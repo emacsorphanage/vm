@@ -255,11 +255,13 @@ read from the minibuffer.  Valid keys are
 
 \"date\"		\"reversed-date\"
 \"author\"		\"reversed-author\"
+\"full-name\"		\"reversed-full-name\"
 \"subject\"		\"reversed-subject\"
 \"recipients\"		\"reversed-recipients\"
 \"line-count\"		\"reversed-line-count\"
 \"byte-count\"		\"reversed-byte-count\"
 \"physical-order\"	\"reversed-physical-order\"
+\"spam-score\"		\"reversed-spam-score\"
 
 Optional second arg (prefix arg interactively) means the sort
 should change the physical order of the messages in the folder.
@@ -316,6 +318,10 @@ folder in the order in which the messages arrived."
 	     (setq key-funcs (cons 'vm-sort-compare-author key-funcs)))
 	    ((equal key "reversed-author")
 	     (setq key-funcs (cons 'vm-sort-compare-author-r key-funcs)))
+	    ((equal key "full-name")
+	     (setq key-funcs (cons 'vm-sort-compare-full-name key-funcs)))
+	    ((equal key "reversed-full-name")
+	     (setq key-funcs (cons 'vm-sort-compare-full-name-r key-funcs)))
 	    ((equal key "date")
 	     (setq key-funcs (cons 'vm-sort-compare-date key-funcs)))
 	    ((equal key "reversed-date")
@@ -336,6 +342,10 @@ folder in the order in which the messages arrived."
 	     (setq key-funcs (cons 'vm-sort-compare-line-count key-funcs)))
 	    ((equal key "reversed-line-count")
 	     (setq key-funcs (cons 'vm-sort-compare-line-count-r key-funcs)))
+	    ((equal key "spam-score")
+	     (setq key-funcs (cons 'vm-sort-compare-spam-score key-funcs)))
+	    ((equal key "reversed-spam-score")
+	     (setq key-funcs (cons 'vm-sort-compare-spam-score-r key-funcs)))
 	    ((equal key "physical-order")
 	     (setq key-funcs (cons 'vm-sort-compare-physical-order key-funcs)))
 	    ((equal key "reversed-physical-order")
@@ -514,6 +524,20 @@ folder in the order in which the messages arrived."
 	  ((string-equal s1 s2) '=)
 	  (t t))))
 
+(defun vm-sort-compare-full-name (m1 m2)
+  (let ((s1 (vm-su-full-name m1))
+	(s2 (vm-su-full-name m2)))
+    (cond ((string-lessp s1 s2) t)
+	  ((string-equal s1 s2) '=)
+	  (t nil))))
+
+(defun vm-sort-compare-full-name-r (m1 m2)
+  (let ((s1 (vm-su-full-name m1))
+	(s2 (vm-su-full-name m2)))
+    (cond ((string-lessp s1 s2) nil)
+	  ((string-equal s1 s2) '=)
+	  (t t))))
+
 (defun vm-sort-compare-date (m1 m2)
   (let ((s1 (vm-so-sortable-datestring m1))
 	(s2 (vm-so-sortable-datestring m2)))
@@ -583,6 +607,20 @@ folder in the order in which the messages arrived."
     (cond ((> n1 n2) t)
 	  ((= n1 n2) '=)
 	  (t nil))))
+
+(defun vm-sort-compare-spam-score (m1 m2)
+  (let ((s1 (vm-su-spam-score m1))
+	(s2 (vm-su-spam-score m2)))
+    (cond ((< s1 s2) t)
+	  ((= s1 s2) '=)
+	  (t nil))))
+
+(defun vm-sort-compare-spam-score-r (m1 m2)
+  (let ((s1 (vm-su-spam-score m1))
+	(s2 (vm-su-spam-score m2)))
+    (cond ((< s1 s2) nil)
+	  ((= s1 s2) '=)
+	  (t t))))
 
 (defun vm-sort-compare-physical-order (m1 m2)
   (let ((n1 (vm-start-of m1))

@@ -731,6 +731,18 @@ mandatory."
 	(- (vm-text-end-of (vm-real-message-of m))
 	   (vm-text-of (vm-real-message-of m)))))))
 
+(defun vm-su-spam-score-aux (m)
+  "Return the numeric spam level for M."
+  (let ((spam-status (vm-get-header-contents m "X-Spam-Status:")))
+    (if (string-match "hits=\\([+-]?[0-9.]+\\)" spam-status)
+        (string-to-number (match-string 1 spam-status))
+      0)))
+
+(defun vm-su-spam-score (m)
+  "Return the numeric spam level for M (possibly using cache)."
+  (or (vm-spam-score-of m)
+      (vm-set-spam-score-of m (vm-su-spam-score-aux m))))
+
 (defun vm-su-weekday (m)
   (or (vm-weekday-of m)
       (progn (vm-su-do-date m) (vm-weekday-of m))))

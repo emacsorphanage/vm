@@ -180,6 +180,8 @@
   (aref (aref message 3) 23))
 (defsubst vm-imap-uid-validity-of (message)
   (aref (aref message 3) 24))
+(defsubst vm-spam-score-of (message)
+  (aref (aref message 3) 25))
 ;; extra data shared by virtual messages if vm-virtual-mirror is non-nil
 (defsubst vm-mirror-data-of (message) (aref message 4))
 ;; if message is being edited, this is the buffer being used.
@@ -317,6 +319,8 @@
   (aset (aref message 3) 23 val))
 (defsubst vm-set-imap-uid-validity-of (message val)
   (aset (aref message 3) 24 val))
+(defsubst vm-set-spam-score-of (message val)
+  (aset (aref message 3) 25 val))
 (defsubst vm-set-mirror-data-of (message data)
   (aset message 4 data))
 (defsubst vm-set-edit-buffer-of (message buf)

@@ -4367,10 +4367,12 @@ Its parent keymap is mail-mode-map.")
 (defconst vm-supported-sort-keys
   '("date" "reversed-date"
     "author" "reversed-author"
+    "full-name" "reversed-full-name"
     "subject" "reversed-subject"
     "recipients" "reversed-recipients"
     "line-count" "reversed-line-count"
     "byte-count" "reversed-byte-count"
+    "spam-score" "reversed-spam-score"
     "physical-order" "reversed-physical-order"))
 (defconst vm-supported-interactive-virtual-selectors
   '(("any")
@@ -4492,7 +4494,7 @@ Should be just a list of strings, not an alist or an obarray.")
   "Non-nil value means that `vm-minibuffer-complete-word' should automatically
 append a space to words that complete unambiguously.")
 (defconst vm-attributes-vector-length 9)
-(defconst vm-cache-vector-length 25)
+(defconst vm-cache-vector-length 26)
 (defconst vm-softdata-vector-length 20)
 (defconst vm-location-data-vector-length 6)
 (defconst vm-mirror-data-vector-length 6)
