@@ -80,9 +80,9 @@
 
 (defvar vm-grepmail-folder-buffer nil)
 
-;; For sixth arg of read-file-name in Emacs 21. cf vm-folder-history.
-(defun vm-grepmail-folders-history (&rest ignored) t)
-
+(if vm-fsfemacs-p
+    ;; For sixth arg of read-file-name in Emacs 21. cf vm-folder-history.
+    (defun vm-grepmail-folders-history (&rest ignored) t))
 
 ;;;###autoload
 (defun vm-grepmail (arguments folders)
@@ -101,8 +101,8 @@ FOLDERS should be a list of files/directories to search in."
                 (let ((default (or vm-folder-directory
                                    "~/Mail"))
                       fd folders)
-                  (while (not (string= fd default))
-                    (setq fd (vm-read-file-name
+                  (while (not (string= fd (expand-file-name default)))
+                    (setq fd (read-file-name
                               (format "Search folder/directory %s%s: "
                                       (if (not folders)
                                           "[end list with RET]" "")
@@ -115,14 +115,15 @@ FOLDERS should be a list of files/directories to search in."
                               default
                               t nil 'vm-grepmail-folders-history)
                           fd (expand-file-name fd))
-                    (if (not (string= fd default))
+                    (if (not (string= fd (expand-file-name default)))
                         (setq folders (add-to-list 'folders fd))))
                   (if (null folders)
                       (setq folders (add-to-list 'folders fd)))
                   folders)))
 
-  (setq vm-grepmail-arguments arguments
-        vm-grepmail-folders-history folders)
+  (setq vm-grepmail-arguments arguments)
+;  (setq vm-grepmail-folders-history
+;        (append folders vm-grepmail-folders-history))
   
   (let ((folder-buffer (format "* VM folder: grepmail %s %s *"
                                arguments folders))
@@ -181,17 +182,26 @@ FOLDERS should be a list of files/directories to search in."
       process)))
 
 (defun vm-grepmail-process-filter (process output)
-  (set-buffer (process-buffer process))
-  (goto-char (point-max))
-  (insert output)
-  (let (end)
-    (goto-char (1+ (point-min)))
-    (when (and (string-match "^\nFrom " output)
-               (setq end (and (re-search-forward "^\nFrom " (point-max) t)
-                              (match-beginning 0))))
-      (vm-grepmail-grab-message (current-buffer) (point-min) end)
-      (delete-region (point-min) end)))
-  (sit-for 0))
+  (condition-case err
+      (progn 
+        (set-buffer (process-buffer process))
+        (goto-char (point-max))
+        (insert output)
+        (let (end)
+          (goto-char (1+ (point-min)))
+          (when (and (string-match "^\nFrom " output)
+                     (setq end (and (re-search-forward "^\nFrom "
+                                                       (point-max) t)
+                                    (match-beginning 0))))
+            (vm-grepmail-grab-message (current-buffer) (point-min) end)
+            (delete-region (point-min) end)))
+        (sit-for 0))
+    (error nil
+           ;; TODO: there are some problems here but we ignore them 
+;           (message "%S" err) 
+;           (backtrace)
+           ))
+  )
 
 (defun vm-grepmail-process-done (process state)
   (message "grepmail cleanup.")
