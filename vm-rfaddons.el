@@ -368,7 +368,7 @@ This does not work when replying to multiple messages."
                  vm-included-text-attribution-format
                  message))))
   (while (re-search-forward "^" (point-max) t)
-    (insert vm-included-text-prefix))))
+    (insert vm-included-text-prefix)))
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun vm-do-fcc-before-mime-encode ()
