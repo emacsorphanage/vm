@@ -1139,21 +1139,19 @@ This will be done according to `vm-mime-auto-save-all-attachments-subdir'."
                ;; for the message
                (subdir (concat 
                         "/"
+                        (format "%04d.%02d.%02d-%s"
+                                (vm-su-year msg)
+                                (vm-su-month-number msg)
+                                (vm-su-monthday msg)
+                                (vm-su-hour msg))
+                        "--"
                         (vm-decode-mime-encoded-words-in-string
                          (or (vm-su-full-name msg)
                              "unknown"))
-                        "-"
+                        "--"
                         (vm-decode-mime-encoded-words-in-string
-                         (vm-su-subject msg))
-                        "-"
-                        (vm-su-monthday msg)
-                        "."
-                        (vm-su-month-number msg)
-                        "."
-                        (vm-su-year msg)
-                        "-"
-                        (vm-su-hour msg))))
-
+                         (vm-su-subject msg)))))
+               
            (if (and basedir vm-folder-directory
                     (string-match
                      (concat "^" (expand-file-name vm-folder-directory))
@@ -1892,7 +1890,8 @@ and add an \"%0UA\" to your `vm-summary-format'."
        (setq attachments (1+ attachments)))
      vm-mime-summary-attachment-label-types
      vm-mime-summary-attachment-label-types-exceptions
-     (list msg))
+     (list msg)
+     t)
                                        
     (if (= attachments 0 )
         ""
