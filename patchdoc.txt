@@ -1,0 +1,87 @@
+This is my patch against the greatest mail reader I know: VM!
+
+Kyle is/does not accept non RFC conform changes or code from other people,
+thus changes of mine are available as a patch to the VM source.
+
+The documentation of my changes is incomplete and the changes may even cause
+new problems or bugs.  Feel free to contact me if you think my patch breaks
+something which is working in standard VM.
+
+Personally I am an follower of the XEmacs church and thus some things may not
+work with GNU Emacs, nevertheless I am happy if you send me fixes for GNU
+Emacs.
+
+*******************************************************************************
+INSTALLATION
+
+Copy this patch to the directory containing a clean standard VM source,
+which is not patched and apply this patch with:
+
+	patch < vm-X.XX.patch
+
+Then rebuilt the elc files by
+
+	make -k -f Makefile.rf
+
+and restart VM, i.e. quit emacs.
+
+You can ignore any warnings, however error messages indicate that some modules
+(partially) will not work, i.e. if other library files are missing or you are
+running GNU emacs.
+
+*******************************************************************************
+UPDATES/UPGRADES
+
+Simply running the following command should check for an update and
+rebuilt the modified sources.  It requires "wget" to be installed!
+
+	make -f Makefile.rf update
+
+*******************************************************************************
+BUGS
+
+Report any problems caused by this patch to the email address listed at 
+http://www.robf.de
+
+*******************************************************************************
+COMMENTS
+
+This patch provides the following hacks & enhancements and other stuff not
+listed here, as I am quite lazy in writing docs. ;c) 
+
+Additional extensions for VM written by myself:
+- vm-pine.el	      for draft handling and other Pine inspired functions.
+- vm-ps-print.el      for nice ps-printing functions
+- vm-rfaddons.el      adds various add-ons to VM
+- vm-grepmail a	      grepmail interface for VM
+- vm-avirtual.el      brings additional virtual folder selectors and functions
+		      for spam tagging
+- vm-biff.el	      is a xbiff within VM, notifying you of new mail
+- vm-serial.el	      templates for mails, personalized serial mails 
+- vm-summary-faces.el face base on virtual selectors 
+
+Additional extensions for VM from other people:
+- vm-pcrisis.el	      by Rob Hodges for people with personal crisis which need
+		      to rewrite headers automatically. 
+- vcard.el            by Noah Friedman <friedman@splode.com> for
+  vm-vcard.el	      displaying vcards within VM.
+
+Patches against the VM core (incomplete docs):
+- make-autoloads: enhanced output & ignore links
+- vm-mime.el:
+	* vm-pine patch for attachment handling of continued message drafts
+	* mime button displaying file name of attachment
+	* write mime filter
+	* qp-decoding of disposition parameters like filename etc.
+- vm-mouse.el: handling of email-addresses like "mailto:" URLs
+- vm-page.el: vm-energize-urls is interactive now, this allows you to easily
+	      check URLs in a message you are currently composing.
+- vm-reply.el:
+	* Proper setting of subject & references when replying to multiple
+	  messages.
+	* Filtering of MIME types when yanking a message.  Now only those
+	  types listed in `vm-included-mime-types-list' are yanked and you
+	  will have no attachment mess any more!
+- vm-startup.el: vm-mail takes now a subject argument
+- vm-vars.el: two new variables for customization (see vm-reply)
+	* vm-included-mime-types-list
