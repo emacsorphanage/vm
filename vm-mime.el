@@ -4707,6 +4707,27 @@ COMPOSITION's name will be read from the minibuffer."
 		(fb (extent-property e 'vm-mime-forward-local-refs)))
 	   (setcar fb val) ))))
 
+(defun vm-mime-delete-attachment-button ()
+  (cond (vm-fsfemacs-p
+         ;; todo
+         )
+	(vm-xemacs-p
+	 (let ((e (extent-at (point) nil 'vm-mime-type)))
+           (delete-region (extent-start-position e)
+                          (extent-end-position e))))))
+
+(defun vm-mime-delete-attachment-button-keep-infos ()
+  (cond (vm-fsfemacs-p
+         ;; todo
+         )
+	(vm-xemacs-p
+	 (let ((e (extent-at (point) nil 'vm-mime-type)))
+           (save-excursion
+             (goto-char (1+ (extent-start-position e)))
+             (insert " --- DELETED ")
+             (goto-char (extent-end-position e))
+             (insert " ---")
+             (delete-extent e))))))
 
 (defun vm-mime-change-content-disposition ()
   (interactive)

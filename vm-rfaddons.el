@@ -346,18 +346,7 @@ This does not work when replying to multiple messages."
       (next-line 1)
       (let ((start (point)))
         (insert-buffer-substring vm-pbuf)
-        (goto-char start)
-        (re-search-forward "^$")
-        (skip-chars-forward " \t\n")
-        (delete-region start (point))
-        ;; the rest is cut&past from vm-do-reply
-        (if (and message vm-included-text-attribution-format)
-            (let ((vm-summary-uninteresting-senders nil))
-              (insert (vm-summary-sprintf
-                       vm-included-text-attribution-format
-                       message))))
-        (while (re-search-forward "^" (point-max) t)
-          (insert vm-included-text-prefix)))
+        (vm-add-reply-prefix message start))
       (run-hooks 'mail-setup-hook)
       (run-hooks 'vm-mail-mode-hook)
       (run-hooks 'vm-reply-hook)
@@ -365,6 +354,22 @@ This does not work when replying to multiple messages."
         (goto-char (point-max))
         (mail-signature)))))
 
+(defun vm-add-reply-prefix (message &optional start)
+  (when (not start)
+    (goto-char (point-min))
+    (re-search-forward (regexp-quote mail-header-separator) (point-max))
+    (forward-char 1)
+    (setq start (point)))
+  (goto-char start)
+  ;; the rest is cut&past from vm-do-reply
+  (if (and message vm-included-text-attribution-format)
+      (let ((vm-summary-uninteresting-senders nil))
+        (insert (vm-summary-sprintf
+                 vm-included-text-attribution-format
+                 message))))
+  (while (re-search-forward "^" (point-max) t)
+    (insert vm-included-text-prefix))))
+  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun vm-do-fcc-before-mime-encode ()
   "The name says it all.

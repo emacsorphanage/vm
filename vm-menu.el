@@ -554,6 +554,12 @@
 	  :active vm-send-using-mime
 	  :style radio
 	  :selected (not (vm-mime-attachment-forward-local-refs-at-point))])
+      ["Delete"
+       (vm-mime-delete-attachment-button)
+       :style button]
+      ["Delete, but keep infos"
+       (vm-mime-delete-attachment-button-keep-infos)
+       :style button]
       )))
 
 (defvar vm-menu-image-menu

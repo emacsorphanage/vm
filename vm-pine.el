@@ -413,10 +413,41 @@ creation)."
       
       ;; and add the buttons for attachments
       (vm-decode-postponed-mime-message)))
+
   (when (not silent)
+    (run-hooks 'mail-setup-hook)
     (run-hooks 'vm-mail-hook)
     (run-hooks 'vm-mail-mode-hook))
+  
   (run-hooks 'vm-continue-postponed-message-hook))
+
+;;-----------------------------------------------------------------------------
+;;;###autoload
+(defun vm-reply-by-continue-postponed-message ()
+  "Like `vm-reply' but preserves attachments."
+  (interactive)
+  (let ((vm-continue-postponed-message-hook)
+        (vm-reply-hook nil)
+        (vm-mail-mode-hook nil)
+        (mail-setup-hook nil)
+        (mail-signature nil)
+        reply-buffer)
+    (vm-reply 1)
+    (save-excursion
+      (vm-continue-postponed-message t)
+      (goto-char (point-min))
+      (re-search-forward (regexp-quote mail-header-separator) (point-max))
+      (forward-char 1)
+      (setq reply-buffer (current-buffer)
+            start (point)
+            end (point-max)))
+    (goto-char (point-max))
+    (insert-buffer-substring reply-buffer start end)
+    (vm-add-reply-prefix (car vm-message-pointer)))
+  (run-hooks 'mail-setup-hook)
+  (run-hooks 'vm-mail-hook)
+  (run-hooks 'vm-mail-mode-hook)
+  (run-hooks 'vm-reply-hook))
 
 ;;-----------------------------------------------------------------------------
 (defun vm-delete-postponed-message ()
