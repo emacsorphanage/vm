@@ -3719,16 +3719,16 @@ named by `vm-movemail-program'."
   :type 'string)
 
 (defcustom vm-firefox-program-switches nil
-  "*List of command line switches to pass to Mozilla Firebird."
+  "*List of command line switches to pass to Mozilla Firefox."
   :type '(repeat string))
 
 (defcustom vm-firefox-client-program "firefox"
-  "*Name of program to use to issue requests to Mozilla Firebird. 
+  "*Name of program to use to issue requests to Mozilla Firefox. 
 `vm-mouse-send-url-to-firefox' uses this."
   :type 'string)
 
 (defcustom vm-firefox-client-program-switches '("-remote")
-  "*List of command line switches to pass to Mozilla Firebird client."
+  "*List of command line switches to pass to Mozilla Firefox client."
   :type '(repeat string))
 
 (defcustom vm-wget-program "wget"
