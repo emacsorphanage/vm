@@ -121,7 +121,10 @@ VMPATCH=vm-$(VMV).patch
 ELISPDIR=$(HOME)/html-data/www.robf.de/Hacking/elisp
 patch:
 	-rm -f *.orig *.rej
-	cp patchdoc.txt $(VMPATCH); diff --ignore-all-space -u -P -x qp-encode -x qp-decode -x patchdoc.txt -x vm-autoload.el -x vm.el -x '*.elc' -x '#*' -x '*.gz' -x '*.patch' -x '*info*' $(HOME)/.hacking/vm-$(VMV) . | grep -v '^Only in'  | grep -v '^Binary files' >> $(VMPATCH); echo patch $(VMPATCH) written ...
+	echo 'Version: $$Id: = '`tla tree-version` > $(VMPATCH)
+	echo "" >> $(VMPATCH)
+	echo '*******************************************************************************' >> $(VMPATCH)
+	cat patchdoc.txt >> $(VMPATCH); diff --ignore-all-space -u -P -x qp-encode -x qp-decode -x patchdoc.txt -x vm-autoload.el -x vm.el -x '*.elc' -x '#*' -x '*.gz' -x '*.patch' -x '*info*' $(HOME)/.hacking/vm-$(VMV) . | grep -v '^Only in'  | grep -v '^Binary files' >> $(VMPATCH); echo patch $(VMPATCH) written ...
 	gzip -f $(VMPATCH)
 	cp $(VMPATCH).gz $(ELISPDIR)
 	touch $(ELISPDIR)/index.rml
@@ -136,3 +139,30 @@ update:
 	if test vmrf.tgz -nt vmrf-newer.tgz; then cp vmrf.tgz vmrf-newer.tgz; tar xvfz vmrf.tgz '*.el'; fi;
 	rm -f vm-autoload.el*
 	make -f Makefile.rf
+
+
+# As long as I am maintaining tla and CVS at the same time 
+update-cvs: $(HOME)/prog/xemacs/vm-mime.el \
+            $(HOME)/prog/xemacs/vm-serial.el \
+            $(HOME)/prog/xemacs/vm-summary-faces.el \
+            $(HOME)/prog/xemacs/vm-avirtual.el \
+            $(HOME)/prog/xemacs/vm-biff.el \
+            $(HOME)/prog/xemacs/vm-grepmail.el \
+            $(HOME)/prog/xemacs/vm-pine.el \
+            $(HOME)/prog/xemacs/vm-rfaddons.el
+
+$(HOME)/prog/xemacs/vm-mime.el: vm-mime.el
+	cp $< $@
+$(HOME)/prog/xemacs/vm-serial.el: vm-serial.el
+	cp $< $@
+$(HOME)/prog/xemacs/vm-summary-faces.el: vm-summary-faces.el
+	cp $< $@
+$(HOME)/prog/xemacs/vm-avirtual.el: vm-avirtual.el
+	cp $< $@
+$(HOME)/prog/xemacs/vm-biff.el: vm-biff.el
+	cp $< $@
+$(HOME)/prog/xemacs/vm-grepmail.el: vm-grepmail.el
+	cp $< $@
+$(HOME)/prog/xemacs/vm-pine.el: vm-pine.el
+	cp $< $@
+$(HOME)/prog/xemacs/vm-rfaddons.el: vm-rfaddons.el
