@@ -338,7 +338,8 @@ This does not work when replying to multiple messages."
     (save-excursion
       (vm-select-folder-buffer)
       (setq vm-pbuf vm-presentation-buffer
-            message (car vm-message-pointer)))
+            message (car vm-message-pointer))
+      (vm-scroll-forward 0))
     (if (null vm-pbuf)
         (vm-reply-include-text count)
       (let ((vm-reply-hook nil)
@@ -348,7 +349,7 @@ This does not work when replying to multiple messages."
       (re-search-forward (regexp-quote mail-header-separator) (point-max))
       (next-line 1)
       (let ((start (point)))
-        (insert (buffer-substring nil nil vm-pbuf))
+        (insert-buffer-substring vm-pbuf)
         (goto-char start)
         (re-search-forward "^$")
         (skip-chars-forward " \t\n")
@@ -356,8 +357,9 @@ This does not work when replying to multiple messages."
         ;; the rest is cut&past from vm-do-reply
         (if (and message vm-included-text-attribution-format)
             (let ((vm-summary-uninteresting-senders nil))
-              (insert (vm-summary-sprintf vm-included-text-attribution-format
-                                          message))))
+              (insert (vm-summary-sprintf
+                       vm-included-text-attribution-format
+                       message))))
         (while (re-search-forward "^" (point-max) t)
           (insert vm-included-text-prefix)))
       (run-hooks 'vm-reply-hook)
