@@ -761,7 +761,7 @@ relevant POP servers to remove the messages."
 		  (set-window-point (selected-window) (point))))
 	    (if (y-or-n-p (format "Retrieve message %d (size = %d)? " n size))
 		'retrieve
-	      (if (y-or-n-p (format "Delete message %d from popdrop? " n size))
+	      (if (y-or-n-p (format "Delete message %d from popdrop? " n))
 		  'delete
 		'skip))))
       (and work-buffer (kill-buffer work-buffer)))))

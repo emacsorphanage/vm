@@ -920,9 +920,9 @@ on all the relevant IMAP servers and then immediately expunges."
 		   nil vm-visible-headers
 		   vm-invisible-header-regexp)))
 	    (set-window-point (selected-window) (point))
-	    (if (y-or-n-p (format "Message %d, size = %d, retrieve? " n size))
+	    (if (y-or-n-p (format "Retrieve message %d (size = %d)? " n size))
 		'retrieve
-	      (if (y-or-n-p (format "Delete message %d from maildrop? " n size))
+	      (if (y-or-n-p (format "Delete message %d from maildrop? " n))
 		  'delete
 		'skip))))
       (and work-buffer (kill-buffer work-buffer)))))
