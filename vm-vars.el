@@ -3351,7 +3351,14 @@ start and end of the message will be bracketed by (point-min) and
 is made to be the current message.  When the hooks are run, the
 current buffer will be the folder containing the message and the
 start and end of the message will be bracketed by (point-min) and
-(point-max)."
+ (point-max)."
+  :type 'hook)
+
+(defcustom vm-showing-message-hook nil
+  "*List of hook functions called every time a message is showed.
+When the hooks are run, the current buffer will be the folder containing the
+message and the start and end of the message will be bracketed by (point-min)
+and (point-max)."
   :type 'hook)
 
 (defcustom vm-arrived-message-hook nil

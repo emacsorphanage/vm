@@ -698,7 +698,6 @@ Use mouse button 3 to choose a Web browser for the URL."
      ;; run the message select hooks.
      (save-excursion
        (vm-select-folder-buffer)
-       (vm-run-message-hook (car vm-message-pointer) 'vm-select-message-hook)
        (and vm-select-new-message-hook (vm-new-flag (car vm-message-pointer))
 	    (vm-run-message-hook (car vm-message-pointer)
 				 'vm-select-new-message-hook))
@@ -779,7 +778,9 @@ Use mouse button 3 to choose a Web browser for the URL."
 		  (set-window-point w (vm-text-of (car vm-message-pointer))))))
      (if just-passing-through
 	 (vm-show-current-message)
-       (vm-update-summary-and-mode-line)))))
+       (vm-update-summary-and-mode-line))))
+
+  (vm-run-message-hook (car vm-message-pointer) 'vm-select-message-hook))
 
 (defun vm-show-current-message ()
   (and vm-display-using-mime
@@ -835,7 +836,11 @@ Use mouse button 3 to choose a Web browser for the URL."
 	   (cond ((vm-new-flag (car vm-message-pointer))
 		  (vm-set-new-flag (car vm-message-pointer) nil)))
 	   (cond ((vm-unread-flag (car vm-message-pointer))
-		  (vm-set-unread-flag (car vm-message-pointer) nil))))
+		  (vm-set-unread-flag (car vm-message-pointer) nil)))
+
+           (vm-run-message-hook (car vm-message-pointer)
+                                'vm-showing-message-hook)
+           )
 	 (vm-update-summary-and-mode-line)
 	 (vm-howl-if-eom))
      (vm-update-summary-and-mode-line))))

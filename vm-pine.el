@@ -431,7 +431,8 @@ creation)."
         (vm-mail-mode-hook nil)
         (mail-setup-hook nil)
         (mail-signature nil)
-        reply-buffer)
+        reply-buffer
+        start end)
     (vm-reply 1)
     (save-excursion
       (vm-continue-postponed-message t)
@@ -636,7 +637,7 @@ Optional argument DONT-KILL is positive, then do not kill source message."
                  (insert (format "From: %s\n" login))))))
     (if (not (vm-mail-mode-get-header-contents "Date:"))
         (insert "Date: "
-                (format-time-string "%a, %d %b %Y %H%M%S %Z"
+                (format-time-string "%a, %d %b %Y %H:%M:%S %Z"
                                     (current-time))
                 "\n"))
     

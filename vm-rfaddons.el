@@ -539,23 +539,24 @@ Call this function, if you want to see the message unfilled."
 (defun vm-switch-to-folder (folder-name)
   "Switch to another opened VM folder and rearrange windows as with a scroll."
   (interactive (list
-                (completing-read "Foldername: " (mapcar (lambda (f) (list f))
-                                                        (vm-folder-list))
-                                 nil t
-                                 (let ((fl (vm-folder-list))
-                                       (f vm-switch-to-folder-history) d)
-                                   (if (member major-mode
-                                               '(vm-mode vm-presentation-mode
-                                                         vm-summary-mode))
-                                       (save-excursion
-                                         (vm-select-folder-buffer)
-                                         (setq fl (delete (buffer-name) fl))))
-                                   (while f
-                                     (setq d (car f) f (cdr f))
-                                     (if (member d fl)
-                                         (setq f nil)))
-                                   d)
-                                 'vm-switch-to-folder-history)))
+                (let ((fl (vm-folder-list))
+                      (f vm-switch-to-folder-history) d)
+                  (if (member major-mode
+                              '(vm-mode vm-presentation-mode
+                                        vm-summary-mode))
+                      (save-excursion
+                        (vm-select-folder-buffer)
+                        (setq fl (delete (buffer-name) fl))))
+                  (while f
+                    (setq d (car f) f (cdr f))
+                    (if (member d fl)
+                        (setq f nil)))
+                  (completing-read
+                   (format "Foldername%s: " (if d (format " (%s)" d) ""))
+                   (mapcar (lambda (f) (list f)) (vm-folder-list))
+                   nil t nil
+                   'vm-switch-to-folder-history
+                   d))))
 
   (switch-to-buffer folder-name)
   (vm-select-folder-buffer)
