@@ -121,17 +121,18 @@ VMPATCH=vm-$(VMV).patch
 ELISPDIR=$(HOME)/html-data/www.robf.de/Hacking/elisp
 patch:
 	-rm -f *.orig *.rej
+	tla changelog > ChangeLog
 	echo 'Version: $$Id: = '`tla revisions -f -r | head -1 | cut -d / -f 2` > $(VMPATCH)
 	echo "" >> $(VMPATCH)
 	echo '*******************************************************************************' >> $(VMPATCH)
-	cat patchdoc.txt >> $(VMPATCH); diff --ignore-all-space -u -P -x qp-encode -x qp-decode -x patchdoc.txt -x vm-autoload.el -x vm.el -x '*.elc' -x '#*' -x '*.gz' -x '*.patch' -x '*info*' $(HOME)/.hacking/vm-$(VMV) . | grep -v '^Only in'  | grep -v '^Binary files' >> $(VMPATCH); echo patch $(VMPATCH) written ...
+	cat patchdoc.txt >> $(VMPATCH); diff --ignore-all-space -u -P -x qp-encode -x qp-decode -x patchdoc.txt -x vm-autoload.el -x vm.el -x '*.elc' -x '#*' -x '*.gz' -x '*.patch' -x '*info*' -x ',*' $(HOME)/.hacking/vm-$(VMV) . | grep -v '^Only in'  | grep -v '^Binary files' >> $(VMPATCH); echo patch $(VMPATCH) written ...
 	gzip -f $(VMPATCH)
 	cp $(VMPATCH).gz $(ELISPDIR)
 	touch $(ELISPDIR)/index.rml
 
 ball:
 	echo 'Version: $$Id: = '`tla revisions -f -r | head -1 | cut -d / -f 2` > ,id
-	tar chfvz vmrf.tgz ,id patchdoc.txt Makefile.rf *.el
+	tar chfvz vmrf.tgz ,id *ChangeLog patchdoc.txt Makefile.rf *.el
 	cp vmrf.tgz $(ELISPDIR)
 	touch $(ELISPDIR)/index.rml
 
