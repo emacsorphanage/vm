@@ -38,6 +38,22 @@ rebuilt the modified sources.  It requires "wget" to be installed!
 	make -f Makefile.rf update
 
 *******************************************************************************
+ARCH (http://wiki.gnuarch.org/)
+
+I maintain my changes in arch now, the coordinates of my archive are:
+Archive:  hack@robf.de--public
+Location: http://www.robf.de/Hacking/arch
+Category: vm
+
+tla commands you may need:
+
+$ tla register-archive http://www.robf.de/Hacking/arch
+$ tla abrowse hack@robf.de--public
+$ tla versions -A hack@robf.de--public vm--robf
+$ # select a version you want to get, e.g. 
+$ tla get -A hack@robf.de--public vm--robf--7.18
+
+*******************************************************************************
 BUGS
 
 Report any problems caused by this patch to the email address listed at 
