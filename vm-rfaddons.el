@@ -1381,7 +1381,7 @@ When directory does not exist it will be created."
          (setq file (if file
                         (if (file-name-directory file)
                             file
-                          (concat directory "/" file))
+                          (expand-file-name file directory))
                       (vm-read-file-name
                        (format "Save %s to file: " type)
                        (or directory
