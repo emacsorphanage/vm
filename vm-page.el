@@ -301,7 +301,8 @@ Negative arg means scroll forward."
 	       (overlay-put p 'vm-highlight t)))
 	(goto-char (vm-matched-header-end)))))))
 
-(defun vm-energize-urls ()
+(defun vm-energize-urls (&optional clean-only)
+  (interactive "P")
   ;; Don't search too long in large regions.  If the region is
   ;; large, search just the head and the tail of the region since
   ;; they tend to contain the interesting text.
@@ -322,6 +323,7 @@ Negative arg means scroll forward."
 			    (delete-extent e))
 			nil))
 		     (current-buffer) (point-min) (point-max))
+	(if clean-only (message "Energy from urls removed!")
 	(while search-pairs
 	  (goto-char (car (car search-pairs)))
 	  (while (re-search-forward vm-url-regexp (cdr (car search-pairs)) t)
@@ -349,8 +351,11 @@ Negative arg means scroll forward."
 		  (set-extent-property e 'vm-button t)
 		  (set-extent-property e 'keymap keymap)
 		  (set-extent-property e 'balloon-help 'vm-url-help)
-		  (set-extent-property e 'highlight t))))
-	  (setq search-pairs (cdr search-pairs)))))
+		  (set-extent-property e 'highlight t)
+		  ;; for vm-continue-postponed-message
+;		  (set-extent-property e 'duplicable t)
+		  )))
+	  (setq search-pairs (cdr search-pairs))))))
      ((and vm-fsfemacs-p
 	   (fboundp 'overlay-put))
       (let (o-lists o p)
@@ -600,6 +605,7 @@ Use mouse button 3 to choose a Web browser for the URL."
 	 (t (symbol-name vm-url-browser)))))
 
 (defun vm-energize-urls-in-message-region (&optional start end)
+  (interactive "r")
   (save-excursion
     (or start (setq start (vm-headers-of (car vm-message-pointer))))
     (or end (setq end (vm-text-end-of (car vm-message-pointer))))

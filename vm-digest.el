@@ -50,7 +50,8 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 				       (vm-text-end-of m))
 	      (goto-char beg)
 	      (vm-reorder-message-headers nil nil vm-internal-unforwarded-header-regexp)
-	      (vm-reorder-message-headers nil keep-list discard-regexp)))))
+	      (vm-reorder-message-headers nil keep-list discard-regexp)
+              (vm-decode-mime-message-headers)))))
       (goto-char (point-max))
       (insert "------- end of forwarded message -------\n"))))
 
@@ -708,6 +709,13 @@ all marked messages will be burst."
 		   (vm-rfc1153-burst-message m))
 		  (t (error "Unknown digest type: %s" digest-type)))
 	    (message "Bursting %s digest... done" digest-type)
+            (and vm-delete-after-bursting
+ 		 (yes-or-no-p (format "Delete message %s? " (vm-number-of m)))
+ 		 (save-excursion
+ 		   (set-buffer start-buffer)
+ 		   ;; don't move message pointer when deleting the message
+ 		   (let ((vm-move-after-deleting nil))
+ 		     (vm-delete-message 1))))
 	    (setq mlist (cdr mlist)))
 	  (set-buffer-modified-p nil)
 	  (vm-save-buffer-excursion

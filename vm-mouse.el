@@ -182,6 +182,8 @@
 	       (vm-mouse-send-url url browser)))))))
 
 (defun vm-mouse-send-url (url &optional browser switches)
+  (if (string-match "^[A-Za-z0-9._-]+@[A-Za-z0-9._-]+$" url)
+      (setq url (concat "mailto:" url)))
   (if (string-match "^mailto:" url)
       (vm-mail-to-mailto-url url)
     (let ((browser (or browser vm-url-browser))
@@ -211,8 +213,48 @@
 	(vm-mouse-send-url-to-netscape url t new-window)))
   (message "Sending URL to Netscape... done"))
 
+(defun vm-mouse-send-url-to-opera (url &optional new-opera new-window)
+  ;; Change commas to %2C to avoid confusing Netscape -remote.
+  (while (string-match "," url)
+    (setq url (replace-match "%2C" nil t url)))
+  (message "Sending URL to Opera...")
+  (if new-opera
+      (apply 'vm-run-background-command vm-opera-program
+	     (append vm-opera-program-switches (list url)))
+    (or (equal 0 (apply 'vm-run-command vm-opera-program
+			(append vm-opera-program-switches
+				(list "-remote"
+				      (concat "openURL(" url
+					      ")")))))
+	(vm-mouse-send-url-to-opera url t new-window)))
+  (message "Sending URL to Opera... done"))
+
+
+(defun vm-mouse-send-url-to-mozilla (url &optional new-mozilla new-window)
+  ;; Change commas to %2C to avoid confusing Netscape -remote.
+  (while (string-match "," url)
+    (setq url (replace-match "%2C" nil t url)))
+  (message "Sending URL to Mozilla...")
+  (if new-mozilla
+      (apply 'vm-run-background-command vm-mozilla-program
+	     (append vm-mozilla-program-switches (list url)))
+    (or (equal 0 (apply 'vm-run-command vm-mozilla-program
+			(append vm-mozilla-program-switches
+				(list "-remote"
+				      (concat "openURL(" url
+					      (if new-window ",new-window" "")
+					      ")")))))
+	(vm-mouse-send-url-to-mozilla url t new-window)))
+  (message "Sending URL to Mozilla... done"))
+
 (defun vm-mouse-send-url-to-netscape-new-window (url)
   (vm-mouse-send-url-to-netscape url nil t))
+
+(defun vm-mouse-send-url-to-opera-new-window (url)
+  (vm-mouse-send-url-to-opera url nil t))
+
+(defun vm-mouse-send-url-to-mozilla-new-window (url)
+  (vm-mouse-send-url-to-mozilla url nil t))
 
 (defvar buffer-file-type)
 
@@ -281,6 +323,17 @@
 	(vm-mouse-send-url-to-konqueror url t)))
   (message "Sending URL to Konqueror... done"))
 
+(defun vm-mouse-send-url-to-MozillaFirebird (url &optional new-window)
+  (message "Sending URL to Mozilla Firebird...")
+  (if new-window
+      (apply 'vm-run-background-command vm-MozillaFirebird-program
+	     (append vm-MozillaFirebird-program-switches (list url)))
+    (or (equal 0 (apply 'vm-run-command vm-MozillaFirebird-client-program
+			(append vm-MozillaFirebird-client-program-switches
+				(list (format "openURL(%s)" url)))))
+	(vm-mouse-send-url-to-MozillaFirebird url t)))
+  (message "Sending URL to Mozilla Firebird... done"))
+
 (defun vm-mouse-send-url-to-konqueror-new-browser (url)
   (vm-mouse-send-url-to-konqueror url t))
 
@@ -294,6 +347,7 @@
 	 (x-own-selection-internal 'CLIPBOARD url)))
   (message "Sending URL to X Clipboard... done"))
 
+;;;###autoload
 (defun vm-mouse-install-mouse ()
   (cond ((vm-mouse-xemacs-mouse-p)
 	 (if (null (lookup-key vm-mode-map 'button2))
@@ -307,10 +361,18 @@
 	       (define-key vm-mode-map [down-mouse-3] 'vm-mouse-button-3))))))
 
 (defun vm-run-background-command (command &rest arg-list)
-  (apply (function call-process) command nil 0 nil arg-list))
+  (message "vm-run-background-command: %S %S" command arg-list)
+  (apply (function call-process) command
+         nil
+         (get-buffer-create (concat " *" command "*"))
+         nil arg-list))
 
 (defun vm-run-command (command &rest arg-list)
-  (apply (function call-process) command nil nil nil arg-list))
+  (message "vm-run-command: %S %S" command arg-list)
+  (apply (function call-process) command
+         nil
+         (get-buffer-create (concat " *" command "*"))
+         nil arg-list))
 
 ;; return t on zero exit status
 ;; return (exit-status . stderr-string) on nonzero exit status
@@ -320,6 +382,7 @@
 	;; use binary coding system in FSF Emacs/MULE
 	(coding-system-for-read (vm-binary-coding-system))
 	(coding-system-for-write (vm-binary-coding-system))
+        (buffer-file-format nil)
 	;; for DOS/Windows command to tell it that its input is
 	;; binary.
 	(binary-process-input t)
@@ -448,6 +511,18 @@ HISTORY argument is ignored."
 		(vm-delete-auto-save-file-names
 		 (vm-delete-index-file-names
 		  (directory-files default-directory)))))
+
+    ;; delete dot files
+    (setq list (vm-delete (lambda (file)
+                            (string-match "^\\.\\([^.].*\\)?$" file))
+                          list))
+    ;; append a "/" to directories 
+    (setq list (mapcar (lambda (file)
+                         (if (file-directory-p file)
+                             (concat file "/")
+                           file))
+                       list))
+    
     (vm-show-list list 'vm-mouse-read-file-name-event-handler)
     (setq buffer-read-only t)))
 

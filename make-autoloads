@@ -10,25 +10,22 @@
 	;; kludge will screw people who try to byte-compile VM
 	;; with emacs18 for emacs19.
 	(macro-flag (if (string-match "^19" emacs-version) ''macro t))
+	(find-file-hooks nil)
 	sexp function doc interactive macro)
     (setq expanded-files (mapcar (function expand-file-name) files))
     (while files
       (set-buffer (find-file-noselect (car expanded-files)))
       (goto-char (point-min))
+      (message "File %s" (car expanded-files))
       (condition-case nil
 	  (while t
 	    (setq sexp (read (current-buffer)))
 	    (if (and (consp sexp) (cdr sexp)
-		     (memq (car sexp) '(defun defmacro defsubst fset)))
+		     (memq (car sexp) '(defun defmacro defsubst)))
 		(progn
 		  (if (memq (car sexp) '(defmacro defsubst))
 		      (setq macro macro-flag)
 		    (setq macro nil))
-		  (if (eq (car sexp) 'fset)
-		      (setq sexp (cdr sexp)
-			    function (eval (car sexp))
-			    interactive nil
-			    doc nil)
 		    (setq sexp (cdr sexp)
 			  function (car sexp)
 			  sexp (cdr (cdr sexp)))
@@ -39,7 +36,7 @@
 		    (if (and (consp (car sexp))
 			     (eq (car (car sexp)) 'interactive))
 			(setq interactive t)
-		      (setq interactive nil)))
+		    (setq interactive nil))
 		  (if (string-match "\\.el$" (car files))
 		      (setq file (substring (car files) 0 -3))
 		    (setq file (car files)))
@@ -49,4 +46,6 @@
       (kill-buffer (current-buffer))
       (setq files (cdr files)
 	    expanded-files (cdr expanded-files))))
+  (message "\n")
+
   (kill-emacs))

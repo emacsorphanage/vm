@@ -1745,7 +1745,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	    spec-list (cdr spec-list)))
     host-alist ))
 
-(defun vm-read-imap-folder-name (prompt spec-list selectable-only)
+(defun vm-read-imap-folder-name (prompt spec-list &optional selectable-only newone)
   "Read an IMAP server and mailbox, return an IMAP mailbox spec."
   (let (host c-list spec process mailbox list
 	(vm-imap-ok-to-ask t)
@@ -1759,9 +1759,9 @@ on all the relevant IMAP servers and then immediately expunges."
 	  process (vm-imap-make-session spec)
 	  c-list (and process (vm-imap-mailbox-list process selectable-only)))
     (vm-imap-end-session process)
-    ;; evade the XEmacs dialog box.
-    (let ((use-dialog-box nil))
-      (setq mailbox (vm-read-string prompt c-list)))
+    (setq mailbox
+          (completing-read prompt (mapcar (lambda (c) (list c)) c-list)
+                           nil (not newone)))
     (setq list (vm-imap-parse-spec-to-list spec))
     (setcar (nthcdr 3 list) mailbox)
     (mapconcat 'identity list ":")))
@@ -1884,7 +1884,7 @@ documentation for `vm-spool-files'."
      (let ((this-command this-command)
 	   (last-command last-command))
        (list (vm-read-imap-folder-name "Create IMAP folder: "
-				       vm-imap-server-list nil)))))
+				       vm-imap-server-list nil t)))))
   (let ((vm-imap-ok-to-ask t)
 	process mailbox)
     (save-excursion
@@ -1894,7 +1894,7 @@ documentation for `vm-spool-files'."
 		 (vm-safe-imapdrop-string folder)))
       (set-buffer (process-buffer process))
       (setq mailbox (nth 3 (vm-imap-parse-spec-to-list folder)))
-      (vm-imap-create-mailbox process mailbox)
+      (vm-imap-create-mailbox process mailbox t)
       (message "Folder %s created" (vm-safe-imapdrop-string folder)))))
 
 (defun vm-delete-imap-folder (folder)

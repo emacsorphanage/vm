@@ -1051,7 +1051,8 @@ mandatory."
 		 (vm-get-header-contents m "Newsgroups:" ", ")
 		 ;; desperation....
 		 (user-login-name))
-	  cc (vm-get-header-contents m "Cc:" ", ")
+          cc (or (vm-get-header-contents m "Cc:" ", ")
+                 (vm-get-header-contents m "Bcc:" ", "))
 	  all to
 	  all (if all (concat all ", " cc) cc)
 	  addresses (rfc822-addresses all))
@@ -1069,7 +1070,8 @@ mandatory."
 	(aset full-name i ?\ ))
       (setq names (cons full-name names))
       (setq list (cdr list)))
-    (setq names (nreverse names)) ; added by jwz for fixed vm-parse-addresses
+    (setq names (nreverse names))
+    ;; added by jwz for fixed vm-parse-addresses
     (vm-set-to-of m (mapconcat 'identity addresses ", "))
     (vm-set-to-names-of m (mapconcat 'identity names ", "))))
 
@@ -1117,7 +1119,8 @@ mandatory."
   (or (vm-subject-of m)
       (vm-set-subject-of
        m
-       (let ((subject (or (vm-get-header-contents m "Subject:" " ") ""))
+       (let ((subject (vm-decode-mime-encoded-words-in-string
+                       (or (vm-get-header-contents m "Subject:") "")))
 	     (i nil))
 	 (while (string-match "\n[ \t]*" subject)
 	   (setq subject (replace-match " " nil t subject)))

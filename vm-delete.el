@@ -395,6 +395,8 @@ ignored."
 			  vm-message-order-header-present)))
 	    (vm-clear-expunge-invalidated-undos)))
 	 buffers-altered))
+      (if vm-ml-sort-keys
+          (vm-sort-messages vm-ml-sort-keys))
       (if (not shaddap)
 	  (message "Deleted messages expunged.")))
      (t (message "No messages are flagged for deletion.")))))

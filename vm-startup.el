@@ -19,6 +19,13 @@
 
 (defvar enable-multibyte-characters)
 
+
+(defun vm-recover-folder ()
+  "Recover the autosave file for the current folder."
+  (interactive)
+  (vm-select-folder-buffer)
+  (recover-file (buffer-file-name)))
+
 ;;;###autoload
 (defun vm (&optional folder read-only access-method)
   "Read mail under Emacs.
@@ -355,7 +362,7 @@ See the documentation for vm-mode for more information."
       (if (and full-startup preserve-auto-save-file)
 	  (message 
 	   (substitute-command-keys
-	    "Auto save file is newer; consider \\[recover-file].  FOLDER IS READ ONLY.")))
+	    "Auto save file is newer; consider \\[vm-recover-folder].  FOLDER IS READ ONLY.")))
       ;; if we're not doing a full startup or if doing more would
       ;; trash the auto save file that we need to preserve,
       ;; stop here.
@@ -1263,7 +1270,7 @@ vm-visit-virtual-folder.")
     (vm-visit-virtual-folder folder-name read-only)))
 
 ;;;###autoload
-(defun vm-mail (&optional to)
+(defun vm-mail (&optional to subject)
   "Send a mail message from within VM, or from without.
 Optional argument TO is a string that should contain a comma separated
 recipient list."
@@ -1272,7 +1279,7 @@ recipient list."
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer-if-possible)
   (vm-check-for-killed-summary)
-  (vm-mail-internal nil to)
+  (vm-mail-internal nil to subject)
   (run-hooks 'vm-mail-hook)
   (run-hooks 'vm-mail-mode-hook))
 
@@ -1307,6 +1314,7 @@ recipient list."
 
 (fset 'vm-folders-summary-mode 'vm-mode)
 (put 'vm-folders-summary-mode 'mode-class 'special)
+
 
 ;;;###autoload
 (defun vm-folders-summarize (&optional display raise)

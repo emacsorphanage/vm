@@ -291,7 +291,8 @@ folder in the order in which the messages arrived."
 	doomed-start doomed-end offset
 	(order-did-change nil)
 	virtual
-	physical)
+	physical
+        auto-folder-p)
     (setq key-list (vm-parse keys "[ \t]*\\([^ \t]+\\)")
 	  ml-keys (and key-list (mapconcat (function identity) key-list "/"))
 	  key-funcs nil
@@ -308,6 +309,9 @@ folder in the order in which the messages arrived."
 	     (vm-build-threads-if-unbuilt)
 	     (vm-build-thread-lists)
 	     (setq key-funcs (cons 'vm-sort-compare-thread key-funcs)))
+	    ((equal key "auto-folder")
+             (setq auto-folder-p t)
+             (setq key-funcs (cons 'vm-sort-compare-auto-folder key-funcs)))
 	    ((equal key "author")
 	     (setq key-funcs (cons 'vm-sort-compare-author key-funcs)))
 	    ((equal key "reversed-author")
@@ -336,7 +340,14 @@ folder in the order in which the messages arrived."
 	     (setq key-funcs (cons 'vm-sort-compare-physical-order key-funcs)))
 	    ((equal key "reversed-physical-order")
 	     (setq key-funcs (cons 'vm-sort-compare-physical-order-r key-funcs)))
-	    (t (error "Unknown key: %s" key)))
+            ((equal key "header")
+             (setq vm-sort-compare-header nil)
+             (setq key-funcs (cons 'vm-sort-compare-header key-funcs)))
+	    (t
+             (let ((compare (intern (format "vm-sort-compare-%s" key))))
+               (if (functionp compare)
+                   (setq key-funcs (cons compare key-funcs))
+                 (error "Unknown key: %s" key)))))
       (setq key-list (cdr key-list)))
     ;; if this is not a thread sort and threading is enabled,
     ;; then disable threading and make sure the whole summary is
@@ -446,7 +457,10 @@ folder in the order in which the messages arrived."
 	     (or lets-get-physical vm-move-messages-physically))
 	;; clip region is most likely messed up
 	(vm-preview-current-message)
-      (vm-update-summary-and-mode-line))))
+      (vm-update-summary-and-mode-line))
+
+    (if auto-folder-p
+        (vm-sort-insert-auto-folder-names))))
 
 (defun vm-sort-compare-xxxxxx (m1 m2)
   (let ((key-funcs vm-key-functions) result)
@@ -583,5 +597,39 @@ folder in the order in which the messages arrived."
     (cond ((> n1 n2) t)
 	  ((= n1 n2) '=)
 	  (t nil))))
+
+(add-to-list 'vm-supported-sort-keys "header")
+
+(defvar vm-sort-compare-header nil
+  "the header to sort on.")
+
+(defvar vm-sort-compare-header-history nil)
+
+(defun vm-get-headers-of (m &optional headers)
+  (save-excursion
+    (save-restriction
+      (widen)
+     (let ((end (vm-text-of m)))
+       (set-buffer (vm-buffer-of m))
+       (goto-char (vm-start-of m))
+       (while (re-search-forward "^[^: \n\t]+:" end t)
+         (add-to-list 'headers (match-string 0)))
+       headers))))
+
+(defun vm-sort-compare-header (m1 m2)
+  (if (null vm-sort-compare-header)
+      (setq vm-sort-compare-header
+            (completing-read
+             (if (car vm-sort-compare-header-history)
+                 (format "Sort hy header (%s): "
+                         (car vm-sort-compare-header-history))
+               "Sort hy header: ")
+             (mapcar (lambda (h) (list h))
+                     (vm-get-headers-of m2 (vm-get-headers-of m1)))
+             nil nil nil 
+             'vm-sort-compare-header-history
+             (car vm-sort-compare-header-history)))
+    (string< (vm-get-header-contents m1 vm-sort-compare-header)
+             (vm-get-header-contents m2 vm-sort-compare-header))))
 
 (provide 'vm-sort)

@@ -15,7 +15,20 @@
 ;;; along with this program; if not, write to the Free Software
 ;;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;(provide 'vm-mime)
+;;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+;;;   This is a modified version of vm-mime.el that comes with vm-pine.el
+;;;
+;;; Author:      Robert Fenk
+;;; Keywords:    draft handling
+;;; X-URL:       http://www.robf.de/Hacking/elisp
+;;; X-RCS:       $Id: vm-mime.el,v 1.35 2004/01/19 22:34:02 fenk Exp $
+
+(eval-and-compile
+  (require 'vm-version)
+  (require 'vm-message)
+  (require 'vm-macro)
+  (require 'vm-vars)
+  (require 'vm-autoload))
 
 (defvar enable-multibyte-characters)
 (defvar default-enable-multibyte-characters)
@@ -72,7 +85,6 @@
 ;; if display of MIME part fails, error string will be here.
 (defun vm-mm-layout-display-error (e) (aref e 14))
 (defun vm-mm-layout-is-converted (e) (aref e 15))
-(defun vm-mm-layout-unconverted-layout (e) (aref e 16))
 
 (defun vm-set-mm-layout-type (e type) (aset e 0 type))
 (defun vm-set-mm-layout-qtype (e type) (aset e 1 type))
@@ -89,7 +101,6 @@
 (defun vm-set-mm-layout-cache (e c) (aset e 12 c))
 (defun vm-set-mm-layout-display-error (e c) (aset e 14 c))
 (defun vm-set-mm-layout-is-converted (e c) (asef e 15 c))
-(defun vm-set-mm-layout-unconverted-layout (e layout) (aset e 16 layout))
 
 (defun vm-mime-make-message-symbol (m)
   (let ((s (make-symbol "<<m>>")))
@@ -124,6 +135,7 @@
 	     (vm-mime-encoded-header-flag-of m))))
 
 (defun vm-mime-Q-decode-region (start end)
+  (interactive "r")
   (let ((buffer-read-only nil))
     (subst-char-in-region start end ?_ (string-to-char " ") t)
     (vm-mime-qp-decode-region start end)))
@@ -562,6 +574,7 @@
 			   (?8 .  8)  (?9 .  9)  (?A . 10)  (?B . 11)
 			   (?C . 12)  (?D . 13)  (?E . 14)  (?F . 15)))
 	char inputpos)
+
     (unwind-protect
 	(save-excursion
 	  (setq work-buffer (vm-make-work-buffer))
@@ -694,13 +707,14 @@
       (vm-error-free-call 'delete-file tempfile)))
   (message "Decoding uuencoded stuff... done"))
 
-(defun vm-decode-mime-message-headers (m)
+(defun vm-decode-mime-message-headers (&optional m)
   (let ((case-fold-search t)
 	(buffer-read-only nil)
 	charset need-conversion encoding match-start match-end start end)
     (save-excursion
-      (goto-char (vm-headers-of m))
-      (while (re-search-forward vm-mime-encoded-word-regexp (vm-text-of m) t)
+      (if m (goto-char (vm-headers-of m)))
+      (while (re-search-forward vm-mime-encoded-word-regexp
+                                (if m (vm-text-of m) (point-max)) t)
 	(setq match-start (match-beginning 0)
 	      match-end (match-end 0)
 	      charset (buffer-substring (match-beginning 1) (match-end 1))
@@ -1154,10 +1168,12 @@
 	 (substring (car param-list) match-end))))
 
 (defun vm-mime-get-parameter (layout name)
-  (vm-mime-get-xxx-parameter name (cdr (vm-mm-layout-type layout))))
+  (let ((string (vm-mime-get-xxx-parameter name (cdr (vm-mm-layout-type layout)))))
+    (if string (vm-decode-mime-encoded-words-in-string string))))
 
 (defun vm-mime-get-disposition-parameter (layout name)
-  (vm-mime-get-xxx-parameter name (cdr (vm-mm-layout-disposition layout))))
+  (let ((string (vm-mime-get-xxx-parameter name (cdr (vm-mm-layout-disposition layout)))))
+    (if string (vm-decode-mime-encoded-words-in-string string))))
 
 (defun vm-mime-set-xxx-parameter (name value param-list)
   (let ((match-end (1+ (length name)))
@@ -1450,8 +1466,14 @@
 	(setq selective-display nil)
 	(vm-mime-insert-mime-body layout)
 	(vm-mime-transfer-decode-region layout (point-min) (point-max))
+        ;; It is annoying to use cat for conversion of a mime type which
+        ;; is just plain text.  Therefore we do not call it ...
+        (setq ex 0)
+        (if (= (length ooo) 2)
+            (if (search-forward-regexp "\n\n" (point-max) t)
+                (delete-region (point-min) (match-beginning 0)))
 	(setq ex (call-process-region (point-min) (point-max) shell-file-name
-				      t t nil shell-command-switch (nth 2 ooo)))
+                                        t t nil shell-command-switch (nth 2 ooo))))
 	(if (not (eq ex 0))
 	    (progn
 	      (message "Conversion from %s to %s failed (exit code %s)"
@@ -1466,24 +1488,21 @@
 	(message "Converting %s to %s... done"
 		 (car (vm-mm-layout-type layout))
 		 (nth 1 ooo))
-	(vm-make-layout
-	 'type (append (list (nth 1 ooo)) (cdr (vm-mm-layout-type layout)))
-	 'qtype (append (list (nth 1 ooo)) (cdr (vm-mm-layout-type layout)))
-	 'encoding "binary"
-	 'id (vm-mm-layout-id layout)
-	 'description (vm-mm-layout-description layout)
-	 'disposition (vm-mm-layout-disposition layout)
-	 'qdisposition (vm-mm-layout-qdisposition layout)
-	 'header-start (vm-marker (point-min))
-	 'header-end (vm-marker (1- (point)))
-	 'body-start (vm-marker (point))
-	 'body-end (vm-marker (point-max))
-	 'cache (vm-mime-make-cache-symbol)
-	 'message-symbol (vm-mime-make-message-symbol
-			  (vm-mm-layout-message layout))
-	 'layout-is-converted t
-	 'unconverted-layout layout
-	 )))))
+	(vector (append (list (nth 1 ooo)) (cdr (vm-mm-layout-type layout)))
+		(append (list (nth 1 ooo)) (cdr (vm-mm-layout-type layout)))
+		"binary"
+		(vm-mm-layout-id layout)
+		(vm-mm-layout-description layout)
+		(vm-mm-layout-disposition layout)
+		(vm-mm-layout-qdisposition layout)
+		(vm-marker (point-min))
+		(vm-marker (1- (point)))
+		(vm-marker (point))
+		(vm-marker (point-max))
+		nil
+		(vm-mime-make-cache-symbol)
+		(vm-mime-make-message-symbol (vm-mm-layout-message layout))
+		nil t )))))
 
 (defun vm-mime-can-convert-charset (charset)
   (vm-mime-can-convert-charset-0 charset vm-mime-charset-converter-alist))
@@ -1770,6 +1789,7 @@ in the buffer.  The function is expected to make the message
 					 (list (concat "\"" type2 "\"")))
 		 (setq type (downcase (car (vm-mm-layout-type layout)))
 		       type-no-subtype (car (vm-parse type "\\([^/]+\\)")))))
+	  
 	  (cond ((and (vm-mime-should-display-button layout dont-honor-c-d)
 		      (or (condition-case nil
 			      (funcall (intern
@@ -2003,6 +2023,10 @@ in the buffer.  The function is expected to make the message
 	       (write-region start end tempfile nil 0)
 	       (delete-region start end))))
 
+      ;; quote file name for shell command only
+      (or (cdr program-list)
+          (setq tempfile (shell-quote-argument tempfile)))
+      
       ;; expand % specs
       (let ((p program-list)
 	    (vm-mf-attachment-file tempfile))
@@ -2190,7 +2214,12 @@ in the buffer.  The function is expected to make the message
 
 (defun vm-mime-display-button-multipart/parallel (layout)
   (vm-mime-insert-button
-   (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+   (concat
+    ;; display the file name or disposition 
+    (let ((file (or (vm-mime-get-disposition-parameter layout "filename")
+                    (vm-mime-get-parameter layout "name"))))
+      (if file (format " %s " file) ""))
+    (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout) )
    (function
     (lambda (layout)
       (save-excursion
@@ -3748,7 +3777,17 @@ LAYOUT is the MIME layout struct for the message/external-body object."
     (vm-set-extent-property e 'vm-mime-disposable disposable)
     (vm-set-extent-property e 'face vm-mime-button-face)
     (vm-set-extent-property e 'vm-mime-layout layout)
-    (vm-set-extent-property e 'vm-mime-function action)))
+    (vm-set-extent-property e 'vm-mime-function action)
+    ;; for vm-continue-postponed-message
+    (if vm-xemacs-p
+	(vm-set-extent-property e 'duplicable t)
+      (put-text-property (overlay-start e) 
+			 (overlay-end e) 
+			 'vm-mime-layout layout)
+      (put-text-property (overlay-start e) 
+			 (overlay-end e) 
+			 'vm-mime-object t)
+      )))
 
 (defun vm-mime-rewrite-failed-button (button error-string)
   (let* ((buffer-read-only nil)
@@ -3758,12 +3797,34 @@ LAYOUT is the MIME layout struct for the message/external-body object."
     (vm-set-extent-endpoints button start (vm-extent-end-position button))
     (delete-region (point) (vm-extent-end-position button))))
 
+ 
+;; From: Eric E. Dors
+;; Date: 1999/04/01
+;; Newsgroups: gnu.emacs.vm.info
+;; example filter-alist variable
+(defvar vm-mime-write-file-filter-alist 
+  '(("application/mac-binhex40" . "hexbin -s "))
+  "*A list of filter used when writing attachements to files!"
+  )
+ 
+;; function to parse vm-mime-write-file-filter-alist
+(defun vm-mime-find-write-filter (type)
+  (let ((e-alist vm-mime-write-file-filter-alist)
+	(matched nil))
+    (while (and e-alist (not matched))
+      (if (and (vm-mime-types-match (car (car e-alist)) type)
+	       (cdr (car e-alist)))
+	  (setq matched (cdr (car e-alist)))
+	(setq e-alist (cdr e-alist))))
+    matched))
+
 (defun vm-mime-send-body-to-file (layout &optional default-filename file)
   (if (not (vectorp layout))
       (setq layout (vm-extent-property layout 'vm-mime-layout)))
   (or default-filename
       (setq default-filename
-	    (vm-mime-get-disposition-parameter layout "filename")))
+	    (or (vm-mime-get-disposition-parameter layout "filename")
+		(vm-mime-get-parameter layout "name"))))
   (and default-filename
        (setq default-filename (file-name-nondirectory default-filename)))
   (let ((work-buffer nil)
@@ -3812,8 +3873,13 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	    ;; that jka-compr won't compress already compressed
 	    ;; data.  This is a crock, but as usual I'm getting
 	    ;; the bug reports for somebody else's bad code.
-	    (let ((jka-compr-compression-info-list nil))
-	      (write-region (point-min) (point-max) file nil nil))
+	    (let ((jka-compr-compression-info-list nil)
+		  (command (vm-mime-find-write-filter
+			    (car (vm-mm-layout-type layout)))))
+	      (if command (shell-command-on-region (point-min) (point-max)
+						   (concat command " > " file))
+		(write-region (point-min) (point-max) file nil nil)))
+	    
 	    file )
 	(and work-buffer (kill-buffer work-buffer))))))
 
@@ -4559,9 +4625,11 @@ COMPOSITION's name will be read from the minibuffer."
 	(fb (list vm-mime-forward-local-external-bodies)))
     (if (< (point) (save-excursion (mail-text) (point)))
 	(mail-text))
-    (setq start (point)
-	  tag-string (format "[ATTACHMENT %s, %s]" object
-			     (or type "MIME file")))
+    (setq start (point))
+    (if (listp object)
+	(setq tag-string (format "[ATTACHMENT %s, %s]" (nth 4 object) type)) 
+      (setq tag-string (format "[ATTACHMENT %s, %s]" object
+			     (or type "MIME file"))))
     (insert tag-string "\n")
     (setq end (1- (point)))
     (if (and (stringp object) (not mimed))
@@ -4577,6 +4645,8 @@ COMPOSITION's name will be read from the minibuffer."
 						(file-name-nondirectory object)
 						"\""))))))
       (setq disposition (list "unspecified")))
+    (if (listp object) (setq disposition (nth 3 object)))
+
     (cond (vm-fsfemacs-p
 	   (put-text-property start end 'front-sticky nil)
 	   (put-text-property start end 'rear-nonsticky t)
@@ -4591,7 +4661,9 @@ COMPOSITION's name will be read from the minibuffer."
 	   (put-text-property start end 'vm-mime-parameters params)
 	   (put-text-property start end 'vm-mime-description description)
 	   (put-text-property start end 'vm-mime-disposition disposition)
-	   (put-text-property start end 'vm-mime-encoded mimed))
+	   (put-text-property start end 'vm-mime-encoded mimed)
+	   (put-text-property start end 'duplicable t)
+	   )
 	  (vm-xemacs-p
 	   (setq e (make-extent start end))
 	   (vm-mime-set-image-stamp-for-type e (or type "text/plain"))
@@ -4602,6 +4674,7 @@ COMPOSITION's name will be read from the minibuffer."
 	     (if vm-popup-menu-on-mouse-3
 		 (define-key keymap 'button3
 		   'vm-menu-popup-attachment-menu))
+             (define-key keymap [return] 'vm-mime-change-content-disposition)
 	     (set-extent-property e 'keymap keymap)
 	     (set-extent-property e 'balloon-help 'vm-mouse-3-help))
 	   (set-extent-property e 'vm-mime-forward-local-refs fb)
@@ -4629,6 +4702,16 @@ COMPOSITION's name will be read from the minibuffer."
 	 (let* ((e (extent-at (point) nil 'vm-mime-type))
 		(fb (extent-property e 'vm-mime-forward-local-refs)))
 	   (setcar fb val) ))))
+
+
+(defun vm-mime-change-content-disposition ()
+  (interactive)
+  (vm-mime-set-attachment-disposition-at-point
+   (intern
+    (completing-read "Disposition-type: "
+                     '(("unspecified") ("inline") ("attachment"))
+                     nil
+                     t))))
 
 (defun vm-mime-attachment-disposition-at-point ()
   (cond (vm-fsfemacs-p
@@ -5001,7 +5084,8 @@ and the approriate content-type and boundary markup information is added."
 	  (enriched (and (boundp 'enriched-mode) enriched-mode))
 	  forward-local-refs already-mimed layout e e-list boundary
 	  type encoding charset params description disposition object
-	  opoint-min)
+	  opoint-min
+	  postponed-attachment)
       (mail-text)
       (setq e-list (extent-list nil (point) (point-max))
 	    e-list (vm-delete (function
@@ -5035,6 +5119,7 @@ and the approriate content-type and boundary markup information is added."
 	    (if vm-xemacs-mule-p
 		(encode-coding-region (point-min) (point-max)
 				      buffer-file-coding-system))
+	    (enriched-mode -1)
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
 			    (point-min)
 			    (point-max))
@@ -5090,9 +5175,21 @@ and the approriate content-type and boundary markup information is added."
 	  (goto-char (extent-start-position e))
 	  (narrow-to-region (point) (point))
 	  (setq object (extent-property e 'vm-mime-object))
+
 	  ;; insert the object
 	  (cond ((bufferp object)
 		 (insert-buffer-substring object))
+		((listp object)
+		 (save-restriction  
+		   (save-excursion (set-buffer (nth 0 object))
+				   (widen))
+		   (setq boundary-positions (cons (point-marker)
+						  boundary-positions))
+		   (insert-buffer-substring (nth 0 object)
+					    (nth 1 object)
+					    (nth 2 object))
+		   (setq postponed-attachment t)
+		   ))
 		((stringp object)
 		 (let ((coding-system-for-read
 			(if (vm-mime-text-type-p
@@ -5173,14 +5270,14 @@ and the approriate content-type and boundary markup information is added."
 		 (goto-char (point-max))
 		 (widen)
 		 (narrow-to-region opoint-min (point)))
-		(t
+		((not postponed-attachment)
 		 (and layout (not forward-local-refs)
 		      (vm-mime-internalize-local-external-bodies layout))
 		 (if already-mimed
 		     (setq encoding (vm-mime-transfer-encode-layout layout))
 		   (vm-mime-base64-encode-region (point-min) (point-max))
 		   (setq encoding "base64"))))
-	  (if just-one
+	  (if (or just-one postponed-attachment)
 	      nil
 	    (goto-char (point-min))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
@@ -5274,9 +5371,10 @@ and the approriate content-type and boundary markup information is added."
 		  (delete-char 1))
 	      ;; copy remainder to enclosing entity's header section
 	      (goto-char (point-max))
+	      (if (not just-one)
 	      (insert-buffer-substring (current-buffer)
 				       (vm-mm-layout-header-start layout)
-				       (vm-mm-layout-body-start layout))
+					   (vm-mm-layout-body-start layout)))
 	      (delete-region (vm-mm-layout-header-start layout)
 			     (vm-mm-layout-body-start layout))))
 	(goto-char (point-min))
@@ -5329,7 +5427,7 @@ and the approriate content-type and boundary markup information is added."
 	  (enriched (and (boundp 'enriched-mode) enriched-mode))
 	  forward-local-refs already-mimed layout o o-list boundary
 	  type encoding charset params description disposition object
-	  opoint-min delete-object)
+	  opoint-min delete-object postponed-attachment)
       (mail-text)
       (setq o-list (vm-mime-fake-attachment-overlays (point) (point-max))
 	    o-list (vm-delete (function
@@ -5459,6 +5557,18 @@ and the approriate content-type and boundary markup information is added."
 			       (vm-binary-coding-system)))
 		       (write-region (point-min) (point-max) tempfile nil 0))
 		     (setq object tempfile)))))
+          ;; insert attachment from postponed message
+          (cond ((listp object)
+                 (save-restriction  
+                   (save-excursion (set-buffer (nth 0 object))
+                                   (widen))
+                   (setq boundary-positions (cons (point-marker)
+                                                  boundary-positions))
+                   (insert-buffer-substring (nth 0 object)
+                                            (nth 1 object)
+                                            (nth 2 object))
+                   (setq postponed-attachment t)
+                   )))
 	  ;; insert the object
 	  (cond ((stringp object)
 		 ;; as of FSF Emacs 19.34, even with the hooks
@@ -5567,14 +5677,14 @@ and the approriate content-type and boundary markup information is added."
 		 (goto-char (point-max))
 		 (widen)
 		 (narrow-to-region opoint-min (point)))
-		(t
+		((not postponed-attachment)
 		 (and layout (not forward-local-refs)
 		      (vm-mime-internalize-local-external-bodies layout))
 		 (if already-mimed
 		     (setq encoding (vm-mime-transfer-encode-layout layout))
 		   (vm-mime-base64-encode-region (point-min) (point-max))
 		   (setq encoding "base64"))))
-	  (if just-one
+	  (if (or just-one postponed-attachment)
 	      nil
 	    (goto-char (point-min))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
@@ -5676,9 +5786,10 @@ and the approriate content-type and boundary markup information is added."
 		  (delete-char 1))
 	   ;; copy remainder to enclosing entity's header section
 	      (goto-char (point-max))
+	      (if (not just-one)
 	      (insert-buffer-substring (current-buffer)
 				       (vm-mm-layout-header-start layout)
-				       (vm-mm-layout-body-start layout))
+					   (vm-mm-layout-body-start layout)))
 	      (delete-region (vm-mm-layout-header-start layout)
 			     (vm-mm-layout-body-start layout))))
 	(goto-char (point-min))
@@ -5954,7 +6065,7 @@ and the approriate content-type and boundary markup information is added."
 	(if (vm-mime-types-match (car (car p)) type)
 	    (throw 'done (cdr (car p)))
 	  (setq p (cdr p))))
-      "%-35.35t [%k to %a]" )))
+      "%-25.25t [%k to %a]" )))
 
 (defun vm-mf-content-type (layout)
   (car (vm-mm-layout-type layout)))

@@ -44,6 +44,8 @@
 
 ;;(provide 'vm-menu)
 
+(require 'vm-easymenu)
+
 (defvar vm-menu-folders-menu 
   '("Manipulate Folders"
     ["Make Folders Menu" vm-menu-hm-make-folder-menu vm-folder-directory])

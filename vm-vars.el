@@ -40,6 +40,11 @@
   "The VM mail reader."
   :group 'mail)
 
+(defcustom vm-assimilate-new-messages-sorted nil
+  "*When enabled new messages will be inserted in current sort order.
+Otherwise they are appended to the folder, which is VM default."
+  :type 'boolean)
+
 (defcustom vm-init-file "~/.vm"
   "*Startup file for VM that is loaded the first time you run VM
 in an Emacs session."
@@ -155,7 +160,7 @@ SPOOLNAME can also be a POP maildrop.
 
     The second form is used to speak POP over an SSL connection.
     You must have the stunnel program installed and the variable
-    vm-stunnel-program naming it in order for IMAP over SSL to
+    `vm-stunnel-program' naming it in order for IMAP over SSL to
     work.  The SSL version of the POP server will not use the
     same port as the non-SSL version.
 
@@ -407,7 +412,7 @@ The alist format is:
  ((POPDROP NAME) ...)
 
 POPDROP is a POP maildrop specification in the same format used
-by vm-spool-files (which see).
+by `vm-spool-files' (which see).
 
 NAME is a string that should give a less cumbersome name that you
 will use to refer to this maildrop when using `vm-visit-pop-folder'."
@@ -431,7 +436,7 @@ is set to a numeric value then you will not be prompted about large
 messages.  This is to avoid prompting you while you're typing in
 another buffer.  In this case the large message will be skipped with a
 warning message.  You will be able to retrieved any skipped messages
-later by running vm-get-new-mail interactively.
+later by running `vm-get-new-mail' interactively.
 
 A nil value for `vm-imap-max-message-size' means no size limit."
   :type '(choice (const nil) integer))
@@ -493,7 +498,7 @@ be considered files except those matched by `vm-recognize-pop-maildrops'."
 (defcustom vm-imap-server-list nil
   "*List of IMAP maildrop specifications that tell VM the IMAP servers
 you have access to and how to log into them.  The IMAP maildrop
-specification in the same format used by vm-spool-files (which
+specification in the same format used by `vm-spool-files' (which
 see).  The mailbox part of the specifiation is ignored and should
 be asterisk or some other placeholder.
 
@@ -1262,7 +1267,7 @@ object."
 
 (defcustom vm-mime-confirm-delete t
   "*Non-nil value causes VM to request confirmation from the user before
-deleting a MIME object with vm-delete-mime-object."
+deleting a MIME object with `vm-delete-mime-object'."
   :type 'boolean)
 
 (defcustom vm-mime-button-face 'gui-button-face
@@ -1333,8 +1338,8 @@ Recognized specifiers are:
        object.
    ( - starts a group, terminated by %).  Useful for specifying
        the field width and precision for the concatentation of
-       group of format specifiers.  Example: \"%.35(%d, %t, %f%)\"
-       specifies a maximum display width of 35 characters for the
+       group of format specifiers.  Example: \"%.25(%d, %t, %f%)\"
+       specifies a maximum display width of 25 characters for the
        concatenation of the content description, content type and 
        suggested file name.
    ) - ends a group.
@@ -1505,7 +1510,7 @@ any relative pathnames will be relative to this directory."
 
 (defcustom vm-mime-attachment-source-directory nil
   "*Non-nil value is a default source directory for MIME attachments.
-When vm-mime-attach-file prompts you for the name of a file to
+When `vm-mime-attach-file' prompts you for the name of a file to
 attach, any relative pathnames will be relative to this directory."
   :type '(choice (const nil) directory))
 
@@ -2082,6 +2087,10 @@ included text from a message in a reply.  See the documentation for the
 variable `vm-summary-format' for information on what this string may contain.
 Nil means don't attribute included text in replies."
   :type '(choice (const nil) string))
+
+(defcustom vm-included-mime-types-list
+  '("text/plain" "text/enriched" "message/rfc822")
+  "*List of mime types that should be retained in a reply message.")
 
 (defcustom vm-included-text-headers nil
   "*List of headers that should be retained in a message included in
@@ -3549,7 +3558,7 @@ function is expected to subsume all of it."
 IMAP session process.  This hook is only run if the
 authentication method for the IMAP mailbox is ``preauth''.  Each
 hook is called with five arguments: HOST, PORT, MAILBOX, USER,
-PASSWORD.  (See the documentation for vm-spool-files to find out
+PASSWORD.  (See the documentation for `vm-spool-files' to find out
 about these arguments.)  It is the responsibility of the hook
 function to create an Emacs process whose input/output streams
 are connected to an authenticated IMAP session, and to return
@@ -3639,6 +3648,24 @@ named by `vm-movemail-program'."
   "*List of command line switches to pass to Netscape."
   :type '(repeat string))
 
+(defcustom vm-opera-program "opera"
+  "*Name of program to use to run Opera.
+`vm-mouse-send-url-to-opera' uses this."
+  :type 'string)
+
+(defcustom vm-opera-program-switches nil
+  "*List of command line switches to pass to Opera."
+  :type '(repeat string))
+
+(defcustom vm-mozilla-program "mozilla"
+  "*Name of program to use to run Mozilla.
+`vm-mouse-send-url-to-mozilla' uses this."
+  :type 'string)
+
+(defcustom vm-mozilla-program-switches nil
+  "*List of command line switches to pass to Mozilla."
+  :type '(repeat string))
+
 (defcustom vm-mosaic-program "Mosaic"
   "*Name of program to use to run Mosaic.
 `vm-mouse-send-url-to-mosaic' uses this."
@@ -3673,6 +3700,24 @@ named by `vm-movemail-program'."
 
 (defcustom vm-konqueror-client-program-switches nil
   "*List of command line switches to pass to Konqueror client."
+  :type '(repeat string))
+
+(defcustom vm-MozillaFirebird-program "MozillaFirebird"
+  "*Name of program to use to run Mozilla Firebird.
+`vm-mouse-send-url-to-MozillaFirebird' uses this."
+  :type 'string)
+
+(defcustom vm-MozillaFirebird-program-switches nil
+  "*List of command line switches to pass to Mozilla Firebird."
+  :type '(repeat string))
+
+(defcustom vm-MozillaFirebird-client-program "MozillaFirebird"
+  "*Name of program to use to issue requests to Mozilla Firebird. 
+`vm-mouse-send-url-to-MozillaFirebird' uses this."
+  :type 'string)
+
+(defcustom vm-MozillaFirebird-client-program-switches '("-remote")
+  "*List of command line switches to pass to Mozilla Firebird client."
   :type '(repeat string))
 
 (defcustom vm-wget-program "wget"
@@ -3997,7 +4042,7 @@ Its parent keymap is mail-mode-map.")
     (cond ((fboundp 'set-keymap-name)
 	   (set-keymap-name map 'vm-edit-message-map)))
     map )
-  "Keymap for the buffers created by VM's vm-edit-message command.")
+  "Keymap for the buffers created by VM's `vm-edit-message' command.")
 
 (defvar vm-mime-reader-map
   (let ((map (make-sparse-keymap)))
@@ -4441,10 +4486,10 @@ Its parent keymap is mail-mode-map.")
 the trailing part of a word that caused completion to fail, and retry
 the completion with the resulting word.")
 (defvar vm-minibuffer-completion-table nil
-  "Completion table used by vm-minibuffer-complete-word.
+  "Completion table used by `vm-minibuffer-complete-word'.
 Should be just a list of strings, not an alist or an obarray.")
 (defvar vm-completion-auto-space t
-  "Non-nil value means that vm-minibuffer-complete-word should automatically
+  "Non-nil value means that `vm-minibuffer-complete-word' should automatically
 append a space to words that complete unambiguously.")
 (defconst vm-attributes-vector-length 9)
 (defconst vm-cache-vector-length 25)
@@ -4734,7 +4779,7 @@ that has a match.")
 	   ("iso-8859-3"	iso-8859-3)
 	   ("iso-8859-4"	iso-8859-4)
 	   ("iso-8859-5"	iso-8859-5)
-	   ("iso-8859-6"	iso-8859-6)
+;	   ("iso-8859-6"	iso-8859-6)
 	   ("iso-8859-7"	iso-8859-7)
 	   ("iso-8859-8"	iso-8859-8)
 	   ("iso-8859-9"	iso-8859-9)

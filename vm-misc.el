@@ -104,9 +104,20 @@ The new version of the list, minus the deleted strings, is returned."
 	     (if (and (null (string-match "^[\t\f\n\r ]+$" s))
 		      (not (string= s "")))
 		 (setq list (cons s list)))
-	     (nreverse list)) ; jwz: fixed order
+             (mapcar 'vmrf-fix-quoted-address (reverse list)))
 	(and work-buffer (kill-buffer work-buffer)))))))
 
+(defun vmrf-fix-quoted-address (a)
+  "RF: evetually there are qp-encoded addresses not quoted by \" and thus we
+  need to add quotes or leave them undecoded."
+  (let ((da (vm-decode-mime-encoded-words-in-string a)))
+    (if (string= da a)
+        a
+      (if (or (string-match "^\\s-*\\([^\"']*,[^\"']*\\)\\b\\s-*\\(<.*\\)" da)
+              (string-match "^\\s-*\"'\\([^\"']+\\)'\"\\(.*\\)" da))
+          (concat "\"" (match-string 1 da) "\" " (match-string 2 da))
+        da))))
+          
 (defun vm-parse-structured-header (string &optional sepchar keep-quotes)
   (if (null string)
       ()
@@ -635,8 +646,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 					vm-tempfile-counter
 					proposed-filename)
 				vm-temp-file-directory))
-		     vm-tempfile-counter (1+ vm-tempfile-counter))
-	       done (not (file-exists-p filename)))))
+		     vm-tempfile-counter (1+ vm-tempfile-counter)
+                     done (not (file-exists-p filename))))))
 	  (t
 	   (let ((done nil))
 	     (while (not done)
@@ -835,7 +846,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
        (or (markerp end) (setq end (vm-marker end)))
        (goto-char start)
        (while (not done)
-	 (re-search-forward "$" end t)
+	 (re-search-forward "[ \t]*$" end t)
+         (replace-match "")
 	 (if (>= (current-column) len)
 	     ;; ignore errors
 	     (condition-case nil

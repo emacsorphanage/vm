@@ -6,7 +6,7 @@
 
 (defun vm-version ()
   "Returns the value of the variable vm-version."
-  vm-version)
+  (format "%s-rfhacked" vm-version))
 
 (defconst vm-xemacs-p nil)
 (defconst vm-xemacs-mule-p nil)

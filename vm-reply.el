@@ -22,52 +22,53 @@
 	  (dir default-directory)
 	  (message-pointer vm-message-pointer)
 	  (case-fold-search t)
-	  to cc subject mp in-reply-to references tmp tmp2 newsgroups)
+	  to cc subject in-reply-to references
+	  mp tmp tmp2 newsgroups)
       (setq mp mlist)
       (while mp 
-	(cond
-	 ((eq mlist mp)
-	  (cond ((setq to
+	(cond ((add-to-list 'to
 		       (let ((reply-to
 			      (vm-get-header-contents (car mp) "Reply-To:"
 						      ", ")))
 			 (if (vm-ignored-reply-to reply-to)
 			     nil
 			   reply-to ))))
-		((setq to (vm-get-header-contents (car mp) "From:" ", ")))
+	      ((add-to-list 'to (vm-get-header-contents (car mp) "From:"
+							", ")))
 		;; bad, but better than nothing for some
-		((setq to (vm-grok-From_-author (car mp))))
+	      ((add-to-list 'to (vm-grok-From_-author (car mp))))
 		(t (error "No From: or Reply-To: header in message")))
-	  (setq subject (vm-get-header-contents (car mp) "Subject:")
-		in-reply-to
-		(and vm-in-reply-to-format
+
+	(let ((this-subject (vm-get-header-contents (car mp) "Subject:"))
+	      (this-reply-to (and vm-in-reply-to-format
 		     (let ((vm-summary-uninteresting-senders nil))
-		       (vm-summary-sprintf vm-in-reply-to-format (car mp))))
-		in-reply-to (and (not (equal "" in-reply-to)) in-reply-to))
-	  (and subject (stringp vm-reply-subject-prefix)
-	       (let ((case-fold-search t))
-		  (not
-		   (equal
-		    (string-match (regexp-quote vm-reply-subject-prefix)
-				  subject)
-		    0)))
-	       (setq subject (concat vm-reply-subject-prefix subject))))
-	 (t (cond ((setq tmp (vm-get-header-contents (car mp) "Reply-To:"
-						     ", "))
-		   (setq to (concat to "," tmp)))
-		  ((setq tmp (vm-get-header-contents (car mp) "From:"
-						     ", "))
-		   (setq to (concat to "," tmp)))
+				    (vm-summary-sprintf vm-in-reply-to-format
+							(car mp))))))
+	  (if vm-reply-subject-prefix
+              (setq this-subject (concat vm-reply-subject-prefix
+                                         this-subject)))
+	  
+	  (setq subject (if subject
+			    (concat subject ",\n\t" this-subject)
+			  this-subject)
+		in-reply-to (if in-reply-to
+				(concat in-reply-to ",\n\t" this-reply-to)
+			      this-reply-to)))
+		
+	(cond ((setq tmp (vm-get-header-contents (car mp) "Reply-To:" ", "))
+               (if (not (vm-ignored-reply-to tmp))
+                   (add-to-list 'to tmp)))
+	      ((setq tmp (vm-get-header-contents (car mp) "From:" ", "))
+	       (add-to-list 'to tmp))
 		  ;; bad, but better than nothing for some
 		  ((setq tmp (vm-grok-From_-author (car mp)))
-		   (setq to (concat to "," tmp)))
-		  (t (error "No From: or Reply-To: header in message")))))
+	       (add-to-list 'to tmp))
+	      (t (error "No From: or Reply-To: header in message")))
+
 	(if to-all
 	    (progn
-	      (setq tmp (vm-get-header-contents (car mp) "To:"
-						", "))
-	      (setq tmp2 (vm-get-header-contents (car mp) "Cc:"
-						 ", "))
+	      (setq tmp (vm-get-header-contents (car mp) "To:" ", "))
+	      (setq tmp2 (vm-get-header-contents (car mp) "Cc:" ", "))
 	      (if tmp
 		  (if cc
 		      (setq cc (concat cc "," tmp))
@@ -82,10 +83,21 @@
 		    (cons (vm-get-header-contents (car mp) "Message-ID:" " ")
 			  references)))
 	(setq newsgroups
-	      (cons (or (and to-all (vm-get-header-contents (car mp) "Followup-To:" ","))
+	      (cons (or (and to-all
+			     (vm-get-header-contents (car mp)
+						     "Followup-To:" ","))
 			(vm-get-header-contents (car mp) "Newsgroups:" ","))
 		    newsgroups))
 	(setq mp (cdr mp)))
+
+      (if (null to) nil
+	(setq tmp (car to))
+	(setq to (cdr to))
+	(while to
+	  (setq tmp (concat tmp ", " (car to)))
+	  (setq to (cdr to)))
+	(setq to tmp))
+
       (if vm-strip-reply-headers
 	  (let ((mail-use-rfc822 t))
 	    (and to (setq to (mail-strip-quoted-names to)))
@@ -281,7 +293,7 @@ vm-included-text-prefix is prepended to every yanked line."
 	     (vm-number-of message)))
   (vm-display nil nil '(vm-yank-message) '(vm-yank-message composing-message))
   (setq message (vm-real-message-of message))
-  (let ((b (current-buffer)) (start (point)) end)
+  (let ((b (current-buffer)) (start (point)) end insert-start)
     (save-restriction
       (widen)
       (save-excursion
@@ -292,13 +304,8 @@ vm-included-text-prefix is prepended to every yanked line."
 	      (vm-insert-region-from-buffer (vm-buffer-of message)
 					    (vm-headers-of message)
 					    (vm-text-of message))
-	      ;; decode MIME encoded words so supercite and other
-	      ;; mail-citation-hook denizens won't have to eat 'em.
-	      (if vm-display-using-mime
-		  (save-restriction
-		    (narrow-to-region start (point))
-		    (vm-decode-mime-encoded-words)))
-	      (cond ((vm-mime-types-match "multipart" type)
+	      (cond ((or (vm-mime-types-match "multipart/alternative" type)
+			 (vm-mime-types-match "multipart/mixed" type))
 		     (setq parts (copy-sequence (vm-mm-layout-parts o))))
 		    (t (setq parts (list o))))
 	      (while parts
@@ -308,20 +315,35 @@ vm-included-text-prefix is prepended to every yanked line."
 				   (car (vm-mm-layout-type (car parts))))
 				  (vm-mime-display-internal-text/enriched
 				   (car parts)))
+				 ((vm-mime-types-match
+				   "message/rfc822"
+				   (car (vm-mm-layout-type (car parts))))
+				  (vm-mime-display-internal-message/rfc822
+				   (car parts)))
 ;; no text/html for now
 ;;				 ((vm-mime-types-match
 ;;				   "text/html"
 ;;				   (car (vm-mm-layout-type (car parts))))
 ;;				  (vm-mime-display-internal-text/html
 ;;				   (car parts)))
-				 ((vm-mime-display-internal-text/plain
+				 ((member (downcase (car (vm-mm-layout-type
+							  (car parts))))
+					  vm-included-mime-types-list)
+				  (vm-mime-display-internal-text/plain
 				   (car parts) t)))
 			   nil
+			 
+			 (if (not (member (downcase (car (vm-mm-layout-type
+							  (car parts))))
+					  vm-included-mime-types-list))
+			     nil
 			 ;; charset problems probably
 			 ;; just dump the raw bits
+			   (setq insert-start (point))
 			 (vm-mime-insert-mime-body (car parts))
 			 (vm-mime-transfer-decode-region (car parts)
-							 start (point)))
+							   insert-start
+							   (point))))
 		       (setq parts (cdr parts)))
 		      ((vm-mime-composite-type-p
 			(car (vm-mm-layout-type (car parts))))
@@ -347,8 +369,17 @@ vm-included-text-prefix is prepended to every yanked line."
       ;; get rid of read-only text properties on the text, as
       ;; they will only cause trouble.
       (let ((inhibit-read-only t))
-	(remove-text-properties (point-min) (point-max) '(read-only nil)
+	(remove-text-properties (point-min) (point-max)
+				'(read-only nil	invisible nil)
 				(current-buffer)))
+      
+      ;; decode MIME encoded words so supercite and other
+      ;; mail-citation-hook denizens won't have to eat 'em.
+      (if vm-display-using-mime
+          (save-restriction
+            (narrow-to-region start end)
+            (vm-decode-mime-encoded-words)))
+      
       (push-mark end)
       (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
 	    (mail-yank-hooks (run-hooks 'mail-yank-hooks))
@@ -989,7 +1020,15 @@ only marked messages will be put into the digest."
 	start header-end boundary)
     (save-restriction
       (widen)
-      (vm-mail-internal (format "digest from %s" (buffer-name)))
+      (vm-mail-internal
+       (format "digest from %s" (buffer-name))
+       nil
+       (and vm-forwarding-subject-format
+            (let ((vm-summary-uninteresting-senders nil))
+              (mapconcat (lambda (mp) 
+                           (vm-summary-sprintf
+                            vm-forwarding-subject-format mp))
+                         mlist ", "))))
       (make-local-variable 'vm-forward-list)
       (setq vm-system-state 'forwarding
 	    vm-forward-list mlist
@@ -1031,7 +1070,14 @@ only marked messages will be put into the digest."
 	    ((equal vm-digest-send-type "rfc1153")
 	     (vm-rfc1153-encapsulate-messages
 	      mlist vm-rfc1153-digest-headers
-	      vm-rfc1153-digest-discard-header-regexp)))
+	      vm-rfc1153-digest-discard-header-regexp))
+            ((equal vm-digest-send-type nil)
+             (while mlist
+               (vm-no-frills-encapsulate-message
+                (car mlist) vm-forwarded-headers
+                vm-unforwarded-header-regexp)
+               (setq mlist (cdr mlist)))))
+
       (goto-char start)
       (setq mp mlist)
       (if miming
@@ -1177,7 +1223,11 @@ found, the current buffer remains selected."
   (let ((folder-buffer nil))
     (if (memq major-mode '(vm-mode vm-virtual-mode))
 	(setq folder-buffer (current-buffer)))
-    (set-buffer (generate-new-buffer (or buffer-name "mail to ?")))
+    (set-buffer
+     (generate-new-buffer
+      (or (if buffer-name
+              (vm-decode-mime-encoded-words-in-string buffer-name))
+          "mail to ?")))
     ;; FSF Emacs: try to prevent write-region (called to handle FCC) from
     ;; asking the user to choose a safe coding system.
     (if (and vm-fsfemacs-mule-p (fboundp 'set-buffer-file-coding-system))
@@ -1216,13 +1266,16 @@ found, the current buffer remains selected."
 		(build-mail-aliases)))))
     (if (stringp vm-mail-header-from)
 	(insert "From: " vm-mail-header-from "\n"))
+    (setq to (if to (vm-decode-mime-encoded-words-in-string to))
+	  subject (if subject (vm-decode-mime-encoded-words-in-string subject))
+	  cc (if cc (vm-decode-mime-encoded-words-in-string cc)))
     (insert "To: " (or to "") "\n")
     (and cc (insert "Cc: " cc "\n"))
     (insert "Subject: " (or subject "") "\n")
     (and newsgroups (insert "Newsgroups: " newsgroups "\n"))
     (and in-reply-to (insert "In-Reply-To: " in-reply-to "\n"))
     (and references (insert "References: " references "\n"))
-    (insert "X-Mailer: VM " vm-version " under "
+    (insert "X-Mailer: VM " (vm-version) " under "
 	    (if vm-fsfemacs-p "Emacs " "")
 	    emacs-version "\n")
     ;; REPLYTO environmental variable support

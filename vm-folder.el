@@ -2346,7 +2346,10 @@ vm-folder-type is initialized here."
 	   (set-buffer-modified-p old-buffer-modified-p))))))
 
 (defun vm-make-index-file-name ()
-  (concat buffer-file-name vm-index-file-suffix))
+  (concat (file-name-directory buffer-file-name)
+          "."
+          (file-name-nondirectory buffer-file-name)
+          vm-index-file-suffix))
 
 (defun vm-read-index-file-maybe ()
   (catch 'done
@@ -3857,7 +3860,8 @@ files."
        (vm-build-message-list)
        (if (or (null tail-cons) (cdr tail-cons))
 	   (progn
-	     (setq vm-ml-sort-keys nil)
+             (if (not vm-assimilate-new-messages-sorted)
+                 (setq vm-ml-sort-keys nil))
 	     (if dont-read-attributes
 		 (vm-set-default-attributes (cdr tail-cons))
 	       (vm-read-attributes (cdr tail-cons)))
@@ -3936,7 +3940,8 @@ files."
 		  (vm-build-virtual-message-list new-messages)
 		  (if (or (null tail-cons) (cdr tail-cons))
 		      (progn
-			(setq vm-ml-sort-keys nil)
+                        (if (not vm-assimilate-new-messages-sorted)
+                            (setq vm-ml-sort-keys nil))
 			(if (vectorp vm-thread-obarray)
 			    (vm-build-threads (cdr tail-cons)))
 			(vm-set-summary-redo-start-point
@@ -3953,6 +3958,8 @@ files."
 			      (vm-update-summary-and-mode-line)
 			      (vm-sort-messages "thread")))))))
 	    (setq b-list (cdr b-list)))))
+    (if (and new-messages vm-ml-sort-keys)
+        (vm-sort-messages vm-ml-sort-keys))
     new-messages ))
 
 ;; return a list of all marked messages or the messages indicated by a

@@ -178,7 +178,7 @@ s-expression like this one in your .vm file:
 VM uses this button to offer help if you're in trouble.
 Under normal circumstances, this button runs `vm-help'.
 If the current folder looks out-of-date relative to its auto-save
-file then this button will run `recover-file'
+file then this button will run `vm-recover-folder'.
 If there is mail waiting in one of the spool files associated
 with the current folder, and the `getmail' button is not on the
 toolbar, this button will run `vm-get-new-mail'.
@@ -296,7 +296,7 @@ s-expression like this one in your .vm file:
       (setq vm-toolbar-delete/undelete-icon vm-toolbar-undelete-icon)
     (setq vm-toolbar-delete/undelete-icon vm-toolbar-delete-icon))
   (cond ((vm-toolbar-can-recover-p)
-	 (setq vm-toolbar-helper-command 'recover-file
+	 (setq vm-toolbar-helper-command 'vm-recover-folder
 	       vm-toolbar-helper-icon vm-toolbar-recover-icon))
 	((and (vm-toolbar-mail-waiting-p)
 	      (not (memq 'getmail vm-use-toolbar)))

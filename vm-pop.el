@@ -759,7 +759,7 @@ relevant POP servers to remove the messages."
 			 nil vm-visible-headers
 			 vm-invisible-header-regexp)))
 		  (set-window-point (selected-window) (point))))
-	    (if (y-or-n-p (format "Message %d, size = %d, retrieve? " n size))
+	    (if (y-or-n-p (format "Retrieve message %d (size = %d)? " n size))
 		'retrieve
 	      (if (y-or-n-p (format "Delete message %d from popdrop? " n size))
 		  'delete
@@ -865,12 +865,20 @@ popdrop
 (defun vm-pop-cleanup-region (start end)
   (setq end (vm-marker end))
   (save-excursion
-    (goto-char start)
     ;; CRLF -> LF
-    (while (and (< (point) end) (search-forward "\r\n"  end t))
-      (replace-match "\n" t t))
+    (if vm-xemacs-mule-p
+        (progn
+          ;; we need this otherwise the end marker gets corrupt and
+          ;; unfortunately decode-coding-region does not return the
+          ;; length to the decoded region 
+          (decode-coding-region start (1- end) 'undecided-dos)
+          (goto-char (- end 2))
+          (delete-char 1))
     (goto-char start)
+      (while (and (< (point) end) (search-forward "\r\n"  end t))
+        (replace-match "\n" t t)))
     ;; chop leading dots
+    (goto-char start)
     (while (and (< (point) end) (re-search-forward "^\\."  end t))
       (replace-match "" t t)
       (forward-char)))
