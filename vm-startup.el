@@ -1764,7 +1764,7 @@ summary buffer to select a folder."
 	(setq vm-buffers-needing-display-update (make-vector 29 0))
 	(setq vm-buffers-needing-undo-boundaries (make-vector 29 0))
 	(add-hook 'post-command-hook 'vm-add-undo-boundaries)
-	(if (if (fboundp 'find-face)
+	(if (if vm-xemacs-p
 		(find-face 'vm-monochrome-image)
 	      (facep 'vm-monochrome-image))
 	    nil
