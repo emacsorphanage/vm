@@ -6,7 +6,7 @@
 ;; Status:      Tested with XEmacs 21.1.10 & GNU Emacs 20.7 & VM 6.95
 ;; Keywords:    vm draft handling
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; X-RCS:       $Id: vm-pine.el,v 1.50 2004/04/29 21:12:38 fenk Exp $
+;; X-RCS:       $Id: vm-pine.el,v 1.51 2004/05/14 09:32:57 fenk Exp $
 
 ;;
 ;; This code is free software; you can redistribute it and/or modify
@@ -232,7 +232,7 @@ when continuing a postponed message."
 This is only for internal use of vm-pine.el!!!")
 
 ;;-----------------------------------------------------------------------------
-(define-key vm-mode-map [C]      'vm-continue-postponed-message)
+(define-key vm-mode-map "C"      'vm-continue-postponed-message)
 
 ;;-----------------------------------------------------------------------------
 (defun vm-get-persistent-message-ids-for (mlist)
@@ -542,7 +542,7 @@ creation)."
                                    (car type) nil desc t)))))))
 
 ;;-----------------------------------------------------------------------------
-(define-key vm-mail-mode-map [(control c) (control p)] 'vm-postpone-message)
+(define-key vm-mail-mode-map "\C-c\C-p" 'vm-postpone-message)
 
 ;;-----------------------------------------------------------------------------
 ;;;###autoload

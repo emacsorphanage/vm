@@ -21,7 +21,7 @@
 ;;; Author:      Robert Fenk
 ;;; Keywords:    draft handling
 ;;; X-URL:       http://www.robf.de/Hacking/elisp
-;;; X-RCS:       $Id: vm-mime.el,v 1.35 2004/01/19 22:34:02 fenk Exp $
+;;; X-RCS:       $Id: vm-mime.el,v 1.36 2004/05/14 09:32:50 fenk Exp $
 
 (eval-and-compile
   (require 'vm-version)
@@ -3583,7 +3583,6 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	 (extent-at (point) nil 'vm-mime-layout))))
 
 (defun vm-mime-run-display-function-at-point (&optional function dispose)
-  "Display the MIME object at point according to its type."
   (interactive)
   ;; save excursion to keep point from moving.  its motion would
   ;; drag window point along, to a place arbitrarily far from
@@ -3600,7 +3599,6 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		      e))))))
 
 (defun vm-mime-reader-map-save-file ()
-  "Write the MIME object at point to a file."
   (interactive)
   ;; make sure point doesn't move, we need it to stay on the tag
   ;; if the user wants to delete after saving.
@@ -3617,7 +3615,6 @@ LAYOUT is the MIME layout struct for the message/external-body object."
     file ))
 
 (defun vm-mime-reader-map-save-message ()
-  "Save the MIME object at point to a folder."
   (interactive)
   ;; make sure point doesn't move, we need it to stay on the tag
   ;; if the user wants to delete after saving.
@@ -3633,29 +3630,24 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	    (error nil))))))
 
 (defun vm-mime-reader-map-pipe-to-command ()
-  "Pipe the MIME object at point to a shell command."
   (interactive)
   (vm-mime-run-display-function-at-point
    'vm-mime-pipe-body-to-queried-command))
 
 (defun vm-mime-reader-map-pipe-to-printer ()
-  "Print the MIME object at point."
   (interactive)
   (vm-mime-run-display-function-at-point 'vm-mime-send-body-to-printer))
 
 (defun vm-mime-reader-map-display-using-external-viewer ()
-  "Display the MIME object at point with an external viewer."
   (interactive)
   (vm-mime-run-display-function-at-point
    'vm-mime-display-body-using-external-viewer))
 
 (defun vm-mime-reader-map-display-using-default ()
-  "Display the MIME object at point using the `default' face."
   (interactive)
   (vm-mime-run-display-function-at-point 'vm-mime-display-body-as-text))
 
 (defun vm-mime-reader-map-display-object-as-type ()
-  "Display the MIME object at point as some other type."
   (interactive)
   (vm-mime-run-display-function-at-point 'vm-mime-display-object-as-type))
 
@@ -4562,7 +4554,7 @@ minibuffer if the command is run interactively."
 			    (list 'kill-buffer buf)))))))
 
 (defun vm-mime-attach-object-from-message (composition)
-  "Attach the MIME object at point to a composition buffer.
+  "Attach a object from the current message to a VM composition buffer.
 
 The object is not inserted into the buffer and MIME encoded until
 you execute `vm-mail-send' or `vm-mail-send-and-exit'.  A visible tag
@@ -4899,8 +4891,7 @@ COMPOSITION's name will be read from the minibuffer."
 ;;	      (t description))))))
 
 (defun vm-delete-mime-object (&optional saved-file)
-  "Delete the MIME object at point.
-The MIME object referred to by the MIME
+  "Deletes the contents of MIME object referred to by the MIME
 button at point.  The MIME object is replaced by a text/plain
 object that briefly describes what was deleted."
   (interactive)

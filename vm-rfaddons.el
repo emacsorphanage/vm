@@ -6,7 +6,7 @@
 ;; Status:      Tested with XEmacs 21.1.12 & VM 7.16
 ;; Keywords:    VM helpers
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; X-RCS:       $Id: vm-rfaddons.el,v 1.57 2004/04/29 21:11:12 fenk Exp $
+;; X-RCS:       $Id: vm-rfaddons.el,v 1.58 2004/05/14 09:32:58 fenk Exp $
 
 ;;
 ;; This code is free software; you can redistribute it and/or modify
@@ -1266,13 +1266,14 @@ See the advice in `vm-rfaddons-infect-vm'."
             (delete-directory (file-name-directory file))))))
 
 (defun vm-mime-action-on-all-attachments (count action
-                                                &optional include exclude)
+                                                &optional include exclude
+                                                mlist)
   (or count (setq count 1))
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer)
   (vm-error-if-folder-empty)
 
-  (let* ((mlist (vm-select-marked-or-prefixed-messages count)))
+  (let* ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (save-excursion
       (while mlist
         (let (parts layout file type o)
@@ -1300,7 +1301,7 @@ See the advice in `vm-rfaddons-infect-vm'."
               
               (if (or (vm-mime-types-match "message/external-body" type)
                       (not (vm-mime-is-type-valid type include exclude)))
-                  (message "Ignoring %s parts!" type)
+                  (message "Ignoring action on %s parts!" type)
                 (setq file (or (vm-mime-get-disposition-parameter
                                 layout "filename") 
                                (vm-mime-get-parameter layout "name")))
@@ -1852,10 +1853,22 @@ Argument MSG is a message pointer."
   :group 'vm-rfaddons
   :type '(choice (string) (const :tag "No Label" nil)))
 
-(defcustom vm-summary-attachment-regexp "^Content-Disposition: attachment"
-  "Regexp used to detect attachments in an message."
+;;;###autoload
+(defcustom vm-mime-summary-attachment-label-types
+  (append
+   '("application" "x-unknown" "application/x-gzip")
+   (mapcar (lambda (a) (car a))
+           vm-mime-external-content-types-alist))
+  "*List of MIME types which should be listed as attachment."
   :group 'vm-rfaddons
-  :type 'regexp)
+  :type '(repeat (string :tag "MIME type" nil)))
+
+;;;###autoload
+(defcustom vm-mime-summary-attachment-label-types-exceptions
+  nil
+  "*List of MIME types which should not be listed as attachment."
+  :group 'vm-rfaddons
+  :type '(repeat (string :tag "MIME type" nil)))
 
 ;;;###autoload
 (defun vm-summary-function-A (msg)
@@ -1868,22 +1881,26 @@ As an sideeffect a label can be added to new messages.  Setting
 `vm-summary-attachment-label' to a string (the label) enables this.
 If you just want the label, then set `vm-summary-attachment-indicator' to nil
 and add an \"%0UA\" to your `vm-summary-format'." 
-  (save-excursion
+  (let ((attachments 0))
     (setq msg (vm-real-message-of msg))
-    (set-buffer (vm-buffer-of msg))
-    (goto-char (vm-text-of msg))
-    (let ((case-fold-search t))
-      (if (not (re-search-forward vm-summary-attachment-regexp
-                                  (vm-end-of msg)  t))
-          ""
-        (if (and (vm-new-flag msg)
-                 vm-summary-attachment-label
-                 (or (not (vm-labels-of msg))
-                     (not (member vm-summary-attachment-label
-                                  (vm-labels-of msg)))))
-            (vm-set-labels msg (append (list vm-summary-attachment-label)
-                                       (vm-labels-of msg))))
-        (or vm-summary-attachment-indicator "")))))
+    (vm-mime-action-on-all-attachments
+     nil
+     (lambda (layout type file)
+       (setq attachments (1+ attachments)))
+     vm-mime-summary-attachment-label-types
+     vm-mime-summary-attachment-label-types-exceptions
+     (list msg))
+                                       
+    (if (= attachments 0 )
+        ""
+      (if (and (vm-new-flag msg)
+               vm-summary-attachment-label
+               (or (not (vm-labels-of msg))
+                   (not (member vm-summary-attachment-label
+                                (vm-labels-of msg)))))
+          (vm-set-labels msg (append (list vm-summary-attachment-label)
+                                     (vm-labels-of msg))))
+      (or vm-summary-attachment-indicator ""))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;###autoload

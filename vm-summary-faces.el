@@ -6,7 +6,7 @@
 ;; Status:      Tested with XEmacs 21.1.10 / GNU Emacs 20.7 & VM 6.96
 ;; Keywords:    VM 
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; X-RCS:       $Id: vm-summary-faces.el,v 1.19 2004/04/29 21:11:50 fenk Exp $
+;; X-RCS:       $Id: vm-summary-faces.el,v 1.20 2004/05/14 09:32:51 fenk Exp $
 
 ;;
 ;; This code is free software; you can redistribute it and/or modify

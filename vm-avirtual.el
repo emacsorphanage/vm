@@ -6,7 +6,7 @@
 ;; Status:      Tested with XEmacs 21.1.10 & GNU Emacs 20.7 & VM 7.03
 ;; Keywords:    VM, virtual folders 
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; X-RCS:       $Id: vm-avirtual.el,v 1.24 2004/02/20 10:20:18 fenk Exp $
+;; X-RCS:       $Id: vm-avirtual.el,v 1.25 2004/05/14 09:32:50 fenk Exp $
 
 ;;
 ;; This code is free software; you can redistribute it and/or modify
