@@ -1305,7 +1305,9 @@ See the advice in `vm-rfaddons-infect-vm'."
             (setq type (car (vm-mm-layout-type o)))
             
             (cond ((or (vm-mime-types-match "multipart/alternative" type)
-                       (vm-mime-types-match "multipart/mixed" type))
+                       (vm-mime-types-match "multipart/mixed" type)
+                       (vm-mime-types-match "multipart/report" type)
+                       (vm-mime-types-match "message/rfc822" type)o)
                    (setq parts (copy-sequence (vm-mm-layout-parts o))))
                   (t (setq parts (list o))))
             
