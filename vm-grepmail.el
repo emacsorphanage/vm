@@ -3,7 +3,7 @@
 ;; Copyright (C) 2001 Robert Fenk
 ;;
 ;; Author:      Robert Fenk
-;; Status:      Tested with XEmacs 21.1.10 & GNU Emacs 20.7 & VM 6.90
+;; Status:      Tested with XEmacs 21.4.15 & VM 7.18
 ;; Keywords:    VM helpers
 ;; X-URL:       http://www.robf.de/Hacking/elisp
 ;; Version:     $Id$

@@ -3,7 +3,7 @@
 ;; Copyright (C) 1998-2002 Robert Fenk
 ;;
 ;; Author:      Robert Fenk
-;; Status:      Tested with XEmacs 21.1.10 & GNU Emacs 20.7 & VM 6.95
+;; Status:      Tested with XEmacs 21.4.15 & VM 7.18
 ;; Keywords:    vm draft handling
 ;; X-URL:       http://www.robf.de/Hacking/elisp
 ;; Version:     $Id$

@@ -4,7 +4,7 @@
 ;; Copyright (C) 2000-2002 Robert Fenk
 ;;
 ;; Author:      Robert Fenk
-;; Status:      Tested with XEmacs 21.1.10 & GNU Emacs 20.7 & VM 7.07
+;; Status:      Tested with XEmacs 21.4.15 & VM 7.18
 ;; Keywords:    sending mail, default mail, multiple recipients, serial mails 
 ;; X-URL:       http://www.robf.de/Hacking/elisp
 ;; Version:     $Id$

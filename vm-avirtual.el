@@ -3,7 +3,7 @@
 ;; Copyright (C) 2000-2002 Robert Fenk
 ;;
 ;; Author:      Robert Fenk
-;; Status:      Tested with XEmacs 21.1.10 & GNU Emacs 20.7 & VM 7.03
+;; Status:      Tested with XEmacs 21.4.15 & VM 7.18
 ;; Keywords:    VM, virtual folders 
 ;; X-URL:       http://www.robf.de/Hacking/elisp
 ;; Version:     $Id$
