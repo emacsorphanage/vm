@@ -323,6 +323,20 @@ or do the binding and advising on your own."
   (message "VM-RFADDONS: VM is now infected. Please report bugs to Robert Widhop-Fenk!")
   (sit-for (or sit-for 2)))
 
+(defun rf-vm-su-labels (m)
+  "This version does some sanity checking."
+  (let ((labels (vm-label-string-of m)))
+    (if (and labels (stringp labels))
+        labels
+      (setq labels (vm-labels-of m))
+      (if (and labels (listp labels))
+          (vm-set-label-string-of
+           m
+           (setq labels (mapconcat 'identity labels ",")))
+        (vm-set-label-string-of m "")
+        (setq labels "")))
+    labels))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun vm-reply-include-presentation (count)
   "Include presentation insted of text.
@@ -1307,7 +1321,8 @@ See the advice in `vm-rfaddons-infect-vm'."
             (cond ((or (vm-mime-types-match "multipart/alternative" type)
                        (vm-mime-types-match "multipart/mixed" type)
                        (vm-mime-types-match "multipart/report" type)
-                       (vm-mime-types-match "message/rfc822" type)o)
+                       (vm-mime-types-match "message/rfc822" type)
+                       )
                    (setq parts (copy-sequence (vm-mm-layout-parts o))))
                   (t (setq parts (list o))))
             
