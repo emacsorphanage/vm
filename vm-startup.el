@@ -522,24 +522,26 @@ Commands:
              that match those selectors.
        M ? - partial help for mark commands
 
- W S - save the current window configuration to a name
- W D - delete a window configuration
- W W - apply a configuration
- W ? - help for the window configuration commands
+   W - prefix for window configuration commands:
+       W S - save the current window configuration to a name
+       W D - delete a window configuration
+       W W - apply a configuration
+       W ? - help for the window configuration commands
 
- V V - visit a virtual folder (must be defined in vm-virtual-folder-alist)
- V C - create a virtual folder composed of a subset of the
-       current folder's messages.
- V A - create a virtual folder containing all the messages in the current
-       folder with the same author as the current message.
- V S - create a virtual folder containing all the messages in the current
-       folder with the same subject as the current message.
- V X - apply the selectors of a named virtual folder to the
-       messages in the current folder and create a virtual folder
-       containing the selected messages.
- V M - toggle whether this virtual folder's messages mirror the
-       underlying real messages' attributes.
- V ? - help for virtual folder commands
+   V - prefix for virtual folder commands:
+       V V - visit a virtual folder (must be defined in vm-virtual-folder-alist)
+       V C - create a virtual folder composed of a subset of
+             the current folder's messages.
+       V A - create a virtual folder containing all the messages in
+             the current folder with the same author as the current message.
+       V S - create a virtual folder containing all the messages in
+             the current folder with the same subject as the current message.
+       V X - apply the selectors of a named virtual folder to the messages in
+             the current folder and create a virtual folder
+             containing the selected messages.
+       V M - toggle whether this virtual folder's messages mirror the
+             underlying real messages' attributes.
+       V ? - help for virtual folder commands
 
  C-_ - undo, special undo that retracts the most recent
              changes in message attributes and labels.  Expunges,
@@ -548,17 +550,22 @@ Commands:
 
    a - set message attributes
 
- l a - add labels to message
- l d - delete labels from message
+   l - prefix for label commands:
+       l a - add labels to message
+       l d - delete labels from message
 
-   $ - prefix for MIME commands.  Position the cursor over a MIME
-       tag and use these keystrokes to operate on a MIME object.
+   $ - prefix for MIME commands (position the cursor over a MIME tag and
+       use these key sequences to operate on the object):
 
-       $ s - save the MIME object
-       $ p - print the MIME object
-       $ | - pipe the MIME object to a shell command.
-       $ RET - display the MIME object's text using the \"default\" face.
+       RET - display the MIME object according to its type.
+       $ RET - display the MIME object's text using the `default' face.
        $ e - display the MIME object with an external viewer.
+       $ v - display the MIME object as some other type.
+       $ w - write the MIME object to a file.
+       $ s - save the MIME object to a folder.
+       $ p - print the MIME object.
+       $ | - pipe the MIME object to a shell command.
+       $ a - attach the MIME object to a composition buffer.
        $ d - delete the MIME object from the message.
 
    L - reload your VM init file, ~/.vm
