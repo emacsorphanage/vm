@@ -136,11 +136,11 @@ ball:
 	touch $(ELISPDIR)/index.rml
 
 update:
+	if test -e '{arch}'; then echo ERROR: No updates in ARCH dirs; exit -1; fi;
 	wget -N http://www.robf.de/Hacking/elisp/vmrf.tgz
 	if test vmrf.tgz -nt vmrf-newer.tgz; then cp vmrf.tgz vmrf-newer.tgz; tar xvfz vmrf.tgz '*.el'; fi;
 	rm -f vm-autoload.el*
 	make -f Makefile.rf
-
 
 # As long as I am maintaining tla and CVS at the same time 
 update-cvs: $(HOME)/prog/xemacs/vm-mime.el \
