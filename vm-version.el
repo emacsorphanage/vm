@@ -1,12 +1,25 @@
-;;(provide 'vm)
-;;(provide 'vm-version)
-
 (defconst vm-version "7.18"
   "Version number of VM.")
 
 (defun vm-version ()
   "Returns the value of the variable vm-version."
-  (format "%s-rfhacked" vm-version))
+  (interactive)
+  (save-excursion
+    (when (not (get-buffer " *vm-version*"))
+      (set-buffer (get-buffer-create " *vm-version*"))
+      (let ((f (locate-library "vm")))
+        (setq f (concat (file-name-directory f) "/" ",id"))
+        (erase-buffer)
+        (if (file-exists-p f)
+            (progn
+              (insert-file-contents f)
+              (search-forward "Version: $Id: = ")
+              (replace-match "")
+              (while (search-forward "\n" (point-max) t)
+                (replace-match "")))
+        (insert (format "vm--robf--%s--patch-unknown" vm-version))
+        (message "Cannot find ,id file for VM version!")))))
+    (buffer-substring nil nil (get-buffer " *vm-version*")))
 
 (defconst vm-xemacs-p nil)
 (defconst vm-xemacs-mule-p nil)
