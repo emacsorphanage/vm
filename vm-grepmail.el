@@ -1,9 +1,9 @@
 ;;; vm-grepmail.el --- VM interface for grepmail
 ;; 
-;; Copyright (C) 2001 Robert Fenk
+;; Copyright (C) 2001-2005 Robert Widhopf-Fenk
 ;;
-;; Author:      Robert Fenk
-;; Status:      Tested with XEmacs 21.4.15 & VM 7.18
+;; Author:      Robert Widhopf-Fenk
+;; Status:      Tested with XEmacs 21.4.15 & VM 7.19
 ;; Keywords:    VM helpers
 ;; X-URL:       http://www.robf.de/Hacking/elisp
 ;; Version:     $Id$
@@ -25,16 +25,19 @@
 
 ;;; Commentary:
 ;;
-;; Add the following line to your .vm 
+;; Add the following line to your .vm
 ;;      (require 'vm-grepmail)
 ;;
+
 ;;; Bugs:
 ;;
-;; Somehow/sometimes the parsing stuff might create a corrupt folder but
+;; Somehow/sometimes the parsing stuff might create a corrupted folder but
 ;; sofar I have not been able to reproduce this problem!
+;;
 ;; I would be thankful if you could provide me with an testing example.
 ;;
 
+;;; Code:
 (eval-and-compile
   (require 'cl)
   (require 'vm-version)
@@ -46,7 +49,7 @@
   (require 'vm-summary)
   (require 'vm-folder)
   (require 'vm-window)
-  (require 'vm-vars)) 
+  (require 'vm-vars))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defgroup vm nil
@@ -88,10 +91,10 @@
 (defun vm-grepmail (arguments folders)
   "A not so excellent interface to grepmail.
 Grepmail is a fast perl-script for finding mails which got lost in the
-folder jungle.
+folder jungle.  End your input or folders and directories with an empty sting
+or the default folder.
 
-SWITCHES should be a list of switches for grepmail.
-EXPRESSION is searched for by grepmail.
+ARGUMENTS the command line aruments to grepmail.
 FOLDERS should be a list of files/directories to search in."
   (interactive (list
                 (split-string
@@ -101,8 +104,9 @@ FOLDERS should be a list of files/directories to search in."
                 (let ((default (or vm-folder-directory
                                    "~/Mail"))
                       fd folders)
-                  (while (not (string= fd (expand-file-name default)))
-                    (setq fd (read-file-name
+                  (while (or (not (string= fd (expand-file-name default)))
+                             (string= fd ""))
+                    (setq fd (vm-read-file-name
                               (format "Search folder/directory %s%s: "
                                       (if (not folders)
                                           "[end list with RET]" "")
@@ -122,8 +126,8 @@ FOLDERS should be a list of files/directories to search in."
                   folders)))
 
   (setq vm-grepmail-arguments arguments)
-;  (setq vm-grepmail-folders-history
-;        (append folders vm-grepmail-folders-history))
+  (setq vm-grepmail-folders-history
+        (append folders vm-grepmail-folders-history))
   
   (let ((folder-buffer (format "* VM folder: grepmail %s %s *"
                                arguments folders))
@@ -182,8 +186,9 @@ FOLDERS should be a list of files/directories to search in."
       process)))
 
 (defun vm-grepmail-process-filter (process output)
-  (condition-case err
-      (progn 
+  "The PROCESS insert OUTPUT into an folder biuffer."
+  (condition-case nil ;err
+      (progn
         (set-buffer (process-buffer process))
         (goto-char (point-max))
         (insert output)
@@ -197,18 +202,19 @@ FOLDERS should be a list of files/directories to search in."
             (delete-region (point-min) end)))
         (sit-for 0))
     (error nil
-           ;; TODO: there are some problems here but we ignore them 
-;           (message "%S" err) 
+           ;; TODO: there are some problems here but we ignore them
+;           (message "%S" err)
 ;           (backtrace)
            ))
   )
 
 (defun vm-grepmail-process-done (process state)
+  "Called when the grepmail PROCESS is finished returning STATE."
   (message "grepmail cleanup.")
   (setq state (process-status process))
   (if (not (or (eq state 'exit) (eq state 'finished)
                (not (= (process-exit-status process) 0))))
-      (error "grepmail terminated abnormally with %S %d"
+      (error "Grepmail terminated abnormally with %S %d"
              state (process-exit-status process)))
 
   ;; grab the last message
@@ -230,6 +236,10 @@ FOLDERS should be a list of files/directories to search in."
   (message "grepmail is finished."))
 
 (defun vm-grepmail-grab-message (message-buffer start end)
+  "Assimilates a message after it is complete.
+MESSAGE-BUFFER is the buffer of the message.
+START the start position in the process output buffer.
+END the end position in the process output buffer."
   (save-excursion
     (set-buffer vm-grepmail-folder-buffer)
     (let ((buffer-read-only nil))
@@ -246,3 +256,5 @@ FOLDERS should be a list of files/directories to search in."
   (sit-for 0))
 
 (provide 'vm-grepmail)
+
+;;; vm-grepmail.el ends here
