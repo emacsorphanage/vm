@@ -1,0 +1,39 @@
+2004-02-20  Robert Widhop-Fenk http://www.robf.de
+
+	* vm-vars.el (vm-completion-auto-space): Applied some patches from
+	Kevin Rogers.
+
+2004-01-22  Robert Widhopf-Fenk  <bbdb@robf.de>
+
+	* vm-sort.el (vm-sort-messages): Allow arbitrary sort functions,
+	by simply adding then to `vm-supported-sort-keys' as a string STR
+	and defining the function `vm-sort-compare-STR', whihc will be
+	called with tow args, i.e the message pointers and should return
+	nil or (not nil).
+
+2003-07-31  Robert Widhop-Fenk http://www.robf.de
+
+	* vm-byteopts.el (load-path): 
+	* Makefile.rf (OTHERLISPDIRS): Allow other user provided
+	load-paths and also add the curent dir to the load-path.
+
+2002-02-13  Robert Widhop-Fenk http://www.robf.de
+
+	* vm-mime.el (vm-mime-attach-object): Allow no selfinsert in
+	attachments buttons and bind return to set disposition type by
+	means of key bindings.
+
+2002-02-01  Robert Widhop-Fenk http://www.robf.de
+
+	* vm-digest.el (vm-no-frills-encapsulate-message): decode also
+	headers when janking a message.
+
+	* vm-mime.el (vm-decode-mime-message-headers): modified to get no
+	message arg and consequently perform decoding in the current buffer.
+
+2002-01-30  Robert Widhop-Fenk http://www.robf.de
+
+	* vm-folder.el (vm-assimilate-new-messages): 
+	* vm-delete.el (vm-expunge-folder): sort messages after expunging
+	if there is a search order for this folder.
+
