@@ -1,10 +1,10 @@
 ;;; vm-serial.el --- automatic creation of personalized message bodies
 ;;                   and sending of personalized serial mails
 ;; 
-;; Copyright (C) 2000-2002 Robert Fenk
+;; Copyright (C) 2000-2005 Robert Widhopf-Fenk
 ;;
-;; Author:      Robert Fenk
-;; Status:      Tested with XEmacs 21.4.15 & VM 7.18
+;; Author:      Robert Widhopf-Fenk
+;; Status:      Tested with XEmacs 21.4.15 & VM 7.19
 ;; Keywords:    sending mail, default mail, multiple recipients, serial mails 
 ;; X-URL:       http://www.robf.de/Hacking/elisp
 ;; Version:     $Id$
@@ -38,6 +38,7 @@
 ;; You may want to use the following into your .vm file after adding other
 ;; vm-mail-mode-hooks ...  
 ;; 
+;;   (require 'vm-serial)
 ;;   (add-hook 'vm-mail-mode-hook 'vm-serial-auto-yank-mail t)
 ;;   (define-key vm-mail-mode-map "\C-c\C-t" 'vm-serial-expand-tokens)
 ;; 
@@ -51,7 +52,7 @@
 ;; trustful guy you may add a prefix arg [C-u].
 ;;
 ;; In order to learn more about valid tokens you should have a look at the
-;; documentation mail.
+;; documentation mail template.
 ;;
 ;; Go to an newly mail buffer add a From and To header and type:
 ;;    C-u M-x vm-serial-yank-mail RET doc RET
@@ -85,7 +86,7 @@
 (require 'vm-mime)
 (require 'vm-pine)
 
-(let ((feature-list '(bbdb)))
+(let ((feature-list '(bbdb bbdb-sc)))
   (while feature-list
     (condition-case nil
         (require (car feature-list))
@@ -106,18 +107,18 @@
      "to header of the mail")
     
     ("sir"      (vm-serial-get-name 'last)
-     "the last name of recipient")
+     "the last name of the recipient")
     ("you"      (vm-serial-get-name 'first)
-     "the first name of recipient")
+     "the first name of the recipient")
     ("mr"       (vm-serial-get-name)
-     "the full name of recipient")
+     "the full name of the recipient")
 
     ("bbdbsir"  (vm-serial-get-bbdb-name 'last)
-     "the last name of recipient as returned by the BBDB")
+     "the last name of the recipient as returned by the BBDB")
     ("bbdbyou"  (vm-serial-get-bbdb-name 'first)
-     "the first name of recipient as returned by the BBDB")
+     "the first name of the recipient as returned by the BBDB")
     ("bbdbmr"   (vm-serial-get-bbdb-name)
-     "the full name of recipient as returned by the BBDB")
+     "the full name of the recipient as returned by the BBDB")
 
     ("me"       (user-full-name)
      "your full name")
@@ -126,7 +127,7 @@
     ("I"        (vm-serial-get-name 'last (user-full-name))
      "your last name")
     ("point"    (and (setq vm-serial-point (point)) nil)
-     "the position of point after expanding")
+     "the position of point after expanding tokens")
     ("reply"    (if (and vm-reply-list vm-serial-body-contents)
                     (insert vm-serial-body-contents))
      "set to the message body when replying")
@@ -135,7 +136,7 @@
      "set to the message body when forwarding")
     ("body"     (if vm-serial-body-contents
                     (insert vm-serial-body-contents))
-     "set to the message body before yanking a mail form")
+     "set to the message body before yanking a mail template")
     ("sig"      (cond
                  ((not vm-serial-mail-signature) 
                   nil)
@@ -147,11 +148,11 @@
                   (funcall vm-serial-mail-signature))
                  (t
                   (eval vm-serial-mail-signature)))
-     "add a signature to the message. See `vm-serial-mail-signature'")
+     "the signature obtained from `vm-serial-mail-signature'")
     ("fifosig"   (concat "-- \n"
                          (shell-command-to-string
                           (concat "cat " mail-signature-file)))
-     "add signature to the message and read it from a FIFO")
+     "a signature read from a FIFO")
     ;; english
     ("hi"       ("Hi" "Hello" "Dear")
      "a randomly selected hi-style salutation")
@@ -176,7 +177,9 @@
     ("ciao"     ("" "Ciao " "Tschüß " "Servus " "Mach's gut " "Bis denn "
                  "Bis die Tage mal ")
      "Verabschiedung")
-    ("mfg"     ("Gruß " "Mit freundlichen Grüßen ")
+    ("sg"      ("Sehr geehrte Frau/Herr")
+     "förmliche Anrede")
+    ("mfg"     ("Mit freundlichen Grüßen")
      "förmliche Verabschiedung")
     ;; french
     ("salut" ("Salut" "Bonjour")
@@ -232,6 +235,17 @@ $ciao$i
 
 $forward
 $sig")
+    ("german-serious"
+     "\\.\\(de\\|at\\|ch\\)>?$"
+     "$sg $sir,
+
+$point$reply
+
+$mfg
+$me
+
+$forward
+$sig")
     ("english-reply"
      vm-reply-list
      "$reply
@@ -254,11 +268,12 @@ $sig
      "
                             A LECTURE ON VM-SERIAL
 
-The `vm-serial-mails-alist' contains a list of mail forms and associated
-conditions and names for these forms.  When doing a `vm-serial-yank-mail'
-it will check for the first condition which matches and inserts this mail.
-The mail might contain tokens which are expanded by the function called
-`vm-serial-expand-tokens'.
+The `vm-serial-mails-alist' contains a list of templates and associated
+conditions and names for these templates.
+
+When doing a `vm-serial-yank-mail' it will check for the first condition
+which matches and inserts this template.  Tokens in the template are
+expanded by the function called `vm-serial-expand-tokens'.
 
 There are default tokens for various things.  Tokens start with the
 string specified in `vm-serial-cookie' which is \"$(eval vm-serial-cookie)\" followed by a
@@ -266,19 +281,24 @@ string matching the regexp \\([a-zA-Z][a-zA-Z0-9_-]*\\) which may be
 enclosed by {} or a lisp expressions.  The first type is a named token
 and has to be listed in the variable `vm-serial-token-alist'.  It will be
 expanded and if evaluating to a non nil object then it is inserted.  In
-order to get the just the `vm-serial-cookie' \"$(eval vm-serial-cookie)\" simply
-write it twice.  You may also embed any kind of lisp expression.
-The value of those which return a string is inserted.
+order to get the just the `vm-serial-cookie' \"$(eval vm-serial-cookie)\" simply write it twice.
 
-Do a [M-x vm-serial-expand-tokens] in order to see how things change ...
+You may also embed any kind of lisp expression.  If they return a string, it
+will be inserted.
+
+Do [M-x vm-serial-expand-tokens] in order to see how things change ...
 
 Example of a embedded lisp expression:
 
  the current date is $$(format-time-string \"%D %r\").
+
  $$(center-line) Center this line
 
+ $$$no expansion 
+  
 The following tokens are currently defined:
- Token   Documentation  (the example follows in the next line)
+
+Token   Documentation  (the example follows in the next line)
 $(mapconcat
   (function (lambda (tk)
       (concat (car tk) \"\\t\" (caddr tk) \"\n\t$\" (car tk))))
@@ -289,7 +309,7 @@ If you thing there are other tokens which should be added to this list, please
 let me know!
 
 mailto:Robert Fenk"))
-  "*alist of default mail forms.
+  "*alist of default mail templates.
 Set this by calling `vm-serial-set-mail'!
 
 Format:
@@ -357,12 +377,12 @@ return a string."
 
 (defvar vm-serial-source-buffer
   nil
-  "The source buffer of the currently expanded mail.
+  "The source buffer of the currently expanded template.
 When doing a `vm-serial-send-mail' this will point to the source
 buffer containing the original message.")
 
 (defvar vm-serial-send-mail-buffer "*vm-serial-mail*"
-  "*Name of the buffer use by `vm-serial-send-mail' for expanded mails.")
+  "*Name of the buffer use by `vm-serial-send-mail' for expanded template.")
 
 (defvar vm-serial-send-mail-jobs
   nil
@@ -463,7 +483,7 @@ Is a list of (TOKEN NEWVALUE DOC) elements"
                   (eval vm-serial-unknown-to)))
         (part (cond ((stringp part) part)
                     ((equal part 'first) "^\\(\\w+\\)[\t ._]")
-                    ((equal part 'last) "[\t ._]\\(\\w+\\)$"))))
+                    ((equal part 'last) "^\\w+[\t ._]+\\(.+\\)$"))))
     
     (if (and part (string-match part name))
         (match-string 1 name)
@@ -499,7 +519,7 @@ Is a list of (TOKEN NEWVALUE DOC) elements"
   "History for `vm-serial-yank-mail'.")
 
 (defun vm-serial-find-default-mail ()
-  "Return the first mail from with a true condition."
+  "Return the first recipient."
   (let ((to (vm-decode-mime-encoded-words-in-string
              (or (vm-mail-mode-get-header-contents "To:")
                  (vm-mail-mode-get-header-contents "CC:")
@@ -528,7 +548,7 @@ Is a list of (TOKEN NEWVALUE DOC) elements"
 
 (defun vm-serial-auto-yank-mail (&optional mail no-expand)
   "Yank the mail associated with MAIL.
-  If MAIL is nil search for a default mail, i.e. the first which evaluates its
+If MAIL is nil search for a default mail, i.e. the first which evaluates its
 condition to true.  When called with a prefix argument or if NO-EXPAND is non
 nil no tokens will be expanded after yanking.
 
@@ -542,21 +562,24 @@ is no serial mail buffer and if there was no yank-mail before!"
       (vm-serial-yank-mail (or mail (vm-serial-find-default-mail))
                            no-expand)))
 
+(defvar vm-serial-yank-mail-choice nil)
+(make-variable-buffer-local 'vm-serial-yank-mail-choice)
+
 (defun vm-serial-yank-mail (&optional mail no-expand)
-  "Yank the mail associated with MAIL.
+  "Yank the template associated with MAIL.
 
-If MAIL is nil search for a default mail, i.e. the first which evaluates its
-condition to true.  When called with a prefix argument ask for a default mail
-and with another prefix argument or if NO-EXPAND is non nil no tokens will be
-expanded after yanking.  
+If MAIL is nil search for a default template, i.e. the first one which
+evaluates its condition to true.  When called with a prefix argument ask for
+a template and with another prefix argument or if NO-EXPAND is non nil
+no tokens will be expanded after yanking.
 
-You may bind this to [C-c C-t] in mail-mode in order to automatically yank the
-right mail into the composition buffer and move the cursor to the editing
-place.
+You may bind this to [C-c C-t] in mail-mode in order to automatically yank
+the right mail into the composition buffer and move the cursor to the
+editing point.
 
 I try to be clever when to delete the existing buffer contents and when to
 expand the tokens, however if this does not satisfy you please report it to
-me." 
+me."
 
   (interactive "p")
   
@@ -572,9 +595,10 @@ me."
                     t;; exact match 
                     (cons (vm-serial-find-default-mail)
                           0)
-                    vm-serial-mail-history))))
-  
-  (setq mail (or mail (vm-serial-find-default-mail)))
+                    vm-serial-mail-history)
+              vm-serial-yank-mail-choice mail)))
+
+  (setq mail (or mail vm-serial-yank-mail-choice (vm-serial-find-default-mail)))
 
   (let ((save-point (point)))
     (if (not mail)
