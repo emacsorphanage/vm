@@ -80,6 +80,10 @@
 
 (defvar vm-grepmail-folder-buffer nil)
 
+;; For sixth arg of read-file-name in Emacs 21. cf vm-folder-history.
+(defun vm-grepmail-folders-history (&rest ignored) t)
+
+
 ;;;###autoload
 (defun vm-grepmail (arguments folders)
   "A not so excellent interface to grepmail.
@@ -109,7 +113,8 @@ FOLDERS should be a list of files/directories to search in."
                                         ""))
                               default
                               default
-                              t nil 'vm-grepmail-folders-history))
+                              t nil 'vm-grepmail-folders-history)
+                          fd (expand-file-name fd))
                     (if (not (string= fd default))
                         (setq folders (add-to-list 'folders fd))))
                   (if (null folders)
