@@ -1,9 +1,9 @@
 ;;; vm-rfaddons.el --- a collections of various useful VM helper functions
 ;; 
-;; Copyright (C) 1999-2003 Robert Fenk
+;; Copyright (C) 1999-2004 Robert Widhopf-Fenk
 ;;
-;; Author:      Robert Fenk
-;; Status:      Tested with XEmacs 21.1.12 & VM 7.16
+;; Author:      Robert Widhopf-Fenk
+;; Status:      Tested with XEmacs 21.4.15 & VM 7.18
 ;; Keywords:    VM helpers
 ;; X-URL:       http://www.robf.de/Hacking/elisp
 ;; Version:     $Id$
@@ -29,8 +29,8 @@
 ;;
 ;; In order to install this package you need to byte-compile it and put
 ;; it into your load-path and add the following lines to the _end_ of your
-;; .vm file.  It should be the _end_ in order to ensure that its variable
-;; honor your user settings!
+;; .vm file.  It should be the _end_ in order to ensure that variable you had
+;; been setting are honored!
 ;;
 ;;      (require 'vm-rfaddons)
 ;;      (vm-rfaddons-infect-vm)
@@ -39,31 +39,25 @@
 ;; look at the documentation of `vm-rfaddons-infect-vm' and modify
 ;; its call as desired.  
 ;; 
-;; The additional package you may need are:
+;; Additional packages you may need are:
 ;;
 ;; * Package: Personality Crisis for VM
-;;   Homepage: http://student.uq.edu.au/~s323140/pcrisis/
+;;   is a really cool package if you want to do automatic header rewriting,
+;;   e.g.  if you have various mail accounts and always want to use the right
+;;   from header, then check it out! 
+;;   It used to be on http://student.uq.edu.au/~s323140/pcrisis/
+;;   but it is no longer available there and thus I provide it on my site.
 ;; * Package: BBDB
 ;;   Homepage: http://bbdb.sourceforge.net
-;;
-;; because they might not be included within the Emacs distribution.
-;; It is really a cool package if you want to do automatic header
-;; rewriting and the like, e.g.  if you get the mail form your various
-;; mail accounts forwarded to one account and always do want to use
-;; the right from header!
 ;;
 ;; All other packages should be included within standard (X)Emacs
 ;; distributions.
 ;;
 ;; Feel free to sent me any comments or bug reports.
-;; I would be thankful for any patched to make things work with
-;; GNU Emacs if there are any problems.
 ;;
-;;; Known Bugs/Problems:
-;; - vm-mime-auto-save-*-attachments sometimes uses the wrong folder name,
-;;   which  must be related to vm-su-* functions returning wrong data, when
-;;   called within the select message hook. 
-;; 
+;; As I am no active GNU Emacs user, I would be thankful for any patches to
+;; make things work with GNU Emacs!
+;;
 ;;; Code:
 
 (defgroup vm nil
@@ -326,7 +320,7 @@ or do the binding and advising on your own."
     (ding)
     (sit-for 3))
   
-  (message "VM-RFADDONS: VM is now infected. Please report bugs to Robert Fenk")
+  (message "VM-RFADDONS: VM is now infected. Please report bugs to Robert Widhop-Fenk!")
   (sit-for (or sit-for 2)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
