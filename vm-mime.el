@@ -4284,7 +4284,9 @@ this case and not prompt you for it in the minibuffer."
 	 description file default-type type)
      (if (null vm-send-using-mime)
 	 (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
-     (setq file (vm-read-file-name "Attach file: " nil nil t)
+     (setq file (vm-read-file-name "Attach file: "
+                                   vm-mime-attachment-source-directory
+                                   nil t)
 	   default-type (or (vm-mime-default-type-from-filename file)
 			    "application/octet-stream")
 	   type (completing-read
@@ -4339,7 +4341,9 @@ should use vm-mime-attach-file to attach the file."
 	 file type)
      (if (null vm-send-using-mime)
 	 (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
-     (setq file (vm-read-file-name "Attach file: " nil nil t)
+     (setq file (vm-read-file-name "Attach file: "
+                                   vm-mime-attachment-source-directory
+                                   nil t)
 	   default-type (or (vm-mime-default-type-from-filename file)
 			    "application/octet-stream")
 	   type (completing-read
