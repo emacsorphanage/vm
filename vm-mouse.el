@@ -323,16 +323,16 @@
 	(vm-mouse-send-url-to-konqueror url t)))
   (message "Sending URL to Konqueror... done"))
 
-(defun vm-mouse-send-url-to-MozillaFirebird (url &optional new-window)
+(defun vm-mouse-send-url-to-firefox (url &optional new-window)
   (message "Sending URL to Mozilla Firebird...")
   (if new-window
-      (apply 'vm-run-background-command vm-MozillaFirebird-program
-	     (append vm-MozillaFirebird-program-switches (list url)))
-    (or (equal 0 (apply 'vm-run-command vm-MozillaFirebird-client-program
-			(append vm-MozillaFirebird-client-program-switches
+      (apply 'vm-run-background-command vm-firefox-program
+	     (append vm-firefox-program-switches (list url)))
+    (or (equal 0 (apply 'vm-run-command vm-firefox-client-program
+			(append vm-firefox-client-program-switches
 				(list (format "openURL(%s)" url)))))
-	(vm-mouse-send-url-to-MozillaFirebird url t)))
-  (message "Sending URL to Mozilla Firebird... done"))
+	(vm-mouse-send-url-to-firefox url t)))
+  (message "Sending URL to Mozilla Firefox... done"))
 
 (defun vm-mouse-send-url-to-konqueror-new-browser (url)
   (vm-mouse-send-url-to-konqueror url t))

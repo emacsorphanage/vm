@@ -3709,21 +3709,21 @@ named by `vm-movemail-program'."
   "*List of command line switches to pass to Konqueror client."
   :type '(repeat string))
 
-(defcustom vm-MozillaFirebird-program "MozillaFirebird"
-  "*Name of program to use to run Mozilla Firebird.
-`vm-mouse-send-url-to-MozillaFirebird' uses this."
+(defcustom vm-firefox-program "firefox"
+  "*Name of program to use to run Mozilla Firefox.
+`vm-mouse-send-url-to-firefox' uses this."
   :type 'string)
 
-(defcustom vm-MozillaFirebird-program-switches nil
+(defcustom vm-firefox-program-switches nil
   "*List of command line switches to pass to Mozilla Firebird."
   :type '(repeat string))
 
-(defcustom vm-MozillaFirebird-client-program "MozillaFirebird"
+(defcustom vm-firefox-client-program "firefox"
   "*Name of program to use to issue requests to Mozilla Firebird. 
-`vm-mouse-send-url-to-MozillaFirebird' uses this."
+`vm-mouse-send-url-to-firefox' uses this."
   :type 'string)
 
-(defcustom vm-MozillaFirebird-client-program-switches '("-remote")
+(defcustom vm-firefox-client-program-switches '("-remote")
   "*List of command line switches to pass to Mozilla Firebird client."
   :type '(repeat string))
 
