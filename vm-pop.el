@@ -165,6 +165,8 @@
 		(and (null (vm-pop-retrieve-to-target process destination
 						      statblob))
 		     (throw 'done (not (equal retrieved 0))))
+		(message "Retrieving message %d (of %d) from %s...done"
+	 	 n mailbox-count popdrop)
 		(vm-increment retrieved)
 		(and b-per-session
 		     (setq retrieved-bytes (+ retrieved-bytes message-size)))

@@ -193,6 +193,8 @@
 					      "FETCH %d (RFC822.PEEK)" n))
 		       (vm-imap-retrieve-to-target process destination
 						   statblob nil)))
+		(message "Retrieving message %d (of %d) from %s...done"
+	 	 n mailbox-count imapdrop)
 		(vm-increment retrieved)
 		(and b-per-session
 		     (setq retrieved-bytes (+ retrieved-bytes message-size)))
