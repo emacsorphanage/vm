@@ -1269,7 +1269,8 @@ See the advice in `vm-rfaddons-infect-vm'."
 
 (defun vm-mime-action-on-all-attachments (count action
                                                 &optional include exclude
-                                                mlist)
+                                                mlist
+                                                quiet)
   (or count (setq count 1))
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer)
@@ -1303,7 +1304,7 @@ See the advice in `vm-rfaddons-infect-vm'."
               
               (if (or (vm-mime-types-match "message/external-body" type)
                       (not (vm-mime-is-type-valid type include exclude)))
-                  (message "Ignoring action on %s parts!" type)
+                  (if quiet (message "Ignoring action on %s parts!" type))
                 (setq file (or (vm-mime-get-disposition-parameter
                                 layout "filename") 
                                (vm-mime-get-parameter layout "name")))
