@@ -378,7 +378,7 @@
 			 "---")
 		 (list "Take Action on MIME body ..."))))
     `(,@title
-      ["Display as Text using Default Face"
+      ["Display as Text (in default face)"
        (vm-mime-run-display-function-at-point
 	'vm-mime-display-body-as-text) t]
       ["Display using External Viewer"
@@ -412,13 +412,15 @@
 				    (car (vm-mm-layout-type layout))))))]
       ["Send to Printer" (vm-mime-run-display-function-at-point
 			  'vm-mime-send-body-to-printer) t]
-      ["Feed to Shell Pipeline (display output)"
+      ["Pipe to Shell Command (display output)"
        (vm-mime-run-display-function-at-point
 	'vm-mime-pipe-body-to-queried-command) t]
-      ["Feed to Shell Pipeline (discard output)"
+      ["Pipe to Shell Command (discard output)"
        (vm-mime-run-display-function-at-point
 	'vm-mime-pipe-body-to-queried-command-discard-output) t]
-      ["Delete object" vm-delete-mime-object t])))
+      ["Attach to Message Composition Buffer"
+       vm-mime-attach-object-from-message t]
+      ["Delete" vm-delete-mime-object t])))
 
 (defvar vm-menu-url-browser-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
