@@ -122,8 +122,10 @@ The defaults to the number of pages and the date of the printout."
 ;;;###autoload
 (defcustom vm-ps-print-message-summary-format
   (concat "******************************************************************************\n"
-	  vm-summary-format
-	  "******************************************************************************\n")
+	  (if (boundp 'vm-summary-format)
+              vm-summary-format
+            "%n %*%a %-17.17F %-3.3m %2d %4l/%-5c %I\"%s\"\n")
+          "******************************************************************************\n")
   "*The summary line before a message.
 See `vm-summary-format' for a description of the conversion specifiers."
   :group 'vm-psprint

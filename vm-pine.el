@@ -928,7 +928,8 @@ See the variable `vm-mail-priority'."
       dir)))
 
 ;;;###autoload
-(defcustom vm-mail-folder-alist vm-auto-folder-alist
+(defcustom vm-mail-folder-alist (if (boundp 'vm-auto-folder-alist)
+                                    vm-auto-folder-alist)
   "Like `vm-auto-folder-alist' but for outgoing messages.
 It should be fed to `vm-mail-select-folder'!"
   :type 'list

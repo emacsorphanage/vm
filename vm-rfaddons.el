@@ -343,7 +343,9 @@ This does not work when replying to multiple messages."
     (if (null vm-pbuf)
         (vm-reply-include-text count)
       (let ((vm-reply-hook nil)
-            (vm-mail-mode-hook nil))
+            (vm-mail-mode-hook nil)
+            (mail-setup-hook nil)
+            (mail-signature nil))
         (vm-reply count))
       (goto-char (point-min))
       (re-search-forward (regexp-quote mail-header-separator) (point-max))
@@ -362,8 +364,12 @@ This does not work when replying to multiple messages."
                        message))))
         (while (re-search-forward "^" (point-max) t)
           (insert vm-included-text-prefix)))
+      (run-hooks 'mail-setup-hook)
+      (run-hooks 'vm-mail-mode-hook)
       (run-hooks 'vm-reply-hook)
-      (run-hooks 'vm-mail-mode-hook))))
+      (save-excursion
+        (goto-char (point-max))
+        (mail-signature)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun vm-do-fcc-before-mime-encode ()
@@ -957,8 +963,10 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;###autoload
 (defcustom vm-mime-all-attachments-directory
-  vm-mime-attachment-save-directory
-  "*Directory to where the attachments should go or come from."
+  (if (boundp 'vm-mime-attachment-save-directory)
+      vm-mime-attachment-save-directory
+    (expand-file-name "~/Attachments"))
+    "*Directory to where the attachments should go or come from."
  :group 'vm-rfaddons
  :type 'directory)
 
@@ -1139,7 +1147,7 @@ This will be done according to `vm-mime-auto-save-all-attachments-subdir'."
                ;; for the message
                (subdir (concat 
                         "/"
-                        (format "%04d.%02d.%02d-%s"
+                        (format "%04s.%02s.%02s-%s"
                                 (vm-su-year msg)
                                 (vm-su-month-number msg)
                                 (vm-su-monthday msg)
