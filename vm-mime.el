@@ -46,6 +46,71 @@
   (put 'vm-mime-error 'error-conditions '(vm-mime-error error))
   (put 'vm-mime-error 'error-message "MIME error"))
 
+;; A lot of the more complicated MIME character set processing is only
+;; practical under MULE.
+
+(when (or vm-xemacs-mule-p
+	(and vm-fsfemacs-mule-p enable-multibyte-characters))
+
+  ;; Load any unicode support that's available. (If we're running on 21.5,
+  ;; utf-8 is predefined as a coding system, so there's no need to load
+  ;; Mule-UCS.)
+  (and (not (coding-system-p (find-coding-system 'utf-8)))
+       (locate-library "un-define") 
+       (require 'un-define)
+       (require 'unicode))
+
+  ;; If we can use latin-unity for sane treatment of the 8859-? charsets
+  ;; under MULE, go for it.
+  (and (locate-library "latin-unity")
+       (require 'latin-unity))
+
+  (let ((haveu8 (coding-system-p (find-coding-system 'utf-8))))
+
+    (if (featurep 'latin-unity)
+	(defvaralias 'vm-mime-ucs-list 'latin-unity-ucs-list)
+      (defcustom vm-mime-ucs-list
+	(or (and haveu8 '(utf-8 iso-2022-jp ctext escape-quoted))
+	    '(iso-2022-jp ctext escape-quoted)) 
+       "*List of coding systems that can encode all characters known to emacs."
+       ))
+
+    ;; Define a list of coding systems that are to be preferred when sending
+    ;; a mail using MIME. This defaults to including UTF-8 when utf-8 exists
+    ;; as a coding system; otherwise, iso-8859-1 is its only element.
+    ;;
+    ;; If we can't use some element from this list, we default to
+    ;; iso-2022-jp as a last resort in the code.
+
+    (defcustom vm-coding-system-priorities
+      (or (and haveu8 '(iso-8859-1 utf-8))
+	  '(iso-8859-1))
+      "*List of coding systems for VM-MIME to use, in order of preference. ")
+
+    ;; Add some extra charsets that may not have been defined onto the end
+    ;; of vm-mime-mule-charset-to-coding-alist.
+    (mapcar (lambda (x)
+	      (and (coding-system-p (find-coding-system x))
+		   ;; Not using vm-string-assoc because of some quoting
+		   ;; weirdness it's doing. 
+		   (if (not (assoc
+			     (format "%s" x)
+			     vm-mime-mule-charset-to-coding-alist))
+		       (add-to-list 'vm-mime-mule-charset-to-coding-alist 
+				    (list (format "%s" x) x)))))
+	      '(utf-8 iso-8859-15 iso-8859-14 iso-8859-16))
+
+    ;; And make sure that the map back from coding-systems is good for
+    ;; those charsets.
+    (mapcar (lambda (x)
+	      (or (assoc (car (cdr x)) vm-mime-mule-coding-to-charset-alist)
+		  (add-to-list 'vm-mime-mule-coding-to-charset-alist
+			       (list (car (cdr x)) (car x)))))
+	    vm-mime-mule-charset-to-coding-alist)
+    ;; Whoops, doesn't get picked up for some reason. 
+    (add-to-list 'vm-mime-mule-coding-to-charset-alist 
+		 '(iso-8859-1 "iso-8859-1"))))
+
 (defun vm-make-layout (&rest plist)
   (vector
    (plist-get plist 'type)
@@ -248,6 +313,7 @@
   (cond ((or vm-xemacs-mule-p vm-fsfemacs-mule-p)
 	 (if (or (and vm-xemacs-p (memq (device-type) '(x gtk mswindows)))
 		 vm-fsfemacs-p
+		 (vm-mime-tty-can-display-mime-charset charset)
 		 nil)
 	     (let ((buffer-read-only nil)
 		   (cell (cdr (vm-string-assoc
@@ -1310,34 +1376,161 @@
 
 (defvar buffer-file-coding-system)
 
+;; Possible further work; integrate with the FSF's unify-8859-on-encoding-mode
+;; stuff.
+
 (defun vm-determine-proper-charset (beg end)
+  "Work out what MIME character set to use for sending a message. 
+
+Uses `us-ascii' if the message is entirely ASCII compatible.  If MULE is not
+available, and the message contains contains non-ASCII characters, consults
+the variable `vm-mime-8bit-composition-charset' or uses `iso-8859-1.' if
+that is nil.
+
+Under MULE, `vm-coding-system-priorities' is searched, in order, for a
+coding system that will encode all the characters in the message. If none is
+found, `iso-2022-jp' is used, which will preserve information for all the
+character sets of which Emacs is aware--at the expense of being incompatible
+with the recipient's software, if that recipient is outside of East Asia."
   (save-excursion
     (save-restriction
       (narrow-to-region beg end)
-      (catch 'done
-	(goto-char (point-min))
 	(if (or vm-xemacs-mule-p 
 		(and vm-fsfemacs-mule-p enable-multibyte-characters))
-	    (let ((charsets (delq 'ascii (vm-charsets-in-region
-					  (point-min) (point-max)))))
-	      (cond ((null charsets)
-		     "us-ascii")
-		    ((cdr charsets)
-		     (or (car (cdr
-			       (assq (vm-coding-system-name
-				      buffer-file-coding-system)
-				     vm-mime-mule-coding-to-charset-alist)))
-			 "iso-2022-jp"))
-		    (t
-		     (or (car (cdr
-			       (assoc
-				(car charsets)
-				vm-mime-mule-charset-to-charset-alist)))
-			 "unknown"))))
-	  (and (re-search-forward "[^\000-\177]" nil t)
-	       (throw 'done (or vm-mime-8bit-composition-charset
-				"iso-8859-1")))
-	  (throw 'done vm-mime-7bit-composition-charset))))))
+	    ;; Okay, we're on a MULE build. 
+	    (let ((charsets (delq 'ascii
+				  (vm-charsets-in-region (point-min)
+							 (point-max)))))
+	      (cond 
+	       ;; No non-ASCII chars? Right, that makes it easy for us.
+	       ((null charsets) "us-ascii")
+
+	       ;; Check whether the buffer can be encoded using one of the
+	       ;; vm-coding-system-priorities coding systems.
+	       ((catch 'done
+
+		  ;; We can't really do this intelligently unless latin-unity
+		  ;; is available.
+		  (if (featurep 'latin-unity)
+		      (let ((csetzero charsets)
+			    ;; Check what latin character sets are in the
+			    ;; buffer.
+			    (csets (latin-unity-representations-feasible-region
+				    beg end))
+			    (psets (latin-unity-representations-present-region
+				    beg end))
+			    (systems vm-coding-system-priorities))
+
+			;; If one of the character sets is outside of latin
+			;; unity's remit, check for a universal character
+			;; set in vm-coding-system-priorities, and pass back
+			;; the first one.
+			;;
+			;; Otherwise, there's no remapping that latin unity
+			;; can do for us, and we should default to something
+			;; iso-2022 based. (Since we're not defaulting to
+			;; Unicode, at the moment.)
+
+			(while csetzero
+			  (if (not (memq (car csetzero)
+					 latin-unity-character-sets))
+			      (let ((preapproved vm-coding-system-priorities))
+				(while preapproved
+				  (if (memq (car preapproved) vm-mime-ucs-list)
+				      (throw 'done 
+					     (car (cdr (assq 
+							(vm-coding-system-name 
+							 (car preapproved))
+				      vm-mime-mule-coding-to-charset-alist)))))
+				  (setq preapproved (cdr preapproved)))
+				;; Nothing universal in the preapproved list.
+				(throw 'done nil)))
+			  (setq csetzero (cdr csetzero)))
+
+			;; Okay, we're able to remap using latin-unity. Do so.
+			(while systems
+			  (let ((sys (latin-unity-massage-name (car systems)
+					       'buffer-default)))
+			    (when (latin-unity-maybe-remap (point-min) 
+							   (point-max) sys 
+							   csets psets t)
+			      (throw 'done (second (assq 
+						    (vm-coding-system-name sys)
+				    vm-mime-mule-coding-to-charset-alist)))))
+			  (setq systems (cdr systems)))
+			(throw 'done nil))
+
+		    ;; Right, latin-unity isn't available.  If there's only
+		    ;; one non-ASCII character set in the region, and the
+		    ;; corresponding coding system is on the preapproved
+		    ;; list before the first universal character set, pass
+		    ;; it back. Otherwise, if a universal character set is
+		    ;; on the preapproved list, pass the first one of them
+		    ;; back. Otherwise, pass back nil and use the
+		    ;; "iso-2022-jp" entry below.
+
+		    (let ((csetzero charsets)
+			  (preapproved vm-coding-system-priorities))
+		      (if (null (cdr csetzero))
+			  (while preapproved 
+			    ;; If we encounter a universal character set on
+			    ;; the preapproved list, pass it back.
+			    (if (memq (car preapproved) vm-mime-ucs-list)
+				(throw 'done (second (assq 
+						      (vm-coding-system-name
+						       (car preapproved))
+				     vm-mime-mule-coding-to-charset-alist))))
+
+			    ;; The preapproved entry isn't universal. Check if
+			    ;; it's related to the single non-ASCII MULE
+			    ;; charset in the buffer (that is, if the
+			    ;; conceptually unordered MULE list of characters
+			    ;; is based on a corresponding ISO character set,
+			    ;; and thus the ordered ISO character set can
+			    ;; encode all the characters in the MIME charset.)
+			    ;;
+			    ;; The string equivalence test is used because we
+			    ;; don't have another mapping that is useful
+			    ;; here. Nnngh.
+
+			    (if (string= 
+				 (car (cdr (assoc (car csetzero)
+				   vm-mime-mule-charset-to-charset-alist)))
+				 (car (cdr (assoc (car preapproved)
+				   vm-mime-mule-coding-to-charset-alist))))
+				(throw 'done 
+				       (car (cdr (assoc (car csetzero)
+				    vm-mime-mule-charset-to-charset-alist)))))
+			    (setq preapproved (cdr preapproved)))
+
+			;; Okay, there's more than one MULE character set in
+			;; the buffer. Check for a universal entry in the
+			;; preapproved list; if it exists pass it back,
+			;; otherwise fall through to the iso-2022-jp below,
+			;; because nothing on the preapproved list is
+			;; appropriate.
+
+			(while preapproved 
+			    ;; If we encounter a universal character set on
+			    ;; the preapproved list, pass it back.
+			    (when (memq (car preapproved) vm-mime-ucs-list)
+				(throw 'done (second (assq 
+						      (vm-coding-system-name
+						       (car preapproved))
+				     vm-mime-mule-coding-to-charset-alist))))
+			    (setq preapproved (cdr preapproved)))))
+		    (throw 'done nil))))
+	       ;; Couldn't do any magic with vm-coding-system-priorities. Pass
+	       ;; back a Japanese iso-2022 MIME character set.
+	       (t "iso-2022-jp")))
+	  ;; If we're non-MULE and there are eight bit characters, use a
+	  ;; sensible default.
+	  (goto-char (point-min))
+	  (if (re-search-forward "[^\000-\177]" nil t)
+	       (or vm-mime-8bit-composition-charset "iso-8859-1")
+	  ;; We're non-MULE and there are purely 7bit characters in the
+	  ;; region. Return vm-mime-7bit-c-c.
+	  vm-mime-7bit-composition-charset)))))
 
 (defun vm-determine-proper-content-transfer-encoding (beg end)
   (save-excursion
@@ -4143,7 +4336,39 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   (or (vm-mime-types-match "text" (car (vm-mm-layout-type layout)))
       (vm-mime-types-match "message" (car (vm-mm-layout-type layout)))))
 
+
+(defun vm-mime-tty-can-display-mime-charset (name)
+  "Can the current TTY correctly display the given MIME character set?"
+  (and (fboundp 'console-tty-output-coding-system)
+       ;; Is this check too paranoid?
+       (coding-system-p (console-tty-output-coding-system))
+       (let 
+	   ;; Nnngh, latin-unity-base-name isn't doing the right thing for
+	   ;; me with MULE-UCS and UTF-8 as the terminal coding system. Of
+	   ;; course, it's not evident that it _can_ do the right thing.
+	   ;;
+	   ;; The intention is that ourtermcs is the version of the
+	   ;; coding-system without line-ending information attached to its
+	   ;; end.
+	   ((ourtermcs (or (car 
+			    (coding-system-get
+			     (console-tty-output-coding-system)
+			     'alias-coding-systems))
+			   (console-tty-output-coding-system))))
+	 (or (eq ourtermcs (car 
+			    (cdr 
+			     (vm-string-assoc 
+			      name vm-mime-mule-charset-to-coding-alist))))
+	     ;; The vm-mime-mule-charset-to-coding-alist check is to make
+	     ;; sure it does the right thing with a nonsense MIME character
+	     ;; set name.
+	     (and (memq ourtermcs vm-mime-ucs-list)
+		  (vm-string-assoc name vm-mime-mule-charset-to-coding-alist) 
+		  t)
+	     (vm-mime-default-face-charset-p name)))))
+
 (defun vm-mime-charset-internally-displayable-p (name)
+  "Can the given MIME charset be displayed within emacs by by VM?"
   (cond ((and vm-xemacs-mule-p (memq (device-type) '(x gtk mswindows)))
 	 (or (vm-string-assoc name vm-mime-mule-charset-to-coding-alist)
 	     (vm-mime-default-face-charset-p name)))
@@ -4153,6 +4378,13 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	((vm-multiple-fonts-possible-p)
 	 (or (vm-mime-default-face-charset-p name)
 	     (vm-string-assoc name vm-mime-charset-font-alist)))
+
+	;; If the terminal-coding-system variable is set to something that
+	;; can encode all the characters of the given MIME character set,
+	;; then we can display any message in the given MIME character set
+	;; internally.
+
+	((vm-mime-tty-can-display-mime-charset name))
 	(t
 	 (vm-mime-default-face-charset-p name))))
 
@@ -5102,9 +5334,31 @@ and the approriate content-type and boundary markup information is added."
 
 (defvar enriched-mode)
 
-;; Non-XEmacs specific changes to this function should be
-;; made to vm-mime-fsfemacs-encode-composition as well.
+;; Non-XEmacs specific changes to this function should be made to
+;; vm-mime-fsfemacs-encode-composition as well.
+
 (defun vm-mime-xemacs-encode-composition ()
+  "Encode the current message using MIME.
+
+The Multipurpose Internet Message Extensions extend the original format of
+Internet mail to allow non-US-ASCII textual messages, non-textual messages,
+multipart message bodies, and non-US-ASCII information in message headers.
+
+This function chooses the MIME character set(s) to use, and transforms the
+message content from the XEmacs-internal encoding to the corresponding
+octets in that MIME character set.
+
+It then applies some transfer encoding to the message. For details of the
+transfer encodings available, see the documentation for
+`vm-mime-8bit-text-transfer-encoding.'
+
+Finally, it creates the headers that are necessary to identify the message
+as one that uses MIME.
+
+Under MULE, it explicitly sets `buffer-file-coding-system' to a binary
+(no-transformation) coding system, to avoid further transformation of the
+message content when it's passed to the MTA (that is, the mail transfer
+agent; under Unix, normally sendmail.)"
   (save-restriction
     (widen)
     (if (not (eq major-mode 'mail-mode))
@@ -5119,6 +5373,8 @@ and the approriate content-type and boundary markup information is added."
 	  type encoding charset params description disposition object
 	  opoint-min
 	  postponed-attachment)
+      ;;Make sure we don't double encode UTF-8 (for example) text.
+      (setq buffer-file-coding-system (vm-binary-coding-system))
       (mail-text)
       (setq e-list (extent-list nil (point) (point-max))
 	    e-list (vm-delete (function
@@ -5150,9 +5406,24 @@ and the approriate content-type and boundary markup information is added."
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
 	    (if vm-xemacs-mule-p
-		(encode-coding-region (point-min) (point-max)
-				      buffer-file-coding-system))
-	    (enriched-mode -1)
+ 		(encode-coding-region 
+ 		 (point-min) (point-max)
+ 
+ 		 ;; What about the case where vm-m-m-c-t-c-a doesn't have an
+ 		 ;; entry for the given charset? That shouldn't happen, if
+ 		 ;; vm-mime-mule-coding-to-charset-alist and
+ 		 ;; vm-mime-mule-charset-to-coding-alist have complete and
+ 
+ 		 ;; matching entries. Admittedly this last is not a
+ 		 ;; given. Should we make it so on startup? (By setting the
+ 		 ;; key for any missing entries in
+ 		 ;; vm-mime-mule-coding-to-charset-alist to being (format
+ 		 ;; "%s" coding-system), if necessary.)
+ 
+ 		 (car (cdr (vm-string-assoc 
+ 			    charset vm-mime-mule-charset-to-coding-alist)))))
+
+            (enriched-mode -1)
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
 			    (point-min)
 			    (point-max))
@@ -5183,11 +5454,26 @@ and the approriate content-type and boundary markup information is added."
 	    (if enriched
 		(let ((enriched-initial-annotation ""))
 		  (enriched-encode (point-min) (point-max))))
+
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
 	    (if vm-xemacs-mule-p
-		(encode-coding-region (point-min) (point-max)
-				      buffer-file-coding-system))
+		(encode-coding-region 
+		 (point-min) (point-max)
+
+		 ;; What about the case where vm-m-m-c-t-c-a doesn't have an
+		 ;; entry for the given charset? That shouldn't happen, if
+		 ;; vm-mime-mule-coding-to-charset-alist and
+		 ;; vm-mime-mule-charset-to-coding-alist have complete and
+		 ;; matching entries. Admittedly this last is not a
+		 ;; given. Should we make it so on startup? (By setting the
+		 ;; key for any missing entries in
+		 ;; vm-mime-mule-coding-to-charset-alist to being (format
+		 ;; "%s" coding-system), if necessary.)
+
+		 (car (cdr (vm-string-assoc 
+			    charset vm-mime-mule-charset-to-coding-alist)))))
+
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
 			    (point-min)
 			    (point-max))
@@ -5360,8 +5646,22 @@ and the approriate content-type and boundary markup information is added."
 	  (setq charset (vm-determine-proper-charset (point)
 						     (point-max)))
 	  (if vm-xemacs-mule-p
-	      (encode-coding-region (point) (point-max)
-				    buffer-file-coding-system))
+	      (encode-coding-region 
+	       (point) (point-max)
+
+	       ;; What about the case where vm-m-m-c-t-c-a doesn't have an
+	       ;; entry for the given charset? That shouldn't happen, if
+	       ;; vm-mime-mule-coding-to-charset-alist and
+	       ;; vm-mime-mule-charset-to-coding-alist have complete and
+	       ;; matching entries. Admittedly this last is not a
+	       ;; given. Should we make it so on startup? (By setting the
+	       ;; key for any missing entries in
+	       ;; vm-mime-mule-coding-to-charset-alist to being (format "%s"
+	       ;; coding-system), if necessary.)
+
+		 (car (cdr (vm-string-assoc 
+			    charset vm-mime-mule-charset-to-coding-alist)))))
+
 	  (setq encoding (vm-determine-proper-content-transfer-encoding
 			  (point)
 			  (point-max))
