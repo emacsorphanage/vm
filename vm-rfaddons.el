@@ -373,7 +373,9 @@ This does not work when replying to multiple messages."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun vm-do-fcc-before-mime-encode ()
-  ""
+  "The name says it all.
+Sometimes you may to save the message unencoded, specifically not to waste
+storage for attachments which are stored on disk anyway."
   (interactive)
   (save-excursion
     (goto-char (point-min))
@@ -385,7 +387,7 @@ This does not work when replying to multiple messages."
       (insert mail-header-separator))))
 
 (defcustom vm-do-fcc-before-mime-encode nil
-  "FCC before encoding if t."
+  "*Non-nil means to FCC before encoding."
   :type 'boolean
   :group 'vm-rfaddons)
   
@@ -398,7 +400,8 @@ This does not work when replying to multiple messages."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defcustom vm-fill-paragraphs-containing-long-lines-faster nil
-  "Do faster filling of long lines with code borrowed from Gnus."
+  "*Do faster filling of long lines with code borrowed from Gnus.
+This is essentially faster than VMs functions."
   :type 'boolean
   :group 'vm-rfaddons)
 
@@ -406,18 +409,19 @@ This does not work when replying to multiple messages."
   "Set by calling `vm-unfill-paragraphs-containing-long-lines'.")
 
 (defcustom vm-fill-long-lines-in-reply-column 70
-  "Fill lined in replies ut to this column."
+  "*Fill lines in replies up to this column."
   :type 'integer
   :group 'vm-rfaddons)
 
 (defadvice vm-fill-paragraphs-containing-long-lines
   (around faster-filling-by-code-borrowed-from-gnus activate)
-  "Do faster filling if `vm-mail-mode-fake-date-p' is t."
+  "Do faster filling if `vm-fill-paragraphs-containing-long-lines-faster' is t."
   (if (eq t vm-fill-paragraphs-containing-long-lines-faster)
       (vm-fill-paragraphs-containing-long-lines-faster
        (ad-get-arg 0) (ad-get-arg 1) (ad-get-arg 2))
     ad-do-it))
 
+;;;###autoload
 (defun vm-fill-long-lines-in-reply ()
   (interactive)
   (rf-vm-fill-paragraphs-containing-long-lines-faster
@@ -431,6 +435,7 @@ This does not work when replying to multiple messages."
    (point-max))
   nil)
 
+;;;###autoload
 (defun vm-fill-paragraphs-containing-long-lines-toggle ()
   (interactive)
   (let ((fp vm-fill-paragraphs-containing-long-lines-faster))
@@ -451,14 +456,16 @@ This does not work when replying to multiple messages."
                  "enabled in fast mode")
              "disabled")))
 
+;;;###autoload
 (defun vm-unfill-paragraphs-containing-long-lines-faster ()
   "Sometimes filling long lines is the wrong thing!
-Call this function, if you want to see a message unfilled."
+Call this function, if you want to see the message unfilled."
   (interactive)
   (let ((vm-unfill-paragraphs-containing-long-lines-faster t))
     (vm-select-folder-buffer)
     (vm-preview-current-message)))
 
+;;;###autoload
 (defun vm-fill-paragraphs-containing-long-lines-faster (width start end)
   (if (not vm-unfill-paragraphs-containing-long-lines-faster)
       (vm-save-restriction
@@ -511,7 +518,7 @@ Call this function, if you want to see a message unfilled."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-spamassassin-strip-report "spamassassin -d"
-  "Shell command used to strip spamassassin-reports from a message."
+  "*Shell command used to strip spamassassin-reports from a message."
   :type 'string
   :group 'vm-rfaddons)
 
@@ -561,9 +568,8 @@ Call this function, if you want to see a message unfilled."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-rmail-mode nil
-  "Whether up/down in the presentation buffer goes to the previous/next
-message or does cursor movement.  Use `vm-rmail-toggle' to change
-mode."
+  "*Non-nil means up/down in the presentation buffer oes cursor movement.
+Use `vm-rmail-toggle' to switch between normal and this mode."
   :type 'boolean
   :group 'vm-rfaddons)
 
@@ -629,9 +635,8 @@ Matching will be done case insentivily."
   :type '(repeat (cons (regexp :tag "Regexp")
                        (string :tag "Replacement"))))
 
-(defcustom vm-mail-subject-number-reply
-  nil
-  "*When enabled add a number [N] after the reply prefix.
+(defcustom vm-mail-subject-number-reply nil
+  "*Non-nil means, add a number [N] after the reply prefix.
 The number reflects the number of references."
   :group 'vm-rfaddons
   :type '(choice
@@ -810,7 +815,7 @@ The element gets added to the 'element-name' sublist of the
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-handle-return-receipt-mode 'edit
-  "Tells `vm-handle-return-receipt' how to handle return receipts.
+  "*Tells `vm-handle-return-receipt' how to handle return receipts.
 One can choose between 'ask, 'auto, 'edit or an expression which is evaluated
 and which should return t if the return receipts should be sent."
   :group 'vm-rfaddons
@@ -819,8 +824,7 @@ and which should return t if the return receipts should be sent."
                  (const :tag "Auto" auto)))
 
 (defcustom vm-handle-return-receipt-peek 500
-  "Number of characters form the original message body which should be
-returned."
+  "*Number of characters from the original message body to be returned."
   :group 'vm-rfaddons
   :type '(integer))
 
@@ -982,26 +986,22 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
  :group 'vm-rfaddons
  :type 'directory)
 
-(defvar vm-mime-save-all-attachments-history
-  nil
-  "*Directory history to where the attachments should go.")
+(defvar vm-mime-save-all-attachments-history nil
+  "Directory history to where the attachments should go.")
 
-(defvar vm-mime-attach-files-in-directory-regexps-history
-  nil
-  "*Regexp history for matching files.")
+(defvar vm-mime-attach-files-in-directory-regexps-history nil
+  "Regexp history for matching files.")
 
-(defcustom vm-mime-attach-files-in-directory-default-type
-  nil
+(defcustom vm-mime-attach-files-in-directory-default-type nil
   "*The default MIME-type for attached files.
-If set to nil you will be asked for the type if it couldn't be guessed by
-`vm-mime-attachment-auto-type-alist'."
+If set to nil you will be asked for the type if it cannot be guessed.
+For guessing mime-types we use `vm-mime-attachment-auto-type-alist'."
   :group 'vm-rfaddons
   :type '(choice (const :tag "Ask" nil)
                  (string "application/octet-stream")))
 
 ;;;###autoload
-(defcustom vm-mime-attach-files-in-directory-default-charset
-  'guess
+(defcustom vm-mime-attach-files-in-directory-default-charset 'guess
   "*The default charset used for attached files of type `text'.
 If set to nil you will be asked for the charset.
 If set to 'guess it will be determined by `vm-determine-proper-charset', but
@@ -1446,7 +1446,7 @@ headers."
 
 
 (defcustom vm-mail-prompt-if-subject-empty t
-  "Promt for a Subject if  empty."
+  "*Prompt for a subject when empty."
   :group 'vm-rfaddons
   :type '(boolean))
 
@@ -1865,12 +1865,12 @@ Argument MSG is a message pointer."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-summary-attachment-indicator "$"
-  "Indicator shown for messages containing an attachments."
+  "*Indicator shown for messages containing an attachments."
   :group 'vm-rfaddons
   :type 'string)
 
 (defcustom vm-summary-attachment-label nil
-  "Label added to messages containing an attachments."
+  "*Label added to messages containing an attachments."
   :group 'vm-rfaddons
   :type '(choice (string) (const :tag "No Label" nil)))
 
@@ -2178,7 +2178,7 @@ It saves the decoded message and not the raw message like `vm-save-message'!"
 ;;;###autoload
 (defcustom vm-mime-display-internal-multipart/mixed-separater
   "\n----------------------------------------------------------------------\n"
-  "The separator which is inserted between the parts of a multipart message."
+  "*The separator which is inserted between the parts of a multipart message."
   :group 'vm-rfaddons
   :type '(string))
 
@@ -2345,8 +2345,7 @@ not end the comment.  Blank lines do not get comments."
 ;; I overwrite the standard function by a slightly different version.
 ;;;###autoload
 (defcustom vm-mail-mode-fake-date-p t
-  "If set to t `vm-mail-mode-insert-date-maybe' will not overwrite a
-existing date header."
+  "*Non-nil means `vm-mail-mode-insert-date-maybe' will not overwrite a existing date header."
   :group 'vm-rfaddons
   :type '(boolean))
 
