@@ -2,26 +2,34 @@
 # prior to 19.14 for XEmacs are unsupported.
 
 # what emacs is called on your system
-EMACS = emacs
+EMACS =	xemacs
+CC =	gcc -O3
 
 # top of the installation
-prefix = /usr/local
+prefix = $(HOME)/.xemacs/vm
 
 # where the Info file should go
-INFODIR = ${prefix}/lib/emacs/info
+INFODIR = $(prefix)/info
 
 # where the vm.elc, tapestry.elc, etc. files should go
-LISPDIR = ${prefix}/lib/emacs/site-lisp
+LISPDIR = $(prefix)/lisp
 
 # where the toolbar pixmaps should go.
 # vm-toolbar-pixmap-directory must point to the same place.
 # vm-image-directory must point to the same place.
-PIXMAPDIR = ${prefix}/lib/emacs/etc/vm
+PIXMAPDIR = $(prefix)/etc/vm
 
-# where the binaries should be go.
-BINDIR = ${prefix}/bin
+# your bin for the external decoder/encoder programs
+BINDIR = $(prefix)/bin
+
+# the load-path for additional packages, i.e. a colon/space separated list
+OTHERLISPDIRS =
+export OTHERLISPDIRS
 
 ############## no user servicable parts beyond this point ###################
+
+# VM version
+VMV =	$(shell sed -n -e 's/^.defconst vm-version "\([0-9]*\.[0-9]*\).*/\1/p' vm-version.el)
 
 # no csh please
 SHELL = /bin/sh
@@ -46,42 +54,46 @@ CORE = vm-message.el vm-macro.el vm-byteopts.el
 
 # vm-version.elc needs to be first in this list, because load time
 # code needs the Emacs/XEmacs MULE/no-MULE feature stuff.
-OBJECTS = \
-    vm-version.elc \
-    vm-crypto.elc \
-    vm-delete.elc vm-digest.elc vm-easymenu.elc vm-edit.elc vm-folder.elc \
-    vm-imap.elc vm-license.elc vm-macro.elc vm-mark.elc vm-menu.elc \
-    vm-message.elc \
-    vm-mime.elc vm-minibuf.elc vm-misc.elc vm-motion.elc \
-    vm-mouse.elc vm-page.elc vm-pop.elc vm-reply.elc \
-    vm-save.elc \
-    vm-search.elc vm-sort.elc vm-summary.elc vm-startup.elc vm-thread.elc \
-    vm-toolbar.elc vm-undo.elc \
-    vm-user.elc vm-vars.elc vm-virtual.elc vm-window.elc
-
-SOURCES = \
-    vm-version.el \
-    vm-crypto.el \
-    vm-delete.el vm-digest.el vm-easymenu.el vm-edit.el vm-folder.el \
-    vm-imap.el vm-license.el vm-macro.el vm-mark.el vm-menu.el vm-message.el \
-    vm-mime.el vm-minibuf.el vm-misc.el vm-motion.el \
-    vm-mouse.el vm-page.el vm-pop.el vm-reply.el vm-save.el \
-    vm-search.el vm-sort.el vm-startup.el vm-summary.el vm-thread.el \
-    vm-toolbar.el vm-undo.el \
-    vm-user.el vm-vars.el vm-virtual.el vm-window.el
+SOURCES = vm-version.el $(wildcard *.el)
+OBJECTS = $(SOURCES:.el=.elc)
 
 UTILS = qp-decode qp-encode base64-decode base64-encode
 
-vm:	vm.elc
+.el.elc:
+	$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile $<
 
-vm.elc:	autoload
+all: vm.elc $(OBJECTS) $(UTILS) vm.info
+
+recompile:
+	$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-recompile-directory .
 
 noautoload:	$(OBJECTS) tapestry.elc
 	@echo "building vm.elc (with all modules included)..."
 	@cat $(OBJECTS) tapestry.elc > vm.elc
 
-autoload:	vm-autoload.elc $(OBJECTS) tapestry.elc
-	@echo "building vm.elc (with all modules set to autoload)..."
+debug:	$(SOURCES) tapestry.el
+	@echo "building vm.elc (uncompiled, no autoloads)..."
+	@cat $(SOURCES) tapestry.el > vm.elc
+
+install: all
+	mkdirhier $(INFODIR) $(LISPDIR) $(PIXMAPDIR) $(BINDIR)
+	cp vm.info vm.info-* $(INFODIR)
+	cp *.elc $(LISPDIR)
+	cp pixmaps/*.xpm $(PIXMAPDIR)
+	cp $(UTILS) $(BINDIR)
+
+vm.info: vm.texinfo
+	@echo "making vm.info..."
+	@$(EMACS) $(BATCHFLAGS) -insert vm.texinfo -l texinfmt -f texinfo-format-buffer -f save-buffer
+
+	@echo "(fmakunbound 'vm-its-such-a-cruel-world)" >> vm.el
+
+clean:
+	rm -f vm-autoload.el vm.el *.elc \
+	base64-decode base64-encode qp-decode qp-encode
+
+vm.el: vm-autoload.elc tapestry.elc
+	@echo "building $@ (with all modules set to autoload)..."
 	@echo "(defun vm-its-such-a-cruel-world ()" > vm.el
 	@echo "   (require 'vm-version)" >> vm.el
 	@echo "   (require 'vm-startup)" >> vm.el
@@ -89,200 +101,99 @@ autoload:	vm-autoload.elc $(OBJECTS) tapestry.elc
 	@echo "   (require 'vm-autoload))" >> vm.el
 	@echo "(vm-its-such-a-cruel-world)" >> vm.el
 	@echo "(fmakunbound 'vm-its-such-a-cruel-world)" >> vm.el
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm.el
 
-all:	vm.info vm utils
-
-debug:	$(SOURCES) tapestry.el
-	@echo "building vm.elc (uncompiled, no autoloads)..."
-	@cat $(SOURCES) tapestry.el > vm.elc
+noautoloads=vm.el vm-autoload.el
+vm-autoload.el: $(filter-out $(noautoloads),$(SOURCES))
+	@echo scanning sources to build autoload definitions...
+	@echo "(provide 'vm-autoload)" > vm-autoload.el
+	@$(EMACS) $(BATCHFLAGS) -l ./make-autoloads -f print-autoloads $(filter-out $(noautoloads),$(SOURCES)) >> vm-autoload.el
 
 utils: $(UTILS)
 
-qp-decode: qp-decode.c
-	$(CC) $(CFLAGS) -o qp-decode qp-decode.c
-
 qp-encode: qp-encode.c
-	$(CC) $(CFLAGS) -o qp-encode qp-encode.c
-
-base64-decode: base64-decode.c
-	$(CC) $(CFLAGS) -o base64-decode base64-decode.c
-
+qp-decode: qp-decode.c
 base64-encode: base64-encode.c
-	$(CC) $(CFLAGS) -o base64-encode base64-encode.c
+base64-decode: base64-decode.c
 
-install: all install-info install-el install-vm install-pixmaps install-utils
+snapshot: patch ball
 
-install-info: vm.info
-	test -d $(INFODIR) || mkdir -p $(INFODIR)
-	cp vm.info vm.info-* $(INFODIR)
+VMPATCH=vm-$(VMV).patch
+ELISPDIR=$(HOME)/html-data/www.robf.de/Hacking/elisp
+patch:
+	-rm -f *.orig *.rej
+	tla changelog > ChangeLog
+	echo 'Version: $$Id: = '`tla revisions -f -r | head -1 | cut -d / -f 2` > $(VMPATCH)
+	echo "" >> $(VMPATCH)
+	echo '*******************************************************************************' >> $(VMPATCH)
+	cat patchdoc.txt >> $(VMPATCH); diff --ignore-all-space -u -P -x qp-encode -x qp-decode -x patchdoc.txt -x vm-autoload.el -x vm.el -x '*.elc' -x '#*' -x '*.gz' -x '*.patch' -x '*info*' -x ',*' $(HOME)/.hacking/vm-$(VMV) . | grep -v '^Only in'  | grep -v '^Binary files' >> $(VMPATCH); echo patch $(VMPATCH) written ...
+	gzip -f $(VMPATCH)
+	cp $(VMPATCH).gz $(ELISPDIR)
+	touch $(ELISPDIR)/index.rml
 
-install-vm: vm.elc
-	test -d $(LISPDIR) || mkdir -p $(LISPDIR)
-	cp *.elc $(LISPDIR)
+ball:
+	echo 'Version: $$Id: = '`tla revisions -f -r | head -1 | cut -d / -f 2` > ,id
+	tar chfvz vmrf.tgz ,id *ChangeLog patchdoc.txt Makefile.rf *.el
+	cp vmrf.tgz $(ELISPDIR)
+	touch $(ELISPDIR)/index.rml
 
-install-el:
-	test -d $(LISPDIR) || mkdir -p $(LISPDIR)
-	cp *.el $(LISPDIR)
+update:
+	if test -e '{arch}'; then echo ERROR: No updates in ARCH dirs; exit -1; fi;
+	wget -N http://www.robf.de/Hacking/elisp/vmrf.tgz
+	if test vmrf.tgz -nt vmrf-newer.tgz; then cp vmrf.tgz vmrf-newer.tgz; tar xvfz vmrf.tgz '*.el'; fi;
+	rm -f vm-autoload.el*
+	make -f Makefile.rf
 
-install-pixmaps:
-	test -d $(PIXMAPDIR) || mkdir -p $(PIXMAPDIR)
-	cp pixmaps/*.x[pb]m $(PIXMAPDIR)
+# As long as I am maintaining tla and CVS at the same time 
+update-cvs: $(HOME)/prog/xemacs/vm-mime.el \
+            $(HOME)/prog/xemacs/vm-serial.el \
+            $(HOME)/prog/xemacs/vm-summary-faces.el \
+            $(HOME)/prog/xemacs/vm-avirtual.el \
+            $(HOME)/prog/xemacs/vm-biff.el \
+            $(HOME)/prog/xemacs/vm-grepmail.el \
+            $(HOME)/prog/xemacs/vm-pine.el \
+            $(HOME)/prog/xemacs/vm-rfaddons.el
 
-install-utils: $(UTILS)
-	test -d $(BINDIR) || mkdir -p $(BINDIR)
-	cp $(UTILS) $(BINDIR)
+$(HOME)/prog/xemacs/vm-mime.el: vm-mime.el
+	cp -f $< $@
+$(HOME)/prog/xemacs/vm-serial.el: vm-serial.el
+	cp -f $< $@
+$(HOME)/prog/xemacs/vm-summary-faces.el: vm-summary-faces.el
+	cp -f $< $@
+$(HOME)/prog/xemacs/vm-avirtual.el: vm-avirtual.el
+	cp -f $< $@
+$(HOME)/prog/xemacs/vm-biff.el: vm-biff.el
+	cp -f $< $@
+$(HOME)/prog/xemacs/vm-grepmail.el: vm-grepmail.el
+	cp -f $< $@
+$(HOME)/prog/xemacs/vm-pine.el: vm-pine.el
+	cp -f $< $@
+$(HOME)/prog/xemacs/vm-rfaddons.el: vm-rfaddons.el
+	cp -f $< $@
 
-clean:
-	rm -f $(UTILS) vm.info vm.info-* vm-autoload.el vm-autoload.elc $(OBJECTS) tapestry.elc
+diff-cvs:
+	-diff -u $(HOME)/prog/xemacs/vm-mime.el vm-mime.el
+	-diff -u $(HOME)/prog/xemacs/vm-serial.el vm-serial.el
+	-diff -u $(HOME)/prog/xemacs/vm-summary-faces.el vm-summary-faces.el
+	-diff -u $(HOME)/prog/xemacs/vm-avirtual.el vm-avirtual.el
+	-diff -u $(HOME)/prog/xemacs/vm-biff.el vm-biff.el
+	-diff -u $(HOME)/prog/xemacs/vm-grepmail.el vm-grepmail.el
+	-diff -u $(HOME)/prog/xemacs/vm-pine.el vm-pine.el
+	-diff -u $(HOME)/prog/xemacs/vm-rfaddons.el vm-rfaddons.el
 
-vm.info:	vm.texinfo
-	@echo "making vm.info..."
-	@$(EMACS) $(BATCHFLAGS) -insert vm.texinfo -l texinfmt -f texinfo-format-buffer -f save-buffer
-
-# We use tr -d because Emacs under Cygwin apparently outputs CRLF
-# under Windows.  We remove the CRs.
-# Solaris 8's tr -d '\r' removes r's so we use '\015' instead.
-# the echo command can also emit CRs.
-vm-autoload.elc:	$(SOURCES)
-	@echo scanning sources to build autoload definitions...
-	@$(EMACS) $(BATCHFLAGS) -l ./make-autoloads -f print-autoloads $(SOURCES) | tr -d '\015' > vm-autoload.el
-	@echo "(provide 'vm-autoload)" | tr -d '\015' >> vm-autoload.el
-	@echo compiling vm-autoload.el...
-	@$(EMACS) $(BATCHFLAGS) -l $(BYTEOPTS) -f batch-byte-compile vm-autoload.el
-
-vm-crypto.elc:	vm-crypto.el $(CORE)
-	@echo compiling vm-crypto.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-crypto.el
-
-vm-delete.elc:	vm-delete.el $(CORE)
-	@echo compiling vm-delete.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-delete.el
-
-vm-digest.elc:	vm-digest.el $(CORE)
-	@echo compiling vm-digest.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-digest.el
-
-vm-edit.elc:	vm-edit.el $(CORE)
-	@echo compiling vm-edit.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-edit.el
-
-vm-folder.elc:	vm-folder.el $(CORE)
-	@echo compiling vm-folder.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-folder.el
-
-vm-imap.elc:	vm-imap.el $(CORE)
-	@echo compiling vm-imap.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-imap.el
-
-vm-license.elc:	vm-license.el $(CORE)
-	@echo compiling vm-license.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-license.el
-
-vm-macro.elc:	vm-macro.el $(CORE)
-	@echo compiling vm-macro.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-macro.el
-
-vm-mark.elc:	vm-mark.el $(CORE)
-	@echo compiling vm-mark.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-mark.el
-
-vm-menu.elc:	vm-menu.el vm-easymenu.el $(CORE)
-	@echo compiling vm-menu.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -l ./vm-easymenu.el -f batch-byte-compile vm-menu.el
-
-vm-message.elc:	vm-message.el $(CORE)
-	@echo compiling vm-message.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-message.el
-
-vm-minibuf.elc:	vm-minibuf.el $(CORE)
-	@echo compiling vm-minibuf.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-minibuf.el
-
-vm-mime.elc:	vm-mime.el $(CORE)
-	@echo compiling vm-mime.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-mime.el
-
-vm-misc.elc:	vm-misc.el $(CORE)
-	@echo compiling vm-misc.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-misc.el
-
-vm-mouse.elc:	vm-mouse.el $(CORE)
-	@echo compiling vm-mouse.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-mouse.el
-
-vm-motion.elc:	vm-motion.el $(CORE)
-	@echo compiling vm-motion.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-motion.el
-
-vm-page.elc:	vm-page.el $(CORE)
-	@echo compiling vm-page.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-page.el
-
-vm-pop.elc:	vm-pop.el $(CORE)
-	@echo compiling vm-pop.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-pop.el
-
-vm-reply.elc:	vm-reply.el $(CORE)
-	@echo compiling vm-reply.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-reply.el
-
-vm-save.elc:	vm-save.el $(CORE)
-	@echo compiling vm-save.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-save.el
-
-vm-search.elc:	vm-search.el $(CORE)
-	@echo compiling vm-search.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-search.el
-
-vm-sort.elc:	vm-sort.el $(CORE)
-	@echo compiling vm-sort.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-sort.el
-
-vm-startup.elc:	vm-startup.el $(CORE)
-	@echo compiling vm-startup.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-startup.el
-
-vm-summary.elc:	vm-summary.el $(CORE)
-	@echo compiling vm-summary.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-summary.el
-
-vm-thread.elc:	vm-thread.el $(CORE)
-	@echo compiling vm-thread.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-thread.el
-
-vm-toolbar.elc:	vm-toolbar.el $(CORE)
-	@echo compiling vm-toolbar.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-toolbar.el
-
-vm-undo.elc:	vm-undo.el $(CORE)
-	@echo compiling vm-undo.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-undo.el
-
-vm-user.elc:	vm-user.el $(CORE)
-	@echo compiling vm-user.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-user.el
-
-vm-vars.elc:	vm-vars.el $(CORE)
-	@echo compiling vm-vars.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-vars.el
-
-vm-version.elc:	vm-version.el $(CORE)
-	@echo compiling vm-version.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-version.el
-
-vm-virtual.elc:	vm-virtual.el $(CORE)
-	@echo compiling vm-virtual.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-virtual.el
-
-vm-window.elc:	vm-window.el $(CORE)
-	@echo compiling vm-window.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-window.el
-
-tapestry.elc:	tapestry.el
-	@echo compiling tapestry.el...
-	@$(EMACS) $(BATCHFLAGS) -l $(BYTEOPTS) -f batch-byte-compile tapestry.el
-
-vm-easymenu.elc:	vm-easymenu.el
-	@echo compiling vm-easymenu.el...
-	@$(EMACS) $(BATCHFLAGS) -l $(BYTEOPTS) -f batch-byte-compile vm-easymenu.el
+update-from-cvs:
+	-diff -u $(HOME)/prog/xemacs/vm-mime.el vm-mime.el \
+		|| cp $(HOME)/prog/xemacs/vm-mime.el .
+	-diff -u $(HOME)/prog/xemacs/vm-serial.el vm-serial.el \
+		|| cp $(HOME)/prog/xemacs/vm-serial.el .
+	-diff -u $(HOME)/prog/xemacs/vm-summary-faces.el vm-summary-faces.el \
+		|| cp $(HOME)/prog/xemacs/vm-summary-faces .
+	-diff -u $(HOME)/prog/xemacs/vm-avirtual.el vm-avirtual.el \
+		|| cp $(HOME)/prog/xemacs/vm-avirtual.el .
+	-diff -u $(HOME)/prog/xemacs/vm-biff.el vm-biff.el \
+		|| cp $(HOME)/prog/xemacs/vm-biff.el .
+	-diff -u $(HOME)/prog/xemacs/vm-grepmail.el vm-grepmail.el \
+		|| cp $(HOME)/prog/xemacs/vm-grepmail .
+	-diff -u $(HOME)/prog/xemacs/vm-pine.el vm-pine.el \
+		|| cp $(HOME)/prog/xemacs/vm-pine.el .
+	-diff -u $(HOME)/prog/xemacs/vm-rfaddons.el vm-rfaddons.el \
+		|| cp $(HOME)/prog/xemacs/vm-rfaddons.el .

@@ -6,7 +6,7 @@
 ;; Status:      Tested with XEmacs 21.1.12 & VM 7.16
 ;; Keywords:    VM helpers
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; X-RCS:       $Id: vm-rfaddons.el,v 1.58 2004/05/14 09:32:58 fenk Exp $
+;; X-RCS:       $Id: vm-rfaddons.el,v 1.59 2004/05/21 13:29:17 fenk Exp $
 
 ;;
 ;; This code is free software; you can redistribute it and/or modify
