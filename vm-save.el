@@ -467,7 +467,7 @@ vm-save-message instead (normally bound to `s')."
 	  (message "Message%s written to %s" (if (/= 1 count) "s" "") file)))
     (setq vm-last-written-file file)))
 
-(defun vm-pipe-message-to-command (command prefix-arg)
+(defun vm-pipe-message-to-command (command &optional prefix-arg)
   "Runs a shell command with some or all of the contents of the
 current message as input.
 By default, the entire message is used.
