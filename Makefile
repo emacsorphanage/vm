@@ -115,7 +115,8 @@ qp-decode: qp-decode.c
 base64-encode: base64-encode.c
 base64-decode: base64-decode.c
 
-snapshot: patch ball
+##############################################################################
+snapshot: patch ball single-files
 
 VMPATCH=vm-$(VMV).patch
 ELISPDIR=$(HOME)/html-data/www.robf.de/Hacking/elisp
@@ -132,68 +133,30 @@ patch:
 
 ball:
 	echo 'Version: $$Id: = '`tla revisions -f -r | head -1 | cut -d / -f 2` > ,id
-	tar chfvz vmrf.tgz ,id *ChangeLog patchdoc.txt Makefile.rf *.el
+	tar chfvz vmrf.tgz ,id *ChangeLog patchdoc.txt Makefile *.el
 	cp vmrf.tgz $(ELISPDIR)
 	touch $(ELISPDIR)/index.rml
 
+# As long as I am maintaining tla and CVS at the same time 
+single-files: $(ELISPDIR)/vm-mime.el \
+            $(ELISPDIR)/vm-serial.el \
+            $(ELISPDIR)/vm-summary-faces.el \
+            $(ELISPDIR)/vm-avirtual.el \
+            $(ELISPDIR)/vm-biff.el \
+            $(ELISPDIR)/vm-grepmail.el \
+            $(ELISPDIR)/vm-pine.el \
+            $(ELISPDIR)/vm-ps-print.el \
+            $(ELISPDIR)/vm-rfaddons.el
+
+$(ELISPDIR)/%.el: %.el
+	@echo Updating $<
+	@perl -pe 's/;; Version:     \$$Id\$$/;; Version:     \$$Id: = '"`tla revisions -f -r | head -1 | cut -d / -f 2`"/ $< > $@
+	@touch $(ELISPDIR)/index.rml
+
+##############################################################################
 update:
 	if test -e '{arch}'; then echo ERROR: No updates in ARCH dirs; exit -1; fi;
 	wget -N http://www.robf.de/Hacking/elisp/vmrf.tgz
 	if test vmrf.tgz -nt vmrf-newer.tgz; then cp vmrf.tgz vmrf-newer.tgz; tar xvfz vmrf.tgz '*.el'; fi;
 	rm -f vm-autoload.el*
-	make -f Makefile.rf
-
-# As long as I am maintaining tla and CVS at the same time 
-update-cvs: $(HOME)/prog/xemacs/vm-mime.el \
-            $(HOME)/prog/xemacs/vm-serial.el \
-            $(HOME)/prog/xemacs/vm-summary-faces.el \
-            $(HOME)/prog/xemacs/vm-avirtual.el \
-            $(HOME)/prog/xemacs/vm-biff.el \
-            $(HOME)/prog/xemacs/vm-grepmail.el \
-            $(HOME)/prog/xemacs/vm-pine.el \
-            $(HOME)/prog/xemacs/vm-rfaddons.el
-
-$(HOME)/prog/xemacs/vm-mime.el: vm-mime.el
-	cp -f $< $@
-$(HOME)/prog/xemacs/vm-serial.el: vm-serial.el
-	cp -f $< $@
-$(HOME)/prog/xemacs/vm-summary-faces.el: vm-summary-faces.el
-	cp -f $< $@
-$(HOME)/prog/xemacs/vm-avirtual.el: vm-avirtual.el
-	cp -f $< $@
-$(HOME)/prog/xemacs/vm-biff.el: vm-biff.el
-	cp -f $< $@
-$(HOME)/prog/xemacs/vm-grepmail.el: vm-grepmail.el
-	cp -f $< $@
-$(HOME)/prog/xemacs/vm-pine.el: vm-pine.el
-	cp -f $< $@
-$(HOME)/prog/xemacs/vm-rfaddons.el: vm-rfaddons.el
-	cp -f $< $@
-
-diff-cvs:
-	-diff -u $(HOME)/prog/xemacs/vm-mime.el vm-mime.el
-	-diff -u $(HOME)/prog/xemacs/vm-serial.el vm-serial.el
-	-diff -u $(HOME)/prog/xemacs/vm-summary-faces.el vm-summary-faces.el
-	-diff -u $(HOME)/prog/xemacs/vm-avirtual.el vm-avirtual.el
-	-diff -u $(HOME)/prog/xemacs/vm-biff.el vm-biff.el
-	-diff -u $(HOME)/prog/xemacs/vm-grepmail.el vm-grepmail.el
-	-diff -u $(HOME)/prog/xemacs/vm-pine.el vm-pine.el
-	-diff -u $(HOME)/prog/xemacs/vm-rfaddons.el vm-rfaddons.el
-
-update-from-cvs:
-	-diff -u $(HOME)/prog/xemacs/vm-mime.el vm-mime.el \
-		|| cp $(HOME)/prog/xemacs/vm-mime.el .
-	-diff -u $(HOME)/prog/xemacs/vm-serial.el vm-serial.el \
-		|| cp $(HOME)/prog/xemacs/vm-serial.el .
-	-diff -u $(HOME)/prog/xemacs/vm-summary-faces.el vm-summary-faces.el \
-		|| cp $(HOME)/prog/xemacs/vm-summary-faces .
-	-diff -u $(HOME)/prog/xemacs/vm-avirtual.el vm-avirtual.el \
-		|| cp $(HOME)/prog/xemacs/vm-avirtual.el .
-	-diff -u $(HOME)/prog/xemacs/vm-biff.el vm-biff.el \
-		|| cp $(HOME)/prog/xemacs/vm-biff.el .
-	-diff -u $(HOME)/prog/xemacs/vm-grepmail.el vm-grepmail.el \
-		|| cp $(HOME)/prog/xemacs/vm-grepmail .
-	-diff -u $(HOME)/prog/xemacs/vm-pine.el vm-pine.el \
-		|| cp $(HOME)/prog/xemacs/vm-pine.el .
-	-diff -u $(HOME)/prog/xemacs/vm-rfaddons.el vm-rfaddons.el \
-		|| cp $(HOME)/prog/xemacs/vm-rfaddons.el .
+	make -f Makefile

@@ -7,7 +7,7 @@
 ;; Status:      Tested with XEmacs 21.1.10 & GNU Emacs 20.7 & VM 7.07
 ;; Keywords:    sending mail, default mail, multiple recipients, serial mails 
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; X-RCS:       $Id: vm-serial.el,v 1.20 2004/05/14 09:32:51 fenk Exp $
+;; Version:     $Id$
 
 ;;
 ;; This code is free software; you can redistribute it and/or modify

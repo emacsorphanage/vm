@@ -21,7 +21,7 @@
 ;;; Author:      Robert Fenk
 ;;; Keywords:    draft handling
 ;;; X-URL:       http://www.robf.de/Hacking/elisp
-;;; X-RCS:       $Id: vm-mime.el,v 1.37 2004/05/21 13:29:15 fenk Exp $
+;;; Version:     $Id$
 
 (eval-and-compile
   (require 'vm-version)

@@ -6,7 +6,7 @@
 ;; Status:	Tested with XEmacs 21.1.10 & GNU Emacs 20.7 & VM 6.82
 ;; Keywords:	extensions, vm, ps-print
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; X-RCS:	$Id: vm-ps-print.el,v 1.16 2003/05/20 15:32:20 fenk Exp $
+;; Version:     $Id$
 ;;
 ;; This code is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

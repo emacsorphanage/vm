@@ -6,7 +6,7 @@
 ;; Status:      Tested with VM 7.00 & XEmacs 21.1.10 & GNU Emacs 20.7
 ;; Keywords:    VM helpers
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; X-RCS:       $Id: vm-biff.el,v 1.19 2004/05/14 09:32:50 fenk Exp $
+;; Version:     $Id$
 
 ;;
 ;; This code is free software; you can redistribute it and/or modify

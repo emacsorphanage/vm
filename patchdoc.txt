@@ -21,7 +21,7 @@ which is not patched and apply this patch with:
 
 Then rebuilt the elc files by
 
-	make -k -f Makefile.rf
+	make -k -f Makefile
 
 and restart VM, i.e. quit emacs.
 
@@ -35,7 +35,7 @@ UPDATES/UPGRADES
 Simply running the following command should check for an update and
 rebuilt the modified sources.  It requires "wget" to be installed!
 
-	make -f Makefile.rf update
+	make -f Makefile update
 
 *******************************************************************************
 ARCH (http://wiki.gnuarch.org/)
