@@ -187,6 +187,12 @@
 	  (save-excursion
 	    (setq work-buffer (vm-make-work-buffer))
 	    (set-buffer work-buffer)
+	    (if (and vm-stunnel-program-additional-configuration-file
+		     (stringp vm-stunnel-program-additional-configuration-file)
+		     (file-readable-p
+		      vm-stunnel-program-additional-configuration-file))
+		(insert-file-contents
+		 vm-stunnel-program-additional-configuration-file))
 	    (insert "client = yes\n")
 	    (insert "RNDfile = " vm-stunnel-random-data-file "\n")
 	    (insert "RNDoverwrite = no\n")

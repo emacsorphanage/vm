@@ -709,7 +709,7 @@ Use mouse button 3 to choose a Web browser for the URL."
      (vm-narrow-for-preview just-passing-through)
      (if (or vm-mime-display-function
 	     (natnump vm-fill-paragraphs-containing-long-lines)
-	     (and vm-display-using-mime vm-auto-decode-mime-messages
+	     (and vm-display-using-mime
 		  (not (vm-mime-plain-message-p (car vm-message-pointer)))))
 	 (let ((layout (vm-mm-layout (car vm-message-pointer))))
 	   (vm-make-presentation-copy (car vm-message-pointer))

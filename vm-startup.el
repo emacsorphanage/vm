@@ -426,7 +426,7 @@ See the documentation for vm-mode for more information."
 (defun vm-mode (&optional read-only)
   "Major mode for reading mail.
 
-This is VM 7.18.
+This is VM 7.19.
 
 Commands:
    h - summarize folder contents
@@ -557,16 +557,16 @@ Commands:
    $ - prefix for MIME commands (position the cursor over a MIME tag and
        use these key sequences to operate on the object):
 
-       RET - display the MIME object according to its type.
-       $ RET - display the MIME object's text using the `default' face.
-       $ e - display the MIME object with an external viewer.
-       $ v - display the MIME object as some other type.
-       $ w - write the MIME object to a file.
-       $ s - save the MIME object to a folder.
-       $ p - print the MIME object.
-       $ | - pipe the MIME object to a shell command.
-       $ a - attach the MIME object to a composition buffer.
-       $ d - delete the MIME object from the message.
+       RET   - display the MIME object according to its type.
+       $ s   - save the MIME object
+       $ p   - print the MIME object
+       $ |   - pipe the MIME object to a shell command.
+       $ RET - display the MIME object's text using the \"default\" face.
+       $ e   - display the MIME object with an external viewer.
+       $ d   - delete the MIME object from the message.
+       $ v   - display the MIME object as some other type.
+       $ w   - write the MIME object to a file.
+       $ a   - attach the MIME object to a composition buffer.
 
    L - reload your VM init file, ~/.vm
 

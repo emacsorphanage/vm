@@ -3772,8 +3772,29 @@ support SSL.  Set this to nil and VM will not use it."
 (defcustom vm-stunnel-program-switches nil
   "*List of command line switches to pass to stunnel.
 Leave this set to nil unless you understand how VM uses stunnel
-and know that you need to change something to get stunnel working."
+and know that you need to change something to get stunnel working.
+This variable is ignored if you're running stunnel version 4 or
+later versions, since those versions of stunnel are configurable
+only with a configuration file."
   :type '(list string))
+
+(defcustom vm-stunnel-program-additional-configuration-file nil
+  "*Name of a configuration file to append to the config file VM creates
+when using stunnel version 4 or later.  Leave this set to nil
+unless you understand how VM uses stunnel and know that you need
+to change something to get stunnel working.
+
+For stunnel version 4 and beyond stunnel relies on a configuration
+file to tell it what to do.  VM builts te ncessary configuration
+file for each instance of stunnel that it runs.  If you have extra
+configuration options you want stunnel to use, put them in a file
+and set vm-stunnel-program-additional-configuration-file to the
+name of that file.
+
+This variable is ignored if you're running stunnel versions prior
+to version 4 as VM uses command line argument to control stunnel
+in those cases."
+  :type 'string)
 
 (defcustom vm-stunnel-random-data-method 'generate
   "*Specifies what VM should do about sending the PRNG.
