@@ -725,9 +725,9 @@ set to the command name so that window configuration will be done."
   (interactive)
   (vm-select-folder-buffer)
   (setq this-command 'vm-create-virtual-folder)
-  (vm-create-virtual-folder 'subject (regexp-quote
-				      (vm-so-sortable-subject
-				       (car vm-message-pointer)))))
+  (vm-create-virtual-folder 'sortable-subject (regexp-quote
+	 			       (vm-so-sortable-subject
+	 				(car vm-message-pointer)))))
 
 (defun vm-menu-create-author-virtual-folder ()
   (interactive)
