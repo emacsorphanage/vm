@@ -150,7 +150,7 @@ single-files: $(ELISPDIR)/vm-mime.el \
 
 $(ELISPDIR)/%.el: %.el
 	@echo Updating $<
-	@perl -pe 's/;; Version:     \$$Id\$$/;; Version:     \$$Id: = '"`tla revisions -f -r | head -1 | cut -d / -f 2`"/ $< > $@
+	@updateWithId $< $@ 
 	@touch $(ELISPDIR)/index.rml
 
 ##############################################################################
