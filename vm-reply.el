@@ -44,7 +44,8 @@
 		     (let ((vm-summary-uninteresting-senders nil))
 				    (vm-summary-sprintf vm-in-reply-to-format
 							(car mp))))))
-	  (if vm-reply-subject-prefix
+	  (if (and vm-reply-subject-prefix
+		   (not (string-match vm-reply-subject-prefix this-subject)))
               (setq this-subject (concat vm-reply-subject-prefix
                                          this-subject)))
 	  
