@@ -1583,7 +1583,10 @@ headers."
     (if vm-presentation-buffer
         (set-buffer vm-presentation-buffer))
     (let ((o (or (car (vm-shrunken-headers-get-overlays (point)))
-                 (car (vm-shrunken-headers-get-overlays (1+ (point)))))))
+                 (car (vm-shrunken-headers-get-overlays
+                       (save-excursion (end-of-line)
+                                       (forward-char 1)
+                                       (point)))))))
       (save-restriction
         (narrow-to-region (- (overlay-start o) 7) (overlay-end o))
         (vm-shrunken-headers 'toggle)
@@ -1631,8 +1634,8 @@ Optional TOGGLE hiding of headers."
                (setq o (car shrunken))
                (let ((w (overlay-get o 'vm-shrunken-headers-widget)))
                  (widget-toggle-action w))
-               (overlay-put o 'invisible (not (overlay-get o 'invisible)))
-               (setq shrunken (cdr shrunken))))
+	       (overlay-put o 'invisible (not (overlay-get o 'invisible)))
+	       (setq shrunken (cdr shrunken))))
             (t
              (goto-char headers-start)
              (while (re-search-forward "^\\(\\s-+.*\n\\)+" headers-end t)
@@ -1649,15 +1652,13 @@ Optional TOGGLE hiding of headers."
                  ;; made before is just for highlighting and key-bindings ...
                  (setq o (make-overlay start end))
                  (overlay-put o 'vm-shrunken-headers t)
-                 (when (and vm-xemacs-p (featurep 'widget))
-                   (goto-char (1- start))
-                   (overlay-put o 'start-closed nil)
-                   (overlay-put o 'vm-shrunken-headers-widget
-                       (widget-create 'visibility
-                                      :action
+		 (goto-char (1- start))
+		 (overlay-put o 'start-closed nil)
+		 (overlay-put o 'vm-shrunken-headers-widget
+			      (widget-create 'visibility
+					     :action
                                       'vm-shrunken-headers-toggle-this-widget))
-                   ))
-               (overlay-put o 'invisible t))))
+		 (overlay-put o 'invisible t)))))
       (goto-char (point-min)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
