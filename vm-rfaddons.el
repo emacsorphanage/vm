@@ -402,6 +402,9 @@ This does not work when replying to multiple messages."
   :type 'boolean
   :group 'vm-rfaddons)
 
+(defvar vm-unfill-paragraphs-containing-long-lines-faster nil
+  "Set by calling `vm-unfill-paragraphs-containing-long-lines'.")
+
 (defcustom vm-fill-long-lines-in-reply-column 70
   "Fill lined in replies ut to this column."
   :type 'integer
@@ -448,13 +451,22 @@ This does not work when replying to multiple messages."
                  "enabled in fast mode")
              "disabled")))
 
-(defun vm-fill-paragraphs-containing-long-lines-faster (width start end)
-  (vm-save-restriction
-   (widen)
-   (or (markerp end) (setq end (vm-marker end)))
-   (rf-vm-fill-paragraphs-containing-long-lines-faster width start end))
-  nil)
+(defun vm-unfill-paragraphs-containing-long-lines-faster ()
+  "Sometimes filling long lines is the wrong thing!
+Call this function, if you want to see a message unfilled."
+  (interactive)
+  (let ((vm-unfill-paragraphs-containing-long-lines-faster t))
+    (vm-select-folder-buffer)
+    (vm-preview-current-message)))
 
+(defun vm-fill-paragraphs-containing-long-lines-faster (width start end)
+  (if (not vm-unfill-paragraphs-containing-long-lines-faster)
+      (vm-save-restriction
+       (widen)
+       (or (markerp end) (setq end (vm-marker end)))
+       (rf-vm-fill-paragraphs-containing-long-lines-faster width start end))
+    nil))
+  
 (defun rf-vm-fill-paragraphs-containing-long-lines-faster (width start end)
   (interactive (list vm-paragraph-fill-column (point-min) (point-max)))
   (save-excursion
