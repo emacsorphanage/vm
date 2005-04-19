@@ -629,6 +629,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     file ))
 
 (defun vm-make-tempfile-name (&optional filename-suffix proposed-filename)
+  (if (stringp proposed-filename)
+      (setq proposed-filename (file-name-nondirectory proposed-filename)))
   (let (filename)
     (cond ((and (stringp proposed-filename)
 		(not (file-exists-p

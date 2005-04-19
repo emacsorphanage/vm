@@ -1313,7 +1313,10 @@ See the advice in `vm-rfaddons-infect-vm'."
       (while mlist
         (let (parts layout file type o)
           (setq o (vm-mm-layout (car mlist)))
-          
+          (when (stringp o)
+            (setq o 'none)
+            (backtrace (get-buffer-create "*backtrace*"))
+            (message "There is a bug, see *backtrace* for details"))
           (if (eq 'none o)
               nil;; this is no mime message
             (setq type (car (vm-mm-layout-type o)))
