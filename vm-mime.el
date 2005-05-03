@@ -1969,7 +1969,9 @@ in the buffer.  The function is expected to make the message
 	  (setq type (downcase (car (vm-mm-layout-type layout)))
 		type-no-subtype (car (vm-parse type "\\([^/]+\\)")))
 	  (cond ((and vm-infer-mime-types
-		      (vm-mime-types-match "application/octet-stream" type)
+		      (or (and vm-mime-attachment-infer-type-for-text-attachments
+			       (vm-mime-types-match "text/plain" type))
+			  (vm-mime-types-match "application/octet-stream" type))
 		      (setq file
 			    (or
 			     (vm-mime-get-disposition-parameter layout

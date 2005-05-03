@@ -1527,6 +1527,12 @@ is checked against the regexps in `vm-mime-attachment-auto-type-alist'
 and the type corresponding to the first match found is used."
   :type 'boolean)
 
+(defcustom vm-mime-attachment-infer-type-for-text-attachments nil
+  "*Non-nil value means VM should try to infer a MIME object's
+  type from its filename also for text attachments, not only for
+  application/octet-stream."
+   :type 'boolean)
+
 (defcustom vm-mime-avoid-folding-content-type t
   "*Non-nil means don't send folded Content- headers in MIME messages.
 `Folded' headers are headers broken into multiple lines as specified
