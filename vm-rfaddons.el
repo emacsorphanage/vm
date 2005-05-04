@@ -339,7 +339,7 @@ or do the binding and advising on your own."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun vm-reply-include-presentation (count)
-  "Include presentation insted of text.
+  "Include presentation instead of text.
 This does not work when replying to multiple messages."
   (interactive "p")
   (let (vm-pbuf message)
