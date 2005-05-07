@@ -338,28 +338,39 @@ or do the binding and advising on your own."
     labels))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun vm-reply-include-presentation (count)
+(defun vm-reply-include-presentation (count &optional to-all)
   "Include presentation instead of text.
 This does not work when replying to multiple messages."
   (interactive "p")
   (let (vm-pbuf message)
     (save-excursion
+      (vm-follow-summary-cursor)
       (vm-select-folder-buffer)
+      (vm-check-for-killed-summary)
+      (vm-error-if-folder-empty)
       (setq vm-pbuf vm-presentation-buffer
             message (car vm-message-pointer))
       (vm-scroll-forward 0))
     (if (null vm-pbuf)
-        (vm-reply-include-text count)
+        (if to-all
+            (vm-followup-include-text count)
+          (vm-reply-include-text count))
       (let ((vm-reply-hook nil)
             (vm-mail-mode-hook nil)
             (mail-setup-hook nil)
             (mail-signature nil))
-        (vm-reply count))
+        (vm-do-reply to-all nil count))
       (goto-char (point-min))
       (re-search-forward (regexp-quote mail-header-separator) (point-max))
       (next-line 1)
-      (let ((start (point)))
-        (insert-buffer-substring vm-pbuf)
+      (let ((start (point))
+            (pbuf-start (save-excursion
+                          (set-buffer vm-pbuf)
+                          (goto-char (point-min))
+                          (if (re-search-forward "\n\n" (point-max) t)
+                              (if (re-search-forward "[^ \t\n]" (point-max) t)
+                                  (goto-char (1- (point))))))))
+        (insert-buffer-substring vm-pbuf pbuf-start)
         (vm-add-reply-prefix message start))
       (run-hooks 'mail-setup-hook)
       (run-hooks 'vm-mail-mode-hook)
@@ -368,6 +379,12 @@ This does not work when replying to multiple messages."
         (goto-char (point-max))
         (mail-signature)))))
 
+(defun vm-followup-include-presentation (count)
+  "Include presentation instead of text.
+This does not work when replying to multiple messages."
+  (interactive "p")
+  (vm-reply-include-presentation count t))
+  
 (defun vm-add-reply-prefix (message &optional start)
   (when (not start)
     (goto-char (point-min))
