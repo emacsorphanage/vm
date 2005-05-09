@@ -41,17 +41,19 @@ rebuilt the modified sources.  It requires "wget" to be installed!
 ARCH (http://wiki.gnuarch.org/)
 
 I maintain my changes in arch now, the coordinates of my archive are:
-Archive:  hack@robf.de--public
+
+Archive:  hack@robf.de--2005
 Location: http://www.robf.de/Hacking/arch
 Category: vm
 
 tla commands you may need:
 
-$ tla register-archive http://www.robf.de/Hacking/arch
-$ tla abrowse hack@robf.de--public
-$ tla versions -A hack@robf.de--public vm--robf
-$ # select a version you want to get, e.g. 
-$ tla get -A hack@robf.de--public vm--robf--7.18
+tla register-archive http://www.robf.de/Hacking/arch/2005
+# see what is there
+tla abrowse -A hack@robf.de--2005 vm--robf
+tla versions -A hack@robf.de--2005 vm--robf
+# get the source
+tla get -A hack@robf.de--public vm--robf--7.18
 
 *******************************************************************************
 BUGS
