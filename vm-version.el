@@ -21,8 +21,9 @@
               (while (search-forward "\n" (point-max) t)
                 (replace-match "")))
         (insert (format "vm--robf--%s--patch-unknown" vm-version))
-        (message "Cannot find ,id file for VM version!")))))
-    (buffer-substring nil nil (get-buffer " *vm-version*")))
+        (message "Cannot find ,id file for VM version!"))))
+    (buffer-substring)))
+    (set-buffer " *vm-version*")
 
 (defconst vm-xemacs-p nil)
 (defconst vm-xemacs-mule-p nil)

@@ -132,7 +132,7 @@ patch:
 	touch $(ELISPDIR)/index.rml
 
 ball:
-	echo 'Version: $$Id: = '`tla revisions -f -r | head -1 | cut -d / -f 2` > ,id
+	echo 'Version: $$Id: = '`tla revisions -f -r | head -1` > ,id
 	tar chfvz vmrf.tgz ,id *ChangeLog patchdoc.txt Makefile *.el
 	cp vmrf.tgz $(ELISPDIR)
 	touch $(ELISPDIR)/index.rml
