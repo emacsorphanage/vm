@@ -23,7 +23,7 @@
         (insert (format "vm--robf--%s--patch-unknown" vm-version))
         (message "Cannot find ,id file for VM version!"))))
     (set-buffer " *vm-version*")
-    (buffer-substring)))
+    (buffer-substring (point-min) (point-max))))
 
 (defconst vm-xemacs-p nil)
 (defconst vm-xemacs-mule-p nil)
