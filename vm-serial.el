@@ -77,14 +77,13 @@
   "Sending personalized serial mails and getting message templates."
   :group  'vm)
 
-(require 'cl)
-(require 'mail-utils)
-(require 'mail-extr)
-(require 'vm-version)
-(require 'vm-vars)
-(require 'vm-reply)
-(require 'vm-mime)
-(require 'vm-pine)
+(eval-when-compile
+  (require 'cl))
+
+(eval-and-compile
+  (require 'vm-pine)
+  (require 'mail-utils)
+  (require 'mail-extr))
 
 (let ((feature-list '(bbdb bbdb-sc)))
   (while feature-list

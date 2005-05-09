@@ -39,12 +39,8 @@
 ;; 
 
 
-(require 'cl)
-(require 'vm-autoload)
-(require 'vm-summary)
-(require 'vm-mime)
-(require 'vm-version)
-(require 'vm-vars)
+(eval-when-compile 
+  (require 'cl))
 
 (when vm-xemacs-p
   (require 'overlay))

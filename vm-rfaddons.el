@@ -71,12 +71,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-when-compile
   (require 'cl)
-  (require 'vm-version)
-  (require 'vm-message)
-  (require 'vm-macro)
-  (require 'vm-mime)
-  (require 'vm-misc)
-  (require 'vm-vars)
   (let ((feature-list '(vm-pcrisis bbdb bbdb-vm mailcrypt gnus-group)))
     (while feature-list
       (condition-case nil
@@ -88,13 +82,6 @@
       (setq feature-list (cdr feature-list)))))
 
 (require 'sendmail)
-(require 'vm-version)
-(condition-case nil
-    (require 'vm-autoload)
-  (error nil))
-(require 'vm-reply)
-(require 'vm-macro)
-(require 'vm-vars)
 (if vm-xemacs-p (require 'overlay))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
