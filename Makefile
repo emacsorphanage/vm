@@ -116,10 +116,14 @@ base64-encode: base64-encode.c
 base64-decode: base64-decode.c
 
 ##############################################################################
-snapshot: patch ball single-files
+snapshot: tla-sync patch ball single-files
 
 VMPATCH=vm-$(VMV).patch
 ELISPDIR=$(HOME)/html-data/www.robf.de/Hacking/elisp
+
+tla-sync:
+	tla archive-mirror hack@robf.de--2005 
+
 patch:
 	-rm -f *.orig *.rej
 	tla changelog > ChangeLog
