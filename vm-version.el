@@ -22,8 +22,8 @@
                 (replace-match "")))
         (insert (format "vm--robf--%s--patch-unknown" vm-version))
         (message "Cannot find ,id file for VM version!"))))
-    (buffer-substring)))
     (set-buffer " *vm-version*")
+    (buffer-substring)))
 
 (defconst vm-xemacs-p nil)
 (defconst vm-xemacs-mule-p nil)
