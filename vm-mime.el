@@ -50,7 +50,8 @@
 ;; practical under MULE.
 
 (when (or vm-xemacs-mule-p
-	(and vm-fsfemacs-mule-p enable-multibyte-characters))
+          ;(and vm-fsfemacs-mule-p enable-multibyte-characters)
+          )
 
   ;; Load any unicode support that's available. (If we're running on 21.5,
   ;; utf-8 is predefined as a coding system, so there's no need to load
