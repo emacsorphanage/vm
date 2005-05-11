@@ -50,13 +50,13 @@
 ;; practical under MULE.
 
 (when (or vm-xemacs-mule-p
-          ;(and vm-fsfemacs-mule-p enable-multibyte-characters)
+          (and vm-fsfemacs-mule-p enable-multibyte-characters)
           )
 
   ;; Load any unicode support that's available. (If we're running on 21.5,
   ;; utf-8 is predefined as a coding system, so there's no need to load
   ;; Mule-UCS.)
-  (and (not (coding-system-p (find-coding-system 'utf-8)))
+  (and (not (coding-system-p (if vm-xemacs-mule-p (find-coding-system 'utf-8) 'utf-8)))
        (locate-library "un-define") 
        (require 'un-define)
        (require 'unicode))
@@ -66,7 +66,7 @@
   (and (locate-library "latin-unity")
        (require 'latin-unity))
 
-  (let ((haveu8 (coding-system-p (find-coding-system 'utf-8))))
+  (let ((haveu8 (coding-system-p (if vm-xemacs-mule-p (find-coding-system 'utf-8) 'utf-8))))
 
     (if (featurep 'latin-unity)
 	(defvaralias 'vm-mime-ucs-list 'latin-unity-ucs-list)
@@ -91,7 +91,7 @@
     ;; Add some extra charsets that may not have been defined onto the end
     ;; of vm-mime-mule-charset-to-coding-alist.
     (mapcar (lambda (x)
-	      (and (coding-system-p (find-coding-system x))
+	      (and (coding-system-p (if vm-xemacs-mule-p (find-coding-system x) x))
 		   ;; Not using vm-string-assoc because of some quoting
 		   ;; weirdness it's doing. 
 		   (if (not (assoc
