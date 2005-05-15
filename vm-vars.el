@@ -3900,7 +3900,7 @@ mail is not sent."
   "*Default UNIX permission bits for newly created folders."
   :type 'integer)
 
-(defconst vm-maintainer-address "bug-vm@wonderworks.com"
+(defconst vm-maintainer-address "hack@robf.de"
   "Where to send VM bug reports.")
 
 (defvar vm-mode-map

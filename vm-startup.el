@@ -1699,7 +1699,15 @@ summary buffer to select a folder."
       )
      nil
      nil
-     "Please change the Subject header to a concise bug description.\nIn this report, remember to cover the basics, that is, what you expected to\nhappen and what in fact did happen.  Please remove these\ninstructions from your message.")
+     "You are using a patched version of VM and thus bug reports are not sent to
+bug-vm@wonderworks.com, but to hack@robf.de, the maintainer of this patched VM.
+
+Please change the Subject header to a concise bug description.
+
+In this report, remember to cover the basics, that is, what you expected to
+happen and what in fact did happen and how to reproduce it.
+
+Please remove these instructions from your message.")
     (save-excursion
       (goto-char (point-min))
       (mail-position-on-field "Subject"))))
