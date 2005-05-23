@@ -5198,7 +5198,7 @@ describes what was deleted."
 	       (save-excursion
 		 (vm-save-restriction
 		  (goto-char (overlay-start o))
-		  (insert "Deleted " (vm-mime-sprintf "%d\n" layout))
+		  (insert (vm-mime-sprintf vm-mime-deleted-object-label layout))
 		  (delete-region (point) (overlay-end o)))))))
 	  (vm-xemacs-p
 	   (let ((e (extent-at (point) nil 'vm-mime-layout)))
@@ -5218,7 +5218,7 @@ describes what was deleted."
 		   (vm-save-restriction
 		     (goto-char (extent-start-position e))
 		     (setq opos (point))
-		     (insert "Deleted " (vm-mime-sprintf "%d\n" layout))
+		     (insert (vm-mime-sprintf vm-mime-deleted-object-label layout))
 		     (delete-region (point) (extent-end-position e))
 		     (set-extent-endpoints e opos (point)))))
 	       (vm-mime-discard-layout-contents layout saved-file)))))))
@@ -5238,7 +5238,7 @@ describes what was deleted."
 	(cond ((null file)
 	       (insert "Content-Type: text/plain; charset=us-ascii\n\n")
 	       (vm-set-mm-layout-body-start layout (point-marker))
-	       (insert "[Deleted " (vm-mime-sprintf "%d]\n" layout)))
+	       (insert (vm-mime-sprintf vm-mime-deleted-object-label layout)))
 	      (t
 	       (insert "Content-Type: message/external-body; access-type=local-file; name=\"" file "\"\n")
 	       (insert "Content-Transfer-Encoding: 7bit\n\n")
@@ -5301,8 +5301,8 @@ describes what was deleted."
 		     (aset layout i (aref new-layout i))
 		     (setq i (1- i))))))
 	      (t
-	       (vm-set-mm-layout-type layout '("text/x-vm-deleted"))
-	       (vm-set-mm-layout-qtype layout '("text/x-vm-deleted"))
+	       (vm-set-mm-layout-type layout '("text/plain"))
+	       (vm-set-mm-layout-qtype layout '("text/plain"))
 	       (vm-set-mm-layout-encoding layout "7bit")
 	       (vm-set-mm-layout-id layout nil)
 	       (vm-set-mm-layout-description

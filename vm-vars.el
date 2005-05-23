@@ -3570,6 +3570,11 @@ that `vm-decode-mime-message' would do is not done, because this
 function is expected to subsume all of it."
   :type 'function)
 
+(defcustom vm-mime-deleted-object-label "[Deleted %f (%d;%t)]\n"
+  "*The label that will be inserted instead of the original mime object.
+See `vm-mime-compile-format-1' for valid format specifiers."
+  :type 'string)
+
 (defcustom vm-imap-session-preauth-hook nil
   "*List of hook functions to call to generate an preauthenticated
 IMAP session process.  This hook is only run if the
@@ -4912,8 +4917,10 @@ that has a match.")
     ("message/rfc822")
     ("message/news")
    ))
+
 (defconst vm-mime-encoded-word-regexp
   "=\\?\\([^?*]+\\)\\(\\*\\([^?*]+\\)\\)?\\?\\([BbQq]\\)\\?\\([^?]+\\)\\?=")
+
 ;; for MS-DOS and Windows NT
 ;;    nil value means text file
 ;;      t value means binary file
