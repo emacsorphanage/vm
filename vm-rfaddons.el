@@ -995,7 +995,6 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 ;  (vm-mime-display-internal-text/plain layout))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;###autoload
 (defcustom vm-mime-all-attachments-directory
   (if (boundp 'vm-mime-attachment-save-directory)
       vm-mime-attachment-save-directory
@@ -1018,7 +1017,6 @@ For guessing mime-types we use `vm-mime-attachment-auto-type-alist'."
   :type '(choice (const :tag "Ask" nil)
                  (string "application/octet-stream")))
 
-;;;###autoload
 (defcustom vm-mime-attach-files-in-directory-default-charset 'guess
   "*The default charset used for attached files of type `text'.
 If set to nil you will be asked for the charset.
@@ -1028,7 +1026,6 @@ this may take some time, since the file needs to be visited."
   :type '(choice (const :tag "Ask" nil)
                  (const :tag "Guess" guess)))
 
-;;;###autoload
 (defcustom vm-mime-save-all-attachments-types
   (append
    '("application" "x-unknown" "application/x-gzip")
@@ -1038,14 +1035,12 @@ this may take some time, since the file needs to be visited."
     :group 'vm-rfaddons
     :type '(repeat (string :tag "MIME type" nil)))
 
-;;;###autoload
 (defcustom vm-mime-save-all-attachments-types-exceptions
   '("text")
   "*List of MIME types which should not be saved."
   :group 'vm-rfaddons
   :type '(repeat (string :tag "MIME type" nil)))
 
-;;;###autoload
 (defcustom vm-mime-delete-all-attachments-types
   (append
    '("application" "x-unknown" "application/x-gzip")
@@ -1055,7 +1050,6 @@ this may take some time, since the file needs to be visited."
     :group 'vm-rfaddons
     :type '(repeat (string :tag "MIME type" nil)))
 
-;;;###autoload
 (defcustom vm-mime-delete-all-attachments-types-exceptions
   '("text")
   "*List of MIME types which should not be deleted."
@@ -1142,7 +1136,6 @@ which should be attached, when empty all files will be attached."
           (vm-mime-attach-file file type charset))
         (setq files (cdr files))))))
 
-;;;###autoload
 (defcustom vm-mime-auto-save-all-attachments-subdir
   nil
   "*Subdirectory where to save the attachments of a message.
@@ -1354,6 +1347,7 @@ See the advice in `vm-rfaddons-infect-vm'."
               (setq parts (cdr parts)))))
         (setq mlist (cdr mlist)))))
   )
+
 ;;;###autoload
 (defun vm-mime-delete-all-attachments (&optional count)
   (interactive "p")
@@ -1372,7 +1366,7 @@ See the advice in `vm-rfaddons-infect-vm'."
     (vm-discard-cached-data)
     (vm-preview-current-message)))
                                                  
- ;;;###autoload
+;;;###autoload
 (defun vm-mime-save-all-attachments (&optional count
                                                directory
                                                no-delete-after-saving)
@@ -1487,7 +1481,6 @@ headers."
           (insert (read-string "Subject: "))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;###autoload
 (defcustom vm-mime-encode-headers-regexp
   "Subject\\|\\(\\(Resent-\\)?\\(From\\|To\\|CC\\|BCC\\)\\)\\|Organization"
   "*A regexp matching the headers which should be encoded."
@@ -1564,7 +1557,6 @@ headers."
       (t (:background "gray")))
     "Used for marking shrunken headers."))
 
-;;;###autoload
 (defvar vm-shrunken-headers-keymap
   (let ((map (if vm-xemacs-p (make-keymap) (copy-keymap vm-mode-map))))
     (define-key map [(return)]   'vm-shrunken-headers-toggle-this)
@@ -1716,7 +1708,6 @@ composition buffer after sending."
       (if (not keep-buffer) (kill-this-buffer)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;###autoload
 (defcustom vm-assimilate-html-command "striptags"
   "*Command/function which should be called for stripping tags.
 
@@ -1736,7 +1727,6 @@ rm $tmpfile"
   :group 'vm-rfaddons
   :type '(string))
 
-;;;###autoload
 (defcustom vm-assimilate-html-mixed t
   "*Non-nil values cause messages to be assimilated as text/mixed.
 Otherwise they will be assimilated into a text/alternative message."
@@ -1899,7 +1889,6 @@ Argument MSG is a message pointer."
   :group 'vm-rfaddons
   :type '(choice (string) (const :tag "No Label" nil)))
 
-;;;###autoload
 (defcustom vm-mime-summary-attachment-label-types
   (append
    '("application" "x-unknown" "application/x-gzip")
@@ -1909,7 +1898,6 @@ Argument MSG is a message pointer."
   :group 'vm-rfaddons
   :type '(repeat (string :tag "MIME type" nil)))
 
-;;;###autoload
 (defcustom vm-mime-summary-attachment-label-types-exceptions
   nil
   "*List of MIME types which should not be listed as attachment."
@@ -2032,7 +2020,6 @@ of empty lines which have been quoted."
           (setq vm-mail-mode-open-line nil)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;###autoload
 (defcustom vm-mail-mode-elide-reply-region "[...]\n"
   "*String which is used as replacement for elided text."
   :group 'vm-rfaddons
@@ -2200,7 +2187,6 @@ It saves the decoded message and not the raw message like `vm-save-message'!"
 ;; Date: Mon, 20 Sep 1999 21:48:37 GMT
 ;; Organization: Deja.com - Share what you know. Learn what you don't.
 ;; From: rmirani
-;;;###autoload
 (defcustom vm-mime-display-internal-multipart/mixed-separater
   "\n----------------------------------------------------------------------\n"
   "*The separator which is inserted between the parts of a multipart message."
