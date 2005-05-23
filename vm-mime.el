@@ -2323,6 +2323,11 @@ in the buffer.  The function is expected to make the message
     t ))
 
 (defun vm-mime-display-internal-multipart/alternative (layout)
+  (if vm-mime-show-alternatives
+      (vm-mime-display-internal-multipart/mixed layout)
+    (vm-mime-display-internal-show-multipart/alternative layout)))
+
+(defun vm-mime-display-internal-show-multipart/alternative (layout)
   (let (best-layout)
     (cond ((eq vm-mime-alternative-select-method 'best)
 	   (let ((done nil)
@@ -6454,9 +6459,14 @@ agent; under Unix, normally sendmail.)"
     "Press RETURN"))
 
 (defun vm-mf-default-action (layout)
+  (if vm-mime-show-alternatives
+      (concat (vm-mf-default-action-orig layout) " alternative")
+    (vm-mf-default-action-orig layout)))
+
+(defun vm-mf-default-action-orig (layout)
   (or vm-mf-default-action
       (let (cons)
-	(cond ((or (vm-mime-can-display-internal layout)
+        (cond ((or (vm-mime-can-display-internal layout)
 		   (vm-mime-find-external-viewer
 		    (car (vm-mm-layout-type layout))))
 	       (let ((p vm-mime-default-action-string-alist)

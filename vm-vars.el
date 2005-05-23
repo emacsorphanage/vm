@@ -3575,6 +3575,10 @@ function is expected to subsume all of it."
 See `vm-mime-compile-format-1' for valid format specifiers."
   :type 'string)
 
+(defcustom vm-mime-show-alternatives t
+  "*Show alternative for multipart/alternative parts."
+  :type 'boolean)
+
 (defcustom vm-imap-session-preauth-hook nil
   "*List of hook functions to call to generate an preauthenticated
 IMAP session process.  This hook is only run if the
