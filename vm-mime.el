@@ -2324,7 +2324,8 @@ in the buffer.  The function is expected to make the message
 
 (defun vm-mime-display-internal-multipart/alternative (layout)
   (if vm-mime-show-alternatives
-      (vm-mime-display-internal-multipart/mixed layout)
+      (let ((vm-mime-show-alternatives 'mixed))
+        (vm-mime-display-internal-multipart/mixed layout))
     (vm-mime-display-internal-show-multipart/alternative layout)))
 
 (defun vm-mime-display-internal-show-multipart/alternative (layout)
@@ -6459,7 +6460,7 @@ agent; under Unix, normally sendmail.)"
     "Press RETURN"))
 
 (defun vm-mf-default-action (layout)
-  (if vm-mime-show-alternatives
+  (if (eq vm-mime-show-alternatives 'mixed)
       (concat (vm-mf-default-action-orig layout) " alternative")
     (vm-mf-default-action-orig layout)))
 
