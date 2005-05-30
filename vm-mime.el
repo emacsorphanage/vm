@@ -5180,7 +5180,7 @@ describes what was deleted."
       (error "Can't edit unmirrored virtual messages."))
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
-  (let (layout)
+  (let (layout label)
     (cond (vm-fsfemacs-p
 	   (let (o-list o (found nil))
 	     (setq o-list (overlays-at (point)))
@@ -5204,7 +5204,8 @@ describes what was deleted."
 	       (save-excursion
 		 (vm-save-restriction
 		  (goto-char (overlay-start o))
-		  (insert (vm-mime-sprintf vm-mime-deleted-object-label layout))
+                  (setq label (vm-mime-sprintf vm-mime-deleted-object-label layout))
+		  (insert label)
 		  (delete-region (point) (overlay-end o)))))))
 	  (vm-xemacs-p
 	   (let ((e (extent-at (point) nil 'vm-mime-layout)))
@@ -5224,10 +5225,17 @@ describes what was deleted."
 		   (vm-save-restriction
 		     (goto-char (extent-start-position e))
 		     (setq opos (point))
-		     (insert (vm-mime-sprintf vm-mime-deleted-object-label layout))
+                     (setq label (vm-mime-sprintf vm-mime-deleted-object-label layout))
+		     (insert label)
 		     (delete-region (point) (extent-end-position e))
 		     (set-extent-endpoints e opos (point)))))
-	       (vm-mime-discard-layout-contents layout saved-file)))))))
+	       (vm-mime-discard-layout-contents layout saved-file)))))
+    (when (interactive-p)
+      ;; make the change visible and place the cursor behind the removed object
+      (vm-discard-cached-data)
+      (when vm-presentation-buffer
+        (set-buffer vm-presentation-buffer)
+        (re-search-forward (regexp-quote label) (point-max) t)))))
 
 (defun vm-mime-discard-layout-contents (layout &optional file)
   (save-excursion
