@@ -433,10 +433,18 @@ This is essentially faster than VMs functions."
 (defadvice vm-fill-paragraphs-containing-long-lines
   (around faster-filling-by-code-borrowed-from-gnus activate)
   "Do faster filling if `vm-fill-paragraphs-containing-long-lines-faster' is t."
-  (if (eq t vm-fill-paragraphs-containing-long-lines-faster)
-      (vm-fill-paragraphs-containing-long-lines-faster
-       (ad-get-arg 0) (ad-get-arg 1) (ad-get-arg 2))
-    ad-do-it))
+  (cond
+   ;; use long lines when present 
+   ((locate-library "longlines")
+    (require 'longlines)
+    (defvar fill-nobreak-predicate nil)
+    (vm-fill-paragraphs-containing-long-lines-by-longlines
+     (ad-get-arg 0) (ad-get-arg 1) (ad-get-arg 2)))
+   ((eq t vm-fill-paragraphs-containing-long-lines-faster)
+    (vm-fill-paragraphs-containing-long-lines-faster
+     (ad-get-arg 0) (ad-get-arg 1) (ad-get-arg 2)))
+   (t 
+    ad-do-it)))
 
 ;;;###autoload
 (defun vm-fill-long-lines-in-reply ()
@@ -532,6 +540,20 @@ Call this function, if you want to see the message unfilled."
                    (if (> filled 1) "s" "")
                    message)
         (message "Nothing to fill!")))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;###autoload
+(defun vm-fill-paragraphs-containing-long-lines-by-longlines (width start end)
+  "Uses `longlines.el' for filling."
+  (let ((buffer-read-only nil))
+    (save-excursion
+      (vm-save-restriction
+       ;; longlines-wrap-region contains a (forward-line -1) which is causing
+       ;; wrapping of headers which is wrong, so we restrict it here!
+       (narrow-to-region start end)
+       (longlines-decode-region start end) ; make linebreaks hard
+       (longlines-wrap-region start end)  ; wrap, adding soft linebreaks
+       (widen)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-spamassassin-strip-report "spamassassin -d"
@@ -1826,7 +1848,7 @@ text/alternative message depending on the value of the variable
    ;; empty lines
    (cons "\n\n\n+"
          "\n\n")
-   ;; signature & -----Ursprngliche Nachricht-----
+   ;; signature & -----Ursprüngliche Nachricht-----
    (cons (concat "^" vm-included-text-prefix "--[^\n]*\n"
                  "\\(" vm-included-text-prefix "[^\n]*\n\\)+")
          "\n")
@@ -2195,7 +2217,7 @@ It saves the decoded message and not the raw message like `vm-save-message'!"
 
 ;;;###autoload
 (defun vm-mime-display-internal-multipart/mixed (layout)
-  "A replacement for VMs default function.
+  "A replacement for VMs default function adding separators.
 LAYOUT specifies the layout."
   
   (let ((part-list (vm-mm-layout-parts layout)))
