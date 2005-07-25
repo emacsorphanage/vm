@@ -122,7 +122,7 @@ VMPATCH=vm-$(VMV).patch
 ELISPDIR=$(HOME)/html-data/www.robf.de/Hacking/elisp
 
 tla-sync:
-	tla archive-mirror hack@robf.de--2005 
+	baz archive-mirror hack@robf.de--2005 
 
 patch:
 	-rm -f *.orig *.rej
@@ -164,3 +164,11 @@ update:
 	if test vmrf.tgz -nt vmrf-newer.tgz; then cp vmrf.tgz vmrf-newer.tgz; tar xvfz vmrf.tgz '*.el'; fi;
 	rm -f vm-autoload.el*
 	make -f Makefile
+
+get-other-extensions:
+	wget -N http://www.splode.com/~friedman/software/emacs-lisp/src/vcard.el
+	wget -N http://www.splode.com/~friedman/software/emacs-lisp/src/vm-vcard.el
+	wget -N http://de.geocities.com/ulf_jasper/lisp/u-vm-color.el
+	wget -N http://www.cis.upenn.edu/~bjornk/bogofilter/vm-bogofilter.el
+	wget -N http://groups-beta.google.com/group/gnu.emacs.vm.info/attach/f37a5e0ce73a4687/vm-message-history.el.%7E1.2%7E?part=2&hl=en
+	
