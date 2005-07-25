@@ -3575,7 +3575,7 @@ function is expected to subsume all of it."
 See `vm-mime-compile-format-1' for valid format specifiers."
   :type 'string)
 
-(defcustom vm-mime-show-alternatives t
+(defcustom vm-mime-show-alternatives nil
   "*Show alternative for multipart/alternative parts."
   :type 'boolean)
 
