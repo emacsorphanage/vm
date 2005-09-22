@@ -437,6 +437,9 @@ This is essentially faster than VMs functions."
    ;; use long lines when present 
    ((locate-library "longlines")
     (require 'longlines)
+    (unless (functionp 'line-end-position)
+      (defun line-end-position ()
+        (save-excursion (end-of-line) (point))))
     (defvar fill-nobreak-predicate nil)
     (vm-fill-paragraphs-containing-long-lines-by-longlines
      (ad-get-arg 0) (ad-get-arg 1) (ad-get-arg 2)))
