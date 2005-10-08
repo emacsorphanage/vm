@@ -180,6 +180,7 @@ all of them will be burst."
 		    (goto-char start)
 		    (while (= (following-char) ?\n)
 		      (delete-char 1)))
+		  (insert ?\n)
 		  (insert (vm-trailing-message-separator folder-type)))
 		 ((vm-mime-types-match "multipart/digest"
 				       (car (vm-mm-layout-type layout)))
@@ -203,6 +204,7 @@ all of them will be burst."
 		      (goto-char start)
 		      (while (= (following-char) ?\n)
 			(delete-char 1)))
+		    (insert ?\n)
 		    (insert (vm-trailing-message-separator folder-type))
 		    (setq part-list (cdr part-list))))
 		 (t (error
