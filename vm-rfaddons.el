@@ -69,6 +69,9 @@
   :group 'vm)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'vm-vars)
+(require 'vm-version)
+
 (eval-when-compile
   (require 'cl)
   (let ((feature-list '(vm-pcrisis bbdb bbdb-vm mailcrypt gnus-group)))
@@ -436,11 +439,30 @@ This is essentially faster than VMs functions."
   (cond
    ;; use long lines when present 
    ((locate-library "longlines")
-    (require 'longlines)
+    (require 'overlay)
+    (defvar fill-nobreak-predicate nil)
+    (defvar undo-in-progress nil)
+    (defvar longlines-mode-hook nil)
+    (defvar longlines-mode-on-hook nil)
+    (defvar longlines-mode-off-hook nil)
+    (unless (functionp 'replace-regexp-in-string)
+      (defun replace-regexp-in-string (regexp rep string
+                                              &optional fixedcase literal)
+        (replace-in-string string regexp rep literal)))
     (unless (functionp 'line-end-position)
       (defun line-end-position ()
         (save-excursion (end-of-line) (point))))
-    (defvar fill-nobreak-predicate nil)
+    (unless (functionp 'line-beginning-position)
+      (defun line-beginning-position (&optional n)
+        (save-excursion
+          (if n (forward-line n))
+          (beginning-of-line)
+          (point)))
+      (unless (functionp 'replace-regexp-in-string)
+        (defun replace-regexp-in-string (regexp rep string
+                                                &optional fixedcase literal)
+          (replace-in-string string regexp rep literal))))
+    (require 'longlines)
     (vm-fill-paragraphs-containing-long-lines-by-longlines
      (ad-get-arg 0) (ad-get-arg 1) (ad-get-arg 2)))
    ((eq t vm-fill-paragraphs-containing-long-lines-faster)
