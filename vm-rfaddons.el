@@ -69,8 +69,8 @@
   :group 'vm)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'vm-vars)
 (require 'vm-version)
+(require 'vm-vars)
 
 (eval-when-compile
   (require 'cl)
