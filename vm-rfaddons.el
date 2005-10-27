@@ -434,10 +434,14 @@ This is essentially faster than VMs functions."
   :group 'vm-rfaddons)
 
 (defadvice vm-fill-paragraphs-containing-long-lines
-  (around faster-filling-by-code-borrowed-from-gnus activate)
-  "Do faster filling if `vm-fill-paragraphs-containing-long-lines-faster' is t."
+  (around vm-rfaddons-better-filling activate)
+  "Do better filling if longlines.el is present otherwise if
+`vm-fill-paragraphs-containing-long-lines-faster' it t do faster
+filling than VMs code."
+  (if (eq (ad-get-arg 0) 'window-width)
+      (ad-set-arg 0 (- (window-width (get-buffer-window (current-buffer))) 1)))
   (cond
-   ;; use long lines when present 
+   ;; use long lines when present
    ((locate-library "longlines")
     (require 'overlay)
     (defvar fill-nobreak-predicate nil)
@@ -528,10 +532,7 @@ Call this function, if you want to see the message unfilled."
   (interactive (list vm-paragraph-fill-column (point-min) (point-max)))
   (save-excursion
     (let ((buffer-read-only nil)
-          (fill-column (min width
-                            fill-column
-                            (window-width (get-buffer-window (current-buffer)))
-                            vm-paragraph-fill-column))
+          (fill-column width)
           (filladapt-fill-column-forward-fuzz 0)
           (filladapt-mode t)
           (abbrev-mode nil)
@@ -570,7 +571,8 @@ Call this function, if you want to see the message unfilled."
 ;;;###autoload
 (defun vm-fill-paragraphs-containing-long-lines-by-longlines (width start end)
   "Uses `longlines.el' for filling."
-  (let ((buffer-read-only nil))
+  (let ((buffer-read-only nil)
+        (fill-column width))
     (save-excursion
       (vm-save-restriction
        ;; longlines-wrap-region contains a (forward-line -1) which is causing

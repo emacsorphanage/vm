@@ -752,12 +752,14 @@ A nil value causes VM to preview messages only if new or unread."
   :type 'boolean)
 
 (defcustom vm-fill-paragraphs-containing-long-lines nil
-  "*Non-nil numeric value N causes VM to fill paragraphs that
-contain lines spanning N columns or more.  Only plain text
+  "*Non-nil numeric value N or symbol 'window-width causes VM to fill
+paragraphs that contain lines spanning that columns or more.  Only plain text
 messages and text/plain MIME parts will be filled.  The message
 itself is not modified; its text is copied into a presentation
 buffer before the filling is done."
-  :type '(choice (const nil) integer))
+  :type '(choice (const nil)
+                 (const window-width)
+                 integer))
 
 (defcustom vm-paragraph-fill-column (default-value 'fill-column)
   "*Column beyond which automatic line-wrapping should happen when
