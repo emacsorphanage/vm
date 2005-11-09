@@ -1207,12 +1207,12 @@ This will be done according to `vm-mime-auto-save-all-attachments-subdir'."
     (if (y-or-n-p (format "Is this wrong? %s <> %s "
                          (vm-su-full-name msg)
                          (vm-get-header-contents msg "From:")))
-        (error "hossa")))
+        (error "Yes it is wrong!")))
     
   (cond ((functionp vm-mime-auto-save-all-attachments-subdir)
          (funcall vm-mime-auto-save-all-attachments-subdir msg))
         ((stringp vm-mime-auto-save-all-attachments-subdir)
-         vm-mime-auto-save-all-attachments-subdir)
+         (vm-summary-sprintf vm-mime-auto-save-all-attachments-subdir msg))
         ((null vm-mime-auto-save-all-attachments-subdir)
          (let (;; for the folder
                (basedir (buffer-file-name (vm-buffer-of msg)))
