@@ -161,7 +161,7 @@ $(ELISPDIR)/%.el: %.el
 update:
 	if test -e '{arch}'; then echo ERROR: No updates in ARCH dirs; exit -1; fi;
 	wget -N http://www.robf.de/Hacking/elisp/vmrf.tgz
-	if test vmrf.tgz -nt vmrf-newer.tgz; then cp vmrf.tgz vmrf-newer.tgz; tar xvfz vmrf.tgz '*.el'; fi;
+	if test vmrf.tgz -nt vmrf-newer.tgz; then cp vmrf.tgz vmrf-newer.tgz; tar xvfz vmrf.tgz; fi;
 	rm -f vm-autoload.el*
 	make -f Makefile
 
@@ -171,4 +171,4 @@ get-other-extensions:
 	wget -N http://de.geocities.com/ulf_jasper/lisp/u-vm-color.el
 	wget -N http://www.cis.upenn.edu/~bjornk/bogofilter/vm-bogofilter.el
 	wget -N http://groups-beta.google.com/group/gnu.emacs.vm.info/attach/f37a5e0ce73a4687/vm-message-history.el.%7E1.2%7E?part=2&hl=en
-	
+
