@@ -785,6 +785,7 @@
 	(setq match-start (match-beginning 0)
 	      match-end (match-end 0)
 	      charset (buffer-substring (match-beginning 1) (match-end 1))
+              need-conversion nil
 	      encoding (buffer-substring (match-beginning 4) (match-end 4))
 	      start (match-beginning 5)
 	      end (vm-marker (match-end 5)))
@@ -823,6 +824,7 @@
 	(setq match-start (match-beginning 0)
 	      match-end (match-end 0)
 	      charset (buffer-substring (match-beginning 1) (match-end 1))
+              need-conversion nil
 	      encoding (buffer-substring (match-beginning 4) (match-end 4))
 	      start (match-beginning 5)
 	      end (vm-marker (match-end 5)))
