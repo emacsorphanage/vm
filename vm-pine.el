@@ -257,8 +257,8 @@ MSGIDLIST is a list as returned by `vm-get-persistent-message-ids-for'."
     
     (while msgidlist
       (setq folder (caar msgidlist))
-      (if (file-exists-p (expand-file-name folder
-                                           (or vm-folder-directory "~/Mail")))
+      (if (and folder (file-exists-p (expand-file-name folder
+                                           (or vm-folder-directory "~/Mail"))))
           (save-excursion
             (if folder
                 (cond ((bufferp folder)
@@ -286,7 +286,7 @@ MSGIDLIST is a list as returned by `vm-get-persistent-message-ids-for'."
                                                           vm-message-pointers)
                                 mp nil)
                         (setq mp (cdr mp)))))))))
-        (message "The folder %s does not exist.  Maybe it was virtual." folder))
+        (message "The folder %s does not exist.  Maybe it was virtual or closed before postponing." folder))
       (setq msgidlist (cdr msgidlist)))
     vm-message-pointers))
 
@@ -370,11 +370,11 @@ creation)."
         (make-local-variable 'vm-redistribute-list)
         (setq vm-pp-data (read vm-pp-data)
               vm-reply-list 
-              (vm-get-message-pointers-for (nth 1 vm-pp-data))
+              (and (nth 1 vm-pp-data) (vm-get-message-pointers-for (nth 1 vm-pp-data)))
               vm-forward-list
-              (vm-get-message-pointers-for (nth 2 vm-pp-data))
+              (and (nth 2 vm-pp-data) (vm-get-message-pointers-for (nth 2 vm-pp-data)))
               vm-redistribute-list
-              (vm-get-message-pointers-for (nth 3 vm-pp-data)))
+              (and (nth 3 vm-pp-data) (vm-get-message-pointers-for (nth 3 vm-pp-data))))
         (if vm-reply-list (setq vm-system-state 'replying))
         (if vm-forward-list (setq vm-system-state 'forwarding))
         (if vm-redistribute-list (setq vm-system-state 'redistributing)))
