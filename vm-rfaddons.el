@@ -1349,10 +1349,11 @@ See the advice in `vm-rfaddons-infect-vm'."
                                                 &optional include exclude
                                                 mlist
                                                 quiet)
-  (or count (setq count 1))
-  (vm-check-for-killed-folder)
-  (vm-select-folder-buffer)
-  (vm-error-if-folder-empty)
+  (unless mlist
+    (or count (setq count 1))
+    (vm-check-for-killed-folder)
+    (vm-select-folder-buffer)
+    (vm-error-if-folder-empty))
 
   (let* ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (save-excursion
@@ -1388,7 +1389,7 @@ See the advice in `vm-rfaddons-infect-vm'."
               
               (if (or (vm-mime-types-match "message/external-body" type)
                       (not (vm-mime-is-type-valid type include exclude)))
-                  (if quiet (message "Ignoring action on %s parts!" type))
+                  (if (not quiet) (message "Ignoring action on %s parts!" type))
                 (setq file (or (vm-mime-get-disposition-parameter
                                 layout "filename") 
                                (vm-mime-get-parameter layout "name")))

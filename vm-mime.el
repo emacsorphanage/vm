@@ -1442,9 +1442,8 @@ with the recipient's software, if that recipient is outside of East Asia."
 				  (if (memq (car preapproved) vm-mime-ucs-list)
 				      (throw 'done 
 					     (car (cdr (assq 
-							(vm-coding-system-name 
-							 (car preapproved))
-				      vm-mime-mule-coding-to-charset-alist)))))
+							(car preapproved)
+                                                        vm-mime-mule-coding-to-charset-alist)))))
 				  (setq preapproved (cdr preapproved)))
 				;; Nothing universal in the preapproved list.
 				(throw 'done nil)))
@@ -1457,9 +1456,9 @@ with the recipient's software, if that recipient is outside of East Asia."
 			    (when (latin-unity-maybe-remap (point-min) 
 							   (point-max) sys 
 							   csets psets t)
-			      (throw 'done (second (assq 
-						    (vm-coding-system-name sys)
-				    vm-mime-mule-coding-to-charset-alist)))))
+			      (throw 'done (second (assq
+                                                    sys
+                                                    vm-mime-mule-coding-to-charset-alist)))))
 			  (setq systems (cdr systems)))
 			(throw 'done nil))
 
@@ -1480,9 +1479,8 @@ with the recipient's software, if that recipient is outside of East Asia."
 			    ;; the preapproved list, pass it back.
 			    (if (memq (car preapproved) vm-mime-ucs-list)
 				(throw 'done (second (assq 
-						      (vm-coding-system-name
-						       (car preapproved))
-				     vm-mime-mule-coding-to-charset-alist))))
+						      preapproved
+                                                      vm-mime-mule-coding-to-charset-alist))))
 
 			    ;; The preapproved entry isn't universal. Check if
 			    ;; it's related to the single non-ASCII MULE
@@ -1517,10 +1515,8 @@ with the recipient's software, if that recipient is outside of East Asia."
 			    ;; If we encounter a universal character set on
 			    ;; the preapproved list, pass it back.
 			    (when (memq (car preapproved) vm-mime-ucs-list)
-				(throw 'done (second (assq 
-						      (vm-coding-system-name
-						       (car preapproved))
-				     vm-mime-mule-coding-to-charset-alist))))
+				(throw 'done (second (assq preapproved
+                                                           vm-mime-mule-coding-to-charset-alist))))
 			    (setq preapproved (cdr preapproved)))))
 		    (throw 'done nil))))
 	       ;; Couldn't do any magic with vm-coding-system-priorities. Pass
@@ -1672,10 +1668,12 @@ with the recipient's software, if that recipient is outside of East Asia."
                                         t t nil shell-command-switch (nth 2 ooo))))
 	(if (not (eq ex 0))
 	    (progn
+              (switch-to-buffer work-buffer)
 	      (message "Conversion from %s to %s failed (exit code %s)"
 		       (car (vm-mm-layout-type layout))
 		       (nth 1 ooo)
 		       ex)
+              (sit-for 5)
 	      (throw 'done nil)))
 	(goto-char (point-min))
 	(insert "Content-Type: " (nth 1 ooo) "\n")
