@@ -328,69 +328,29 @@ or do the binding and advising on your own."
     labels))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvar vm-reply-include-presentation nil)
+
 (defun vm-reply-include-presentation (count &optional to-all)
   "Include presentation instead of text.
-This does not work when replying to multiple messages."
+This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
   (interactive "p")
-  (let (vm-pbuf message)
-    (save-excursion
-      (vm-follow-summary-cursor)
-      (vm-select-folder-buffer)
-      (vm-check-for-killed-summary)
-      (vm-error-if-folder-empty)
-      (setq vm-pbuf vm-presentation-buffer
-            message (car vm-message-pointer))
-      (vm-scroll-forward 0))
-    (if (null vm-pbuf)
-        (if to-all
-            (vm-followup-include-text count)
-          (vm-reply-include-text count))
-      (let ((vm-reply-hook nil)
-            (vm-mail-mode-hook nil)
-            (mail-setup-hook nil)
-            (mail-signature nil))
-        (vm-do-reply to-all nil count))
-      (goto-char (point-min))
-      (re-search-forward (regexp-quote mail-header-separator) (point-max))
-      (next-line 1)
-      (let ((start (point))
-            (pbuf-start (save-excursion
-                          (set-buffer vm-pbuf)
-                          (goto-char (point-min))
-                          (if (re-search-forward "\n\n" (point-max) t)
-                              (if (re-search-forward "[^ \t\n]" (point-max) t)
-                                  (goto-char (1- (point))))))))
-        (insert-buffer-substring vm-pbuf pbuf-start)
-        (vm-add-reply-prefix message start))
-      (run-hooks 'mail-setup-hook)
-      (run-hooks 'vm-mail-mode-hook)
-      (run-hooks 'vm-reply-hook)
-      (save-excursion
-        (goto-char (point-max))
-        (mail-signature)))))
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer)
+  (vm-check-for-killed-summary)
+  (vm-error-if-folder-empty)
+  (if (null vm-presentation-buffer)
+      (if to-all
+          (vm-followup-include-text count)
+        (vm-reply-include-text count))
+    (let ((vm-reply-include-presentation t))
+      (vm-do-reply to-all t count))))
 
 (defun vm-followup-include-presentation (count)
   "Include presentation instead of text.
 This does not work when replying to multiple messages."
   (interactive "p")
   (vm-reply-include-presentation count t))
-  
-(defun vm-add-reply-prefix (message &optional start)
-  (when (not start)
-    (goto-char (point-min))
-    (re-search-forward (regexp-quote mail-header-separator) (point-max))
-    (forward-char 1)
-    (setq start (point)))
-  (goto-char start)
-  ;; the rest is cut&past from vm-do-reply
-  (if (and message vm-included-text-attribution-format)
-      (let ((vm-summary-uninteresting-senders nil))
-        (insert (vm-summary-sprintf
-                 vm-included-text-attribution-format
-                 message))))
-  (while (re-search-forward "^" (point-max) t)
-    (insert vm-included-text-prefix)))
-  
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun vm-do-fcc-before-mime-encode ()
   "The name says it all.

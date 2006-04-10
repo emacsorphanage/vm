@@ -298,6 +298,20 @@ vm-included-text-prefix is prepended to every yanked line."
     (save-restriction
       (widen)
       (save-excursion
+        (if (and vm-reply-include-presentation
+                 (save-excursion
+                   (set-buffer (vm-buffer-of message))
+                   vm-presentation-buffer))
+            (let ((text
+                   (save-excursion
+                     (set-buffer (vm-buffer-of message))
+                     (set-buffer vm-presentation-buffer)
+                     (goto-char (point-min))
+                     (re-search-forward "\n\n" (point-max) t)
+                     (re-search-forward "[^ \t\n]" (point-max) t)
+                     (goto-char (1- (point)))
+                     (buffer-substring-no-properties (point)))))
+              (insert text))
 	(if (vectorp (vm-mm-layout message))
 	    (let* ((o (vm-mm-layout message))
 		   (type (car (vm-mm-layout-type o)))
@@ -366,7 +380,9 @@ vm-included-text-prefix is prepended to every yanked line."
 	    (if vm-display-using-mime
 		(progn
 		  (narrow-to-region start end)
-		  (vm-decode-mime-encoded-words))))))
+		  (vm-decode-mime-encoded-words)))))))
+      (if vm-reply-include-presentation
+          (setq end (point-max-marker))
       ;; get rid of read-only text properties on the text, as
       ;; they will only cause trouble.
       (let ((inhibit-read-only t))
@@ -379,7 +395,7 @@ vm-included-text-prefix is prepended to every yanked line."
       (if vm-display-using-mime
           (save-restriction
             (narrow-to-region start end)
-            (vm-decode-mime-encoded-words)))
+            (vm-decode-mime-encoded-words))))
       
       (push-mark end)
       (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
