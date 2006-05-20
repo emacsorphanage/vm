@@ -1235,11 +1235,22 @@ found, the current buffer remains selected."
 (defvar mail-signature-file)
 (defvar mail-personal-alias-file)
 
+(defun vm-drop-8bit-chars (buffer-name)
+  "Removes 8bit chars from the argument."
+  (if (and vm-drop-8bit-chars buffer-name)
+      (let ((i 0) (l (length buffer-name)))
+        (while (< i l)
+          (if (> (aref buffer-name i) 127)
+              (aset buffer-name i ?_))
+          (setq i (1+ i)))))
+  buffer-name)
+
 (defun vm-mail-internal
     (&optional buffer-name to subject in-reply-to cc references newsgroups)
   (let ((folder-buffer nil))
     (if (memq major-mode '(vm-mode vm-virtual-mode))
 	(setq folder-buffer (current-buffer)))
+    (setq buffer-name (vm-drop-8bit-chars buffer-name))
     (set-buffer
      (generate-new-buffer
       (or (if buffer-name
@@ -1608,6 +1619,7 @@ message."
               newbufname (format fmt newbufname ellipsis))
         (if (equal newbufname curbufname)
             nil
+          (setq newbufname (vm-drop-8bit-chars newbufname))
           (rename-buffer newbufname t)))))
 
 (defun vm-mail-mode-remove-tm-hooks ()
