@@ -18,7 +18,7 @@
 ;;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ;;;   This is a modified version of vm-mime.el that comes with vm-pine.el
 ;;;
-;;; Author:      Robert Fenk
+;;; Author:      Robert Widhopf-Fenk
 ;;; Keywords:    draft handling
 ;;; X-URL:       http://www.robf.de/Hacking/elisp
 ;;; Version:     $Id$
