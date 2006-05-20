@@ -3911,6 +3911,19 @@ mail is not sent."
   "*Default UNIX permission bits for newly created folders."
   :type 'integer)
 
+(defcustom vm-coding-system-priorities '(iso-8859-1 iso-8859-15 utf-8)
+  "*List of coding systems for VM-MIME to use, in order of preference."
+  :type 'sexp)
+
+(defcustom vm-mime-ucs-list '(utf-8 iso-2022-jp ctext escape-quoted)
+  "*List of coding systems that can encode all characters known to emacs."
+  :type 'sexp)
+
+(defcustom vm-drop-8bit-chars nil
+  "*If true buffer names will not contain 8bit chars which might cause problems
+on the file system of Macs."
+  :type 'boolean)
+
 (defconst vm-maintainer-address "hack@robf.de"
   "Where to send VM bug reports.")
 
