@@ -360,7 +360,7 @@ creation)."
       (make-local-variable 'vm-message-pointer)
       (setq vm-message-pointer vmp)
       (make-local-hook 'mail-send-hook)
-      (add-hook 'mail-send-hook 'vm-delete-postponed-message t t)
+      (add-local-hook 'mail-send-hook 'vm-delete-postponed-message t)
       (erase-buffer)
 
       ;; set the VM variables for setting source message attributes
@@ -821,7 +821,7 @@ Drafts in other folders are not recognized!"
            (funcall visit vm-postponed-folder)
            (vm-select-folder-buffer)
            (make-local-hook 'vm-quit-hook)
-           (add-hook 'vm-quit-hook 'vm-expunge-folder)
+           (add-local-hook 'vm-quit-hook 'vm-expunge-folder)
            (vm-expunge-folder)
            (cond ((= (length vm-message-list) 0)
                   (let ((this-command 'vm-quit))
@@ -868,10 +868,10 @@ If set to nil it will never save them nor it will ask."
 
 (defun vm-add-save-killed-message-hook ()
   (make-local-hook  'kill-buffer-hook)
-  (add-hook 'kill-buffer-hook 'vm-save-killed-message-hook nil t))
+  (add-local-hook 'kill-buffer-hook 'vm-save-killed-message-hook nil t))
 
 (defun vm-remove-save-killed-message-hook ()
-  (remove-hook 'kill-buffer-hook 'vm-save-killed-message-hook t))
+  (remove-local-hook 'kill-buffer-hook 'vm-save-killed-message-hook))
 
 (defun vm-save-killed-message-hook ()
   (if (or (and (equal vm-save-killed-message 'ask)
