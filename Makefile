@@ -122,7 +122,7 @@ VMPATCH=vm-$(VMV).patch
 ELISPDIR=$(HOME)/html-data/www.robf.de/Hacking/elisp
 
 tla-sync:
-	baz archive-mirror hack@robf.de--2005 
+	baz archive-mirror /home/fenk/ArchRepository/hack@robf.de--2005 /home/fenk/html-data/www.robf.de/Hacking/arch/2005 vm
 
 patch:
 	-rm -f *.orig *.rej
