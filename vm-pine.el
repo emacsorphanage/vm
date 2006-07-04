@@ -360,7 +360,7 @@ creation)."
       (make-local-variable 'vm-message-pointer)
       (setq vm-message-pointer vmp)
       (make-local-hook 'mail-send-hook)
-      (add-local-hook 'mail-send-hook 'vm-delete-postponed-message t)
+      (add-local-hook 'mail-send-hook 'vm-delete-postponed-message)
       (erase-buffer)
 
       ;; set the VM variables for setting source message attributes
@@ -868,7 +868,7 @@ If set to nil it will never save them nor it will ask."
 
 (defun vm-add-save-killed-message-hook ()
   (make-local-hook  'kill-buffer-hook)
-  (add-local-hook 'kill-buffer-hook 'vm-save-killed-message-hook nil t))
+  (add-local-hook 'kill-buffer-hook 'vm-save-killed-message-hook))
 
 (defun vm-remove-save-killed-message-hook ()
   (remove-local-hook 'kill-buffer-hook 'vm-save-killed-message-hook))
