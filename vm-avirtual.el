@@ -156,7 +156,7 @@
     (unforwarded . vm-mail-vs-unforwarded)
     (unredistributed . vm-mail-vs-unredistributed)
 
-    ;; unknown selectors which retrun always nil
+    ;; unknown selectors which return always nil
     (new . vm-mail-vs-unknown)
     (unread . vm-mail-vs-unknown)
     (read . vm-mail-vs-unknown)
@@ -183,6 +183,7 @@
     (vm-mode . vm-vs-vm-mode)
     (eval . vm-mail-vs-eval)
     (older-than . vm-mail-vs-older-than)
+    (in-bbdb . vm-mail-vs-in-bbdb)
     ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -364,6 +365,29 @@ I was really missing this!"
                          (bbdb-search-simple name nil)))))
       done)))
 
+(defun vm-mail-vs-in-bbdb (&optional address-class only-first)
+  "check if one of the email addresses from the mail is known."
+  (let (bbdb-user-mail-names)
+    (let* ((bbdb-get-only-first-address-p only-first)
+           (bbdb-user-mail-names nil)
+           (bbdb-get-addresses-headers
+            (if address-class
+                (or (list (assoc address-class bbdb-get-addresses-headers))
+                    (error "no such address class"))
+              bbdb-get-addresses-headers))
+           (addresses (bbdb-get-addresses nil nil
+                                          'vm-mail-mode-get-header-contents))
+           (done nil)
+           addr)
+      (while (and (not done) addresses)
+        (setq addr (caddar addresses)
+              addresses (cdr addresses))
+        (let ((name (car addr))
+              (net  (cadr addr)))
+          (setq done (or (bbdb-search-simple nil net)
+                         (bbdb-search-simple name nil)))))
+      done)))
+
 (defvar vm-spam-words nil
   "A list of words often contained in spam messages.")
 
@@ -438,6 +462,8 @@ I was really missing this!"
   (if (equal major-mode 'mail-mode)
       (apply 'vm-mail-vs-or selectors)
     nil))
+
+(defalias 'vm-vs-mail-mode 'vm-mail-vs-mail-mode)
 
 (defun vm-mail-vs-or (&rest selectors)
   (let ((result nil) selector arglist
