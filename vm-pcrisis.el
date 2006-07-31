@@ -1,14 +1,13 @@
 ;;; vm-pcrisis.el --- wide-ranging auto-setup for personalities in VM
 ;;
-;; Copyright (C) 1999 Rob Hodges
+;; Copyright (C) 1999 Rob Hodges, 2006 Robert Widhopf
 ;;
 ;; Package: Personality Crisis for VM
-;; Homepage: http://student.uq.edu.au/~s323140/pcrisis/
+;; Homepage: http://www.robf.de/Hacking/elisp/
 ;; Author: Rob Hodges
+;; Maintainer: Robert Widhopf-Fenk <hack@robf.de>
 ;; Filename: vm-pcrisis.el
-;; Version: 0.85 beta
-;; Status: This is not an official package; it's just something I wrote.
-;;
+;; Version: 1.0
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

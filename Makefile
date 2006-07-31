@@ -88,6 +88,10 @@ vm.info: vm.texinfo
 
 	@echo "(fmakunbound 'vm-its-such-a-cruel-world)" >> vm.el
 
+vm-pcrisis.info: vm-pcrisis.texi
+	@echo "making $@..."
+	$(EMACS) $(BATCHFLAGS) -insert vm.texinfo -l texinfmt -f texinfo-format-buffer -f save-buffer
+
 clean:
 	rm -f vm-autoload.el vm.el *.elc \
 	base64-decode base64-encode qp-decode qp-encode
