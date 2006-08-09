@@ -1,6 +1,6 @@
 \input texinfo
 @c %**start of header
-@setfilename p-crisis.info
+@setfilename vm-pcrisis.info
 @settitle Personality Crisis for VM
 @c %**end of header
 @paragraphindent asis
@@ -24,7 +24,7 @@ This is the documentation for Personality Crisis, version 1.0 beta.
 
 It was written by Rob Hodges <s323140@@student.uq.edu.au>.
 
-It is currently maintained by Robert Widhopf-Fenk <hack@robf.de>
+It is currently maintained by Robert Widhopf-Fenk <hack@@robf.de>
 
 Please read the docs before sending email about problems you're having.
 Most problems are due to incorrect regexps.  That said, if something in
