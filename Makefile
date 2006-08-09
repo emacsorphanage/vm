@@ -43,7 +43,7 @@ BYTEOPTS = ./vm-byteopts.el
 PRELOADS = -l $(BYTEOPTS) -l ./vm-version.el -l ./vm-message.el -l ./vm-macro.el -l ./vm-vars.el  
 
 # compile with noninteractive and relatively clean environment
-BATCHFLAGS = -batch -q -no-site-file
+BATCHFLAGS = -batch -q -no-site-file -eval '(setq buffer-file-coding-system nil)'
 
 # files that contain key macro definitions.  almost everything
 # depends on them because the byte-compiler inlines macro
@@ -90,7 +90,7 @@ vm.info: vm.texinfo
 
 vm-pcrisis.info: vm-pcrisis.texi
 	@echo "making $@..."
-	$(EMACS) $(BATCHFLAGS) -insert vm.texinfo -l texinfmt -f texinfo-format-buffer -f save-buffer
+	$(EMACS) $(BATCHFLAGS) -insert vm-pcrisis.texi -l texinfmt -f texinfo-format-buffer -f save-buffer
 
 clean:
 	rm -f vm-autoload.el vm.el *.elc \
