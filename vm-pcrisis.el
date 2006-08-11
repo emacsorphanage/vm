@@ -101,23 +101,27 @@ fairly high.  The value that's right for you will depend on how often you send
 email to new addresses using `vmpc-prompt-for-profile' (with the REMEMBER flag
 set to 'always or 'prompt).")
 
-(defvar vmpc-current-state ()
-  "Don't mess with this.")
+(defvar vmpc-current-state nil
+  "The current state, i.e. one of 'reply, 'forward, 'resent or 'automorph.
+It controls which actions/functions can be run.")
 
-(defvar vmpc-current-buffer ()
-  "Don't mess with this.")
+(defvar vmpc-current-buffer nil
+  "The current buffer, i.e. 'none or 'composition.
+It is 'none before running the adviced VM function and 'composition afterward,
+i.e. when within a composition buffer.")
 
-(defvar vmpc-saved-headers-alist ()
-  "Don't mess with this.")
+(defvar vmpc-saved-headers-alist nil
+  "Alist of headers from the original message saved for using them later in
+the composition.")
 
-(defvar vmpc-auto-profiles ()
-  "Don't mess with this.")
+(defvar vmpc-auto-profiles nil
+  "The auto profiles as stored in `vmpc-auto-profiles-file'.")
 
-(defvar vmpc-actions-to-run ()
-  "Don't mess with this.")
+(defvar vmpc-actions-to-run nil
+  "The actions which were run the last run.")
 
-(defvar vmpc-true-conditions ()
-  "Don't mess with this.")
+(defvar vmpc-true-conditions nil
+  "The true conditions from the last run.")
 
 ;; An "exerlay" is an overlay in FSF Emacs and an extent in XEmacs.
 ;; It's not a real type; it's just the way I'm dealing with the damn
