@@ -36,7 +36,9 @@
 (eval-when-compile
   (require 'vm-version)
   (require 'vm-message)
-  (require 'vm-macro))
+  (require 'vm-macro)
+  ;; get the macros we need.
+  (require 'cl))
 
 (require 'vm-reply)
 
@@ -125,8 +127,12 @@ set to 'always or 'prompt).")
 (defvar vmpc-pre-sig-exerlay ()
   "Don't mess with this.")
 
+(make-variable-buffer-local 'vmpc-pre-sig-exerlay)
+
 (defvar vmpc-sig-exerlay ()
   "Don't mess with this.")
+
+(make-variable-buffer-local 'vmpc-sig-exerlay)
 
 (defvar vmpc-pre-sig-face (progn (make-face 'vmpc-pre-sig-face 
 	    "Face used for highlighting the pre-signature.")
@@ -637,14 +643,12 @@ the signature at POS if `vmpc-sig-exerlay' is detached."
 
 (defun vmpc-delete-signature ()
   "Deletes the contents of `vmpc-sig-exerlay'."
-  (if (eq vmpc-current-buffer 'composition)
-      (progn
-	;; make sure it's not detached first:
-	(if (vmpc-exerlay-start vmpc-sig-exerlay)
-	    (progn
-	      (delete-region (vmpc-exerlay-start vmpc-sig-exerlay)
-			     (vmpc-exerlay-end vmpc-sig-exerlay))
-	      (vmpc-forcefully-detach-exerlay vmpc-sig-exerlay))))))
+  (when (and (eq vmpc-current-buffer 'composition)
+             ;; make sure it's not detached first:
+             (vmpc-exerlay-start vmpc-sig-exerlay))
+    (delete-region (vmpc-exerlay-start vmpc-sig-exerlay)
+                   (vmpc-exerlay-end vmpc-sig-exerlay))
+    (vmpc-forcefully-detach-exerlay vmpc-sig-exerlay)))
 
 
 (defun vmpc-signature (sig)
@@ -1021,6 +1025,21 @@ body of the message being replied to."
   (vmpc-create-sig-and-pre-sig-exerlays)
   (setq vmpc-current-buffer 'composition)
   (vmpc-run-actions))
+
+(defadvice vm-compose-mail (around vmpc-compose-newmail activate)
+  (setq vmpc-saved-headers-alist ()
+	vmpc-actions-to-run ()
+	vmpc-true-conditions ())
+  (setq vmpc-current-state 'newmail
+	vmpc-current-buffer 'none)
+  (vmpc-build-true-conditions-list)
+  (vmpc-build-actions-to-run-list)
+  (vmpc-run-actions)
+  ad-do-it
+  (vmpc-create-sig-and-pre-sig-exerlays)
+  (setq vmpc-current-buffer 'composition)
+  (vmpc-run-actions))
+
 
 (defadvice vm-forward-message (around vmpc-forward activate)
   ;; this stuff is already done when replying, but not here:
