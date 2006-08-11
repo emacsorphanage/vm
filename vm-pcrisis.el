@@ -158,12 +158,8 @@ the composition.")
 (defvar vmpc-intangible-sig 'nil
   "Whether to forbid the cursor from entering the signature.")
 
-(defvar vmpc-xemacs-p
-  (if (string-match "XEmacs\\|Lucid" emacs-version)
-      t
-    nil)
-  "Don't mess with this.
-This variable is automatically initialised to t if p-crisis is
+(defvar vmpc-xemacs-p (featurep 'xemacs)
+  "This variable is automatically initialised to t if p-crisis is
 running under XEmacs; otherwise nil.  P-crisis checks its value when
 it needs to know what flavour of Emacs this is.")
 
