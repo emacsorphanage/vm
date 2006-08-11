@@ -3,8 +3,11 @@
 @setfilename vm-pcrisis.info
 @settitle Personality Crisis for VM
 @c %**end of header
-@paragraphindent asis
+@direntry
+* VM-pcrisis::                  A personality crisis solver for VM
+@end direntry
 
+@paragraphindent asis
 
 @ifinfo
 This is the documentation for Personality Crisis, an add-on for the
@@ -147,7 +150,7 @@ explicitly choose a "personality" when composing new messages.
 @section Specific Abilities
 
 Based on the headers of a message you're replying to, you can get
-p-crisis to do any number of these things:
+vm-pcrisis to do any number of these things:
 
 @itemize @bullet
 @item Change or insert any headers you like in your reply.
@@ -177,12 +180,12 @@ remember to use that profile when sending messages to the same address
 in the future.
 @end itemize
 
-If you wish, you can also have p-crisis prompt you for a personality
+If you wish, you can also have vm-pcrisis prompt you for a personality
 when composing a new mail, which is useful if you need to set up VM
 variables with new mails, or if you prefer to more deliberatly choose
 who you are for each message.  
 
-If you write your own functions to do things that p-crisis can't do by
+If you write your own functions to do things that vm-pcrisis can't do by
 itself, ready-made functions are provided to allow you easy access to
 the contents of headers in both the message you're replying to, and
 the message you're writing.
@@ -228,7 +231,7 @@ new mail message after typing in the To: address.
 particular address.  
 
 @item If you put your imagination to work while reading through this
-manual, you'll probably think of other ways that p-crisis can help
+manual, you'll probably think of other ways that vm-pcrisis can help
 you.  Have fun!
 
 @end itemize
@@ -244,7 +247,7 @@ when you're replying to or forwarding a message, or in the midst of
 writing a message.
 
 You define the condition in @code{vmpc-conditions}, and the action you
-want p-crisis to take in @code{vmpc-actions}, giving a name to each.
+want vm-pcrisis to take in @code{vmpc-actions}, giving a name to each.
 You then associate the condition with the action in
 @code{vmpc-replies-alist} if it's one that relies on the headers of a
 message you're replying to, @code{vmpc-forwards-alist} if it's a message
@@ -285,7 +288,7 @@ message.  Here are a couple of ideas:
 A very good idea if you're in the habit of using this to move from
 your headers to the body of your message.
 
-@item Let p-crisis help you: tab between headers.@*
+@item Let vm-pcrisis help you: tab between headers.@*
 See below for more about this.
 
 @item Pre-empting vm-mail-send-and-exit: automorph with C-c C-c.@*
@@ -307,8 +310,7 @@ mode.  For example, to bind it to the F7 key, you might put this in
 your ~/.vm file:
 
 @lisp
-(add-hook 'vm-mail-mode-hook
-        '(lambda () (local-set-key [f7] 'vmpc-automorph)))
+(define-key vm-mail-mode-map [f7] 'vmpc-automorph)
 @end lisp
 
 Attaching to other functions is also fairly straightforward.  Just use a
@@ -316,9 +318,9 @@ wrapper function.  For example:
 
 @lisp
 (defun mail-text-and-automorph ()
-        (interactive)
-        (mail-text)
-        (vmpc-automorph))
+   (interactive)
+   (mail-text)
+   (vmpc-automorph))
 @end lisp
 
 Then bind this function to C-c C-t (or whatever keystroke you like to
@@ -331,8 +333,7 @@ again to then go to the start of the message body, calling
 file:
 
 @lisp
-(add-hook 'vm-mail-mode-hook
-    '(lambda () (local-set-key [tab] 'vmpc-tab-header-or-tab-stop)))
+(define-key vm-mail-mode-map [tab] 'vmpc-tab-header-or-tab-stop)
 @end lisp
 
 If you also want shift-tab to take you back to the previous header, you
@@ -341,9 +342,7 @@ doing @code{Ctrl-h k Shift-TAB} -- for me, it produces
 @code{iso-left-tab}.  So I add this to my ~/.vm:
 
 @lisp
-(add-hook 'vm-mail-mode-hook '(lambda ()
-        (local-set-key [iso-left-tab] 
-                'vmpc-backward-tab-header-or-tab-stop)))
+(define-key vm-mail-mode-map [iso-left-tab] 'vmpc-backward-tab-header-or-tab-stop)
 @end lisp
 
 You can use any one or more of these ideas, calling the automorph
@@ -700,7 +699,7 @@ first false one it finds.
 
 Okay, I believe I've gone into much more depth here than the average
 user will ever need; the point is that with a little lisp knowledge you
-can have as fine a control over the automated actions of p-crisis as you
+can have as fine a control over the automated actions of vm-pcrisis as you
 need.  Even without real lisp knowledge, I hope that you can figure out
 enough from these examples to achieve such control.
 
@@ -830,7 +829,7 @@ and change the contents of a header field.
 @end lisp
 
 When an empty string is given as the signature, as in the second
-profile, p-crisis will actually remove any signature that has been
+profile, vm-pcrisis will actually remove any signature that has been
 placed there by other actions.  
 
 Also note that by including a From: header, we override the values of
@@ -900,7 +899,7 @@ we can associate it with an "unknown sender" condition.  Here we go:
   (vmpc-prompt-for-profile))
 @end lisp
 
-If we want p-crisis to figure out who our message is destined for and to
+If we want vm-pcrisis to figure out who our message is destined for and to
 remember to use the profile we choose the next time we send to that
 address instead of prompting, we would do it like this:
 
@@ -917,10 +916,10 @@ deal with filenames like that, you might have to change this value.
 Keep in mind that the associations stored in this file are only used by
 @code{vmpc-prompt-for-profile}.  They do not have the effect of adding
 new associations between addresses and profiles in the general operation
-of p-crisis; they are simply used by @code{vmpc-prompt-for-profile}
+of vm-pcrisis; they are simply used by @code{vmpc-prompt-for-profile}
 instead of prompting you in the future.
 
-IMPORTANT: When p-crisis decides who your message is destined for, it
+IMPORTANT: When vm-pcrisis decides who your message is destined for, it
 does so on the basis of the Reply-To: or From: field of the message
 being replied (or in the case of automorph, the To: field of your
 message).  This takes account of @code{vm-reply-ignored-reply-tos}, but
@@ -1033,7 +1032,7 @@ messages with vm-mail.
 
 One strategy for this is to have conditions based on the folder from
 which you are sending mail.  You might like to set things this up for
-some folders, and have p-crisis prompt you for an action in the other
+some folders, and have vm-pcrisis prompt you for an action in the other
 folders.  Here's how you might do that...
 
 In @code{vmpc-conditions}, you'd have a couple of conditions like this:
@@ -1162,7 +1161,7 @@ The @code{vmpc-intangible-pre-sig} variable works just like
 Traditionally, signatures are added to new mail messages using a
 signature-insertion function bound to @code{mail-mode-hook} or similar,
 so that every message you wrote started off containing a signature.  If
-you use the p-crisis signature functions in addition to such a setup,
+you use the vm-pcrisis signature functions in addition to such a setup,
 you should add the following to your ~/.vm file:
 
 (setq vmpc-expect-default-signature t)
@@ -1216,7 +1215,7 @@ skips across them with @code{vmpc-intangible-pre-sig} and
 package to insert a signature in every mail buffer, you should look at
 setting @code{vmpc-expect-default-signature}.
 
-@item You can now use p-crisis in conjunction with the forwarding
+@item You can now use vm-pcrisis in conjunction with the forwarding
 functions of VM.  Just set up @code{vmpc-forwards-alist}, which has an
 identical format to @code{vmpc-replies-alist}.
 

@@ -159,7 +159,7 @@ the composition.")
   "Whether to forbid the cursor from entering the signature.")
 
 (defvar vmpc-xemacs-p (featurep 'xemacs)
-  "This variable is automatically initialised to t if p-crisis is
+  "This variable is automatically initialised to t if vm-pcrisis is
 running under XEmacs; otherwise nil.  P-crisis checks its value when
 it needs to know what flavour of Emacs this is.")
 
@@ -352,7 +352,7 @@ Or overlays, in the case of GNUmacs.  Thus, exerlays."
   (vmpc-set-exerlay-insertion-types 'vmpc-pre-sig-exerlay t nil)
   (vmpc-set-exerlay-insertion-types 'vmpc-sig-exerlay t nil)
 
-  ;; deal with signatures inserted by other things than p-crisis:
+  ;; deal with signatures inserted by other things than vm-pcrisis:
   (if vmpc-expect-default-signature
       (save-excursion
 	(let ((p-max (point-max))
