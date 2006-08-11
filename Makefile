@@ -62,7 +62,7 @@ UTILS = qp-decode qp-encode base64-decode base64-encode
 .el.elc:
 	$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile $<
 
-all: vm.elc $(OBJECTS) $(UTILS) vm.info
+all: vm.elc $(OBJECTS) $(UTILS) vm.info vm-pcrisis.info
 
 recompile:
 	$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-recompile-directory .
@@ -77,7 +77,7 @@ debug:	$(SOURCES) tapestry.el
 
 install: all
 	mkdirhier $(INFODIR) $(LISPDIR) $(PIXMAPDIR) $(BINDIR)
-	cp vm.info vm.info-* $(INFODIR)
+	cp vm.info vm.info-* vm-pcrisis.info $(INFODIR)
 	cp *.elc $(LISPDIR)
 	cp pixmaps/*.xpm $(PIXMAPDIR)
 	cp $(UTILS) $(BINDIR)
