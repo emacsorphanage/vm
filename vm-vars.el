@@ -2209,6 +2209,13 @@ leaving no way to reply to just the author of a message."
   :group 'vm
   :type '(repeat regexp))
 
+(defcustom vm-reply-include-presentation nil
+  "*If true a reply will include the presentation of a message.
+This might give better results when using filling or MIME encoded messages,
+e.g. HTML message."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-in-reply-to-format "%i"
   "*String which specifies the format of the contents of the In-Reply-To
 header that is generated for replies.  See the documentation for the
