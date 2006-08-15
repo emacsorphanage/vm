@@ -448,8 +448,11 @@ CLUMP-SEP."
               (setq hdrfield (list hdrfield)))
 	  ;; find the end of the headers:
 	  (goto-char (point-min))
-	  (re-search-forward 
-           (concat "^\\(" (regexp-quote mail-header-separator) "\\)$"))
+	  (or (re-search-forward 
+               (concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
+               nil t)
+              (error "Cannot find mail-header-separator %S in buffer %S"
+                     mail-header-separator (current-buffer)))
 	  (setq end-of-headers (match-beginning 0))
 	  ;; now rip through finding all the ones we want:
           (while hdrfield
