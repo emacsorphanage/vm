@@ -125,7 +125,7 @@ but you don't have to.
 @item 
 Add the following line to your ~/.vm file:
 @lisp
-(load "vm-pcrisis")
+(require 'vm-pcrisis)
 @end lisp
 
 @item 
