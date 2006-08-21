@@ -30,16 +30,15 @@
 ;;
 ;; Documentation is now in Texinfo and HTML formats.  You should have
 ;; downloaded one or the other along with this package at the URL
-;; above.  
+;; above.
 
 ;;; TODO:
-;; - more lispification, Rob was a bit unfunctional 
+;; - more lispification, Rob was a bit unfunctional
 ;; - use defcustom all over the place
-;; - checkdoc
 ;; - add a trace buffer?
 ;; - info file:
-;;  - add a list of the changes 
-;;  - how to debug 
+;;  - add a list of the changes
+;;  - how to debug
 ;;  - quick start (with prompting)
 
 ;;; Code:
@@ -71,7 +70,7 @@ features of Personality Crisis, or the `vmpc-prompt-for-profile' action.")
 (defvar vmpc-actions-alist ()
   "*An alist associating conditions with actions from `vmpc-actions'.
 If you do not want to map actions for each state, e.g. for replying, forwarding,
-resending, composing or automorphing, then set this one.") 
+resending, composing or automorphing, then set this one.")
 
 (defvar vmpc-reply-alist ()
   "*An alist associating conditions with actions from `vmpc-actions' when replying.")
@@ -89,7 +88,7 @@ resending, composing or automorphing, then set this one.")
   "*An alist associating conditions with actions from `vmpc-actions' when resending.")
 
 (defvar vmpc-auto-profiles-file "~/.vmpc-auto-profiles"
-  "*File in which to save information used by `vmpc-prompt-for-profile'.  
+  "*File in which to save information used by `vmpc-prompt-for-profile'.
 The user is welcome to change this value.")
 
 (defvar vmpc-auto-profiles-expunge-days 100
@@ -100,7 +99,8 @@ right for you will depend on how often you send email to new addresses using
 `vmpc-prompt-for-profile' (with the REMEMBER flag set to 'always or 'prompt).")
 
 (defvar vmpc-current-state nil
-  "The current state, i.e. one of 'reply, 'forward, 'resent, 'automorph or 'newmail.
+  "The current state of pcrisis.
+It is one of 'reply, 'forward, 'resent, 'automorph or 'newmail.
 It controls which actions/functions can/will be run.")
 
 (defvar vmpc-current-buffer nil
@@ -123,7 +123,7 @@ i.e. when within the composition buffer.")
 ;; An "exerlay" is an overlay in FSF Emacs and an extent in XEmacs.
 ;; It's not a real type; it's just the way I'm dealing with the damn
 ;; things to produce containers for the signature and pre-signature
-;; which can be highlighted etc. and work on both platforms.  
+;; which can be highlighted etc. and work on both platforms.
 
 (defvar vmpc-pre-sig-exerlay ()
   "Don't mess with this.")
@@ -135,7 +135,7 @@ i.e. when within the composition buffer.")
 
 (make-variable-buffer-local 'vmpc-sig-exerlay)
 
-(defvar vmpc-pre-sig-face (progn (make-face 'vmpc-pre-sig-face 
+(defvar vmpc-pre-sig-face (progn (make-face 'vmpc-pre-sig-face
 	    "Face used for highlighting the pre-signature.")
 				 (set-face-foreground
 				  'vmpc-pre-sig-face "forestgreen")
@@ -144,7 +144,7 @@ i.e. when within the composition buffer.")
 
 (defvar vmpc-sig-face (progn (make-face 'vmpc-sig-face
 		"Face used for highlighting the signature.")
-			     (set-face-foreground 'vmpc-sig-face 
+			     (set-face-foreground 'vmpc-sig-face
 						  "steelblue")
 			     'vmpc-sig-face)
   "Face used for highlighting the signature.")
@@ -155,14 +155,9 @@ i.e. when within the composition buffer.")
 (defvar vmpc-intangible-sig 'nil
   "Whether to forbid the cursor from entering the signature.")
 
-(defvar vmpc-xemacs-p (featurep 'xemacs)
-  "This variable is automatically initialised to t if vm-pcrisis is
-running under XEmacs; otherwise nil.  P-crisis checks its value when
-it needs to know what flavour of Emacs this is.")
-
 (defvar vmpc-expect-default-signature 'nil
-  "*Set this to 't if you have a signature-inserting function hanging
-off a hook that pre-empts Personality Crisis.")
+  "*Set this to 't if you have a signature-inserting function.
+It will ensure that pcrisis correctly handles the signature .")
 
 
 ;; -------------------------------------------------------------------
@@ -170,19 +165,19 @@ off a hook that pre-empts Personality Crisis.")
 ;; -------------------------------------------------------------------
 
 (defun vmpc-header-field-for-point ()
-  "*Returns a string indicating the mail header field point is in.  
+  "*Return a string indicating the mail header field point is in.
 If point is not in a header field, returns nil."
   (save-excursion
-    (unless (save-excursion 
+    (unless (save-excursion
 	      (re-search-backward (regexp-quote mail-header-separator)
 				  (point-min) t))
       (re-search-backward "^\\([^ \t\n:]+\\):")
       (match-string 1))))
 
 (defun vmpc-tab-header-or-tab-stop (&optional backward)
-  "*If in a mail header field, moves to next useful header or body.  
+  "*If in a mail header field, moves to next useful header or body.
 When moving to the message body, calls the `vmpc-automorph' function.
-If within the message body, runs `tab-to-tab-stop'.  
+If within the message body, runs `tab-to-tab-stop'.
 If BACKWARD is specified and non-nil, moves to previous useful header
 field, whether point is in the body or the headers.
 \"Useful header fields\" are currently, in order, \"To\" and
@@ -193,9 +188,9 @@ field, whether point is in the body or the headers.
 	    backward)
 	(progn
 	  (setq nextfield
-		(- (length useful-headers) 
+		(- (length useful-headers)
 		   (length (member curfield useful-headers))))
-	  (if backward 
+	  (if backward
 	      (setq nextfield (nth (1- nextfield) useful-headers))
 	    (setq nextfield (nth (1+ nextfield) useful-headers)))
 	  (if nextfield
@@ -207,7 +202,7 @@ field, whether point is in the body or the headers.
       )))
 
 (defun vmpc-backward-tab-header-or-tab-stop ()
-  "*Wrapper for `vmpc-tab-header-or-tab-stop' with BACKWARD set"
+  "*Wrapper for `vmpc-tab-header-or-tab-stop' with BACKWARD set."
   (interactive)
   (vmpc-tab-header-or-tab-stop t))
 
@@ -217,14 +212,16 @@ field, whether point is in the body or the headers.
 ;; -------------------------------------------------------------------
 
 (defun vmpc-set-overlay-insertion-types (overlay start end)
-  "Creates a new copy of OVERLAY with different insertion types at
-START and END; returns this overlay.  START and END should be nil or t
--- the marker insertion types at the start and end.  This seems to be
-the only way you of changing the insertion types for an overlay --
-save the overlay properties that we care about, create a new overlay
-with the new insertion types, set its properties to the saved ones.
+  "Set insertion types for OVERLAY from START to END.
+In fact a new copy of OVERLAY with different insertion types at START and END
+is created and returned.
+
+START and END should be nil or t -- the marker insertion types at the start
+and end.  This seems to be the only way you of changing the insertion types
+for an overlay -- save the overlay properties that we care about, create a new
+overlay with the new insertion types, set its properties to the saved ones.
 Overlays suck.  Extents rule.  XEmacs got this right."
-  (let* ((useful-props (list 'face 'intangible 'evaporate)) (saved-props) 
+  (let* ((useful-props (list 'face 'intangible 'evaporate)) (saved-props)
 	 (i 0) (len (length useful-props)) (startpos) (endpos) (new-ovl))
     (while (< i len)
       (setq saved-props (append saved-props (cons
@@ -246,10 +243,10 @@ Overlays suck.  Extents rule.  XEmacs got this right."
 
 
 (defun vmpc-set-extent-insertion-types (extent start end)
-  "Set the insertion types for START and END of EXTENT.
+  "Set the insertion types of EXTENT from START to END.
 START and END should be either nil or t, indicating the desired value
 of the 'start-open and 'end-closed properties of the extent
-respectively.  
+respectively.
 This is the XEmacs version of `vmpc-set-overlay-insertion-types'."
   ;; pretty simple huh?
   (set-extent-property extent 'start-open start)
@@ -257,48 +254,47 @@ This is the XEmacs version of `vmpc-set-overlay-insertion-types'."
 
 
 (defun vmpc-set-exerlay-insertion-types (exerlay start end)
-  "Sets the insertion types for the extent or overlay named by the
-symbol EXERLAY.  In other words, EXERLAY is the name of the overlay or
-extent with a quote in front.  START and END are the equivalent of the
-marker insertion types for the start and end of the overlay/extent."
-  (if vmpc-xemacs-p
+  "Set the insertion types for EXERLAY from START to END.
+In other words, EXERLAY is the name of the overlay or extent with a quote in
+front.  START and END are the equivalent of the marker insertion types for the
+start and end of the overlay/extent."
+  (if vm-xemacs-p
       (vmpc-set-extent-insertion-types (symbol-value exerlay) start end)
     (set exerlay (vmpc-set-overlay-insertion-types (symbol-value exerlay)
 						   start end))))
 
 
 (defun vmpc-exerlay-start (exerlay)
-  "Returns buffer position of the start of EXERLAY."
-  (if vmpc-xemacs-p
+  "Return buffer position of the start of EXERLAY."
+  (if vm-xemacs-p
       (extent-start-position exerlay)
     (overlay-start exerlay)))
 
 
 (defun vmpc-exerlay-end (exerlay)
-  "Returns buffer position of the end of EXERLAY."
-  (if vmpc-xemacs-p
+  "Return buffer position of the end of EXERLAY."
+  (if vm-xemacs-p
       (extent-end-position exerlay)
     (overlay-end exerlay)))
 
 
 (defun vmpc-move-exerlay (exerlay new-start new-end)
-  "Moves the start and end points of EXERLAY to the buffer positions
-NEW-START and NEW-END respectively."
-  (if vmpc-xemacs-p
+  "Change EXERLAY to cover region from NEW-START to NEW-END."
+  (if vm-xemacs-p
       (set-extent-endpoints exerlay new-start new-end (current-buffer))
     (move-overlay exerlay new-start new-end (current-buffer))))
 
 
 (defun vmpc-set-exerlay-detachable-property (exerlay newval)
-  "Sets the 'detachable or 'evaporate property for EXERLAY to NEWVAL."
-  (if vmpc-xemacs-p
+  "Set the 'detachable or 'evaporate property for EXERLAY to NEWVAL."
+  (if vm-xemacs-p
       (set-extent-property exerlay 'detachable newval)
     (overlay-put exerlay 'evaporate newval)))
 
 
 (defun vmpc-set-exerlay-intangible-property (exerlay newval)
-  "Sets the 'intangible or 'atomic property for EXERLAY to NEWVAL."
-  (if vmpc-xemacs-p
+  "Set the 'intangible or 'atomic property for EXERLAY to NEWVAL."
+  (if vm-xemacs-p
       (progn
 	(require 'atomic-extents)
 	(set-extent-property exerlay 'atomic newval))
@@ -306,30 +302,29 @@ NEW-START and NEW-END respectively."
 
 
 (defun vmpc-set-exerlay-face (exerlay newface)
-  "Sets the face used by EXERLAY to NEWFACE."
-  (if vmpc-xemacs-p
+  "Set the face used by EXERLAY to NEWFACE."
+  (if vm-xemacs-p
       (set-extent-face exerlay newface)
     (overlay-put exerlay 'face newface)))
 
 
 (defun vmpc-forcefully-detach-exerlay (exerlay)
-  "Leaves EXERLAY in memory but detaches it from the buffer."
-  (if vmpc-xemacs-p
+  "Leave EXERLAY in memory but detaches it from the buffer."
+  (if vm-xemacs-p
       (detach-extent exerlay)
     (delete-overlay exerlay)))
 
 
 (defun vmpc-make-exerlay (startpos endpos)
-  "Returns a newly created exerlay spanning from STARTPOS to ENDPOS in the
-current buffer."
-  (if vmpc-xemacs-p
+  "Create a new exerlay spanning from STARTPOS to ENDPOS."
+  (if vm-xemacs-p
       (make-extent startpos endpos (current-buffer))
     (make-overlay startpos endpos (current-buffer))))
 
 
 (defun vmpc-create-sig-and-pre-sig-exerlays ()
-  "Creates the extents in which the pre-sig and sig can reside.
-Or overlays, in the case of GNUmacs.  Thus, exerlays."
+  "Create the extents in which the pre-sig and sig can reside.
+Or overlays, in the case of GNU Emacs.  Thus, exerlays."
   (setq vmpc-pre-sig-exerlay (vmpc-make-exerlay 1 2))
   (setq vmpc-sig-exerlay (vmpc-make-exerlay 3 4))
 
@@ -366,24 +361,24 @@ Or overlays, in the case of GNUmacs.  Thus, exerlays."
 ;; -------------------------------------------------------------------
 
 (defun vmpc-composition-buffer-function (&rest form)
-  "Runs a composition-buffer-function provided the time is right.
-That is to say, runs the function if you're really in a composition
-buffer.  This function should not be called directly; only from within
-the vmpc-actions list."
+  "Evaluate FORM if in composition state.
+That is to say, evaluates the form if you are really in a composition
+buffer.  This function should not be called directly, only from within
+the `vmpc-actions' list."
   (if (eq vmpc-current-buffer 'composition)
       (eval (cons 'progn form))))
 
 (defun vmpc-pre-function (&rest form)
-  "Runs a pre-function provided the time is right.
-That is to say, runs the function before VM does its thing, whether
+  "Evaluate FORM if in pre-function state.
+That is to say, evaluates the FORM before VM does its thing, whether
 that be creating a new mail or a reply.  This function should not be
-called directly; only from within the vmpc-actions list."
+called directly, only from within the `vmpc-actions' list."
   (if (and (eq vmpc-current-buffer 'none)
 	   (not (eq vmpc-current-state 'automorph)))
       (eval (cons 'progn form))))
 
 (defun vmpc-delete-header (hdrfield &optional entire)
-  "Delete the contents of a header field in the current mail message.
+  "Delete the contents of a HDRFIELD in the current mail message.
 If ENTIRE is specified and non-nil, deletes the header field as well."
   (if (eq vmpc-current-buffer 'composition)
       (save-excursion
@@ -399,28 +394,28 @@ If ENTIRE is specified and non-nil, deletes the header field as well."
 	  (delete-region start end)))))
 
 
-(defun vmpc-insert-header (hdrfield hdrcont)
-  "Insert HDRCONT in HDRFIELD in the current mail message.  
+(defun vmpc-insert-header (hdrfield content)
+  "Insert to HDRFIELD the new CONTENT.
 Both arguments are strings.  The field can either be present or not,
 but if present, HDRCONT will be appended to the current header
 contents."
   (if (eq vmpc-current-buffer 'composition)
       (save-excursion
 	(mail-position-on-field hdrfield)
-	(insert hdrcont))))
+	(insert content))))
 
-(defun vmpc-substitute-header (hdrfield hdrcont)
-  "Insert HDRCONT in HDRFIELD in the current mail message.  
+(defun vmpc-substitute-header (hdrfield content)
+  "Substitute HDRFIELD with new CONTENT.
 Both arguments are strings.  The field can either be present or not.
 If the header field is present and already contains something, the
-contents will be replaced with the new ones specified in HDRCONT."
+contents will be replaced, otherwise a new header is created."
   (if (eq vmpc-current-buffer 'composition)
       (save-excursion
 	(vmpc-delete-header hdrfield)
-	(vmpc-insert-header hdrfield hdrcont))))
+	(vmpc-insert-header hdrfield content))))
 
 (defun vmpc-get-current-header-contents (hdrfield &optional clump-sep)
-  "Returns the contents of HDRFIELD in the current mail message.
+  "Return the contents of HDRFIELD in the current mail message.
 Returns an empty string if the header doesn't exist.  HDRFIELD should
 be a string.  If the string CLUMP-SEP is specified, it means to return
 the contents of all headers matching the regexp HDRFIELD, separated by
@@ -435,7 +430,7 @@ CLUMP-SEP."
               (setq hdrfield (list hdrfield)))
 	  ;; find the end of the headers:
 	  (goto-char (point-min))
-	  (or (re-search-forward 
+	  (or (re-search-forward
                (concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
                nil t)
               (error "Cannot find mail-header-separator %S in buffer %S"
@@ -451,7 +446,7 @@ CLUMP-SEP."
                           (goto-char (match-beginning 0))
                           (let (header-cont-start header-cont-end)
                             (if (if (not clump-sep)
-                                    (and (looking-at (car hdrfield)) 
+                                    (and (looking-at (car hdrfield))
                                          (looking-at header-name-regexp))
                                   (looking-at header-name-regexp))
                                 (save-excursion
@@ -464,8 +459,8 @@ CLUMP-SEP."
                                     (forward-line 1))
                                   ;; drop the trailing newline
                                   (setq header-cont-end (1- (point)))))
-                            (setq temp-contents 
-                                  (buffer-substring header-cont-start 
+                            (setq temp-contents
+                                  (buffer-substring header-cont-start
                                                     header-cont-end)))))
               (if contents
                   (setq contents
@@ -478,18 +473,18 @@ CLUMP-SEP."
 	  contents ))))
 
 (defun vmpc-get-current-body-text ()
-  "Returns the body text of the mail message in the current buffer."
+  "Return the body text of the mail message in the current buffer."
   (if (eq vmpc-current-state 'automorph)
       (save-excursion
 	(goto-char (point-min))
-	(let ((start (re-search-forward 
+	(let ((start (re-search-forward
 		      (concat "^" (regexp-quote mail-header-separator) "$")))
 	      (end (point-max)))
 	  (buffer-substring start end)))))
 
 
 (defun vmpc-get-replied-header-contents (hdrfield &optional clump-sep)
-  "Returns the contents of HDRFIELD in the message being replied to.
+  "Return the contents of HDRFIELD in the message being replied to.
 If that header does not exist, returns an empty string.  If the string
 CLUMP-SEP is specified, treat HDRFIELD as a regular expression and
 return the contents of all header fields which match that regexp,
@@ -507,7 +502,7 @@ separated from each other by CLUMP-SEP."
         (or (mapconcat 'identity content "\n") ""))))
 
 (defun vmpc-get-replied-body-text ()
-  "Returns the body text of the message being replied to."
+  "Return the body text of the message being replied to."
   (if (and (eq vmpc-current-buffer 'none)
 	   (memq vmpc-current-state '(reply forward resend)))
       (save-excursion
@@ -522,7 +517,7 @@ separated from each other by CLUMP-SEP."
 	    (buffer-substring start end))))))
 
 (defun vmpc-save-replied-header (hdrfield)
-  "Saves the contents of HDRFIELD in `vmpc-saved-headers-alist'. 
+  "Save the contents of HDRFIELD in `vmpc-saved-headers-alist'.
 Does nothing if that header doesn't exist."
   (let ((hdrcont (vmpc-get-replied-header-contents hdrfield)))
   (if (and (eq vmpc-current-buffer 'none)
@@ -531,18 +526,17 @@ Does nothing if that header doesn't exist."
       (add-to-list 'vmpc-saved-headers-alist (cons hdrfield hdrcont)))))
 
 (defun vmpc-get-saved-header (hdrfield)
-  "Returns the contents of HDRFIELD from `vmpc-saved-headers-alist'.  
+  "Return the contents of HDRFIELD from `vmpc-saved-headers-alist'.
 The alist in question is created by `vmpc-save-replied-header'."
   (if (and (eq vmpc-current-buffer 'composition)
 	   (memq vmpc-current-state '(reply forward resend)))
       (cdr (assoc hdrfield vmpc-saved-headers-alist))))
 
 (defun vmpc-substitute-replied-header (dest src)
-  "Inserts the contents of the header SRC in the message you're
-replying to as the contents of the header DEST in your reply.  
+  "Substitute header DEST with content from SRC.
 For example, if the address you want to send your reply to is the same
-as the contents of the \"From\" header in the message you're replying
-to, you'd use (vmpc-substitute-replied-header \"To\" \"From\"."  
+as the contents of the \"From\" header in the message you are replying
+to, use (vmpc-substitute-replied-header \"To\" \"From\"."
   (if (memq vmpc-current-state '(reply forward resend))
       (progn
 	(if (eq vmpc-current-buffer 'none)
@@ -554,21 +548,21 @@ to, you'd use (vmpc-substitute-replied-header \"To\" \"From\"."
   "Return buffer positions (START . END) for the contents of HDRFIELD.
 If HDRFIELD does not exist, return nil."
   (if (eq vmpc-current-buffer 'composition)
-      (save-excursion 
+      (save-excursion
         (let ((header-name-regexp "^\\([^ \t\n:]+\\):") (start) (end))
-          (setq end 
-                (if (mail-position-on-field hdrfield t) 
-                    (point) 
+          (setq end
+                (if (mail-position-on-field hdrfield t)
+                    (point)
                   nil))
-          (setq start 
+          (setq start
                 (if (re-search-backward header-name-regexp (point-min) t)
                     (match-end 0)
                   nil))
           (and start end (<= start end) (cons start end))))))
 
-(defun vmpc-substitute-within-header 
+(defun vmpc-substitute-within-header
   (hdrfield regexp to-string &optional append-if-no-match sep)
-  "Replace REGEXP in HDRFIELD with TO-STRING.  
+  "Replace in HDRFIELD strings matched by  REGEXP with TO-STRING.
 HDRFIELD need not exist.  TO-STRING may contain references to groups
 within REGEXP, in the same manner as `replace-regexp'.  If REGEXP is
 not found in the header contents, and APPEND-IF-NO-MATCH is t,
@@ -602,9 +596,9 @@ previously empty."
 
 
 (defun vmpc-insert-signature (sig &optional pos)
-  "Inserts SIG at the end of `vmpc-sig-exerlay'.  SIG is a string.  If
-it's the name of a file, the file's contents are inserted -- otherwise
-the string itself is inserted.  Optional parameter POS means insert
+  "Insert SIG at the end of `vmpc-sig-exerlay'.
+SIG is a string.  If it is the name of a file, its contents is inserted --
+otherwise the string itself is inserted.  Optional parameter POS means insert
 the signature at POS if `vmpc-sig-exerlay' is detached."
   (if (eq vmpc-current-buffer 'composition)
       (progn
@@ -642,7 +636,7 @@ the signature at POS if `vmpc-sig-exerlay' is detached."
 
 
 (defun vmpc-signature (sig)
-  "Removes a current signature if present, and replaces it with SIG.
+  "Remove a current signature if present, and replace it with SIG.
 If the string SIG is the name of a readable file, its contents are
 inserted as the signature; otherwise SIG is inserted literally.  If
 SIG is the empty string (\"\"), the current signature is deleted if
@@ -656,7 +650,7 @@ present, and that's all."
   
 
 (defun vmpc-insert-pre-signature (pre-sig &optional pos)
-  "Inserts PRE-SIG at the end of `vmpc-pre-sig-exerlay'.  
+  "Insert PRE-SIG at the end of `vmpc-pre-sig-exerlay'.
 PRE-SIG is a string.  If it's the name of a file, the file's contents
 are inserted; otherwise the string itself is inserted.  Optional
 parameter POS means insert the pre-signature at position POS if
@@ -701,8 +695,7 @@ parameter POS means insert the pre-signature at position POS if
 
 
 (defun vmpc-pre-signature (pre-sig)
-  "As for `vmpc-insert-pre-signature', except that the last pre-sig
-added is removed before the new one is added."
+  "Insert PRE-SIG at the end of `vmpc-pre-sig-exerlay' removing last pre-sig."
   (if (eq vmpc-current-buffer 'composition)
       (let ((pos (vmpc-exerlay-start vmpc-pre-sig-exerlay)))
 	(save-excursion
@@ -712,7 +705,7 @@ added is removed before the new one is added."
 
 
 (defun vmpc-gregorian-days ()
-  "Returns the number of days elapsed since December 31, 1 B.C."
+  "Return the number of days elapsed since December 31, 1 B.C."
   ;; this code stolen from gnus-util.el :)
   (let ((tim (decode-time (current-time))))
     (timezone-absolute-from-gregorian
@@ -720,7 +713,7 @@ added is removed before the new one is added."
 
 
 (defun vmpc-load-auto-profiles ()
-  "Initialise vmpc-auto-profiles from vmpc-auto-profiles-file."
+  "Initialise `vmpc-auto-profiles' from `vmpc-auto-profiles-file'."
   (if (and (file-exists-p vmpc-auto-profiles-file)
 	   (file-readable-p vmpc-auto-profiles-file))
       (save-excursion
@@ -734,7 +727,7 @@ added is removed before the new one is added."
 
 
 (defun vmpc-save-auto-profiles ()
-  "Save vmpc-auto-profiles to vmpc-auto-profiles-file."
+  "Save `vmpc-auto-profiles' to `vmpc-auto-profiles-file'."
   ;; TODO instead of recreating it all the time we should open it and modify
   ;; the buffer instead, then this would only be a save-buffer and updates
   ;; will be faster also for big files ... maybe we should use Berkley DB ...
@@ -742,7 +735,7 @@ added is removed before the new one is added."
       (save-excursion
 	(set-buffer (get-buffer-create "*pcrisis-temp*"))
 	(buffer-disable-undo (current-buffer))
-	(erase-buffer)      
+	(erase-buffer)
 	(goto-char (point-min))
 	(prin1 vmpc-auto-profiles (current-buffer))
 	(write-region (point-min) (point-max)
@@ -753,7 +746,7 @@ added is removed before the new one is added."
 	   vmpc-auto-profiles-file)))
 
 (defun vmpc-fix-auto-profiles-file ()
-  "Change `vmpc-auto-profiles-file' to the format used by v0.82+"
+  "Change `vmpc-auto-profiles-file' to the format used by v0.82+."
   (interactive)
   (vmpc-load-auto-profiles)
   (let ((len (length vmpc-auto-profiles)) (i 0) (day))
@@ -767,7 +760,7 @@ added is removed before the new one is added."
 
 
 (defun vmpc-get-profile-for-address (addr)
-  "This is a support function for `vmpc-prompt-for-profile'."
+  "Return profile for ADDR."
   (unless vmpc-auto-profiles
     (vmpc-load-auto-profiles))
   (let ((prof (cadr (assoc addr vmpc-auto-profiles))))
@@ -782,7 +775,7 @@ added is removed before the new one is added."
 
 
 (defun vmpc-save-profile-for-address (prof addr)
-  "This is a support function for `vmpc-prompt-for-profile'."
+  "Save profile PROF for ADDR, i.e. its association."
   (let ((today (vmpc-gregorian-days)))
     (add-to-list 'vmpc-auto-profiles (append (list addr prof) today))
     (when vmpc-auto-profiles-expunge-days
@@ -798,31 +791,30 @@ added is removed before the new one is added."
 
 
 (defun vmpc-string-extract-address (str)
-  "Finds the first email address in the string STR and returns it.
+  "Find the first email address in the string STR and return it.
 If no email address in found in STR, returns nil."
   (if (string-match "[^ \t,<]+@[^ \t,>]+" str)
       (match-string 0 str)))
 
 
 (defun vmpc-prompt-for-profile (&optional remember)
-  "Prompts the user for a profile (one of the sets of actions named in
-vmpc-actions) and adds it to the list of actions to be performed,
-unless it is already in there.  
-REMEMBER can be set to 'always or 'prompt.  It figures out who your
-message is going to, and saves a record in vmpc-auto-profiles-file
-which says to use that profile for messages to that address in the
-future, instead of prompting you for a profile the next time.  If set
-to 'prompt, it will ask before doing this; otherwise it will do it
-automatically."
+  "Prompt the user for a profile and add it to the list of actions.
+A profile is one of the sets of actions named in `vmpc-actions'.
+
+REMEMBER can be set to 'always or 'prompt.  It figures out who your message is
+going to, and saves a record in `vmpc-auto-profiles-file' which says to use that
+profile for messages to that address in the future, instead of prompting you
+for a profile the next time.  If set to 'prompt, it will ask before doing
+this; otherwise it will do it automatically."
   (if (and (memq vmpc-current-state '(forward resend))
 	   remember)
-      (error "You can't have vmpc-prompt-for-profile remember when forwarding or resending."))
+      (error "You can not have vmpc-prompt-for-profile remember when forwarding or resending"))
   (if (or (and (eq vmpc-current-buffer 'none)
 	       (not (eq vmpc-current-state 'automorph)))
 	  (eq vmpc-current-state 'automorph))
       (let ((prof) (dest ""))
 	;; figure out where this email is going:
-	(cond 
+	(cond
 	 ((eq vmpc-current-state 'automorph)
 	  (setq dest (vmpc-get-current-header-contents "To")))
 	 ((and (eq vmpc-current-state 'reply)
@@ -842,7 +834,7 @@ automatically."
                         (setq remember 'already))
                     p)
 		  (let ((default (car (car vmpc-actions))) (choice nil))
-		    (setq choice (completing-read 
+		    (setq choice (completing-read
 				  (format "Use profile (Default \"%s\"): "
 					  default) vmpc-actions nil t))
 		    (if (equal choice "")
@@ -872,16 +864,16 @@ automatically."
 ;; -------------------------------------------------------------------
 
 (defun vmpc-none-true-yet (&optional &rest exceptions)
-  "This is a condition that can appear in vmpc-conditions.  It means that none
-of the previous conditions matched.  If EXCEPTIONS are specified, it means none
-were true except those.  For example, if you wanted to check whether no
-conditions had yet matched with the exception of the two conditions named
-\"default\" and \"blah\", you would make the call like this:
+  "True if none of the previous evaluated conditions was true.
+This is a condition that can appear in `vmpc-conditions'.  If EXCEPTIONS are
+specified, it means none were true except those.  For example, if you wanted
+to check whether no conditions had yet matched with the exception of the two
+conditions named \"default\" and \"blah\", you would make the call like this:
   (vmpc-none-true-yet \"default\" \"blah\")
-Then it will return true regardless of whether \"default\" and \"blah\" had 
+Then it will return true regardless of whether \"default\" and \"blah\" had
 matched."
   (let ((lenex (length exceptions)) (lentc (length vmpc-true-conditions)))
-    (cond 
+    (cond
      ((> lentc lenex)
       'nil)
      ((<= lentc lenex)
@@ -898,17 +890,23 @@ matched."
 	  'nil))))))
 
 (defun vmpc-other-cond (condition)
-  "Returns true if the specified CONDITION in vmpc-conditions matched.
+  "Return true if the specified CONDITION in `vmpc-conditions' matched.
 CONDITION can only be the name of a condition specified earlier in
-vmpc-conditions -- that is to say, any conditions which follow the one
-containing vmpc-other-cond will show up as not having matched, because they
+`vmpc-conditions' -- that is to say, any conditions which follow the one
+containing `vmpc-other-cond' will show up as not having matched, because they
 haven't yet been checked when this one is checked."
   (member condition vmpc-true-conditions))
 
 (defun vmpc-header-match (hdrfield regexp &optional clump-sep num)
-  "Returns true if the contents of specified header HDRFIELD match REGEXP.  
-For automorph, this means the header in your message; when replying it means the 
-header in the message being replied to."
+  "Return true if the contents of specified header HDRFIELD match REGEXP.
+For automorph, this means the header in your message, when replying it means
+the header in the message being replied to.
+
+CLUMP-SEP is specified, treat HDRFIELD as a regular expression and
+return the contents of all header fields which match that regexp,
+separated from each other by CLUMP-SEP.
+
+If NUM is specified return the match string NUM."
   (cond ((memq vmpc-current-state '(reply forward resend))
          (let ((hdr (vmpc-get-replied-header-contents hdrfield clump-sep)))
            (and (string-match regexp hdr)
@@ -919,7 +917,7 @@ header in the message being replied to."
                 (if num (match-string num hdr) t))))))
 
 (defun vmpc-body-match (regexp)
-  "Returns non-nil if the contents of the message body match REGEXP.
+  "Return non-nil if the contents of the message body match REGEXP.
 For automorph, this means the body of your message; when replying it means the
 body of the message being replied to."
   (cond ((and (memq vmpc-current-state '(reply forward resend))
@@ -970,18 +968,19 @@ Run this function in order to test/check your conditions."
     vmpc-true-conditions))
 
 (defun vmpc-build-true-conditions-list ()
-  "Built list of true conditions and store it in `vmpc-true-conditions'."
+  "Built list of true conditions and store it in variable `vmpc-true-conditions'."
   (setq vmpc-true-conditions nil)
-  (mapcar (lambda (c) 
+  (mapcar (lambda (c)
             (if (save-excursion (eval (cons 'progn (cdr c))))
                 (setq vmpc-true-conditions (cons (car c) vmpc-true-conditions))))
           vmpc-conditions)
   (setq vmpc-true-conditions (reverse vmpc-true-conditions)))
 
 (defun vmpc-build-actions-to-run-list ()
-  "Built a list of the actions to run, i.e. the true conditions mapped to actions.
-Duplicates will be eliminated.  You may run it in a composition buffer in order to
-see what actions will be run."
+  "Built a list of the actions to run.
+These are the true conditions mapped to actions.  Duplicates will be
+eliminated.  You may run it in a composition buffer in order to see what
+actions will be run."
   (interactive)
   (if (and (not vmpc-current-state) (interactive-p))
       (error "Run `vmpc-build-actions-to-run-list' in a composition buffer!"))
@@ -1002,7 +1001,7 @@ see what actions will be run."
   vmpc-actions-to-run)
 
 (defun vmpc-read-actions ()
-  "Reads a list of actions to run asn stores it in `vmpc-actions-to-run'."
+  "Read a list of actions to run and store it in `vmpc-actions-to-run'."
   (interactive)
   (let ((completion-table (mapcar (lambda (a) (list (car a))) vmpc-actions))
         action)
@@ -1033,7 +1032,7 @@ see what actions will be run."
 ;; The main functions and advices -- these are the entry points to pcrisis:
 ;; ------------------------------------------------------------------------
 (defun vmpc-init-vars (&optional state buffer)
-  "Initialize pcrisis vars."
+  "Initialize pcrisis variables and optionally set STATE and BUFFER."
   (setq vmpc-saved-headers-alist nil
         vmpc-actions-to-run nil
         vmpc-true-conditions nil
@@ -1051,12 +1050,12 @@ buffer.  At least for saved-headers-alist this should fix a bug.
 
 The current solution is not reentrant save, but there also should be no
 recursion or concurrent calls."
-  (let ((saved-headers-alist vmpc-saved-headers-alist) 
+  (let ((saved-headers-alist vmpc-saved-headers-alist)
         (actions-to-run      vmpc-actions-to-run)
         (true-conditions     vmpc-true-conditions)
         (current-state       vmpc-current-state))
     (vmpc-init-vars)
-    (make-local-variable 'vmpc-saved-headers-alist) 
+    (make-local-variable 'vmpc-saved-headers-alist)
     (make-local-variable 'vmpc-actions-to-run)
     (make-local-variable 'vmpc-true-conditions)
     (make-local-variable 'vmpc-current-state)
@@ -1068,6 +1067,7 @@ recursion or concurrent calls."
           vmpc-current-buffer      'composition)))
 
 (defadvice vm-do-reply (around vmpc-reply activate)
+  "*Reply to a message with pcrisis voodoo."
   (vmpc-init-vars 'reply)
   (vmpc-build-true-conditions-list)
   (vmpc-build-actions-to-run-list)
@@ -1078,6 +1078,7 @@ recursion or concurrent calls."
   (vmpc-run-actions))
 
 (defadvice vm-mail (around vmpc-newmail activate)
+  "*Start a new message with pcrisis voodoo."
   (vmpc-init-vars 'newmail)
   (vmpc-build-true-conditions-list)
   (vmpc-build-actions-to-run-list)
@@ -1088,6 +1089,7 @@ recursion or concurrent calls."
   (vmpc-run-actions))
 
 (defadvice vm-compose-mail (around vmpc-compose-newmail activate)
+  "*Start a new message with pcrisis voodoo."
   (vmpc-init-vars 'newmail)
   (vmpc-build-true-conditions-list)
   (vmpc-build-actions-to-run-list)
@@ -1098,6 +1100,7 @@ recursion or concurrent calls."
   (vmpc-run-actions))
 
 (defadvice vm-forward-message (around vmpc-forward activate)
+  "*Forward a message with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
@@ -1114,6 +1117,7 @@ recursion or concurrent calls."
   (vmpc-run-actions))
 
 (defadvice vm-resend-message (around vmpc-resend activate)
+  "*Resent a message with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
@@ -1131,7 +1135,7 @@ recursion or concurrent calls."
 
 ;;;###autoload
 (defun vmpc-automorph ()
-  "*Changes contents of the current mail message based on its own headers.
+  "*Change contents of the current mail message based on its own headers.
 Headers and signatures can be changed; pre-signatures added; functions called.
 For more information, see the Personality Crisis info file."
   (interactive)
