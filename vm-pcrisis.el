@@ -769,17 +769,18 @@ added is removed before the new one is added."
 
 
 (defun vmpc-save-profile-for-address (prof addr)
-  "This is a support function for vmpc-prompt-for-profile."
-  (let ((today) (len (length vmpc-auto-profiles)) (i 0))
-    (setq today (vmpc-gregorian-days))
+  "This is a support function for `vmpc-prompt-for-profile'."
+  (let ((today (vmpc-gregorian-days)))
     (add-to-list 'vmpc-auto-profiles (append (list addr prof) today))
-    (if vmpc-auto-profiles-expunge-days
-	;; expunge old stuff from the list:
-	(while (< i len)
-	  (if (> (- today (cddr (nth i vmpc-auto-profiles)))
-		 vmpc-auto-profiles-expunge-days)
-	      (delete (nth i vmpc-auto-profiles) vmpc-auto-profiles))
-	  (setq i (1+ i))))
+    (when vmpc-auto-profiles-expunge-days
+      ;; expunge old stuff from the list:
+      (setq vmpc-auto-profiles
+            (mapcar (lambda (p)
+                      (if (> (- today (cddr p)) vmpc-auto-profiles-expunge-days)
+                          nil
+                        p))
+                    vmpc-auto-profiles))
+      (seqt vmpc-auto-profiles (delete nil vmpc-auto-profiles)))
     (vmpc-save-auto-profiles)))
 
 
