@@ -120,18 +120,18 @@ base64-encode: base64-encode.c
 base64-decode: base64-decode.c
 
 ##############################################################################
-snapshot: tla-sync patch ball single-files
+snapshot: push patch ball single-files
 
 VMPATCH=vm-$(VMV).patch
 ELISPDIR=$(HOME)/html-data/www.robf.de/Hacking/elisp
 
-tla-sync:
-	baz archive-mirror /home/fenk/ArchRepository/hack@robf.de--2005 /home/fenk/html-data/www.robf.de/Hacking/arch/2005 vm
+push:
+	bzr push
 
 patch:
 	-rm -f *.orig *.rej
-	tla changelog > ChangeLog
-	echo 'Version: $$Id: = '`tla revisions -f -r | head -1 | cut -d / -f 2` > $(VMPATCH)
+	bzr log --verbose > ChangeLog
+	echo 'Version: $$Id: '`bzr nick`-`bzr revno`'$$' > $(VMPATCH)
 	echo "" >> $(VMPATCH)
 	echo '*******************************************************************************' >> $(VMPATCH)
 	cat patchdoc.txt >> $(VMPATCH); diff --ignore-all-space -u -P -x qp-encode -x qp-decode -x patchdoc.txt -x vm-autoload.el -x vm.el -x '*.elc' -x '#*' -x '*.gz' -x '*.patch' -x '*info*' -x ',*' $(HOME)/.hacking/vm-$(VMV) . | grep -v '^Only in'  | grep -v '^Binary files' >> $(VMPATCH); echo patch $(VMPATCH) written ...
@@ -140,7 +140,7 @@ patch:
 	touch $(ELISPDIR)/index.rml
 
 ball:
-	echo 'Version: $$Id: = '`tla revisions -f -r | head -1` > ,id
+	echo 'Version: $$Id: '`bzr nick`-`bzr revno`'$$' > ,id
 	tar chfvz vmrf.tgz ,id *.c *.texinfo *ChangeLog patchdoc.txt Makefile *.el
 	cp vmrf.tgz $(ELISPDIR)
 	touch $(ELISPDIR)/index.rml
@@ -163,11 +163,11 @@ $(ELISPDIR)/%.el: %.el
 
 ##############################################################################
 update:
-	if test -e '{arch}'; then echo ERROR: No updates in ARCH dirs; exit -1; fi;
+	if test -e '.bzr'; then echo ERROR: No updates in checkouts; exit -1; fi;
 	wget -N http://www.robf.de/Hacking/elisp/vmrf.tgz
 	if test vmrf.tgz -nt vmrf-newer.tgz; then cp vmrf.tgz vmrf-newer.tgz; tar xvfz vmrf.tgz; fi;
 	rm -f vm-autoload.el*
-	make -f Makefile
+	make
 
 get-other-extensions:
 	wget -N http://www.splode.com/~friedman/software/emacs-lisp/src/vcard.el

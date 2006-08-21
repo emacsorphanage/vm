@@ -21,13 +21,13 @@ which is not patched and apply this patch with:
 
 Then rebuilt the elc files by
 
-	make -k -f Makefile
+	make  
 
-and restart VM, i.e. quit emacs.
+and restart VM, i.e. quit Emacs.
 
 You can ignore any warnings, however error messages indicate that some modules
 (partially) will not work, i.e. if other library files are missing or you are
-running GNU emacs.
+running GNU Emacs.
 
 *******************************************************************************
 UPDATES/UPGRADES
@@ -35,31 +35,27 @@ UPDATES/UPGRADES
 Simply running the following command should check for an update and
 rebuilt the modified sources.  It requires "wget" to be installed!
 
-	make -f Makefile update
+	make update
 
 *******************************************************************************
-ARCH (http://wiki.gnuarch.org/)
+BZR (http://bazaar-vcs.org/)
 
-I maintain my changes in arch now, the coordinates of my archive are:
+I maintain my changes by BZR now, since CVS sucks and TLA/BAZ are gone.
+If you want to send me changes or start hacking on your own you should 
+branch from my repository.
 
-Archive:  hack@robf.de--2005
-Location: http://www.robf.de/Hacking/arch
-Category: vm
-
-tla commands you may need:
-
-tla register-archive http://www.robf.de/Hacking/arch/2005
-# see what is there
-tla abrowse -A hack@robf.de--2005 vm--robf
-tla versions -A hack@robf.de--2005 vm--robf
-# get the source
-tla get -A hack@robf.de--public vm--robf--7.18
+# create your own local branch
+bzr get http://www.robf.de/Hacking/bazaar/vm
+# update (or merge if you have own commits)
+bzr pull
+# or 
+bzr merge
+...
 
 *******************************************************************************
 BUGS
 
-Report any problems caused by this patch to the email address listed at 
-http://www.robf.de
+Report any problems caused by this patch to hack@robf.de!
 
 *******************************************************************************
 COMMENTS
