@@ -933,39 +933,88 @@ body of the message being replied to."
 ;; Support functions for the advices:
 ;; -------------------------------------------------------------------
 
+(defun vmpc-true-conditions ()
+  "Return a list of all true conditions.
+Run this function in order to test/check your conditions."
+  (interactive)
+  (let (vmpc-true-conditions
+        vmpc-current-state
+        vmpc-current-buffer)
+    (if (eq major-mode 'vm-mail-mode)
+        (setq vmpc-current-state 'automorph
+              vmpc-current-buffer 'composition)
+      (setq vmpc-current-state (intern (completing-read
+                                        "VMPC state (default is 'reply): "
+                                        '(("reply") ("forward") ("resent"))
+                                        nil t nil nil "reply"))
+            vmpc-current-buffer 'none))
+    (vm-follow-summary-cursor)
+    (vm-select-folder-buffer)
+    (vm-check-for-killed-summary)
+    (vm-error-if-folder-empty)
+    (vmpc-build-true-conditions-list)
+    (message "VMPC true conditions: %S" vmpc-true-conditions)
+    vmpc-true-conditions))
+
 (defun vmpc-build-true-conditions-list ()
-  (let ((len (length vmpc-conditions)) (i 0))
-    (while (< i len)
-      (if (eval (car (cdr (nth i vmpc-conditions))))
-	  (setq vmpc-true-conditions (append vmpc-true-conditions
-		     (cons (car (nth i vmpc-conditions)) ()))))
-      (setq i (1+ i)))))
+  "Built list of true conditions and store it in `vmpc-true-conditions'."
+  (setq vmpc-true-conditions nil)
+  (mapcar (lambda (c) 
+            (if (save-excursion (eval (cons 'progn (cdr c))))
+                (setq vmpc-true-conditions (cons (car c) vmpc-true-conditions))))
+          vmpc-conditions)
+  (setq vmpc-true-conditions (reverse vmpc-true-conditions)))
 
 (defun vmpc-build-actions-to-run-list ()
-  (let ((alist) (i 0) (actions) (len))
-    (cond
-     ((eq vmpc-current-state 'automorph) (setq alist vmpc-automorph-alist))
-     ((eq vmpc-current-state 'reply) (setq alist vmpc-replies-alist))
-     ((eq vmpc-current-state 'forward) (setq alist vmpc-forwards-alist))
-     ((eq vmpc-current-state 'newmail) (setq alist vmpc-newmail-alist))
-     ((eq vmpc-current-state 'resend) (setq alist vmpc-resend-alist)))
-    (setq len (length vmpc-true-conditions))
-    (while (< i len)
-      (setq actions (cdr (assoc (nth i vmpc-true-conditions) alist)))
-      (if actions
-	  (setq vmpc-actions-to-run (append vmpc-actions-to-run actions)))
-      (setq i (1+ i)))))
+  "Built a list of the actions to run, i.e. the true conditions mapped to actions.
+Duplicates will be eliminated.  You may run it in a composition buffer in order to
+see what actions will be run."
+  (interactive)
+  (if (and (not vmpc-current-state) (interactive-p))
+      (error "Run `vmpc-build-actions-to-run-list' in a composition buffer!"))
+  (let ((alist (or (symbol-value (intern (format "vmpc-%s-alist" vmpc-current-state)))
+                   vmpc-actions-alist))
+        actions)
+    (mapcar (lambda (c)
+              (setq actions (cdr (assoc c alist)))
+              ;; TODO warn about unbound conditions?
+              (while actions
+                (if (not (member (car actions) vmpc-actions-to-run))
+                    (setq vmpc-actions-to-run (cons (car actions) vmpc-actions-to-run)))
+                (setq actions (cdr actions))))
+            vmpc-true-conditions))
+  (setq vmpc-actions-to-run (reverse vmpc-actions-to-run))
+  (if (interactive-p)
+      (message "VMPC actions to run: %S" vmpc-actions-to-run))
+  vmpc-actions-to-run)
+
+(defun vmpc-read-actions ()
+  "Reads a list of actions to run asn stores it in `vmpc-actions-to-run'."
+  (interactive)
+  (let ((completion-table (mapcar (lambda (a) (list (car a))) vmpc-actions))
+        action)
+    (setq vmpc-actions-to-run nil)
+    (while (not (string= "" (setq action (completing-read (format "VMPC action to run %S: "
+                                                                  vmpc-actions-to-run)
+                                                          completion-table nil t))))
+      (setq vmpc-actions-to-run (cons action vmpc-actions-to-run)))
+    (setq vmpc-actions-to-run (reverse vmpc-actions-to-run)))
+  (if (interactive-p)
+      (message "VMPC actions to run: %S" vmpc-actions-to-run))
+  vmpc-actions-to-run)
 
 (defun vmpc-run-actions ()
-  (let ((len (length vmpc-actions-to-run)) (i 0))
-    (while (< i len)
-      (let* ((functions (cdr (assoc (nth i vmpc-actions-to-run) vmpc-actions))) 
-	     (len2 (length functions)) (j 0))
-	(while (< j len2)
-	  (eval (nth j functions))
-	  (setq j (1+ j)))
-	(setq i (1+ i))))))
+  "Run the actions stored in `vmpc-actions-to-run'."
+  (interactive)
+  (if (and (not vmpc-actions-to-run) (interactive-p))
+      (vmpc-read-actions))
 
+  (let ((actions vmpc-actions-to-run) form)
+    (while actions
+      (setq form (or (assoc (car actions) vmpc-actions)
+                     (error "Action %S does not exist!" (car actions)))
+            actions (cdr actions))
+      (eval (cons 'progn (cdr form))))))
 
 ;; ------------------------------------------------------------------------
 ;; The main functions and advices -- these are the entry points to pcrisis:
