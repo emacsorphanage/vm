@@ -4358,6 +4358,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   (and (fboundp 'console-tty-output-coding-system)
        ;; Is this check too paranoid?
        (coding-system-p (console-tty-output-coding-system))
+       (fboundp 'coding-system-get)
        (let 
 	   ;; Nnngh, latin-unity-base-name isn't doing the right thing for
 	   ;; me with MULE-UCS and UTF-8 as the terminal coding system. Of
