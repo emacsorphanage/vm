@@ -1,0 +1,12 @@
+*.elc
+,id
+ChangeLog
+base64-decode
+base64-encode
+qp-decode
+qp-encode
+vm-7.19.patch.gz
+vm-autoload.el
+vmrf.tgz
+*.info*
+vm.el
