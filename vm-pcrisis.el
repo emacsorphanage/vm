@@ -725,6 +725,9 @@ added is removed before the new one is added."
 
 (defun vmpc-save-auto-profiles ()
   "Save vmpc-auto-profiles to vmpc-auto-profiles-file."
+  ;; TODO instead of recreating it all the time we should open it and modify
+  ;; the buffer instead, then this would only be a save-buffer and updates
+  ;; will be faster also for big files ... maybe we should use Berkley DB ...
   (if (file-writable-p vmpc-auto-profiles-file)
       (save-excursion
 	(set-buffer (get-buffer-create "*pcrisis-temp*"))
