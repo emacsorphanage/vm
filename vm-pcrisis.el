@@ -843,9 +843,7 @@ this; otherwise it will do it automatically."
 
 	(if (not (eq vmpc-current-state 'automorph))
 	    ;; add it to the end of the list:
-	    (if (not (member prof vmpc-actions-to-run))
-		(setq vmpc-actions-to-run (append vmpc-actions-to-run
-						  (cons prof ()))))
+            (add-to-list 'vmpc-actions-to-run prof t)
 	  ;; or in automorph, run it immediately:
 	  (let ((vmpc-actions-to-run (list prof)))
             (vmpc-run-actions)))
