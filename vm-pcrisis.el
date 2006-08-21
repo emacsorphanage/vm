@@ -927,18 +927,9 @@ body of the message being replied to."
 	 (string-match regexp (vmpc-get-current-body-text)))))
 
 
-(defun vmpc-xor (a b &optional &rest cdetc)
-  "A generic xor function.  If one and only one argument is true, returns 't."
-  (let ((len (length cdetc)) (count 0) (i 0))
-    (if a (setq count (1+ count)))
-    (if b (setq count (1+ count)))
-    (while (< i len)
-      (if (nth i cdetc)
-	  (setq count (1+ count)))
-      (setq i (1+ i)))
-    (if (equal count 1)
-	't
-      'nil )))
+(defun vmpc-xor (&rest args)
+  "Return true if one and only one argument in ARGS is true."
+  (= 1 (length (delete nil args))))
 
 ;; -------------------------------------------------------------------
 ;; Support functions for the advices:
