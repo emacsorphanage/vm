@@ -103,32 +103,21 @@ set to 'always or 'prompt).")
 
 (defvar vmpc-current-state nil
   "The current state, i.e. one of 'reply, 'forward, 'resent, 'automorph or 'newmail.
-It controls which actions/functions can be run.")
-
-(make-variable-buffer-local 'vmpc-current-state)
+It controls which actions/functions can/will be run.")
 
 (defvar vmpc-current-buffer nil
   "The current buffer, i.e. 'none or 'composition.
-It is 'none before running the adviced VM function and 'composition afterward,
-i.e. when within a composition buffer.")
-
-(make-variable-buffer-local 'vmpc-current-buffer)
+It is 'none before running an adviced VM function and 'composition afterward,
+i.e. when within the composition buffer.")
 
 (defvar vmpc-saved-headers-alist nil
-  "Alist of headers from the original message saved for using them later in
-the composition.")
-
-(make-variable-buffer-local 'vmpc-saved-headers-alist)
+  "Alist of headers from the original message saved for later use.")
 
 (defvar vmpc-actions-to-run nil
-  "The actions which were run the last run.")
-
-(make-variable-buffer-local 'vmpc-actions-to-run)
+  "The actions to run.")
 
 (defvar vmpc-true-conditions nil
-  "The true conditions from the last run.")
-
-(make-variable-buffer-local 'vmpc-true-conditions)
+  "The true conditions.")
 
 (defvar vmpc-auto-profiles nil
   "The auto profiles as stored in `vmpc-auto-profiles-file'.")
@@ -1010,78 +999,70 @@ body of the message being replied to."
 ;; ------------------------------------------------------------------------
 ;; The main functions and advices -- these are the entry points to pcrisis:
 ;; ------------------------------------------------------------------------
+(defun vmpc-init-vars (&optional state buffer)
+  "Initialize pcrisis vars."
+  (setq vmpc-saved-headers-alist nil
+        vmpc-actions-to-run nil
+        vmpc-true-conditions nil
+        vmpc-current-state state
+        vmpc-current-buffer (or buffer 'none)))
+
+(defun vmpc-make-vars-local ()
+  "Make the pcrisis vars buffer local.
+
+When the vars are first set they cannot be made buffer local as we are not in
+the composition buffer then.  Unfortunately making them buffer local while
+they are bound by a `let' does not work, see the info for `make-local-variable'.
+So we are using the global ones and make them buffer local when in the composition
+buffer.  At least for saved-headers-alist this should fix a bug.
+
+The current solution is not reentrant save, but there also should be no
+recursion or concurrent calls."
+  (let ((saved-headers-alist vmpc-saved-headers-alist) 
+        (actions-to-run      vmpc-actions-to-run)
+        (true-conditions     vmpc-true-conditions)
+        (current-state       vmpc-current-state))
+    (vmpc-init-vars)
+    (make-local-variable 'vmpc-saved-headers-alist) 
+    (make-local-variable 'vmpc-actions-to-run)
+    (make-local-variable 'vmpc-true-conditions)
+    (make-local-variable 'vmpc-current-state)
+    (make-local-variable 'vmpc-current-buffer)
+    (setq vmpc-saved-headers-alist saved-headers-alist
+          vmpc-actions-to-run      actions-to-run
+          vmpc-true-conditions     true-conditions
+          vmpc-current-state       current-state
+          vmpc-current-buffer      'composition)))
 
 (defadvice vm-do-reply (around vmpc-reply activate)
-  (let (saved-headers-alist actions-to-run true-conditions)
-    ;; bind vmpc vars 
-    (let (vmpc-saved-headers-alist 
-          vmpc-actions-to-run 
-          vmpc-true-conditions
-          (vmpc-current-state 'reply)
-          (vmpc-current-buffer 'none))
-      (vmpc-build-true-conditions-list)
-      (vmpc-build-actions-to-run-list)
-      ;; pass them to the local vars in the composition buffer 
-      (setq saved-headers-alist vmpc-saved-headers-alist
-            actions-to-run vmpc-actions-to-run
-            true-conditions vmpc-true-conditions)
-      (vmpc-run-actions))
-    ad-do-it
-    (vmpc-create-sig-and-pre-sig-exerlays)
-    (setq vmpc-saved-headers-alist  saved-headers-alist
-          vmpc-actions-to-run actions-to-run
-          vmpc-true-conditions true-conditions
-          vmpc-current-state 'reply
-          vmpc-current-buffer 'composition)
-    (vmpc-run-actions)))
+  (vmpc-init-vars 'reply)
+  (vmpc-build-true-conditions-list)
+  (vmpc-build-actions-to-run-list)
+  (vmpc-run-actions)
+  ad-do-it
+  (vmpc-create-sig-and-pre-sig-exerlays)
+  (vmpc-make-vars-local)
+  (vmpc-run-actions))
 
 (defadvice vm-mail (around vmpc-newmail activate)
-  (let (saved-headers-alist actions-to-run true-conditions)
-    ;; bind vmpc vars 
-    (let (vmpc-saved-headers-alist 
-          vmpc-actions-to-run 
-          vmpc-true-conditions
-          (vmpc-current-state 'newmail)
-          (vmpc-current-buffer 'none))
-      (vmpc-build-true-conditions-list)
-      (vmpc-build-actions-to-run-list)
-      ;; pass them to the local vars in the composition buffer 
-      (setq saved-headers-alist vmpc-saved-headers-alist
-            actions-to-run vmpc-actions-to-run
-            true-conditions vmpc-true-conditions)
-      (vmpc-run-actions))
-    ad-do-it
-    (vmpc-create-sig-and-pre-sig-exerlays)
-    (setq vmpc-saved-headers-alist  saved-headers-alist
-          vmpc-actions-to-run actions-to-run
-          vmpc-true-conditions true-conditions
-          vmpc-current-state 'reply
-          vmpc-current-buffer 'composition)
-    (vmpc-run-actions)))
+  (vmpc-init-vars 'newmail)
+  (vmpc-build-true-conditions-list)
+  (vmpc-build-actions-to-run-list)
+  (vmpc-run-actions)
+  ad-do-it
+  (vmpc-create-sig-and-pre-sig-exerlays)
+  (vmpc-make-vars-local)
+  (vmpc-run-actions))
 
 (defadvice vm-compose-mail (around vmpc-compose-newmail activate)
-  (let (saved-headers-alist actions-to-run true-conditions)
-    ;; bind vmpc vars 
-    (let (vmpc-saved-headers-alist 
-          vmpc-actions-to-run 
-          vmpc-true-conditions
-          (vmpc-current-state 'newmail)
-          (vmpc-current-buffer 'none))
-      (vmpc-build-true-conditions-list)
-      (vmpc-build-actions-to-run-list)
-      ;; pass them to the local vars in the composition buffer 
-      (setq saved-headers-alist vmpc-saved-headers-alist
-            actions-to-run vmpc-actions-to-run
-            true-conditions vmpc-true-conditions)
-      (vmpc-run-actions))
-    ad-do-it
-    (vmpc-create-sig-and-pre-sig-exerlays)
-    (setq vmpc-saved-headers-alist  saved-headers-alist
-          vmpc-actions-to-run actions-to-run
-          vmpc-true-conditions true-conditions
-          vmpc-current-state 'reply
-          vmpc-current-buffer 'composition)
-    (vmpc-run-actions)))
+  (vmpc-init-vars 'newmail)
+  (vmpc-build-true-conditions-list)
+  (vmpc-build-actions-to-run-list)
+  (vmpc-run-actions)
+  ad-do-it
+  (vmpc-create-sig-and-pre-sig-exerlays)
+  (vmpc-make-vars-local)
+  (vmpc-run-actions))
 
 (defadvice vm-forward-message (around vmpc-forward activate)
   ;; this stuff is already done when replying, but not here:
@@ -1090,28 +1071,14 @@ body of the message being replied to."
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
   ;; the rest is almost exactly the same as replying:
-  (let (saved-headers-alist actions-to-run true-conditions)
-    ;; bind vmpc vars 
-    (let (vmpc-saved-headers-alist 
-          vmpc-actions-to-run 
-          vmpc-true-conditions
-          (vmpc-current-state 'forward)
-          (vmpc-current-buffer 'none))
-      (vmpc-build-true-conditions-list)
-      (vmpc-build-actions-to-run-list)
-      ;; pass them to the local vars in the composition buffer 
-      (setq saved-headers-alist vmpc-saved-headers-alist
-            actions-to-run vmpc-actions-to-run
-            true-conditions vmpc-true-conditions)
-      (vmpc-run-actions))
-    ad-do-it
-    (vmpc-create-sig-and-pre-sig-exerlays)
-    (setq vmpc-saved-headers-alist  saved-headers-alist
-          vmpc-actions-to-run actions-to-run
-          vmpc-true-conditions true-conditions
-          vmpc-current-state 'reply
-          vmpc-current-buffer 'composition)
-    (vmpc-run-actions)))
+  (vmpc-init-vars 'forward)
+  (vmpc-build-true-conditions-list)
+  (vmpc-build-actions-to-run-list)
+  (vmpc-run-actions)
+  ad-do-it
+  (vmpc-create-sig-and-pre-sig-exerlays)
+  (vmpc-make-vars-local)
+  (vmpc-run-actions))
 
 (defadvice vm-resend-message (around vmpc-resend activate)
   ;; this stuff is already done when replying, but not here:
@@ -1120,28 +1087,14 @@ body of the message being replied to."
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
   ;; the rest is almost exactly the same as replying:
-  (let (saved-headers-alist actions-to-run true-conditions)
-    ;; bind vmpc vars 
-    (let (vmpc-saved-headers-alist 
-          vmpc-actions-to-run 
-          vmpc-true-conditions
-          (vmpc-current-state 'resent)
-          (vmpc-current-buffer 'none))
-      (vmpc-build-true-conditions-list)
-      (vmpc-build-actions-to-run-list)
-      ;; pass them to the local vars in the composition buffer 
-      (setq saved-headers-alist vmpc-saved-headers-alist
-            actions-to-run vmpc-actions-to-run
-            true-conditions vmpc-true-conditions)
-      (vmpc-run-actions))
-    ad-do-it
-    (vmpc-create-sig-and-pre-sig-exerlays)
-    (setq vmpc-saved-headers-alist  saved-headers-alist
-          vmpc-actions-to-run actions-to-run
-          vmpc-true-conditions true-conditions
-          vmpc-current-state 'resent
-          vmpc-current-buffer 'composition)
-    (vmpc-run-actions)))
+  (vmpc-init-vars 'resent)
+  (vmpc-build-true-conditions-list)
+  (vmpc-build-actions-to-run-list)
+  (vmpc-run-actions)
+  ad-do-it
+  (vmpc-create-sig-and-pre-sig-exerlays)
+  (vmpc-make-vars-local)
+  (vmpc-run-actions))
 
 ;;;###autoload
 (defun vmpc-automorph ()
@@ -1149,10 +1102,8 @@ body of the message being replied to."
 Headers and signatures can be changed; pre-signatures added; functions called.
 For more information, see the Personality Crisis info file."
   (interactive)
-  (setq vmpc-actions-to-run nil
-	vmpc-true-conditions nil
-        vmpc-current-state 'automorph
-	vmpc-current-buffer 'composition)
+  (vmpc-make-vars-local)
+  (vmpc-init-vars 'automorph 'composition)
   (vmpc-build-true-conditions-list)
   (vmpc-build-actions-to-run-list)
   (vmpc-run-actions))
