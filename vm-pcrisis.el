@@ -47,59 +47,47 @@
 ;; -------------------------------------------------------------------
 
 (defvar vmpc-conditions ()
-  "*List of conditions used by pcrisis to decide what to do when replying or
-using `vmpc-automorph'.  For more information, see the Personality Crisis info
-file.")
+  "*List of conditions which will be checked by pcrisis.")
 
 (defvar vmpc-actions ()
-  "*List of actions that can be associated with conditions in
-`vmpc-conditions' for replying (see `vmpc-replies-alist') or with
-`vmpc-automorph' (see `vmpc-automorph-alist').  These are also the actions from
-which you can choose when using the newmail features of Personality Crisis, or
-the `vmpc-prompt-for-profile' action.  For more information, see the pcrisis
-info file.")
+  "*List of actions.
+Actions are associated with conditions from `vmpc-conditions' by one of
+`vmpc-actions-alist', `vmpc-reply-alist', `', `vmpc-forward-alist',
+`vmpc-resend-alist',  `vmpc-newmail-alist' or `vmpc-automorph-alist'.
 
-(defvar vmpc-replies-alist ()
-  "*An alist which associates conditions in `vmpc-conditions' with actions in
-`vmpc-actions' when replying to a message using VM with Personality Crisis.  For 
-more information, see the pcrisis info file.")
+These are also the actions from which you can choose when using the newmail
+features of Personality Crisis, or the `vmpc-prompt-for-profile' action.")
 
-(defvar vmpc-forwards-alist ()
-  "*An alist which associates conditions in `vmpc-conditions' with actions in
-`vmpc-actions' when forwarding a message using VM with Personality Crisis.  For
-more information, see the pcrisis info file.")
+(defvar vmpc-actions-alist ()
+  "*An alist associating conditions with actions from `vmpc-actions'.
+If you do not want to map actions for each state, e.g. for replying, forwarding,
+resending, composing or automorphing, then set this one.") 
+
+(defvar vmpc-reply-alist ()
+  "*An alist associating conditions with actions from `vmpc-actions' when replying.")
+
+(defvar vmpc-forward-alist ()
+  "*An alist associating conditions with actions from `vmpc-actions' when forwarding.")
 
 (defvar vmpc-automorph-alist ()
-  "*An alist which associates conditions in `vmpc-conditions' with actions in
-`vmpc-actions' when using the `vmpc-automorph' function.  For more information,
-see the Personality Crisis info file.")
+  "*An alist associating conditions with actions from `vmpc-actions' when automorphing.")
 
 (defvar vmpc-newmail-alist ()
-  "*An alist which associates conditions in `vmpc-conditions' with actions in
-`vmpc-actions' when composing a new message using VM with Personality
-Crisis.  For more information, see the pcrisis info file.")
+  "*An alist associating conditions with actions from `vmpc-actions' when composing.")
 
 (defvar vmpc-resend-alist ()
-  "*An alist which associates conditions in `vmpc-conditions' with actions in
-`vmpc-actions' when resending a message using VM with Personality Crisis.  For
-more information, see the pcrisis info file.")
-
-(defvar vmpc-newmail-prompt-for-profile ()
-  "Obsolete and ignored as of Personality Crisis v0.84.  
-Instead set up `vmpc-newmail-alist' to taste.  See the pcrisis info
-file for more details.")
+  "*An alist associating conditions with actions from `vmpc-actions' when resending.")
 
 (defvar vmpc-auto-profiles-file "~/.vmpc-auto-profiles"
   "*File in which to save information used by `vmpc-prompt-for-profile'.  
 The user is welcome to change this value.")
 
 (defvar vmpc-auto-profiles-expunge-days 100
-  "*Number of days after which to expunge old address-profile associations from
-`vmpc-auto-profiles-file'.  Performance may suffer noticeably if this file
-becomes enormous, but in other repects it is preferable for this value to be
-fairly high.  The value that's right for you will depend on how often you send
-email to new addresses using `vmpc-prompt-for-profile' (with the REMEMBER flag
-set to 'always or 'prompt).")
+  "*Number of days after which to expunge old address-profile associations.
+Performance may suffer noticeably if this file becomes enormous, but in other
+respects it is preferable for this value to be fairly high.  The value that is
+right for you will depend on how often you send email to new addresses using
+`vmpc-prompt-for-profile' (with the REMEMBER flag set to 'always or 'prompt).")
 
 (defvar vmpc-current-state nil
   "The current state, i.e. one of 'reply, 'forward, 'resent, 'automorph or 'newmail.
@@ -177,7 +165,7 @@ If point is not in a header field, returns nil."
   (save-excursion
     (unless (save-excursion 
 	      (re-search-backward (regexp-quote mail-header-separator)
-				  (point-min) 't))
+				  (point-min) t))
       (re-search-backward "^\\([^ \t\n:]+\\):")
       (match-string 1))))
 
@@ -211,7 +199,7 @@ field, whether point is in the body or the headers.
 (defun vmpc-backward-tab-header-or-tab-stop ()
   "*Wrapper for `vmpc-tab-header-or-tab-stop' with BACKWARD set"
   (interactive)
-  (vmpc-tab-header-or-tab-stop 't))
+  (vmpc-tab-header-or-tab-stop t))
 
 
 ;; -------------------------------------------------------------------
@@ -497,9 +485,7 @@ CLUMP-SEP is specified, treat HDRFIELD as a regular expression and
 return the contents of all header fields which match that regexp,
 separated from each other by CLUMP-SEP."
   (if (and (eq vmpc-current-buffer 'none)
-	   (or (eq vmpc-current-state 'reply)
-	       (eq vmpc-current-state 'forward)
-               (eq vmpc-current-state 'resend)))
+	   (memq vmpc-current-state '(reply forward resend)))
       (let ((mp (car (vm-select-marked-or-prefixed-messages 1)))
             content c)
         (if (not (listp hdrfield))
@@ -513,9 +499,7 @@ separated from each other by CLUMP-SEP."
 (defun vmpc-get-replied-body-text ()
   "Returns the body text of the message being replied to."
   (if (and (eq vmpc-current-buffer 'none)
-	   (or (eq vmpc-current-state 'reply)
-	       (eq vmpc-current-state 'forward)
-               (eq vmpc-current-state 'resend)))
+	   (memq vmpc-current-state '(reply forward resend)))
       (save-excursion
 	(let* ((mp (car (vm-select-marked-or-prefixed-messages 1)))
 	       (message (vm-real-message-of mp))
@@ -532,9 +516,7 @@ separated from each other by CLUMP-SEP."
 Does nothing if that header doesn't exist."
   (let ((hdrcont (vmpc-get-replied-header-contents hdrfield)))
   (if (and (eq vmpc-current-buffer 'none)
-	   (or (eq vmpc-current-state 'reply)
-	       (eq vmpc-current-state 'forward)
-               (eq vmpc-current-state 'resend))
+	   (memq vmpc-current-state '(reply forward resend))
 	   (not (equal hdrcont "")))
       (add-to-list 'vmpc-saved-headers-alist (cons hdrfield hdrcont)))))
 
@@ -542,9 +524,7 @@ Does nothing if that header doesn't exist."
   "Returns the contents of HDRFIELD from `vmpc-saved-headers-alist'.  
 The alist in question is created by `vmpc-save-replied-header'."
   (if (and (eq vmpc-current-buffer 'composition)
-	   (or (eq vmpc-current-state 'reply)
-	       (eq vmpc-current-state 'forward)
-               (eq vmpc-current-state 'resend)))
+	   (memq vmpc-current-state '(reply forward resend)))
       (cdr (assoc hdrfield vmpc-saved-headers-alist))))
 
 (defun vmpc-substitute-replied-header (dest src)
@@ -553,9 +533,7 @@ replying to as the contents of the header DEST in your reply.
 For example, if the address you want to send your reply to is the same
 as the contents of the \"From\" header in the message you're replying
 to, you'd use (vmpc-substitute-replied-header \"To\" \"From\"."  
-  (if (or (eq vmpc-current-state 'reply)
-	  (eq vmpc-current-state 'forward)
-          (eq vmpc-current-state 'resend))
+  (if (memq vmpc-current-state '(reply forward resend))
       (progn
 	(if (eq vmpc-current-buffer 'none)
 	    (vmpc-save-replied-header src))
@@ -776,7 +754,7 @@ added is removed before the new one is added."
 
 
 (defun vmpc-get-profile-for-address (addr)
-  "This is a support function for vmpc-prompt-for-profile."
+  "This is a support function for `vmpc-prompt-for-profile'."
   (unless vmpc-auto-profiles
     (vmpc-load-auto-profiles))
   (let ((prof (cadr (assoc addr vmpc-auto-profiles))))
@@ -808,22 +786,21 @@ added is removed before the new one is added."
 (defun vmpc-string-extract-address (str)
   "Finds the first email address in the string STR and returns it.
 If no email address in found in STR, returns nil."
-  (if (string-match "[^ 	,<]+@[^ 	,>]+" str)
+  (if (string-match "[^ \t,<]+@[^ \t,>]+" str)
       (match-string 0 str)))
 
 
 (defun vmpc-prompt-for-profile (&optional remember)
   "Prompts the user for a profile (one of the sets of actions named in
 vmpc-actions) and adds it to the list of actions to be performed,
-unless it's already in there.  
+unless it is already in there.  
 REMEMBER can be set to 'always or 'prompt.  It figures out who your
 message is going to, and saves a record in vmpc-auto-profiles-file
 which says to use that profile for messages to that address in the
 future, instead of prompting you for a profile the next time.  If set
 to 'prompt, it will ask before doing this; otherwise it will do it
 automatically."
-  (if (and (or (eq vmpc-current-state 'forward)
-               (eq vmpc-current-state 'resend))
+  (if (and (memq vmpc-current-state '(forward resend))
 	   remember)
       (error "You can't have vmpc-prompt-for-profile remember when forwarding or resending."))
   (if (or (and (eq vmpc-current-buffer 'none)
@@ -846,10 +823,10 @@ automatically."
 	;; figure out which profile to use:
 	(setq prof
 	      (or (let ((p))
-		   (setq p (vmpc-get-profile-for-address dest))
-		   (if p
-		       (setq remember 'already))
-		   p)
+                    (setq p (vmpc-get-profile-for-address dest))
+                    (if p
+                        (setq remember 'already))
+                    p)
 		  (let ((default (car (car vmpc-actions))) (choice nil))
 		    (setq choice (completing-read 
 				  (format "Use profile (Default \"%s\"): "
@@ -864,11 +841,8 @@ automatically."
 		(setq vmpc-actions-to-run (append vmpc-actions-to-run
 						  (cons prof ()))))
 	  ;; or in automorph, run it immediately:
-	  (let* ((functions (cdr (assoc prof vmpc-actions)))
-		 (len (length functions)) (i 0))
-	    (while (< i len)
-	      (eval (nth i functions))
-	      (setq i (1+ i)))))
+	  (let ((vmpc-actions-to-run (list prof)))
+            (vmpc-run-actions)))
 	
 	;; save the association of this profile with this destination
 	;; address if applicable:
@@ -921,9 +895,7 @@ haven't yet been checked when this one is checked."
   "Returns true if the contents of specified header HDRFIELD match REGEXP.  
 For automorph, this means the header in your message; when replying it means the 
 header in the message being replied to."
-  (cond ((or (eq vmpc-current-state 'reply)
-	     (eq vmpc-current-state 'forward)
-             (eq vmpc-current-state 'resend))
+  (cond ((memq vmpc-current-state '(reply forward resend))
          (let ((hdr (vmpc-get-replied-header-contents hdrfield clump-sep)))
            (and (string-match regexp hdr)
                 (if num (match-string num hdr) t))))
@@ -936,9 +908,7 @@ header in the message being replied to."
   "Returns non-nil if the contents of the message body match REGEXP.
 For automorph, this means the body of your message; when replying it means the
 body of the message being replied to."
-  (cond ((and (or (eq vmpc-current-state 'reply)
-		  (eq vmpc-current-state 'forward)
-                  (eq vmpc-current-state 'resend))
+  (cond ((and (memq vmpc-current-state '(reply forward resend))
 	      (eq vmpc-current-buffer 'none))
 	 (string-match regexp (vmpc-get-replied-body-text)))
 	((eq vmpc-current-state 'automorph)
