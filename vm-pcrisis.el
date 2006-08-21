@@ -32,6 +32,16 @@
 ;; downloaded one or the other along with this package at the URL
 ;; above.  
 
+;;; TODO:
+;; - more lispification, Rob was a bit unfunctional 
+;; - use defcustom all over the place
+;; - checkdoc
+;; - add a trace buffer?
+;; - info file:
+;;  - add a list of the changes 
+;;  - how to debug 
+;;  - quick start (with prompting)
+
 ;;; Code:
 (eval-when-compile
   (require 'vm-version)
