@@ -355,22 +355,22 @@ Or overlays, in the case of GNUmacs.  Thus, exerlays."
 ;; Functions for vmpc-actions:
 ;; -------------------------------------------------------------------
 
-(defun vmpc-composition-buffer-function (func)
+(defun vmpc-composition-buffer-function (&rest form)
   "Runs a composition-buffer-function provided the time is right.
 That is to say, runs the function if you're really in a composition
 buffer.  This function should not be called directly; only from within
 the vmpc-actions list."
   (if (eq vmpc-current-buffer 'composition)
-      (eval func)))
+      (eval (cons 'progn form))))
 
-(defun vmpc-pre-function (func)
+(defun vmpc-pre-function (&rest form)
   "Runs a pre-function provided the time is right.
 That is to say, runs the function before VM does its thing, whether
 that be creating a new mail or a reply.  This function should not be
 called directly; only from within the vmpc-actions list."
   (if (and (eq vmpc-current-buffer 'none)
 	   (not (eq vmpc-current-state 'automorph)))
-      (eval func)))
+      (eval (cons 'progn form))))
 
 (defun vmpc-delete-header (hdrfield &optional entire)
   "Delete the contents of a header field in the current mail message.
