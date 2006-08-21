@@ -36,7 +36,7 @@
 (defun vm-fsfemacs-p () vm-fsfemacs-p)
 (defun vm-fsfemacs-mule-p () vm-fsfemacs-mule-p)
 (defun vm-note-emacs-version ()
-  (setq vm-xemacs-p (string-match "XEmacs" emacs-version)
+  (setq vm-xemacs-p (featurep 'xemacs)
 	vm-xemacs-mule-p (and vm-xemacs-p (featurep 'mule)
 			      ;; paranoia
 			      (fboundp 'set-buffer-file-coding-system))
