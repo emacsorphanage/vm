@@ -29,7 +29,7 @@ It was written by Rob Hodges <s323140@@student.uq.edu.au>.
 
 It is currently maintained by Robert Widhopf-Fenk <hack@@robf.de>
 
-Please read the docs before sending email about problems you're having.
+Please read the docs before sending email about problems you are having.
 Most problems are due to incorrect regexps.  That said, if something in
 the docs is unclear, I'd like to know so that I can improve them.  And
 if you find a bug, I'd definitely like to know.  I hope you enjoy this
@@ -67,9 +67,9 @@ vmpc-actions
 
 Associating Conditions with Actions
 
-* vmpc-replies-alist::          
+* vmpc-reply-alist::          
 * vmpc-automorph-alist::        
-* vmpc-forwards-alist::         
+* vmpc-forward-alist::         
 * vmpc-resend-alist::           
 * vmpc-newmail-alist::          
 
@@ -113,7 +113,7 @@ Load VM if you haven't previously done so in your current Emacs session.
 Byte-compile vm-pcrisis.el, using @code{M-x byte-compile-file}.  You may
 get some byte-compiler warnings; ignore them.  (For the curious:
 Personality Crisis uses some functions that have different names in FSF
-Emacs and XEmacs, automatically detecting which one you're running.  The
+Emacs and XEmacs, automatically detecting which one you are running.  The
 byte-compiler isn't smart enough to know this, so it warns of the
 functions it doesn't know about, even though they'll never be run.)
 
@@ -138,8 +138,8 @@ Read the rest of this manual and set up the variables it describes.
 @node Description, Specific Abilities, Installation, Getting Started
 @section Description
 
-Personality Crisis can look at the headers of a message you're replying
-to or forwarding, or a message you're composing, and you can set it up
+Personality Crisis can look at the headers of a message you are replying
+to or forwarding, or a message you are composing, and you can set it up
 to do just about anything based on those.  To get some ideas about how
 this might be useful, see @ref{Common Uses}.  You can also use it to
 explicitly choose a "personality" when composing new messages.
@@ -149,7 +149,7 @@ explicitly choose a "personality" when composing new messages.
 @node Specific Abilities, Common Uses, Description, Getting Started
 @section Specific Abilities
 
-Based on the headers of a message you're replying to, you can get
+Based on the headers of a message you are replying to, you can get
 vm-pcrisis to do any number of these things:
 
 @itemize @bullet
@@ -157,7 +157,7 @@ vm-pcrisis to do any number of these things:
 @item Change or insert a signature in your reply.
 @item Insert some text in the body of your reply.
 @item Change any header in your reply to the value of any of the
-headers in the message you're replying to.
+headers in the message you are replying to.
 @item Call some functions before VM creates the reply.
 @item Call some functions in the reply buffer.
 @item Prompt you for a personality profile to use, and optionally,
@@ -167,7 +167,7 @@ in the future.
 
 Similar functionality is available when forwarding messages.  
 
-Based on the headers of a message you're composing, it can do these
+Based on the headers of a message you are composing, it can do these
 things:
 
 @itemize @bullet
@@ -187,8 +187,8 @@ who you are for each message.
 
 If you write your own functions to do things that vm-pcrisis can't do by
 itself, ready-made functions are provided to allow you easy access to
-the contents of headers in both the message you're replying to, and
-the message you're writing.
+the contents of headers in both the message you are replying to, and
+the message you are writing.
 
 @c ***************************************************************************
 
@@ -243,22 +243,22 @@ you.  Have fun!
 
 When setting up variables for Personality Crisis, you begin by thinking
 about what you want it to do when a certain condition occurs, either
-when you're replying to or forwarding a message, or in the midst of
+when you are replying to or forwarding a message, or in the midst of
 writing a message.
 
 You define the condition in @code{vmpc-conditions}, and the action you
 want vm-pcrisis to take in @code{vmpc-actions}, giving a name to each.
 You then associate the condition with the action in
-@code{vmpc-replies-alist} if it's one that relies on the headers of a
-message you're replying to, @code{vmpc-forwards-alist} if it's a message
-you're forwarding, or @code{vmpc-automorph-alist} if it's based on the
+@code{vmpc-reply-alist} if it's one that relies on the headers of a
+message you are replying to, @code{vmpc-forward-alist} if it's a message
+you are forwarding, or @code{vmpc-automorph-alist} if it's based on the
 headers of your own message.  As of v0.84, you may also use
 @code{vmpc-newmail-alist} to associate conditions with actions for new
 messages, and since v0.85, @code{vmpc-resend-alist} for resending
 (bouncing) messages.  
 
 If you want to use the @code{vmpc-automorph} function, which takes
-actions based on the headers of a message you're composing, you should
+actions based on the headers of a message you are composing, you should
 read @ref{Calling Automorph} to decide where you want to hook it in.
 
 The remainder of this manual will provide more information about how to
@@ -285,7 +285,7 @@ message.  Here are a couple of ideas:
 
 @itemize @bullet
 @item Hitching a ride on the mail-text function: automorph with C-c C-t.@*
-A very good idea if you're in the habit of using this to move from
+A very good idea if you are in the habit of using this to move from
 your headers to the body of your message.
 
 @item Let vm-pcrisis help you: tab between headers.@*
@@ -388,9 +388,9 @@ fine-grained control over when your actions will trigger.
 
 @item @code{vmpc-header-match} is of course the main one.  When making
 replies or forwards, this matches against the contents of a header in
-the message you're replying/forwarding; when using the
+the message you are replying/forwarding; when using the
 @code{vmpc-automorph} function, it matches against a header in the
-message you're composing.
+message you are composing.
 
 @item @code{vmpc-body-match} is just like @code{vmpc-header-match} but 
 allows you to match against the text in the body of the message.
@@ -615,7 +615,7 @@ then associate with a prompting action) is to use
 @end lisp
 
 It's also possible to match against the text in the body of a message
-you're replying to, forwarding or composing.  If you wanted to check
+you are replying to, forwarding or composing.  If you wanted to check
 whether the phrase "make money fast" appeared in a message, you'd have 
 a condition like this:
 
@@ -719,10 +719,10 @@ enough from these examples to achieve such control.
 
 The @code{vmpc-actions} variable is a list of actions, which can equally
 be referred to as "profiles".  You will set up some of them for replies,
-some for @code{vmpc-automorph} (if you use it), and some for when you're
+some for @code{vmpc-automorph} (if you use it), and some for when you are
 prompted for a profile (if you have an action that uses
 @code{vmpc-prompt-for-profile}).  Many will be equally applicable in all
-three cases, which is why they're all kept in the same place.
+three cases, which is why they are all kept in the same place.
 
 Each action is given a unique, descriptive name, and consists of one or
 more function calls, so that the format of the list looks something like
@@ -752,11 +752,11 @@ above the signature.
 replace the contents of the specified header-field in your message with
 the new contents, creating the header field if necessary.
 @item (vmpc-substitute-replied-header "Dest-Header" "Src-Header") takes
-the contents of the Src-Header field in the message you're replying to,
+the contents of the Src-Header field in the message you are replying to,
 and inserts them as the contents of the Dest-Header field in your
 reply, creating the Dest-Header field if necessary.  (If it's contained
-in an action which is called when you're not replying to a message, it
-does nothing.  The same is true of all of these functions: when they're
+in an action which is called when you are not replying to a message, it
+does nothing.  The same is true of all of these functions: when they are
 called in an inappropriate context, they only do as much as they can.)
 @item (vmpc-pre-function '(foo-function args)) evaluates the lisp
 expression 
@@ -805,7 +805,7 @@ after the other, in the place of the comment above.
 Say you wanted two personality profiles from which you could choose when
 prompted, and to automatically apply when certain conditions were met
 with replies or in automorph mode.  One thing to bear in mind is that
-when you're prompted, there will be auto-completion available --- you'll
+when you are prompted, there will be auto-completion available --- you'll
 only need to type enough to uniquely identify a profile (you won't even
 need to hit TAB).  Also, the first profile in @code{vmpc-actions} will
 be the default at the prompt, so you can just hit RET to use it.
@@ -929,7 +929,7 @@ using this feature in both automorph and reply mode, an association made
 in one mode may not be properly suited to the other.  The best way to
 avoid this problem is to set up your conditions so that the above action
 is not run in conjunction with other actions that change the To: field.
-This is not really limiting, because the situations in which you're
+This is not really limiting, because the situations in which you are
 changing the To: field will generally be ones in which you know which
 profile you want to use anyway.
 
@@ -949,20 +949,40 @@ address.  Like this:
 @chapter Associating Conditions with Actions
 
 @menu
-* vmpc-replies-alist::          
+* vmpc-action-alist::          
+* vmpc-reply-alist::          
 * vmpc-automorph-alist::        
-* vmpc-forwards-alist::         
+* vmpc-forward-alist::         
 * vmpc-resend-alist::           
 * vmpc-newmail-alist::          
 @end menu
 
 @c ***************************************************************************
 
-@node vmpc-replies-alist, vmpc-automorph-alist, Associating Conditions with Actions, Associating Conditions with Actions
+@node vmpc-action-alist, vmpc-automorph-alist, Associating Conditions with Actions, Associating Conditions with Actions
 @c node-name, next, previous, up
-@section vmpc-replies-alist
+@section vmpc-action-alist
 
-The @code{vmpc-replies-alist} variable controls which actions are
+The @code{vmpc-action-alist} variable controls which actions are
+performed if various conditions are met when creating a reply.  Its
+format is something like this:
+
+@lisp
+'(  ("condition 1" "action 1" "action 2")
+    ("condition 2" "action 3")
+    ...                         )
+@end lisp
+
+If you do not want to set all the other alists then sent this one as it
+will be used as a fall back.
+
+@c ***************************************************************************
+
+@node vmpc-reply-alist, vmpc-action-alist, Associating Conditions with Actions, Associating Conditions with Actions
+@c node-name, next, previous, up
+@section vmpc-reply-alist
+
+The @code{vmpc-reply-alist} variable controls which actions are
 performed if various conditions are met when creating a reply.  Its
 format is something like this:
 
@@ -976,7 +996,7 @@ If we follow on from our examples in the previous sections, we might
 have this in our ~/.vm file:
 
 @lisp
-(setq vmpc-replies-alist '(
+(setq vmpc-reply-alist '(
   ("condition that's always true" "david")
   ("plaintext messages from foo-list" "foo on the hill")
   ("html messages from foo-list" "set To to From" 
@@ -988,33 +1008,33 @@ have this in our ~/.vm file:
 
 @c ***************************************************************************
 
-@node vmpc-automorph-alist, vmpc-forwards-alist, vmpc-replies-alist, Associating Conditions with Actions
+@node vmpc-automorph-alist, vmpc-forward-alist, vmpc-reply-alist, Associating Conditions with Actions
 @c node-name, next, previous, up
 @section vmpc-automorph-alist
 
 The @code{vmpc-automorph-alist} variable has the same syntax as
-@code{vmpc-replies-alist} and follows the same principles.  (See
-@ref{vmpc-replies-alist}.)  The only difference is that it controls
+@code{vmpc-reply-alist} and follows the same principles.  (See
+@ref{vmpc-reply-alist}.)  The only difference is that it controls
 which actions are associated with which conditions when the
 @code{vmpc-automorph} function is called.
 
 @c ***************************************************************************
-@node vmpc-forwards-alist, vmpc-resend-alist, vmpc-automorph-alist, Associating Conditions with Actions
-@section vmpc-forwards-alist
+@node vmpc-forward-alist, vmpc-resend-alist, vmpc-automorph-alist, Associating Conditions with Actions
+@section vmpc-forward-alist
 
-The @code{vmpc-forwards-alist} variable has the same syntax as
-@code{vmpc-replies-alist} and follows the same principles.  (See
-@ref{vmpc-replies-alist}.)  The only difference is that it controls
+The @code{vmpc-forward-alist} variable has the same syntax as
+@code{vmpc-reply-alist} and follows the same principles.  (See
+@ref{vmpc-reply-alist}.)  The only difference is that it controls
 which actions are associated with which conditions when forwarding
 messages.
 
 @c ***************************************************************************
-@node vmpc-resend-alist, vmpc-newmail-alist, vmpc-forwards-alist, Associating Conditions with Actions
+@node vmpc-resend-alist, vmpc-newmail-alist, vmpc-forward-alist, Associating Conditions with Actions
 @section vmpc-resend-alist
 
 The @code{vmpc-resend-alist} variable has the same syntax as
-@code{vmpc-replies-alist} and follows the same principles.  (See
-@ref{vmpc-replies-alist}.)  The only difference is that it controls
+@code{vmpc-reply-alist} and follows the same principles.  (See
+@ref{vmpc-reply-alist}.)  The only difference is that it controls
 which actions are associated with which conditions when resending
 messages with @code{vm-resend-message}.  
 
@@ -1025,8 +1045,8 @@ messages with @code{vm-resend-message}.
 @section vmpc-newmail-alist
 
 The @code{vmpc-newmail-alist} variable has the same syntax as
-@code{vmpc-replies-alist} and follows the same principles.  (See
-@ref{vmpc-replies-alist}.)  The only difference is that it controls
+@code{vmpc-reply-alist} and follows the same principles.  (See
+@ref{vmpc-reply-alist}.)  The only difference is that it controls
 which actions are associated with which conditions when creating new
 messages with vm-mail.  
 
@@ -1177,6 +1197,39 @@ setup, provided that your signature-insertion function uses the standard
 @c node-name, next, previous, up
 @chapter New In This Version
 
+Version 0.9:
+
+@itemize @bullet
+
+@item The new maintainer is <hack@@robf.de> now.
+
+@item @code{vmpc-pre-function} and @code{vmpc-composition-buffer-function} handle forms
+     now, not only a single function.
+
+@item Renamed @code{vmpc-reply-alist} to @code{vmpc-reply-alist} and
+     @code{vmpc-forward-alist} to @code{vmpc-forward-alist} for consistency.
+
+@item New function @code{vmpc-true-conditions} to test conditions without actually
+     running some actions.
+
+@item New function @code{vmpc-read-actions} to set actions by hand.
+
+@item @code{vmpc-build-actions-to-run-list} and @code{vmpc-run-actions} are interactive
+     now.
+
+@item The state variables become buffer-local now, which should prevent some
+     bugs, i.e. for saved headers. 
+
+@item Rewrite of unlispish code.
+
+@item @code{M-x checkdoc RET}
+
+@item Several bug fixes and enhancements from Robert P. Goldman.
+
+@item Fixes and updates of the info file. 
+
+@end itemize
+
 Version 0.85:
 
 @itemize @bullet
@@ -1194,7 +1247,7 @@ Version 0.84:
 
 @item There is now a @code{vmpc-newmail-alist} in recognition of the fact that
 you @strong{can} actually test for useful criteria (such as what folder
-you're in when you invoke vm-mail) when creating a brand new message.
+you are in when you invoke vm-mail) when creating a brand new message.
 
 @item Due to the above, the @code{vmpc-newmail-prompt-for-profile}
 variable is now obsoleted.  Its effect can be duplicated easily enough;
@@ -1220,7 +1273,7 @@ functions of VM.  Just set up @code{vmpc-forwards-alist}, which has an
 identical format to @code{vmpc-replies-alist}.
 
 @item There is now a @code{vmpc-body-match} function which matches
-text in the body of a message you're composing, replying to or
+text in the body of a message you are composing, replying to or
 forwarding.  See @ref{vmpc-conditions examples} for more about that.
 
 @item You can now use @code{vmpc-header-match} to test if a regexp appears in 
@@ -1234,7 +1287,7 @@ For further details, again see @ref{vmpc-conditions examples}.
 
 @item @code{vmpc-auto-profiles-expunge-days} can now be set to nil if
 you want to never expunge old profile associations.  Associations are
-now "touched" each time they're used, so that as long as they're used
+now "touched" each time they are used, so that as long as they are used
 more often than @code{vmpc-auto-profiles-expunge-days} they will never
 be expunged.  
 

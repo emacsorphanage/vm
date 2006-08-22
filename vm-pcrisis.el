@@ -7,7 +7,6 @@
 ;; Author: Rob Hodges
 ;; Maintainer: Robert Widhopf-Fenk <hack@robf.de>
 ;; Filename: vm-pcrisis.el
-;; Version: 1.0
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -54,6 +53,8 @@
 ;; -------------------------------------------------------------------
 ;; Variables:
 ;; -------------------------------------------------------------------
+(defconst vmpc-version "0.9"
+  "Version of pcrisis.")
 
 (defvar vmpc-conditions ()
   "*List of conditions which will be checked by pcrisis.")
