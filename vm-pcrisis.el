@@ -361,22 +361,26 @@ Or overlays, in the case of GNU Emacs.  Thus, exerlays."
 ;; Functions for vmpc-actions:
 ;; -------------------------------------------------------------------
 
-(defun vmpc-composition-buffer-function (&rest form)
-  "Evaluate FORM if in composition state.
+(defmacro vmpc-composition-buffer (&rest form)
+  "Evaluate FORM if in the composition buffer.
 That is to say, evaluates the form if you are really in a composition
 buffer.  This function should not be called directly, only from within
 the `vmpc-actions' list."
-  (if (eq vmpc-current-buffer 'composition)
-      (eval (cons 'progn form))))
+  (list 'if '(eq vmpc-current-buffer 'composition)
+        (list 'eval (cons 'progn form))))
 
-(defun vmpc-pre-function (&rest form)
+(put 'vmpc-composition-buffer 'lisp-indent-hook 'defun)
+
+(defmacro vmpc-pre-function (&rest form)
   "Evaluate FORM if in pre-function state.
 That is to say, evaluates the FORM before VM does its thing, whether
 that be creating a new mail or a reply.  This function should not be
 called directly, only from within the `vmpc-actions' list."
-  (if (and (eq vmpc-current-buffer 'none)
-	   (not (eq vmpc-current-state 'automorph)))
-      (eval (cons 'progn form))))
+  (list 'if '(and (eq vmpc-current-buffer 'none)
+                  (not (eq vmpc-current-state 'automorph)))
+        (list 'eval (cons 'progn form))))
+
+(put 'vmpc-pre-function 'lisp-indent-hook 'defun)
 
 (defun vmpc-delete-header (hdrfield &optional entire)
   "Delete the contents of a HDRFIELD in the current mail message.
