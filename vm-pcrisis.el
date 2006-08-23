@@ -518,6 +518,15 @@ separated from each other by CLUMP-SEP."
           (setq hdrfield (cdr hdrfield)))
         (or (mapconcat 'identity content "\n") ""))))
 
+(defun vmpc-get-header-contents (hdrfield &optional clump-sep)
+ "Return the contents of HDRFIELD."
+ (cond ((and (eq vmpc-current-buffer 'none)
+             (memq vmpc-current-state '(reply forward resend)))
+        (vmpc-get-replied-header-contents hdrfield clump-sep))
+       ((eq vmpc-current-state 'automorph)
+        (vmpc-get-current-header-contents hdrfield clump-sep))
+       (t (error "Unknow vmpc state %S" vmpc-current-state))))
+
 (defun vmpc-get-replied-body-text ()
   "Return the body text of the message being replied to."
   (if (and (eq vmpc-current-buffer 'none)
@@ -813,8 +822,30 @@ If no email address in found in STR, returns nil."
   (if (string-match "[^ \t,<]+@[^ \t,>]+" str)
       (match-string 0 str)))
 
+(defun vmpc-split (string separators)
+  "Return a list by splitting STRING at SEPARATORS."
+  (let (result
+        (not-separators (concat "^" separators)))
+    (save-excursion
+      (set-buffer (get-buffer-create " *split*"))
+      (erase-buffer)
+      (insert string)
+      (goto-char (point-min))
+      (while (progn
+               (skip-chars-forward separators)
+               (skip-chars-forward " \t\n\r")
+               (not (eobp)))
+        (let ((begin (point))
+              p)
+          (skip-chars-forward not-separators)
+          (setq p (point))
+          (skip-chars-backward " \t\n\r")
+          (setq result (cons (buffer-substring begin (point)) result))
+          (goto-char p)))
+      (erase-buffer))
+    (nreverse result)))
 
-(defun vmpc-prompt-for-profile (&optional remember)
+(defun vmpc-prompt-for-profile (&optional remember re-prompt)
   "Prompt the user for a profile and add it to the list of actions.
 A profile is one of the sets of actions named in `vmpc-actions'.
 
@@ -822,57 +853,64 @@ REMEMBER can be set to 'always or 'prompt.  It figures out who your message is
 going to, and saves a record in `vmpc-auto-profiles-file' which says to use that
 profile for messages to that address in the future, instead of prompting you
 for a profile the next time.  If set to 'prompt, it will ask before doing
-this; otherwise it will do it automatically."
+this, otherwise it will do it automatically.
+
+If you want to change a profile->action mapping call this function
+interactivly within a composition buffer.  This will set RE-PROMPT
+and thus will prompt you for a profile again."
+  (interactive (progn (setq vmpc-current-state 'automorph)
+                      (list 'prompt t)))
+  
   (if (and (memq vmpc-current-state '(forward resend))
 	   remember)
       (error "You can not have vmpc-prompt-for-profile remember when forwarding or resending"))
   (if (or (and (eq vmpc-current-buffer 'none)
 	       (not (eq vmpc-current-state 'automorph)))
 	  (eq vmpc-current-state 'automorph))
-      (let ((prof) (dest ""))
-	;; figure out where this email is going:
-	(cond
-	 ((eq vmpc-current-state 'automorph)
-	  (setq dest (vmpc-get-current-header-contents "To")))
-	 ((and (eq vmpc-current-state 'reply)
-	       (eq vmpc-current-buffer 'none))
-	  (setq dest (vmpc-get-replied-header-contents "Reply-To"))
-	  (if (or (vm-ignored-reply-to dest)
-		  (equal dest ""))
-	      (setq dest (vmpc-get-replied-header-contents "From")))))
-	;; just the email address thanks:
-	(unless (eq vmpc-current-state 'newmail)
-	  (setq dest (vmpc-string-extract-address dest)))
-	;; figure out which profile to use:
-	(setq prof
-	      (or (let ((p))
-                    (setq p (vmpc-get-profile-for-address dest))
-                    (if p
-                        (setq remember 'already))
-                    p)
-		  (let ((default (car (car vmpc-actions))) (choice nil))
-		    (setq choice (completing-read
-				  (format "Use profile (Default \"%s\"): "
-					  default) vmpc-actions nil t))
-		    (if (equal choice "")
-			default
-		      choice))))
+      (let ((headers (if (eq vmpc-current-state 'automorph)
+                         '("To" "CC" "BCC")
+                       '("Reply-To" "From" "CC")))
+            addrs a prof dest)
+        ;; search also other headers fro known addresses 
+        (while (and headers (not prof))
+          (setq addrs (vmpc-split (vmpc-get-header-contents (car headers)) ","))
+          (while addrs
+            (setq a (vmpc-string-extract-address (car addrs)))
+            (if (vm-ignored-reply-to a)
+                (setq a nil))
+            (if (and (setq prof (vmpc-get-profile-for-address a)))
+                (setq dest a headers nil)
+              (if (and (not dest) a)
+                  (setq dest a)))
+            (setq addrs (cdr addrs)))
+          (setq headers (cdr headers)))
+        
+	;; figure out which profile to use
+        (if (setq prof (unless re-prompt (or prof (vmpc-get-profile-for-address dest))))
+            (setq remember 'already)
+          (setq prof (completing-read
+                      (format "Profile for \"%s\" (\"%s\"): "
+                              dest (caar vmpc-actions))
+                      ;; omit those starting with (vmpc-prompt-for-profile ...
+                      (mapcar
+                       (lambda (a)
+                         (if (not (eq (caadr a) 'vmpc-prompt-for-profile)) a))
+                       vmpc-actions)
+                      nil t nil nil (caar vmpc-actions))))
 
 	(if (not (eq vmpc-current-state 'automorph))
-	    ;; add it to the end of the list:
+	    ;; add it to the end of the list
             (add-to-list 'vmpc-actions-to-run prof t)
-	  ;; or in automorph, run it immediately:
+	  ;; or in automorph, run it immediately
 	  (let ((vmpc-actions-to-run (list prof)))
             (vmpc-run-actions)))
 	
-	;; save the association of this profile with this destination
-	;; address if applicable:
+	;; save the association of this profile with this destination address if applicable
 	(if (or (and (eq remember 'prompt)
 		     (y-or-n-p (format "Always use \"%s\" for \"%s\"? "
 				       prof dest)))
 		(eq remember 'always))
-	    (vmpc-save-profile-for-address prof dest)
-	    ))))
+	    (vmpc-save-profile-for-address prof dest)))))
 
 ;; -------------------------------------------------------------------
 ;; Functions for vmpc-conditions:
