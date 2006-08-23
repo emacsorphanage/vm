@@ -42,48 +42,6 @@ package.
 * Associating Conditions with Actions::  
 * Miscellaneous Variables::     
 * New In This Version::         
-
-@detailmenu
---- The Detailed Node Listing ---
-
-Getting Started
-
-* Installation::                
-* Description::                 
-* Specific Abilities::          
-* Common Uses::                 
-* Overview::                    
-* Calling Automorph::           
-
-vmpc-conditions
-
-* The vmpc-conditions variable::  
-* vmpc-conditions examples::    
-
-vmpc-actions
-
-* The vmpc-actions variable::   
-* vmpc-actions examples::       
-
-Associating Conditions with Actions
-
-* vmpc-reply-alist::          
-* vmpc-automorph-alist::        
-* vmpc-forward-alist::         
-* vmpc-resend-alist::           
-* vmpc-newmail-alist::          
-
-Miscellaneous Variables
-
-* vmpc-auto-profiles-file::     
-* vmpc-auto-profiles-expunge-days::  
-* vmpc-sig-face::               
-* vmpc-pre-sig-face::           
-* vmpc-intangible-sig::         
-* vmpc-intangible-pre-sig::     
-* vmpc-expect-default-signature::  
-
-@end detailmenu
 @end menu
 
 @c ***************************************************************************
@@ -94,6 +52,7 @@ Miscellaneous Variables
 
 @menu
 * Installation::                
+* Quick start::
 * Description::                 
 * Specific Abilities::          
 * Common Uses::                 
@@ -101,7 +60,7 @@ Miscellaneous Variables
 * Calling Automorph::           
 @end menu
 
-@node Installation, Description, Getting Started, Getting Started
+@node Installation, Quick start, Getting Started, Getting Started
 @section Installation
 
 @enumerate
@@ -135,7 +94,26 @@ Read the rest of this manual and set up the variables it describes.
 
 @c ***************************************************************************
 
-@node Description, Specific Abilities, Installation, Getting Started
+@node Quick start, Description, Installation, Getting Started
+@section Quick start
+
+You do not want to read a manual but solve your personal crisis now?
+
+Then add the following to your ~/.vm file:
+
+@lisp
+(require 'vm-pcrisis)
+(vmpc-my-identities "me@@company1.nil" "me@@home.nil" "me@@alterego.nil")
+@end lisp
+
+Where you add you own email addresses to the call of
+@code{vmpc-my-identities}.  This will prompt you for 
+the profile to use when first writing an message to a 
+unknown email address.
+
+@c ***************************************************************************
+
+@node Description, Specific Abilities, Quick start, Getting Started
 @section Description
 
 Personality Crisis can look at the headers of a message you are replying
@@ -477,10 +455,10 @@ you could use @code{regexp-opt} like this:
 @end lisp
 
 @subheading Regexp Aside #3:
-If you write you own regular expressions instead of using
+If you write your own regular expressions instead of using
 @code{regexp-quote} and @code{regexp-opt}, you should keep in mind that
 they must be in lisp syntax.  In short, this means that you should use
-two backslashes wherever you'd usually use one, and if you use a
+two backslashes wherever you would usually use one, and if you use a
 double-quote (") it should be escaped with a backslash to avoid
 prematurely ending the string.  You can learn more about regexps from
 your Emacs documentation.
@@ -758,7 +736,7 @@ reply, creating the Dest-Header field if necessary.  (If it's contained
 in an action which is called when you are not replying to a message, it
 does nothing.  The same is true of all of these functions: when they are
 called in an inappropriate context, they only do as much as they can.)
-@item (vmpc-pre-function '(foo-function args)) evaluates the lisp
+@item (vmpc-pre-function (foo-function args)) evaluates the lisp
 expression 
 @lisp 
 (foo-function args) 
@@ -766,7 +744,7 @@ expression
 before VM creates a mail composition buffer.  (This is useful for setting 
 VM variables which need to be set at this stage, such as the message
 encoding.)  It therefore does nothing in automorph mode.  
-@item (vmpc-composition-buffer-function '(foo-function args)) does the
+@item (vmpc-composition-buffer (foo-function args)) does the
 same, but in the composition buffer.  
 @item (vmpc-prompt-for-profile arg) prompts the user for a profile
 (action) to run.  (The user would be well advised not to choose one
@@ -776,13 +754,13 @@ it to check who your message is destined for, and remember to apply the
 profile you choose now to messages sent to that person in the future,
 instead of prompting you for a profile the next time.  If set to
 'prompt, it will ask whether it should remember; if set to 'always, it
-will always remember.  If ARG is not present, it doesn't remember.
+will always remember.  If ARG is not present, it does not remember.
 
 @end itemize
 
 Do not include your own functions in actions directly; call them with
-@code{vmpc-pre-function} or @code{vmpc-composition-buffer-function}
-instead -- otherwise they'll be called twice, both before and after the
+@code{vmpc-pre-function} or @code{vmpc-composition-buffer}
+instead -- otherwise they will be called twice, both before and after the
 composition buffer is created.
 
 @c ***************************************************************************
@@ -840,12 +818,14 @@ using composition-buffer-functions, like this:
 
 @lisp
 ("foo on the hill"
-  (vmpc-composition-buffer-function '(setq user-full-name "The Foo On The Hill"))
-  (vmpc-composition-buffer-function '(setq user-mail-address "foo@@hill.com"))
+  (vmpc-composition-buffer 
+     (setq user-full-name "The Foo On The Hill")
+     (setq user-mail-address "foo@@hill.com"))
   (vmpc-signature "~/.foo-sig"))
 ("david"
-  (vmpc-composition-buffer-function '(setq user-full-name "David Foo"))
-  (vmpc-composition-buffer-function '(setq user-mail-address "foo@@hill.com"))
+  (vmpc-composition-buffer 
+      (setq user-full-name "David Foo"))
+      (setq user-mail-address "foo@@hill.com"))
   (vmpc-signature ""))
 @end lisp
 
@@ -856,7 +836,7 @@ or use @code{vmpc-substitute-header} to insert a Reply-To: header.
 -----------------------------------------------------------------
 
 @subheading Aside:
-Why did we use @code{vmpc-composition-buffer-function} rather than
+Why did we use @code{vmpc-composition-buffer} rather than
 @code{vmpc-pre-function} to set those variables?  Well, their values are
 only examined when you actually send your message, so you could equally
 well set them with either, but the @code{vmpc-automorph} function does
@@ -910,8 +890,8 @@ address instead of prompting, we would do it like this:
 
 The associations between addresses and profiles will be stored in the
 file named by @code{vmpc-auto-profiles-file} --- by default, this is
-"~/.vmpc-auto-profiles".  If your OS has a shonky filesystem that can't
-deal with filenames like that, you might have to change this value.
+"~/.vmpc-auto-profiles".  If your OS has a shonky filesystem that can
+not deal with filenames like that, you might have to change this value.
 
 Keep in mind that the associations stored in this file are only used by
 @code{vmpc-prompt-for-profile}.  They do not have the effect of adding
@@ -959,7 +939,7 @@ address.  Like this:
 
 @c ***************************************************************************
 
-@node vmpc-action-alist, vmpc-automorph-alist, Associating Conditions with Actions, Associating Conditions with Actions
+@node vmpc-action-alist, vmpc-reply-alist, Associating Conditions with Actions, Associating Conditions with Actions
 @c node-name, next, previous, up
 @section vmpc-action-alist
 
@@ -978,7 +958,7 @@ will be used as a fall back.
 
 @c ***************************************************************************
 
-@node vmpc-reply-alist, vmpc-action-alist, Associating Conditions with Actions, Associating Conditions with Actions
+@node vmpc-reply-alist, vmpc-action-alist, vmpc-action-alist, Associating Conditions with Actions
 @c node-name, next, previous, up
 @section vmpc-reply-alist
 
@@ -1203,8 +1183,10 @@ Version 0.9:
 
 @item The new maintainer is <hack@@robf.de> now.
 
-@item @code{vmpc-pre-function} and @code{vmpc-composition-buffer-function} handle forms
-     now, not only a single function.
+@item Renamed @code{vmpc-composition-buffer @code{vvmpc-composition-buffer}.
+
+@item @code{vmpc-pre-function} and @code{vmpc-composition-buffer} handle forms
+     now, not only a single function which must be quoted.
 
 @item Renamed @code{vmpc-reply-alist} to @code{vmpc-reply-alist} and
      @code{vmpc-forward-alist} to @code{vmpc-forward-alist} for consistency.
@@ -1216,6 +1198,13 @@ Version 0.9:
 
 @item @code{vmpc-build-actions-to-run-list} and @code{vmpc-run-actions} are interactive
      now.
+
+@item @code{vmpc-prompt-for-profile} will search all headers for a
+recipient with an associated profile before prompting for one.
+
+@item When calling @code{vmpc-prompt-for-profile} interactively form a
+composition buffer one will get prompted again for a profile.  This
+allows to easily fix a bad association. 
 
 @item The state variables become buffer-local now, which should prevent some
      bugs, i.e. for saved headers. 
