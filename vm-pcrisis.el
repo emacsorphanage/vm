@@ -763,7 +763,8 @@ parameter POS means insert the pre-signature at position POS if
 	(buffer-disable-undo (current-buffer))
 	(erase-buffer)
 	(goto-char (point-min))
-	(prin1 vmpc-auto-profiles (current-buffer))
+;	(prin1 vmpc-auto-profiles (current-buffer))
+	(pp vmpc-auto-profiles (current-buffer))
 	(write-region (point-min) (point-max)
 		      vmpc-auto-profiles-file nil 'quietly)
 	(kill-buffer (current-buffer)))
@@ -802,8 +803,11 @@ parameter POS means insert the pre-signature at position POS if
 
 (defun vmpc-save-profile-for-address (prof addr)
   "Save profile PROF for ADDR, i.e. its association."
-  (let ((today (vmpc-gregorian-days)))
-    (add-to-list 'vmpc-auto-profiles (append (list addr prof) today))
+  (let ((today (vmpc-gregorian-days))
+        (old-association (assoc addr vmpc-auto-profiles)))
+    (if old-association
+        (setq vmpc-auto-profiles (delete old-association vmpc-auto-profiles)))
+    (setq vmpc-auto-profiles (cons (append (list addr prof) today) vmpc-auto-profiles))
     (when vmpc-auto-profiles-expunge-days
       ;; expunge old stuff from the list:
       (setq vmpc-auto-profiles
@@ -812,7 +816,7 @@ parameter POS means insert the pre-signature at position POS if
                           nil
                         p))
                     vmpc-auto-profiles))
-      (seqt vmpc-auto-profiles (delete nil vmpc-auto-profiles)))
+      (setq vmpc-auto-profiles (delete nil vmpc-auto-profiles)))
     (vmpc-save-auto-profiles)))
 
 
