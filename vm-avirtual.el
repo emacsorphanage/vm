@@ -209,7 +209,9 @@
    uninteresting-senders 
    spam-word 
    folder-name 
-   attachment))
+   attachment
+   spam-level
+   spam-score))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; we redefine the basic selectors for some extra features ...
@@ -451,6 +453,22 @@ I was really missing this!"
       (kill-buffer (get-file-buffer vm-spam-words-file)))
   (vm-vs-spam-word nil)
   (message "%d spam words are installed!" (length vm-spam-words)))
+
+(defun vm-vs-spam-level (m min &optional max)
+  "True when the spam level is >= MIN and optionally <= MAX.
+The checked header is X-Spam-Level and the level is the number of \"*\"s."
+  (let ((level (vm-get-header-contents m "X-Spam-Level:")))
+    (when (and level (string-match "\\*+" level))
+      (setq level (length (match-string 0 level)))
+      (and (<= min level) (if max (<= level max) t)))))
+
+(defun vm-vs-spam-score (m min &optional max)
+  "True when the spam score is >= MIN and optionally <= MAX.
+The checked header is X-Spam-Status."
+  (let ((score (vm-get-header-contents m "X-Spam-Status:")))
+    (when (and score (string-match "score=\\([0-9.]+\\)" score))
+      (setq score (string-to-number (match-string 1 score)))
+      (and (<= min score) (if max (<= score max) t)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mail virtual folder selectors 
