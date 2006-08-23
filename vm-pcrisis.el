@@ -165,6 +165,18 @@ It will ensure that pcrisis correctly handles the signature .")
 ;; Some easter-egg functionality:
 ;; -------------------------------------------------------------------
 
+(defun vmpc-my-identities (&rest identities)
+  "Setup pcrisis with the given IDENTITIES."
+  (setq vmpc-conditions    '(("always true" t))
+        vmpc-actions-alist '(("always true" "prompt for a profile"))
+        vmpc-actions       '(("prompt for a profile" (vmpc-prompt-for-profile 'always))))
+  (setq vmpc-actions
+        (append (mapcar
+                 (lambda (i)
+                   (list i (list 'vmpc-substitute-header "From" i)))
+                 identities)
+                vmpc-actions)))
+
 (defun vmpc-header-field-for-point ()
   "*Return a string indicating the mail header field point is in.
 If point is not in a header field, returns nil."
