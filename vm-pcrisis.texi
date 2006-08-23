@@ -1183,7 +1183,12 @@ Version 0.9:
 
 @item The new maintainer is <hack@@robf.de> now.
 
-@item Renamed @code{vmpc-composition-buffer @code{vvmpc-composition-buffer}.
+@item Renamed @code{vmpc-prompt-for-profile} checks all relevant headers
+now and will only prompt for a profile if no matches were found.  It
+also can be called interactively to correct a existing profile
+association.
+
+@item Renamed @code{vmpc-composition-buffer} to @code{vmpc-composition-buffer}.
 
 @item @code{vmpc-pre-function} and @code{vmpc-composition-buffer} handle forms
      now, not only a single function which must be quoted.
