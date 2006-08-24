@@ -141,7 +141,7 @@ patch:
 
 ball:
 	echo 'Version: $$Id: '`bzr nick`-`bzr revno`'$$' > ,id
-	tar chfvz vmrf.tgz ,id *.c *.texinfo *ChangeLog patchdoc.txt Makefile *.el
+	tar chfvz vmrf.tgz ,id *.c *.texi* *ChangeLog patchdoc.txt Makefile *.el
 	cp vmrf.tgz $(ELISPDIR)
 	touch $(ELISPDIR)/index.rml
 
