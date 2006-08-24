@@ -145,6 +145,13 @@ ball:
 	cp vmrf.tgz $(ELISPDIR)
 	touch $(ELISPDIR)/index.rml
 
+vm-pcrisis.tgz:
+	tar chfvz $@ vm-pcrisis.el vm-pcrisis.info vm-pcrisis.texi
+	cp $@ $(ELISPDIR)
+	touch $(ELISPDIR)/index.rml
+
+
+
 # As long as I am maintaining tla and CVS at the same time 
 single-files: $(ELISPDIR)/vm-mime.el \
             $(ELISPDIR)/vm-serial.el \
