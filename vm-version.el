@@ -16,12 +16,12 @@
         (if (file-exists-p f)
             (progn
               (insert-file-contents f)
-              (search-forward "Version: $Id: = ")
-              (replace-match "")
-              (while (search-forward "\n" (point-max) t)
+              (re-search-forward "^[^$]*\\$Id: \\([^$]+\\)\\$[^$]*")
+              (replace-match (match-string 1))
+              (while (search-forward "[\n\t\r ]" (point-max) t)
                 (replace-match "")))
-        (insert (format "vm--robf--%s--patch-unknown" vm-version))
-        (message "Cannot find ,id file for VM version!"))))
+          (insert (format "vm-robf-devo" vm-version))
+          (message "Cannot find ,id file for VM version!"))))
     (set-buffer " *vm-version*")
     (buffer-substring (point-min) (point-max))))
 
