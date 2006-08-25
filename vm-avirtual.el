@@ -210,7 +210,6 @@
    spam-word 
    folder-name 
    attachment
-   spam-level
    spam-score))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -454,21 +453,30 @@ I was really missing this!"
   (vm-vs-spam-word nil)
   (message "%d spam words are installed!" (length vm-spam-words)))
 
-(defun vm-vs-spam-level (m min &optional max)
-  "True when the spam level is >= MIN and optionally <= MAX.
-The checked header is X-Spam-Level and the level is the number of \"*\"s."
-  (let ((level (vm-get-header-contents m "X-Spam-Level:")))
-    (when (and level (string-match "\\*+" level))
-      (setq level (length (match-string 0 level)))
-      (and (<= min level) (if max (<= level max) t)))))
+(defcustom vm-vs-spam-score-headers
+  '(("X-Spam-Score:" "[0-9.]+"  string-to-number)
+    ("X-Spam-Status:" "[0-9.]+" string-to-number)
+    ("X-Spam-Level:" "\\*+"     length))
+  "A list of headers to look for spam scores."
+  :group 'vm-avirtual
+  :type '(repeat (list (string :tag "Header regexp")
+                       (regexp :tag "Regexp matching the score")
+                       (function :tag "Function converting the score to a number"))))
 
 (defun vm-vs-spam-score (m min &optional max)
   "True when the spam score is >= MIN and optionally <= MAX.
-The checked header is X-Spam-Status."
-  (let ((score (vm-get-header-contents m "X-Spam-Status:")))
-    (when (and score (string-match "score=\\([0-9.]+\\)" score))
-      (setq score (string-to-number (match-string 1 score)))
-      (and (<= min score) (if max (<= score max) t)))))
+The headers that will be checked are those listed in `vm-vs-spam-score-headers'."
+  (let ((spam-headers vm-vs-spam-score-headers)
+        it-is-spam)
+    (while spam-headers
+      (let* ((spam-selector (car spam-headers))
+             (score (vm-get-header-contents m (car spam-selector))))
+        (when (and score (string-match (nth 1 spam-selector) score))
+          (setq score (funcall (nth 2 spam-selector) (match-string 0 score)))
+          (if (and (<= min score) (if max (<= score max) t))
+              (setq it-is-spam t spam-headers nil))))
+      (setq spam-headers (cdr spam-headers)))
+    it-is-spam))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mail virtual folder selectors 
