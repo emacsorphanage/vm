@@ -1183,6 +1183,8 @@ Version 0.9:
 
 @item The new maintainer is <hack@@robf.de> now.
 
+@item All variables of pcrisis can be customized now.
+
 @item Renamed @code{vmpc-prompt-for-profile} checks all relevant headers
 now and will only prompt for a profile if no matches were found.  It
 also can be called interactively to correct a existing profile

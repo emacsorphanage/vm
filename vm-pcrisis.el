@@ -33,7 +33,6 @@
 
 ;;; TODO:
 ;; - more lispification, Rob was a bit unfunctional
-;; - use defcustom all over the place
 ;; - add a trace buffer?
 ;; - info file:
 ;;  - add a list of the changes
@@ -56,48 +55,102 @@
 (defconst vmpc-version "0.9"
   "Version of pcrisis.")
 
-(defvar vmpc-conditions ()
-  "*List of conditions which will be checked by pcrisis.")
+(defgroup vmpc nil
+  "Manage personalities and more in VM."
+  :group  'vm)
 
-(defvar vmpc-actions ()
+(defcustom vmpc-conditions ()
+  "*List of conditions which will be checked by pcrisis."
+  :group 'vmpc)
+
+(defcustom vmpc-actions ()
   "*List of actions.
 Actions are associated with conditions from `vmpc-conditions' by one of
 `vmpc-actions-alist', `vmpc-reply-alist', `', `vmpc-forward-alist',
 `vmpc-resend-alist',  `vmpc-newmail-alist' or `vmpc-automorph-alist'.
 
 These are also the actions from which you can choose when using the newmail
-features of Personality Crisis, or the `vmpc-prompt-for-profile' action.")
+features of Personality Crisis, or the `vmpc-prompt-for-profile' action."
+  :type '(repeat (list (string :tag "Action name")
+                       (sexp :tag "Condition")))
+  :group 'vmpc)
 
-(defvar vmpc-actions-alist ()
+(defun vmpc-alist-set (symbol value)
+  "Used as :set for vmpc-*-alist variables.
+Checks if the condition and all the actions exist."
+  (if (and value (not (assoc (car value) vmpc-conditions)))
+      (error "Condition '%s' does not exist!" (car value)))
+  (setq value (cdr value))
+  (while value
+    (if (not (assoc (car value) vmpc-actions))
+        (error "Action '%s' does not exist!" (car value)))
+    (setq value (cdr value)))
+  (set symbol value))
+
+(defun vmpc-defcustom-alist-type ()
+  "Generate :type for vmpc-*-alist variables."
+  (list 'repeat
+        (list 'list 
+              (append '(choice :tag "Condition")
+                      (mapcar (lambda (c) (list 'const (car c))) vmpc-conditions)
+                      '((string)))
+              (list 'repeat :tag "Actions to run"
+                    (append '(choice :tag "Action")
+                            (mapcar (lambda (a) (list 'const (car a))) vmpc-actions)
+                            '(string))))))
+
+(defcustom vmpc-actions-alist ()
   "*An alist associating conditions with actions from `vmpc-actions'.
 If you do not want to map actions for each state, e.g. for replying, forwarding,
-resending, composing or automorphing, then set this one.")
+resending, composing or automorphing, then set this one."
+  :type (vmpc-defcustom-alist-type)
+  :set 'vmpc-alist-set
+  :group 'vmpc)
 
-(defvar vmpc-reply-alist ()
-  "*An alist associating conditions with actions from `vmpc-actions' when replying.")
+(defcustom vmpc-reply-alist ()
+  "*An alist associating conditions with actions from `vmpc-actions' when replying."
+  :type (vmpc-defcustom-alist-type)
+  :set 'vmpc-alist-set
+  :group 'vmpc)
 
-(defvar vmpc-forward-alist ()
-  "*An alist associating conditions with actions from `vmpc-actions' when forwarding.")
+(defcustom vmpc-forward-alist ()
+  "*An alist associating conditions with actions from `vmpc-actions' when forwarding."
+  :type (vmpc-defcustom-alist-type)
+  :set 'vmpc-alist-set
+  :group 'vmpc)
 
-(defvar vmpc-automorph-alist ()
-  "*An alist associating conditions with actions from `vmpc-actions' when automorphing.")
+(defcustom vmpc-automorph-alist ()
+  "*An alist associating conditions with actions from `vmpc-actions' when automorphing."
+  :type (vmpc-defcustom-alist-type)
+  :set 'vmpc-alist-set
+  :group 'vmpc)
 
-(defvar vmpc-newmail-alist ()
-  "*An alist associating conditions with actions from `vmpc-actions' when composing.")
+(defcustom vmpc-newmail-alist ()
+  "*An alist associating conditions with actions from `vmpc-actions' when composing."
+  :type (vmpc-defcustom-alist-type)
+  :set 'vmpc-alist-set
+  :group 'vmpc)
 
-(defvar vmpc-resend-alist ()
-  "*An alist associating conditions with actions from `vmpc-actions' when resending.")
+(defcustom vmpc-resend-alist ()
+  "*An alist associating conditions with actions from `vmpc-actions' when resending."
+  :type (vmpc-defcustom-alist-type)
+  :set 'vmpc-alist-set
+  :group 'vmpc)
 
-(defvar vmpc-auto-profiles-file "~/.vmpc-auto-profiles"
+(defcustom vmpc-auto-profiles-file "~/.vmpc-auto-profiles"
   "*File in which to save information used by `vmpc-prompt-for-profile'.
-The user is welcome to change this value.")
+The user is welcome to change this value."
+  :type 'file
+  :group 'vmpc)
 
-(defvar vmpc-auto-profiles-expunge-days 100
+(defcustom vmpc-auto-profiles-expunge-days 100
   "*Number of days after which to expunge old address-profile associations.
 Performance may suffer noticeably if this file becomes enormous, but in other
 respects it is preferable for this value to be fairly high.  The value that is
 right for you will depend on how often you send email to new addresses using
-`vmpc-prompt-for-profile' (with the REMEMBER flag set to 'always or 'prompt).")
+`vmpc-prompt-for-profile' (with the REMEMBER flag set to 'always or 'prompt)."
+  :type 'integer
+  :group 'vmpc)
 
 (defvar vmpc-current-state nil
   "The current state of pcrisis.
