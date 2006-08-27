@@ -73,12 +73,15 @@ features of Personality Crisis, or the `vmpc-prompt-for-profile' action."
 (defun vmpc-alist-set (symbol value)
   "Used as :set for vmpc-*-alist variables.
 Checks if the condition and all the actions exist."
-  (if (and value (not (assoc (car value) vmpc-conditions)))
-      (error "Condition '%s' does not exist!" (car value)))
-  (setq value (cdr value))
   (while value
-    (if (not (assoc (car value) vmpc-actions))
-        (error "Action '%s' does not exist!" (car value)))
+    (let ((condition (caar value))
+          (actions   (cdar value)))
+      (if (and condition (not (assoc condition vmpc-conditions)))
+          (error "Condition '%s' does not exist!" condition))
+      (while actions 
+        (if (not (assoc (car actions) vmpc-actions))
+            (error "Action '%s' does not exist!" (car actions)))
+        (setq actions (cdr actions))))
     (setq value (cdr value)))
   (set symbol value))
 
