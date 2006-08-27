@@ -41,6 +41,7 @@ package.
 * vmpc-actions::                
 * Associating Conditions with Actions::  
 * Miscellaneous Variables::     
+* Debugging::                   
 * New In This Version::         
 @end menu
 
@@ -52,7 +53,7 @@ package.
 
 @menu
 * Installation::                
-* Quick start::
+* Quick start::                 
 * Description::                 
 * Specific Abilities::          
 * Common Uses::                 
@@ -929,10 +930,10 @@ address.  Like this:
 @chapter Associating Conditions with Actions
 
 @menu
-* vmpc-action-alist::          
-* vmpc-reply-alist::          
+* vmpc-action-alist::           
+* vmpc-reply-alist::            
 * vmpc-automorph-alist::        
-* vmpc-forward-alist::         
+* vmpc-forward-alist::          
 * vmpc-resend-alist::           
 * vmpc-newmail-alist::          
 @end menu
@@ -958,7 +959,7 @@ will be used as a fall back.
 
 @c ***************************************************************************
 
-@node vmpc-reply-alist, vmpc-action-alist, vmpc-action-alist, Associating Conditions with Actions
+@node vmpc-reply-alist, vmpc-automorph-alist, vmpc-action-alist, Associating Conditions with Actions
 @c node-name, next, previous, up
 @section vmpc-reply-alist
 
@@ -1068,7 +1069,7 @@ Finally, you'd set up @code{vmpc-newmail-alist} like this:
 
 @c ***************************************************************************
 
-@node Miscellaneous Variables, New In This Version, Associating Conditions with Actions, Top
+@node Miscellaneous Variables, Debugging, Associating Conditions with Actions, Top
 @c node-name, next, previous, up
 @chapter Miscellaneous Variables
 
@@ -1172,8 +1173,40 @@ setup, provided that your signature-insertion function uses the standard
 
 @c ***************************************************************************
 
+@node Debugging, New In This Version, Miscellaneous Variables, Top
+@c node-name, next, previous, up
+@chapter Debugging 
 
-@node New In This Version,  , Miscellaneous Variables, Top
+With a complex setup it can be come hard to understand why vm-pcrisis
+is doing a specific thing.  In order to understand what is going on you
+should check the value of the following variables:
+
+@itemize @bullet
+
+@item @code{vmpc-true-conditions} is the list of true conditions.
+
+@item @code{vmpc-actions-to-run} is the list of actions to run,
+i.e. those actions mapped by a @code{vmpc-*-alist}. 
+
+@item @code{vmpc-saved-headers-alist} the value of headers saved for
+substitution. 
+
+@end itemize
+
+If you want to check new contions you can run
+@code{vmpc-build-true-conditions-list} interactively.
+
+If you want to check which true conditions are mapped to actions you can
+run @code{vmpc-build-actions-to-run-list} interactively.  True
+conditions which are not mapped to an action are silently ignored.
+
+If you want to run new actions you can run @code{vmpc-read-actions} and
+@code{vmpc-run-actions} interactively.
+
+@c ***************************************************************************
+
+
+@node New In This Version,  , Debugging, Top
 @c node-name, next, previous, up
 @chapter New In This Version
 
@@ -1181,7 +1214,7 @@ Version 0.9:
 
 @itemize @bullet
 
-@item The new maintainer is <hack@@robf.de> now.
+@item The new maintainer is: Robert Widhopf-Fenk <hack@@robf.de>
 
 @item All variables of pcrisis can be customized now.
 
@@ -1193,18 +1226,18 @@ association.
 @item Renamed @code{vmpc-composition-buffer} to @code{vmpc-composition-buffer}.
 
 @item @code{vmpc-pre-function} and @code{vmpc-composition-buffer} handle forms
-     now, not only a single function which must be quoted.
+now, not only a single function which must be quoted.
 
 @item Renamed @code{vmpc-reply-alist} to @code{vmpc-reply-alist} and
-     @code{vmpc-forward-alist} to @code{vmpc-forward-alist} for consistency.
+@code{vmpc-forward-alist} to @code{vmpc-forward-alist} for consistency.
 
 @item New function @code{vmpc-true-conditions} to test conditions without actually
-     running some actions.
+running some actions.
 
 @item New function @code{vmpc-read-actions} to set actions by hand.
 
 @item @code{vmpc-build-actions-to-run-list} and @code{vmpc-run-actions} are interactive
-     now.
+now.
 
 @item @code{vmpc-prompt-for-profile} will search all headers for a
 recipient with an associated profile before prompting for one.
@@ -1214,7 +1247,7 @@ composition buffer one will get prompted again for a profile.  This
 allows to easily fix a bad association. 
 
 @item The state variables become buffer-local now, which should prevent some
-     bugs, i.e. for saved headers. 
+bugs, i.e. for saved headers. 
 
 @item Rewrite of unlispish code.
 

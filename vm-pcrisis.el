@@ -33,11 +33,6 @@
 
 ;;; TODO:
 ;; - more lispification, Rob was a bit unfunctional
-;; - add a trace buffer?
-;; - info file:
-;;  - add a list of the changes
-;;  - how to debug
-;;  - quick start (with prompting)
 
 ;;; Code:
 (eval-when-compile
