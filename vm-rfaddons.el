@@ -1,9 +1,9 @@
 ;;; vm-rfaddons.el --- a collections of various useful VM helper functions
 ;; 
-;; Copyright (C) 1999-2004 Robert Widhopf-Fenk
+;; Copyright (C) 1999-2006 Robert Widhopf-Fenk
 ;;
 ;; Author:      Robert Widhopf-Fenk
-;; Status:      Tested with XEmacs 21.4.15 & VM 7.18
+;; Status:      Tested with XEmacs 21.4.19 & VM 7.19
 ;; Keywords:    VM helpers
 ;; X-URL:       http://www.robf.de/Hacking/elisp
 ;; Version:     $Id$
@@ -45,8 +45,7 @@
 ;;   is a really cool package if you want to do automatic header rewriting,
 ;;   e.g.  if you have various mail accounts and always want to use the right
 ;;   from header, then check it out! 
-;;   It used to be on http://student.uq.edu.au/~s323140/pcrisis/
-;;   but it is no longer available there and thus I provide it on my site.
+;;
 ;; * Package: BBDB
 ;;   Homepage: http://bbdb.sourceforge.net
 ;;

@@ -1,9 +1,9 @@
-;;; vm-avirtual.el --- additional functions using virtual folder selectors
+;;; vm-avirtual.el --- additional functions for virtual folder selectors
 ;; 
-;; Copyright (C) 2000-2002 Robert Fenk
+;; Copyright (C) 2000-2006 Robert Widhopf-Fenk
 ;;
-;; Author:      Robert Fenk
-;; Status:      Tested with XEmacs 21.4.15 & VM 7.18
+;; Author:      Robert Widhopf-Fenk
+;; Status:      Tested with XEmacs 21.4.19 & VM 7.19
 ;; Keywords:    VM, virtual folders 
 ;; X-URL:       http://www.robf.de/Hacking/elisp
 ;; Version:     $Id$
@@ -38,14 +38,13 @@
 ;; actually the same things.  They were `vm-auto-folder-alist' for automatic
 ;; selection of folders when saving messages, `vm-virtual-folder-alist' for my
 ;; loved virtual folders and `vmpc-conditions' in order to solve the handling
-;; of my different email-addresses (Have a look at Personality Crisis for VM
-;; http://student.uq.edu.au/~s323140/pcrisis/ which is perfect for this and
-;; other automatic header rewriting).  Well and this was kind of annoying,
-;; since virtual folder selector offer the best way of specifying conditions,
-;; but they work only on messages within folders and not on messages which are
-;; currently composed.  So I decided to extent virtual folder selectors also
-;; to message composing, although not all of the selectors are meaning full
-;; for `mail-mode'. 
+;; of my different email-addresses.
+;;
+;; This was kind of annoying, since virtual folder selector offer the best
+;; way of specifying conditions, but they only work on messages within
+;; folders and not on messages which are currently composed. So I decided to
+;; extent virtual folder selectors also to message composing, although not
+;; all of the selectors are meaning full for `mail-mode'.
 ;;
 ;; I wrote functions which can replace (*) the existing ones and others that
 ;; add new (+) functionality.  Finally I came up with the following ones:
