@@ -363,6 +363,9 @@ Crisis provides some functions which can be used there, in combination
 with @code{and}, @code{or}, and @code{vmpc-xor} to produce a
 fine-grained control over when your actions will trigger.
 
+If you are using @code{vm-avirtual.el} you can also use
+@code{vmpc-check-virtual-selector} to check a virtual folder selector.
+
 @itemize @bullet
 
 @item @code{vmpc-header-match} is of course the main one.  When making
