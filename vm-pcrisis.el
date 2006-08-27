@@ -1055,7 +1055,8 @@ Run this function in order to test/check your conditions."
               vmpc-current-buffer 'composition)
       (setq vmpc-current-state (intern (completing-read
                                         "VMPC state (default is 'reply): "
-                                        '(("reply") ("forward") ("resent"))
+                                        '(("reply") ("forward") ("resent")
+                                          ("newmail") ("automorph"))
                                         nil t nil nil "reply"))
             vmpc-current-buffer 'none))
     (vm-follow-summary-cursor)
@@ -1081,7 +1082,7 @@ These are the true conditions mapped to actions.  Duplicates will be
 eliminated.  You may run it in a composition buffer in order to see what
 actions will be run."
   (interactive)
-  (if (and (not vmpc-current-state) (interactive-p))
+  (if (and (interactive-p) (not (member major-mode '(vm-mail-mode mail-mode))))
       (error "Run `vmpc-build-actions-to-run-list' in a composition buffer!"))
   (let ((alist (or (symbol-value (intern (format "vmpc-%s-alist" vmpc-current-state)))
                    vmpc-actions-alist))
@@ -1232,17 +1233,36 @@ recursion or concurrent calls."
   (vmpc-make-vars-local)
   (vmpc-run-actions))
 
+(defvar vmpc-no-automorph nil
+  "When true automorphing will be disabled.")
+
+(make-variable-buffer-local 'vmpc-no-automorph)
+
+;;;###autoload
+(defun vmpc-toggle-no-automorph ()
+  "Disable automorph for the current buffer.
+When automorph is not doing the right thing and you want to disable it for the
+current composition, then call this function."
+  (interactive)
+  (setq vmpc-no-automorph (not vmpc-no-automorph))
+  (message (if vmpc-no-automorph
+               "Automorphing has been enabled"
+             "Automorphing has been disabled")))
+
 ;;;###autoload
 (defun vmpc-automorph ()
   "*Change contents of the current mail message based on its own headers.
-Headers and signatures can be changed; pre-signatures added; functions called.
-For more information, see the Personality Crisis info file."
+Unless `vmpc-current-state' is 'no-automorph, headers and signatures can be
+changed; pre-signatures added; functions called.
+
+Call `vmpc-no-automorph' to disable it for the current buffer."
   (interactive)
-  (vmpc-make-vars-local)
-  (vmpc-init-vars 'automorph 'composition)
-  (vmpc-build-true-conditions-list)
-  (vmpc-build-actions-to-run-list)
-  (vmpc-run-actions))
+  (unless vmpc-no-automorph
+    (vmpc-make-vars-local)
+    (vmpc-init-vars 'automorph 'composition)
+    (vmpc-build-true-conditions-list)
+    (vmpc-build-actions-to-run-list)
+    (vmpc-run-actions)))
 
 (provide 'vm-pcrisis)
 

@@ -1218,6 +1218,9 @@ Version 0.9:
 
 @item All variables of pcrisis can be customized now.
 
+@item Added new function @code{vmpc-toggle-no-automorph} to disable automorph
+for the current buffer.  
+
 @item Renamed @code{vmpc-prompt-for-profile} checks all relevant headers
 now and will only prompt for a profile if no matches were found.  It
 also can be called interactively to correct a existing profile
