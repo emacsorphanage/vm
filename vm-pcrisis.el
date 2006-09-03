@@ -48,7 +48,7 @@
 ;; -------------------------------------------------------------------
 ;; Variables:
 ;; -------------------------------------------------------------------
-(defconst vmpc-version "0.9"
+(defconst vmpc-version "0.9.1"
   "Version of pcrisis.")
 
 (defgroup vmpc nil
