@@ -3,10 +3,11 @@
 ;; Copyright (C) 1999 Rob Hodges, 2006 Robert Widhopf
 ;;
 ;; Package: Personality Crisis for VM
-;; Homepage: http://www.robf.de/Hacking/elisp/
 ;; Author: Rob Hodges
+;;
 ;; Maintainer: Robert Widhopf-Fenk <hack@robf.de>
-;; Filename: vm-pcrisis.el
+;; X-URL:       http://www.robf.de/Hacking/elisp
+;; Revision     $Id$
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

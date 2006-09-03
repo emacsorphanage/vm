@@ -1229,7 +1229,7 @@ now and will only prompt for a profile if no matches were found.  It
 also can be called interactively to correct a existing profile
 association.
 
-@item Renamed @code{vmpc-composition-buffer} to @code{vmpc-composition-buffer}.
+@item Renamed @code{vmpc-composition-buffer-function} to @code{vmpc-composition-buffer}.
 
 @item @code{vmpc-pre-function} and @code{vmpc-composition-buffer} handle forms
 now, not only a single function which must be quoted.

@@ -145,12 +145,16 @@ ball:
 	cp vmrf.tgz $(ELISPDIR)
 	touch $(ELISPDIR)/index.rml
 
-vm-pcrisis.tgz:
-	tar chfvz $@ vm-pcrisis.el vm-pcrisis.info vm-pcrisis.texi
-	cp $@ $(ELISPDIR)
+vm-pcrisis.tgz: vm-pcrisis.info
+	dest="vm-pcrisis-"`grep vmpc-version vm-pcrisis.el | cut -d '"' -f 2`; \
+	rm -rf $$dest; \
+	mkdir $$dest; \
+	updateWithId vm-pcrisis.el $$dest/vm-pcrisis.el; \
+	updateWithId vm-pcrisis.texi $$dest/vm-pcrisis.texi; \
+	cp vm-pcrisis.info $$dest/vm-pcrisis.info; \
+	tar chfvz $$dest.tgz $$dest; \
+	cp $$dest.tgz $(ELISPDIR); \
 	touch $(ELISPDIR)/index.rml
-
-
 
 # As long as I am maintaining tla and CVS at the same time 
 single-files: $(ELISPDIR)/vm-mime.el \
