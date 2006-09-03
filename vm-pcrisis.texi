@@ -23,7 +23,7 @@ Copyright @copyright{} 1999  Rob Hodges, 2006 Robert Widhopf-Fenk
 @c node-name, next, previous, up
 @chapter Personality Crisis for VM
 
-This is the documentation for Personality Crisis, version 1.0 beta.
+This is the documentation for Personality Crisis 0.9.1
 
 It was written by Rob Hodges <s323140@@student.uq.edu.au>.
 
@@ -44,6 +44,15 @@ package.
 * Debugging::                   
 * New In This Version::         
 @end menu
+
+The incompete list of Roberts which have been involved in vm-prisis:
+
+@itemize @bullet
+@item Rob Hodges
+@item Robert Widhopf-Fenk
+@item Robert P. Goldman
+@item Robert Marshall
+@end itemize 
 
 @c ***************************************************************************
 
