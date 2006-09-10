@@ -1222,6 +1222,15 @@ If you want to run new actions you can run @code{vmpc-read-actions} and
 @c node-name, next, previous, up
 @chapter New In This Version
 
+Version 0.10:
+
+@itemize @bullet
+
+@item Added support for a list of actions in @code{vmpc-prompt-for-profile}.
+Before it was only possible to specify a single action.
+ 
+@end itemize
+
 Version 0.9:
 
 @itemize @bullet
