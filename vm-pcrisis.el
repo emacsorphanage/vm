@@ -153,7 +153,7 @@ right for you will depend on how often you send email to new addresses using
 
 (defvar vmpc-current-state nil
   "The current state of pcrisis.
-It is one of 'reply, 'forward, 'resent, 'automorph or 'newmail.
+It is one of 'reply, 'forward, 'resend, 'automorph or 'newmail.
 It controls which actions/functions can/will be run.")
 
 (defvar vmpc-current-buffer nil
@@ -1056,7 +1056,7 @@ Run this function in order to test/check your conditions."
               vmpc-current-buffer 'composition)
       (setq vmpc-current-state (intern (completing-read
                                         "VMPC state (default is 'reply): "
-                                        '(("reply") ("forward") ("resent")
+                                        '(("reply") ("forward") ("resend")
                                           ("newmail") ("automorph"))
                                         nil t nil nil "reply"))
             vmpc-current-buffer 'none))
@@ -1225,7 +1225,7 @@ recursion or concurrent calls."
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
   ;; the rest is almost exactly the same as replying:
-  (vmpc-init-vars 'resent)
+  (vmpc-init-vars 'resend)
   (vmpc-build-true-conditions-list)
   (vmpc-build-actions-to-run-list)
   (vmpc-run-actions)
