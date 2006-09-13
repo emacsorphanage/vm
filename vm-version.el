@@ -8,21 +8,26 @@
   "Returns the value of the variable vm-version."
   (interactive)
   (save-excursion
-    (when (not (get-buffer " *vm-version*"))
+    (unless (get-buffer " *vm-version*")
       (set-buffer (get-buffer-create " *vm-version*"))
       (let ((f (locate-library "vm")))
-        (setq f (concat (file-name-directory f) "/" ",id"))
+        (setq f (expand-file-name ",id" (file-name-directory f)))
         (erase-buffer)
         (if (file-exists-p f)
+            ;; insert content of ,id (in distributed bundle)
             (progn
               (insert-file-contents f)
+              (goto-char (point-min))
               (re-search-forward "^[^$]*\\$Id: \\([^$]+\\)\\$[^$]*")
-              (replace-match (match-string 1))
-              (while (search-forward "[\n\t\r ]" (point-max) t)
-                (replace-match "")))
-          (insert (format "vm-robf-devo" vm-version))
-          (message "Cannot find ,id file for VM version!"))))
-    (set-buffer " *vm-version*")
+              (replace-match (match-string 1)))
+          ;; get the current branch nick and revno from bzr 
+          (insert (concat (shell-command-to-string "bzr nick") "-"
+                          (shell-command-to-string "bzr revno"))))
+        (goto-char (point-min))
+        ;; remove any whitespace 
+        (while (re-search-forward "[\n\t\r ]+" (point-max) t)
+          (replace-match ""))))
+    (set-buffer (get-buffer " *vm-version*"))
     (buffer-substring (point-min) (point-max))))
 
 (defconst vm-xemacs-p nil)
