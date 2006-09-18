@@ -797,6 +797,13 @@ A nil value causes VM to preview messages only if new or unread."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-always-use-presentation-buffer nil
+  "*Non-nil means to always use a presentation buffer for displaying messages.
+It will also be used if no decoding or other modification of the message are
+necessary." 
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-fill-paragraphs-containing-long-lines nil
   "*Non-nil numeric value N or symbol 'window-width causes VM to fill
 paragraphs that contain lines spanning that columns or more.  Only plain text

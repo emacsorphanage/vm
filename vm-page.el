@@ -707,7 +707,8 @@ Use mouse button 3 to choose a Web browser for the URL."
 				 'vm-select-unread-message-hook)))
 
      (vm-narrow-for-preview just-passing-through)
-     (if (or vm-mime-display-function
+     (if (or vm-always-use-presentation-buffer
+             vm-mime-display-function
 	     (or (natnump vm-fill-paragraphs-containing-long-lines)
                  (eq 'window-width vm-fill-paragraphs-containing-long-lines))
              (and vm-display-using-mime
