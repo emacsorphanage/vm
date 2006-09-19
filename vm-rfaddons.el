@@ -1347,7 +1347,7 @@ See the advice in `vm-rfaddons-infect-vm'."
                     type (car (vm-mm-layout-type layout)))
               
               (if (or (vm-mime-types-match "message/external-body" type)
-                      (not (vm-mime-is-type-valid type include exclude)))
+                      (and include (not (vm-mime-is-type-valid type include exclude))))
                   (if (not quiet) (message "Ignoring action on %s parts!" type))
                 (setq file (or (vm-mime-get-disposition-parameter
                                 layout "filename") 
@@ -1898,12 +1898,10 @@ Argument MSG is a message pointer."
   :group 'vm-rfaddons
   :type '(choice (string) (const :tag "No Label" nil)))
 
-(defcustom vm-mime-summary-attachment-label-types
-  (append
-   '("application" "x-unknown" "application/x-gzip")
-   (mapcar (lambda (a) (car a))
-           vm-mime-external-content-types-alist))
-  "*List of MIME types which should be listed as attachment."
+(defcustom vm-mime-summary-attachment-label-types nil
+  "*List of MIME types which should be listed as attachment. 
+If nil all mime parts with a filename/name disposition will be considered as a
+attachment."
   :group 'vm-rfaddons
   :type '(repeat (string :tag "MIME type" nil)))
 
@@ -1929,7 +1927,11 @@ and add an \"%0UA\" to your `vm-summary-format'."
     (vm-mime-action-on-all-attachments
      nil
      (lambda (layout type file)
-       (setq attachments (1+ attachments)))
+       (when (or vm-mime-summary-attachment-label-types 
+                 (delete nil (mapcar (lambda (p)
+                                       (vm-mime-get-disposition-parameter layout p))
+                                     '("filename" "name" "filename*" "name*"))))
+         (setq attachments (1+ attachments))))
      vm-mime-summary-attachment-label-types
      vm-mime-summary-attachment-label-types-exceptions
      (list msg)
