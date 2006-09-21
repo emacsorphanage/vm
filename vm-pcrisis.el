@@ -905,9 +905,7 @@ If no email address in found in STR, returns nil."
 (defun vmpc-read-actions (prompt)
   "Read a list of actions to run and store it in `vmpc-actions-to-run'."
   (interactive (list "VMPC actions %s:"))
-  (let ((completion-table (mapcar (lambda (a) (list (car a))) vmpc-actions))
-        (actions ())
-        a)
+  (let ((actions ()) a)
     (while (not (string-equal
                  (setq a (completing-read
                           (format prompt (or actions "()"))
