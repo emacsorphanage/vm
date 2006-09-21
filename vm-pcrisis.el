@@ -1132,18 +1132,27 @@ actions will be run."
       (message "VMPC actions to run: %S" vmpc-actions-to-run))
   vmpc-actions-to-run)
 
-(defun vmpc-run-actions ()
-  "Run the actions stored in `vmpc-actions-to-run'."
+(defun vmpc-run-actions (&optional actions verbose)
+  "Run the argument actions, or the actions stored in `vmpc-actions-to-run'.
+If verbose is supplied, it should be a STRING, indicating the name of a
+buffer to which to write diagnostic output."
   (interactive)
-  (if (and (not vmpc-actions-to-run) (interactive-p))
+  
+  (if (and (not vmpc-actions-to-run) (not actions) (interactive-p))
       (setq vmpc-actions-to-run (vmpc-read-actions "VMPC actions %%s")))
 
-  (let ((actions vmpc-actions-to-run) form)
+  (let ((actions (or actions vmpc-actions-to-run)) form)
     (while actions
       (setq form (or (assoc (car actions) vmpc-actions)
                      (error "Action %S does not exist!" (car actions)))
             actions (cdr actions))
-      (eval (cons 'progn (cdr form))))))
+      (let ((form (cons 'progn (cdr form)))
+	    (results (eval (cons 'progn (cdr form)))))
+	(when verbose
+	  (save-excursion
+	    (set-buffer verbose)
+	    (insert (format "Action form is:\n%S\nResults are:\n%S\n"
+			    form results))))))))
 
 ;; ------------------------------------------------------------------------
 ;; The main functions and advices -- these are the entry points to pcrisis:
