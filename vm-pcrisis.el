@@ -576,8 +576,7 @@ separated from each other by CLUMP-SEP."
              (memq vmpc-current-state '(reply forward resend)))
         (vmpc-get-replied-header-contents hdrfield clump-sep))
        ((eq vmpc-current-state 'automorph)
-        (vmpc-get-current-header-contents hdrfield clump-sep))
-       (t (error "Unknow vmpc state %S" vmpc-current-state))))
+        (vmpc-get-current-header-contents hdrfield clump-sep))))
 
 (defun vmpc-get-replied-body-text ()
   "Return the body text of the message being replied to."
@@ -950,13 +949,14 @@ and thus will prompt you for a profile again."
   (if (or (and (eq vmpc-current-buffer 'none)
 	       (not (eq vmpc-current-state 'automorph)))
 	  (eq vmpc-current-state 'automorph))
-      (let ((headers (if (eq vmpc-current-state 'automorph)
+      (let ((headers (if (member vmpc-current-state '(automorph newmail))
                          '("To" "CC" "BCC")
                        '("Reply-To" "From" "CC")))
             addrs a actions dest)
         ;; search also other headers fro known addresses 
         (while (and headers (not actions))
-          (setq addrs (vmpc-split (vmpc-get-header-contents (car headers)) ","))
+          (setq addrs (vmpc-get-header-contents (car headers)))
+          (if addrs (setq addrs (vmpc-split addrs  ",")))
           (while addrs
             (setq a (vmpc-string-extract-address (car addrs)))
             (if (vm-ignored-reply-to a)
@@ -967,28 +967,34 @@ and thus will prompt you for a profile again."
                   (setq dest a)))
             (setq addrs (cdr addrs)))
           (setq headers (cdr headers)))
-        
-	;; figure out which actions to run
-        (unless (and actions (not re-prompt))
-          (setq remember how-to-remember
-                actions (vmpc-read-actions (format "Actions for \"%s\" %%s: " dest))))
 
-        (unless (listp actions)
-          (setq remember how-to-remember)
-          (setq actions (list actions)))
+        (when dest
+          ;; figure out which actions to run
+          (unless (and actions (not re-prompt))
+            (setq remember how-to-remember
+                  actions (vmpc-read-actions (format "Actions for \"%s\" %%s: " dest))))
 
-        ;; add the actions to the end of the list as a side effect 
-        (setq vmpc-actions-to-run (append vmpc-actions-to-run actions))
+          (unless (listp actions)
+            (setq remember how-to-remember)
+            (setq actions (list actions)))
+
+          ;; TODO: understand when vmpc-prompt-for-profile has to run actions 
+          ;; if we are in automorph (actually being called from within an action)
+          (if (eq vmpc-current-state 'automorph)
+              (let ((vmpc-actions-to-run actions))
+                (vmpc-run-actions))
+            ;; otherwise add the actions to the end of the list as a side effect 
+            (setq vmpc-actions-to-run (append vmpc-actions-to-run actions)))
 	
-	;; save the association of this profile with these actions if applicable
-	(if (or (and (eq remember 'prompt)
-		     (y-or-n-p (format "Always run %s for \"%s\"? "
-				       actions dest)))
-		(eq remember 'always))
-	    (vmpc-save-profile-for-address dest actions))
+          ;; save the association of this profile with these actions if applicable
+          (if (or (and (eq remember 'prompt)
+                       (y-or-n-p (format "Always run %s for \"%s\"? "
+                                         actions dest)))
+                  (eq remember 'always))
+              (vmpc-save-profile-for-address dest actions))
 
-        ;; return the actions, which makes the condition true if a profile exists 
-        actions)))
+          ;; return the actions, which makes the condition true if a profile exists 
+          actions))))
 
 ;; -------------------------------------------------------------------
 ;; Functions for vmpc-conditions:
@@ -1190,22 +1196,20 @@ recursion or concurrent calls."
 
 (defadvice vm-mail (around vmpc-newmail activate)
   "*Start a new message with pcrisis voodoo."
+  ad-do-it
   (vmpc-init-vars 'newmail)
   (vmpc-build-true-conditions-list)
   (vmpc-build-actions-to-run-list)
-  (vmpc-run-actions)
-  ad-do-it
   (vmpc-create-sig-and-pre-sig-exerlays)
   (vmpc-make-vars-local)
   (vmpc-run-actions))
 
 (defadvice vm-compose-mail (around vmpc-compose-newmail activate)
   "*Start a new message with pcrisis voodoo."
+  ad-do-it
   (vmpc-init-vars 'newmail)
   (vmpc-build-true-conditions-list)
   (vmpc-build-actions-to-run-list)
-  (vmpc-run-actions)
-  ad-do-it
   (vmpc-create-sig-and-pre-sig-exerlays)
   (vmpc-make-vars-local)
   (vmpc-run-actions))
