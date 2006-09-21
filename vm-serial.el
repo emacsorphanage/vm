@@ -280,7 +280,7 @@ string matching the regexp \\([a-zA-Z][a-zA-Z0-9_-]*\\) which may be
 enclosed by {} or a lisp expressions.  The first type is a named token
 and has to be listed in the variable `vm-serial-token-alist'.  It will be
 expanded and if evaluating to a non nil object then it is inserted.  In
-order to get the just the `vm-serial-cookie' \"$(eval vm-serial-cookie)\" simply write it twice.
+order to get just the `vm-serial-cookie' \"$(eval vm-serial-cookie)\" simply write it twice.
 
 You may also embed any kind of lisp expression.  If they return a string, it
 will be inserted.
@@ -315,13 +315,10 @@ Format:
    ((SYMBOLIC-NAME CONDITION MAIL-FORM)
     ...)
     
-Each element of the list is a list itself describing the symbolic name of
-th mail from, a condition and the mail from itself.
-
 When calling `vm-serial-yank-mail' interactively one will be prompted for
-a symbolic name of a mail from.  If called non interactively it will 
+a SYMBOLIC-NAME of a mail from.  If called non interactively it will 
 search for the first condition which evaluates to true and inserts the
-corresponding mail.  If condition is a string it is matched against the
+corresponding mail.  If CONDITION is a string it is matched against the
 To-header otherwise it is evaluated."
   :group 'vm-serial
   :type '(repeat (list (string :tag "Name")
