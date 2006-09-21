@@ -10,19 +10,23 @@
   (save-excursion
     (unless (get-buffer " *vm-version*")
       (set-buffer (get-buffer-create " *vm-version*"))
-      (let ((f (locate-library "vm")))
-        (setq f (expand-file-name ",id" (file-name-directory f)))
+      (let* ((f (locate-library "vm"))
+             (d (file-name-directory f)))
+        (setq default-directory d)
         (erase-buffer)
-        (if (file-exists-p f)
-            ;; insert content of ,id (in distributed bundle)
-            (progn
-              (insert-file-contents f)
-              (goto-char (point-min))
-              (re-search-forward "^[^$]*\\$Id: \\([^$]+\\)\\$[^$]*")
-              (replace-match (match-string 1)))
-          ;; get the current branch nick and revno from bzr 
-          (insert (concat (shell-command-to-string "bzr nick") "-"
-                          (shell-command-to-string "bzr revno"))))
+        (cond ((file-exists-p (setq f (expand-file-name ",id" d)))
+               ;; insert content of ,id (in distributed bundle)
+               (insert-file-contents f)
+               (goto-char (point-min))
+               (re-search-forward "^[^$]*\\$Id: \\([^$]+\\)\\$[^$]*")
+               (replace-match (match-string 1)))
+              ((file-exists-p (expand-file-name ".bzr" d))
+               ;; get the current branch nick and revno from bzr 
+               (insert (concat (shell-command-to-string "bzr nick") "-"
+                               (shell-command-to-string "bzr revno"))))
+              (t
+               (insert vm-version 
+                       "-cannot_determine_precise_VM_version.")))
         (goto-char (point-min))
         ;; remove any whitespace 
         (while (re-search-forward "[\n\t\r ]+" (point-max) t)
