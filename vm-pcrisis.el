@@ -483,6 +483,29 @@ contents will be replaced, otherwise a new header is created."
 	(vmpc-delete-header hdrfield)
 	(vmpc-insert-header hdrfield content))))
 
+;;; this is something I use for FCC, but it's a mess because vm
+;;; (sendmail?) allows multiple FCC fields, so the check for redundant
+;;; FCCs won't necessarily work properly. [2006/09/22:rpg]
+(defun vmpc-add-header (hdrfield content)
+  "Add a new HDRFIELD with the new CONTENT.
+Both arguments are strings.  The field can either be present or not.
+If present, a new field with the same title will be added
+to the message.  This is suitable for FCC, which is not a real field, and
+can be multiply specified."
+  (unless (eq vmpc-current-buffer 'composition)
+    (error "attempting to insert a header into a non-composition buffer."))
+  (let ((prev-contents (vmpc-get-header-contents hdrfield)))
+    ;; don't add this new header if it's already there
+    (unless (and prev-contents
+		 (string-equal prev-contents content))
+      (save-excursion
+	(or (mail-position-on-field hdrfield t)	;Put new field after existing one
+	    (mail-position-on-field "to"))
+	(unless (eql (aref hdrfield (1- (length hdrfield))) ?:)
+	  (setq hdrfield (concat hdrfield ":")))
+	(insert "\n" hdrfield)
+	(insert content)))))
+
 (defun vmpc-get-current-header-contents (hdrfield &optional clump-sep)
   "Return the contents of HDRFIELD in the current mail message.
 Returns an empty string if the header doesn't exist.  HDRFIELD should
