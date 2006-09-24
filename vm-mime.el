@@ -30,6 +30,9 @@
   (require 'vm-vars)
   (require 'vm-autoload))
 
+(eval-when-compile
+  (require 'cl))
+
 (defvar enable-multibyte-characters)
 (defvar default-enable-multibyte-characters)
 
@@ -1386,9 +1389,7 @@
 
 (defvar buffer-file-coding-system)
 
-;; Possible further work; integrate with the FSF's unify-8859-on-encoding-mode
-;; stuff.
-
+;; TODO: Possible further work; integrate with the FSF's unify-8859-on-encoding-mode stuff.
 (defun vm-determine-proper-charset (beg end)
   "Work out what MIME character set to use for sending a message. 
 
