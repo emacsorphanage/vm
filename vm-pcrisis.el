@@ -483,27 +483,26 @@ contents will be replaced, otherwise a new header is created."
 	(vmpc-delete-header hdrfield)
 	(vmpc-insert-header hdrfield content))))
 
-;;; this is something I use for FCC, but it's a mess because vm
-;;; (sendmail?) allows multiple FCC fields, so the check for redundant
-;;; FCCs won't necessarily work properly. [2006/09/22:rpg]
 (defun vmpc-add-header (hdrfield content)
-  "Add a new HDRFIELD with the new CONTENT.
-Both arguments are strings.  The field can either be present or not.
-If present, a new field with the same title will be added
-to the message.  This is suitable for FCC, which is not a real field, and
-can be multiply specified."
+  "Add HDRFIELD with CONTENT if it is not present already.
+Both arguments are strings.  
+If a header field with the same CONTENT is present already nothing will be
+done, otherwise  a new field with the same name and the new CONTENT will be
+added to the message.
+
+This is suitable for FCC, which can be specified multiple times."
   (unless (eq vmpc-current-buffer 'composition)
     (error "attempting to insert a header into a non-composition buffer."))
-  (let ((prev-contents (vmpc-get-header-contents hdrfield)))
+  (let ((prev-contents (vmpc-get-header-contents hdrfield "\n")))
+    (setq prev-contents (vmpc-split prev-contents "\n"))
     ;; don't add this new header if it's already there
-    (unless (and prev-contents
-		 (string-equal prev-contents content))
+    (unless (member content prev-contents)
       (save-excursion
-	(or (mail-position-on-field hdrfield t)	;Put new field after existing one
+	(or (mail-position-on-field hdrfield t)	; Put new field after existing one
 	    (mail-position-on-field "to"))
-	(unless (eql (aref hdrfield (1- (length hdrfield))) ?:)
+	(unless (eq (aref hdrfield (1- (length hdrfield))) ?:)
 	  (setq hdrfield (concat hdrfield ":")))
-	(insert "\n" hdrfield)
+	(insert "\n" hdrfield " ")
 	(insert content)))))
 
 (defun vmpc-get-current-header-contents (hdrfield &optional clump-sep)
@@ -903,7 +902,7 @@ If no email address in found in STR, returns nil."
       (match-string 0 str)))
 
 (defun vmpc-split (string separators)
-  "Return a list by splitting STRING at SEPARATORS."
+  "Return a list by splitting STRING at SEPARATORS and trimming all whitespace."
   (let (result
         (not-separators (concat "^" separators)))
     (save-excursion
