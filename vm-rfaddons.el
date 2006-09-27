@@ -1086,7 +1086,10 @@ this may take some time, since the file needs to be visited."
 (defun vm-mime-attach-files-in-directory (directory &optional match)
   "Attach all files in DIRECTORY matching MATCH.
 The optional argument MATCH might specify a regexp matching all files
-which should be attached, when empty all files will be attached."
+which should be attached, when empty all files will be attached.
+
+When called with a prefix arg it will do a literal match instead of a regexp
+match."
   (interactive
    (flet ((substitute-in-file-name (file) file))
      (let ((file (vm-read-file-name
@@ -1103,8 +1106,12 @@ which should be attached, when empty all files will be attached."
              (file-name-nondirectory file)))))
 
   (setq vm-mime-all-attachments-directory directory)
-  
+
   (message "Attaching files matching `%s' from directory %s " match directory)
+  
+  (if current-prefix-arg
+      (setq match (concat "^" (regexp-quote match) "$")))
+  
   (let ((files (directory-files directory t match nil))
         file type charset)
     (if (null files)
