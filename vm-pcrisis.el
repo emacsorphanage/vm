@@ -964,7 +964,7 @@ and thus will prompt you for a profile again."
                       (list 'prompt t)))
   
   (if (and (memq vmpc-current-state '(forward resend))
-	   remember)
+	   how-to-remember)
       (error "You can not have `vmpc-prompt-for-profile' set to 'remember when forwarding or resending"))
   (if (or (and (eq vmpc-current-buffer 'none)
 	       (not (eq vmpc-current-state 'automorph)))
@@ -972,7 +972,7 @@ and thus will prompt you for a profile again."
       (let ((headers (if (member vmpc-current-state '(automorph newmail))
                          '("To" "CC" "BCC")
                        '("Reply-To" "From" "CC")))
-            addrs a actions dest)
+            addrs a actions dest remember)
         ;; search also other headers fro known addresses 
         (while (and headers (not actions))
           (setq addrs (vmpc-get-header-contents (car headers)))
