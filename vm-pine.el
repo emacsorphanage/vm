@@ -868,10 +868,10 @@ If set to nil it will never save them nor it will ask."
 
 (defun vm-add-save-killed-message-hook ()
   (make-local-hook  'kill-buffer-hook)
-  (add-local-hook 'kill-buffer-hook 'vm-save-killed-message-hook))
+  (add-hook 'kill-buffer-hook 'vm-save-killed-message-hook nil t))
 
 (defun vm-remove-save-killed-message-hook ()
-  (remove-local-hook 'kill-buffer-hook 'vm-save-killed-message-hook))
+  (remove-hook 'kill-buffer-hook 'vm-save-killed-message-hook t))
 
 (defun vm-save-killed-message-hook ()
   (if (or (and (equal vm-save-killed-message 'ask)
