@@ -1,30 +1,5 @@
-# All versions of Emacs prior to 19.34 for Emacs and
-# prior to 19.14 for XEmacs are unsupported.
-
-# what emacs is called on your system
-EMACS =	xemacs
-CC =	gcc -O3
-
-# top of the installation
-prefix = $(HOME)/.xemacs/vm
-
-# where the Info file should go
-INFODIR = $(prefix)/info
-
-# where the vm.elc, tapestry.elc, etc. files should go
-LISPDIR = $(prefix)/lisp
-
-# where the toolbar pixmaps should go.
-# vm-toolbar-pixmap-directory must point to the same place.
-# vm-image-directory must point to the same place.
-PIXMAPDIR = $(prefix)/etc/vm
-
-# your bin for the external decoder/encoder programs
-BINDIR = $(prefix)/bin
-
-# the load-path for additional packages, i.e. a colon/space separated list
-OTHERLISPDIRS =
-export OTHERLISPDIRS
+########### all user servicable parts are in Makefile.User ##################
+include Makefile.User
 
 ############## no user servicable parts beyond this point ###################
 
@@ -69,11 +44,11 @@ recompile:
 
 noautoload:	$(OBJECTS) tapestry.elc
 	@echo "building vm.elc (with all modules included)..."
-	@cat $(OBJECTS) tapestry.elc > vm.elc
+	cat $(OBJECTS) tapestry.elc > vm.elc
 
 debug:	$(SOURCES) tapestry.el
 	@echo "building vm.elc (uncompiled, no autoloads)..."
-	@cat $(SOURCES) tapestry.el > vm.elc
+	cat $(SOURCES) tapestry.el > vm.elc
 
 install: all
 	mkdirhier $(INFODIR) $(LISPDIR) $(PIXMAPDIR) $(BINDIR)
@@ -84,8 +59,7 @@ install: all
 
 vm.info: vm.texinfo
 	@echo "making vm.info..."
-	@$(EMACS) $(BATCHFLAGS) -insert vm.texinfo -l texinfmt -f texinfo-format-buffer -f save-buffer
-
+	$(EMACS) $(BATCHFLAGS) -insert vm.texinfo -l texinfmt -f texinfo-format-buffer -f save-buffer
 	@echo "(fmakunbound 'vm-its-such-a-cruel-world)" >> vm.el
 
 vm-pcrisis.info: vm-pcrisis.texi
@@ -110,7 +84,7 @@ noautoloads=vm.el vm-autoload.el
 vm-autoload.el: $(filter-out $(noautoloads),$(SOURCES))
 	@echo scanning sources to build autoload definitions...
 	@echo "(provide 'vm-autoload)" > vm-autoload.el
-	@$(EMACS) $(BATCHFLAGS) -l ./make-autoloads -f print-autoloads $(filter-out $(noautoloads),$(SOURCES)) >> vm-autoload.el
+	$(EMACS) $(BATCHFLAGS) -l ./make-autoloads -f print-autoloads $(filter-out $(noautoloads),$(SOURCES)) >> vm-autoload.el
 
 utils: $(UTILS)
 
@@ -141,7 +115,7 @@ patch:
 
 ball:
 	echo 'Version: $$Id: '`bzr nick`-`bzr revno`'$$' > ,id
-	tar chfvz vmrf.tgz ,id *.c *.texi* *ChangeLog patchdoc.txt Makefile make-autoloads *.el
+	tar chfvz vmrf.tgz ,id *.c *.texi* *ChangeLog patchdoc.txt Makefile* make-autoloads *.el
 	cp vmrf.tgz $(ELISPDIR)
 	touch $(ELISPDIR)/index.rml
 
@@ -176,7 +150,7 @@ $(ELISPDIR)/%.el: %.el
 update:
 	if test -e '.bzr'; then echo ERROR: No updates in checkouts; exit -1; fi;
 	wget -N http://www.robf.de/Hacking/elisp/vmrf.tgz
-	if test vmrf.tgz -nt vmrf-newer.tgz; then cp vmrf.tgz vmrf-newer.tgz; tar xvfz vmrf.tgz; fi;
+	if test vmrf.tgz -nt vmrf-newer.tgz; then cp vmrf.tgz vmrf-newer.tgz; tar --exclude=Makefile.User -x -v -f -z vmrf.tgz; fi;
 	rm -f vm-autoload.el*
 	make
 

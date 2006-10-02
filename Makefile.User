@@ -1,0 +1,27 @@
+########### all user servicable parts are in Makefile.User ##################
+
+# what emacs is called on your system
+EMACS =	xemacs
+CC =	gcc -O3
+
+# top of the installation
+prefix = $(HOME)/.xemacs/vm
+
+# where the Info file should go
+INFODIR = $(prefix)/info
+
+# where the vm.elc, tapestry.elc, etc. files should go
+LISPDIR = $(prefix)/lisp
+
+# where the toolbar pixmaps should go.
+# vm-toolbar-pixmap-directory must point to the same place.
+# vm-image-directory must point to the same place.
+PIXMAPDIR = $(prefix)/etc/vm
+
+# your bin for the external decoder/encoder programs
+BINDIR = $(prefix)/bin
+
+# the load-path for additional packages, i.e. a colon/space separated list
+OTHERLISPDIRS =
+export OTHERLISPDIRS
+
