@@ -994,6 +994,7 @@ and thus will prompt you for a profile again."
             (setq remember how-to-remember
                   actions (vmpc-read-actions (format "Actions for \"%s\" %%s: " dest))))
 
+          ;; fixed old style format where there was only a single action
           (unless (listp actions)
             (setq remember how-to-remember)
             (setq actions (list actions)))
