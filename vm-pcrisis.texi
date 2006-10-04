@@ -1226,6 +1226,13 @@ Version 0.11:
 
 @itemize @bullet
 
+@item Profiles can now be stored in the BBDB instead of the file
+@code{vmpc-auto-profiles-file}.  To enable this and migrate your old
+profiles you should call @code{vmpc-migrate-profiles-to-BBDB} once. A
+backup of your BBDB will be created first as
+@file{~/.bbdb-vmpc-profile-migration-backup} and your old profiles-file
+will be moved to @file{~/.vmpc-auto-profiles-migrated-to-BBDB}.
+
 @item Added @code{vmpc-add-header} which allows to create a header
 multiple times.  This is useful when having more than one FCC header. 
 

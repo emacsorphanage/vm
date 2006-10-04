@@ -1,6 +1,7 @@
 ;;; vm-pcrisis.el --- wide-ranging auto-setup for personalities in VM
 ;;
-;; Copyright (C) 1999 Rob Hodges, 2006 Robert Widhopf
+;; Copyright (C) 1999 Rob Hodges,
+;;               2006 Robert Widhopf, Robert P. Goldman
 ;;
 ;; Package: Personality Crisis for VM
 ;; Author: Rob Hodges
@@ -32,16 +33,18 @@
 ;; downloaded one or the other along with this package at the URL
 ;; above.
 
-;;; TODO:
-;; - more lispification, Rob was a bit unfunctional
-
 ;;; Code:
 (eval-when-compile
   (require 'vm-version)
   (require 'vm-message)
   (require 'vm-macro)
   ;; get the macros we need.
-  (require 'cl))
+  (require 'cl)
+  (condition-case nil
+      (require 'bbdb)
+    (error
+     (message "Could not load bbdb.el.  Related functions may not work correctly!")
+     (sit-for 5))))
 
 (require 'vm-reply)
 
@@ -138,8 +141,9 @@ resending, composing or automorphing, then set this one."
 
 (defcustom vmpc-auto-profiles-file "~/.vmpc-auto-profiles"
   "*File in which to save information used by `vmpc-prompt-for-profile'.
-The user is welcome to change this value."
-  :type 'file
+When set to the symbol 'BBDB, profiles will be stored there."
+  :type '(choice (file)
+                 (const BBDB))
   :group 'vmpc)
 
 (defcustom vmpc-auto-profiles-expunge-days 100
@@ -813,8 +817,23 @@ parameter POS means insert the pre-signature at position POS if
 
 (defun vmpc-load-auto-profiles ()
   "Initialise `vmpc-auto-profiles' from `vmpc-auto-profiles-file'."
-  (if (and (file-exists-p vmpc-auto-profiles-file)
-	   (file-readable-p vmpc-auto-profiles-file))
+  (setq vmpc-auto-profiles nil)
+  (if (eq vmpc-auto-profiles-file 'BBDB)
+      (let ((records (bbdb-with-db-buffer bbdb-records))
+            profile rec nets)
+        (while records
+          (setq rec (car records)
+                profile (bbdb-get-field rec 'vmpc-profile))
+          (when (and profile (> (length profile) 0))
+            (setq nets (bbdb-record-net rec))
+            (while nets
+              (setq vmpc-auto-profiles (cons (cons (car nets) (read profile))
+                                             vmpc-auto-profiles)
+                    nets (cdr nets))))
+          (setq records (cdr records)))
+        (setq vmpc-auto-profiles (reverse vmpc-auto-profiles)))
+    (when (and (file-exists-p vmpc-auto-profiles-file) ;
+               (file-readable-p vmpc-auto-profiles-file))
       (save-excursion
 	(set-buffer (get-buffer-create "*pcrisis-temp*"))
 	(buffer-disable-undo (current-buffer))
@@ -822,29 +841,27 @@ parameter POS means insert the pre-signature at position POS if
 	(insert-file-contents vmpc-auto-profiles-file)
 	(goto-char (point-min))
 	(setq vmpc-auto-profiles (read (current-buffer)))
-	(kill-buffer (current-buffer)))))
+	(kill-buffer (current-buffer))))))
 
 
 (defun vmpc-save-auto-profiles ()
   "Save `vmpc-auto-profiles' to `vmpc-auto-profiles-file'."
-  ;; TODO instead of recreating it all the time we should open it and modify
-  ;; the buffer instead, then this would only be a save-buffer and updates
-  ;; will be faster also for big files ... maybe we should use Berkley DB ...
-  (if (file-writable-p vmpc-auto-profiles-file)
-      (save-excursion
-	(set-buffer (get-buffer-create "*pcrisis-temp*"))
-	(buffer-disable-undo (current-buffer))
-	(erase-buffer)
-	(goto-char (point-min))
+  (when (not (eq vmpc-auto-profiles-file 'BBDB))
+    (if (not (file-writable-p vmpc-auto-profiles-file))
+        ;; if file is not writable, signal an error:
+        (error "Error: P-Crisis could not write to file %s"
+               vmpc-auto-profiles-file))
+    (save-excursion
+      (set-buffer (get-buffer-create "*pcrisis-temp*"))
+      (buffer-disable-undo (current-buffer))
+      (erase-buffer)
+      (goto-char (point-min))
 ;	(prin1 vmpc-auto-profiles (current-buffer))
-	(pp vmpc-auto-profiles (current-buffer))
-	(write-region (point-min) (point-max)
-		      vmpc-auto-profiles-file nil 'quietly)
-	(kill-buffer (current-buffer)))
-    ;; if file is not writable, signal an error:
-    (error "Error: P-Crisis could not write to file %s"
-	   vmpc-auto-profiles-file)))
-
+      (pp vmpc-auto-profiles (current-buffer))
+      (write-region (point-min) (point-max)
+                    vmpc-auto-profiles-file nil 'quietly)
+      (kill-buffer (current-buffer)))))
+    
 (defun vmpc-fix-auto-profiles-file ()
   "Change `vmpc-auto-profiles-file' to the format used by v0.82+."
   (interactive)
@@ -859,32 +876,90 @@ parameter POS means insert the pre-signature at position POS if
   (setq vmpc-auto-profiles ()))
 
 
+(defun vmpc-migrate-profiles-to-BBDB ()
+  "Migrate the profiles stored in `vmpc-auto-profiles-file' to the BBDB.
+
+This will automatically create records if they do not exist and add the new
+field `vmpc-profile' to the records which is a sexp not meant to be edited."
+  (interactive)
+  (if (eq vmpc-auto-profiles-file 'BBDB)
+      (error "`vmpc-auto-profiles-file' has been migrated already."))
+  (unless vmpc-auto-profiles
+    (vmpc-load-auto-profiles))
+  ;; create a BBDB backup
+  (bbdb-save-db)
+  (copy-file (expand-file-name bbdb-file)
+             (concat (expand-file-name bbdb-file) "-vmpc-profile-migration-backup"))
+  ;; now migrate the profiles 
+  (let ((profiles vmpc-auto-profiles)
+        (records (bbdb-with-db-buffer bbdb-records))
+        p addr rec)
+    (while profiles
+      (setq p (car profiles)
+            addr (car p)
+            rec (car (bbdb-search records nil nil addr)))
+      (when (not rec)
+        (setq rec (bbdb-create-internal "?" nil addr nil nil nil)))
+      (bbdb-record-putprop rec 'vmpc-profile (format "%S" (cdr p)))
+      (setq profiles (cdr profiles))))
+  ;; move old profiles file out of the way
+  (rename-file vmpc-auto-profiles-file
+               (concat vmpc-auto-profiles-file "-migrated-to-BBDB"))
+  ;; switch to BBDB mode
+  (customize-save-variable 'vmpc-auto-profiles-file 'BBDB)
+  (message "`vmpc-auto-profiles-file' has been set to 'BBDB"))
+
 (defun vmpc-get-profile-for-address (addr)
   "Return profile for ADDR."
   (unless vmpc-auto-profiles
     (vmpc-load-auto-profiles))
+  ;; TODO: BBDB "normalizes" email addresses, i.e. before we had a one-to-one
+  ;; mapping of address=>actions, now multiple actions may point to the same
+  ;; list of actions.  So either we should update vmpc-auto-profiles upon
+  ;; storing a new profile or directly search BBDB for it, which might be
+  ;; slower!
   (let ((prof (cadr (assoc addr vmpc-auto-profiles))))
-    (if prof
-	(let ((today (vmpc-gregorian-days)))
-	  ;; if we found for a profile for this address, we are still
-	  ;; using it -- so "touch" the record to ensure it stays
-	  ;; newer than vmpc-auto-profiles-expunge-days:
-	  (setcdr (cdr (assoc addr vmpc-auto-profiles)) today)
-	  (vmpc-save-auto-profiles)))
-    prof ))
+    (when prof
+      ;; we found a profile for this address and we are still
+      ;; using it -- so "touch" the record to ensure it stays
+      ;; newer than vmpc-auto-profiles-expunge-days
+      (setcdr (cdr (assoc addr vmpc-auto-profiles)) (vmpc-gregorian-days))
+      (vmpc-save-auto-profiles))
+    prof))
 
 
 (defun vmpc-save-profile-for-address (addr actions)
   "Save the association ADDR => ACTIONS."
   (let ((today (vmpc-gregorian-days))
-        (old-association (assoc addr vmpc-auto-profiles)))
-    (if old-association
-        (setq vmpc-auto-profiles (delete old-association vmpc-auto-profiles)))
-    (if actions 
-        (setq vmpc-auto-profiles (cons (append (list addr actions) today)
-                                       vmpc-auto-profiles)))
+        (old-association (assoc addr vmpc-auto-profiles))
+        profile)
+
+    ;; we store the actions list and the durrent date
+    (setq profile (append (list addr actions) today))
+
+    ;; remove old profile
+    (when old-association
+      ;; now possibly delete it from the BBDB
+      (setq vmpc-auto-profiles (delete old-association vmpc-auto-profiles))
+      (when (and (eq vmpc-auto-profiles-file 'BBDB) (not actions))
+        (let ((records (bbdb-with-db-buffer bbdb-records)) rec)
+          (setq rec (bbdb-search records nil nil addr))
+          (when rec
+            (bbdb-record-putprop rec 'vmpc-profile nil)))))
+
+    ;; add new profile
+    (when actions 
+      (setq vmpc-auto-profiles (cons profile vmpc-auto-profiles))
+      ;; now possibly add it to the BBDB
+      (when (eq vmpc-auto-profiles-file 'BBDB)
+        (let ((records (bbdb-with-db-buffer bbdb-records)) rec)
+          (setq rec (bbdb-search records nil nil addr))
+          (when (not rec)
+            (setq rec (bbdb-create-internal "?" nil addr nil nil nil)))
+          (bbdb-record-putprop rec 'vmpc-profile profile))))
+
+    ;; expunge old stuff from the list:
     (when vmpc-auto-profiles-expunge-days
-      ;; expunge old stuff from the list:
       (setq vmpc-auto-profiles
             (mapcar (lambda (p)
                       (if (> (- today (cddr p)) vmpc-auto-profiles-expunge-days)
@@ -892,6 +967,8 @@ parameter POS means insert the pre-signature at position POS if
                         p))
                     vmpc-auto-profiles))
       (setq vmpc-auto-profiles (delete nil vmpc-auto-profiles)))
+
+    ;; save the file 
     (vmpc-save-auto-profiles)))
 
 
@@ -1164,7 +1241,7 @@ actions will be run."
     (setq vmpc-actions-to-run nil)
     (mapcar (lambda (c)
               (setq actions (cdr (assoc c alist)))
-              ;; TODO warn about unbound conditions?
+              ;; TODO: warn about unbound conditions?
               (while actions
                 (if (not (member (car actions) vmpc-actions-to-run))
                     (setq vmpc-actions-to-run (cons (car actions) vmpc-actions-to-run)))
