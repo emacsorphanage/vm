@@ -1228,6 +1228,9 @@ Version 0.11:
 
 @item Added @code{vmpc-add-header} which allows to create a header
 multiple times.  This is useful when having more than one FCC header. 
+
+@item @code{vmpc-prompt-for-profile} finds now all profiles, i.e. before
+it stopped at the first match, now it will check all email addresses.
  
 @end itemize
 
@@ -1251,7 +1254,7 @@ Version 0.9:
 @item Added new function @code{vmpc-toggle-no-automorph} to disable automorph
 for the current buffer.  
 
-@item Renamed @code{vmpc-prompt-for-profile} checks all relevant headers
+@item @code{vmpc-prompt-for-profile} checks all relevant headers
 now and will only prompt for a profile if no matches were found.  It
 also can be called interactively to correct a existing profile
 association.

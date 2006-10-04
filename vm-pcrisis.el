@@ -947,32 +947,50 @@ If no email address in found in STR, returns nil."
       (message "VMPC actions to run: %S" actions))
     actions))
 
-(defun vmpc-prompt-for-profile (&optional how-to-remember re-prompt)
-  "Prompt the user for a profile and add it to the list of actions.
-A profile is one of the sets of actions named in `vmpc-actions'.
+(defcustom vmpc-prompt-for-profile-headers
+  '((composition ("To" "CC" "BCC"))
+    (default     ("From" "Sender" "Reply-To" "From" "Resent-From")))
+  "*List of headers to check for email addresses.
 
-REMEMBER can be set to 'always or 'prompt.  It figures out who your message is
-going to, and saves a record in `vmpc-auto-profiles-file' which says to use that
-profile for messages to that address in the future, instead of prompting you
-for a profile the next time.  If set to 'prompt, it will ask before doing
-this, otherwise it will do it automatically.
+`vmpc-prompt-for-profile' will scan the given headers in the given order."
+  :type '(repeat (list (choice (const default)
+                               (const composition)
+                               (const reply)
+                               (const forward)
+                               (const resent)
+                               (const newmail))
+                       (repeat (string :tag "Header"))))
+  :group 'vmpc)
 
-If you want to change a profile->action mapping call this function
-interactivly within a composition buffer.  This will set RE-PROMPT
-and thus will prompt you for a profile again."
+(defun vmpc-prompt-for-profile (&optional remember prompt)
+  "Find a profile or prompt for it and add its actions to the list of actions.
+
+A profile is an association between a recipient address and a set of the
+actions named in `vmpc-actions'.  When entering the list of actions, one has
+to press ENTER after each action and finish adding action by pressing ENTER
+without an action.
+
+The association is stored in `vmpc-auto-profiles-file' and in the future the
+stored actions will automatically run for messages to that address.
+
+REMEMBER can be set to 'always or 'prompt.  When set to 'prompt you will
+be asked if you want to store the association.  When set to 'always a new
+profile will be stored without asking.
+
+If you want to change the profile late call this function interactively in a
+composition buffer.  Set PROFILE to 'never and you will never ever be prompted
+for anything, i.e. only existing profiles will be applied."
   (interactive (progn (setq vmpc-current-state 'automorph)
-                      (list 'prompt t)))
+                      (list 'prompt 'again)))
   
-  (if (and (memq vmpc-current-state '(forward resend))
-	   how-to-remember)
-      (error "You can not have `vmpc-prompt-for-profile' set to 'remember when forwarding or resending"))
   (if (or (and (eq vmpc-current-buffer 'none)
 	       (not (eq vmpc-current-state 'automorph)))
 	  (eq vmpc-current-state 'automorph))
-      (let ((headers (if (member vmpc-current-state '(automorph newmail))
-                         '("To" "CC" "BCC")
-                       '("Reply-To" "From" "CC")))
-            addrs a actions dest remember)
+      (let ((headers (or (assoc vmpc-current-buffer vmpc-prompt-for-profile-headers)
+                         (assoc vmpc-current-state vmpc-prompt-for-profile-headers)
+                         (assoc 'default vmpc-prompt-for-profile-headers)))
+            addrs a actions dest)
+        (setq headers (car (cdr headers)))
         ;; search also other headers fro known addresses 
         (while (and headers (not actions))
           (setq addrs (vmpc-get-header-contents (car headers)))
@@ -981,23 +999,34 @@ and thus will prompt you for a profile again."
             (setq a (vmpc-string-extract-address (car addrs)))
             (if (vm-ignored-reply-to a)
                 (setq a nil))
-            (if (setq actions (vmpc-get-profile-for-address a))
-                (setq remember 'already dest a headers nil)
-              (if (and (not dest) a)
-                  (setq dest a)))
+            (setq actions (append (vmpc-get-profile-for-address a) actions))
+            (when (and (not remember) actions)
+              (setq remember 'already dest a))
+            (if (not dest) (setq dest a))
             (setq addrs (cdr addrs)))
           (setq headers (cdr headers)))
 
         (when dest
           ;; figure out which actions to run
-          (unless (and actions (not re-prompt))
-            (setq remember how-to-remember
-                  actions (vmpc-read-actions (format "Actions for \"%s\" %%s: " dest))))
+          (when (or (not actions) (and prompt (not (eq prompt 'never))))
+            (setq actions (vmpc-read-actions (format "Actions for \"%s\" %%s: " dest))))
 
           ;; fixed old style format where there was only a single action
           (unless (listp actions)
-            (setq remember how-to-remember)
+            (setq remeber 'again)
             (setq actions (list actions)))
+
+          ;; save the association of this profile with these actions if applicable
+          (if (or (and (eq remember 'prompt)
+                       (not (eq prompt 'never))
+                       (if actions 
+                           (y-or-n-p (format "Always run %s for \"%s\"? "
+                                             actions dest))
+                         (if (vmpc-get-profile-for-address dest)
+                             (yes-or-no-p (format "Delete profile for \"%s\"? "
+                                                  dest)))))
+                  (eq remember 'always))
+              (vmpc-save-profile-for-address dest actions))
 
           ;; TODO: understand when vmpc-prompt-for-profile has to run actions 
           ;; if we are in automorph (actually being called from within an action)
@@ -1007,13 +1036,6 @@ and thus will prompt you for a profile again."
             ;; otherwise add the actions to the end of the list as a side effect 
             (setq vmpc-actions-to-run (append vmpc-actions-to-run actions)))
 	
-          ;; save the association of this profile with these actions if applicable
-          (if (or (and (eq remember 'prompt)
-                       (y-or-n-p (format "Always run %s for \"%s\"? "
-                                         actions dest)))
-                  (eq remember 'always))
-              (vmpc-save-profile-for-address dest actions))
-
           ;; return the actions, which makes the condition true if a profile exists 
           actions))))
 
