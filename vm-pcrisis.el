@@ -945,7 +945,7 @@ field `vmpc-profile' to the records which is a sexp not meant to be edited."
         (let ((records (bbdb-with-db-buffer bbdb-records)) rec)
           (setq rec (bbdb-search records nil nil addr))
           (when rec
-            (bbdb-record-putprop rec 'vmpc-profile nil)))))
+            (bbdb-record-putprop (car rec) 'vmpc-profile nil)))))
 
     ;; add new profile
     (when actions 
@@ -953,10 +953,10 @@ field `vmpc-profile' to the records which is a sexp not meant to be edited."
       ;; now possibly add it to the BBDB
       (when (eq vmpc-auto-profiles-file 'BBDB)
         (let ((records (bbdb-with-db-buffer bbdb-records)) rec)
-          (setq rec (bbdb-search records nil nil addr))
+          (setq rec (car (bbdb-search records nil nil addr)))
           (when (not rec)
             (setq rec (bbdb-create-internal "?" nil addr nil nil nil)))
-          (bbdb-record-putprop rec 'vmpc-profile profile))))
+          (bbdb-record-putprop rec 'vmpc-profile (format "%S" profile)))))
 
     ;; expunge old stuff from the list:
     (when vmpc-auto-profiles-expunge-days
