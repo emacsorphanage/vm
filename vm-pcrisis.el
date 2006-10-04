@@ -930,7 +930,7 @@ If no email address in found in STR, returns nil."
   (let ((actions ()) a)
     (while (not (string-equal
                  (setq a (completing-read
-                          (format prompt (or actions "()"))
+                          (format prompt (or actions ""))
                           ;; omit those starting with (vmpc-prompt-for-profile ...
                           (mapcar
                            (lambda (a)
@@ -992,7 +992,7 @@ and thus will prompt you for a profile again."
           ;; figure out which actions to run
           (unless (and actions (not re-prompt))
             (setq remember how-to-remember
-                  actions (vmpc-read-actions (format "Actions for \"%s\" %%s: " dest))))
+                  actions (vmpc-read-actions (format "Actions for \"%s\" %%s (end with empty line): " dest))))
 
           (unless (listp actions)
             (setq remember how-to-remember)
