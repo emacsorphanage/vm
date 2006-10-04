@@ -4538,6 +4538,7 @@ this case and not prompt you for it in the minibuffer."
    ;; protect value of last-command and this-command
    (let ((last-command last-command)
 	 (this-command this-command)
+         (completion-ignored-extensions nil)
 	 (charset nil)
 	 description file default-type type)
      (if (null vm-send-using-mime)
