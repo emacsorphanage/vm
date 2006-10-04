@@ -1091,7 +1091,7 @@ for anything, i.e. only existing profiles will be applied."
 
           ;; fixed old style format where there was only a single action
           (unless (listp actions)
-            (setq remeber 'again)
+            (setq remember 'again)
             (setq actions (list actions)))
 
           ;; save the association of this profile with these actions if applicable
