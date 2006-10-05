@@ -847,8 +847,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
        (widen)
        (or (markerp end) (setq end (vm-marker end)))
        (goto-char start)
-       (while (not done)
-	 (re-search-forward "[ \t]*$" end t)
+       (while (and (not done) (re-search-forward "[ \t]*$" end t))
          (replace-match "")
 	 (if (>= (current-column) len)
 	     ;; ignore errors
