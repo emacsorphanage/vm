@@ -395,7 +395,7 @@ This is essentially faster than VMs functions."
 (defadvice vm-fill-paragraphs-containing-long-lines
   (around vm-rfaddons-better-filling activate)
   "Do better filling if longlines.el is present otherwise if
-`vm-fill-paragraphs-containing-long-lines-faster' it t do faster
+`vm-fill-paragraphs-containing-long-lines-faster' is 't do faster
 filling than VMs code."
   (if (eq (ad-get-arg 0) 'window-width)
       (ad-set-arg 0 (- (window-width (get-buffer-window (current-buffer))) 1)))
@@ -653,8 +653,8 @@ Use `vm-rmail-toggle' to switch between normal and this mode."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-mail-subject-prefix-replacements
-  '(("\\(\\(re\\|aw\\|antw\\)\\(\\[[0-9]+\\]\\)?:\\s-*\\)+" . "Re: ")
-    ("\\(\\(fo\\|wg\\)\\(\\[[0-9]+\\]\\)?:\\s-*\\)+" . "Fo: "))
+  '(("\\(\\(re\\|aw\\|antw\\)\\(\\[[0-9]+\\]\\)?:[ \t]*\\)+" . "Re: ")
+    ("\\(\\(fo\\|wg\\)\\(\\[[0-9]+\\]\\)?:[ \t]*\\)+" . "Fo: "))
   "*List of subject prefixes which should be replaced.
 Matching will be done case insentivily."
   :group 'vm-rfaddons
@@ -684,7 +684,7 @@ Subject header."
     (let ((case-fold-search t)
           (rpl vm-mail-subject-prefix-replacements))
       (while rpl
-        (if (re-search-backward (concat "^Subject:\\s-*" (caar rpl))
+        (if (re-search-backward (concat "^Subject:[ \t]*" (caar rpl))
                                 (point-min) t)
             (replace-match (concat "Subject: " (cdar rpl))))
         (setq rpl (cdr rpl))))
