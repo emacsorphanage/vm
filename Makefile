@@ -149,10 +149,15 @@ $(ELISPDIR)/%.el: %.el
 ##############################################################################
 update:
 	if test -e '.bzr'; then echo ERROR: No updates in checkouts; exit -1; fi;
-	wget -N http://www.robf.de/Hacking/elisp/vmrf.tgz
-	if test vmrf.tgz -nt vmrf-newer.tgz; then cp vmrf.tgz vmrf-newer.tgz; tar --exclude=Makefile.User -x -v -f -z vmrf.tgz; fi;
-	rm -f vm-autoload.el*
-	make
+	c=`ls -l vmrf.tgz`; \
+	wget -N http://www.robf.de/Hacking/elisp/vmrf.tgz; \
+	if test "$$c" != "`ls -l vmrf.tgz`"; then \
+	    echo extracting vmrf.tgz; \
+	    tar --exclude=Makefile.User -x -z -f vmrf.tgz; \
+	    rm -f vm-autoload.el*; \
+	    echo building ...; \
+	    make; \
+        fi;
 
 get-other-extensions:
 	wget -N http://www.splode.com/~friedman/software/emacs-lisp/src/vcard.el
