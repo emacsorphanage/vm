@@ -1315,13 +1315,18 @@ See the advice in `vm-rfaddons-infect-vm'."
                                                 &optional include exclude
                                                 mlist
                                                 quiet)
+  "On the next COUNT or marked messages call the function ACTION on those mime
+parts which match with their type to INCLUDE or EXCLUDE (which are list of
+mime parts).  If QUIET is true do not generate messages on irnored parts.
+
+ACTION will get called with three arguments: LAYOUT TYPE FILENAME." 
   (unless mlist
     (or count (setq count 1))
     (vm-check-for-killed-folder)
     (vm-select-folder-buffer)
     (vm-error-if-folder-empty))
 
-  (let* ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
+  (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (save-excursion
       (while mlist
         (let (parts layout file type o)
@@ -1359,7 +1364,7 @@ See the advice in `vm-rfaddons-infect-vm'."
                 (setq file (or (vm-mime-get-disposition-parameter
                                 layout "filename") 
                                (vm-mime-get-parameter layout "name")))
-                (funcall action layout type file))
+                (funcall action (car mlist) layout type file))
               (setq parts (cdr parts)))))
         (setq mlist (cdr mlist)))))
   )
@@ -1372,8 +1377,8 @@ See the advice in `vm-rfaddons-infect-vm'."
   
   (vm-mime-action-on-all-attachments
    count
-   (lambda (layout type file)
-     (message "Deleting `%s´%s" type (if file (format " (%s)" file) ""))
+   (lambda (msg layout type file)
+     (message "Deleting `%s%s" type (if file (format " (%s)" file) ""))
      (vm-mime-discard-layout-contents layout))
    vm-mime-delete-all-attachments-types
    vm-mime-delete-all-attachments-types-exceptions)
@@ -1408,9 +1413,9 @@ When directory does not exist it will be created."
     (vm-mime-action-on-all-attachments
      count
      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; the action to be performed BEGIN
-     (lambda (layout type file)
+     (lambda (msg layout type file)
        (let ((directory (if (functionp directory)
-                            (funcall directory (car mlist))
+                            (funcall directory msg)
                           directory)))
          (setq file (if file
                         (if (file-name-directory file)
@@ -1434,7 +1439,7 @@ When directory does not exist it will be created."
                (setq file nil)))
          
          (when file
-           (message "Saving `%s´%s" type (if file (format " (%s)" file) ""))
+           (message "Saving `%s%s" type (if file (format " (%s)" file) ""))
            (make-directory (file-name-directory file) t)
            (vm-mime-send-body-to-file layout file file)
            (if vm-mime-delete-after-saving
@@ -1933,7 +1938,7 @@ and add an \"%0UA\" to your `vm-summary-format'."
     (setq msg (vm-real-message-of msg))
     (vm-mime-action-on-all-attachments
      nil
-     (lambda (layout type file)
+     (lambda (msg layout type file)
        (when (or vm-mime-summary-attachment-label-types 
                  (delete nil (mapcar (lambda (p)
                                        (vm-mime-get-disposition-parameter layout p))
