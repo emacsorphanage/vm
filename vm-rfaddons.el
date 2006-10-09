@@ -1083,8 +1083,8 @@ this may take some time, since the file needs to be visited."
       matched )))
 
 ;;;###autoload
-(defun vm-mime-attach-files-in-directory (directory &optional match)
-  "Attach all files in DIRECTORY matching MATCH.
+(defun vm-mime-attach-files-in-directory (directory &optional regexp)
+  "Attach all files in DIRECTORY matching REGEXP.
 The optional argument MATCH might specify a regexp matching all files
 which should be attached, when empty all files will be attached.
 
@@ -1093,7 +1093,7 @@ match."
   (interactive
    (flet ((substitute-in-file-name (file) file))
      (let ((file (vm-read-file-name
-                  "Attach files matching: "
+                  "Attach files matching regexp: "
                   (or vm-mime-all-attachments-directory
                       vm-mime-attachment-save-directory
                       default-directory)
@@ -1107,12 +1107,12 @@ match."
 
   (setq vm-mime-all-attachments-directory directory)
 
-  (message "Attaching files matching `%s' from directory %s " match directory)
+  (message "Attaching files matching `%s' from directory %s " regexp directory)
   
   (if current-prefix-arg
-      (setq match (concat "^" (regexp-quote match) "$")))
+      (setq regexp (concat "^" (regexp-quote regexp) "$")))
   
-  (let ((files (directory-files directory t match nil))
+  (let ((files (directory-files directory t regexp nil))
         file type charset)
     (if (null files)
         (error "No matching files!")
