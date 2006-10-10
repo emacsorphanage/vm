@@ -139,9 +139,10 @@ single-files: $(ELISPDIR)/vm-mime.el \
             $(ELISPDIR)/vm-grepmail.el \
             $(ELISPDIR)/vm-pine.el \
             $(ELISPDIR)/vm-ps-print.el \
-            $(ELISPDIR)/vm-rfaddons.el
+            $(ELISPDIR)/vm-rfaddons.el \
+            $(ELISPDIR)/vm-mail
 
-$(ELISPDIR)/%.el: %.el
+$(ELISPDIR)/%: %
 	@echo Updating $<
 	@updateWithId $< $@ 
 	@touch $(ELISPDIR)/index.rml
