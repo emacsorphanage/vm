@@ -1077,8 +1077,7 @@ for anything, i.e. only existing profiles will be applied."
             (if (vm-ignored-reply-to a)
                 (setq a nil))
             (setq actions (append (vmpc-get-profile-for-address a) actions))
-            (when (and (not remember) actions)
-              (setq remember 'already dest a))
+            (if actions (setq remember 'already))
             (if (not dest) (setq dest a))
             (setq addrs (cdr addrs)))
           (setq headers (cdr headers)))
@@ -1096,7 +1095,6 @@ for anything, i.e. only existing profiles will be applied."
 
           ;; save the association of this profile with these actions if applicable
           (if (or (and (eq remember 'prompt)
-                       (not (eq prompt 'never))
                        (if actions 
                            (y-or-n-p (format "Always run %s for \"%s\"? "
                                              actions dest))
