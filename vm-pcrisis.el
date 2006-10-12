@@ -817,6 +817,7 @@ parameter POS means insert the pre-signature at position POS if
 
 (defun vmpc-load-auto-profiles ()
   "Initialise `vmpc-auto-profiles' from `vmpc-auto-profiles-file'."
+  (interactive)
   (setq vmpc-auto-profiles nil)
   (if (eq vmpc-auto-profiles-file 'BBDB)
       (let ((records (bbdb-with-db-buffer bbdb-records))
@@ -956,7 +957,7 @@ field `vmpc-profile' to the records which is a sexp not meant to be edited."
           (setq rec (car (bbdb-search records nil nil addr)))
           (when (not rec)
             (setq rec (bbdb-create-internal "?" nil addr nil nil nil)))
-          (bbdb-record-putprop rec 'vmpc-profile (format "%S" profile)))))
+          (bbdb-record-putprop rec 'vmpc-profile (format "%S" (cdr profile))))))
 
     ;; expunge old stuff from the list:
     (when vmpc-auto-profiles-expunge-days
