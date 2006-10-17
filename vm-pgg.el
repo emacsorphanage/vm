@@ -132,7 +132,7 @@ If 'never, always use a viewer instead of replacing."
 ;;; ###autoload
 (defun vm-pgg-cleartext-sign ()
   "*Sign the message."
-  (interactive "P")
+  (interactive)
   (save-excursion 
     (vm-pgp-prepare-composition)
     (let ((start (point)) (end (point-max)))
@@ -290,8 +290,8 @@ If 'never, always use a viewer instead of replacing."
       (let ((start (point)) end)
         (insert message)
         ;; according to the RFC 3156 we need to skip trailing white space, but
-        ;; the it does not work for me ....  
-;        (skip-chars-backward " \t\r\n\f") 
+        ;; then it does not work for me with Gnus messages ....  
+        (skip-chars-backward " \t\r\n\f") 
         (setq end (point-marker))
         (vm-pgg-make-crlf start end)
         (setq status (pgg-verify-region start end signature-file))
@@ -360,6 +360,52 @@ If 'never, always use a viewer instead of replacing."
             (error "%s has no public key!" pgg-default-user-id)))
     (vm-mime-attach-buffer buffer "application/pgp-keys" nil description))))
 
+;;; ###autoload
+(defun vm-pgg-sign ()
+  "Sign the composition with PGP/MIME."
+  (interactive)
+  (vm-mime-encode-composition)
+  (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
+        (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))
+        (boundary (vm-mime-make-multipart-boundary))
+        micalg
+        body-start)
+    ;; fix the body
+    (goto-char (point-min))
+    (search-forward (concat "\n" mail-header-separator "\n"))
+    (goto-char (match-end 0))
+    (setq body-start (point-marker))
+    (insert "Content-Type:" (or content-type "text/plain") "\n")
+    (insert "Content-Transfer-Encoding:" (or encoding "7bit") "\n")
+    (insert "\n")
+    (goto-char (point-max))
+    (insert "\n")
+    (vm-pgg-cleartext-sign)
+    (goto-char body-start)
+    (forward-line 1)
+    (delete-region body-start (point))
+    (if (not (looking-at "^Hash: \\([^ \t\n\r]+\\)"))
+        (error "Could not determine micalg."))
+    (setq micalg (downcase (match-string 1)))
+    (forward-line 2)
+    (delete-region body-start (point))
+    (insert "--" boundary "\n")
+    (search-forward "-----BEGIN PGP SIGNATURE-----")
+    (goto-char (match-beginning 0))
+    (insert "--" boundary "\n")
+    (insert "Content-Type: application/pgp-signature\n\n")
+    (goto-char (point-max))
+    (insert "--" boundary "--\n")
+    ;; fix the headers 
+    (vm-mail-mode-remove-header "MIME-Version:")
+    (vm-mail-mode-remove-header "Content-Type:")
+    (vm-mail-mode-remove-header "Content-Transfer-Encoding:")
+    (mail-position-on-field "MIME-Version")
+    (insert "1.0")
+    (mail-position-on-field "Content-Type")
+    (insert "multipart/signed; boundary=\"" boundary "\";\n"
+            "\tmicalg=pgp-" micalg "; protocol=\"application/pgp-signature\"")))
+    
 (provide 'vm-pgg)
 
 ;;; vm-pgg.el ends here
