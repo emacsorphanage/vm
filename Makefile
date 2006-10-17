@@ -60,7 +60,6 @@ install: all
 vm.info: vm.texinfo
 	@echo "making vm.info..."
 	$(EMACS) $(BATCHFLAGS) -insert vm.texinfo -l texinfmt -f texinfo-format-buffer -f save-buffer
-	@echo "(fmakunbound 'vm-its-such-a-cruel-world)" >> vm.el
 
 vm-pcrisis.info: vm-pcrisis.texi
 	@echo "making $@..."
