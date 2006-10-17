@@ -45,9 +45,8 @@
 
 ;;; TODO:
 ;;
-;; * PGP-Mime encoding and signing support
 ;; * test snarfing of keys
-;; * attaching keys 
+;; * attaching of other keys from key-ring
 ;;
 
 ;;; Code:
@@ -238,9 +237,9 @@ If 'never, always use a viewer instead of replacing."
 (defun vm-mime-display-internal-multipart/encrypted (layout)
   "Display multipart/encrypted LAYOUT."
   (let* ((part-list (vm-mm-layout-parts layout))
-        (header (car part-list))
-        (message (car (cdr part-list)))
-        status)
+         (header (car part-list))
+         (message (car (cdr part-list)))
+         status)
     (if (not (and (= (length part-list) 2)
                   (vm-mime-types-match (car (vm-mm-layout-type header))
                                        "application/pgp-encrypted")
@@ -255,11 +254,22 @@ If 'never, always use a viewer instead of replacing."
           (widen)
           (setq status (pgg-decrypt-region (vm-mm-layout-body-start message)
                                            (vm-mm-layout-body-end message)))))
-      (if status
-          (let ((start (point)))
-            (insert-buffer-substring pgg-output-buffer)
-            (vm-pgg-crlf-cleanup start (point)))
-        (insert-buffer-substring pgg-errors-buffer))
+      (if (not status)
+          (insert-buffer-substring pgg-errors-buffer)
+        (save-excursion
+          (set-buffer pgg-output-buffer)
+          (vm-pgg-crlf-cleanup (point-min) (point-max))
+          (setq message (vm-mime-parse-entity-safe nil nil nil t)))
+        (if message
+          (vm-decode-mime-layout message)
+          (insert-buffer-substring pgg-output-buffer))
+        (setq status (save-excursion
+                       (set-buffer pgg-errors-buffer)
+                       (goto-char (point-min))
+                       (if (re-search-forward "GOODSIG [^\n\r]+" (point-max) t)
+                           (match-string 0))))
+        (if status 
+            (insert "\n" status "\n")))
       t)))
 
 ;;; ###autoload
@@ -310,7 +320,7 @@ If 'never, always use a viewer instead of replacing."
 (defun vm-mime-display-internal-application/pgp-keys (layout)
   "Snarf keys in LAYOUT and display result of snarfing."
   ;; insert the keys
-  (let ((start (point)) status)
+  (let ((start (point)) end status)
     (vm-decode-mime-layout layout)
     (setq end (point))
     (setq status (pgg-snarf-keys-region start end))
@@ -379,7 +389,8 @@ If 'never, always use a viewer instead of replacing."
     (insert "Content-Transfer-Encoding:" (or encoding "7bit") "\n")
     (insert "\n")
     (goto-char (point-max))
-    (insert "\n")
+    (skip-chars-backward " \t\r\n\f")
+    (delete-region (point) (point-max))
     (vm-pgg-cleartext-sign)
     (goto-char body-start)
     (forward-line 1)
@@ -405,6 +416,44 @@ If 'never, always use a viewer instead of replacing."
     (mail-position-on-field "Content-Type")
     (insert "multipart/signed; boundary=\"" boundary "\";\n"
             "\tmicalg=pgp-" micalg "; protocol=\"application/pgp-signature\"")))
+    
+;;; ###autoload
+(defun vm-pgg-encrypt (sign)
+  "Encrypt the composition with PGP/MIME. With prefix arg SIGN also sign it."
+  (interactive "P") 
+  (vm-mime-encode-composition)
+  (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
+        (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))
+        (boundary (vm-mime-make-multipart-boundary))
+        body-start)
+    ;; fix the body
+    (goto-char (point-min))
+    (search-forward (concat "\n" mail-header-separator "\n"))
+    (goto-char (match-end 0))
+    (setq body-start (point-marker))
+    (insert "Content-Type: " (or content-type "text/plain") "\n")
+    (insert "Content-Transfer-Encoding: " (or encoding "7bit") "\n")
+    (insert "\n")
+    (goto-char (point-max))
+    (insert "\n")
+    (vm-pgg-cleartext-encrypt sign)
+    (goto-char body-start)
+    (insert "--" boundary "\n")
+    (insert "Content-Type: application/pgp-encrypted\n\n")
+    (insert "Version: 1\n\n")
+    (insert "--" boundary "\n")
+    (insert "Content-Type: application/octet-stream\n\n")
+    (goto-char (point-max))
+    (insert "--" boundary "--\n")
+    ;; fix the headers 
+    (vm-mail-mode-remove-header "MIME-Version:")
+    (vm-mail-mode-remove-header "Content-Type:")
+    (vm-mail-mode-remove-header "Content-Transfer-Encoding:")
+    (mail-position-on-field "MIME-Version")
+    (insert "1.0")
+    (mail-position-on-field "Content-Type")
+    (insert "multipart/encrypted; boundary=\"" boundary "\";\n"
+            "\tprotocol=\"application/pgp-encrypted\"")))
     
 (provide 'vm-pgg)
 
