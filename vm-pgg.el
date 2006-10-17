@@ -113,7 +113,7 @@ If 'never, always use a viewer instead of replacing."
   (search-forward (concat "\n" mail-header-separator "\n"))
   (goto-char (match-end 0))
   ;; guess the author 
-  (make-local-variable 'gg-default-user-id)
+  (make-local-variable 'pgg-default-user-id)
   (setq pgg-default-user-id (or (vm-pgg-get-author) pgg-default-user-id)))
   
 ;;; ###autoload
@@ -152,8 +152,9 @@ If 'never, always use a viewer instead of replacing."
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
   (save-restriction
-    ;; ensure we are in the presentation buffer
-    (set-buffer vm-presentation-buffer)
+    ;; ensure we are in the right buffer
+    (if vm-presentation-buffer
+        (set-buffer vm-presentation-buffer))
     ;; skip headers 
     (goto-char (point-min))
     (search-forward "\n\n")
@@ -331,8 +332,9 @@ If 'never, always use a viewer instead of replacing."
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
   (save-restriction
-    ;; ensure we are in the presentation buffer
-    (set-buffer vm-presentation-buffer)
+    ;; ensure we are in the right buffer
+    (if vm-presentation-buffer
+        (set-buffer vm-presentation-buffer))
     ;; skip headers 
     (goto-char (point-min))
     (search-forward "\n\n")
@@ -344,8 +346,19 @@ If 'never, always use a viewer instead of replacing."
 
 ;;; ###autoload
 (defun vm-pgg-attach-public-key ()
-  ;; TODO
-  )
+  "Attach your public key to a composition."
+  (interactive)
+  (let* ((pgg-default-user-id (or (vm-pgg-get-author) pgg-default-user-id))
+         (description (concat "public key of " pgg-default-user-id))
+         (buffer (get-buffer-create (concat " *" description "*"))))
+    (save-excursion
+      (set-buffer buffer)
+      (erase-buffer)
+      (let ((start (point)))
+        (pgg-insert-key)
+        (if (= start (point))
+            (error "%s has no public key!" pgg-default-user-id)))
+    (vm-mime-attach-buffer buffer "application/pgp-keys" nil description))))
 
 (provide 'vm-pgg)
 
