@@ -367,8 +367,8 @@ If 'never, always use a viewer instead of replacing."
       (let ((start (point)))
         (pgg-insert-key)
         (if (= start (point))
-            (error "%s has no public key!" pgg-default-user-id)))
-    (vm-mime-attach-buffer buffer "application/pgp-keys" nil description))))
+            (error "%s has no public key!" pgg-default-user-id))))
+    (vm-mime-attach-buffer buffer "application/pgp-keys" nil description)))
 
 ;;; ###autoload
 (defun vm-pgg-sign ()
@@ -392,6 +392,7 @@ If 'never, always use a viewer instead of replacing."
     (skip-chars-backward " \t\r\n\f")
     (delete-region (point) (point-max))
     (vm-pgg-cleartext-sign)
+    (vm-pgg-crlf-cleanup  body-start (point-max))
     (goto-char body-start)
     (forward-line 1)
     (delete-region body-start (point))
