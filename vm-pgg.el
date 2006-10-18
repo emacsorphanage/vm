@@ -45,7 +45,7 @@
 
 ;;; TODO:
 ;;
-;; * test snarfing of keys
+;; * do nicer cleartext sig-check and auto decrypt 
 ;; * attaching of other keys from key-ring
 ;;
 
@@ -61,8 +61,23 @@
   :group 'mail)
 
 (defgroup vm-pgg nil
-  "Sending personalized serial mails and getting message templates."
+  "PGP and PGP/MIME support for VM by PGG."
   :group  'vm)
+
+(defface vm-pgg-bad-signature
+  '((t (:foreground "red3")))
+  "The face used to highlight messages on bad signatures."
+  :group 'vm-pgg)
+
+(defface vm-pgg-good-signature
+  '((t (:foreground "green3")))
+  "The face used to highlight messages on good signatures."
+  :group 'vm-pgg)
+
+(defface vm-pgg-error
+  '((t (:foreground "red3")))
+  "The face used to highlight error messages."
+  :group 'vm-pgg)
 
 (defcustom vm-pgg-always-replace nil
   "*If t, decrypt mail messages in place without prompting.
@@ -114,7 +129,7 @@ If 'never, always use a viewer instead of replacing."
   ;; guess the author 
   (make-local-variable 'pgg-default-user-id)
   (setq pgg-default-user-id (or (vm-pgg-get-author) pgg-default-user-id)))
-  
+
 ;;; ###autoload
 (defun vm-pgg-cleartext-encrypt (sign)
   "*Encrypt the message and with an prefix also SIGN it."
@@ -127,6 +142,30 @@ If 'never, always use a viewer instead of replacing."
         (error "Encrypt error"))
       (delete-region start end)
       (insert-buffer-substring pgg-output-buffer))))
+
+(defun vm-pgg-cleartext-automode ()
+  (goto-char (point-min))
+  (search-forward "\n\n")
+  (if (looking-at "^-----BEGIN PGP \\(ENCRYPTED\\|SIGNED\\) MESSAGE----")
+      (condition-case nil
+          (cond ((string= (match-string 1) "ENCRYPTED")
+                 (vm-pgg-cleartext-decrypt))
+                ((string= (match-string 1) "SIGNED")
+                 (vm-pgg-cleartext-verify)))
+        (error nil))
+    (let ((window (get-buffer-window pgg-output-buffer)))
+      (when window
+        (delete-window window)))))
+
+(defadvice vm-preview-current-message (after vm-pgg-cleartext-automode activate)
+  (if (not (eq vm-system-state 'previewing))
+      (vm-pgg-cleartext-automode)))
+
+(defadvice vm-scroll-forward (around vm-pgg-cleartext-automode activate)
+  (let ((vm-system-state-was vm-system-state))
+    ad-do-it
+    (if (eq vm-system-state-was 'previewing)
+        (vm-pgg-cleartext-automode))))
 
 ;;; ###autoload
 (defun vm-pgg-cleartext-sign ()
@@ -145,12 +184,12 @@ If 'never, always use a viewer instead of replacing."
 (defun vm-pgg-cleartext-verify ()
   "*Verify the signature in the current message."
   (interactive)
-  (if (interactive-p)
-      (vm-follow-summary-cursor))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
-  (save-restriction
+  (let ((current-window (selected-window)))
+    (if (interactive-p)
+        (vm-follow-summary-cursor))
+    (vm-select-folder-buffer)
+    (vm-check-for-killed-summary)
+    (vm-error-if-folder-empty)
     ;; ensure we are in the right buffer
     (if vm-presentation-buffer
         (set-buffer vm-presentation-buffer))
@@ -160,8 +199,20 @@ If 'never, always use a viewer instead of replacing."
     (goto-char (match-end 0))
     ;; verify 
     (unless (pgg-verify-region (point) (point-max))
-      (error "Verification failed"))
-    (message (buffer-substring nil nil pgg-output-buffer))))
+      (save-excursion
+        (set-buffer pgg-errors-buffer)
+        (if (re-search-forward "NO_PUBKEY[^\n\r]+" (point-max) t)
+            (message (match-string 0))
+          (pop-to-buffer pgg-errors-buffer)
+          (error "Verification failed"))))
+    (save-excursion
+      (set-buffer pgg-output-buffer)
+      (skip-chars-backward " \t\t\n\f")
+      (let ((start) (end (point)))
+        (beginning-of-line)
+        (setq start (point))
+        (message (buffer-substring start end pgg-output-buffer))
+        (sit-for 2)))))
 
 ;;; ###autoload
 (defun vm-pgg-cleartext-decrypt ()
@@ -255,7 +306,9 @@ If 'never, always use a viewer instead of replacing."
           (setq status (pgg-decrypt-region (vm-mm-layout-body-start message)
                                            (vm-mm-layout-body-end message)))))
       (if (not status)
-          (insert-buffer-substring pgg-errors-buffer)
+          (let ((start (point)))
+            (insert-buffer-substring pgg-errors-buffer)
+            (put-text-property start (point) 'face 'vm-pgg-error))
         (save-excursion
           (set-buffer pgg-output-buffer)
           (vm-pgg-crlf-cleanup (point-min) (point-max))
@@ -268,9 +321,9 @@ If 'never, always use a viewer instead of replacing."
                        (goto-char (point-min))
                        (if (re-search-forward "GOODSIG [^\n\r]+" (point-max) t)
                            (match-string 0))))
-        (if status 
-            (insert "\n" status "\n")))
-      t)))
+        (if status
+            (insert "\n" status "\n"))
+        t))))
 
 ;;; ###autoload
 (defun vm-mime-display-internal-multipart/signed (layout)
@@ -300,8 +353,9 @@ If 'never, always use a viewer instead of replacing."
       (let ((start (point)) end)
         (insert message)
         ;; according to the RFC 3156 we need to skip trailing white space, but
-        ;; then it does not work for me with Gnus messages ....  
-        (skip-chars-backward " \t\r\n\f") 
+        ;; IMHO a least a single ^M must remain ... odd!
+        (if (< (skip-chars-backward " \t\r\n\f" start) 0)
+            (forward-char 1))
         (setq end (point-marker))
         (vm-pgg-make-crlf start end)
         (setq status (pgg-verify-region start end signature-file))
@@ -309,24 +363,31 @@ If 'never, always use a viewer instead of replacing."
         (delete-region start end))
       ;; now insert the content
       (insert "\n")
-      (if status
-          (let ((start (point)))
-            (insert-buffer-substring pgg-output-buffer)
-            (vm-pgg-crlf-cleanup start (point)))
-        (insert-buffer-substring pgg-errors-buffer))
+      (let ((start (point)) end)
+        (if (not status)
+            (insert-buffer-substring pgg-errors-buffer)
+          (insert-buffer-substring pgg-output-buffer)
+          (vm-pgg-crlf-cleanup start (point)))
+        (setq end (point))
+        (put-text-property start end 'face (if status 'vm-pgg-good-signature 'vm-pgg-bad-signature)))
       t)))
+
+;; we must add these in order to force VM to call our handler
+;(add-to-list 'vm-auto-displayed-mime-content-types "application/pgp-keys")
+;(add-to-list 'vm-mime-internal-content-types "application/pgp-keys")
 
 ;;; ###autoload
 (defun vm-mime-display-internal-application/pgp-keys (layout)
   "Snarf keys in LAYOUT and display result of snarfing."
   ;; insert the keys
   (let ((start (point)) end status)
-    (vm-decode-mime-layout layout)
-    (setq end (point))
-    (setq status (pgg-snarf-keys-region start end))
+    (vm-mime-insert-mime-body layout)
+    (setq end (point-marker))
+    (vm-mime-transfer-decode-region layout start end)
+    (save-excursion
+      (setq status (pgg-snarf-keys-region start end)))
     (delete-region start end)
     ;; now insert the result of snafing 
-    (insert "\n")
     (if status
         (insert-buffer-substring pgg-output-buffer)
       (insert-buffer-substring pgg-errors-buffer))
