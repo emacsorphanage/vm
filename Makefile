@@ -139,7 +139,8 @@ single-files: $(ELISPDIR)/vm-mime.el \
             $(ELISPDIR)/vm-pine.el \
             $(ELISPDIR)/vm-ps-print.el \
             $(ELISPDIR)/vm-rfaddons.el \
-            $(ELISPDIR)/vm-mail
+            $(ELISPDIR)/vm-mail \
+            $(ELISPDIR)/vm-pgg.el
 
 $(ELISPDIR)/%: %
 	@echo Updating $<
