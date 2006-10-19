@@ -31,6 +31,12 @@
 ;; 
 ;;      (and (locate-library "vm-pgg") (require 'vm-pgg))
 ;;
+;; If you set `vm-auto-displayed-mime-content-types' or
+;; `vm-auto-displayed-mime-content-types' make sure that
+;; they contain "application/pgp-keys" or set them before
+;; loading vm-pgg.  Otherwise public keys are not detected
+;; automatically .
+;;
 ;; To customize vm-pgg use: M-x customize-group RET vm-pgg RET 
 ;;
 ;; Displaying of messages in the PGP/MIME format will automatically trigger:
@@ -471,8 +477,11 @@ If 'never, always use a viewer instead of replacing."
       t)))
 
 ;; we must add these in order to force VM to call our handler
-;(add-to-list 'vm-auto-displayed-mime-content-types "application/pgp-keys")
-;(add-to-list 'vm-mime-internal-content-types "application/pgp-keys")
+(if (listp vm-auto-displayed-mime-content-types)
+    (add-to-list 'vm-auto-displayed-mime-content-types "application/pgp-keys"))
+
+(if (listp vm-mime-internal-content-types)
+    (add-to-list 'vm-mime-internal-content-types "application/pgp-keys"))
 
 ;;; ###autoload
 (defun vm-mime-display-internal-application/pgp-keys (layout)
@@ -521,18 +530,32 @@ If 'never, always use a viewer instead of replacing."
   (interactive)
   (let* ((pgg-default-user-id (or (vm-pgg-get-author) pgg-default-user-id))
          (description (concat "public key of " pgg-default-user-id))
-         (buffer (get-buffer-create (concat " *" description "*"))))
+         (buffer (get-buffer-create (concat " *" description "*")))
+         start)
     (save-excursion
       (set-buffer buffer)
       (erase-buffer)
-      (let ((start (point)))
-        (pgg-insert-key)
-        (if (= start (point))
-            (error "%s has no public key!" pgg-default-user-id))))
+      (setq start (point))
+      (pgg-insert-key)
+      (if (= start (point))
+          (error "%s has no public key!" pgg-default-user-id)))
     (save-excursion
       (goto-char (point-max))
       (insert "\n")
-      (vm-mime-attach-buffer buffer "application/pgp-keys" nil description))))
+      (setq start (point))
+      (vm-mime-attach-object buffer
+                             "application/pgp-keys"
+                             (list (concat "name=\"" pgg-default-user-id ".asc\""))
+                             description
+                             nil)
+      ;; a crude hack to set the disposition
+      (let ((disposition (list "attachment"
+                               (concat "filename=\"" pgg-default-user-id ".asc\"")))
+            (end (point)))
+        (if (featurep 'xemacs)
+            (set-extent-property (extent-at start nil 'vm-mime-disposition)
+                                 'vm-mime-disposition disposition)
+          (put-text-property start end 'vm-mime-disposition disposition))))))
 
 ;;; ###autoload
 (defun vm-pgg-sign ()
