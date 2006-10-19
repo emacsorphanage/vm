@@ -1,4 +1,4 @@
-;;; vm-pgg.el --- PGP(/MIME) support for VM by pgg.el
+;;; vm-pgg.el --- PGP/MIME support for VM by pgg.el
 ;; 
 ;; Copyright (C) 2006 Robert Widhopf-Fenk
 ;;
@@ -50,7 +50,8 @@
 ;;  * C-u M-x vm-pgg-encrypt   for encrypting + signing 
 ;;
 ;; All these commands are also available in the menu PGP/MIME which is
-;; activated by the minor mode `vm-pgg-compose-mode'.
+;; activated by the minor mode `vm-pgg-compose-mode'.  There are also
+;; commands for the old style clear text format as MC had them.
 ;;
 ;; If you get annoyed by answering password prompts you might want to set the
 ;; variable `password-cache-expiry' to a higher value or nil!
