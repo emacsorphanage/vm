@@ -5383,7 +5383,7 @@ Finally, it creates the headers that are necessary to identify the message
 as one that uses MIME.
 
 Under MULE, it explicitly sets `buffer-file-coding-system' to a binary
-(no-transformation) coding system, to avoid further transformation of the
+ (no-transformation) coding system, to avoid further transformation of the
 message content when it's passed to the MTA (that is, the mail transfer
 agent; under Unix, normally sendmail.)"
   (save-restriction
