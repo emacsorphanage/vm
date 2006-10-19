@@ -33,8 +33,7 @@
 ;;
 ;; To customize vm-pgg use: M-x customize-group RET vm-pgg RET 
 ;;
-;; Displaying of messages following the PGP/MIME will automatically trigger:
-;;
+;; Displaying of messages in the PGP/MIME format will automatically trigger:
 ;;  * decrypted of encrypted MIME parts
 ;;  * verification of signed MIME parts 
 ;;  * snarfing of public keys
@@ -43,6 +42,9 @@
 ;;  * M-x vm-pgg-encrypt       for encrypting
 ;;  * M-x vm-pgg-sign          for signing  
 ;;  * C-u M-x vm-pgg-encrypt   for encrypting + signing 
+;;
+;; All these commands are also available in the menu PGP/MIME which is
+;; activated by the minor mode `vm-pgg-compose-mode'.
 ;;
 ;; If you get annoyed by answering password prompts you might want to set the
 ;; variable `password-cache-expiry' to a higher value or nil!
@@ -68,6 +70,7 @@
 ;;; Code:
 
 (require 'pgg)
+(require 'easymenu)
 
 (eval-when-compile
   (require 'cl))
@@ -81,23 +84,38 @@
   :group  'vm)
 
 (defface vm-pgg-bad-signature
-  '((t
-     (:foreground "red3")
-     (:background "white")))
+  '((((type tty) (class color))
+     (:foreground "red" :bold t))
+    (((type tty))
+     (:bold t))
+    (((background light))
+     (:foreground "red" :bold t))
+    (((background dark))
+     (:foreground "red" :bold t:)))
   "The face used to highlight bad signature messages."
   :group 'vm-pgg)
 
 (defface vm-pgg-good-signature
-  '((t
-     (:foreground "green3")
-     (:background "white")))
+  '((((type tty) (class color))
+     (:foreground "green" :bold t))
+    (((type tty))
+     (:bold t))
+    (((background light))
+     (:foreground "green"))
+    (((background dark))
+     (:foreground "green")))
   "The face used to highlight good signature messages."
   :group 'vm-pgg)
 
 (defface vm-pgg-error
-  '((t
-     (:foreground "red3")
-     (:background "white")))
+  '((((type tty) (class color))
+     (:foreground "red" :bold t))
+    (((type tty))
+     (:bold t))
+    (((background light))
+     (:foreground "red" :bold t))
+    (((background dark))
+     (:foreground "red" :bold t:)))
   "The face used to highlight error messages."
   :group 'vm-pgg)
 
@@ -109,6 +127,64 @@ If 'never, always use a viewer instead of replacing."
   :type '(choice (const never)
                  (const :tag "always" t)
                  (const :tag "ask" nil)))
+
+(defvar vm-pgg-compose-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "\C-c#e" 'vm-pgg-encrypt-and-sign)
+    (define-key map "\C-c#E" 'vm-pgg-encrypt)
+    (define-key map "\C-c#s" 'vm-pgg-sign)
+    (define-key map "\C-c#k" 'vm-pgg-attach-public-key)
+    map))
+
+(defvar vm-pgg-compose-mode-menu nil
+  "The composition menu of vm-pgg.")
+
+(easy-menu-define
+ vm-pgg-compose-mode-menu (if (featurep 'xemacs) nil (list vm-pgg-compose-mode-map))
+ "PGP/MIME compose mode menu."
+ '("PGP/MIME"
+   ["Encrypt"           vm-pgg-encrypt t]
+   ["Sign"              vm-pgg-sign t]
+   ["Encrypt+Sign"      vm-pgg-encrypt-and-sign t]
+   ["Attach Public Key" vm-pgg-attach-public-key t]))
+
+(defvar vm-pgg-compose-mode nil
+  "None-nil means PGP/MIME composition mode key bindings and menu are available.")
+
+(make-variable-buffer-local 'vm-pgg-compose-mode)
+
+(defun vm-pgg-compose-mode (&optional arg)
+  "\nMinor mode for interfacing with cryptographic functions.
+\\<vm-pgg-compose-mode-map>
+\\[vm-pgg-encrypt]\t\tEncrypt (and optionally sign) message
+\\[vm-pgg-sign]\t\tClearsign message
+\\[vm-pgg-attach-public-key]\t\Attach public key from keyring"
+  (interactive)
+  (setq vm-pgg-compose-mode
+	(if (null arg) (not vm-pgg-compose-mode)
+	  (> (prefix-numeric-value arg) 0)))
+  (if vm-pgg-compose-mode
+      (easy-menu-add vm-pgg-compose-mode-menu)
+    (easy-menu-remove vm-pgg-compose-mode-menu)))
+
+(defvar vm-pgg-compose-mode-string " vm-pgg"
+  "*String to put in mode line when `vm-pgg-compose-mode' is active.")
+
+
+(if (not (assq 'vm-pgg-compose-mode minor-mode-map-alist))
+    (setq minor-mode-map-alist
+	  (cons (cons 'vm-pgg-compose-mode vm-pgg-compose-mode-map)
+		minor-mode-map-alist)))
+
+(if (not (assq 'vm-pgg-compose-mode minor-mode-alist))
+    (setq minor-mode-alist
+	  (cons '(vm-pgg-compose-mode vm-pgg-compose-mode-string) minor-mode-alist)))
+
+(defun vm-pgg-compose-mode-activate ()
+  "Activate `vm-pgg-compose-mode'."
+  (vm-pgg-compose-mode 1))
+
+(add-hook 'vm-mail-mode-hook 'vm-pgg-compose-mode-activate t)
 
 (defun vm-pgg-get-emails (headers)
   "Return email addresses found in the given HEADERS."
@@ -453,7 +529,10 @@ If 'never, always use a viewer instead of replacing."
         (pgg-insert-key)
         (if (= start (point))
             (error "%s has no public key!" pgg-default-user-id))))
-    (vm-mime-attach-buffer buffer "application/pgp-keys" nil description)))
+    (save-excursion
+      (goto-char (point-max))
+      (insert "\n")
+      (vm-mime-attach-buffer buffer "application/pgp-keys" nil description))))
 
 ;;; ###autoload
 (defun vm-pgg-sign ()
@@ -506,7 +585,7 @@ If 'never, always use a viewer instead of replacing."
 ;;; ###autoload
 (defun vm-pgg-encrypt (sign)
   "Encrypt the composition as PGP/MIME. With a prefix arg SIGN also sign it."
-  (interactive "P") 
+  (interactive "P")
   (vm-mime-encode-composition)
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
         (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))
@@ -540,7 +619,12 @@ If 'never, always use a viewer instead of replacing."
     (mail-position-on-field "Content-Type")
     (insert "multipart/encrypted; boundary=\"" boundary "\";\n"
             "\tprotocol=\"application/pgp-encrypted\"")))
-    
+
+(defun vm-pgg-encrypt-and-sign ()
+  "*Encrypt and sign the composition as PGP/MIME."
+  (interactive)
+  (vm-pgg-encrypt t))
+
 (provide 'vm-pgg)
 
 ;;; vm-pgg.el ends here
