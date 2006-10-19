@@ -425,9 +425,11 @@ If 'never, always use a viewer instead of replacing."
                        (set-buffer pgg-errors-buffer)
                        (goto-char (point-min))
                        (if (re-search-forward "GOODSIG [^\n\r]+" (point-max) t)
-                           (match-string 0))))
+                           (buffer-substring))))
         (if status
-            (insert "\n" status "\n"))
+            (let ((start (point)))
+              (insert "\n" status "\n")
+              (put-text-property start (point) 'face 'vm-pgg-good-signature)))
         t))))
 
 ;;; ###autoload
@@ -436,7 +438,7 @@ If 'never, always use a viewer instead of replacing."
   (let* ((part-list (vm-mm-layout-parts layout))
          (message (car part-list))
          (signature (car (cdr part-list)))
-         status signature-file)
+         status signature-file start end)
     (if (not (and (= (length part-list) 2)
                   ;; TODO: check version and protocol here?
                   (vm-mime-types-match (car (vm-mm-layout-type signature))
@@ -444,28 +446,27 @@ If 'never, always use a viewer instead of replacing."
         (insert "Unknown multipart/signed format.")
       ;; insert the message 
       (vm-decode-mime-layout message)
-      ;; verify the message now
-      (save-excursion
-        (set-buffer (vm-buffer-of (vm-mm-layout-message message)))
-        (save-restriction
-          (widen)
-          ;; write signature to a temp file
-          (write-region (vm-mm-layout-body-start signature)
-                        (vm-mm-layout-body-end signature)
-                        (setq signature-file (make-temp-file "vm-pgg-signature")))
-          (setq message (buffer-substring  (vm-mm-layout-header-start message)
-                                           (vm-mm-layout-body-end message)))))
-      (let ((start (point)) end)
-        (insert message)
-        ;; according to the RFC 3156 we need to skip trailing white space, but
-        ;; IMHO a least a single ^M must remain ... odd!
-        (if (< (skip-chars-backward " \t\r\n\f" start) 0)
-            (forward-char 1))
-        (setq end (point-marker))
-        (vm-pgg-make-crlf start end)
-        (setq status (pgg-verify-region start end signature-file))
-        (delete-file signature-file)
-        (delete-region start end))
+      ;; write signature to a temp file
+      (setq start (point))
+      (vm-mime-insert-mime-body signature)
+      (setq end (point))
+      (write-region start end
+                    (setq signature-file (make-temp-file "vm-pgg-signature")))
+      (delete-region start end)
+      (setq start (point))
+      (vm-insert-region-from-buffer (marker-buffer (vm-mm-layout-header-start message))
+                                    (vm-mm-layout-header-start message)
+                                    (vm-mm-layout-body-end message))
+      (setq end (point))
+      ;; according to the RFC 3156 we need to skip trailing white space, but
+      ;; IMHO a least a single ^M must remain ... odd!
+      (if (< (skip-chars-backward " \t\r\n\f" start) 0)
+          (forward-char 1))
+      (setq end (point-marker))
+      (vm-pgg-make-crlf start end)
+      (setq status (pgg-verify-region start end signature-file))
+      (delete-file signature-file)
+      (delete-region start end)
       ;; now insert the content
       (insert "\n")
       (let ((start (point)) end)
@@ -474,7 +475,8 @@ If 'never, always use a viewer instead of replacing."
           (insert-buffer-substring pgg-output-buffer)
           (vm-pgg-crlf-cleanup start (point)))
         (setq end (point))
-        (put-text-property start end 'face (if status 'vm-pgg-good-signature 'vm-pgg-bad-signature)))
+        (put-text-property start end 'face
+                           (if status 'vm-pgg-good-signature 'vm-pgg-bad-signature)))
       t)))
 
 ;; we must add these in order to force VM to call our handler
@@ -562,7 +564,8 @@ If 'never, always use a viewer instead of replacing."
 (defun vm-pgg-sign ()
   "Sign the composition with PGP/MIME."
   (interactive)
-  (vm-mime-encode-composition)
+  (unless (vm-mail-mode-get-header-contents "MIME-Version:")
+    (vm-mime-encode-composition))
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
         (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))
         (boundary (vm-mime-make-multipart-boundary))
@@ -610,7 +613,8 @@ If 'never, always use a viewer instead of replacing."
 (defun vm-pgg-encrypt (sign)
   "Encrypt the composition as PGP/MIME. With a prefix arg SIGN also sign it."
   (interactive "P")
-  (vm-mime-encode-composition)
+  (unless (vm-mail-mode-get-header-contents "MIME-Version:")
+    (vm-mime-encode-composition))
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
         (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))
         (boundary (vm-mime-make-multipart-boundary))
