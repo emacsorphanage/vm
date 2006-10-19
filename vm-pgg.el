@@ -211,7 +211,7 @@ If 'never, always use a viewer instead of replacing."
       (let ((start) (end (point)))
         (beginning-of-line)
         (setq start (point))
-        (message (buffer-substring start end pgg-output-buffer))
+        (message (buffer-substring start end))
         (sit-for 2)))))
 
 ;;; ###autoload
@@ -413,7 +413,9 @@ If 'never, always use a viewer instead of replacing."
     ;; verify 
     (unless (pgg-snarf-keys)
       (error "Snarfing failed"))
-    (message (buffer-substring nil nil pgg-output-buffer))))
+    (save-excursion
+      (set-buffer pgg-output-buffer)
+      (message (buffer-substring)))))
 
 ;;; ###autoload
 (defun vm-pgg-attach-public-key ()
