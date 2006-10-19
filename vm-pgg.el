@@ -1,4 +1,4 @@
-;;; vm-pgg.el --- VM interface to PGG
+;;; vm-pgg.el --- PGP(/MIME) support for VM by pgg.el
 ;; 
 ;; Copyright (C) 2006 Robert Widhopf-Fenk
 ;;
@@ -29,7 +29,23 @@
 ;;
 ;; It is still in BETA state thus you must explicitly load it by
 ;; 
-;;      (require 'vm-pgg)
+;;      (and (locate-library "vm-pgg") (require 'vm-pgg))
+;;
+;; To customize vm-pgg use: M-x customize-group RET vm-pgg RET 
+;;
+;; Displaying of messages following the PGP/MIME will automatically trigger:
+;;
+;;  * decrypted of encrypted MIME parts
+;;  * verification of signed MIME parts 
+;;  * snarfing of public keys
+;;
+;; To create messages according to PGP/MIME you should use:
+;;  * M-x vm-pgg-encrypt       for encrypting
+;;  * M-x vm-pgg-sign          for signing  
+;;  * C-u M-x vm-pgg-encrypt   for encrypting + signing 
+;;
+;; If you get annoyed by answering password prompts you might want to set the
+;; variable `password-cache-expiry' to a higher value or nil!
 ;;
 
 ;;; References:
@@ -132,7 +148,7 @@ If 'never, always use a viewer instead of replacing."
 
 ;;; ###autoload
 (defun vm-pgg-cleartext-encrypt (sign)
-  "*Encrypt the message and with an prefix also SIGN it."
+  "*Encrypt the composition as cleartext and with a prefix also SIGN it."
   (interactive "P")
   (save-excursion 
     (vm-pgp-prepare-composition)
@@ -483,7 +499,7 @@ If 'never, always use a viewer instead of replacing."
     
 ;;; ###autoload
 (defun vm-pgg-encrypt (sign)
-  "Encrypt the composition with PGP/MIME. With prefix arg SIGN also sign it."
+  "Encrypt the composition as PGP/MIME. With a prefix arg SIGN also sign it."
   (interactive "P") 
   (vm-mime-encode-composition)
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
