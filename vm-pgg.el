@@ -81,17 +81,23 @@
   :group  'vm)
 
 (defface vm-pgg-bad-signature
-  '((t (:foreground "red3")))
-  "The face used to highlight messages on bad signatures."
+  '((t
+     (:foreground "red3")
+     (:background "white")))
+  "The face used to highlight bad signature messages."
   :group 'vm-pgg)
 
 (defface vm-pgg-good-signature
-  '((t (:foreground "green3")))
-  "The face used to highlight messages on good signatures."
+  '((t
+     (:foreground "green3")
+     (:background "white")))
+  "The face used to highlight good signature messages."
   :group 'vm-pgg)
 
 (defface vm-pgg-error
-  '((t (:foreground "red3")))
+  '((t
+     (:foreground "red3")
+     (:background "white")))
   "The face used to highlight error messages."
   :group 'vm-pgg)
 
