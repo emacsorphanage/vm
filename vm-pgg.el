@@ -108,7 +108,7 @@
     (((type tty))
      (:bold t))
     (((background light))
-     (:foreground "green"))
+     (:foreground "green4"))
     (((background dark))
      (:foreground "green")))
   "The face used to highlight good signature messages."
