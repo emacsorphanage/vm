@@ -224,7 +224,7 @@ If 'never, always use a viewer instead of replacing."
   ;; encode message
   (unless (vm-mail-mode-get-header-contents "MIME-Version:")
     (vm-mime-encode-composition))
-  ;; ensure newline at end
+  ;; ensure newline at the end
   (goto-char (point-max))
   (skip-chars-backward " \t\r\n\f")
   (delete-region (point) (point-max))
@@ -427,7 +427,7 @@ If 'never, always use a viewer instead of replacing."
                        (set-buffer pgg-errors-buffer)
                        (goto-char (point-min))
                        (if (re-search-forward "GOODSIG [^\n\r]+" (point-max) t)
-                           (buffer-substring))))
+                           (buffer-substring (match-beginning 0) (match-end 0)))))
         (if status
             (let ((start (point)))
               (insert "\n" status "\n")
@@ -459,11 +459,10 @@ If 'never, always use a viewer instead of replacing."
       (vm-insert-region-from-buffer (marker-buffer (vm-mm-layout-header-start message))
                                     (vm-mm-layout-header-start message)
                                     (vm-mm-layout-body-end message))
-      (setq end (point))
-      ;; according to the RFC 3156 we need to skip trailing white space, but
-      ;; IMHO a least a single ^M must remain ... odd!
-      (if (< (skip-chars-backward " \t\r\n\f" start) 0)
-          (forward-char 1))
+      ;; according to the RFC 3156 we need to skip trailing white space and
+      ;; end with a  CRLF!
+      (skip-chars-backward " \t\r\n\f" start)
+      (insert "\n")
       (setq end (point-marker))
       (vm-pgg-make-crlf start end)
       (setq status (pgg-verify-region start end signature-file))
@@ -567,7 +566,8 @@ If 'never, always use a viewer instead of replacing."
 
 We cannot use `vm-mime-make-multipart-boundary' as it uses the current time as
 seed and thus creates the same boundery when called twice in a short period."
-  (let ((boundary (concat word "+" (make-string 15 ?a)))
+  (if word (setq word (concat word "+")))
+  (let ((boundary (concat word (make-string 15 ?a)))
 	(i (length word)))
     (random)
     (while (< i (length boundary))
@@ -596,10 +596,8 @@ seed and thus creates the same boundery when called twice in a short period."
     (setq body-start (point-marker))
     (insert "Content-Type:" (or content-type "text/plain") "\n")
     (insert "Content-Transfer-Encoding:" (or encoding "7bit") "\n")
-    (insert "\n")
-    (goto-char (point-max))
-    (skip-chars-backward " \t\r\n\f")
-    (delete-region (point) (point-max))
+    (if (not (looking-at "\n"))
+        (insert "\n"))
     ;; now create the signature
     (save-excursion 
       (vm-pgp-prepare-composition)
