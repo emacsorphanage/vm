@@ -44,6 +44,8 @@
 ;;  * verification of signed MIME parts 
 ;;  * snarfing of public keys
 ;;
+;; The status of the current message will also be displayed in the modeline.
+;;
 ;; To create messages according to PGP/MIME you should use:
 ;;  * M-x vm-pgg-encrypt       for encrypting
 ;;  * M-x vm-pgg-sign          for signing  
@@ -560,6 +562,21 @@ If 'never, always use a viewer instead of replacing."
                                  'vm-mime-disposition disposition)
           (put-text-property start end 'vm-mime-disposition disposition))))))
 
+(defun vm-pgg-make-multipart-boundary (word)
+  "Creates a mime part boundery. 
+
+We cannot use `vm-mime-make-multipart-boundary' as it uses the current time as
+seed and thus creates the same boundery when called twice in a short period."
+  (let ((boundary (concat word "+" (make-string 15 ?a)))
+	(i (length word)))
+    (random)
+    (while (< i (length boundary))
+      (aset boundary i (aref vm-mime-base64-alphabet
+			     (% (vm-abs (lsh (random) -8))
+				(length vm-mime-base64-alphabet))))
+      (vm-increment i))
+    boundary))
+
 ;;; ###autoload
 (defun vm-pgg-sign ()
   "Sign the composition with PGP/MIME."
@@ -568,8 +585,9 @@ If 'never, always use a viewer instead of replacing."
     (vm-mime-encode-composition))
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
         (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))
-        (boundary (vm-mime-make-multipart-boundary))
-        micalg
+        (boundary (vm-pgg-make-multipart-boundary "pgp+signed"))
+        (micalg "sha1")
+        entry
         body-start)
     ;; fix the body
     (goto-char (point-min))
@@ -582,22 +600,27 @@ If 'never, always use a viewer instead of replacing."
     (goto-char (point-max))
     (skip-chars-backward " \t\r\n\f")
     (delete-region (point) (point-max))
-    (vm-pgg-cleartext-sign)
-    (vm-pgg-crlf-cleanup  body-start (point-max))
+    ;; now create the signature
+    (save-excursion 
+      (vm-pgp-prepare-composition)
+      (unless (pgg-sign-region (point) (point-max) nil)
+        (pop-to-buffer pgg-errors-buffer)
+        (error "Signing error"))
+      (and (setq entry (assq 2 (pgg-parse-armor
+                                (with-current-buffer pgg-output-buffer
+                                  (buffer-string)))))
+           (setq entry (assq 'hash-algorithm (cdr entry)))
+           (if (cdr entry)
+               (setq micalg (downcase (format "%s" (cdr entry)))))))
+    ;; insert mime part bounderies
     (goto-char body-start)
-    (forward-line 1)
-    (delete-region body-start (point))
-    (if (not (looking-at "^Hash: \\([^ \t\n\r]+\\)"))
-        (error "Could not determine micalg."))
-    (setq micalg (downcase (match-string 1)))
-    (forward-line 2)
-    (delete-region body-start (point))
     (insert "--" boundary "\n")
-    (search-forward "-----BEGIN PGP SIGNATURE-----")
-    (goto-char (match-beginning 0))
+    (goto-char (point-max))
     (insert "--" boundary "\n")
+    ;; insert the signature
     (insert "Content-Type: application/pgp-signature\n\n")
     (goto-char (point-max))
+    (insert-buffer-substring pgg-output-buffer)
     (insert "--" boundary "--\n")
     ;; fix the headers 
     (vm-mail-mode-remove-header "MIME-Version:")
@@ -606,8 +629,10 @@ If 'never, always use a viewer instead of replacing."
     (mail-position-on-field "MIME-Version")
     (insert "1.0")
     (mail-position-on-field "Content-Type")
-    (insert "multipart/signed; boundary=\"" boundary "\";\n"
-            "\tmicalg=pgp-" micalg "; protocol=\"application/pgp-signature\"")))
+    (insert "multipart/signed;\n"
+            "\tboundary=\"" boundary "\";\n"
+            "\tmicalg=pgg-\"" micalg "\";\n"
+            "\tprotocol=\"application/pgp-signature\"")))
     
 ;;; ###autoload
 (defun vm-pgg-encrypt (sign)
@@ -617,7 +642,7 @@ If 'never, always use a viewer instead of replacing."
     (vm-mime-encode-composition))
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
         (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))
-        (boundary (vm-mime-make-multipart-boundary))
+        (boundary (vm-pgg-make-multipart-boundary "pgp+encrypted"))
         body-start)
     ;; fix the body
     (goto-char (point-min))
