@@ -635,16 +635,17 @@ Optional argument DONT-KILL is positive, then do not kill source message."
                  (insert (format "From: %s (%s)\n" login fullname)))
                 (t
                  (insert (format "From: %s\n" login))))))
+    
+    ;; mime-encode the message if necessary 
+    (let ((vm-do-fcc-before-mime-encode nil))
+      (condition-case nil (vm-mime-encode-composition) (error t)))
+
+    ;; add the current date 
     (if (not (vm-mail-mode-get-header-contents "Date:"))
         (insert "Date: "
                 (format-time-string "%a, %d %b %Y %H:%M:%S %Z"
                                     (current-time))
                 "\n"))
-    
-        ;; mime-encode the message if necessary 
-    (let ((vm-do-fcc-before-mime-encode nil))
-      (condition-case nil (vm-mime-encode-composition) (error t)))
-    
     ;; add the postponed header
     (vm-mail-mode-remove-header vm-postponed-header)
 
