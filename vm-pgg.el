@@ -128,7 +128,7 @@
   "The face used to highlight error messages."
   :group 'vm-pgg)
 
-(defcustom vm-pgg-always-replace nil
+(defcustom vm-pgg-always-replace 'never
   "*If t, decrypt mail messages in place without prompting.
 
 If 'never, always use a viewer instead of replacing."
@@ -250,29 +250,101 @@ If 'never, always use a viewer instead of replacing."
       (delete-region start end)
       (insert-buffer-substring pgg-output-buffer))))
 
+(defvar vm-pgg-state nil
+  "State of the currently viewed message.")
+
+(make-variable-buffer-local 'vm-pgg-state)
+
+(defvar vm-pgg-state-message nil
+  "The message for `vm-pgg-state'.")
+
+(make-variable-buffer-local 'vm-pgg-state-message)
+
+(defvar vm-pgg-mode-line-items
+  (let ((items '((error " ERROR" vm-pgg-error)
+                 (verified " verified" vm-pgg-good-signature)))
+        mode-line-items
+        x i s f)
+    (while items
+      (setq x (car items)
+            i (car x)
+            s (cadr x)
+            f (caddr x)
+            x (vm-make-extent 0 (length s) s))
+      (vm-set-extent-property x 'face f)
+      (setq items (cdr items))
+      (setq mode-line-items (append mode-line-items (list (list i x s)))))
+    mode-line-items)
+  "An alist mapping states to modeline strings.")
+
+(if (not (member'vm-pgg-state vm-mode-line-format))
+    (setq vm-mode-line-format (append '("" vm-pgg-state) vm-mode-line-format)))
+
+(defun vm-pgg-state-set (&rest states)
+  ;; clear state for a new message
+  (save-excursion
+    (vm-select-folder-buffer-if-possible)
+    (when (not (equal (car vm-message-pointer) vm-pgg-state-message))
+      (setq vm-pgg-state-message (car vm-message-pointer))
+      (setq vm-pgg-state nil)
+      (when vm-presentation-buffer
+        (save-excursion
+          (set-buffer vm-presentation-buffer)
+          (setq vm-pgg-state nil)))
+      (when vm-summary-buffer
+        (save-excursion
+          (set-buffer vm-summary-buffer)
+          (setq vm-pgg-state nil))))
+    ;; add prefix
+    (if (and states (not vm-pgg-state))
+        (setq vm-pgg-state '("PGP:")))
+    ;; add new states
+    (let (s)
+      (while states
+        (setq s (car states)
+              vm-pgg-state (append vm-pgg-state
+                                   (list (or (cdr (assoc s vm-pgg-mode-line-items))
+                                             (format " %s" s))))
+              states (cdr states))))
+    ;; propagate state
+    (setq states vm-pgg-state)
+    (when vm-presentation-buffer
+      (save-excursion
+        (set-buffer vm-presentation-buffer)
+        (setq vm-pgg-state states)))
+    (when vm-summary-buffer
+      (save-excursion
+        (set-buffer vm-summary-buffer)
+        (setq vm-pgg-state states)))))
+                         
 (defun vm-pgg-cleartext-automode ()
+  (enlarge-window (- 1 (window-height (minibuffer-window))) nil (minibuffer-window))
   (goto-char (point-min))
   (search-forward "\n\n")
-  (if (looking-at "^-----BEGIN PGP \\(ENCRYPTED\\|SIGNED\\) MESSAGE----")
-      (condition-case nil
-          (cond ((string= (match-string 1) "ENCRYPTED")
-                 (vm-pgg-cleartext-decrypt))
-                ((string= (match-string 1) "SIGNED")
-                 (vm-pgg-cleartext-verify)))
-        (error nil))
+  (if (looking-at "^-----BEGIN PGP \\(SIGNED \\)?MESSAGE-----$")
+      (condition-case e
+          (cond ((string= (match-string 1) "SIGNED ")
+                 (vm-pgg-cleartext-verify))
+                (t
+                 (vm-pgg-cleartext-decrypt)))
+        (error (message "%S" e)))
     (let ((window (get-buffer-window pgg-output-buffer)))
       (when window
         (delete-window window)))))
 
 (defadvice vm-preview-current-message (after vm-pgg-cleartext-automode activate)
-  (if (not (eq vm-system-state 'previewing))
-      (vm-pgg-cleartext-automode)))
+  "Decode or check signature on clear text messages."
+  (when (not (eq vm-system-state 'previewing))
+    (vm-pgg-state-set)
+    (vm-pgg-cleartext-automode)))
 
 (defadvice vm-scroll-forward (around vm-pgg-cleartext-automode activate)
+  "Decode or check signature on clear text messages."
   (let ((vm-system-state-was vm-system-state))
     ad-do-it
-    (if (eq vm-system-state-was 'previewing)
-        (vm-pgg-cleartext-automode))))
+    (when (eq vm-system-state-was 'previewing)
+      (vm-pgg-state-set)
+      (vm-pgg-cleartext-automode))))
 
 ;;; ###autoload
 (defun vm-pgg-cleartext-sign ()
@@ -291,7 +363,8 @@ If 'never, always use a viewer instead of replacing."
 (defun vm-pgg-cleartext-verify ()
   "*Verify the signature in the current message."
   (interactive)
-  (let ((current-window (selected-window)))
+  (let ((current-window (selected-window))
+        (status))
     (if (interactive-p)
         (vm-follow-summary-cursor))
     (vm-select-folder-buffer)
@@ -308,18 +381,27 @@ If 'never, always use a viewer instead of replacing."
     (unless (pgg-verify-region (point) (point-max))
       (save-excursion
         (set-buffer pgg-errors-buffer)
-        (if (re-search-forward "NO_PUBKEY[^\n\r]+" (point-max) t)
-            (message (match-string 0))
+        (if (re-search-forward "\\(BADSIG\\|NO_PUBKEY\\)[^\n\r]+" (point-max) t)
+            (progn
+              (setq status (downcase (match-string 0)))
+              (vm-pgg-state-set (intern status))
+              (message status))
+          (vm-pgg-state-set 'error)
           (pop-to-buffer pgg-errors-buffer)
           (error "Verification failed"))))
-    (save-excursion
-      (set-buffer pgg-output-buffer)
-      (skip-chars-backward " \t\t\n\f")
-      (let ((start) (end (point)))
+    (vm-pgg-state-set 'signed)
+    (let ((start) (end (point)) lines height)
+      (save-excursion
+        (set-buffer pgg-output-buffer)
+        (skip-chars-backward " \t\t\n\f")
         (beginning-of-line)
         (setq start (point))
-        (message (buffer-substring start end))
-        (sit-for 2)))))
+        (message (buffer-substring))
+        (setq lines (count-lines (point-min) (point-max))))
+      (setq height (window-height (minibuffer-window)))
+      (if (< height lines)
+          (enlarge-window (- lines height) nil (minibuffer-window))))
+    (vm-pgg-state-set 'verified)))
 
 ;;; ###autoload
 (defun vm-pgg-cleartext-decrypt ()
@@ -333,15 +415,7 @@ If 'never, always use a viewer instead of replacing."
     (vm-check-for-killed-summary)
     (vm-error-if-folder-read-only)
     (vm-error-if-folder-empty)
-
-    ;; store away a valid "From " line for possible later use.
-    (save-excursion
-      (vm-select-folder-buffer)
-      (set-buffer (vm-buffer-of (vm-real-message-of (car vm-message-pointer))))
-      (setq from-line (vm-leading-message-separator)))
     
-    (vm-edit-message)
-
     ;; skip headers 
     (goto-char (point-min))
     (search-forward "\n\n")
@@ -349,33 +423,53 @@ If 'never, always use a viewer instead of replacing."
     
     ;; decrypt 
     (unless (pgg-decrypt-region (point) (point-max))
-      (vm-edit-message-abort)
+      (vm-pgg-state-set 'error)
       (pop-to-buffer pgg-errors-buffer)
       (error "Decryption failed"))
 
-    ;; replace message body 
-    (delete-region (point) (point-max))
-    (insert-buffer-substring pgg-output-buffer)
+    (vm-pgg-state-set 'encrypted)
+    
+    ;; make a presentation copy 
+    (vm-make-presentation-copy (car vm-message-pointer))
+    (vm-save-buffer-excursion
+     (vm-replace-buffer-in-windows (current-buffer)
+                                   vm-presentation-buffer))
+    (set-buffer vm-presentation-buffer)
 
-    ;; remove carrige returns
-    (goto-char (point-min))
-    (while (search-forward "\r\n" nil t)
-      (replace-match "\n" t t))
-
-    ;; display/replace the message
-    (if (and (not (eq vm-pgg-always-replace 'never))
-             (or vm-pgg-always-replace
-                 (y-or-n-p "Replace encrypted message with decrypted? ")))
+    (let ((buffer-read-only nil))
+      ;; remove From line 
+      (goto-char (point-min))
+      (forward-line 1)
+      (delete-region (point-min) (point))
+      ;; insert decrypted message 
+      (search-forward "\n\n")
+      (goto-char (match-end 0))
+      (delete-region (point) (point-max))
+      (insert-buffer-substring pgg-output-buffer)
+      ;; do cleanup 
+      (vm-pgg-crlf-cleanup (point-min) (point-max))
+      (goto-char (point-min))
+      (vm-reorder-message-headers nil vm-visible-headers
+                                  vm-invisible-header-regexp)
+      (vm-decode-mime-message-headers (car vm-message-pointer))
+      (vm-energize-urls-in-message-region)
+      (vm-highlight-headers-maybe)
+      (vm-energize-headers-and-xfaces)
+      ;; care for a signature 
+      (goto-char (point-min))
+      (search-forward "\n\n")
+      (goto-char (match-end 0))
+      (if (looking-at "^-----BEGIN PGP \\(SIGNED \\)?MESSAGE-----$")
+          (vm-pgg-cleartext-verify))
+      ;; replace the message?
+      (when (and (not (eq vm-pgg-always-replace 'never))
+                 (or vm-pgg-always-replace
+                     (y-or-n-p "Replace encrypted message with decrypted? ")))
+        (vm-edit-message)
+        (delete-region (point-min) (point-max))
+        (insert-buffer-substring vm-presentation-buffer)
         (let ((this-command 'vm-edit-message-end))
-          (vm-edit-message-end))
-      (let ((tmp (generate-new-buffer "*Viewing decrypted message*")))
-        (copy-to-buffer tmp (point-min) (point-max))
-        (vm-edit-message-abort)
-        (switch-to-buffer tmp t)
-        (goto-char (point-min))
-        (insert from-line)	     
-        (set-buffer-modified-p nil)
-        (vm-mode t)))))
+          (vm-edit-message-end))))))
 
 (defun vm-pgg-crlf-cleanup (start end)
   "Convert CRLF to LF in region from START to END."
@@ -394,6 +488,7 @@ If 'never, always use a viewer instead of replacing."
 ;;; ###autoload
 (defun vm-mime-display-internal-multipart/encrypted (layout)
   "Display multipart/encrypted LAYOUT."
+  (vm-pgg-state-set 'encrypted)
   (let* ((part-list (vm-mm-layout-parts layout))
          (header (car part-list))
          (message (car (cdr part-list)))
@@ -414,6 +509,7 @@ If 'never, always use a viewer instead of replacing."
                                            (vm-mm-layout-body-end message)))))
       (if (not status)
           (let ((start (point)))
+            (vm-pgg-state-set 'error)
             (insert-buffer-substring pgg-errors-buffer)
             (put-text-property start (point) 'face 'vm-pgg-error))
         (save-excursion
@@ -426,17 +522,20 @@ If 'never, always use a viewer instead of replacing."
         (setq status (save-excursion
                        (set-buffer pgg-errors-buffer)
                        (goto-char (point-min))
-                       (if (re-search-forward "GOODSIG [^\n\r]+" (point-max) t)
-                           (buffer-substring (match-beginning 0) (match-end 0)))))
+                       ;; TODO: care for BADSIG
+                       (when (re-search-forward "GOODSIG [^\n\r]+" (point-max) t)
+                         (vm-pgg-state-set 'signed 'verified)
+                         (buffer-substring (match-beginning 0) (match-end 0)))))
         (if status
             (let ((start (point)))
               (insert "\n" status "\n")
-              (put-text-property start (point) 'face 'vm-pgg-good-signature)))
-        t))))
+              (put-text-property start (point) 'face 'vm-pgg-good-signature))))
+      t)))
 
 ;;; ###autoload
 (defun vm-mime-display-internal-multipart/signed (layout)
   "Display multipart/signed LAYOUT."
+  (vm-pgg-state-set 'signed)
   (let* ((part-list (vm-mm-layout-parts layout))
          (message (car part-list))
          (signature (car (cdr part-list)))
@@ -472,7 +571,10 @@ If 'never, always use a viewer instead of replacing."
       (insert "\n")
       (let ((start (point)) end)
         (if (not status)
-            (insert-buffer-substring pgg-errors-buffer)
+            (progn
+              (vm-pgg-state-set 'error)
+              (insert-buffer-substring pgg-errors-buffer))
+          (vm-pgg-state-set 'verified)
           (insert-buffer-substring pgg-output-buffer)
           (vm-pgg-crlf-cleanup start (point)))
         (setq end (point))
@@ -490,6 +592,7 @@ If 'never, always use a viewer instead of replacing."
 ;;; ###autoload
 (defun vm-mime-display-internal-application/pgp-keys (layout)
   "Snarf keys in LAYOUT and display result of snarfing."
+  (vm-pgg-state-set 'public-key)
   ;; insert the keys
   (let ((start (point)) end status)
     (vm-mime-insert-mime-body layout)
