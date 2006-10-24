@@ -80,9 +80,19 @@
 
 (require 'pgg)
 (require 'easymenu)
+(require 'vm-misc)
 
 (eval-when-compile
-  (require 'cl))
+  (require 'cl)
+  (require 'vm-version)
+  (require 'vm-vars)
+  (require 'vm-mime)
+  (require 'vm-reply)
+  ;; avoid warnings 
+  (defvar vm-mode-line-format)
+  (defvar vm-message-pointer)
+  (defvar vm-presentation-buffer)
+  (defvar vm-summary-buffer))
 
 (defgroup vm nil
   "VM"
@@ -164,10 +174,7 @@ If 'never, always use a viewer instead of replacing."
 
 (defun vm-pgg-compose-mode (&optional arg)
   "\nMinor mode for interfacing with cryptographic functions.
-\\<vm-pgg-compose-mode-map>
-\\[vm-pgg-encrypt]\t\tEncrypt (and optionally sign) message
-\\[vm-pgg-sign]\t\tClearsign message
-\\[vm-pgg-attach-public-key]\t\Attach public key from keyring"
+\\<vm-pgg-compose-mode-map>"
   (interactive)
   (setq vm-pgg-compose-mode
 	(if (null arg) (not vm-pgg-compose-mode)
@@ -265,7 +272,7 @@ If 'never, always use a viewer instead of replacing."
                  (verified " verified" vm-pgg-good-signature)))
         mode-line-items
         x i s f)
-    (while items
+    (while (and (featurep 'xemacs) items)
       (setq x (car items)
             i (car x)
             s (cadr x)
@@ -318,19 +325,27 @@ If 'never, always use a viewer instead of replacing."
         (setq vm-pgg-state states)))))
                          
 (defun vm-pgg-cleartext-automode ()
-  (enlarge-window (- 1 (window-height (minibuffer-window))) nil (minibuffer-window))
+  (let ((current-window (selected-window)))
+    (select-window (minibuffer-window))
+    (enlarge-window (- 1 (window-height (minibuffer-window))))
+    (select-window current-window))
   (goto-char (point-min))
-  (search-forward "\n\n")
-  (if (looking-at "^-----BEGIN PGP \\(SIGNED \\)?MESSAGE-----$")
-      (condition-case e
-          (cond ((string= (match-string 1) "SIGNED ")
-                 (vm-pgg-cleartext-verify))
-                (t
-                 (vm-pgg-cleartext-decrypt)))
-        (error (message "%S" e)))
-    (let ((window (get-buffer-window pgg-output-buffer)))
-      (when window
-        (delete-window window)))))
+  (save-excursion 
+    (vm-select-folder-buffer)
+    (if vm-presentation-buffer
+	(set-buffer vm-presentation-buffer))
+    (goto-char (point-min))
+    (search-forward "\n\n")
+    (if (looking-at "^-----BEGIN PGP \\(SIGNED \\)?MESSAGE-----$")
+	(condition-case e
+	    (cond ((string= (match-string 1) "SIGNED ")
+		   (vm-pgg-cleartext-verify))
+		  (t
+		   (vm-pgg-cleartext-decrypt)))
+	  (error (message "%S" e)))
+      (let ((window (get-buffer-window pgg-output-buffer)))
+	(when window
+	  (delete-window window))))))
 
 (defadvice vm-preview-current-message (after vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages."
@@ -363,8 +378,11 @@ If 'never, always use a viewer instead of replacing."
 (defun vm-pgg-cleartext-verify ()
   "*Verify the signature in the current message."
   (interactive)
-  (let ((current-window (selected-window))
-        (status))
+  (let ((current-window (selected-window)))
+    (select-window (minibuffer-window))
+    (enlarge-window (- 1 (window-height (minibuffer-window))))
+    (select-window current-window))
+  (let ((status))
     (if (interactive-p)
         (vm-follow-summary-cursor))
     (vm-select-folder-buffer)
@@ -390,25 +408,26 @@ If 'never, always use a viewer instead of replacing."
           (pop-to-buffer pgg-errors-buffer)
           (error "Verification failed"))))
     (vm-pgg-state-set 'signed)
-    (let ((start) (end (point)) lines height)
+    (let (lines height)
       (save-excursion
         (set-buffer pgg-output-buffer)
         (skip-chars-backward " \t\t\n\f")
         (beginning-of-line)
-        (setq start (point))
-        (message (buffer-substring))
+        (message (buffer-substring (point-min) (point-max)))
         (setq lines (count-lines (point-min) (point-max))))
       (setq height (window-height (minibuffer-window)))
       (if (< height lines)
-          (enlarge-window (- lines height) nil (minibuffer-window))))
+	  (let ((current-window (selected-window)))
+	    (select-window (minibuffer-window))
+	    (enlarge-window (- lines height))
+	    (select-window current-window))))
     (vm-pgg-state-set 'verified)))
 
 ;;; ###autoload
 (defun vm-pgg-cleartext-decrypt ()
   "*Decrypt the contents of the current message."
   (interactive)
-  (let ((vm-frame-per-edit nil)
-	from-line)
+  (let ((vm-frame-per-edit nil))
     (if (interactive-p)
 	(vm-follow-summary-cursor))
     (vm-select-folder-buffer)
@@ -629,7 +648,7 @@ If 'never, always use a viewer instead of replacing."
       (error "Snarfing failed"))
     (save-excursion
       (set-buffer pgg-output-buffer)
-      (message (buffer-substring)))))
+      (message (buffer-substring (point-min) (point-max))))))
 
 ;;; ###autoload
 (defun vm-pgg-attach-public-key ()
