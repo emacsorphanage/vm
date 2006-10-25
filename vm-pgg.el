@@ -60,7 +60,8 @@
 ;; commands for the old style clear text format as MC had them.
 ;;
 ;; If you get annoyed by answering password prompts you might want to set the
-;; variable `password-cache-expiry' to a higher value or nil!
+;; variable `pgg-cache-passphrase' to t and `pgg-passphrase-cache-expiry' to a
+;; higher value or nil! 
 ;;
 
 ;;; References:
