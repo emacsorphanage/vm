@@ -27,6 +27,10 @@
 ;;
 ;; This is a replacement for mailcrypt adding PGP/MIME support to VM. 
 ;;
+;; It requires PGG which is a standard package for XEmacs and is a part 
+;; of Gnus for GNU Emacs.  On Debian "apt-get install gnus" should do the 
+;; trick.
+;;
 ;; It is still in BETA state thus you must explicitly load it by
 ;; 
 ;;      (and (locate-library "vm-pgg") (require 'vm-pgg))
@@ -72,7 +76,9 @@
 
 ;;; TODO:
 ;;
-;; * do nicer cleartext sig-check and auto decrypt 
+;; * remove ARMOR for clear text signatues 
+;; * add header with verification status, or glyph to the modeline, or annotation see
+;;   display-time of GNU Emacs ...    
 ;; * attaching of other keys from key-ring
 ;;
 
@@ -112,7 +118,8 @@
     (((background dark))
      (:foreground "red" :bold t:)))
   "The face used to highlight bad signature messages."
-  :group 'vm-pgg)
+  :group 'vm-pgg
+  :group 'faces)
 
 (defface vm-pgg-good-signature
   '((((type tty) (class color))
@@ -124,7 +131,8 @@
     (((background dark))
      (:foreground "green")))
   "The face used to highlight good signature messages."
-  :group 'vm-pgg)
+  :group 'vm-pgg
+  :group 'faces)
 
 (defface vm-pgg-error
   '((((type tty) (class color))
@@ -136,7 +144,8 @@
     (((background dark))
      (:foreground "red" :bold t:)))
   "The face used to highlight error messages."
-  :group 'vm-pgg)
+  :group 'vm-pgg
+  :group 'faces)
 
 (defcustom vm-pgg-always-replace 'never
   "*If t, decrypt mail messages in place without prompting.
@@ -329,7 +338,6 @@ If 'never, always use a viewer instead of replacing."
     (select-window (minibuffer-window))
     (enlarge-window (- 1 (window-height (minibuffer-window))))
     (select-window current-window))
-  (goto-char (point-min))
   (save-excursion 
     (vm-select-folder-buffer)
     (if vm-presentation-buffer
