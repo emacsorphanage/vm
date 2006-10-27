@@ -1085,7 +1085,7 @@ for anything, i.e. only existing profiles will be applied."
 
         (when dest
           ;; figure out which actions to run
-          (when (or (not actions) (and prompt (not (eq prompt 'never))))
+          (when (if prompt (not (eq prompt 'never)) (not actions))
             (setq actions (vmpc-read-actions
                            (format "Actions for \"%s\" %%s (end with RET): " dest))))
 
@@ -1096,6 +1096,7 @@ for anything, i.e. only existing profiles will be applied."
 
           ;; save the association of this profile with these actions if applicable
           (if (or (and (eq remember 'prompt)
+                       (not (eq prompt 'never))
                        (if actions 
                            (y-or-n-p (format "Always run %s for \"%s\"? "
                                              actions dest))
@@ -1104,7 +1105,7 @@ for anything, i.e. only existing profiles will be applied."
                                                   dest)))))
                   (eq remember 'always))
               (vmpc-save-profile-for-address dest actions))
-
+          
           ;; TODO: understand when vmpc-prompt-for-profile has to run actions 
           ;; if we are in automorph (actually being called from within an action)
           (if (eq vmpc-current-state 'automorph)
