@@ -174,6 +174,10 @@ If 'never, always use a viewer instead of replacing."
   :group 'vm-pgg
    :type 'boolean)
 
+(defcustom vm-pgg-auto-snarf t
+  "*If t, snarfing of keys will happen automatically."
+  :group 'vm-pgg
+   :type 'boolean)
 
 (defvar vm-pgg-compose-mode-map
   (let ((map (make-sparse-keymap)))
@@ -387,8 +391,9 @@ If 'never, always use a viewer instead of replacing."
 		   (vm-pgg-cleartext-verify))
 		  ((string= (match-string 1) "MESSAGE")
 		   (vm-pgg-cleartext-decrypt))
-		  ((string= (match-string 1) "PUBLIC KEY BLOCK")
-		   (vm-pgg-snarf-keys))
+		  ((and vm-pgg-auto-snarf
+                        (string= (match-string 1) "PUBLIC KEY BLOCK"))
+                   (vm-pgg-snarf-keys))
                   (t
                    (error "This should never happen!")))
 	  (error (message "%S" e)))
@@ -652,29 +657,47 @@ If 'never, always use a viewer instead of replacing."
       t)))
 
 ;; we must add these in order to force VM to call our handler
-(if (listp vm-auto-displayed-mime-content-types)
-    (add-to-list 'vm-auto-displayed-mime-content-types "application/pgp-keys"))
+(eval-and-compile 
+  (if (listp vm-auto-displayed-mime-content-types)
+      (add-to-list 'vm-auto-displayed-mime-content-types "application/pgp-keys"))
+  (if (listp vm-mime-internal-content-types)
+      (add-to-list 'vm-mime-internal-content-types "application/pgp-keys"))
+  (add-to-list 'vm-mime-button-format-alist
+               '("application/pgp-keys" . "Snarf %d")))
 
-(if (listp vm-mime-internal-content-types)
-    (add-to-list 'vm-mime-internal-content-types "application/pgp-keys"))
+(defun vm-pgg-mime-snarf-keys (button)
+  "Replace the button with the output from `pgg-snarf-keys'."
+  (let ((vm-pgg-auto-snarf t)
+        (layout (copy-sequence (vm-extent-property button 'vm-mime-layout))))
+    (vm-set-extent-property button 'vm-mime-disposable t)
+    (vm-set-extent-property button 'vm-mime-layout layout)
+    (goto-char (vm-extent-start-position button))
+    (let ((buffer-read-only nil))
+      (vm-decode-mime-layout button t))))
 
 ;;; ###autoload
 (defun vm-mime-display-internal-application/pgp-keys (layout)
   "Snarf keys in LAYOUT and display result of snarfing."
   (vm-pgg-state-set 'public-key)
   ;; insert the keys
-  (let ((start (point)) end status)
-    (vm-mime-insert-mime-body layout)
-    (setq end (point-marker))
-    (vm-mime-transfer-decode-region layout start end)
-    (save-excursion
-      (setq status (pgg-snarf-keys-region start end)))
-    (delete-region start end)
-    ;; now insert the result of snafing 
-    (if status
-        (insert-buffer-substring pgg-output-buffer)
-      (insert-buffer-substring pgg-errors-buffer))
-    t))
+  (if vm-pgg-auto-snarf
+      (let ((start (point)) end status)
+        (vm-mime-insert-mime-body layout)
+        (setq end (point-marker))
+        (vm-mime-transfer-decode-region layout start end)
+        (save-excursion
+          (setq status (pgg-snarf-keys-region start end)))
+        (delete-region start end)
+        ;; now insert the result of snafing 
+        (if status
+            (insert-buffer-substring pgg-output-buffer)
+          (insert-buffer-substring pgg-errors-buffer)))
+    (let ((buffer-read-only nil))
+      (vm-mime-insert-button
+       (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+       'vm-pgg-mime-snarf-keys
+       layout nil)))
+  t)
 
 ;;; ###autoload
 (defun vm-pgg-snarf-keys ()
