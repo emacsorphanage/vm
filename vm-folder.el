@@ -3962,23 +3962,26 @@ files."
         (vm-sort-messages vm-ml-sort-keys))
     new-messages ))
 
-;; return a list of all marked messages or the messages indicated by a
-;; prefix argument.
 (defun vm-select-marked-or-prefixed-messages (prefix)
-  (let (mlist)
-    (if (eq last-command 'vm-next-command-uses-marks)
-	(setq mlist (vm-marked-messages))
-      (let ((direction (if (< prefix 0) 'backward 'forward))
-	     (count (vm-abs prefix))
-	     (vm-message-pointer vm-message-pointer))
-	(if (not (eq vm-circular-folders t))
+  "Return a list of all marked messages or the messages indicated by a
+prefix argument.  If the prefix argument is supplied *and we are
+not in a vm-next-command-uses-marks context*, then return a number
+of messages around vm-message-pointer equal to (abs prefix), 
+either backward (prefix is negative) or forward (positive)."
+  (if (eq last-command 'vm-next-command-uses-marks)
+      (vm-marked-messages)
+      (let (mlist
+	    (direction (if (< prefix 0) 'backward 'forward))
+	    (count (vm-abs prefix))
+	    (vm-message-pointer vm-message-pointer))
+	(unless (eq vm-circular-folders t)
 	    (vm-check-count prefix))
 	(while (not (zerop count))
 	  (setq mlist (cons (car vm-message-pointer) mlist))
 	  (vm-decrement count)
-	  (if (not (zerop count))
-	      (vm-move-message-pointer direction))))
-      (nreverse mlist))))
+	  (unless (zerop count)
+	      (vm-move-message-pointer direction)))
+	(nreverse mlist))))
 
 (defun vm-display-startup-message ()
   (if (sit-for 5)
