@@ -43,7 +43,7 @@
 ;;
 ;; To customize vm-pgg use: M-x customize-group RET vm-pgg RET 
 ;;
-;; Displaying of messages in the PGP/MIME format will automatically trigger:
+;; Displaying of messages in the PGP(/MIME) format will automatically trigger:
 ;;  * decrypted of encrypted MIME parts
 ;;  * verification of signed MIME parts 
 ;;  * snarfing of public keys
@@ -77,9 +77,14 @@
 
 ;;; TODO:
 ;;
-;; * remove ARMOR for clear text signatues 
+;; * remove ASCII-ARMOR frow clear text signed messages => use a presentation
+;;   copy there too.
+;; * handle embedded clear text things. 
+;; * Disable automode if users want it! => Add Menu/Buttons.
 ;; * add header with verification status, or glyph to the modeline, or annotation see
-;;   display-time of GNU Emacs ...    
+;;   display-time of GNU Emacs ... marking the signed/encrypted message[+signature].
+;;   XEmacs has annotations and GNU Emacs?  Maybe I simply use overlays at the
+;;   line start without eys candy.
 ;; * attaching of other keys from key-ring
 ;;
 
@@ -164,6 +169,12 @@ If 'never, always use a viewer instead of replacing."
                  (const :tag "always" t)
                  (const :tag "ask" nil)))
 
+(defcustom vm-pgg-fetch-missing-keys nil
+  "*If t, PGP will try to fetch missing keys from `pgg-default-keyserver-address'."
+  :group 'vm-pgg
+   :type 'boolean)
+
+
 (defvar vm-pgg-compose-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c#e" 'vm-pgg-encrypt-and-sign)
@@ -182,7 +193,8 @@ If 'never, always use a viewer instead of replacing."
    ["Encrypt"           vm-pgg-encrypt t]
    ["Sign"              vm-pgg-sign t]
    ["Encrypt+Sign"      vm-pgg-encrypt-and-sign t]
-   ["Attach Public Key" vm-pgg-attach-public-key t]))
+   ["Attach Public Key" vm-pgg-attach-public-key t]
+   ["Insert Public Key" pgg-insert-key t]))
 
 (defvar vm-pgg-compose-mode nil
   "None-nil means PGP/MIME composition mode key bindings and menu are available.")
@@ -340,25 +352,47 @@ If 'never, always use a viewer instead of replacing."
       (save-excursion
         (set-buffer vm-summary-buffer)
         (setq vm-pgg-state states)))))
-                         
+
+(defvar vm-pgg-cleartext-begin-regexp
+  "^-----BEGIN PGP \\(\\(SIGNED \\)?MESSAGE\\|PUBLIC KEY BLOCK\\)-----$"
+    "regexp used to match PGP armor.")
+
+(defvar vm-pgg-cleartext-end-regexp
+  "^-----END PGP \\(\\(SIGNED \\)?MESSAGE\\|PUBLIC KEY BLOCK\\)-----$"
+    "regexp used to match PGP armor.")
+
+(defcustom vm-pgg-cleartext-search-limit 4096
+  "Number of bytes to peek into the message for a PGP clear text armor."
+   :group 'vm-pgg
+   :group 'faces)
+
 (defun vm-pgg-cleartext-automode ()
+  ;; shrink minibuffer 
   (let ((current-window (selected-window)))
     (select-window (minibuffer-window))
     (enlarge-window (- 1 (window-height (minibuffer-window))))
     (select-window current-window))
+  ;; now check for PGP ASCII armor 
   (save-excursion 
     (vm-select-folder-buffer)
     (if vm-presentation-buffer
 	(set-buffer vm-presentation-buffer))
     (goto-char (point-min))
     (search-forward "\n\n")
-    (if (looking-at "^-----BEGIN PGP \\(SIGNED \\)?MESSAGE-----$")
+    (if (re-search-forward vm-pgg-cleartext-begin-regexp
+                           (+ (point) vm-pgg-cleartext-search-limit)
+                           t)
 	(condition-case e
-	    (cond ((string= (match-string 1) "SIGNED ")
+	    (cond ((string= (match-string 1) "SIGNED MESSAGE")
 		   (vm-pgg-cleartext-verify))
-		  (t
-		   (vm-pgg-cleartext-decrypt)))
+		  ((string= (match-string 1) "MESSAGE")
+		   (vm-pgg-cleartext-decrypt))
+		  ((string= (match-string 1) "PUBLIC KEY BLOCK")
+		   (vm-pgg-snarf-keys))
+                  (t
+                   (error "This should never happen!")))
 	  (error (message "%S" e)))
+      ;; remove window if not needed
       (let ((window (get-buffer-window pgg-output-buffer)))
 	(when window
 	  (delete-window window))))))
@@ -412,7 +446,7 @@ If 'never, always use a viewer instead of replacing."
     (search-forward "\n\n")
     (goto-char (match-end 0))
     ;; verify 
-    (unless (pgg-verify-region (point) (point-max))
+    (unless (pgg-verify-region (point) (point-max) nil vm-pgg-fetch-missing-keys)
       (save-excursion
         (set-buffer pgg-errors-buffer)
         (if (re-search-forward "\\(BADSIG\\|NO_PUBKEY\\)[^\n\r]+" (point-max) t)
@@ -599,7 +633,7 @@ If 'never, always use a viewer instead of replacing."
       (insert "\n")
       (setq end (point-marker))
       (vm-pgg-make-crlf start end)
-      (setq status (pgg-verify-region start end signature-file))
+      (setq status (pgg-verify-region start end signature-file vm-pgg-fetch-missing-keys))
       (delete-file signature-file)
       (delete-region start end)
       ;; now insert the content
