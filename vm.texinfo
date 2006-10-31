@@ -794,7 +794,7 @@ The variable's value should be a list of the form:
 @end example
 
 @var{IMAPDROP} is a IMAP maildrop specification in the same format used
-by @code{vm-spool-files}.
+by @code{vm-spool-files}. @xref{IMAP Spool Files}.
 
 For example:
 
