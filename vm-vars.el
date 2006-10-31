@@ -551,6 +551,12 @@ variable."
   :group 'vm
   :type '(choice (const nil) directory))
 
+(defcustom vm-imap-save-to-server nil
+  "If this variable is non-NIL, then the save-message command should
+save to IMAP folders on the server, rather than to local files."
+  :group 'vm
+  :type '(choice (const nil) (const t)))
+
 (defcustom vm-auto-get-new-mail t
   "*Non-nil value causes VM to automatically move mail from spool files
 to a mail folder when the folder is first visited.  Nil means
