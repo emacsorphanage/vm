@@ -489,63 +489,63 @@ If 'never, always use a viewer instead of replacing."
 (defun vm-pgg-cleartext-decrypt ()
   "*Decrypt the contents of the current message."
   (interactive)
-  (let ((vm-frame-per-edit nil))
-    (if (interactive-p)
-	(vm-follow-summary-cursor))
-    (vm-select-folder-buffer)
-    (vm-check-for-killed-summary)
-    (vm-error-if-folder-read-only)
-    (vm-error-if-folder-empty)
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
+  (vm-select-folder-buffer)
+  (vm-check-for-killed-summary)
+  (vm-error-if-folder-read-only)
+  (vm-error-if-folder-empty)
     
-    ;; skip headers 
+  ;; skip headers 
+  (goto-char (point-min))
+  (search-forward "\n\n")
+  (goto-char (match-end 0))
+    
+  ;; decrypt 
+  (unless (pgg-decrypt-region (point) (point-max))
+    (vm-pgg-state-set 'error)
+    (pop-to-buffer pgg-errors-buffer)
+    (error "Decryption failed"))
+
+  (vm-pgg-state-set 'encrypted)
+    
+  ;; make a presentation copy 
+  (vm-make-presentation-copy (car vm-message-pointer))
+  (vm-save-buffer-excursion
+   (vm-replace-buffer-in-windows (current-buffer)
+                                 vm-presentation-buffer))
+  (set-buffer vm-presentation-buffer)
+
+  (let ((buffer-read-only nil))
+    ;; remove From line 
+    (goto-char (point-min))
+    (forward-line 1)
+    (delete-region (point-min) (point))
+    ;; insert decrypted message 
+    (search-forward "\n\n")
+    (goto-char (match-end 0))
+    (delete-region (point) (point-max))
+    (insert-buffer-substring pgg-output-buffer)
+    ;; do cleanup 
+    (vm-pgg-crlf-cleanup (point-min) (point-max))
+    (goto-char (point-min))
+    (vm-reorder-message-headers nil vm-visible-headers
+                                vm-invisible-header-regexp)
+    (vm-decode-mime-message-headers (car vm-message-pointer))
+    (vm-energize-urls-in-message-region)
+    (vm-highlight-headers-maybe)
+    (vm-energize-headers-and-xfaces)
+    ;; care for a signature 
     (goto-char (point-min))
     (search-forward "\n\n")
     (goto-char (match-end 0))
-    
-    ;; decrypt 
-    (unless (pgg-decrypt-region (point) (point-max))
-      (vm-pgg-state-set 'error)
-      (pop-to-buffer pgg-errors-buffer)
-      (error "Decryption failed"))
-
-    (vm-pgg-state-set 'encrypted)
-    
-    ;; make a presentation copy 
-    (vm-make-presentation-copy (car vm-message-pointer))
-    (vm-save-buffer-excursion
-     (vm-replace-buffer-in-windows (current-buffer)
-                                   vm-presentation-buffer))
-    (set-buffer vm-presentation-buffer)
-
-    (let ((buffer-read-only nil))
-      ;; remove From line 
-      (goto-char (point-min))
-      (forward-line 1)
-      (delete-region (point-min) (point))
-      ;; insert decrypted message 
-      (search-forward "\n\n")
-      (goto-char (match-end 0))
-      (delete-region (point) (point-max))
-      (insert-buffer-substring pgg-output-buffer)
-      ;; do cleanup 
-      (vm-pgg-crlf-cleanup (point-min) (point-max))
-      (goto-char (point-min))
-      (vm-reorder-message-headers nil vm-visible-headers
-                                  vm-invisible-header-regexp)
-      (vm-decode-mime-message-headers (car vm-message-pointer))
-      (vm-energize-urls-in-message-region)
-      (vm-highlight-headers-maybe)
-      (vm-energize-headers-and-xfaces)
-      ;; care for a signature 
-      (goto-char (point-min))
-      (search-forward "\n\n")
-      (goto-char (match-end 0))
-      (if (looking-at "^-----BEGIN PGP \\(SIGNED \\)?MESSAGE-----$")
-          (vm-pgg-cleartext-verify))
-      ;; replace the message?
-      (when (and (not (eq vm-pgg-always-replace 'never))
-                 (or vm-pgg-always-replace
-                     (y-or-n-p "Replace encrypted message with decrypted? ")))
+    (if (looking-at "^-----BEGIN PGP \\(SIGNED \\)?MESSAGE-----$")
+        (vm-pgg-cleartext-verify))
+    ;; replace the message?
+    (when (and (not (eq vm-pgg-always-replace 'never))
+               (or vm-pgg-always-replace
+                   (y-or-n-p "Replace encrypted message with decrypted? ")))
+      (let ((vm-frame-per-edit nil))
         (vm-edit-message)
         (delete-region (point-min) (point-max))
         (insert-buffer-substring vm-presentation-buffer)
