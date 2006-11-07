@@ -179,6 +179,11 @@ If 'never, always use a viewer instead of replacing."
   :group 'vm-pgg
    :type 'boolean)
 
+(defcustom vm-pgg-auto-decrypt t
+  "*If t, decrypting will happen automatically."
+  :group 'vm-pgg
+   :type 'boolean)
+
 (defvar vm-pgg-compose-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c#e" 'vm-pgg-encrypt-and-sign)
@@ -390,7 +395,9 @@ If 'never, always use a viewer instead of replacing."
 	    (cond ((string= (match-string 1) "SIGNED MESSAGE")
 		   (vm-pgg-cleartext-verify))
 		  ((string= (match-string 1) "MESSAGE")
-		   (vm-pgg-cleartext-decrypt))
+                   (if vm-pgg-auto-decrypt
+                       (vm-pgg-cleartext-decrypt)
+                     )
 		  ((and vm-pgg-auto-snarf
                         (string= (match-string 1) "PUBLIC KEY BLOCK"))
                    (vm-pgg-snarf-keys))
@@ -559,6 +566,16 @@ If 'never, always use a viewer instead of replacing."
     (while (search-forward "\n" end t)
       (replace-match "\r\n" t t))))
 
+(defun vm-pgg-mime-decrypt (button)
+  "Replace the button with the output from `pgg-snarf-keys'."
+  (let ((vm-pgg-auto-decrypt t)
+        (layout (copy-sequence (vm-extent-property button 'vm-mime-layout))))
+    (vm-set-extent-property button 'vm-mime-disposable t)
+    (vm-set-extent-property button 'vm-mime-layout layout)
+    (goto-char (vm-extent-start-position button))
+    (let ((buffer-read-only nil))
+      (vm-decode-mime-layout button t))))
+
 ;;; ###autoload
 (defun vm-mime-display-internal-multipart/encrypted (layout)
   "Display multipart/encrypted LAYOUT."
@@ -567,44 +584,52 @@ If 'never, always use a viewer instead of replacing."
          (header (car part-list))
          (message (car (cdr part-list)))
          status)
-    (if (not (and (= (length part-list) 2)
-                  (vm-mime-types-match (car (vm-mm-layout-type header))
-                                       "application/pgp-encrypted")
-                  ;; TODO: check version and protocol here?
-                  (vm-mime-types-match (car (vm-mm-layout-type message))
-                                       "application/octet-stream")))
-        (insert "Unknown multipart/encrypted format.")
-      ;; decode the message now
-      (save-excursion
-        (set-buffer (vm-buffer-of (vm-mm-layout-message message)))
-        (save-restriction
-          (widen)
-          (setq status (pgg-decrypt-region (vm-mm-layout-body-start message)
-                                           (vm-mm-layout-body-end message)))))
-      (if (not status)
-          (let ((start (point)))
-            (vm-pgg-state-set 'error)
-            (insert-buffer-substring pgg-errors-buffer)
-            (put-text-property start (point) 'face 'vm-pgg-error))
-        (save-excursion
-          (set-buffer pgg-output-buffer)
-          (vm-pgg-crlf-cleanup (point-min) (point-max))
-          (setq message (vm-mime-parse-entity-safe nil nil nil t)))
-        (if message
-          (vm-decode-mime-layout message)
-          (insert-buffer-substring pgg-output-buffer))
-        (setq status (save-excursion
-                       (set-buffer pgg-errors-buffer)
-                       (goto-char (point-min))
-                       ;; TODO: care for BADSIG
-                       (when (re-search-forward "GOODSIG [^\n\r]+" (point-max) t)
-                         (vm-pgg-state-set 'signed 'verified)
-                         (buffer-substring (match-beginning 0) (match-end 0)))))
-        (if status
-            (let ((start (point)))
-              (insert "\n" status "\n")
-              (put-text-property start (point) 'face 'vm-pgg-good-signature))))
-      t)))
+    (cond ((not (and (= (length part-list) 2)
+                     (vm-mime-types-match (car (vm-mm-layout-type header))
+                                          "application/pgp-encrypted")
+                     ;; TODO: check version and protocol here?
+                     (vm-mime-types-match (car (vm-mm-layout-type message))
+                                          "application/octet-stream")))
+           (insert "Unknown multipart/encrypted format."))
+          ((not vm-pgg-auto-decrypt)
+           ;; add a button 
+           (let ((buffer-read-only nil))
+             (vm-mime-insert-button
+              (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+              'vm-pgg-mime-decrypt
+              layout nil)))
+          (t 
+           ;; decode the message now
+           (save-excursion
+             (set-buffer (vm-buffer-of (vm-mm-layout-message message)))
+             (save-restriction
+               (widen)
+               (setq status (pgg-decrypt-region (vm-mm-layout-body-start message)
+                                                (vm-mm-layout-body-end message)))))
+           (if (not status)
+               (let ((start (point)))
+                 (vm-pgg-state-set 'error)
+                 (insert-buffer-substring pgg-errors-buffer)
+                 (put-text-property start (point) 'face 'vm-pgg-error))
+             (save-excursion
+               (set-buffer pgg-output-buffer)
+               (vm-pgg-crlf-cleanup (point-min) (point-max))
+               (setq message (vm-mime-parse-entity-safe nil nil nil t)))
+             (if message
+                 (vm-decode-mime-layout message)
+               (insert-buffer-substring pgg-output-buffer))
+             (setq status (save-excursion
+                            (set-buffer pgg-errors-buffer)
+                            (goto-char (point-min))
+                            ;; TODO: care for BADSIG
+                            (when (re-search-forward "GOODSIG [^\n\r]+" (point-max) t)
+                              (vm-pgg-state-set 'signed 'verified)
+                              (buffer-substring (match-beginning 0) (match-end 0)))))
+             (if status
+                 (let ((start (point)))
+                   (insert "\n" status "\n")
+                   (put-text-property start (point) 'face 'vm-pgg-good-signature))))
+           t))))
 
 ;;; ###autoload
 (defun vm-mime-display-internal-multipart/signed (layout)
@@ -663,7 +688,9 @@ If 'never, always use a viewer instead of replacing."
   (if (listp vm-mime-internal-content-types)
       (add-to-list 'vm-mime-internal-content-types "application/pgp-keys"))
   (add-to-list 'vm-mime-button-format-alist
-               '("application/pgp-keys" . "Snarf %d")))
+               '("application/pgp-keys" . "Snarf %d"))
+  (add-to-list 'vm-mime-button-format-alist
+               '("multipart/encrypted" . "Decrypt PGP/MIME message")))
 
 (defun vm-pgg-mime-snarf-keys (button)
   "Replace the button with the output from `pgg-snarf-keys'."
