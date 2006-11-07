@@ -10,3 +10,5 @@ vm-autoload.el
 vmrf.tgz
 *.info*
 vm.el
+*.diff
+dir

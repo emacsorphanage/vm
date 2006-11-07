@@ -1960,4 +1960,62 @@ documentation for `vm-spool-files'."
       (message "Folder %s renamed to %s" (vm-safe-imapdrop-string source)
 	       (vm-safe-imapdrop-string dest)))))
 
+;;; Robert Fenk's draft function for saving messages to IMAP folders.
+(defun vm-imap-save-composition ()
+  "Saves the current composition in the IMAP folder given by the IMAP-FCC header.
+
+Add this to your `mail-send-hook' and start composing from an IMAP folder."
+  (let (process flags response string
+		(mailbox (vm-mail-get-header-contents "IMAP-FCC:")))
+    (when mailbox
+      (save-excursion
+        (vm-select-folder-buffer)
+	(vm-establish-new-folder-imap-session)
+	(setq process (vm-folder-imap-process)))
+      (save-excursion
+        (vm-mail-mode-remove-header "IMAP-FCC:")
+        (goto-char (point-min))
+        (re-search-forward (concat "^" (regexp-quote mail-header-separator) "$"))
+        (setq string (concat (buffer-substring (point-min) (match-beginning 0))
+                             (buffer-substring
+			      (match-end 0) (point-max))))
+	;; this can go awry if the process has died...
+        (set-buffer (process-buffer process))
+        (condition-case nil
+	     (vm-imap-create-mailbox process mailbox)
+	   (error nil))
+        (vm-imap-send-command process
+                              (format "APPEND %s %s {%d}"
+                                      (vm-imap-quote-string mailbox)
+                                      (if flags flags "()")
+                                      (length string)))
+	;; could these be done with vm-imap-read-boolean-response?
+	(let ((need-plus t))
+	  (while need-plus
+	    (let ((response (vm-imap-read-response process)))
+	      (cond ((vm-imap-response-matches response 'VM 'NO)
+		     (error "server said NO to APPEND command"))
+		    ((vm-imap-response-matches response 'VM 'BAD)
+		     (vm-imap-protocol-error "server said BAD to APPEND command"))
+		    ((vm-imap-response-matches response '* 'BYE)
+		     (vm-imap-protocol-error "server said BYE to APPEND command"))
+		    ((vm-imap-response-matches response '+)
+		     (setq need-plus nil))))))
+        (vm-imap-send-command process string nil t)
+	(let ((need-ok t))
+	  (while need-ok
+	    (let ((response (vm-imap-read-response process)))
+	      (cond ((vm-imap-response-matches response 'VM 'NO)
+		     (error "server said NO to APPEND data"))
+		    ((vm-imap-response-matches response 'VM 'BAD)
+		     (vm-imap-protocol-error "server said BAD to APPEND data"))
+		    ((vm-imap-response-matches response '* 'BYE)
+		     (vm-imap-protocol-error "server said BYE to APPEND data"))
+		    ((vm-imap-response-matches response 'VM 'OK)
+		     (setq need-ok nil))))))
+	(when (and (processp process)
+		     (memq (process-status process) '(open run)))
+	  (vm-imap-end-session process))
+	))))
+
 (provide 'vm-imap)

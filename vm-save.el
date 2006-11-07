@@ -152,7 +152,72 @@ The saved messages are flagged as `filed'."
       (message "%d message%s archived"
 	       archived (if (= 1 archived) "" "s")))))
 
+;;;---------------------------------------------------------------------------
+;;; The following defun seems a lot less efficient than it might be,
+;;; but I don't have a better sense of how to access the folder buffer
+;;; and read its local variables. [2006/10/31:rpg]
+;;;---------------------------------------------------------------------------
+
+(defun vm-imap-folder-p ()
+  "Is the current folder an IMAP folder?"
+  (save-excursion
+    (vm-select-folder-buffer)
+    (eq vm-folder-access-method 'imap)))
+
+;;;---------------------------------------------------------------------------
+;;; New shell defun to handle both IMAP and local saving.
+;;;---------------------------------------------------------------------------
 (defun vm-save-message (folder &optional count)
+  "Save the current message.  This may be done either by saving it
+to an IMAP folder or by saving it to a local filesystem folder.
+Which is done is controlled by the type of the current vm-folder
+buffer and the variable VM-IMAP-SAVE-TO-SERVER."
+  (interactive
+   (if (and vm-imap-save-to-server
+	    (vm-imap-folder-p))
+       ;; IMAP saving --- argument parsing taken from
+       ;; vm-save-message-to-imap-folder
+       (save-excursion
+	 (vm-session-initialization)
+	 (vm-check-for-killed-folder)
+	 (vm-select-folder-buffer-if-possible)
+	 (let ((this-command this-command)
+	       (last-command last-command))
+	   (list (vm-read-imap-folder-name "Save to IMAP folder: "
+					   vm-imap-server-list t)
+		 (prefix-numeric-value current-prefix-arg))))
+       ;; saving to local filesystem.  argument parsing taken from old
+       ;; vm-save-message now vm-save-message-to-local-folder
+       (list
+	;; protect value of last-command
+	(let ((last-command last-command)
+	      (this-command this-command))
+	  (vm-follow-summary-cursor)
+	  (let ((default (save-excursion
+			   (vm-select-folder-buffer)
+			   (vm-check-for-killed-summary)
+			   (vm-error-if-folder-empty)
+			   (or (vm-auto-select-folder vm-message-pointer
+						      vm-auto-folder-alist)
+			       vm-last-save-folder)))
+		(dir (or vm-folder-directory default-directory)))
+	    (cond ((and default
+			(let ((default-directory dir))
+			  (file-directory-p default)))
+		   (vm-read-file-name "Save in folder: " dir nil nil default))
+		  (default
+		      (vm-read-file-name
+		       (format "Save in folder: (default %s) " default)
+		       dir default))
+		  (t
+		   (vm-read-file-name "Save in folder: " dir nil)))))
+	(prefix-numeric-value current-prefix-arg))))
+  (if (and vm-imap-save-to-server
+	   (vm-imap-folder-p))
+      (vm-save-message-to-imap-folder folder count)
+      (vm-save-message-to-local-folder folder count)))
+   
+(defun vm-save-message-to-local-folder (folder &optional count)
   "Save the current message to a mail folder.
 If the folder already exists, the message will be appended to it.
 
@@ -662,18 +727,18 @@ The saved messages are flagged as `filed'."
 	  (while mlist
 	    (setq m (car mlist))
 	    (vm-imap-save-message process m mailbox)
-	    (if (null (vm-filed-flag m))
+	    (when (null (vm-filed-flag m))
 		(vm-set-filed-flag m t))
 	    (vm-increment count)
 	    (vm-modify-folder-totals folder 'saved 1 m)
 	    (setq mlist (cdr mlist))))
       (and process (vm-imap-end-session process)))
     (vm-update-summary-and-mode-line)
-    (if (interactive-p)
+    (when (interactive-p)
 	(message "%d message%s saved to %s"
 		 count (if (/= 1 count) "s" "")
 		 (vm-safe-imapdrop-string folder)))
-    (if (and vm-delete-after-saving (not vm-folder-read-only))
+    (when (and vm-delete-after-saving (not vm-folder-read-only))
 	(vm-delete-message count))
     folder ))
 
