@@ -77,15 +77,10 @@
 
 ;;; TODO:
 ;;
-;; * remove ASCII-ARMOR frow clear text signed messages => use a presentation
-;;   copy there too.
-;; * handle embedded clear text things. 
-;; * Disable automode if users want it! => Add Menu/Buttons.
-;; * add header with verification status, or glyph to the modeline, or annotation see
-;;   display-time of GNU Emacs ... marking the signed/encrypted message[+signature].
-;;   XEmacs has annotations and GNU Emacs?  Maybe I simply use overlays at the
-;;   line start without eys candy.
-;; * attaching of other keys from key-ring
+;; * add annotation see to signed/encrypted regions.  XEmacs has annotations
+;;   and GNU Emacs?  Maybe I simply use overlays at the line start without eys
+;;   candy.
+;; * allow attaching of other keys from key-ring
 ;;
 
 ;;; Code:
@@ -295,6 +290,35 @@ If 'never, always use a viewer instead of replacing."
       (delete-region start end)
       (insert-buffer-substring pgg-output-buffer))))
 
+(defun vm-pgg-make-presentation-copy ()
+  "Make a presentation copy also for cleartext PGP messages."
+  ;; make a presentation copy 
+  (vm-make-presentation-copy (car vm-message-pointer))
+  (vm-save-buffer-excursion
+   (vm-replace-buffer-in-windows (current-buffer)
+                                 vm-presentation-buffer))
+  (set-buffer vm-presentation-buffer)
+  
+  (let ((buffer-read-only nil))
+    ;; remove From line 
+    (goto-char (point-min))
+    (forward-line 1)
+    (delete-region (point-min) (point))
+    ;; insert decrypted message 
+    (search-forward "\n\n")
+    (goto-char (match-end 0))
+    (delete-region (point) (point-max))
+    (insert-buffer-substring pgg-output-buffer)
+    ;; do cleanup 
+    (vm-pgg-crlf-cleanup (point-min) (point-max))
+    (goto-char (point-min))
+    (vm-reorder-message-headers nil vm-visible-headers
+                                vm-invisible-header-regexp)
+    (vm-decode-mime-message-headers (car vm-message-pointer))
+    (vm-energize-urls-in-message-region)
+    (vm-highlight-headers-maybe)
+    (vm-energize-headers-and-xfaces)))
+    
 (defvar vm-pgg-state nil
   "State of the currently viewed message.")
 
@@ -367,7 +391,7 @@ If 'never, always use a viewer instead of replacing."
     "regexp used to match PGP armor.")
 
 (defvar vm-pgg-cleartext-end-regexp
-  "^-----END PGP \\(\\(SIGNED \\)?MESSAGE\\|PUBLIC KEY BLOCK\\)-----$"
+  "^-----END PGP %s-----$"
     "regexp used to match PGP armor.")
 
 (defcustom vm-pgg-cleartext-search-limit 4096
@@ -375,13 +399,32 @@ If 'never, always use a viewer instead of replacing."
    :group 'vm-pgg
    :group 'faces)
 
+(defun vm-pgg-cleartext-automode-button (label action)
+  "Cleartext thing by a button with text LABEL and associate ACTION with it.
+When the button is pressed ACTION is called."
+  (save-excursion
+    (unless (eq major-mode 'vm-presentation-mode)
+      (vm-pgg-make-presentation-copy))
+    (goto-char (match-beginning 0))
+    (let ((buffer-read-only nil)
+          (start (point)))
+      (if (re-search-forward (format vm-pgg-cleartext-end-regexp
+                                     (match-string 0))
+                             (point-max) t)
+          (delete-region start (match-end 0)))
+      (insert label)
+      (setq o (make-overlay start (point)))
+      (overlay-put o 'vm-pgg t)
+      (overlay-put o 'face vm-mime-button-face)
+      (overlay-put o 'vm-button t)
+      (overlay-put o 'mouse-face 'highlight)
+      (let ((keymap (make-sparse-keymap)))
+        (define-key keymap [mouse-2] action)
+        (define-key keymap "\r"  action)
+        (overlay-put o 'local-map keymap)))))
+
 (defun vm-pgg-cleartext-automode ()
-  ;; shrink minibuffer 
-  (let ((current-window (selected-window)))
-    (select-window (minibuffer-window))
-    (enlarge-window (- 1 (window-height (minibuffer-window))))
-    (select-window current-window))
-  ;; now check for PGP ASCII armor 
+  ;; now look for a PGP ASCII armor 
   (save-excursion 
     (vm-select-folder-buffer)
     (if vm-presentation-buffer
@@ -397,17 +440,24 @@ If 'never, always use a viewer instead of replacing."
 		  ((string= (match-string 1) "MESSAGE")
                    (if vm-pgg-auto-decrypt
                        (vm-pgg-cleartext-decrypt)
-                     )
-		  ((and vm-pgg-auto-snarf
-                        (string= (match-string 1) "PUBLIC KEY BLOCK"))
-                   (vm-pgg-snarf-keys))
+                     (vm-pgg-cleartext-automode-button
+                      "Decrypt PGP message\n"
+                      (lambda ()
+                        (interactive)
+                        (let ((vm-pgg-auto-decrypt t))
+                          (vm-pgg-cleartext-decrypt))))))
+		  ((string= (match-string 1) "PUBLIC KEY BLOCK")
+                   (if vm-pgg-auto-snarf
+                       (vm-pgg-snarf-keys)
+                    (vm-pgg-cleartext-automode-button
+                      "Snarf PGP key\n"
+                      (lambda ()
+                        (interactive)
+                        (let ((vm-pgg-auto-snarf t))
+                          (vm-pgg-snarf-keys)))))) 
                   (t
                    (error "This should never happen!")))
-	  (error (message "%S" e)))
-      ;; remove window if not needed
-      (let ((window (get-buffer-window pgg-output-buffer)))
-	(when window
-	  (delete-window window))))))
+	  (error (message "%S" e))))))
 
 (defadvice vm-preview-current-message (after vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages."
@@ -440,50 +490,51 @@ If 'never, always use a viewer instead of replacing."
 (defun vm-pgg-cleartext-verify ()
   "*Verify the signature in the current message."
   (interactive)
-  (let ((current-window (selected-window)))
-    (select-window (minibuffer-window))
-    (enlarge-window (- 1 (window-height (minibuffer-window))))
-    (select-window current-window))
-  (let ((status))
-    (if (interactive-p)
-        (vm-follow-summary-cursor))
+  (when (interactive-p)
+    (vm-follow-summary-cursor)
     (vm-select-folder-buffer)
     (vm-check-for-killed-summary)
-    (vm-error-if-folder-empty)
-    ;; ensure we are in the right buffer
-    (if vm-presentation-buffer
-        (set-buffer vm-presentation-buffer))
-    ;; skip headers 
-    (goto-char (point-min))
-    (search-forward "\n\n")
-    (goto-char (match-end 0))
-    ;; verify 
-    (unless (pgg-verify-region (point) (point-max) nil vm-pgg-fetch-missing-keys)
-      (save-excursion
-        (set-buffer pgg-errors-buffer)
-        (if (re-search-forward "\\(BADSIG\\|NO_PUBKEY\\)[^\n\r]+" (point-max) t)
-            (progn
-              (setq status (downcase (match-string 0)))
-              (vm-pgg-state-set (intern status))
-              (message status))
-          (vm-pgg-state-set 'error)
-          (pop-to-buffer pgg-errors-buffer)
-          (error "Verification failed"))))
-    (vm-pgg-state-set 'signed)
-    (let (lines height)
-      (save-excursion
-        (set-buffer pgg-output-buffer)
-        (skip-chars-backward " \t\t\n\f")
-        (beginning-of-line)
-        (message (buffer-substring (point-min) (point-max)))
-        (setq lines (count-lines (point-min) (point-max))))
-      (setq height (window-height (minibuffer-window)))
-      (if (< height lines)
-	  (let ((current-window (selected-window)))
-	    (select-window (minibuffer-window))
-	    (enlarge-window (- lines height))
-	    (select-window current-window))))
-    (vm-pgg-state-set 'verified)))
+    (vm-error-if-folder-empty))
+  
+  ;; create a presentation copy 
+  (unless (eq major-mode 'vm-presentation-mode)
+    (vm-pgg-make-presentation-copy))
+  
+  ;; skip headers 
+  (goto-char (point-min))
+  (search-forward "\n\n")
+  (goto-char (match-end 0))
+  
+  ;; verify 
+  (let ((buffer-read-only nil)
+        (status (pgg-verify-region (point) (point-max) nil vm-pgg-fetch-missing-keys)))
+    
+    ;; remove ASCII armor
+    (let (start end)
+      (setq start (and (re-search-forward "^-----BEGIN PGP SIGNED MESSAGE-----$")
+                       (match-beginning 0))
+            end   (and (search-forward "\n\n")
+                       (match-end 0)))
+      (delete-region start end)
+      (setq start (and (re-search-forward "^-----BEGIN PGP SIGNATURE-----$")
+                       (match-beginning 0))
+            end (and (re-search-forward "^-----END PGP SIGNATURE-----$")
+                     (match-end 0)))
+      (delete-region start end))
+
+    ;; add output from PGP
+    (insert "\n")
+    (let ((start (point)) end)
+      (if (not status)
+          (progn
+            (vm-pgg-state-set 'error)
+            (insert-buffer-substring pgg-errors-buffer))
+        (vm-pgg-state-set 'verified)
+        (insert-buffer-substring pgg-output-buffer)
+        (vm-pgg-crlf-cleanup start (point)))
+      (setq end (point))
+      (put-text-property start end 'face
+                         (if status 'vm-pgg-good-signature 'vm-pgg-bad-signature)))))
 
 ;;; ###autoload
 (defun vm-pgg-cleartext-decrypt ()
@@ -502,55 +553,41 @@ If 'never, always use a viewer instead of replacing."
   (goto-char (match-end 0))
     
   ;; decrypt 
-  (unless (pgg-decrypt-region (point) (point-max))
-    (vm-pgg-state-set 'error)
-    (pop-to-buffer pgg-errors-buffer)
-    (error "Decryption failed"))
-
-  (vm-pgg-state-set 'encrypted)
+  (let ((state (pgg-decrypt-region (point) (point-max))))
+    (vm-pgg-state-set 'encrypted)
     
-  ;; make a presentation copy 
-  (vm-make-presentation-copy (car vm-message-pointer))
-  (vm-save-buffer-excursion
-   (vm-replace-buffer-in-windows (current-buffer)
-                                 vm-presentation-buffer))
-  (set-buffer vm-presentation-buffer)
+    ;; make a presentation copy 
+    (unless (eq major-mode 'vm-presentation-mode)
+      (vm-pgg-make-presentation-copy))
 
-  (let ((buffer-read-only nil))
-    ;; remove From line 
     (goto-char (point-min))
+    (search-forward "\n\n")
     (forward-line 1)
-    (delete-region (point-min) (point))
-    ;; insert decrypted message 
-    (search-forward "\n\n")
-    (goto-char (match-end 0))
-    (delete-region (point) (point-max))
-    (insert-buffer-substring pgg-output-buffer)
-    ;; do cleanup 
-    (vm-pgg-crlf-cleanup (point-min) (point-max))
-    (goto-char (point-min))
-    (vm-reorder-message-headers nil vm-visible-headers
-                                vm-invisible-header-regexp)
-    (vm-decode-mime-message-headers (car vm-message-pointer))
-    (vm-energize-urls-in-message-region)
-    (vm-highlight-headers-maybe)
-    (vm-energize-headers-and-xfaces)
-    ;; care for a signature 
-    (goto-char (point-min))
-    (search-forward "\n\n")
-    (goto-char (match-end 0))
-    (if (looking-at "^-----BEGIN PGP \\(SIGNED \\)?MESSAGE-----$")
-        (vm-pgg-cleartext-verify))
-    ;; replace the message?
-    (when (and (not (eq vm-pgg-always-replace 'never))
-               (or vm-pgg-always-replace
-                   (y-or-n-p "Replace encrypted message with decrypted? ")))
-      (let ((vm-frame-per-edit nil))
-        (vm-edit-message)
-        (delete-region (point-min) (point-max))
-        (insert-buffer-substring vm-presentation-buffer)
-        (let ((this-command 'vm-edit-message-end))
-          (vm-edit-message-end))))))
+    
+    (if (not state)
+        ;; insert the error message 
+        (let ((buffer-read-only nil)
+              (start (point)))
+          (vm-pgg-state-set 'error)
+          (insert-buffer-substring pgg-errors-buffer)
+          (put-text-property start (point) 'face 'vm-pgg-error))
+      ;; if it signed then also verify it
+      (goto-char (point-min))
+      (search-forward "\n\n")
+      (if (re-search-forward "^-----BEGIN PGP \\(SIGNED \\)?MESSAGE-----$"
+                             (point-max) t)
+          (vm-pgg-cleartext-verify))
+      
+      ;; replace the message?
+      (when (and (not (eq vm-pgg-always-replace 'never))
+                 (or vm-pgg-always-replace
+                     (y-or-n-p "Replace encrypted message with decrypted? ")))
+        (let ((vm-frame-per-edit nil))
+          (vm-edit-message)
+          (delete-region (point-min) (point-max))
+          (insert-buffer-substring vm-presentation-buffer)
+          (let ((this-command 'vm-edit-message-end))
+            (vm-edit-message-end)))))))
 
 (defun vm-pgg-crlf-cleanup (start end)
   "Convert CRLF to LF in region from START to END."
