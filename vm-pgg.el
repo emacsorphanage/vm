@@ -407,7 +407,8 @@ When the button is pressed ACTION is called."
       (vm-pgg-make-presentation-copy))
     (goto-char (match-beginning 0))
     (let ((buffer-read-only nil)
-          (start (point)))
+          (start (point))
+          o)
       (if (re-search-forward (format vm-pgg-cleartext-end-regexp
                                      (match-string 0))
                              (point-max) t)
@@ -522,6 +523,9 @@ When the button is pressed ACTION is called."
                      (match-end 0)))
       (delete-region start end))
 
+    
+    (vm-pgg-state-set 'signed)
+    
     ;; add output from PGP
     (insert "\n")
     (let ((start (point)) end)
