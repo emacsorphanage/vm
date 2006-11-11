@@ -892,7 +892,7 @@ seed and thus creates the same boundery when called twice in a short period."
     (mail-position-on-field "Content-Type")
     (insert "multipart/signed;\n"
             "\tboundary=\"" boundary "\";\n"
-            "\tmicalg=pgg-\"" micalg "\";\n"
+            "\tmicalg=pgg-" micalg ";\n"
             "\tprotocol=\"application/pgp-signature\"")))
     
 ;;; ###autoload
