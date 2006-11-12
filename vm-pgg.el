@@ -35,11 +35,10 @@
 ;; 
 ;;      (and (locate-library "vm-pgg") (require 'vm-pgg))
 ;;
-;; If you set `vm-auto-displayed-mime-content-types' or
-;; `vm-auto-displayed-mime-content-types' make sure that
-;; they contain "application/pgp-keys" or set them before
-;; loading vm-pgg.  Otherwise public keys are not detected
-;; automatically .
+;; If you set `vm-auto-displayed-mime-content-types' and/or
+;; `vm-mime-internal-content-types' make sure that they contain
+;; "application/pgp-keys" or set them before loading vm-pgg.
+;; Otherwise public  keys are not detected automatically .
 ;;
 ;; To customize vm-pgg use: M-x customize-group RET vm-pgg RET 
 ;;
