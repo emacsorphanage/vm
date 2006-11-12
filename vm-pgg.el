@@ -698,7 +698,7 @@ When the button is pressed ACTION is called."
       (vm-mime-insert-mime-body signature)
       (setq end (point))
       (write-region start end
-                    (setq signature-file (make-temp-file "vm-pgg-signature")))
+                    (setq signature-file (pgg-make-temp-file "vm-pgg-signature")))
       (delete-region start end)
       (setq start (point))
       (vm-insert-region-from-buffer (marker-buffer (vm-mm-layout-header-start message))
