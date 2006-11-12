@@ -352,7 +352,7 @@ If 'never, always use a viewer instead of replacing."
 (defun vm-pgg-state-set (&rest states)
   ;; clear state for a new message
   (save-excursion
-    (vm-select-folder-buffer-if-possible)
+    (vm-select-folder-buffer)
     (when (not (equal (car vm-message-pointer) vm-pgg-state-message))
       (setq vm-pgg-state-message (car vm-message-pointer))
       (setq vm-pgg-state nil)
@@ -606,6 +606,13 @@ When the button is pressed ACTION is called."
     (goto-char start)
     (while (search-forward "\n" end t)
       (replace-match "\r\n" t t))))
+
+(defadvice vm-decode-mime-message (before vm-pgg-clear-state activate)
+  "Clear the modeline state before decoding."
+  (save-excursion
+    (vm-select-folder-buffer)
+    (setq vm-pgg-state-message nil)
+    (setq vm-pgg-state nil)))
 
 (defun vm-pgg-mime-decrypt (button)
   "Replace the button with the output from `pgg-snarf-keys'."
