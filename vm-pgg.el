@@ -430,7 +430,7 @@ When the button is pressed ACTION is called."
     (if vm-presentation-buffer
 	(set-buffer vm-presentation-buffer))
     (goto-char (point-min))
-    (search-forward "\n\n")
+    (search-forward "\n\n" nil t)
     (if (re-search-forward vm-pgg-cleartext-begin-regexp
                            (+ (point) vm-pgg-cleartext-search-limit)
                            t)
