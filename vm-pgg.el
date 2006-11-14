@@ -351,7 +351,7 @@ If 'never, always use a viewer instead of replacing."
 (defun vm-pgg-state-set (&rest states)
   ;; clear state for a new message
   (save-excursion
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-if-possible)
     (when (not (equal (car vm-message-pointer) vm-pgg-state-message))
       (setq vm-pgg-state-message (car vm-message-pointer))
       (setq vm-pgg-state nil)
