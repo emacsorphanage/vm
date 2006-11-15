@@ -338,6 +338,7 @@ If nil, `pgg-default-user-id' is used as a fallback."
 
 (defvar vm-pgg-mode-line-items
   (let ((items '((error " ERROR" vm-pgg-error)
+                 (unknown " unknown" vm-pgg-good-signature)
                  (verified " verified" vm-pgg-good-signature)))
         mode-line-items
         x i s f)
@@ -697,13 +698,23 @@ When the button is pressed ACTION is called."
          (message (car part-list))
          (signature (car (cdr part-list)))
          status signature-file start end)
+    ;; insert the message 
+    (vm-decode-mime-layout message)
+
     (if (not (and (= (length part-list) 2)
                   ;; TODO: check version and protocol here?
                   (vm-mime-types-match (car (vm-mm-layout-type signature))
                                        "application/pgp-signature")))
-        (insert "Unknown multipart/signed format.")
-      ;; insert the message 
-      (vm-decode-mime-layout message)
+        (let (start end)
+          (vm-pgg-state-set 'unknown)
+          (setq start (point))
+          (insert 
+           (format 
+            "******* unknown signature format %s *******\n"
+            (car (vm-mm-layout-type signature))))
+          (setq end (point))
+          (put-text-property start end 'face 'vm-pgg-bad-signature)
+          (vm-decode-mime-layout signature))
       ;; write signature to a temp file
       (setq start (point))
       (vm-mime-insert-mime-body signature)
