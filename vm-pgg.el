@@ -178,6 +178,14 @@ If 'never, always use a viewer instead of replacing."
   :group 'vm-pgg
    :type 'boolean)
 
+(defcustom vm-pgg-get-author-headers '("From:" "Sender:")
+  "*The list of headers to get the author of a mail that is to be send.
+If nil, `pgg-default-user-id' is used as a fallback."
+  :group 'vm-pgg
+  :type '(repeat string))
+
+
+
 (defvar vm-pgg-compose-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c#e" 'vm-pgg-encrypt-and-sign)
@@ -251,9 +259,6 @@ If 'never, always use a viewer instead of replacing."
   "Return a list of recipients."
   (vm-pgg-get-emails vm-pgg-get-recipients-headers))
 
-(defvar vm-pgg-get-author-headers '("From:" "Sender:")
-  "The list of headers to get the author from.")
-
 (defun vm-pgg-get-author ()
   "Return the author of the message."
   (car (vm-pgg-get-emails vm-pgg-get-author-headers)))
@@ -274,7 +279,10 @@ If 'never, always use a viewer instead of replacing."
   (goto-char (match-end 0))
   ;; guess the author 
   (make-local-variable 'pgg-default-user-id)
-  (setq pgg-default-user-id (or (vm-pgg-get-author) pgg-default-user-id)))
+  (setq pgg-default-user-id 
+        (or 
+         (and vm-pgg-get-author-headers (vm-pgg-get-author))
+         pgg-default-user-id)))
 
 ;;; ###autoload
 (defun vm-pgg-cleartext-encrypt (sign)
@@ -804,7 +812,10 @@ When the button is pressed ACTION is called."
 (defun vm-pgg-attach-public-key ()
   "Attach your public key to a composition."
   (interactive)
-  (let* ((pgg-default-user-id (or (vm-pgg-get-author) pgg-default-user-id))
+  (let* ((pgg-default-user-id 
+          (or 
+           (and vm-pgg-get-author-headers (vm-pgg-get-author))
+           pgg-default-user-id))
          (description (concat "public key of " pgg-default-user-id))
          (buffer (get-buffer-create (concat " *" description "*")))
          start)
