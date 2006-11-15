@@ -556,7 +556,10 @@ When the button is pressed ACTION is called."
   (goto-char (match-end 0))
     
   ;; decrypt 
-  (let ((state (pgg-decrypt-region (point) (point-max))))
+  (let ((state 
+	 (condition-case nil
+	     (pgg-decrypt-region (point) (point-max))
+	   (error nil))))
     (vm-pgg-state-set 'encrypted)
     
     ;; make a presentation copy 
