@@ -2221,7 +2221,8 @@ It saves the decoded message and not the raw message like `vm-save-message'!"
   "\n----------------------------------------------------------------------\n"
   "*The separator which is inserted between the parts of a multipart message."
   :group 'vm-rfaddons
-  :type '(string))
+  :type '(choice (string :tag "Separator")
+                 (const :tag "No Separator" nil)))
 
 ;;;###autoload
 (defun vm-mime-display-internal-multipart/mixed (layout)
@@ -2236,17 +2237,15 @@ LAYOUT specifies the layout."
         ;; RM: show a separator between parts
         (cond
          ((and part-list
-               (not
-                (vm-mime-should-display-button cur nil))
+               (not (vm-mime-should-display-button cur nil))
                (vm-mime-should-display-button (car part-list) nil))
           (insert "\n"))
          ((and part-list
-               (not
-                (vm-mime-should-display-button cur nil))
-               (not
-                (vm-mime-should-display-button (car part-list) nil)))
-                (insert vm-mime-display-internal-multipart/mixed-separater)))))
-    t ))
+               (not (vm-mime-should-display-button cur nil))
+               (not (vm-mime-should-display-button (car part-list) nil))
+               vm-mime-display-internal-multipart/mixed-separate)
+          (insert vm-mime-display-internal-multipart/mixed-separater)))))
+    t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;###autoload
