@@ -2243,7 +2243,7 @@ LAYOUT specifies the layout."
          ((and part-list
                (not (vm-mime-should-display-button cur nil))
                (not (vm-mime-should-display-button (car part-list) nil))
-               vm-mime-display-internal-multipart/mixed-separate)
+               vm-mime-display-internal-multipart/mixed-separater)
           (insert vm-mime-display-internal-multipart/mixed-separater)))))
     t))
 
