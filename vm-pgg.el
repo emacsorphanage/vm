@@ -880,6 +880,7 @@ seed and thus creates the same boundery when called twice in a short period."
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
         (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))
         (boundary (vm-pgg-make-multipart-boundary "pgp+signed"))
+        (pgg-text-mode t) ;; For GNU Emacs PGG
         (micalg "sha1")
         entry
         body-start)
@@ -935,6 +936,7 @@ seed and thus creates the same boundery when called twice in a short period."
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
         (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))
         (boundary (vm-pgg-make-multipart-boundary "pgp+encrypted"))
+        (pgg-text-mode t) ;; For GNU Emacs PGG
         body-start)
     ;; fix the body
     (goto-char (point-min))
