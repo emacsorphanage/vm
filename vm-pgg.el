@@ -614,9 +614,10 @@ When the button is pressed ACTION is called."
 (defun vm-pgg-make-crlf (start end)
   "Convert CRLF to LF in region from START to END."
   (save-excursion
-    (goto-char start)
-    (while (search-forward "\n" end t)
-      (replace-match "\r\n" t t))))
+    (goto-char end)
+    (while (search-backward "\n" start t)
+      (replace-match "\r\n" t t)
+      (backward-char))))
 
 (defadvice vm-decode-mime-message (before vm-pgg-clear-state activate)
   "Clear the modeline state before decoding."
