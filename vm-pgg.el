@@ -163,7 +163,7 @@ If 'never, always use a viewer instead of replacing."
                  (const :tag "always" t)
                  (const :tag "ask" nil)))
 
-(defcustom vm-pgg-fetch-missing-keys nil
+(defcustom vm-pgg-fetch-missing-keys t
   "*If t, PGP will try to fetch missing keys from `pgg-default-keyserver-address'."
   :group 'vm-pgg
    :type 'boolean)
