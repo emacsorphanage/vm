@@ -71,6 +71,7 @@
 ;;
 ;; For PGP/MIME see:
 ;; * http://www.faqs.org/rfcs/rfc2015.html
+;; * http://www.faqs.org/rfcs/rfc2440.html
 ;; * http://www.faqs.org/rfcs/rfc3156.html
 ;;
 
@@ -910,14 +911,15 @@ seed and thus creates the same boundery when called twice in a short period."
                (setq micalg (downcase (format "%s" (cdr entry)))))))
     ;; insert mime part bounderies
     (goto-char body-start)
+    (insert "This is an OpenPGP/MIME signed message (RFC 2440 and 3156)\n")
     (insert "--" boundary "\n")
     (goto-char (point-max))
-    (insert "--" boundary "\n")
+    (insert "\n--" boundary "\n")
     ;; insert the signature
     (insert "Content-Type: application/pgp-signature\n\n")
     (goto-char (point-max))
     (insert-buffer-substring pgg-output-buffer)
-    (insert "--" boundary "--\n")
+    (insert "\n--" boundary "--\n")
     ;; fix the headers 
     (vm-mail-mode-remove-header "MIME-Version:")
     (vm-mail-mode-remove-header "Content-Type:")
@@ -953,13 +955,14 @@ seed and thus creates the same boundery when called twice in a short period."
     (insert "\n")
     (vm-pgg-cleartext-encrypt sign)
     (goto-char body-start)
+    (insert "This is an OpenPGP/MIME encrypted message (RFC 2440 and 3156)\n")
     (insert "--" boundary "\n")
     (insert "Content-Type: application/pgp-encrypted\n\n")
     (insert "Version: 1\n\n")
     (insert "--" boundary "\n")
     (insert "Content-Type: application/octet-stream\n\n")
     (goto-char (point-max))
-    (insert "--" boundary "--\n")
+    (insert "\n--" boundary "--\n")
     ;; fix the headers 
     (vm-mail-mode-remove-header "MIME-Version:")
     (vm-mail-mode-remove-header "Content-Type:")
