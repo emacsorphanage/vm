@@ -470,16 +470,16 @@ When the button is pressed ACTION is called."
 
 (defadvice vm-preview-current-message (after vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages."
+  (vm-pgg-state-set)
   (when (not (eq vm-system-state 'previewing))
-    (vm-pgg-state-set)
     (vm-pgg-cleartext-automode)))
-
+  
 (defadvice vm-scroll-forward (around vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages."
   (let ((vm-system-state-was vm-system-state))
     ad-do-it
+    (vm-pgg-state-set)
     (when (eq vm-system-state-was 'previewing)
-      (vm-pgg-state-set)
       (vm-pgg-cleartext-automode))))
 
 ;;; ###autoload
