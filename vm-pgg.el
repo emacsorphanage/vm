@@ -728,9 +728,9 @@ When the button is pressed ACTION is called."
                                     (vm-mm-layout-header-start message)
                                     (vm-mm-layout-body-end message))
       ;; according to the RFC 3156 we need to skip trailing white space and
-      ;; end with a  CRLF!
-      (skip-chars-backward " \t\r\n\f" start)
-      (insert "\n")
+      ;; end with a  CRLF! But this does not seem to be true ... BUGME!
+;      (skip-chars-backward " \t\r\n\f" start)
+;      (insert "\n")
       (setq end (point-marker))
       (vm-pgg-make-crlf start end)
       (setq status (pgg-verify-region start end signature-file vm-pgg-fetch-missing-keys))
