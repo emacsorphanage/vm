@@ -480,7 +480,7 @@ When the button is pressed ACTION is called."
   (let ((vm-system-state-was vm-system-state))
     ad-do-it
     (vm-pgg-state-set)
-    (when (eq vm-system-state-was 'previewing)
+    (when (not (eq vm-system-state-was 'previewing))
       (vm-pgg-cleartext-automode))))
 
 ;;; ###autoload
