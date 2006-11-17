@@ -142,6 +142,15 @@
   :group 'vm-pgg
   :group 'faces)
 
+(defface vm-pgg-unknown-signature-type 
+  '((((type tty) (class color))
+     (:bold t))
+    (((type tty))
+     (:bold t)))
+  "The face used to highlight unknown signature types."
+  :group 'vm-pgg
+  :group 'faces)
+
 (defface vm-pgg-error
   '((((type tty) (class color))
      (:foreground "red" :bold t))
@@ -339,7 +348,7 @@ If nil, `pgg-default-user-id' is used as a fallback."
 
 (defvar vm-pgg-mode-line-items
   (let ((items '((error " ERROR" vm-pgg-error)
-                 (unknown " unknown" vm-pgg-good-signature)
+                 (unknown " unknown" vm-pgg-unknown-signature-type)
                  (verified " verified" vm-pgg-good-signature)))
         mode-line-items
         x i s f)
@@ -712,11 +721,11 @@ When the button is pressed ACTION is called."
           (setq start (point))
           (insert 
            (format 
-            "******* unknown signature format %s *******\n"
+            "******* unknown signature type %s *******\n"
             (car (vm-mm-layout-type signature))))
           (setq end (point))
-          (put-text-property start end 'face 'vm-pgg-bad-signature)
-          (vm-decode-mime-layout signature))
+          (vm-decode-mime-layout signature) 
+          (put-text-property start end 'face 'vm-pgg-unknown-signature-type))
       ;; write signature to a temp file
       (setq start (point))
       (vm-mime-insert-mime-body signature)
