@@ -897,6 +897,8 @@ seed and thus creates the same boundery when called twice in a short period."
     ;; now create the signature
     (save-excursion 
       (vm-pgp-prepare-composition)
+      ;; BUGME do we need the CRLF conversion?
+;      (vm-pgg-make-crlf (point) (point-max))
       (unless (pgg-sign-region (point) (point-max) nil)
         (pop-to-buffer pgg-errors-buffer)
         (error "Signing error"))
