@@ -167,6 +167,8 @@
 (defcustom vm-pgg-always-replace 'never
   "*If t, decrypt mail messages in place without prompting.
 
+TODO: This is currently disabled as it might cause message corruption. 
+
 If 'never, always use a viewer instead of replacing."
   :group 'vm-pgg
   :type '(choice (const never)
@@ -635,7 +637,8 @@ cleanup here after verification and decoding took place."
           (vm-pgg-cleartext-verify))
       
       ;; replace the message?
-      (when (and (not (eq vm-pgg-always-replace 'never))
+      (when (and nil ;; this is buggy
+                 (not (eq vm-pgg-always-replace 'never))
                  (or vm-pgg-always-replace
                      (y-or-n-p "Replace encrypted message with decrypted? ")))
         (let ((vm-frame-per-edit nil))
