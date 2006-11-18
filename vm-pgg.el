@@ -449,7 +449,7 @@ When the button is pressed ACTION is called."
     (if vm-presentation-buffer
 	(set-buffer vm-presentation-buffer))
     (goto-char (point-min))
-    (search-forward "\n\n" nil t)
+;    (search-forward "\n\n" nil t)
     (if (re-search-forward vm-pgg-cleartext-begin-regexp
                            (+ (point) vm-pgg-cleartext-search-limit)
                            t)
@@ -481,15 +481,20 @@ When the button is pressed ACTION is called."
 (defadvice vm-preview-current-message (after vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages."
   (vm-pgg-state-set)
-  (when (not (eq vm-system-state 'previewing))
+  (when (and (not (eq vm-system-state 'previewing))
+             (not vm-mime-decoded))
     (vm-pgg-cleartext-automode)))
-  
+
 (defadvice vm-scroll-forward (around vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages."
-  (let ((vm-system-state-was vm-system-state))
+  (let ((vm-system-state-was
+         (save-excursion
+           (vm-select-folder-buffer-if-possible)
+           vm-system-state)))
     ad-do-it
     (vm-pgg-state-set)
-    (when (not (eq vm-system-state-was 'previewing))
+    (when (and (eq vm-system-state-was 'previewing)
+               (not vm-mime-decoded))
       (vm-pgg-cleartext-automode))))
 
 ;;; ###autoload
@@ -505,6 +510,57 @@ When the button is pressed ACTION is called."
       (delete-region start end)
       (insert-buffer-substring pgg-output-buffer))))
 
+(defun vm-pgg-cleartext-cleanup (status)
+  "Removed ASCII armor and inserts PGG output depending on STATE."
+  (let (start end)
+    (setq start (and (re-search-forward "^-----BEGIN PGP SIGNED MESSAGE-----$")
+                     (match-beginning 0))
+          end   (and (search-forward "\n\n")
+                     (match-end 0)))
+    (delete-region start end)
+    (setq start (and (re-search-forward "^-----BEGIN PGP SIGNATURE-----$")
+                     (match-beginning 0))
+          end (and (re-search-forward "^-----END PGP SIGNATURE-----$")
+                   (match-end 0)))
+    (delete-region start end)
+    ;; add output from PGP
+    (insert "\n")
+    (let ((start (point)) end)
+      (if (eq status 'error)
+          (insert-buffer-substring pgg-errors-buffer)
+        (insert-buffer-substring pgg-output-buffer)
+        (vm-pgg-crlf-cleanup start (point)))
+      (setq end (point))
+      (put-text-property start end 'face
+                         (if status 'vm-pgg-good-signature 'vm-pgg-bad-signature)))))
+  
+(defadvice vm-mime-transfer-decode-region (around vm-pgg-cleartext-automode activate)
+  "Decode or check signature on clear text messages parts."
+  ad-do-it
+  (when (vm-mime-text-type-layout-p (ad-get-arg 0))
+    (save-excursion
+      (save-restriction
+        (narrow-to-region (ad-get-arg 1) (ad-get-arg 2))
+        (vm-pgg-cleartext-automode)
+        (widen)))))
+  
+(defadvice vm-mime-display-internal-text/plain (around vm-pgg-cleartext-automode activate)
+  "Decode or check signature on clear text messages parts.
+We use the advice here in order to avoid overwriting VMs internal text display
+function.  Faces will get lost if a charset conversion happens thus we do the
+cleanup here after verification and decoding took place."
+  (let ((vm-pgg-cleartext-state nil)
+        (start (point))
+        end)
+    ad-do-it
+    (when vm-pgg-cleartext-state
+      (setq end (point))
+      (save-restriction
+        (narrow-to-region start end)
+        (goto-char (point-min))
+        (vm-pgg-cleartext-cleanup vm-pgg-cleartext-state)
+        (widen)))))
+    
 ;;; ###autoload
 (defun vm-pgg-cleartext-verify ()
   "*Verify the signature in the current message."
@@ -519,44 +575,19 @@ When the button is pressed ACTION is called."
   (unless (eq major-mode 'vm-presentation-mode)
     (vm-pgg-make-presentation-copy))
   
-  ;; skip headers 
-  (goto-char (point-min))
-  (search-forward "\n\n")
-  (goto-char (match-end 0))
-  
-  ;; verify 
-  (let ((buffer-read-only nil)
-        (status (pgg-verify-region (point) (point-max) nil vm-pgg-fetch-missing-keys)))
-    
-    ;; remove ASCII armor
-    (let (start end)
-      (setq start (and (re-search-forward "^-----BEGIN PGP SIGNED MESSAGE-----$")
-                       (match-beginning 0))
-            end   (and (search-forward "\n\n")
-                       (match-end 0)))
-      (delete-region start end)
-      (setq start (and (re-search-forward "^-----BEGIN PGP SIGNATURE-----$")
-                       (match-beginning 0))
-            end (and (re-search-forward "^-----END PGP SIGNATURE-----$")
-                     (match-end 0)))
-      (delete-region start end))
-
-    
-    (vm-pgg-state-set 'signed)
-    
-    ;; add output from PGP
-    (insert "\n")
-    (let ((start (point)) end)
-      (if (not status)
-          (progn
-            (vm-pgg-state-set 'error)
-            (insert-buffer-substring pgg-errors-buffer))
-        (vm-pgg-state-set 'verified)
-        (insert-buffer-substring pgg-output-buffer)
-        (vm-pgg-crlf-cleanup start (point)))
-      (setq end (point))
-      (put-text-property start end 'face
-                         (if status 'vm-pgg-good-signature 'vm-pgg-bad-signature)))))
+  ;; verify
+  (save-excursion
+    (goto-char (point-min))
+    (let ((buffer-read-only nil)
+          (status (pgg-verify-region (point) (point-max) nil vm-pgg-fetch-missing-keys)))
+      
+      (vm-pgg-state-set 'signed)
+      
+      (setq status (if (not status) 'error 'verified))
+      (vm-pgg-state-set status)
+      (if (boundp 'vm-pgg-cleartext-state)
+          (setq vm-pgg-cleartext-state status)
+        (vm-pgg-cleartext-cleanup status)))))
 
 ;;; ###autoload
 (defun vm-pgg-cleartext-decrypt ()
