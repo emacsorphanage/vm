@@ -449,7 +449,7 @@ When the button is pressed ACTION is called."
 (defun vm-pgg-cleartext-automode ()
   ;; now look for a PGP ASCII armor 
   (save-excursion 
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-if-possible)
     (if vm-presentation-buffer
 	(set-buffer vm-presentation-buffer))
     (goto-char (point-min))
@@ -571,7 +571,7 @@ cleanup here after verification and decoding took place."
   (interactive)
   (when (interactive-p)
     (vm-follow-summary-cursor)
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-if-possible)
     (vm-check-for-killed-summary)
     (vm-error-if-folder-empty))
   
@@ -599,7 +599,7 @@ cleanup here after verification and decoding took place."
   (interactive)
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-if-possible)
   (vm-check-for-killed-summary)
   (vm-error-if-folder-read-only)
   (vm-error-if-folder-empty)
