@@ -94,11 +94,11 @@
     (require 'pgg)))
 
 (require 'easymenu)
+(require 'vm-version)
 (require 'vm-misc)
 
 (eval-when-compile
   (require 'cl)
-  (require 'vm-version)
   (require 'vm-vars)
   (require 'vm-mime)
   (require 'vm-reply)
@@ -106,7 +106,9 @@
   (defvar vm-mode-line-format)
   (defvar vm-message-pointer)
   (defvar vm-presentation-buffer)
-  (defvar vm-summary-buffer))
+  (defvar vm-summary-buffer)
+  ;; avoid bytecompile warnings 
+  (defvar vm-pgg-cleartext-state nil "For interfunction communication."))
 
 (defgroup vm nil
   "VM"
