@@ -1515,68 +1515,68 @@ headers."
   :group 'vm-rfaddons
   :type '(regexp))
 
+(defcustom vm-mime-encode-headers-words-regexp
+  (let ((8bit-word "\\([^ \t\n\r]*[\200-\377]+[^ \t\n\r]*\\)+"))
+    (concat "\\s-\\(" 8bit-word "\\(\\s-+" 8bit-word "\\)*\\)"))
+  "*A regexp matching a set of consecutive words which must be encoded."
+  :group 'vm-rfaddons
+  :type '(regexp))
+
 ;;;###autoload
 (defun vm-mime-encode-headers ()
-  "Encodes the headers of a message."
+  "Encodes the headers of a message.
+
+Only the words containing a non 7bit ASCII char are encoded, but not the whole
+header as this will cause trouble for the recipients and authors headers.
+
+Whitespace between encoded words is trimmed during decoding and thus those
+should be encoded together."
   (interactive)
   (save-excursion 
-    (let ((mail-sep (concat "^" (regexp-quote mail-header-separator) "$"))
-          (headers (concat "^\\(" vm-mime-encode-headers-regexp "\\):"))
-          charset coding q-encoding
-          headerbeg headerval headerend start end word)
-    
+    (let ((headers (concat "^\\(" vm-mime-encode-headers-regexp "\\):"))
+          bodysep)
+      
       (goto-char (point-min))
-      (re-search-forward mail-sep (point-max))
-      (beginning-of-line)
-      (setq headerend (point))
-    
-      (while (re-search-backward "^[^ \t:]+:" (point-min) t)
-        (setq headerbeg (match-beginning 0)
-              headerval (match-end 0))
-        (when (looking-at headers)
-          (goto-char headerval)
-          (if (not (looking-at "\\s-"))
-              (insert " "))
-          (goto-char headerend)
+      (search-forward mail-header-separator)
+      (setq bodysep (vm-marker (match-beginning 0)))
+      (goto-char (point-min))
+      
+      (while (re-search-forward headers bodysep t)
+        (goto-char (match-end 0))
+        (when (not (looking-at "\\s-"))
+          (insert " ")
+          (backward-char 1))
+        (let (hend charset coding q-encoding start end)
+          (save-excursion
+            (setq hend (or (and (re-search-forward "^[^ \t:]+:" bodysep t)
+                                (match-beginning 0))
+                           bodysep)
+                  hend  (vm-marker hend)))
           ;; search for words containing chars in the upper 8bit range
-          (while (re-search-backward "\\s-\\([^ \t\n]+\\)" headerval t)
+          (while (re-search-forward vm-mime-encode-headers-words-regexp hend t)
             (setq start (match-beginning 1)
-                  end (match-end 1)
-                  word (match-string 1))
-            ;; If its not encoded so far, encode it now
-            (if (string-match "^=\\?[^?]+\\?[QBqb]?" word)
-                (goto-char start)
-              (setq charset (or (vm-determine-proper-charset start end)
-                                vm-mime-8bit-composition-charset)
-                    coding (vm-string-assoc 
-                            charset vm-mime-mule-charset-to-coding-alist)
-                    coding (and coding (cadr coding))
-                    q-encoding (string-match "^iso-8859-\\|^us-ascii" charset))
-
-              (when (or (not q-encoding)
-                        ;; qp encode only if some chars are not 7bit or other crap
-                        (string-match "[^\t\n\r -~]" word))
-                ;; end
-                (goto-char end)
-                (insert "?=")
-                ;; encode coding system body
-                (when (and coding (not (eq coding 'no-conversion)))
-                  (goto-char end)
-                  ;; this is a bug of encode-coding-region, it does not return
-                  ;; the right length of the new text, but always 0
-                  (let ((old-buffer-size (buffer-size)))
-                    (encode-coding-region start end coding)
-                    (setq end (+ end (- (buffer-size) old-buffer-size)))))
-                ;; unprintable chars in body 
-                (if q-encoding
-                    (vm-mime-Q-encode-region start end)
-                  (vm-mime-B-encode-region start end))
-                ;; start
-                (goto-char start)
-                (insert "=?" charset "?" (if q-encoding "Q" "B") "?")))
-            (goto-char start))
-          (goto-char headerbeg))
-        (setq headerend headerbeg)))))
+                  end   (vm-marker (match-end 1))
+                  charset (or (vm-determine-proper-charset start end)
+                              vm-mime-8bit-composition-charset)
+                  coding (vm-string-assoc charset vm-mime-mule-charset-to-coding-alist)
+                  coding (and coding (cadr coding)))
+            ;; insert end mark 
+            (goto-char end)
+            (insert "?=")
+            ;; encode coding system body
+            (when (and coding (not (eq coding 'no-conversion)))
+              (goto-char end)
+              ;; this is a bug of encode-coding-region, it does not return
+              ;; the right length of the new text, but always 0
+              (let ((old-buffer-size (buffer-size)))
+                (encode-coding-region start end coding)
+                (setq end (+ end (- (buffer-size) old-buffer-size)))))
+            ;; encode unprintable chars in header
+            (vm-mime-Q-encode-region start end)
+            ;; insert start mark
+            (goto-char start)
+            (insert "=?" charset "?Q?")
+            (goto-char end)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (when (not (facep 'vm-shrunken-headers-face))
