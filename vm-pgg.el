@@ -920,8 +920,18 @@ seed and thus creates the same boundery when called twice in a short period."
 
 ;;; ###autoload
 (defun vm-pgg-sign ()
-  "Sign the composition with PGP/MIME."
+  "Sign the composition with PGP/MIME.
+
+RFC 2015 and its successor 3156 forbit the use of 8bit encoding for signed
+messages, but require to use quoted-printable or base64 instead.
+
+Thus you must set `vm-mime-8bit-text-transfer-encoding' to something different
+than 8bit!"
   (interactive)
+  (when (not (member vm-mime-8bit-text-transfer-encoding
+                     '(quoted-printable base64)))
+    (describe-function 'vm-pgg-sign)
+    (error "Signing is broken for %s encoding!" vm-mime-8bit-text-transfer-encoding))
   (unless (vm-mail-mode-get-header-contents "MIME-Version:")
     (vm-mime-encode-composition))
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
