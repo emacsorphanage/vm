@@ -926,14 +926,20 @@ RFC 2015 and its successor 3156 forbit the use of 8bit encoding for signed
 messages, but require to use quoted-printable or base64 instead.
 
 Thus you must set `vm-mime-8bit-text-transfer-encoding' to something different
-than 8bit!"
+than 8bit!
+
+Also line starting with \"From \" cause trouble and should be encoded, thus
+you must set `vm-mime-composition-armor-from-lines' to t."
   (interactive)
-  (when (not (member vm-mime-8bit-text-transfer-encoding
-                     '(quoted-printable base64)))
+  (unless (member vm-mime-8bit-text-transfer-encoding '(quoted-printable base64))
     (describe-function 'vm-pgg-sign)
     (error "Signing is broken for %s encoding!" vm-mime-8bit-text-transfer-encoding))
-  (unless (vm-mail-mode-get-header-contents "MIME-Version:")
-    (vm-mime-encode-composition))
+  (unless (not vm-mime-composition-armor-from-lines)
+    (describe-function 'vm-pgg-sign)
+    (error "Signing is broken for unquoted lines starting with \"From \"!"))
+  
+  (vm-pgp-prepare-composition)
+  
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
         (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))
         (boundary (vm-pgg-make-multipart-boundary "pgp+signed"))
@@ -952,7 +958,6 @@ than 8bit!"
         (insert "\n"))
     ;; now create the signature
     (save-excursion 
-      (vm-pgp-prepare-composition)
       ;; BUGME do we need the CRLF conversion?
 ;      (vm-pgg-make-crlf (point) (point-max))
       (unless (pgg-sign-region (point) (point-max) nil)
