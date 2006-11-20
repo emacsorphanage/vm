@@ -946,8 +946,8 @@ than 8bit!"
     (search-forward (concat "\n" mail-header-separator "\n"))
     (goto-char (match-end 0))
     (setq body-start (point-marker))
-    (insert "Content-Type:" (or content-type "text/plain") "\n")
-    (insert "Content-Transfer-Encoding:" (or encoding "7bit") "\n")
+    (insert "Content-Type: " (or content-type "text/plain") "\n")
+    (insert "Content-Transfer-Encoding: " (or encoding "7bit") "\n")
     (if (not (looking-at "\n"))
         (insert "\n"))
     ;; now create the signature
