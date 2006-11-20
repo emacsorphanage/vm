@@ -982,10 +982,8 @@ than 8bit!"
     (mail-position-on-field "MIME-Version")
     (insert "1.0")
     (mail-position-on-field "Content-Type")
-    (insert "multipart/signed;\n"
-            "\tboundary=\"" boundary "\";\n"
-            "\tmicalg=pgg-" micalg ";\n"
-            "\tprotocol=\"application/pgp-signature\"")))
+    (insert "multipart/signed; \tboundary=\"" boundary "\";\n"
+            "\tmicalg=pgg-" micalg "; protocol=\"application/pgp-signature\"")))
     
 ;;; ###autoload
 (defun vm-pgg-encrypt (sign)
