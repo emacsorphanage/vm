@@ -2,7 +2,7 @@
 ;; 
 ;; Copyright (C) 2006 Robert Widhopf-Fenk
 ;;
-;; Author:      Robert Widhopf-Fenk
+;; Author:      Robert Widhopf-Fenk, Jens Gustedt
 ;; Status:      Tested with XEmacs 21.4.19 & VM 7.19
 ;; Keywords:    VM helpers
 ;; X-URL:       http://www.robf.de/Hacking/elisp
