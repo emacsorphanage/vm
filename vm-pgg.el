@@ -281,6 +281,12 @@ See `vm-pgg-sign' for details."
   "Return the author of the message."
   (car (vm-pgg-get-emails vm-pgg-get-author-headers)))
 
+(defun vm-pgp-goto-body-start ()
+  (goto-char (point-min))
+  (search-forward (concat "\n" mail-header-separator "\n"))
+  (goto-char (match-end 0))
+  (point))
+
 (defun vm-pgp-prepare-composition ()
   "Prepare the composition for encrypting or signing."
   ;; encode message
@@ -292,9 +298,7 @@ See `vm-pgg-sign' for details."
   (delete-region (point) (point-max))
   (insert "\n")
   ;; skip headers
-  (goto-char (point-min))
-  (search-forward (concat "\n" mail-header-separator "\n"))
-  (goto-char (match-end 0))
+  (vm-pgp-goto-body-start)
   ;; guess the author 
   (make-local-variable 'pgg-default-user-id)
   (setq pgg-default-user-id 
@@ -941,23 +945,24 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
 `vm-pgg-sign-text-transfer-encoding'."
   (interactive)
   
-  (if (not (vm-mail-mode-get-header-contents "MIME-Version:"))
-      (let ((vm-mime-8bit-text-transfer-encoding
-             vm-pgg-sign-text-transfer-encoding)
-            (vm-mime-composition-armor-from-lines t))
-        (vm-pgp-prepare-composition))
+  (when (vm-mail-mode-get-header-contents "MIME-Version:")
     ;; do a simple sanity check ... too simple as we should walk the MIME part 
     ;; hierarchy and only check the MIME headers ...  
     (goto-char (point-min))
     (when (re-search-forward "Content-Transfer-Encoding:\\s-*8bit" nil t)
       (describe-function 'vm-pgg-sign)
       (error "Signing is broken for 8bit encoding!"))
-    
     (goto-char (point-min))
     (when (re-search-forward "^From\\s-+" nil t)
       (describe-function 'vm-pgg-sign)
       (error "Signing is broken for lines starting with \"From \"!")))
-    
+
+  ;; prepare composition 
+  (let ((vm-mime-8bit-text-transfer-encoding
+         vm-pgg-sign-text-transfer-encoding)
+        (vm-mime-composition-armor-from-lines t))
+    (vm-pgp-prepare-composition))
+  
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
         (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))
         (boundary (vm-pgg-make-multipart-boundary "pgp+signed"))
@@ -966,19 +971,16 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
         entry
         body-start)
     ;; fix the body
-    (goto-char (point-min))
-    (search-forward (concat "\n" mail-header-separator "\n"))
-    (goto-char (match-end 0))
-    (setq body-start (point-marker))
+    (setq body-start (vm-marker (vm-pgp-goto-body-start)))
     (insert "Content-Type: " (or content-type "text/plain") "\n")
     (insert "Content-Transfer-Encoding: " (or encoding "7bit") "\n")
     (if (not (looking-at "\n"))
         (insert "\n"))
     ;; now create the signature
-    (save-excursion 
+    (save-excursion
       ;; BUGME do we need the CRLF conversion?
 ;      (vm-pgg-make-crlf (point) (point-max))
-      (unless (pgg-sign-region (point) (point-max) nil)
+      (unless (pgg-sign-region body-start (point-max) nil)
         (pop-to-buffer pgg-errors-buffer)
         (error "Signing error"))
       (and (setq entry (assq 2 (pgg-parse-armor
@@ -1020,10 +1022,7 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
         (pgg-text-mode t) ;; For GNU Emacs PGG
         body-start)
     ;; fix the body
-    (goto-char (point-min))
-    (search-forward (concat "\n" mail-header-separator "\n"))
-    (goto-char (match-end 0))
-    (setq body-start (point-marker))
+    (setq body-start (vm-marker (vm-pgp-goto-body-start)))
     (insert "Content-Type: " (or content-type "text/plain") "\n")
     (insert "Content-Transfer-Encoding: " (or encoding "7bit") "\n")
     (insert "\n")
