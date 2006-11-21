@@ -198,7 +198,11 @@ If nil, `pgg-default-user-id' is used as a fallback."
   :group 'vm-pgg
   :type '(repeat string))
 
-
+(defcustom vm-pgg-sign-text-transfer-encoding 'quoted-printable
+  "*The encoding used for signed MIME parts of type text.
+See `vm-pgg-sign' for details." 
+  :group 'vm-pgg
+  :type '(choice (const quoted-printable) (const base64)))
 
 (defvar vm-pgg-compose-mode-map
   (let ((map (make-sparse-keymap)))
@@ -922,24 +926,38 @@ seed and thus creates the same boundery when called twice in a short period."
 (defun vm-pgg-sign ()
   "Sign the composition with PGP/MIME.
 
-RFC 2015 and its successor 3156 forbit the use of 8bit encoding for signed
-messages, but require to use quoted-printable or base64 instead.
+If the composition is not encoded so far, it is encoded before signing.
+Signing of already encoded messages is discouraged.
 
-Thus you must set `vm-mime-8bit-text-transfer-encoding' to something different
-than 8bit!
+RFC 2015 and its successor 3156 forbid the use of 8bit encoding for signed
+messages, but require to use quoted-printable or base64 instead.  Also lines
+starting with \"From \" cause trouble and should be quoted.
 
-Also line starting with \"From \" cause trouble and should be encoded, thus
-you must set `vm-mime-composition-armor-from-lines' to t."
+Thus signing of encoded messages may cause an error.  To avoid this you must
+set `vm-mime-8bit-text-transfer-encoding' to something different than 8bit and
+`vm-mime-composition-armor-from-lines' to t.
+
+The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
+`vm-pgg-sign-text-transfer-encoding'."
   (interactive)
-  (unless (member vm-mime-8bit-text-transfer-encoding '(quoted-printable base64))
-    (describe-function 'vm-pgg-sign)
-    (error "Signing is broken for %s encoding!" vm-mime-8bit-text-transfer-encoding))
-  (unless (not vm-mime-composition-armor-from-lines)
-    (describe-function 'vm-pgg-sign)
-    (error "Signing is broken for unquoted lines starting with \"From \"!"))
   
-  (vm-pgp-prepare-composition)
-  
+  (if (not (vm-mail-mode-get-header-contents "MIME-Version:"))
+      (let ((vm-mime-8bit-text-transfer-encoding
+             vm-pgg-sign-text-transfer-encoding)
+            (vm-mime-composition-armor-from-lines t))
+        (vm-pgp-prepare-composition))
+    ;; do a simple sanity check ... too simple as we should walk the MIME part 
+    ;; hierarchy and only check the MIME headers ...  
+    (goto-char (point-min))
+    (when (re-search-forward "Content-Transfer-Encoding:\\s-*8bit" nil t)
+      (describe-function 'vm-pgg-sign)
+      (error "Signing is broken for 8bit encoding!"))
+    
+    (goto-char (point-min))
+    (when (re-search-forward "^From\\s-+" nil t)
+      (describe-function 'vm-pgg-sign)
+      (error "Signing is broken for lines starting with \"From \"!")))
+    
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
         (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))
         (boundary (vm-pgg-make-multipart-boundary "pgp+signed"))
@@ -987,7 +1005,7 @@ you must set `vm-mime-composition-armor-from-lines' to t."
     (mail-position-on-field "MIME-Version")
     (insert "1.0")
     (mail-position-on-field "Content-Type")
-    (insert "multipart/signed; \tboundary=\"" boundary "\";\n"
+    (insert "multipart/signed; boundary=\"" boundary "\";\n"
             "\tmicalg=pgg-" micalg "; protocol=\"application/pgp-signature\"")))
     
 ;;; ###autoload
