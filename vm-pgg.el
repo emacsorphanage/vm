@@ -926,6 +926,22 @@ seed and thus creates the same boundery when called twice in a short period."
       (vm-increment i))
     boundary))
 
+(defun vm-pgg-save-work (function &rest args)
+  "Do WORK without messing up the composition in case of an error."
+  (let ((composition-buffer (current-buffer))
+        (undo-list-backup buffer-undo-list) 
+        (work-buffer (get-buffer-create " *VM-PGG-WORK*")))
+    (save-excursion
+      (set-buffer work-buffer)
+      (buffer-disable-undo)
+      (erase-buffer)
+      (insert-buffer-substring composition-buffer)
+      (setq major-mode 'mail-mode)
+      (apply function args))
+    (erase-buffer)
+    (insert-buffer-substring work-buffer)
+    (kill-buffer work-buffer)))
+
 ;;; ###autoload
 (defun vm-pgg-sign ()
   "Sign the composition with PGP/MIME.
@@ -944,7 +960,7 @@ set `vm-mime-8bit-text-transfer-encoding' to something different than 8bit and
 The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
 `vm-pgg-sign-text-transfer-encoding'."
   (interactive)
-  
+
   (when (vm-mail-mode-get-header-contents "MIME-Version:")
     ;; do a simple sanity check ... too simple as we should walk the MIME part 
     ;; hierarchy and only check the MIME headers ...  
@@ -956,7 +972,11 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
     (when (re-search-forward "^From\\s-+" nil t)
       (describe-function 'vm-pgg-sign)
       (error "Signing is broken for lines starting with \"From \"!")))
+  
+  (vm-pgg-save-work 'vm-pgg-sign-internal))
 
+(defun vm-pgg-sign-internal ()
+  "Do the signing."
   ;; prepare composition 
   (let ((vm-mime-8bit-text-transfer-encoding
          vm-pgg-sign-text-transfer-encoding)
@@ -1014,6 +1034,10 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
 (defun vm-pgg-encrypt (sign)
   "Encrypt the composition as PGP/MIME. With a prefix arg SIGN also sign it."
   (interactive "P")
+  (vm-pgg-save-work 'vm-pgg-encrypt-internal sign))
+
+(defun vm-pgg-encrypt-internal (sign)
+  "Do the encrypting."
   (unless (vm-mail-mode-get-header-contents "MIME-Version:")
     (vm-mime-encode-composition))
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
