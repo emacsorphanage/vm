@@ -25,10 +25,10 @@
 
 ;;; Commentary:
 ;;
-;; This is a replacement for mailcrypt adding PGP/MIME support to VM. 
+;; This is a replacement for mailcrypt adding PGP/MIME support to VM.
 ;;
-;; It requires PGG which is a standard package for XEmacs and is a part 
-;; of Gnus for GNU Emacs.  On Debian "apt-get install gnus" should do the 
+;; It requires PGG which is a standard package for XEmacs and is a part
+;; of Gnus for GNU Emacs.  On Debian "apt-get install gnus" should do the
 ;; trick.
 ;;
 ;; It is still in BETA state thus you must explicitly load it by
@@ -40,19 +40,19 @@
 ;; "application/pgp-keys" or set them before loading vm-pgg.
 ;; Otherwise public  keys are not detected automatically .
 ;;
-;; To customize vm-pgg use: M-x customize-group RET vm-pgg RET 
+;; To customize vm-pgg use: M-x customize-group RET vm-pgg RET
 ;;
 ;; Displaying of messages in the PGP(/MIME) format will automatically trigger:
 ;;  * decrypted of encrypted MIME parts
-;;  * verification of signed MIME parts 
+;;  * verification of signed MIME parts
 ;;  * snarfing of public keys
 ;;
 ;; The status of the current message will also be displayed in the modeline.
 ;;
 ;; To create messages according to PGP/MIME you should use:
 ;;  * M-x vm-pgg-encrypt       for encrypting
-;;  * M-x vm-pgg-sign          for signing  
-;;  * C-u M-x vm-pgg-encrypt   for encrypting + signing 
+;;  * M-x vm-pgg-sign          for signing
+;;  * C-u M-x vm-pgg-encrypt   for encrypting + signing
 ;;
 ;; All these commands are also available in the menu PGP/MIME which is
 ;; activated by the minor mode `vm-pgg-compose-mode'.  There are also
@@ -60,14 +60,14 @@
 ;;
 ;; If you get annoyed by answering password prompts you might want to set the
 ;; variable `pgg-cache-passphrase' to t and `pgg-passphrase-cache-expiry' to a
-;; higher value or nil! 
+;; higher value or nil!
 ;;
 
 ;;; References:
 ;;
 ;; Code partially stems from the sources:
 ;; * mml2015.el (Gnus)
-;; * mc-toplev.el (Mailcrypt) 
+;; * mc-toplev.el (Mailcrypt)
 ;;
 ;; For PGP/MIME see:
 ;; * http://www.faqs.org/rfcs/rfc2015.html
@@ -85,7 +85,7 @@
 
 ;;; Code:
 
-;; handle missing pgg.el gracefully 
+;; handle missing pgg.el gracefully
 (eval-and-compile
   (if (and (boundp 'byte-compile-current-file) byte-compile-current-file)
       (condition-case nil
@@ -102,12 +102,12 @@
   (require 'vm-vars)
   (require 'vm-mime)
   (require 'vm-reply)
-  ;; avoid warnings 
+  ;; avoid warnings
   (defvar vm-mode-line-format)
   (defvar vm-message-pointer)
   (defvar vm-presentation-buffer)
   (defvar vm-summary-buffer)
-  ;; avoid bytecompile warnings 
+  ;; avoid bytecompile warnings
   (defvar vm-pgg-cleartext-state nil "For interfunction communication."))
 
 (defgroup vm nil
@@ -144,7 +144,7 @@
   :group 'vm-pgg
   :group 'faces)
 
-(defface vm-pgg-unknown-signature-type 
+(defface vm-pgg-unknown-signature-type
   '((((type tty) (class color))
      (:bold t))
     (((type tty))
@@ -169,7 +169,7 @@
 (defcustom vm-pgg-always-replace 'never
   "*If t, decrypt mail messages in place without prompting.
 
-TODO: This is currently disabled as it might cause message corruption. 
+TODO: This is currently disabled as it might cause message corruption.
 
 If 'never, always use a viewer instead of replacing."
   :group 'vm-pgg
@@ -200,7 +200,7 @@ If nil, `pgg-default-user-id' is used as a fallback."
 
 (defcustom vm-pgg-sign-text-transfer-encoding 'quoted-printable
   "*The encoding used for signed MIME parts of type text.
-See `vm-pgg-sign' for details." 
+See `vm-pgg-sign' for details."
   :group 'vm-pgg
   :type '(choice (const quoted-printable) (const base64)))
 
@@ -232,6 +232,9 @@ See `vm-pgg-sign' for details."
 
 (defun vm-pgg-compose-mode (&optional arg)
   "\nMinor mode for interfacing with cryptographic functions.
+
+Switch mode on/off according to ARG.
+
 \\<vm-pgg-compose-mode-map>"
   (interactive)
   (setq vm-pgg-compose-mode
@@ -242,7 +245,7 @@ See `vm-pgg-sign' for details."
     (easy-menu-remove vm-pgg-compose-mode-menu)))
 
 (defvar vm-pgg-compose-mode-string " vm-pgg"
-  "*String to put in mode line when `vm-pgg-compose-mode' is active.")
+  "*String to put in mode line when function `vm-pgg-compose-mode' is active.")
 
 
 (if (not (assq 'vm-pgg-compose-mode minor-mode-map-alist))
@@ -255,7 +258,7 @@ See `vm-pgg-sign' for details."
 	  (cons '(vm-pgg-compose-mode vm-pgg-compose-mode-string) minor-mode-alist)))
 
 (defun vm-pgg-compose-mode-activate ()
-  "Activate `vm-pgg-compose-mode'."
+  "Activate function `vm-pgg-compose-mode'."
   (vm-pgg-compose-mode 1))
 
 (add-hook 'vm-mail-mode-hook 'vm-pgg-compose-mode-activate t)
@@ -282,6 +285,7 @@ See `vm-pgg-sign' for details."
   (car (vm-pgg-get-emails vm-pgg-get-author-headers)))
 
 (defun vm-pgp-goto-body-start ()
+  "Goto the start of the body and return point."
   (goto-char (point-min))
   (search-forward (concat "\n" mail-header-separator "\n"))
   (goto-char (match-end 0))
@@ -299,10 +303,10 @@ See `vm-pgg-sign' for details."
   (insert "\n")
   ;; skip headers
   (vm-pgp-goto-body-start)
-  ;; guess the author 
+  ;; guess the author
   (make-local-variable 'pgg-default-user-id)
-  (setq pgg-default-user-id 
-        (or 
+  (setq pgg-default-user-id
+        (or
          (and vm-pgg-get-author-headers (vm-pgg-get-author))
          pgg-default-user-id)))
 
@@ -310,7 +314,7 @@ See `vm-pgg-sign' for details."
 (defun vm-pgg-cleartext-encrypt (sign)
   "*Encrypt the composition as cleartext and with a prefix also SIGN it."
   (interactive "P")
-  (save-excursion 
+  (save-excursion
     (vm-pgp-prepare-composition)
     (let ((start (point)) (end   (point-max)))
       (unless (pgg-encrypt-region start end (vm-pgg-get-recipients) sign)
@@ -321,7 +325,7 @@ See `vm-pgg-sign' for details."
 
 (defun vm-pgg-make-presentation-copy ()
   "Make a presentation copy also for cleartext PGP messages."
-  ;; make a presentation copy 
+  ;; make a presentation copy
   (vm-make-presentation-copy (car vm-message-pointer))
   (vm-save-buffer-excursion
    (vm-replace-buffer-in-windows (current-buffer)
@@ -329,16 +333,16 @@ See `vm-pgg-sign' for details."
   (set-buffer vm-presentation-buffer)
   
   (let ((buffer-read-only nil))
-    ;; remove From line 
+    ;; remove From line
     (goto-char (point-min))
     (forward-line 1)
     (delete-region (point-min) (point))
-    ;; insert decrypted message 
+    ;; insert decrypted message
     (search-forward "\n\n")
     (goto-char (match-end 0))
     (delete-region (point) (point-max))
     (insert-buffer-substring pgg-output-buffer)
-    ;; do cleanup 
+    ;; do cleanup
     (vm-pgg-crlf-cleanup (point-min) (point-max))
     (goto-char (point-min))
     (vm-reorder-message-headers nil vm-visible-headers
@@ -380,6 +384,8 @@ See `vm-pgg-sign' for details."
     (setq vm-mode-line-format (append '("" vm-pgg-state) vm-mode-line-format)))
 
 (defun vm-pgg-state-set (&rest states)
+  "Set the message state  displayed in the modeline acording to STATES.
+If STATES is nil, clear it."
   ;; clear state for a new message
   (save-excursion
     (vm-select-folder-buffer-if-possible)
@@ -418,11 +424,11 @@ See `vm-pgg-sign' for details."
 
 (defvar vm-pgg-cleartext-begin-regexp
   "^-----BEGIN PGP \\(\\(SIGNED \\)?MESSAGE\\|PUBLIC KEY BLOCK\\)-----$"
-    "regexp used to match PGP armor.")
+    "Regexp used to match PGP armor.")
 
 (defvar vm-pgg-cleartext-end-regexp
   "^-----END PGP %s-----$"
-    "regexp used to match PGP armor.")
+    "Regexp used to match PGP armor.")
 
 (defcustom vm-pgg-cleartext-search-limit 4096
   "Number of bytes to peek into the message for a PGP clear text armor."
@@ -455,8 +461,8 @@ When the button is pressed ACTION is called."
         (overlay-put o 'local-map keymap)))))
 
 (defun vm-pgg-cleartext-automode ()
-  ;; now look for a PGP ASCII armor 
-  (save-excursion 
+  "Check for PGP ASCII armor and triggers automatic verification/decryption."
+  (save-excursion
     (vm-select-folder-buffer-if-possible)
     (if vm-presentation-buffer
 	(set-buffer vm-presentation-buffer))
@@ -485,7 +491,7 @@ When the button is pressed ACTION is called."
                       (lambda ()
                         (interactive)
                         (let ((vm-pgg-auto-snarf t))
-                          (vm-pgg-snarf-keys)))))) 
+                          (vm-pgg-snarf-keys))))))
                   (t
                    (error "This should never happen!")))
 	  (error (message "%S" e))))))
@@ -513,7 +519,7 @@ When the button is pressed ACTION is called."
 (defun vm-pgg-cleartext-sign ()
   "*Sign the message."
   (interactive)
-  (save-excursion 
+  (save-excursion
     (vm-pgp-prepare-composition)
     (let ((start (point)) (end (point-max)))
       (unless (pgg-sign-region start end t)
@@ -523,7 +529,7 @@ When the button is pressed ACTION is called."
       (insert-buffer-substring pgg-output-buffer))))
 
 (defun vm-pgg-cleartext-cleanup (status)
-  "Removed ASCII armor and inserts PGG output depending on STATE."
+  "Removed ASCII armor and insert PGG output depending on STATUS."
   (let (start end)
     (setq start (and (re-search-forward "^-----BEGIN PGP SIGNED MESSAGE-----$")
                      (match-beginning 0))
@@ -583,7 +589,7 @@ cleanup here after verification and decoding took place."
     (vm-check-for-killed-summary)
     (vm-error-if-folder-empty))
   
-  ;; create a presentation copy 
+  ;; create a presentation copy
   (unless (eq major-mode 'vm-presentation-mode)
     (vm-pgg-make-presentation-copy))
   
@@ -612,19 +618,19 @@ cleanup here after verification and decoding took place."
   (vm-error-if-folder-read-only)
   (vm-error-if-folder-empty)
     
-  ;; skip headers 
+  ;; skip headers
   (goto-char (point-min))
   (search-forward "\n\n")
   (goto-char (match-end 0))
     
-  ;; decrypt 
-  (let ((state 
+  ;; decrypt
+  (let ((state
 	 (condition-case nil
 	     (pgg-decrypt-region (point) (point-max))
 	   (error nil))))
     (vm-pgg-state-set 'encrypted)
     
-    ;; make a presentation copy 
+    ;; make a presentation copy
     (unless (eq major-mode 'vm-presentation-mode)
       (vm-pgg-make-presentation-copy))
 
@@ -633,7 +639,7 @@ cleanup here after verification and decoding took place."
     (forward-line 1)
     
     (if (not state)
-        ;; insert the error message 
+        ;; insert the error message
         (let ((buffer-read-only nil)
               (start (point)))
           (vm-pgg-state-set 'error)
@@ -681,7 +687,7 @@ cleanup here after verification and decoding took place."
     (setq vm-pgg-state nil)))
 
 (defun vm-pgg-mime-decrypt (button)
-  "Replace the button with the output from `pgg-snarf-keys'."
+  "Replace the BUTTON with the output from `pgg-snarf-keys'."
   (let ((vm-pgg-auto-decrypt t)
         (layout (copy-sequence (vm-extent-property button 'vm-mime-layout))))
     (vm-set-extent-property button 'vm-mime-disposable t)
@@ -706,13 +712,13 @@ cleanup here after verification and decoding took place."
                                           "application/octet-stream")))
            (insert "Unknown multipart/encrypted format."))
           ((not vm-pgg-auto-decrypt)
-           ;; add a button 
+           ;; add a button
            (let ((buffer-read-only nil))
              (vm-mime-insert-button
               (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
               'vm-pgg-mime-decrypt
               layout nil)))
-          (t 
+          (t
            ;; decode the message now
            (save-excursion
              (set-buffer (vm-buffer-of (vm-mm-layout-message message)))
@@ -753,7 +759,7 @@ cleanup here after verification and decoding took place."
          (message (car part-list))
          (signature (car (cdr part-list)))
          status signature-file start end)
-    ;; insert the message 
+    ;; insert the message
     (vm-decode-mime-layout message)
 
     (if (not (and (= (length part-list) 2)
@@ -763,12 +769,12 @@ cleanup here after verification and decoding took place."
         (let (start end)
           (vm-pgg-state-set 'unknown)
           (setq start (point))
-          (insert 
-           (format 
+          (insert
+           (format
             "******* unknown signature type %s *******\n"
             (car (vm-mm-layout-type signature))))
           (setq end (point))
-          (vm-decode-mime-layout signature) 
+          (vm-decode-mime-layout signature)
           (put-text-property start end 'face 'vm-pgg-unknown-signature-type))
       ;; write signature to a temp file
       (setq start (point))
@@ -806,7 +812,7 @@ cleanup here after verification and decoding took place."
       t)))
 
 ;; we must add these in order to force VM to call our handler
-(eval-and-compile 
+(eval-and-compile
   (if (listp vm-auto-displayed-mime-content-types)
       (add-to-list 'vm-auto-displayed-mime-content-types "application/pgp-keys"))
   (if (listp vm-mime-internal-content-types)
@@ -817,7 +823,7 @@ cleanup here after verification and decoding took place."
                '("multipart/encrypted" . "Decrypt PGP/MIME message")))
 
 (defun vm-pgg-mime-snarf-keys (button)
-  "Replace the button with the output from `pgg-snarf-keys'."
+  "Replace the BUTTON with the output from `pgg-snarf-keys'."
   (let ((vm-pgg-auto-snarf t)
         (layout (copy-sequence (vm-extent-property button 'vm-mime-layout))))
     (vm-set-extent-property button 'vm-mime-disposable t)
@@ -839,7 +845,7 @@ cleanup here after verification and decoding took place."
         (save-excursion
           (setq status (pgg-snarf-keys-region start end)))
         (delete-region start end)
-        ;; now insert the result of snafing 
+        ;; now insert the result of snafing
         (if status
             (insert-buffer-substring pgg-output-buffer)
           (insert-buffer-substring pgg-errors-buffer)))
@@ -863,11 +869,11 @@ cleanup here after verification and decoding took place."
     ;; ensure we are in the right buffer
     (if vm-presentation-buffer
         (set-buffer vm-presentation-buffer))
-    ;; skip headers 
+    ;; skip headers
     (goto-char (point-min))
     (search-forward "\n\n")
     (goto-char (match-end 0))
-    ;; verify 
+    ;; verify
     (unless (pgg-snarf-keys)
       (error "Snarfing failed"))
     (save-excursion
@@ -878,8 +884,8 @@ cleanup here after verification and decoding took place."
 (defun vm-pgg-attach-public-key ()
   "Attach your public key to a composition."
   (interactive)
-  (let* ((pgg-default-user-id 
-          (or 
+  (let* ((pgg-default-user-id
+          (or
            (and vm-pgg-get-author-headers (vm-pgg-get-author))
            pgg-default-user-id))
          (description (concat "public key of " pgg-default-user-id))
@@ -911,7 +917,7 @@ cleanup here after verification and decoding took place."
           (put-text-property start end 'vm-mime-disposition disposition))))))
 
 (defun vm-pgg-make-multipart-boundary (word)
-  "Creates a mime part boundery. 
+  "Create a mime part boundery starting with WORD and return it.
 
 We cannot use `vm-mime-make-multipart-boundary' as it uses the current time as
 seed and thus creates the same boundery when called twice in a short period."
@@ -927,9 +933,9 @@ seed and thus creates the same boundery when called twice in a short period."
     boundary))
 
 (defun vm-pgg-save-work (function &rest args)
-  "Do WORK without messing up the composition in case of an error."
+  "Call FUNCTION with ARGS without messing up the composition in case of an error."
   (let ((composition-buffer (current-buffer))
-        (undo-list-backup buffer-undo-list) 
+        (undo-list-backup buffer-undo-list)
         (work-buffer (get-buffer-create " *VM-PGG-WORK*")))
     (save-excursion
       (set-buffer work-buffer)
@@ -962,8 +968,8 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
   (interactive)
 
   (when (vm-mail-mode-get-header-contents "MIME-Version:")
-    ;; do a simple sanity check ... too simple as we should walk the MIME part 
-    ;; hierarchy and only check the MIME headers ...  
+    ;; do a simple sanity check ... too simple as we should walk the MIME part
+    ;; hierarchy and only check the MIME headers ...
     (goto-char (point-min))
     (when (re-search-forward "Content-Transfer-Encoding:\\s-*8bit" nil t)
       (describe-function 'vm-pgg-sign)
@@ -977,7 +983,7 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
 
 (defun vm-pgg-sign-internal ()
   "Do the signing."
-  ;; prepare composition 
+  ;; prepare composition
   (let ((vm-mime-8bit-text-transfer-encoding
          vm-pgg-sign-text-transfer-encoding)
         (vm-mime-composition-armor-from-lines t))
@@ -1020,7 +1026,7 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
     (goto-char (point-max))
     (insert-buffer-substring pgg-output-buffer)
     (insert "\n--" boundary "--\n")
-    ;; fix the headers 
+    ;; fix the headers
     (vm-mail-mode-remove-header "MIME-Version:")
     (vm-mail-mode-remove-header "Content-Type:")
     (vm-mail-mode-remove-header "Content-Transfer-Encoding:")
@@ -1032,12 +1038,12 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
     
 ;;; ###autoload
 (defun vm-pgg-encrypt (sign)
-  "Encrypt the composition as PGP/MIME. With a prefix arg SIGN also sign it."
+  "Encrypt the composition as PGP/MIME.  With a prefix arg SIGN also sign it."
   (interactive "P")
   (vm-pgg-save-work 'vm-pgg-encrypt-internal sign))
 
 (defun vm-pgg-encrypt-internal (sign)
-  "Do the encrypting."
+  "Do the encrypting, if SIGN is t also sign it."
   (unless (vm-mail-mode-get-header-contents "MIME-Version:")
     (vm-mime-encode-composition))
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
@@ -1062,7 +1068,7 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
     (insert "Content-Type: application/octet-stream\n\n")
     (goto-char (point-max))
     (insert "\n--" boundary "--\n")
-    ;; fix the headers 
+    ;; fix the headers
     (vm-mail-mode-remove-header "MIME-Version:")
     (vm-mail-mode-remove-header "Content-Type:")
     (vm-mail-mode-remove-header "Content-Transfer-Encoding:")
@@ -1088,7 +1094,7 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
           (setq event (bbdb-event-to-character (aref event 0)))
         (setq event (if (stringp event) (aref event 0))))
       (cond ((eq event ?q)
-             (error "Sending aborted."))
+             (error "Sending aborted"))
             ((eq event ?s)
              (vm-pgg-sign)
              (message "Sending signed message..."))
