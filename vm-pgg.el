@@ -1054,6 +1054,33 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
   (interactive)
   (vm-pgg-encrypt t))
 
+(defun vm-pgg-mail-send ()
+  "Replacement for `vm-mail-send' asking for signing and/or encrypting."
+  (interactive)
+  (let ((prompt "Send composition signed (s), encrypted (e), both (E), normal (RET) or quit (q)? ")
+        event)
+    (while (not event)
+      (setq event (read-key-sequence prompt))
+      (if (featurep 'xemacs)
+          (setq event (bbdb-event-to-character (aref event 0)))
+        (setq event (if (stringp event) (aref event 0))))
+      (cond ((eq event ?q)
+             (error "Sending aborted."))
+            ((eq event ?s)
+             (vm-pgg-sign)
+             (message "Sending signed message..."))
+            ((eq event ?e)
+             (vm-pgg-encrypt nil)
+             (message "Sending encrypted message..."))
+            ((eq event ?E)
+             (vm-pgg-encrypt t)
+             (message "Sending encrypted and signed message..."))
+            ((eq event ?\r)
+             (message "Sending an unsave message..."))
+            (t
+             (setq event nil))))
+    (vm-mail-send)))
+
 (provide 'vm-pgg)
 
 ;;; vm-pgg.el ends here
