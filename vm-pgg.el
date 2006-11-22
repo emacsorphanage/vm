@@ -247,6 +247,30 @@ Switch mode on/off according to ARG.
 (defvar vm-pgg-compose-mode-string " vm-pgg"
   "*String to put in mode line when function `vm-pgg-compose-mode' is active.")
 
+(defcustom vm-pgg-ask-function 'vm-pgg-sign
+  "*The function to use in `vm-pgg-ask-hook'."
+  :group 'vm-pgg
+  :type '(choice
+          (const 
+           :tag "do nothing" 
+           :doc "Disable `vm-pgg-ask-hook'"
+           nil)
+          (const
+           :tag "sign" 
+           :doc "Ask whether to sign the message before sending"
+           sign)
+          (const
+           :tag "encrypt" 
+           :doc "Ask whether to encryt the message before sending"
+           encrypt)
+          (const
+           :tag "encrypt and sign" 
+           :doc "Ask whether to encrypt and sign the message before sending"
+           encrypt-and-sign)
+          (function
+           :tag "your own function" 
+           :doc "It should returning one of the other values.")))
+
 
 (if (not (assq 'vm-pgg-compose-mode minor-mode-map-alist))
     (setq minor-mode-map-alist
@@ -1035,7 +1059,7 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
     (mail-position-on-field "Content-Type")
     (insert "multipart/signed; boundary=\"" boundary "\";\n"
             "\tmicalg=pgg-" micalg "; protocol=\"application/pgp-signature\"")))
-    
+
 ;;; ###autoload
 (defun vm-pgg-encrypt (sign)
   "Encrypt the composition as PGP/MIME.  With a prefix arg SIGN also sign it."
@@ -1109,6 +1133,33 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
             (t
              (setq event nil))))
     (vm-mail-send)))
+
+;;; ###autoload
+(defun vm-pgg-ask-hook ()
+  "Hook to automatically ask for signing or encrypting outgoing messages with PGP/MIME.
+
+Put this function into `vm-mail-send-hook' to be asked each time you
+send a message whether or not you want to sign or encrypt the
+message. See `vm-pgg-ask-function' to determine which function is
+proposed.
+
+This hook should probably be the last of your hooks if you have several
+other functions there.  Signing crucially relies on the fact that the
+message is not altered afterwards. To put it into `vm-mail-send-hook'
+put something like
+
+       \(add-hook \'vm-mail-send-hook \'vm-pgg-sign-hook t\) 
+
+into your VM init file."
+  (let ((handler vm-pgg-ask-function)
+        (action nil))
+    (when handler
+      (setq action (if (fboundp handler)
+                       (funcall handler)
+                     (if (y-or-n-p (format "%s the composition? " handler))
+                         (intern (format "vm-pgg-%s" handler)))))
+      (when action 
+           (funcall action)))))
 
 (provide 'vm-pgg)
 
