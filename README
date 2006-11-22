@@ -1,3 +1,5 @@
+Read patchdoc.txt first!
+
 How to setup VM:
 
 0) Look at Makefile.User and review the values of EMACS, INFODIR,

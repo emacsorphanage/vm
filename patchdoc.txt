@@ -14,16 +14,19 @@ Emacs.
 *******************************************************************************
 INSTALLATION
 
-Copy this patch to the directory containing a clean standard VM source,
-which is not patched and apply this patch with:
+If you have a unmodified VM, grab http://www.robf.de/Hacking/elisp/vmrf.tgz !
+
+
+If not copy this patch to the directory containing the VM sources and apply 
+this patch with: 
 
 	patch < vm-X.XX.patch
 
-Then rebuilt the elc files by
+Check Makefile.User and then rebuilt the elc files by
 
 	make  
 
-and restart VM, i.e. quit Emacs.
+and restart Emacs and VM.
 
 You can ignore any warnings, however error messages indicate that some modules
 (partially) will not work, i.e. if other library files are missing or you are
@@ -37,25 +40,36 @@ rebuilt the modified sources.  It requires "wget" to be installed!
 
 	make update
 
+WARNING: THIS WILL OVERWRITE ALL LOCAL CHANGES TO THE SOURCES!
+
+If you want to maintain a hacked version of VM and stay in sync with me, see
+the next section on BZR. 
+
 *******************************************************************************
 BZR (http://bazaar-vcs.org/)
 
-I maintain my changes by BZR now, since CVS sucks and TLA/BAZ are gone.
-If you want to send me changes or start hacking on your own you should 
+I maintain my changes by BZR now, since CVS sucks and TLA/BAZ do as well.
+
+If you want to send me changes or start hacking on your own you may want to 
 branch from my repository.
 
 # create your own local branch
 bzr get http://www.robf.de/Hacking/bazaar/vm
-# update (or merge if you have own commits)
+# get updates
 bzr pull
-# or 
-bzr merge
-...
+# start hacking 
+xemacs vm-pgg.el
+# commit your changes 
+bzr commit
+# Generate a bundle of your changes for merge into the mainline 
+bzr bundle-revisions --output=xy-changes.diff
+# Attach the bundle to a mail (rather than doing cut&paste) and send
+# it to hack@robf.de with a descriptive subject.  
 
 *******************************************************************************
 BUGS
 
-Report any problems caused by this patch to hack@robf.de!
+Report any problems caused by this patch resp. version of VM to hack@robf.de!
 
 *******************************************************************************
 COMMENTS
