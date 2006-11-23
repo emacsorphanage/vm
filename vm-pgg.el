@@ -206,9 +206,10 @@ See `vm-pgg-sign' for details."
 
 (defvar vm-pgg-compose-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "\C-c#e" 'vm-pgg-encrypt-and-sign)
-    (define-key map "\C-c#E" 'vm-pgg-encrypt)
     (define-key map "\C-c#s" 'vm-pgg-sign)
+    (define-key map "\C-c#e" 'vm-pgg-encrypt)
+    (define-key map "\C-c#E" 'vm-pgg-sign-and-encrypt)
+    (define-key map "\C-c#a" 'vm-pgg-ask-hook)
     (define-key map "\C-c#k" 'vm-pgg-attach-public-key)
     map))
 
@@ -219,9 +220,11 @@ See `vm-pgg-sign' for details."
  vm-pgg-compose-mode-menu (if (featurep 'xemacs) nil (list vm-pgg-compose-mode-map))
  "PGP/MIME compose mode menu."
  '("PGP/MIME"
-   ["Encrypt"           vm-pgg-encrypt t]
    ["Sign"              vm-pgg-sign t]
-   ["Encrypt+Sign"      vm-pgg-encrypt-and-sign t]
+   ["Encrypt"           vm-pgg-encrypt t]
+   ["Sign+Encrypt"      vm-pgg-sign-and-encrypt t]
+   ["Ask For An Action" vm-pgg-ask-hook t]
+   "----"
    ["Attach Public Key" vm-pgg-attach-public-key t]
    ["Insert Public Key" pgg-insert-key t]))
 
@@ -247,7 +250,7 @@ Switch mode on/off according to ARG.
 (defvar vm-pgg-compose-mode-string " vm-pgg"
   "*String to put in mode line when function `vm-pgg-compose-mode' is active.")
 
-(defcustom vm-pgg-ask-function 'vm-pgg-sign
+(defcustom vm-pgg-ask-function 'vm-pgg-prompt-for-action
   "*The function to use in `vm-pgg-ask-hook'."
   :group 'vm-pgg
   :type '(choice
@@ -268,8 +271,12 @@ Switch mode on/off according to ARG.
            :doc "Ask whether to encrypt and sign the message before sending"
            encrypt-and-sign)
           (function
+           :tag "ask for the action"
+           :doc "Will prompt for an action by calling `vm-pgg-prompt-for-action'"
+           vm-pgg-prompt-for-action)
+          (function
            :tag "your own function" 
-           :doc "It should returning one of the other values.")))
+           :doc "It should returning one of the other const values.")))
 
 
 (if (not (assq 'vm-pgg-compose-mode minor-mode-map-alist))
@@ -1061,7 +1068,7 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
             "\tmicalg=pgg-" micalg "; protocol=\"application/pgp-signature\"")))
 
 ;;; ###autoload
-(defun vm-pgg-encrypt (sign)
+(defun vm-pgg-encrypt (&optional sign)
   "Encrypt the composition as PGP/MIME.  With a prefix arg SIGN also sign it."
   (interactive "P")
   (vm-pgg-save-work 'vm-pgg-encrypt-internal sign))
@@ -1102,37 +1109,56 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
     (insert "multipart/encrypted; boundary=\"" boundary "\";\n"
             "\tprotocol=\"application/pgp-encrypted\"")))
 
-(defun vm-pgg-encrypt-and-sign ()
-  "*Encrypt and sign the composition as PGP/MIME."
+(defun vm-pgg-sign-and-encrypt ()
+  "*Sign and encrypt the composition as PGP/MIME."
   (interactive)
   (vm-pgg-encrypt t))
 
-(defun vm-pgg-mail-send ()
-  "Replacement for `vm-mail-send' asking for signing and/or encrypting."
+(defvar vm-pgg-prompt-last-action nil
+  "The action last taken in `vm-pgg-prompt-for-action'.")
+
+(defvar vm-pgg-prompt-action-alist
+  '((?s sign "Sign")
+    (?e encrypt "encrypt") 
+    (?E sign-and-encrypt "both")
+    (?n nil "nothing")
+    (?q quit "quit"))
+  "Alist of (KEY ACTION LABEL) elements.")
+
+(defun vm-pgg-prompt-for-action ()
+  "Prompt for an action and return it. See also `vm-pgg-prompt-action-alist'."
   (interactive)
-  (let ((prompt "Send composition signed (s), encrypted (e), both (E), normal (RET) or quit (q)? ")
-        event)
+  (let (prompt event action)
+    (setq prompt (mapconcat (lambda (a)
+                              (format "%s (%c)" (nth 2 a) (car a)))
+                            vm-pgg-prompt-action-alist ", ")
+          action (mapcar (lambda (a)
+                           (if (eq (nth 1 a)
+                                   vm-pgg-prompt-last-action)
+                               (downcase (nth 2 a))))
+                         vm-pgg-prompt-action-alist)
+          prompt (format "%s (default %s)?"
+                         prompt
+                         (car (delete nil action)))
+          action nil)
     (while (not event)
       (setq event (read-key-sequence prompt))
       (if (featurep 'xemacs)
           (setq event (bbdb-event-to-character (aref event 0)))
         (setq event (if (stringp event) (aref event 0))))
-      (cond ((eq event ?q)
-             (error "Sending aborted"))
-            ((eq event ?s)
-             (vm-pgg-sign)
-             (message "Sending signed message..."))
-            ((eq event ?e)
-             (vm-pgg-encrypt nil)
-             (message "Sending encrypted message..."))
-            ((eq event ?E)
-             (vm-pgg-encrypt t)
-             (message "Sending encrypted and signed message..."))
-            ((eq event ?\r)
-             (message "Sending an unsave message..."))
-            (t
-             (setq event nil))))
-    (vm-mail-send)))
+      (if (eq event ?\r)
+          (setq action vm-pgg-prompt-last-action)
+        (setq action (assoc event vm-pgg-prompt-action-alist))
+        (if action
+            (setq action (nth 1 action))
+          (setq event nil))))
+    (when (eq action 'quit)
+      (error "Sending aborted!"))
+    (if action
+        (message "Action is %s." action)
+      (message "No action selected."))
+    (setq vm-pgg-prompt-last-action action)
+    action))
 
 ;;; ###autoload
 (defun vm-pgg-ask-hook ()
@@ -1148,18 +1174,19 @@ other functions there.  Signing crucially relies on the fact that the
 message is not altered afterwards. To put it into `vm-mail-send-hook'
 put something like
 
-       \(add-hook \'vm-mail-send-hook \'vm-pgg-sign-hook t\) 
+       (add-hook 'vm-mail-send-hook 'vm-pgg-ask-hook t) 
 
 into your VM init file."
+  (interactive)
   (let ((handler vm-pgg-ask-function)
-        (action nil))
+        action)
     (when handler
       (setq action (if (fboundp handler)
                        (funcall handler)
                      (if (y-or-n-p (format "%s the composition? " handler))
-                         (intern (format "vm-pgg-%s" handler)))))
+                         handler)))
       (when action 
-           (funcall action)))))
+        (funcall (intern (format "vm-pgg-%s" action)))))))
 
 (provide 'vm-pgg)
 
