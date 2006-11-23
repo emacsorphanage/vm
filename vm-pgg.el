@@ -1174,10 +1174,17 @@ other functions there.  Signing crucially relies on the fact that the
 message is not altered afterwards. To put it into `vm-mail-send-hook'
 put something like
 
-       (add-hook 'vm-mail-send-hook 'vm-pgg-ask-hook t) 
+       (add-hook 'vm-mail-send-hook 'vm-pgg-ask-hook t)
 
 into your VM init file."
   (interactive)
+
+  ;; ensure we are the last hook
+  (when (and (member 'vm-pgg-ask-hook vm-mail-send-hook)
+             (member 'vm-pgg-ask-hook vm-mail-send-hook))
+    (describe-function 'vm-pgg-ask-hook)
+    (error "`vm-pgg-ask-function' must be the last hook in `vm-mail-send-hook'!"))
+  
   (let ((handler vm-pgg-ask-function)
         action)
     (when handler
