@@ -1181,7 +1181,7 @@ into your VM init file."
 
   ;; ensure we are the last hook
   (when (and (member 'vm-pgg-ask-hook vm-mail-send-hook)
-             (member 'vm-pgg-ask-hook vm-mail-send-hook))
+             (cdr (member 'vm-pgg-ask-hook vm-mail-send-hook)))
     (describe-function 'vm-pgg-ask-hook)
     (error "`vm-pgg-ask-function' must be the last hook in `vm-mail-send-hook'!"))
   
