@@ -908,7 +908,7 @@ cleanup here after verification and decoding took place."
     (unless (pgg-snarf-keys)
       (error "Snarfing failed"))
     (save-excursion
-      (set-buffer pgg-output-buffer)
+      (set-buffer (if vm-fsfemacs-p pgg-errors-buffer pgg-output-buffer))
       (message (buffer-substring (point-min) (point-max))))))
 
 ;;; ###autoload

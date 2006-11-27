@@ -1,7 +1,7 @@
 ########### all user servicable parts are in Makefile.User ##################
 
 # what emacs is called on your system
-EMACS =	xemacs
+EMACS =	emacs
 CC =	gcc -O3
 
 # top of the installation
