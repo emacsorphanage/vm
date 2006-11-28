@@ -368,13 +368,6 @@ Switch mode on/off according to ARG.
     (goto-char (point-min))
     (forward-line 1)
     (delete-region (point-min) (point))
-    ;; insert decrypted message
-    (search-forward "\n\n")
-    (goto-char (match-end 0))
-    (delete-region (point) (point-max))
-    (insert-buffer-substring pgg-output-buffer)
-    ;; do cleanup
-    (vm-pgg-crlf-cleanup (point-min) (point-max))
     (goto-char (point-min))
     (vm-reorder-message-headers nil vm-visible-headers
                                 vm-invisible-header-regexp)
