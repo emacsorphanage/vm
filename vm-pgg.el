@@ -1146,7 +1146,7 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
     (while (not event)
       (setq event (read-key-sequence prompt))
       (if (featurep 'xemacs)
-          (setq event (bbdb-event-to-character (aref event 0)))
+          (setq event (event-to-character (aref event 0)))
         (setq event (if (stringp event) (aref event 0))))
       (if (eq event ?\r)
           (setq action vm-pgg-prompt-last-action)
