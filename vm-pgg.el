@@ -581,7 +581,9 @@ When the button is pressed ACTION is called."
         (vm-pgg-crlf-cleanup start (point)))
       (setq end (point))
       (put-text-property start end 'face
-                         (if status 'vm-pgg-good-signature 'vm-pgg-bad-signature)))))
+                         (if (eq status 'error)
+			     'vm-pgg-bad-signature
+			   'vm-pgg-good-signature)))))
   
 (defadvice vm-mime-transfer-decode-region (around vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages parts."
