@@ -368,13 +368,6 @@ Switch mode on/off according to ARG.
     (goto-char (point-min))
     (forward-line 1)
     (delete-region (point-min) (point))
-    ;; insert decrypted message
-    (search-forward "\n\n")
-    (goto-char (match-end 0))
-    (delete-region (point) (point-max))
-    (insert-buffer-substring pgg-output-buffer)
-    ;; do cleanup
-    (vm-pgg-crlf-cleanup (point-min) (point-max))
     (goto-char (point-min))
     (vm-reorder-message-headers nil vm-visible-headers
                                 vm-invisible-header-regexp)
@@ -581,7 +574,9 @@ When the button is pressed ACTION is called."
         (vm-pgg-crlf-cleanup start (point)))
       (setq end (point))
       (put-text-property start end 'face
-                         (if status 'vm-pgg-good-signature 'vm-pgg-bad-signature)))))
+                         (if (eq status 'error)
+			     'vm-pgg-bad-signature
+			   'vm-pgg-good-signature)))))
   
 (defadvice vm-mime-transfer-decode-region (around vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages parts."
@@ -835,12 +830,13 @@ cleanup here after verification and decoding took place."
               (vm-pgg-state-set 'error)
               (insert-buffer-substring pgg-errors-buffer))
           (vm-pgg-state-set 'verified)
-          (insert-buffer-substring pgg-output-buffer)
-          (vm-pgg-crlf-cleanup start (point)))
+	  (insert-buffer-substring 
+	   (if vm-fsfemacs-p pgg-errors-buffer pgg-output-buffer))
+	  (vm-pgg-crlf-cleanup start (point)))
         (setq end (point))
         (put-text-property start end 'face
-                           (if status 'vm-pgg-good-signature 'vm-pgg-bad-signature)))
-      t)))
+                           (if status 'vm-pgg-good-signature 'vm-pgg-bad-signature)))))
+  t)
 
 ;; we must add these in order to force VM to call our handler
 (eval-and-compile
@@ -908,7 +904,7 @@ cleanup here after verification and decoding took place."
     (unless (pgg-snarf-keys)
       (error "Snarfing failed"))
     (save-excursion
-      (set-buffer pgg-output-buffer)
+      (set-buffer (if vm-fsfemacs-p pgg-errors-buffer pgg-output-buffer))
       (message (buffer-substring (point-min) (point-max))))))
 
 ;;; ###autoload
@@ -1144,7 +1140,7 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
     (while (not event)
       (setq event (read-key-sequence prompt))
       (if (featurep 'xemacs)
-          (setq event (bbdb-event-to-character (aref event 0)))
+          (setq event (event-to-character (aref event 0)))
         (setq event (if (stringp event) (aref event 0))))
       (if (eq event ?\r)
           (setq action vm-pgg-prompt-last-action)

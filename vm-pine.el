@@ -78,6 +78,9 @@
   (require 'vm-macro)
   (require 'vm-vars))
 
+(eval-when-compile 
+  (require 'cl))
+
 (if (not (boundp 'user-mail-address))
     (if (functionp 'user-mail-address)
         (setq user-mail-address (user-mail-address))
