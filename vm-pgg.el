@@ -830,12 +830,13 @@ cleanup here after verification and decoding took place."
               (vm-pgg-state-set 'error)
               (insert-buffer-substring pgg-errors-buffer))
           (vm-pgg-state-set 'verified)
-          (insert-buffer-substring pgg-output-buffer)
-          (vm-pgg-crlf-cleanup start (point)))
+	  (insert-buffer-substring 
+	   (if vm-fsfemacs-p pgg-errors-buffer pgg-output-buffer))
+	  (vm-pgg-crlf-cleanup start (point)))
         (setq end (point))
         (put-text-property start end 'face
-                           (if status 'vm-pgg-good-signature 'vm-pgg-bad-signature)))
-      t)))
+                           (if status 'vm-pgg-good-signature 'vm-pgg-bad-signature)))))
+  t)
 
 ;; we must add these in order to force VM to call our handler
 (eval-and-compile
