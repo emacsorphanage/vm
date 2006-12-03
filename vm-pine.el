@@ -1,9 +1,9 @@
 ;;; vm-pine.el --- draft handling and other neat functions for VM
 ;; 
-;; Copyright (C) 1998-2002 Robert Fenk
+;; Copyright (C) 1998-2006 Robert Fenk
 ;;
 ;; Author:      Robert Fenk
-;; Status:      Tested with XEmacs 21.4.15 & VM 7.18
+;; Status:      Tested with XEmacs 21.4.19 & VM 7.19
 ;; Keywords:    vm draft handling
 ;; X-URL:       http://www.robf.de/Hacking/elisp
 ;; Version:     $Id$
