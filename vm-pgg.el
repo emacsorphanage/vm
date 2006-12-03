@@ -96,19 +96,21 @@
 (require 'easymenu)
 (require 'vm-version)
 (require 'vm-misc)
+(require 'vm-page)
+(require 'vm-vars)
+(require 'vm-mime)
+(require 'vm-reply)
 
 (eval-when-compile
   (require 'cl)
-  (require 'vm-vars)
-  (require 'vm-mime)
-  (require 'vm-reply)
   ;; avoid warnings
   (defvar vm-mode-line-format)
   (defvar vm-message-pointer)
   (defvar vm-presentation-buffer)
   (defvar vm-summary-buffer)
   ;; avoid bytecompile warnings
-  (defvar vm-pgg-cleartext-state nil "For interfunction communication."))
+;  (defvar vm-pgg-cleartext-state nil "For interfunction communication.")
+)
 
 (defgroup vm nil
   "VM"
@@ -491,34 +493,33 @@ When the button is pressed ACTION is called."
     (if vm-presentation-buffer
 	(set-buffer vm-presentation-buffer))
     (goto-char (point-min))
-;    (search-forward "\n\n" nil t)
-    (if (re-search-forward vm-pgg-cleartext-begin-regexp
-                           (+ (point) vm-pgg-cleartext-search-limit)
-                           t)
-	(condition-case e
-	    (cond ((string= (match-string 1) "SIGNED MESSAGE")
-		   (vm-pgg-cleartext-verify))
-		  ((string= (match-string 1) "MESSAGE")
-                   (if vm-pgg-auto-decrypt
-                       (vm-pgg-cleartext-decrypt)
-                     (vm-pgg-cleartext-automode-button
-                      "Decrypt PGP message\n"
-                      (lambda ()
-                        (interactive)
-                        (let ((vm-pgg-auto-decrypt t))
-                          (vm-pgg-cleartext-decrypt))))))
-		  ((string= (match-string 1) "PUBLIC KEY BLOCK")
-                   (if vm-pgg-auto-snarf
-                       (vm-pgg-snarf-keys)
-                    (vm-pgg-cleartext-automode-button
-                      "Snarf PGP key\n"
-                      (lambda ()
-                        (interactive)
-                        (let ((vm-pgg-auto-snarf t))
-                          (vm-pgg-snarf-keys))))))
-                  (t
-                   (error "This should never happen!")))
-	  (error (message "%S" e))))))
+    (when (re-search-forward vm-pgg-cleartext-begin-regexp
+			     (+ (point) vm-pgg-cleartext-search-limit)
+			     t)
+      (condition-case e
+	  (cond ((string= (match-string 1) "SIGNED MESSAGE")
+		 (vm-pgg-cleartext-verify))
+		((string= (match-string 1) "MESSAGE")
+		 (if vm-pgg-auto-decrypt
+		     (vm-pgg-cleartext-decrypt)
+		   (vm-pgg-cleartext-automode-button
+		    "Decrypt PGP message\n"
+		    (lambda ()
+		      (interactive)
+		      (let ((vm-pgg-auto-decrypt t))
+			(vm-pgg-cleartext-decrypt))))))
+		((string= (match-string 1) "PUBLIC KEY BLOCK")
+		 (if vm-pgg-auto-snarf
+		     (vm-pgg-snarf-keys)
+		   (vm-pgg-cleartext-automode-button
+		    "Snarf PGP key\n"
+		    (lambda ()
+		      (interactive)
+		      (let ((vm-pgg-auto-snarf t))
+			(vm-pgg-snarf-keys))))))
+		(t
+		 (error "This should never happen!")))
+	(error (message "%S" e))))))
 
 (defadvice vm-preview-current-message (after vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages."
@@ -609,6 +610,7 @@ cleanup here after verification and decoding took place."
 (defun vm-pgg-cleartext-verify ()
   "*Verify the signature in the current message."
   (interactive)
+  (message "Verifying PGP cleartext message...")
   (when (interactive-p)
     (vm-follow-summary-cursor)
     (vm-select-folder-buffer-if-possible)
@@ -623,10 +625,10 @@ cleanup here after verification and decoding took place."
   (save-excursion
     (goto-char (point-min))
     (let ((buffer-read-only nil)
-          (status (pgg-verify-region (point) (point-max) nil vm-pgg-fetch-missing-keys)))
+          (status (pgg-verify-region (point) (point-max) nil 
+				     vm-pgg-fetch-missing-keys)))
       
       (vm-pgg-state-set 'signed)
-      
       (setq status (if (not status) 'error 'verified))
       (vm-pgg-state-set status)
       (if (boundp 'vm-pgg-cleartext-state)
