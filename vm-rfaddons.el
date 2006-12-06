@@ -1262,7 +1262,7 @@ save attachments.
 ;;;###autoload
 (defun vm-mime-auto-save-all-attachments-delete-external (msg)
   "Deletes the external attachments created by `vm-mime-save-all-attachments'.
-You may want to use this function inorder to get rid of the external files
+You may want to use this function in order to get rid of the external files
 when deleting a message.
 
 See the advice in `vm-rfaddons-infect-vm'."
@@ -1323,10 +1323,12 @@ See the advice in `vm-rfaddons-infect-vm'."
                                                 mlist
                                                 quiet)
   "On the next COUNT or marked messages call the function ACTION on those mime
-parts which match with their type to INCLUDE or EXCLUDE (which are list of
-mime parts).  If QUIET is true do not generate messages on irnored parts.
+parts which have a filename or the disposition attachment or match with their type
+to INCLUDE but not to EXCLUDE (which are lists of mime types).
 
-ACTION will get called with three arguments: LAYOUT TYPE FILENAME." 
+If QUIET is true no messages are generated.
+
+ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME." 
   (unless mlist
     (or count (setq count 1))
     (vm-check-for-killed-folder)
@@ -1336,7 +1338,7 @@ ACTION will get called with three arguments: LAYOUT TYPE FILENAME."
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (save-excursion
       (while mlist
-        (let (parts layout file type o)
+        (let (parts layout filename type disposition o)
           (setq o (vm-mm-layout (car mlist)))
           (when (stringp o)
             (setq o 'none)
@@ -1363,18 +1365,27 @@ ACTION will get called with three arguments: LAYOUT TYPE FILENAME."
                                      (cdr parts))))
               
               (setq layout (car parts)
-                    type (car (vm-mm-layout-type layout)))
+                    type (car (vm-mm-layout-type layout))
+                    disposition (car (vm-mm-layout-disposition layout))
+                    filename (or (vm-mime-get-disposition-parameter layout "filename") 
+                                 (vm-mime-get-disposition-parameter layout "name") 
+                                 (vm-mime-get-disposition-parameter layout "filename*") 
+                                 (vm-mime-get-disposition-parameter layout "name*")))
               
-              (if (or (vm-mime-types-match "message/external-body" type)
-                      (and include (not (vm-mime-is-type-valid type include exclude))))
-                  (if (not quiet) (message "Ignoring action on %s parts!" type))
-                (setq file (or (vm-mime-get-disposition-parameter
-                                layout "filename") 
-                               (vm-mime-get-parameter layout "name")))
-                (funcall action (car mlist) layout type file))
+              (cond ((or filename
+                         (and disposition (string= disposition "attachment"))
+                         (and (not (vm-mime-types-match "message/external-body" type))
+                              include
+                              (vm-mime-is-type-valid type include exclude)))
+                     (when (not quiet)
+                       (message "Action on part type=%s filename=%s disposition=%s!"
+                                type filename disposition))
+                     (funcall action (car mlist) layout type filename))
+                    ((not quiet)
+                     (message "No action on part type=%s filename=%s disposition=%s!"
+                              type filename disposition)))
               (setq parts (cdr parts)))))
-        (setq mlist (cdr mlist)))))
-  )
+        (setq mlist (cdr mlist))))))
 
 ;;;###autoload
 (defun vm-mime-delete-all-attachments (&optional count)
@@ -1919,8 +1930,8 @@ Argument MSG is a message pointer."
 
 (defcustom vm-mime-summary-attachment-label-types nil
   "*List of MIME types which should be listed as attachment. 
-If nil all mime parts with a filename/name disposition will be considered as a
-attachment."
+Mime parts with a disposition of attachment or a filename/name disposition
+parameter will be automatically considered as attachment."
   :group 'vm-rfaddons
   :type '(repeat (string :tag "MIME type" nil)))
 
@@ -1946,11 +1957,7 @@ and add an \"%0UA\" to your `vm-summary-format'."
     (vm-mime-action-on-all-attachments
      nil
      (lambda (msg layout type file)
-       (when (or vm-mime-summary-attachment-label-types 
-                 (delete nil (mapcar (lambda (p)
-                                       (vm-mime-get-disposition-parameter layout p))
-                                     '("filename" "name" "filename*" "name*"))))
-         (setq attachments (1+ attachments))))
+       (setq attachments (1+ attachments)))
      vm-mime-summary-attachment-label-types
      vm-mime-summary-attachment-label-types-exceptions
      (list msg)
