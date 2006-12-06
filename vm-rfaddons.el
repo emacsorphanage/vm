@@ -1436,9 +1436,7 @@ When directory does not exist it will be created."
                             (funcall directory msg)
                           directory)))
          (setq file (if file
-                        (if (file-name-directory file)
-                            file
-                          (expand-file-name file directory))
+                        (expand-file-name (file-name-nondirectory file) directory)
                       (vm-read-file-name
                        (format "Save %s to file: " type)
                        (or directory
