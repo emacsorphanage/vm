@@ -555,9 +555,10 @@ When the button is pressed ACTION is called."
     (if vm-presentation-buffer
 	(set-buffer vm-presentation-buffer))
     (goto-char (point-min))
-    (when (re-search-forward vm-pgg-cleartext-begin-regexp
+    (when (and (vm-mime-plain-message-p (car vm-message-pointer))
+               (re-search-forward vm-pgg-cleartext-begin-regexp
 			     (+ (point) vm-pgg-cleartext-search-limit)
-			     t)
+			     t))
       (condition-case e
 	  (cond ((string= (match-string 1) "SIGNED MESSAGE")
 		 (vm-pgg-cleartext-verify))
@@ -803,7 +804,10 @@ cleanup here after verification and decoding took place."
          (header (car part-list))
          (message (car (cdr part-list)))
          status)
-    (cond ((not (and (= (length part-list) 2)
+    (cond ((eq vm-pgg-mime-decoded 'decoded)
+           ;; after decode the state of vm-mime-decoded is 'buttons
+           nil)
+          ((not (and (= (length part-list) 2)
                      (vm-mime-types-match (car (vm-mm-layout-type header))
                                           "application/pgp-encrypted")
                      ;; TODO: check version and protocol here?
