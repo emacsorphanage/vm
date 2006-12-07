@@ -537,41 +537,55 @@ When the button is pressed ACTION is called."
         (define-key keymap "\r"  action)
         (overlay-put o 'local-map keymap)))))
 
+(defvar vm-pgg-cleartext-decoded nil
+  "State of the cleartext message.")
+(make-variable-buffer-local 'vm-pgg-cleartext-decoded)
+
+(defun vm-pgg-set-cleartext-decoded ()
+   (save-excursion
+    (vm-select-folder-buffer)
+    (setq vm-pgg-cleartext-decoded (car vm-message-pointer))))
+
 (defun vm-pgg-cleartext-automode ()
   "Check for PGP ASCII armor and triggers automatic verification/decryption."
   (save-excursion
     (vm-select-folder-buffer-if-possible)
-    (if vm-presentation-buffer
-	(set-buffer vm-presentation-buffer))
-    (goto-char (point-min))
-    (when (and (vm-mime-plain-message-p (car vm-message-pointer))
-               (re-search-forward vm-pgg-cleartext-begin-regexp
-			     (+ (point) vm-pgg-cleartext-search-limit)
-			     t))
-      (condition-case e
-	  (cond ((string= (match-string 1) "SIGNED MESSAGE")
-		 (vm-pgg-cleartext-verify))
-		((string= (match-string 1) "MESSAGE")
-		 (if vm-pgg-auto-decrypt
-		     (vm-pgg-cleartext-decrypt)
-		   (vm-pgg-cleartext-automode-button
-		    "Decrypt PGP message\n"
-		    (lambda ()
-		      (interactive)
-		      (let ((vm-pgg-auto-decrypt t))
-			(vm-pgg-cleartext-decrypt))))))
-		((string= (match-string 1) "PUBLIC KEY BLOCK")
-		 (if vm-pgg-auto-snarf
-		     (vm-pgg-snarf-keys)
-		   (vm-pgg-cleartext-automode-button
-		    "Snarf PGP key\n"
-		    (lambda ()
-		      (interactive)
-		      (let ((vm-pgg-auto-snarf t))
-			(vm-pgg-snarf-keys))))))
-		(t
-		 (error "This should never happen!")))
-	(error (message "%S" e))))))
+    (if (equal vm-pgg-cleartext-decoded (car vm-message-pointer))
+        (setq vm-pgg-cleartext-decoded nil)
+      (if vm-presentation-buffer
+          (set-buffer vm-presentation-buffer))
+      (goto-char (point-min))
+      (when (and (vm-mime-plain-message-p (car vm-message-pointer))
+                 (re-search-forward vm-pgg-cleartext-begin-regexp
+                                    (+ (point) vm-pgg-cleartext-search-limit)
+                                    t))
+        (condition-case e
+            (cond ((string= (match-string 1) "SIGNED MESSAGE")
+                   (vm-pgg-set-cleartext-decoded)
+                   (vm-pgg-cleartext-verify))
+                  ((string= (match-string 1) "MESSAGE")
+                   (vm-pgg-set-cleartext-decoded)
+                   (if vm-pgg-auto-decrypt
+                       (vm-pgg-cleartext-decrypt)
+                     (vm-pgg-cleartext-automode-button
+                      "Decrypt PGP message\n"
+                      (lambda ()
+                        (interactive)
+                        (let ((vm-pgg-auto-decrypt t))
+                          (vm-pgg-cleartext-decrypt))))))
+                  ((string= (match-string 1) "PUBLIC KEY BLOCK")
+                   (vm-pgg-set-cleartext-decoded)
+                   (if vm-pgg-auto-snarf
+                       (vm-pgg-snarf-keys)
+                     (vm-pgg-cleartext-automode-button
+                      "Snarf PGP key\n"
+                      (lambda ()
+                        (interactive)
+                        (let ((vm-pgg-auto-snarf t))
+                          (vm-pgg-snarf-keys))))))
+                  (t
+                   (error "This should never happen!")))
+          (error (message "%S" e)))))))
 
 (defvar vm-pgg-mime-decoded nil
   "Save decoded state.")
@@ -762,12 +776,15 @@ cleanup here after verification and decoding took place."
       (replace-match "\r\n" t t)
       (backward-char))))
 
-(defadvice vm-decode-mime-message (before vm-pgg-clear-state activate)
+(defadvice vm-decode-mime-message (around vm-pgg-clear-state activate)
   "Clear the modeline state before decoding."
-  (save-excursion
-    (vm-select-folder-buffer)
-    (setq vm-pgg-state-message nil)
-    (setq vm-pgg-state nil)))
+  (vm-select-folder-buffer)
+  (setq vm-pgg-state-message nil)
+  (setq vm-pgg-state nil)
+  (if (vm-mime-plain-message-p (car vm-message-pointer))
+      (if vm-pgg-cleartext-decoded
+	  (vm-preview-current-message))
+    ad-do-it))
 
 (defun vm-pgg-mime-decrypt (button)
   "Replace the BUTTON with the output from `pgg-snarf-keys'."
