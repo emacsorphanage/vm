@@ -727,7 +727,8 @@ cleanup here after verification and decoding took place."
   (let ((state
 	 (condition-case nil
 	     (pgg-decrypt-region (point) (point-max))
-	   (error nil))))
+	   (error nil)))
+        start end)
     (vm-pgg-state-set 'encrypted)
     
     ;; make a presentation copy
@@ -736,22 +737,26 @@ cleanup here after verification and decoding took place."
 
     (goto-char (point-min))
     (search-forward "\n\n")
-    (forward-line 1)
+    (setq start (point))
     
     (if (not state)
         ;; insert the error message
-        (let ((buffer-read-only nil)
-              (start (point)))
+        (let ((buffer-read-only nil))
           (vm-pgg-state-set 'error)
           (insert-buffer-substring pgg-errors-buffer)
           (put-text-property start (point) 'face 'vm-pgg-error))
+      ;; replace it with decrypted message
+      (setq start (and (re-search-forward "^-----BEGIN PGP MESSAGE-----$")
+                       (match-beginning 0))
+            end   (and (re-search-forward "^-----END PGP MESSAGE-----$")
+                       (match-end 0)))
+      (let ((buffer-read-only nil))
+        (delete-region start end)
+        (insert-buffer-substring pgg-output-buffer))
       ;; if it signed then also verify it
-      (goto-char (point-min))
-      (search-forward "\n\n")
-      (if (re-search-forward "^-----BEGIN PGP \\(SIGNED \\)?MESSAGE-----$"
-                             (point-max) t)
+      (goto-char start)
+      (if (looking-at "^-----BEGIN PGP \\(SIGNED \\)?MESSAGE-----$")
           (vm-pgg-cleartext-verify))
-      
       ;; replace the message?
       (when (and nil ;; this is buggy
                  (not (eq vm-pgg-always-replace 'never))
