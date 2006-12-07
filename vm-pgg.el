@@ -583,6 +583,15 @@ When the button is pressed ACTION is called."
 		 (error "This should never happen!")))
 	(error (message "%S" e))))))
 
+(defvar vm-pgg-mime-decoded nil
+  "Save decoded state.")
+
+(defadvice vm-preview-current-message (before vm-pgg-save-mime-decoded activate)
+  "Save the state of `vm-mime-decoded' for later use."
+  (save-excursion
+    (vm-select-folder-buffer)
+    (setq vm-pgg-mime-decoded vm-mime-decoded)))
+
 (defadvice vm-preview-current-message (after vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages."
   (vm-pgg-state-set)
@@ -849,58 +858,63 @@ cleanup here after verification and decoding took place."
          (message (car part-list))
          (signature (car (cdr part-list)))
          status signature-file start end)
-    ;; insert the message
-    (vm-decode-mime-layout message)
-
-    (if (not (and (= (length part-list) 2)
-                  ;; TODO: check version and protocol here?
-                  (vm-mime-types-match (car (vm-mm-layout-type signature))
-                                       "application/pgp-signature")))
-        (let (start end)
-          (vm-pgg-state-set 'unknown)
-          (setq start (point))
-          (insert
-           (format
-            "******* unknown signature type %s *******\n"
-            (car (vm-mm-layout-type signature))))
-          (setq end (point))
-          (vm-decode-mime-layout signature)
-          (put-text-property start end 'face 'vm-pgg-unknown-signature-type))
-      ;; write signature to a temp file
-      (setq start (point))
-      (vm-mime-insert-mime-body signature)
-      (setq end (point))
-      (write-region start end
-                    (setq signature-file (pgg-make-temp-file "vm-pgg-signature")))
-      (delete-region start end)
-      (setq start (point))
-      (vm-insert-region-from-buffer (marker-buffer (vm-mm-layout-header-start message))
-                                    (vm-mm-layout-header-start message)
-                                    (vm-mm-layout-body-end message))
-      ;; according to the RFC 3156 we need to skip trailing white space and
-      ;; end with a  CRLF! But this does not seem to be true ... BUGME!
-;      (skip-chars-backward " \t\r\n\f" start)
-;      (insert "\n")
-      (setq end (point-marker))
-      (vm-pgg-make-crlf start end)
-      (setq status (pgg-verify-region start end signature-file vm-pgg-fetch-missing-keys))
-      (delete-file signature-file)
-      (delete-region start end)
-      ;; now insert the content
-      (insert "\n")
-      (let ((start (point)) end)
-        (if (not status)
-            (progn
-              (vm-pgg-state-set 'error)
-              (insert-buffer-substring pgg-errors-buffer))
-          (vm-pgg-state-set 'verified)
-	  (insert-buffer-substring 
-	   (if vm-fsfemacs-p pgg-errors-buffer pgg-output-buffer))
-	  (vm-pgg-crlf-cleanup start (point)))
-        (setq end (point))
-        (put-text-property start end 'face
-                           (if status 'vm-pgg-good-signature 'vm-pgg-bad-signature)))))
-  t)
+    (cond ((eq vm-pgg-mime-decoded 'decoded)
+           ;; after decode the state of vm-mime-decoded is 'buttons
+           nil)
+          ((not (and (= (length part-list) 2)
+                     ;; TODO: check version and protocol here?
+                     (vm-mime-types-match (car (vm-mm-layout-type signature))
+                                          "application/pgp-signature")))
+           ;; insert the message
+           (vm-decode-mime-layout message)
+           (let (start end)
+             (vm-pgg-state-set 'unknown)
+             (setq start (point))
+             (insert
+              (format
+               "******* unknown signature type %s *******\n"
+               (car (vm-mm-layout-type signature))))
+             (setq end (point))
+             (vm-decode-mime-layout signature)
+             (put-text-property start end 'face 'vm-pgg-unknown-signature-type))
+           t)
+          (t 
+           ;; insert the message
+           (vm-decode-mime-layout message)
+           ;; write signature to a temp file
+           (setq start (point))
+           (vm-mime-insert-mime-body signature)
+           (setq end (point))
+           (write-region start end
+                         (setq signature-file (pgg-make-temp-file "vm-pgg-signature")))
+           (delete-region start end)
+           (setq start (point))
+           (vm-insert-region-from-buffer (marker-buffer (vm-mm-layout-header-start
+                                                         message))
+                                         (vm-mm-layout-header-start message)
+                                         (vm-mm-layout-body-end message))
+           (setq end (point-marker))
+           (vm-pgg-make-crlf start end)
+           (setq status (pgg-verify-region start end signature-file
+                                           vm-pgg-fetch-missing-keys))
+           (delete-file signature-file)
+           (delete-region start end)
+           ;; now insert the content
+           (insert "\n")
+           (let ((start (point)) end)
+             (if (not status)
+                 (progn
+                   (vm-pgg-state-set 'error)
+                   (insert-buffer-substring pgg-errors-buffer))
+               (vm-pgg-state-set 'verified)
+               (insert-buffer-substring 
+                (if vm-fsfemacs-p pgg-errors-buffer pgg-output-buffer))
+               (vm-pgg-crlf-cleanup start (point)))
+             (setq end (point))
+             (put-text-property start end 'face
+                                (if status 'vm-pgg-good-signature
+                                  'vm-pgg-bad-signature)))
+           t))))
 
 ;; we must add these in order to force VM to call our handler
 (eval-and-compile
