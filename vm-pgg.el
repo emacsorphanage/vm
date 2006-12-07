@@ -168,6 +168,68 @@
   :group 'vm-pgg
   :group 'faces)
 
+(defface vm-pgg-bad-signature-modeline
+  '((((type tty) (class color))
+     (:inherit modeline :foreground "red" :bold t))
+    (((type tty))
+     (:inherit modeline :bold t))
+    (((background light))
+     (:inherit modeline :foreground "red" :bold t))
+    (((background dark))
+     (:inherit modeline :foreground "red" :bold t:)))
+  "The face used to highlight bad signature messages."
+  :group 'vm-pgg
+  :group 'faces)
+
+(defface vm-pgg-good-signature-modeline
+  '((((type tty) (class color))
+     (:inherit modeline :foreground "green" :bold t))
+    (((type tty))
+     (:inherit modeline :bold t))
+    (((background light))
+     (:inherit modeline :foreground "green4"))
+    (((background dark))
+     (:inherit modeline :foreground "green")))
+  "The face used to highlight good signature messages."
+  :group 'vm-pgg
+  :group 'faces)
+
+(defface vm-pgg-unknown-signature-type-modeline
+  '((((type tty) (class color))
+     (:inherit modeline :bold t))
+    (((type tty))
+     (:inherit modeline :bold t)))
+    "The face used to highlight unknown signature types."
+  :group 'vm-pgg
+  :group 'faces)
+
+(defface vm-pgg-error-modeline
+  '((((type tty) (class color))
+     (:inherit modeline :foreground "red" :bold t))
+    (((type tty))
+     (:inherit modeline :bold t))
+    (((background light))
+     (:inherit modeline :foreground "red" :bold t))
+    (((background dark))
+     (:inherit modeline :foreground "red" :bold t:)))
+  "The face used to highlight error messages."
+  :group 'vm-pgg
+  :group 'faces)
+
+;; hack to work around the missing support for :inherit in XEmacs
+(when (featurep 'xemacs)
+  (let ((faces '(vm-pgg-bad-signature-modeline
+                 vm-pgg-good-signature-modeline
+                 vm-pgg-unknown-signature-type-modeline
+                 vm-pgg-error-modeline))
+        (faces-list (face-list))
+        f)
+    (while faces
+      (setq f (car faces))
+      (set-face-parent f 'modeline)
+      (face-display-set f (custom-face-get-spec f) nil '(custom))
+      (setq faces (cdr faces)))))
+
 (defcustom vm-pgg-always-replace 'never
   "*If t, decrypt mail messages in place without prompting.
 
@@ -389,9 +451,9 @@ Switch mode on/off according to ARG.
 (make-variable-buffer-local 'vm-pgg-state-message)
 
 (defvar vm-pgg-mode-line-items
-  (let ((items '((error " ERROR" vm-pgg-error)
-                 (unknown " unknown" vm-pgg-unknown-signature-type)
-                 (verified " verified" vm-pgg-good-signature)))
+  (let ((items '((error " ERROR" vm-pgg-error-modeline)
+                 (unknown " unknown" vm-pgg-unknown-signature-type-modeline)
+                 (verified " verified" vm-pgg-good-signature-modeline)))
         mode-line-items
         x i s f)
     (while (and (featurep 'xemacs) items)
