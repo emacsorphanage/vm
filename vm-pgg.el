@@ -230,17 +230,6 @@
       (face-display-set f (custom-face-get-spec f) nil '(custom))
       (setq faces (cdr faces)))))
 
-(defcustom vm-pgg-always-replace 'never
-  "*If t, decrypt mail messages in place without prompting.
-
-TODO: This is currently disabled as it might cause message corruption.
-
-If 'never, always use a viewer instead of replacing."
-  :group 'vm-pgg
-  :type '(choice (const never)
-                 (const :tag "always" t)
-                 (const :tag "ask" nil)))
-
 (defcustom vm-pgg-fetch-missing-keys t
   "*If t, PGP will try to fetch missing keys from `pgg-default-keyserver-address'."
   :group 'vm-pgg
@@ -756,18 +745,7 @@ cleanup here after verification and decoding took place."
       ;; if it signed then also verify it
       (goto-char start)
       (if (looking-at "^-----BEGIN PGP \\(SIGNED \\)?MESSAGE-----$")
-          (vm-pgg-cleartext-verify))
-      ;; replace the message?
-      (when (and nil ;; this is buggy
-                 (not (eq vm-pgg-always-replace 'never))
-                 (or vm-pgg-always-replace
-                     (y-or-n-p "Replace encrypted message with decrypted? ")))
-        (let ((vm-frame-per-edit nil))
-          (vm-edit-message)
-          (delete-region (point-min) (point-max))
-          (insert-buffer-substring vm-presentation-buffer)
-          (let ((this-command 'vm-edit-message-end))
-            (vm-edit-message-end)))))))
+          (vm-pgg-cleartext-verify)))))
 
 (defun vm-pgg-crlf-cleanup (start end)
   "Convert CRLF to LF in region from START to END."
