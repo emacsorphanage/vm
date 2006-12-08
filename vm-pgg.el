@@ -128,7 +128,7 @@
     (((background light))
      (:foreground "red" :bold t))
     (((background dark))
-     (:foreground "red" :bold t:)))
+     (:foreground "red" :bold t)))
   "The face used to highlight bad signature messages."
   :group 'vm-pgg
   :group 'faces)
@@ -163,7 +163,7 @@
     (((background light))
      (:foreground "red" :bold t))
     (((background dark))
-     (:foreground "red" :bold t:)))
+     (:foreground "red" :bold t)))
   "The face used to highlight error messages."
   :group 'vm-pgg
   :group 'faces)
@@ -176,7 +176,7 @@
     (((background light))
      (:inherit modeline :foreground "red" :bold t))
     (((background dark))
-     (:inherit modeline :foreground "red" :bold t:)))
+     (:inherit modeline :foreground "red" :bold t)))
   "The face used to highlight bad signature messages."
   :group 'vm-pgg
   :group 'faces)
@@ -209,9 +209,9 @@
     (((type tty))
      (:inherit modeline :bold t))
     (((background light))
-     (:inherit modeline :foreground "red" :bold t))
+     (:inherit modeline :foreground "red"))
     (((background dark))
-     (:inherit modeline :foreground "red" :bold t:)))
+     (:inherit modeline :foreground "red")))
   "The face used to highlight error messages."
   :group 'vm-pgg
   :group 'faces)
