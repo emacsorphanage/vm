@@ -552,6 +552,7 @@ When the button is pressed ACTION is called."
     (vm-select-folder-buffer-if-possible)
     (if (equal vm-pgg-cleartext-decoded (car vm-message-pointer))
         (setq vm-pgg-cleartext-decoded nil)
+      (setq vm-pgg-cleartext-decoded nil)
       (if vm-presentation-buffer
           (set-buffer vm-presentation-buffer))
       (goto-char (point-min))
@@ -587,18 +588,12 @@ When the button is pressed ACTION is called."
                    (error "This should never happen!")))
           (error (message "%S" e)))))))
 
-(defvar vm-pgg-mime-decoded nil
-  "Save decoded state.")
-
-(defadvice vm-preview-current-message (before vm-pgg-save-mime-decoded activate)
-  "Save the state of `vm-mime-decoded' for later use."
-  (save-excursion
-    (vm-select-folder-buffer)
-    (setq vm-pgg-mime-decoded vm-mime-decoded)))
-
 (defadvice vm-preview-current-message (after vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages."
   (vm-pgg-state-set)
+  (when (and vm-pgg-cleartext-decoded
+             (not (equal vm-pgg-cleartext-decoded (car vm-message-pointer))))
+    (setq vm-pgg-cleartext-decoded nil))
   (when (and (not (eq vm-system-state 'previewing))
              (not vm-mime-decoded))
     (vm-pgg-cleartext-automode)))
@@ -776,15 +771,31 @@ cleanup here after verification and decoding took place."
       (replace-match "\r\n" t t)
       (backward-char))))
 
+(defvar vm-pgg-mime-decoded nil
+  "Saves decoded state for later use, i.e. decoding to buttons.")
+(make-variable-buffer-local 'vm-pgg-mime-decoded)
+
+(defun vm-pgg-get-mime-decoded ()
+  "Return `vm-pgg-mime-decoded'."
+  (save-excursion
+    (vm-select-folder-buffer)
+    vm-pgg-mime-decoded))
+
+(defvar vm-pgg-recursion nil
+  "Detect recursive calles.")
+
 (defadvice vm-decode-mime-message (around vm-pgg-clear-state activate)
   "Clear the modeline state before decoding."
   (vm-select-folder-buffer)
+  (when (not vm-pgg-recursion)
+    (setq vm-pgg-mime-decoded vm-mime-decoded))
   (setq vm-pgg-state-message nil)
   (setq vm-pgg-state nil)
   (if (vm-mime-plain-message-p (car vm-message-pointer))
       (if vm-pgg-cleartext-decoded
-	  (vm-preview-current-message))
-    ad-do-it))
+          (vm-preview-current-message))
+    (let ((vm-pgg-recursion t))
+      ad-do-it)))
 
 (defun vm-pgg-mime-decrypt (button)
   "Replace the BUTTON with the output from `pgg-snarf-keys'."
@@ -804,7 +815,7 @@ cleanup here after verification and decoding took place."
          (header (car part-list))
          (message (car (cdr part-list)))
          status)
-    (cond ((eq vm-pgg-mime-decoded 'decoded)
+    (cond ((eq (vm-pgg-get-mime-decoded) 'decoded)
            ;; after decode the state of vm-mime-decoded is 'buttons
            nil)
           ((not (and (= (length part-list) 2)
@@ -862,7 +873,7 @@ cleanup here after verification and decoding took place."
          (message (car part-list))
          (signature (car (cdr part-list)))
          status signature-file start end)
-    (cond ((eq vm-pgg-mime-decoded 'decoded)
+    (cond ((eq (vm-pgg-get-mime-decoded) 'decoded)
            ;; after decode the state of vm-mime-decoded is 'buttons
            nil)
           ((not (and (= (length part-list) 2)
