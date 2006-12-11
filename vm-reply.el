@@ -310,7 +310,7 @@ vm-included-text-prefix is prepended to every yanked line."
                      (re-search-forward "\n\n" (point-max) t)
                      (re-search-forward "[^ \t\n]" (point-max) t)
                      (goto-char (1- (point)))
-                     (buffer-substring-no-properties (point)))))
+                     (vm-buffer-substring-no-properties (point) (point-max)))))
               (insert text))
 	(if (vectorp (vm-mm-layout message))
 	    (let* ((o (vm-mm-layout message))
