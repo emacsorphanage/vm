@@ -123,8 +123,6 @@ The EXCLUDE-OPTION-LIST can be use to exclude individual option.
 The following options are possible.
 
 `general' options:
- - read-passwd: redefine vm-read-passwd in order to use read-passwd which is
-   more convenient since allowing the use of backspace.
  - rf-faces: change some faces
 
 `vm-mail-mode' options:
@@ -169,7 +167,6 @@ or do the binding and advising on your own."
   
   (when (member 'general option-list)
     (setq option-list (append '(
-                                read-passwd
                                 rf-faces)
                               option-list))
     (setq option-list (delq 'general option-list)))
@@ -203,14 +200,6 @@ or do the binding and advising on your own."
     (setq exclude-option-list (cdr exclude-option-list)))
   
   ;; general ----------------------------------------------------------------
-  ;; Redefine vm-read-password
-  (vm-rfaddons-check-option
-   'read-passwd option-list
-   (require 'vm-minibuf)
-   (if (fboundp 'read-passwd)
-       (defun vm-read-password (prompt &optional confirm default)
-         (read-passwd prompt confirm default))))
-
   ;; install my choice of faces 
   (vm-rfaddons-check-option
    'rf-faces option-list

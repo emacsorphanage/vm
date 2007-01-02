@@ -420,7 +420,7 @@ relevant POP servers to remove the messages."
 			(progn (message "Need password for %s" popdrop)
 			       (throw 'done nil))
 		      (setq pass
-			    (vm-read-password
+			    (read-passwd
 			     (format "POP password for %s: "
 				     popdrop)))))))
 	  ;; save the password for the sake of

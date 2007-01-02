@@ -493,7 +493,7 @@ on all the relevant IMAP servers and then immediately expunges."
 			(progn (message "Need password for %s" imapdrop)
 			       (throw 'end-of-session nil))
 		      (setq pass
-			    (vm-read-password
+			    (read-passwd
 			     (format "IMAP password for %s: "
 				     imapdrop)))))))
 	  ;; save the password for the sake of
