@@ -3,8 +3,9 @@
 @setfilename vm-pcrisis.info
 @settitle Personality Crisis for VM
 @c %**end of header
+@dircategory Emacs
 @direntry
-* VM-pcrisis::                  A personality crisis solver for VM
+* VM-pcrisis: (vm-pcrisis).                  A personality crisis solver for VM
 @end direntry
 
 @paragraphindent asis
