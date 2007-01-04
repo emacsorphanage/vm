@@ -362,8 +362,7 @@ creation)."
             (vm-buffer-of (vm-real-message-of (car vmp))))
       (make-local-variable 'vm-message-pointer)
       (setq vm-message-pointer vmp)
-      (make-local-hook 'mail-send-hook)
-      (add-local-hook 'mail-send-hook 'vm-delete-postponed-message)
+      (add-hook 'mail-send-hook 'vm-delete-postponed-message t t)
       (erase-buffer)
 
       ;; set the VM variables for setting source message attributes
@@ -384,7 +383,7 @@ creation)."
       
       ;; Prepare headers
       (insert-buffer-substring folder-buffer hstart tstart)
-      (beginning-of-buffer)
+      (goto-char (point-min))
       (cond ((or (vm-mime-plain-message-p (car vmp)) is-decoded)
              (vm-reorder-message-headers nil
                  vm-postponed-message-headers
@@ -500,7 +499,7 @@ creation)."
              (vm-decode-postponed-mime-button (car e-list))
              (setq e-list (cdr e-list)))))
         (vm-fsfemacs-p
-         (let ((o-list (vm-mime-fake-attachment-overlays (point-min)
+         (let ((o-list (vm-pine-fake-attachment-overlays (point-min)
                                                          (point-max))))
            (setq o-list (sort (vm-delete
                                (function (lambda (o)
@@ -516,6 +515,34 @@ creation)."
         (t
          (error "don't know how to MIME dencode composition for %s"
                 (emacs-version)))))
+
+(defun vm-pine-fake-attachment-overlays (start end)
+  (let ((o-list nil)
+	(done nil)
+	(pos start)
+	object props o)
+    (save-excursion
+      (save-restriction
+	(narrow-to-region start end)
+	(while (not done)
+	  (setq object (get-text-property pos 'vm-mime-layout))
+	  (setq pos (next-single-property-change pos 'vm-mime-layout))
+	  (or pos (setq pos (point-max) done t))
+	  (if object
+	      (progn
+		(setq o (make-overlay start pos))
+		(overlay-put o 'insert-in-front-hooks
+			     '(vm-disallow-overlay-endpoint-insertion))
+		(overlay-put o 'insert-behind-hooks
+			     '(vm-disallow-overlay-endpoint-insertion))
+		(setq props (append (list 'vm-mime-object t)
+				    (text-properties-at start)))
+		(while props
+		  (overlay-put o (car props) (car (cdr props)))
+		  (setq props (cdr (cdr props))))
+		(setq o-list (cons o o-list))))
+	  (setq start pos))
+	o-list ))))
 
 ;;-----------------------------------------------------------------------------
 (defun vm-decode-postponed-mime-button (x)
@@ -671,7 +698,7 @@ Optional argument DONT-KILL is positive, then do not kill source message."
     (run-hooks 'vm-postpone-message-hook)
 
     ;; delete mail header separator
-    (beginning-of-buffer)
+    (goto-char (point-min))
     (if (re-search-forward (regexp-quote mail-header-separator) nil t)
         (delete-region (match-beginning 0) (match-end 0)))
 
@@ -824,8 +851,7 @@ Drafts in other folders are not recognized!"
           ((equal action 'visit)
            (funcall visit vm-postponed-folder)
            (vm-select-folder-buffer)
-           (make-local-hook 'vm-quit-hook)
-           (add-local-hook 'vm-quit-hook 'vm-expunge-folder)
+           (add-hook 'vm-quit-hook 'vm-expunge-folder nil t)
            (vm-expunge-folder)
            (cond ((= (length vm-message-list) 0)
                   (let ((this-command 'vm-quit))
@@ -871,7 +897,6 @@ If set to nil it will never save them nor it will ask."
   :group 'vm-pine)
 
 (defun vm-add-save-killed-message-hook ()
-  (make-local-hook  'kill-buffer-hook)
   (add-hook 'kill-buffer-hook 'vm-save-killed-message-hook nil t))
 
 (defun vm-remove-save-killed-message-hook ()
@@ -958,9 +983,9 @@ See the variable `vm-mail-priority'."
   "Returns a nice path to a folder."
   (let* ((path (expand-file-name file dir)))
     (if path
-	(if (not vm-xemacs-p)
-	    (abbreviate-file-name path)
-	  (abbreviate-file-name path t))
+	(if vm-xemacs-p
+	    (abbreviate-file-name path t)
+	  (abbreviate-file-name path))
       dir)))
 
 ;;;###autoload

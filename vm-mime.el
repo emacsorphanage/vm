@@ -4002,9 +4002,6 @@ LAYOUT is the MIME layout struct for the message/external-body object."
       (put-text-property (overlay-start e) 
 			 (overlay-end e) 
 			 'vm-mime-layout layout)
-      (put-text-property (overlay-start e) 
-			 (overlay-end e) 
-			 'vm-mime-object t)
       )))
 
 (defun vm-mime-rewrite-failed-button (button error-string)
