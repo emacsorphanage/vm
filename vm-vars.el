@@ -1606,14 +1606,14 @@ for transmission using the MIME message/partial type."
   :group 'vm
   :type '(choice (const nil) integer))
 
-(defcustom vm-mime-attachment-save-directory nil
+(defcustom vm-mime-attachment-save-directory (expand-file-name "~")
   "*Non-nil value is a default directory for saving MIME attachments.
 When VM prompts you for a target file name when saving a MIME body,
 any relative pathnames will be relative to this directory."
   :group 'vm
   :type '(choice (const nil) directory))
 
-(defcustom vm-mime-attachment-source-directory nil
+(defcustom vm-mime-attachment-source-directory (expand-file-name "~")
   "*Non-nil value is a default source directory for MIME attachments.
 When `vm-mime-attach-file' prompts you for the name of a file to
 attach, any relative pathnames will be relative to this directory."
