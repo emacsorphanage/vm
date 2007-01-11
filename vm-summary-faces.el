@@ -45,7 +45,8 @@
   (require 'vm-autoload)
   (require 'vm-version)
   (require 'vm-vars)
-  (require 'vm-misc))
+  (require 'vm-misc)
+  (require 'vm-summary))
 
 (eval-and-compile
   (if vm-xemacs-p (require 'overlay)))
