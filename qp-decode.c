@@ -88,7 +88,7 @@ main()
 		for (stop++; *stop && (*stop == ' ' || *stop == '\t'); stop++)
 		    ;
 	    } else {
-/* 		printf("\nError: line %d: '%c' is something other than line break or hex digits after = in quoted-printable encoding\n", lineno, *stop); */
+		fprintf(stderr, "Error: line %d: '%c' is something other than line break or hex digit after = in quoted-printable encoding\n", lineno, *stop);
 		putchar('=');
 		putchar(*stop);
 		stop++;
