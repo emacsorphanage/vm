@@ -1514,7 +1514,7 @@ headers."
   :type '(regexp))
 
 (defcustom vm-mime-encode-headers-words-regexp
-  (let ((8bit-word "\\([^ \t\n\r]*[\200-\377]+[^ \t\n\r]*\\)+"))
+  (let ((8bit-word "\\([^ \t\n\r]*[^\x0-\x80]+[^ \t\n\r]*\\)+"))
     (concat "\\s-\\(" 8bit-word "\\(\\s-+" 8bit-word "\\)*\\)"))
   "*A regexp matching a set of consecutive words which must be encoded."
   :group 'vm-rfaddons
