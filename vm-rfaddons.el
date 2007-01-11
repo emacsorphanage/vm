@@ -73,7 +73,7 @@
 
 (eval-when-compile
   (require 'cl)
-  (let ((feature-list '(vm-pcrisis bbdb bbdb-vm mailcrypt gnus-group)))
+  (let ((feature-list '(regexp-opt bbdb bbdb-vm gnus-group)))
     (while feature-list
       (condition-case nil
           (require (car feature-list))
@@ -1704,36 +1704,6 @@ Optional TOGGLE hiding of headers."
       (goto-char (point-min)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(autoload 'mc-encrypt-message "mc-toplev")
-;;;###autoload
-(defun mc-vm-mail-send-and-exit (&optional keep-buffer)
-  "Send message and keep a self-encrypted version in the FCC-folder.
-See `vm-mail-send-and-exit'.  If KEEP-BUFFER is t then do not kill
-composition buffer after sending."
-  (interactive "P")
-
-  (let ((fcc nil)
-        (vm-keep-sent-messages  t))
-    (mail-text)
-    (let ((case-fold-search t))
-      (if (re-search-backward "^FCC:\\s-*\\([^\n ]+\\)" (point-min) t)
-          (progn
-            (setq fcc (buffer-substring (match-beginning 1) (match-end 0)))
-            (vm-mail-mode-remove-header "FCC:"))))
-    (vm-mail-send)
-    (if fcc
-        (let ((mc-pgp-always-sign 'never))
-          (if (not (mail-position-on-field "From" t))
-              (progn (goto-char (point-min))
-                     (insert (format "From: %s <%s>\n"
-                                     user-full-name
-                                     user-mail-address))))
-          (mc-encrypt-message user-mail-address)
-          (vm-postpone-message fcc keep-buffer)
-          )
-      (if (not keep-buffer) (kill-this-buffer)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-assimilate-html-command "striptags"
   "*Command/function which should be called for stripping tags.
 
@@ -2102,52 +2072,6 @@ B and E are the beginning and end of the marked region or the current line."
         (if (eq major-mode 'vm-mode)
             (vm-get-new-mail))
         (setq buffers (cdr buffers))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;###autoload
-(defun vm-mail-replace-or-add-in-header (hdrfield regexp hdrcont &optional sep)
-  "Replace in HDRFIELD the match of REGEXP with HDRCONT.
-All arguments are strings.  The field can either be present or not.
-If the header field is present and already contains something, HDRCONT
-will be appended and if SEP is none nil it will be used as separator.
-
-I use this function to modify recipients in the TO-header.
-e.g.
- (vmpc-replace-or-add-in-header \"To\" \"[Rr]obert Fenk[^,]*\"
-                                     \"Robert Fenk\" \", \"))"
-  (if (eq vmpc-current-buffer 'composition)
-      (let ((hdr (vmpc-get-current-header-contents hdrfield))
-            (old-point (point)))
-        (if hdr
-            (progn
-              (vmpc-delete-header hdrfield)
-              (if (string-match regexp hdr)
-                  (setq hdr (replace-in-string hdr regexp hdrcont))
-                (setq hdr (if sep (concat hdr sep hdrcont)
-                            (concat hdr hdrcont))))
-              (vmpc-insert-header hdrfield hdr)
-              (goto-char old-point))
-          ))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;###autoload
-(defun vmpc-run-action (&optional action-regexp)
-  "Run all actions with names matching the ACTION-REGEXP.
-If called interactivly it promts for the regexp.  You may also use
-completion."
-  (interactive)
-  (let ((action-names (mapcar '(lambda (a)
-                                 (list (regexp-quote (car a)) 1))
-                              vmpc-actions)))
-    (if (not action-regexp)
-        (setq action-regexp (completing-read "VMPC action-regexp: "
-                                             action-names)))
-    (mapcar '(lambda (action)
-               (if (string-match action-regexp (car action))
-                   (mapcar '(lambda (action-command)
-                              (eval action-command))
-                           (cdr action))))
-            vmpc-actions)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;###autoload

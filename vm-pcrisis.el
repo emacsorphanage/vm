@@ -34,10 +34,12 @@
 ;; above.
 
 ;;; Code:
+(require 'vm-reply)
+
 (eval-when-compile
   (require 'vm-version)
-  (require 'vm-message)
   (require 'vm-macro)
+  (require 'vm-message)
   ;; get the macros we need.
   (require 'cl)
   (condition-case nil
@@ -45,8 +47,6 @@
     (error
      (message "Could not load bbdb.el.  Related functions may not work correctly!")
      (sit-for 5))))
-
-(require 'vm-reply)
 
 ;; -------------------------------------------------------------------
 ;; Variables:
@@ -698,6 +698,30 @@ previously empty."
                   (insert to-string))))))))
 
 
+(defun vmpc-replace-or-add-in-header (hdrfield regexp hdrcont &optional sep)
+  "Replace in HDRFIELD the match of REGEXP with HDRCONT.
+All arguments are strings.  The field can either be present or not.
+If the header field is present and already contains something, HDRCONT
+will be appended and if SEP is none nil it will be used as separator.
+
+I use this function to modify recipients in the TO-header.
+e.g.
+ (vmpc-replace-or-add-in-header \"To\" \"[Rr]obert Fenk[^,]*\"
+                                     \"Robert Fenk\" \", \"))"
+  (if (eq vmpc-current-buffer 'composition)
+      (let ((hdr (vmpc-get-current-header-contents hdrfield))
+            (old-point (point)))
+        (if hdr
+            (progn
+              (vmpc-delete-header hdrfield)
+              (if (string-match regexp hdr)
+                  (setq hdr (replace-in-string hdr regexp hdrcont))
+                (setq hdr (if sep (concat hdr sep hdrcont)
+                            (concat hdr hdrcont))))
+              (vmpc-insert-header hdrfield hdr)
+              (goto-char old-point))
+          ))))
+
 (defun vmpc-insert-signature (sig &optional pos)
   "Insert SIG at the end of `vmpc-sig-exerlay'.
 SIG is a string.  If it is the name of a file, its contents is inserted --
@@ -1252,6 +1276,27 @@ actions will be run."
   (if (interactive-p)
       (message "VMPC actions to run: %S" vmpc-actions-to-run))
   vmpc-actions-to-run)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;###autoload
+(defun vmpc-run-action (&optional action-regexp)
+  "Run all actions with names matching the ACTION-REGEXP.
+If called interactivly it promts for the regexp.  You may also use
+completion."
+  (interactive)
+  (let ((action-names (mapcar '(lambda (a)
+                                 (list (regexp-quote (car a)) 1))
+                              vmpc-actions)))
+    (if (not action-regexp)
+        (setq action-regexp (completing-read "VMPC action-regexp: "
+                                             action-names)))
+    (mapcar '(lambda (action)
+               (if (string-match action-regexp (car action))
+                   (mapcar '(lambda (action-command)
+                              (eval action-command))
+                           (cdr action))))
+            vmpc-actions)))
+
 
 (defun vmpc-run-actions (&optional actions verbose)
   "Run the argument actions, or the actions stored in `vmpc-actions-to-run'.
