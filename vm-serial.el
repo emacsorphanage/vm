@@ -82,6 +82,7 @@
 
 (eval-and-compile
   (require 'vm-pine)
+  (require 'vm-reply)
   (require 'mail-utils)
   (require 'mail-extr))
 
