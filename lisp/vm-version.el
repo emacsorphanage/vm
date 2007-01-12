@@ -5,7 +5,7 @@
   "Version number of VM.")
 
 (defun vm-version ()
-  "Returns the value of the variable vm-version."
+  "Returns the value of the variable `vm-version'."
   (interactive)
   (save-excursion
     (unless (get-buffer " *vm-version*")
@@ -14,16 +14,12 @@
              (d (file-name-directory f)))
         (setq default-directory d)
         (erase-buffer)
-        (cond ((file-exists-p (setq f (expand-file-name ",id" d)))
-               ;; insert content of ,id (in distributed bundle)
-               (insert-file-contents f)
-               (goto-char (point-min))
-               (re-search-forward "^[^$]*\\$Id: \\([^$]+\\)\\$[^$]*")
-               (replace-match (match-string 1)))
-              ((file-exists-p (expand-file-name ".bzr" d))
+        (cond ((file-exists-p (expand-file-name ".bzr" d))
                ;; get the current branch nick and revno from bzr 
                (insert (concat (shell-command-to-string "bzr nick") "-"
                                (shell-command-to-string "bzr revno"))))
+              ((and (locate-library "vm-revno") (load-library "vm-revno"))
+               (insert vm-revno))
               (t
                (insert vm-version 
                        "-cannot_determine_precise_VM_version.")))

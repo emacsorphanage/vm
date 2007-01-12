@@ -12,3 +12,4 @@ vmrf.tgz
 vm.el
 *.diff
 dir
+Makefile

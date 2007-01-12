@@ -1,68 +1,104 @@
-Read patchdoc.txt first!
+This is NOT the original VM from http://www.wonderworks.com/vm!
 
-How to setup VM:
+Hail Kyle!
 
-0) Look at Makefile.User and review the values of EMACS, INFODIR,
-   LISPDIR, BINDIR and PIXMAPDIR.  If they are not right for your
-   system, change them.
+This is Robert Widhopf-Fenk's version from http://www.robf.de/Hacking/elisp!
 
-1) Your build options:
-     `make' to build a usable VM.
-     `make vm.info' to build the Info online help document.
-     'make utils' to compile the external Quoted-Printable and
-         BASE64 encoders and decoders.
-     `make all' to make everything.
-   If there are byte compiler warnings, ignore them.  They
-   probably can't be avoided with code that is run on multipe
-   Emacs versions.
-
-2) Put all the .elc files into a Lisp directory that is in your
-   Emacs load-path.  If you've already set LISPDIR to this
-   directory, just `make install'.
-
-3) If you're using XEmacs or Emacs 21 and you want toolbar
-   support, make a directory called `vm' in the XEmacs `etc'
-   directory.  Copy the files in pixmaps directory into the
-   directory you just created.  VM will look for the pixmaps
-   there by default.
-
-   Alternately you can put the pixmap files in any directory you
-   want or just leave them where they are.  Be sure to point the
-   variables vm-toolbar-pixmap-directory and vm-image-directory at
-   the direrctory where you put the files.  That is
-
-      (setq vm-toolbar-pixmap-directory "/path/to/pixmaps")
-      (setq vm-image-directory "/path/to/pixmaps")
-
-   in your .emacs or .vm file.  If you've set PIXMAPDIR, 'make
-   install' will copy the files to that directory.
-
-4) If you built the Info document, copy the file vm.info* files
-   into the Emacs' info.  ('make install' will do this for you if
-   you've set INFODIR). You may need to edit the "dir" file in
-   that directory and add a menu entry for VM.  It should look
-   like this:
-
-* VM:: (vm)		A mail reader.
-
-5) Put these lines in your .emacs file if they aren't there
-   already:
-
-   (autoload 'vm "vm" "Start VM on your primary inbox." t)
-   (autoload 'vm-other-frame "vm" "Like `vm' but starts in another frame." t)
-   (autoload 'vm-visit-folder "vm" "Start VM on an arbitrary folder." t)
-   (autoload 'vm-visit-virtual-folder "vm" "Visit a VM virtual folder." t)
-   (autoload 'vm-mode "vm" "Run VM major mode on a buffer" t)
-   (autoload 'vm-mail "vm" "Send a mail message using VM." t)
-   (autoload 'vm-submit-bug-report "vm" "Send a bug report about VM." t)
-
-You're now ready to use VM.  C-h i should start up the Emacs Info
-system and if you've installed the Info document properly you can
-use the online documentation to teach yourself how to use VM.
-
-Please use M-x vm-submit-bug-report to report bugs.  The bug report
-will be sent to bug-vm@uunet.uu.net and be gatewayed from there to
-gnu.emacs.vm.bug.
+Read INSTALL and follow the instructions.
 
 VM's home page on the World Wide Web is at http://www.wonderworks.com/vm .
 You can get the latest version of VM from there.
+
+The documentation of my changes is incomplete and the changes may even cause
+new problems or bugs.  Feel free to contact me if you think my patch breaks
+something which is working in standard VM.
+
+Personally I am an follower of the XEmacs church and thus some things may not
+work with GNU Emacs, nevertheless I am happy if you send me fixes for GNU
+Emacs.
+
+*******************************************************************************
+BUGS
+
+Report any problems or bugs otherwise they cannot be fixed!
+
+Post them to the USENET groups gnu.emacs.vm.bugs or gnu.emacs.vm.info!
+
+Or use M-x vm-submit-bug-report to report bugs.
+
+*******************************************************************************
+UPDATES/UPGRADES
+
+Simply running the following command should check for an update and
+rebuilt the modified sources.  It requires "wget" to be installed!
+
+	make update
+
+WARNING: THIS WILL OVERWRITE ALL LOCAL CHANGES TO THE SOURCES!
+
+If you want to maintain a hacked version of VM and stay in sync with me, see
+the next section on BZR. 
+
+*******************************************************************************
+BZR (http://bazaar-vcs.org/)
+
+I maintain my changes by BZR now, since CVS sucks and TLA/BAZ do as well.
+
+If you want to send me changes or start hacking on your own you may want to 
+branch from my repository.
+
+# create your own local branch
+bzr get http://www.robf.de/Hacking/bazaar/vm
+# get updates
+bzr pull
+# start hacking 
+xemacs vm-pgg.el
+# commit your changes 
+bzr commit
+# Generate a bundle of your changes for merge into the mainline 
+bzr bundle-revisions --output=xy-changes.diff
+# Attach the bundle to a mail (rather than doing cut&paste) and send
+# it to hack@robf.de with a descriptive subject.  
+
+*******************************************************************************
+COMMENTS
+
+This patch provides the following hacks & enhancements and other stuff not
+listed here, as I am quite lazy in writing docs. ;c) 
+
+Additional extensions for VM written by myself:
+- vm-pine.el	      for draft handling and other Pine inspired functions.
+- vm-ps-print.el      for nice ps-printing functions
+- vm-rfaddons.el      adds various add-ons to VM
+- vm-grepmail a	      grepmail interface for VM
+- vm-avirtual.el      brings additional virtual folder selectors and functions
+		      for spam tagging
+- vm-biff.el	      is a xbiff within VM, notifying you of new mail
+- vm-serial.el	      templates for mails, personalized serial mails 
+- vm-summary-faces.el face base on virtual selectors 
+
+Additional extensions for VM from other people:
+- vm-pcrisis.el	      by Rob Hodges for people with personal crisis which need
+		      to rewrite headers automatically. 
+- vcard.el            by Noah Friedman <friedman@splode.com> for
+  vm-vcard.el	      displaying vcards within VM.
+
+Patches against the VM core (incomplete docs):
+- make-autoloads: enhanced output & ignore links
+- vm-mime.el:
+	* vm-pine patch for attachment handling of continued message drafts
+	* mime button displaying file name of attachment
+	* write mime filter
+	* qp-decoding of disposition parameters like filename etc.
+- vm-mouse.el: handling of email-addresses like "mailto:" URLs
+- vm-page.el: vm-energize-urls is interactive now, this allows you to easily
+	      check URLs in a message you are currently composing.
+- vm-reply.el:
+	* Proper setting of subject & references when replying to multiple
+	  messages.
+	* Filtering of MIME types when yanking a message.  Now only those
+	  types listed in `vm-included-mime-types-list' are yanked and you
+	  will have no attachment mess any more!
+- vm-startup.el: vm-mail takes now a subject argument
+- vm-vars.el: two new variables for customization (see vm-reply)
+	* vm-included-mime-types-list
