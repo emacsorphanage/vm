@@ -5,15 +5,62 @@
 SHELL = /bin/sh
 
 # the list of source files 
-SOURCES = vm-version.el $(wildcard vm-*.el)
+SOURCES = vm-version.el
+SOURCES += vm.el
+SOURCES += vm-avirtual.el
+SOURCES += vm-biff.el
+SOURCES += vm-crypto.el
+SOURCES += vm-delete.el
+SOURCES += vm-digest.el
+SOURCES += vm-easymenu.el
+SOURCES += vm-edit.el
+SOURCES += vm-folder.el
+SOURCES += vm-grepmail.el
+SOURCES += vm-imap.el
+SOURCES += vm-license.el
+SOURCES += vm-macro.el
+SOURCES += vm-mark.el
+SOURCES += vm-menu.el
+SOURCES += vm-message.el
+SOURCES += vm-message-history.el
+SOURCES += vm-mime-display-internal-application.el
+SOURCES += vm-mime.el
+SOURCES += vm-minibuf.el
+SOURCES += vm-misc.el
+SOURCES += vm-motion.el
+SOURCES += vm-mouse.el
+SOURCES += vm-page.el
+SOURCES += vm-pcrisis.el
+SOURCES += vm-pgg.el
+SOURCES += vm-pine.el
+SOURCES += vm-pop.el
+SOURCES += vm-ps-print.el
+SOURCES += vm-reply.el
+SOURCES += vm-rfaddons.el
+SOURCES += vm-save.el
+SOURCES += vm-search.el
+SOURCES += vm-serial.el
+SOURCES += vm-sort.el
+SOURCES += vm-startup.el
+SOURCES += vm-summary.el
+SOURCES += vm-summary-faces.el
+SOURCES += vm-thread.el
+SOURCES += vm-toolbar.el
+SOURCES += vm-undo.el
+SOURCES += vm-user.el
+SOURCES += vm-vars.el
+SOURCES += vm-vcard.el
+SOURCES += vm-version.el
+SOURCES += vm-virtual.el
+SOURCES += vm-window.el
 
 # to list of object files 
 OBJECTS = $(SOURCES:.el=.elc)
 
 ifeq (@EMACS_FLAVOR@,emacs)
-OBJECTS = xtla-autoloads.elc
+OBJECTS += xtla-autoloads.elc
 else
-OBJECTS = auto-autoloads.elc custom-load.elc
+OBJECTS += auto-autoloads.elc custom-load.elc
 endif
 
 INSTALL_FILES = $(SOURCES) $(OBJECTS)
