@@ -659,7 +659,7 @@ When the button is pressed ACTION is called."
           (narrow-to-region start (point))
           (vm-pgg-cleartext-automode)
           (widen)
-          (set-window-start (selected-window) 0)
+;          (set-window-start (selected-window) 0)
           ;(scroll-down 1000)
           )))))
   
