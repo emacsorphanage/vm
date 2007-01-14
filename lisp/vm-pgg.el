@@ -651,13 +651,17 @@ When the button is pressed ACTION is called."
   
 (defadvice vm-mime-transfer-decode-region (around vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages parts."
-  ad-do-it
-  (when (vm-mime-text-type-layout-p (ad-get-arg 0))
-    (save-excursion
-      (save-restriction
-        (narrow-to-region (ad-get-arg 1) (ad-get-arg 2))
-        (vm-pgg-cleartext-automode)
-        (widen)))))
+  (let ((start (point)))
+    ad-do-it
+    (when (vm-mime-text-type-layout-p (ad-get-arg 0))
+      (save-excursion
+        (save-restriction
+          (narrow-to-region start (point))
+          (vm-pgg-cleartext-automode)
+          (widen)
+          (set-window-start (selected-window) 0)
+          ;(scroll-down 1000)
+          )))))
   
 (defadvice vm-mime-display-internal-text/plain (around vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages parts.
