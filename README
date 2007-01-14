@@ -1,30 +1,55 @@
 This is NOT the original VM from http://www.wonderworks.com/vm!
 
-Hail Kyle!
+VM was written by Kyle Jones!  Hail Kyle!
 
 This is Robert Widhopf-Fenk's version from http://www.robf.de/Hacking/elisp!
 
+Beside my own extensions, bug-fixes and enhancements it contains also most of
+those posted to gnu.emacs.vm.bugs, gnu.emacs.vm.info or mailed to me.  In fact
+I might have I accidently missed some or considered them to much of a hack,
+which might also hold for code snippets I posted in response to others wanting
+wired features.
+
+The persons contributing to this version of VM (in alphabetic order) are:
+
+ * Aidan Kehoe
+ * Glenn ???
+ * Jens Gustedt
+ * John J Foerch
+ * Kevin Rogers
+ * Rob Hodges
+ * Robert Marshall
+ * Robert P. Goldman
+
+Please mail me a note, if I have forgotten someone or accidently put you on
+the list. 
+
 Read INSTALL and follow the instructions.
 
-VM's home page on the World Wide Web is at http://www.wonderworks.com/vm .
-You can get the latest version of VM from there.
-
-The documentation of my changes is incomplete and the changes may even cause
-new problems or bugs.  Feel free to contact me if you think my patch breaks
-something which is working in standard VM.
-
-Personally I am an follower of the XEmacs church and thus some things may not
-work with GNU Emacs, nevertheless I am happy if you send me fixes for GNU
-Emacs.
+VM's home page on the World Wide Web is at http://www.wonderworks.com/vm and
+the FAQ is still hosted there.
 
 *******************************************************************************
 BUGS
 
+If you have any problems or met a bug it is best to discuss them on the USENET
+groups gnu.emacs.vm.bugs or gnu.emacs.vm.info!  Also search the groups before
+posting as there might have been some discussion and a fix before.
+
 Report any problems or bugs otherwise they cannot be fixed!
 
-Post them to the USENET groups gnu.emacs.vm.bugs or gnu.emacs.vm.info!
+Please provide the version number of VM and Emacs and how to reproduce the
+problem.
 
-Or use M-x vm-submit-bug-report to report bugs.
+Personally I am an follower of the XEmacs church and thus some things may not
+work with GNU Emacs, nevertheless I test VM also on GNU Emacs from time to
+time and I am happy to merge you fixes.
+
+*******************************************************************************
+Wiki
+
+The Wiki at http://www.emacswiki.org/cgi-bin/wiki?id=CategoryViewMail is
+best suited to conserve code snippets, cooking guides or feature requests.
 
 *******************************************************************************
 UPDATES/UPGRADES
@@ -63,14 +88,17 @@ bzr bundle-revisions --output=xy-changes.diff
 *******************************************************************************
 COMMENTS
 
-This patch provides the following hacks & enhancements and other stuff not
+The documentation of my changes is incomplete and the changes may even cause
+new problems or bugs.  
+
+This VM provides the following hacks & enhancements and other stuff not
 listed here, as I am quite lazy in writing docs. ;c) 
 
 Additional extensions for VM written by myself:
 - vm-pine.el	      for draft handling and other Pine inspired functions.
 - vm-ps-print.el      for nice ps-printing functions
 - vm-rfaddons.el      adds various add-ons to VM
-- vm-grepmail a	      grepmail interface for VM
+- vm-grepmail	      a grepmail interface for VM
 - vm-avirtual.el      brings additional virtual folder selectors and functions
 		      for spam tagging
 - vm-biff.el	      is a xbiff within VM, notifying you of new mail
@@ -83,7 +111,7 @@ Additional extensions for VM from other people:
 - vcard.el            by Noah Friedman <friedman@splode.com> for
   vm-vcard.el	      displaying vcards within VM.
 
-Patches against the VM core (incomplete docs):
+Changes of the VM core (incomplete):
 - make-autoloads: enhanced output & ignore links
 - vm-mime.el:
 	* vm-pine patch for attachment handling of continued message drafts
