@@ -68,10 +68,8 @@
   :group 'vm)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'vm-version)
-(require 'vm-vars)
-
 (eval-when-compile
+  (require 'advice)
   (require 'cl)
   (let ((feature-list '(regexp-opt bbdb bbdb-vm gnus-group)))
     (while feature-list
@@ -85,6 +83,10 @@
 
 (require 'sendmail)
 (if vm-xemacs-p (require 'overlay))
+
+(require 'vm-version)
+(require 'vm-vars)
+(require 'vm-vars)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GNU Emacs seems to miss some functions
