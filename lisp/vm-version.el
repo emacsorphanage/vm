@@ -14,10 +14,10 @@
              (d (file-name-directory f)))
         (setq default-directory d)
         (erase-buffer)
-        (cond ((file-exists-p (expand-file-name ".bzr" d))
+        (cond ((file-exists-p (expand-file-name ".bzr" (concat d "../")))
                ;; get the current branch nick and revno from bzr 
-               (insert (concat (shell-command-to-string "bzr nick") "-"
-                               (shell-command-to-string "bzr revno"))))
+               (insert (concat (shell-command-to-string "bzr --no-plugins nick") "-"
+                               (shell-command-to-string "bzr --no-plugins revno"))))
               ((and (locate-library "vm-revno") (load-library "vm-revno"))
                (insert vm-revno))
               (t
