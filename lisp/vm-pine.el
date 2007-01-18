@@ -607,6 +607,10 @@ creation)."
 ;;-----------------------------------------------------------------------------
 (define-key vm-mail-mode-map "\C-c\C-p" 'vm-postpone-message)
 
+(defvar vm-postpone-message-modes-to-disable
+  '(font-lock-mode ispell-minor-mode filladapt-mode auto-fill-mode)
+  "A list of modes to disable before postponing a message.")
+
 ;;-----------------------------------------------------------------------------
 ;;;###autoload
 (defun vm-postpone-message (&optional folder dont-kill no-postpone-header)
@@ -622,14 +626,11 @@ Optional argument DONT-KILL is positive, then do not kill source message."
         folder-buffer
         target-type)
 
-    (if (and (boundp 'font-lock-mode) font-lock-mode)
-        (font-lock-mode 0))
-    (if (and vm-fsfemacs-p (boundp 'ispell-minor-mode) ispell-minor-mode)
-        (ispell-minor-mode 0))
-    (if (and vm-fsfemacs-p (boundp  'filladapt-mode) filladapt-mode)
-        (filladapt-mode 0))
-    (if (boundp 'auto-fill-mode)
-        (auto-fill-mode 0))
+    (let (m (modes vm-postpone-message-modes-to-disable))
+      (while modes
+        (setq m (car modes) modes (cdr modes))
+        (if (and (boundp m) (symbol-value m))
+            (funcall m 0))))
 
     (if (and folder (not (stringp folder)))
         (setq folder (vm-read-file-name
