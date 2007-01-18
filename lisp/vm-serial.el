@@ -80,11 +80,13 @@
 (eval-when-compile
   (require 'cl))
 
+(require 'vm-reply)
+
 (eval-and-compile
   (require 'vm-pine)
-  (require 'vm-reply)
   (require 'mail-utils)
-  (require 'mail-extr))
+  (require 'mail-extr)
+  (require 'advice))
 
 (let ((feature-list '(bbdb bbdb-sc)))
   (while feature-list

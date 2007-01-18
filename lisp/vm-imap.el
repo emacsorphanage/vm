@@ -17,6 +17,9 @@
 
 ;;(provide 'vm-imap)
 
+(eval-when-compile 
+  (require 'sendmail))
+
 (if (fboundp 'define-error)
     (progn
       (define-error 'vm-imap-protocol-error "IMAP protocol error"))

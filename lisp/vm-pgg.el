@@ -91,15 +91,18 @@
       (condition-case nil
           (require 'pgg)
         (error (message "WARNING: Cannot load pgg.el, related functions may not work!")))
-    (require 'pgg)))
+    (require 'pgg))
 
-(require 'easymenu)
-(require 'vm-version)
-(require 'vm-misc)
-(require 'vm-page)
-(require 'vm-vars)
-(require 'vm-mime)
-(require 'vm-reply)
+  (require 'easymenu)
+  (require 'vm-version)
+  (require 'vm-misc)
+  (require 'vm-page)
+  (require 'vm-vars)
+  (require 'vm-mime)
+  (require 'vm-reply)
+
+  (require 'advice))
+  
 
 (eval-when-compile
   (require 'cl)
@@ -109,7 +112,7 @@
   (defvar vm-presentation-buffer)
   (defvar vm-summary-buffer)
   ;; avoid bytecompile warnings
-;  (defvar vm-pgg-cleartext-state nil "For interfunction communication.")
+  (defvar vm-pgg-cleartext-state nil "For interfunction communication.")
 )
 
 (defgroup vm nil
@@ -651,12 +654,12 @@ When the button is pressed ACTION is called."
   
 (defadvice vm-mime-transfer-decode-region (around vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages parts."
-  (let ((start (point)))
+  (let ((vm-pgg-part-start (point)))
     ad-do-it
     (when (vm-mime-text-type-layout-p (ad-get-arg 0))
       (save-excursion
         (save-restriction
-          (narrow-to-region start (point))
+          (narrow-to-region vm-pgg-part-start (point))
           (vm-pgg-cleartext-automode)
           (widen)
 ;          (set-window-start (selected-window) 0)

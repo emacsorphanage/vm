@@ -34,17 +34,21 @@
 ;; above.
 
 ;;; Code:
-(require 'vm-reply)
 
 (eval-when-compile
   (require 'vm-version)
-  (require 'vm-macro)
   (require 'vm-message)
+  (require 'vm-macro)
+  (require 'vm-reply)
   ;; get the macros we need.
   (require 'cl)
-  (condition-case nil
-      (require 'bbdb)
+  (require 'advice)
+  (condition-case e
+      (progn 
+        (require 'regexp-opt)
+        (require 'bbdb))
     (error
+     (message "%S" e)
      (message "Could not load bbdb.el.  Related functions may not work correctly!")
      (sit-for 5))))
 

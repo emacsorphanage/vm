@@ -19,5 +19,6 @@
 (require 'vm-message)
 (require 'vm-macro)
 (require 'vm-vars)
+(require 'sendmail)
 
 (provide 'vm-build)

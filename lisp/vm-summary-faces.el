@@ -46,7 +46,8 @@
   (require 'vm-version)
   (require 'vm-vars)
   (require 'vm-misc)
-  (require 'vm-summary))
+  (require 'vm-summary)
+  (require 'advice))
 
 (eval-and-compile
   (if vm-xemacs-p (require 'overlay)))
