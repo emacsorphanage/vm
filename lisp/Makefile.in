@@ -54,13 +54,13 @@ SOURCES += vm-virtual.el
 SOURCES += vm-window.el
 
 # to list of object files 
-OBJECTS = $(SOURCES:.el=.elc)
-
 ifeq (@EMACS_FLAVOR@,emacs)
-OBJECTS += xtla-autoloads.elc
+OBJECTS = vm-autoloads.elc
 else
-OBJECTS += auto-autoloads.elc custom-load.elc
+OBJECTS = auto-autoloads.elc custom-load.elc
 endif
+
+OBJECTS += $(SOURCES:.el=.elc)
 
 INSTALL_FILES = $(SOURCES) $(OBJECTS)
 
@@ -93,7 +93,7 @@ FLAGS = @FLAGS@
 
 EMACS_COMP = lispdir=$(lispdir) srcdir=$(srcdir) $(EMACS_PROG) $(FLAGS)
 
-OTHERDIRS = @OTHERDIRS@
+export OTHERDIRS = @OTHERDIRS@
 
 SYMLINKS = @SYMLINKS@
 LINKPATH = @LINKPATH@
@@ -116,12 +116,10 @@ vm-revno.el: $(INSTALL_FILES)
 # GNU Emacs's vm-autoload file
 vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	-$(RM) -f $@
-	echo "" >> $@
 	(build_dir=`pwd`;                                                               \
          cd @srcdir@;                                                                   \
          $(EMACS_PROG) -batch -q -l autoload                                            \
                 --eval '(setq generated-autoload-file "'"@abs_builddir@/$@"'")'         \
-                --eval "(if (featurep 'xemacs) (delete-file generated-autoload-file))"  \
                 --eval '(setq make-backup-files nil)'                                   \
                 --eval "$(AUTOLOAD_PACKAGE_NAME)" \
                 -f batch-update-autoloads `pwd`)

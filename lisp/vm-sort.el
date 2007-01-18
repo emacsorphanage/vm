@@ -246,6 +246,11 @@ the folder undisturbed."
 	   subject ))
 	(vm-sortable-subject-of m))))
 
+(defvar vm-sort-compare-header nil
+  "the header to sort on.")
+
+(defvar vm-sort-compare-header-history nil)
+
 (defun vm-sort-messages (keys &optional lets-get-physical)
   "Sort message in a folder by the specified KEYS.
 You may sort by more than one particular message key.  If
@@ -637,11 +642,6 @@ folder in the order in which the messages arrived."
 	  (t nil))))
 
 (add-to-list 'vm-supported-sort-keys "header")
-
-(defvar vm-sort-compare-header nil
-  "the header to sort on.")
-
-(defvar vm-sort-compare-header-history nil)
 
 (defun vm-get-headers-of (m &optional headers)
   (save-excursion

@@ -15,8 +15,6 @@
 ;;; along with this program; if not, write to the Free Software
 ;;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;(provide 'vm-startup)
-
 (defvar enable-multibyte-characters)
 
 
@@ -1726,17 +1724,11 @@ Please remove these instructions from your message.")
   (vm-display nil nil '(vm-load-init-file) '(vm-load-init-file)))
 
 (defun vm-check-emacs-version ()
-  (cond ((and vm-xemacs-p
-	      (or (< emacs-major-version 19)
-		  (and (= emacs-major-version 19)
-		       (< emacs-minor-version 14))))
-	 (error "VM %s must be run on XEmacs 19.14 or a later version."
+  (cond ((and vm-xemacs-p (< emacs-major-version 21))
+	 (error "VM %s must be run on XEmacs 21 or a later version."
 		vm-version))
-	((and vm-fsfemacs-p
-	      (or (< emacs-major-version 19)
-		  (and (= emacs-major-version 19)
-		       (< emacs-minor-version 34))))
-	 (error "VM %s must be run on Emacs 19.34 or a later v19 version."
+	((and vm-fsfemacs-p (< emacs-major-version 21))
+	 (error "VM %s must be run on GNU Emacs 21 or a later version."
 		vm-version))))
 
 (defun vm-set-debug-flags ()
@@ -1755,7 +1747,6 @@ Please remove these instructions from your message.")
 (defun vm-session-initialization ()
   (require 'vm-version)
   (require 'vm-vars)
-  (vm-note-emacs-version)
   (vm-check-emacs-version)
   (add-hook 'kill-emacs-hook 'vm-garbage-collect-global)
 ;;  (vm-set-debug-flags)
