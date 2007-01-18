@@ -30,10 +30,6 @@ FLAGS = @FLAGS@
 SYMLINKS = @SYMLINKS@
 LINKPATH = @LINKPATH@
 
-.info.texinfo:
-	$(EMACS_PROG) $(FLAGS) -insert $< \
-		-l texinfmt -f texinfo-format-buffer -f save-buffer
-
 ##############################################################################
 
 all: vm.info vm-pcrisis.info
