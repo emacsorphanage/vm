@@ -20,6 +20,12 @@
 
 # Process this file with autoconf to produce a new configure script
 
+m4_define([VM_PRE_INIT],
+[ m4_define([VM_VERSION],
+             m4_esyscmd([bzr nick | xargs printf '%s'
+	     		]))
+])
+
 # VM_ARG_SUBST(VAR, OPTION, VAL, DESC[, DEFAULT[, ACTION]])
 #
 # Substitute the autoconf variable VAR to a value specified by the user
@@ -52,10 +58,29 @@ AC_DEFUN([VM_COLON_TO_SPACE],
 # --with-other-dir option
 AC_DEFUN([VM_OTHERDIRS],
   [ VM_ARG_SUBST([OTHERDIRS], [other-dirs], [DIRS],
-    [set other needed directories (a list of space or colon separated paths)],
+    [set other needed lisp directories (a list of space or colon separated paths)],
     [],
     dnl #### WARNING: pay attention to the quoting of ACTION if given !!!!!
-    [[ VM_COLON_TO_SPACE(withval) ]])])
+    [[ VM_COLON_TO_SPACE(withval) ]])
+   dnl # convert to absolute path
+   AC_MSG_CHECKING([otherdirs])
+   otherdirs=
+   for thedir in ${OTHERDIRS}; do
+     if test -d $thedir; then 
+       thedir="`(cd $thedir; pwd)`"
+       if test "x$otherdirs" = "x"; then 
+         otherdirs=$thedir
+       else
+         otherdirs="$otherdirs;$thedir"
+       fi
+     else 
+       AC_MSG_ERROR([$thedir does not exist])
+     fi
+   done;
+   OTHERDIRS=$otherdirs 
+   AC_MSG_RESULT($otherdirs)
+   AC_SUBST(otherdirs)
+])
 
 # Find a (g)tar program and make sure it is GNU one. A failure is not fatal
 # since tar is needed for non critical targets only.
@@ -212,28 +237,6 @@ AC_DEFUN([VM_PATH_INFO_DIR], [
   AC_SUBST(info_dir)
 ])
 
-AC_DEFUN([VM_HAS_TREE_WIDGET],
-  [ AC_MSG_CHECKING([checking wether tree-widget is in the load-path])
-    OTHERDIRS_LIST='"'`echo ${OTHERDIRS} | sed 's/ /" "/g'`'"'
-    cat > conftest.el << TEST
-(mapcar (lambda (x) (add-to-list 'load-path x))
-        '(${OTHERDIRS_LIST}))
-(if (locate-library "tree-widget")
-    (princ "yes")
-    (princ "no"))
-TEST
-    HAS_TREE_WIDGET=`${EMACS_PROG} --no-site-file --batch -l conftest.el | ${GREP} .`
-    AC_MSG_RESULT([${HAS_TREE_WIDGET}])
-    if test "x${HAS_TREE_WIDGET}" = "xno" ; then
-      AC_MSG_WARN([*** tree-widget.el not found in 'load-path.])
-      AC_MSG_WARN([*** tla-browse.el won't be available unless you install it.])
-      AC_MSG_WARN([*** See http://sourceforge.net/projects/emhacks/])
-      AC_MSG_WARN([*** Provide the path to tree-widget with --with-other-dirs])
-      AC_MSG_WARN([*** if tree-widget.el is already present on your system])
-    fi
-    AC_SUBST(HAS_TREE_WIDGET)
-  ])
-
 ##############################################################################
 VM_PRE_INIT
 AC_INIT([VM], [VM_VERSION], [hack@robf.de])
@@ -261,7 +264,6 @@ VM_PROG_GNU_TAR
 VM_PROG_MAKEINFO
 VM_PROG_TEXI2DVI
 VM_OTHERDIRS
-VM_HAS_TREE_WIDGET
 
 # is there a sane way to set this to a useful default?
 VM_ARG_SUBST([PACKAGEDIR], [package-dir], [DIR],
