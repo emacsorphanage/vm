@@ -42,7 +42,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-when-compile
   (require 'cl)
-  (require 'vm-autoload)
   (require 'vm-version)
   (require 'vm-vars)
   (require 'vm-misc)

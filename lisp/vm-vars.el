@@ -23,19 +23,6 @@
 
 (defconst vm-faked-defcustom nil)
 
-(eval-and-compile
-  (condition-case ()
-      (require 'custom)
-    (error nil))
-  (if (and (featurep 'custom) (fboundp 'custom-declare-variable))
-      nil ;; We've got what we needed
-    ;; We have the old custom-library, or no library at all so
-    ;; hack around it!
-    (setq vm-faked-defcustom t)
-    (defmacro defgroup (&rest args) nil)
-    (defmacro defcustom (var value doc &rest args) 
-      (` (defvar (, var) (, value) (, doc))))))
-
 (defgroup vm nil
   "The VM mail reader."
   :group 'mail)
@@ -3122,9 +3109,12 @@ VM wants to display or undisplay."
   :type 'boolean)
 
 (defcustom vm-image-directory
-  (if (fboundp 'locate-data-directory)
-      (locate-data-directory "vm")
-    (expand-file-name (concat data-directory "vm/")))
+  (let* ((vm-dir (locate-library "vm"))
+	 (image-dir (expand-file-name "pixmaps" (file-name-directory vm-dir))))
+    
+    (if (file-exists-p image-dir)
+	image-dir
+      (expand-file-name (concat data-directory "vm/"))))
   "*Value specifies the directory where VM should find its artwork."
   :group 'vm
   :type 'directory)

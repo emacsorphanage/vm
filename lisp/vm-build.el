@@ -2,10 +2,10 @@
 (setq load-path (cons default-directory load-path))
 
 ;; Add additional dirs to the load-path
-(if (getenv "OTHERLISPDIRS")
-    (let ((ps (delete "" (split-string (getenv "OTHERLISPDIRS") "[ :;]"))))
+(if (getenv "OTHERDIRS")
+    (let ((ps (delete "" (split-string (getenv "OTHERDIRS") "[:;]"))))
       (while ps
-        (message "adding user load-path: <%s>" (car ps))
+;        (message "adding user load-path: <%s>" (car ps))
         (setq load-path (cons (car ps) load-path)
               ps (cdr ps)))))
 

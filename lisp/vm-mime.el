@@ -23,13 +23,6 @@
 ;;; X-URL:       http://www.robf.de/Hacking/elisp
 ;;; Version:     $Id$
 
-(eval-and-compile
-  (require 'vm-version)
-  (require 'vm-message)
-  (require 'vm-macro)
-  (require 'vm-vars)
-  (require 'vm-autoload))
-
 (eval-when-compile
   (require 'cl))
 

@@ -1,8 +1,30 @@
-;;(provide 'vm)
-;;(provide 'vm-version)
+;;; Copyright (C) Kyle E. Jones
+;;;
+;;; This program is free software; you can redistribute it and/or modify
+;;; it under the terms of the GNU General Public License as published by
+;;; the Free Software Foundation; either version 1, or (at your option)
+;;; any later version.
+;;;
+;;; This program is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
+;;;
+;;; You should have received a copy of the GNU General Public License
+;;; along with this program; if not, write to the Free Software
+;;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 (defconst vm-version "7.19"
   "Version number of VM.")
+
+(defvar vm-revno nil
+  "The exact version for tarbundles.
+This is the nick and revision number of the BZR repository from which VM was
+released.")  
+
+(defvar vm-author nil
+  "The author for tarbundles.
+This is the author of the BZR repository from which VM was released.")
 
 (defun vm-version ()
   "Returns the value of the variable `vm-version'."
@@ -30,28 +52,26 @@
     (set-buffer (get-buffer " *vm-version*"))
     (buffer-substring (point-min) (point-max))))
 
-(defconst vm-xemacs-p nil)
-(defconst vm-xemacs-mule-p nil)
-(defconst vm-xemacs-file-coding-p nil)
-(defconst vm-fsfemacs-p nil)
-(defconst vm-fsfemacs-mule-p nil)
+(defconst vm-xemacs-p 
+  (featurep 'xemacs))
+(defconst vm-xemacs-mule-p 
+  (and vm-xemacs-p (featurep 'mule)))
+(defconst vm-xemacs-file-coding-p
+  (and vm-xemacs-p (featurep 'file-coding)
+       ;; paranoia
+       (fboundp 
+	'set-buffer-file-coding-system)))
+(defconst vm-fsfemacs-p 
+  (not vm-xemacs-p))
+(defconst vm-fsfemacs-mule-p 
+  (and (not vm-xemacs-mule-p) (featurep 'mule)
+       (fboundp 'set-buffer-file-coding-system)))
+
 (defun vm-xemacs-p () vm-xemacs-p)
 (defun vm-xemacs-mule-p () vm-xemacs-mule-p)
 (defun vm-xemacs-file-coding-p () vm-xemacs-file-coding-p)
 (defun vm-fsfemacs-p () vm-fsfemacs-p)
 (defun vm-fsfemacs-mule-p () vm-fsfemacs-mule-p)
-(defun vm-note-emacs-version ()
-  (setq vm-xemacs-p (featurep 'xemacs)
-	vm-xemacs-mule-p (and vm-xemacs-p (featurep 'mule)
-			      ;; paranoia
-			      (fboundp 'set-buffer-file-coding-system))
-	vm-xemacs-file-coding-p (and vm-xemacs-p (featurep 'file-coding)
-				     ;; paranoia
-				     (fboundp 'set-buffer-file-coding-system))
-	vm-fsfemacs-p (not vm-xemacs-p)
-	vm-fsfemacs-mule-p (and (not vm-xemacs-mule-p) (featurep 'mule)
-				(fboundp 'set-buffer-file-coding-system))))
-(vm-note-emacs-version)
 
 (defun vm-mouse-fsfemacs-mouse-p ()
   (and vm-fsfemacs-p
@@ -128,5 +148,4 @@
       (image-type-available-p type)
     (or (featurep type) (eq type 'xbm))))
 
-(provide 'vm)
 (provide 'vm-version)

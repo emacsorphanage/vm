@@ -115,8 +115,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-and-compile
-  (let ((feature-list '(cl vm vm-version vm-vars vm-autoload time-date
-                           bbdb bbdb-autoloads bbdb-com)))
+  (require 'cl)
+  (require 'vm-version)
+  (require 'vm-message)
+  (require 'vm-macro)
+  (require 'vm-vars)
+  (require 'time-date)
+                           
+  (let ((feature-list '(bbdb bbdb-autoloads bbdb-com)))
     (while feature-list
       (condition-case nil
           (require (car feature-list))
