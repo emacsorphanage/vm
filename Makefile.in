@@ -33,6 +33,12 @@ clean:
 distclean:
 	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i distclean); done
 
+push:
+	bzr --no-plugins push
+
+dist:
+	TODO create a release tar ball 
+
 ##############################################################################
 # TODO creation of a XEmacs package
 PKGDIR =  $(shell pwd)/,,package/
