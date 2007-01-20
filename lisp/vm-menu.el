@@ -151,6 +151,8 @@
 (defvar vm-menu-virtual-menu
   '("Virtual"
     ["Visit Virtual Folder" vm-visit-virtual-folder t]
+    ["Visit Virtual Folder Same Author" vm-visit-virtual-folder-same-author t]
+    ["Visit Virtual Folder Same Subject" vm-visit-virtual-folder-same-subject t]
     ["Create Virtual Folder" vm-create-virtual-folder t]
     ["Apply Virtual Folder" vm-apply-virtual-folder t]
     "---"

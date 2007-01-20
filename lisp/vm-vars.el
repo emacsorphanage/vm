@@ -47,17 +47,17 @@ users to edit directly."
   :group 'vm
   :type 'file)
 
-(defcustom vm-folder-directory nil
+(defcustom vm-folder-directory (expand-file-name "~/Mail")
   "*Directory where folders of mail are kept."
   :group 'vm
   :type '(choice (const nil) directory))
 
-(defcustom vm-primary-inbox "~/INBOX"
+(defcustom vm-primary-inbox (expand-file-name "inbox" vm-folder-directory)
   "*Mail is moved from the system mailbox to this file for reading."
   :group 'vm
   :type 'file)
 
-(defcustom vm-crash-box "~/INBOX.CRASH"
+(defcustom vm-crash-box (expand-file-name "inbox.crash" vm-folder-directory)
   "*File in which to store mail temporarily while it is transferred from
 the system mailbox to the primary inbox.  If a crash occurs
 during this mail transfer, any missing mail will be found in this
@@ -3110,7 +3110,7 @@ VM wants to display or undisplay."
 
 (defcustom vm-image-directory
   (let* ((vm-dir (locate-library "vm"))
-	 (image-dir (expand-file-name "pixmaps" (file-name-directory vm-dir))))
+	 (image-dir (expand-file-name "../pixmaps" (file-name-directory vm-dir))))
     
     (if (file-exists-p image-dir)
 	image-dir
@@ -3121,7 +3121,7 @@ VM wants to display or undisplay."
 
 (defcustom vm-use-toolbar
   '(next previous delete/undelete autofile file
-    reply compose print visit quit nil help)
+    reply compose print visit quit help)
   "*Non-nil value causes VM to provide a toolbar interface.
 Value should be a list of symbols and integers that will determine which
 toolbar buttons will appear and in what order.  Valid symbol

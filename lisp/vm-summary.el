@@ -1153,6 +1153,8 @@ mandatory."
 	  (vm-summary-of m)))))
 
 (defun vm-fix-my-summary!!! ()
+  "Rebuilts the summary.
+Call this function if you made changes to `vm-summary-format'."
   (interactive)
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)

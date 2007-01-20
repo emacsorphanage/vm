@@ -17,6 +17,7 @@
 
 ;;(provide 'vm-delete)
 
+;;;###autoload
 (defun vm-delete-message (count)
   "Add the `deleted' attribute to the current message.
 
@@ -60,6 +61,7 @@ only marked messages are deleted, other messages are ignored."
 					(eq vm-move-after-deleting t))))
 	  (vm-next-message count t executing-kbd-macro)))))
 
+;;;###autoload
 (defun vm-delete-message-backward (count)
   "Like vm-delete-message, except the deletion direction is reversed."
   (interactive "p")
@@ -67,6 +69,7 @@ only marked messages are deleted, other messages are ignored."
       (vm-follow-summary-cursor))
   (vm-delete-message (- count)))
 
+;;;###autoload
 (defun vm-undelete-message (count)
   "Remove the `deleted' attribute from the current message.
 
@@ -107,8 +110,9 @@ only marked messages are undeleted, other messages are ignored."
 					(eq vm-move-after-undeleting t))))
 	  (vm-next-message count t executing-kbd-macro)))))
 
+;;;###autoload
 (defun vm-kill-subject (&optional arg)
-  "Delete all messages with the same subject as the current message.
+"Delete all messages with the same subject as the current message.
 Message subjects are compared after ignoring parts matched by
 the variables vm-subject-ignored-prefix and vm-subject-ignored-suffix.
 
@@ -150,8 +154,9 @@ don't move at all."
 				      (eq vm-move-after-killing t))))
 	(vm-next-message arg t executing-kbd-macro))))
 
+;;;###autoload
 (defun vm-delete-duplicate-messages ()
-  "Delete duplicate messages in the current folder.
+"Delete duplicate messages in the current folder.
 This command works by computing an MD5 hash for the body ofeach
 non-deleted message in the folder and deleting messages that have
 a hash that has already been seen.  Messages that already deleted
@@ -199,6 +204,7 @@ unmarked messages are not hashed or considerd for deletion."
 	       (if (= 1 del-count) "" "s")))
     (vm-update-summary-and-mode-line)))
 
+;;;###autoload
 (defun vm-expunge-folder (&optional shaddap just-these-messages
 				    messages-to-expunge)
   "Expunge messages with the `deleted' attribute.

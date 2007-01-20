@@ -248,6 +248,7 @@ all the real folder buffers involved."
 	  (setq vm-message-list new-message-list))
 	new-message-list ))))
 
+;;;###autoload
 (defun vm-create-virtual-folder (selector &optional arg read-only name
 					  bookmark)
   "Create a new virtual folder from messages in the current folder.
@@ -287,6 +288,7 @@ Prefix arg means the new virtual folder should be visited read only."
       (vm-menu-install-known-virtual-folders-menu)))
 
 
+;;;###autoload
 (defun vm-apply-virtual-folder (name &optional read-only)
   "Apply the selectors of a named virtual folder to the current folder
 and create a virtual folder containing the selected messages.
@@ -324,6 +326,7 @@ Prefix arg means the new virtual folder should be visited read only."
   (if vm-use-menus
       (vm-menu-install-known-virtual-folders-menu)))
 
+;;;###autoload
 (defun vm-create-virtual-folder-same-subject ()
   (interactive)
   (vm-follow-summary-cursor)
@@ -343,6 +346,7 @@ Prefix arg means the new virtual folder should be visited read only."
      'sortable-subject subject nil
      (format "%s %s %s" (buffer-name) 'subject displayed-subject) bookmark)))
 
+;;;###autoload
 (defun vm-create-virtual-folder-same-author ()
   (interactive)
   (vm-follow-summary-cursor)
@@ -411,8 +415,9 @@ Prefix arg means the new virtual folder should be visited read only."
 	   (if vm-virtual-mirror "mirrors" "does not mirror")
 	   (if (cdr vm-real-buffers) "s" "")))
 
+;;;###autoload
 (defun vm-virtual-help ()
-  (interactive)
+(interactive)
   (vm-display nil nil '(vm-virtual-help) '(vm-virtual-help))
   (message "VV = visit, VX = apply selectors, VC = create, VM = toggle virtual mirror"))
 
@@ -598,6 +603,7 @@ Prefix arg means the new virtual folder should be visited read only."
 
 ;; clear away links between real and virtual folders when
 ;; a vm-quit is performed in either type folder.
+;;;###autoload
 (defun vm-virtual-quit ()
   (save-excursion
     (cond ((eq major-mode 'vm-virtual-mode)
@@ -755,5 +761,5 @@ Prefix arg means the new virtual folder should be visited read only."
 					 (vm-start-of real-m))))
     (set-marker (vm-end-of m) (+ (vm-start-of m) (- (vm-end-of real-m)
 						    (vm-start-of real-m))))))
-
 (provide 'vm-virtual)
+(require 'vm-avirtual)
