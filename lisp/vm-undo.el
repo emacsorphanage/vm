@@ -265,6 +265,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
       (setq m-list (cdr m-list)))
     (vm-update-summary-and-mode-line)))
 
+;;;###autoload
 (defun vm-add-message-labels (string count)
   "Attach some labels to a message.
 These are arbitrary user-defined labels, not to be confused with
