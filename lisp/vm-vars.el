@@ -1294,16 +1294,24 @@ them all at once.  See `vm-mime-use-image-strips'."
   :type 'boolean)
 
 (defun vm-locate-executable-file (name)
-  (cond ((fboundp 'locate-file)
-	 (locate-file name exec-path nil 1))
-	(t
-	 (let (file done (dirs exec-path))
-	   (while (and dirs (not done))
-	     (setq file (expand-file-name name (car dirs)))
-	     (if (file-executable-p file)
-		 (setq done t)
-	       (setq dirs (cdr dirs))))
-	   (and dirs file)))))
+  (or (cond ((fboundp 'locate-file)
+	     (locate-file name exec-path nil 1))
+	    (t
+	     (let (file done (dirs exec-path))
+	       (while (and dirs (not done))
+		 (setq file (expand-file-name name (car dirs)))
+		 (if (file-executable-p file)
+		     (setq done t)
+		   (setq dirs (cdr dirs))))
+	       (and dirs file))))
+      (let ((vmdir (file-name-directory (locate-library "vm")))
+	    file)
+	(setq vmdir (expand-file-name "../src/" vmdir)
+	      file (expand-file-name name vmdir))
+	(if (file-exists-p file)
+	    file
+;	  (message "VM could not find executable %S!" name)
+	  nil))))
 
 (defcustom vm-imagemagick-convert-program (vm-locate-executable-file "convert")
   "*Name of ImageMagick 'convert' program.
