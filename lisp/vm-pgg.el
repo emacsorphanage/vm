@@ -656,7 +656,9 @@ When the button is pressed ACTION is called."
   "Decode or check signature on clear text messages parts."
   (let ((vm-pgg-part-start (point)))
     ad-do-it
-    (when (vm-mime-text-type-layout-p (ad-get-arg 0))
+    ;; BUGME should we use marks here?
+    (when (and (vm-mime-text-type-layout-p (ad-get-arg 0))
+               (< vm-pgg-part-start (point)))
       (save-excursion
         (save-restriction
           (narrow-to-region vm-pgg-part-start (point))
