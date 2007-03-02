@@ -1,4 +1,4 @@
-;;; Copyright (C) Kyle E. Jones
+;;; Copyright (C) Kyle E. Jones, Robert Widhopf-Fenk
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 ;;; along with this program; if not, write to the Free Software
 ;;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-(defconst vm-version "7.19"
+(defconst vm-version "8.0"
   "Version number of VM.")
 
 (defvar vm-revno nil
