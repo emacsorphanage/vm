@@ -4892,8 +4892,9 @@ COMPOSITION's name will be read from the minibuffer."
 	      (setq disposition (list "attachment"))
 	    (setq disposition (list "inline")))
 	  (if (not no-suggested-filename)
-	      (setq disposition (nconc disposition
-				       (list
+	      (setq type (concat type "; name=\"" (file-name-nondirectory object) "\"")
+                    disposition (nconc disposition
+                                       (list
 					(concat "filename=\""
 						(file-name-nondirectory object)
 						"\""))))))
