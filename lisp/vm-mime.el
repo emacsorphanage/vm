@@ -4915,6 +4915,7 @@ COMPOSITION's name will be read from the minibuffer."
 	   (put-text-property start end 'vm-mime-parameters params)
 	   (put-text-property start end 'vm-mime-description description)
 	   (put-text-property start end 'vm-mime-disposition disposition)
+	   (put-text-property start end 'vm-mime-encoding nil)
 	   (put-text-property start end 'vm-mime-encoded mimed)
 	   (put-text-property start end 'duplicable t)
 	   )
@@ -4937,6 +4938,7 @@ COMPOSITION's name will be read from the minibuffer."
 	   (set-extent-property e 'vm-mime-parameters params)
 	   (set-extent-property e 'vm-mime-description description)
 	   (set-extent-property e 'vm-mime-disposition disposition)
+	   (set-extent-property e 'vm-mime-encoding nil)
 	   (set-extent-property e 'vm-mime-encoded mimed)))))
 
 (defun vm-mime-attachment-forward-local-refs-at-point ()
@@ -5005,6 +5007,21 @@ COMPOSITION's name will be read from the minibuffer."
 	 (let* ((e (extent-at (point) nil 'vm-mime-disposition))
 		(disp (extent-property e 'vm-mime-disposition)))
 	   (setcar disp (symbol-name sym))))))
+
+
+(defun vm-mime-attachment-encoding-at-point ()
+  (cond (vm-fsfemacs-p
+	 (get-text-property (point) 'vm-mime-encoding))
+	(vm-xemacs-p
+	 (let ((e (extent-at (point) nil 'vm-mime-encoding)))
+           (if e (extent-property e 'vm-mime-encoding))))))
+
+(defun vm-mime-set-attachment-encoding-at-point (sym)
+  (cond (vm-fsfemacs-p
+	 (set-text-property (point) 'vm-mime-encoding sym))
+	(vm-xemacs-p
+	 (let ((e (extent-at (point) nil 'vm-mime-disposition)))
+           (set-extent-property e 'vm-mime-encoding sym)))))
 
 (defun vm-disallow-overlay-endpoint-insertion (overlay after start end
 					       &optional old-size)
@@ -5574,11 +5591,13 @@ agent; under Unix, normally sendmail.)"
 		      nil)))
 	  (cond ((vm-mime-types-match "text" type)
 		 (setq encoding
-		       (vm-determine-proper-content-transfer-encoding
-			(if already-mimed
-			    (vm-mm-layout-body-start layout)
-			  (point-min))
-			(point-max))
+		       (or
+                        (extent-property e 'vm-mime-encoding)
+                        (vm-determine-proper-content-transfer-encoding
+                         (if already-mimed
+                             (vm-mm-layout-body-start layout)
+                           (point-min))
+                         (point-max)))
 		       encoding (vm-mime-transfer-encode-region
 				 encoding
 				 (if already-mimed
@@ -5995,11 +6014,12 @@ agent; under Unix, normally sendmail.)"
 		    nil)))
 	  (cond ((vm-mime-types-match "text" type)
 		 (setq encoding
-		       (vm-determine-proper-content-transfer-encoding
-			(if already-mimed
-			    (vm-mm-layout-body-start layout)
-			  (point-min))
-			(point-max))
+                       (or (overlay-get o 'vm-mime-encoding)
+                           (vm-determine-proper-content-transfer-encoding
+                            (if already-mimed
+                                (vm-mm-layout-body-start layout)
+                              (point-min))
+                            (point-max)))
 		       encoding (vm-mime-transfer-encode-region
 				 encoding
 				 (if already-mimed

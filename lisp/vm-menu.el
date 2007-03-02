@@ -539,6 +539,39 @@
 			'attachment)])
       (
        ,@(if (vm-menu-fsfemacs19-menus-p)
+	     (list "Set Content Encoding..."
+		   "Set Content Encoding..."
+		   "---"
+		   "---")
+	   (list "Set Content Encoding..."))
+	 ["Guess"
+	  (vm-mime-set-attachment-encoding-at-point "guess")
+	  :active vm-send-using-mime
+	  :style radio
+	  :selected (eq (vm-mime-attachment-encoding-at-point) nil)]
+	 ["Binary"
+	  (vm-mime-set-attachment-encoding-at-point "binary")
+	  :active vm-send-using-mime
+	  :style radio
+	  :selected (string= (vm-mime-attachment-encoding-at-point) "binary")]
+	 ["7bit"
+	  (vm-mime-set-attachment-encoding-at-point "7bit")
+	  :active vm-send-using-mime
+	  :style radio
+	  :selected (string= (vm-mime-attachment-encoding-at-point) "7bit")]
+	 ["8bit"
+	  (vm-mime-set-attachment-encoding-at-point "8bit")
+	  :active vm-send-using-mime
+	  :style radio
+	  :selected (string= (vm-mime-attachment-encoding-at-point) "8bit")]
+	 ["quoted-printable"
+	  (vm-mime-set-attachment-encoding-at-point "quoted-printable")
+	  :active vm-send-using-mime
+	  :style radio
+	  :selected (string= (vm-mime-attachment-encoding-at-point) "quoted-printable")]
+         )
+      (
+       ,@(if (vm-menu-fsfemacs19-menus-p)
 	     (list "Forward Local External Bodies"
 		   "Forward Local External Bodies"
 		   "---"
