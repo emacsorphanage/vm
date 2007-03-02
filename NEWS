@@ -1,0 +1,44 @@
+
+*******************************************************************************
+VM 8.0
+
+  NOTES:
+
+    VM is now in my hands and I will do my best to keep it alive!
+
+    ,--------------------------------------------------------------------------
+    | From: Kyle Jones <kyle_jones@wonderworks.com>
+    | To: Robert Widhopf-Fenk <hack@robf.de>
+    | Date: Wed, 21 Feb 2007 13:11:32 -0800
+    | Subject: Handing over VM?
+    | 
+    | Robert Widhopf-Fenk writes:
+    |  > Hi Kyle,
+    |  > 
+    |  > I have been maintaining VM "unofficially" for the last few
+    |  > years and now I want to become the official maintainer of
+    |  > VM.
+    |  > 
+    |  > Do I get your OK?
+    | 
+    | Yes.  Obviously I've moved on, though I've been slow to admit it
+    | to myself.  Good luck.
+    `--------------------------------------------------------------------------
+	   
+  BUG FIXES:
+
+    * All serious bugs reported to gnu.emacs.vm.bugs, gnu.emacs.vm.info and
+      directly to me are fixed either by the patches posted by others or me.  
+
+    * Added numerous new bugs.
+
+
+  IMPROVEMENTS:
+
+    * Better built system based on configure.  Autoloads are generated only
+      for those functions marked with the autoload token. 
+
+    * New cleaner source tree directory layout.
+
+    * My (robf) VM extensions are now activated by default, where it made
+      sense to me.
