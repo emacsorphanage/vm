@@ -17,9 +17,11 @@
 
 (defvar enable-multibyte-characters)
 
+(require 'vm-version)
 
+;;;###autoload
 (defun vm-recover-folder ()
-  "Recover the autosave file for the current folder."
+"Recover the autosave file for the current folder."
   (interactive)
   (vm-select-folder-buffer)
   (recover-file (buffer-file-name)))
@@ -1380,7 +1382,6 @@ Please remove these instructions from your message.")
 	     ))))
 
 (defun vm-session-initialization ()
-  (require 'vm-version)
   (require 'vm-message)
   (require 'vm-macro)
   (require 'vm-vars)
@@ -1394,14 +1395,16 @@ Please remove these instructions from your message.")
   (require 'vm-sort)
   (require 'vm-reply)
   (require 'vm-virtual)
-  (require 'vm-pgg)
+  (if (locate-library "pgg")
+      (require 'vm-pgg)
+    (message "vm-pgg disabled since pgg is missing!"))
   (require 'vm-pine)
   (require 'vm-summary-faces)
   (require 'vm-rfaddons)
   (require 'vm-autoloads)
   (vm-check-emacs-version)
   (add-hook 'kill-emacs-hook 'vm-garbage-collect-global)
-  (vm-rfaddons-infect-vm)
+  (vm-rfaddons-infect-vm 0)
   (vm-summary-faces-mode 1)
   ;;  (vm-set-debug-flags)
   ;; If this is the first time VM has been run in this Emacs session,
