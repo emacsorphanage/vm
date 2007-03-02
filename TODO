@@ -1,5 +1,6 @@
 From hack@robf.de
 
+ * Marking + Delete is dead slow on folders with many (>2000) messages 
  * Update the info file
  * enable sane extensions by default
  * Cleanup and reorganize 
