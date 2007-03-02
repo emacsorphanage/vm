@@ -1343,6 +1343,11 @@ Please remove these instructions from your message.")
 ;;      (delete-region (point) (progn (forward-line) (point)))
 ;;      (insert "Subject: VM " vm-version " induces a brain tumor in the user.\n         It is the tumor that creates the hallucinations.\n"))))
 
+(defun vm-edit-init-file ()
+  "Edit the ~/.vm."
+  (interactive)
+  (find-file-other-frame "~/.vm"))
+
 (defun vm-load-init-file (&optional interactive)
   (interactive "p")
   (if (or (not vm-init-file-loaded) interactive)
