@@ -17,9 +17,11 @@
 
 (defvar enable-multibyte-characters)
 
+(require 'vm-version)
 
+;;;###autoload
 (defun vm-recover-folder ()
-  "Recover the autosave file for the current folder."
+"Recover the autosave file for the current folder."
   (interactive)
   (vm-select-folder-buffer)
   (recover-file (buffer-file-name)))
@@ -426,383 +428,13 @@ See the documentation for vm-mode for more information."
 
 This is VM.
 
-Commands:
-   h - summarize folder contents
-   H - summarize contents of all folders
- C-t - toggle threads display
-
-   n - go to next message
-   p - go to previous message
-   N - like `n' but ignores skip-variable settings
-   P - like `p' but ignores skip-variable settings
- M-n - go to next unread message
- M-p - go to previous unread message
- RET - go to numbered message (uses prefix arg or prompts in minibuffer)
- M-g - go to numbered message (uses prefix arg or prompts in minibuffer)
- TAB - go to last message seen
-   ^ - go to parent of this message
- M-s - incremental search through the folder
-
-   t - display hidden headers
- SPC - expose message body or scroll forward a page
-   b - scroll backward a page
-   < - go to beginning of current message
-   > - go to end of current message
-   [ - go to previous button
-   ] - go to next button
-   D - decode MIME if not already decoded.  If already decoded,
-       display all MIME objects as tags.  If already displaying
-       tags, show raw unecoded MIME>
-
-   d - delete message, prefix arg deletes messages forward
- C-d - delete message, prefix arg deletes messages backward
-   u - undelete
-   k - delete all messages with same subject as the current message
-
-   r - reply (only to the sender of the message)
-   R - reply with included text from the current message
- M-r - extract and resend bounced message
-   f - followup (reply to all recipients of message)
-   F - followup with included text from the current message
-   z - forward the current message
-   m - send a message
-   B - resend the current message to another user.
-   c - continue composing the most recent message you were composing
-
-   @ - digestify and mail entire folder contents (the folder is not modified)
-   * - burst a digest into individual messages, and append and assimilate these
-       messages into the current folder.
-
-   G - sort messages by various keys
-
-   g - get any new mail that has arrived in the system mailbox
-       (new mail is appended to the disk and buffer copies of the
-       primary inbox.)
-   v - visit another mail folder
-
-   e - edit the current message
-   j - discard cached information about the current message
-
-   s - save current message in a folder (appends if folder already exists)
-   w - write current message to a file without its headers (appends if exists)
-   S - save entire folder to disk, does not expunge
-   A - save unfiled messages to their vm-auto-folder-alist specified folders
- ### - expunge deleted messages (without saving folder)
-   q - quit VM, deleted messages are not expunged, folder is
-       saved to disk if it is modified.  new messages are changed
-       to be flagged as just unread.
-   x - exit VM with no change to the folder
-
- M N - use marks; the next vm command will affect only marked messages
-       if it makes sense for the command to do so.  These commands
-       apply and remove marks to messages:
-
-       M M - mark the current message
-       M U - unmark the current message
-       M m - mark all messages
-       M u - unmark all messages
-       M C - mark messages matched by a virtual folder selector
-       M c - unmark messages matched by a virtual folder selector
-       M T - mark thread tree rooted at the current message
-       M t - unmark thread tree rooted at the current message
-       M S - mark messages with the same subject as the current message
-       M s - unmark messages with the same subject as the current message
-       M A - mark messages with the same author as the current message
-       M a - unmark messages with the same author as the current message
-       M R - mark messages within the point/mark region in the summary
-       M r - unmark messages within the point/mark region in the summary
-       M V - toggle the marked-ness of all messages
-       M X - apply the selectors of a named virtual folder to the
-             messages in the current folder and mark all messages
-             that match those selectors.
-       M x - apply the selectors of a named virtual folder to the
-             messages in the current folder and unmark all messages
-             that match those selectors.
-       M ? - partial help for mark commands
-
-   W - prefix for window configuration commands:
-       W S - save the current window configuration to a name
-       W D - delete a window configuration
-       W W - apply a configuration
-       W ? - help for the window configuration commands
-
-   V - prefix for virtual folder commands:
-       V V - visit a virtual folder (must be defined in vm-virtual-folder-alist)
-       V C - create a virtual folder composed of a subset of
-             the current folder's messages.
-       V A - create a virtual folder containing all the messages in
-             the current folder with the same author as the current message.
-       V S - create a virtual folder containing all the messages in
-             the current folder with the same subject as the current message.
-       V X - apply the selectors of a named virtual folder to the messages in
-             the current folder and create a virtual folder
-             containing the selected messages.
-       V M - toggle whether this virtual folder's messages mirror the
-             underlying real messages' attributes.
-       V ? - help for virtual folder commands
-
- C-_ - undo, special undo that retracts the most recent
-             changes in message attributes and labels.  Expunges,
-             message edits, and saves cannot be undone.  C-x u is
-             also bound to this command.
-
-   a - set message attributes
-
-   l - prefix for label commands:
-       l a - add labels to message
-       l d - delete labels from message
-
-   $ - prefix for MIME commands (position the cursor over a MIME tag and
-       use these key sequences to operate on the object):
-
-       RET   - display the MIME object according to its type.
-       $ s   - save the MIME object
-       $ p   - print the MIME object
-       $ |   - pipe the MIME object to a shell command.
-       $ RET - display the MIME object's text using the \"default\" face.
-       $ e   - display the MIME object with an external viewer.
-       $ d   - delete the MIME object from the message.
-       $ v   - display the MIME object as some other type.
-       $ w   - write the MIME object to a file.
-       $ a   - attach the MIME object to a composition buffer.
-
-   L - reload your VM init file, ~/.vm
-
-   % - change a folder to another type
-
-   ? - help
-
-   ! - run a shell command
-   | - run a shell command with the current message as input
-
- M-C - view conditions under which you may redistribute VM
- M-W - view the details of VM's lack of a warranty
-
 Use M-x vm-submit-bug-report to submit a bug report.
 
-Variables:
-   vm-arrived-message-hook
-   vm-arrived-messages-hook
-   vm-auto-center-summary
-   vm-auto-decode-mime-messages
-   vm-auto-displayed-mime-content-type-exceptions
-   vm-auto-displayed-mime-content-types
-   vm-auto-folder-alist
-   vm-auto-folder-case-fold-search
-   vm-auto-get-new-mail
-   vm-auto-next-message
-   vm-berkeley-mail-compatibility
-   vm-burst-digest-messages-inherit-labels
-   vm-check-folder-types
-   vm-circular-folders
-   vm-confirm-new-folders
-   vm-confirm-quit
-   vm-convert-folder-types
-   vm-crash-box
-   vm-crash-box-suffix
-   vm-default-From_-folder-type
-   vm-default-folder-permission-bits
-   vm-default-folder-type
-   vm-delete-after-archiving
-   vm-delete-after-bursting
-   vm-delete-after-saving
-   vm-delete-empty-folders
-   vm-digest-burst-type
-   vm-digest-center-preamble
-   vm-digest-preamble-format
-   vm-digest-send-type
-   vm-display-buffer-hook
-   vm-display-using-mime
-   vm-edit-message-hook
-   vm-fill-paragraphs-containing-long-lines
-   vm-flush-interval
-   vm-folder-directory
-   vm-folder-read-only
-   vm-folders-summary-database
-   vm-folders-summary-directories
-   vm-folders-summary-format
-   vm-follow-summary-cursor
-   vm-forward-message-hook
-   vm-forwarded-headers
-   vm-forwarding-digest-type
-   vm-forwarding-subject-format
-   vm-frame-parameter-alist
-   vm-frame-per-completion
-   vm-frame-per-composition
-   vm-frame-per-edit
-   vm-frame-per-folder
-   vm-frame-per-folders-summary
-   vm-frame-per-help
-   vm-frame-per-summary
-   vm-highlighted-header-face
-   vm-highlighted-header-regexp
-   vm-honor-mime-content-disposition
-   vm-honor-page-delimiters
-   vm-icontopbm-program
-   vm-image-directory
-   vm-imagemagick-convert-program
-   vm-imagemagick-identify-program
-   vm-imap-auto-expunge-alist
-   vm-imap-bytes-per-session
-   vm-imap-expunge-after-retrieving
-   vm-imap-max-message-size
-   vm-imap-messages-per-session
-   vm-imap-session-preauth-hook
-   vm-index-file-suffix
-   vm-in-reply-to-format
-   vm-included-text-attribution-format
-   vm-included-text-discard-header-regexp
-   vm-included-text-headers
-   vm-included-text-prefix
-   vm-infer-mime-types
-   vm-invisible-header-regexp
-   vm-jump-to-new-messages
-   vm-jump-to-unread-messages
-   vm-keep-crash-boxes
-   vm-keep-sent-messages
-   vm-lynx-program
-   vm-mail-check-interval
-   vm-mail-header-from
-   vm-mail-header-insert-date
-   vm-mail-header-insert-message-id
-   vm-mail-mode-hook
-   vm-mail-send-hook
-   vm-make-crash-box-name
-   vm-make-spool-file-name
-   vm-mime-7bit-composition-charset
-   vm-mime-8bit-composition-charset
-   vm-mime-8bit-text-transfer-encoding
-   vm-mime-alternative-select-method
-   vm-mime-attachment-auto-type-alist
-   vm-mime-attachment-save-directory
-   vm-mime-avoid-folding-content-type
-   vm-mime-base64-decoder-program
-   vm-mime-base64-decoder-switches
-   vm-mime-base64-encoder-program
-   vm-mime-base64-encoder-switches
-   vm-mime-button-face
-   vm-mime-button-format-alist
-   vm-mime-charset-converter-alist
-   vm-mime-charset-font-alist
-   vm-mime-confirm-delete
-   vm-mime-decode-for-preview
-   vm-mime-default-face-charset-exceptions
-   vm-mime-default-face-charsets
-   vm-mime-delete-after-saving
-   vm-mime-delete-viewer-processes
-   vm-mime-digest-discard-header-regexp
-   vm-mime-digest-headers
-   vm-mime-display-function
-   vm-mime-external-content-types-alist
-   vm-mime-forward-local-external-bodies
-   vm-mime-ignore-composite-type-opaque-transfer-encoding
-   vm-mime-ignore-mime-version
-   vm-mime-ignore-missing-multipart-boundary
-   vm-mime-internal-content-type-exceptions
-   vm-mime-internal-content-types
-   vm-mime-max-message-size
-   vm-mime-qp-decoder-program
-   vm-mime-qp-decoder-switches
-   vm-mime-qp-encoder-program
-   vm-mime-qp-encoder-switches
-   vm-mime-require-mime-version-header
-   vm-mime-type-converter-alist
-   vm-mime-use-image-strips
-   vm-mime-use-w3-for-text/html
-   vm-mime-uuencode-decoder-program
-   vm-mime-uuencode-decoder-switches
-   vm-mode-hook
-   vm-mosaic-program
-   vm-mosaic-program-switches
-   vm-move-after-deleting
-   vm-move-after-killing
-   vm-move-after-undeleting
-   vm-move-messages-physically
-   vm-mutable-frames
-   vm-mutable-windows
-   vm-netscape-program
-   vm-netscape-program-switches
-   vm-page-continuation-glyph
-   vm-paragraph-fill-column
-   vm-pop-auto-expunge-alist
-   vm-pop-bytes-per-session
-   vm-pop-expunge-after-retrieving
-   vm-pop-folder-alist
-   vm-pop-max-message-size
-   vm-pop-md5-program
-   vm-pop-messages-per-session
-   vm-popup-menu-on-mouse-3
-   vm-preferences-file
-   vm-preview-lines
-   vm-preview-read-messages
-   vm-primary-inbox
-   vm-quit-hook
-   vm-recognize-imap-maildrops
-   vm-recognize-pop-maildrops
-   vm-reply-hook
-   vm-reply-ignored-addresses
-   vm-reply-ignored-reply-tos
-   vm-reply-subject-prefix
-   vm-resend-bounced-discard-header-regexp
-   vm-resend-bounced-headers
-   vm-resend-bounced-message-hook
-   vm-resend-discard-header-regexp
-   vm-resend-headers
-   vm-resend-message-hook
-   vm-retrieved-spooled-mail-hook
-   vm-rfc1153-digest-discard-header-regexp
-   vm-rfc1153-digest-headers
-   vm-rfc934-digest-discard-header-regexp
-   vm-rfc934-digest-headers
-   vm-search-using-regexps
-   vm-select-message-hook
-   vm-select-new-message-hook
-   vm-select-unread-message-hook
-   vm-send-digest-hook
-   vm-send-using-mime
-   vm-skip-deleted-messages
-   vm-skip-read-messages
-   vm-spool-file-suffixes
-   vm-spool-files
-   vm-spooled-mail-waiting-hook
-   vm-ssh-program
-   vm-ssh-program-switches
-   vm-ssh-remote-command
-   vm-startup-with-summary
-   vm-strip-reply-headers
-   vm-stunnel-program
-   vm-stunnel-program-switches
-   vm-stunnel-random-data-method
-   vm-subject-significant-chars
-   vm-summary-arrow
-   vm-summary-format
-   vm-summary-highlight-face
-   vm-summary-mode-hook
-   vm-summary-redo-hook
-   vm-summary-show-threads
-   vm-summary-thread-indent-level
-   vm-tale-is-an-idiot
-   vm-temp-file-directory
-   vm-thread-using-subject
-   vm-toolbar-pixmap-directory
-   vm-trust-From_-with-Content-Length
-   vm-uncompface-program
-   vm-undisplay-buffer-hook
-   vm-unforwarded-header-regexp
-   vm-url-browser
-   vm-url-browser-switches
-   vm-url-retrieval-methods
-   vm-url-search-limit
-   vm-use-menus
-   vm-use-toolbar
-   vm-virtual-folder-alist
-   vm-virtual-mirror
-   vm-visible-headers
-   vm-visit-folder-hook
-   vm-visit-when-saving
-   vm-warp-mouse-to-new-frame
-   vm-wget-program
-   vm-window-configuration-file
+Commands:
+\\{vm-mode-map}
+
+
+Customize VM by setting variables and store them in the file ~/.vm.
 "
   (interactive "P")
   (vm (current-buffer) read-only)
@@ -1713,6 +1345,11 @@ Please remove these instructions from your message.")
 ;;      (delete-region (point) (progn (forward-line) (point)))
 ;;      (insert "Subject: VM " vm-version " induces a brain tumor in the user.\n         It is the tumor that creates the hallucinations.\n"))))
 
+(defun vm-edit-init-file ()
+  "Edit the ~/.vm."
+  (interactive)
+  (find-file-other-frame "~/.vm"))
+
 (defun vm-load-init-file (&optional interactive)
   (interactive "p")
   (if (or (not vm-init-file-loaded) interactive)
@@ -1745,11 +1382,31 @@ Please remove these instructions from your message.")
 	     ))))
 
 (defun vm-session-initialization ()
-  (require 'vm-version)
+  (require 'vm-message)
+  (require 'vm-macro)
   (require 'vm-vars)
+  (require 'vm-window)
+  (require 'vm-undo)
+  (require 'vm-menu)
+  (require 'vm-folder)
+  (require 'vm-toolbar)
+  (require 'vm-mime)
+  (require 'vm-page)
+  (require 'vm-sort)
+  (require 'vm-reply)
+  (require 'vm-virtual)
+  (if (locate-library "pgg")
+      (require 'vm-pgg)
+    (message "vm-pgg disabled since pgg is missing!"))
+  (require 'vm-pine)
+  (require 'vm-summary-faces)
+  (require 'vm-rfaddons)
+  (require 'vm-autoloads)
   (vm-check-emacs-version)
   (add-hook 'kill-emacs-hook 'vm-garbage-collect-global)
-;;  (vm-set-debug-flags)
+  (vm-rfaddons-infect-vm 0)
+  (vm-summary-faces-mode 1)
+  ;;  (vm-set-debug-flags)
   ;; If this is the first time VM has been run in this Emacs session,
   ;; do some necessary preparations.
   (if (or (not (boundp 'vm-session-beginning))

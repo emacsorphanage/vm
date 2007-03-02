@@ -145,7 +145,7 @@ The following options are possible.
 Other EXPERIMENTAL options:
  - auto-save-all-attachments: add `vm-mime-auto-save-all-attachments' to
    `vm-select-new-message-hook' for automatic saving of attachments and define
-   an advice for `vm-set-deleted-flag-of' in order to automatically  delete
+   an advice for `vm-set-deleted-flag-of' in order to automatically delete
    the files corresponding to MIME objects of type message/external-body when
    deleting the message.
  - return-receipt-to
@@ -561,8 +561,9 @@ Call this function, if you want to see the message unfilled."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar vm-switch-to-folder-history nil)
 
+;;;###autoload
 (defun vm-switch-to-folder (folder-name)
-  "Switch to another opened VM folder and rearrange windows as with a scroll."
+"Switch to another opened VM folder and rearrange windows as with a scroll."
   (interactive (list
                 (let ((fl (vm-folder-list))
                       (f vm-switch-to-folder-history) d)

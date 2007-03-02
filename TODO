@@ -12,6 +12,7 @@ From hack@robf.de
  * Virtual folders everywhere, i.e. only one physical folder.  VM should
    not read the folder into a buffer, but only query relevant messages from
    an maildb-backend.
+ * GNU Emacs: highlight attachment buttons
 
 ----
 

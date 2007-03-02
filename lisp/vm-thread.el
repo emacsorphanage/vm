@@ -17,6 +17,7 @@
 
 ;;(provide 'vm-thread)
 
+;;;###autoload
 (defun vm-toggle-threads-display ()
   "Toggle the threads display on and off.
 When the threads display is on, the folder will be sorted by

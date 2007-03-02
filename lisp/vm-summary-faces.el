@@ -97,8 +97,8 @@
   "The face used in VM Summary buffers for forwarded messages."
   :group 'vm-summary-faces)
 
-(defface vm-summary-edited-face
-  '((t (:underline t)))
+(defface vm-summary-edited-face 
+  nil
   "The face used in VM Summary buffers for edited messages."
   :group 'vm-summary-faces)
 
@@ -157,7 +157,9 @@
     ((redistributed) vm-summary-redistributed-face)
     ((marked)    vm-summary-marked-face)
     ((outgoing)  vm-summary-outgoing-face)
-    ((any)       vm-summary-default-face))
+    ((any)       vm-summary-default-face)
+    ((label "!") vm-summary-high-priority-face)
+    (header "^X-VM-postponed-data:") vm-summary-high-priority-face)
   "Alist of virtual folder conditions and corresponding faces.
 Order matters. The first matching one will be used as face."
   :type '(repeat (cons (sexp) (face)))

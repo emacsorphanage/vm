@@ -47,17 +47,17 @@ users to edit directly."
   :group 'vm
   :type 'file)
 
-(defcustom vm-folder-directory nil
+(defcustom vm-folder-directory (expand-file-name "~/Mail")
   "*Directory where folders of mail are kept."
   :group 'vm
   :type '(choice (const nil) directory))
 
-(defcustom vm-primary-inbox "~/INBOX"
+(defcustom vm-primary-inbox (expand-file-name "inbox" vm-folder-directory)
   "*Mail is moved from the system mailbox to this file for reading."
   :group 'vm
   :type 'file)
 
-(defcustom vm-crash-box "~/INBOX.CRASH"
+(defcustom vm-crash-box (expand-file-name "inbox.crash" vm-folder-directory)
   "*File in which to store mail temporarily while it is transferred from
 the system mailbox to the primary inbox.  If a crash occurs
 during this mail transfer, any missing mail will be found in this
@@ -1294,16 +1294,24 @@ them all at once.  See `vm-mime-use-image-strips'."
   :type 'boolean)
 
 (defun vm-locate-executable-file (name)
-  (cond ((fboundp 'locate-file)
-	 (locate-file name exec-path nil 1))
-	(t
-	 (let (file done (dirs exec-path))
-	   (while (and dirs (not done))
-	     (setq file (expand-file-name name (car dirs)))
-	     (if (file-executable-p file)
-		 (setq done t)
-	       (setq dirs (cdr dirs))))
-	   (and dirs file)))))
+  (or (cond ((fboundp 'locate-file)
+	     (locate-file name exec-path nil 1))
+	    (t
+	     (let (file done (dirs exec-path))
+	       (while (and dirs (not done))
+		 (setq file (expand-file-name name (car dirs)))
+		 (if (file-executable-p file)
+		     (setq done t)
+		   (setq dirs (cdr dirs))))
+	       (and dirs file))))
+      (let ((vmdir (file-name-directory (locate-library "vm")))
+	    file)
+	(setq vmdir (expand-file-name "../src/" vmdir)
+	      file (expand-file-name name vmdir))
+	(if (file-exists-p file)
+	    file
+;	  (message "VM could not find executable %S!" name)
+	  nil))))
 
 (defcustom vm-imagemagick-convert-program (vm-locate-executable-file "convert")
   "*Name of ImageMagick 'convert' program.
@@ -3110,7 +3118,7 @@ VM wants to display or undisplay."
 
 (defcustom vm-image-directory
   (let* ((vm-dir (locate-library "vm"))
-	 (image-dir (expand-file-name "pixmaps" (file-name-directory vm-dir))))
+	 (image-dir (expand-file-name "../pixmaps" (file-name-directory vm-dir))))
     
     (if (file-exists-p image-dir)
 	image-dir
@@ -3121,7 +3129,7 @@ VM wants to display or undisplay."
 
 (defcustom vm-use-toolbar
   '(next previous delete/undelete autofile file
-    reply compose print visit quit nil help)
+    reply compose print visit quit help)
   "*Non-nil value causes VM to provide a toolbar interface.
 Value should be a list of symbols and integers that will determine which
 toolbar buttons will appear and in what order.  Valid symbol
@@ -4237,6 +4245,9 @@ on the file system of Macs."
     (define-key map "H" 'vm-folders-summarize)
     (define-key map "\M-n" 'vm-next-unread-message)
     (define-key map "\M-p" 'vm-previous-unread-message)
+    (define-key map "E"     'vm-rmail-toggle)
+    (define-key map [up]    'vm-rmail-up)
+    (define-key map [down]  'vm-rmail-down)
     (define-key map "n" 'vm-next-message)
     (define-key map "p" 'vm-previous-message)
     (define-key map "N" 'vm-next-message-no-skip)
@@ -4272,7 +4283,7 @@ on the file system of Macs."
     (define-key map "c" 'vm-continue-composing-message)
     (define-key map "@" 'vm-send-digest)
     (define-key map "*" 'vm-burst-digest)
-    (define-key map "m" 'vm-mail)
+    (define-key map "m" 'vm-continue-what-message)
     (define-key map "g" 'vm-get-new-mail)
     (define-key map "G" 'vm-sort-messages)
     (define-key map "v" 'vm-visit-folder)
@@ -4302,6 +4313,7 @@ on the file system of Macs."
     (define-key map "\M-s" 'vm-isearch-forward)
     (define-key map "=" 'vm-summarize)
     (define-key map "L" 'vm-load-init-file)
+    (define-key map "\M-l" 'vm-edit-init-file)
     (define-key map "l" (make-sparse-keymap))
     (define-key map "la" 'vm-add-message-labels)
     (define-key map "le" 'vm-add-existing-message-labels)
