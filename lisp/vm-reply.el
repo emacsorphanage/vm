@@ -314,6 +314,7 @@ vm-included-text-prefix is prepended to every yanked line."
               (insert text))
 	(if (vectorp (vm-mm-layout message))
 	    (let* ((o (vm-mm-layout message))
+                   layout new-layout
 		   (type (car (vm-mm-layout-type o)))
 		   parts)
 	      (vm-insert-region-from-buffer (vm-buffer-of message)
@@ -324,44 +325,52 @@ vm-included-text-prefix is prepended to every yanked line."
 		     (setq parts (copy-sequence (vm-mm-layout-parts o))))
 		    (t (setq parts (list o))))
 	      (while parts
-		(cond ((vm-mime-text-type-layout-p (car parts))
+                (setq layout (car parts))
+		(cond ((vm-mime-text-type-layout-p layout)
 		       (if (cond ((vm-mime-types-match
 				   "text/enriched"
-				   (car (vm-mm-layout-type (car parts))))
+				   (car (vm-mm-layout-type layout)))
 				  (vm-mime-display-internal-text/enriched
-				   (car parts)))
+				   layout))
 				 ((vm-mime-types-match
 				   "message/rfc822"
-				   (car (vm-mm-layout-type (car parts))))
+				   (car (vm-mm-layout-type layout)))
 				  (vm-mime-display-internal-message/rfc822
-				   (car parts)))
+				   layout))
 ;; no text/html for now
 ;;				 ((vm-mime-types-match
 ;;				   "text/html"
-;;				   (car (vm-mm-layout-type (car parts))))
+;;				   (car (vm-mm-layout-type layout)))
 ;;				  (vm-mime-display-internal-text/html
-;;				   (car parts)))
+;;				   layout))
 				 ((member (downcase (car (vm-mm-layout-type
-							  (car parts))))
+							  layout)))
 					  vm-included-mime-types-list)
 				  (vm-mime-display-internal-text/plain
-				   (car parts) t)))
+				   layout t))
+                                 ;; convert the layout if possible 
+                                 ((and (not (vm-mm-layout-is-converted layout))
+                                       (vm-mime-can-convert type)
+                                       (setq new-layout
+                                             (vm-mime-convert-undisplayable-layout
+                                              layout)))
+                                  (vm-decode-mime-layout new-layout)))
 			   nil
 			 
 			 (if (not (member (downcase (car (vm-mm-layout-type
-							  (car parts))))
+							  layout)))
 					  vm-included-mime-types-list))
 			     nil
 			 ;; charset problems probably
 			 ;; just dump the raw bits
 			   (setq insert-start (point))
-			 (vm-mime-insert-mime-body (car parts))
-			 (vm-mime-transfer-decode-region (car parts)
+			 (vm-mime-insert-mime-body layout)
+			 (vm-mime-transfer-decode-region layout
 							   insert-start
 							   (point))))
 		       (setq parts (cdr parts)))
 		      ((vm-mime-composite-type-p
-			(car (vm-mm-layout-type (car parts))))
+			(car (vm-mm-layout-type layout)))
 		       (setq parts (nconc (copy-sequence
 					   (vm-mm-layout-parts
 					    (car parts)))
