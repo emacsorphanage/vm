@@ -763,6 +763,5 @@ Prefix arg means the new virtual folder should be visited read only."
     (set-marker (vm-end-of m) (+ (vm-start-of m) (- (vm-end-of real-m)
 						    (vm-start-of real-m))))))
 (provide 'vm-virtual)
-(require 'vm-avirtual)
 
 ;;; vm-virtual.el ends here
