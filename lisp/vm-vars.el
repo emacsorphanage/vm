@@ -5264,10 +5264,6 @@ that has a match.")
 (defvar vm-fsfemacs-cached-scroll-bar-width nil)
 (defvar vm-update-composition-buffer-name-timer nil)
 
-(cond (vm-faked-defcustom
-       (fmakunbound 'defcustom)
-       (fmakunbound 'defgroup)))
-
 (provide 'vm-vars)
 
 ;;; vm-vars.el ends here
