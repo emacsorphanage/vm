@@ -1,51 +1,44 @@
 ;;; vm-easymenu.el --- support the easymenu interface for defining a menu.
-
+;;
 ;; Copyright (C) 1994 Free Software Foundation, Inc.
 
-;; Keywords: emulations
-;; Author: rms
-
-;; This file is not part of GNU Emacs.
-
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; This is compatible with easymenu.el by Per Abrahamsen
-;;; but it is much simpler as it doesn't try to support other Emacs versions.
-;;; The code was mostly derived from lmenu.el.
+;; but it is much simpler as it doesn't try to support other Emacs versions.
+;; The code was mostly derived from lmenu.el.
 
 ;;;  Changed 17-May-1995, Kyle Jones
-;;;    Made easy-menu-create-keymaps handle the
-;;;     [ NAME CALLBACK ENABLE ]
-;;;    case properly.  Previously the enabler function was not
-;;;    being put on the property list of the command.
-;;;  Changed 20-May-1995, Kyle Jones
-;;;    Made easy-menu-create-keymaps handle the
-;;;     [ NAME CALLBACK ENABLE SUFFIX ]
-;;;    case properly.
-;;;  Changed 25-May-1995, Kyle Jones
-;;;    Renamed easy-menu- functions to vm-easy-menu- to avoid
-;;;    non-vm compatible versions.
-;;;  Changed 2-July-1995, Kyle Jones
-;;;    If callback is a symbol use it in the menu keymap instead
-;;;    of the uninterned menu-function-XXX symbols.  This allows
-;;;    Emacs' menu code to set this-command properly when
-;;;    launching a command from the menubar.
-;;;
-;;; Code:
-
-;;(provide 'vm-easymenu)
+;;    Made easy-menu-create-keymaps handle the
+;;     [ NAME CALLBACK ENABLE ]
+;;    case properly.  Previously the enabler function was not
+;;    being put on the property list of the command.
+;;  Changed 20-May-1995, Kyle Jones
+;;    Made easy-menu-create-keymaps handle the
+;;     [ NAME CALLBACK ENABLE SUFFIX ]
+;;    case properly.
+;;  Changed 25-May-1995, Kyle Jones
+;;    Renamed easy-menu- functions to vm-easy-menu- to avoid
+;;    non-vm compatible versions.
+;;  Changed 2-July-1995, Kyle Jones
+;;    If callback is a symbol use it in the menu keymap instead
+;;    of the uninterned menu-function-XXX symbols.  This allows
+;;    Emacs' menu code to set this-command properly when
+;;    launching a command from the menubar.
+;;
+;; Code:
 
 (defmacro vm-easy-menu-define (symbol maps doc menu)
   "Define a menu bar submenu in maps MAPS, according to MENU.
@@ -65,7 +58,7 @@ or a list to evaluate when the item is chosen.
 ENABLE is an expression; the item is enabled for selection
 whenever this expression's value is non-nil.
 
-Alternatively, a menu item may have the form: 
+Alternatively, a menu item may have the form:
 
    [ NAME CALLBACK [ KEYWORD ARG ] ... ]
 
@@ -86,14 +79,14 @@ whenever this expression's value is non-nil.
 
 NAME is a string; the name of an argument to CALLBACK.
 
-   :style 
+   :style
    
 STYLE is a symbol describing the type of menu item.  The following are
-defined:  
+defined:
 
-toggle: A checkbox.  
+toggle: A checkbox.
         Currently just prepend the name with the string \"Toggle \".
-radio: A radio button. 
+radio: A radio button.
 nil: An ordinary menu item.
 
    :selected SELECTED
@@ -118,11 +111,11 @@ is a list of menu items, as above."
   ;; We can't do anything that might differ between Emacs dialects in
   ;; `vm-easy-menu-define' in order to make byte compiled files
   ;; compatible.  Therefore everything interesting is done in this
-  ;; function. 
+  ;; function.
   (set symbol (vm-easy-menu-create-keymaps (car menu) (cdr menu)))
   (fset symbol (` (lambda (event) (, doc) (interactive "@e")
 		    (easy-popup-menu event (, symbol)))))
-  (mapcar (function (lambda (map) 
+  (mapcar (function (lambda (map)
 	    (define-key map (vector 'menu-bar (intern (car menu)))
 	      (cons (car menu) (symbol-value symbol)))))
 	  (if (keymapp maps) (list maps) maps)))
@@ -178,7 +171,7 @@ is a list of menu items, as above."
 		       (if (eq style 'toggle)
 			   ;; Simulate checkboxes.
 			   (setq name (concat "Toggle " name)))
-		       (if active 
+		       (if active
 			   (put command 'menu-enable active)
 			 (and (eq style 'radio)
 			      selected
@@ -197,7 +190,7 @@ is a list of menu items, as above."
 	    ;; Handle inactive strings specially--allow any number
 	    ;; of identical ones.
 	    (setcdr menu (cons (list nil name) (cdr menu)))
-	  (if name 
+	  (if name
 	      (define-key menu (vector (intern name)) (cons name command)))))
       (setq menu-items (cdr menu-items)))
     menu))

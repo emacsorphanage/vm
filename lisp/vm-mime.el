@@ -1,22 +1,23 @@
 ;;; vm-mime.el ---  MIME support functions
-;;;
-;;; Copyright (C) 1997-2003 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-
+;;
+;; Copyright (C) 1997-2003 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
 ;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
+;;; Code:
 (eval-when-compile
   (require 'cl))
 
@@ -47,7 +48,7 @@
   ;; utf-8 is predefined as a coding system, so there's no need to load
   ;; Mule-UCS.)
   (and (not (coding-system-p (if vm-xemacs-mule-p (find-coding-system 'utf-8) 'utf-8)))
-       (locate-library "un-define") 
+       (locate-library "un-define")
        (require 'un-define)
        (require 'unicode))
 
@@ -62,7 +63,7 @@
 	(defvaralias 'vm-mime-ucs-list 'latin-unity-ucs-list)
       (defcustom vm-mime-ucs-list
 	(or (and haveu8 '(utf-8 iso-2022-jp ctext escape-quoted))
-	    '(iso-2022-jp ctext escape-quoted)) 
+	    '(iso-2022-jp ctext escape-quoted))
        "*List of coding systems that can encode all characters known to emacs."
        ))
 
@@ -83,11 +84,11 @@
     (mapcar (lambda (x)
 	      (and (coding-system-p (if vm-xemacs-mule-p (find-coding-system x) x))
 		   ;; Not using vm-string-assoc because of some quoting
-		   ;; weirdness it's doing. 
+		   ;; weirdness it's doing.
 		   (if (not (assoc
 			     (format "%s" x)
 			     vm-mime-mule-charset-to-coding-alist))
-		       (add-to-list 'vm-mime-mule-charset-to-coding-alist 
+		       (add-to-list 'vm-mime-mule-charset-to-coding-alist
 				    (list (format "%s" x) x)))))
 	      '(utf-8 iso-8859-15 iso-8859-14 iso-8859-16))
 
@@ -98,8 +99,8 @@
 		  (add-to-list 'vm-mime-mule-coding-to-charset-alist
 			       (list (car (cdr x)) (car x)))))
 	    vm-mime-mule-charset-to-coding-alist)
-    ;; Whoops, doesn't get picked up for some reason. 
-    (add-to-list 'vm-mime-mule-coding-to-charset-alist 
+    ;; Whoops, doesn't get picked up for some reason.
+    (add-to-list 'vm-mime-mule-coding-to-charset-alist
 		 '(iso-8859-1 "iso-8859-1"))))
 
 (defun vm-make-layout (&rest plist)
@@ -401,7 +402,7 @@
 		 ((> (skip-chars-forward vm-mime-base64-alphabet end) 0)
 		  (setq lim (point))
 		  (while (< inputpos lim)
-		    (setq bits (+ bits 
+		    (setq bits (+ bits
 				  (aref vm-mime-base64-alphabet-decoding-vector
 					(char-after inputpos))))
 		    (vm-increment counter)
@@ -877,7 +878,7 @@
 		    (encode-coding-region start pos coding)
 		    (setq pos (+ pos (- (buffer-size) old-size)))))
 	      (setq pos
-		    (+ start 
+		    (+ start
 		       (if (setq q-encoding
 				 (string-match "^iso-8859-\\|^us-ascii"
 					       charset))
@@ -933,7 +934,7 @@
 			version (if (or version
 					vm-mime-require-mime-version-header)
 				    version
-				  (if type "1.0" nil)) 
+				  (if type "1.0" nil))
 			qtype (vm-mime-parse-content-header type ?\; t)
 			type (vm-mime-parse-content-header type ?\;)
 			encoding (vm-get-header-contents
@@ -941,7 +942,7 @@
 			version (if (or version
 					vm-mime-require-mime-version-header)
 				    version
-				  (if encoding "1.0" nil)) 
+				  (if encoding "1.0" nil))
 			encoding (or encoding "7bit")
 			encoding (or (car
 				      (vm-mime-parse-content-header encoding))
@@ -1378,7 +1379,7 @@
 
 ;; TODO: Possible further work; integrate with the FSF's unify-8859-on-encoding-mode stuff.
 (defun vm-determine-proper-charset (beg end)
-  "Work out what MIME character set to use for sending a message. 
+  "Work out what MIME character set to use for sending a message.
 
 Uses `us-ascii' if the message is entirely ASCII compatible.  If MULE is not
 available, and the message contains contains non-ASCII characters, consults
@@ -1393,13 +1394,13 @@ with the recipient's software, if that recipient is outside of East Asia."
   (save-excursion
     (save-restriction
       (narrow-to-region beg end)
-	(if (or vm-xemacs-mule-p 
+	(if (or vm-xemacs-mule-p
 		(and vm-fsfemacs-mule-p enable-multibyte-characters))
-	    ;; Okay, we're on a MULE build. 
+	    ;; Okay, we're on a MULE build.
 	    (let ((charsets (delq 'ascii
 				  (vm-charsets-in-region (point-min)
 							 (point-max)))))
-	      (cond 
+	      (cond
 	       ;; No non-ASCII chars? Right, that makes it easy for us.
 	       ((null charsets) "us-ascii")
 
@@ -1435,8 +1436,8 @@ with the recipient's software, if that recipient is outside of East Asia."
 			      (let ((preapproved vm-coding-system-priorities))
 				(while preapproved
 				  (if (memq (car preapproved) vm-mime-ucs-list)
-				      (throw 'done 
-					     (car (cdr (assq 
+				      (throw 'done
+					     (car (cdr (assq
 							(car preapproved)
                                                         vm-mime-mule-coding-to-charset-alist)))))
 				  (setq preapproved (cdr preapproved)))
@@ -1448,8 +1449,8 @@ with the recipient's software, if that recipient is outside of East Asia."
 			(while systems
 			  (let ((sys (latin-unity-massage-name (car systems)
 					       'buffer-default)))
-			    (when (latin-unity-maybe-remap (point-min) 
-							   (point-max) sys 
+			    (when (latin-unity-maybe-remap (point-min)
+							   (point-max) sys
 							   csets psets t)
 			      (throw 'done (second (assq
                                                     sys
@@ -1469,11 +1470,11 @@ with the recipient's software, if that recipient is outside of East Asia."
 		    (let ((csetzero charsets)
 			  (preapproved vm-coding-system-priorities))
 		      (if (null (cdr csetzero))
-			  (while preapproved 
+			  (while preapproved
 			    ;; If we encounter a universal character set on
 			    ;; the preapproved list, pass it back.
 			    (if (memq (car preapproved) vm-mime-ucs-list)
-				(throw 'done (second (assq 
+				(throw 'done (second (assq
 						      preapproved
                                                       vm-mime-mule-coding-to-charset-alist))))
 
@@ -1489,12 +1490,12 @@ with the recipient's software, if that recipient is outside of East Asia."
 			    ;; don't have another mapping that is useful
 			    ;; here. Nnngh.
 
-			    (if (string= 
+			    (if (string=
 				 (car (cdr (assoc (car csetzero)
 				   vm-mime-mule-charset-to-charset-alist)))
 				 (car (cdr (assoc (car preapproved)
 				   vm-mime-mule-coding-to-charset-alist))))
-				(throw 'done 
+				(throw 'done
 				       (car (cdr (assoc (car csetzero)
 				    vm-mime-mule-charset-to-charset-alist)))))
 			    (setq preapproved (cdr preapproved)))
@@ -1506,7 +1507,7 @@ with the recipient's software, if that recipient is outside of East Asia."
 			;; because nothing on the preapproved list is
 			;; appropriate.
 
-			(while preapproved 
+			(while preapproved
 			    ;; If we encounter a universal character set on
 			    ;; the preapproved list, pass it back.
 			    (when (memq (car preapproved) vm-mime-ucs-list)
@@ -2412,7 +2413,7 @@ in the buffer.  The function is expected to make the message
 (defun vm-mime-display-button-multipart/parallel (layout)
   (vm-mime-insert-button
    (concat
-    ;; display the file name or disposition 
+    ;; display the file name or disposition
     (let ((file (or (vm-mime-get-disposition-parameter layout "filename")
                     (vm-mime-get-parameter layout "name"))))
       (if file (format " %s " file) ""))
@@ -2922,7 +2923,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
     (vm-mime-display-internal-image-xemacs-xxxx layout image-type name))
    ((and vm-fsfemacs-p (fboundp 'image-type-available-p))
     (vm-mime-display-internal-image-fsfemacs-21-xxxx layout image-type name))
-   (vm-fsfemacs-p 
+   (vm-fsfemacs-p
     (vm-mime-display-internal-image-fsfemacs-19-xxxx layout image-type name))))
 
 (defun vm-mime-display-internal-image-xemacs-xxxx (layout image-type name)
@@ -3986,8 +3987,8 @@ LAYOUT is the MIME layout struct for the message/external-body object."
     ;; for vm-continue-postponed-message
     (if vm-xemacs-p
 	(vm-set-extent-property e 'duplicable t)
-      (put-text-property (overlay-start e) 
-			 (overlay-end e) 
+      (put-text-property (overlay-start e)
+			 (overlay-end e)
 			 'vm-mime-layout layout)
       )))
 
@@ -4004,7 +4005,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 ;; Date: 1999/04/01
 ;; Newsgroups: gnu.emacs.vm.info
 ;; example filter-alist variable
-(defvar vm-mime-write-file-filter-alist 
+(defvar vm-mime-write-file-filter-alist
   '(("application/mac-binhex40" . "hexbin -s "))
   "*A list of filter used when writing attachements to files!"
   )
@@ -4344,7 +4345,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
        ;; Is this check too paranoid?
        (coding-system-p (console-tty-output-coding-system))
        (fboundp 'coding-system-get)
-       (let 
+       (let
 	   ;; Nnngh, latin-unity-base-name isn't doing the right thing for
 	   ;; me with MULE-UCS and UTF-8 as the terminal coding system. Of
 	   ;; course, it's not evident that it _can_ do the right thing.
@@ -4352,20 +4353,20 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	   ;; The intention is that ourtermcs is the version of the
 	   ;; coding-system without line-ending information attached to its
 	   ;; end.
-	   ((ourtermcs (or (car 
+	   ((ourtermcs (or (car
 			    (coding-system-get
 			     (console-tty-output-coding-system)
 			     'alias-coding-systems))
 			   (console-tty-output-coding-system))))
-	 (or (eq ourtermcs (car 
-			    (cdr 
-			     (vm-string-assoc 
+	 (or (eq ourtermcs (car
+			    (cdr
+			     (vm-string-assoc
 			      name vm-mime-mule-charset-to-coding-alist))))
 	     ;; The vm-mime-mule-charset-to-coding-alist check is to make
 	     ;; sure it does the right thing with a nonsense MIME character
 	     ;; set name.
 	     (and (memq ourtermcs vm-mime-ucs-list)
-		  (vm-string-assoc name vm-mime-mule-charset-to-coding-alist) 
+		  (vm-string-assoc name vm-mime-mule-charset-to-coding-alist)
 		  t)
 	     (vm-mime-default-face-charset-p name)))))
 
@@ -4874,7 +4875,7 @@ COMPOSITION's name will be read from the minibuffer."
 	(mail-text))
     (setq start (point))
     (if (listp object)
-	(setq tag-string (format "[ATTACHMENT %s, %s]" (nth 4 object) type)) 
+	(setq tag-string (format "[ATTACHMENT %s, %s]" (nth 4 object) type))
       (setq tag-string (format "[ATTACHMENT %s, %s]" object
 			     (or type "MIME file"))))
     (insert tag-string "\n")
@@ -5435,7 +5436,7 @@ agent; under Unix, normally sendmail.)"
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
 	    (if vm-xemacs-mule-p
- 		(encode-coding-region 
+ 		(encode-coding-region
  		 (point-min) (point-max)
  
  		 ;; What about the case where vm-m-m-c-t-c-a doesn't have an
@@ -5449,7 +5450,7 @@ agent; under Unix, normally sendmail.)"
  		 ;; vm-mime-mule-coding-to-charset-alist to being (format
  		 ;; "%s" coding-system), if necessary.)
  
- 		 (car (cdr (vm-string-assoc 
+ 		 (car (cdr (vm-string-assoc
  			    charset vm-mime-mule-charset-to-coding-alist)))))
 
             (enriched-mode -1)
@@ -5487,7 +5488,7 @@ agent; under Unix, normally sendmail.)"
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
 	    (if vm-xemacs-mule-p
-		(encode-coding-region 
+		(encode-coding-region
 		 (point-min) (point-max)
 
 		 ;; What about the case where vm-m-m-c-t-c-a doesn't have an
@@ -5500,7 +5501,7 @@ agent; under Unix, normally sendmail.)"
 		 ;; vm-mime-mule-coding-to-charset-alist to being (format
 		 ;; "%s" coding-system), if necessary.)
 
-		 (car (cdr (vm-string-assoc 
+		 (car (cdr (vm-string-assoc
 			    charset vm-mime-mule-charset-to-coding-alist)))))
 
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -5528,7 +5529,7 @@ agent; under Unix, normally sendmail.)"
 	  (cond ((bufferp object)
 		 (insert-buffer-substring object))
 		((listp object)
-		 (save-restriction  
+		 (save-restriction
 		   (save-excursion (set-buffer (nth 0 object))
 				   (widen))
 		   (setq boundary-positions (cons (point-marker)
@@ -5677,7 +5678,7 @@ agent; under Unix, normally sendmail.)"
 	  (setq charset (vm-determine-proper-charset (point)
 						     (point-max)))
 	  (if vm-xemacs-mule-p
-	      (encode-coding-region 
+	      (encode-coding-region
 	       (point) (point-max)
 
 	       ;; What about the case where vm-m-m-c-t-c-a doesn't have an
@@ -5690,7 +5691,7 @@ agent; under Unix, normally sendmail.)"
 	       ;; vm-mime-mule-coding-to-charset-alist to being (format "%s"
 	       ;; coding-system), if necessary.)
 
-		 (car (cdr (vm-string-assoc 
+		 (car (cdr (vm-string-assoc
 			    charset vm-mime-mule-charset-to-coding-alist)))))
 
 	  (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -5923,7 +5924,7 @@ agent; under Unix, normally sendmail.)"
 		     (setq object tempfile)))))
           ;; insert attachment from postponed message
           (cond ((listp object)
-                 (save-restriction  
+                 (save-restriction
                    (save-excursion (set-buffer (nth 0 object))
                                    (widen))
                    (setq boundary-positions (cons (point-marker)
@@ -6509,3 +6510,5 @@ agent; under Unix, normally sendmail.)"
       "burn in the raging fires of hell forever"))
 
 (provide 'vm-mime)
+
+;;; vm-mime.el ends here

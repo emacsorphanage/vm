@@ -1,5 +1,6 @@
-;;; Tools to configure your GNU Emacs windows
-;; Copyright (C) 1991, 1993, 1994, 1995, 1997 Kyle E. Jones 
+;;; tapestry.el --- Tools to configure your GNU Emacs windows
+;;
+;; Copyright (C) 1991, 1993, 1994, 1995, 1997 Kyle E. Jones
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -15,6 +16,7 @@
 ;; with this program; if not, write to the Free Software Foundation, Inc.,
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+;;; Code:
 (defvar tapestry-version "1.09")
 
 ;; Pass state information between the tapestry-set-window-map
@@ -604,3 +606,5 @@ ROOT-WINDOW-EDGES will be used."
     t ))
 
 (provide 'tapestry)
+
+;;; tapestry.el ends here

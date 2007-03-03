@@ -1,21 +1,23 @@
-;;; VM folder related functions
-;;; Copyright (C) 1989-2001 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-folder.el --- VM folder related functions
+;;
+;; Copyright (C) 1989-2001 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+;;; Code:
 (defun vm-number-messages (&optional start-point end-point)
   "Set the number-of and padded-number-of slots of messages
 in vm-message-list.
@@ -163,7 +165,7 @@ and thread indentation."
 	     ;; message that could appear in the summary has changed.
 	     (vm-set-summary-of m nil))
 	 (if (vm-su-start-of m)
-	     (setq vm-messages-needing-summary-update 
+	     (setq vm-messages-needing-summary-update
 		   (cons m vm-messages-needing-summary-update)))
 	 (intern (buffer-name (vm-buffer-of m))
 		 vm-buffers-needing-display-update)
@@ -772,7 +774,7 @@ Returns non-nil if the separator is found, nil otherwise."
       (if (re-search-forward reg1 nil 'no-error)
 	  (progn
 	    (goto-char (match-beginning 0))
-	    t ) 
+	    t )
 	nil )))
    ((eq vm-folder-type 'From_-with-Content-Length)
     (let ((reg1 "\\(^\\|\n+\\)From ")
@@ -1072,7 +1074,7 @@ vm-folder-type is initialized here."
 			 (setq work-buffer (vm-make-work-buffer))
 			 (set-buffer work-buffer)
 			 (insert-buffer-substring
-			  folder-buffer 
+			  folder-buffer
 			  (vm-headers-of message)
 			  (vm-text-of message))
 			 (goto-char (point-min))))
@@ -1233,7 +1235,7 @@ vm-folder-type is initialized here."
 			(error "Bad x-vm-v5-data at %d in buffer %s"
 			       oldpoint (buffer-name))))
 		  data )
-	      (error 
+	      (error
 	       (message "Bad x-vm-v5-data header at %d in buffer %s, ignoring"
 			oldpoint (buffer-name))
 	       (setq data
@@ -2545,7 +2547,7 @@ vm-folder-type is initialized here."
 	  (prin1 vm-folder-type work-buffer)
 	  (terpri work-buffer)
 
-	  (princ 
+	  (princ
 	   ";; timestamp + sample of folder bytes for consistency check\n"
 	   work-buffer)
 	  (prin1 (vm-generate-index-file-validity-check) work-buffer)
@@ -2880,13 +2882,13 @@ The folder is not altered and Emacs is still visiting it."
 	     (progn (require 'timer) t)
 	   (error nil))
 	 (let (timer)
-	   (and (natnump vm-flush-interval) 
+	   (and (natnump vm-flush-interval)
 		(not (vm-timer-using 'vm-flush-itimer-function))
 		(setq timer (run-at-time vm-flush-interval vm-flush-interval
 					 'vm-flush-itimer-function nil))
 		(timer-set-function timer 'vm-flush-itimer-function
 				    (list timer)))
-	   (and (natnump vm-mail-check-interval) 
+	   (and (natnump vm-mail-check-interval)
 		(not (vm-timer-using 'vm-check-mail-itimer-function))
 		(setq timer (run-at-time vm-mail-check-interval
 					 vm-mail-check-interval
@@ -3313,7 +3315,7 @@ run vm-expunge-folder followed by vm-save-folder."
      ((memq vm-system-state '(showing reading))
       (message "SPC and b scroll, (d)elete, (s)ave, (n)ext, (r)eply   (? gives more help)"))
      ((eq vm-system-state 'editing)
-      (message 
+      (message
        (substitute-command-keys
 	"Type \\[vm-edit-message-end] to end edit, \\[vm-edit-message-abort] to abort with no change.")))
      ((eq major-mode 'mail-mode)
@@ -3913,7 +3915,7 @@ files."
 	     (or vm-arrived-message-hook vm-arrived-messages-hook)
 	     ;; Run the hooks only if this is not the first
 	     ;; time vm-assimilate-new-messages has been called
-	     ;; in this folder. 
+	     ;; in this folder.
 	     (not first-time))
 	(let ((new-messages new-messages))
 	  ;; seems wise to do this so that if the user runs VM
@@ -3965,7 +3967,7 @@ files."
   "Return a list of all marked messages or the messages indicated by a
 prefix argument.  If the prefix argument is supplied *and we are
 not in a vm-next-command-uses-marks context*, then return a number
-of messages around vm-message-pointer equal to (abs prefix), 
+of messages around vm-message-pointer equal to (abs prefix),
 either backward (prefix is negative) or forward (positive)."
   (if (eq last-command 'vm-next-command-uses-marks)
       (vm-marked-messages)
@@ -4276,3 +4278,5 @@ Interactively TYPE will be read from the minibuffer."
   (setq after-revert-hook (list 'vm-after-revert-buffer-hook)))
 
 (provide 'vm-folder)
+
+;;; vm-folder.el ends here

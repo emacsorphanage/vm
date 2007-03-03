@@ -1,21 +1,28 @@
-;;; Entry points for VM
-;;; Copyright (C) 1994-1998, 2003 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm.el --- Entry points for VM
+;;
+;; Copyright (C) 1994-1998, 2003 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+
+;;; History:
+;;
+;; This files was vm-startup.el!
+
+;;; Code:
 (defvar enable-multibyte-characters)
 
 (require 'vm-version)
@@ -245,7 +252,7 @@ See the documentation for vm-mode for more information."
 				    (default-value 'vm-folder-read-only)
 				    (and first-time buffer-read-only)))
       ;; If this is not a VM mode buffer then some initialization
-      ;; needs to be done 
+      ;; needs to be done
       (if first-time
 	  (progn
 	    (buffer-disable-undo (current-buffer))
@@ -361,7 +368,7 @@ See the documentation for vm-mode for more information."
 
       ;; Warn user about auto save file, if appropriate.
       (if (and full-startup preserve-auto-save-file)
-	  (message 
+	  (message
 	   (substitute-command-keys
 	    "Auto save file is newer; consider \\[vm-recover-folder].  FOLDER IS READ ONLY.")))
       ;; if we're not doing a full startup or if doing more would
@@ -1500,3 +1507,5 @@ Please remove these instructions from your message.")
 (autoload 'vm-easy-menu-do-define "vm-easymenu")
 
 (provide 'vm)
+
+;;; vm.el ends here

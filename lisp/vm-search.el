@@ -1,21 +1,23 @@
-;;; Incremental search through a mail folder (for Lucid and FSF Emacs 19)
-;;; Copyright (C) 1994 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-search.el --- Incremental search through a mail folder
+;;
+;; Copyright (C) 1994 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+;;; Code:
 (defun vm-isearch-forward (&optional arg)
   "Incrementally search forward through the current folder's messages.
 Usage is identical to the standard Emacs incremental search.
@@ -121,3 +123,5 @@ vm-search-using-regexps for this search."
 	  (vm-update-summary-and-mode-line)))))
 
 (provide 'vm-search)
+
+;;; vm-search.el ends here

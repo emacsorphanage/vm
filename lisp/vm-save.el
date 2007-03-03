@@ -1,24 +1,27 @@
-;;; Saving and piping messages under VM
-;;; Copyright (C) 1989, 1990, 1993, 1994 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-save.el --- Saving and piping messages under VM
+;;
+;; Copyright (C) 1989, 1990, 1993, 1994 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-;; (match-data) returns the match data as MARKERS, often corrupting
-;; it in the process due to buffer narrowing, and the fact that buffers are
-;; indexed from 1 while strings are indexed from 0. :-(
+;; (match-data) returns the match data as MARKERS, often corrupting it in the
+;; process due to buffer narrowing, and the fact that buffers are indexed from
+;; 1 while strings are indexed from 0. :-(
+
+;;; Code:
 (defun vm-match-data ()
   (let ((n (1- (/ (length (match-data)) 2)))
         (list nil))
@@ -152,10 +155,10 @@ The saved messages are flagged as `filed'."
 	       archived (if (= 1 archived) "" "s")))))
 
 ;;;---------------------------------------------------------------------------
-;;; The following defun seems a lot less efficient than it might be,
-;;; but I don't have a better sense of how to access the folder buffer
-;;; and read its local variables. [2006/10/31:rpg]
-;;;---------------------------------------------------------------------------
+;; The following defun seems a lot less efficient than it might be,
+;; but I don't have a better sense of how to access the folder buffer
+;; and read its local variables. [2006/10/31:rpg]
+;;---------------------------------------------------------------------------
 
 (defun vm-imap-folder-p ()
   "Is the current folder an IMAP folder?"
@@ -164,8 +167,8 @@ The saved messages are flagged as `filed'."
     (eq vm-folder-access-method 'imap)))
 
 ;;;---------------------------------------------------------------------------
-;;; New shell defun to handle both IMAP and local saving.
-;;;---------------------------------------------------------------------------
+;; New shell defun to handle both IMAP and local saving.
+;;---------------------------------------------------------------------------
 (defun vm-save-message (folder &optional count)
   "Save the current message.  This may be done either by saving it
 to an IMAP folder or by saving it to a local filesystem folder.
@@ -742,3 +745,5 @@ The saved messages are flagged as `filed'."
     folder ))
 
 (provide 'vm-save)
+
+;;; vm-save.el ends here

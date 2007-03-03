@@ -1,21 +1,24 @@
-;;; Simple IMAP4 (RFC 2060) client for VM
-;;; Copyright (C) 1998, 2001, 2003 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-imap.el ---  Simple IMAP4 (RFC 2060) client for VM
+;;
+;; Copyright (C) 1998, 2001, 2003 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;; Copyright (C) 2006 Robert P. Goldman
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+;;; Code:
 (eval-when-compile 
   (require 'sendmail))
 
@@ -2021,3 +2024,5 @@ Add this to your `mail-send-hook' and start composing from an IMAP folder."
 	))))
 
 (provide 'vm-imap)
+
+;;; vm-imap.el ends here

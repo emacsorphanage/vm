@@ -1,21 +1,24 @@
-;;; Mailing, forwarding, and replying commands for VM
-;;; Copyright (C) 1989-2001 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-reply.el --- Mailing, forwarding, and replying commands
+;;
+;; Copyright (C) 1989-2001 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+
+;;; Code:
 (defun vm-do-reply (to-all include-text count)
     (let ((mlist (vm-select-marked-or-prefixed-messages count))
 	  (dir default-directory)
@@ -24,7 +27,7 @@
 	  to cc subject in-reply-to references
 	  mp tmp tmp2 newsgroups)
       (setq mp mlist)
-      (while mp 
+      (while mp
 	(cond ((add-to-list 'to
 		       (let ((reply-to
 			      (vm-get-header-contents (car mp) "Reply-To:"
@@ -43,7 +46,7 @@
 		     (let ((vm-summary-uninteresting-senders nil))
 				    (vm-summary-sprintf vm-in-reply-to-format
 							(car mp))))))
-	  (if (and this-subject vm-reply-subject-prefix 
+	  (if (and this-subject vm-reply-subject-prefix
 		   (not (string-match vm-reply-subject-prefix this-subject)))
               (setq this-subject (concat vm-reply-subject-prefix
                                          this-subject)))
@@ -347,7 +350,7 @@ vm-included-text-prefix is prepended to every yanked line."
 					  vm-included-mime-types-list)
 				  (vm-mime-display-internal-text/plain
 				   layout t))
-                                 ;; convert the layout if possible 
+                                 ;; convert the layout if possible
                                  ((and (not (vm-mm-layout-is-converted layout))
                                        (vm-mime-can-convert type)
                                        (setq new-layout
@@ -732,7 +735,7 @@ as replied to, forwarded, etc, if appropriate."
   "Reply to the sender of the current message.
 Numeric prefix argument N means to reply to the current message plus the
 next N-1 messages.  A negative N means reply to the current message and
-the previous N-1 messages. 
+the previous N-1 messages.
 
 If invoked on marked messages (via vm-next-command-uses-marks),
 all marked messages will be replied to.
@@ -1050,7 +1053,7 @@ only marked messages will be put into the digest."
        nil
        (and vm-forwarding-subject-format
             (let ((vm-summary-uninteresting-senders nil))
-              (mapconcat (lambda (mp) 
+              (mapconcat (lambda (mp)
                            (vm-summary-sprintf
                             vm-forwarding-subject-format mp))
                          mlist ", "))))
@@ -1349,7 +1352,7 @@ found, the current buffer remains selected."
 						  mail-signature-file)
 					     "~/.signature")))
 		  (t
-		   (let ((str (eval mail-signature))) 
+		   (let ((str (eval mail-signature)))
 		     (if (stringp str)
 			 (insert str)))))
 	    (goto-char (point-min))
@@ -1638,3 +1641,5 @@ message."
   (remove-hook 'mail-send-hook 'mime-editor/maybe-translate))
 
 (provide 'vm-reply)
+
+;;; vm-reply.el ends here

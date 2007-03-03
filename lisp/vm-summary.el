@@ -1,21 +1,23 @@
-;;; Summary gathering and formatting routines for VM
-;;; Copyright (C) 1989-1995, 2000 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-summary.el --- Summary gathering and formatting routines for VM
+;;
+;; Copyright (C) 1989-1995, 2000 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+;;; Code:
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"
 	major-mode 'vm-summary-mode
@@ -51,7 +53,7 @@
 (put 'vm-summary-mode 'mode-class 'special)
 
 (defun vm-summarize (&optional display raise)
-  "Summarize the contents of the folder in a summary buffer. 
+  "Summarize the contents of the folder in a summary buffer.
 The format is as described by the variable vm-summary-format.  Generally
 one line per message is most pleasing to the eye but this is not
 mandatory."
@@ -1716,3 +1718,5 @@ Call this function if you made changes to `vm-summary-format'."
       nil )))
 
 (provide 'vm-summary)
+
+;;; vm-summary.el ends here

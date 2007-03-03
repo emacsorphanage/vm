@@ -1,34 +1,37 @@
-;;; Copyright (C) Kyle E. Jones, Robert Widhopf-Fenk
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-version.el --- Version information about VM and the Emacs running VM.
+;;
+;; Copyright (C) Kyle E. Jones, Robert Widhopf-Fenk
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+;;; Code:
 (defconst vm-version "8.0"
   "Version number of VM.")
 
 (defvar vm-revno nil
   "The exact version for tarbundles.
 This is the nick and revision number of the BZR repository from which VM was
-released.")  
+released.")
 
 (defvar vm-author nil
   "The author for tarbundles.
 This is the author of the BZR repository from which VM was released.")
 
 (defun vm-version ()
-  "Returns the value of the variable `vm-version'."
+  "Return the value of the variable `vm-version'."
   (interactive)
   (save-excursion
     (unless (get-buffer " *vm-version*")
@@ -38,33 +41,33 @@ This is the author of the BZR repository from which VM was released.")
         (setq default-directory d)
         (erase-buffer)
         (cond ((file-exists-p (expand-file-name ".bzr" (concat d "../")))
-               ;; get the current branch nick and revno from bzr 
+               ;; get the current branch nick and revno from bzr
                (insert (concat (shell-command-to-string "bzr --no-plugins nick") "-"
                                (shell-command-to-string "bzr --no-plugins revno"))))
               ((and (locate-library "vm-revno") (load-library "vm-revno"))
                (insert vm-revno))
               (t
-               (insert vm-version 
+               (insert vm-version
                        "-cannot_determine_precise_VM_version.")))
         (goto-char (point-min))
-        ;; remove any whitespace 
+        ;; remove any whitespace
         (while (re-search-forward "[\n\t\r ]+" (point-max) t)
           (replace-match ""))))
     (set-buffer (get-buffer " *vm-version*"))
     (buffer-substring (point-min) (point-max))))
 
-(defconst vm-xemacs-p 
+(defconst vm-xemacs-p
   (featurep 'xemacs))
-(defconst vm-xemacs-mule-p 
+(defconst vm-xemacs-mule-p
   (and vm-xemacs-p (featurep 'mule)))
 (defconst vm-xemacs-file-coding-p
   (and vm-xemacs-p (featurep 'file-coding)
        ;; paranoia
-       (fboundp 
+       (fboundp
 	'set-buffer-file-coding-system)))
-(defconst vm-fsfemacs-p 
+(defconst vm-fsfemacs-p
   (not vm-xemacs-p))
-(defconst vm-fsfemacs-mule-p 
+(defconst vm-fsfemacs-mule-p
   (and (not vm-xemacs-mule-p) (featurep 'mule)
        (fboundp 'set-buffer-file-coding-system)))
 
@@ -102,17 +105,17 @@ This is the author of the BZR repository from which VM was released.")
 	   (check-menu-syntax '("bar" ((identity "foo") 'ding t)))
 	 (error nil))))
 
-(defun vm-multiple-frames-possible-p () 
-  (cond (vm-xemacs-p 
+(defun vm-multiple-frames-possible-p ()
+  (cond (vm-xemacs-p
 	 (or (memq 'win (device-matching-specifier-tag-list))
 	     (featurep 'tty-frames)))
-        (vm-fsfemacs-p 
+        (vm-fsfemacs-p
          (fboundp 'make-frame))))
  
-(defun vm-mouse-support-possible-p () 
-  (cond (vm-xemacs-p 
-         (featurep 'window-system)) 
-        (vm-fsfemacs-p 
+(defun vm-mouse-support-possible-p ()
+  (cond (vm-xemacs-p
+         (featurep 'window-system))
+        (vm-fsfemacs-p
          (fboundp 'track-mouse))))
  
 (defun vm-mouse-support-possible-here-p ()
@@ -150,3 +153,5 @@ This is the author of the BZR repository from which VM was released.")
     (or (featurep type) (eq type 'xbm))))
 
 (provide 'vm-version)
+
+;;; vm-version.el ends here

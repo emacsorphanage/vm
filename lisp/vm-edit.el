@@ -1,21 +1,23 @@
-;;; Editing VM messages
-;;; Copyright (C) 1990, 1991, 1993, 1994, 1997, 2001 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-edit.el --- Editing VM messages
+;;
+;; Copyright (C) 1990, 1991, 1993, 1994, 1997, 2001 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+;;; Code:
 (defun vm-edit-message (&optional prefix-argument)
   "Edit the current message.  Prefix arg means mark as unedited instead.
 If editing, the current message is copied into a temporary buffer, and
@@ -82,7 +84,7 @@ replace the original, use C-c C-] and the edit will be aborted."
 		  vm-system-state 'editing
 		  buffer-offer-save t)
 	    (run-hooks 'vm-edit-message-hook)
-	    (message 
+	    (message
 	     (substitute-command-keys
 	      "Type \\[vm-edit-message-end] to end edit, \\[vm-edit-message-abort] to abort with no change.")))
 	(set-buffer edit-buf))
@@ -295,3 +297,5 @@ data is discarded only from the marked messages in the current folder."
   (message "Aborted, no change."))
 
 (provide 'vm-edit)
+
+;;; vm-edit.el ends here

@@ -1,19 +1,23 @@
-;;; Encryption and related functions for VM
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-crypto.el --- Encryption and related functions for VM
+;;
+;; Copyright (C) 2001 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+;;; Code:
 
 ;; compatibility
 (fset 'vm-pop-md5 'vm-md5-string)
@@ -49,8 +53,8 @@
 	    (if (or (re-search-forward "[^0-9a-f\n]" nil t)
 		    (< (point-max) 32))
 		(error "%s produced bogus MD5 digest '%s'"
-		       vm-pop-md5-program 
-		       (vm-buffer-substring-no-properties (point-min) 
+		       vm-pop-md5-program
+		       (vm-buffer-substring-no-properties (point-min)
 							  (point-max))))
 	    ;; MD5 digest is 32 chars long
 	    ;; mddriver adds a newline to make neaten output for tty
@@ -207,3 +211,5 @@
     vm-stunnel-configuration-file))
 
 (provide 'vm-crypto)
+
+;;; vm-crypto.el ends here

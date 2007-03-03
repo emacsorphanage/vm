@@ -1,51 +1,57 @@
-;;; Menu related functions and commands
-;;; Copyright (C) 1995, 1997 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; Folders menu derived from
-;;;     vm-folder-menu.el
-;;;     v1.10; 03-May-1994
-;;;     Copyright (C) 1994 Heiko Muenkel
-;;;     email: muenkel@tnt.uni-hannover.de
-;;;  Used with permission and my thanks.
-;;;  Changed 18-May-1995, Kyle Jones
-;;;     Cosmetic string changes, changed some variable names
-;;;     and interfaced it with FSF Emacs via easymenu.el.
-;;;   
-;;; Tree menu code is essentially tree-menu.el with renamed functions
-;;;     tree-menu.el
-;;;     v1.20; 10-May-1994
-;;;     Copyright (C) 1994 Heiko Muenkel
-;;;     email: muenkel@tnt.uni-hannover.de
-;;;
-;;;  Changed 18-May-1995, Kyle Jones
-;;;    Removed the need for the utils.el package and references thereto.
-;;;    Changed file-truename calls to tree-menu-file-truename so
-;;;    the calls could be made compatible with FSF Emacs 19's
-;;;    file-truename function.
-;;;  Changed 30-May-1995, Kyle Jones
-;;;    Renamed functions: tree- -> vm-menu-hm-tree.
-;;;  Changed 5-July-1995, Kyle Jones
-;;;    Removed the need for -A in ls flags.
-;;;    Some systems' ls don't support -A.
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-menu.el --- Menu related functions and commands
+;;
+;; Copyright (C) 1994 Heiko Muenkel
+;; Copyright (C) 1995, 1997 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;
+;;; History:
+;;
+;; Folders menu derived from
+;;     vm-folder-menu.el
+;;     v1.10; 03-May-1994
+;;     Copyright (C) 1994 Heiko Muenkel
+;;     email: muenkel@tnt.uni-hannover.de
+;;  Used with permission and my thanks.
+;;  Changed 18-May-1995, Kyle Jones
+;;     Cosmetic string changes, changed some variable names
+;;     and interfaced it with FSF Emacs via easymenu.el.
+;;   
+;; Tree menu code is essentially tree-menu.el with renamed functions
+;;     tree-menu.el
+;;     v1.20; 10-May-1994
+;;     Copyright (C) 1994 Heiko Muenkel
+;;     email: muenkel@tnt.uni-hannover.de
+;;
+;;  Changed 18-May-1995, Kyle Jones
+;;    Removed the need for the utils.el package and references thereto.
+;;    Changed file-truename calls to tree-menu-file-truename so
+;;    the calls could be made compatible with FSF Emacs 19's
+;;    file-truename function.
+;;  Changed 30-May-1995, Kyle Jones
+;;    Renamed functions: tree- -> vm-menu-hm-tree.
+;;  Changed 5-July-1995, Kyle Jones
+;;    Removed the need for -A in ls flags.
+;;    Some systems' ls don't support -A.
 
 (require 'vm-easymenu)
 
-(defvar vm-menu-folders-menu 
+;;; Code:
+(defvar vm-menu-folders-menu
   '("Manipulate Folders"
     ["Make Folders Menu" vm-menu-hm-make-folder-menu vm-folder-directory])
   "VM folder menu list.")
@@ -881,7 +887,7 @@ set to the command name so that window configuration will be done."
 	      (vec (vector 'rootmenu 'vm nil))
 	      ;; menus appear in the opposite order that we
 	      ;; define-key them.
-	      (menu-list 
+	      (menu-list
 	       (if (consp vm-use-menus)
 		   (reverse vm-use-menus)
 		 (list 'help nil 'dispose 'virtual 'sort
@@ -1321,7 +1327,7 @@ set to the command name so that window configuration will be done."
   "Create a subdir in PARENT-DIR."
   (interactive "DCreate new directory in: ")
   (setq parent-dir (or parent-dir vm-folder-directory))
-  (make-directory 
+  (make-directory
    (expand-file-name (read-file-name
 		      (format "Create directory in %s called: "
 			      parent-dir)
@@ -1344,19 +1350,19 @@ set to the command name so that window configuration will be done."
     (setq vm-menu-folders-menu
 	  (cons "Manipulate Folders"
 		(list (cons "Visit Inboxes  "
-			    (vm-menu-hm-tree-make-menu 
+			    (vm-menu-hm-tree-make-menu
 			     inbox-list
 			     'vm-visit-folder
 			     t))
 		      (cons "Visit Folder   "
-			    (vm-menu-hm-tree-make-menu 
+			    (vm-menu-hm-tree-make-menu
 			     folder-list
 			     'vm-visit-folder
 			     t
 			     vm-menu-hm-no-hidden-dirs
 			     vm-menu-hm-hidden-file-list))
 		      (cons "Save Message   "
-			    (vm-menu-hm-tree-make-menu 
+			    (vm-menu-hm-tree-make-menu
 			     folder-list
 			     'vm-save-message
 			     t
@@ -1364,7 +1370,7 @@ set to the command name so that window configuration will be done."
 			     vm-menu-hm-hidden-file-list))
 		      "----"
 		      (cons "Delete Folder  "
-			    (vm-menu-hm-tree-make-menu 
+			    (vm-menu-hm-tree-make-menu
 			     folder-list
 			     'vm-menu-hm-delete-folder
 			     t
@@ -1373,7 +1379,7 @@ set to the command name so that window configuration will be done."
 			     t
 			     ))
 		      (cons "Rename Folder  "
-			    (vm-menu-hm-tree-make-menu 
+			    (vm-menu-hm-tree-make-menu
 			     folder-list
 			     'vm-menu-hm-rename-folder
 			     t
@@ -1382,7 +1388,7 @@ set to the command name so that window configuration will be done."
 			     t
 			     ))
 		      (cons "Make New Directory in..."
-			    (vm-menu-hm-tree-make-menu 
+			    (vm-menu-hm-tree-make-menu
 			     (cons (list vm-folder-directory) folder-list)
 			     'vm-menu-hm-create-dir
 			     t
@@ -1416,11 +1422,11 @@ set to the command name so that window configuration will be done."
 
 ;;; Muenkel tree-menu code
 
-(defvar vm-menu-hm-tree-ls-flags "-aFLR" 
+(defvar vm-menu-hm-tree-ls-flags "-aFLR"
   "*A String with the flags used in the function
 vm-menu-hm-tree-ls-in-temp-buffer for the ls command.
-Be careful if you want to change this variable. 
-The ls command must append a / on all files which are directories. 
+Be careful if you want to change this variable.
+The ls command must append a / on all files which are directories.
 The original flags are -aFLR.")
 
 
@@ -1448,8 +1454,8 @@ The original flags are -aFLR.")
 					      (end-of-line)
 					      (point)))))
     (while (not (string= filename ""))
-      (setq 
-       list 
+      (setq
+       list
        (append
 	list
 	(list
@@ -1460,7 +1466,7 @@ The original flags are -aFLR.")
 		  (search-forward (concat root filename ":"))
 		  (forward-line)
 		  (vm-menu-hm-tree-make-file-list-1 (concat root filename "/")
-						(list (vm-menu-hm-tree-menu-file-truename 
+						(list (vm-menu-hm-tree-menu-file-truename
 						       filename
 						       root)))))
 	       ((char-equal (char-after (- (point) 1)) ?*)
@@ -1480,7 +1486,7 @@ The original flags are -aFLR.")
 
 (defun vm-menu-hm-tree-make-file-list (dir)
   "Makes a list with the files and subdirectories of DIR.
-The list looks like: ((dirname1 file1 file2) 
+The list looks like: ((dirname1 file1 file2)
                       file3
                       (dirname2 (dirname3 file4 file5) file6))"
   (save-window-excursion
@@ -1490,7 +1496,7 @@ The list looks like: ((dirname1 file1 file2)
 ;;    (while (string-match "/$" dir)
 ;;      (setq dir (substring dir 0 -1)))
     (vm-menu-hm-tree-ls-in-temp-buffer dir
-				 (generate-new-buffer-name 
+				 (generate-new-buffer-name
 				  vm-menu-hm-tree-temp-buffername))
     (let ((list nil))
       (setq list (vm-menu-hm-tree-make-file-list-1 dir nil))
@@ -1501,22 +1507,22 @@ The list looks like: ((dirname1 file1 file2)
 (defun vm-menu-hm-tree-hide-file-p (filename re-hidden-file-list)
   "t, if one of the regexps in RE-HIDDEN-FILE-LIST matches the FILENAME."
   (cond ((not re-hidden-file-list) nil)
-	((string-match (car re-hidden-file-list) 
+	((string-match (car re-hidden-file-list)
 		       (vm-menu-hm-tree-menu-file-truename filename)))
 	(t (vm-menu-hm-tree-hide-file-p filename (cdr re-hidden-file-list)))))
 
 
-(defun vm-menu-hm-tree-make-menu (dirlist 
-		       function 
-		       selectable 
-		       &optional 
+(defun vm-menu-hm-tree-make-menu (dirlist
+		       function
+		       selectable
+		       &optional
 		       no-hidden-dirs
 		       re-hidden-file-list
 		       include-current-dir)
   "Returns a menu list.
-Each item of the menu list has the form 
+Each item of the menu list has the form
  [\"subdir\" (FUNCTION \"dir\") SELECTABLE].
-Hidden directories (with a leading point) are suppressed, 
+Hidden directories (with a leading point) are suppressed,
 if NO-HIDDEN-DIRS are non nil. Also all files which are
 matching a regexp in RE-HIDDEN-FILE-LIST are suppressed.
 If INCLUDE-CURRENT-DIR non nil, then an additional command
@@ -1535,12 +1541,12 @@ for the current directory (.) is inserted."
 				    selectable)))))
 	    ((and (listp subdir)
 		  (or (not no-hidden-dirs)
-		      (not (char-equal 
+		      (not (char-equal
 			    ?.
-			    (string-to-char 
+			    (string-to-char
 			     (file-name-nondirectory (car subdir))))))
 		  (setq menulist
-			(append 
+			(append
 			 menulist
 			 (list
 			  (cons (file-name-nondirectory (car subdir))
@@ -1570,3 +1576,5 @@ for the current directory (.) is inserted."
   )
 
 (provide 'vm-menu)
+
+;;; vm-menu.el ends here

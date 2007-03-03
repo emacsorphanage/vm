@@ -1,21 +1,23 @@
-;;; VM user and internal variable initialization
-;;; Copyright (C) 1989-2003 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-vars.el --- VM user and internal variable initialization
+;;
+;; Copyright (C) 1989-2003 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+;;; Code:
 (defgroup vm nil
   "The VM mail reader."
   :group 'mail)
@@ -109,7 +111,7 @@ A nil value means VM should not read or write index files."
 				 (list vm-spool-files))))))
 
 (defcustom vm-spool-files nil
-  "*If non-nil this variable's value should be a list of strings 
+  "*If non-nil this variable's value should be a list of strings
 or a list of lists.
 
 If the value is a list of strings, the strings should name files
@@ -772,7 +774,7 @@ flagged as read until it is exposed in its entirety.
 A value of t causes VM to display as much of the message as will
 fit in the window associated with the folder buffer.
 
-A nil value causes VM not to preview messages; no text lines are hidden and 
+A nil value causes VM not to preview messages; no text lines are hidden and
 messages are immediately flagged as read."
   :group 'vm
   :type '(choice boolean integer))
@@ -786,7 +788,7 @@ A nil value causes VM to preview messages only if new or unread."
 (defcustom vm-always-use-presentation-buffer nil
   "*Non-nil means to always use a presentation buffer for displaying messages.
 It will also be used if no decoding or other modification of the message are
-necessary." 
+necessary."
   :group 'vm
   :type 'boolean)
 
@@ -1376,7 +1378,7 @@ The format of the list is
 
   ((TYPE . FORMAT) (TYPE . FORMAT) ...)
 
-The list is searched sequentially and the FORMAT corresponding to 
+The list is searched sequentially and the FORMAT corresponding to
 the first TYPE that matches the type of the button's object is
 used.
 
@@ -1411,7 +1413,7 @@ Recognized specifiers are:
    s - an empty string if %n would display \"1\", otherwise
        \"s\".
    t - the content type of the object, e.g. \"text/enriched\".
-   T - for message/partial objects, the total number of expected 
+   T - for message/partial objects, the total number of expected
        parts.  \"?\" is displayed if the object doesn't specify
        the total number of parts expected.
    x - the content type of the external body of a message/external-body
@@ -1420,7 +1422,7 @@ Recognized specifiers are:
        the field width and precision for the concatentation of
        group of format specifiers.  Example: \"%.25(%d, %t, %f%)\"
        specifies a maximum display width of 25 characters for the
-       concatenation of the content description, content type and 
+       concatenation of the content description, content type and
        suggested file name.
    ) - ends a group.
 
@@ -1526,7 +1528,7 @@ line can be protected."
     ("\\.hqx$"		.	"application/mac-binhex40")
    )
   "*Alist used to guess a MIME content type based on a file name.
-The list format is 
+The list format is
 
   ((REGEXP . TYPE) ...)
 
@@ -1564,7 +1566,7 @@ value of `vm-infer-mime-types' is non-nil."
     ("application/mac-binhex40"	.	".hqx")
    )
   "*Alist used to select a filename suffix for MIME object temporary files.
-The list format is 
+The list format is
 
   ((TYPE . SUFFIX) ...)
 
@@ -1997,7 +1999,7 @@ The recognized SELECTORs are:
                      selectors match the message.  Example:
                         (and (author \"Derek McGinty\") (new))
                      matches all new messages from Derek McGinty.
-                     `and' takes any number of arguments. 
+                     `and' takes any number of arguments.
    any             - matches any message.
    deleted         - matches message if it is flagged for deletion.
    edited          - matches message if it has been edited.
@@ -2006,7 +2008,7 @@ The recognized SELECTORs are:
 		     a variant of `vm-forward-message' or `vm-send-digest'.
    header          - matches message if ARG matches any part of the header
                      portion of the message; ARG should be a
-                     regular expression. 
+                     regular expression.
    header-or-text  - matches message if ARG matches any part of the
 		     headers or the text portion of the message;
 		     ARG should be a regular expression.
@@ -2372,7 +2374,7 @@ bound to `l a'."
   :type 'boolean)
 
 (defcustom vm-digest-preamble-format "\"%s\" (%F)"
-  "*String which specifies the format of the preamble lines generated by 
+  "*String which specifies the format of the preamble lines generated by
 `vm-send-digest' when it is invoked with a prefix argument.  One
 line will be generated for each message put into the digest.  See the
 documentation for the variable `vm-summary-format' for information
@@ -2904,7 +2906,7 @@ Recognized specifiers are:
        the field width and precision for the concatentation of
        group of format specifiers.  Example: \"%.35(%d, %t, %f%)\"
        specifies a maximum display width of 35 characters for the
-       concatenation of the content description, content type and 
+       concatenation of the content description, content type and
        suggested file name.
    ) - ends a group.
 
@@ -3204,7 +3206,7 @@ Consider this variable experimental; it may not be supported forever."
   :group 'vm
   :type 'sexp)
 
-(defcustom vm-use-menus 
+(defcustom vm-use-menus
   (nconc (list 'folder 'motion 'send 'mark 'label 'sort 'virtual)
 	 (cond ((string-match ".*-.*-\\(win95\\|nt\\)" system-configuration)
 		nil)
@@ -3814,7 +3816,7 @@ confusing."
   :type 'hook)
 
 (defcustom vm-mime-display-function nil
-  "*If non-nil, this should name a function to be called inside 
+  "*If non-nil, this should name a function to be called inside
 `vm-decode-mime-message' to do the MIME display the current
 message.  The function is called with no arguments, and at the
 time of the call the current buffer will be the `presentation'
@@ -3998,7 +4000,7 @@ named by `vm-movemail-program'."
   :type '(repeat string))
 
 (defcustom vm-konqueror-client-program "kfmclient"
-  "*Name of program to use to issue requests to Konqueror. 
+  "*Name of program to use to issue requests to Konqueror.
 `vm-mouse-send-url-to-konqueror' uses this."
   :group 'vm
   :type 'string)
@@ -4020,7 +4022,7 @@ named by `vm-movemail-program'."
   :type '(repeat string))
 
 (defcustom vm-firefox-client-program "firefox"
-  "*Name of program to use to issue requests to Mozilla Firefox. 
+  "*Name of program to use to issue requests to Mozilla Firefox.
 `vm-mouse-send-url-to-firefox' uses this."
   :group 'vm
   :type 'string)
@@ -4322,7 +4324,7 @@ on the file system of Macs."
     (define-key map "M" (make-sparse-keymap))
     (define-key map "MN" 'vm-next-command-uses-marks)
     (define-key map "Mn" 'vm-next-command-uses-marks)
-    (define-key map "MM" 'vm-mark-message) 
+    (define-key map "MM" 'vm-mark-message)
     (define-key map "MU" 'vm-unmark-message)
     (define-key map "Mm" 'vm-mark-all-messages)
     (define-key map "Mu" 'vm-clear-all-marks)
@@ -4385,7 +4387,7 @@ on the file system of Macs."
 (defvar vm-folders-summary-mode-map vm-mode-map
   "Keymap for VM Folders Summary mode")
 
-(defvar vm-mail-mode-map 
+(defvar vm-mail-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-v" vm-mode-map)
     (define-key map "\C-c\C-p" 'vm-preview-composition)
@@ -5267,3 +5269,5 @@ that has a match.")
        (fmakunbound 'defgroup)))
 
 (provide 'vm-vars)
+
+;;; vm-vars.el ends here

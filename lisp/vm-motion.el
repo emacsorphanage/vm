@@ -1,21 +1,23 @@
-;;; Commands to move around in a VM folder
-;;; Copyright (C) 1989-1997 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-motion.el --- Commands to move around in a VM folder
+;;
+;; Copyright (C) 1989-1997 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+;;; Code:
 (defun vm-record-and-change-message-pointer (old new)
   (intern (buffer-name) vm-buffers-needing-display-update)
   (vm-garbage-collect-message)
@@ -443,7 +445,7 @@ to the subject comparisons."
 		  ;; return non-nil so the caller will know that
 		  ;; a new message was selected.
 		  t ))
-	       (t 
+	       (t
 		(if (< point (vm-su-start-of (car message-pointer)))
 		    (setq mp message-list)
 		  (setq mp (cdr message-pointer) message-pointer nil))
@@ -461,3 +463,5 @@ to the subject comparisons."
 		      t )))))))
 
 (provide 'vm-motion)
+
+;;; vm-motion.el ends here

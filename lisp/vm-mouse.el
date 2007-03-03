@@ -1,21 +1,23 @@
-;;; Mouse related functions and commands
-;;; Copyright (C) 1995-1997 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-mouse.el --- Mouse related functions and commands
+;;
+;; Copyright (C) 1995-1997 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+;;; Code:
 (defun vm-mouse-set-mouse-track-highlight (start end &optional overlay)
   (if (null overlay)
 	(cond (vm-fsfemacs-p
@@ -515,7 +517,7 @@ HISTORY argument is ignored."
     (setq list (vm-delete (lambda (file)
                             (string-match "^\\.\\([^.].*\\)?$" file))
                           list))
-    ;; append a "/" to directories 
+    ;; append a "/" to directories
     (setq list (mapcar (lambda (file)
                          (if (file-directory-p file)
                              (concat file "/")
@@ -638,3 +640,5 @@ HISTORY argument is ignored."
     (throw 'exit t)))
 
 (provide 'vm-mouse)
+
+;;; vm-mouse.el ends here

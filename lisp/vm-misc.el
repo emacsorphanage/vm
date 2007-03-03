@@ -1,21 +1,23 @@
-;;; Miscellaneous functions for VM
-;;; Copyright (C) 1989-2001 Kyle E. Jones
-;;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
-;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2 of the License, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License along
-;;; with this program; if not, write to the Free Software Foundation, Inc.,
-;;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+;;; vm-misc.el --- Miscellaneous functions for VM
+;;
+;; Copyright (C) 1989-2001 Kyle E. Jones
+;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+;;; Code:
 (defun vm-delete-non-matching-strings (regexp list &optional destructively)
   "Delete strings matching REGEXP from LIST.
 Optional third arg non-nil means to destructively alter LIST, instead of
@@ -894,7 +896,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 (defvar enable-multibyte-characters)
 (defvar buffer-display-table)
 (defun vm-fsfemacs-nonmule-display-8bit-chars ()
-  (cond ((and vm-fsfemacs-p 
+  (cond ((and vm-fsfemacs-p
 	      (or (not vm-fsfemacs-mule-p)
 		  (and (boundp 'enable-multibyte-characters)
 		       (not enable-multibyte-characters))))
@@ -948,3 +950,5 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	(setq vm-fsfemacs-cached-scroll-bar-width size))))
 
 (provide 'vm-misc)
+
+;;; vm-misc.el ends here

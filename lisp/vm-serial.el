@@ -5,7 +5,7 @@
 ;;
 ;; Author:      Robert Widhopf-Fenk
 ;; Status:      Tested with XEmacs 21.4.15 & VM 7.19
-;; Keywords:    sending mail, default mail, multiple recipients, serial mails 
+;; Keywords:    sending mail, default mail, multiple recipients, serial mails
 ;; X-URL:       http://www.robf.de/Hacking/elisp
 ;; Version:     $Id$
 
@@ -36,7 +36,7 @@
 ;; mails with VM.
 ;; 
 ;; You may want to use the following into your .vm file after adding other
-;; vm-mail-mode-hooks ...  
+;; vm-mail-mode-hooks ...
 ;; 
 ;;   (require 'vm-serial)
 ;;   (add-hook 'vm-mail-mode-hook 'vm-serial-auto-yank-mail t)
@@ -60,7 +60,7 @@
 ;;
 ;;; KNOWN PROBLEMS:
 ;;
-;; - mail-signature: instead of using this variable, you should use 
+;; - mail-signature: instead of using this variable, you should use
 ;;   `vm-serial-mail-signature' with exaclty the same semantics.
 ;;
 ;;; Thanks:
@@ -103,8 +103,8 @@
 (defvar vm-forward-list)
 
 ;;-----------------------------------------------------------------------------
-(defcustom vm-serial-token-alist 
-  '(;; standard tokens you should not change (or need not) 
+(defcustom vm-serial-token-alist
+  '(;; standard tokens you should not change (or need not)
     ("to"       (vm-serial-get-to)
      "to header of the mail")
     
@@ -140,7 +140,7 @@
                     (insert vm-serial-body-contents))
      "set to the message body before yanking a mail template")
     ("sig"      (cond
-                 ((not vm-serial-mail-signature) 
+                 ((not vm-serial-mail-signature)
                   nil)
                  ((stringp vm-serial-mail-signature)
                   vm-serial-mail-signature)
@@ -189,7 +189,7 @@
     ("merci" ("Merci" "Au revoir" "A+" "Amicalement")
      "Un au revoir au hasard")
     )
-  "*alist for mapping tokens to real things, i.e., strings.
+  "*Alist for mapping tokens to real things, i.e., strings.
 Set this by calling `vm-serial-set-tokens'!
 
 The format of each record is:
@@ -197,11 +197,11 @@ The format of each record is:
         (TOKENNAME SEXPRESSION DOCUMENTATION)
 
 TOKENNAME and DOCUMENTATION have to be strings.
-SEXPRESSION one of 
+SEXPRESSION one of
 - a list starting with a string, which might be followed by other
-  string, functions or lisp expressions
+  string, functions or Lisp expressions
 - a function returning a string
-- a lisp expression which evaluates to a string
+- a Lisp expression which evaluates to a string
 
 When a list starting with a string then `vm-serial-expand-tokens' will
 randomly select one of them during expansion."
@@ -296,7 +296,7 @@ Example of a embedded lisp expression:
 
  $$(center-line) Center this line
 
- $$$no expansion 
+ $$$no expansion
   
 The following tokens are currently defined:
 
@@ -311,7 +311,7 @@ If you thing there are other tokens which should be added to this list, please
 let me know!
 
 mailto:Robert Fenk"))
-  "*alist of default mail templates.
+  "*Alist of default mail templates.
 Set this by calling `vm-serial-set-mail'!
 
 Format:
@@ -319,7 +319,7 @@ Format:
     ...)
     
 When calling `vm-serial-yank-mail' interactively one will be prompted for
-a SYMBOLIC-NAME of a mail from.  If called non interactively it will 
+a SYMBOLIC-NAME of a mail from.  If called non interactively it will
 search for the first condition which evaluates to true and inserts the
 corresponding mail.  If CONDITION is a string it is matched against the
 To-header otherwise it is evaluated."
@@ -336,14 +336,14 @@ To-header otherwise it is evaluated."
                        (string :tag "Message-Template"))))
 
 (defcustom vm-serial-cookie "$"
-  "*The string which begins a token or lisp expression.
+  "*The string which begins a token or Lisp expression.
 See `vm-serial-expand-tokens' for information about valid tokens."
   :group 'vm-serial
   :type 'string)
 
 (defcustom vm-serial-fcc  nil
   "*Whether to keep a FCC from the source mail within each serial mail.
-If the function vm-postpone-message (from vm-pine) is present it will
+If the function `vm-postpone-message' (from vm-pine) is present it will
 also save the source message in the specified folder otherwise there is
 no way to save the source message."
   :group 'vm-serial
@@ -351,10 +351,10 @@ no way to save the source message."
 
 (defcustom vm-serial-mail-signature nil
   "*Text inserted at the `sig'-token of a mail buffer.
-The semantics are equal to those of `mail-signature', however you should
-disable mail-signature, since it interacts badly with vm-serial, i.e. set
-vm-serial-mail-signature to the value of mail-signature and set mail-signature
-to nil!"
+The semantics are equal to those of variable `mail-signature', however you
+should disable variable `mail-signature', since it interacts badly with
+vm-serial, i.e. set vm-serial-mail-signature to the value of variable
+`mail-signature' and set variable `mail-signature' to nil!"
   :group 'vm-serial
   :type '(choice (const :tag "None" nil)
                  (const :tag "The content of `mail-signature-file'" t)
@@ -392,6 +392,7 @@ buffer containing the original message.")
 
 ;;-----------------------------------------------------------------------------
 (defun vm-serial-get-completing-list (alist)
+  "Return cars from ALIST for completion."
   (mapcar (lambda (e) (list (car e))) alist))
 
 ;;-----------------------------------------------------------------------------
@@ -461,7 +462,8 @@ Is a list of (TOKEN NEWVALUE DOC) elements"
 
 ;;-----------------------------------------------------------------------------
 (defun vm-serial-get-emails (&optional header)
-  "Return the recipient of current message."
+  "Return the recipient of current message.
+Optional argument HEADER is the header to get the recipients from."
   (setq header (or header "To:"))
   (let ((to (vm-mail-mode-get-header-contents header)))
     (if (functionp 'bbdb-extract-address-components)
@@ -491,7 +493,7 @@ Is a list of (TOKEN NEWVALUE DOC) elements"
 (defun vm-serial-get-bbdb-name (&optional part name)
   (let* ((to (vm-serial-get-to))
          (rec (bbdb-search-simple nil (cadr to))))
-    (if rec 
+    (if rec
         (cond ((equal part 'first) (or (bbdb/sc-consult-attr (cadr to))
                                        (bbdb-record-firstname rec)))
               ((equal part 'last)  (bbdb-record-lastname rec)))
@@ -504,7 +506,7 @@ Is a list of (TOKEN NEWVALUE DOC) elements"
     (setq mail-alist (reverse mail-alist))
     (while mail-alist
       (setq m (assoc (caar mail-alist) vm-serial-mails-alist))
-      (if m 
+      (if m
           (setq vm-serial-mails-alist (delete m vm-serial-mails-alist)))
       (add-to-list 'vm-serial-mails-alist (car mail-alist))
       (setq mail-alist (cdr mail-alist)))))
@@ -591,7 +593,7 @@ me."
                     (vm-serial-get-completing-list
                      vm-serial-mails-alist)
                     nil
-                    t;; exact match 
+                    t;; exact match
                     (cons (vm-serial-find-default-mail)
                           0)
                     vm-serial-mail-history)
@@ -653,10 +655,10 @@ expression which is evaluated
 
 Results evaluating to a string are inserted all other return values are
 ignored.  For non existing tokens or errors during evaluation one will get
-a warning." 
+a warning."
   (interactive)
   
-  (let ((token-regexp (concat (regexp-quote vm-serial-cookie) 
+  (let ((token-regexp (concat (regexp-quote vm-serial-cookie)
                        "\\(" (regexp-quote vm-serial-cookie) "\\)*"
                        "[{\(a-zA-Z]"))
         start end expr result vm-serial-point)
@@ -853,7 +855,7 @@ questions will bother you!"
                     t t)
           (add-hook 'kill-buffer-hook 'vm-serial-send-mail t t)
           (make-local-hook 'mail-send-hook)
-          (add-hook 'mail-send-hook 
+          (add-hook 'mail-send-hook
                     '(lambda ()
                        (vm-serial-send-mail-increment 'vm-serial-sent-cnt))
                     t t)
@@ -866,7 +868,7 @@ questions will bother you!"
 
       (if (not (equal work 'quit))
           (let ((fcc (vm-mail-mode-get-header-contents "FCC:")))
-            ;; some statistics 
+            ;; some statistics
             (message "%s mail%s sent, %s edited and %s killed by vm-serial!"
                      (if (= vm-serial-sent-cnt 1) "One" vm-serial-sent-cnt)
                      (if (= vm-serial-sent-cnt 1) "" "s")
