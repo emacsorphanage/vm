@@ -2346,7 +2346,11 @@ nil
 A nil value means don't use a digest, just mark the beginning and
 end of the forwarded message."
   :group 'vm
-  :type '(choice (const "rfc934") (const "rfc1153") (const "mime")))
+  :type '(choice
+          (const "rfc934")
+          (const "rfc1153")
+          (const "mime")
+          (const :tag "Do not use digests" nil)))
 
 (defcustom vm-mime-forward-local-external-bodies nil
   "*Non-nil value means forward messages that contain
