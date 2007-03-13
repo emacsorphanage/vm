@@ -171,6 +171,7 @@ Order matters. The first matching one will be used as face."
     (defun vm-summary-faces-list-extents ()
       (let ((o (overlay-lists))) (nconc (car o) (cdr o))))))
 
+;;;###autoload
 (defun vm-summary-faces-hide (&optional face)
   "Toggle visibility of messages with FACE.
 When called with a prefix arg prompt for the face."
@@ -202,6 +203,7 @@ When called with a prefix arg prompt for the face."
 (defvar vm-summary-faces-su-end-of nil)
 (defvar vm-summary-faces-message nil)
 
+;;;###autoload
 (defun vm-summary-faces-add (&optional start end)
   "Add faces to a summary entry according to `vm-summary-faces-alist'."
   (interactive "P")
@@ -255,6 +257,7 @@ When called with a prefix arg prompt for the face."
   
 (defvar vm-summary-faces-mode nil)
 
+;;;###autoload
 (defun vm-summary-faces-mode (&optional arg)
   "Toggle `vm-summary-faces-mode'.
 Remove/add the `vm-summary-fontify-buffer' hook from the hook variable

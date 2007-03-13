@@ -256,6 +256,7 @@ folder selectors work."
   (let ((ff (vm-biff-find-folder-window msg)))
     (if ff (window-frame ff))))
 
+;;;###autoload
 (defun vm-biff-select-message ()
   "Put focus on the folder frame and select the appropiate message."
   (interactive)
@@ -293,6 +294,7 @@ folder selectors work."
     
     (run-hooks 'vm-biff-select-hook)))
 
+;;;###autoload
 (defun vm-biff-select-message-mouse (event)
   (interactive "e")
   (mouse-set-point event)
@@ -303,6 +305,7 @@ folder selectors work."
   :group 'vm-biff
   :type 'file)
 
+;;;###autoload
 (defun vm-biff-fvwm-focus-vm-folder-frame ()
   "Jumps to the frame containing the folder for the selected message.
 
@@ -334,6 +337,7 @@ AddToFunc SelectWindow
                                    "*\n"))
     (process-send-eof p)))
   
+;;;###autoload
 (defun vm-biff-delete-popup (&optional wf)
   (interactive)
   (if (vm-biff-x-p)

@@ -550,6 +550,7 @@ M should be a message struct for a real message."
 M should be a message struct for a real message."
   (vm-rfc1153-or-rfc934-burst-message m t))
 
+;;;###autoload
 (defun vm-burst-digest (&optional digest-type)
   "Burst the current message (a digest) into its individual messages.
 The digest's messages are assimilated into the folder as new mail
@@ -634,21 +635,25 @@ all marked messages will be burst."
       (vm-update-summary-and-mode-line))
     (message totals-blurb)))
 
+;;;###autoload
 (defun vm-burst-rfc934-digest ()
   "Burst an RFC 934 style digest"
   (interactive)
   (vm-burst-digest "rfc934"))
 
+;;;###autoload
 (defun vm-burst-rfc1153-digest ()
   "Burst an RFC 1153 style digest"
   (interactive)
   (vm-burst-digest "rfc1153"))
 
+;;;###autoload
 (defun vm-burst-mime-digest ()
   "Burst a MIME digest"
   (interactive)
   (vm-burst-digest "mime"))
 
+;;;###autoload
 (defun vm-burst-digest-to-temp-folder (&optional digest-type)
   "Burst the current message (a digest) into a temporary folder.
 The digest's messages are copied to a buffer and vm-mode is

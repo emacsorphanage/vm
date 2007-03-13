@@ -35,6 +35,7 @@
 	  (vm-xemacs-p
 	   (set-extent-endpoints overlay start end)))))
 
+;;;###autoload
 (defun vm-mouse-button-2 (event)
   (interactive "e")
   ;; go to where the event occurred
@@ -60,6 +61,7 @@
 	((memq major-mode '(vm-mode vm-virtual-mode vm-presentation-mode))
 	 (vm-mouse-popup-or-select event))))
 
+;;;###autoload
 (defun vm-mouse-button-3 (event)
   (interactive "e")
   (if vm-use-menus
@@ -115,6 +117,7 @@
 	       nil)))
 	  (t nil))))
 
+;;;###autoload
 (defun vm-mouse-popup-or-select (event)
   (interactive "e")
   (cond ((vm-mouse-fsfemacs-mouse-p)
@@ -147,6 +150,7 @@
 		  (funcall (extent-property e 'vm-mime-function) e))
 		 (t (vm-menu-popup-context-menu event)))))))
 
+;;;###autoload
 (defun vm-mouse-send-url-at-event (event)
   (interactive "e")
   (cond ((vm-mouse-xemacs-mouse-p)
@@ -527,6 +531,7 @@ HISTORY argument is ignored."
     (vm-show-list list 'vm-mouse-read-file-name-event-handler)
     (setq buffer-read-only t)))
 
+;;;###autoload
 (defun vm-mouse-read-file-name-quit-handler (&optional normal-exit)
   (interactive)
   (if vm-mouse-read-file-name-should-delete-frame
@@ -631,6 +636,7 @@ HISTORY argument is ignored."
 		  'vm-mouse-read-string-event-handler)
     (setq buffer-read-only t)))
 
+;;;###autoload
 (defun vm-mouse-read-string-quit-handler (&optional normal-exit)
   (interactive)
   (if vm-mouse-read-string-should-delete-frame

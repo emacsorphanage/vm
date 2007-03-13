@@ -20,6 +20,7 @@
 ;;; Commentary:
 ;; 
 
+;;;###autoload
 (defun vm-move-message-forward (count)
   "Move a message forward in a VM folder.
 Prefix arg COUNT causes the current message to be moved COUNT messages forward.
@@ -133,6 +134,7 @@ the folder undisturbed."
       (vm-preview-current-message)
     (vm-update-summary-and-mode-line)))
 
+;;;###autoload
 (defun vm-move-message-backward (count)
   "Move a message backward in a VM folder.
 Prefix arg COUNT causes the current message to be moved COUNT
@@ -147,12 +149,14 @@ the folder undisturbed."
   (interactive "p")
   (vm-move-message-forward (- count)))
 
+;;;###autoload
 (defun vm-move-message-forward-physically (count)
   "Like vm-move-message-forward but always move the message physically."
   (interactive "p")
   (let ((vm-move-messages-physically t))
     (vm-move-message-forward count)))
 
+;;;###autoload
 (defun vm-move-message-backward-physically (count)
   "Like vm-move-message-backward but always move the message physically."
   (interactive "p")
@@ -254,6 +258,7 @@ the folder undisturbed."
 
 (defvar vm-sort-compare-header-history nil)
 
+;;;###autoload
 (defun vm-sort-messages (keys &optional lets-get-physical)
   "Sort message in a folder by the specified KEYS.
 You may sort by more than one particular message key.  If

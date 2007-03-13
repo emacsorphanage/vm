@@ -18,6 +18,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+;;;###autoload
 (defun vm-clear-all-marks ()
   "Removes all message marks in the current folder."
   (interactive)
@@ -37,6 +39,7 @@
   (vm-update-summary-and-mode-line)
   (message "Clearing all marks... done"))
 
+;;;###autoload
 (defun vm-toggle-all-marks ()
   "Toggles all message marks in the current folder.
 Messages that are unmarked will become marked and messages that are
@@ -56,6 +59,7 @@ marked will become unmarked."
   (vm-update-summary-and-mode-line)
   (message "Toggling all marks... done"))
 
+;;;###autoload
 (defun vm-mark-all-messages ()
   "Mark all messages in the current folder."
   (interactive)
@@ -73,6 +77,7 @@ marked will become unmarked."
   (vm-update-summary-and-mode-line)
   (message "Marking all messages... done"))
 
+;;;###autoload
 (defun vm-mark-message (count)
   "Mark the current message.
 Numeric prefix argument N means mark the current message and the next
@@ -100,6 +105,7 @@ previous N-1 messages."
 	      '(vm-mark-message marking-message))
   (vm-update-summary-and-mode-line))
 
+;;;###autoload
 (defun vm-unmark-message (count)
   "Remove the mark from the current message.
 Numeric prefix argument N means unmark the current message and the next
@@ -122,6 +128,7 @@ previous N-1 messages."
 	      '(vm-unmark-message marking-message))
   (vm-update-summary-and-mode-line))
 
+;;;###autoload
 (defun vm-mark-summary-region ()
   "Mark all messages with summary lines contained in the region."
   (interactive)
@@ -138,6 +145,7 @@ previous N-1 messages."
 	      '(vm-mark-summary-region marking-message))
   (vm-update-summary-and-mode-line))
 
+;;;###autoload
 (defun vm-unmark-summary-region ()
   "Remove marks from messages with summary lines contained in the region."
   (interactive)
@@ -206,6 +214,7 @@ previous N-1 messages."
 	     (if (= 1 count) "" "s")
 	     (if val "" "un"))))
 
+;;;###autoload
 (defun vm-mark-matching-messages (selector &optional arg)
   "Mark messages matching some criterion.
 You can use any of the virtual folder selectors, except for the
@@ -221,6 +230,7 @@ variable vm-virtual-folder-alist for more information."
   (vm-error-if-folder-empty)
   (vm-mark-or-unmark-messages-with-selector t selector arg))
 
+;;;###autoload
 (defun vm-unmark-matching-messages (selector &optional arg)
   "Unmark messages matching some criterion.
 You can use any of the virtual folder selectors, except for the
@@ -236,6 +246,7 @@ variable vm-virtual-folder-alist for more information."
   (vm-error-if-folder-empty)
   (vm-mark-or-unmark-messages-with-selector nil selector arg))
 
+;;;###autoload
 (defun vm-mark-thread-subtree ()
   "Mark all messages in the thread tree rooted at the current message."
   (interactive)
@@ -245,6 +256,7 @@ variable vm-virtual-folder-alist for more information."
   (vm-error-if-folder-empty)
   (vm-mark-or-unmark-thread-subtree t))
 
+;;;###autoload
 (defun vm-unmark-thread-subtree ()
   "Unmark all messages in the thread tree rooted at the current message."
   (interactive)
@@ -281,6 +293,7 @@ variable vm-virtual-folder-alist for more information."
 	      (list this-command 'marking-message))
   (vm-update-summary-and-mode-line))
 
+;;;###autoload
 (defun vm-mark-messages-same-subject ()
   "Mark all messages with the same subject as the current message."
   (interactive)
@@ -290,6 +303,7 @@ variable vm-virtual-folder-alist for more information."
   (vm-error-if-folder-empty)
   (vm-mark-or-unmark-messages-same-subject t))
 
+;;;###autoload
 (defun vm-unmark-messages-same-subject ()
   "Unmark all messages with the same subject as the current message."
   (interactive)
@@ -323,6 +337,7 @@ variable vm-virtual-folder-alist for more information."
 	      (list this-command 'marking-message))
   (vm-update-summary-and-mode-line))
 
+;;;###autoload
 (defun vm-mark-messages-same-author ()
   "Mark all messages with the same author as the current message."
   (interactive)
@@ -332,6 +347,7 @@ variable vm-virtual-folder-alist for more information."
   (vm-error-if-folder-empty)
   (vm-mark-or-unmark-messages-same-author t))
 
+;;;###autoload
 (defun vm-unmark-messages-same-author ()
   "Unmark all messages with the same author as the current message."
   (interactive)
@@ -406,6 +422,7 @@ variable vm-virtual-folder-alist for more information."
 	     (if (= 1 count) "" "s")
 	     (if val "" "un"))))
 
+;;;###autoload
 (defun vm-mark-matching-messages-with-virtual-folder (name)
   "Mark messages that are matched by the selectors of virtual folder NAME."
   (interactive
@@ -420,6 +437,7 @@ variable vm-virtual-folder-alist for more information."
   (vm-error-if-folder-empty)
   (vm-mark-or-unmark-messages-with-virtual-folder t name))
 
+;;;###autoload
 (defun vm-unmark-matching-messages-with-virtual-folder (name)
   "Unmark messages that are matched by the selectors of virtual folder NAME."
   (interactive
@@ -434,6 +452,7 @@ variable vm-virtual-folder-alist for more information."
   (vm-error-if-folder-empty)
   (vm-mark-or-unmark-messages-with-virtual-folder nil name))
 
+;;;###autoload
 (defun vm-next-command-uses-marks ()
   "Does nothing except insure that the next VM command will operate only
 on the marked messages in the current folder.  This only works for
@@ -453,6 +472,7 @@ not work."
       (setq mp (cdr mp)))
     (nreverse list)))
 
+;;;###autoload
 (defun vm-mark-help ()
   (interactive)
   (vm-display nil nil '(vm-mark-help) '(vm-mark-help))

@@ -242,6 +242,7 @@
 	      (not (equal 0 (car response))))))
       (and process (vm-pop-end-session process nil vm-pop-ok-to-ask)))))
 
+;;;###autoload
 (defun vm-expunge-pop-messages ()
   "Deletes all messages from POP mailbox that have already been retrieved
 into the current folder.  VM sends POP DELE commands to all the

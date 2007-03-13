@@ -52,6 +52,7 @@
 (fset 'vm-summary-mode 'vm-mode)
 (put 'vm-summary-mode 'mode-class 'special)
 
+;;;###autoload
 (defun vm-summarize (&optional display raise)
   "Summarize the contents of the folder in a summary buffer.
 The format is as described by the variable vm-summary-format.  Generally
@@ -96,6 +97,7 @@ mandatory."
 		(list this-command)))
   (vm-update-summary-and-mode-line))
 
+;;;###autoload
 (defun vm-summarize-other-frame (&optional display)
   "Like vm-summarize, but run in a newly created frame."
   (interactive "p")
@@ -1153,6 +1155,7 @@ mandatory."
 	  (vm-set-summary-of m (vm-summary-sprintf vm-summary-format m t))
 	  (vm-summary-of m)))))
 
+;;;###autoload
 (defun vm-fix-my-summary!!! ()
   "Rebuilts the summary.
 Call this function if you made changes to `vm-summary-format'."

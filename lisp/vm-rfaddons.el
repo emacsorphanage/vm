@@ -114,6 +114,7 @@
                                 option)
                           body)))))
 
+;;;###autoload
 (defun vm-rfaddons-infect-vm (&optional sit-for
                                         option-list exclude-option-list)
   "This function will setup the key bindings, advices and hooks
@@ -328,6 +329,7 @@ or do the binding and advising on your own."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar vm-reply-include-presentation nil)
 
+;;;###autoload
 (defun vm-reply-include-presentation (count &optional to-all)
   "Include presentation instead of text.
 This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
@@ -343,6 +345,7 @@ This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
     (let ((vm-reply-include-presentation t))
       (vm-do-reply to-all t count))))
 
+;;;###autoload
 (defun vm-followup-include-presentation (count)
   "Include presentation instead of text.
 This does not work when replying to multiple messages."
@@ -350,6 +353,7 @@ This does not work when replying to multiple messages."
   (vm-reply-include-presentation count t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;###autoload
 (defun vm-do-fcc-before-mime-encode ()
   "The name says it all.
 Sometimes you may to save the message unencoded, specifically not to waste

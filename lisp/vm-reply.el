@@ -196,6 +196,7 @@
 	(insert vm-included-text-prefix)
 	(forward-line 1)))))
 
+;;;###autoload
 (defun vm-yank-message-other-folder (folder)
   "Like vm-yank-message except the message is yanked from a folder other
 than the one that spawned the current Mail mode buffer.  The name of the
@@ -242,6 +243,7 @@ Don't call this function from a program."
       (vm-bury-buffer newbuf)
       (vm-bury-buffer sumbuf))))
 
+;;;###autoload
 (defun vm-yank-message (message)
   "Yank message number N into the current buffer at point.
 When called interactively N is always read from the minibuffer.  When
@@ -413,6 +415,7 @@ vm-included-text-prefix is prepended to every yanked line."
 	    (mail-yank-hooks (run-hooks 'mail-yank-hooks))
 	    (t (vm-mail-yank-default message))))))
 
+;;;###autoload
 (defun vm-mail-send-and-exit (&rest ignored)
   "Send message and maybe delete the composition buffer.
 The value of `vm-keep-sent-mesages' determines whether the composition buffer is deleted.  If the composition is a reply to a message ina currenttly visited folder, that message is marked as having been rpelied to."
@@ -555,6 +558,7 @@ The value of `vm-keep-sent-mesages' determines whether the composition buffer is
 
 (defvar coding-system-for-write)
 
+;;;###autoload
 (defun vm-mail-send ()
   "Just like mail-send except that VM flags the appropriate message(s)
 as replied to, forwarded, etc, if appropriate."
@@ -731,6 +735,7 @@ as replied to, forwarded, etc, if appropriate."
 	(setq mp (cdr mp)))
       (vm-update-summary-and-mode-line))))
 
+;;;###autoload
 (defun vm-reply (count)
   "Reply to the sender of the current message.
 Numeric prefix argument N means to reply to the current message plus the
@@ -758,6 +763,7 @@ with C-c C-v."
   (vm-error-if-folder-empty)
   (vm-do-reply nil nil count))
 
+;;;###autoload
 (defun vm-reply-include-text (count)
   "Reply to the sender (only) of the current message and include text
 from the message.  See the documentation for function vm-reply for details."
@@ -768,6 +774,7 @@ from the message.  See the documentation for function vm-reply for details."
   (vm-error-if-folder-empty)
   (vm-do-reply nil t count))
 
+;;;###autoload
 (defun vm-followup (count)
   "Reply to all recipients of the current message.
 See the documentation for the function vm-reply for details."
@@ -778,6 +785,7 @@ See the documentation for the function vm-reply for details."
   (vm-error-if-folder-empty)
   (vm-do-reply t nil count))
 
+;;;###autoload
 (defun vm-followup-include-text (count)
   "Reply to all recipients of the current message and include text from
 the message.  See the documentation for the function vm-reply for details."
@@ -788,6 +796,7 @@ the message.  See the documentation for the function vm-reply for details."
   (vm-error-if-folder-empty)
   (vm-do-reply t t count))
 
+;;;###autoload
 (defun vm-forward-message-all-headers ()
   "Like vm-forward-message but always forwards all the headers."
   (interactive)
@@ -803,6 +812,7 @@ the message.  See the documentation for the function vm-reply for details."
 	(vm-mime-digest-discard-header-regexp "only-drop-this-header"))
     (vm-forward-message)))
 
+;;;###autoload
 (defun vm-forward-message ()
   "Forward the current message to one or more recipients.
 You will be placed in a Mail mode buffer as you would with a
@@ -894,6 +904,7 @@ Subject: header manually."
       (run-hooks 'vm-forward-message-hook)
       (run-hooks 'vm-mail-mode-hook))))
 
+;;;###autoload
 (defun vm-resend-bounced-message ()
   "Extract the original text from a bounced message and resend it.
 You will be placed in a Mail mode buffer with the extracted message and
@@ -958,6 +969,7 @@ you can change the recipient address before resending the message."
   (run-hooks 'vm-resend-bounced-message-hook)
   (run-hooks 'vm-mail-mode-hook))
 
+;;;###autoload
 (defun vm-resend-message ()
   "Resend the current message to someone else.
 The current message will be copied to a Mail mode buffer and you
@@ -1020,6 +1032,7 @@ You may also create a Resent-Cc header."
       (run-hooks 'vm-resend-message-hook)
       (run-hooks 'vm-mail-mode-hook))))
 
+;;;###autoload
 (defun vm-send-digest (&optional prefix)
   "Send a digest of all messages in the current folder to recipients.
 The type of the digest is specified by the variable vm-digest-send-type.
@@ -1141,24 +1154,28 @@ only marked messages will be put into the digest."
   (run-hooks 'vm-send-digest-hook)
   (run-hooks 'vm-mail-mode-hook))
 
+;;;###autoload
 (defun vm-send-rfc934-digest (&optional preamble)
   "Like vm-send-digest but always sends an RFC 934 digest."
   (interactive "P")
   (let ((vm-digest-send-type "rfc934"))
     (vm-send-digest preamble)))
 
+;;;###autoload
 (defun vm-send-rfc1153-digest (&optional preamble)
   "Like vm-send-digest but always sends an RFC 1153 digest."
   (interactive "P")
   (let ((vm-digest-send-type "rfc1153"))
     (vm-send-digest preamble)))
 
+;;;###autoload
 (defun vm-send-mime-digest (&optional preamble)
   "Like vm-send-digest but always sends an MIME (multipart/digest) digest."
   (interactive "P")
   (let ((vm-digest-send-type "mime"))
     (vm-send-digest preamble)))
 
+;;;###autoload
 (defun vm-continue-composing-message (&optional not-picky)
   "Find and select the most recently used mail composition buffer.
 If the selected buffer is already a Mail mode buffer then it is
@@ -1413,6 +1430,7 @@ found, the current buffer remains selected."
 		 (run-with-idle-timer 1.5 t 'vm-update-composition-buffer-name))))
     (run-hooks 'mail-setup-hook)))
 
+;;;###autoload
 (defun vm-reply-other-frame (count)
   "Like vm-reply, but run in a newly created frame."
   (interactive "p")
@@ -1424,6 +1442,7 @@ found, the current buffer remains selected."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
+;;;###autoload
 (defun vm-reply-include-text-other-frame (count)
   "Like vm-reply-include-text, but run in a newly created frame."
   (interactive "p")
@@ -1435,6 +1454,7 @@ found, the current buffer remains selected."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
+;;;###autoload
 (defun vm-followup-other-frame (count)
   "Like vm-followup, but run in a newly created frame."
   (interactive "p")
@@ -1446,6 +1466,7 @@ found, the current buffer remains selected."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
+;;;###autoload
 (defun vm-followup-include-text-other-frame (count)
   "Like vm-followup-include-text, but run in a newly created frame."
   (interactive "p")
@@ -1457,6 +1478,7 @@ found, the current buffer remains selected."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
+;;;###autoload
 (defun vm-forward-message-all-headers-other-frame ()
   "Like vm-forward-message-all-headers, but run in a newly created frame."
   (interactive)
@@ -1468,6 +1490,7 @@ found, the current buffer remains selected."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
+;;;###autoload
 (defun vm-forward-message-other-frame ()
   "Like vm-forward-message, but run in a newly created frame."
   (interactive)
@@ -1479,6 +1502,7 @@ found, the current buffer remains selected."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
+;;;###autoload
 (defun vm-resend-message-other-frame ()
   "Like vm-resend-message, but run in a newly created frame."
   (interactive)
@@ -1490,6 +1514,7 @@ found, the current buffer remains selected."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
+;;;###autoload
 (defun vm-resend-bounced-message-other-frame ()
   "Like vm-resend-bounced-message, but run in a newly created frame."
   (interactive)
@@ -1501,6 +1526,7 @@ found, the current buffer remains selected."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
+;;;###autoload
 (defun vm-send-digest-other-frame (&optional prefix)
   "Like vm-send-digest, but run in a newly created frame."
   (interactive "P")
@@ -1512,6 +1538,7 @@ found, the current buffer remains selected."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
+;;;###autoload
 (defun vm-send-rfc934-digest-other-frame (&optional prefix)
   "Like vm-send-rfc934-digest, but run in a newly created frame."
   (interactive "P")
@@ -1523,6 +1550,7 @@ found, the current buffer remains selected."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
+;;;###autoload
 (defun vm-send-rfc1153-digest-other-frame (&optional prefix)
   "Like vm-send-rfc1153-digest, but run in a newly created frame."
   (interactive "P")
@@ -1534,6 +1562,7 @@ found, the current buffer remains selected."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
+;;;###autoload
 (defun vm-send-mime-digest-other-frame (&optional prefix)
   "Like vm-send-mime-digest, but run in a newly created frame."
   (interactive "P")
@@ -1547,6 +1576,7 @@ found, the current buffer remains selected."
 
 (defvar enriched-mode)
 
+;;;###autoload
 (defun vm-preview-composition ()
   "Show how the current composition buffer might be displayed
 in a MIME-aware mail reader.  VM copies and encodes the current

@@ -284,6 +284,7 @@ I was really missing this!"
     (not result)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;###autoload
 (defun vm-avirtual-check-for-missing-selectors (&optional arg)
   "Check if there are selectors missing for either vm-mode or mail-mode."
   (interactive "P")
@@ -425,6 +426,7 @@ I was really missing this!"
               (t
                (vm-vs-text m vm-spam-words-regexp))))))
 
+;;;###autoload
 (defun vm-add-spam-word (word)
   "Add a new word to the list of spam words."
   (interactive (list (if (region-active-p)
@@ -447,6 +449,7 @@ I was really missing this!"
       (setq vm-spam-words (cons word vm-spam-words))
       (setq vm-spam-words-regexp (regexp-opt vm-spam-words)))))
 
+;;;###autoload
 (defun vm-spam-words-rebuild ()
   "Discharge the internal cached data about spam words."
   (interactive)
@@ -1067,6 +1070,7 @@ messages which are composed in order to find the right FCC."
            '=)
           (t nil))))
 
+;;;###autoload
 (defun vm-sort-insert-auto-folder-names ()
   (interactive)
   (if (interactive-p)

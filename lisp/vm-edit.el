@@ -18,6 +18,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+;;;###autoload
 (defun vm-edit-message (&optional prefix-argument)
   "Edit the current message.  Prefix arg means mark as unedited instead.
 If editing, the current message is copied into a temporary buffer, and
@@ -102,6 +104,7 @@ replace the original, use C-c C-] and the edit will be aborted."
       (vm-display edit-buf t '(vm-edit-message vm-edit-message-other-frame)
 		  (list this-command 'editing-message)))))
 
+;;;###autoload
 (defun vm-edit-message-other-frame (&optional prefix)
   "Like vm-edit-message, but run in a newly created frame."
   (interactive "P")
@@ -113,6 +116,7 @@ replace the original, use C-c C-] and the edit will be aborted."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
+;;;###autoload
 (defun vm-discard-cached-data (&optional count)
   "Discard cached information about the current message.
 When VM gathers information from the headers of a message, it stores it
