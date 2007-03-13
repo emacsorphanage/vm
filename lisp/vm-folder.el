@@ -4000,7 +4000,7 @@ either backward (prefix is negative) or forward (positive)."
 (defun vm-display-startup-message ()
   (if (sit-for 5)
       (let ((lines vm-startup-message-lines))
-	(message "VM %s, Copyright %s 2003 Kyle E. Jones; type ? for help"
+	(message "VM %s. Type ? for help."
 		 vm-version (if vm-xemacs-p "\251" "(C)"))
 	(setq vm-startup-message-displayed t)
 	(while (and (sit-for 4) lines)
