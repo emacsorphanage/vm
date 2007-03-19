@@ -2331,7 +2331,9 @@ order in that case, with headers not matching any in the
 `vm-forwarded-headers' list appearing last in the header section of
 the forwarded message."
   :group 'vm
-  :type 'regexp)
+  :type '(choice
+          (const nil)
+          regexp))
 
 (defcustom vm-forwarding-digest-type "mime"
   "*Non-nil value should be a string that specifies the type of
