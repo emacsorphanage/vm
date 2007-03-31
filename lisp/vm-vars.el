@@ -3133,23 +3133,7 @@ VM wants to display or undisplay."
     reply compose print visit quit help)
   "*Non-nil value causes VM to provide a toolbar interface.
 Value should be a list of symbols and integers that will determine which
-toolbar buttons will appear and in what order.  Valid symbol
-value within the list are:
-
-    autofile
-    compose
-    delete/undelete
-    file
-    getmail
-    help
-    mime
-    next
-    previous
-    print
-    quit
-    reply
-    visit
-    nil
+toolbar buttons will appear and in what order.
 
 If nil appears in the list, it should appear exactly once.  All
 buttons after nil in the list will be displayed flushright in
@@ -3158,9 +3142,6 @@ top/bottom toolbars and flushbottom in left/right toolbars.
 If a positive integer N appears in the list, a blank space will
 appear in the toolbar with a width of N pixels for top/bottom
 toolbars, and a height of N for left/right toolbars.
-
-This variable only has meaning under XEmacs 19.12 and beyond, and under
-Emacs 21 and beyond.
 
 See also `vm-toolbar-orientation' to control where the toolbar is placed."
   :group 'vm
@@ -3177,10 +3158,12 @@ See also `vm-toolbar-orientation' to control where the toolbar is placed."
 			 (const print)
 			 (const quit)
 			 (const reply)
+			 (const followup)
+			 (const forward)
 			 (const visit)
 			 (const nil))))
 
-(defcustom vm-toolbar-orientation 'left
+(defcustom vm-toolbar-orientation 'top
   "*Value is a symbol that specifies where the VM toolbar is located.
 Legal values are `left', `right' `top' and `bottom'.  Any other
 value will be interpreted as `top'.

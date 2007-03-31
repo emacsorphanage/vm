@@ -120,6 +120,34 @@ s-expression like this one in your .vm file:
 (or (fboundp 'vm-toolbar-reply-command)
     (fset 'vm-toolbar-reply-command 'vm-followup-include-text))
 
+(defvar vm-toolbar-forward-button
+  [vm-toolbar-forward-icon
+   vm-toolbar-forward-command
+   (vm-toolbar-any-messages-p)
+   "Forward the current message.\n
+The command `vm-toolbar-forward-command' is run, which is normally
+fbound to `vm-forward-message'.
+You can make this button run some other command by using a Lisp
+s-expression like this one in your .vm file:
+   (fset 'vm-toolbar-forward-command 'some-other-command)"])
+(defvar vm-toolbar-forward-icon nil)
+(or (fboundp 'vm-toolbar-forward-command)
+    (fset 'vm-toolbar-forward-command 'vm-forward-message))
+
+(defvar vm-toolbar-followup-button
+  [vm-toolbar-followup-icon
+   vm-toolbar-followup-command
+   (vm-toolbar-any-messages-p)
+   "Forward the current message.\n
+The command `vm-toolbar-followup-command' is run, which is normally
+fbound to `vm-followup-message'.
+You can make this button run some other command by using a Lisp
+s-expression like this one in your .vm file:
+   (fset 'vm-toolbar-followup-command 'some-other-command)"])
+(defvar vm-toolbar-followup-icon nil)
+(or (fboundp 'vm-toolbar-followup-command)
+    (fset 'vm-toolbar-followup-command 'vm-followup))
+
 (defvar vm-toolbar-compose-button
   [vm-toolbar-compose-icon vm-toolbar-compose-command t
    "Compose a new message.\n
@@ -348,8 +376,8 @@ s-expression like this one in your .vm file:
 	  (message "Bad toolbar pixmap directory, can't setup toolbar.")
 	  (sit-for 2))
       (vm-toolbar-initialize)
-      (let ((height (+ 4 (glyph-height (car vm-toolbar-help-icon))))
-	    (width (+ 4 (glyph-width (car vm-toolbar-help-icon))))
+      (let ((height (+ 5 (glyph-height (car vm-toolbar-help-icon))))
+	    (width (+ 5 (glyph-width (car vm-toolbar-help-icon))))
 	    (frame (selected-frame))
 	    (buffer (current-buffer))
 	    (tag-set '(win))
@@ -358,9 +386,9 @@ s-expression like this one in your .vm file:
 	;; glyph-width and glyph-height return 0 at startup sometimes
 	;; use reasonable values if they fail.
 	(if (= width 4)
-	    (setq width 68))
+	    (setq width 38))
 	(if (= height 4)
-	    (setq height 46))
+	    (setq height 38))
 	;; honor user setting of vm-toolbar if they are daring enough
 	;; to set it.
 	(if vm-toolbar
@@ -406,6 +434,8 @@ s-expression like this one in your .vm file:
 			(print . vm-toolbar-print-button)
 			(quit . vm-toolbar-quit-button)
 			(reply . vm-toolbar-reply-button)
+			(forward . vm-toolbar-forward-button)
+			(followup . vm-toolbar-followup-button)
 			(visit . vm-toolbar-visit-button)
 			))
 	(button-list vm-use-toolbar)
@@ -431,54 +461,42 @@ s-expression like this one in your .vm file:
    (vm-fsfemacs-p nil)
    ((null vm-toolbar-help-icon)
     (let ((tuples
-	   (if (featurep 'xpm)
-	       (list
-		(if (and (device-on-window-system-p)
-			 (>= (device-bitplanes) 16))
-      '(vm-toolbar-decode-mime-icon "mime-colorful-up.xpm"
-				    "mime-colorful-dn.xpm"
-				    "mime-colorful-xx.xpm")
-   '(vm-toolbar-decode-mime-icon "mime-simple-up.xpm"
-				 "mime-simple-dn.xpm"
-				 "mime-simple-xx.xpm"))
- '(vm-toolbar-next-icon "next-up.xpm" "next-dn.xpm" "next-dn.xpm")
- '(vm-toolbar-previous-icon "previous-up.xpm" "previous-dn.xpm"
-			   "previous-dn.xpm")
- '(vm-toolbar-delete-icon "delete-up.xpm" "delete-dn.xpm" "delete-dn.xpm")
- '(vm-toolbar-undelete-icon "undelete-up.xpm" "undelete-dn.xpm"
-			   "undelete-dn.xpm")
- '(vm-toolbar-autofile-icon "autofile-up.xpm" "autofile-dn.xpm"
-			   "autofile-dn.xpm")
- '(vm-toolbar-getmail-icon "getmail-up.xpm" "getmail-dn.xpm" "getmail-dn.xpm")
- '(vm-toolbar-file-icon "file-up.xpm" "file-dn.xpm" "file-dn.xpm")
- '(vm-toolbar-reply-icon "reply-up.xpm" "reply-dn.xpm" "reply-dn.xpm")
- '(vm-toolbar-compose-icon "compose-up.xpm" "compose-dn.xpm" "compose-dn.xpm")
- '(vm-toolbar-print-icon "print-up.xpm" "print-dn.xpm" "print-dn.xpm")
- '(vm-toolbar-visit-icon "visit-up.xpm" "visit-dn.xpm" "visit-dn.xpm")
- '(vm-toolbar-quit-icon "quit-up.xpm" "quit-dn.xpm" "quit-dn.xpm")
- '(vm-toolbar-help-icon "help-up.xpm" "help-dn.xpm" "help-dn.xpm")
- '(vm-toolbar-recover-icon "recover-up.xpm" "recover-dn.xpm" "recover-dn.xpm")
-	   )
-	       '(
- (vm-toolbar-decode-mime-icon "mime-up.xbm" "mime-dn.xbm" "mime-xx.xbm")
- (vm-toolbar-next-icon "next-up.xbm" "next-dn.xbm" "next-xx.xbm")
- (vm-toolbar-previous-icon "previous-up.xbm" "previous-dn.xbm"
-			   "previous-xx.xbm")
- (vm-toolbar-delete-icon "delete-up.xbm" "delete-dn.xbm" "delete-xx.xbm")
- (vm-toolbar-undelete-icon "undelete-up.xbm" "undelete-dn.xbm"
-			   "undelete-xx.xbm")
- (vm-toolbar-autofile-icon "autofile-up.xbm" "autofile-dn.xbm"
-			   "autofile-xx.xbm")
- (vm-toolbar-getmail-icon "getmail-up.xbm" "getmail-dn.xbm" "getmail-xx.xbm")
- (vm-toolbar-file-icon "file-up.xbm" "file-dn.xbm" "file-xx.xbm")
- (vm-toolbar-reply-icon "reply-up.xbm" "reply-dn.xbm" "reply-xx.xbm")
- (vm-toolbar-compose-icon "compose-up.xbm" "compose-dn.xbm" "compose-xx.xbm")
- (vm-toolbar-print-icon "print-up.xbm" "print-dn.xbm" "print-xx.xbm")
- (vm-toolbar-visit-icon "visit-up.xbm" "visit-dn.xbm" "visit-xx.xbm")
- (vm-toolbar-quit-icon "quit-up.xbm" "quit-dn.xbm" "quit-xx.xbm")
- (vm-toolbar-help-icon "help-up.xbm" "help-dn.xbm" "help-xx.xpm")
- (vm-toolbar-recover-icon "recover-up.xbm" "recover-dn.xbm" "recover-xx.xpm")
-	   )))
+           (list
+            '(vm-toolbar-decode-mime-icon
+              "mime-up.xpm" "mime-dn.xpm" "mime-xx.xpm")
+            '(vm-toolbar-next-icon
+              "next-up.xpm" "next-dn.xpm" "next-dn.xpm")
+            '(vm-toolbar-previous-icon
+              "previous-up.xpm" "previous-dn.xpm" "previous-dn.xpm")
+            '(vm-toolbar-delete-icon
+              "delete-up.xpm" "delete-dn.xpm" "delete-dn.xpm")
+            '(vm-toolbar-undelete-icon
+              "undelete-up.xpm" "undelete-dn.xpm" "undelete-dn.xpm")
+            '(vm-toolbar-autofile-icon
+              "autofile-up.xpm" "autofile-dn.xpm" "autofile-dn.xpm")
+            '(vm-toolbar-getmail-icon
+              "getmail-up.xpm" "getmail-dn.xpm" "getmail-dn.xpm")
+            '(vm-toolbar-file-icon
+              "file-up.xpm" "file-dn.xpm" "file-dn.xpm")
+            '(vm-toolbar-reply-icon
+              "reply-up.xpm" "reply-dn.xpm" "reply-dn.xpm")
+            '(vm-toolbar-forward-icon
+              "forward-up.xpm" "forward-dn.xpm" "forward-dn.xpm")
+            '(vm-toolbar-followup-icon
+              "followup-up.xpm" "followup-dn.xpm" "followup-dn.xpm")
+            '(vm-toolbar-compose-icon
+              "compose-up.xpm" "compose-dn.xpm" "compose-dn.xpm")
+            '(vm-toolbar-print-icon
+              "print-up.xpm" "print-dn.xpm" "print-dn.xpm")
+            '(vm-toolbar-visit-icon
+              "visit-up.xpm" "visit-dn.xpm" "visit-dn.xpm")
+            '(vm-toolbar-quit-icon
+              "quit-up.xpm" "quit-dn.xpm" "quit-dn.xpm")
+            '(vm-toolbar-help-icon
+              "help-up.xpm" "help-dn.xpm" "help-dn.xpm")
+            '(vm-toolbar-recover-icon
+              "recover-up.xpm" "recover-dn.xpm" "recover-dn.xpm")
+            ))
 	  tuple files var)
       (while tuples
 	(setq tuple (car tuples)
@@ -529,15 +547,13 @@ s-expression like this one in your .vm file:
 	     ;; can't do separators in FSF Emacs
 	     t)
 	    ((memq sym '(autofile compose file getmail
-			 mime next previous print quit reply visit))
+			 mime next previous print quit reply followup forward visit))
 	     (setq t-spec (symbol-value
 			   (intern (format "vm-toolbar-%s-button"
 					   (if (eq sym 'mime)
 					       'decode-mime
 					     sym)))))
-	     (if (and (eq sym 'mime) (string= extension "xpm"))
-		 (setq name "mime-colorful")
-	       (setq name (symbol-name sym)))
+             (setq name (symbol-name sym))
 	     (setq images (vm-toolbar-make-fsfemacs-toolbar-image-spec
 			   name extension dir
 			   (if (eq sym 'mime) nil 'heuristic)))
@@ -617,9 +633,7 @@ s-expression like this one in your .vm file:
 			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar 'help-getmail) item)
-	     (if (string= extension "xpm")
-		 (setq name "mime-colorful")
-	       (setq name "mime"))
+             (setq name "mime")
 	     (setq images (vm-toolbar-make-fsfemacs-toolbar-image-spec
 			   name extension dir nil))
 	     (setq item

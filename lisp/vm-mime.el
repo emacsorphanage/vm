@@ -3867,21 +3867,21 @@ LAYOUT is the MIME layout struct for the message/external-body object."
    (vm-fsfemacs-p
     (vm-mime-fsfemacs-set-image-stamp-for-type e type))))
 
+(defvar vm-mime-type-images
+  '(("text" "text.xpm")
+    ("image" "image.xpm")
+    ("audio" "audio.xpm")
+    ("video" "video.xpm")
+    ("message" "message.xpm")
+    ("application" "application.xpm")
+    ("multipart" "multipart.xpm")))
+
 (defun vm-mime-xemacs-set-image-stamp-for-type (e type)
   (if (and (vm-images-possible-here-p)
 	   (vm-image-type-available-p 'xpm)
 	   (> (device-bitplanes) 7))
-      (let ((dir vm-image-directory)
-	    (colorful (> (device-bitplanes) 15))
-	    (tuples
-	     '(("text" "document-simple.xpm" "document-colorful.xpm")
-	       ("image" "mona_stamp-simple.xpm" "mona_stamp-colorful.xpm")
-	       ("audio" "audio_stamp-simple.xpm" "audio_stamp-colorful.xpm")
-	       ("video" "film-simple.xpm" "film-colorful.xpm")
-	       ("message" "message-simple.xpm" "message-colorful.xpm")
-	       ("application" "gear-simple.xpm" "gear-colorful.xpm")
-	       ("multipart" "stuffed_box-simple.xpm"
-		"stuffed_box-colorful.xpm")))
+      (let ((dir (expand-file-name "mime" vm-image-directory))
+	    (tuples vm-mime-type-images)
 	    glyph file sym p)
 	(setq file (catch 'done
 		     (while tuples
@@ -3889,7 +3889,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 			   (throw 'done (car tuples))
 			 (setq tuples (cdr tuples))))
 		     nil)
-	      file (and file (if colorful (nth 2 file) (nth 1 file)))
+	      file (and file (nth 1 file))
 	      sym (and file (intern file vm-image-obarray))
 	      glyph (and sym (boundp sym) (symbol-value sym))
 	      glyph (or glyph
@@ -3905,29 +3905,16 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 (defun vm-mime-fsfemacs-set-image-stamp-for-type (e type)
   (if (and (vm-images-possible-here-p)
 	   (vm-image-type-available-p 'xpm))
-      (let ((dir vm-image-directory)
-	    ;; no display-planes function under FSF Emacs before
-	    ;; v21, so only try to use it if present.
-	    (colorful (if (fboundp 'display-planes)
-			  (> (display-planes) 15)
-			t))
-	    (tuples
-	     '(("text" "document-simple.xpm" "document-colorful.xpm")
-	       ("image" "mona_stamp-simple.xpm" "mona_stamp-colorful.xpm")
-	       ("audio" "audio_stamp-simple.xpm" "audio_stamp-colorful.xpm")
-	       ("video" "film-simple.xpm" "film-colorful.xpm")
-	       ("message" "message-simple.xpm" "message-colorful.xpm")
-	       ("application" "gear-simple.xpm" "gear-colorful.xpm")
-	       ("multipart" "stuffed_box-simple.xpm"
-		"stuffed_box-colorful.xpm")))
-	    file)
+      (let ((dir (expand-file-name "mime" vm-image-directory))
+        (tuples vm-mime-type-images)
+             file)
 	(setq file (catch 'done
 		     (while tuples
 		       (if (vm-mime-types-match (car (car tuples)) type)
 			   (throw 'done (car tuples))
 			 (setq tuples (cdr tuples))))
 		     nil)
-	      file (and file (if colorful (nth 2 file) (nth 1 file)))
+	      file (and file (nth 1 file))
 	      file (and file (expand-file-name file dir)))
 	(if file
 	    (save-excursion
