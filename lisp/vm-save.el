@@ -87,6 +87,7 @@
     (error (error "error processing vm-auto-folder-alist: %s"
 		  (prin1-to-string error-data)))))
 
+;;;###autoload
 (defun vm-auto-archive-messages (&optional arg)
   "Save all unfiled messages that auto-match a folder via
 vm-auto-folder-alist to their appropriate folders.  Messages that
@@ -169,6 +170,7 @@ The saved messages are flagged as `filed'."
 ;;;---------------------------------------------------------------------------
 ;; New shell defun to handle both IMAP and local saving.
 ;;---------------------------------------------------------------------------
+;;;###autoload
 (defun vm-save-message (folder &optional count)
   "Save the current message.  This may be done either by saving it
 to an IMAP folder or by saving it to a local filesystem folder.
@@ -219,6 +221,7 @@ buffer and the variable VM-IMAP-SAVE-TO-SERVER."
       (vm-save-message-to-imap-folder folder count)
       (vm-save-message-to-local-folder folder count)))
    
+;;;###autoload
 (defun vm-save-message-to-local-folder (folder &optional count)
   "Save the current message to a mail folder.
 If the folder already exists, the message will be appended to it.
@@ -443,6 +446,7 @@ The saved messages are flagged as `filed'."
 	(vm-delete-message count))
     folder ))
 
+;;;###autoload
 (defun vm-save-message-sans-headers (file &optional count)
   "Save the current message to a file, without its header section.
 If the file already exists, the message body will be appended to it.
@@ -534,6 +538,7 @@ vm-save-message instead (normally bound to `s')."
 	  (message "Message%s written to %s" (if (/= 1 count) "s" "") file)))
     (setq vm-last-written-file file)))
 
+;;;###autoload
 (defun vm-pipe-message-to-command (command &optional prefix-arg)
   "Runs a shell command with some or all of the contents of the
 current message as input.
@@ -600,6 +605,7 @@ Output, if any, is displayed.  The message is not altered."
     (if (not (zerop (save-excursion (set-buffer buffer) (buffer-size))))
 	(display-buffer buffer))))
 
+;;;###autoload
 (defun vm-print-message (&optional count)
   "Print the current message
 Prefix arg N means print the current message and the next N - 1 messages.
@@ -691,6 +697,7 @@ Output, if any, is displayed.  The message is not altered."
     (if (not (zerop (save-excursion (set-buffer buffer) (buffer-size))))
 	(display-buffer buffer))))
 
+;;;###autoload
 (defun vm-save-message-to-imap-folder (folder &optional count)
   "Save the current message to an IMAP folder.
 Prefix arg COUNT means save this message and the next COUNT-1

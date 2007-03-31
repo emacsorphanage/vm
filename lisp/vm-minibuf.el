@@ -18,6 +18,7 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+;;;###autoload
 (defun vm-minibuffer-complete-word (&optional exiting)
   (interactive)
   (let ((opoint (point))
@@ -128,6 +129,7 @@
 	(and (not exiting)
 	     (vm-minibuffer-completion-message "[No match]")))))))
 
+;;;###autoload
 (defun vm-minibuffer-complete-word-and-exit ()
   (interactive)
   (vm-minibuffer-complete-word t)
@@ -240,6 +242,7 @@ default the local keymap of the current buffer is used."
 	(setq i (1+ i))
 	(insert "\n")))))
 
+;;;###autoload
 (defun vm-minibuffer-completion-help ()
   (interactive)
   (let ((opoint (point))

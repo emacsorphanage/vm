@@ -1857,6 +1857,7 @@ with the recipient's software, if that recipient is outside of East Asia."
 			  (vm-extent-end-position extent))
 	   (vm-detach-extent extent)))))
 
+;;;###autoload
 (defun vm-decode-mime-message ()
   "Decode the MIME objects in the current message.
 
@@ -3780,6 +3781,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	(vm-xemacs-p
 	 (extent-at (point) nil 'vm-mime-layout))))
 
+;;;###autoload
 (defun vm-mime-run-display-function-at-point (&optional function dispose)
   "Display the MIME object at point according to its type."
   (interactive)
@@ -3797,6 +3799,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	     (funcall (or function (extent-property e 'vm-mime-function))
 		      e))))))
 
+;;;###autoload
 (defun vm-mime-reader-map-save-file ()
   "Write the MIME object at point to a file."
   (interactive)
@@ -3814,6 +3817,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	    (error nil))))
     file ))
 
+;;;###autoload
 (defun vm-mime-reader-map-save-message ()
   "Save the MIME object at point to a folder."
   (interactive)
@@ -3830,28 +3834,33 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	      (vm-delete-mime-object folder)
 	    (error nil))))))
 
+;;;###autoload
 (defun vm-mime-reader-map-pipe-to-command ()
   "Pipe the MIME object at point to a shell command."
   (interactive)
   (vm-mime-run-display-function-at-point
    'vm-mime-pipe-body-to-queried-command))
 
+;;;###autoload
 (defun vm-mime-reader-map-pipe-to-printer ()
   "Print the MIME object at point."
   (interactive)
   (vm-mime-run-display-function-at-point 'vm-mime-send-body-to-printer))
 
+;;;###autoload
 (defun vm-mime-reader-map-display-using-external-viewer ()
   "Display the MIME object at point with an external viewer."
   (interactive)
   (vm-mime-run-display-function-at-point
    'vm-mime-display-body-using-external-viewer))
 
+;;;###autoload
 (defun vm-mime-reader-map-display-using-default ()
   "Display the MIME object at point using the `default' face."
   (interactive)
   (vm-mime-run-display-function-at-point 'vm-mime-display-body-as-text))
 
+;;;###autoload
 (defun vm-mime-reader-map-display-object-as-type ()
   "Display the MIME object at point as some other type."
   (interactive)
@@ -4478,6 +4487,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	(setq alist (cdr alist))))
     suffix ))
 
+;;;###autoload
 (defun vm-mime-attach-file (file type &optional charset description
 			    no-suggested-filename)
   "Attach a file to a VM composition buffer to be sent along with the message.
@@ -4545,6 +4555,7 @@ this case and not prompt you for it in the minibuffer."
   (and description (setq description (vm-mime-scrub-description description)))
   (vm-mime-attach-object file type charset description nil))
 
+;;;###autoload
 (defun vm-mime-attach-mime-file (file type)
   "Attach a MIME encoded file to a VM composition buffer to be sent
 along with the message.
@@ -4593,6 +4604,7 @@ should use vm-mime-attach-file to attach the file."
       (error "You don't have permission to read %s" file))
   (vm-mime-attach-object file type nil nil t))
 
+;;;###autoload
 (defun vm-mime-attach-buffer (buffer type &optional charset description)
   "Attach a buffer to a VM composition buffer to be sent along with
 the message.
@@ -4653,6 +4665,7 @@ this case and not prompt you for it in the minibuffer."
   (and description (setq description (vm-mime-scrub-description description)))
   (vm-mime-attach-object buffer type charset description nil))
 
+;;;###autoload
 (defun vm-mime-attach-message (message &optional description)
   "Attach a message from a folder to a VM composition buffer
 to be sent along with the message.
@@ -4788,6 +4801,7 @@ minibuffer if the command is run interactively."
 		      (list 'if (list 'eq (current-buffer) '(current-buffer))
 			    (list 'kill-buffer buf)))))))
 
+;;;###autoload
 (defun vm-mime-attach-object-from-message (composition)
   "Attach a object from the current message to a VM composition buffer.
 
@@ -4963,6 +4977,7 @@ COMPOSITION's name will be read from the minibuffer."
              (insert " ---")
              (delete-extent e))))))
 
+;;;###autoload
 (defun vm-mime-change-content-disposition ()
   (interactive)
   (vm-mime-set-attachment-disposition-at-point
@@ -5164,6 +5179,7 @@ COMPOSITION's name will be read from the minibuffer."
 ;;	      (ellipsis (concat description "..."))
 ;;	      (t description))))))
 
+;;;###autoload
 (defun vm-delete-mime-object (&optional saved-file)
   "Delete the contents of MIME object referred to by the MIME button at point.
 The MIME object is replaced by a text/plain object that briefly
@@ -5327,6 +5343,7 @@ describes what was deleted."
 	       (vm-set-mm-layout-parts layout nil)
 	       (vm-set-mm-layout-display-error layout nil)))))))
 
+;;;###autoload
 (defun vm-mime-encode-composition ()
  "MIME encode the current mail composition buffer.
 Attachment tags added to the buffer with vm-mime-attach-file are expanded

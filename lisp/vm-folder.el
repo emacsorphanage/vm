@@ -2695,6 +2695,7 @@ vm-folder-type is initialized here."
 	    (vm-set-unread-flag (car mp) t)))
       (setq mp (cdr mp)))))
 
+;;;###autoload
 (defun vm-unread-message (&optional count)
   "Set the `unread' attribute for the current message.  If the message is
 already new or unread, then it is left unchanged.
@@ -2720,6 +2721,7 @@ all marked messages are affected, other messages are ignored."
   (vm-display nil nil '(vm-unread-message) '(vm-unread-message))
   (vm-update-summary-and-mode-line))
 
+;;;###autoload
 (defun vm-quit-just-bury ()
   "Bury the current VM folder and summary buffers.
 The folder is not altered and Emacs is still visiting it.  You
@@ -2749,6 +2751,7 @@ Buffer Menu."
   (vm-display (current-buffer) nil nil nil)
   (vm-bury-buffer (current-buffer)))
 
+;;;###autoload
 (defun vm-quit-just-iconify ()
   "Iconify the frame and bury the current VM folder and summary buffers.
 The folder is not altered and Emacs is still visiting it."
@@ -2774,11 +2777,13 @@ The folder is not altered and Emacs is still visiting it."
 	(vm-bury-buffer pres-buffer))
     (vm-iconify-frame)))
 
+;;;###autoload
 (defun vm-quit-no-change ()
   "Quit visiting the current folder without saving changes made to the folder."
   (interactive)
   (vm-quit t))
 
+;;;###autoload
 (defun vm-quit (&optional no-change)
   "Quit visiting the current folder, saving changes.  Deleted messages are not expunged."
   (interactive)
@@ -3083,6 +3088,7 @@ The folder is not altered and Emacs is still visiting it."
 		  (vm-stuff-message-order))))
        nil ))))
 
+;;;###autoload
 (defun vm-save-buffer (prefix)
   (interactive "P")
   (vm-select-folder-buffer)
@@ -3098,6 +3104,7 @@ The folder is not altered and Emacs is still visiting it."
   (vm-update-summary-and-mode-line)
   (vm-write-index-file-maybe))
 
+;;;###autoload
 (defun vm-write-file ()
   (interactive)
   (vm-select-folder-buffer)
@@ -3138,6 +3145,7 @@ The folder is not altered and Emacs is still visiting it."
 (defun vm-unblock-new-mail ()
   (setq vm-block-new-mail nil))
 
+;;;###autoload
 (defun vm-save-folder (&optional prefix)
   "Save current folder to disk.
 Deleted messages are not expunged.
@@ -3229,6 +3237,7 @@ folder."
 		 (error nil))))
       (message "No changes need to be saved"))))
 
+;;;###autoload
 (defun vm-save-and-expunge-folder (&optional prefix)
   "Expunge folder, then save it to disk.
 Prefix arg is handled the same as for the command save-buffer.
@@ -3247,11 +3256,13 @@ run vm-expunge-folder followed by vm-save-folder."
 	(vm-expunge-folder t)))
   (vm-save-folder prefix))
 
+;;;###autoload
 (defun vm-revert-buffer (&rest args)
   (interactive)
   (vm-select-folder-buffer-if-possible)
   (call-interactively 'revert-buffer))
 
+;;;###autoload
 (defun vm-recover-file (&rest args)
   (interactive)
   (vm-select-folder-buffer-if-possible)
@@ -3300,6 +3311,7 @@ run vm-expunge-folder followed by vm-save-folder."
   (if (eq major-mode 'vm-mode)
       (vm-handle-file-recovery-or-reversion nil)))
 
+;;;###autoload
 (defun vm-help ()
   "Display help for various VM activities."
   (interactive)
@@ -3764,6 +3776,7 @@ run vm-expunge-folder followed by vm-save-folder."
 		   "]"))
       "???"))
 
+;;;###autoload
 (defun vm-get-new-mail (&optional arg)
   "Move any new mail that has arrived in any of the spool files for the
 current folder into the folder.  New mail is appended to the disk
@@ -3987,7 +4000,7 @@ either backward (prefix is negative) or forward (positive)."
 (defun vm-display-startup-message ()
   (if (sit-for 5)
       (let ((lines vm-startup-message-lines))
-	(message "VM %s, Copyright %s 2003 Kyle E. Jones; type ? for help"
+	(message "VM %s. Type ? for help."
 		 vm-version (if vm-xemacs-p "\251" "(C)"))
 	(setq vm-startup-message-displayed t)
 	(while (and (sit-for 4) lines)
@@ -3995,6 +4008,7 @@ either backward (prefix is negative) or forward (positive)."
 	  (setq lines (cdr lines)))))
   (message ""))
 
+;;;###autoload
 (defun vm-toggle-read-only ()
   (interactive)
   (vm-select-folder-buffer)
@@ -4107,6 +4121,7 @@ either backward (prefix is negative) or forward (positive)."
 	(setq b-list (cdr b-list)))
       vbuffers )))
 
+;;;###autoload
 (defun vm-change-folder-type (type)
   "Change folder type to TYPE.
 TYPE may be one of the following symbol values:

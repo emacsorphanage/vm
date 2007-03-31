@@ -157,6 +157,7 @@
 	(let ((vm-folder-read-only t))
 	  (vm-preview-current-message)))))
 
+;;;###autoload
 (defun vm-undo ()
   "Undo last change to message attributes in the current folder.
 Consecutive invocations of this command cause sequentially earlier
@@ -183,6 +184,7 @@ the undos themselves become undoable."
 	 (delete-auto-save-file-if-necessary))
     (vm-update-summary-and-mode-line)))
 
+;;;###autoload
 (defun vm-set-message-attributes (string count)
   "Set message attributes.
 Use this command to change attributes like `deleted' or
@@ -301,6 +303,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
   (vm-error-if-folder-empty)
   (vm-add-or-delete-message-labels string count 'all))
 
+;;;###autoload
 (defun vm-add-existing-message-labels (string count)
   "Attach some already existing labels to a message.
 Only labels that are currently attached to some message in this
@@ -350,6 +353,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 	    (setq ignored-labels (cdr ignored-labels)))
 	  (display-buffer (current-buffer))))))
 
+;;;###autoload
 (defun vm-delete-message-labels (string count)
   "Delete some labels from a message.
 These are arbitrary user-defined labels, not to be confused with

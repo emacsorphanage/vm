@@ -231,6 +231,7 @@
 	     (vm-maybe-delete-windows-or-frames-on nonexistent-summary)))
       config )))
 
+;;;###autoload
 (defun vm-save-window-configuration (tag)
   "Name and save the current window configuration.
 With this command you associate the current window setup with an
@@ -297,6 +298,7 @@ window configurations."
 	   'edit)
 	  (t buf))))
 
+;;;###autoload
 (defun vm-delete-window-configuration (tag)
   "Delete the configuration saved for a particular action.
 This action will no longer have an associated window configuration.
@@ -326,6 +328,7 @@ The action will be read from the minibuffer."
   (vm-store-window-configurations vm-window-configuration-file)
   (message "%s configuration deleted" tag))
 
+;;;###autoload
 (defun vm-apply-window-configuration (tag)
   "Change the current window configuration to be one
 associated with a particular action.  The action will be read

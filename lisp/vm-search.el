@@ -18,6 +18,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+;;;###autoload
 (defun vm-isearch-forward (&optional arg)
   "Incrementally search forward through the current folder's messages.
 Usage is identical to the standard Emacs incremental search.
@@ -32,6 +34,7 @@ vm-search-using-regexps for this search."
 	 (if arg (not vm-search-using-regexps) vm-search-using-regexps)))
     (vm-isearch t)))
 
+;;;###autoload
 (defun vm-isearch-backward (&optional arg)
   "Incrementally search backward through the current folder's messages.
 Usage is identical to the standard Emacs incremental search.

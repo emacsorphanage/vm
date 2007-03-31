@@ -1877,6 +1877,7 @@ on all the relevant IMAP servers and then immediately expunges."
   (if (null (vm-imap-read-boolean-response process))
       (error "IMAP RENAME of %s to %s failed" source dest)))
 
+;;;###autoload
 (defun vm-create-imap-folder (folder)
   "Create a folder on an IMAP server.
 First argument FOLDER is read from the minibuffer if called
@@ -1904,6 +1905,7 @@ documentation for `vm-spool-files'."
       (vm-imap-create-mailbox process mailbox t)
       (message "Folder %s created" (vm-safe-imapdrop-string folder)))))
 
+;;;###autoload
 (defun vm-delete-imap-folder (folder)
   "Delete a folder on an IMAP server.
 First argument FOLDER is read from the minibuffer if called
@@ -1931,6 +1933,7 @@ documentation for `vm-spool-files'."
       (vm-imap-delete-mailbox process mailbox)
       (message "Folder %s deleted" (vm-safe-imapdrop-string folder)))))
 
+;;;###autoload
 (defun vm-rename-imap-folder (source dest)
   "Rename a folder on an IMAP server.
 Argument SOURCE and DEST are read from the minibuffer if called

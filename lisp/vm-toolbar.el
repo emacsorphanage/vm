@@ -217,6 +217,7 @@ will run 'vm-decode-mime-message'."])
 (defvar vm-toolbar-helper-command nil)
 (make-variable-buffer-local 'vm-toolbar-helper-command)
 
+;;;###autoload
 (defun vm-toolbar-helper-command ()
   (interactive)
   (setq this-command vm-toolbar-helper-command)
@@ -243,6 +244,7 @@ s-expression like this one in your .vm file:
 	vm-message-list)
     (error nil)))
 
+;;;###autoload
 (defun vm-toolbar-delete/undelete-message (&optional prefix-arg)
   (interactive "P")
   (vm-follow-summary-cursor)
@@ -255,6 +257,7 @@ s-expression like this one in your .vm file:
 	(call-interactively 'vm-undelete-message)
       (call-interactively 'vm-delete-message))))
 
+;;;###autoload
 (defun vm-toolbar-can-autofile-p ()
   (interactive)
   (condition-case nil
@@ -265,6 +268,7 @@ s-expression like this one in your .vm file:
 	     (vm-auto-select-folder vm-message-pointer vm-auto-folder-alist)))
     (error nil)))
 
+;;;###autoload
 (defun vm-toolbar-autofile-message ()
   (interactive)
   (vm-follow-summary-cursor)

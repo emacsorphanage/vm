@@ -110,6 +110,7 @@ Also bind keys in `vm-mode-map' to `vm-message-history-backward' and
 		    '(t))		; hack!
 		nil))))
 
+;;;###autoload
 (defun vm-message-history-backward (&optional arg)
   "Select the previous message in the current folder's history.
 With prefix ARG, select the ARG'th previous message."
@@ -146,6 +147,7 @@ With prefix ARG, select the ARG'th previous message."
 						vm-message-list))
     (vm-preview-current-message)))
 
+;;;###autoload
 (defun vm-message-history-forward (&optional arg)
   "Select the next message in the current folder's history.
 With prefix ARG, select the ARG'th next message."
@@ -155,6 +157,7 @@ With prefix ARG, select the ARG'th next message."
 (defvar vm-message-history-menu nil
   "A popup menu of messages, generated from `vm-message-history'.")
 
+;;;###autoload
 (defun vm-message-history-browse ()
   "Select a message from a popup menu of the current folder's history."
   (interactive)

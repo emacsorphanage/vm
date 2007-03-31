@@ -25,6 +25,7 @@
 	vm-message-pointer new
 	vm-need-summary-pointer-update t))
 
+;;;###autoload
 (defun vm-goto-message (n)
   "Go to the message numbered N.
 Interactively N is the prefix argument.  If no prefix arg is provided
@@ -57,6 +58,7 @@ given."
 	(vm-record-and-change-message-pointer vm-message-pointer cons)
 	(vm-preview-current-message)))))
 
+;;;###autoload
 (defun vm-goto-message-last-seen ()
   "Go to the message last previewed."
   (interactive)
@@ -71,6 +73,7 @@ given."
 					      vm-last-message-pointer)
 	(vm-preview-current-message))))
 
+;;;###autoload
 (defun vm-goto-parent-message ()
   "Go to the parent of the current message."
   (interactive)
@@ -137,6 +140,7 @@ given."
 	(and (eq last-command 'vm-next-command-uses-marks)
 	     (null (vm-mark-of (car mp)))))))
 
+;;;###autoload
 (defun vm-next-message (&optional count retry signal-errors)
   "Go forward one message and preview it.
 With prefix arg (optional first argument) COUNT, go forward COUNT
@@ -258,6 +262,7 @@ this command 'sees' marked messages as it moves."
     (and error signal-errors
 	 (signal error nil))))
 
+;;;###autoload
 (defun vm-previous-message (&optional count retry signal-errors)
   "Go back one message and preview it.
 With prefix arg COUNT, go backward COUNT messages.  A negative COUNT
@@ -272,6 +277,7 @@ ignored."
   (vm-display nil nil '(vm-previous-message) '(vm-previous-message))
   (vm-next-message (- count) retry signal-errors))
 
+;;;###autoload
 (defun vm-next-message-no-skip (&optional count)
   "Like vm-next-message but will not skip deleted or read messages."
   (interactive "p")
@@ -286,6 +292,7 @@ ignored."
 ;; backward compatibility
 (fset 'vm-Next-message 'vm-next-message-no-skip)
 
+;;;###autoload
 (defun vm-previous-message-no-skip (&optional count)
   "Like vm-previous-message but will not skip deleted or read messages."
   (interactive "p")
@@ -300,6 +307,7 @@ ignored."
 ;; backward compatibility
 (fset 'vm-Previous-message 'vm-previous-message-no-skip)
 
+;;;###autoload
 (defun vm-next-unread-message ()
   "Move forward to the nearest new or unread message, if there is one."
   (interactive)
@@ -316,6 +324,7 @@ ignored."
 	(and (eq vm-message-pointer oldmp) (signal 'end-of-folder nil)))
     (end-of-folder (message "No next unread message"))))
 
+;;;###autoload
 (defun vm-previous-unread-message ()
   "Move backward to the nearest new or unread message, if there is one."
   (interactive)
@@ -333,6 +342,7 @@ ignored."
 	(and (eq vm-message-pointer oldmp) (signal 'beginning-of-folder nil)))
     (beginning-of-folder (message "No previous unread message"))))
 
+;;;###autoload
 (defun vm-next-message-same-subject ()
   "Move forward to the nearest message with the same subject.
 vm-subject-ignored-prefix and vm-subject-ignored-suffix will apply
@@ -362,6 +372,7 @@ to the subject comparisons."
        (setq vm-message-pointer oldmp)
        (message "No next message with the same subject")))))
 
+;;;###autoload
 (defun vm-previous-message-same-subject ()
   "Move backward to the nearest message with the same subject.
 vm-subject-ignored-prefix and vm-subject-ignored-suffix will apply

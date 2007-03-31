@@ -18,6 +18,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+;;;###autoload
 (defun vm-scroll-forward (&optional arg)
   "Scroll forward a screenful of text.
 If the current message is being previewed, the message body is revealed.
@@ -231,6 +233,7 @@ Prefix argument N means scroll forward N lines."
 	     (vm-number-of (car vm-message-pointer))
 	     (vm-summary-sprintf "%F" (car vm-message-pointer)))))
 
+;;;###autoload
 (defun vm-scroll-backward (&optional arg)
   "Scroll backward a screenful of text.
 Prefix N scrolls backward N lines."
@@ -241,6 +244,7 @@ Prefix N scrolls backward N lines."
 			   ((symbolp arg) nil)
 			   (t arg))))
 
+;;;###autoload
 (defun vm-scroll-forward-one-line (&optional count)
   "Scroll forward one line.
 Prefix arg N means scroll forward N lines.
@@ -248,6 +252,7 @@ Negative arg means scroll backward."
   (interactive "p")
   (vm-scroll-forward count))
 
+;;;###autoload
 (defun vm-scroll-backward-one-line (&optional count)
   "Scroll backward one line.
 Prefix arg N means scroll backward N lines.
@@ -302,6 +307,7 @@ Negative arg means scroll forward."
 	       (overlay-put p 'vm-highlight t)))
 	(goto-char (vm-matched-header-end)))))))
 
+;;;###autoload
 (defun vm-energize-urls (&optional clean-only)
   (interactive "P")
   ;; Don't search too long in large regions.  If the region is
@@ -605,6 +611,7 @@ Use mouse button 3 to choose a Web browser for the URL."
 	  "Netscape")
 	 (t (symbol-name vm-url-browser)))))
 
+;;;###autoload
 (defun vm-energize-urls-in-message-region (&optional start end)
   (interactive "r")
   (save-excursion
@@ -849,6 +856,7 @@ Use mouse button 3 to choose a Web browser for the URL."
 	 (vm-howl-if-eom))
      (vm-update-summary-and-mode-line))))
 
+;;;###autoload
 (defun vm-expose-hidden-headers ()
   "Toggle exposing and hiding message headers that are normally not visible."
   (interactive)
@@ -927,6 +935,7 @@ Use mouse button 3 to choose a Web browser for the URL."
       (setq max (point))
       (narrow-to-region min max))))
 
+;;;###autoload
 (defun vm-beginning-of-message ()
   "Moves to the beginning of the current message."
   (interactive)
@@ -952,6 +961,7 @@ Use mouse button 3 to choose a Web browser for the URL."
   (if vm-honor-page-delimiters
       (vm-narrow-to-page)))
 
+;;;###autoload
 (defun vm-end-of-message ()
   "Moves to the end of the current message, exposing and flagging it read
 as necessary."
@@ -981,6 +991,7 @@ as necessary."
   (if vm-honor-page-delimiters
       (vm-narrow-to-page)))
 
+;;;###autoload
 (defun vm-move-to-next-button (count)
   "Moves to the next button in the current message.
 Prefix argument N means move to the Nth next button.
@@ -1010,6 +1021,7 @@ exposed and marked as read."
     (if vm-honor-page-delimiters
 	(vm-narrow-to-page))))
 
+;;;###autoload
 (defun vm-move-to-previous-button (count)
   "Moves to the previous button in the current message.
 Prefix argument N means move to the Nth previous button.

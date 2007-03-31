@@ -18,6 +18,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+;;;###autoload
 (defun vm-show-copying-restrictions (&optional warranty)
   "Show VM's license, i.e. the GPL."
   (interactive)
@@ -41,6 +43,7 @@
 	  (forward-line -1)
 	  (set-window-start (selected-window) (point))))))
 
+;;;###autoload
 (defun vm-show-no-warranty ()
   "Display \"NO WARRANTY\" section of the GNU General Public License."
   (interactive)
