@@ -65,6 +65,7 @@
 	(or (and haveu8 '(utf-8 iso-2022-jp ctext escape-quoted))
 	    '(iso-2022-jp ctext escape-quoted))
        "*List of coding systems that can encode all characters known to emacs."
+       :group 'vm
        ))
 
     ;; Define a list of coding systems that are to be preferred when sending
@@ -77,7 +78,8 @@
     (defcustom vm-coding-system-priorities
       (or (and haveu8 '(iso-8859-1 utf-8))
 	  '(iso-8859-1))
-      "*List of coding systems for VM-MIME to use, in order of preference. ")
+      "*List of coding systems for VM-MIME to use, in order of preference. "
+      :group 'vm)
 
     ;; Add some extra charsets that may not have been defined onto the end
     ;; of vm-mime-mule-charset-to-coding-alist.
@@ -4580,7 +4582,7 @@ should use vm-mime-attach-file to attach the file."
    ;; protect value of last-command and this-command
    (let ((last-command last-command)
 	 (this-command this-command)
-	 file type)
+	 file type default-type)
      (if (null vm-send-using-mime)
 	 (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
      (setq file (vm-read-file-name "Attach file: "
