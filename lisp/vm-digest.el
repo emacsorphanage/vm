@@ -18,6 +18,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+;;;###autoload
 (defun vm-no-frills-encapsulate-message (m keep-list discard-regexp)
   "Encapsulate a message M for forwarding, simply.
 No message encapsulation standard is used.  The message is
@@ -56,6 +58,7 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
       (goto-char (point-max))
       (insert "------- end of forwarded message -------\n"))))
 
+;;;###autoload
 (defun vm-mime-encapsulate-messages (message-list keep-list discard-regexp
 				     always-use-digest)
   "Encapsulate the messages in MESSAGE-LIST as per the MIME spec.
@@ -257,6 +260,7 @@ from them."
       (forward-char)))
   (set-marker end nil))
 
+;;;###autoload
 (defun vm-rfc934-encapsulate-messages (message-list keep-list discard-regexp)
   "Encapsulate the messages in MESSAGE-LIST as per RFC 934.
 The resulting digest is inserted at point in the current buffer.
