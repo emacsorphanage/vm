@@ -137,7 +137,6 @@ auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	mv $@ $@.tmp
 	echo "(setq features (delete 'vm-autoloads features))" > $@
 	cat $@.tmp >> $@
-	echo "(setq features (delete 'vm-autoloads features))" >> $@
 	rm $@.tmp
 
 
