@@ -214,6 +214,7 @@
    spam-word 
    folder-name 
    attachment
+   spam-level
    spam-score))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
