@@ -118,7 +118,10 @@ vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	-$(RM) -f $@
 	(build_dir=`pwd`;                                                               \
          cd @srcdir@;                                                                   \
-         $(EMACS_PROG) -batch -q -l autoload                                            \
+	 echo ";;; vm-autoloads.el --- automatically extracted autoloads" >> $@		\
+	 echo ";;"  >> $@								\
+	 echo ";;; Code:"								\
+	 $(EMACS_PROG) -batch -q -l autoload                                            \
                 --eval '(setq generated-autoload-file "'"@abs_builddir@/$@"'")'         \
                 --eval '(setq make-backup-files nil)'                                   \
                 --eval "$(AUTOLOAD_PACKAGE_NAME)" \
