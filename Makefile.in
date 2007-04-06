@@ -62,3 +62,10 @@ xemacs-package:
 	touch $(PKGDIR)/pkginfo/MANIFEST.vm;
 	cd $(PKGDIR); find -type f | cut -c3- > pkginfo/MANIFEST.vm
 	cd ,,package; $(TAR) -cvzf ../vm-pkg.tar.gz *
+
+##############################################################################
+# TODO creation of a release bundle
+release:
+	release.sh
+
+
