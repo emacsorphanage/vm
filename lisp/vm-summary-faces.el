@@ -39,13 +39,11 @@
   :group 'vm)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(eval-when-compile
+(eval-and-compile
+  (require 'advice)
   (require 'cl)
-  (require 'vm-version)
-  (require 'vm-vars)
-  (require 'vm-misc)
   (require 'vm-summary)
-  (require 'advice))
+  (require 'vm-virtual))
 
 (eval-and-compile
   (if vm-xemacs-p (require 'overlay)))
