@@ -422,7 +422,7 @@ folder in the order in which the messages arrived."
 		(vm-set-su-start-of (car mp-new)
 				    (vm-su-start-of (car mp-old)))))
 	  (setq mp-new nil)))
-      (if (and order-did-change physical)
+      (if (and physical (vm-has-message-order))
 	  (let ((buffer-read-only nil))
 	    ;; the folder is being physically ordered so we don't
 	    ;; need a message order header to be stuffed, nor do

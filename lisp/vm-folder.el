@@ -1685,6 +1685,22 @@ vm-folder-type is initialized here."
 		    (vm-startup-apply-message-order order)
 		    (message "Reordering messages... done")))))))))
 
+(defun vm-has-message-order ()
+  (let ((case-fold-search t)
+	lim order)
+    (save-excursion
+      (save-restriction
+	(widen)
+	(goto-char (point-min))
+	(vm-skip-past-folder-header)
+	(vm-skip-past-leading-message-separator)
+	(search-forward "\n\n" nil t)
+	(setq lim (point))
+	(goto-char (point-min))
+	(vm-skip-past-folder-header)
+	(vm-skip-past-leading-message-separator)
+	(re-search-forward vm-message-order-header-regexp lim t)))))
+
 (defun vm-startup-apply-message-order (order)
   (let (list-length v (mp vm-message-list))
     (setq list-length (length vm-message-list)
