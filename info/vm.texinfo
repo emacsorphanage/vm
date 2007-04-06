@@ -2373,7 +2373,7 @@ message order would be unchanged.  VM numbers and presents the messages
 in a different order internally.  If you want the message order to be
 changed in the folder so that other programs can see the change, you
 can either invoke @code{vm-sort-messages} with a prefix argument, or
-you can set @code{vm-move-message-physically} non-@code{nil} before
+you can set @code{vm-move-messages-physically} non-@code{nil} before
 sorting.  Either way, VM will shift the actual messages around in the
 folder buffer, and when you save the folder, the order change will be
 visible to other programs.
