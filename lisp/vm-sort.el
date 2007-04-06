@@ -214,6 +214,7 @@ the folder undisturbed."
        ;; delete the old copy of the message
        (delete-region doomed-start doomed-end)))))
 
+;;;###autoload
 (defun vm-so-sortable-datestring (m)
   (or (vm-sortable-datestring-of m)
       (progn
@@ -227,6 +228,7 @@ the folder undisturbed."
 	   (error "1970010100:00:00")))
 	(vm-sortable-datestring-of m))))
 
+;;;###autoload
 (defun vm-so-sortable-subject (m)
   (or (vm-sortable-subject-of m)
       (progn
