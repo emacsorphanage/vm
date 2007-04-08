@@ -1398,6 +1398,7 @@ Please remove these instructions from your message.")
 
 (defun vm-session-initialization ()
   (require 'vm-vars)
+  (require 'vm-macro)
   (require 'vm-misc)
   (require 'vm-message)
   (require 'vm-motion)
