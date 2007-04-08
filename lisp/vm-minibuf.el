@@ -18,6 +18,7 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
 ;;;###autoload
 (defun vm-minibuffer-complete-word (&optional exiting)
   (interactive)
@@ -90,14 +91,16 @@
       (setq diff (- (length completion) (length word)))
       (cond
        ;; We have some completion chars.  Insert them.
-       ((or (> diff 0)
-	    (and (zerop diff) (not (string-equal completion word))))
+       ((or (> diff 0) 
+	    (and completion (zerop diff) (not (string-equal completion word))))
 	(goto-char end)
 	(delete-char (- (length word)))
 	(insert completion)
 	(if (and vm-completion-auto-space
 		 (null (cdr trimmed-c-list)))
 	    (insert " ")))
+       ((null completion)
+        (vm-minibuffer-completion-message "[No completion available]"))
        ;; The word prefixed more than one string, but we can't complete
        ;; any further.  Either give help or say "Ambiguous".
        ((zerop diff)
