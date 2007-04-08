@@ -120,23 +120,6 @@
   :group 'vm-summary-faces)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun vm-vs-outgoing (m)
-  (and vm-summary-uninteresting-senders
-       (or (string-match vm-summary-uninteresting-senders (vm-su-full-name m))
-           (string-match vm-summary-uninteresting-senders (vm-su-from m)))))
-
-(add-to-list 'vm-virtual-selector-function-alist
-             '(outgoing . vm-vs-outgoing))
-
-(defun vm-vs-selected (m)
-  (save-excursion
-    (set-buffer (vm-buffer-of m))
-    (eq m (car vm-message-pointer))))
-
-(add-to-list 'vm-virtual-selector-function-alist
-             '(selected . vm-vs-selected))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-summary-faces-alist
   '(
     ((deleted)   vm-summary-deleted-face)
