@@ -18,6 +18,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+;;;###autoload
 (defun vm-build-virtual-message-list (new-messages &optional dont-finalize)
   "Builds a list of messages matching the virtual folder definition
 stored in the variable vm-virtual-folder-definition.
@@ -574,6 +576,7 @@ Prefix arg means the new virtual folder should be visited read only."
 (put 'more-lines-than 'vm-virtual-selector-arg-type 'number)
 (put 'less-lines-than 'vm-virtual-selector-arg-type 'number)
 
+;;;###autoload
 (defun vm-read-virtual-selector (prompt)
   (let (selector (arg nil))
     (setq selector
@@ -695,6 +698,7 @@ Prefix arg means the new virtual folder should be visited read only."
 		 (vm-update-summary-and-mode-line))
 	       (setq bp (cdr bp))))))))
 
+;;;###autoload
 (defun vm-virtual-save-folder (prefix)
   (save-excursion
     ;; don't trust blindly, user might have killed some of
@@ -709,6 +713,7 @@ Prefix arg means the new virtual folder should be visited read only."
   (vm-clear-modification-flag-undos)
   (vm-update-summary-and-mode-line))
 
+;;;###autoload
 (defun vm-virtual-get-new-mail ()
   (save-excursion
     ;; don't trust blindly, user might have killed some of
@@ -730,6 +735,7 @@ Prefix arg means the new virtual folder should be visited read only."
 	(setq bp (cdr bp)))))
   (vm-emit-totals-blurb))
 
+;;;###autoload
 (defun vm-make-virtual-copy (m)
   (widen)
   (let ((virtual-buffer (current-buffer))

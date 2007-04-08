@@ -19,6 +19,8 @@
 
 
 ;;; Code:
+
+;;;###autoload
 (defun vm-do-reply (to-all include-text count)
     (let ((mlist (vm-select-marked-or-prefixed-messages count))
 	  (dir default-directory)
@@ -175,6 +177,7 @@
 	    (setq re-list (cdr re-list))))
 	result )))
 
+;;;###autoload
 (defun vm-mail-yank-default (&optional message)
   (save-excursion
     (vm-reorder-message-headers nil vm-included-text-headers
@@ -638,6 +641,7 @@ as replied to, forwarded, etc, if appropriate."
 	  (vm-keep-mail-buffer (current-buffer))))
     (vm-display nil nil '(vm-mail-send) '(vm-mail-send))))
 
+;;;###autoload
 (defun vm-mail-mode-get-header-contents (header-name-regexp)
   (let (regexp)
     (setq regexp (concat "^\\(" header-name-regexp "\\)\\|\\(^"
@@ -654,6 +658,7 @@ as replied to, forwarded, etc, if appropriate."
 	      (vm-matched-header-contents)
 	    nil ))))))
 
+;;;###autoload
 (defun vm-mail-mode-remove-header (header-name-regexp)
   (let (regexp)
     (setq regexp (concat "^\\(" header-name-regexp "\\)\\|\\(^"
@@ -1273,6 +1278,7 @@ found, the current buffer remains selected."
           (setq i (1+ i)))))
   buffer-name)
 
+;;;###autoload
 (defun vm-mail-internal
     (&optional buffer-name to subject in-reply-to cc references newsgroups)
   (let ((folder-buffer nil))
@@ -1663,6 +1669,7 @@ message."
           (setq newbufname (vm-drop-8bit-chars newbufname))
           (rename-buffer newbufname t)))))
 
+;;;###autoload
 (defun vm-mail-mode-remove-tm-hooks ()
   (remove-hook 'mail-setup-hook 'turn-on-mime-edit)
   (remove-hook 'mail-setup-hook 'mime/decode-message-header)

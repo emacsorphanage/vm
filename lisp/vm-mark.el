@@ -464,6 +464,7 @@ not work."
   (vm-display nil nil '(vm-next-command-uses-marks)
 	      '(vm-next-command-uses-marks)))
 
+;;;###autoload
 (defun vm-marked-messages ()
   (let (list (mp vm-message-list))
     (while mp

@@ -637,6 +637,7 @@ folder in the order in which the messages arrived."
 	  ((= s1 s2) '=)
 	  (t t))))
 
+;;;###autoload
 (defun vm-sort-compare-physical-order (m1 m2)
   (let ((n1 (vm-start-of m1))
 	(n2 (vm-start-of m2)))
@@ -644,6 +645,7 @@ folder in the order in which the messages arrived."
 	  ((= n1 n2) '=)
 	  (t nil))))
 
+;;;###autoload
 (defun vm-sort-compare-physical-order-r (m1 m2)
   (let ((n1 (vm-start-of m1))
 	(n2 (vm-start-of m2)))

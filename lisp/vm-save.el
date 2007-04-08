@@ -22,6 +22,8 @@
 ;; 1 while strings are indexed from 0. :-(
 
 ;;; Code:
+
+;;;###autoload
 (defun vm-match-data ()
   (let ((n (1- (/ (length (match-data)) 2)))
         (list nil))
@@ -31,6 +33,7 @@
             n (1- n)))
     list))
 
+;;;###autoload
 (defun vm-auto-select-folder (mp auto-folder-alist)
   (condition-case error-data
       (catch 'match

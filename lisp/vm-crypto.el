@@ -22,6 +22,7 @@
 ;; compatibility
 (fset 'vm-pop-md5 'vm-md5-string)
 
+;;;###autoload
 (defun vm-md5-region (start end)
   (if (fboundp 'md5)
       (md5 (current-buffer) start end)
@@ -63,6 +64,7 @@
 	(and buffer (kill-buffer buffer))))))
 
 ;; output is in hex
+;;;###autoload
 (defun vm-md5-string (string)
   (if (fboundp 'md5)
       (md5 string)
@@ -74,6 +76,7 @@
 	       (delete-region (point) (point-max)))))))
 
 ;; output is the raw digest bits, not hex
+;;;###autoload
 (defun vm-md5-raw-string (s)
   (setq s (vm-md5-string s))
   (let ((raw (make-string 16 0))
@@ -94,6 +97,7 @@
       (setq i (+ i 2)))
     raw ))
 
+;;;###autoload
 (defun vm-xor-string (s1 s2)
   (let ((len (length s1))
 	result (i 0))
@@ -105,6 +109,7 @@
       (setq i (1+ i)))
     result ))
 
+;;;###autoload
 (defun vm-setup-ssh-tunnel (host port)
   (let (local-port process done)
     (while (not done)
@@ -155,6 +160,7 @@
       (and work-buffer (kill-buffer work-buffer)))
     file ))
 
+;;;###autoload
 (defun vm-setup-stunnel-random-data-if-needed ()
   (cond ((null vm-stunnel-random-data-method) nil)
 	((eq vm-stunnel-random-data-method 'generate)
@@ -164,6 +170,7 @@
 	   (setq vm-stunnel-random-data-file
 		 (vm-generate-random-data-file (* 4 1024)))))))
 
+;;;###autoload
 (defun vm-tear-down-stunnel-random-data ()
   (if (stringp vm-stunnel-random-data-file)
       (vm-error-free-call 'delete-file vm-stunnel-random-data-file))
@@ -175,6 +182,7 @@
 	 (list "-R" vm-stunnel-random-data-file))
 	(t nil)))
 
+;;;###autoload
 (defun vm-stunnel-configuration-args (host port)
   (if (eq vm-stunnel-wants-configuration-file 'unknown)
       (setq vm-stunnel-wants-configuration-file

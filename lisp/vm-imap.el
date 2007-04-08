@@ -434,6 +434,7 @@ on all the relevant IMAP servers and then immediately expunges."
       (and process (vm-imap-end-session process)))
     (or trouble (setq vm-imap-retrieved-messages nil))))
 
+;;;###autoload
 (defun vm-imap-make-session (source)
   (let ((process-to-shutdown nil)
 	(folder-type vm-folder-type)
@@ -646,6 +647,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	  (vm-imap-end-session process-to-shutdown t))
       (vm-tear-down-stunnel-random-data))))
 
+;;;###autoload
 (defun vm-imap-end-session (process &optional keep-buffer)
   (if (and (memq (process-status process) '(open run))
 	   (buffer-live-p (process-buffer process)))
@@ -1515,6 +1517,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	       (setq need-ok nil))))
       (vm-set-attribute-modflag-of m nil))))
 
+;;;###autoload
 (defun vm-imap-save-message (process m mailbox)
   (let (need-ok need-plus flags response string)
     ;; save the message's flag along with it.
@@ -1590,6 +1593,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	      there)
     (list retrieve-list expunge-list)))
 
+;;;###autoload
 (defun vm-imap-synchronize-folder (&optional interactive
 					     do-remote-expunges
 					     do-local-expunges
@@ -1701,6 +1705,7 @@ on all the relevant IMAP servers and then immediately expunges."
 			  vm-imap-retrieved-messages))))
       got-some)))
 
+;;;###autoload
 (defun vm-imap-folder-check-for-mail (&optional interactive)
   (if (or vm-global-block-new-mail
 	  (null (vm-establish-new-folder-imap-session interactive)))
@@ -1709,6 +1714,7 @@ on all the relevant IMAP servers and then immediately expunges."
       (vm-imap-end-session (vm-folder-imap-process))
       result )))
 
+;;;###autoload
 (defun vm-imap-find-spec-for-buffer (buffer)
   (let ((list vm-imap-server-list)
 	(done nil))
@@ -1719,6 +1725,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	(setq list (cdr list))))
     (and list (car list))))
 
+;;;###autoload
 (defun vm-imap-make-filename-for-spec (spec)
   (let (md5 list)
     (setq spec (vm-imap-normalize-spec spec))
@@ -1738,6 +1745,7 @@ on all the relevant IMAP servers and then immediately expunges."
     (setq spec (mapconcat (function identity) list ":"))
     spec ))
 
+;;;###autoload
 (defun vm-imap-parse-spec-to-list (spec)
   (vm-parse spec "\\([^:]+\\):?" 1 6))
 
@@ -1752,6 +1760,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	    spec-list (cdr spec-list)))
     host-alist ))
 
+;;;###autoload
 (defun vm-read-imap-folder-name (prompt spec-list &optional selectable-only newone)
   "Read an IMAP server and mailbox, return an IMAP mailbox spec."
   (let (host c-list spec process mailbox list

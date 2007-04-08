@@ -192,6 +192,7 @@ data is discarded only from the marked messages in the current folder."
 			    (vm-sort-messages "thread")))
 		buffers-needing-thread-sort))))
 
+;;;###autoload
 (defun vm-edit-message-end ()
   "End the edit of a message and copy the result to its folder."
   (interactive)

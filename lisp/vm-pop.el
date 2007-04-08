@@ -972,6 +972,7 @@ popdrop
 	      there)
     (list retrieve-list expunge-list)))
 
+;;;###autoload
 (defun vm-pop-synchronize-folder (&optional interactive
 					    do-remote-expunges
 					    do-local-expunges
@@ -1063,6 +1064,7 @@ popdrop
 			  vm-pop-retrieved-messages))))
       got-some)))
 
+;;;###autoload
 (defun vm-pop-folder-check-for-mail (&optional interactive)
   (if (or vm-global-block-new-mail
 	  (null (vm-establish-new-folder-pop-session interactive)))
@@ -1071,6 +1073,7 @@ popdrop
       (vm-pop-end-session (vm-folder-pop-process))
       result )))
 
+;;;###autoload
 (defun vm-pop-find-spec-for-name (name)
   (let ((list vm-pop-folder-alist)
 	(done nil))
@@ -1080,6 +1083,7 @@ popdrop
 	(setq list (cdr list))))
     (and list (car (car list)))))
 
+;;;###autoload
 (defun vm-pop-find-name-for-spec (spec)
   (let ((list vm-pop-folder-alist)
 	(done nil))
@@ -1089,6 +1093,7 @@ popdrop
 	(setq list (cdr list))))
     (and list (nth 1 (car list)))))
 
+;;;###autoload
 (defun vm-pop-find-name-for-buffer (buffer)
   (let ((list vm-pop-folder-alist)
 	(done nil))
@@ -1099,6 +1104,7 @@ popdrop
 	(setq list (cdr list))))
     (and list (nth 1 (car list)))))
 
+;;;###autoload
 (defun vm-pop-make-filename-for-spec (spec &optional scrub-password scrub-spec)
   (let (md5 list)
     (if (and (null scrub-password) (null scrub-spec))

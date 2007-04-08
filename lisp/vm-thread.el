@@ -38,6 +38,7 @@ will be visible."
       (vm-sort-messages "thread")
     (vm-sort-messages "physical-order")))
 
+;;;###autoload
 (defun vm-build-threads (message-list)
   (if (not (vectorp vm-thread-obarray))
       (setq vm-thread-obarray (make-vector 641 0)
@@ -173,6 +174,8 @@ will be visible."
 ;; ordering key by the thread sort the oldest-date properties
 ;; must be computed before the sort begins, not during it.
 ;; Otherwise the sort won't be stable and there will be chaos.
+
+;;;###autoload
 (defun vm-build-thread-lists ()
   (let ((mp vm-message-list))
     (while mp
@@ -262,6 +265,8 @@ will be visible."
 ;; might be different if the message contents changed.
 ;;
 ;; message must be a real (non-virtual) message
+
+;;;###autoload
 (defun vm-unthread-message (message &optional message-changing)
   (save-excursion
     (let ((mp (cons message (vm-virtual-messages-of message)))
@@ -340,6 +345,7 @@ will be visible."
 	     (and id (vm-set-references-of m (list id)))
 	     id )))))
 
+;;;###autoload
 (defun vm-th-thread-indentation (m)
   (or (vm-thread-indentation-of m)
       (let ((p (vm-th-thread-list m)))
@@ -348,6 +354,7 @@ will be visible."
 	(vm-set-thread-indentation-of m (1- (length p)))
 	(vm-thread-indentation-of m))))
 
+;;;###autoload
 (defun vm-th-thread-list (m)
   (or (vm-thread-list-of m)
       (progn

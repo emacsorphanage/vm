@@ -157,6 +157,7 @@ all of them will be burst."
       (setq list (cdr list)))
     did-burst))
 
+;;;###autoload
 (defun vm-mime-burst-layout (layout ident-header)
   (let ((work-buffer nil)
 	(folder-buffer (current-buffer))
@@ -353,6 +354,7 @@ converted to a hyphen."
       (replace-match "------------------------------" t t)))
   (set-marker end nil))
 
+;;;###autoload
 (defun vm-rfc1153-encapsulate-messages (message-list keep-list discard-regexp)
   "Encapsulate the messages in MESSAGE-LIST as per RFC 1153.
 The resulting digest is inserted at point in the current buffer.
