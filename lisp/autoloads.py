@@ -64,7 +64,8 @@ preloaded = ["vm-version.el", "vm-misc.el", "vm-macro.el", "vm-folder.el",
 	     "vm-mouse.el", "vm-window.el", "vm-menu.el", "vm-message.el",
 	     "vm-toolbar.el", "vm.el", "vm-undo.el", "vm-mime.el",
 	     "vm-vars.el"]
-def check_calls(filename, funs):
+
+def check_calls(filename, funs, missing):
     print "-" * 50
     print filename
     fd = open(filename)
@@ -95,9 +96,13 @@ def check_calls(filename, funs):
 		(d.filename not in preloaded) and
 		(d.filename not in required)):
 		#print preloaded
-		print "'%s' : '%s' => '%s' %s" % (filename, f, d.filename,
-						  d.filename in preloaded)
+		#print "'%s' : '%s' => '%s' %s" % (filename, f, d.filename,
+						  #d.filename in preloaded)
 		#print preloaded
+		if not missing.has_key(d.filename):
+		    missing[d.filename] = []
+		if f not in  missing[d.filename]:
+		    missing[d.filename].append(f)
     fd.close()
     
 
@@ -110,7 +115,12 @@ if __name__ == '__main__':
 		print "Duplicate %s <> %s" % (d, funs[d.symbol])
 	    else:
 		funs[d.symbol] = d
+    missing = {}
     for filename in sys.argv[3:]:
-	check_calls(filename, funs)
+	check_calls(filename, funs, missing)
+    for f in missing.keys():
+	print f
+	for m in missing[f]:
+	    print "\t", m
 	
     
