@@ -4724,6 +4724,7 @@ Its parent keymap is mail-mode-map.")
     ("vm-yank-message")
     ("vm-yank-message-other-folder")
 ))
+
 (defconst vm-supported-sort-keys
   '("date" "reversed-date"
     "author" "reversed-author"
@@ -4734,6 +4735,7 @@ Its parent keymap is mail-mode-map.")
     "byte-count" "reversed-byte-count"
     "spam-score" "reversed-spam-score"
     "physical-order" "reversed-physical-order"))
+
 (defconst vm-supported-interactive-virtual-selectors
   '(("any")
     ("virtual-folder-member")
@@ -4772,6 +4774,7 @@ Its parent keymap is mail-mode-map.")
     ("unwritten")
     ("unedited")
     ("unmarked")))
+
 (defconst vm-virtual-selector-function-alist
   '((any . vm-vs-any)
     (virtual-folder-member . vm-vs-virtual-folder-member)
