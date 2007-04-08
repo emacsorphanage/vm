@@ -1112,7 +1112,6 @@ messages which are composed in order to find the right FCC."
         (setq ml (cdr ml))))))
         
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 ;;;###autoload
 (defun vm-virtual-save-message (&optional folder count)
   "Save the current message to a mail folder.
@@ -1223,11 +1222,6 @@ name."
           (vm-save-message file (length vm-message-list))
           (message "Saved virtual folder in file \"%s\"" file))
       (error "This is no virtual folder!"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;###autoload
-;;; redefine vm-read-virtual-selector to be more felxible, i.e. allow complex selectors.
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (provide 'vm-avirtual)

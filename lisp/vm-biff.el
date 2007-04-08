@@ -101,22 +101,6 @@
   :group 'vm-biff
   :type 'sexp)
 
-(add-to-list 'vm-virtual-selector-function-alist
-             '(outgoing . vm-vs-outgoing))
-
-(add-to-list 'vm-virtual-selector-function-alist
-             '(selected . vm-vs-selected))
-
-(defun vm-vs-outgoing (m)
-  (and vm-summary-uninteresting-senders
-       (or (string-match vm-summary-uninteresting-senders (vm-su-full-name m))
-           (string-match vm-summary-uninteresting-senders (vm-su-from m)))))
-
-(defun vm-vs-selected (m)
-  (save-excursion
-    (set-buffer (vm-buffer-of m))
-    (eq m (car vm-message-pointer))))
-
 (defcustom vm-biff-place-frame-function 'vm-biff-place-frame
   "*Function that sets the popup frame position and size."
   :group 'vm-biff

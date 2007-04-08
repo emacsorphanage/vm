@@ -770,4 +770,7 @@ Prefix arg means the new virtual folder should be visited read only."
 						    (vm-start-of real-m))))))
 (provide 'vm-virtual)
 
+;; now load vm-avirtual to avoid a loading loop
+(require 'vm-avirtual)
+
 ;;; vm-virtual.el ends here

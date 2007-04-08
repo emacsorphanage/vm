@@ -487,6 +487,7 @@ folder in the order in which the messages arrived."
     (if auto-folder-p
         (vm-sort-insert-auto-folder-names))))
 
+;;;###autoload
 (defun vm-sort-compare-xxxxxx (m1 m2)
   (let ((key-funcs vm-key-functions) result)
     (while (and key-funcs

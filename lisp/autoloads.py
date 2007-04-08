@@ -66,8 +66,8 @@ preloaded = ["vm-version.el", "vm-misc.el", "vm-macro.el", "vm-folder.el",
 	     "vm-vars.el"]
 
 def check_calls(filename, funs, missing):
-    print "-" * 50
-    print filename
+    #print "-" * 50
+    #print filename
     fd = open(filename)
     required = []
     for l in fd:
