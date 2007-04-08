@@ -24,8 +24,9 @@
 ;; is explained in tapestry-set-buffer-map.
 (defvar tapestry-windows-changed nil)
 
+;;;###autoload
 (defun tapestry (&optional frame-list)
-  "Returns a list containing complete information about the current
+"Returns a list containing complete information about the current
 configuration of Emacs frames, windows, buffers and cursor
 positions.  Call the function set-tapestry with the list that this function
 returns to restore the configuration.
@@ -50,6 +51,8 @@ restored across multiple Emacs sessions."
       (tapestry-select-frame sf))
     (list frame-map other-maps)))
 
+
+;;;###autoload
 (defun set-tapestry (map &optional n root-window-edges)
   "Restore the frame/window/buffer configuration described by MAP,
 which should be a list previously returned by a call to
@@ -429,6 +432,7 @@ ROOT-WINDOW-EDGES will be used."
 	(setq prev curr curr (cdr curr))))
     list ))
 
+;;;###autoload
 (defun tapestry-remove-frame-parameters (map params)
   (let (frame-map)
     (while params
@@ -438,6 +442,7 @@ ROOT-WINDOW-EDGES will be used."
 	(setq frame-map (cdr frame-map)))
       (setq params (cdr params)))))
 
+;;;###autoload
 (defun tapestry-nullify-tapestry-elements (map &optional buf-file-name buf-name
 					window-start window-point
 					window-hscroll selected-window)
@@ -458,6 +463,7 @@ ROOT-WINDOW-EDGES will be used."
 	(setq p (cdr p)))
       (setq map (cdr map)))))
 
+;;;###autoload
 (defun tapestry-replace-tapestry-element (map what function)
   (let (mapi mapj p old new)
     (cond ((eq what 'buffer-file-name)
