@@ -36,11 +36,7 @@ distclean:
 push:
 	bzr --no-plugins push
 
-dist:
-	TODO create a release tar ball 
-
 ##############################################################################
-# TODO creation of a XEmacs package
 PKGDIR =  $(shell pwd)/,,package/
 PKGINFO = $(PKGDIR)/lisp/vm/_pkg.el
 xemacs-package:
@@ -64,8 +60,7 @@ xemacs-package:
 	cd ,,package; $(TAR) -cvzf ../vm-pkg.tar.gz *
 
 ##############################################################################
-# TODO creation of a release bundle
-release:
-	release.sh
+release::
+	./release.sh
 
 
