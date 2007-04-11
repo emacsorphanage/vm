@@ -1,5 +1,3 @@
-
-*******************************************************************************
 VM 8.0
 
   NOTES:
@@ -25,20 +23,21 @@ VM 8.0
     | to myself.  Good luck.
     `--------------------------------------------------------------------------
 	   
-  BUG FIXES:
+  BUGS:
 
-    * All serious bugs reported to gnu.emacs.vm.bugs, gnu.emacs.vm.info and
-      directly to me are fixed either by the patches posted by others or me.  
+    * All bugs reported to gnu.emacs.vm.bugs, gnu.emacs.vm.info and directly
+      to me are fixed either by the patches posted by others or me.    
 
-    * Added numerous new bugs.
+    * Probably added numerous new bugs.
 
 
   IMPROVEMENTS:
 
     * Better built system based on configure.  Autoloads are generated only
-      for those functions marked with the autoload token. 
+      for those functions marked with the autoload token now, which are mainly
+      interactive function.
 
-    * New cleaner source tree directory layout.
+    * New cleaner source tree layout.
 
-    * My (robf) VM extensions are now activated by default, where it made
+    * My (robf) VM extensions are now activated by default, where it makes
       sense to me.
