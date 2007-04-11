@@ -1,38 +1,32 @@
-This is NOT the original VM from http://www.wonderworks.com/vm!
+VM was written by Kyle Jones! Hail Kyle! The last release from Kyle was 7.19.
 
-VM was written by Kyle Jones!  Hail Kyle!
+VM's home page up to version 7.19 on the World Wide Web is at
+http://www.wonderworks.com/vm and the FAQ is still hosted there.
 
-This is Robert Widhopf-Fenk's version from http://www.robf.de/Hacking/elisp!
+This VM is based on my (Robert Widhopf-Fenk) patches against VM 7.19.
 
-Beside my own extensions, bug-fixes and enhancements it contains also most of
-those posted to gnu.emacs.vm.bugs, gnu.emacs.vm.info or mailed to me.  In fact
-I might have I accidently missed some or considered them to much of a hack,
-which might also hold for code snippets I posted in response to others wanting
-wired features.
-
-The persons contributing to this version of VM (in alphabetic order) are:
+The persons who have contributed to this version of VM are:
 
  * Aidan Kehoe
  * Glenn ???
  * Jens Gustedt
  * John J Foerch
  * Kevin Rogers
+ * Kyle Jones
  * Rob Hodges
  * Robert Marshall
  * Robert P. Goldman
+ * Robert Widhopf-Fenk
 
 Please mail me a note, if I have forgotten someone or accidently put you on
 the list. 
 
-Read INSTALL and follow the instructions.
-
-VM's home page on the World Wide Web is at http://www.wonderworks.com/vm and
-the FAQ is still hosted there.
+Read INSTALL and follow the instructions to compile and setup VM.
 
 *******************************************************************************
 BUGS
 
-If you have any problems or met a bug it is best to discuss them on the USENET
+If you have any problems or meet a bug it is best to discuss them on the USENET
 groups gnu.emacs.vm.bugs or gnu.emacs.vm.info!  Also search the groups before
 posting as there might have been some discussion and a fix before.
 
@@ -46,28 +40,22 @@ work with GNU Emacs, nevertheless I test VM also on GNU Emacs from time to
 time and I am happy to merge you fixes.
 
 *******************************************************************************
+Homepage
+
+The new homepage of VM is at http://www.nongnu.org/viewmail/ hosted by
+Savannah.  There is a bugtracker and other stuff, but I prefer the news
+groups!
+
+*******************************************************************************
 Wiki
 
 The Wiki at http://www.emacswiki.org/cgi-bin/wiki?id=CategoryViewMail is
 best suited to conserve code snippets, cooking guides or feature requests.
 
 *******************************************************************************
-UPDATES/UPGRADES
-
-Simply running the following command should check for an update and
-rebuilt the modified sources.  It requires "wget" to be installed!
-
-	make update
-
-WARNING: THIS WILL OVERWRITE ALL LOCAL CHANGES TO THE SOURCES!
-
-If you want to maintain a hacked version of VM and stay in sync with me, see
-the next section on BZR. 
-
-*******************************************************************************
 BZR (http://bazaar-vcs.org/)
 
-I maintain my changes by BZR now, since CVS sucks and TLA/BAZ do as well.
+I maintain my changes with BZR now, since CVS and SVN suck and TLA/BAZ do as well.
 
 If you want to send me changes or start hacking on your own you may want to 
 branch from my repository.
