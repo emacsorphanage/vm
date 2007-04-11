@@ -63,4 +63,5 @@ xemacs-package:
 release::
 	./release.sh
 
-
+snapshot::
+	./release.sh snapshot
