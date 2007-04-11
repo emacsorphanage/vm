@@ -462,8 +462,8 @@ I was really missing this!"
   (message "%d spam words are installed!" (length vm-spam-words)))
 
 (defcustom vm-vs-spam-score-headers
-  '(("X-Spam-Score:" "[-+]?[0-9]*\.?[0-9]+"  string-to-number)
-    ("X-Spam-Status:" "[-+]?[0-9]*\.?[0-9]+" string-to-number)
+  '(("X-Spam-Score:" "[-+]?[0-9]*\\.?[0-9]+"  string-to-number)
+    ("X-Spam-Status:" "[-+]?[0-9]*\\.?[0-9]+" string-to-number)
     ("X-Spam-Level:" "\\*+"     length))
   "A list of headers to look for spam scores."
   :group 'vm-avirtual
