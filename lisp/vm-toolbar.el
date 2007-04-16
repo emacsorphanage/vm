@@ -564,7 +564,7 @@ s-expression like this one in your .vm file:
 			 (aref t-spec 3)
 			 (aref t-spec 1)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar sym) item))
 	    ((eq sym 'delete/undelete)
@@ -579,7 +579,7 @@ s-expression like this one in your .vm file:
 			 ':visible '(eq vm-toolbar-delete/undelete-icon
 					vm-toolbar-delete-icon)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar 'delete) item)
 	     (setq name "undelete")
@@ -592,7 +592,7 @@ s-expression like this one in your .vm file:
 			 ':visible '(eq vm-toolbar-delete/undelete-icon
 					vm-toolbar-undelete-icon)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar 'undelete) item))
 	    ((eq sym 'help)
@@ -606,7 +606,7 @@ s-expression like this one in your .vm file:
 			 (aref t-spec 1)
 			 ':visible '(eq vm-toolbar-helper-command 'vm-help)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar 'help-help) item)
 	     (setq name "recover")
@@ -619,7 +619,7 @@ s-expression like this one in your .vm file:
 			 ':visible '(eq vm-toolbar-helper-command
 					'recover-file)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar 'help-recover) item)
 	     (setq name "getmail")
@@ -632,7 +632,7 @@ s-expression like this one in your .vm file:
 			 ':visible '(eq vm-toolbar-helper-command
 					'vm-get-new-mail)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar 'help-getmail) item)
              (setq name "mime")
@@ -645,7 +645,7 @@ s-expression like this one in your .vm file:
 			 ':visible '(eq vm-toolbar-helper-command
 					'vm-decode-mime-message)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar 'help-mime) item)))
       (setq button-list (cdr button-list))))
