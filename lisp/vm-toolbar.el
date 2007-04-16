@@ -138,7 +138,7 @@ s-expression like this one in your .vm file:
   [vm-toolbar-followup-icon
    vm-toolbar-followup-command
    (vm-toolbar-any-messages-p)
-   "Forward the current message.\n
+   "Follow up the current message.\n
 The command `vm-toolbar-followup-command' is run, which is normally
 fbound to `vm-followup-message'.
 You can make this button run some other command by using a Lisp
