@@ -41,3 +41,9 @@ VM 8.0
 
     * My (robf) VM extensions are now activated by default, where it makes
       sense to me.
+
+    * vm-mime-type-converter-alist now also works when replying to messages,
+      i.e. for text/html one can use lynx or w3m for the conversion.
+      (setq vm-mime-type-converter-alist
+	'(("text/html" "text/plain" "lynx -force_html -dump /dev/stdin")))
+
