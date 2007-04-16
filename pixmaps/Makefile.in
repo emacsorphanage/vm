@@ -41,10 +41,14 @@ Makefile: @srcdir@/Makefile.in
 install: install-pkg
 
 install-pkg: 
-	$(MKDIR) -p $(lispdir)
-	@for i in `ls *.xpm* ` ; do                                    \
+	$(MKDIR) -p $(lispdir)/mime
+	@for i in `ls *.xpm` ; do                                      \
 	    echo "Installing $$i in $(lispdir)" ;                      \
 	    $(INSTALL_DATA) $$i $(lispdir) ;                           \
+	done ;                                                         \
+	for i in `ls mime/*.xpm` ; do                                  \
+	    echo "Installing $$i in $(lispdir)" ;                      \
+	    $(INSTALL_DATA) $$i $(lispdir)/mime ;                      \
 	done ;                                                         
 	@echo VM pixmaps successfully installed\!
 
