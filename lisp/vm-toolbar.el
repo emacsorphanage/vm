@@ -526,10 +526,7 @@ s-expression like this one in your .vm file:
 (defun vm-toolbar-fsfemacs-install-toolbar ()
   (let ((button-list (reverse vm-use-toolbar))
 	(dir vm-toolbar-pixmap-directory)
-	(extension (if (and (display-color-p)
-			    (image-type-available-p 'xpm))
-		       "xpm"
-		     "xbm"))
+	(extension "xpm")
 	item t-spec sym name images)
     (defvar tool-bar-map)
     ;; hide the toolbar entries that are in the global keymap so
