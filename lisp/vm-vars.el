@@ -3118,15 +3118,20 @@ VM wants to display or undisplay."
   :type 'boolean)
 
 (defcustom vm-image-directory
-  (let* ((vm-dir (locate-library "vm"))
-	 (image-dir (expand-file-name "../pixmaps" (file-name-directory vm-dir))))
-    
-    (if (file-exists-p image-dir)
-	image-dir
-      (expand-file-name (concat data-directory "vm/"))))
+  (let* ((vm-dir (file-name-directory (locate-library "vm")))
+	 (image-dirs (list (expand-file-name "pixmaps" vm-dir)
+			   (expand-file-name "../pixmaps" vm-dir)
+			   (expand-file-name (concat data-directory "vm/"))))
+	 image-dir)
+    (while image-dirs
+      (setq image-dir (car image-dirs))
+      (if (file-exists-p image-dir)
+	  (setq image-dirs nil)
+	(setq image-dirs (cdr image-dirs))))
+    image-dir)
   "*Value specifies the directory where VM should find its artwork."
   :group 'vm
-  :type 'directory)
+  :type '(choice (const nil) directory))
 
 (defcustom vm-use-toolbar
   '(next previous delete/undelete autofile file
