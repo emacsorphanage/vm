@@ -244,7 +244,7 @@ AC_INIT([VM], [VM_VERSION], [hack@robf.de])
 AC_COPYRIGHT([Copyright (C) 2006-2007 Robert Widhopf-Fenk <hack@robf.de>])
 
 AC_CONFIG_SRCDIR([configure.ac])
-AC_CONFIG_FILES([Makefile lisp/Makefile info/Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile lisp/Makefile info/Makefile src/Makefile pixmaps/Makefile])
 
 # Common system utilities checking:
 AC_PROG_MAKE_SET

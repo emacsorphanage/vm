@@ -10,3 +10,9 @@ vm-autoload.el
 Makefile
 auto-autoloads.el
 custom-load.el
+autom4te.cache
+config.log
+config.status
+configure
+lisp/vm-revno.el
+lisp/vm-autoloads.el

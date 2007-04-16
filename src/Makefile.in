@@ -33,8 +33,11 @@ bindir= @bindir@
 all: $(SOURCES:.c=)
 
 install:
-	$(MKDIR) -p $(bindir)
-	cp $(SOURCES:.c=) $(bindir)
+	for i in $(SOURCES:.c=) ; do                               \
+	  echo "Installing $$i in $(bindir)" ;                     \
+          $(INSTALL_DATA) $$i $(bindir) ;                          \
+        done ;
+	@echo VM helper binaries successfully installed\!
 
 ##############################################################################
 Makefile: @srcdir@/Makefile.in

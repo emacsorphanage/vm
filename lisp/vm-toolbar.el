@@ -138,7 +138,7 @@ s-expression like this one in your .vm file:
   [vm-toolbar-followup-icon
    vm-toolbar-followup-command
    (vm-toolbar-any-messages-p)
-   "Forward the current message.\n
+   "Follow up the current message.\n
 The command `vm-toolbar-followup-command' is run, which is normally
 fbound to `vm-followup-message'.
 You can make this button run some other command by using a Lisp
@@ -526,10 +526,7 @@ s-expression like this one in your .vm file:
 (defun vm-toolbar-fsfemacs-install-toolbar ()
   (let ((button-list (reverse vm-use-toolbar))
 	(dir vm-toolbar-pixmap-directory)
-	(extension (if (and (display-color-p)
-			    (image-type-available-p 'xpm))
-		       "xpm"
-		     "xbm"))
+	(extension "xpm")
 	item t-spec sym name images)
     (defvar tool-bar-map)
     ;; hide the toolbar entries that are in the global keymap so
@@ -551,7 +548,8 @@ s-expression like this one in your .vm file:
 	     ;; can't do separators in FSF Emacs
 	     t)
 	    ((memq sym '(autofile compose file getmail
-			 mime next previous print quit reply followup forward visit))
+			 mime next previous print quit
+			 reply followup forward visit))
 	     (setq t-spec (symbol-value
 			   (intern (format "vm-toolbar-%s-button"
 					   (if (eq sym 'mime)
@@ -566,7 +564,7 @@ s-expression like this one in your .vm file:
 			 (aref t-spec 3)
 			 (aref t-spec 1)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar sym) item))
 	    ((eq sym 'delete/undelete)
@@ -581,7 +579,7 @@ s-expression like this one in your .vm file:
 			 ':visible '(eq vm-toolbar-delete/undelete-icon
 					vm-toolbar-delete-icon)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar 'delete) item)
 	     (setq name "undelete")
@@ -594,7 +592,7 @@ s-expression like this one in your .vm file:
 			 ':visible '(eq vm-toolbar-delete/undelete-icon
 					vm-toolbar-undelete-icon)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar 'undelete) item))
 	    ((eq sym 'help)
@@ -608,7 +606,7 @@ s-expression like this one in your .vm file:
 			 (aref t-spec 1)
 			 ':visible '(eq vm-toolbar-helper-command 'vm-help)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar 'help-help) item)
 	     (setq name "recover")
@@ -621,7 +619,7 @@ s-expression like this one in your .vm file:
 			 ':visible '(eq vm-toolbar-helper-command
 					'recover-file)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar 'help-recover) item)
 	     (setq name "getmail")
@@ -634,7 +632,7 @@ s-expression like this one in your .vm file:
 			 ':visible '(eq vm-toolbar-helper-command
 					'vm-get-new-mail)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar 'help-getmail) item)
              (setq name "mime")
@@ -647,7 +645,7 @@ s-expression like this one in your .vm file:
 			 ':visible '(eq vm-toolbar-helper-command
 					'vm-decode-mime-message)
 			 ':enable (aref t-spec 2)
-			 ':button '(:toggle nil)
+;			 ':button '(:toggle nil)
 			 ':image images))
 	     (define-key vm-mode-map (vector 'tool-bar 'help-mime) item)))
       (setq button-list (cdr button-list))))
