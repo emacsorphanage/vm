@@ -3130,7 +3130,7 @@ VM wants to display or undisplay."
 
 (defcustom vm-use-toolbar
   '(next previous delete/undelete autofile file
-    reply compose print visit quit help)
+    reply followup forward compose print visit quit help)
   "*Non-nil value causes VM to provide a toolbar interface.
 Value should be a list of symbols and integers that will determine which
 toolbar buttons will appear and in what order.
