@@ -11,6 +11,8 @@ OBJECTS = $(SOURCES:.c=.o)
 ##############################################################################
 # location of required programms
 prefix = @prefix@
+exec_prefix = @exec_prefix@
+MKDIR = @MKDIR@
 RM   = @RM@
 LS   = @LS@
 XARGS = @XARGS@
@@ -19,22 +21,20 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_DATA = @INSTALL_DATA@
 
+prefix = @prefix@
 top_srcdir = @top_srcdir@
 srcdir = @srcdir@
-
 datadir= @datadir@
 datarootdir= @datarootdir@
 lispdir = @lispdir@
-contribdir = contrib
-
-SYMLINKS = @SYMLINKS@
-LINKPATH = @LINKPATH@
+bindir= @bindir@
 
 ##############################################################################
 all: $(SOURCES:.c=)
 
 install:
-	TODO
+	$(MKDIR) -p $(bindir)
+	cp $(SOURCES:.c=) $(bindir)
 
 ##############################################################################
 Makefile: @srcdir@/Makefile.in

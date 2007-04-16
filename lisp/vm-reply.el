@@ -357,7 +357,8 @@ vm-included-text-prefix is prepended to every yanked line."
 				   layout t))
                                  ;; convert the layout if possible
                                  ((and (not (vm-mm-layout-is-converted layout))
-                                       (vm-mime-can-convert type)
+                                       (vm-mime-can-convert (car (vm-mm-layout-type
+                                                                  layout)))
                                        (setq new-layout
                                              (vm-mime-convert-undisplayable-layout
                                               layout)))

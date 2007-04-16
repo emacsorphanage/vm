@@ -53,6 +53,9 @@ SOURCES += vm-version.el
 SOURCES += vm-virtual.el
 SOURCES += vm-window.el
 
+SOURCES += vcard.el
+SOURCES += tapestry.el
+
 # to list of object files 
 ifeq (@EMACS_FLAVOR@,emacs)
 OBJECTS = vm-autoloads.elc

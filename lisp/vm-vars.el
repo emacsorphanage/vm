@@ -4218,7 +4218,7 @@ on the file system of Macs."
   :group 'vm
   :type 'boolean)
 
-(defconst vm-maintainer-address "hack@robf.de"
+(defconst vm-maintainer-address "viewmail-bugs@nongnu.org"
   "Where to send VM bug reports.")
 
 (defvar vm-mode-map

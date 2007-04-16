@@ -8,6 +8,7 @@ SOURCES = vm-version.el $(wildcard *.el)
 ##############################################################################
 # location of required programms
 prefix = @prefix@
+MKDIR = @MKDIR@
 RM   = @RM@
 LS   = @LS@
 XARGS = @XARGS@
@@ -32,7 +33,9 @@ LINKPATH = @LINKPATH@
 
 ##############################################################################
 
-all: vm.info vm-pcrisis.info
+all: info
+
+info: vm.info vm-pcrisis.info
 
 Makefile: @srcdir@/Makefile.in
 	cd ..; ./config.status
@@ -60,6 +63,9 @@ install-pkg: uninstall-pkg info
           fi ;                                                         \
         fi
 	@echo VM INFO files successfully installed\!
+
+uninstall-pkg:
+	-$(RM) $(info_dir)/vm*.info*
 
 ##############################################################################
 clean:
