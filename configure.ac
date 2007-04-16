@@ -2,7 +2,7 @@
 
 # Author:        Robert Widhopf-Fenk <hack@robf.de>
 
-# Copyright (C) 2006
+# Copyright (C) 2006-2007
 
 # VM is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Library General Public License as published by the Free
@@ -241,7 +241,7 @@ AC_DEFUN([VM_PATH_INFO_DIR], [
 VM_PRE_INIT
 AC_INIT([VM], [VM_VERSION], [hack@robf.de])
 
-AC_COPYRIGHT([Copyright (C) 2006 Robert Widhopf-Fenk <hack@robf.de>])
+AC_COPYRIGHT([Copyright (C) 2006-2007 Robert Widhopf-Fenk <hack@robf.de>])
 
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_FILES([Makefile lisp/Makefile info/Makefile src/Makefile])
@@ -252,6 +252,7 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PATH_PROG(RM, rm, /bin/rm)
 AC_PATH_PROG(LS, ls, /bin/ls)
+AC_PATH_PROG(MKDIR, mkdir, /bin/mkdir)
 AC_PATH_PROG(GREP, grep, /bin/grep)
 
 # External programs checking:
