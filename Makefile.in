@@ -8,7 +8,7 @@ XARGS = @XARGS@
 prefix = @prefix@
 INSTALL = @INSTALL@
 
-SUBDIRS = lisp info src
+SUBDIRS = lisp info src pixmaps
 
 ##############################################################################
 all:

@@ -38,7 +38,7 @@ all: info
 info: vm.info vm-pcrisis.info
 
 Makefile: @srcdir@/Makefile.in
-	cd ..; ./config.status
+	cd @srcdir@/..; ./config.status
 
 install: install-pkg
 
