@@ -551,7 +551,8 @@ s-expression like this one in your .vm file:
 	     ;; can't do separators in FSF Emacs
 	     t)
 	    ((memq sym '(autofile compose file getmail
-			 mime next previous print quit reply followup forward visit))
+			 mime next previous print quit
+			 reply followup forward visit))
 	     (setq t-spec (symbol-value
 			   (intern (format "vm-toolbar-%s-button"
 					   (if (eq sym 'mime)
