@@ -122,11 +122,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-summary-faces-alist
   '(
-    ((deleted)   vm-summary-deleted-face)
     ((or (header "Priority: urgent")
          (header "Importance: high")
-         (header "X-Priority: 1"))
+         (header "X-Priority: 1")
+         (label "!")
+         (header "X-VM-postponed-data:"))
      vm-summary-high-priority-face)
+    ((deleted)   vm-summary-deleted-face)
     ((new)       vm-summary-new-face)
     ((unread)    vm-summary-unread-face)
     ((filed)     vm-summary-filed-face)
@@ -137,9 +139,7 @@
     ((redistributed) vm-summary-redistributed-face)
     ((marked)    vm-summary-marked-face)
     ((outgoing)  vm-summary-outgoing-face)
-    ((any)       vm-summary-default-face)
-    ((label "!") vm-summary-high-priority-face)
-    (header "^X-VM-postponed-data:") vm-summary-high-priority-face)
+    ((any)       vm-summary-default-face))
   "Alist of virtual folder conditions and corresponding faces.
 Order matters. The first matching one will be used as face."
   :type '(repeat (cons (sexp) (face)))
