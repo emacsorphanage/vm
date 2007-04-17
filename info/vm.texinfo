@@ -249,7 +249,7 @@ by typing @kbd{L} (@code{vm-load-init-file}) from within VM.
 inbox}.  If the variable @code{vm-auto-get-new-mail} is set
 non-@code{nil}, VM will gather any mail present in your system mailbox
 and integrate it into your primary inbox.  The default name of your
-primary inbox is @file{~/INBOX}, but VM will use whatever file is named
+primary inbox is @file{~/Mail/inbox}, but VM will use whatever file is named
 by the variable @code{vm-primary-inbox}.
 
 @vindex vm-crash-box
@@ -1640,6 +1640,7 @@ Manual}.  However, mail composition buffers created by VM have some
 extra command keys.
 
 @table @kbd
+
 @findex vm-yank-message
 @findex vm-yank-message-other-folder
 @kindex C-c C-y
@@ -1657,6 +1658,7 @@ value of @code{vm-included-text-prefix} to every yanked line, and don't yank
 any headers other than those specified in
 @code{vm-visible-headers} and @code{vm-invisible-headers}.  To yank a message from
 a different folder than the parent of this composition, use
+
 @key{M-x vm-yank-message-other-buffer}.
 @kindex C-c C-v
 @item C-c C-v <Any VM command key>
@@ -1686,6 +1688,7 @@ encoded message.  If you change your mind about using the
 attachment, you can remove it from the composition with @key{C-k}.
 If you want to move the attachment to some other part of the message,
 you can kill it @key{C-k} and yank it back with @key{C-y}.
+
 @kindex C-c C-m
 @item C-c C-m (@code{vm-mime-attach-message})
 Attaches a mail message to the composition.  If invoked with a
@@ -1699,6 +1702,7 @@ the selected folder will be attached as a MIME digest.
 @kindex C-c C-b
 @item C-c C-b (@code{vm-mime-attach-buffer})
 Attaches an Emacs buffer to the composition.
+
 @findex vm-mime-encode-composition
 @kindex C-c C-e
 @item C-c C-e (@code{vm-mime-encode-composition})
@@ -1708,6 +1712,7 @@ it.  After signing the message, you would use C-c C-c as usual to
 send the message.  Emacs' @code{undo} command can be used to undo
 the encoding, so that you can continue composing the unencoded
 message.
+
 @findex vm-preview-composition
 @kindex C-c C-p
 @item C-c C-p (@code{vm-preview-composition})
@@ -1716,6 +1721,18 @@ temporary folder and you can read the message and interact with
 it using normal VM mode commands to see how it might look to a
 recipient.  Type @key{q} to quit the temporary folder and resume
 composing your message.
+
+@findex vm-postpone-composition
+@kindex C-c C-d
+@item C-c C-d (@code{vm-postpone-composition})
+Postpones the current composition.  The message is stored in the
+folder specified in @code{vm-postponed-folder}.  You can continue composing
+of messages by visiting @code{vm-postponed-folder}, selecting the a messsage
+and @key{m} or by directly calling the function on any message in any folder
+@kbd{M-x vm-continue-postponed-message}.  When called with a prefix arg
+@code{vm-postpone-composition} will ask you for the folder to save the draft
+to, i.e. you might also save it to your inbox.
+
 @end table
 
 @findex vm-mail
@@ -2031,7 +2048,8 @@ If you have a directory where you keep all your mail folders, you should
 set the variable @code{vm-folder-directory} to point to it.  If this
 variable is set, @code{vm-save-message} will insert this directory name
 into the minibuffer before prompting you for a folder name; this will save
-you some typing.
+you some typing. The default value of @code{vm-folder-directory} is 
+@code{~/Mail}.
 
 @vindex vm-auto-folder-alist
 Another aid to selecting folders in which to save mail is the variable
@@ -2833,6 +2851,39 @@ member of some virtual folder currently
 being visited.
 @item written
 matches message if it has been saved without its headers.
+@item older-than
+matches message if it is atleast @var{ARG} days old
+@item eval
+matches message if evaluating the sexpr @var{ARG} yields @code{t}.
+@item outgoing
+matches message if your are the author of it, i.e. if the yuthor matches
+@code{vm-summary-uninteresting-senders}
+@item spam-score
+matches message if its spam score is atleast @var{ARG}.  See
+@code{vm-vs-spam-score-headers} for configuration.
+@item spam-word
+matches message if it contains a word from @code{vm-spam-words-file}
+@item folder-name
+matches message if it is from a folder matching @code{ARG}
+@item in-bbdb
+matches if the addresses from the message are in the BBDB. With an option
+first argument you might select the address class and with an optional second
+argument if only the first address should be checked.  
+@example
+(in-bbdb authors)
+@end example
+@example
+(in-bbdb recipients t)
+@end example
+@item attachment
+matches if a message contains an attachment resp. its text matched
+@code{vm-vs-attachment-regexp}
+@item vm-mode
+matches the message if in vm-mode and one of its argument
+selectors match the message.
+@item mail-mode
+matches the message if in mail-mode and one of its argument
+selectors match the message.
 @end table
 
 Here is an example that you may find useful as a template to
@@ -2921,6 +2972,25 @@ The keys @kbd{V S} and @kbd{V A} invoke
 @code{vm-create-virtual-folder-same-author} which create virtual folders
 containing all the messages in the current folder with the same
 subject or author as the current message.
+
+The keys @kbd{V O} @code{vm-virtual-omit-message} will omit a message from the
+virtual folder and @kbd{V U} @code{vm-virtual-update-folders} will force an
+update of the virtual folder.
+
+@kbd{M-x vm-virtual-check-selector-interactive} allows to test selectors
+interactively and will emit debug information when called with a prefix
+argument.
+
+Automatical marking of messages for deletion based on a selector can be
+achived with @code{vm-virtual-auto-delete-message} for interactive use and the
+function and @code{vm-virtual-auto-delete-messages} when added to the VM hook
+@code{vm-arrived-messages-hook}.  This can be quite handy for marking spam for
+deletion.
+
+@kbd{M-x vm-virtual-save-message} can be used to save messages to the 
+folder corresponging to the first matching selector and the function 
+@kbd{vm-virtual-auto-archive-messages} can file messages based on
+selectors (see also @code{vm-auto-archive-messages}). 
 
 @node Frames and Windows, Toolbar, Virtual Folders, Top
 @chapter Frames and Windows

@@ -1,4 +1,4 @@
-VM 8.0
+VM 8.0.0
 
   NOTES:
 
@@ -23,27 +23,48 @@ VM 8.0
     | to myself.  Good luck.
     `--------------------------------------------------------------------------
 	   
+    * My (robf) VM extensions are now activated by default, where it makes
+      sense to me.
+
+    * Releases are numbered now MAJOR.MINOR.PATCHLEVEL, where MAJOR is
+      increased when fundamental changes occur, MINOR for new features and
+      PATCHLEVEL for bugfix releases.
+
+    * New cleaner source tree layout.
+
+    * Better built system based on configure.  Autoloads are generated only
+      for those functions marked with the autoload token now, which are mainly
+      interactive function. Thus, loading occurs only on demand and startup
+      should be faster.
+      
   BUGS:
 
     * All bugs reported to gnu.emacs.vm.bugs, gnu.emacs.vm.info and directly
-      to me are fixed either by the patches posted by others or me.    
+      to me are fixed either by the patches posted by others or me.
+
+    * If there are any missing autoloads, please report them and add a
+      (require 'vm-SOURCE) to your ~/.vm!
 
     * Probably added numerous new bugs.
 
 
-  IMPROVEMENTS:
+  IMPROVEMENTS: compared to 7.19 (not vmrf)
 
-    * Better built system based on configure.  Autoloads are generated only
-      for those functions marked with the autoload token now, which are mainly
-      interactive function.
-
-    * New cleaner source tree layout.
-
-    * My (robf) VM extensions are now activated by default, where it makes
-      sense to me.
-
+    * A new icon set based on vm-small-pixmaps.tgz which was floating around. 
+    
     * vm-mime-type-converter-alist now also works when replying to messages,
       i.e. for text/html one can use lynx or w3m for the conversion.
       (setq vm-mime-type-converter-alist
 	'(("text/html" "text/plain" "lynx -force_html -dump /dev/stdin")))
 
+    * Postponing (draft handling) of compositions and continuing of drafts, in
+      fact any messages also those from other people. (Info node: Sending
+      Messages) 
+
+    * New mail header insertion functions for return-receipts, mail-priority
+      and FCC.
+
+    * More virtual folder selectors and replacements of other functions based
+      on selectors. (Info node: Virtual Folders)
+
+      TODO vm-serial.el ... siehe home page
