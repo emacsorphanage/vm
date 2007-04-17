@@ -598,7 +598,7 @@ Call this function, if you want to see the message unfilled."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-rmail-mode nil
-  "*Non-nil means up/down in the presentation buffer oes cursor movement.
+  "*Non-nil means up/down in the presentation buffer does cursor movement.
 Use `vm-rmail-toggle' to switch between normal and this mode."
   :type 'boolean
   :group 'vm-rfaddons)
