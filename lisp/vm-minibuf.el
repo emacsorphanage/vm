@@ -19,7 +19,6 @@
 
 ;;; Code:
 
-;;;###autoload
 (defun vm-minibuffer-complete-word (&optional exiting)
   (interactive)
   (let ((opoint (point))
@@ -132,7 +131,6 @@
 	(and (not exiting)
 	     (vm-minibuffer-completion-message "[No match]")))))))
 
-;;;###autoload
 (defun vm-minibuffer-complete-word-and-exit ()
   (interactive)
   (vm-minibuffer-complete-word t)
@@ -245,7 +243,6 @@ default the local keymap of the current buffer is used."
 	(setq i (1+ i))
 	(insert "\n")))))
 
-;;;###autoload
 (defun vm-minibuffer-completion-help ()
   (interactive)
   (let ((opoint (point))
@@ -290,7 +287,6 @@ default the local keymap of the current buffer is used."
 
 (defvar last-nonmenu-event)
 
-;;;###autoload
 (defun vm-read-string (prompt completion-list &optional multi-word)
   ;; handle alist
   (if (consp (car completion-list))
@@ -308,7 +304,6 @@ default the local keymap of the current buffer is used."
 	     (vm-keyboard-read-string prompt completion-list multi-word)))
     (vm-keyboard-read-string prompt completion-list multi-word)))
 
-;;;###autoload
 (defun vm-read-number (prompt)
   (let (result)
     (while
@@ -316,7 +311,6 @@ default the local keymap of the current buffer is used."
 	 (string-match "^[ \t]*-?[0-9]+" (setq result (read-string prompt)))))
     (string-to-int result)))
 
-;;;###autoload
 (defun vm-keyboard-read-file-name (prompt &optional dir default
 					  must-match initial history)
   "Like read-file-name, except HISTORY's value is unaltered."
@@ -336,7 +330,6 @@ default the local keymap of the current buffer is used."
 	     (read-file-name prompt dir default must-match initial))))
       (and history (set history oldvalue)))))
 
-;;;###autoload
 (defun vm-read-file-name (prompt &optional dir default
 				 must-match initial history)
   "Like read-file-name, except a mouse interface is used if a mouse
