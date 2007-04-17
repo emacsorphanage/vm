@@ -4385,6 +4385,7 @@ on the file system of Macs."
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-v" vm-mode-map)
     (define-key map "\C-c\C-p" 'vm-preview-composition)
+    (define-key map "\C-c\C-d" 'vm-postpone-message)
     (define-key map "\C-c\C-e" 'vm-mime-encode-composition)
     (define-key map "\C-c\C-a" 'vm-mime-attach-file)
     (define-key map "\C-c\C-b" 'vm-mime-attach-buffer)
