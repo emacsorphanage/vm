@@ -605,7 +605,7 @@ creation)."
                                    (car type) nil desc t)))))))
 
 ;;-----------------------------------------------------------------------------
-(define-key vm-mail-mode-map "\C-c\C-p" 'vm-postpone-message)
+(define-key vm-mail-mode-map "\C-c\C-d" 'vm-postpone-message)
 
 (defvar vm-postpone-message-modes-to-disable
   '(font-lock-mode ispell-minor-mode filladapt-mode auto-fill-mode)
