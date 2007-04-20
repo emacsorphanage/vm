@@ -4705,6 +4705,11 @@ minibuffer if the command is run interactively."
 	 mlist mp default prompt description folder)
      (if (null vm-send-using-mime)
 	 (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
+     (if current-prefix-arg
+         (setq vm-mail-buffer (vm-read-folder-name)
+               vm-mail-buffer (if (string= vm-mail-buffer "") nil
+                                (setq current-prefix-arg nil)
+                                (get-buffer vm-mail-buffer))))
      (cond ((or current-prefix-arg (null vm-mail-buffer)
 		(not (buffer-live-p vm-mail-buffer)))
 	    (let ((dir (if vm-folder-directory

@@ -2065,16 +2065,6 @@ B and E are the beginning and end of the marked region or the current line."
   (if (fboundp 'gnus-group-save-newsrc)
       (gnus-group-save-newsrc)))
 
-(defun vm-folder-list ()
-  (save-excursion
-    (let ((buffers (buffer-list)) folders)
-      (while buffers
-        (set-buffer (car buffers))
-        (if (eq major-mode 'vm-mode)
-            (setq folders (cons (buffer-name) folders)))
-        (setq buffers (cdr buffers)))
-      folders)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;###autoload
 (defun vm-get-all-new-mail ()
