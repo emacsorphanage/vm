@@ -3352,6 +3352,7 @@ run vm-expunge-folder followed by vm-save-folder."
 	"Type \\[vm-mail-send-and-exit] to send message, \\[kill-buffer] to discard this composition")))
      (t (describe-mode)))))
 
+;;;###autoload
 (defun vm-spool-move-mail (source destination)
   (let ((handler (and (fboundp 'find-file-name-handler)
 		      (condition-case ()

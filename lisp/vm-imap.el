@@ -82,6 +82,8 @@
 ;; We remember which messages we have retrieved so that we can
 ;; leave the message in the mailbox, and yet not retrieve the
 ;; same messages again and again.
+
+;;;###autoload
 (defun vm-imap-move-mail (source destination)
   (let ((process nil)
 	(m-per-session vm-imap-messages-per-session)
