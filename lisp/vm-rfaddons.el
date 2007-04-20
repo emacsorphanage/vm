@@ -603,6 +603,15 @@ Use `vm-rmail-toggle' to switch between normal and this mode."
   :type 'boolean
   :group 'vm-rfaddons)
 
+(defcustom vm-rmail-mode-list
+  '(vm-mode vm-presentation-mode vm-virtual-mode vm-summary-mode)
+  "*Mode to activate `vm-rmail-mode' in."
+  :type '(repeat (const vm-mode)
+                 (const vm-presentation-mode)
+                 (const vm-virtual-mode)
+                 (const vm-summary-mode))
+  :group 'vm-rfaddons)
+  
 (defun vm-rmail-toggle ()
   (interactive)
   (message (if vm-rmail-mode "VM-mode" "Rmail-mode"))
@@ -610,23 +619,21 @@ Use `vm-rmail-toggle' to switch between normal and this mode."
   
 (defun vm-rmail-up ()
   (interactive)
-  (cond ((and vm-rmail-mode
-              (member major-mode '(vm-mode vm-presentation-mode)))
-         (next-line -1))
-        (t
+  (cond ((and vm-rmail-mode (member major-mode vm-rmail-mode-list))
          (vm-next-message -1)
          (vm-display nil nil '(rf-vm-rmail-up vm-previous-message)
-                     (list this-command)))))
+                     (list this-command)))
+        (t 
+         (next-line -1))))
 
 (defun vm-rmail-down ()
   (interactive)
-  (cond ((and vm-rmail-mode
-              (member major-mode '(vm-mode vm-presentation-mode)))
-         (next-line 1))
-        (t
+  (cond ((and vm-rmail-mode (member major-mode vm-rmail-mode-list))
          (vm-next-message 1)
          (vm-display nil nil '(rf-vm-rmail-up vm-next-message)
-                     (list this-command)))))
+                     (list this-command)))
+        (t
+         (next-line 1))))
 
 (defun vm-do-with-message (count function vm-display)
   (vm-follow-summary-cursor)
