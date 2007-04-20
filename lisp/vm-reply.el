@@ -1282,15 +1282,17 @@ found, the current buffer remains selected."
 ;;;###autoload
 (defun vm-mail-internal
     (&optional buffer-name to subject in-reply-to cc references newsgroups)
+    "Create a message buffer and set it up according to args.
+Fills in the headers as given by the arguments.
+Binds the `vm-mail-mode-map' and hooks"
   (let ((folder-buffer nil))
     (if (memq major-mode '(vm-mode vm-virtual-mode))
 	(setq folder-buffer (current-buffer)))
+    (setq buffer-name (if buffer-name
+                          (vm-decode-mime-encoded-words-in-string buffer-name)
+                        "mail to ?"))
     (setq buffer-name (vm-drop-8bit-chars buffer-name))
-    (set-buffer
-     (generate-new-buffer
-      (or (if buffer-name
-              (vm-decode-mime-encoded-words-in-string buffer-name))
-          "mail to ?")))
+    (set-buffer (generate-new-buffer buffer-name))
     ;; FSF Emacs: try to prevent write-region (called to handle FCC) from
     ;; asking the user to choose a safe coding system.
     (if (and vm-fsfemacs-mule-p (fboundp 'set-buffer-file-coding-system))
