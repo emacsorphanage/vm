@@ -4217,11 +4217,15 @@ mail is not sent."
   :group 'vm
   :type 'sexp)
 
-(defcustom vm-drop-8bit-chars nil
-  "*If true buffer names will not contain 8bit chars which might cause problems
-on the file system of Macs."
+(defcustom vm-drop-buffer-name-chars nil
+  "*Regexp used to replace chars in composition buffer names.
+If non-nil buffer names will be cleaned to avoid save problems.
+If t, 8bit chars are replaced by a \"_\", if a string it should
+be a regexp matching all chars to be replaced by a \"_\"."
   :group 'vm
-  :type 'boolean)
+  :type '(choice (const :tag "Disabled" nil)
+		 (regexp :tag "8bit chars" "[^\x0-\x80]")
+		 (regexp :tag "Custom regexp")))
 
 (defconst vm-maintainer-address "viewmail-bugs@nongnu.org"
   "Where to send VM bug reports.")

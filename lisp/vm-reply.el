@@ -1269,15 +1269,11 @@ found, the current buffer remains selected."
 (defvar mail-signature-file)
 (defvar mail-personal-alias-file)
 
-(defun vm-drop-8bit-chars (buffer-name)
+(defun vm-drop-buffer-name-chars (buffer-name)
   "Removes 8bit chars from the argument."
-  (if (and vm-drop-8bit-chars buffer-name)
-      (let ((i 0) (l (length buffer-name)))
-        (while (< i l)
-          (if (> (aref buffer-name i) 127)
-              (aset buffer-name i ?_))
-          (setq i (1+ i)))))
-  buffer-name)
+  (if (and vm-drop-buffer-name-chars buffer-name)
+      (replace-in-string buffer-name vm-drop-buffer-name-chars "_" t)
+    buffer-name))
 
 ;;;###autoload
 (defun vm-mail-internal
@@ -1291,7 +1287,7 @@ Binds the `vm-mail-mode-map' and hooks"
     (setq buffer-name (if buffer-name
                           (vm-decode-mime-encoded-words-in-string buffer-name)
                         "mail to ?"))
-    (setq buffer-name (vm-drop-8bit-chars buffer-name))
+    (setq buffer-name (vm-drop-buffer-name-chars buffer-name))
     (set-buffer (generate-new-buffer buffer-name))
     ;; FSF Emacs: try to prevent write-region (called to handle FCC) from
     ;; asking the user to choose a safe coding system.
@@ -1669,7 +1665,7 @@ message."
               newbufname (format fmt newbufname ellipsis))
         (if (equal newbufname curbufname)
             nil
-          (setq newbufname (vm-drop-8bit-chars newbufname))
+          (setq newbufname (vm-drop-buffer-name-chars newbufname))
           (rename-buffer newbufname t)))))
 
 ;;;###autoload
