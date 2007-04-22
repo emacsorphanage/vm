@@ -66,7 +66,7 @@ endif
 
 OBJECTS += $(SOURCES:.el=.elc)
 
-INSTALL_FILES = $(SOURCES) $(OBJECTS)
+INSTALL_FILES = $(SOURCES) $(OBJECTS) vm-revno.el vm-revno.elc
 
 # for autoload generation 
 AUTOLOAD_PACKAGE_NAME = (setq autoload-package-name \"vm\")
@@ -111,7 +111,7 @@ all: $(OBJECTS)
 install: install-el install-elc
 
 ##############################################################################
-vm-revno.el: $(INSTALL_FILES)
+vm-revno.el: $(SOURCES)
 	echo ";;; This is a generated file, do not edit it!" > vm-revno.el
 	echo "(setq vm-revno \"`$(BZR) nick`-`$(BZR) revno`\")" >> vm-revno.el
 	echo "(setq vm-author \"`$(BZR) whoami`\")" >> vm-revno.el
