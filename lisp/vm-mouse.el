@@ -287,7 +287,7 @@
 		 (setq selective-display nil)
 		 (erase-buffer)
 		 (insert-file-contents pid-file)
-		 (setq pid (int-to-string (string-to-int (buffer-string))))
+		 (setq pid (int-to-string (string-to-number (buffer-string))))
 		 (erase-buffer)
 		 (insert (if new-window "newwin" "goto") ?\n)
 		 (insert url ?\n)

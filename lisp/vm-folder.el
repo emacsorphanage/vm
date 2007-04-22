@@ -36,7 +36,7 @@ before this cell.  A nil value means numbering will be done until
 the end of vm-message-list is reached."
   (let ((n 1) (message-list (or start-point vm-message-list)))
     (if (and start-point (vm-reverse-link-of (car start-point)))
-	(setq n (1+ (string-to-int
+	(setq n (1+ (string-to-number
 		     (vm-number-of
 		      (car
 		       (vm-reverse-link-of
@@ -90,10 +90,10 @@ and the message in the cons pointed to by vm-numbering-redo-end-point."
   (cond ((eq end-point t)
 	 (setq vm-numbering-redo-end-point t))
 	((and (consp end-point)
-	      (> (string-to-int
+	      (> (string-to-number
 		  (vm-number-of
 		   (car end-point)))
-		 (string-to-int
+		 (string-to-number
 		  (vm-number-of
 		   (car vm-numbering-redo-end-point)))))
 	 (setq vm-numbering-redo-end-point end-point))
@@ -823,7 +823,7 @@ Returns non-nil if the separator is found, nil otherwise."
 		      (vm-match-header vm-content-length-header)))
 	  (progn
 	    (setq content-length
-		  (string-to-int (vm-matched-header-contents)))
+		  (string-to-number (vm-matched-header-contents)))
 	    ;; if search fails, we'll be at point-max
 	    ;; if specified content-length is too long, go to point-max
 	    (if (search-forward "\n\n" nil 0)
@@ -3591,7 +3591,7 @@ run vm-expunge-folder followed by vm-save-folder."
 				vm-grep-program file data)
 		       (sleep-for 2)
 		       (setq vm-grep-program nil)))
-	      (setq count (string-to-int (buffer-string)))
+	      (setq count (string-to-number (buffer-string)))
 	      (cond ((memq type '(From_ BellFrom_ From_-with-Content-Length))
 		     t )
 		    ((eq type 'mmdf)

@@ -504,16 +504,16 @@ Prefix arg means the new virtual folder should be visited read only."
       (re-search-forward arg (vm-text-end-of (vm-real-message-of m)) t))))
 
 (defun vm-vs-more-chars-than (m arg)
-  (> (string-to-int (vm-su-byte-count m)) arg))
+  (> (string-to-number (vm-su-byte-count m)) arg))
 
 (defun vm-vs-less-chars-than (m arg)
-  (< (string-to-int (vm-su-byte-count m)) arg))
+  (< (string-to-number (vm-su-byte-count m)) arg))
 
 (defun vm-vs-more-lines-than (m arg)
-  (> (string-to-int (vm-su-line-count m)) arg))
+  (> (string-to-number (vm-su-line-count m)) arg))
 
 (defun vm-vs-less-lines-than (m arg)
-  (< (string-to-int (vm-su-line-count m)) arg))
+  (< (string-to-number (vm-su-line-count m)) arg))
 
 (defun vm-vs-virtual-folder-member (m)
   (vm-virtual-messages-of m))

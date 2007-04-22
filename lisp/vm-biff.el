@@ -274,7 +274,7 @@ folder selectors work."
     (sit-for 0)
     
     (if vm-biff-message-number
-        (vm-goto-message (string-to-int (vm-number-of msg))))
+        (vm-goto-message (string-to-number (vm-number-of msg))))
     
     (run-hooks 'vm-biff-select-hook)))
 

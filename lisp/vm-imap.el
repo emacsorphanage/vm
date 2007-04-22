@@ -482,7 +482,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	      (error "No port in IMAP maildrop specification, \"%s\""
 		     source))
 	  (if (string-match "^[0-9]+$" port)
-	      (setq port (string-to-int port)))
+	      (setq port (string-to-number port)))
 	  (if (null auth)
 	      (error "No authentication method in IMAP maildrop specification, \"%s\"" source))
 	  (if (null user)
@@ -1228,7 +1228,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	       (setq obj (vm-imap-read-object process))
 	       (if (not (eq (car obj) 'atom))
 		   (vm-imap-protocol-error "number expected after {"))
-	       (setq n-octets (string-to-int
+	       (setq n-octets (string-to-number
 			       (buffer-substring (nth 1 obj)
 						 (nth 2 obj))))
 	       (setq obj (vm-imap-read-object process))

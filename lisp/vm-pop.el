@@ -405,7 +405,7 @@ relevant POP servers to remove the messages."
 	      (error "No port in POP maildrop specification, \"%s\""
 		     source))
 	  (if (string-match "^[0-9]+$" port)
-	      (setq port (string-to-int port)))
+	      (setq port (string-to-number port)))
 	  (if (null auth)
 	      (error
 	       "No authentication method in POP maildrop specification, \"%s\""
@@ -687,12 +687,12 @@ relevant POP servers to remove the messages."
     (if (null response)
 	nil
       (setq list (vm-parse response "\\([^ ]+\\) *"))
-      (list (string-to-int (nth 1 list)) (string-to-int (nth 2 list))))))
+      (list (string-to-number (nth 1 list)) (string-to-int (nth 2 list))))))
 
 (defun vm-pop-read-list-response (process)
   (let ((response (vm-pop-read-response process t)))
     (and response
-	 (string-to-int (nth 2 (vm-parse response "\\([^ ]+\\) *"))))))
+	 (string-to-number (nth 2 (vm-parse response "\\([^ ]+\\) *"))))))
 
 (defun vm-pop-read-uidl-long-response (process)
   (vm-pop-check-connection process)

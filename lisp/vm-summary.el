@@ -444,10 +444,10 @@ mandatory."
 				   new-match-end (car retval))))
 		       (setq token `('group-begin
 				     ,(if (match-beginning 2)
-					  (string-to-int
+					  (string-to-number
 					   (concat (match-string 1 format)
 						   (match-string 2 format))))
-				     ,(string-to-int
+				     ,(string-to-number
 				       (match-string 4 format)))
 			     splice t)))
 		    ((= conv-spec ?\))
@@ -547,7 +547,7 @@ mandatory."
 				  'vm-numeric-left-justify-string
 				'vm-left-justify-string)
 			      (car sexp)
-			      (string-to-int
+			      (string-to-number
 			       (substring format
 					  (match-beginning 2)
 					  (match-end 2))))))
@@ -558,14 +558,14 @@ mandatory."
 				  'vm-numeric-right-justify-string
 				'vm-right-justify-string)
 			      (car sexp)
-			      (string-to-int
+			      (string-to-number
 			       (substring format
 					  (match-beginning 2)
 					  (match-end 2)))))))
 	      (cond ((and (not token) (match-beginning 3))
 		     (setcar sexp
 			     (list 'vm-truncate-string (car sexp)
-				   (string-to-int
+				   (string-to-number
 				    (substring format
 					       (match-beginning 4)
 					       (match-end 4)))))))
@@ -836,7 +836,7 @@ mandatory."
 		  (<= (length string) 2))
 	     (setq monthday string))
 	    ((= (length string) 2)
-	     (if (< (string-to-int string) 70)
+	     (if (< (string-to-number string) 70)
 		 (setq year (concat "20" string))
 	       (setq year (concat "19" string))))
 	    (t (setq year string))))
@@ -1432,7 +1432,7 @@ Call this function if you made changes to `vm-summary-format'."
 				  'vm-numeric-left-justify-string
 				'vm-left-justify-string)
 			      (car sexp)
-			      (string-to-int
+			      (string-to-number
 			       (substring format
 					  (match-beginning 2)
 					  (match-end 2))))))
@@ -1443,14 +1443,14 @@ Call this function if you made changes to `vm-summary-format'."
 				  'vm-numeric-right-justify-string
 				'vm-right-justify-string)
 			      (car sexp)
-			      (string-to-int
+			      (string-to-number
 			       (substring format
 					  (match-beginning 2)
 					  (match-end 2)))))))
 	      (cond ((match-beginning 3)
 		     (setcar sexp
 			     (list 'vm-truncate-string (car sexp)
-				   (string-to-int
+				   (string-to-number
 				    (substring format
 					       (match-beginning 4)
 					       (match-end 4)))))))

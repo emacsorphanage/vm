@@ -2827,7 +2827,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		  (setq p-total (vm-mime-get-parameter (car p-list) "total"))
 		  (if (null p-total)
 		      nil
-		    (setq p-total (string-to-int p-total))
+		    (setq p-total (string-to-number p-total))
 		    (if (< p-total 1)
 			(vm-mime-error "message/partial specified part total < 1, %d" p-total))
 		    (if total
@@ -2838,7 +2838,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		  (if (null p-number)
 		      (vm-mime-error
 		       "message/partial message missing number parameter"))
-		  (setq p-number (string-to-int p-number))
+		  (setq p-number (string-to-number p-number))
 		  (if (< p-number 1)
 		      (vm-mime-error "message/partial part number < 1, %d"
 				     p-number))
@@ -3335,8 +3335,8 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	  (if (not (re-search-forward "\\b\\([0-9]+\\)x\\([0-9]+\\)\\b" nil t))
 	      (error "file dimensions missing from 'identify' output: %s"
 		     (buffer-string)))
-	  (setq width (string-to-int (match-string 1))
-		height (string-to-int (match-string 2))))
+	  (setq width (string-to-number (match-string 1))
+		height (string-to-number (match-string 2))))
       (and work-buffer (kill-buffer work-buffer)))
     (list width height)))
 
@@ -3514,7 +3514,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 (defun vm-process-filter-display-some-image-strips (process output)
   (let (which-strips (i 0))
     (while (string-match "XZXX\\([0-9]+\\)XZXX" output i)
-      (setq which-strips (cons (string-to-int (match-string 1 output))
+      (setq which-strips (cons (string-to-number (match-string 1 output))
 			       which-strips)
 	    i (match-end 0)))
     (save-excursion
@@ -4744,7 +4744,7 @@ minibuffer if the command is run interactively."
 	   (while (zerop result)
 	     (setq result (read-string prompt))
 	     (and (string= result "") default (setq result default))
-	     (setq result (string-to-int result)))
+	     (setq result (string-to-number result)))
 	   (if (null (setq mp (nthcdr (1- result) vm-message-list)))
 	       (error "No such message."))))
      (setq description (read-string "Description: "))
@@ -6382,7 +6382,7 @@ agent; under Unix, normally sendmail.)"
 				  'vm-numeric-left-justify-string
 				'vm-left-justify-string)
 			      (car sexp)
-			      (string-to-int
+			      (string-to-number
 			       (substring format
 					  (match-beginning 2)
 					  (match-end 2))))))
@@ -6393,14 +6393,14 @@ agent; under Unix, normally sendmail.)"
 				  'vm-numeric-right-justify-string
 				'vm-right-justify-string)
 			      (car sexp)
-			      (string-to-int
+			      (string-to-number
 			       (substring format
 					  (match-beginning 2)
 					  (match-end 2)))))))
 	      (cond ((match-beginning 3)
 		     (setcar sexp
 			     (list 'vm-truncate-string (car sexp)
-				   (string-to-int
+				   (string-to-number
 				    (substring format
 					       (match-beginning 4)
 					       (match-end 4)))))))

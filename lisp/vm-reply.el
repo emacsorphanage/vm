@@ -236,7 +236,7 @@ Don't call this function from a program."
 	(while (zerop result)
 	  (setq result (read-string prompt))
 	  (and (string= result "") default (setq result default))
-	  (setq result (string-to-int result)))
+	  (setq result (string-to-number result)))
 	(if (null (setq mp (nthcdr (1- result) vm-message-list)))
 	    (error "No such message."))))
     (set-buffer b)
@@ -290,7 +290,7 @@ vm-included-text-prefix is prepended to every yanked line."
 	(while (zerop result)
 	  (setq result (read-string prompt))
 	  (and (string= result "") default (setq result default))
-	  (setq result (string-to-int result)))
+	  (setq result (string-to-number result)))
 	(if (null (setq mp (nthcdr (1- result) vm-message-list)))
 	    (error "No such message.")))
       (car mp))))
@@ -501,18 +501,18 @@ The value of `vm-keep-sent-mesages' determines whether the composition buffer is
 	  (goto-char (point-min))
 	  (insert (format "%sDate: " (if resent "Resent-" ""))
 		  (capitalize
-		   (car (nth (string-to-int (format-time-string "%w" time))
+		   (car (nth (string-to-number (format-time-string "%w" time))
 			     vm-weekday-alist)))
 		  ", "
 		  ;; %e generated " 2".  Go from string to int
 		  ;; to string to get rid of the blank.
 		  (int-to-string
-		   (string-to-int
+		   (string-to-number
 		    (format-time-string "%e" time)))
 		  " "
 		  (capitalize
 		   (car (nth
-			 (1- (string-to-int (format-time-string "%m" time)))
+			 (1- (string-to-number (format-time-string "%m" time)))
 			 vm-month-alist)))
 		  (format-time-string " %Y %H:%M:%S" time)
 		  (format " %s%02d%02d"

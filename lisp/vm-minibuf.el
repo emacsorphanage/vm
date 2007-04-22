@@ -309,7 +309,7 @@ default the local keymap of the current buffer is used."
     (while
 	(null
 	 (string-match "^[ \t]*-?[0-9]+" (setq result (read-string prompt)))))
-    (string-to-int result)))
+    (string-to-number result)))
 
 (defun vm-keyboard-read-file-name (prompt &optional dir default
 					  must-match initial history)
