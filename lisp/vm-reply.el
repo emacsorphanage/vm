@@ -1336,7 +1336,7 @@ Binds the `vm-mail-mode-map' and hooks"
     (and newsgroups (insert "Newsgroups: " newsgroups "\n"))
     (and in-reply-to (insert "In-Reply-To: " in-reply-to "\n"))
     (and references (insert "References: " references "\n"))
-    (insert "X-Mailer: VM " (vm-version) " under "
+    (insert "X-Mailer: " (vm-version) " under "
 	    (if vm-fsfemacs-p "Emacs " "")
 	    emacs-version "\n")
     ;; REPLYTO environmental variable support
