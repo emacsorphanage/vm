@@ -323,14 +323,11 @@ vm-included-text-prefix is prepended to every yanked line."
 	    (let* ((o (vm-mm-layout message))
                    layout new-layout
 		   (type (car (vm-mm-layout-type o)))
-		   parts)
+                   (alternatives 0)
+		   (parts (list o)))
 	      (vm-insert-region-from-buffer (vm-buffer-of message)
 					    (vm-headers-of message)
 					    (vm-text-of message))
-	      (cond ((or (vm-mime-types-match "multipart/alternative" type)
-			 (vm-mime-types-match "multipart/mixed" type))
-		     (setq parts (copy-sequence (vm-mm-layout-parts o))))
-		    (t (setq parts (list o))))
 	      (while parts
                 (setq layout (car parts))
 		(cond ((vm-mime-text-type-layout-p layout)
@@ -363,7 +360,11 @@ vm-included-text-prefix is prepended to every yanked line."
                                              (vm-mime-convert-undisplayable-layout
                                               layout)))
                                   (vm-decode-mime-layout new-layout)))
-			   nil
+                           ;; we have found a part to insert, thus skip the
+                           ;; remaining alternatives  
+			   (while (> alternatives 1)
+                              (setq parts (cdr parts)
+                                    alternatives (1- alternatives)))
 			 
 			 (if (not (member (downcase (car (vm-mm-layout-type
 							  layout)))
@@ -376,14 +377,20 @@ vm-included-text-prefix is prepended to every yanked line."
 			 (vm-mime-transfer-decode-region layout
 							   insert-start
 							   (point))))
+                       (setq alternatives (1- alternatives))
 		       (setq parts (cdr parts)))
+                      ;; burst composite types 
 		      ((vm-mime-composite-type-p
 			(car (vm-mm-layout-type layout)))
+                       (setq alternatives (length (vm-mm-layout-parts (car parts))))
 		       (setq parts (nconc (copy-sequence
 					   (vm-mm-layout-parts
 					    (car parts)))
 					  (cdr parts))))
-		      (t (setq parts (cdr parts)))))
+                      ;; skip non-text parts 
+		      (t
+                       (setq alternatives (1- alternatives))
+                       (setq parts (cdr parts)))))
 	      (setq end (point-marker)))
 	  (set-buffer (vm-buffer-of message))
 	  (save-restriction
