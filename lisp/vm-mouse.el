@@ -369,7 +369,7 @@
   (message "vm-run-background-command: %S %S" command arg-list)
   (apply (function call-process) command
          nil
-         (get-buffer-create (concat " *" command "*"))
+         0
          nil arg-list))
 
 (defun vm-run-command (command &rest arg-list)
