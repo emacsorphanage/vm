@@ -150,13 +150,13 @@ SPOOLNAME can also be a POP maildrop.
 
     The second form is used to speak POP over an SSL connection.
     You must have the stunnel program installed and the variable
-    `vm-stunnel-program' naming it in order for IMAP over SSL to
+    `vm-stunnel-program' naming it in order for POP over SSL to
     work.  The SSL version of the POP server will not use the
     same port as the non-SSL version.
 
     The third form is used to speak POP over an SSH connection.
     You must have the ssh program installed and the variable
-    `vm-ssh-program' must name it in order for IMAP over SSH to
+    `vm-ssh-program' must name it in order for POP over SSH to
     work.  SSH must be able to authenticate without a password,
     which means you must be using either .shosts authentication
     or RSA authentication.
