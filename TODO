@@ -68,4 +68,9 @@ FROM Robert Marshall
  Date: Sun, 01 Oct 2006 22:46:17 +0100
  Message-ID: <m18xjz7lqu.fsf@chezmarshall.freeserve.co.uk>
  
+----
 
+FROM blueman
+
+ Newsgroups: gnu.emacs.vm.info
+ Subject: Re: Improved search for mixed (mime) ascii/html folders?
