@@ -2314,6 +2314,17 @@ not end the comment.  Blank lines do not get comments."
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun vm-isearch-presentation ()
+  "Switched to the presentation or preview buffer and starts isearch."
+  (interactive)
+  (vm-select-folder-buffer)
+  (let ((target (or vm-presentation-buffer (current-buffer))))
+    (if (get-buffer-window-list target)
+        (select-window (car (get-buffer-window-list target)))
+      (switch-to-buffer target)))
+  (isearch-forward))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (provide 'vm-rfaddons)
 
 ;;; vm-rfaddons.el ends here
