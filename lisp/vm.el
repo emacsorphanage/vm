@@ -1415,12 +1415,13 @@ Please remove these instructions from your message.")
   (if (locate-library "pgg")
       (require 'vm-pgg)
     (message "vm-pgg disabled since pgg is missing!"))
-  (require 'vm-summary-faces)
   (require 'vm-rfaddons)
   (vm-check-emacs-version)
   (add-hook 'kill-emacs-hook 'vm-garbage-collect-global)
-  (vm-rfaddons-infect-vm 0)
-  (vm-summary-faces-mode 1)
+  (when vm-enable-addons
+    (vm-rfaddons-infect-vm 0)
+    (require 'vm-summary-faces)
+    (vm-summary-faces-mode 1))
   ;;  (vm-set-debug-flags)
   ;; If this is the first time VM has been run in this Emacs session,
   ;; do some necessary preparations.

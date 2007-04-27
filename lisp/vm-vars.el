@@ -5266,6 +5266,11 @@ that has a match.")
 (defvar vm-fsfemacs-cached-scroll-bar-width nil)
 (defvar vm-update-composition-buffer-name-timer nil)
 
+(defcustom vm-enable-addons t
+  "*A list of addons to load by default."
+  :group 'vm
+  :type 'boolean)
+
 (provide 'vm-vars)
 
 ;;; vm-vars.el ends here
