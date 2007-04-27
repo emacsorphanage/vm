@@ -2306,7 +2306,6 @@ not end the comment.  Blank lines do not get comments."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Sometimes it's handy to fake a date.
 ;; I overwrite the standard function by a slightly different version.
-;;;###autoload
 (defcustom vm-mail-mode-fake-date-p t
   "*Non-nil means `vm-mail-mode-insert-date-maybe' will not overwrite a existing date header."
   :group 'vm-rfaddons
@@ -2323,6 +2322,99 @@ not end the comment.  Blank lines do not get comments."
         (select-window (car (get-buffer-window-list target)))
       (switch-to-buffer target)))
   (isearch-forward))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defcustom vm-delete-message-action "vm-next-message"
+  "Forward to next (unread) message after deletion")
+
+;;;###autoload
+(defun vm-delete-message-action (&optional arg)
+  "Delete current message and perform some action after it, e.g. move to next.
+Call it with a prefix ARG to change the action."
+  (interactive "P")
+  (when (and (listp arg) (not (null arg)))
+    (setq rf-vm-delete-message-forward
+          (completing-read "After delete: "
+                           '(("vm-rmail-up")
+                             ("vm-rmail-down")
+                             ("vm-previous-message")
+                             ("vm-next-message")
+                             ("vm-previous-unread-message")
+                             ("vm-next-unread-message")
+                             ("nothing"))))
+    (message "action after delete is %S"
+             rf-vm-delete-message-forward))
+  (vm-toggle-deleted (prefix-numeric-value arg))
+  (let ((fun (intern rf-vm-delete-message-forward)))
+    (if (functionp fun)
+        (call-interactively fun))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvar vm-smtp-server-online-p-cache nil
+  "Alist of cached results.")
+
+(defun vm-smtp-server-online-p (&optional host port)
+  "Opens SMTP connection to see if the server HOST on PORT is online.
+Results are cached in `smtp-server-online-p-cache' for non interactive
+calls."
+  (interactive)
+  (save-excursion 
+    (let (online-p server hp)
+      (if (null host)
+          (setq server (esmtpmail-via-smtp-server)
+                host   (car server)
+                port   (cadr server)))
+      (setq port (or port 25)
+            hp (format "%s:%s" host port))
+
+      (if (interactive-p)
+          (setq vm-smtp-server-online-p-cache nil))
+      
+      (if (assoc hp vm-smtp-server-online-p-cache)
+          ;; take cache content
+          (setq online-p (cadr (assoc hp vm-smtp-server-online-p-cache))
+                hp (concat hp " (cached)"))
+        ;; do the check
+        (let* ((n (format " *SMTP server check %s:%s *" host port))
+               (buf (get-buffer n))
+               (stream nil))
+          (if buf (kill-buffer buf))
+        
+          (condition-case err
+              (progn 
+                (setq stream (open-network-stream n n host port))
+                (setq online-p t))
+            (error
+             (message (cadr err))
+             (if (and (get-buffer n)
+                      (< 0 (length (save-excursion
+				     (set-buffer (get-buffer n))
+				     (buffer-substring (point-min) (point-max))))))
+		 (pop-to-buffer n))))
+	  (if stream (delete-process stream))
+          (when (setq buf (get-buffer n))
+            (set-buffer buf)
+            (message "%S" (buffer-substring (point-min) (point-max)))
+            (goto-char (point-min))
+            (when (re-search-forward
+                   "gethostbyname: Resource temporarily unavailable"
+                   (point-max) t)
+              (setq online-p nil)))
+          ;; add offline to cache for further lookups 
+          (if (not online-p)
+              (add-to-list 'vm-smtp-server-online-p-cache (list hp nil)))))
+    
+      (if (interactive-p)
+          (message "SMTP server %s is %s" hp
+                   (if online-p "online" "offline")))
+      online-p)))
+         
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun vm-mail-send-or-feed-it ()
+  "Sends a message if the SMTP server is online, queues it otherwise."
+  (if (not (vm-smtp-server-online-p))
+      (feedmail-send-it)
+    (esmtpmail-send-it)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (provide 'vm-rfaddons)
