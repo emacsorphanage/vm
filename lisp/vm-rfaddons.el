@@ -2351,7 +2351,7 @@ Call it with a prefix ARG to change the action."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar vm-smtp-server-online-p-cache nil
-  "Alist of cached results.")
+  "Alist of cached (server online-status) entries.")
 
 (defun vm-smtp-server-online-p (&optional host port)
   "Opens SMTP connection to see if the server HOST on PORT is online.
@@ -2361,7 +2361,9 @@ calls."
   (save-excursion 
     (let (online-p server hp)
       (if (null host)
-          (setq server (esmtpmail-via-smtp-server)
+          (setq server (if (functionp 'esmtpmail-via-smtp-server)
+                           (esmtpmail-via-smtp-server)
+                         (smtpmail-via-smtp-server))
                 host   (car server)
                 port   (cadr server)))
       (setq port (or port 25)
@@ -2399,10 +2401,10 @@ calls."
             (when (re-search-forward
                    "gethostbyname: Resource temporarily unavailable"
                    (point-max) t)
-              (setq online-p nil)))
-          ;; add offline to cache for further lookups 
-          (if (not online-p)
-              (add-to-list 'vm-smtp-server-online-p-cache (list hp nil)))))
+              (setq online-p nil))))
+        
+        ;; add to cache for further lookups 
+        (add-to-list 'vm-smtp-server-online-p-cache (list hp online-p)))
     
       (if (interactive-p)
           (message "SMTP server %s is %s" hp
@@ -2414,7 +2416,9 @@ calls."
   "Sends a message if the SMTP server is online, queues it otherwise."
   (if (not (vm-smtp-server-online-p))
       (feedmail-send-it)
-    (esmtpmail-send-it)))
+    (if (functionp 'esmtpmail-send-it)
+        (esmtpmail-send-it)
+      (smtpmail-send-it))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (provide 'vm-rfaddons)
