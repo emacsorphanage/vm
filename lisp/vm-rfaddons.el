@@ -2333,7 +2333,7 @@ not end the comment.  Blank lines do not get comments."
 Call it with a prefix ARG to change the action."
   (interactive "P")
   (when (and (listp arg) (not (null arg)))
-    (setq rf-vm-delete-message-forward
+    (setq vm-delete-message-action
           (completing-read "After delete: "
                            '(("vm-rmail-up")
                              ("vm-rmail-down")
@@ -2342,10 +2342,9 @@ Call it with a prefix ARG to change the action."
                              ("vm-previous-unread-message")
                              ("vm-next-unread-message")
                              ("nothing"))))
-    (message "action after delete is %S"
-             rf-vm-delete-message-forward))
+    (message "action after delete is %S" vm-delete-message-action))
   (vm-toggle-deleted (prefix-numeric-value arg))
-  (let ((fun (intern rf-vm-delete-message-forward)))
+  (let ((fun (intern vm-delete-message-action)))
     (if (functionp fun)
         (call-interactively fun))))
 
