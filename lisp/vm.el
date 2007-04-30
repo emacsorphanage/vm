@@ -1418,10 +1418,6 @@ Please remove these instructions from your message.")
   (require 'vm-rfaddons)
   (vm-check-emacs-version)
   (add-hook 'kill-emacs-hook 'vm-garbage-collect-global)
-  (when vm-enable-addons
-    (vm-rfaddons-infect-vm 0)
-    (require 'vm-summary-faces)
-    (vm-summary-faces-mode 1))
   ;;  (vm-set-debug-flags)
   ;; If this is the first time VM has been run in this Emacs session,
   ;; do some necessary preparations.
@@ -1430,6 +1426,10 @@ Please remove these instructions from your message.")
       (progn
 	(random t)
 	(vm-load-init-file)
+	(when vm-enable-addons
+	  (vm-rfaddons-infect-vm 0)
+	  (require 'vm-summary-faces)
+	  (vm-summary-faces-mode 1))
 	(if (not vm-window-configuration-file)
 	    (setq vm-window-configurations vm-default-window-configuration)
 	  (or (vm-load-window-configurations vm-window-configuration-file)
