@@ -52,14 +52,18 @@ users to edit directly."
   :group 'vm
   :type 'file)
 
-(defcustom vm-crash-box (expand-file-name "inbox.crash" vm-folder-directory)
+(defcustom vm-crash-box nil
   "*File in which to store mail temporarily while it is transferred from
 the system mailbox to the primary inbox.  If a crash occurs
 during this mail transfer, any missing mail will be found in this
 file.  VM will do crash recovery from this file automatically at
-startup, as necessary."
+startup, as necessary.
+
+If nil, `vm-primary-inbox' with `vm-crash-box-suffix' appende will be used as
+crash boxdot set."
   :group 'vm
-  :type 'file)
+  :type '(choice file 
+		 (const :tag "Automatic" nil)))
 
 (defcustom vm-keep-crash-boxes nil
   "*Non-nil value should be a string specifying a directory where
@@ -281,7 +285,7 @@ required for all mail retrieval from spool files."
   :group 'vm
   :type '(repeat string))
 
-(defcustom vm-crash-box-suffix nil
+(defcustom vm-crash-box-suffix ".crash"
   "*String suffix used to create possible crash box file names for folders.
 When VM uses `vm-spool-file-suffixes' to create a spool file name,
 it will append the value of `vm-crash-box-suffix' to the folder's

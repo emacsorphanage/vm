@@ -3500,17 +3500,19 @@ run vm-expunge-folder followed by vm-save-folder."
 
 (defun vm-compute-spool-files (&optional all)
   (let ((fallback-triples nil)
+	(crash-box (or vm-crash-box
+		       (concat vm-primary-inbox vm-crash-box-suffix)))
 	file file-list
 	triples)
     (cond ((null (vm-spool-files))
 	   (setq triples (list
 			  (list vm-primary-inbox
 				(concat vm-spool-directory (user-login-name))
-				vm-crash-box))))
+				crash-box))))
 	  ((stringp (car (vm-spool-files)))
 	   (setq triples
 		 (mapcar (function
-			  (lambda (s) (list vm-primary-inbox s vm-crash-box)))
+			  (lambda (s) (list vm-primary-inbox s crash-box)))
 			 (vm-spool-files))))
 	  ((consp (car (vm-spool-files)))
 	   (setq triples (vm-spool-files))))
