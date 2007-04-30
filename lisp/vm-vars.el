@@ -1117,7 +1117,11 @@ Example:
 	)
  )
 
-The first matching list element will be used.")
+The first matching list element will be used."
+  :group 'vm
+  :type '(repeat (list (string :tag "From type")
+		       (string :tag "To type")
+		       (string :tag "Converter program"))))
 
 (defcustom vm-mime-charset-converter-alist nil
   "*Alist of MIME charsets and programs that can convert between them.
@@ -2238,7 +2242,9 @@ Nil means don't attribute included text in replies."
 
 (defcustom vm-included-mime-types-list
   '("text/plain" "text/enriched" "message/rfc822")
-  "*List of mime types that should be retained in a reply message.")
+  "*List of mime types that should be retained in a reply message."
+  :group 'vm
+  :type '(repeat string))
 
 (defcustom vm-included-text-headers nil
   "*List of headers that should be retained in a message included in
@@ -2370,7 +2376,9 @@ the recipient doesn't have access to your local filesystems then
 they will not be able to use the message/external-body reference.
 That is why the default value of this variable is nil, which
 forces such referneces to be converted to objects present in the
-message itself.")
+message itself."
+  :group 'vm
+  :type 'boolean)
 
 (defcustom vm-burst-digest-messages-inherit-labels t
   "*Non-nil values means messages from a digest inherit the digest's labels.
