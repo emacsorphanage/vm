@@ -942,12 +942,12 @@ cleanup here after verification and decoding took place."
 
 ;; we must add these in order to force VM to call our handler
 (eval-and-compile
-  (if (listp vm-auto-displayed-mime-content-types)
-      (add-to-list 'vm-auto-displayed-mime-content-types "application/pgp-keys"))
+;; (if (listp vm-auto-displayed-mime-content-types)
+;;       (add-to-list 'vm-auto-displayed-mime-content-types "application/pgp-keys"))
   (if (listp vm-mime-internal-content-types)
       (add-to-list 'vm-mime-internal-content-types "application/pgp-keys"))
   (add-to-list 'vm-mime-button-format-alist
-               '("application/pgp-keys" . "Snarf %d"))
+	       '("application/pgp-keys" . "Snarf %d"))
   (add-to-list 'vm-mime-button-format-alist
                '("multipart/encrypted" . "Decrypt PGP/MIME message")))
 
