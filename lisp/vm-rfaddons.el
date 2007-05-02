@@ -612,10 +612,15 @@ Use `vm-rmail-toggle' to switch between normal and this mode."
                  (const vm-summary-mode))
   :group 'vm-rfaddons)
   
-(defun vm-rmail-toggle ()
+(defun vm-rmail-toggle (&optional arg)
   (interactive)
-  (message (if vm-rmail-mode "VM-mode" "Rmail-mode"))
-  (setq vm-rmail-mode (not vm-rmail-mode)))
+  (cond ((=  1 arg)
+         (setq vm-rmail-mode t))
+        ((= -1 arg)
+         (setq vm-rmail-mode nil))
+        (t
+         (setq vm-rmail-mode (not vm-rmail-mode))))
+  (message (if vm-rmail-mode "VM cursor mode" "Rmail cursor mode")))
   
 (defun vm-rmail-up ()
   (interactive)
