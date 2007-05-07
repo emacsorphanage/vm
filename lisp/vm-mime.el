@@ -1223,7 +1223,8 @@
       'message-symbol (vm-mime-make-message-symbol m)
       )))))
 
-(defun vm-mime-get-xxx-parameter (name param-list)
+(defun vm-mime-get-xxx-parameter-internal (name param-list)
+  "Return the parameter NAME from PARAM-LIST."
   (let ((match-end (1+ (length name)))
 	(name-regexp (concat (regexp-quote name) "="))
 	(case-fold-search t)
@@ -1235,6 +1236,20 @@
 	(setq param-list (cdr param-list))))
     (and (car param-list)
 	 (substring (car param-list) match-end))))
+
+(defun vm-mime-get-xxx-parameter (name param-list)
+  "Return the parameter NAME from PARAM-LIST.
+
+If parameter value continuations was used, i.e. the parameter was split into
+shorter pieces, rebuilt it from them."  
+  (or (vm-mime-get-xxx-parameter-internal name param-list)
+      (let ((n 0) content p)
+        (while (setq p (vm-mime-get-xxx-parameter-internal
+                        (format "%s*%d" name n)
+                        param-list))
+          (setq n (1+ n)
+                content (concat content p)))
+        content)))
 
 (defun vm-mime-get-parameter (layout name)
   (let ((string (vm-mime-get-xxx-parameter name (cdr (vm-mm-layout-type layout)))))
