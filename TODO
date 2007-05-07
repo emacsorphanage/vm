@@ -1,4 +1,6 @@
-From hack@robf.de
+!!!! Create a road map and overview on wanted features ... !!!
+
+From: hack@robf.de
 
  * Autoloading should be optimized, currently we load almost all ;-/
  * Marking + Delete is dead slow on folders with many (>2000) messages 
@@ -17,8 +19,7 @@ From hack@robf.de
 
 ----
 
-From EU
-
+From: EU
 Message-ID: <BAY107-F312750B976E45598305D8EF8110@phx.gbl>
 
  * for text/alternative messages, when the plain text part is
@@ -51,16 +52,14 @@ Message-ID: <BAY107-F312750B976E45598305D8EF8110@phx.gbl>
 
 ----
 
-FROM RPG
+From: RPG
 
  Message-ID: <1159541555.884682.318660@c28g2000cwb.googlegroups.com>
  Newsgroups: gnu.emacs.vm.info
  Subject: VM feature requests
  Date: 29 Sep 2006 07:52:35 -0700
 
-----
-
-FROM Robert Marshall
+From: Robert Marshall
 
  From: Robert Marshall <s...@chezmarshall.freeserve.co.uk>
  Newsgroups: gnu.emacs.vm.info
@@ -68,9 +67,7 @@ FROM Robert Marshall
  Date: Sun, 01 Oct 2006 22:46:17 +0100
  Message-ID: <m18xjz7lqu.fsf@chezmarshall.freeserve.co.uk>
  
-----
-
-FROM blueman
+From: blueman
 
  Newsgroups: gnu.emacs.vm.info
  Subject: Re: Improved search for mixed (mime) ascii/html folders?
