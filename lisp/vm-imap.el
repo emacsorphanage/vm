@@ -1519,6 +1519,18 @@ on all the relevant IMAP servers and then immediately expunges."
 	       (setq need-ok nil))))
       (vm-set-attribute-modflag-of m nil))))
 
+(defvar vm-imap-subst-char-in-string-buffer
+  (get-buffer-create " *subst-char-in-string*"))
+
+(defun vm-imap-subst-CRLF-for-LF (string)
+  (with-current-buffer vm-imap-subst-char-in-string-buffer
+    (erase-buffer)
+    (insert string)
+    (goto-char (point-min))
+    (while (search-forward "\n" nil t)
+      (replace-match "\r\n" nil t))
+    (buffer-string (point-min) (point-max))))
+
 ;;;###autoload
 (defun vm-imap-save-message (process m mailbox)
   (let (need-ok need-plus flags response string)
@@ -1532,7 +1544,8 @@ on all the relevant IMAP servers and then immediately expunges."
       (set-buffer (vm-buffer-of (vm-real-message-of m)))
       (save-restriction
 	(widen)
-	(setq string (buffer-substring (vm-headers-of m) (vm-text-end-of m)))))
+	(setq string (buffer-substring (vm-headers-of m) (vm-text-end-of m))
+              string (vm-imap-subst-CRLF-for-LF string))))
     (save-excursion
       (set-buffer (process-buffer process))
       (condition-case nil
