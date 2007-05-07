@@ -1272,8 +1272,8 @@ association.
 @item @code{vmpc-pre-function} and @code{vmpc-composition-buffer} handle forms
 now, not only a single function which must be quoted.
 
-@item Renamed @code{vmpc-reply-alist} to @code{vmpc-reply-alist} and
-@code{vmpc-forward-alist} to @code{vmpc-forward-alist} for consistency.
+@item Renamed @code{vmpc-replies-alist} to @code{vmpc-reply-alist} and
+@code{vmpc-forwards-alist} to @code{vmpc-forward-alist} for consistency.
 
 @item New function @code{vmpc-true-conditions} to test conditions without actually
 running some actions.
