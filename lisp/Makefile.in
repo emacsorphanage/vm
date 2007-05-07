@@ -66,7 +66,7 @@ endif
 
 OBJECTS += $(SOURCES:.el=.elc)
 
-INSTALL_FILES = $(SOURCES) $(OBJECTS) vm-revno.el vm-revno.elc
+INSTALL_FILES = $(SOURCES) $(OBJECTS) vm-revno.el
 
 # for autoload generation 
 AUTOLOAD_PACKAGE_NAME = (setq autoload-package-name \"vm\")
@@ -111,7 +111,7 @@ all: $(OBJECTS)
 install: install-el install-elc
 
 ##############################################################################
-vm-revno.el: $(SOURCES)
+vm-revno.el:
 	echo ";;; This is a generated file, do not edit it!" > vm-revno.el
 	echo "(setq vm-revno \"`$(BZR) nick`-`$(BZR) revno`\")" >> vm-revno.el
 	echo "(setq vm-author \"`$(BZR) whoami`\")" >> vm-revno.el
@@ -152,7 +152,6 @@ install-pkg: all vm-revno.el
 	    echo "Installing $$i in $(PACKAGEDIR)" ;           \
 	    $(INSTALL_DATA) $$i $(PACKAGEDIR) ;                \
 	  done ;                                               \
-	  $(INSTALL_DATA) vm-revno.el $(PACKAGEDIR) ;          \
 	else                                                   \
 	  if test "x$(LINKPATH)" = "x" ; then                  \
 	    $(LN_S) `pwd` $(PACKAGEDIR) ;                      \
@@ -160,7 +159,7 @@ install-pkg: all vm-revno.el
 	    $(LN_S) $(LINKPATH)/lisp $(PACKAGEDIR) ;           \
 	  fi ;                                                 \
 	fi
-	@echo XTLA ELISP files successfully installed\!
+	@echo VM ELISP files successfully installed\!
 
 # This entry will never install .el files if there are no .elc files.
 install-el: all vm-revno.el
