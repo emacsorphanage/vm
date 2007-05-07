@@ -155,9 +155,9 @@ If you want to use only a subset of the options then call
 `vm-rfaddons-infect-vm' like this:
         (vm-rfaddons-infect-vm 2 '(general vm-mail-mode shrunken-headers)
                                  '(fake-date))
-This will enable all `general' and `m-mail-mode' options plus the
+This will enable all `general' and `vm-mail-mode' options plus the
 `shrunken-headers' option, but it will exclude the `fake-date' option of the
-`general' options.
+`vm-mail-mode' options.
 
 or do the binding and advising on your own."
   (interactive "")
@@ -170,9 +170,8 @@ or do the binding and advising on your own."
         (setq option-list (list 'general 'vm-mail-mode 'vm-mode))))
   
   (when (member 'general option-list)
-    (setq option-list (append '(
-                                rf-faces)
-                              option-list))
+;    (setq option-list (append '()
+;                              option-list))
     (setq option-list (delq 'general option-list)))
   
   (when (member 'vm-mail-mode option-list)
