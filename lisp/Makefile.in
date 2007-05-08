@@ -66,7 +66,7 @@ endif
 
 OBJECTS += $(SOURCES:.el=.elc)
 
-INSTALL_FILES = $(SOURCES) $(OBJECTS) vm-revno.el
+INSTALL_FILES = $(SOURCES) $(OBJECTS) vm-revno.elc
 
 # for autoload generation 
 AUTOLOAD_PACKAGE_NAME = (setq autoload-package-name \"vm\")
@@ -145,7 +145,7 @@ custom-load.el: $(SRCS:%=@srcdir@/%)
 	$(EMACS_PROG) $(FLAGS) -l cus-dep -f Custom-make-dependencies .
 
 ##############################################################################
-install-pkg: all vm-revno.el
+install-pkg: all vm-revno.elc
 	@if test "x$(SYMLINKS)" = "xno" ; then                 \
 	  mkdir -p -m 0755 $(PACKAGEDIR);                      \
 	  for i in $(SRCS:%=@srcdir@/%) $(INSTALL_FILES) ; do  \
@@ -162,7 +162,7 @@ install-pkg: all vm-revno.el
 	@echo VM ELISP files successfully installed\!
 
 # This entry will never install .el files if there are no .elc files.
-install-el: all vm-revno.el
+install-el: all vm-revno.elc
 	$(INSTALL) -d -m 0755 $(lispdir)/
 	for elc in *.elc; do                                                  \
 	    el=`basename $$elc c`;                                            \
@@ -181,7 +181,7 @@ install-el: all vm-revno.el
 	    done;                                                             \
 	fi;
 
-install-elc: all vm-revno.el
+install-elc: all vm-revno.elc
 	$(INSTALL) -d -m 0755 $(lispdir)/
 	for elc in *.elc; do                                 \
 	    echo "Install $$elc in $(lispdir)/";             \
