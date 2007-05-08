@@ -115,6 +115,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-and-compile
   (require 'cl)
+  (require 'advice)
   (require 'regexp-opt)
   (require 'vm-version)
   (require 'vm-message)
