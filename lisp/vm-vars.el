@@ -5282,7 +5282,7 @@ that has a match.")
 (defvar vm-update-composition-buffer-name-timer nil)
 
 (defcustom vm-enable-addons t
-  "*A list of addons to load by default."
+  "*A list of vm-rfaddons to enable, t for default and nil to disable them."
   :group 'vm
   :type 'boolean)
 

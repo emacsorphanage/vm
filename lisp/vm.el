@@ -1427,7 +1427,7 @@ Please remove these instructions from your message.")
 	(random t)
 	(vm-load-init-file)
 	(when vm-enable-addons
-	  (vm-rfaddons-infect-vm 0)
+	  (vm-rfaddons-infect-vm 0 vm-enable-addons)
 	  (require 'vm-summary-faces)
 	  (vm-summary-faces-mode 1))
 	(if (not vm-window-configuration-file)
