@@ -2133,8 +2133,7 @@ It saves the decoded message and not the raw message like `vm-save-message'!"
          ((string= action "display-as-ascii")
           'vm-mime-display-body-as-text)
          ((string= action "delete")
-          (vm-delete-mime-object)
-          (return-from vm-mime-take-action-on-attachment))
+          (vm-delete-mime-object))
          ((string= action "pipe-to-command")
           'vm-mime-pipe-body-to-queried-command-discard-output))))
 
