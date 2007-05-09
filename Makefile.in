@@ -1,7 +1,7 @@
 @SET_MAKE@
 
 # location of required programms
-BZR = bzr
+BZR = bzr --no-plugins
 TAR = @TAR@
 RM   = @RM@
 XARGS = @XARGS@
@@ -34,7 +34,7 @@ distclean:
 	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i distclean); done
 
 push:
-	bzr --no-plugins push
+	$(BZR) push
 
 ##############################################################################
 PKGDIR =  $(shell pwd)/,,package/

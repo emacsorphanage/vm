@@ -74,7 +74,7 @@ AUTOLOAD_FILE = (setq generated-autoload-file \"./auto-autoloads.el\")
 
 ##############################################################################
 # location of required programms
-BZR = bzr
+BZR = bzr --no-plugins
 RM   = @RM@
 LS   = @LS@
 XARGS = @XARGS@
