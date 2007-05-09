@@ -448,7 +448,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	(use-ssh nil)
 	(session-name "IMAP")
 	(process-connection-type nil)
-	greeting timestamp
+	greeting
 	host port mailbox auth user pass source-list process-buffer
 	source-nopwd-nombox)
     (unwind-protect
@@ -1051,8 +1051,7 @@ on all the relevant IMAP servers and then immediately expunges."
       (vm-imap-protocol-error "STORE ... +FLAGS.SILENT (\\Deleted) failed")))
 
 (defun vm-imap-get-message-size (process n)
-  (let ((list nil)
-	(imap-buffer (current-buffer))
+  (let ((imap-buffer (current-buffer))
 	tok size response p
 	(need-size t)
 	(need-ok t))
@@ -1583,7 +1582,6 @@ on all the relevant IMAP servers and then immediately expunges."
 (defun vm-imap-get-synchronization-data ()
   (let ((here (make-vector 67 0))
 	(there (vm-imap-get-uid-data))
-	(process (vm-folder-imap-process))
 	(uid-validity (vm-folder-imap-uid-validity))
 	retrieve-list expunge-list
 	mp)
@@ -1742,7 +1740,7 @@ on all the relevant IMAP servers and then immediately expunges."
 
 ;;;###autoload
 (defun vm-imap-make-filename-for-spec (spec)
-  (let (md5 list)
+  (let (md5)
     (setq spec (vm-imap-normalize-spec spec))
     (setq md5 (vm-md5-string spec))
     (expand-file-name (concat "imap-cache-" md5)
@@ -1798,8 +1796,7 @@ on all the relevant IMAP servers and then immediately expunges."
     (mapconcat 'identity list ":")))
 
 (defun vm-imap-directory-separator (process ref)
-  (let ((c-list nil)
-	sep p r response need-ok)
+  (let (sep p r response need-ok)
     (vm-imap-check-connection process)
     (save-excursion
       (set-buffer (process-buffer process))
@@ -1997,8 +1994,9 @@ documentation for `vm-spool-files'."
   "Saves the current composition in the IMAP folder given by the IMAP-FCC header.
 
 Add this to your `mail-send-hook' and start composing from an IMAP folder."
-  (let (process flags response string
-		(mailbox (vm-mail-get-header-contents "IMAP-FCC:")))
+  (let (process
+        flags string
+        (mailbox (vm-mail-get-header-contents "IMAP-FCC:")))
     (when mailbox
       (save-excursion
         (vm-select-folder-buffer)
