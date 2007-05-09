@@ -83,6 +83,13 @@
 ;; leave the message in the mailbox, and yet not retrieve the
 ;; same messages again and again.
 
+(defun vm-imap-fetch-message (process n use-body-peek &optional headers-only)
+  (let ((fetchcmd
+         (if headers-only
+             (if use-body-peek "(BODY.PEEK[HEADER])" "(RFC822.HEADER)")
+           (if use-body-peek "(BODY.PEEK[])" "(RFC822.PEEK)"))))
+    (vm-imap-send-command process (format "FETCH %d %s" n fetchcmd))))
+
 ;;;###autoload
 (defun vm-imap-move-mail (source destination)
   (let ((process nil)
@@ -187,21 +194,10 @@
 		      (throw 'skip t)))
 		(message "Retrieving message %d (of %d) from %s..."
 			 n mailbox-count imapdrop)
-		(if use-body-peek
-		    (progn
-		      (vm-imap-send-command process
-					    (format "FETCH %d (BODY.PEEK[])"
-						    n))
-		      (vm-imap-retrieve-to-target process destination
-						  statblob t))
-		  (progn
-		       (vm-imap-send-command process
-					     (format
-					      "FETCH %d (RFC822.PEEK)" n))
-		       (vm-imap-retrieve-to-target process destination
-						   statblob nil)))
-		(message "Retrieving message %d (of %d) from %s...done"
-	 	 n mailbox-count imapdrop)
+                (vm-imap-fetch-message process n use-body-peek t)
+                (vm-imap-retrieve-to-target process destination statblob use-body-peek)
+                (message "Retrieving message %d (of %d) from %s...done"
+                         n mailbox-count imapdrop)
 		(vm-increment retrieved)
 		(and b-per-session
 		     (setq retrieved-bytes (+ retrieved-bytes message-size)))
@@ -1649,22 +1645,10 @@ on all the relevant IMAP servers and then immediately expunges."
 		     (setq message-size (vm-imap-get-message-size
 					 process (cdr (car r-list))))
 		     (vm-set-imap-stat-x-need statblob message-size)
-		     (if use-body-peek
-			 (progn
-			   (vm-imap-send-command process
-						 (format
-						  "FETCH %s (BODY.PEEK[])"
-						  (cdr (car r-list))))
-			   (vm-imap-retrieve-to-target process folder-buffer
-						       statblob t))
-		       (progn
-			 (vm-imap-send-command process
-					       (format
-						"FETCH %s (RFC822.PEEK)"
-						(cdr (car r-list))))
-			 (vm-imap-retrieve-to-target process folder-buffer
-						     statblob nil)))
-		     (setq r-list (cdr r-list)
+                     (vm-imap-fetch-message process (cdr (car r-list)) use-body-peek t)
+                     (vm-imap-retrieve-to-target process folder-buffer
+                                                 statblob use-body-peek)
+                     (setq r-list (cdr r-list)
 			   n (1+ n))))
 	       (error
 		(message "Retrieval from %s signaled: %s" safe-imapdrop
