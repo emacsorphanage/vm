@@ -162,16 +162,16 @@ This will enable all `general' and `vm-mail-mode' options plus the
 or do the binding and advising on your own."
   (interactive "")
 
-  (if (eq option-list t)
+  (if (eq option-list 'all)
       (setq option-list (list 'general 'vm-mail-mode 'vm-mode
                               'auto-save-all-attachments
                               'auto-delete-message-external-body))
-    (if (null option-list)
-        (setq option-list (list 'general 'vm-mail-mode 'vm-mode))))
+    (if (eq option-list t)
+        (setq option-list (list 'vm-mail-mode 'vm-mode))))
   
   (when (member 'general option-list)
-;    (setq option-list (append '()
-;                              option-list))
+    (setq option-list (append '(rf-faces)
+                              option-list))
     (setq option-list (delq 'general option-list)))
   
   (when (member 'vm-mail-mode option-list)
