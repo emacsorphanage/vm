@@ -308,7 +308,7 @@ or do the binding and advising on your own."
     (ding)
     (sit-for 3))
   
-  (message "VM-RFADDONS: VM is now infected. Please report bugs to Robert Widhop-Fenk!")
+  (message "VM-RFADDONS: VM is now infected. Please report bugs to Robert Widhopf-Fenk!")
   (sit-for (or sit-for 2)))
 
 (defun rf-vm-su-labels (m)
@@ -355,7 +355,7 @@ This does not work when replying to multiple messages."
 ;;;###autoload
 (defun vm-do-fcc-before-mime-encode ()
   "The name says it all.
-Sometimes you may to save the message unencoded, specifically not to waste
+Sometimes you may want to save a message unencoded, specifically not to waste
 storage for attachments which are stored on disk anyway."
   (interactive)
   (save-excursion
