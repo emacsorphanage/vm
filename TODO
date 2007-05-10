@@ -1,26 +1,65 @@
-!!!! Create a road map and overview on wanted features ... !!!
+******************************************************************************
+EVERGREENS
 
-From: hack@robf.de
+There are some things which probably will never be fixed ...
 
- * Autoloading should be optimized, currently we load almost all ;-/
- * Marking + Delete is dead slow on folders with many (>2000) messages 
- * Update the info file
- * enable sane extensions by default
- * Cleanup and reorganize 
- * Fix bugs when marking threads by "M T".  Sometimes it misses some messages,
-   IMHO ones of broken MUAs, but hey we cannot fix them so let's work around
-   them.
+ * Update the info file. News should also be there not in the NEWS file?
+
+ * Cleanup and reorganize the code.
+
+ * Better doc strings: VM has nearly none in the core, just my own extensions
+   have been documented properly using "M-x checkdoc RET".
+
+ * Enable sane extensions and configurations: The default should satisfy most
+   people, but still allow one to disable what they dislike. 
+
+******************************************************************************
+ROADMAP
+
+The features planed for one of the next releases
+
+ * GNU Emacs: does not highlight attachment buttons in compositions
+
+ * Merge changes from the Debian package.
+
+ * Some of the user defined summary specifiers should become internal ones.
+
+ * Better HTML support for both displaying and replying, but probably not for
+   composition as there is no urge to surrender here! 
+
+ * Virtual selectors matching on specific mime parts, e.g.
+   (vm-vs-text regexp): matching only text parts and those which can be
+      converted to text. 
+   (vm-vs-attachment regexp):  matching the disposition of parts
+
+ * Improved (i)search support: Only text parts and certain headers should be
+   searched and it should also work for virtual folders.  We might utilize
+   virtual folder selectors here. 
+
  * Better IMAP support, i.e. just fetch headers, sync, offline, search.  It is
    really bad now and thus I do use Thunderbird at work!
+
+ * Maildir support: It is a nice format and possibly can fix the problem of
+   huge mail folders, as VM must not read the whole buffer into memory, just
+   the index.  Also it would allow for using external indexing tools like
+   http://www.rpcurnow.force9.co.uk/mairix/ and make folders really virtual.
+
  * Virtual folders everywhere, i.e. only one physical folder.  VM should
    not read the folder into a buffer, but only query relevant messages from
    an maildb-backend.
- * GNU Emacs: highlight attachment buttons
+ 
+******************************************************************************
+REST
 
-----
+The unsorted and remaining ones.
 
-From: EU
-Message-ID: <BAY107-F312750B976E45598305D8EF8110@phx.gbl>
+ * Marking + Delete is dead slow on folders with many (>2000) messages
+
+From EU
+
+ * Fix bugs when marking threads by "M T".  Sometimes it misses some messages,
+   IMHO ones of broken MUAs not setting the References: header, but hey we
+   cannot fix them so let's work around them.
 
  * for text/alternative messages, when the plain text part is
    displayed internally, [add variable that will allow to] show icon
@@ -50,24 +89,4 @@ Message-ID: <BAY107-F312750B976E45598305D8EF8110@phx.gbl>
    replace all three windows (headers, presentation, BBDB) until the
    reply is sent.
 
-----
 
-From: RPG
-
- Message-ID: <1159541555.884682.318660@c28g2000cwb.googlegroups.com>
- Newsgroups: gnu.emacs.vm.info
- Subject: VM feature requests
- Date: 29 Sep 2006 07:52:35 -0700
-
-From: Robert Marshall
-
- From: Robert Marshall <s...@chezmarshall.freeserve.co.uk>
- Newsgroups: gnu.emacs.vm.info
- Subject: completion-ignored-extensions
- Date: Sun, 01 Oct 2006 22:46:17 +0100
- Message-ID: <m18xjz7lqu.fsf@chezmarshall.freeserve.co.uk>
- 
-From: blueman
-
- Newsgroups: gnu.emacs.vm.info
- Subject: Re: Improved search for mixed (mime) ascii/html folders?
