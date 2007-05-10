@@ -17,11 +17,11 @@
 ;;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;;
 
-;;; You may use this file as a starting point for setting up and customizing VM to
-;;; your own needs.
+;;; You may use this file as a starting point for setting up and customizing
+;;; VM to your own needs.
 
 ;;*****************************************************************************
-;; Folders and spoolfiles, this is where your mail comes from.
+;; Folders and spool files, this is where your mail comes from.
 
 ;; vm-spool-files is a list of lists, each sublist should be of the form
 ;;   (INBOX SPOOLNAME CRASHBOX)
@@ -56,6 +56,27 @@
 ;; Run "M-x vm-fix-my-summary!!! RET" to fix existing summaries.
 
 ;;*****************************************************************************
+;; Viewing messages
+;;
+;; HTML messages can be converted to text or the w3 resp. w3m Emacs viewers
+;; can be used for displaying. 
+
+(setq  vm-mime-type-converter-alist
+      '(("text/html" "text/plain" "lynx -force_html -dump /dev/stdin")
+        ("message/delivery-status"  "text/plain")
+        ("application/zip"  "text/plain" "listzip")
+        ("application/x-zip-compressed"  "text/plain" "zipinfo /dev/stdin")
+        ("application/x-www-form-urlencoded"  "text/plain")
+        ("message/disposition-notification"  "text/plain")
+        ("application/mac-binhex40" "application/octet-stream" "hexbin -s"))
+
+      
+;; Set up w3m (you should check if it exists)
+(require 'vm-w3m)
+(setq vm-included-mime-types-list
+      '("text/plain" "text/html" "text/enriched" "message/rfc822"))
+
+;;*****************************************************************************
 ;; Composing email
 
 (setq mail-default-headers "From: Robert Widhopf-Fenk <hack@robf.de>\n")
@@ -66,7 +87,7 @@
 ;;*****************************************************************************
 ;; A hook function to setup mail-composing buffers
 (defun robf-vm-mail-mode-hook ()
-  "Robert Fenks vm-mail-mode-hook."
+  "Robert Widhopf-Fenks `vm-mail-mode-hook'."
   (interactive)
 
   (when (string-match "received" (buffer-name))
@@ -75,12 +96,13 @@
   
   (setq fill-column 60
         comment-start "> "
-        indent-line-function 'indent-relative-maybe
-        ;; mark lines longer than 76 chars red 
-        mail-font-lock-keywords (add-to-list 'mail-font-lock-keywords
-                                             (list (concat "^" (make-string 76 ?.)
-                                                           "\\(.+$\\)")
-                                                   '(1 font-lock-warning-face t))))
+        indent-line-function 'indent-relative-maybe)
+  
+  ;; mark lines longer than `fill-column' chars red 
+  (add-to-list 'mail-font-lock-keywords
+               (list (concat "^" (make-string fill-column ?.)
+                             "\\(.+$\\)")
+                     '(1 font-lock-warning-face t)))
   
   (ispell-change-dictionary "deutsch8")
 
@@ -95,15 +117,30 @@
 
 (add-hook 'vm-mail-mode-hook 'robf-vm-mail-mode-hook)
 
+;; Do you like boxquotes? 
+(require 'boxquote)
+
+(defun boxquote-region-and-edit-title (s e)
+  (interactive "r")
+  (boxquote-region s e)
+  (call-interactively 'boxquote-title))
+
 ;;*****************************************************************************
-;; Sending email via SMTP
+;; Sending email via SMTP.
+;;
+;; This is not done by VM, by by separate packages.  The standard package is
+;; smtpmail.el and it should come with your Emacs. If you have more than one
+;; email address and have to send them using different SMTP servers, the you
+;; might want to take a look at esmtpmail.el a fork from smtpmail.el targeted
+;; to deal with personal crisis support.
 (require 'esmtpmail)
 (setq send-mail-function 'esmtpmail-send-it
       esmtpmail-default-smtp-server "smtp.someprovider.com"
       ;; trace buffers help debugging problems 
       esmtpmail-debug-info t)
 
-;; Select the SMTP server based on the email address of the author. 
+;; Select the SMTP server based on the From: header, i.e. the email address of
+;; the author.  There are also other authentication  methods, see the docs.
 (setq esmtpmail-send-it-by-alist 
       (list
        '("YourEmaiAddress1" "SMTPSERVER1"
@@ -112,7 +149,7 @@
          (vm-after-pop "pop:SMTPSERVER2:110:pass:YourEmailAddress:*"))))
 
 ;;*****************************************************************************
-;; Feedmail if you are offline
+;; Feed mail to a local queue if you are offline
 (require 'feedmail)
 
 (setq send-mail-function 'vm-mail-send-or-feed-it
@@ -127,7 +164,7 @@
 
 (setq auto-mode-alist (cons '("\\.fqm$" . mail-mode) auto-mode-alist))
 
-;; check the queue on startup 
+;; Check the queue on startup 
 (when (and (> (car (feedmail-look-at-queue-directory
                     feedmail-queue-directory)) 0))
   (feedmail-queue-reminder-medium)
@@ -147,7 +184,6 @@
 
 ;;*****************************************************************************
 ;; Now change some keyboard bindings 
-
 (define-key vm-mode-map [(meta up)]    'vm-previous-unread-message)
 (define-key vm-mode-map [(meta down)]  'vm-next-unread-message)
 (define-key vm-mode-map "\C- "  'vm-scroll-backward)
@@ -200,7 +236,6 @@
 (define-key vm-mail-mode-map "\C-c\C-k" 'vm-mail-mode-citation-clean-up)
 (define-key vm-mail-mode-map "\C-c\C-a" 'vm-mime-attach-file)
 (define-key vm-mail-mode-map "\C-c\C-b" 'boxquote-region-and-edit-title)
-
 
 ;;; Local Variables: ***
 ;;; mode:emacs-lisp ***
