@@ -40,15 +40,16 @@ This is the author of the BZR repository from which VM was released.")
              (d (file-name-directory f)))
         (setq default-directory d)
         (erase-buffer)
-        (cond ((file-exists-p (expand-file-name ".bzr" (concat d "../")))
+        (cond ((and (file-exists-p (expand-file-name ".bzr" (concat d "../")))
+		    (locate-file "bzr" exec-path)
+		    (= 0 (shell-command "bzr")))
                ;; get the current branch nick and revno from bzr
                (insert (concat (shell-command-to-string "bzr --no-plugins nick") "-"
                                (shell-command-to-string "bzr --no-plugins revno"))))
               ((and (locate-library "vm-revno") (load-library "vm-revno"))
                (insert vm-revno))
               (t
-               (insert vm-version
-                       "-cannot_determine_precise_VM_version.")))
+               (insert vm-version "-?bug?")))
         (goto-char (point-min))
         ;; remove any whitespace
         (while (re-search-forward "[\n\t\r ]+" (point-max) t)

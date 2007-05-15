@@ -15,16 +15,32 @@
 (put 'inhibit-local-variables 'byte-obsolete-variable nil)
 
 ;; Preload these to get macros right 
+(require 'cl)
 (require 'vm-version)
 (require 'vm-message)
 (require 'vm-macro)
 (require 'vm-vars)
 (require 'sendmail)
 
+(defun vm-fix-cygwin-path (path)
+  (cond ((functionp 'mswindows-cygwin-to-win32-path)
+         (mswindows-cygwin-to-win32-path path))
+        ((string-match "^/cygdrive/\\([a-z]\\)" path)
+         (replace-match (format "%s:" (match-string 1 path)) t t path))
+        (t
+         path)))
+
 (defun vm-built-autoloads ()
   (setq file (car command-line-args-left)
-	dir (car (cdr command-line-args-left)))
-  (message "Building autoloads for %s" dir)
+	dir (car (cdr command-line-args-left))
+        debug-on-error t)
+  (if (not (file-exists-p dir))
+      ;; to handle emacsW32 path problems when building on cygwin
+      (setq file (vm-fix-cygwin-path file)
+            dir (vm-fix-cygwin-path dir)))
+  (if (not (file-exists-p dir))
+      (error "Built %S directory does not exist!" dir))
+  (message "Building autoloads file %S\nin directory %S." file dir)
   (load-library "autoload")
   (set-buffer (find-file-noselect file))
   (erase-buffer)
