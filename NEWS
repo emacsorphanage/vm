@@ -67,4 +67,10 @@ VM 8.0.0
     * More virtual folder selectors and replacements of other functions based
       on selectors. (Info node: Virtual Folders)
 
-      TODO vm-serial.el ... siehe home page
+    * vm-serial.el provides message templates for composition and
+      personalizes mass emails. (Info node: TODO)
+    
+    * vm-biff.el for popups with a list of new messages.
+
+    * vm-rfaddons.el has various stuff, look at the source if you are curious
+      or miss some VM feature, as it might already be there!
