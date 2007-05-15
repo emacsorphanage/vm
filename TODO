@@ -1,3 +1,6 @@
+This file lists the bugs, feature requests and wishes for future versions
+of VM.  If you are missing anything please let me know!
+
 ******************************************************************************
 EVERGREENS
 
@@ -13,10 +16,20 @@ There are some things which probably will never be fixed ...
  * Enable sane extensions and configurations: The default should satisfy most
    people, but still allow one to disable what they dislike. 
 
+ * Integrate more extensions from others into the core.
+
+******************************************************************************
+BUGS
+
+These are bugs which must be fixed before the next release.
+
+ * Click in mailto: link does not copy the address.
+
 ******************************************************************************
 ROADMAP
 
-The features planed for one of the next releases
+The features planed for one of the next releases.  
+The order hints on the priority, but it is no gurantee.
 
  * GNU Emacs: does not highlight attachment buttons in compositions
 
@@ -25,7 +38,13 @@ The features planed for one of the next releases
  * Some of the user defined summary specifiers should become internal ones.
 
  * Better HTML support for both displaying and replying, but probably not for
-   composition as there is no urge to surrender here! 
+   composition as there is no urge to surrender here!  There should be a test 
+   for w3m-emacs, w3, lynx, w3m and the best method should be selected by 
+   default if not configured by the user.  
+
+   HTML only messages should be converted into mixes/alternative parts by 
+   vm-assimilate-html-message.  vm-mime-show-alternatives should probably 
+   be smart enough to display all but the chosen part as button.
 
  * Virtual selectors matching on specific mime parts, e.g.
    (vm-vs-text regexp): matching only text parts and those which can be
@@ -34,7 +53,8 @@ The features planed for one of the next releases
 
  * Improved (i)search support: Only text parts and certain headers should be
    searched and it should also work for virtual folders.  We might utilize
-   virtual folder selectors here. 
+   virtual folder selectors here. [1]
+   
 
  * Better IMAP support, i.e. just fetch headers, sync, offline, search.  It is
    really bad now and thus I do use Thunderbird at work!
@@ -53,7 +73,9 @@ REST
 
 The unsorted and remaining ones.
 
- * Marking + Delete is dead slow on folders with many (>2000) messages
+ * Marking + Delete is dead slow on folders with many (>2000) messages.
+
+ * Shortcut to expunge a single message.
 
 From EU
 
@@ -89,4 +111,17 @@ From EU
    replace all three windows (headers, presentation, BBDB) until the
    reply is sent.
 
+******************************************************************************
+REFERENCES
 
+[1] Newsgroups: gnu.emacs.vm.info
+    Subject: Re: Improved search for mixed (mime) ascii/html folders?
+
+[2] Message-ID: <1159541555.884682.318660@c28g2000cwb.googlegroups.com>
+    Newsgroups: gnu.emacs.vm.info
+    Subject: VM feature requests
+    Date: 29 Sep 2006 07:52:35 -0700
+
+;;; Local Variables: ***
+;;; mode:text ***
+;;; End: ***
