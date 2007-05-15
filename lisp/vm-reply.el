@@ -1343,9 +1343,24 @@ Binds the `vm-mail-mode-map' and hooks"
     (and newsgroups (insert "Newsgroups: " newsgroups "\n"))
     (and in-reply-to (insert "In-Reply-To: " in-reply-to "\n"))
     (and references (insert "References: " references "\n"))
-    (insert "X-Mailer: " (vm-version) " under "
-	    (if vm-fsfemacs-p "Emacs " "")
-	    emacs-version "\n")
+    (insert "X-Mailer: " (vm-version) " under ")
+    (cond ((vm-fsfemacs-p)
+	   (insert "Emacs " emacs-version))
+	  ((featurep 'xemacs)
+	   (insert
+	    (format "XEmacs %d.%d.%d" 
+		    emacs-major-version 
+		    emacs-minor-version 
+		    emacs-major-version)))
+	  ((boundp 'emacs-version)
+	   (insert emacs-version))
+	  (t
+	   (insert "Unknown Emacs")))
+    (if (functionp 'emacsw32-version)
+	(insert " [" (emacsw32-version) "]"))
+    (if (boundp 'system-configuration)
+	(insert " (" system-configuration ")"))
+    (insert "\n")
     ;; REPLYTO environmental variable support
     ;; note that in FSF Emacs v19.29 we would initialize if the
     ;; value was t.  nil is the trigger value used now.
