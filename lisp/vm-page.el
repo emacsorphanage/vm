@@ -223,6 +223,7 @@ Prefix argument N means scroll forward N lines."
 	 (vm-emit-eom-blurb))))
 
 (defun vm-emit-eom-blurb ()
+  (interactive)
   (let ((vm-summary-uninteresting-senders-arrow "")
 	(case-fold-search nil))
     (message (if (and (stringp vm-summary-uninteresting-senders)

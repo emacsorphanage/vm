@@ -1417,6 +1417,7 @@ vm-folder-type is initialized here."
 			    vm-deleted-count)))))
 
 (defun vm-emit-totals-blurb ()
+  (interactive)
   (save-excursion
     (vm-select-folder-buffer)
     (if (not (equal (nth 0 vm-totals) vm-modification-counter))
