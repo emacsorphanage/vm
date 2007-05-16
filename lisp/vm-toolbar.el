@@ -374,8 +374,7 @@ s-expression like this one in your .vm file:
   (if vm-fsfemacs-p
       (if (not vm-fsfemacs-toolbar-installed-p)
 	  (vm-toolbar-fsfemacs-install-toolbar))
-    (if (not (and (stringp vm-toolbar-pixmap-directory)
-		  (file-directory-p vm-toolbar-pixmap-directory)))
+    (if (not (vm-toolbar-pixmap-directory))
 	(progn
 	  (message "Bad toolbar pixmap directory, can't setup toolbar.")
 	  (sit-for 2))
@@ -510,7 +509,7 @@ s-expression like this one in your .vm file:
 		  (function
 		   (lambda (f)
 		     (make-glyph
-		      (expand-file-name f vm-toolbar-pixmap-directory))))
+		      (expand-file-name f (vm-toolbar-pixmap-directory)))))
 		  files))
 	(setq tuples (cdr tuples))))))
   (setq vm-toolbar-delete/undelete-icon vm-toolbar-delete-icon)
@@ -525,7 +524,7 @@ s-expression like this one in your .vm file:
 
 (defun vm-toolbar-fsfemacs-install-toolbar ()
   (let ((button-list (reverse vm-use-toolbar))
-	(dir vm-toolbar-pixmap-directory)
+	(dir (vm-toolbar-pixmap-directory))
 	(extension "xpm")
 	item t-spec sym name images)
     (defvar tool-bar-map)

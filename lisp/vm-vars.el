@@ -3132,7 +3132,9 @@ VM wants to display or undisplay."
   :group 'vm
   :type 'boolean)
 
-(defcustom vm-image-directory
+
+(defun vm-pixmap-directory () 
+  (interactive)
   (let* ((vm-dir (file-name-directory (locate-library "vm")))
 	 (image-dirs (list (expand-file-name "pixmaps" vm-dir)
 			   (expand-file-name "../pixmaps" vm-dir)
@@ -3143,10 +3145,15 @@ VM wants to display or undisplay."
       (if (file-exists-p image-dir)
 	  (setq image-dirs nil)
 	(setq image-dirs (cdr image-dirs))))
-    image-dir)
+    image-dir))
+
+(defun vm-image-directory () 
+  (or vm-image-directory (vm-pixmap-directory)))
+
+(defcustom vm-image-directory nil
   "*Value specifies the directory where VM should find its artwork."
   :group 'vm
-  :type '(choice (const nil) directory))
+  :type '(choice directory (const :tag "Automatic" nil)))
 
 (defcustom vm-use-toolbar
   '(next previous delete/undelete autofile file
@@ -3196,10 +3203,13 @@ Under FSF Emacs 21 the toolbar is always at the top of the frame."
 		 (const top)
 		 (const bottom)))
 
-(defcustom vm-toolbar-pixmap-directory vm-image-directory
+(defun vm-toolbar-pixmap-directory () 
+  (or vm-toolbar-pixmap-directory (vm-pixmap-directory)))
+
+(defcustom vm-toolbar-pixmap-directory nil
   "*Value specifies the directory VM should find its toolbar pixmaps."
   :group 'vm
-  :type 'directory)
+  :type '(coice directory (const :tag "Automatic" nil)))
 
 (defcustom vm-toolbar nil
   "*Non-nil value should be a list of toolbar button descriptors.
