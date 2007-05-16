@@ -50,8 +50,12 @@ VM 8.0.0
 
   IMPROVEMENTS: compared to 7.19 (not vmrf)
 
-    * A new icon set based on vm-small-pixmaps.tgz which was floating around. 
-    
+    * A new icon set based on vm-small-pixmaps.tgz which was floating around.
+      This one should fit by height to the one used in XEmacs and Emacs 22,
+      but it is slightly larger than those used in Emacs 21.  If you see the
+      old icons, the please set the variables `vm-image-directory' and
+      `vm-toolbar-pixmap-directory' to nil in your ~/.vm!
+
     * vm-mime-type-converter-alist now also works when replying to messages,
       i.e. for text/html one can use lynx or w3m for the conversion.
       (setq vm-mime-type-converter-alist
@@ -74,3 +78,7 @@ VM 8.0.0
 
     * vm-rfaddons.el has various stuff, look at the source if you are curious
       or miss some VM feature, as it might already be there!
+
+;;; Local Variables: ***
+;;; mode:text ***
+;;; End: ***
