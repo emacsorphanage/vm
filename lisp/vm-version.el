@@ -37,15 +37,19 @@ This is the author of the BZR repository from which VM was released.")
     (unless (get-buffer " *vm-version*")
       (set-buffer (get-buffer-create " *vm-version*"))
       (let* ((f (locate-library "vm"))
-             (d (file-name-directory f)))
+             (d (file-name-directory f))
+             (b (get-buffer " *vm-version*")))
         (setq default-directory d)
         (erase-buffer)
         (cond ((and (file-exists-p (expand-file-name ".bzr" (concat d "../")))
 		    (locate-file "bzr" exec-path)
-		    (= 0 (shell-command "bzr")))
+		    (= 0 (call-process "bzr" nil b)))
+               (erase-buffer)
                ;; get the current branch nick and revno from bzr
-               (insert (concat (shell-command-to-string "bzr --no-plugins nick") "-"
-                               (shell-command-to-string "bzr --no-plugins revno"))))
+               (insert (concat (shell-command-to-string
+                                "bzr --no-aliases --no-plugins nick") "-"
+                               (shell-command-to-string
+                                "bzr --no-aliases --no-plugins revno"))))
               ((and (locate-library "vm-revno") (load-library "vm-revno"))
                (insert vm-revno))
               (t
