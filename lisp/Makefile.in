@@ -119,6 +119,7 @@ vm-revno.el:
 ##############################################################################
 # GNU Emacs's vm-autoload file
 vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
+	-$(RM) $@
 	echo > $@
 	(build_dir=`pwd`; cd @srcdir@; \
 	 $(EMACS_PROG) $(FLAGS) -l autoload \
@@ -129,6 +130,10 @@ vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 ##############################################################################
 # XEmacs#s auto-autoloads and custom-load file
 auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
+	-$(RM) $@
+#	(build_dir=`pwd`; cd @srcdir@; \
+#	 $(EMACS_PROG) $(FLAGS) -l autoload \
+#		-f vm-built-autoloads "@abs_builddir@/$@" `pwd`)
 	$(EMACS_PROG) $(FLAGS) \
                 -eval "$(AUTOLOAD_PACKAGE_NAME)" \
                 -eval "$(AUTOLOAD_FILE)" \
@@ -138,7 +143,7 @@ auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	echo "(setq features (delete 'vm-autoloads features))" > $@
 	cat $@.tmp >> $@
 	echo "(setq features (delete 'vm-autoloads features))" >> $@
-	rm $@.tmp
+	$(RM) $@.tmp
 
 
 custom-load.el: $(SRCS:%=@srcdir@/%)
