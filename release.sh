@@ -1,10 +1,11 @@
 #!/bin/sh
 
 make
-bzr=bzr --no-plugins --no-aliases
+bzr="bzr --no-plugins --no-aliases"
 rdir=`$bzr nick`
 dir="release/$rdir"
 rm -rf $dir
+mkdir -p release
 $bzr export $dir
 cp configure $dir
 (cd lisp; rm vm-revno.el; make vm-revno.el)
