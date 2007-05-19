@@ -3204,7 +3204,10 @@ Under FSF Emacs 21 the toolbar is always at the top of the frame."
 		 (const bottom)))
 
 (defun vm-toolbar-pixmap-directory () 
-  (or vm-toolbar-pixmap-directory (vm-pixmap-directory)))
+  (or vm-toolbar-pixmap-directory 
+      (if (string-match "'--with-gtk'" system-configuration-options)
+	  (concat (vm-pixmap-directory) "/gtk")
+	(vm-pixmap-directory))))
 
 (defcustom vm-toolbar-pixmap-directory nil
   "*Value specifies the directory VM should find its toolbar pixmaps."
