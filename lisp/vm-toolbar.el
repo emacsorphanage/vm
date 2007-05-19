@@ -364,6 +364,11 @@ s-expression like this one in your .vm file:
   (if (and vm-fsfemacs-p (not vm-use-toolbar))
       (vm-toolbar-fsfemacs-uninstall-toolbar)))
 
+(defcustom vm-toolbar-height nil
+  "*Desired height of the toolbar."
+  :group 'vm
+  :type '(choice (const  :tag "Automatic" nil) integer))
+
 (defun vm-toolbar-install-toolbar ()
   ;; drag these in now instead of waiting for them to be
   ;; autoloaded.  the "loading..." messages could come at a bad
@@ -379,7 +384,8 @@ s-expression like this one in your .vm file:
 	  (message "Bad toolbar pixmap directory, can't setup toolbar.")
 	  (sit-for 2))
       (vm-toolbar-initialize)
-      (let ((height (+ 5 (glyph-height (car vm-toolbar-help-icon))))
+      (let ((height (or vm-toolbar-height
+			(+ 5 (glyph-height (car vm-toolbar-help-icon)))))
 	    (width (+ 5 (glyph-width (car vm-toolbar-help-icon))))
 	    (frame (selected-frame))
 	    (buffer (current-buffer))
