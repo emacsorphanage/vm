@@ -1375,20 +1375,22 @@ recursion or concurrent calls."
 
 (defadvice vm-mail (around vmpc-newmail activate)
   "*Start a new message with pcrisis voodoo."
-  ad-do-it
   (vmpc-init-vars 'newmail)
   (vmpc-build-true-conditions-list)
   (vmpc-build-actions-to-run-list)
+  (vmpc-run-actions)
+  ad-do-it
   (vmpc-create-sig-and-pre-sig-exerlays)
   (vmpc-make-vars-local)
   (vmpc-run-actions))
 
 (defadvice vm-compose-mail (around vmpc-compose-newmail activate)
   "*Start a new message with pcrisis voodoo."
-  ad-do-it
   (vmpc-init-vars 'newmail)
   (vmpc-build-true-conditions-list)
   (vmpc-build-actions-to-run-list)
+  (vmpc-run-actions)
+  ad-do-it
   (vmpc-create-sig-and-pre-sig-exerlays)
   (vmpc-make-vars-local)
   (vmpc-run-actions))
