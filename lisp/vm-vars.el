@@ -3156,7 +3156,8 @@ VM wants to display or undisplay."
   :type '(choice directory (const :tag "Automatic" nil)))
 
 (defcustom vm-use-toolbar
-  '(next previous delete/undelete autofile file
+  '(getmail 
+    next previous delete/undelete autofile file
     reply followup forward compose print visit quit help)
   "*Non-nil value causes VM to provide a toolbar interface.
 Value should be a list of symbols and integers that will determine which
