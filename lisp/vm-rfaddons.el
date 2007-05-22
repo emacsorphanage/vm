@@ -597,13 +597,13 @@ Call this function, if you want to see the message unfilled."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-rmail-mode nil
-  "*Non-nil means up/down in the presentation buffer does cursor movement.
+  "*Non-nil means up/down of modes listed in `vm-rmail-mode-list' do cursor movement.
 Use `vm-rmail-toggle' to switch between normal and this mode."
   :type 'boolean
   :group 'vm-rfaddons)
 
 (defcustom vm-rmail-mode-list
-  '(vm-mode vm-presentation-mode vm-virtual-mode vm-summary-mode)
+  '(vm-mode vm-presentation-mode vm-virtual-mode)
   "*Mode to activate `vm-rmail-mode' in."
   :type '(repeat (const vm-mode)
                  (const vm-presentation-mode)
@@ -613,31 +613,33 @@ Use `vm-rmail-toggle' to switch between normal and this mode."
   
 (defun vm-rmail-toggle (&optional arg)
   (interactive)
-  (cond ((=  1 arg)
+  (cond ((eq nil arg)
+         (setq vm-rmail-mode (not vm-rmail-mode)))
+        ((=  1 arg)
          (setq vm-rmail-mode t))
         ((= -1 arg)
          (setq vm-rmail-mode nil))
         (t
          (setq vm-rmail-mode (not vm-rmail-mode))))
-  (message (if vm-rmail-mode "VM cursor mode" "Rmail cursor mode")))
+  (message (if vm-rmail-mode "Rmail cursor mode" "VM cursor mode")))
   
 (defun vm-rmail-up ()
   (interactive)
   (cond ((and vm-rmail-mode (member major-mode vm-rmail-mode-list))
+         (next-line -1))
+        (t
          (vm-next-message -1)
          (vm-display nil nil '(rf-vm-rmail-up vm-previous-message)
-                     (list this-command)))
-        (t 
-         (next-line -1))))
+                     (list this-command)))))
 
 (defun vm-rmail-down ()
   (interactive)
   (cond ((and vm-rmail-mode (member major-mode vm-rmail-mode-list))
+         (next-line 1))
+        (t 
          (vm-next-message 1)
          (vm-display nil nil '(rf-vm-rmail-up vm-next-message)
-                     (list this-command)))
-        (t
-         (next-line 1))))
+                     (list this-command)))))
 
 (defun vm-do-with-message (count function vm-display)
   (vm-follow-summary-cursor)
