@@ -1339,28 +1339,31 @@ buffer to which to write diagnostic output."
   "Make the pcrisis vars buffer local.
 
 When the vars are first set they cannot be made buffer local as we are not in
-the composition buffer then.  Unfortunately making them buffer local while
-they are bound by a `let' does not work, see the info for `make-local-variable'.
-So we are using the global ones and make them buffer local when in the composition
-buffer.  At least for saved-headers-alist this should fix a bug.
+the composition buffer then.
+
+Unfortunately making them buffer local while they are bound by a `let' does
+not work, see the info for `make-local-variable'.  So we are using the global
+ones and make them buffer local when in the composition buffer.  At least for
+`saved-headers-alist' this should fix the bug that another composition
+overwrites the stored headers for subsequent morphs.
 
 The current solution is not reentrant save, but there also should be no
-recursion or concurrent calls."
-  (let ((saved-headers-alist vmpc-saved-headers-alist)
-        (actions-to-run      vmpc-actions-to-run)
-        (true-conditions     vmpc-true-conditions)
-        (current-state       vmpc-current-state))
+recursion nor concurrent calls."
+  ;; make the variables buffer local
+  (make-local-variable 'vmpc-true-conditions)
+  (make-local-variable 'vmpc-saved-headers-alist)
+  (make-local-variable 'vmpc-actions-to-run)
+  (make-local-variable 'vmpc-current-state)
+  (make-local-variable 'vmpc-current-buffer)
+  ;; mark, that we are in the composition buffer now
+  (setq vmpc-current-buffer      'composition)
+  ;; BUGME why is the global value resurrected after making the variable
+  ;; buffer local?  Is this related to defadvice?  I have no idea what is
+  ;; going on here!  Thus we clear it afterwards now!
+  (save-excursion
+    (set-buffer (get-buffer-create " *vmpc-cleanup*"))
     (vmpc-init-vars)
-    (make-local-variable 'vmpc-saved-headers-alist)
-    (make-local-variable 'vmpc-actions-to-run)
-    (make-local-variable 'vmpc-true-conditions)
-    (make-local-variable 'vmpc-current-state)
-    (make-local-variable 'vmpc-current-buffer)
-    (setq vmpc-saved-headers-alist saved-headers-alist
-          vmpc-actions-to-run      actions-to-run
-          vmpc-true-conditions     true-conditions
-          vmpc-current-state       current-state
-          vmpc-current-buffer      'composition)))
+    (setq vmpc-current-buffer nil)))
 
 (defadvice vm-do-reply (around vmpc-reply activate)
   "*Reply to a message with pcrisis voodoo."
