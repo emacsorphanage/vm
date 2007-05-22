@@ -1183,6 +1183,10 @@ containing `vmpc-other-cond' will show up as not having matched, because they
 haven't yet been checked when this one is checked."
   (member condition vmpc-true-conditions))
 
+(defun vmpc-folder-match (regexp)
+  "Return true if the current folder name matches REGEXP."
+  (string-match regexp (buffer-name)))
+
 (defun vmpc-header-match (hdrfield regexp &optional clump-sep num)
   "Return true if the contents of specified header HDRFIELD match REGEXP.
 For automorph, this means the header in your message, when replying it means
