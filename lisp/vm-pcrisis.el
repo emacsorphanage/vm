@@ -1266,7 +1266,8 @@ actions will be run."
   (interactive)
   (if (and (interactive-p) (not (member major-mode '(vm-mail-mode mail-mode))))
       (error "Run `vmpc-build-actions-to-run-list' in a composition buffer!"))
-  (let ((alist (or (symbol-value (intern (format "vmpc-%s-alist" vmpc-current-state)))
+  (let ((alist (or (symbol-value (intern (format "vmpc-%s-alist"
+                                                 vmpc-current-state)))
                    vmpc-actions-alist))
         (old-vmpc-actions-to-run vmpc-actions-to-run)
         actions)
