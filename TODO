@@ -23,8 +23,6 @@ BUGS
 
 These are bugs which must be fixed before the next release.
 
- * Click in mailto: link does not copy the address.
-
 ******************************************************************************
 ROADMAP
 
@@ -45,6 +43,8 @@ The order hints on the priority, but it is no gurantee.
    HTML only messages should be converted into mixes/alternative parts by 
    vm-assimilate-html-message.  vm-mime-show-alternatives should probably 
    be smart enough to display all but the chosen part as button.
+
+ * Click in mailto: link does not work when being used from w3 buffers.
 
  * Virtual selectors matching on specific mime parts, e.g.
    (vm-vs-text regexp): matching only text parts and those which can be
