@@ -1,5 +1,7 @@
 #!/bin/sh
 
+bzr diff || exit 1
+
 make
 bzr="bzr --no-plugins --no-aliases"
 rdir=`$bzr nick`
