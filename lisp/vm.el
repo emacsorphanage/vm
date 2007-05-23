@@ -1102,7 +1102,7 @@ summary buffer to select a folder."
     (delete-other-windows)
     (reporter-submit-bug-report
      vm-maintainer-address
-     (concat "VM " vm-version)
+     (concat "VM " (vm-version))
      (list
       'vm-arrived-message-hook
       'vm-arrived-messages-hook
@@ -1378,10 +1378,10 @@ Please remove these instructions from your message.")
 (defun vm-check-emacs-version ()
   (cond ((and vm-xemacs-p (< emacs-major-version 21))
 	 (error "VM %s must be run on XEmacs 21 or a later version."
-		vm-version))
+		(vm-version)))
 	((and vm-fsfemacs-p (< emacs-major-version 21))
 	 (error "VM %s must be run on GNU Emacs 21 or a later version."
-		vm-version))))
+		(vm-version)))))
 
 (defun vm-set-debug-flags ()
   (or stack-trace-on-error
