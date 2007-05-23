@@ -1,7 +1,7 @@
 ;;; vm-version.el --- Version information about VM and the Emacs running VM.
 ;;
 ;; Copyright (C) Kyle E. Jones, Robert Widhopf-Fenk
-;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;; Copyright (C) 2003-2007 Robert Widhopf-Fenk
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -18,8 +18,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
-(defconst vm-version "8.0"
-  "Version number of VM.")
+(defconst vm-version nil
+  "Version number of VM.
+Call `vm-version' instead of accessing this variable!")
 
 (defvar vm-revno nil
   "The exact version for tarbundles.
@@ -33,8 +34,8 @@ This is the author of the BZR repository from which VM was released.")
 (defun vm-version ()
   "Return the value of the variable `vm-version'."
   (interactive)
-  (save-excursion
-    (unless (get-buffer " *vm-version*")
+  (unless vm-version
+    (save-excursion
       (set-buffer (get-buffer-create " *vm-version*"))
       (let* ((f (locate-library "vm"))
              (d (file-name-directory f))
@@ -48,18 +49,18 @@ This is the author of the BZR repository from which VM was released.")
                ;; get the current branch nick and revno from bzr
                (insert (concat (shell-command-to-string
                                 "bzr --no-aliases --no-plugins nick") "-"
-                               (shell-command-to-string
-                                "bzr --no-aliases --no-plugins revno"))))
+                                (shell-command-to-string
+                                 "bzr --no-aliases --no-plugins revno"))))
               ((and (locate-library "vm-revno") (load-library "vm-revno"))
                (insert vm-revno))
               (t
-               (insert vm-version "-?bug?")))
+               (error "Cannot determine VM version!")))
         (goto-char (point-min))
         ;; remove any whitespace
         (while (re-search-forward "[\n\t\r ]+" (point-max) t)
-          (replace-match ""))))
-    (set-buffer (get-buffer " *vm-version*"))
-    (buffer-substring (point-min) (point-max))))
+          (replace-match "")))
+      (setq vm-version (buffer-substring (point-min) (point-max)))))
+  vm-version)
 
 (defconst vm-xemacs-p
   (featurep 'xemacs))
