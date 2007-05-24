@@ -1529,7 +1529,7 @@ on all the relevant IMAP servers and then immediately expunges."
     (goto-char (point-min))
     (while (search-forward "\n" nil t)
       (replace-match "\r\n" nil t))
-    (buffer-string (point-min) (point-max))))
+    (buffer-substring-no-properties (point-min) (point-max))))
 
 ;;;###autoload
 (defun vm-imap-save-message (process m mailbox)
