@@ -56,6 +56,8 @@ This is the author of the BZR repository from which VM was released.")
               (t
                (error "Cannot determine VM version!")))
         (goto-char (point-min))
+        (if (looking-at "vm-")
+            (replace-match ""))
         ;; remove any whitespace
         (while (re-search-forward "[\n\t\r ]+" (point-max) t)
           (replace-match "")))
