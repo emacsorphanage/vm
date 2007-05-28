@@ -1199,7 +1199,7 @@ separated from each other by CLUMP-SEP.
 If NUM is specified return the match string NUM."
   (cond ((memq vmpc-current-state '(reply forward resend))
          (let ((hdr (vmpc-get-replied-header-contents hdrfield clump-sep)))
-           (and (string-match regexp hdr)
+           (and hdr (string-match regexp hdr)
                 (if num (match-string num hdr) t))))
         ((eq vmpc-current-state 'automorph)
          (let ((hdr (vmpc-get-current-header-contents hdrfield clump-sep)))
