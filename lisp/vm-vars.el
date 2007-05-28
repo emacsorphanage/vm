@@ -4256,7 +4256,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
 		 (regexp :tag "8bit chars" "[^\x0-\x80]")
 		 (regexp :tag "Custom regexp")))
 
-(defconst vm-maintainer-address "viewmail-bugs@nongnu.org"
+(defconst vm-maintainer-address "hack@robf.de"
   "Where to send VM bug reports.")
 
 (defvar vm-mode-map
