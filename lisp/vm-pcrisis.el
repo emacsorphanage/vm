@@ -110,37 +110,37 @@ Checks if the condition and all the actions exist."
 If you do not want to map actions for each state, e.g. for replying, forwarding,
 resending, composing or automorphing, then set this one."
   :type (vmpc-defcustom-alist-type)
-  :set 'vmpc-alist-set
+;  :set 'vmpc-alist-set
   :group 'vmpc)
 
 (defcustom vmpc-reply-alist ()
   "*An alist associating conditions with actions from `vmpc-actions' when replying."
   :type (vmpc-defcustom-alist-type)
-  :set 'vmpc-alist-set
+;  :set 'vmpc-alist-set
   :group 'vmpc)
 
 (defcustom vmpc-forward-alist ()
   "*An alist associating conditions with actions from `vmpc-actions' when forwarding."
   :type (vmpc-defcustom-alist-type)
-  :set 'vmpc-alist-set
+;  :set 'vmpc-alist-set
   :group 'vmpc)
 
 (defcustom vmpc-automorph-alist ()
   "*An alist associating conditions with actions from `vmpc-actions' when automorphing."
   :type (vmpc-defcustom-alist-type)
-  :set 'vmpc-alist-set
+;  :set 'vmpc-alist-set
   :group 'vmpc)
 
 (defcustom vmpc-newmail-alist ()
   "*An alist associating conditions with actions from `vmpc-actions' when composing."
   :type (vmpc-defcustom-alist-type)
-  :set 'vmpc-alist-set
+;  :set 'vmpc-alist-set
   :group 'vmpc)
 
 (defcustom vmpc-resend-alist ()
   "*An alist associating conditions with actions from `vmpc-actions' when resending."
   :type (vmpc-defcustom-alist-type)
-  :set 'vmpc-alist-set
+;  :set 'vmpc-alist-set
   :group 'vmpc)
 
 (defcustom vmpc-auto-profiles-file "~/.vmpc-auto-profiles"
@@ -1355,13 +1355,22 @@ overwrites the stored headers for subsequent morphs.
 The current solution is not reentrant save, but there also should be no
 recursion nor concurrent calls."
   ;; make the variables buffer local
-  (make-local-variable 'vmpc-true-conditions)
-  (make-local-variable 'vmpc-saved-headers-alist)
-  (make-local-variable 'vmpc-actions-to-run)
-  (make-local-variable 'vmpc-current-state)
-  (make-local-variable 'vmpc-current-buffer)
-  ;; mark, that we are in the composition buffer now
-  (setq vmpc-current-buffer      'composition)
+  (let ((tc vmpc-true-conditions)
+        (sha vmpc-saved-headers-alist)
+        (atr vmpc-actions-to-run)
+        (cs vmpc-current-state))
+    (make-local-variable 'vmpc-true-conditions)
+    (make-local-variable 'vmpc-saved-headers-alist)
+    (make-local-variable 'vmpc-actions-to-run)
+    (make-local-variable 'vmpc-current-state)
+    (make-local-variable 'vmpc-current-buffer)
+    ;; now set them again to make sure the contain the right value
+    (setq vmpc-true-conditions tc)
+    (setq vmpc-saved-headers-alist sha)
+    (setq vmpc-actions-to-run atr)
+    (setq vmpc-current-state cs))
+    ;; mark, that we are in the composition buffer now
+    (setq vmpc-current-buffer      'composition)
   ;; BUGME why is the global value resurrected after making the variable
   ;; buffer local?  Is this related to defadvice?  I have no idea what is
   ;; going on here!  Thus we clear it afterwards now!
