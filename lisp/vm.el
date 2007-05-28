@@ -1346,6 +1346,8 @@ summary buffer to select a folder."
      nil
      "Please change the Subject header to a concise bug description.
 
+Consider to post this to the News group gnu.emacs.vm.bug instead.
+
 In this report, remember to cover the basics, that is, what you expected to
 happen and what in fact did happen and how to reproduce it.
 
