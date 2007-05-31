@@ -543,6 +543,7 @@ Prefix arg means the new virtual folder should be visited read only."
 (defun vm-vs-unmarked (m) (not (vm-mark-of m)))
 (defun vm-vs-unedited (m) (not (vm-edited-flag m)))
 
+(put 'sexp 'vm-virtual-selector-clause "matching S-expression selector")
 (put 'header 'vm-virtual-selector-clause "with header matching")
 (put 'label 'vm-virtual-selector-clause "with label of")
 (put 'text 'vm-virtual-selector-clause "with text matching")
@@ -561,6 +562,7 @@ Prefix arg means the new virtual folder should be visited read only."
      "with less characters than")
 (put 'more-lines-than 'vm-virtual-selector-clause "with more lines than")
 (put 'less-lines-than 'vm-virtual-selector-clause "with less lines than")
+(put 'sexp 'vm-virtual-selector-arg-type 'string)
 (put 'header 'vm-virtual-selector-arg-type 'string)
 (put 'label 'vm-virtual-selector-arg-type 'label)
 (put 'text 'vm-virtual-selector-arg-type 'string)
@@ -601,9 +603,16 @@ Prefix arg means the new virtual folder should be visited read only."
 			      vm-label-obarray)
 			     nil)))))
 	      (t (setq arg (read-string prompt))))))
-    (or (fboundp (intern (concat "vm-vs-" (symbol-name selector))))
-	(error "Invalid selector"))
-    (list selector arg)))
+    (let ((real-selector
+	   (if (eq selector 'sexp)
+	       (let ((read-arg (read arg)))
+		 (if (listp read-arg) read-arg (list read-arg)))
+	     (list selector arg))))
+      (or (fboundp (intern (concat "vm-vs-"
+				   (symbol-name (car real-selector)))))
+	  (error "Invalid selector"))
+      real-selector)))
+
 
 ;; clear away links between real and virtual folders when
 ;; a vm-quit is performed in either type folder.

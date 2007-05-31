@@ -4777,6 +4777,7 @@ Its parent keymap is mail-mode-map.")
 
 (defconst vm-supported-interactive-virtual-selectors
   '(("any")
+    ("sexp")
     ("virtual-folder-member")
     ("header")
     ("label")
