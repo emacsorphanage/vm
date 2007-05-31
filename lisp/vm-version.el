@@ -18,7 +18,7 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
-(defconst vm-version nil
+(defvar vm-version nil
   "Version number of VM.
 Call `vm-version' instead of accessing this variable!")
 
@@ -54,7 +54,9 @@ This is the author of the BZR repository from which VM was released.")
               ((and (locate-library "vm-revno") (load-library "vm-revno"))
                (insert vm-revno))
               (t
-               (error "Cannot determine VM version!")))
+               (insert "?bug?")
+               (message "ERROR: Cannot determine VM version!")
+               (sit-for 5)))
         (goto-char (point-min))
         (if (looking-at "vm-")
             (replace-match ""))
