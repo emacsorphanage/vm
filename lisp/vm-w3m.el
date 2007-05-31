@@ -209,4 +209,5 @@ To re-install it, load the vm-w3m module again."
   (ad-unadvise 'vm-mime-display-internal-text/html)
   (fmakunbound 'vm-mime-display-internal-multipart/related))
 
+(provide 'vm-w3m)
 ;;; vm-w3m.el ends here
