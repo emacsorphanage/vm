@@ -204,8 +204,9 @@
 (defun vm-mime-Q-encode-region (start end)
   (let ((buffer-read-only nil)
 	(val))
-    (setq val (vm-mime-qp-encode-region start end t))
-    (subst-char-in-region start end (string-to-char " ") ?_ t)
+    (setq val (vm-mime-qp-encode-region start end t)) ; may modify buffer
+    (subst-char-in-region start (min end (point-max))
+                          (string-to-char " ") ?_ t)
     val ))
 
 (defun vm-mime-B-encode-region (start end)
@@ -1938,10 +1939,12 @@ in the buffer.  The function is expected to make the message
 	       (error "Invalid MIME message: %s" layout)))
 	(if (vm-mime-plain-message-p m)
 	    (error "Message needs no decoding."))
-	(or vm-presentation-buffer
-	    ;; maybe user killed it
-	    (error "No presentation buffer."))
-	(set-buffer vm-presentation-buffer)
+	(if (not vm-presentation-buffer)
+	    ;; maybe user killed it - make a new one
+	    (progn
+	      (vm-make-presentation-copy (car vm-message-pointer))
+	      (vm-expose-hidden-headers))
+	  (set-buffer vm-presentation-buffer))
 	(if (and (interactive-p) (eq vm-system-state 'previewing))
 	    (let ((vm-display-using-mime nil))
 	      (vm-show-current-message)))
