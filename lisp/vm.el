@@ -1485,6 +1485,7 @@ Please remove these instructions from your message.")
 	     (vm-menu-initialize-vm-mode-menu-map))
 	(setq vm-session-beginning nil))))
 
+;;;###autoload
 (if (fboundp 'define-mail-user-agent)
     (define-mail-user-agent 'vm-user-agent
       (function vm-compose-mail)	; compose function
