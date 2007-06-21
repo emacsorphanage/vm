@@ -53,10 +53,12 @@
               (setq this-subject (concat vm-reply-subject-prefix
                                          this-subject)))
 	  
-	  (setq subject (if subject
-			    (concat subject ",\n\t" this-subject)
-			  this-subject)
-		in-reply-to (if in-reply-to
+          (unless subject
+            (setq subject (concat this-subject
+                                  (if (cdr mlist)
+                                      (format " [and %d more messages]"
+                                              (length (cdr mlist)))))))
+          (setq in-reply-to (if in-reply-to
 				(concat in-reply-to ",\n\t" this-reply-to)
 			      this-reply-to)))
 		
@@ -1079,10 +1081,10 @@ only marked messages will be put into the digest."
        nil
        (and vm-forwarding-subject-format
             (let ((vm-summary-uninteresting-senders nil))
-              (mapconcat (lambda (mp)
-                           (vm-summary-sprintf
-                            vm-forwarding-subject-format mp))
-                         mlist ", "))))
+              (concat (vm-summary-sprintf vm-forwarding-subject-format (car mlist))
+                      (if (cdr mlist)
+                          (format " [and %d more messages]"
+                                  (length (cdr mlist))))))))
       (make-local-variable 'vm-forward-list)
       (setq vm-system-state 'forwarding
 	    vm-forward-list mlist
