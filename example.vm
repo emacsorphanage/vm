@@ -21,6 +21,10 @@
 ;;; VM to your own needs.
 
 ;;*****************************************************************************
+;; Make VM your default mail agent in Emacs
+(setq mail-user-agent 'vm-user-agent)
+
+;;*****************************************************************************
 ;; Folders and spool files, this is where your mail comes from.
 
 ;; vm-spool-files is a list of lists, each sublist should be of the form
