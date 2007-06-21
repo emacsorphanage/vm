@@ -1598,11 +1598,10 @@ should be encoded together."
             (goto-char end)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(when (not (facep 'vm-shrunken-headers-face))
-  (defface vm-shrunken-headers-face
-    '((((class color) (background dark)) (:background "blue"))
-      (t (:background "gray")))
-    "Used for marking shrunken headers."))
+(defface vm-shrunken-headers-face 
+  '((t (:background "gray")))
+  "Used for marking shrunken headers."
+  :group 'vm-faces)
 
 (defvar vm-shrunken-headers-keymap
   (let ((map (if vm-xemacs-p (make-keymap) (copy-keymap vm-mode-map))))
@@ -1612,8 +1611,6 @@ should be encoded together."
       (define-key map [(mouse-2)]  'vm-shrunken-headers-toggle-this-mouse))
     map)
   "*Keymap used for shrunken-headers glyphs.")
-
-
 
 ;;;###autoload
 (defun vm-shrunken-headers-toggle ()
@@ -1671,7 +1668,11 @@ should be encoded together."
   "Hide or show headers which occupy more than one line.
 Well, one might do it more precisely with only some headers,
 but it is sufficient for me!
-Optional TOGGLE hiding of headers."
+
+If the optional argument TOGGLE, then hiding is toggled.
+
+The face used for the visible hidden regions is `vm-shrunken-headers-face' and
+the keymap used within that region is `vm-shrunken-headers-keymap'."
   (interactive "P")
   
   (save-excursion 
