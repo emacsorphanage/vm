@@ -35,7 +35,7 @@ all: $(SOURCES:.c=)
 install:
 	for i in $(SOURCES:.c=) ; do                               \
 	  echo "Installing $$i in $(bindir)" ;                     \
-          $(INSTALL_DATA) $$i $(bindir) ;                          \
+          $(INSTALL_PROGRAM) $$i $(bindir) ;                       \
         done ;
 	@echo VM helper binaries successfully installed\!
 

@@ -1,3 +1,18 @@
+VM 8.0.1
+
+  BUGS:
+
+    * A saner default for vm-shrunken-header-face.
+
+    * Added documentation on vm-shrunken-headers-face and
+      vm-shrunken-headers-keymap.
+
+    * Added a new custom group vm-faces for faces.
+
+    * Added autoload token for vm-user-agent.
+
+    * Use INSTALL_PROGRAM instead of INSTALL_DATA for programs.
+
 VM 8.0.0
 
   NOTES:

@@ -761,6 +761,10 @@ FSF Emacs always uses VM's builtin highlighting code."
   :group 'vm
   :type 'boolean)
 
+(defgroup vm-faces nil
+  "VM additional virtual folder selectors and functions."
+  :group 'vm)
+
 (defcustom vm-highlighted-header-face 'bold
   "*Face to be used to highlight headers.
 The headers to highlight are specified by the `vm-highlighted-header-regexp'
@@ -770,7 +774,7 @@ This variable is ignored under XEmacs if `vm-use-lucid-highlighting' is
 non-nil.  XEmacs' highlight-headers package is used instead.  See the
 documentation for the function `highlight-headers' to find out how to
 customize header highlighting using this package."
-  :group 'vm
+  :group 'vm-faces
   :type 'symbol)
 
 (defcustom vm-preview-lines 0
@@ -1364,7 +1368,7 @@ deleting a MIME object with `vm-delete-mime-object'."
 
 (defcustom vm-mime-button-face 'gui-button-face
   "*Face used for text in buttons that trigger the display of MIME objects."
-  :group 'vm
+  :group 'vm-faces
   :type 'boolean)
 
 (defcustom vm-mime-button-format-alist
@@ -2791,7 +2795,7 @@ variable's value has no effect on existing summary buffers."
 (defcustom vm-summary-highlight-face 'bold
   "*Face to use to highlight the summary entry for the current message.
 Nil means don't highlight the current message's summary entry."
-  :group 'vm
+  :group 'vm-faces
   :type 'symbol)
 
 (defcustom vm-mouse-track-summary t
@@ -3384,7 +3388,7 @@ in messages when you click on them."
 (defcustom vm-highlight-url-face 'bold-italic
   "*Non-nil value should be a face to use display URLs found in messages.
 Nil means don't highlight URLs."
-  :group 'vm
+  :group 'vm-faces
   :type 'symbol)
 
 (defcustom vm-url-search-limit 12000
