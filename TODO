@@ -33,7 +33,8 @@ The order hints on the priority, but it is no gurantee.
 
  * Merge changes from the Debian package.
 
- * Some of the user defined summary specifiers should become internal ones.
+ * Some of the user defined summary functions should become internal ones.
+   E.g.: has-attachments, text/html, size, draft, ...
 
  * Better HTML support for both displaying and replying, but probably not for
    composition as there is no urge to surrender here!  There should be a test 
