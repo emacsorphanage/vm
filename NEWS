@@ -13,6 +13,10 @@ VM 8.0.1
 
     * Use INSTALL_PROGRAM instead of INSTALL_DATA for programs.
 
+    * Do not set vm-folder-directory if there is ~/INBOX.  If VM does not get
+      mail after upgrading from 7.19 it is probably due to the new default for
+      vm-folder-directory, which was nil before.
+
 VM 8.0.0
 
   NOTES:
