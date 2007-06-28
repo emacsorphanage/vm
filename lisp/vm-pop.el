@@ -18,6 +18,12 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(defcustom vm-pop-debug t
+  "*If t, the trace buffers with the POP server communication are kept."
+  :group 'vm
+  :type 'boolean)
+
 (if (fboundp 'define-error)
     (progn
       (define-error 'vm-cant-uidl "Can't use UIDL")
@@ -554,7 +560,7 @@ relevant POP servers to remove the messages."
 	      (and verbose
 		   (message
 		    "Waiting for response to POP QUIT command... done"))))))
-  (if (not keep-buffer)
+  (if (and (not keep-buffer) (not vm-pop-debug))
       (if (buffer-live-p (process-buffer process))
 	  (kill-buffer (process-buffer process)))
     (save-excursion
