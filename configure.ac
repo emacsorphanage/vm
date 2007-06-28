@@ -151,12 +151,12 @@ TEST
     # EMACS VERSION ###############################################
     AC_MSG_CHECKING([checking emacs-version of ${EMACS_PROG}])
     cat > conftest.el <<TEST
-(if (featurep 'xemacs )
-     (princ (format "%d.%d.%d"
-                 emacs-major-version emacs-minor-version emacs-patch-level))
-  (princ (format "%s" emacs-version)))
+(princ (format "%d" emacs-major-version))
 TEST
     EMACS_VERSION=`${EMACS_PROG} --no-site-file --batch -l conftest.el | ${GREP} .`
+    if test ${EMACS_VERSION} -lt 21; then
+      AC_MSG_ERROR([Emacs version ${EMACS_VERSION} is too old!])
+    fi
     # EMACS DEPENDENT SETTINGS ####################################
     # We may add a version check here ...
     AC_MSG_RESULT([${EMACS_VERSION}])
