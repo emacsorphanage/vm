@@ -1,5 +1,10 @@
 VM 8.0.1
 
+  NOTES:
+
+    In order to get more features from vm-rfaddons set the variable
+    `vm-enable-addons' in your ~/.vm.
+
   BUGS:
 
     * A saner default for vm-shrunken-header-face.
@@ -7,11 +12,18 @@ VM 8.0.1
     * Added documentation on vm-shrunken-headers-face and
       vm-shrunken-headers-keymap.
 
-    * Added a new custom group vm-faces for faces.
+    * Added a new custom group `vm-faces' for faces.
 
     * Added autoload token for vm-user-agent.
 
     * Use INSTALL_PROGRAM instead of INSTALL_DATA for programs.
+
+    * Do not set vm-folder-directory if there is ~/INBOX.  If VM does not get
+      mail after upgrading from 7.19 it is probably due to the new default for
+      vm-folder-directory, which was nil before.
+
+    * Revised the bindings and enabled features to a hopefully less
+      controversial setting. 
 
 VM 8.0.0
 

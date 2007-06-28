@@ -42,7 +42,9 @@ users to edit directly."
   :group 'vm
   :type 'file)
 
-(defcustom vm-folder-directory (expand-file-name "~/Mail")
+(defcustom vm-folder-directory
+  (if (not (file-exists-p "~/INBOX"))
+      (expand-file-name "~/Mail"))
   "*Directory where folders of mail are kept."
   :group 'vm
   :type '(choice (const nil) directory))
@@ -4271,9 +4273,6 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "H" 'vm-folders-summarize)
     (define-key map "\M-n" 'vm-next-unread-message)
     (define-key map "\M-p" 'vm-previous-unread-message)
-    (define-key map "E"     'vm-rmail-toggle)
-    (define-key map [up]    'vm-rmail-up)
-    (define-key map [down]  'vm-rmail-down)
     (define-key map "n" 'vm-next-message)
     (define-key map "p" 'vm-previous-message)
     (define-key map "N" 'vm-next-message-no-skip)
@@ -4309,7 +4308,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "c" 'vm-continue-composing-message)
     (define-key map "@" 'vm-send-digest)
     (define-key map "*" 'vm-burst-digest)
-    (define-key map "m" 'vm-continue-what-message)
+    (define-key map "m" 'vm-mail)
     (define-key map "g" 'vm-get-new-mail)
     (define-key map "G" 'vm-sort-messages)
     (define-key map "v" 'vm-visit-folder)
@@ -5300,7 +5299,10 @@ that has a match.")
 (defvar vm-fsfemacs-cached-scroll-bar-width nil)
 (defvar vm-update-composition-buffer-name-timer nil)
 
-(defcustom vm-enable-addons t
+(defcustom vm-enable-addons '(check-recipients
+			      check-for-empty-subject
+			      encode-headers
+			      take-action-on-attachment)
   "*A list of vm-rfaddons to enable, t for default and nil to disable them."
   :group 'vm
   :type 'boolean)
