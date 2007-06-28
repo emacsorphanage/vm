@@ -42,7 +42,9 @@ users to edit directly."
   :group 'vm
   :type 'file)
 
-(defcustom vm-folder-directory (expand-file-name "~/Mail")
+(defcustom vm-folder-directory
+  (if (not (file-exists-p "~/INBOX"))
+      (expand-file-name "~/Mail"))
   "*Directory where folders of mail are kept."
   :group 'vm
   :type '(choice (const nil) directory))
