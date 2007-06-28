@@ -5302,7 +5302,10 @@ that has a match.")
 (defvar vm-fsfemacs-cached-scroll-bar-width nil)
 (defvar vm-update-composition-buffer-name-timer nil)
 
-(defcustom vm-enable-addons t
+(defcustom vm-enable-addons '(check-recipients
+			      check-for-empty-subject
+			      encode-headers
+			      take-action-on-attachment)
   "*A list of vm-rfaddons to enable, t for default and nil to disable them."
   :group 'vm
   :type 'boolean)
