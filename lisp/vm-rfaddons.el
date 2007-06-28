@@ -597,13 +597,15 @@ Call this function, if you want to see the message unfilled."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-rmail-mode nil
-  "*Non-nil means up/down of modes listed in `vm-rmail-mode-list' do cursor movement.
+  "*Non-nil means up/down move to the next/previous message instead.
+Otherwise normal cursor movement is done.  Specifically only modes
+listed in `vm-rmail-mode-list' are affected.
 Use `vm-rmail-toggle' to switch between normal and this mode."
   :type 'boolean
   :group 'vm-rfaddons)
 
 (defcustom vm-rmail-mode-list
-  '(vm-mode vm-presentation-mode vm-virtual-mode)
+  '(vm-summary-mode)
   "*Mode to activate `vm-rmail-mode' in."
   :type '(repeat (const vm-mode)
                  (const vm-presentation-mode)
@@ -626,20 +628,20 @@ Use `vm-rmail-toggle' to switch between normal and this mode."
 (defun vm-rmail-up ()
   (interactive)
   (cond ((and vm-rmail-mode (member major-mode vm-rmail-mode-list))
-         (next-line -1))
-        (t
          (vm-next-message -1)
          (vm-display nil nil '(rf-vm-rmail-up vm-previous-message)
-                     (list this-command)))))
+                     (list this-command)))
+        (t 
+         (next-line -1))))
 
 (defun vm-rmail-down ()
   (interactive)
   (cond ((and vm-rmail-mode (member major-mode vm-rmail-mode-list))
-         (next-line 1))
-        (t 
          (vm-next-message 1)
          (vm-display nil nil '(rf-vm-rmail-up vm-next-message)
-                     (list this-command)))))
+                     (list this-command)))
+        (t 
+         (next-line 1))))
 
 (defun vm-do-with-message (count function vm-display)
   (vm-follow-summary-cursor)
