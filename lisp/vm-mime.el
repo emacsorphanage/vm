@@ -451,6 +451,7 @@
   (and (> (- end start) 200)
        (message "Encoding base64..."))
   (let ((work-buffer nil)
+	(buffer-undo-list t)
 	(counter 0)
 	(cols 0)
 	(bits 0)
@@ -5574,6 +5575,8 @@ agent; under Unix, normally sendmail.)"
 			     (extent-property e 'vm-mime-type))
 			    (vm-line-ending-coding-system)
 			  (vm-binary-coding-system)))
+		       ;; keep no undos 
+		       (buffer-undo-list t)
 		       ;; no transformations!
 		       (format-alist nil)
 		       ;; no decompression!
@@ -5979,6 +5982,8 @@ agent; under Unix, normally sendmail.)"
 			     (overlay-get o 'vm-mime-type))
 			    (vm-line-ending-coding-system)
 			  (vm-binary-coding-system)))
+		       ;; keep no undos 
+		       (buffer-undo-list t)
 		       ;; no transformations!
 		       (format-alist nil)
 		       ;; no decompression!

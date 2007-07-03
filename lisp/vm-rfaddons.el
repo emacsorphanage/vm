@@ -1022,13 +1022,11 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 ;  (vm-mime-display-internal-text/plain layout))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defcustom vm-mime-all-attachments-directory
-  (if (boundp 'vm-mime-attachment-save-directory)
-      vm-mime-attachment-save-directory
-    (expand-file-name "~/Attachments"))
+(defcustom vm-mime-all-attachments-directory nil
     "*Directory to where the attachments should go or come from."
  :group 'vm-rfaddons
- :type 'directory)
+ :type '(choice (directory :tag "Directory:")
+                (const :tag "Use `vm-mime-attachment-save-directory'" nil)))
 
 (defvar vm-mime-save-all-attachments-history nil
   "Directory history to where the attachments should go.")
