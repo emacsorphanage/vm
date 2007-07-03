@@ -29,6 +29,8 @@ ROADMAP
 The features planed for one of the next releases.  
 The order hints on the priority, but it is no gurantee.
 
+ * Display draft status in the modeline.
+
  * GNU Emacs: does not highlight attachment buttons in compositions
 
  * Merge changes from the Debian package.
@@ -55,7 +57,6 @@ The order hints on the priority, but it is no gurantee.
  * Improved (i)search support: Only text parts and certain headers should be
    searched and it should also work for virtual folders.  We might utilize
    virtual folder selectors here. [1]
-   
 
  * Better IMAP support, i.e. just fetch headers, sync, offline, search.  It is
    really bad now and thus I do use Thunderbird at work!
@@ -68,6 +69,8 @@ The order hints on the priority, but it is no gurantee.
  * Virtual folders everywhere, i.e. only one physical folder.  VM should
    not read the folder into a buffer, but only query relevant messages from
    an maildb-backend.
+
+ * S/MIME PKI support.
  
 ******************************************************************************
 REST
