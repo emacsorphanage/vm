@@ -148,9 +148,12 @@ Order matters. The first matching one will be used as face."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-and-compile
   (if (fboundp 'mapcar-extents)
-      (defun vm-summary-faces-list-extents () `(mapcar-extents 'identity))
+      (defun vm-summary-faces-list-extents () (mapcar-extents 'identity))
     (defun vm-summary-faces-list-extents ()
       (let ((o (overlay-lists))) (nconc (car o) (cdr o))))))
+
+(defvar vm-summary-faces-hide nil
+  "Last face hidden by `vm-summary-faces-hide'.")
 
 ;;;###autoload
 (defun vm-summary-faces-hide (&optional face)
@@ -163,21 +166,18 @@ When called with a prefix arg prompt for the face."
                                             (list (format "%s" (caar f))))
                                           vm-summary-faces-alist)
                                   nil t "deleted")))
-  (if (not face) (setq face "deleted"))
+  (setq face (or face vm-summary-faces-hide "deleted"))
   (vm-summarize)
   (vm-select-folder-buffer)
   (set-buffer vm-summary-buffer)
-  (let ((visibility 'check)
-        (extents (vm-summary-faces-list-extents))
+  (let ((extents (vm-summary-faces-list-extents))
         (face (intern (concat "vm-summary-" face "-face")))
         x)
     (while extents
       (setq x (car extents)) 
       (when (equal face (vm-extent-property x 'face))
-        (if (eq visibility 'check)
-            (setq visibility (not (vm-extent-property x 'invisible))))
-        (vm-set-extent-property x 'invisible visibility)
-        (setq extents (car extents))))))
+        (vm-set-extent-property x 'invisible (not (vm-extent-property x 'invisible))))
+      (setq extents (cdr extents)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar vm-summary-faces-su-start-of nil)
