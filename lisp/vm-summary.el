@@ -55,7 +55,7 @@
 ;;;###autoload
 (defun vm-summarize (&optional display raise)
   "Summarize the contents of the folder in a summary buffer.
-The format is as described by the variable vm-summary-format.  Generally
+The format is as described by the variable `vm-summary-format'.  Generally
 one line per message is most pleasing to the eye but this is not
 mandatory."
   (interactive "p\np")
