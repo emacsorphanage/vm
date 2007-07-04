@@ -604,14 +604,13 @@ Use `vm-rmail-toggle' to switch between normal and this mode."
   :type 'boolean
   :group 'vm-rfaddons)
 
-(defcustom vm-rmail-mode-list
-  '(vm-summary-mode)
+(defcustom vm-rmail-mode-list '(vm-summary-mode)
   "*Mode to activate `vm-rmail-mode' in."
-  :type '(repeat (const vm-mode)
-                 (const vm-presentation-mode)
-                 (const vm-virtual-mode)
-                 (const vm-summary-mode))
-  :group 'vm-rfaddons)
+  :type '(set (const vm-mode)
+              (const vm-presentation-mode)
+              (const vm-virtual-mode)
+              (const vm-summary-mode))
+:group 'vm-rfaddons)
   
 (defun vm-rmail-toggle (&optional arg)
   (interactive)
