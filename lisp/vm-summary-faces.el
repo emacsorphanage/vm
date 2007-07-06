@@ -235,8 +235,7 @@ Remove/add the `vm-summary-fontify-buffer' hook from the hook variable
           (vm-summary-faces-destroy)
           (if vm-summary-overlay
               (vm-set-extent-property vm-summary-overlay 'face
-                                      vm-summary-highlight-face)))))
-  (setq vm-summary-faces-message nil))
+                                      vm-summary-highlight-face))))))
 
 (defadvice vm-mouse-set-mouse-track-highlight (after vm-summary-faces activate)
   (when vm-summary-faces-mode
