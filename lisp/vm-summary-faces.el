@@ -179,63 +179,26 @@ When called with a prefix arg prompt for the face."
         (vm-set-extent-property x 'invisible (not (vm-extent-property x 'invisible))))
       (setq extents (cdr extents)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar vm-summary-faces-su-start-of nil)
-(defvar vm-summary-faces-su-end-of nil)
-(defvar vm-summary-faces-message nil)
-
 ;;;###autoload
-(defun vm-summary-faces-add (&optional start end)
+(defun vm-summary-faces-add (msg)
   "Add faces to a summary entry according to `vm-summary-faces-alist'."
-  (interactive "P")
-  
-  (if (and (memq major-mode '(vm-mode vm-virtual-mode vm-summary-mode
-                                      vm-presentation-mode))
-           t) ;vm-summary-buffer)
-      (save-excursion
-        (vm-select-folder-buffer)
-        (let ((faces vm-summary-faces-alist)
-              (msg (or vm-summary-faces-message
-                       (if vm-message-pointer (car vm-message-pointer))))
-              vm-summary-face)
-          (setq vm-summary-face vm-summary-face)
-          (setq start (or start
-                          vm-summary-faces-su-start-of
-                          (vm-su-start-of msg))
-                end   (or end
-                          vm-summary-faces-su-end-of
-                          (vm-su-end-of msg)))
-          (while faces
-            (when (apply 'vm-vs-or msg (list (caar faces)))
-              (save-excursion 
-                (set-buffer vm-summary-buffer)
-                (vm-summary-xxxx-highlight-region start end
-                                                  (cadar faces)
-                                                  'vm-summary-face)
-                (setq faces nil)))
-            (setq faces (cdr faces)))))))
+  (let ((faces vm-summary-faces-alist)
+        (x (or (vm-su-summary-mouse-track-overlay-of msg)
+               (vm-extent-at (vm-su-start-of msg)))))
+    (while faces
+      (when (apply 'vm-vs-or msg (list (caar faces)))
+        (vm-set-extent-property x 'face (cadar faces))
+        (setq faces nil))
+      (setq faces (cdr faces)))))
 
-(defvar vm-summary-faces-fix-pointer t)
-(make-variable-buffer-local 'vm-summary-faces-fix-pointer)
+(defun vm-summary-faces-destroy ()
+  (let ((extents (vm-summary-faces-list-extents))
+        x)
+    (while extents
+      (setq x (car extents))
+      (vm-set-extent-property x 'face nil)
+      (setq extents (cdr extents)))))
 
-(defun vm-summary-faces-fix-pointer ()
-  (save-excursion
-    (vm-select-folder-buffer)
-    ;; remove the selected (highlight) face
-    (if vm-summary-buffer
-        (save-excursion
-          (set-buffer vm-summary-buffer)
-          (if (and vm-summary-faces-fix-pointer
-                   (symbol-value 'vm-summary-overlay))
-            (let ((ooo (symbol-value 'vm-summary-overlay))
-                  (face vm-summary-highlight-face))
-              (vm-set-extent-property ooo 'face face)
-              (vm-set-extent-property ooo 'priority 10)
-              (if vm-xemacs-p (set-extent-priority ooo 10))
-              ;; we get called as long as we were not able to fix the
-              ;; overlay/extent, but now we are done ...
-              (setq vm-summary-faces-fix-pointer nil)))))))
-  
 (defvar vm-summary-faces-mode nil)
 
 ;;;###autoload
@@ -251,47 +214,32 @@ Remove/add the `vm-summary-fontify-buffer' hook from the hook variable
         (setq vm-summary-faces-mode t)
       (setq vm-summary-faces-mode nil)))
 
+  (when (interactive-p)
+    (message "VM summary faces mode is %s"
+             (if vm-summary-faces-mode "on" "off")))
   
-  (setq vm-summary-highlight-face
-        (if vm-summary-faces-mode
-            'vm-summary-selected-face
-          'bold))
-
   (if (memq major-mode '(vm-mode vm-virtual-mode vm-summary-mode
                                  vm-presentation-mode))
       (save-excursion
         (vm-select-folder-buffer)
         (vm-summarize)
-        (if vm-summary-buffer
-            (save-excursion
-              (set-buffer vm-summary-buffer)
-              (setq vm-summary-faces-fix-pointer t)
-              (vm-summary-faces-fix-pointer)))
+        (set-buffer vm-summary-buffer)
         (if vm-summary-faces-mode
             (let ((mp vm-message-list))
+              (if vm-summary-overlay
+                  (vm-set-extent-property vm-summary-overlay 'face
+                                          'vm-summary-selected-face))
               (while mp
-                (setq vm-summary-faces-message (car mp))
-                (vm-summary-faces-add)
+                (vm-summary-faces-add (car mp))
                 (setq mp (cdr mp))))
-          
-          (vm-set-summary-redo-start-point t)
-          (vm-update-summary-and-mode-line))))
+          (vm-summary-faces-destroy)
+          (if vm-summary-overlay
+              (vm-set-extent-property vm-summary-overlay 'face
+                                      vm-summary-highlight-face)))))
   (setq vm-summary-faces-message nil))
 
-(defadvice vm-tokenized-summary-insert
-  (around vm-summary-faces activate)
-  (setq vm-summary-faces-su-start-of (point)
-        vm-summary-faces-su-end-of   nil
-        vm-summary-faces-message (ad-get-arg 0))
-  ad-do-it
+(defadvice vm-mouse-set-mouse-track-highlight (after vm-summary-faces activate)
   (when vm-summary-faces-mode
-    (setq vm-summary-faces-su-end-of (point))
-    (vm-summary-faces-add))
-
-  (setq vm-summary-faces-su-start-of nil
-        vm-summary-faces-su-end-of   nil
-        vm-summary-faces-message  nil))
-
-(add-hook 'vm-summary-pointer-update-hook 'vm-summary-faces-fix-pointer)
+    (vm-summary-faces-add m)))
 
 (provide 'vm-summary-faces)
