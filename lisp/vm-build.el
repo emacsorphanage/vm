@@ -9,6 +9,10 @@ This handles EmacsW32 path problems when building on cygwin."
       path
     (let ((dos-path (cond ((functionp 'mswindows-cygwin-to-win32-path)
                            (mswindows-cygwin-to-win32-path path))
+                          ((and (locate-library "cygwin-mount")
+				(require 'cygwin-mount))
+			   (cygwin-mount-activate)
+			   (cygwin-mount-convert-file-name path))
                           ((string-match "^/cygdrive/\\([a-z]\\)" path)
                            (replace-match (format "%s:" (match-string 1 path))
                                           t t path)))))
