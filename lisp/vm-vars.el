@@ -2711,6 +2711,8 @@ The string may contain the printf-like `%' conversion specifiers which
 substitute information about the message into the final summary line.
 
 Recognized specifiers are:
+   p - indicator for postponed messages 
+   P - indicator for attachments, see `vm-summary-attachment-indicator'
    a - attribute indicators (always four characters wide)
        The first char is  `D', `N', `U' or ` ' for deleted, new, unread
        and read messages respectively.
@@ -2729,6 +2731,7 @@ Recognized specifiers are:
        The sixth is `w' or ` ', for messages written.
        The seventh is `e' or ` ', for messages that have been edited.
    c - number of characters in message (ignoring headers)
+   S - human readable size of the message
    d - numeric day of month message sent
    f - author's address
    F - author's full name (same as f if full name not found)
@@ -2783,6 +2786,30 @@ a newline, otherwise the message pointer will not be displayed correctly
 in the summary window."
   :group 'vm
   :type 'string)
+
+(defcustom vm-summary-postponed-indicator "P"
+  "*Indicator shown for postponed messages."
+  :group 'vm
+  :type 'string)
+
+(defcustom vm-summary-attachment-indicator "$"
+  "*Indicator shown for messages containing an attachments."
+  :group 'vm
+  :type '(choice (string :tag "A string to display" "$")
+                 (symbol :tag "Display the number of attachments prefixed by" ?$)))
+
+(defcustom vm-summary-attachment-mime-types nil
+  "*List of MIME types which should be listed as attachment. 
+Mime parts with a disposition of attachment or a filename/name disposition
+parameter will be automatically considered as attachment."
+  :group 'vm
+  :type '(repeat (string :tag "MIME type" nil)))
+
+(defcustom vm-summary-attachment-mime-type-exceptions
+  nil
+  "*List of MIME types which should not be listed as attachment."
+  :group 'vm
+  :type '(repeat (string :tag "MIME type" nil)))
 
 (defcustom vm-summary-arrow "->"
   "*String that is displayed to the left of the summary of the

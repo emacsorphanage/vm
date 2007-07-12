@@ -422,11 +422,11 @@ mandatory."
       (while
 	  (and (not saw-close-group) (not token)
 	       (string-match
-		"%\\(-\\)?\\([0-9]+\\)?\\(\\.\\(-?[0-9]+\\)\\)?\\([()aAcdfFhHiIlLmMnstTwyz*%]\\|U[A-Za-z]\\)"
+		"%\\(-\\)?\\([0-9]+\\)?\\(\\.\\(-?[0-9]+\\)\\)?\\([()pPaAcSdfFhHiIlLmMnstTwyz*%]\\|U[A-Za-z]\\)"
 		format last-match-end))
 	(setq conv-spec (aref format (match-beginning 5)))
 	(setq new-match-end (match-end 0))
-	(if (and (memq conv-spec '(?\( ?\) ?a ?A ?c ?d ?f ?F ?h ?H ?i ?I
+	(if (and (memq conv-spec '(?\( ?\) ?p ?P ?a ?A ?c ?S ?d ?f ?F ?h ?H ?i ?I
 				   ?l ?L ?M ?m ?n ?s ?t ?T ?U ?w ?y ?z ?* ))
 		 ;; for the non-tokenized path, we don't want
 		 ;; the close group spcifier processed here, we
@@ -452,6 +452,12 @@ mandatory."
 			     splice t)))
 		    ((= conv-spec ?\))
 		     (setq token ''group-end))
+		    ((= conv-spec ?p)
+		     (setq sexp (cons (list 'vm-su-postponed-indicator
+					    'vm-su-message) sexp)))
+		    ((= conv-spec ?P)
+		     (setq sexp (cons (list 'vm-su-attachment-indicator
+					    'vm-su-message) sexp)))
 		    ((= conv-spec ?a)
 		     (setq sexp (cons (list 'vm-su-attribute-indicators
 					    'vm-su-message) sexp)))
@@ -460,6 +466,9 @@ mandatory."
 					    'vm-su-message) sexp)))
 		    ((= conv-spec ?c)
 		     (setq sexp (cons (list 'vm-su-byte-count
+					    'vm-su-message) sexp)))
+		    ((= conv-spec ?S)
+		     (setq sexp (cons (list 'vm-su-size
 					    'vm-su-message) sexp)))
 		    ((= conv-spec ?d)
 		     (setq sexp (cons (list 'vm-su-monthday
@@ -697,6 +706,28 @@ mandatory."
 	(t
 	 (substring string 0 width))))
 
+(defun vm-su-postponed-indicator (msg)
+  (if (vm-get-header-contents msg vm-postponed-header)
+      vm-summary-postponed-indicator
+    ""))
+
+(defun vm-su-attachment-indicator (msg)
+  (let ((attachments 0))
+    (setq msg (vm-real-message-of msg))
+    (vm-mime-action-on-all-attachments
+     nil
+     (lambda (msg layout type file)
+       (setq attachments (1+ attachments)))
+     vm-summary-attachment-mime-types
+     vm-summary-attachment-mime-type-exceptions
+     (list msg)
+     t)
+    (if (= attachments 0)
+        ""
+      (if (stringp vm-summary-attachment-indicator)
+          vm-summary-attachment-indicator
+        (format "%s%d" vm-summary-attachment-indicator attachments)))))
+
 (defun vm-su-attribute-indicators (m)
   (concat
    (cond ((vm-deleted-flag m) "D")
@@ -733,6 +764,19 @@ mandatory."
        (int-to-string
 	(- (vm-text-end-of (vm-real-message-of m))
 	   (vm-text-of (vm-real-message-of m)))))))
+
+(defun vm-su-size (msg)
+  "Return the size of a message in bytes, kilobytes or megabytes.
+Argument msg is a message pointer."
+  (let ((size (string-to-number (vm-su-byte-count msg))))
+    (cond ((< size 1024)
+           (format "%d" size))
+          ((< size 1048576)
+           (setq size (/ size 1024))
+           (format "%dK" size))
+          (t
+           (setq size (/ size 1048576))
+           (format "%dM" size)))))
 
 (defun vm-su-spam-score-aux (m)
   "Return the numeric spam level for M."

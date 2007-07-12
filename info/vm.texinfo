@@ -2562,8 +2562,18 @@ The fifth is `f' or ` ', for messages filed.
 The sixth is `w' or ` ', for messages written.
 @*
 The seventh is `e' or ` ', for messages that have been edited.
+@item P
+indicator for a message with attachments.
+The variable @vindex vm-summary-attachment-indicator
+@code{vm-summary-attachment-indicator} is the inserted string, by default a @code{$}.
+@item p
+indicator for a postponed message. 
+The variable @vindex vm-summary-postponed-indicator
+@code{vm-summary-postponed-indicator} is the inserted string, by default a @code{P}.
 @item c
 number of characters in message (ignoring headers)
+@item S
+human readable size of the message
 @item d
 numeric day of month message sent
 @item f

@@ -170,21 +170,6 @@ while the last three are set by `vm-get-persistent-message-ids-for'."
   :type 'string
   :group 'vm-pine)
 
-;;;###autoload
-(defcustom vm-postponed-attribute "P"
-  "Summary string that will be inserted by `vm-summary-function-p' for
-postponed messages."
-  :type 'string
-  :group 'vm-pine)
-  
-;;;###autoload
-(defun vm-summary-function-p (m)
-  "Return 'P' for postponed messages."
-  (interactive)
-  (if (vm-get-header-contents m vm-postponed-header)
-      "P"
-    ""))
-
 ;;-----------------------------------------------------------------------------
 ;; A Pine-like postponed folder handling
 ;;;###autoload

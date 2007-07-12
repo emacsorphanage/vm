@@ -1327,6 +1327,7 @@ See the advice in `vm-rfaddons-infect-vm'."
                    (and files (= 2 (length files)))))
             (delete-directory (file-name-directory file))))))
 
+;;;###autoload
 (defun vm-mime-action-on-all-attachments (count action
                                                 &optional include exclude
                                                 mlist
@@ -1878,51 +1879,15 @@ text/alternative message depending on the value of the variable
         (setq re-alist (cdr re-alist))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;###autoload
-(defun vm-summary-function-S (MSG)
-  "Return the size of a message in bytes, kilobytes or megabytes.
-You may add this to the summary line by \"%US\".
-Argument MSG is a message pointer."
-  (let ((size (- (point-max) (point-min))))
-    (cond
-     ((< size 1024)
-      (format "%d" size))
-     ((< size 1048576)
-      (setq size (/ size 1024))
-      (format "%dK" size))
-     (t
-      (setq size (/ size 1048576))
-      (format "%dM" size)))))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defcustom vm-summary-attachment-indicator "$"
-  "*Indicator shown for messages containing an attachments."
-  :group 'vm-rfaddons
-  :type 'string)
-
-(defcustom vm-summary-attachment-label nil
+(defcustom vm-summary-attachment-label "$"
   "*Label added to messages containing an attachments."
   :group 'vm-rfaddons
   :type '(choice (string) (const :tag "No Label" nil)))
 
-(defcustom vm-mime-summary-attachment-label-types nil
-  "*List of MIME types which should be listed as attachment. 
-Mime parts with a disposition of attachment or a filename/name disposition
-parameter will be automatically considered as attachment."
-  :group 'vm-rfaddons
-  :type '(repeat (string :tag "MIME type" nil)))
-
-(defcustom vm-mime-summary-attachment-label-types-exceptions
-  nil
-  "*List of MIME types which should not be listed as attachment."
-  :group 'vm-rfaddons
-  :type '(repeat (string :tag "MIME type" nil)))
-
 ;;;###autoload
-(defun vm-summary-function-A (msg)
+(defun vm-summary-attachment-label (msg)
   "Indicate if there are attachments in a message.
-The summary displays a `vm-summary-attachment-indicator', wich is a $ by
+The summary displays a `vm-summary-attachment-indicator', which is a '$' by
 default.  In order to get this working, add an \"%1UA\" to your
 `vm-summary-format' and call `vm-fix-my-summary!!!'.
 
@@ -1936,21 +1901,18 @@ and add an \"%0UA\" to your `vm-summary-format'."
      nil
      (lambda (msg layout type file)
        (setq attachments (1+ attachments)))
-     vm-mime-summary-attachment-label-types
-     vm-mime-summary-attachment-label-types-exceptions
+     vm-summary-attachment-mime-types
+     vm-summary-attachment-mime-type-exceptions
      (list msg)
      t)
                                        
-    (if (= attachments 0 )
-        ""
-      (if (and (vm-new-flag msg)
-               vm-summary-attachment-label
+    (when (and (> attachments 0 )
+               (vm-new-flag msg)
                (or (not (vm-labels-of msg))
                    (not (member vm-summary-attachment-label
                                 (vm-labels-of msg)))))
-          (vm-set-labels msg (append (list vm-summary-attachment-label)
-                                     (vm-labels-of msg))))
-      (or vm-summary-attachment-indicator ""))))
+      (vm-set-labels msg (append (list vm-summary-attachment-label)
+                                 (vm-labels-of msg))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;###autoload
