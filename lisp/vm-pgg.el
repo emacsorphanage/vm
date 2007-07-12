@@ -460,7 +460,7 @@ Switch mode on/off according to ARG.
     mode-line-items)
   "An alist mapping states to modeline strings.")
 
-(if (not (member'vm-pgg-state vm-mode-line-format))
+(if (not (member 'vm-pgg-state vm-mode-line-format))
     (setq vm-mode-line-format (append '("" vm-pgg-state) vm-mode-line-format)))
 
 (defun vm-pgg-state-set (&rest states)
