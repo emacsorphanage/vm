@@ -181,10 +181,11 @@ When called with a prefix arg prompt for the face."
 
 ;;;###autoload
 (defun vm-summary-faces-add (msg)
-  "Add faces to a summary entry according to `vm-summary-faces-alist'."
+  "Add a face to a summary entry according to `vm-summary-faces-alist'."
   (let ((faces vm-summary-faces-alist)
         (x (or (vm-su-summary-mouse-track-overlay-of msg)
-               (vm-extent-at (vm-su-start-of msg)))))
+               (vm-extent-at (vm-su-start-of msg))
+               (vm-extent-at (vm-su-end-of msg)))))
     (while faces
       (when (apply 'vm-vs-or msg (list (caar faces)))
         (vm-set-extent-property x 'face (cadar faces))
@@ -192,6 +193,7 @@ When called with a prefix arg prompt for the face."
       (setq faces (cdr faces)))))
 
 (defun vm-summary-faces-destroy ()
+  "Removes the face from all summary entries."
   (let ((extents (vm-summary-faces-list-extents))
         x)
     (while extents
