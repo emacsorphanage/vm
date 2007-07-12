@@ -4938,24 +4938,28 @@ append a space to words that complete unambiguously.")
 (defconst vm-startup-message-displayed nil)
 ;; for the mode line
 (defvar vm-mode-line-format
-  '("" "  %&%& "
-    ("VM " vm-version ": "
+  '("- " ;
+    (vm-compositions-exist ("" vm-ml-composition-buffer-count " / "))
+    (vm-drafts-exist ("" vm-ml-draft-count " / "))
+    ((vm-spooled-mail-waiting "New mail for")
      (vm-folder-read-only "read-only ")
      (vm-virtual-folder-definition (vm-virtual-mirror "mirrored "))
      "%b"
      (vm-mail-buffer (vm-ml-sort-keys ("" " by " vm-ml-sort-keys)))
      (vm-message-list
-      ("   " vm-ml-message-number
+      (" " vm-ml-message-number
        " (of " vm-ml-highest-message-number ")")
       (vm-folder-type
-       "   (unrecognized folder type)"
-       "   (no messages)")))
-    (vm-spooled-mail-waiting " Mail")
+       " (unrecognized folder type)"
+       " (no messages)")))
     (vm-message-list
-     ("  %[ " vm-ml-message-attributes-alist
-      (vm-ml-labels ("; " vm-ml-labels)) " %]    ")
-     ("  %[%]   "))
-    "%p" "   " global-mode-string))
+     (" %[ " vm-ml-message-attributes-alist
+      (vm-ml-labels ("; " vm-ml-labels)) " %] ")
+     (" %[%] "))
+    "%p"
+    " (VM " vm-version ")"
+    global-mode-string
+    "%-"))
 
 (defvar vm-ml-message-attributes-alist
   '((vm-ml-message-new

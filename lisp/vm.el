@@ -1392,6 +1392,11 @@ Please remove these instructions from your message.")
 	      invalid-function
 	     ))))
 
+(defvar vm-drafts-exist nil)
+
+(defvar vm-ml-draft-count ""
+  "The current number of drafts in the `vm-postponed-folder'.")
+
 (defun vm-session-initialization ()
   ;;  (vm-set-debug-flags)
   ;; If this is the first time VM has been run in this Emacs session,
@@ -1420,7 +1425,7 @@ Please remove these instructions from your message.")
             (require 'vm-pgg)
           (message "vm-pgg disabled since pgg is missing!"))
         (add-hook 'kill-emacs-hook 'vm-garbage-collect-global)
-	(random t)
+        (vm-version)
 	(vm-load-init-file)
 	(when vm-enable-addons
 	  (vm-rfaddons-infect-vm 0 vm-enable-addons)
@@ -1483,7 +1488,13 @@ Please remove these instructions from your message.")
 	     vm-use-menus
 	     (vm-menu-fsfemacs-menus-p)
 	     (vm-menu-initialize-vm-mode-menu-map))
-	(setq vm-session-beginning nil))))
+	(setq vm-session-beginning nil)))
+  ;; check for postponed messages
+  (let ((f (expand-file-name vm-postponed-folder vm-folder-directory)))
+    (if (or (not (file-exists-p f)) (= (nth 7 (file-attributes f)) 0))
+        (setq vm-drafts-exist nil)
+      (setq vm-drafts-exist t)
+      (setq vm-ml-draft-count (format "%d postponed" (vm-count-messages-in-file f))))))
 
 ;;;###autoload
 (if (fboundp 'define-mail-user-agent)

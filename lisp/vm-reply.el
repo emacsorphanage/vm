@@ -1284,6 +1284,31 @@ found, the current buffer remains selected."
       (replace-in-string buffer-name vm-drop-buffer-name-chars "_" t)
     buffer-name))
 
+(defvar vm-compositions-exist nil)
+
+(defvar vm-composition-buffer-count 0
+  "The current number of composition buffers.")
+
+(defvar vm-ml-composition-buffer-count ""
+  "The modeline string displayed for the current number of composition buffers.")
+
+(defun vm-update-ml-composition-buffer-count ()
+   (setq vm-ml-composition-buffer-count
+         (format "%d composition%s" vm-composition-buffer-count
+                 (if (= vm-composition-buffer-count 1) "" "s"))))
+
+(defun vm-forget-composition-buffer ()
+  (setq vm-composition-buffer-count (- vm-composition-buffer-count 1))
+  (setq vm-compositions-exist (> vm-composition-buffer-count 0))
+  (vm-update-ml-composition-buffer-count))
+
+(defun vm-new-composition-buffer ()
+  (setq vm-composition-buffer-count (+ 1 vm-composition-buffer-count))
+  (setq vm-compositions-exist t)
+  (make-local-hook 'kill-buffer-hook)
+  (add-hook 'kill-buffer-hook 'vm-forget-composition-buffer nil t)
+  (vm-update-ml-composition-buffer-count))
+
 ;;;###autoload
 (defun vm-mail-internal
     (&optional buffer-name to subject in-reply-to cc references newsgroups)
@@ -1457,6 +1482,7 @@ Binds the `vm-mail-mode-map' and hooks"
 		(null vm-update-composition-buffer-name-timer))
 	   (setq vm-update-composition-buffer-name-timer
 		 (run-with-idle-timer 1.5 t 'vm-update-composition-buffer-name))))
+    (vm-new-composition-buffer)
     (run-hooks 'mail-setup-hook)))
 
 ;;;###autoload
