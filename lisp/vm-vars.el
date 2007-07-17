@@ -3217,7 +3217,7 @@ Under FSF Emacs 21 the toolbar is always at the top of the frame."
 (defcustom vm-toolbar-pixmap-directory nil
   "*Value specifies the directory VM should find its toolbar pixmaps."
   :group 'vm
-  :type '(coice directory (const :tag "Automatic" nil)))
+  :type '(choice directory (const :tag "Automatic" nil)))
 
 (defcustom vm-toolbar nil
   "*Non-nil value should be a list of toolbar button descriptors.
