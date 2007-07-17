@@ -22,7 +22,7 @@ This handles EmacsW32 path problems when building on cygwin."
 
 ;; Add additional dirs to the load-path
 (if (getenv "OTHERDIRS")
-    (let ((otherdirs (delete "" (split-string (getenv "OTHERDIRS") "[:;]")))
+    (let ((otherdirs (delete "" (split-string (getenv "OTHERDIRS") ";")))
           dir)
       (while otherdirs
         (setq dir (vm-fix-cygwin-path (car otherdirs)))

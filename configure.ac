@@ -46,22 +46,22 @@ AC_DEFUN([VM_ARG_SUBST],
     ifelse($5, [], [], [$1="$5"]))
 ])
 
-# VM_COLON_TO_SPACE(VAR)
+# VM_SEMICOLON_TO_SPACE(VAR)
 #
 # Transforms a (possibly) colon separated list VAR into a space separated
 # one. VAR needs not be quoted.
-AC_DEFUN([VM_COLON_TO_SPACE],
+AC_DEFUN([VM_SEMICOLON_TO_SPACE],
 [ case "$$1" in *:*)
-    $1="`echo $$1 | sed -e 's/:/ /g'`";;
+    $1="`echo $$1 | sed -e 's/;/ /g'`";;
   esac ])
 
 # --with-other-dir option
 AC_DEFUN([VM_OTHERDIRS],
   [ VM_ARG_SUBST([OTHERDIRS], [other-dirs], [DIRS],
-    [set other needed lisp directories (a list of space or colon separated paths)],
+    [set other needed lisp directories (a list of semicolon separated paths)],
     [],
     dnl #### WARNING: pay attention to the quoting of ACTION if given !!!!!
-    [[ VM_COLON_TO_SPACE(withval) ]])
+    [[ VM_SEMICOLON_TO_SPACE(withval) ]])
    dnl # convert to absolute path
    AC_MSG_CHECKING([otherdirs])
    otherdirs=
@@ -162,7 +162,7 @@ TEST
     AC_MSG_RESULT([${EMACS_VERSION}])
 
     # Copied from gnus aclocal.m4
-    AC_ARG_WITH(lispdir,[  --with-lispdir=DIR      Where to install lisp files], lispdir=${withval})
+    AC_ARG_WITH(lispdir,[  --with-lispdir=DIR      where to install lisp files], lispdir=${withval})
     AC_MSG_CHECKING([where .elc files should go])
     if test -z "$lispdir"; then
       dnl Set default value
