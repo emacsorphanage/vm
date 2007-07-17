@@ -33,6 +33,7 @@ bindir= @bindir@
 all: $(SOURCES:.c=)
 
 install:
+	@mkdir -p -m 0755 $(bindir);                               \
 	for i in $(SOURCES:.c=) ; do                               \
 	  echo "Installing $$i in $(bindir)" ;                     \
           $(INSTALL_PROGRAM) $$i $(bindir) ;                       \
