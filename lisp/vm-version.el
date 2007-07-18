@@ -39,19 +39,23 @@ This is the author of the BZR repository from which VM was released.")
       (set-buffer (get-buffer-create " *vm-version*"))
       (let* ((f (locate-library "vm"))
              (d (file-name-directory f))
-             (b (get-buffer " *vm-version*")))
+             (b (get-buffer " *vm-version*"))
+	     (devo (file-exists-p (expand-file-name ".bzr" (concat d "../"))))
+	     (bzr (or (locate-file "bzr.exe" exec-path)
+		      (locate-file "bzr.bat" exec-path)
+		      (locate-file "bzr" exec-path))))
         (setq default-directory d)
         (erase-buffer)
-        (cond ((and (file-exists-p (expand-file-name ".bzr" (concat d "../")))
-		    (locate-file "bzr" exec-path)
-		    (= 0 (call-process "bzr" nil b)))
+        (cond ((and devo bzr 
+		    (condition-case nil
+			(= 0 (call-process bzr nil b))
+		      (error nil)))
                (erase-buffer)
                ;; get the current branch nick and revno from bzr
-               (insert (concat (shell-command-to-string
-                                "bzr --no-aliases --no-plugins nick") "-"
-                                (shell-command-to-string
-                                 "bzr --no-aliases --no-plugins revno"))))
-              ((and (locate-library "vm-revno") (load-library "vm-revno"))
+	       (call-process bzr nil b nil "--no-aliases" "--no-plugins" "nick") 
+	       (insert "-")
+	       (call-process bzr nil b nil "--no-aliases" "--no-plugins" "revno"))
+              ((and (not devo) (locate-library "vm-revno") (load-library "vm-revno"))
                (insert vm-revno))
               (t
                (insert "?bug?")
