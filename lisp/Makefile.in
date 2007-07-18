@@ -89,13 +89,14 @@ srcdir = @srcdir@
 datadir= @datadir@
 datarootdir= @datarootdir@
 lispdir = @lispdir@
+pixmapdir= @pixmapdir@
 
 EMACS_PROG = @EMACS_PROG@
 EMACS_FLAVOR = @EMACS_FLAVOR@
 
 FLAGS = @FLAGS@
 
-EMACS_COMP = lispdir=$(lispdir) srcdir=$(srcdir) $(EMACS_PROG) $(FLAGS)
+EMACS_COMP = lispdir="$(lispdir)" srcdir="$(srcdir)" "$(EMACS_PROG)" $(FLAGS)
 
 export OTHERDIRS = @OTHERDIRS@
 
@@ -103,7 +104,7 @@ SYMLINKS = @SYMLINKS@
 LINKPATH = @LINKPATH@
 
 .el.elc:
-	$(EMACS_PROG) $(FLAGS) -f batch-byte-compile $<
+	"$(EMACS_PROG)" $(FLAGS) -f batch-byte-compile $<
 
 ##############################################################################
 all: $(OBJECTS)
@@ -121,20 +122,22 @@ vm-revno.el:
 vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	-$(RM) $@
 	echo > $@
-	(build_dir=`pwd`; cd @srcdir@; \
-	 $(EMACS_PROG) $(FLAGS) -l autoload \
-		-f vm-built-autoloads "@abs_builddir@/$@" `pwd`)
-	echo "(custom-add-load 'vm 'vm-vars)" >> $@
+	(build_dir="`pwd`"; cd "@srcdir@"; \
+	 "$(EMACS_PROG)" $(FLAGS) -l autoload \
+		-f vm-built-autoloads "@abs_builddir@/$@" "`pwd`")
+	echo "(custom-add-load 'vm 'vm-vars)" >> $@	
+	echo "(setq vm-configure-datadir \"${datadir}\")" >> $@
+	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" >> $@
 	echo "(provide 'vm-autoloads)" >> $@
 
 ##############################################################################
 # XEmacs#s auto-autoloads and custom-load file
 auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	-$(RM) $@
-#	(build_dir=`pwd`; cd @srcdir@; \
+#	(build_dir=`pwd`; cd "@srcdir@"; \
 #	 $(EMACS_PROG) $(FLAGS) -l autoload \
-#		-f vm-built-autoloads "@abs_builddir@/$@" `pwd`)
-	$(EMACS_PROG) $(FLAGS) \
+#		-f vm-built-autoloads "@abs_builddir@/$@" "`pwd`")
+	"$(EMACS_PROG)" $(FLAGS) \
                 -eval "$(AUTOLOAD_PACKAGE_NAME)" \
                 -eval "$(AUTOLOAD_FILE)" \
                 -l autoload -f batch-update-autoloads $^
@@ -143,11 +146,13 @@ auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	echo "(setq features (delete 'vm-autoloads features))" > $@
 	cat $@.tmp >> $@
 	echo "(setq features (delete 'vm-autoloads features))" >> $@
+	echo "(setq vm-configure-datadir \"${datadir}\")" >> $@
+	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" >> $@
 	$(RM) $@.tmp
 
 
 custom-load.el: $(SRCS:%=@srcdir@/%)
-	$(EMACS_PROG) $(FLAGS) -l cus-dep -f Custom-make-dependencies .
+	"$(EMACS_PROG)" $(FLAGS) -l cus-dep -f Custom-make-dependencies .
 
 ##############################################################################
 install-pkg: all vm-revno.elc
@@ -159,7 +164,7 @@ install-pkg: all vm-revno.elc
 	  done ;                                               \
 	else                                                   \
 	  if test "x$(LINKPATH)" = "x" ; then                  \
-	    $(LN_S) `pwd` $(PACKAGEDIR) ;                      \
+	    $(LN_S) "`pwd`" $(PACKAGEDIR) ;                      \
 	  else                                                 \
 	    $(LN_S) $(LINKPATH)/lisp $(PACKAGEDIR) ;           \
 	  fi ;                                                 \
@@ -168,12 +173,12 @@ install-pkg: all vm-revno.elc
 
 # This entry will never install .el files if there are no .elc files.
 install-el: all vm-revno.elc
-	$(INSTALL) -d -m 0755 $(lispdir)/
+	$(INSTALL) -d -m 0755 "$(lispdir)/"
 	for elc in *.elc; do                                                  \
 	    el=`basename $$elc c`;                                            \
 	    if test -f "$(srcdir)/$$el"; then                                 \
 	        echo "Install $$el in $(lispdir)/";                           \
-	        $(INSTALL_DATA) ${srcdir}/$$el $(lispdir)/;                   \
+	        $(INSTALL_DATA) "${srcdir}/$$el" "$(lispdir)/";               \
 	    fi;                                                               \
         done;
 	if $(LS) $(contrib)/*.elc > /dev/null 2>&1; then                      \
@@ -181,21 +186,21 @@ install-el: all vm-revno.elc
 	        el=`basename $$elc c`;                                        \
 	        if test -f "${srcdir}/$(contribdir)/$$el"; then               \
 	            echo "Install $(contribdir)/$$el in $(lispdir)/";         \
-	            $(INSTALL_DATA) ${srcdir}/$(contribdir)/$$el $(lispdir)/; \
+	            $(INSTALL_DATA) "${srcdir}/$(contribdir)/$$el" "$(lispdir)/"; \
 	        fi;                                                           \
 	    done;                                                             \
 	fi;
 
 install-elc: all vm-revno.elc
-	$(INSTALL) -d -m 0755 $(lispdir)/
+	$(INSTALL) -d -m 0755 "$(lispdir)/"
 	for elc in *.elc; do                                 \
 	    echo "Install $$elc in $(lispdir)/";             \
-	    $(INSTALL_DATA) $$elc $(lispdir)/;               \
+	    $(INSTALL_DATA) $$elc "$(lispdir)/";             \
         done;
 	if $(LS) $(contribdir)/*.elc > /dev/null 2>&1; then  \
 	    for elc in $(contribdir)/*.elc; do               \
 	        echo "Install $$elc in $(lispdir)";          \
-	        $(INSTALL_DATA) $$elc $(lispdir);            \
+	        $(INSTALL_DATA) $$elc "$(lispdir)";          \
 	    done;                                            \
 	fi;
 

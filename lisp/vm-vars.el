@@ -3163,17 +3163,28 @@ VM wants to display or undisplay."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-configure-datadir nil
+  "A directory VM will search for data files."
+  :group 'vm
+  :type 'directory)
+
+(defcustom vm-configure-pixmapdir nil
+  "A directory VM will search for pixmap files."
+  :group 'vm
+  :type 'directory)
 
 (defun vm-pixmap-directory () 
   (interactive)
   (let* ((vm-dir (file-name-directory (locate-library "vm")))
-	 (image-dirs (list (expand-file-name "pixmaps" vm-dir)
+	 (image-dirs (list (expand-file-name vm-configure-pixmapdir)
+			   (expand-file-name vm-configure-datadir)
+			   (expand-file-name "pixmaps" vm-dir)
 			   (expand-file-name "../pixmaps" vm-dir)
 			   (expand-file-name (concat data-directory "vm/"))))
 	 image-dir)
     (while image-dirs
       (setq image-dir (car image-dirs))
-      (if (file-exists-p image-dir)
+      (if (file-exists-p (expand-file-name "visit-up.xpm" image-dir))
 	  (setq image-dirs nil)
 	(setq image-dirs (cdr image-dirs))))
     image-dir))
@@ -3244,7 +3255,7 @@ Under FSF Emacs 21 the toolbar is always at the top of the frame."
 (defcustom vm-toolbar-pixmap-directory nil
   "*Value specifies the directory VM should find its toolbar pixmaps."
   :group 'vm
-  :type '(coice directory (const :tag "Automatic" nil)))
+  :type '(choice directory (const :tag "Automatic" nil)))
 
 (defcustom vm-toolbar nil
   "*Non-nil value should be a list of toolbar button descriptors.
@@ -5332,9 +5343,36 @@ that has a match.")
 			      check-for-empty-subject
 			      encode-headers
 			      take-action-on-attachment)
-  "*A list of vm-rfaddons to enable, t for default and nil to disable them."
+  "*A list of addons to enable, t for all and nil to disable all.
+Most addons are from `vm-rfaddons-infect-vm'.
+
+You must restart VM after a change to cause any effects."
   :group 'vm
-  :type 'boolean)
+  :type '(set (const :tag "Enable faces in the summary buffer" 
+		     summary-faces)
+	      (const :tag "Enable shrinking of multi-line headers to one line."
+		     shrunken-headers)
+	      (const :tag "Open a line when typing in quoted text"
+		     open-line)
+	      (const :tag "Check the recipients before sending a message"
+		     check-recipients)
+	      (const :tag "Check for an empty subject before sending a message"
+		     check-for-empty-subject)
+	      (const :tag "MIME encode headers before sending a message"
+		     encode-headers)
+	      (const :tag "Clean up subject prefixes before sending a message"
+		     clean-subject)
+	      (const :tag "Do not replace Date: header when sending a message"
+		     fake-date)
+	      (const :tag "Bind '.' on attachment buttons to 'vm-mime-take-action-on-attachment'"
+		     take-action-on-attachment)
+	      (const :tag "Bind 'C-c C-s' to `vm-mime-save-all-attachments'"
+		     save-all-attachments)
+	      (const :tag "Automatically save attachments of new messages" 
+		     auto-save-all-attachments)
+	      (const :tag "Delete external attachments of a message when expunging it." 
+		     auto-delete-message-external-body)
+	      (const :tag "Enable all addons" t)))
 
 (provide 'vm-vars)
 

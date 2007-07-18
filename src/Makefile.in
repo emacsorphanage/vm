@@ -14,28 +14,22 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 MKDIR = @MKDIR@
 RM   = @RM@
-LS   = @LS@
-XARGS = @XARGS@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
-INSTALL_SCRIPT = @INSTALL_SCRIPT@
-INSTALL_DATA = @INSTALL_DATA@
 
 prefix = @prefix@
 top_srcdir = @top_srcdir@
 srcdir = @srcdir@
-datadir= @datadir@
-datarootdir= @datarootdir@
-lispdir = @lispdir@
 bindir= @bindir@
 
 ##############################################################################
 all: $(SOURCES:.c=)
 
 install:
+	@mkdir -p -m 0755 "$(bindir)";                             \
 	for i in $(SOURCES:.c=) ; do                               \
 	  echo "Installing $$i in $(bindir)" ;                     \
-          $(INSTALL_PROGRAM) $$i $(bindir) ;                       \
+          $(INSTALL_PROGRAM) $$i "$(bindir)" ;                     \
         done ;
 	@echo VM helper binaries successfully installed\!
 
@@ -49,7 +43,3 @@ clean:
 
 distclean: clean
 	-$(RM) -f Makefile
-
-##############################################################################
-release:
-	TODO

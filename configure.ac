@@ -46,42 +46,6 @@ AC_DEFUN([VM_ARG_SUBST],
     ifelse($5, [], [], [$1="$5"]))
 ])
 
-# VM_COLON_TO_SPACE(VAR)
-#
-# Transforms a (possibly) colon separated list VAR into a space separated
-# one. VAR needs not be quoted.
-AC_DEFUN([VM_COLON_TO_SPACE],
-[ case "$$1" in *:*)
-    $1="`echo $$1 | sed -e 's/:/ /g'`";;
-  esac ])
-
-# --with-other-dir option
-AC_DEFUN([VM_OTHERDIRS],
-  [ VM_ARG_SUBST([OTHERDIRS], [other-dirs], [DIRS],
-    [set other needed lisp directories (a list of space or colon separated paths)],
-    [],
-    dnl #### WARNING: pay attention to the quoting of ACTION if given !!!!!
-    [[ VM_COLON_TO_SPACE(withval) ]])
-   dnl # convert to absolute path
-   AC_MSG_CHECKING([otherdirs])
-   otherdirs=
-   for thedir in ${OTHERDIRS}; do
-     if test -d $thedir; then 
-       thedir="`(cd $thedir; pwd)`"
-       if test "x$otherdirs" = "x"; then 
-         otherdirs=$thedir
-       else
-         otherdirs="$otherdirs;$thedir"
-       fi
-     else 
-       AC_MSG_ERROR([$thedir does not exist])
-     fi
-   done;
-   OTHERDIRS=$otherdirs 
-   AC_MSG_RESULT($otherdirs)
-   AC_SUBST(otherdirs)
-])
-
 # Find a (g)tar program and make sure it is GNU one. A failure is not fatal
 # since tar is needed for non critical targets only.
 AC_DEFUN([VM_PROG_GNU_TAR],
@@ -146,23 +110,23 @@ AC_DEFUN([VM_PROG_EMACS],
     cat > conftest.el <<TEST
 (princ (format "%s" (if (featurep 'xemacs ) 'xemacs 'emacs)))
 TEST
-    EMACS_FLAVOR=`${EMACS_PROG} --no-site-file --batch -l conftest.el | ${GREP} .`
+    EMACS_FLAVOR=`"${EMACS_PROG}" --no-site-file --batch -l conftest.el | ${GREP} .`
     AC_MSG_RESULT([${EMACS_FLAVOR}])
     # EMACS VERSION ###############################################
     AC_MSG_CHECKING([checking emacs-version of ${EMACS_PROG}])
     cat > conftest.el <<TEST
 (princ (format "%d" emacs-major-version))
 TEST
-    EMACS_VERSION=`${EMACS_PROG} --no-site-file --batch -l conftest.el | ${GREP} .`
+    EMACS_VERSION=`"${EMACS_PROG}" --no-site-file --batch -l conftest.el | ${GREP} .`
     if test ${EMACS_VERSION} -lt 21; then
-      AC_MSG_ERROR([Emacs version ${EMACS_VERSION} is too old!])
+      AC_MSG_ERROR([Emacs version ${EMACS_VERSION} is too old, 21 is minimum!])
     fi
     # EMACS DEPENDENT SETTINGS ####################################
     # We may add a version check here ...
     AC_MSG_RESULT([${EMACS_VERSION}])
 
     # Copied from gnus aclocal.m4
-    AC_ARG_WITH(lispdir,[  --with-lispdir=DIR      Where to install lisp files], lispdir=${withval})
+    AC_ARG_WITH(lispdir,[  --with-lispdir=DIR      where to install lisp files], lispdir=${withval})
     AC_MSG_CHECKING([where .elc files should go])
     if test -z "$lispdir"; then
       dnl Set default value
@@ -179,7 +143,7 @@ TEST
       fi
       for thedir in share lib; do
   	potential=
-  	if test -d ${theprefix}/${thedir}/${EMACS_FLAVOR}/site-lisp; then
+  	if test -d "${theprefix}/${thedir}/${EMACS_FLAVOR}/site-lisp"; then
              if test "$EMACS_FLAVOR" = "xemacs"; then
   	         lispdir="\$(prefix)/${thedir}/${EMACS_FLAVOR}/site-packages/lisp/vm"
              else
@@ -191,6 +155,15 @@ TEST
     fi
     AC_MSG_RESULT($lispdir)
     AC_SUBST(lispdir)
+
+    AC_ARG_WITH(pixmapdir,[  --with-pixmapdir=DIR    where to install pixmap files], pixmapdir=${withval})
+    AC_MSG_CHECKING([where pixmaps should go])
+    if test -z "$pixmapdir"; then
+      dnl Set default value
+      pixmapdir="${datadir}/vm"
+    fi
+    AC_MSG_RESULT($pixmapdir)
+    AC_SUBST(pixmapdir)
 
 #    if test "x${EMACS_FLAVOR}" = "xemacs" ; then
 #      PACKAGEDIR="${prefix}/share/emacs/site-lisp"
@@ -237,6 +210,29 @@ AC_DEFUN([VM_PATH_INFO_DIR], [
   AC_SUBST(info_dir)
 ])
 
+# --with-other-dir option
+AC_DEFUN([VM_OTHERDIRS],
+  [ VM_ARG_SUBST([OTHERDIRS], [other-dirs], [DIRS],
+    [set other needed lisp directories (a list of semicolon separated paths)],
+    [],)
+  AC_MSG_CHECKING([otherdirs])
+  cat > conftest.el <<TEST
+    (let ((otherdirs (delete "" (split-string "${OTHERDIRS}" ";")))
+    	  absolutedirs
+          dir)
+      (while otherdirs
+        (setq dir (expand-file-name (vm-fix-cygwin-path (car otherdirs)))
+	      otherdirs (cdr otherdirs))
+        (if (not (file-exists-p dir))
+            (error "Directory %S does not exist!" dir)
+          (add-to-list 'absolutedirs dir)))
+      (princ (format "%S" absolutedirs)))
+TEST
+  OTHERDIRS=`"${EMACS_PROG}" --no-site-file --batch -l lisp/vm-build.el -l conftest.el`
+  AC_MSG_RESULT($OTHERDIRS)
+  AC_SUBST(OTHERDIRS)
+])
+
 ##############################################################################
 VM_PRE_INIT
 AC_INIT([VM], [VM_VERSION], [hack@robf.de])
@@ -256,14 +252,14 @@ AC_PATH_PROG(MKDIR, mkdir, /bin/mkdir)
 AC_PATH_PROG(GREP, grep, /bin/grep)
 
 # External programs checking:
-VM_PROG_EMACS
-VM_BUILD_FLAGS
-VM_PATH_INFO_DIR
-
 VM_PROG_XARGS
 VM_PROG_GNU_TAR
 VM_PROG_MAKEINFO
 VM_PROG_TEXI2DVI
+
+VM_PROG_EMACS
+VM_BUILD_FLAGS
+VM_PATH_INFO_DIR
 VM_OTHERDIRS
 
 # is there a sane way to set this to a useful default?
