@@ -156,6 +156,15 @@ TEST
     AC_MSG_RESULT($lispdir)
     AC_SUBST(lispdir)
 
+    AC_ARG_WITH(pixmapdir,[  --with-pixmapdir=DIR    where to install pixmap files], pixmapdir=${withval})
+    AC_MSG_CHECKING([where pixmaps should go])
+    if test -z "$pixmapdir"; then
+      dnl Set default value
+      pixmapdir="${datadir}/vm"
+    fi
+    AC_MSG_RESULT($pixmapdir)
+    AC_SUBST(pixmapdir)
+
 #    if test "x${EMACS_FLAVOR}" = "xemacs" ; then
 #      PACKAGEDIR="${prefix}/share/emacs/site-lisp"
 #    else
@@ -243,14 +252,14 @@ AC_PATH_PROG(MKDIR, mkdir, /bin/mkdir)
 AC_PATH_PROG(GREP, grep, /bin/grep)
 
 # External programs checking:
-VM_PROG_EMACS
-VM_BUILD_FLAGS
-VM_PATH_INFO_DIR
-
 VM_PROG_XARGS
 VM_PROG_GNU_TAR
 VM_PROG_MAKEINFO
 VM_PROG_TEXI2DVI
+
+VM_PROG_EMACS
+VM_BUILD_FLAGS
+VM_PATH_INFO_DIR
 VM_OTHERDIRS
 
 # is there a sane way to set this to a useful default?

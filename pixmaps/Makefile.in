@@ -15,6 +15,7 @@ INSTALL_DATA = @INSTALL_DATA@
 srcdir = @srcdir@
 datadir= @datadir@/vm
 datarootdir= @datarootdir@
+pixmapdir = @pixmapdir@
 
 SYMLINKS = @SYMLINKS@
 LINKPATH = @LINKPATH@
@@ -29,14 +30,20 @@ Makefile: @srcdir@/Makefile.in
 install: install-pkg
 
 install-pkg: 
-	$(MKDIR) -p "$(datadir)/mime"
+	$(MKDIR) -p "$(pixmapdir)"
 	for i in `$(LS) *.xpm` ; do                                    \
-	    echo "Installing $$i in '$(datadir)'" ;                    \
-	    $(INSTALL_DATA) $$i "$(datadir)" ;                         \
+	    echo "Installing $$i in '$(pixmapdir)'" ;                  \
+	    $(INSTALL_DATA) $$i "$(pixmapdir)" ;                       \
 	done ;
+	$(MKDIR) -p "$(pixmapdir)/mime"
 	for i in `ls mime/*.xpm` ; do                                  \
-	    echo "Installing $$i in '$(datadir)'" ;                    \
-	    $(INSTALL_DATA) $$i "$(datadir)/mime" ;                    \
+	    echo "Installing $$i in '$(pixmapdir)'" ;                  \
+	    $(INSTALL_DATA) $$i "$(pixmapdir)/mime" ;                  \
+	done ;                                                         
+	$(MKDIR) -p "$(pixmapdir)/gtk"
+	for i in `ls gtk/*.xpm` ; do                                   \
+	    echo "Installing $$i in '$(pixmapdir)'" ;                  \
+	    $(INSTALL_DATA) $$i "$(pixmapdir)/gtk" ;                   \
 	done ;                                                         
 	@echo VM pixmaps successfully installed\!
 

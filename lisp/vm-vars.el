@@ -3136,17 +3136,28 @@ VM wants to display or undisplay."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-configure-datadir nil
+  "A directory VM will search for data files."
+  :group 'vm
+  :type 'directory)
+
+(defcustom vm-configure-pixmapdir nil
+  "A directory VM will search for pixmap files."
+  :group 'vm
+  :type 'directory)
 
 (defun vm-pixmap-directory () 
   (interactive)
   (let* ((vm-dir (file-name-directory (locate-library "vm")))
-	 (image-dirs (list (expand-file-name "pixmaps" vm-dir)
+	 (image-dirs (list (expand-file-name vm-configure-pixmapdir)
+			   (expand-file-name vm-configure-datadir)
+			   (expand-file-name "pixmaps" vm-dir)
 			   (expand-file-name "../pixmaps" vm-dir)
 			   (expand-file-name (concat data-directory "vm/"))))
 	 image-dir)
     (while image-dirs
       (setq image-dir (car image-dirs))
-      (if (file-exists-p image-dir)
+      (if (file-exists-p (expand-file-name "visit-up.xpm" image-dir))
 	  (setq image-dirs nil)
 	(setq image-dirs (cdr image-dirs))))
     image-dir))

@@ -89,6 +89,7 @@ srcdir = @srcdir@
 datadir= @datadir@
 datarootdir= @datarootdir@
 lispdir = @lispdir@
+pixmapdir= @pixmapdir@
 
 EMACS_PROG = @EMACS_PROG@
 EMACS_FLAVOR = @EMACS_FLAVOR@
@@ -121,10 +122,12 @@ vm-revno.el:
 vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	-$(RM) $@
 	echo > $@
-	(build_dir=`pwd`; cd "@srcdir@"; \
+	(build_dir="`pwd`"; cd "@srcdir@"; \
 	 "$(EMACS_PROG)" $(FLAGS) -l autoload \
-		-f vm-built-autoloads "@abs_builddir@/$@" `pwd`)
-	echo "(custom-add-load 'vm 'vm-vars)" >> $@
+		-f vm-built-autoloads "@abs_builddir@/$@" "`pwd`")
+	echo "(custom-add-load 'vm 'vm-vars)" >> $@	
+	echo "(setq vm-configure-datadir \"${datadir}\")" >> $@
+	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" >> $@
 	echo "(provide 'vm-autoloads)" >> $@
 
 ##############################################################################
@@ -133,7 +136,7 @@ auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	-$(RM) $@
 #	(build_dir=`pwd`; cd "@srcdir@"; \
 #	 $(EMACS_PROG) $(FLAGS) -l autoload \
-#		-f vm-built-autoloads "@abs_builddir@/$@" `pwd`)
+#		-f vm-built-autoloads "@abs_builddir@/$@" "`pwd`")
 	"$(EMACS_PROG)" $(FLAGS) \
                 -eval "$(AUTOLOAD_PACKAGE_NAME)" \
                 -eval "$(AUTOLOAD_FILE)" \
@@ -143,6 +146,8 @@ auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	echo "(setq features (delete 'vm-autoloads features))" > $@
 	cat $@.tmp >> $@
 	echo "(setq features (delete 'vm-autoloads features))" >> $@
+	echo "(setq vm-configure-datadir \"${datadir}\")" >> $@
+	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" >> $@
 	$(RM) $@.tmp
 
 
@@ -159,7 +164,7 @@ install-pkg: all vm-revno.elc
 	  done ;                                               \
 	else                                                   \
 	  if test "x$(LINKPATH)" = "x" ; then                  \
-	    $(LN_S) `pwd` $(PACKAGEDIR) ;                      \
+	    $(LN_S) "`pwd`" $(PACKAGEDIR) ;                      \
 	  else                                                 \
 	    $(LN_S) $(LINKPATH)/lisp $(PACKAGEDIR) ;           \
 	  fi ;                                                 \
