@@ -1,3 +1,44 @@
+VM 8.0.2
+
+  NOTES:
+
+    * Added --with-pixmapdir to configure the location of the pixmaps.
+
+    * DESTDIR-Patch (Ulrich Mueller).
+
+  BUGS:
+
+    * Avoid overflow of `buffer-undo-list' when inserting or encoding
+      big attachments.
+
+    * defcustom of `vm-mime-all-attachments-directory' should list nil.
+
+    * Honor pre VM 8.0.0 values of `vm-folder-directory' and
+      `vm-primary-inbox'. This should eliminate problems with users which
+      never changed the defaults. 
+
+    * Use "cygwin-mount" to fix paths when available.
+
+    * Activate summary faces only when requested by vm-enable-addons.
+
+    * Fixed defcustom of `vm-enable-addons' and added documentation.
+
+    * "make install" creates $(bindir) now.
+
+    * Separate paths (e.g. otherdirs) only by semicolons to avoid problems on
+      Win32.
+
+    * Handle paths with spaces correctly.
+
+    * Install also pixmaps for GTK enabled Emacs.
+
+    * Just use the first subject when replying/forwarding to a set of
+      messages.  This avoids long filenames for saved composition buffers.
+    
+    * Ensure we are compiling with an emacs version >= 21.
+
+    * Encode headers regexp and case-fold-search corrected. (Ulrich Mueller)
+
 VM 8.0.1
 
   NOTES:
