@@ -39,6 +39,8 @@ VM 8.0.2
 
     * Encode headers regexp and case-fold-search corrected. (Ulrich Mueller)
 
+    * vm-summary-faces-mode does not leak extents anymore.
+
 VM 8.0.1
 
   NOTES:
