@@ -157,50 +157,50 @@ custom-load.el: $(SRCS:%=@srcdir@/%)
 ##############################################################################
 install-pkg: all vm-revno.elc
 	@if test "x$(SYMLINKS)" = "xno" ; then                 \
-	  mkdir -p -m 0755 $(PACKAGEDIR);                      \
+	  mkdir -p -m 0755 $(DESTDIR)$(PACKAGEDIR);            \
 	  for i in $(SRCS:%=@srcdir@/%) $(INSTALL_FILES) ; do  \
-	    echo "Installing $$i in $(PACKAGEDIR)" ;           \
-	    $(INSTALL_DATA) $$i $(PACKAGEDIR) ;                \
+	    echo "Installing $$i in $(DESTDIR)$(PACKAGEDIR)" ; \
+	    $(INSTALL_DATA) $$i $(DESTDIR)$(PACKAGEDIR) ;      \
 	  done ;                                               \
 	else                                                   \
 	  if test "x$(LINKPATH)" = "x" ; then                  \
-	    $(LN_S) "`pwd`" $(PACKAGEDIR) ;                      \
+	    $(LN_S) "`pwd`" $(DESTDIR)$(PACKAGEDIR) ;          \
 	  else                                                 \
-	    $(LN_S) $(LINKPATH)/lisp $(PACKAGEDIR) ;           \
+	    $(LN_S) $(LINKPATH)/lisp $(DESTDIR)$(PACKAGEDIR) ; \
 	  fi ;                                                 \
 	fi
 	@echo VM ELISP files successfully installed\!
 
 # This entry will never install .el files if there are no .elc files.
 install-el: all vm-revno.elc
-	$(INSTALL) -d -m 0755 "$(lispdir)/"
+	$(INSTALL) -d -m 0755 "$(DESTDIR)$(lispdir)/"
 	for elc in *.elc; do                                                  \
 	    el=`basename $$elc c`;                                            \
 	    if test -f "$(srcdir)/$$el"; then                                 \
-	        echo "Install $$el in $(lispdir)/";                           \
-	        $(INSTALL_DATA) "${srcdir}/$$el" "$(lispdir)/";               \
+	        echo "Install $$el in $(DESTDIR)$(lispdir)/";                 \
+	        $(INSTALL_DATA) "${srcdir}/$$el" "$(DESTDIR)$(lispdir)/";     \
 	    fi;                                                               \
         done;
 	if $(LS) $(contrib)/*.elc > /dev/null 2>&1; then                      \
 	    for elc in $(contribdir)/*.elc; do                                \
 	        el=`basename $$elc c`;                                        \
 	        if test -f "${srcdir}/$(contribdir)/$$el"; then               \
-	            echo "Install $(contribdir)/$$el in $(lispdir)/";         \
-	            $(INSTALL_DATA) "${srcdir}/$(contribdir)/$$el" "$(lispdir)/"; \
+	            echo "Install $(contribdir)/$$el in $(DESTDIR)$(lispdir)/"; \
+	            $(INSTALL_DATA) "${srcdir}/$(contribdir)/$$el" "$(DESTDIR)$(lispdir)/"; \
 	        fi;                                                           \
 	    done;                                                             \
 	fi;
 
 install-elc: all vm-revno.elc
-	$(INSTALL) -d -m 0755 "$(lispdir)/"
+	$(INSTALL) -d -m 0755 "$(DESTDIR)$(lispdir)/"
 	for elc in *.elc; do                                 \
-	    echo "Install $$elc in $(lispdir)/";             \
-	    $(INSTALL_DATA) $$elc "$(lispdir)/";             \
+	    echo "Install $$elc in $(DESTDIR)$(lispdir)/";   \
+	    $(INSTALL_DATA) $$elc "$(DESTDIR)$(lispdir)/";   \
         done;
 	if $(LS) $(contribdir)/*.elc > /dev/null 2>&1; then  \
 	    for elc in $(contribdir)/*.elc; do               \
-	        echo "Install $$elc in $(lispdir)";          \
-	        $(INSTALL_DATA) $$elc "$(lispdir)";          \
+	        echo "Install $$elc in $(DESTDIR)$(lispdir)"; \
+	        $(INSTALL_DATA) $$elc "$(DESTDIR)$(lispdir)"; \
 	    done;                                            \
 	fi;
 

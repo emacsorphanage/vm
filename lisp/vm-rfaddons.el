@@ -1535,7 +1535,7 @@ headers."
   :type '(regexp))
 
 (defcustom vm-mime-encode-headers-words-regexp
-  (let ((8bit-word "\\([^ \t\n\r]*[^\x0-\x80]+[^ \t\n\r]*\\)+"))
+  (let ((8bit-word "\\([^ \t\n\r]*[^\x0-\x7f]+[^ \t\n\r]*\\)+"))
     (concat "\\s-\\(" 8bit-word "\\(\\s-+" 8bit-word "\\)*\\)"))
   "*A regexp matching a set of consecutive words which must be encoded."
   :group 'vm-rfaddons
@@ -1572,7 +1572,9 @@ should be encoded together."
                            bodysep)
                   hend  (vm-marker hend)))
           ;; search for words containing chars in the upper 8bit range
-          (while (re-search-forward vm-mime-encode-headers-words-regexp hend t)
+          (while
+	      (let ((case-fold-search nil))
+		(re-search-forward vm-mime-encode-headers-words-regexp hend t))
             (setq start (match-beginning 1)
                   end   (vm-marker (match-end 1))
                   charset (or (vm-determine-proper-charset start end)

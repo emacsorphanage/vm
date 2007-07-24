@@ -30,20 +30,20 @@ Makefile: @srcdir@/Makefile.in
 install: install-pkg
 
 install-pkg: 
-	$(MKDIR) -p "$(pixmapdir)"
+	$(MKDIR) -p "$(DESTDIR)$(pixmapdir)"
 	for i in `$(LS) *.xpm` ; do                                    \
-	    echo "Installing $$i in '$(pixmapdir)'" ;                  \
-	    $(INSTALL_DATA) $$i "$(pixmapdir)" ;                       \
+	    echo "Installing $$i in '$(DESTDIR)$(pixmapdir)'" ;        \
+	    $(INSTALL_DATA) $$i "$(DESTDIR)$(pixmapdir)" ;             \
 	done ;
-	$(MKDIR) -p "$(pixmapdir)/mime"
+	$(MKDIR) -p "$(DESTDIR)$(pixmapdir)/mime"
 	for i in `ls mime/*.xpm` ; do                                  \
-	    echo "Installing $$i in '$(pixmapdir)'" ;                  \
-	    $(INSTALL_DATA) $$i "$(pixmapdir)/mime" ;                  \
+	    echo "Installing $$i in '$(DESTDIR)$(pixmapdir)'" ;        \
+	    $(INSTALL_DATA) $$i "$(DESTDIR)$(pixmapdir)/mime" ;        \
 	done ;                                                         
-	$(MKDIR) -p "$(pixmapdir)/gtk"
+	$(MKDIR) -p "$(DESTDIR)$(pixmapdir)/gtk"
 	for i in `ls gtk/*.xpm` ; do                                   \
-	    echo "Installing $$i in '$(pixmapdir)'" ;                  \
-	    $(INSTALL_DATA) $$i "$(pixmapdir)/gtk" ;                   \
+	    echo "Installing $$i in '$(DESTDIR)$(pixmapdir)'" ;        \
+	    $(INSTALL_DATA) $$i "$(DESTDIR)$(pixmapdir)/gtk" ;         \
 	done ;                                                         
 	@echo VM pixmaps successfully installed\!
 
