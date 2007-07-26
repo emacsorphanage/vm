@@ -1,12 +1,18 @@
+VM 8.0.3 (IN DEVELOPMENT)
+
+  IMPROVEMENTS:
+
+  BUGFIXES:
+
 VM 8.0.2
 
-  NOTES:
+  IMPROVEMENTS:
 
     * Added --with-pixmapdir to configure the location of the pixmaps.
 
     * DESTDIR-Patch (Ulrich Mueller).
 
-  BUGS:
+  BUGFIXES:
 
     * Avoid overflow of `buffer-undo-list' when inserting or encoding
       big attachments.
@@ -48,7 +54,7 @@ VM 8.0.1
     In order to get more features from vm-rfaddons set the variable
     `vm-enable-addons' in your ~/.vm.
 
-  BUGS:
+  BUGFIXES:
 
     * A saner default for vm-shrunken-header-face.
 
@@ -107,7 +113,7 @@ VM 8.0.0
       interactive function. Thus, loading occurs only on demand and startup
       should be faster.
       
-  BUGS:
+  BUGFIXES:
 
     * All bugs reported to gnu.emacs.vm.bugs, gnu.emacs.vm.info and directly
       to me are fixed either by the patches posted by others or me.
