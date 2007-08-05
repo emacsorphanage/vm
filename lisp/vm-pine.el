@@ -28,11 +28,21 @@
 ;; This package provides the following new features for VM:
 ;;
 ;;  A Pine-like postpone message function and folder.  There are two new
-;;  functions. `vm-postpone-message' bound to [C-c C-p] in
+;;  functions. `vm-postpone-message' bound to [C-c C-d] in
 ;;  the `vm-mail-mode' and the function `vm-continue-postponed-message'
 ;;  is bound to [C] in a folder buffer.
-;;  The `vm-continue-what-message' imitates Pines message composing.
-;;  You can set `vm-mode-map' in the following way to get Pine-like.
+;;
+;;  Typical usage: If you are writing a mail message, and you wish to
+;;  postpone it for a while, hit C-c C-d.  The messae will be saved in
+;;  a folder called "postponed" by default.  Later, when you wish to
+;;  resume editing that file, visit the "postponed" folder, find the
+;;  message you wish to continue editing, and then hit C to resume
+;;  editing.
+;;
+;;  Furthermore, this facility can be configured, using
+;;  `vm-continue-what-message' to imitate Pine's message composing.
+;;  You can set `vm-mode-map' in the following way to get Pine-like
+;;  behaviour:
 ;;
 ;;  (define-key vm-mode-map "m" 'vm-continue-what-message)
 ;;
@@ -62,7 +72,7 @@
 ;;  You may also add `vm-mail-auto-fcc' to `vm-reply-hook' in order to
 ;;  automatically setup the FCC header according to the variable
 ;;  `vm-mail-folder-alist'.
-;;  An there's another fcc-function `vm-mail-to-fcc' which set the FCC
+;;  There is another fcc-function `vm-mail-to-fcc' which set the FCC
 ;;  according to the recipients email-address.
 ;;
 ;;; Bug reports and feature requests:
@@ -311,7 +321,7 @@ The variables `vm-postponed-message-headers' and
 headers are copied to the composition buffer.
 
 In `vm-mail-mode' this is bound to [C].
-Optional argument SILENT is positiv then act in background (no frame
+If optional argument SILENT is positive then act in background (no frame
 creation)."
   (interactive "P")
 

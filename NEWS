@@ -6,6 +6,8 @@ VM 8.0.3 (IN DEVELOPMENT)
 
     * Fixed building of autoloads for GNU Emacs.
 
+    * Docfixes for vm-pine.el (Thanks to Stephen Eglen).
+
 VM 8.0.2
 
   IMPROVEMENTS:
