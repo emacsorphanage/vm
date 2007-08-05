@@ -85,7 +85,8 @@ clean out this directory from time to time; VM does not do so.
 A nil value means VM should just delete crash boxes after it
 has copied out the mail."
   :group 'vm
-  :type 'boolean)
+  :type '(choice directory 
+		 (const :tag "No not keep crash boxes" nil)))
 
 (defcustom vm-index-file-suffix nil
   "*Suffix used to construct VM index file names.
@@ -268,8 +269,12 @@ environmental variables MAILPATH or MAIL if either of these
 variables are defined and no particular value for `vm-spool-files'
 has been specified."
   :group 'vm
-  :type '(choice (repeat string)
-		 (repeat (list string string string))))
+  :type '(choice (repeat :tag "List of spool files" 
+			 (file :tag "Spoolfile"))
+		 (repeat :tag "List of (inbox spoolfile crashbox) elements"
+			 (list (file :tag "Inbox")
+			       (file :tag "Spoolfile")
+			       (file :tag "Crashbox")))))
 
 (defcustom vm-spool-file-suffixes nil
   "*List of suffixes to be used to create possible spool file names
