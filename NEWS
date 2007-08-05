@@ -2,11 +2,18 @@ VM 8.0.3 (IN DEVELOPMENT)
 
   IMPROVEMENTS:
 
+    *  Unified `vm-continue-what-message', i.e. first check for composition
+       buffers, if none exist then for saved drafts.  Also added new variable
+       `vm-zero-drafts-start-compose'.
+
   BUGFIXES:
 
     * Fixed building of autoloads for GNU Emacs.
 
     * Docfixes for vm-pine.el (Thanks to Stephen Eglen).
+
+    * Resurrected `vm-add-reply-subject-prefix' which was lost by the commit
+      of revno 91.
 
 VM 8.0.2
 

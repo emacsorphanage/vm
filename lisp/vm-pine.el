@@ -33,7 +33,7 @@
 ;;  is bound to [C] in a folder buffer.
 ;;
 ;;  Typical usage: If you are writing a mail message, and you wish to
-;;  postpone it for a while, hit C-c C-d.  The messae will be saved in
+;;  postpone it for a while, hit C-c C-d.  The message will be saved in
 ;;  a folder called "postponed" by default.  Later, when you wish to
 ;;  resume editing that file, visit the "postponed" folder, find the
 ;;  message you wish to continue editing, and then hit C to resume
@@ -45,9 +45,10 @@
 ;;  behaviour:
 ;;
 ;;  (define-key vm-mode-map "m" 'vm-continue-what-message)
+;;  (setq vm-zero-drafts-start-compose t)
 ;;
 ;;  If you have postponed messages you will be asked if you want to continue
-;;  their composing, if you say "yes" you will visit the `vm-postponed-folder'
+;;  composing them, if you say "yes" you will visit the `vm-postponed-folder'
 ;;  and you can select the message you would like to continue and press "m"
 ;;  again!  However be aware this works currently only if you expunge all
 ;;  messages marked for deletion and save the postponed folder.
@@ -245,7 +246,7 @@ when continuing a postponed message."
 This is only for internal use of vm-pine.el!!!")
 
 ;;-----------------------------------------------------------------------------
-(define-key vm-mode-map "C"      'vm-continue-postponed-message)
+(define-key vm-mode-map "C"      'vm-continue-what-message)
 
 ;;-----------------------------------------------------------------------------
 (defun vm-get-persistent-message-ids-for (mlist)
@@ -457,7 +458,7 @@ creation)."
             end (point-max)))
     (goto-char (point-max))
     (insert-buffer-substring reply-buffer start end)
-    (vm-add-reply-prefix (car vm-message-pointer)))
+    (vm-add-reply-subject-prefix (car vm-message-pointer)))
   (run-hooks 'mail-setup-hook)
   (run-hooks 'vm-mail-hook)
   (run-hooks 'vm-mail-mode-hook)
@@ -788,6 +789,12 @@ Optional argument DONT-KILL is positive, then do not kill source message."
                  (const continue))
   :group 'vm-pine)
 
+(defcustom vm-zero-drafts-start-compose nil
+  "When t and there are no drafts, `vm-continue-what-message' call `vm-mail'."
+  :type '(choice (const :tag "do nothing" nil)
+                 (const :tag "start new message" t))
+  :group 'vm-pine)
+
 (defun vm-continue-what-message-composing ()
   "Decide whether to compose a new message or continue a draft.
 This checks if the postponed folder contains drafts.
@@ -801,7 +808,13 @@ Drafts in other folders are not recognized!"
                                                 default-directory))))
            action
            buffer)
-
+      
+      (when current-prefix-arg
+        (setq action 'force-continue))
+      
+      (when (vm-find-composition-buffer)
+        (setq action 'continue))
+      
       ;; postponed message in current folder
       (when (vm-buffer-in-vm-mode)
         (vm-check-for-killed-folder)
@@ -852,14 +865,24 @@ Drafts in other folders are not recognized!"
               
 ;;;###autoload
 (defun vm-continue-what-message (&optional where)
-  "Ask for continuing of postponed messages if there are some."
+  "Continue compositions or postponed messages if there are some.
+
+With a prefix arg, call `vm-continue-postponed-message', i.e. continue the
+currently selected message.
+
+See `vm-continue-what-message' and `vm-zero-drafts-start-compose' for
+configuration."
   (interactive)
   (if where (setq where (concat "-" where)))
   (let ((action (vm-continue-what-message-composing))
         (visit  (intern (concat "vm-visit-folder" (or where ""))))
         (mail   (intern (concat "vm-mail" (or where "")))))
-    (cond ((equal action 'continue)
+    (cond ((equal action 'force-continue)
            (vm-continue-postponed-message))
+          ((equal action 'continue)
+           (if (vm-find-composition-buffer)
+               (vm-continue-composing-message)
+             (vm-continue-postponed-message)))
           ((equal action 'visit)
            (funcall visit vm-postponed-folder)
            (vm-select-folder-buffer)
@@ -873,12 +896,14 @@ Drafts in other folders are not recognized!"
                     (funcall mail)))
                  ((= (length vm-message-list) 1)
                   (vm-continue-postponed-message))))
-          ((equal action 'new)
+          ((and vm-zero-drafts-start-compose (equal action 'new))
            (let ((this-command mail))
-             (funcall mail))))))
+             (funcall mail)))
+          (t
+           (message "There are no known drafts.")))))
 
 ;;;###autoload
-  (defun vm-continue-what-message-other-window ()
+(defun vm-continue-what-message-other-window ()
     "Ask for continuing of postponed messages if there are some."
     (interactive)
     (vm-continue-what-message "other-window"))
