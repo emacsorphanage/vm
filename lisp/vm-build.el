@@ -45,7 +45,15 @@
   (require 'vm-macro)
   (require 'vm-vars)
   (require 'sendmail))
-  
+
+(defun vm-custom-make-dependencies ()
+  (if (load-library "cus-dep")
+      (if (functionp 'Custom-make-dependencies)
+	  (Custom-make-dependencies)
+	(let ((generated-custom-dependencies-file "vm-cus-load.el"))
+	  (custom-make-dependencies)))
+    (error "Failed to load 'cus-dep'")))
+
 (defun vm-built-autoloads (&optional autoloads-file source-dir)
   (let ((autoloads-file (or autoloads-file
                             (vm-fix-cygwin-path (car command-line-args-left))))
