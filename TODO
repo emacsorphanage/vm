@@ -29,7 +29,9 @@ ROADMAP
 The features planed for one of the next releases.  
 The order hints on the priority, but it is no gurantee.
 
- * Display draft status in the modeline.
+ * Display draft status in the modeline. (partially done)
+
+ * Break up the customize stuff into more and smaller sub categories.
 
  * GNU Emacs: does not highlight attachment buttons in compositions
 
@@ -43,9 +45,12 @@ The order hints on the priority, but it is no gurantee.
    for w3m-emacs, w3, lynx, w3m and the best method should be selected by 
    default if not configured by the user.  
 
-   HTML only messages should be converted into mixes/alternative parts by 
+   HTML only messages should be converted to mixed/alternative parts by 
    vm-assimilate-html-message.  vm-mime-show-alternatives should probably 
    be smart enough to display all but the chosen part as button.
+
+   "D" should switch between mixed/alternative parts and the undecoded
+   resp. button representation.
 
  * Click in mailto: link does not work when being used from w3 buffers.
 
