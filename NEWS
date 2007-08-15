@@ -1,4 +1,4 @@
-VM 8.0.3 (IN DEVELOPMENT)
+VM 8.0.3
 
   IMPROVEMENTS:
 
@@ -14,6 +14,15 @@ VM 8.0.3 (IN DEVELOPMENT)
 
     * Resurrected `vm-add-reply-subject-prefix' which was lost by the commit
       of revno 91.
+
+    * Search for BZR only if bzrdir exists and use locate-file only when
+      defined.
+
+    * Use  vm-mime-8bit-composition-charset as a fallback also for MULE Emacs.
+
+    * Fixed defcustom of vm-keep-crash-boxes and vm-spool-files.
+
+    * Fixed the section headers of the NEWS file.
 
 VM 8.0.2
 
