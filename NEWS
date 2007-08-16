@@ -1,12 +1,38 @@
+VM 8.0.3
+
+  IMPROVEMENTS:
+
+    *  Unified `vm-continue-what-message', i.e. first check for composition
+       buffers, if none exist then for saved drafts.  Also added new variable
+       `vm-zero-drafts-start-compose'.
+
+  BUGFIXES:
+
+    * Fixed building of autoloads for GNU Emacs.
+
+    * Docfixes for vm-pine.el (Thanks to Stephen Eglen).
+
+    * Resurrected `vm-add-reply-subject-prefix' which was lost by the commit
+      of revno 91.
+
+    * Search for BZR only if bzrdir exists and use locate-file only when
+      defined.
+
+    * Use  vm-mime-8bit-composition-charset as a fallback also for MULE Emacs.
+
+    * Fixed defcustom of vm-keep-crash-boxes and vm-spool-files.
+
+    * Fixed the section headers of the NEWS file.
+
 VM 8.0.2
 
-  NOTES:
+  IMPROVEMENTS:
 
     * Added --with-pixmapdir to configure the location of the pixmaps.
 
     * DESTDIR-Patch (Ulrich Mueller).
 
-  BUGS:
+  BUGFIXES:
 
     * Avoid overflow of `buffer-undo-list' when inserting or encoding
       big attachments.
@@ -39,6 +65,8 @@ VM 8.0.2
 
     * Encode headers regexp and case-fold-search corrected. (Ulrich Mueller)
 
+    * vm-summary-faces-mode does not leak extents anymore.
+
 VM 8.0.1
 
   NOTES:
@@ -46,7 +74,7 @@ VM 8.0.1
     In order to get more features from vm-rfaddons set the variable
     `vm-enable-addons' in your ~/.vm.
 
-  BUGS:
+  BUGFIXES:
 
     * A saner default for vm-shrunken-header-face.
 
@@ -105,7 +133,7 @@ VM 8.0.0
       interactive function. Thus, loading occurs only on demand and startup
       should be faster.
       
-  BUGS:
+  BUGFIXES:
 
     * All bugs reported to gnu.emacs.vm.bugs, gnu.emacs.vm.info and directly
       to me are fixed either by the patches posted by others or me.

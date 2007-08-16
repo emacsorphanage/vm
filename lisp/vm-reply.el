@@ -20,6 +20,21 @@
 
 ;;; Code:
 
+(defun vm-add-reply-subject-prefix (message &optional start)
+  (when (not start)
+    (goto-char (point-min))
+    (re-search-forward (regexp-quote mail-header-separator) (point-max))
+    (forward-char 1)
+    (setq start (point)))
+  (goto-char start)
+  (if (and message vm-included-text-attribution-format)
+      (let ((vm-summary-uninteresting-senders nil))
+        (insert (vm-summary-sprintf
+                 vm-included-text-attribution-format
+                 message))))
+  (while (re-search-forward "^" (point-max) t)
+    (insert vm-included-text-prefix)))
+
 ;;;###autoload
 (defun vm-do-reply (to-all include-text count)
     (let ((mlist (vm-select-marked-or-prefixed-messages count))

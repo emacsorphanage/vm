@@ -59,7 +59,7 @@ SOURCES += tapestry.el
 
 # to list of object files 
 ifeq (@EMACS_FLAVOR@,emacs)
-OBJECTS = vm-autoloads.elc
+OBJECTS = vm-autoloads.elc vm-cus-load.elc
 else
 OBJECTS = auto-autoloads.elc custom-load.elc
 endif
@@ -125,10 +125,13 @@ vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	(build_dir="`pwd`"; cd "@srcdir@"; \
 	 "$(EMACS_PROG)" $(FLAGS) -l autoload \
 		-f vm-built-autoloads "@abs_builddir@/$@" "`pwd`")
-	echo "(custom-add-load 'vm 'vm-vars)" >> $@	
+	echo "(custom-add-load 'vm-cus-load)" >> $@	
 	echo "(setq vm-configure-datadir \"${datadir}\")" >> $@
 	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" >> $@
 	echo "(provide 'vm-autoloads)" >> $@
+
+vm-cus-load.el: $(SRCS:%=@srcdir@/%)
+	"$(EMACS_PROG)" $(FLAGS) -f vm-custom-make-dependencies .
 
 ##############################################################################
 # XEmacs#s auto-autoloads and custom-load file
@@ -152,7 +155,7 @@ auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
 
 
 custom-load.el: $(SRCS:%=@srcdir@/%)
-	"$(EMACS_PROG)" $(FLAGS) -l cus-dep -f Custom-make-dependencies .
+	"$(EMACS_PROG)" $(FLAGS) -f vm-custom-make-dependencies .
 
 ##############################################################################
 install-pkg: all vm-revno.elc

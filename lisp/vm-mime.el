@@ -1405,11 +1405,12 @@ available, and the message contains contains non-ASCII characters, consults
 the variable `vm-mime-8bit-composition-charset' or uses `iso-8859-1.' if
 that is nil.
 
-Under MULE, `vm-coding-system-priorities' is searched, in order, for a
-coding system that will encode all the characters in the message. If none is
-found, `iso-2022-jp' is used, which will preserve information for all the
-character sets of which Emacs is aware--at the expense of being incompatible
-with the recipient's software, if that recipient is outside of East Asia."
+Under MULE, `vm-coding-system-priorities' is searched, in order, for a coding
+system that will encode all the characters in the message. If none is found,
+consults the variable `vm-mime-8bit-composition-charset' or uses `iso-2022-jp',
+which will preserve information for all the character sets of which Emacs is
+aware--at the expense of being incompatible with the recipient's software, if
+that recipient is outside of East Asia."
   (save-excursion
     (save-restriction
       (narrow-to-region beg end)
@@ -1536,12 +1537,12 @@ with the recipient's software, if that recipient is outside of East Asia."
 		    (throw 'done nil))))
 	       ;; Couldn't do any magic with vm-coding-system-priorities. Pass
 	       ;; back a Japanese iso-2022 MIME character set.
-	       (t "iso-2022-jp")))
+	       (t (or vm-mime-8bit-composition-charset "iso-2022-jp"))))
 	  ;; If we're non-MULE and there are eight bit characters, use a
 	  ;; sensible default.
 	  (goto-char (point-min))
 	  (if (re-search-forward "[^\000-\177]" nil t)
-	       (or vm-mime-8bit-composition-charset "iso-8859-1")
+              (or vm-mime-8bit-composition-charset "iso-8859-1")
 	  ;; We're non-MULE and there are purely 7bit characters in the
 	  ;; region. Return vm-mime-7bit-c-c.
 	  vm-mime-7bit-composition-charset)))))
