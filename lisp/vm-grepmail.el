@@ -38,8 +38,10 @@
 ;;
 
 ;;; Code:
+(eval-when-compile
+  (require 'cl))
+
 (eval-and-compile
-  (require 'cl)
   (require 'vm-version)
   (require 'vm-macro)
   (require 'vm-misc)

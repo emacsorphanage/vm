@@ -39,9 +39,11 @@
   :group 'vm)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(eval-when-compile
+  (require 'cl))
+
 (eval-and-compile
   (require 'advice)
-  (require 'cl)
   (require 'vm-summary)
   (require 'vm-virtual))
 
