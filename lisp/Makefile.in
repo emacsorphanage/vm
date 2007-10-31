@@ -132,6 +132,10 @@ vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 
 vm-cus-load.el: $(SRCS:%=@srcdir@/%)
 	"$(EMACS_PROG)" $(FLAGS) -f vm-custom-make-dependencies .
+ifeq (@EMACS_VERSION@,21)
+	sed -e "s/provide 'cus-load/provide 'vm-cus-load/" cus-load.el > $@
+	$(RM) cus-load.el
+endif
 
 ##############################################################################
 # XEmacs#s auto-autoloads and custom-load file
