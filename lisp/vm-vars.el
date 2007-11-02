@@ -3168,39 +3168,49 @@ VM wants to display or undisplay."
   :group 'vm
   :type 'boolean)
 
-(defcustom vm-configure-datadir nil
-  "A directory VM will search for data files."
-  :group 'vm
-  :type 'directory)
+(defvar vm-configure-datadir nil
+  "A directory VM will search for data files.
 
-(defcustom vm-configure-pixmapdir nil
-  "A directory VM will search for pixmap files."
-  :group 'vm
-  :type 'directory)
+It will be set at built time and should not be used by the user.")
 
-(defun vm-pixmap-directory () 
-  (interactive)
+(defvar vm-configure-pixmapdir nil
+  "A directory VM will search for pixmaps.
+
+It will be set at built time and should not be used by the user.")
+
+(defun vm-pixmap-directory ()
+  "Return the directory where the pixmaps are.
+
+We look for the file followup-dn.xpm in order not to pickup the pixmaps of an
+older VM installation." 
   (let* ((vm-dir (file-name-directory (locate-library "vm")))
-	 (image-dirs (list (expand-file-name vm-configure-pixmapdir)
-			   (expand-file-name vm-configure-datadir)
-			   (expand-file-name "pixmaps" vm-dir)
-			   (expand-file-name "../pixmaps" vm-dir)
-			   (expand-file-name (concat data-directory "vm/"))))
+	 (image-dirs (list (expand-file-name "../pixmaps" vm-dir)
+                           (and vm-configure-pixmapdir
+                                (expand-file-name vm-configure-pixmapdir))
+                           (and vm-configure-datadir
+                                (expand-file-name vm-configure-datadir))
+                           (expand-file-name "pixmaps" vm-dir)
+			   (expand-file-name (concat data-directory "vm/"))
+                           ;; use this as a fallback 
+                           (expand-file-name "../pixmaps" vm-dir)))
 	 image-dir)
     (while image-dirs
       (setq image-dir (car image-dirs))
-      (if (file-exists-p (expand-file-name "visit-up.xpm" image-dir))
-	  (setq image-dirs nil)
+      (if (and image-dir
+               (file-exists-p (expand-file-name "followup-dn.xpm" image-dir)))
+          (setq image-dirs nil)
 	(setq image-dirs (cdr image-dirs))))
     image-dir))
 
-(defun vm-image-directory () 
-  (or vm-image-directory (vm-pixmap-directory)))
-
 (defcustom vm-image-directory nil
-  "*Value specifies the directory where VM should find its artwork."
+  "*The directory where VM finds the pixmaps for mime objects."
   :group 'vm
   :type '(choice directory (const :tag "Automatic" nil)))
+
+(defun vm-image-directory ()
+  "Return the directory where the images for mime objects are."
+  (or vm-image-directory
+      (expand-file-name "mime" (vm-pixmap-directory))))
 
 (defcustom vm-use-toolbar
   '(getmail 
@@ -3251,16 +3261,17 @@ Under FSF Emacs 21 the toolbar is always at the top of the frame."
 		 (const top)
 		 (const bottom)))
 
-(defun vm-toolbar-pixmap-directory () 
+(defcustom vm-toolbar-pixmap-directory nil
+  "*The directory VM should find its toolbar pixmaps."
+  :group 'vm
+  :type '(choice directory (const :tag "Automatic" nil)))
+
+(defun vm-toolbar-pixmap-directory ()
+  "Return the directory where the toolbar pixmaps are."
   (or vm-toolbar-pixmap-directory 
       (if (string-match "'--with-gtk'" system-configuration-options)
 	  (concat (vm-pixmap-directory) "/gtk")
 	(vm-pixmap-directory))))
-
-(defcustom vm-toolbar-pixmap-directory nil
-  "*Value specifies the directory VM should find its toolbar pixmaps."
-  :group 'vm
-  :type '(choice directory (const :tag "Automatic" nil)))
 
 (defcustom vm-toolbar nil
   "*Non-nil value should be a list of toolbar button descriptors.

@@ -1,3 +1,11 @@
+  IMPROVEMENTS:
+
+    * Uncoupled searching of MIME images from source location.
+      The search should be a bit smarter allowing to place the images outside 
+      the source tree now.
+      
+  BUGFIXES:
+  
 VM 8.0.3
 
   IMPROVEMENTS:
