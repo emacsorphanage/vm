@@ -6,13 +6,33 @@
       
   BUGFIXES:
   
+VM 8.0.4
+
+  IMPROVEMENTS:
+
+    * Require cl.el at compile-time only. (Thanks to John J. Foerch)
+
+    * Quiet compiler warning about old style backquotes. (Thanks to John
+      J. Foerch)
+
+  BUGFIXES:
+
+    * Correctly call custom-add-load. (Thanks to John J. Foerch and
+      Jonathan.underwood) 
+
+    * Fixed building of vm-cus-load.el for Emacs 21.
+
+    * Use the old default for `vm-primary-inbox', i.e. "~/INBOX".
+
+    * Honor a t in `vm-drop-buffer-name-chars' as documented.
+
 VM 8.0.3
 
   IMPROVEMENTS:
 
-    *  Unified `vm-continue-what-message', i.e. first check for composition
-       buffers, if none exist then for saved drafts.  Also added new variable
-       `vm-zero-drafts-start-compose'.
+    * Unified `vm-continue-what-message', i.e. first check for composition
+      buffers, if none exist then for saved drafts.  Also added new variable
+      `vm-zero-drafts-start-compose'.
 
   BUGFIXES:
 

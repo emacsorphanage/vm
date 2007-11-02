@@ -113,8 +113,10 @@
   :group 'vm)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(eval-when-compile
+  (require 'cl))
+
 (eval-and-compile
-  (require 'cl)
   (require 'advice)
   (require 'regexp-opt)
   (require 'vm-version)

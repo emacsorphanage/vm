@@ -1294,10 +1294,12 @@ found, the current buffer remains selected."
 (defvar mail-personal-alias-file)
 
 (defun vm-drop-buffer-name-chars (buffer-name)
-  "Removes 8bit chars from the argument."
-  (if (and vm-drop-buffer-name-chars buffer-name)
-      (replace-in-string buffer-name vm-drop-buffer-name-chars "_" t)
-    buffer-name))
+  "Replace chars matching `vm-drop-buffer-name-chars' by an \"_\"."
+  (let ((r vm-drop-buffer-name-chars))
+    (if (eq r t) (setq r "[^\x0-\x80]"))
+    (if (and buffer-name t)
+        (replace-in-string buffer-name r "_" t)
+      buffer-name)))
 
 (defvar vm-compositions-exist nil)
 

@@ -47,10 +47,7 @@ users to edit directly."
   :group 'vm
   :type '(choice (const nil) directory))
 
-(defcustom vm-primary-inbox 
-  (if (file-exists-p "~/INBOX")
-      "~/INBOX"
-    (expand-file-name "~/Mail/inbox"))
+(defcustom vm-primary-inbox "~/INBOX"
   "*Mail is moved from the system mailbox to this file for reading."
   :group 'vm
   :type 'file)

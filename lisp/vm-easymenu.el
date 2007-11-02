@@ -103,9 +103,9 @@ A menu item can be a list.  It is treated as a submenu.
 The first element should be the submenu name.  That's used as the
 menu item in the top-level menu.  The cdr of the submenu list
 is a list of menu items, as above."
-  (` (progn
-       (defvar (, symbol) nil (, doc))
-       (vm-easy-menu-do-define (quote (, symbol)) (, maps) (, doc) (, menu)))))
+  `(progn
+     (defvar ,symbol nil ,doc)
+     (vm-easy-menu-do-define (quote ,symbol) ,maps ,doc ,menu)))
 
 (defun vm-easy-menu-do-define (symbol maps doc menu)
   ;; We can't do anything that might differ between Emacs dialects in
@@ -113,8 +113,8 @@ is a list of menu items, as above."
   ;; compatible.  Therefore everything interesting is done in this
   ;; function.
   (set symbol (vm-easy-menu-create-keymaps (car menu) (cdr menu)))
-  (fset symbol (` (lambda (event) (, doc) (interactive "@e")
-		    (easy-popup-menu event (, symbol)))))
+  (fset symbol `(lambda (event) ,doc (interactive "@e")
+                        (easy-popup-menu event ,symbol)))
   (mapcar (function (lambda (map)
 	    (define-key map (vector 'menu-bar (intern (car menu)))
 	      (cons (car menu) (symbol-value symbol)))))

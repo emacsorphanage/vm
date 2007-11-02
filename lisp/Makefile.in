@@ -125,13 +125,17 @@ vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	(build_dir="`pwd`"; cd "@srcdir@"; \
 	 "$(EMACS_PROG)" $(FLAGS) -l autoload \
 		-f vm-built-autoloads "@abs_builddir@/$@" "`pwd`")
-	echo "(custom-add-load 'vm-cus-load)" >> $@	
+	echo "(custom-add-load 'vm 'vm-cus-load)" >> $@	
 	echo "(setq vm-configure-datadir \"${datadir}\")" >> $@
 	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" >> $@
 	echo "(provide 'vm-autoloads)" >> $@
 
 vm-cus-load.el: $(SRCS:%=@srcdir@/%)
 	"$(EMACS_PROG)" $(FLAGS) -f vm-custom-make-dependencies .
+ifeq (@EMACS_VERSION@,21)
+	sed -e "s/provide 'cus-load/provide 'vm-cus-load/" cus-load.el > $@
+	$(RM) cus-load.el
+endif
 
 ##############################################################################
 # XEmacs#s auto-autoloads and custom-load file
