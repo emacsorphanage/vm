@@ -6,6 +6,14 @@
       
   BUGFIXES:
   
+VM 8.0.5
+
+  BUGFIXES:
+
+    * Fixed bug caused by fixing `vm-drop-buffer-name-chars' in 8.0.4.  There
+      is a 20-40% chance to create a new bug when fixing one.  Regression
+      tests would be nice, but we do not have any for VM ;-/
+
 VM 8.0.4
 
   IMPROVEMENTS:
