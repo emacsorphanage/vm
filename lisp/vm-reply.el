@@ -1297,7 +1297,7 @@ found, the current buffer remains selected."
   "Replace chars matching `vm-drop-buffer-name-chars' by an \"_\"."
   (let ((r vm-drop-buffer-name-chars))
     (if (eq r t) (setq r "[^\x0-\x80]"))
-    (if (and buffer-name t)
+    (if (and buffer-name r)
         (replace-in-string buffer-name r "_" t)
       buffer-name)))
 
