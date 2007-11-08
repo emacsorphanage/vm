@@ -170,6 +170,12 @@ See the documentation for vm-mode for more information."
 				      (cons item vm-folder-history))))
 			  (message "Reading %s... done" file))))))))
       (set-buffer folder-buffer)
+      ;; notice the message summary file of Thunderbird 
+      (let ((msf (concat (buffer-file-name) ".msf")))
+        (setq vm-sync-thunderbird-status
+              (or (file-exists-p msf)
+                  (re-search-forward "^X-Mozilla-Status2?:"
+                                     (point-max) t))))
       (cond ((memq access-method '(pop imap))
 	     (if (not (equal folder-name (buffer-name)))
 		 (rename-buffer folder-name t))))

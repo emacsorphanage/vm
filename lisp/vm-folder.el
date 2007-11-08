@@ -1185,28 +1185,59 @@ vm-folder-type is initialized here."
 			message
 			(concat "^" (vm-matched-header-name) ":"))))))))))))
 
-;; Reads the message attributes and cached header information from the
-;; header portion of the each message, if our X-VM- attributes header is
-;; present.  If the header is not present, assume the message is new,
-;; unless we are being compatible with Berkeley Mail in which case we
-;; also check for a Status header.
-;;
-;; If a message already has attributes don't bother checking the
-;; headers.
-;;
-;; This function also discovers and stores the position where the
-;; message text begins.
-;;
-;; Totals are gathered for use by vm-emit-totals-blurb.
-;;
-;; Supports version 4 format of attribute storage, for backward compatibility.
+(defvar vm-sync-thunderbird-status nil
+  "If t VM syncs its headers with the headers of Thunderbird.")
+
+(make-variable-buffer-local 'vm-sync-thunderbird-status)
+
+(defun vm-read-thunderbird-status (message)
+  (let (status)
+    (setq status (vm-get-header-contents message "X-Mozilla-Status"))
+    (when status
+      (setq status (string-to-number status 16))
+      (when (not (= 0 (logand status 1)))
+        (vm-set-unread-flag-of message nil)
+        (vm-set-new-flag-of message nil))
+      (if (not (= 0 (logand status 2)))
+          (vm-set-replied-flag-of message nil))
+      (if (not (= 0 (logand status 4)))
+          (vm-set-mark-of message t))
+      (if (not (= 0 (logand status 8)))
+          (vm-set-deleted-flag-of message t))
+      (if (not (= 0 (logand status #x1000)))
+          (vm-set-forwarded-flag-of message t)))
+    (setq status (vm-get-header-contents message "X-Mozilla-Status2"))
+    (when status
+      (setq status (string-to-number status 16))
+      (if (not (= 0 (logand status #x10000)))
+          (vm-set-new-flag-of message t))
+      (when (not (= 0 (logand status #xE000000)))
+        ;; care for message labels
+        ))))
 
 (defun vm-read-attributes (message-list)
+  "Reads the message attributes and cached header information.
+
+Reads the message attributes and cached header information from the
+header portion of the each message, if our X-VM- attributes header is
+present.  If the header is not present, assume the message is new,
+unless we are being compatible with Berkeley Mail in which case we
+also check for a Status header.
+
+If a message already has attributes don't bother checking the
+headers.
+
+This function also discovers and stores the position where the
+message text begins.
+
+Totals are gathered for use by vm-emit-totals-blurb.
+
+Supports version 4 format of attribute storage, for backward compatibility."
   (save-excursion
     (let ((mp (or message-list vm-message-list))
-	  (vm-new-count 0)
-	  (vm-unread-count 0)
-	  (vm-deleted-count 0)
+          (vm-new-count 0)
+          (vm-unread-count 0)
+          (vm-deleted-count 0)
 	  (vm-total-count 0)
 	  (modulus (+ (% (vm-abs (random)) 11) 25))
 	  (case-fold-search t)
@@ -1313,7 +1344,10 @@ vm-folder-type is initialized here."
 	  ;; let babyl attributes override the normal VM
 	  ;; attributes header.
 	  (cond ((eq vm-folder-type 'babyl)
-		 (vm-read-babyl-attributes (car mp)))))
+		 (vm-read-babyl-attributes (car mp))))
+          ;; read the status flags of Thunderbird
+          (if vm-sync-thunderbird-status
+              (vm-read-thunderbird-status (car mp))))
 	(cond ((vm-deleted-flag (car mp))
 	       (vm-increment vm-deleted-count))
 	      ((vm-new-flag (car mp))
@@ -1759,6 +1793,43 @@ vm-folder-type is initialized here."
 	  (vm-set-stuff-flag-of (car mp) t)
 	  (setq mp (cdr mp))))))
 
+(defun vm-set-thunderbird-status (message)
+  (let (status status2)
+    (setq status (vm-get-header-contents message "X-Mozilla-Status"))
+    (if (not status)
+        (setq status 0)
+      (setq status (string-to-number status 16))
+      ;; clear those bits we are using and keep others ...
+      (setq status (logand status (lognot (logior 1 2 4 8 #x1000))))
+      (goto-char (vm-start-of message))
+      (if (re-search-forward "^X-Mozilla-Status: [0-9A-Fa-f]+\n" (vm-text-of message) t)
+          (delete-region (match-beginning 0) (match-end 0))))
+    (setq status2 (vm-get-header-contents message "X-Mozilla-Status"))
+    (if (not status2)
+        (setq status2 0)
+      (setq status2 (string-to-number status2 16))
+      ;; clear those bits we are using and keep others ...
+      (setq status2 (logand status2 (lognot (logior #x10000))))
+      (goto-char (vm-start-of message))
+      (if (re-search-forward "^X-Mozilla-Status2: [0-9A-Fa-f]+\n" (vm-text-of message) t)
+          (delete-region (match-beginning 0) (match-end 0))))
+    (if (vm-unread-flag message)
+        (setq status (logior status 1)))
+    (if (vm-replied-flag message)
+        (setq status (logior status 2)))
+    (if (vm-mark-of message)
+        (setq status (logior status 4)))
+    (if (vm-deleted-flag message)
+        (setq status (logior status 8)))
+    (if (vm-forwarded-flag message)
+        (setq status (logior status #x1000)))
+    (if (vm-new-flag message)
+        (setq status2 (logior status2 #x10000)))
+    (goto-char (vm-start-of message))
+    (next-line 1)
+    (insert (format "X-Mozilla-Status: %4x\n" status))
+    (insert (format "X-Mozilla-Status2: %4x\n" status2))))
+  
 ;; Stuff the message attributes back into the message as headers.
 (defun vm-stuff-attributes (m &optional for-other-folder)
   (save-excursion
@@ -1793,6 +1864,9 @@ vm-folder-type is initialized here."
 		   (setq attributes (copy-sequence attributes)) nil))
 	     (if (eq vm-folder-type 'babyl)
 		 (vm-stuff-babyl-attributes m for-other-folder))
+             ;; set status flags of Thunderbird according to VMs
+             (if vm-sync-thunderbird-status
+                 (vm-set-thunderbird-status m))
 	     (goto-char (vm-headers-of m))
 	     (while (re-search-forward vm-attributes-header-regexp
 				       (vm-text-of m) t)
@@ -1827,7 +1901,7 @@ vm-folder-type is initialized here."
 			   (set-marker (vm-headers-of m) opoint)))))
 	     (vm-set-stuff-flag-of m (not for-other-folder)))
 	 (set-buffer-modified-p old-buffer-modified-p))))))
-
+  
 (defun vm-stuff-folder-attributes (&optional abort-if-input-pending quiet)
   (let ((newlist nil) mp len (n 0))
     ;; stuff the attributes of messages that need it.
@@ -2374,10 +2448,14 @@ vm-folder-type is initialized here."
     (if (or (not (stringp buffer-file-name))
 	    (not (stringp vm-index-file-suffix)))
 	(throw 'done nil))
-    (let ((index-file (vm-make-index-file-name)))
-      (if (file-readable-p index-file)
-	  (vm-read-index-file index-file)
-	nil ))))
+    (let* ((index-file (vm-make-index-file-name))
+           (mtime-buffer (nth 5 (file-attributes buffer-file-name)))
+           (mtime-index (nth 5 (file-attributes index-file))))
+      (if (and (file-readable-p index-file)
+               (>= (car mtime-index) (car mtime-buffer))
+               (>= (car (cdr mtime-index)) (car (cdr mtime-buffer))))
+          (vm-read-index-file index-file)
+	nil))))
 
 (defun vm-read-index-file (index-file)
   (catch 'done
@@ -3251,7 +3329,11 @@ folder."
 		     (clear-visited-file-modtime)
 		     (message "%s removed" buffer-file-name))
 		 ;; no can do, oh well.
-		 (error nil))))
+		 (error nil)))
+          ;; remove the message summary file of Thunderbird and force it to rebuilt it
+          (let ((msf (concat buffer-file-name ".msf")))
+            (if (file-exists-p msf)
+                (delete-file msf))))
       (message "No changes need to be saved"))))
 
 ;;;###autoload
