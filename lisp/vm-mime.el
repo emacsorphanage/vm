@@ -5418,9 +5418,12 @@ describes what was deleted."
 ;;;###autoload
 (defun vm-mime-encode-composition ()
  "MIME encode the current mail composition buffer.
-Attachment tags added to the buffer with vm-mime-attach-file are expanded
+Attachment tags added to the buffer with `vm-mime-attach-file' are expanded
 and the approriate content-type and boundary markup information is added."
   (interactive)
+
+  (vm-disable-all-minor-modes)
+  
   (buffer-enable-undo)
   (let ((unwind-needed t)
 	(mybuffer (current-buffer)))
@@ -5481,7 +5484,7 @@ agent; under Unix, normally sendmail.)"
 	  postponed-attachment)
       ;;Make sure we don't double encode UTF-8 (for example) text.
       (setq buffer-file-coding-system (vm-binary-coding-system))
-      (mail-text)
+      (goto-char (mail-text-start))
       (setq e-list (extent-list nil (point) (point-max))
 	    e-list (vm-delete (function
 			       (lambda (e)
@@ -5871,7 +5874,7 @@ agent; under Unix, normally sendmail.)"
 	  forward-local-refs already-mimed layout o o-list boundary
 	  type encoding charset params description disposition object
 	  opoint-min delete-object postponed-attachment)
-      (mail-text)
+      (goto-char (mail-text-start))
       (setq o-list (vm-mime-fake-attachment-overlays (point) (point-max))
 	    o-list (vm-delete (function
 			       (lambda (o)

@@ -956,6 +956,14 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	(scroll-bar-mode nil)
 	(setq vm-fsfemacs-cached-scroll-bar-width size))))
 
+(defun vm-disable-all-minor-modes ()
+  (mapcar (lambda (m)
+            (setq m (car m))
+            (when (and (symbolp m) (boundp m) (symbol-value m))
+              (message "Disabling %s" m)
+              (funcall m -1)))
+          minor-mode-alist))
+
 (provide 'vm-misc)
 
 ;;; vm-misc.el ends here
