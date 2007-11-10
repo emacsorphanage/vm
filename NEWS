@@ -3,7 +3,15 @@
     * Uncoupled searching of MIME images from source location.
       The search should be a bit smarter allowing to place the images outside 
       the source tree now.
-      
+
+    * Added syncing of message status when visiting a mbox of Thunderbird.
+      Not all message flags are interchangeable and the message summary
+      file (.msf) of Thunderbird will get removed by VM in order to force
+      Thunderbird to rebuilt it.  Also VMs folder index will be skipped if
+      it is older than the folder in order to update VMs message status flags.
+
+    * TODO: add other changes here
+
   BUGFIXES:
   
 VM 8.0.5
