@@ -10,6 +10,10 @@
       Thunderbird to rebuilt it.  Also VMs folder index will be skipped if
       it is older than the folder in order to update VMs message status flags.
 
+    * Improved text/html displaying by w3m.  Inline images are now extracted
+      correctly and they also display now.  Added a generic handler code to
+      support also other HTML handlers.
+
     * TODO: add other changes here
 
   BUGFIXES:

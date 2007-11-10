@@ -1,6 +1,7 @@
 ;;; vm-w3m.el --- additional functions to make VM use emacs-w3m for HTML mails
 
-;; Copyright (C) 2003, 2005, 2006 Katsumi Yamaoka
+;; Copyright (C) 2003, 2005, 2006 Katsumi Yamaoka,
+;; Copyright (C)             2007 Robert Widhopf-Fenk
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -23,14 +24,7 @@
 ;; work.  Visit <URL:http://emacs-w3m.namazu.org/> for details.
 ;; You don't have to change VM at all.  Simply load this module and
 ;; you will see HTML mails inlined by emacs-w3m in the VM presentation
-;; buffer.  It was tested with VM 7.17, 7.18 and 7.19.
-
-;; Please don't complain to the author or the emacs-w3m team, even if
-;; it becomes impossible to use this module in the future.  There is
-;; currently no person familiar with VM in the emacs-w3m developers.
-;; Supposing you volunteer for the development, it will greatly be
-;; welcomed.  Or if you incorporate these functions in VM, we need to
-;; offer the maximum support.
+;; buffer.
 
 ;;; Code:
 
@@ -89,18 +83,20 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
 			 (set-buffer w3m-current-buffer)
 			 (vm-mm-layout-parts
 			  (vm-mm-layout (car vm-message-pointer)))))
-	    layout start type)
+	    part start type)
 	(setq url (concat "<" (substring url (match-end 0)) ">"))
-	(while (and part-list
-		    (not type))
-	  (setq layout (car part-list)
-		part-list (cdr part-list))
-	  (if (equal url (vm-mm-layout-id layout))
+	(while (and part-list (not type))
+          (setq part (car part-list))
+          (if (vm-mime-composite-type-p (car (vm-mm-layout-type part)))
+              (setq part-list (nconc (copy-sequence (vm-mm-layout-parts part))
+                                     (cdr part-list))))
+	  (setq part-list (cdr part-list))
+	  (if (equal url (vm-mm-layout-id part))
 	      (progn
 		(setq start (point))
-		(vm-mime-insert-mime-body layout)
-		(vm-mime-transfer-decode-region layout start (point))
-		(setq type (car (vm-mm-layout-type layout))))))
+		(vm-mime-insert-mime-body part)
+		(vm-mime-transfer-decode-region part start (point))
+		(setq type (car (vm-mm-layout-type part))))))
 	type)))
 
 (or (assq 'vm-presentation-mode w3m-cid-retrieve-function-alist)
@@ -120,76 +116,21 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
 		    (set-keymap-parent vm-w3m-mode-map vm-mode-map)
 		    vm-w3m-mode-map))))))
 
-(defadvice vm-mime-can-display-internal (around
-					 return-t-for-text/html
-					 (layout &optional deep)
-					 activate)
-  "Always return non-nil for the text/html MIME type."
-  (or (setq ad-return-value
-	    (vm-mime-types-match "text/html"
-				 (car (vm-mm-layout-type layout))))
-      ad-do-it))
-
-(defadvice vm-mime-display-internal-text/html (around
-					       use-emacs-w3m (layout)
-					       activate)
+(defun vm-mime-display-internal-w3m-text/html (start end layout)
   "Use emacs-w3m to inline HTML mails in the VM presentation buffer."
   (setq w3m-display-inline-images vm-w3m-display-inline-images)
-  (condition-case error-data
-      (let ((buffer-read-only nil)
-	    (start (point))
-	    (charset (or (vm-mime-get-parameter layout "charset")
-			 "us-ascii"))
-	    end
-	    (w3m-safe-url-regexp vm-w3m-safe-url-regexp)
-	    w3m-force-redisplay)
-	(message "Inlining text/html...")
-	(vm-mime-insert-mime-body layout)
-	(setq end (point-marker))
-	(vm-mime-transfer-decode-region layout start end)
-	(vm-mime-charset-decode-region charset start end)
-	;; See the comment about "z" in the original function.
-	(goto-char end)
-	(insert-before-markers "z")
-	(w3m-region start (1- end))
-	(goto-char end)
-	(delete-char -1)
-	(add-text-properties
-	 start end
-	 (nconc (if vm-w3m-use-w3m-minor-mode-map
-		    (vm-w3m-local-map-property))
-		;; Put the mark meaning that this part was
-		;; inlined by emacs-w3m.
-		'(text-rendered-by-emacs-w3m t)))
-	(goto-char end)
-	(message "Inlining text/html... done")
-	(setq ad-return-value t))
-    (error (vm-set-mm-layout-display-error
-	    layout
-	    (format "Inline HTML display failed: %s"
-		    (prin1-to-string error-data)))
-	   (message "%s" (vm-mm-layout-display-error layout))
-	   (sleep-for 2)
-	   (setq ad-return-value nil))))
-
-(defun vm-mime-display-internal-multipart/related (layout)
-  "Decode Multipart/Related body parts.
-This function decodes the ``start'' part (see RFC2387) only.  The
-other parts will be decoded by the other VM functions through
-emacs-w3m."
-  (let* ((part-list (vm-mm-layout-parts layout))
-	 (start-part (car part-list))
-	 (start-id (vm-mime-get-parameter layout "start"))
-	 layout)
-    ;; Look for the start part.
-    (if start-id
-	(while part-list
-	  (setq layout (car part-list))
-	  (if (equal start-id (vm-mm-layout-id layout))
-	      (setq start-part layout
-		    part-list nil)
-	    (setq part-list (cdr part-list)))))
-    (vm-decode-mime-layout start-part)))
+  (let ((w3m-safe-url-regexp vm-w3m-safe-url-regexp))
+    ;; do not mess up the scrollbar, i.e. we want to see the start of the
+    ;; message not the end of this part after decoding ...
+    (save-window-excursion
+      (w3m-region start (1- end)))
+    (add-text-properties
+     start end
+     (nconc (if vm-w3m-use-w3m-minor-mode-map
+                (vm-w3m-local-map-property))
+            ;; Put the mark meaning that this part was
+            ;; inlined by emacs-w3m.
+            '(text-rendered-by-emacs-w3m t)))))
 
 (eval-when-compile
   (defvar vm-mail-buffer)
@@ -211,14 +152,6 @@ If the prefix arg is given, all images are considered to be safe."
 	(save-excursion
 	  (set-buffer buffer)
 	  (w3m-safe-toggle-inline-images arg)))))
-
-(defun vm-w3m-uninstall ()
-  "Don't let VM use emacs-w3m.
-To re-install it, load the vm-w3m module again."
-  (interactive)
-  (ad-unadvise 'vm-mime-can-display-internal)
-  (ad-unadvise 'vm-mime-display-internal-text/html)
-  (fmakunbound 'vm-mime-display-internal-multipart/related))
 
 (provide 'vm-w3m)
 ;;; vm-w3m.el ends here

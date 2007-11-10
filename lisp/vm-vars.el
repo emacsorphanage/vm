@@ -1203,11 +1203,28 @@ chosen."
 		 (cons (const favorite) (repeat string))
 		 (cons (const favorite-internal) (repeat string))))
 
-(defcustom vm-mime-use-w3-for-text/html t
-  "*Non-nil means use Emacs W3 to display text/html MIME objects
-Nil means don't use W3 for this."
+(defcustom vm-mime-text/html-handler 'auto-select
+  "*The handler used for displaying HTML messages."
   :group 'vm
-  :type 'boolean)
+  :type '(choice (const nil :tag "Do not display HTML messages.")
+                 (const auto-select :tag "Autoselect best method")
+                 (const emacs-w3m)
+                 (const emacs-w3)
+                 (const w3m)
+                 (const lynx)))
+
+(defcustom vm-mime-text/html-blocker "<img[^>]*\\s-src=."
+  "*Regexp after which a \"blocked:\" will be inserted.
+This is done in order to prevent loading of embedded images used to check if
+and when you read an email."
+  :group 'vm
+  :type 'regexp)
+  
+(defcustom vm-mime-text/html-blocker-exceptions nil
+  "*Regexp matching URL which should not be blocked."
+  :group 'vm
+  :type 'regexp)
+
 
 (defcustom vm-mime-default-face-charsets
   (if vm-fsfemacs-mule-p

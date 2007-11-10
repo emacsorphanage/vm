@@ -1587,6 +1587,17 @@ that recipient is outside of East Asia."
 
 (defvar native-sound-only-on-console)
 
+(defun vm-mime-text/html-handler ()
+  (if (eq vm-mime-text/html-handler 'auto-select)
+      (setq vm-mime-text/html-handler
+            (or (and (functionp 'w3m) 'w3m)
+                ; TODO: enable other html handlers ...
+                ;(and (functionp 'w3) 'w3)
+                ;(and (locate-file "w3m" exec-path) 'w3m)
+                ;(and (locate-file "lynx" exec-path) 'lynx)
+                )))
+  vm-mime-text/html-handler)
+
 (defun vm-mime-can-display-internal (layout &optional deep)
   (let ((type (car (vm-mm-layout-type layout))))
     (cond ((vm-mime-types-match "image/jpeg" type)
@@ -1619,10 +1630,7 @@ that recipient is outside of East Asia."
 	  ((vm-mime-types-match "message" type) t)
 	  ((vm-mime-types-match "text/html" type)
 	   (and (fboundp 'w3-region)
-		vm-mime-use-w3-for-text/html
-		;; this because GNUS bogusly sets up autoloads
-		;; for w3-region even if W3 isn't installed.
-		(fboundp 'w3-about)
+		(vm-mime-text/html-handler)
 		(let ((charset (or (vm-mime-get-parameter layout "charset")
 				   "us-ascii")))
 		  (vm-mime-charset-internally-displayable-p charset))))
@@ -2072,49 +2080,67 @@ in the buffer.  The function is expected to make the message
 (defun vm-mime-display-internal-text (layout)
   (vm-mime-display-internal-text/plain layout))
 
+(defun vm-mime-display-internal-w3-text/html (start end &optional layout)
+  (w3-region start (1- end))
+  ;; remove read-only text properties
+  (let ((inhibit-read-only t))
+    (remove-text-properties start end '(read-only nil))))
+
 (defun vm-mime-display-internal-text/html (layout)
-  (if (and (fboundp 'w3-region)
-	   vm-mime-use-w3-for-text/html)
-      (condition-case error-data
-	  (let ((buffer-read-only nil)
-		(start (point))
-		(charset (or (vm-mime-get-parameter layout "charset")
-			     "us-ascii"))
-		end buffer-size)
-	    (message "Inlining text/html, be patient...")
-	    (vm-mime-insert-mime-body layout)
-	    (setq end (point-marker))
-	    (vm-mime-transfer-decode-region layout start end)
-	    (vm-mime-charset-decode-region charset start end)
-	    ;; w3-region apparently deletes all the text in the
-	    ;; region and then insert new text.  This makes the
-	    ;; end == start.  The fix is to move the end marker
-	    ;; forward with a placeholder character so that when
-	    ;; w3-region delete all the text, end will still be
-	    ;; ahead of the insertion point and so will be moved
-	    ;; forward when the new text is inserted.  We'll
-	    ;; delete the placeholder afterward.
-	    (goto-char end)
-	    (insert-before-markers "z")
-	    (w3-region start (1- end))
-	    (goto-char end)
-	    (delete-char -1)
-	    ;; remove read-only text properties
-	    (let ((inhibit-read-only t))
-	      (remove-text-properties start end '(read-only nil)))
-	    (goto-char end)
-	    (message "Inlining text/html... done")
-	    t )
-	(error (vm-set-mm-layout-display-error
-		layout
-		(format "Inline HTML display failed: %s"
-			(prin1-to-string error-data)))
-	       (message "%s" (vm-mm-layout-display-error layout))
-	       (sleep-for 2)
-	       nil ))
-    (vm-set-mm-layout-display-error layout "Need W3 to inline HTML")
-    (message "%s" (vm-mm-layout-display-error layout))
-    nil ))
+  "Dispatch handling of html to the actual html handler."
+  (condition-case error-data
+      (let ((buffer-read-only nil)
+            (start (point))
+            (charset (or (vm-mime-get-parameter layout "charset")
+                         "us-ascii"))
+            end buffer-size)
+        (message "Inlining text/html by %s, be patient..."
+                 vm-mime-text/html-handler)
+        (vm-mime-insert-mime-body layout)
+        (setq end (point-marker))
+        (vm-mime-transfer-decode-region layout start end)
+        (vm-mime-charset-decode-region charset start end)
+        ;; block remote images by prefixing the link
+        (goto-char start)
+        (let ((case-fold-search t))
+          (while (re-search-forward vm-mime-text/html-blocker end t)
+            (goto-char (match-end 0))
+            (if (or t (and vm-mime-text/html-blocker-exceptions
+                         (looking-at vm-mime-text/html-blocker-exceptions))
+                    (looking-at "cid:"))
+                (progn
+                  ;; TODO: write the image to a file and replace the link
+                  )
+              (insert "blocked:"))))
+        ;; w3-region apparently deletes all the text in the
+        ;; region and then insert new text.  This makes the
+        ;; end == start.  The fix is to move the end marker
+        ;; forward with a placeholder character so that when
+        ;; w3-region delete all the text, end will still be
+        ;; ahead of the insertion point and so will be moved
+        ;; forward when the new text is inserted.  We'll
+        ;; delete the placeholder afterward.
+        (goto-char end)
+        (insert-before-markers "z")
+        ;; dispatch to actual handler 
+        (funcall (intern (format "vm-mime-display-internal-%s-text/html"
+                                 vm-mime-text/html-handler))
+                 start end layout)
+        ;; do clean up
+        (goto-char end)
+        (delete-char -1)
+        (message "Inlining text/html by %s... done."
+                 vm-mime-text/html-handler)
+        t)
+    (error (vm-set-mm-layout-display-error
+            layout
+            (format "Inline text/html by %s display failed: %s"
+                    vm-mime-text/html-handler
+                    (prin1-to-string error-data)))
+           (message "%s" (vm-mm-layout-display-error layout))
+           (sleep-for 2)
+           nil)))
+  
 
 (defun vm-mime-display-internal-text/plain (layout &optional no-highlighting)
   (let ((start (point)) end need-conversion
@@ -2432,6 +2458,25 @@ in the buffer.  The function is expected to make the message
 	     (setq best-layout (or best second-best
 				   (car (vm-mm-layout-parts layout)))))))
     (and best-layout (vm-decode-mime-layout best-layout))))
+
+(defun vm-mime-display-internal-multipart/related (layout)
+  "Decode multipart/related body parts.
+This function decodes the ``start'' part (see RFC2387) only.  The
+other parts will be decoded by the other VM functions through
+emacs-w3m."
+  (let* ((part-list (vm-mm-layout-parts layout))
+	 (start-part (car part-list))
+	 (start-id (vm-mime-get-parameter layout "start"))
+	 layout)
+    ;; Look for the start part.
+    (if start-id
+	(while part-list
+	  (setq layout (car part-list))
+	  (if (equal start-id (vm-mm-layout-id layout))
+	      (setq start-part layout
+		    part-list nil)
+	    (setq part-list (cdr part-list)))))
+    (vm-decode-mime-layout start-part)))
 
 (defun vm-mime-display-button-multipart/parallel (layout)
   (vm-mime-insert-button
