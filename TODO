@@ -21,12 +21,23 @@ There are some things which probably will never be fixed ...
 ******************************************************************************
 BUGS
 
-These are bugs which must be fixed before the next release.
+The bugs which should be fixed before the next release:
+
+ *
+
+The bugs that remain unsolved:
+
+ * Sometimes the cursor is not restored correctly in GNU Emacs when visiting
+   a folder multiple times during an Emacs session.
+
+ * VM is dead slow in marking/deleting/... when a folder has thousands of 
+   messages.
 
 ******************************************************************************
 ROADMAP
 
 The features planed for one of the next releases.  
+
 The order hints on the priority, but it is no gurantee.
 
  * Display draft status in the modeline. (partially done)
