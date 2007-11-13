@@ -957,11 +957,22 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	(setq vm-fsfemacs-cached-scroll-bar-width size))))
 
 (defun vm-disable-all-minor-modes ()
+  ;; disable these we cannot guess 
+  (let ((modes '(auto-fill-mode)))
+    (while modes
+      (if (car modes)
+          (condition-case nil
+              (funcall (car modes) -1)
+            (error nil)))
+      (setq modes (cdr modes))))
+  ;; now guess others 
   (mapcar (lambda (m)
             (setq m (car m))
             (when (and (symbolp m) (boundp m) (symbol-value m))
               (message "Disabling %s" m)
-              (funcall m -1)))
+              (condition-case nil
+                  (funcall m -1)
+                (error nil))))
           minor-mode-alist))
 
 (provide 'vm-misc)
