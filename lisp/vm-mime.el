@@ -2122,10 +2122,12 @@ in the buffer.  The function is expected to make the message
         ;; delete the placeholder afterward.
         (goto-char end)
         (insert-before-markers "z")
-        ;; dispatch to actual handler 
-        (funcall (intern (format "vm-mime-display-internal-%s-text/html"
-                                 vm-mime-text/html-handler))
-                 start end layout)
+        ;; the view port (scrollbar) is sometimes messed up, try to avoid it
+        (save-window-excursion
+          ;; dispatch to actual handler
+          (funcall (intern (format "vm-mime-display-internal-%s-text/html"
+                                   vm-mime-text/html-handler))
+                   start end layout))
         ;; do clean up
         (goto-char end)
         (delete-char -1)

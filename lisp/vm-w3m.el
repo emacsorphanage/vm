@@ -120,10 +120,7 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
   "Use emacs-w3m to inline HTML mails in the VM presentation buffer."
   (setq w3m-display-inline-images vm-w3m-display-inline-images)
   (let ((w3m-safe-url-regexp vm-w3m-safe-url-regexp))
-    ;; do not mess up the scrollbar, i.e. we want to see the start of the
-    ;; message not the end of this part after decoding ...
-    (save-window-excursion
-      (w3m-region start (1- end)))
+    (w3m-region start (1- end))
     (add-text-properties
      start end
      (nconc (if vm-w3m-use-w3m-minor-mode-map
