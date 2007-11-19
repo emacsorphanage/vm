@@ -1377,10 +1377,7 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
               (setq layout (car parts)
                     type (car (vm-mm-layout-type layout))
                     disposition (car (vm-mm-layout-disposition layout))
-                    filename (or (vm-mime-get-disposition-parameter layout "filename") 
-                                 (vm-mime-get-disposition-parameter layout "name") 
-                                 (vm-mime-get-disposition-parameter layout "filename*") 
-                                 (vm-mime-get-disposition-parameter layout "name*")))
+                    filename (vm-mime-get-disposition-filename layout) )
               
               (cond ((or filename
                          (and disposition (string= disposition "attachment"))

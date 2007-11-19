@@ -1984,6 +1984,26 @@ in the buffer.  The function is expected to make the message
   (vm-display nil nil '(vm-decode-mime-message)
 	      '(vm-decode-mime-message reading-message)))
 
+(defun vm-mime-get-disposition-filename (layout)
+  (let ((filename nil)
+        (case-fold-search t))
+    (setq filename (or (vm-mime-get-disposition-parameter layout "filename") 
+                       (vm-mime-get-disposition-parameter layout "name")))
+    (when (not filename)
+      (setq filename (or (vm-mime-get-disposition-parameter layout "filename*") 
+                         (vm-mime-get-disposition-parameter layout "name*")))
+      ;; decode encoded filenames
+      (when (and filename  
+                 (string-match "^\\([^']+\\)'\\([^']*\\)'\\(.*%[0-9A-F][0-9A-F].*\\)$"
+                               filename))
+        ;; transform it to something we are already able to decode
+        (let ((charset (match-string 1 filename))
+              (f (match-string 3 filename)))
+          (setq f (vm-replace-in-string f "%\\([0-9A-F][0-9A-F]\\)" "=\\1" t))
+          (setq filename (concat "=?" charset "?Q?" f "?="))
+          (setq filename (vm-decode-mime-encoded-words-in-string filename)))))
+    filename))
+
 (defun vm-decode-mime-layout (layout &optional dont-honor-c-d)
   (let ((modified (buffer-modified-p))
 	new-layout file type type2 type-no-subtype (extent nil))
@@ -2000,11 +2020,7 @@ in the buffer.  The function is expected to make the message
 		      (or (and vm-mime-attachment-infer-type-for-text-attachments
 			       (vm-mime-types-match "text/plain" type))
 			  (vm-mime-types-match "application/octet-stream" type))
-		      (setq file
-			    (or
-			     (vm-mime-get-disposition-parameter layout
-								"filename")
-			     (vm-mime-get-parameter layout "name")))
+		      (setq file (vm-mime-get-disposition-filename layout))
 		      (setq type2 (vm-mime-default-type-from-filename file))
 		      (not (vm-mime-types-match type type2)))
 		 (vm-set-mm-layout-type layout (list type2))
@@ -2244,9 +2260,7 @@ in the buffer.  The function is expected to make the message
 	     (setq suffix (vm-mime-extract-filename-suffix layout)
 		   suffix (or suffix
 			      (vm-mime-find-filename-suffix-for-type layout)))
-	     (setq basename
-		   (or (vm-mime-get-disposition-parameter layout "filename")
-		       (vm-mime-get-parameter layout "name")))
+	     (setq basename (vm-mime-get-disposition-filename layout))
 	     (setq tempfile (vm-make-tempfile suffix basename))
 	     (vm-register-message-garbage-files (list tempfile))
 	     (let ((buffer-file-type buffer-file-type)
@@ -2328,10 +2342,7 @@ in the buffer.  The function is expected to make the message
     ;; support old "name" paramater for application/octet-stream
     ;; but don't override the "filename" parameter extracted from
     ;; Content-Disposition, if any.
-    (let ((default-filename
-	    (if (vm-mime-get-disposition-parameter layout "filename")
-		nil
-	      (vm-mime-get-parameter layout "name")))
+    (let ((default-filename (vm-mime-get-disposition-filename layout))
 	  (file nil))
       (setq file (vm-mime-send-body-to-file layout default-filename))
       (if vm-mime-delete-after-saving
@@ -2484,8 +2495,7 @@ emacs-w3m."
   (vm-mime-insert-button
    (concat
     ;; display the file name or disposition
-    (let ((file (or (vm-mime-get-disposition-parameter layout "filename")
-                    (vm-mime-get-parameter layout "name"))))
+    (let ((file (vm-mime-get-disposition-filename layout)))
       (if file (format " %s " file) ""))
     (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout) )
    (function
@@ -4089,10 +4099,8 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 (defun vm-mime-send-body-to-file (layout &optional default-filename file)
   (if (not (vectorp layout))
       (setq layout (vm-extent-property layout 'vm-mime-layout)))
-  (or default-filename
-      (setq default-filename
-	    (or (vm-mime-get-disposition-parameter layout "filename")
-		(vm-mime-get-parameter layout "name"))))
+  (if (not default-filename)
+      (setq default-filename (vm-mime-get-disposition-filename layout)))
   (and default-filename
        (setq default-filename (file-name-nondirectory default-filename)))
   (let ((work-buffer nil)
@@ -4538,8 +4546,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
     boundary ))
 
 (defun vm-mime-extract-filename-suffix (layout)
-  (let ((filename (or (vm-mime-get-disposition-parameter layout "filename")
-		      (vm-mime-get-parameter layout "name")))
+  (let ((filename (vm-mime-get-disposition-filename layout))
 	(suffix nil) i)
     (if (and filename (string-match "\\.[^.]+$" filename))
 	(setq suffix (substring filename (match-beginning 0) (match-end 0))))
@@ -6559,7 +6566,7 @@ agent; under Unix, normally sendmail.)"
 
 (defun vm-mf-attachment-file (layout)
   (or vm-mf-attachment-file ;; for %f expansion in external viewer arg lists
-      (vm-mime-get-disposition-parameter layout "filename")
+      (vm-mime-get-disposition-filename layout)
       (vm-mime-get-parameter layout "name")
       "<no suggested filename>"))
 

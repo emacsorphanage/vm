@@ -975,6 +975,39 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
                 (error nil))))
           minor-mode-alist))
 
+;; A copy of XEmacs version in oder to have it in GNU Emacs
+(defun vm-replace-in-string (str regexp newtext &optional literal)
+  "Replace all matches in STR for REGEXP with NEWTEXT string,
+ and returns the new string.
+Optional LITERAL non-nil means do a literal replacement.
+Otherwise treat `\\' in NEWTEXT as special:
+  `\\&' in NEWTEXT means substitute original matched text.
+  `\\N' means substitute what matched the Nth `\\(...\\)'.
+       If Nth parens didn't match, substitute nothing.
+  `\\\\' means insert one `\\'.
+  `\\u' means upcase the next character.
+  `\\l' means downcase the next character.
+  `\\U' means begin upcasing all following characters.
+  `\\L' means begin downcasing all following characters.
+  `\\E' means terminate the effect of any `\\U' or `\\L'."
+  (check-argument-type 'stringp str)
+  (check-argument-type 'stringp newtext)
+  (if (> (length str) 50)
+      (let ((cfs case-fold-search))
+	(with-temp-buffer
+          (setq case-fold-search cfs)
+	  (insert str)
+	  (goto-char 1)
+	  (while (re-search-forward regexp nil t)
+	    (replace-match newtext t literal))
+	  (buffer-string)))
+    (let ((start 0) newstr)
+      (while (string-match regexp str start)
+        (setq newstr (replace-match newtext t literal str)
+              start (+ (match-end 0) (- (length newstr) (length str)))
+              str newstr))
+      str)))
+
 (provide 'vm-misc)
 
 ;;; vm-misc.el ends here
