@@ -30,6 +30,22 @@ VM 8.1.0-devo
 
     * Added the variable `vm-pop-debug' to keep trace buffers.
 
+VM 8.0.6
+
+  BUGFIXES:
+
+    * Ignore empty reply-to in `vm-ignored-reply-to'.
+
+    * Quoted the variable `vm-summary-format' in a doc string.
+
+    * Fixed typos in the docstring of `vm-mail-send-and-exit'.
+
+    * Disable all minor modes before encoding a composition.  This results in
+      faster encoding when font-lock was enabled and avoids problems when
+      parts of a MIME object button get expanded due to an abbrev and thus the
+      extent/overlay gets split into two separate parts causing an encoding
+      error.
+
 VM 8.0.5
 
   BUGFIXES:
