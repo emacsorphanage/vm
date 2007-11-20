@@ -4,8 +4,16 @@ VM 8.0.6
 
     * Ignore empty reply-to in `vm-ignored-reply-to'.
 
-    * Just use the first subject when replying/forwarding to a set of
-      messages. (Thanks to Sridhar Boovaragh)
+    * Quoted the variable `vm-summary-format' in a doc string.
+
+    * Fixed typos in the docstring of `vm-mail-send-and-exit'.
+
+    * Disable all minor modes before encoding a composition.  This results in
+      faster encoding when font-lock was enabled and avoids problems when
+      parts of a MIME object button get expanded due to an abbrev and thus the
+      extent/overlay gets split into two separate parts causing an encoding
+      error.
+
 
 VM 8.0.5
 
