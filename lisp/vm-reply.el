@@ -446,7 +446,9 @@ vm-included-text-prefix is prepended to every yanked line."
 ;;;###autoload
 (defun vm-mail-send-and-exit (&rest ignored)
   "Send message and maybe delete the composition buffer.
-The value of `vm-keep-sent-mesages' determines whether the composition buffer is deleted.  If the composition is a reply to a message ina currenttly visited folder, that message is marked as having been rpelied to."
+The value of `vm-keep-sent-mesages' determines whether the composition buffer
+is deleted.  If the composition is a reply to a message in a currently visited
+folder, that message is marked as having been replied to."  
   (interactive "P")
   (vm-check-for-killed-folder)
   (if (and (boundp 'mail-alias-file)
