@@ -1,3 +1,12 @@
+VM 8.0.6
+
+  BUGFIXES:
+
+    * Ignore empty reply-to in `vm-ignored-reply-to'.
+
+    * Just use the first subject when replying/forwarding to a set of
+      messages. (Thanks to Sridhar Boovaragh)
+
 VM 8.0.5
 
   BUGFIXES:

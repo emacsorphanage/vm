@@ -185,14 +185,14 @@
   addresses )
 
 (defun vm-ignored-reply-to (reply-to)
-  (if reply-to
+  (if (and reply-to (not (string= reply-to "")))
       (let (re-list result)
 	(setq re-list vm-reply-ignored-reply-tos)
 	(while re-list
 	  (if (string-match (car re-list) reply-to)
 	      (setq result t re-list nil)
 	    (setq re-list (cdr re-list))))
-	result )))
+	result)))
 
 ;;;###autoload
 (defun vm-mail-yank-default (&optional message)
