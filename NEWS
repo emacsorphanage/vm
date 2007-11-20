@@ -1,12 +1,14 @@
+VM 8.1.0-devo
+
   IMPROVEMENTS:
 
     * Handle filenames also from the disposition fields "name", "filename*"
       and "name*", where the latter two get decoded as they might contain 8bit
       chars.
 
-    * Uncoupled searching of MIME images from source location.
-      The search should be a bit smarter allowing to place the images outside 
-      the source tree now.
+    * Uncoupled searching of MIME images from source location.  The search
+      should be a bit smarter now allowing to place the images outside of the
+      source tree now.
 
     * Added syncing of message status when visiting a mbox of Thunderbird.
       Not all message flags are interchangeable and the message summary
@@ -18,10 +20,16 @@
       correctly and they also display now.  Added a generic handler code to
       support also other HTML handlers.
 
-    * TODO: add other changes here
+    * Display number of drafts and postponed messages in the modeline and use
+      a more compact modeline.
 
-  BUGFIXES:
-  
+    * Moved my user defined summary functions to the core:
+     - S for human readable size
+     - P for indication of attachments
+     - p for indication of a postponed message
+
+    * Added the variable `vm-pop-debug' to keep trace buffers.
+
 VM 8.0.5
 
   BUGFIXES:
