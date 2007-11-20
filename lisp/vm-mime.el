@@ -1999,7 +1999,7 @@ in the buffer.  The function is expected to make the message
         ;; transform it to something we are already able to decode
         (let ((charset (match-string 1 filename))
               (f (match-string 3 filename)))
-          (setq f (vm-replace-in-string f "%\\([0-9A-F][0-9A-F]\\)" "=\\1" t))
+          (setq f (vm-replace-in-string f "%\\([0-9A-F][0-9A-F]\\)" "=\\1"))
           (setq filename (concat "=?" charset "?Q?" f "?="))
           (setq filename (vm-decode-mime-encoded-words-in-string filename)))))
     filename))
