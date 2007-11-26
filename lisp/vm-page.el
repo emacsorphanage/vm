@@ -845,15 +845,11 @@ Use mouse button 3 to choose a Web browser for the URL."
 	   ;; into the real message buffer to do attribute
 	   ;; updates.
 	   (vm-select-folder-buffer)
-	   (cond ((vm-new-flag (car vm-message-pointer))
-		  (vm-set-new-flag (car vm-message-pointer) nil)))
-	   (cond ((vm-unread-flag (car vm-message-pointer))
-		  (vm-set-unread-flag (car vm-message-pointer) nil)))
-
            (vm-run-message-hook (car vm-message-pointer)
                                 'vm-showing-message-hook)
-           )
-	 (vm-update-summary-and-mode-line)
+           (vm-set-new-flag (car vm-message-pointer) nil)
+           (vm-set-unread-flag (car vm-message-pointer) nil))
+         (vm-update-summary-and-mode-line)
 	 (vm-howl-if-eom))
      (vm-update-summary-and-mode-line))))
 
