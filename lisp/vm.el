@@ -1403,6 +1403,17 @@ Please remove these instructions from your message.")
 (defvar vm-ml-draft-count ""
   "The current number of drafts in the `vm-postponed-folder'.")
 
+(defun vm-update-draft-count ()
+  "Check number of postponed messages in folder `vm-postponed-folder'."
+  (let ((f (expand-file-name vm-postponed-folder vm-folder-directory)))
+    (if (or (not (file-exists-p f)) (= (nth 7 (file-attributes f)) 0))
+        (setq vm-drafts-exist nil)
+      (let ((mtime (nth 5 (file-attributes f))))
+        (when (not (equal vm-drafts-exist mtime))
+          (setq vm-drafts-exist mtime)
+          (setq vm-ml-draft-count (format "%d postponed"
+                                          (vm-count-messages-in-file f))))))))
+
 (defun vm-session-initialization ()
   ;;  (vm-set-debug-flags)
   ;; If this is the first time VM has been run in this Emacs session,
@@ -1498,11 +1509,7 @@ Please remove these instructions from your message.")
 	     (vm-menu-initialize-vm-mode-menu-map))
 	(setq vm-session-beginning nil)))
   ;; check for postponed messages
-  (let ((f (expand-file-name vm-postponed-folder vm-folder-directory)))
-    (if (or (not (file-exists-p f)) (= (nth 7 (file-attributes f)) 0))
-        (setq vm-drafts-exist nil)
-      (setq vm-drafts-exist t)
-      (setq vm-ml-draft-count (format "%d postponed" (vm-count-messages-in-file f))))))
+  (vm-update-draft-count))
 
 ;;;###autoload
 (if (fboundp 'define-mail-user-agent)

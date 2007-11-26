@@ -1326,6 +1326,7 @@ found, the current buffer remains selected."
   (setq vm-compositions-exist t)
   (make-local-hook 'kill-buffer-hook)
   (add-hook 'kill-buffer-hook 'vm-forget-composition-buffer nil t)
+  (add-hook 'vm-mail-send-hook 'vm-forget-composition-buffer nil t)
   (vm-update-ml-composition-buffer-count))
 
 ;;;###autoload

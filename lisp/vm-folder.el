@@ -351,6 +351,7 @@ Summary entries are wiped and regenerated.
 Mode lines are updated.
 Toolbars are updated."
   (save-excursion
+    (vm-update-draft-count)
     (mapatoms (function
 	       (lambda (b)
 		 (setq b (get-buffer (symbol-name b)))
