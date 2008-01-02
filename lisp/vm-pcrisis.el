@@ -1206,6 +1206,21 @@ If NUM is specified return the match string NUM."
            (and (string-match regexp hdr)
                 (if num (match-string num hdr) t))))))
 
+(defun vmpc-only-from-match (hdrfield company &optional clump-sep)
+  "Return non-nil if all emails from the given HDRFIELD are from COMPANY."
+  (setq company (downcase company))
+  (let* ((content (vmpc-get-header-contents hdrfield clump-sep))
+         (case-fold-search t)
+         (pos 0)
+         (len (length content))
+         (only-from (not (null content))))
+    (while (and only-from (< pos len)
+                (setq pos (string-match "@[a-z0-9._-]+" content pos)))
+      (if (not (string= company (downcase (match-string 0 content))))
+          (setq only-from nil))
+      (setq pos (1+ pos)))
+    only-from))
+
 (defun vmpc-body-match (regexp)
   "Return non-nil if the contents of the message body match REGEXP.
 For automorph, this means the body of your message; when replying it means the
