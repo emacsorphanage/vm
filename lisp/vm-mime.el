@@ -692,7 +692,7 @@
 			 (and (= cols 0) (= char ?.)
 			      (looking-at "\\.\\(\n\\|\\'\\)")))
 		     (vm-insert-char ?= 1 nil work-buffer)
-		     (vm-insert-char (car (rassq (lsh char -4)
+		     (vm-insert-char (car (rassq (lsh (logand char 255) -4)
 						 hex-digit-alist))
 				     1 nil work-buffer)
 		     (vm-insert-char (car (rassq (logand char 15)

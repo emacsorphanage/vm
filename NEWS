@@ -21,6 +21,10 @@ VM 8.0.6
     * Avoid duplicate mime buttons during decoding. (Thanks to Alley for
       reporting)
 
+    * Mask 8 bit chars by 0xff in `vm-mime-qp-encode-region' to avoid crash
+      for those with all higher order bits set (negative ones?) (Thanks to
+      Blueman for the fix.)
+
 VM 8.0.5
 
   BUGFIXES:
