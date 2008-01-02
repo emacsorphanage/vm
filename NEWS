@@ -1,10 +1,3 @@
-VM 8.0.7
-
-  BUGFIXES:
-
-    * Avoid duplicate mime buttons during decoding. (Thanks to Alley for
-      reporting)
-
 VM 8.0.6
 
   BUGFIXES:
@@ -21,6 +14,8 @@ VM 8.0.6
       extent/overlay gets split into two separate parts causing an encoding
       error.
 
+    * Avoid duplicate mime buttons during decoding. (Thanks to Alley for
+      reporting)
 
 VM 8.0.5
 
