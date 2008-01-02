@@ -2487,6 +2487,7 @@ in the buffer.  The function is expected to make the message
     (vm-display (or vm-presentation-buffer (current-buffer)) t
 		(list this-command) '(vm-mode startup)))
   t )
+
 (fset 'vm-mime-display-button-multipart/digest
       'vm-mime-display-internal-multipart/digest)
 
@@ -2499,6 +2500,7 @@ in the buffer.  The function is expected to make the message
 	(save-excursion
 	  (vm-mime-display-internal-message/rfc822 layout))))
      layout nil)))
+
 (fset 'vm-mime-display-button-message/news
       'vm-mime-display-button-message/rfc822)
 
@@ -3787,8 +3789,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   (vm-mime-insert-button
    (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
    (function vm-mime-display-generic)
-   layout disposable)
-  t )
+   layout disposable))
 
 (defun vm-find-layout-extent-at-point ()
   (cond (vm-fsfemacs-p
@@ -4007,8 +4008,9 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	(vm-set-extent-property e 'duplicable t)
       (put-text-property (overlay-start e)
 			 (overlay-end e)
-			 'vm-mime-layout layout)
-      )))
+			 'vm-mime-layout layout))
+    ;; return t as decoding worked
+    t))
 
 (defun vm-mime-rewrite-failed-button (button error-string)
   (let* ((buffer-read-only nil)
