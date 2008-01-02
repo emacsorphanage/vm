@@ -29,7 +29,7 @@ USING CONFIGURE
 	./configure --with-other-dirs=/absolute/path/to/bbdb/lisp
 
    b) XEmacs+BBDB users run:
-	./configure --with-emacs=xemacs --with-other-dirs=/absolute/path/to/bbdb/lisp
+	./configure --with-emacs=xemacs --with-other-dirs=/path/to/bbdb/lisp
 
    It is possible to build VM in a separate directory. For instance, type
 
@@ -39,28 +39,35 @@ USING CONFIGURE
 
 	make
 
-    You may ignore warnings, however error messages indicate that some modules
-    (partially) will not work, i.e. if other library files are missing or you
-    are running GNU Emacs.
+   You may ignore warnings, however error messages indicate that some modules
+   (partially) will not work, i.e. if other library files are missing or you
+   are running GNU Emacs.
 
 3) Installing the files
 
    a) The manual way
 
-       Add the lisp/info path as chosen above to the paths Emacs searches, 
-       i.e. add the following to your ~/.emacs resp. ~/.xemacs/init.el (if you
-       don't already have an equivalent)
+      Add the "lisp" and "info" directories in the VM bulit directory to the
+      Emacs search paths, e.g. if you have built vm in ~/vm add the following
+      to your ~/.emacs resp. ~/.xemacs/init.el. 
 
-         (add-to-list 'load-path "/path/to/lisp/build/dir")
-         (add-to-list 'Info-default-directory-list "/path/to/the/info/dir"))
+         (add-to-list 'load-path
+                      (expand-file-name "~/vm/lisp"))
+         (add-to-list 'Info-default-directory-list
+	              (expand-file-name "~/vm/info")))
 
-       GNU Emacs users, have to load the autloads by hand now by adding
+      GNU Emacs users, have to load the autloads by hand by adding
 
          (require 'vm-autoloads)
 
-       to their ~/.emacs.
+      to their ~/.emacs.
 
-       XEmacs: You are lucky nothing to do for you!
+      XEmacs: You are lucky nothing to do for you!
+
+   b) make install
+
+      Which might work, but must not work as most distros have their own
+      directory layout.
 
 4) You are now ready to use VM.  C-h i should start up the Emacs Info
    system and if you have installed the Info documents properly you can

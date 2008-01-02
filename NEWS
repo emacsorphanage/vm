@@ -1,5 +1,9 @@
 VM 8.0.6
 
+  IMPROVEMENTS:
+
+    * Rewrote INSTALL to be more consistent and more understandable.
+
   BUGFIXES:
 
     * Ignore empty reply-to in `vm-ignored-reply-to'.
