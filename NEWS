@@ -4,6 +4,9 @@ VM 8.0.6
 
     * Rewrote INSTALL to be more consistent and more understandable.
 
+    * Allow defadvice on function `vm' by recursing on session start. (Thanks
+      to Blueman for the code)
+
   BUGFIXES:
 
     * Ignore empty reply-to in `vm-ignored-reply-to'.
