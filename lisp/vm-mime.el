@@ -4986,7 +4986,7 @@ COMPOSITION's name will be read from the minibuffer."
 
 (defun vm-mime-delete-attachment-button ()
   (cond (vm-fsfemacs-p
-         ;; todo
+         ;; TODO
          )
 	(vm-xemacs-p
 	 (let ((e (extent-at (point) nil 'vm-mime-type)))
@@ -4995,7 +4995,7 @@ COMPOSITION's name will be read from the minibuffer."
 
 (defun vm-mime-delete-attachment-button-keep-infos ()
   (cond (vm-fsfemacs-p
-         ;; todo
+         ;; TODO
          )
 	(vm-xemacs-p
 	 (let ((e (extent-at (point) nil 'vm-mime-type)))
