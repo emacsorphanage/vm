@@ -278,7 +278,7 @@ The saved messages are flagged as `filed'."
 	    (expand-file-name (or vm-folder-directory default-directory))))
       (setq folder (expand-file-name folder)))
     ;; Confirm new folders, if the user requested this.
-    (if (and vm-confirm-new-folders (interactive-p)
+    (if (and vm-confirm-new-folders
 	     (not (file-exists-p folder))
 	     (or (not vm-visit-when-saving) (not (vm-get-file-buffer folder)))
 	     (not (y-or-n-p (format "%s does not exist, save there anyway? "
@@ -434,14 +434,12 @@ The saved messages are flagged as `filed'."
 					   vm-buffers-needing-display-update)
 				   (vm-preview-current-message))
 			  (vm-update-summary-and-mode-line)))))
-		(if (interactive-p)
-		    (message "%d message%s saved to buffer %s"
-			     count
-			     (if (/= 1 count) "s" "")
-			     (buffer-name folder-buffer))))
-	    (if (interactive-p)
-		(message "%d message%s saved to %s"
-			 count (if (/= 1 count) "s" "") folder)))))
+		(message "%d message%s saved to buffer %s"
+			 count
+			 (if (/= 1 count) "s" "")
+			 (buffer-name folder-buffer)))
+	    (message "%d message%s saved to %s"
+		     count (if (/= 1 count) "s" "") folder))))
     (if (or (null vm-last-save-folder)
 	    (not (equal unexpanded-folder auto-folder)))
 	(setq vm-last-save-folder unexpanded-folder))
@@ -746,10 +744,9 @@ The saved messages are flagged as `filed'."
 	    (setq mlist (cdr mlist))))
       (and process (vm-imap-end-session process)))
     (vm-update-summary-and-mode-line)
-    (when (interactive-p)
-	(message "%d message%s saved to %s"
-		 count (if (/= 1 count) "s" "")
-		 (vm-safe-imapdrop-string folder)))
+    (message "%d message%s saved to %s"
+	     count (if (/= 1 count) "s" "")
+	     (vm-safe-imapdrop-string folder))
     (when (and vm-delete-after-saving (not vm-folder-read-only))
 	(vm-delete-message count))
     folder ))
