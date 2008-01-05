@@ -956,24 +956,26 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	(scroll-bar-mode nil)
 	(setq vm-fsfemacs-cached-scroll-bar-width size))))
 
-(defun vm-disable-all-minor-modes ()
-  ;; disable these we cannot guess 
-  (let ((modes '(auto-fill-mode)))
+(defvar vm-disable-modes-ignore nil
+  "List of modes ignored by `vm-disable-modes'.
+Any mode causing an error while trying to disable it will be added to this
+list.  It still will try to diable it, but no error messages are generated
+anymore for it.")
+
+(defun vm-disable-modes (&optional modes)
+  "Disable the given minor modes.
+If MODES is nil the take the modes from the variable 
+`vm-disable-modes-before-encoding'."
+  (let (m)
     (while modes
-      (if (car modes)
-          (condition-case nil
-              (funcall (car modes) -1)
-            (error nil)))
-      (setq modes (cdr modes))))
-  ;; now guess others 
-  (mapcar (lambda (m)
-            (setq m (car m))
-            (when (and (symbolp m) (boundp m) (symbol-value m))
-              (message "Disabling %s" m)
-              (condition-case nil
-                  (funcall m -1)
-                (error nil))))
-          minor-mode-alist))
+      (setq m (car modes) modes (cdr modes))
+      (condition-case errmsg
+	  (funcall m -1)
+	(error 
+	 (when (not (member m vm-disable-modes-ignore))
+	   (message "Could not disable mode `%S': %S" m errmsg)
+	   (setq vm-disable-modes-ignore (cons m vm-disable-modes-ignore)))
+	 nil)))))
 
 ;; A copy of XEmacs version in oder to have it in GNU Emacs
 (defun vm-replace-in-string (str regexp newtext &optional literal)

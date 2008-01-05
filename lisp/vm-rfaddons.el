@@ -2123,12 +2123,12 @@ LAYOUT specifies the layout."
       (let ((cur (car part-list)))
         (vm-decode-mime-layout cur)
         (setq part-list (cdr part-list))
-        ;; RM: show a separator between parts
         (cond
          ((and part-list
                (not (vm-mime-should-display-button cur nil))
                (vm-mime-should-display-button (car part-list) nil))
-          (insert "\n"))
+	  ;; do nothing 
+	  )
          ((and part-list
                (not (vm-mime-should-display-button cur nil))
                (not (vm-mime-should-display-button (car part-list) nil))

@@ -692,7 +692,7 @@
 			 (and (= cols 0) (= char ?.)
 			      (looking-at "\\.\\(\n\\|\\'\\)")))
 		     (vm-insert-char ?= 1 nil work-buffer)
-		     (vm-insert-char (car (rassq (lsh char -4)
+		     (vm-insert-char (car (rassq (lsh (logand char 255) -4)
 						 hex-digit-alist))
 				     1 nil work-buffer)
 		     (vm-insert-char (car (rassq (logand char 15)
@@ -2544,6 +2544,7 @@ emacs-w3m."
     (vm-display (or vm-presentation-buffer (current-buffer)) t
 		(list this-command) '(vm-mode startup)))
   t )
+
 (fset 'vm-mime-display-button-multipart/digest
       'vm-mime-display-internal-multipart/digest)
 
@@ -2556,6 +2557,7 @@ emacs-w3m."
 	(save-excursion
 	  (vm-mime-display-internal-message/rfc822 layout))))
      layout nil)))
+
 (fset 'vm-mime-display-button-message/news
       'vm-mime-display-button-message/rfc822)
 
@@ -3844,8 +3846,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   (vm-mime-insert-button
    (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
    (function vm-mime-display-generic)
-   layout disposable)
-  t )
+   layout disposable))
 
 (defun vm-find-layout-extent-at-point ()
   (cond (vm-fsfemacs-p
@@ -4064,8 +4065,9 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	(vm-set-extent-property e 'duplicable t)
       (put-text-property (overlay-start e)
 			 (overlay-end e)
-			 'vm-mime-layout layout)
-      )))
+			 'vm-mime-layout layout))
+    ;; return t as decoding worked
+    t))
 
 (defun vm-mime-rewrite-failed-button (button error-string)
   (let* ((buffer-read-only nil)
@@ -5038,7 +5040,7 @@ COMPOSITION's name will be read from the minibuffer."
 
 (defun vm-mime-delete-attachment-button ()
   (cond (vm-fsfemacs-p
-         ;; todo
+         ;; TODO
          )
 	(vm-xemacs-p
 	 (let ((e (extent-at (point) nil 'vm-mime-type)))
@@ -5047,7 +5049,7 @@ COMPOSITION's name will be read from the minibuffer."
 
 (defun vm-mime-delete-attachment-button-keep-infos ()
   (cond (vm-fsfemacs-p
-         ;; todo
+         ;; TODO
          )
 	(vm-xemacs-p
 	 (let ((e (extent-at (point) nil 'vm-mime-type)))
@@ -5431,7 +5433,7 @@ Attachment tags added to the buffer with `vm-mime-attach-file' are expanded
 and the approriate content-type and boundary markup information is added."
   (interactive)
 
-  (vm-disable-all-minor-modes)
+  (vm-disable-modes vm-disable-modes-before-encoding)
   
   (buffer-enable-undo)
   (let ((unwind-needed t)

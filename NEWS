@@ -30,7 +30,31 @@ VM 8.1.0-devo
 
     * Added the variable `vm-pop-debug' to keep trace buffers.
 
+VM 8.0.7
+
+  BUGFIXES:
+
+    * Disable only those minor modes listed in the variable
+      `vm-disable-modes-before-encoding' before encoding a
+      composition. (Thanks to Alley for reporting and debugging)
+
+    * Removed recursion from function `vm' added by 8.0.6, as it 
+      causes startup troubles.
+
+    * Removed extra newline before attachment buttons. (Thanks to Alley for
+      reporting)
+
+    * Removed wrongly used calls to `interactive-p'. (Thanks to Alley for
+      reporting and debugging)
+
 VM 8.0.6
+
+  IMPROVEMENTS:
+
+    * Rewrote INSTALL to be more consistent and more understandable.
+
+    * Allow defadvice on function `vm' by recursing on session start. (Thanks
+      to Blueman for the code)
 
   BUGFIXES:
 
@@ -45,6 +69,13 @@ VM 8.0.6
       parts of a MIME object button get expanded due to an abbrev and thus the
       extent/overlay gets split into two separate parts causing an encoding
       error.
+
+    * Avoid duplicate mime buttons during decoding. (Thanks to Alley for
+      reporting)
+
+    * Mask 8 bit chars by 0xff in `vm-mime-qp-encode-region' to avoid crash
+      for those with all higher order bits set (negative ones?) (Thanks to
+      Blueman for the fix.)
 
 VM 8.0.5
 

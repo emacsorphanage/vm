@@ -5405,6 +5405,15 @@ You must restart VM after a change to cause any effects."
 		     auto-delete-message-external-body)
 	      (const :tag "Enable all addons" t)))
 
+(defcustom vm-disable-modes-before-encoding 
+  '(auto-fill-mode font-lock-mode ispell-minor-mode flyspell-mode
+		   abbrev-mode adaptive-fill-mode)
+  "*A list of minor modes to disable before encoding a message.
+These modes may slow down (font-lock and *spell) encoding and may
+cause trouble (abbrev-mode)."
+  :group 'vm
+  :type '(repeat symbol))
+
 (provide 'vm-vars)
 
 ;;; vm-vars.el ends here
