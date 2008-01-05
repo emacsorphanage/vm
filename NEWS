@@ -6,11 +6,17 @@ VM 8.0.7
       `vm-disable-modes-before-encoding' before encoding a
       composition. (Thanks to Alley for reporting and debugging)
 
+    * Removed recursion from function `vm' added by 8.0.6, as it 
+      causes startup troubles.
+
 VM 8.0.6
 
   IMPROVEMENTS:
 
     * Rewrote INSTALL to be more consistent and more understandable.
+
+    * Allow defadvice on function `vm' by recursing on session start. (Thanks
+      to Blueman for the code)
 
   BUGFIXES:
 
