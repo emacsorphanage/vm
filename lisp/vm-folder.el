@@ -3257,7 +3257,7 @@ folder."
   (if (eq major-mode 'vm-virtual-mode)
       (vm-virtual-save-folder prefix)
     (if (buffer-modified-p)
-	(let (mp (newlist nil))
+	(let (mp (newlist nil) (buffer-undo-list t))
 	  (cond ((eq vm-folder-access-method 'pop)
 		 (vm-pop-synchronize-folder t t t nil))
 		((eq vm-folder-access-method 'imap)
