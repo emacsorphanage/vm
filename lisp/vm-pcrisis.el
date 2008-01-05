@@ -1206,17 +1206,16 @@ If NUM is specified return the match string NUM."
            (and (string-match regexp hdr)
                 (if num (match-string num hdr) t))))))
 
-(defun vmpc-only-from-match (hdrfield company &optional clump-sep)
-  "Return non-nil if all emails from the given HDRFIELD are from COMPANY."
-  (setq company (downcase company))
+(defun vmpc-only-from-match (hdrfield regexp &optional clump-sep)
+  "Return non-nil if all emails from the given HDRFIELD are matched by REGEXP."
   (let* ((content (vmpc-get-header-contents hdrfield clump-sep))
          (case-fold-search t)
          (pos 0)
          (len (length content))
          (only-from (not (null content))))
     (while (and only-from (< pos len)
-                (setq pos (string-match "@[a-z0-9._-]+" content pos)))
-      (if (not (string= company (downcase (match-string 0 content))))
+                (setq pos (string-match "[a-z0-9._-]+@[a-z0-9._-]+" content pos)))
+      (if (not (string-match regexp (match-string 0 content)))
           (setq only-from nil))
       (setq pos (1+ pos)))
     only-from))

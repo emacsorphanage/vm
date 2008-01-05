@@ -384,6 +384,11 @@ the message you are replying/forwarding; when using the
 @code{vmpc-automorph} function, it matches against a header in the
 message you are composing.
 
+@item @code{vmpc-only-from-match} When making replies or forwards, this
+matches against the contents of the given headers in and it is true only
+when all email adresses match the given regexp.
+
+
 @item @code{vmpc-body-match} is just like @code{vmpc-header-match} but 
 allows you to match against the text in the body of the message.
 
