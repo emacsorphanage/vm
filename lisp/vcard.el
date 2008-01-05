@@ -292,7 +292,9 @@ Note: this function modifies the buffer!"
                         (set-marker match-end (point-max))))
                  (funcall decoder pos match-beg)
                  (setq result (cons (buffer-substring pos match-beg) result))
-                 (set-marker pos (marker-position match-end))))
+                 (if (= match-beg match-end)
+                     (setq pos (point-max))
+                   (set-marker pos (marker-position match-end)))))
              (setq result (nreverse result))
              (vcard-set-property proplist "encoding" nil))
             (t
