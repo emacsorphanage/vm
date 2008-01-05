@@ -174,8 +174,9 @@ See the documentation for vm-mode for more information."
       (let ((msf (concat (buffer-file-name) ".msf")))
         (setq vm-sync-thunderbird-status
               (or (file-exists-p msf)
-                  (re-search-forward "^X-Mozilla-Status2?:"
-                                     (point-max) t))))
+                  ;TODO (re-search-forward "^X-Mozilla-Status2?:"
+                  ;                   (point-max) t)
+                  )))
       (cond ((memq access-method '(pop imap))
 	     (if (not (equal folder-name (buffer-name)))
 		 (rename-buffer folder-name t))))
