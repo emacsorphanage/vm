@@ -109,7 +109,7 @@ mandatory."
 
 (defun vm-do-summary (&optional start-point)
   (let ((m-list (or start-point vm-message-list))
-	mp m
+	mp m tr trs tre
 	(n 0)
 	;; Just for laughs, make the update interval vary.
 	(modulus (+ (% (vm-abs (random)) 11) 10))
@@ -120,6 +120,7 @@ mandatory."
     (setq mp m-list)
     (save-excursion
       (set-buffer vm-summary-buffer)
+      (setq line-move-ignore-invisible vm-summary-show-threads)
       (let ((buffer-read-only nil)
 	    (modified (buffer-modified-p)))
 	(unwind-protect
@@ -137,11 +138,29 @@ mandatory."
 	      ;; and then convert them to markers after all the
 	      ;; insertions are done.
 	      (while mp
-		(setq summary (vm-su-summary (car mp)))
-		(vm-set-su-start-of (car mp) (point))
+                (setq m (car mp))
+		(setq summary (vm-su-summary m))
+		(vm-set-su-start-of m (point))
 		(insert vm-summary-no-=>)
-		(vm-tokenized-summary-insert (car mp) (vm-su-summary (car mp)))
-		(vm-set-su-end-of (car mp) (point))
+		(vm-tokenized-summary-insert m (vm-su-summary m))
+		(vm-set-su-end-of m (point))
+                (let ((s (vm-su-start-of m)) (e (vm-su-end-of m)))
+                  (put-text-property s e 'vm-message m)
+                  (when vm-summary-show-threads
+                    (if (= 0 (vm-thread-indentation-of m))
+                        (setq tr m trs s tre e)
+                      (save-excursion
+                        (when (and tr trs
+                                   (progn (goto-char (1+ (vm-su-start-of tr)))
+                                          (not (looking-at "-"))))
+                          ;; do not hide new messages 
+                          (put-text-property s e 'invisible (not (vm-new-flag m)))
+                          (put-text-property s e 'thread-root tr)
+                          (put-text-property trs tre 'thread-end m)
+                          (insert "+")
+                          (goto-char (vm-su-start-of tr))
+                          (delete-char 1)
+                          )))))
 		(setq mp (cdr mp) n (1+ n))
 		(if (zerop (% n modulus))
 		    (message "Generating summary... %d" n)))
@@ -165,6 +184,26 @@ mandatory."
 	(run-hooks 'vm-summary-redo-hook)))
     (if (>= n modulus)
 	(message "Generating summary... done"))))
+
+(defun vm-summary-toggle-thread-folding (&optional visible)
+  "Toggle the thread folding at point."
+  (interactive)
+  (save-excursion
+    (vm-follow-folders-summary-cursor)
+    (vm-select-folder-buffer)
+    (set-buffer vm-summary-buffer)
+    (when (and vm-summary-show-threads (get-text-property (point) 'thread-end))
+      (let* ((m (get-text-property (point) 'vm-message))
+             (e (get-text-property (point) 'thread-end))
+             (i (not (get-text-property (vm-su-start-of e) 'invisible))))
+        (if (eq visible -1) (setq i t)
+          (if (eq visible 1) (setq i nil)))
+        (put-text-property (vm-su-end-of m) (vm-su-end-of e) 'invisible i)
+        (let ((buffer-read-only nil))
+          (goto-char (1+ (vm-su-start-of m)))
+          (insert (if i "+" "-"))
+          (goto-char (vm-su-start-of m))
+          (delete-char 1))))))
 
 (defun vm-do-needed-summary-rebuild ()
   (if (and vm-summary-redo-start-point vm-summary-buffer)
@@ -200,7 +239,7 @@ mandatory."
 	    (unwind-protect
 		(save-excursion
 		  (goto-char (vm-su-start-of m))
-		  (setq selected (not (looking-at vm-summary-no-=>)))
+		  (setq selected (looking-at "[+-]>"))
 		  ;; We do a little dance to update the text in
 		  ;; order to make the markers in the text do
 		  ;; what we want.
@@ -221,15 +260,22 @@ mandatory."
 		  ;; summary entry. We achieve (1) by inserting a
 		  ;; placeholder character at the end of the
 		  ;; summary entry before deleting the region.
-		  (goto-char (vm-su-end-of m))
-		  (insert-before-markers "z")
 		  (goto-char (vm-su-start-of m))
-		  (delete-region (point) (1- (vm-su-end-of m)))
 		  (if (not selected)
-		      (insert vm-summary-no-=>)
-		    (insert vm-summary-=>))
+                      (if (not (get-text-property (point) 'thread-end))
+                          (insert vm-summary-no-=>)
+                        (if (get-text-property (1+ (vm-su-end-of vm-summary-pointer))
+                                               'invisible)
+                            (insert "+ ")
+                          (insert "- ")))
+                    (if (not (get-text-property (point) 'thread-end))
+                        (insert vm-summary-=>)
+                      (if (get-text-property (1+ (vm-su-end-of vm-summary-pointer))
+                                             'invisible)
+                          (insert "+>")
+                        (insert "->"))))
 		  (vm-tokenized-summary-insert m (vm-su-summary m))
-		  (delete-char 1)
+		  (delete-region (point) (vm-su-end-of m))
 		  (run-hooks 'vm-summary-update-hook)
 		  (and do-mouse-track
 		       (vm-mouse-set-mouse-track-highlight
@@ -261,7 +307,12 @@ mandatory."
 			   (vm-su-start-of vm-summary-pointer))
 		      (progn
 			(goto-char (vm-su-start-of vm-summary-pointer))
-			(insert vm-summary-no-=>)
+                        (if (not (get-text-property (point) 'thread-end))
+                            (insert vm-summary-no-=>)
+                          (if (get-text-property (1+ (vm-su-end-of vm-summary-pointer))
+                                                 'invisible)
+                              (insert "+ ")
+                            (insert "- ")))
 			(delete-char (length vm-summary-=>))
 			(and do-mouse-track
 			     (vm-mouse-set-mouse-track-highlight
@@ -274,7 +325,12 @@ mandatory."
 		  (let ((modified (buffer-modified-p)))
 		    (unwind-protect
 			(progn
-			  (insert vm-summary-=>)
+                          (if (not (get-text-property (point) 'thread-end))
+                              (insert vm-summary-=>)
+                            (if (get-text-property (1+ (vm-su-end-of vm-summary-pointer))
+                                                   'invisible)
+                                (insert "+>")
+                              (insert "->")))
 			  (delete-char (length vm-summary-=>))
 			  (and do-mouse-track
 			       (vm-mouse-set-mouse-track-highlight
@@ -1765,5 +1821,6 @@ Call this function if you made changes to `vm-summary-format'."
       nil )))
 
 (provide 'vm-summary)
+
 
 ;;; vm-summary.el ends here

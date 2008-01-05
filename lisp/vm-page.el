@@ -851,7 +851,9 @@ Use mouse button 3 to choose a Web browser for the URL."
            (vm-set-unread-flag (car vm-message-pointer) nil))
          (vm-update-summary-and-mode-line)
 	 (vm-howl-if-eom))
-     (vm-update-summary-and-mode-line))))
+     (vm-update-summary-and-mode-line)))
+
+  (vm-summary-toggle-thread-folding 1))
 
 ;;;###autoload
 (defun vm-expose-hidden-headers ()

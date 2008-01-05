@@ -40,6 +40,8 @@ The features planed for one of the next releases.
 
 The order hints on the priority, but it is no gurantee.
 
+ * Folding of threads in the summary
+
  * Display draft status in the modeline. (partially done)
 
  * Break up the customize stuff into more and smaller sub categories.

@@ -4444,6 +4444,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "WD" 'vm-delete-window-configuration)
     (define-key map "W?" 'vm-window-help)
     (define-key map "\C-t" 'vm-toggle-threads-display)
+    (define-key map "\M-t" 'vm-summary-toggle-thread-folding)
     (define-key map "\C-x\C-s" 'vm-save-buffer)
     (define-key map "\C-x\C-w" 'vm-write-file)
     (define-key map "\C-x\C-q" 'vm-toggle-read-only)
