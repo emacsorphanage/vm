@@ -1,3 +1,11 @@
+VM 8.0.7
+
+  BUGFIXES:
+
+    * Disable only those minor modes listed in the variable
+      `vm-disable-modes-before-encoding' before encoding a
+      composition. (Thanks to Alley for reporting and debugging)
+
 VM 8.0.6
 
   IMPROVEMENTS:

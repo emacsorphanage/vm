@@ -5379,7 +5379,7 @@ Attachment tags added to the buffer with `vm-mime-attach-file' are expanded
 and the approriate content-type and boundary markup information is added."
   (interactive)
 
-  (vm-disable-all-minor-modes)
+  (vm-disable-modes vm-disable-modes-before-encoding)
   
   (buffer-enable-undo)
   (let ((unwind-needed t)
