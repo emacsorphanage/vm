@@ -9,6 +9,8 @@ VM 8.0.7
     * Removed recursion from function `vm' added by 8.0.6, as it 
       causes startup troubles.
 
+    * Removed extra newline before attachment buttons.
+
 VM 8.0.6
 
   IMPROVEMENTS:
