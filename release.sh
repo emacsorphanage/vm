@@ -1,11 +1,17 @@
 #!/bin/sh
 
 bzr diff || exit 1
-
-make
+make || exit 1
 bzr="bzr --no-plugins --no-aliases"
-nick=`$bzr nick`
+nick=(`$bzr tags | tail -1`)
+nickrevno=${nick[1]}
+nick=${nick[0]}
 revno=`$bzr revno`
+if [ "$nickrevno" != "$revno" ]; then
+  echo "ERROR: No tag present at the head revision."
+  echo "ERROR: First you must create a release tag!"
+  exit -1
+fi
 rdir=$nick-$revno
 dir="release/$rdir"
 rm -rf $dir
