@@ -111,8 +111,6 @@
   (defvar vm-message-pointer)
   (defvar vm-presentation-buffer)
   (defvar vm-summary-buffer)
-  ;; avoid bytecompile warnings
-  (defvar vm-pgg-cleartext-state nil "For interfunction communication.")
 )
 
 (defgroup vm nil
@@ -559,10 +557,9 @@ When the button is pressed ACTION is called."
       (if vm-presentation-buffer
           (set-buffer vm-presentation-buffer))
       (goto-char (point-min))
-      (when (and (vm-mime-plain-message-p (car vm-message-pointer))
-                 (re-search-forward vm-pgg-cleartext-begin-regexp
+      (when (re-search-forward vm-pgg-cleartext-begin-regexp
                                     (+ (point) vm-pgg-cleartext-search-limit)
-                                    t))
+                                    t)
         (condition-case e
             (cond ((string= (match-string 1) "SIGNED MESSAGE")
                    (vm-pgg-set-cleartext-decoded)
@@ -673,17 +670,16 @@ When the button is pressed ACTION is called."
 We use the advice here in order to avoid overwriting VMs internal text display
 function.  Faces will get lost if a charset conversion happens thus we do the
 cleanup here after verification and decoding took place."
-  (let ((vm-pgg-cleartext-state nil)
-        (start (point))
+  (let ((start (point))
         end)
     ad-do-it
-    (when vm-pgg-cleartext-state
+    (save-restriction
       (setq end (point))
-      (save-restriction
-        (narrow-to-region start end)
-        (goto-char (point-min))
-        (vm-pgg-cleartext-cleanup vm-pgg-cleartext-state)
-        (widen)))))
+      (narrow-to-region start end)
+      (goto-char start)
+      (vm-pgg-cleartext-automode)
+      (goto-char (point-max))
+      (widen))))
     
 ;;; ###autoload
 (defun vm-pgg-cleartext-verify ()
@@ -710,9 +706,7 @@ cleanup here after verification and decoding took place."
       (vm-pgg-state-set 'signed)
       (setq status (if (not status) 'error 'verified))
       (vm-pgg-state-set status)
-      (if (boundp 'vm-pgg-cleartext-state)
-          (setq vm-pgg-cleartext-state status)
-        (vm-pgg-cleartext-cleanup status)))))
+      (vm-pgg-cleartext-cleanup status))))
 
 ;;; ###autoload
 (defun vm-pgg-cleartext-decrypt ()
