@@ -238,9 +238,8 @@
     ))
 
 (defvar vm-menu-help-menu
-  '("Help!"
-    ["Emacs Toolbar" vm-menu-toggle-menubar]
-    ["Undo" vm-undo]
+  '("Help"
+    ["Switch to Emacs Toolbar" vm-menu-toggle-menubar]
     "---"
     ["What Now?" vm-help t]
     ["Describe Mode" describe-mode t]
@@ -406,6 +405,8 @@
 		   (vm-mime-can-convert
 		    (car (vm-mm-layout-type
 			  (vm-mime-get-button-layout e))))]))
+      "---"
+      ["Undo" vm-undo]
       "---"
       ["Save to File" vm-mime-reader-map-save-file t]
       ["Save to Folder" vm-mime-reader-map-save-message
@@ -868,7 +869,7 @@ set to the command name so that window configuration will be done."
 		 (folder
 		  (cons "Folder" vm-menu-fsfemacs-folder-menu))
 		 (help
-		  (cons "Help!" vm-menu-fsfemacs-help-menu))
+		  (cons "Help" vm-menu-fsfemacs-help-menu))
 		 (label
 		  (cons "Label" vm-menu-fsfemacs-label-menu))
 		 (mark
