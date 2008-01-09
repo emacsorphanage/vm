@@ -608,7 +608,16 @@ Output, if any, is displayed.  The message is not altered."
 	(if discard-output
 	    (message "Command '%s' produced %d bytes of output." 
 		     command output-bytes)
-	  (display-buffer buffer))))))
+	  (display-buffer buffer))))
+    buffer))
+
+(defun vm-pipe-message-to-command-to-string (command &optional prefix-arg)
+  "Runs a shell command with contents from the current message as input.
+This function is like `vm-pipe-message-to-command', but will not display the
+output of the command, but return it as a string."
+  (save-excursion 
+    (set-buffer (vm-pipe-message-to-command command prefix-arg t))
+    (buffer-substring-no-properties (point-min) (point-max))))
 
 ;;;###autoload
 (defun vm-pipe-message-to-command-discard-output (command &optional prefix-arg)

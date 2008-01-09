@@ -5,6 +5,10 @@ VM 8.0.7
     * Reactiavted "Allow defadvice on function `vm' by recursing on session
       start".  It should work correctly now.
 
+    * Added interactive `vm-pipe-message-to-command-discard-output' and
+      the non-interactive `vm-pipe-message-to-command-to-string' for using
+      it in own functions.
+
   BUGFIXES:
 
 VM 8.0.7
