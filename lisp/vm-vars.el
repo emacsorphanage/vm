@@ -4328,6 +4328,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "A" 'vm-auto-archive-messages)
     (define-key map "S" 'vm-save-folder)
     (define-key map "|" 'vm-pipe-message-to-command)
+    (define-key map "\C-|" 'vm-pipe-message-to-command-discard-output)
     (define-key map "###" 'vm-expunge-folder)
     (cond ((fboundp 'set-keymap-prompt)
 	   (set-keymap-prompt (lookup-key map "#")

@@ -540,9 +540,8 @@ vm-save-message instead (normally bound to `s')."
     (setq vm-last-written-file file)))
 
 ;;;###autoload
-(defun vm-pipe-message-to-command (command &optional prefix-arg)
-  "Runs a shell command with some or all of the contents of the
-current message as input.
+(defun vm-pipe-message-to-command (command &optional prefix-arg discard-output)
+  "Runs a shell command with contents from the current message as input.
 By default, the entire message is used.
 With one \\[universal-argument] the text portion of the message is used.
 With two \\[universal-argument]'s the header portion of the message is used.
@@ -603,8 +602,28 @@ Output, if any, is displayed.  The message is not altered."
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-pipe-message-to-command)
 		'(vm-pipe-message-to-command))
-    (if (not (zerop (save-excursion (set-buffer buffer) (buffer-size))))
-	(display-buffer buffer))))
+    (let ((output-bytes (save-excursion (set-buffer buffer) (buffer-size))))
+      (if (zerop output-bytes)
+	  (message "Command '%s' produced no output." command)
+	(if discard-output
+	    (message "Command '%s' produced %d bytes of output." 
+		     command output-bytes)
+	  (display-buffer buffer))))))
+
+;;;###autoload
+(defun vm-pipe-message-to-command-discard-output (command &optional prefix-arg)
+  "Runs a shell command with contents from the current message as input.
+This function is like `vm-pipe-message-to-command', but will not display the
+output of the command."
+  (interactive
+   ;; protect value of last-command
+   (let ((last-command last-command)
+	 (this-command this-command))
+     (vm-follow-summary-cursor)
+     (vm-select-folder-buffer)
+     (list (read-string "Pipe to command: " vm-last-pipe-command)
+	   current-prefix-arg)))
+  (vm-pipe-message-to-command command prefix-arg t))
 
 ;;;###autoload
 (defun vm-print-message (&optional count)
