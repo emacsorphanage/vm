@@ -1,5 +1,14 @@
 VM 8.0.7
 
+  IMPROVEMENTS:
+
+    * Reactiavted "Allow defadvice on function `vm' by recursing on session
+      start".  It should work correctly now.
+
+  BUGFIXES:
+
+VM 8.0.7
+
   BUGFIXES:
 
     * Disable only those minor modes listed in the variable
