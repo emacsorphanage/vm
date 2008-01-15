@@ -2,14 +2,24 @@ VM 8.0.7
 
   IMPROVEMENTS:
 
-    * Reactiavted "Allow defadvice on function `vm' by recursing on session
+    * Reactivated "Allow defadvice on function `vm' by recursing on session
       start".  It should work correctly now.
 
     * Added interactive `vm-pipe-message-to-command-discard-output' and
       the non-interactive `vm-pipe-message-to-command-to-string' for using
       it in own functions.
 
+    * Added `vm-pipe-messages-to-command*' for bulk piping messages to a
+      single command, i.e. like saving to a pipe.  This is substantially
+      faster than `vm-pipe-message-to-command*' which call the command on 
+      each message separately.  You may want to use it to feed spamassasin.
+
+    * Removed vm-easymenu.el and use easymenu.el instead.
+
   BUGFIXES:
+
+    * Moved [Undo] to Dispose menu and [Emacs] to Help menu as these do not
+      work in Emacs 22 anymore when on the menu bar.
 
 VM 8.0.7
 
