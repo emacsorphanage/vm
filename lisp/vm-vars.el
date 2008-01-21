@@ -549,7 +549,7 @@ save to IMAP folders on the server, rather than to local files."
   :type '(choice (const nil) (const t)))
 
 (defcustom vm-imap-full-sync-on-get t
-  "If this variable is non-NIL, then the vm-get-new-mail command should
+  "*If this variable is non-NIL, then the vm-get-new-mail command should
 do a full synchonization with the IMAP folder on the server.  This
 involves expunging messages on the server and the cache, saving and
 retrieving message attributes as well retrieving new messages.  If the
