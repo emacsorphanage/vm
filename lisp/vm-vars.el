@@ -548,6 +548,16 @@ save to IMAP folders on the server, rather than to local files."
   :group 'vm
   :type '(choice (const nil) (const t)))
 
+(defcustom vm-imap-full-sync-on-get t
+  "If this variable is non-NIL, then the vm-get-new-mail command should
+do a full synchonization with the IMAP folder on the server.  This
+involves expunging messages on the server and the cache, saving and
+retrieving message attributes as well retrieving new messages.  If the
+variable is NIL, this functionality can be obtained via the
+vm-imap-synchronize command."
+  :group 'vm
+  :type '(choice (const t) (const nil)))
+
 (defcustom vm-auto-get-new-mail t
   "*Non-nil value causes VM to automatically move mail from spool files
 to a mail folder when the folder is first visited.  Nil means

@@ -774,15 +774,45 @@ instead of a spool file, manipulating the remote source as if it
 were a folder instead of just a holding area for incoming messages.
 
 The command @code{vm-visit-imap-folder} allows you to visit a IMAP
-mailbox as if it were a folder.  When you visit a IMAP folder, VM
-will download copies of the messages that it finds there for you
-to read.  If you delete and expunge messages in the local copy of
-the folder, the corresponding messages on the IMAP server will be
-removed when you save the changes with @code{vm-save-folder}.
+mailbox as if it were a folder.  When you visit a IMAP folder, VM will
+download copies of the messages that it finds there for you to read.
+These messages are saved locally in a folder on the disk, in the 
+directory specified by @code{vm-imap-folder-cache-directory}.
+@vindex vm-imap-folder-cache-directory
+If you delete and expunge messages, these changes are made to both the
+local copy of the folder and the folder on the IMAP server when saved
+with @code{vm-save-folder}.
 
-Message attributes (new, replied, filed, etc.) are stored on the
-IMAP server and are also cached locally.  Labels cannot be stored
-on the IMAP server but you can use them lcoally.
+Message attributes (new, replied, filed, etc.) are stored on the IMAP
+server and are also cached locally.  Message labels are also stored on
+the IMAP server, provided the server has the ability to store
+user-defined permanent flags.  
+
+The local copy and the folder on the IMAP server are synchronized
+every time @code{vm-get-new-mail} is invoked.  This involves writing
+the changed attributes and labels to the server, expunging the locally
+expunged messages on the server, updating the attributes and labels in
+the local copy based on the server data, expunging messages in the
+local copy that have been expunged on the server (through perhaps a
+concurrent access to the IMAP folder), and finally retrieving any new
+messages on the server.  This is called full synchronization.  The
+variable @code{vm-imap-full-sync-on-get} specifies whether it should
+be done as part of @code{vm-get-new-mail}.
+@vindex vm-imap-full-sync-on-get
+@findex vm-imap-synchronize
+If it is not done as part of @code{vm-get-new-mail}, then the command
+@code{vm-imap-synchronize} can be used to perform the
+synchronization.  
+
+After fetching messages from the IMAP server into the local copy, VM
+can operate on the local copy without contacting the server.  This
+allows offline operation on the mail folders.  When the IMAP server is
+connected again, one should do the @code{vm-imap-synchronize} command
+with a prefix argument.  This causes @emph{all} the message attributes
+and labels to be written to the server, since it may not be known
+which of them have actually changed during the offline operation.
+
+
 
 @vindex vm-imap-server-list
 In order for VM to know about IMAP servers that you can access, you
@@ -2153,6 +2183,12 @@ A non-@code{nil} value of @var{vm-berkeley-mail-compatibility}
 means to read and write BSD @i{Mail(1)} style Status: headers.
 This makes sense if you plan to use VM to read mail archives
 created by @i{Mail}.
+
+@vindex vm-imap-save-to-server
+A non-@code{nil} value of @code{vm-imap-save-to-server} means that
+messages from IMAP folders should be saved in other IMAP folds on the
+same server.  Otherwise, the messages are saved to local folders. 
+
 
 @node Deleting Messages, Editing Messages, Saving Messages, Top
 @chapter Deleting Messages

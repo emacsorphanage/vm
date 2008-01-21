@@ -519,7 +519,7 @@ folder in the order in which the messages arrived."
 		       ((string-lessp p1 p2)
 			(throw 'done t))
 		       (t
-			(throw 'done t)))))
+			(throw 'done nil)))))
 	  (setq list1 (cdr list1)
 		list2 (cdr list2)))
 	(cond ((and list1 (not list2)) nil)
