@@ -302,11 +302,12 @@ there are @var{n} or fewer messages.  The default value of
 
 @menu
 * Spool Files::  Linking folders and mailboxes.
+* Remote Folders::  Working with folders on mail servers
 * Getting New Mail::  Retrieving mail from spool files.
 * Crash Recovery::  Recovering changes after Emacs or your system dies.
 @end menu
 
-@node Spool Files, Getting New Mail, Starting Up, Starting Up
+@node Spool Files, Remote Folders, Starting Up, Starting Up
 @section Spool Files
 @vindex vm-spool-files
 A @dfn{spool file} is a file where the mail transport system delivers
@@ -436,12 +437,10 @@ spool files on remote hosts using the POP and IMAP protocols.
 @menu
 * POP Spool Files::	How to use a POP maildrop as a spool file
 * IMAP Spool Files::	How to use an IMAP maildrop as a spool file
-* POP Folders::		How to use a POP maildrop as a folder
-* IMAP Folders::	How to use a IMAP maildrop as a folder
 @end menu
 
-@node POP Spool Files,,, Spool Files
-@section POP Spool Files
+@node POP Spool Files,IMAP Spool Files,, Spool Files
+@unnumberedsubsec POP Spool Files
 @cindex POP
 VM supports accessing spool files on remote hosts via the Post
 Office Protocol (POP).  Instead of a spool file name as in the
@@ -567,8 +566,8 @@ Here is an example:
 )
 @end example
 
-@node IMAP Spool Files,,, Spool Files
-@section IMAP Spool Files
+@node IMAP Spool Files,,POP Spool Files, Spool Files
+@unnumberedsubsec IMAP Spool Files
 @cindex IMAP
 VM can also use the IMAP protocol to access a mailbox on a remote 
 host.  As with POP, instead of specifying a spool file name in
@@ -709,11 +708,9 @@ Here is an example:
 )
 @end example
 
-@node POP Folders,,, Spool Files
-@section POP Folders
-@cindex POP
+@node Remote Folders, Getting New Mail, Spool Files, Starting Up
+@section Remote Folders
 
-@findex vm-visit-pop-folder
 VM's traditional mode of operation is to treat all remote mail
 sources as spool files, pulling all mail down from remote sources
 into local folders and deleting the remote copies.  But sometimes
@@ -721,6 +718,16 @@ it is more convenient to treat a remote mail source as a folder
 instead of a spool file, manipulating the remote source as if it
 were a folder instead of just a holding area for incoming messages.
 
+@menu
+* POP Folders::		How to use a POP maildrop as a folder
+* IMAP Folders::	How to use an IMAP maildrop as a folder
+@end menu
+
+@node POP Folders, IMAP Folders, Remote Folders, Remote Folders
+@unnumberedsubsec POP Folders
+@cindex POP
+
+@findex vm-visit-pop-folder
 The command @code{vm-visit-pop-folder} allows you to visit a POP
 mailbox as if it were a folder.  When you visit a POP folder, VM
 will download copies of the messages that it finds there for you
@@ -761,20 +768,13 @@ For example:
 @samp{Yahoo! mail} and @samp{local mail} are what you would type
 when @code{vm-visit-pop-folder} asks for a folder name.
 
-@node IMAP Folders,,, Spool Files
-@section IMAP Folders
+@node IMAP Folders,, POP Folders, Remote Folders
+@unnumberedsubsec IMAP Folders
 @cindex IMAP
 
 @findex vm-visit-imap-folder
-VM's traditional mode of operation is to treat all remote mail
-sources as spool files, pulling all mail down from remote sources
-into local folders and deleting the remote copies.  But sometimes
-it is more convenient to treat a remote mail source as a folder
-instead of a spool file, manipulating the remote source as if it
-were a folder instead of just a holding area for incoming messages.
-
-The command @code{vm-visit-imap-folder} allows you to visit a IMAP
-mailbox as if it were a folder.  When you visit a IMAP folder, VM will
+The command @code{vm-visit-imap-folder} allows you to visit an IMAP
+mailbox as if it were a folder.  When you visit an IMAP folder, VM will
 download copies of the messages that it finds there for you to read.
 These messages are saved locally in a folder on the disk, in the 
 directory specified by @code{vm-imap-folder-cache-directory}.
@@ -823,7 +823,7 @@ The variable's value should be a list of the form:
  (@var{IMAPDROP} @var{IMAPDROP} ...)
 @end example
 
-@var{IMAPDROP} is a IMAP maildrop specification in the same format used
+@var{IMAPDROP} is an IMAP maildrop specification in the same format used
 by @code{vm-spool-files}. @xref{IMAP Spool Files}.
 
 For example:
@@ -841,7 +841,7 @@ The mailbox (@samp{inbox} in the example) is ignored; when
 when @code{vm-visit-imap-folder} asks for a folder name you can
 enter any folder that is acessible to you on the IMAP server.
 
-@node Getting New Mail, Crash Recovery, Spool Files, Starting Up
+@node Getting New Mail, Crash Recovery, Remote Folders, Starting Up
 @section Getting New Mail
 
 @findex vm-get-new-mail

@@ -1944,13 +1944,6 @@ on all the relevant IMAP servers and then immediately expunges."
 		  (< (cdr **pair1) (cdr **pair2)))))	  
     (list retrieve-list expunge-list stale-list flags)))
 
-(defvar switch-to-usr nil
-  "Switch to new version being developed by Uday Reddy")
-
-(defvar vm-imap-expunge-retries 1
-  "* Number of retries to be performed for expunging IMAP mailboxes.
-Increase this if your IMAP server is sluggish.")
-
 ;;;###autoload
 (defun vm-imap-synchronize-folder (&optional interactive
 					     do-remote-expunges
@@ -2195,7 +2188,7 @@ downloading the server data.
 Prefix argument ALL-FLAGS says that all the messages' flags should be
 written to the server irrespective of whether they were changed in the
 VM session.  This is useful for saving offline work."
-  (interactive "p")
+  (interactive "P")
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
   (vm-display nil nil '(vm-imap-synchronize) '(vm-imap-synchronize))
@@ -2493,73 +2486,6 @@ documentation for `vm-spool-files'."
       (vm-imap-rename-mailbox process mailbox-source mailbox-dest)
       (message "Folder %s renamed to %s" (vm-safe-imapdrop-string source)
 	       (vm-safe-imapdrop-string dest)))))
-
-
-;; -----------------------------------------------------------------------
-;; Functions in other files that need to be modified
-;; -----------------------------------------------------------------------
-(defun vm-add-or-delete-message-labels (string count add)
-  (vm-display nil nil '(vm-add-message-labels vm-delete-message-labels)
-	      (list this-command))
-  (setq string (downcase string))
-  (let ((m-list (vm-select-marked-or-prefixed-messages count))
-	(action-labels (vm-parse string
-"[\000-\040,\177-\377]*\\([^\000-\040,\177-\377]+\\)[\000-\040,\177-\377]*"))
-	(ignored-labels nil)
-	labels act-labels m mm-list)
-    (if (and add m-list)
-	(if (eq add 'all)
-	    (progn
-	      (setq act-labels action-labels)
-	      (while act-labels
-		(intern (car act-labels) vm-label-obarray)
-		(setq act-labels (cdr act-labels))))
-	  (let ((newlist nil))
-	    (setq act-labels action-labels)
-	    (while act-labels
-	      (if (intern-soft (car act-labels) vm-label-obarray)
-		  (setq newlist (cons (car act-labels) newlist))
-		(setq ignored-labels (cons (car act-labels) ignored-labels)))
-	      (setq act-labels (cdr act-labels)))
-	    (setq action-labels newlist))))
-    (if (null action-labels)
-	(setq m-list nil))
-    (while m-list
-      (setq m (car m-list))
-      (if (and add (vm-virtual-message-p m))
-	  (let ((labels action-labels))
-	    (save-excursion
-	      (set-buffer (vm-buffer-of (vm-real-message-of m)))
-	      (while labels
-		(intern (car labels) vm-label-obarray)
-		(setq labels (cdr labels))))))
-      (if add
-	  (save-excursion
-	    (setq mm-list (vm-virtual-messages-of m))
-	    (while mm-list
-	      (let ((labels action-labels))
-		(set-buffer (vm-buffer-of (car mm-list)))
-		(while labels
-		  (intern (car labels) vm-label-obarray)
-		  (setq labels (cdr labels))))
-	      (setq mm-list (cdr mm-list)))))
-      (setq act-labels action-labels
-	    labels (copy-sequence (vm-labels-of (car m-list))))
-      (if add
-	  (while act-labels
-	    (setq labels (cons (car act-labels) labels)
-		  act-labels (cdr act-labels)))
-	(while act-labels
-	  (setq labels (vm-delqual (car act-labels) labels)
-		act-labels (cdr act-labels))))
-      (if add
-	  (setq labels (vm-delete-duplicates labels)))
-      (vm-set-labels (car m-list) labels)
-      ;; This line added by USR
-      (vm-set-attribute-modflag-of (car m-list) t)
-      (setq m-list (cdr m-list)))
-    (vm-update-summary-and-mode-line)
-    ignored-labels))
 
 
 ;;; Robert Fenk's draft function for saving messages to IMAP folders.

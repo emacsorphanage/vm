@@ -445,6 +445,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
       (if add
 	  (setq labels (vm-delete-duplicates labels)))
       (vm-set-labels (car m-list) labels)
+      (vm-set-attribute-modflag-of (car m-list) t) ; added by USR
       (setq m-list (cdr m-list)))
     (vm-update-summary-and-mode-line)
     ignored-labels))
