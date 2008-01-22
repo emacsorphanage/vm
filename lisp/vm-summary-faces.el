@@ -128,6 +128,7 @@
          (header "Importance: high")
          (header "X-Priority: 1")
          (label "!")
+	 (label "\\flagged")
          (header "X-VM-postponed-data:"))
      vm-summary-high-priority-face)
     ((deleted)   vm-summary-deleted-face)
@@ -142,7 +143,7 @@
     ((marked)    vm-summary-marked-face)
     ((outgoing)  vm-summary-outgoing-face)
     ((any)       vm-summary-default-face))
-  "Alist of virtual folder conditions and corresponding faces.
+  "*Alist of virtual folder conditions and corresponding faces.
 Order matters. The first matching one will be used as face."
   :type '(repeat (cons (sexp) (face)))
   :group 'vm-summary-faces)
