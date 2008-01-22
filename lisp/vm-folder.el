@@ -302,6 +302,7 @@ on its presentation buffer, if any."
 				   'vm-ml-message-written
 				   'vm-ml-message-deleted
 				   'vm-ml-message-marked
+                                   'vm-ml-message-redistributed
 				   'vm-ml-message-number
 				   'vm-ml-highest-message-number
 				   'vm-folder-read-only
@@ -330,6 +331,7 @@ on its presentation buffer, if any."
 				   'vm-ml-message-deleted
 				   'vm-ml-message-marked
 				   'vm-ml-message-number
+                                   'vm-ml-message-redistributed
 				   'vm-ml-highest-message-number
 				   'vm-folder-read-only
 				   'vm-folder-type
