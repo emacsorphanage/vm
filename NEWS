@@ -1,4 +1,4 @@
-VM 8.0.7
+VM 8.0.8
 
   IMPROVEMENTS:
 
@@ -13,6 +13,12 @@ VM 8.0.7
       single command, i.e. like saving to a pipe.  This is substantially
       faster than `vm-pipe-message-to-command*' which call the command on 
       each message separately.  You may want to use it to feed spamassasin.
+
+    * Modified key bindings for piping messages, i.e. "|" is a prefix key
+      now. Type it twice to get the old pipe command, "|d" will call the 
+      discard the output, just display some infos in the mode line. "|s" 
+      will call `vm-pipe-messages-to-command' and "|n" will also call it 
+      but discard the output.
 
     * Removed vm-easymenu.el and use easymenu.el instead.
 
