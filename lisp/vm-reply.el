@@ -325,6 +325,8 @@ vm-included-text-prefix is prepended to every yanked line."
         (if (and vm-reply-include-presentation
                  (save-excursion
                    (set-buffer (vm-buffer-of message))
+		   ;; ensure the current message is presented 
+		   (vm-show-current-message)
                    vm-presentation-buffer))
             (let ((text
                    (save-excursion
@@ -332,10 +334,10 @@ vm-included-text-prefix is prepended to every yanked line."
                      (set-buffer vm-presentation-buffer)
                      (goto-char (point-min))
                      (re-search-forward "\n\n" (point-max) t)
-                     (re-search-forward "[^ \t\n]" (point-max) t)
-                     (goto-char (1- (point)))
+                     (goto-char (point))
                      (vm-buffer-substring-no-properties (point) (point-max)))))
-              (insert text))
+              (insert text)
+	      (setq end (point-marker)))
 	(if (vectorp (vm-mm-layout message))
 	    (let* ((o (vm-mm-layout message))
                    layout new-layout
@@ -422,8 +424,6 @@ vm-included-text-prefix is prepended to every yanked line."
 		(progn
 		  (narrow-to-region start end)
 		  (vm-decode-mime-encoded-words)))))))
-      (if vm-reply-include-presentation
-          (setq end (point-max-marker))
       ;; get rid of read-only text properties on the text, as
       ;; they will only cause trouble.
       (let ((inhibit-read-only t))

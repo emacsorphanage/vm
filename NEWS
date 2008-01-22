@@ -27,6 +27,10 @@ VM 8.0.8
     * Moved [Undo] to Dispose menu and [Emacs] to Help menu as these do not
       work in Emacs 22 anymore when on the menu bar.
 
+    * Fixed intermixing of signature and quoted text in reply if
+      `vm-reply-include-presentation' is t. (Thanks to Roland Winkler for
+      debugging and reporting)
+
 VM 8.0.7
 
   BUGFIXES:
