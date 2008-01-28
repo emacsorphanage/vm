@@ -852,8 +852,8 @@ Use mouse button 3 to choose a Web browser for the URL."
          (vm-update-summary-and-mode-line)
 	 (vm-howl-if-eom))
      (vm-update-summary-and-mode-line)))
-
-  (vm-summary-toggle-thread-folding 1))
+  (if vm-summary-toggle-thread-folding
+      (vm-summary-toggle-thread-folding 1)))
 
 ;;;###autoload
 (defun vm-expose-hidden-headers ()

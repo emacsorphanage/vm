@@ -107,6 +107,8 @@ mandatory."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
+(defvar vm-summary-toggle-thread-folding nil)
+
 (defun vm-do-summary (&optional start-point)
   (let ((m-list (or start-point vm-message-list))
 	mp m tr trs tre
@@ -146,7 +148,8 @@ mandatory."
 		(vm-set-su-end-of m (point))
                 (let ((s (vm-su-start-of m)) (e (vm-su-end-of m)))
                   (put-text-property s e 'vm-message m)
-                  (when vm-summary-show-threads
+                  (when (and vm-summary-toggle-thread-folding
+                             vm-summary-show-threads)
                     (if (= 0 (vm-thread-indentation-of m))
                         (setq tr m trs s tre e)
                       (save-excursion
@@ -192,7 +195,8 @@ mandatory."
     (vm-follow-folders-summary-cursor)
     (vm-select-folder-buffer)
     (set-buffer vm-summary-buffer)
-    (when (and vm-summary-show-threads (get-text-property (point) 'thread-end))
+    (when (and vm-summary-toggle-thread-folding
+               vm-summary-show-threads (get-text-property (point) 'thread-end))
       (let* ((m (get-text-property (point) 'vm-message))
              (e (get-text-property (point) 'thread-end))
              (i (not (get-text-property (vm-su-start-of e) 'invisible))))
