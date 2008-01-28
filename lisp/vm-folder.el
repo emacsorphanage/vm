@@ -1786,13 +1786,15 @@ Supports version 4 format of attribute storage, for backward compatibility."
 
 (defun vm-startup-apply-summary (summary)
   (if (not (equal summary vm-summary-format))
-      (let ((mp vm-message-list))
-	(while mp
-	  (vm-set-summary-of (car mp) nil)
-	  ;; force restuffing of cache to clear old
-	  ;; summary entry cache.
-	  (vm-set-stuff-flag-of (car mp) t)
-	  (setq mp (cdr mp))))))
+      (if vm-restore-saved-summary-formats
+	  (setq vm-summary-format summary)
+	(let ((mp vm-message-list))
+	  (while mp
+	    (vm-set-summary-of (car mp) nil)
+	    ;; force restuffing of cache to clear old
+	    ;; summary entry cache.
+	    (vm-set-stuff-flag-of (car mp) t)
+	    (setq mp (cdr mp)))))))
 
 (defun vm-set-thunderbird-status (message)
   (let (status status2)

@@ -1095,7 +1095,7 @@ summary buffer to select a folder."
       (setq mail-send-actions send-actions))))
 
 ;;;###autoload
-(defun vm-submit-bug-report ()
+(defun vm-submit-bug-report (&optional pre-hooks post-hooks)
   "Submit a bug report, with pertinent information to the VM bug list."
   (interactive)
   (require 'reporter)
@@ -1176,11 +1176,16 @@ summary buffer to select a folder."
       'vm-imagemagick-identify-program
 ;; IMAP passwords might be listed here
 ;;      'vm-imap-auto-expunge-alist
-      'vm-imap-bytes-per-session
+      'vm-imap-bytes-per-session 
       'vm-imap-expunge-after-retrieving
+      'vm-imap-expunge-retries
+      'vm-imap-folder-cache-directory
+      'vm-imap-full-sync-on-get
+      'vm-imap-keep-failed-trace-buffers
       'vm-imap-max-message-size
       'vm-imap-messages-per-session
       'vm-imap-session-preauth-hook
+      'vm-imap-save-to-server
       'vm-in-reply-to-format
       'vm-included-text-attribution-format
       'vm-included-text-discard-header-regexp
@@ -1194,6 +1199,8 @@ summary buffer to select a folder."
       'vm-jump-to-unread-messages
       'vm-keep-crash-boxes
       'vm-keep-sent-messages
+      'vm-kept-imap-buffers
+      'vm-kept-pop-buffers
       'vm-lynx-program
       'vm-mail-header-from
       'vm-mail-header-insert-date
@@ -1267,6 +1274,7 @@ summary buffer to select a folder."
       'vm-pop-expunge-after-retrieving
 ;; POP passwords might be listed here
 ;;      'vm-pop-folder-alist
+      'vm-pop-keep-failed-trace-buffers
       'vm-pop-max-message-size
       'vm-pop-messages-per-session
       'vm-pop-md5-program
@@ -1349,8 +1357,8 @@ summary buffer to select a folder."
 ;; see what the user had loaded
       'features
       )
-     nil
-     nil
+     pre-hooks
+     post-hooks
      "Please change the Subject header to a concise bug description.
 
 Consider to post this to the News group gnu.emacs.vm.bug instead.

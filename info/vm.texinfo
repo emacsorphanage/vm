@@ -81,6 +81,7 @@ chapters.
 
 Indices:
 
+* Concept Index::	Menus of key concepts
 * Key Index::		Menus of command keys and their references.
 * Command Index::	Menus of commands and their references.
 * Variable Index::	Menus of variables and their references.
@@ -726,6 +727,8 @@ were a folder instead of just a holding area for incoming messages.
 @node POP Folders, IMAP Folders, Remote Folders, Remote Folders
 @unnumberedsubsec POP Folders
 @cindex POP
+@cindex message attributes
+
 
 @findex vm-visit-pop-folder
 The command @code{vm-visit-pop-folder} allows you to visit a POP
@@ -771,6 +774,8 @@ when @code{vm-visit-pop-folder} asks for a folder name.
 @node IMAP Folders,, POP Folders, Remote Folders
 @unnumberedsubsec IMAP Folders
 @cindex IMAP
+@cindex message attributes 
+@cindex message labels
 
 @findex vm-visit-imap-folder
 The command @code{vm-visit-imap-folder} allows you to visit an IMAP
@@ -838,7 +843,7 @@ For example:
 @end example
 
 The mailbox (@samp{inbox} in the example) is ignored; when
-when @code{vm-visit-imap-folder} asks for a folder name you can
+@code{vm-visit-imap-folder} asks for a folder name you can
 enter any folder that is acessible to you on the IMAP server.
 
 @node Getting New Mail, Crash Recovery, Remote Folders, Starting Up
@@ -866,6 +871,8 @@ appear on the Emacs mode line of folders that have mail waiting.
 
 @node Crash Recovery,, Getting New Mail, Starting Up
 @section Crash Recovery
+@cindex message attributes
+@cindex message labels
 
 When Emacs crashes, its last action before dying is to try to
 write out an autosave file that contains changes to files that
@@ -1149,6 +1156,7 @@ You can ``unread'' a message (so to speak) by typing @kbd{U}
 (@code{vm-unread-message}).  The current message will be flagged
 unread.
 
+@cindex filling paragraphs
 @vindex vm-paragraph-fill-column
 @vindex vm-fill-paragraphs-containing-long-lines
 Sometimes you will receive messages that contain lines that are
@@ -1164,8 +1172,16 @@ controlled by @code{vm-paragraph-fill-column}.  Unlike the Emacs
 variable @code{fill-column}, this variable is not buffer-local
 by default.
 
+@cindex longlines.el
+The @code{longlines.el} library by Grossjohann, Schroeder and Yidong
+provides advanced filling functions that are compatible word
+processors.  Word processors produce 'flowed text' that has only
+essential line breaks; others must be added as needed to fit the text
+into a window.  VM can use the longlines library automatically if you
+install it somewhere on your @var{load-path}.
+
 @node Reading MIME Messages,, Paging, Reading Messages
-@chapter Reading MIME Messages
+@section Reading MIME Messages
 
 @vindex vm-display-using-mime
 If the variable @code{vm-display-using-mime} is non-@code{nil} VM will display
@@ -1213,6 +1229,7 @@ and Quoted-Printable.  VM does not have a builtin ``uuencode''
 decoder, so @code{vm-mime-uuencode-decoder-program} must be set
 non-@code{nil} for VM to decode uuencoded MIME objects.
 
+@unnumberedsubsec Viewing MIME messages
 By default VM will display as many content types as possible
 within Emacs.  Images and audio are also supported if
 support for images and audio has been compiled in.  Types that
@@ -1231,6 +1248,15 @@ the message body is exposed, or during previewing if
 requested.  Type @kbd{D} (@code{vm-decode-mime-message}) to
 manually initiate MIME decoding.
 
+@vindex vm-mime-button-format-alist
+When VM does not display a MIME object immediately, it displays a
+button or tag line in its place that describes the object and what you
+have to do to display it.  The value of @var{vm-mime-button-format-alist}
+determines the format of the text in those buttons.
+
+
+@unnumberedsubsec  Operating on MIME attachments
+
 @kindex $ |
 @kindex $ d
 @kindex $ RET
@@ -1238,8 +1264,18 @@ manually initiate MIME decoding.
 @kindex $ w
 @kindex $ p
 @kindex $ d
-@kindex $ e
+@kindex $ e  
 @vindex vm-auto-displayed-mime-content-types
+@findex vm-mime-reader-map-pipe-to-command
+@findex vm-delete-mime-object
+@findex vm-mime-reader-map-display-using-default
+@findex vm-mime-reader-map-display-object-as-type
+@findex vm-mime-reader-map-save-message
+@findex vm-mime-reader-map-save-file
+@findex vm-mime-reader-map-pipe-to-printer
+@findex vm-delete-mime-object
+@findex vm-mime-reader-map-display-using-external-viewer
+@findex vm-mime-attach-object-from-message
 After decoding you will see either the decoded MIME objects or
 button lines that must be activated to attempt display of the
 MIME object.  The variable
@@ -1260,7 +1296,20 @@ display the object with its characters displayed using Emacs'
 default face, use @kbd{$ RET}.  To display the object using an
 external viewer, type @kbd{$ e}.
 
+@multitable @columnfractions .20 .80
+@item $ w   @tab @code{vm-mime-reader-map-save-file}
+@item $ s   @tab @code{vm-mime-reader-map-save-message}
+@item $ p   @tab @code{vm-mime-reader-map-pipe-to-printer}
+@item $ |   @tab @code{vm-mime-reader-map-pipe-to-command}
+@item $ RET @tab @code{vm-mime-reader-map-display-using-default}
+@item $ e   @tab @code{vm-mime-reader-map-display-using-external-viewer}
+@item $ v   @tab @code{vm-mime-reader-map-display-object-as-type}
+@item $ d   @tab @code{vm-delete-mime-object}
+@item $ a   @tab @code{vm-mime-attach-object-from-message}
+@end multitable
+
 @vindex vm-mime-confirm-delete
+@findex vm-delete-mime-object
 Sometimes MIME objects are large and you may not want to save
 them along with the message that contains them.  If so, use
 @kbd{$ d} (@code{vm-delete-mime-object}) while the cursor is on
@@ -1275,6 +1324,19 @@ you save the folder.  By default VM will ask if you're sure
 about deleting an object before doing the deletion.  You can
 make VM not ask this question by setting
 @code{vm-mime-confirm-delete} to @code{nil}.
+
+@vindex vm-mime-delete-after-saving
+@vindex vm-mime-attachment-save-directory
+The MIME attachments can be saved to disk with @kbd{$ s}
+(@code{vm-mime-save-file}).  They can be deleted at the same time
+by setting the variable @var{vm-mime-delete-after-saving}.  In this
+case, the attachment is deleted and replaced by a new one that refers
+to the saved copy.  The variable
+@var{vm-mime-attachment-save-directory} specifies the default
+directory to save the attachments in.
+
+
+@unnumberedsubsec Internal display of MIME attachments
 
 @vindex vm-auto-displayed-mime-content-types
 A value of t for @code{vm-auto-displayed-mime-content-types} means that
@@ -1338,6 +1400,8 @@ handled internally regardless of the setting of this variable.
 The variable @code{vm-mime-internal-content-type-exceptions} serves as
 the exception list for @code{vm-mime-internal-content-types}.  Its value 
 should be a list of types that should not be displayed internally.
+
+@unnumberedsubsec External display of MIME attachments
 
 @vindex vm-mime-external-content-types-alist
 For types that you want displayed externally, set the value
@@ -1471,6 +1535,8 @@ VM will search the list for a matching type.  The suffix
 associated with the first type that matches will be used for the
 temporary filename.
 
+@unnumberedsubsec MIME type conversion
+
 @vindex vm-mime-type-converter-alist
 Types that cannot be displayed internally or externally are
 checked against an associative list of types that can be converted to other
@@ -1511,6 +1577,8 @@ Example:
 @end example
 
 The first matching list element will be used.
+
+@unnumberedsubsec MIME character sets
 
 For text type messages, MIME also requires that a character set
 be specified, so that the recipient's mail reader knows what
@@ -1624,6 +1692,8 @@ any XEmacs version compiled with MULE support, the value of
 because all characters are displayed using fonts discovered by
 MULE and VM has no control over them.
 
+@unnumberedsubsec MIME multipart/alternative
+
 MIME allows a message to be sent with its content encoded in multiple
 formats, simultaneously, in the same message.  Such messages have a
 content type of multipart/alternative.  The idea is that the sender
@@ -1638,7 +1708,7 @@ formatting language that the sender used.
 
 @vindex vm-mime-alternative-select-method
 To control how VM displays multipart/alternative messages, you must
-set the variable @code{vm-mime-alternative-select-method}.  Its value must be
+set the variable @var{vm-mime-alternative-select-method}.  Its value must be
 a symbol.  A value of @code{best} tells VM to display the message
 using the subpart closest in appearance to what the sender used to
 compose the message.  In the example above this would mean displaying
@@ -1647,6 +1717,15 @@ VM will display the type either internally or externally.  A
 value of @code{best-internal} tells VM to use the closest subpart that
 it can display internally.  External viewers won't be used in this
 case.
+
+@vindex vm-mime-show-alternatives
+Normally, one the chosen alternative is shown and the other
+alternatives suppressed.  If the variable
+@var{vm-mime-show-alternatives} is set, then all the alternatives are
+shown.  In effect, multipart/alternative is treated the same as
+multipart/mixed. 
+
+@unnumberedsubsec Dealing with bad MIME
 
 @vindex vm-infer-mime-types
 Some mailers incorrectly use the generic
@@ -2325,6 +2404,7 @@ applied to such messages in a meaningful and useful way.
 
 @node Message Attributes, Sorting Messages, Message Marks, Top
 @chapter Message Attributes
+@cindex message attributes
 
 Each message in a folder has a set of attributes that VM will remember
 from session to session.  Various VM commands set and unset these
@@ -2382,7 +2462,7 @@ Note that expunges, saves and message edits are @emph{not} undoable.
 @findex vm-delete-message-labels
 @kindex l a
 @kindex l d
-@cindex labels
+@cindex message labels
 @dfn{Labels} are user-defined message attributes.  They can have any
 name and be assigned any meaning by you.  Labels are added with
 @kbd{l a} (@code{vm-add-message-labels} and @kbd{l e}
@@ -2697,6 +2777,16 @@ respectively.
 The summary format need not be one line per message but it must end with
 a newline, otherwise the message pointer will not be displayed correctly
 in the summary window.
+
+@findex vm-fix-my-summary!!!
+Summary lines are precomputed and cached in the folder buffer.  If you
+changce the @var{vm-summary-format}, you need to force the cache to be
+updated.  You can do this by the command@code{vm-fix-my-summary!!!}.
+
+Every folder can have its own summary format.  The format is written
+into the folder and saved on its disk.  When you visit the folder
+again, you can reuse the saved summary format.  Set the variable
+@var{vm-restore-saved-summary-format} to t to achieve this effect.
 
 You can have a summary generated automatically at VM startup
 by setting the variable @code{vm-startup-with-summary} non-nil.
@@ -3493,7 +3583,7 @@ specific menu is produced.
 In mail composition buffers only mouse button-3 is affected.
 Context sensitive menus are produced when that button is clicked.
 
-@node Hooks, Key Index, Using the Mouse, Top
+@node Hooks, Concept Index, Using the Mouse, Top
 @chapter Hooks
 
 VM has many hook variables that allow you to run functions when
@@ -3754,7 +3844,11 @@ If this hook is entirely empty, i.e. @code{nil}, a default action is taken
 instead of no action.
 @end table
 
-@node Key Index, Command Index, Hooks, Top
+@node Concept Index, Key Index, Hooks, Top
+@unnumbered Concept Index
+@printindex cp
+
+@node Key Index, Command Index, Concept Index, Top
 @unnumbered Key Index
 @printindex ky
 

@@ -2820,6 +2820,13 @@ a newline, otherwise the message pointer will not be displayed correctly
 in the summary window."
   :group 'vm
   :type 'string)
+(make-variable-buffer-local 'vm-summary-format)
+
+(defcustom vm-restore-saved-summary-format nil
+  "*If t, the summary format is stored in each folder and restored
+after visiting it again."
+  :group 'vm
+  :type 'boolean)
 
 (defcustom vm-summary-postponed-indicator "P"
   "*Indicator shown for postponed messages."
@@ -5076,8 +5083,10 @@ append a space to words that complete unambiguously.")
 (defvar vm-imap-read-point nil)
 (defvar vm-imap-ok-to-ask nil)
 (defvar vm-imap-passwords nil)
+;; keep a list of all (?) retrieved messages retrieved from the IMAP server
 (defvar vm-imap-retrieved-messages nil)
 (make-variable-buffer-local 'vm-imap-retrieved-messages)
+;; list of messages to be expunged on the server during the next save
 (defvar vm-imap-messages-to-expunge nil)
 (make-variable-buffer-local 'vm-imap-messages-to-expunge)
 (defvar vm-imap-capabilities nil)
