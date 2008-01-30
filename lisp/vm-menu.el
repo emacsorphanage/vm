@@ -78,7 +78,7 @@
     "---"
     ["Visit Local Folder" vm-visit-folder t]
     ["Visit POP Folder" vm-visit-pop-folder vm-pop-folder-alist]
-    ["Visit IMAP Folder" vm-visit-imap-folder vm-imap-server-list]
+    ["Visit IMAP Folder" vm-visit-imap-folder vm-imap-account-alist]
     ["Revert Folder (back to disk version)" vm-revert-buffer
      (vm-menu-can-revert-p)]
     ["Recover Folder (from auto-save file)" vm-recover-file

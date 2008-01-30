@@ -686,8 +686,8 @@ cache.  If you expunge messages from the cache, the corresponding
 messages will be expunged from the IMAP mailbox.
 
 First arg FOLDER specifies the IMAP mailbox to visit.  You can only
-visit mailboxes on servers that are listed in `vm-imap-server-list'.
-When this command is called interactively the server and mailbox
+visit mailboxes on accounts that are listed in `vm-imap-account-alist'.
+When this command is called interactively the account and mailbox
 names are read from the minibuffer.
 
 Prefix arg or optional second arg READ-ONLY non-nil indicates
@@ -702,10 +702,15 @@ visited folder."
      (require 'vm-imap)
      (let ((this-command this-command)
 	   (last-command last-command))
+       (if (null vm-imap-account-alist)
+	   (setq vm-imap-account-alist 
+		 (mapcar 
+		  'reverse
+		  (vm-imap-spec-list-to-host-alist vm-imap-server-list))))
        (list (vm-read-imap-folder-name
 	      (format "Visit%s IMAP folder: "
 		      (if current-prefix-arg " read only" ""))
-	      vm-imap-server-list t)
+	      vm-imap-account-alist t)
 	     current-prefix-arg))))
   (vm-session-initialization)
   (vm-check-for-killed-folder)
@@ -727,7 +732,7 @@ visited folder."
        (list (vm-read-imap-folder-name
 	      (format "Visit%s IMAP folder: "
 		      (if current-prefix-arg " read only" ""))
-	      vm-imap-server-list)
+	      vm-imap-account-alist)
 	     current-prefix-arg))))
   (vm-session-initialization)
   (if (vm-multiple-frames-possible-p)
@@ -752,7 +757,7 @@ visited folder."
        (list (vm-read-imap-folder-name
 	      (format "Visit%s IMAP folder: "
 		      (if current-prefix-arg " read only" ""))
-	      vm-imap-server-list)
+	      vm-imap-account-alist)
 	     current-prefix-arg))))
   (vm-session-initialization)
   (if (one-window-p t)

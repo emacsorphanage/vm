@@ -191,7 +191,7 @@ buffer and the variable VM-IMAP-SAVE-TO-SERVER."
 	 (let ((this-command this-command)
 	       (last-command last-command))
 	   (list (vm-read-imap-folder-name "Save to IMAP folder: "
-					   vm-imap-server-list t)
+					   vm-imap-account-alist t)
 		 (prefix-numeric-value current-prefix-arg))))
        ;; saving to local filesystem.  argument parsing taken from old
        ;; vm-save-message now vm-save-message-to-local-folder
@@ -718,7 +718,7 @@ The saved messages are flagged as `filed'."
      (let ((this-command this-command)
 	   (last-command last-command))
        (list (vm-read-imap-folder-name "Save to IMAP folder: "
-				       vm-imap-server-list t)
+				       vm-imap-account-alist t)
 	     (prefix-numeric-value current-prefix-arg)))))
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)

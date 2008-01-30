@@ -819,25 +819,27 @@ which of them have actually changed during the offline operation.
 
 
 
-@vindex vm-imap-server-list
-In order for VM to know about IMAP servers that you can access, you
-must declare them by setting the variable @code{vm-imap-server-list}.
-The variable's value should be a list of the form:
+@vindex vm-imap-account-alist
+In order for VM to know about IMAP accounts that you can access, you
+must declare them by setting the variable @code{vm-imap-account-alist}.
+The variable's value should be an associative list of the form:
 
 @example
- (@var{IMAPDROP} @var{IMAPDROP} ...)
+ ((@var{IMAPDROP} @var{NAME}) ...)
 @end example
 
 @var{IMAPDROP} is an IMAP maildrop specification in the same format used
 by @code{vm-spool-files}. @xref{IMAP Spool Files}.
 
+@var{NAME} is a string that should give a less cumbersome name that you
+will use to refer to this maildrop when using @code{vm-visit-imap-folder}.
 For example:
 
 @example
-(setq vm-imap-server-list
+(setq vm-imap-account-alist
       '(
-         "imap-ssl:mail.foocorp.com:993:inbox:login:becky:*"
-         "imap:crickle.lex.ky.us:143:inbox:login:becky:*"
+        ("imap-ssl:mail.foocorp.com:993:inbox:login:becky:*" "becky")
+        ("imap:crickle.lex.ky.us:143:inbox:login:becky:*" "crickle")
        )
 )
 @end example
@@ -845,6 +847,10 @@ For example:
 The mailbox (@samp{inbox} in the example) is ignored; when
 @code{vm-visit-imap-folder} asks for a folder name you can
 enter any folder that is acessible to you on the IMAP server.
+
+@vindex vm-imap-server-list
+The customization variable @code{vm-imap-server-list} is deprecated.
+Please use @code{vm-imap-account-alist} instead.
 
 @node Getting New Mail, Crash Recovery, Remote Folders, Starting Up
 @section Getting New Mail
@@ -1327,14 +1333,19 @@ make VM not ask this question by setting
 
 @vindex vm-mime-delete-after-saving
 @vindex vm-mime-attachment-save-directory
-The MIME attachments can be saved to disk with @kbd{$ s}
-(@code{vm-mime-save-file}).  They can be deleted at the same time
+The MIME attachments can be saved to disk with @kbd{$ w}
+(@code{vm-mime-reader-map-save-file}).  They can be deleted at the same time
 by setting the variable @var{vm-mime-delete-after-saving}.  In this
 case, the attachment is deleted and replaced by a new one that refers
 to the saved copy.  The variable
 @var{vm-mime-attachment-save-directory} specifies the default
 directory to save the attachments in.
 
+@findex vm-mime-save-all-attachments
+@findex vm-mime-delete-all-attachments
+The command @code{vm-mime-save-all-attachments} and
+@code{vm-mime-delete-all-attachments} can be used to save or delete
+all the attachments in a message.
 
 @unnumberedsubsec Internal display of MIME attachments
 

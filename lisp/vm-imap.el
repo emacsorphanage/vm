@@ -2148,7 +2148,8 @@ on all the relevant IMAP servers and then immediately expunges."
 		      (mapcar 
 		       (lambda (uid)
 			 (let ((m (car (rassoc uid uid-alist))))
-			   (vm-imap-delete-message process m)
+			   (if m
+			       (vm-imap-delete-message process m))
 			   m))
 		       uid-list))
 		(setq m-list (cons nil (sort m-list '>)))
@@ -2253,9 +2254,42 @@ VM session.  This is useful for saving offline work."
       (vm-imap-end-session (vm-folder-imap-process))
       result )))
 
+;; ----------- new function s-----------
+;;;###autoload
+(defun vm-imap-find-spec-for-name (name)
+  (let ((list vm-imap-folder-alist)
+	(done nil))
+    (while (and (not done) list)
+      (if (equal name (nth 1 (car list)))
+	  (setq done t)
+	(setq list (cdr list))))
+    (and list (car (car list)))))
+
+;;;###autoload
+(defun vm-imap-find-name-for-spec (spec)
+  (let ((list vm-imap-folder-alist)
+	(done nil))
+    (while (and (not done) list)
+      (if (equal spec (car (car list)))
+	  (setq done t)
+	(setq list (cdr list))))
+    (and list (nth 1 (car list)))))
+
+;;;###autoload
+(defun vm-imap-find-name-for-buffer (buffer)
+  (let ((list vm-imap-folder-alist)
+	(done nil))
+    (while (and (not done) list)
+      (if (eq buffer (vm-get-file-buffer (vm-imap-make-filename-for-spec
+					  (car (car list)))))
+	  (setq done t)
+	(setq list (cdr list))))
+    (and list (nth 1 (car list)))))
+;;--------------
+
 ;;;###autoload
 (defun vm-imap-find-spec-for-buffer (buffer)
-  (let ((list vm-imap-server-list)
+  (let ((list (mapcar 'car vm-imap-account-alist))
 	(done nil))
     (while (and (not done) list)
       (if (eq buffer (vm-get-file-buffer (vm-imap-make-filename-for-spec
@@ -2300,17 +2334,17 @@ VM session.  This is useful for saving offline work."
     host-alist ))
 
 ;;;###autoload
-(defun vm-read-imap-folder-name (prompt spec-list &optional selectable-only newone)
+(defun vm-read-imap-folder-name (prompt account-alist &optional selectable-only newone)
   "Read an IMAP server and mailbox, return an IMAP mailbox spec."
   (let (host c-list spec process mailbox list
 	(vm-imap-ok-to-ask t)
-	(host-alist (vm-imap-spec-list-to-host-alist spec-list)))
+	(host-alist (mapcar 'reverse account-alist)))
     (if (null host-alist)
-	(error "No known IMAP servers.  Please set vm-imap-server-list."))
+	(error "No known IMAP accounts.  Please set vm-imap-account-alist."))
     (setq host (if (cdr host-alist)
-		   (completing-read "IMAP server: " host-alist nil t)
+		   (completing-read "IMAP account: " host-alist nil t)
 		 (car (car host-alist)))
-	  spec (cdr (assoc host host-alist))
+	  spec (cadr (assoc host host-alist))
 	  process (vm-imap-make-session spec)
 	  c-list (and process (vm-imap-mailbox-list process selectable-only)))
     (vm-imap-end-session process)
@@ -2430,7 +2464,7 @@ documentation for `vm-spool-files'."
      (let ((this-command this-command)
 	   (last-command last-command))
        (list (vm-read-imap-folder-name "Create IMAP folder: "
-				       vm-imap-server-list nil t)))))
+				       vm-imap-account-alist nil t)))))
   (let ((vm-imap-ok-to-ask t)
 	process mailbox)
     (save-excursion
@@ -2458,7 +2492,7 @@ documentation for `vm-spool-files'."
      (let ((this-command this-command)
 	   (last-command last-command))
        (list (vm-read-imap-folder-name "Delete IMAP folder: "
-				       vm-imap-server-list nil)))))
+				       vm-imap-account-alist nil)))))
   (let ((vm-imap-ok-to-ask t)
 	process mailbox)
     (setq process (vm-imap-make-session folder))
@@ -2487,7 +2521,7 @@ documentation for `vm-spool-files'."
 	   (last-command last-command)
 	   source dest)
        (setq source (vm-read-imap-folder-name "Rename IMAP folder: "
-					      vm-imap-server-list t))
+					      vm-imap-account-alist t))
        (setq dest (vm-read-imap-folder-name
 		   (format "Rename %s to: " (vm-safe-imapdrop-string source))
 		   (list source) nil))

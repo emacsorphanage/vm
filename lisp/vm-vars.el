@@ -522,6 +522,9 @@ specification in the same format used by `vm-spool-files' (which
 see).  The mailbox part of the specifiation is ignored and should
 be asterisk or some other placeholder.
 
+This customization variable is deprecated.  Use vm-imap-account-alist
+instead. 
+
 Example:
  (setq vm-imap-server-list
       '(
@@ -531,6 +534,29 @@ Example:
  )"
   :group 'vm
   :type '(repeat string))
+
+(defcustom vm-imap-account-alist nil
+  "*Alist of IMAP account specifications and names that refer to them.
+The alist format is:
+
+ ((IMAPDROP NAME) ...)
+
+IMAPDROP is a IMAP maildrop specification in the same format used
+by `vm-spool-files' (which see).
+
+NAME is a string that should give a less cumbersome name that you
+will use to refer to this maildrop when using `vm-visit-imap-folder'.
+
+Example:
+ (setq vm-imap-account-alist
+      '(
+         (\"imap-ssl:mail.foocorp.com:993:inbox:login:becky:*\" \"becky\")
+         (\"imap:crickle.lex.ky.us:143:inbox:login:becky:*\" \"crickle\")
+       )
+ )
+"
+  :group 'vm
+  :type '(repeat (list string string)))
 
 (defcustom vm-imap-folder-cache-directory nil
   "*Directory where VM stores cached copies of IMAP folders.
