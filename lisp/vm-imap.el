@@ -2145,13 +2145,14 @@ on all the relevant IMAP servers and then immediately expunges."
 		;; the message sequence numbers don't change in the
 		;; process, according to the IMAP4 protocol
 		(setq m-list 
-		      (mapcar 
-		       (lambda (uid)
-			 (let ((m (car (rassoc uid uid-alist))))
-			   (if m
-			       (vm-imap-delete-message process m))
-			   m))
-		       uid-list))
+		      (delete nil
+			      (mapcar 
+			       (lambda (uid)
+				 (let ((m (car (rassoc uid uid-alist))))
+				   (if m
+				       (vm-imap-delete-message process m))
+				   m))
+			       uid-list)))
 		(setq m-list (cons nil (sort m-list '>)))
 					; dummy header added
 		(setq count 0)
