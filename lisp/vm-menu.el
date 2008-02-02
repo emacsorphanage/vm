@@ -73,7 +73,7 @@
     ["Expunge" vm-expunge-folder vm-message-list]
     ["Expunge POP Messages" vm-expunge-pop-messages
      (vm-menu-can-expunge-pop-messages-p)]
-    ["Expunge IMAP Messages" vm-expunge-pop-messages
+    ["Expunge IMAP Messages" vm-expunge-imap-messages
      (vm-menu-can-expunge-imap-messages-p)]
     "---"
     ["Visit Local Folder" vm-visit-folder t]

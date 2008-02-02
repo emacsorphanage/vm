@@ -1014,7 +1014,8 @@ on all the relevant IMAP servers and then immediately expunges."
       (cond ((vm-imap-response-matches response 'VM 'OK)
 	     (setq need-ok nil))
 	    ((vm-imap-response-matches response '* 'SEARCH 'atom)
-	     (setq tok (nth 2 response))
+	     (if (null (setq tok (nth 2 response)))
+		 (vm-imap-protocol-error "Message not found on server"))
 	     (goto-char (nth 1 tok))
 	     (setq msg-num (read imap-buffer))
 	     )))
@@ -2614,16 +2615,19 @@ Add this to your `mail-send-hook' and start composing from an IMAP folder."
 
 (defun vm-imap-submit-bug-report ()
   "Submit a bug report for VM's IMAP support functionality.  
-It is necessary to run vm-imap-begin-bug-report before the problem
+It is necessary to run vm-imap-start-bug-report before the problem
 occurrence and this command after the problem occurrence, in
 order to capture the trace of IMAP sessions during the occurrence."
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
-  (if (y-or-n-p "Did you run vm-imap-begin-bug-report earlier? ")
+  (if (or vm-imap-keep-trace-buffer
+	  (y-or-n-p "Did you run vm-imap-start-bug-report earlier? "))
       (message "Thank you. Preparing the bug report... ")
-    (message "Consider running vm-imap-begin-bug-report before the problem occurrence"))
-  (vm-imap-end-session (vm-folder-imap-process))
+    (message "Consider running vm-imap-start-bug-report before the problem occurrence"))
+  (let ((process (vm-folder-imap-process)))
+    (if process
+	(vm-imap-end-session (vm-folder-imap-process))))
   (let ((trace-buffer-hook
 	 '(lambda ()
 	    (let ((bufs vm-kept-imap-buffers) 

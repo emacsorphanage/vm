@@ -65,10 +65,10 @@ chapters.
 * Saving Messages::	How to save messages.
 * Deleting Messages::	How to delete, undelete and expunge messages.
 * Editing Messages::    How to alter the text and headers of a message.
-* Message Marks::	Running VM commands on arbitrary sets of messages.
+* Marking Messages::	Running VM commands on arbitrary sets of messages.
 * Message Attributes::	How to change and undo changes to message attributes.
 * Sorting Messages::	How to make VM present similar messages together.
-* Reading Digests::	How to read digests under VM.
+* Digests::	How to read digests under VM.
 * Summaries::		How to view and customize the summary of a folder.
 * Virtual Folders::	Blurring the boundaries of different physical folders.
 * Frames and Windows::	How to customize VM's use of windows and frames.
@@ -495,7 +495,7 @@ command.  In this case the string is not really a secret;
 authentication is done by other means.  For @samp{apop}, an
 MD5 digest of the @var{PASSWORD} appended to the server
 timestamp will be sent to the server with the APOP command.
-If Emacs does not have bulit in MD5 support, you will have
+If Emacs does not have built in MD5 support, you will have
 to set the value of @code{vm-pop-md5-program} appropriately
 to point at the program that will generate the MD5 digest
 that VM needs.
@@ -621,13 +621,13 @@ authenticated in some way external to VM.  The hook
 @code{vm-imap-session-preauth-hook} is run, and it is expected to
 return a process connected to an authenticated IMAP session.
 @samp{"cram-md5} tells VM to use the CRAM-MD5 authentication
-method as specificed in RFC 2195.  The advantage of this method
+method as specified in RFC 2195.  The advantage of this method
 over the @samp{"login"} method is that it avoids sending your
 password over the net unencrypted.  Not all IMAP servers support
 @samp{"cram-md5"}; if you're not sure, ask your mail
 administrator or just try it.  The other value, @samp{"login"},
 tells VM to use the IMAP LOGIN command for authentication, which
-sends your username and password in cleartext to the server.
+sends your username and password in clear text to the server.
 
 @var{USER} is the user name used in authentication methods that
 require such an identifier.  @samp{"login"} and @samp{"cram-md5"}
@@ -846,7 +846,7 @@ For example:
 
 The mailbox (@samp{inbox} in the example) is ignored; when
 @code{vm-visit-imap-folder} asks for a folder name you can
-enter any folder that is acessible to you on the IMAP server.
+enter any folder that is accessible to you on the IMAP server.
 
 @vindex vm-imap-server-list
 The customization variable @code{vm-imap-server-list} is deprecated.
@@ -1064,7 +1064,7 @@ presentation is done in two stages: @dfn{previewing} and @dfn{paging}.
 @menu
 * Previewing::	                Customizing message previews.
 * Paging::              	Scrolling through the current message.
-* Reading MIME Messages::	Using VM's MIME display features.
+* MIME Messages::               Using VM's MIME display features.
 @end menu
 
 @node Previewing, Paging, Reading Messages, Reading Messages
@@ -1113,8 +1113,8 @@ effects will not be immediate.  You will need to use the command
 @code{vm-discard-cached-data} on each message (bound to @kbd{j} by
 default) to force VM to rearrange the message headers.  A good way to do
 this is to mark all the messages in the folder and apply
-@code{vm-discard-cached-data} to the marked messages.  @xref{Message
-Marks}.
+@code{vm-discard-cached-data} to the marked messages
+@xref{Marking Messages}.
 
 @vindex vm-highlighted-header-regexp
 @vindex vm-highlighted-header-face
@@ -1136,7 +1136,7 @@ have VM preview all messages, set the value of
 Typing @kbd{t} (@code{vm-expose-hidden-headers}) makes VM toggle
 between exposing and hiding headers that would ordinarily be hidden.
 
-@node Paging, Reading MIME Messages, Previewing, Reading Messages
+@node Paging, MIME Messages, Previewing, Reading Messages
 @section Paging
 
 @vindex vm-auto-next-message
@@ -1184,9 +1184,9 @@ provides advanced filling functions that are compatible word
 processors.  Word processors produce 'flowed text' that has only
 essential line breaks; others must be added as needed to fit the text
 into a window.  VM can use the longlines library automatically if you
-install it somewhere on your @var{load-path}.
+install it somewhere on your @code{load-path}.
 
-@node Reading MIME Messages,, Paging, Reading Messages
+@node MIME Messages,, Paging, Reading Messages
 @section Reading MIME Messages
 
 @vindex vm-display-using-mime
@@ -1216,7 +1216,7 @@ will decode messages that use them as necessary.  VM also will
 try to recognize and decode messages using the UNIX ``uuencode''
 encoding system.  While this is not an official MIME transfer
 encoding and never will be, enough old mailers still use it
-that it is worthwile to attempt to decode it.
+that it is worthwhile to attempt to decode it.
 VM has Emacs-Lisp based Quoted-Printable and BASE64 encoders and
 decoders, but you can have VM use external programs to perform
 these tasks and the process will almost certainly be faster.
@@ -1231,7 +1231,7 @@ The variables @code{vm-mime-qp-decoder-program},
 tell VM which programs to use
 and what command line switches to pass to them.  There are C
 programs at VM's distribution sites on the Internet to handle BASE64
-and Quoted-Printable.  VM does not have a builtin ``uuencode''
+and Quoted-Printable.  VM does not have a built-in ``uuencode''
 decoder, so @code{vm-mime-uuencode-decoder-program} must be set
 non-@code{nil} for VM to decode uuencoded MIME objects.
 
@@ -1257,7 +1257,7 @@ manually initiate MIME decoding.
 @vindex vm-mime-button-format-alist
 When VM does not display a MIME object immediately, it displays a
 button or tag line in its place that describes the object and what you
-have to do to display it.  The value of @var{vm-mime-button-format-alist}
+have to do to display it.  The value of @code{vm-mime-button-format-alist}
 determines the format of the text in those buttons.
 
 
@@ -1335,10 +1335,10 @@ make VM not ask this question by setting
 @vindex vm-mime-attachment-save-directory
 The MIME attachments can be saved to disk with @kbd{$ w}
 (@code{vm-mime-reader-map-save-file}).  They can be deleted at the same time
-by setting the variable @var{vm-mime-delete-after-saving}.  In this
+by setting the variable @code{vm-mime-delete-after-saving}.  In this
 case, the attachment is deleted and replaced by a new one that refers
 to the saved copy.  The variable
-@var{vm-mime-attachment-save-directory} specifies the default
+@code{vm-mime-attachment-save-directory} specifies the default
 directory to save the attachments in.
 
 @findex vm-mime-save-all-attachments
@@ -1501,17 +1501,17 @@ automatically launch an external viewer, it will consult the
 variable @code{vm-mime-external-content-type-exceptions}.  If the 
 type to be displayed is listed, VM will not launch a viewer.
 This allows you to setup viewers for types that ordinarily you
-would not want VM to display or for types that you norally want
+would not want VM to display or for types that you normally want
 to convert to some other type using @code{vm-mime-type-converter-alist}.
-You can still display such a type with anexternal viewer by using 
+You can still display such a type with an external viewer by using 
 @kbd{$ e}.
 
 @vindex vm-mime-attachment-auto-suffix-alist
 
 When a MIME object is displayed using an external viewer VM must
 first write the object to a temporary file.  The external viewer
-thne opens and displays that file.  Some viewers will not open a
-file unless the filename ends with some extention that it
+then opens and displays that file.  Some viewers will not open a
+file unless the filename ends with some extension that it
 recognizes such as @samp{.html} or @samp{.jpg}.  You can use the
 variable @code{vm-mime-attachment-auto-suffix-alist} to map MIME
 types to extensions that your external viewers will recognize.
@@ -1526,7 +1526,7 @@ pairs.  The list format is:
 If a top-level type is listed without a subtype, all subtypes of
 that type are matched.
 
-@var{SUFFIX} is a string specifying the suffix that shoul be used for
+@var{SUFFIX} is a string specifying the suffix that should be used for
 the accompanying type.
 
 Example:
@@ -1714,12 +1714,12 @@ message using fancy text formatting constructs like tables, italics
 and equations but some of the recipients may only be able to display
 plain text.  The multipart/alternative type message is the solution
 to this dilemma.  Such a message would contain at least two text
-subparts, one in plaintext and the other in the full featured text
+subparts, one in plain text and the other in the full featured text
 formatting language that the sender used.
 
 @vindex vm-mime-alternative-select-method
 To control how VM displays multipart/alternative messages, you must
-set the variable @var{vm-mime-alternative-select-method}.  Its value must be
+set the variable @code{vm-mime-alternative-select-method}.  Its value must be
 a symbol.  A value of @code{best} tells VM to display the message
 using the subpart closest in appearance to what the sender used to
 compose the message.  In the example above this would mean displaying
@@ -1730,9 +1730,9 @@ it can display internally.  External viewers won't be used in this
 case.
 
 @vindex vm-mime-show-alternatives
-Normally, one the chosen alternative is shown and the other
+Normally, one chosen alternative is shown and the other
 alternatives suppressed.  If the variable
-@var{vm-mime-show-alternatives} is set, then all the alternatives are
+@code{vm-mime-show-alternatives} is set, then all the alternatives are
 shown.  In effect, multipart/alternative is treated the same as
 multipart/mixed. 
 
@@ -1812,7 +1812,7 @@ you can kill it @key{C-k} and yank it back with @key{C-y}.
 @kindex C-c C-m
 @item C-c C-m (@code{vm-mime-attach-message})
 Attaches a mail message to the composition.  If invoked with a
-prefix arg, the name of a folder read from the minibuffer and
+prefix argument, the name of a folder read from the minibuffer and
 the message or messages to be attached are copied from that
 folder.  You will be prompted for the message number of the
 message to be attached.  If you invoke the command on marked
@@ -1847,9 +1847,9 @@ composing your message.
 @item C-c C-d (@code{vm-postpone-composition})
 Postpones the current composition.  The message is stored in the
 folder specified in @code{vm-postponed-folder}.  You can continue composing
-of messages by visiting @code{vm-postponed-folder}, selecting the a messsage
+of messages by visiting @code{vm-postponed-folder}, selecting the a message
 and @key{m} or by directly calling the function on any message in any folder
-@kbd{M-x vm-continue-postponed-message}.  When called with a prefix arg
+@kbd{M-x vm-continue-postponed-message}.  When called with a prefix argument
 @code{vm-postpone-composition} will ask you for the folder to save the draft
 to, i.e. you might also save it to your inbox.
 
@@ -2072,7 +2072,7 @@ negative) @var{n-1} messages as well as the current message.  Also, all
 the reply commands set the ``replied'' attribute of the messages to
 which you are responding, but only when the reply is actually sent.  The
 reply commands can also be applied to marked messages,
-@pxref{Message Marks}.
+@pxref{Marking Messages}.
 
 @vindex vm-reply-ignored-addresses
 If you are one of multiple recipients of a message and you use @kbd{f}
@@ -2108,7 +2108,7 @@ is flagged ``forwarded'' when the message is sent.
 The command @key{@@} (@code{vm-send-digest}) works like @kbd{z} except
 that a digest of all the messages in the current folder is made and
 inserted into the VM Mail mode buffer.  Also, @code{vm-send-digest} can
-be applied to just marked messages.  @xref{Message Marks}.  When applied
+be applied to just marked messages.  @xref{Marking Messages}.  When applied
 to marked messages, @code{vm-send-digest} will only bundle marked
 messages, as opposed to the usual bundling of all messages in the
 current folder.  The message encapsulation method is specified by the
@@ -2191,7 +2191,7 @@ If any part of the contents of the message header named by
 @var{regexp}, VM will evaluate the corresponding
 @var{folder-name} and use the result as the default when
 prompting for a folder to save the message in.  If the resulting
-folder name is a relative pathname it resolves to the directory
+folder name is a relative path name it resolves to the directory
 named by @code{vm-folder-directory}, or the
 @code{default-directory} of the currently visited folder if
 @code{vm-folder-directory} is @code{nil}.
@@ -2224,7 +2224,7 @@ visit a folder before saving message to it.  A @code{nil} value causes VM
 to always append directly to the folder file.  In this case VM will not
 save messages to the disk copy of a folder that is being visited.  This
 restriction is necessary to insure that the buffer and on-disk copies of
-the folder are consistent. If the value of @var{vm-visit-when-saving} is
+the folder are consistent. If the value of @code{vm-visit-when-saving} is
 not @code{nil} and not @code{t} (e.g. 0, the default), VM will append to
 the folder's buffer if the buffer is currently being visited, otherwise VM
 will append to the file itself.
@@ -2269,7 +2269,7 @@ If the shell command generates any output, it is displayed in a
 @end table
 
 @vindex vm-berkeley-mail-compatibility
-A non-@code{nil} value of @var{vm-berkeley-mail-compatibility}
+A non-@code{nil} value of @code{vm-berkeley-mail-compatibility}
 means to read and write BSD @i{Mail(1)} style Status: headers.
 This makes sense if you plan to use VM to read mail archives
 created by @i{Mail}.
@@ -2327,7 +2327,7 @@ means that the value of @code{vm-circular-folders} applies to the
 post-command motion as for a motion command, not as for a non-motion
 command.
 
-@node Editing Messages, Message Marks, Deleting Messages, Top
+@node Editing Messages, Marking Messages, Deleting Messages, Top
 @chapter Editing Messages
 
 To edit a message, type @kbd{e} (@code{vm-edit-message}).  The current
@@ -2348,7 +2348,7 @@ current message will be flagged unedited.
 As with VM Mail mode buffers, all VM commands can be accessed from
 the edit buffer through the command prefix @kbd{C-c C-v}.
 
-@node Message Marks, Message Attributes, Editing Messages, Top
+@node Marking Messages, Message Attributes, Editing Messages, Top
 @chapter Message Marks
 
 VM provides general purpose @dfn{marks} that may be applied to any and
@@ -2413,7 +2413,7 @@ key sequence @kbd{M N} (@code{vm-next-command-uses-marks}).  The next VM
 command will apply to all marked messages, provided the command can be
 applied to such messages in a meaningful and useful way.
 
-@node Message Attributes, Sorting Messages, Message Marks, Top
+@node Message Attributes, Sorting Messages, Marking Messages, Top
 @chapter Message Attributes
 @cindex message attributes
 
@@ -2502,7 +2502,7 @@ Recovery}.  A positive integer value @var{n} instructs VM to write
 out attribute changes every @var{n} seconds.  The default value
 of this variable is @code{t}.
 
-@node Sorting Messages, Reading Digests, Message Attributes, Top
+@node Sorting Messages, Digests, Message Attributes, Top
 @chapter Sorting Messages
 
 @cindex sorting
@@ -2535,7 +2535,7 @@ When sorting by subject (or threading using subjects, or killing
 messages by subject) the subject of the message is
 @dfn{normalized} before comparisons are done.  A @dfn{normalized}
 subject has uninteresting prefixes and suffixes stripped off, and
-multiple consecutive whitespace characters are collapsed to a single
+multiple consecutive white space characters are collapsed to a single
 space.  The variable @code{vm-subject-ignored-prefix} should be
 a regular expression that matches all strings at the beginning of
 a subject that you do not want to be considered when message
@@ -2591,7 +2591,7 @@ If you don't want VM to use Subject headers, set the variable
 
 If you want VM to always display messages using threads, you should set
 the default value of the variable @code{vm-summary-show-threads}
-non-@code{nil} in your VM init file.  Exmaple:
+non-@code{nil} in your VM init file.  Example:
 
 @example
 (setq-default vm-summary-show-threads t)
@@ -2605,8 +2605,8 @@ display.
 Note that threading is really a specialized form of sorting, and so the
 value of the variable @code{vm-move-messages-physically} applies.
 
-@node Reading Digests, Summaries, Sorting Messages, Top
-@chapter Reading Digests
+@node Digests, Summaries, Sorting Messages, Top
+@chapter Digests
 
 A @dfn{digest} is one or more mail messages encapsulated within another
 message.
@@ -2629,7 +2629,7 @@ will try to figure out the digest type on its own.  VM is pretty smart
 about digests and will usually make the correct choice if the digest is
 properly formatted.
 
-@node Summaries, Virtual Folders, Reading Digests, Top
+@node Summaries, Virtual Folders, Digests, Top
 @chapter Summaries
 
 @findex vm-summarize
@@ -2791,13 +2791,13 @@ in the summary window.
 
 @findex vm-fix-my-summary!!!
 Summary lines are precomputed and cached in the folder buffer.  If you
-changce the @var{vm-summary-format}, you need to force the cache to be
+change the @code{vm-summary-format}, you need to force the cache to be
 updated.  You can do this by the command@code{vm-fix-my-summary!!!}.
 
 Every folder can have its own summary format.  The format is written
 into the folder and saved on its disk.  When you visit the folder
 again, you can reuse the saved summary format.  Set the variable
-@var{vm-restore-saved-summary-format} to t to achieve this effect.
+@code{vm-restore-saved-summary-format} to t to achieve this effect.
 
 You can have a summary generated automatically at VM startup
 by setting the variable @code{vm-startup-with-summary} non-nil.
@@ -2812,7 +2812,7 @@ message.  Note that this occurs @emph{only} when executing a command
 from the summary buffer window.
 
 @vindex vm-gargle-uucp
-A non-@code{nil} value of @var{vm-gargle-uucp} means to use a crufty
+A non-@code{nil} value of @code{vm-gargle-uucp} means to use a crufty
 regular expression that does surprisingly well at beautifying UUCP
 addresses that are substituted for @samp{%f} and @samp{%t} as part
 of summary and attribution formats.
@@ -2999,14 +2999,14 @@ being visited.
 @item written
 matches message if it has been saved without its headers.
 @item older-than
-matches message if it is atleast @var{ARG} days old
+matches message if it is at least @var{ARG} days old
 @item eval
 matches message if evaluating the sexpr @var{ARG} yields @code{t}.
 @item outgoing
-matches message if your are the author of it, i.e. if the yuthor matches
+matches message if your are the author of it, i.e. if the author matches
 @code{vm-summary-uninteresting-senders}
 @item spam-score
-matches message if its spam score is atleast @var{ARG}.  See
+matches message if its spam score is at least @var{ARG}.  See
 @code{vm-vs-spam-score-headers} for configuration.
 @item spam-word
 matches message if it contains a word from @code{vm-spam-words-file}
@@ -3128,14 +3128,14 @@ update of the virtual folder.
 interactively and will emit debug information when called with a prefix
 argument.
 
-Automatical marking of messages for deletion based on a selector can be
-achived with @code{vm-virtual-auto-delete-message} for interactive use and the
+Automatic marking of messages for deletion based on a selector can be
+archived with @code{vm-virtual-auto-delete-message} for interactive use and the
 function and @code{vm-virtual-auto-delete-messages} when added to the VM hook
 @code{vm-arrived-messages-hook}.  This can be quite handy for marking spam for
 deletion.
 
 @kbd{M-x vm-virtual-save-message} can be used to save messages to the 
-folder corresponging to the first matching selector and the function 
+folder corresponding to the first matching selector and the function 
 @kbd{vm-virtual-auto-archive-messages} can file messages based on
 selectors (see also @code{vm-auto-archive-messages}). 
 
@@ -3493,7 +3493,7 @@ This is a menu of commands that let you add and remove message
 labels from messages.
 @item mark
 This is a menu of commands that you can use to mark and unmark
-messages based on various criteria.  @xref{Message Marks}.
+messages based on various criteria.  @xref{Marking Messages}.
 @item motion
 This is a menu of commands to move around inside messages and
 inside folders.
@@ -3788,7 +3788,7 @@ be the buffer that VM wants to display.  The hooks are expected
 to select a window and VM will display the buffer in that
 window.
 
-If you use display hooks, you should not use VM's builtin window
+If you use display hooks, you should not use VM's built-in window
 configuration system as the result is likely to be confusing.
 
 @item vm-undisplay-buffer-hook
@@ -3799,7 +3799,7 @@ current buffer will be the buffer that VM wants to disappear.
 The hooks are expected to do the work of removing the buffer from
 the display.  The hook functions should not kill the buffer.
 
-If you use undisplay hooks, you should not use VM's builtin
+If you use undisplay hooks, you should not use VM's built-in
 window configuration system as the result is likely to be
 confusing.
 

@@ -5102,14 +5102,22 @@ append a space to words that complete unambiguously.")
 (defvar vm-pop-read-point nil)
 (defvar vm-pop-ok-to-ask nil)
 (defvar vm-pop-passwords nil)
+;; Keep a list of messages retrieved from the POP maildrops
+;; Prune the list when messages are expunged on the server
+;; This variable is also used for POP folders, to selectively mark
+;; messages that need to be expunged on the server
 (defvar vm-pop-retrieved-messages nil)
 (make-variable-buffer-local 'vm-pop-retrieved-messages)
+;; list of messages to be expunged on the server during the next save
 (defvar vm-pop-messages-to-expunge nil)
 (make-variable-buffer-local 'vm-pop-messages-to-expunge)
 (defvar vm-imap-read-point nil)
 (defvar vm-imap-ok-to-ask nil)
 (defvar vm-imap-passwords nil)
-;; keep a list of all (?) retrieved messages retrieved from the IMAP server
+;; Keep a list of messages retrieved from the IMAP maildrops
+;; Prune the list when messages are expunged on the server
+;; This variable is also used for IMAP folders, to selectively mark
+;; messages that need to be expunged on the server
 (defvar vm-imap-retrieved-messages nil)
 (make-variable-buffer-local 'vm-imap-retrieved-messages)
 ;; list of messages to be expunged on the server during the next save
@@ -5117,10 +5125,15 @@ append a space to words that complete unambiguously.")
 (make-variable-buffer-local 'vm-imap-messages-to-expunge)
 (defvar vm-imap-capabilities nil)
 (defvar vm-imap-auth-methods nil)
+;; The number of old ('failed') trace buffers to remember for debugging
+;; purposes 
 (defvar vm-pop-keep-failed-trace-buffers 5)
 (defvar vm-imap-keep-failed-trace-buffers 5)
+;; Lists of trace buffers remembered for debugging purposes
 (defvar vm-kept-pop-buffers nil)
 (defvar vm-kept-imap-buffers nil)
+;; Flag to make POP/IMAP code remember old trace buffers
+(defvar vm-pop-keep-trace-buffer nil)
 (defvar vm-imap-keep-trace-buffer nil)
 (defvar vm-imap-session-done nil)
 (defvar vm-reply-list nil)
