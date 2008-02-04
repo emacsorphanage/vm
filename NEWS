@@ -30,6 +30,22 @@ VM 8.1.0-devo
 
     * Added the variable `vm-pop-debug' to keep trace buffers.
 
+    * Added variable `vm-restore-saved-summary-formats' to restore
+      each folder's summary format to what was saved previously.
+
+  IMPROVEMENTS for imap-folders
+
+    * Made server expunge more robust; added variable
+      'vm-imap-expunge-retries' to force retries for sluggish servers.
+    * Allow message attributes as well as labels to be saved on server 
+    * Changed vm-imap-get-new-mail to do synchronization: reading
+      and writing message attributes & labels, expunge messages in the
+      cache.  
+    * Added variable 'vm-imap-sync-on-get' to control this
+      behavior.
+    * Added command 'vm-imap-synchronize' to do full synchronization. 
+    * Trapping server errors uniformly,
+
 VM 8.0.7
 
   BUGFIXES:

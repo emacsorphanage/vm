@@ -2436,20 +2436,20 @@ VM session.  This is useful for saving offline work."
   (vm-imap-send-command process (format "CREATE %s"
 					(vm-imap-quote-string mailbox)))
   (if (null (vm-imap-read-boolean-response process))
-      (error "IMAP CREATE of %s failed" mailbox)))
+      (vm-imap-protocol-error "IMAP CREATE of %s failed" mailbox)))
 
 (defun vm-imap-delete-mailbox (process mailbox)
   (vm-imap-send-command process (format "DELETE %s"
 					(vm-imap-quote-string mailbox)))
   (if (null (vm-imap-read-boolean-response process))
-      (error "IMAP DELETE of %s failed" mailbox)))
+      (vm-imap-protocol-error "IMAP DELETE of %s failed" mailbox)))
 
 (defun vm-imap-rename-mailbox (process source dest)
   (vm-imap-send-command process (format "RENAME %s %s"
 					(vm-imap-quote-string source)
 					(vm-imap-quote-string dest)))
   (if (null (vm-imap-read-boolean-response process))
-      (error "IMAP RENAME of %s to %s failed" source dest)))
+      (vm-imap-protocol-error "IMAP RENAME of %s to %s failed" source dest)))
 
 ;;;###autoload
 (defun vm-create-imap-folder (folder)
@@ -2545,11 +2545,12 @@ documentation for `vm-spool-files'."
 
 ;;; Robert Fenk's draft function for saving messages to IMAP folders.
 (defun vm-imap-save-composition ()
-  "Saves the current composition in the IMAP folder given by the IMAP-FCC header.
-
-Add this to your `mail-send-hook' and start composing from an IMAP folder."
-  (let (process flags response string
-		(mailbox (vm-mail-get-header-contents "IMAP-FCC:")))
+  "Saves the current composition in the IMAP folder given by the
+IMAP-FCC header. 
+Add this to your `mail-send-hook' and start composing from an IMAP
+folder." 
+  (let ((mailbox (vm-mail-get-header-contents "IMAP-FCC:"))
+	process flags response string)
     (when mailbox
       (save-excursion
         (vm-select-folder-buffer)

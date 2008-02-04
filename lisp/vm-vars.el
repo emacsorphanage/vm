@@ -579,10 +579,10 @@ save to IMAP folders on the server, rather than to local files."
 Increase this if your IMAP server is sluggish."
   :group 'vm)
 
-(defcustom vm-imap-full-sync-on-get t
-  "*If this variable is non-NIL, then the vm-get-new-mail command should
-do a full synchonization with the IMAP folder on the server.  This
-involves expunging messages on the server and the cache, saving and
+(defcustom vm-imap-sync-on-get t
+  "*If this variable is non-NIL, then the vm-get-new-mail command
+should synchronize with the IMAP mailbox on the server.  This involves
+expunging messages that have been expunged from the server, saving and
 retrieving message attributes as well retrieving new messages.  If the
 variable is NIL, this functionality can be obtained via the
 vm-imap-synchronize command."
@@ -2848,7 +2848,7 @@ in the summary window."
   :type 'string)
 (make-variable-buffer-local 'vm-summary-format)
 
-(defcustom vm-restore-saved-summary-format nil
+(defcustom vm-restore-saved-summary-formats nil
   "*If t, the summary format is stored in each folder and restored
 after visiting it again."
   :group 'vm

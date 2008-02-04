@@ -3753,10 +3753,9 @@ run vm-expunge-folder followed by vm-save-folder."
   (cond ((eq vm-folder-access-method 'pop)
 	 (vm-pop-synchronize-folder interactive nil nil t))
 	((eq vm-folder-access-method 'imap)
-	 (if vm-imap-full-sync-on-get
+	 (if vm-imap-sync-on-get
 	     (progn
-	       (vm-imap-synchronize-folder interactive t nil nil t nil)
-					; do-remote-expunges
+	       (vm-imap-synchronize-folder interactive nil nil nil t nil)
 					; save-attributes
 	       (vm-imap-synchronize-folder interactive nil t t nil t))
 					; do-local-expunges
