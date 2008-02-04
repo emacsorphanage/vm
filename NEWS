@@ -30,6 +30,12 @@ VM 8.1.0-devo
 
     * Added the variable `vm-pop-debug' to keep trace buffers.
 
+  BUGFIXES:
+
+    * Correctly determine the real folder when postponing compositions started
+      from a virtual folder. (Thanks to Uday S. Reddy for reporting and 
+      debugging)
+
 VM 8.0.7
 
   BUGFIXES:
