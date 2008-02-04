@@ -7,7 +7,8 @@ nick=(`$bzr tags | tail -1`)
 nickrevno=${nick[1]}
 nick=${nick[0]}
 revno=`$bzr revno`
-if [ "$nickrevno" != "$revno" ]; then
+devo=`bzr nick | sed -e 's/.*-devo/devo/'`
+if [ "$nickrevno" != "$revno" -a "is-$devo" = "is-devo" ]; then
   echo "ERROR: No tag present at the head revision."
   echo "ERROR: First you must create a release tag!"
   exit -1
