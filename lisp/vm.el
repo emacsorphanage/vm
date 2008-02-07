@@ -1185,10 +1185,13 @@ summary buffer to select a folder."
       'vm-imap-expunge-after-retrieving
       'vm-imap-expunge-retries
       'vm-imap-folder-cache-directory
-      'vm-imap-full-sync-on-get
+      'vm-imap-sync-on-get
+      'vm-imap-keep-trace-buffer
       'vm-imap-keep-failed-trace-buffers
       'vm-imap-max-message-size
       'vm-imap-messages-per-session
+      'vm-imap-messages-to-expunge
+      'vm-imap-retrieved-messages
       'vm-imap-session-preauth-hook
       'vm-imap-save-to-server
       'vm-in-reply-to-format
@@ -1279,10 +1282,13 @@ summary buffer to select a folder."
       'vm-pop-expunge-after-retrieving
 ;; POP passwords might be listed here
 ;;      'vm-pop-folder-alist
+      'vm-pop-keep-trace-buffer
       'vm-pop-keep-failed-trace-buffers
       'vm-pop-max-message-size
-      'vm-pop-messages-per-session
       'vm-pop-md5-program
+      'vm-pop-messages-per-session
+      'vm-pop-messages-to-expunge
+      'vm-pop-retrieved-messages
       'vm-popup-menu-on-mouse-3
       'vm-preferences-file
       'vm-preview-lines
@@ -1335,6 +1341,7 @@ summary buffer to select a folder."
       'vm-summary-redo-hook
       'vm-summary-show-threads
       'vm-summary-thread-indent-level
+      'vm-summary-toggle-thread-folding
       'vm-summary-uninteresting-senders
       'vm-summary-uninteresting-senders-arrow
       'vm-tale-is-an-idiot

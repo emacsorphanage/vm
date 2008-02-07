@@ -1850,7 +1850,7 @@ on all the relevant IMAP servers and then immediately expunges."
       (set-buffer (process-buffer process))
       (condition-case nil
 	  (vm-imap-create-mailbox process mailbox)
-	(error nil))
+	(vm-imap-protocol-error nil))
       (vm-imap-send-command process
 			    (format "APPEND %s %s {%d}"
 				    (vm-imap-quote-string mailbox)
@@ -2256,37 +2256,11 @@ VM session.  This is useful for saving offline work."
       (vm-imap-end-session (vm-folder-imap-process))
       result )))
 
-;; ----------- new function s-----------
-;;;###autoload
-(defun vm-imap-find-spec-for-name (name)
-  (let ((list vm-imap-folder-alist)
-	(done nil))
-    (while (and (not done) list)
-      (if (equal name (nth 1 (car list)))
-	  (setq done t)
-	(setq list (cdr list))))
-    (and list (car (car list)))))
-
+;; ----------- missing functions-----------
 ;;;###autoload
 (defun vm-imap-find-name-for-spec (spec)
-  (let ((list vm-imap-folder-alist)
-	(done nil))
-    (while (and (not done) list)
-      (if (equal spec (car (car list)))
-	  (setq done t)
-	(setq list (cdr list))))
-    (and list (nth 1 (car list)))))
-
-;;;###autoload
-(defun vm-imap-find-name-for-buffer (buffer)
-  (let ((list vm-imap-folder-alist)
-	(done nil))
-    (while (and (not done) list)
-      (if (eq buffer (vm-get-file-buffer (vm-imap-make-filename-for-spec
-					  (car (car list)))))
-	  (setq done t)
-	(setq list (cdr list))))
-    (and list (nth 1 (car list)))))
+  (error "vm-imap-find-name-for-spec has not been defined.  Please report it."
+	 ))
 ;;--------------
 
 ;;;###autoload

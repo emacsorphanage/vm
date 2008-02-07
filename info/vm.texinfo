@@ -71,7 +71,7 @@ chapters.
 * Marking Messages::	Running VM commands on arbitrary sets of messages.
 * Message Attributes::	How to change and undo changes to message attributes.
 * Sorting Messages::	How to make VM present similar messages together.
-* Digests::	How to read digests under VM.
+* Digests::             How to read digests under VM.
 * Summaries::		How to view and customize the summary of a folder.
 * Virtual Folders::	Blurring the boundaries of different physical folders.
 * Frames and Windows::	How to customize VM's use of windows and frames.
@@ -80,6 +80,7 @@ chapters.
 * Faces::		How to configure VM's use of faces.
 * Using the Mouse::	Understanding the VM mouse interface.
 * Hooks::		How you can make VM run your code at certain times.
+* Bugs::                How to report VM bugs
 * License::		Copying and distribution terms for VM.
 
 Indices:
@@ -324,6 +325,7 @@ are listed in the documentation of the variable
 
 @cindex spool file
 @vindex vm-spool-files
+@cindex file locking
 A @dfn{spool file} is a file where the mail transport system delivers
 messages intended for you.  Typically a program called @file{/bin/mail}
 or @file{/bin/mail.local} does this delivery, although agents such as
@@ -927,6 +929,7 @@ appear on the Emacs mode line of folders that have mail waiting.
 @cindex message attributes
 @cindex message labels
 
+@cindex autosave
 When Emacs crashes, its last action before dying is to try to
 write out an autosave file that contains changes to files that
 you were editing.  VM folders are file buffers inside Emacs, so
@@ -2185,6 +2188,7 @@ as ``redistributed''.
 @node Saving Messages, Deleting Messages, Sending Messages, Top
 @chapter Saving Messages
 
+@cindex file locking
 Mail messages are normally saved to files that contain only mail
 messages.  Such files are called @dfn{folders}.  Folders are
 distinguished from spool files in that VM does not expect other
@@ -2204,6 +2208,11 @@ minibuffer.  If @code{vm-save-message} is given a prefix argument
 If @var{n} is negative, the current message and the previous @var{n-1}
 messages are saved.  Messages saved with @code{vm-save-message} are
 flagged ``filed''.
+
+@findex vm-save-message-to-imap-folder
+One can save messages to remote IMAP folders by
+@code{vm-save-message-to-imap-folder}; the name of the folder can be
+entered from the minibuffer.
 
 @vindex vm-confirm-new-folders
 If the value of the variable @code{vm-confirm-new-folders} is
@@ -2535,6 +2544,7 @@ other BABYL mailers.  The labels used are ``recent'', ``unseen'',
 folders, you should not use these label names for your own purposes.
 
 @vindex vm-flush-interval
+@cindex autosave
 All message attributes are stored in the folder.  In order for
 attribute changes to be saved to disk, they must be written to
 the folder's buffer prior to the buffer being saved.  The
@@ -3642,7 +3652,7 @@ specific menu is produced.
 In mail composition buffers only mouse button-3 is affected.
 Context sensitive menus are produced when that button is clicked.
 
-@node Hooks, Concept Index, Using the Mouse, Top
+@node Hooks, Bugs, Using the Mouse, Top
 @chapter Hooks
 
 VM has many hook variables that allow you to run functions when
@@ -3903,7 +3913,41 @@ If this hook is entirely empty, i.e. @code{nil}, a default action is taken
 instead of no action.
 @end table
 
-@node Concept Index, Key Index, Hooks, Top
+@node Bugs, Concept Index, Hooks, Top
+@chapter Reporting Bugs
+@cindex bug reports
+
+VM has a sophisticated bug reporting system in order to provide the
+VM maintainers with adequate informaion about the state of VM when the
+error situation occurred.  However, it is still important for the
+users to give as full an explanation of the problem as possible.
+@xref{Bugs,,,emacs, the GNU Emacs Manual}.
+
+
+@findex vm-submit-bug-report
+The command @code{M-x vm-submit-bug-report} should be invoked from the
+VM folder buffer in which a problem is encountered.  This creates a
+mail buffer with information about the state of VM pre-filled.  Insert
+suitable text to explain the problem and send the bug-report message.
+
+@findex vm-pop-start-bug-report
+@findex vm-pop-submit-bug-report
+@findex vm-imap-start-bug-report
+@findex vm-imap-submit-bug-report
+For mail server-associated problems dealing with POP/IMAP spool files
+or POP/IMAP folders, the cause of the problem might be in the
+interaction with the mail server.  To identify the cause, it may be
+necessary for the VM maintainer to look at the server interactions
+during the problem occurrence.  To capture the server interactions,
+run @code{vm-pop-start-bug-report}/@code{vm-imap-start-bug-report}
+before the problem occurrence and @code{vm-pop-submit-bug-report}
+/@code{vm-imap-submit-bug-report} after the problem occurrence.  All
+the server intearactions during the interval are captured and
+automatically incldued in the bug-report.
+
+
+
+@node Concept Index, Key Index, Bugs, Top
 @unnumbered Concept Index
 @printindex cp
 
