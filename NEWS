@@ -54,6 +54,9 @@ VM 8.1.0-devo
 
   BUGFIXES:
 
+    * `vm-submit-bug-report' gets the variables dynamically now and thus does
+      not miss new ones or references old ones anymore. 
+
     * Correctly determine the real folder when postponing compositions started
       from a virtual folder. (Thanks to Uday S. Reddy for reporting and 
       debugging)

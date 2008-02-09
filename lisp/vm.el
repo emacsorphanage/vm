@@ -1105,250 +1105,29 @@ summary buffer to select a folder."
   ;; time we'll be fine and users like to use MIME to attach
   ;; stuff to the reports.
   (let ((reporter-mailer '(vm-mail))
-	(mail-user-agent 'vm-user-agent))
+	(mail-user-agent 'vm-user-agent)
+        varlist)
+    (setq varlist (apropos-internal "^\\(vm\\|vmpc\\)-" 'user-variable-p)
+          varlist (sort varlist
+                        (lambda (v1 v2)
+                          (string-lessp (format "%s" v1) (format "%s" v2)))))
+    (let ((vars-to-delete '(
+                            ;; passwords might be listed here
+                            vm-spool-files
+                            vm-imap-auto-expunge-alist
+                            vm-pop-auto-expunge-alist
+                            vm-pop-folder-alist
+                            )))
+      (while vars-to-delete
+        (setq varlist (delete (car vars-to-delete) varlist)
+              vars-to-delete (cdr vars-to-delete))))
+    ;; see what the user had loaded
+    (setq varlist (append (list 'features) varlist))
     (delete-other-windows)
     (reporter-submit-bug-report
      vm-maintainer-address
      (concat "VM " (vm-version))
-     (list
-      'vm-arrived-message-hook
-      'vm-arrived-messages-hook
-      'vm-auto-center-summary
-      'vm-auto-decode-mime-messages
-      'vm-auto-displayed-mime-content-type-exceptions
-      'vm-auto-displayed-mime-content-types
-;; don't send this by default, might be personal stuff in here.
-;;      'vm-auto-folder-alist
-      'vm-auto-folder-case-fold-search
-      'vm-auto-get-new-mail
-      'vm-auto-next-message
-      'vm-berkeley-mail-compatibility
-      'vm-check-folder-types
-      'vm-circular-folders
-      'vm-confirm-new-folders
-      'vm-confirm-quit
-      'vm-convert-folder-types
-      'vm-crash-box
-      'vm-crash-box-suffix
-      'vm-default-From_-folder-type
-      'vm-default-folder-permission-bits
-      'vm-default-folder-type
-      'vm-delete-after-archiving
-      'vm-delete-after-bursting
-      'vm-delete-after-saving
-      'vm-delete-empty-folders
-      'vm-digest-burst-type
-      'vm-digest-identifier-header-format
-      'vm-digest-center-preamble
-      'vm-digest-preamble-format
-      'vm-digest-send-type
-      'vm-display-buffer-hook
-      'vm-display-using-mime
-      'vm-edit-message-hook
-      'vm-edit-message-mode
-      'vm-fill-paragraphs-containing-long-lines
-      'vm-flush-interval
-      'vm-folder-directory
-      'vm-folder-read-only
-      'vm-folders-summary-database
-      'vm-folders-summary-directories
-      'vm-folders-summary-format
-      'vm-follow-summary-cursor
-      'vm-forward-message-hook
-      'vm-forwarded-headers
-      'vm-forwarding-digest-type
-      'vm-forwarding-subject-format
-      'vm-frame-parameter-alist
-      'vm-frame-per-completion
-      'vm-frame-per-composition
-      'vm-frame-per-edit
-      'vm-frame-per-folder
-      'vm-frame-per-folders-summary
-      'vm-frame-per-help
-      'vm-frame-per-summary
-      'vm-highlight-url-face
-      'vm-highlighted-header-regexp
-      'vm-honor-mime-content-disposition
-      'vm-honor-page-delimiters
-      'vm-icontopbm-program
-      'vm-image-directory
-      'vm-imagemagick-convert-program
-      'vm-imagemagick-identify-program
-;; IMAP passwords might be listed here
-;;      'vm-imap-auto-expunge-alist
-      'vm-imap-bytes-per-session
-      'vm-imap-expunge-after-retrieving
-      'vm-imap-max-message-size
-      'vm-imap-messages-per-session
-      'vm-imap-session-preauth-hook
-      'vm-in-reply-to-format
-      'vm-included-text-attribution-format
-      'vm-included-text-discard-header-regexp
-      'vm-included-text-headers
-      'vm-included-text-prefix
-      'vm-index-file-suffix
-      'vm-init-file
-      'vm-infer-mime-types
-      'vm-invisible-header-regexp
-      'vm-jump-to-new-messages
-      'vm-jump-to-unread-messages
-      'vm-keep-crash-boxes
-      'vm-keep-sent-messages
-      'vm-lynx-program
-      'vm-mail-header-from
-      'vm-mail-header-insert-date
-      'vm-mail-header-insert-message-id
-      'vm-mail-hook
-      'vm-mail-check-interval
-      'vm-mail-mode-hook
-      'vm-mail-send-hook
-      'vm-make-crash-box-name
-      'vm-make-spool-file-name
-      'vm-mime-7bit-composition-charset
-      'vm-mime-8bit-composition-charset
-      'vm-mime-8bit-text-transfer-encoding
-      'vm-mime-alternative-select-method
-      'vm-mime-attachment-auto-type-alist
-      'vm-mime-attachment-save-directory
-      'vm-mime-avoid-folding-content-type
-      'vm-mime-base64-decoder-program
-      'vm-mime-base64-decoder-switches
-      'vm-mime-base64-encoder-program
-      'vm-mime-base64-encoder-switches
-      'vm-mime-button-face
-      'vm-mime-button-format-alist
-      'vm-mime-charset-converter-alist
-      'vm-mime-charset-font-alist
-      'vm-mime-confirm-delete
-      'vm-mime-decode-for-preview
-      'vm-mime-default-face-charset-exceptions
-      'vm-mime-default-face-charsets
-      'vm-mime-delete-after-saving
-      'vm-mime-delete-viewer-processes
-      'vm-mime-digest-discard-header-regexp
-      'vm-mime-digest-headers
-      'vm-mime-display-function
-      'vm-mime-external-content-types-alist
-      'vm-mime-forward-local-external-bodies
-      'vm-mime-ignore-composite-type-opaque-transfer-encoding
-      'vm-mime-ignore-mime-version
-      'vm-mime-ignore-missing-multipart-boundary
-      'vm-mime-internal-content-type-exceptions
-      'vm-mime-internal-content-types
-      'vm-mime-max-message-size
-      'vm-mime-qp-decoder-program
-      'vm-mime-qp-decoder-switches
-      'vm-mime-qp-encoder-program
-      'vm-mime-qp-encoder-switches
-      'vm-mime-require-mime-version-header
-      'vm-mime-type-converter-alist
-      'vm-mime-use-image-strips
-      'vm-mime-use-w3-for-text/html
-      'vm-mime-uuencode-decoder-program
-      'vm-mime-uuencode-decoder-switches
-      'vm-mode-hook
-      'vm-mode-hooks
-      'vm-mosaic-program
-      'vm-mosaic-program-switches
-      'vm-move-after-deleting
-      'vm-move-after-undeleting
-      'vm-move-after-killing
-      'vm-move-messages-physically
-      'vm-movemail-program
-      'vm-mutable-frames
-      'vm-mutable-windows
-      'vm-netscape-program
-      'vm-netscape-program-switches
-      'vm-page-continuation-glyph
-      'vm-paragraph-fill-column
-;; POP passwords might be listed here
-;;      'vm-pop-auto-expunge-alist
-      'vm-pop-bytes-per-session
-      'vm-pop-expunge-after-retrieving
-;; POP passwords might be listed here
-;;      'vm-pop-folder-alist
-      'vm-pop-max-message-size
-      'vm-pop-messages-per-session
-      'vm-pop-md5-program
-      'vm-popup-menu-on-mouse-3
-      'vm-preferences-file
-      'vm-preview-lines
-      'vm-preview-read-messages
-      'vm-primary-inbox
-      'vm-quit-hook
-      'vm-recognize-imap-maildrops
-      'vm-recognize-pop-maildrops
-      'vm-reply-hook
-;; don't feed the spammers or crackers
-;;      'vm-reply-ignored-addresses
-      'vm-reply-ignored-reply-tos
-      'vm-reply-subject-prefix
-      'vm-resend-bounced-discard-header-regexp
-      'vm-resend-bounced-headers
-      'vm-resend-bounced-message-hook
-      'vm-resend-discard-header-regexp
-      'vm-resend-headers
-      'vm-resend-message-hook
-      'vm-retrieved-spooled-mail-hook
-      'vm-rfc1153-digest-discard-header-regexp
-      'vm-rfc1153-digest-headers
-      'vm-rfc934-digest-discard-header-regexp
-      'vm-rfc934-digest-headers
-      'vm-search-using-regexps
-      'vm-select-message-hook
-      'vm-select-new-message-hook
-      'vm-select-unread-message-hook
-      'vm-send-digest-hook
-      'vm-send-using-mime
-      'vm-skip-deleted-messages
-      'vm-skip-read-messages
-;; don't send vm-spool-files by default, might contain passwords
-;;      'vm-spool-files
-      'vm-spool-file-suffixes
-      'vm-spooled-mail-waiting-hook
-      'vm-ssh-program
-      'vm-ssh-program-switches
-      'vm-ssh-remote-command
-      'vm-startup-with-summary
-      'vm-strip-reply-headers
-      'vm-stunnel-program
-      'vm-stunnel-program-switches
-      'vm-stunnel-random-data-method
-      'vm-subject-significant-chars
-      'vm-summary-format
-      'vm-summary-highlight-face
-      'vm-summary-mode-hook
-      'vm-summary-mode-hooks
-      'vm-summary-redo-hook
-      'vm-summary-show-threads
-      'vm-summary-thread-indent-level
-      'vm-summary-uninteresting-senders
-      'vm-summary-uninteresting-senders-arrow
-      'vm-tale-is-an-idiot
-      'vm-temp-file-directory
-      'vm-thread-using-subject
-      'vm-toolbar-pixmap-directory
-      'vm-trust-From_-with-Content-Length
-      'vm-uncompface-program
-      'vm-undisplay-buffer-hook
-      'vm-unforwarded-header-regexp
-      'vm-url-browser
-      'vm-url-browser-switches
-      'vm-url-retrieval-methods
-      'vm-url-search-limit
-      'vm-use-menus
-      'vm-use-toolbar
-      'vm-virtual-folder-alist
-      'vm-virtual-mirror
-      'vm-visible-headers
-      'vm-visit-folder-hook
-      'vm-visit-when-saving
-      'vm-warp-mouse-to-new-frame
-      'vm-wget-program
-      'vm-window-configuration-file
-;; see what the user had loaded
-      'features
-      )
+     varlist
      nil
      nil
      "Please change the Subject header to a concise bug description.
@@ -1358,10 +1137,12 @@ Consider to post this to the News group gnu.emacs.vm.bug instead.
 In this report, remember to cover the basics, that is, what you expected to
 happen and what in fact did happen and how to reproduce it.
 
-Please remove these instructions from your message.")
+Please remove these instructions and other stuff which is unrelated to the bug
+from your message.")
     (save-excursion
       (goto-char (point-min))
-      (mail-position-on-field "Subject"))))
+      (mail-position-on-field "Subject")
+      (insert "VM-BUG: "))))
 
 (defun vm-edit-init-file ()
   "Edit the ~/.vm."
