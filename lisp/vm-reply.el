@@ -36,6 +36,18 @@
     (insert vm-included-text-prefix)))
 
 ;;;###autoload
+(defun vm-fill-long-lines-in-reply ()
+  (interactive)
+  (vm-fill-paragraphs-containing-long-lines
+   vm-fill-long-lines-in-reply-column
+   (save-excursion
+     (goto-char (point-min))
+     (re-search-forward (regexp-quote mail-header-separator) (point-max))
+     (forward-line 1)
+     (point))
+   (point-max)))
+
+;;;###autoload
 (defun vm-do-reply (to-all include-text count)
     (let ((mlist (vm-select-marked-or-prefixed-messages count))
 	  (dir default-directory)
@@ -168,7 +180,9 @@
 		(vm-yank-message (car mlist))
 		(goto-char (point-max)))
 	      (setq mlist (cdr mlist)))))
-      (run-hooks 'vm-reply-hook)
+      (if vm-fill-long-lines-in-reply-column
+          (vm-fill-long-lines-in-reply))
+        (run-hooks 'vm-reply-hook)
       (run-hooks 'vm-mail-mode-hook)))
 
 (defun vm-strip-ignored-addresses (addresses)

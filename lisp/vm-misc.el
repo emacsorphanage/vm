@@ -844,26 +844,54 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
   (while (re-search-forward "[ \t\n]+" nil 0)
     (replace-match " " t t)))
 
-(defun vm-fill-paragraphs-containing-long-lines (len start end)
-  (let ((done nil)
-	(buffer-read-only nil)
-	(fill-column vm-paragraph-fill-column)
-	;; user doesn't want long lines, so set this to zero for them.
-	(filladapt-fill-column-forward-fuzz 0))
-    (save-excursion
-      (vm-save-restriction
-       (widen)
-       (or (markerp end) (setq end (vm-marker end)))
-       (goto-char start)
-       (while (and (not done) (re-search-forward "[ \t]*$" end t))
-         (replace-match "")
-	 (if (>= (current-column) len)
-	     ;; ignore errors
-	     (condition-case nil
-		 (fill-paragraph nil)
-	       (error nil)))
-	 (forward-line)
-	 (setq done (>= (point) end)))))))
+(defun vm-fill-paragraphs-containing-long-lines (width start end)
+  "Fill paragraphs spanning more than WIDTH columns in region START to END."
+  (if (eq width 'window-width)
+      (setq width (- (window-width (get-buffer-window (current-buffer))) 1)))
+  (save-excursion
+    (let ((buffer-read-only nil)
+          (fill-column width)
+          (filladapt-fill-column-forward-fuzz 0)
+          (filladapt-mode t)
+          (abbrev-mode nil)
+          (filled 0)
+          (message (if (car vm-message-pointer)
+                       (vm-su-subject (car vm-message-pointer))
+                     (buffer-name)))
+          (needmsg (> (- end start) 12000)))
+      
+      (if needmsg
+          (message "Filling message `%s' to column %d!" message fill-column))
+
+      ;; we need a marker for the end since this position might change 
+      (goto-char end) (setq end (point-marker))
+      (goto-char start)
+
+      ;; this should speed up things!
+      (buffer-disable-undo)
+      
+      (condition-case nil
+          (while (< (point) end)
+            (end-of-line)
+            (when (> (current-column) fill-column)
+              (setq filled (1+ filled))
+              (if (functionp 'filladapt-fill-paragraph)
+                  (filladapt-fill-paragraph 'fill-paragraph nil)
+                ;; ignore errors
+                (condition-case nil
+                    (fill-paragraph nil)
+                  (error nil))))
+            (forward-line 1))
+        (error nil)
+        (quit nil))
+      (buffer-enable-undo)
+
+      (if (> filled 0)
+          (message "Filled %s line%s in message '%s'!"
+                   (if (> filled 1) (format "%d" filled) "one")
+                   (if (> filled 1) "s" "")
+                   message)
+        (message "Nothing to fill!")))))
 
 (defun vm-make-message-id ()
   (let (hostname

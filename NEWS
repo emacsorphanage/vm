@@ -2,6 +2,20 @@ VM 8.1.0-devo
 
   IMPROVEMENTS:
 
+    * Removed `vm-paragraph-fill-column', the value is now taken from
+      `vm-fill-paragraphs-containing-long-lines' thus allowing to fill to the
+      available window with.
+
+    * Replaced 'vm-fill-paragraphs-containing-long-lines' by the faster and
+      more flexible version from vm-rfaddons.el.  Also cleaned up calls to the
+      fill function and removed code duplication.  The code using longline.el
+      remains in vm-rfaddons.el, but it must be used explicitely now in an
+      advice.
+
+    * Moved the variable `vm-fill-long-lines-in-reply-column' from
+      vm-rfaddons.el to VM core.  It is not necessary to hook the fill
+      function, just set the variable.
+
     * Errors caused by `vm-retrieved-spooled-mail-hook' are reported and
       assimilation of messages continues instead of aborting.
 

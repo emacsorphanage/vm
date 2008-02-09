@@ -831,12 +831,12 @@ buffer before the filling is done."
                  (const window-width)
                  integer))
 
-(defcustom vm-paragraph-fill-column (default-value 'fill-column)
-  "*Column beyond which automatic line-wrapping should happen when
-re-filling lines longer than the value of
-`vm-fill-paragraphs-containing-long-lines'."
-  :group 'vm
-  :type 'integer)
+(defcustom vm-fill-long-lines-in-reply-column nil
+  "*Fill lines spanning that columns or more in replies."
+  :type '(choice (const nil)
+                 (const window-width)
+                 integer)
+  :group 'vm-rfaddons)
 
 (defcustom vm-display-using-mime t
   "*Non-nil value means VM should display messages using MIME.

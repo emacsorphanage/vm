@@ -2179,14 +2179,9 @@ in the buffer.  The function is expected to make the message
       (or no-highlighting (vm-energize-urls-in-message-region start end))
       (if (and vm-fill-paragraphs-containing-long-lines
 	       (not no-highlighting))
-	  (let ((needmsg (> (- end start) 12000)))
-	    (if needmsg
-		(message "Searching for paragraphs to fill..."))
-	    (vm-fill-paragraphs-containing-long-lines
-	     vm-fill-paragraphs-containing-long-lines
-	     start end)
-	    (if needmsg
-		(message "Searching for paragraphs to fill... done"))))
+          (vm-fill-paragraphs-containing-long-lines
+           vm-fill-paragraphs-containing-long-lines
+           start end))
       (goto-char end)
       t )))
 
