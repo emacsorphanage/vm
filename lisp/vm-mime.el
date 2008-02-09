@@ -3809,61 +3809,56 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 
 (defun vm-mime-display-button-image (layout)
   "Displays an button for the image and when possible a thumbnail."
-  (if (not (and (vm-mime-can-display-internal layout)
-		vm-mime-thumbnail-max-height
-		vm-mime-thumbnail-max-width))
+  (if (not (and vm-mime-thumbnail-max-geometry
+                (vm-mime-can-display-internal layout)))
       ;; just display the normal button
       (vm-mime-display-button-xxxx layout t)
     ;; otherwise create a thumb and display it
-    (let (tempfile s e g)
+    (let (tempfile start end x glyph)
       ;; fake an extent to display the image as thumb
-    (setq s (point))
-    (insert " ")
-    (setq e (vm-make-extent s (point)))
-    (vm-set-extent-property e 'vm-mime-layout layout)
-    (vm-set-extent-property e 'vm-mime-disposable nil)
-    (vm-set-extent-property e 'start-open t)
-    ;; write out the image data 
-    (save-excursion 
-      (setq work-buffer (vm-make-work-buffer))
-      (set-buffer work-buffer)
       (setq start (point))
-      (vm-mime-insert-mime-body layout)
-      (setq end (point-marker))
-      (vm-mime-transfer-decode-region layout start end)
-      (setq tempfile (vm-make-tempfile))
-      (let ((coding-system-for-write (vm-binary-coding-system)))
-        (write-region start end tempfile nil 0)))
-    ;; store the temp filename
-    (put (vm-mm-layout-cache layout)
-	 'vm-mime-display-internal-image-xxxx
-	 tempfile)
-    (vm-register-folder-garbage-files (list tempfile))
-    ;; force display
-    (let ((vm-mime-internal-content-types '("image"))
-          (vm-mime-internal-content-type-exceptions nil)
-          (vm-mime-use-image-strips nil))
-      (vm-mime-frob-image-xxxx e
-			       "-thumbnail" 
-			       vm-mime-thumbnail-max-geometry)
-    ;; extract image data 
-    (setq e (vm-extent-at s))
-    (setq g (if vm-xemacs-p
-                (extent-begin-glyph e)
-              (get-text-property s 'display)))
-    (delete-region s (point))
-    (setq s (point))
-    ;; insert the button and correct the image 
-    (vm-mime-display-button-xxxx layout t)
-    (setq e (vm-extent-at s))
-    (if vm-xemacs-p
-        (set-extent-begin-glyph e g)
-      (put-text-property s (1+ s) 'display g))
-    ;; force redisplay in original size 
-    (put (vm-mm-layout-cache layout)
-	 'vm-mime-display-internal-image-xxxx
-	 nil))
-    t))
+      (insert " ")
+      (setq x (vm-make-extent start (point)))
+      (vm-set-extent-property x 'vm-mime-layout layout)
+      (vm-set-extent-property x 'vm-mime-disposable nil)
+      (vm-set-extent-property x 'start-open t)
+      ;; write out the image data 
+      (save-excursion 
+        (set-buffer (vm-make-work-buffer))
+        (vm-mime-insert-mime-body layout)
+        (vm-mime-transfer-decode-region layout (point-min) (point-max))
+        (setq tempfile (vm-make-tempfile))
+        (let ((coding-system-for-write (vm-binary-coding-system)))
+          (write-region (point-min) (point-max) tempfile nil 0))
+        (kill-buffer (current-buffer)))
+      ;; store the temp filename
+      (put (vm-mm-layout-cache layout)
+           'vm-mime-display-internal-image-xxxx
+           tempfile)
+      (vm-register-folder-garbage-files (list tempfile))
+      ;; force display
+      (let ((vm-mime-internal-content-types '("image"))
+            (vm-mime-internal-content-type-exceptions nil)
+            (vm-mime-use-image-strips nil))
+        (vm-mime-frob-image-xxxx x
+                                 "-thumbnail" 
+                                 vm-mime-thumbnail-max-geometry))
+      ;; extract image data 
+      (setq glyph (if vm-xemacs-p
+                      (extent-begin-glyph (vm-extent-at start))
+                    (get-text-property start 'display)))
+      (delete-region start (point))
+      ;; insert the button and correct the image 
+      (setq start (point))
+      (vm-mime-display-button-xxxx layout t)
+      (if vm-xemacs-p
+          (set-extent-begin-glyph (vm-extent-at start) glyph)
+        (put-text-property start (1+ start) 'display glyph))
+      ;; force redisplay in original size 
+      (put (vm-mm-layout-cache layout)
+           'vm-mime-display-internal-image-xxxx
+           nil)
+      t)))
 
 (defun vm-mime-display-internal-audio/basic (layout)
   (if (and vm-xemacs-p
