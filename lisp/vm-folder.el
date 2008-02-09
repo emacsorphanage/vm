@@ -3867,9 +3867,12 @@ run vm-expunge-folder followed by vm-save-folder."
 	(setq vm-spooled-mail-waiting nil)
 	(intern (buffer-name) vm-buffers-needing-display-update)
 	(vm-update-summary-and-mode-line)
-	(if got-mail
-	    (run-hooks 'vm-retrieved-spooled-mail-hook))
-	(and got-mail (vm-assimilate-new-messages t))))))
+	(when got-mail
+          (condition-case errmsg
+              (run-hooks 'vm-retrieved-spooled-mail-hook)
+            (t (message "Ignoring error while running vm-retrieved-spooled-mail-hook. %S"
+                        errmsg)))
+          (vm-assimilate-new-messages t))))))
 
 (defun vm-safe-popdrop-string (drop)
   (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]+\\):[^:]+:[^:]+:\\([^:]+\\):[^:]+" drop)

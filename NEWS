@@ -2,6 +2,9 @@ VM 8.1.0-devo
 
   IMPROVEMENTS:
 
+    * Errors caused by `vm-retrieved-spooled-mail-hook' are reported and
+      assimilation of messages continues instead of aborting.
+
     * Handle filenames also from the disposition fields "name", "filename*"
       and "name*", where the latter two get decoded as they might contain 8bit
       chars.
