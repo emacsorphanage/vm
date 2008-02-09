@@ -2,6 +2,9 @@ VM 8.1.0-devo
 
   IMPROVEMENTS:
 
+    * In `vm-save-message-preview', ask the user if the output file already
+      exists instead of silently overwriting it.
+      
     * Removed `vm-paragraph-fill-column', the value is now taken from
       `vm-fill-paragraphs-containing-long-lines' thus allowing to fill to the
       available window with.
@@ -9,7 +12,7 @@ VM 8.1.0-devo
     * Replaced 'vm-fill-paragraphs-containing-long-lines' by the faster and
       more flexible version from vm-rfaddons.el.  Also cleaned up calls to the
       fill function and removed code duplication.  The code using longline.el
-      remains in vm-rfaddons.el, but it must be used explicitely now in an
+      remains in vm-rfaddons.el, but it must be used explicitly now in an
       advice.
 
     * Moved the variable `vm-fill-long-lines-in-reply-column' from
