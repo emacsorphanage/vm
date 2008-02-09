@@ -33,6 +33,8 @@ VM 8.1.0-devo
 
     * Added the variable `vm-pop-debug' to keep trace buffers.
 
+    * The button for images shows a thumbnail now when possible.
+
   BUGFIXES:
 
     * Correctly determine the real folder when postponing compositions started
