@@ -39,6 +39,9 @@ VM 8.0.8
       from a virtual folder. (Thanks to Uday S. Reddy for reporting and 
       debugging)
 
+    * Avoid crash when `vm-mouse-set-mouse-track-highlight' is not called
+      within a summary buffer or without a valid message pointer.
+
 VM 8.0.7
 
   BUGFIXES:

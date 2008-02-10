@@ -239,7 +239,11 @@ Remove/add the `vm-summary-fontify-buffer' hook from the hook variable
                                       vm-summary-highlight-face))))))
 
 (defadvice vm-mouse-set-mouse-track-highlight (after vm-summary-faces activate)
-  (when vm-summary-faces-mode
+  (when (and vm-summary-faces-mode
+             (eq major-mode 'vm-summary-mode)
+             (boundp 'm)
+             m)
+    ;; FIXME there is a warning about a free variable here, sorry!
     (vm-summary-faces-add m)))
 
 (defun vm-summary-faces-fix-pointer ()
