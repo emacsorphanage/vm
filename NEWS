@@ -34,6 +34,9 @@ VM 8.0.8
       `vm-reply-include-presentation' is t. (Thanks to Roland Winkler for
       debugging and reporting)
 
+    * Fixed yanking of presentation from wrong folder when folder is virtual.
+      (Thanks to Roland Winkler for reporting)
+
     * Redistributed flag not displayed in presentation buffer mode line. 
       https://bugzilla.redhat.com/show_bug.cgi?id=428248 (Thanks to Jonathan
       Underwood for the fix)
