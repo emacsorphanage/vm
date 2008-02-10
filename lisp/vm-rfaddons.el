@@ -2093,16 +2093,21 @@ It saves the decoded message and not the raw message like `vm-save-message'!"
   (interactive
    ;; protect value of last-command
    (let ((last-command last-command)
-         (this-command this-command))
+         (this-command this-command)
+         filename)
      (vm-follow-summary-cursor)
      (vm-select-folder-buffer)
-     (list
+     (setq filename
       (vm-read-file-name
        (if vm-last-written-file
            (format "Write text to file: (default %s) "
                    vm-last-written-file)
          "Write text to file: ")
-       nil vm-last-written-file nil))))
+       nil vm-last-written-file nil))
+     (if (and (file-exists-p filename)
+              (not (yes-or-no-p (format "Overwrite '%s'? " filename))))
+         (error "Aborting `vm-save-message-preview'."))
+     (list filename)))
     (save-excursion
       (vm-follow-summary-cursor)
       (vm-select-folder-buffer)

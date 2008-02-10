@@ -22,6 +22,9 @@ VM 8.0.8
 
     * Removed vm-easymenu.el and use easymenu.el instead.
 
+    * In `vm-save-message-preview', ask the user if the output file already
+      exists instead of silently overwriting it.
+
   BUGFIXES:
 
     * Moved [Undo] to Dispose menu and [Emacs] to Help menu as these do not
