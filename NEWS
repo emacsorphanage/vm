@@ -64,6 +64,9 @@ VM 8.1.0-devo
     * Avoid crash when `vm-mouse-set-mouse-track-highlight' is not called
       within a summary buffer or without a valid message pointer.
 
+    * Do not disable modes which do not exist. (Thanks to Uday S. Reddy for
+      reporting) 
+
 VM 8.0.7
 
   BUGFIXES:
