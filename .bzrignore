@@ -16,3 +16,4 @@ config.status
 configure
 lisp/vm-revno.el
 lisp/vm-autoloads.el
+lisp/vm-cus-load.el
