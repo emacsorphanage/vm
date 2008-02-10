@@ -35,6 +35,10 @@ VM 8.0.8
       https://bugzilla.redhat.com/show_bug.cgi?id=428248 (Thanks to Jonathan
       Underwood for the fix)
 
+    * Correctly determine the real folder when postponing compositions started
+      from a virtual folder. (Thanks to Uday S. Reddy for reporting and 
+      debugging)
+
 VM 8.0.7
 
   BUGFIXES:

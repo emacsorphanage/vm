@@ -254,7 +254,7 @@ This is only for internal use of vm-pine.el!!!")
   (let (mp midlist folder mid f)
     (while mlist
       (setq mp (car mlist)
-            folder (buffer-name (vm-buffer-of mp))
+            folder (buffer-file-name (vm-buffer-of (vm-real-message-of mp)))
             mid (vm-message-id-of mp)
             f (assoc folder midlist))
       (if mid
@@ -268,40 +268,38 @@ This is only for internal use of vm-pine.el!!!")
   "Return the message pointers belonging to the messages listed in MSGIDLIST.
 MSGIDLIST is a list as returned by `vm-get-persistent-message-ids-for'."
   (let (folder vm-message-pointers)
-    
     (while msgidlist
       (setq folder (caar msgidlist))
-      (if (and folder (file-exists-p (expand-file-name folder
-                                           (or vm-folder-directory "~/Mail"))))
-          (save-excursion
-            (if folder
-                (cond ((bufferp folder)
-                       (set-buffer folder))
-                      ((stringp folder)
-                       (if (get-buffer folder)
-                           (set-buffer (get-buffer folder))
-                         (vm-visit-folder folder)))))
-            (vm-select-folder-buffer)
-            (save-restriction
-              (widen)
-              (goto-char (point-min))
-              (let ((msgid-regexp (concat "^Message-Id:\\s-*"
-                                          (regexp-opt (cdar msgidlist))))
-                    (point-max (point-max))
+      (save-excursion
+        (when (cond ((get-buffer folder)
+                     (set-buffer (get-buffer folder)))
+                    ((get-file-buffer folder)
+                     (set-buffer (get-file-buffer folder)))
+                    ((file-exists-p folder)
+                     (vm-visit-folder folder))
+                    (t
+                     (message "The folder '%s' does not exist anymore.  Maybe it was virtual or closed before postponing." folder)
+                     nil))
+          (vm-select-folder-buffer)
+          (save-restriction
+            (widen)
+            (goto-char (point-min))
+            (let ((msgid-regexp (concat "^Message-Id:\\s-*"
+                                        (regexp-opt (cdar msgidlist))))
+                  (point-max (point-max))
                     (case-fold-search t))
-
-                (while (re-search-forward msgid-regexp point-max t)
-                  (let ((point (point))
-                        (mp vm-message-list))
-                    (while mp
-                      (if (and (>= point (vm-start-of (car mp)))
-                               (<= point (vm-end-of (car mp))))
-                          (setq vm-message-pointers (cons (car mp)
-                                                          vm-message-pointers)
-                                mp nil)
-                        (setq mp (cdr mp)))))))))
-        (message "The folder %s does not exist.  Maybe it was virtual or closed before postponing." folder))
-      (setq msgidlist (cdr msgidlist)))
+              
+              (while (re-search-forward msgid-regexp point-max t)
+                (let ((point (point))
+                      (mp vm-message-list))
+                  (while mp
+                    (if (and (>= point (vm-start-of (car mp)))
+                             (<= point (vm-end-of (car mp))))
+                        (setq vm-message-pointers (cons (car mp)
+                                                        vm-message-pointers)
+                              mp nil)
+                      (setq mp (cdr mp)))))))))
+        (setq msgidlist (cdr msgidlist))))
     vm-message-pointers))
 
 ;;-----------------------------------------------------------------------------
