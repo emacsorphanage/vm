@@ -322,16 +322,15 @@ vm-included-text-prefix is prepended to every yanked line."
     (save-restriction
       (widen)
       (save-excursion
-        (if (and vm-reply-include-presentation
-                 (save-excursion
-                   (set-buffer (vm-buffer-of message))
-		   ;; ensure the current message is presented 
-		   (vm-show-current-message)
-                   vm-presentation-buffer))
+        (if vm-reply-include-presentation
             (let ((text
                    (save-excursion
-                     (set-buffer (vm-buffer-of message))
-                     (set-buffer vm-presentation-buffer)
+		     (vm-select-folder-buffer)
+		     ;; ensure the current message is presented 
+		     (vm-show-current-message)
+		     (vm-select-folder-buffer)
+		     (if vm-presentation-buffer
+			 (set-buffer vm-presentation-buffer))
                      (goto-char (point-min))
                      (re-search-forward "\n\n" (point-max) t)
                      (goto-char (point))
