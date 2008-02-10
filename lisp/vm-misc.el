@@ -970,7 +970,8 @@ If MODES is nil the take the modes from the variable
     (while modes
       (setq m (car modes) modes (cdr modes))
       (condition-case errmsg
-	  (funcall m -1)
+          (if (functionp m)
+              (funcall m -1))
 	(error 
 	 (when (not (member m vm-disable-modes-ignore))
 	   (message "Could not disable mode `%S': %S" m errmsg)
