@@ -83,6 +83,7 @@ See the documentation for vm-mode for more information."
 	  folder-name remote-spec
 	  preserve-auto-save-file)
       (cond ((eq access-method 'pop)
+	     (setq vm-last-visit-pop-folder folder)
 	     (setq remote-spec (vm-pop-find-spec-for-name folder))
 	     (if (null remote-spec)
 		 (error "No such POP folder: %s" folder))
@@ -134,6 +135,7 @@ See the documentation for vm-mode for more information."
 		     (t
 		      (setq folder f-nospec)))))
 	    ((eq access-method 'imap)
+	     (setq vm-last-visit-imap-folder folder)
 	     (setq remote-spec folder
 		   folder-name (or (nth 3 (vm-imap-parse-spec-to-list
 					   remote-spec))
@@ -497,15 +499,19 @@ visited folder."
 		(string-match vm-recognize-pop-maildrops folder)
 		(setq foo (vm-pop-find-name-for-spec folder)))
 	   (setq folder foo
-		 access-method 'pop))
+		 access-method 'pop
+		 vm-last-visit-pop-folder folder))
 	  ((and (stringp vm-recognize-imap-maildrops)
 		(string-match vm-recognize-imap-maildrops folder)
 		(setq foo (vm-imap-find-name-for-spec folder)))
 	   (setq folder foo
-		 access-method 'imap))
+		 access-method 'imap
+		 vm-last-visit-imap-folder folder))
 	  (t
-	   (let ((default-directory (or vm-folder-directory default-directory)))
-	     (setq folder (expand-file-name folder)))))
+	   (let ((default-directory 
+		   (or vm-folder-directory default-directory)))
+	     (setq folder (expand-file-name folder)
+		   vm-last-visit-folder folder))))
     (vm folder read-only access-method)))
 
 ;;;###autoload
@@ -710,12 +716,13 @@ visited folder."
        (list (vm-read-imap-folder-name
 	      (format "Visit%s IMAP folder: "
 		      (if current-prefix-arg " read only" ""))
-	      vm-imap-account-alist t)
+	      vm-imap-account-alist t nil vm-last-visit-imap-folder)
 	     current-prefix-arg))))
   (vm-session-initialization)
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer-if-possible)
   (vm-check-for-killed-summary)
+  (setq vm-last-visit-imap-folder folder)
   (vm folder read-only 'imap))
 
 ;;;###autoload
@@ -732,7 +739,7 @@ visited folder."
        (list (vm-read-imap-folder-name
 	      (format "Visit%s IMAP folder: "
 		      (if current-prefix-arg " read only" ""))
-	      vm-imap-account-alist)
+	      vm-imap-account-alist nil nil vm-last-visit-imap-folder)
 	     current-prefix-arg))))
   (vm-session-initialization)
   (if (vm-multiple-frames-possible-p)
@@ -757,7 +764,7 @@ visited folder."
        (list (vm-read-imap-folder-name
 	      (format "Visit%s IMAP folder: "
 		      (if current-prefix-arg " read only" ""))
-	      vm-imap-account-alist)
+	      vm-imap-account-alist nil nil vm-last-visit-imap-folder)
 	     current-prefix-arg))))
   (vm-session-initialization)
   (if (one-window-p t)

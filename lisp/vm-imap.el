@@ -531,7 +531,7 @@ on all the relevant IMAP servers and then immediately expunges."
 ;; vm-imap-get-uid-and-flags-list: (process & int & int) ->
 ;;					(int . uid . string list) list
 ;; vm-imap-get-uid-and-flags: (process & vm-message) -> (uid . string list)
-;; vm-imap-store-message-flags: (process & int & server-response) -> void
+;; vm-imap-save-message-flags: (process & int & server-response) -> void
 ;; vm-imap-get-message-size: (process & int) -> int
 ;; vm-imap-save-message: (process & int & string?) -> void
 ;; vm-imap-delete-message: (process & int) -> void
@@ -1744,7 +1744,7 @@ on all the relevant IMAP servers and then immediately expunges."
       (vm-set-stuff-flag-of m t))
     ))
 
-(defun vm-imap-store-message-flags (process m uid-validity)
+(defun vm-imap-save-message-flags (process m uid-validity)
   ;; Stores the message flags of a message on the IMAP server.  Any
   ;; flags already on the server are preserved, except for \\Seen
   ;; \\Deleted and \\Flagged which can be reversed if necessary.
@@ -1879,6 +1879,7 @@ on all the relevant IMAP servers and then immediately expunges."
 ;; top-level operations
 ;; vm-imap-synchronize-folder:
 ;;	(&optional interactive & bool & bool & bool & bool) -> void
+;; vm-imap-save-attributes: (&optional interactive) -> void
 ;; vm-imap-folder-check-for-mail: (&optional interactive) -> ?
 ;;
 ;; vm-imap-get-synchronization-data: () -> 
@@ -2091,7 +2092,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	      (if (or (eq save-attributes 'all)
 		      (vm-attribute-modflag-of (car mp)))
 		(condition-case nil
-		    (vm-imap-store-message-flags process (car mp) uid-validity)
+		    (vm-imap-save-message-flags process (car mp) uid-validity)
 		  (vm-imap-protocol-error nil)))
 	      (setq mp (cdr mp)))
 	    (message "Updating attributes on the IMAP server... done")))
@@ -2202,6 +2203,27 @@ on all the relevant IMAP servers and then immediately expunges."
 	    ))
       got-some)))
 
+(defun vm-imap-save-attributes (&optional interactive all-flags)
+  "* Save the attributes of changed messages to the IMAP folder.
+   INTERACTIVE, true if the function was invoked interactively, e.g., as
+   vm-get-spooled-mail.
+   ALL-FLAGS, if true says that the attributes of all messages should
+   be saved to the IMAP folder, not only those of changed messages.
+"
+  (let* ((process (vm-folder-imap-process))
+	 (uid-validity (vm-folder-imap-uid-validity))
+	 (mp vm-message-list))
+      ;;  (perm-flags (vm-folder-imap-permanent-flags))
+      (message "Updating attributes on the IMAP server... ")
+      (while mp
+	(if (or all-flags (vm-attribute-modflag-of (car mp)))
+	    (condition-case nil
+		(vm-imap-save-message-flags process (car mp) uid-validity)
+	      (vm-imap-protocol-error nil)))
+	(setq mp (cdr mp)))
+      (message "Updating attributes on the IMAP server... done")))
+
+
 (defun vm-imap-synchronize (&optional all-flags)
   "Synchronize the current folder with the IMAP mailbox.
 Deleted messages are not expunged.
@@ -2216,8 +2238,9 @@ VM session.  This is useful for saving offline work."
   (vm-display nil nil '(vm-imap-synchronize) '(vm-imap-synchronize))
   (if (not (eq vm-folder-access-method 'imap))
       (message "This is not an IMAP folder")
-    (vm-imap-synchronize-folder t nil nil nil 
-				(if all-flags 'all t) nil)
+    (vm-imap-save-attributes all-flags)
+    ;; (vm-imap-synchronize-folder t nil nil nil 
+    ;; 			(if all-flags 'all t) nil)
 					; save-attributes
     (vm-imap-synchronize-folder t t t t nil t)
 					; do-local-expunges,
@@ -2276,6 +2299,8 @@ VM session.  This is useful for saving offline work."
 
 ;;;###autoload
 (defun vm-imap-make-filename-for-spec (spec)
+  "Returns a cache file name appropriate for the IMAP maildrop
+specification SPEC."
   (let (md5 list)
     (setq spec (vm-imap-normalize-spec spec))
     (setq md5 (vm-md5-string spec))
@@ -2287,10 +2312,10 @@ VM session.  This is useful for saving offline work."
 (defun vm-imap-normalize-spec (spec)
   (let (list)
     (setq list (vm-imap-parse-spec-to-list spec))
-    (setcar (vm-last list) "*")
-    (setcar list "imap")
-    (setcar (nthcdr 2 list) "*")
-    (setcar (nthcdr 4 list) "*")
+    (setcar (vm-last list) "*")		; scrub password
+    (setcar list "imap")		; standardise protocol name
+    (setcar (nthcdr 2 list) "*")	; scrub portnumber
+    (setcar (nthcdr 4 list) "*")	; scrub authentication method
     (setq spec (mapconcat (function identity) list ":"))
     spec ))
 
@@ -2299,36 +2324,58 @@ VM session.  This is useful for saving offline work."
   (vm-parse spec "\\([^:]+\\):?" 1 6))
 
 (defun vm-imap-spec-list-to-host-alist (spec-list)
-  (let (host-alist)
+  (let (host-alist spec host)
     (while spec-list
+      (setq spec (vm-imapdrop-sans-password-and-mailbox (car spec-list)))
       (setq host-alist (cons
 			(cons
-			 (nth 1 (vm-imap-parse-spec-to-list (car spec-list)))
-			 (car spec-list))
+			 (nth 1 (vm-imap-parse-spec-to-list spec))
+			 spec)
 			host-alist)
 	    spec-list (cdr spec-list)))
     host-alist ))
 
 ;;;###autoload
-(defun vm-read-imap-folder-name (prompt account-alist &optional selectable-only newone)
-  "Read an IMAP server and mailbox, return an IMAP mailbox spec."
-  (let (host c-list spec process mailbox list
+(defun vm-read-imap-folder-name (prompt account-alist 
+					&optional selectable-only
+					newone default) 
+  "Read an IMAP account and mailbox, return an IMAP mailbox spec."
+  (let* (host c-list spec process mailbox list default-account default-folder
 	(vm-imap-ok-to-ask t)
 	(host-alist (mapcar 'reverse account-alist)))
     (if (null host-alist)
 	(error "No known IMAP accounts.  Please set vm-imap-account-alist."))
-    (setq host (if (cdr host-alist)
-		   (completing-read "IMAP account: " host-alist nil t)
-		 (car (car host-alist)))
-	  spec (cadr (assoc host host-alist))
+    (if default 
+	(setq list (vm-imap-parse-spec-to-list default)
+	      default-account 
+	      (cadr (assoc (vm-imapdrop-sans-password-and-mailbox default)
+			   vm-imap-account-alist))
+	      default-folder (nth 3 list))
+      (setq default-account vm-last-visit-imap-account))
+    (setq host (completing-read
+		    (format "IMAP account:%s " 
+			    (if default-account
+				(format " (default %s)" default-account) ""))
+		    host-alist nil t))
+    (if (equal host "") 
+	(if default-account
+	    (setq host default-account)
+	  (error "No IMAP account specified")))
+    (setq spec (cadr (assoc host host-alist))
 	  process (vm-imap-make-session spec)
 	  c-list (and process (vm-imap-mailbox-list process selectable-only)))
     (vm-imap-end-session process)
     (setq mailbox
-          (completing-read prompt (mapcar (lambda (c) (list c)) c-list)
-                           nil (not newone)))
+          (completing-read 
+	   (format "%s%s " 
+		   prompt 
+		   (if default (format "(default %s)" default-folder) ""))
+	   (mapcar (lambda (c) (list c)) c-list)
+	   nil (not newone)))
+    (if (equal mailbox "") (setq mailbox default-folder))
     (setq list (vm-imap-parse-spec-to-list spec))
     (setcar (nthcdr 3 list) mailbox)
+    (setq vm-last-visit-imap-account host)
     (mapconcat 'identity list ":")))
 
 (defun vm-imap-directory-separator (process ref)

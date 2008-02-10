@@ -1108,17 +1108,19 @@ popdrop
 
 ;;;###autoload
 (defun vm-pop-make-filename-for-spec (spec &optional scrub-password scrub-spec)
+  "Returns a cache file name appropriate for the POP maildrop
+specification SPEC."
   (let (md5 list)
     (if (and (null scrub-password) (null scrub-spec))
 	nil
       (setq list (vm-pop-parse-spec-to-list spec))
-      (setcar (vm-last list) "*")
+      (setcar (vm-last list) "*")	; scrub password
       (if scrub-spec
 	  (progn
 	    (cond ((= (length list) 6)
-		   (setcar list "pop")
-		   (setcar (nthcdr 2 list) "*")
-		   (setcar (nthcdr 3 list) "*"))
+		   (setcar list "pop")	; standardise protocol name
+		   (setcar (nthcdr 2 list) "*")	; scrub port number
+		   (setcar (nthcdr 3 list) "*")) ; scrub auth method
 		  (t
 		   (setq list (cons "pop" list))
 		   (setcar (nthcdr 2 list) "*")

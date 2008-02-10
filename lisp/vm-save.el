@@ -717,8 +717,10 @@ The saved messages are flagged as `filed'."
      (vm-select-folder-buffer-if-possible)
      (let ((this-command this-command)
 	   (last-command last-command))
-       (list (vm-read-imap-folder-name "Save to IMAP folder: "
-				       vm-imap-account-alist t)
+       (list (vm-read-imap-folder-name 
+	      "Save to IMAP folder: "
+	      vm-imap-account-alist t nil
+	      (or vm-last-save-imap-folder vm-last-visit-imap-folder))
 	     (prefix-numeric-value current-prefix-arg)))))
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
@@ -744,6 +746,7 @@ The saved messages are flagged as `filed'."
 	    (setq mlist (cdr mlist))))
       (and process (vm-imap-end-session process)))
     (vm-update-summary-and-mode-line)
+    (setq vm-last-save-imap-folder folder)
     (message "%d message%s saved to %s"
 	     count (if (/= 1 count) "s" "")
 	     (vm-safe-imapdrop-string folder))

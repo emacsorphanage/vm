@@ -297,16 +297,16 @@ The variable @code{vm-startup-with-summary} controls whether VM
 automatically displays a summary of the folder's contents at startup.  A
 value of @code{nil} gives no summary; a value of @code{t} always gives a
 summary.  A value that is a positive integer @var{n} means that VM
-should generate a summary on if there are @var{n} or more messages in
+should generate a summary if there are @var{n} or more messages in
 the folder.  A negative value @var{-n} means generate a summary only if
 there are @var{n} or fewer messages.  The default value of
 @code{vm-startup-with-summary} is @code{t}.
 
 @menu
-* Local Folders::  Working with folders on the local filesystem
-* Server Folders::  Working with folders on mail servers
+* Local Folders::     Working with folders on the local filesystem
+* Server Folders::    Working with folders on mail servers
 * Getting New Mail::  Retrieving mail from spool files.
-* Crash Recovery::  Recovering changes after Emacs or your system dies.
+* Crash Recovery::    Recovering changes after Emacs or your system dies.
 @end menu
 
 @node Local Folders, Server Folders, Starting Up, Starting Up
@@ -327,14 +327,17 @@ are listed in the documentation of the variable
 @vindex vm-spool-files
 @cindex file locking
 A @dfn{spool file} is a file where the mail transport system delivers
-messages intended for you.  Typically a program called @file{/bin/mail}
-or @file{/bin/mail.local} does this delivery, although agents such as
-@file{procmail}, @file{filter} and @file{slocal} can be invoked from a
-user's @file{~/.forward} or @file{~/.qmail} files.  No matter what the
+messages intended for you.  On Unix systems, a program called
+@file{/bin/mail} or @file{/bin/mail.local} does this delivery,
+although agents such as @file{procmail}, @file{filter} and
+@file{slocal} can be invoked from a user's @file{~/.forward} or
+@file{~/.qmail} files.  On other systems, incoming mail is typically
+delivered to mailboxes on remote mail servers, from where it can be
+retrieved through protocols like POP and IMAP.  No matter what the
 delivery agent, what all spool files have in common is that mail is
 delivered into them by one or more entities apart from VM and that all
-access to spool files must therefore be accompanied by the use of
-some file locking protocol.
+access to spool files must therefore be accompanied by the use of some
+file locking protocol.
 
 @vindex vm-movemail-program
 @vindex vm-movemail-program-switches
@@ -774,8 +777,11 @@ save the changes with @code{vm-save-folder}.
 
 Message attributes (new, replied, filed, etc.) and labels cannot be
 stored on the POP server but they will be maintained in the local
-copy.  To be able to store message attributes and labels on the
-server, you should use @ref{IMAP Folders} resident on an IMAP server.
+copy.  This means that if you access the same POP mailbox from
+multiple locations on the internet, you will see different attributes
+at different locations.  To be able to store message attributes and
+labels on the server, you should use @ref{IMAP Folders} resident on an
+IMAP server.
 
 @vindex vm-pop-folder-alist
 In order for VM to know about POP folders that you can access, you
@@ -803,7 +809,8 @@ For example:
 @end example
 
 @samp{Yahoo! mail} and @samp{local mail} are what you would type
-when @code{vm-visit-pop-folder} asks for a folder name.
+when @code{vm-visit-pop-folder} asks for a folder name.  There is no
+need to specify the password for POP accounts in this definition.
 
 @node IMAP Folders,, POP Folders, Server Folders
 @unnumberedsubsec IMAP Folders
@@ -847,19 +854,21 @@ For example:
 @example
 (setq vm-imap-account-alist
       '(
-        ("imap-ssl:mail.foocorp.com:993:inbox:login:becky:*" "becky")
-        ("imap:crickle.lex.ky.us:143:inbox:login:becky:*" "crickle")
+        ("imap-ssl:mail.foocorp.com:993:*:login:becky:*" "becky")
+        ("imap:crickle.lex.ky.us:143:*:login:becky:*" "crickle")
        )
 )
 @end example
 
-The mailbox (@samp{inbox} in the example) is ignored; when
+The mailbox (@samp{*} in the example) is ignored; when
 @code{vm-visit-imap-folder} asks for a folder name you can
 enter any folder that is accessible to you on the IMAP server.
+Similarly, the password field is also ignored.
 
 @vindex vm-imap-server-list
-The customization variable @code{vm-imap-server-list} is deprecated.
-Please use @code{vm-imap-account-alist} instead.
+The customization variable @code{vm-imap-server-list}, used in old
+versions of VM, is deprecated.  Please use @code{vm-imap-account-alist}
+instead.
 
 @anchor{IMAP Synchronization}
 @unnumberedsubsec IMAP Synchronization
@@ -1060,6 +1069,7 @@ unread messages over new messages if the old, unread message appears
 earlier in the folder.  If you set @code{vm-jump-to-unread-messages} to
 @code{nil} also, VM will not search for new or unread messages.
 
+@cindex searching
 Other commands to select messages:
 
 @table @kbd
@@ -2406,11 +2416,18 @@ As with VM Mail mode buffers, all VM commands can be accessed from
 the edit buffer through the command prefix @kbd{C-c C-v}.
 
 @node Marking Messages, Message Attributes, Editing Messages, Top
-@chapter Message Marks
+@chapter Marking Messages
 
-VM provides general purpose @dfn{marks} that may be applied to any and
-all messages within a given folder.  Certain VM commands can be
-subsequently invoked only on those messages that are marked.
+@cindex marking
+@cindex searching
+@cindex virtual fodlers
+VM provides a way to mark selected messages so that subsequent
+operations can be applied to them.  This is similar to marking in other
+parts of Emacs, e.g., @xref{Marks vs Flags, Dired Marks, Dired Marks,
+emacs}, but arguably more powerful.  For example, one can mark all
+messages from a particular sender and save them to a folder, or mark all
+messages with a particular subject and print them.  One can also mark
+messages by searching for particular strings in their text.
 
 To mark the current message, type @kbd{M M}
 (@code{vm-mark-message}).  If you give a numeric prefix argument
@@ -2468,7 +2485,18 @@ Unmark messages with the same author as the current message.
 To apply a VM command to all marked messages you must prefix it with the
 key sequence @kbd{M N} (@code{vm-next-command-uses-marks}).  The next VM
 command will apply to all marked messages, provided the command can be
-applied to such messages in a meaningful and useful way.
+applied to such messages in a meaningful and useful way.  Unfortunately,
+as of this writing, this mechanism works only if the next command
+invoked is a keyboard command.  Commands invoked by @code{M-x} are
+unable to access the marked messages.  So, to invoke a complex command,
+you might temporary bind to an unused key, e.g.,
+
+@example
+M-x local-set-key C vm-forward-message-all-headers
+M N C
+@end example
+
+forwards marked messages with all headers included.
 
 @node Message Attributes, Sorting Messages, Marking Messages, Top
 @chapter Message Attributes
@@ -2878,6 +2906,9 @@ of summary and attribution formats.
 @node Virtual Folders, Frames and Windows, Summaries, Top
 @chapter Virtual Folders
 
+@cindex searching
+@cindex virtual folders
+
 A @dfn{virtual folder} is a mapping of messages from one or more
 real folders into a container that in most ways acts like a
 real folder but has no real existence outside of VM.  You can have a
@@ -3111,6 +3142,11 @@ create virtual folder definitions.
    )
 )
 @end example
+
+The @code{text} selector provides a particularly effective way to search
+for strings in messages.  It is better than the
+@code{vm-isearch-forward/backward} functions because it avoids searching
+inside encoded attachments, hence faster.
 
 Again, you visit virtual folders you have defined in
 @code{vm-virtual-folder-alist} with @kbd{V V}.  Once you've
