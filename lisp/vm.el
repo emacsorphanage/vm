@@ -58,6 +58,9 @@ deleted messages.  Use `###' to expunge deleted messages.
 See the documentation for vm-mode for more information."
   (interactive (list nil current-prefix-arg))
   (vm-session-initialization)
+  ;; recursive call to vm in order to allow defadvice on its first call
+  (unless (boundp 'vm-session-beginning)
+    (vm folder read-only access-method))
   ;; set inhibit-local-variables non-nil to protect
   ;; against letter bombs.
   ;; set enable-local-variables to nil for newer Emacses

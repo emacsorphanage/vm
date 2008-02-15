@@ -302,14 +302,14 @@ vm-included-text-discard-header-regexp, and the value of
 vm-included-text-prefix is prepended to every yanked line."
   (interactive
    (list
-   ;; What we really want for the first argument is a message struct,
-   ;; but if called interactively, we let the user type in a message
-   ;; number instead.
+    ;; What we really want for the first argument is a message struct,
+    ;; but if called interactively, we let the user type in a message
+    ;; number instead.
     (let (mp default
-	  (result 0)
-	  prompt
-	  (last-command last-command)
-	  (this-command this-command))
+             (result 0)
+             prompt
+             (last-command last-command)
+             (this-command this-command))
       (save-excursion
 	(vm-select-folder-buffer)
 	(setq default (and vm-message-pointer
@@ -336,108 +336,107 @@ vm-included-text-prefix is prepended to every yanked line."
     (save-restriction
       (widen)
       (save-excursion
-        (if (and vm-reply-include-presentation
-                 (save-excursion
-                   (set-buffer (vm-buffer-of message))
-                   vm-presentation-buffer))
+        (if vm-reply-include-presentation
             (let ((text
                    (save-excursion
-                     (set-buffer (vm-buffer-of message))
-                     (set-buffer vm-presentation-buffer)
+		     (vm-select-folder-buffer)
+		     ;; ensure the current message is presented 
+		     (vm-show-current-message)
+		     (vm-select-folder-buffer)
+		     (if vm-presentation-buffer
+			 (set-buffer vm-presentation-buffer))
                      (goto-char (point-min))
                      (re-search-forward "\n\n" (point-max) t)
-                     (re-search-forward "[^ \t\n]" (point-max) t)
-                     (goto-char (1- (point)))
+                     (goto-char (point))
                      (vm-buffer-substring-no-properties (point) (point-max)))))
-              (insert text))
-	(if (vectorp (vm-mm-layout message))
-	    (let* ((o (vm-mm-layout message))
-                   layout new-layout
-		   (type (car (vm-mm-layout-type o)))
-                   (alternatives 0)
-		   (parts (list o)))
-	      (vm-insert-region-from-buffer (vm-buffer-of message)
-					    (vm-headers-of message)
-					    (vm-text-of message))
-	      (while parts
-                (setq layout (car parts))
-		(cond ((vm-mime-text-type-layout-p layout)
-		       (if (cond ((vm-mime-types-match
-				   "text/enriched"
-				   (car (vm-mm-layout-type layout)))
-				  (vm-mime-display-internal-text/enriched
-				   layout))
-				 ((vm-mime-types-match
-				   "message/rfc822"
-				   (car (vm-mm-layout-type layout)))
-				  (vm-mime-display-internal-message/rfc822
-				   layout))
+              (insert text)
+	      (setq end (point-marker)))
+          (if (vectorp (vm-mm-layout message))
+              (let* ((o (vm-mm-layout message))
+                     layout new-layout
+                     (type (car (vm-mm-layout-type o)))
+                     (alternatives 0)
+                     (parts (list o)))
+                (vm-insert-region-from-buffer (vm-buffer-of message)
+                                              (vm-headers-of message)
+                                              (vm-text-of message))
+                (while parts
+                  (setq layout (car parts))
+                  (cond ((vm-mime-text-type-layout-p layout)
+                         (if (cond ((vm-mime-types-match
+                                     "text/enriched"
+                                     (car (vm-mm-layout-type layout)))
+                                    (vm-mime-display-internal-text/enriched
+                                     layout))
+                                   ((vm-mime-types-match
+                                     "message/rfc822"
+                                     (car (vm-mm-layout-type layout)))
+                                    (vm-mime-display-internal-message/rfc822
+                                     layout))
 ;; no text/html for now
 ;;				 ((vm-mime-types-match
 ;;				   "text/html"
 ;;				   (car (vm-mm-layout-type layout)))
 ;;				  (vm-mime-display-internal-text/html
 ;;				   layout))
-				 ((member (downcase (car (vm-mm-layout-type
-							  layout)))
-					  vm-included-mime-types-list)
-				  (vm-mime-display-internal-text/plain
-				   layout t))
-                                 ;; convert the layout if possible
-                                 ((and (not (vm-mm-layout-is-converted layout))
-                                       (vm-mime-can-convert (car (vm-mm-layout-type
-                                                                  layout)))
-                                       (setq new-layout
-                                             (vm-mime-convert-undisplayable-layout
-                                              layout)))
-                                  (vm-decode-mime-layout new-layout)))
-                           ;; we have found a part to insert, thus skip the
-                           ;; remaining alternatives  
-			   (while (> alternatives 1)
-                              (setq parts (cdr parts)
-                                    alternatives (1- alternatives)))
+                                   ((member (downcase (car (vm-mm-layout-type
+                                                            layout)))
+                                            vm-included-mime-types-list)
+                                    (vm-mime-display-internal-text/plain
+                                     layout t))
+                                   ;; convert the layout if possible
+                                   ((and (not (vm-mm-layout-is-converted layout))
+                                         (vm-mime-can-convert (car (vm-mm-layout-type
+                                                                    layout)))
+                                         (setq new-layout
+                                               (vm-mime-convert-undisplayable-layout
+                                                layout)))
+                                    (vm-decode-mime-layout new-layout)))
+                             ;; we have found a part to insert, thus skip the
+                             ;; remaining alternatives  
+                             (while (> alternatives 1)
+                               (setq parts (cdr parts)
+                                     alternatives (1- alternatives)))
 			 
-			 (if (not (member (downcase (car (vm-mm-layout-type
-							  layout)))
-					  vm-included-mime-types-list))
-			     nil
-			 ;; charset problems probably
-			 ;; just dump the raw bits
-			   (setq insert-start (point))
-			 (vm-mime-insert-mime-body layout)
-			 (vm-mime-transfer-decode-region layout
-							   insert-start
-							   (point))))
-                       (setq alternatives (1- alternatives))
-		       (setq parts (cdr parts)))
-                      ;; burst composite types 
-		      ((vm-mime-composite-type-p
-			(car (vm-mm-layout-type layout)))
-                       (setq alternatives (length (vm-mm-layout-parts (car parts))))
-		       (setq parts (nconc (copy-sequence
-					   (vm-mm-layout-parts
-					    (car parts)))
-					  (cdr parts))))
-                      ;; skip non-text parts 
-		      (t
-                       (setq alternatives (1- alternatives))
-                       (setq parts (cdr parts)))))
-	      (setq end (point-marker)))
-	  (set-buffer (vm-buffer-of message))
-	  (save-restriction
-	    (widen)
-	    ;; decode MIME encoded words so supercite and other
-	    ;; mail-citation-hook denizens won't have to eat 'em.
-	    (append-to-buffer b (vm-headers-of message)
-			      (vm-text-end-of message))
-	    (set-buffer b)
-	    (setq end (point-marker))
-	    (if vm-display-using-mime
-		(progn
-		  (narrow-to-region start end)
-		  (vm-decode-mime-encoded-words)))))))
-      (if vm-reply-include-presentation
-          (setq end (point-max-marker))
+                           (if (not (member (downcase (car (vm-mm-layout-type
+                                                            layout)))
+                                            vm-included-mime-types-list))
+                               nil
+                             ;; charset problems probably
+                             ;; just dump the raw bits
+                             (setq insert-start (point))
+                             (vm-mime-insert-mime-body layout)
+                             (vm-mime-transfer-decode-region layout
+                                                             insert-start
+                                                             (point))))
+                         (setq alternatives (1- alternatives))
+                         (setq parts (cdr parts)))
+                        ;; burst composite types 
+                        ((vm-mime-composite-type-p
+                          (car (vm-mm-layout-type layout)))
+                         (setq alternatives (length (vm-mm-layout-parts (car parts))))
+                         (setq parts (nconc (copy-sequence
+                                             (vm-mm-layout-parts
+                                              (car parts)))
+                                            (cdr parts))))
+                        ;; skip non-text parts 
+                        (t
+                         (setq alternatives (1- alternatives))
+                         (setq parts (cdr parts)))))
+                (setq end (point-marker)))
+            (set-buffer (vm-buffer-of message))
+            (save-restriction
+              (widen)
+              ;; decode MIME encoded words so supercite and other
+              ;; mail-citation-hook denizens won't have to eat 'em.
+              (append-to-buffer b (vm-headers-of message)
+                                (vm-text-end-of message))
+              (set-buffer b)
+              (setq end (point-marker))
+              (if vm-display-using-mime
+                  (progn
+                    (narrow-to-region start end)
+                    (vm-decode-mime-encoded-words)))))))
       ;; get rid of read-only text properties on the text, as
       ;; they will only cause trouble.
       (let ((inhibit-read-only t))
@@ -452,10 +451,10 @@ vm-included-text-prefix is prepended to every yanked line."
             (narrow-to-region start end)
             (vm-decode-mime-encoded-words))))
       
-      (push-mark end)
-      (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
-	    (mail-yank-hooks (run-hooks 'mail-yank-hooks))
-	    (t (vm-mail-yank-default message))))))
+    (push-mark end)
+    (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
+          (mail-yank-hooks (run-hooks 'mail-yank-hooks))
+          (t (vm-mail-yank-default message)))))
 
 ;;;###autoload
 (defun vm-mail-send-and-exit (&rest ignored)

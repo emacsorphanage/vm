@@ -178,7 +178,7 @@ The saved messages are flagged as `filed'."
   "Save the current message.  This may be done either by saving it
 to an IMAP folder or by saving it to a local filesystem folder.
 Which is done is controlled by the type of the current vm-folder
-buffer and the variable VM-IMAP-SAVE-TO-SERVER."
+buffer and the variable `vm-imap-save-to-server'."
   (interactive
    (if (and vm-imap-save-to-server
 	    (vm-imap-folder-p))
@@ -539,15 +539,35 @@ vm-save-message instead (normally bound to `s')."
 	  (message "Message%s written to %s" (if (/= 1 count) "s" "") file)))
     (setq vm-last-written-file file)))
 
+(defun vm-switch-to-command-output-buffer (command buffer discard-output)
+  "Eventually switch to the output buffer of the command."
+  (let ((output-bytes (save-excursion (set-buffer buffer) (buffer-size))))
+    (if (zerop output-bytes)
+	(message "Command '%s' produced no output." command)
+      (if discard-output
+	  (message "Command '%s' produced %d bytes of output." 
+		   command output-bytes)
+	(display-buffer buffer)))))
+
+(defun vm-pipe-message-part (m arg)
+  "Return (START END) bounds for piping to external command, based on ARG."
+  (cond ((equal prefix-arg '(4))
+	 (list (vm-text-of m) (vm-text-end-of m)))
+	((equal prefix-arg '(16))
+	 (list (vm-headers-of m) (vm-text-of m)))
+	((equal prefix-arg '(64))
+	 (list (vm-vheaders-of m) (vm-text-end-of m)))
+	(t 
+	 (list (vm-headers-of m) (vm-text-end-of m)))))
+
 ;;;###autoload
-(defun vm-pipe-message-to-command (command &optional prefix-arg)
-  "Runs a shell command with some or all of the contents of the
-current message as input.
+(defun vm-pipe-message-to-command (command &optional prefix-arg discard-output)
+  "Runs a shell command with contents from the current message as input.
 By default, the entire message is used.
 With one \\[universal-argument] the text portion of the message is used.
 With two \\[universal-argument]'s the header portion of the message is used.
 With three \\[universal-argument]'s the visible header portion of the message
-  plus the text portion is used.
+plus the text portion is used.
 
 When invoked on marked messages (via vm-next-command-uses-marks),
 each marked message is successively piped to the shell command,
@@ -582,29 +602,170 @@ Output, if any, is displayed.  The message is not altered."
       (set-buffer (vm-buffer-of m))
       (save-restriction
 	(widen)
-	(goto-char (vm-headers-of m))
-	(cond ((equal prefix-arg nil)
-	       (narrow-to-region (point) (vm-text-end-of m)))
-	      ((equal prefix-arg '(4))
-	       (narrow-to-region (vm-text-of m)
-				 (vm-text-end-of m)))
-	      ((equal prefix-arg '(16))
-	       (narrow-to-region (point) (vm-text-of m)))
-	      ((equal prefix-arg '(64))
-	       (narrow-to-region (vm-vheaders-of m) (vm-text-end-of m)))
-	      (t (narrow-to-region (point) (vm-text-end-of m))))
 	(let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
 	      ;; call-process-region calls write-region.
 	      ;; don't let it do CR -> LF translation.
-	      (selective-display nil))
-	  (call-process-region (point-min) (point-max)
+	      (selective-display nil)
+	      (region (vm-pipe-message-part m prefix-arg)))
+	  (call-process-region (nth 0 region) (nth 1 region)
 			       (or shell-file-name "sh")
 			       nil buffer nil shell-command-switch command)))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-pipe-message-to-command)
 		'(vm-pipe-message-to-command))
-    (if (not (zerop (save-excursion (set-buffer buffer) (buffer-size))))
-	(display-buffer buffer))))
+    (vm-switch-to-command-output-buffer command buffer discard-output)
+    buffer))
+
+(defun vm-pipe-message-to-command-to-string (command &optional prefix-arg)
+  "Run a shell command with contents from the current message as input.
+This function is like `vm-pipe-message-to-command', but will not display the
+output of the command, but return it as a string."
+  (save-excursion 
+    (set-buffer (vm-pipe-message-to-command command prefix-arg t))
+    (buffer-substring-no-properties (point-min) (point-max))))
+
+;;;###autoload
+(defun vm-pipe-message-to-command-discard-output (command &optional prefix-arg)
+  "Run a shell command with contents from the current message as input.
+This function is like `vm-pipe-message-to-command', but will not display the
+output of the command."
+  (interactive
+   ;; protect value of last-command
+   (let ((last-command last-command)
+	 (this-command this-command))
+     (vm-follow-summary-cursor)
+     (vm-select-folder-buffer)
+     (list (read-string "Pipe to command: " vm-last-pipe-command)
+	   current-prefix-arg)))
+  (vm-pipe-message-to-command command prefix-arg t))
+
+(defun vm-pipe-command-exit-handler (process discard-output 
+					     &optional exit-handler)
+  "Switch to output buffer of PROCESS if DISCARD-OUTPUT non-nil.
+If non-nil call EXIT-HANDLER with the two arguments COMMAND and OUTPUT-BUFFER." 
+  (let ((exit-code (process-exit-status process))
+	(buffer (process-buffer process))
+	(command (process-command process)))
+  (if (not (zerop exit-code))
+      (message "Command '%s' exit code is %d." command exit-code))
+  (vm-display nil nil '(vm-pipe-message-to-command)
+	      '(vm-pipe-message-to-command))
+  (vm-switch-to-command-output-buffer command buffer discard-output)
+  (if exit-handler
+      (funcall exit-handler command buffer))))
+
+(defvar vm-pipe-messages-to-command-start ""
+  "*Inserted by `vm-pipe-messages-to-command' before a message.")
+
+(defvar vm-pipe-messages-to-command-end "\n"
+  "*Inserted by `vm-pipe-messages-to-command' after a message.")
+
+;;;###autoload
+(defun vm-pipe-messages-to-command (command &optional prefix-arg 
+					    discard-output no-wait)
+  "Run a shell command with contents from messages as input.
+
+Similar to `vm-pipe-message-to-command', but it will call process
+just once and pipe all messages to it.  For bulk operations this
+is much faster than calling the command on each message.  This is
+more like saving to a pipe.
+
+Before a message it will insert `vm-pipe-messages-to-command-start'
+and after a message `vm-pipe-messages-to-command-end'.
+
+Output, if any, is displayed unless DISCARD-OUTPUT is t.
+
+If NO-WAIT is t, then do not wait for process to finish, if it is
+a function then call it with the COMMAND and OUTPUT-BUFFER as
+arguments after the command finished."
+  (interactive
+   ;; protect value of last-command
+   (let ((last-command last-command)
+	 (this-command this-command))
+     (vm-follow-summary-cursor)
+     (vm-select-folder-buffer)
+     (list (read-string "Pipe to command: " vm-last-pipe-command)
+	   current-prefix-arg)))
+  (vm-select-folder-buffer)
+  (vm-check-for-killed-summary)
+  (vm-error-if-folder-empty)
+  (setq vm-last-pipe-command command)
+  (let ((buffer (get-buffer-create "*Shell Command Output*"))
+	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
+	;; prefix arg doesn't have "normal" meaning here, so only call
+	;; vm-select-marked-or-prefixed-messages if we're using marks.
+	(mlist (if (eq last-command 'vm-next-command-uses-marks)
+		   (vm-select-marked-or-prefixed-messages 0)
+		 (list (car vm-message-pointer))))
+	m process)
+    (save-excursion
+      (set-buffer buffer)
+      (erase-buffer))
+    (setq process (start-process command buffer 
+				 (or shell-file-name "sh")
+				 shell-command-switch command))
+    (set-process-sentinel 
+     process 
+     `(lambda (process status) 
+	(setq status (process-status process))
+	(if (eq 'exit status)
+	    (if ,no-wait
+		(vm-pipe-command-exit-handler 
+		 process ,command ,discard-output 
+		 (if (and ,no-wait (functionp ,no-wait))
+		     no-wait)))
+	  (message "Command '%s' changed state to %s."
+		   ,command status))))
+    (while mlist
+      (setq m (vm-real-message-of (car mlist)))
+      (set-buffer (vm-buffer-of m))
+      (process-send-string process vm-pipe-messages-to-command-start)
+      (save-restriction
+	(widen)
+	(let ((region (vm-pipe-message-part m prefix-arg)))
+	  (process-send-region process (nth 0 region) (nth 1 region))))
+      (process-send-string process vm-pipe-messages-to-command-end)
+      (setq mlist (cdr mlist)))
+
+    (process-send-eof process)
+
+    (when (not no-wait) 
+      (while (and (eq 'run (process-status process)))
+	(accept-process-output process)
+	(sit-for 0))
+      (vm-pipe-command-exit-handler process command discard-output))
+    buffer))
+
+(defun vm-pipe-messages-to-command-to-string (command &optional prefix-arg)
+  "Runs a shell command with contents from the current message as input.
+This function is like `vm-pipe-messages-to-command', but will not display the
+output of the command, but return it as a string."
+  (interactive
+   ;; protect value of last-command
+   (let ((last-command last-command)
+	 (this-command this-command))
+     (vm-follow-summary-cursor)
+     (vm-select-folder-buffer)
+     (list (read-string "Pipe to command: " vm-last-pipe-command)
+	   current-prefix-arg)))
+  (save-excursion 
+    (set-buffer (vm-pipe-messages-to-command command prefix-arg t))
+    (buffer-substring-no-properties (point-min) (point-max))))
+
+;;;###autoload
+(defun vm-pipe-messages-to-command-discard-output (command &optional prefix-arg)
+  "Runs a shell command with contents from the current message as input.
+This function is like `vm-pipe-messages-to-command', but will not display the
+output of the command."
+  (interactive
+   ;; protect value of last-command
+   (let ((last-command last-command)
+	 (this-command this-command))
+     (vm-follow-summary-cursor)
+     (vm-select-folder-buffer)
+     (list (read-string "Pipe to command: " vm-last-pipe-command)
+	   current-prefix-arg)))
+  (vm-pipe-messages-to-command command prefix-arg t))
 
 ;;;###autoload
 (defun vm-print-message (&optional count)
@@ -695,8 +856,7 @@ Output, if any, is displayed.  The message is not altered."
 		(vm-error-free-call 'delete-file tempfile)))))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-print-message) '(vm-print-message))
-    (if (not (zerop (save-excursion (set-buffer buffer) (buffer-size))))
-	(display-buffer buffer))))
+    (vm-switch-to-command-output-buffer command buffer nil)))
 
 ;;;###autoload
 (defun vm-save-message-to-imap-folder (folder &optional count)

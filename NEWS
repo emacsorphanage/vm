@@ -2,9 +2,6 @@ VM 8.1.0-devo
 
   IMPROVEMENTS:
 
-    * In `vm-save-message-preview', ask the user if the output file already
-      exists instead of silently overwriting it.
-      
     * Removed `vm-paragraph-fill-column', the value is now taken from
       `vm-fill-paragraphs-containing-long-lines' thus allowing to fill to the
       available window with.
@@ -52,7 +49,48 @@ VM 8.1.0-devo
 
     * The button for images shows a thumbnail now when possible.
 
+VM 8.0.8
+
+  IMPROVEMENTS:
+
+    * Reactivated "Allow defadvice on function `vm' by recursing on session
+      start".  It should work correctly now.
+
+    * Added interactive `vm-pipe-message-to-command-discard-output' and
+      the non-interactive `vm-pipe-message-to-command-to-string' for using
+      it in own functions.
+
+    * Added `vm-pipe-messages-to-command*' for bulk piping messages to a
+      single command, i.e. like saving to a pipe.  This is substantially
+      faster than `vm-pipe-message-to-command*' which call the command on 
+      each message separately.  You may want to use it to feed spamassasin.
+
+    * Modified key bindings for piping messages, i.e. "|" is a prefix key
+      now. Type it twice to get the old pipe command, "|d" will call the 
+      discard the output, just display some infos in the mode line. "|s" 
+      will call `vm-pipe-messages-to-command' and "|n" will also call it 
+      but discard the output.
+
+    * Removed vm-easymenu.el and use easymenu.el instead.
+
+    * In `vm-save-message-preview', ask the user if the output file already
+      exists instead of silently overwriting it.
+
   BUGFIXES:
+
+    * Moved [Undo] to Dispose menu and [Emacs] to Help menu as these do not
+      work in Emacs 22 anymore when on the menu bar.
+
+    * Fixed intermixing of signature and quoted text in reply if
+      `vm-reply-include-presentation' is t. (Thanks to Roland Winkler for
+      debugging and reporting)
+
+    * Fixed yanking of presentation from wrong folder when folder is virtual.
+      (Thanks to Roland Winkler for reporting)
+
+    * Redistributed flag not displayed in presentation buffer mode line. 
+      https://bugzilla.redhat.com/show_bug.cgi?id=428248 (Thanks to Jonathan
+      Underwood for the fix)
 
     * `vm-submit-bug-report' gets the variables dynamically now and thus does
       not miss new ones or references old ones anymore. 
