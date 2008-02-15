@@ -399,7 +399,7 @@ function instead."
                                             &optional fixedcase literal)
       (replace-in-string string regexp rep literal)))
   (unless (functionp 'line-end-position)
-    (defun line-end-position ()q
+    (defun line-end-position ()
       (save-excursion (end-of-line) (point))))
   (unless (functionp 'line-beginning-position)
     (defun line-beginning-position (&optional n)
@@ -890,7 +890,7 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
                   (shell-command (concat (caddr converter) " < '" filename "'")
                                  1)
                 (message "Could not find viewer for type %s!" type)
-                (insert-file filename))))
+                (insert-file-contents filename))))
           )))
      layout
       nil)))
@@ -1232,7 +1232,7 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
           (setq o (vm-mm-layout (car mlist)))
           (when (stringp o)
             (setq o 'none)
-            (backtrace (get-buffer-create "*backtrace*"))
+            (backtrace)
             (message "There is a bug, see *backtrace* for details"))
           (if (eq 'none o)
               nil;; this is no mime message
@@ -1737,12 +1737,9 @@ text/alternative message depending on the value of the variable
                        (regexp :tag "Regexp")
                        (string :tag "Replacement"))))
    
-(defun vm-mail-mode-citation-clean-up (&optional s e)
+(defun vm-mail-mode-citation-clean-up ()
   "Remove doubly-cited text and extra lines in a mail message."
   (interactive)
-  (if (region-exists-p)
-      (setq s (point)
-            e (mark)))
   (save-excursion
     (mail-text)
     (let ((re-alist vm-mail-mode-citation-kill-regexp-alist)
@@ -1813,8 +1810,6 @@ and add an \"%0UA\" to your `vm-summary-format'."
 (defun vm-mail-mode-install-open-line ()
   "Install the open-line hooks for `vm-mail-mode'.
 Add this to `vm-mail-mode-hook'."
-  (make-local-hook 'before-change-functions)
-  (make-local-hook 'after-change-functions)
   (add-hook 'before-change-functions 'vm-mail-mode-open-line nil t)
   (add-hook 'after-change-functions 'vm-mail-mode-open-line nil t))
 
@@ -2176,7 +2171,8 @@ not end the comment.  Blank lines do not get comments."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-delete-message-action "vm-next-message"
-  "Forward to next (unread) message after deletion")
+  "Command to do after deleting a message."
+  :group 'vm)
 
 ;;;###autoload
 (defun vm-delete-message-action (&optional arg)
@@ -2189,8 +2185,8 @@ Call it with a prefix ARG to change the action."
                            '(("vm-rmail-up")
                              ("vm-rmail-down")
                              ("vm-previous-message")
-                             ("vm-next-message")
                              ("vm-previous-unread-message")
+                             ("vm-next-message")
                              ("vm-next-unread-message")
                              ("nothing"))))
     (message "action after delete is %S" vm-delete-message-action))
