@@ -2960,7 +2960,10 @@ The folder is not altered and Emacs is still visiting it."
       ;; selcetion of some other folder.
       (if buffer-file-name
 	  (vm-mark-for-folders-summary-update buffer-file-name))
+      ;; this is a hack to suppress another confirmation dialogue
+      ;; coming from kill-buffer
       (set-buffer-modified-p nil)
+      (delete-auto-save-file-if-necessary)
       (kill-buffer (current-buffer)))
     (vm-update-summary-and-mode-line)))
 
