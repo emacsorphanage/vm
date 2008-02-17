@@ -1460,7 +1460,7 @@ run an external viewer to display all MIME objects.
 If the value is a list, it should be a list of strings.  Example:
 
 @example
-(setq vm-mime-internal-content-types '("text" "image/jpeg"))
+(setq vm-mime-internal-content-types '("text" "message" "image/jpeg"))
 @end example
 
 If a top-level type is listed without a subtype, all subtypes of that
@@ -1836,10 +1836,12 @@ the text and setting point and mark.  If a prefix argument is given,
 this tells VM to ignore @code{mail-yank-hooks}, don't set the mark, don't prepend the
 value of @code{vm-included-text-prefix} to every yanked line, and don't yank
 any headers other than those specified in
-@code{vm-visible-headers} and @code{vm-invisible-headers}.  To yank a message from
-a different folder than the parent of this composition, use
+@code{vm-visible-headers} and @code{vm-invisible-headers}.  
 
-@key{M-x vm-yank-message-other-buffer}.
+@item @code{M-x vm-yank-message-other-folder}
+This allows one to yank a message from a different folder than the
+parent of this composition.
+
 @kindex C-c C-v
 @item C-c C-v <Any VM command key>
 All VM commands may be accessed in a VM Mail mode buffer by prefixing them
@@ -2609,11 +2611,18 @@ sorting.  Either way, VM will shift the actual messages around in the
 folder buffer, and when you save the folder, the order change will be
 visible to other programs.
 
-Valid sort keys are: ``date'', ``reversed-date'', ``author'',
-``reversed-author'', ``subject'', ``reversed-subject'', ``recipients'',
-``reversed-recipients'', ``line-count'', ``reversed-line-count'',
-``byte-count'', ``reversed-byte-count'', ``physical-order'', and
-``reversed-physical-order''.
+@cindex spam
+Valid sort keys are:
+@multitable @columnfractions 0.35 0.60
+@item date @tab reversed-date
+@item author @tab reversed-author
+@item subject @tab reversed-subject
+@item recipients @tab reversed-recipients
+@item line-count @tab reversed-line-count
+@item byte-count @tab reversed-byte-count
+@item physical-order @tab reversed-physical-order
+@item spam-score @tab reversed-spam-score
+@end multitable
 
 @vindex vm-subject-ignored-prefix
 @vindex vm-subject-ignored-suffix

@@ -1031,7 +1031,7 @@ means VM must run an external viewer to display MIME objects.
 
 If the value is a list, it should be a list of strings.  Example:
 
- (setq vm-mime-internal-content-types '(\"text\" \"image/jpeg\"))
+ (setq vm-mime-internal-content-types '(\"text\" \"message\" \"image/jpeg\"))
 
 If a top-level type is listed without a subtype, all subtypes of
 that type are assumed to be included.
