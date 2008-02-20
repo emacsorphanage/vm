@@ -6,6 +6,10 @@ VM 8.0.9
       extra single quotes should be used around %f as the file name is already
       quoted for the shell. (Thanks to Martin Schwenke)
 
+    * Fixed version number generation in release script.  It was broken for
+      8.0.8, i.e. it was showing 8.0.x-xemacs-542 instead.  Now also other
+      branch related information is stored in the file vm-revno.el.
+
 VM 8.0.8
 
   IMPROVEMENTS:

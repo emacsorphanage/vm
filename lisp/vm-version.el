@@ -22,14 +22,8 @@
   "Version number of VM.
 Call `vm-version' instead of accessing this variable!")
 
-(defvar vm-revno nil
-  "The exact version for tarbundles.
-This is the nick and revision number of the BZR repository from which VM was
-released.")
-
-(defvar vm-author nil
-  "The author for tarbundles.
-This is the author of the BZR repository from which VM was released.")
+(defvar vm-version-info nil
+  "The exact version information for tarbundles.")
 
 (defun vm-version ()
   "Return the value of the variable `vm-version'."
@@ -61,7 +55,7 @@ This is the author of the BZR repository from which VM was released.")
               ((and (not bzr) 
 		    (locate-library "vm-revno") 
 		    (load-library "vm-revno"))
-               (insert vm-revno))
+               (insert vm-version))
               (t
                (insert "?bug?")
                (message "ERROR: Cannot determine VM version!")
