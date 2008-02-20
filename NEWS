@@ -1,3 +1,11 @@
+VM 8.0.9
+
+  BUGFIXES:
+
+    * Added documentation to `vm-mime-external-content-types-alist' that no
+      extra single quotes should be used around %f as the file name is already
+      quoted for the shell. (Thanks to Martin Schwenke)
+
 VM 8.0.8
 
   IMPROVEMENTS:
