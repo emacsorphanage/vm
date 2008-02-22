@@ -500,7 +500,7 @@ on all the relevant IMAP servers and then immediately expunges."
 ;; vm-establish-new-folder-imap-session: (&optional interactive) -> void
 ;;
 ;; -- mailbox operations
-;; vm-imap-mailbox-list: (process & bool) -> ? list
+;; vm-imap-mailbox-list: (process & bool) -> string list
 ;; vm-imap-create-mailbox: (process & string &optional bool) -> void
 ;; vm-imap-delete-mailbox: (process & string) -> void
 ;; vm-imap-rename-mailbox: (process & string & string) -> void
@@ -514,7 +514,7 @@ on all the relevant IMAP servers and then immediately expunges."
 ;; vm-imap-read-greeting: process -> ?
 ;; vm-imap-read-ok-response: process -> ?
 ;; vm-imap-read-response: process -> server-resonse
-;; vm-imap-read-and-check-response: process -> server-resopnse
+;; vm-imap-read-response-and-verify: process -> server-resopnse
 ;; vm-imap-read-boolean-response: process -> ?
 ;; vm-imap-read-object: (process &optinal bool) -> ?
 ;; vm-imap-response-matches: (string &rest symbol) -> bool
@@ -707,7 +707,7 @@ on all the relevant IMAP servers and then immediately expunges."
 					       0)))
 			 response p challenge answer)
 		     (vm-imap-send-command process command)
-		     (setq response (vm-imap-read-and-check-response process command))
+		     (setq response (vm-imap-read-response-and-verify process command))
 		     (cond ((vm-imap-response-matches response '+ 'atom)
 			    (setq p (cdr (nth 1 response))
 				  challenge (buffer-substring
@@ -905,7 +905,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	(need-ok t))
     (vm-imap-send-command process (format "%s %s" command mailbox))
     (while need-ok
-      (setq response (vm-imap-read-and-check-response process command))
+      (setq response (vm-imap-read-response-and-verify process command))
       (cond ((vm-imap-response-matches response '* 'OK 'vector)
 	     (setq p (cdr (nth 2 response)))
 	     (cond ((vm-imap-response-matches p 'UIDVALIDITY 'atom)
@@ -948,7 +948,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	tok msg-num response
 	)
     (while need-ok
-      (setq response (vm-imap-read-and-check-response process "EXPUNGE"))
+      (setq response (vm-imap-read-response-and-verify process "EXPUNGE"))
       (cond ((vm-imap-response-matches response '* 'atom 'EXPUNGE)
 	     (setq tok (nth 1 response))
 	     (goto-char (nth 1 tok))
@@ -975,7 +975,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	(need-ok t))
     (vm-imap-send-command process (format "FETCH %s:%s (UID)" first last))
     (while need-ok
-      (setq response (vm-imap-read-and-check-response process "UID FETCH"))
+      (setq response (vm-imap-read-response-and-verify process "UID FETCH"))
       (cond ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
 	     (setq p (cdr (nth 3 response)))
 	     (if (not (vm-imap-response-matches p 'UID 'atom))
@@ -1010,7 +1010,7 @@ on all the relevant IMAP servers and then immediately expunges."
      process (format "SEARCH UID %s" (vm-imap-uid-of m)))
     (setq need-ok t)
     (while need-ok
-      (setq response (vm-imap-read-and-check-response process "UID"))
+      (setq response (vm-imap-read-response-and-verify process "UID"))
       (cond ((vm-imap-response-matches response 'VM 'OK)
 	     (setq need-ok nil))
 	    ((vm-imap-response-matches response '* 'SEARCH 'atom)
@@ -1042,7 +1042,7 @@ on all the relevant IMAP servers and then immediately expunges."
     (vm-imap-send-command 
      process (format "FETCH %s:%s (UID FLAGS)" first last))
     (while need-ok
-      (setq response (vm-imap-read-and-check-response process "FLAGS FETCH"))
+      (setq response (vm-imap-read-response-and-verify process "FLAGS FETCH"))
       (cond ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
 	     (setq p (cdr (nth 3 response)))
 	     (if (not (vm-imap-response-matches p 'UID 'atom 'FLAGS 'list))
@@ -1087,7 +1087,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	    (vm-imap-send-command process
 				  (format "FETCH %d (RFC822.HEADER)" n))
 	    (while need-ok
-	      (setq response (vm-imap-read-and-check-response process "header FETCH"))
+	      (setq response (vm-imap-read-response-and-verify process "header FETCH"))
 	      (cond ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
 		     (setq fetch-response response
 			   need-header nil))
@@ -1146,7 +1146,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	   (need-ok t)
 	   response)
       (while need-ok
-	(setq response (vm-imap-read-and-check-response process "message FETCH"))
+	(setq response (vm-imap-read-response-and-verify process "message FETCH"))
 	(cond ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
 	       (setq fetch-response response
 		     need-msg nil))
@@ -1244,7 +1244,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	(need-ok t))
     (vm-imap-send-command process (format "FETCH %d:%d (RFC822.SIZE)" n n))
     (while need-ok
-      (setq response (vm-imap-read-and-check-response process "size FETCH"))
+      (setq response (vm-imap-read-response-and-verify process "size FETCH"))
       (cond ((and need-size
 		  (vm-imap-response-matches response '* 'atom 'FETCH 'list))
 	     (setq need-size nil)
@@ -1262,7 +1262,7 @@ on all the relevant IMAP servers and then immediately expunges."
 (defun vm-imap-read-capability-response (process)
   (let (response r cap-list auth-list (need-ok t))
     (while need-ok
-      (setq response (vm-imap-read-and-check-response process "CAPABILITY"))
+      (setq response (vm-imap-read-response-and-verify process "CAPABILITY"))
       (if (vm-imap-response-matches response 'VM 'OK)
 	  (setq need-ok nil)
 	(if (not (vm-imap-response-matches response '* 'CAPABILITY))
@@ -1357,7 +1357,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	(setq tail (cdr tail))))
     list ))
 
-(defun vm-imap-read-and-check-response (process &optional command-desc)
+(defun vm-imap-read-response-and-verify (process &optional command-desc)
   ;; Reads a line of response from the imap PROCESS and checks for
   ;; standard errors like "BAD" and "BYE".  Optional COMMAND-DESC is a
   ;; command description that can be printed with the error message.
@@ -1653,7 +1653,7 @@ on all the relevant IMAP servers and then immediately expunges."
 				    (vm-imap-uid-of m)))
       (setq need-ok t)
       (while need-ok
-	(setq response (vm-imap-read-and-check-response process "UID FETCH (FLAGS)"))
+	(setq response (vm-imap-read-response-and-verify process "UID FETCH (FLAGS)"))
 	(cond ((vm-imap-response-matches response 'VM 'OK)
 	       (setq need-ok nil))
 	      ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
@@ -1802,7 +1802,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	 (format "UID STORE %s +FLAGS.SILENT %s" (car server-flags) flags+))
 	(setq need-ok t)
 	(while need-ok
-	  (setq response (vm-imap-read-and-check-response process "UID FETCH (FLAGS)"))
+	  (setq response (vm-imap-read-response-and-verify process "UID FETCH (FLAGS)"))
 	  (cond ((vm-imap-response-matches response 'VM 'OK)
 		 (setq need-ok nil)))))
 
@@ -1813,7 +1813,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	 (format "UID STORE %s -FLAGS.SILENT %s" (car server-flags) flags-))
 	(setq need-ok t)
 	(while need-ok
-	  (setq response (vm-imap-read-and-check-response process "UID FETCH (FLAGS)"))
+	  (setq response (vm-imap-read-response-and-verify process "UID FETCH (FLAGS)"))
 	  (cond ((vm-imap-response-matches response 'VM 'OK)
 		 (setq need-ok nil)))))
 
@@ -1841,7 +1841,7 @@ on all the relevant IMAP servers and then immediately expunges."
     (if (not (vm-unread-flag m))
 	(setq flags (cons (intern "\\Seen") flags)))
     (save-excursion
-      (set-buffer (vm-buffer-of (vm-real-message-of m)))
+      (set-buffer (vm-buffer-of m))
       (save-restriction
 	(widen)
 	(setq string (buffer-substring (vm-headers-of m) (vm-text-end-of m))
@@ -1858,16 +1858,50 @@ on all the relevant IMAP servers and then immediately expunges."
 				    (length string)))
       (setq need-plus t)
       (while need-plus
-	(setq response (vm-imap-read-and-check-response process "APPEND"))
+	(setq response (vm-imap-read-response-and-verify process "APPEND"))
 	(cond ((vm-imap-response-matches response '+)
 	       (setq need-plus nil))))
       (vm-imap-send-command process string nil t)
       (setq need-ok t)
       (while need-ok
-	(setq response (vm-imap-read-and-check-response process "APPEND data"))
+	(setq response (vm-imap-read-response-and-verify process "APPEND data"))
 	(cond ((vm-imap-response-matches response 'VM 'OK)
 	       (setq need-ok nil)))))))
 
+;; Incomplete -- Yet to be finished
+;; creation of new mailboxes has to be straightened out
+
+(defun vm-imap-copy-message (process m mailbox)
+  "Use IMAP session PROCESS to copy message M to MAILBOX.  The PROCESS
+is expected to have logged in and selected the current folder.
+
+This is similar to vm-imap-save-message but uses the internal copy
+operation of the server to minimize I/O."
+  (let ((uid (vm-imap-uid-of m))
+	(uid-validity (vm-imap-uid-validity-of m))
+	need-ok response string)
+    (if (not (equal uid-validity (vm-folder-imap-uid-validity)))
+	(error "Message does not have a valid UID"))
+    (save-excursion
+      (set-buffer (process-buffer process))
+      (if (vm-attribute-modflag-of m)
+	  (condition-case nil
+	      (vm-imap-save-message-flags process m uid-validity)
+	    (vm-imap-protocol-error nil)))
+;;       (condition-case nil
+;; 	  (vm-imap-create-mailbox process mailbox)
+;; 	(vm-imap-protocol-error nil))
+      (vm-imap-send-command 
+       process
+       (format "UID COPY %s %s"
+	       (vm-imap-uid-of m)
+	       (vm-imap-quote-string mailbox)))
+      (setq need-ok t)
+      (while need-ok
+	(setq response 
+	      (vm-imap-read-response-and-verify process "UID COPY"))
+	(cond ((vm-imap-response-matches response 'VM 'OK)
+	       (setq need-ok nil)))))))
 
 ;; ------------------------------------------------------------------------
 ;; 
@@ -2336,14 +2370,15 @@ specification SPEC."
     host-alist ))
 
 ;;;###autoload
-(defun vm-read-imap-folder-name (prompt account-alist 
-					&optional selectable-only
+(defun vm-read-imap-folder-name (prompt &optional selectable-only
 					newone default) 
   "Read an IMAP account and mailbox, return an IMAP mailbox spec."
-  (let* (host c-list spec process mailbox list default-account default-folder
-	(vm-imap-ok-to-ask t)
-	(host-alist (mapcar 'reverse account-alist)))
-    (if (null host-alist)
+  (let* (host c-list spec process mailbox list 
+	 default-account default-folder
+	 (vm-imap-ok-to-ask t)
+	 (account-list (mapcar 'cadr vm-imap-account-alist))
+	 (host-alist (mapcar 'reverse vm-imap-account-alist)))
+    (if (null account-list)
 	(error "No known IMAP accounts.  Please set vm-imap-account-alist."))
     (if default 
 	(setq list (vm-imap-parse-spec-to-list default)
@@ -2378,7 +2413,62 @@ specification SPEC."
     (setq vm-last-visit-imap-account host)
     (mapconcat 'identity list ":")))
 
+(defun vm-read-imap-folder-name (prompt &optional selectable-only
+					newone default) 
+  "Read an IMAP account and mailbox, return an IMAP mailbox spec."
+  (let* (folder-input completion-list spec process list 
+	 default-account default-folder
+	 (vm-imap-ok-to-ask t)
+	 (account-list (mapcar 'cadr vm-imap-account-alist))
+	 account-and-folder account folder mailbox-list)
+    (if (null account-list)
+	(error "No known IMAP accounts.  Please set vm-imap-account-alist."))
+    (if default 
+	(setq list (vm-imap-parse-spec-to-list default)
+	      default-account 
+	      (cadr (assoc (vm-imapdrop-sans-password-and-mailbox default)
+			   vm-imap-account-alist))
+	      default-folder (nth 3 list))
+      (setq default-account vm-last-visit-imap-account))
+    (when default-account
+      (setq spec (car (rassoc (list default-account) vm-imap-account-alist)))
+      (setq process (vm-imap-make-session spec))
+      (setq mailbox-list (and process 
+			      (vm-imap-mailbox-list process selectable-only)))
+      (setq completion-list 
+	    (mapcar '(lambda (m) (list (format "%s:%s" default-account m)))
+		    mailbox-list))
+      (vm-imap-end-session process))
+    (setq folder-input 
+	  (completing-read
+	   (format			; prompt
+	    "IMAP folder:%s " 
+	    (if default-folder
+		(format " (default %s:%s)" default-account default-folder)
+	      ""))
+	   completion-list		; table
+	   nil				; predicate
+	   nil				; require-match
+	   (if default-account		; initial-input
+	       (format "%s:" default-account)
+	     "")))
+    (if (or (equal folder-input "")  
+	    (equal folder-input (format "%s:" default-account)))
+	(if default-folder
+	    (setq folder-input (format "%s:%s" default-account default-folder))
+	  (error 
+	   "IMAP folder required in the format account-name:folder-name"))) 
+    (setq account-and-folder (vm-parse folder-input "\\([^:]+\\):?" 1 2)
+	  account (car account-and-folder)
+	  folder (cadr account-and-folder)
+	  spec (car (rassoc (list account) vm-imap-account-alist)))
+    (setq list (vm-imap-parse-spec-to-list spec))
+    (setcar (nthcdr 3 list) folder)
+    (setq vm-last-visit-imap-account account)
+    (mapconcat 'identity list ":")))
+
 (defun vm-imap-directory-separator (process ref)
+
   (let ((c-list nil)
 	sep p r response need-ok)
     (vm-imap-check-connection process)
@@ -2388,7 +2478,7 @@ specification SPEC."
 					    (vm-imap-quote-string ref)))
       (setq need-ok t)
       (while need-ok
-	(setq response (vm-imap-read-and-check-response process "LIST"))
+	(setq response (vm-imap-read-response-and-verify process "LIST"))
 	(cond ((vm-imap-response-matches response 'VM 'OK)
 	       (setq need-ok nil))
 	      ((vm-imap-response-matches response '* 'LIST 'list 'string)
@@ -2400,6 +2490,9 @@ specification SPEC."
       sep )))
 
 (defun vm-imap-mailbox-list (process selectable-only)
+  "Query the IMAP PROCESS to get a list of the mailboxes (folders)
+available in the IMAP account.  SELECTABLE-ONLY flag asks only
+selectable mailboxes to be listed.  Returns a list of mailbox names."
   (let ((c-list nil)
 	p r response need-ok)
     (vm-imap-check-connection process)
@@ -2408,7 +2501,36 @@ specification SPEC."
       (vm-imap-send-command process "LIST \"\" \"*\"")
       (setq need-ok t)
       (while need-ok
-	(setq response (vm-imap-read-and-check-response process "LIST"))
+	(setq response (vm-imap-read-response-and-verify process "LIST"))
+	(cond ((vm-imap-response-matches response 'VM 'OK)
+	       (setq need-ok nil))
+	      ((vm-imap-response-matches response '* 'LIST 'list)
+	       (setq r (nthcdr 2 response)
+		     p (car r))
+	       (if (and selectable-only
+			(vm-imap-scan-list-for-flag p "\\Noselect"))
+		   nil
+		 (setq r (nthcdr 4 response)
+		       p (car r))
+		 (if (memq (car p) '(atom string))
+		     (setq c-list (cons (buffer-substring (nth 1 p) (nth 2 p))
+					c-list)))))))
+      c-list )))
+
+;; This is unfinished
+(defun vm-imap-mailbox-p (process mailbox selectable-only)
+  "Query the IMAP PROCESS to check if MAILBOX exists as a folder.
+SELECTABLE-ONLY flag asks whether the mailbox is selectable as
+well. Returns a boolean value."
+  (let ((c-list nil)
+	p r response need-ok)
+    (vm-imap-check-connection process)
+    (save-excursion
+      (set-buffer (process-buffer process))
+      (vm-imap-send-command process (concat "LIST \"\" \"" mailbox "\""))
+      (setq need-ok t)
+      (while need-ok
+	(setq response (vm-imap-read-response-and-verify process "LIST"))
 	(cond ((vm-imap-response-matches response 'VM 'OK)
 	       (setq need-ok nil))
 	      ((vm-imap-response-matches response '* 'LIST 'list)
@@ -2486,8 +2608,7 @@ documentation for `vm-spool-files'."
      (vm-select-folder-buffer-if-possible)
      (let ((this-command this-command)
 	   (last-command last-command))
-       (list (vm-read-imap-folder-name "Create IMAP folder: "
-				       vm-imap-account-alist nil t)))))
+       (list (vm-read-imap-folder-name "Create IMAP folder: " nil t)))))
   (let ((vm-imap-ok-to-ask t)
 	process mailbox)
     (save-excursion
@@ -2514,8 +2635,7 @@ documentation for `vm-spool-files'."
      (vm-select-folder-buffer-if-possible)
      (let ((this-command this-command)
 	   (last-command last-command))
-       (list (vm-read-imap-folder-name "Delete IMAP folder: "
-				       vm-imap-account-alist nil)))))
+       (list (vm-read-imap-folder-name "Delete IMAP folder: " nil nil)))))
   (let ((vm-imap-ok-to-ask t)
 	process mailbox)
     (setq process (vm-imap-make-session folder))
@@ -2543,11 +2663,10 @@ documentation for `vm-spool-files'."
      (let ((this-command this-command)
 	   (last-command last-command)
 	   source dest)
-       (setq source (vm-read-imap-folder-name "Rename IMAP folder: "
-					      vm-imap-account-alist t))
+       (setq source (vm-read-imap-folder-name "Rename IMAP folder: " t nil))
        (setq dest (vm-read-imap-folder-name
 		   (format "Rename %s to: " (vm-safe-imapdrop-string source))
-		   (list source) nil))
+		    nil t))
        (list source dest))))
   (let ((vm-imap-ok-to-ask t)
 	process mailbox-source mailbox-dest)

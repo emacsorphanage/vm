@@ -388,8 +388,8 @@ setting @code{vm-spool-files} like this:
 (setq vm-spool-files '("/var/spool/mail/kyle" "~/Mailbox"))
 @end example
 
-With this setting, VM will retrieve mail for the primary inbox from
-first @file{/var/spool/mail/kyle} and then @file{~/Mailbox}.
+@noindent With this setting, VM will retrieve mail for the primary
+inbox from first @file{/var/spool/mail/kyle} and then @file{~/Mailbox}.
 
 If the value of @code{vm-spool-files} is @code{nil}, a default value for
 @code{vm-spool-files} will be inherited from the shell environmental
@@ -420,7 +420,8 @@ For example, you can set @code{vm-spool-files} like this
 @end group
 @end example
 
-The folder @file{~/INBOX} has two spool files associated with it in this
+@noindent The folder @file{~/INBOX} has two spool files associated
+with it in this 
 example, @file{/var/spool/mail/kyle} and @file{~/Mailbox}.  Another
 folder, @file{"~/Mail/bugs"} has one folder
 @file{/var/spool/mail/answerman} associated with it.  Note that both of
@@ -443,7 +444,8 @@ to be used to create possible spool file names for folders.  Example:
 @end group
 @end example
 
-With @code{vm-spool-file-suffixes} set this way, if you visit a
+@noindent With @code{vm-spool-file-suffixes} set this way, if you
+visit a 
 folder @file{~/mail/beekeeping}, when VM attempts to retrieve new mail for
 that folder it will look for mail in @file{~/mail/beekeeping.spool}
 and @file{~/mail/beekeeping-} in addition to scanning @code{vm-spool-files}
@@ -641,9 +643,9 @@ following formats:
 ``pop:@var{HOST}:@var{PORT}:@var{AUTH}:@var{USER}:@var{PASSWORD}''
 ``imap:@var{HOST}:@var{PORT}:@var{MAILBOX}:@var{AUTH}:@var{USER}:@var{PASSWORD}''@end example
 
-Remote mailboxes accessed by VM in this fashion are referred to as
-@dfn{server folders} (and @dfn{POP folders} or @dfn{IMAP folders},
-more specifically).
+@noindent Remote mailboxes accessed by VM in this fashion are referred
+to as @dfn{server folders} (and @dfn{POP folders} or @dfn{IMAP
+folders}, more specifically).
 
 VM retrieves mail from the server folders into internal Emacs buffers
 for its normal operation.  It also saves copies of the folders on the
@@ -665,12 +667,13 @@ The format of a POP or IMAP maildrop specification is as follows:
 
 @example
 ``pop:@var{HOST}:@var{PORT}:@var{AUTH}:@var{USER}:@var{PASSWORD}''
-``imap:@var{HOST}:@var{PORT}:@var{MAILBOX}:@var{AUTH}:@var{USER}:@var{PASSWORD}''@end example
+``imap:@var{HOST}:@var{PORT}:@var{MAILBOX}:@var{AUTH}:@var{USER}:@var{PASSWORD}''
+@end example
 
-Replace @samp{pop} in the example with @samp{pop-ssl} to have VM speak
-POP over an SSL connection.  Use @samp{pop-ssh} to use POP over an SSH
-connection.  Similarly, replace @samp{imap} with @samp{imap-ssl} or
-@samp{imap-ssh}, as needed.
+@noindent Replace @samp{pop} in the example with @samp{pop-ssl} to
+have VM speak POP over an SSL connection.  Use @samp{pop-ssh} to use
+POP over an SSH connection.  Similarly, replace @samp{imap} with
+@samp{imap-ssl} or @samp{imap-ssh}, as needed.
 
 For SSL, you must have the stunnel program installed and the
 variable @code{vm-stunnel-program} must name it in order for
@@ -694,12 +697,12 @@ which means you must be using .shosts authentication or RSA.)
 
 @var{PORT} is the TCP port number to connect to.  The normal port
 numbers are:
-@table @asis
-@item 110 for POP
-@item 995 for POP over SSL
-@item 143 for IMAP
-@item 993 for IMAP over SSL
-@end table
+@multitable @columnfractions 0.20 0.80
+@item 110 @tab for POP
+@item 995 @tab for POP over SSL
+@item 143 @tab for IMAP
+@item 993 @tab for IMAP over SSL
+@end multitable
 
 @var{MAILBOX} is the name of the mailbox on the IMAP server.  This should
 be @samp{"inbox"}, to access your default IMAP mailbox on the
@@ -860,10 +863,11 @@ For example:
 )
 @end example
 
-The mailbox (@samp{*} in the example) is ignored; when
-@code{vm-visit-imap-folder} asks for a folder name you can
-enter any folder that is accessible to you on the IMAP server.
-Similarly, the password field is also ignored.
+@noindent The mailbox and password fields (@samp{*} in the example) are
+ignored.  When @code{vm-visit-imap-folder} asks for a folder name, you
+enter an account name followed by ``:'' and a folder name.  Any folder
+that is accessible to you on the IMAP server can be specified.  For
+example, @code{becky:inbox} or @code{crickle:drafts}.
 
 @vindex vm-imap-server-list
 The customization variable @code{vm-imap-server-list}, used in old
@@ -1421,10 +1425,10 @@ type/subtype pairs.  Example:
 (setq vm-auto-displayed-mime-content-types '("text" "image/jpeg"))
 @end example
 
-If a top-level type is listed without a subtype, all subtypes of that
-type are assumed to be included.  The example above specifies that all
-text types are displayed immediately, but only JPEG images are displayed
-this way.
+@noindent If a top-level type is listed without a subtype, all
+subtypes of that type are assumed to be included.  The example above
+specifies that all text types are displayed immediately, but only JPEG
+images are displayed this way.
 
 @vindex vm-auto-displayed-mime-content-type-exceptions
 The variable @code{vm-auto-displayed-mime-content-type-exceptions}
@@ -1442,8 +1446,8 @@ all be types or type/subtype pairs.  Example:
 (setq vm-auto-displayed-mime-content-type-exceptions '("text/html"))
 @end example
 
-Again, if a top-level type is listed without a subtype, all subtypes of
-that type are assumed to be included.
+@noindent Again, if a top-level type is listed without a subtype, all
+subtypes of that type are assumed to be included.
 
 @vindex vm-mime-internal-content-types
 The variable @code{vm-mime-internal-content-types} specifies
@@ -1463,9 +1467,10 @@ If the value is a list, it should be a list of strings.  Example:
 (setq vm-mime-internal-content-types '("text" "message" "image/jpeg"))
 @end example
 
-If a top-level type is listed without a subtype, all subtypes of that
-type are assumed to be included.  Note that multipart types are always
-handled internally regardless of the setting of this variable.
+@noindent If a top-level type is listed without a subtype, all
+subtypes of that type are assumed to be included.  Note that multipart
+types are always handled internally regardless of the setting of this
+variable.
 
 @vindex vm-mime-internal-content-type-exceptions
 The variable @code{vm-mime-internal-content-type-exceptions} serves as
@@ -1489,16 +1494,16 @@ The alist format is a list of lists, each sublist having the form
 (@var{TYPE} @var{PROGRAM} @var{ARG} @var{ARG} ... )
 @end example
 
-or
+@noindent or
 
 @example
 (@var{TYPE} @var{COMMAND-LINE})
 @end example
 
-@var{TYPE} is a string specifying a MIME type or type/subtype pair.
-For example ``text'' or ``image/jpeg''.  If a top-level type is
-listed without a subtype, all subtypes of that type are assumed
-to be included.
+@noindent @var{TYPE} is a string specifying a MIME type or
+type/subtype pair.  For example ``text'' or ``image/jpeg''.  If a
+top-level type is listed without a subtype, all subtypes of that type
+are assumed to be included.
 
 In the first form, @var{PROGRAM} is a string naming a program to
 run to display an object.  Any @var{ARG}s will be passed to the
@@ -1602,7 +1607,7 @@ Example:
 )
 @end example
 
-VM will search the list for a matching type.  The suffix
+@noindent VM will search the list for a matching type.  The suffix 
 associated with the first type that matches will be used for the
 temporary filename.
 
@@ -1647,7 +1652,7 @@ Example:
 )
 @end example
 
-The first matching list element will be used.
+@noindent The first matching list element will be used.
 
 @unnumberedsubsec MIME character sets
 
@@ -1674,7 +1679,7 @@ Example:
 (add-to-list 'vm-mime-default-face-charsets "Windows-1257")
 @end example
 
-Messages sent using such character sets would normally be
+@noindent Messages sent using such character sets would normally be
 considered undisplayable by VM, and a button would be displayed
 that offers to save the message body to a file.
 
@@ -1749,9 +1754,9 @@ An example setup might be:
 )
 @end example
 
-This variable is only useful for character sets whose characters
-can all be encoded in single 8-bit bytes.  Also multiple fonts
-can only be displayed if you're running under a window system
+@noindent This variable is only useful for character sets whose
+characters can all be encoded in single 8-bit bytes.  Also multiple
+fonts can only be displayed if you're running under a window system
 e.g. X Windows.  So this variable will have no effect if you're
 running Emacs on a tty.
 
@@ -2498,7 +2503,7 @@ M-x local-set-key C vm-forward-message-all-headers
 M N C
 @end example
 
-forwards marked messages with all headers included.
+@noindent forwards marked messages with all headers included.
 
 @node Message Attributes, Sorting Messages, Marking Messages, Top
 @chapter Message Attributes
@@ -2692,10 +2697,10 @@ non-@code{nil} in your VM init file.  Example:
 (setq-default vm-summary-show-threads t)
 @end example
 
-Do not use @code{setq}, as this will only set the value of the variable in
-a single buffer.  Once you've started VM you should not change the value
-of this variable.  Rather you should use @kbd{C-t} to control the thread
-display.
+@noindent Do not use @code{setq}, as this will only set the value of
+the variable in a single buffer.  Once you've started VM you should
+not change the value of this variable.  Rather you should use
+@kbd{C-t} to control the thread display.
 
 Note that threading is really a specialized form of sorting, and so the
 value of the variable @code{vm-move-messages-physically} applies.
@@ -2969,7 +2974,7 @@ selectors match the message.  Example:
 @example
 (and (author "Derek McGinty") (new))
 @end example
-matches all new messages from Derek McGinty.
+@noindent matches all new messages from Derek McGinty.
 @code{and} takes any number of arguments.
 @item any
 matches any message.
@@ -3015,14 +3020,14 @@ does NOT match the message.  Example:
 @example
 (not (deleted))
 @end example
-matches messages that are not deleted.
+@noindent matches messages that are not deleted.
 @item or
 matches the message if any of its argument
 selectors match the message.  Example:
 @example
 (or (author "Dave Weckl") (subject "drum"))
 @end example
-matches messages from Dave Weckl or messages
+@noindent matches messages from Dave Weckl or messages
 with the string ``drum'' in their Subject header.
 @code{or} takes any number of arguments.
 @item read
@@ -3043,7 +3048,7 @@ A fully specified date looks like this:
 @example
 ``31 Dec 1999 23:59:59 GMT''
 @end example
-although the parts can appear in any order.
+@noindent although the parts can appear in any order.
 You can leave out any part and it will
 default to the current date's value for that
 part, with the exception of the @samp{hh:mm:ss}
@@ -3054,7 +3059,7 @@ A fully specified date looks like this:
 @example
 ``31 Dec 1999 23:59:59 GMT''
 @end example
-although the parts can appear in any order.
+@noindent although the parts can appear in any order.
 You can leave out any part and it will
 default to the current date's value for that
 part, with the exception of the hh:mm:ss
@@ -3198,7 +3203,7 @@ buffers.
 (setq-default vm-virtual-mirror nil)
 @end example
 
-If you want to change whether the currently visited virtual
+@noindent If you want to change whether the currently visited virtual 
 folder shares attributes with the underlying real folders, use the 
 command @code{vm-toggle-virtual-mirror} (bound to @kbd{V M}).  If the
 virtual folder is currently sharing attributes it will no longer
@@ -3544,7 +3549,7 @@ frame the toolbar is displayed.  E.g.
 (setq vm-toolbar-orientation 'top)
 @end example
 
-causes the toolbar to be displayed at the top of the frame.  The
+@noindent causes the toolbar to be displayed at the top of the frame.  The
 @code{top} in the example can be replaced with @code{bottom},
 @code{right} and @code{left} to make the toolbar appear in those
 places instead.
@@ -3629,11 +3634,11 @@ like this:
 (setq vm-summary-highlight-face 'bold-italic)
 @end example
 
-In the summary buffer, VM displays the summary entry for the current
-message using the face specified by the @code{vm-summary-highlight-face}
-variable.  The value of this variable should be a symbol that names a
-face, or nil which means don't display the summary entry of the
-current message in a special way.
+@noindent In the summary buffer, VM displays the summary entry for the
+current message using the face specified by the
+@code{vm-summary-highlight-face} variable.  The value of this variable
+should be a symbol that names a face, or nil which means don't display
+the summary entry of the current message in a special way.
 
 @vindex vm-mouse-track-summary
 The variable @code{vm-mouse-track-summary} controls whether summary

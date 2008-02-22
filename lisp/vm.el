@@ -716,7 +716,7 @@ visited folder."
        (list (vm-read-imap-folder-name
 	      (format "Visit%s IMAP folder: "
 		      (if current-prefix-arg " read only" ""))
-	      vm-imap-account-alist t nil vm-last-visit-imap-folder)
+	      t nil vm-last-visit-imap-folder)
 	     current-prefix-arg))))
   (vm-session-initialization)
   (vm-check-for-killed-folder)
@@ -739,7 +739,7 @@ visited folder."
        (list (vm-read-imap-folder-name
 	      (format "Visit%s IMAP folder: "
 		      (if current-prefix-arg " read only" ""))
-	      vm-imap-account-alist nil nil vm-last-visit-imap-folder)
+	      nil nil vm-last-visit-imap-folder)
 	     current-prefix-arg))))
   (vm-session-initialization)
   (if (vm-multiple-frames-possible-p)
@@ -764,7 +764,7 @@ visited folder."
        (list (vm-read-imap-folder-name
 	      (format "Visit%s IMAP folder: "
 		      (if current-prefix-arg " read only" ""))
-	      vm-imap-account-alist nil nil vm-last-visit-imap-folder)
+	      nil nil vm-last-visit-imap-folder)
 	     current-prefix-arg))))
   (vm-session-initialization)
   (if (one-window-p t)
