@@ -3237,7 +3237,7 @@ interactively and will emit debug information when called with a prefix
 argument.
 
 Automatic marking of messages for deletion based on a selector can be
-archived with @code{vm-virtual-auto-delete-message} for interactive use and the
+achieved with @code{vm-virtual-auto-delete-message} for interactive use and the
 function and @code{vm-virtual-auto-delete-messages} when added to the VM hook
 @code{vm-arrived-messages-hook}.  This can be quite handy for marking spam for
 deletion.
