@@ -414,6 +414,14 @@ mandatory."
 	    (cons (cons format return-value)
 		  vm-summary-untokenized-compiled-format-alist)))))
 
+;; Inserts the summary line for MESSAGE created from TOKENS, which is
+;; a list of tokens.  A token is one of 
+;; - string, which is inserted literally, 
+;; - 'number, meaning message number,
+;; - 'mark, meaning the message mark indicator,
+;; - 'thread-indent, meaning the indentation space for the message
+;; - 'group-begin and 'group-end
+
 (defun vm-tokenized-summary-insert (message tokens)
   (if (stringp tokens)
       (insert tokens)

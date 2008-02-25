@@ -3758,9 +3758,9 @@ run vm-expunge-folder followed by vm-save-folder."
 	((eq vm-folder-access-method 'imap)
 	 (if vm-imap-sync-on-get
 	     (progn
-	       (vm-imap-synchronize-folder interactive nil nil nil t nil)
+;;	       (vm-imap-synchronize-folder interactive nil nil nil t nil)
 					; save-attributes
-	       (vm-imap-synchronize-folder interactive nil t t nil t))
+	       (vm-imap-synchronize-folder interactive nil t t t t))
 					; do-local-expunges
 					; do-retrieves
 					; retrieve-attributes

@@ -494,7 +494,7 @@ on all the relevant IMAP servers and then immediately expunges."
 ;; Server-side
 ;; -- Functions to handle the interaction with the IMAP server
 ;;
-;; vm-imap-make-session: string -> void
+;; vm-imap-make-session: string -> process
 ;; vm-imap-end-session: (process &optional buffer) -> void
 ;; vm-imap-check-connection: process -> void
 ;; vm-establish-new-folder-imap-session: (&optional interactive) -> void
@@ -544,6 +544,8 @@ on all the relevant IMAP servers and then immediately expunges."
 ;;	(process & vm-message &optional norecord:bool) -> 
 ;; --------------------------------------------------------------------
 
+;; Create a process for a new IMAP session to the account SOURCE and
+;; return it.
 
 ;;;###autoload
 (defun vm-imap-make-session (source)
@@ -750,9 +752,13 @@ on all the relevant IMAP servers and then immediately expunges."
 		  (t (error "Don't know how to authenticate using %s" auth)))
 	    (setq process-to-shutdown nil)
 	    process ))
-      (if process-to-shutdown
+      (if process-to-shutdown		; unwind-protection
 	  (vm-imap-end-session process-to-shutdown t))
       (vm-tear-down-stunnel-random-data))))
+
+;; Kill the IMAP session represented by PROCES.  If the optional
+;; argument KEEP-BUFFER is non-nil, the process buffer is retained,
+;; otherwise it is killed as well
 
 ;;;###autoload
 (defun vm-imap-end-session (process &optional keep-buffer)
@@ -1586,6 +1592,9 @@ on all the relevant IMAP servers and then immediately expunges."
   (goto-char (point-max))
   (insert "\""))
 
+;; Kill and restart the IMAP session for the current folder.  (Not
+;; entirely clear why it is necessary to do so.)
+
 (defun vm-establish-new-folder-imap-session (&optional interactive)
   (let ((process (vm-folder-imap-process))
 	mailbox select mailbox-count uid-validity permanent-flags
@@ -2017,6 +2026,7 @@ operation of the server to minimize I/O."
     (if do-retrieves
 	(vm-assimilate-new-messages))	; Funny that this should be
 					; necessary.  Indicates bugs?
+    (message "Logging into the IMAP server...")
     (let* ((sync-data (vm-imap-get-synchronization-data))
 	   (retrieve-list (nth 0 sync-data))
 	   (expunge-list (nth 1 sync-data))
@@ -2031,6 +2041,18 @@ operation of the server to minimize I/O."
 	   (use-body-peek (vm-folder-imap-body-peek))
 	   r-list mp got-some message-size old-eob
 	   (folder-buffer (current-buffer)))
+      (if save-attributes
+	  (let ((mp vm-message-list))
+	    ;;  (perm-flags (vm-folder-imap-permanent-flags))
+	    (message "Updating attributes on the IMAP server... ")
+	    (while mp
+	      (if (or (eq save-attributes 'all)
+		      (vm-attribute-modflag-of (car mp)))
+		(condition-case nil
+		    (vm-imap-save-message-flags process (car mp) uid-validity)
+		  (vm-imap-protocol-error nil)))
+	      (setq mp (cdr mp)))
+	    (message "Updating attributes on the IMAP server... done")))
       (if retrieve-attributes
 	  (let ((mp vm-message-list)
 		(len (length vm-message-list))
@@ -2043,8 +2065,8 @@ operation of the server to minimize I/O."
 		       (boundp (intern uid flags))
 		       (setq mflags (symbol-value (intern uid flags))))
 		  (vm-imap-update-message-flags m mflags t))
-	      (message "Retrieving message attributes and labels... %d%%" 
-		       (* (/ (+ n 0.0) len) 100))
+;; 	      (message "Retrieving message attributes and labels... %d%%" 
+;; 		       (* (/ (+ n 0.0) len) 100))
 	      (setq mp (cdr mp)
 		    n (1+ n)))
 	    (message "Retrieving message atrributes and labels... done")
@@ -2118,18 +2140,6 @@ operation of the server to minimize I/O."
 	     (message "Retrieving new message attributes... done")
 	     )))
 
-      (if save-attributes
-	  (let ((mp vm-message-list))
-	    ;;  (perm-flags (vm-folder-imap-permanent-flags))
-	    (message "Updating attributes on the IMAP server... ")
-	    (while mp
-	      (if (or (eq save-attributes 'all)
-		      (vm-attribute-modflag-of (car mp)))
-		(condition-case nil
-		    (vm-imap-save-message-flags process (car mp) uid-validity)
-		  (vm-imap-protocol-error nil)))
-	      (setq mp (cdr mp)))
-	    (message "Updating attributes on the IMAP server... done")))
       (if do-local-expunges
 	  (progn
 	    (message "Expunging messages in cache... ")
