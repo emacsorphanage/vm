@@ -302,6 +302,7 @@ on its presentation buffer, if any."
 				   'vm-ml-message-written
 				   'vm-ml-message-deleted
 				   'vm-ml-message-marked
+                                   'vm-ml-message-redistributed
 				   'vm-ml-message-number
 				   'vm-ml-highest-message-number
 				   'vm-folder-read-only
@@ -330,6 +331,7 @@ on its presentation buffer, if any."
 				   'vm-ml-message-deleted
 				   'vm-ml-message-marked
 				   'vm-ml-message-number
+                                   'vm-ml-message-redistributed
 				   'vm-ml-highest-message-number
 				   'vm-folder-read-only
 				   'vm-folder-type
@@ -3871,9 +3873,12 @@ run vm-expunge-folder followed by vm-save-folder."
 	(setq vm-spooled-mail-waiting nil)
 	(intern (buffer-name) vm-buffers-needing-display-update)
 	(vm-update-summary-and-mode-line)
-	(if got-mail
-	    (run-hooks 'vm-retrieved-spooled-mail-hook))
-	(and got-mail (vm-assimilate-new-messages t))))))
+	(when got-mail
+          (condition-case errmsg
+              (run-hooks 'vm-retrieved-spooled-mail-hook)
+            (t (message "Ignoring error while running vm-retrieved-spooled-mail-hook. %S"
+                        errmsg)))
+          (vm-assimilate-new-messages t))))))
 
 (defun vm-safe-popdrop-string (drop)
   (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]+\\):[^:]+:[^:]+:\\([^:]+\\):[^:]+" drop)
@@ -4100,18 +4105,18 @@ of messages around vm-message-pointer equal to (abs prefix),
 either backward (prefix is negative) or forward (positive)."
   (if (eq last-command 'vm-next-command-uses-marks)
       (vm-marked-messages)
-      (let (mlist
-	    (direction (if (< prefix 0) 'backward 'forward))
-	    (count (vm-abs prefix))
-	    (vm-message-pointer vm-message-pointer))
-	(unless (eq vm-circular-folders t)
-	    (vm-check-count prefix))
-	(while (not (zerop count))
-	  (setq mlist (cons (car vm-message-pointer) mlist))
-	  (vm-decrement count)
-	  (unless (zerop count)
-	      (vm-move-message-pointer direction)))
-	(nreverse mlist))))
+    (let (mlist
+	  (direction (if (< prefix 0) 'backward 'forward))
+	  (count (vm-abs prefix))
+	  (vm-message-pointer vm-message-pointer))
+      (unless (eq vm-circular-folders t)
+	(vm-check-count prefix))
+      (while (not (zerop count))
+	(setq mlist (cons (car vm-message-pointer) mlist))
+	(vm-decrement count)
+	(unless (zerop count)
+	  (vm-move-message-pointer direction)))
+      (nreverse mlist))))
 
 (defun vm-display-startup-message ()
   (if (sit-for 5)

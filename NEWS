@@ -2,6 +2,23 @@ VM 8.1.0-devo
 
   IMPROVEMENTS:
 
+    * Removed `vm-paragraph-fill-column', the value is now taken from
+      `vm-fill-paragraphs-containing-long-lines' thus allowing to fill to the
+      available window with.
+
+    * Replaced 'vm-fill-paragraphs-containing-long-lines' by the faster and
+      more flexible version from vm-rfaddons.el.  Also cleaned up calls to the
+      fill function and removed code duplication.  The code using longline.el
+      remains in vm-rfaddons.el, but it must be used explicitly now in an
+      advice.
+
+    * Moved the variable `vm-fill-long-lines-in-reply-column' from
+      vm-rfaddons.el to VM core.  It is not necessary to hook the fill
+      function, just set the variable.
+
+    * Errors caused by `vm-retrieved-spooled-mail-hook' are reported and
+      assimilation of messages continues instead of aborting.
+
     * Handle filenames also from the disposition fields "name", "filename*"
       and "name*", where the latter two get decoded as they might contain 8bit
       chars.
@@ -35,6 +52,8 @@ VM 8.1.0-devo
     * `vm-quit-no-change' made to honour the setting of the variable
       `delete-auto-save-files'. 
 
+    * The button for images shows a thumbnail now when possible.
+
   IMPROVEMENTS for pop-folders (Uday S. Reddy)
 
     * Added the variable `vm-pop-debug' to keep trace buffers.
@@ -64,6 +83,62 @@ VM 8.1.0-devo
 
     * New variable `vm-imap-account-alist' allows multiple IMAP
       accounts to be handled uniformly.
+
+VM 8.0.8
+
+  IMPROVEMENTS:
+
+    * Reactivated "Allow defadvice on function `vm' by recursing on session
+      start".  It should work correctly now.
+
+    * Added interactive `vm-pipe-message-to-command-discard-output' and
+      the non-interactive `vm-pipe-message-to-command-to-string' for using
+      it in own functions.
+
+    * Added `vm-pipe-messages-to-command*' for bulk piping messages to a
+      single command, i.e. like saving to a pipe.  This is substantially
+      faster than `vm-pipe-message-to-command*' which call the command on 
+      each message separately.  You may want to use it to feed spamassasin.
+
+    * Modified key bindings for piping messages, i.e. "|" is a prefix key
+      now. Type it twice to get the old pipe command, "|d" will call the 
+      discard the output, just display some infos in the mode line. "|s" 
+      will call `vm-pipe-messages-to-command' and "|n" will also call it 
+      but discard the output.
+
+    * Removed vm-easymenu.el and use easymenu.el instead.
+
+    * In `vm-save-message-preview', ask the user if the output file already
+      exists instead of silently overwriting it.
+
+  BUGFIXES:
+
+    * Moved [Undo] to Dispose menu and [Emacs] to Help menu as these do not
+      work in Emacs 22 anymore when on the menu bar.
+
+    * Fixed intermixing of signature and quoted text in reply if
+      `vm-reply-include-presentation' is t. (Thanks to Roland Winkler for
+      debugging and reporting)
+
+    * Fixed yanking of presentation from wrong folder when folder is virtual.
+      (Thanks to Roland Winkler for reporting)
+
+    * Redistributed flag not displayed in presentation buffer mode line. 
+      https://bugzilla.redhat.com/show_bug.cgi?id=428248 (Thanks to Jonathan
+      Underwood for the fix)
+
+    * `vm-submit-bug-report' gets the variables dynamically now and thus does
+      not miss new ones or references old ones anymore. 
+
+    * Correctly determine the real folder when postponing compositions started
+      from a virtual folder. (Thanks to Uday S. Reddy for reporting and 
+      debugging)
+
+    * Avoid crash when `vm-mouse-set-mouse-track-highlight' is not called
+      within a summary buffer or without a valid message pointer.
+
+    * Do not disable modes which do not exist. (Thanks to Uday S. Reddy for
+      reporting) 
 
 VM 8.0.7
 

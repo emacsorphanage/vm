@@ -48,7 +48,8 @@
 ;;    Removed the need for -A in ls flags.
 ;;    Some systems' ls don't support -A.
 
-(require 'vm-easymenu)
+(eval-when-compile
+  (defvar current-menubar nil))
 
 ;;; Code:
 (defvar vm-menu-folders-menu
@@ -134,7 +135,6 @@
     ["End" vm-end-of-message vm-message-list]
     "----"
     ["Expose/Hide Headers" vm-expose-hidden-headers vm-message-list]
-    "----"
     "----"
     ["Next Message" vm-next-message t]
     ["Previous Message"	vm-previous-message t]
@@ -238,7 +238,9 @@
     ))
 
 (defvar vm-menu-help-menu
-  '("Help!"
+  '("Help"
+    ["Switch to Emacs Toolbar" vm-menu-toggle-menubar]
+    "---"
     ["What Now?" vm-help t]
     ["Describe Mode" describe-mode t]
     ["Revert Folder (back to disk version)" revert-buffer (vm-menu-can-revert-p)]
@@ -368,8 +370,7 @@
 	:selected (eq vm-mime-8bit-text-transfer-encoding 'base64)])
       "----"
       ["Attach File..."	vm-mime-attach-file vm-send-using-mime]
-;;	   ["Attach MIME Message..." vm-mime-attach-mime-file
-;;	    vm-send-using-mime]
+      ["Attach MIME Message..." vm-mime-attach-mime-file vm-send-using-mime]
       ["Encode MIME, But Don't Send" vm-mime-encode-composition
        (and vm-send-using-mime
 	    (null (vm-mail-mode-get-header-contents "MIME-Version:")))]
@@ -404,6 +405,8 @@
 		   (vm-mime-can-convert
 		    (car (vm-mm-layout-type
 			  (vm-mime-get-button-layout e))))]))
+      "---"
+      ["Undo" vm-undo]
       "---"
       ["Save to File" vm-mime-reader-map-save-file t]
       ["Save to Folder" vm-mime-reader-map-save-message
@@ -790,58 +793,58 @@ set to the command name so that window configuration will be done."
 	    (dummy (make-sparse-keymap)))
 	;; initialize all the vm-menu-fsfemacs-*-menu variables
 	;; with the menus.
-	(vm-easy-menu-define vm-menu-fsfemacs-help-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-help-menu (list dummy) nil
 			     vm-menu-help-menu)
-	(vm-easy-menu-define vm-menu-fsfemacs-dispose-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-dispose-menu (list dummy) nil
 			     (cons "Dispose" (nthcdr 4 vm-menu-dispose-menu)))
-	(vm-easy-menu-define vm-menu-fsfemacs-dispose-popup-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-dispose-popup-menu (list dummy) nil
 			     vm-menu-dispose-menu)
-;;	(vm-easy-menu-define vm-menu-fsfemacs-undo-menu (list dummy) nil
+;;	(easy-menu-define vm-menu-fsfemacs-undo-menu (list dummy) nil
 ;;			     (list "Undo" vm-menu-undo-menu))
-	(vm-easy-menu-define vm-menu-fsfemacs-virtual-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-virtual-menu (list dummy) nil
 			     vm-menu-virtual-menu)
-	(vm-easy-menu-define vm-menu-fsfemacs-sort-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-sort-menu (list dummy) nil
 			     vm-menu-sort-menu)
-	(vm-easy-menu-define vm-menu-fsfemacs-label-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-label-menu (list dummy) nil
 			     vm-menu-label-menu)
-	(vm-easy-menu-define vm-menu-fsfemacs-mark-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-mark-menu (list dummy) nil
 			     vm-menu-mark-menu)
-	(vm-easy-menu-define vm-menu-fsfemacs-send-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-send-menu (list dummy) nil
 			     vm-menu-send-menu)
-	(vm-easy-menu-define vm-menu-fsfemacs-motion-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-motion-menu (list dummy) nil
 			     vm-menu-motion-menu)
-;;	(vm-easy-menu-define vm-menu-fsfemacs-folders-menu (list dummy) nil
+;;	(easy-menu-define vm-menu-fsfemacs-folders-menu (list dummy) nil
 ;;			     vm-menu-folders-menu)
-	(vm-easy-menu-define vm-menu-fsfemacs-folder-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-folder-menu (list dummy) nil
 			     vm-menu-folder-menu)
-	(vm-easy-menu-define vm-menu-fsfemacs-vm-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-vm-menu (list dummy) nil
 			     vm-menu-vm-menu)
 	;; for mail mode
-	(vm-easy-menu-define vm-menu-fsfemacs-mail-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-mail-menu (list dummy) nil
 			     vm-menu-mail-menu)
 	;; subject menu
-	(vm-easy-menu-define vm-menu-fsfemacs-subject-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-subject-menu (list dummy) nil
 			     vm-menu-subject-menu)
 	;; author menu
-	(vm-easy-menu-define vm-menu-fsfemacs-author-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-author-menu (list dummy) nil
 			     vm-menu-author-menu)
 	;; url browser menu
-	(vm-easy-menu-define vm-menu-fsfemacs-url-browser-menu (list dummy) nil
+	(easy-menu-define vm-menu-fsfemacs-url-browser-menu (list dummy) nil
 			     vm-menu-url-browser-menu)
 	;; mailto url browser menu
-	(vm-easy-menu-define vm-menu-fsfemacs-mailto-url-browser-menu
+	(easy-menu-define vm-menu-fsfemacs-mailto-url-browser-menu
 			     (list dummy) nil
 			     vm-menu-url-browser-menu)
 	;; mime dispose menu
-	(vm-easy-menu-define vm-menu-fsfemacs-mime-dispose-menu
+	(easy-menu-define vm-menu-fsfemacs-mime-dispose-menu
 			     (list dummy) nil
 			     vm-menu-mime-dispose-menu)
 	;; attachment menu
-	(vm-easy-menu-define vm-menu-fsfemacs-attachment-menu
+	(easy-menu-define vm-menu-fsfemacs-attachment-menu
 			     (list dummy) nil
 			     vm-menu-attachment-menu)
 	;; image menu
-	(vm-easy-menu-define vm-menu-fsfemacs-image-menu
+	(easy-menu-define vm-menu-fsfemacs-image-menu
 			     (list dummy) nil
 			     vm-menu-image-menu)
 	;; block the global menubar entries in the map so that VM
@@ -866,7 +869,7 @@ set to the command name so that window configuration will be done."
 		 (folder
 		  (cons "Folder" vm-menu-fsfemacs-folder-menu))
 		 (help
-		  (cons "Help!" vm-menu-fsfemacs-help-menu))
+		  (cons "Help" vm-menu-fsfemacs-help-menu))
 		 (label
 		  (cons "Label" vm-menu-fsfemacs-label-menu))
 		 (mark
@@ -878,13 +881,8 @@ set to the command name so that window configuration will be done."
 		 (sort
 		  (cons "Sort" vm-menu-fsfemacs-sort-menu))
 		 (virtual
-		  (cons "Virtual" vm-menu-fsfemacs-virtual-menu))
-		 (emacs
-		  (cons "[Emacs]" 'vm-menu-toggle-menubar))
-		 (undo
-		  (cons "[Undo]" 'vm-undo))))
-	      cons
-	      (vec (vector 'rootmenu 'vm nil))
+		  (cons "Virtual" vm-menu-fsfemacs-virtual-menu))))
+	      cons (vec (vector 'rootmenu 'vm nil))
 	      ;; menus appear in the opposite order that we
 	      ;; define-key them.
 	      (menu-list
@@ -1210,7 +1208,7 @@ set to the command name so that window configuration will be done."
 	  (vm-menu-set-menubar-dirty-flag)
 	  (cond ((vm-menu-fsfemacs-menus-p)
 		 (makunbound 'vm-menu-fsfemacs-virtual-menu)
-		 (vm-easy-menu-define vm-menu-fsfemacs-virtual-menu
+		 (easy-menu-define vm-menu-fsfemacs-virtual-menu
 				      (list (make-sparse-keymap))
 				      nil
 				      vm-menu-virtual-menu)
@@ -1272,7 +1270,7 @@ set to the command name so that window configuration will be done."
 	  (vm-menu-set-menubar-dirty-flag)
 	  (cond ((vm-menu-fsfemacs-menus-p)
 		 (makunbound 'vm-menu-fsfemacs-folder-menu)
-		 (vm-easy-menu-define vm-menu-fsfemacs-folder-menu
+		 (easy-menu-define vm-menu-fsfemacs-folder-menu
 				      (list (make-sparse-keymap))
 				      nil
 				      vm-menu-folder-menu)
@@ -1412,7 +1410,7 @@ set to the command name so that window configuration will be done."
 		(add-menu '("Folder") "Manipulate Folders"
 			  (cdr vm-menu-folders-menu) "Motion"))))
 	((vm-menu-fsfemacs-menus-p)
-	 (vm-easy-menu-define vm-menu-fsfemacs-folders-menu
+	 (easy-menu-define vm-menu-fsfemacs-folders-menu
 			      (list (make-sparse-keymap))
 			      nil
 			      vm-menu-folders-menu)

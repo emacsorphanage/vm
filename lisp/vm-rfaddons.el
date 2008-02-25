@@ -379,159 +379,39 @@ storage for attachments which are stored on disk anyway."
       (vm-do-fcc-before-mime-encode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defcustom vm-fill-paragraphs-containing-long-lines-faster nil
-  "*Do faster filling of long lines with code borrowed from Gnus.
-This is essentially faster than VMs functions."
-  :type 'boolean
-  :group 'vm-rfaddons)
-
-(defvar vm-unfill-paragraphs-containing-long-lines-faster nil
-  "Set by calling `vm-unfill-paragraphs-containing-long-lines'.")
-
-(defcustom vm-fill-long-lines-in-reply-column 70
-  "*Fill lines in replies up to this column."
-  :type 'integer
-  :group 'vm-rfaddons)
-
-(defadvice vm-fill-paragraphs-containing-long-lines
-  (around vm-rfaddons-better-filling activate)
-  "Do better filling if longlines.el is present otherwise if
-`vm-fill-paragraphs-containing-long-lines-faster' is 't do faster
-filling than VMs code."
-  (if (eq (ad-get-arg 0) 'window-width)
-      (ad-set-arg 0 (- (window-width (get-buffer-window (current-buffer))) 1)))
-  (cond
-   ;; use long lines when present
-   ((locate-library "longlines")
-    (require 'overlay)
-    (defvar fill-nobreak-predicate nil)
-    (defvar undo-in-progress nil)
-    (defvar longlines-mode-hook nil)
-    (defvar longlines-mode-on-hook nil)
-    (defvar longlines-mode-off-hook nil)
+;;;###autoload
+(defun vm-fill-paragraphs-by-longlines (width start end)
+  "Uses longlines.el for filling.
+To use it, advice `vm-fill-paragraphs-containing-long-lines' and call this
+function instead."
+  (if (eq width 'window-width)
+      (setq width (- (window-width (get-buffer-window (current-buffer))) 1)))
+  ;; prepare for longlines.el in XEmacs
+  (require 'overlay)
+  (require 'longlines)
+  (defvar fill-nobreak-predicate nil)
+  (defvar undo-in-progress nil)
+  (defvar longlines-mode-hook nil)
+  (defvar longlines-mode-on-hook nil)
+  (defvar longlines-mode-off-hook nil)
+  (unless (functionp 'replace-regexp-in-string)
+    (defun replace-regexp-in-string (regexp rep string
+                                            &optional fixedcase literal)
+      (replace-in-string string regexp rep literal)))
+  (unless (functionp 'line-end-position)
+    (defun line-end-position ()
+      (save-excursion (end-of-line) (point))))
+  (unless (functionp 'line-beginning-position)
+    (defun line-beginning-position (&optional n)
+      (save-excursion
+        (if n (forward-line n))
+        (beginning-of-line)
+        (point)))
     (unless (functionp 'replace-regexp-in-string)
       (defun replace-regexp-in-string (regexp rep string
                                               &optional fixedcase literal)
-        (replace-in-string string regexp rep literal)))
-    (unless (functionp 'line-end-position)
-      (defun line-end-position ()
-        (save-excursion (end-of-line) (point))))
-    (unless (functionp 'line-beginning-position)
-      (defun line-beginning-position (&optional n)
-        (save-excursion
-          (if n (forward-line n))
-          (beginning-of-line)
-          (point)))
-      (unless (functionp 'replace-regexp-in-string)
-        (defun replace-regexp-in-string (regexp rep string
-                                                &optional fixedcase literal)
-          (replace-in-string string regexp rep literal))))
-    (require 'longlines)
-    (vm-fill-paragraphs-containing-long-lines-by-longlines
-     (ad-get-arg 0) (ad-get-arg 1) (ad-get-arg 2)))
-   ((eq t vm-fill-paragraphs-containing-long-lines-faster)
-    (vm-fill-paragraphs-containing-long-lines-faster
-     (ad-get-arg 0) (ad-get-arg 1) (ad-get-arg 2)))
-   (t 
-    ad-do-it)))
-
-;;;###autoload
-(defun vm-fill-long-lines-in-reply ()
-  (interactive)
-  (rf-vm-fill-paragraphs-containing-long-lines-faster
-   vm-fill-long-lines-in-reply-column
-   (save-excursion
-     (goto-char (point-min))
-     (re-search-forward
-      (regexp-quote mail-header-separator) (point-max))
-     (forward-line 1)
-     (point))
-   (point-max))
-  nil)
-
-;;;###autoload
-(defun vm-fill-paragraphs-containing-long-lines-toggle ()
-  (interactive)
-  (let ((fp vm-fill-paragraphs-containing-long-lines-faster))
-    (setq vm-fill-paragraphs-containing-long-lines-faster
-          (cond ((eq fp nil)
-                 (setq vm-fill-paragraphs-containing-long-lines
-                       vm-fill-long-lines-in-reply-column))
-                ((numberp fp)
-                 t)
-                (t
-                 (setq vm-fill-paragraphs-containing-long-lines nil)))))
-  
-  (message "Paragraph-filling %s!"
-           (if vm-fill-paragraphs-containing-long-lines-faster
-               (if (numberp vm-fill-paragraphs-containing-long-lines-faster)
-                   (format "for rows longer than %d chars"
-                           vm-fill-paragraphs-containing-long-lines-faster)
-                 "enabled in fast mode")
-             "disabled")))
-
-;;;###autoload
-(defun vm-unfill-paragraphs-containing-long-lines-faster ()
-  "Sometimes filling long lines is the wrong thing!
-Call this function, if you want to see the message unfilled."
-  (interactive)
-  (let ((vm-unfill-paragraphs-containing-long-lines-faster t))
-    (vm-select-folder-buffer)
-    (vm-preview-current-message)))
-
-;;;###autoload
-(defun vm-fill-paragraphs-containing-long-lines-faster (width start end)
-  (if (not vm-unfill-paragraphs-containing-long-lines-faster)
-      (vm-save-restriction
-       (widen)
-       (or (markerp end) (setq end (vm-marker end)))
-       (rf-vm-fill-paragraphs-containing-long-lines-faster width start end))
-    nil))
-  
-(defun rf-vm-fill-paragraphs-containing-long-lines-faster (width start end)
-  (interactive (list vm-paragraph-fill-column (point-min) (point-max)))
-  (save-excursion
-    (let ((buffer-read-only nil)
-          (fill-column width)
-          (filladapt-fill-column-forward-fuzz 0)
-          (filladapt-mode t)
-          (abbrev-mode nil)
-          (filled 0)
-          (message (if (car vm-message-pointer)
-                       (vm-su-subject (car vm-message-pointer))
-                     (buffer-name))))
-      
-      ;; we need a marker for the end since this position might change 
-      (goto-char end) (setq end (point-marker))
-      (goto-char start)
-
-      (message "Filling message `%s' to column %d!" message fill-column)
-
-      ;; this should speed up things!
-      (buffer-disable-undo)
-      (condition-case nil
-          (while (< (point) end)
-            (end-of-line)
-            (when (> (current-column) fill-column)
-              (setq filled (1+ filled))
-              (filladapt-fill-paragraph 'fill-paragraph nil))
-            (forward-line 1))
-        (error nil)
-        (quit nil))
-      (buffer-enable-undo)
-
-      (if (> filled 0)
-          (message "Filled %s line%s in message `%s'!"
-                   (if (> filled 1) (format "%d" filled) "one")
-                   (if (> filled 1) "s" "")
-                   message)
-        (message "Nothing to fill!")))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;###autoload
-(defun vm-fill-paragraphs-containing-long-lines-by-longlines (width start end)
-  "Uses `longlines.el' for filling."
+        (replace-in-string string regexp rep literal))))
+  ;; now do the filling
   (let ((buffer-read-only nil)
         (fill-column width))
     (save-excursion
@@ -1010,7 +890,7 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
                   (shell-command (concat (caddr converter) " < '" filename "'")
                                  1)
                 (message "Could not find viewer for type %s!" type)
-                (insert-file filename))))
+                (insert-file-contents filename))))
           )))
      layout
       nil)))
@@ -1352,7 +1232,7 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
           (setq o (vm-mm-layout (car mlist)))
           (when (stringp o)
             (setq o 'none)
-            (backtrace (get-buffer-create "*backtrace*"))
+            (backtrace)
             (message "There is a bug, see *backtrace* for details"))
           (if (eq 'none o)
               nil;; this is no mime message
@@ -1857,12 +1737,9 @@ text/alternative message depending on the value of the variable
                        (regexp :tag "Regexp")
                        (string :tag "Replacement"))))
    
-(defun vm-mail-mode-citation-clean-up (&optional s e)
+(defun vm-mail-mode-citation-clean-up ()
   "Remove doubly-cited text and extra lines in a mail message."
   (interactive)
-  (if (region-exists-p)
-      (setq s (point)
-            e (mark)))
   (save-excursion
     (mail-text)
     (let ((re-alist vm-mail-mode-citation-kill-regexp-alist)
@@ -1933,8 +1810,6 @@ and add an \"%0UA\" to your `vm-summary-format'."
 (defun vm-mail-mode-install-open-line ()
   "Install the open-line hooks for `vm-mail-mode'.
 Add this to `vm-mail-mode-hook'."
-  (make-local-hook 'before-change-functions)
-  (make-local-hook 'after-change-functions)
   (add-hook 'before-change-functions 'vm-mail-mode-open-line nil t)
   (add-hook 'after-change-functions 'vm-mail-mode-open-line nil t))
 
@@ -2053,16 +1928,21 @@ It saves the decoded message and not the raw message like `vm-save-message'!"
   (interactive
    ;; protect value of last-command
    (let ((last-command last-command)
-         (this-command this-command))
+         (this-command this-command)
+         filename)
      (vm-follow-summary-cursor)
      (vm-select-folder-buffer)
-     (list
+     (setq filename
       (vm-read-file-name
        (if vm-last-written-file
            (format "Write text to file: (default %s) "
                    vm-last-written-file)
          "Write text to file: ")
-       nil vm-last-written-file nil))))
+       nil vm-last-written-file nil))
+     (if (and (file-exists-p filename)
+              (not (yes-or-no-p (format "Overwrite '%s'? " filename))))
+         (error "Aborting `vm-save-message-preview'."))
+     (list filename)))
     (save-excursion
       (vm-follow-summary-cursor)
       (vm-select-folder-buffer)
@@ -2291,7 +2171,8 @@ not end the comment.  Blank lines do not get comments."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-delete-message-action "vm-next-message"
-  "Forward to next (unread) message after deletion")
+  "Command to do after deleting a message."
+  :group 'vm)
 
 ;;;###autoload
 (defun vm-delete-message-action (&optional arg)
@@ -2304,8 +2185,8 @@ Call it with a prefix ARG to change the action."
                            '(("vm-rmail-up")
                              ("vm-rmail-down")
                              ("vm-previous-message")
-                             ("vm-next-message")
                              ("vm-previous-unread-message")
+                             ("vm-next-message")
                              ("vm-next-unread-message")
                              ("nothing"))))
     (message "action after delete is %S" vm-delete-message-action))

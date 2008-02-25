@@ -459,7 +459,9 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 		      (set-buffer
 		       (vm-buffer-of
 			 (vm-real-message-of m)))
-		      vm-folder-read-only))))
+		      vm-folder-read-only)))
+           ;; do nothing it is is already set 
+           (not (eq flag (aref (vm-attributes-of m) attr-index))))
       (cond
        ((not norecord)
 	(setq vmp (cons (vm-real-message-of m) (vm-virtual-messages-of m)))

@@ -718,8 +718,7 @@ Use mouse button 3 to choose a Web browser for the URL."
      (vm-narrow-for-preview just-passing-through)
      (if (or vm-always-use-presentation-buffer
              vm-mime-display-function
-	     (or (natnump vm-fill-paragraphs-containing-long-lines)
-                 (eq 'window-width vm-fill-paragraphs-containing-long-lines))
+             vm-fill-paragraphs-containing-long-lines
              (and vm-display-using-mime
 		  (not (vm-mime-plain-message-p (car vm-message-pointer)))))
 	 (let ((layout (vm-mm-layout (car vm-message-pointer))))
@@ -805,20 +804,12 @@ Use mouse button 3 to choose a Web browser for the URL."
 	 (vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
 					       (car (cdr data)))
 			(message "%s" (car (cdr data))))))
-  (if (and (or (natnump vm-fill-paragraphs-containing-long-lines)
-               (eq 'window-width vm-fill-paragraphs-containing-long-lines))
-	   (vm-mime-plain-message-p (car vm-message-pointer)))
-      (let ((needmsg (> (- (vm-text-end-of (car vm-message-pointer))
-			   (vm-text-of (car vm-message-pointer)))
-			12000)))
-	(if needmsg
-	    (message "Searching for paragraphs to fill..."))
-	(vm-fill-paragraphs-containing-long-lines
-	 vm-fill-paragraphs-containing-long-lines
-	 (vm-text-of (car vm-message-pointer))
-	 (vm-text-end-of (car vm-message-pointer)))
-	(if needmsg
-	    (message "Searching for paragraphs to fill... done"))))
+  (if (and vm-fill-paragraphs-containing-long-lines
+           (vm-mime-plain-message-p (car vm-message-pointer)))
+      (vm-fill-paragraphs-containing-long-lines
+       vm-fill-paragraphs-containing-long-lines
+       (vm-text-of (car vm-message-pointer))
+       (vm-text-end-of (car vm-message-pointer))))
   (vm-save-buffer-excursion
    (save-excursion
      (save-excursion
