@@ -1,10 +1,5 @@
 #!/bin/sh -x
 
-if [ "$1" != "test" ]; then 
-  bzr diff || exit 1
-  make || exit 1
-fi
-
 bzr="bzr --no-plugins --no-aliases"
 nick=`$bzr nick`
 devo=`echo $nick | fgrep -q devo && echo devo`
@@ -26,11 +21,6 @@ else
   version=$tag
 fi
 
-dir="release/$rdir"
-rm -rf $dir
-mkdir -p release
-$bzr export $dir
-cp configure $dir
 cat > lisp/vm-revno.el <<EOFREVNO
 ;;; This is a generated file, do not edit it!
 (setq vm-version "$version")
@@ -39,14 +29,35 @@ cat > lisp/vm-revno.el <<EOFREVNO
   (author "`$bzr whoami`")
 ))
 EOFREVNO
+
+# now check for uncommitted changes
+if [ "$1" != "test" ]; then 
+  bzr diff || exit 1
+fi
+
+# just create the version-info, no bundle 
+if [ "$1" != "version-info" ]; then 
+  exit 0
+fi
+
+# check for an error less build
+if [ "$1" != "test" ]; then 
+  make || exit 1
+fi
+
+dir="release/$rdir"
+rm -rf $dir
+mkdir -p release
+$bzr export $dir
+cp configure $dir
 cp lisp/vm-revno.el $dir/lisp
-echo 'Version: $Id: '$rdir'$' > $dir/id
+
 cd release
 tar cvfz $rdir.tgz $rdir
 cd ..
 
 if [ -n "$1" -a -e "$1" ]; then
-  ./$1 $dir.tgz $nick $revno;
+  ./$1 $dir.tgz $nick $revno
 fi
 
 if [ "$1" != "test" ]; then 
