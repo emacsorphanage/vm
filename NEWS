@@ -1,3 +1,15 @@
+VM 8.0.10
+
+  IMPROVEMENTS:
+
+    * `vm-message-history.el' now uses a buffer similar to the summary for
+      browsing the history.  The buffer replaces the summary buffer when
+      present.  Duplicate history entries will be removed.  
+
+  BUGFIXES:
+
+    * Rewrote `vm-message-history.el' to also work for XEmacs.
+
 VM 8.0.9
 
   BUGFIXES:
