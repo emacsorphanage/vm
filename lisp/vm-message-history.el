@@ -35,22 +35,26 @@
 ;; (except when using `vm-goto-message-last-seen' or one of the
 ;; vm-message-history.el commands).
 
-;; Usage:
+;;; Usage:
+;;
+;; Add the follwoing line to your ~/.vm
+;;
 ;; (require 'vm-message-history)
-;; M-x vm-visit-folder
-;; M-x vm-message-history-backward	; C-c b, Motion -> Backward in History
-;; M-x vm-message-history-forward	; C-c f, Motion -> Forward in History
-;; M-x vm-message-history-browse	;        Motion -> Browse History
+;;
+;; Visit a folder, move around and the use the key bindings or menu items for
+;; the moving and browsing the history.
+;; C-c p, Motion -> Backward in History
+;; C-c n, Motion -> Forward in History
+;; C-c b, Motion -> Browse History
 
-;; TODO: Expunged messages in the history list?
+;;; TODO: Handle Expunged messages in the history list?
 
 ;;; Code:
 
 (eval-and-compile
   (require 'easymenu)
   (require 'vm-version)
-  (require 'vm-misc)
-  (require 'vm-page)
+  (require 'vm-menu)
   (require 'vm-vars))
 
 (defgroup vm-message-history nil
@@ -76,18 +80,16 @@
 (define-key vm-mode-map "\C-cn" 'vm-message-history-forward)
 (define-key vm-mode-map "\C-cb" 'vm-message-history-browse)
 
-(let ((menu (if vm-fsfemacs-p 'vm-menu-fsfemacs-motion-menu 'vm-menu-vm-menu))
-      (path (if vm-xemacs-p '("Motion"))))
-  (easy-menu-add-item menu path
-                      ["Backward in History" vm-message-history-backward])
-  (easy-menu-add-item menu path
-                      ["Forward in History" vm-message-history-forward])
-  (easy-menu-add-item menu path
-                      ["Browse History" vm-message-history-browse
-                       :active (save-excursion
-                                 (vm-select-folder-buffer)
-                                 vm-message-history)]))
+(setq vm-menu-motion-menu
+      (append vm-menu-motion-menu
+	      '(["Backward in History" vm-message-history-backward t]
+		["Forward in History" vm-message-history-forward t]
+		["Browse History" vm-message-history-browse
+		 :active (save-excursion
+			   (vm-select-folder-buffer)
+			   vm-message-history)])))
 
+;;;###autoload
 (defun vm-message-history-add ()
   "Add the selected message to `vm-message-history'.
 \(Unless the message was selected via \\[vm-message-history-backward] or
@@ -202,7 +204,7 @@ With prefix ARG, select the ARG'th next message."
     ;; now switch to new buffer and set it up
     (switch-to-buffer buf)
     (let ((buffer-read-only nil))
-      (erase-buffer buf))
+      (erase-buffer))
     (abbrev-mode 0)
     (auto-fill-mode 0)
     (vm-fsfemacs-nonmule-display-8bit-chars)
