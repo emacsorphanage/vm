@@ -73,9 +73,11 @@ Actions are associated with conditions from `vmpc-conditions' by one of
 `vmpc-resend-alist',  `vmpc-newmail-alist' or `vmpc-automorph-alist'.
 
 These are also the actions from which you can choose when using the newmail
-features of Personality Crisis, or the `vmpc-prompt-for-profile' action."
+features of Personality Crisis, or the `vmpc-prompt-for-profile' action.
+
+You may also define an action without associated commands, e.g. \"none\"."
   :type '(repeat (list (string :tag "Action name")
-                       (sexp :tag "Condition")))
+                       (sexp :tag "Commands")))
   :group 'vmpc)
 
 (defun vmpc-alist-set (symbol value)
@@ -143,6 +145,12 @@ resending, composing or automorphing, then set this one."
 ;  :set 'vmpc-alist-set
   :group 'vmpc)
 
+(defcustom vmpc-default-profile "default"
+  "*The default profile to select if no profile was found."
+  :type '(choice (const :tag "None" nil)
+                 (string))
+  :group 'vmpc)
+
 (defcustom vmpc-auto-profiles-file "~/.vmpc-auto-profiles"
   "*File in which to save information used by `vmpc-prompt-for-profile'.
 When set to the symbol 'BBDB, profiles will be stored there."
@@ -155,7 +163,7 @@ When set to the symbol 'BBDB, profiles will be stored there."
 Performance may suffer noticeably if this file becomes enormous, but in other
 respects it is preferable for this value to be fairly high.  The value that is
 right for you will depend on how often you send email to new addresses using
-`vmpc-prompt-for-profile' (with the REMEMBER flag set to 'always or 'prompt)."
+`vmpc-prompt-for-profile'."
   :type 'integer
   :group 'vmpc)
 
@@ -229,7 +237,7 @@ It will ensure that pcrisis correctly handles the signature .")
   "Setup pcrisis with the given IDENTITIES."
   (setq vmpc-conditions    '(("always true" t))
         vmpc-actions-alist '(("always true" "prompt for a profile"))
-        vmpc-actions       '(("prompt for a profile" (vmpc-prompt-for-profile 'always))))
+        vmpc-actions       '(("prompt for a profile" (vmpc-prompt-for-profile t t))))
   (setq vmpc-actions
         (append (mapcar
                  (lambda (i)
@@ -1030,24 +1038,21 @@ If no email address in found in STR, returns nil."
       (erase-buffer))
     (nreverse result)))
 
-(defun vmpc-read-actions (prompt)
-  "Read a list of actions to run and store it in `vmpc-actions-to-run'."
-  (interactive (list "VMPC actions %s:"))
-  (let ((actions ()) a)
-    (while (not (string-equal
-                 (setq a (completing-read
-                          (format prompt (or actions ""))
-                          ;; omit those starting with (vmpc-prompt-for-profile ...
-                          (mapcar
-                           (lambda (a)
-                             (if (not (or (eq (caadr a) 'vmpc-prompt-for-profile)
-                                          (member (car a) actions)))
-                                 a))
-                           vmpc-actions)
-                          nil t nil nil ""))
-                 ""))
-      (setq actions (cons a actions)))
-    (setq actions (reverse actions))
+(defun vmpc-read-actions (prompt &optional default)
+  "Read a list of actions to run and store it in `vmpc-actions-to-run'.
+The special action \"none\" will result in an empty action list."
+  (interactive (list "VMPC actions%s: "))
+  (let ((actions ()) (read-count 0) a)
+    (setq actions (vm-read-string 
+                   (format prompt (if default (format " %s" default) ""))
+                   (append '(("none")) vmpc-actions)
+                   t))
+    (if (string= actions "none")
+        (setq actions nil)
+      (if (string= actions "")
+          (setq actions default)
+        (setq actions (vmpc-split actions " "))
+        (setq actions (reverse actions))))
     (when (interactive-p)
       (setq vmpc-actions-to-run actions)
       (message "VMPC actions to run: %S" actions))
@@ -1068,6 +1073,24 @@ If no email address in found in STR, returns nil."
                        (repeat (string :tag "Header"))))
   :group 'vmpc)
 
+(defvar vmpc-profiles-history nil
+  "History of profiles prompted for.")
+
+(defun vmpc-read-profile (&optional require-match initial-contents default)
+  "Read a profile and return it."
+  (unless default
+    (setq default (car vmpc-profiles-history)))
+  (completing-read (format "VMPC profile%s: "
+                           (if vmpc-profiles-history
+                               (concat " (" default ")")
+                             ""))
+                   vmpc-auto-profiles
+                   nil
+                   require-match
+                   initial-contents
+                   'vmpc-profiles-history
+                   default))
+
 (defun vmpc-prompt-for-profile (&optional remember prompt)
   "Find a profile or prompt for it and add its actions to the list of actions.
 
@@ -1079,25 +1102,25 @@ without an action.
 The association is stored in `vmpc-auto-profiles-file' and in the future the
 stored actions will automatically run for messages to that address.
 
-REMEMBER can be set to 'always or 'prompt.  When set to 'prompt you will
-be asked if you want to store the association.  When set to 'always a new
-profile will be stored without asking.
+REMEMBER can be set to t or 'prompt.  When set to 'prompt you will be asked if
+you want to store the association.  When set to t a new profile will be stored
+without asking.
 
-If you want to change the profile late call this function interactively in a
-composition buffer.  Set PROFILE to 'never and you will never ever be prompted
-for anything, i.e. only existing profiles will be applied."
+Set PROMPT to t and you will be prompted each time, i.e. not only for unknown
+profiles.  If you want to change the profile only explicitly, then omit the
+PROMPT argument and call this function interactively in the composition buffer."
   (interactive (progn (setq vmpc-current-state 'automorph)
-                      (list 'prompt 'again)))
-  
+                      (list 'prompt t)))
+    
   (if (or (and (eq vmpc-current-buffer 'none)
 	       (not (eq vmpc-current-state 'automorph)))
 	  (eq vmpc-current-state 'automorph))
       (let ((headers (or (assoc vmpc-current-buffer vmpc-prompt-for-profile-headers)
                          (assoc vmpc-current-state vmpc-prompt-for-profile-headers)
                          (assoc 'default vmpc-prompt-for-profile-headers)))
-            addrs a actions dest)
+            addrs a old-actions actions dest)
         (setq headers (car (cdr headers)))
-        ;; search also other headers fro known addresses 
+        ;; search also other headers for known addresses 
         (while (and headers (not actions))
           (setq addrs (vmpc-get-header-contents (car headers)))
           (if addrs (setq addrs (vmpc-split addrs  ",")))
@@ -1106,32 +1129,40 @@ for anything, i.e. only existing profiles will be applied."
             (if (vm-ignored-reply-to a)
                 (setq a nil))
             (setq actions (append (vmpc-get-profile-for-address a) actions))
-            (if actions (setq remember 'already))
             (if (not dest) (setq dest a))
             (setq addrs (cdr addrs)))
           (setq headers (cdr headers)))
 
+        (setq dest (or dest vmpc-default-profile (if prompt (vmpc-read-profile))))
+        
+        (unless actions 
+          (setq actions (vmpc-get-profile-for-address dest)))
+
+        ;; save action to detect a change
+        (setq old-actions actions)
+        
         (when dest
           ;; figure out which actions to run
-          (when (if prompt (not (eq prompt 'never)) (not actions))
+          (when (or prompt (not actions))
             (setq actions (vmpc-read-actions
-                           (format "Actions for \"%s\" %%s (end with RET): " dest))))
+                           (format "Actions for \"%s\"%%s: " dest)
+                           actions)))
 
           ;; fixed old style format where there was only a single action
           (unless (listp actions)
-            (setq remember 'again)
+            (setq remember t)
             (setq actions (list actions)))
 
           ;; save the association of this profile with these actions if applicable
-          (if (or (and (eq remember 'prompt)
-                       (not (eq prompt 'never))
-                       (if actions 
-                           (y-or-n-p (format "Always run %s for \"%s\"? "
-                                             actions dest))
-                         (if (vmpc-get-profile-for-address dest)
-                             (yes-or-no-p (format "Delete profile for \"%s\"? "
-                                                  dest)))))
-                  (eq remember 'always))
+          (if (and (not (equal old-actions actions))
+                   (or (eq remember t)
+                       (and (eq remember 'prompt)
+                            (if actions 
+                                (y-or-n-p (format "Always run %s for \"%s\"? "
+                                                  actions dest))
+                              (if (vmpc-get-profile-for-address dest)
+                                  (yes-or-no-p (format "Delete profile for \"%s\"? "
+                                                       dest)))))))
               (vmpc-save-profile-for-address dest actions))
           
           ;; TODO: understand when vmpc-prompt-for-profile has to run actions 
@@ -1328,7 +1359,7 @@ buffer to which to write diagnostic output."
   (interactive)
   
   (if (and (not vmpc-actions-to-run) (not actions) (interactive-p))
-      (setq vmpc-actions-to-run (vmpc-read-actions "VMPC actions %%s")))
+      (setq vmpc-actions-to-run (vmpc-read-actions)))
 
   (let ((actions (or actions vmpc-actions-to-run)) form)
     (while actions

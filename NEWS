@@ -2,6 +2,11 @@ VM 8.1.0-devo
 
   IMPROVEMENTS:
 
+    * VMPC: Better action reader and a default profile which is used if no
+      email addresses could be found.  The meaning of the arguments for
+      `vmpc-prompt-for-profile' has been slightly simplified, see the doc
+      string for details.  
+
     * Removed `vm-paragraph-fill-column', the value is now taken from
       `vm-fill-paragraphs-containing-long-lines' thus allowing to fill to the
       available window with.
