@@ -6654,6 +6654,82 @@ agent; under Unix, normally sendmail.)"
       ;; should not be reached
       "burn in the raging fires of hell forever"))
 
+(defun vm-mime-map-layout-parts (m function &optional layout path)
+  "Apply FUNCTION to each part of the message M.
+This function will call itself recursively with the currently processed LAYOUT
+and the PATH to it.  PATH is a list of parent layouts where the root is at the
+end of the path."
+  (unless layout
+    (setq layout (vm-mm-layout m)))
+  (funcall function m layout path)
+  (let ((parts (copy-sequence (vm-mm-layout-parts layout))))
+    (while parts
+      (vm-mime-map-layout-parts m function (car parts) (cons layout path))
+      (setq parts (cdr parts)))))
+
+(defun vm-mime-list-part-structure ()
+  "List mime part structure of the current message."
+  (interactive)
+  (vm-check-for-killed-summary)
+  (if (interactive-p) (vm-follow-summary-cursor))
+  (vm-select-folder-buffer)
+  (let ((m (car vm-message-pointer)))
+    (switch-to-buffer "VM mime part layout.")
+    (erase-buffer)
+    (setq truncate-lines t)
+    (insert (format "%s\n" (vm-summary-of m)))
+    (vm-mime-map-layout-parts
+     m
+     (lambda (m layout path)
+       (insert (format "%s%S\n" (make-string (length path) ? ) layout))))))
+
+;;;###autoload
+(defun vm-mime-nuke-alternative-text/html-internal (m)
+  (let (prev-type this-type parent-type)
+    (vm-mime-map-layout-parts
+     m
+     (lambda (m layout path)
+       (setq this-type (car (vm-mm-layout-type layout))
+             parent-type (if path (car (vm-mm-layout-type (car path)))))
+       (when (and path (vm-mime-types-match "multipart/alternative" parent-type))
+         (when (and (vm-mime-types-match "text/html" this-type)
+                    (vm-mime-types-match "text/plain" prev-type))
+           (save-excursion
+             (set-buffer (vm-buffer-of m))
+             (let ((inhibit-read-only t)
+                   (buffer-read-only nil))
+               (vm-save-restriction
+                (widen)
+                (if (vm-mm-layout-is-converted layout)
+                    (setq layout (vm-mm-layout-unconverted-layout layout)))
+                (goto-char (vm-mm-layout-header-start layout))
+                (forward-line -1)
+                (delete-region (point) (vm-mm-layout-body-end layout))
+                (vm-set-edited-flag-of m t)
+                (vm-set-byte-count-of m nil)
+                (vm-set-line-count-of m nil)
+                (vm-set-stuff-flag-of m t)
+                (vm-mark-for-summary-update m))))))
+       (setq prev-type this-type)))))
+
+;;;###autoload
+(defun vm-mime-nuke-alternative-text/html (&optional count mlist)
+  "Removes the text/html part of all multipart/alternative message parts.
+
+This is a destructive operation and cannot be undone!"
+  (interactive "p")
+  (when (interactive-p)
+    (vm-check-for-killed-summary)
+    (vm-follow-summary-cursor)
+    (vm-select-folder-buffer))
+  (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
+    (save-excursion
+      (while mlist
+        (vm-mime-nuke-alternative-text/html-internal (car mlist))
+        (setq mlist (cdr mlist)))))
+  (when (interactive-p)
+    (vm-discard-cached-data count)))
+
 (provide 'vm-mime)
 
 ;;; vm-mime.el ends here

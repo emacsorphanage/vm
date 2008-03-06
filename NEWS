@@ -2,6 +2,12 @@ VM 8.1.0-devo
 
   IMPROVEMENTS:
 
+    * Added the function `vm-mime-list-part-structure' to list the mime part
+      structure of a message.
+
+    * Added function `vm-mime-nuke-alternative-text/html' which can be used to
+      get rid of alternative text/html parts.
+
     * VMPC: Better action reader and a default profile which is used if no
       email addresses could be found.  The meaning of the arguments for
       `vmpc-prompt-for-profile' has been slightly simplified, see the doc
