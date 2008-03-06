@@ -1057,6 +1057,9 @@ into a temporary file and the name of the file can be inserted
 into an ARG string by writing %f.  In earlier versions of VM the
 filename was always added as the last argument; as of VM 6.49 this
 is only done if %f does not appear in any of the ARG strings.
+The filename inserted by %f will be quoted by `shell-quote-argument'
+and thus no single quotes should be used, i.e. do not use the following 
+\"...'%f'...\".
 
 If the COMMAND-LINE form is used, the program and its arguments
 are specified as a single string and that string is passed to the
