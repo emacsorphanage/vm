@@ -116,6 +116,7 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
 		    (set-keymap-parent vm-w3m-mode-map vm-mode-map)
 		    vm-w3m-mode-map))))))
 
+;;;###autoload
 (defun vm-mime-display-internal-w3m-text/html (start end layout)
   "Use emacs-w3m to inline HTML mails in the VM presentation buffer."
   (setq w3m-display-inline-images vm-w3m-display-inline-images)
