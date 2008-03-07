@@ -28,19 +28,28 @@
 
 ;;; Code:
 
-(require 'vm-mime)
+(eval-when-compile
+  (require 'cl)
+  (require 'advice)
+  (require 'vm-mime)
+  (require 'vm-version)
+  (require 'vm-vars)
+  (require 'executable))
+
 (require 'w3m)
 
-(defvar vm-message-pointer)
-(defvar vm-mode-map)
-(defvar vm-w3m-mode-map)
-(defvar w3m-minor-mode-map)
+(defvar vm-w3m-mode-map nil
+  "Keymap for w3m within VM.")
+
+(defgroup vm-w3m nil
+  "w3m settings for VM."
+  :group  'vm)
 
 (defcustom vm-w3m-display-inline-images t
   "Non-nil means VM will allow retrieving images in the HTML contents
 with the <img> tags.  See also the documentation for the variable
 `vm-w3m-safe-url-regexp'."
-  :group 'w3m
+  :group 'vm-w3m
   :type 'boolean)
 
 (defcustom vm-w3m-safe-url-regexp "\\`cid:"
@@ -55,7 +64,7 @@ when displaying the image.  The default value is \"\\\\`cid:\" which only
 matches parts embedded to the Multipart/Related type MIME contents and
 VM will never connect to the spammer's site arbitrarily.  You may set
 this variable to nil if you consider all urls to be safe."
-  :group 'w3m
+  :group 'vm-w3m
   :type '(choice (regexp :tag "Regexp")
 		 (const :tag "All URLs are safe" nil)))
 
@@ -65,7 +74,7 @@ Set this variable to nil if you don't want vm-w3m to override any VM
 commend keys.  If it is non-nil, you will not be able to use some VM
 command keys, which are bound to emacs-w3m commands defined in the
 `w3m-minor-mode-command-alist' variable."
-  :group 'w3m
+  :group 'vm-w3m
   :type 'boolean)
 
 (eval-and-compile
@@ -129,11 +138,6 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
             ;; Put the mark meaning that this part was
             ;; inlined by emacs-w3m.
             '(text-rendered-by-emacs-w3m t)))))
-
-(eval-when-compile
-  (defvar vm-mail-buffer)
-  (defvar vm-presentation-buffer)
-  (autoload 'vm-buffer-variable-value "vm-misc"))
 
 (defun vm-w3m-safe-toggle-inline-images (&optional arg)
   "Toggle displaying of all images in the presentation buffer.
