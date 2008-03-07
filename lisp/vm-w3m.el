@@ -86,27 +86,17 @@ by the value of `w3m-minor-mode-map'.  In order to add some commands to
 this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
 
 (defun vm-w3m-cid-retrieve (url &rest args)
-  "Insert a content pointed by URL if it has the cid: scheme."
-  (if (string-match "\\`cid:" url)
-      (let ((part-list (save-excursion
-			 (set-buffer w3m-current-buffer)
-			 (vm-mm-layout-parts
-			  (vm-mm-layout (car vm-message-pointer)))))
-	    part start type)
-	(setq url (concat "<" (substring url (match-end 0)) ">"))
-	(while (and part-list (not type))
-          (setq part (car part-list))
-          (if (vm-mime-composite-type-p (car (vm-mm-layout-type part)))
-              (setq part-list (nconc (copy-sequence (vm-mm-layout-parts part))
-                                     (cdr part-list))))
-	  (setq part-list (cdr part-list))
-	  (if (equal url (vm-mm-layout-id part))
-	      (progn
-		(setq start (point))
-		(vm-mime-insert-mime-body part)
-		(vm-mime-transfer-decode-region part start (point))
-		(setq type (car (vm-mm-layout-type part))))))
-	type)))
+  "Insert a content of URL."
+  (let ((message (save-excursion
+                   (set-buffer w3m-current-buffer)
+                   (car vm-message-pointer)))
+        part
+        type)
+    (setq part (vm-mime-cid-retrieve url message)
+          type (car (vm-mm-layout-type part)))
+    (when part
+      (vm-mime-transfer-decode-region part (point-min) (point-max)))
+    type))
 
 (or (assq 'vm-presentation-mode w3m-cid-retrieve-function-alist)
     (setq w3m-cid-retrieve-function-alist
@@ -126,7 +116,7 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
 		    vm-w3m-mode-map))))))
 
 ;;;###autoload
-(defun vm-mime-display-internal-w3m-text/html (start end layout)
+(defun vm-mime-display-internal-emacs-w3m-text/html (start end layout)
   "Use emacs-w3m to inline HTML mails in the VM presentation buffer."
   (setq w3m-display-inline-images vm-w3m-display-inline-images)
   (let ((w3m-safe-url-regexp vm-w3m-safe-url-regexp))

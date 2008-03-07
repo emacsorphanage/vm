@@ -1590,13 +1590,15 @@ that recipient is outside of East Asia."
 (defun vm-mime-text/html-handler ()
   (if (eq vm-mime-text/html-handler 'auto-select)
       (setq vm-mime-text/html-handler
-            (or (and (functionp 'w3m) 'w3m)
-                ; TODO: enable other html handlers ...
-                ;(and (functionp 'w3) 'w3)
-                ;(and (locate-file "w3m" exec-path) 'w3m)
-                ;(and (locate-file "lynx" exec-path) 'lynx)
-                )))
-  vm-mime-text/html-handler)
+            (cond ((locate-library "w3m")
+                   'emacs-w3m)
+                  ((locate-library "w3")
+                   'w3)
+                  ((executable-find "w3m")
+                   'w3m)
+                  ((executable-find "lynx")
+                   'lynx)))
+    vm-mime-text/html-handler))
 
 (defun vm-mime-can-display-internal (layout &optional deep)
   (let ((type (car (vm-mm-layout-type layout))))
@@ -2096,14 +2098,41 @@ in the buffer.  The function is expected to make the message
 (defun vm-mime-display-internal-text (layout)
   (vm-mime-display-internal-text/plain layout))
 
-(defun vm-mime-display-internal-w3-text/html (start end &optional layout)
-  (w3-region start (1- end))
-  ;; remove read-only text properties
-  (let ((inhibit-read-only t))
-    (remove-text-properties start end '(read-only nil))))
+(defun vm-mime-cid-retrieve (url message)
+  "Insert a content pointed by URL if it has the cid: scheme."
+  (if (string-match "\\`cid:" url)
+      (setq url (concat "<" (substring url (match-end 0)) ">"))
+    (error "%S is no cid url!"))
+  (let ((part-list (vm-mm-layout-parts (vm-mm-layout message)))
+        part)
+    (while part-list
+      (setq part (car part-list))
+      (if (vm-mime-composite-type-p (car (vm-mm-layout-type part)))
+          (setq part-list (nconc (copy-sequence (vm-mm-layout-parts part))
+                                 (cdr part-list))))
+      (setq part-list (cdr part-list))
+      (if (not (equal url (vm-mm-layout-id part)))
+          (setq part nil)
+        (vm-mime-insert-mime-body part)
+        (setq part-list nil)))
+    (unless part
+      (message "No data for cid %S!" url))
+    part))
+
+(defun vm-mime-display-internal-w3m-text/html (start end layout)
+  (let ((charset (or (vm-mime-get-parameter layout "charset") "us-ascii")))
+    (shell-command-on-region
+     start (1- end)
+     (format "w3m -dump -T text/html -I %s -O %s" charset charset)
+     nil t)))
+  
+(defun vm-mime-display-internal-lynx-text/html (start end layout)
+  (shell-command-on-region start (1- end)
+                           "lynx -force_html /dev/stdin" nil t))
 
 (defun vm-mime-display-internal-text/html (layout)
   "Dispatch handling of html to the actual html handler."
+
   (condition-case error-data
       (let ((buffer-read-only nil)
             (start (point))
