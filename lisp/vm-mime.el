@@ -6714,7 +6714,10 @@ end of the path."
 
 ;;;###autoload
 (defun vm-mime-nuke-alternative-text/html-internal (m)
-  (let (prev-type this-type parent-type)
+  "Delete all text/html parts of multipart/alternative parts of message M.
+Returns the number of deleted parts."
+  (let ((deleted-count 0)
+        prev-type this-type parent-type)
     (vm-mime-map-layout-parts
      m
      (lambda (m layout path)
@@ -6738,8 +6741,10 @@ end of the path."
                 (vm-set-byte-count-of m nil)
                 (vm-set-line-count-of m nil)
                 (vm-set-stuff-flag-of m t)
-                (vm-mark-for-summary-update m))))))
-       (setq prev-type this-type)))))
+                (vm-mark-for-summary-update m))))
+           (setq deleted-count (1+ deleted-count))
+           (setq prev-type this-type)))))
+    deleted-count))
 
 ;;;###autoload
 (defun vm-mime-nuke-alternative-text/html (&optional count mlist)
@@ -6754,8 +6759,13 @@ This is a destructive operation and cannot be undone!"
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (save-excursion
       (while mlist
-        (vm-mime-nuke-alternative-text/html-internal (car mlist))
-        (setq mlist (cdr mlist)))))
+        (let ((count (vm-mime-nuke-alternative-text/html-internal (car mlist))))
+          (when (interactive-p)
+            (if (= count 0)
+                (message "No text/html parts found.")
+              (message "%d text/html part%s deleted."
+                       count (if (> count 1) "s" ""))))
+          (setq mlist (cdr mlist))))))
   (when (interactive-p)
     (vm-discard-cached-data count)))
 
