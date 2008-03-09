@@ -6724,8 +6724,8 @@ Returns the number of deleted parts."
        (setq this-type (car (vm-mm-layout-type layout))
              parent-type (if path (car (vm-mm-layout-type (car path)))))
        (when (and path (vm-mime-types-match "multipart/alternative" parent-type))
-         (when (and (vm-mime-types-match "text/html" this-type)
-                    (vm-mime-types-match "text/plain" prev-type))
+         (when (and this-type (vm-mime-types-match "text/html" this-type)
+                    prev-type (vm-mime-types-match "text/plain" prev-type))
            (save-excursion
              (set-buffer (vm-buffer-of m))
              (let ((inhibit-read-only t)
@@ -6741,9 +6741,9 @@ Returns the number of deleted parts."
                 (vm-set-byte-count-of m nil)
                 (vm-set-line-count-of m nil)
                 (vm-set-stuff-flag-of m t)
-                (vm-mark-for-summary-update m))))
-           (setq deleted-count (1+ deleted-count))
-           (setq prev-type this-type)))))
+                (vm-mark-for-summary-update m)))
+             (setq deleted-count (1+ deleted-count))))
+         (setq prev-type this-type))))
     deleted-count))
 
 ;;;###autoload
