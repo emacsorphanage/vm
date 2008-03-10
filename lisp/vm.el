@@ -695,9 +695,13 @@ cache.  If you expunge messages from the cache, the corresponding
 messages will be expunged from the IMAP mailbox.
 
 First arg FOLDER specifies the IMAP mailbox to visit.  You can only
-visit mailboxes on accounts that are listed in `vm-imap-account-alist'.
-When this command is called interactively the account and mailbox
-names are read from the minibuffer.
+visit mailboxes on accounts that are listed in
+`vm-imap-account-alist'.  
+
+When this command is called interactively, the folder name will be
+read from the minibuffer in the format account:mailbox, where account
+is the short name of an IMAP account listed in `vm-imap-account-alist' and
+mailbox is a folder in this account.
 
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute

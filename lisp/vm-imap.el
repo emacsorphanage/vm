@@ -2382,50 +2382,8 @@ specification SPEC."
 ;;;###autoload
 (defun vm-read-imap-folder-name (prompt &optional selectable-only
 					newone default) 
-  "Read an IMAP account and mailbox, return an IMAP mailbox spec."
-  (let* (host c-list spec process mailbox list 
-	 default-account default-folder
-	 (vm-imap-ok-to-ask t)
-	 (account-list (mapcar 'cadr vm-imap-account-alist))
-	 (host-alist (mapcar 'reverse vm-imap-account-alist)))
-    (if (null account-list)
-	(error "No known IMAP accounts.  Please set vm-imap-account-alist."))
-    (if default 
-	(setq list (vm-imap-parse-spec-to-list default)
-	      default-account 
-	      (cadr (assoc (vm-imapdrop-sans-password-and-mailbox default)
-			   vm-imap-account-alist))
-	      default-folder (nth 3 list))
-      (setq default-account vm-last-visit-imap-account))
-    (setq host (completing-read
-		    (format "IMAP account:%s " 
-			    (if default-account
-				(format " (default %s)" default-account) ""))
-		    host-alist nil t))
-    (if (equal host "") 
-	(if default-account
-	    (setq host default-account)
-	  (error "No IMAP account specified")))
-    (setq spec (cadr (assoc host host-alist))
-	  process (vm-imap-make-session spec)
-	  c-list (and process (vm-imap-mailbox-list process selectable-only)))
-    (vm-imap-end-session process)
-    (setq mailbox
-          (completing-read 
-	   (format "%s%s " 
-		   prompt 
-		   (if default (format "(default %s)" default-folder) ""))
-	   (mapcar (lambda (c) (list c)) c-list)
-	   nil (not newone)))
-    (if (equal mailbox "") (setq mailbox default-folder))
-    (setq list (vm-imap-parse-spec-to-list spec))
-    (setcar (nthcdr 3 list) mailbox)
-    (setq vm-last-visit-imap-account host)
-    (mapconcat 'identity list ":")))
-
-(defun vm-read-imap-folder-name (prompt &optional selectable-only
-					newone default) 
-  "Read an IMAP account and mailbox, return an IMAP mailbox spec."
+  "Read an IMAP folder name in the format account:mailbox, return an
+IMAP mailbox spec." 
   (let* (folder-input completion-list spec process list 
 	 default-account default-folder
 	 (vm-imap-ok-to-ask t)

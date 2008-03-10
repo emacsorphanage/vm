@@ -96,7 +96,9 @@ VM 8.1.0-devo
 
     * New variable `vm-imap-account-alist' allows multiple IMAP
       accounts to be handled uniformly.  The variable
-      'vm-imap-server-list' is now obsolete.
+      'vm-imap-server-list' is now obsolete.  IMAP folders should be
+      specified in the minibuffer using the account:mailbox format.
+      See the info node on IMAP folders.
 
 VM 8.0.8
 
