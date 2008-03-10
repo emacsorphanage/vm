@@ -1363,6 +1363,7 @@ shorter pieces, rebuilt it from them."
 	(widen)
 	(let ((buffer-read-only nil)
 	      (inhibit-read-only t)
+	      (buffer-undo-list t)
 	      (modified (buffer-modified-p)))
 	  (unwind-protect
 	      (progn
@@ -1389,7 +1390,66 @@ shorter pieces, rebuilt it from them."
 	(set-marker (vm-end-of mm) (+ (vm-start-of mm)
 				      (- (vm-end-of real-m)
 					 (vm-start-of real-m))))
+
+	;; fetch the real message now
+	(goto-char (point-min))
+	(if (re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
+	    (vm-fetch-message (read (current-buffer)) mm))
+	;; fixup the reference to the message
 	(setcar vm-message-pointer mm)))))
+
+(defun vm-fetch-message (storage mm)
+  "Fetch the real message based on the \"^X-VM-Storage:\" header.
+
+This allows for storing only the headers required for the summary
+and maybe a small preview of the message, or keywords for search,
+etc.  Only when displaying it the actual message is fetched based
+on the storage handler.
+
+The information about the actual message is stored in the
+\"^X-VM-Storage:\" header and should be a lisp list of the
+following format.
+
+    \(HANDLER ARGS...\)
+
+HANDLER should correspond to a `vm-fetch-HANDLER-message'
+function, i.e. the handler `file' corresponds to the function
+`vm-fetch-file-message' which gets one argument, the filename
+containing the message.  
+
+For example, 'X-VM-Storage: (file \"message-11\")' will fetch 
+the actual message from the file \"message-11\"."
+  (goto-char (match-end 0))
+  (let ((buffer-read-only nil)
+	(inhibit-read-only t)
+	(buffer-undo-list t)
+	(vheader-regexp (concat "^\\(" 
+				(regexp-opt-group vm-visible-headers) 
+				"\\)")))
+    (erase-buffer)
+    (apply (intern (format "vm-fetch-%s-message" (car storage)))
+	   (cdr storage))
+    ;; fix markers now
+    (set-marker (vm-headers-of mm) (point-min))
+    (goto-char (point-min))
+    (set-marker (vm-text-of mm) (or (re-search-forward "\n\n" (point-max) t)
+				    (point-max)))
+    (goto-char (point-min))
+    (set-marker (vm-vheaders-of mm) 
+		(if (re-search-forward vheader-regexp (vm-text-of mm) t)
+		    (match-beginning 0)
+		  (point-min)))
+    (set-marker (vm-text-end-of mm) (point-max))	
+    (set-marker (vm-end-of mm) (point-max))
+    ;; now care for the layout of the message, old layouts are invalid as the
+    ;; presentation buffer may have been used for other messages in the
+    ;; meantime and the marker got invalid by this.
+    (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
+    ))
+  
+(defun vm-fetch-file-message (filename)
+  "Insert the message stored in the given file."
+  (insert-file-contents filename nil nil nil t))
 
 (fset 'vm-presentation-mode 'vm-mode)
 (put 'vm-presentation-mode 'mode-class 'special)
