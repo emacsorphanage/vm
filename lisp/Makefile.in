@@ -52,6 +52,8 @@ SOURCES += vm-vcard.el
 SOURCES += vm-version.el
 SOURCES += vm-virtual.el
 SOURCES += vm-window.el
+SOURCES += vm-w3m.el
+SOURCES += vm-w3.el
 
 SOURCES += vcard.el
 SOURCES += tapestry.el

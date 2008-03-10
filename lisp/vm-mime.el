@@ -1363,6 +1363,7 @@ shorter pieces, rebuilt it from them."
 	(widen)
 	(let ((buffer-read-only nil)
 	      (inhibit-read-only t)
+	      (buffer-undo-list t)
 	      (modified (buffer-modified-p)))
 	  (unwind-protect
 	      (progn
@@ -1389,7 +1390,66 @@ shorter pieces, rebuilt it from them."
 	(set-marker (vm-end-of mm) (+ (vm-start-of mm)
 				      (- (vm-end-of real-m)
 					 (vm-start-of real-m))))
+
+	;; fetch the real message now
+	(goto-char (point-min))
+	(if (re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
+	    (vm-fetch-message (read (current-buffer)) mm))
+	;; fixup the reference to the message
 	(setcar vm-message-pointer mm)))))
+
+(defun vm-fetch-message (storage mm)
+  "Fetch the real message based on the \"^X-VM-Storage:\" header.
+
+This allows for storing only the headers required for the summary
+and maybe a small preview of the message, or keywords for search,
+etc.  Only when displaying it the actual message is fetched based
+on the storage handler.
+
+The information about the actual message is stored in the
+\"^X-VM-Storage:\" header and should be a lisp list of the
+following format.
+
+    \(HANDLER ARGS...\)
+
+HANDLER should correspond to a `vm-fetch-HANDLER-message'
+function, i.e. the handler `file' corresponds to the function
+`vm-fetch-file-message' which gets one argument, the filename
+containing the message.  
+
+For example, 'X-VM-Storage: (file \"message-11\")' will fetch 
+the actual message from the file \"message-11\"."
+  (goto-char (match-end 0))
+  (let ((buffer-read-only nil)
+	(inhibit-read-only t)
+	(buffer-undo-list t)
+	(vheader-regexp (concat "^\\(" 
+				(regexp-opt-group vm-visible-headers) 
+				"\\)")))
+    (erase-buffer)
+    (apply (intern (format "vm-fetch-%s-message" (car storage)))
+	   (cdr storage))
+    ;; fix markers now
+    (set-marker (vm-headers-of mm) (point-min))
+    (goto-char (point-min))
+    (set-marker (vm-text-of mm) (or (re-search-forward "\n\n" (point-max) t)
+				    (point-max)))
+    (goto-char (point-min))
+    (set-marker (vm-vheaders-of mm) 
+		(if (re-search-forward vheader-regexp (vm-text-of mm) t)
+		    (match-beginning 0)
+		  (point-min)))
+    (set-marker (vm-text-end-of mm) (point-max))	
+    (set-marker (vm-end-of mm) (point-max))
+    ;; now care for the layout of the message, old layouts are invalid as the
+    ;; presentation buffer may have been used for other messages in the
+    ;; meantime and the marker got invalid by this.
+    (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
+    ))
+  
+(defun vm-fetch-file-message (filename)
+  "Insert the message stored in the given file."
+  (insert-file-contents filename nil nil nil t))
 
 (fset 'vm-presentation-mode 'vm-mode)
 (put 'vm-presentation-mode 'mode-class 'special)
@@ -1590,13 +1650,15 @@ that recipient is outside of East Asia."
 (defun vm-mime-text/html-handler ()
   (if (eq vm-mime-text/html-handler 'auto-select)
       (setq vm-mime-text/html-handler
-            (or (and (functionp 'w3m) 'w3m)
-                ; TODO: enable other html handlers ...
-                ;(and (functionp 'w3) 'w3)
-                ;(and (locate-file "w3m" exec-path) 'w3m)
-                ;(and (locate-file "lynx" exec-path) 'lynx)
-                )))
-  vm-mime-text/html-handler)
+            (cond ((locate-library "w3m")
+                   'emacs-w3m)
+                  ((locate-library "w3")
+                   'w3)
+                  ((executable-find "w3m")
+                   'w3m)
+                  ((executable-find "lynx")
+                   'lynx)))
+    vm-mime-text/html-handler))
 
 (defun vm-mime-can-display-internal (layout &optional deep)
   (let ((type (car (vm-mm-layout-type layout))))
@@ -2096,14 +2158,41 @@ in the buffer.  The function is expected to make the message
 (defun vm-mime-display-internal-text (layout)
   (vm-mime-display-internal-text/plain layout))
 
-(defun vm-mime-display-internal-w3-text/html (start end &optional layout)
-  (w3-region start (1- end))
-  ;; remove read-only text properties
-  (let ((inhibit-read-only t))
-    (remove-text-properties start end '(read-only nil))))
+(defun vm-mime-cid-retrieve (url message)
+  "Insert a content pointed by URL if it has the cid: scheme."
+  (if (string-match "\\`cid:" url)
+      (setq url (concat "<" (substring url (match-end 0)) ">"))
+    (error "%S is no cid url!"))
+  (let ((part-list (vm-mm-layout-parts (vm-mm-layout message)))
+        part)
+    (while part-list
+      (setq part (car part-list))
+      (if (vm-mime-composite-type-p (car (vm-mm-layout-type part)))
+          (setq part-list (nconc (copy-sequence (vm-mm-layout-parts part))
+                                 (cdr part-list))))
+      (setq part-list (cdr part-list))
+      (if (not (equal url (vm-mm-layout-id part)))
+          (setq part nil)
+        (vm-mime-insert-mime-body part)
+        (setq part-list nil)))
+    (unless part
+      (message "No data for cid %S!" url))
+    part))
+
+(defun vm-mime-display-internal-w3m-text/html (start end layout)
+  (let ((charset (or (vm-mime-get-parameter layout "charset") "us-ascii")))
+    (shell-command-on-region
+     start (1- end)
+     (format "w3m -dump -T text/html -I %s -O %s" charset charset)
+     nil t)))
+  
+(defun vm-mime-display-internal-lynx-text/html (start end layout)
+  (shell-command-on-region start (1- end)
+                           "lynx -force_html /dev/stdin" nil t))
 
 (defun vm-mime-display-internal-text/html (layout)
   "Dispatch handling of html to the actual html handler."
+
   (condition-case error-data
       (let ((buffer-read-only nil)
             (start (point))
@@ -6685,15 +6774,18 @@ end of the path."
 
 ;;;###autoload
 (defun vm-mime-nuke-alternative-text/html-internal (m)
-  (let (prev-type this-type parent-type)
+  "Delete all text/html parts of multipart/alternative parts of message M.
+Returns the number of deleted parts."
+  (let ((deleted-count 0)
+        prev-type this-type parent-type)
     (vm-mime-map-layout-parts
      m
      (lambda (m layout path)
        (setq this-type (car (vm-mm-layout-type layout))
              parent-type (if path (car (vm-mm-layout-type (car path)))))
        (when (and path (vm-mime-types-match "multipart/alternative" parent-type))
-         (when (and (vm-mime-types-match "text/html" this-type)
-                    (vm-mime-types-match "text/plain" prev-type))
+         (when (and this-type (vm-mime-types-match "text/html" this-type)
+                    prev-type (vm-mime-types-match "text/plain" prev-type))
            (save-excursion
              (set-buffer (vm-buffer-of m))
              (let ((inhibit-read-only t)
@@ -6709,8 +6801,10 @@ end of the path."
                 (vm-set-byte-count-of m nil)
                 (vm-set-line-count-of m nil)
                 (vm-set-stuff-flag-of m t)
-                (vm-mark-for-summary-update m))))))
-       (setq prev-type this-type)))))
+                (vm-mark-for-summary-update m)))
+             (setq deleted-count (1+ deleted-count))))
+         (setq prev-type this-type))))
+    deleted-count))
 
 ;;;###autoload
 (defun vm-mime-nuke-alternative-text/html (&optional count mlist)
@@ -6725,8 +6819,13 @@ This is a destructive operation and cannot be undone!"
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (save-excursion
       (while mlist
-        (vm-mime-nuke-alternative-text/html-internal (car mlist))
-        (setq mlist (cdr mlist)))))
+        (let ((count (vm-mime-nuke-alternative-text/html-internal (car mlist))))
+          (when (interactive-p)
+            (if (= count 0)
+                (message "No text/html parts found.")
+              (message "%d text/html part%s deleted."
+                       count (if (> count 1) "s" ""))))
+          (setq mlist (cdr mlist))))))
   (when (interactive-p)
     (vm-discard-cached-data count)))
 

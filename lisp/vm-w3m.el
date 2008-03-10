@@ -28,19 +28,28 @@
 
 ;;; Code:
 
-(require 'vm-mime)
+(eval-when-compile
+  (require 'cl)
+  (require 'advice)
+  (require 'vm-mime)
+  (require 'vm-version)
+  (require 'vm-vars)
+  (require 'executable))
+
 (require 'w3m)
 
-(defvar vm-message-pointer)
-(defvar vm-mode-map)
-(defvar vm-w3m-mode-map)
-(defvar w3m-minor-mode-map)
+(defvar vm-w3m-mode-map nil
+  "Keymap for w3m within VM.")
+
+(defgroup vm-w3m nil
+  "w3m settings for VM."
+  :group  'vm)
 
 (defcustom vm-w3m-display-inline-images t
   "Non-nil means VM will allow retrieving images in the HTML contents
 with the <img> tags.  See also the documentation for the variable
 `vm-w3m-safe-url-regexp'."
-  :group 'w3m
+  :group 'vm-w3m
   :type 'boolean)
 
 (defcustom vm-w3m-safe-url-regexp "\\`cid:"
@@ -55,7 +64,7 @@ when displaying the image.  The default value is \"\\\\`cid:\" which only
 matches parts embedded to the Multipart/Related type MIME contents and
 VM will never connect to the spammer's site arbitrarily.  You may set
 this variable to nil if you consider all urls to be safe."
-  :group 'w3m
+  :group 'vm-w3m
   :type '(choice (regexp :tag "Regexp")
 		 (const :tag "All URLs are safe" nil)))
 
@@ -65,7 +74,7 @@ Set this variable to nil if you don't want vm-w3m to override any VM
 commend keys.  If it is non-nil, you will not be able to use some VM
 command keys, which are bound to emacs-w3m commands defined in the
 `w3m-minor-mode-command-alist' variable."
-  :group 'w3m
+  :group 'vm-w3m
   :type 'boolean)
 
 (eval-and-compile
@@ -77,27 +86,17 @@ by the value of `w3m-minor-mode-map'.  In order to add some commands to
 this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
 
 (defun vm-w3m-cid-retrieve (url &rest args)
-  "Insert a content pointed by URL if it has the cid: scheme."
-  (if (string-match "\\`cid:" url)
-      (let ((part-list (save-excursion
-			 (set-buffer w3m-current-buffer)
-			 (vm-mm-layout-parts
-			  (vm-mm-layout (car vm-message-pointer)))))
-	    part start type)
-	(setq url (concat "<" (substring url (match-end 0)) ">"))
-	(while (and part-list (not type))
-          (setq part (car part-list))
-          (if (vm-mime-composite-type-p (car (vm-mm-layout-type part)))
-              (setq part-list (nconc (copy-sequence (vm-mm-layout-parts part))
-                                     (cdr part-list))))
-	  (setq part-list (cdr part-list))
-	  (if (equal url (vm-mm-layout-id part))
-	      (progn
-		(setq start (point))
-		(vm-mime-insert-mime-body part)
-		(vm-mime-transfer-decode-region part start (point))
-		(setq type (car (vm-mm-layout-type part))))))
-	type)))
+  "Insert a content of URL."
+  (let ((message (save-excursion
+                   (set-buffer w3m-current-buffer)
+                   (car vm-message-pointer)))
+        part
+        type)
+    (setq part (vm-mime-cid-retrieve url message)
+          type (car (vm-mm-layout-type part)))
+    (when part
+      (vm-mime-transfer-decode-region part (point-min) (point-max)))
+    type))
 
 (or (assq 'vm-presentation-mode w3m-cid-retrieve-function-alist)
     (setq w3m-cid-retrieve-function-alist
@@ -117,7 +116,7 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
 		    vm-w3m-mode-map))))))
 
 ;;;###autoload
-(defun vm-mime-display-internal-w3m-text/html (start end layout)
+(defun vm-mime-display-internal-emacs-w3m-text/html (start end layout)
   "Use emacs-w3m to inline HTML mails in the VM presentation buffer."
   (setq w3m-display-inline-images vm-w3m-display-inline-images)
   (let ((w3m-safe-url-regexp vm-w3m-safe-url-regexp))
@@ -129,11 +128,6 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
             ;; Put the mark meaning that this part was
             ;; inlined by emacs-w3m.
             '(text-rendered-by-emacs-w3m t)))))
-
-(eval-when-compile
-  (defvar vm-mail-buffer)
-  (defvar vm-presentation-buffer)
-  (autoload 'vm-buffer-variable-value "vm-misc"))
 
 (defun vm-w3m-safe-toggle-inline-images (&optional arg)
   "Toggle displaying of all images in the presentation buffer.
