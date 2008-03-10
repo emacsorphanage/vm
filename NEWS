@@ -60,10 +60,12 @@ VM 8.1.0-devo
       each folder's summary format to what was saved previously.
       (Uday S. Reddy)
 
-    * `vm-quit-no-change' made to honour the setting of the variable
-      `delete-auto-save-files'. 
-
     * The button for images shows a thumbnail now when possible.
+
+  BUG FIXES
+
+    * `vm-quit-no-change' made to honour the setting of the variable
+      `delete-auto-save-files'. (Uday S. Reddy)
 
   IMPROVEMENTS for pop-folders (Uday S. Reddy)
 
@@ -93,7 +95,8 @@ VM 8.1.0-devo
       vm-imap-submit-bug-report which track IMAP session details.
 
     * New variable `vm-imap-account-alist' allows multiple IMAP
-      accounts to be handled uniformly.
+      accounts to be handled uniformly.  The variable
+      'vm-imap-server-list' is now obsolete.
 
 VM 8.0.8
 

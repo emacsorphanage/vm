@@ -1299,6 +1299,19 @@ and Quoted-Printable.  VM does not have a built-in ``uuencode''
 decoder, so @code{vm-mime-uuencode-decoder-program} must be set
 non-@code{nil} for VM to decode uuencoded MIME objects.
 
+@menu
+* Viewing MIME::                Decoding MIME for viewing
+* Attachments::    		Operating on MIME attachments
+* Internal display::    	Viewing attachments internally in Emacs
+* External display::    	Viewing attachments with external viewers
+* MIME type conversion::	Converting external attachments to internal
+* Character sets::      	MIME character sets
+* multipart/alternative::       MIME content in alternative formats
+* Bad MIME::                    Dealing with bad MIME
+@end menu
+
+
+@node Viewing MIME, Attachments,, MIME Messages
 @unnumberedsubsec Viewing MIME messages
 By default VM will display as many content types as possible
 within Emacs.  Images and audio are also supported if
@@ -1324,7 +1337,7 @@ button or tag line in its place that describes the object and what you
 have to do to display it.  The value of @code{vm-mime-button-format-alist}
 determines the format of the text in those buttons.
 
-
+@node Attachments, Internal display, Viewing MIME, MIME Messages
 @unnumberedsubsec  Operating on MIME attachments
 
 @kindex $ |
@@ -1411,6 +1424,7 @@ The command @code{vm-mime-save-all-attachments} and
 @code{vm-mime-delete-all-attachments} can be used to save or delete
 all the attachments in a message.
 
+@node Internal display, External display, Attachments, MIME Messages
 @unnumberedsubsec Internal display of MIME attachments
 
 @vindex vm-auto-displayed-mime-content-types
@@ -1477,6 +1491,7 @@ The variable @code{vm-mime-internal-content-type-exceptions} serves as
 the exception list for @code{vm-mime-internal-content-types}.  Its value 
 should be a list of types that should not be displayed internally.
 
+@node External display, MIME type conversion, Internal display, MIME Messages
 @unnumberedsubsec External display of MIME attachments
 
 @vindex vm-mime-external-content-types-alist
@@ -1611,6 +1626,7 @@ Example:
 associated with the first type that matches will be used for the
 temporary filename.
 
+@node MIME type conversion, Character sets, External display, MIME Messages
 @unnumberedsubsec MIME type conversion
 
 @vindex vm-mime-type-converter-alist
@@ -1654,6 +1670,7 @@ Example:
 
 @noindent The first matching list element will be used.
 
+@node Character sets, multipart/alternative, MIME type conversion, MIME Messages
 @unnumberedsubsec MIME character sets
 
 For text type messages, MIME also requires that a character set
@@ -1768,6 +1785,7 @@ any XEmacs version compiled with MULE support, the value of
 because all characters are displayed using fonts discovered by
 MULE and VM has no control over them.
 
+@node multipart/alternative, Bad MIME, Character sets, MIME Messages
 @unnumberedsubsec MIME multipart/alternative
 
 MIME allows a message to be sent with its content encoded in multiple
@@ -1801,6 +1819,13 @@ alternatives suppressed.  If the variable
 shown.  In effect, multipart/alternative is treated the same as
 multipart/mixed. 
 
+@findex vm-mime-nuke-alternative-text/html
+Messages with multiple alternatives use up extra file space and slow
+down the operation of vm.  If you would like keep the text/plain
+alternatives but erase the text/html alternatives, you can use the
+'vm-mime-nuke-alternative-text/html' command.
+
+@node Bad MIME, , multipart/alternative, MIME Messages
 @unnumberedsubsec Dealing with bad MIME
 
 @vindex vm-infer-mime-types
