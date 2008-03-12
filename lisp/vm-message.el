@@ -180,6 +180,7 @@
 ;; imap UID value for message (shares same slot as pop-uidl-of)
 (defsubst vm-imap-uid-of (message)
   (aref (aref message 3) 23))
+;; imap UIDVALIDITY value for message
 (defsubst vm-imap-uid-validity-of (message)
   (aref (aref message 3) 24))
 (defsubst vm-spam-score-of (message)

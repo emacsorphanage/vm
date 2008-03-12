@@ -86,6 +86,7 @@ See the documentation for vm-mode for more information."
 	  folder-name remote-spec
 	  preserve-auto-save-file)
       (cond ((eq access-method 'pop)
+	     (setq vm-last-visit-pop-folder folder)
 	     (setq remote-spec (vm-pop-find-spec-for-name folder))
 	     (if (null remote-spec)
 		 (error "No such POP folder: %s" folder))
@@ -137,6 +138,7 @@ See the documentation for vm-mode for more information."
 		     (t
 		      (setq folder f-nospec)))))
 	    ((eq access-method 'imap)
+	     (setq vm-last-visit-imap-folder folder)
 	     (setq remote-spec folder
 		   folder-name (or (nth 3 (vm-imap-parse-spec-to-list
 					   remote-spec))
@@ -500,15 +502,19 @@ visited folder."
 		(string-match vm-recognize-pop-maildrops folder)
 		(setq foo (vm-pop-find-name-for-spec folder)))
 	   (setq folder foo
-		 access-method 'pop))
+		 access-method 'pop
+		 vm-last-visit-pop-folder folder))
 	  ((and (stringp vm-recognize-imap-maildrops)
 		(string-match vm-recognize-imap-maildrops folder)
 		(setq foo (vm-imap-find-name-for-spec folder)))
 	   (setq folder foo
-		 access-method 'imap))
+		 access-method 'imap
+		 vm-last-visit-imap-folder folder))
 	  (t
-	   (let ((default-directory (or vm-folder-directory default-directory)))
-	     (setq folder (expand-file-name folder)))))
+	   (let ((default-directory 
+		   (or vm-folder-directory default-directory)))
+	     (setq folder (expand-file-name folder)
+		   vm-last-visit-folder folder))))
     (vm folder read-only access-method)))
 
 ;;;###autoload
@@ -689,9 +695,13 @@ cache.  If you expunge messages from the cache, the corresponding
 messages will be expunged from the IMAP mailbox.
 
 First arg FOLDER specifies the IMAP mailbox to visit.  You can only
-visit mailboxes on servers that are listed in `vm-imap-server-list'.
-When this command is called interactively the server and mailbox
-names are read from the minibuffer.
+visit mailboxes on accounts that are listed in
+`vm-imap-account-alist'.  
+
+When this command is called interactively, the folder name will be
+read from the minibuffer in the format account:mailbox, where account
+is the short name of an IMAP account listed in `vm-imap-account-alist' and
+mailbox is a folder in this account.
 
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute
@@ -705,15 +715,21 @@ visited folder."
      (require 'vm-imap)
      (let ((this-command this-command)
 	   (last-command last-command))
+       (if (null vm-imap-account-alist)
+	   (setq vm-imap-account-alist 
+		 (mapcar 
+		  'reverse
+		  (vm-imap-spec-list-to-host-alist vm-imap-server-list))))
        (list (vm-read-imap-folder-name
 	      (format "Visit%s IMAP folder: "
 		      (if current-prefix-arg " read only" ""))
-	      vm-imap-server-list t)
+	      t nil vm-last-visit-imap-folder)
 	     current-prefix-arg))))
   (vm-session-initialization)
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer-if-possible)
   (vm-check-for-killed-summary)
+  (setq vm-last-visit-imap-folder folder)
   (vm folder read-only 'imap))
 
 ;;;###autoload
@@ -730,7 +746,7 @@ visited folder."
        (list (vm-read-imap-folder-name
 	      (format "Visit%s IMAP folder: "
 		      (if current-prefix-arg " read only" ""))
-	      vm-imap-server-list)
+	      nil nil vm-last-visit-imap-folder)
 	     current-prefix-arg))))
   (vm-session-initialization)
   (if (vm-multiple-frames-possible-p)
@@ -755,7 +771,7 @@ visited folder."
        (list (vm-read-imap-folder-name
 	      (format "Visit%s IMAP folder: "
 		      (if current-prefix-arg " read only" ""))
-	      vm-imap-server-list)
+	      nil nil vm-last-visit-imap-folder)
 	     current-prefix-arg))))
   (vm-session-initialization)
   (if (one-window-p t)
@@ -1098,7 +1114,7 @@ summary buffer to select a folder."
       (setq mail-send-actions send-actions))))
 
 ;;;###autoload
-(defun vm-submit-bug-report ()
+(defun vm-submit-bug-report (&optional pre-hooks post-hooks)
   "Submit a bug report, with pertinent information to the VM bug list."
   (interactive)
   (require 'reporter)

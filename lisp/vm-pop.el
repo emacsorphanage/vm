@@ -19,11 +19,6 @@
 
 ;;; Code:
 
-(defcustom vm-pop-debug t
-  "*If t, the trace buffers with the POP server communication are kept."
-  :group 'vm
-  :type 'boolean)
-
 (if (fboundp 'define-error)
     (progn
       (define-error 'vm-cant-uidl "Can't use UIDL")
@@ -323,7 +318,7 @@ relevant POP servers to remove the messages."
 					     (format "DELE %s" (car match)))
 			(if (null (vm-pop-read-response process))
 			    (signal 'vm-dele-failed nil))
-			(setcar mp nil)
+			(setcar mp nil)	; side effect!!
 			(vm-increment delete-count)))
 		  (setq mp (cdr mp)))
 	      (vm-dele-failed
@@ -560,7 +555,7 @@ relevant POP servers to remove the messages."
 	      (and verbose
 		   (message
 		    "Waiting for response to POP QUIT command... done"))))))
-  (if (and (not keep-buffer) (not vm-pop-debug))
+  (if (and (not keep-buffer) (not vm-pop-keep-trace-buffer))
       (if (buffer-live-p (process-buffer process))
 	  (kill-buffer (process-buffer process)))
     (save-excursion
@@ -1064,6 +1059,8 @@ popdrop
 		  (mapcar (function (lambda (x) (list x popdrop 'uidl)))
 			  vm-pop-messages-to-expunge))
 	    (vm-expunge-pop-messages)
+	    ;; Any messages that could not be expunged will be
+	    ;; remembered for future
 	    (setq vm-pop-messages-to-expunge
 		  (mapcar (function (lambda (x) (car x)))
 			  vm-pop-retrieved-messages))))
@@ -1111,17 +1108,19 @@ popdrop
 
 ;;;###autoload
 (defun vm-pop-make-filename-for-spec (spec &optional scrub-password scrub-spec)
+  "Returns a cache file name appropriate for the POP maildrop
+specification SPEC."
   (let (md5 list)
     (if (and (null scrub-password) (null scrub-spec))
 	nil
       (setq list (vm-pop-parse-spec-to-list spec))
-      (setcar (vm-last list) "*")
+      (setcar (vm-last list) "*")	; scrub password
       (if scrub-spec
 	  (progn
 	    (cond ((= (length list) 6)
-		   (setcar list "pop")
-		   (setcar (nthcdr 2 list) "*")
-		   (setcar (nthcdr 3 list) "*"))
+		   (setcar list "pop")	; standardise protocol name
+		   (setcar (nthcdr 2 list) "*")	; scrub port number
+		   (setcar (nthcdr 3 list) "*")) ; scrub auth method
 		  (t
 		   (setq list (cons "pop" list))
 		   (setcar (nthcdr 2 list) "*")
@@ -1137,6 +1136,52 @@ popdrop
   (if (string-match "\\(pop\\|pop-ssh\\|pop-ssl\\)" spec)
       (vm-parse spec "\\([^:]+\\):?" 1 5)
     (vm-parse spec "\\([^:]+\\):?" 1 4)))
+
+
+(defun vm-pop-start-bug-report ()
+  "Begin to compose a bug report for POP support functionality."
+  (interactive)
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer)
+  (setq vm-kept-pop-buffers nil)
+  (setq vm-pop-keep-trace-buffer t)
+  (setq vm-pop-keep-failed-trace-buffers 20))
+
+(defun vm-pop-submit-bug-report ()
+  "Submit a bug report for VM's POP support functionality.  
+It is necessary to run vm-pop-start-bug-report before the problem
+occurrence and this command after the problem occurrence, in
+order to capture the trace of POP sessions during the occurrence."
+  (interactive)
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer)
+  (if (or vm-pop-keep-trace-buffer
+	  (y-or-n-p "Did you run vm-pop-start-bug-report earlier? "))
+      (message "Thank you. Preparing the bug report... ")
+    (message "Consider running vm-pop-start-bug-report before the problem occurrence"))
+  (let ((process (vm-folder-pop-process)))
+    (if process
+	(vm-pop-end-session process)))
+  (let ((trace-buffer-hook
+	 '(lambda ()
+	    (let ((bufs vm-kept-pop-buffers) 
+		  buf)
+	      (insert "\n\n")
+	      (insert "POP Trace buffers - most recent first\n\n")
+	      (while bufs
+		(setq buf (car bufs))
+		(insert "----") 
+		(insert (format "%s" buf))
+		(insert "----------\n")
+		(insert (save-excursion
+			  (set-buffer buf)
+			  (buffer-string)))
+		(setq bufs (cdr bufs)))
+	      (insert "--------------------------------------------------\n"))
+	    )))
+    (vm-submit-bug-report nil (list trace-buffer-hook))
+  ))
+
 
 (provide 'vm-pop)
 

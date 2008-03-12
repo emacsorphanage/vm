@@ -1788,13 +1788,15 @@ Supports version 4 format of attribute storage, for backward compatibility."
 
 (defun vm-startup-apply-summary (summary)
   (if (not (equal summary vm-summary-format))
-      (let ((mp vm-message-list))
-	(while mp
-	  (vm-set-summary-of (car mp) nil)
-	  ;; force restuffing of cache to clear old
-	  ;; summary entry cache.
-	  (vm-set-stuff-flag-of (car mp) t)
-	  (setq mp (cdr mp))))))
+      (if vm-restore-saved-summary-formats
+	  (setq vm-summary-format summary)
+	(let ((mp vm-message-list))
+	  (while mp
+	    (vm-set-summary-of (car mp) nil)
+	    ;; force restuffing of cache to clear old
+	    ;; summary entry cache.
+	    (vm-set-stuff-flag-of (car mp) t)
+	    (setq mp (cdr mp)))))))
 
 (defun vm-set-thunderbird-status (message)
   (let (status status2)
@@ -2960,7 +2962,10 @@ The folder is not altered and Emacs is still visiting it."
       ;; selcetion of some other folder.
       (if buffer-file-name
 	  (vm-mark-for-folders-summary-update buffer-file-name))
+      ;; this is a hack to suppress another confirmation dialogue
+      ;; coming from kill-buffer
       (set-buffer-modified-p nil)
+      (delete-auto-save-file-if-necessary)
       (kill-buffer (current-buffer)))
     (vm-update-summary-and-mode-line)))
 
@@ -3753,12 +3758,11 @@ run vm-expunge-folder followed by vm-save-folder."
   (cond ((eq vm-folder-access-method 'pop)
 	 (vm-pop-synchronize-folder interactive nil nil t))
 	((eq vm-folder-access-method 'imap)
-	 (if vm-imap-full-sync-on-get
+	 (if vm-imap-sync-on-get
 	     (progn
-	       (vm-imap-synchronize-folder interactive t nil nil t nil)
-					; do-remote-expunges
+;;	       (vm-imap-synchronize-folder interactive nil nil nil t nil)
 					; save-attributes
-	       (vm-imap-synchronize-folder interactive nil t t nil t))
+	       (vm-imap-synchronize-folder interactive nil t t t t))
 					; do-local-expunges
 					; do-retrieves
 					; retrieve-attributes

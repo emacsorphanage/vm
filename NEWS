@@ -56,9 +56,49 @@ VM 8.1.0-devo
      - P for indication of attachments
      - p for indication of a postponed message
 
-    * Added the variable `vm-pop-debug' to keep trace buffers.
+    * Added variable `vm-restore-saved-summary-formats' to restore
+      each folder's summary format to what was saved previously.
+      (Uday S. Reddy)
 
     * The button for images shows a thumbnail now when possible.
+
+  BUG FIXES
+
+    * `vm-quit-no-change' made to honour the setting of the variable
+      `delete-auto-save-files'. (Uday S. Reddy)
+
+  IMPROVEMENTS for pop-folders (Uday S. Reddy)
+
+    * Added the variable `vm-pop-debug' to keep trace buffers.
+
+    * New commands vm-pop-start-bug-report and
+      vm-pop-submit-bug-report which track POP session details.
+
+
+  IMPROVEMENTS for imap-folders (Uday S. Reddy)
+
+    * Made server expunge more robust; added variable
+      'vm-imap-expunge-retries' to force retries for sluggish servers.
+
+    * Allow message attributes as well as labels to be saved on server 
+
+    * Changed vm-imap-get-new-mail to do synchronization: reading
+      and writing message attributes & labels, expunge messages in the
+      cache.  Added variable 'vm-imap-sync-on-get' to control this
+      behavior.
+
+    * Added command 'vm-imap-synchronize' to do full synchronization. 
+
+    * Trapping IMAP server errors uniformly.
+
+    * New commands vm-imap-start-bug-report and
+      vm-imap-submit-bug-report which track IMAP session details.
+
+    * New variable `vm-imap-account-alist' allows multiple IMAP
+      accounts to be handled uniformly.  The variable
+      'vm-imap-server-list' is now obsolete.  IMAP folders should be
+      specified in the minibuffer using the account:mailbox format.
+      See the info node on IMAP folders.
 
 VM 8.0.8
 

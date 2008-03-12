@@ -190,8 +190,7 @@ buffer and the variable `vm-imap-save-to-server'."
 	 (vm-select-folder-buffer-if-possible)
 	 (let ((this-command this-command)
 	       (last-command last-command))
-	   (list (vm-read-imap-folder-name "Save to IMAP folder: "
-					   vm-imap-server-list t)
+	   (list (vm-read-imap-folder-name "Save to IMAP folder: " t)
 		 (prefix-numeric-value current-prefix-arg))))
        ;; saving to local filesystem.  argument parsing taken from old
        ;; vm-save-message now vm-save-message-to-local-folder
@@ -859,7 +858,7 @@ Output, if any, is displayed.  The message is not altered."
     (vm-switch-to-command-output-buffer command buffer nil)))
 
 ;;;###autoload
-(defun vm-save-message-to-imap-folder (folder &optional count)
+(defun vm-save-message-to-imap-folder (target-folder &optional count)
   "Save the current message to an IMAP folder.
 Prefix arg COUNT means save this message and the next COUNT-1
 messages.  A negative COUNT means save this message and the
@@ -877,8 +876,9 @@ The saved messages are flagged as `filed'."
      (vm-select-folder-buffer-if-possible)
      (let ((this-command this-command)
 	   (last-command last-command))
-       (list (vm-read-imap-folder-name "Save to IMAP folder: "
-				       vm-imap-server-list t)
+       (list (vm-read-imap-folder-name 
+	      "Save to IMAP folder: " t nil
+	      (or vm-last-save-imap-folder vm-last-visit-imap-folder))
 	     (prefix-numeric-value current-prefix-arg)))))
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
@@ -886,30 +886,48 @@ The saved messages are flagged as `filed'."
   (vm-display nil nil '(vm-save-message-to-imap-folder)
 	      '(vm-save-message-to-imap-folder))
   (or count (setq count 1))
-  (let ((mlist (vm-select-marked-or-prefixed-messages count))
-	process m 
-	(mailbox (nth 3 (vm-imap-parse-spec-to-list folder)))
-	(count 0))
+  (let (source-spec-list
+	(target-spec-list (vm-imap-parse-spec-to-list target-folder))
+	(mlist (vm-select-marked-or-prefixed-messages count))
+	(count 0)
+	server-to-server-p mailbox process m
+	)
+    (setq mailbox (nth 3 target-spec-list))
     (unwind-protect
 	(save-excursion
-	  (setq process (vm-imap-make-session folder))
-	  (set-buffer (process-buffer process))
 	  (while mlist
-	    (setq m (car mlist))
-	    (vm-imap-save-message process m mailbox)
+	    (setq m (vm-real-message-of (car mlist)))
+	    (set-buffer (vm-buffer-of m))
+	    (setq source-spec-list 
+		  (and (vm-imap-folder-p)
+		       (vm-imap-parse-spec-to-list 
+			(vm-folder-imap-maildrop-spec))))
+	    (setq server-to-server-p
+		  (and (equal (nth 1 source-spec-list) 
+			      (nth 1 target-spec-list))
+		       (equal (nth 5 source-spec-list) 
+			      (nth 5 target-spec-list))))
+	    (if server-to-server-p
+		(progn
+		  (setq process (vm-establish-new-folder-imap-session))
+		  (vm-imap-copy-message process m mailbox))
+	      (progn
+		(setq process (vm-imap-make-session target-folder))
+		(vm-imap-save-message process m mailbox)))
 	    (when (null (vm-filed-flag m))
-		(vm-set-filed-flag m t))
+	      (vm-set-filed-flag m t))
 	    (vm-increment count)
-	    (vm-modify-folder-totals folder 'saved 1 m)
+	    (vm-modify-folder-totals target-folder 'saved 1 m)
 	    (setq mlist (cdr mlist))))
       (and process (vm-imap-end-session process)))
     (vm-update-summary-and-mode-line)
+    (setq vm-last-save-imap-folder target-folder)
     (message "%d message%s saved to %s"
 	     count (if (/= 1 count) "s" "")
-	     (vm-safe-imapdrop-string folder))
+	     (vm-safe-imapdrop-string target-folder))
     (when (and vm-delete-after-saving (not vm-folder-read-only))
 	(vm-delete-message count))
-    folder ))
+    target-folder ))
 
 (provide 'vm-save)
 

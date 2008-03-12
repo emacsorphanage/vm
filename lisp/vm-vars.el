@@ -522,6 +522,9 @@ specification in the same format used by `vm-spool-files' (which
 see).  The mailbox part of the specifiation is ignored and should
 be asterisk or some other placeholder.
 
+This customization variable is deprecated.  Use vm-imap-account-alist
+instead. 
+
 Example:
  (setq vm-imap-server-list
       '(
@@ -531,6 +534,29 @@ Example:
  )"
   :group 'vm
   :type '(repeat string))
+
+(defcustom vm-imap-account-alist nil
+  "*Alist of IMAP account specifications and names that refer to them.
+The alist format is:
+
+ ((IMAPDROP NAME) ...)
+
+IMAPDROP is a IMAP maildrop specification in the same format used
+by `vm-spool-files' (which see).
+
+NAME is a string that should give a less cumbersome name that you
+will use to refer to this maildrop when using `vm-visit-imap-folder'.
+
+Example:
+ (setq vm-imap-account-alist
+      '(
+         (\"imap-ssl:mail.foocorp.com:993:inbox:login:becky:*\" \"becky\")
+         (\"imap:crickle.lex.ky.us:143:inbox:login:becky:*\" \"crickle\")
+       )
+ )
+"
+  :group 'vm
+  :type '(repeat (list string string)))
 
 (defcustom vm-imap-folder-cache-directory nil
   "*Directory where VM stores cached copies of IMAP folders.
@@ -553,10 +579,10 @@ save to IMAP folders on the server, rather than to local files."
 Increase this if your IMAP server is sluggish."
   :group 'vm)
 
-(defcustom vm-imap-full-sync-on-get t
-  "*If this variable is non-NIL, then the vm-get-new-mail command should
-do a full synchonization with the IMAP folder on the server.  This
-involves expunging messages on the server and the cache, saving and
+(defcustom vm-imap-sync-on-get t
+  "*If this variable is non-NIL, then the vm-get-new-mail command
+should synchronize with the IMAP mailbox on the server.  This involves
+expunging messages that have been expunged from the server, saving and
 retrieving message attributes as well retrieving new messages.  If the
 variable is NIL, this functionality can be obtained via the
 vm-imap-synchronize command."
@@ -1005,7 +1031,7 @@ means VM must run an external viewer to display MIME objects.
 
 If the value is a list, it should be a list of strings.  Example:
 
- (setq vm-mime-internal-content-types '(\"text\" \"image/jpeg\"))
+ (setq vm-mime-internal-content-types '(\"text\" \"message\" \"image/jpeg\"))
 
 If a top-level type is listed without a subtype, all subtypes of
 that type are assumed to be included.
@@ -2823,6 +2849,13 @@ a newline, otherwise the message pointer will not be displayed correctly
 in the summary window."
   :group 'vm
   :type 'string)
+(make-variable-buffer-local 'vm-summary-format)
+
+(defcustom vm-restore-saved-summary-formats nil
+  "*If t, the summary format is stored in each folder and restored
+after visiting it again."
+  :group 'vm
+  :type 'boolean)
 
 (defcustom vm-summary-postponed-indicator "P"
   "*Indicator shown for postponed messages."
@@ -4608,11 +4641,14 @@ Its parent keymap is mail-mode-map.")
 (make-variable-buffer-local 'vm-undo-record-pointer)
 (defvar vm-last-save-folder nil)
 (make-variable-buffer-local 'vm-last-save-folder)
+(defvar vm-last-save-imap-folder nil)
+(make-variable-buffer-local 'vm-last-save-imap-folder)
 (defvar vm-last-written-file nil)
 (make-variable-buffer-local 'vm-last-written-file)
 (defvar vm-last-visit-folder nil)
 (defvar vm-last-visit-pop-folder nil)
 (defvar vm-last-visit-imap-folder nil)
+(defvar vm-last-visit-imap-account nil)
 (defvar vm-last-pipe-command nil)
 (make-variable-buffer-local 'vm-last-pipe-command)
 (defvar vm-messages-not-on-disk 0)
@@ -5075,23 +5111,38 @@ append a space to words that complete unambiguously.")
 (defvar vm-pop-read-point nil)
 (defvar vm-pop-ok-to-ask nil)
 (defvar vm-pop-passwords nil)
+;; Keep a list of messages retrieved from the POP maildrops
+;; Prune the list when messages are expunged on the server
+;; This variable is also used for POP folders, to selectively mark
+;; messages that need to be expunged on the server
 (defvar vm-pop-retrieved-messages nil)
 (make-variable-buffer-local 'vm-pop-retrieved-messages)
+;; list of messages to be expunged on the server during the next save
 (defvar vm-pop-messages-to-expunge nil)
 (make-variable-buffer-local 'vm-pop-messages-to-expunge)
 (defvar vm-imap-read-point nil)
 (defvar vm-imap-ok-to-ask nil)
 (defvar vm-imap-passwords nil)
+;; Keep a list of messages retrieved from the IMAP maildrops
+;; Prune the list when messages are expunged on the server
+;; This variable is also used for IMAP folders, to selectively mark
+;; messages that need to be expunged on the server
 (defvar vm-imap-retrieved-messages nil)
 (make-variable-buffer-local 'vm-imap-retrieved-messages)
+;; list of messages to be expunged on the server during the next save
 (defvar vm-imap-messages-to-expunge nil)
 (make-variable-buffer-local 'vm-imap-messages-to-expunge)
 (defvar vm-imap-capabilities nil)
 (defvar vm-imap-auth-methods nil)
+;; The number of old ('failed') trace buffers to remember for debugging
+;; purposes 
 (defvar vm-pop-keep-failed-trace-buffers 5)
 (defvar vm-imap-keep-failed-trace-buffers 5)
+;; Lists of trace buffers remembered for debugging purposes
 (defvar vm-kept-pop-buffers nil)
 (defvar vm-kept-imap-buffers nil)
+;; Flag to make POP/IMAP code remember old trace buffers
+(defvar vm-pop-keep-trace-buffer nil)
 (defvar vm-imap-keep-trace-buffer nil)
 (defvar vm-imap-session-done nil)
 (defvar vm-reply-list nil)
