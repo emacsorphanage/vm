@@ -62,7 +62,7 @@ If you want to send me changes or start hacking on your own you may want to
 branch from my repository at http://www.robf.de/Hacking/bazaar/vm-repo.
 
 # create your own branch from the trunk
-bzr get http://www.robf.de/Hacking/bazaar/vm-repo/vm-trunk
+bzr get lp:viewmail
 # get updates
 bzr pull
 # start hacking 
