@@ -6758,21 +6758,30 @@ end of the path."
       (vm-mime-map-layout-parts m function (car parts) (cons layout path))
       (setq parts (cdr parts)))))
 
-(defun vm-mime-list-part-structure ()
+(defun vm-mime-list-part-structure (&optional verbose)
   "List mime part structure of the current message."
-  (interactive)
+  (interactive "P")
   (vm-check-for-killed-summary)
   (if (interactive-p) (vm-follow-summary-cursor))
   (vm-select-folder-buffer)
   (let ((m (car vm-message-pointer)))
-    (switch-to-buffer "VM mime part layout.")
+    (switch-to-buffer "*VM mime part layout*")
     (erase-buffer)
     (setq truncate-lines t)
     (insert (format "%s\n" (vm-summary-of m)))
     (vm-mime-map-layout-parts
      m
      (lambda (m layout path)
-       (insert (format "%s%S\n" (make-string (length path) ? ) layout))))))
+       (if verbose
+           (insert (format "%s%S\n" (make-string (length path) ? ) layout))
+         (insert (format "%s%S%s%s%s\n" (make-string (length path) ? )
+                         (vm-mm-layout-type layout)
+                         (let ((id (vm-mm-layout-id layout)))
+                           (if id (format " id=%S" id) ""))
+                         (let ((desc (vm-mm-layout-description layout)))
+                           (if desc (format " desc=%S" desc) ""))
+                         (let ((dispo (vm-mm-layout-disposition layout)))
+                           (if dispo (format " %S" dispo) "")))))))))
 
 ;;;###autoload
 (defun vm-mime-nuke-alternative-text/html-internal (m)
