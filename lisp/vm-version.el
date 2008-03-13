@@ -171,6 +171,27 @@ This is the author of the BZR repository from which VM was released.")
       (image-type-available-p type)
     (or (featurep type) (eq type 'xbm))))
 
+(defun vm-load-features (feature-list &optional silent)
+  "Try to load those features listed in FEATURE_LIST.
+If SILENT is t, do not display warnings for unloadable features.
+Return the list of loaded features."
+  (setq feature-list
+        (mapcar (lambda (f)
+                  (condition-case nil
+                      (progn (require f)
+                             f)
+                    (error
+                     (if (load (format "%s" f) t)
+                         f
+                       (when (not silent)
+                         (message "WARNING: Could not load feature %S." f)
+                         (sit-for 1)
+                         (message "WARNING: Related functions may not work correctly!")
+                         (sit-for 1))
+                       nil))))
+                feature-list))
+  (delete nil feature-list))
+
 (provide 'vm-version)
 
 ;;; vm-version.el ends here

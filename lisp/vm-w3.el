@@ -30,7 +30,8 @@
   (require 'vm-mime)
   (require 'vm-vars))
 
-(require 'w3)
+(eval-and-compile
+  (vm-load-features '(w3)))
 
 (defvar vm-w3-text/html-message nil
   "The currently displayed message.")

@@ -75,15 +75,7 @@
   (require 'vm-vars)
   (require 'cl)
   (require 'advice)
-  (let ((feature-list '(regexp-opt bbdb bbdb-vm gnus-group)))
-    (while feature-list
-      (condition-case nil
-          (require (car feature-list))
-        (error
-         (if (load (format "%s" (car feature-list)) t)
-             (message "Library %s loaded!" (car feature-list))
-	   (message "Could not load feature %S.  Related functions may not work correctly!" (car feature-list)))))
-      (setq feature-list (cdr feature-list)))))
+  (vm-load-features '(regexp-opt bbdb bbdb-vm gnus-group)))
 
 (require 'sendmail)
 

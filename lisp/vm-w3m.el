@@ -36,7 +36,8 @@
   (require 'vm-vars)
   (require 'executable))
 
-(require 'w3m)
+(eval-and-compile
+  (vm-load-features '(w3m)))
 
 (defvar vm-w3m-mode-map nil
   "Keymap for w3m within VM.")
