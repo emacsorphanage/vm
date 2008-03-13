@@ -60,6 +60,9 @@ VM 8.1.0-devo
       each folder's summary format to what was saved previously.
       (Uday S. Reddy)
 
+    * A prefix argument to `vm-fix-my-summary!!!' will kill a folders local
+      summary format which was restored by `vm-restore-saved-summary-formats'.
+
     * The button for images shows a thumbnail now when possible.
 
   BUG FIXES

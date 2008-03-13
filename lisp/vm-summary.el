@@ -1268,14 +1268,16 @@ Argument msg is a message pointer."
 	  (vm-summary-of m)))))
 
 ;;;###autoload
-(defun vm-fix-my-summary!!! ()
+(defun vm-fix-my-summary!!! (&optional kill-local-summary)
   "Rebuilts the summary.
 Call this function if you made changes to `vm-summary-format'."
-  (interactive)
+  (interactive "P")
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
-  (message "Fixing your summary...")
+  (if kill-local-summary
+      (kill-local-variable 'vm-summary-format))
+  (message "Fixing your summary... %s" vm-summary-format)
   (let ((mp vm-message-list))
     (while mp
       (vm-set-summary-of (car mp) nil)
