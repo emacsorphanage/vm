@@ -49,141 +49,141 @@
 
 ;;;###autoload
 (defun vm-do-reply (to-all include-text count)
-    (let ((mlist (vm-select-marked-or-prefixed-messages count))
-	  (dir default-directory)
-	  (message-pointer vm-message-pointer)
-	  (case-fold-search t)
-	  to cc subject in-reply-to references
-	  mp tmp tmp2 newsgroups)
-      (setq mp mlist)
-      (while mp
-	(cond ((add-to-list 'to
-		       (let ((reply-to
-			      (vm-get-header-contents (car mp) "Reply-To:"
-						      ", ")))
-			 (if (vm-ignored-reply-to reply-to)
-			     nil
-			   reply-to ))))
-	      ((add-to-list 'to (vm-get-header-contents (car mp) "From:"
-							", ")))
-		;; bad, but better than nothing for some
-	      ((add-to-list 'to (vm-grok-From_-author (car mp))))
-		(t (error "No From: or Reply-To: header in message")))
+  (let ((mlist (vm-select-marked-or-prefixed-messages count))
+        (dir default-directory)
+        (message-pointer vm-message-pointer)
+        (case-fold-search t)
+        to cc subject in-reply-to references
+        mp tmp tmp2 newsgroups)
+    (setq mp mlist)
+    (while mp
+      (cond ((add-to-list 'to
+                          (let ((reply-to
+                                 (vm-get-header-contents (car mp) "Reply-To:"
+                                                         ", ")))
+                            (if (vm-ignored-reply-to reply-to)
+                                nil
+                              reply-to ))))
+            ((add-to-list 'to (vm-get-header-contents (car mp) "From:"
+                                                      ", ")))
+            ;; bad, but better than nothing for some
+            ((add-to-list 'to (vm-grok-From_-author (car mp))))
+            (t (error "No From: or Reply-To: header in message")))
 
-	(let ((this-subject (vm-get-header-contents (car mp) "Subject:"))
-	      (this-reply-to (and vm-in-reply-to-format
-		     (let ((vm-summary-uninteresting-senders nil))
-				    (vm-summary-sprintf vm-in-reply-to-format
-							(car mp))))))
-	  (if (and this-subject vm-reply-subject-prefix
-		   (not (string-match vm-reply-subject-prefix this-subject)))
-              (setq this-subject (concat vm-reply-subject-prefix
-                                         this-subject)))
+      (let ((this-subject (vm-get-header-contents (car mp) "Subject:"))
+            (this-reply-to (and vm-in-reply-to-format
+                                (let ((vm-summary-uninteresting-senders nil))
+                                  (vm-summary-sprintf vm-in-reply-to-format
+                                                      (car mp))))))
+        (if (and this-subject vm-reply-subject-prefix
+                 (not (string-match vm-reply-subject-prefix this-subject)))
+            (setq this-subject (concat vm-reply-subject-prefix
+                                       this-subject)))
 	  
-          (unless subject
-            (setq subject (concat this-subject
-                                  (if (cdr mlist)
-                                      (format " [and %d more messages]"
-                                              (length (cdr mlist)))))))
-          (setq in-reply-to (if in-reply-to
-				(concat in-reply-to ",\n\t" this-reply-to)
-			      this-reply-to)))
+        (unless subject
+          (setq subject (concat this-subject
+                                (if (cdr mlist)
+                                    (format " [and %d more messages]"
+                                            (length (cdr mlist)))))))
+        (setq in-reply-to (if in-reply-to
+                              (concat in-reply-to ",\n\t" this-reply-to)
+                            this-reply-to)))
 		
-	(cond ((setq tmp (vm-get-header-contents (car mp) "Reply-To:" ", "))
-               (if (not (vm-ignored-reply-to tmp))
-                   (add-to-list 'to tmp)))
-	      ((setq tmp (vm-get-header-contents (car mp) "From:" ", "))
-	       (add-to-list 'to tmp))
-		  ;; bad, but better than nothing for some
-		  ((setq tmp (vm-grok-From_-author (car mp)))
-	       (add-to-list 'to tmp))
-	      (t (error "No From: or Reply-To: header in message")))
+      (cond ((setq tmp (vm-get-header-contents (car mp) "Reply-To:" ", "))
+             (if (not (vm-ignored-reply-to tmp))
+                 (add-to-list 'to tmp)))
+            ((setq tmp (vm-get-header-contents (car mp) "From:" ", "))
+             (add-to-list 'to tmp))
+            ;; bad, but better than nothing for some
+            ((setq tmp (vm-grok-From_-author (car mp)))
+             (add-to-list 'to tmp))
+            (t (error "No From: or Reply-To: header in message")))
 
-	(if to-all
-	    (progn
-	      (setq tmp (vm-get-header-contents (car mp) "To:" ", "))
-	      (setq tmp2 (vm-get-header-contents (car mp) "Cc:" ", "))
-	      (if tmp
-		  (if cc
-		      (setq cc (concat cc "," tmp))
-		    (setq cc tmp)))
-	      (if tmp2
-		  (if cc
-		      (setq cc (concat cc "," tmp2))
-		    (setq cc tmp2)))))
-	(setq references
-	      (cons (or (vm-get-header-contents (car mp) "References:" " ")
-			(vm-get-header-contents (car mp) "In-reply-to:" " "))
-		    (cons (vm-get-header-contents (car mp) "Message-ID:" " ")
-			  references)))
-	(setq newsgroups
-	      (cons (or (and to-all
-			     (vm-get-header-contents (car mp)
-						     "Followup-To:" ","))
-			(vm-get-header-contents (car mp) "Newsgroups:" ","))
-		    newsgroups))
-	(setq mp (cdr mp)))
+      (if to-all
+          (progn
+            (setq tmp (vm-get-header-contents (car mp) "To:" ", "))
+            (setq tmp2 (vm-get-header-contents (car mp) "Cc:" ", "))
+            (if tmp
+                (if cc
+                    (setq cc (concat cc "," tmp))
+                  (setq cc tmp)))
+            (if tmp2
+                (if cc
+                    (setq cc (concat cc "," tmp2))
+                  (setq cc tmp2)))))
+      (setq references
+            (cons (or (vm-get-header-contents (car mp) "References:" " ")
+                      (vm-get-header-contents (car mp) "In-reply-to:" " "))
+                  (cons (vm-get-header-contents (car mp) "Message-ID:" " ")
+                        references)))
+      (setq newsgroups
+            (cons (or (and to-all
+                           (vm-get-header-contents (car mp)
+                                                   "Followup-To:" ","))
+                      (vm-get-header-contents (car mp) "Newsgroups:" ","))
+                  newsgroups))
+      (setq mp (cdr mp)))
 
-      (if (null to) nil
-	(setq tmp (car to))
-	(setq to (cdr to))
-	(while to
-	  (setq tmp (concat tmp ", " (car to)))
-	  (setq to (cdr to)))
-	(setq to tmp))
+    (if (null to) nil
+      (setq tmp (car to))
+      (setq to (cdr to))
+      (while to
+        (setq tmp (concat tmp ", " (car to)))
+        (setq to (cdr to)))
+      (setq to tmp))
 
-      (if vm-strip-reply-headers
-	  (let ((mail-use-rfc822 t))
-	    (and to (setq to (mail-strip-quoted-names to)))
-	    (and cc (setq cc (mail-strip-quoted-names cc)))))
-      (setq to (vm-parse-addresses to)
-	    cc (vm-parse-addresses cc))
-      (if vm-reply-ignored-addresses
-	  (setq to (vm-strip-ignored-addresses to)
-		cc (vm-strip-ignored-addresses cc)))
-      (setq to (vm-delete-duplicates to nil t))
-      (setq cc (vm-delete-duplicates
-		(append (vm-delete-duplicates cc nil t)
-			to (copy-sequence to))
-		t t))
-      (and to (setq to (mapconcat 'identity to ",\n    ")))
-      (and cc (setq cc (mapconcat 'identity cc ",\n    ")))
-      (and (null to) (setq to cc cc nil))
-      (setq references (delq nil references)
-	    references (mapconcat 'identity references " ")
-	    references (vm-parse references "[^<]*\\(<[^>]+>\\)")
-	    references (vm-delete-duplicates references)
-	    references (if references (mapconcat 'identity references "\n\t")))
-      (setq newsgroups (delq nil newsgroups)
-	    newsgroups (mapconcat 'identity newsgroups ",")
-	    newsgroups (vm-parse newsgroups "[ \t\f\r\n,]*\\([^ \t\f\r\n,]+\\)")
-	    newsgroups (vm-delete-duplicates newsgroups)
-	    newsgroups (if newsgroups (mapconcat 'identity newsgroups ",")))
-      (vm-mail-internal
-       (format "reply to %s%s" (vm-su-full-name (car mlist))
-	       (if (cdr mlist) ", ..." ""))
-       to subject in-reply-to cc references newsgroups)
-      (make-local-variable 'vm-reply-list)
-      (setq vm-system-state 'replying
-	    vm-reply-list mlist
-	    default-directory dir)
-      (if include-text
-	  (save-excursion
-	    (goto-char (point-min))
-	    (let ((case-fold-search nil))
-	      (re-search-forward
-	       (concat "^" (regexp-quote mail-header-separator) "$") nil 0))
-	    (forward-char 1)
-	    (while mlist
-	      (save-restriction
-		(narrow-to-region (point) (point))
-		(vm-yank-message (car mlist))
-		(goto-char (point-max)))
-	      (setq mlist (cdr mlist)))))
-      (if vm-fill-long-lines-in-reply-column
-          (vm-fill-long-lines-in-reply))
-        (run-hooks 'vm-reply-hook)
-      (run-hooks 'vm-mail-mode-hook)))
+    (if vm-strip-reply-headers
+        (let ((mail-use-rfc822 t))
+          (and to (setq to (mail-strip-quoted-names to)))
+          (and cc (setq cc (mail-strip-quoted-names cc)))))
+    (setq to (vm-parse-addresses to)
+          cc (vm-parse-addresses cc))
+    (if vm-reply-ignored-addresses
+        (setq to (vm-strip-ignored-addresses to)
+              cc (vm-strip-ignored-addresses cc)))
+    (setq to (vm-delete-duplicates to nil t))
+    (setq cc (vm-delete-duplicates
+              (append (vm-delete-duplicates cc nil t)
+                      to (copy-sequence to))
+              t t))
+    (and to (setq to (mapconcat 'identity to ",\n    ")))
+    (and cc (setq cc (mapconcat 'identity cc ",\n    ")))
+    (and (null to) (setq to cc cc nil))
+    (setq references (delq nil references)
+          references (mapconcat 'identity references " ")
+          references (vm-parse references "[^<]*\\(<[^>]+>\\)")
+          references (vm-delete-duplicates references)
+          references (if references (mapconcat 'identity references "\n\t")))
+    (setq newsgroups (delq nil newsgroups)
+          newsgroups (mapconcat 'identity newsgroups ",")
+          newsgroups (vm-parse newsgroups "[ \t\f\r\n,]*\\([^ \t\f\r\n,]+\\)")
+          newsgroups (vm-delete-duplicates newsgroups)
+          newsgroups (if newsgroups (mapconcat 'identity newsgroups ",")))
+    (vm-mail-internal
+     (format "reply to %s%s" (vm-su-full-name (car mlist))
+             (if (cdr mlist) ", ..." ""))
+     to subject in-reply-to cc references newsgroups)
+    (make-local-variable 'vm-reply-list)
+    (setq vm-system-state 'replying
+          vm-reply-list mlist
+          default-directory dir)
+    (if include-text
+        (save-excursion
+          (goto-char (point-min))
+          (let ((case-fold-search nil))
+            (re-search-forward
+             (concat "^" (regexp-quote mail-header-separator) "$") nil 0))
+          (forward-char 1)
+          (while mlist
+            (save-restriction
+              (narrow-to-region (point) (point))
+              (vm-yank-message (car mlist))
+              (goto-char (point-max)))
+            (setq mlist (cdr mlist)))))
+    (if vm-fill-long-lines-in-reply-column
+        (vm-fill-long-lines-in-reply))
+    (run-hooks 'vm-reply-hook)
+    (run-hooks 'vm-mail-mode-hook)))
 
 (defun vm-strip-ignored-addresses (addresses)
   (setq addresses (copy-sequence addresses))
