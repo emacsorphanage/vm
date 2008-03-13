@@ -1789,7 +1789,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 (defun vm-startup-apply-summary (summary)
   (if (not (equal summary vm-summary-format))
       (if vm-restore-saved-summary-formats
-	  (setq vm-summary-format summary)
+	  (prog
+           (make-local-variable 'vm-summary-format)
+           (setq vm-summary-format summary))
 	(let ((mp vm-message-list))
 	  (while mp
 	    (vm-set-summary-of (car mp) nil)

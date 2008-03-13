@@ -2849,7 +2849,6 @@ a newline, otherwise the message pointer will not be displayed correctly
 in the summary window."
   :group 'vm
   :type 'string)
-(make-variable-buffer-local 'vm-summary-format)
 
 (defcustom vm-restore-saved-summary-formats nil
   "*If t, the summary format is stored in each folder and restored
