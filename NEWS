@@ -17,7 +17,7 @@ VM 8.1.0-devo
       `vm-fill-paragraphs-containing-long-lines' thus allowing to fill to the
       available window with.
 
-    * Replaced 'vm-fill-paragraphs-containing-long-lines' by the faster and
+    * Replaced `vm-fill-paragraphs-containing-long-lines' by the faster and
       more flexible version from vm-rfaddons.el.  Also cleaned up calls to the
       fill function and removed code duplication.  The code using longline.el
       remains in vm-rfaddons.el, but it must be used explicitly now in an
@@ -74,34 +74,32 @@ VM 8.1.0-devo
 
     * Added the variable `vm-pop-debug' to keep trace buffers.
 
-    * New commands vm-pop-start-bug-report and
-      vm-pop-submit-bug-report which track POP session details.
+    * New commands `vm-pop-start-bug-report' and `vm-pop-submit-bug-report'
+      which track POP session details.
 
 
   IMPROVEMENTS for imap-folders (Uday S. Reddy)
 
-    * Made server expunge more robust; added variable
-      'vm-imap-expunge-retries' to force retries for sluggish servers.
+    * Made server expunge more robust.  Added new variable
+      `vm-imap-expunge-retries' to force retries for sluggish servers.
 
-    * Allow message attributes as well as labels to be saved on server 
+    * Allow message attributes as well as labels to be saved on server
 
-    * Changed vm-imap-get-new-mail to do synchronization: reading
-      and writing message attributes & labels, expunge messages in the
-      cache.  Added variable 'vm-imap-sync-on-get' to control this
-      behavior.
+    * Changed vm-imap-get-new-mail to do synchronization: reading and writing
+      message attributes & labels, expunge messages in the cache.  Added
+      variable `vm-imap-sync-on-get' to control this behavior.
 
-    * Added command 'vm-imap-synchronize' to do full synchronization. 
+    * Added command `vm-imap-synchronize' to do full synchronization. 
 
     * Trapping IMAP server errors uniformly.
 
-    * New commands vm-imap-start-bug-report and
-      vm-imap-submit-bug-report which track IMAP session details.
+    * New commands `vm-imap-start-bug-report' and `vm-imap-submit-bug-report'
+      which track IMAP session details.
 
-    * New variable `vm-imap-account-alist' allows multiple IMAP
-      accounts to be handled uniformly.  The variable
-      'vm-imap-server-list' is now obsolete.  IMAP folders should be
-      specified in the minibuffer using the account:mailbox format.
-      See the info node on IMAP folders.
+    * New variable `vm-imap-account-alist' allows multiple IMAP accounts to be
+      handled uniformly.  The variable `vm-imap-server-list' is now obsolete.
+      IMAP folders should be specified in the minibuffer using the
+      account:mailbox format.  See the info node on IMAP folders.
 
 VM 8.0.8
 
@@ -130,7 +128,7 @@ VM 8.0.8
     * In `vm-save-message-preview', ask the user if the output file already
       exists instead of silently overwriting it.
 
-  BUGFIXES:
+  BUG FIXES:
 
     * Moved [Undo] to Dispose menu and [Emacs] to Help menu as these do not
       work in Emacs 22 anymore when on the menu bar.
@@ -161,7 +159,7 @@ VM 8.0.8
 
 VM 8.0.7
 
-  BUGFIXES:
+  BUG FIXES:
 
     * Disable only those minor modes listed in the variable
       `vm-disable-modes-before-encoding' before encoding a
@@ -185,7 +183,7 @@ VM 8.0.6
     * Allow defadvice on function `vm' by recursing on session start. (Thanks
       to Blueman for the code)
 
-  BUGFIXES:
+  BUG FIXES:
 
     * Ignore empty reply-to in `vm-ignored-reply-to'.
 
@@ -208,7 +206,7 @@ VM 8.0.6
 
 VM 8.0.5
 
-  BUGFIXES:
+  BUG FIXES:
 
     * Fixed bug caused by fixing `vm-drop-buffer-name-chars' in 8.0.4.  There
       is a 20-40% chance to create a new bug when fixing one.  Regression
@@ -223,7 +221,7 @@ VM 8.0.4
     * Quiet compiler warning about old style backquotes. (Thanks to John
       J. Foerch)
 
-  BUGFIXES:
+  BUG FIXES:
 
     * Correctly call custom-add-load. (Thanks to John J. Foerch and
       Jonathan.underwood) 
@@ -242,7 +240,7 @@ VM 8.0.3
       buffers, if none exist then for saved drafts.  Also added new variable
       `vm-zero-drafts-start-compose'.
 
-  BUGFIXES:
+  BUG FIXES:
 
     * Fixed building of autoloads for GNU Emacs.
 
@@ -268,7 +266,7 @@ VM 8.0.2
 
     * DESTDIR-Patch (Ulrich Mueller).
 
-  BUGFIXES:
+  BUG FIXES:
 
     * Avoid overflow of `buffer-undo-list' when inserting or encoding
       big attachments.
@@ -310,7 +308,7 @@ VM 8.0.1
     In order to get more features from vm-rfaddons set the variable
     `vm-enable-addons' in your ~/.vm.
 
-  BUGFIXES:
+  BUG FIXES:
 
     * A saner default for vm-shrunken-header-face.
 
@@ -369,7 +367,7 @@ VM 8.0.0
       interactive function. Thus, loading occurs only on demand and startup
       should be faster.
       
-  BUGFIXES:
+  BUG FIXES:
 
     * All bugs reported to gnu.emacs.vm.bugs, gnu.emacs.vm.info and directly
       to me are fixed either by the patches posted by others or me.
