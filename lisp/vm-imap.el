@@ -2379,6 +2379,47 @@ specification SPEC."
 	    spec-list (cdr spec-list)))
     host-alist ))
 
+(defvar vm-imap-account-folder-cache nil
+  "Caches the list of all folders on an account.")
+
+(defun vm-imap-folder-completion-list (string predicate flag)
+  (let ((completion-list (mapcar (lambda (a) (concat (cadr a) ":"))
+				 vm-imap-account-alist))
+	account spec process mailbox-list)
+    
+    ;; check for account 
+    (setq folder (try-completion (or string "") completion-list predicate))
+    
+    ;; get folders of this account
+    (if (stringp folder)
+	(setq account (car (vm-parse folder "\\([^:]+\\):?" 1)))
+      (setq account (car (vm-parse string "\\([^:]+\\):?" 1))))
+    
+    (when account
+      (setq mailbox-list (cdr (assoc account vm-imap-account-folder-cache)))
+      (when (null mailbox-list)
+	(setq spec (car (rassoc (list account) vm-imap-account-alist)))
+	(setq process (vm-imap-make-session spec))
+	(when process
+	  (setq mailbox-list (vm-imap-mailbox-list process selectable-only))
+	  (vm-imap-end-session process)
+	  (when mailbox-list
+	    (add-to-list 'vm-imap-account-folder-cache 
+			 (cons account mailbox-list)))))
+      (setq completion-list 
+	    (mapcar '(lambda (m) (format "%s:%s" account m)) mailbox-list))
+      (setq folder (try-completion (or string "") completion-list predicate)))
+    
+    (setq folder (or folder ""))
+    (if (eq folder t)
+	(setq folder string))
+    (cond ((null flag)
+	   folder)
+	  ((eq t flag)
+	   completion-list)
+	  ((eq 'lambda flag)
+	   (try-completion folder completion-list predicate)))))
+
 ;;;###autoload
 (defun vm-read-imap-folder-name (prompt &optional selectable-only
 					newone default) 
@@ -2398,23 +2439,14 @@ IMAP mailbox spec."
 			   vm-imap-account-alist))
 	      default-folder (nth 3 list))
       (setq default-account vm-last-visit-imap-account))
-    (when default-account
-      (setq spec (car (rassoc (list default-account) vm-imap-account-alist)))
-      (setq process (vm-imap-make-session spec))
-      (setq mailbox-list (and process 
-			      (vm-imap-mailbox-list process selectable-only)))
-      (setq completion-list 
-	    (mapcar '(lambda (m) (list (format "%s:%s" default-account m)))
-		    mailbox-list))
-      (vm-imap-end-session process))
-    (setq folder-input 
+    (setq folder-input
 	  (completing-read
 	   (format			; prompt
 	    "IMAP folder:%s " 
-	    (if default-folder
+	    (if (and default-account default-folder)
 		(format " (default %s:%s)" default-account default-folder)
 	      ""))
-	   completion-list		; table
+	   'vm-imap-folder-completion-list
 	   nil				; predicate
 	   nil				; require-match
 	   (if default-account		; initial-input
@@ -2422,7 +2454,7 @@ IMAP mailbox spec."
 	     "")))
     (if (or (equal folder-input "")  
 	    (equal folder-input (format "%s:" default-account)))
-	(if default-folder
+	(if (and default-account default-folder)
 	    (setq folder-input (format "%s:%s" default-account default-folder))
 	  (error 
 	   "IMAP folder required in the format account-name:folder-name"))) 
