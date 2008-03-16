@@ -2383,7 +2383,7 @@ specification SPEC."
   "Caches the list of all folders on an account.")
 
 (defun vm-imap-folder-completion-list (string predicate flag)
-  (let ((completion-list (mapcar (lambda (a) (concat (cadr a) ":"))
+  (let ((completion-list (mapcar (lambda (a) (list (concat (cadr a) ":")))
 				 vm-imap-account-alist))
 	account spec process mailbox-list)
     
@@ -2407,7 +2407,7 @@ specification SPEC."
 	    (add-to-list 'vm-imap-account-folder-cache 
 			 (cons account mailbox-list)))))
       (setq completion-list 
-	    (mapcar '(lambda (m) (format "%s:%s" account m)) mailbox-list))
+	    (mapcar '(lambda (m) (list (format "%s:%s" account m))) mailbox-list))
       (setq folder (try-completion (or string "") completion-list predicate)))
     
     (setq folder (or folder ""))
@@ -2416,7 +2416,7 @@ specification SPEC."
     (cond ((null flag)
 	   folder)
 	  ((eq t flag)
-	   completion-list)
+	   (mapcar 'car completion-list))
 	  ((eq 'lambda flag)
 	   (try-completion folder completion-list predicate)))))
 
