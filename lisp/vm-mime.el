@@ -3931,7 +3931,8 @@ LAYOUT is the MIME layout struct for the message/external-body object."
                                  vm-mime-thumbnail-max-geometry))
       ;; extract image data 
       (setq glyph (if vm-xemacs-p
-                      (extent-begin-glyph (vm-extent-at start))
+                      (or (extent-begin-glyph (vm-extent-at start))
+                          (extent-begin-glyph (vm-extent-at (1+ start))))
                     (get-text-property start 'display)))
       (delete-region start (point))
       ;; insert the button and correct the image 
