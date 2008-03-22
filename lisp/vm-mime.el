@@ -1413,9 +1413,10 @@ following format.
     \(HANDLER ARGS...\)
 
 HANDLER should correspond to a `vm-fetch-HANDLER-message'
-function, i.e. the handler `file' corresponds to the function
-`vm-fetch-file-message' which gets one argument, the filename
-containing the message.  
+function, e.g., the handler `file' corresponds to the function
+`vm-fetch-file-message' which gets two arguments, the message
+descriptor and the filename containing the message, and inserts the
+message body from the file into the current buffer. 
 
 For example, 'X-VM-Storage: (file \"message-11\")' will fetch 
 the actual message from the file \"message-11\"."
@@ -1428,7 +1429,7 @@ the actual message from the file \"message-11\"."
 				"\\)")))
     (erase-buffer)
     (apply (intern (format "vm-fetch-%s-message" (car storage)))
-	   (cdr storage))
+	   mm (cdr storage))
     ;; fix markers now
     (set-marker (vm-headers-of mm) (point-min))
     (goto-char (point-min))
@@ -1447,8 +1448,8 @@ the actual message from the file \"message-11\"."
     (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
     ))
   
-(defun vm-fetch-file-message (filename)
-  "Insert the message stored in the given file."
+(defun vm-fetch-file-message (m filename)
+  "Insert the message with message descriptor MM stored in the given FILENAME."
   (insert-file-contents filename nil nil nil t))
 
 (fset 'vm-presentation-mode 'vm-mode)
