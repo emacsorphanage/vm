@@ -4192,7 +4192,7 @@ either backward (prefix is negative) or forward (positive)."
 		vm-folder-access-data (make-vector 2 nil)))
 	 ((eq access-method 'imap)
 	  (setq vm-folder-access-method 'imap
-		vm-folder-access-data (make-vector 9 nil))))
+		vm-folder-access-data (make-vector 11 nil))))
   (use-local-map vm-mode-map)
   ;; if the user saves after M-x recover-file, let them get new
   ;; mail again.
