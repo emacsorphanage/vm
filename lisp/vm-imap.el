@@ -2379,8 +2379,8 @@ specification SPEC."
     
     (when account
       (setq mailbox-list (cdr (assoc account vm-imap-account-folder-cache)))
-      (when (null mailbox-list)
-	(setq spec (car (rassoc (list account) vm-imap-account-alist)))
+      (setq spec (car (rassoc (list account) vm-imap-account-alist)))
+      (when (and (null mailbox-list) spec)
 	(setq process (vm-imap-make-session spec))
 	(when process
 	  (setq mailbox-list (vm-imap-mailbox-list process selectable-only))
@@ -2397,7 +2397,7 @@ specification SPEC."
 	(setq folder string))
     (cond ((null flag)
 	   folder)
-	  ((eq t flag)
+	  ((or (eq t flag) (string= " " folder))
 	   (mapcar 'car completion-list))
 	  ((eq 'lambda flag)
 	   (try-completion folder completion-list predicate)))))

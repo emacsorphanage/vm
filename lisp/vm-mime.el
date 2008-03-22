@@ -3932,7 +3932,8 @@ LAYOUT is the MIME layout struct for the message/external-body object."
                                  vm-mime-thumbnail-max-geometry))
       ;; extract image data 
       (setq glyph (if vm-xemacs-p
-                      (extent-begin-glyph (vm-extent-at start))
+                      (or (extent-begin-glyph (vm-extent-at start))
+                          (extent-begin-glyph (vm-extent-at (1+ start))))
                     (get-text-property start 'display)))
       (delete-region start (point))
       ;; insert the button and correct the image 
@@ -6787,9 +6788,11 @@ end of the path."
 ;;;###autoload
 (defun vm-mime-nuke-alternative-text/html-internal (m)
   "Delete all text/html parts of multipart/alternative parts of message M.
-Returns the number of deleted parts."
+Returns the number of deleted parts.  text/html parts are only deleted iff
+the first sub part of a multipart/alternative is a text/plain part."
   (let ((deleted-count 0)
-        prev-type this-type parent-type)
+        prev-type this-type parent-type
+        nuke-html)
     (vm-mime-map-layout-parts
      m
      (lambda (m layout path)
@@ -6797,9 +6800,9 @@ Returns the number of deleted parts."
              parent-types (mapcar (lambda (layout)
                                     (car (vm-mm-layout-type layout)))
                                   path))
-       (when (and (member "multipart/alternative" parent-types)
-                  this-type (vm-mime-types-match "text/html" this-type)
-                  prev-type (vm-mime-types-match "text/plain" prev-type))
+       (when (and nuke-html
+                  (member "multipart/alternative" parent-types)
+                  (vm-mime-types-match "text/html" this-type))
          (save-excursion
            (set-buffer (vm-buffer-of m))
            (let ((inhibit-read-only t)
@@ -6817,10 +6820,10 @@ Returns the number of deleted parts."
               (vm-set-stuff-flag-of m t)
               (vm-mark-for-summary-update m)))
            (setq deleted-count (1+ deleted-count))))
-       (if (vm-mime-types-match "text/plain" this-type)
-           (setq prev-type this-type)
-         (if (not (vm-mime-types-match "multipart" this-type))
-             (setq prev-type nil)))))
+       (if (and (vm-mime-types-match "multipart/alternative" prev-type)
+                (vm-mime-types-match "text/plain" this-type))
+           (setq nuke-html t))
+       (setq prev-type this-type)))
     deleted-count))
 
 ;;;###autoload
