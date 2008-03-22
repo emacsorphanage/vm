@@ -5148,6 +5148,20 @@ append a space to words that complete unambiguously.")
 (defvar vm-forward-list nil)
 (defvar vm-redistribute-list nil)
 
+;; For verification of the correct buffer protocol
+;; Possible values are 'folder, 'presentation, 'summary, 'process
+
+(defvar vm-buffer-types (cons nil nil))
+
+;; For verification of imap session protocol
+;; Possible values are 
+;; 'active - active session present
+;; 'valid - message sequence numbers are valid 
+;;	validity is preserved by FETCH, STORE and SEARCH operations
+;; 'inactive - session is inactive
+
+(defvar vm-imap-session-type nil)
+
 (eval-when-compile
   (defvar current-itimer nil)
   (defvar current-menubar nil)
