@@ -123,7 +123,7 @@
 ;; leave the message in the mailbox, and yet not retrieve the
 ;; same messages again and again.
 
-(defun vm-imap-fetch-message (process n use-body-peek &optional headers-only)
+(defun vm-imap-fetch-message (process n use-body-peek &optional headers-only) 
   (let ((fetchcmd
          (if headers-only
              (if use-body-peek "(BODY.PEEK[HEADER])" "(RFC822.HEADER)")
@@ -2228,6 +2228,44 @@ operation of the server to minimize I/O."
 		      safe-imapdrop)))
 	    ))
       got-some)))
+
+(defun vm-fetch-imap-message (m)
+  "Insert the message body of M in the current buffer."
+  (let ((body-buffer (current-buffer)))
+    (save-excursion
+      (vm-select-folder-buffer)
+      (let* ((statblob nil)
+	     (imapdrop (vm-folder-imap-maildrop-spec))
+	     (safe-imapdrop (vm-safe-imapdrop-string imapdrop))
+	     (process (or (vm-folder-imap-process)
+			  (vm-imap-make-session imapdrop)))
+	     (use-body-peek (vm-folder-imap-body-peek))
+	     (server-uid-validity (vm-folder-imap-uid-validity))
+	     (n (car (vm-imap-get-uid-and-flags 
+		      process m server-uid-validity)))
+	     )
+	(message "Retrieving message body... ")
+	(condition-case error-data
+	    (save-excursion
+	      (set-buffer (process-buffer process))
+	      (setq statblob (vm-imap-start-status-timer))
+	      (vm-set-imap-stat-x-box statblob safe-imapdrop)
+	      (vm-set-imap-stat-x-maxmsg statblob 1)
+	      (vm-set-imap-stat-x-currmsg statblob n)
+	      (setq message-size (vm-imap-get-message-size process n))
+	      (vm-set-imap-stat-x-need statblob message-size)
+	      (vm-imap-fetch-message process n use-body-peek nil)
+	      (vm-retrieve-to-target process body-buffer statblob use-body-peek))
+	  (vm-imap-protocol-error
+	   (message "Retrieval from %s signaled: %s" safe-imapdrop
+		    error-data)
+	   ;; Continue with whatever messages have been read
+	   )
+	  (quit
+	   (delete-region old-eob (point-max))
+	   (error (format "Quit received during retrieval from %s"
+			  safe-imapdrop))))
+	))))
 
 (defun vm-imap-save-attributes (&optional interactive all-flags)
   "* Save the attributes of changed messages to the IMAP folder.
