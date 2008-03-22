@@ -119,9 +119,9 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
 ;;;###autoload
 (defun vm-mime-display-internal-emacs-w3m-text/html (start end layout)
   "Use emacs-w3m to inline HTML mails in the VM presentation buffer."
-  (setq w3m-display-inline-images vm-w3m-display-inline-images)
-  (let ((w3m-safe-url-regexp vm-w3m-safe-url-regexp))
-    (w3m-region start (1- end))
+  (let ((w3m-display-inline-images vm-w3m-display-inline-images)
+        (w3m-safe-url-regexp vm-w3m-safe-url-regexp))
+        (w3m-region start (1- end))
     (add-text-properties
      start end
      (nconc (if vm-w3m-use-w3m-minor-mode-map
