@@ -2231,6 +2231,7 @@ operation of the server to minimize I/O."
 ;; vm-rename-imap-folder: string & string -> void
 ;; 
 ;; top-level operations
+;; vm-fetch-imap-message: (vm-message) -> void
 ;; vm-imap-synchronize-folder:
 ;;	(&optional interactive & bool & bool & bool & bool) -> void
 ;; vm-imap-save-attributes: (&optional interactive) -> void
@@ -2582,20 +2583,27 @@ operation of the server to minimize I/O."
   "Insert the message body of M in the current buffer."
   (let ((body-buffer (current-buffer)))
     (save-excursion
+      ;;----------------------------------
+      (vm-buffer-type:enter 'folder)
+      (vm-imap-session-type:assert 'valid)
+      ;;----------------------------------
       (vm-select-folder-buffer)
       (let* ((statblob nil)
+	     (uid (vm-imap-uid-of m))
 	     (imapdrop (vm-folder-imap-maildrop-spec))
 	     (safe-imapdrop (vm-safe-imapdrop-string imapdrop))
 	     (process (or (vm-folder-imap-process)
 			  (vm-imap-make-session imapdrop)))
 	     (use-body-peek (vm-folder-imap-body-peek))
 	     (server-uid-validity (vm-folder-imap-uid-validity))
-	     (n (car (vm-imap-get-uid-and-flags 
-		      process m server-uid-validity)))
+	     (n (symbol-value (intern uid (vm-folder-imap-uid-obarray))))
 	     )
 	(message "Retrieving message body... ")
 	(condition-case error-data
 	    (save-excursion
+	      ;;----------------------------
+	      (vm-buffer-type:enter 'process)
+	      ;;----------------------------
 	      (set-buffer (process-buffer process))
 	      (setq statblob (vm-imap-start-status-timer))
 	      (vm-set-imap-stat-x-box statblob safe-imapdrop)
@@ -2604,17 +2612,31 @@ operation of the server to minimize I/O."
 	      (setq message-size (vm-imap-get-message-size process n))
 	      (vm-set-imap-stat-x-need statblob message-size)
 	      (vm-imap-fetch-message process n use-body-peek nil)
-	      (vm-retrieve-to-target process body-buffer statblob use-body-peek))
+	      (vm-imap-retrieve-to-target process body-buffer statblob
+				     use-body-peek)
+	      ;;-------------------
+	      (vm-buffer-type:exit)
+	      ;;-------------------
+	      )
 	  (vm-imap-protocol-error
+	   ;;-------------------
+	   (vm-buffer-type:exit)
+	   ;;-------------------
 	   (message "Retrieval from %s signaled: %s" safe-imapdrop
 		    error-data)
 	   ;; Continue with whatever messages have been read
 	   )
 	  (quit
+	   ;;-------------------
+	   (vm-buffer-type:exit)
+	   ;;-------------------
 	   (delete-region old-eob (point-max))
 	   (error (format "Quit received during retrieval from %s"
-			  safe-imapdrop))))
-	))))
+			  safe-imapdrop)))))
+      ;;-------------------
+      (vm-buffer-type:exit)
+      ;;-------------------
+      )))
 
 (defun vm-imap-save-attributes (&optional interactive all-flags)
   "* Save the attributes of changed messages to the IMAP folder.
