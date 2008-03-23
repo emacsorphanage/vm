@@ -25,6 +25,10 @@
   (require 'vm-vars)
   (require 'vm-macro))
 
+;; To-Do  (USR)
+;; - Need to ensure that new imap sessions get created as and when needed.
+
+
 ;; ------------------------------------------------------------------------
 ;; Utilities
 ;; ------------------------------------------------------------------------
@@ -62,6 +66,10 @@
 
 (defun vm-imap-session-type:set (type)
   (setq vm-imap-session-type type))
+
+(defun vm-imap-session-type:make-active ()
+  (if (eq vm-imap-session-type 'inactive))
+      (setq vm-imap-session-type 'active)))
 
 (defsubst vm-imap-session-type:assert (type)
   (vm-assert (eq vm-imap-session-type type)))
@@ -606,12 +614,14 @@ on all the relevant IMAP servers and then immediately expunges."
 
 ;; --------------------------------------------------------------------
 ;; Server-side
+;;
+;; vm-establish-new-folder-imap-session: (&optional interactive) -> void
+;;
 ;; -- Functions to handle the interaction with the IMAP server
 ;;
 ;; vm-imap-make-session: string -> process
 ;; vm-imap-end-session: (process &optional buffer) -> void
 ;; vm-imap-check-connection: process -> void
-;; vm-establish-new-folder-imap-session: (&optional interactive) -> void
 ;;
 ;; -- mailbox operations
 ;; vm-imap-mailbox-list: (process & bool) -> string list
@@ -2228,7 +2238,8 @@ operation of the server to minimize I/O."
 ;;
 ;; vm-imap-get-synchronization-data: () -> 
 ;;		(retrieve-list: (uid . int) list &
-;;		 expunge-list: vm-message list & stale-list: vm-message list)
+;;		 expunge-list: vm-message list & 
+;;		 stale-list: vm-message list)
 ;;
 ;; ------------------------------------------------------------------------
 
