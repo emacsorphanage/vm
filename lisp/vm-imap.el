@@ -68,7 +68,7 @@
   (setq vm-imap-session-type type))
 
 (defun vm-imap-session-type:make-active ()
-  (if (eq vm-imap-session-type 'inactive))
+  (if (eq vm-imap-session-type 'inactive)
       (setq vm-imap-session-type 'active)))
 
 (defsubst vm-imap-session-type:assert (type)
@@ -2350,9 +2350,10 @@ operation of the server to minimize I/O."
 	   (flags (vm-folder-imap-flags-obarray))
 	   (process (vm-folder-imap-process))
 	   (n 1)
-	   (statblob nil)
-	   (imapdrop (vm-folder-imap-maildrop-spec))
+	   (statblob nil) (m nil) (mflags nil)
+	   (uid nil)
 	   (uid-validity (vm-folder-imap-uid-validity))
+	   (imapdrop (vm-folder-imap-maildrop-spec))
 	   (safe-imapdrop (vm-safe-imapdrop-string imapdrop))
 	   (use-body-peek (vm-folder-imap-body-peek))
 	   r-list mp got-some message-size old-eob
@@ -2372,7 +2373,7 @@ operation of the server to minimize I/O."
       (when retrieve-attributes
 	(let ((mp vm-message-list)
 	      (len (length vm-message-list))
-	      (n 0) m mflags uid)
+	      (n 0))
 	  (message "Retrieving message attributes and labels... ")
 	  (while mp
 	    (setq m (car mp))
@@ -2417,26 +2418,18 @@ operation of the server to minimize I/O."
 		   (vm-imap-retrieve-to-target process folder-buffer
 					       statblob use-body-peek)
 		   (setq r-list (cdr r-list)
-			 n (1+ n)))
-		 ;;-------------------
-		 (vm-buffer-type:exit)
-		 ;;-------------------
-		 )
+			 n (1+ n))))
 	     (vm-imap-protocol-error
-	      ;;-------------------
-	      (vm-buffer-type:exit)
-	      ;;-------------------
 	      (message "Retrieval from %s signaled: %s" safe-imapdrop
-		       error-data)
+		       error-data))
 	      ;; Continue with whatever messages have been read
-	      )
 	     (quit
-	      ;;-------------------
-	      (vm-buffer-type:exit)
-	      ;;-------------------
 	      (delete-region old-eob (point-max))
 	      (error (format "Quit received during retrieval from %s"
 			     safe-imapdrop))))
+	   ;;-------------------
+	   (vm-buffer-type:exit)
+	   ;;-------------------
 	   (and statblob (vm-imap-stop-status-timer statblob))
 	   ;; to make the "Mail" indicator go away
 	   (setq vm-spooled-mail-waiting nil)
