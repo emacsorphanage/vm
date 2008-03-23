@@ -25,6 +25,10 @@
   (require 'vm-vars)
   (require 'vm-macro))
 
+;; To-Do  (USR)
+;; - Need to ensure that new imap sessions get created as and when needed.
+
+
 ;; ------------------------------------------------------------------------
 ;; Utilities
 ;; ------------------------------------------------------------------------
@@ -62,6 +66,10 @@
 
 (defun vm-imap-session-type:set (type)
   (setq vm-imap-session-type type))
+
+(defun vm-imap-session-type:make-active ()
+  (if (eq vm-imap-session-type 'inactive))
+      (setq vm-imap-session-type 'active)))
 
 (defsubst vm-imap-session-type:assert (type)
   (vm-assert (eq vm-imap-session-type type)))
@@ -180,6 +188,13 @@
 ;; leave the message in the mailbox, and yet not retrieve the
 ;; same messages again and again.
 
+(defun vm-imap-fetch-message (process n use-body-peek &optional headers-only) 
+  (let ((fetchcmd
+         (if headers-only
+             (if use-body-peek "(BODY.PEEK[HEADER])" "(RFC822.HEADER)")
+           (if use-body-peek "(BODY.PEEK[])" "(RFC822.PEEK)"))))
+    (vm-imap-send-command process (format "FETCH %d %s" n fetchcmd))))
+
 ;;;###autoload
 (defun vm-imap-move-mail (source destination)
   ;;--------------------------
@@ -293,21 +308,10 @@
 		      (throw 'skip t)))
 		(message "Retrieving message %d (of %d) from %s..."
 			 n mailbox-count imapdrop)
-		(if use-body-peek
-		    (progn
-		      (vm-imap-send-command process
-					    (format "FETCH %d (BODY.PEEK[])"
-						    n))
-		      (vm-imap-retrieve-to-target process destination
-						  statblob t))
-		  (progn
-		       (vm-imap-send-command process
-					     (format
-					      "FETCH %d (RFC822.PEEK)" n))
-		       (vm-imap-retrieve-to-target process destination
-						   statblob nil)))
-		(message "Retrieving message %d (of %d) from %s...done"
-	 	 n mailbox-count imapdrop)
+                (vm-imap-fetch-message process n use-body-peek nil)
+                (vm-imap-retrieve-to-target process destination statblob use-body-peek)
+                (message "Retrieving message %d (of %d) from %s...done"
+                         n mailbox-count imapdrop)
 		(vm-increment retrieved)
 		(and b-per-session
 		     (setq retrieved-bytes (+ retrieved-bytes message-size)))
@@ -610,12 +614,14 @@ on all the relevant IMAP servers and then immediately expunges."
 
 ;; --------------------------------------------------------------------
 ;; Server-side
+;;
+;; vm-establish-new-folder-imap-session: (&optional interactive) -> void
+;;
 ;; -- Functions to handle the interaction with the IMAP server
 ;;
 ;; vm-imap-make-session: string -> process
 ;; vm-imap-end-session: (process &optional buffer) -> void
 ;; vm-imap-check-connection: process -> void
-;; vm-establish-new-folder-imap-session: (&optional interactive) -> void
 ;;
 ;; -- mailbox operations
 ;; vm-imap-mailbox-list: (process & bool) -> string list
@@ -676,7 +682,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	(use-ssh nil)
 	(session-name "IMAP")
 	(process-connection-type nil)
-	greeting timestamp
+	greeting
 	host port mailbox auth user pass source-list process-buffer
 	source-nopwd-nombox)
     (unwind-protect
@@ -1450,8 +1456,7 @@ on all the relevant IMAP servers and then immediately expunges."
       (vm-imap-protocol-error "STORE ... +FLAGS.SILENT (\\Deleted) failed")))
 
 (defun vm-imap-get-message-size (process n)
-  (let ((list nil)
-	(imap-buffer (current-buffer))
+  (let ((imap-buffer (current-buffer))
 	tok size response p
 	(need-size t)
 	(need-ok t))
@@ -2233,7 +2238,8 @@ operation of the server to minimize I/O."
 ;;
 ;; vm-imap-get-synchronization-data: () -> 
 ;;		(retrieve-list: (uid . int) list &
-;;		 expunge-list: vm-message list & stale-list: vm-message list)
+;;		 expunge-list: vm-message list & 
+;;		 stale-list: vm-message list)
 ;;
 ;; ------------------------------------------------------------------------
 
@@ -2403,27 +2409,12 @@ operation of the server to minimize I/O."
 		   (setq message-size (vm-imap-get-message-size
 				       process (cdr (car r-list))))
 		   (vm-set-imap-stat-x-need statblob message-size)
-		   (if use-body-peek
-		       (progn
-			 ;;----------------------------------
-			 (vm-imap-session-type:assert 'valid)
-			 ;;----------------------------------
-			 (vm-imap-send-command process
-					       (format
-						"FETCH %s (BODY.PEEK[])"
-						(cdr (car r-list))))
-			 (vm-imap-retrieve-to-target process folder-buffer
-						     statblob t))
-		     (progn
-		       ;;----------------------------------
-		       (vm-imap-session-type:assert 'valid)
-		       ;;----------------------------------
-		       (vm-imap-send-command process
-					     (format
-					      "FETCH %s (RFC822.PEEK)"
-					      (cdr (car r-list))))
-		       (vm-imap-retrieve-to-target process folder-buffer
-						   statblob nil)))
+		   ;;----------------------------------
+		   (vm-imap-session-type:assert 'valid)
+		   ;;----------------------------------
+		   (vm-imap-fetch-message process (cdr (car r-list)) use-body-peek nil)
+		   (vm-imap-retrieve-to-target process folder-buffer
+					       statblob use-body-peek)
 		   (setq r-list (cdr r-list)
 			 n (1+ n)))
 		 ;;-------------------
@@ -2703,7 +2694,7 @@ VM session.  This is useful for saving offline work."
 (defun vm-imap-make-filename-for-spec (spec)
   "Returns a cache file name appropriate for the IMAP maildrop
 specification SPEC."
-  (let (md5 list)
+  (let (md5)
     (setq spec (vm-imap-normalize-spec spec))
     (setq md5 (vm-md5-string spec))
     (expand-file-name (concat "imap-cache-" md5)
