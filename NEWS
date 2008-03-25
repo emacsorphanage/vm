@@ -10,6 +10,9 @@ VM 8.0.10
 
     * Rewrote `vm-message-history.el' to also work for XEmacs.
 
+    * Leading lines of a yanked message were accidently taken as headers and
+      got removed if `vm-reply-include-presentation' was t.
+
 VM 8.0.9
 
   BUGFIXES:
