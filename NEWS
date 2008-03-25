@@ -101,6 +101,36 @@ VM 8.1.0-devo
       IMAP folders should be specified in the minibuffer using the
       account:mailbox format.  See the info node on IMAP folders.
 
+VM 8.0.10
+
+  IMPROVEMENTS:
+
+    * `vm-message-history.el' now uses a buffer similar to the summary for
+      browsing the history.  The buffer replaces the summary buffer when
+      present.  Duplicate history entries will be removed.  
+
+  BUGFIXES:
+
+    * Rewrote `vm-message-history.el' to also work for XEmacs.
+
+    * Leading lines of a yanked message were accidently taken as headers and
+      got removed if `vm-reply-include-presentation' was t.
+
+    * Fixed encoding of headers for trailing 8 bit characters.  (Thanks to
+      Lutz Euler for the patch)
+
+VM 8.0.9
+
+  BUGFIXES:
+
+    * Added documentation to `vm-mime-external-content-types-alist' that no
+      extra single quotes should be used around %f as the file name is already
+      quoted for the shell. (Thanks to Martin Schwenke)
+
+    * Fixed version number generation in release script.  It was broken for
+      8.0.8, i.e. it was showing 8.0.x-xemacs-542 instead.  Now also other
+      branch related information is stored in the file vm-revno.el.
+
 VM 8.0.8
 
   IMPROVEMENTS:

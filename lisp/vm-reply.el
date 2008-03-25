@@ -290,16 +290,16 @@ are replying to, forwarding, or invoked VM's mail command from.
 
 All message headers are yanked along with the text.  Point is
 left before the inserted text, the mark after.  Any hook
-functions bound to mail-citation-hook are run, after inserting
+functions bound to `mail-citation-hook' are run, after inserting
 the text and setting point and mark.  For backward compatibility,
 if mail-citation-hook is set to nil, `mail-yank-hooks' is run
 instead.
 
 If mail-citation-hook and mail-yank-hooks are both nil, this
 default action is taken: the yanked headers are trimmed as
-specified by vm-included-text-headers and
-vm-included-text-discard-header-regexp, and the value of
-vm-included-text-prefix is prepended to every yanked line."
+specified by `vm-included-text-headers' and
+`vm-included-text-discard-header-regexp', and the value of
+`vm-included-text-prefix' is prepended to every yanked line."
   (interactive
    (list
     ;; What we really want for the first argument is a message struct,
@@ -345,10 +345,7 @@ vm-included-text-prefix is prepended to every yanked line."
 		     (vm-select-folder-buffer)
 		     (if vm-presentation-buffer
 			 (set-buffer vm-presentation-buffer))
-                     (goto-char (point-min))
-                     (re-search-forward "\n\n" (point-max) t)
-                     (goto-char (point))
-                     (vm-buffer-substring-no-properties (point) (point-max)))))
+                     (vm-buffer-substring-no-properties (point-min) (point-max)))))
               (insert text)
 	      (setq end (point-marker)))
           (if (vectorp (vm-mm-layout message))
