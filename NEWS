@@ -13,6 +13,9 @@ VM 8.0.10
     * Leading lines of a yanked message were accidently taken as headers and
       got removed if `vm-reply-include-presentation' was t.
 
+    * Fixed encoding of headers for trailing 8 bit characters.  (Thanks to
+      Lutz Euler for the patch)
+
 VM 8.0.9
 
   BUGFIXES:
