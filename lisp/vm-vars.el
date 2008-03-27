@@ -5148,6 +5148,10 @@ append a space to words that complete unambiguously.")
 (defvar vm-forward-list nil)
 (defvar vm-redistribute-list nil)
 
+;; For verification of assertions
+
+(defvar vm-assertion-checking-off t)
+
 ;; For verification of the correct buffer protocol
 ;; Possible values are 'folder, 'presentation, 'summary, 'process
 

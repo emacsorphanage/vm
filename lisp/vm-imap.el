@@ -431,9 +431,6 @@ on all the relevant IMAP servers and then immediately expunges."
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
-  ;;--------------------------
-  (vm-buffer-type:set 'folder)
-  ;;--------------------------
   (vm-check-for-killed-summary)
   (vm-error-if-virtual-folder)
   (let ((process nil)
@@ -1884,12 +1881,13 @@ on all the relevant IMAP servers and then immediately expunges."
       (vm-set-folder-imap-flags-obarray flags))))
 
 (defun vm-imap-dump-uid-and-flags-data ()
-  ;;------------------------------
-  (vm-buffer-type:assert 'folder)
-  ;;------------------------------
-  (vm-set-folder-imap-uid-list nil)
-  (vm-set-folder-imap-uid-obarray nil)
-  (vm-set-folder-imap-flags-obarray nil))
+  (when (eq (car vm-buffer-types) 'folder)
+    ;;------------------------------
+    (vm-buffer-type:assert 'folder)
+    ;;------------------------------
+    (vm-set-folder-imap-uid-list nil)
+    (vm-set-folder-imap-uid-obarray nil)
+    (vm-set-folder-imap-flags-obarray nil)))
 
 ;; This function is now obsolete.  It is faster to get flags of
 ;; several messages at once, using vm-imap-get-message-data-list
@@ -2024,6 +2022,7 @@ on all the relevant IMAP servers and then immediately expunges."
 
   ;;----------------------------------
   (vm-imap-session-type:assert 'valid)
+  (vm-buffer-type:assert 'folder)
   ;;----------------------------------
   (let* ((uid (vm-imap-uid-of m))
 	 (message-num 
@@ -2184,16 +2183,18 @@ is expected to have logged in and selected the current folder.
 
 This is similar to vm-imap-save-message but uses the internal copy
 operation of the server to minimize I/O."
+  ;;-----------------------------
+  (vm-buffer-type:set 'folder)
+  ;;-----------------------------
   (let ((uid (vm-imap-uid-of m))
 	(uid-validity (vm-imap-uid-validity-of m))
 	need-ok response string)
     (if (not (equal uid-validity (vm-folder-imap-uid-validity)))
 	(error "Message does not have a valid UID"))
     (save-excursion
-      ;;----------------------------
-      (vm-buffer-type:enter 'process)
-      ;;----------------------------
-      (set-buffer (process-buffer process))
+      ;;------------------------
+      (vm-buffer-type:duplicate)
+      ;;------------------------
       (if (vm-attribute-modflag-of m)
 	  (condition-case nil
 	      (vm-imap-save-message-flags process m uid-validity)
@@ -2203,7 +2204,9 @@ operation of the server to minimize I/O."
 ;; 	(vm-imap-protocol-error nil))
       ;;----------------------------------
       (vm-imap-session-type:assert-active)
+      (vm-buffer-type:set 'process)
       ;;----------------------------------
+      (set-buffer (process-buffer process))
       (vm-imap-send-command 
        process
        (format "UID COPY %s %s"
@@ -2261,6 +2264,10 @@ operation of the server to minimize I/O."
   ;; - Originally, messages with stale UIDVALIDITY values were
   ;; ignored.  So, they would never get expunged from the cache.  The
   ;; STALE-LIST component was added to fix this.
+  
+  ;;-----------------------------
+  (vm-buffer-type:assert 'folder)
+  ;;-----------------------------
   (let ((here (make-vector 67 0))	; OBARRAY(uid, vm-message)
 	there flags
 	(uid-validity (vm-folder-imap-uid-validity))
@@ -2335,13 +2342,13 @@ operation of the server to minimize I/O."
   (if (or vm-global-block-new-mail
 	  (null (vm-establish-new-folder-imap-session interactive)))
       nil
-    ;;-------------------------------
-    (vm-imap-session-type:set 'valid)
-    ;;-------------------------------
     (if do-retrieves
 	(vm-assimilate-new-messages))	; Funny that this should be
 					; necessary.  Indicates bugs?
     (message "Logging into the IMAP server...")
+    ;;-------------------------------
+    (vm-imap-session-type:set 'valid)	; not yet valid, see below
+    ;;-------------------------------
     (let* ((sync-data (vm-imap-get-synchronization-data))
 	   (retrieve-list (nth 0 sync-data))
 	   (expunge-list (nth 1 sync-data))
@@ -2410,10 +2417,8 @@ operation of the server to minimize I/O."
 		   (setq message-size (vm-imap-get-message-size
 				       process (cdr (car r-list))))
 		   (vm-set-imap-stat-x-need statblob message-size)
-		   ;;----------------------------------
-		   (vm-imap-session-type:assert 'valid)
-		   ;;----------------------------------
-		   (vm-imap-fetch-message process (cdr (car r-list)) use-body-peek nil)
+		   (vm-imap-fetch-message process (cdr (car r-list)) 
+					  use-body-peek nil)
 		   (vm-imap-retrieve-to-target process folder-buffer
 					       statblob use-body-peek)
 		   (setq r-list (cdr r-list)
@@ -2469,7 +2474,7 @@ operation of the server to minimize I/O."
 	(message "Expunging messages in cache... done"))
       (when (and do-remote-expunges
 		 vm-imap-messages-to-expunge)
-					; New code.  Kyle's version was piggybacking on IMAP spool
+	;; New code.  Kyle's version was piggybacking on IMAP spool
 					; file code and wasn't ideal.
 	(save-excursion
 	  ;;-----------------------
@@ -2608,9 +2613,6 @@ written to the server irrespective of whether they were changed in the
 VM session.  This is useful for saving offline work."
   (interactive "P")
   (vm-select-folder-buffer)
-  ;;--------------------------
-  (vm-buffer-type:set 'folder)
-  ;;--------------------------
   (vm-check-for-killed-summary)
   (vm-display nil nil '(vm-imap-synchronize) '(vm-imap-synchronize))
   (if (not (eq vm-folder-access-method 'imap))
@@ -2670,7 +2672,7 @@ VM session.  This is useful for saving offline work."
 (defun vm-imap-find-name-for-spec (spec)
   (error "vm-imap-find-name-for-spec has not been defined.  Please report it."
 	 ))
-;;--------------
+;;-----------------------------------------
 
 ;;;###autoload
 (defun vm-imap-find-spec-for-buffer (buffer)
@@ -2853,17 +2855,15 @@ selectable mailboxes to be listed.  Returns a list of mailbox names."
 	p r response need-ok)
     (vm-imap-check-connection process)
     (save-excursion
-      ;;----------------------------
+      ;;-----------------------------
       (vm-buffer-type:enter 'process)
-      ;;----------------------------
+      ;;------------------------------
       (set-buffer (process-buffer process))
+
       ;;----------------------------------
       (vm-imap-session-type:assert-active)
       ;;----------------------------------
       (vm-imap-send-command process "LIST \"\" \"*\"")
-      ;;-------------------------------
-      (vm-imap-session-type:set 'active)
-      ;;-------------------------------
       (vm-imap-dump-uid-and-flags-data)
       (setq need-ok t)
       (while need-ok
@@ -2900,12 +2900,10 @@ well. Returns a boolean value."
       ;;-----------------------------
       (set-buffer (process-buffer process))
       ;;----------------------------------
+
       (vm-imap-session-type:assert-active)
       ;;----------------------------------
       (vm-imap-send-command process (concat "LIST \"\" \"" mailbox "\""))
-      ;;--------------------------------
-      (vm-imap-session-type:set 'active)
-      ;;--------------------------------
       (vm-imap-dump-uid-and-flags-data)
       (setq need-ok t)
       (while need-ok
@@ -2991,15 +2989,13 @@ documentation for `vm-spool-files'."
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
-     ;;--------------------------
-     (vm-buffer-type:set 'folder)
-     ;;--------------------------
      (let ((this-command this-command)
-	   (last-command last-command))
-       (list (vm-read-imap-folder-name "Create IMAP folder: " nil t)))
-     ;;-------------------
-     (vm-buffer-type:exit)
-     ;;-------------------
+	   (last-command last-command)
+	   (folder (vm-read-imap-folder-name "Create IMAP folder: " nil t)))
+       ;;-------------------
+       (vm-buffer-type:exit)
+       ;;-------------------
+       (list folder))
      ))
   (let ((vm-imap-ok-to-ask t)
 	process mailbox)
@@ -3038,9 +3034,6 @@ documentation for `vm-spool-files'."
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
-     ;;--------------------------
-     (vm-buffer-type:set 'folder)
-     ;;--------------------------
      (let ((this-command this-command)
 	   (last-command last-command))
        (list (vm-read-imap-folder-name "Delete IMAP folder: " nil nil)))))
@@ -3081,9 +3074,6 @@ documentation for `vm-spool-files'."
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
-     ;;--------------------------
-     (vm-buffer-type:set 'folder)
-     ;;--------------------------
      (let ((this-command this-command)
 	   (last-command last-command)
 	   source dest)
@@ -3118,6 +3108,8 @@ documentation for `vm-spool-files'."
 
 
 ;;; Robert Fenk's draft function for saving messages to IMAP folders.
+
+;;;###autoload
 (defun vm-imap-save-composition ()
   "Saves the current composition in the IMAP folder given by the
 IMAP-FCC header. 
@@ -3214,9 +3206,6 @@ folder."
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
-  ;;--------------------------
-  (vm-buffer-type:set 'folder)
-  ;;--------------------------
   (setq vm-kept-imap-buffers nil)
   (setq vm-imap-keep-trace-buffer t)
   (setq vm-imap-keep-failed-trace-buffers 20))
@@ -3229,9 +3218,6 @@ order to capture the trace of IMAP sessions during the occurrence."
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
-  ;;--------------------------
-  (vm-buffer-type:set 'folder)
-  ;;--------------------------
   (if (or vm-imap-keep-trace-buffer
 	  (y-or-n-p "Did you run vm-imap-start-bug-report earlier? "))
       (message "Thank you. Preparing the bug report... ")
