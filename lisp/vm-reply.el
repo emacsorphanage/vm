@@ -610,6 +610,7 @@ as replied to, forwarded, etc, if appropriate."
     (if (and vm-confirm-mail-send
 	     (not (y-or-n-p "Send the message? ")))
 	(error "Message not sent.")))
+  (vm-mail-mode-show-headers)
   (save-excursion (run-hooks 'vm-mail-send-hook))
   (vm-mail-mode-insert-date-maybe)
   (vm-mail-mode-insert-message-id-maybe)
