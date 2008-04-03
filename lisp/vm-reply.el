@@ -1756,6 +1756,44 @@ message."
   (remove-hook 'mail-send-hook  'mime-edit-maybe-translate)
   (remove-hook 'mail-send-hook 'mime-editor/maybe-translate))
 
+
+(defun vm-mail-mode-show-headers ()
+  "Display any hidden headers in a composition buffer."
+  (interactive)
+  (mapcar 'delete-overlay (overlays-in (point-min)
+                                       (save-excursion (mail-text) (point))))
+  (if (local-variable-p 'line-move-ignore-invisible (current-buffer))
+      (setq line-move-ignore-invisible nil)))
+
+(defun vm-mail-mode-hide-headers ()
+  "Hides and protects headers listed in `vm-mail-mode-hidden-headers'.
+With a prefix arg, call `vm-mail-mode-show-headers' instead."
+  (interactive)
+  (let ((case-fold-search t)
+        (header-regexp (regexp-opt vm-mail-mode-hidden-headers))
+        (header-end (save-excursion (mail-text) (point)))
+        start end o)
+    (setq header-regexp (concat "^" header-regexp))
+    (make-variable-buffer-local 'line-move-ignore-invisible)
+    (setq line-move-ignore-invisible t)
+    (goto-char (point-min))
+    (while (re-search-forward header-regexp header-end t)
+      (setq start (match-beginning 0)
+            end (1- (re-search-forward "^[^ \t]" header-end)))
+      (goto-char end)
+      (let ((o (or (car (overlays-at start))
+                   (make-overlay start end))))
+        (when (not (overlay-get o 'invisible))
+          (overlay-put o 'invisible t)
+          (overlay-put o 'read-only t))))))
+
+(defun vm-mail-mode-hide-headers-hook ()
+  "Hook which handles `vm-mail-mode-hidden-headers'."
+  (if vm-mail-mode-hidden-headers
+      (vm-mail-mode-hide-headers)))
+
+(add-hook 'vm-mail-mode-hook 'vm-mail-mode-hide-headers-hook)
+
 (provide 'vm-reply)
 
 ;;; vm-reply.el ends here

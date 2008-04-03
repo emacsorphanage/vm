@@ -2,6 +2,10 @@ VM 8.1.0-devo
 
   IMPROVEMENTS:
 
+    * Added hiding and protection of headers in composition buffers.  See the
+      new variable `vm-mail-mode-hidden-headers' for customization. (Thanks to
+      Eric Schulte for the initial code posted in gnu.emacs.vm.info)
+
     * Added the function `vm-mime-list-part-structure' to list the mime part
       structure of a message.
 

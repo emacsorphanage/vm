@@ -5488,6 +5488,18 @@ cause trouble (abbrev-mode)."
   :group 'vm
   :type '(repeat symbol))
 
+(defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To"
+                                         "X-Mailer" "Bcc" "FCC")
+  "*A list of header to hide in `vm-mail-mode'."
+  :group 'vm
+  :type '(choice (const :tag "Disabled" nil)
+                 (set :tag "Header list"
+                      (string "References")
+                      (string "In-Reply-To")
+                      (string "X-Mailer")
+                      (string "Bcc")
+                      (string "FCC"))))
+
 (provide 'vm-vars)
 
 ;;; vm-vars.el ends here
