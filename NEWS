@@ -1,5 +1,10 @@
 VM 8.0.10
 
+  NOTES:
+
+    * This is the first version of VM 8.* to be also released as a XEmacs
+      package.
+
   IMPROVEMENTS:
 
     * `vm-message-history.el' now uses a buffer similar to the summary for
