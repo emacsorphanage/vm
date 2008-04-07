@@ -111,10 +111,9 @@ all: $(OBJECTS)
 install: install-el install-elc
 
 ##############################################################################
-vm-revno.el:
-	echo ";;; This is a generated file, do not edit it!" > vm-revno.el
-	echo "(setq vm-revno \"`$(BZR) nick`-`$(BZR) revno`\")" >> vm-revno.el
-	echo "(setq vm-author \"`$(BZR) whoami`\")" >> vm-revno.el
+vm-revno.el: $(SOURCES:%=@srcdir@/%) @srcdir@/..
+	cd @srcdir@
+	./vm-revno.sh
 
 ##############################################################################
 # GNU Emacs's vm-autoload file
@@ -147,7 +146,7 @@ auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
                 -eval "$(AUTOLOAD_PACKAGE_NAME)" \
                 -eval "$(AUTOLOAD_FILE)" \
                 -l autoload -f batch-update-autoloads $^
-	# avoid getting an error about an already loaded vm-autoloads
+#	avoid getting an error about an already loaded vm-autoloads
 	mv $@ $@.tmp
 	echo "(setq features (delete 'vm-autoloads features))" > $@
 	cat $@.tmp >> $@
@@ -210,11 +209,9 @@ install-elc: all vm-revno.elc
 	    done;                                            \
 	fi;
 
-
-
 ##############################################################################
 Makefile: @srcdir@/Makefile.in
-	cd ..; ./config.status
+	cd .. ; config.status $@
 
 ##############################################################################
 clean:

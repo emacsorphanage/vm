@@ -1,34 +1,8 @@
 #!/bin/sh -x
+# -*- shell-script -*-
 
-bzr="bzr --no-plugins --no-aliases"
-nick=`$bzr nick`
-devo=`echo $nick | fgrep -q devo && echo devo`
-revno=`$bzr revno`
-echo $devo
-if [ "$devo" = "devo" ] ; then
-  tag=$nick
-  rdir=$tag-$revno
-  version=$rdir
-else
-  tag=(`$bzr tags | tail -1`)
-  if [ "${tag[1]}" != "$revno" ]; then
-    echo "ERROR: No tag present at the head revision."
-    echo "ERROR: First you must create a release tag!"
-    exit -1
-  fi
-  tag=${tag[0]}
-  rdir=$tag-$revno
-  version=$tag
-fi
+. ../getversion.sh
 
-cat > lisp/vm-revno.el <<EOFREVNO
-;;; This is a generated file, do not edit it!
-(setq vm-version "$version")
-(setq vm-version-info '(
-`bzr version-info --custom --template='  (revdate "{date}")\n  (revno {revno})\n  (revid "{revision_id}")\n  (branch_nick "{branch_nick}")'`
-  (author "`$bzr whoami`")
-))
-EOFREVNO
 
 # now check for uncommitted changes
 if [ "$1" != "test" ]; then 
@@ -43,14 +17,16 @@ fi
 # check for an error less build
 if [ "$1" != "test" ]; then 
   make || exit 1
+  make lisp/revno.el || exit 1
 fi
 
 dir="release/$rdir"
 rm -rf $dir
 mkdir -p release
 $bzr export $dir
+
 cp configure $dir
-cp lisp/vm-revno.el $dir/lisp
+mv lisp/revno.el $dir/lisp
 
 cd release
 tar cvfz $rdir.tgz $rdir
