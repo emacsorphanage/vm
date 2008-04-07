@@ -109,6 +109,11 @@ VM 8.1.0-devo
 
 VM 8.0.10
 
+  NOTES:
+
+    * This is the first version of VM 8.* to be also released as a XEmacs
+      package.
+
   IMPROVEMENTS:
 
     * `vm-message-history.el' now uses a buffer similar to the summary for
@@ -124,6 +129,8 @@ VM 8.0.10
 
     * Fixed encoding of headers for trailing 8 bit characters.  (Thanks to
       Lutz Euler for the patch)
+
+    * Decode (QP-)encoded clear text before decrypting it.
 
 VM 8.0.9
 
