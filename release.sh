@@ -17,6 +17,8 @@ fi
 # check for an error less build
 if [ "$1" != "test" ]; then 
   make || exit 1
+  # make sure we delete the existing file
+  rm -f lisp/revno.el
   make lisp/revno.el || exit 1
 fi
 

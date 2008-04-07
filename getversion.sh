@@ -4,7 +4,7 @@
 bzr="bzr --no-plugins --no-aliases"
 $bzr rocks > /dev/null || (echo "ERROR: cannot run bzr." && exit 1)
 nick=`$bzr nick`
-devo=`echo $nick | fgrep -q devo && echo devo`
+devo=`head -1 NEWS | fgrep -s devo > /dev/null && echo devo`
 revno=`$bzr revno`
 
 if [ "$devo" = "devo" ] ; then

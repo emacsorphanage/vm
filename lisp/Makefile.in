@@ -55,6 +55,8 @@ SOURCES += vm-window.el
 SOURCES += vm-w3m.el
 SOURCES += vm-w3.el
 
+SOURCES += vm-revno.el
+
 SOURCES += vcard.el
 SOURCES += tapestry.el
 
@@ -67,7 +69,7 @@ endif
 
 OBJECTS += $(SOURCES:.el=.elc)
 
-INSTALL_FILES = $(SOURCES) $(OBJECTS) vm-revno.elc
+INSTALL_FILES = $(SOURCES) $(OBJECTS)
 
 # for autoload generation 
 AUTOLOAD_PACKAGE_NAME = (setq autoload-package-name \"vm\")
@@ -112,8 +114,11 @@ all: $(OBJECTS)
 
 install: install-el install-elc
 
-##############################################################################
-vm-revno.el: $(SOURCES:%=@srcdir@/%) @srcdir@/..
+############################################################################## 
+# This is just a dependecy guess, but it will fail if other files have
+# changed and this is a PITA, but I currently see no better way of doing
+# this. 
+vm-revno.el: $(SOURCES:%=@srcdir@/%)
 	cd @srcdir@
 	./vm-revno.sh
 
@@ -162,7 +167,7 @@ custom-load.el: $(SRCS:%=@srcdir@/%)
 	"$(EMACS_PROG)" $(FLAGS) -f vm-custom-make-dependencies .
 
 ##############################################################################
-install-pkg: all vm-revno.elc
+install-pkg: all
 	@if test "x$(SYMLINKS)" = "xno" ; then                 \
 	  mkdir -p -m 0755 $(DESTDIR)$(PACKAGEDIR);            \
 	  for i in $(SRCS:%=@srcdir@/%) $(INSTALL_FILES) ; do  \
@@ -179,7 +184,7 @@ install-pkg: all vm-revno.elc
 	@echo VM ELISP files successfully installed\!
 
 # This entry will never install .el files if there are no .elc files.
-install-el: all vm-revno.elc
+install-el: all
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(lispdir)/"
 	for elc in *.elc; do                                                  \
 	    el=`basename $$elc c`;                                            \
@@ -198,7 +203,7 @@ install-el: all vm-revno.elc
 	    done;                                                             \
 	fi;
 
-install-elc: all vm-revno.elc
+install-elc: all
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(lispdir)/"
 	for elc in *.elc; do                                 \
 	    echo "Install $$elc in $(DESTDIR)$(lispdir)/";   \
