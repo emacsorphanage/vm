@@ -482,7 +482,7 @@ Use `vm-rmail-toggle' to switch between normal and this mode."
               (const vm-presentation-mode)
               (const vm-virtual-mode)
               (const vm-summary-mode))
-:group 'vm-rfaddons)
+  :group 'vm-rfaddons)
   
 (defun vm-rmail-toggle (&optional arg)
   (interactive)
