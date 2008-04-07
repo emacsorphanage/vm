@@ -5583,8 +5583,10 @@ Attachment tags added to the buffer with `vm-mime-attach-file' are expanded
 and the approriate content-type and boundary markup information is added."
   (interactive)
 
+  (vm-mail-mode-show-headers)
+
   (vm-disable-modes vm-disable-modes-before-encoding)
-  
+ 
   (buffer-enable-undo)
   (let ((unwind-needed t)
 	(mybuffer (current-buffer)))

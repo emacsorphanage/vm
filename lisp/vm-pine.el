@@ -652,6 +652,7 @@ Optional argument DONT-KILL is positive, then do not kill source message."
 
     ;; Now add possibly missing headers
     (goto-char (point-min))
+    (vm-mail-mode-show-headers)
     (if (not (vm-mail-mode-get-header-contents "From:"))
         (let* ((login user-mail-address)
                (fullname (user-full-name)))
