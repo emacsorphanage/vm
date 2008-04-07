@@ -67,7 +67,9 @@ VM 8.1.0-devo
     * A prefix argument to `vm-fix-my-summary!!!' will kill a folders local
       summary format which was restored by `vm-restore-saved-summary-formats'.
 
-    * The button for images shows a thumbnail now when possible.
+    * The button for an image or PDF shows a thumbnail now when possible.
+      This requires ImageMagick.  (Thanks to Eric Schulte for the idea and
+      initial code.)
 
   BUG FIXES
 
