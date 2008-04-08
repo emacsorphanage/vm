@@ -1,10 +1,11 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # -*- shell-script -*-
 
 bzr="bzr --no-plugins --no-aliases"
 $bzr rocks > /dev/null || (echo "ERROR: cannot run bzr." && exit 1)
 nick=`$bzr nick`
-devo=`head -1 NEWS | fgrep -s devo > /dev/null && echo devo`
+news=`$bzr root`/NEWS
+devo=`head -1 $news | fgrep -s devo > /dev/null && echo devo`
 revno=`$bzr revno`
 
 if [ "$devo" = "devo" ] ; then
