@@ -2509,11 +2509,12 @@ operation of the server to minimize I/O."
 		      (delete nil
 			      (mapcar 
 			       (lambda (uid)
-				 (let ((m (symbol-value
-					   (intern uid uid-obarray))))
-				   (if m
-				       (vm-imap-delete-message process m))
-				   m))
+				 (let ((key (intern-soft uid uid-obarray)))
+				   (if key
+				       (vm-imap-delete-message 
+					process 
+					(symbol-value key)))
+				   (symbol-value key)))
 			       uids-to-delete)))
 		(setq m-list (cons nil (sort m-list '>)))
 					; dummy header added
