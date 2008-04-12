@@ -33,28 +33,6 @@
 ;; Utilities
 ;; ------------------------------------------------------------------------
 
-;; For verification of the correct buffer protocol
-;; Possible values are 'folder, 'presentation, 'summary, 'process
-
-;; (defvar vm-buffer-types nil)    ; moved to vm-vars.el
-
-(defun vm-buffer-type:enter (type)
-  (setq vm-buffer-types (cons type vm-buffer-types)))
-
-(defun vm-buffer-type:exit ()
-  (setq vm-buffer-types (cdr vm-buffer-types)))
-
-(defun vm-buffer-type:duplicate ()
-  (setq vm-buffer-types (cons (car vm-buffer-types) vm-buffer-types)))
-
-(defun vm-buffer-type:set (type)
-  (if vm-buffer-types
-      (rplaca vm-buffer-types type)
-    (setq vm-buffer-types (cons type vm-buffer-types))))
-
-(defsubst vm-buffer-type:assert (type)
-  (vm-assert (eq (car vm-buffer-types) type)))
-
 ;; For verification of session protocol
 ;; Possible values are 
 ;; 'active - active session present
@@ -73,6 +51,11 @@
 
 (defsubst vm-imap-session-type:assert (type)
   (vm-assert (eq vm-imap-session-type type)))
+
+(defsubst vm-imap-folder-session-type:assert (type)
+  (save-excursion
+    (set-buffer (process-buffer (vm-folder-imap-process)))
+    (vm-assert (eq vm-imap-session-type type))))
 
 (defsubst vm-imap-session-type:assert-active ()
   (vm-assert (or (eq vm-imap-session-type 'active) 
@@ -101,29 +84,42 @@
 (defun vm-imap-auth-method (auth)
   (memq auth vm-imap-auth-methods))
 
+;; the maildrop spec of the imap folder
 (defsubst vm-folder-imap-maildrop-spec ()
   (aref vm-folder-access-data 0))
+;; current imap process of the folder
 (defsubst vm-folder-imap-process ()
   (aref vm-folder-access-data 1))
+;; the uid validity value of the imap folder
 (defsubst vm-folder-imap-uid-validity ()
   (aref vm-folder-access-data 2))
+;; the list of uid's and flags of the messages in the imap folder
+;; (msg-num . uid . flags list)
 (defsubst vm-folder-imap-uid-list ()
-  (aref vm-folder-access-data 3))	; (msg-num . uid . flags list)
+  (aref vm-folder-access-data 3))	
+;; the number of messages in the imap folder
 (defsubst vm-folder-imap-mailbox-count ()
   (aref vm-folder-access-data 4))
+;; flag indicating whether the imap folder allows writing
 (defsubst vm-folder-imap-read-write ()
   (aref vm-folder-access-data 5))
+;; flag indicating whether the imap folder allows deleting
 (defsubst vm-folder-imap-can-delete ()
   (aref vm-folder-access-data 6))
+;; flag indicating whether the imap server has body-peek functionality
 (defsubst vm-folder-imap-body-peek ()
   (aref vm-folder-access-data 7))
+;; list of permanent flags storable on the imap server
 (defsubst vm-folder-imap-permanent-flags ()
   (aref vm-folder-access-data 8))
+;; obarray of uid's with message numbers as their values
 (defsubst vm-folder-imap-uid-obarray ()
   (aref vm-folder-access-data 9))	; obarray(uid, msg-num)
+;; obarray of uid's with flags lists as their values
 (defsubst vm-folder-imap-flags-obarray ()
   (aref vm-folder-access-data 10))	; obarray(uid, (uid . flags list))
 					; cons-pair shared with imap-uid-list
+
 (defsubst vm-set-folder-imap-maildrop-spec (val)
   (aset vm-folder-access-data 0 val))
 (defsubst vm-set-folder-imap-process (val)
@@ -231,9 +227,6 @@
 	      (throw 'end-of-session
 		     (funcall handler 'vm-imap-move-mail source destination)))
 	  (setq process (vm-imap-make-session source))
-	  ;;-------------------------------
-	  (vm-imap-session-type:set 'valid)
-	  ;;-------------------------------
 	  (or process (throw 'end-of-session nil))
 	  (setq process-buffer (process-buffer process))
 	  (save-excursion
@@ -372,9 +365,6 @@
 		    (throw 'end-of-session
 			   (funcall handler 'vm-imap-check-mail source)))
 		(setq process (vm-imap-make-session source))
-		;;-------------------------------
-		(vm-imap-session-type:set 'valid)
-		;;-------------------------------
 		(or process (throw 'end-of-session nil))
 		;;----------------------------
 		(vm-buffer-type:enter 'process)
@@ -488,9 +478,6 @@ on all the relevant IMAP servers and then immediately expunges."
 				(message "Opening IMAP session to %s..."
 					 imapdrop)
 				(setq process (vm-imap-make-session source))
-				;;-------------------------------
-				(vm-imap-session-type:set 'valid)
-				;;-------------------------------
 				(if (null process)
 				    (signal 'vm-imap-protocol-error nil))
 				;;--------------------------
@@ -612,11 +599,12 @@ on all the relevant IMAP servers and then immediately expunges."
 ;; --------------------------------------------------------------------
 ;; Server-side
 ;;
+;; vm-re-establish-folder-imap-session: (&optional interactive) -> void
 ;; vm-establish-new-folder-imap-session: (&optional interactive) -> void
 ;;
 ;; -- Functions to handle the interaction with the IMAP server
 ;;
-;; vm-imap-make-session: string -> process
+;; vm-imap-make-session: folder -> process
 ;; vm-imap-end-session: (process &optional buffer) -> void
 ;; vm-imap-check-connection: process -> void
 ;;
@@ -912,7 +900,9 @@ on all the relevant IMAP servers and then immediately expunges."
 	;; this process, so don't logout and schedule the killing
 	;; the process again if it's already been done.
 	(if vm-imap-session-done
-	    nil
+	    ;;-------------------------------------
+	    (vm-imap-session-type:assert 'inactive)
+	    ;;-------------------------------------
 	  (vm-imap-send-command process "LOGOUT")
 	  (setq vm-imap-session-done t)
 	  ;; we don't care about the response.
@@ -940,7 +930,6 @@ on all the relevant IMAP servers and then immediately expunges."
 	    (run-at-time 2 nil 'delete-process process)))
 	;;----------------------------------
 	(vm-buffer-type:exit)
-	(vm-imap-session-type:set 'inactive)
 	;;----------------------------------
 	)))
 
@@ -1110,7 +1099,7 @@ on all the relevant IMAP servers and then immediately expunges."
       (message "Warning: Only basic message flags available for the mailbox")
       )
     ;;-------------------------------
-    (vm-imap-session-type:set 'valid)
+    (vm-imap-session-type:set 'active)
     ;;-------------------------------
     (list msg-count uid-validity read-write can-delete permanent-flags)))
 
@@ -1150,7 +1139,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	tok msg-num uid response p
 	(need-ok t))
     ;;----------------------------------
-    (vm-imap-session-type:assert 'valid)
+    (vm-imap-session-type:assert-active)
     ;;----------------------------------
     (vm-imap-send-command process (format "FETCH %s:%s (UID)" first last))
     (while need-ok
@@ -1225,7 +1214,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	tok msg-num uid flag flags response p
 	(need-ok t))
     ;;----------------------------------
-    (vm-imap-session-type:assert 'valid)
+    (vm-imap-session-type:assert-active)
     ;;----------------------------------
     (vm-imap-send-command 
      process (format "FETCH %s:%s (UID FLAGS)" first last))
@@ -1807,8 +1796,16 @@ on all the relevant IMAP servers and then immediately expunges."
   (goto-char (point-max))
   (insert "\""))
 
-;; Kill and restart the IMAP session for the current folder.  (Not
-;; entirely clear why it is necessary to do so.)
+(defun vm-re-establish-folder-imap-session (&optional interactive)
+  (let ((process (vm-folder-imap-process)))
+    (if (and (processp process)
+	     (memq (process-status process) '(open run)))
+	process
+      (vm-establish-new-folder-imap-session interactive))))
+
+;; Kill and restart the IMAP session for the current folder.  This is
+;; necessary because we might unexpected EXPUNGE responses which we
+;; don't know how to deal with.
 
 (defun vm-establish-new-folder-imap-session (&optional interactive)
   (let ((process (vm-folder-imap-process))
@@ -1818,9 +1815,6 @@ on all the relevant IMAP servers and then immediately expunges."
     (if (processp process)
 	(vm-imap-end-session process))
     (setq process (vm-imap-make-session (vm-folder-imap-maildrop-spec)))
-    ;;-------------------------------
-    (vm-imap-session-type:set 'valid)
-    ;;-------------------------------
     (vm-set-folder-imap-process process)
     (setq mailbox (vm-imap-parse-spec-to-list (vm-folder-imap-maildrop-spec))
 	  mailbox (nth 3 mailbox))
@@ -1836,9 +1830,10 @@ on all the relevant IMAP servers and then immediately expunges."
 	    can-delete (nth 3 select)
 	    permanent-flags (nth 4 select)
 	    body-peek (vm-imap-capability 'IMAP4REV1))
-      ;;-------------------
+      ;;---------------------------------
+      (vm-imap-session-type:set 'active)
       (vm-buffer-type:exit)
-      ;;-------------------
+      ;;---------------------------------
       )
     (vm-set-folder-imap-uid-validity uid-validity) ; unique per session
     (vm-set-folder-imap-mailbox-count mailbox-count)
@@ -1846,6 +1841,7 @@ on all the relevant IMAP servers and then immediately expunges."
     (vm-set-folder-imap-can-delete can-delete)
     (vm-set-folder-imap-body-peek body-peek)
     (vm-set-folder-imap-permanent-flags permanent-flags)
+    (vm-imap-dump-uid-and-flags-data)
     process ))
 
 (defun vm-imap-retrieve-uid-and-flags-data ()
@@ -1853,12 +1849,12 @@ on all the relevant IMAP servers and then immediately expunges."
   (vm-buffer-type:assert 'folder)
   ;;------------------------------
   (if (vm-folder-imap-uid-list)
-      nil				; don't retrieve twice
+      nil ; don't retrieve twice
     (let ((there (make-vector 67 0))
 	  (flags (make-vector 67 0))
 	  (process (vm-folder-imap-process))
 	  (mailbox-count (vm-folder-imap-mailbox-count))
-	  list tuple uid)
+	  list tuples tuple uid)
       (save-excursion
 	;;----------------------------
 	(vm-buffer-type:enter 'process)
@@ -1867,14 +1863,16 @@ on all the relevant IMAP servers and then immediately expunges."
 	(if (eq mailbox-count 0)
 	    (setq list nil)
 	  (setq list (vm-imap-get-message-data-list process 1 mailbox-count)))
-	(while list
-	  (setq tuple (car list))
+	(setq tuples list)
+	(while tuples
+	  (setq tuple (car tuples))
 	  (set (intern (cadr tuple) there) (car tuple))
 	  (set (intern (cadr tuple) flags) (cdr tuple))
-	  (setq list (cdr list)))
-	;;-------------------
+	  (setq tuples (cdr tuples)))
+	;;-------------------------------
+	(vm-imap-session-type:set 'valid)
 	(vm-buffer-type:exit)
-	;;-------------------
+	;;-------------------------------
 	)
       (vm-set-folder-imap-uid-list list)
       (vm-set-folder-imap-uid-obarray there)
@@ -1887,7 +1885,13 @@ on all the relevant IMAP servers and then immediately expunges."
     ;;------------------------------
     (vm-set-folder-imap-uid-list nil)
     (vm-set-folder-imap-uid-obarray nil)
-    (vm-set-folder-imap-flags-obarray nil)))
+    (vm-set-folder-imap-flags-obarray nil)
+    (save-excursion
+      (set-buffer (process-buffer (vm-folder-imap-process)))
+      ;;---------------------------------
+      (vm-imap-session-type:set 'active))
+      ;;---------------------------------
+    ))
 
 ;; This function is now obsolete.  It is faster to get flags of
 ;; several messages at once, using vm-imap-get-message-data-list
@@ -1899,13 +1903,11 @@ on all the relevant IMAP servers and then immediately expunges."
 		    (vm-folder-imap-uid-validity)))
 	(vm-imap-protocol-error "message has invalid uid"))
     (save-excursion
-      ;;-----------------------------
-      (vm-buffer-type:enter 'process)
-      ;;-----------------------------
-      (set-buffer (process-buffer process))
       ;;----------------------------------
+      (vm-buffer-type:enter 'process)
       (vm-imap-session-type:assert-active)
       ;;----------------------------------
+      (set-buffer (process-buffer process))
       (vm-imap-send-command process
 			    (format "UID FETCH %s (FLAGS)"
 				    (vm-imap-uid-of m)))
@@ -2020,10 +2022,10 @@ on all the relevant IMAP servers and then immediately expunges."
   ;; are not listed in PERMANENTFLAGS.  Removed unnecessary checks to
   ;; this effect.
 
-  ;;----------------------------------
-  (vm-imap-session-type:assert 'valid)
+  ;;-----------------------------------------
   (vm-buffer-type:assert 'folder)
-  ;;----------------------------------
+  (vm-imap-folder-session-type:assert 'valid)
+  ;;-----------------------------------------
   (let* ((uid (vm-imap-uid-of m))
 	 (message-num 
 	  (symbol-value (intern uid (vm-folder-imap-uid-obarray))))
@@ -2067,11 +2069,9 @@ on all the relevant IMAP servers and then immediately expunges."
     (setq flags- (append (mapcar 'intern (cdr server-flags)) flags-))
 
     (save-excursion
-      ;;-----------------------------
-      (vm-buffer-type:enter 'process)
-      ;;-----------------------------
       (set-buffer (process-buffer process))
       ;;----------------------------------
+      (vm-buffer-type:enter 'process)
       (vm-imap-session-type:assert 'valid)
       ;;----------------------------------
       (when flags+
@@ -2161,9 +2161,6 @@ on all the relevant IMAP servers and then immediately expunges."
 	(cond ((vm-imap-response-matches response '+)
 	       (setq need-plus nil))))
       (vm-imap-send-command process string nil t)
-      ;;--------------------------------
-      (vm-imap-session-type:set 'active)
-      ;;--------------------------------
       (setq need-ok t)
       (while need-ok
 	(setq response (vm-imap-read-response-and-verify process "APPEND data"))
@@ -2202,11 +2199,12 @@ operation of the server to minimize I/O."
 ;;       (condition-case nil
 ;; 	  (vm-imap-create-mailbox process mailbox)
 ;; 	(vm-imap-protocol-error nil))
-      ;;----------------------------------
-      (vm-imap-session-type:assert-active)
-      (vm-buffer-type:set 'process)
-      ;;----------------------------------
+
       (set-buffer (process-buffer process))
+      ;;-----------------------------------------
+      (vm-buffer-type:set 'process)
+      (vm-imap-session-type:assert-active)
+      ;;-----------------------------------------
       (vm-imap-send-command 
        process
        (format "UID COPY %s %s"
@@ -2346,9 +2344,6 @@ operation of the server to minimize I/O."
 	(vm-assimilate-new-messages))	; Funny that this should be
 					; necessary.  Indicates bugs?
     (message "Logging into the IMAP server...")
-    ;;-------------------------------
-    (vm-imap-session-type:set 'valid)	; not yet valid, see below
-    ;;-------------------------------
     (let* ((sync-data (vm-imap-get-synchronization-data))
 	   (retrieve-list (nth 0 sync-data))
 	   (expunge-list (nth 1 sync-data))
@@ -2475,36 +2470,37 @@ operation of the server to minimize I/O."
       (when (and do-remote-expunges
 		 vm-imap-messages-to-expunge)
 	;; New code.  Kyle's version was piggybacking on IMAP spool
-					; file code and wasn't ideal.
+	;; file code and wasn't ideal.
 	(save-excursion
-	  ;;-----------------------
+	  ;;-----------------------------
 	  (vm-buffer-type:duplicate)
-	  ;;-----------------------
+	  ;;-----------------------------
 	  (message "Expunging messages on the server... ")
 	  (condition-case error-data
 	      (let ((mailbox-count (vm-folder-imap-mailbox-count))
 		    (expunge-count (length vm-imap-messages-to-expunge))
-		    uid-alist uid-list m-list message e-list count)
-		;; uid-list to have UID's of all UID-valid messages in
+		    (uid-obarray (vm-folder-imap-uid-obarray))
+		    uids-to-delete m-list message e-list count)
+		;; uids-to-delete to have UID's of all UID-valid messages in
 		;; vm-imap-messages-to-expunge 
 		(while vm-imap-messages-to-expunge
 		  (setq message (car vm-imap-messages-to-expunge))
 		  (if (equal (cdr message) uid-validity)
-		      (setq uid-list (cons (car message) uid-list)))
+		      (setq uids-to-delete (cons (car message) uids-to-delete)))
 		  (setq vm-imap-messages-to-expunge 
 			(cdr vm-imap-messages-to-expunge)))
-		(if (not (equal expunge-count (length uid-list)))
+		(if (not (equal expunge-count (length uids-to-delete)))
 		    (progn
 		      (message "%s stale deleted messages are ignored"
-			       (- expunge-count (length uid-list)))
+			       (- expunge-count (length uids-to-delete)))
 		      (sit-for 2)))
 
-		;;--------------------------
+		;;---------------------------
 		(vm-buffer-type:set 'process)
-		;;--------------------------
+		;;---------------------------
 		(set-buffer (process-buffer process))
-		(setq uid-alist (vm-imap-get-uid-list 
-				 process 1 mailbox-count))
+		;; (setq uid-alist (vm-imap-get-uid-list 
+		;;		 process 1 mailbox-count))
 		;; m-list to have the message sequence numbers of
 		;; messages to be expunged, in descending order.
 		;; the message sequence numbers don't change in the
@@ -2513,11 +2509,12 @@ operation of the server to minimize I/O."
 		      (delete nil
 			      (mapcar 
 			       (lambda (uid)
-				 (let ((m (car (rassoc uid uid-alist))))
+				 (let ((m (symbol-value
+					   (intern uid uid-obarray))))
 				   (if m
 				       (vm-imap-delete-message process m))
 				   m))
-			       uid-list)))
+			       uids-to-delete)))
 		(setq m-list (cons nil (sort m-list '>)))
 					; dummy header added
 		(setq count 0)
@@ -2591,9 +2588,9 @@ operation of the server to minimize I/O."
 	 (mp vm-message-list))
       ;;  (perm-flags (vm-folder-imap-permanent-flags))
       (message "Updating attributes on the IMAP server... ")
-      ;;----------------------------------
-      (vm-imap-session-type:assert 'valid)
-      ;;----------------------------------
+      ;;-----------------------------------------
+      (vm-imap-folder-session-type:assert 'valid)
+      ;;-----------------------------------------
       (while mp
 	(if (or all-flags (vm-attribute-modflag-of (car mp)))
 	    (condition-case nil
@@ -2619,9 +2616,6 @@ VM session.  This is useful for saving offline work."
       (message "This is not an IMAP folder")
     (if (null (vm-establish-new-folder-imap-session t))
 	nil
-      ;;-------------------------------
-      (vm-imap-session-type:set 'valid)
-      ;;-------------------------------
 
       (vm-imap-save-attributes all-flags)
       ;; (vm-imap-synchronize-folder t nil nil nil 
@@ -2676,14 +2670,21 @@ VM session.  This is useful for saving offline work."
 
 ;;;###autoload
 (defun vm-imap-find-spec-for-buffer (buffer)
-  (let ((list (mapcar 'car vm-imap-account-alist))
-	(done nil))
-    (while (and (not done) list)
-      (if (eq buffer (vm-get-file-buffer (vm-imap-make-filename-for-spec
-					  (car list))))
-	  (setq done t)
-	(setq list (cdr list))))
-    (and list (car list))))
+  (save-excursion
+    (set-buffer buffer)
+    (vm-folder-imap-maildrop-spec)))
+;;   (let ((list (mapcar 'car vm-imap-account-alist))
+;; 	(done nil)
+;; 	(spec-items nil))
+;;     (while (and (not done) list)
+;;       (setq spec-items (vm-imap-parse-spec-to-list (car list)))
+;;       (setcar (nthcdr 3 spec-items) folder)
+;;       (if (eq buffer (vm-get-file-buffer 
+;; 		      (vm-imap-make-filename-for-spec
+;; 		       (mapconcat 'identity spec-items ":"))))
+;; 	  (setq done t)
+;; 	(setq list (cdr list))))
+;;     (and list (car list)))
 
 ;;;###autoload
 (defun vm-imap-make-filename-for-spec (spec)
@@ -2745,9 +2746,6 @@ specification SPEC."
       (setq spec (car (rassoc (list account) vm-imap-account-alist)))
       (when (and (null mailbox-list) spec)
 	(setq process (vm-imap-make-session spec))
-	;;-------------------------------
-	(vm-imap-session-type:set 'valid)
-	;;-------------------------------
 	(when process
 	  (setq mailbox-list (vm-imap-mailbox-list process selectable-only))
 	  (vm-imap-end-session process)
@@ -2820,16 +2818,16 @@ IMAP mailbox spec."
 	sep p r response need-ok)
     (vm-imap-check-connection process)
     (save-excursion
-      ;;----------------------------
-      (vm-buffer-type:enter 'process)
-      ;;----------------------------
       (set-buffer (process-buffer process))
       ;;----------------------------------
+      (vm-buffer-type:enter 'process)
       (vm-imap-session-type:assert-active)
       ;;----------------------------------
       (vm-imap-send-command process (format "LIST %s \"\""
 					    (vm-imap-quote-string ref)))
+      ;;--------------------------------
       (vm-imap-session-type:set 'active)
+      ;;--------------------------------
       (vm-imap-dump-uid-and-flags-data)
       (setq need-ok t)
       (while need-ok
@@ -2855,12 +2853,9 @@ selectable mailboxes to be listed.  Returns a list of mailbox names."
 	p r response need-ok)
     (vm-imap-check-connection process)
     (save-excursion
-      ;;-----------------------------
-      (vm-buffer-type:enter 'process)
-      ;;------------------------------
       (set-buffer (process-buffer process))
-
       ;;----------------------------------
+      (vm-buffer-type:enter 'process)
       (vm-imap-session-type:assert-active)
       ;;----------------------------------
       (vm-imap-send-command process "LIST \"\" \"*\"")
@@ -2895,12 +2890,9 @@ well. Returns a boolean value."
 	p r response need-ok)
     (vm-imap-check-connection process)
     (save-excursion
-      ;;-----------------------------
-      (vm-buffer-type:enter 'process)
-      ;;-----------------------------
       (set-buffer (process-buffer process))
       ;;----------------------------------
-
+      (vm-buffer-type:enter 'process)
       (vm-imap-session-type:assert-active)
       ;;----------------------------------
       (vm-imap-send-command process (concat "LIST \"\" \"" mailbox "\""))
@@ -3001,9 +2993,6 @@ documentation for `vm-spool-files'."
 	process mailbox)
     (save-excursion
       (setq process (vm-imap-make-session folder))
-      ;;-------------------------------
-      (vm-imap-session-type:set 'valid)
-      ;;-------------------------------
       (if (null process)
 	  (error "Couldn't open IMAP session for %s"
 		 (vm-safe-imapdrop-string folder)))
@@ -3040,9 +3029,6 @@ documentation for `vm-spool-files'."
   (let ((vm-imap-ok-to-ask t)
 	process mailbox)
     (setq process (vm-imap-make-session folder))
-    ;;-------------------------------
-    (vm-imap-session-type:set 'valid)
-    ;;-------------------------------
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
 	       (vm-safe-imapdrop-string folder)))
@@ -3085,9 +3071,6 @@ documentation for `vm-spool-files'."
   (let ((vm-imap-ok-to-ask t)
 	process mailbox-source mailbox-dest)
     (setq process (vm-imap-make-session source))
-    ;;-------------------------------
-    (vm-imap-session-type:set 'valid)
-    ;;-------------------------------
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
 	       (vm-safe-imapdrop-string source)))

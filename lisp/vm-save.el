@@ -902,14 +902,14 @@ The saved messages are flagged as `filed'."
 		  (and (vm-imap-folder-p)
 		       (vm-imap-parse-spec-to-list 
 			(vm-folder-imap-maildrop-spec))))
-	    (setq server-to-server-p
+	    (setq server-to-server-p	; copy on the same imap server
 		  (and (equal (nth 1 source-spec-list) 
 			      (nth 1 target-spec-list))
 		       (equal (nth 5 source-spec-list) 
 			      (nth 5 target-spec-list))))
 	    (if server-to-server-p
-		(progn
-		  (setq process (vm-establish-new-folder-imap-session))
+		(progn			; economise on upstream data traffic
+		  (setq process (vm-re-establish-folder-imap-session))
 		  (vm-imap-copy-message process m mailbox))
 	      (progn
 		(setq process (vm-imap-make-session target-folder))

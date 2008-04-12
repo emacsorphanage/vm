@@ -1037,6 +1037,28 @@ Otherwise treat `\\' in NEWTEXT as special:
               str newstr))
       str)))
 
+;; For verification of the correct buffer protocol
+;; Possible values are 'folder, 'presentation, 'summary, 'process
+
+;; (defvar vm-buffer-types nil)    ; moved to vm-vars.el
+
+(defun vm-buffer-type:enter (type)
+  (setq vm-buffer-types (cons type vm-buffer-types)))
+
+(defun vm-buffer-type:exit ()
+  (setq vm-buffer-types (cdr vm-buffer-types)))
+
+(defun vm-buffer-type:duplicate ()
+  (setq vm-buffer-types (cons (car vm-buffer-types) vm-buffer-types)))
+
+(defun vm-buffer-type:set (type)
+  (if vm-buffer-types
+      (rplaca vm-buffer-types type)
+    (setq vm-buffer-types (cons type vm-buffer-types))))
+
+(defsubst vm-buffer-type:assert (type)
+  (vm-assert (eq (car vm-buffer-types) type)))
+
 (provide 'vm-misc)
 
 ;;; vm-misc.el ends here
