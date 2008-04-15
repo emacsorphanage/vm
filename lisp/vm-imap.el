@@ -599,8 +599,8 @@ on all the relevant IMAP servers and then immediately expunges."
 ;; --------------------------------------------------------------------
 ;; Server-side
 ;;
-;; vm-re-establish-folder-imap-session: (&optional interactive) -> void
 ;; vm-establish-new-folder-imap-session: (&optional interactive) -> void
+;; vm-re-establish-folder-imap-session: (&optional interactive) -> void
 ;;
 ;; -- Functions to handle the interaction with the IMAP server
 ;;
@@ -639,7 +639,7 @@ on all the relevant IMAP servers and then immediately expunges."
 ;;					(int . uid . string list) list
 ;; vm-imap-get-message-data: (process & vm-message) -> 
 ;;					(int . uid . string list)
-;; vm-imap-save-message-flags: (process & int & uid-validity) -> void
+;; vm-imap-save-message-flags: (process & int &optional bool) -> void
 ;; vm-imap-get-message-size: (process & int) -> int
 ;; vm-imap-save-message: (process & int & string?) -> void
 ;; vm-imap-delete-message: (process & int) -> void
@@ -651,6 +651,21 @@ on all the relevant IMAP servers and then immediately expunges."
 ;; vm-imap-get-message-flags: 
 ;;	(process & vm-message &optional norecord:bool) -> 
 ;; --------------------------------------------------------------------
+
+
+;; The IMAP sessions work as follows:
+
+;; Generally, sessions are created for get-new-mail, save-folder and
+;; vm-imap-synchronize operations.  All these operations read the
+;; uid-and-flags-data and cache it internally.  At this stage, the
+;; IMAP session is said to be "valid", i.e., message numbers stored in
+;; the cache are valid.  As long as FETCH and STORE operations are
+;; performed, the session remains valid.
+
+;; When other IMAP operations are performed, the server can send
+;; EXPUNGE responses and invalidate the cached message sequence
+;; numbers.  In this state, the IMAP session is "active", but not
+;; "valid".  Only UID-based commands can be issued in this state.
 
 ;; Create a process for a new IMAP session to the account SOURCE and
 ;; return it.
@@ -2011,96 +2026,105 @@ on all the relevant IMAP servers and then immediately expunges."
       (vm-set-stuff-flag-of m t))
     ))
 
-(defun vm-imap-save-message-flags (process m uid-validity)
-  ;; Stores the message flags of a message on the IMAP server.  Any
-  ;; flags already on the server are preserved, except for \\Seen
-  ;; \\Deleted and \\Flagged which can be reversed if necessary.
-  ;; Or, gives an error if the message has an invalid uid.
+(defun vm-imap-save-message-flags (process m &optional by-uid)
+  ;; Saves the message flags of a message on the IMAP server, adding
+  ;; or deleting flags on the servers as necessary.  Irreversible
+  ;; flags, however, are not deleted.
+  ;; Optional argument BY-UID says that the save messages should be
+  ;; issued by UID, not message sequence number.
 
   ;; Comment by USR
   ;; According to RFC 2060, it is not an error to store flags that
   ;; are not listed in PERMANENTFLAGS.  Removed unnecessary checks to
   ;; this effect.
 
-  ;;-----------------------------------------
+  ;;-----------------------------------------------------
   (vm-buffer-type:assert 'folder)
-  (vm-imap-folder-session-type:assert 'valid)
-  ;;-----------------------------------------
+  (or by-uid (vm-imap-folder-session-type:assert 'valid))
+  ;;-----------------------------------------------------
   (let* ((uid (vm-imap-uid-of m))
-	 (message-num 
-	  (symbol-value (intern uid (vm-folder-imap-uid-obarray))))
-	 (server-flags 
-	  (symbol-value (intern uid (vm-folder-imap-flags-obarray))))
+	 (uid-key1 (intern uid (vm-folder-imap-uid-obarray)))
+	 (uid-key2 (intern-soft uid (vm-folder-imap-flags-obarray)))
+	 (message-num (and (boundp uid-key1) (symbol-value uid-key1)))
+	 (server-flags (and (boundp uid-key2) (symbol-value uid-key2)))
 					; leave uid as the dummy header
 	 (labels (vm-labels-of m))
 	 need-ok flags+ flags- response)
-    ;; Reversible flags are treated the same as labels
-    (if (not (vm-unread-flag m))
-	(setq labels (cons "\\seen" labels)))
-    (if (vm-deleted-flag m)
-	(setq labels (cons "\\deleted" labels)))
-    ;; Irreversible flags
-    (if (and (vm-replied-flag m) 
-	     (not (member "\\answered" server-flags)))
-	(setq flags+ (cons (intern "\\Answered") flags+)))
-    (if (and (vm-filed-flag m) (not (member "filed" server-flags)))
-	(setq flags+ (cons 'filed flags+)))
-    (if (and (vm-written-flag m) 
-	     (not (member "written" server-flags)))
-	(setq flags+ (cons 'written flags+)))
-    (if (and (vm-forwarded-flag m)
-	     (not (member "forwarded" server-flags)))
-	(setq flags+ (cons 'forwarded flags+)))
-    (if (and (vm-redistributed-flag m)
-	     (not (member "redistributed" server-flags)))
-	(setq flags+ (cons 'redistributed flags+)))
-    (mapcar (lambda (flag) (delete flag server-flags))
-	    '("\\answered" "filed" "written" "forwarded" "redistributed"))
-    ;; Make a copy of labels for side effects
-    (setq labels (cons nil (copy-sequence labels)))
-    ;; Ignore labels that are both in vm and the server
-    (delete-common-elements labels server-flags 'string<)
-    ;; Ignore reversible flags that we have locally reversed -- Why?
-    ;; (mapcar (lambda (flag) (delete flag server-flags))
-    ;;  '("\\seen" "\\deleted" "\\flagged"))
-    ;; Flags to be added to the server
-    (setq flags+ (append (mapcar 'intern (cdr labels)) flags+))
-    ;; Flags to be deleted from the server
-    (setq flags- (append (mapcar 'intern (cdr server-flags)) flags-))
+    (when message-num
+      ;; Reversible flags are treated the same as labels
+      (if (not (vm-unread-flag m))
+	  (setq labels (cons "\\seen" labels)))
+      (if (vm-deleted-flag m)
+	  (setq labels (cons "\\deleted" labels)))
+      ;; Irreversible flags
+      (if (and (vm-replied-flag m) 
+	       (not (member "\\answered" server-flags)))
+	  (setq flags+ (cons (intern "\\Answered") flags+)))
+      (if (and (vm-filed-flag m) (not (member "filed" server-flags)))
+	  (setq flags+ (cons 'filed flags+)))
+      (if (and (vm-written-flag m) 
+	       (not (member "written" server-flags)))
+	  (setq flags+ (cons 'written flags+)))
+      (if (and (vm-forwarded-flag m)
+	       (not (member "forwarded" server-flags)))
+	  (setq flags+ (cons 'forwarded flags+)))
+      (if (and (vm-redistributed-flag m)
+	       (not (member "redistributed" server-flags)))
+	  (setq flags+ (cons 'redistributed flags+)))
+      (mapcar (lambda (flag) (delete flag server-flags))
+	      '("\\answered" "filed" "written" "forwarded" "redistributed"))
+      ;; Make a copy of labels for side effects
+      (setq labels (cons nil (copy-sequence labels)))
+      ;; Ignore labels that are both in vm and the server
+      (delete-common-elements labels server-flags 'string<)
+      ;; Ignore reversible flags that we have locally reversed -- Why?
+      ;; (mapcar (lambda (flag) (delete flag server-flags))
+      ;;  '("\\seen" "\\deleted" "\\flagged"))
+      ;; Flags to be added to the server
+      (setq flags+ (append (mapcar 'intern (cdr labels)) flags+))
+      ;; Flags to be deleted from the server
+      (setq flags- (append (mapcar 'intern (cdr server-flags)) flags-))
 
-    (save-excursion
-      (set-buffer (process-buffer process))
-      ;;----------------------------------
-      (vm-buffer-type:enter 'process)
-      (vm-imap-session-type:assert 'valid)
-      ;;----------------------------------
-      (when flags+
-	(vm-imap-send-command 
-	 process
-	 (format "STORE %s +FLAGS.SILENT %s" message-num flags+))
-	(setq need-ok t)
-	(while need-ok
-	  (setq response 
-		(vm-imap-read-response-and-verify process "UID FETCH (FLAGS)"))
-	  (cond ((vm-imap-response-matches response 'VM 'OK)
-		 (setq need-ok nil)))))
+      (save-excursion
+	(set-buffer (process-buffer process))
+	;;----------------------------------
+	(vm-buffer-type:enter 'process)
+	;;----------------------------------
+	(when flags+
+	  (vm-imap-send-command 
+	   process
+	   (format "%sSTORE %s +FLAGS.SILENT %s" 
+		   (if by-uid "UID " "")
+		   (if by-uid uid message-num)
+		   flags+))
+	  (setq need-ok t)
+	  (while need-ok
+	    (setq response 
+		  (vm-imap-read-response-and-verify 
+		   process "STORE +FLAGS.SILENT"))
+	    (cond ((vm-imap-response-matches response 'VM 'OK)
+		   (setq need-ok nil)))))
 
-      (when flags-
-	(vm-imap-send-command 
-	 process
-	 (format "STORE %s -FLAGS.SILENT %s" message-num flags-))
-	(setq need-ok t)
-	(while need-ok
-	  (setq response 
-		(vm-imap-read-response-and-verify process "UID FETCH (FLAGS)"))
-	  (cond ((vm-imap-response-matches response 'VM 'OK)
-		 (setq need-ok nil)))))
+	(when flags-
+	  (vm-imap-send-command 
+	   process
+	   (format "%sSTORE %s -FLAGS.SILENT %s"
+		   (if by-uid "UID " "")
+		   (if by-uid uid message-num)
+		   flags-))
+	  (setq need-ok t)
+	  (while need-ok
+	    (setq response 
+		  (vm-imap-read-response-and-verify 
+		   process "STORE -FLAGS.SILENT"))
+	    (cond ((vm-imap-response-matches response 'VM 'OK)
+		   (setq need-ok nil)))))
 
-      (vm-set-attribute-modflag-of m nil)
-      ;;-------------------
-      (vm-buffer-type:exit)
-      ;;-------------------
-      )))
+	(vm-set-attribute-modflag-of m nil)
+	;;-------------------
+	(vm-buffer-type:exit)
+	;;-------------------
+	))))
 
 (defvar vm-imap-subst-char-in-string-buffer
   (get-buffer-create " *subst-char-in-string*"))
@@ -2194,7 +2218,10 @@ operation of the server to minimize I/O."
       ;;------------------------
       (if (vm-attribute-modflag-of m)
 	  (condition-case nil
-	      (vm-imap-save-message-flags process m uid-validity)
+	      (progn
+		(if (null (vm-folder-imap-flags-obarray))
+		    (vm-imap-retrieve-uid-and-flags-data))
+		(vm-imap-save-message-flags process m 'by-uid))
 	    (vm-imap-protocol-error nil)))
 ;;       (condition-case nil
 ;; 	  (vm-imap-create-mailbox process mailbox)
@@ -2367,7 +2394,7 @@ operation of the server to minimize I/O."
 	    (if (or (eq save-attributes 'all)
 		    (vm-attribute-modflag-of (car mp)))
 		(condition-case nil
-		    (vm-imap-save-message-flags process (car mp) uid-validity)
+		    (vm-imap-save-message-flags process (car mp))
 		  (vm-imap-protocol-error nil)))
 	    (setq mp (cdr mp)))
 	  (message "Updating attributes on the IMAP server... done")))
@@ -2509,12 +2536,12 @@ operation of the server to minimize I/O."
 		      (delete nil
 			      (mapcar 
 			       (lambda (uid)
-				 (let ((key (intern-soft uid uid-obarray)))
-				   (if key
-				       (vm-imap-delete-message 
-					process 
-					(symbol-value key)))
-				   (symbol-value key)))
+				 (let ((key (intern uid uid-obarray)))
+				   (and (boundp key)
+					(progn
+					  (vm-imap-delete-message 
+					   process (symbol-value key))
+					  (symbol-value key)))))
 			       uids-to-delete)))
 		(setq m-list (cons nil (sort m-list '>)))
 					; dummy header added
@@ -2595,7 +2622,7 @@ operation of the server to minimize I/O."
       (while mp
 	(if (or all-flags (vm-attribute-modflag-of (car mp)))
 	    (condition-case nil
-		(vm-imap-save-message-flags process (car mp) uid-validity)
+		(vm-imap-save-message-flags process (car mp))
 	      (vm-imap-protocol-error nil)))
 	(setq mp (cdr mp)))
       (message "Updating attributes on the IMAP server... done")))
@@ -2618,6 +2645,7 @@ VM session.  This is useful for saving offline work."
     (if (null (vm-establish-new-folder-imap-session t))
 	nil
 
+      (vm-imap-retrieve-uid-and-flags-data)
       (vm-imap-save-attributes all-flags)
       ;; (vm-imap-synchronize-folder t nil nil nil 
       ;; 			(if all-flags 'all t) nil)

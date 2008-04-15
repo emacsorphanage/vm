@@ -890,11 +890,13 @@ The saved messages are flagged as `filed'."
 	(target-spec-list (vm-imap-parse-spec-to-list target-folder))
 	(mlist (vm-select-marked-or-prefixed-messages count))
 	(count 0)
-	server-to-server-p mailbox process m
+	server-to-server-p mailbox m
+	process
 	)
     (setq mailbox (nth 3 target-spec-list))
     (unwind-protect
 	(save-excursion
+	  (message "Saving messages...")
 	  (while mlist
 	    (setq m (vm-real-message-of (car mlist)))
 	    (set-buffer (vm-buffer-of m))
@@ -907,19 +909,19 @@ The saved messages are flagged as `filed'."
 			      (nth 1 target-spec-list))
 		       (equal (nth 5 source-spec-list) 
 			      (nth 5 target-spec-list))))
-	    (if server-to-server-p
-		(progn			; economise on upstream data traffic
-		  (setq process (vm-re-establish-folder-imap-session))
+	    (if server-to-server-p 	; economise on upstream data traffic
+		(let ((process (vm-re-establish-folder-imap-session)))
 		  (vm-imap-copy-message process m mailbox))
-	      (progn
-		(setq process (vm-imap-make-session target-folder))
-		(vm-imap-save-message process m mailbox)))
-	    (when (null (vm-filed-flag m))
+	      (unless process
+		(setq process (vm-imap-make-session target-folder)))
+	      (vm-imap-save-message process m mailbox))
+	    (unless (vm-filed-flag m)
 	      (vm-set-filed-flag m t))
 	    (vm-increment count)
+	    (message "Saving messages... %s" count)
 	    (vm-modify-folder-totals target-folder 'saved 1 m)
 	    (setq mlist (cdr mlist))))
-      (and process (vm-imap-end-session process)))
+      (when process (vm-imap-end-session process)))
     (vm-update-summary-and-mode-line)
     (setq vm-last-save-imap-folder target-folder)
     (message "%d message%s saved to %s"
