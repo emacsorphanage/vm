@@ -1411,7 +1411,7 @@ shorter pieces, rebuilt it from them."
 
 (defvar buffer-file-coding-system)
 
-;; TODO: Possible further work; integrate with the FSF's unify-8859-on-encoding-mode stuff.
+;; TODO: integrate with the FSF's unify-8859-on-encoding-mode stuff.
 (defun vm-determine-proper-charset (beg end)
   "Work out what MIME character set to use for sending a message.
 
@@ -1424,7 +1424,7 @@ Under MULE, `vm-coding-system-priorities' is searched, in order, for a coding
 system that will encode all the characters in the message. If none is found,
 consults the variable `vm-mime-8bit-composition-charset' or uses `iso-2022-jp',
 which will preserve information for all the character sets of which Emacs is
-aware--at the expense of being incompatible with the recipient's software, if
+aware - at the expense of being incompatible with the recipient's software, if
 that recipient is outside of East Asia."
   (save-excursion
     (save-restriction
