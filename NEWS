@@ -23,6 +23,10 @@ VM 8.0.10
 
     * Decode (QP-)encoded clear text before decrypting it.
 
+    * Use nil as default for `vm-mime-8bit-composition-charset' and thus
+      enable proper detection of right charset.  (Thanks to Naoki Saito for
+      reporting and debugging)
+
 VM 8.0.9
 
   BUGFIXES:

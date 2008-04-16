@@ -1474,7 +1474,7 @@ character set that can display all the buffer's characters."
   :group 'vm
   :type 'string)
 
-(defcustom vm-mime-8bit-composition-charset "iso-8859-1"
+(defcustom vm-mime-8bit-composition-charset nil
   "*Character set that VM should assume if it finds non-US-ASCII characters
 in a composition buffer.  Composition buffers are assumed to use
 US-ASCII unless the buffer contains a byte with the high bit set.
@@ -1487,7 +1487,10 @@ in a single buffer under MULE, VM will map the file coding system
 of the buffer to a single MIME character set that can display all
 the buffer's characters."
   :group 'vm
-  :type 'string)
+  :type '(choice (string :tag "iso-8859-1" "iso-8859-1")
+                 (string :tag "iso-2022-jp" "iso-2022-jp")
+                 (string :tag "User defined")
+                 (const  :tag "Auto select" nil)))
 
 (defcustom vm-mime-8bit-text-transfer-encoding 'quoted-printable
   "*Symbol specifying what kind of transfer encoding to use on 8bit
