@@ -5132,14 +5132,18 @@ append a space to words that complete unambiguously.")
 (defvar vm-imap-messages-to-expunge nil)
 (make-variable-buffer-local 'vm-imap-messages-to-expunge)
 (defvar vm-imap-capabilities nil)
+(make-variable-buffer-local 'vm-imap-capabilities)
 (defvar vm-imap-auth-methods nil)
+(make-variable-buffer-local 'vm-imap-auth-methods)
 ;; The number of old ('failed') trace buffers to remember for debugging
 ;; purposes 
 (defvar vm-pop-keep-failed-trace-buffers 5)
 (defvar vm-imap-keep-failed-trace-buffers 5)
 ;; Lists of trace buffers remembered for debugging purposes
 (defvar vm-kept-pop-buffers nil)
+(make-variable-buffer-local 'vm-kept-pop-buffers)
 (defvar vm-kept-imap-buffers nil)
+(make-variable-buffer-local 'vm-kept-imap-buffers)
 ;; Flag to make POP/IMAP code remember old trace buffers
 (defvar vm-pop-keep-trace-buffer nil)
 (defvar vm-imap-keep-trace-buffer nil)
@@ -5147,6 +5151,10 @@ append a space to words that complete unambiguously.")
 (defvar vm-reply-list nil)
 (defvar vm-forward-list nil)
 (defvar vm-redistribute-list nil)
+
+;; For verification of assertions
+
+(defvar vm-assertion-checking-off t)
 
 ;; For verification of the correct buffer protocol
 ;; Possible values are 'folder, 'presentation, 'summary, 'process
@@ -5161,6 +5169,7 @@ append a space to words that complete unambiguously.")
 ;; 'inactive - session is inactive
 
 (defvar vm-imap-session-type nil)
+(make-variable-buffer-local 'vm-imap-session-type)
 
 (eval-when-compile
   (defvar current-itimer nil)

@@ -1077,6 +1077,7 @@ popdrop
 
 ;;;###autoload
 (defun vm-pop-find-spec-for-name (name)
+  "Returns the full maildrop specification of a short name NAME."
   (let ((list vm-pop-folder-alist)
 	(done nil))
     (while (and (not done) list)
@@ -1087,6 +1088,7 @@ popdrop
 
 ;;;###autoload
 (defun vm-pop-find-name-for-spec (spec)
+  "Returns the short name of a POP maildrop specification SPEC."
   (let ((list vm-pop-folder-alist)
 	(done nil))
     (while (and (not done) list)

@@ -46,8 +46,10 @@ that the folder should be considered read only.  No attribute
 changes, message additions or deletions will be allowed in the
 visited folder.
 
-Visiting the primary inbox normally causes any contents of the system mailbox to
-be moved and appended to the resulting buffer.  You can disable this automatic fetching of mail by setting `vm-auto-get-new-mail' to nil.
+Visiting the primary inbox normally causes any contents of the system
+mailbox to be moved and appended to the resulting buffer.  You can
+disable this automatic fetching of mail by setting
+`vm-auto-get-new-mail' to nil. 
 
 All the messages can be read by repeatedly pressing SPC.  Use `n'ext and
 `p'revious to move about in the folder.  Messages are marked for
@@ -56,6 +58,13 @@ with `q' saves the buffered folder to disk, but does not expunge
 deleted messages.  Use `###' to expunge deleted messages.
 
 See the documentation for vm-mode for more information."
+
+  ;; ACCESS-METHOD, if non-nil, indicates that the FOLDER is a proxy
+  ;; for a remote server folder.  The ACCESS-METHOD (one of 'pop and
+  ;; 'imap) indicates which access-method is used.  The functions
+  ;; find-name-for-spec and find-spec-for-name translate between
+  ;; folder names and maildrop specs for the server folders.
+
   (interactive (list nil current-prefix-arg))
   (vm-session-initialization)
   ;; recursive call to vm in order to allow defadvice on its first call
