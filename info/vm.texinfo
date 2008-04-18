@@ -368,6 +368,7 @@ retrieving any new messages from the system mailbox.
 * Spool Files::         Specifying where mail comes from
 * POP Spool Files::	How to use a POP mailbox as a spool file
 * IMAP Spool Files::	How to use an IMAP mailbox as a spool file
+* Index Files::         Using an index to speed up VM starting
 @end menu
 
 @node Spool Files, POP Spool Files, Local Folders, Local Folders
@@ -556,7 +557,7 @@ Here is an example:
 )
 @end example
 
-@node IMAP Spool Files,,POP Spool Files, Local Folders
+@node IMAP Spool Files, Index Files, POP Spool Files, Local Folders
 @unnumberedsubsec IMAP Spool Files
 @cindex IMAP
 @cindex maildrop specification
@@ -625,6 +626,24 @@ Here is an example:
     )
 )
 @end example
+
+@node Index Files,,IMAP Spool Files, Local Folders
+@unnumberedsubsec Index Files
+@cindex index file
+
+VM can create an index file which describes the messages contained in
+a folder.  If such an index file exists and is up to date, then VM
+will read the contents of the index file first while starting up in
+order to quickly form the summary of the folder.
+
+@vindex vm-index-file-suffix
+To use this feature, set the variable @code{vm-index-file-suffix} to a
+file name extension, e.g., 
+
+@example
+(setq vm-index-file-suffix "idx")
+@end example
+
 
 @node Server Folders, Getting New Mail, Local Folders, Starting Up
 @section Server Folders
