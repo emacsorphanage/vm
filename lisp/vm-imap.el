@@ -2042,6 +2042,9 @@ on all the relevant IMAP servers and then immediately expunges."
   (vm-buffer-type:assert 'folder)
   (or by-uid (vm-imap-folder-session-type:assert 'valid))
   ;;-----------------------------------------------------
+  (if (not (equal (vm-imap-uid-validity-of m)
+		  (vm-folder-imap-uid-validity)))
+      (vm-imap-protocol-error "message has invalid uid"))
   (let* ((uid (vm-imap-uid-of m))
 	 (uid-key1 (intern uid (vm-folder-imap-uid-obarray)))
 	 (uid-key2 (intern-soft uid (vm-folder-imap-flags-obarray)))
@@ -2304,13 +2307,15 @@ operation of the server to minimize I/O."
     ;; in the cache.
     (setq mp vm-message-list)
     (while mp
-      (setq uid (vm-imap-uid-of (car mp)))
-      (if (and (not (equal (vm-imap-uid-validity-of (car mp)) uid-validity))
-	       (not (member "stale" (vm-labels-of (car mp)))))
-	  (setq stale-list (cons (car mp) stale-list))
-	(set (intern uid here) (car mp))
-	(if (not (boundp (intern uid there)))
-	    (setq expunge-list (cons (car mp) expunge-list))))
+      (cond ((not (equal (vm-imap-uid-validity-of (car mp)) uid-validity))
+	     (setq stale-list (cons (car mp) stale-list)))
+	    ((member "stale" (vm-labels-of (car mp)))
+	     nil)
+	    (t
+	     (setq uid (vm-imap-uid-of (car mp)))
+	     (set (intern uid here) (car mp))
+	     (if (not (boundp (intern uid there)))
+		 (setq expunge-list (cons (car mp) expunge-list)))))
       (setq mp (cdr mp)))
     ;; Figure out messages that need to be retrieved
     (mapatoms (function
