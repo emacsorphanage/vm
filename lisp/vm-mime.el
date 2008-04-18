@@ -3787,7 +3787,8 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   (let* ((layout (vm-extent-property extent 'vm-mime-layout))
 	 (blob (get (vm-mm-layout-cache layout)
 		    'vm-mime-display-internal-image-xxxx))
-	 success tempfile
+         (saved-type (vm-mm-layout-type layout))
+         success tempfile
 	 (work-buffer nil))
     ;; Emacs 19 uses a different layout cache than XEmacs or Emacs 21+.
     ;; The cache blob is a list in that case.
@@ -3798,10 +3799,11 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	(save-excursion
 	  (setq work-buffer (vm-make-work-buffer))
 	  (set-buffer work-buffer)
+          ;; convert just the first page "[0]" and enforce PNG output by "png:"
 	  (setq success
 		(eq 0 (apply 'call-process vm-imagemagick-convert-program
 			     tempfile t nil
-			     (append convert-args (list "-" "-")))))
+			     (append convert-args (list "-[0]" "png:-")))))
 	  (if success
 	      (progn
 		(write-region (point-min) (point-max) tempfile nil 0)
@@ -3809,10 +3811,13 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		    (setcar (nthcdr 5 blob) 0))
 		(put (vm-mm-layout-cache layout) 'vm-image-modified t))))
       (and work-buffer (kill-buffer work-buffer)))
-    (if success
-	(progn
-	  (vm-mark-image-tempfile-as-message-garbage-once layout tempfile)
-	  (vm-mime-display-generic extent)))))
+    (when success
+      ;; the output is always PNG now, so fix it for displaying, but restore
+      ;; it for the layout afterwards
+      (vm-set-mm-layout-type layout '("image/png"))
+      (vm-mark-image-tempfile-as-message-garbage-once layout tempfile)
+      (vm-mime-display-generic extent)
+      (vm-set-mm-layout-type layout saved-type))))
 
 (defun vm-mark-image-tempfile-as-message-garbage-once (layout tempfile)
   (if (get (vm-mm-layout-cache layout) 'vm-message-garbage)
@@ -3895,8 +3900,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 
 (defun vm-mime-display-button-image (layout)
   "Displays an button for the image and when possible a thumbnail."
-  (if (not (and vm-mime-thumbnail-max-geometry
-                (vm-mime-can-display-internal layout)))
+  (if (not (and vm-mime-thumbnail-max-geometry (vm-images-possible-here-p)))
       ;; just display the normal button
       (vm-mime-display-button-xxxx layout t)
     ;; otherwise create a thumb and display it
@@ -3946,6 +3950,9 @@ LAYOUT is the MIME layout struct for the message/external-body object."
            'vm-mime-display-internal-image-xxxx
            nil)
       t)))
+
+(defun vm-mime-display-button-application/pdf (layout)
+  (vm-mime-display-button-image layout))
 
 (defun vm-mime-display-internal-audio/basic (layout)
   (if (and vm-xemacs-p
@@ -5576,8 +5583,10 @@ Attachment tags added to the buffer with `vm-mime-attach-file' are expanded
 and the approriate content-type and boundary markup information is added."
   (interactive)
 
+  (vm-mail-mode-show-headers)
+
   (vm-disable-modes vm-disable-modes-before-encoding)
-  
+ 
   (buffer-enable-undo)
   (let ((unwind-needed t)
 	(mybuffer (current-buffer)))
