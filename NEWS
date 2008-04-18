@@ -101,6 +101,9 @@ VM 8.1.0-devo
       IMAP folders should be specified in the minibuffer using the
       account:mailbox format.  See the info node on IMAP folders.
 
+    * New variable `vm-load-headers-only' to enable headers-only
+      downloading of IMAP folders.  (This is still experimental.)
+
 VM 8.0.8
 
   IMPROVEMENTS:

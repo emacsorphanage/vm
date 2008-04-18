@@ -1837,6 +1837,23 @@ Supports version 4 format of attribute storage, for backward compatibility."
     (insert (format "X-Mozilla-Status: %4x\n" status))
     (insert (format "X-Mozilla-Status2: %4x\n" status2))))
   
+;; Add a X-VM-Storage header
+(defun vm-add-storage-header (&rest args)
+  (save-excursion
+    (let ((buffer-read-only nil)
+	  opoint)
+      (goto-char (vm-headers-of (car mp)))
+      (setq opoint (point))
+      (insert-before-markers vm-storage-header " (")
+      (when args (insert-before-markers (format "%s" (car args))))
+      (setq args (cdr args))
+      (while args
+	(insert-before-markers (format " %s" (car args)))
+	(setq args (cdr args)))
+      (insert-before-markers ")\n")
+      (set-marker (vm-headers-of (car mp)) opoint))))
+
+
 ;; Stuff the message attributes back into the message as headers.
 (defun vm-stuff-attributes (m &optional for-other-folder)
   (save-excursion

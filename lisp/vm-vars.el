@@ -100,6 +100,21 @@ A nil value means VM should not read or write index files."
   :group 'vm
   :type '(choice string (const nil)))
 
+;; This is added by Uday Reddy as a temporary measure.  2008-04-15
+;; It should really be folder-specific and saved with the folders on
+;; the file system.
+(defcustom vm-load-headers-only nil
+  "*If non-nil, asks VM to load headers of mail folders whenever
+possible, without loading the message bodies.
+
+This allows faster start-ups and smaller memory images of Emacs
+sessions, at the cost of short delays when messages are viewed.
+
+As of April 2008, this facility is only available for IMAP folders."
+  :group 'vm
+  :type 'boolean)
+
+
 ;; use this function to access vm-spool-files on the fly.  this
 ;; allows us to use environmental variables without setting
 ;; vm-spool-files at load time and thereby making it hard to dump an
@@ -4709,6 +4724,8 @@ Its parent keymap is mail-mode-map.")
 (defconst vm-pop-retrieved-header "X-VM-POP-Retrieved:")
 (defconst vm-imap-retrieved-header-regexp "^X-VM-IMAP-Retrieved:")
 (defconst vm-imap-retrieved-header "X-VM-IMAP-Retrieved:")
+(defconst vm-storage-header-regexp "^X-VM-Storage:")
+(defconst vm-storage-header "X-VM-Storage:")
 (defconst vm-last-modified-header-regexp "^X-VM-Last-Modified:")
 (defconst vm-last-modified-header "X-VM-Last-Modified:")
 (defconst vm-summary-header-regexp "^X-VM-Summary-Format:")

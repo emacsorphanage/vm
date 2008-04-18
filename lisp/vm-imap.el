@@ -301,8 +301,10 @@
 		      (throw 'skip t)))
 		(message "Retrieving message %d (of %d) from %s..."
 			 n mailbox-count imapdrop)
-                (vm-imap-fetch-message process n use-body-peek 'headers-only)
-                (vm-imap-retrieve-to-target process destination statblob use-body-peek)
+                (vm-imap-fetch-message process n 
+				       use-body-peek vm-load-headers-only)
+                (vm-imap-retrieve-to-target process destination
+					    statblob use-body-peek) 
                 (message "Retrieving message %d (of %d) from %s...done"
                          n mailbox-count imapdrop)
 		(vm-increment retrieved)
@@ -2042,6 +2044,9 @@ on all the relevant IMAP servers and then immediately expunges."
   (vm-buffer-type:assert 'folder)
   (or by-uid (vm-imap-folder-session-type:assert 'valid))
   ;;-----------------------------------------------------
+  (if (not (equal (vm-imap-uid-validity-of m)
+		  (vm-folder-imap-uid-validity)))
+      (vm-imap-protocol-error "message has invalid uid"))
   (let* ((uid (vm-imap-uid-of m))
 	 (uid-key1 (intern uid (vm-folder-imap-uid-obarray)))
 	 (uid-key2 (intern-soft uid (vm-folder-imap-flags-obarray)))
@@ -2305,13 +2310,15 @@ operation of the server to minimize I/O."
     ;; in the cache.
     (setq mp vm-message-list)
     (while mp
-      (setq uid (vm-imap-uid-of (car mp)))
-      (if (and (not (equal (vm-imap-uid-validity-of (car mp)) uid-validity))
-	       (not (member "stale" (vm-labels-of (car mp)))))
-	  (setq stale-list (cons (car mp) stale-list))
-	(set (intern uid here) (car mp))
-	(if (not (boundp (intern uid there)))
-	    (setq expunge-list (cons (car mp) expunge-list))))
+      (cond ((not (equal (vm-imap-uid-validity-of (car mp)) uid-validity))
+	     (setq stale-list (cons (car mp) stale-list)))
+	    ((member "stale" (vm-labels-of (car mp)))
+	     nil)
+	    (t
+	     (setq uid (vm-imap-uid-of (car mp)))
+	     (set (intern uid here) (car mp))
+	     (if (not (boundp (intern uid there)))
+		 (setq expunge-list (cons (car mp) expunge-list)))))
       (setq mp (cdr mp)))
     ;; Figure out messages that need to be retrieved
     (mapatoms (function
@@ -2444,7 +2451,7 @@ operation of the server to minimize I/O."
 		   (vm-imap-session-type:assert 'valid)
 		   ;;----------------------------------
 		   (vm-imap-fetch-message process (cdr (car r-list)) 
-					  use-body-peek 'headers-only)
+					  use-body-peek vm-load-headers-only)
 		   (vm-imap-retrieve-to-target process folder-buffer
 					       statblob use-body-peek)
 		   (setq r-list (cdr r-list)
@@ -2471,6 +2478,8 @@ operation of the server to minimize I/O."
 	   (setq got-some mp)
 	   (setq r-list retrieve-list)
 	   (while mp
+	     (if vm-load-headers-only 
+		 (vm-add-storage-header 'imap))
 	     (setq uid (car (car r-list)))
 	     (vm-set-imap-uid-of (car mp) uid)
 	     (vm-set-imap-uid-validity-of (car mp) uid-validity)
@@ -2611,7 +2620,6 @@ operation of the server to minimize I/O."
     (save-excursion
       ;;----------------------------------
       (vm-buffer-type:enter 'folder)
-      (vm-imap-session-type:assert 'valid)
       ;;----------------------------------
       (vm-select-folder-buffer)
       (let* ((statblob nil)
@@ -2623,14 +2631,17 @@ operation of the server to minimize I/O."
 	     (use-body-peek (vm-folder-imap-body-peek))
 	     (server-uid-validity (vm-folder-imap-uid-validity))
 	     (n (symbol-value (intern uid (vm-folder-imap-uid-obarray))))
+	     (old-eob (point-max))
+	     message-size
 	     )
 	(message "Retrieving message body... ")
 	(condition-case error-data
 	    (save-excursion
-	      ;;----------------------------
-	      (vm-buffer-type:enter 'process)
-	      ;;----------------------------
 	      (set-buffer (process-buffer process))
+	      ;;----------------------------------
+	      (vm-buffer-type:enter 'process)
+	      (vm-imap-session-type:assert 'valid)
+	      ;;----------------------------------
 	      (setq statblob (vm-imap-start-status-timer))
 	      (vm-set-imap-stat-x-box statblob safe-imapdrop)
 	      (vm-set-imap-stat-x-maxmsg statblob 1)
