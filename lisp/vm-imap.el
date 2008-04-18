@@ -301,7 +301,7 @@
 		      (throw 'skip t)))
 		(message "Retrieving message %d (of %d) from %s..."
 			 n mailbox-count imapdrop)
-                (vm-imap-fetch-message process n use-body-peek t)
+                (vm-imap-fetch-message process n use-body-peek 'headers-only)
                 (vm-imap-retrieve-to-target process destination statblob use-body-peek)
                 (message "Retrieving message %d (of %d) from %s...done"
                          n mailbox-count imapdrop)
@@ -2444,7 +2444,7 @@ operation of the server to minimize I/O."
 		   (vm-imap-session-type:assert 'valid)
 		   ;;----------------------------------
 		   (vm-imap-fetch-message process (cdr (car r-list)) 
-					  use-body-peek nil)
+					  use-body-peek 'headers-only)
 		   (vm-imap-retrieve-to-target process folder-buffer
 					       statblob use-body-peek)
 		   (setq r-list (cdr r-list)
