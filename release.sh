@@ -1,7 +1,7 @@
 #!/usr/bin/env bash -x
 # -*- shell-script -*-
 
-. ../getversion.sh
+. ./getversion.sh
 
 
 # now check for uncommitted changes
