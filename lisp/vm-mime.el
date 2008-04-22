@@ -2322,49 +2322,13 @@ in the buffer.  The function is expected to make the message
     (if (and (processp process) (eq (process-status process) 'run))
 	t
       (cond ((or (null tempfile) (null (file-exists-p tempfile)))
-	     (cond (vm-fsfemacs-mule-p
-		    (let (work-buffer (target (current-buffer)))
-		      (unwind-protect
-			  (save-excursion
-			    (setq work-buffer (vm-make-work-buffer))
-			    (set-buffer work-buffer)
-			    (vm-mime-insert-mime-body layout)
-			    (vm-mime-transfer-decode-region layout
-							    (point-min)
-							    (point-max))
-			    (set-buffer-multibyte t)
-			    (set-buffer target)
-			    (setq start (point))
-			    (insert-buffer-substring work-buffer)
-			    (setq end (point-marker)))
-			(and work-buffer (kill-buffer work-buffer)))))
-		   (t
-		    (setq start (point))
-		    (vm-mime-insert-mime-body layout)
-		    (setq end (point-marker))
-		    (vm-mime-transfer-decode-region layout start end)))
 	     (setq suffix (vm-mime-extract-filename-suffix layout)
 		   suffix (or suffix
 			      (vm-mime-find-filename-suffix-for-type layout)))
 	     (setq basename (vm-mime-get-disposition-filename layout))
 	     (setq tempfile (vm-make-tempfile suffix basename))
-	     (vm-register-message-garbage-files (list tempfile))
-	     (let ((buffer-file-type buffer-file-type)
-		   (selective-display nil)
-		   buffer-file-coding-system)
-	       ;; Tell DOS/Windows NT whether the file is binary
-	       (setq buffer-file-type
-		     (not (vm-mime-text-type-layout-p layout)))
-	       ;; Tell XEmacs/MULE not to mess with the bits unless
-	       ;; this is a text type.
-	       (if (fboundp 'set-buffer-file-coding-system)
-		   (if (vm-mime-text-type-layout-p layout)
-		       (set-buffer-file-coding-system
-			(vm-line-ending-coding-system) nil)
-		     (set-buffer-file-coding-system
-		      (vm-binary-coding-system) t)))
-	       (write-region start end tempfile nil 0)
-	       (delete-region start end))))
+             (vm-register-message-garbage-files (list tempfile))
+             (vm-mime-send-body-to-file layout nil tempfile t)))
 
       ;; quote file name for shell command only
       (or (cdr program-list)
@@ -4250,7 +4214,8 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	(setq e-alist (cdr e-alist))))
     matched))
 
-(defun vm-mime-send-body-to-file (layout &optional default-filename file)
+(defun vm-mime-send-body-to-file (layout &optional default-filename file
+                                         overwrite)
   (if (not (vectorp layout))
       (setq layout (vm-extent-property layout 'vm-mime-layout)))
   (if (not default-filename)
@@ -4296,9 +4261,9 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		  (set-buffer-file-coding-system (vm-binary-coding-system) t)))
 	    (vm-mime-insert-mime-body layout)
 	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
-	    (or (not (file-exists-p file))
-		(y-or-n-p "File exists, overwrite? ")
-		(error "Aborted"))
+            (unless (or overwrite (not (file-exists-p file)))
+              (or (y-or-n-p "File exists, overwrite? ")
+                  (error "Aborted")))
 	    ;; Bind the jka-compr-compression-info-list to nil so
 	    ;; that jka-compr won't compress already compressed
 	    ;; data.  This is a crock, but as usual I'm getting
