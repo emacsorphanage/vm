@@ -3864,7 +3864,9 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 
 (defun vm-mime-display-button-image (layout)
   "Displays an button for the image and when possible a thumbnail."
-  (if (not (and vm-mime-thumbnail-max-geometry (vm-images-possible-here-p)))
+  (if (not (and vm-imagemagick-convert-program
+                vm-mime-thumbnail-max-geometry
+                (vm-images-possible-here-p)))
       ;; just display the normal button
       (vm-mime-display-button-xxxx layout t)
     ;; otherwise create a thumb and display it
