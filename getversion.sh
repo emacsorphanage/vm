@@ -13,7 +13,7 @@ if [ "$devo" = "devo" ] ; then
   rdir=$tag-$revno
   version=$rdir
 else
-  tag=(`$bzr tags | tail -1`)
+  tag=(`$bzr tags --sort=time | tail -1`)
   if [ "${tag[1]}" != "$revno" ]; then
     echo "ERROR: No tag present at the head revision."
     echo "ERROR: First you must create a release tag!"

@@ -55,8 +55,6 @@ SOURCES += vm-window.el
 SOURCES += vm-w3m.el
 SOURCES += vm-w3.el
 
-SOURCES += vm-revno.el
-
 SOURCES += vcard.el
 SOURCES += tapestry.el
 
@@ -67,9 +65,9 @@ else
 OBJECTS = auto-autoloads.elc custom-load.elc
 endif
 
-OBJECTS += $(SOURCES:.el=.elc)
+OBJECTS += vm-revno.elc
 
-INSTALL_FILES = $(SOURCES) $(OBJECTS)
+INSTALL_FILES += $(OBJECTS:.elc=.el) $(OBJECTS)
 
 # for autoload generation 
 AUTOLOAD_PACKAGE_NAME = (setq autoload-package-name \"vm\")
@@ -218,7 +216,7 @@ install-elc: all
 
 ##############################################################################
 Makefile: @srcdir@/Makefile.in
-	cd .. ; config.status $@
+	cd .. ; ./config.status
 
 ##############################################################################
 clean:
