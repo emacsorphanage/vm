@@ -27,12 +27,20 @@
 	     (error "Folder buffer has been killed."))
 	 (set-buffer vm-mail-buffer))
 	((not (memq major-mode '(vm-mode vm-virtual-mode)))
-	 (error "No VM folder buffer associated with this buffer"))))
+	 (error "No VM folder buffer associated with this buffer")))
+  ;;--------------------------
+  (vm-buffer-type:set 'folder)
+  ;;--------------------------
+  )
 
 (defsubst vm-select-folder-buffer-if-possible ()
   (cond ((and (bufferp vm-mail-buffer)
 	      (buffer-name vm-mail-buffer))
-	 (set-buffer vm-mail-buffer))))
+	 (set-buffer vm-mail-buffer)))
+  ;;--------------------------
+  (vm-buffer-type:set 'folder)
+  ;;--------------------------
+  )
 
 (defsubst vm-error-if-folder-read-only ()
   (while vm-folder-read-only
@@ -96,11 +104,12 @@
 	   (set-buffer vm-sbe-buffer)))))
 
 (defmacro vm-assert (expression)
-  (list 'or expression
-	(list 'let
-	      (list (list 'debug-on-error t))
-	      (list 'error "assertion failed: %S"
-		    (list 'quote expression)))))
+  (list 'or 'vm-assertion-checking-off
+	(list 'or expression
+	      (list 'let
+		    (list (list 'debug-on-error t))
+		    (list 'error "assertion failed: %S"
+			  (list 'quote expression))))))
 
 (defmacro vm-increment (variable)
   (list 'setq variable (list '1+ variable)))
