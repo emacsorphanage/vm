@@ -94,7 +94,7 @@
 (defsubst vm-folder-imap-uid-validity ()
   (aref vm-folder-access-data 2))
 ;; the list of uid's and flags of the messages in the imap folder
-;; (msg-num . uid . flags list)
+;; (msg-num . uid . size . flags list)
 (defsubst vm-folder-imap-uid-list ()
   (aref vm-folder-access-data 3))	
 ;; the number of messages in the imap folder
@@ -117,7 +117,7 @@
   (aref vm-folder-access-data 9))	; obarray(uid, msg-num)
 ;; obarray of uid's with flags lists as their values
 (defsubst vm-folder-imap-flags-obarray ()
-  (aref vm-folder-access-data 10))	; obarray(uid, (uid . flags list))
+  (aref vm-folder-access-data 10))	; obarray(uid, (size . flags list))
 					; cons-pair shared with imap-uid-list
 
 (defsubst vm-set-folder-imap-maildrop-spec (val)
@@ -1188,7 +1188,7 @@ on all the relevant IMAP servers and then immediately expunges."
   ;;   PROCESS  - The IMAP process
   ;;   M - a vm-message
   ;;   uid-validity -  the folder's uid-validity
-  ;; Returns (msg-num: int . uid: string . flags: string list)
+  ;; Returns (msg-num: int . uid: string . size: string . flags: string list)
   ;; Or gives an error if the message has an invalid uid
   (let ((imap-buffer (current-buffer))
 	response tok need-ok msg-num list)
@@ -1222,32 +1222,37 @@ on all the relevant IMAP servers and then immediately expunges."
   ;; Returns an assoc list with entries
   ;;   int msg-num - message sequence number of a message
   ;;   string uid - uid of the message
+  ;;   string size - message size
   ;;   (string list) flags - list of flags for the message
   ;; or nil indicating failure
   ;; If there are no messages in the range then (nil) is returned
 
   (let ((list nil)
 	(imap-buffer (current-buffer))
-	tok msg-num uid flag flags response p
+	tok msg-num uid size flag flags response p
 	(need-ok t))
     ;;----------------------------------
     (vm-imap-session-type:assert-active)
     ;;----------------------------------
     (vm-imap-send-command 
-     process (format "FETCH %s:%s (UID FLAGS)" first last))
+     process (format "FETCH %s:%s (UID RFC822.SIZE FLAGS)" first last))
     (while need-ok
       (setq response (vm-imap-read-response-and-verify process "FLAGS FETCH"))
       (cond ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
 	     (setq p (cdr (nth 3 response)))
-	     (if (not (vm-imap-response-matches p 'UID 'atom 'FLAGS 'list))
+	     (if (not (vm-imap-response-matches 
+		       p 'UID 'atom 'RFC822\.SIZE 'atom 'FLAGS 'list))
 		 (vm-imap-protocol-error
-		  "expected UID and (FLAGS list) in FETCH response"))
+		  "expected UID, RFC822.SIZE and (FLAGS list) in FETCH response"))
 	     (setq tok (nth 1 response))
 	     (goto-char (nth 1 tok))
 	     (setq msg-num (read imap-buffer))
 	     (setq tok (nth 1 p))
 	     (setq uid (buffer-substring (nth 1 tok) (nth 2 tok)))
-	     (setq p (cdr (nth 3 p))
+	     (setq tok (nth 3 p))
+	     (goto-char (nth 1 tok))
+	     (setq size (buffer-substring (nth 1 tok) (nth 2 tok)))
+	     (setq p (cdr (nth 5 p))
 		   flags nil)
 	     (while p
 	       (setq tok (car p))
@@ -1258,7 +1263,9 @@ on all the relevant IMAP servers and then immediately expunges."
 			   (buffer-substring (nth 1 tok) (nth 2 tok)))
 		     flags (cons flag flags)
 		     p (cdr p)))
-	     (setq list (cons (cons msg-num (cons uid flags)) list)))
+	     (setq list 
+		   (cons (cons msg-num (cons uid (cons size flags)))
+			 list)))
 	    ((vm-imap-response-matches response 'VM 'OK)
 	     (setq need-ok nil))))
       ;; returning nil means the fetch failed so return
@@ -1884,7 +1891,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	(while tuples
 	  (setq tuple (car tuples))
 	  (set (intern (cadr tuple) there) (car tuple))
-	  (set (intern (cadr tuple) flags) (cdr tuple))
+	  (set (intern (cadr tuple) flags) (nthcdr 2 tuple))
 	  (setq tuples (cdr tuples)))
 	;;-------------------------------
 	(vm-imap-session-type:set 'valid)
@@ -2483,6 +2490,8 @@ operation of the server to minimize I/O."
 	     (setq uid (car (car r-list)))
 	     (vm-set-imap-uid-of (car mp) uid)
 	     (vm-set-imap-uid-validity-of (car mp) uid-validity)
+	     (vm-set-byte-count-of 
+	      (car mp) (car (symbol-value (intern uid flags))))
 	     (vm-imap-update-message-flags 
 	      (car mp) (cdr (symbol-value (intern uid flags))) t)
 	     (setq mp (cdr mp)
@@ -2627,13 +2636,21 @@ operation of the server to minimize I/O."
 	     (imapdrop (vm-folder-imap-maildrop-spec))
 	     (safe-imapdrop (vm-safe-imapdrop-string imapdrop))
 	     (process (or (vm-folder-imap-process)
-			  (vm-imap-make-session imapdrop)))
+			  (vm-establish-new-folder-imap-session imapdrop)))
 	     (use-body-peek (vm-folder-imap-body-peek))
 	     (server-uid-validity (vm-folder-imap-uid-validity))
-	     (n (symbol-value (intern uid (vm-folder-imap-uid-obarray))))
+	     (uid-key1 (intern-soft uid (vm-folder-imap-uid-obarray)))
+	     (uid-key2 (intern-soft uid (vm-folder-imap-flags-obarray)))
 	     (old-eob (point-max))
-	     message-size
+	     message-num message-size
 	     )
+	(when (null uid-key1)
+	  (vm-imap-retrieve-uid-and-flags-data)
+	  (setq uid-key1 (intern-soft uid (vm-folder-imap-uid-obarray)))
+	  (setq uid-key2 (intern-soft uid (vm-folder-imap-flags-obarray))))
+	(setq message-num (symbol-value uid-key1))
+	(setq messize-size (string-to-number (car (symbol-value uid-key2))))
+
 	(message "Retrieving message body... ")
 	(condition-case error-data
 	    (save-excursion
@@ -2645,10 +2662,10 @@ operation of the server to minimize I/O."
 	      (setq statblob (vm-imap-start-status-timer))
 	      (vm-set-imap-stat-x-box statblob safe-imapdrop)
 	      (vm-set-imap-stat-x-maxmsg statblob 1)
-	      (vm-set-imap-stat-x-currmsg statblob n)
-	      (setq message-size (vm-imap-get-message-size process n))
+	      (vm-set-imap-stat-x-currmsg statblob message-num)
+	      ;; (setq message-size (vm-imap-get-message-size process message-num))
 	      (vm-set-imap-stat-x-need statblob message-size)
-	      (vm-imap-fetch-message process n use-body-peek nil)
+	      (vm-imap-fetch-message process message-num use-body-peek nil)
 	      (vm-imap-retrieve-to-target process body-buffer statblob
 				     use-body-peek)
 	      ;;-------------------
