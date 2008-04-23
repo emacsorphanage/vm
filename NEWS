@@ -33,6 +33,8 @@ VM 8.0.10-devo
       There has been some special handling for `vm-fsfemacs-mule-p', but the
       actual reason for this was unclear so it has been removed.
 
+    * Correctly handle `vm-enable-addons' being t.
+
 VM 8.0.9
 
   BUGFIXES:
