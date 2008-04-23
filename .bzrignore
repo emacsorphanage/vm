@@ -19,3 +19,5 @@ lisp/vm-autoloads.el
 release
 snapshot
 lisp/vm-cus-load.el
+CVS
+.cvsignore

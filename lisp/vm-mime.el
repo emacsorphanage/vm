@@ -1457,7 +1457,7 @@ the actual message from the file \"message-11\"."
 
 (defvar buffer-file-coding-system)
 
-;; TODO: Possible further work; integrate with the FSF's unify-8859-on-encoding-mode stuff.
+;; TODO: integrate with the FSF's unify-8859-on-encoding-mode stuff.
 (defun vm-determine-proper-charset (beg end)
   "Work out what MIME character set to use for sending a message.
 
@@ -1470,7 +1470,7 @@ Under MULE, `vm-coding-system-priorities' is searched, in order, for a coding
 system that will encode all the characters in the message. If none is found,
 consults the variable `vm-mime-8bit-composition-charset' or uses `iso-2022-jp',
 which will preserve information for all the character sets of which Emacs is
-aware--at the expense of being incompatible with the recipient's software, if
+aware - at the expense of being incompatible with the recipient's software, if
 that recipient is outside of East Asia."
   (save-excursion
     (save-restriction
@@ -2323,49 +2323,13 @@ in the buffer.  The function is expected to make the message
     (if (and (processp process) (eq (process-status process) 'run))
 	t
       (cond ((or (null tempfile) (null (file-exists-p tempfile)))
-	     (cond (vm-fsfemacs-mule-p
-		    (let (work-buffer (target (current-buffer)))
-		      (unwind-protect
-			  (save-excursion
-			    (setq work-buffer (vm-make-work-buffer))
-			    (set-buffer work-buffer)
-			    (vm-mime-insert-mime-body layout)
-			    (vm-mime-transfer-decode-region layout
-							    (point-min)
-							    (point-max))
-			    (set-buffer-multibyte t)
-			    (set-buffer target)
-			    (setq start (point))
-			    (insert-buffer-substring work-buffer)
-			    (setq end (point-marker)))
-			(and work-buffer (kill-buffer work-buffer)))))
-		   (t
-		    (setq start (point))
-		    (vm-mime-insert-mime-body layout)
-		    (setq end (point-marker))
-		    (vm-mime-transfer-decode-region layout start end)))
 	     (setq suffix (vm-mime-extract-filename-suffix layout)
 		   suffix (or suffix
 			      (vm-mime-find-filename-suffix-for-type layout)))
 	     (setq basename (vm-mime-get-disposition-filename layout))
 	     (setq tempfile (vm-make-tempfile suffix basename))
-	     (vm-register-message-garbage-files (list tempfile))
-	     (let ((buffer-file-type buffer-file-type)
-		   (selective-display nil)
-		   buffer-file-coding-system)
-	       ;; Tell DOS/Windows NT whether the file is binary
-	       (setq buffer-file-type
-		     (not (vm-mime-text-type-layout-p layout)))
-	       ;; Tell XEmacs/MULE not to mess with the bits unless
-	       ;; this is a text type.
-	       (if (fboundp 'set-buffer-file-coding-system)
-		   (if (vm-mime-text-type-layout-p layout)
-		       (set-buffer-file-coding-system
-			(vm-line-ending-coding-system) nil)
-		     (set-buffer-file-coding-system
-		      (vm-binary-coding-system) t)))
-	       (write-region start end tempfile nil 0)
-	       (delete-region start end))))
+             (vm-register-message-garbage-files (list tempfile))
+             (vm-mime-send-body-to-file layout nil tempfile t)))
 
       ;; quote file name for shell command only
       (or (cdr program-list)
@@ -3788,7 +3752,8 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   (let* ((layout (vm-extent-property extent 'vm-mime-layout))
 	 (blob (get (vm-mm-layout-cache layout)
 		    'vm-mime-display-internal-image-xxxx))
-	 success tempfile
+         (saved-type (vm-mm-layout-type layout))
+         success tempfile
 	 (work-buffer nil))
     ;; Emacs 19 uses a different layout cache than XEmacs or Emacs 21+.
     ;; The cache blob is a list in that case.
@@ -3799,10 +3764,11 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	(save-excursion
 	  (setq work-buffer (vm-make-work-buffer))
 	  (set-buffer work-buffer)
+          ;; convert just the first page "[0]" and enforce PNG output by "png:"
 	  (setq success
 		(eq 0 (apply 'call-process vm-imagemagick-convert-program
 			     tempfile t nil
-			     (append convert-args (list "-" "-")))))
+			     (append convert-args (list "-[0]" "png:-")))))
 	  (if success
 	      (progn
 		(write-region (point-min) (point-max) tempfile nil 0)
@@ -3810,10 +3776,13 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		    (setcar (nthcdr 5 blob) 0))
 		(put (vm-mm-layout-cache layout) 'vm-image-modified t))))
       (and work-buffer (kill-buffer work-buffer)))
-    (if success
-	(progn
-	  (vm-mark-image-tempfile-as-message-garbage-once layout tempfile)
-	  (vm-mime-display-generic extent)))))
+    (when success
+      ;; the output is always PNG now, so fix it for displaying, but restore
+      ;; it for the layout afterwards
+      (vm-set-mm-layout-type layout '("image/png"))
+      (vm-mark-image-tempfile-as-message-garbage-once layout tempfile)
+      (vm-mime-display-generic extent)
+      (vm-set-mm-layout-type layout saved-type))))
 
 (defun vm-mark-image-tempfile-as-message-garbage-once (layout tempfile)
   (if (get (vm-mm-layout-cache layout) 'vm-message-garbage)
@@ -3896,8 +3865,9 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 
 (defun vm-mime-display-button-image (layout)
   "Displays an button for the image and when possible a thumbnail."
-  (if (not (and vm-mime-thumbnail-max-geometry
-                (vm-mime-can-display-internal layout)))
+  (if (not (and vm-imagemagick-convert-program
+                vm-mime-thumbnail-max-geometry
+                (vm-images-possible-here-p)))
       ;; just display the normal button
       (vm-mime-display-button-xxxx layout t)
     ;; otherwise create a thumb and display it
@@ -3932,8 +3902,10 @@ LAYOUT is the MIME layout struct for the message/external-body object."
                                  vm-mime-thumbnail-max-geometry))
       ;; extract image data 
       (setq glyph (if vm-xemacs-p
-                      (or (extent-begin-glyph (vm-extent-at start))
-                          (extent-begin-glyph (vm-extent-at (1+ start))))
+                      (let ((e1 (vm-extent-at start))
+                            (e2 (vm-extent-at (1+ start))))
+                        (or (and e1 (extent-begin-glyph e1))
+                            (and e2 (extent-begin-glyph e2))))
                     (get-text-property start 'display)))
       (delete-region start (point))
       ;; insert the button and correct the image 
@@ -3947,6 +3919,9 @@ LAYOUT is the MIME layout struct for the message/external-body object."
            'vm-mime-display-internal-image-xxxx
            nil)
       t)))
+
+(defun vm-mime-display-button-application/pdf (layout)
+  (vm-mime-display-button-image layout))
 
 (defun vm-mime-display-internal-audio/basic (layout)
   (if (and vm-xemacs-p
@@ -4242,7 +4217,8 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	(setq e-alist (cdr e-alist))))
     matched))
 
-(defun vm-mime-send-body-to-file (layout &optional default-filename file)
+(defun vm-mime-send-body-to-file (layout &optional default-filename file
+                                         overwrite)
   (if (not (vectorp layout))
       (setq layout (vm-extent-property layout 'vm-mime-layout)))
   (if (not default-filename)
@@ -4288,9 +4264,9 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		  (set-buffer-file-coding-system (vm-binary-coding-system) t)))
 	    (vm-mime-insert-mime-body layout)
 	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
-	    (or (not (file-exists-p file))
-		(y-or-n-p "File exists, overwrite? ")
-		(error "Aborted"))
+            (unless (or overwrite (not (file-exists-p file)))
+              (or (y-or-n-p "File exists, overwrite? ")
+                  (error "Aborted")))
 	    ;; Bind the jka-compr-compression-info-list to nil so
 	    ;; that jka-compr won't compress already compressed
 	    ;; data.  This is a crock, but as usual I'm getting
@@ -5577,8 +5553,10 @@ Attachment tags added to the buffer with `vm-mime-attach-file' are expanded
 and the approriate content-type and boundary markup information is added."
   (interactive)
 
+  (vm-mail-mode-show-headers)
+
   (vm-disable-modes vm-disable-modes-before-encoding)
-  
+ 
   (buffer-enable-undo)
   (let ((unwind-needed t)
 	(mybuffer (current-buffer)))

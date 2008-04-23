@@ -482,7 +482,7 @@ Use `vm-rmail-toggle' to switch between normal and this mode."
               (const vm-presentation-mode)
               (const vm-virtual-mode)
               (const vm-summary-mode))
-:group 'vm-rfaddons)
+  :group 'vm-rfaddons)
   
 (defun vm-rmail-toggle (&optional arg)
   (interactive)
@@ -1445,7 +1445,7 @@ should be encoded together."
 	      (let ((case-fold-search nil))
 		(re-search-forward vm-mime-encode-headers-words-regexp hend t))
             (setq start (match-beginning 1)
-                  end   (vm-marker (match-end 1))
+                  end   (match-end 1)
                   charset (or (vm-determine-proper-charset start end)
                               vm-mime-8bit-composition-charset)
                   coding (vm-string-assoc charset vm-mime-mule-charset-to-coding-alist)

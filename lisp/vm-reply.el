@@ -290,16 +290,16 @@ are replying to, forwarding, or invoked VM's mail command from.
 
 All message headers are yanked along with the text.  Point is
 left before the inserted text, the mark after.  Any hook
-functions bound to mail-citation-hook are run, after inserting
+functions bound to `mail-citation-hook' are run, after inserting
 the text and setting point and mark.  For backward compatibility,
 if mail-citation-hook is set to nil, `mail-yank-hooks' is run
 instead.
 
 If mail-citation-hook and mail-yank-hooks are both nil, this
 default action is taken: the yanked headers are trimmed as
-specified by vm-included-text-headers and
-vm-included-text-discard-header-regexp, and the value of
-vm-included-text-prefix is prepended to every yanked line."
+specified by `vm-included-text-headers' and
+`vm-included-text-discard-header-regexp', and the value of
+`vm-included-text-prefix' is prepended to every yanked line."
   (interactive
    (list
     ;; What we really want for the first argument is a message struct,
@@ -345,10 +345,7 @@ vm-included-text-prefix is prepended to every yanked line."
 		     (vm-select-folder-buffer)
 		     (if vm-presentation-buffer
 			 (set-buffer vm-presentation-buffer))
-                     (goto-char (point-min))
-                     (re-search-forward "\n\n" (point-max) t)
-                     (goto-char (point))
-                     (vm-buffer-substring-no-properties (point) (point-max)))))
+                     (vm-buffer-substring-no-properties (point-min) (point-max)))))
               (insert text)
 	      (setq end (point-marker)))
           (if (vectorp (vm-mm-layout message))
@@ -613,6 +610,7 @@ as replied to, forwarded, etc, if appropriate."
     (if (and vm-confirm-mail-send
 	     (not (y-or-n-p "Send the message? ")))
 	(error "Message not sent.")))
+  (vm-mail-mode-show-headers)
   (save-excursion (run-hooks 'vm-mail-send-hook))
   (vm-mail-mode-insert-date-maybe)
   (vm-mail-mode-insert-message-id-maybe)
@@ -1758,6 +1756,45 @@ message."
   (remove-hook 'mail-setup-hook 'mime/editor-mode)
   (remove-hook 'mail-send-hook  'mime-edit-maybe-translate)
   (remove-hook 'mail-send-hook 'mime-editor/maybe-translate))
+
+
+(defun vm-mail-mode-show-headers ()
+  "Display any hidden headers in a composition buffer."
+  (interactive)
+  (mapcar 'delete-overlay (overlays-in (point-min)
+                                       (save-excursion (mail-text) (point))))
+  (if (local-variable-p 'line-move-ignore-invisible (current-buffer))
+      (setq line-move-ignore-invisible nil)))
+
+(defun vm-mail-mode-hide-headers ()
+  "Hides and protects headers listed in `vm-mail-mode-hidden-headers'.
+With a prefix arg, call `vm-mail-mode-show-headers' instead."
+  (interactive)
+  (let ((case-fold-search t)
+        (header-regexp (regexp-opt vm-mail-mode-hidden-headers))
+        (header-end (save-excursion (mail-text) (point)))
+        start end o)
+    (setq header-regexp (concat "^" header-regexp))
+    (make-variable-buffer-local 'line-move-ignore-invisible)
+    (setq line-move-ignore-invisible t)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward header-regexp header-end t)
+        (setq start (match-beginning 0)
+              end (1- (re-search-forward "^[^ \t]" header-end)))
+        (goto-char end)
+        (let ((o (or (car (overlays-at start))
+                     (make-overlay start end))))
+          (when (not (overlay-get o 'invisible))
+            (overlay-put o 'invisible t)
+            (overlay-put o 'read-only t)))))))
+
+(defun vm-mail-mode-hide-headers-hook ()
+  "Hook which handles `vm-mail-mode-hidden-headers'."
+  (if vm-mail-mode-hidden-headers
+      (vm-mail-mode-hide-headers)))
+
+(add-hook 'vm-mail-mode-hook 'vm-mail-mode-hide-headers-hook)
 
 (provide 'vm-reply)
 

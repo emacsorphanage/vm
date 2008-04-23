@@ -65,9 +65,9 @@ else
 OBJECTS = auto-autoloads.elc custom-load.elc
 endif
 
-OBJECTS += $(SOURCES:.el=.elc)
+OBJECTS += vm-revno.elc
 
-INSTALL_FILES = $(SOURCES) $(OBJECTS) vm-revno.elc
+INSTALL_FILES += $(OBJECTS:.elc=.el) $(OBJECTS)
 
 # for autoload generation 
 AUTOLOAD_PACKAGE_NAME = (setq autoload-package-name \"vm\")
@@ -112,11 +112,13 @@ all: $(OBJECTS)
 
 install: install-el install-elc
 
-##############################################################################
-vm-revno.el:
-	echo ";;; This is a generated file, do not edit it!" > vm-revno.el
-	echo "(setq vm-revno \"`$(BZR) nick`-`$(BZR) revno`\")" >> vm-revno.el
-	echo "(setq vm-author \"`$(BZR) whoami`\")" >> vm-revno.el
+############################################################################## 
+# This is just a dependecy guess, but it will fail if other files have
+# changed and this is a PITA, but I currently see no better way of doing
+# this. 
+vm-revno.el: $(SOURCES:%=@srcdir@/%)
+	cd @srcdir@
+	./vm-revno.sh
 
 ##############################################################################
 # GNU Emacs's vm-autoload file
@@ -149,7 +151,7 @@ auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
                 -eval "$(AUTOLOAD_PACKAGE_NAME)" \
                 -eval "$(AUTOLOAD_FILE)" \
                 -l autoload -f batch-update-autoloads $^
-	# avoid getting an error about an already loaded vm-autoloads
+#	avoid getting an error about an already loaded vm-autoloads
 	mv $@ $@.tmp
 	echo "(setq features (delete 'vm-autoloads features))" > $@
 	cat $@.tmp >> $@
@@ -163,7 +165,7 @@ custom-load.el: $(SRCS:%=@srcdir@/%)
 	"$(EMACS_PROG)" $(FLAGS) -f vm-custom-make-dependencies .
 
 ##############################################################################
-install-pkg: all vm-revno.elc
+install-pkg: all
 	@if test "x$(SYMLINKS)" = "xno" ; then                 \
 	  mkdir -p -m 0755 $(DESTDIR)$(PACKAGEDIR);            \
 	  for i in $(SRCS:%=@srcdir@/%) $(INSTALL_FILES) ; do  \
@@ -180,7 +182,7 @@ install-pkg: all vm-revno.elc
 	@echo VM ELISP files successfully installed\!
 
 # This entry will never install .el files if there are no .elc files.
-install-el: all vm-revno.elc
+install-el: all
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(lispdir)/"
 	for elc in *.elc; do                                                  \
 	    el=`basename $$elc c`;                                            \
@@ -199,7 +201,7 @@ install-el: all vm-revno.elc
 	    done;                                                             \
 	fi;
 
-install-elc: all vm-revno.elc
+install-elc: all
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(lispdir)/"
 	for elc in *.elc; do                                 \
 	    echo "Install $$elc in $(DESTDIR)$(lispdir)/";   \
@@ -212,11 +214,9 @@ install-elc: all vm-revno.elc
 	    done;                                            \
 	fi;
 
-
-
 ##############################################################################
 Makefile: @srcdir@/Makefile.in
-	cd ..; ./config.status
+	cd .. ; ./config.status
 
 ##############################################################################
 clean:
