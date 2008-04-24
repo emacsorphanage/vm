@@ -5174,7 +5174,8 @@ append a space to words that complete unambiguously.")
 
 ;; For verification of assertions
 
-(defvar vm-assertion-checking-off t)
+(defvar vm-assertion-checking-off t
+  "* Set this to nil to enable assertion checking")
 
 ;; For verification of the correct buffer protocol
 ;; Possible values are 'folder, 'presentation, 'summary, 'process

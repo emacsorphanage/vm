@@ -312,7 +312,7 @@
   (aset (aref message 3) 19 val))
 (defsubst vm-set-references-of (message val)
   (aset (aref message 3) 20 val))
-(defsubst vm-set-retrieved-header-of (message val)
+(defsubst vm-set-retrieved-headers-of (message val)
   (aset (aref message 3) 21 val))
 (defsubst vm-set-retrieved-body-of (message val)
   (aset (aref message 3) 22 val))

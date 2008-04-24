@@ -184,12 +184,17 @@
 ;; leave the message in the mailbox, and yet not retrieve the
 ;; same messages again and again.
 
-(defun vm-imap-fetch-message (process n use-body-peek &optional headers-only) 
+(defsubst vm-imap-fetch-message (process n use-body-peek 
+					   &optional headers-only)
+  (vm-imap-fetch-messages process n n use-body-peek headers-only))
+
+(defun vm-imap-fetch-messages (process beg end use-body-peek 
+				       &optional headers-only) 
   (let ((fetchcmd
          (if headers-only
              (if use-body-peek "(BODY.PEEK[HEADER])" "(RFC822.HEADER)")
            (if use-body-peek "(BODY.PEEK[])" "(RFC822.PEEK)"))))
-    (vm-imap-send-command process (format "FETCH %d %s" n fetchcmd))))
+    (vm-imap-send-command process (format "FETCH %d:%d %s" beg end fetchcmd))))
 
 ;;;###autoload
 (defun vm-imap-move-mail (source destination)
@@ -301,10 +306,11 @@
 		      (throw 'skip t)))
 		(message "Retrieving message %d (of %d) from %s..."
 			 n mailbox-count imapdrop)
-                (vm-imap-fetch-message process n 
+                (vm-imap-fetch-message process n
 				       use-body-peek vm-load-headers-only)
                 (vm-imap-retrieve-to-target process destination
 					    statblob use-body-peek) 
+		(vm-imap-read-ok-response)
                 (message "Retrieving message %d (of %d) from %s...done"
                          n mailbox-count imapdrop)
 		(vm-increment retrieved)
@@ -340,10 +346,11 @@
       (setq vm-imap-retrieved-messages imap-retrieved-messages)
       (if (and (eq vm-flush-interval t) (not (equal retrieved 0)))
 	  (vm-stuff-imap-retrieved))
-      (and statblob (vm-imap-stop-status-timer statblob))
+      (when statblob 
+	(vm-imap-stop-status-timer statblob))
       (when process
-	  (vm-imap-end-session process)
-	  (vm-imap-dump-uid-and-flags-data)))))
+	(vm-imap-end-session process)
+	(vm-imap-dump-uid-and-flags-data)))))
 
 (defun vm-imap-check-mail (source)
   ;;--------------------------
@@ -1340,33 +1347,30 @@ on all the relevant IMAP servers and then immediately expunges."
 (defun vm-imap-retrieve-to-target (process target statblob bodypeek)
   ;; Read a mail message from PROCESS and store it in TARGET, which is
   ;; either a file or a buffer.  Report status using STATBLOB.  The
-  ;; boolean BODYPEEK tells if the bodykeep function is available for
+  ;; boolean BODYPEEK tells if the bodypeek function is available for
   ;; the IMAP server.
-  (let ((start vm-imap-read-point)
-	(need-msg t)
+  (vm-assert (not (null vm-imap-read-point)))
+  (let ((***start vm-imap-read-point)	; avoid dynamic binding of 'start'
 	end fetch-response list p)
-    (goto-char start)
+    (goto-char ***start)
     (vm-set-imap-stat-x-got statblob 0)
     (let* ((func
 	    (function
 	     (lambda (beg end len)
 	       (if vm-imap-read-point
 		   (progn
-		     (vm-set-imap-stat-x-got statblob (- end start))
+		     (vm-set-imap-stat-x-got statblob (- end ***start))
 		     (if (zerop (% (random) 10))
 			 (vm-imap-report-retrieval-status statblob)))))))
 	   (after-change-functions (cons func after-change-functions))
 	   (need-ok t)
 	   response)
-      (while need-ok
-	(setq response (vm-imap-read-response-and-verify process "message FETCH"))
-	(cond ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
-	       (setq fetch-response response
-		     need-msg nil))
-	      ((vm-imap-response-matches response 'VM 'OK)
-	       (setq need-ok nil)))))
-    (if need-msg
-	(vm-imap-protocol-error "FETCH OK sent before FETCH response"))
+      (setq response (vm-imap-read-response-and-verify process "message FETCH"))
+      (cond ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
+	     (setq fetch-response response))
+	    (t
+	     (vm-imap-protocol-error "Expected FETCH response not received"))))
+      
     ;; must make the read point a marker so that it stays fixed
     ;; relative to the text when we modify things below.
     (setq vm-imap-read-point (point-marker))
@@ -1377,19 +1381,19 @@ on all the relevant IMAP servers and then immediately expunges."
 	  (vm-imap-protocol-error
 	   "expected (BODY[] string) in FETCH response"))
       (setq p (nth 2 list)
-	    start (nth 1 p)))
+	    ***start (nth 1 p)))
      (t
       (if (not (vm-imap-response-matches list 'RFC822 'string))
 	  (vm-imap-protocol-error
 	   "expected (RFC822 string) in FETCH response"))
       (setq p (nth 1 list)
-	    start (nth 1 p))))
+	    ***start (nth 1 p))))
     (goto-char (nth 2 p))
     (setq end (point-marker))
     (vm-set-imap-stat-x-need statblob nil)
-    (vm-imap-cleanup-region start end)
-    (vm-munge-message-separators vm-folder-type start end)
-    (goto-char start)
+    (vm-imap-cleanup-region ***start end)
+    (vm-munge-message-separators vm-folder-type ***start end)
+    (goto-char ***start)
     (vm-set-imap-stat-x-got statblob nil)
     ;; avoid the consing and stat() call for all but babyl
     ;; files, since this will probably slow things down.
@@ -1413,8 +1417,8 @@ on all the relevant IMAP servers and then immediately expunges."
 	  (vm-convert-folder-header nil vm-folder-type)
 	  ;; if start is a marker, then it was moved
 	  ;; forward by the insertion.  restore it.
-	  (setq start opoint)
-	  (goto-char start)
+	  (setq ***start opoint)
+	  (goto-char ***start)
 	  (vm-skip-past-folder-header)))
     (insert (vm-leading-message-separator))
     (save-restriction
@@ -1440,7 +1444,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	;; newline convention is used.
 	(let ((buffer-file-type t)
 	      (selective-display nil))
-	  (write-region start end target t 0))
+	  (write-region ***start end target t 0))
       (let ((b (current-buffer)))
 	(save-excursion
 	  ;;----------------------------
@@ -1448,20 +1452,23 @@ on all the relevant IMAP servers and then immediately expunges."
 	  ;;----------------------------
 	  (set-buffer target)
 	  (let ((buffer-read-only nil))
-	    (insert-buffer-substring b start end))
+	    (insert-buffer-substring b ***start end))
 	  ;;-------------------
 	  (vm-buffer-type:exit)
 	  ;;-------------------
 	  )))
-    (delete-region start end)
+    (delete-region ***start end)
     t ))
 
-(defun vm-imap-delete-message (process n)
+(defsubst vm-imap-delete-message (process n)
+  (vm-imap-delete-messages process n n))
+
+(defun vm-imap-delete-messages (process beg end)
   ;;----------------------------------
   (vm-imap-session-type:assert 'valid)
   ;;----------------------------------
-  (vm-imap-send-command process (format "STORE %d +FLAGS.SILENT (\\Deleted)"
-					n))
+  (vm-imap-send-command process (format "STORE %d:%d +FLAGS.SILENT (\\Deleted)"
+					beg end))
   (if (null (vm-imap-read-ok-response process))
       (vm-imap-protocol-error "STORE ... +FLAGS.SILENT (\\Deleted) failed")))
 
@@ -2399,7 +2406,7 @@ operation of the server to minimize I/O."
 	   (imapdrop (vm-folder-imap-maildrop-spec))
 	   (safe-imapdrop (vm-safe-imapdrop-string imapdrop))
 	   (use-body-peek (vm-folder-imap-body-peek))
-	   r-list mp got-some message-size old-eob
+	   r-list range k mp got-some message-size old-eob
 	   (folder-buffer (current-buffer)))
       (when save-attributes
 	(let ((mp vm-message-list))
@@ -2438,43 +2445,54 @@ operation of the server to minimize I/O."
 	   (widen)
 	   (setq old-eob (point-max))
 	   (goto-char (point-max))
-	   (condition-case error-data
-	       (save-excursion
-		 ;;----------------------------
-		 (vm-buffer-type:enter 'process)
-		 ;;----------------------------
-		 (set-buffer (process-buffer process))
-		 (setq statblob (vm-imap-start-status-timer))
-		 (vm-set-imap-stat-x-box statblob safe-imapdrop)
-		 (vm-set-imap-stat-x-maxmsg statblob
-					    (length retrieve-list))
-		 (setq r-list retrieve-list)
-		 (while r-list
-		   (vm-set-imap-stat-x-currmsg statblob n)
-		   (setq message-size (vm-imap-get-message-size
-				       process (cdr (car r-list))))
-		   (vm-set-imap-stat-x-need statblob message-size)
-		   ;;----------------------------------
-		   (vm-imap-session-type:assert 'valid)
-		   ;;----------------------------------
-		   (vm-imap-fetch-message process (cdr (car r-list)) 
-					  use-body-peek vm-load-headers-only)
-		   (vm-imap-retrieve-to-target process folder-buffer
-					       statblob use-body-peek)
-		   (setq r-list (cdr r-list)
-			 n (1+ n))))
-	     (vm-imap-protocol-error
-	      (message "Retrieval from %s signaled: %s" safe-imapdrop
-		       error-data))
-	      ;; Continue with whatever messages have been read
-	     (quit
-	      (delete-region old-eob (point-max))
-	      (error (format "Quit received during retrieval from %s"
-			     safe-imapdrop))))
+	   (unwind-protect
+	       (condition-case error-data
+		   (save-excursion
+		     ;;----------------------------
+		     (vm-buffer-type:enter 'process)
+		     ;;----------------------------
+		     (set-buffer (process-buffer process))
+		     (setq statblob (vm-imap-start-status-timer))
+		     (vm-set-imap-stat-x-box statblob safe-imapdrop)
+		     (vm-set-imap-stat-x-maxmsg statblob
+						(length retrieve-list))
+		     (setq r-list (vm-imap-bunch-messages 
+				   (mapcar (function cdr) retrieve-list)))
+		     (while r-list
+		       (setq range (car r-list))
+		       (vm-set-imap-stat-x-currmsg statblob n)
+		       (setq message-size 
+			     (vm-imap-get-message-size
+			      process (car range))) ; sloppy
+		       (vm-set-imap-stat-x-need statblob message-size)
+		       ;;----------------------------------
+		       (vm-imap-session-type:assert 'valid)
+		       ;;----------------------------------
+		       (vm-imap-fetch-messages process (car range) (cdr range)
+					       use-body-peek vm-load-headers-only)
+		       (setq k (1+ (- (cdr range) (car range))))
+		       (while (> k 0)
+			 (vm-imap-retrieve-to-target process folder-buffer
+						     statblob use-body-peek)
+			 (setq k (1- k)))
+		       (vm-imap-read-ok-response process)
+		       (setq r-list (cdr r-list)
+			     n (+ n (1+ (- (cdr range) (car range)))))))
+		 (vm-imap-protocol-error
+		  (message "Retrieval from %s signaled: %s" safe-imapdrop
+			   error-data))
+		 ;; Continue with whatever messages have been read
+		 (quit
+		  (delete-region old-eob (point-max))
+		  (error (format "Quit received during retrieval from %s"
+				 safe-imapdrop))))
+	     ;; cleanup
+	     (when statblob 
+	       (vm-imap-stop-status-timer statblob))	   
+	     )
 	   ;;-------------------
 	   (vm-buffer-type:exit)
 	   ;;-------------------
-	   (and statblob (vm-imap-stop-status-timer statblob))
 	   ;; to make the "Mail" indicator go away
 	   (setq vm-spooled-mail-waiting nil)
 	   (intern (buffer-name) vm-buffers-needing-display-update)
@@ -2558,12 +2576,13 @@ operation of the server to minimize I/O."
 		      (delete nil
 			      (mapcar 
 			       (lambda (uid)
-				 (let ((key (intern uid uid-obarray)))
+				 (let* ((key (intern uid uid-obarray))
+					(n (symbol-value key)))
 				   (and (boundp key)
 					(progn
 					  (vm-imap-delete-message 
-					   process (symbol-value key))
-					  (symbol-value key)))))
+					   process n)
+					  n))))
 			       uids-to-delete)))
 		(setq m-list (cons nil (sort m-list '>)))
 					; dummy header added
@@ -2623,6 +2642,32 @@ operation of the server to minimize I/O."
 	(vm-imap-dump-uid-and-flags-data))
       got-some)))
 
+(defvar vm-imap-message-bunch-size 10
+  "* Number of messages in a bunch to be used for IMAP server
+operations")
+
+(defun vm-imap-bunch-messages (seq-nums)
+  ;; Given a sorted list of message sequence numbers, creates a list
+  ;; of bunched message sequences, each of the form 
+  ;; (begin-num . end-num)
+  (let ((seqs nil)
+	beg last next diff)
+    (when seq-nums
+      (setq beg (car seq-nums))
+      (setq last beg)
+      (setq seq-nums (cdr seq-nums)))
+    (while seq-nums
+      (setq next (car seq-nums))
+      (if (and (= (- next last) 1)
+	       (< (- next beg) vm-imap-message-bunch-size))
+	  (setq last next)
+	(setq seqs (cons (cons beg last) seqs))
+	(setq beg next)
+	(setq last next))
+      (setq seq-nums (cdr seq-nums)))
+    (setq seqs (cons (cons beg last) seqs))
+    (nreverse seqs)))
+
 (defun vm-fetch-imap-message (m)
   "Insert the message body of M in the current buffer."
   (let ((body-buffer (current-buffer)))
@@ -2649,7 +2694,7 @@ operation of the server to minimize I/O."
 	  (setq uid-key1 (intern-soft uid (vm-folder-imap-uid-obarray)))
 	  (setq uid-key2 (intern-soft uid (vm-folder-imap-flags-obarray))))
 	(setq message-num (symbol-value uid-key1))
-	(setq messize-size (string-to-number (car (symbol-value uid-key2))))
+	(setq message-size (string-to-number (car (symbol-value uid-key2))))
 
 	(message "Retrieving message body... ")
 	(condition-case error-data
@@ -2668,6 +2713,7 @@ operation of the server to minimize I/O."
 	      (vm-imap-fetch-message process message-num use-body-peek nil)
 	      (vm-imap-retrieve-to-target process body-buffer statblob
 				     use-body-peek)
+	      (vm-imap-read-ok-response process)
 	      ;;-------------------
 	      (vm-buffer-type:exit)
 	      ;;-------------------
