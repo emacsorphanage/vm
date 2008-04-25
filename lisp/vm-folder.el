@@ -1414,7 +1414,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
       (vm-set-labels-of message labels))))
 
 (defun vm-set-default-attributes (message-list)
-  (let ((mp (or message-list vm-message-list)) attr cache)
+  (let ((mp (or message-list vm-message-list)) attr access-method cache)
     (while mp
       (setq attr (make-vector vm-attributes-vector-length nil)
 	    cache (make-vector vm-cache-vector-length nil))
@@ -1427,6 +1427,11 @@ Supports version 4 format of attribute storage, for backward compatibility."
       ;; attributes from the buffer, the buffer attributes may be
       ;; untrustworthy.  tink the message stuff flag to force the
       ;; new attributes out if the user saves.
+      (setq access-method (vm-message-access-method-of (car mp)))
+      (cond ((eq access-method 'imap)
+	     (vm-imap-set-default-attributes (car mp)))
+	    ((eq access-method 'pop)
+	     (vm-pop-set-default-attributes (car mp))))
       (vm-set-stuff-flag-of (car mp) t)
       (setq mp (cdr mp)))))
 
@@ -1838,7 +1843,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
     (insert (format "X-Mozilla-Status2: %4x\n" status2))))
   
 ;; Add a X-VM-Storage header
-(defun vm-add-storage-header (&rest args)
+(defun vm-add-storage-header (mp &rest args)
   (save-excursion
     (let ((buffer-read-only nil)
 	  opoint)

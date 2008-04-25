@@ -1362,7 +1362,9 @@ on all the relevant IMAP servers and then immediately expunges."
 		     (vm-set-imap-stat-x-got statblob (- end ***start))
 		     (if (zerop (% (random) 10))
 			 (vm-imap-report-retrieval-status statblob)))))))
-	   (after-change-functions (cons func after-change-functions))
+	   ;; this seems to slow things down
+	   ;;(after-change-functions (cons func after-change-functions))
+	   
 	   (need-ok t)
 	   response)
       (setq response (vm-imap-read-response-and-verify process "message FETCH"))
@@ -2503,8 +2505,8 @@ operation of the server to minimize I/O."
 	   (setq got-some mp)
 	   (setq r-list retrieve-list)
 	   (while mp
-	     (if vm-load-headers-only 
-		 (vm-add-storage-header 'imap))
+	     ;; (if vm-load-headers-only 
+	     ;; 	 (vm-add-storage-header mp 'imap))
 	     (setq uid (car (car r-list)))
 	     (vm-set-imap-uid-of (car mp) uid)
 	     (vm-set-imap-uid-validity-of (car mp) uid-validity)
@@ -2675,13 +2677,12 @@ operations")
       ;;----------------------------------
       (vm-buffer-type:enter 'folder)
       ;;----------------------------------
-      (vm-select-folder-buffer)
+      (set-buffer (vm-buffer-of (vm-real-message-of m)))
       (let* ((statblob nil)
 	     (uid (vm-imap-uid-of m))
 	     (imapdrop (vm-folder-imap-maildrop-spec))
 	     (safe-imapdrop (vm-safe-imapdrop-string imapdrop))
-	     (process (or (vm-folder-imap-process)
-			  (vm-establish-new-folder-imap-session imapdrop)))
+	     (process (vm-re-establish-folder-imap-session imapdrop))
 	     (use-body-peek (vm-folder-imap-body-peek))
 	     (server-uid-validity (vm-folder-imap-uid-validity))
 	     (uid-key1 (intern-soft uid (vm-folder-imap-uid-obarray)))
@@ -3395,6 +3396,9 @@ order to capture the trace of IMAP sessions during the occurrence."
   ))
 
 
+(defun vm-imap-set-default-attributes (m)
+  (vm-set-retrieved-headers-of m t)
+  (vm-set-retrieved-body-of m (null vm-load-headers-only)))
 
 
 

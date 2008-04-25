@@ -738,13 +738,14 @@ Use mouse button 3 to choose a Web browser for the URL."
      ;; if we're using one for this message.
      (vm-unbury-buffer (current-buffer))
 
-     (let ((real-m (car vm-message-pointer)))
-       (if (= (vm-text-of real-m) (vm-text-end-of real-m))
-           (message "must fetch the body of %s ..." (vm-imap-uid-of real-m))
-	 (message "must NOT fetch the body of %s ..." (vm-imap-uid-of real-m))
-	 ;(let ((vm-message-pointer nil))
-	  ; (vm-discard-cached-data)))
-	   ))
+;;     (let ((real-m (car vm-message-pointer)))
+;;        (if (= (1+ (marker-position (vm-text-of real-m)))
+;; 	      (marker-position (vm-text-end-of real-m)))
+;;            (message "must fetch the body of %s ..." (vm-imap-uid-of real-m))
+;; 	 (message "must NOT fetch the body of %s ..." (vm-imap-uid-of real-m))
+;;	 (let ((vm-message-pointer nil))
+;;	   (vm-discard-cached-data)))
+;;	   ))
      
      (if (and vm-display-using-mime
 	      vm-auto-decode-mime-messages

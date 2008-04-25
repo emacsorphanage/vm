@@ -1184,6 +1184,10 @@ order to capture the trace of POP sessions during the occurrence."
     (vm-submit-bug-report nil (list trace-buffer-hook))
   ))
 
+(defun vm-pop-set-default-attributes (m)
+  (vm-set-retrieved-headers-of m t)
+  (vm-set-retrieved-body-of m t))
+
 
 (provide 'vm-pop)
 

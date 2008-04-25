@@ -81,6 +81,7 @@ chapters.
 * Using the Mouse::	Understanding the VM mouse interface.
 * Hooks::		How you can make VM run your code at certain times.
 * Bugs::                How to report VM bugs
+* Internals::           Information on VM internals for developers
 * License::		Copying and distribution terms for VM.
 
 Indices:
@@ -4007,7 +4008,7 @@ If this hook is entirely empty, i.e. @code{nil}, a default action is taken
 instead of no action.
 @end table
 
-@node Bugs, Concept Index, Hooks, Top
+@node Bugs, Internals, Hooks, Top
 @chapter Reporting Bugs
 @cindex bug reports
 
@@ -4038,6 +4039,25 @@ before the problem occurrence and @code{vm-pop-submit-bug-report}
 /@code{vm-imap-submit-bug-report} after the problem occurrence.  All
 the server intearactions during the interval are captured and
 automatically incldued in the bug-report.
+
+
+
+@node Internals, Concept Index, Bugs, Top
+@section VM Internals
+
+This section gives a sketchy overview of the VM internals for the
+developers/programmers. 
+
+@menu
+* Folder: Folder Internals:      Structure of the folders
+* Message: Message Internals:     Structure of the message data structure
+@end menu
+
+@node Folder Internals
+@subsection Folder Internals
+
+@node Message Internals
+@subsection Message Internals
 
 
 
