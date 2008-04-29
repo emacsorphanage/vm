@@ -2578,13 +2578,12 @@ operation of the server to minimize I/O."
 		      (delete nil
 			      (mapcar 
 			       (lambda (uid)
-				 (let* ((key (intern uid uid-obarray))
-					(n (symbol-value key)))
+				 (let* ((key (intern uid uid-obarray)))
 				   (and (boundp key)
 					(progn
 					  (vm-imap-delete-message 
-					   process n)
-					  n))))
+					   process (symbol-value key))
+					  (symbol-value key)))))
 			       uids-to-delete)))
 		(setq m-list (cons nil (sort m-list '>)))
 					; dummy header added
@@ -3266,90 +3265,106 @@ IMAP-FCC header.
 Add this to your `mail-send-hook' and start composing from an IMAP
 folder." 
   (let ((mailbox (vm-mail-get-header-contents "IMAP-FCC:"))
-	process flags response string)
-    (when mailbox
+	(mailboxes nil)
+	(fcc-string (vm-mail-get-header-contents "FCC:" ","))
+	fcc-list fcc maildrop spec-list 
+	process flags response string
+	(vm-imap-ok-to-ask t))
+    (if (null mailbox)
+	(setq mailboxes nil)
       (save-excursion
 	;;----------------------------
 	(vm-buffer-type:enter 'folder)
 	;;----------------------------
         (vm-select-folder-buffer)
 	(vm-establish-new-folder-imap-session)
+	(vm-imap-dump-uid-and-flags-data)
 	(setq process (vm-folder-imap-process))
+	(setq mailboxes (list (cons mailbox process)))
 	;;-------------------
 	(vm-buffer-type:exit)
 	;;-------------------
 	)
-      (save-excursion
-	;;------------------------
-	(vm-buffer-type:duplicate)
-	;;------------------------
-        (vm-mail-mode-remove-header "IMAP-FCC:")
-        (goto-char (point-min))
-        (re-search-forward (concat "^" (regexp-quote mail-header-separator) "$"))
-        (setq string (concat (buffer-substring (point-min) (match-beginning 0))
-                             (buffer-substring
-			      (match-end 0) (point-max))))
-	;; this can go awry if the process has died...
-	;;--------------------------
-	(vm-buffer-type:set 'process)
-	;;--------------------------
-        (set-buffer (process-buffer process))
-        (condition-case nil
-	     (vm-imap-create-mailbox process mailbox)
-	   (vm-imap-protocol-error nil))
-	;;----------------------------------
-	(vm-imap-session-type:assert-active)
-	;;----------------------------------
-        (vm-imap-send-command process
-                              (format "APPEND %s %s {%d}"
-                                      (vm-imap-quote-string mailbox)
-                                      (if flags flags "()")
-                                      (length string)))
-	;;--------------------------------
-	(vm-imap-session-type:set 'active)
-	;;--------------------------------
-	(vm-imap-dump-uid-and-flags-data)
-	;; could these be done with vm-imap-read-boolean-response?
-	(let ((need-plus t))
-	  (while need-plus
-	    (let ((response (vm-imap-read-response process)))
-	      (cond ((vm-imap-response-matches response 'VM 'NO)
-		     (vm-imap-protocol-error
-		      "server said NO to APPEND command"))
-		    ((vm-imap-response-matches response 'VM 'BAD)
-		     (vm-imap-protocol-error 
-		      "server said BAD to APPEND command"))
-		    ((vm-imap-response-matches response '* 'BYE)
-		     (vm-imap-protocol-error 
-		      "server said BYE to APPEND command"))
-		    ((vm-imap-response-matches response '+)
-		     (setq need-plus nil))))))
-	;;----------------------------------
-	(vm-imap-session-type:assert-active)
-	;;----------------------------------
-        (vm-imap-send-command process string nil t)
-	;;--------------------------------
-	(vm-imap-session-type:set 'active)
-	;;--------------------------------
-	(vm-imap-dump-uid-and-flags-data)
-	(let ((need-ok t))
-	  (while need-ok
-	    (let ((response (vm-imap-read-response process)))
-	      (cond ((vm-imap-response-matches response 'VM 'NO)
-		     (vm-imap-protocol-error "server said NO to APPEND data"))
-		    ((vm-imap-response-matches response 'VM 'BAD)
-		     (vm-imap-protocol-error "server said BAD to APPEND data"))
-		    ((vm-imap-response-matches response '* 'BYE)
-		     (vm-imap-protocol-error "server said BYE to APPEND data"))
-		    ((vm-imap-response-matches response 'VM 'OK)
-		     (setq need-ok nil))))))
+      (vm-mail-mode-remove-header "IMAP-FCC:")
+      )
+
+    (when fcc-string
+      (setq fcc-list (vm-parse fcc-string "\\([^,]+\\),?"))
+      (while fcc-list
+	(setq fcc (car fcc-list))
+	(setq spec-list (vm-parse fcc "\\([^:]+\\):?"))
+	(when (member (car spec-list) '("imap" "imap-ssl" "imap-ssh"))
+	  (setq process (vm-imap-make-session fcc))
+	  (setq mailboxes (cons (cons (nth 3 spec-list) process) 
+				mailboxes)))
+	(setq fcc-list (cdr fcc-list))))
+    
+    (goto-char (point-min))
+    (re-search-forward (concat "^" (regexp-quote mail-header-separator) "$"))
+    (setq string (concat (buffer-substring (point-min) (match-beginning 0))
+			 (buffer-substring
+			  (match-end 0) (point-max))))
+    
+    (while mailboxes
+      (setq mailbox (car (car mailboxes)))
+      (setq process (cdr (car mailboxes)))
+      (unwind-protect
+	  (save-excursion
+	    ;;-----------------------------
+	    (vm-buffer-type:enter 'process)
+	    ;;-----------------------------
+	    ;; this can go awry if the process has died...
+	    (set-buffer (process-buffer process))
+	    (condition-case nil
+		(vm-imap-create-mailbox process mailbox)
+	      (vm-imap-protocol-error nil))
+	    ;;----------------------------------
+	    (vm-imap-session-type:assert-active)
+	    ;;----------------------------------
+
+	    (vm-imap-send-command process
+				  (format "APPEND %s %s {%d}"
+					  (vm-imap-quote-string mailbox)
+					  (if flags flags "()")
+					  (length string)))
+	    ;; could these be done with vm-imap-read-boolean-response?
+	    (let ((need-plus t) response)
+	      (while need-plus
+		(setq response (vm-imap-read-response process))
+		(cond ((vm-imap-response-matches response 'VM 'NO)
+		       (vm-imap-protocol-error
+			"server said NO to APPEND command"))
+		      ((vm-imap-response-matches response 'VM 'BAD)
+		       (vm-imap-protocol-error 
+			"server said BAD to APPEND command"))
+		      ((vm-imap-response-matches response '* 'BYE)
+		       (vm-imap-protocol-error 
+			"server said BYE to APPEND command"))
+		      ((vm-imap-response-matches response '+)
+		       (setq need-plus nil)))))
+
+	    (vm-imap-send-command process string nil t)
+	    (let ((need-ok t) response)
+	      (while need-ok
+
+		(setq response (vm-imap-read-response process))
+		(cond ((vm-imap-response-matches response 'VM 'NO)
+		       (vm-imap-protocol-error "server said NO to APPEND data"))
+		      ((vm-imap-response-matches response 'VM 'BAD)
+		       (vm-imap-protocol-error "server said BAD to APPEND data"))
+		      ((vm-imap-response-matches response '* 'BYE)
+		       (vm-imap-protocol-error "server said BYE to APPEND data"))
+		      ((vm-imap-response-matches response 'VM 'OK)
+		       (setq need-ok nil)))))
+	    ;;-------------------
+	    (vm-buffer-type:exit)
+	    ;;-------------------
+	    )
 	(when (and (processp process)
-		     (memq (process-status process) '(open run)))
-	  (vm-imap-end-session process))
-	;;-------------------
-	(vm-buffer-type:exit)
-	;;-------------------
-	))))
+		   (memq (process-status process) '(open run)))
+	  (vm-imap-end-session process)))
+      (setq mailboxes (cdr mailboxes)))
+    ))
 
 (defun vm-imap-start-bug-report ()
   "Begin to compose a bug report for IMAP support functionality."
@@ -3400,6 +3415,17 @@ order to capture the trace of IMAP sessions during the occurrence."
   (vm-set-retrieved-headers-of m t)
   (vm-set-retrieved-body-of m (null vm-load-headers-only)))
 
+(defun vm-imap-set-retrieved-bodies ()
+  "Set the retrieved-body flag of all the messages.  Needed for
+converting old IMAP folders."
+  (interactive)
+  (save-excursion
+   (vm-select-folder-buffer)
+   (let ((mp vm-message-pointer))
+     (while mp
+       (vm-set-retrieved-body-of (car mp) t)
+       (setq mp (cdr mp)))
+     )))
 
 
 (provide 'vm-imap)

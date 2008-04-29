@@ -4061,23 +4061,23 @@ developers/programmers.
 
 
 
-@node Concept Index, Key Index, Bugs, Top
+@node Concept Index, Bugs, Key Index, Top
 @unnumbered Concept Index
 @printindex cp
 
-@node Key Index, Command Index, Concept Index, Top
+@node Key Index, Concept Index, Command Index, Top
 @unnumbered Key Index
 @printindex ky
 
-@node Command Index, Variable Index, Key Index, Top
+@node Command Index, Key Index, Variable Index, Top
 @unnumbered Command Index
 @printindex fn
 
-@node Variable Index, License, Command Index, Top
+@node Variable Index, Command Index, License, Top
 @unnumbered Variable Index
 @printindex vr
 
-@node License,, Variable Index, Top
+@node License, Variable Index,, Top
 @unnumbered GNU GENERAL PUBLIC LICENSE
 @center Version 2, June 1991
 

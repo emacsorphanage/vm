@@ -4,7 +4,7 @@
 bzr="bzr --no-plugins --no-aliases"
 $bzr rocks > /dev/null || (echo "ERROR: cannot run bzr." && exit 1)
 nick=`$bzr nick`
-news=`$bzr root`/NEWS
+news=/cygdrive/c/gnu/vm-trunk/NEWS
 devo=`head -1 $news | fgrep -s devo > /dev/null && echo devo`
 revno=`$bzr revno`
 
