@@ -66,6 +66,7 @@ OBJECTS = auto-autoloads.elc custom-load.elc
 endif
 
 OBJECTS += vm-revno.elc
+OBJECTS += $(SOURCES:.el=.elc)
 
 INSTALL_FILES += $(OBJECTS:.elc=.el) $(OBJECTS)
 
