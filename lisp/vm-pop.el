@@ -1185,8 +1185,8 @@ order to capture the trace of POP sessions during the occurrence."
   ))
 
 (defun vm-pop-set-default-attributes (m)
-  (vm-set-retrieved-headers-of m t)
-  (vm-set-retrieved-body-of m t))
+  (vm-set-headers-to-be-retrieved m nil)
+  (vm-set-body-to-be-retrieved m nil))
 
 
 (provide 'vm-pop)

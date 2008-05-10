@@ -1423,15 +1423,15 @@ Supports version 4 format of attribute storage, for backward compatibility."
       ;; make message be new by default, but avoid vm-set-new-flag
       ;; because it asks for a summary update for the message.
       (vm-set-new-flag-of (car mp) t)
-      ;; since this function is usually called in lieu of reading
-      ;; attributes from the buffer, the buffer attributes may be
-      ;; untrustworthy.  tink the message stuff flag to force the
-      ;; new attributes out if the user saves.
       (setq access-method (vm-message-access-method-of (car mp)))
       (cond ((eq access-method 'imap)
 	     (vm-imap-set-default-attributes (car mp)))
 	    ((eq access-method 'pop)
 	     (vm-pop-set-default-attributes (car mp))))
+      ;; since this function is usually called in lieu of reading
+      ;; attributes from the buffer, the buffer attributes may be
+      ;; untrustworthy.  tink the message stuff flag to force the
+      ;; new attributes out if the user saves.
       (vm-set-stuff-flag-of (car mp) t)
       (setq mp (cdr mp)))))
 

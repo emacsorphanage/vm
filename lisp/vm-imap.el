@@ -3412,20 +3412,37 @@ order to capture the trace of IMAP sessions during the occurrence."
 
 
 (defun vm-imap-set-default-attributes (m)
-  (vm-set-retrieved-headers-of m t)
-  (vm-set-retrieved-body-of m (null vm-load-headers-only)))
+  (vm-set-headers-to-be-retrieved m nil)
+  (vm-set-body-to-be-retrieved m vm-load-headers-only))
 
-(defun vm-imap-set-retrieved-bodies ()
-  "Set the retrieved-body flag of all the messages.  Needed for
-converting old IMAP folders."
+(defun vm-imap-unset-body-retrieve ()
+  "Unset the body-to-be-retrieved flag of all the messages.  May
+  be needed if the folder has become corrupted somehow."
   (interactive)
   (save-excursion
    (vm-select-folder-buffer)
-   (let ((mp vm-message-pointer))
+   (let ((mp vm-message-list))
      (while mp
-       (vm-set-retrieved-body-of (car mp) t)
-       (setq mp (cdr mp)))
-     )))
+       (vm-set-body-to-be-retrieved (car mp) nil)
+       ;; (vm-set-retrieved-body-of (car mp) nil)
+       (setq mp (cdr mp))))
+   (message "Marked %s messages as having retrieved bodies" 
+	    (length vm-message-list))
+   ))
+
+(defun vm-imap-unset-byte-counts ()
+  "Unset the byte counts of all the messages, so that the size of the
+downloaded bodies will be displayed."
+  (interactive)
+  (save-excursion
+   (vm-select-folder-buffer)
+   (let ((mp vm-message-list))
+     (while mp
+       (vm-set-byte-count-of (car mp) nil)
+       (setq mp (cdr mp))))
+   (message "Unset the byte counts of %s messages" 
+	    (length vm-message-list))
+   ))
 
 
 (provide 'vm-imap)

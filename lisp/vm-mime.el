@@ -1394,7 +1394,7 @@ shorter pieces, rebuilt it from them."
 	;; fetch the real message now
 	(goto-char (point-min))
 	(cond ((and (vm-message-access-method-of mm)
-		    (not (vm-retrieved-body-of mm)))
+		    (vm-body-to-be-retrieved mm))
 	       (vm-fetch-message 
 		(list (vm-message-access-method-of mm)) mm))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
