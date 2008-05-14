@@ -430,7 +430,9 @@ mandatory."
 	(setq token (car tokens))
 	(cond ((stringp token)
 	       (if vm-display-using-mime
-		   (insert (vm-decode-mime-encoded-words-in-string token))
+		   (let ((vm-mime-qp-decoder-program nil) ; speed up decoding
+			 (vm-mime-base64-decoder-program nil))
+		     (insert (vm-decode-mime-encoded-words-in-string token)))
 		 (insert token)))
 	      ((eq token 'group-begin)
 	       (setq group-list (cons (list (point) (nth 1 tokens)
