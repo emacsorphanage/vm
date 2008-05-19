@@ -30,6 +30,11 @@ Prefix argument N means scroll forward N lines."
   (let ((mp-changed (vm-follow-summary-cursor))
 	needs-decoding 
 	(was-invisible nil))
+    ;; the following vodoo was added by USR for fixing the jumping
+    ;; cursor problem in the summary window, reported on May 4, 2008
+    ;; in gnu.emacs.vm.info, title "Re: synchronization of vm buffers"
+    (if mp-changed (sit-for 0))
+
     (vm-select-folder-buffer)
     (vm-check-for-killed-summary)
     (vm-check-for-killed-presentation)
