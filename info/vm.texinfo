@@ -2426,6 +2426,10 @@ messages to be undeleted.
 @item k (@code{vm-kill-subject})
 Flags all messages with the same subject as the current message (ignoring
 ``Re:'') for deletion.
+@findex vm-delete-duplicate-messages
+@item @code{vm-delete-duplicate-messages}
+Flags duplicates messages for deletion.  The duplicate messages are
+detected by comparing message bodies.
 @findex vm-expunge-folder
 @kindex ###
 @item ### (@code{vm-expunge-folder})
@@ -2541,7 +2545,7 @@ applied to such messages in a meaningful and useful way.  Unfortunately,
 as of this writing, this mechanism works only if the next command
 invoked is a keyboard command.  Commands invoked by @code{M-x} are
 unable to access the marked messages.  So, to invoke a complex command,
-you might temporary bind to an unused key, e.g.,
+you might temporarily bind it to an unused key, e.g.,
 
 @example
 M-x local-set-key C vm-forward-message-all-headers
@@ -2940,7 +2944,7 @@ change the @code{vm-summary-format}, you need to force the cache to be
 updated.  You can do this by the command@code{vm-fix-my-summary!!!}.
 
 Every folder can have its own summary format.  The format is written
-into the folder and saved on its disk.  When you visit the folder
+into the folder and saved on the disk.  When you visit the folder
 again, you can reuse the saved summary format.  Set the variable
 @code{vm-restore-saved-summary-format} to t to achieve this effect.
 

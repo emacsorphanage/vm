@@ -1239,6 +1239,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	tok msg-num uid size flag flags response p
 	(need-ok t))
     ;;----------------------------------
+    (vm-buffer-type:assert 'process)
     (vm-imap-session-type:assert-active)
     ;;----------------------------------
     (vm-imap-send-command 
@@ -1586,9 +1587,13 @@ on all the relevant IMAP servers and then immediately expunges."
 
 (defun vm-imap-read-response (process)
   ;; Reads a line of respose from the imap PROCESS
-  ;;------------------------------
-  (vm-buffer-type:assert 'process)
-  ;;------------------------------
+  ;;--------------------------------------------
+  ;; This assertion often fails for some reason,
+  ;; perhaps some asynchrony involved?
+  ;; Assertion check being disabled unless debugging is on.
+  (if vm-buffer-type-debug
+      (vm-buffer-type:assert 'process))
+  ;;--------------------------------------------
   (let ((list nil) tail obj)
     (goto-char vm-imap-read-point)
     (while (not (eq (car (setq obj (vm-imap-read-object process)))

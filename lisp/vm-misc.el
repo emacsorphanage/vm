@@ -1042,16 +1042,32 @@ Otherwise treat `\\' in NEWTEXT as special:
 
 ;; (defvar vm-buffer-types nil)    ; moved to vm-vars.el
 
+(defvar vm-buffer-type-debug nil)	; for debugging asynchronous
+					; buffer change errors
+(defvar vm-buffer-type-trail nil)
+
 (defun vm-buffer-type:enter (type)
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail 
+	    (cons type (cons 'enter vm-buffer-type-trail))))
   (setq vm-buffer-types (cons type vm-buffer-types)))
 
 (defun vm-buffer-type:exit ()
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail (cons 'exit vm-buffer-type-trail)))
   (setq vm-buffer-types (cdr vm-buffer-types)))
 
 (defun vm-buffer-type:duplicate ()
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail (cons (car vm-buffer-type-trail)
+				       vm-buffer-type-trail)))
   (setq vm-buffer-types (cons (car vm-buffer-types) vm-buffer-types)))
 
 (defun vm-buffer-type:set (type)
+;;   (if (eq type 'folder)
+;;       (debug))
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail (cons type vm-buffer-type-trail)))
   (if vm-buffer-types
       (rplaca vm-buffer-types type)
     (setq vm-buffer-types (cons type vm-buffer-types))))
