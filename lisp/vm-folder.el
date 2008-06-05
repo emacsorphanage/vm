@@ -1230,7 +1230,11 @@ vm-folder-type is initialized here."
 	    (condition-case ()
 		(progn
 		  (setq oldpoint (point)
-			data (read (current-buffer)))
+			data (car (read-from-string
+				   (decode-coding-string
+				    (buffer-substring
+				     (match-beginning 2) (match-end 2))
+				    'utf-8))))
 		  (if (and (or (not (listp data)) (not (> (length data) 1)))
 			   (not (vectorp data)))
 		      (progn
@@ -1806,8 +1810,9 @@ vm-folder-type is initialized here."
 	      (let ((print-escape-newlines t))
 		(prin1-to-string attributes))
 	      "\n\t"
-	      (let ((print-escape-newlines t))
-		(prin1-to-string cache))
+	      (string-as-unibyte
+	       (let ((print-escape-newlines t))
+		 (prin1-to-string cache)))
 	      "\n\t"
 	      (let ((print-escape-newlines t))
 		(prin1-to-string (vm-labels-of m)))
