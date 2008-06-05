@@ -1445,7 +1445,7 @@ should be encoded together."
 	      (let ((case-fold-search nil))
 		(re-search-forward vm-mime-encode-headers-words-regexp hend t))
             (setq start (match-beginning 1)
-                  end   (match-end 1)
+                  end   (vm-marker (match-end 1))
                   charset (or (vm-determine-proper-charset start end)
                               vm-mime-8bit-composition-charset)
                   coding (vm-string-assoc charset vm-mime-mule-charset-to-coding-alist)
@@ -1455,12 +1455,7 @@ should be encoded together."
             (insert "?=")
             ;; encode coding system body
             (when (and coding (not (eq coding 'no-conversion)))
-              (goto-char end)
-              ;; this is a bug of encode-coding-region, it does not return
-              ;; the right length of the new text, but always 0
-              (let ((old-buffer-size (buffer-size)))
-                (encode-coding-region start end coding)
-                (setq end (+ end (- (buffer-size) old-buffer-size)))))
+              (encode-coding-region start end coding))
             ;; encode unprintable chars in header
             (vm-mime-Q-encode-region start end)
             ;; insert start mark
