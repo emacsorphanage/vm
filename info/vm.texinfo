@@ -98,10 +98,17 @@ advanced commands that do tasks like bursting and creating digests,
 message forwarding, and organizing message presentation according to
 various criteria.
 
+You can make VM your default mail user agent by setting @code{mail-user-agent}
+to @code{vm-user-agent}, e.g. by @kbd{M-x} @code{customize-variable} @kbd{RET}
+@code{mail-user-agent} @kbd{RET}.
+
 To invoke VM, type @kbd{M-x vm}.  VM gathers any mail that has
 arrived in your system mailbox and appends it to a file known as your
 @dfn{primary inbox}, and visits that file for reading.  @xref{Starting Up}.
 A file visited for reading by VM is called the @dfn{current folder}.
+
+If you type @kbd{?} in a VM folder buffer you will get some help, i.e.
+@code{vm-help} is called.
 
 @findex vm-scroll-forward
 @findex vm-scroll-backward
@@ -136,6 +143,8 @@ change your mind about deleting a message, select it and type @kbd{u}
 the current folder is called @dfn{expunging} and it is accomplished by
 typing @kbd{###} (@code{vm-expunge-folder}).  The message is still present
 in the on-disk version of the folder until the folder is saved.
+
+To delete duplicates type @kbd{M-x} (@code{vm-delete-duplicate-messages}). 
 
 Typing @kbd{h} (@code{vm-summarize}) causes VM to display a window
 containing a summary of the contents of the current folder.  The summary is

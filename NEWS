@@ -7,6 +7,9 @@ VM 8.0.10-devo
 
   IMPROVEMENTS:
 
+    * Added missing documentation for `vm-user-agent', "?" binding and
+      'vm-delete-duplicate-messages'.  (Thanks to Alan Wehmann)
+
     * `vm-message-history.el' now uses a buffer similar to the summary for
       browsing the history.  The buffer replaces the summary buffer when
       present.  Duplicate history entries will be removed.  
