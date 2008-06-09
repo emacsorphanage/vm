@@ -337,7 +337,7 @@
 		  ;;----------------------------------
 		  (vm-imap-session-type:set 'inactive)
 		  ;;----------------------------------
-		  (vm-imap-dump-uid-and-flags-data)))
+		  )
 	    (not (equal retrieved 0))
 	    ;;-------------------
 	    (vm-buffer-type:exit)
@@ -347,10 +347,11 @@
       (if (and (eq vm-flush-interval t) (not (equal retrieved 0)))
 	  (vm-stuff-imap-retrieved))
       (when statblob 
-	(vm-imap-stop-status-timer statblob))
+	(vm-imap-stop-status-timer statblob)))
+      ;; unwind-protections
       (when process
-	(vm-imap-end-session process)
-	(vm-imap-dump-uid-and-flags-data)))))
+	(vm-imap-end-session process))
+      )))
 
 (defun vm-imap-check-mail (source)
   ;;--------------------------
@@ -419,9 +420,11 @@
 	      ;;-------------------
 	      )
 	  (setq vm-imap-retrieved-messages retrieved))
+      ;; unwind-protections
       (when process 
 	(vm-imap-end-session process)
-	(vm-imap-dump-uid-and-flags-data)))))
+	;; (vm-imap-dump-uid-and-flags-data)
+	))))
 
 (defun vm-expunge-imap-messages ()
   "Deletes all messages from IMAP mailbox that have already been retrieved
@@ -475,7 +478,8 @@ on all the relevant IMAP servers and then immediately expunges."
 				      ;;----------------------------------
 				      (vm-imap-session-type:set 'inactive)
 				      ;;----------------------------------
-				      (vm-imap-dump-uid-and-flags-data)))
+				      ;; (vm-imap-dump-uid-and-flags-data)
+				      ))
 				(vm-imap-end-session process)
 				
 				(setq process nil
@@ -561,7 +565,8 @@ on all the relevant IMAP servers and then immediately expunges."
 		;;----------------------------------
 		(vm-imap-session-type:set 'inactive)
 		;;----------------------------------
-		(vm-imap-dump-uid-and-flags-data)))
+		;; (vm-imap-dump-uid-and-flags-data)
+		))
 	  (if trouble
 	      (progn
 		;;--------------------------
