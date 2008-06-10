@@ -1064,10 +1064,10 @@ Otherwise treat `\\' in NEWTEXT as special:
   (setq vm-buffer-types (cons (car vm-buffer-types) vm-buffer-types)))
 
 (defun vm-buffer-type:set (type)
-;;   (if (eq type 'folder)
-;;       (debug))
-  (if vm-buffer-type-debug
-      (setq vm-buffer-type-trail (cons type vm-buffer-type-trail)))
+  (when vm-buffer-type-debug
+    (if (and (eq type 'folder) (cdr vm-buffer-types))
+	(debug))
+    (setq vm-buffer-type-trail (cons type vm-buffer-type-trail)))
   (if vm-buffer-types
       (rplaca vm-buffer-types type)
     (setq vm-buffer-types (cons type vm-buffer-types))))

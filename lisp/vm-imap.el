@@ -912,7 +912,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	  (vm-imap-end-session process-to-shutdown t))
       (vm-tear-down-stunnel-random-data))))
 
-;; Kill the IMAP session represented by PROCES.  If the optional
+;; Kill the IMAP session represented by PROCESS.  If the optional
 ;; argument KEEP-BUFFER is non-nil, the process buffer is retained,
 ;; otherwise it is killed as well
 
@@ -1244,6 +1244,8 @@ on all the relevant IMAP servers and then immediately expunges."
 	tok msg-num uid size flag flags response p
 	(need-ok t))
     ;;----------------------------------
+    (if vm-buffer-type-debug
+	(setq vm-buffer-type-trail (cons 'message-data vm-buffer-type-trail)))
     (vm-buffer-type:assert 'process)
     (vm-imap-session-type:assert-active)
     ;;----------------------------------
@@ -1473,6 +1475,7 @@ on all the relevant IMAP servers and then immediately expunges."
 
 (defun vm-imap-delete-messages (process beg end)
   ;;----------------------------------
+  (vm-buffer-type:assert 'process)
   (vm-imap-session-type:assert 'valid)
   ;;----------------------------------
   (vm-imap-send-command process (format "STORE %d:%d +FLAGS.SILENT (\\Deleted)"
@@ -1486,6 +1489,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	(need-size t)
 	(need-ok t))
     ;;----------------------------------
+    (vm-buffer-type:assert 'process)
     (vm-imap-session-type:assert 'valid)
     ;;----------------------------------
     (vm-imap-send-command process (format "FETCH %d:%d (RFC822.SIZE)" n n))
@@ -1506,6 +1510,9 @@ on all the relevant IMAP servers and then immediately expunges."
     size ))
 
 (defun vm-imap-read-capability-response (process)
+  ;;----------------------------------
+  (vm-buffer-type:assert 'process)
+  ;;----------------------------------
   (let (response r cap-list auth-list (need-ok t))
     (while need-ok
       (setq response (vm-imap-read-response-and-verify process "CAPABILITY"))
@@ -1543,6 +1550,9 @@ on all the relevant IMAP servers and then immediately expunges."
       nil)))
 
 (defun vm-imap-read-greeting (process)
+  ;;----------------------------------
+  (vm-buffer-type:assert 'process)
+  ;;----------------------------------
   (let (response)
     (setq response (vm-imap-read-response process))
     (cond ((vm-imap-response-matches response '* 'OK)
@@ -1552,6 +1562,9 @@ on all the relevant IMAP servers and then immediately expunges."
 	  (t nil))))
 
 (defun vm-imap-read-ok-response (process)
+  ;;----------------------------------
+  (vm-buffer-type:assert 'process)
+  ;;----------------------------------
   (let (response retval (done nil))
     (while (not done)
       (setq response (vm-imap-read-response process))
@@ -1598,6 +1611,8 @@ on all the relevant IMAP servers and then immediately expunges."
   ;; Assertion check being disabled unless debugging is on.
   (if vm-buffer-type-debug
       (vm-buffer-type:assert 'process))
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail (cons 'read vm-buffer-type-trail)))
   ;;--------------------------------------------
   (let ((list nil) tail obj)
     (goto-char vm-imap-read-point)
@@ -1614,6 +1629,15 @@ on all the relevant IMAP servers and then immediately expunges."
   ;; Reads a line of response from the imap PROCESS and checks for
   ;; standard errors like "BAD" and "BYE".  Optional COMMAND-DESC is a
   ;; command description that can be printed with the error message.
+  ;;--------------------------------------------
+  ;; This assertion often fails for some reason,
+  ;; perhaps some asynchrony involved?
+  ;; Assertion check being disabled unless debugging is on.
+  (if vm-buffer-type-debug
+      (vm-buffer-type:assert 'process))
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail (cons 'verify vm-buffer-type-trail)))
+  ;;--------------------------------------------
   (let ((response (vm-imap-read-response process)))
     (if (vm-imap-response-matches response 'VM 'NO)
 	(vm-imap-protocol-error
@@ -1627,6 +1651,9 @@ on all the relevant IMAP servers and then immediately expunges."
     response))
 
 (defun vm-imap-read-object (process &optional skip-eol)
+  ;;----------------------------------
+  (vm-buffer-type:assert 'process)
+  ;;----------------------------------
   (let ((done nil)
 	opoint
 	(token nil))
@@ -1858,37 +1885,41 @@ on all the relevant IMAP servers and then immediately expunges."
     (if (processp process)
 	(vm-imap-end-session process))
     (setq process (vm-imap-make-session (vm-folder-imap-maildrop-spec)))
-    (vm-set-folder-imap-process process)
-    (setq mailbox (vm-imap-parse-spec-to-list (vm-folder-imap-maildrop-spec))
-	  mailbox (nth 3 mailbox))
-    (save-excursion
-      ;;----------------------------
-      (vm-buffer-type:enter 'process)
-      ;;----------------------------
-      (set-buffer (process-buffer process))
-      (setq select (vm-imap-select-mailbox process mailbox))
-      (setq mailbox-count (nth 0 select)
-	    uid-validity (nth 1 select)
-	    read-write (nth 2 select)
-	    can-delete (nth 3 select)
-	    permanent-flags (nth 4 select)
-	    body-peek (vm-imap-capability 'IMAP4REV1))
-      ;;---------------------------------
-      (vm-imap-session-type:set 'active)
-      (vm-buffer-type:exit)
-      ;;---------------------------------
-      )
-    (vm-set-folder-imap-uid-validity uid-validity) ; unique per session
-    (vm-set-folder-imap-mailbox-count mailbox-count)
-    (vm-set-folder-imap-read-write read-write)
-    (vm-set-folder-imap-can-delete can-delete)
-    (vm-set-folder-imap-body-peek body-peek)
-    (vm-set-folder-imap-permanent-flags permanent-flags)
-    (vm-imap-dump-uid-and-flags-data)
-    process ))
+    (when (processp process)
+      (vm-set-folder-imap-process process)
+      (setq mailbox (vm-imap-parse-spec-to-list (vm-folder-imap-maildrop-spec))
+	    mailbox (nth 3 mailbox))
+      (save-excursion
+	;;----------------------------
+	(vm-buffer-type:enter 'process)
+	;;----------------------------
+	(set-buffer (process-buffer process))
+	(setq select (vm-imap-select-mailbox process mailbox))
+	(setq mailbox-count (nth 0 select)
+	      uid-validity (nth 1 select)
+	      read-write (nth 2 select)
+	      can-delete (nth 3 select)
+	      permanent-flags (nth 4 select)
+	      body-peek (vm-imap-capability 'IMAP4REV1))
+	;;---------------------------------
+	(vm-imap-session-type:set 'active)
+	(vm-buffer-type:exit)
+	;;---------------------------------
+	)
+      (vm-set-folder-imap-uid-validity uid-validity) ; unique per session
+      (vm-set-folder-imap-mailbox-count mailbox-count)
+      (vm-set-folder-imap-read-write read-write)
+      (vm-set-folder-imap-can-delete can-delete)
+      (vm-set-folder-imap-body-peek body-peek)
+      (vm-set-folder-imap-permanent-flags permanent-flags)
+      (vm-imap-dump-uid-and-flags-data)
+      process )))
 
 (defun vm-imap-retrieve-uid-and-flags-data ()
   ;;------------------------------
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail (cons 'uid-and-flags-data 
+				       vm-buffer-type-trail)))
   (vm-buffer-type:assert 'folder)
   ;;------------------------------
   (if (vm-folder-imap-uid-list)
@@ -2323,6 +2354,9 @@ operation of the server to minimize I/O."
   ;; STALE-LIST component was added to fix this.
   
   ;;-----------------------------
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail (cons 'synchronization-data
+				       vm-buffer-type-trail)))
   (vm-buffer-type:assert 'folder)
   ;;-----------------------------
   (let ((here (make-vector 67 0))	; OBARRAY(uid, vm-message)
@@ -2394,6 +2428,8 @@ operation of the server to minimize I/O."
   ;; separate.  It doesn't make sense to do one but not the other!
 
   ;;--------------------------
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail (cons 'synchronize vm-buffer-type-trail)))
   (vm-buffer-type:set 'folder)
   ;;--------------------------
   (if (and do-retrieves vm-block-new-mail)
