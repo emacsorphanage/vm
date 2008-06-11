@@ -82,7 +82,6 @@ chapters.
 * Hooks::		How you can make VM run your code at certain times.
 * Bugs::                How to report VM bugs
 * Internals::           Information on VM internals for developers
-* License::		Copying and distribution terms for VM.
 
 Indices:
 
@@ -90,6 +89,11 @@ Indices:
 * Key Index::		Menus of command keys and their references.
 * Command Index::	Menus of commands and their references.
 * Variable Index::	Menus of variables and their references.
+
+Rights:
+* License::		Copying and distribution terms for VM.
+
+
 @end menu
 @end ifnottex
 
@@ -4047,21 +4051,21 @@ automatically incldued in the bug-report.
 
 
 @node Internals, Concept Index, Bugs, Top
-@section VM Internals
+@chapter VM Internals
 
 This section gives a sketchy overview of the VM internals for the
 developers/programmers. 
 
 @menu
-* Folder Internals: Folder Internals:      Structure of the folders
-* Message Internals: Message Internals:     Structure of the message data structure
+* Folder Internals::      Structure of the folders
+* Message Internals::     Structure of the message data structure
 @end menu
 
-@node Folder Internals, , , Internals
-@subsection Folder Internals
+@node Folder Internals, Message Internals , , Internals
+@section Folder Internals
 
-@node Message Internals, , , Internals
-@subsection Message Internals
+@node Message Internals, , Folder Internals, Internals
+@section Message Internals
 
 
 
