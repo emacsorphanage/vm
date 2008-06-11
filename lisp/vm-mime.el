@@ -1360,10 +1360,11 @@ shorter pieces, rebuilt it from them."
 	;; wrong.
 	(vm-vheaders-of real-m)
 	(set-buffer b)
+	;; do not keep undo information in presentation buffers 
+	(setq buffer-undo-list t)
 	(widen)
 	(let ((buffer-read-only nil)
 	      (inhibit-read-only t)
-	      (buffer-undo-list t)
 	      (modified (buffer-modified-p)))
 	  (unwind-protect
 	      (progn
