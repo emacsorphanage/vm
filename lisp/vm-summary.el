@@ -264,7 +264,10 @@ mandatory."
 		  ;; summary entry. We achieve (1) by inserting a
 		  ;; placeholder character at the end of the
 		  ;; summary entry before deleting the region.
+                  (goto-char (vm-su-end-of m)) 		
+                  (insert-before-markers "z")
 		  (goto-char (vm-su-start-of m))
+		  (delete-region (point) (1- (vm-su-end-of m)))
 		  (if (not selected)
                       (if (not (get-text-property (point) 'thread-end))
                           (insert vm-summary-no-=>)
@@ -279,8 +282,8 @@ mandatory."
                           (insert "+>")
                         (insert "->"))))
 		  (vm-tokenized-summary-insert m (vm-su-summary m))
-		  (delete-region (point) (vm-su-end-of m))
-		  (run-hooks 'vm-summary-update-hook)
+                  (delete-char 1)
+                  (run-hooks 'vm-summary-update-hook)
 		  (and do-mouse-track
 		       (vm-mouse-set-mouse-track-highlight
 			(vm-su-start-of m)

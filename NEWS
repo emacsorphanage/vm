@@ -119,6 +119,9 @@ VM 8.0.10-devo
 
   IMPROVEMENTS:
 
+    * Added missing documentation for `vm-user-agent', "?" binding and
+      'vm-delete-duplicate-messages'.  (Thanks to Alan Wehmann)
+
     * `vm-message-history.el' now uses a buffer similar to the summary for
       browsing the history.  The buffer replaces the summary buffer when
       present.  Duplicate history entries will be removed.  
@@ -146,6 +149,12 @@ VM 8.0.10-devo
       actual reason for this was unclear so it has been removed.
 
     * Correctly handle `vm-enable-addons' being t.
+
+    * Correctly store UTF-8 strings in the X-VM-v5-Data header to avoid
+      corruption of summay lines. (Thanks to Yuning Feng for the patch)
+
+    * Correctly encode multibyte subjects. (Thanks to Yuning Feng for the
+      patch) 
 
 VM 8.0.9
 
