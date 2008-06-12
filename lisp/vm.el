@@ -1173,9 +1173,9 @@ from your message.")
       (insert "VM-BUG: "))))
 
 (defun vm-edit-init-file ()
-  "Edit the ~/.vm."
+  "Edit the `vm-init-file'."
   (interactive)
-  (find-file-other-frame "~/.vm"))
+  (find-file-other-frame vm-init-file))
 
 (defun vm-load-init-file (&optional interactive)
   (interactive "p")

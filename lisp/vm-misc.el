@@ -844,16 +844,67 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
   (while (re-search-forward "[ \t\n]+" nil 0)
     (replace-match " " t t)))
 
+(defvar vm-paragraph-prefix-regexp "^[ >]*"
+  "A regexp used by `vm-forward-paragraph' to match paragraph prefixes.")
+
+(defvar vm-empty-line-regexp "^[ \t>]*$"
+  "A regexp used by `vm-forward-paragraph' to match paragraph prefixes.")
+
+(defun vm-skip-empty-lines ()
+  "Move forward as long as current line matches `vm-empty-line-regexp'."
+  (while (and (not (eobp)) 
+	      (looking-at vm-empty-line-regexp))
+    (forward-line 1)))
+
+(defun vm-forward-paragraph ()
+  "Move forward to end of paragraph and do it also right for quoted text.
+As a side-effect set `fill-prefix' to the paragraphs prefix.
+Returns t if there was a line longer than `fill-column'."
+  (let ((long-line)
+	(line-no 1)
+	len-fill-prefix)
+    (setq fill-prefix nil)
+    (while (and 
+	    ;; stop at end of buffer
+	    (not (eobp)) 
+	    ;; empty lines break paragraphs
+	    (not (looking-at "^[ \t]*$"))
+	    ;; do we see a prefix
+	    (looking-at vm-paragraph-prefix-regexp)
+	    (let ((m (match-string 0))
+		  lenm)
+	      (or (and (null fill-prefix)
+		       ;; save prefix for next line
+		       (setq fill-prefix m len-fill-prefix (length m)))
+		  ;; is it still the same prefix?
+		  (string= fill-prefix m)
+		  ;; or is it just shorter by whitespace on the second line
+		  (and 
+		   (= line-no 2)
+		   (< (setq lenm (length m)) len-fill-prefix)
+		   (string-match "^[ \t]+$" (substring fill-prefix lenm))
+		   ;; then save new shorter prefix
+		   (setq fill-prefix m len-fill-prefix lenm)))))
+      (end-of-line)
+      (setq line-no (1+ line-no))
+      (setq long-line (or long-line (> (current-column) fill-column)))
+      (forward-line 1))
+    long-line))
+
 (defun vm-fill-paragraphs-containing-long-lines (width start end)
-  "Fill paragraphs spanning more than WIDTH columns in region START to END."
+  "Fill paragraphs spanning more than WIDTH columns in region START to END.
+
+In order to fill also quoted text you will need `filladapt.el' as the adaptive
+filling of GNU Emacs does not work correctly here!"
   (if (eq width 'window-width)
       (setq width (- (window-width (get-buffer-window (current-buffer))) 1)))
   (save-excursion
     (let ((buffer-read-only nil)
           (fill-column width)
-          (filladapt-fill-column-forward-fuzz 0)
-          (filladapt-mode t)
+	  (adaptive-fill-mode nil)
           (abbrev-mode nil)
+	  (fill-prefix nil)
+;	  (use-hard-newlines t)
           (filled 0)
           (message (if (car vm-message-pointer)
                        (vm-su-subject (car vm-message-pointer))
@@ -862,36 +913,24 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       
       (if needmsg
           (message "Filling message `%s' to column %d!" message fill-column))
-
-      ;; we need a marker for the end since this position might change 
-      (goto-char end) (setq end (point-marker))
-      (goto-char start)
-
-      ;; this should speed up things!
-      (buffer-disable-undo)
       
-      (condition-case nil
-          (while (< (point) end)
-            (end-of-line)
-            (when (> (current-column) fill-column)
-              (setq filled (1+ filled))
-              (if (functionp 'filladapt-fill-paragraph)
-                  (filladapt-fill-paragraph 'fill-paragraph nil)
-                ;; ignore errors
-                (condition-case nil
-                    (fill-paragraph nil)
-                  (error nil))))
-            (forward-line 1))
-        (error nil)
-        (quit nil))
-      (buffer-enable-undo)
-
-      (if (> filled 0)
-          (message "Filled %s line%s in message '%s'!"
-                   (if (> filled 1) (format "%d" filled) "one")
-                   (if (> filled 1) "s" "")
-                   message)
-        (message "Nothing to fill!")))))
+      ;; we need a marker for the end since this position might change 
+      (or (markerp end) (setq end (vm-marker end)))
+      (goto-char start)
+      
+      (while (< (point) end)
+	(setq start (point))
+	(vm-skip-empty-lines)
+	(when (vm-forward-paragraph)
+	  (fill-region start (point))
+	  (setq filled (1+ filled))))
+      
+      (if (= filled 0)
+	  (message "Nothing to fill!")
+	(message "Filled %s paragraph%s in message '%s'!"
+		 (if (> filled 1) (format "%d" filled) "one")
+		 (if (> filled 1) "s" "")
+		 message)))))
 
 (defun vm-make-message-id ()
   (let (hostname
