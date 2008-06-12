@@ -1,4 +1,4 @@
-#!/usr/bin/env bash -x
+#!/usr/bin/env bash
 # -*- shell-script -*-
 
 . ./getversion.sh
@@ -9,17 +9,17 @@ if [ "$1" != "test" ]; then
   bzr diff || exit 1
 fi
 
-# just create the version-info, no bundle 
-if [ "$1" != "version-info" ]; then 
-  exit 0
-fi
-
 # check for an error less build
 if [ "$1" != "test" ]; then 
   make || exit 1
   # make sure we delete the existing file
-  rm -f lisp/revno.el
-  make lisp/revno.el || exit 1
+  rm -f lisp/vm-revno.el
+  make lisp/vm-revno.el || exit 1
+fi
+
+# just create the version-info, no bundle 
+if [ "$1" == "version-info" ]; then 
+  exit 0
 fi
 
 dir="release/$rdir"
@@ -28,7 +28,7 @@ mkdir -p release
 $bzr export $dir
 
 cp configure $dir
-mv lisp/revno.el $dir/lisp
+mv lisp/vm-revno.el $dir/lisp
 
 cd release
 tar cvfz $rdir.tgz $rdir
