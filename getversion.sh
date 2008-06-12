@@ -5,11 +5,11 @@ bzr="bzr --no-plugins --no-aliases"
 $bzr rocks > /dev/null || (echo "ERROR: cannot run bzr." && exit 1)
 nick=`$bzr nick`
 news=`$bzr root`/NEWS
+tag=`head -1 $news | cut -c 3-`
 devo=`head -1 $news | fgrep -s devo > /dev/null && echo devo`
 revno=`$bzr revno`
 
 if [ "$devo" = "devo" ] ; then
-  tag=$nick
   rdir=$tag-$revno
   version=$rdir
 else
