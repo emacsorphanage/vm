@@ -1539,6 +1539,13 @@ headers."
   :group 'vm-rfaddons
   :type '(regexp))
 
+(defcustom vm-mime-encode-headers-type "[^- !#-'*+/-9=?A-Z^-~]"
+  "*The encoding type to use for encoding headers."
+  :group 'vm-rfaddons
+  :type '(choice (const :tag "QP" 'Q)
+                 (const :tag "BASE64" 'B)
+                 (regexp :tag "BASE64 on match of " "[^- !#-'*+/-9=?A-Z^-~]")))
+
 ;;;###autoload
 (defun vm-mime-encode-headers ()
   "Encodes the headers of a message.
@@ -1551,7 +1558,8 @@ should be encoded together."
   (interactive)
   (save-excursion 
     (let ((headers (concat "^\\(" vm-mime-encode-headers-regexp "\\):"))
-          bodysep)
+          (encoding vm-mime-encode-headers-type)
+	  bodysep)
       
       (goto-char (point-min))
       (search-forward mail-header-separator)
@@ -1579,17 +1587,27 @@ should be encoded together."
                               vm-mime-8bit-composition-charset)
                   coding (vm-string-assoc charset vm-mime-mule-charset-to-coding-alist)
                   coding (and coding (cadr coding)))
-            ;; insert end mark 
-            (goto-char end)
-            (insert "?=")
             ;; encode coding system body
             (when (and coding (not (eq coding 'no-conversion)))
               (encode-coding-region start end coding))
+	    ;; find right coding
+	    (when (stringp encoding)
+	      (setq encoding 
+		    (if (string-match encoding
+				      (buffer-substring start end))
+			'B
+		      'Q)))
             ;; encode unprintable chars in header
-            (vm-mime-Q-encode-region start end)
-            ;; insert start mark
+	    (if (eq encoding 'Q)
+		(vm-mime-Q-encode-region start end)
+	      (vm-mime-base64-encode-region  start end))
+	    ;; insert start and end markers 
             (goto-char start)
-            (insert "=?" charset "?Q?")
+            (insert "=?" charset "?" (format "%s" encoding) "?")
+	    (setq start (point))
+            (goto-char end)
+            (insert "?=")
+            ;; goto end for next round
             (goto-char end)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
