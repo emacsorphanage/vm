@@ -820,10 +820,12 @@ Use mouse button 3 to choose a Web browser for the URL."
 			(message "%s" (car (cdr data))))))
   (if (and vm-fill-paragraphs-containing-long-lines
            (vm-mime-plain-message-p (car vm-message-pointer)))
-      (vm-fill-paragraphs-containing-long-lines
-       vm-fill-paragraphs-containing-long-lines
-       (vm-text-of (car vm-message-pointer))
-       (vm-text-end-of (car vm-message-pointer))))
+      (vm-save-restriction
+       (widen)
+       (vm-fill-paragraphs-containing-long-lines
+	vm-fill-paragraphs-containing-long-lines
+	(vm-text-of (car vm-message-pointer))
+	(vm-text-end-of (car vm-message-pointer)))))
   (vm-save-buffer-excursion
    (save-excursion
      (save-excursion

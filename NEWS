@@ -150,8 +150,12 @@ VM 8.0.10-devo
 
     * Correctly handle `vm-enable-addons' being t.
 
-    * Correctly store UTF-8 strings in the X-VM-v5-Data header to avoid
-      corruption of summay lines. (Thanks to Yuning Feng for the patch)
+    * FIXME This has been reverted as it causes loss of attributes.
+      If you have sufferend from this, and saved the folder there is no
+      way to restore it!
+
+        Correctly store UTF-8 strings in the X-VM-v5-Data header to avoid
+        corruption of summay lines. (Thanks to Yuning Feng for the patch)
 
     * Correctly encode multibyte subjects. (Thanks to Yuning Feng for the
       patch) 

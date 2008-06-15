@@ -1957,7 +1957,9 @@ on all the relevant IMAP servers and then immediately expunges."
       (vm-set-folder-imap-flags-obarray flags))))
 
 (defun vm-imap-dump-uid-and-flags-data ()
-  (when (eq (car vm-buffer-types) 'folder)
+  (when (and vm-folder-access-data
+             (eq (car vm-buffer-types) 'folder))
+             
     ;;------------------------------
     (vm-buffer-type:assert 'folder)
     ;;------------------------------
