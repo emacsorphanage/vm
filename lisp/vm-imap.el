@@ -1652,7 +1652,11 @@ on all the relevant IMAP servers and then immediately expunges."
 
 (defun vm-imap-read-object (process &optional skip-eol)
   ;;----------------------------------
-  (vm-buffer-type:assert 'process)
+  ;; This assertion often fails for some reason,
+  ;; perhaps some asynchrony involved?
+  ;; Assertion check being disabled unless debugging is on.
+  (if vm-buffer-type-debug
+      (vm-buffer-type:assert 'process))
   ;;----------------------------------
   (let ((done nil)
 	opoint

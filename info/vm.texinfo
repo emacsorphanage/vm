@@ -154,8 +154,6 @@ the current folder is called @dfn{expunging} and it is accomplished by
 typing @kbd{###} (@code{vm-expunge-folder}).  The message is still present
 in the on-disk version of the folder until the folder is saved.
 
-To delete duplicates type @kbd{M-x} (@code{vm-delete-duplicate-messages}). 
-
 Typing @kbd{h} (@code{vm-summarize}) causes VM to display a window
 containing a summary of the contents of the current folder.  The summary is
 presented one line per message, by message number, listing each message's

@@ -1065,8 +1065,9 @@ Otherwise treat `\\' in NEWTEXT as special:
 
 (defun vm-buffer-type:set (type)
   (when vm-buffer-type-debug
-    (if (and (eq type 'folder) (cdr vm-buffer-types))
-	(debug))
+    (if (and (eq type 'folder) vm-buffer-types 
+	     (eq (car vm-buffer-types) 'process))
+	(debug "folder buffer being entered at inner level"))
     (setq vm-buffer-type-trail (cons type vm-buffer-type-trail)))
   (if vm-buffer-types
       (rplaca vm-buffer-types type)
