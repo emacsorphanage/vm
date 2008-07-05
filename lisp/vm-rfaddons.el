@@ -82,21 +82,6 @@
 (if vm-xemacs-p (require 'overlay))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; GNU Emacs seems to miss some functions
-(if (not (functionp 'replace-in-string))
-    ;; actually this is dired-replace-in-string slightly modified 
-    (defun replace-in-string (string regexp newtext &optional literal)
-      ;; Replace REGEXP with NEWTEXT everywhere in STRING and return result.
-      ;; NEWTEXT is taken literally---no \\DIGIT escapes will be recognized.
-      (let ((result "") (start 0) mb me)
-        (while (string-match regexp string start)
-          (setq mb (match-beginning 0)
-                me (match-end 0)
-                result (concat result (substring string start mb) newtext)
-                start me))
-        (concat result (substring string start)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro vm-rfaddons-check-option (option option-list &rest body)
   "Evaluate body if option is in OPTION-LIST or OPTION-LIST is nil."
   (list 'if (list 'member option option-list)
@@ -389,7 +374,7 @@ function instead."
   (unless (functionp 'replace-regexp-in-string)
     (defun replace-regexp-in-string (regexp rep string
                                             &optional fixedcase literal)
-      (replace-in-string string regexp rep literal)))
+      (vm-replace-in-string string regexp rep literal)))
   (unless (functionp 'line-end-position)
     (defun line-end-position ()
       (save-excursion (end-of-line) (point))))
@@ -402,7 +387,7 @@ function instead."
     (unless (functionp 'replace-regexp-in-string)
       (defun replace-regexp-in-string (regexp rep string
                                               &optional fixedcase literal)
-        (replace-in-string string regexp rep literal))))
+        (vm-replace-in-string string regexp rep literal))))
   ;; now do the filling
   (let ((buffer-read-only nil)
         (fill-column width))
@@ -842,7 +827,7 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
   (let ((buffer-read-only nil)
         (real-mime-type (vm-mime-find-type-of-message/external-body layout)))
     (vm-mime-insert-button
-     (replace-in-string
+     (vm-replace-in-string
       (format " external: %s %s"
               (if (vm-mime-get-parameter layout "name")
                   (file-name-nondirectory (vm-mime-get-parameter layout "name"))
@@ -851,7 +836,7 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
                     format)
                 (aset tmplayout 0 (list real-mime-type))
                 (setq format (vm-mime-find-format-for-layout tmplayout))
-                (setq format (replace-in-string format "^%-[0-9]+.[0-9]+"
+                (setq format (vm-replace-in-string format "^%-[0-9]+.[0-9]+"
                                                 "%-15.15" t))
                 (vm-mime-sprintf format tmplayout)))
       "save to a file\\]"
@@ -1092,11 +1077,11 @@ This will be done according to `vm-mime-auto-save-all-attachments-subdir'."
                      basedir))
                (setq basedir (replace-match "" nil nil basedir)))
            
-           (setq subdir (replace-in-string subdir "\\s-\\s-+" " " t))
-           (setq subdir (replace-in-string subdir "[^A-Za-z0-9\241-_-]+" "_" t))
-           (setq subdir (replace-in-string subdir "?_-?_" "-" nil))
-           (setq subdir (replace-in-string subdir "^_+" "" t))
-           (setq subdir (replace-in-string subdir "_+$" "" t))
+           (setq subdir (vm-replace-in-string subdir "\\s-\\s-+" " " t))
+           (setq subdir (vm-replace-in-string subdir "[^A-Za-z0-9\241-_-]+" "_" t))
+           (setq subdir (vm-replace-in-string subdir "?_-?_" "-" nil))
+           (setq subdir (vm-replace-in-string subdir "^_+" "" t))
+           (setq subdir (vm-replace-in-string subdir "_+$" "" t))
            (concat basedir "/" subdir)))
         (t
          (eval vm-mime-auto-save-all-attachments-subdir))))
@@ -1369,7 +1354,7 @@ headers."
     (while header-list
       (setq contents (vm-mail-mode-get-header-contents (car header-list)))
       (if (and contents (string-match "@[^,\"]*@" contents))
-          (setq errors (replace-in-string
+          (setq errors (vm-replace-in-string
                         (format "Missing separator in %s \"%s\"!  "
                                 (car header-list)
                                 (match-string 0 contents))
@@ -1410,6 +1395,13 @@ headers."
   :group 'vm-rfaddons
   :type '(regexp))
 
+(defcustom vm-mime-encode-headers-type "[^- !#-'*+/-9=?A-Z^-~]"
+  "*The encoding type to use for encoding headers."
+  :group 'vm-rfaddons
+  :type '(choice (const :tag "QP" 'Q)
+                 (const :tag "BASE64" 'B)
+                 (regexp :tag "BASE64 on match of " "[^- !#-'*+/-9=?A-Z^-~]")))
+
 ;;;###autoload
 (defun vm-mime-encode-headers ()
   "Encodes the headers of a message.
@@ -1422,7 +1414,8 @@ should be encoded together."
   (interactive)
   (save-excursion 
     (let ((headers (concat "^\\(" vm-mime-encode-headers-regexp "\\):"))
-          bodysep)
+          (encoding vm-mime-encode-headers-type)
+	  bodysep)
       
       (goto-char (point-min))
       (search-forward mail-header-separator)
@@ -1450,17 +1443,27 @@ should be encoded together."
                               vm-mime-8bit-composition-charset)
                   coding (vm-string-assoc charset vm-mime-mule-charset-to-coding-alist)
                   coding (and coding (cadr coding)))
-            ;; insert end mark 
-            (goto-char end)
-            (insert "?=")
             ;; encode coding system body
             (when (and coding (not (eq coding 'no-conversion)))
               (encode-coding-region start end coding))
+	    ;; find right coding
+	    (when (stringp encoding)
+	      (setq encoding 
+		    (if (string-match encoding
+				      (buffer-substring start end))
+			'B
+		      'Q)))
             ;; encode unprintable chars in header
-            (vm-mime-Q-encode-region start end)
-            ;; insert start mark
+	    (if (eq encoding 'Q)
+		(vm-mime-Q-encode-region start end)
+	      (vm-mime-base64-encode-region  start end))
+	    ;; insert start and end markers 
             (goto-char start)
-            (insert "=?" charset "?Q?")
+            (insert "=?" charset "?" (format "%s" encoding) "?")
+	    (setq start (point))
+            (goto-char end)
+            (insert "?=")
+            ;; goto end for next round
             (goto-char end)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
