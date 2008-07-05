@@ -719,7 +719,7 @@ e.g.
             (progn
               (vmpc-delete-header hdrfield)
               (if (string-match regexp hdr)
-                  (setq hdr (replace-in-string hdr regexp hdrcont))
+                  (setq hdr (vm-replace-in-string hdr regexp hdrcont))
                 (setq hdr (if sep (concat hdr sep hdrcont)
                             (concat hdr hdrcont))))
               (vmpc-insert-header hdrfield hdr)

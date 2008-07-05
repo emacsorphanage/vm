@@ -18,6 +18,39 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+;; Taken from XEmacs as GNU Emacs is missing `replace-in-string' and defining
+;; it may cause clashes with other packages defining it differently 
+(defun vm-replace-in-string (str regexp newtext &optional literal)
+  "Replace all matches in STR for REGEXP with NEWTEXT string,
+ and returns the new string.
+Optional LITERAL non-nil means do a literal replacement.
+Otherwise treat `\\' in NEWTEXT as special:
+  `\\&' in NEWTEXT means substitute original matched text.
+  `\\N' means substitute what matched the Nth `\\(...\\)'.
+       If Nth parens didn't match, substitute nothing.
+  `\\\\' means insert one `\\'.
+  `\\u' means upcase the next character.
+  `\\l' means downcase the next character.
+  `\\U' means begin upcasing all following characters.
+  `\\L' means begin downcasing all following characters.
+  `\\E' means terminate the effect of any `\\U' or `\\L'."
+  (if (> (length str) 50)
+      (let ((cfs case-fold-search))
+	(with-temp-buffer
+          (setq case-fold-search cfs)
+	  (insert str)
+	  (goto-char 1)
+	  (while (re-search-forward regexp nil t)
+	    (replace-match newtext t literal))
+	  (buffer-string)))
+    (let ((start 0) newstr)
+      (while (string-match regexp str start)
+        (setq newstr (replace-match newtext t literal str)
+              start (+ (match-end 0) (- (length newstr) (length str)))
+              str newstr))
+      str)))
+
 (defun vm-delete-non-matching-strings (regexp list &optional destructively)
   "Delete strings matching REGEXP from LIST.
 Optional third arg non-nil means to destructively alter LIST, instead of

@@ -12,7 +12,12 @@ VM 8.0.10-devo
 
     * `vm-message-history.el' now uses a buffer similar to the summary for
       browsing the history.  The buffer replaces the summary buffer when
-      present.  Duplicate history entries will be removed.  
+      present.  Duplicate history entries will be removed.
+
+    * Define and use `vm-replace-in-string' which is `replace-in-string'
+      from XEmacs to avoid clashes with other GNU Emacs packages defining
+      it differently. Unfortunately, GNU Emacs still does not provide this
+      handy function. (Thanks to José Miguel Figueroa)
 
   BUGFIXES:
 
