@@ -1803,6 +1803,9 @@ Add this to `vm-mail-mode-hook'."
 (defvar vm-mail-mode-open-line nil
   "Flag used by `vm-mail-mode-open-line'.")
 
+(defcustom vm-mail-mode-open-line-regexp "[> ]"
+  "Regexp matching prefix of quoted text at line start.")
+
 (defun vm-mail-mode-open-line (start end &optional length)
   "Opens a line when inserting into the region of a reply.
 
@@ -1814,8 +1817,7 @@ of empty lines which have been quoted."
         (setq vm-mail-mode-open-line
               (if (and (eq this-command 'self-insert-command)
                        (looking-at (concat "^"
-                                           (regexp-quote
-                                            vm-included-text-prefix))))
+                                           vm-mail-mode-open-line-regexp)))
                   (if (< (point) start) (point) start))))
     (if (and length (= length 0) vm-mail-mode-open-line)
         (let (start-mark end-mark)
@@ -1828,7 +1830,7 @@ of empty lines which have been quoted."
                   (setq start-mark (point-marker))
                   (insert "\n\n"))
               (if (looking-at (concat "\\("
-                                      (regexp-quote vm-included-text-prefix)
+                                      vm-mail-mode-open-line-regexp
                                       "\\)+[ \t]*\n"))
                   (replace-match ""))
               (insert "\n\n")
@@ -1838,7 +1840,7 @@ of empty lines which have been quoted."
               (insert "\n"))
 
             ;; clean leading and trailing garbage 
-            (let ((iq (concat "^" (regexp-quote vm-included-text-prefix)
+            (let ((iq (concat "^" vm-mail-mode-open-line-regexp
                               "[> \t]*\n")))
               (save-excursion
                 (goto-char start-mark)
