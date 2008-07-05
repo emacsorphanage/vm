@@ -370,12 +370,11 @@ specified by `vm-included-text-headers' and
                                      (car (vm-mm-layout-type layout)))
                                     (vm-mime-display-internal-message/rfc822
                                      layout))
-;; no text/html for now
-;;				 ((vm-mime-types-match
-;;				   "text/html"
-;;				   (car (vm-mm-layout-type layout)))
-;;				  (vm-mime-display-internal-text/html
-;;				   layout))
+                                   ((vm-mime-types-match
+                                     "text/html"
+                                     (car (vm-mm-layout-type layout)))
+                                    (vm-mime-display-internal-text/html
+                                     layout))
                                    ((member (downcase (car (vm-mm-layout-type
                                                             layout)))
                                             vm-included-mime-types-list)
