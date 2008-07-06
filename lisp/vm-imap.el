@@ -310,7 +310,7 @@
 				       use-body-peek vm-load-headers-only)
                 (vm-imap-retrieve-to-target process destination
 					    statblob use-body-peek) 
-		(vm-imap-read-ok-response)
+		(vm-imap-read-ok-response process)
                 (message "Retrieving message %d (of %d) from %s...done"
                          n mailbox-count imapdrop)
 		(vm-increment retrieved)
