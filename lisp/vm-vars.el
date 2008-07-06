@@ -5059,7 +5059,7 @@ append a space to words that complete unambiguously.")
   '("- " ;
     (vm-compositions-exist ("" vm-ml-composition-buffer-count " / "))
     (vm-drafts-exist ("" vm-ml-draft-count " / "))
-    ((vm-spooled-mail-waiting "New mail for")
+    ((vm-spooled-mail-waiting "New mail for ")
      (vm-folder-read-only "read-only ")
      (vm-virtual-folder-definition (vm-virtual-mirror "mirrored "))
      "%b"
