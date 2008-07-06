@@ -23,6 +23,7 @@
 (eval-when-compile 
   (require 'sendmail)
   (require 'vm-vars)
+  (require 'vm-misc)
   (require 'vm-macro))
 
 ;; To-Do  (USR)
