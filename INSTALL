@@ -31,9 +31,7 @@ USING CONFIGURE
    b) XEmacs+BBDB users run:
 	./configure --with-emacs=xemacs --with-other-dirs=/path/to/bbdb/lisp
 
-   It is possible to build VM in a separate directory. For instance, type
-
-        mkdir build; cd build; ../configure
+   It is currently not possible to build VM in a separate directory.
 
 2) Compile everything by running:
 

@@ -124,7 +124,12 @@ VM 8.0.10-devo
 
     * `vm-message-history.el' now uses a buffer similar to the summary for
       browsing the history.  The buffer replaces the summary buffer when
-      present.  Duplicate history entries will be removed.  
+      present.  Duplicate history entries will be removed.
+
+    * Define and use `vm-replace-in-string' which is `replace-in-string'
+      from XEmacs to avoid clashes with other GNU Emacs packages defining
+      it differently. Unfortunately, GNU Emacs still does not provide this
+      handy function. (Thanks to José Miguel Figueroa)
 
   BUGFIXES:
 
@@ -144,7 +149,7 @@ VM 8.0.10-devo
 
     * Fixed bug in `vm-mime-display-external-generic' for GNU Emacs 23 causing
       corrupted content in the output file.  The old code has been replaced by
-      a call to `vm-mime-send-body-to-file' which avoids duplication and works.  
+      a call to `vm-mime-send-body-to-file' which avoids duplication and works.
       There has been some special handling for `vm-fsfemacs-mule-p', but the
       actual reason for this was unclear so it has been removed.
 
@@ -159,6 +164,9 @@ VM 8.0.10-devo
 
     * Correctly encode multibyte subjects. (Thanks to Yuning Feng for the
       patch) 
+
+    * Use BASE64 for header encoding when there are special chars not quoted
+      by QP normally.  You may configure this by `vm-mime-encode-headers-type'.
 
 VM 8.0.9
 

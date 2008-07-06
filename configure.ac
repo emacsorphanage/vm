@@ -228,7 +228,7 @@ AC_DEFUN([VM_OTHERDIRS],
           (add-to-list 'absolutedirs dir)))
       (princ (format "%S" absolutedirs)))
 TEST
-  OTHERDIRS=`"${EMACS_PROG}" --no-site-file --batch -l lisp/vm-build.el -l conftest.el`
+  OTHERDIRS=`"${EMACS_PROG}" --no-site-file --batch -l ${srcdir}/lisp/vm-build.el -l conftest.el`
   AC_MSG_RESULT($OTHERDIRS)
   AC_SUBST(OTHERDIRS)
 ])

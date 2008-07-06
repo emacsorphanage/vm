@@ -370,12 +370,11 @@ specified by `vm-included-text-headers' and
                                      (car (vm-mm-layout-type layout)))
                                     (vm-mime-display-internal-message/rfc822
                                      layout))
-;; no text/html for now
-;;				 ((vm-mime-types-match
-;;				   "text/html"
-;;				   (car (vm-mm-layout-type layout)))
-;;				  (vm-mime-display-internal-text/html
-;;				   layout))
+                                   ((vm-mime-types-match
+                                     "text/html"
+                                     (car (vm-mm-layout-type layout)))
+                                    (vm-mime-display-internal-text/html
+                                     layout))
                                    ((member (downcase (car (vm-mm-layout-type
                                                             layout)))
                                             vm-included-mime-types-list)
@@ -1311,7 +1310,7 @@ found, the current buffer remains selected."
   (let ((r vm-drop-buffer-name-chars))
     (if (eq r t) (setq r "[^\x0-\x80]"))
     (if (and buffer-name r)
-        (replace-in-string buffer-name r "_" t)
+        (vm-replace-in-string buffer-name r "_" t)
       buffer-name)))
 
 (defvar vm-compositions-exist nil)
