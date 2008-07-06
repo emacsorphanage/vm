@@ -1966,11 +1966,13 @@ on all the relevant IMAP servers and then immediately expunges."
     (vm-set-folder-imap-uid-list nil)
     (vm-set-folder-imap-uid-obarray nil)
     (vm-set-folder-imap-flags-obarray nil)
-    (save-excursion
-      (set-buffer (process-buffer (vm-folder-imap-process)))
-      ;;---------------------------------
-      (vm-imap-session-type:set 'active))
-      ;;---------------------------------
+    (if (processp (vm-folder-imap-process))
+	(save-excursion
+	  (set-buffer (process-buffer (vm-folder-imap-process)))
+	  ;;---------------------------------
+	  (vm-imap-session-type:set 'active)
+	  ;;---------------------------------
+	  ))
     ))
 
 ;; This function is now obsolete.  It is faster to get flags of
