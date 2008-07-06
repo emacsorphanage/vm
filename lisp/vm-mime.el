@@ -1394,11 +1394,16 @@ shorter pieces, rebuilt it from them."
 
 	;; fetch the real message now
 	(goto-char (point-min))
-	(if (re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
-	    (vm-fetch-message (read (current-buffer)) mm))
+	(cond ((and (vm-message-access-method-of mm)
+		    (vm-body-to-be-retrieved mm))
+	       (vm-fetch-message 
+		(list (vm-message-access-method-of mm)) mm))
+	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
+	       (vm-fetch-message (read (current-buffer)) mm)))
 	;; fixup the reference to the message
 	(setcar vm-message-pointer mm)))))
 
+;; This is overridden by the new version below
 (defun vm-fetch-message (storage mm)
   "Fetch the real message based on the \"^X-VM-Storage:\" header.
 
@@ -1414,9 +1419,10 @@ following format.
     \(HANDLER ARGS...\)
 
 HANDLER should correspond to a `vm-fetch-HANDLER-message'
-function, i.e. the handler `file' corresponds to the function
-`vm-fetch-file-message' which gets one argument, the filename
-containing the message.  
+function, e.g., the handler `file' corresponds to the function
+`vm-fetch-file-message' which gets two arguments, the message
+descriptor and the filename containing the message, and inserts the
+message body from the file into the current buffer. 
 
 For example, 'X-VM-Storage: (file \"message-11\")' will fetch 
 the actual message from the file \"message-11\"."
@@ -1429,7 +1435,7 @@ the actual message from the file \"message-11\"."
 				"\\)")))
     (erase-buffer)
     (apply (intern (format "vm-fetch-%s-message" (car storage)))
-	   (cdr storage))
+	   mm (cdr storage))
     ;; fix markers now
     (set-marker (vm-headers-of mm) (point-min))
     (goto-char (point-min))
@@ -1448,8 +1454,53 @@ the actual message from the file \"message-11\"."
     (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
     ))
   
-(defun vm-fetch-file-message (filename)
-  "Insert the message stored in the given file."
+(defun vm-fetch-message (storage mm)
+  "Fetch the real message based on the \"^X-VM-Storage:\" header.
+
+This allows for storing only the headers required for the summary
+and maybe a small preview of the message, or keywords for search,
+etc.  Only when displaying it the actual message is fetched based
+on the storage handler.
+
+The information about the actual message is stored in the
+\"^X-VM-Storage:\" header and should be a lisp list of the
+following format.
+
+    \(HANDLER ARGS...\)
+
+HANDLER should correspond to a `vm-fetch-HANDLER-message'
+function, e.g., the handler `file' corresponds to the function
+`vm-fetch-file-message' which gets two arguments, the message
+descriptor and the filename containing the message, and inserts the
+message body from the file into the current buffer. 
+
+For example, 'X-VM-Storage: (file \"message-11\")' will fetch 
+the actual message from the file \"message-11\"."
+  (goto-char (match-end 0))
+  (let ((buffer-read-only nil)
+	(inhibit-read-only t)
+	(buffer-undo-list t)
+	(text-begin (marker-position (vm-text-of mm))))
+    (goto-char text-begin)
+    (delete-region (point) (point-max))
+    (apply (intern (format "vm-fetch-%s-message" (car storage)))
+	   mm (cdr storage))
+    ;; delete the new headers
+    (delete-region text-begin
+		   (or (re-search-forward "\n\n" (point-max) t)
+		       (point-max)))
+    ;; fix markers now
+    (set-marker (vm-text-of mm) text-begin)
+    (set-marker (vm-text-end-of mm) (point-max))	
+    (set-marker (vm-end-of mm) (point-max))
+    ;; now care for the layout of the message, old layouts are invalid as the
+    ;; presentation buffer may have been used for other messages in the
+    ;; meantime and the marker got invalid by this.
+    (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
+    ))
+  
+(defun vm-fetch-file-message (m filename)
+  "Insert the message with message descriptor MM stored in the given FILENAME."
   (insert-file-contents filename nil nil nil t))
 
 (fset 'vm-presentation-mode 'vm-mode)
@@ -2018,7 +2069,8 @@ in the buffer.  The function is expected to make the message
 	    ;; maybe user killed it - make a new one
 	    (progn
 	      (vm-make-presentation-copy (car vm-message-pointer))
-	      (vm-expose-hidden-headers))
+	      ;; (vm-expose-hidden-headers)
+	      )
 	  (set-buffer vm-presentation-buffer))
 	(if (and (interactive-p) (eq vm-system-state 'previewing))
 	    (let ((vm-display-using-mime nil))

@@ -81,7 +81,7 @@ chapters.
 * Using the Mouse::	Understanding the VM mouse interface.
 * Hooks::		How you can make VM run your code at certain times.
 * Bugs::                How to report VM bugs
-* License::		Copying and distribution terms for VM.
+* Internals::           Information on VM internals for developers
 
 Indices:
 
@@ -89,6 +89,11 @@ Indices:
 * Key Index::		Menus of command keys and their references.
 * Command Index::	Menus of commands and their references.
 * Variable Index::	Menus of variables and their references.
+
+Rights:
+* License::		Copying and distribution terms for VM.
+
+
 @end menu
 @end ifnottex
 
@@ -148,8 +153,6 @@ change your mind about deleting a message, select it and type @kbd{u}
 the current folder is called @dfn{expunging} and it is accomplished by
 typing @kbd{###} (@code{vm-expunge-folder}).  The message is still present
 in the on-disk version of the folder until the folder is saved.
-
-To delete duplicates type @kbd{M-x} (@code{vm-delete-duplicate-messages}). 
 
 Typing @kbd{h} (@code{vm-summarize}) causes VM to display a window
 containing a summary of the contents of the current folder.  The summary is
@@ -2434,6 +2437,10 @@ messages to be undeleted.
 @item k (@code{vm-kill-subject})
 Flags all messages with the same subject as the current message (ignoring
 ``Re:'') for deletion.
+@findex vm-delete-duplicate-messages
+@item @code{vm-delete-duplicate-messages}
+Flags duplicates messages for deletion.  The duplicate messages are
+detected by comparing message bodies.
 @findex vm-expunge-folder
 @kindex ###
 @item ### (@code{vm-expunge-folder})
@@ -2549,7 +2556,7 @@ applied to such messages in a meaningful and useful way.  Unfortunately,
 as of this writing, this mechanism works only if the next command
 invoked is a keyboard command.  Commands invoked by @code{M-x} are
 unable to access the marked messages.  So, to invoke a complex command,
-you might temporary bind to an unused key, e.g.,
+you might temporarily bind it to an unused key, e.g.,
 
 @example
 M-x local-set-key C vm-forward-message-all-headers
@@ -2948,7 +2955,7 @@ change the @code{vm-summary-format}, you need to force the cache to be
 updated.  You can do this by the command@code{vm-fix-my-summary!!!}.
 
 Every folder can have its own summary format.  The format is written
-into the folder and saved on its disk.  When you visit the folder
+into the folder and saved on the disk.  When you visit the folder
 again, you can reuse the saved summary format.  Set the variable
 @code{vm-restore-saved-summary-format} to t to achieve this effect.
 
@@ -4016,7 +4023,7 @@ If this hook is entirely empty, i.e. @code{nil}, a default action is taken
 instead of no action.
 @end table
 
-@node Bugs, Concept Index, Hooks, Top
+@node Bugs, Internals, Hooks, Top
 @chapter Reporting Bugs
 @cindex bug reports
 
@@ -4050,7 +4057,26 @@ automatically incldued in the bug-report.
 
 
 
-@node Concept Index, Key Index, Bugs, Top
+@node Internals, Concept Index, Bugs, Top
+@chapter VM Internals
+
+This section gives a sketchy overview of the VM internals for the
+developers/programmers. 
+
+@menu
+* Folder Internals::      Structure of the folders
+* Message Internals::     Structure of the message data structure
+@end menu
+
+@node Folder Internals, Message Internals , , Internals
+@section Folder Internals
+
+@node Message Internals, , Folder Internals, Internals
+@section Message Internals
+
+
+
+@node Concept Index, Key Index, Internals, Top
 @unnumbered Concept Index
 @printindex cp
 

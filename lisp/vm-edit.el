@@ -157,10 +157,14 @@ data is discarded only from the marked messages in the current folder."
       ;; it's too late to change it now.  So keep the data from
       ;; getting wiped.
       (let ((uid (vm-imap-uid-of m))
-	    (uid-validity (vm-imap-uid-validity-of m)))
+	    (uid-validity (vm-imap-uid-validity-of m))
+	    (headers-flag (vm-headers-to-be-retrieved m))
+	    (body-flag (vm-body-to-be-retrieved m)))
         (fillarray (vm-cache-of m) nil)
         (vm-set-imap-uid-of m uid)
-	(vm-set-imap-uid-validity-of m uid-validity))
+	(vm-set-imap-uid-validity-of m uid-validity)
+	(vm-set-headers-to-be-retrieved m headers-flag)
+	(vm-set-body-to-be-retrieved m body-flag))
       (vm-set-vheaders-of m nil)
       (vm-set-vheaders-regexp-of m nil)
       (vm-set-text-of m nil)

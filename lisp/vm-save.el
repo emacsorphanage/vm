@@ -917,6 +917,8 @@ The saved messages are flagged as `filed'."
 	      (vm-imap-save-message process m mailbox))
 	    (unless (vm-filed-flag m)
 	      (vm-set-filed-flag m t))
+	    (when (and vm-delete-after-saving (not (vm-deleted-flag m)))
+	      (vm-set-deleted-flag m t))
 	    (vm-increment count)
 	    (message "Saving messages... %s" count)
 	    (vm-modify-folder-totals target-folder 'saved 1 m)
@@ -927,8 +929,6 @@ The saved messages are flagged as `filed'."
     (message "%d message%s saved to %s"
 	     count (if (/= 1 count) "s" "")
 	     (vm-safe-imapdrop-string target-folder))
-    (when (and vm-delete-after-saving (not vm-folder-read-only))
-	(vm-delete-message count))
     target-folder ))
 
 (provide 'vm-save)

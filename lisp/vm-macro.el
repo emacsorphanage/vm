@@ -29,7 +29,8 @@
 	((not (memq major-mode '(vm-mode vm-virtual-mode)))
 	 (error "No VM folder buffer associated with this buffer")))
   ;;--------------------------
-  (vm-buffer-type:set 'folder)
+  ;; This may be problematic
+  ;; (vm-buffer-type:set 'folder)
   ;;--------------------------
   )
 
@@ -38,7 +39,8 @@
 	      (buffer-name vm-mail-buffer))
 	 (set-buffer vm-mail-buffer)))
   ;;--------------------------
-  (vm-buffer-type:set 'folder)
+  ;; This may be problematic
+  ;; (vm-buffer-type:set 'folder)
   ;;--------------------------
   )
 

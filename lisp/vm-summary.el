@@ -240,7 +240,7 @@ mandatory."
 	  (let ((buffer-read-only nil)
 		(selected nil)
 		(modified (buffer-modified-p)))
-            (goto-char (vm-su-start-of m))
+	    (goto-char (vm-su-start-of m))
 	    (unwind-protect
 		(save-excursion
 		  (setq selected (looking-at "[+-]>"))
@@ -433,7 +433,9 @@ mandatory."
 	(setq token (car tokens))
 	(cond ((stringp token)
 	       (if vm-display-using-mime
-		   (insert (vm-decode-mime-encoded-words-in-string token))
+		   (let ((vm-mime-qp-decoder-program nil) ; speed up decoding
+			 (vm-mime-base64-decoder-program nil))
+		     (insert (vm-decode-mime-encoded-words-in-string token)))
 		 (insert token)))
 	      ((eq token 'group-begin)
 	       (setq group-list (cons (list (point) (nth 1 tokens)

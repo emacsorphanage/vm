@@ -30,6 +30,11 @@ Prefix argument N means scroll forward N lines."
   (let ((mp-changed (vm-follow-summary-cursor))
 	needs-decoding 
 	(was-invisible nil))
+    ;; the following vodoo was added by USR for fixing the jumping
+    ;; cursor problem in the summary window, reported on May 4, 2008
+    ;; in gnu.emacs.vm.info, title "Re: synchronization of vm buffers"
+    (if mp-changed (sit-for 0))
+
     (vm-select-folder-buffer)
     (vm-check-for-killed-summary)
     (vm-check-for-killed-presentation)
@@ -738,6 +743,15 @@ Use mouse button 3 to choose a Web browser for the URL."
      ;; if we're using one for this message.
      (vm-unbury-buffer (current-buffer))
 
+;;     (let ((real-m (car vm-message-pointer)))
+;;        (if (= (1+ (marker-position (vm-text-of real-m)))
+;; 	      (marker-position (vm-text-end-of real-m)))
+;;            (message "must fetch the body of %s ..." (vm-imap-uid-of real-m))
+;; 	 (message "must NOT fetch the body of %s ..." (vm-imap-uid-of real-m))
+;;	 (let ((vm-message-pointer nil))
+;;	   (vm-discard-cached-data)))
+;;	   ))
+     
      (if (and vm-display-using-mime
 	      vm-auto-decode-mime-messages
 	      vm-mime-decode-for-preview
