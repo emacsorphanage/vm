@@ -818,7 +818,9 @@ Use mouse button 3 to choose a Web browser for the URL."
 	 (vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
 					       (car (cdr data)))
 			(message "%s" (car (cdr data))))))
-  (if (and vm-fill-paragraphs-containing-long-lines
+  ;; FIXME this probably cause folder corruption by filling the folder instead
+  ;; of the presentation copy  ...
+  (if (and nil vm-fill-paragraphs-containing-long-lines
            (vm-mime-plain-message-p (car vm-message-pointer)))
       (vm-save-restriction
        (widen)
