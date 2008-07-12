@@ -56,6 +56,9 @@ VM 8.0.10-devo
     * Use BASE64 for header encoding when there are special chars not quoted
       by QP normally.  You may configure this by `vm-mime-encode-headers-type'.
 
+    * qp-decode program handles premature end of QP-encoded stream now
+      gracefully. (Thanks to Ralf Fassel for the bug report, fix and testing)
+
 VM 8.0.9
 
   BUGFIXES:
