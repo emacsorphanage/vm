@@ -97,6 +97,8 @@
 		   (set-marker ,vm-sr-min nil)
 		   (set-marker ,vm-sr-max nil)))))))
 
+(put 'vm-save-restriction 'edebug-form-spec t)
+
 (defmacro vm-save-buffer-excursion (&rest forms)
   `(let ((vm-sbe-buffer (current-buffer)))
     (unwind-protect
@@ -104,6 +106,8 @@
       (and (not (eq vm-sbe-buffer (current-buffer)))
 	   (buffer-name vm-sbe-buffer)
 	   (set-buffer vm-sbe-buffer)))))
+
+(put 'vm-save-buffer-excursion 'edebug-form-spec t)
 
 (defmacro vm-assert (expression)
   (list 'or 'vm-assertion-checking-off
