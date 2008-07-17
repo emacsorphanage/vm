@@ -5548,6 +5548,82 @@ describes what was deleted."
 	       (vm-set-mm-layout-parts layout nil)
 	       (vm-set-mm-layout-display-error layout nil)))))))
 
+(defun vm-mime-encode-words (&optional encoding)
+  (goto-char (point-min))
+
+  ;; find right encoding 
+  (setq encoding (or encoding vm-mime-encode-headers-type))
+  (save-excursion
+    (when (stringp encoding)
+      (setq encoding 
+            (if (re-search-forward encoding (point-max) t)
+                'B
+              'Q))))
+  ;; now encode the words 
+  (let ((case-fold-search nil)
+        start end charset coding)
+    (while (re-search-forward vm-mime-encode-words-regexp (point-max) t)
+      (setq start (match-beginning 0)
+            end   (vm-marker (match-end 0))
+            charset (or (vm-determine-proper-charset start end)
+                        vm-mime-8bit-composition-charset)
+            coding (vm-string-assoc charset vm-mime-mule-charset-to-coding-alist)
+            coding (and coding (cadr coding)))
+      ;; encode coding system body
+      (when (and coding (not (eq coding 'no-conversion)))
+        (encode-coding-region start end coding))
+      ;; encode 
+      (if (eq encoding 'Q)
+          (vm-mime-Q-encode-region start end)
+        (vm-mime-base64-encode-region  start end))
+      ;; insert start and end markers 
+      (goto-char start)
+      (insert "=?" charset "?" (format "%s" encoding) "?")
+      (setq start (point))
+      (goto-char end)
+      (insert "?=")
+      ;; goto end for next round
+      (goto-char end))))
+
+;;;###autoload
+(defun vm-mime-encode-words-in-string (string &optional encoding)
+  (vm-with-string-as-temp-buffer string 'vm-mime-encode-words))
+
+(defun vm-mime-encode-headers ()
+  "Encodes the headers of a message.
+
+Only the words containing a non 7bit ASCII char are encoded, but not the whole
+header as this will cause trouble for the recipients and authors headers.
+
+Whitespace between encoded words is trimmed during decoding and thus those
+should be encoded together."
+  (interactive)
+  (save-excursion 
+    (let ((headers (concat "^\\(" vm-mime-encode-headers-regexp "\\):"))
+          (case-fold-search nil)
+          (encoding vm-mime-encode-headers-type)
+          body-start
+          start end)
+      (goto-char (point-min))
+      (search-forward mail-header-separator)
+      (setq body-start (vm-marker (match-beginning 0)))
+      (goto-char (point-min))
+      
+      (while (re-search-forward headers body-start t)
+        (goto-char (match-end 0))
+        (setq start (point))
+        (when (not (looking-at "\\s-"))
+          (insert " ")
+          (backward-char 1))
+        (save-excursion
+          (setq end (or (and (re-search-forward "^[^ \t:]+:" body-start t)
+                             (match-beginning 0))
+                        body-start)))
+        (vm-save-restriction
+         (narrow-to-region start end)
+         (vm-mime-encode-words))
+        (goto-char end)))))
+
 ;;;###autoload
 (defun vm-mime-encode-composition ()
  "MIME encode the current mail composition buffer.
@@ -5558,7 +5634,9 @@ and the approriate content-type and boundary markup information is added."
   (vm-mail-mode-show-headers)
 
   (vm-disable-modes vm-disable-modes-before-encoding)
- 
+
+  (vm-mime-encode-headers)
+
   (buffer-enable-undo)
   (let ((unwind-needed t)
 	(mybuffer (current-buffer)))

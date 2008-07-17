@@ -131,6 +131,9 @@ VM 8.0.10-devo
       it differently. Unfortunately, GNU Emacs still does not provide this
       handy function. (Thanks to José Miguel Figueroa)
 
+    * MIME encoding of header will automatically happen now and has been moved
+      from `vm-rfaddons.el' to `vm-mime.el' and `vm-vars.el'.
+
   BUGFIXES:
 
     * Rewrote `vm-message-history.el' to also work for XEmacs.
@@ -155,18 +158,17 @@ VM 8.0.10-devo
 
     * Correctly handle `vm-enable-addons' being t.
 
-    * FIXME This has been reverted as it causes loss of attributes.
-      If you have sufferend from this, and saved the folder there is no
-      way to restore it!
-
-        Correctly store UTF-8 strings in the X-VM-v5-Data header to avoid
-        corruption of summay lines. (Thanks to Yuning Feng for the patch)
+    * Correctly store UTF-8 strings in the X-VM-v5-Data header to avoid
+      corruption of summay lines. (Thanks to Yuning Feng for reporting)
 
     * Correctly encode multibyte subjects. (Thanks to Yuning Feng for the
       patch) 
 
     * Use BASE64 for header encoding when there are special chars not quoted
       by QP normally.  You may configure this by `vm-mime-encode-headers-type'.
+
+    * qp-decode program handles premature end of QP-encoded stream now
+      gracefully. (Thanks to Ralf Fassel for the bug report, fix and testing)
 
 VM 8.0.9
 

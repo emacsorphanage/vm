@@ -63,7 +63,9 @@ main()
 	    continue;
 	} else { /* *stop == '=' */
 	    stop++;
-	    if ((d1 = strchr(hexdigits, *(stop))) &&
+	    if (*stop == 0) {
+		continue;
+	    } else if ((d1 = strchr(hexdigits, *(stop))) &&
 		(d2 = strchr(hexdigits, *(stop+1)))) {
 		c = (d1 - hexdigits) * 16 + (d2 - hexdigits);
 		putchar(c);
