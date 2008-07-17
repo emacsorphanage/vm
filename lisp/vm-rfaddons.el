@@ -1809,7 +1809,7 @@ Add this to `vm-mail-mode-hook'."
 (defvar vm-mail-mode-open-line nil
   "Flag used by `vm-mail-mode-open-line'.")
 
-(defcustom vm-mail-mode-open-line-regexp "[> ]"
+(defcustom vm-mail-mode-open-line-regexp "[ \t]*>"
   "Regexp matching prefix of quoted text at line start.")
 
 (defun vm-mail-mode-open-line (start end &optional length)
