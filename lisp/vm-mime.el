@@ -6734,11 +6734,12 @@ and the PATH to it.  PATH is a list of parent layouts where the root is at the
 end of the path."
   (unless layout
     (setq layout (vm-mm-layout m)))
-  (funcall function m layout path)
-  (let ((parts (copy-sequence (vm-mm-layout-parts layout))))
-    (while parts
-      (vm-mime-map-layout-parts m function (car parts) (cons layout path))
-      (setq parts (cdr parts)))))
+  (when (vectorp layout)
+    (funcall function m layout path)
+    (let ((parts (copy-sequence (vm-mm-layout-parts layout))))
+      (while parts
+        (vm-mime-map-layout-parts m function (car parts) (cons layout path))
+        (setq parts (cdr parts))))))
 
 (defun vm-mime-list-part-structure (&optional verbose)
   "List mime part structure of the current message."
