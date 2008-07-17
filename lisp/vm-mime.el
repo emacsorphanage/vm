@@ -6751,7 +6751,7 @@ end of the path."
     (switch-to-buffer "*VM mime part layout*")
     (erase-buffer)
     (setq truncate-lines t)
-    (insert (format "%s\n" (vm-summary-of m)))
+    (insert (format "%s\n" (vm-decode-mime-encoded-words-in-string (vm-summary-of m))))
     (vm-mime-map-layout-parts
      m
      (lambda (m layout path)
