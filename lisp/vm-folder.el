@@ -1806,8 +1806,9 @@ vm-folder-type is initialized here."
 	      (let ((print-escape-newlines t))
 		(prin1-to-string attributes))
 	      "\n\t"
-	      (let ((print-escape-newlines t))
-		(prin1-to-string cache))
+	      (vm-mime-encode-words-in-string
+	       (let ((print-escape-newlines t))
+		 (prin1-to-string cache)))
 	      "\n\t"
 	      (let ((print-escape-newlines t))
 		(prin1-to-string (vm-labels-of m)))

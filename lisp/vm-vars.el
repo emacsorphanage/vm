@@ -1611,6 +1611,32 @@ with the first type that matches will be used."
   :group 'vm
   :type '(repeat (cons string string)))
 
+(defcustom vm-mime-encode-headers-regexp
+  "Subject\\|\\(\\(Resent-\\)?\\(From\\|To\\|CC\\|BCC\\)\\)\\|Organization"
+  "*A regexp matching the headers which should be encoded."
+  :group 'vm
+  :type '(regexp))
+
+(defcustom vm-mime-encode-headers-words-regexp
+  (let ((8bit-word "\\([^ \t\n\r]*[^\x0-\x7f]+[^ \t\n\r]*\\)+"))
+    (concat "\\s-\\(" 8bit-word "\\(\\s-+" 8bit-word "\\)*\\)"))
+  "*A regexp matching a set of consecutive words which must be encoded."
+  :group 'vm
+  :type '(regexp))
+
+(defcustom vm-mime-encode-headers-type 'B
+  "*The encoding type to use for encoding headers."
+  :group 'vm
+  :type '(choice (const :tag "QP" 'Q)
+                 (const :tag "BASE64" 'B)
+                 (regexp :tag "BASE64 on match of " "[^- !#-'*+/-9=?A-Z^-~]")))
+
+
+(defcustom vm-mime-encode-words-regexp "[^\x0-\x7f]+"
+  "*A regexp matching a sequence of 8 bit chars."
+  :group 'vm
+  :type '(regexp))
+
 (defcustom vm-mime-max-message-size nil
   "*Largest MIME message that VM should send without fragmentation.
 The value should be an integer which specifies the size in bytes.
