@@ -58,6 +58,9 @@ VM 8.0.10-devo
     * qp-decode program handles premature end of QP-encoded stream now
       gracefully. (Thanks to Ralf Fassel for the bug report, fix and testing)
 
+    * Added missing newline after "Content-Type" when using the command
+      `vm-mime-attach-object-from-message'.  (Thanks to Dan Freed)
+
 VM 8.0.9
 
   BUGFIXES:
