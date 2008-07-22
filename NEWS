@@ -110,7 +110,13 @@ VM 8.1.0-devo
     * New variable `vm-load-headers-only' to enable headers-only
       downloading of IMAP folders.  (This is still experimental.)
 
-VM 8.0.10-devo
+VM 8.0.11-devo
+
+  BUGFIXES:
+
+    * 
+
+VM 8.0.10
 
   NOTES:
 
@@ -169,6 +175,9 @@ VM 8.0.10-devo
 
     * qp-decode program handles premature end of QP-encoded stream now
       gracefully. (Thanks to Ralf Fassel for the bug report, fix and testing)
+
+    * Added missing newline after "Content-Type" when using the command
+      `vm-mime-attach-object-from-message'.  (Thanks to Dan Freed)
 
 VM 8.0.9
 

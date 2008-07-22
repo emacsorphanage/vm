@@ -5048,7 +5048,7 @@ COMPOSITION's name will be read from the minibuffer."
 	    (vm-mime-transfer-decode-region layout start (point-max))
 	    (goto-char (point-min))
 	    (vm-reorder-message-headers nil nil "Content-Transfer-Encoding:")
-	    (insert "Content-Transfer-Encoding: binary")
+	    (insert "Content-Transfer-Encoding: binary\n")
 	    (set-buffer composition)
 	    (vm-mime-attach-object work-buffer
 				   (car (vm-mm-layout-type layout))
