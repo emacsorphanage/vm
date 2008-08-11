@@ -2,7 +2,8 @@ VM 8.0.11-devo
 
   BUGFIXES:
 
-    * 
+    * Removed dependency of vm-revno.el to other lisp sources to avoid
+      building it in a release bundle.  (Thanks to Ralf Fassel)
 
 VM 8.0.10
 
