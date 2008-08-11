@@ -132,7 +132,7 @@ vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" >> $@
 	echo "(provide 'vm-autoloads)" >> $@
 
-vm-cus-load.el: $(SRCS:%=@srcdir@/%)
+vm-cus-load.el: $(SOURCES:%=@srcdir@/%)
 	"$(EMACS_PROG)" $(FLAGS) -f vm-custom-make-dependencies .
 ifeq (@EMACS_VERSION@,21)
 	sed -e "s/provide 'cus-load/provide 'vm-cus-load/" cus-load.el > $@
@@ -160,14 +160,14 @@ auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	$(RM) $@.tmp
 
 
-custom-load.el: $(SRCS:%=@srcdir@/%)
+custom-load.el: $(SOURCES:%=@srcdir@/%)
 	"$(EMACS_PROG)" $(FLAGS) -f vm-custom-make-dependencies .
 
 ##############################################################################
 install-pkg: all
 	@if test "x$(SYMLINKS)" = "xno" ; then                 \
 	  mkdir -p -m 0755 $(DESTDIR)$(PACKAGEDIR);            \
-	  for i in $(SRCS:%=@srcdir@/%) $(INSTALL_FILES) ; do  \
+	  for i in $(SOURCES:%=@srcdir@/%) $(INSTALL_FILES) ; do  \
 	    echo "Installing $$i in $(DESTDIR)$(PACKAGEDIR)" ; \
 	    $(INSTALL_DATA) $$i $(DESTDIR)$(PACKAGEDIR) ;      \
 	  done ;                                               \
