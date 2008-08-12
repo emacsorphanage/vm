@@ -8,7 +8,6 @@
 ;;
 ;; Maintainer: Robert Widhopf-Fenk <hack@robf.de>
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; Revision     $Id$
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

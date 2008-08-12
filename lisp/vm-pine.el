@@ -6,7 +6,6 @@
 ;; Status:      Tested with XEmacs 21.4.19 & VM 7.19
 ;; Keywords:    vm draft handling
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; Version:     $Id$
 
 ;;
 ;; This code is free software; you can redistribute it and/or modify
