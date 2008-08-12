@@ -3183,16 +3183,19 @@ VM wants to display or undisplay."
 (defun vm-pixmap-directory () 
   (interactive)
   (let* ((vm-dir (file-name-directory (locate-library "vm")))
-	 (image-dirs (list (expand-file-name vm-configure-pixmapdir)
-			   (expand-file-name vm-configure-datadir)
-			   (expand-file-name "pixmaps" vm-dir)
+	 (image-dirs (list (and vm-configure-pixmapdir
+                                (expand-file-name vm-configure-pixmapdir))
+                           (and vm-configure-datadir
+                                (expand-file-name vm-configure-datadir))
+                           (expand-file-name "pixmaps" vm-dir)
 			   (expand-file-name "../pixmaps" vm-dir)
-			   (expand-file-name (concat data-directory "vm/"))))
+                           (locate-data-directory "vm")))
 	 image-dir)
     (while image-dirs
       (setq image-dir (car image-dirs))
-      (if (file-exists-p (expand-file-name "visit-up.xpm" image-dir))
-	  (setq image-dirs nil)
+      (if (and image-dir
+               (file-exists-p (expand-file-name "visit-up.xpm" image-dir)))
+          (setq image-dirs nil)
 	(setq image-dirs (cdr image-dirs))))
     image-dir))
 

@@ -6,6 +6,9 @@ VM 8.0.12-devo
       XEmacs, i.e. the patch level was the major version. (Thanks to Stephen
       Turnbull)
 
+    * Correctly locate the data directory for the pixmaps when running as a
+      XEmacs package.
+
 VM 8.0.11
 
   BUGFIXES:
