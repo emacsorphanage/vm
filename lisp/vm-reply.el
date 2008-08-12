@@ -1361,15 +1361,7 @@ Binds the `vm-mail-mode-map' and hooks"
     (and in-reply-to (insert "In-Reply-To: " in-reply-to "\n"))
     (and references (insert "References: " references "\n"))
     (insert "X-Mailer: VM " (vm-version) " under ")
-    (cond ((vm-fsfemacs-p)
-	   (insert "Emacs " emacs-version))
-	  ((featurep 'xemacs)
-	   (insert
-	    (format "XEmacs %d.%d.%d" 
-		    emacs-major-version 
-		    emacs-minor-version 
-		    emacs-major-version)))
-	  ((boundp 'emacs-version)
+    (cond ((boundp 'emacs-version)
 	   (insert emacs-version))
 	  (t
 	   (insert "Unknown Emacs")))

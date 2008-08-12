@@ -2,7 +2,9 @@ VM 8.0.12-devo
 
   BUGFIXES:
 
-    * 
+    * Insert `emacs-version' instead of creating wrong version string for
+      XEmacs, i.e. the patch level was the major version. (Thanks to Stephen
+      Turnbull)
 
 VM 8.0.11
 
