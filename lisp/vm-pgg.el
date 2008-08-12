@@ -6,7 +6,6 @@
 ;; Status:      Tested with XEmacs 21.4.19 & VM 7.19
 ;; Keywords:    VM helpers
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; Version:     $Id$
 
 ;;
 ;; This code is free software; you can redistribute it and/or modify
@@ -886,6 +885,7 @@ cleanup here after verification and decoding took place."
            ;; after decode the state of vm-mime-decoded is 'buttons
            nil)
           ((not (and (= (length part-list) 2)
+		     signature
                      ;; TODO: check version and protocol here?
                      (vm-mime-types-match (car (vm-mm-layout-type signature))
                                           "application/pgp-signature")))
@@ -897,9 +897,10 @@ cleanup here after verification and decoding took place."
              (insert
               (format
                "******* unknown signature type %s *******\n"
-               (car (vm-mm-layout-type signature))))
+               (car (and signature (vm-mm-layout-type signature)))))
              (setq end (point))
-             (vm-decode-mime-layout signature)
+	     (when signature
+	       (vm-decode-mime-layout signature))
              (put-text-property start end 'face 'vm-pgg-unknown-signature-type))
            t)
           (t 
