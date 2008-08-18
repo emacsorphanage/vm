@@ -411,8 +411,7 @@ Switch mode on/off according to ARG.
 
 (defun vm-pgg-make-presentation-copy ()
   "Make a presentation copy also for cleartext PGP messages."
-  (let* ((buffer-read-only nil)
-         (m (car vm-message-pointer))
+  (let* ((m (car vm-message-pointer))
          (layout (vm-mm-layout m)))
     ;; make a presentation copy
     (vm-make-presentation-copy m)
@@ -424,19 +423,20 @@ Switch mode on/off according to ARG.
     ;; remove From line
     (goto-char (point-min))
     (forward-line 1)
-    (delete-region (point-min) (point))
-    (vm-reorder-message-headers nil vm-visible-headers
-                                vm-invisible-header-regexp)
-    (vm-decode-mime-message-headers m)
-    (when (vectorp layout)
-      ;; skip headers otherwise they get removed 
-      (goto-char (point-min))
-      (search-forward "\n\n")
-      (vm-decode-mime-layout layout)
-      (delete-region (point) (point-max)))
-    (vm-energize-urls-in-message-region)
-    (vm-highlight-headers-maybe)
-    (vm-energize-headers-and-xfaces)))
+    (let ((buffer-read-only nil))
+      (delete-region (point-min) (point))
+      (vm-reorder-message-headers nil vm-visible-headers
+                                  vm-invisible-header-regexp)
+      (vm-decode-mime-message-headers m)
+      (when (vectorp layout)
+        ;; skip headers otherwise they get removed 
+        (goto-char (point-min))
+        (search-forward "\n\n")
+        (vm-decode-mime-layout layout)
+        (delete-region (point) (point-max)))
+      (vm-energize-urls-in-message-region)
+      (vm-highlight-headers-maybe)
+      (vm-energize-headers-and-xfaces))))
     
 (defvar vm-pgg-state nil
   "State of the currently viewed message.")
