@@ -466,7 +466,7 @@ Switch mode on/off according to ARG.
     mode-line-items)
   "An alist mapping states to modeline strings.")
 
-(if (not (member'vm-pgg-state vm-mode-line-format))
+(if (not (member 'vm-pgg-state vm-mode-line-format))
     (setq vm-mode-line-format (append '("" vm-pgg-state) vm-mode-line-format)))
 
 (defun vm-pgg-state-set (&rest states)
@@ -569,33 +569,31 @@ When the button is pressed ACTION is called."
                  (re-search-forward vm-pgg-cleartext-begin-regexp
                                     (+ (point) vm-pgg-cleartext-search-limit)
                                     t))
-        (condition-case e
-            (cond ((string= (match-string 1) "SIGNED MESSAGE")
-                   (vm-pgg-set-cleartext-decoded)
-                   (vm-pgg-cleartext-verify))
-                  ((string= (match-string 1) "MESSAGE")
-                   (vm-pgg-set-cleartext-decoded)
-                   (if vm-pgg-auto-decrypt
-                       (vm-pgg-cleartext-decrypt)
-                     (vm-pgg-cleartext-automode-button
-                      "Decrypt PGP message\n"
-                      (lambda ()
-                        (interactive)
-                        (let ((vm-pgg-auto-decrypt t))
-                          (vm-pgg-cleartext-decrypt))))))
-                  ((string= (match-string 1) "PUBLIC KEY BLOCK")
-                   (vm-pgg-set-cleartext-decoded)
-                   (if vm-pgg-auto-snarf
-                       (vm-pgg-snarf-keys)
-                     (vm-pgg-cleartext-automode-button
-                      "Snarf PGP key\n"
-                      (lambda ()
-                        (interactive)
-                        (let ((vm-pgg-auto-snarf t))
-                          (vm-pgg-snarf-keys))))))
-                  (t
-                   (error "This should never happen!")))
-          (error (message "%S" e)))))))
+        (cond ((string= (match-string 1) "SIGNED MESSAGE")
+               (vm-pgg-set-cleartext-decoded)
+               (vm-pgg-cleartext-verify))
+              ((string= (match-string 1) "MESSAGE")
+               (vm-pgg-set-cleartext-decoded)
+               (if vm-pgg-auto-decrypt
+                   (vm-pgg-cleartext-decrypt)
+                 (vm-pgg-cleartext-automode-button
+                  "Decrypt PGP message\n"
+                  (lambda ()
+                    (interactive)
+                    (let ((vm-pgg-auto-decrypt t))
+                      (vm-pgg-cleartext-decrypt))))))
+              ((string= (match-string 1) "PUBLIC KEY BLOCK")
+               (vm-pgg-set-cleartext-decoded)
+               (if vm-pgg-auto-snarf
+                   (vm-pgg-snarf-keys)
+                 (vm-pgg-cleartext-automode-button
+                  "Snarf PGP key\n"
+                  (lambda ()
+                    (interactive)
+                    (let ((vm-pgg-auto-snarf t))
+                      (vm-pgg-snarf-keys))))))
+              (t
+               (error "This should never happen!")))))))
 
 (defadvice vm-preview-current-message (after vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages."
