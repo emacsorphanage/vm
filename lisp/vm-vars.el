@@ -2301,6 +2301,19 @@ A nil value means don't insert a Message-ID header."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-mail-header-order
+  '("From:" "Organization:"
+    "Subject:"
+    "Date:"
+    "Priority:" "X-Priority:" "Importance:"
+    "Message-ID:"
+    "MIME-Version:" "Content-Type:"
+    "To:" "CC:" "BCC:" "Reply-To:")
+  "*Order of headers when calling `vm-reorder-message-headers' interactively
+in a composition buffer."
+  :group 'vm
+  :type '(list string))
+
 (defcustom vm-reply-subject-prefix nil
   "*Non-nil value should be a string that VM should add to the beginning
 of the Subject header in replies, if the string is not already present.

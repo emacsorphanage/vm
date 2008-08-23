@@ -1000,6 +1000,10 @@ vm-folder-type is initialized here."
 ;; are ordered according to the order of the keep list.
 
 (defun vm-reorder-message-headers (message keep-list discard-regexp)
+  (interactive
+   (progn 
+     (goto-char (point-min))
+     (list nil vm-mail-header-order "NO_MATCH_ON_HEADERS:")))
   (save-excursion
     (if message
 	(progn

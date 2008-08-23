@@ -2,6 +2,12 @@ VM 8.1.0-devo
 
   IMPROVEMENTS:
 
+    * Allow for sorting the headers of composition buffers by calling the
+      function `vm-reorder-message-headers' interactively.  You may configure
+      the order by the new variable `vm-mail-header-order'.  This can be
+      useful if some broken MUAs (e.g. Tobit) mess up the messages due to the
+      header order.
+
     * Added hiding and protection of headers in composition buffers.  See the
       new variable `vm-mail-mode-hidden-headers' for customization. (Thanks to
       Eric Schulte for the initial code posted in gnu.emacs.vm.info)
