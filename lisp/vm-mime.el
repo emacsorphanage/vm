@@ -5390,7 +5390,7 @@ describes what was deleted."
             coding (and coding (cadr coding)))
       ;; encode coding system body
       (when (and coding (not (eq coding 'no-conversion)))
-        (encode-coding-region start end coding))
+        (vm-encode-coding-region start end coding))
       ;; encode 
       (if (eq encoding 'Q)
           (vm-mime-Q-encode-region start end)

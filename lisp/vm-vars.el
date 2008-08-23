@@ -1972,13 +1972,13 @@ file itself."
   "*Non-nil value should be an alist that VM will use to choose a default
 folder name when messages are saved.  The alist should be of the form
 \((HEADER-NAME-REGEXP
-   (REGEXP . FOLDER-NAME) ...
-  ...))
+   (REGEXP . FOLDER-NAME) ... )
+  ...)
 where HEADER-NAME-REGEXP and REGEXP are strings, and FOLDER-NAME
 is a string or an s-expression that evaluates to a string.
 
-If any part of the contents of the message header whose name is
-matched by HEADER-NAME-REGEXP is matched by the regular
+If any part of the contents of the first message header whose name
+is matched by HEADER-NAME-REGEXP is matched by the regular
 expression REGEXP, VM will evaluate the corresponding FOLDER-NAME
 and use the result as the default when prompting for a folder to
 save the message in.  If the resulting folder name is a relative
