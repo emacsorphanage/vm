@@ -1,6 +1,9 @@
   BUGFIXES:
  
     * Applied patches from Michael Ernst fixing documentation.
+
+    * Fixed infinite loop in vm-mime-encode-words on XEmacs  21.5-b28.
+      (Thanks to Aidan Kehoe for the patch)
  
 VM 8.0.11
 
