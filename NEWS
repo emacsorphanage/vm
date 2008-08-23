@@ -9,6 +9,9 @@ VM 8.0.12-devo
     * Correctly locate the data directory for the pixmaps when running as a
       XEmacs package.
 
+    * Check for some MIME character sets that may be available in recent
+      XEmacs.  (Thanks to Aidan Kehoe for the patch)
+
 VM 8.0.11
 
   BUGFIXES:

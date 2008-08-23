@@ -95,7 +95,10 @@ configuration.  "
 			   vm-mime-mule-charset-to-coding-alist))
 		     (add-to-list 'vm-mime-mule-charset-to-coding-alist 
 				  (list (format "%s" x) x)))))
-	  '(utf-8 iso-8859-15 iso-8859-14 iso-8859-16))
+	  '(utf-8 iso-8859-15 iso-8859-14 iso-8859-16
+            alternativnyj iso-8859-6 iso-8859-7 koi8-c koi8-o koi8-ru koi8-t
+            koi8-u macintosh windows-1250 windows-1251 windows-1252
+            windows-1253 windows-1256))
 
   ;; And make sure that the map back from coding-systems is good for
   ;; those charsets.
