@@ -1,10 +1,11 @@
-\input texinfo  @comment -*-Text-*-
+\input texinfo
 @setfilename vm.info
 @settitle VM User's Manual
 @dircategory Emacs
 @direntry
 * VM: (vm).                             A mail reader.
 @end direntry
+
 @iftex
 @finalout
 @end iftex
@@ -18,6 +19,7 @@
 This file documents the VM mail reader.
 
 Copyright (C) 1989, 1991, 1999 Kyle E. Jones
+Copyright (C) 2003 - 2008 Robert Widhopf-Fenk
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -36,12 +38,10 @@ notice identical to this one except for the removal of this paragraph
 @sp 6
 @center @titlefont{VM User's Manual}
 @sp 4
-@center VM Version 8.0
-@sp 5
 @page
 @vskip 0pt plus 1filll
 Copyright @copyright{} 1989, 1991, 1999, 2002, 2003 Kyle E. Jones
-Copyright @copyright{} 2003 - 2007 Robert Widhopf-Fenk
+Copyright @copyright{} 2003 - 2008 Robert Widhopf-Fenk
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -55,6 +55,10 @@ are preserved on all copies.
 This manual documents the VM mail reader, a Lisp program which runs as a
 subsystem under Emacs.  The manual is divided into the following
 chapters.
+
+@include version.texi
+This manual corresponds to VM version @value{VERSION}.
+It was last updated at @value{VMUPDATED}.
 
 @menu
 * Introduction::	Overview of the VM interface.
