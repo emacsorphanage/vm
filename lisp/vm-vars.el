@@ -4290,15 +4290,22 @@ mail is not sent."
   :group 'vm
   :type 'integer)
 
-(defcustom vm-coding-system-priorities '(iso-8859-1 iso-8859-15 utf-8)
-  "*List of coding systems for VM-MIME to use, in order of preference."
+(defcustom vm-coding-system-priorities nil ;'(iso-8859-1 iso-8859-15 utf-8)
+  "*List of coding systems for VM to use, for outgoing mail, in order of
+preference.
+
+If you find that your outgoing mail is being encoded in `iso-2022-jp' and
+you'd prefer something more widely used outside of Japan be used instead,
+you could load the `latin-unity' and `un-define' libraries under XEmacs
+21.4, and intialize this list to something like `(iso-8859-1 iso-8859-15
+utf-8)'. "
   :group 'vm
-  :type 'sexp)
+  :type '(repeat symbol))
 
 (defcustom vm-mime-ucs-list '(utf-8 iso-2022-jp ctext escape-quoted)
   "*List of coding systems that can encode all characters known to emacs."
   :group 'vm
-  :type 'sexp)
+  :type '(repeat symbol))
 
 (defcustom vm-drop-buffer-name-chars nil
   "*Regexp used to replace chars in composition buffer names.

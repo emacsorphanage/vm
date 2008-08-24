@@ -42,16 +42,6 @@
 (eval-when-compile 
   (defvar latin-unity-ucs-list))
 
-(defcustom vm-coding-system-priorities nil
-  "*List of coding systems for VM to use, for outgoing mail, in order of
-preference.
-
-If you find that your outgoing mail is being encoded in `iso-2022-jp' and
-you'd prefer something more widely used outside of Japan be used instead,
-you could load the `latin-unity' and `un-define' libraries under XEmacs
-21.4, and intialize this list to something like `(iso-8859-1 iso-8859-15
-utf-8)'. ")
-
 (defun vm-get-coding-system-priorities ()
   "Return the value of `vm-coding-system-priorities', or a reasonable
 default for it if it's nil.  "
@@ -63,9 +53,6 @@ default for it if it's nil.  "
 	(unless (coding-system-p (find-coding-system list-item))
 	  (delq list-item res)))
       res)))
-
-(defcustom vm-mime-ucs-list nil 
-  "*List of coding systems that can encode all chars emacs knows.")
 
 (defun vm-get-mime-ucs-list ()
   "Return the value of `vm-mime-ucs-list', or a reasonable default for it if
@@ -96,9 +83,9 @@ configuration.  "
 		     (add-to-list 'vm-mime-mule-charset-to-coding-alist 
 				  (list (format "%s" x) x)))))
 	  '(utf-8 iso-8859-15 iso-8859-14 iso-8859-16
-            alternativnyj iso-8859-6 iso-8859-7 koi8-c koi8-o koi8-ru koi8-t
-            koi8-u macintosh windows-1250 windows-1251 windows-1252
-            windows-1253 windows-1256))
+                  alternativnyj iso-8859-6 iso-8859-7 koi8-c koi8-o koi8-ru koi8-t
+                  koi8-u macintosh windows-1250 windows-1251 windows-1252
+                  windows-1253 windows-1256))
 
   ;; And make sure that the map back from coding-systems is good for
   ;; those charsets.
@@ -6263,7 +6250,7 @@ agent; under Unix, normally sendmail.)"
 	      (goto-char (vm-mm-layout-header-end layout))
 	      (if (looking-at "\n")
 		  (delete-char 1))
-	   ;; copy remainder to enclosing entity's header section
+              ;; copy remainder to enclosing entity's header section
 	      (goto-char (point-max))
 	      (if (not just-one)
                   (insert-buffer-substring (current-buffer)
