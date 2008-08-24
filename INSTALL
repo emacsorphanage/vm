@@ -45,16 +45,16 @@ USING CONFIGURE
 
    a) The manual way
 
-      Add the "lisp" and "info" directories in the VM bulit directory to the
+      Add the "lisp" and "info" directories in the VM built directory to the
       Emacs search paths, e.g. if you have built vm in ~/vm add the following
       to your ~/.emacs resp. ~/.xemacs/init.el. 
 
          (add-to-list 'load-path
                       (expand-file-name "~/vm/lisp"))
          (add-to-list 'Info-default-directory-list
-	              (expand-file-name "~/vm/info")))
+	              (expand-file-name "~/vm/info"))
 
-      GNU Emacs users, have to load the autloads by hand by adding
+      GNU Emacs users, have to load the autoloads by hand by adding
 
          (require 'vm-autoloads)
 
@@ -64,7 +64,7 @@ USING CONFIGURE
 
    b) make install
 
-      Which might work, but must not work as most distros have their own
+      Which might work, but might not work as most distros have their own
       directory layout.
 
 4) You are now ready to use VM.  C-h i should start up the Emacs Info

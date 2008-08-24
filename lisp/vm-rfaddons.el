@@ -6,7 +6,6 @@
 ;; Status:      Tested with XEmacs 21.4.19 & VM 7.19
 ;; Keywords:    VM helpers
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; Version:     $Id$
 
 ;;
 ;; This code is free software; you can redistribute it and/or modify
@@ -109,7 +108,7 @@ The following options are possible.
 `vm-mail-mode' options:
  - attach-save-files: bind [C-c C-a] to `vm-mime-attach-files-in-directory' 
  - check-recipients: add `vm-mail-check-recipients' to `mail-send-hook' in
-   order to check if the recipients headers are correctly.
+   order to check if the recipients headers are correct.
  - encode-headers: add `vm-mime-encode-headers' to `mail-send-hook' in
    order to encode the headers before sending.
  - fake-date: if enabled allows you to fake the date of an outgoing message.
@@ -1343,7 +1342,7 @@ When directory does not exist it will be created."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;###autoload
 (defun vm-mail-check-recipients ()
-  "Check if the recipients are specifiey correctly.
+  "Check if the recipients are specified correctly.
 Actually it checks only if there are any missing commas or the like in the
 headers."
   (interactive)

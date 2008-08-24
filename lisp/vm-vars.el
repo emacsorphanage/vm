@@ -2045,13 +2045,13 @@ file itself."
   "*Non-nil value should be an alist that VM will use to choose a default
 folder name when messages are saved.  The alist should be of the form
 \((HEADER-NAME-REGEXP
-   (REGEXP . FOLDER-NAME) ...
-  ...))
+   (REGEXP . FOLDER-NAME) ... )
+  ...)
 where HEADER-NAME-REGEXP and REGEXP are strings, and FOLDER-NAME
 is a string or an s-expression that evaluates to a string.
 
-If any part of the contents of the message header whose name is
-matched by HEADER-NAME-REGEXP is matched by the regular
+If any part of the contents of the first message header whose name
+is matched by HEADER-NAME-REGEXP is matched by the regular
 expression REGEXP, VM will evaluate the corresponding FOLDER-NAME
 and use the result as the default when prompting for a folder to
 save the message in.  If the resulting folder name is a relative
@@ -3305,20 +3305,20 @@ It will be set at built time and should not be used by the user.")
 We look for the file followup-dn.xpm in order not to pickup the pixmaps of an
 older VM installation." 
   (let* ((vm-dir (file-name-directory (locate-library "vm")))
-	 (image-dirs (list (expand-file-name "../pixmaps" vm-dir)
-                           (and vm-configure-pixmapdir
+	 (image-dirs (list (and vm-configure-pixmapdir
                                 (expand-file-name vm-configure-pixmapdir))
                            (and vm-configure-datadir
                                 (expand-file-name vm-configure-datadir))
                            (expand-file-name "pixmaps" vm-dir)
-			   (expand-file-name (concat data-directory "vm/"))
-                           ;; use this as a fallback 
-                           (expand-file-name "../pixmaps" vm-dir)))
-	 image-dir)
+			   (expand-file-name "../pixmaps" vm-dir)
+                           (let ((d (locate-data-directory "vm")))
+                             (and d
+                                  (expand-file-name "pixmaps" d)))))
+         image-dir)
     (while image-dirs
       (setq image-dir (car image-dirs))
       (if (and image-dir
-               (file-exists-p (expand-file-name "followup-dn.xpm" image-dir)))
+               (file-exists-p (expand-file-name "visit-up.xpm" image-dir)))
           (setq image-dirs nil)
 	(setq image-dirs (cdr image-dirs))))
     image-dir))
@@ -4415,15 +4415,22 @@ mail is not sent."
   :group 'vm
   :type 'integer)
 
-(defcustom vm-coding-system-priorities '(iso-8859-1 iso-8859-15 utf-8)
-  "*List of coding systems for VM-MIME to use, in order of preference."
+(defcustom vm-coding-system-priorities nil ;'(iso-8859-1 iso-8859-15 utf-8)
+  "*List of coding systems for VM to use, for outgoing mail, in order of
+preference.
+
+If you find that your outgoing mail is being encoded in `iso-2022-jp' and
+you'd prefer something more widely used outside of Japan be used instead,
+you could load the `latin-unity' and `un-define' libraries under XEmacs
+21.4, and intialize this list to something like `(iso-8859-1 iso-8859-15
+utf-8)'. "
   :group 'vm
-  :type 'sexp)
+  :type '(repeat symbol))
 
 (defcustom vm-mime-ucs-list '(utf-8 iso-2022-jp ctext escape-quoted)
   "*List of coding systems that can encode all characters known to emacs."
   :group 'vm
-  :type 'sexp)
+  :type '(repeat symbol))
 
 (defcustom vm-drop-buffer-name-chars nil
   "*Regexp used to replace chars in composition buffer names.

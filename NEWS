@@ -116,11 +116,31 @@ VM 8.1.0-devo
     * New variable `vm-load-headers-only' to enable headers-only
       downloading of IMAP folders.  (This is still experimental.)
 
-VM 8.0.11-devo
+VM 8.0.12-devo
 
   BUGFIXES:
 
-    * 
+    * Insert `emacs-version' instead of creating wrong version string for
+      XEmacs, i.e. the patch level was the major version. (Thanks to Stephen
+      Turnbull)
+
+    * Correctly locate the data directory for the pixmaps when running as a
+      XEmacs package.
+
+    * Check for some MIME character sets that may be available in recent
+      XEmacs.  (Thanks to Aidan Kehoe for the patch)
+
+    * Some documentation fixes. (Thanks to Michael Ernst for the patches)
+
+    * Fixed infinite loop in vm-mime-encode-words on XEmacs  21.5-b28.
+      (Thanks to Aidan Kehoe for the patch)
+ 
+VM 8.0.11
+
+  BUGFIXES:
+
+    * Removed dependency of vm-revno.el to other lisp sources to avoid
+      building it in a release bundle.  (Thanks to Ralf Fassel)
 
 VM 8.0.10
 

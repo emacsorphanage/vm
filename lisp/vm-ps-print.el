@@ -6,7 +6,6 @@
 ;; Status:	Tested with XEmacs 21.4.15 & VM 7.18
 ;; Keywords:	extensions, vm, ps-print
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; Version:     $Id$
 ;;
 ;; This code is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

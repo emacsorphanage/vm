@@ -29,7 +29,7 @@ $bzr export $dir
 
 cp configure $dir
 mv lisp/vm-revno.el $dir/lisp
-
+rm $dir/getversion.sh $dir/release.sh $dir/lisp/vm-revno.sh
 cd release
 tar cvfz $rdir.tgz $rdir
 cd ..
