@@ -67,6 +67,10 @@ Call `vm-version' instead of accessing this variable!")
         (while (re-search-forward "[\n\t\r ]+" (point-max) t)
           (replace-match "")))
       (setq vm-version (buffer-substring (point-min) (point-max)))))
+  (when (interactive-p)
+    (if (string= "?bug?" vm-version)
+        (error "Cannot determine VM version!")
+      (message "VM version is: %s" vm-version)))
   vm-version)
 
 (defconst vm-xemacs-p

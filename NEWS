@@ -1,5 +1,10 @@
 VM 8.0.12-devo
 
+  IMPROVEMENTS:
+
+    * Display version info when calling `vm-version' interactively.  (Thanks
+      to Ulrich Mueller)
+
   BUGFIXES:
 
     * Insert `emacs-version' instead of creating wrong version string for
