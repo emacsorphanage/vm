@@ -3189,9 +3189,9 @@ VM wants to display or undisplay."
                                 (expand-file-name vm-configure-datadir))
                            (expand-file-name "pixmaps" vm-dir)
 			   (expand-file-name "../pixmaps" vm-dir)
-                           (let ((d (locate-data-directory "vm")))
-                             (and d
-                                  (expand-file-name "pixmaps" d)))))
+			   (let ((d (and vm-xemacs-p 
+					 (locate-data-directory "vm"))))
+			     (and d (expand-file-name "pixmaps" d)))))
          image-dir)
     (while image-dirs
       (setq image-dir (car image-dirs))
