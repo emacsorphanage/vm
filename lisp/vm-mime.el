@@ -1630,11 +1630,8 @@ that recipient is outside of East Asia."
 		(car (vm-mm-layout-parts layout)) t)))
 	  ((vm-mime-types-match "message" type) t)
 	  ((vm-mime-types-match "text/html" type)
-	   (and (fboundp 'w3-region)
+	   (and (locate-library "w3")
 		vm-mime-use-w3-for-text/html
-		;; this because GNUS bogusly sets up autoloads
-		;; for w3-region even if W3 isn't installed.
-		(fboundp 'w3-about)
 		(let ((charset (or (vm-mime-get-parameter layout "charset")
 				   "us-ascii")))
 		  (vm-mime-charset-internally-displayable-p charset))))

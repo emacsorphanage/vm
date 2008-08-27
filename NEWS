@@ -7,6 +7,10 @@ VM 8.0.12-devo
 
   BUGFIXES:
 
+    * Detect w3 by using `locate-library' instead of checking for a bound
+      `w3-about'. (Thanks to Klaus Straubinger)
+
+
     * vm.revno.el was not installed anymore b "make install".  (Thanks to
       Ulrich Mueller for reporting)
 
