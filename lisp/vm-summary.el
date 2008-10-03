@@ -737,8 +737,8 @@ mandatory."
 (defun vm-su-spam-score-aux (m)
   "Return the numeric spam level for M."
   (let ((spam-status (vm-get-header-contents m "X-Spam-Status:")))
-    (if (string-match "hits=\\([+-]?[0-9.]+\\)" spam-status)
-        (string-to-number (match-string 1 spam-status))
+    (if (string-match "\\(hits\\|score\\)=\\([+-]?[0-9.]+\\)" spam-status)
+        (string-to-number (match-string 2 spam-status))
       0)))
 
 (defun vm-su-spam-score (m)

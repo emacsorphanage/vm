@@ -27,6 +27,11 @@ VM 8.0.12-devo
 
     * Fixed infinite loop in vm-mime-encode-words on XEmacs  21.5-b28.
       (Thanks to Aidan Kehoe for the patch)
+
+    * Detect "score" (additionally to "hits") in "X-Spam-Status:" headers in
+      `vm-su-spam-score-aux'. (Patch from Michael Ernst)
+
+Public bug reported:
  
 VM 8.0.11
 
