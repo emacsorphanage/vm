@@ -10,7 +10,6 @@ VM 8.0.12-devo
     * Detect w3 by using `locate-library' instead of checking for a bound
       `w3-about'. (Thanks to Klaus Straubinger)
 
-
     * vm.revno.el was not installed anymore b "make install".  (Thanks to
       Ulrich Mueller for reporting)
 
@@ -85,7 +84,7 @@ VM 8.0.10
     * Correctly handle `vm-enable-addons' being t.
 
     * Correctly store UTF-8 strings in the X-VM-v5-Data header to avoid
-      corruption of summay lines. (Thanks to Yuning Feng for reporting)
+      corruption of summary lines. (Thanks to Yuning Feng for reporting)
 
     * Correctly encode multibyte subjects. (Thanks to Yuning Feng for the
       patch) 
