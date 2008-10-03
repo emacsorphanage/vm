@@ -48,7 +48,7 @@ It was last updated at @value{VMPCUPDATED}.
 * New In This Version::         
 @end menu
 
-The incompete list of Roberts which have been involved in vm-prisis:
+The incompete list of Roberts which have been involved in vm-pcrisis:
 
 @itemize @bullet
 @item Rob Hodges
