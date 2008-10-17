@@ -9,6 +9,9 @@ VM 8.0.12-devo
       now.  See the new variable `vm-mime-yank-attachments' to configure if
       attachments are also yanked.
 
+    * `u-vm-color.el' is bundled and maintained with VM now.  Ulf Jasper handed
+      it over to me as he switched to Gnus.
+
   BUGFIXES:
 
     * Detect w3 by using `locate-library' instead of checking for a bound
