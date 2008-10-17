@@ -1070,7 +1070,12 @@ mandatory."
                  (vm-get-header-contents m "Bcc:" ", "))
 	  all to
 	  all (if all (concat all ", " cc) cc)
-	  addresses (rfc822-addresses all))
+	  addresses (condition-case err
+                        (rfc822-addresses all)
+                      (error
+                       (message err)
+                       (sit-for 5)
+                       "corrupted-header")))
     (setq list (vm-parse-addresses all))
     (while list
       ;; Just like vm-su-do-author:

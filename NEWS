@@ -50,6 +50,8 @@ VM 8.0.12-devo
     * Limit the buffer-name length and sanitize the used characters. (Thanks
       to Mark Diekhans for reporting)
 
+    * Do not fail on corrupted address headers.  (Reported by John Covici)
+
 Public bug reported:
  
 VM 8.0.11
