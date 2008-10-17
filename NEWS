@@ -44,6 +44,9 @@ VM 8.0.12-devo
     * MIME text parts interleaved by attachments are now correctly yanked,
       e.g. when replying to a message.
 
+    * Limit the buffer-name length and sanitize the used characters. (Thanks
+      to Mark Diekhans for reporting)
+
 Public bug reported:
  
 VM 8.0.11

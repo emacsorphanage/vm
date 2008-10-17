@@ -1211,14 +1211,17 @@ found, the current buffer remains selected."
 (defvar mail-signature-file)
 (defvar mail-personal-alias-file)
 
-(defun vm-drop-buffer-name-chars (buffer-name)
+(defun vm-sanitize-buffer-name (buffer-name)
   "Replace chars matching `vm-drop-buffer-name-chars' by an \"_\"."
   (let ((r vm-drop-buffer-name-chars))
-    (if (eq r t) (setq r "[^\x0-\x80]"))
-    (if (and buffer-name r)
-        (vm-replace-in-string buffer-name r "_" t)
-      buffer-name)))
-
+    (when buffer-name
+      (if (eq r t) (setq r "[^\x0-\x80]"))
+      (if r
+          (setq buffer-name (vm-replace-in-string buffer-name r "_" t)))
+      (if (>= (length buffer-name) vm-buffer-name-limit)
+          (setq buffer-name (substring buffer-name vm-buffer-name-limit)))
+      buffer-name)
+    
 ;;;###autoload
 (defun vm-mail-internal
     (&optional buffer-name to subject in-reply-to cc references newsgroups)
@@ -1231,7 +1234,7 @@ Binds the `vm-mail-mode-map' and hooks"
     (setq buffer-name (if buffer-name
                           (vm-decode-mime-encoded-words-in-string buffer-name)
                         "mail to ?"))
-    (setq buffer-name (vm-drop-buffer-name-chars buffer-name))
+    (setq buffer-name (vm-sanitize-buffer-name buffer-name))
     (set-buffer (generate-new-buffer buffer-name))
     ;; FSF Emacs: try to prevent write-region (called to handle FCC) from
     ;; asking the user to choose a safe coding system.
@@ -1616,7 +1619,7 @@ message."
               newbufname (format fmt newbufname ellipsis))
         (if (equal newbufname curbufname)
             nil
-          (setq newbufname (vm-drop-buffer-name-chars newbufname))
+          (setq newbufname (vm-sanitize-buffer-name newbufname))
           (rename-buffer newbufname t)))))
 
 ;;;###autoload

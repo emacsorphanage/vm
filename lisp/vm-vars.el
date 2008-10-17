@@ -4313,15 +4313,22 @@ utf-8)'. "
   :group 'vm
   :type '(repeat symbol))
 
-(defcustom vm-drop-buffer-name-chars nil
+(defcustom vm-drop-buffer-name-chars "[a-zA-Z0-9.,_+-]"
   "*Regexp used to replace chars in composition buffer names.
 If non-nil buffer names will be cleaned to avoid save problems.
 If t, 8bit chars are replaced by a \"_\", if a string it should
 be a regexp matching all chars to be replaced by a \"_\"."
   :group 'vm
   :type '(choice (const :tag "Disabled" nil)
-		 (regexp :tag "8bit chars" "[^\x0-\x80]")
+		 (regexp :tag "Enabled" "[a-zA-Z0-9.,_+-]")
 		 (regexp :tag "Custom regexp")))
+
+(defcustom vm-buffer-name-limit 80
+  "*The limit for a generated buffer name."
+  :group 'vm
+  :type '(choice (const :tag "Disabled" nil)
+		 (integer :tag "Enabled" 80)
+                 (integer :tag "Length")))
 
 (defconst vm-maintainer-address "hack@robf.de"
   "Where to send VM bug reports.")
