@@ -1104,7 +1104,9 @@ vm-folder-type is initialized here."
 		     ;;       or
 		     ;;  discard-regexp is matched
 		     (if (or (and (null list) (null discard-regexp))
-			     (and discard-regexp (looking-at discard-regexp)))
+			     (and discard-regexp
+                                  (not (eq 'none discard-regexp))
+                                  discard-regexp (looking-at discard-regexp)))
 			 ;; delete the unwanted header if not doing
 			 ;; work for a folder buffer, otherwise
 			 ;; remember the start and end of the

@@ -77,6 +77,9 @@ VM 8.1.0-devo
       This requires ImageMagick.  (Thanks to Eric Schulte for the idea and
       initial code.)
 
+    * Allow to reorder messages headers before sending by setting the new
+      variable `vm-mail-reorder-message-headers'.
+
   BUG FIXES
 
     * `vm-quit-no-change' made to honour the setting of the variable

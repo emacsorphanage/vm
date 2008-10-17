@@ -618,6 +618,8 @@ as replied to, forwarded, etc, if appropriate."
   (if (and vm-send-using-mime
 	   (null (vm-mail-mode-get-header-contents "MIME-Version:")))
       (vm-mime-encode-composition))
+  (if vm-mail-reorder-message-headers
+      (vm-reorder-message-headers nil vm-mail-header-order 'none))
   ;; this to prevent Emacs 19 from asking whether a message that
   ;; has already been sent should be sent again.  VM renames mail
   ;; buffers after the message has been sent, so the user should
@@ -1689,7 +1691,9 @@ message."
 	  (and vm-send-using-mime
 	       (null (vm-mail-mode-get-header-contents "MIME-Version:"))
 	       (vm-mime-encode-composition))
-	  (vm-remove-mail-mode-header-separator)
+          (if vm-mail-reorder-message-headers
+              (vm-reorder-message-headers nil vm-mail-header-order 'none))
+  	  (vm-remove-mail-mode-header-separator)
 	  (vm-munge-message-separators 'mmdf (point-min) (point-max))
 	  (goto-char (point-min))
 	  (insert (vm-leading-message-separator 'mmdf))

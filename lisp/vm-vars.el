@@ -2314,6 +2314,11 @@ in a composition buffer."
   :group 'vm
   :type '(list string))
 
+(defcustom vm-mail-reorder-message-headers nil
+  "*Reorder message headers before sending."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-reply-subject-prefix nil
   "*Non-nil value should be a string that VM should add to the beginning
 of the Subject header in replies, if the string is not already present.

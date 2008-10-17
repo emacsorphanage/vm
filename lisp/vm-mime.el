@@ -5648,6 +5648,9 @@ and the approriate content-type and boundary markup information is added."
 
   (vm-mime-encode-headers)
 
+  (if vm-mail-reorder-message-headers
+      (vm-reorder-message-headers nil vm-mail-header-order 'none))
+  
   (buffer-enable-undo)
   (let ((unwind-needed t)
 	(mybuffer (current-buffer)))
