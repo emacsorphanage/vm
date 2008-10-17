@@ -6865,7 +6865,7 @@ end of the path."
 Returns the number of deleted parts.  text/html parts are only deleted iff
 the first sub part of a multipart/alternative is a text/plain part."
   (let ((deleted-count 0)
-        prev-type this-type parent-type
+        prev-type this-type parent-types
         nuke-html)
     (vm-mime-map-layout-parts
      m
