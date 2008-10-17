@@ -382,6 +382,7 @@ Switch mode on/off according to ARG.
   ;; encode message
   (unless (vm-mail-mode-get-header-contents "MIME-Version:")
     (vm-mime-encode-composition))
+  (vm-mail-mode-show-headers)
   ;; ensure newline at the end
   (goto-char (point-max))
   (skip-chars-backward " \t\r\n\f")
@@ -1072,6 +1073,7 @@ seed and thus creates the same boundery when called twice in a short period."
       (insert-buffer-substring composition-buffer)
       (setq major-mode 'mail-mode)
       (apply function args))
+    (vm-mail-mode-show-headers)
     (erase-buffer)
     (insert-buffer-substring work-buffer)
     (kill-buffer work-buffer)))
