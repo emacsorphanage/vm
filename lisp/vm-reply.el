@@ -1215,12 +1215,12 @@ found, the current buffer remains selected."
   "Replace chars matching `vm-drop-buffer-name-chars' by an \"_\"."
   (let ((r vm-drop-buffer-name-chars))
     (when buffer-name
-      (if (eq r t) (setq r "[^\x0-\x80]"))
       (if r
           (setq buffer-name (vm-replace-in-string buffer-name r "_" t)))
       (if (>= (length buffer-name) vm-buffer-name-limit)
-          (setq buffer-name (substring buffer-name vm-buffer-name-limit)))
-      buffer-name)
+          (setq buffer-name (concat (substring buffer-name vm-buffer-name-limit)
+                                    "...")))))
+  buffer-name)))
     
 ;;;###autoload
 (defun vm-mail-internal
@@ -1607,7 +1607,7 @@ message."
 	    fmt newbufname
             (ellipsis ""))
 	(cond (vm-reply-list (setq fmt "reply to %s%s"))
-	      (t (setq fmt "mail to %s%s")))
+	      (t (setq fmt "mail to %s%s on \"%s\"")))
         (setq to (vm-parse-addresses to)
               cc (vm-parse-addresses cc))
         (if (or (cdr to)
@@ -1616,7 +1616,8 @@ message."
         (setq newbufname (or (car to) (car cc) "foo (?)")
               newbufname (funcall vm-chop-full-name-function newbufname)
               newbufname (or (car newbufname) (car (cdr newbufname)))
-              newbufname (format fmt newbufname ellipsis))
+              newbufname (format fmt newbufname ellipsis
+                                 (mail-fetch-field "Subject")))
         (if (equal newbufname curbufname)
             nil
           (setq newbufname (vm-sanitize-buffer-name newbufname))
