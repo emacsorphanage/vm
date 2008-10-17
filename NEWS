@@ -5,6 +5,10 @@ VM 8.0.12-devo
     * Display version info when calling `vm-version' interactively.  (Thanks
       to Ulrich Mueller)
 
+    * Yanking of messages uses the same MIME decoding as the presentation
+      now.  See the new variable `vm-mime-yank-attachments' to configure if
+      attachments are also yanked.
+
   BUGFIXES:
 
     * Detect w3 by using `locate-library' instead of checking for a bound
@@ -36,6 +40,9 @@ VM 8.0.12-devo
     * Header encoding was BASE64 instead of QP by default and it was not
       encoding whole words, but only the 8bit chars instead. (Thanks to Ulrich
       Mueller for reporting)
+
+    * MIME text parts interleaved by attachments are now correctly yanked,
+      e.g. when replying to a message.
 
 Public bug reported:
  
