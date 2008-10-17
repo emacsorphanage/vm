@@ -33,6 +33,10 @@ VM 8.0.12-devo
 
     * Typo fix in vm-pcrisis.texinfo. (Patch from Michael Ernst)
 
+    * Header encoding was BASE64 instead of QP by default and it was not
+      encoding whole words, but only the 8bit chars instead. (Thanks to Ulrich
+      Mueller for reporting)
+
 Public bug reported:
  
 VM 8.0.11

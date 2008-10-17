@@ -5365,8 +5365,8 @@ describes what was deleted."
   ;; now encode the words 
   (let ((case-fold-search nil)
         start end charset coding)
-    (while (re-search-forward vm-mime-encode-words-regexp (point-max) t)
-      (setq start (match-beginning 0)
+    (while (re-search-forward vm-mime-encode-headers-words-regexp (point-max) t)
+      (setq start (match-beginning 1)
             end   (vm-marker (match-end 0))
             charset (or (vm-determine-proper-charset start end)
                         vm-mime-8bit-composition-charset)

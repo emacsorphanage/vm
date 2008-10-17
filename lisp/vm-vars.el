@@ -1624,7 +1624,7 @@ with the first type that matches will be used."
   :group 'vm
   :type '(regexp))
 
-(defcustom vm-mime-encode-headers-type 'B
+(defcustom vm-mime-encode-headers-type 'Q
   "*The encoding type to use for encoding headers."
   :group 'vm
   :type '(choice (const :tag "QP" 'Q)
