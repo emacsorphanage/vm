@@ -121,7 +121,25 @@ VM 8.1.0-devo
 
 VM 8.0.12-devo
 
+  IMPROVEMENTS:
+
+    * Display version info when calling `vm-version' interactively.  (Thanks
+      to Ulrich Mueller)
+
+    * Yanking of messages uses the same MIME decoding as the presentation
+      now.  See the new variable `vm-mime-yank-attachments' to configure if
+      attachments are also yanked.
+
+    * `u-vm-color.el' is bundled and maintained with VM now.  Ulf Jasper handed
+      it over to me as he switched to Gnus.
+
   BUGFIXES:
+
+    * Detect w3 by using `locate-library' instead of checking for a bound
+      `w3-about'. (Thanks to Klaus Straubinger)
+
+    * vm.revno.el was not installed anymore b "make install".  (Thanks to
+      Ulrich Mueller for reporting)
 
     * Insert `emacs-version' instead of creating wrong version string for
       XEmacs, i.e. the patch level was the major version. (Thanks to Stephen
@@ -137,6 +155,25 @@ VM 8.0.12-devo
 
     * Fixed infinite loop in vm-mime-encode-words on XEmacs  21.5-b28.
       (Thanks to Aidan Kehoe for the patch)
+
+    * Detect "score" (additionally to "hits") in "X-Spam-Status:" headers in
+      `vm-su-spam-score-aux'. (Patch from Michael Ernst)
+
+    * Typo fix in vm-pcrisis.texinfo. (Patch from Michael Ernst)
+
+    * Header encoding was BASE64 instead of QP by default and it was not
+      encoding whole words, but only the 8bit chars instead. (Thanks to Ulrich
+      Mueller for reporting)
+
+    * MIME text parts interleaved by attachments are now correctly yanked,
+      e.g. when replying to a message.
+
+    * Limit the buffer-name length and sanitize the used characters. (Thanks
+      to Mark Diekhans for reporting)
+
+    * Do not fail on corrupted address headers.  (Reported by John Covici)
+
+Public bug reported:
  
 VM 8.0.11
 
@@ -194,7 +231,7 @@ VM 8.0.10
     * Correctly handle `vm-enable-addons' being t.
 
     * Correctly store UTF-8 strings in the X-VM-v5-Data header to avoid
-      corruption of summay lines. (Thanks to Yuning Feng for reporting)
+      corruption of summary lines. (Thanks to Yuning Feng for reporting)
 
     * Correctly encode multibyte subjects. (Thanks to Yuning Feng for the
       patch) 

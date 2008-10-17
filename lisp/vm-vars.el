@@ -1697,7 +1697,7 @@ with the first type that matches will be used."
   :group 'vm
   :type '(regexp))
 
-(defcustom vm-mime-encode-headers-type 'B
+(defcustom vm-mime-encode-headers-type 'Q
   "*The encoding type to use for encoding headers."
   :group 'vm
   :type '(choice (const :tag "QP" 'Q)
@@ -1731,6 +1731,12 @@ When `vm-mime-attach-file' prompts you for the name of a file to
 attach, any relative pathnames will be relative to this directory."
   :group 'vm
   :type '(choice (const nil) directory))
+
+(defcustom vm-mime-yank-attachments t
+  "*Non-nil value enables yanking of attachments.
+Otherwise only the button label will be yanked."
+  :group 'vm
+  :type 'boolean)
 
 (defcustom vm-infer-mime-types nil
   "*Non-nil value means that VM should try to infer a MIME object's
@@ -3316,9 +3322,9 @@ older VM installation."
                                 (expand-file-name vm-configure-datadir))
                            (expand-file-name "pixmaps" vm-dir)
 			   (expand-file-name "../pixmaps" vm-dir)
-                           (let ((d (locate-data-directory "vm")))
-                             (and d
-                                  (expand-file-name "pixmaps" d)))))
+			   (let ((d (and vm-xemacs-p 
+					 (locate-data-directory "vm"))))
+			     (and d (expand-file-name "pixmaps" d)))))
          image-dir)
     (while image-dirs
       (setq image-dir (car image-dirs))
@@ -4437,15 +4443,22 @@ utf-8)'. "
   :group 'vm
   :type '(repeat symbol))
 
-(defcustom vm-drop-buffer-name-chars nil
+(defcustom vm-drop-buffer-name-chars "[a-zA-Z0-9.,_+-]"
   "*Regexp used to replace chars in composition buffer names.
 If non-nil buffer names will be cleaned to avoid save problems.
 If t, 8bit chars are replaced by a \"_\", if a string it should
 be a regexp matching all chars to be replaced by a \"_\"."
   :group 'vm
   :type '(choice (const :tag "Disabled" nil)
-		 (regexp :tag "8bit chars" "[^\x0-\x80]")
+		 (regexp :tag "Enabled" "[a-zA-Z0-9.,_+-]")
 		 (regexp :tag "Custom regexp")))
+
+(defcustom vm-buffer-name-limit 80
+  "*The limit for a generated buffer name."
+  :group 'vm
+  :type '(choice (const :tag "Disabled" nil)
+		 (integer :tag "Enabled" 80)
+                 (integer :tag "Length")))
 
 (defconst vm-maintainer-address "hack@robf.de"
   "Where to send VM bug reports.")
