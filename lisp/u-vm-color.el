@@ -7,10 +7,10 @@
 ;;  Filename:   u-vm-color.el
 ;;  Created:    January 19 2001
 ;;  Keywords:   VM, Customization
-;;  Time-stamp: "19. Dezember 2007, 22:04:47 (ulf)"
-;;  CVS-Version: $Id: u-vm-color.el,v 2.18 2007-12-19 21:05:00 ulf Exp $
+;;  Time-stamp: "23. Februar 2008, 21:28:20 (ulf)"
+;;  CVS-Version: $Id: u-vm-color.el,v 2.19 2008-02-23 20:28:57 ulf Exp $
 
-(defconst u-vm-color-version "2.9" "Version number of u-vm-color.")
+(defconst u-vm-color-version "2.10" "Version number of u-vm-color.")
 
 ;;  This program is free software; you can redistribute it and/or modify it
 ;;  under the terms of the GNU General Public License as published by the
@@ -80,6 +80,8 @@
 ;; ======================================================================
 ;;; History:
 
+;;  2.10: (2008-02-23)
+;;        Bugfixes -- thanks to Martin Schwenke
 ;;  2.9:  (2007-12-19)
 ;;        Handle PGP signatures -- thanks to Frederik Axelsson.
 ;;        Other minor changes.
@@ -389,7 +391,7 @@ subexpressions."
 	 (string-match "XEmacs\\|Lucid" emacs-version)))
     ;; pick up all elements in the vm-summary-format
     (while (string-match
-	    (concat "%-?\\([0-9]+\\.\\)?\\([0-9]+\\)?"
+	    (concat "%-?\\([0-9]+\\.\\)?-?\\([0-9]+\\)?"
 		    "\\([aAcdfFhHiIlLmMnstTwyz*]\\|U.\\)\\([^%\n]*\\)")
 	    t-vm-summary-format search-start)
       (setq search-start (match-end 0))
@@ -527,7 +529,7 @@ subexpressions."
 	     (setq m-element (list count (quote 'u-vm-color-date-face)
 				    nil u-vm-color-xemacs-workaround)))
 	    ((string-equal value "y") ;; year
-	     (setq f-element "\\([0-9][0-9][0-9][0-9]\\)")
+	     (setq f-element "\\([0-9]+\\)")
 	     (setq m-element (list count (quote 'u-vm-color-date-face)
 				    nil u-vm-color-xemacs-workaround)))
 	    ((string-equal value "z") ;; timezone
@@ -620,15 +622,14 @@ the form '((index face)...)."
 	(setq start (re-search-forward regexp end t))
 	(when start
 	  ;;(message "match found!")
-	  (mapcar (lambda (what)
-		    (let ((index (nth 0 what)) (face (nth 1 what)))
-		      (when (match-beginning index)
-			;;(message "Adding face %s for match %d" face index)
-			(put-text-property (match-beginning index)
-					   (match-end index)
-					   'face face))))
-		  how))))))
-
+	  (mapc (lambda (what)
+                  (let ((index (nth 0 what)) (face (nth 1 what)))
+                    (when (match-beginning index)
+                      ;;(message "Adding face %s for match %d" face index)
+                      (put-text-property (match-beginning index)
+                                         (match-end index)
+                                         'face face))))
+                how))))))
 
 (defun u-vm-color-fontify-signature (start end)
   "Search and fontify the signature.
