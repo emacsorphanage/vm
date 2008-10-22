@@ -403,7 +403,15 @@ See the documentation for vm-mode for more information."
 		  (setq totals-blurb (vm-emit-totals-blurb))
 		  (if (vm-thoughtfully-select-message)
 		      (vm-preview-current-message)
-		    (vm-update-summary-and-mode-line))))
+		    (vm-update-summary-and-mode-line)))
+	      (if vm-message-list
+		  ;; don't decode MIME if recover-file is
+		  ;; likely to happen, since recover-file does
+		  ;; not work in a presentation buffer.
+		  (let ((vm-auto-decode-mime-messages
+			 (and vm-auto-decode-mime-messages
+			      (not preserve-auto-save-file))))
+		    (vm-preview-current-message))))
 	    (message totals-blurb))
 	(if vm-message-list
 	    ;; don't decode MIME if recover-file is

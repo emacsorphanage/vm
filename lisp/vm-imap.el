@@ -235,10 +235,10 @@
 	  (or process (throw 'end-of-session nil))
 	  (setq process-buffer (process-buffer process))
 	  (save-excursion
-	    ;;----------------------------
-	    (vm-buffer-type:enter 'process)
-	    ;;----------------------------
 	    (set-buffer process-buffer)
+	    ;;--------------------------------
+	    (vm-buffer-type:enter 'process)
+	    ;;--------------------------------
 	    ;; find out how many messages are in the box.
 	    (setq source-list (vm-parse source "\\([^:]+\\):?")
 		  mailbox (nth 3 source-list))
@@ -248,6 +248,14 @@
 		  read-write (nth 2 select)
 		  can-delete (nth 3 select)
 		  use-body-peek (vm-imap-capability 'IMAP4REV1))
+	    ;;--------------------------------
+	    (vm-imap-session-type:set 'valid)
+	    ;;--------------------------------
+	    ;; The session type is not really "valid" because the uid
+	    ;; and flags data has not been obtained.  But since
+	    ;; move-mail uses a short, bursty session, the effect is
+	    ;; that of a valid session throughout.
+
 	    ;; sweep through the retrieval list, removing entries
 	    ;; that have been invalidated by the new UIDVALIDITY
 	    ;; value.
@@ -338,10 +346,10 @@
 		  (vm-imap-session-type:set 'inactive)
 		  ;;----------------------------------
 		  )
-	    (not (equal retrieved 0))
 	    ;;-------------------
 	    (vm-buffer-type:exit)
 	    ;;-------------------
+	    (not (equal retrieved 0))
 	    ))
       (setq vm-imap-retrieved-messages imap-retrieved-messages)
       (if (and (eq vm-flush-interval t) (not (equal retrieved 0)))
@@ -366,19 +374,20 @@
 	(retrieved vm-imap-retrieved-messages)
 	(imapdrop (vm-imapdrop-sans-password source))
 	(count 0)
-	msg-count uid-validity x response select mailbox source-list)
+	msg-count uid-validity x response select mailbox source-list
+	result)
     (unwind-protect
 	(prog1
 	    (save-excursion
+	      ;;----------------------------
+	      (vm-buffer-type:enter 'process)
+	      ;;----------------------------
 	      (catch 'end-of-session
 		(if handler
 		    (throw 'end-of-session
 			   (funcall handler 'vm-imap-check-mail source)))
 		(setq process (vm-imap-make-session source))
 		(or process (throw 'end-of-session nil))
-		;;----------------------------
-		(vm-buffer-type:enter 'process)
-		;;----------------------------
 		(set-buffer (process-buffer process))
 		(setq source-list (vm-parse source "\\([^:]+\\):?")
 		      mailbox (nth 3 source-list))
@@ -414,16 +423,17 @@
 		      (setq response (cdr response))))
 		  (vm-store-folder-totals source (list count 0 0 0))
 		  (throw 'end-of-session (not (eq count 0))))
-		(not (equal 0 (car select))))
-	      ;;-------------------
-	      (vm-buffer-type:exit)
-	      ;;-------------------
-	      )
+		(not (equal 0 (car select)))))
+
 	  (setq vm-imap-retrieved-messages retrieved))
+
       ;; unwind-protections
       (when process 
 	(vm-imap-end-session process)
 	;; (vm-imap-dump-uid-and-flags-data)
+	;;-------------------
+	(vm-buffer-type:exit)
+	;;-------------------
 	))))
 
 (defun vm-expunge-imap-messages ()
@@ -3330,7 +3340,10 @@ folder."
 	;;----------------------------
 	(vm-buffer-type:enter 'folder)
 	;;----------------------------
-        (vm-select-folder-buffer)
+        (vm-select-folder-buffer)	; This doesn't work if the
+					; parent folder is virtual
+	(if (not (eq vm-folder-access-method 'imap))
+	    (error "Cannot do IMAP-FCC because the parent folder is not an IMAP folder"))
 	(vm-establish-new-folder-imap-session)
 	(vm-imap-dump-uid-and-flags-data)
 	(setq process (vm-folder-imap-process))
