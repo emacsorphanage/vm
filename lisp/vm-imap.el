@@ -1101,7 +1101,8 @@ on all the relevant IMAP servers and then immediately expunges."
 	(read-write (not just-examine))
 	(can-delete t)
 	(need-ok t))
-    (vm-imap-send-command process (format "%s %s" command mailbox))
+    (vm-imap-send-command 
+     process (format "%s %s" command (vm-imap-quote-string mailbox)))
     (while need-ok
       (setq response (vm-imap-read-response-and-verify process command))
       (cond ((vm-imap-response-matches response '* 'OK 'vector)
@@ -3038,6 +3039,8 @@ IMAP mailbox spec."
 	  account (car account-and-folder)
 	  folder (cadr account-and-folder)
 	  spec (car (rassoc (list account) vm-imap-account-alist)))
+    (if (null spec)
+	(error "Unknown IMAP account-name:folder-name"))
     (setq list (vm-imap-parse-spec-to-list spec))
     (setcar (nthcdr 3 list) folder)
     (setq vm-last-visit-imap-account account)
