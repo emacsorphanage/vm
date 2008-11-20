@@ -1114,8 +1114,10 @@ Otherwise treat `\\' in NEWTEXT as special:
 
 ;; (defvar vm-buffer-types nil)    ; moved to vm-vars.el
 
-(defvar vm-buffer-type-debug nil)	; for debugging asynchronous
-					; buffer change errors
+(defvar vm-buffer-type-debug nil
+  "*This flag can be set to t for debugging asynchronous buffer change
+  errors.")
+
 (defvar vm-buffer-type-trail nil)
 
 (defun vm-buffer-type:enter (type)

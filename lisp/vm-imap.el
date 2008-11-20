@@ -2248,7 +2248,8 @@ on all the relevant IMAP servers and then immediately expunges."
       (set-buffer (process-buffer process))
       (condition-case nil
 	  (vm-imap-create-mailbox process mailbox)
-	(vm-imap-protocol-error nil))
+	(vm-imap-protocol-error 
+	 (vm-buffer-type:set 'process)))
       ;;----------------------------------
       (vm-imap-session-type:assert-active)
       ;;----------------------------------
@@ -2305,8 +2306,8 @@ operation of the server to minimize I/O."
 		(vm-imap-save-message-flags process m 'by-uid))
 	    (vm-imap-protocol-error nil)))
 ;;       (condition-case nil
-;; 	  (vm-imap-create-mailbox process mailbox)
-;; 	(vm-imap-protocol-error nil))
+;; 	    (vm-imap-create-mailbox process mailbox)
+;; 	  (vm-imap-protocol-error nil))
 
       (set-buffer (process-buffer process))
       ;;-----------------------------------------
@@ -2484,7 +2485,8 @@ operation of the server to minimize I/O."
 		    (vm-attribute-modflag-of (car mp)))
 		(condition-case nil
 		    (vm-imap-save-message-flags process (car mp))
-		  (vm-imap-protocol-error nil)))
+		  (vm-imap-protocol-error 
+		   (vm-buffer-type:set 'folder))))
 	    (setq mp (cdr mp)))
 	  (message "Updating attributes on the IMAP server... done")))
       (when retrieve-attributes
@@ -2825,7 +2827,8 @@ operations")
 	(if (or all-flags (vm-attribute-modflag-of (car mp)))
 	    (condition-case nil
 		(vm-imap-save-message-flags process (car mp))
-	      (vm-imap-protocol-error nil)))
+	      (vm-imap-protocol-error 
+	       (vm-buffer-type:set 'folder))))
 	(setq mp (cdr mp)))
       (message "Updating attributes on the IMAP server... done")))
 
@@ -3387,7 +3390,8 @@ folder."
 	    (set-buffer (process-buffer process))
 	    (condition-case nil
 		(vm-imap-create-mailbox process mailbox)
-	      (vm-imap-protocol-error nil))
+	      (vm-imap-protocol-error 
+	       (vm-buffer-type:set 'process)))
 	    ;;----------------------------------
 	    (vm-imap-session-type:assert-active)
 	    ;;----------------------------------
