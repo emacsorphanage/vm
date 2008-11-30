@@ -883,7 +883,7 @@ The variable's value should be an associative list of the form:
  ((@var{IMAPDROP} @var{NAME}) ...)
 @end example
 
-@var{IMAPDROP} is an IMAP @ref{maildrop specification}.
+@var{IMAPDROP} is an IMAP specification (@ref{maildrop specification}).
 
 @var{NAME} is a string that should give a less cumbersome name that you
 will use to refer to this maildrop when using @code{vm-visit-imap-folder}.
