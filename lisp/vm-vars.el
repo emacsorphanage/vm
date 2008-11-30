@@ -18,6 +18,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(require 'vm-version)
+
 (defgroup vm nil
   "The VM mail reader."
   :group 'mail)
