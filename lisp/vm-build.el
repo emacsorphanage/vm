@@ -22,16 +22,18 @@
 	path))))
 
 ;; Add additional dirs to the load-path
-(when (getenv "OTHERDIRS")
-  (let ((otherdirs (read (format "%s" (getenv "OTHERDIRS"))))
-	dir)
-    (while otherdirs
-      (setq dir (car otherdirs))
-      (if (not (file-exists-p dir))
-	  (error "Extra `load-path' directory %S does not exist!" dir))
-;      (print (format "Adding %S" dir))
-      (setq load-path (cons dir load-path)
-	    otherdirs (cdr otherdirs)))))
+(let ((other-dirs-env (getenv "OTHERDIRS")))
+  (when (and other-dirs-env (not (string-equal other-dirs-env "")))
+    (when (getenv "OTHERDIRS")
+      (let ((otherdirs (read (format "%s" (getenv "OTHERDIRS"))))
+	    dir)
+	(while otherdirs
+	  (setq dir (car otherdirs))
+	  (if (not (file-exists-p dir))
+	      (error "Extra `load-path' directory %S does not exist!" dir))
+					;      (print (format "Adding %S" dir))
+	  (setq load-path (cons dir load-path)
+		otherdirs (cdr otherdirs)))))))
   
 ;; Load byte compile 
 (require 'bytecomp)

@@ -21,3 +21,4 @@ snapshot
 lisp/vm-cus-load.el
 CVS
 .cvsignore
+info/version.texi
