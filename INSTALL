@@ -36,6 +36,7 @@ USING CONFIGURE
 2) Compile everything by running:
 
 	make
+	make install
 
    You may ignore warnings, however error messages indicate that some modules
    (partially) will not work, i.e. if other library files are missing or you
