@@ -2347,7 +2347,7 @@ operation of the server to minimize I/O."
 ;; vm-imap-save-attributes: (&optional interactive) -> void
 ;; vm-imap-folder-check-for-mail: (&optional interactive) -> ?
 ;;
-;; vm-imap-get-synchronization-data: () -> 
+;; vm-imap-get-synchronization-data: (&optional bool) -> 
 ;;		(retrieve-list: (uid . int) list &
 ;;		 expunge-list: vm-message list & 
 ;;		 stale-list: vm-message list)
@@ -2356,7 +2356,7 @@ operation of the server to minimize I/O."
 
 
 
-(defun vm-imap-get-synchronization-data ()
+(defun vm-imap-get-synchronization-data (do-retrieves)
   ;; Compares the UID's of messages in the local cache and the IMAP
   ;; server.  Returns a list containing:
   ;; RETRIEVE-LIST: A list of pairs consisting of UID's and message
@@ -2367,6 +2367,9 @@ operation of the server to minimize I/O."
   ;; to expunged locally.
   ;; STALE-LIST: A list of message descriptors for messages in the
   ;; local cache whose uidvalidity values are stale.
+  ;; If the argument DO-RETRIEVES is 'full, then all the messages that
+  ;; are not presently in cache are retrieved.  Otherwise, the
+  ;; messages previously retrieved are ignored.
 
   ;; Comments by USR
   ;; - Originally, messages with stale UIDVALIDITY values were
@@ -2382,6 +2385,7 @@ operation of the server to minimize I/O."
   (let ((here (make-vector 67 0))	; OBARRAY(uid, vm-message)
 	there flags
 	(uid-validity (vm-folder-imap-uid-validity))
+	(do-full-retrieve (eq do-retrieves 'full))
 	retrieve-list expunge-list stale-list uid
 	mp)
     (vm-imap-retrieve-uid-and-flags-data)
@@ -2404,8 +2408,9 @@ operation of the server to minimize I/O."
     (mapatoms (function
 	       (lambda (sym)
 		 (if (and (not (boundp (intern (symbol-name sym) here)))
-			  (not (assoc (symbol-name sym)
-				      vm-imap-retrieved-messages)))
+			  (or do-full-retrieve
+			      (not (assoc (symbol-name sym)
+					  vm-imap-retrieved-messages))))
 		     ;; don't retrieve messages that have been
 		     ;; retrieved previously
 		     ;; This is bad because if a message got lost
@@ -2436,7 +2441,9 @@ operation of the server to minimize I/O."
    DO-LOCAL-EXPUNGES indicates whether the cache buffer should be
    expunged.
    DO-RETRIEVES indicates if new messages that are not already in the
-   cache should be retrieved from the server.
+   cache should be retrieved from the server.  If this flag is 'full
+   then messages previously retrieved but not in cache are retrieved
+   as well.
    SAVE-ATTRIBUTES indicates if the message attributes should be updated on
    the server.  If it is 'all, then the attributes of all messages are
    updated irrespective of whether they were modified or not.
@@ -2461,7 +2468,7 @@ operation of the server to minimize I/O."
 	(vm-assimilate-new-messages))	; Funny that this should be
 					; necessary.  Indicates bugs?
     (message "Logging into the IMAP server...")
-    (let* ((sync-data (vm-imap-get-synchronization-data))
+    (let* ((sync-data (vm-imap-get-synchronization-data do-retrieves))
 	   (retrieve-list (nth 0 sync-data))
 	   (expunge-list (nth 1 sync-data))
 	   (stale-list (nth 2 sync-data))
@@ -2855,9 +2862,9 @@ VM session.  This is useful for saving offline work."
       ;; (vm-imap-synchronize-folder t nil nil nil 
       ;; 			(if all-flags 'all t) nil)
 					; save-attributes
-      (vm-imap-synchronize-folder t t t t nil t)
-					; do-local-expunges,
+      (vm-imap-synchronize-folder t t t 'full nil t)
 					; do-remote-expunges, 
+					; do-local-expunges,
 					; do-retrieves and
 					; retrieve-attributes 
       ;; stuff the attributes of messages that need it.
