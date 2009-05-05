@@ -123,7 +123,7 @@ vm-revno.el:
 ##############################################################################
 # GNU Emacs's vm-autoload file
 vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
-	-$(RM) $@
+	-$(RM) -f $@
 	echo > $@
 	(build_dir="`pwd`"; cd "@srcdir@"; \
 	 "$(EMACS_PROG)" $(FLAGS) -l autoload \
@@ -143,7 +143,7 @@ endif
 ##############################################################################
 # XEmacs#s auto-autoloads and custom-load file
 auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
-	-$(RM) $@
+	-$(RM) -f $@
 #	(build_dir=`pwd`; cd "@srcdir@"; \
 #	 $(EMACS_PROG) $(FLAGS) -l autoload \
 #		-f vm-built-autoloads "@abs_builddir@/$@" "`pwd`")
