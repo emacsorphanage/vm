@@ -1000,6 +1000,10 @@ vm-folder-type is initialized here."
 ;; are ordered according to the order of the keep list.
 
 (defun vm-reorder-message-headers (message keep-list discard-regexp)
+  (interactive
+   (progn 
+     (goto-char (point-min))
+     (list nil vm-mail-header-order "NO_MATCH_ON_HEADERS:")))
   (save-excursion
     (if message
 	(progn
@@ -1100,7 +1104,9 @@ vm-folder-type is initialized here."
 		     ;;       or
 		     ;;  discard-regexp is matched
 		     (if (or (and (null list) (null discard-regexp))
-			     (and discard-regexp (looking-at discard-regexp)))
+			     (and discard-regexp
+                                  (not (eq 'none discard-regexp))
+                                  discard-regexp (looking-at discard-regexp)))
 			 ;; delete the unwanted header if not doing
 			 ;; work for a folder buffer, otherwise
 			 ;; remember the start and end of the
@@ -1907,8 +1913,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	      (let ((print-escape-newlines t))
 		(prin1-to-string attributes))
 	      "\n\t"
-	      (let ((print-escape-newlines t))
-		(prin1-to-string cache))
+	      (vm-mime-encode-words-in-string
+	       (let ((print-escape-newlines t))
+		 (prin1-to-string cache)))
 	      "\n\t"
 	      (let ((print-escape-newlines t))
 		(prin1-to-string (vm-labels-of m)))

@@ -39,71 +39,74 @@
 
 ;; A lot of the more complicated MIME character set processing is only
 ;; practical under MULE.
+(eval-when-compile 
+  (defvar latin-unity-ucs-list))
 
-(when (or vm-xemacs-mule-p
-          (and vm-fsfemacs-mule-p enable-multibyte-characters)
-          )
+(defun vm-get-coding-system-priorities ()
+  "Return the value of `vm-coding-system-priorities', or a reasonable
+default for it if it's nil.  "
+  (if vm-coding-system-priorities
+      vm-coding-system-priorities
+    (let ((res '(iso-8859-1 iso-8859-2 iso-8859-15 iso-8859-16 utf-8)))
+      (dolist (list-item res)
+	;; Assumes iso-8859-1 is always available, which is reasonable.
+	(unless (coding-system-p (find-coding-system list-item))
+	  (delq list-item res)))
+      res)))
 
-  ;; Load any unicode support that's available. (If we're running on 21.5,
-  ;; utf-8 is predefined as a coding system, so there's no need to load
-  ;; Mule-UCS.)
-  (and (not (coding-system-p (if vm-xemacs-mule-p (find-coding-system 'utf-8) 'utf-8)))
-       (locate-library "un-define")
-       (require 'un-define)
-       (require 'unicode))
-
-  ;; If we can use latin-unity for sane treatment of the 8859-? charsets
-  ;; under MULE, go for it.
-  (and (locate-library "latin-unity")
-       (require 'latin-unity))
-
-  (let ((haveu8 (coding-system-p (if vm-xemacs-mule-p (find-coding-system 'utf-8) 'utf-8))))
-
+(defun vm-get-mime-ucs-list ()
+  "Return the value of `vm-mime-ucs-list', or a reasonable default for it if
+it's nil.  This is used instead of `vm-mime-ucs-list' directly in order to
+allow runtime checks for optional features like `mule-ucs' or
+`latin-unity'.  "
+  (if vm-mime-ucs-list
+      vm-mime-ucs-list
     (if (featurep 'latin-unity)
-	(defvaralias 'vm-mime-ucs-list 'latin-unity-ucs-list)
-      (defcustom vm-mime-ucs-list
-	(or (and haveu8 '(utf-8 iso-2022-jp ctext escape-quoted))
-	    '(iso-2022-jp ctext escape-quoted))
-       "*List of coding systems that can encode all characters known to emacs."
-       :group 'vm
-       ))
+	latin-unity-ucs-list
+      (if (coding-system-p (find-coding-system 'utf-8))
+	  '(utf-8 iso-2022-jp ctext escape-quoted)
+	'(iso-2022-jp ctext escape-quoted)))))
 
-    ;; Define a list of coding systems that are to be preferred when sending
-    ;; a mail using MIME. This defaults to including UTF-8 when utf-8 exists
-    ;; as a coding system; otherwise, iso-8859-1 is its only element.
-    ;;
-    ;; If we can't use some element from this list, we default to
-    ;; iso-2022-jp as a last resort in the code.
+(defun vm-update-mime-charset-maps ()
+  "Check for the presence of certain Mule coding systems, and add
+information about the corresponding MIME character sets to VM's
+configuration.  "
+  ;; Add some extra charsets that may not have been defined onto the end
+  ;; of vm-mime-mule-charset-to-coding-alist.
+  (mapcar (lambda (x)
+	    (and (coding-system-p (find-coding-system x))
+		 ;; Not using vm-string-assoc because of some quoting
+		 ;; weirdness it's doing. 
+		 (if (not (assoc
+			   (format "%s" x)
+			   vm-mime-mule-charset-to-coding-alist))
+		     (add-to-list 'vm-mime-mule-charset-to-coding-alist 
+				  (list (format "%s" x) x)))))
+	  '(utf-8 iso-8859-15 iso-8859-14 iso-8859-16
+                  alternativnyj iso-8859-6 iso-8859-7 koi8-c koi8-o koi8-ru koi8-t
+                  koi8-u macintosh windows-1250 windows-1251 windows-1252
+                  windows-1253 windows-1256))
 
-    (defcustom vm-coding-system-priorities
-      (or (and haveu8 '(iso-8859-1 utf-8))
-	  '(iso-8859-1))
-      "*List of coding systems for VM-MIME to use, in order of preference. "
-      :group 'vm)
+  ;; And make sure that the map back from coding-systems is good for
+  ;; those charsets.
+  (mapcar (lambda (x)
+	    (or (assoc (car (cdr x)) vm-mime-mule-coding-to-charset-alist)
+		(add-to-list 'vm-mime-mule-coding-to-charset-alist
+			     (list (car (cdr x)) (car x)))))
+	  vm-mime-mule-charset-to-coding-alist)
+  ;; Whoops, doesn't get picked up for some reason. 
+  (add-to-list 'vm-mime-mule-coding-to-charset-alist 
+	       '(iso-8859-1 "iso-8859-1")))
 
-    ;; Add some extra charsets that may not have been defined onto the end
-    ;; of vm-mime-mule-charset-to-coding-alist.
-    (mapcar (lambda (x)
-	      (and (coding-system-p (if vm-xemacs-mule-p (find-coding-system x) x))
-		   ;; Not using vm-string-assoc because of some quoting
-		   ;; weirdness it's doing.
-		   (if (not (assoc
-			     (format "%s" x)
-			     vm-mime-mule-charset-to-coding-alist))
-		       (add-to-list 'vm-mime-mule-charset-to-coding-alist
-				    (list (format "%s" x) x)))))
-	      '(utf-8 iso-8859-15 iso-8859-14 iso-8859-16))
-
-    ;; And make sure that the map back from coding-systems is good for
-    ;; those charsets.
-    (mapcar (lambda (x)
-	      (or (assoc (car (cdr x)) vm-mime-mule-coding-to-charset-alist)
-		  (add-to-list 'vm-mime-mule-coding-to-charset-alist
-			       (list (car (cdr x)) (car x)))))
-	    vm-mime-mule-charset-to-coding-alist)
-    ;; Whoops, doesn't get picked up for some reason.
-    (add-to-list 'vm-mime-mule-coding-to-charset-alist
-		 '(iso-8859-1 "iso-8859-1"))))
+(when vm-xemacs-mule-p
+  (require 'vm-vars)
+  (vm-update-mime-charset-maps)
+  ;; If the user loads Mule-UCS, re-evaluate the MIME charset maps. 
+  (unless (coding-system-p (find-coding-system 'utf-8))
+    (eval-after-load "un-define" `(vm-update-mime-charset-maps)))
+  ;; Ditto for latin-unity. 
+  (unless (featurep 'latin-unity)
+    (eval-after-load "latin-unity" `(vm-update-mime-charset-maps))))
 
 (defun vm-make-layout (&rest plist)
   (vector
@@ -1403,57 +1406,7 @@ shorter pieces, rebuilt it from them."
 	;; fixup the reference to the message
 	(setcar vm-message-pointer mm)))))
 
-;; This is overridden by the new version below
-(defun vm-fetch-message (storage mm)
-  "Fetch the real message based on the \"^X-VM-Storage:\" header.
 
-This allows for storing only the headers required for the summary
-and maybe a small preview of the message, or keywords for search,
-etc.  Only when displaying it the actual message is fetched based
-on the storage handler.
-
-The information about the actual message is stored in the
-\"^X-VM-Storage:\" header and should be a lisp list of the
-following format.
-
-    \(HANDLER ARGS...\)
-
-HANDLER should correspond to a `vm-fetch-HANDLER-message'
-function, e.g., the handler `file' corresponds to the function
-`vm-fetch-file-message' which gets two arguments, the message
-descriptor and the filename containing the message, and inserts the
-message body from the file into the current buffer. 
-
-For example, 'X-VM-Storage: (file \"message-11\")' will fetch 
-the actual message from the file \"message-11\"."
-  (goto-char (match-end 0))
-  (let ((buffer-read-only nil)
-	(inhibit-read-only t)
-	(buffer-undo-list t)
-	(vheader-regexp (concat "^\\(" 
-				(regexp-opt-group vm-visible-headers) 
-				"\\)")))
-    (erase-buffer)
-    (apply (intern (format "vm-fetch-%s-message" (car storage)))
-	   mm (cdr storage))
-    ;; fix markers now
-    (set-marker (vm-headers-of mm) (point-min))
-    (goto-char (point-min))
-    (set-marker (vm-text-of mm) (or (re-search-forward "\n\n" (point-max) t)
-				    (point-max)))
-    (goto-char (point-min))
-    (set-marker (vm-vheaders-of mm) 
-		(if (re-search-forward vheader-regexp (vm-text-of mm) t)
-		    (match-beginning 0)
-		  (point-min)))
-    (set-marker (vm-text-end-of mm) (point-max))	
-    (set-marker (vm-end-of mm) (point-max))
-    ;; now care for the layout of the message, old layouts are invalid as the
-    ;; presentation buffer may have been used for other messages in the
-    ;; meantime and the marker got invalid by this.
-    (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
-    ))
-  
 (defun vm-fetch-message (storage mm)
   "Fetch the real message based on the \"^X-VM-Storage:\" header.
 
@@ -1550,7 +1503,7 @@ that recipient is outside of East Asia."
 				    beg end))
 			    (psets (latin-unity-representations-present-region
 				    beg end))
-			    (systems vm-coding-system-priorities))
+			    (systems (vm-get-coding-system-priorities)))
 
 			;; If one of the character sets is outside of latin
 			;; unity's remit, check for a universal character
@@ -1563,15 +1516,18 @@ that recipient is outside of East Asia."
 			;; Unicode, at the moment.)
 
 			(while csetzero
-			  (if (not (memq (car csetzero)
-					 latin-unity-character-sets))
-			      (let ((preapproved vm-coding-system-priorities))
+			  (if (not (memq 
+				    (car csetzero) latin-unity-character-sets))
+			      (let ((ucs-list (vm-get-mime-ucs-list))
+				    (preapproved
+				     (vm-get-coding-system-priorities)))
 				(while preapproved
-				  (if (memq (car preapproved) vm-mime-ucs-list)
-				      (throw 'done
-					     (car (cdr (assq
-							(car preapproved)
-                                                        vm-mime-mule-coding-to-charset-alist)))))
+				  (if (memq (car preapproved) ucs-list)
+				      (throw 'done 
+					     (car (cdr (assq 
+							(vm-coding-system-name 
+							 (car preapproved))
+				      vm-mime-mule-coding-to-charset-alist)))))
 				  (setq preapproved (cdr preapproved)))
 				;; Nothing universal in the preapproved list.
 				(throw 'done nil)))
@@ -1581,12 +1537,12 @@ that recipient is outside of East Asia."
 			(while systems
 			  (let ((sys (latin-unity-massage-name (car systems)
 					       'buffer-default)))
-			    (when (latin-unity-maybe-remap (point-min)
-							   (point-max) sys
+			    (when (latin-unity-maybe-remap (point-min) 
+							   (point-max) sys 
 							   csets psets t)
-			      (throw 'done (second (assq
-                                                    sys
-                                                    vm-mime-mule-coding-to-charset-alist)))))
+			      (throw 'done (second (assq 
+						    (vm-coding-system-name sys)
+				    vm-mime-mule-coding-to-charset-alist)))))
 			  (setq systems (cdr systems)))
 			(throw 'done nil))
 
@@ -1600,15 +1556,17 @@ that recipient is outside of East Asia."
 		    ;; "iso-2022-jp" entry below.
 
 		    (let ((csetzero charsets)
-			  (preapproved vm-coding-system-priorities))
+			  (preapproved (vm-get-coding-system-priorities))
+			  (ucs-list (vm-get-mime-ucs-list)))
 		      (if (null (cdr csetzero))
 			  (while preapproved
 			    ;; If we encounter a universal character set on
 			    ;; the preapproved list, pass it back.
-			    (if (memq (car preapproved) vm-mime-ucs-list)
-				(throw 'done (second (assq
-						      preapproved
-                                                      vm-mime-mule-coding-to-charset-alist))))
+			    (if (memq (car preapproved) ucs-list)
+				(throw 'done (second (assq 
+						      (vm-coding-system-name
+						       (car preapproved))
+				     vm-mime-mule-coding-to-charset-alist))))
 
 			    ;; The preapproved entry isn't universal. Check if
 			    ;; it's related to the single non-ASCII MULE
@@ -1642,9 +1600,11 @@ that recipient is outside of East Asia."
 			(while preapproved
 			    ;; If we encounter a universal character set on
 			    ;; the preapproved list, pass it back.
-			    (when (memq (car preapproved) vm-mime-ucs-list)
-				(throw 'done (second (assq preapproved
-                                                           vm-mime-mule-coding-to-charset-alist))))
+			    (when (memq (car preapproved) ucs-list)
+				(throw 'done (second (assq 
+						      (vm-coding-system-name
+						       (car preapproved))
+				     vm-mime-mule-coding-to-charset-alist))))
 			    (setq preapproved (cdr preapproved)))))
 		    (throw 'done nil))))
 	       ;; Couldn't do any magic with vm-coding-system-priorities. Pass
@@ -1745,7 +1705,7 @@ that recipient is outside of East Asia."
 		(car (vm-mm-layout-parts layout)) t)))
 	  ((vm-mime-types-match "message" type) t)
 	  ((vm-mime-types-match "text/html" type)
-	   (and (fboundp 'w3-region)
+           (and (locate-library "w3")
 		(vm-mime-text/html-handler)
 		(let ((charset (or (vm-mime-get-parameter layout "charset")
 				   "us-ascii")))
@@ -2069,8 +2029,7 @@ in the buffer.  The function is expected to make the message
 	    ;; maybe user killed it - make a new one
 	    (progn
 	      (vm-make-presentation-copy (car vm-message-pointer))
-	      ;; (vm-expose-hidden-headers)
-	      )
+	      (vm-expose-hidden-headers))
 	  (set-buffer vm-presentation-buffer))
 	(if (and (interactive-p) (eq vm-system-state 'previewing))
 	    (let ((vm-display-using-mime nil))
@@ -4140,7 +4099,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   (if (and (vm-images-possible-here-p)
 	   (vm-image-type-available-p 'xpm)
 	   (> (device-bitplanes) 7))
-      (let ((dir (vm-image-directory))
+      (let ((dir (expand-file-name "mime" (vm-image-directory)))
 	    (tuples vm-mime-type-images)
 	    glyph file sym p)
 	(setq file (catch 'done
@@ -4165,7 +4124,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 (defun vm-mime-fsfemacs-set-image-stamp-for-type (e type)
   (if (and (vm-images-possible-here-p)
 	   (vm-image-type-available-p 'xpm))
-      (let ((dir (vm-image-directory))
+      (let ((dir (expand-file-name "mime" (vm-image-directory)))
         (tuples vm-mime-type-images)
              file)
 	(setq file (catch 'done
@@ -4600,20 +4559,22 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	   ;; The intention is that ourtermcs is the version of the
 	   ;; coding-system without line-ending information attached to its
 	   ;; end.
-	   ((ourtermcs (or (car
-			    (coding-system-get
-			     (console-tty-output-coding-system)
-			     'alias-coding-systems))
-			   (console-tty-output-coding-system))))
-	 (or (eq ourtermcs (car
-			    (cdr
-			     (vm-string-assoc
+	   ((ourtermcs (coding-system-name
+                        (or (car 
+                             (coding-system-get
+                              (console-tty-output-coding-system)
+                              'alias-coding-systems))
+                            (coding-system-base
+                             (console-tty-output-coding-system))))))
+	 (or (eq ourtermcs (car 
+			    (cdr 
+			     (vm-string-assoc 
 			      name vm-mime-mule-charset-to-coding-alist))))
 	     ;; The vm-mime-mule-charset-to-coding-alist check is to make
 	     ;; sure it does the right thing with a nonsense MIME character
 	     ;; set name.
-	     (and (memq ourtermcs vm-mime-ucs-list)
-		  (vm-string-assoc name vm-mime-mule-charset-to-coding-alist)
+	     (and (memq ourtermcs (vm-get-mime-ucs-list))
+		  (vm-string-assoc name vm-mime-mule-charset-to-coding-alist) 
 		  t)
 	     (vm-mime-default-face-charset-p name)))))
 
@@ -5098,7 +5059,7 @@ COMPOSITION's name will be read from the minibuffer."
 	    (vm-mime-transfer-decode-region layout start (point-max))
 	    (goto-char (point-min))
 	    (vm-reorder-message-headers nil nil "Content-Transfer-Encoding:")
-	    (insert "Content-Transfer-Encoding: binary")
+	    (insert "Content-Transfer-Encoding: binary\n")
 	    (set-buffer composition)
 	    (vm-mime-attach-object work-buffer
 				   (car (vm-mm-layout-type layout))
@@ -5598,6 +5559,82 @@ describes what was deleted."
 	       (vm-set-mm-layout-parts layout nil)
 	       (vm-set-mm-layout-display-error layout nil)))))))
 
+(defun vm-mime-encode-words (&optional encoding)
+  (goto-char (point-min))
+
+  ;; find right encoding 
+  (setq encoding (or encoding vm-mime-encode-headers-type))
+  (save-excursion
+    (when (stringp encoding)
+      (setq encoding 
+            (if (re-search-forward encoding (point-max) t)
+                'B
+              'Q))))
+  ;; now encode the words 
+  (let ((case-fold-search nil)
+        start end charset coding)
+    (while (re-search-forward vm-mime-encode-headers-words-regexp (point-max) t)
+      (setq start (match-beginning 1)
+            end   (vm-marker (match-end 0))
+            charset (or (vm-determine-proper-charset start end)
+                        vm-mime-8bit-composition-charset)
+            coding (vm-string-assoc charset vm-mime-mule-charset-to-coding-alist)
+            coding (and coding (cadr coding)))
+      ;; encode coding system body
+      (when (and coding (not (eq coding 'no-conversion)))
+        (vm-encode-coding-region start end coding))
+      ;; encode 
+      (if (eq encoding 'Q)
+          (vm-mime-Q-encode-region start end)
+        (vm-mime-base64-encode-region  start end))
+      ;; insert start and end markers 
+      (goto-char start)
+      (insert "=?" charset "?" (format "%s" encoding) "?")
+      (setq start (point))
+      (goto-char end)
+      (insert "?=")
+      ;; goto end for next round
+      (goto-char end))))
+
+;;;###autoload
+(defun vm-mime-encode-words-in-string (string &optional encoding)
+  (vm-with-string-as-temp-buffer string 'vm-mime-encode-words))
+
+(defun vm-mime-encode-headers ()
+  "Encodes the headers of a message.
+
+Only the words containing a non 7bit ASCII char are encoded, but not the whole
+header as this will cause trouble for the recipients and authors headers.
+
+Whitespace between encoded words is trimmed during decoding and thus those
+should be encoded together."
+  (interactive)
+  (save-excursion 
+    (let ((headers (concat "^\\(" vm-mime-encode-headers-regexp "\\):"))
+          (case-fold-search nil)
+          (encoding vm-mime-encode-headers-type)
+          body-start
+          start end)
+      (goto-char (point-min))
+      (search-forward mail-header-separator)
+      (setq body-start (vm-marker (match-beginning 0)))
+      (goto-char (point-min))
+      
+      (while (re-search-forward headers body-start t)
+        (goto-char (match-end 0))
+        (setq start (point))
+        (when (not (looking-at "\\s-"))
+          (insert " ")
+          (backward-char 1))
+        (save-excursion
+          (setq end (or (and (re-search-forward "^[^ \t:]+:" body-start t)
+                             (match-beginning 0))
+                        body-start)))
+        (vm-save-restriction
+         (narrow-to-region start end)
+         (vm-mime-encode-words))
+        (goto-char end)))))
+
 ;;;###autoload
 (defun vm-mime-encode-composition ()
  "MIME encode the current mail composition buffer.
@@ -5608,7 +5645,12 @@ and the approriate content-type and boundary markup information is added."
   (vm-mail-mode-show-headers)
 
   (vm-disable-modes vm-disable-modes-before-encoding)
- 
+
+  (vm-mime-encode-headers)
+
+  (if vm-mail-reorder-message-headers
+      (vm-reorder-message-headers nil vm-mail-header-order 'none))
+  
   (buffer-enable-undo)
   (let ((unwind-needed t)
 	(mybuffer (current-buffer)))
@@ -5697,25 +5739,25 @@ agent; under Unix, normally sendmail.)"
 	    (if enriched
 		(let ((enriched-initial-annotation ""))
 		  (enriched-encode (point-min) (point-max))))
+            
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
 	    (if vm-xemacs-mule-p
- 		(encode-coding-region
- 		 (point-min) (point-max)
- 
- 		 ;; What about the case where vm-m-m-c-t-c-a doesn't have an
- 		 ;; entry for the given charset? That shouldn't happen, if
- 		 ;; vm-mime-mule-coding-to-charset-alist and
- 		 ;; vm-mime-mule-charset-to-coding-alist have complete and
- 
- 		 ;; matching entries. Admittedly this last is not a
- 		 ;; given. Should we make it so on startup? (By setting the
- 		 ;; key for any missing entries in
- 		 ;; vm-mime-mule-coding-to-charset-alist to being (format
- 		 ;; "%s" coding-system), if necessary.)
- 
- 		 (car (cdr (vm-string-assoc
- 			    charset vm-mime-mule-charset-to-coding-alist)))))
+		(encode-coding-region 
+		 (point-min) (point-max)
+                 
+		 ;; What about the case where vm-m-m-c-t-c-a doesn't have an
+		 ;; entry for the given charset? That shouldn't happen, if
+		 ;; vm-mime-mule-coding-to-charset-alist and
+		 ;; vm-mime-mule-charset-to-coding-alist have complete and
+		 ;; matching entries. Admittedly this last is not a
+		 ;; given. Should we make it so on startup? (By setting the
+		 ;; key for any missing entries in
+		 ;; vm-mime-mule-coding-to-charset-alist to being (format
+		 ;; "%s" coding-system), if necessary.)
+                 
+		 (car (cdr (vm-string-assoc 
+			    charset vm-mime-mule-charset-to-coding-alist)))))
 
             (enriched-mode -1)
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -6003,8 +6045,8 @@ agent; under Unix, normally sendmail.)"
 	      ;; copy remainder to enclosing entity's header section
 	      (goto-char (point-max))
 	      (if (not just-one)
-	      (insert-buffer-substring (current-buffer)
-				       (vm-mm-layout-header-start layout)
+                  (insert-buffer-substring (current-buffer)
+                                           (vm-mm-layout-header-start layout)
 					   (vm-mm-layout-body-start layout)))
 	      (delete-region (vm-mm-layout-header-start layout)
 			     (vm-mm-layout-body-start layout))))
@@ -6418,12 +6460,12 @@ agent; under Unix, normally sendmail.)"
 	      (goto-char (vm-mm-layout-header-end layout))
 	      (if (looking-at "\n")
 		  (delete-char 1))
-	   ;; copy remainder to enclosing entity's header section
+              ;; copy remainder to enclosing entity's header section
 	      (goto-char (point-max))
 	      (if (not just-one)
-	      (insert-buffer-substring (current-buffer)
-				       (vm-mm-layout-header-start layout)
-					   (vm-mm-layout-body-start layout)))
+                  (insert-buffer-substring (current-buffer)
+                                           (vm-mm-layout-header-start layout)
+                                           (vm-mm-layout-body-start layout)))
 	      (delete-region (vm-mm-layout-header-start layout)
 			     (vm-mm-layout-body-start layout))))
 	(goto-char (point-min))
@@ -6784,11 +6826,12 @@ and the PATH to it.  PATH is a list of parent layouts where the root is at the
 end of the path."
   (unless layout
     (setq layout (vm-mm-layout m)))
-  (funcall function m layout path)
-  (let ((parts (copy-sequence (vm-mm-layout-parts layout))))
-    (while parts
-      (vm-mime-map-layout-parts m function (car parts) (cons layout path))
-      (setq parts (cdr parts)))))
+  (when (vectorp layout)
+    (funcall function m layout path)
+    (let ((parts (copy-sequence (vm-mm-layout-parts layout))))
+      (while parts
+        (vm-mime-map-layout-parts m function (car parts) (cons layout path))
+        (setq parts (cdr parts))))))
 
 (defun vm-mime-list-part-structure (&optional verbose)
   "List mime part structure of the current message."
@@ -6800,7 +6843,8 @@ end of the path."
     (switch-to-buffer "*VM mime part layout*")
     (erase-buffer)
     (setq truncate-lines t)
-    (insert (format "%s\n" (vm-summary-of m)))
+    (insert (format "%s\n" (vm-decode-mime-encoded-words-in-string
+                            (vm-su-subject m))))
     (vm-mime-map-layout-parts
      m
      (lambda (m layout path)
@@ -6821,7 +6865,7 @@ end of the path."
 Returns the number of deleted parts.  text/html parts are only deleted iff
 the first sub part of a multipart/alternative is a text/plain part."
   (let ((deleted-count 0)
-        prev-type this-type parent-type
+        prev-type this-type parent-types
         nuke-html)
     (vm-mime-map-layout-parts
      m

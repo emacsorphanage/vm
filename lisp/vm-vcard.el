@@ -7,7 +7,6 @@
 ;; Keywords: extensions
 ;; Created: 1997-10-03
 
-;; $Id: vm-vcard.el,v 1.6 2000/02/03 17:55:10 friedman Exp $
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

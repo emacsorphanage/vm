@@ -277,6 +277,22 @@ Don't call this function from a program."
       (vm-bury-buffer newbuf)
       (vm-bury-buffer sumbuf))))
 
+(defun vm-insert-presentation (message)
+  (let ((start (point)))
+    (vm-insert-region-from-buffer
+     (save-excursion
+       (vm-select-folder-buffer)
+       ;; ensure the current message is presented 
+     (vm-show-current-message)
+     (vm-select-folder-buffer)
+     (if vm-presentation-buffer
+         (set-buffer vm-presentation-buffer))
+     (current-buffer)))
+    (save-excursion
+      (goto-char start)
+      (if (looking-at "From ")
+          (delete-region start (1+ (line-end-position)))))))
+
 ;;;###autoload
 (defun vm-yank-message (message)
   "Yank message number N into the current buffer at point.
@@ -332,122 +348,28 @@ specified by `vm-included-text-headers' and
 	     (vm-number-of message)))
   (vm-display nil nil '(vm-yank-message) '(vm-yank-message composing-message))
   (setq message (vm-real-message-of message))
-  (let ((b (current-buffer)) (start (point)) end insert-start)
-    (save-restriction
-      (widen)
-      (save-excursion
-        (if vm-reply-include-presentation
-            (let ((text
-                   (save-excursion
-		     (vm-select-folder-buffer)
-		     ;; ensure the current message is presented 
-		     (vm-show-current-message)
-		     (vm-select-folder-buffer)
-		     (if vm-presentation-buffer
-			 (set-buffer vm-presentation-buffer))
-                     (vm-buffer-substring-no-properties (point-min) (point-max)))))
-              (insert text)
-	      (setq end (point-marker)))
-          (if (vectorp (vm-mm-layout message))
-              (let* ((o (vm-mm-layout message))
-                     layout new-layout
-                     (type (car (vm-mm-layout-type o)))
-                     (alternatives 0)
-                     (parts (list o)))
-                (vm-insert-region-from-buffer (vm-buffer-of message)
-                                              (vm-headers-of message)
-                                              (vm-text-of message))
-                (while parts
-                  (setq layout (car parts))
-                  (cond ((vm-mime-text-type-layout-p layout)
-                         (if (cond ((vm-mime-types-match
-                                     "text/enriched"
-                                     (car (vm-mm-layout-type layout)))
-                                    (vm-mime-display-internal-text/enriched
-                                     layout))
-                                   ((vm-mime-types-match
-                                     "message/rfc822"
-                                     (car (vm-mm-layout-type layout)))
-                                    (vm-mime-display-internal-message/rfc822
-                                     layout))
-                                   ((vm-mime-types-match
-                                     "text/html"
-                                     (car (vm-mm-layout-type layout)))
-                                    (vm-mime-display-internal-text/html
-                                     layout))
-                                   ((member (downcase (car (vm-mm-layout-type
-                                                            layout)))
-                                            vm-included-mime-types-list)
-                                    (vm-mime-display-internal-text/plain
-                                     layout t))
-                                   ;; convert the layout if possible
-                                   ((and (not (vm-mm-layout-is-converted layout))
-                                         (vm-mime-can-convert (car (vm-mm-layout-type
-                                                                    layout)))
-                                         (setq new-layout
-                                               (vm-mime-convert-undisplayable-layout
-                                                layout)))
-                                    (vm-decode-mime-layout new-layout)))
-                             ;; we have found a part to insert, thus skip the
-                             ;; remaining alternatives  
-                             (while (> alternatives 1)
-                               (setq parts (cdr parts)
-                                     alternatives (1- alternatives)))
-			 
-                           (if (not (member (downcase (car (vm-mm-layout-type
-                                                            layout)))
-                                            vm-included-mime-types-list))
-                               nil
-                             ;; charset problems probably
-                             ;; just dump the raw bits
-                             (setq insert-start (point))
-                             (vm-mime-insert-mime-body layout)
-                             (vm-mime-transfer-decode-region layout
-                                                             insert-start
-                                                             (point))))
-                         (setq alternatives (1- alternatives))
-                         (setq parts (cdr parts)))
-                        ;; burst composite types 
-                        ((vm-mime-composite-type-p
-                          (car (vm-mm-layout-type layout)))
-                         (setq alternatives (length (vm-mm-layout-parts (car parts))))
-                         (setq parts (nconc (copy-sequence
-                                             (vm-mm-layout-parts
-                                              (car parts)))
-                                            (cdr parts))))
-                        ;; skip non-text parts 
-                        (t
-                         (setq alternatives (1- alternatives))
-                         (setq parts (cdr parts)))))
-                (setq end (point-marker)))
-            (set-buffer (vm-buffer-of message))
-            (save-restriction
-              (widen)
-              ;; decode MIME encoded words so supercite and other
-              ;; mail-citation-hook denizens won't have to eat 'em.
-              (append-to-buffer b (vm-headers-of message)
-                                (vm-text-end-of message))
-              (set-buffer b)
-              (setq end (point-marker))
-              (if vm-display-using-mime
-                  (progn
-                    (narrow-to-region start end)
-                    (vm-decode-mime-encoded-words)))))))
-      ;; get rid of read-only text properties on the text, as
-      ;; they will only cause trouble.
-      (let ((inhibit-read-only t))
-	(remove-text-properties (point-min) (point-max)
-				'(read-only nil	invisible nil)
-				(current-buffer)))
-      
-      ;; decode MIME encoded words so supercite and other
-      ;; mail-citation-hook denizens won't have to eat 'em.
-      (if vm-display-using-mime
-          (save-restriction
-            (narrow-to-region start end)
-            (vm-decode-mime-encoded-words))))
-      
-    (push-mark end)
+  (let ((layout (vm-mm-layout message))
+        (end (point-marker)))
+    (save-excursion
+      (if vm-reply-include-presentation
+          (vm-insert-presentation message)
+        (if (eq layout 'none)
+
+            (vm-insert-region-from-buffer (vm-buffer-of message)
+                                          (vm-headers-of message)
+                                          (vm-text-end-of message))
+          (vm-decode-mime-layout layout)
+          (if vm-mime-yank-attachments
+              (vm-decode-postponed-mime-message))))
+      (setq end (point-marker)))
+    ;; get rid of read-only text properties on the text, as
+    ;; they will only cause trouble.
+    (let ((inhibit-read-only t))
+      (remove-text-properties (point-min) (point-max)
+                              '(read-only nil invisible nil)
+                              (current-buffer)))
+    (push-mark end))
+  (save-excursion
     (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
           (mail-yank-hooks (run-hooks 'mail-yank-hooks))
           (t (vm-mail-yank-default message)))))
@@ -618,6 +540,8 @@ as replied to, forwarded, etc, if appropriate."
   (if (and vm-send-using-mime
 	   (null (vm-mail-mode-get-header-contents "MIME-Version:")))
       (vm-mime-encode-composition))
+  (if vm-mail-reorder-message-headers
+      (vm-reorder-message-headers nil vm-mail-header-order 'none))
   ;; this to prevent Emacs 19 from asking whether a message that
   ;; has already been sent should be sent again.  VM renames mail
   ;; buffers after the message has been sent, so the user should
@@ -1308,13 +1232,16 @@ command can be invoked from external agents via an emacsclient."
 (defvar mail-signature-file)
 (defvar mail-personal-alias-file)
 
-(defun vm-drop-buffer-name-chars (buffer-name)
+(defun vm-sanitize-buffer-name (buffer-name)
   "Replace chars matching `vm-drop-buffer-name-chars' by an \"_\"."
   (let ((r vm-drop-buffer-name-chars))
-    (if (eq r t) (setq r "[^\x0-\x80]"))
-    (if (and buffer-name r)
-        (vm-replace-in-string buffer-name r "_" t)
-      buffer-name)))
+    (when buffer-name
+      (if r
+          (setq buffer-name (vm-replace-in-string buffer-name r "_" t)))
+      (if (>= (length buffer-name) vm-buffer-name-limit)
+          (setq buffer-name (concat (substring buffer-name vm-buffer-name-limit)
+                                    "...")))))
+  buffer-name)
 
 (defvar vm-compositions-exist nil)
 
@@ -1354,7 +1281,7 @@ Binds the `vm-mail-mode-map' and hooks"
     (setq buffer-name (if buffer-name
                           (vm-decode-mime-encoded-words-in-string buffer-name)
                         "mail to ?"))
-    (setq buffer-name (vm-drop-buffer-name-chars buffer-name))
+    (setq buffer-name (vm-sanitize-buffer-name buffer-name))
     (set-buffer (generate-new-buffer buffer-name))
     ;; FSF Emacs: try to prevent write-region (called to handle FCC) from
     ;; asking the user to choose a safe coding system.
@@ -1404,15 +1331,7 @@ Binds the `vm-mail-mode-map' and hooks"
     (and in-reply-to (insert "In-Reply-To: " in-reply-to "\n"))
     (and references (insert "References: " references "\n"))
     (insert "X-Mailer: VM " (vm-version) " under ")
-    (cond ((vm-fsfemacs-p)
-	   (insert "Emacs " emacs-version))
-	  ((featurep 'xemacs)
-	   (insert
-	    (format "XEmacs %d.%d.%d" 
-		    emacs-major-version 
-		    emacs-minor-version 
-		    emacs-major-version)))
-	  ((boundp 'emacs-version)
+    (cond ((boundp 'emacs-version)
 	   (insert emacs-version))
 	  (t
 	   (insert "Unknown Emacs")))
@@ -1700,7 +1619,9 @@ message."
 	  (and vm-send-using-mime
 	       (null (vm-mail-mode-get-header-contents "MIME-Version:"))
 	       (vm-mime-encode-composition))
-	  (vm-remove-mail-mode-header-separator)
+          (if vm-mail-reorder-message-headers
+              (vm-reorder-message-headers nil vm-mail-header-order 'none))
+  	  (vm-remove-mail-mode-header-separator)
 	  (vm-munge-message-separators 'mmdf (point-min) (point-max))
 	  (goto-char (point-min))
 	  (insert (vm-leading-message-separator 'mmdf))
@@ -1736,7 +1657,7 @@ message."
 	    fmt newbufname
             (ellipsis ""))
 	(cond (vm-reply-list (setq fmt "reply to %s%s"))
-	      (t (setq fmt "mail to %s%s")))
+	      (t (setq fmt "mail to %s%s on \"%s\"")))
         (setq to (vm-parse-addresses to)
               cc (vm-parse-addresses cc))
         (if (or (cdr to)
@@ -1745,10 +1666,11 @@ message."
         (setq newbufname (or (car to) (car cc) "foo (?)")
               newbufname (funcall vm-chop-full-name-function newbufname)
               newbufname (or (car newbufname) (car (cdr newbufname)))
-              newbufname (format fmt newbufname ellipsis))
+              newbufname (format fmt newbufname ellipsis
+                                 (mail-fetch-field "Subject")))
         (if (equal newbufname curbufname)
             nil
-          (setq newbufname (vm-drop-buffer-name-chars newbufname))
+          (setq newbufname (vm-sanitize-buffer-name newbufname))
           (rename-buffer newbufname t)))))
 
 ;;;###autoload

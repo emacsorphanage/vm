@@ -20,7 +20,9 @@
 ;;; Code:
 
 ;; Taken from XEmacs as GNU Emacs is missing `replace-in-string' and defining
-;; it may cause clashes with other packages defining it differently 
+;; it may cause clashes with other packages defining it differently, in fact
+;; we could also call the function `replace-regexp-in-string' as Roland
+;; Winkler pointed out.
 (defun vm-replace-in-string (str regexp newtext &optional literal)
   "Replace all matches in STR for REGEXP with NEWTEXT string,
  and returns the new string.
@@ -1118,6 +1120,8 @@ Otherwise treat `\\' in NEWTEXT as special:
   "*This flag can be set to t for debugging asynchronous buffer change
   errors.")
 
+(defvar vm-buffer-type-debug nil)	; for debugging asynchronous
+					; buffer change errors
 (defvar vm-buffer-type-trail nil)
 
 (defun vm-buffer-type:enter (type)

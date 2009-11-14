@@ -2,6 +2,12 @@ VM 8.1.0-devo
 
   IMPROVEMENTS:
 
+    * Allow for sorting the headers of composition buffers by calling the
+      function `vm-reorder-message-headers' interactively.  You may configure
+      the order by the new variable `vm-mail-header-order'.  This can be
+      useful if some broken MUAs (e.g. Tobit) mess up the messages due to the
+      header order.
+
     * Added hiding and protection of headers in composition buffers.  See the
       new variable `vm-mail-mode-hidden-headers' for customization. (Thanks to
       Eric Schulte for the initial code posted in gnu.emacs.vm.info)
@@ -71,6 +77,9 @@ VM 8.1.0-devo
       This requires ImageMagick.  (Thanks to Eric Schulte for the idea and
       initial code.)
 
+    * Allow to reorder messages headers before sending by setting the new
+      variable `vm-mail-reorder-message-headers'.
+
   BUG FIXES
 
     * `vm-quit-no-change' made to honour the setting of the variable
@@ -110,7 +119,70 @@ VM 8.1.0-devo
     * New variable `vm-load-headers-only' to enable headers-only
       downloading of IMAP folders.  (This is still experimental.)
 
-VM 8.0.10-devo
+VM 8.0.12-devo
+
+  IMPROVEMENTS:
+
+    * Display version info when calling `vm-version' interactively.  (Thanks
+      to Ulrich Mueller)
+
+    * Yanking of messages uses the same MIME decoding as the presentation
+      now.  See the new variable `vm-mime-yank-attachments' to configure if
+      attachments are also yanked.
+
+    * `u-vm-color.el' is bundled and maintained with VM now.  Ulf Jasper handed
+      it over to me as he switched to Gnus.
+
+  BUGFIXES:
+
+    * Detect w3 by using `locate-library' instead of checking for a bound
+      `w3-about'. (Thanks to Klaus Straubinger)
+
+    * vm.revno.el was not installed anymore b "make install".  (Thanks to
+      Ulrich Mueller for reporting)
+
+    * Insert `emacs-version' instead of creating wrong version string for
+      XEmacs, i.e. the patch level was the major version. (Thanks to Stephen
+      Turnbull)
+
+    * Correctly locate the data directory for the pixmaps when running as a
+      XEmacs package.
+
+    * Check for some MIME character sets that may be available in recent
+      XEmacs.  (Thanks to Aidan Kehoe for the patch)
+
+    * Some documentation fixes. (Thanks to Michael Ernst for the patches)
+
+    * Fixed infinite loop in vm-mime-encode-words on XEmacs  21.5-b28.
+      (Thanks to Aidan Kehoe for the patch)
+
+    * Detect "score" (additionally to "hits") in "X-Spam-Status:" headers in
+      `vm-su-spam-score-aux'. (Patch from Michael Ernst)
+
+    * Typo fix in vm-pcrisis.texinfo. (Patch from Michael Ernst)
+
+    * Header encoding was BASE64 instead of QP by default and it was not
+      encoding whole words, but only the 8bit chars instead. (Thanks to Ulrich
+      Mueller for reporting)
+
+    * MIME text parts interleaved by attachments are now correctly yanked,
+      e.g. when replying to a message.
+
+    * Limit the buffer-name length and sanitize the used characters. (Thanks
+      to Mark Diekhans for reporting)
+
+    * Do not fail on corrupted address headers.  (Reported by John Covici)
+
+Public bug reported:
+ 
+VM 8.0.11
+
+  BUGFIXES:
+
+    * Removed dependency of vm-revno.el to other lisp sources to avoid
+      building it in a release bundle.  (Thanks to Ralf Fassel)
+
+VM 8.0.10
 
   NOTES:
 
@@ -130,6 +202,9 @@ VM 8.0.10-devo
       from XEmacs to avoid clashes with other GNU Emacs packages defining
       it differently. Unfortunately, GNU Emacs still does not provide this
       handy function. (Thanks to José Miguel Figueroa)
+
+    * MIME encoding of header will automatically happen now and has been moved
+      from `vm-rfaddons.el' to `vm-mime.el' and `vm-vars.el'.
 
   BUGFIXES:
 
@@ -155,18 +230,20 @@ VM 8.0.10-devo
 
     * Correctly handle `vm-enable-addons' being t.
 
-    * FIXME This has been reverted as it causes loss of attributes.
-      If you have sufferend from this, and saved the folder there is no
-      way to restore it!
-
-        Correctly store UTF-8 strings in the X-VM-v5-Data header to avoid
-        corruption of summay lines. (Thanks to Yuning Feng for the patch)
+    * Correctly store UTF-8 strings in the X-VM-v5-Data header to avoid
+      corruption of summary lines. (Thanks to Yuning Feng for reporting)
 
     * Correctly encode multibyte subjects. (Thanks to Yuning Feng for the
       patch) 
 
     * Use BASE64 for header encoding when there are special chars not quoted
       by QP normally.  You may configure this by `vm-mime-encode-headers-type'.
+
+    * qp-decode program handles premature end of QP-encoded stream now
+      gracefully. (Thanks to Ralf Fassel for the bug report, fix and testing)
+
+    * Added missing newline after "Content-Type" when using the command
+      `vm-mime-attach-object-from-message'.  (Thanks to Dan Freed)
 
 VM 8.0.9
 

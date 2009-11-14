@@ -854,8 +854,8 @@ Argument msg is a message pointer."
 (defun vm-su-spam-score-aux (m)
   "Return the numeric spam level for M."
   (let ((spam-status (vm-get-header-contents m "X-Spam-Status:")))
-    (if (string-match "hits=\\([+-]?[0-9.]+\\)" spam-status)
-        (string-to-number (match-string 1 spam-status))
+    (if (string-match "\\(hits\\|score\\)=\\([+-]?[0-9.]+\\)" spam-status)
+        (string-to-number (match-string 2 spam-status))
       0)))
 
 (defun vm-su-spam-score (m)
@@ -1187,7 +1187,12 @@ Argument msg is a message pointer."
                  (vm-get-header-contents m "Bcc:" ", "))
 	  all to
 	  all (if all (concat all ", " cc) cc)
-	  addresses (rfc822-addresses all))
+	  addresses (condition-case err
+                        (rfc822-addresses all)
+                      (error
+                       (message err)
+                       (sit-for 5)
+                       "corrupted-header")))
     (setq list (vm-parse-addresses all))
     (while list
       ;; Just like vm-su-do-author:

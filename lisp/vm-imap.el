@@ -23,6 +23,7 @@
 (eval-when-compile 
   (require 'sendmail)
   (require 'vm-vars)
+  (require 'vm-misc)
   (require 'vm-macro))
 
 ;; To-Do  (USR)
@@ -2572,12 +2573,13 @@ operation of the server to minimize I/O."
 	   ;; to make the "Mail" indicator go away
 	   (setq vm-spooled-mail-waiting nil)
 	   (intern (buffer-name) vm-buffers-needing-display-update)
-	   (vm-increment vm-modification-counter)
 	   (message "Updating summary... ")
 	   (vm-update-summary-and-mode-line)
 	   (setq mp (vm-assimilate-new-messages t))
 	   (setq got-some mp)
-	   (setq r-list retrieve-list)
+           (if got-some
+               (vm-increment vm-modification-counter))
+           (setq r-list retrieve-list)
 	   (while mp
 	     ;; (if vm-load-headers-only 
 	     ;; 	 (vm-add-storage-header mp 'imap))

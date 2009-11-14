@@ -65,10 +65,10 @@ else
 OBJECTS = auto-autoloads.elc custom-load.elc
 endif
 
-OBJECTS += vm-revno.elc
 OBJECTS += $(SOURCES:.el=.elc)
 
 INSTALL_FILES += $(OBJECTS:.elc=.el) $(OBJECTS)
+INSTALL_FILES += vm-revno.el vm-revno.elc
 
 # for autoload generation 
 AUTOLOAD_PACKAGE_NAME = (setq autoload-package-name \"vm\")
@@ -114,10 +114,9 @@ all: $(OBJECTS)
 install: install-el install-elc
 
 ############################################################################## 
-# This is just a dependecy guess, but it will fail if other files have
-# changed and this is a PITA, but I currently see no better way of doing
-# this. 
-vm-revno.el: $(SOURCES:%=@srcdir@/%)
+# This will only work if there is a BZR repo and it should only be done for
+# releases.  Building VM from a BZR repo will not use vm-revno.el ...
+vm-revno.el:
 	cd @srcdir@
 	./vm-revno.sh
 
@@ -134,7 +133,7 @@ vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" >> $@
 	echo "(provide 'vm-autoloads)" >> $@
 
-vm-cus-load.el: $(SRCS:%=@srcdir@/%)
+vm-cus-load.el: $(SOURCES:%=@srcdir@/%)
 	"$(EMACS_PROG)" $(FLAGS) -f vm-custom-make-dependencies .
 ifeq (@EMACS_VERSION@,21)
 	sed -e "s/provide 'cus-load/provide 'vm-cus-load/" cus-load.el > $@
@@ -162,14 +161,14 @@ auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	$(RM) $@.tmp
 
 
-custom-load.el: $(SRCS:%=@srcdir@/%)
+custom-load.el: $(SOURCES:%=@srcdir@/%)
 	"$(EMACS_PROG)" $(FLAGS) -f vm-custom-make-dependencies .
 
 ##############################################################################
-install-pkg: all
+install-pkg: all $(INSTALL_FILES)
 	@if test "x$(SYMLINKS)" = "xno" ; then                 \
 	  mkdir -p -m 0755 $(DESTDIR)$(PACKAGEDIR);            \
-	  for i in $(SRCS:%=@srcdir@/%) $(INSTALL_FILES) ; do  \
+	  for i in $(SOURCES:%=@srcdir@/%) $(INSTALL_FILES) ; do  \
 	    echo "Installing $$i in $(DESTDIR)$(PACKAGEDIR)" ; \
 	    $(INSTALL_DATA) $$i $(DESTDIR)$(PACKAGEDIR) ;      \
 	  done ;                                               \
@@ -183,7 +182,7 @@ install-pkg: all
 	@echo VM ELISP files successfully installed\!
 
 # This entry will never install .el files if there are no .elc files.
-install-el: all
+install-el: all $(INSTALL_FILES)
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(lispdir)/"
 	for elc in *.elc; do                                                  \
 	    el=`basename $$elc c`;                                            \
@@ -202,7 +201,7 @@ install-el: all
 	    done;                                                             \
 	fi;
 
-install-elc: all
+install-elc: all $(INSTALL_FILES)
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(lispdir)/"
 	for elc in *.elc; do                                 \
 	    echo "Install $$elc in $(DESTDIR)$(lispdir)/";   \

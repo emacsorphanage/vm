@@ -5,7 +5,7 @@
 @c %**end of header
 @dircategory Emacs
 @direntry
-* VM-pcrisis: (vm-pcrisis).                  A personality crisis solver for VM
+* VM-pcrisis: (vm-pcrisis).             A personality crisis solver for VM
 @end direntry
 
 @paragraphindent asis
@@ -15,7 +15,7 @@ This is the documentation for Personality Crisis, an add-on for the
 mail reader VM which allows you to do all sorts of things
 automatically when you compose new mail messages or replies.
 
-Copyright @copyright{} 1999  Rob Hodges, 2006 Robert Widhopf-Fenk
+Copyright @copyright{} 1999  Rob Hodges, 2006-2008 Robert Widhopf-Fenk
 @end ifinfo
 
 @c ***************************************************************************
@@ -24,17 +24,19 @@ Copyright @copyright{} 1999  Rob Hodges, 2006 Robert Widhopf-Fenk
 @c node-name, next, previous, up
 @chapter Personality Crisis for VM
 
-This is the documentation for Personality Crisis 0.9.1
+This is the documentation for Personality Crisis for VM.
 
-It was written by Rob Hodges <s323140@@student.uq.edu.au>.
-
-It is currently maintained by Robert Widhopf-Fenk <hack@@robf.de>
+It was originally written by Rob Hodges.
 
 Please read the docs before sending email about problems you are having.
 Most problems are due to incorrect regexps.  That said, if something in
 the docs is unclear, I'd like to know so that I can improve them.  And
 if you find a bug, I'd definitely like to know.  I hope you enjoy this
 package.
+
+@include version.texi
+This manual corresponds to VM version @value{VERSION}.
+It was last updated at @value{VMPCUPDATED}.
 
 @menu
 * Getting Started::             
@@ -46,7 +48,7 @@ package.
 * New In This Version::         
 @end menu
 
-The incompete list of Roberts which have been involved in vm-prisis:
+The incompete list of Roberts which have been involved in vm-pcrisis:
 
 @itemize @bullet
 @item Rob Hodges

@@ -1033,10 +1033,11 @@ popdrop
 	     ;; to make the "Mail" indicator go away
 	     (setq vm-spooled-mail-waiting nil)
 	     (intern (buffer-name) vm-buffers-needing-display-update)
-	     (vm-increment vm-modification-counter)
 	     (vm-update-summary-and-mode-line)
 	     (setq mp (vm-assimilate-new-messages t))
 	     (setq got-some mp)
+             (if got-some
+                 (vm-increment vm-modification-counter))
 	     (setq r-list retrieve-list)
 	     (while mp
 	       (vm-set-pop-uidl-of (car mp) (car (car r-list)))

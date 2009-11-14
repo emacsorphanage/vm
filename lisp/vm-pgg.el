@@ -6,7 +6,6 @@
 ;; Status:      Tested with XEmacs 21.4.19 & VM 7.19
 ;; Keywords:    VM helpers
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; Version:     $Id$
 
 ;;
 ;; This code is free software; you can redistribute it and/or modify
@@ -111,6 +110,8 @@
   (defvar vm-message-pointer)
   (defvar vm-presentation-buffer)
   (defvar vm-summary-buffer)
+  ;; avoid bytecompile warnings
+  (defvar vm-pgg-cleartext-state nil "For interfunction communication.")
 )
 
 (defgroup vm nil
@@ -381,6 +382,7 @@ Switch mode on/off according to ARG.
   ;; encode message
   (unless (vm-mail-mode-get-header-contents "MIME-Version:")
     (vm-mime-encode-composition))
+  (vm-mail-mode-show-headers)
   ;; ensure newline at the end
   (goto-char (point-max))
   (skip-chars-backward " \t\r\n\f")
@@ -410,8 +412,7 @@ Switch mode on/off according to ARG.
 
 (defun vm-pgg-make-presentation-copy ()
   "Make a presentation copy also for cleartext PGP messages."
-  (let* ((buffer-read-only nil)
-         (m (car vm-message-pointer))
+  (let* ((m (car vm-message-pointer))
          (layout (vm-mm-layout m)))
     ;; make a presentation copy
     (vm-make-presentation-copy m)
@@ -423,19 +424,20 @@ Switch mode on/off according to ARG.
     ;; remove From line
     (goto-char (point-min))
     (forward-line 1)
-    (delete-region (point-min) (point))
-    (vm-reorder-message-headers nil vm-visible-headers
-                                vm-invisible-header-regexp)
-    (vm-decode-mime-message-headers m)
-    (when (vectorp layout)
-      ;; skip headers otherwise they get removed 
-      (goto-char (point-min))
-      (search-forward "\n\n")
-      (vm-decode-mime-layout layout)
-      (delete-region (point) (point-max)))
-    (vm-energize-urls-in-message-region)
-    (vm-highlight-headers-maybe)
-    (vm-energize-headers-and-xfaces)))
+    (let ((buffer-read-only nil))
+      (delete-region (point-min) (point))
+      (vm-reorder-message-headers nil vm-visible-headers
+                                  vm-invisible-header-regexp)
+      (vm-decode-mime-message-headers m)
+      (when (vectorp layout)
+        ;; skip headers otherwise they get removed 
+        (goto-char (point-min))
+        (search-forward "\n\n")
+        (vm-decode-mime-layout layout)
+        (delete-region (point) (point-max)))
+      (vm-energize-urls-in-message-region)
+      (vm-highlight-headers-maybe)
+      (vm-energize-headers-and-xfaces))))
     
 (defvar vm-pgg-state nil
   "State of the currently viewed message.")
@@ -564,36 +566,35 @@ When the button is pressed ACTION is called."
       (if vm-presentation-buffer
           (set-buffer vm-presentation-buffer))
       (goto-char (point-min))
-      (when (re-search-forward vm-pgg-cleartext-begin-regexp
+      (when (and (vm-mime-plain-message-p (car vm-message-pointer))
+                 (re-search-forward vm-pgg-cleartext-begin-regexp
                                     (+ (point) vm-pgg-cleartext-search-limit)
-                                    t)
-        (condition-case e
-            (cond ((string= (match-string 1) "SIGNED MESSAGE")
-                   (vm-pgg-set-cleartext-decoded)
-                   (vm-pgg-cleartext-verify))
-                  ((string= (match-string 1) "MESSAGE")
-                   (vm-pgg-set-cleartext-decoded)
-                   (if vm-pgg-auto-decrypt
-                       (vm-pgg-cleartext-decrypt)
-                     (vm-pgg-cleartext-automode-button
-                      "Decrypt PGP message\n"
-                      (lambda ()
-                        (interactive)
-                        (let ((vm-pgg-auto-decrypt t))
-                          (vm-pgg-cleartext-decrypt))))))
-                  ((string= (match-string 1) "PUBLIC KEY BLOCK")
-                   (vm-pgg-set-cleartext-decoded)
-                   (if vm-pgg-auto-snarf
-                       (vm-pgg-snarf-keys)
-                     (vm-pgg-cleartext-automode-button
-                      "Snarf PGP key\n"
-                      (lambda ()
-                        (interactive)
-                        (let ((vm-pgg-auto-snarf t))
-                          (vm-pgg-snarf-keys))))))
-                  (t
-                   (error "This should never happen!")))
-          (error (message "%S" e)))))))
+                                    t))
+        (cond ((string= (match-string 1) "SIGNED MESSAGE")
+               (vm-pgg-set-cleartext-decoded)
+               (vm-pgg-cleartext-verify))
+              ((string= (match-string 1) "MESSAGE")
+               (vm-pgg-set-cleartext-decoded)
+               (if vm-pgg-auto-decrypt
+                   (vm-pgg-cleartext-decrypt)
+                 (vm-pgg-cleartext-automode-button
+                  "Decrypt PGP message\n"
+                  (lambda ()
+                    (interactive)
+                    (let ((vm-pgg-auto-decrypt t))
+                      (vm-pgg-cleartext-decrypt))))))
+              ((string= (match-string 1) "PUBLIC KEY BLOCK")
+               (vm-pgg-set-cleartext-decoded)
+               (if vm-pgg-auto-snarf
+                   (vm-pgg-snarf-keys)
+                 (vm-pgg-cleartext-automode-button
+                  "Snarf PGP key\n"
+                  (lambda ()
+                    (interactive)
+                    (let ((vm-pgg-auto-snarf t))
+                      (vm-pgg-snarf-keys))))))
+              (t
+               (error "This should never happen!")))))))
 
 (defadvice vm-preview-current-message (after vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages."
@@ -677,16 +678,17 @@ When the button is pressed ACTION is called."
 We use the advice here in order to avoid overwriting VMs internal text display
 function.  Faces will get lost if a charset conversion happens thus we do the
 cleanup here after verification and decoding took place."
-  (let ((start (point))
+  (let ((vm-pgg-cleartext-state nil)
+        (start (point))
         end)
     ad-do-it
-    (save-restriction
+    (when vm-pgg-cleartext-state
       (setq end (point))
-      (narrow-to-region start end)
-      (goto-char start)
-      (vm-pgg-cleartext-automode)
-      (goto-char (point-max))
-      (widen))))
+      (save-restriction
+        (narrow-to-region start end)
+        (goto-char (point-min))
+        (vm-pgg-cleartext-cleanup vm-pgg-cleartext-state)
+        (widen)))))
     
 ;;; ###autoload
 (defun vm-pgg-cleartext-verify ()
@@ -713,7 +715,9 @@ cleanup here after verification and decoding took place."
       (vm-pgg-state-set 'signed)
       (setq status (if (not status) 'error 'verified))
       (vm-pgg-state-set status)
-      (vm-pgg-cleartext-cleanup status))))
+      (if (boundp 'vm-pgg-cleartext-state)
+          (setq vm-pgg-cleartext-state status)
+        (vm-pgg-cleartext-cleanup status)))))
 
 ;;; ###autoload
 (defun vm-pgg-cleartext-decrypt ()
@@ -880,6 +884,7 @@ cleanup here after verification and decoding took place."
            ;; after decode the state of vm-mime-decoded is 'buttons
            nil)
           ((not (and (= (length part-list) 2)
+		     signature
                      ;; TODO: check version and protocol here?
                      (vm-mime-types-match (car (vm-mm-layout-type signature))
                                           "application/pgp-signature")))
@@ -891,9 +896,10 @@ cleanup here after verification and decoding took place."
              (insert
               (format
                "******* unknown signature type %s *******\n"
-               (car (vm-mm-layout-type signature))))
+               (car (and signature (vm-mm-layout-type signature)))))
              (setq end (point))
-             (vm-decode-mime-layout signature)
+	     (when signature
+	       (vm-decode-mime-layout signature))
              (put-text-property start end 'face 'vm-pgg-unknown-signature-type))
            t)
           (t 
@@ -1067,6 +1073,7 @@ seed and thus creates the same boundery when called twice in a short period."
       (insert-buffer-substring composition-buffer)
       (setq major-mode 'mail-mode)
       (apply function args))
+    (vm-mail-mode-show-headers)
     (erase-buffer)
     (insert-buffer-substring work-buffer)
     (kill-buffer work-buffer)))

@@ -470,9 +470,7 @@ Use M-x vm-submit-bug-report to submit a bug report.
 Commands:
 \\{vm-mode-map}
 
-
-Customize VM by setting variables and store them in the file ~/.vm.
-"
+Customize VM by setting variables and store them in the `vm-init-file'."
   (interactive "P")
   (vm (current-buffer) read-only)
   (vm-display nil nil '(vm-mode) '(vm-mode)))

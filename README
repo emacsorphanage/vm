@@ -59,8 +59,9 @@ BZR (http://bazaar-vcs.org/)
 I maintain my changes with BZR now, since CVS and SVN suck and TLA/BAZ do as well.
 
 If you want to send me changes or start hacking on your own you may want to 
-branch from my repository at http://www.robf.de/Hacking/bazaar/vm-repo.
-New URL: http://bazaar.launchpad.net/~hack-robf/viewmail/trunk
+branch from the follwing URL:
+
+  http://bazaar.launchpad.net/~hack-robf/viewmail/trunk
 
 # create your own branch from the trunk
 bzr get lp:viewmail

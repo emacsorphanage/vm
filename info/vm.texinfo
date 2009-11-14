@@ -1,10 +1,11 @@
-\input texinfo  @comment -*-Text-*-
+\input texinfo
 @setfilename vm.info
 @settitle VM User's Manual
 @dircategory Emacs
 @direntry
 * VM: (vm).                             A mail reader.
 @end direntry
+
 @iftex
 @finalout
 @end iftex
@@ -21,6 +22,7 @@ This file documents the VM mail reader.
 @item Copyright (C) 2003 - 2008 Robert Widhopf-Fenk
 @item Copyright (C) 2008 Uday S. Reddy
 @end table
+
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
 are preserved on all copies.
@@ -38,12 +40,10 @@ notice identical to this one except for the removal of this paragraph
 @sp 6
 @center @titlefont{VM User's Manual}
 @sp 4
-@center VM Version 8.0
-@sp 5
 @page
 @vskip 0pt plus 1filll
 Copyright @copyright{} 1989, 1991, 1999, 2002, 2003 Kyle E. Jones
-Copyright @copyright{} 2003 - 2007 Robert Widhopf-Fenk
+Copyright @copyright{} 2003 - 2008 Robert Widhopf-Fenk
 Copyright @copyright{} 2008 Uday S. Reddy
 
 Permission is granted to make and distribute verbatim copies of
@@ -58,6 +58,10 @@ are preserved on all copies.
 This manual documents the VM mail reader, a Lisp program which runs as a
 subsystem under Emacs.  The manual is divided into the following
 chapters.
+
+@include version.texi
+This manual corresponds to VM version @value{VERSION}.
+It was last updated at @value{VMUPDATED}.
 
 @menu
 * Introduction::	Overview of the VM interface.
@@ -169,8 +173,8 @@ When you are finished reading mail the current folder must be saved, so
 that the next time the folder is visited VM will know which messages
 have been already read, replied to and so on.  Typing @kbd{S}
 (@code{vm-save-folder}) saves the folder.  Note that deleted messages are
-@emph{not} expunged automatically when you save a folder; this is a change from
-version 4 of VM.  The next time you visit the folder any deleted
+@emph{not} expunged automatically when you save a folder.
+The next time you visit the folder any deleted
 messages will still be flagged for deletion.
 
 @vindex vm-folder-file-precious-flag
@@ -1556,8 +1560,8 @@ run to display an object.  Any @var{ARG}s will be passed to the
 program as arguments.  The octets that compose the object will be
 written into a temporary file and the name of the file can be
 inserted into an @var{ARG} string by writing @samp{%f} in the
-@var{ARG} string.  In earlier versions of VM the filename was
-always added as the last argument; as of VM 6.49 this is only done
+@var{ARG} string.  The filename is
+added as the last argument
 if @samp{%f} does not appear in any of the @var{ARG} strings.
 
 If the @var{COMMAND-LINE} form is used, the program and its
@@ -1970,7 +1974,7 @@ composing your message.
 @item C-c C-d (@code{vm-postpone-composition})
 Postpones the current composition.  The message is stored in the
 folder specified in @code{vm-postponed-folder}.  You can continue composing
-of messages by visiting @code{vm-postponed-folder}, selecting the a message
+of messages by visiting @code{vm-postponed-folder}, selecting a messsage
 and @key{m} or by directly calling the function on any message in any folder
 @kbd{M-x vm-continue-postponed-message}.  When called with a prefix argument
 @code{vm-postpone-composition} will ask you for the folder to save the draft

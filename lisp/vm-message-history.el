@@ -5,9 +5,7 @@
 
 ;; Author: Kevin Rodgers <ihs_4664@yahoo.com>
 ;; Created: 6 Oct 2003
-;; Version: $Revision: 1.2 $
 ;; Keywords: mail, history
-;; RCS: $Id: vm-message-history.el,v 1.2 2003/10/08 14:18:42 kevinr Exp $
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as

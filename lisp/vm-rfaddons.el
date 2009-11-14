@@ -6,7 +6,6 @@
 ;; Status:      Tested with XEmacs 21.4.19 & VM 7.19
 ;; Keywords:    VM helpers
 ;; X-URL:       http://www.robf.de/Hacking/elisp
-;; Version:     $Id$
 
 ;;
 ;; This code is free software; you can redistribute it and/or modify
@@ -109,7 +108,7 @@ The following options are possible.
 `vm-mail-mode' options:
  - attach-save-files: bind [C-c C-a] to `vm-mime-attach-files-in-directory' 
  - check-recipients: add `vm-mail-check-recipients' to `mail-send-hook' in
-   order to check if the recipients headers are correctly.
+   order to check if the recipients headers are correct.
  - encode-headers: add `vm-mime-encode-headers' to `mail-send-hook' in
    order to encode the headers before sending.
  - fake-date: if enabled allows you to fake the date of an outgoing message.
@@ -1343,7 +1342,7 @@ When directory does not exist it will be created."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;###autoload
 (defun vm-mail-check-recipients ()
-  "Check if the recipients are specifiey correctly.
+  "Check if the recipients are specified correctly.
 Actually it checks only if there are any missing commas or the like in the
 headers."
   (interactive)
@@ -1382,90 +1381,6 @@ headers."
           (insert (read-string "Subject: "))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defcustom vm-mime-encode-headers-regexp
-  "Subject\\|\\(\\(Resent-\\)?\\(From\\|To\\|CC\\|BCC\\)\\)\\|Organization"
-  "*A regexp matching the headers which should be encoded."
-  :group 'vm-rfaddons
-  :type '(regexp))
-
-(defcustom vm-mime-encode-headers-words-regexp
-  (let ((8bit-word "\\([^ \t\n\r]*[^\x0-\x7f]+[^ \t\n\r]*\\)+"))
-    (concat "\\s-\\(" 8bit-word "\\(\\s-+" 8bit-word "\\)*\\)"))
-  "*A regexp matching a set of consecutive words which must be encoded."
-  :group 'vm-rfaddons
-  :type '(regexp))
-
-(defcustom vm-mime-encode-headers-type "[^- !#-'*+/-9=?A-Z^-~]"
-  "*The encoding type to use for encoding headers."
-  :group 'vm-rfaddons
-  :type '(choice (const :tag "QP" 'Q)
-                 (const :tag "BASE64" 'B)
-                 (regexp :tag "BASE64 on match of " "[^- !#-'*+/-9=?A-Z^-~]")))
-
-;;;###autoload
-(defun vm-mime-encode-headers ()
-  "Encodes the headers of a message.
-
-Only the words containing a non 7bit ASCII char are encoded, but not the whole
-header as this will cause trouble for the recipients and authors headers.
-
-Whitespace between encoded words is trimmed during decoding and thus those
-should be encoded together."
-  (interactive)
-  (save-excursion 
-    (let ((headers (concat "^\\(" vm-mime-encode-headers-regexp "\\):"))
-          (encoding vm-mime-encode-headers-type)
-	  bodysep)
-      
-      (goto-char (point-min))
-      (search-forward mail-header-separator)
-      (setq bodysep (vm-marker (match-beginning 0)))
-      (goto-char (point-min))
-      
-      (while (re-search-forward headers bodysep t)
-        (goto-char (match-end 0))
-        (when (not (looking-at "\\s-"))
-          (insert " ")
-          (backward-char 1))
-        (let (hend charset coding q-encoding start end)
-          (save-excursion
-            (setq hend (or (and (re-search-forward "^[^ \t:]+:" bodysep t)
-                                (match-beginning 0))
-                           bodysep)
-                  hend  (vm-marker hend)))
-          ;; search for words containing chars in the upper 8bit range
-          (while
-	      (let ((case-fold-search nil))
-		(re-search-forward vm-mime-encode-headers-words-regexp hend t))
-            (setq start (match-beginning 1)
-                  end   (vm-marker (match-end 1))
-                  charset (or (vm-determine-proper-charset start end)
-                              vm-mime-8bit-composition-charset)
-                  coding (vm-string-assoc charset vm-mime-mule-charset-to-coding-alist)
-                  coding (and coding (cadr coding)))
-            ;; encode coding system body
-            (when (and coding (not (eq coding 'no-conversion)))
-              (encode-coding-region start end coding))
-	    ;; find right coding
-	    (when (stringp encoding)
-	      (setq encoding 
-		    (if (string-match encoding
-				      (buffer-substring start end))
-			'B
-		      'Q)))
-            ;; encode unprintable chars in header
-	    (if (eq encoding 'Q)
-		(vm-mime-Q-encode-region start end)
-	      (vm-mime-base64-encode-region  start end))
-	    ;; insert start and end markers 
-            (goto-char start)
-            (insert "=?" charset "?" (format "%s" encoding) "?")
-	    (setq start (point))
-            (goto-char end)
-            (insert "?=")
-            ;; goto end for next round
-            (goto-char end)))))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defface vm-shrunken-headers-face 
   '((t (:background "gray")))
@@ -1800,13 +1715,16 @@ and add an \"%0UA\" to your `vm-summary-format'."
 (defun vm-mail-mode-install-open-line ()
   "Install the open-line hooks for `vm-mail-mode'.
 Add this to `vm-mail-mode-hook'."
+  ;; these are not local even when using add-hook, so we make them local
+  (make-local-hook 'before-change-functions)
+  (make-local-hook 'after-change-functions)
   (add-hook 'before-change-functions 'vm-mail-mode-open-line nil t)
   (add-hook 'after-change-functions 'vm-mail-mode-open-line nil t))
 
 (defvar vm-mail-mode-open-line nil
   "Flag used by `vm-mail-mode-open-line'.")
 
-(defcustom vm-mail-mode-open-line-regexp "[> ]"
+(defcustom vm-mail-mode-open-line-regexp "[ \t]*>"
   "Regexp matching prefix of quoted text at line start.")
 
 (defun vm-mail-mode-open-line (start end &optional length)

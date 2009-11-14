@@ -3,8 +3,6 @@
 # no csh please
 SHELL = /bin/sh
 
-SOURCES = vm-version.el $(wildcard *.el)
-
 ##############################################################################
 # location of required programms
 prefix = @prefix@
@@ -34,6 +32,15 @@ LINKPATH = @LINKPATH@
 ##############################################################################
 
 all: info
+
+version.texi:
+	. ../getversion.sh; echo @set VERSION $$version > version.texi
+	echo @set VMUPDATED `getlastupdate.sh vm.texinfo` >> version.texi
+	echo @set VMPCUPDATED `getlastupdate.sh vm-pcrisis.texinfo` >> version.texi
+
+vm.info:: version.texi
+
+vm-pcrisis.info:: version.texi
 
 info: vm.info vm-pcrisis.info
 
