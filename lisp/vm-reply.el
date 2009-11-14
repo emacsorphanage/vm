@@ -1256,6 +1256,9 @@ found, the current buffer remains selected."
 
 ;;;###autoload
 (defun vm-mail-to-mailto-url (url)
+  "Creates a message composition buffer to send mail to the URL.  This
+command can be invoked from external agents via an emacsclient."
+  (interactive "s")
   (vm-session-initialization)
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer-if-possible)

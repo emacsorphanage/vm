@@ -2225,6 +2225,7 @@ variable @code{vm-forwarding-digest-type}.  Recognized values are
 the format of the Subject header of the forwarded message.  A @code{nil}
 value causes the Subject header to be left blank.  The forwarded message
 is flagged ``forwarded'' when the message is sent.
+
 @findex vm-send-digest
 @vindex vm-digest-send-type
 @kindex @@
@@ -2257,6 +2258,20 @@ will use essentially the same message and headers and add a Resent-To
 header that you should fill in with the new recipients.  Use @kbd{C-c
 C-c} as usual to send the message.  The resent message will be flagged
 as ``redistributed''.
+
+@vindex vm-forwarded-headers
+@vindex vm-unforwarded-header-regexp
+
+You can control which header lines are included in forwarded messages
+via the variables @code{vm-forwarded-headers} and
+@code{vm-unforwarded-header-regexp}.  By default, both of these
+variables are nil, which means that all headers should be included.
+If @code{vm-unforwarded-header-regexp} is set to a regular expression
+then all the headers matching the regular expression are omitted in
+forwarded messages.  If this variable is nil but
+@code{vm-forwarded-headers} is set to a list of headers, then only
+these headers are included in the forwarded messages.  See the
+documentation of these variables for further information.
 
 @node Saving Messages, Deleting Messages, Sending Messages, Top
 @chapter Saving Messages
