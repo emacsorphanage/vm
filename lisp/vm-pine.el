@@ -473,6 +473,7 @@ creation)."
         (error "Folder buffer closed before deletion of source message."))))
 
 ;;-----------------------------------------------------------------------------
+;;;###autoload
 (defun vm-decode-postponed-mime-message ()
   "Replace the mime buttons by attachment buttons."
   (interactive)
