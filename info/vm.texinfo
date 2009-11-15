@@ -9,7 +9,7 @@
 @iftex
 @finalout
 @end iftex
-@c @setchapternewpage odd		% For book style double sided manual.
+@c @setchapternewpage odd               % For book style double sided manual.
 @c      @smallbook
 @tex
 \overfullrule=0pt
@@ -40,11 +40,13 @@ notice identical to this one except for the removal of this paragraph
 @sp 6
 @center @titlefont{VM User's Manual}
 @sp 4
+@center VM Version 8
+@sp 5
 @page
 @vskip 0pt plus 1filll
 Copyright @copyright{} 1989, 1991, 1999, 2002, 2003 Kyle E. Jones
 Copyright @copyright{} 2003 - 2008 Robert Widhopf-Fenk
-Copyright @copyright{} 2008 Uday S. Reddy
+Copyright @copyright{} 2008 - 2009 Uday S. Reddy
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -64,38 +66,38 @@ This manual corresponds to VM version @value{VERSION}.
 It was last updated at @value{VMUPDATED}.
 
 @menu
-* Introduction::	Overview of the VM interface.
-* Starting Up::		What happens when you start VM.
-* Selecting Messages::	How to select messages for reading.
-* Reading Messages::	Previewing and paging through a message.
-* Sending Messages::	How to send messages from within VM.
-* Saving Messages::	How to save messages.
-* Deleting Messages::	How to delete, undelete and expunge messages.
+* Introduction::        Overview of the VM interface.
+* Starting Up::         What happens when you start VM.
+* Selecting Messages::  How to select messages for reading.
+* Reading Messages::    Previewing and paging through a message.
+* Sending Messages::    How to send messages from within VM.
+* Saving Messages::     How to save messages.
+* Deleting Messages::   How to delete, undelete and expunge messages.
 * Editing Messages::    How to alter the text and headers of a message.
-* Marking Messages::	Running VM commands on arbitrary sets of messages.
-* Message Attributes::	How to change and undo changes to message attributes.
-* Sorting Messages::	How to make VM present similar messages together.
+* Marking Messages::    Running VM commands on arbitrary sets of messages.
+* Message Attributes::  How to change and undo changes to message attributes.
+* Sorting Messages::    How to make VM present similar messages together.
 * Digests::             How to read digests under VM.
-* Summaries::		How to view and customize the summary of a folder.
-* Virtual Folders::	Blurring the boundaries of different physical folders.
-* Frames and Windows::	How to customize VM's use of windows and frames.
-* Toolbar::		How to configure VM's toolbar.
-* Menus::		How to configure VM's menus.
-* Faces::		How to configure VM's use of faces.
-* Using the Mouse::	Understanding the VM mouse interface.
-* Hooks::		How you can make VM run your code at certain times.
+* Summaries::           How to view and customize the summary of a folder.
+* Virtual Folders::     Blurring the boundaries of different physical folders.
+* Frames and Windows::  How to customize VM's use of windows and frames.
+* Toolbar::             How to configure VM's toolbar.
+* Menus::               How to configure VM's menus.
+* Faces::               How to configure VM's use of faces.
+* Using the Mouse::     Understanding the VM mouse interface.
+* Hooks::               How you can make VM run your code at certain times.
 * Bugs::                How to report VM bugs
 * Internals::           Information on VM internals for developers
 
 Indices:
 
-* Concept Index::	Menus of key concepts
-* Key Index::		Menus of command keys and their references.
-* Command Index::	Menus of commands and their references.
-* Variable Index::	Menus of variables and their references.
+* Concept Index::       Menus of key concepts
+* Key Index::           Menus of command keys and their references.
+* Command Index::       Menus of commands and their references.
+* Variable Index::      Menus of variables and their references.
 
 Rights:
-* License::		Copying and distribution terms for VM.
+* License::             Copying and distribution terms for VM.
 
 
 @end menu
@@ -305,7 +307,7 @@ to put it into the VM major mode so that VM commands can be executed
 on it.  This command is suitable for use in Lisp programs, and for
 inclusion in @code{auto-mode-alist} to automatically start VM on a
 file based on a particular filename suffix.  @code{vm-mode} skips
-some of VM's startup procedures (e.g. starting up a summary) to make
+some of VM's start-up procedures (e.g. starting up a summary) to make
 non-interactive use easier.
 
 @vindex vm-startup-with-summary
@@ -319,7 +321,7 @@ there are @var{n} or fewer messages.  The default value of
 @code{vm-startup-with-summary} is @code{t}.
 
 @menu
-* Local Folders::     Working with folders on the local filesystem
+* Local Folders::     Working with folders on the local file system
 * Server Folders::    Working with folders on mail servers
 * Getting New Mail::  Retrieving mail from spool files.
 * Crash Recovery::    Recovering changes after Emacs or your system dies.
@@ -382,8 +384,8 @@ retrieving any new messages from the system mailbox.
 
 @menu
 * Spool Files::         Specifying where mail comes from
-* POP Spool Files::	How to use a POP mailbox as a spool file
-* IMAP Spool Files::	How to use an IMAP mailbox as a spool file
+* POP Spool Files::     How to use a POP mailbox as a spool file
+* IMAP Spool Files::    How to use an IMAP mailbox as a spool file
 * Index Files::         Using an index to speed up VM starting
 @end menu
 
@@ -607,7 +609,7 @@ retrieved into the current folder will be expunged.
 
 @vindex vm-imap-auto-expunge-alist
 The variable @code{vm-imap-auto-expunge-alist} gives you a way to specify
-on a per-mailbox basis which IMAP mailboxs have message
+on a per-mailbox basis which IMAP mailboxes have message
 automatically removed when retrieved and which ones leave the
 messages on the IMAP server.  The value of
 @code{vm-imap-auto-expunge-alist} should be a list of IMAP mailboxes and
@@ -754,7 +756,7 @@ should be the string to be sent to the server via the RPOP
 command.  In this case the string is not really a secret;
 authentication is done by other means.  For @samp{apop}, an
 MD5 digest of the @var{PASSWORD} appended to the server
-timestamp will be sent to the server with the APOP command.
+time-stamp will be sent to the server with the APOP command.
 If Emacs does not have built in MD5 support, you will have
 to set the value of @code{vm-pop-md5-program} appropriately
 to point at the program that will generate the MD5 digest
@@ -775,7 +777,7 @@ password over the net unencrypted.  Not all IMAP servers support
 @samp{"cram-md5"}; if you're not sure, ask your mail
 administrator or just try it.  The other value, @samp{"login"},
 tells VM to use the IMAP LOGIN command for authentication, which
-sends your username and password in clear text to the server.
+sends your user name and password in clear text to the server.
 
 @var{USER} is the user name used in authentication methods that
 require such an identifier.  @samp{"login"} and @samp{"cram-md5"}
@@ -791,8 +793,8 @@ session.
 
 
 @menu
-* POP Folders::		How to use mailboxes on POP servers
-* IMAP Folders::	How to use mail folders on IMAP servers
+* POP Folders::         How to use mailboxes on POP servers
+* IMAP Folders::        How to use mail folders on IMAP servers
 @end menu
 
 @node POP Folders, IMAP Folders, Server Folders, Server Folders
@@ -1024,7 +1026,7 @@ you had not yet committed to disk before the crash.  If so, answering
 than not knowing whether the autosave file was truncated.
 
 Assuming you answered ``yes'', the folder buffer's contents will be
-replaced by the contents of the autosave file and VM will reparse the
+replaced by the contents of the autosave file and VM will re-parse the
 folder.  At this point the contents of the folder buffer and the disk
 copy of the folder are different.  Therefore VM will not get new mail
 for this folder until the two copies of the folder are synchronized.
@@ -1161,8 +1163,8 @@ Once a message has been selected, VM will show it to you.  By default,
 presentation is done in two stages: @dfn{previewing} and @dfn{paging}.
 
 @menu
-* Previewing::	                Customizing message previews.
-* Paging::              	Scrolling through the current message.
+* Previewing::                  Customizing message previews.
+* Paging::                      Scrolling through the current message.
 * MIME Messages::               Using VM's MIME display features.
 @end menu
 
@@ -1336,11 +1338,11 @@ non-@code{nil} for VM to decode uuencoded MIME objects.
 
 @menu
 * Viewing MIME::                Decoding MIME for viewing
-* Attachments::    		Operating on MIME attachments
-* Internal display::    	Viewing attachments internally in Emacs
-* External display::    	Viewing attachments with external viewers
-* MIME type conversion::	Converting external attachments to internal
-* Character sets::      	MIME character sets
+* Attachments::                 Operating on MIME attachments
+* Internal display::            Viewing attachments internally in Emacs
+* External display::            Viewing attachments with external viewers
+* MIME type conversion::        Converting external attachments to internal
+* Character sets::              MIME character sets
 * multipart/alternative::       MIME content in alternative formats
 * Bad MIME::                    Dealing with bad MIME
 @end menu
@@ -1560,8 +1562,8 @@ run to display an object.  Any @var{ARG}s will be passed to the
 program as arguments.  The octets that compose the object will be
 written into a temporary file and the name of the file can be
 inserted into an @var{ARG} string by writing @samp{%f} in the
-@var{ARG} string.  The filename is
-added as the last argument
+@var{ARG} string.  In earlier versions of VM the filename was
+always added as the last argument; as of VM 6.49 this is only done
 if @samp{%f} does not appear in any of the @var{ARG} strings.
 
 If the @var{COMMAND-LINE} form is used, the program and its
@@ -1586,11 +1588,11 @@ Example:
 @example
 (setq vm-mime-external-content-types-alist
       '(
-	 ("text/html" 	"netscape")
-	 ("image/gif" 	"xv")
-	 ("image/jpeg" 	"xv")
-	 ("video/mpeg" 	"mpeg_play")
-	 ("video" 	"xanim")
+         ("text/html"   "netscape")
+         ("image/gif"   "xv")
+         ("image/jpeg"  "xv")
+         ("video/mpeg"  "mpeg_play")
+         ("video"       "xanim")
        )
 )
 @end example
@@ -1649,10 +1651,10 @@ Example:
 @example
 (setq vm-mime-attachment-auto-suffix-alist
       '(
-        ("image/jpeg"		.	".jpg")
-        ("image/gif"		.	".gif")
-        ("image/png"		.	".png")
-        ("text"			.	".txt")
+        ("image/jpeg"           .       ".jpg")
+        ("image/gif"            .       ".gif")
+        ("image/png"            .       ".png")
+        ("text"                 .       ".txt")
        )
 )
 @end example
@@ -1697,9 +1699,9 @@ Example:
 @example
 (setq vm-mime-type-converter-alist
        '(
-	 ("image/jpeg"	"image/gif"	"jpeg2gif")
-	 ("text/html"	"text/plain"	"striptags")
-	)
+         ("image/jpeg"  "image/gif"     "jpeg2gif")
+         ("text/html"   "text/plain"    "striptags")
+        )
 )
 @end example
 
@@ -1774,7 +1776,7 @@ Example:
 @example
 (setq vm-mime-charset-converter-alist
       '(
-	 ("utf-8" "iso-2022-jp" "iconv -f utf-8 -t iso-2022-jp")
+         ("utf-8" "iso-2022-jp" "iconv -f utf-8 -t iso-2022-jp")
        )
 )
 @end example
@@ -2006,9 +2008,9 @@ you delete both of those headers.  In that case the To and Cc
 headers will be used.
 
 @menu
-* MIME Composition::	Sending a message using MIME attachments.
-* Replying::		Describes the various ways to reply to a message.
-* Forwarding Messages::	How to forward a message to a third party.
+* MIME Composition::    Sending a message using MIME attachments.
+* Replying::            Describes the various ways to reply to a message.
+* Forwarding Messages:: How to forward a message to a third party.
 @end menu
 
 @node MIME Composition, Replying, Sending Messages, Sending Messages
@@ -2506,7 +2508,7 @@ the edit buffer through the command prefix @kbd{C-c C-v}.
 
 @cindex marking
 @cindex searching
-@cindex virtual fodlers
+@cindex virtual folders
 VM provides a way to mark selected messages so that subsequent
 operations can be applied to them.  This is similar to marking in other
 parts of Emacs, e.g., @xref{Marks vs Flags, Dired Marks, Dired Marks,
@@ -2739,7 +2741,7 @@ prefix argument @var{n} can specify a longer move.  The value of
 @code{vm-move-messages-physically} applies to these commands.
 
 @menu
-* Threading::	Using subjects and message IDs to group messages.
+* Threading::   Using subjects and message IDs to group messages.
 @end menu
 
 @node Threading,,, Sorting Messages
@@ -2932,7 +2934,7 @@ timezone of date when the message was sent
 `*' if the message is marked, ` ' otherwise
 @item (
 starts a group, terminated by %).  Useful for specifying
-the field width and precision for the concatentation of
+the field width and precision for the concatenation of
 group of format specifiers.  Example: \"%.35(%I%s%)\"
 specifies a maximum display width of 35 characters for the
 concatenation of the thread indentation and the subject.
@@ -3350,8 +3352,8 @@ will only use the selected window, and will not create, delete or
 resize windows.
 
 @menu
-* Frame Configuration::		How to configure frame use and appearance.
-* Window Configuration::	How to configure window use and appearance.
+* Frame Configuration::         How to configure frame use and appearance.
+* Window Configuration::        How to configure window use and appearance.
 @end menu
 
 @node Frame Configuration, Window Configuration, Frames and Windows, Frames and Windows
@@ -3493,7 +3495,7 @@ configuration is used.  So if you prefer for the cursor to be in
 a particular window, make sure you invoke
 @code{vm-save-window-configuration} window from that window.  Remember
 that you can invoke the command with @kbd{M-x} if VM's normal
-keymap is not in effect.
+key map is not in effect.
 
 To delete a window configuration, use @kbd{W D} which is bound to
 @code{vm-delete-window-configuration}.  You will be prompted for the
@@ -3643,32 +3645,32 @@ not need to set it.
 @chapter Menus
 
 @vindex vm-popup-menu-on-mouse-3
-VM uses Emacs' menubar and popup menus when they are available to 
+VM uses Emacs' menu bar and pop-up menus when they are available to 
 give you access to more of VM's commands.  By default VM puts a
-context sensitive popup menu on mouse button 3 (usually the
+context sensitive pop-up menu on mouse button 3 (usually the
 rightmost mouse button).  If you don't want this menu, set the
 variable @code{vm-popup-menu-on-mouse-3} to nil.
 
 @vindex vm-use-menus
-If you set @code{vm-use-menus} to nil, VM will not generate a menubar
-for VM folder buffers and VM won't use popup menus either.  If
+If you set @code{vm-use-menus} to nil, VM will not generate a menu bar
+for VM folder buffers and VM won't use pop-up menus either.  If
 you set @code{vm-use-menus} to @samp{1}, VM will add a single @samp{VM}
-entry to the existing menubar instead of using the whole menubar
+entry to the existing menu bar instead of using the whole menu bar
 for its purposes.  That single entry will have all the VM command
 submenus under it.
 
-To make VM use the whole menubar, you must set variable @code{vm-use-menus}
+To make VM use the whole menu bar, you must set variable @code{vm-use-menus}
 to a list of symbols.  The symbols and the order in which they are listed
-determine which menus will be in the menubar and how they are ordered.
+determine which menus will be in the menu bar and how they are ordered.
 Valid symbol values are:
 @table @code
 @item dispose
 This is menu of commands that are commonly used to dispose of a
 message.  E.g. reply, print, save, delete.
 @item emacs
-This is actually a menu button that causes the menubar to change
-to the global Emacs menubar.  On that menubar you will find
-a VM button that will return you to the VM menubar.
+This is actually a menu button that causes the menu bar to change
+to the global Emacs menu bar.  On that menu bar you will find
+a VM button that will return you to the VM menu bar.
 @item folder
 This is a menu of folder related commands.  You can visit a
 folder, save a folder, quit a folder and so on.
@@ -3696,7 +3698,7 @@ folders.
 @item nil
 If nil appears in the list, it should appear exactly once.  All
 menus after nil in the list will be displayed flushright in
-the menubar.
+the menu bar.
 @end table
 
 @node Faces, Using the Mouse, Menus, Top
@@ -4047,7 +4049,7 @@ instead of no action.
 @cindex bug reports
 
 VM has a sophisticated bug reporting system in order to provide the
-VM maintainers with adequate informaion about the state of VM when the
+VM maintainers with adequate information about the state of VM when the
 error situation occurred.  However, it is still important for the
 users to give as full an explanation of the problem as possible.
 @xref{Bugs,,,emacs, the GNU Emacs Manual}.
@@ -4071,8 +4073,8 @@ during the problem occurrence.  To capture the server interactions,
 run @code{vm-pop-start-bug-report}/@code{vm-imap-start-bug-report}
 before the problem occurrence and @code{vm-pop-submit-bug-report}
 /@code{vm-imap-submit-bug-report} after the problem occurrence.  All
-the server intearactions during the interval are captured and
-automatically incldued in the bug-report.
+the server interactions during the interval are captured and
+automatically included in the bug-report.
 
 
 
@@ -4090,8 +4092,299 @@ developers/programmers.
 @node Folder Internals, Message Internals , , Internals
 @section Folder Internals
 
+By default, VM stores mail folders in the Unix @code{mbox} format,
+described in the RFC 2822 specification of the Internet Engineering Task
+Force.  In this format, the mail folder is a text file consisting of a
+sequence of messages, with each message consisting of a series of
+headers followed by a message body.  The beginning of each message is
+delineated by a header line starting with the string ``From ''.  To make
+sure that such a line exists, VM adds its own header line of the form
+``From VM ...'' where the ``...'' records the time at which VM first saw
+the message.
+
+To every message, VM adds a header with the field name
+``X-VM-v5-Data:'' and stores in it the information about the message it
+wishes to remember between sessions.  This header line is used merely
+for speed of processing.  If, for any reason, a VM folder is
+corrupted, it is safe to delete all the X-VM-v5-Data headers, and VM
+will generate them afresh when the folder is visited.
+
+The first message of the VM folder file contains additional headers that
+VM uses for remembering information between sessions.
+@itemize
+@item
+X-VM-Bookmark. This header stores the position of the cursor, as a
+message number, in effect when VM saved the folder.  Upon revisiting the
+folder, VM attempts to put the cursor back at this position.
+@item
+X-VM-Last-Modified. 
+@item
+X-VM-Message-Order.  This header lists the order in which the messages
+should be listed.
+@item
+X-VM-Labels. This header lists the message labels that have been used in
+the folder.  
+@item
+X-VM-VHeader. This header lists the visible headers that should be
+displayed in message listings.
+@item
+X-VM-Summary-Format.  This header stores the format string for the
+summary lines.
+@item
+X-VM-POP-Retrieved. This header lists all the messages that have
+been retrieved from POP servers together with the identifying
+information for the POP servers.  VM refrains from retrieving these
+messages again in future in order to avoid duplication.
+@item
+X-VM-IMAP-Retrieved. This header lists all the messages that have
+been retrieved from IMAP servers together with the identifying
+information for the IMAP servers.  VM refrains from retrieving these
+messages again in future in order to avoid duplication.
+@end itemize
+
+Internally, VM stores the folder as simply a text buffer.  However, it
+remembers a variety of data about the message contents in the buffer
+through internal variables.
+@itemize
+@item
+@code{vm-message-list}.  A list of message data structures for all the
+messages in the buffer.
+@item
+@code{vm-message-pointer}.  A sublist of vm-message-list starting from
+the current message that the cursor is on.  So, the first element of
+vm-message-pointer is the current message.
+@item
+@code{vm-last-message-pointer}.  Whenever the cursor is moved, the
+previous value of vm-message-pointer is remembered in this variable.
+@item
+@code{vm-folder-type}.  The type of the current folder indicating how
+the messages are stored: one of 'babyl, 'From_, 'BellFrom_,
+'From_-with-Content-Length and 'mmdf.
+@item
+@code{vm-folder-access-method}.  The method for accessing the server
+message store: 'pop for pop-folders as well as local folders retrieving
+messages from POP servers, 'imap for imap-folders as well as local
+folders retrieving messages from IMAP servers, and nil for all other folders.
+@item
+@code{vm-folder-access-data}.  A vector of data for accessing the server
+message store.  The first two elements of the vector are the maildrop
+specification for the mail server and a reference to the process
+connecting to the mail server.  For the 'pop access method, that is all
+there is.  But, for the 'imap access method, the vector has 9 other
+entries detailing various pieces of data about the IMAP server.
+@item
+@code{vm-virtual-folder-definition}.  If the current folder is virtual,
+then this variable holds the data constituting its definition.
+@item
+@code{vm-real-buffers}.  If the current folder is virtual, then this
+variable is a list of all the real folder buffers involved in
+constructing it.
+@item
+@code{vm-virtual-buffers}.  A list of all the virtual folder buffers
+that the current buffer is involved in.
+@end itemize
+
+
+
 @node Message Internals, , Folder Internals, Internals
 @section Message Internals
+
+The message data structure is a vector containing various pieces of
+data:
+@itemize
+@item
+Location data.  This data about the location of the various parts of the
+message in the folder buffer is calculated after a folder is loaded and
+parsed. 
+@itemize
+@item
+headers. The position in the folder buffer where the headers of the message
+start.
+@item
+vheaders.  The position in the folder buffer where the visible headers of the
+message start.  (The headers are rearranged in such a way that all the
+visible headers are towards the end of the headers region.)
+@item
+text. The position in the folder buffer where the text of the message starts.
+@item
+text-end. The position in the folder buffer where the text of the message ends
+@item
+end. The position in the folder buffer where the message ends.
+@end itemize
+
+@item
+Soft data.  This vector contains other calculated data about the
+message. 
+@itemize
+@item
+number. The message number as an integer.
+@item
+padded number. The message number as a padded string.
+@item
+mark. Flag that indicates if the message has been marked (via
+@code{vm-mark-message}).
+@item
+su-start. The position in the summary buffer where the summary line of
+the message starts.
+@item
+su-end.  The position in the summary buffer where the summary line of
+the message ends.
+@item
+real-message-sym.  If the message is in a virtual folder, then its
+corresponding ``real message'' is the underlying message in another
+folder which is described by a message data structure similar to the
+current one.  The real message data structures are interned in an
+obarray and represented by ``symbols''.  This field stores the symbol
+representing the real message of the current message.
+@item
+reverse-link.  Link to the previous message in the message list.
+@item
+message-type.  A symbol indicating the type of the message according to
+its folder type, one of @code{BellFrom_}, @code{From_} and
+@code{From_-with-Content-Length}.
+@item
+message-id-number.  The unique id of the message.
+@item
+buffer. The folder buffer of the message.
+@item
+thread-indentation. Indentation level of the message in its message
+thread.
+@item
+babyl-frob-flag.
+@item
+saved-virtual-attributes.  Saved attributes if the message switched from
+unmirrored to mirrored.
+@item
+saved-virtual-mirror-data.  Saved mirror data, if the message was
+switched from unmirrored to mirrored.
+@item
+virtual-summary.  Summary for unmirrored virtual message.
+@item
+mime-layout.  MIME layout information; types, ids, positions, etc of
+all MIME entities.
+@item
+mime-encoded-header-flag. Flag that indicates if the headers of the
+message are MIME encoded.
+@item
+su-summary-mouse-track-overlay.
+@item
+message-access-method.  The access-method to be used for the message,
+inherited from its real folder.
+@end itemize
+
+@item
+Attributes.  All the hard-wired message attributes are stored in this
+vector.  They also get saved as part of the @code{X-VM-v5-Data} header
+field when the folder is saved to disk.
+@itemize
+@item
+new-flag.  Flag to indicate if the message is ``new''.
+@item
+unread-flag.  Flag to indicate if the message is unread.
+@item
+deleted-flag.  Flag to indicate if the message has been deleted.
+@item
+filed-flag.  Flag to indicate if the message has been filed.
+@item
+replied-flag.  Flag to indicate if the message has been replied to.
+@item
+written-flag.  Flag to indicate if the message has been saved.
+@item
+forwarded-flag.  Flag to indicate if the message has been forwarded.
+@item
+edited-flag.  Flag to indicate if the message has been edited.
+@item
+redistributed-flag.  Flag to indicate if the message has been
+redistributed. 
+@end itemize
+
+@item
+Cached Data.  The data that is cached for the message and stored in the
+folder on disk as the @code{X-VM-v5-Data} header field.  Even though
+this vector is only supposed to have data that can be calculated from
+the message itself, the fields pop-uidl, imap-uid and imap-uid-validity
+form an exception.  They are really hard data that cannot be calculated
+from anything else.
+@itemize
+@item
+byte-count.  The size of the message in bytes.
+@item
+weekday, monthday, month, year, hour, zone.  Data indicating the date of
+the message.
+@item 
+full-name.  The full name of the author of the message.
+@item
+from.  The email address of the author of the message.
+@item
+message-id.  The unique id of the message.
+@item
+line-count. The number of lines in the message.
+@item
+subject.  The subject string of the message.
+@item
+vheaders-regexp.  A regular expression that can be used to find the
+start of the already ordered headers.
+@item
+to.  Addresses of the recipients of the message in a comma separated
+string.
+@item
+to-names. The full names of the recipients in a comma separated string.
+Addresses are used if full names are not available.
+@item
+month-number.  Numeric month of the sent date.
+@item
+sortable-datestring.  Date string of the sent date for sorting purposes.
+@item
+sortable-subject.  The subject string for sorting purposes.  (Prefixes
+such as ``re:'' are removed.)
+@item
+summary.  The summary string for the message.
+@item
+parent.  The parent of the message in the message thread, which is
+another message data structure.
+@item
+references.  Message IDs listed in the References header of the message.
+@item
+headers-to-be-retrieved.  Flag that indicates whether the headers of the
+message have not been retrieved from the mail server (for POP or IMAP
+folders).
+@item
+body-to-be-retrieved.  Flag that indicates whether the body of the
+message has not been retrieved from the mail server.
+@item
+pop-uidl.  The UIDL id of the message on the POP server.
+@item
+imap-uid.  The UID of the message on the IMAP server.
+@item
+imap-uid-validity.  The UID-VALIDITY value of the message on the IMAP
+server. 
+@item
+spam-score.  The spam score of the message.
+@end itemize
+
+@item
+Mirror Data.  Extra data shared by virtual messages if vm-virtual-mirror
+is non-nil.
+@itemize
+@item 
+edit-buffer.  If the message is being edited, this is the buffer being
+used.
+@item
+virtual-messages.  List of virtual messages mirroring the current real
+message. 
+@item
+stuff-flag.  Flag to indicates if the attribute changes have been
+``stuffed'' into the folder buffer.
+@item
+labels.  List of labels attached to the message.
+@item
+label-string.  The string of labels attached to the message.
+@item
+attribute-modflag.  Flag to indicate if the attributes of the message
+have been modified since the last save.
+@end itemize
+
+@end itemize
 
 
 
