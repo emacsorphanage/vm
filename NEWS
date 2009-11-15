@@ -119,6 +119,9 @@ VM 8.1.0-devo
     * New variable `vm-load-headers-only' to enable headers-only
       downloading of IMAP folders.  (This is still experimental.)
 
+    * IMAP-FCC is extended to work for virtual folders, but only if
+      the real parent message is an IMAP message.
+
 VM 8.0.12-devo
 
   IMPROVEMENTS:

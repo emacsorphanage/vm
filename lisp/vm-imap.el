@@ -3347,7 +3347,7 @@ folder."
 	(mailboxes nil)
 	(fcc-string (vm-mail-get-header-contents "FCC:" ","))
 	fcc-list fcc maildrop spec-list 
-	process flags response string
+	process flags response string m
 	(vm-imap-ok-to-ask t))
     (if (null mailbox)
 	(setq mailboxes nil)
@@ -3355,8 +3355,10 @@ folder."
 	;;----------------------------
 	(vm-buffer-type:enter 'folder)
 	;;----------------------------
-        (vm-select-folder-buffer)	; This doesn't work if the
-					; parent folder is virtual
+        (vm-select-folder-buffer)
+	(setq m (car vm-message-pointer))
+	(if m 
+	    (set-buffer (vm-buffer-of (vm-real-message-of m))))
 	(if (not (eq vm-folder-access-method 'imap))
 	    (error "Cannot do IMAP-FCC because the parent folder is not an IMAP folder"))
 	(vm-establish-new-folder-imap-session)
