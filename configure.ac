@@ -228,7 +228,8 @@ AC_DEFUN([VM_OTHERDIRS],
           (add-to-list 'absolutedirs dir)))
       (princ (format "%S" absolutedirs)))
 TEST
-  OTHERDIRS=`"${EMACS_PROG}" --no-site-file --batch -l ${srcdir}/lisp/vm-build.el -l conftest.el`
+  OTHERDIRS=`cd ${srcdir}/lisp \
+  		&& "${EMACS_PROG}" --no-site-file --batch -l vm-build.el -l ../conftest.el`
   AC_MSG_RESULT($OTHERDIRS)
   AC_SUBST(OTHERDIRS)
 ])
@@ -240,7 +241,7 @@ AC_INIT([VM], [VM_VERSION], [hack@robf.de])
 AC_COPYRIGHT([Copyright (C) 2006-2007 Robert Widhopf-Fenk <hack@robf.de>])
 
 AC_CONFIG_SRCDIR([configure.ac])
-AC_CONFIG_FILES([Makefile lisp/Makefile info/Makefile src/Makefile pixmaps/Makefile])
+AC_CONFIG_FILES([Makefile lisp/Makefile info/Makefile src/Makefile pixmaps/Makefile vm-load.el])
 
 # Common system utilities checking:
 AC_PROG_MAKE_SET

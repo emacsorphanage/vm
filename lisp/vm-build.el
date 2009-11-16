@@ -1,6 +1,8 @@
 ;; Add the current dir to the load-path
 (setq load-path (cons default-directory load-path))
 ;(setq debug-on-error t)
+;(setq debug-ignored-errors nil)
+;(message "load-path: %S" load-path)
 
 (defun vm-fix-cygwin-path (path)
   "If PATH does not exist, try the DOS path instead.
@@ -22,16 +24,24 @@
 	path))))
 
 ;; Add additional dirs to the load-path
-(when (getenv "OTHERDIRS")
-  (let ((otherdirs (read (format "%s" (getenv "OTHERDIRS"))))
-	dir)
-    (while otherdirs
-      (setq dir (car otherdirs))
-      (if (not (file-exists-p dir))
-	  (error "Extra `load-path' directory %S does not exist!" dir))
-;      (print (format "Adding %S" dir))
-      (setq load-path (cons dir load-path)
-	    otherdirs (cdr otherdirs)))))
+(condition-case err
+    (when (getenv "OTHERDIRS")
+      (let ((otherdirs (read (format "%s" (getenv "OTHERDIRS"))))
+	    dir)
+	(while otherdirs
+	  (setq dir (car otherdirs))
+	  (if (not (file-exists-p dir))
+	      (error "Extra `load-path' directory %S does not exist!" dir))
+					;      (print (format "Adding %S" dir))
+	  (setq load-path (cons dir load-path)
+		otherdirs (cdr otherdirs)))))
+
+  ((end-of-file invalid-read-syntax)   
+   (message "OTHERDIRS=%S rejected by `read': %s"
+	    (getenv "OTHERDIRS")
+	    ;(error-message-string err)
+	    err
+	    )))
   
 ;; Load byte compile 
 (require 'bytecomp)

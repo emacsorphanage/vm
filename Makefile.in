@@ -11,10 +11,10 @@ INSTALL = @INSTALL@
 SUBDIRS = lisp info src pixmaps
 
 ##############################################################################
-all:
+all: vm-load.el
 	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i); done
 
-Makefile: config.status @srcdir@/Makefile.in
+Makefile vm-load.el: %: config.status @srcdir@/%.in
 	./config.status $@
 
 @srcdir@/configure: @srcdir@/configure.ac
