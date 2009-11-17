@@ -1461,7 +1461,6 @@ the actual message from the file \"message-11\"."
 
 (defvar buffer-file-coding-system)
 
-;; TODO: integrate with the FSF's unify-8859-on-encoding-mode stuff.
 (defun vm-determine-proper-charset (beg end)
   "Work out what MIME character set to use for sending a message.
 
@@ -1482,6 +1481,28 @@ that recipient is outside of East Asia."
 	(if (or vm-xemacs-mule-p
 		(and vm-fsfemacs-mule-p enable-multibyte-characters))
 	    ;; Okay, we're on a MULE build.
+	  (if (fboundp 'check-coding-systems-region)
+	      ;; check-coding-systems-region appeared in GNU Emacs 23.
+	      (let* ((preapproved (vm-get-coding-system-priorities))
+		     (ucs-list (vm-get-mime-ucs-list))
+		     (cant-encode (check-coding-systems-region
+				   (point-min) (point-max)
+				   (cons 'us-ascii preapproved))))
+		(if (not (assq 'us-ascii cant-encode))
+		    ;; If there are only ASCII chars, we're done.
+		    "us-ascii"
+		  (while (and preapproved
+			      (assq (car preapproved) cant-encode)
+			      (not (memq (car preapproved) ucs-list)))
+		    (setq preapproved (cdr preapproved)))
+		  (if preapproved
+		      (cadr (assq (car preapproved)
+				  vm-mime-mule-coding-to-charset-alist))
+		    ;; None of the entries in vm-coding-system-priorities
+		    ;; can be used. This can only happen if no universal
+		    ;; coding system is included. Fall back to utf-8.
+		    "utf-8")))
+
 	    (let ((charsets (delq 'ascii
 				  (vm-charsets-in-region (point-min)
 							 (point-max)))))
@@ -1524,9 +1545,7 @@ that recipient is outside of East Asia."
 				(while preapproved
 				  (if (memq (car preapproved) ucs-list)
 				      (throw 'done 
-					     (car (cdr (assq 
-							(vm-coding-system-name 
-							 (car preapproved))
+					     (car (cdr (assq (car preapproved)
 				      vm-mime-mule-coding-to-charset-alist)))))
 				  (setq preapproved (cdr preapproved)))
 				;; Nothing universal in the preapproved list.
@@ -1540,8 +1559,8 @@ that recipient is outside of East Asia."
 			    (when (latin-unity-maybe-remap (point-min) 
 							   (point-max) sys 
 							   csets psets t)
-			      (throw 'done (second (assq 
-						    (vm-coding-system-name sys)
+			      (throw 'done
+				     (second (assq sys
 				    vm-mime-mule-coding-to-charset-alist)))))
 			  (setq systems (cdr systems)))
 			(throw 'done nil))
@@ -1563,9 +1582,8 @@ that recipient is outside of East Asia."
 			    ;; If we encounter a universal character set on
 			    ;; the preapproved list, pass it back.
 			    (if (memq (car preapproved) ucs-list)
-				(throw 'done (second (assq 
-						      (vm-coding-system-name
-						       (car preapproved))
+				(throw 'done
+				       (second (assq (car preapproved)
 				     vm-mime-mule-coding-to-charset-alist))))
 
 			    ;; The preapproved entry isn't universal. Check if
@@ -1601,15 +1619,18 @@ that recipient is outside of East Asia."
 			    ;; If we encounter a universal character set on
 			    ;; the preapproved list, pass it back.
 			    (when (memq (car preapproved) ucs-list)
-				(throw 'done (second (assq 
-						      (vm-coding-system-name
-						       (car preapproved))
+			      (throw 'done
+				     (second (assq (car preapproved)
 				     vm-mime-mule-coding-to-charset-alist))))
 			    (setq preapproved (cdr preapproved)))))
 		    (throw 'done nil))))
 	       ;; Couldn't do any magic with vm-coding-system-priorities. Pass
 	       ;; back a Japanese iso-2022 MIME character set.
-	       (t (or vm-mime-8bit-composition-charset "iso-2022-jp"))))
+	       (t "iso-2022-jp")
+	       ;; Undo the change made in revisin 493
+	       ;; (t (or vm-mime-8bit-composition-charset "iso-2022-jp"))
+	       ;;    -- 
+	       )))
 	  ;; If we're non-MULE and there are eight bit characters, use a
 	  ;; sensible default.
 	  (goto-char (point-min))
