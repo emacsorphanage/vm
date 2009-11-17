@@ -29,8 +29,18 @@
 ;;*****************************************************************************
 ;; Folders and spool files, this is where your mail comes from.
 
+
+(setq 
+ ;; vm-primary-inbox is the filesystem path to where VM stores downloaded messages:
+ vm-primary-inbox "~/INBOX"
+ ;; vm-crash-box is where messages are stored temporarily as it is moved into
+ ;; your primary inbox file (vm-primary-inbox). Here we just tack on a .crash to
+ ;; name it separately:
+ vm-crash-box (concat vm-primary-inbox ".crash"))
+
 ;; vm-spool-files is a list of lists, each sublist should be of the form
 ;;   (INBOX SPOOLNAME CRASHBOX)
+
 
 (setq vm-spool-files
       (list
@@ -134,7 +144,7 @@
 ;;*****************************************************************************
 ;; Sending email via SMTP.
 ;;
-;; This is not done by VM, by by separate packages.  The standard package is
+;; This is not done by VM, but by separate packages.  The standard package is
 ;; smtpmail.el and it should come with your Emacs. If you have more than one
 ;; email address and have to send them using different SMTP servers, the you
 ;; might want to take a look at esmtpmail.el a fork from smtpmail.el targeted

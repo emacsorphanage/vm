@@ -178,7 +178,7 @@ TEST
 
 # copied from gnus aclocal.m4
 AC_DEFUN([VM_BUILD_FLAGS], [
-  AC_MSG_CHECKING([wich options to pass on to (X)Emacs])
+  AC_MSG_CHECKING([which options to pass on to (X)Emacs])
   if test "x$FLAGS" = "x"; then
     if test "x$EMACS_FLAVOR" = "xxemacs"; then
       FLAGS="-batch -no-autoloads -l \$(srcdir)/vm-build.el"
@@ -228,8 +228,7 @@ AC_DEFUN([VM_OTHERDIRS],
           (add-to-list 'absolutedirs dir)))
       (princ (format "%S" absolutedirs)))
 TEST
-  OTHERDIRS=`cd ${srcdir}/lisp \
-  		&& "${EMACS_PROG}" --no-site-file --batch -l vm-build.el -l ../conftest.el`
+  OTHERDIRS=`"${EMACS_PROG}" --no-site-file --batch -L ${srcdir}/lisp -l vm-build.el -l conftest.el`
   AC_MSG_RESULT($OTHERDIRS)
   AC_SUBST(OTHERDIRS)
 ])
