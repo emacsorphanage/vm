@@ -16,6 +16,9 @@ The persons who have contributed to this version of VM are:
  * Rob Hodges
  * Robert Marshall
  * Robert P. Goldman
+ * Samuel Bronson
+ * Brent Goodrick
+ * Ulrich Muller
  * Uday S. Reddy
  * Robert Widhopf-Fenk
 
@@ -24,6 +27,10 @@ the list.
 
 Read INSTALL and follow the instructions to compile and setup VM.
 
+[In Rob's absence, Uday S. Reddy is hosting the latest updates to VM
+version 8.1 on Launchpad.  He can be contacted at 
+'u DOT s DOT reddy @ cs.bham.ac.uk'. 
+]
 *******************************************************************************
 BUGS
 
@@ -56,15 +63,26 @@ best suited to conserve code snippets, cooking guides or feature requests.
 *******************************************************************************
 BZR (http://bazaar-vcs.org/)
 
-I maintain my changes with BZR now, since CVS and SVN suck and TLA/BAZ do as well.
+I maintain my changes with BZR now, since CVS and SVN suck and TLA/BAZ
+do as well. 
 
 If you want to send me changes or start hacking on your own you may want to 
 branch from the follwing URL:
 
   http://bazaar.launchpad.net/~hack-robf/viewmail/trunk
 
+[The version 8.1 being hosted by Uday S. Reddy is at:
+
+  http://bazaar.launchpad.net/~reddyuday/viewmail/8.1
+]
+
+
+
 # create your own branch from the trunk
+# the 'lp' URL's do they same job as the 'http' URL's above.
 bzr get lp:viewmail
+(or)
+bzr get lp:~reddyuday/viewmail/8.1
 # get updates
 bzr pull
 # start hacking 
@@ -74,7 +92,7 @@ bzr commit
 # Generate a bundle of your changes for merging
 bzr bundle-revisions --output=xy-changes.diff
 # Attach the bundle to a mail (rather than doing cut&paste) and send
-# it to hack@robf.de with a descriptive subject.  
+# it to hack @ robf.de with a descriptive subject.  
 
 *******************************************************************************
 COMMENTS
