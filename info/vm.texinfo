@@ -498,15 +498,14 @@ If your spool file is on another host, VM supports accessing
 spool files on remote hosts using the POP and IMAP protocols.
 
 @node POP Spool Files,IMAP Spool Files,Spool Files,Local Folders
-@unnumberedsubsec POP Spool Files
-@cindex POP
-VM can access spool files on mail servers via the Post Office Protocol
-(POP).  To use a POP mailbox as a spool file, you need to use a POP
-@ref{maildrop specification} as the spool file name (whose structure
-is described in @ref{Server Folders}).  Once this is done, VM will
-retrieve new mail from the POP mailbox in the same way as it retrieves
-it from system mailbox.  The retrieved messages can be automatically
-removed from the POP mailbox or retained until a later expunge operation.
+@unnumberedsubsec POP Spool Files @cindex POP VM can access spool
+files on mail servers via the Post Office Protocol (POP).  To use a
+POP mailbox as a spool file, you need to use a POP maildrop
+specification (@ref{maildrop specification}, @ref{Server Folders}).
+Once this is done, VM will retrieve new mail from the POP mailbox in
+the same way as it retrieves it from system mailbox.  The retrieved
+messages can be automatically removed from the POP mailbox or retained
+until a later expunge operation.
 
 @vindex vm-pop-max-message-size
 By default VM will retrieve all the messages from a POP mailbox
@@ -581,8 +580,8 @@ Here is an example:
 @cindex maildrop specification
 VM can also use the IMAP protocol to retrieve mail from a mail server.
 As with POP, instead of specifying a local file name in the
-@code{vm-spool-files} definition, you would give an IMAP @ref{maildrop
-specification} (whose structure is described in @ref{Server Folders}).
+@code{vm-spool-files} definition, you would give an IMAP maildrop
+specification (@ref{maildrop specification}, @ref{Server Folders}).
 Once this is done, VM will retrieve new mail from the IMAP mailbox in
 the same way as it retrieves it from system mailbox.  The retrieved
 messages can be automatically removed from the IMAP mailbox or
@@ -688,7 +687,7 @@ VM retrieves mail from the server folders into internal Emacs buffers
 for its normal operation.  It also saves copies of the folders on the
 local file system for speed of operation.  However, the @emph{only}
 permanent copies of the folders are on the mail server.  This should
-be contrasted with using server mailboxes as spool files (as in
+be contrasted with using server mailboxes as spool files (
 @ref{POP Spool Files} and @ref{IMAP Spool Files}), where the permanent
 folders are on the @emph{local} file system and only incoming mail is
 held on the servers.
@@ -820,8 +819,8 @@ stored on the POP server but they will be maintained in the local
 copy.  This means that if you access the same POP mailbox from
 multiple locations on the internet, you will see different attributes
 at different locations.  To be able to store message attributes and
-labels on the server, you should use @ref{IMAP Folders} resident on an
-IMAP server.
+labels on the server, you should use IMAP folders (@ref{IMAP Folders})
+resident on an IMAP server.
 
 @vindex vm-pop-folder-alist
 In order for VM to know about POP folders that you can access, you
@@ -832,7 +831,7 @@ The variable's value should be an associative list of the form:
  ((@var{POPDROP} @var{NAME}) ...)
 @end example
 
-@var{POPDROP} is a POP @ref{maildrop specification}.
+@var{POPDROP} is a POP maildrop specification (@ref{maildrop specification}).
 
 @var{NAME} is a string that should give a less cumbersome name that you
 will use to refer to this maildrop when using @code{vm-visit-pop-folder}.
@@ -885,7 +884,8 @@ The variable's value should be an associative list of the form:
  ((@var{IMAPDROP} @var{NAME}) ...)
 @end example
 
-@var{IMAPDROP} is an IMAP @ref{maildrop specification}.
+@var{IMAPDROP} is an IMAP maildrop specification (@ref{maildrop
+  specification}). 
 
 @var{NAME} is a string that should give a less cumbersome name that you
 will use to refer to this maildrop when using @code{vm-visit-imap-folder}.

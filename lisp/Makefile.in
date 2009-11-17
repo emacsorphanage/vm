@@ -131,6 +131,7 @@ vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	echo "(custom-add-load 'vm 'vm-cus-load)" >> $@	
 	echo "(setq vm-configure-datadir \"${datadir}\")" >> $@
 	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" >> $@
+	echo "(require 'vm-vars)" >> $@
 	echo "(provide 'vm-autoloads)" >> $@
 
 vm-cus-load.el: $(SOURCES:%=@srcdir@/%)
