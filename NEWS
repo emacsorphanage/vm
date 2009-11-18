@@ -80,10 +80,16 @@ VM 8.1.0-devo
     * Allow to reorder messages headers before sending by setting the new
       variable `vm-mail-reorder-message-headers'.
 
+    * Allow UTF-8 encoded messages to be displayed on tty.  (Ulrich
+      Muller)
+
   BUG FIXES
 
     * `vm-quit-no-change' made to honour the setting of the variable
       `delete-auto-save-files'. (Uday S. Reddy)
+
+    * Allow the use of iso-8859-1 for outgoing mail under Emacs 23
+      (instead of spurious iso-2022-jp).  (Ulrich Muller)
 
   IMPROVEMENTS for pop-folders (Uday S. Reddy)
 

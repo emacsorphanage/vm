@@ -4604,9 +4604,11 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   (cond ((and vm-xemacs-mule-p (memq (device-type) '(x gtk mswindows)))
 	 (or (vm-string-assoc name vm-mime-mule-charset-to-coding-alist)
 	     (vm-mime-default-face-charset-p name)))
-	((and vm-fsfemacs-mule-p (memq window-system '(x mac win32 w32)))
-	 (or (vm-string-assoc name vm-mime-mule-charset-to-coding-alist)
-	     (vm-mime-default-face-charset-p name)))
+
+	;; vm-mime-tty-can-display-mime-charset (called below) fails
+	;; for GNU Emacs. So keep things simple, since there's no harm
+	;; if replacement characters are displayed.
+	(vm-fsfemacs-mule-p)
 	((vm-multiple-fonts-possible-p)
 	 (or (vm-mime-default-face-charset-p name)
 	     (vm-string-assoc name vm-mime-charset-font-alist)))
