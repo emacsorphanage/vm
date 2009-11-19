@@ -325,6 +325,9 @@ VM 8.0.8
     * Do not disable modes which do not exist. (Thanks to Uday S. Reddy for
       reporting) 
 
+    * Set correct coding-system-for-read for the real messages of
+      virtual folders.  (Thanks to Julian Bradfield)
+
 VM 8.0.7
 
   BUG FIXES:

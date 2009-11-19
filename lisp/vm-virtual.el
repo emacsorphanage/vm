@@ -116,12 +116,14 @@ all the real folder buffers involved."
 			 ;; set enable-local-variables to nil
 			 ;; for newer Emacses
 			 (let ((inhibit-local-variables t)
+			       (coding-system-for-read (vm-binary-coding-system))
 			       (enable-local-eval nil)
 			       (enable-local-variables nil))
 			   (find-file-noselect folder)))))
 	    (set-buffer (or (and (bufferp folder) folder)
 			    (vm-get-file-buffer folder)
 			    (let ((inhibit-local-variables t)
+				  (coding-system-for-read (vm-binary-coding-system))
 				  (enable-local-eval nil)
 				  (enable-local-variables nil))
 			      (find-file-noselect folder))))
