@@ -1664,9 +1664,10 @@ on all the relevant IMAP servers and then immediately expunges."
 
 (defun vm-imap-read-object (process &optional skip-eol)
   ;;----------------------------------
-  ;; This assertion often fails for some reason,
+  ;; Originally, this assertion failed often for some reason,
   ;; perhaps some asynchrony involved?
-  ;; Assertion check being disabled unless debugging is on.
+  ;; It has been mostly chased up by now. (Nov 2009)
+  ;; Still assertion check being disabled unless debugging is on.
   (if vm-buffer-type-debug
       (vm-buffer-type:assert 'process))
   ;;----------------------------------
@@ -1755,7 +1756,8 @@ on all the relevant IMAP servers and then immediately expunges."
 	       (setq token (list 'string start curpoint)))))
 	    ;; should be (looking-at "[\000-\040\177-\377]")
 	    ;; but Microsoft Exchange emits 8-bit chars.
-	    ((looking-at "[\000-\040\177]")
+	    ((and (looking-at "[\000-\040\177]") 
+		  (= vm-imap-tolerant-of-bad-imap 0))
 	     (vm-imap-protocol-error "unexpected char (%d)"
 				     (char-after (point))))
 	    (t

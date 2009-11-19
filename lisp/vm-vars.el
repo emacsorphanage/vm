@@ -576,6 +576,16 @@ Example:
   :group 'vm
   :type '(repeat (list string string)))
 
+(defcustom vm-imap-tolerant-of-bad-imap 0
+  "*Level of tolerance that vm should use for IMAP servers that
+don't follow the IMAP specification.  Default of 0 means no
+tolerance.  Level 1 allows possibly harmless violations of
+prohibitions.  (But these violations could also be symptomatic of
+deeper problems.)  Use this level carefully.  Higher levels of
+violations are not currently permitted."
+  :group 'vm
+  :type 'integer)
+
 (defcustom vm-imap-folder-cache-directory nil
   "*Directory where VM stores cached copies of IMAP folders.
 When VM visits a IMAP folder (really just a IMAP server where you

@@ -114,6 +114,9 @@ VM 8.1.0-devo
 
     * Trapping IMAP server errors uniformly.
 
+    * Added variable `vm-imap-tolerant-of-bad-imap' to allow minor
+      violations of the IMAP spec by IMAP servers.
+
     * New commands `vm-imap-start-bug-report' and `vm-imap-submit-bug-report'
       which track IMAP session details.
 
