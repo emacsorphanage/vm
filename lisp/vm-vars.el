@@ -875,11 +875,14 @@ necessary."
   :type 'boolean)
 
 (defcustom vm-fill-paragraphs-containing-long-lines nil
-  "*Non-nil numeric value N or symbol 'window-width causes VM to fill
-paragraphs that contain lines spanning that columns or more.  Only plain text
-messages and text/plain MIME parts will be filled.  The message
-itself is not modified; its text is copied into a presentation
-buffer before the filling is done."
+  "*This variable can be set to nil, a numeric value N or the
+symbol 'window-width.  When non-nil, it causes VM to fill
+paragraphs that contain lines spanning that many columns or more.
+Only plain text messages and text/plain MIME parts will be
+filled.  This variable determines which paragraphs are filled,
+but `vm-paragraph-fill-column' determines the fill column.  The
+message itself is not modified; its text is copied into a
+presentation buffer before the filling is done."
   :group 'vm
   :type '(choice (const nil)
                  (const window-width)

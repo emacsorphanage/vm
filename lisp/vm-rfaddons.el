@@ -3,9 +3,9 @@
 ;; Copyright (C) 1999-2006 Robert Widhopf-Fenk
 ;;
 ;; Author:      Robert Widhopf-Fenk
-;; Status:      Tested with XEmacs 21.4.19 & VM 7.19
+;; Status:      Integrated into View Mail (aka VM), 8.0.x
 ;; Keywords:    VM helpers
-;; X-URL:       http://www.robf.de/Hacking/elisp
+;; X-URL:       http://bazaar.launchpad.net/viewmail
 
 ;;
 ;; This code is free software; you can redistribute it and/or modify
@@ -26,15 +26,14 @@
 ;; Some of the functions should be unbundled into separate packages,
 ;; but well I'm a lazy guy.  And some of them are not tested well. 
 ;;
-;; In order to install this package you need to byte-compile it and put
-;; it into your load-path and add the following lines to the _end_ of your
+;; In order to use this package add the following lines to the _end_ of your
 ;; .vm file.  It should be the _end_ in order to ensure that variable you had
 ;; been setting are honored!
 ;;
 ;;      (require 'vm-rfaddons)
 ;;      (vm-rfaddons-infect-vm)
 ;;
-;; When using only a subset of the functions you should have a
+;; If you want to use only a subset of the functions you should have a
 ;; look at the documentation of `vm-rfaddons-infect-vm' and modify
 ;; its call as desired.  
 ;; 
@@ -50,8 +49,6 @@
 ;;
 ;; All other packages should be included within standard (X)Emacs
 ;; distributions.
-;;
-;; Feel free to sent me any comments or bug reports.
 ;;
 ;; As I am no active GNU Emacs user, I would be thankful for any patches to
 ;; make things work with GNU Emacs!

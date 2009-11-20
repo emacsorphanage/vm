@@ -1849,6 +1849,18 @@ value of @code{best-internal} tells VM to use the closest subpart that
 it can display internally.  External viewers won't be used in this
 case.
 
+The value can also be a list of the form
+@example
+  (favorite TYPE ...)
+@end example
+with the first element of the list being the symbol @code{favorite}.
+The remaining elements of the list are strings specifying MIME types.
+VM will look for each TYPE in turn in the list of alternatives and
+choose the first matching alternative found that can be displayed.  If
+instead of the symbol @code{favorite}, @code{favorite-internal} is used
+then the first TYPE that matches an alternative that can be displayed
+internally will be chosen.
+
 @vindex vm-mime-show-alternatives
 Normally, one chosen alternative is shown and the other
 alternatives suppressed.  If the variable
