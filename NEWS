@@ -131,6 +131,16 @@ VM 8.1.0-devo
     * IMAP-FCC is extended to work for virtual folders, but only if
       the real parent message is an IMAP message.
 
+VM 8.0.13-devo
+
+  BUGFIXES:
+
+    * VM-Cache entries were broken by encoding the pretty printed cache string
+      instead of the individual strings.  This causes opening of folders to
+      fail.  If this error occurs fix it by switching to the folder buffer and
+      press "M m M N j", i.e. discard all cached data and it should be working
+      again.
+
 VM 8.0.12
 
   IMPROVEMENTS:

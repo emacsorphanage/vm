@@ -1865,6 +1865,13 @@ Supports version 4 format of attribute storage, for backward compatibility."
       (set-marker (vm-headers-of (car mp)) opoint))))
 
 
+(defun vm-encode-words-in-cache-vector (list)
+  (mapvector (lambda (e)
+               (if (stringp e)
+                   (vm-mime-encode-words-in-string e)
+                 e))
+             list))
+
 ;; Stuff the message attributes back into the message as headers.
 (defun vm-stuff-attributes (m &optional for-other-folder)
   (save-excursion
@@ -1913,10 +1920,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	      (let ((print-escape-newlines t))
 		(prin1-to-string attributes))
 	      "\n\t"
-	      (vm-mime-encode-words-in-string
-	       (let ((print-escape-newlines t))
-		 (prin1-to-string cache)))
-	      "\n\t"
+              (let ((print-escape-newlines t))
+                (prin1-to-string (vm-encode-words-in-cache-vector cache)))
+              "\n\t"
 	      (let ((print-escape-newlines t))
 		(prin1-to-string (vm-labels-of m)))
 	      ")\n")
