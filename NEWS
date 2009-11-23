@@ -185,6 +185,8 @@ VM 8.0.12
 
     * Do not fail on corrupted address headers.  (Reported by John Covici)
 
+    * Fixed GTK detection and toolbar handling for newer Emacs 22 versions.
+
 Public bug reported:
  
 VM 8.0.11
