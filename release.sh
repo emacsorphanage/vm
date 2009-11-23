@@ -39,5 +39,5 @@ if [ -n "$1" -a -e "$1" ]; then
 fi
 
 if [ "$1" != "test" ]; then 
-  $bzr push
+  $bzr push --overwrite
 fi
