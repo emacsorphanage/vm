@@ -1250,7 +1250,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	  (vm-total-count 0)
 	  (modulus (+ (% (vm-abs (random)) 11) 25))
 	  (case-fold-search t)
-	  oldpoint data)
+	  oldpoint data cache)
       (while mp
 	(vm-increment vm-total-count)
 	(if (vm-attributes-of (car mp))
@@ -1268,13 +1268,14 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	    (condition-case ()
 		(progn
 		  (setq oldpoint (point)
-			data (read (current-buffer)))
+			data (read (current-buffer))
+                        cache (cadr data))
 		  (if (and (or (not (listp data)) (not (> (length data) 1)))
 			   (not (vectorp data)))
-		      (progn
-			(error "Bad x-vm-v5-data at %d in buffer %s"
-			       oldpoint (buffer-name))))
-		  data )
+                      (progn
+			(error "Bad x-vm-v5-data at %d in buffer %s: %S"
+			       oldpoint (buffer-name) data)))
+		  data)
 	      (error
 	       (message "Bad x-vm-v5-data header at %d in buffer %s, ignoring"
 			oldpoint (buffer-name))
@@ -1311,7 +1312,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			  (setcar data (vm-extend-vector
 					(car data)
 					vm-attributes-vector-length))))
-		   (cond ((< (length (car (cdr data)))
+		   (cond ((< (length cache)
 			     vm-cache-vector-length)
 			  ;; tink the message stuff flag so that if
 			  ;; the user saves we get rid of the old
@@ -1321,13 +1322,22 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			  (vm-set-stuff-flag-of (car mp) t)
 			  (setcar (cdr data)
 				  (vm-extend-vector
-				   (car (cdr data))
+				   cache
 				   vm-cache-vector-length))))))
 	    ;; data list might not be long enough for (nth 2 ...)  but
 	    ;; that's OK because nth returns nil if you overshoot the
 	    ;; end of the list.
+            (when (not (and (vectorp cache)
+                            (= (length cache) vm-cache-vector-length)
+                            (or (null (aref cache 7)) (stringp (aref cache 7)))
+                            (or (null (aref cache 11)) (stringp (aref cache 11)))))
+              (message "Bad VM cache data: %S" cache)
+              (vm-set-stuff-flag-of (car mp) t)
+              (setcar (cdr data)
+                      (setq cache (make-vector vm-cache-vector-length nil))))
+
 	    (vm-set-labels-of (car mp) (nth 2 data))
-	    (vm-set-cache-of (car mp) (car (cdr data)))
+	    (vm-set-cache-of (car mp) cache)
 	    (vm-set-attributes-of (car mp) (car data)))
 	   ((and vm-berkeley-mail-compatibility
 		 (re-search-forward vm-berkeley-mail-status-header-regexp

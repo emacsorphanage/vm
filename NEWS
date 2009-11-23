@@ -136,10 +136,10 @@ VM 8.0.13-devo
   BUGFIXES:
 
     * VM-Cache entries were broken by encoding the pretty printed cache string
-      instead of the individual strings.  This causes opening of folders to
-      fail.  If this error occurs fix it by switching to the folder buffer and
-      press "M m M N j", i.e. discard all cached data and it should be working
-      again.
+      instead of the individual strings.  This bug was introduced in 8.0.10 by
+      the bug fix for correctly storing the cached multibyte summary entries.
+      It causes building of the summary to fail.  Broken cache entries are now
+      detected and removed while loading a folder.
 
 VM 8.0.12
 
