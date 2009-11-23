@@ -42,6 +42,14 @@
 (eval-when-compile 
   (defvar latin-unity-ucs-list))
 
+(defun vm-find-coding-system (system)
+  (cond ((functionp 'find-coding-system)
+	 (find-coding-system system))
+	((boundp 'coding-system-list)
+	 (member system coding-system-list))
+	;; FIXME is this the right fallback?
+	t t))
+
 (defun vm-get-coding-system-priorities ()
   "Return the value of `vm-coding-system-priorities', or a reasonable
 default for it if it's nil.  "
@@ -50,7 +58,7 @@ default for it if it's nil.  "
     (let ((res '(iso-8859-1 iso-8859-2 iso-8859-15 iso-8859-16 utf-8)))
       (dolist (list-item res)
 	;; Assumes iso-8859-1 is always available, which is reasonable.
-	(unless (coding-system-p (find-coding-system list-item))
+	(unless (coding-system-p (vm-find-coding-system list-item))
 	  (delq list-item res)))
       res)))
 
@@ -63,7 +71,7 @@ allow runtime checks for optional features like `mule-ucs' or
       vm-mime-ucs-list
     (if (featurep 'latin-unity)
 	latin-unity-ucs-list
-      (if (coding-system-p (find-coding-system 'utf-8))
+      (if (coding-system-p (vm-find-coding-system 'utf-8))
 	  '(utf-8 iso-2022-jp ctext escape-quoted)
 	'(iso-2022-jp ctext escape-quoted)))))
 
@@ -74,7 +82,7 @@ configuration.  "
   ;; Add some extra charsets that may not have been defined onto the end
   ;; of vm-mime-mule-charset-to-coding-alist.
   (mapcar (lambda (x)
-	    (and (coding-system-p (find-coding-system x))
+	    (and (coding-system-p (vm-find-coding-system x))
 		 ;; Not using vm-string-assoc because of some quoting
 		 ;; weirdness it's doing. 
 		 (if (not (assoc
@@ -102,7 +110,7 @@ configuration.  "
   (require 'vm-vars)
   (vm-update-mime-charset-maps)
   ;; If the user loads Mule-UCS, re-evaluate the MIME charset maps. 
-  (unless (coding-system-p (find-coding-system 'utf-8))
+  (unless (coding-system-p (vm-find-coding-system 'utf-8))
     (eval-after-load "un-define" `(vm-update-mime-charset-maps)))
   ;; Ditto for latin-unity. 
   (unless (featurep 'latin-unity)
