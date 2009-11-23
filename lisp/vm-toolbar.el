@@ -18,6 +18,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+(eval-when-compile
+  (require 'vm-vars))
+
 (defvar vm-toolbar-specifier nil)
 
 (defvar vm-toolbar-next-button
