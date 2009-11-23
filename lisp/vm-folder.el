@@ -1882,6 +1882,15 @@ Supports version 4 format of attribute storage, for backward compatibility."
                  e))
              list))
 
+(defun mapvector (proc vec)
+  (let ((new-vec (make-vector (length vec) nil))
+	(i 0)
+	(n (length vec)))
+    (while (< i n)
+      (aset new-vec i (apply proc (aref vec i) nil))
+      (setq i (1+ i)))
+    new-vec))
+
 ;; Stuff the message attributes back into the message as headers.
 (defun vm-stuff-attributes (m &optional for-other-folder)
   (save-excursion
