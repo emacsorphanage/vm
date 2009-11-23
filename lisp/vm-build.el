@@ -50,11 +50,15 @@
 
 ;; Preload these to get macros right 
 (require 'cl)
+(require 'sendmail)
+
+;; now add VM source dirs to load-path and preload some
+(setq load-path (append '("." "./lisp") load-path))
 (require 'vm-version)
 (require 'vm-message)
 (require 'vm-macro)
 (require 'vm-vars)
-(require 'sendmail)
+
 
 (defun vm-custom-make-dependencies ()
   (if (load-library "cus-dep")
