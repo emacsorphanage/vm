@@ -48,7 +48,7 @@
 	((boundp 'coding-system-list)
 	 (member system coding-system-list))
 	;; FIXME is this the right fallback?
-	t t))
+	(t t)))
 
 (defun vm-get-coding-system-priorities ()
   "Return the value of `vm-coding-system-priorities', or a reasonable
