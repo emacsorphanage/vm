@@ -3414,10 +3414,17 @@ Under FSF Emacs 21 the toolbar is always at the top of the frame."
   :group 'vm
   :type '(choice directory (const :tag "Automatic" nil)))
 
+(defvar vm-gtk-emacs-p (or (featurep 'gtk)
+			 (string-match "'--with-gtk'" 
+				       system-configuration-options)
+			 (and (boundp 'device-type)
+			      (eq (device-type) 'gtk mswindows)))
+  "True when running in a GTK enabled Emacs.")
+
 (defun vm-toolbar-pixmap-directory ()
   "Return the directory where the toolbar pixmaps are."
   (or vm-toolbar-pixmap-directory 
-      (if (string-match "'--with-gtk'" system-configuration-options)
+      (if vm-gtk-emacs-p
 	  (concat (vm-pixmap-directory) "/gtk")
 	(vm-pixmap-directory))))
 

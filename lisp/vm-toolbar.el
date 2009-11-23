@@ -566,8 +566,9 @@ s-expression like this one in your .vm file:
 			   (if (eq sym 'mime) nil 'heuristic)))
 	     (setq item
 		   (list 'menu-item
-			 (aref t-spec 3)
+			 name
 			 (aref t-spec 1)
+			 ':help (aref t-spec 3)
 			 ':enable (aref t-spec 2)
 ;			 ':button '(:toggle nil)
 			 ':image images))
@@ -579,8 +580,9 @@ s-expression like this one in your .vm file:
 			   name extension dir 'heuristic))
 	     (setq item
 		   (list 'menu-item
-			 (aref t-spec 3)
+			 name
 			 (aref t-spec 1)
+			 ':help (aref t-spec 3)
 			 ':visible '(eq vm-toolbar-delete/undelete-icon
 					vm-toolbar-delete-icon)
 			 ':enable (aref t-spec 2)
@@ -592,8 +594,9 @@ s-expression like this one in your .vm file:
 			   name extension dir 'heuristic))
 	     (setq item
 		   (list 'menu-item
-			 (aref t-spec 3)
+			 name
 			 (aref t-spec 1)
+			 ':help (aref t-spec 3)
 			 ':visible '(eq vm-toolbar-delete/undelete-icon
 					vm-toolbar-undelete-icon)
 			 ':enable (aref t-spec 2)
@@ -607,8 +610,9 @@ s-expression like this one in your .vm file:
 			   name extension dir 'heuristic))
 	     (setq item
 		   (list 'menu-item
-			 (aref t-spec 3)
+			 name
 			 (aref t-spec 1)
+			 ':help (aref t-spec 3)
 			 ':visible '(eq vm-toolbar-helper-command 'vm-help)
 			 ':enable (aref t-spec 2)
 ;			 ':button '(:toggle nil)
@@ -619,8 +623,9 @@ s-expression like this one in your .vm file:
 			   name extension dir 'heuristic))
 	     (setq item
 		   (list 'menu-item
-			 (aref t-spec 3)
+			 name
 			 (aref t-spec 1)
+			 ':help (aref t-spec 3)
 			 ':visible '(eq vm-toolbar-helper-command
 					'recover-file)
 			 ':enable (aref t-spec 2)
@@ -632,8 +637,9 @@ s-expression like this one in your .vm file:
 			   name extension dir 'heuristic))
 	     (setq item
 		   (list 'menu-item
-			 (aref t-spec 3)
+			 name
 			 (aref t-spec 1)
+			 ':help (aref t-spec 3)
 			 ':visible '(eq vm-toolbar-helper-command
 					'vm-get-new-mail)
 			 ':enable (aref t-spec 2)
@@ -645,8 +651,9 @@ s-expression like this one in your .vm file:
 			   name extension dir nil))
 	     (setq item
 		   (list 'menu-item
-			 (aref t-spec 3)
+			 name
 			 (aref t-spec 1)
+			 ':help (aref t-spec 3)
 			 ':visible '(eq vm-toolbar-helper-command
 					'vm-decode-mime-message)
 			 ':enable (aref t-spec 2)
@@ -657,63 +664,38 @@ s-expression like this one in your .vm file:
   (setq vm-fsfemacs-toolbar-installed-p t))
 
 (defun vm-toolbar-make-fsfemacs-toolbar-image-spec (name extension dir mask)
-  (if (string= extension "xpm")
-      (vector
-       (list 'image
-	     ':type (intern extension)
-	     ':mask mask
-	     ':file (expand-file-name
-		     (format "%s-dn.%s"
-			     name extension)
-		     dir))
-       (list 'image
-	     ':type (intern extension)
-	     ':mask mask
-	     ':file (expand-file-name
-		     (format "%s-up.%s"
-			     name extension)
-		     dir))
-       (list 'image
-	     ':type (intern extension)
-	     ':mask mask
-	     ':file (expand-file-name
-		     (format "%s-dn.%s"
-			     name extension)
-		     dir))
-       (list 'image
-	     ':type (intern extension)
-	     ':mask mask
-	     ':file (expand-file-name
-		     (format "%s-dn.%s"
-			     name extension)
-		     dir)))
+  (if vm-gtk-emacs-p
+      ;; the GTK-toolbar will not display icons when providing a vector since
+      ;; some version of GTK resp. Emacs 22 ...
+      (list 'image
+	    ':type (intern extension)
+	    ':file (expand-file-name
+		    (format "%s-up.%s"
+			    name extension)
+		    dir))
     (vector
      (list 'image
 	   ':type (intern extension)
-	   ':mask mask
 	   ':file (expand-file-name
 		   (format "%s-dn.%s"
 			   name extension)
 		   dir))
      (list 'image
 	   ':type (intern extension)
-	   ':mask mask
 	   ':file (expand-file-name
 		   (format "%s-up.%s"
 			   name extension)
 		   dir))
      (list 'image
 	   ':type (intern extension)
-	   ':mask mask
 	   ':file (expand-file-name
-		   (format "%s-xx.%s"
+		   (format "%s-dn.%s"
 			   name extension)
 		   dir))
      (list 'image
 	   ':type (intern extension)
-	   ':mask mask
 	   ':file (expand-file-name
-		   (format "%s-xx.%s"
+		   (format "%s-dn.%s"
 			   name extension)
 		   dir)))))
 
