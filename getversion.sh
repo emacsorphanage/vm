@@ -20,6 +20,6 @@ else
     exit -1
   fi
   tag=${tag[0]}
-  rdir=$tag-$revno
+  rdir=$tag
   version=$tag
 fi
