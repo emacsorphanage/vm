@@ -13,7 +13,7 @@ fi
 if [ "$1" != "test" ]; then 
   # make sure we delete the existing files containing version info
   rm -f lisp/vm-revno.el info/version.texi
-  make all lisp/vm-revno.el || exit 1
+  make all lisp/vm-revno.el info/version.texi || exit 1
 fi
 
 # just create the version-info, no bundle 
@@ -28,6 +28,7 @@ $bzr export $dir
 
 cp configure $dir
 mv lisp/vm-revno.el $dir/lisp
+mv info/version.texi $dir/info
 rm $dir/getversion.sh $dir/release.sh $dir/lisp/vm-revno.sh
 cd release
 tar cvfz $rdir.tgz $rdir
