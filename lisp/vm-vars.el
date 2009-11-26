@@ -4483,7 +4483,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
 		 (integer :tag "Enabled" 80)
                  (integer :tag "Length")))
 
-(defconst vm-maintainer-address "hack@robf.de"
+(defconst vm-maintainer-address "vm@lists.launchpad.net"
   "Where to send VM bug reports.")
 
 (defvar vm-mode-map
