@@ -235,7 +235,7 @@ TEST
 
 ##############################################################################
 VM_PRE_INIT
-AC_INIT([VM], [VM_VERSION], [hack@robf.de])
+AC_INIT([VM], [VM_VERSION], [vm@lists.launchpad.net])
 
 AC_COPYRIGHT([Copyright (C) 2006-2007 Robert Widhopf-Fenk <hack@robf.de>])
 

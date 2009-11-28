@@ -3852,11 +3852,11 @@ run vm-expunge-folder followed by vm-save-folder."
 	    (sleep-for 2)
 	    nil )
 	(while triples
-	  (setq in (expand-file-name (nth 0 (car triples)) vm-folder-directory)
-		maildrop (nth 1 (car triples))
-		crash (nth 2 (car triples)))
-	  (setq safe-maildrop maildrop
-		non-file-maildrop nil)
+	  (setq in (expand-file-name (nth 0 (car triples)) vm-folder-directory))
+	  (setq maildrop (nth 1 (car triples)))
+	  (setq crash (nth 2 (car triples)))
+	  (setq safe-maildrop maildrop)
+	  (setq non-file-maildrop nil)
 	  (cond ((vm-movemail-specific-spool-file-p maildrop)
 		 (setq non-file-maildrop t)
 		 (setq retrieval-function 'vm-spool-move-mail))
@@ -3873,6 +3873,7 @@ run vm-expunge-folder followed by vm-save-folder."
 		 (setq safe-maildrop (vm-safe-popdrop-string maildrop))
 		 (setq retrieval-function 'vm-pop-move-mail))
 		(t (setq retrieval-function 'vm-spool-move-mail)))
+	  (setq crash (expand-file-name crash vm-folder-directory))
 	  (if (eq (current-buffer) (vm-get-file-buffer in))
 	      (progn
 		(if (file-exists-p crash)
@@ -3884,10 +3885,10 @@ run vm-expunge-folder followed by vm-save-folder."
 			(and (not (equal 0 (nth 7 (file-attributes maildrop))))
 			     (file-readable-p maildrop)))
 		    (progn
-		      (setq crash (expand-file-name crash vm-folder-directory))
 		      (if (not non-file-maildrop)
-			  (setq maildrop (expand-file-name maildrop
-							   vm-folder-directory)))
+			  (setq maildrop 
+				(expand-file-name maildrop 
+						  vm-folder-directory)))
 		      (if (if got-mail
 			      ;; don't allow errors to be signaled unless no
 			      ;; mail has been appended to the incore

@@ -169,7 +169,7 @@
 ;; -- used. Use 'IMAP folders' instead.
 ;;
 ;; handler methods:
-;; vm-imap-move-mail: (string & string) -> void
+;; vm-imap-move-mail: (string & string) -> bool
 ;; vm-imap-check-mail: string -> void
 ;;
 ;; interactive commands:
@@ -178,12 +178,6 @@
 ;; vm-imap-clear-invalid-retrieval-entries: ... 
 ;; ------------------------------------------------------------------------
 
-
-;; Our goal is to drag the mail from the IMAP maildrop to the crash box.
-;; just as if we were using movemail on a spool file.
-;; We remember which messages we have retrieved so that we can
-;; leave the message in the mailbox, and yet not retrieve the
-;; same messages again and again.
 
 (defsubst vm-imap-fetch-message (process n use-body-peek 
 					   &optional headers-only)
@@ -196,6 +190,12 @@
              (if use-body-peek "(BODY.PEEK[HEADER])" "(RFC822.HEADER)")
            (if use-body-peek "(BODY.PEEK[])" "(RFC822.PEEK)"))))
     (vm-imap-send-command process (format "FETCH %d:%d %s" beg end fetchcmd))))
+
+;; Our goal is to drag the mail from the IMAP maildrop to the crash box.
+;; just as if we were using movemail on a spool file.
+;; We remember which messages we have retrieved so that we can
+;; leave the message in the mailbox, and yet not retrieve the
+;; same messages again and again.
 
 ;;;###autoload
 (defun vm-imap-move-mail (source destination)
@@ -325,10 +325,10 @@
 		(vm-increment retrieved)
 		(and b-per-session
 		     (setq retrieved-bytes (+ retrieved-bytes message-size)))
-		(if (not auto-expunge)
-		    (setq imap-retrieved-messages
-			  (cons (copy-sequence msgid)
-				imap-retrieved-messages))
+		(setq imap-retrieved-messages
+		      (cons (copy-sequence msgid)
+			    imap-retrieved-messages))
+		(if auto-expunge
 		  ;; The user doesn't want the messages
 		  ;; kept in the mailbox.
 		  ;; Delete the message now.
@@ -346,18 +346,18 @@
 		  ;;----------------------------------
 		  (vm-imap-session-type:set 'inactive)
 		  ;;----------------------------------
-		  )
+		  ))
 	    ;;-------------------
 	    (vm-buffer-type:exit)
 	    ;;-------------------
-	    (not (equal retrieved 0))
+	    (not (equal retrieved 0))	; return result
 	    ))
+      ;; unwind-protections
       (setq vm-imap-retrieved-messages imap-retrieved-messages)
       (if (and (eq vm-flush-interval t) (not (equal retrieved 0)))
 	  (vm-stuff-imap-retrieved))
       (when statblob 
-	(vm-imap-stop-status-timer statblob)))
-      ;; unwind-protections
+	(vm-imap-stop-status-timer statblob))
       (when process
 	(vm-imap-end-session process))
       )))

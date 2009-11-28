@@ -70,20 +70,14 @@ do as well.
 If you want to send me changes or start hacking on your own you may want to 
 branch from the follwing URL:
 
-  http://bazaar.launchpad.net/~hack-robf/viewmail/trunk
-
-[The version 8.1 being hosted by Uday S. Reddy is at:
-
-  http://bazaar.launchpad.net/~reddyuday/viewmail/8.1
-]
-
+  http://bazaar.launchpad.net/~vm/vm/trunk
 
 
 # create your own branch from the trunk
 # the 'lp' URL's do they same job as the 'http' URL's above.
-bzr get lp:viewmail
+bzr get lp:vm
 (or)
-bzr get lp:~reddyuday/viewmail/8.1
+bzr get lp:~vm/vm/trunk
 # get updates
 bzr pull
 # start hacking 
@@ -93,7 +87,7 @@ bzr commit
 # Generate a bundle of your changes for merging
 bzr bundle-revisions --output=xy-changes.diff
 # Attach the bundle to a mail (rather than doing cut&paste) and send
-# it to hack @ robf.de with a descriptive subject.  
+# it to vm @ lists.launchpad.net with a descriptive subject.  
 
 *******************************************************************************
 COMMENTS
