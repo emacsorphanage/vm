@@ -358,6 +358,12 @@ specified by `vm-included-text-headers' and
             (vm-insert-region-from-buffer (vm-buffer-of message)
                                           (vm-headers-of message)
                                           (vm-text-end-of message))
+	  (vm-insert-region-from-buffer (vm-buffer-of message)
+					(vm-headers-of message)
+					(vm-text-of message))
+	  (save-excursion
+	    (goto-char (point-min))
+	    (vm-decode-mime-message-headers))
           (vm-decode-mime-layout layout)
           (if vm-mime-yank-attachments
               (vm-decode-postponed-mime-message))))
