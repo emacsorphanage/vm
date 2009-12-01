@@ -89,7 +89,10 @@ VM 8.1.0-devo
       `delete-auto-save-files'. (Uday S. Reddy)
 
     * Allow the use of iso-8859-1 for outgoing mail under Emacs 23
-      (instead of spurious iso-2022-jp).  (Ulrich Muller)
+      (instead of spurious iso-2022-jp).  (Ulrich Mueller)
+
+    * Coding system set to binary when reading and writing to allow
+      for 8-bit content.  (Julian Bradfield)
 
   IMPROVEMENTS for pop-folders (Uday S. Reddy)
 
@@ -131,7 +134,7 @@ VM 8.1.0-devo
     * IMAP-FCC is extended to work for virtual folders, but only if
       the real parent message is an IMAP message.
 
-VM 8.0.13-devo
+VM 8.0.13
 
   BUGFIXES:
 
