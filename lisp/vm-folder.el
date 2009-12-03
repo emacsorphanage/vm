@@ -999,6 +999,7 @@ vm-folder-type is initialized here."
 ;; list are stripped from the message.  The remaining headers
 ;; are ordered according to the order of the keep list.
 
+;;;###autoload
 (defun vm-reorder-message-headers (message keep-list discard-regexp)
   (interactive
    (progn 

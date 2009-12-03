@@ -282,6 +282,7 @@ and flexible."
 	 (setq vm-presentation-buffer-handle nil
 	       vm-presentation-buffer nil))))
 
+;;;###autoload
 (defun vm-check-for-killed-folder ()
   (and (bufferp vm-mail-buffer) (null (buffer-name vm-mail-buffer))
        (setq vm-mail-buffer nil)))

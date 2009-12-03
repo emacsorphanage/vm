@@ -2386,7 +2386,10 @@ e.g. HTML message."
 header that is generated for replies.  See the documentation for the
 variable `vm-summary-format' for information on what this string may
 contain.  The format should *not* end with a newline.
-Nil means don't put an In-Reply-To header in replies."
+Nil means don't put an In-Reply-To header in replies.
+
+If the format includes elements with non-ASCII characters, then
+\"In-Reply-To\" should be added to `vm-mime-encode-headers-regexp'."
   :group 'vm
   :type '(choice (const nil) string))
 
