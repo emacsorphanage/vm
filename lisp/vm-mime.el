@@ -1793,8 +1793,9 @@ that recipient is outside of East Asia."
         (if (= (length ooo) 2)
             (if (search-forward-regexp "\n\n" (point-max) t)
                 (delete-region (point-min) (match-beginning 0)))
-	(setq ex (call-process-region (point-min) (point-max) shell-file-name
-                                        t t nil shell-command-switch (nth 2 ooo))))
+	  (let ((coding-system-for-write 'binary))
+	    (setq ex (call-process-region (point-min) (point-max) shell-file-name
+                                        t t nil shell-command-switch (nth 2 ooo)))))
 	(if (not (eq ex 0))
 	    (progn
               (switch-to-buffer work-buffer)

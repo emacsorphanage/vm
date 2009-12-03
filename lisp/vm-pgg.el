@@ -1164,7 +1164,7 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
     (insert "1.0")
     (mail-position-on-field "Content-Type")
     (insert "multipart/signed; boundary=\"" boundary "\";\n"
-            "\tmicalg=pgg-" micalg "; protocol=\"application/pgp-signature\"")))
+            "\tmicalg=pgp-" micalg "; protocol=\"application/pgp-signature\"")))
 
 ;;; ###autoload
 (defun vm-pgg-encrypt (&optional sign)
