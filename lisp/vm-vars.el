@@ -1319,8 +1319,13 @@ the value of `vm-mime-default-face-charsets'.  Example:
 
 Case is not significant in character set names.
 
+For Emacs versions with MULE or Unicode support, this variable is
+semi-obsolete and should only be used for making bogus, unregistered
+character sets that are slight variants of ISO-8859-1 visible.
+Don't add charsets like \"utf-8\" that require additional decoding.
+
 A value of t means all character sets can be displayed by the
-default face.  This should be used in combination with
+default face.  This should only be used in combination with
 `vm-mime-default-face-charset-exceptions' to tell VM that most of
 the mail you receive is displayable using your default face and
 its associated font, even though the messages might arrive with
