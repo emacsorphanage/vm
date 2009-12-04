@@ -1738,7 +1738,7 @@ considered undisplayable by VM, and a button would be displayed
 that offers to save the message body to a file.
 
 Please note that for character sets listed in this variable, VM's MIME
-decoding is bypassed. So don't add charsets like \"utf-8\" that require
+decoding is bypassed.  So don't add charsets like \"utf-8\" that require
 additional decoding.
 
 @vindex vm-mime-charset-converter-alist
