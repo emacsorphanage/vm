@@ -36,7 +36,6 @@ package.
 
 @include version.texi
 This manual corresponds to VM version @value{VERSION}.
-It was last updated at @value{VMPCUPDATED}.
 
 @menu
 * Getting Started::             

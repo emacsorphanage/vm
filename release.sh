@@ -29,8 +29,7 @@ $bzr export $dir
 cp configure $dir
 mv lisp/vm-revno.el $dir/lisp
 mv info/version.texi $dir/info
-rm $dir/getversion.sh $dir/release.sh $dir/lisp/vm-revno.sh \
-    $dir/info/getlastupdate.sh
+rm $dir/getversion.sh $dir/release.sh
 cd release
 tar cvfz $rdir.tgz $rdir
 cd ..
