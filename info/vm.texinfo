@@ -2175,7 +2175,9 @@ In-Reply-To header that is inserted into the header section of the reply
 buffer.  Like @code{vm-included-text-attribution-format},
 @code{vm-in-reply-to-format} should be a string similar to that of
 @code{vm-summary-format}.  A @code{nil} value causes the In-Reply-To
-header to be omitted.
+header to be omitted.  If the format includes elements that can contain
+non-ASCII characters, then @samp{In-Reply-To} should be added to
+@code{vm-mime-encode-headers-regexp}.
 
 @vindex vm-strip-reply-headers
 The recipient headers generated for reply messages are created by
