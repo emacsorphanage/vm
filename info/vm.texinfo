@@ -1737,6 +1737,10 @@ Example:
 considered undisplayable by VM, and a button would be displayed
 that offers to save the message body to a file.
 
+Please note that for character sets listed in this variable, VM's MIME
+decoding is bypassed.  So don't add charsets like \"utf-8\" that require
+additional decoding.
+
 @vindex vm-mime-charset-converter-alist
 Sometimes a charset that VM cannot display can be converted to a
 one that VM can display.  An example would be a message encoded
@@ -2175,7 +2179,9 @@ In-Reply-To header that is inserted into the header section of the reply
 buffer.  Like @code{vm-included-text-attribution-format},
 @code{vm-in-reply-to-format} should be a string similar to that of
 @code{vm-summary-format}.  A @code{nil} value causes the In-Reply-To
-header to be omitted.
+header to be omitted.  If the format includes elements that can contain
+non-ASCII characters, then @samp{In-Reply-To} should be added to
+@code{vm-mime-encode-headers-regexp}.
 
 @vindex vm-strip-reply-headers
 The recipient headers generated for reply messages are created by
