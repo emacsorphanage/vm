@@ -2039,6 +2039,16 @@ enabled, VM will allow you to add file attachments to your
 composition and will analyze your message when you send it and
 MIME encode it as necessary.
 
+@menu
+* MIME attachments::    Sending a message using MIME attachments.
+* MIME characters::     Sending a message with MIME-encoded characters.
+* MIME headers::        Sending a message with MIME-encoded headers.
+* MIME preview::        Previewing a MIME message before sending.
+@end menu
+
+@node MIME attachments, MIME characters, MIME Composition, MIME Composition, 
+@unnumberedsec MIME attachments
+
 @kindex C-c C-a
 To attach a file to your composition, use @kbd{C-c C-a}
 (@code{vm-mime-attach-file}).  VM will ask you for the name of the file, 
@@ -2074,27 +2084,8 @@ To attach a buffer instead of a file, use @kbd{C-c C-b} (normally
 bound to @code{vm-mime-attach-buffer}.  You must not kill the
 buffer that you attach until after the message has been sent.
 
-@kindex C-c C-p
-To preview what a MIME message will look like to a recipient,
-use @kbd{C-c C-p} (@code{vm-mime-preview-composition}).  VM
-will encode a copy of the message and present it to you in a
-temporary mail folder.  You can scroll through the message
-using normal VM mail reading commands.  Typing @kbd{q} in this
-folder will return you to your composition where you can make
-further changes.
-
-@kindex C-c C-e
-To encode a MIME message without sending it, use @kbd{C-c C-e}
-(@code{vm-mime-encode-composition}).  This is useful if you use
-PGP and want to sign a message before sending it.  VM will encode
-the message for transport, inserting all necessary headers and
-boundary markers.  You can then sign the message and send it with
-C-c C-c and be confident that VM won't invalidate the signature
-by making further modifications to the message.  Or if you want
-to resume editing the message you can run the Emacs @code{undo}
-(normally bound to @kbd{C-x u}) command which will revert the
-encoded MIME bodies back to tags and you can continue entering
-your composition.
+@node MIME characters, MIME headers, MIME attachments, MIME Composition
+@unnumberedsec MIME characters
 
 @vindex vm-mime-7bit-composition-charset
 By default, when you type text into a composition buffer VM
@@ -2138,6 +2129,58 @@ which moves them outside the scope of this variable.  For
 example, messages with line lengths of 1000 characters or more
 are considered binary, as are messages that contain carriage
 returns (ASCII code 13) or NULs (ASCII code 0).
+
+@node MIME headers, MIME preview, MIME characters, MIME Composition
+@unnumberedsec MIME headers
+
+The internet standards specify that the header lines of messages should
+always be in 7 bit ASCII, even if the body of a message can use an
+8 bit character set.  If you use other non-ASCII characters in typing
+the headers then VM encodes their words using the MIME encoded-word
+syntax, which is of the form @code{=?charset?encoding?encoded text?=}.  
+
+@vindex vm-mime-encode-headers-regexp
+@vindex vm-mime-encode-headers-type
+The variable @code{vm-mime-encode-headers-regexp} specifies which
+headers should be encoded in this way.  By default, @samp{Subject},
+@samp{Organization}, @samp{From}, @samp{To}, @samp{CC}, @samp{BCC} and
+@samp{Resent-} header lines encoded.  The words are encoded using
+quoted-printable encoding (@code{Q}).  You can ask VM to use the base64
+encoding by setting the variable @code{vm-mime-encode-headers-type}.
+
+@vindex vm-mime-encode-words.regexp
+@vindex vm-mime-encode-headers-words-regexp
+The variables @code{vm-mime-encode-words.regexp} and
+@code{vm-mime-encode-headers-words-regexp} control what is 
+meant by a ``word'' for VM for the purpose of encoding.  By default, the
+words are those containing any 8 bit character and delimited by white
+space characters.
+
+@node MIME preview, , MIME headers, MIME Composition
+@unnumberedsec MIME preview
+
+@kindex C-c C-p
+To preview what a MIME message will look like to a recipient,
+use @kbd{C-c C-p} (@code{vm-mime-preview-composition}).  VM
+will encode a copy of the message and present it to you in a
+temporary mail folder.  You can scroll through the message
+using normal VM mail reading commands.  Typing @kbd{q} in this
+folder will return you to your composition where you can make
+further changes.
+
+@kindex C-c C-e
+To encode a MIME message without sending it, use @kbd{C-c C-e}
+(@code{vm-mime-encode-composition}).  This is useful if you use
+PGP and want to sign a message before sending it.  VM will encode
+the message for transport, inserting all necessary headers and
+boundary markers.  You can then sign the message and send it with
+C-c C-c and be confident that VM won't invalidate the signature
+by making further modifications to the message.  Or if you want
+to resume editing the message you can run the Emacs @code{undo}
+(normally bound to @kbd{C-x u}) command which will revert the
+encoded MIME bodies back to tags and you can continue entering
+your composition.
+
 
 @node Replying, Forwarding Messages, MIME Composition, Sending Messages
 @section Replying

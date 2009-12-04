@@ -707,7 +707,8 @@ visited folder."
 VM will present its messages to you in the usual way.  Messages
 found in the IMAP mailbox will be downloaded and stored in a local
 cache.  If you expunge messages from the cache, the corresponding
-messages will be expunged from the IMAP mailbox.
+messages will be expunged from the IMAP mailbox when the folder is
+saved. 
 
 First arg FOLDER specifies the IMAP mailbox to visit.  You can only
 visit mailboxes on accounts that are listed in
