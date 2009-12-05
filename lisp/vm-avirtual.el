@@ -24,7 +24,7 @@
 ;;; Commentary:
 ;;
 ;; Virtual folders are one of the greatest features offered by VM, however
-;; sometimes I do not want do visit a virtual folder in order to do something
+;; sometimes I do not want to visit a virtual folder in order to do something
 ;; on messages.  E.g. I have a virtual folder selector for spam messages and I
 ;; want VM to mark those messages matching the selector for deletion when
 ;; retrieving new messages.  This can be done with a trick described in

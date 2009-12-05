@@ -540,7 +540,7 @@ specification in the same format used by `vm-spool-files' (which
 see).  The mailbox part of the specifiation is ignored and should
 be asterisk or some other placeholder.
 
-This customization variable is deprecated.  Use vm-imap-account-alist
+***This customization variable is deprecated.  Use `vm-imap-account-alist'
 instead. 
 
 Example:
