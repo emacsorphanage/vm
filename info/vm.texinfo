@@ -36,11 +36,12 @@ notice identical to this one except for the removal of this paragraph
 @end ignore
 @end ifinfo
 @c
+@include version.texi
 @titlepage
 @sp 6
 @center @titlefont{VM User's Manual}
 @sp 4
-@center VM Version 8
+@center VM Version @value{VERSION}
 @sp 5
 @page
 @vskip 0pt plus 1filll
@@ -61,9 +62,7 @@ This manual documents the VM mail reader, a Lisp program which runs as a
 subsystem under Emacs.  The manual is divided into the following
 chapters.
 
-@include version.texi
 This manual corresponds to VM version @value{VERSION}.
-It was last updated at @value{VMUPDATED}.
 
 @menu
 * Introduction::        Overview of the VM interface.
