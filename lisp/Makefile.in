@@ -7,7 +7,7 @@ SHELL = /bin/sh
 # the version of this package
 PACKAGE_VERSION = @PACKAGE_VERSION@
 
-# the list of source files 
+# the list of source files
 SOURCES = vm-version.el
 SOURCES += vm.el
 SOURCES += vm-autoload.el
@@ -62,7 +62,7 @@ SOURCES += vcard.el
 SOURCES += tapestry.el
 SOURCES += u-vm-color.el
 
-# to list of object files 
+# to list of object files
 ifeq (@EMACS_FLAVOR@,emacs)
 OBJECTS = vm-autoloads.elc vm-cus-load.elc
 else
@@ -72,9 +72,11 @@ endif
 OBJECTS += $(SOURCES:.el=.elc)
 
 INSTALL_FILES += $(OBJECTS:.elc=.el) $(OBJECTS)
-INSTALL_FILES += vm-revno.el
+# FIXME: vm-revno.elc is not really needed, but without it the install-el
+# target doesn't install the .el file
+INSTALL_FILES += vm-revno.el vm-revno.elc
 
-# for autoload generation 
+# for autoload generation
 AUTOLOAD_PACKAGE_NAME = (setq autoload-package-name \"vm\")
 AUTOLOAD_FILE = (setq generated-autoload-file \"./auto-autoloads.el\")
 
@@ -116,7 +118,7 @@ all: $(OBJECTS)
 
 install: install-el install-elc
 
-############################################################################## 
+##############################################################################
 vm-version.elc: vm-revno.el
 
 vm-revno.el:
@@ -131,7 +133,7 @@ vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	(build_dir="`pwd`"; cd "@srcdir@"; \
 	 "$(EMACS_PROG)" $(FLAGS) -l autoload \
 		-f vm-built-autoloads "@abs_builddir@/$@" "`pwd`")
-	echo "(custom-add-load 'vm 'vm-cus-load)" >> $@	
+	echo "(custom-add-load 'vm 'vm-cus-load)" >> $@
 	echo "(setq vm-configure-datadir \"${datadir}\")" >> $@
 	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" >> $@
 	echo "(require 'vm-vars)" >> $@
@@ -228,4 +230,3 @@ clean:
 
 distclean: clean
 	-$(RM) -f Makefile
-
