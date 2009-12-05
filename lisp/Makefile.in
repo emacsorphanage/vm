@@ -72,7 +72,9 @@ endif
 OBJECTS += $(SOURCES:.el=.elc)
 
 INSTALL_FILES += $(OBJECTS:.elc=.el) $(OBJECTS)
-INSTALL_FILES += vm-revno.el
+# FIXME: vm-revno.elc is not really needed, but without it the install-el
+# target doesn't install the .el file
+INSTALL_FILES += vm-revno.el vm-revno.elc
 
 # for autoload generation 
 AUTOLOAD_PACKAGE_NAME = (setq autoload-package-name \"vm\")
