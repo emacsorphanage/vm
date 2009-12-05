@@ -20,12 +20,6 @@
 
 # Process this file with autoconf to produce a new configure script
 
-m4_define([VM_PRE_INIT],
-[ m4_define([VM_VERSION],
-             m4_esyscmd([bzr nick | xargs printf '%s'
-	     		]))
-])
-
 # VM_ARG_SUBST(VAR, OPTION, VAL, DESC[, DEFAULT[, ACTION]])
 #
 # Substitute the autoconf variable VAR to a value specified by the user
@@ -234,8 +228,7 @@ TEST
 ])
 
 ##############################################################################
-VM_PRE_INIT
-AC_INIT([VM], [VM_VERSION], [vm@lists.launchpad.net])
+AC_INIT([VM], [8.1.0-beta], [vm@lists.launchpad.net])
 
 AC_COPYRIGHT([Copyright (C) 2006-2007 Robert Widhopf-Fenk <hack@robf.de>])
 

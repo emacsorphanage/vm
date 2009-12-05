@@ -4,6 +4,9 @@
 # no csh please
 SHELL = /bin/sh
 
+# the version of this package
+PACKAGE_VERSION = @PACKAGE_VERSION@
+
 # the list of source files 
 SOURCES = vm-version.el
 SOURCES += vm.el
@@ -69,7 +72,7 @@ endif
 OBJECTS += $(SOURCES:.el=.elc)
 
 INSTALL_FILES += $(OBJECTS:.elc=.el) $(OBJECTS)
-INSTALL_FILES += vm-revno.el vm-revno.elc
+INSTALL_FILES += vm-revno.el
 
 # for autoload generation 
 AUTOLOAD_PACKAGE_NAME = (setq autoload-package-name \"vm\")
@@ -77,7 +80,6 @@ AUTOLOAD_FILE = (setq generated-autoload-file \"./auto-autoloads.el\")
 
 ##############################################################################
 # location of required programms
-BZR = bzr --no-plugins
 RM   = @RM@
 LS   = @LS@
 XARGS = @XARGS@
@@ -115,11 +117,11 @@ all: $(OBJECTS)
 install: install-el install-elc
 
 ############################################################################## 
-# This will only work if there is a BZR repo and it should only be done for
-# releases.  Building VM from a BZR repo will not use vm-revno.el ...
+vm-version.elc: vm-revno.el
+
 vm-revno.el:
-	cd @srcdir@
-	./vm-revno.sh
+	echo ";;; This is a generated file, do not edit it!" > $@
+	echo "(setq vm-version \"$(PACKAGE_VERSION)\")" >> $@
 
 ##############################################################################
 # GNU Emacs's vm-autoload file

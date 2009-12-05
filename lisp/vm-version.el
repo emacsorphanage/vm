@@ -18,58 +18,16 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
-(defvar vm-version nil
-  "Version number of VM.
-Call `vm-version' instead of accessing this variable!")
-
-(defvar vm-version-info nil
-  "The exact version information for tarbundles.")
+(defconst vm-version
+  (eval-when-compile
+    (let (vm-version)
+      (load "vm-revno.el" t t t)
+      vm-version))
+  "Version number of VM.")
 
 (defun vm-version ()
   "Return the value of the variable `vm-version'."
   (interactive)
-  (unless vm-version
-    (save-excursion
-      (set-buffer (get-buffer-create " *vm-version*"))
-      (let* ((f (locate-library "vm"))
-             (d (file-name-directory f))
-             (b (get-buffer " *vm-version*"))
-	     (bzrdir (expand-file-name ".bzr" (concat d "../")))
-	     (bzr (and (file-exists-p bzrdir)
-		       (if (functionp 'locate-file)
-			   (or (locate-file "bzr.exe" exec-path)
-			       (locate-file "bzr.bat" exec-path)
-			       (locate-file "bzr" exec-path))
-			 "bzr"))))
-        (setq default-directory d)
-        (erase-buffer)
-        (cond ((and bzr 
-		    (condition-case nil
-			(= 0 (call-process bzr nil b))
-		      (error nil)))
-               (erase-buffer)
-               ;; get the current branch nick and revno from bzr
-	       (call-process bzr nil b nil "--no-aliases" "--no-plugins" "nick") 
-	       (insert "-")
-	       (call-process bzr nil b nil "--no-aliases" "--no-plugins" "revno"))
-              ((and (locate-library "vm-revno") 
-		    (load-library "vm-revno"))
-               (insert vm-version))
-              (t
-               (insert "?bug?")
-               (message "ERROR: Cannot determine VM version!")
-               (sit-for 5)))
-        (goto-char (point-min))
-        (if (looking-at "vm-")
-            (replace-match ""))
-        ;; remove any whitespace
-        (while (re-search-forward "[\n\t\r ]+" (point-max) t)
-          (replace-match "")))
-      (setq vm-version (buffer-substring (point-min) (point-max)))))
-  (when (interactive-p)
-    (if (string= "?bug?" vm-version)
-        (error "Cannot determine VM version!")
-      (message "VM version is: %s" vm-version)))
   vm-version)
 
 (defconst vm-xemacs-p
