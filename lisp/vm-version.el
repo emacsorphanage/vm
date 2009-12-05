@@ -21,7 +21,7 @@
 (defconst vm-version
   (eval-when-compile
     (let (vm-version)
-      (load "vm-revno")
+      (load "vm-revno.el" t t t)
       vm-version))
   "Version number of VM.")
 

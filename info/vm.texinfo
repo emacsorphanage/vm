@@ -36,8 +36,8 @@ notice identical to this one except for the removal of this paragraph
 @end ignore
 @end ifinfo
 @c
-@titlepage
 @include version.texi
+@titlepage
 @sp 6
 @center @titlefont{VM User's Manual}
 @sp 4
