@@ -3,7 +3,10 @@ VM was written by Kyle Jones! Hail Kyle! The last release from Kyle was 7.19.
 VM's home page up to version 7.19 on the World Wide Web is at
 http://www.wonderworks.com/vm and the FAQ is still hosted there.
 
-This VM is based on my (Robert Widhopf-Fenk) patches against VM 7.19.
+This VM is based on my Robert Widhopf-Fenk's patches against VM 7.19.
+The current version is maintained by the 'VM development team'
+(vm@lists.launchpad.net) consisting of Robert, Ulrich Müller and Uday
+Reddy. 
 
 The persons who have contributed to this version of VM are:
 
@@ -28,10 +31,6 @@ the list.
 
 Read INSTALL and follow the instructions to compile and setup VM.
 
-[In Rob's absence, Uday S. Reddy is hosting the latest updates to VM
-version 8.1 on Launchpad.  He can be contacted at 
-'u DOT s DOT reddy @ cs.bham.ac.uk'. 
-]
 *******************************************************************************
 BUGS
 
