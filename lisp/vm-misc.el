@@ -315,6 +315,15 @@ and flexible."
 	      blobarray)
     list ))
 
+(defun vm-mapvector (proc vec)
+  (let ((new-vec (make-vector (length vec) nil))
+	(i 0)
+	(n (length vec)))
+    (while (< i n)
+      (aset new-vec i (apply proc (aref vec i) nil))
+      (setq i (1+ i)))
+    new-vec))
+
 (defun vm-mapcar (function &rest lists)
   (let (arglist result)
     (while (car lists)
