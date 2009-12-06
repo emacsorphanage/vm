@@ -210,6 +210,7 @@
 
 ;;;###autoload
 (defun vm-mail-yank-default (&optional message)
+  "The default message yank handler when `mail-citation-hook' is set to nil."
   (save-excursion
     (vm-reorder-message-headers nil vm-included-text-headers
 				vm-included-text-discard-header-regexp)
@@ -220,9 +221,9 @@
 	(let ((vm-summary-uninteresting-senders nil))
 	  (insert (vm-summary-sprintf vm-included-text-attribution-format
 				      message))))
-    ; turn off zmacs-regions for Lucid Emacs 19
-    ; and get around transient-mark-mode in FSF Emacs 19
-    ; all this so that (mark) does what it did in v18, sheesh.
+    ;; turn off zmacs-regions for Lucid Emacs 19
+    ;; and get around transient-mark-mode in FSF Emacs 19
+    ;; all this so that (mark) does what it did in v18, sheesh.
     (let* ((zmacs-regions nil)
 	   (mark-even-if-inactive t)
 	   (end (mark-marker)))
@@ -376,6 +377,15 @@ specified by `vm-included-text-headers' and
                               (current-buffer)))
     (push-mark end))
   (save-excursion
+    ;; Move point above the headers which should be at the top of the buffer by
+    ;; this point, and given the push-mark above, mark should now be after the
+    ;; message text. This is the invariant needed by the hook functions called
+    ;; by mail-citation-hook whose doc string states "Each hook function can
+    ;; find the citation between (point) and (mark t)." The upshot of that is
+    ;; that if point equals mark at the end of the buffer, some citation
+    ;; functions will fail with messages similar to "doesn't conform to RFC
+    ;; 822."
+    (goto-char (point-min))
     (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
           (mail-yank-hooks (run-hooks 'mail-yank-hooks))
           (t (vm-mail-yank-default message)))))
