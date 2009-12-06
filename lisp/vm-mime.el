@@ -42,13 +42,14 @@
 (eval-when-compile 
   (defvar latin-unity-ucs-list))
 
+;; This function has been updated from Rob F's version based on Brent
+;; Goodrick's suggestions, his rev. 609, 2009-01-24
 (defun vm-find-coding-system (system)
   (cond ((functionp 'find-coding-system)
 	 (find-coding-system system))
 	((boundp 'coding-system-list)
-	 (member system coding-system-list))
-	;; FIXME is this the right fallback?
-	(t t)))
+	 (if (member system coding-system-list) system nil))
+	(t system)))
 
 (defun vm-get-coding-system-priorities ()
   "Return the value of `vm-coding-system-priorities', or a reasonable
