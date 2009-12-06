@@ -4464,7 +4464,7 @@ preference.
 If you find that your outgoing mail is being encoded in `iso-2022-jp' and
 you'd prefer something more widely used outside of Japan be used instead,
 you could load the `latin-unity' and `un-define' libraries under XEmacs
-21.4, and intialize this list to something like `(iso-8859-1 iso-8859-15
+21.4, and initialize this list to something like `(iso-8859-1 iso-8859-15
 utf-8)'. "
   :group 'vm
   :type '(repeat symbol))

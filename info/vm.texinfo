@@ -28,7 +28,7 @@ this manual provided the copyright notice and this permission notice
 are preserved on all copies.
 
 @ignore
-Permission is granted to process this file through Tex and print the
+Permission is granted to process this file through TeX and print the
 results, provided the printed document carries copying permission
 notice identical to this one except for the removal of this paragraph
 (this paragraph not being relevant to the printed manual).
@@ -497,14 +497,15 @@ If your spool file is on another host, VM supports accessing
 spool files on remote hosts using the POP and IMAP protocols.
 
 @node POP Spool Files,IMAP Spool Files,Spool Files,Local Folders
-@unnumberedsubsec POP Spool Files @cindex POP VM can access spool
-files on mail servers via the Post Office Protocol (POP).  To use a
-POP mailbox as a spool file, you need to use a POP maildrop
-specification (@ref{maildrop specification}, @ref{Server Folders}).
-Once this is done, VM will retrieve new mail from the POP mailbox in
-the same way as it retrieves it from system mailbox.  The retrieved
-messages can be automatically removed from the POP mailbox or retained
-until a later expunge operation.
+@unnumberedsubsec POP Spool Files
+@cindex POP
+VM can access spool files on mail servers via the Post Office Protocol
+(POP).  To use a POP mailbox as a spool file, you need to use a POP
+maildrop specification (@ref{maildrop specification},
+@ref{Server Folders}).  Once this is done, VM will retrieve new mail
+from the POP mailbox in the same way as it retrieves it from system
+mailbox.  The retrieved messages can be automatically removed from the
+POP mailbox or retained until a later expunge operation.
 
 @vindex vm-pop-max-message-size
 By default VM will retrieve all the messages from a POP mailbox
