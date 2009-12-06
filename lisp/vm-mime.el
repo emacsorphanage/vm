@@ -1734,8 +1734,8 @@ that recipient is outside of East Asia."
 		(car (vm-mm-layout-parts layout)) t)))
 	  ((vm-mime-types-match "message" type) t)
 	  ((vm-mime-types-match "text/html" type)
-           (and (locate-library "w3")
-		(vm-mime-text/html-handler)
+	   ;; Allow vm-mime-text/html-handler to decide if text/html parts are displayable:
+           (and (vm-mime-text/html-handler)
 		(let ((charset (or (vm-mime-get-parameter layout "charset")
 				   "us-ascii")))
 		  (vm-mime-charset-internally-displayable-p charset))))
@@ -2236,7 +2236,14 @@ in the buffer.  The function is expected to make the message
 
 (defun vm-mime-display-internal-text/html (layout)
   "Dispatch handling of html to the actual html handler."
-
+  ;; If the user has set the vm-mime-text/html-handler _variable_ to
+  ;; 'auto-select, and it is left set that way in this function, we will get a
+  ;; failure because there is no function called
+  ;; "vm-mime-display-internal-auto-select-text/html". But, the
+  ;; vm-mime-text/html-handler _function_ sets the corresponding _variable_
+  ;; based upon a heuristic about available packages, so call it for its
+  ;; side-effect now.  -- Brent Goodrick, 2008-12-08
+  (vm-mime-text/html-handler)
   (condition-case error-data
       (let ((buffer-read-only nil)
             (start (point))
