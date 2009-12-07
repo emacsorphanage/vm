@@ -281,7 +281,7 @@ or do the binding and advising on your own."
     (ding)
     (sit-for 3))
   
-  (message "VM-RFADDONS: VM is now infected. Please report bugs to Robert Widhopf-Fenk!")
+  (message "VM-RFADDONS: VM is now infected.")
   (sit-for (or sit-for 2)))
 
 (defun rf-vm-su-labels (m)
