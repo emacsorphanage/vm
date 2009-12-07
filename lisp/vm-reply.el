@@ -385,7 +385,10 @@ specified by `vm-included-text-headers' and
     ;; that if point equals mark at the end of the buffer, some citation
     ;; functions will fail with messages similar to "doesn't conform to RFC
     ;; 822."
-    (goto-char (point-min))
+    ;; 822." -- Brent Goodrick, 2009-01-24 
+    ;; But this yanks wrongly!  
+    ;; The following line reverted by Uday Reddy, 2009-12-07
+    ;; (goto-char (point-min))
     (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
           (mail-yank-hooks (run-hooks 'mail-yank-hooks))
           (t (vm-mail-yank-default message)))))
