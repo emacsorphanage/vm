@@ -4137,7 +4137,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   (if (and (vm-images-possible-here-p)
 	   (vm-image-type-available-p 'xpm)
 	   (> (device-bitplanes) 7))
-      (let ((dir (expand-file-name "mime" (vm-image-directory)))
+      (let ((dir (vm-image-directory))
 	    (tuples vm-mime-type-images)
 	    glyph file sym p)
 	(setq file (catch 'done
@@ -4162,7 +4162,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 (defun vm-mime-fsfemacs-set-image-stamp-for-type (e type)
   (if (and (vm-images-possible-here-p)
 	   (vm-image-type-available-p 'xpm))
-      (let ((dir (expand-file-name "mime" (vm-image-directory)))
+      (let ((dir (vm-image-directory))
         (tuples vm-mime-type-images)
              file)
 	(setq file (catch 'done
