@@ -194,7 +194,7 @@ default the local keymap of the current buffer is used."
   (save-excursion
     (let ((buffer-read-only nil)
 	  (separation 3)
-	  tabs longest columns list-length q i w start command
+	  tabs longest positions columns list-length q i w start command
 	  keymap)
       (cond ((and function keymaps (vm-mouse-support-possible-p))
 	     (setq command
@@ -220,15 +220,17 @@ default the local keymap of the current buffer is used."
 	    q list
 	    list-length 0
 	    longest 0
-	    columns (1- (window-width w)))
+	    positions (1- (window-width w)))
       (while q
 	(setq longest (max longest (length (car q)))
 	      list-length (1+ list-length)
 	      q (cdr q)))
-      (setq tabs (/ list-length (/ columns (+ longest separation)))
+      (setq columns (if (< positions (+ longest separation))
+			1
+		      (/ positions (+ longest separation))))
+      (setq tabs (/ list-length columns)
 	    tabs (+ tabs
-		    (if (zerop (% list-length
-				  (/ columns (+ longest separation))))
+		    (if (zerop (% list-length columns))
 			0
 		      1)))
       (setq i 0)
