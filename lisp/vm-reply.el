@@ -1206,7 +1206,7 @@ command can be invoked from external agents via an emacsclient."
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer-if-possible)
   (vm-check-for-killed-summary)
-  (let ((list (vm-parse url "^mailto:\\([^?]+\\)\\??\\|\\([^&]+\\)&?"
+  (let ((list (vm-parse url "^mailto:\\([^?]*\\)\\??\\|\\([^&]+\\)&?"
 			'(1 2)))
 	to subject in-reply-to cc references newsgroups body
 	tem header value header-list)
