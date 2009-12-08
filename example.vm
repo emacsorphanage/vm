@@ -27,21 +27,26 @@
 (setq mail-user-agent 'vm-user-agent)
 
 ;;*****************************************************************************
-;; Folders and spool files, this is where your mail comes from.
 
+;; Two ways of using VM:
+;; - downloading mail to local folders
+;; - reading mail on mail servers from anywhere on the internet
+
+;; For local folders, set these variables:
+
+(setq vm-folder-directory "~/mail")
 
 (setq 
- ;; vm-primary-inbox is the filesystem path to where VM stores downloaded messages:
+ ;; vm-primary-inbox is the filesystem path to where VM stores
+ ;; downloaded messages: 
  vm-primary-inbox "~/INBOX"
  ;; vm-crash-box is where messages are stored temporarily as it is moved into
- ;; your primary inbox file (vm-primary-inbox). Here we just tack on a .crash to
- ;; name it separately:
+ ;; your primary inbox file (vm-primary-inbox). Here we just tack on a
+ ;; .crash to name it separately:
  vm-crash-box (concat vm-primary-inbox ".crash"))
 
 ;; vm-spool-files is a list of lists, each sublist should be of the form
 ;;   (INBOX SPOOLNAME CRASHBOX)
-
-
 (setq vm-spool-files
       (list
        ;; You can drop mail to the same inbox from different spool files.
@@ -51,16 +56,46 @@
        (list "spam" (expand-file-name "~spam/drop")
              (concat vm-folder-directory "spam.crash"))
        ;; POP
-       (list "gmail.pop" "pop:pop.google.com:110:pass:YourEmailAddress:*"
+       (list "gmail.pop" 
+	     "pop:pop.google.com:110:pass:YourEmailAddress:*"
              (concat vm-folder-directory "gmail.pop.crash"))
        ;; POP-SSL 
-       (list "gmail.pop" "pop-ssl:pop.google.com:995:pass:YourEmailAddress:*"
+       (list "gmail.pop" 
+	     "pop-ssl:pop.google.com:995:pass:YourEmailAddress:*"
              (concat vm-folder-directory "gmail.pop.crash"))
        ;; IMAP
-       (list "gmail.imap" "imap:imap.google.com:143:inbox:login:YourEmailAddress:*"
+       (list "gmail.imap" 
+	     "imap:imap.google.com:143:inbox:login:YourEmailAddress:*"
              (concat vm-folder-directory "gmail.imap.crash"))
        ))
        
+;; For server folders, set these variables:
+
+(setq vm-primary-inbox
+      ;; use one of these two
+      ;; for POP server 
+      "pop:pop.google.com:110:pass:YourEmailAddress:*"
+      ;; for IMAP server 
+      "imap:imap.google.com:143:inbox:login:YourEmailAddress:*"
+      )
+
+(setq vm-pop-folder-cache-directory "~/mailcache")
+(setq vm-imap-folder-cache-directory "~/mailcache")
+
+(setq vm-pop-folder-alist
+      ;; for other POP servers
+      '(("pop:pop3.blueyonder.co.uk:110:pass:YourEmailAddress:*" 
+	 "blueyonder")
+	("pop:mailhost.cs.bham.ac.uk:110:pass:YourEmailAddress:*" 
+	 "bham")))
+(setq vm-imap-account-alist
+      ;; for other IMAP servers
+      '(("imap:imap4.blueyonder.co.uk:143:*:login:YourEmailAddress:*" 
+	 "blueyonder")
+	("imap:mailhost.cs.bham.ac.uk:143:*:login:YourEmailAddress:*" 
+	 "bham")
+	))
+
 ;;*****************************************************************************
 ;; Summary 
 
