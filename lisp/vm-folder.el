@@ -1324,7 +1324,8 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			  (setcar (cdr data)
 				  (vm-extend-vector
 				   cache
-				   vm-cache-vector-length))))))
+				   vm-cache-vector-length))
+			  (setq cache (cadr data))))))
 	    ;; data list might not be long enough for (nth 2 ...)  but
 	    ;; that's OK because nth returns nil if you overshoot the
 	    ;; end of the list.
