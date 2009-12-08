@@ -1146,35 +1146,44 @@ summary buffer to select a folder."
           varlist (sort varlist
                         (lambda (v1 v2)
                           (string-lessp (format "%s" v1) (format "%s" v2)))))
-    (let ((vars-to-delete '(
-                            ;; passwords might be listed here
-                            vm-spool-files
-                            vm-imap-auto-expunge-alist
-                            vm-pop-auto-expunge-alist
-                            vm-pop-folder-alist
-                            )))
-      (while vars-to-delete
-        (setq varlist (delete (car vars-to-delete) varlist)
-              vars-to-delete (cdr vars-to-delete))))
-    ;; see what the user had loaded
-    (setq varlist (append (list 'features) varlist))
-    (delete-other-windows)
-    (reporter-submit-bug-report
-     vm-maintainer-address
-     (concat "VM " (vm-version))
-     varlist
-     nil
-     nil
-     "Please change the Subject header to a concise bug description.
+    (let ( ;; delete any passwords stored in maildrop strings
+	  (vm-spool-files 
+	   (vm-mapcar 
+	    (lambda (elem-xyz)
+	      (vm-mapcar (function vm-maildrop-sans-password) elem-xyz))
+	    vm-spool-files))
+	  (vm-pop-folder-alist 
+	   (vm-maildrop-alist-sans-password vm-pop-folder-alist))
+	  (vm-imap-server-list 
+	   (vm-mapcar (function vm-maildrop-sans-password) 
+		      vm-imap-server-list))
+	  (vm-imap-account-alist 
+	   (vm-maildrop-alist-sans-password vm-imap-account-alist))
+	  (vm-pop-auto-expunge-alist
+	   (vm-maildrop-alist-sans-password vm-pop-auto-expunge-alist))
+	  (vm-imap-auto-expunge-alist
+	   (vm-maildrop-alist-sans-password vm-imap-auto-expunge-alist)))
+      ;; see what the user had loaded
+      (setq varlist (append (list 'features) varlist))
+      (delete-other-windows)
+      (reporter-submit-bug-report
+       vm-maintainer-address
+       (concat "VM " (vm-version))
+       varlist
+       nil
+       nil
+       "INSTRUCTIONS:
+- Please change the Subject header to a concise bug description.
 
-Consider to post this to the News group gnu.emacs.vm.bug instead.
+- In this report, remember to cover the basics, that is, what you
+  expected to happen and what in fact did happen and how to reproduce it.
 
-In this report, remember to cover the basics, that is, what you expected to
-happen and what in fact did happen and how to reproduce it.
+- You may attach sample messages or attachments that can be used to
+  reproduce the problem.  (They will be kept confidential.)
 
-Please remove these instructions and other stuff which is unrelated to the bug
-from your message.")
-    (save-excursion
+- Please remove these instructions and other stuff which is unrelated
+  to the bug from your message.
+")
       (goto-char (point-min))
       (mail-position-on-field "Subject")
       (insert "VM-BUG: "))))

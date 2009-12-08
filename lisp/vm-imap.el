@@ -1596,25 +1596,6 @@ on all the relevant IMAP servers and then immediately expunges."
       (replace-match "\n" t t)))
   (set-marker end nil))
 
-(defun vm-imapdrop-sans-password (source)
-  (let (source-list)
-    (setq source-list (vm-parse source "\\([^:]+\\):?"))
-    (concat (nth 0 source-list) ":"
-	    (nth 1 source-list) ":"
-	    (nth 2 source-list) ":"
-	    (nth 3 source-list) ":"
-	    (nth 4 source-list) ":"
-	    (nth 5 source-list) ":*")))
-
-(defun vm-imapdrop-sans-password-and-mailbox (source)
-  (let (source-list)
-    (setq source-list (vm-parse source "\\([^:]+\\):?"))
-    (concat (nth 0 source-list) ":"
-	    (nth 1 source-list) ":"
-	    (nth 2 source-list) ":*:"
-	    (nth 4 source-list) ":"
-	    (nth 5 source-list) ":*")))
-
 (defun vm-imap-read-response (process)
   ;; Reads a line of respose from the imap PROCESS
   ;;--------------------------------------------
