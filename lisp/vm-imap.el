@@ -1253,7 +1253,7 @@ on all the relevant IMAP servers and then immediately expunges."
 
   (let ((list nil)
 	(imap-buffer (current-buffer))
-	tok msg-num uid size flag flags response p
+	tok msg-num uid size flag flags response p pl
 	(need-ok t))
     ;;----------------------------------
     (if vm-buffer-type-debug
@@ -1265,41 +1265,49 @@ on all the relevant IMAP servers and then immediately expunges."
      process (format "FETCH %s:%s (UID RFC822.SIZE FLAGS)" first last))
     (while need-ok
       (setq response (vm-imap-read-response-and-verify process "FLAGS FETCH"))
-      (cond ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
-	     (setq p (cdr (nth 3 response)))
-	     (if (not (vm-imap-response-matches 
-		       p 'UID 'atom 'RFC822\.SIZE 'atom 'FLAGS 'list))
-		 (vm-imap-protocol-error
-		  "expected UID, RFC822.SIZE and (FLAGS list) in FETCH response"))
-	     (setq tok (nth 1 response))
-	     (goto-char (nth 1 tok))
-	     (setq msg-num (read imap-buffer))
-	     (setq tok (nth 1 p))
-	     (setq uid (buffer-substring (nth 1 tok) (nth 2 tok)))
-	     (setq tok (nth 3 p))
-	     (goto-char (nth 1 tok))
-	     (setq size (buffer-substring (nth 1 tok) (nth 2 tok)))
-	     (setq p (cdr (nth 5 p))
-		   flags nil)
-	     (while p
-	       (setq tok (car p))
-	       (if (not (vm-imap-response-matches (list tok) 'atom))
-		   (vm-imap-protocol-error
-		    "expected atom in FLAGS list in FETCH response"))
-	       (setq flag (downcase
-			   (buffer-substring (nth 1 tok) (nth 2 tok)))
-		     flags (cons flag flags)
-		     p (cdr p)))
-	     (setq list 
-		   (cons (cons msg-num (cons uid (cons size flags)))
-			 list)))
-	    ((vm-imap-response-matches response 'VM 'OK)
-	     (setq need-ok nil))))
-      ;; returning nil means the fetch failed so return
-      ;; something other than nil if there aren't any messages.
-      (if (null list)
-	  (cons nil nil)
-	list )))
+      (cond 
+       ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
+	(setq p (cdr (nth 3 response)))
+	(setq tok (nth 1 response))
+	(goto-char (nth 1 tok))
+	(setq msg-num (read imap-buffer))
+	(while p
+	  (cond 
+	   ((vm-imap-response-matches p 'UID 'atom)
+	    (setq tok (nth 1 p))
+	    (setq uid (buffer-substring (nth 1 tok) (nth 2 tok)))
+	    (setq p (nthcdr 2 p)))
+	   ((vm-imap-response-matches p 'RFC822\.SIZE 'atom)
+	    (setq tok (nth 1 p))
+	    (setq size (buffer-substring (nth 1 tok) (nth 2 tok)))
+	    (setq p (nthcdr 2 p)))
+	   ((vm-imap-response-matches p  'FLAGS 'list)
+	    (setq pl (cdr (nth 1 p))
+		  flags nil)
+	    (while pl
+	      (setq tok (car pl))
+	      (if (not (vm-imap-response-matches (list tok) 'atom))
+		  (vm-imap-protocol-error
+		   "expected atom in FLAGS list in FETCH response"))
+	      (setq flag (downcase
+			  (buffer-substring (nth 1 tok) (nth 2 tok)))
+		    flags (cons flag flags)
+		    pl (cdr pl)))
+	    (setq p (nthcdr 2 p)))
+	   (t
+	    (vm-imap-protocol-error
+	     "expected UID, RFC822.SIZE and (FLAGS list) in FETCH response"))
+	   ))
+	(setq list 
+	      (cons (cons msg-num (cons uid (cons size flags)))
+		    list)))
+       ((vm-imap-response-matches response 'VM 'OK)
+	(setq need-ok nil))))
+    ;; returning nil means the fetch failed so return
+    ;; something other than nil if there aren't any messages.
+    (if (null list)
+	(cons nil nil)
+      list )))
 
 (defun vm-imap-ask-about-large-message (process size n)
   (let ((work-buffer nil)
