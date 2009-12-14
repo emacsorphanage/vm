@@ -3246,7 +3246,10 @@ documentation for `vm-spool-files'."
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
-      )))
+      (when (and (processp process)
+		 (memq (process-status process) '(open run)))
+	(vm-imap-end-session process)))
+    ))
 
 ;;;###autoload
 (defun vm-delete-imap-folder (folder)
@@ -3283,6 +3286,9 @@ documentation for `vm-spool-files'."
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
+      (when (and (processp process)
+		 (memq (process-status process) '(open run)))
+	(vm-imap-end-session process))
       )))
 
 ;;;###autoload
@@ -3327,6 +3333,9 @@ documentation for `vm-spool-files'."
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
+      (when (and (processp process)
+		 (memq (process-status process) '(open run)))
+	(vm-imap-end-session process))
       )))
 
 
