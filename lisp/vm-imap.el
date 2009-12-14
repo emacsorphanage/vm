@@ -3022,9 +3022,10 @@ IMAP mailbox spec."
     (setq folder-input
 	  (completing-read
 	   (format			; prompt
-	    "IMAP folder:%s " 
+;;	    "IMAP folder:%s " 
+	    "%s%s" prompt
 	    (if (and default-account default-folder)
-		(format " (default %s:%s)" default-account default-folder)
+		(format "(default %s:%s) " default-account default-folder)
 	      ""))
 	   'vm-imap-folder-completion-list
 	   nil				; predicate
@@ -3042,6 +3043,9 @@ IMAP mailbox spec."
 	  account (car account-and-folder)
 	  folder (cadr account-and-folder)
 	  spec (car (rassoc (list account) vm-imap-account-alist)))
+    (if (null folder)
+	(error 
+	 "IMAP folder required in the format account-name:folder-name"))
     (if (null spec)
 	(error "Unknown IMAP account-name:folder-name"))
     (setq list (vm-imap-parse-spec-to-list spec))
