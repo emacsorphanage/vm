@@ -1143,7 +1143,16 @@ summary buffer to select a folder."
           varlist (sort varlist
                         (lambda (v1 v2)
                           (string-lessp (format "%s" v1) (format "%s" v2)))))
-    (let ( ;; delete any passwords stored in maildrop strings
+    (let ((vars-to-delete 
+	   '(vm-shrunken-headers-keymap	; big and wasteful
+	     vm-auto-folder-alist	; a bit private
+	     vm-mail-folder-alist	; ditto
+	     ;; vm-mail-fcc-default - is this private?
+	     vmpc-actions vmpc-conditions 
+	     vmpc-actions-alist vmpc-reply-alist vmpc-forward-alist
+	     vmpc-resend-alist vmpc-newmail-alist vmpc-automorph-alist
+	     ))
+	  ;; delete any passwords stored in maildrop strings
 	  (vm-spool-files 
 	   (vm-mapcar 
 	    (lambda (elem-xyz)
@@ -1160,6 +1169,9 @@ summary buffer to select a folder."
 	   (vm-maildrop-alist-sans-password vm-pop-auto-expunge-alist))
 	  (vm-imap-auto-expunge-alist
 	   (vm-maildrop-alist-sans-password vm-imap-auto-expunge-alist)))
+      (while vars-to-delete
+        (setq varlist (delete (car vars-to-delete) varlist)
+              vars-to-delete (cdr vars-to-delete)))
       ;; see what the user had loaded
       (setq varlist (append (list 'features) varlist))
       (delete-other-windows)
