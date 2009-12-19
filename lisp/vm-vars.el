@@ -879,17 +879,18 @@ necessary."
 symbol 'window-width.  When non-nil, it causes VM to fill
 paragraphs that contain lines spanning that many columns or more.
 Only plain text messages and text/plain MIME parts will be
-filled.  This variable determines which paragraphs are filled,
-but `vm-paragraph-fill-column' determines the fill column.  The
-message itself is not modified; its text is copied into a
-presentation buffer before the filling is done."
+filled.  The message itself is not modified; its text is copied
+into a presentation buffer before the filling is done."
+;; Old text removed to reflect the change in revision 516:
+;; This variable determines which paragraphs are filled,
+;; but `vm-paragraph-fill-column' determines the fill column.
   :group 'vm
   :type '(choice (const nil)
                  (const window-width)
                  integer))
 
 (defcustom vm-fill-long-lines-in-reply-column nil
-  "*Fill lines spanning that columns or more in replies."
+  "*Fill lines spanning that many columns or more in replies."
   :type '(choice (const nil)
                  (const window-width)
                  integer)
