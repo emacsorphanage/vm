@@ -229,6 +229,9 @@ TEST
 
 ##############################################################################
 AC_INIT([VM], [8.1.0-beta], [vm@lists.launchpad.net])
+# Name of the application
+# Version (release) number
+# Contact address
 
 AC_COPYRIGHT([Copyright (C) 2006-2007 Robert Widhopf-Fenk <hack@robf.de>])
 

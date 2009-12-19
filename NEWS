@@ -1,4 +1,20 @@
-VM 8.1.0-devo
+VM 8.1.0-beta
+
+  VM is currently being maintained by a 'VM development team'
+  consisting of Robert Widhopf-Fenk, Ulrich Mueller and Uday S Reddy.
+  We continue to look for more volunteers to help with the
+  maintenance.
+
+  The version 8.1 released here has been under development for more
+  than 2 years.  It was held back by Robert Fenk getting busy towards
+  the end of 2008 and a long period of interregnum.  Hopefully, we
+  have that behind us.  This version has major improvements on various
+  fronts, especially for imap-folders.  Please read the details
+  below. 
+
+  Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
+  using VM! - Rob, Ulrich and Uday
+  
 
   IMPROVEMENTS:
 
@@ -61,7 +77,7 @@ VM 8.1.0-devo
     * Display number of drafts and postponed messages in the modeline and use
       a more compact modeline.
 
-    * Moved my user defined summary functions to the core:
+    * Moved Robert's user-defined summary functions to the core:
      - S for human readable size
      - P for indication of attachments
      - p for indication of a postponed message
@@ -524,7 +540,7 @@ VM 8.0.0
 
   NOTES:
 
-    VM is now in my hands and I will do my best to keep it alive!
+    VM is now in my hands and I will do my best to keep it alive! -- Robert
 
     ,--------------------------------------------------------------------------
     | From: Kyle Jones <kyle_jones@wonderworks.com>
