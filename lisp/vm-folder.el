@@ -3931,7 +3931,7 @@ run vm-expunge-folder followed by vm-save-folder."
           (vm-assimilate-new-messages t))))))
 
 (defun vm-safe-popdrop-string (drop)
-  (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]+\\):[^:]+:[^:]+:\\([^:]+\\):[^:]+" drop)
+  (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]*\\):[^:]*:[^:]*:\\([^:]*\\):[^:]*" drop)
 	   (concat (substring drop (match-beginning 3) (match-end 3))
 		   "@"
 		   (substring drop (match-beginning 2) (match-end 2))))
@@ -3940,12 +3940,12 @@ run vm-expunge-folder followed by vm-save-folder."
 (defun vm-popdrop-sans-password (source)
   "Return popdrop SOURCE, but replace the password by a \"*\"."
   (mapconcat 'identity 
-             (append (reverse (cdr (reverse (vm-parse source "\\([^:]+\\):?"))))
+             (append (reverse (cdr (reverse (vm-parse source "\\([^:]*\\):?"))))
                      '("*"))
              ":"))
 
 (defun vm-safe-imapdrop-string (drop)
-  (or (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]+\\):[^:]+:\\([^:]+\\):[^:]+:\\([^:]+\\):[^:]+" drop)
+  (or (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*" drop)
 	   (concat (substring drop (match-beginning 4) (match-end 4))
 		   "@"
 		   (substring drop (match-beginning 2) (match-end 2))
@@ -3956,7 +3956,7 @@ run vm-expunge-folder followed by vm-save-folder."
 
 (defun vm-imapdrop-sans-password (source)
   (let (source-list)
-    (setq source-list (vm-parse source "\\([^:]+\\):?"))
+    (setq source-list (vm-parse source "\\([^:]*\\):?"))
     (concat (nth 0 source-list) ":"
 	    (nth 1 source-list) ":"
 	    (nth 2 source-list) ":"
@@ -3966,7 +3966,7 @@ run vm-expunge-folder followed by vm-save-folder."
 
 (defun vm-imapdrop-sans-password-and-mailbox (source)
   (let (source-list)
-    (setq source-list (vm-parse source "\\([^:]+\\):?"))
+    (setq source-list (vm-parse source "\\([^:]*\\):?"))
     (concat (nth 0 source-list) ":"
 	    (nth 1 source-list) ":"
 	    (nth 2 source-list) ":*:"
@@ -3974,9 +3974,9 @@ run vm-expunge-folder followed by vm-save-folder."
 	    (nth 5 source-list) ":*")))
 
 (defun vm-maildrop-sans-password (drop)
-  (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]+\\):[^:]+:[^:]+:\\([^:]+\\):[^:]+" drop)
+  (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]*\\):[^:]*:[^:]*:\\([^:]*\\):[^:]*" drop)
 	   (vm-popdrop-sans-password drop))
-      (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]+\\):[^:]+:\\([^:]+\\):[^:]+:\\([^:]+\\):[^:]+" drop)
+      (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*" drop)
 	   (vm-imapdrop-sans-passord drop))
       drop))
 

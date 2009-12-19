@@ -84,6 +84,7 @@ and flexible."
   (let (list tem)
     (store-match-data nil)
     (while (and (not (eq matches 0))
+		(not (eq (match-end 0) (length string)))
 		(string-match regexp string (match-end 0)))
       (and (integerp matches) (setq matches (1- matches)))
       (if (not (consp matchn))

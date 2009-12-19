@@ -713,7 +713,7 @@ on all the relevant IMAP servers and then immediately expunges."
     (unwind-protect
 	(catch 'end-of-session
 	  ;; parse the maildrop
-	  (setq source-list (vm-parse source "\\([^:]+\\):?")
+	  (setq source-list (vm-parse source "\\([^:]*\\):?" 1 7)
 		host (nth 1 source-list)
 		port (nth 2 source-list)
 ;;		mailbox (nth 3 source-list)
