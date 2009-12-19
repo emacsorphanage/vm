@@ -240,9 +240,9 @@ mandatory."
 	  (let ((buffer-read-only nil)
 		(selected nil)
 		(modified (buffer-modified-p)))
-	    (goto-char (vm-su-start-of m))
 	    (unwind-protect
 		(save-excursion
+		  (goto-char (vm-su-start-of m))
 		  (setq selected (looking-at "[+-]>"))
 		  ;; We do a little dance to update the text in
 		  ;; order to make the markers in the text do
