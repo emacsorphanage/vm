@@ -1002,7 +1002,8 @@ for this variable to have effect."
   :group 'vm
   :type 'boolean)
 
-(defcustom vm-auto-displayed-mime-content-types '("text" "image" "multipart")
+(defcustom vm-auto-displayed-mime-content-types 
+  '("text" "image" "multipart" "message/rfc822")
   "*List of MIME content types that should be displayed immediately
 after decoding.  Other types will be displayed as a button that
 you must activate to display the object.
