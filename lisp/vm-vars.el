@@ -925,7 +925,7 @@ you use such systems."
   :group 'vm
   :type 'boolean)
 
-(defcustom vm-mime-require-mime-version-header t
+(defcustom vm-mime-require-mime-version-header nil
   "*Non-nil means a message must contain MIME-Version to be considered MIME.
 The MIME standard requires that MIME messages contain a MIME-Version,
 but some mailers ignore the standard and do not send the header.  Set

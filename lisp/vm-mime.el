@@ -4561,6 +4561,13 @@ LAYOUT is the MIME layout struct for the message/external-body object."
     result ))
   
 (defun vm-mime-plain-message-p (m)
+  ;; A message is considered plain if
+  ;; - it does not have encoded headers, and
+  ;; - - it does not have a MIME layout, or
+  ;; - - it has a text/plain component as its first element with a
+  ;; - -   character set in vm-mime-default-charsets and the encoding
+  ;; - -   is unibyte (7bit, 8bit or binary).
+  
   (save-match-data
     (let ((o (vm-mm-layout m))
 	  (case-fold-search t))

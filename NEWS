@@ -1,4 +1,4 @@
-VM 8.1.0-beta
+VM 8.1.0
 
   VM is currently being maintained by a 'VM development team'
   consisting of Robert Widhopf-Fenk, Ulrich Mueller and Uday S Reddy.
@@ -17,6 +17,9 @@ VM 8.1.0-beta
   
 
   IMPROVEMENTS:
+
+    * The variable vm-mime-require-mime-version-header is set to nil
+      by default, so that we will be tolerant of bad MIME senders.
 
     * Allow for sorting the headers of composition buffers by calling the
       function `vm-reorder-message-headers' interactively.  You may configure
