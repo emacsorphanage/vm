@@ -1154,10 +1154,13 @@ summary buffer to select a folder."
 	     ))
 	  ;; delete any passwords stored in maildrop strings
 	  (vm-spool-files 
-	   (vm-mapcar 
-	    (lambda (elem-xyz)
-	      (vm-mapcar (function vm-maildrop-sans-password) elem-xyz))
-	    vm-spool-files))
+	   (if (listp (car vm-spool-files))
+	       (vm-mapcar 
+		(lambda (elem-xyz)
+		  (vm-mapcar (function vm-maildrop-sans-password)
+			     elem-xyz)))
+	     (vm-mapcar (function vm-maildrop-sans-password)
+			vm-spool-files)))
 	  (vm-pop-folder-alist 
 	   (vm-maildrop-alist-sans-password vm-pop-folder-alist))
 	  (vm-imap-server-list 
