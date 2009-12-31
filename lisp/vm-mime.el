@@ -4137,7 +4137,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   (if (and (vm-images-possible-here-p)
 	   (vm-image-type-available-p 'xpm)
 	   (> (device-bitplanes) 7))
-      (let ((dir (expand-file-name "mime" (vm-image-directory)))
+      (let ((dir (vm-image-directory))
 	    (tuples vm-mime-type-images)
 	    glyph file sym p)
 	(setq file (catch 'done
@@ -4162,7 +4162,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 (defun vm-mime-fsfemacs-set-image-stamp-for-type (e type)
   (if (and (vm-images-possible-here-p)
 	   (vm-image-type-available-p 'xpm))
-      (let ((dir (expand-file-name "mime" (vm-image-directory)))
+      (let ((dir (vm-image-directory))
         (tuples vm-mime-type-images)
              file)
 	(setq file (catch 'done
@@ -4561,6 +4561,13 @@ LAYOUT is the MIME layout struct for the message/external-body object."
     result ))
   
 (defun vm-mime-plain-message-p (m)
+  ;; A message is considered plain if
+  ;; - it does not have encoded headers, and
+  ;; - - it does not have a MIME layout, or
+  ;; - - it has a text/plain component as its first element with a
+  ;; - -   character set in vm-mime-default-charsets and the encoding
+  ;; - -   is unibyte (7bit, 8bit or binary).
+  
   (save-match-data
     (let ((o (vm-mm-layout m))
 	  (case-fold-search t))

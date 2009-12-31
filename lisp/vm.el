@@ -710,14 +710,11 @@ cache.  If you expunge messages from the cache, the corresponding
 messages will be expunged from the IMAP mailbox when the folder is
 saved. 
 
-First arg FOLDER specifies the IMAP mailbox to visit.  You can only
-visit mailboxes on accounts that are listed in
-`vm-imap-account-alist'.  
-
-When this command is called interactively, the folder name will be
-read from the minibuffer in the format account:mailbox, where account
-is the short name of an IMAP account listed in `vm-imap-account-alist' and
-mailbox is a folder in this account.
+When this command is called interactively, the FOLDER name will
+be read from the minibuffer in the format
+\"account-name:folder-name\", where account-name is the short
+name of an IMAP account listed in `vm-imap-account-alist' and
+folder-name is a folder in this account.
 
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute
@@ -1146,35 +1143,59 @@ summary buffer to select a folder."
           varlist (sort varlist
                         (lambda (v1 v2)
                           (string-lessp (format "%s" v1) (format "%s" v2)))))
-    (let ((vars-to-delete '(
-                            ;; passwords might be listed here
-                            vm-spool-files
-                            vm-imap-auto-expunge-alist
-                            vm-pop-auto-expunge-alist
-                            vm-pop-folder-alist
-                            )))
+    (let ((vars-to-delete 
+	   '(vm-shrunken-headers-keymap	; big and wasteful
+	     vm-auto-folder-alist	; a bit private
+	     vm-mail-folder-alist	; ditto
+	     ;; vm-mail-fcc-default - is this private?
+	     vmpc-actions vmpc-conditions 
+	     vmpc-actions-alist vmpc-reply-alist vmpc-forward-alist
+	     vmpc-resend-alist vmpc-newmail-alist vmpc-automorph-alist
+	     ))
+	  ;; delete any passwords stored in maildrop strings
+	  (vm-spool-files 
+	   (if (listp (car vm-spool-files))
+	       (vm-mapcar 
+		(lambda (elem-xyz)
+		  (vm-mapcar (function vm-maildrop-sans-password)
+			     elem-xyz)))
+	     (vm-mapcar (function vm-maildrop-sans-password)
+			vm-spool-files)))
+	  (vm-pop-folder-alist 
+	   (vm-maildrop-alist-sans-password vm-pop-folder-alist))
+	  (vm-imap-server-list 
+	   (vm-mapcar (function vm-maildrop-sans-password) 
+		      vm-imap-server-list))
+	  (vm-imap-account-alist 
+	   (vm-maildrop-alist-sans-password vm-imap-account-alist))
+	  (vm-pop-auto-expunge-alist
+	   (vm-maildrop-alist-sans-password vm-pop-auto-expunge-alist))
+	  (vm-imap-auto-expunge-alist
+	   (vm-maildrop-alist-sans-password vm-imap-auto-expunge-alist)))
       (while vars-to-delete
         (setq varlist (delete (car vars-to-delete) varlist)
-              vars-to-delete (cdr vars-to-delete))))
-    ;; see what the user had loaded
-    (setq varlist (append (list 'features) varlist))
-    (delete-other-windows)
-    (reporter-submit-bug-report
-     vm-maintainer-address
-     (concat "VM " (vm-version))
-     varlist
-     nil
-     nil
-     "Please change the Subject header to a concise bug description.
+              vars-to-delete (cdr vars-to-delete)))
+      ;; see what the user had loaded
+      (setq varlist (append (list 'features) varlist))
+      (delete-other-windows)
+      (reporter-submit-bug-report
+       vm-maintainer-address
+       (concat "VM " (vm-version))
+       varlist
+       nil
+       nil
+       "INSTRUCTIONS:
+- Please change the Subject header to a concise bug description.
 
-Consider to post this to the News group gnu.emacs.vm.bug instead.
+- In this report, remember to cover the basics, that is, what you
+  expected to happen and what in fact did happen and how to reproduce it.
 
-In this report, remember to cover the basics, that is, what you expected to
-happen and what in fact did happen and how to reproduce it.
+- You may attach sample messages or attachments that can be used to
+  reproduce the problem.  (They will be kept confidential.)
 
-Please remove these instructions and other stuff which is unrelated to the bug
-from your message.")
-    (save-excursion
+- Please remove these instructions and other stuff which is unrelated
+  to the bug from your message.
+")
       (goto-char (point-min))
       (mail-position-on-field "Subject")
       (insert "VM-BUG: "))))

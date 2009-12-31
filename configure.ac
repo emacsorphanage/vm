@@ -222,13 +222,16 @@ AC_DEFUN([VM_OTHERDIRS],
           (add-to-list 'absolutedirs dir)))
       (princ (format "%S" absolutedirs)))
 TEST
-  OTHERDIRS=`"${EMACS_PROG}" --no-site-file --batch -L ${srcdir}/lisp -l vm-build.el -l conftest.el`
+  OTHERDIRS=`"${EMACS_PROG}" --no-site-file --batch -l ${srcdir}/lisp/vm-build.el -l conftest.el`
   AC_MSG_RESULT($OTHERDIRS)
   AC_SUBST(OTHERDIRS)
 ])
 
 ##############################################################################
 AC_INIT([VM], [8.1.0-beta], [vm@lists.launchpad.net])
+# Name of the application
+# Version (release) number
+# Contact address
 
 AC_COPYRIGHT([Copyright (C) 2006-2007 Robert Widhopf-Fenk <hack@robf.de>])
 

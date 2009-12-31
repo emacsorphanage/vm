@@ -879,17 +879,18 @@ necessary."
 symbol 'window-width.  When non-nil, it causes VM to fill
 paragraphs that contain lines spanning that many columns or more.
 Only plain text messages and text/plain MIME parts will be
-filled.  This variable determines which paragraphs are filled,
-but `vm-paragraph-fill-column' determines the fill column.  The
-message itself is not modified; its text is copied into a
-presentation buffer before the filling is done."
+filled.  The message itself is not modified; its text is copied
+into a presentation buffer before the filling is done."
+;; Old text removed to reflect the change in revision 516:
+;; This variable determines which paragraphs are filled,
+;; but `vm-paragraph-fill-column' determines the fill column.
   :group 'vm
   :type '(choice (const nil)
                  (const window-width)
                  integer))
 
 (defcustom vm-fill-long-lines-in-reply-column nil
-  "*Fill lines spanning that columns or more in replies."
+  "*Fill lines spanning that many columns or more in replies."
   :type '(choice (const nil)
                  (const window-width)
                  integer)
@@ -924,7 +925,7 @@ you use such systems."
   :group 'vm
   :type 'boolean)
 
-(defcustom vm-mime-require-mime-version-header t
+(defcustom vm-mime-require-mime-version-header nil
   "*Non-nil means a message must contain MIME-Version to be considered MIME.
 The MIME standard requires that MIME messages contain a MIME-Version,
 but some mailers ignore the standard and do not send the header.  Set
@@ -1001,7 +1002,8 @@ for this variable to have effect."
   :group 'vm
   :type 'boolean)
 
-(defcustom vm-auto-displayed-mime-content-types '("text" "image" "multipart")
+(defcustom vm-auto-displayed-mime-content-types 
+  '("text" "image" "multipart" "message/rfc822")
   "*List of MIME content types that should be displayed immediately
 after decoding.  Other types will be displayed as a button that
 you must activate to display the object.

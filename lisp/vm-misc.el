@@ -84,6 +84,7 @@ and flexible."
   (let (list tem)
     (store-match-data nil)
     (while (and (not (eq matches 0))
+		(not (eq (match-end 0) (length string)))
 		(string-match regexp string (match-end 0)))
       (and (integerp matches) (setq matches (1- matches)))
       (if (not (consp matchn))
@@ -314,6 +315,15 @@ and flexible."
     (mapatoms (function (lambda (s) (setq list (cons (symbol-name s) list))))
 	      blobarray)
     list ))
+
+(defun vm-mapvector (proc vec)
+  (let ((new-vec (make-vector (length vec) nil))
+	(i 0)
+	(n (length vec)))
+    (while (< i n)
+      (aset new-vec i (apply proc (aref vec i) nil))
+      (setq i (1+ i)))
+    new-vec))
 
 (defun vm-mapcar (function &rest lists)
   (let (arglist result)

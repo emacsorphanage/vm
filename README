@@ -1,4 +1,5 @@
-VM was written by Kyle Jones! Hail Kyle! The last release from Kyle was 7.19.
+VM was written by Kyle Jones! Hail Kyle! The last release from Kyle
+was 7.19. 
 
 VM's home page up to version 7.19 on the World Wide Web is at
 http://www.wonderworks.com/vm and the FAQ is still hosted there.
@@ -6,12 +7,12 @@ http://www.wonderworks.com/vm and the FAQ is still hosted there.
 This VM is based on Robert Widhopf-Fenk's patches against VM 7.19.
 The current version is maintained by the 'VM development team'
 (vm@lists.launchpad.net) consisting of Robert, Ulrich Müller and Uday
-Reddy. 
+Reddy.
 
 The persons who have contributed to this version of VM are:
 
  * Aidan Kehoe
- * Glenn ???
+ * Glenn <unknown>
  * Jens Gustedt
  * John J Foerch
  * Kevin Rogers
@@ -26,33 +27,43 @@ The persons who have contributed to this version of VM are:
  * Uday S. Reddy
  * Robert Widhopf-Fenk
 
-Please mail me a note, if I have forgotten someone or accidently put you on
-the list. 
+Please mail us a note, if I have forgotten someone or accidently put
+you on the list.
 
 Read INSTALL and follow the instructions to compile and setup VM.
+
+If you are new to VM, see example.vm for example configuration
+settings (in a '~/.vm' file).  Read more in the VM manual on 'info'. 
 
 *******************************************************************************
 BUGS
 
-If you have any problems or meet a bug it is best to discuss them on the USENET
-groups gnu.emacs.vm.bugs or gnu.emacs.vm.info!  Also search the groups before
-posting as there might have been some discussion and a fix before.
+If you have any problems or meet a bug it is best to discuss them on
+the USENET groups gnu.emacs.vm.bugs or gnu.emacs.vm.info!  Also search
+the groups before posting as there might have been some discussion and
+a fix before.
+
+In addition to discussing the problems on the newsgroups, you are
+encouraged to file a bug report using the Emacs function 
+	   M-x vm-submit-bug-report
+This function formats an email report including the entire state of VM
+which can be used to diagnose and fix the bug.
 
 Report any problems or bugs otherwise they cannot be fixed!
 
-Please provide the version number of VM and Emacs and how to reproduce the
-problem.
-
-Personally I am an follower of the XEmacs church and thus some things may not
-work with GNU Emacs, nevertheless I test VM also on GNU Emacs from time to
-time and I am happy to merge you fixes.
+Please provide the version number of VM and Emacs and how to reproduce
+the problem.
 
 *******************************************************************************
 Homepage
 
 The new homepage of VM is at http://www.nongnu.org/viewmail/ hosted by
-Savannah.  There is a bugtracker and other stuff, but I prefer the news
-groups!
+Savannah.  The latest downloads of VM can also be found here.
+
+The source code of VM is at http://launchpad.net/vm hosted by
+Launchpad.
+
+Eventually, we may migrate to a single site for both the facilities.  
 
 *******************************************************************************
 Wiki
@@ -63,10 +74,9 @@ best suited to conserve code snippets, cooking guides or feature requests.
 *******************************************************************************
 BZR (http://bazaar-vcs.org/)
 
-I maintain my changes with BZR now, since CVS and SVN suck and TLA/BAZ
-do as well. 
+We maintain the source code using Bazaar.
 
-If you want to send me changes or start hacking on your own you may want to 
+If you want to send us changes or start hacking on your own you may want to 
 branch from the follwing URL:
 
   http://bazaar.launchpad.net/~vm/vm/trunk
@@ -91,13 +101,10 @@ bzr bundle-revisions --output=xy-changes.diff
 *******************************************************************************
 COMMENTS
 
-The documentation of my changes is incomplete and the changes may even cause
-new problems or bugs.  
+In addition to Kyle Jones's original VM, this version includes
+various contributions from Robert Widhopf-Fenk and others.
 
-This VM provides the following hacks & enhancements and other stuff not
-listed here, as I am quite lazy in writing docs. ;c) 
-
-Additional extensions for VM written by myself:
+Extensions for VM written by Robert:
 - vm-pine.el	      for draft handling and other Pine inspired functions.
 - vm-ps-print.el      for nice ps-printing functions
 - vm-rfaddons.el      adds various add-ons to VM
@@ -111,25 +118,9 @@ Additional extensions for VM written by myself:
 Additional extensions for VM from other people:
 - vm-pcrisis.el	      by Rob Hodges for people with personal crisis which need
 		      to rewrite headers automatically. 
-- vcard.el            by Noah Friedman <friedman@splode.com> for
+- vcard.el            by Noah Friedman <friedman 'at' splode.com> for
   vm-vcard.el	      displaying vcards within VM.
 
-Changes of the VM core (incomplete):
-- make-autoloads: enhanced output & ignore links
-- vm-mime.el:
-	* vm-pine patch for attachment handling of continued message drafts
-	* mime button displaying file name of attachment
-	* write mime filter
-	* qp-decoding of disposition parameters like filename etc.
-- vm-mouse.el: handling of email-addresses like "mailto:" URLs
-- vm-page.el: vm-energize-urls is interactive now, this allows you to easily
-	      check URLs in a message you are currently composing.
-- vm-reply.el:
-	* Proper setting of subject & references when replying to multiple
-	  messages.
-	* Filtering of MIME types when yanking a message.  Now only those
-	  types listed in `vm-included-mime-types-list' are yanked and you
-	  will have no attachment mess any more!
-- vm-startup.el: vm-mail takes now a subject argument
-- vm-vars.el: two new variables for customization (see vm-reply)
-	* vm-included-mime-types-list
+Enhancements:
+
+- IMAP server support by Uday Reddy

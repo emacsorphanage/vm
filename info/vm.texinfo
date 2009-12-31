@@ -859,7 +859,13 @@ need to specify the password for POP accounts in this definition.
 
 @findex vm-visit-imap-folder
 The command @code{vm-visit-imap-folder} allows you to visit an IMAP
-mailbox as a folder.  When you visit an IMAP folder, VM will
+mailbox as a folder.  The name of the IMAP mailbox should be input via
+the minibuffer in the format account-name:folder-name.  Here,
+``account-name'' is the name of an IMAP account declared in
+@code{vm-imap-account-alist} and ``folder-name'' is the name of an IMAP
+mailbox in this account.
+
+When you visit an IMAP folder, VM will
 download copies of the messages that it finds there for you to read.
 These messages are saved locally in a folder on the disk, in the 
 directory specified by @code{vm-imap-folder-cache-directory} (or
@@ -907,7 +913,7 @@ that is accessible to you on the IMAP server can be specified.  For
 example, @code{becky:inbox} or @code{crickle:drafts}.
 
 @vindex vm-imap-server-list
-The customization variable @code{vm-imap-server-list}, used in old
+The customization variable @code{vm-imap-server-list}, used in older
 versions of VM, is deprecated.  Please use @code{vm-imap-account-alist}
 instead.
 
