@@ -12,7 +12,7 @@ SUBDIRS = lisp info src pixmaps
 
 ##############################################################################
 all: vm-load.el
-	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i); done
+	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i) || exit 1; done
 
 Makefile vm-load.el: %: config.status @srcdir@/%.in
 	./config.status $@
@@ -25,13 +25,13 @@ config.status: @srcdir@/configure
 	./config.status --recheck
 
 install:
-	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i install); done
+	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i install) || exit 1; done
 
 clean:
-	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i clean); done
+	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i clean) || exit 1; done
 
 distclean:
-	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i distclean); done
+	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i distclean) || exit 1; done
 
 push:
 	$(BZR) push
