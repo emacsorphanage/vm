@@ -1755,7 +1755,7 @@ attach, any relative pathnames will be relative to this directory."
   :group 'vm
   :type '(choice (const nil) directory))
 
-(defcustom vm-mime-yank-attachments t
+(defcustom vm-mime-yank-attachments nil
   "*Non-nil value enables yanking of attachments.
 Otherwise only the button label will be yanked."
   :group 'vm

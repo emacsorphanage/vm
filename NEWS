@@ -28,6 +28,9 @@ VM 8.1.0
 
   IMPROVEMENTS:
 
+    * The variable vm-mime-yank-attachments is set to nil by default,
+      so that we are not surprised by unexpectedly large mail messages.
+
     * The variable vm-mime-require-mime-version-header is set to nil
       by default, so that we will be tolerant of bad MIME senders.
 
