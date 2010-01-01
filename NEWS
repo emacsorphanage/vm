@@ -5,6 +5,8 @@ VM 8.1.1
   * vm-delete-duplicate-messages now works by comparing message ID's.
     (from Noah Friedman's vm-addons).
 
+  * New boolean variable vm-sort-threads-by-youngest-date allows
+    threads to be sorted by their youngest date or oldest date.
 
 VM 8.1.0
 

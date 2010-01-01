@@ -3040,6 +3040,15 @@ threading messages."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-sort-threads-by-youngest-date t
+"*Non-nil values causes VM to sort threads by their youngest date,
+i.e., a thread A will appear before B if the youngest message in the
+thread A is dated before the youngest message in the thread B.  If the
+variable is nil, threads are sorted by their oldest date."
+  :group 'vm
+  :type 'boolean)
+
+
 (defcustom vm-summary-uninteresting-senders nil
   "*Non-nil value should be a regular expression that matches
 addresses that you don't consider interesting enough to
@@ -4813,6 +4822,8 @@ Its parent keymap is mail-mode-map.")
       "/usr/spool/mail/"))
 (defconst vm-content-length-search-regexp "^Content-Length:.*\n\\|\\(\n\n\\)")
 (defconst vm-content-length-header "Content-Length:")
+(defconst vm-references-header-regexp
+  "^References:\\(.*\n\\([ \t].*\n\\)*\\)")
 (defconst vm-attributes-header-regexp
   "^X-VM-\\(Attributes\\|v5-Data\\):\\(.*\n\\([ \t].*\n\\)*\\)")
 (defconst vm-attributes-header "X-VM-v5-Data:")
