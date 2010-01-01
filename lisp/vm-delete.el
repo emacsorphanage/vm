@@ -159,6 +159,51 @@ don't move at all."
 ;;;###autoload
 (defun vm-delete-duplicate-messages ()
 "Delete duplicate messages in the current folder.
+This command works by comparing the message ID's.  Messages that
+already deleted are not considered, so VM will never delete the last
+copy of a message in a folder.  'Deleting' means flagging for
+deletion; you will have to expunge the messages with
+`vm-expunge-folder' to really get rid of them, as usual.
+
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+only duplicate messages among the marked messages are deleted,
+unmarked messages are not hashed or considerd for deletion."
+  (interactive)
+  (vm-select-folder-buffer)
+  (vm-check-for-killed-summary)
+  (vm-error-if-folder-read-only)
+  (vm-error-if-folder-empty)
+  (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
+	(table (make-vector 103 0))
+	(mp vm-message-list)
+        (n 0)
+        (case-fold-search t)
+        mid)
+    (if used-marks
+	(setq mp (vm-select-marked-or-prefixed-messages 0)))	
+    (while mp
+      (cond ((vm-deleted-flag (car mp)))
+            (t
+             (setq mid (vm-su-message-id (car mp)))
+	     (when mid
+	       ;; (or mid (debug (car mp)))
+	       (when (intern-soft mid table)
+		 (vm-set-deleted-flag (car mp) t)
+		 (setq n (1+ n)))
+	       (intern mid table))))
+      (setq mp (cdr mp)))
+    (and (interactive-p)
+         (message "%d duplicate%s marked deleted" n (if (= n 1) "" "s")))
+    (vm-update-summary-and-mode-line)
+    (when vm-move-after-killing
+      (let ((vm-circular-folders (and vm-circular-folders
+                                      (eq vm-move-after-killing t))))
+        (vm-next-message 1 t executing-kbd-macro)))
+    n))
+
+;;;###autoload
+(defun vm-delete-duplicate-messages-by-body ()
+"Delete duplicate messages in the current folder.
 This command works by computing an MD5 hash for the body ofeach
 non-deleted message in the folder and deleting messages that have
 a hash that has already been seen.  Messages that already deleted

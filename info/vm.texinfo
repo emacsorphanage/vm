@@ -2527,7 +2527,11 @@ Flags all messages with the same subject as the current message (ignoring
 ``Re:'') for deletion.
 @findex vm-delete-duplicate-messages
 @item @code{vm-delete-duplicate-messages}
-Flags duplicates messages for deletion.  The duplicate messages are
+Flags duplicate messages for deletion.  The duplicate messages are
+detected by comparing message ID's.
+@findex vm-delete-duplicate-messages-by-body
+@item @code{vm-delete-duplicate-messages-by-body}
+Flags duplicate messages for deletion.  The duplicate messages are
 detected by comparing message bodies.
 @findex vm-expunge-folder
 @kindex ###

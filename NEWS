@@ -1,3 +1,11 @@
+VM 8.1.1
+
+  IMPROVEMENTS:
+
+  * vm-delete-duplicate-messages now works by comparing message ID's.
+    (from Noah Friedman's vm-addons).
+
+
 VM 8.1.0
 
   VM is currently being maintained by a 'VM development team'
