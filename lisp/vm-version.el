@@ -20,9 +20,12 @@
 ;;; Code:
 (defconst vm-version
   (eval-when-compile
-    (let (vm-version)
-      (load "vm-revno.el" t t t)
-      vm-version))
+    (with-temp-buffer
+      (insert-file-contents-literally
+       (expand-file-name
+	"version.txt"
+	(and load-file-name (file-name-directory load-file-name))))
+      (read (current-buffer))))
   "Version number of VM.")
 
 (defun vm-version ()
