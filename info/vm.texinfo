@@ -2205,13 +2205,17 @@ the default).  In any case you can edit any of the message headers
 manually, if you wish.
 
 @vindex vm-included-text-prefix
-VM also helps you quote material from a message to which you are
+VM also helps you cite material from a message to which you are
 replying by providing @dfn{included text} as a feature of some of the
 commands.  @dfn{Included text} is a copy of the message being replied to with
 some fixed string prepended to each line so that included text can be
 distinguished from the text of the reply.  The variable
 @code{vm-included-text-prefix} specifies what the prepended string will
-be.
+be.  
+
+(Note: VM allows you to cite any messages in a message you compose.
+Your message does not have to be a reply.  Neither do the cited messages
+have to be the messages you are replying to.)
 
 @vindex vm-included-text-attribution-format
 The variable @code{vm-included-text-attribution-format} specifies the
@@ -2221,6 +2225,19 @@ inserted before the included text.  If non-@code{nil}, the value of
 @code{vm-included-text-attribution-format} should be a string format
 specification similar to @code{vm-summary-format}.  @xref{Summaries}.  A
 @code{nil} value causes the attribution to be omitted.
+
+@vindex vm-included-mime-types-list
+@vindex vm-include-text-from-presentation
+By default, VM uses its MIME displaying mechanism to extract the
+included text to be cited in replies.  If this does not work correctly,
+you can set the variable @code{vm-included-mime-types-list} to a list of
+MIME types that should be covered in the included text.  The list should
+have @code{text/plain} at a minimum and could include other types such
+as @code{text/enriched} and @code{message}.  Setting the variable to nil
+returns you to the default behaviour.  Another possibe way to extract
+included text is to use the contents of the presentation buffer.  You
+can ask VM to do so by setting the variable
+@code{vm-include-text-from-presentation} to t.
 
 @vindex vm-in-reply-to-format
 The variable @code{vm-in-reply-to-format} specifies the format of the

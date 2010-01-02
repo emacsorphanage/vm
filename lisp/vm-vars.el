@@ -1757,7 +1757,8 @@ attach, any relative pathnames will be relative to this directory."
 
 (defcustom vm-mime-yank-attachments nil
   "*Non-nil value enables yanking of attachments.
-Otherwise only the button label will be yanked."
+Otherwise only the button label will be yanked.
+(This functionally is currently part of vm-pine.el.)"
   :group 'vm
   :type 'boolean)
 
@@ -2384,7 +2385,8 @@ leaving no way to reply to just the author of a message."
 (defcustom vm-reply-include-presentation nil
   "*If true a reply will include the presentation of a message.
 This might give better results when using filling or MIME encoded messages,
-e.g. HTML message."
+e.g. HTML message.
+(This variable is part of vm-rfaddons.el.)"
   :group 'vm
   :type 'boolean)
 
@@ -2409,10 +2411,21 @@ Nil means don't attribute included text in replies."
   :type '(choice (const nil) string))
 
 (defcustom vm-included-mime-types-list
-  '("text/plain" "text/enriched" "message/rfc822")
-  "*List of mime types that should be retained in a reply message."
+  nil
+"*If non-nil, the list of mime types that should be included in quote
+text in a reply message.  A suitable value could be
+  '(\"text/plain\" \"text/enriched\" \"message/rfc822\")
+By default, this variable is nil, which means include all types that
+are handled by VM's MIME decoding mechanism." 
   :group 'vm
   :type '(repeat string))
+
+(defcustom vm-include-text-from-presentation nil
+  "*If true a reply will include the presentation of a message.
+This might give better results when using filling or MIME encoded messages,
+e.g. HTML message."
+  :group 'vm
+  :type 'boolean)
 
 (defcustom vm-included-text-headers nil
   "*List of headers that should be retained in a message included in

@@ -1,4 +1,4 @@
-VM 8.1.1
+VM 8.1.1-devo
 
   IMPROVEMENTS:
 
@@ -7,6 +7,10 @@ VM 8.1.1
 
   * New boolean variable vm-sort-threads-by-youngest-date allows
     threads to be sorted by their youngest date or oldest date.
+
+  * vm-yank-message function streamlined a bit.  New variable
+    vm-include-text-from-presentation used to extract message text
+    from presentation buffer.
 
 VM 8.1.0
 

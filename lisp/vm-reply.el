@@ -278,22 +278,6 @@ Don't call this function from a program."
       (vm-bury-buffer newbuf)
       (vm-bury-buffer sumbuf))))
 
-(defun vm-insert-presentation (message)
-  (let ((start (point)))
-    (vm-insert-region-from-buffer
-     (save-excursion
-       (vm-select-folder-buffer)
-       ;; ensure the current message is presented 
-     (vm-show-current-message)
-     (vm-select-folder-buffer)
-     (if vm-presentation-buffer
-         (set-buffer vm-presentation-buffer))
-     (current-buffer)))
-    (save-excursion
-      (goto-char start)
-      (if (looking-at "From ")
-          (delete-region start (1+ (line-end-position)))))))
-
 ;;;###autoload
 (defun vm-yank-message (message)
   "Yank message number N into the current buffer at point.
@@ -350,48 +334,167 @@ specified by `vm-included-text-headers' and
   (vm-display nil nil '(vm-yank-message) '(vm-yank-message composing-message))
   (setq message (vm-real-message-of message))
   (let ((layout (vm-mm-layout message))
+	(start (point))
         (end (point-marker)))
-    (save-excursion
-      (if vm-reply-include-presentation
-          (vm-insert-presentation message)
-        (if (eq layout 'none)
-
-            (vm-insert-region-from-buffer (vm-buffer-of message)
-                                          (vm-headers-of message)
-                                          (vm-text-end-of message))
-	  (vm-insert-region-from-buffer (vm-buffer-of message)
-					(vm-headers-of message)
-					(vm-text-of message))
-	  (save-excursion
-	    (goto-char (point-min))
-	    (vm-decode-mime-message-headers))
-          (vm-decode-mime-layout layout)
-          (if vm-mime-yank-attachments
-              (vm-decode-postponed-mime-message))))
-      (setq end (point-marker)))
+     (save-excursion
+      (cond (vm-include-text-from-presentation
+	     (vm-yank-message-presentation message)
+	     (setq end (point-marker)))
+	    ((null vm-included-mime-types-list)
+	     (vm-yank-message-mime message layout)
+	     (setq end (point-marker)))
+	    (t
+	     (vm-yank-message-text message layout)
+	     (setq end (point-marker)))
+	    )
+      ;; decode MIME encoded words so supercite and other
+      ;; mail-citation-hook denizens won't have to eat 'em.
+      (if vm-display-using-mime
+	  (save-restriction
+	    (narrow-to-region start end)
+	    (vm-decode-mime-encoded-words))))
     ;; get rid of read-only text properties on the text, as
     ;; they will only cause trouble.
     (let ((inhibit-read-only t))
       (remove-text-properties (point-min) (point-max)
                               '(read-only nil invisible nil)
                               (current-buffer)))
-    (push-mark end))
-  (save-excursion
-    ;; Move point above the headers which should be at the top of the buffer by
-    ;; this point, and given the push-mark above, mark should now be after the
-    ;; message text. This is the invariant needed by the hook functions called
-    ;; by mail-citation-hook whose doc string states "Each hook function can
-    ;; find the citation between (point) and (mark t)." The upshot of that is
-    ;; that if point equals mark at the end of the buffer, some citation
-    ;; functions will fail with messages similar to "doesn't conform to RFC
-    ;; 822."
-    ;; 822." -- Brent Goodrick, 2009-01-24 
-    ;; But this yanks wrongly!  
-    ;; The following line reverted by Uday Reddy, 2009-12-07
-    ;; (goto-char (point-min))
-    (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
-          (mail-yank-hooks (run-hooks 'mail-yank-hooks))
-          (t (vm-mail-yank-default message)))))
+    (push-mark end)
+    (save-excursion
+      ;; Move point above the headers which should be at the top of the buffer by
+      ;; this point, and given the push-mark above, mark should now be after the
+      ;; message text. This is the invariant needed by the hook functions called
+      ;; by mail-citation-hook whose doc string states "Each hook function can
+      ;; find the citation between (point) and (mark t)." The upshot of that is
+      ;; that if point equals mark at the end of the buffer, some citation
+      ;; functions will fail with messages similar to "doesn't conform to RFC
+      ;; 822." -- Brent Goodrick, 2009-01-24 
+      ;; But this yanks wrongly!  
+      ;; The following line reverted by Uday Reddy, 2009-12-07
+      ;; (goto-char (point-min))
+      (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
+	    (mail-yank-hooks (run-hooks 'mail-yank-hooks))
+	    (t (vm-mail-yank-default message))))))
+
+(defun vm-yank-message-presentation (message)
+  (let ((start (point)))
+    (vm-insert-region-from-buffer
+     (save-excursion
+       (vm-select-folder-buffer)
+       ;; ensure the current message is presented 
+     (vm-show-current-message)
+     (vm-select-folder-buffer)
+     (if vm-presentation-buffer
+         (set-buffer vm-presentation-buffer))
+     (current-buffer)))
+    (save-excursion
+      (goto-char start)
+      (if (looking-at "From ")
+          (delete-region start (1+ (line-end-position)))))))
+
+(defun vm-yank-message-mime (message layout)
+  ;; This is Rob's new code that uses vm-decode-mime-layout for
+  ;; creating the yanked text
+  (if (eq layout 'none)
+
+      (vm-insert-region-from-buffer (vm-buffer-of message)
+				    (vm-headers-of message)
+				    (vm-text-end-of message))
+    (vm-insert-region-from-buffer (vm-buffer-of message)
+				  (vm-headers-of message)
+				  (vm-text-of message))
+    (save-excursion
+      (goto-char (point-min))
+      (vm-decode-mime-message-headers))
+    (vm-decode-mime-layout layout)
+    (if vm-mime-yank-attachments
+	;; FIXME This uses a function of vm-pine.el
+	(vm-decode-postponed-mime-message))))
+
+(defun vm-yank-message-text (message layout)
+  ;; This is the original code for included text
+  (let (new-layout type alternatives parts res insert-start)
+    (if (null (vectorp (vm-mm-layout message)))
+	(let ((b (current-buffer)))
+	  (set-buffer (vm-buffer-of message))
+	  (save-restriction
+	    (widen)
+	    ;; decode MIME encoded words so supercite and other
+	    ;; mail-citation-hook denizens won't have to eat 'em.
+	    (append-to-buffer b (vm-headers-of message)
+			      (vm-text-end-of message))
+	    (set-buffer b)))
+      (setq type (car (vm-mm-layout-type layout))
+	    alternatives 0
+	    parts (list layout))
+
+      (vm-insert-region-from-buffer (vm-buffer-of message)
+				    (vm-headers-of message)
+				    (vm-text-of message))
+      (while parts
+	(setq layout (car parts))
+	(cond ((vm-mime-text-type-layout-p layout)
+	       (cond ((vm-mime-types-match
+		       "text/enriched"
+		       (car (vm-mm-layout-type layout)))
+		      (setq res (vm-mime-display-internal-text/enriched
+				 layout)))
+		     ((vm-mime-types-match
+		       "message/rfc822"
+		       (car (vm-mm-layout-type layout)))
+		      (setq res (vm-mime-display-internal-message/rfc822
+				 layout)))
+		     ;; no text/html for now
+		     ;; ((vm-mime-types-match
+		     ;;   "text/html"
+		     ;;   (car (vm-mm-layout-type layout)))
+		     ;;  (setq res (vm-mime-display-internal-text/html
+		     ;; 	      layout)))
+		     ((member (downcase (car (vm-mm-layout-type
+					      layout)))
+			      vm-included-mime-types-list)
+		      (setq res (vm-mime-display-internal-text/plain
+				 layout t)))
+		     ;; convert the layout if possible
+		     ((and (not (vm-mm-layout-is-converted layout))
+			   (vm-mime-can-convert (car (vm-mm-layout-type
+						      layout)))
+			   (setq new-layout
+				 (vm-mime-convert-undisplayable-layout
+				  layout)))
+		      (setq res (vm-decode-mime-layout new-layout))))
+	       (if res
+		   ;; we have found a part to insert, thus skip the
+		   ;; remaining alternatives  
+		   (while (> alternatives 1)
+		     (setq parts (cdr parts)
+			   alternatives (1- alternatives)))
+			 
+		 (if (not (member (downcase (car (vm-mm-layout-type
+						  layout)))
+				  vm-included-mime-types-list))
+		     nil
+		   ;; charset problems probably
+		   ;; just dump the raw bits
+		   (setq insert-start (point))
+		   (vm-mime-insert-mime-body layout)
+		   (vm-mime-transfer-decode-region layout
+						   insert-start
+						   (point))))
+	       (setq alternatives (1- alternatives))
+	       (setq parts (cdr parts)))
+	      ;; burst composite types 
+	      ((vm-mime-composite-type-p
+		(car (vm-mm-layout-type layout)))
+	       (setq alternatives (length (vm-mm-layout-parts (car parts))))
+	       (setq parts (nconc (copy-sequence
+				   (vm-mm-layout-parts
+				    (car parts)))
+				  (cdr parts))))
+	      ;; skip non-text parts 
+	      (t
+	       (setq alternatives (1- alternatives))
+	       (setq parts (cdr parts))))))))
 
 ;;;###autoload
 (defun vm-mail-send-and-exit (&rest ignored)
