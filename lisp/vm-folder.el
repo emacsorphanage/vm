@@ -3414,15 +3414,55 @@ run vm-expunge-folder followed by vm-save-folder."
 
 ;;;###autoload
 (defun vm-revert-buffer (&rest args)
+"Revert the current folder to its version on the disk.
+Same as \\[vm-revert-folder]."
   (interactive)
   (vm-select-folder-buffer-if-possible)
-  (call-interactively 'revert-buffer))
+  (let ((summary-buffer vm-summary-buffer)
+	(pres-buffer vm-presentation-buffer-handle))
+    (if summary-buffer
+	(progn
+	  (vm-display summary-buffer nil nil nil)
+	  (kill-buffer summary-buffer)))
+    (if pres-buffer
+	(progn
+	  (vm-display pres-buffer nil nil nil)
+	  (kill-buffer pres-buffer)))
+    (call-interactively 'revert-buffer)
+    (vm (current-buffer))))
+
+;;;###autoload
+(defun vm-revert-folder (&rest args)
+"Revert the current folder to its version on the disk.
+Same as \\[vm-revert-buffer]."
+  (interactive)
+  (call-interactively 'vm-revert-buffer))
 
 ;;;###autoload
 (defun vm-recover-file (&rest args)
+"Recover the autosave file for the current folder. 
+Same as \\[vm-recover-folder]."
   (interactive)
   (vm-select-folder-buffer-if-possible)
-  (call-interactively 'recover-file))
+  (let ((summary-buffer vm-summary-buffer)
+	(pres-buffer vm-presentation-buffer-handle))
+    (if summary-buffer
+	(progn
+	  (vm-display summary-buffer nil nil nil)
+	  (kill-buffer summary-buffer)))
+    (if pres-buffer
+	(progn
+	  (vm-display pres-buffer nil nil nil)
+	  (kill-buffer pres-buffer)))
+    (call-interactively 'recover-file)
+    (vm (current-buffer))))
+
+;;;###autoload
+(defun vm-recover-folder ()
+"Recover the autosave file for the current folder.
+Same as \\[vm-recover-file]."
+  (interactive)
+  (call-interactively 'vm-recover-file))
 
 (defun vm-handle-file-recovery-or-reversion (recovery)
   (if (and vm-summary-buffer (buffer-name vm-summary-buffer))

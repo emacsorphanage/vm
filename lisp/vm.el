@@ -28,13 +28,6 @@
 (require 'vm-version)
 
 ;;;###autoload
-(defun vm-recover-folder ()
-"Recover the autosave file for the current folder."
-  (interactive)
-  (vm-select-folder-buffer-if-possible)
-  (recover-file (buffer-file-name)))
-
-;;;###autoload
 (defun vm (&optional folder read-only access-method)
   "Read mail under Emacs.
 Optional first arg FOLDER specifies the folder to visit.  It defaults
