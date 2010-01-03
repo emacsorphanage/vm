@@ -1634,7 +1634,10 @@ line can be protected."
     ("\\.gif$"		.	"image/gif")
     ("\\.png$"		.	"image/png")
     ("\\.tiff?$"	.	"image/tiff")
+    ("\\.pcx$"          .       "image/x-pcx")
+    ("\\.txt$"          .       "text/plain")
     ("\\.html?$"	.	"text/html")
+    ("\\.vcf$"          .       "text/x-vcard")
     ("\\.au$"		.	"audio/basic")
     ("\\.mpe?g$" 	.	"video/mpeg")
     ("\\.mov$" 		.	"video/quicktime")
@@ -1644,8 +1647,9 @@ line can be protected."
     ("\\.doc$"		.	"application/msword")
     ("\\.xls$"		.	"application/vnd.ms-excel")
     ("\\.ppt$"		.	"application/vnd.ms-powerpoint")
+    ("\\.mdb$"          .       "application/vnd.ms-access")
     ("\\.hqx$"		.	"application/mac-binhex40")
-   )
+    )
   "*Alist used to guess a MIME content type based on a file name.
 The list format is
 
