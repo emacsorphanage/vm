@@ -176,7 +176,7 @@ See the documentation for vm-mode for more information."
 			    (coding-system-for-read
 			         (vm-line-ending-coding-system)))
 			(message "Reading %s..." file)
-			(prog1 (find-file-noselect file)
+			(prog1 (find-file-noselect file t)
 			  ;; update folder history
 			  (let ((item (or remote-spec folder
 					  vm-primary-inbox)))
