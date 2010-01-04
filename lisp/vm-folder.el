@@ -3011,10 +3011,41 @@ The folder is not altered and Emacs is still visiting it."
       ;; selcetion of some other folder.
       (if buffer-file-name
 	  (vm-mark-for-folders-summary-update buffer-file-name))
+      ;; The following call is not working correctly.  So we do it
+      ;; ourselves. 
+      ;; (delete-auto-save-file-if-necessary)
+      (when (and buffer-auto-save-file-name delete-auto-save-files
+		 (not (string= buffer-file-name buffer-auto-save-file-name))
+		 (file-newer-than-file-p 
+		  buffer-auto-save-file-name buffer-file-name))
+	(condition-case ()
+	    (if (save-window-excursion
+		  (with-output-to-temp-buffer "*Directory*"
+		    (buffer-disable-undo standard-output)
+		    (save-excursion
+		      (let ((switches dired-listing-switches)
+			    (file buffer-file-name)
+			    (save-file buffer-auto-save-file-name))
+			(if (file-symlink-p buffer-file-name)
+			    (setq switches (concat switches "L")))
+			(set-buffer standard-output)
+			;; Use insert-directory-safely, not insert-directory,
+			;; because these files might not exist.  In particular,
+			;; FILE might not exist if the auto-save file was for
+			;; a buffer that didn't visit a file, such as "*mail*".
+			;; The code in v20.x called `ls' directly, so we need
+			;; to emulate what `ls' did in that case.
+			(insert-directory-safely save-file switches)
+			(insert-directory-safely file switches))))
+		  (yes-or-no-p 
+		   (format "Delete auto save file %s? " 
+			   buffer-auto-save-file-name)))
+		(delete-file buffer-auto-save-file-name))
+	  (file-error nil))
+	(set-buffer-auto-saved))
       ;; this is a hack to suppress another confirmation dialogue
       ;; coming from kill-buffer
       (set-buffer-modified-p nil)
-      (delete-auto-save-file-if-necessary)
       (kill-buffer (current-buffer)))
     (vm-update-summary-and-mode-line)))
 

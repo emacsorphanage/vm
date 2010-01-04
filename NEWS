@@ -2,6 +2,9 @@ VM 8.1.1-devo
 
   IMPROVEMENTS:
 
+  * vm-quit-no-change offers to delete the auto-save file if there is
+    one.  (This wasn't getting done due to a bug in FSF Emacs.)
+
   * vm-delete-duplicate-messages now works by comparing message ID's.
     (from Noah Friedman's vm-addons).
 
