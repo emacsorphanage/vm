@@ -2,6 +2,10 @@ VM 8.1.1-devo
 
   IMPROVEMENTS:
 
+  * New variable: vm-message-includes-separators allows the meaning of
+    'message' to include separators (the leading 'From ' line and
+    trailing blank line).
+  
   * vm-quit-no-change offers to delete the auto-save file if there is
     one.  (This wasn't getting done due to a bug in FSF Emacs.)
 
@@ -12,8 +16,8 @@ VM 8.1.1-devo
     threads to be sorted by their youngest date or oldest date.
 
   * vm-yank-message function streamlined a bit.  New variable
-    vm-include-text-from-presentation used to extract message text
-    from presentation buffer.
+    vm-include-text-from-presentation can be used to extract the
+    included message text from the presentation buffer.
 
 VM 8.1.0
 

@@ -584,7 +584,7 @@ prohibitions.  (But these violations could also be symptomatic of
 deeper problems.)  Use this level carefully.  Higher levels of
 violations are not currently permitted."
   :group 'vm
-  :type 'integer)
+  :type '(choice (const nil) integer))
 
 (defcustom vm-imap-folder-cache-directory nil
   "*Directory where VM stores cached copies of IMAP folders.
@@ -766,6 +766,13 @@ line that begins with \"From \".
 
 If you set `vm-default-folder-type' to From_-with-Content-Length you
 must set this variable non-nil."
+  :group 'vm
+  :type 'boolean)
+
+(defcustom vm-message-includes-separators
+  nil
+"*Non-nil value means that VM should include the leading and
+separator lines when it passes a message to external programs."
   :group 'vm
   :type 'boolean)
 

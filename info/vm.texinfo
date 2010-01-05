@@ -1463,7 +1463,7 @@ directory to save the attachments in.
 
 @findex vm-mime-save-all-attachments
 @findex vm-mime-delete-all-attachments
-The command @code{vm-mime-save-all-attachments} and
+The commands @code{vm-mime-save-all-attachments} and
 @code{vm-mime-delete-all-attachments} can be used to save or delete
 all the attachments in a message.
 
@@ -4181,14 +4181,22 @@ developers/programmers.
 @section Folder Internals
 
 By default, VM stores mail folders in the Unix @code{mbox} format,
-described in the RFC 2822 specification of the Internet Engineering Task
+described in the RFC 4155 specification of the Internet Engineering Task
 Force.  In this format, the mail folder is a text file consisting of a
 sequence of messages, with each message consisting of a series of
 headers followed by a message body.  The beginning of each message is
-delineated by a header line starting with the string ``From ''.  To make
-sure that such a line exists, VM adds its own header line of the form
-``From VM ...'' where the ``...'' records the time at which VM first saw
-the message.
+delineated by a separator line starting with the string ``From '' and
+the end by a blank line.  To make sure that such a line exists, VM adds
+its own header line of the form ``From VM ...'' where the ``...''
+records the time at which VM first saw the message.  The format of the
+individual messages is as per the RFC 2822 specification, except that
+Line-Feed characters may be used to delineate the end of lines in the
+"Unix" format.  
+
+In addition to the Unix mbox format (which is called the @code{From_}
+format), VM also handles the MMDF format and two versions of the System
+V Unix format and the Emacs Rmail's Babyl format.  The variable
+@code{vm-folder-type} stores the type of the folder being used.
 
 To every message, VM adds a header with the field name
 ``X-VM-v5-Data:'' and stores in it the information about the message it
@@ -4230,7 +4238,7 @@ information for the IMAP servers.  VM refrains from retrieving these
 messages again in future in order to avoid duplication.
 @end itemize
 
-Internally, VM stores the folder as simply a text buffer.  However, it
+Internal to Emacs, VM stores the folder as simply a text buffer.  However, it
 remembers a variety of data about the message contents in the buffer
 through internal variables.
 @itemize
