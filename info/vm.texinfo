@@ -859,7 +859,13 @@ need to specify the password for POP accounts in this definition.
 
 @findex vm-visit-imap-folder
 The command @code{vm-visit-imap-folder} allows you to visit an IMAP
-mailbox as a folder.  When you visit an IMAP folder, VM will
+mailbox as a folder.  The name of the IMAP mailbox should be input via
+the minibuffer in the format account-name:folder-name.  Here,
+``account-name'' is the name of an IMAP account declared in
+@code{vm-imap-account-alist} and ``folder-name'' is the name of an IMAP
+mailbox in this account.
+
+When you visit an IMAP folder, VM will
 download copies of the messages that it finds there for you to read.
 These messages are saved locally in a folder on the disk, in the 
 directory specified by @code{vm-imap-folder-cache-directory} (or
@@ -907,7 +913,7 @@ that is accessible to you on the IMAP server can be specified.  For
 example, @code{becky:inbox} or @code{crickle:drafts}.
 
 @vindex vm-imap-server-list
-The customization variable @code{vm-imap-server-list}, used in old
+The customization variable @code{vm-imap-server-list}, used in older
 versions of VM, is deprecated.  Please use @code{vm-imap-account-alist}
 instead.
 
@@ -1448,18 +1454,29 @@ make VM not ask this question by setting
 @vindex vm-mime-delete-after-saving
 @vindex vm-mime-attachment-save-directory
 The MIME attachments can be saved to disk with @kbd{$ w}
-(@code{vm-mime-reader-map-save-file}).  They can be deleted at the same time
-by setting the variable @code{vm-mime-delete-after-saving}.  In this
-case, the attachment is deleted and replaced by a new one that refers
-to the saved copy.  The variable
-@code{vm-mime-attachment-save-directory} specifies the default
-directory to save the attachments in.
+(@code{vm-mime-reader-map-save-file}).  They can be deleted at the same
+time by setting the variable @code{vm-mime-delete-after-saving}.  In
+this case, the attachment is deleted and replaced by a MIME part that
+refers to the saved copy.  The variable
+@code{vm-mime-attachment-save-directory} specifies the default directory
+to save the attachments in.  It is a good idea to
+@code{vm-mime-delete-after-saving} to delete saved attachments instead
+of deleting them manually, because the message will still have a handle
+to retrieve the saved copy.
 
 @findex vm-mime-save-all-attachments
 @findex vm-mime-delete-all-attachments
-The command @code{vm-mime-save-all-attachments} and
+@vindex vm-mime-deletable-types
+@vindex vm-mime-deletable-type-exceptions
+@vindex vm-mime-savable-types
+@vindex vm-mime-savable-type-exceptions
+The commands @code{vm-mime-save-all-attachments} and
 @code{vm-mime-delete-all-attachments} can be used to save or delete
-all the attachments in a message.
+@i{all} the attachments in a message.  An "attachment" in this context
+is any MIME part that has "attachment" as its content-disposition or
+simply has a file name.  In addition, all MIME parts that have types
+matching @code{vm-mime-savable-types} or @code{vm-mime-deletable-types}
+(but not the corresponding @code{-exceptions}) are included.
 
 @node Internal display, External display, Attachments, MIME Messages
 @unnumberedsubsec Internal display of MIME attachments
@@ -2199,13 +2216,17 @@ the default).  In any case you can edit any of the message headers
 manually, if you wish.
 
 @vindex vm-included-text-prefix
-VM also helps you quote material from a message to which you are
+VM also helps you cite material from a message to which you are
 replying by providing @dfn{included text} as a feature of some of the
 commands.  @dfn{Included text} is a copy of the message being replied to with
 some fixed string prepended to each line so that included text can be
 distinguished from the text of the reply.  The variable
 @code{vm-included-text-prefix} specifies what the prepended string will
-be.
+be.  
+
+(Note: VM allows you to cite any messages in a message you compose.
+Your message does not have to be a reply.  Neither do the cited messages
+have to be the messages you are replying to.)
 
 @vindex vm-included-text-attribution-format
 The variable @code{vm-included-text-attribution-format} specifies the
@@ -2215,6 +2236,19 @@ inserted before the included text.  If non-@code{nil}, the value of
 @code{vm-included-text-attribution-format} should be a string format
 specification similar to @code{vm-summary-format}.  @xref{Summaries}.  A
 @code{nil} value causes the attribution to be omitted.
+
+@vindex vm-included-mime-types-list
+@vindex vm-include-text-from-presentation
+By default, VM uses its MIME displaying mechanism to extract the
+included text to be cited in replies.  If this does not work correctly,
+you can set the variable @code{vm-included-mime-types-list} to a list of
+MIME types that should be covered in the included text.  The list should
+have @code{text/plain} at a minimum and could include other types such
+as @code{text/enriched} and @code{message}.  Setting the variable to nil
+returns you to the default behaviour.  Another possibe way to extract
+included text is to use the contents of the presentation buffer.  You
+can ask VM to do so by setting the variable
+@code{vm-include-text-from-presentation} to t.
 
 @vindex vm-in-reply-to-format
 The variable @code{vm-in-reply-to-format} specifies the format of the
@@ -2521,7 +2555,11 @@ Flags all messages with the same subject as the current message (ignoring
 ``Re:'') for deletion.
 @findex vm-delete-duplicate-messages
 @item @code{vm-delete-duplicate-messages}
-Flags duplicates messages for deletion.  The duplicate messages are
+Flags duplicate messages for deletion.  The duplicate messages are
+detected by comparing message ID's.
+@findex vm-delete-duplicate-messages-by-body
+@item @code{vm-delete-duplicate-messages-by-body}
+Flags duplicate messages for deletion.  The duplicate messages are
 detected by comparing message bodies.
 @findex vm-expunge-folder
 @kindex ###
@@ -4154,14 +4192,22 @@ developers/programmers.
 @section Folder Internals
 
 By default, VM stores mail folders in the Unix @code{mbox} format,
-described in the RFC 2822 specification of the Internet Engineering Task
+described in the RFC 4155 specification of the Internet Engineering Task
 Force.  In this format, the mail folder is a text file consisting of a
 sequence of messages, with each message consisting of a series of
 headers followed by a message body.  The beginning of each message is
-delineated by a header line starting with the string ``From ''.  To make
-sure that such a line exists, VM adds its own header line of the form
-``From VM ...'' where the ``...'' records the time at which VM first saw
-the message.
+delineated by a separator line starting with the string ``From '' and
+the end by a blank line.  To make sure that such a line exists, VM adds
+its own header line of the form ``From VM ...'' where the ``...''
+records the time at which VM first saw the message.  The format of the
+individual messages is as per the RFC 2822 specification, except that
+Line-Feed characters may be used to delineate the end of lines in the
+"Unix" format.  
+
+In addition to the Unix mbox format (which is called the @code{From_}
+format), VM also handles the MMDF format and two versions of the System
+V Unix format and the Emacs Rmail's Babyl format.  The variable
+@code{vm-folder-type} stores the type of the folder being used.
 
 To every message, VM adds a header with the field name
 ``X-VM-v5-Data:'' and stores in it the information about the message it
@@ -4203,7 +4249,7 @@ information for the IMAP servers.  VM refrains from retrieving these
 messages again in future in order to avoid duplication.
 @end itemize
 
-Internally, VM stores the folder as simply a text buffer.  However, it
+Internal to Emacs, VM stores the folder as simply a text buffer.  However, it
 remembers a variety of data about the message contents in the buffer
 through internal variables.
 @itemize

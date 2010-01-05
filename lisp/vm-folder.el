@@ -1195,11 +1195,6 @@ vm-folder-type is initialized here."
 			message
 			(concat "^" (vm-matched-header-name) ":"))))))))))))
 
-(defvar vm-sync-thunderbird-status nil
-  "If t VM syncs its headers with the headers of Thunderbird.")
-
-(make-variable-buffer-local 'vm-sync-thunderbird-status)
-
 (defun vm-read-thunderbird-status (message)
   (let (status)
     (setq status (vm-get-header-contents message "X-Mozilla-Status"))
@@ -1324,7 +1319,8 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			  (setcar (cdr data)
 				  (vm-extend-vector
 				   cache
-				   vm-cache-vector-length))))))
+				   vm-cache-vector-length))
+			  (setq cache (cadr data))))))
 	    ;; data list might not be long enough for (nth 2 ...)  but
 	    ;; that's OK because nth returns nil if you overshoot the
 	    ;; end of the list.
@@ -1877,20 +1873,11 @@ Supports version 4 format of attribute storage, for backward compatibility."
 
 
 (defun vm-encode-words-in-cache-vector (list)
-  (mapvector (lambda (e)
+  (vm-mapvector (lambda (e)
                (if (stringp e)
                    (vm-mime-encode-words-in-string e)
                  e))
              list))
-
-(defun mapvector (proc vec)
-  (let ((new-vec (make-vector (length vec) nil))
-	(i 0)
-	(n (length vec)))
-    (while (< i n)
-      (aset new-vec i (apply proc (aref vec i) nil))
-      (setq i (1+ i)))
-    new-vec))
 
 ;; Stuff the message attributes back into the message as headers.
 (defun vm-stuff-attributes (m &optional for-other-folder)
@@ -3019,10 +3006,41 @@ The folder is not altered and Emacs is still visiting it."
       ;; selcetion of some other folder.
       (if buffer-file-name
 	  (vm-mark-for-folders-summary-update buffer-file-name))
+      ;; The following call is not working correctly.  So we do it
+      ;; ourselves. 
+      ;; (delete-auto-save-file-if-necessary)
+      (when (and buffer-auto-save-file-name delete-auto-save-files
+		 (not (string= buffer-file-name buffer-auto-save-file-name))
+		 (file-newer-than-file-p 
+		  buffer-auto-save-file-name buffer-file-name))
+	(condition-case ()
+	    (if (save-window-excursion
+		  (with-output-to-temp-buffer "*Directory*"
+		    (buffer-disable-undo standard-output)
+		    (save-excursion
+		      (let ((switches dired-listing-switches)
+			    (file buffer-file-name)
+			    (save-file buffer-auto-save-file-name))
+			(if (file-symlink-p buffer-file-name)
+			    (setq switches (concat switches "L")))
+			(set-buffer standard-output)
+			;; Use insert-directory-safely, not insert-directory,
+			;; because these files might not exist.  In particular,
+			;; FILE might not exist if the auto-save file was for
+			;; a buffer that didn't visit a file, such as "*mail*".
+			;; The code in v20.x called `ls' directly, so we need
+			;; to emulate what `ls' did in that case.
+			(insert-directory-safely save-file switches)
+			(insert-directory-safely file switches))))
+		  (yes-or-no-p 
+		   (format "Delete auto save file %s? " 
+			   buffer-auto-save-file-name)))
+		(delete-file buffer-auto-save-file-name))
+	  (file-error nil))
+	(set-buffer-auto-saved))
       ;; this is a hack to suppress another confirmation dialogue
       ;; coming from kill-buffer
       (set-buffer-modified-p nil)
-      (delete-auto-save-file-if-necessary)
       (kill-buffer (current-buffer)))
     (vm-update-summary-and-mode-line)))
 
@@ -3422,15 +3440,55 @@ run vm-expunge-folder followed by vm-save-folder."
 
 ;;;###autoload
 (defun vm-revert-buffer (&rest args)
+"Revert the current folder to its version on the disk.
+Same as \\[vm-revert-folder]."
   (interactive)
   (vm-select-folder-buffer-if-possible)
-  (call-interactively 'revert-buffer))
+  (let ((summary-buffer vm-summary-buffer)
+	(pres-buffer vm-presentation-buffer-handle))
+    (if summary-buffer
+	(progn
+	  (vm-display summary-buffer nil nil nil)
+	  (kill-buffer summary-buffer)))
+    (if pres-buffer
+	(progn
+	  (vm-display pres-buffer nil nil nil)
+	  (kill-buffer pres-buffer)))
+    (call-interactively 'revert-buffer)
+    (vm (current-buffer))))
+
+;;;###autoload
+(defun vm-revert-folder (&rest args)
+"Revert the current folder to its version on the disk.
+Same as \\[vm-revert-buffer]."
+  (interactive)
+  (call-interactively 'vm-revert-buffer))
 
 ;;;###autoload
 (defun vm-recover-file (&rest args)
+"Recover the autosave file for the current folder. 
+Same as \\[vm-recover-folder]."
   (interactive)
   (vm-select-folder-buffer-if-possible)
-  (call-interactively 'recover-file))
+  (let ((summary-buffer vm-summary-buffer)
+	(pres-buffer vm-presentation-buffer-handle))
+    (if summary-buffer
+	(progn
+	  (vm-display summary-buffer nil nil nil)
+	  (kill-buffer summary-buffer)))
+    (if pres-buffer
+	(progn
+	  (vm-display pres-buffer nil nil nil)
+	  (kill-buffer pres-buffer)))
+    (call-interactively 'recover-file)
+    (vm (current-buffer))))
+
+;;;###autoload
+(defun vm-recover-folder ()
+"Recover the autosave file for the current folder.
+Same as \\[vm-recover-file]."
+  (interactive)
+  (call-interactively 'vm-recover-file))
 
 (defun vm-handle-file-recovery-or-reversion (recovery)
   (if (and vm-summary-buffer (buffer-name vm-summary-buffer))
@@ -3939,14 +3997,21 @@ run vm-expunge-folder followed by vm-save-folder."
           (vm-assimilate-new-messages t))))))
 
 (defun vm-safe-popdrop-string (drop)
-  (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]+\\):[^:]+:[^:]+:\\([^:]+\\):[^:]+" drop)
+  (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]*\\):[^:]*:[^:]*:\\([^:]*\\):[^:]*" drop)
 	   (concat (substring drop (match-beginning 3) (match-end 3))
 		   "@"
 		   (substring drop (match-beginning 2) (match-end 2))))
       "???"))
 
+(defun vm-popdrop-sans-password (source)
+  "Return popdrop SOURCE, but replace the password by a \"*\"."
+  (mapconcat 'identity 
+             (append (reverse (cdr (reverse (vm-parse source "\\([^:]*\\):?"))))
+                     '("*"))
+             ":"))
+
 (defun vm-safe-imapdrop-string (drop)
-  (or (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]+\\):[^:]+:\\([^:]+\\):[^:]+:\\([^:]+\\):[^:]+" drop)
+  (or (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*" drop)
 	   (concat (substring drop (match-beginning 4) (match-end 4))
 		   "@"
 		   (substring drop (match-beginning 2) (match-end 2))
@@ -3954,6 +4019,39 @@ run vm-expunge-folder followed by vm-save-folder."
 		   (substring drop (match-beginning 3) (match-end 3))
 		   "]"))
       "???"))
+
+(defun vm-imapdrop-sans-password (source)
+  (let (source-list)
+    (setq source-list (vm-parse source "\\([^:]*\\):?"))
+    (concat (nth 0 source-list) ":"
+	    (nth 1 source-list) ":"
+	    (nth 2 source-list) ":"
+	    (nth 3 source-list) ":"
+	    (nth 4 source-list) ":"
+	    (nth 5 source-list) ":*")))
+
+(defun vm-imapdrop-sans-password-and-mailbox (source)
+  (let (source-list)
+    (setq source-list (vm-parse source "\\([^:]*\\):?"))
+    (concat (nth 0 source-list) ":"
+	    (nth 1 source-list) ":"
+	    (nth 2 source-list) ":*:"
+	    (nth 4 source-list) ":"
+	    (nth 5 source-list) ":*")))
+
+(defun vm-maildrop-sans-password (drop)
+  (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]*\\):[^:]*:[^:]*:\\([^:]*\\):[^:]*" drop)
+	   (vm-popdrop-sans-password drop))
+      (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*" drop)
+	   (vm-imapdrop-sans-passord drop))
+      drop))
+
+
+(defun vm-maildrop-alist-sans-password (alist)
+  (vm-mapcar 
+   (lambda (pair-xxx)
+     (cons (vm-maildrop-sans-password (car pair-xxx)) (cdr pair-xxx)))
+   alist))
 
 ;;;###autoload
 (defun vm-get-new-mail (&optional arg)

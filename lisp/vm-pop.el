@@ -891,13 +891,6 @@ popdrop
       (forward-char)))
   (set-marker end nil))
 
-(defun vm-popdrop-sans-password (source)
-  "Return popdrop SOURCE, but replace the password by a \"*\"."
-  (mapconcat 'identity 
-             (append (reverse (cdr (reverse (vm-parse source "\\([^:]+\\):?"))))
-                     '("*"))
-             ":"))
-
 (defun vm-establish-new-folder-pop-session (&optional interactive)
   (let ((process (vm-folder-pop-process))
 	(vm-pop-ok-to-ask interactive))

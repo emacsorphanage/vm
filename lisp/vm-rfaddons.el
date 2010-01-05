@@ -111,10 +111,7 @@ The following options are possible.
  - fake-date: if enabled allows you to fake the date of an outgoing message.
 
 `vm-mode' options:
- - save-all-attachments: in vm-mail-mode and [C-c C-s] to the function
-   `vm-mime-save-all-attachments' 
  - shrunken-headers: enable shrunken-headers by advising several functions 
- - take-action-on-attachment: bind [.] to `vm-mime-take-action-on-attachment'
 
 Other EXPERIMENTAL options:
  - auto-save-all-attachments: add `vm-mime-auto-save-all-attachments' to
@@ -160,9 +157,10 @@ or do the binding and advising on your own."
   
   (when (member 'vm-mode option-list)
     (setq option-list (append '(
-                                save-all-attachments
+                                ;; save-all-attachments
                                 shrunken-headers
-                                take-action-on-attachment)
+                                take-action-on-attachment
+				)
                               option-list))
     (setq option-list (delq 'vm-mode option-list)))
     
@@ -240,14 +238,18 @@ or do the binding and advising on your own."
        (vm-shrunken-headers))
      (define-key vm-mode-map "T" 'vm-shrunken-headers-toggle)))
 
+;; This is not needed any more because VM has $ commands to take
+;; action on attachments.  But we keep it for compatibility.
+
   ;; take action on attachment binding
   (vm-rfaddons-check-option
    'take-action-on-attachment option-list
    (define-key vm-mode-map "."  'vm-mime-take-action-on-attachment))
   
-  (vm-rfaddons-check-option
-   'save-all-attachments option-list
-   (define-key vm-mode-map "\C-c\C-s" 'vm-mime-save-all-attachments))
+;; This is not needed any more becaue it is in the core  
+;;   (vm-rfaddons-check-option
+;;    'save-all-attachments option-list
+;;    (define-key vm-mode-map "\C-c\C-s" 'vm-mime-save-all-attachments))
 
   ;; other experimental options ---------------------------------------------
   ;; Now take care of automatic saving of attachments
@@ -281,7 +283,7 @@ or do the binding and advising on your own."
     (ding)
     (sit-for 3))
   
-  (message "VM-RFADDONS: VM is now infected. Please report bugs to Robert Widhopf-Fenk!")
+  (message "VM-RFADDONS: VM is now infected.")
   (sit-for (or sit-for 2)))
 
 (defun rf-vm-su-labels (m)
@@ -314,7 +316,8 @@ This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
       (if to-all
           (vm-followup-include-text count)
         (vm-reply-include-text count))
-    (let ((vm-reply-include-presentation t))
+    (let ((vm-include-text-from-presentation t)
+	  (vm-reply-include-presentation t)) ; is this variable necessary?
       (vm-do-reply to-all t count))))
 
 ;;;###autoload
@@ -874,15 +877,6 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 ;  (vm-mime-display-internal-text/plain layout))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defcustom vm-mime-all-attachments-directory nil
-    "*Directory to where the attachments should go or come from."
- :group 'vm-rfaddons
- :type '(choice (directory :tag "Directory:")
-                (const :tag "Use `vm-mime-attachment-save-directory'" nil)))
-
-(defvar vm-mime-save-all-attachments-history nil
-  "Directory history to where the attachments should go.")
-
 (defvar vm-mime-attach-files-in-directory-regexps-history nil
   "Regexp history for matching files.")
 
@@ -902,39 +896,6 @@ this may take some time, since the file needs to be visited."
   :group 'vm-rfaddons
   :type '(choice (const :tag "Ask" nil)
                  (const :tag "Guess" guess)))
-
-(defcustom vm-mime-save-all-attachments-types
-  (append
-   '("application" "x-unknown" "application/x-gzip")
-   (mapcar (lambda (a) (car a))
-           vm-mime-external-content-types-alist))
-  "*List of MIME types which should be saved."
-    :group 'vm-rfaddons
-    :type '(repeat (string :tag "MIME type" nil)))
-
-(defcustom vm-mime-save-all-attachments-types-exceptions
-  '("text")
-  "*List of MIME types which should not be saved."
-  :group 'vm-rfaddons
-  :type '(repeat (string :tag "MIME type" nil)))
-
-(defcustom vm-mime-delete-all-attachments-types
-  (append
-   '("application" "x-unknown" "application/x-gzip")
-   (mapcar (lambda (a) (car a))
-           vm-mime-external-content-types-alist))
-  "*List of MIME types which should be deleted."
-    :group 'vm-rfaddons
-    :type '(repeat (string :tag "MIME type" nil)))
-
-(defcustom vm-mime-delete-all-attachments-types-exceptions
-  '("text")
-  "*List of MIME types which should not be deleted."
-  :group 'vm-rfaddons
-  :type '(repeat (string :tag "MIME type" nil)))
-
-(defvar vm-mime-auto-save-all-attachments-avoid-recursion nil
-  "For internal use.")
 
 (defun vm-mime-is-type-valid (type types-alist type-exceptions)
   (catch 'done
@@ -1180,161 +1141,6 @@ See the advice in `vm-rfaddons-infect-vm'."
                    (and files (= 2 (length files)))))
             (delete-directory (file-name-directory file))))))
 
-;;;###autoload
-(defun vm-mime-action-on-all-attachments (count action
-                                                &optional include exclude
-                                                mlist
-                                                quiet)
-  "On the next COUNT or marked messages call the function ACTION on those mime
-parts which have a filename or the disposition attachment or match with their type
-to INCLUDE but not to EXCLUDE (which are lists of mime types).
-
-If QUIET is true no messages are generated.
-
-ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME." 
-  (unless mlist
-    (or count (setq count 1))
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (vm-error-if-folder-empty))
-
-  (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
-    (save-excursion
-      (while mlist
-        (let (parts layout filename type disposition o)
-          (setq o (vm-mm-layout (car mlist)))
-          (when (stringp o)
-            (setq o 'none)
-            (backtrace)
-            (message "There is a bug, see *backtrace* for details"))
-          (if (eq 'none o)
-              nil;; this is no mime message
-            (setq type (car (vm-mm-layout-type o)))
-            
-            (cond ((or (vm-mime-types-match "multipart/alternative" type)
-                       (vm-mime-types-match "multipart/mixed" type)
-                       (vm-mime-types-match "multipart/report" type)
-                       (vm-mime-types-match "message/rfc822" type)
-                       )
-                   (setq parts (copy-sequence (vm-mm-layout-parts o))))
-                  (t (setq parts (list o))))
-            
-            (while parts
-              (if (vm-mime-composite-type-p
-                   (car (vm-mm-layout-type (car parts))))
-                  (setq parts (nconc (copy-sequence
-                                      (vm-mm-layout-parts
-                                       (car parts)))
-                                     (cdr parts))))
-              
-              (setq layout (car parts)
-                    type (car (vm-mm-layout-type layout))
-                    disposition (car (vm-mm-layout-disposition layout))
-                    filename (vm-mime-get-disposition-filename layout) )
-              
-              (cond ((or filename
-                         (and disposition (string= disposition "attachment"))
-                         (and (not (vm-mime-types-match "message/external-body" type))
-                              include
-                              (vm-mime-is-type-valid type include exclude)))
-                     (when (not quiet)
-                       (message "Action on part type=%s filename=%s disposition=%s!"
-                                type filename disposition))
-                     (funcall action (car mlist) layout type filename))
-                    ((not quiet)
-                     (message "No action on part type=%s filename=%s disposition=%s!"
-                              type filename disposition)))
-              (setq parts (cdr parts)))))
-        (setq mlist (cdr mlist))))))
-
-;;;###autoload
-(defun vm-mime-delete-all-attachments (&optional count)
-  (interactive "p")
-  (vm-check-for-killed-summary)
-  (if (interactive-p) (vm-follow-summary-cursor))
-  
-  (vm-mime-action-on-all-attachments
-   count
-   (lambda (msg layout type file)
-     (message "Deleting `%s%s" type (if file (format " (%s)" file) ""))
-     (vm-mime-discard-layout-contents layout))
-   vm-mime-delete-all-attachments-types
-   vm-mime-delete-all-attachments-types-exceptions)
-
-  (when (interactive-p)
-    (vm-discard-cached-data)
-    (vm-preview-current-message)))
-                                                 
-;;;###autoload
-(defun vm-mime-save-all-attachments (&optional count
-                                               directory
-                                               no-delete-after-saving)
-  "Save all MIME-attachments to DIRECTORY.
-When directory does not exist it will be created." 
-  (interactive
-   (list current-prefix-arg
-         (vm-read-file-name
-          "Attachment directory: "
-          (or vm-mime-all-attachments-directory
-              vm-mime-attachment-save-directory
-              default-directory)
-          (or vm-mime-all-attachments-directory
-              vm-mime-attachment-save-directory
-              default-directory)
-          nil nil
-          vm-mime-save-all-attachments-history)))
-
-  (vm-check-for-killed-summary)
-  (if (interactive-p) (vm-follow-summary-cursor))
- 
-  (let ((no 0))
-    (vm-mime-action-on-all-attachments
-     count
-     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; the action to be performed BEGIN
-     (lambda (msg layout type file)
-       (let ((directory (if (functionp directory)
-                            (funcall directory msg)
-                          directory)))
-         (setq file (if file
-                        (expand-file-name (file-name-nondirectory file) directory)
-                      (vm-read-file-name
-                       (format "Save %s to file: " type)
-                       (or directory
-                           vm-mime-all-attachments-directory
-                           vm-mime-attachment-save-directory)
-                       (or directory
-                           vm-mime-all-attachments-directory
-                           vm-mime-attachment-save-directory)
-                       nil nil
-                       vm-mime-save-all-attachments-history)
-                      ))
-         
-         (if (and file (file-exists-p file))
-             (if (y-or-n-p (format "Overwrite `%s'? " file))
-                 (delete-file file)
-               (setq file nil)))
-         
-         (when file
-           (message "Saving `%s%s" type (if file (format " (%s)" file) ""))
-           (make-directory (file-name-directory file) t)
-           (vm-mime-send-body-to-file layout file file)
-           (if vm-mime-delete-after-saving
-               (let ((vm-mime-confirm-delete nil))
-                 (vm-mime-discard-layout-contents layout
-                                                  (expand-file-name file))))
-           (setq no (+ 1 no)))))
-     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; the action to be performed END
-     ;; attachment filters 
-     vm-mime-save-all-attachments-types
-     vm-mime-save-all-attachments-types-exceptions)
-
-    (when (interactive-p)
-      (vm-discard-cached-data)
-      (vm-preview-current-message))
-    
-    (if (> no 0)
-        (message "%d attachment%s saved." no (if (= no 1) "" "s"))
-      (message "No attachments saved!"))))
  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;###autoload
@@ -1863,6 +1669,8 @@ It saves the decoded message and not the raw message like `vm-save-message'!"
       (write-region (point-min) (point-max) file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; This code is now obsolete.  VM has built-in facilities for taking
+;; actions on attachments.  USR, 2010-01-05
 ;; Subject: Re: How to Delete an attachment?
 ;; Newsgroups: gnu.emacs.vm.info
 ;; Date: 05 Oct 1999 11:09:19 -0400

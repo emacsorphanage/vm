@@ -61,9 +61,11 @@
   :group 'vm-summary-faces)
 
 (defface vm-summary-deleted-face
-  '((t (:foreground "grey50" :strikethru t)))
-  "The face used in VM Summary buffers for deleted messages."
-  :group 'vm-summary-faces)
+     (if (featurep 'xemacs)
+         '((t (:foreground "grey50" :strikethru t)))
+       '((t (:foreground "grey50" :strike-through "grey70"))))
+     "The face used in VM Summary buffers for deleted messages."
+     :group 'vm-summary-faces)
 
 (defface vm-summary-new-face
   '((t (:foreground "blue")))

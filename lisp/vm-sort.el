@@ -498,11 +498,14 @@ folder in the order in which the messages arrived."
 (defun vm-sort-compare-thread (m1 m2)
   (let ((list1 (vm-th-thread-list m1))
 	(list2 (vm-th-thread-list m2))
+	(criterion (if vm-sort-threads-by-youngest-date 
+		       'youngest-date
+		     'oldest-date))
 	p1 p2 d1 d2)
     (catch 'done
       (if (not (eq (car list1) (car list2)))
-	  (let ((date1 (get (car list1) 'youngest-date))
-		(date2 (get (car list2) 'youngest-date)))
+	  (let ((date1 (get (car list1) criterion))
+		(date2 (get (car list2) criterion)))
 	    (cond ((string-lessp date1 date2) t)
 		  ((string-equal date1 date2)
 		   (string-lessp (car list1) (car list2)))

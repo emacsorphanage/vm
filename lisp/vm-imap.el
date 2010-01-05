@@ -713,7 +713,7 @@ on all the relevant IMAP servers and then immediately expunges."
     (unwind-protect
 	(catch 'end-of-session
 	  ;; parse the maildrop
-	  (setq source-list (vm-parse source "\\([^:]+\\):?")
+	  (setq source-list (vm-parse source "\\([^:]*\\):?" 1 7)
 		host (nth 1 source-list)
 		port (nth 2 source-list)
 ;;		mailbox (nth 3 source-list)
@@ -1253,7 +1253,7 @@ on all the relevant IMAP servers and then immediately expunges."
 
   (let ((list nil)
 	(imap-buffer (current-buffer))
-	tok msg-num uid size flag flags response p
+	tok msg-num uid size flag flags response p pl
 	(need-ok t))
     ;;----------------------------------
     (if vm-buffer-type-debug
@@ -1265,41 +1265,49 @@ on all the relevant IMAP servers and then immediately expunges."
      process (format "FETCH %s:%s (UID RFC822.SIZE FLAGS)" first last))
     (while need-ok
       (setq response (vm-imap-read-response-and-verify process "FLAGS FETCH"))
-      (cond ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
-	     (setq p (cdr (nth 3 response)))
-	     (if (not (vm-imap-response-matches 
-		       p 'UID 'atom 'RFC822\.SIZE 'atom 'FLAGS 'list))
-		 (vm-imap-protocol-error
-		  "expected UID, RFC822.SIZE and (FLAGS list) in FETCH response"))
-	     (setq tok (nth 1 response))
-	     (goto-char (nth 1 tok))
-	     (setq msg-num (read imap-buffer))
-	     (setq tok (nth 1 p))
-	     (setq uid (buffer-substring (nth 1 tok) (nth 2 tok)))
-	     (setq tok (nth 3 p))
-	     (goto-char (nth 1 tok))
-	     (setq size (buffer-substring (nth 1 tok) (nth 2 tok)))
-	     (setq p (cdr (nth 5 p))
-		   flags nil)
-	     (while p
-	       (setq tok (car p))
-	       (if (not (vm-imap-response-matches (list tok) 'atom))
-		   (vm-imap-protocol-error
-		    "expected atom in FLAGS list in FETCH response"))
-	       (setq flag (downcase
-			   (buffer-substring (nth 1 tok) (nth 2 tok)))
-		     flags (cons flag flags)
-		     p (cdr p)))
-	     (setq list 
-		   (cons (cons msg-num (cons uid (cons size flags)))
-			 list)))
-	    ((vm-imap-response-matches response 'VM 'OK)
-	     (setq need-ok nil))))
-      ;; returning nil means the fetch failed so return
-      ;; something other than nil if there aren't any messages.
-      (if (null list)
-	  (cons nil nil)
-	list )))
+      (cond 
+       ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
+	(setq p (cdr (nth 3 response)))
+	(setq tok (nth 1 response))
+	(goto-char (nth 1 tok))
+	(setq msg-num (read imap-buffer))
+	(while p
+	  (cond 
+	   ((vm-imap-response-matches p 'UID 'atom)
+	    (setq tok (nth 1 p))
+	    (setq uid (buffer-substring (nth 1 tok) (nth 2 tok)))
+	    (setq p (nthcdr 2 p)))
+	   ((vm-imap-response-matches p 'RFC822\.SIZE 'atom)
+	    (setq tok (nth 1 p))
+	    (setq size (buffer-substring (nth 1 tok) (nth 2 tok)))
+	    (setq p (nthcdr 2 p)))
+	   ((vm-imap-response-matches p  'FLAGS 'list)
+	    (setq pl (cdr (nth 1 p))
+		  flags nil)
+	    (while pl
+	      (setq tok (car pl))
+	      (if (not (vm-imap-response-matches (list tok) 'atom))
+		  (vm-imap-protocol-error
+		   "expected atom in FLAGS list in FETCH response"))
+	      (setq flag (downcase
+			  (buffer-substring (nth 1 tok) (nth 2 tok)))
+		    flags (cons flag flags)
+		    pl (cdr pl)))
+	    (setq p (nthcdr 2 p)))
+	   (t
+	    (vm-imap-protocol-error
+	     "expected UID, RFC822.SIZE and (FLAGS list) in FETCH response"))
+	   ))
+	(setq list 
+	      (cons (cons msg-num (cons uid (cons size flags)))
+		    list)))
+       ((vm-imap-response-matches response 'VM 'OK)
+	(setq need-ok nil))))
+    ;; returning nil means the fetch failed so return
+    ;; something other than nil if there aren't any messages.
+    (if (null list)
+	(cons nil nil)
+      list )))
 
 (defun vm-imap-ask-about-large-message (process size n)
   (let ((work-buffer nil)
@@ -1595,25 +1603,6 @@ on all the relevant IMAP servers and then immediately expunges."
     (while (and (< (point) end) (search-forward "\r\n"  end t))
       (replace-match "\n" t t)))
   (set-marker end nil))
-
-(defun vm-imapdrop-sans-password (source)
-  (let (source-list)
-    (setq source-list (vm-parse source "\\([^:]+\\):?"))
-    (concat (nth 0 source-list) ":"
-	    (nth 1 source-list) ":"
-	    (nth 2 source-list) ":"
-	    (nth 3 source-list) ":"
-	    (nth 4 source-list) ":"
-	    (nth 5 source-list) ":*")))
-
-(defun vm-imapdrop-sans-password-and-mailbox (source)
-  (let (source-list)
-    (setq source-list (vm-parse source "\\([^:]+\\):?"))
-    (concat (nth 0 source-list) ":"
-	    (nth 1 source-list) ":"
-	    (nth 2 source-list) ":*:"
-	    (nth 4 source-list) ":"
-	    (nth 5 source-list) ":*")))
 
 (defun vm-imap-read-response (process)
   ;; Reads a line of respose from the imap PROCESS
@@ -3033,9 +3022,10 @@ IMAP mailbox spec."
     (setq folder-input
 	  (completing-read
 	   (format			; prompt
-	    "IMAP folder:%s " 
+;;	    "IMAP folder:%s " 
+	    "%s%s" prompt
 	    (if (and default-account default-folder)
-		(format " (default %s:%s)" default-account default-folder)
+		(format "(default %s:%s) " default-account default-folder)
 	      ""))
 	   'vm-imap-folder-completion-list
 	   nil				; predicate
@@ -3053,6 +3043,9 @@ IMAP mailbox spec."
 	  account (car account-and-folder)
 	  folder (cadr account-and-folder)
 	  spec (car (rassoc (list account) vm-imap-account-alist)))
+    (if (null folder)
+	(error 
+	 "IMAP folder required in the format account-name:folder-name"))
     (if (null spec)
 	(error "Unknown IMAP account-name:folder-name"))
     (setq list (vm-imap-parse-spec-to-list spec))
@@ -3253,7 +3246,10 @@ documentation for `vm-spool-files'."
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
-      )))
+      (when (and (processp process)
+		 (memq (process-status process) '(open run)))
+	(vm-imap-end-session process)))
+    ))
 
 ;;;###autoload
 (defun vm-delete-imap-folder (folder)
@@ -3290,6 +3286,9 @@ documentation for `vm-spool-files'."
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
+      (when (and (processp process)
+		 (memq (process-status process) '(open run)))
+	(vm-imap-end-session process))
       )))
 
 ;;;###autoload
@@ -3334,6 +3333,9 @@ documentation for `vm-spool-files'."
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
+      (when (and (processp process)
+		 (memq (process-status process) '(open run)))
+	(vm-imap-end-session process))
       )))
 
 

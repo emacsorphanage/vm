@@ -71,10 +71,10 @@ endif
 
 OBJECTS += $(SOURCES:.el=.elc)
 
+AUX_FILES = version.txt
+
 INSTALL_FILES += $(OBJECTS:.elc=.el) $(OBJECTS)
-# FIXME: vm-revno.elc is not really needed, but without it the install-el
-# target doesn't install the .el file
-INSTALL_FILES += vm-revno.el vm-revno.elc
+INSTALL_FILES += $(AUX_FILES)
 
 # for autoload generation
 AUTOLOAD_PACKAGE_NAME = (setq autoload-package-name \"vm\")
@@ -116,14 +116,13 @@ LINKPATH = @LINKPATH@
 ##############################################################################
 all: $(OBJECTS)
 
-install: install-el install-elc
+install: install-el install-elc install-aux
 
 ##############################################################################
-vm-version.elc: vm-revno.el
+vm-version.elc: vm-version.el version.txt
 
-vm-revno.el:
-	echo ";;; This is a generated file, do not edit it!" > $@
-	echo "(setq vm-version \"$(PACKAGE_VERSION)\")" >> $@
+version.txt:
+	echo "\"$(PACKAGE_VERSION)\"" > $@
 
 ##############################################################################
 # GNU Emacs's vm-autoload file
@@ -219,6 +218,13 @@ install-elc: all $(INSTALL_FILES)
 	        $(INSTALL_DATA) $$elc "$(DESTDIR)$(lispdir)"; \
 	    done;                                            \
 	fi;
+
+install-aux: $(AUX_FILES)
+	$(INSTALL) -d -m 0755 "$(DESTDIR)$(lispdir)/"
+	for i in $(AUX_FILES); do                                 \
+	    echo "Install $$i in $(DESTDIR)$(lispdir)/";   \
+	    $(INSTALL_DATA) $$i "$(DESTDIR)$(lispdir)/";   \
+        done;
 
 ##############################################################################
 Makefile: @srcdir@/Makefile.in

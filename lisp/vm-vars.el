@@ -584,7 +584,7 @@ prohibitions.  (But these violations could also be symptomatic of
 deeper problems.)  Use this level carefully.  Higher levels of
 violations are not currently permitted."
   :group 'vm
-  :type 'integer)
+  :type '(choice (const nil) integer))
 
 (defcustom vm-imap-folder-cache-directory nil
   "*Directory where VM stores cached copies of IMAP folders.
@@ -769,6 +769,19 @@ must set this variable non-nil."
   :group 'vm
   :type 'boolean)
 
+(defvar vm-sync-thunderbird-status nil
+  "If t VM syncs its headers with the headers of Thunderbird.  (This is
+still experimental functionality.)")
+
+(make-variable-buffer-local 'vm-sync-thunderbird-status)
+
+(defcustom vm-message-includes-separators
+  nil
+"*Non-nil value means that VM should include the leading and
+separator lines when it passes a message to external programs."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-visible-headers
   '("Resent-"
     "From:" "Sender:"
@@ -879,17 +892,18 @@ necessary."
 symbol 'window-width.  When non-nil, it causes VM to fill
 paragraphs that contain lines spanning that many columns or more.
 Only plain text messages and text/plain MIME parts will be
-filled.  This variable determines which paragraphs are filled,
-but `vm-paragraph-fill-column' determines the fill column.  The
-message itself is not modified; its text is copied into a
-presentation buffer before the filling is done."
+filled.  The message itself is not modified; its text is copied
+into a presentation buffer before the filling is done."
+;; Old text removed to reflect the change in revision 516:
+;; This variable determines which paragraphs are filled,
+;; but `vm-paragraph-fill-column' determines the fill column.
   :group 'vm
   :type '(choice (const nil)
                  (const window-width)
                  integer))
 
 (defcustom vm-fill-long-lines-in-reply-column nil
-  "*Fill lines spanning that columns or more in replies."
+  "*Fill lines spanning that many columns or more in replies."
   :type '(choice (const nil)
                  (const window-width)
                  integer)
@@ -924,7 +938,7 @@ you use such systems."
   :group 'vm
   :type 'boolean)
 
-(defcustom vm-mime-require-mime-version-header t
+(defcustom vm-mime-require-mime-version-header nil
   "*Non-nil means a message must contain MIME-Version to be considered MIME.
 The MIME standard requires that MIME messages contain a MIME-Version,
 but some mailers ignore the standard and do not send the header.  Set
@@ -1001,7 +1015,8 @@ for this variable to have effect."
   :group 'vm
   :type 'boolean)
 
-(defcustom vm-auto-displayed-mime-content-types '("text" "image" "multipart")
+(defcustom vm-auto-displayed-mime-content-types 
+  '("text" "image" "multipart" "message/rfc822")
   "*List of MIME content types that should be displayed immediately
 after decoding.  Other types will be displayed as a button that
 you must activate to display the object.
@@ -1465,6 +1480,39 @@ deleting a MIME object with `vm-delete-mime-object'."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-mime-savable-types
+  (append
+   '("application" "x-unknown" "application/x-gzip")
+   (mapcar (lambda (a) (car a))
+           vm-mime-external-content-types-alist))
+  "*List of MIME types which should be saved."
+    :group 'vm
+    :type '(repeat (string :tag "MIME type" nil)))
+
+(defcustom vm-mime-savable-type-exceptions
+  '("text")
+  "*List of MIME types which should not be saved."
+  :group 'vm
+  :type '(repeat (string :tag "MIME type" nil)))
+
+(defcustom vm-mime-deletable-types
+  (append
+   '("application" "x-unknown" "application/x-gzip")
+   (mapcar (lambda (a) (car a))
+           vm-mime-external-content-types-alist))
+  "*List of MIME types which should be deleted."
+    :group 'vm
+    :type '(repeat (string :tag "MIME type" nil)))
+
+(defcustom vm-mime-deletable-type-exceptions
+  '("text")
+  "*List of MIME types which should not be deleted."
+  :group 'vm
+  :type '(repeat (string :tag "MIME type" nil)))
+
+(defvar vm-mime-auto-save-all-attachments-avoid-recursion nil
+  "For internal use.")
+
 (defcustom vm-mime-button-face 'gui-button-face
   "*Face used for text in buttons that trigger the display of MIME objects."
   :group 'vm-faces
@@ -1632,7 +1680,10 @@ line can be protected."
     ("\\.gif$"		.	"image/gif")
     ("\\.png$"		.	"image/png")
     ("\\.tiff?$"	.	"image/tiff")
+    ("\\.pcx$"          .       "image/x-pcx")
+    ("\\.txt$"          .       "text/plain")
     ("\\.html?$"	.	"text/html")
+    ("\\.vcf$"          .       "text/x-vcard")
     ("\\.au$"		.	"audio/basic")
     ("\\.mpe?g$" 	.	"video/mpeg")
     ("\\.mov$" 		.	"video/quicktime")
@@ -1642,8 +1693,9 @@ line can be protected."
     ("\\.doc$"		.	"application/msword")
     ("\\.xls$"		.	"application/vnd.ms-excel")
     ("\\.ppt$"		.	"application/vnd.ms-powerpoint")
+    ("\\.mdb$"          .       "application/vnd.ms-access")
     ("\\.hqx$"		.	"application/mac-binhex40")
-   )
+    )
   "*Alist used to guess a MIME content type based on a file name.
 The list format is
 
@@ -1753,9 +1805,19 @@ attach, any relative pathnames will be relative to this directory."
   :group 'vm
   :type '(choice (const nil) directory))
 
-(defcustom vm-mime-yank-attachments t
+(defcustom vm-mime-all-attachments-directory nil
+    "*Directory to where the attachments should go or come from."
+ :group 'vm
+ :type '(choice (directory :tag "Directory:")
+                (const :tag "Use `vm-mime-attachment-save-directory'" nil)))
+
+(defvar vm-mime-save-all-attachments-history nil
+  "Directory history to where the attachments should go.")
+
+(defcustom vm-mime-yank-attachments nil
   "*Non-nil value enables yanking of attachments.
-Otherwise only the button label will be yanked."
+Otherwise only the button label will be yanked.
+(This functionally is currently part of vm-pine.el.)"
   :group 'vm
   :type 'boolean)
 
@@ -2382,7 +2444,8 @@ leaving no way to reply to just the author of a message."
 (defcustom vm-reply-include-presentation nil
   "*If true a reply will include the presentation of a message.
 This might give better results when using filling or MIME encoded messages,
-e.g. HTML message."
+e.g. HTML message.
+(This variable is part of vm-rfaddons.el.)"
   :group 'vm
   :type 'boolean)
 
@@ -2407,10 +2470,21 @@ Nil means don't attribute included text in replies."
   :type '(choice (const nil) string))
 
 (defcustom vm-included-mime-types-list
-  '("text/plain" "text/enriched" "message/rfc822")
-  "*List of mime types that should be retained in a reply message."
+  nil
+"*If non-nil, the list of mime types that should be included in quote
+text in a reply message.  A suitable value could be
+  '(\"text/plain\" \"text/enriched\" \"message/rfc822\")
+By default, this variable is nil, which means include all types that
+are handled by VM's MIME decoding mechanism." 
   :group 'vm
   :type '(repeat string))
+
+(defcustom vm-include-text-from-presentation nil
+  "*If true a reply will include the presentation of a message.
+This might give better results when using filling or MIME encoded messages,
+e.g. HTML message."
+  :group 'vm
+  :type 'boolean)
 
 (defcustom vm-included-text-headers nil
   "*List of headers that should be retained in a message included in
@@ -3037,6 +3111,15 @@ A nil value means VM will disregard the Subject header when
 threading messages."
   :group 'vm
   :type 'boolean)
+
+(defcustom vm-sort-threads-by-youngest-date t
+"*Non-nil values causes VM to sort threads by their youngest date,
+i.e., a thread A will appear before B if the youngest message in the
+thread A is dated before the youngest message in the thread B.  If the
+variable is nil, threads are sorted by their oldest date."
+  :group 'vm
+  :type 'boolean)
+
 
 (defcustom vm-summary-uninteresting-senders nil
   "*Non-nil value should be a regular expression that matches
@@ -4617,6 +4700,8 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "%" 'vm-change-folder-type)
     (define-key map "\M-C" 'vm-show-copying-restrictions)
     (define-key map "\M-W" 'vm-show-no-warranty)
+    (define-key map "\C-c\C-s" 'vm-mime-save-all-attachments)
+    (define-key map "\C-c\C-d" 'vm-mime-delete-all-attachments)
     ;; suppress-keymap provides these, but now that we don't use
     ;; suppress-keymap anymore...
     (define-key map "0" 'digit-argument)
@@ -4643,6 +4728,10 @@ be a regexp matching all chars to be replaced by a \"_\"."
 
     map )
   "Keymap for VM mode.")
+
+(defvar vm-summary-toggle-thread-folding nil
+  "Enables folding of threads in VM summary windows.  (This
+functionality is highly experimental!)")
 
 (defvar vm-summary-mode-map vm-mode-map
   "Keymap for VM Summary mode")
@@ -4811,6 +4900,8 @@ Its parent keymap is mail-mode-map.")
       "/usr/spool/mail/"))
 (defconst vm-content-length-search-regexp "^Content-Length:.*\n\\|\\(\n\n\\)")
 (defconst vm-content-length-header "Content-Length:")
+(defconst vm-references-header-regexp
+  "^References:\\(.*\n\\([ \t].*\n\\)*\\)")
 (defconst vm-attributes-header-regexp
   "^X-VM-\\(Attributes\\|v5-Data\\):\\(.*\n\\([ \t].*\n\\)*\\)")
 (defconst vm-attributes-header "X-VM-v5-Data:")
@@ -5565,6 +5656,16 @@ that has a match.")
     ("message/news")
    ))
 
+;; The following undocumented variables have been moved here from
+;; vm-mime.el.  USR, 2010-01-05
+
+(defvar vm-image-list nil)
+(defvar vm-image-type nil)
+(defvar vm-image-type-name nil)
+(defvar vm-extent-list nil)
+(defvar vm-overlay-list nil)
+
+
 (defconst vm-mime-encoded-word-regexp
   "=\\?\\([^?*]+\\)\\(\\*\\([^?*]+\\)\\)?\\?\\([BbQq]\\)\\?\\([^?]+\\)\\?=")
 
@@ -5585,8 +5686,7 @@ that has a match.")
 
 (defcustom vm-enable-addons '(check-recipients
 			      check-for-empty-subject
-			      encode-headers
-			      take-action-on-attachment)
+			      encode-headers)
   "*A list of addons to enable, t for all and nil to disable all.
 Most addons are from `vm-rfaddons-infect-vm'.
 
@@ -5610,8 +5710,6 @@ You must restart VM after a change to cause any effects."
 		     fake-date)
 	      (const :tag "Bind '.' on attachment buttons to 'vm-mime-take-action-on-attachment'"
 		     take-action-on-attachment)
-	      (const :tag "Bind 'C-c C-s' to `vm-mime-save-all-attachments'"
-		     save-all-attachments)
 	      (const :tag "Automatically save attachments of new messages" 
 		     auto-save-all-attachments)
 	      (const :tag "Delete external attachments of a message when expunging it." 

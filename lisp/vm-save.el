@@ -556,13 +556,17 @@ vm-save-message instead (normally bound to `s')."
 	 (list (vm-headers-of m) (vm-text-of m)))
 	((equal prefix-arg '(64))
 	 (list (vm-vheaders-of m) (vm-text-end-of m)))
+	(vm-message-includes-separators
+	 (list (vm-start-of m) (vm-end-of m)))
 	(t 
 	 (list (vm-headers-of m) (vm-text-end-of m)))))
 
 ;;;###autoload
 (defun vm-pipe-message-to-command (command &optional prefix-arg discard-output)
   "Runs a shell command with contents from the current message as input.
-By default, the entire message is used.
+By default, the entire message is used.  Message separators are
+included if `vm-message-includes-separators' is non-Nil.
+
 With one \\[universal-argument] the text portion of the message is used.
 With two \\[universal-argument]'s the header portion of the message is used.
 With three \\[universal-argument]'s the visible header portion of the message

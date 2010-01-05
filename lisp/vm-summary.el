@@ -107,8 +107,6 @@ mandatory."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
-(defvar vm-summary-toggle-thread-folding nil)
-
 (defun vm-do-summary (&optional start-point)
   (let ((m-list (or start-point vm-message-list))
 	mp m tr trs tre
@@ -240,9 +238,9 @@ mandatory."
 	  (let ((buffer-read-only nil)
 		(selected nil)
 		(modified (buffer-modified-p)))
-	    (goto-char (vm-su-start-of m))
 	    (unwind-protect
 		(save-excursion
+		  (goto-char (vm-su-start-of m))
 		  (setq selected (looking-at "[+-]>"))
 		  ;; We do a little dance to update the text in
 		  ;; order to make the markers in the text do
