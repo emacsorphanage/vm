@@ -4700,6 +4700,8 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "%" 'vm-change-folder-type)
     (define-key map "\M-C" 'vm-show-copying-restrictions)
     (define-key map "\M-W" 'vm-show-no-warranty)
+    (define-key map "\C-c\C-s" 'vm-mime-save-all-attachments)
+    (define-key map "\C-c\C-d" 'vm-mime-delete-all-attachments)
     ;; suppress-keymap provides these, but now that we don't use
     ;; suppress-keymap anymore...
     (define-key map "0" 'digit-argument)
@@ -5684,8 +5686,7 @@ that has a match.")
 
 (defcustom vm-enable-addons '(check-recipients
 			      check-for-empty-subject
-			      encode-headers
-			      take-action-on-attachment)
+			      encode-headers)
   "*A list of addons to enable, t for all and nil to disable all.
 Most addons are from `vm-rfaddons-infect-vm'.
 
@@ -5709,8 +5710,6 @@ You must restart VM after a change to cause any effects."
 		     fake-date)
 	      (const :tag "Bind '.' on attachment buttons to 'vm-mime-take-action-on-attachment'"
 		     take-action-on-attachment)
-	      (const :tag "Bind 'C-c C-s' to `vm-mime-save-all-attachments'"
-		     save-all-attachments)
 	      (const :tag "Automatically save attachments of new messages" 
 		     auto-save-all-attachments)
 	      (const :tag "Delete external attachments of a message when expunging it." 

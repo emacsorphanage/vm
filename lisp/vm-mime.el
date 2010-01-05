@@ -107,8 +107,9 @@ configuration.  "
   (add-to-list 'vm-mime-mule-coding-to-charset-alist 
 	       '(iso-8859-1 "iso-8859-1")))
 
-(when vm-fsfemacs-p
-  (defvar latin-unity-character-sets nil))
+(eval-when-compile
+  (when vm-fsfemacs-p
+    (defvar latin-unity-character-sets nil)))
 
 (when vm-xemacs-mule-p
   (require 'vm-vars)

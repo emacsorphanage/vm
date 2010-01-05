@@ -111,10 +111,7 @@ The following options are possible.
  - fake-date: if enabled allows you to fake the date of an outgoing message.
 
 `vm-mode' options:
- - save-all-attachments: in vm-mail-mode and [C-c C-s] to the function
-   `vm-mime-save-all-attachments' 
  - shrunken-headers: enable shrunken-headers by advising several functions 
- - take-action-on-attachment: bind [.] to `vm-mime-take-action-on-attachment'
 
 Other EXPERIMENTAL options:
  - auto-save-all-attachments: add `vm-mime-auto-save-all-attachments' to
@@ -160,9 +157,10 @@ or do the binding and advising on your own."
   
   (when (member 'vm-mode option-list)
     (setq option-list (append '(
-                                save-all-attachments
+                                ;; save-all-attachments
                                 shrunken-headers
-                                take-action-on-attachment)
+                                take-action-on-attachment
+				)
                               option-list))
     (setq option-list (delq 'vm-mode option-list)))
     
@@ -240,14 +238,18 @@ or do the binding and advising on your own."
        (vm-shrunken-headers))
      (define-key vm-mode-map "T" 'vm-shrunken-headers-toggle)))
 
+;; This is not needed any more because VM has $ commands to take
+;; action on attachments.  But we keep it for compatibility.
+
   ;; take action on attachment binding
   (vm-rfaddons-check-option
    'take-action-on-attachment option-list
    (define-key vm-mode-map "."  'vm-mime-take-action-on-attachment))
   
-  (vm-rfaddons-check-option
-   'save-all-attachments option-list
-   (define-key vm-mode-map "\C-c\C-s" 'vm-mime-save-all-attachments))
+;; This is not needed any more becaue it is in the core  
+;;   (vm-rfaddons-check-option
+;;    'save-all-attachments option-list
+;;    (define-key vm-mode-map "\C-c\C-s" 'vm-mime-save-all-attachments))
 
   ;; other experimental options ---------------------------------------------
   ;; Now take care of automatic saving of attachments
@@ -1667,6 +1669,8 @@ It saves the decoded message and not the raw message like `vm-save-message'!"
       (write-region (point-min) (point-max) file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; This code is now obsolete.  VM has built-in facilities for taking
+;; actions on attachments.  USR, 2010-01-05
 ;; Subject: Re: How to Delete an attachment?
 ;; Newsgroups: gnu.emacs.vm.info
 ;; Date: 05 Oct 1999 11:09:19 -0400
