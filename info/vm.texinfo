@@ -1454,18 +1454,29 @@ make VM not ask this question by setting
 @vindex vm-mime-delete-after-saving
 @vindex vm-mime-attachment-save-directory
 The MIME attachments can be saved to disk with @kbd{$ w}
-(@code{vm-mime-reader-map-save-file}).  They can be deleted at the same time
-by setting the variable @code{vm-mime-delete-after-saving}.  In this
-case, the attachment is deleted and replaced by a new one that refers
-to the saved copy.  The variable
-@code{vm-mime-attachment-save-directory} specifies the default
-directory to save the attachments in.
+(@code{vm-mime-reader-map-save-file}).  They can be deleted at the same
+time by setting the variable @code{vm-mime-delete-after-saving}.  In
+this case, the attachment is deleted and replaced by a MIME part that
+refers to the saved copy.  The variable
+@code{vm-mime-attachment-save-directory} specifies the default directory
+to save the attachments in.  It is a good idea to
+@code{vm-mime-delete-after-saving} to delete saved attachments instead
+of deleting them manually, because the message will still have a handle
+to retrieve the saved copy.
 
 @findex vm-mime-save-all-attachments
 @findex vm-mime-delete-all-attachments
+@vindex vm-mime-deletable-types
+@vindex vm-mime-deletable-type-exceptions
+@vindex vm-mime-savable-types
+@vindex vm-mime-savable-type-exceptions
 The commands @code{vm-mime-save-all-attachments} and
 @code{vm-mime-delete-all-attachments} can be used to save or delete
-all the attachments in a message.
+@i{all} the attachments in a message.  An "attachment" in this context
+is any MIME part that has "attachment" as its content-disposition or
+simply has a file name.  In addition, all MIME parts that have types
+matching @code{vm-mime-savable-types} or @code{vm-mime-deletable-types}
+(but not the corresponding @code{-exceptions}) are included.
 
 @node Internal display, External display, Attachments, MIME Messages
 @unnumberedsubsec Internal display of MIME attachments

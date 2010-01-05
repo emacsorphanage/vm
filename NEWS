@@ -2,21 +2,37 @@ VM 8.1.1-devo
 
   IMPROVEMENTS:
 
-  * New variable: vm-message-includes-separators allows the meaning of
+  ** The commands `vm-mime-save-all-attachments' and
+    `vm-mime-delete-all-attachments' have been moved to the VM core
+    (from vm-rfaddons).  New variables:
+       vm-mime-deletable-types 
+          (formerly `vm-mime-delete-all-attachments-types')
+       vm-mime-deletable-type-exceptions
+          (formerly `vm-mime-delete-all-attachments-types-exceptions')
+       vm-mime-savable-types
+          (formerly `vm-mime-save-all-attachments-types')
+       vm-mime-savable-type-exceptions
+          (formerly `vm-mime-save-all-attachments-types-exceptions')         
+       vm-mime-attachment-save-directory
+       vm-mime-attachment-source-directory
+       vm-mime-all-attachments-directory
+    See the info file section on MIME attachments for details.
+
+  * New variable: `vm-message-includes-separators' allows the meaning of
     'message' to include separators (the leading 'From ' line and
     trailing blank line).
   
-  * vm-quit-no-change offers to delete the auto-save file if there is
+  * `vm-quit-no-change' offers to delete the auto-save file if there is
     one.  (This wasn't getting done due to a bug in FSF Emacs.)
 
-  * vm-delete-duplicate-messages now works by comparing message ID's.
+  * `vm-delete-duplicate-messages' now works by comparing message ID's.
     (from Noah Friedman's vm-addons).
 
-  * New boolean variable vm-sort-threads-by-youngest-date allows
+  * New boolean variable `vm-sort-threads-by-youngest-date' allows
     threads to be sorted by their youngest date or oldest date.
 
-  * vm-yank-message function streamlined a bit.  New variable
-    vm-include-text-from-presentation can be used to extract the
+  * `vm-yank-message' function streamlined a bit.  New variable
+    `vm-include-text-from-presentation' can be used to extract the
     included message text from the presentation buffer.
 
 VM 8.1.0
@@ -39,10 +55,10 @@ VM 8.1.0
 
   IMPROVEMENTS:
 
-    * The variable vm-mime-yank-attachments is set to nil by default,
+    * The variable `vm-mime-yank-attachments' is set to nil by default,
       so that we are not surprised by unexpectedly large mail messages.
 
-    * The variable vm-mime-require-mime-version-header is set to nil
+    * The variable `vm-mime-require-mime-version-header' is set to nil
       by default, so that we will be tolerant of bad MIME senders.
 
     * Allow for sorting the headers of composition buffers by calling the

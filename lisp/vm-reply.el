@@ -1812,6 +1812,8 @@ message."
   (if (local-variable-p 'line-move-ignore-invisible (current-buffer))
       (setq line-move-ignore-invisible nil)))
 
+(make-variable-buffer-local 'line-move-ignore-invisible)
+
 (defun vm-mail-mode-hide-headers ()
   "Hides and protects headers listed in `vm-mail-mode-hidden-headers'.
 With a prefix arg, call `vm-mail-mode-show-headers' instead."
@@ -1821,7 +1823,6 @@ With a prefix arg, call `vm-mail-mode-show-headers' instead."
         (header-end (save-excursion (mail-text) (point)))
         start end o)
     (setq header-regexp (concat "^" header-regexp))
-    (make-variable-buffer-local 'line-move-ignore-invisible)
     (setq line-move-ignore-invisible t)
     (save-excursion
       (goto-char (point-min))

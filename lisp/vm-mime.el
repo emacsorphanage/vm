@@ -107,6 +107,9 @@ configuration.  "
   (add-to-list 'vm-mime-mule-coding-to-charset-alist 
 	       '(iso-8859-1 "iso-8859-1")))
 
+(when vm-fsfemacs-p
+  (defvar latin-unity-character-sets nil))
+
 (when vm-xemacs-mule-p
   (require 'vm-vars)
   (vm-update-mime-charset-maps)
@@ -3606,11 +3609,6 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	    (nreverse image-list)))
       (and work-buffer (kill-buffer work-buffer)))))
 
-(defvar vm-image-list)
-(defvar vm-image-type)
-(defvar vm-image-type-name)
-(defvar vm-extent-list)
-(defvar vm-overlay-list)
 (defun vm-process-sentinel-display-image-strips (process what-happened)
   (save-excursion
     (set-buffer (process-buffer process))
@@ -4113,6 +4111,179 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   "Display the MIME object at point as some other type."
   (interactive)
   (vm-mime-run-display-function-at-point 'vm-mime-display-object-as-type))
+
+;;;###autoload
+(defun vm-mime-action-on-all-attachments 
+  (count action &optional types exceptions mlist quiet)
+  "On the next COUNT messages or marked messages, call the
+function ACTION on all \"attachments\".  For the purpose of this
+function, an \"attachment\" is a mime part part which has
+\"attachment\" as its disposition, or simply has an associated
+filename, or has a type that matches a regexp in TYPES but
+doesn't match one in EXCEPTIONS.
+
+If QUIET is true no messages are generated.
+
+ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME." 
+  (unless mlist
+    (or count (setq count 1))
+    (vm-check-for-killed-folder)
+    (vm-select-folder-buffer)
+    (vm-error-if-folder-empty))
+
+  (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
+    (save-excursion
+      (while mlist
+        (let (parts layout filename type disposition o)
+          (setq o (vm-mm-layout (car mlist)))
+          (when (stringp o)
+            (setq o 'none)
+            (backtrace)
+            (message "There is a bug, please report it with *backtrace*"))
+          (if (eq 'none o)
+              nil;; this is no mime message
+            (setq type (car (vm-mm-layout-type o)))
+            
+            (cond ((or (vm-mime-types-match "multipart/alternative" type)
+                       (vm-mime-types-match "multipart/mixed" type)
+                       (vm-mime-types-match "multipart/report" type)
+                       (vm-mime-types-match "message/rfc822" type)
+                       )
+                   (setq parts (copy-sequence (vm-mm-layout-parts o))))
+                  (t (setq parts (list o))))
+            
+            (while parts
+              (if (vm-mime-composite-type-p
+                   (car (vm-mm-layout-type (car parts))))
+                  (setq parts 
+			(nconc (copy-sequence (vm-mm-layout-parts (car parts)))
+			       (cdr parts))))
+              
+              (setq layout (car parts)
+                    type (car (vm-mm-layout-type layout))
+                    disposition (car (vm-mm-layout-disposition layout))
+                    filename (vm-mime-get-disposition-filename layout) )
+              
+              (cond ((or filename
+                         (and disposition (string= disposition "attachment"))
+                         (and (not (vm-mime-types-match "message/external-body" type))
+                              types
+                              (vm-mime-is-type-valid type types exceptions)))
+                     (when (not quiet)
+                       (message "Action on part type=%s filename=%s disposition=%s!"
+                                type filename disposition))
+                     (funcall action (car mlist) layout type filename))
+                    ((not quiet)
+                     (message "No action on part type=%s filename=%s disposition=%s!"
+                              type filename disposition)))
+              (setq parts (cdr parts)))))
+        (setq mlist (cdr mlist))))))
+
+;;;###autoload
+(defun vm-mime-delete-all-attachments (&optional count)
+  "Delete all attachments from the next COUNT messages or marked
+messages.  For the purpose of this function, an \"attachment\" is
+a mime part part which has \"attachment\" as its disposition or
+simply has an associated filename.  Any mime types that match
+`vm-mime-deletable-types' but not `vm-mime-deletable-type-exceptions'
+are also included."
+  (interactive "p")
+  (vm-check-for-killed-summary)
+  (if (interactive-p) (vm-follow-summary-cursor))
+  
+  (vm-mime-action-on-all-attachments
+   count
+   (lambda (msg layout type file)
+     (message "Deleting `%s%s" type (if file (format " (%s)" file) ""))
+     (vm-mime-discard-layout-contents layout))
+   vm-mime-deletable-types
+   vm-mime-deletable-type-exceptions)
+
+  (when (interactive-p)
+    (vm-discard-cached-data)
+    (vm-preview-current-message)))
+                                                 
+;;;###autoload
+(defun vm-mime-save-all-attachments (&optional count
+                                               directory
+                                               no-delete-after-saving)
+  "Save all attachments in the next COUNT messages or marked
+messages.  For the purpose of this function, an \"attachment\" is
+a mime part part which has \"attachment\" as its disposition or
+simply has an associated filename.  Any mime types that match
+`vm-mime-savable-types' but not `vm-mime-savable-type-exceptions'
+are also included.
+
+The attachments are saved to the specified DIRECTORY.  The
+variables `vm-all-attachments-directory' or
+`vm-mime-attachment-save-directory' can be used to set the
+default location.  When directory does not exist it will be
+created."
+  (interactive
+   (list current-prefix-arg
+         (vm-read-file-name
+          "Attachment directory: "
+          (or vm-mime-all-attachments-directory
+              vm-mime-attachment-save-directory
+              default-directory)
+          (or vm-mime-all-attachments-directory
+              vm-mime-attachment-save-directory
+              default-directory)
+          nil nil
+          vm-mime-save-all-attachments-history)))
+
+  (vm-check-for-killed-summary)
+  (if (interactive-p) (vm-follow-summary-cursor))
+ 
+  (let ((n 0))
+    (vm-mime-action-on-all-attachments
+     count
+     ;; the action to be performed BEGIN
+     (lambda (msg layout type file)
+       (let ((directory (if (functionp directory)
+                            (funcall directory msg)
+                          directory)))
+         (setq file 
+	       (if file
+		   (expand-file-name (file-name-nondirectory file) directory)
+		 (vm-read-file-name
+		  (format "Save %s to file: " type)
+		  (or directory
+		      vm-mime-all-attachments-directory
+		      vm-mime-attachment-save-directory)
+		  (or directory
+		      vm-mime-all-attachments-directory
+		      vm-mime-attachment-save-directory)
+		  nil nil
+		  vm-mime-save-all-attachments-history)
+		 ))
+         
+         (if (and file (file-exists-p file))
+             (if (y-or-n-p (format "Overwrite `%s'? " file))
+                 (delete-file file)
+               (setq file nil)))
+         
+         (when file
+           (message "Saving `%s%s" type (if file (format " (%s)" file) ""))
+           (make-directory (file-name-directory file) t)
+           (vm-mime-send-body-to-file layout file file)
+           (if vm-mime-delete-after-saving
+               (let ((vm-mime-confirm-delete nil))
+                 (vm-mime-discard-layout-contents 
+		  layout (expand-file-name file))))
+           (setq n (+ 1 n)))))
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; the action to be performed END
+     ;; attachment filters 
+     vm-mime-savable-types
+     vm-mime-savable-type-exceptions)
+
+    (when (interactive-p)
+      (vm-discard-cached-data)
+      (vm-preview-current-message))
+    
+    (if (> n 0)
+        (message "%d attachment%s saved" n (if (= n 1) "" "s"))
+      (message "No attachments to be saved!"))))
 
 ;; for the karking compiler
 (defvar vm-menu-mime-dispose-menu)

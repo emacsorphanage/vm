@@ -1195,11 +1195,6 @@ vm-folder-type is initialized here."
 			message
 			(concat "^" (vm-matched-header-name) ":"))))))))))))
 
-(defvar vm-sync-thunderbird-status nil
-  "If t VM syncs its headers with the headers of Thunderbird.")
-
-(make-variable-buffer-local 'vm-sync-thunderbird-status)
-
 (defun vm-read-thunderbird-status (message)
   (let (status)
     (setq status (vm-get-header-contents message "X-Mozilla-Status"))

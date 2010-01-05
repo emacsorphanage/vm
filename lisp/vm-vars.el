@@ -769,6 +769,12 @@ must set this variable non-nil."
   :group 'vm
   :type 'boolean)
 
+(defvar vm-sync-thunderbird-status nil
+  "If t VM syncs its headers with the headers of Thunderbird.  (This is
+still experimental functionality.)")
+
+(make-variable-buffer-local 'vm-sync-thunderbird-status)
+
 (defcustom vm-message-includes-separators
   nil
 "*Non-nil value means that VM should include the leading and
@@ -1474,6 +1480,39 @@ deleting a MIME object with `vm-delete-mime-object'."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-mime-savable-types
+  (append
+   '("application" "x-unknown" "application/x-gzip")
+   (mapcar (lambda (a) (car a))
+           vm-mime-external-content-types-alist))
+  "*List of MIME types which should be saved."
+    :group 'vm
+    :type '(repeat (string :tag "MIME type" nil)))
+
+(defcustom vm-mime-savable-type-exceptions
+  '("text")
+  "*List of MIME types which should not be saved."
+  :group 'vm
+  :type '(repeat (string :tag "MIME type" nil)))
+
+(defcustom vm-mime-deletable-types
+  (append
+   '("application" "x-unknown" "application/x-gzip")
+   (mapcar (lambda (a) (car a))
+           vm-mime-external-content-types-alist))
+  "*List of MIME types which should be deleted."
+    :group 'vm
+    :type '(repeat (string :tag "MIME type" nil)))
+
+(defcustom vm-mime-deletable-type-exceptions
+  '("text")
+  "*List of MIME types which should not be deleted."
+  :group 'vm
+  :type '(repeat (string :tag "MIME type" nil)))
+
+(defvar vm-mime-auto-save-all-attachments-avoid-recursion nil
+  "For internal use.")
+
 (defcustom vm-mime-button-face 'gui-button-face
   "*Face used for text in buttons that trigger the display of MIME objects."
   :group 'vm-faces
@@ -1765,6 +1804,15 @@ When `vm-mime-attach-file' prompts you for the name of a file to
 attach, any relative pathnames will be relative to this directory."
   :group 'vm
   :type '(choice (const nil) directory))
+
+(defcustom vm-mime-all-attachments-directory nil
+    "*Directory to where the attachments should go or come from."
+ :group 'vm
+ :type '(choice (directory :tag "Directory:")
+                (const :tag "Use `vm-mime-attachment-save-directory'" nil)))
+
+(defvar vm-mime-save-all-attachments-history nil
+  "Directory history to where the attachments should go.")
 
 (defcustom vm-mime-yank-attachments nil
   "*Non-nil value enables yanking of attachments.
@@ -4679,6 +4727,10 @@ be a regexp matching all chars to be replaced by a \"_\"."
     map )
   "Keymap for VM mode.")
 
+(defvar vm-summary-toggle-thread-folding nil
+  "Enables folding of threads in VM summary windows.  (This
+functionality is highly experimental!)")
+
 (defvar vm-summary-mode-map vm-mode-map
   "Keymap for VM Summary mode")
 
@@ -5601,6 +5653,16 @@ that has a match.")
     ("message/rfc822")
     ("message/news")
    ))
+
+;; The following undocumented variables have been moved here from
+;; vm-mime.el.  USR, 2010-01-05
+
+(defvar vm-image-list nil)
+(defvar vm-image-type nil)
+(defvar vm-image-type-name nil)
+(defvar vm-extent-list nil)
+(defvar vm-overlay-list nil)
+
 
 (defconst vm-mime-encoded-word-regexp
   "=\\?\\([^?*]+\\)\\(\\*\\([^?*]+\\)\\)?\\?\\([BbQq]\\)\\?\\([^?]+\\)\\?=")
