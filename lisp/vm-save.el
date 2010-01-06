@@ -642,26 +642,33 @@ output of the command."
 	   current-prefix-arg)))
   (vm-pipe-message-to-command command prefix-arg t))
 
-(defun vm-pipe-command-exit-handler (process discard-output 
+(defun vm-pipe-command-exit-handler (process command discard-output 
 					     &optional exit-handler)
-  "Switch to output buffer of PROCESS if DISCARD-OUTPUT non-nil.
+"Switch to output buffer of PROCESS that ran COMMAND, if
+DISCARD-OUTPUT non-nil.  
 If non-nil call EXIT-HANDLER with the two arguments COMMAND and OUTPUT-BUFFER." 
   (let ((exit-code (process-exit-status process))
 	(buffer (process-buffer process))
-	(command (process-command process)))
+	(process-command (process-command process)))
   (if (not (zerop exit-code))
       (message "Command '%s' exit code is %d." command exit-code))
   (vm-display nil nil '(vm-pipe-message-to-command)
 	      '(vm-pipe-message-to-command))
   (vm-switch-to-command-output-buffer command buffer discard-output)
   (if exit-handler
-      (funcall exit-handler command buffer))))
+      (funcall exit-handler process-command buffer))))
 
-(defvar vm-pipe-messages-to-command-start ""
-  "*Inserted by `vm-pipe-messages-to-command' before a message.")
+(defvar vm-pipe-messages-to-command-start t
+  "*The string to be used as the leading message separator by
+`vm-pipe-messages-to-command' at the beginning of each message.
+If set to 't', then use the leading message separator stored in the VM
+folder.")
 
-(defvar vm-pipe-messages-to-command-end "\n"
-  "*Inserted by `vm-pipe-messages-to-command' after a message.")
+(defvar vm-pipe-messages-to-command-end t
+  "*The string to be used as the trailing message separator by
+`vm-pipe-messages-to-command' at the end of each message.
+If set to 't', then use the trailing message separator stored in the VM
+folder.")
 
 ;;;###autoload
 (defun vm-pipe-messages-to-command (command &optional prefix-arg 
@@ -716,18 +723,24 @@ arguments after the command finished."
 		(vm-pipe-command-exit-handler 
 		 process ,command ,discard-output 
 		 (if (and ,no-wait (functionp ,no-wait))
-		     no-wait)))
+		     ,no-wait)))
 	  (message "Command '%s' changed state to %s."
 		   ,command status))))
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
       (set-buffer (vm-buffer-of m))
-      (process-send-string process vm-pipe-messages-to-command-start)
       (save-restriction
 	(widen)
+	(if (equal vm-pipe-messages-to-command-start t)
+	    (process-send-region process 
+				 (vm-start-of m) (vm-headers-of m))
+	  (process-send-string process vm-pipe-messages-to-command-start))
 	(let ((region (vm-pipe-message-part m prefix-arg)))
-	  (process-send-region process (nth 0 region) (nth 1 region))))
-      (process-send-string process vm-pipe-messages-to-command-end)
+	  (process-send-region process (nth 0 region) (nth 1 region)))
+	(if (equal vm-pipe-messages-to-command-end t)
+	    (process-send-region process 
+				 (vm-text-end-of m) (vm-end-of m))
+	  (process-send-string process vm-pipe-messages-to-command-end)))
       (setq mlist (cdr mlist)))
 
     (process-send-eof process)

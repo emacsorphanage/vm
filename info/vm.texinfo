@@ -2507,16 +2507,37 @@ Save all unfiled messages that auto-match a folder via
 are flagged for deletion are not saved by this command.  If invoked with a
 prefix argument, confirmation will be requested for each save.
 @findex vm-pipe-message-to-command
-@kindex |
-@item | (@code{vm-pipe-message-to-command})
+@kindex ||
+@item || (@code{vm-pipe-message-to-command})
 Runs a shell command with some or all of the current message as input.
-By default, the entire message is used.@*
-@*
+By default, the entire message is used.  However, the leading and
+trailing message separator lines are not included.  So, this command is
+unlikely to be useful when applied to multiple messages (via marked
+messages).@* 
 If invoked with one @t{C-u} the text portion of the message is used.@*
 If invoked with two @t{C-u}'s the header portion of the message is used.@*
-@*
+In invoked with three @t{C-u}'s the visible headers and the text
+portions of the message are used.@*
 If the shell command generates any output, it is displayed in a
 @samp{*Shell Command Output*} buffer.  The message itself is not altered.
+@findex vm-pipe-message-to-command-discard-output
+@kindex |d
+@item |d (@code{vm-pipe-message-to-command-discard-output})
+Runs a shell command with some or all of the current message as input,
+like the above, but will not display the output.
+@findex vm-pipe-messages-to-command
+@kindex |s
+@item |s (@code{vm-pipe-messages-to-command})
+Runs a shell command using as input the current message or marked
+messages in the mbox format.  In contrast to
+@code{vm-pipe-message-to-command}, the leading and trailing separator
+lines are included.  This is likely to be the preferred version of the
+piping operation for multiple messages.
+@findex vm-pipe-messages-to-command-discard-output
+@kindex |n
+@item |n (@code{vm-pipe-messages-to-command-discard-output})
+Runs a shell command using as input the current message or marked
+messages in the mbox format, but will not display the output.
 @end table
 
 @vindex vm-berkeley-mail-compatibility
