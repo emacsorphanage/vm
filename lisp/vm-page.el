@@ -819,15 +819,19 @@ Use mouse button 3 to choose a Web browser for the URL."
 					       (car (cdr data)))
 			(message "%s" (car (cdr data))))))
   ;; FIXME this probably cause folder corruption by filling the folder instead
-  ;; of the presentation copy  ...
-  (if (and nil vm-fill-paragraphs-containing-long-lines
-           (vm-mime-plain-message-p (car vm-message-pointer)))
-      (vm-save-restriction
-       (widen)
-       (vm-fill-paragraphs-containing-long-lines
-	vm-fill-paragraphs-containing-long-lines
-	(vm-text-of (car vm-message-pointer))
-	(vm-text-end-of (car vm-message-pointer)))))
+  ;; of the presentation copy  ..., RWF, 2008-07
+  ;; Well, so, we will check if we are in a presentation buffer! 
+  ;; USR, 2010-01-07
+  (when (and  vm-fill-paragraphs-containing-long-lines
+	      (vm-mime-plain-message-p (car vm-message-pointer)))
+    (if (null vm-mail-buffer)		; this can't be presentation then
+	(error "VM internl error #2010.  Please report it"))
+    (vm-save-restriction
+     (widen)
+     (vm-fill-paragraphs-containing-long-lines
+      vm-fill-paragraphs-containing-long-lines
+      (vm-text-of (car vm-message-pointer))
+      (vm-text-end-of (car vm-message-pointer)))))
   (vm-save-buffer-excursion
    (save-excursion
      (save-excursion
