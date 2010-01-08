@@ -96,9 +96,9 @@
       (insert ";;; vm-autoloads.el --- automatically extracted autoloads\n")
       (insert ";;\n")
       (insert ";;; Code:\n")
-      (if (>= emacs-major-version 21)
+      (if (>= emacs-major-version 22)
           (update-autoloads-from-directories source-dir)
-        (if (>= emacs-major-version 22)
+	(if (>= emacs-major-version 21)
             (update-directory-autoloads source-dir)
           (error "Do not know how to generate autoloads"))))))
 
