@@ -556,8 +556,6 @@ vm-save-message instead (normally bound to `s')."
 	 (list (vm-headers-of m) (vm-text-of m)))
 	((equal prefix-arg '(64))
 	 (list (vm-vheaders-of m) (vm-text-end-of m)))
-	(vm-message-includes-separators
-	 (list (vm-start-of m) (vm-end-of m)))
 	(t 
 	 (list (vm-headers-of m) (vm-text-end-of m)))))
 
@@ -662,13 +660,13 @@ If non-nil call EXIT-HANDLER with the two arguments COMMAND and OUTPUT-BUFFER."
   "*The string to be used as the leading message separator by
 `vm-pipe-messages-to-command' at the beginning of each message.
 If set to 't', then use the leading message separator stored in the VM
-folder.")
+folder.  If set to nil, then no leading separator is included.")
 
 (defvar vm-pipe-messages-to-command-end t
   "*The string to be used as the trailing message separator by
 `vm-pipe-messages-to-command' at the end of each message.
 If set to 't', then use the trailing message separator stored in the VM
-folder.")
+folder.  If set to nil, no trailing separator is included.")
 
 ;;;###autoload
 (defun vm-pipe-messages-to-command (command &optional prefix-arg 
@@ -680,8 +678,14 @@ just once and pipe all messages to it.  For bulk operations this
 is much faster than calling the command on each message.  This is
 more like saving to a pipe.
 
-Before a message it will insert `vm-pipe-messages-to-command-start'
-and after a message `vm-pipe-messages-to-command-end'.
+With one \\[universal-argument] the text portion of the messages is used.
+With two \\[universal-argument]'s the header portion of the messages is used.
+With three \\[universal-argument]'s the visible header portion of the messages
+plus the text portion is used.
+
+Leading and trailing separators are included with each message
+depending on the settings of `vm-pipe-messages-to-command-start'
+and `vm-pipe-messages-to-command-end'.
 
 Output, if any, is displayed unless DISCARD-OUTPUT is t.
 
@@ -731,17 +735,19 @@ arguments after the command finished."
       (set-buffer (vm-buffer-of m))
       (save-restriction
 	(widen)
-	(if (equal vm-pipe-messages-to-command-start t)
-	    (process-send-region process 
-				 (vm-start-of m) (vm-headers-of m))
-	  (process-send-string process vm-pipe-messages-to-command-start))
+	(cond ((eq vm-pipe-messages-to-command-start t)
+	       (process-send-region process 
+				    (vm-start-of m) (vm-headers-of m)))
+	      (vm-pipe-messages-to-command-start
+	       (process-send-string process vm-pipe-messages-to-command-start)))
 	(let ((region (vm-pipe-message-part m prefix-arg)))
 	  (process-send-region process (nth 0 region) (nth 1 region)))
-	(if (equal vm-pipe-messages-to-command-end t)
-	    (process-send-region process 
-				 (vm-text-end-of m) (vm-end-of m))
-	  (process-send-string process vm-pipe-messages-to-command-end)))
-      (setq mlist (cdr mlist)))
+	(cond ((eq vm-pipe-messages-to-command-end t)
+	       (process-send-region process 
+				    (vm-text-end-of m) (vm-end-of m)))
+	      (vm-pipe-messages-to-command-end
+	       (process-send-string process vm-pipe-messages-to-command-end)))
+	(setq mlist (cdr mlist))))
 
     (process-send-eof process)
 

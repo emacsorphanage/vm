@@ -41,10 +41,6 @@ VM 8.1.1-devo
     being used.  The option `take-action-on-attachments' is not
     included by default.
 
-  * New variable: `vm-message-includes-separators' allows the meaning of
-    'message' to include separators (the leading 'From ' line and
-    trailing blank line).
-  
   * `vm-quit-no-change' offers to delete the auto-save file if there is
     one.  (This wasn't getting done due to a bug in FSF Emacs.)
 

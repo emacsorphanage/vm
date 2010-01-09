@@ -775,13 +775,6 @@ still experimental functionality.)")
 
 (make-variable-buffer-local 'vm-sync-thunderbird-status)
 
-(defcustom vm-message-includes-separators
-  nil
-"*Non-nil value means that VM should include the leading and
-separator lines when it passes a message to external programs."
-  :group 'vm
-  :type 'boolean)
-
 (defcustom vm-visible-headers
   '("Resent-"
     "From:" "Sender:"
