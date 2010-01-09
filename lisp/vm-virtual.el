@@ -849,7 +849,7 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 						    (vm-start-of real-m))))))
 (provide 'vm-virtual)
 
-;; now load vm-avirtual to avoid a loading loop
-(require 'vm-avirtual)
+;; ;; now load vm-avirtual to avoid a loading loop
+;; (require 'vm-avirtual)
 
 ;;; vm-virtual.el ends here
