@@ -5096,6 +5096,33 @@ Its parent keymap is mail-mode-map.")
     ("vm-yank-message-other-folder")
 ))
 
+(defcustom vm-vs-attachment-regexp "^Content-Disposition: attachment"
+  "Regexp used to detect attachments in a message."
+  :group 'vm
+  :type 'regexp)
+
+(defvar vm-spam-words nil
+  "A list of words often contained in spam messages.")
+
+(defvar vm-spam-words-regexp nil
+  "A regexp matching those words in `vm-spam-words'.")
+
+(defcustom vm-spam-words-file
+  (expand-file-name "~/.spam-words")
+  "A file storing a list of words contained in spam messages."
+  :group 'vm
+  :type 'file)
+
+(defcustom vm-vs-spam-score-headers
+  '(("X-Spam-Score:"  "[-+]?[0-9]*\\.?[0-9]+"  string-to-number)
+    ("X-Spam-Status:" "[-+]?[0-9]*\\.?[0-9]+" string-to-number)
+    ("X-Spam-Level:"  "\\*+"     length))
+  "A list of headers to look for spam scores."
+  :group 'vm
+  :type '(repeat (list (string :tag "Header regexp")
+                       (regexp :tag "Regexp matching the score")
+                       (function :tag "Function converting the score to a number"))))
+
 (defconst vm-supported-sort-keys
   '("date" "reversed-date"
     "author" "reversed-author"
@@ -5118,9 +5145,14 @@ Its parent keymap is mail-mode-map.")
     ("recipient")
     ("author")
     ("author-or-recipient")
+    ("outgoing")
+    ("uninteresting-senders")
     ("subject")
     ("sent-before")
     ("sent-after")
+    ("older-than")
+    ("newer-than")
+    ("attachment")
     ("more-chars-than")
     ("less-chars-than")
     ("more-lines-than")
@@ -5145,7 +5177,10 @@ Its parent keymap is mail-mode-map.")
     ("unfiled")
     ("unwritten")
     ("unedited")
-    ("unmarked")))
+    ("unmarked")
+    ("spam-word")
+    ("spam-score")
+    ))
 
 (defconst vm-virtual-selector-function-alist
   '((any . vm-vs-any)
@@ -5160,10 +5195,15 @@ Its parent keymap is mail-mode-map.")
     (recipient . vm-vs-recipient)
     (author . vm-vs-author)
     (author-or-recipient . vm-vs-author-or-recipient)
+    (outgoing . vm-vs-outgoing)
+    (uninteresting-senders . vm-vs-uninteresting-senders)
     (subject . vm-vs-subject)
     (sortable-subject . vm-vs-sortable-subject)
     (sent-before . vm-vs-sent-before)
     (sent-after . vm-vs-sent-after)
+    (older-than . vm-vs-older-than)
+    (newer-than . vm-vs-newer-than)
+    (attachment . vm-vs-attachment)
     (more-chars-than . vm-vs-more-chars-than)
     (less-chars-than . vm-vs-less-chars-than)
     (more-lines-than . vm-vs-more-lines-than)
@@ -5190,7 +5230,10 @@ Its parent keymap is mail-mode-map.")
     (unfiled . vm-vs-unfiled)
     (unwritten . vm-vs-unwritten)
     (unedited . vm-vs-unedited)
-    (unmarked . vm-vs-unmarked)))
+    (unmarked . vm-vs-unmarked)
+    (spam-word . vm-vs-spam-word)
+    (spam-score . vm-vs-spam-score)
+    ))
 
 (defconst vm-supported-attribute-names
   '("new"
