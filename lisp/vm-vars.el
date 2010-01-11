@@ -1766,9 +1766,10 @@ with the first type that matches will be used."
 (defcustom vm-mime-encode-headers-type 'Q
   "*The encoding type to use for encoding headers."
   :group 'vm
-  :type '(choice (const :tag "QP" 'Q)
-                 (const :tag "BASE64" 'B)
-                 (regexp :tag "BASE64 on match of " "[^- !#-'*+/-9=?A-Z^-~]")))
+  :type '(choice (const  Q)
+                 (const  B)
+                 (regexp :tag "BASE64 on match of " 
+			 "[^- !#-'*+/-9=?A-Z^-~]")))
 
 
 (defcustom vm-mime-encode-words-regexp "[^\x0-\x7f]+"
