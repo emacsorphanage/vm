@@ -2800,47 +2800,72 @@ operations")
 	   ;;-------------------
 	   (delete-region old-eob (point-max))
 	   (error (format "Quit received during retrieval from %s"
-			  safe-imapdrop)))))
+			  safe-imapdrop))))
+	(message "Retrieving message body... done")
+	)
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
       )))
 
-(defun vm-imap-refresh-message ()
-  "Refresh the current IMAP folder message by retrieving it from the
-IMAP server."
-  (interactive)
+(defun vm-refresh-message (&optional count)
+  "Refresh the message by retrieving its body from its
+permanent location.  Currently this facility is only available for IMAP
+folders.
+
+With a prefix argument COUNT, the current message and the next 
+COUNT - 1 messages are refreshed.  A negative argument means
+the current message and the previous |COUNT| - 1 messages are
+refreshed.
+
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+only marked messages are refreshed, other messages are ignored."
+  (interactive "p")
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
   (vm-select-folder-buffer)
-  (let ((mm (car vm-message-pointer))
+  (vm-check-for-killed-summary)
+  (vm-error-if-folder-read-only)
+  (vm-error-if-virtual-folder)
+  (if (not (eq vm-folder-access-method 'imap))
+      (error "This is currently available only for imap folders."))
+  (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
+	(mlist (vm-select-marked-or-prefixed-messages count))
+	(mm (car vm-message-pointer))
 	(buffer-read-only nil)
 	(inhibit-read-only t)
 	(buffer-undo-list t)
 	(text-begin nil)
-	(text-end nil))
-    (setq text-begin (marker-position (vm-text-of mm)))
-    (setq text-end (marker-position (vm-text-end-of mm)))
-    (goto-char text-begin)
-    (delete-region (point) text-end)
-    (apply (intern (format "vm-fetch-%s-message" "imap"))
-	   mm nil)
-    ;; delete the new headers
-    (delete-region text-begin
-		   (or (re-search-forward "\n\n" (point-max) t)
-		       (point-max)))
-    ;; fix markers now
-    ;; FIXME the text-end is guessed
-    (set-marker (vm-end-of mm) (point-max))
-    (set-marker (vm-text-of mm) text-begin)
-    (set-marker (vm-text-end-of mm) 
-		(save-excursion
-		  (goto-char (point-max))
-		  (end-of-line 0)	; move back one line
-		  (point)))
-    ;; now care for the layout of the message, old layouts are invalid as the
-    ;; presentation buffer may have been used for other messages in the
-    ;; meantime and the marker got invalid by this.
-    (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
-    (vm-set-body-to-be-retrieved mm nil)
+	(end nil))
+;;     (if (not used-marks) 
+;; 	(setq mlist (list (car vm-message-pointer))))
+    (while mlist
+      (setq mm (car mlist))
+      (setq text-begin (marker-position (vm-text-of mm)))
+      (setq end (marker-position (vm-end-of mm)))
+      (goto-char text-begin)
+      (delete-region (point) end)
+      (apply (intern (format "vm-fetch-%s-message" "imap"))
+	     mm nil)
+      ;; delete the new headers
+      (delete-region text-begin
+		     (or (re-search-forward "\n\n" (point-max) t)
+			 (point-max)))
+      ;; fix markers now
+      ;; FIXME the text-end is guessed
+      (set-marker (vm-end-of mm) (point-max))
+      (set-marker (vm-text-of mm) text-begin)
+      (set-marker (vm-text-end-of mm) 
+		  (save-excursion
+		    (goto-char (point-max))
+		    (end-of-line 0)	; move back one line
+		    (point)))
+      ;; now care for the layout of the message, old layouts are invalid as the
+      ;; presentation buffer may have been used for other messages in the
+      ;; meantime and the marker got invalid by this.
+      (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
+      (vm-set-body-to-be-retrieved mm nil)
+      (setq mlist (cdr mlist)))
     ))
 
 
