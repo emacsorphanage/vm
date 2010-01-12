@@ -329,6 +329,10 @@ The saved messages are flagged as `filed'."
 	    (while mlist
 	      (setq m (vm-real-message-of (car mlist)))
 	      (set-buffer (vm-buffer-of m))
+	      ;; FIXME try to load the body before saving
+	      (if (vm-body-to-be-retrieved-of m)
+		  (error "Message %s body has not been retrieved"
+			 (vm-number-of (car mlist))))
 	      (vm-save-restriction
 	       (widen)
 	       ;; have to stuff the attributes in all cases because
@@ -507,6 +511,10 @@ vm-save-message instead (normally bound to `s')."
 	  (while mlist
 	    (setq m (vm-real-message-of (car mlist)))
 	    (set-buffer (vm-buffer-of m))
+	    ;; FIXME try to load the body before saving
+	    (if (vm-body-to-be-retrieved-of m)
+		(error "Message %s body has not been retrieved"
+		       (vm-number-of (car mlist))))
 	    (vm-save-restriction
 	     (widen)
 	     (if (null file-buffer)
@@ -601,6 +609,10 @@ Output, if any, is displayed.  The message is not altered."
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
       (set-buffer (vm-buffer-of m))
+      ;; FIXME try to load the body before saving
+      (if (vm-body-to-be-retrieved-of m)
+	  (error "Message %s body has not been retrieved"
+		 (vm-number-of (car mlist))))
       (save-restriction
 	(widen)
 	(let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
@@ -733,7 +745,11 @@ arguments after the command finished."
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
       (set-buffer (vm-buffer-of m))
-      (save-restriction
+      ;; FIXME try to load the body before saving
+      (if (vm-body-to-be-retrieved-of m)
+	  (error "Message %s body has not been retrieved"
+		 (vm-number-of (car mlist))))
+     (save-restriction
 	(widen)
 	(cond ((eq vm-pipe-messages-to-command-start t)
 	       (process-send-region process 
@@ -828,7 +844,11 @@ Output, if any, is displayed.  The message is not altered."
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
       (set-buffer (vm-buffer-of m))
-      (if (and vm-display-using-mime (vectorp (vm-mm-layout m)))
+      ;; FIXME try to load the body before saving
+      (if (vm-body-to-be-retrieved-of m)
+	  (error "Message %s body has not been retrieved"
+		 (vm-number-of (car mlist))))
+     (if (and vm-display-using-mime (vectorp (vm-mm-layout m)))
 	  (let ((work-buffer nil))
 	    (unwind-protect
 		(progn
@@ -923,6 +943,11 @@ The saved messages are flagged as `filed'."
 	  (while mlist
 	    (setq m (vm-real-message-of (car mlist)))
 	    (set-buffer (vm-buffer-of m))
+	    ;; FIXME try to load the body before saving
+	    (if (and (not server-to-server-p)
+		     (vm-body-to-be-retrieved-of m))
+		(error "Message %s body has not been retrieved"
+		       (vm-number-of (car mlist))))
 	    (setq source-spec-list 
 		  (and (vm-imap-folder-p)
 		       (vm-imap-parse-spec-to-list 

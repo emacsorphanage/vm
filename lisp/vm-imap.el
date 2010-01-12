@@ -2572,8 +2572,9 @@ operation of the server to minimize I/O."
                (vm-increment vm-modification-counter))
            (setq r-list retrieve-list)
 	   (while mp
-	     ;; (if vm-load-headers-only 
-	     ;; 	 (vm-add-storage-header mp 'imap))
+	     ;; headers-only loading is still experimental. USR, 2010-01-12
+	     (if vm-load-headers-only 
+		 (vm-set-body-to-be-retrieved (car mp) t))
 	     (setq uid (car (car r-list)))
 	     (vm-set-imap-uid-of (car mp) uid)
 	     (vm-set-imap-uid-validity-of (car mp) uid-validity)
@@ -2804,6 +2805,45 @@ operations")
       (vm-buffer-type:exit)
       ;;-------------------
       )))
+
+(defun vm-imap-refresh-message ()
+  "Refresh the current IMAP folder message by retrieving it from the
+IMAP server."
+  (interactive)
+  (vm-select-folder-buffer)
+  (let ((mm (car vm-message-pointer))
+	(buffer-read-only nil)
+	(inhibit-read-only t)
+	(buffer-undo-list t)
+	(text-begin nil)
+	(text-end nil))
+    (setq text-begin (marker-position (vm-text-of mm)))
+    (setq text-end (marker-position (vm-text-end-of mm)))
+    (goto-char text-begin)
+    (delete-region (point) text-end)
+    (apply (intern (format "vm-fetch-%s-message" "imap"))
+	   mm nil)
+    ;; delete the new headers
+    (delete-region text-begin
+		   (or (re-search-forward "\n\n" (point-max) t)
+		       (point-max)))
+    ;; fix markers now
+    ;; FIXME the text-end is guessed
+    (set-marker (vm-end-of mm) (point-max))
+    (set-marker (vm-text-of mm) text-begin)
+    (set-marker (vm-text-end-of mm) 
+		(save-excursion
+		  (goto-char (point-max))
+		  (end-of-line 0)	; move back one line
+		  (point)))
+    ;; now care for the layout of the message, old layouts are invalid as the
+    ;; presentation buffer may have been used for other messages in the
+    ;; meantime and the marker got invalid by this.
+    (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
+    (vm-set-body-to-be-retrieved mm nil)
+    ))
+
+
 
 (defun vm-imap-save-attributes (&optional interactive all-flags)
   "* Save the attributes of changed messages to the IMAP folder.
@@ -3513,7 +3553,6 @@ order to capture the trace of IMAP sessions during the occurrence."
    (let ((mp vm-message-list))
      (while mp
        (vm-set-body-to-be-retrieved (car mp) nil)
-       ;; (vm-set-retrieved-body-of (car mp) nil)
        (setq mp (cdr mp))))
    (message "Marked %s messages as having retrieved bodies" 
 	    (length vm-message-list))

@@ -20,6 +20,32 @@ VM 8.1.1-devo
 
   IMPROVEMENTS:
 
+  ** This version contains an experimental feature of using IMAP
+     folders in "headers-only" mode, with body loaded only on demand.
+     This helps to keep the folder sizes small and VM to run fast.
+     However, this code is in a preliminary stage.  Please use it
+     with CAUTION.
+
+     variable: vm-load-headers-only
+
+     If set to t, all new messages will be loaded to the cache-folder
+     in headers-only mode.  The body is loaded on demand when a
+     message is displayed in its Presentation Buffer.  This is a
+     temporary load and is lost as soon as you move to another
+     message.  To load the body into the Folder Buffer, use:
+
+     command: vm-refresh-message
+
+     This command discards the current body of the message, if any,
+     and refreshes it from the server copy.
+
+     Some of the VM operations, e.g., vm-save-message, can only be
+     performed if the body is loaded into the Folder Buffer.
+
+     FAILURE RECOVERY: If the cache folder gets corrupted for any
+     reason, just delete it from the file system.  A new cache folder
+     will be generated upon the next visit.
+
   ** The commands `vm-mime-save-all-attachments' and
     `vm-mime-delete-all-attachments' have been moved to the VM core
     (from vm-rfaddons).  New variables:

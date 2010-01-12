@@ -935,6 +935,14 @@ configuration.  "
 
 (defun vm-mime-parse-entity (&optional m default-type default-encoding
 				       passing-message-only)
+  "Parse a MIME message M and return its mime-layout.
+Optional arguments:
+DEFAULT-TYPE is the type to use if no Content-Type is specified.
+DEFAULT-ENCODING is the default character encoding if none is
+  specified in the message.
+PASSING-MESSAGE-ONLY is a boolean argument that says that VM is only
+  passing through this message.  So, a full analysis is not required.
+                                                     (USR, 2010-01-12)"
   (catch 'return-value
     (save-excursion
       (if (and m (not passing-message-only))
@@ -1201,6 +1209,11 @@ configuration.  "
 	     )))))))
 
 (defun vm-mime-parse-entity-safe (&optional m c-t c-t-e p-m-only)
+  "Like vm-mime-parse-entity, but recovers from any errors.
+DEFAULT-TYPE, unless specified, is assumed to be text/plain.
+DEFAULT-TRANSFER-ENCODING, unless specified, is assumed to be 7bit.
+						(USR, 2010-01-12)"
+
   (or c-t (setq c-t '("text/plain" "charset=us-ascii")))
   (or c-t-e (setq c-t-e "7bit"))
   ;; don't let subpart parse errors make the whole parse fail.  use default
@@ -1411,7 +1424,7 @@ shorter pieces, rebuilt it from them."
 	;; fetch the real message now
 	(goto-char (point-min))
 	(cond ((and (vm-message-access-method-of mm)
-		    (vm-body-to-be-retrieved mm))
+		    (vm-body-to-be-retrieved-of mm))
 	       (vm-fetch-message 
 		(list (vm-message-access-method-of mm)) mm))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
