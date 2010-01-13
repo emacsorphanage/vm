@@ -2808,6 +2808,7 @@ operations")
       ;;-------------------
       )))
 
+;;;###autoload
 (defun vm-refresh-message (&optional count)
   "Refresh the message by retrieving its body from its
 permanent location.  Currently this facility is only available for IMAP
@@ -2870,6 +2871,7 @@ only marked messages are refreshed, other messages are ignored."
        (setq mlist (cdr mlist))))				
     ))
 
+;;;###autoload
 (defun vm-unload-message (&optional count)
   "Unload the message body.  It can be retrieved again from its
 permanent location.  Currently this facility is only available

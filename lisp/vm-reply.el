@@ -937,6 +937,10 @@ Subject: header manually."
 	(setq vm-system-state 'forwarding
 	      vm-forward-list (list (car mp))
 	      default-directory dir)
+	;; FIXME try to load the body before saving
+	(if (vm-body-to-be-retrieved-of (car mp))
+	    (error "Message %s body has not been retrieved"
+		   (vm-number-of (car mp))))
 	(if miming
 	    (progn
 	      (setq mail-buffer (current-buffer))
@@ -1006,6 +1010,10 @@ you can change the recipient address before resending the message."
 	(dir default-directory)
 	(layout (vm-mm-layout (car vm-message-pointer)))
 	(lim (vm-text-end-of (car vm-message-pointer))))
+    ;; FIXME try to load the body before saving
+    (if (vm-body-to-be-retrieved-of (car vm-message-pointer))
+	(error "Message %s body has not been retrieved"
+	       (vm-number-of (car vm-message-poiner))))
       (save-restriction
 	(widen)
 	(if (or (not (vectorp layout))
@@ -1079,6 +1087,10 @@ You may also create a Resent-Cc header."
 	  (vmp vm-message-pointer)
 	  (start (vm-headers-of (car vm-message-pointer)))
 	  (lim (vm-text-end-of (car vm-message-pointer))))
+      ;; FIXME try to load the body before saving
+      (if (vm-body-to-be-retrieved-of (car vm-message-pointer))
+	  (error "Message %s body has not been retrieved"
+		 (vm-number-of (car vm-message-pointer))))
       ;; briefly nullify vm-mail-header-from to keep vm-mail-internal
       ;; from inserting another From header.
       (let ((vm-mail-header-from nil))
@@ -1146,7 +1158,14 @@ only marked messages will be put into the digest."
 	(mlist (if (eq last-command 'vm-next-command-uses-marks)
 		   (vm-select-marked-or-prefixed-messages 0)
 		 vm-message-list))
+	(ms mlist)
 	start header-end boundary)
+    ;; FIXME try to load the body before saving
+    (while ms
+      (if (vm-body-to-be-retrieved-of (car ms))
+	    (error "Message %s body has not been retrieved"
+		   (vm-number-of (car ms))))
+      (setq ms (cdr ms)))
     (save-restriction
       (widen)
       (vm-mail-internal

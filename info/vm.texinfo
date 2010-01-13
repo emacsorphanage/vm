@@ -4241,6 +4241,7 @@ will generate them afresh when the folder is visited.
 
 The first message of the VM folder file contains additional headers that
 VM uses for remembering information between sessions.
+
 @itemize
 @item
 X-VM-Bookmark. This header stores the position of the cursor, as a
@@ -4275,6 +4276,7 @@ messages again in future in order to avoid duplication.
 Internal to Emacs, VM stores the folder as simply a text buffer.  However, it
 remembers a variety of data about the message contents in the buffer
 through internal variables.
+
 @itemize
 @item
 @code{vm-message-list}.  A list of message data structures for all the
@@ -4321,12 +4323,17 @@ that the current buffer is involved in.
 
 The message data structure is a vector containing various pieces of
 data:
+
 @itemize
 @item
 Location data.  This data about the location of the various parts of the
 message in the folder buffer is calculated after a folder is loaded and
 parsed. 
+
 @itemize
+@item
+start.  The starting position of the message, at which a leading
+separator line begins.
 @item
 headers. The position in the folder buffer where the headers of the message
 start.
@@ -4345,6 +4352,7 @@ end. The position in the folder buffer where the message ends.
 @item
 Soft data.  This vector contains other calculated data about the
 message. 
+
 @itemize
 @item
 number. The message number as an integer.
@@ -4406,6 +4414,7 @@ inherited from its real folder.
 Attributes.  All the hard-wired message attributes are stored in this
 vector.  They also get saved as part of the @code{X-VM-v5-Data} header
 field when the folder is saved to disk.
+
 @itemize
 @item
 new-flag.  Flag to indicate if the message is ``new''.
@@ -4435,6 +4444,7 @@ this vector is only supposed to have data that can be calculated from
 the message itself, the fields pop-uidl, imap-uid and imap-uid-validity
 form an exception.  They are really hard data that cannot be calculated
 from anything else.
+
 @itemize
 @item
 byte-count.  The size of the message in bytes.
@@ -4495,6 +4505,7 @@ spam-score.  The spam score of the message.
 @item
 Mirror Data.  Extra data shared by virtual messages if vm-virtual-mirror
 is non-nil.
+
 @itemize
 @item 
 edit-buffer.  If the message is being edited, this is the buffer being

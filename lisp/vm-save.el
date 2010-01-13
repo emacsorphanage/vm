@@ -943,11 +943,6 @@ The saved messages are flagged as `filed'."
 	  (while mlist
 	    (setq m (vm-real-message-of (car mlist)))
 	    (set-buffer (vm-buffer-of m))
-	    ;; FIXME try to load the body before saving
-	    (if (and (not server-to-server-p)
-		     (vm-body-to-be-retrieved-of m))
-		(error "Message %s body has not been retrieved"
-		       (vm-number-of (car mlist))))
 	    (setq source-spec-list 
 		  (and (vm-imap-folder-p)
 		       (vm-imap-parse-spec-to-list 
@@ -957,6 +952,11 @@ The saved messages are flagged as `filed'."
 			      (nth 1 target-spec-list))
 		       (equal (nth 5 source-spec-list) 
 			      (nth 5 target-spec-list))))
+	    ;; FIXME try to load the body before saving
+	    (if (and (not server-to-server-p)
+		     (vm-body-to-be-retrieved-of m))
+		(error "Message %s body has not been retrieved"
+		       (vm-number-of (car mlist))))
 	    (if server-to-server-p 	; economise on upstream data traffic
 		(let ((process (vm-re-establish-folder-imap-session)))
 		  (vm-imap-copy-message process m mailbox))

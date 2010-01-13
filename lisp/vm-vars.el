@@ -4622,6 +4622,9 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "w" 'vm-save-message-sans-headers)
     (define-key map "A" 'vm-auto-archive-messages)
     (define-key map "S" 'vm-save-folder)
+    ;; these two key bindings are experimental
+    (define-key map "o" 'vm-load-message)
+    (define-key map "O" 'vm-unload-message)
     (define-key map "||" 'vm-pipe-message-to-command)
     (define-key map "|d" 'vm-pipe-message-to-command-discard-output)
     (define-key map "|s" 'vm-pipe-messages-to-command)
