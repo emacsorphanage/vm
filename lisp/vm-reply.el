@@ -1013,7 +1013,7 @@ you can change the recipient address before resending the message."
     ;; FIXME try to load the body before saving
     (if (vm-body-to-be-retrieved-of (car vm-message-pointer))
 	(error "Message %s body has not been retrieved"
-	       (vm-number-of (car vm-message-poiner))))
+	       (vm-number-of (car vm-message-pointer))))
       (save-restriction
 	(widen)
 	(if (or (not (vectorp layout))
@@ -1158,9 +1158,9 @@ only marked messages will be put into the digest."
 	(mlist (if (eq last-command 'vm-next-command-uses-marks)
 		   (vm-select-marked-or-prefixed-messages 0)
 		 vm-message-list))
-	(ms mlist)
-	start header-end boundary)
+	ms start header-end boundary)
     ;; FIXME try to load the body before saving
+    (setq ms mlist)
     (while ms
       (if (vm-body-to-be-retrieved-of (car ms))
 	    (error "Message %s body has not been retrieved"
