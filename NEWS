@@ -42,6 +42,11 @@ VM 8.1.1-devo
      Some of the VM operations, e.g., vm-save-message, can only be
      performed if the body is loaded into the Folder Buffer.
 
+     command : vm-unload-message
+
+     This command discards the current body of the message and leaves
+     it empty.
+
      FAILURE RECOVERY: If the cache folder gets corrupted for any
      reason, just delete it from the file system.  A new cache folder
      will be generated upon the next visit.
