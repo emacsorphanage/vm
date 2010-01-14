@@ -1324,6 +1324,9 @@ shorter pieces, rebuilt it from them."
 (defvar standard-display-table)
 (defvar buffer-file-type)
 (defun vm-make-presentation-copy (m)
+  "Create a copy of the message M in the Presentation Buffer.  If
+working in headers-only mode, the copy is made from the external
+source of the message."
   (let ((mail-buffer (current-buffer))
 	b mm
 	(real-m (vm-real-message-of m))
@@ -2069,8 +2072,8 @@ in the buffer.  The function is expected to make the message
       (let ((layout (vm-mm-layout (car vm-message-pointer)))
 	    (m (car vm-message-pointer)))
 	(message "Decoding MIME message...")
-	(cond ((stringp layout)
-	       (error "Invalid MIME message: %s" layout)))
+	(if (stringp layout)
+	       (error "Invalid MIME message: %s" layout))
 	(if (vm-mime-plain-message-p m)
 	    (error "Message needs no decoding."))
 	(if (not vm-presentation-buffer)
@@ -2095,6 +2098,7 @@ in the buffer.  The function is expected to make the message
 		 (if (vectorp layout)
 		     (progn
 		       (vm-decode-mime-layout layout)
+		       ;; Delete the original presentation copy
 		       (delete-region (point) (point-max))))
 		 (vm-energize-urls)
 		 (vm-highlight-headers-maybe)
@@ -2129,6 +2133,9 @@ in the buffer.  The function is expected to make the message
     filename))
 
 (defun vm-decode-mime-layout (layout &optional dont-honor-c-d)
+  "Decode the MIME message in the current buffer using LAYOUT.  
+DONT-HONOR-C-D non-Nil, then don't honor the Content-Disposition
+declarations in the attachments and make a decision independently."
   (let ((modified (buffer-modified-p))
 	new-layout file type type2 type-no-subtype (extent nil))
     (unwind-protect

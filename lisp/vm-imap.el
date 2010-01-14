@@ -2809,18 +2809,18 @@ operations")
       )))
 
 ;;;###autoload
-(defun vm-refresh-message (&optional count)
-  "Refresh the message by retrieving its body from its
+(defun vm-load-message (&optional count)
+  "Load the message by retrieving its body from its
 permanent location.  Currently this facility is only available for IMAP
 folders.
 
 With a prefix argument COUNT, the current message and the next 
-COUNT - 1 messages are refreshed.  A negative argument means
+COUNT - 1 messages are loaded.  A negative argument means
 the current message and the previous |COUNT| - 1 messages are
-refreshed.
+loaded.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
-only marked messages are refreshed, other messages are ignored."
+only marked messages are loaded, other messages are ignored."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
@@ -2872,10 +2872,17 @@ only marked messages are refreshed, other messages are ignored."
     ))
 
 ;;;###autoload
+(defun vm-refresh-message (&optional count)
+  "This is an alias for vm-load-message."
+  (interactive "p")
+  (call-interactively (function vm-load-message)))
+
+;;;###autoload
 (defun vm-unload-message (&optional count)
-  "Unload the message body.  It can be retrieved again from its
-permanent location.  Currently this facility is only available
-for IMAP folders.
+  "Unload the message body, i.e., delete it from the folder
+buffer.  It can be retrieved again in future from its permanent
+external location.  Currently this facility is only available for
+IMAP folders.
 
 With a prefix argument COUNT, the current message and the next 
 COUNT - 1 messages are unloaded.  A negative argument means
