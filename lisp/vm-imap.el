@@ -2826,49 +2826,50 @@ only marked messages are loaded, other messages are ignored."
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
-  (vm-error-if-folder-read-only)
-  (vm-error-if-virtual-folder)
-  (if (not (eq vm-folder-access-method 'imap))
-      (error "This is currently available only for imap folders."))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-marked-or-prefixed-messages count))
-	(mm (car vm-message-pointer))
 	(buffer-read-only nil)
 	(inhibit-read-only t)
 	(buffer-undo-list t)
 	(text-begin nil)
-	(text-end nil))
+	(text-end nil)
+	m mm)
 ;;     (if (not used-marks) 
 ;; 	(setq mlist (list (car vm-message-pointer))))
-    (vm-save-restriction
-     (while mlist
-       (widen)
-       (setq mm (car mlist))
-       (setq text-begin (marker-position (vm-text-of mm)))
-       (setq text-end (marker-position (vm-text-end-of mm)))
-       (narrow-to-region (marker-position (vm-headers-of mm)) text-end)
-       (goto-char text-begin)
-       (delete-region (point) (point-max))
-       (apply (intern (format "vm-fetch-%s-message" "imap"))
-	      mm nil)
-       ;; delete the new headers
-       (delete-region text-begin
-		      (or (re-search-forward "\n\n" (point-max) t)
-			  (point-max)))
-       ;; fix markers now
-       ;; FIXME the text-end is guessed
-       (set-marker (vm-text-of mm) text-begin)
-       (set-marker (vm-text-end-of mm) 
-		   (save-excursion
-		     (goto-char (point-max))
-		     (end-of-line 0)	; move back one line
-		     (kill-line 1)
-		     (point)))
-       (goto-char text-begin)
-       ;; now care for the layout of the message
-       (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
-       (vm-set-body-to-be-retrieved mm nil)
-       (setq mlist (cdr mlist))))				
+    (save-excursion
+      (while mlist
+	(setq m (car mlist))
+	(setq mm (vm-real-message-of m))
+	(set-buffer (vm-buffer-of mm))
+	(if (not (eq vm-folder-access-method 'imap))
+	    (error "This is currently available only for imap folders."))
+	(vm-save-restriction
+	 (widen)
+	 (setq text-begin (marker-position (vm-text-of mm)))
+	 (setq text-end (marker-position (vm-text-end-of mm)))
+	 (narrow-to-region (marker-position (vm-headers-of mm)) text-end)
+	 (goto-char text-begin)
+	 (delete-region (point) (point-max))
+	 (apply (intern (format "vm-fetch-%s-message" "imap"))
+		mm nil)
+	 ;; delete the new headers
+	 (delete-region text-begin
+			(or (re-search-forward "\n\n" (point-max) t)
+			    (point-max)))
+	 ;; fix markers now
+	 ;; FIXME the text-end is guessed
+	 (set-marker (vm-text-of mm) text-begin)
+	 (set-marker (vm-text-end-of mm) 
+		     (save-excursion
+		       (goto-char (point-max))
+		       (end-of-line 0)	; move back one line
+		       (kill-line 1)
+		       (point)))
+	 (goto-char text-begin)
+	 ;; now care for the layout of the message
+	 (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
+	 (vm-set-body-to-be-retrieved mm nil)
+	 (setq mlist (cdr mlist)))))				
     ))
 
 ;;;###autoload
@@ -2896,31 +2897,32 @@ only marked messages are unloaded, other messages are ignored."
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
-  (vm-error-if-folder-read-only)
-  (vm-error-if-virtual-folder)
-  (if (not (eq vm-folder-access-method 'imap))
-      (error "This is currently available only for imap folders."))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-marked-or-prefixed-messages count))
-	(mm (car vm-message-pointer))
 	(buffer-read-only nil)
 	(inhibit-read-only t)
 	(buffer-undo-list t)
 	(text-begin nil)
-	(text-end nil))
-;;     (if (not used-marks) 
-;; 	(setq mlist (list (car vm-message-pointer))))
-    (vm-save-restriction
-     (widen)
-     (while mlist
-       (setq mm (car mlist))
-       (setq text-begin (marker-position (vm-text-of mm)))
-       (setq text-end (marker-position (vm-text-end-of mm)))
-       (goto-char text-begin)
-       (delete-region (point) text-end)
-       (vm-set-mime-layout-of mm nil)
-       (vm-set-body-to-be-retrieved mm t)
-       (setq mlist (cdr mlist))))				
+	(text-end nil)
+	m mm)
+    ;;     (if (not used-marks) 
+    ;; 	(setq mlist (list (car vm-message-pointer))))
+    (save-excursion
+      (while mlist
+	(setq m (car mlist))
+	(setq mm (vm-real-message-of m))
+	(set-buffer (vm-buffer-of mm))
+	(if (not (eq vm-folder-access-method 'imap))
+	    (error "This is currently available only for imap folders."))
+	(vm-save-restriction
+	 (widen)
+	 (setq text-begin (marker-position (vm-text-of mm)))
+	 (setq text-end (marker-position (vm-text-end-of mm)))
+	 (goto-char text-begin)
+	 (delete-region (point) text-end)
+	 (vm-set-mime-layout-of mm nil)
+	 (vm-set-body-to-be-retrieved mm t)
+	 (setq mlist (cdr mlist)))))				
     ))
 
 
