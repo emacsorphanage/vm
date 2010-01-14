@@ -18,6 +18,12 @@ Status
 
 VM 8.1.1-devo
 
+  CHANGES:
+
+  ** vm-pgg is not loaded by default because it is an add-on that is
+     currently not being maintained.  Users should load it from their
+     .vm file.  See the comments at the beginning of vm-pgg.el.
+
   IMPROVEMENTS:
 
   ** This version contains an experimental feature of using IMAP
