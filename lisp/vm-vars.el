@@ -775,13 +775,6 @@ still experimental functionality.)")
 
 (make-variable-buffer-local 'vm-sync-thunderbird-status)
 
-(defcustom vm-message-includes-separators
-  nil
-"*Non-nil value means that VM should include the leading and
-separator lines when it passes a message to external programs."
-  :group 'vm
-  :type 'boolean)
-
 (defcustom vm-visible-headers
   '("Resent-"
     "From:" "Sender:"
@@ -1773,9 +1766,10 @@ with the first type that matches will be used."
 (defcustom vm-mime-encode-headers-type 'Q
   "*The encoding type to use for encoding headers."
   :group 'vm
-  :type '(choice (const :tag "QP" 'Q)
-                 (const :tag "BASE64" 'B)
-                 (regexp :tag "BASE64 on match of " "[^- !#-'*+/-9=?A-Z^-~]")))
+  :type '(choice (const  Q)
+                 (const  B)
+                 (regexp :tag "BASE64 on match of " 
+			 "[^- !#-'*+/-9=?A-Z^-~]")))
 
 
 (defcustom vm-mime-encode-words-regexp "[^\x0-\x7f]+"
@@ -4628,6 +4622,9 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "w" 'vm-save-message-sans-headers)
     (define-key map "A" 'vm-auto-archive-messages)
     (define-key map "S" 'vm-save-folder)
+    ;; these two key bindings are experimental
+    (define-key map "o" 'vm-load-message)
+    (define-key map "O" 'vm-unload-message)
     (define-key map "||" 'vm-pipe-message-to-command)
     (define-key map "|d" 'vm-pipe-message-to-command-discard-output)
     (define-key map "|s" 'vm-pipe-messages-to-command)
@@ -5096,6 +5093,33 @@ Its parent keymap is mail-mode-map.")
     ("vm-yank-message-other-folder")
 ))
 
+(defcustom vm-vs-attachment-regexp "^Content-Disposition: attachment"
+  "Regexp used to detect attachments in a message."
+  :group 'vm
+  :type 'regexp)
+
+(defvar vm-spam-words nil
+  "A list of words often contained in spam messages.")
+
+(defvar vm-spam-words-regexp nil
+  "A regexp matching those words in `vm-spam-words'.")
+
+(defcustom vm-spam-words-file
+  (expand-file-name "~/.spam-words")
+  "A file storing a list of words contained in spam messages."
+  :group 'vm
+  :type 'file)
+
+(defcustom vm-vs-spam-score-headers
+  '(("X-Spam-Score:"  "[-+]?[0-9]*\\.?[0-9]+"  string-to-number)
+    ("X-Spam-Status:" "[-+]?[0-9]*\\.?[0-9]+" string-to-number)
+    ("X-Spam-Level:"  "\\*+"     length))
+  "A list of headers to look for spam scores."
+  :group 'vm
+  :type '(repeat (list (string :tag "Header regexp")
+                       (regexp :tag "Regexp matching the score")
+                       (function :tag "Function converting the score to a number"))))
+
 (defconst vm-supported-sort-keys
   '("date" "reversed-date"
     "author" "reversed-author"
@@ -5118,9 +5142,14 @@ Its parent keymap is mail-mode-map.")
     ("recipient")
     ("author")
     ("author-or-recipient")
+    ("outgoing")
+    ("uninteresting-senders")
     ("subject")
     ("sent-before")
     ("sent-after")
+    ("older-than")
+    ("newer-than")
+    ("attachment")
     ("more-chars-than")
     ("less-chars-than")
     ("more-lines-than")
@@ -5145,7 +5174,10 @@ Its parent keymap is mail-mode-map.")
     ("unfiled")
     ("unwritten")
     ("unedited")
-    ("unmarked")))
+    ("unmarked")
+    ("spam-word")
+    ("spam-score")
+    ))
 
 (defconst vm-virtual-selector-function-alist
   '((any . vm-vs-any)
@@ -5160,10 +5192,15 @@ Its parent keymap is mail-mode-map.")
     (recipient . vm-vs-recipient)
     (author . vm-vs-author)
     (author-or-recipient . vm-vs-author-or-recipient)
+    (outgoing . vm-vs-outgoing)
+    (uninteresting-senders . vm-vs-uninteresting-senders)
     (subject . vm-vs-subject)
     (sortable-subject . vm-vs-sortable-subject)
     (sent-before . vm-vs-sent-before)
     (sent-after . vm-vs-sent-after)
+    (older-than . vm-vs-older-than)
+    (newer-than . vm-vs-newer-than)
+    (attachment . vm-vs-attachment)
     (more-chars-than . vm-vs-more-chars-than)
     (less-chars-than . vm-vs-less-chars-than)
     (more-lines-than . vm-vs-more-lines-than)
@@ -5190,7 +5227,10 @@ Its parent keymap is mail-mode-map.")
     (unfiled . vm-vs-unfiled)
     (unwritten . vm-vs-unwritten)
     (unedited . vm-vs-unedited)
-    (unmarked . vm-vs-unmarked)))
+    (unmarked . vm-vs-unmarked)
+    (spam-word . vm-vs-spam-word)
+    (spam-score . vm-vs-spam-score)
+    ))
 
 (defconst vm-supported-attribute-names
   '("new"

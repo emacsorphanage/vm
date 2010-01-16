@@ -18,7 +18,48 @@ Status
 
 VM 8.1.1-devo
 
+  CHANGES:
+
+  ** vm-pgg is not loaded by default because it is an add-on that is
+     currently not being maintained.  Users should load it from their
+     .vm file.  See the comments at the beginning of vm-pgg.el.
+
   IMPROVEMENTS:
+
+  ** This version contains an experimental feature of using IMAP
+     folders in "headers-only" mode, with body loaded only on demand.
+     This helps to keep the folder sizes small and VM to run faster.
+     However, this code is in a preliminary stage.  Please use it
+     with CAUTION.
+
+     variable: vm-load-headers-only
+
+     If set to t, all new messages will be loaded to the cache-folder
+     in headers-only mode.  The body is loaded on demand when a
+     message is displayed in the Presentation Buffer.  This is a
+     temporary load and is lost as soon as you move to another
+     message.  
+
+     Previewing of messages interferes with headers-only operation.
+     So, you should set `vm-preview-lines' to nil.
+
+     To load the message body into the Folder Buffer, use:
+
+     command: vm-load-message (bound to 'o')
+
+     This command discards the current body of the message, if any,
+     and refreshes it from the server copy. Some of the VM operations,
+     e.g., vm-save-message, can only be performed if the body is
+     loaded into the Folder Buffer. 
+
+     command : vm-unload-message (bound to 'O')
+
+     This command discards the current body of the message from the
+     Folder Buffer and leaves it empty.
+
+     FAILURE RECOVERY: If the cache folder gets corrupted for any
+     reason, just delete it from the file system.  A new cache folder
+     will be generated upon the next visit.
 
   ** The commands `vm-mime-save-all-attachments' and
     `vm-mime-delete-all-attachments' have been moved to the VM core
@@ -41,10 +82,6 @@ VM 8.1.1-devo
     being used.  The option `take-action-on-attachments' is not
     included by default.
 
-  * New variable: `vm-message-includes-separators' allows the meaning of
-    'message' to include separators (the leading 'From ' line and
-    trailing blank line).
-  
   * `vm-quit-no-change' offers to delete the auto-save file if there is
     one.  (This wasn't getting done due to a bug in FSF Emacs.)
 

@@ -2572,8 +2572,9 @@ operation of the server to minimize I/O."
                (vm-increment vm-modification-counter))
            (setq r-list retrieve-list)
 	   (while mp
-	     ;; (if vm-load-headers-only 
-	     ;; 	 (vm-add-storage-header mp 'imap))
+	     ;; headers-only loading is still experimental. USR, 2010-01-12
+	     (if vm-load-headers-only 
+		 (vm-set-body-to-be-retrieved (car mp) t))
 	     (setq uid (car (car r-list)))
 	     (vm-set-imap-uid-of (car mp) uid)
 	     (vm-set-imap-uid-validity-of (car mp) uid-validity)
@@ -2799,11 +2800,132 @@ operations")
 	   ;;-------------------
 	   (delete-region old-eob (point-max))
 	   (error (format "Quit received during retrieval from %s"
-			  safe-imapdrop)))))
+			  safe-imapdrop))))
+	(message "Retrieving message body... done")
+	)
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
       )))
+
+;;;###autoload
+(defun vm-load-message (&optional count)
+  "Load the message by retrieving its body from its
+permanent location.  Currently this facility is only available for IMAP
+folders.
+
+With a prefix argument COUNT, the current message and the next 
+COUNT - 1 messages are loaded.  A negative argument means
+the current message and the previous |COUNT| - 1 messages are
+loaded.
+
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+only marked messages are loaded, other messages are ignored."
+  (interactive "p")
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
+  (vm-select-folder-buffer)
+  (vm-check-for-killed-summary)
+  (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
+	(mlist (vm-select-marked-or-prefixed-messages count))
+	(buffer-read-only nil)
+	(inhibit-read-only t)
+	(buffer-undo-list t)
+	(text-begin nil)
+	(text-end nil)
+	m mm)
+;;     (if (not used-marks) 
+;; 	(setq mlist (list (car vm-message-pointer))))
+    (save-excursion
+      (while mlist
+	(setq m (car mlist))
+	(setq mm (vm-real-message-of m))
+	(set-buffer (vm-buffer-of mm))
+	(if (not (eq vm-folder-access-method 'imap))
+	    (error "This is currently available only for imap folders."))
+	(vm-save-restriction
+	 (widen)
+	 (setq text-begin (marker-position (vm-text-of mm)))
+	 (setq text-end (marker-position (vm-text-end-of mm)))
+	 (narrow-to-region (marker-position (vm-headers-of mm)) text-end)
+	 (goto-char text-begin)
+	 (delete-region (point) (point-max))
+	 (apply (intern (format "vm-fetch-%s-message" "imap"))
+		mm nil)
+	 ;; delete the new headers
+	 (delete-region text-begin
+			(or (re-search-forward "\n\n" (point-max) t)
+			    (point-max)))
+	 ;; fix markers now
+	 ;; FIXME the text-end is guessed
+	 (set-marker (vm-text-of mm) text-begin)
+	 (set-marker (vm-text-end-of mm) 
+		     (save-excursion
+		       (goto-char (point-max))
+		       (end-of-line 0)	; move back one line
+		       (kill-line 1)
+		       (point)))
+	 (goto-char text-begin)
+	 ;; now care for the layout of the message
+	 (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
+	 (vm-set-body-to-be-retrieved mm nil)
+	 (setq mlist (cdr mlist)))))				
+    ))
+
+;;;###autoload
+(defun vm-refresh-message (&optional count)
+  "This is an alias for vm-load-message."
+  (interactive "p")
+  (call-interactively (function vm-load-message)))
+
+;;;###autoload
+(defun vm-unload-message (&optional count)
+  "Unload the message body, i.e., delete it from the folder
+buffer.  It can be retrieved again in future from its permanent
+external location.  Currently this facility is only available for
+IMAP folders.
+
+With a prefix argument COUNT, the current message and the next 
+COUNT - 1 messages are unloaded.  A negative argument means
+the current message and the previous |COUNT| - 1 messages are
+unloaded.
+
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+only marked messages are unloaded, other messages are ignored."
+  (interactive "p")
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
+  (vm-select-folder-buffer)
+  (vm-check-for-killed-summary)
+  (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
+	(mlist (vm-select-marked-or-prefixed-messages count))
+	(buffer-read-only nil)
+	(inhibit-read-only t)
+	(buffer-undo-list t)
+	(text-begin nil)
+	(text-end nil)
+	m mm)
+    ;;     (if (not used-marks) 
+    ;; 	(setq mlist (list (car vm-message-pointer))))
+    (save-excursion
+      (while mlist
+	(setq m (car mlist))
+	(setq mm (vm-real-message-of m))
+	(set-buffer (vm-buffer-of mm))
+	(if (not (eq vm-folder-access-method 'imap))
+	    (error "This is currently available only for imap folders."))
+	(vm-save-restriction
+	 (widen)
+	 (setq text-begin (marker-position (vm-text-of mm)))
+	 (setq text-end (marker-position (vm-text-end-of mm)))
+	 (goto-char text-begin)
+	 (delete-region (point) text-end)
+	 (vm-set-mime-layout-of mm nil)
+	 (vm-set-body-to-be-retrieved mm t)
+	 (setq mlist (cdr mlist)))))				
+    ))
+
+
 
 (defun vm-imap-save-attributes (&optional interactive all-flags)
   "* Save the attributes of changed messages to the IMAP folder.
@@ -3513,7 +3635,6 @@ order to capture the trace of IMAP sessions during the occurrence."
    (let ((mp vm-message-list))
      (while mp
        (vm-set-body-to-be-retrieved (car mp) nil)
-       ;; (vm-set-retrieved-body-of (car mp) nil)
        (setq mp (cdr mp))))
    (message "Marked %s messages as having retrieved bodies" 
 	    (length vm-message-list))

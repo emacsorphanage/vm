@@ -2507,16 +2507,39 @@ Save all unfiled messages that auto-match a folder via
 are flagged for deletion are not saved by this command.  If invoked with a
 prefix argument, confirmation will be requested for each save.
 @findex vm-pipe-message-to-command
-@kindex |
-@item | (@code{vm-pipe-message-to-command})
+@kindex ||
+@item || (@code{vm-pipe-message-to-command})
 Runs a shell command with some or all of the current message as input.
-By default, the entire message is used.@*
-@*
+By default, the entire message is used.  However, the leading and
+trailing message separator lines are not included.  When applied to
+multiple messages, the command is invoked on each message individually.@* 
 If invoked with one @t{C-u} the text portion of the message is used.@*
 If invoked with two @t{C-u}'s the header portion of the message is used.@*
-@*
+In invoked with three @t{C-u}'s the visible headers and the text
+portions of the message are used.@*
 If the shell command generates any output, it is displayed in a
 @samp{*Shell Command Output*} buffer.  The message itself is not altered.
+@findex vm-pipe-message-to-command-discard-output
+@kindex |d
+@item |d (@code{vm-pipe-message-to-command-discard-output})
+Runs a shell command with some or all of the current message as input,
+like the above, but will not display the output.
+@findex vm-pipe-messages-to-command
+@vindex vm-pipe-messages-to-command-start
+@vindex vm-pipe-messages-to-command-end
+@kindex |s
+@item |s (@code{vm-pipe-messages-to-command})
+Runs a shell command using as input the current message or marked
+messages in the mbox format.  In contrast to
+@code{vm-pipe-message-to-command}, the leading and trailing separator
+lines are included.  This behaviour can be altered using the variables
+@code{vm-pipe-messages-to-command-start} and
+@code{vm-pipe-messages-to-command-end}. 
+@findex vm-pipe-messages-to-command-discard-output
+@kindex |n
+@item |n (@code{vm-pipe-messages-to-command-discard-output})
+Runs a shell command using as input the current message or marked
+messages in the mbox format, but will not display the output.
 @end table
 
 @vindex vm-berkeley-mail-compatibility
@@ -4218,6 +4241,7 @@ will generate them afresh when the folder is visited.
 
 The first message of the VM folder file contains additional headers that
 VM uses for remembering information between sessions.
+
 @itemize
 @item
 X-VM-Bookmark. This header stores the position of the cursor, as a
@@ -4252,6 +4276,7 @@ messages again in future in order to avoid duplication.
 Internal to Emacs, VM stores the folder as simply a text buffer.  However, it
 remembers a variety of data about the message contents in the buffer
 through internal variables.
+
 @itemize
 @item
 @code{vm-message-list}.  A list of message data structures for all the
@@ -4298,12 +4323,17 @@ that the current buffer is involved in.
 
 The message data structure is a vector containing various pieces of
 data:
+
 @itemize
 @item
 Location data.  This data about the location of the various parts of the
 message in the folder buffer is calculated after a folder is loaded and
 parsed. 
+
 @itemize
+@item
+start.  The starting position of the message, at which a leading
+separator line begins.
 @item
 headers. The position in the folder buffer where the headers of the message
 start.
@@ -4322,6 +4352,7 @@ end. The position in the folder buffer where the message ends.
 @item
 Soft data.  This vector contains other calculated data about the
 message. 
+
 @itemize
 @item
 number. The message number as an integer.
@@ -4383,6 +4414,7 @@ inherited from its real folder.
 Attributes.  All the hard-wired message attributes are stored in this
 vector.  They also get saved as part of the @code{X-VM-v5-Data} header
 field when the folder is saved to disk.
+
 @itemize
 @item
 new-flag.  Flag to indicate if the message is ``new''.
@@ -4412,6 +4444,7 @@ this vector is only supposed to have data that can be calculated from
 the message itself, the fields pop-uidl, imap-uid and imap-uid-validity
 form an exception.  They are really hard data that cannot be calculated
 from anything else.
+
 @itemize
 @item
 byte-count.  The size of the message in bytes.
@@ -4472,6 +4505,7 @@ spam-score.  The spam score of the message.
 @item
 Mirror Data.  Extra data shared by virtual messages if vm-virtual-mirror
 is non-nil.
+
 @itemize
 @item 
 edit-buffer.  If the message is being edited, this is the buffer being

@@ -936,6 +936,14 @@ configuration.  "
 
 (defun vm-mime-parse-entity (&optional m default-type default-encoding
 				       passing-message-only)
+  "Parse a MIME message M and return its mime-layout.
+Optional arguments:
+DEFAULT-TYPE is the type to use if no Content-Type is specified.
+DEFAULT-ENCODING is the default character encoding if none is
+  specified in the message.
+PASSING-MESSAGE-ONLY is a boolean argument that says that VM is only
+  passing through this message.  So, a full analysis is not required.
+                                                     (USR, 2010-01-12)"
   (catch 'return-value
     (save-excursion
       (if (and m (not passing-message-only))
@@ -1202,6 +1210,11 @@ configuration.  "
 	     )))))))
 
 (defun vm-mime-parse-entity-safe (&optional m c-t c-t-e p-m-only)
+  "Like vm-mime-parse-entity, but recovers from any errors.
+DEFAULT-TYPE, unless specified, is assumed to be text/plain.
+DEFAULT-TRANSFER-ENCODING, unless specified, is assumed to be 7bit.
+						(USR, 2010-01-12)"
+
   (or c-t (setq c-t '("text/plain" "charset=us-ascii")))
   (or c-t-e (setq c-t-e "7bit"))
   ;; don't let subpart parse errors make the whole parse fail.  use default
@@ -1312,6 +1325,9 @@ shorter pieces, rebuilt it from them."
 (defvar standard-display-table)
 (defvar buffer-file-type)
 (defun vm-make-presentation-copy (m)
+  "Create a copy of the message M in the Presentation Buffer.  If
+working in headers-only mode, the copy is made from the external
+source of the message."
   (let ((mail-buffer (current-buffer))
 	b mm
 	(real-m (vm-real-message-of m))
@@ -1412,7 +1428,7 @@ shorter pieces, rebuilt it from them."
 	;; fetch the real message now
 	(goto-char (point-min))
 	(cond ((and (vm-message-access-method-of mm)
-		    (vm-body-to-be-retrieved mm))
+		    (vm-body-to-be-retrieved-of mm))
 	       (vm-fetch-message 
 		(list (vm-message-access-method-of mm)) mm))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
@@ -2057,8 +2073,8 @@ in the buffer.  The function is expected to make the message
       (let ((layout (vm-mm-layout (car vm-message-pointer)))
 	    (m (car vm-message-pointer)))
 	(message "Decoding MIME message...")
-	(cond ((stringp layout)
-	       (error "Invalid MIME message: %s" layout)))
+	(if (stringp layout)
+	       (error "Invalid MIME message: %s" layout))
 	(if (vm-mime-plain-message-p m)
 	    (error "Message needs no decoding."))
 	(if (not vm-presentation-buffer)
@@ -2083,6 +2099,7 @@ in the buffer.  The function is expected to make the message
 		 (if (vectorp layout)
 		     (progn
 		       (vm-decode-mime-layout layout)
+		       ;; Delete the original presentation copy
 		       (delete-region (point) (point-max))))
 		 (vm-energize-urls)
 		 (vm-highlight-headers-maybe)
@@ -2117,6 +2134,9 @@ in the buffer.  The function is expected to make the message
     filename))
 
 (defun vm-decode-mime-layout (layout &optional dont-honor-c-d)
+  "Decode the MIME message in the current buffer using LAYOUT.  
+DONT-HONOR-C-D non-Nil, then don't honor the Content-Disposition
+declarations in the attachments and make a decision independently."
   (let ((modified (buffer-modified-p))
 	new-layout file type type2 type-no-subtype (extent nil))
     (unwind-protect
