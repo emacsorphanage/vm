@@ -919,7 +919,7 @@ Subject: header manually."
     (let ((dir default-directory)
 	  (miming (and vm-send-using-mime
 		       (equal vm-forwarding-digest-type "mime")))
-	  mail-buffer
+	  reply-buffer
 	  header-end
 	  (mp (vm-select-marked-or-prefixed-messages 1)))
       (save-restriction
@@ -937,13 +937,14 @@ Subject: header manually."
 	(setq vm-system-state 'forwarding
 	      vm-forward-list (list (car mp))
 	      default-directory dir)
+	;; current-buffer is now the reply buffer
 	;; FIXME try to load the body before saving
 	(if (vm-body-to-be-retrieved-of (car mp))
 	    (error "Message %s body has not been retrieved"
 		   (vm-number-of (car mp))))
 	(if miming
 	    (progn
-	      (setq mail-buffer (current-buffer))
+	      (setq reply-buffer (current-buffer))
 	      (set-buffer (vm-make-work-buffer "*vm-forward-buffer*"))
 	      (setq header-end (point))
 	      (insert "\n"))
@@ -984,13 +985,13 @@ Subject: header manually."
 		vm-unforwarded-header-regexp)))
       (if miming
 	  (let ((b (current-buffer)))
-	    (set-buffer mail-buffer)
+	    (set-buffer reply-buffer)
 	    (mail-text)
 	    (vm-mime-attach-object b "message/rfc822" nil
 				   "forwarded message" t)
 	    (add-hook 'kill-buffer-hook
 		      (list 'lambda ()
-			    (list 'if (list 'eq mail-buffer '(current-buffer))
+			    (list 'if (list 'eq reply-buffer '(current-buffer))
 				  (list 'kill-buffer b))))))
 	(mail-position-on-field "To"))
       (run-hooks 'vm-forward-message-hook)
@@ -1380,8 +1381,9 @@ command can be invoked from external agents via an emacsclient."
       (if r
           (setq buffer-name (vm-replace-in-string buffer-name r "_" t)))
       (if (>= (length buffer-name) vm-buffer-name-limit)
-          (setq buffer-name (concat (substring buffer-name vm-buffer-name-limit)
-                                    "...")))))
+          (setq buffer-name 
+		(concat (substring buffer-name 0 (-  vm-buffer-name-limit 4))
+			"...")))))
   buffer-name)
 
 (defvar vm-compositions-exist nil)
@@ -1472,10 +1474,9 @@ Binds the `vm-mail-mode-map' and hooks"
     (and in-reply-to (insert "In-Reply-To: " in-reply-to "\n"))
     (and references (insert "References: " references "\n"))
     (insert "X-Mailer: VM " (vm-version) " under ")
-    (cond ((boundp 'emacs-version)
-	   (insert emacs-version))
-	  (t
-	   (insert "Unknown Emacs")))
+    (if (boundp 'emacs-version)
+	   (insert emacs-version)
+      (insert "Unknown Emacs"))
     (if (functionp 'emacsw32-version)
 	(insert " [" (emacsw32-version) "]"))
     (if (boundp 'system-configuration)

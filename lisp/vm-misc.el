@@ -909,6 +909,7 @@ Returns t if there was a line longer than `fill-column'."
   (let ((long-line)
 	(line-no 1)
 	len-fill-prefix)
+    (forward-line 0)			; cover for bad fill-region fns
     (setq fill-prefix nil)
     (while (and 
 	    ;; stop at end of buffer

@@ -15,7 +15,6 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
-
 VM 8.1.1-devo
 
   CHANGES:
@@ -241,7 +240,7 @@ VM 8.0.14
 
   BUGFIXES
 
-    * Removed incompatibility of a mapvector procedure with XEmacs.
+    * Removed an incompatibility of the mapvector procedure with XEmacs.
 
 VM 8.0.13
 

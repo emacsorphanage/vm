@@ -1297,14 +1297,14 @@ your @code{load-path}.
 @section Reading MIME Messages
 
 @vindex vm-display-using-mime
-If the variable @code{vm-display-using-mime} is non-@code{nil} VM will display
-messages using Multipurpose Internet Mail Extensions (MIME).  @dfn{MIME}
-is a set of extensions to the standard Internet message format that
-allows reliable transmission of arbitrary data including
-images, audio and video, as well as ordinary text.  A non-@code{nil} value for
-this variable means that VM will recognize MIME encoded messages and
+@dfn{MIME} is a set of extensions to the standard Internet message
+format that allows reliable transmission of arbitrary data including
+images, audio and video, as well as ordinary text in different
+languages.  By default, VM will recognize MIME encoded messages and
 display them as specified by the various MIME standards specifications.
-A nil value means VM will display MIME messages as plain text messages.
+This can be turned off by setting the variable
+@code{vm-display-using-mime} to @code{nil} and VM will then display MIME
+messages as plain text messages.
 
 @vindex vm-mime-base64-decoder-program
 @vindex vm-mime-base64-encoder-program
@@ -1404,23 +1404,24 @@ determines the format of the text in those buttons.
 @findex vm-mime-attach-object-from-message
 After decoding you will see either the decoded MIME objects or
 button lines that must be activated to attempt display of the
-MIME object.  The variable
-@code{vm-auto-displayed-mime-content-types} specifies the types
-that are displayed immediately.  Its value should be a list of
-MIME content types that should be displayed immediately after
-decoding.  Other types will be displayed as a button that you
-must activate to display the object.  To activate a button,
-either click the middle mouse button over it, or move the cursor
-to the line and press RET.  If you are running under a window
-system, you can use the right mouse button over a MIME button to
-display a menu of actions you can take on the MIME object.  If
-you prefer using keyboard commands, you can save the MIME object
-with @kbd{$ w}, print it with @kbd{$ p}, or pipe it to a shell
-command with @kbd{$ |}.  Use @kbd{$ s} to append an encapsulated
-message or USENET news article to a folder.  If you want to
-display the object with its characters displayed using Emacs'
-default face, use @kbd{$ RET}.  To display the object using an
-external viewer, type @kbd{$ e}.
+MIME object.  
+
+The variable @code{vm-auto-displayed-mime-content-types} specifies the
+types that are displayed immediately.  Its value should be a list of
+MIME content types that should be displayed immediately after decoding.
+Other types will be displayed as a button that you must activate to
+display the object.  
+
+To activate a button, either click the middle mouse
+button over it, or move the cursor to the line and press RET.  If you
+are running under a window system, you can use the right mouse button
+over a MIME button to display a menu of actions you can take on the MIME
+object.  If you prefer using keyboard commands, you can save the MIME
+object with @kbd{$ w}, print it with @kbd{$ p}, or pipe it to a shell
+command with @kbd{$ |}.  Use @kbd{$ s} to append an encapsulated message
+or USENET news article to a folder.  If you want to display the object
+with its characters displayed using Emacs' default face, use @kbd{$
+RET}.  To display the object using an external viewer, type @kbd{$ e}.
 
 @multitable @columnfractions .20 .80
 @item $ w   @tab @code{vm-mime-reader-map-save-file}
@@ -1434,35 +1435,30 @@ external viewer, type @kbd{$ e}.
 @item $ a   @tab @code{vm-mime-attach-object-from-message}
 @end multitable
 
-@vindex vm-mime-confirm-delete
-@findex vm-delete-mime-object
-Sometimes MIME objects are large and you may not want to save
-them along with the message that contains them.  If so, use
-@kbd{$ d} (@code{vm-delete-mime-object}) while the cursor is on
-the MIME button.  The object will be deleted and replaced with
-an object that indicates what the old object was and the fact
-that it is gone.  This is not an undoable operation, so use this
-command with care.  If you inadvertently delete an object, the
-only way to get it back is to quit visiting the current folder
-without saving and then revisit the folder.  This works because
-the object isn't removed from the disk copy of the folder until
-you save the folder.  By default VM will ask if you're sure
-about deleting an object before doing the deletion.  You can
-make VM not ask this question by setting
-@code{vm-mime-confirm-delete} to @code{nil}.
-
 @vindex vm-mime-delete-after-saving
 @vindex vm-mime-attachment-save-directory
+@vindex vm-mime-confirm-delete
 The MIME attachments can be saved to disk with @kbd{$ w}
-(@code{vm-mime-reader-map-save-file}).  They can be deleted at the same
-time by setting the variable @code{vm-mime-delete-after-saving}.  In
-this case, the attachment is deleted and replaced by a MIME part that
-refers to the saved copy.  The variable
-@code{vm-mime-attachment-save-directory} specifies the default directory
-to save the attachments in.  It is a good idea to
-@code{vm-mime-delete-after-saving} to delete saved attachments instead
-of deleting them manually, because the message will still have a handle
-to retrieve the saved copy.
+(@code{vm-mime-reader-map-save-file}).  They can be deleted at the
+same time by setting the variable @code{vm-mime-delete-after-saving}.
+In this case, the attachment is deleted and replaced by a MIME part
+that refers to the saved copy.  The variable
+@code{vm-mime-attachment-save-directory} specifies the default
+directory to save the attachments in.  The MIME attachments can also
+be deleted directly from the message bodies with @kbd{$ d}
+(@code{vm-delete-mime-object}).  The variable
+@code{vm-mime-confirm-delete} controls whether a confirmation is asked
+for.  
+
+It is a good idea to use @code{vm-mime-delete-after-saving} to delete
+saved attachments instead of deleting them manually, because with the
+former approach the message will have a handle to the saved copy,
+which can be retrieved when desired.
+
+Saving attachments to the file system and deleting them from message
+bodies has the beneficial effect of reducing the size of VM folders.
+That leads to a better utilisation of the computer resources and
+usually a faster operation of VM.
 
 @findex vm-mime-save-all-attachments
 @findex vm-mime-delete-all-attachments
