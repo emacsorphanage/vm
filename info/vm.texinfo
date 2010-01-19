@@ -386,6 +386,7 @@ retrieving any new messages from the system mailbox.
 * POP Spool Files::     How to use a POP mailbox as a spool file
 * IMAP Spool Files::    How to use an IMAP mailbox as a spool file
 * Index Files::         Using an index to speed up VM starting
+* Folder types::        About the mail folder formats handled by VM
 @end menu
 
 @node Spool Files, POP Spool Files, Local Folders, Local Folders
@@ -644,7 +645,7 @@ Here is an example:
 )
 @end example
 
-@node Index Files,,IMAP Spool Files, Local Folders
+@node Index Files, Folder types,IMAP Spool Files, Local Folders
 @unnumberedsubsec Index Files
 @cindex index file
 
@@ -660,6 +661,60 @@ file name extension, e.g.,
 @example
 (setq vm-index-file-suffix "idx")
 @end example
+
+
+@node Folder types,,Index Files, Local Folders
+@unnumberedsubsec Folder types
+@cindex folder types
+
+@vindex vm-default-folder-type
+VM can handle a variety of formats for mail folders, which differ in
+details.  The variable @code{vm-default-folder-type} can be used to
+set the default format that is suitable for your environment.  This
+setting is used when VM creates new folders.
+
+Whcn VM reads a folder from the file system, it examines contents of the
+folder to determine what format it is stored in and decodes it
+appropriately.  (However, such inference is not fully automatic.  See
+below.)
+
+@findex vm-change-folder-type
+After a folder is loaded into VM, you can convert it to a different
+format using the command @code{vm-change-folder-type}.  It is a good
+idea to keep all your mail folders in a single format in order to avoid
+incompatibilities.
+
+The system default format is referred to as @code{From_}.  It is the
+Unix mbox format described RFC 4155.  In this format, a leading
+separator line and a trailing separator line are added to each message.
+The leading separator line starts with the string ``From ''.  The
+trailing separator line is a blank line.  VM actually adds two blank lines at
+the end for clarity.
+
+A variant of this format is referred to as @code{BellFrom_}.  It has a
+leading separator line that starts with the string ``From ''.  However,
+it does not have a trailing blank line.
+
+Since VM cannot reliably infer whether a mail folder is of type
+@code{From_} or @code{BellFrom_}, you must tell VM which one your system
+uses by setting the variable @code{vm-default-From_-folder-type}.  Some
+of the old folders created by VM prior to 2000 were in the
+@code{BellFrom_} format.  If you will be using both @code{From_} and
+@code{BellFrom_} style folders, it is not possible to choose an
+appropriate setting for this variable.  It is recommended that you
+convert all the old @code{BellFrom_} folders to the @code{From_} format using
+the command @code{vm-change-folder-type}.
+
+Solaris, System V and AIX operating systems use another variant of the
+mbox format where the content-length is specified in the ``From '' line.
+VM refers to this format as @code{From_-with-Content-Length}.  Since the
+content lengths may be unreliable, you must also set the variable
+@code{vm-trust-From_-with-Content-Length} to a non-Nil value in order to
+convince VM that you really want to use this format.
+
+Two additional formats are @code{mmdf} used by MMDF systems and
+@code{babyl} used by the Emacs Rmail mode.  These formats are recognized
+automatically when read from the file system.
 
 
 @node Server Folders, Getting New Mail, Local Folders, Starting Up
@@ -1297,14 +1352,14 @@ your @code{load-path}.
 @section Reading MIME Messages
 
 @vindex vm-display-using-mime
-@dfn{MIME} is a set of extensions to the standard Internet message
-format that allows reliable transmission of arbitrary data including
-images, audio and video, as well as ordinary text in different
-languages.  By default, VM will recognize MIME encoded messages and
+If the variable @code{vm-display-using-mime} is non-@code{nil} VM will display
+messages using Multipurpose Internet Mail Extensions (MIME).  @dfn{MIME}
+is a set of extensions to the standard Internet message format that
+allows reliable transmission of arbitrary data including
+images, audio and video, as well as ordinary text.  A non-@code{nil} value for
+this variable means that VM will recognize MIME encoded messages and
 display them as specified by the various MIME standards specifications.
-This can be turned off by setting the variable
-@code{vm-display-using-mime} to @code{nil} and VM will then display MIME
-messages as plain text messages.
+A nil value means VM will display MIME messages as plain text messages.
 
 @vindex vm-mime-base64-decoder-program
 @vindex vm-mime-base64-encoder-program
@@ -1404,24 +1459,23 @@ determines the format of the text in those buttons.
 @findex vm-mime-attach-object-from-message
 After decoding you will see either the decoded MIME objects or
 button lines that must be activated to attempt display of the
-MIME object.  
-
-The variable @code{vm-auto-displayed-mime-content-types} specifies the
-types that are displayed immediately.  Its value should be a list of
-MIME content types that should be displayed immediately after decoding.
-Other types will be displayed as a button that you must activate to
-display the object.  
-
-To activate a button, either click the middle mouse
-button over it, or move the cursor to the line and press RET.  If you
-are running under a window system, you can use the right mouse button
-over a MIME button to display a menu of actions you can take on the MIME
-object.  If you prefer using keyboard commands, you can save the MIME
-object with @kbd{$ w}, print it with @kbd{$ p}, or pipe it to a shell
-command with @kbd{$ |}.  Use @kbd{$ s} to append an encapsulated message
-or USENET news article to a folder.  If you want to display the object
-with its characters displayed using Emacs' default face, use @kbd{$
-RET}.  To display the object using an external viewer, type @kbd{$ e}.
+MIME object.  The variable
+@code{vm-auto-displayed-mime-content-types} specifies the types
+that are displayed immediately.  Its value should be a list of
+MIME content types that should be displayed immediately after
+decoding.  Other types will be displayed as a button that you
+must activate to display the object.  To activate a button,
+either click the middle mouse button over it, or move the cursor
+to the line and press RET.  If you are running under a window
+system, you can use the right mouse button over a MIME button to
+display a menu of actions you can take on the MIME object.  If
+you prefer using keyboard commands, you can save the MIME object
+with @kbd{$ w}, print it with @kbd{$ p}, or pipe it to a shell
+command with @kbd{$ |}.  Use @kbd{$ s} to append an encapsulated
+message or USENET news article to a folder.  If you want to
+display the object with its characters displayed using Emacs'
+default face, use @kbd{$ RET}.  To display the object using an
+external viewer, type @kbd{$ e}.
 
 @multitable @columnfractions .20 .80
 @item $ w   @tab @code{vm-mime-reader-map-save-file}
@@ -1435,39 +1489,38 @@ RET}.  To display the object using an external viewer, type @kbd{$ e}.
 @item $ a   @tab @code{vm-mime-attach-object-from-message}
 @end multitable
 
+@vindex vm-mime-confirm-delete
+@findex vm-delete-mime-object
+Sometimes MIME objects are large and you may not want to save
+them along with the message that contains them.  If so, use
+@kbd{$ d} (@code{vm-delete-mime-object}) while the cursor is on
+the MIME button.  The object will be deleted and replaced with
+an object that indicates what the old object was and the fact
+that it is gone.  This is not an undoable operation, so use this
+command with care.  If you inadvertently delete an object, the
+only way to get it back is to quit visiting the current folder
+without saving and then revisit the folder.  This works because
+the object isn't removed from the disk copy of the folder until
+you save the folder.  By default VM will ask if you're sure
+about deleting an object before doing the deletion.  You can
+make VM not ask this question by setting
+@code{vm-mime-confirm-delete} to @code{nil}.
+
 @vindex vm-mime-delete-after-saving
 @vindex vm-mime-attachment-save-directory
-The MIME attachment can be saved to disk with @kbd{$ w}
-(@code{vm-mime-reader-map-save-file}).  It can be deleted at the same
-time by setting the variable @code{vm-mime-delete-after-saving}.  When
-the attachment is deleted, it is replaced by a @i{new MIME object} that
-refers to the saved copy.  Saving attachments is a good way to reduce
-the size of the VM folders.  The variable
-@code{vm-mime-attachment-save-directory} specifies the default directory
-to save the attachments in.
+The MIME attachments can be saved to disk with @kbd{$ w}
+(@code{vm-mime-reader-map-save-file}).  They can be deleted at the same time
+by setting the variable @code{vm-mime-delete-after-saving}.  In this
+case, the attachment is deleted and replaced by a new one that refers
+to the saved copy.  The variable
+@code{vm-mime-attachment-save-directory} specifies the default
+directory to save the attachments in.
 
 @findex vm-mime-save-all-attachments
 @findex vm-mime-delete-all-attachments
-There is also a command @code{vm-mime-save-all-attachments} which can be
-used to save all the attachments in a message.  The attachments are
-saved with the file names indicated in the message itself.
-
-@vindex vm-mime-confirm-delete
-@findex vm-delete-mime-object
-To delete a MIME attachment without saving, use @kbd{$ d}
-(@code{vm-delete-mime-object}) while the cursor is on the MIME button.
-The object will be deleted and replaced with an object that indicates
-what the old object was and the fact that it is gone.  This is not an
-undoable operation, so use this command with care.  If you inadvertently
-delete an object, the only way to get it back is to quit visiting the
-current folder without saving and then revisit the folder.  This works
-because the object isn't removed from the disk copy of the folder until
-you save the folder.  By default VM will ask if you're sure about
-deleting an object before doing the deletion.  You can make VM not ask
-this question by setting @code{vm-mime-confirm-delete} to @code{nil}.
-@code{vm-mime-delete-all-attachments} can be used to save or delete all
-the attachments in a message.
-
+The command @code{vm-mime-save-all-attachments} and
+@code{vm-mime-delete-all-attachments} can be used to save or delete
+all the attachments in a message.
 
 @node Internal display, External display, Attachments, MIME Messages
 @unnumberedsubsec Internal display of MIME attachments
