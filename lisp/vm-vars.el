@@ -1280,7 +1280,8 @@ that matches an alternative that can be displayed internally will be
 chosen."
   :group 'vm
   :type '(choice (choice (const best-internal)
-			 (const best))
+			 (const best)
+			 (const all))
 		 (cons (const favorite) (repeat string))
 		 (cons (const favorite-internal) (repeat string))))
 
@@ -4154,7 +4155,9 @@ See `vm-mime-compile-format-1' for valid format specifiers."
   :type 'string)
 
 (defcustom vm-mime-show-alternatives nil
-  "*Show alternative for multipart/alternative parts."
+  "*This variable is deprecated.  You can set
+`vm-mime-alternative-select-method' to 'all to get the same effect as
+setting this one to t."
   :group 'vm
   :type 'boolean)
 

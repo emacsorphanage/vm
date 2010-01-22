@@ -2502,7 +2502,8 @@ declarations in the attachments and make a decision independently."
     t ))
 
 (defun vm-mime-display-internal-multipart/alternative (layout)
-  (if vm-mime-show-alternatives
+  (if (or vm-mime-show-alternatives
+	  (eq vm-mime-alternative-select-method 'all))
       (let ((vm-mime-show-alternatives 'mixed))
         (vm-mime-display-internal-multipart/mixed layout))
     (vm-mime-display-internal-show-multipart/alternative layout)))

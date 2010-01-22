@@ -23,6 +23,10 @@ VM 8.1.1-devo
      currently not being maintained.  Users should load it from their
      .vm file.  See the comments at the beginning of vm-pgg.el.
 
+  ** The variable `vm-mime-show-alternatives' is deprecated.  Set
+     the variable `vm-mime-alternative-select-method' to 'all to
+     get the same effect.
+
   IMPROVEMENTS:
 
   ** This version contains an experimental feature of using IMAP

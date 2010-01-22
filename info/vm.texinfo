@@ -1864,7 +1864,7 @@ the fully featured text subpart, if VM knows how to display that type.
 VM will display the type either internally or externally.  A
 value of @code{best-internal} tells VM to use the closest subpart that
 it can display internally.  External viewers won't be used in this
-case.
+case.  A value of @code{all} asks VM to display all the alternatives.
 
 The value can also be a list of the form
 @example
@@ -1877,13 +1877,6 @@ choose the first matching alternative found that can be displayed.  If
 instead of the symbol @code{favorite}, @code{favorite-internal} is used
 then the first TYPE that matches an alternative that can be displayed
 internally will be chosen.
-
-@vindex vm-mime-show-alternatives
-Normally, one chosen alternative is shown and the other
-alternatives suppressed.  If the variable
-@code{vm-mime-show-alternatives} is set, then all the alternatives are
-shown.  In effect, multipart/alternative is treated the same as
-multipart/mixed. 
 
 @findex vm-mime-nuke-alternative-text/html
 Messages with multiple alternatives use up extra file space and slow
