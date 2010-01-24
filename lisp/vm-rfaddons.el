@@ -314,7 +314,8 @@ This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
       (if to-all
           (vm-followup-include-text count)
         (vm-reply-include-text count))
-    (let ((vm-reply-include-presentation t))
+    (let ((vm-include-text-from-presentation t)
+	  (vm-reply-include-presentation t)) ; is this variable necessary?
       (vm-do-reply to-all t count))))
 
 ;;;###autoload

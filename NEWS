@@ -19,6 +19,10 @@ VM 8.1.0
 
   IMPROVEMENTS:
 
+    * vm-yank-message function streamlined somewhat.  New variable
+      vm-include-text-from-presentation used to extract message text
+      from presentation buffer.
+
     * The variable `vm-mime-yank-attachments' is set to nil by default,
       so that we are not surprised by unexpectedly large mail messages.
 
