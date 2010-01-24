@@ -2799,7 +2799,9 @@ operations")
 	   ;;-------------------
 	   (delete-region old-eob (point-max))
 	   (error (format "Quit received during retrieval from %s"
-			  safe-imapdrop)))))
+			  safe-imapdrop))))
+	(message "Retrieving message body... done")
+	)
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
@@ -2951,7 +2953,7 @@ specification SPEC."
     (while spec-list
       (setq spec (vm-imapdrop-sans-password-and-mailbox (car spec-list)))
       (setq host-alist (cons
-			(cons
+			(list
 			 (nth 1 (vm-imap-parse-spec-to-list spec))
 			 spec)
 			host-alist)
@@ -3513,7 +3515,6 @@ order to capture the trace of IMAP sessions during the occurrence."
    (let ((mp vm-message-list))
      (while mp
        (vm-set-body-to-be-retrieved (car mp) nil)
-       ;; (vm-set-retrieved-body-of (car mp) nil)
        (setq mp (cdr mp))))
    (message "Marked %s messages as having retrieved bodies" 
 	    (length vm-message-list))
