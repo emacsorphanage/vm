@@ -3439,12 +3439,48 @@ run vm-expunge-folder followed by vm-save-folder."
   (vm-save-folder prefix))
 
 ;;;###autoload
-(defun vm-revert-buffer (&rest args)
+(defun vm-read-folder (folder &optional remote-spec)
+  "Reads the FOLDER from the file system and creates a buffer.
+Returns the buffer created.
+Optional argument REMOTE-SPEC gives the maildrop specification for
+the server folder that the FOLDER might be caching."
+  (let ((file (or folder (expand-file-name vm-primary-inbox
+					   vm-folder-directory))))
+    (if (file-directory-p file)
+	;; MH code perhaps... ?
+	(error "%s is a directory" file)
+      (or (vm-get-file-buffer file)
+	  (let ((default-directory
+		  (or (and vm-folder-directory
+			   (expand-file-name vm-folder-directory))
+		      default-directory))
+		(inhibit-local-variables t)
+		(enable-local-variables nil)
+		(enable-local-eval nil)
+		;; for Emacs/MULE
+		(default-enable-multibyte-characters nil)
+		;; for XEmacs/Mule
+		(coding-system-for-read
+		 (vm-line-ending-coding-system)))
+	    (message "Reading %s..." file)
+	    (prog1 (find-file-noselect file t)
+	      ;; update folder history
+	      (let ((item (or remote-spec folder
+			      vm-primary-inbox)))
+		(if (not (equal item (car vm-folder-history)))
+		    (setq vm-folder-history
+			  (cons item vm-folder-history))))
+	      (message "Reading %s... done" file)))))))
+
+;;;###autoload
+(defun vm-revert-buffer ()
 "Revert the current folder to its version on the disk.
 Same as \\[vm-revert-folder]."
   (interactive)
   (vm-select-folder-buffer-if-possible)
-  (let ((summary-buffer vm-summary-buffer)
+  (let ((access-method vm-folder-access-method) ; preserve these across
+	(access-data vm-folder-access-data)	; the revert-buffer opn
+	(summary-buffer vm-summary-buffer)
 	(pres-buffer vm-presentation-buffer-handle))
     (if summary-buffer
 	(progn
@@ -3455,22 +3491,26 @@ Same as \\[vm-revert-folder]."
 	  (vm-display pres-buffer nil nil nil)
 	  (kill-buffer pres-buffer)))
     (call-interactively 'revert-buffer)
-    (vm (current-buffer))))
+    (setq vm-folder-access-data access-data) ; restore preserved data
+    (setq vm-folder-access-method access-method)
+    (vm (current-buffer) nil access-method 'reload)))
 
 ;;;###autoload
-(defun vm-revert-folder (&rest args)
+(defun vm-revert-folder ()
 "Revert the current folder to its version on the disk.
 Same as \\[vm-revert-buffer]."
   (interactive)
   (call-interactively 'vm-revert-buffer))
 
 ;;;###autoload
-(defun vm-recover-file (&rest args)
+(defun vm-recover-file ()
 "Recover the autosave file for the current folder. 
 Same as \\[vm-recover-folder]."
   (interactive)
   (vm-select-folder-buffer-if-possible)
-  (let ((summary-buffer vm-summary-buffer)
+  (let ((access-method vm-folder-access-method) ; preserve these across
+	(access-data vm-folder-access-data)	; the recover-file opn.
+	(summary-buffer vm-summary-buffer)
 	(pres-buffer vm-presentation-buffer-handle))
     (if summary-buffer
 	(progn
@@ -3481,7 +3521,9 @@ Same as \\[vm-recover-folder]."
 	  (vm-display pres-buffer nil nil nil)
 	  (kill-buffer pres-buffer)))
     (call-interactively 'recover-file)
-    (vm (current-buffer))))
+    (setq vm-folder-access-method access-method)
+    (setq vm-folder-access-data access-data) ; restore data
+    (vm (current-buffer) nil access-method 'reload)))
 
 ;;;###autoload
 (defun vm-recover-folder ()
@@ -3489,6 +3531,9 @@ Same as \\[vm-recover-folder]."
 Same as \\[vm-recover-file]."
   (interactive)
   (call-interactively 'vm-recover-file))
+
+;; It doesn't seem that any of these recover/reversion handlers are
+;; working any more.  Not on GNU Emacs.  USR, 2010-01-23
 
 (defun vm-handle-file-recovery-or-reversion (recovery)
   (if (and vm-summary-buffer (buffer-name vm-summary-buffer))
@@ -4298,7 +4343,11 @@ either backward (prefix is negative) or forward (positive)."
 (defvar scroll-in-place)
 
 ;; this does the real major mode scutwork.
-(defun vm-mode-internal (&optional access-method)
+(defun vm-mode-internal (&optional access-method reload)
+  "Turn on vm-mode in the current buffer.
+ACCESS-METHOD is either 'pop or 'imap for server folders.
+If RELOAD is non-Nil, then the folder is being recovered.  So,
+folder-access-data should be preserved."
   (widen)
   (make-local-variable 'require-final-newline)
   ;; don't kill local variables, as there is some state we'd like to
@@ -4341,12 +4390,13 @@ either backward (prefix is negative) or forward (positive)."
    vm-undo-record-pointer nil
    vm-virtual-buffers (vm-link-to-virtual-buffers)
    vm-folder-type (vm-get-folder-type))
-   (cond ((eq access-method 'pop)
-	  (setq vm-folder-access-method 'pop
-		vm-folder-access-data (make-vector 2 nil)))
-	 ((eq access-method 'imap)
-	  (setq vm-folder-access-method 'imap
-		vm-folder-access-data (make-vector 11 nil))))
+  (when (not reload)
+    (cond ((eq access-method 'pop)
+	   (setq vm-folder-access-method 'pop
+		 vm-folder-access-data (make-vector 2 nil)))
+	  ((eq access-method 'imap)
+	   (setq vm-folder-access-method 'imap
+		 vm-folder-access-data (make-vector 11 nil)))))
   (use-local-map vm-mode-map)
   ;; if the user saves after M-x recover-file, let them get new
   ;; mail again.

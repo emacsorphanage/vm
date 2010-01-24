@@ -1018,18 +1018,23 @@ the autosave file.  VM will not retrieve new mail for a folder
 that is in read-only mode.  VM also skips summary
 generation and MIME decoding to help catch your attention.
 
-If you want to recover the lost changes, run @kbd{M-x recover-file} or
-use the Recover toolbar button.  At the
-@samp{Recover File: } prompt press @kbd{RET}.  Emacs will then
-display a detailed directory listing showing the folder file and the
-autosave file and ask if you want to recover from the autosave file.  A
-good rule of thumb is to answer ``yes'' if the autosave file is larger
-than the folder file.  If the autosave file is significantly smaller,
-Emacs may not have completed writing the autosave file.  Or it could be
-that the smaller autosave file reflects the results of an expunge that
-you had not yet committed to disk before the crash.  If so, answering
-``no'' means you might have to do that expunge again, but this is better
-than not knowing whether the autosave file was truncated.
+@findex vm-recover-folder
+@findex recover-file
+If you want to recover the lost changes, run @kbd{M-x
+vm-recover-folder} or use the Recover Folder entry in Folder menu.  At
+the @samp{Recover File: } prompt press @kbd{RET}.  (Emacs's built-in
+@kbd{recover-file} command is not recommended for this purpose because
+VM is unable to obtain reliable data regarding the mail folders from
+Emacs.)  Emacs will then display a detailed directory listing showing
+the folder file and the autosave file and ask if you want to recover
+from the autosave file.  A good rule of thumb is to answer ``yes'' if
+the autosave file is larger than the folder file.  If the autosave
+file is significantly smaller, Emacs may not have completed writing
+the autosave file.  Or it could be that the smaller autosave file
+reflects the results of an expunge that you had not yet committed to
+disk before the crash.  If so, answering ``no'' means you might have
+to do that expunge again, but this is better than not knowing whether
+the autosave file was truncated.
 
 Assuming you answered ``yes'', the folder buffer's contents will be
 replaced by the contents of the autosave file and VM will re-parse the
@@ -1045,6 +1050,13 @@ Assuming you answered ``no'' to the recovery question, you should type
 @kbd{C-x C-q}, which is bound to @code{vm-toggle-read-only} in VM folder
 buffers.  The folder will be taken out of read-only mode and you can
 read and retrieve your mail normally.
+
+@findex vm-revert-folder
+@findex revert-file
+If you have made changes to a mail folder which you would like to
+cancel and go back to the version currently on the disk, you can use
+the function @kbd{vm-revert-folder} or the Revert Folder entry in the
+Folder menu.  (Emacs's built-in @kbd{revert-file} is not recommended.)
 
 @node Selecting Messages, Reading Messages, Starting Up, Top
 @chapter Selecting Messages
@@ -3677,7 +3689,7 @@ conditions.  If the current message is a MIME message that needs
 decoding, the Helper button becomes the Decode MIME button.  If the 
 current folder has an autosave file that appears to be the result 
 of an Emacs or system crash, the Helper button becomes the Recover 
-button.  Clicking on the Recover button runs @code{recover-file}, 
+button.  Clicking on the Recover button runs @code{vm-recover-folder}, 
 so you can recover your folder from an existing autosave file.
 @item mime
 The Decode MIME button.  Clicking on this button runs the command

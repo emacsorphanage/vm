@@ -41,6 +41,58 @@
 (defsubst vm-set-folder-pop-process (val)
   (aset vm-folder-access-data 1 val))
 
+(defun vm-pop-find-cache-file-for-spec (remote-spec)
+  "Given REMOTE-SPEC, which is a maildrop specification of a folder on
+a POP server, find its cache file on the file system"
+  ;; Prior to VM 7.11, we computed the cache filename
+  ;; based on the full POP spec including the password
+  ;; if it was in the spec.  This meant that every
+  ;; time the user changed his password, we'd start
+  ;; visiting the wrong (and probably nonexistent)
+  ;; cache file.
+  ;;
+  ;; To fix this we do two things.  First, migrate the
+  ;; user's caches to the filenames based in the POP
+  ;; sepc without the password.  Second, we visit the
+  ;; old password based filename if it still exists
+  ;; after trying to migrate it.
+  ;;
+  ;; For VM 7.16 we apply the same logic to the access
+  ;; methods, pop, pop-ssh and pop-ssl and to
+  ;; authentication method and service port, which can
+  ;; also change and lead us to visit a nonexistent
+  ;; cache file.  The assumption is that these
+  ;; properties of the connection can change and we'll
+  ;; still be accessing the same mailbox on the
+  ;; server.
+
+  (let ((f-pass (vm-pop-make-filename-for-spec remote-spec))
+	(f-nopass (vm-pop-make-filename-for-spec remote-spec t))
+	(f-nospec (vm-pop-make-filename-for-spec remote-spec t t)))
+    (cond ((or (string= f-pass f-nospec)
+	       (file-exists-p f-nospec))
+	   nil )
+	  ((file-exists-p f-pass)
+	   ;; try to migrate
+	   (condition-case nil
+	       (rename-file f-pass f-nospec)
+	     (error nil)))
+	  ((file-exists-p f-nopass)
+	   ;; try to migrate
+	   (condition-case nil
+	       (rename-file f-nopass f-nospec)
+	     (error nil))))
+    ;; choose the one that exists, password version,
+    ;; nopass version and finally nopass+nospec
+    ;; version.
+    (cond ((file-exists-p f-pass)
+	   f-pass)
+	  ((file-exists-p f-nopass)
+	   f-nopass)
+	  (t
+	   f-nospec))))
+
+
 ;; Our goal is to drag the mail from the POP maildrop to the crash box.
 ;; just as if we were using movemail on a spool file.
 ;; We remember which messages we have retrieved so that we can
