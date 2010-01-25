@@ -339,7 +339,7 @@ specified by `vm-included-text-headers' and
      (save-excursion
       (cond ((or (and vm-include-text-from-presentation
 		      (not (vm-mime-plain-message-p message)))
-		 (vm-body-to-be-retrieved-of message))
+		 (vm-body-to-be-retrieved message))
 	     (vm-yank-message-presentation message)
 	     (setq end (point-marker)))
 	    ((null vm-included-mime-types-list)
