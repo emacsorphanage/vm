@@ -121,11 +121,12 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
   "Use emacs-w3m to inline HTML mails in the VM presentation buffer."
   (let ((w3m-display-inline-images vm-w3m-display-inline-images)
         (w3m-safe-url-regexp vm-w3m-safe-url-regexp))
-        (w3m-region start (1- end))
+    (w3m-region start (1- end))
     (add-text-properties
      start end
      (nconc (if vm-w3m-use-w3m-minor-mode-map
-                (vm-w3m-local-map-property))
+		(if (equal major-mode 'vm-presentation-mode)
+		    (vm-w3m-local-map-property)))
             ;; Put the mark meaning that this part was
             ;; inlined by emacs-w3m.
             '(text-rendered-by-emacs-w3m t)))))
