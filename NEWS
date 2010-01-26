@@ -17,11 +17,18 @@ Status
   
 VM 8.1.0
 
+  KNOWN PROBLEMS:
+
+    * Automatic filling is turned off for plain text messages for
+      safety reasons.  Next release will have the correct
+      functionality. 
+
   IMPROVEMENTS:
 
     * vm-yank-message function streamlined somewhat.  New variable
-      vm-include-text-from-presentation used to extract message text
-      from presentation buffer.
+      `vm-include-text-from-presentation' used to extract message text
+      from presentation buffer.  (This replaces the variable
+      `vm-reply-include-presentation' used in vm-rfaddons.)
 
     * The variable `vm-mime-yank-attachments' is set to nil by default,
       so that we are not surprised by unexpectedly large mail messages.
