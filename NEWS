@@ -19,9 +19,9 @@ VM 8.1.0
 
   KNOWN PROBLEMS:
 
-    * Automatic filling is turned off for plain text messages for
-      safety reasons.  Next release will have the correct
-      functionality. 
+    * Automatic filling is turned off for some plain text messages for
+      safety reasons.  Help us by sending us sample messages for which
+      filling fails.
 
   IMPROVEMENTS:
 
