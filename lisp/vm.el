@@ -1201,7 +1201,6 @@ summary buffer to select a folder."
         ;;     (require 'vm-pgg)
         ;;   (message "vm-pgg disabled since pgg is missing!"))
         (add-hook 'kill-emacs-hook 'vm-garbage-collect-global)
-        (vm-version)
 	(vm-load-init-file)
 	(when vm-enable-addons
 	  (vm-rfaddons-infect-vm 0 vm-enable-addons)
