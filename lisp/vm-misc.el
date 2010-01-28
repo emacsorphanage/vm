@@ -968,7 +968,8 @@ filling of GNU Emacs does not work correctly here!"
       (while (< (point) end)
 	(setq start (point))
 	(vm-skip-empty-lines)
-	(when (vm-forward-paragraph)
+	(when (and (< (point) end)	; if no newline at the end
+		   (vm-forward-paragraph))
 	  (fill-region start (point))
 	  (setq filled (1+ filled))))
       
