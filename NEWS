@@ -25,6 +25,9 @@ VM 8.1.0
 
   IMPROVEMENTS:
 
+    * vm-delete-duplicate-messages now works by comparing message ID's.
+      (from Noah Friedman's vm-addons).
+
     * vm-yank-message function streamlined somewhat.  New variable
       `vm-include-text-from-presentation' used to extract message text
       from presentation buffer.  (This replaces the variable
