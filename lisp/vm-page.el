@@ -796,7 +796,9 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 		   ;; copy.  Where will the next decoding get its
 		   ;; presentation copy from?  This is a problem for
 		   ;; the headers-only mode.
-		   (if (and vm-mail-buffer (not vm-load-headers-only))
+		   (if (and vm-mail-buffer 
+			    (not (vm-body-to-be-retrieved-of
+				  (car vm-message-pointer))))
 			(vm-set-buffer-variable vm-mail-buffer
 						'vm-mime-decoded nil))
 		   )
@@ -825,7 +827,10 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 (defun vm-show-current-message ()
   "Show the current message in the Presentation Buffer.  MIME decoding
 is done if necessary.  (USR, 2010-01-14)" 
-
+  ;; It looks like this function can be invoked in both the folder
+  ;; buffer as well the presentation buffer, but it is not clear if it
+  ;; works correctly when invoked in the presentation buffer.  
+  ;; (USR, 2010-01-21)
   (and vm-display-using-mime
        vm-auto-decode-mime-messages
        (if vm-mail-buffer
@@ -845,13 +850,13 @@ is done if necessary.  (USR, 2010-01-14)"
   (when (and  vm-fill-paragraphs-containing-long-lines
 	      (vm-mime-plain-message-p (car vm-message-pointer)))
     (if (null vm-mail-buffer)		; this can't be presentation then
-	(error "VM internal error #2010.  Please report it"))
-    (vm-save-restriction
-     (widen)
-     (vm-fill-paragraphs-containing-long-lines
-      vm-fill-paragraphs-containing-long-lines
-      (vm-text-of (car vm-message-pointer))
-      (vm-text-end-of (car vm-message-pointer)))))
+	(debug "VM internal error #2010.  Please report it")
+      (vm-save-restriction
+       (widen)
+       (vm-fill-paragraphs-containing-long-lines
+	vm-fill-paragraphs-containing-long-lines
+	(vm-text-of (car vm-message-pointer))
+	(vm-text-end-of (car vm-message-pointer))))))
   (vm-save-buffer-excursion
    (save-excursion
      (save-excursion

@@ -379,16 +379,20 @@ specified by `vm-included-text-headers' and
 	    (t (vm-mail-yank-default message))))))
 
 (defun vm-yank-message-presentation (message)
+  ;; This function is the same as Rob's vm-insert-presentation.
+  ;; It has been reported that it includes the entire mail box on
+  ;; occasion.  See Bug #498477.  It should not be used until that
+  ;; problem resolved.
   (let ((start (point)))
     (vm-insert-region-from-buffer
      (save-excursion
        (vm-select-folder-buffer)
        ;; ensure the current message is presented 
-     (vm-show-current-message)
-     (vm-select-folder-buffer)
-     (if vm-presentation-buffer
-         (set-buffer vm-presentation-buffer))
-     (current-buffer)))
+       (vm-show-current-message)
+       (vm-select-folder-buffer)
+       (if vm-presentation-buffer
+	   (set-buffer vm-presentation-buffer))
+       (current-buffer)))
     (save-excursion
       (goto-char start)
       (if (looking-at "From ")
