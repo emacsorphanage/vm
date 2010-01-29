@@ -1589,6 +1589,24 @@ The variable @code{vm-mime-internal-content-type-exceptions} serves as
 the exception list for @code{vm-mime-internal-content-types}.  Its value 
 should be a list of types that should not be displayed internally.
 
+@cindex HTML browsers
+@vindex vm-mime-text/html-handler
+The HTML content in text/html MIME parts can be displayed in Emacs using
+a variety of packages.  VM knows about:
+
+@multitable @columnfractions .20 .80
+@item lynx   @tab  The lynx browser used externally to convert to plain text
+@item w3m    @tab  The w3m browser used externally to convert to plain text
+@item emacs-w3 @tab  The Emacs/W3 browser used internally in Emacs
+@item emacs-w3m @tab The Emacs interface to the w3m browser
+@end multitable
+
+You can set the variable @code{vm-mime-text/html-handler} to one of
+these values to use the appropriate package.  A value of
+@code{auto-select} causes VM to select the best package available.  A
+value of @code{nil} asks VM not to display HTML content internally.
+
+
 @node External display, MIME type conversion, Internal display, MIME Messages
 @unnumberedsubsec External display of MIME attachments
 
