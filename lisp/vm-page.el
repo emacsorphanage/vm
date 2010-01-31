@@ -850,7 +850,7 @@ is done if necessary.  (USR, 2010-01-14)"
   (when (and  vm-fill-paragraphs-containing-long-lines
 	      (vm-mime-plain-message-p (car vm-message-pointer)))
     (if (null vm-mail-buffer)		; this can't be presentation then
-	(debug "VM internal error #2010.  Please report it")
+	nil
       (vm-save-restriction
        (widen)
        (vm-fill-paragraphs-containing-long-lines
