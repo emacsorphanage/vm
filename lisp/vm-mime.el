@@ -2257,7 +2257,9 @@ declarations in the attachments and make a decision independently."
   
 (defun vm-mime-display-internal-lynx-text/html (start end layout)
   (shell-command-on-region start (1- end)
-                           "lynx -force_html /dev/stdin" nil t))
+;;                           "lynx -force_html /dev/stdin" 
+			   "lynx -force_html -dump -pseudo_inlines -stdin"
+			   nil t))
 
 (defun vm-mime-display-internal-text/html (layout)
   "Dispatch handling of html to the actual html handler."

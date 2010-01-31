@@ -20,6 +20,7 @@ The persons who have contributed to this version of VM are:
  * Rob Hodges
  * Robert Marshall
  * Robert P. Goldman
+ * Katsumi Yamaoka
  * Julian Bradfield
  * Samuel Bronson
  * Brent Goodrick
@@ -122,5 +123,8 @@ Additional extensions for VM from other people:
   vm-vcard.el	      displaying vcards within VM.
 
 Enhancements:
+
+- Support for reading HTML messages using Emacs packages and external
+applications, as well as replying to HTML messages.
 
 - IMAP server support by Uday Reddy

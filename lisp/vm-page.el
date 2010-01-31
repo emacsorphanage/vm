@@ -905,7 +905,7 @@ is done if necessary.  (USR, 2010-01-14)"
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (vm-display (current-buffer) t '(vm-expose-hidden-headers)
-	      '(vm-expose-hidden-headers reading-message))
+	      '(vm-expose-hidden-headers))
   (let* ((exposed (= (point-min) (vm-start-of (car vm-message-pointer)))))
     (vm-widen-page)
     (goto-char (point-max))

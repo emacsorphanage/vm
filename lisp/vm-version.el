@@ -33,6 +33,10 @@
 (defun vm-version ()
   "Return the value of the variable `vm-version'."
   (interactive)
+  (when (interactive-p)
+    (if (string= "?bug?" vm-version)
+        (error "Cannot determine VM version!")
+      (message "VM version is: %s" vm-version)))
   vm-version)
 
 (defconst vm-xemacs-p

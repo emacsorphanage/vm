@@ -944,7 +944,6 @@ Subject: header manually."
 	      vm-forward-list (list (car mp))
 	      default-directory dir)
 	;; current-buffer is now the reply buffer
-	;; FIXME try to load the body before saving
 	(if (vm-body-to-be-retrieved-of (car mp))
 	    (error "Message %s body has not been retrieved"
 		   (vm-number-of (car mp))))

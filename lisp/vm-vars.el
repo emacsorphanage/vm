@@ -1286,7 +1286,15 @@ chosen."
 		 (cons (const favorite-internal) (repeat string))))
 
 (defcustom vm-mime-text/html-handler 'auto-select
-  "*The handler used for displaying HTML messages."
+  "*The library used for displaying HTML messages.  The possible
+values are:
+  emacs-w3m  The emacs interface to the w3m viewer,
+  emacs-w3   The emacs interface to the w3 viewer,
+  w3m        The w3m viewer used externally to convert to plain text,
+  lynx       The lynx viewer used externally to convert to plain text,
+  auto-select Automatic selection among these alternatives, and
+  nil        No internal display of HTML messages.
+"
   :group 'vm
   :type '(choice (const nil :tag "Do not display HTML messages.")
                  (const auto-select :tag "Autoselect best method")

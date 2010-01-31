@@ -3073,7 +3073,7 @@ specification SPEC."
     (while spec-list
       (setq spec (vm-imapdrop-sans-password-and-mailbox (car spec-list)))
       (setq host-alist (cons
-			(cons
+			(list
 			 (nth 1 (vm-imap-parse-spec-to-list spec))
 			 spec)
 			host-alist)

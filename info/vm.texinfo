@@ -386,6 +386,7 @@ retrieving any new messages from the system mailbox.
 * POP Spool Files::     How to use a POP mailbox as a spool file
 * IMAP Spool Files::    How to use an IMAP mailbox as a spool file
 * Index Files::         Using an index to speed up VM starting
+* Folder types::        About the mail folder formats handled by VM
 @end menu
 
 @node Spool Files, POP Spool Files, Local Folders, Local Folders
@@ -644,7 +645,7 @@ Here is an example:
 )
 @end example
 
-@node Index Files,,IMAP Spool Files, Local Folders
+@node Index Files, Folder types,IMAP Spool Files, Local Folders
 @unnumberedsubsec Index Files
 @cindex index file
 
@@ -660,6 +661,60 @@ file name extension, e.g.,
 @example
 (setq vm-index-file-suffix "idx")
 @end example
+
+
+@node Folder types,,Index Files, Local Folders
+@unnumberedsubsec Folder types
+@cindex folder types
+
+@vindex vm-default-folder-type
+VM can handle a variety of formats for mail folders, which differ in
+details.  The variable @code{vm-default-folder-type} can be used to
+set the default format that is suitable for your environment.  This
+setting is used when VM creates new folders.
+
+Whcn VM reads a folder from the file system, it examines contents of the
+folder to determine what format it is stored in and decodes it
+appropriately.  (However, such inference is not fully automatic.  See
+below.)
+
+@findex vm-change-folder-type
+After a folder is loaded into VM, you can convert it to a different
+format using the command @code{vm-change-folder-type}.  It is a good
+idea to keep all your mail folders in a single format in order to avoid
+incompatibilities.
+
+The system default format is referred to as @code{From_}.  It is the
+Unix mbox format described RFC 4155.  In this format, a leading
+separator line and a trailing separator line are added to each message.
+The leading separator line starts with the string ``From ''.  The
+trailing separator line is a blank line.  VM actually adds two blank lines at
+the end for clarity.
+
+A variant of this format is referred to as @code{BellFrom_}.  It has a
+leading separator line that starts with the string ``From ''.  However,
+it does not have a trailing blank line.
+
+Since VM cannot reliably infer whether a mail folder is of type
+@code{From_} or @code{BellFrom_}, you must tell VM which one your system
+uses by setting the variable @code{vm-default-From_-folder-type}.  Some
+of the old folders created by VM prior to 2000 were in the
+@code{BellFrom_} format.  If you will be using both @code{From_} and
+@code{BellFrom_} style folders, it is not possible to choose an
+appropriate setting for this variable.  It is recommended that you
+convert all the old @code{BellFrom_} folders to the @code{From_} format using
+the command @code{vm-change-folder-type}.
+
+Solaris, System V and AIX operating systems use another variant of the
+mbox format where the content-length is specified in the ``From '' line.
+VM refers to this format as @code{From_-with-Content-Length}.  Since the
+content lengths may be unreliable, you must also set the variable
+@code{vm-trust-From_-with-Content-Length} to a non-Nil value in order to
+convince VM that you really want to use this format.
+
+Two additional formats are @code{mmdf} used by MMDF systems and
+@code{babyl} used by the Emacs Rmail mode.  These formats are recognized
+automatically when read from the file system.
 
 
 @node Server Folders, Getting New Mail, Local Folders, Starting Up
@@ -1552,6 +1607,24 @@ variable.
 The variable @code{vm-mime-internal-content-type-exceptions} serves as
 the exception list for @code{vm-mime-internal-content-types}.  Its value 
 should be a list of types that should not be displayed internally.
+
+@cindex HTML browsers
+@vindex vm-mime-text/html-handler
+The HTML content in text/html MIME parts can be displayed in Emacs using
+a variety of packages.  VM knows about:
+
+@multitable @columnfractions .20 .80
+@item lynx   @tab  The lynx browser used externally to convert to plain text
+@item w3m    @tab  The w3m browser used externally to convert to plain text
+@item emacs-w3 @tab  The Emacs/W3 browser used internally in Emacs
+@item emacs-w3m @tab The Emacs interface to the w3m browser
+@end multitable
+
+You can set the variable @code{vm-mime-text/html-handler} to one of
+these values to use the appropriate package.  A value of
+@code{auto-select} causes VM to select the best package available.  A
+value of @code{nil} asks VM not to display HTML content internally.
+
 
 @node External display, MIME type conversion, Internal display, MIME Messages
 @unnumberedsubsec External display of MIME attachments

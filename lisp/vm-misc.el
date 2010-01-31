@@ -959,7 +959,7 @@ filling of GNU Emacs does not work correctly here!"
           (needmsg (> (- end start) 12000)))
       
       (if needmsg
-          (message "Filling message `%s' to column %d!" message fill-column))
+          (message "Filling message to column %d!" fill-column))
       
       ;; we need a marker for the end since this position might change 
       (or (markerp end) (setq end (vm-marker end)))
@@ -968,16 +968,19 @@ filling of GNU Emacs does not work correctly here!"
       (while (< (point) end)
 	(setq start (point))
 	(vm-skip-empty-lines)
-	(when (vm-forward-paragraph)
+	(when (and (< (point) end)	; if no newline at the end
+		   (vm-forward-paragraph))
 	  (fill-region start (point))
 	  (setq filled (1+ filled))))
       
-      (if (= filled 0)
-	  (message "Nothing to fill!")
-	(message "Filled %s paragraph%s in message '%s'!"
-		 (if (> filled 1) (format "%d" filled) "one")
-		 (if (> filled 1) "s" "")
-		 message)))))
+      ;; Turning off these messages because they go by too fast and
+      ;; are not particularly enlightening.  USR, 2010-01-26
+      ;; (if (= filled 0)
+      ;;    (message "Nothing to fill!")
+      ;;  (message "Filled %s paragraph%s!"
+      ;;           (if (> filled 1) (format "%d" filled) "one")
+      ;;           (if (> filled 1) "s" "")))
+      )))
 
 (defun vm-make-message-id ()
   (let (hostname
