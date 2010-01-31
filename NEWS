@@ -23,7 +23,21 @@ VM 8.1.0
       safety reasons.  Help us by sending us sample messages for which
       filling fails.
 
+  MAJOR NEW FEATURES:
+
+    * Support for reading and replying to messages in HTML.
+
+    * Full support for IMAP servers.  (See "IMPROVEMENTS for
+      imap-folders" below.) 
+
   IMPROVEMENTS:
+
+    * text/html handling controlled by a new variable
+      `vm-mime-text/html-handler' which is set to 'auto-select by
+      default.  It causes VM to locate the best library among
+      emacs-w3m, external w3m, w3 and lynx to display html
+      internally.  (This replaces the earlier variable
+      `vm-mime-use-w3-for-text/html'.) 
 
     * vm-delete-duplicate-messages now works by comparing message ID's.
       (from Noah Friedman's vm-addons).
@@ -416,13 +430,6 @@ VM 8.0.6    2008-01-02
 
     * Allow defadvice on function `vm' by recursing on session start. (Thanks
       to Blueman for the code)
-
-    * text/html handling controlled by a new variable
-      `vm-mime-text/html-handler' which is set to 'auto-select by
-      default.  It causes VM to locate the best library among
-      emacs-w3m, external w3m, w3 and lynx to display html
-      internally.  (This replaces the earlier variable
-      `vm-mime-use-w3-for-text/html'.) 
 
   BUG FIXES:
 
