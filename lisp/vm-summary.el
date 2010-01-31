@@ -107,8 +107,6 @@ mandatory."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
-(defvar vm-summary-toggle-thread-folding nil)
-
 (defun vm-do-summary (&optional start-point)
   (let ((m-list (or start-point vm-message-list))
 	mp m tr trs tre

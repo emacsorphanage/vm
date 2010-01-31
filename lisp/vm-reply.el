@@ -339,7 +339,7 @@ specified by `vm-included-text-headers' and
      (save-excursion
       (cond ((or (and vm-include-text-from-presentation
 		      (not (vm-mime-plain-message-p message)))
-		 (vm-body-to-be-retrieved message))
+		 (vm-body-to-be-retrieved-of message))
 	     (vm-yank-message-presentation message)
 	     (setq end (point-marker)))
 	    ((null vm-included-mime-types-list)
@@ -379,16 +379,20 @@ specified by `vm-included-text-headers' and
 	    (t (vm-mail-yank-default message))))))
 
 (defun vm-yank-message-presentation (message)
+  ;; This function is the same as Rob's vm-insert-presentation.
+  ;; It has been reported that it includes the entire mail box on
+  ;; occasion.  See Bug #498477.  It should not be used until that
+  ;; problem resolved.
   (let ((start (point)))
     (vm-insert-region-from-buffer
      (save-excursion
        (vm-select-folder-buffer)
        ;; ensure the current message is presented 
-     (vm-show-current-message)
-     (vm-select-folder-buffer)
-     (if vm-presentation-buffer
-         (set-buffer vm-presentation-buffer))
-     (current-buffer)))
+       (vm-show-current-message)
+       (vm-select-folder-buffer)
+       (if vm-presentation-buffer
+	   (set-buffer vm-presentation-buffer))
+       (current-buffer)))
     (save-excursion
       (goto-char start)
       (if (looking-at "From ")
@@ -940,6 +944,9 @@ Subject: header manually."
 	      vm-forward-list (list (car mp))
 	      default-directory dir)
 	;; current-buffer is now the reply buffer
+	(if (vm-body-to-be-retrieved-of (car mp))
+	    (error "Message %s body has not been retrieved"
+		   (vm-number-of (car mp))))
 	(if miming
 	    (progn
 	      (setq reply-buffer (current-buffer))
@@ -1009,6 +1016,10 @@ you can change the recipient address before resending the message."
 	(dir default-directory)
 	(layout (vm-mm-layout (car vm-message-pointer)))
 	(lim (vm-text-end-of (car vm-message-pointer))))
+    ;; FIXME try to load the body before saving
+    (if (vm-body-to-be-retrieved-of (car vm-message-pointer))
+	(error "Message %s body has not been retrieved"
+	       (vm-number-of (car vm-message-pointer))))
       (save-restriction
 	(widen)
 	(if (or (not (vectorp layout))
@@ -1082,6 +1093,10 @@ You may also create a Resent-Cc header."
 	  (vmp vm-message-pointer)
 	  (start (vm-headers-of (car vm-message-pointer)))
 	  (lim (vm-text-end-of (car vm-message-pointer))))
+      ;; FIXME try to load the body before saving
+      (if (vm-body-to-be-retrieved-of (car vm-message-pointer))
+	  (error "Message %s body has not been retrieved"
+		 (vm-number-of (car vm-message-pointer))))
       ;; briefly nullify vm-mail-header-from to keep vm-mail-internal
       ;; from inserting another From header.
       (let ((vm-mail-header-from nil))
@@ -1149,7 +1164,14 @@ only marked messages will be put into the digest."
 	(mlist (if (eq last-command 'vm-next-command-uses-marks)
 		   (vm-select-marked-or-prefixed-messages 0)
 		 vm-message-list))
-	start header-end boundary)
+	ms start header-end boundary)
+    ;; FIXME try to load the body before saving
+    (setq ms mlist)
+    (while ms
+      (if (vm-body-to-be-retrieved-of (car ms))
+	    (error "Message %s body has not been retrieved"
+		   (vm-number-of (car ms))))
+      (setq ms (cdr ms)))
     (save-restriction
       (widen)
       (vm-mail-internal
@@ -1815,6 +1837,8 @@ message."
   (if (local-variable-p 'line-move-ignore-invisible (current-buffer))
       (setq line-move-ignore-invisible nil)))
 
+(make-variable-buffer-local 'line-move-ignore-invisible)
+
 (defun vm-mail-mode-hide-headers ()
   "Hides and protects headers listed in `vm-mail-mode-hidden-headers'.
 With a prefix arg, call `vm-mail-mode-show-headers' instead."
@@ -1824,7 +1848,6 @@ With a prefix arg, call `vm-mail-mode-show-headers' instead."
         (header-end (save-excursion (mail-text) (point)))
         start end o)
     (setq header-regexp (concat "^" header-regexp))
-    (make-variable-buffer-local 'line-move-ignore-invisible)
     (setq line-move-ignore-invisible t)
     (save-excursion
       (goto-char (point-min))

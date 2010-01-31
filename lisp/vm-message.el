@@ -168,15 +168,15 @@
   (aref (aref message 3) 20))
 ;; have we retrieved the headers of this message?
 ;; only valid for remote folder access methods
-;; USR: changed the name to vm-headers-to-be-retrieved because all the
+;; USR: changed the name to vm-headers-to-be-retrieved-of because all the
 ;; VM folders in the world already have nil's written in this field. 
-(defsubst vm-headers-to-be-retrieved (message)
+(defsubst vm-headers-to-be-retrieved-of (message)
   (aref (aref message 3) 21))
 ;; have we retrieved the body of this message?
 ;; only valid for remote folder access methods
-;; USR: changed the name to vm-body-to-be-retrieved because all the
+;; USR: changed the name to vm-body-to-be-retrieved-of because all the
 ;; VM folders in the world already have nil's written in this field. 
-(defsubst vm-body-to-be-retrieved (message)
+(defsubst vm-body-to-be-retrieved-of (message)
   (aref (aref message 3) 22))
 ;; pop UIDL value for message
 (defsubst vm-pop-uidl-of (message)

@@ -329,6 +329,10 @@ The saved messages are flagged as `filed'."
 	    (while mlist
 	      (setq m (vm-real-message-of (car mlist)))
 	      (set-buffer (vm-buffer-of m))
+	      ;; FIXME try to load the body before saving
+	      (if (vm-body-to-be-retrieved-of m)
+		  (error "Message %s body has not been retrieved"
+			 (vm-number-of (car mlist))))
 	      (vm-save-restriction
 	       (widen)
 	       ;; have to stuff the attributes in all cases because
@@ -507,6 +511,10 @@ vm-save-message instead (normally bound to `s')."
 	  (while mlist
 	    (setq m (vm-real-message-of (car mlist)))
 	    (set-buffer (vm-buffer-of m))
+	    ;; FIXME try to load the body before saving
+	    (if (vm-body-to-be-retrieved-of m)
+		(error "Message %s body has not been retrieved"
+		       (vm-number-of (car mlist))))
 	    (vm-save-restriction
 	     (widen)
 	     (if (null file-buffer)
@@ -562,7 +570,9 @@ vm-save-message instead (normally bound to `s')."
 ;;;###autoload
 (defun vm-pipe-message-to-command (command &optional prefix-arg discard-output)
   "Runs a shell command with contents from the current message as input.
-By default, the entire message is used.
+By default, the entire message is used.  Message separators are
+included if `vm-message-includes-separators' is non-Nil.
+
 With one \\[universal-argument] the text portion of the message is used.
 With two \\[universal-argument]'s the header portion of the message is used.
 With three \\[universal-argument]'s the visible header portion of the message
@@ -599,6 +609,10 @@ Output, if any, is displayed.  The message is not altered."
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
       (set-buffer (vm-buffer-of m))
+      ;; FIXME try to load the body before saving
+      (if (vm-body-to-be-retrieved-of m)
+	  (error "Message %s body has not been retrieved"
+		 (vm-number-of (car mlist))))
       (save-restriction
 	(widen)
 	(let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
@@ -638,26 +652,33 @@ output of the command."
 	   current-prefix-arg)))
   (vm-pipe-message-to-command command prefix-arg t))
 
-(defun vm-pipe-command-exit-handler (process discard-output 
+(defun vm-pipe-command-exit-handler (process command discard-output 
 					     &optional exit-handler)
-  "Switch to output buffer of PROCESS if DISCARD-OUTPUT non-nil.
+"Switch to output buffer of PROCESS that ran COMMAND, if
+DISCARD-OUTPUT non-nil.  
 If non-nil call EXIT-HANDLER with the two arguments COMMAND and OUTPUT-BUFFER." 
   (let ((exit-code (process-exit-status process))
 	(buffer (process-buffer process))
-	(command (process-command process)))
+	(process-command (process-command process)))
   (if (not (zerop exit-code))
       (message "Command '%s' exit code is %d." command exit-code))
   (vm-display nil nil '(vm-pipe-message-to-command)
 	      '(vm-pipe-message-to-command))
   (vm-switch-to-command-output-buffer command buffer discard-output)
   (if exit-handler
-      (funcall exit-handler command buffer))))
+      (funcall exit-handler process-command buffer))))
 
-(defvar vm-pipe-messages-to-command-start ""
-  "*Inserted by `vm-pipe-messages-to-command' before a message.")
+(defvar vm-pipe-messages-to-command-start t
+  "*The string to be used as the leading message separator by
+`vm-pipe-messages-to-command' at the beginning of each message.
+If set to 't', then use the leading message separator stored in the VM
+folder.  If set to nil, then no leading separator is included.")
 
-(defvar vm-pipe-messages-to-command-end "\n"
-  "*Inserted by `vm-pipe-messages-to-command' after a message.")
+(defvar vm-pipe-messages-to-command-end t
+  "*The string to be used as the trailing message separator by
+`vm-pipe-messages-to-command' at the end of each message.
+If set to 't', then use the trailing message separator stored in the VM
+folder.  If set to nil, no trailing separator is included.")
 
 ;;;###autoload
 (defun vm-pipe-messages-to-command (command &optional prefix-arg 
@@ -669,8 +690,14 @@ just once and pipe all messages to it.  For bulk operations this
 is much faster than calling the command on each message.  This is
 more like saving to a pipe.
 
-Before a message it will insert `vm-pipe-messages-to-command-start'
-and after a message `vm-pipe-messages-to-command-end'.
+With one \\[universal-argument] the text portion of the messages is used.
+With two \\[universal-argument]'s the header portion of the messages is used.
+With three \\[universal-argument]'s the visible header portion of the messages
+plus the text portion is used.
+
+Leading and trailing separators are included with each message
+depending on the settings of `vm-pipe-messages-to-command-start'
+and `vm-pipe-messages-to-command-end'.
 
 Output, if any, is displayed unless DISCARD-OUTPUT is t.
 
@@ -712,19 +739,31 @@ arguments after the command finished."
 		(vm-pipe-command-exit-handler 
 		 process ,command ,discard-output 
 		 (if (and ,no-wait (functionp ,no-wait))
-		     no-wait)))
+		     ,no-wait)))
 	  (message "Command '%s' changed state to %s."
 		   ,command status))))
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
       (set-buffer (vm-buffer-of m))
-      (process-send-string process vm-pipe-messages-to-command-start)
-      (save-restriction
+      ;; FIXME try to load the body before saving
+      (if (vm-body-to-be-retrieved-of m)
+	  (error "Message %s body has not been retrieved"
+		 (vm-number-of (car mlist))))
+     (save-restriction
 	(widen)
+	(cond ((eq vm-pipe-messages-to-command-start t)
+	       (process-send-region process 
+				    (vm-start-of m) (vm-headers-of m)))
+	      (vm-pipe-messages-to-command-start
+	       (process-send-string process vm-pipe-messages-to-command-start)))
 	(let ((region (vm-pipe-message-part m prefix-arg)))
-	  (process-send-region process (nth 0 region) (nth 1 region))))
-      (process-send-string process vm-pipe-messages-to-command-end)
-      (setq mlist (cdr mlist)))
+	  (process-send-region process (nth 0 region) (nth 1 region)))
+	(cond ((eq vm-pipe-messages-to-command-end t)
+	       (process-send-region process 
+				    (vm-text-end-of m) (vm-end-of m)))
+	      (vm-pipe-messages-to-command-end
+	       (process-send-string process vm-pipe-messages-to-command-end)))
+	(setq mlist (cdr mlist))))
 
     (process-send-eof process)
 
@@ -805,7 +844,11 @@ Output, if any, is displayed.  The message is not altered."
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
       (set-buffer (vm-buffer-of m))
-      (if (and vm-display-using-mime (vectorp (vm-mm-layout m)))
+      ;; FIXME try to load the body before saving
+      (if (vm-body-to-be-retrieved-of m)
+	  (error "Message %s body has not been retrieved"
+		 (vm-number-of (car mlist))))
+     (if (and vm-display-using-mime (vectorp (vm-mm-layout m)))
 	  (let ((work-buffer nil))
 	    (unwind-protect
 		(progn
@@ -909,6 +952,11 @@ The saved messages are flagged as `filed'."
 			      (nth 1 target-spec-list))
 		       (equal (nth 5 source-spec-list) 
 			      (nth 5 target-spec-list))))
+	    ;; FIXME try to load the body before saving
+	    (if (and (not server-to-server-p)
+		     (vm-body-to-be-retrieved-of m))
+		(error "Message %s body has not been retrieved"
+		       (vm-number-of (car mlist))))
 	    (if server-to-server-p 	; economise on upstream data traffic
 		(let ((process (vm-re-establish-folder-imap-session)))
 		  (vm-imap-copy-message process m mailbox))

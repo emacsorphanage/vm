@@ -124,4 +124,7 @@ Additional extensions for VM from other people:
 
 Enhancements:
 
+- Support for reading HTML messages using Emacs packages and external
+applications, as well as replying to HTML messages.
+
 - IMAP server support by Uday Reddy

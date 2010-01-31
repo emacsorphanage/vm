@@ -63,7 +63,6 @@
 ;;      mail-mode       if in mail-mode evals its `argument' else `nil'
 ;;      vm-mode         if in vm-mode evals its `arg' else `nil'
 ;;      eval            evaluates its `arg' (write own complex selectors)
-;;      older-than      returns `t' is a message is older than `arg' days
 ;;
 ;; So by using theses new features I can maintain just one selector for
 ;; e.g. my private email-address and get the right folder for saving messages,
@@ -209,16 +208,10 @@
  '(mail-mode 
    vm-mode 
    eval 
-   older-than 
-   outgoing 
    selected 
    in-bbdb 
-   uninteresting-senders 
-   spam-word 
    folder-name 
-   attachment
-   spam-level
-   spam-score))
+   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; we redefine the basic selectors for some extra features ...
@@ -243,6 +236,8 @@ I was really missing this!"
     (while selectors
       (setq selector (car (car selectors))
 	    function (cdr (assq selector vm-virtual-selector-function-alist)))
+      (if (null function)
+	  (error "Invalid virtual selector: %s" selector))
       (setq arglist (cdr (car selectors))
 	    arglist (cdr (car selectors))
 	    result (apply function m arglist)
@@ -261,7 +256,7 @@ I was really missing this!"
       (setq selector (car (car selectors))
 	    function (cdr (assq selector vm-virtual-selector-function-alist)))
       (if (null function)
-	  (error "Invalid selector"))
+	  (error "Invalid virtual selector: %s" selector))
       (setq arglist (cdr (car selectors))
 	    result (apply function m arglist)
 	    selectors (if (null result) nil (cdr selectors)))
@@ -276,10 +271,11 @@ I was really missing this!"
   (let ((vm-virtual-check-level (+ 2 vm-virtual-check-level))
         (selector (car arg))
 	(arglist (cdr arg))
-        result)
-    (setq result
-          (apply (cdr (assq selector vm-virtual-selector-function-alist))
-                 m arglist))
+        result function)
+    (setq function (cdr (assq selector vm-virtual-selector-function-alist)))
+    (if (null function)
+	(error "Invalid virtual selector: %s" selector))
+    (setq result (apply function m arglist))
     (if vm-virtual-check-diagnostics
         (princ (format "%snot: %s for (%S%s)\n"
                        (make-string vm-virtual-check-level ? )
@@ -311,14 +307,6 @@ I was really missing this!"
 (defvar vm-virtual-message nil
   "Set to the VM message vector when doing a `vm-vs-eval'.")
 
-(defcustom vm-vs-attachment-regexp "^Content-Disposition: attachment"
-  "Regexp used to detect attachments in an message."
-  :group 'vm-avirtual
-  :type 'regexp)
-
-(defun vm-vs-attachment (m)
-  (vm-vs-text m vm-vs-attachment-regexp))
-
 (defun vm-vs-folder-name (m regexp)
   (setq m (vm-real-message-of m))
   (string-match regexp (buffer-name (marker-buffer (vm-start-of m)))))
@@ -332,24 +320,10 @@ I was really missing this!"
       (apply 'vm-vs-or selectors)
     nil))
 
-(defun vm-vs-older-than (m arg)
-  (let ((date (vm-get-header-contents m "Date:")))
-    (if date
-        (> (days-between (current-time-string) date) arg))))
-
-(defun vm-vs-outgoing (m)
-  (and vm-summary-uninteresting-senders
-       (or (string-match vm-summary-uninteresting-senders (vm-su-full-name m))
-           (string-match vm-summary-uninteresting-senders (vm-su-from m)))))
-
 (defun vm-vs-selected (m)
   (save-excursion
     (vm-select-folder-buffer)
     (eq m (car vm-message-pointer))))
-
-(defun vm-vs-uninteresting-senders (m)
-  (string-match vm-summary-uninteresting-senders
-                (vm-get-header-contents m "From:")))
 
 (defun vm-vs-in-bbdb (m &optional address-class only-first)
   "check if one of the email addresses from the mail is known."
@@ -398,38 +372,6 @@ I was really missing this!"
                          (bbdb-search-simple name nil)))))
       done)))
 
-(defvar vm-spam-words nil
-  "A list of words often contained in spam messages.")
-
-(defvar vm-spam-words-regexp nil
-  "A regexp matching those words in `vm-spam-words'.")
-
-(defcustom vm-spam-words-file
-  (expand-file-name "~/.spam-words")
-  "A file storing a list of words contained in spam messages."
-  :group 'vm-avirtual
-  :type 'file)
-
-(defun vm-vs-spam-word (m &optional selector)
-  (if (and (not vm-spam-words)
-           vm-spam-words-file
-           (file-readable-p vm-spam-words-file)
-           (not (get-file-buffer vm-spam-words-file)))
-      (save-excursion
-        (set-buffer (find-file-noselect vm-spam-words-file))
-        (goto-char (point-min))
-        (while (re-search-forward "^\\s-*\\([^#;].*\\)\\s-*$" (point-max) t)
-          (setq vm-spam-words (cons (match-string 1) vm-spam-words)))
-        (setq vm-spam-words-regexp (regexp-opt vm-spam-words))))
-  (if (and m vm-spam-words-regexp)
-      (let ((case-fold-search t))
-        (cond ((eq selector 'header)
-               (vm-vs-header m vm-spam-words-regexp))
-              ((eq selector 'header-or-text)
-               (vm-vs-header-or-text m vm-spam-words-regexp))
-              (t
-               (vm-vs-text m vm-spam-words-regexp))))))
-
 ;;;###autoload
 (defun vm-add-spam-word (word)
   "Add a new word to the list of spam words."
@@ -463,31 +405,6 @@ I was really missing this!"
       (kill-buffer (get-file-buffer vm-spam-words-file)))
   (vm-vs-spam-word nil)
   (message "%d spam words are installed!" (length vm-spam-words)))
-
-(defcustom vm-vs-spam-score-headers
-  '(("X-Spam-Score:"  "[-+]?[0-9]*\\.?[0-9]+"  string-to-number)
-    ("X-Spam-Status:" "[-+]?[0-9]*\\.?[0-9]+" string-to-number)
-    ("X-Spam-Level:"  "\\*+"     length))
-  "A list of headers to look for spam scores."
-  :group 'vm-avirtual
-  :type '(repeat (list (string :tag "Header regexp")
-                       (regexp :tag "Regexp matching the score")
-                       (function :tag "Function converting the score to a number"))))
-
-(defun vm-vs-spam-score (m min &optional max)
-  "True when the spam score is >= MIN and optionally <= MAX.
-The headers that will be checked are those listed in `vm-vs-spam-score-headers'."
-  (let ((spam-headers vm-vs-spam-score-headers)
-        it-is-spam)
-    (while spam-headers
-      (let* ((spam-selector (car spam-headers))
-             (score (vm-get-header-contents m (car spam-selector))))
-        (when (and score (string-match (nth 1 spam-selector) score))
-          (setq score (funcall (nth 2 spam-selector) (match-string 0 score)))
-          (if (and (<= min score) (if max (<= score max) t))
-              (setq it-is-spam t spam-headers nil))))
-      (setq spam-headers (cdr spam-headers)))
-    it-is-spam))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mail virtual folder selectors 

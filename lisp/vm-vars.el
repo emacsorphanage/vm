@@ -582,7 +582,7 @@ prohibitions.  (But these violations could also be symptomatic of
 deeper problems.)  Use this level carefully.  Higher levels of
 violations are not currently permitted."
   :group 'vm
-  :type 'integer)
+  :type '(choice (const nil) integer))
 
 (defcustom vm-imap-folder-cache-directory nil
   "*Directory where VM stores cached copies of IMAP folders.
@@ -766,6 +766,12 @@ If you set `vm-default-folder-type' to From_-with-Content-Length you
 must set this variable non-nil."
   :group 'vm
   :type 'boolean)
+
+(defvar vm-sync-thunderbird-status nil
+  "If t VM syncs its headers with the headers of Thunderbird.  (This is
+still experimental functionality.)")
+
+(make-variable-buffer-local 'vm-sync-thunderbird-status)
 
 (defcustom vm-visible-headers
   '("Resent-"
@@ -1274,7 +1280,8 @@ that matches an alternative that can be displayed internally will be
 chosen."
   :group 'vm
   :type '(choice (choice (const best-internal)
-			 (const best))
+			 (const best)
+			 (const all))
 		 (cons (const favorite) (repeat string))
 		 (cons (const favorite-internal) (repeat string))))
 
@@ -1472,6 +1479,39 @@ object."
 deleting a MIME object with `vm-delete-mime-object'."
   :group 'vm
   :type 'boolean)
+
+(defcustom vm-mime-savable-types
+  (append
+   '("application" "x-unknown" "application/x-gzip")
+   (mapcar (lambda (a) (car a))
+           vm-mime-external-content-types-alist))
+  "*List of MIME types which should be saved."
+    :group 'vm
+    :type '(repeat (string :tag "MIME type" nil)))
+
+(defcustom vm-mime-savable-type-exceptions
+  '("text")
+  "*List of MIME types which should not be saved."
+  :group 'vm
+  :type '(repeat (string :tag "MIME type" nil)))
+
+(defcustom vm-mime-deletable-types
+  (append
+   '("application" "x-unknown" "application/x-gzip")
+   (mapcar (lambda (a) (car a))
+           vm-mime-external-content-types-alist))
+  "*List of MIME types which should be deleted."
+    :group 'vm
+    :type '(repeat (string :tag "MIME type" nil)))
+
+(defcustom vm-mime-deletable-type-exceptions
+  '("text")
+  "*List of MIME types which should not be deleted."
+  :group 'vm
+  :type '(repeat (string :tag "MIME type" nil)))
+
+(defvar vm-mime-auto-save-all-attachments-avoid-recursion nil
+  "For internal use.")
 
 (defcustom vm-mime-button-face 'gui-button-face
   "*Face used for text in buttons that trigger the display of MIME objects."
@@ -1765,6 +1805,15 @@ When `vm-mime-attach-file' prompts you for the name of a file to
 attach, any relative pathnames will be relative to this directory."
   :group 'vm
   :type '(choice (const nil) directory))
+
+(defcustom vm-mime-all-attachments-directory nil
+    "*Directory to where the attachments should go or come from."
+ :group 'vm
+ :type '(choice (directory :tag "Directory:")
+                (const :tag "Use `vm-mime-attachment-save-directory'" nil)))
+
+(defvar vm-mime-save-all-attachments-history nil
+  "Directory history to where the attachments should go.")
 
 (defcustom vm-mime-yank-attachments nil
   "*Non-nil value enables yanking of attachments.
@@ -3064,6 +3113,15 @@ threading messages."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-sort-threads-by-youngest-date t
+"*Non-nil values causes VM to sort threads by their youngest date,
+i.e., a thread A will appear before B if the youngest message in the
+thread A is dated before the youngest message in the thread B.  If the
+variable is nil, threads are sorted by their oldest date."
+  :group 'vm
+  :type 'boolean)
+
+
 (defcustom vm-summary-uninteresting-senders nil
   "*Non-nil value should be a regular expression that matches
 addresses that you don't consider interesting enough to
@@ -4105,7 +4163,9 @@ See `vm-mime-compile-format-1' for valid format specifiers."
   :type 'string)
 
 (defcustom vm-mime-show-alternatives nil
-  "*Show alternative for multipart/alternative parts."
+  "*This variable is deprecated.  You can set
+`vm-mime-alternative-select-method' to 'all to get the same effect as
+setting this one to t."
   :group 'vm
   :type 'boolean)
 
@@ -4571,6 +4631,9 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "w" 'vm-save-message-sans-headers)
     (define-key map "A" 'vm-auto-archive-messages)
     (define-key map "S" 'vm-save-folder)
+    ;; these two key bindings are experimental
+    (define-key map "o" 'vm-load-message)
+    (define-key map "O" 'vm-unload-message)
     (define-key map "||" 'vm-pipe-message-to-command)
     (define-key map "|d" 'vm-pipe-message-to-command-discard-output)
     (define-key map "|s" 'vm-pipe-messages-to-command)
@@ -4643,6 +4706,8 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "%" 'vm-change-folder-type)
     (define-key map "\M-C" 'vm-show-copying-restrictions)
     (define-key map "\M-W" 'vm-show-no-warranty)
+    (define-key map "\C-c\C-s" 'vm-mime-save-all-attachments)
+    (define-key map "\C-c\C-d" 'vm-mime-delete-all-attachments)
     ;; suppress-keymap provides these, but now that we don't use
     ;; suppress-keymap anymore...
     (define-key map "0" 'digit-argument)
@@ -4669,6 +4734,10 @@ be a regexp matching all chars to be replaced by a \"_\"."
 
     map )
   "Keymap for VM mode.")
+
+(defvar vm-summary-toggle-thread-folding nil
+  "Enables folding of threads in VM summary windows.  (This
+functionality is highly experimental!)")
 
 (defvar vm-summary-mode-map vm-mode-map
   "Keymap for VM Summary mode")
@@ -4837,6 +4906,8 @@ Its parent keymap is mail-mode-map.")
       "/usr/spool/mail/"))
 (defconst vm-content-length-search-regexp "^Content-Length:.*\n\\|\\(\n\n\\)")
 (defconst vm-content-length-header "Content-Length:")
+(defconst vm-references-header-regexp
+  "^References:\\(.*\n\\([ \t].*\n\\)*\\)")
 (defconst vm-attributes-header-regexp
   "^X-VM-\\(Attributes\\|v5-Data\\):\\(.*\n\\([ \t].*\n\\)*\\)")
 (defconst vm-attributes-header "X-VM-v5-Data:")
@@ -5031,6 +5102,33 @@ Its parent keymap is mail-mode-map.")
     ("vm-yank-message-other-folder")
 ))
 
+(defcustom vm-vs-attachment-regexp "^Content-Disposition: attachment"
+  "Regexp used to detect attachments in a message."
+  :group 'vm
+  :type 'regexp)
+
+(defvar vm-spam-words nil
+  "A list of words often contained in spam messages.")
+
+(defvar vm-spam-words-regexp nil
+  "A regexp matching those words in `vm-spam-words'.")
+
+(defcustom vm-spam-words-file
+  (expand-file-name "~/.spam-words")
+  "A file storing a list of words contained in spam messages."
+  :group 'vm
+  :type 'file)
+
+(defcustom vm-vs-spam-score-headers
+  '(("X-Spam-Score:"  "[-+]?[0-9]*\\.?[0-9]+"  string-to-number)
+    ("X-Spam-Status:" "[-+]?[0-9]*\\.?[0-9]+" string-to-number)
+    ("X-Spam-Level:"  "\\*+"     length))
+  "A list of headers to look for spam scores."
+  :group 'vm
+  :type '(repeat (list (string :tag "Header regexp")
+                       (regexp :tag "Regexp matching the score")
+                       (function :tag "Function converting the score to a number"))))
+
 (defconst vm-supported-sort-keys
   '("date" "reversed-date"
     "author" "reversed-author"
@@ -5053,9 +5151,14 @@ Its parent keymap is mail-mode-map.")
     ("recipient")
     ("author")
     ("author-or-recipient")
+    ("outgoing")
+    ("uninteresting-senders")
     ("subject")
     ("sent-before")
     ("sent-after")
+    ("older-than")
+    ("newer-than")
+    ("attachment")
     ("more-chars-than")
     ("less-chars-than")
     ("more-lines-than")
@@ -5080,7 +5183,10 @@ Its parent keymap is mail-mode-map.")
     ("unfiled")
     ("unwritten")
     ("unedited")
-    ("unmarked")))
+    ("unmarked")
+    ("spam-word")
+    ("spam-score")
+    ))
 
 (defconst vm-virtual-selector-function-alist
   '((any . vm-vs-any)
@@ -5095,10 +5201,15 @@ Its parent keymap is mail-mode-map.")
     (recipient . vm-vs-recipient)
     (author . vm-vs-author)
     (author-or-recipient . vm-vs-author-or-recipient)
+    (outgoing . vm-vs-outgoing)
+    (uninteresting-senders . vm-vs-uninteresting-senders)
     (subject . vm-vs-subject)
     (sortable-subject . vm-vs-sortable-subject)
     (sent-before . vm-vs-sent-before)
     (sent-after . vm-vs-sent-after)
+    (older-than . vm-vs-older-than)
+    (newer-than . vm-vs-newer-than)
+    (attachment . vm-vs-attachment)
     (more-chars-than . vm-vs-more-chars-than)
     (less-chars-than . vm-vs-less-chars-than)
     (more-lines-than . vm-vs-more-lines-than)
@@ -5125,7 +5236,10 @@ Its parent keymap is mail-mode-map.")
     (unfiled . vm-vs-unfiled)
     (unwritten . vm-vs-unwritten)
     (unedited . vm-vs-unedited)
-    (unmarked . vm-vs-unmarked)))
+    (unmarked . vm-vs-unmarked)
+    (spam-word . vm-vs-spam-word)
+    (spam-score . vm-vs-spam-score)
+    ))
 
 (defconst vm-supported-attribute-names
   '("new"
@@ -5591,6 +5705,16 @@ that has a match.")
     ("message/news")
    ))
 
+;; The following undocumented variables have been moved here from
+;; vm-mime.el.  USR, 2010-01-05
+
+(defvar vm-image-list nil)
+(defvar vm-image-type nil)
+(defvar vm-image-type-name nil)
+(defvar vm-extent-list nil)
+(defvar vm-overlay-list nil)
+
+
 (defconst vm-mime-encoded-word-regexp
   "=\\?\\([^?*]+\\)\\(\\*\\([^?*]+\\)\\)?\\?\\([BbQq]\\)\\?\\([^?]+\\)\\?=")
 
@@ -5611,8 +5735,7 @@ that has a match.")
 
 (defcustom vm-enable-addons '(check-recipients
 			      check-for-empty-subject
-			      encode-headers
-			      take-action-on-attachment)
+			      encode-headers)
   "*A list of addons to enable, t for all and nil to disable all.
 Most addons are from `vm-rfaddons-infect-vm'.
 
@@ -5636,8 +5759,6 @@ You must restart VM after a change to cause any effects."
 		     fake-date)
 	      (const :tag "Bind '.' on attachment buttons to 'vm-mime-take-action-on-attachment'"
 		     take-action-on-attachment)
-	      (const :tag "Bind 'C-c C-s' to `vm-mime-save-all-attachments'"
-		     save-all-attachments)
 	      (const :tag "Automatically save attachments of new messages" 
 		     auto-save-all-attachments)
 	      (const :tag "Delete external attachments of a message when expunging it." 

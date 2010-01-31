@@ -15,6 +15,89 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
+VM 8.1.1-devo
+
+  CHANGES:
+
+  ** vm-pgg is not loaded by default because it is an add-on that is
+     currently not being maintained.  Users should load it from their
+     .vm file.  See the comments at the beginning of vm-pgg.el.
+
+  ** The variable `vm-mime-show-alternatives' is deprecated.  Set
+     the variable `vm-mime-alternative-select-method' to 'all to
+     get the same effect.
+
+  IMPROVEMENTS:
+
+  ** This version contains an experimental feature of using IMAP
+     folders in "headers-only" mode, with body loaded only on demand.
+     This helps to keep the folder sizes small and VM to run faster.
+     However, this code is in a preliminary stage.  Please use it
+     with CAUTION.
+
+     variable: vm-load-headers-only
+
+     If set to t, all new messages will be loaded to the cache-folder
+     in headers-only mode.  The body is loaded on demand when a
+     message is displayed in the Presentation Buffer.  This is a
+     temporary load and is lost as soon as you move to another
+     message.  
+
+     Previewing of messages interferes with headers-only operation.
+     So, you should set `vm-preview-lines' to nil.
+
+     To load the message body into the Folder Buffer, use:
+
+     command: vm-load-message (bound to 'o')
+
+     This command discards the current body of the message, if any,
+     and refreshes it from the server copy. Some of the VM operations,
+     e.g., vm-save-message, can only be performed if the body is
+     loaded into the Folder Buffer. 
+
+     command : vm-unload-message (bound to 'O')
+
+     This command discards the current body of the message from the
+     Folder Buffer and leaves it empty.
+
+     FAILURE RECOVERY: If the cache folder gets corrupted for any
+     reason, just delete it from the file system.  A new cache folder
+     will be generated upon the next visit.
+
+  ** The commands `vm-mime-save-all-attachments' and
+    `vm-mime-delete-all-attachments' have been moved to the VM core
+    (from vm-rfaddons).  New variables:
+       vm-mime-deletable-types 
+          (formerly `vm-mime-delete-all-attachments-types')
+       vm-mime-deletable-type-exceptions
+          (formerly `vm-mime-delete-all-attachments-types-exceptions')
+       vm-mime-savable-types
+          (formerly `vm-mime-save-all-attachments-types')
+       vm-mime-savable-type-exceptions
+          (formerly `vm-mime-save-all-attachments-types-exceptions')         
+       vm-mime-attachment-save-directory
+       vm-mime-attachment-source-directory
+       vm-mime-all-attachments-directory
+    See the info file section on MIME attachments for details.
+
+    The options for vm-rfaddons.el should not include
+    `save-all-attachments' and should be removed if it is currently
+    being used.  The option `take-action-on-attachments' is not
+    included by default.
+
+  * `vm-quit-no-change' offers to delete the auto-save file if there is
+    one.  (This wasn't getting done due to a bug in FSF Emacs.)
+
+  * `vm-delete-duplicate-messages' now works by comparing message ID's.
+    (from Noah Friedman's vm-addons).
+
+  * New boolean variable `vm-sort-threads-by-youngest-date' allows
+    threads to be sorted by their youngest date or oldest date.
+
+  * `vm-yank-message' function streamlined a bit.  New variable
+    `vm-include-text-from-presentation' can be used to extract the
+    included message text from the presentation buffer.
+
 VM 8.1.0
 
   KNOWN PROBLEMS:
@@ -32,15 +115,15 @@ VM 8.1.0
 
   IMPROVEMENTS:
 
-    * text/html handling controlled by a new variable
-      `vm-mime-text/html-handler' which is set to 'auto-select by
-      default.  It causes VM to locate the best library among
-      emacs-w3m, external w3m, w3 and lynx to display html
-      internally.  (This replaces the earlier variable
-      `vm-mime-use-w3-for-text/html'.) 
+    ** text/html handling controlled by a new variable
+       `vm-mime-text/html-handler' which is set to 'auto-select by
+       default.  It causes VM to locate the best library among
+       emacs-w3m, external w3m, w3 and lynx to display html
+       internally.  (This replaces the earlier variable
+       `vm-mime-use-w3-for-text/html'.)
 
-    * vm-delete-duplicate-messages now works by comparing message ID's.
-      (from Noah Friedman's vm-addons).
+    ** vm-delete-duplicate-messages now works by comparing message ID's.
+       (from Noah Friedman's vm-addons).
 
     * vm-yank-message function streamlined somewhat.  New variable
       `vm-include-text-from-presentation' used to extract message text
@@ -189,7 +272,7 @@ VM 8.0.14    2009-12-16
 
   BUGFIXES
 
-    * Removed incompatibility of a mapvector procedure with XEmacs.
+    * Removed an incompatibility of the mapvector procedure with XEmacs.
 
 VM 8.0.13    2009-11-29  
 

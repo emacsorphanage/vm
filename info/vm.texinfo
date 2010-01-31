@@ -1073,18 +1073,23 @@ the autosave file.  VM will not retrieve new mail for a folder
 that is in read-only mode.  VM also skips summary
 generation and MIME decoding to help catch your attention.
 
-If you want to recover the lost changes, run @kbd{M-x recover-file} or
-use the Recover toolbar button.  At the
-@samp{Recover File: } prompt press @kbd{RET}.  Emacs will then
-display a detailed directory listing showing the folder file and the
-autosave file and ask if you want to recover from the autosave file.  A
-good rule of thumb is to answer ``yes'' if the autosave file is larger
-than the folder file.  If the autosave file is significantly smaller,
-Emacs may not have completed writing the autosave file.  Or it could be
-that the smaller autosave file reflects the results of an expunge that
-you had not yet committed to disk before the crash.  If so, answering
-``no'' means you might have to do that expunge again, but this is better
-than not knowing whether the autosave file was truncated.
+@findex vm-recover-folder
+@findex recover-file
+If you want to recover the lost changes, run @kbd{M-x
+vm-recover-folder} or use the Recover Folder entry in Folder menu.  At
+the @samp{Recover File: } prompt press @kbd{RET}.  (Emacs's built-in
+@kbd{recover-file} command is not recommended for this purpose because
+VM is unable to obtain reliable data regarding the mail folders from
+Emacs.)  Emacs will then display a detailed directory listing showing
+the folder file and the autosave file and ask if you want to recover
+from the autosave file.  A good rule of thumb is to answer ``yes'' if
+the autosave file is larger than the folder file.  If the autosave
+file is significantly smaller, Emacs may not have completed writing
+the autosave file.  Or it could be that the smaller autosave file
+reflects the results of an expunge that you had not yet committed to
+disk before the crash.  If so, answering ``no'' means you might have
+to do that expunge again, but this is better than not knowing whether
+the autosave file was truncated.
 
 Assuming you answered ``yes'', the folder buffer's contents will be
 replaced by the contents of the autosave file and VM will re-parse the
@@ -1100,6 +1105,13 @@ Assuming you answered ``no'' to the recovery question, you should type
 @kbd{C-x C-q}, which is bound to @code{vm-toggle-read-only} in VM folder
 buffers.  The folder will be taken out of read-only mode and you can
 read and retrieve your mail normally.
+
+@findex vm-revert-folder
+@findex revert-file
+If you have made changes to a mail folder which you would like to
+cancel and go back to the version currently on the disk, you can use
+the function @kbd{vm-revert-folder} or the Revert Folder entry in the
+Folder menu.  (Emacs's built-in @kbd{revert-file} is not recommended.)
 
 @node Selecting Messages, Reading Messages, Starting Up, Top
 @chapter Selecting Messages
@@ -1352,14 +1364,14 @@ your @code{load-path}.
 @section Reading MIME Messages
 
 @vindex vm-display-using-mime
-If the variable @code{vm-display-using-mime} is non-@code{nil} VM will display
-messages using Multipurpose Internet Mail Extensions (MIME).  @dfn{MIME}
-is a set of extensions to the standard Internet message format that
-allows reliable transmission of arbitrary data including
-images, audio and video, as well as ordinary text.  A non-@code{nil} value for
-this variable means that VM will recognize MIME encoded messages and
+@dfn{MIME} is a set of extensions to the standard Internet message
+format that allows reliable transmission of arbitrary data including
+images, audio and video, as well as ordinary text in different
+languages.  By default, VM will recognize MIME encoded messages and
 display them as specified by the various MIME standards specifications.
-A nil value means VM will display MIME messages as plain text messages.
+This can be turned off by setting the variable
+@code{vm-display-using-mime} to @code{nil} and VM will then display MIME
+messages as plain text messages.
 
 @vindex vm-mime-base64-decoder-program
 @vindex vm-mime-base64-encoder-program
@@ -1459,23 +1471,24 @@ determines the format of the text in those buttons.
 @findex vm-mime-attach-object-from-message
 After decoding you will see either the decoded MIME objects or
 button lines that must be activated to attempt display of the
-MIME object.  The variable
-@code{vm-auto-displayed-mime-content-types} specifies the types
-that are displayed immediately.  Its value should be a list of
-MIME content types that should be displayed immediately after
-decoding.  Other types will be displayed as a button that you
-must activate to display the object.  To activate a button,
-either click the middle mouse button over it, or move the cursor
-to the line and press RET.  If you are running under a window
-system, you can use the right mouse button over a MIME button to
-display a menu of actions you can take on the MIME object.  If
-you prefer using keyboard commands, you can save the MIME object
-with @kbd{$ w}, print it with @kbd{$ p}, or pipe it to a shell
-command with @kbd{$ |}.  Use @kbd{$ s} to append an encapsulated
-message or USENET news article to a folder.  If you want to
-display the object with its characters displayed using Emacs'
-default face, use @kbd{$ RET}.  To display the object using an
-external viewer, type @kbd{$ e}.
+MIME object.  
+
+The variable @code{vm-auto-displayed-mime-content-types} specifies the
+types that are displayed immediately.  Its value should be a list of
+MIME content types that should be displayed immediately after decoding.
+Other types will be displayed as a button that you must activate to
+display the object.  
+
+To activate a button, either click the middle mouse
+button over it, or move the cursor to the line and press RET.  If you
+are running under a window system, you can use the right mouse button
+over a MIME button to display a menu of actions you can take on the MIME
+object.  If you prefer using keyboard commands, you can save the MIME
+object with @kbd{$ w}, print it with @kbd{$ p}, or pipe it to a shell
+command with @kbd{$ |}.  Use @kbd{$ s} to append an encapsulated message
+or USENET news article to a folder.  If you want to display the object
+with its characters displayed using Emacs' default face, use @kbd{$
+RET}.  To display the object using an external viewer, type @kbd{$ e}.
 
 @multitable @columnfractions .20 .80
 @item $ w   @tab @code{vm-mime-reader-map-save-file}
@@ -1489,38 +1502,44 @@ external viewer, type @kbd{$ e}.
 @item $ a   @tab @code{vm-mime-attach-object-from-message}
 @end multitable
 
-@vindex vm-mime-confirm-delete
-@findex vm-delete-mime-object
-Sometimes MIME objects are large and you may not want to save
-them along with the message that contains them.  If so, use
-@kbd{$ d} (@code{vm-delete-mime-object}) while the cursor is on
-the MIME button.  The object will be deleted and replaced with
-an object that indicates what the old object was and the fact
-that it is gone.  This is not an undoable operation, so use this
-command with care.  If you inadvertently delete an object, the
-only way to get it back is to quit visiting the current folder
-without saving and then revisit the folder.  This works because
-the object isn't removed from the disk copy of the folder until
-you save the folder.  By default VM will ask if you're sure
-about deleting an object before doing the deletion.  You can
-make VM not ask this question by setting
-@code{vm-mime-confirm-delete} to @code{nil}.
-
 @vindex vm-mime-delete-after-saving
 @vindex vm-mime-attachment-save-directory
+@vindex vm-mime-confirm-delete
 The MIME attachments can be saved to disk with @kbd{$ w}
-(@code{vm-mime-reader-map-save-file}).  They can be deleted at the same time
-by setting the variable @code{vm-mime-delete-after-saving}.  In this
-case, the attachment is deleted and replaced by a new one that refers
-to the saved copy.  The variable
+(@code{vm-mime-reader-map-save-file}).  They can be deleted at the
+same time by setting the variable @code{vm-mime-delete-after-saving}.
+In this case, the attachment is deleted and replaced by a MIME part
+that refers to the saved copy.  The variable
 @code{vm-mime-attachment-save-directory} specifies the default
-directory to save the attachments in.
+directory to save the attachments in.  The MIME attachments can also
+be deleted directly from the message bodies with @kbd{$ d}
+(@code{vm-delete-mime-object}).  The variable
+@code{vm-mime-confirm-delete} controls whether a confirmation is asked
+for.  
+
+It is a good idea to use @code{vm-mime-delete-after-saving} to delete
+saved attachments instead of deleting them manually, because with the
+former approach the message will have a handle to the saved copy,
+which can be retrieved when desired.
+
+Saving attachments to the file system and deleting them from message
+bodies has the beneficial effect of reducing the size of VM folders.
+That leads to a better utilisation of the computer resources and
+usually a faster operation of VM.
 
 @findex vm-mime-save-all-attachments
 @findex vm-mime-delete-all-attachments
-The command @code{vm-mime-save-all-attachments} and
+@vindex vm-mime-deletable-types
+@vindex vm-mime-deletable-type-exceptions
+@vindex vm-mime-savable-types
+@vindex vm-mime-savable-type-exceptions
+The commands @code{vm-mime-save-all-attachments} and
 @code{vm-mime-delete-all-attachments} can be used to save or delete
-all the attachments in a message.
+@i{all} the attachments in a message.  An "attachment" in this context
+is any MIME part that has "attachment" as its content-disposition or
+simply has a file name.  In addition, all MIME parts that have types
+matching @code{vm-mime-savable-types} or @code{vm-mime-deletable-types}
+(but not the corresponding @code{-exceptions}) are included.
 
 @node Internal display, External display, Attachments, MIME Messages
 @unnumberedsubsec Internal display of MIME attachments
@@ -1930,7 +1949,7 @@ the fully featured text subpart, if VM knows how to display that type.
 VM will display the type either internally or externally.  A
 value of @code{best-internal} tells VM to use the closest subpart that
 it can display internally.  External viewers won't be used in this
-case.
+case.  A value of @code{all} asks VM to display all the alternatives.
 
 The value can also be a list of the form
 @example
@@ -1943,13 +1962,6 @@ choose the first matching alternative found that can be displayed.  If
 instead of the symbol @code{favorite}, @code{favorite-internal} is used
 then the first TYPE that matches an alternative that can be displayed
 internally will be chosen.
-
-@vindex vm-mime-show-alternatives
-Normally, one chosen alternative is shown and the other
-alternatives suppressed.  If the variable
-@code{vm-mime-show-alternatives} is set, then all the alternatives are
-shown.  In effect, multipart/alternative is treated the same as
-multipart/mixed. 
 
 @findex vm-mime-nuke-alternative-text/html
 Messages with multiple alternatives use up extra file space and slow
@@ -2569,16 +2581,39 @@ Save all unfiled messages that auto-match a folder via
 are flagged for deletion are not saved by this command.  If invoked with a
 prefix argument, confirmation will be requested for each save.
 @findex vm-pipe-message-to-command
-@kindex |
-@item | (@code{vm-pipe-message-to-command})
+@kindex ||
+@item || (@code{vm-pipe-message-to-command})
 Runs a shell command with some or all of the current message as input.
-By default, the entire message is used.@*
-@*
+By default, the entire message is used.  However, the leading and
+trailing message separator lines are not included.  When applied to
+multiple messages, the command is invoked on each message individually.@* 
 If invoked with one @t{C-u} the text portion of the message is used.@*
 If invoked with two @t{C-u}'s the header portion of the message is used.@*
-@*
+In invoked with three @t{C-u}'s the visible headers and the text
+portions of the message are used.@*
 If the shell command generates any output, it is displayed in a
 @samp{*Shell Command Output*} buffer.  The message itself is not altered.
+@findex vm-pipe-message-to-command-discard-output
+@kindex |d
+@item |d (@code{vm-pipe-message-to-command-discard-output})
+Runs a shell command with some or all of the current message as input,
+like the above, but will not display the output.
+@findex vm-pipe-messages-to-command
+@vindex vm-pipe-messages-to-command-start
+@vindex vm-pipe-messages-to-command-end
+@kindex |s
+@item |s (@code{vm-pipe-messages-to-command})
+Runs a shell command using as input the current message or marked
+messages in the mbox format.  In contrast to
+@code{vm-pipe-message-to-command}, the leading and trailing separator
+lines are included.  This behaviour can be altered using the variables
+@code{vm-pipe-messages-to-command-start} and
+@code{vm-pipe-messages-to-command-end}. 
+@findex vm-pipe-messages-to-command-discard-output
+@kindex |n
+@item |n (@code{vm-pipe-messages-to-command-discard-output})
+Runs a shell command using as input the current message or marked
+messages in the mbox format, but will not display the output.
 @end table
 
 @vindex vm-berkeley-mail-compatibility
@@ -3727,7 +3762,7 @@ conditions.  If the current message is a MIME message that needs
 decoding, the Helper button becomes the Decode MIME button.  If the 
 current folder has an autosave file that appears to be the result 
 of an Emacs or system crash, the Helper button becomes the Recover 
-button.  Clicking on the Recover button runs @code{recover-file}, 
+button.  Clicking on the Recover button runs @code{vm-recover-folder}, 
 so you can recover your folder from an existing autosave file.
 @item mime
 The Decode MIME button.  Clicking on this button runs the command
@@ -4254,14 +4289,22 @@ developers/programmers.
 @section Folder Internals
 
 By default, VM stores mail folders in the Unix @code{mbox} format,
-described in the RFC 2822 specification of the Internet Engineering Task
+described in the RFC 4155 specification of the Internet Engineering Task
 Force.  In this format, the mail folder is a text file consisting of a
 sequence of messages, with each message consisting of a series of
 headers followed by a message body.  The beginning of each message is
-delineated by a header line starting with the string ``From ''.  To make
-sure that such a line exists, VM adds its own header line of the form
-``From VM ...'' where the ``...'' records the time at which VM first saw
-the message.
+delineated by a separator line starting with the string ``From '' and
+the end by a blank line.  To make sure that such a line exists, VM adds
+its own header line of the form ``From VM ...'' where the ``...''
+records the time at which VM first saw the message.  The format of the
+individual messages is as per the RFC 2822 specification, except that
+Line-Feed characters may be used to delineate the end of lines in the
+"Unix" format.  
+
+In addition to the Unix mbox format (which is called the @code{From_}
+format), VM also handles the MMDF format and two versions of the System
+V Unix format and the Emacs Rmail's Babyl format.  The variable
+@code{vm-folder-type} stores the type of the folder being used.
 
 To every message, VM adds a header with the field name
 ``X-VM-v5-Data:'' and stores in it the information about the message it
@@ -4272,6 +4315,7 @@ will generate them afresh when the folder is visited.
 
 The first message of the VM folder file contains additional headers that
 VM uses for remembering information between sessions.
+
 @itemize
 @item
 X-VM-Bookmark. This header stores the position of the cursor, as a
@@ -4303,9 +4347,10 @@ information for the IMAP servers.  VM refrains from retrieving these
 messages again in future in order to avoid duplication.
 @end itemize
 
-Internally, VM stores the folder as simply a text buffer.  However, it
+Internal to Emacs, VM stores the folder as simply a text buffer.  However, it
 remembers a variety of data about the message contents in the buffer
 through internal variables.
+
 @itemize
 @item
 @code{vm-message-list}.  A list of message data structures for all the
@@ -4352,12 +4397,17 @@ that the current buffer is involved in.
 
 The message data structure is a vector containing various pieces of
 data:
+
 @itemize
 @item
 Location data.  This data about the location of the various parts of the
 message in the folder buffer is calculated after a folder is loaded and
 parsed. 
+
 @itemize
+@item
+start.  The starting position of the message, at which a leading
+separator line begins.
 @item
 headers. The position in the folder buffer where the headers of the message
 start.
@@ -4376,6 +4426,7 @@ end. The position in the folder buffer where the message ends.
 @item
 Soft data.  This vector contains other calculated data about the
 message. 
+
 @itemize
 @item
 number. The message number as an integer.
@@ -4437,6 +4488,7 @@ inherited from its real folder.
 Attributes.  All the hard-wired message attributes are stored in this
 vector.  They also get saved as part of the @code{X-VM-v5-Data} header
 field when the folder is saved to disk.
+
 @itemize
 @item
 new-flag.  Flag to indicate if the message is ``new''.
@@ -4466,6 +4518,7 @@ this vector is only supposed to have data that can be calculated from
 the message itself, the fields pop-uidl, imap-uid and imap-uid-validity
 form an exception.  They are really hard data that cannot be calculated
 from anything else.
+
 @itemize
 @item
 byte-count.  The size of the message in bytes.
@@ -4526,6 +4579,7 @@ spam-score.  The spam score of the message.
 @item
 Mirror Data.  Extra data shared by virtual messages if vm-virtual-mirror
 is non-nil.
+
 @itemize
 @item 
 edit-buffer.  If the message is being edited, this is the buffer being

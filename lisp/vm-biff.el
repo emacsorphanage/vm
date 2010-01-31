@@ -42,6 +42,9 @@
 (when vm-xemacs-p
   (require 'overlay))
 
+(when vm-fsfemacs-p
+  (defvar horizontal-scrollbar-visible-p nil))
+
 (defgroup vm nil
   "VM"
   :group 'mail)
