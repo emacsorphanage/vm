@@ -1,1 +1,1 @@
-@set VERSION 8.1.0-beta
+@set VERSION 8.1.0-beta2

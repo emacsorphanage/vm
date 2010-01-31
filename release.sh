@@ -12,7 +12,7 @@ fi
 # check for an error less build
 if [ "$1" != "test" ]; then 
   # make sure we delete the existing files containing version info
-  rm -f lisp/version.txt info/version.texi
+  # rm -f lisp/version.txt info/version.texi
   make all || exit 1
 fi
 
