@@ -1006,6 +1006,10 @@ for this variable to have effect."
   :group 'vm
   :type 'boolean)
 
+(defvar vm-mime-decode-for-show t
+  "*Control variable that says whether MIME messages should be decoded
+for showing the message, in addition to decoding for preview.")
+
 (defcustom vm-auto-displayed-mime-content-types 
   '("text" "image" "multipart" "message/rfc822")
   "*List of MIME content types that should be displayed immediately

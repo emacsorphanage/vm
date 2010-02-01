@@ -796,7 +796,10 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 		   ;; copy.  Where will the next decoding get its
 		   ;; presentation copy from?  This is a problem for
 		   ;; the headers-only mode.
-		   (if (and vm-mail-buffer 
+		   ;; As an experiment, we turn off the double
+		   ;; decoding and see what happens. USR, 2010-02-01
+		   (if (and vm-mime-decode-for-show
+			    vm-mail-buffer 
 			    (not (vm-body-to-be-retrieved-of
 				  (car vm-message-pointer))))
 			(vm-set-buffer-variable vm-mail-buffer
