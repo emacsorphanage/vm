@@ -17,16 +17,6 @@ Status
   
 VM 8.1.1-devo
 
-  CHANGES:
-
-  ** vm-pgg is not loaded by default because it is an add-on that is
-     currently not being maintained.  Users should load it from their
-     .vm file.  See the comments at the beginning of vm-pgg.el.
-
-  ** The variable `vm-mime-show-alternatives' is deprecated.  Set
-     the variable `vm-mime-alternative-select-method' to 'all to
-     get the same effect.
-
   IMPROVEMENTS:
 
   ** This version contains an experimental feature of using IMAP
@@ -64,47 +54,13 @@ VM 8.1.1-devo
      reason, just delete it from the file system.  A new cache folder
      will be generated upon the next visit.
 
-  ** The commands `vm-mime-save-all-attachments' and
-    `vm-mime-delete-all-attachments' have been moved to the VM core
-    (from vm-rfaddons).  New variables:
-       vm-mime-deletable-types 
-          (formerly `vm-mime-delete-all-attachments-types')
-       vm-mime-deletable-type-exceptions
-          (formerly `vm-mime-delete-all-attachments-types-exceptions')
-       vm-mime-savable-types
-          (formerly `vm-mime-save-all-attachments-types')
-       vm-mime-savable-type-exceptions
-          (formerly `vm-mime-save-all-attachments-types-exceptions')         
-       vm-mime-attachment-save-directory
-       vm-mime-attachment-source-directory
-       vm-mime-all-attachments-directory
-    See the info file section on MIME attachments for details.
-
-    The options for vm-rfaddons.el should not include
-    `save-all-attachments' and should be removed if it is currently
-    being used.  The option `take-action-on-attachments' is not
-    included by default.
-
-  * `vm-quit-no-change' offers to delete the auto-save file if there is
-    one.  (This wasn't getting done due to a bug in FSF Emacs.)
-
-  * `vm-delete-duplicate-messages' now works by comparing message ID's.
-    (from Noah Friedman's vm-addons).
-
-  * New boolean variable `vm-sort-threads-by-youngest-date' allows
-    threads to be sorted by their youngest date or oldest date.
-
-  * `vm-yank-message' function streamlined a bit.  New variable
-    `vm-include-text-from-presentation' can be used to extract the
-    included message text from the presentation buffer.
-
-VM 8.1.0
+VM 8.1.0 (beta2, 2010-01-31)
 
   KNOWN PROBLEMS:
 
     * Automatic filling is turned off for some plain text messages for
-      safety reasons.  Help us by sending us sample messages for which
-      filling fails.
+      safety reasons.  Please help us by sending us sample messages
+      for which filling fails.
 
   MAJOR NEW FEATURES:
 
@@ -113,17 +69,63 @@ VM 8.1.0
     * Full support for IMAP servers.  (See "IMPROVEMENTS for
       imap-folders" below.) 
 
+  CHANGES:
+
+   ** vm-pgg is not loaded by default because it is a set up as an
+      add-on.  Users should load it from their .emacs file by using
+      the sequence
+           (require 'vm-autoloads)
+           (require 'vm-pgg)
+
+   ** The variable `vm-mime-show-alternatives' is deprecated.  Set
+      the variable `vm-mime-alternative-select-method' to 'all to
+      get the same effect.
+
   IMPROVEMENTS:
 
-    ** text/html handling controlled by a new variable
-       `vm-mime-text/html-handler' which is set to 'auto-select by
-       default.  It causes VM to locate the best library among
-       emacs-w3m, external w3m, w3 and lynx to display html
-       internally.  (This replaces the earlier variable
-       `vm-mime-use-w3-for-text/html'.)
+   ** The commands `vm-mime-save-all-attachments' and
+      `vm-mime-delete-all-attachments' have been moved to the VM core
+      (from vm-rfaddons).  New variables:
+	 vm-mime-deletable-types 
+	    (formerly `vm-mime-delete-all-attachments-types')
+	 vm-mime-deletable-type-exceptions
+	    (formerly `vm-mime-delete-all-attachments-types-exceptions')
+	 vm-mime-savable-types
+	    (formerly `vm-mime-save-all-attachments-types')
+	 vm-mime-savable-type-exceptions
+	    (formerly `vm-mime-save-all-attachments-types-exceptions')         
+	 vm-mime-attachment-save-directory
+	 vm-mime-attachment-source-directory
+	 vm-mime-all-attachments-directory
+      See the info file section on MIME attachments for details.
 
-    ** vm-delete-duplicate-messages now works by comparing message ID's.
-       (from Noah Friedman's vm-addons).
+      The options for vm-rfaddons.el should not include
+      `save-all-attachments' and should be removed if it is currently
+      being used.  The option `take-action-on-attachments' is not
+      included by default.
+
+    * `vm-quit-no-change' offers to delete the auto-save file if there is
+      one.  (This wasn't getting done due to a bug in FSF Emacs.)
+
+    * `vm-delete-duplicate-messages' now works by comparing message ID's.
+      (from Noah Friedman's vm-addons).
+
+    * New boolean variable `vm-sort-threads-by-youngest-date' allows
+      threads to be sorted by their youngest date or oldest date.
+
+    * `vm-yank-message' function streamlined a bit.  New variable
+      `vm-include-text-from-presentation' can be used to extract the
+      included message text from the presentation buffer.
+
+   ** text/html handling controlled by a new variable
+      `vm-mime-text/html-handler' which is set to 'auto-select by
+      default.  It causes VM to locate the best library among
+      emacs-w3m, external w3m, w3 and lynx to display html
+      internally.  (This replaces the earlier variable
+      `vm-mime-use-w3-for-text/html'.)
+
+   ** vm-delete-duplicate-messages now works by comparing message ID's.
+      (from Noah Friedman's vm-addons).
 
     * vm-yank-message function streamlined somewhat.  New variable
       `vm-include-text-from-presentation' used to extract message text
@@ -238,10 +240,11 @@ VM 8.1.0
 
   IMPROVEMENTS for imap-folders (Uday S. Reddy)
 
-    * New variable `vm-imap-account-alist' allows multiple IMAP accounts to be
-      handled uniformly.  The variable `vm-imap-server-list' is now obsolete.
-      IMAP folders should be specified in the minibuffer using the
-      account:mailbox format.  See the info node on IMAP folders.
+   ** New variable `vm-imap-account-alist' allows multiple IMAP
+      accounts to be handled uniformly.  The variable
+      `vm-imap-server-list' is now obsolete.  IMAP folders should be
+      specified in the minibuffer using the account:mailbox format.
+      See the info node on IMAP folders.
 
     * New variable `vm-load-headers-only' to enable headers-only
       downloading of IMAP folders.  (This is still experimental.)
