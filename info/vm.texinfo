@@ -1363,6 +1363,7 @@ your @code{load-path}.
 @node MIME Messages,, Paging, Reading Messages
 @section Reading MIME Messages
 
+@cindex MIME
 @vindex vm-display-using-mime
 @dfn{MIME} is a set of extensions to the standard Internet message
 format that allows reliable transmission of arbitrary data including
@@ -1450,6 +1451,7 @@ determines the format of the text in those buttons.
 @node Attachments, Internal display, Viewing MIME, MIME Messages
 @unnumberedsubsec  Operating on MIME attachments
 
+@cindex attachments
 @kindex $ |
 @kindex $ d
 @kindex $ RET
@@ -1608,16 +1610,20 @@ The variable @code{vm-mime-internal-content-type-exceptions} serves as
 the exception list for @code{vm-mime-internal-content-types}.  Its value 
 should be a list of types that should not be displayed internally.
 
-@cindex HTML browsers
+@cindex HTML
 @vindex vm-mime-text/html-handler
 The HTML content in text/html MIME parts can be displayed in Emacs using
 a variety of packages.  VM knows about:
 
-@multitable @columnfractions .20 .80
-@item lynx   @tab  The lynx browser used externally to convert to plain text
-@item w3m    @tab  The w3m browser used externally to convert to plain text
-@item emacs-w3 @tab  The Emacs/W3 browser used internally in Emacs
-@item emacs-w3m @tab The Emacs interface to the w3m browser
+@multitable @columnfractions .15 .85
+@item lynx   
+  @tab  The lynx browser used externally to convert HTML to plain text
+@item w3m    
+  @tab  The w3m browser used externally to convert HTML to plain text
+@item emacs-w3 
+  @tab  The Emacs/W3 browser used internally in Emacs
+@item emacs-w3m 
+  @tab  The Emacs/W3M browser used internally in Emacs
 @end multitable
 
 You can set the variable @code{vm-mime-text/html-handler} to one of
@@ -1699,7 +1705,7 @@ The first matching list element will be used.
 
 No multipart message will ever be sent to an external viewer.
 
-External viewer processes are normally killed when you select a
+External viewer processes are normally killed when you select
 a new message in the current folder.  If you want viewer
 processes to not be killed, set
 @code{vm-mime-delete-viewer-processes} to a @code{nil} value.
