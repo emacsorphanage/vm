@@ -191,6 +191,14 @@
            (if use-body-peek "(BODY.PEEK[])" "(RFC822.PEEK)"))))
     (vm-imap-send-command process (format "FETCH %d:%d %s" beg end fetchcmd))))
 
+(defsubst vm-imap-fetch-uid-message (process uid use-body-peek 
+					   &optional headers-only)
+  (let ((fetchcmd
+         (if headers-only
+             (if use-body-peek "(BODY.PEEK[HEADER])" "(RFC822.HEADER)")
+           (if use-body-peek "(BODY.PEEK[])" "(RFC822.PEEK)"))))
+    (vm-imap-send-command process (format "UID FETCH %s:%s %s" uid uid fetchcmd))))
+
 ;; Our goal is to drag the mail from the IMAP maildrop to the crash box.
 ;; just as if we were using movemail on a spool file.
 ;; We remember which messages we have retrieved so that we can
@@ -1407,11 +1415,15 @@ on all the relevant IMAP servers and then immediately expunges."
     (setq list (cdr (nth 3 fetch-response)))
     (cond
      (bodypeek
-      (if (not (vm-imap-response-matches list 'BODY '(vector) 'string))
-	  (vm-imap-protocol-error
-	   "expected (BODY[] string) in FETCH response"))
-      (setq p (nth 2 list)
-	    ***start (nth 1 p)))
+      (cond ((vm-imap-response-matches list 'BODY '(vector) 'string)
+	     (setq p (nth 2 list) 
+		   ***start (nth 1 p)))
+	    ((vm-imap-response-matches list 'UID 'atom 'BODY '(vector) 'string)
+	     (setq p (nth 4 list)
+		   ***start (nth 1 p)))
+	    (t
+	     (vm-imap-protocol-error
+	      "expected (BODY[] string) in FETCH response"))))
      (t
       (if (not (vm-imap-response-matches list 'RFC822 'string))
 	  (vm-imap-protocol-error
@@ -2701,13 +2713,13 @@ operation of the server to minimize I/O."
 				 (length (cdr m-list))))
 					; try again, if the user wants us to
 		    (setq count (1+ count)))
-		  (message "Expunging messages on the server... done"))
+		  (message "Expunging messages on the server... done")))
 		(vm-imap-protocol-error 
 		 (message "Expunge from %s signalled: %s"
 			  safe-imapdrop error-data))
 		(quit 
 		 (error "Quit received during expunge from %s"
-			safe-imapdrop))))
+			safe-imapdrop)))
 	  ;;-------------------
 	  (vm-buffer-type:exit)
 	  ;;-------------------
@@ -2783,7 +2795,8 @@ operations")
 	      (vm-set-imap-stat-x-currmsg statblob message-num)
 	      ;; (setq message-size (vm-imap-get-message-size process message-num))
 	      (vm-set-imap-stat-x-need statblob message-size)
-	      (vm-imap-fetch-message process message-num use-body-peek nil)
+	      ;; (vm-imap-fetch-message process message-num use-body-peek nil)
+	      (vm-imap-fetch-uid-message process uid use-body-peek nil)
 	      (vm-imap-retrieve-to-target process body-buffer statblob
 				     use-body-peek)
 	      (vm-imap-read-ok-response process)
