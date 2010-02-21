@@ -1923,6 +1923,8 @@ on all the relevant IMAP servers and then immediately expunges."
       process )))
 
 (defun vm-imap-retrieve-uid-and-flags-data ()
+  "Retrieve the uid's and message flags for all the messages on the
+IMAP server in the current mail box."
   ;;------------------------------
   (if vm-buffer-type-debug
       (setq vm-buffer-type-trail (cons 'uid-and-flags-data 
@@ -2608,18 +2610,15 @@ operation of the server to minimize I/O."
 		 vm-imap-messages-to-expunge)
 	;; New code.  Kyle's version was piggybacking on IMAP spool
 	;; file code and wasn't ideal.
-	(save-excursion
-	  ;;-----------------------------
-	  (vm-buffer-type:duplicate)
-	  ;;-----------------------------
-	  (message "Expunging messages on the server... ")
+	(message "Expunging messages on the server... ")
+	(let ((mailbox-count (vm-folder-imap-mailbox-count))
+	      (expunge-count (length vm-imap-messages-to-expunge))
+	      (uid-obarray (vm-folder-imap-uid-obarray))
+	      uids-to-delete m-list message e-list count)
+	  ;; uids-to-delete to have UID's of all UID-valid messages in
+	  ;; vm-imap-messages-to-expunge 
 	  (condition-case error-data
-	      (let ((mailbox-count (vm-folder-imap-mailbox-count))
-		    (expunge-count (length vm-imap-messages-to-expunge))
-		    (uid-obarray (vm-folder-imap-uid-obarray))
-		    uids-to-delete m-list message e-list count)
-		;; uids-to-delete to have UID's of all UID-valid messages in
-		;; vm-imap-messages-to-expunge 
+	      (progn
 		(while vm-imap-messages-to-expunge
 		  (setq message (car vm-imap-messages-to-expunge))
 		  (if (equal (cdr message) uid-validity)
@@ -2631,84 +2630,90 @@ operation of the server to minimize I/O."
 		      (message "%s stale deleted messages are ignored"
 			       (- expunge-count (length uids-to-delete)))
 		      (sit-for 2)))
-
-		;;---------------------------
-		(vm-buffer-type:set 'process)
-		;;---------------------------
-		(set-buffer (process-buffer process))
-		;; (setq uid-alist (vm-imap-get-uid-list 
-		;;		 process 1 mailbox-count))
-		;; m-list to have the message sequence numbers of
-		;; messages to be expunged, in descending order.
-		;; the message sequence numbers don't change in the
-		;; process, according to the IMAP4 protocol
-		(setq m-list 
-		      (delete nil
-			      (mapcar 
-			       (lambda (uid)
-				 (let* ((key (intern uid uid-obarray)))
-				   (and (boundp key)
-					(progn
-					  (vm-imap-delete-message 
-					   process (symbol-value key))
-					  (symbol-value key)))))
-			       uids-to-delete)))
-		(setq m-list (cons nil (sort m-list '>)))
+		(setq expunge-count 0)	; number of messages expunged
+		(save-excursion
+		  ;;-----------------------------
+		  (vm-buffer-type:duplicate)
+		  ;;-----------------------------
+		  ;;---------------------------
+		  (vm-buffer-type:set 'process)
+		  ;;---------------------------
+		  (set-buffer (process-buffer process))
+		  ;; (setq uid-alist (vm-imap-get-uid-list 
+		  ;;		 process 1 mailbox-count))
+		  ;; m-list to have the message sequence numbers of
+		  ;; messages to be expunged, in descending order.
+		  ;; the message sequence numbers don't change in the
+		  ;; process, according to the IMAP4 protocol
+		  (setq m-list 
+			(delete nil
+				(mapcar 
+				 (lambda (uid)
+				   (let* ((key (intern uid uid-obarray)))
+				     (and (boundp key)
+					  (progn
+					    (vm-imap-delete-message 
+					     process (symbol-value key))
+					    (symbol-value key)))))
+				 uids-to-delete)))
+		  (setq m-list (cons nil (sort m-list '>)))
 					; dummy header added
-		(setq count 0)
-		(while (and (cdr m-list) (<= count vm-imap-expunge-retries))
-		  ;;----------------------------------
-		  (vm-imap-session-type:assert-active)
-		  ;;----------------------------------
-		  (vm-imap-send-command process "EXPUNGE")
-		  ;;--------------------------------
-		  (vm-imap-session-type:set 'active)
-		  ;;--------------------------------
-		  ;; e-list to have the message sequence numbers of
-		  ;; messages that got expunged
-		  (setq e-list (sort 
-				(vm-imap-read-expunge-response
-				 process)
-				'>))
-		  (while e-list		; for each message expunged
-		    (let ((e (car e-list))
-			  (pair m-list)
-			  (done nil))
-		      (while (not done)	; remove it from m-list
-			(cond ((null (cdr pair))
-			       (setq done t))
-			      ((> (car (cdr pair)) e) 
+		  (setq count 0)
+		  (while (and (cdr m-list) (<= count vm-imap-expunge-retries))
+		    ;;----------------------------------
+		    (vm-imap-session-type:assert-active)
+		    ;;----------------------------------
+		    (vm-imap-send-command process "EXPUNGE")
+		    ;;--------------------------------
+		    (vm-imap-session-type:set 'active)
+		    ;;--------------------------------
+		    ;; e-list to have the message sequence numbers of
+		    ;; messages that got expunged
+		    (setq e-list (sort 
+				  (vm-imap-read-expunge-response
+				   process)
+				  '>))
+		    (setq expunge-count (+ expunge-count (length e-list)))
+		    (while e-list	; for each message expunged
+		      (let ((e (car e-list))
+			    (pair m-list)
+			    (done nil))
+			(while (not done) ; remove it from m-list
+			  (cond ((null (cdr pair))
+				 (setq done t))
+				((> (car (cdr pair)) e) 
 					; decrement the message sequence
 					; numbers following e in m-list
-			       (rplaca (cdr pair) 
-				       (- (car (cdr pair)) 1)))
-			      ((= (car (cdr pair)) e)
-			       (rplacd pair (cdr (cdr pair)))
-			       (setq done t))
-			      ((< (car (cdr pair)) e)
+				 (rplaca (cdr pair) 
+					 (- (car (cdr pair)) 1)))
+				((= (car (cdr pair)) e)
+				 (rplacd pair (cdr (cdr pair)))
+				 (setq done t))
+				((< (car (cdr pair)) e)
 					; oops. somebody expunged e!?!
-			       (setq done t)))
-			(setq pair (cdr pair)))
-		      (setq e-list (cdr e-list))))
-		  ;; m-list has message sequence numbers of messages
-		  ;; that haven't yet been expunged
-		  (if (cdr m-list)
-		      (message "%s messages yet to be expunged"
-			       (length (cdr m-list))))
+				 (setq done t)))
+			  (setq pair (cdr pair)))
+			(setq e-list (cdr e-list))))
+		    ;; m-list has message sequence numbers of messages
+		    ;; that haven't yet been expunged
+		    (if (cdr m-list)
+			(message "%s messages yet to be expunged"
+				 (length (cdr m-list))))
 					; try again, if the user wants us to
-		  (setq count (1+ count)))
-		(message "Expunging messages on the server... done"))
-	    (vm-imap-protocol-error 
-	     (message "Expunge from %s signalled: %s"
-		      safe-imapdrop error-data))
-	    (quit 
-	     (error "Quit received during expunge from %s"
-		    safe-imapdrop)))
+		    (setq count (1+ count)))
+		  (message "Expunging messages on the server... done"))
+		(vm-imap-protocol-error 
+		 (message "Expunge from %s signalled: %s"
+			  safe-imapdrop error-data))
+		(quit 
+		 (error "Quit received during expunge from %s"
+			safe-imapdrop))))
 	  ;;-------------------
 	  (vm-buffer-type:exit)
 	  ;;-------------------
-	  )
-	(vm-imap-dump-uid-and-flags-data))
+	  (vm-imap-dump-uid-and-flags-data)
+	  (vm-set-folder-imap-mailbox-count (- mailbox-count expunge-count))
+	  ))
       got-some)))
 
 (defvar vm-imap-message-bunch-size 10
