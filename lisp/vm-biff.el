@@ -1,4 +1,6 @@
 ;;; vm-biff.el --- a xlbiff like tool for VM
+;;;
+;;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 2001 Robert Fenk
 ;;

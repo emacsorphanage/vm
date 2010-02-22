@@ -1,4 +1,6 @@
 ;;; vm-rfaddons.el --- a collections of various useful VM helper functions
+;;;
+;;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 1999-2006 Robert Widhopf-Fenk
 ;;

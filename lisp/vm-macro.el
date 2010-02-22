@@ -1,4 +1,6 @@
 ;;; vm-macro.el ---  Random VM macros
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

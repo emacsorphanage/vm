@@ -1,4 +1,6 @@
 ;;; vm-vcard.el --- vcard parsing and formatting routines for VM
+;;;
+;;; This file is an add-on for VM
 
 ;; Copyright (C) 1997, 2000 Noah S. Friedman
 

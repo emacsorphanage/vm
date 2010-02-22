@@ -1,5 +1,7 @@
 ;;; vcard.el --- vcard parsing and display routines
-
+;;;
+;;; This file is not part of VM; it is a utility used there.
+;;
 ;; Copyright (C) 1997, 1999, 2000 Noah S. Friedman
 
 ;; Author: Noah Friedman <friedman@splode.com>

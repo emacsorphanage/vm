@@ -1,4 +1,6 @@
 ;;; vm-folder.el --- VM folder related functions
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

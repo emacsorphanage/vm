@@ -1,4 +1,6 @@
 ;;; vm-imap.el ---  Simple IMAP4 (RFC 2060) client for VM
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1998, 2001, 2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

@@ -1,4 +1,6 @@
 ;;; vm-summary.el --- Summary gathering and formatting routines for VM
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1995, 2000 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

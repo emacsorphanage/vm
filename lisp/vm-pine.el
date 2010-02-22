@@ -1,4 +1,6 @@
 ;;; vm-pine.el --- draft handling and other neat functions for VM
+;;;
+;;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 1998-2006 Robert Fenk
 ;;

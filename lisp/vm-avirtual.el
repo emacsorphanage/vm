@@ -1,4 +1,6 @@
 ;;; vm-avirtual.el --- additional functions for virtual folder selectors
+;;;
+;;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 2000-2006 Robert Widhopf-Fenk
 ;;

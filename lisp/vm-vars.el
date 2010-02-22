@@ -1,4 +1,6 @@
 ;;; vm-vars.el --- VM user and internal variable initialization
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

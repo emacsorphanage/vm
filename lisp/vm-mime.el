@@ -1,4 +1,6 @@
 ;;; vm-mime.el ---  MIME support functions
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1997-2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

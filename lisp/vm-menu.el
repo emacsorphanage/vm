@@ -1,4 +1,6 @@
 ;;; vm-menu.el --- Menu related functions and commands
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1994 Heiko Muenkel
 ;; Copyright (C) 1995, 1997 Kyle E. Jones

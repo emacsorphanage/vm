@@ -1,4 +1,6 @@
 ;;; vm-summary-faces.el --- faces support for VM summary buffers
+;;;
+;;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 2001 Robert Fenk
 ;;

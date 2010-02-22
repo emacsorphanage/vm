@@ -1,4 +1,6 @@
 ;;; vm-ps-print.el --- PS-printing functions for VM
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1999 Robert Fenk
 ;;

@@ -1,4 +1,6 @@
 ;;; vm-delete.el --- Delete and expunge commands for VM.
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

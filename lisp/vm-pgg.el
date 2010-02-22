@@ -1,4 +1,6 @@
 ;;; vm-pgg.el --- PGP/MIME support for VM by pgg.el
+;;;
+;;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 2006 Robert Widhopf-Fenk
 ;;

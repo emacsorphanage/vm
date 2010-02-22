@@ -1,4 +1,6 @@
 ;;; vm-pcrisis.el --- wide-ranging auto-setup for personalities in VM
+;;;
+;;; This file is an add-on for VM
 ;;
 ;; Copyright (C) 1999 Rob Hodges,
 ;;               2006 Robert Widhopf, Robert P. Goldman

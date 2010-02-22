@@ -1,4 +1,6 @@
 ;;; vm-grepmail.el --- VM interface for grepmail
+;;;
+;;; This file is part of VM
 ;; 
 ;; Copyright (C) 2001-2005 Robert Widhopf-Fenk
 ;;

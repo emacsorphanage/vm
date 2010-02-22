@@ -1,4 +1,7 @@
-;;; vm-message.el --- Macros and functions dealing with accessing VM message struct fields
+;;; vm-message.el --- Macros and functions dealing with accessing VM
+;;; message struct fields 
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

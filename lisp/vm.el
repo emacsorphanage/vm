@@ -1,4 +1,6 @@
 ;;; vm.el --- Entry points for VM
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1994-1998, 2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

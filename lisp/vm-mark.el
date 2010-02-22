@@ -1,4 +1,6 @@
 ;;; vm-mark.el ---  Commands for handling messages marks
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1990, 1993, 1994 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

@@ -1,5 +1,7 @@
 ;;; vm-w3m.el --- additional functions to make VM use emacs-w3m for HTML mails
-
+;;;
+;;; This file is part of VM
+;;
 ;; Copyright (C) 2003, 2005, 2006 Katsumi Yamaoka,
 ;; Copyright (C)             2007 Robert Widhopf-Fenk
 

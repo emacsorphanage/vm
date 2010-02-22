@@ -1,4 +1,6 @@
 ;;; vm-virtual.el --- Virtual folders for VM
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1990-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

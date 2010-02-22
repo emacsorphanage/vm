@@ -1,4 +1,6 @@
 ;;; vm-minibuf.el --- Minibuffer read functions for VM
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1993, 1994 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
