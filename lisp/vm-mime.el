@@ -5664,9 +5664,10 @@ describes what was deleted."
 	       (setq o (car o-list))
 	       (cond ((setq layout (overlay-get o 'vm-mime-layout))
 		      (setq found t)
-		      (if (eq layout
-			      (vm-mime-layout-of
-			       (vm-mm-layout-message layout)))
+		      (if (and (vm-mm-layout-message layout)
+			       (eq layout
+				   (vm-mime-layout-of
+				    (vm-mm-layout-message layout))))
 			  (error "Can't delete only MIME object; use vm-delete-message instead."))
 		      (if vm-mime-confirm-delete
 			  (or (y-or-n-p (vm-mime-sprintf "Delete %t? " layout))
@@ -5688,8 +5689,9 @@ describes what was deleted."
 	     (if (null e)
 		 (error "No MIME button found at point.")
 	       (setq layout (extent-property e 'vm-mime-layout))
-	       (if (eq layout (vm-mime-layout-of
-			       (vm-mm-layout-message layout)))
+	       (if (and (vm-mm-laytout-message layout)
+			(eq layout (vm-mime-layout-of
+				    (vm-mm-layout-message layout))))
 		   (error "Can't delete only MIME object; use vm-delete-message instead."))
 	       (if vm-mime-confirm-delete
 		   (or (y-or-n-p (vm-mime-sprintf "Delete %t? " layout))
@@ -5719,6 +5721,8 @@ describes what was deleted."
 	  (buffer-read-only nil)
 	  (m (vm-mm-layout-message layout))
 	  newid new-layout)
+      (if (null m)
+	  (error "Message body not loaded"))
       (set-buffer (vm-buffer-of m))
       (vm-save-restriction
 	(widen)
