@@ -499,8 +499,8 @@ on all the relevant IMAP servers and then immediately expunges."
 				      (vm-imap-read-ok-response process)
 				      ;;----------------------------------
 				      (vm-imap-session-type:set 'inactive)
-				      ;;----------------------------------
 				      ;; (vm-imap-dump-uid-and-flags-data)
+				      ;;----------------------------------
 				      ))
 				(vm-imap-end-session process)
 				
@@ -586,8 +586,8 @@ on all the relevant IMAP servers and then immediately expunges."
 		(vm-imap-read-ok-response process)
 		;;----------------------------------
 		(vm-imap-session-type:set 'inactive)
-		;;----------------------------------
 		;; (vm-imap-dump-uid-and-flags-data)
+		;;----------------------------------
 		))
 	  (if trouble
 	      (progn
@@ -670,6 +670,7 @@ on all the relevant IMAP servers and then immediately expunges."
 ;; -- message opeations
 ;; vm-imap-retrieve-uid-and-flags-data: () -> void
 ;; vm-imap-dump-uid-and-flags-data: () -> void
+;; vm-imap-dump-uid-seq-num-data: () -> void
 ;; vm-imap-get-uid-list: (process & int & int) -> (int . uid) list
 ;; vm-imap-get-message-data-list: (process & int & int) ->
 ;;					(int . uid . string list) list
@@ -1962,7 +1963,9 @@ on all the relevant IMAP servers and then immediately expunges."
       (vm-set-folder-imap-can-delete can-delete)
       (vm-set-folder-imap-body-peek body-peek)
       (vm-set-folder-imap-permanent-flags permanent-flags)
+      ;;-------------------------------
       (vm-imap-dump-uid-and-flags-data)
+      ;;-------------------------------
       process )))
 
 (defun vm-imap-retrieve-uid-and-flags-data ()
@@ -2778,10 +2781,10 @@ operation of the server to minimize I/O."
 		(quit 
 		 (error "Quit received during expunge from %s"
 			safe-imapdrop)))
-	  ;;-------------------
+	  ;;-----------------------------
 	  (vm-buffer-type:exit)
-	  ;;-------------------
 	  (vm-imap-dump-uid-seq-num-data)
+	  ;;-----------------------------
 	  (vm-set-folder-imap-mailbox-count (- mailbox-count expunge-count))
 	  ))
       got-some)))
@@ -2852,7 +2855,6 @@ operations")
 	      (vm-imap-read-ok-response process)
 	      ;;--------------------------------
 	      (vm-buffer-type:exit)
-	      (vm-imap-session-type:set 'active)
 	      ;;--------------------------------
 	      )
 	  (vm-imap-protocol-error
@@ -2870,6 +2872,9 @@ operations")
 	   (delete-region old-eob (point-max))
 	   (error (format "Quit received during retrieval from %s"
 			  safe-imapdrop))))
+	;;-----------------------------
+	(vm-imap-dump-uid-seq-num-data)
+	;;-----------------------------
 	(message "Retrieving message body... done")
 	)
       ;;-------------------
@@ -3257,9 +3262,8 @@ IMAP mailbox spec."
       (vm-imap-send-command process (format "LIST %s \"\""
 					    (vm-imap-quote-string ref)))
       ;;--------------------------------
-      (vm-imap-session-type:set 'active)
-      ;;--------------------------------
       (vm-imap-dump-uid-seq-num-data)
+      ;;--------------------------------
       (setq need-ok t)
       (while need-ok
 	(setq response (vm-imap-read-response-and-verify process "LIST"))
@@ -3288,9 +3292,9 @@ selectable mailboxes to be listed.  Returns a list of mailbox names."
       ;;----------------------------------
       (vm-buffer-type:enter 'process)
       (vm-imap-session-type:assert-active)
+      (vm-imap-dump-uid-seq-num-data)
       ;;----------------------------------
       (vm-imap-send-command process "LIST \"\" \"*\"")
-      (vm-imap-dump-uid-seq-num-data)
       (setq need-ok t)
       (while need-ok
 	(setq response (vm-imap-read-response-and-verify process "LIST"))
@@ -3325,9 +3329,9 @@ well. Returns a boolean value."
       ;;----------------------------------
       (vm-buffer-type:enter 'process)
       (vm-imap-session-type:assert-active)
+      (vm-imap-dump-uid-seq-num-data)
       ;;----------------------------------
       (vm-imap-send-command process (concat "LIST \"\" \"" mailbox "\""))
-      (vm-imap-dump-uid-seq-num-data)
       (setq need-ok t)
       (while need-ok
 	(setq response (vm-imap-read-response-and-verify process "LIST"))
