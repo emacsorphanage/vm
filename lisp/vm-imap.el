@@ -677,6 +677,7 @@ on all the relevant IMAP servers and then immediately expunges."
 ;;					(int . uid . string list)
 ;; vm-imap-save-message-flags: (process & int &optional bool) -> void
 ;; vm-imap-get-message-size: (process & int) -> int
+;; vm-imap-get-uid-message-size: (process & uid) -> int
 ;; vm-imap-save-message: (process & int & string?) -> void
 ;; vm-imap-delete-message: (process & int) -> void
 ;;
@@ -1528,6 +1529,33 @@ on all the relevant IMAP servers and then immediately expunges."
     (vm-imap-session-type:assert 'valid)
     ;;----------------------------------
     (vm-imap-send-command process (format "FETCH %d:%d (RFC822.SIZE)" n n))
+    (while need-ok
+      (setq response (vm-imap-read-response-and-verify process "size FETCH"))
+      (cond ((and need-size
+		  (vm-imap-response-matches response '* 'atom 'FETCH 'list))
+	     (setq need-size nil)
+	     (setq p (cdr (nth 3 response)))
+	     (if (not (vm-imap-response-matches p 'RFC822\.SIZE 'atom))
+		 (vm-imap-protocol-error
+		  "expected (RFC822.SIZE number) in FETCH response"))
+	     (setq tok (nth 1 p))
+	     (goto-char (nth 1 tok))
+	     (setq size (read imap-buffer)))
+	    ((vm-imap-response-matches response 'VM 'OK)
+	     (setq need-ok nil))))
+    size ))
+
+(defun vm-imap-get-uid-message-size (process uid)
+  (let ((imap-buffer (current-buffer))
+	tok size response p
+	(need-size t)
+	(need-ok t))
+    ;;----------------------------------
+    (vm-buffer-type:assert 'process)
+    (vm-imap-session-type:assert-active)
+    ;;----------------------------------
+    (vm-imap-send-command 
+     process (format "UID FETCH %s:%s (RFC822.SIZE)" uid uid))
     (while need-ok
       (setq response (vm-imap-read-response-and-verify process "size FETCH"))
       (cond ((and need-size
@@ -2799,17 +2827,9 @@ operations")
 	     (process (vm-re-establish-folder-imap-session imapdrop))
 	     (use-body-peek (vm-folder-imap-body-peek))
 	     (server-uid-validity (vm-folder-imap-uid-validity))
-	     (uid-key1 (intern-soft uid (vm-folder-imap-uid-obarray)))
-	     (uid-key2 (intern-soft uid (vm-folder-imap-flags-obarray)))
 	     (old-eob (point-max))
 	     message-num message-size
 	     )
-	(when (null uid-key2)
-	  (vm-imap-retrieve-uid-and-flags-data)
-	  (setq uid-key1 (intern-soft uid (vm-folder-imap-uid-obarray)))
-	  (setq uid-key2 (intern-soft uid (vm-folder-imap-flags-obarray))))
-	;; (setq message-num (symbol-value uid-key1))
-	(setq message-size (string-to-number (car (symbol-value uid-key2))))
 
 	(message "Retrieving message body... ")
 	(condition-case error-data
@@ -2823,16 +2843,17 @@ operations")
 	      (vm-set-imap-stat-x-box statblob safe-imapdrop)
 	      (vm-set-imap-stat-x-maxmsg statblob 1)
 	      (vm-set-imap-stat-x-currmsg statblob message-num)
-	      ;; (setq message-size (vm-imap-get-message-size process message-num))
+	      (setq message-size (vm-imap-get-uid-message-size process uid))
 	      (vm-set-imap-stat-x-need statblob message-size)
 	      ;; (vm-imap-fetch-message process message-num use-body-peek nil)
 	      (vm-imap-fetch-uid-message process uid use-body-peek nil)
 	      (vm-imap-retrieve-to-target process body-buffer statblob
 				     use-body-peek)
 	      (vm-imap-read-ok-response process)
-	      ;;-------------------
+	      ;;--------------------------------
 	      (vm-buffer-type:exit)
-	      ;;-------------------
+	      (vm-imap-session-type:set 'active)
+	      ;;--------------------------------
 	      )
 	  (vm-imap-protocol-error
 	   ;;-------------------
