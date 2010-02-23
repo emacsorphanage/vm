@@ -1347,7 +1347,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	    (vm-set-attributes-of
 	     (car mp)
 	     (make-vector vm-attributes-vector-length nil))
-	    (vm-set-unread-flag (car mp) (not (looking-at ".*R.*")) t))
+	    (vm-set-unread-flag (car mp) (not (looking-at ".*R.*")) 'norecord))
 	   (t
 	    (vm-set-cache-of (car mp) (make-vector vm-cache-vector-length
 						   nil))

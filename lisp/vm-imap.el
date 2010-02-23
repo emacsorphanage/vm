@@ -199,7 +199,8 @@
          (if headers-only
              (if use-body-peek "(BODY.PEEK[HEADER])" "(RFC822.HEADER)")
            (if use-body-peek "(BODY.PEEK[])" "(RFC822.PEEK)"))))
-    (vm-imap-send-command process (format "UID FETCH %s:%s %s" uid uid fetchcmd))))
+    (vm-imap-send-command 
+     process (format "UID FETCH %s:%s %s" uid uid fetchcmd))))
 
 ;; Our goal is to drag the mail from the IMAP maildrop to the crash box.
 ;; just as if we were using movemail on a spool file.
@@ -1994,6 +1995,24 @@ IMAP server in the current mail box."
 	  ))
     ))
 
+(defun vm-imap-dump-uid-seq-num-data ()
+  (when (and vm-folder-access-data
+             (eq (car vm-buffer-types) 'folder))
+             
+    ;;------------------------------
+    (vm-buffer-type:assert 'folder)
+    ;;------------------------------
+    (vm-set-folder-imap-uid-list nil)
+    (vm-set-folder-imap-uid-obarray nil)
+    (if (processp (vm-folder-imap-process))
+	(save-excursion
+	  (set-buffer (process-buffer (vm-folder-imap-process)))
+	  ;;---------------------------------
+	  (vm-imap-session-type:set 'active)
+	  ;;---------------------------------
+	  ))
+    ))
+
 ;; This function is now obsolete.  It is faster to get flags of
 ;; several messages at once, using vm-imap-get-message-data-list
 
@@ -2725,7 +2744,7 @@ operation of the server to minimize I/O."
 	  ;;-------------------
 	  (vm-buffer-type:exit)
 	  ;;-------------------
-	  (vm-imap-dump-uid-and-flags-data)
+	  (vm-imap-dump-uid-seq-num-data)
 	  (vm-set-folder-imap-mailbox-count (- mailbox-count expunge-count))
 	  ))
       got-some)))
@@ -2776,11 +2795,11 @@ operations")
 	     (old-eob (point-max))
 	     message-num message-size
 	     )
-	(when (null uid-key1)
+	(when (null uid-key2)
 	  (vm-imap-retrieve-uid-and-flags-data)
 	  (setq uid-key1 (intern-soft uid (vm-folder-imap-uid-obarray)))
 	  (setq uid-key2 (intern-soft uid (vm-folder-imap-flags-obarray))))
-	(setq message-num (symbol-value uid-key1))
+	;; (setq message-num (symbol-value uid-key1))
 	(setq message-size (string-to-number (car (symbol-value uid-key2))))
 
 	(message "Retrieving message body... ")
@@ -2789,7 +2808,7 @@ operations")
 	      (set-buffer (process-buffer process))
 	      ;;----------------------------------
 	      (vm-buffer-type:enter 'process)
-	      (vm-imap-session-type:assert 'valid)
+	      (vm-imap-session-type:assert-active)
 	      ;;----------------------------------
 	      (setq statblob (vm-imap-start-status-timer))
 	      (vm-set-imap-stat-x-box statblob safe-imapdrop)
@@ -3210,7 +3229,7 @@ IMAP mailbox spec."
       ;;--------------------------------
       (vm-imap-session-type:set 'active)
       ;;--------------------------------
-      (vm-imap-dump-uid-and-flags-data)
+      (vm-imap-dump-uid-seq-num-data)
       (setq need-ok t)
       (while need-ok
 	(setq response (vm-imap-read-response-and-verify process "LIST"))
@@ -3241,7 +3260,7 @@ selectable mailboxes to be listed.  Returns a list of mailbox names."
       (vm-imap-session-type:assert-active)
       ;;----------------------------------
       (vm-imap-send-command process "LIST \"\" \"*\"")
-      (vm-imap-dump-uid-and-flags-data)
+      (vm-imap-dump-uid-seq-num-data)
       (setq need-ok t)
       (while need-ok
 	(setq response (vm-imap-read-response-and-verify process "LIST"))
@@ -3278,7 +3297,7 @@ well. Returns a boolean value."
       (vm-imap-session-type:assert-active)
       ;;----------------------------------
       (vm-imap-send-command process (concat "LIST \"\" \"" mailbox "\""))
-      (vm-imap-dump-uid-and-flags-data)
+      (vm-imap-dump-uid-seq-num-data)
       (setq need-ok t)
       (while need-ok
 	(setq response (vm-imap-read-response-and-verify process "LIST"))
