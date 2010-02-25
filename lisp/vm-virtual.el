@@ -818,6 +818,8 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 
 ;;;###autoload
 (defun vm-make-virtual-copy (m)
+  "Copy of the real message of the virtual message M in the current
+folder buffer (which should be the virtual folder in which M occurs)."
   (widen)
   (let ((virtual-buffer (current-buffer))
 	(real-m (vm-real-message-of m))

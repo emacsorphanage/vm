@@ -26,6 +26,16 @@
 (defvar enable-multibyte-characters)
 (defvar default-enable-multibyte-characters)
 
+;; The following variables are defined in the code, depending on the
+;; Emacs version being used.  They should not be initialized here.
+
+(defvar vm-image-list)
+(defvar vm-image-type)
+(defvar vm-image-type-name)
+(defvar vm-extent-list)
+(defvar vm-overlay-list)
+
+
 (defun vm-mime-error (&rest args)
   (signal 'vm-mime-error (list (apply 'format args)))
   (error "can't return from vm-mime-error"))

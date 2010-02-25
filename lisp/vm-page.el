@@ -703,7 +703,7 @@ done if necessary.  The type of preview is governed by the variables
 `vm-preview-lines' and `vm-preview-read-messages'.  If no preview is
 required, then the entire message is shown directly. (USR, 2010-01-14)"
 
-  ;; Set just-passing-through if the user will never see the
+  ;; Set new-preview if the user needs to see the
   ;; message in the previewed state.  Save some time later by not
   ;; doing preview action that the user will never see anyway.
   (let ((need-preview

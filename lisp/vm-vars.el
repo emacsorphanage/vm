@@ -5451,7 +5451,7 @@ append a space to words that complete unambiguously.")
 ;; is loaded before highlight-headers.el
 (defvar highlight-headers-regexp "Subject[ \t]*:")
 (defvar vm-url-regexp
-  "<URL:\\([^>\n]+\\)>\\|\\(\\(file\\|ftp\\|gopher\\|http\\|https\\|news\\|wais\\|www\\)://[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)\\|\\(mailto:[^ \t\n\f\r\"<>|()]*[^] \t\n\f\r\"<>|.!?(){}]\\)\\|\\(file:/[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)"
+  "<URL:\\([^>\n]+\\)>\\|\\(\\(file\\|sftp\\|ftp\\|gopher\\|http\\|https\\|news\\|wais\\|www\\)://[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)\\|\\(mailto:[^ \t\n\f\r\"<>|()]*[^] \t\n\f\r\"<>|.!?(){}]\\)\\|\\(file:/[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)"
   "Regular expression that matches an absolute URL.
 The URL itself must be matched by a \\(..\\) grouping.
 VM will extract the URL by copying the lowest number grouping
@@ -5710,16 +5710,6 @@ that has a match.")
     ("message/rfc822")
     ("message/news")
    ))
-
-;; The following undocumented variables have been moved here from
-;; vm-mime.el.  USR, 2010-01-05
-
-(defvar vm-image-list nil)
-(defvar vm-image-type nil)
-(defvar vm-image-type-name nil)
-(defvar vm-extent-list nil)
-(defvar vm-overlay-list nil)
-
 
 (defconst vm-mime-encoded-word-regexp
   "=\\?\\([^?*]+\\)\\(\\*\\([^?*]+\\)\\)?\\?\\([BbQq]\\)\\?\\([^?]+\\)\\?=")
