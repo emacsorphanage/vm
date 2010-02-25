@@ -5445,7 +5445,7 @@ append a space to words that complete unambiguously.")
 ;; is loaded before highlight-headers.el
 (defvar highlight-headers-regexp "Subject[ \t]*:")
 (defvar vm-url-regexp
-  "<URL:\\([^>\n]+\\)>\\|\\(\\(file\\|ftp\\|gopher\\|http\\|https\\|news\\|wais\\|www\\)://[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)\\|\\(mailto:[^ \t\n\f\r\"<>|()]*[^] \t\n\f\r\"<>|.!?(){}]\\)\\|\\(file:/[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)"
+  "<URL:\\([^>\n]+\\)>\\|\\(\\(file\\|sftp\\|ftp\\|gopher\\|http\\|https\\|news\\|wais\\|www\\)://[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)\\|\\(mailto:[^ \t\n\f\r\"<>|()]*[^] \t\n\f\r\"<>|.!?(){}]\\)\\|\\(file:/[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)"
   "Regular expression that matches an absolute URL.
 The URL itself must be matched by a \\(..\\) grouping.
 VM will extract the URL by copying the lowest number grouping
