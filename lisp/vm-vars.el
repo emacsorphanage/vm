@@ -5705,16 +5705,6 @@ that has a match.")
     ("message/news")
    ))
 
-;; The following undocumented variables have been moved here from
-;; vm-mime.el.  USR, 2010-01-05
-
-(defvar vm-image-list nil)
-(defvar vm-image-type nil)
-(defvar vm-image-type-name nil)
-(defvar vm-extent-list nil)
-(defvar vm-overlay-list nil)
-
-
 (defconst vm-mime-encoded-word-regexp
   "=\\?\\([^?*]+\\)\\(\\*\\([^?*]+\\)\\)?\\?\\([BbQq]\\)\\?\\([^?]+\\)\\?=")
 
