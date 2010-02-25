@@ -331,7 +331,7 @@
   (message "Sending URL to Konqueror... done"))
 
 (defun vm-mouse-send-url-to-firefox (url &optional new-window)
-  (message "Sending URL to Mozilla Firebird...")
+  (message "Sending URL to Mozilla Firefox...")
   (if new-window
       (apply 'vm-run-background-command vm-firefox-program
 	     (append vm-firefox-program-switches (list url)))

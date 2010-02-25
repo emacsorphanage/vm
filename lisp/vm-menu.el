@@ -449,21 +449,33 @@
     `(,@title
       ["Emacs W3" (vm-mouse-send-url-at-position (point) (quote ,w3))
        (fboundp (quote ,w3))]
-      ["Mosaic"
+      ["Firefox"
        (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-mosaic)
+				      'vm-mouse-send-url-to-firefox)
        t]
-      ["mMosaic"
+      ["Konqueror"
        (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-mmosaic)
+				      'vm-mouse-send-url-to-konqueror)
+       t]
+      ;; ["Mosaic"
+      ;;  (vm-mouse-send-url-at-position (point)
+      ;; 			      'vm-mouse-send-url-to-mosaic)
+      ;;  t]
+      ;; ["mMosaic"
+      ;;  (vm-mouse-send-url-at-position (point)
+      ;; 			      'vm-mouse-send-url-to-mmosaic)
+      ;; t]
+      ["Mozilla"
+       (vm-mouse-send-url-at-position (point)
+				      'vm-mouse-send-url-to-mozilla)
        t]
       ["Netscape"
        (vm-mouse-send-url-at-position (point)
 				      'vm-mouse-send-url-to-netscape)
        t]
-      ["Konqueror"
+      ["Opera"
        (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-konqueror)
+				      'vm-mouse-send-url-to-opera)
        t]
       ["X Clipboard"
        (vm-mouse-send-url-at-position (point)

@@ -54,6 +54,13 @@ VM 8.1.1-devo
      reason, just delete it from the file system.  A new cache folder
      will be generated upon the next visit.
 
+  CHANGES
+
+   * The right-mouse-button context menu for URL's in messages updated
+     to eliminate obsolete web browsers.  Entries added for Firefox,
+     Mozilla and Opera.
+
+
 VM 8.1.0 (beta2, 2010-01-31)
 
   KNOWN PROBLEMS:
