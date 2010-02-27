@@ -711,6 +711,7 @@ on all the relevant IMAP servers and then immediately expunges."
 ;;;###autoload
 (defun vm-imap-make-session (source)
   (let ((process-to-shutdown nil)
+	(shutdown nil)
 	(folder-type vm-folder-type)
 	process ooo
 	(imapdrop (vm-safe-imapdrop-string source))
@@ -770,8 +771,7 @@ on all the relevant IMAP servers and then immediately expunges."
 		    (read-passwd (format "IMAP password for %s: " imapdrop))))
 	    (when (null pass)
 	      (message "Need password for %s" imapdrop)
-	      (throw 'end-of-session nil))
-	    )
+	      (throw 'end-of-session nil)))
 	  ;; save the password for the sake of
 	  ;; vm-expunge-imap-messages, which passes password-less
 	  ;; imapdrop specifications to vm-make-imap-session.
@@ -798,9 +798,10 @@ on all the relevant IMAP servers and then immediately expunges."
 		(set-buffer-file-coding-system (vm-binary-coding-system) t))
 	    (if (equal auth "preauth")
 		(setq process
-		      (run-hook-with-args-until-success 'vm-imap-session-preauth-hook
-							host port mailbox
-							user pass)))
+		      (run-hook-with-args-until-success 
+		       'vm-imap-session-preauth-hook
+		       host port mailbox
+		       user pass)))
 	    (if (processp process)
 		(set-process-buffer process (current-buffer))
 	      (insert "starting " session-name
@@ -808,33 +809,36 @@ on all the relevant IMAP servers and then immediately expunges."
 	      (insert (format "connecting to %s:%s\n" host port))
 	      ;; open the connection to the server
 	      (condition-case err
-		  (cond (use-ssl
-			 (vm-setup-stunnel-random-data-if-needed)
-			 (setq process
-			       (apply 'start-process session-name process-buffer
-				      vm-stunnel-program
-				      (nconc (vm-stunnel-configuration-args host
-									    port)
-					     vm-stunnel-program-switches))))
-			(use-ssh
-			 (setq process (open-network-stream
-					session-name process-buffer
-					"127.0.0.1"
-					(vm-setup-ssh-tunnel host port))))
-			(t
-			 (setq process (open-network-stream session-name
-							    process-buffer
-							    host port))))
+		  (cond 
+		   (use-ssl
+		    (vm-setup-stunnel-random-data-if-needed)
+		    (setq process
+			  (apply 'start-process session-name process-buffer
+				 vm-stunnel-program
+				 (nconc (vm-stunnel-configuration-args host
+								       port)
+					vm-stunnel-program-switches))))
+		   (use-ssh
+		    (setq process (open-network-stream
+				   session-name process-buffer
+				   "127.0.0.1"
+				   (vm-setup-ssh-tunnel host port))))
+		   (t
+		    (setq process (open-network-stream session-name
+						       process-buffer
+						       host port))))
 		(error
 		 (message "%s" (error-message-string err))
+		 (setq shutdown t)
 		 (throw 'end-of-session nil)))
 	      (insert-before-markers "connected\n"))
 	    (setq vm-imap-read-point (point))
 	    (process-kill-without-query process)
 	    (if (null (setq greeting (vm-imap-read-greeting process)))
-		(progn (delete-process process)
+		(progn (delete-process process) ; why here?  USR
+		       (setq shutdown t)
 		       (throw 'end-of-session nil)))
-	    (setq process-to-shutdown process)
+	    ;; (setq process-to-shutdown process)
 	    (set (make-local-variable 'vm-imap-session-done) nil)
 	    ;; record server capabilities
 	    (vm-imap-send-command process "CAPABILITY")
@@ -843,113 +847,113 @@ on all the relevant IMAP servers and then immediately expunges."
 	    (set (make-local-variable 'vm-imap-capabilities) (car ooo))
 	    (set (make-local-variable 'vm-imap-auth-methods) (nth 1 ooo))
 	    ;; authentication
-	    (cond ((equal auth "login")
-		   ;; LOGIN must be supported by all imap servers,
-		   ;; no need to check for it in CAPABILITIES.
-		   (vm-imap-send-command process
-					 (format "LOGIN %s %s"
-						 (vm-imap-quote-string user)
-						 (vm-imap-quote-string pass)))
-		   (if (null (vm-imap-read-ok-response process))
-			(progn
-			  (setq vm-imap-passwords
-				(delete (list source-nopwd-nombox pass)
-					vm-imap-passwords))
-			  (message "IMAP password for %s incorrect" imapdrop)
-			  ;; don't sleep unless we're running synchronously.
-			  (if vm-imap-ok-to-ask
-			      (sleep-for 2))
-			  (throw 'end-of-session nil))
-		     ;;--------------------------------
-		     (vm-imap-session-type:set 'active)
-		     ;;--------------------------------
-		     ))
-		  ((equal auth "cram-md5")
-		   (if (not (vm-imap-auth-method 'CRAM-MD5))
-		       (error "CRAM-MD5 authentication unsupported by this server"))
-		   (let ((ipad (make-string 64 54))
-			 (opad (make-string 64 92))
-			 (command "AUTHENTICATE CRAM-MD5")
-			 (secret (concat
-				  pass
-				  (make-string (max 0 (- 64 (length pass)))
-					       0)))
-			 response p challenge answer)
-		     (vm-imap-send-command process command)
-		     (setq response 
-			   (vm-imap-read-response-and-verify process command))
-		     (cond ((vm-imap-response-matches response '+ 'atom)
-			    (setq p (cdr (nth 1 response))
-				  challenge (buffer-substring
-					     (nth 0 p)
-					     (nth 1 p))
-				  challenge (vm-mime-base64-decode-string
-					     challenge)))
-			   (t
-			    (vm-imap-protocol-error
-			     "Don't understand AUTHENTICATE response")))
-		     (setq answer
-			   (concat
-			    user " "
-			    (vm-md5-string
-			     (concat
-			      (vm-xor-string secret opad)
-			      (vm-md5-raw-string 
-			       (concat
-				(vm-xor-string secret ipad) challenge)))))
-			   answer (vm-mime-base64-encode-string answer))
-		     (vm-imap-send-command process answer nil t)
-		     (if (null (vm-imap-read-ok-response process))
-			  (progn
-			    (setq vm-imap-passwords
-				  (delete (list source-nopwd-nombox pass)
-					  vm-imap-passwords))
-			    (message "IMAP password for %s incorrect" imapdrop)
-			    ;; don't sleep unless we're running synchronously.
-			    (if vm-imap-ok-to-ask
-				(sleep-for 2))
-			    (throw 'end-of-session nil))
-		       ;;-------------------------------
-		       (vm-imap-session-type:set 'active)
-		       ;;-------------------------------
-		       )))
-		  ((equal auth "preauth")
-		   (if (not (eq greeting 'preauth))
-		       (progn
-			 (message "IMAP session was not pre-authenticated")
-			 ;; don't sleep unless we're running synchronously.
-			 (if vm-imap-ok-to-ask
-			     (sleep-for 2))
-			 (throw 'end-of-session nil))
-		     ;;-------------------------------
-		     (vm-imap-session-type:set 'active)
-		     ;;-------------------------------
-		     ))
-		  (t (error "Don't know how to authenticate using %s" auth)))
-	    (setq process-to-shutdown nil)
+	    (cond 
+	     ((equal auth "login")
+	      ;; LOGIN must be supported by all imap servers,
+	      ;; no need to check for it in CAPABILITIES.
+	      (vm-imap-send-command process
+				    (format "LOGIN %s %s"
+					    (vm-imap-quote-string user)
+					    (vm-imap-quote-string pass)))
+	      (if (null (vm-imap-read-ok-response process))
+		  (progn
+		    (setq vm-imap-passwords
+			  (delete (list source-nopwd-nombox pass)
+				  vm-imap-passwords))
+		    (message "IMAP password for %s incorrect" imapdrop)
+		    ;; don't sleep unless we're running synchronously.
+		    (if vm-imap-ok-to-ask
+			(sleep-for 2))
+		    (throw 'end-of-session nil))
+		;;--------------------------------
+		(vm-imap-session-type:set 'active)
+		;;--------------------------------
+		))
+	     ((equal auth "cram-md5")
+	      (if (not (vm-imap-auth-method 'CRAM-MD5))
+		  (error "CRAM-MD5 authentication unsupported by this server"))
+	      (let ((ipad (make-string 64 54))
+		    (opad (make-string 64 92))
+		    (command "AUTHENTICATE CRAM-MD5")
+		    (secret (concat
+			     pass
+			     (make-string (max 0 (- 64 (length pass))) 0)))
+		    response p challenge answer)
+		(vm-imap-send-command process command)
+		(setq response 
+		      (vm-imap-read-response-and-verify process command))
+		(cond ((vm-imap-response-matches response '+ 'atom)
+		       (setq p (cdr (nth 1 response))
+			     challenge (buffer-substring (nth 0 p) (nth 1 p))
+			     challenge (vm-mime-base64-decode-string
+					challenge)))
+		      (t
+		       (vm-imap-protocol-error
+			"Don't understand AUTHENTICATE response")))
+		(setq answer
+		      (concat
+		       user " "
+		       (vm-md5-string
+			(concat
+			 (vm-xor-string secret opad)
+			 (vm-md5-raw-string 
+			  (concat
+			   (vm-xor-string secret ipad) challenge)))))
+		      answer (vm-mime-base64-encode-string answer))
+		(vm-imap-send-command process answer nil t)
+		(if (null (vm-imap-read-ok-response process))
+		    (progn
+		      (setq vm-imap-passwords
+			    (delete (list source-nopwd-nombox pass)
+				    vm-imap-passwords))
+		      (message "IMAP password for %s incorrect" imapdrop)
+		      ;; don't sleep unless we're running synchronously.
+		      (if vm-imap-ok-to-ask
+			  (sleep-for 2))
+		      (setq shutdown t)
+		      (throw 'end-of-session nil))
+		  ;;-------------------------------
+		  (vm-imap-session-type:set 'active)
+		  ;;-------------------------------
+		  )))
+	     ((equal auth "preauth")
+	      (if (not (eq greeting 'preauth))
+		  (progn
+		    (message "IMAP session was not pre-authenticated")
+		    ;; don't sleep unless we're running synchronously.
+		    (if vm-imap-ok-to-ask
+			(sleep-for 2))
+		    (throw 'end-of-session nil))
+		;;-------------------------------
+		(vm-imap-session-type:set 'active)
+		;;-------------------------------
+		))
+	     (t (error "Don't know how to authenticate using %s" auth)))
+	    (setq shutdown nil)
 	    ;;-------------------
 	    (vm-buffer-type:exit)
 	    ;;-------------------
 	    process ))
       ;; unwind-protection
-      (if process-to-shutdown	
-	  (vm-imap-end-session process-to-shutdown t)
-	;; (kill-buffer process-buffer)
-	)
+      (if shutdown
+	  (vm-imap-end-session process process-buffer))
       (vm-tear-down-stunnel-random-data))))
 
 ;;;###autoload
-(defun vm-imap-end-session (process &optional keep-buffer)
-  "Kill the IMAP session represented by PROCESS.  If the optional
-argument KEEP-BUFFER is non-nil, the process buffer is retained,
-otherwise it is killed as well."
-  (if (and (memq (process-status process) '(open run))
-	   (buffer-live-p (process-buffer process)))
+(defun vm-imap-end-session (process &optional buffer keep-buffer)
+  "Kill the IMAP session represented by PROCESS.  PROCESS could
+be nil. Optional argument BUFFER specifies the process-buffer. If
+the optional argument KEEP-BUFFER is non-nil, the process buffer
+is retained, otherwise it is killed as well."
+  (if (and process (null buffer))
+      (setq buffer (process-buffer process)))
+  (if (and process (memq (process-status process) '(open run))
+	   (buffer-live-p buffer))
       (save-excursion
 	;;----------------------------
 	(vm-buffer-type:enter 'process)
 	;;----------------------------
-	(set-buffer (process-buffer process))
+	(set-buffer buffer)
 	;; vm-imap-end-session might have already been called on
 	;; this process, so don't logout and schedule the killing
 	;; the process again if it's already been done.
@@ -965,27 +969,28 @@ otherwise it is killed as well."
 	  ;;----------------------------------
 	  (vm-imap-session-type:set 'inactive)
 	  ;;----------------------------------
-	  (if (and (not vm-imap-keep-trace-buffer) (not keep-buffer))
-	      (kill-buffer (process-buffer process))
-	    (save-excursion
-	      ;;----------------------------
-	      (vm-buffer-type:enter 'process)
-	      ;;----------------------------
-	      (set-buffer (process-buffer process))
-	      (rename-buffer (concat "saved " (buffer-name)) t)
-	      (vm-keep-some-buffers (current-buffer) 'vm-kept-imap-buffers
-				    vm-imap-keep-failed-trace-buffers)
-	      ;;-------------------
-	      (vm-buffer-type:exit)
-	      ;;-------------------
-	      ))
 	  (if (fboundp 'add-async-timeout)
 	      (add-async-timeout 2 'delete-process process)
 	    (run-at-time 2 nil 'delete-process process)))
 	;;----------------------------------
 	(vm-buffer-type:exit)
 	;;----------------------------------
-	)))
+	))
+  (if (and (not vm-imap-keep-trace-buffer) (not keep-buffer))
+      (kill-buffer buffer)
+    (save-excursion
+      ;;----------------------------
+      (vm-buffer-type:enter 'process)
+      ;;----------------------------
+      (set-buffer buffer)
+      (rename-buffer (concat "saved " (buffer-name)) t)
+      (vm-keep-some-buffers (current-buffer) 'vm-kept-imap-buffers
+			    vm-imap-keep-failed-trace-buffers)
+      ;;-------------------
+      (vm-buffer-type:exit)
+      ;;-------------------
+      ))
+  )
 
 ;; Status indicator vector
 ;; timer
@@ -2532,6 +2537,7 @@ operation of the server to minimize I/O."
   (if (or vm-global-block-new-mail
 	  (null (vm-establish-new-folder-imap-session interactive)))
       (error "Could not connect to the IMAP server")
+    (setq vm-imap-offline-mode nil)
     (if do-retrieves
 	(vm-assimilate-new-messages))	; Funny that this should be
 					; necessary.  Indicates bugs?
@@ -2823,7 +2829,8 @@ so, message bodies of headers-only messages will not be retrieved.")
 (make-variable-buffer-local 'vm-imap-offline-mode)
 
 (defun vm-fetch-imap-message (m)
-  "Insert the message body of M in the current buffer."
+  "Insert the message body of M in the current buffer, which must be
+either the folder buffer or the presentation buffer."
   (let ((body-buffer (current-buffer)))
     (save-excursion
       ;;----------------------------------
