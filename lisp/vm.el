@@ -1172,9 +1172,10 @@ summary buffer to select a folder."
                                           (vm-count-messages-in-file f))))))))
 
 (defun vm-session-initialization ()
+  "If this is the first time VM has been run in this Emacs session,
+do some necessary preparations.  Otherwise, update the count of
+draft messages."
   ;;  (vm-set-debug-flags)
-  ;; If this is the first time VM has been run in this Emacs session,
-  ;; do some necessary preparations.
   (if (or (not (boundp 'vm-session-beginning))
 	  vm-session-beginning)
       (progn

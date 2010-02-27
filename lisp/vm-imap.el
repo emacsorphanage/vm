@@ -942,6 +942,9 @@ on all the relevant IMAP servers and then immediately expunges."
 
 ;;;###autoload
 (defun vm-imap-end-session (process &optional keep-buffer)
+  "Kill the IMAP session represented by PROCESS.  If the optional
+argument KEEP-BUFFER is non-nil, the process buffer is retained,
+otherwise it is killed as well."
   (if (and (memq (process-status process) '(open run))
 	   (buffer-live-p (process-buffer process)))
       (save-excursion
@@ -2853,9 +2856,9 @@ operations")
 	      (vm-imap-retrieve-to-target process body-buffer statblob
 				     use-body-peek)
 	      (vm-imap-read-ok-response process)
-	      ;;--------------------------------
+	      ;;-------------------
 	      (vm-buffer-type:exit)
-	      ;;--------------------------------
+	      ;;-------------------
 	      )
 	  (vm-imap-protocol-error
 	   ;;-------------------
@@ -2872,9 +2875,6 @@ operations")
 	   (delete-region old-eob (point-max))
 	   (error (format "Quit received during retrieval from %s"
 			  safe-imapdrop))))
-	;;-----------------------------
-	(vm-imap-dump-uid-seq-num-data)
-	;;-----------------------------
 	(message "Retrieving message body... done")
 	)
       ;;-------------------

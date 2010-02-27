@@ -2625,7 +2625,7 @@ emacs-w3m."
 	      (setq start-part layout
 		    part-list nil)
 	    (setq part-list (cdr part-list)))))
-    (vm-decode-mime-layout start-part)))
+    (if start-part (vm-decode-mime-layout start-part))))
 
 (defun vm-mime-display-button-multipart/parallel (layout)
   (vm-mime-insert-button
