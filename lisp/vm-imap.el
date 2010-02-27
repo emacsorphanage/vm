@@ -747,35 +747,31 @@ on all the relevant IMAP servers and then immediately expunges."
 		 (if (null vm-ssh-program)
 		     (error "vm-ssh-program must be non-nil to use IMAP over SSH."))))
 	  ;; carp if parts are missing
-	  (if (null host)
+	  (when (null host)
 	      (error "No host in IMAP maildrop specification, \"%s\""
 		     source))
-	  (if (null port)
+	  (when (null port)
 	      (error "No port in IMAP maildrop specification, \"%s\""
 		     source))
-	  (if (string-match "^[0-9]+$" port)
+	  (when (string-match "^[0-9]+$" port)
 	      (setq port (string-to-number port)))
-	  (if (null auth)
+	  (when (null auth)
 	      (error "No authentication method in IMAP maildrop specification, \"%s\"" source))
-	  (if (null user)
+	  (when (null user)
 	      (error "No user in IMAP maildrop specification, \"%s\""
 		     source))
-	  (if (null pass)
+	  (when (null pass)
 	      (error "No password in IMAP maildrop specification, \"%s\""
 		     source))
-	  (if (and (equal pass "*")
-		   (not (equal auth "preauth")))
-	      (progn
-		(setq pass (car (cdr (assoc source-nopwd-nombox
-					    vm-imap-passwords))))
-		(if (null pass)
-		    (if (null vm-imap-ok-to-ask)
-			(progn (message "Need password for %s" imapdrop)
-			       (throw 'end-of-session nil))
-		      (setq pass
-			    (read-passwd
-			     (format "IMAP password for %s: "
-				     imapdrop)))))))
+	  (when (and (equal pass "*") (not (equal auth "preauth")))
+	    (setq pass (car (cdr (assoc source-nopwd-nombox vm-imap-passwords))))
+	    (when (and (null pass) vm-imap-ok-to-ask)
+	      (setq pass
+		    (read-passwd (format "IMAP password for %s: " imapdrop))))
+	    (when (null pass)
+	      (message "Need password for %s" imapdrop)
+	      (throw 'end-of-session nil))
+	    )
 	  ;; save the password for the sake of
 	  ;; vm-expunge-imap-messages, which passes password-less
 	  ;; imapdrop specifications to vm-make-imap-session.
@@ -811,24 +807,27 @@ on all the relevant IMAP servers and then immediately expunges."
 		      " session " (current-time-string) "\n")
 	      (insert (format "connecting to %s:%s\n" host port))
 	      ;; open the connection to the server
-	      (cond (use-ssl
-		     (vm-setup-stunnel-random-data-if-needed)
-		     (setq process
-			   (apply 'start-process session-name process-buffer
-				  vm-stunnel-program
-				  (nconc (vm-stunnel-configuration-args host
-									port)
-					 vm-stunnel-program-switches))))
-		    (use-ssh
-		     (setq process (open-network-stream
-				    session-name process-buffer
-				    "127.0.0.1"
-				    (vm-setup-ssh-tunnel host port))))
-		    (t
-		     (setq process (open-network-stream session-name
-							process-buffer
-							host port))))
-	      (and (null process) (throw 'end-of-session nil))
+	      (condition-case err
+		  (cond (use-ssl
+			 (vm-setup-stunnel-random-data-if-needed)
+			 (setq process
+			       (apply 'start-process session-name process-buffer
+				      vm-stunnel-program
+				      (nconc (vm-stunnel-configuration-args host
+									    port)
+					     vm-stunnel-program-switches))))
+			(use-ssh
+			 (setq process (open-network-stream
+					session-name process-buffer
+					"127.0.0.1"
+					(vm-setup-ssh-tunnel host port))))
+			(t
+			 (setq process (open-network-stream session-name
+							    process-buffer
+							    host port))))
+		(error
+		 (message "%s" (error-message-string err))
+		 (throw 'end-of-session nil)))
 	      (insert-before-markers "connected\n"))
 	    (setq vm-imap-read-point (point))
 	    (process-kill-without-query process)
@@ -932,13 +931,12 @@ on all the relevant IMAP servers and then immediately expunges."
 	    (vm-buffer-type:exit)
 	    ;;-------------------
 	    process ))
-      (if process-to-shutdown		; unwind-protection
-	  (vm-imap-end-session process-to-shutdown t))
+      ;; unwind-protection
+      (if process-to-shutdown	
+	  (vm-imap-end-session process-to-shutdown t)
+	;; (kill-buffer process-buffer)
+	)
       (vm-tear-down-stunnel-random-data))))
-
-;; Kill the IMAP session represented by PROCESS.  If the optional
-;; argument KEEP-BUFFER is non-nil, the process buffer is retained,
-;; otherwise it is killed as well
 
 ;;;###autoload
 (defun vm-imap-end-session (process &optional keep-buffer)
@@ -2530,10 +2528,10 @@ operation of the server to minimize I/O."
   (vm-buffer-type:set 'folder)
   ;;--------------------------
   (if (and do-retrieves vm-block-new-mail)
-      (error "Can't get new mail until you save this folder."))
+      (error "Can't get new mail until you save this folder"))
   (if (or vm-global-block-new-mail
 	  (null (vm-establish-new-folder-imap-session interactive)))
-      nil
+      (error "Could not connect to the IMAP server")
     (if do-retrieves
 	(vm-assimilate-new-messages))	; Funny that this should be
 					; necessary.  Indicates bugs?
@@ -2818,6 +2816,12 @@ operations")
     (setq seqs (cons (cons beg last) seqs))
     (nreverse seqs)))
 
+(defvar vm-imap-offline-mode nil
+  "Flag to indicate whether IMAP folder should be used offline.  If
+so, message bodies of headers-only messages will not be retrieved.")
+
+(make-variable-buffer-local 'vm-imap-offline-mode)
+
 (defun vm-fetch-imap-message (m)
   "Insert the message body of M in the current buffer."
   (let ((body-buffer (current-buffer)))
@@ -2830,7 +2834,8 @@ operations")
 	     (uid (vm-imap-uid-of m))
 	     (imapdrop (vm-folder-imap-maildrop-spec))
 	     (safe-imapdrop (vm-safe-imapdrop-string imapdrop))
-	     (process (vm-re-establish-folder-imap-session imapdrop))
+	     (process (and (not vm-imap-offline-mode)
+			   (vm-re-establish-folder-imap-session imapdrop)))
 	     (use-body-peek (vm-folder-imap-body-peek))
 	     (server-uid-validity (vm-folder-imap-uid-validity))
 	     (old-eob (point-max))
@@ -2838,45 +2843,52 @@ operations")
 	     )
 
 	(message "Retrieving message body... ")
-	(condition-case error-data
-	    (save-excursion
-	      (set-buffer (process-buffer process))
-	      ;;----------------------------------
-	      (vm-buffer-type:enter 'process)
-	      (vm-imap-session-type:assert-active)
-	      ;;----------------------------------
-	      (setq statblob (vm-imap-start-status-timer))
-	      (vm-set-imap-stat-x-box statblob safe-imapdrop)
-	      (vm-set-imap-stat-x-maxmsg statblob 1)
-	      (vm-set-imap-stat-x-currmsg statblob message-num)
-	      (setq message-size (vm-imap-get-uid-message-size process uid))
-	      (vm-set-imap-stat-x-need statblob message-size)
-	      ;; (vm-imap-fetch-message process message-num use-body-peek nil)
-	      (vm-imap-fetch-uid-message process uid use-body-peek nil)
-	      (vm-imap-retrieve-to-target process body-buffer statblob
-				     use-body-peek)
-	      (vm-imap-read-ok-response process)
-	      ;;-------------------
-	      (vm-buffer-type:exit)
-	      ;;-------------------
-	      )
-	  (vm-imap-protocol-error
-	   ;;-------------------
-	   (vm-buffer-type:exit)
-	   ;;-------------------
-	   (message "Retrieval from %s signaled: %s" safe-imapdrop
-		    error-data)
-	   ;; Continue with whatever messages have been read
-	   )
-	  (quit
-	   ;;-------------------
-	   (vm-buffer-type:exit)
-	   ;;-------------------
-	   (delete-region old-eob (point-max))
-	   (error (format "Quit received during retrieval from %s"
-			  safe-imapdrop))))
-	(message "Retrieving message body... done")
-	)
+	(if (null process)
+	    (progn
+	      (message "Could not connect to IMAP server; Type g to reconnect")
+	      (setq vm-imap-offline-mode t))
+	  (condition-case error-data
+	      (save-excursion
+		(set-buffer (process-buffer process))
+		;;----------------------------------
+		(vm-buffer-type:enter 'process)
+		(vm-imap-session-type:assert-active)
+		;;----------------------------------
+		(setq statblob (vm-imap-start-status-timer))
+		(vm-set-imap-stat-x-box statblob safe-imapdrop)
+		(vm-set-imap-stat-x-maxmsg statblob 1)
+		(vm-set-imap-stat-x-currmsg statblob message-num)
+		(setq message-size (vm-imap-get-uid-message-size process uid))
+		(vm-set-imap-stat-x-need statblob message-size)
+		;; (vm-imap-fetch-message process message-num use-body-peek nil)
+		(vm-imap-fetch-uid-message process uid use-body-peek nil)
+		(vm-imap-retrieve-to-target process body-buffer statblob
+					    use-body-peek)
+		(vm-imap-read-ok-response process)
+		;;--------------------------------
+		(vm-buffer-type:exit)
+		;;--------------------------------
+		)
+	    (vm-imap-protocol-error
+	     ;;-------------------
+	     (vm-buffer-type:exit)
+	     ;;-------------------
+	     (message "Retrieval from %s signaled: %s" safe-imapdrop
+		      error-data)
+	     ;; Continue with whatever messages have been read
+	     )
+	    (quit
+	     ;;-------------------
+	     (vm-buffer-type:exit)
+	     ;;-------------------
+	     (delete-region old-eob (point-max))
+	     (error (format "Quit received during retrieval from %s"
+			    safe-imapdrop))))
+	  ;;-----------------------------
+	  (vm-imap-dump-uid-seq-num-data)
+	  ;;-----------------------------
+	  (message "Retrieving message body... done")
+	  ))
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
@@ -3175,13 +3187,17 @@ specification SPEC."
       (setq mailbox-list (cdr (assoc account vm-imap-account-folder-cache)))
       (setq spec (car (rassoc (list account) vm-imap-account-alist)))
       (when (and (null mailbox-list) spec)
-	(setq process (vm-imap-make-session spec))
-	(when process
-	  (setq mailbox-list (vm-imap-mailbox-list process selectable-only))
-	  (vm-imap-end-session process)
-	  (when mailbox-list
-	    (add-to-list 'vm-imap-account-folder-cache 
-			 (cons account mailbox-list)))))
+	(unwind-protect
+	    (progn
+	      (setq process (vm-imap-make-session spec))
+	      (when process
+		(setq mailbox-list 
+		      (vm-imap-mailbox-list process selectable-only))
+		(when mailbox-list
+		  (add-to-list 'vm-imap-account-folder-cache 
+			       (cons account mailbox-list)))))
+	  ;; unwind-protection
+	  (vm-imap-end-session process)))
       (setq completion-list 
 	    (mapcar '(lambda (m) (list (format "%s:%s" account m))) mailbox-list))
       (setq folder (try-completion (or string "") completion-list predicate)))
