@@ -214,7 +214,10 @@ See the documentation for vm-mode for more information."
 		(cond ((eq access-method 'pop)
 		       (vm-set-folder-pop-maildrop-spec remote-spec))
 		      ((eq access-method 'imap)
-		       (vm-set-folder-imap-maildrop-spec remote-spec))))
+		       (vm-set-folder-imap-maildrop-spec remote-spec)
+		       ;; (vm-register-folder-garbage 
+		       ;;  'vm-kill-folder-imap-session nil)
+		       )))
 	    ;; If the buffer is modified we don't know if the
 	    ;; folder format has been changed to be different
 	    ;; from index file, so don't read the index file in

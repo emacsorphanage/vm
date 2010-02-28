@@ -28,9 +28,24 @@
   (require 'vm-misc)
   (require 'vm-macro))
 
-;; To-Do  (USR)
-;; - Need to ensure that new imap sessions get created as and when needed.
+;; ------------------------------------------------------------------------
+;; The IMAP session protocol
+;; ------------------------------------------------------------------------
 
+;; Folder-specific IMAP sessions are created and destroyed for each
+;; get-new-mail and synchronize-folder.  (Same as in VM 7.19)
+
+;; check-for-new-mail also creates and destroys sessions.
+
+;; Rob F's save-composition creates and destroys its own sessions.
+
+;; They are also created and destroyed at a global level for
+;; operations like create-mailbox.  (VM 7.19 didn't destroy them in the
+;; end, but we do.)
+
+;; Longer-lived IMAP sessions for each IMAP folder are used for
+;; fetch-imap-message and copy-message.  They are normally destroyed when
+;; the folder buffer is saved, but otherwise they get timed out.
 
 ;; ------------------------------------------------------------------------
 ;; Utilities
@@ -87,10 +102,20 @@
 (defun vm-imap-auth-method (auth)
   (memq auth vm-imap-auth-methods))
 
+;; Mollify the pesky compiler
+(defvar selectable-only)
+
+(defvar vm-imap-offline-mode nil
+  "Flag to indicate whether IMAP folder should be used offline.  If
+so, message bodies of headers-only messages will not be retrieved.
+This is reset whenever an interactive operation is done which invokes
+vm-imap-synchronize-folder.")
+(make-variable-buffer-local 'vm-imap-offline-mode)
+
 ;; the maildrop spec of the imap folder
 (defsubst vm-folder-imap-maildrop-spec ()
   (aref vm-folder-access-data 0))
-;; current imap process of the folder
+;; current imap process of the folder - each folder has a separate one
 (defsubst vm-folder-imap-process ()
   (aref vm-folder-access-data 1))
 ;; the uid validity value of the imap folder
@@ -710,8 +735,7 @@ on all the relevant IMAP servers and then immediately expunges."
 
 ;;;###autoload
 (defun vm-imap-make-session (source)
-  (let ((process-to-shutdown nil)
-	(shutdown nil)
+  (let ((shutdown nil)			; whether process is to be shutdown
 	(folder-type vm-folder-type)
 	process ooo
 	(imapdrop (vm-safe-imapdrop-string source))
@@ -800,8 +824,7 @@ on all the relevant IMAP servers and then immediately expunges."
 		(setq process
 		      (run-hook-with-args-until-success 
 		       'vm-imap-session-preauth-hook
-		       host port mailbox
-		       user pass)))
+		       host port mailbox user pass)))
 	    (if (processp process)
 		(set-process-buffer process (current-buffer))
 	      (insert "starting " session-name
@@ -838,7 +861,7 @@ on all the relevant IMAP servers and then immediately expunges."
 		(progn (delete-process process) ; why here?  USR
 		       (setq shutdown t)
 		       (throw 'end-of-session nil)))
-	    ;; (setq process-to-shutdown process)
+	    (setq shutdown t)
 	    (set (make-local-variable 'vm-imap-session-done) nil)
 	    ;; record server capabilities
 	    (vm-imap-send-command process "CAPABILITY")
@@ -910,7 +933,6 @@ on all the relevant IMAP servers and then immediately expunges."
 		      ;; don't sleep unless we're running synchronously.
 		      (if vm-imap-ok-to-ask
 			  (sleep-for 2))
-		      (setq shutdown t)
 		      (throw 'end-of-session nil))
 		  ;;-------------------------------
 		  (vm-imap-session-type:set 'active)
@@ -942,14 +964,15 @@ on all the relevant IMAP servers and then immediately expunges."
 ;;;###autoload
 (defun vm-imap-end-session (process &optional buffer keep-buffer)
   "Kill the IMAP session represented by PROCESS.  PROCESS could
-be nil. Optional argument BUFFER specifies the process-buffer. If
-the optional argument KEEP-BUFFER is non-nil, the process buffer
-is retained, otherwise it is killed as well."
-  (if (and process (null buffer))
-      (setq buffer (process-buffer process)))
+be nil or be already closed. Optional argument BUFFER specifies
+the process-buffer. If the optional argument KEEP-BUFFER is
+non-nil, the process buffer is retained, otherwise it is killed
+as well."
   (if (and process (memq (process-status process) '(open run))
-	   (buffer-live-p buffer))
+	   (buffer-live-p (process-buffer process)))
       (save-excursion
+	(if (null buffer)
+	    (setq buffer (process-buffer process)))
 	;;----------------------------
 	(vm-buffer-type:enter 'process)
 	;;----------------------------
@@ -970,27 +993,34 @@ is retained, otherwise it is killed as well."
 	  (vm-imap-session-type:set 'inactive)
 	  ;;----------------------------------
 	  (if (fboundp 'add-async-timeout)
-	      (add-async-timeout 2 'delete-process process)
-	    (run-at-time 2 nil 'delete-process process)))
+	      (add-async-timeout 2 'kill-imap-process process)
+	    (run-at-time 2 nil 'kill-imap-process process)))
 	;;----------------------------------
 	(vm-buffer-type:exit)
 	;;----------------------------------
 	))
-  (if (and (not vm-imap-keep-trace-buffer) (not keep-buffer))
-      (kill-buffer buffer)
-    (save-excursion
-      ;;----------------------------
-      (vm-buffer-type:enter 'process)
-      ;;----------------------------
-      (set-buffer buffer)
-      (rename-buffer (concat "saved " (buffer-name)) t)
-      (vm-keep-some-buffers (current-buffer) 'vm-kept-imap-buffers
-			    vm-imap-keep-failed-trace-buffers)
-      ;;-------------------
-      (vm-buffer-type:exit)
-      ;;-------------------
-      ))
+  (if buffer
+      (if (and (not vm-imap-keep-trace-buffer) (not keep-buffer))
+	  (kill-buffer buffer)
+	(save-excursion
+	  ;;----------------------------
+	  (vm-buffer-type:enter 'process)
+	  ;;----------------------------
+	  (set-buffer buffer)
+	  (rename-buffer (concat "saved " (buffer-name)) t)
+	  (vm-keep-some-buffers (current-buffer) 'vm-kept-imap-buffers
+				vm-imap-keep-failed-trace-buffers)
+	  ;;-------------------
+	  (vm-buffer-type:exit)
+	  ;;-------------------
+	  )))
   )
+
+(defun kill-imap-process (process)
+  (set-buffer (process-buffer process))
+  (goto-char (point-max))
+  (insert "ending IMAP session " (current-time-string) "\n")
+  (delete-process process))
 
 ;; Status indicator vector
 ;; timer
@@ -1974,13 +2004,18 @@ is retained, otherwise it is killed as well."
       ;;-------------------------------
       process )))
 
+(defun vm-kill-folder-imap-session  (&optional interactive)
+  (let ((process (vm-folder-imap-process)))
+    (if (processp process)
+	(vm-imap-end-session process))))
+
 (defun vm-imap-retrieve-uid-and-flags-data ()
   "Retrieve the uid's and message flags for all the messages on the
 IMAP server in the current mail box."
   ;;------------------------------
   (if vm-buffer-type-debug
-      (setq vm-buffer-type-trail (cons 'uid-and-flags-data 
-				       vm-buffer-type-trail)))
+      (setq vm-buffer-type-trail 
+	    (cons 'uid-and-flags-data vm-buffer-type-trail)))
   (vm-buffer-type:assert 'folder)
   ;;------------------------------
   (if (vm-folder-imap-uid-list)
@@ -2618,8 +2653,9 @@ operation of the server to minimize I/O."
 		       ;;----------------------------------
 		       (vm-imap-session-type:assert 'valid)
 		       ;;----------------------------------
-		       (vm-imap-fetch-messages process (car range) (cdr range)
-					       use-body-peek vm-load-headers-only)
+		       (vm-imap-fetch-messages 
+			process (car range) (cdr range)
+			use-body-peek vm-load-headers-only)
 		       (setq k (1+ (- (cdr range) (car range))))
 		       (while (> k 0)
 			 (vm-imap-retrieve-to-target process folder-buffer
@@ -2794,6 +2830,7 @@ operation of the server to minimize I/O."
 	  ;;-----------------------------
 	  (vm-set-folder-imap-mailbox-count (- mailbox-count expunge-count))
 	  ))
+      (vm-imap-end-session process)
       got-some)))
 
 (defvar vm-imap-message-bunch-size 10
@@ -2822,11 +2859,6 @@ operations")
     (setq seqs (cons (cons beg last) seqs))
     (nreverse seqs)))
 
-(defvar vm-imap-offline-mode nil
-  "Flag to indicate whether IMAP folder should be used offline.  If
-so, message bodies of headers-only messages will not be retrieved.")
-
-(make-variable-buffer-local 'vm-imap-offline-mode)
 
 (defun vm-fetch-imap-message (m)
   "Insert the message body of M in the current buffer, which must be
@@ -3431,6 +3463,7 @@ First argument FOLDER is read from the minibuffer if called
 interactively.  Non-interactive callers must provide an IMAP
 maildrop specification for the folder as described in the
 documentation for `vm-spool-files'."
+;; Creates a self-contained IMAP session and destroys it at the end.
   (interactive
    (save-excursion
      ;;------------------------
@@ -3476,6 +3509,7 @@ First argument FOLDER is read from the minibuffer if called
 interactively.  Non-interactive callers must provide an IMAP
 maildrop specification for the folder as described in the
 documentation for `vm-spool-files'."
+;; Creates a self-contained IMAP session and destroys it at the end.
   (interactive
    (save-excursion
      ;;------------------------
@@ -3516,6 +3550,7 @@ Argument SOURCE and DEST are read from the minibuffer if called
 interactively.  Non-interactive callers must provide full IMAP
 maildrop specifications for SOURCE and DEST as described in the
 documentation for `vm-spool-files'."
+;; Creates a self-contained IMAP session and destroys it at the end.
   (interactive
    (save-excursion
      ;;------------------------
@@ -3565,6 +3600,7 @@ documentation for `vm-spool-files'."
 IMAP-FCC header. 
 Add this to your `mail-send-hook' and start composing from an IMAP
 folder." 
+;; Creates a self-contained IMAP session and destroys it at the end.
   (let ((mailbox (vm-mail-get-header-contents "IMAP-FCC:"))
 	(mailboxes nil)
 	(fcc-string (vm-mail-get-header-contents "FCC:" ","))

@@ -5401,13 +5401,19 @@ append a space to words that complete unambiguously.")
 (defvar vm-pop-keep-failed-trace-buffers 5)
 (defvar vm-imap-keep-failed-trace-buffers 5)
 ;; Lists of trace buffers remembered for debugging purposes
-(defvar vm-kept-pop-buffers nil)
-(make-variable-buffer-local 'vm-kept-pop-buffers)
-(defvar vm-kept-imap-buffers nil)
-(make-variable-buffer-local 'vm-kept-imap-buffers)
+(defvar vm-kept-pop-buffers nil
+  "* Variable that holds the old trace buffers of POP sessions for
+  debugging purposes.")
+(defvar vm-kept-imap-buffers nil
+  "* Variable that holds the old trace buffers of IMAP sessions for
+  debugging purposes.")
 ;; Flag to make POP/IMAP code remember old trace buffers
-(defvar vm-pop-keep-trace-buffer nil)
-(defvar vm-imap-keep-trace-buffer nil)
+(defvar vm-pop-keep-trace-buffer nil
+  "* Set this to non-nil to retain a limited number of POP session
+  trace buffers for debugging purposes.")
+(defvar vm-imap-keep-trace-buffer nil
+  "* Set this to non-nil to retain a limited number of IMAP session
+  trace buffers for debugging purposes.")
 (defvar vm-imap-session-done nil)
 (defvar vm-reply-list nil)
 (defvar vm-forward-list nil)
