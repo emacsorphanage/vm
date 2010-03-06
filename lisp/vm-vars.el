@@ -109,7 +109,7 @@ A nil value means VM should not read or write index files."
 ;; It should really be folder-specific and saved with the folders on
 ;; the file system.
 (defvar vm-load-headers-only nil
-  "If non-nil, asks VM to load headers of mail folders whenever
+  "*If non-nil, asks VM to load headers of mail folders whenever
 possible, without loading the message bodies.
 
 This allows faster start-ups and smaller memory images of Emacs

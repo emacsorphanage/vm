@@ -206,9 +206,9 @@ unmarked messages are not hashed or considerd for deletion."
 ;;;###autoload
 (defun vm-delete-duplicate-messages-by-body ()
 "Delete duplicate messages in the current folder.
-This command works by computing an MD5 hash for the body ofeach
+This command works by computing an MD5 hash for the body of each
 non-deleted message in the folder and deleting messages that have
-a hash that has already been seen.  Messages that already deleted
+a hash that has already been seen.  Messages that are already deleted
 are never hashed, so VM will never delete the last copy of a
 message in a folder.  'Deleting' means flagging for deletion; you
 will have to expunge the messages with `vm-expunge-folder' to

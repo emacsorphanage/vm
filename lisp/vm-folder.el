@@ -1883,6 +1883,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 
 ;; Stuff the message attributes back into the message as headers.
 (defun vm-stuff-attributes (m &optional for-other-folder)
+  "Stuff the attributes of message M into the folder buffer.  The
+optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
+2010-03-06"
   (save-excursion
     (vm-save-restriction
      (widen)
@@ -1950,7 +1953,10 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			    (if (vm-unread-flag m) "" "R")
 			    "O\n")
 			   (set-marker (vm-headers-of m) opoint)))))
-	     (vm-set-stuff-flag-of m (not for-other-folder)))
+	     (if for-other-folder
+		 (vm-set-stuff-flag-of m nil) ; same effect as VM 7.19
+	       (vm-set-stuff-flag-of m nil))  ; new
+	     )
 	 (set-buffer-modified-p old-buffer-modified-p))))))
   
 (defun vm-stuff-folder-attributes (&optional abort-if-input-pending quiet)

@@ -750,6 +750,15 @@ VM 8.0.0    2007-05-31
     * vm-rfaddons.el has various stuff, look at the source if you are curious
       or miss some VM feature, as it might already be there!
 
+
+VMRF 7.19.187   2006-10-12
+
+VMRF  2006-09
+
+   Mentioned on gnu.emacs.vm.info as a fork.
+
+
+
 ;;; Local Variables: ***
 ;;; mode:text ***
 ;;; End: ***
