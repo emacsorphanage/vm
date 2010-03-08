@@ -432,6 +432,9 @@ to the subject comparisons."
       nil )))
 
 (defun vm-follow-summary-cursor ()
+  "Select the message under the cursor in the summary window before
+executing commands that operate on the current message.  This occurs
+only when the summary buffer window is the selected window."
   (and vm-follow-summary-cursor (eq major-mode 'vm-summary-mode)
        (let ((point (point))
 	     message-pointer message-list mp)
