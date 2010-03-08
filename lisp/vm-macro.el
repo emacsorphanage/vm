@@ -24,6 +24,9 @@
   (set-marker (make-marker) pos buffer))
 
 (defsubst vm-select-folder-buffer ()
+  "Select the folder buffer corresponding to the current buffer (which
+could be Summary or Presentation).  Gives an error message if there
+isn't a folder buffer.  USR, 2010-03-08"
   (cond (vm-mail-buffer
 	 (or (buffer-name vm-mail-buffer)
 	     (error "Folder buffer has been killed."))
@@ -37,6 +40,9 @@
   )
 
 (defsubst vm-select-folder-buffer-if-possible ()
+  "Select the folder buffer corresponding to the current buffer (which
+could be Summary or Presentation).  Returns normally if there
+isn't a folder buffer.  USR, 2010-03-08"
   (cond ((and (bufferp vm-mail-buffer)
 	      (buffer-name vm-mail-buffer))
 	 (set-buffer vm-mail-buffer)))

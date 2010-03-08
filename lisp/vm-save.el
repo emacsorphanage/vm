@@ -182,32 +182,34 @@ to an IMAP folder or by saving it to a local filesystem folder.
 Which is done is controlled by the type of the current vm-folder
 buffer and the variable `vm-imap-save-to-server'."
   (interactive
-   (if (and vm-imap-save-to-server
-	    (vm-imap-folder-p))
+   (if (and vm-imap-save-to-server (vm-imap-folder-p))
        ;; IMAP saving --- argument parsing taken from
        ;; vm-save-message-to-imap-folder
-       (save-excursion
-	 (vm-session-initialization)
-	 (vm-check-for-killed-folder)
-	 (vm-select-folder-buffer-if-possible)
-	 (let ((this-command this-command)
-	       (last-command last-command))
+       (let ((this-command this-command)
+	     (last-command last-command))
+	 (vm-follow-summary-cursor)
+	 (save-excursion
+	   (vm-session-initialization)
+	   (vm-select-folder-buffer)
+	   (vm-check-for-killed-summary)
+	   (vm-error-if-folder-empty)
 	   (list (vm-read-imap-folder-name "Save to IMAP folder: " t)
 		 (prefix-numeric-value current-prefix-arg))))
        ;; saving to local filesystem.  argument parsing taken from old
-       ;; vm-save-message now vm-save-message-to-local-folder
+       ;; vm-save-message (now vm-save-message-to-local-folder)
        (list
 	;; protect value of last-command
 	(let ((last-command last-command)
 	      (this-command this-command))
 	  (vm-follow-summary-cursor)
-	  (let ((default (save-excursion
-			   (vm-select-folder-buffer)
-			   (vm-check-for-killed-summary)
-			   (vm-error-if-folder-empty)
-			   (or (vm-auto-select-folder vm-message-pointer
-						      vm-auto-folder-alist)
-			       vm-last-save-folder)))
+	  (let ((default 
+		  (save-excursion
+		    (vm-select-folder-buffer)
+		    (vm-check-for-killed-summary)
+		    (vm-error-if-folder-empty)
+		    (or (vm-auto-select-folder 
+			 vm-message-pointer vm-auto-folder-alist)
+			vm-last-save-folder)))
 		(dir (or vm-folder-directory default-directory)))
 	    (cond ((and default
 			(let ((default-directory dir))
@@ -220,10 +222,9 @@ buffer and the variable `vm-imap-save-to-server'."
 		  (t
 		   (vm-read-file-name "Save in folder: " dir nil)))))
 	(prefix-numeric-value current-prefix-arg))))
-  (if (and vm-imap-save-to-server
-	   (vm-imap-folder-p))
+  (if (and vm-imap-save-to-server (vm-imap-folder-p))
       (vm-save-message-to-imap-folder folder count)
-      (vm-save-message-to-local-folder folder count)))
+    (vm-save-message-to-local-folder folder count)))
    
 ;;;###autoload
 (defun vm-save-message-to-local-folder (folder &optional count)
@@ -915,12 +916,14 @@ ignored.
 
 The saved messages are flagged as `filed'."
   (interactive
-   (save-excursion
-     (vm-session-initialization)
-     (vm-check-for-killed-folder)
-     (vm-select-folder-buffer-if-possible)
-     (let ((this-command this-command)
-	   (last-command last-command))
+   (let ((this-command this-command)
+	 (last-command last-command))
+     (vm-follow-summary-cursor)
+     (save-excursion
+       (vm-session-initialization)
+       (vm-select-folder-buffer)
+       (vm-check-for-killed-summary)
+       (vm-error-if-folder-empty)
        (list (vm-read-imap-folder-name 
 	      "Save to IMAP folder: " t nil
 	      (or vm-last-save-imap-folder vm-last-visit-imap-folder))
