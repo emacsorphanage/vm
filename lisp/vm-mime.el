@@ -6389,7 +6389,7 @@ agent; under Unix, normally sendmail.)"
 	   ;; support enriched-mode for text/enriched composition
 	    (if enriched
 		(let ((enriched-initial-annotation ""))
-		  (enriched-encode (point-min) (point-max))))
+		  (enriched-encode (point-min) (point-max) (current-buffer))))
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
 	    (if vm-fsfemacs-mule-p
