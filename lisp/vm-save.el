@@ -962,6 +962,13 @@ The saved messages are flagged as `filed'."
 		     (vm-body-to-be-retrieved-of m))
 		(error "Message %s body has not been retrieved"
 		       (vm-number-of (car mlist))))
+	    ;; Kyle Jones says:
+	    ;; have to stuff the attributes in all cases because
+	    ;; the deleted attribute may have been stuffed
+	    ;; previously and we don't want to save that attribute.
+	    ;; FIXME But stuffing attributes into the IMAP buffer is
+	    ;; not easy.  USR, 2010-03-08
+	    ;; (vm-stuff-attributes m t)
 	    (if server-to-server-p 	; economise on upstream data traffic
 		(let ((process (vm-re-establish-folder-imap-session)))
 		  (vm-imap-copy-message process m mailbox))
@@ -970,6 +977,8 @@ The saved messages are flagged as `filed'."
 	      (vm-imap-save-message process m mailbox))
 	    (unless (vm-filed-flag m)
 	      (vm-set-filed-flag m t))
+	    ;; we set the deleted flag so that the user is not
+	    ;; confused if the save doesn't go through fully.
 	    (when (and vm-delete-after-saving (not (vm-deleted-flag m)))
 	      (vm-set-deleted-flag m t))
 	    (vm-increment count)
@@ -979,6 +988,8 @@ The saved messages are flagged as `filed'."
       (when process (vm-imap-end-session process)))
     (vm-update-summary-and-mode-line)
     (setq vm-last-save-imap-folder target-folder)
+    (if (and vm-delete-after-saving (not vm-folder-read-only))
+	(vm-delete-message count))
     (message "%d message%s saved to %s"
 	     count (if (/= 1 count) "s" "")
 	     (vm-safe-imapdrop-string target-folder))
