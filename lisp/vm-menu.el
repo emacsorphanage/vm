@@ -1209,8 +1209,7 @@ set to the command name so that window configuration will be done."
       (setq menu (cons (vector "    "
 			       (list 'vm-menu-run-command
 				     ''vm-visit-virtual-folder (car folders))
-			       t
-			       (car folders))
+			       :suffix (car folders))
 		       menu)
 	    folders (cdr folders)))
     (and menu (setq menu (nreverse menu)
@@ -1251,8 +1250,7 @@ set to the command name so that window configuration will be done."
 			   (t
 			    (list 'vm-menu-run-command
 				  ''vm-visit-folder (car folders))))
-			  t
-			  (car folders))
+			  :suffix (car folders))
 		       menu)
 	    folders (cdr folders)
 	    i (1+ i)))
@@ -1274,8 +1272,7 @@ set to the command name so that window configuration will be done."
 			(list (vector "    "
 				      (list 'vm-menu-run-command
 					    ''vm-visit-folder (car folders))
-				      t
-				      (car folders))))
+				      :suffix (car folders))))
 	    folders (cdr folders)))
     (setq tail (vm-member special vm-menu-folder-menu))
     (if (and menu tail)
