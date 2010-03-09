@@ -1415,6 +1415,7 @@ non-@code{nil} for VM to decode uuencoded MIME objects.
 * Attachments::                 Operating on MIME attachments
 * Internal display::            Viewing attachments internally in Emacs
 * External display::            Viewing attachments with external viewers
+* Displaying images::           Using Emacs facilities for images
 * MIME type conversion::        Converting external attachments to internal
 * Character sets::              MIME character sets
 * multipart/alternative::       MIME content in alternative formats
@@ -1632,7 +1633,7 @@ these values to use the appropriate package.  A value of
 value of @code{nil} asks VM not to display HTML content internally.
 
 
-@node External display, MIME type conversion, Internal display, MIME Messages
+@node External display, Displaying images, Internal display, MIME Messages
 @unnumberedsubsec External display of MIME attachments
 
 @vindex vm-mime-external-content-types-alist
@@ -1767,7 +1768,63 @@ Example:
 associated with the first type that matches will be used for the
 temporary filename.
 
-@node MIME type conversion, Character sets, External display, MIME Messages
+@node Displaying images, MIME type conversion, External display, MIME Messages
+@unnumberedsubsec Displaying inline images in messages
+
+@cindex images
+Most versions of Emacs can display images when used on graphical
+screens.  You can verify if the Emacs version is able to do so by
+calling the funciton @code{display-images-p}.  However, Emacs relies
+on external libraries to create graphical images, which are specified
+through the variable @code{image-library-alist}.  Even if Emacs has
+the ability to display some image type, it cannot display such images
+unless appropriate libraries are installed and specified to Emacs.  You
+can verify which image types are really available by calling the
+function @code{image-type-available-p} with an image type such as
+@samp{tiff} or @samp{gif} as the argument.
+
+@vindex vm-mime-internal-content-types
+@vindex vm-auto-displayed-mime-content-types
+Assuming that a particular image type, say @samp{tiff} is available,
+you can include its MIME type in
+@code{vm-mime-internal-content-types}, e.g., 
+@example
+(add-to-list 'vm-mime-internal-content-types "image/tiff")
+@end example
+You can also add the MIME type to the variable
+@code{vm-auto-displayed-mime-content-types} so that VM will
+automatically display all images of the type.  
+If the type is not included among the auto-displayed types, then the
+image is initially shown as a button with a thumbnail image.  Clicking on the
+button with the middle mouse button expands the image to its full size.
+
+@cindex ImageMagick
+@vindex vm-imagemagick-identify-program
+@vindex vm-imagemagick-convert-program
+Once an image is displayed, you can use the right mouse button to do
+various image manipulations on it, such as enlarging/reducing it,
+rotating it etc.  To do such operations, VM uses the ImageMagick
+graphics manipulation software.  You can install ImageMagick on your
+system and specify the location of its @code{identify} and
+@code{convert} programs to VM via the variables
+@code{vm-imagemagick-identify-program} and
+@code{vm-imagemagick-convert-program}.
+
+@vindex vm-mime-use-image-strips
+By default, VM displays images by slicing them into contiguous
+horizontal strips and displaying the strips in order.  This
+facilitates vertical scrolling within an image.  The variable
+@code{vm-mime-use-image-strips} controls whether VM uses strips for
+image display.  It is @samp{t} by default.
+
+VM also uses the ImageMagick's @code{convert} program to convert
+between image formats, so that an image that is not displayable in
+Emacs is converted to another format that is displayable.  You can
+turn off such conversion by setting the variable
+@code{vm-imagemagick-convert-program} to @samp{nil}.
+
+
+@node MIME type conversion, Character sets, Displaying images, MIME Messages
 @unnumberedsubsec MIME type conversion
 
 @vindex vm-mime-type-converter-alist

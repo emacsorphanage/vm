@@ -58,7 +58,9 @@ USING CONFIGURE
 
          (require 'vm-autoloads)
 
-      to their ~/.emacs.
+      to their ~/.emacs.  If there are any VM-related autoloads in
+      your ~/.emacs file, you should remove them.  The vm-autoloads
+      library takes care of all the autoloads for VM.
 
       XEmacs: You are lucky nothing to do for you!
 
