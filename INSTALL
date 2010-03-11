@@ -22,10 +22,10 @@ USING CONFIGURE
    XEmacs and you may experience strange problems during startup when doing
    so.  Even between GNU Emacs versions there might be problems! Thus you must
    ensure you are configuring with --with-emacs=xemacs when installing VM for
-   XEmacs!  Also if you want to use BBDB features please specify the path
-   to its source files with the -with-other-dirs option. 
+   XEmacs!  Also if you want to use BBDB or Emacs-w3m features please
+   specify the path to their source files with the -with-other-dirs option. 
 
-   a) GNU Emacs users run:
+   a) GNU Emacs+BBDB users run:
 	./configure --with-other-dirs=/absolute/path/to/bbdb/lisp
 
    b) XEmacs+BBDB users run:
@@ -33,6 +33,9 @@ USING CONFIGURE
    
    c) GNU Emacs+BBDB+w3m users run:
 	./configure --with-other-dirs="/absolute/path/to/bbdb/lisp;/absolute/path/to/w3m"
+
+   d) XEmacs with no additional packages
+        ./configure --with-emacs=xemacs
 
    It is currently not possible to build VM in a separate directory.
 

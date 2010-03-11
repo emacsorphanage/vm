@@ -2928,6 +2928,8 @@ The folder is not altered and Emacs is still visiting it."
   (interactive)
   (vm-quit t))
 
+(defvar dired-listing-switches)		; defined only in FSF Emacs?
+
 ;;;###autoload
 (defun vm-quit (&optional no-change)
   "Quit visiting the current folder, saving changes.  Deleted messages are not expunged."
