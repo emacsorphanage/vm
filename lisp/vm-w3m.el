@@ -39,6 +39,13 @@
 (eval-and-compile
   (vm-load-features '(w3m)))
 
+;; Dummy vriable declarations to suppress warnings if w3m is not
+;; loaded
+
+(defvar w3m-current-buffer)
+(defvar w3m-cid-retrieve-function-alist)
+(defvar w3m-minor-mode-map)
+
 (defvar vm-w3m-mode-map nil
   "Keymap for w3m within VM.")
 

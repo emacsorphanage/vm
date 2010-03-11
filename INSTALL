@@ -30,6 +30,9 @@ USING CONFIGURE
 
    b) XEmacs+BBDB users run:
 	./configure --with-emacs=xemacs --with-other-dirs=/path/to/bbdb/lisp
+   
+   c) GNU Emacs+BBDB+w3m users run:
+	./configure --with-other-dirs="/absolute/path/to/bbdb/lisp;/absolute/path/to/w3m"
 
    It is currently not possible to build VM in a separate directory.
 
