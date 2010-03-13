@@ -45,6 +45,9 @@
 (defvar w3m-current-buffer)
 (defvar w3m-cid-retrieve-function-alist)
 (defvar w3m-minor-mode-map)
+(defvar url-working-buffer)
+(defvar url-current-mime-type)
+(defvar url-current-mime-headers)
 
 (defvar vm-w3m-mode-map nil
   "Keymap for w3m within VM.")

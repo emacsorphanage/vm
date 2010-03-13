@@ -34,7 +34,8 @@ VM 8.1.0 (beta2, 2010-01-31)
 
    ** New boolean variable `vm-word-wrap-paragraphs' controls the word
       wrapping of paragraphs in messages using the longlines library.
-      The variable is set to t by default. When it is t, the variable 
+      The variable is set to nil by default. When it is set to t,
+      paragraphs are word wrapped and the variable
       `vm-fill-paragraphs-containing-long-lines' has no effect.  Set
       it to nil to enable the usual filling functionality.
 

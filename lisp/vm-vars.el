@@ -878,12 +878,12 @@ necessary."
   :group 'vm
   :type 'boolean)
 
-(defcustom vm-word-wrap-paragraphs t
+(defcustom vm-word-wrap-paragraphs nil
   "If non-nil, causes VM to word wrap paragraphs with long lines.
 This is done using the `longlines' library, which must be installed
 for the variable to have effect."
   :group 'vm
-  :type 'bookean)
+  :type 'boolean)
 
 (defcustom vm-fill-paragraphs-containing-long-lines nil
   "*This variable can be set to nil, a numeric value N, the
