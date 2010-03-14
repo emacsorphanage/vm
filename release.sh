@@ -27,8 +27,9 @@ mkdir -p release
 $bzr export $dir
 
 cp configure $dir
-mv lisp/version.txt $dir/lisp
-mv info/version.texi $dir/info
+# The following lines are useless and misguided.  USR, 2010-03-13
+# mv lisp/version.txt $dir/lisp
+# mv info/version.texi $dir/info
 rm $dir/getversion.sh $dir/release.sh
 cd release
 tar cvfz $rdir.tgz $rdir
