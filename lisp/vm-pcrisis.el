@@ -53,6 +53,12 @@
      (message "Could not load bbdb.el.  Related functions may not work correctly!")
      (sit-for 5))))
 
+;; Dummy declarations for variables that are defined in bbdb
+
+(defvar bbdb-records)
+(defvar bbdb-file)
+(defvar bbdb-records)
+
 ;; -------------------------------------------------------------------
 ;; Variables:
 ;; -------------------------------------------------------------------

@@ -20,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(defvar scrollbar-height)		; defined for XEmacs
+
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"
 	major-mode 'vm-summary-mode
@@ -778,6 +781,8 @@ mandatory."
 	 (substring string width))
 	(t
 	 (substring string 0 width))))
+
+(defvar vm-postponed-header)		; defined vm-pine.el
 
 (defun vm-su-postponed-indicator (msg)
   (if (vm-get-header-contents msg vm-postponed-header)

@@ -941,48 +941,94 @@ Returns t if there was a line longer than `fill-column'."
     long-line))
 
 (defun vm-fill-paragraphs-containing-long-lines (width start end)
-  "Fill paragraphs spanning more than WIDTH columns in region START to END.
+  "Fill paragraphs spanning more than WIDTH columns in region
+START to END.  If WIDTH is 'window-width, the current width of
+the Emacs window is used.  If vm-word-wrap-paragraphs is set
+non-nil, then the longlines package is used to word-wrap long
+lines without removing any existing line breaks.
 
 In order to fill also quoted text you will need `filladapt.el' as the adaptive
 filling of GNU Emacs does not work correctly here!"
-  (if (eq width 'window-width)
-      (setq width (- (window-width (get-buffer-window (current-buffer))) 1)))
-  (save-excursion
-    (let ((buffer-read-only nil)
-          (fill-column width)
-	  (adaptive-fill-mode nil)
-          (abbrev-mode nil)
-	  (fill-prefix nil)
-;	  (use-hard-newlines t)
-          (filled 0)
-          (message (if (car vm-message-pointer)
-                       (vm-su-subject (car vm-message-pointer))
-                     (buffer-name)))
-          (needmsg (> (- end start) 12000)))
+  (if (and vm-word-wrap-paragraphs (locate-library "longlines"))
+      (vm-fill-paragraphs-by-longlines start end)
+    (if (eq width 'window-width)
+	(setq width (- (window-width (get-buffer-window (current-buffer))) 1)))
+    (save-excursion
+      (let ((buffer-read-only nil)
+	    (fill-column vm-paragraph-fill-column)
+	    (adaptive-fill-mode nil)
+	    (abbrev-mode nil)
+	    (fill-prefix nil)
+	    ;; (use-hard-newlines t)
+	    (filled 0)
+	    (message (if (car vm-message-pointer)
+			 (vm-su-subject (car vm-message-pointer))
+		       (buffer-name)))
+	    (needmsg (> (- end start) 12000)))
       
-      (if needmsg
-          (message "Filling message to column %d!" fill-column))
+	(if needmsg
+	    (message "Filling message to column %d!" fill-column))
       
-      ;; we need a marker for the end since this position might change 
-      (or (markerp end) (setq end (vm-marker end)))
-      (goto-char start)
+	;; we need a marker for the end since this position might change 
+	(or (markerp end) (setq end (vm-marker end)))
+	(goto-char start)
       
-      (while (< (point) end)
-	(setq start (point))
-	(vm-skip-empty-lines)
-	(when (and (< (point) end)	; if no newline at the end
-		   (vm-forward-paragraph))
-	  (fill-region start (point))
-	  (setq filled (1+ filled))))
+	(while (< (point) end)
+	  (setq start (point))
+	  (vm-skip-empty-lines)
+	  (when (and (< (point) end)	; if no newline at the end
+		     (vm-forward-paragraph))
+	    (fill-region start (point))
+	    (setq filled (1+ filled))))
       
-      ;; Turning off these messages because they go by too fast and
-      ;; are not particularly enlightening.  USR, 2010-01-26
-      ;; (if (= filled 0)
-      ;;    (message "Nothing to fill!")
-      ;;  (message "Filled %s paragraph%s!"
-      ;;           (if (> filled 1) (format "%d" filled) "one")
-      ;;           (if (> filled 1) "s" "")))
-      )))
+	;; Turning off these messages because they go by too fast and
+	;; are not particularly enlightening.  USR, 2010-01-26
+	;; (if (= filled 0)
+	;;    (message "Nothing to fill!")
+	;;  (message "Filled %s paragraph%s!"
+	;;           (if (> filled 1) (format "%d" filled) "one")
+	;;           (if (> filled 1) "s" "")))
+	))))
+
+(defun vm-fill-paragraphs-by-longlines (start end)
+  "Uses longlines.el for filling the region."
+  ;; prepare for longlines.el in XEmacs
+  (require 'overlay)
+  (require 'longlines)
+  (defvar fill-nobreak-predicate nil)
+  (defvar undo-in-progress nil)
+  (defvar longlines-mode-hook nil)
+  (defvar longlines-mode-on-hook nil)
+  (defvar longlines-mode-off-hook nil)
+  (unless (functionp 'replace-regexp-in-string)
+    (defun replace-regexp-in-string (regexp rep string
+                                            &optional fixedcase literal)
+      (vm-replace-in-string string regexp rep literal)))
+  (unless (functionp 'line-end-position)
+    (defun line-end-position ()
+      (save-excursion (end-of-line) (point))))
+  (unless (functionp 'line-beginning-position)
+    (defun line-beginning-position (&optional n)
+      (save-excursion
+        (if n (forward-line n))
+        (beginning-of-line)
+        (point)))
+    (unless (functionp 'replace-regexp-in-string)
+      (defun replace-regexp-in-string (regexp rep string
+                                              &optional fixedcase literal)
+        (vm-replace-in-string string regexp rep literal))))
+  ;; now do the filling
+  (let ((buffer-read-only nil)
+        (fill-column vm-paragraph-fill-column))
+    (save-excursion
+      (vm-save-restriction
+       ;; longlines-wrap-region contains a (forward-line -1) which is causing
+       ;; wrapping of headers which is wrong, so we restrict it here!
+       (narrow-to-region start end)
+       (longlines-decode-region start end) ; make linebreaks hard
+       (longlines-wrap-region start end)  ; wrap, adding soft linebreaks
+       (widen)))))
+
 
 (defun vm-make-message-id ()
   (let (hostname

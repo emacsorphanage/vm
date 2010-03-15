@@ -342,6 +342,8 @@ AddToFunc SelectWindow
 (defvar vm-biff-message-pointer nil)
 (make-variable-buffer-local 'vm-biff-message-pointer)
 
+(defvar horizontal-scrollbar-visible-p)	; defined for XEmacs only
+
 ;;;###autoload
 (defun vm-biff-popup (&optional force)
   "Scan the current VM folder for new messages and popup a summary frame."

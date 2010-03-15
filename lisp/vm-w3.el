@@ -38,6 +38,12 @@
 (defvar vm-w3-text/html-message nil
   "The currently displayed message.")
 
+(defvar url-working-buffer)
+(defvar url-current-content-length)
+(defvar url-current-mime-encoding)
+(defvar url-current-mime-type)
+(defvar url-current-mime-headers)
+
 (defun vm-w3-cid-retrieve (url)
   "Insert content of URL."
   (set-buffer (get-buffer-create url-working-buffer))

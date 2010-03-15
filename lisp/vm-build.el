@@ -36,7 +36,8 @@
 	  (setq load-path (cons dir load-path)
 		otherdirs (cdr otherdirs)))))
 
-  ((end-of-file invalid-read-syntax)   
+  ((end-of-file) nil)
+  ((invalid-read-syntax)   
    (message "OTHERDIRS=%S rejected by `read': %s"
 	    (getenv "OTHERDIRS")
 	    ;(error-message-string err)

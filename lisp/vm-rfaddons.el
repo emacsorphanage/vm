@@ -357,49 +357,50 @@ storage for attachments which are stored on disk anyway."
       (vm-do-fcc-before-mime-encode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;###autoload
-(defun vm-fill-paragraphs-by-longlines (width start end)
-  "Uses longlines.el for filling.
-To use it, advice `vm-fill-paragraphs-containing-long-lines' and call this
-function instead."
-  (if (eq width 'window-width)
-      (setq width (- (window-width (get-buffer-window (current-buffer))) 1)))
-  ;; prepare for longlines.el in XEmacs
-  (require 'overlay)
-  (require 'longlines)
-  (defvar fill-nobreak-predicate nil)
-  (defvar undo-in-progress nil)
-  (defvar longlines-mode-hook nil)
-  (defvar longlines-mode-on-hook nil)
-  (defvar longlines-mode-off-hook nil)
-  (unless (functionp 'replace-regexp-in-string)
-    (defun replace-regexp-in-string (regexp rep string
-                                            &optional fixedcase literal)
-      (vm-replace-in-string string regexp rep literal)))
-  (unless (functionp 'line-end-position)
-    (defun line-end-position ()
-      (save-excursion (end-of-line) (point))))
-  (unless (functionp 'line-beginning-position)
-    (defun line-beginning-position (&optional n)
-      (save-excursion
-        (if n (forward-line n))
-        (beginning-of-line)
-        (point)))
-    (unless (functionp 'replace-regexp-in-string)
-      (defun replace-regexp-in-string (regexp rep string
-                                              &optional fixedcase literal)
-        (vm-replace-in-string string regexp rep literal))))
-  ;; now do the filling
-  (let ((buffer-read-only nil)
-        (fill-column width))
-    (save-excursion
-      (vm-save-restriction
-       ;; longlines-wrap-region contains a (forward-line -1) which is causing
-       ;; wrapping of headers which is wrong, so we restrict it here!
-       (narrow-to-region start end)
-       (longlines-decode-region start end) ; make linebreaks hard
-       (longlines-wrap-region start end)  ; wrap, adding soft linebreaks
-       (widen)))))
+;; This has been moved to the VM core.  USR, 2010-03-11
+;;;;;###autoload
+;; (defun vm-fill-paragraphs-by-longlines (width start end)
+;;   "Uses longlines.el for filling.
+;; To use it, advice `vm-fill-paragraphs-containing-long-lines' and call this
+;; function instead."
+;;   (if (eq width 'window-width)
+;;       (setq width (- (window-width (get-buffer-window (current-buffer))) 1)))
+;;   ;; prepare for longlines.el in XEmacs
+;;   (require 'overlay)
+;;   (require 'longlines)
+;;   (defvar fill-nobreak-predicate nil)
+;;   (defvar undo-in-progress nil)
+;;   (defvar longlines-mode-hook nil)
+;;   (defvar longlines-mode-on-hook nil)
+;;   (defvar longlines-mode-off-hook nil)
+;;   (unless (functionp 'replace-regexp-in-string)
+;;     (defun replace-regexp-in-string (regexp rep string
+;;                                             &optional fixedcase literal)
+;;       (vm-replace-in-string string regexp rep literal)))
+;;   (unless (functionp 'line-end-position)
+;;     (defun line-end-position ()
+;;       (save-excursion (end-of-line) (point))))
+;;   (unless (functionp 'line-beginning-position)
+;;     (defun line-beginning-position (&optional n)
+;;       (save-excursion
+;;         (if n (forward-line n))
+;;         (beginning-of-line)
+;;         (point)))
+;;     (unless (functionp 'replace-regexp-in-string)
+;;       (defun replace-regexp-in-string (regexp rep string
+;;                                               &optional fixedcase literal)
+;;         (vm-replace-in-string string regexp rep literal))))
+;;   ;; now do the filling
+;;   (let ((buffer-read-only nil)
+;;         (fill-column width))
+;;     (save-excursion
+;;       (vm-save-restriction
+;;        ;; longlines-wrap-region contains a (forward-line -1) which is causing
+;;        ;; wrapping of headers which is wrong, so we restrict it here!
+;;        (narrow-to-region start end)
+;;        (longlines-decode-region start end) ; make linebreaks hard
+;;        (longlines-wrap-region start end)  ; wrap, adding soft linebreaks
+;;        (widen)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-spamassassin-strip-report "spamassassin -d"
@@ -1318,7 +1319,7 @@ the keymap used within that region is `vm-shrunken-headers-keymap'."
 (defcustom vm-assimilate-html-command "striptags"
   "*Command/function which should be called for stripping tags.
 
-When this is a string, then it is a command which is feed with the
+When this is a string, then it is a command which is fed with the
 html and which should return the text.
 Otherwise it should be a Lisp function which performs the stripping of
 the tags.
@@ -1474,10 +1475,10 @@ text/alternative message depending on the value of the variable
 (defun vm-summary-attachment-label (msg)
   "Indicate if there are attachments in a message.
 The summary displays a `vm-summary-attachment-indicator', which is a '$' by
-default.  In order to get this working, add an \"%1UA\" to your
+default.  In order to get this working, add a \"%1UA\" to your
 `vm-summary-format' and call `vm-fix-my-summary!!!'.
 
-As an sideeffect a label can be added to new messages.  Setting 
+As a sideeffect a label can be added to new messages.  Setting 
 `vm-summary-attachment-label' to a string (the label) enables this.
 If you just want the label, then set `vm-summary-attachment-indicator' to nil
 and add an \"%0UA\" to your `vm-summary-format'." 

@@ -880,20 +880,38 @@ necessary."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-word-wrap-paragraphs nil
+  "If non-nil, causes VM to word wrap paragraphs with long lines.
+This is done using the `longlines' library, which must be installed
+for the variable to have effect."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-fill-paragraphs-containing-long-lines nil
-  "*This variable can be set to nil, a numeric value N or the
-symbol 'window-width.  When non-nil, it causes VM to fill
+  "*This variable can be set to nil, a numeric value N, the
+symbol 'window-width.  If it is numeric, it causes VM to fill
 paragraphs that contain lines spanning that many columns or more.
+Setting it to 'window-width has the effect of using the width of
+the Emacs window.
+
 Only plain text messages and text/plain MIME parts will be
 filled.  The message itself is not modified; its text is copied
-into a presentation buffer before the filling is done."
-;; Old text removed to reflect the change in revision 516:
-;; This variable determines which paragraphs are filled,
-;; but `vm-paragraph-fill-column' determines the fill column.
+into a presentation buffer before the filling is done.
+
+This variable determines which paragraphs are filled,
+but `vm-paragraph-fill-column' determines the fill column."
   :group 'vm
   :type '(choice (const nil)
                  (const window-width)
+		 (const wrap)
                  integer))
+
+(defcustom vm-paragraph-fill-column (default-value 'fill-column)
+  "*Column beyond which automatic line-wrapping should happen when
+re-filling lines longer than the value of
+`vm-fill-paragraphs-containing-long-lines'."
+  :group 'vm
+  :type 'integer)
 
 (defcustom vm-fill-long-lines-in-reply-column nil
   "*Fill lines spanning that many columns or more in replies."

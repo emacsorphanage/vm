@@ -1158,6 +1158,8 @@ summary buffer to select a folder."
 	      invalid-function
 	     ))))
 
+(defvar vm-postponed-folder)
+
 (defvar vm-drafts-exist nil)
 
 (defvar vm-ml-draft-count ""

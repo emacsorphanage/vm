@@ -52,7 +52,9 @@
 ;; A lot of the more complicated MIME character set processing is only
 ;; practical under MULE.
 (eval-when-compile 
-  (defvar latin-unity-ucs-list))
+  (defvar latin-unity-ucs-list)
+  (defvar latin-unity-character-sets)
+  (defvar coding-system-list))
 
 ;; This function has been updated from Rob F's version based on Brent
 ;; Goodrick's suggestions, his rev. 609, 2009-01-24

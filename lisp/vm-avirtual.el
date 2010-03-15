@@ -136,6 +136,8 @@
            (beep 1))))
       (setq feature-list (cdr feature-list)))))
 
+(defvar bbdb-get-addresses-headers)	; dummyd declaration
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar vm-mail-virtual-selector-function-alist
   '(;; standard selectors 

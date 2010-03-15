@@ -61,7 +61,7 @@ VM 8.1.1-devo
      Mozilla and Opera.
 
 
-VM 8.1.0 (beta2, 2010-01-31)
+VM 8.1.0 (2010-03-21)
 
   KNOWN PROBLEMS:
 
@@ -78,6 +78,13 @@ VM 8.1.0 (beta2, 2010-01-31)
 
   CHANGES:
 
+   ** New boolean variable `vm-word-wrap-paragraphs' controls the word
+      wrapping of paragraphs in messages using the longlines library.
+      The variable is set to nil by default. When it is set to t,
+      paragraphs are word wrapped and the variable
+      `vm-fill-paragraphs-containing-long-lines' has no effect.  Set
+      it to nil to enable the usual filling functionality.
+
    ** vm-pgg is not loaded by default because it is a set up as an
       add-on.  Users should load it from their .emacs file by using
       the sequence
@@ -89,6 +96,9 @@ VM 8.1.0 (beta2, 2010-01-31)
       get the same effect.
 
   IMPROVEMENTS:
+
+   * The variable `vm-paragraph-fill-column', previously removed in
+     earlier versions of this release, is brought back.
 
    ** The commands `vm-mime-save-all-attachments' and
       `vm-mime-delete-all-attachments' have been moved to the VM core

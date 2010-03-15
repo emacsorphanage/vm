@@ -1219,8 +1219,9 @@ vm-folder-type is initialized here."
       (if (not (= 0 (logand status #x10000)))
           (vm-set-new-flag-of message t))
       (when (not (= 0 (logand status #xE000000)))
-        ;; care for message labels
-        ))))
+        ;; FIXME care for message labels
+	(message "VM internal error 2011; continuing..."))
+      )))
 
 (defun vm-read-attributes (message-list)
   "Reads the message attributes and cached header information.
@@ -2935,6 +2936,8 @@ The folder is not altered and Emacs is still visiting it."
   (interactive)
   (vm-quit t))
 
+(defvar dired-listing-switches)		; defined only in FSF Emacs?
+
 ;;;###autoload
 (defun vm-quit (&optional no-change)
   "Quit visiting the current folder, saving changes.  Deleted messages are not expunged."
@@ -3106,6 +3109,8 @@ The folder is not altered and Emacs is still visiting it."
 	  (setq done t)
 	(setq p (cdr p))))
     p ))
+
+(defvar current-itimer)
 
 ;; support for vm-mail-check-interval
 ;; if timer argument is present, this means we're using the Emacs

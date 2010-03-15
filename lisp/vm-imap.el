@@ -28,6 +28,11 @@
   (require 'vm-misc)
   (require 'vm-macro))
 
+(defvar selectable-only)		; used with dynamic binding
+
+;; To-Do  (USR)
+;; - Need to ensure that new imap sessions get created as and when needed.
+
 ;; ------------------------------------------------------------------------
 ;; The IMAP session protocol
 ;; ------------------------------------------------------------------------
@@ -235,6 +240,8 @@ vm-imap-synchronize-folder.")
 
 ;;;###autoload
 (defun vm-imap-move-mail (source destination)
+  "move-mail function for IMAP folders.  SOURCE is the IMAP mail box
+from which mail is to be moved and DESTINATION is the VM folder."
   ;;--------------------------
   (vm-buffer-type:set 'folder)
   ;;--------------------------
@@ -735,6 +742,7 @@ on all the relevant IMAP servers and then immediately expunges."
 
 ;;;###autoload
 (defun vm-imap-make-session (source)
+  "Create a new IMAP session for the IMAP mail box SOURCE."
   (let ((shutdown nil)			; whether process is to be shutdown
 	(folder-type vm-folder-type)
 	process ooo
@@ -2329,6 +2337,8 @@ IMAP server in the current mail box."
 
 ;;;###autoload
 (defun vm-imap-save-message (process m mailbox)
+  "Using the IMAP process PROCESS, save the message M to IMAP mailbox
+MAILBOX." 
   (let (need-ok need-plus flags response string)
     ;; save the message's flag along with it.
     ;; don't save the deleted flag.
@@ -3132,6 +3142,9 @@ VM session.  This is useful for saving offline work."
 
 ;;;###autoload
 (defun vm-imap-folder-check-for-mail (&optional interactive)
+  "Check if there is new mail in th current IMAP folder.  The optional
+argument INTERACTIVE says if the function is being invoked
+interactively."
   ;;--------------------------
   (vm-buffer-type:set 'folder)
   ;;--------------------------
@@ -3145,12 +3158,14 @@ VM session.  This is useful for saving offline work."
 ;; ----------- missing functions-----------
 ;;;###autoload
 (defun vm-imap-find-name-for-spec (spec)
+  "This is a stub for a function that has not been defined."
   (error "vm-imap-find-name-for-spec has not been defined.  Please report it."
 	 ))
 ;;-----------------------------------------
 
 ;;;###autoload
 (defun vm-imap-find-spec-for-buffer (buffer)
+  "Find the IMAP maildrop spec for the folder BUFFER."
   (save-excursion
     (set-buffer buffer)
     (vm-folder-imap-maildrop-spec)))
@@ -3191,6 +3206,8 @@ specification SPEC."
 
 ;;;###autoload
 (defun vm-imap-parse-spec-to-list (spec)
+  "Parses the IMAP maildrop specification SPEC and returns a list of
+its components."
   (vm-parse spec "\\([^:]+\\):?" 1 6))
 
 (defun vm-imap-spec-list-to-host-alist (spec-list)

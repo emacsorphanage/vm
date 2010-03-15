@@ -139,7 +139,7 @@ sender, recipient, subject and date headers.  Typing @key{SPC}
 message as read.  Subsequent @key{SPC}'s scroll forward through the
 message, @kbd{b} or @key{DEL} scrolls backward.  When you reach the end
 of a message, typing @key{SPC} or @kbd{n} moves you forward to preview
-the next message.  @xref{Paging}.
+the next message.  @xref{Viewing}.
 
 If you do not want to read a message that's being previewed, type
 @kbd{n} and VM will move to the next message (if there is one).
@@ -1237,11 +1237,11 @@ presentation is done in two stages: @dfn{previewing} and @dfn{paging}.
 
 @menu
 * Previewing::                  Customizing message previews.
-* Paging::                      Scrolling through the current message.
+* Viewing::                     Viewing the current message.
 * MIME Messages::               Using VM's MIME display features.
 @end menu
 
-@node Previewing, Paging, Reading Messages, Reading Messages
+@node Previewing, Viewing, Reading Messages, Reading Messages
 @section Previewing
 
 @dfn{Previewing} means showing you a small portion of a message
@@ -1310,8 +1310,8 @@ have VM preview all messages, set the value of
 Typing @kbd{t} (@code{vm-expose-hidden-headers}) makes VM toggle
 between exposing and hiding headers that would ordinarily be hidden.
 
-@node Paging, MIME Messages, Previewing, Reading Messages
-@section Paging
+@node Viewing, MIME Messages, Previewing, Reading Messages
+@section Viewing
 
 @vindex vm-auto-next-message
 Typing @key{SPC} during a message preview exposes the body of the
@@ -1336,31 +1336,37 @@ You can ``unread'' a message (so to speak) by typing @kbd{U}
 (@code{vm-unread-message}).  The current message will be flagged
 unread.
 
+@cindex longlines.el
 @cindex filling paragraphs
+@cindex visual line mode
 @vindex vm-paragraph-fill-column
 @vindex vm-fill-paragraphs-containing-long-lines
+@vindex vm-word-wrap-paragraphs
 Sometimes you will receive messages that contain lines that are
-too long to fit on your screen without wrapping.  If you set
-@code{vm-fill-paragraphs-containing-long-lines} to a positive
-numeric value @var{N}, VM will call @code{fill-paragraph} on all
-paragraphs that contain lines spanning @var{N} columns or more.
-As with other things VM does that modifies the way the
-message looks on the screen, this does not change message
-contents.  VM copies the message contents to a ``presentation''
-buffer before altering them.  The fill column that VM uses is
-controlled by @code{vm-paragraph-fill-column}.  Unlike the Emacs
-variable @code{fill-column}, this variable is not buffer-local
-by default.
+too long to fit on your screen without wrapping.  Setting
+@code{vm-word-wrap-paragraphs} to t will cause VM to use the 
+@code{longlines.el} library by Grossjohann, Schroeder and Yidong to
+carry out word wrapping.  You must have this library installed
+somewhere on your @code{load-path}.  Another way to deal with the
+problem is to use the @code{visual-line-mode} in Emacs 23.  You can
+activate it automatically for viewing messages by adding the function
+@code{turn-on-visual-line-mode} to the
+@code{vm-presentation-mode-hook}. 
 
-@cindex longlines.el
-The @code{longlines.el} library by Grossjohann, Schroeder and Yidong
-provides advanced filling functions for 'flowed text' produced by
-modern word processors.  Flowed text has only essential line breaks;
-others must be added as needed to fit the text into a window.  VM can
-use the longlines library automatically if you install it somewhere on
-your @code{load-path}.
+If you are unable to use either of these solutions, then you can use
+Emacs's paragraph filling facility.  If you set
+@code{vm-fill-paragraphs-containing-long-lines} to a positive numeric
+value @var{N}, VM will call @code{fill-paragraph} on all paragraphs that
+contain lines spanning @var{N} columns or more.  As with other things VM
+does that modifies the way the message looks on the screen, this does
+not change message contents.  VM copies the message contents to a
+``presentation'' buffer before altering them.  The fill column that VM
+uses is controlled by @code{vm-paragraph-fill-column}.  Unlike the Emacs
+variable @code{fill-column}, this variable is not buffer-local by
+default.
 
-@node MIME Messages,, Paging, Reading Messages
+
+@node MIME Messages,, Viewing, Reading Messages
 @section Reading MIME Messages
 
 @cindex MIME
@@ -1415,6 +1421,7 @@ non-@code{nil} for VM to decode uuencoded MIME objects.
 * Attachments::                 Operating on MIME attachments
 * Internal display::            Viewing attachments internally in Emacs
 * External display::            Viewing attachments with external viewers
+* Displaying images::           Using Emacs facilities for images
 * MIME type conversion::        Converting external attachments to internal
 * Character sets::              MIME character sets
 * multipart/alternative::       MIME content in alternative formats
@@ -1632,7 +1639,7 @@ these values to use the appropriate package.  A value of
 value of @code{nil} asks VM not to display HTML content internally.
 
 
-@node External display, MIME type conversion, Internal display, MIME Messages
+@node External display, Displaying images, Internal display, MIME Messages
 @unnumberedsubsec External display of MIME attachments
 
 @vindex vm-mime-external-content-types-alist
@@ -1767,7 +1774,63 @@ Example:
 associated with the first type that matches will be used for the
 temporary filename.
 
-@node MIME type conversion, Character sets, External display, MIME Messages
+@node Displaying images, MIME type conversion, External display, MIME Messages
+@unnumberedsubsec Displaying inline images in messages
+
+@cindex images
+Most versions of Emacs can display images when used on graphical
+screens.  You can verify if the Emacs version is able to do so by
+calling the funciton @code{display-images-p}.  However, Emacs relies
+on external libraries to create graphical images, which are specified
+through the variable @code{image-library-alist}.  Even if Emacs has
+the ability to display some image type, it cannot display such images
+unless appropriate libraries are installed and specified to Emacs.  You
+can verify which image types are really available by calling the
+function @code{image-type-available-p} with an image type such as
+@samp{tiff} or @samp{gif} as the argument.
+
+@vindex vm-mime-internal-content-types
+@vindex vm-auto-displayed-mime-content-types
+Assuming that a particular image type, say @samp{tiff} is available,
+you can include its MIME type in
+@code{vm-mime-internal-content-types}, e.g., 
+@example
+(add-to-list 'vm-mime-internal-content-types "image/tiff")
+@end example
+You can also add the MIME type to the variable
+@code{vm-auto-displayed-mime-content-types} so that VM will
+automatically display all images of the type.  
+If the type is not included among the auto-displayed types, then the
+image is initially shown as a button with a thumbnail image.  Clicking on the
+button with the middle mouse button expands the image to its full size.
+
+@cindex ImageMagick
+@vindex vm-imagemagick-identify-program
+@vindex vm-imagemagick-convert-program
+Once an image is displayed, you can use the right mouse button to do
+various image manipulations on it, such as enlarging/reducing it,
+rotating it etc.  To do such operations, VM uses the ImageMagick
+graphics manipulation software.  You can install ImageMagick on your
+system and specify the location of its @code{identify} and
+@code{convert} programs to VM via the variables
+@code{vm-imagemagick-identify-program} and
+@code{vm-imagemagick-convert-program}.
+
+@vindex vm-mime-use-image-strips
+By default, VM displays images by slicing them into contiguous
+horizontal strips and displaying the strips in order.  This
+facilitates vertical scrolling within an image.  The variable
+@code{vm-mime-use-image-strips} controls whether VM uses strips for
+image display.  It is @samp{t} by default.
+
+VM also uses the ImageMagick's @code{convert} program to convert
+between image formats, so that an image that is not displayable in
+Emacs is converted to another format that is displayable.  You can
+turn off such conversion by setting the variable
+@code{vm-imagemagick-convert-program} to @samp{nil}.
+
+
+@node MIME type conversion, Character sets, Displaying images, MIME Messages
 @unnumberedsubsec MIME type conversion
 
 @vindex vm-mime-type-converter-alist
