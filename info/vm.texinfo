@@ -1622,6 +1622,9 @@ should be a list of types that should not be displayed internally.
 The HTML content in text/html MIME parts can be displayed in Emacs using
 a variety of packages.  VM knows about:
 
+@cindex lynx
+@cindex w3m
+@cindex w3
 @multitable @columnfractions .15 .85
 @item lynx   
   @tab  The lynx browser used externally to convert HTML to plain text
@@ -4002,10 +4005,13 @@ The XEmacs @code{highlight-headers} package is used instead.  See the
 documentation for the function @code{highlight-headers} to find out
 how to customize header highlighting using this package.
 
+@cindex URL
 @vindex vm-highlight-url-face
 @vindex vm-url-search-limit
 URL's that occur in message bodies are displayed using the face
-named by @code{vm-highlight-url-face}.  Searching for URLs in a
+named by @code{vm-highlight-url-face}.  Typing Return on such URL's or
+clicking button-2 has the effect of sending the URL to an external web
+browser.  @xref{Using the Mouse}.  Searching for URLs in a
 large message can take a long time.  Since URLs often occur near
 the beginning and near the end of messages, VM offers a way to
 search just those parts of a message for URLs.  The variable
@@ -4027,6 +4033,7 @@ and summary buffers.
 @table @asis
 @item button-1 (left button usually)
 Unchanged.
+@cindex URL
 @item button-2 (middle button usually)
 Activate.  If you click on a summary entry, that message will be
 selected and become the current message.  If you click on a
@@ -4045,8 +4052,33 @@ of Web browsers is produced.  Otherwise the normal VM mode
 specific menu is produced.
 @end table
 
+@cindex w3m
+@cindex HTML
+These button assignments work only in plain text messsages.  For HTML
+messages, you might use an internal web browser such as w3m to display
+the content, which will have its own button assignments.  For instace,
+w3m binds button-2 to the browser function specified by
+@code{w3m-goto-article-function}.  You will need to set that variable to
+the desired browser function as well.
+
 In mail composition buffers only mouse button-3 is affected.
 Context sensitive menus are produced when that button is clicked.
+
+@findex vm-mouse-send-url-to-netscape
+@findex vm-mouse-send-url-to-xxx
+@findex browse-url
+@cindex browse-url
+@cindex web browser
+VM provides a number of browser functions that you can set as the value
+of @code{vm-url-browser}.  An example is
+@code{vm-mouse-send-url-to-netscape}, which sends the URL at mouse to the
+Netscape browser.  Other browsers supported in this way include
+@code{mosaic}, @code{mmosaic}, @code{opera}, @code{mozilla},
+@code{firefox}, and @code{konqueror}, all of which have functions of the
+form @code{vm-mouse-send-url-to-xxx}.  You can also set
+@code{vm-url-browser} to the Emacs function @code{browse-url}, and use
+the facilities defined in the @code{browse-url} library to send URL's to
+external browsers.
 
 @node Hooks, Bugs, Using the Mouse, Top
 @chapter Hooks

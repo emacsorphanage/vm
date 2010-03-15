@@ -3666,14 +3666,9 @@ This means that VM will search for URLs (Uniform Resource
 Locators) in messages and make it possible for you to pass them
 to a World Wide Web browser.
 
-Clicking mouse-2 on the URL will send it to the browser.
-
-By default clicking mouse-3 on the URL will pop up a menu of
-browsers and you can pick which one you want to use.  If
-`vm-popup-menu-on-mouse-3' is set to nil, you will not see the menu.
-
-Moving point to a character within the URL and pressing RETURN
-will send the URL to the browser.
+Clicking mouse-2 on the URL will send it to the browser.  Moving point
+to a character within the URL and pressing RETURN will also send the
+URL to the browser. 
 
 If the value of `vm-url-browser' is a string, it should specify
 name of an external browser to run.  The URL will be passed to
@@ -3682,20 +3677,16 @@ specified by `vm-url-browser-switches', if any.
 
 If the value of `vm-url-browser' is a symbol, it should specify a
 Lisp function to call.  The URL will be passed to the program as
-its first and only argument.  Use
+its first and only argument.  VM defines a number of browser
+functions of the form `vm-mouse-send-url-to-xxx', where xxx is the
+name of a browser.  The `xxx' can be netscape, mmosaic, mosaic, opera,
+mozilla, konqueror, firefox, or clipboard.  If it is clipboard, the URL
+is sent to the X clipboard so that you can paste it into other browser
+windows. 
 
-   (setq vm-url-browser 'vm-mouse-send-url-to-netscape)
-
-for Netscape, and
-
-   (setq vm-url-browser 'vm-mouse-send-url-to-mmosaic)
-
-for mMosaic, and
-
-   (setq vm-url-browser 'vm-mouse-send-url-to-mosaic)
-
-for Mosaic.  The advantage of using them is that they will display
-an URL using an existing Mosaic or Netscape process, if possible.
+You might also consider specifying `vm-url-browser' to be the
+`browse-url' function defined in the browse-url library of Emacs.
+That library has a variety of browsers that can be invoked.
 
 A nil value means VM should not enable URL passing to browsers."
   :group 'vm
