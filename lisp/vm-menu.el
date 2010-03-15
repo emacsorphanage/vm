@@ -91,7 +91,7 @@
     ["Quit" vm-quit-no-change t]
     ["Save & Quit" vm-quit t]
     "---"
-    "---"
+    ;; "---"
     ;; special string that marks the tail of this menu for
     ;; vm-menu-install-visited-folders-menu.
     "-------"
@@ -163,7 +163,7 @@
     ["Create Virtual Folder" vm-create-virtual-folder t]
     ["Apply Virtual Folder" vm-apply-virtual-folder t]
     "---"
-    "---"
+    ;; "---"
     ;; special string that marks the tail of this menu for
     ;; vm-menu-install-known-virtual-folders-menu.
     "-------"

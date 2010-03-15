@@ -1163,6 +1163,8 @@ summary buffer to select a folder."
 (defvar vm-ml-draft-count ""
   "The current number of drafts in the `vm-postponed-folder'.")
 
+(defvar vm-postponed-folder)
+
 (defun vm-update-draft-count ()
   "Check number of postponed messages in folder `vm-postponed-folder'."
   (let ((f (expand-file-name vm-postponed-folder vm-folder-directory)))

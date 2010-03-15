@@ -45,6 +45,7 @@
 
 (eval-and-compile
   (require 'advice)
+  (require 'vm-macro)
   (require 'vm-summary)
   (require 'vm-virtual))
 
