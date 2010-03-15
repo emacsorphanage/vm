@@ -1,15 +1,17 @@
 BINARIES
 ========
 
-This release includes binaries (.elc and .info files) for Gnu Emacs.
-You can add /path/to/vm/lisp to your load-path and /path/to/vm/info to
-your Info-default-directory-list, and start using VM.
+This release includes binaries (.elc and .info files) for Gnu Emacs
+version 22.  You can add /path/to/vm/lisp to your load-path and
+/path/to/vm/info to your Info-default-directory-list, and start using
+VM.
 
 However, this build assumes that you are not using any supporting
 libraries such as BBDB, W3 or W3M.  If you are using such libraries,
 please rebuild VM as indicated below.  
 
-If you are using XEmacs, you need to do your own build as well.
+If you are using XEmacs or Gnu Emacs versions other than 22, you need
+to do your own build.
 
 USING CONFIGURE
 ===============
