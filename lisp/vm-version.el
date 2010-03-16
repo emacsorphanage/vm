@@ -27,16 +27,17 @@
 	    "version.txt"
 	    (and load-file-name (file-name-directory load-file-name))))
 	  (read (current-buffer)))
-      (file-error nil)))
+      (file-error "undefined")))
   "Version number of VM.")
 
 (defun vm-version ()
   "Return the value of the variable `vm-version'."
   (interactive)
   (when (interactive-p)
-    (if (string= "?bug?" vm-version)
-        (error "Cannot determine VM version!")
-      (message "VM version is: %s" vm-version)))
+    (or (and (stringp vm-version)
+	     (string-match "[0-9]" vm-version))
+	(error "Cannot determine VM version!"))
+    (message "VM version is: %s" vm-version))
   vm-version)
 
 (defconst vm-xemacs-p
