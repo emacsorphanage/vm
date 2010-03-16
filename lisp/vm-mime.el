@@ -849,7 +849,8 @@ configuration.  "
 (defun vm-decode-mime-encoded-words ()
   (let ((case-fold-search t)
 	(buffer-read-only nil)
-	charset need-conversion encoding match-start match-end start end)
+	charset need-conversion encoding match-start match-end start end
+	previous-end)
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward vm-mime-encoded-word-regexp nil t)
@@ -866,6 +867,11 @@ configuration.  "
 		 (not (setq need-conversion
 			    (vm-mime-can-convert-charset charset))))
 	    nil
+	  ;; suppress whitespace between encoded words.
+	  (and previous-end
+	       (string-match "\\`[ \t\n]*\\'"
+			     (buffer-substring previous-end match-start))
+	       (setq match-start previous-end))
 	  (delete-region end match-end)
 	  (condition-case data
 	      (cond ((string-match "B" encoding)
@@ -883,6 +889,7 @@ configuration.  "
 			      charset start end)))
 	  (vm-mime-charset-decode-region charset start end)
 	  (goto-char end)
+	  (setq previous-end end)
 	  (delete-region match-start start))))))
 
 (defun vm-decode-mime-encoded-words-in-string (string)
