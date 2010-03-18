@@ -23,6 +23,9 @@ VM 8.1.0 (2010-03-21)
       safety reasons.  Please help us by sending us sample messages
       for which filling fails.
 
+    * IMAP folders occasionally give spurious connection errors.
+      Doing vm-get-new-mail ('g') resumes the connection.
+
   MAJOR NEW FEATURES:
 
     * Support for reading and replying to messages in HTML.
