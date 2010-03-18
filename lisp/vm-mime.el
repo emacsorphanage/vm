@@ -1417,8 +1417,8 @@ source of the message."
 	(setq buffer-undo-list t)
 	(widen)
 	(let ((buffer-read-only nil)
-	      (inhibit-read-only t)
-	      (modified (buffer-modified-p)))
+	      (inhibit-read-only t))
+	  (setq modified (buffer-modified-p))
 	  (unwind-protect
 	      (progn
 		(erase-buffer)
@@ -1453,6 +1453,7 @@ source of the message."
 		(list (vm-message-access-method-of mm)) mm))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 	       (vm-fetch-message (read (current-buffer)) mm)))
+	(set-buffer-modified-p modified)
 	;; fixup the reference to the message
 	(setcar vm-message-pointer mm)))))
 

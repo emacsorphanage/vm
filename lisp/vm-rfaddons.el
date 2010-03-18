@@ -1266,7 +1266,7 @@ the keymap used within that region is `vm-shrunken-headers-keymap'."
   (interactive "P")
   
   (save-excursion 
-    (let (headers-start headers-end start end o shrunken)
+    (let (headers-start headers-end start end o shrunken modified)
       (if (equal major-mode 'vm-summary-mode)
           (if (and (boundp 'vm-mail-buffer) (symbol-value 'vm-mail-buffer))
               (set-buffer (symbol-value 'vm-mail-buffer))))
@@ -1276,6 +1276,7 @@ the keymap used within that region is `vm-shrunken-headers-keymap'."
 
       ;; We cannot use the default functions (vm-headers-of, ...) since
       ;; we might also work within a presentation buffer.
+      (setq modified (buffer-modified-p))
       (goto-char (point-min))
       (setq headers-start (point-min)
             headers-end (or (re-search-forward "\n\n" (point-max) t)
@@ -1313,6 +1314,7 @@ the keymap used within that region is `vm-shrunken-headers-keymap'."
 					     :action
                                       'vm-shrunken-headers-toggle-this-widget))
 		 (overlay-put o 'invisible t)))))
+      (set-buffer-modified-p modified)
       (goto-char (point-min)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
