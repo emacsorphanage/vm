@@ -113,7 +113,7 @@ and flexible."
       (save-excursion
        (unwind-protect
 	   (let (list start s char)
-	     (setq work-buffer (vm-make-work-buffer))
+	     (setq work-buffer (vm-make-multibyte-work-buffer))
 	     (set-buffer work-buffer)
 	     (insert string)
 	     (goto-char (point-min))
