@@ -21,6 +21,43 @@
 
 ;;; Code:
 
+(defun vm-th-youngest-date-of (id-sym)
+  (get id-sym 'youngest-date))
+
+(defun vm-th-set-youngest-date-of (id-sym date)
+  (put id-sym 'youngest-date date))
+
+(defun vm-th-oldest-date-of (id-sym)
+  (get id-sym 'oldest-date))
+
+(defun vm-th-set-oldest-date-of (id-sym date)
+  (put id-sym 'oldest-date date))
+
+(defsubst vm-th-messages-of (id-sym)
+  (get id-sym 'messages))
+
+(defsubst vm-th-set-messages-of (id-sym ml)
+  (put id-sym 'messages ml))
+
+(defsubst vm-th-children-of (id-sym)
+  (get id-sym 'children))
+
+(defsubst vm-th-set-children-of (id-sym ml)
+  (put id-sym 'children ml))
+
+(defsubst vm-th-parent-of (id-sym)
+  (symbol-value id-sym))
+
+(defsubst vm-th-set-parent-of (id-sym p-sym)
+  (set id-sym p-sym))
+
+(defsubst vm-th-date-of (id-sym)
+  (get id-sym 'date))
+
+(defsubst vm-th-set-date-of (id-sym date)
+  (put id-sym 'date date))
+
+
 ;;;###autoload
 (defun vm-toggle-threads-display ()
   "Toggle the threads display on and off.
@@ -59,23 +96,23 @@ will be visible."
 	    id (vm-su-message-id m)
 	    id-sym (intern id vm-thread-obarray)
 	    date (vm-so-sortable-datestring m))
-      (put id-sym 'messages (cons m (get id-sym 'messages)))
-      (put id-sym 'date date)
-      (if (and (null (cdr (get id-sym 'messages)))
+      (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))
+      (vm-th-set-date-of id-sym date)
+      (if (and (null (cdr (vm-th-messages-of id-sym)))
 	       schedule-reindents)
-	  (vm-thread-mark-for-summary-update (get id-sym 'children)))
+	  (vm-thread-mark-for-summary-update (vm-th-children-of id-sym)))
       (if parent
 	  (progn
 	    (setq parent-sym (intern parent vm-thread-obarray))
 	    (cond ((or (not (boundp id-sym))
-		       (null (symbol-value id-sym))
-		       (eq (symbol-value id-sym) parent-sym))
-		   (set id-sym parent-sym))
+		       (null (vm-th-parent-of id-sym))
+		       (eq (vm-th-parent-of id-sym) parent-sym))
+		   (vm-th-set-parent-of id-sym parent-sym))
 		  (t
-		   (setq old-parent-sym (symbol-value id-sym))
-		   (put old-parent-sym 'children
-			(let ((kids (get old-parent-sym 'children))
-			      (msgs (get id-sym 'messages)))
+		   (setq old-parent-sym (vm-th-parent-of id-sym))
+		   (vm-th-set-children-of old-parent-sym
+			(let ((kids (vm-th-children-of old-parent-sym ))
+			      (msgs (vm-th-messages-of id-sym)))
 			  (while msgs
 			    (setq kids (delq (car msgs) kids)
 				  msgs (cdr msgs)))
@@ -83,9 +120,9 @@ will be visible."
 		   (set id-sym parent-sym)
 		   (if schedule-reindents
 		       (vm-thread-mark-for-summary-update
-			(get id-sym 'messages)))))
-	    (put parent-sym 'children
-		 (cons m (get parent-sym 'children))))
+			(vm-messages-of id-sym)))))
+	    (vm-th-set-children-of parent-sym
+		 (cons m (vm-th-children-of parent-sym))))
 	(if (not (boundp id-sym))
 	    (set id-sym nil)))
       ;; use the references header to set parenting information
@@ -100,9 +137,9 @@ will be visible."
 	      (if (and (boundp id-sym) (symbol-value id-sym))
 		  nil
 		(set id-sym parent-sym)
-		(if (setq msgs (get id-sym 'messages))
-		    (put parent-sym 'children
-			 (append msgs (get parent-sym 'children))))
+		(if (setq msgs (vm-th-messages-of id-sym))
+		    (vm-th-set-children-of parent-sym 
+			 (append msgs (vm-th-children-of parent-sym))))
 		(if schedule-reindents
 		    (vm-thread-mark-for-summary-update msgs)))
 	      (setq parent-sym id-sym
@@ -143,7 +180,7 @@ will be visible."
 		      ;; unthreaded using the parent information.
 		      (if (or (not (boundp i-sym))
 			      (null (symbol-value i-sym)))
-			  (aset vect 2 (append (get i-sym 'messages)
+			  (aset vect 2 (append (vm-th-messages-of i-sym)
 					       (aref vect 2))))
 		      (aset vect 0 id-sym)
 		      (aset vect 1 date)
@@ -196,8 +233,7 @@ will be visible."
 	(vm-set-thread-list-of m nil)
 	(vm-set-thread-indentation-of m nil)
 	(vm-thread-mark-for-summary-update
-	 (get (intern (vm-su-message-id m) vm-thread-obarray)
-	      'children)))
+	 (vm-th-children-of (intern (vm-su-message-id m) vm-thread-obarray))))
       (setq message-list (cdr message-list)))))
 
 (defun vm-thread-list (message)
@@ -214,15 +250,15 @@ will be visible."
       (set (intern (symbol-name id-sym) vm-thread-loop-obarray) t)
       (while (not done)
 	;; save the date of the oldest message in this thread
-	(setq root-date (get id-sym 'oldest-date))
+	(setq root-date (vm-th-oldest-date-of id-sym))
 	(if (or (null root-date)
 		(string< date root-date))
-	    (put id-sym 'oldest-date date))
+	    (vm-th-set-oldest-date-of id-sym date))
 	;; save the date of the youngest message in this thread
-	(setq youngest-date (get id-sym 'youngest-date))
+	(setq youngest-date (vm-th-youngest-date-of id-sym))
 	(if (or (null root-date)
 		(string< youngest-date date))
-	    (put id-sym 'youngest-date date))
+	    (vm-th-set-youngest-date-of id-sym date))
 	(if (and (boundp id-sym) (symbol-value id-sym))
 	    (progn
 	      (setq id-sym (symbol-value id-sym)
@@ -234,7 +270,7 @@ will be visible."
 			thread-list (or loop-recovery-point thread-list))
 		(set loop-sym t)
 		(setq thread-list (cons id-sym thread-list)
-		      m (car (get id-sym 'messages)))))
+		      m (car (vm-th-messages-of id-sym)))))
 	  (if (null m)
 	      (setq done t)
 	    (if (null vm-thread-using-subject)
@@ -258,7 +294,7 @@ will be visible."
 			  thread-list (or loop-recovery-point thread-list))
 		  (set loop-sym t)
 		  (setq thread-list (cons id-sym thread-list)
-			m (car (get id-sym 'messages)))))))))
+			m (car (vm-th-messages-of id-sym)))))))))
       thread-list )))
 
 ;; remove message struct from thread data.
@@ -270,30 +306,54 @@ will be visible."
 
 ;;;###autoload
 (defun vm-unthread-message (message &optional message-changing)
+  "Removes MESSAGE from its current thread.  If optional argument
+MESSAGE-CHANGING is non-nil, then its thread data is removed from
+the thread database so that it can be recalculated.  Otherwise,
+the message's thread data still stores the original thread, even
+though the message itself is removed from those threads.  (A bit odd,
+but works when the message is getting expunged from its folder.)
+
+MESSAGE should be a real (non-virtual) message.
+
+The full functionality of this function is not entirely clear.  USR,
+2010-03-13"
   (save-excursion
     (let ((mp (cons message (vm-virtual-messages-of message)))
-	  m id-sym subject-sym vect p-sym)
+	  m date id-sym subject-sym vect p-sym)
       (while mp
 	(setq m (car mp))
 	(set-buffer (vm-buffer-of m))
 	(if (not (vectorp vm-thread-obarray))
 	    nil
 	  (let ((inhibit-quit t))
+	    ;; discard cached thread properties
 	    (vm-set-thread-list-of m nil)
 	    (vm-set-thread-indentation-of m nil)
+	    ;; handles for the thread and thread-subject databases
 	    (setq id-sym (intern (vm-su-message-id m) vm-thread-obarray)
 		  subject-sym (intern (vm-so-sortable-subject m)
 				      vm-thread-subject-obarray))
 	    (if (boundp id-sym)
 		(progn
-		  (put id-sym 'messages (delq m (get id-sym 'messages)))
-		  (vm-thread-mark-for-summary-update (get id-sym 'children))
-		  (setq p-sym (symbol-value id-sym))
-		  (and p-sym (put p-sym 'children
-				  (delq m (get p-sym 'children))))
+		  ;; remove m from its erstwhile thread
+		  (vm-th-set-messages-of 
+		   id-sym (delq m (vm-th-messages-of id-sym)))
+		  ;; remove m from the children list of its erstwhile parent
+		  (vm-thread-mark-for-summary-update 
+		   (vm-th-children-of id-sym))
+		  (setq p-sym (vm-th-parent-of id-sym))
+		  (and p-sym 
+		       (vm-th-set-children-of 
+			p-sym (delq m (vm-th-children-of p-sym))))
+		  ;; teset the thread dates of the m
+		  (setq date (vm-so-sortable-datestring message))
+		  (vm-th-set-youngest-date-of id-sym date)
+		  (vm-th-set-oldest-date-of id-sym date)
+		  ;; if message changed, reset its thread to nil
 		  (if message-changing
 		      (set id-sym nil))))
-	    (if (and (boundp subject-sym) (setq vect (symbol-value subject-sym)))
+	    (if (and (boundp subject-sym)
+		     (setq vect (symbol-value subject-sym)))
 		(if (not (eq id-sym (aref vect 0)))
 		    (aset vect 2 (delq m (aref vect 2)))
 		  (if message-changing
@@ -324,6 +384,9 @@ will be visible."
 	  (setq mp (cdr mp))))))
 
 (defun vm-th-references (m)
+  "Returns the cached references list of message M.  If the cache is
+nil, retrieves the references list from the headers and caches it.
+USR, 2010-03-13"
   (or (vm-references-of m)
       (vm-set-references-of
        m
@@ -332,6 +395,8 @@ will be visible."
 	 (and references (vm-parse references "[^<]*\\(<[^>]+>\\)"))))))
 
 (defun vm-th-parent (m)
+  "Returns the cached parent message of message M (in its thread).  If
+the cache is nil, calculates the parent and caches it.  USR, 2010-03-13"
   (or (vm-parent-of m)
       (vm-set-parent-of
        m
@@ -349,15 +414,19 @@ will be visible."
 
 ;;;###autoload
 (defun vm-th-thread-indentation (m)
+  "Returns the cached thread-indentation of message M.  If the cache is
+nil, calculates the thread-indentation and caches it.  USR, 2010-03-13"
   (or (vm-thread-indentation-of m)
       (let ((p (vm-th-thread-list m)))
-	(while (and p (null (get (car p) 'messages)))
+	(while (and p (null (vm-th-messages-of (car p))))
 	  (setq p (cdr p)))
 	(vm-set-thread-indentation-of m (1- (length p)))
 	(vm-thread-indentation-of m))))
 
 ;;;###autoload
 (defun vm-th-thread-list (m)
+  "Returns the cached thread-list of message M.  If the cache is nil,
+calculates the thread-list and caches it.  USR, 2010-03-13"
   (or (vm-thread-list-of m)
       (progn
 	(vm-set-thread-list-of m (vm-thread-list m))

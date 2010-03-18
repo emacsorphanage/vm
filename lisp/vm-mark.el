@@ -21,6 +21,11 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'vm-message)
+  (require 'vm-thread))
+
+
 ;;;###autoload
 (defun vm-clear-all-marks ()
   "Removes all message marks in the current folder."
@@ -282,7 +287,7 @@ variable vm-virtual-folder-alist for more information."
       (if (null (intern-soft (symbol-name id-sym) loop-obarray))
 	  (progn
 	    (intern (symbol-name id-sym) loop-obarray)
-	    (nconc list (copy-sequence (get id-sym 'children)))
+	    (nconc list (copy-sequence (vm-th-children-of id-sym)))
 	    (setq subject-sym (intern (vm-so-sortable-subject (car list))
 				      vm-thread-subject-obarray))
 	    (if (and (boundp subject-sym) 

@@ -507,12 +507,14 @@ folder in the order in which the messages arrived."
 	p1 p2 d1 d2)
     (catch 'done
       (if (not (eq (car list1) (car list2)))
+	  ;; different threads
 	  (let ((date1 (get (car list1) criterion))
 		(date2 (get (car list2) criterion)))
 	    (cond ((string-lessp date1 date2) t)
 		  ((string-equal date1 date2)
 		   (string-lessp (car list1) (car list2)))
 		  (t nil)))
+	;; within the same thread
 	(setq list1 (cdr list1) list2 (cdr list2))
 	(while (and list1 list2)
 	  (setq p1 (car list1) p2 (car list2))
