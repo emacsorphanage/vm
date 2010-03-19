@@ -1,4 +1,6 @@
 ;;; vm-toolbar.el --- Toolbar related functions and commands
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1995-1997, 2000, 2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

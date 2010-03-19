@@ -1,4 +1,6 @@
 ;;; vm-page.el ---  Commands to move around within a VM message
+;;;
+;;; This file is part of VM
 ;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -701,7 +703,7 @@ done if necessary.  The type of preview is governed by the variables
 `vm-preview-lines' and `vm-preview-read-messages'.  If no preview is
 required, then the entire message is shown directly. (USR, 2010-01-14)"
 
-  ;; Set just-passing-through if the user will never see the
+  ;; Set new-preview if the user needs to see the
   ;; message in the previewed state.  Save some time later by not
   ;; doing preview action that the user will never see anyway.
   (let ((need-preview
@@ -796,7 +798,12 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 		   ;; copy.  Where will the next decoding get its
 		   ;; presentation copy from?  This is a problem for
 		   ;; the headers-only mode.
-		   (if (and vm-mail-buffer (not vm-load-headers-only))
+		   ;; As an experiment, we turn off the double
+		   ;; decoding and see what happens. USR, 2010-02-01
+		   (if (and vm-mime-decode-for-show
+			    vm-mail-buffer 
+			    (not (vm-body-to-be-retrieved-of
+				  (car vm-message-pointer))))
 			(vm-set-buffer-variable vm-mail-buffer
 						'vm-mime-decoded nil))
 		   )
@@ -825,7 +832,10 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 (defun vm-show-current-message ()
   "Show the current message in the Presentation Buffer.  MIME decoding
 is done if necessary.  (USR, 2010-01-14)" 
-
+  ;; It looks like this function can be invoked in both the folder
+  ;; buffer as well the presentation buffer, but it is not clear if it
+  ;; works correctly when invoked in the presentation buffer.  
+  ;; (USR, 2010-01-21)
   (and vm-display-using-mime
        vm-auto-decode-mime-messages
        (if vm-mail-buffer
@@ -845,13 +855,13 @@ is done if necessary.  (USR, 2010-01-14)"
   (when (and  vm-fill-paragraphs-containing-long-lines
 	      (vm-mime-plain-message-p (car vm-message-pointer)))
     (if (null vm-mail-buffer)		; this can't be presentation then
-	(error "VM internal error #2010.  Please report it"))
-    (vm-save-restriction
-     (widen)
-     (vm-fill-paragraphs-containing-long-lines
-      vm-fill-paragraphs-containing-long-lines
-      (vm-text-of (car vm-message-pointer))
-      (vm-text-end-of (car vm-message-pointer)))))
+	(debug "VM internal error #2010.  Please report it")
+      (vm-save-restriction
+       (widen)
+       (vm-fill-paragraphs-containing-long-lines
+	vm-fill-paragraphs-containing-long-lines
+	(vm-text-of (car vm-message-pointer))
+	(vm-text-end-of (car vm-message-pointer))))))
   (vm-save-buffer-excursion
    (save-excursion
      (save-excursion
@@ -900,7 +910,7 @@ is done if necessary.  (USR, 2010-01-14)"
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (vm-display (current-buffer) t '(vm-expose-hidden-headers)
-	      '(vm-expose-hidden-headers reading-message))
+	      '(vm-expose-hidden-headers))
   (let* ((exposed (= (point-min) (vm-start-of (car vm-message-pointer)))))
     (vm-widen-page)
     (goto-char (point-max))

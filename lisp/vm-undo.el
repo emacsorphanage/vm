@@ -1,4 +1,6 @@
 ;;; vm-undo.el --- Commands to undo message attribute changes in VM
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1995 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

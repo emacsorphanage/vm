@@ -1,4 +1,6 @@
 ;;; vm.el --- Entry points for VM
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1994-1998, 2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -28,7 +30,7 @@
 (require 'vm-version)
 
 ;;;###autoload
-(defun vm (&optional folder read-only access-method)
+(defun vm (&optional folder read-only access-method reload)
   "Read mail under Emacs.
 Optional first arg FOLDER specifies the folder to visit.  It defaults
 to the value of vm-primary-inbox.  The folder buffer is put into VM
@@ -52,17 +54,28 @@ deleted messages.  Use `###' to expunge deleted messages.
 
 See the documentation for vm-mode for more information."
 
-  ;; ACCESS-METHOD, if non-nil, indicates that the FOLDER is a proxy
-  ;; for a remote server folder.  The ACCESS-METHOD (one of 'pop and
-  ;; 'imap) indicates which access-method is used.  The functions
-  ;; find-name-for-spec and find-spec-for-name translate between
-  ;; folder names and maildrop specs for the server folders.
+  ;; Internally, this function may also be called with a buffer as the
+  ;; FOLDER argument.  In that case, the function sets up the buffer
+  ;; as a folder buffer and turns on vm-mode.
+
+  ;; ACCESS-METHOD, if non-nil, indicates that the FOLDER is the
+  ;; maildrop spec of a remote server folder.  Possible values for the
+  ;; parameter are 'pop and 'imap.  Or, if FOLDER is a buffer instead
+  ;; of a name, it will be set up as a folder buffer using the
+  ;; specified ACCESS-METHOD.
+
+  ;; RELOAD, if non-nil, means that the folder should be reloaded into
+  ;; an existing buffer.  All initialisations must be performed but
+  ;; some variables need to be preserved, e.g., vm-folder-access-data.
+
+  ;; The functions find-name-for-spec and find-spec-for-name translate
+  ;; between folder names and maildrop specs for the server folders.
 
   (interactive (list nil current-prefix-arg))
   (vm-session-initialization)
   ;; recursive call to vm in order to allow defadvice on its first call
   (unless (boundp 'vm-session-beginning)
-    (vm folder read-only access-method))
+    (vm folder read-only access-method reload))
   ;; set inhibit-local-variables non-nil to protect
   ;; against letter bombs.
   ;; set enable-local-variables to nil for newer Emacses
@@ -70,77 +83,32 @@ See the documentation for vm-mode for more information."
     ;; deduce the access method if none specified
     (if (null access-method)
 	(let ((f (or folder vm-primary-inbox)))
-	  (cond ((and vm-recognize-imap-maildrops
-		      ;; f could be a buffer
-		      (stringp f)
+	  (cond ((bufferp f)		; may be unnecessary. USR, 2010-01
+		 (setq access-method vm-folder-access-method))
+		((and (stringp f)
+		      vm-recognize-imap-maildrops
 		      (string-match vm-recognize-imap-maildrops f))
 		 (setq access-method 'imap
 		       folder f))
-		((and vm-recognize-pop-maildrops
-		      ;; f could be a buffer
-		      (stringp f)
+		((and (stringp f)
+		      vm-recognize-pop-maildrops
 		      (string-match vm-recognize-pop-maildrops f))
 		 (setq access-method 'pop
 		       folder f)))))
-    (let ((full-startup (not (bufferp folder)))
+    (let ((full-startup (and (not reload) (not (bufferp folder))))
 	  ;; not clear why full-startup isn't always true - USR, 2010-01-02
 	  (did-read-index-file nil)
 	  folder-buffer first-time totals-blurb
 	  folder-name remote-spec
 	  preserve-auto-save-file)
-      (cond ((eq access-method 'pop)
+      (cond ((and full-startup (eq access-method 'pop))
 	     (setq vm-last-visit-pop-folder folder)
 	     (setq remote-spec (vm-pop-find-spec-for-name folder))
 	     (if (null remote-spec)
 		 (error "No such POP folder: %s" folder))
 	     (setq folder-name folder)
-	     ;; Prior to VM 7.11, we computed the cache filename
-	     ;; based on the full POP spec including the password
-	     ;; if it was in the spec.  This meant that every
-	     ;; time the user changed his password, we'd start
-	     ;; visiting the wrong (and probably nonexistent)
-	     ;; cache file.
-	     ;;
-	     ;; To fix this we do two things.  First, migrate the
-	     ;; user's caches to the filenames based in the POP
-	     ;; sepc without the password.  Second, we visit the
-	     ;; old password based filename if it still exists
-	     ;; after trying to migrate it.
-	     ;;
-	     ;; For VM 7.16 we apply the same logic to the access
-	     ;; methods, pop, pop-ssh and pop-ssl and to
-	     ;; authentication method and service port, which can
-	     ;; also change and lead us to visit a nonexistent
-	     ;; cache file.  The assumption is that these
-	     ;; properties of the connection can change and we'll
-	     ;; still be accessing the same mailbox on the
-	     ;; server.
-	     (let ((f-pass (vm-pop-make-filename-for-spec remote-spec))
-		   (f-nopass (vm-pop-make-filename-for-spec remote-spec t))
-		   (f-nospec (vm-pop-make-filename-for-spec remote-spec t t)))
-	       (cond ((or (string= f-pass f-nospec)
-			  (file-exists-p f-nospec))
-		      nil )
-		     ((file-exists-p f-pass)
-		      ;; try to migrate
-		      (condition-case nil
-			  (rename-file f-pass f-nospec)
-			(error nil)))
-		     ((file-exists-p f-nopass)
-		      ;; try to migrate
-		      (condition-case nil
-			  (rename-file f-nopass f-nospec)
-			(error nil))))
-	       ;; choose the one that exists, password version,
-	       ;; nopass version and finally nopass+nospec
-	       ;; version.
-	       (cond ((file-exists-p f-pass)
-		      (setq folder f-pass))
-		     ((file-exists-p f-nopass)
-		      (setq folder f-nopass))
-		     (t
-		      (setq folder f-nospec)))))
-	    ((eq access-method 'imap)
+	     (setq folder (vm-pop-find-cache-file-for-spec remote-spec)))
+	    ((and full-startup (eq access-method 'imap))
 	     (setq vm-last-visit-imap-folder folder)
 	     (setq remote-spec folder
 		   folder-name (or (nth 3 (vm-imap-parse-spec-to-list
@@ -150,33 +118,7 @@ See the documentation for vm-mode for more information."
       (setq folder-buffer
 	    (if (bufferp folder)
 		folder
-	      (let ((file (or folder (expand-file-name vm-primary-inbox
-						       vm-folder-directory))))
-		(if (file-directory-p file)
-		    ;; MH code perhaps... ?
-		    (error "%s is a directory" file)
-		  (or (vm-get-file-buffer file)
-		      (let ((default-directory
-			      (or (and vm-folder-directory
-				       (expand-file-name vm-folder-directory))
-				  default-directory))
-			    (inhibit-local-variables t)
-			    (enable-local-variables nil)
-			    (enable-local-eval nil)
-			    ;; for Emacs/MULE
-			    (default-enable-multibyte-characters nil)
-			    ;; for XEmacs/Mule
-			    (coding-system-for-read
-			         (vm-line-ending-coding-system)))
-			(message "Reading %s..." file)
-			(prog1 (find-file-noselect file t)
-			  ;; update folder history
-			  (let ((item (or remote-spec folder
-					  vm-primary-inbox)))
-			    (if (not (equal item (car vm-folder-history)))
-				(setq vm-folder-history
-				      (cons item vm-folder-history))))
-			  (message "Reading %s... done" file))))))))
+	      (vm-read-folder folder remote-spec)))
       (set-buffer folder-buffer)
       ;; notice the message summary file of Thunderbird 
       (let ((msf (concat (buffer-file-name) ".msf")))
@@ -185,9 +127,9 @@ See the documentation for vm-mode for more information."
                   ;TODO (re-search-forward "^X-Mozilla-Status2?:"
                   ;                   (point-max) t)
                   )))
-      (cond ((memq access-method '(pop imap))
+      (when (and (stringp folder) (memq access-method '(pop imap)))
 	     (if (not (equal folder-name (buffer-name)))
-		 (rename-buffer folder-name t))))
+		 (rename-buffer folder-name t)))
       (if (and vm-fsfemacs-mule-p enable-multibyte-characters)
 	  (set-buffer-multibyte nil))
       ;; for MULE
@@ -252,17 +194,6 @@ See the documentation for vm-mode for more information."
 					  (file-newer-than-file-p
 					   (make-auto-save-file-name)
 					   buffer-file-name)))
-      ;; Force the folder to be read only if the auto
-      ;; save file contains information the user might not
-      ;; want overwritten, i.e. recover-file might be
-      ;; desired.  What we want to avoid is an auto-save.
-      ;; Making the folder read only will keep
-      ;; subsequent actions from modifying the buffer in a
-      ;; way that triggers an auto save.
-      ;;
-      ;; Also force the folder read-only if it was read only and
-      ;; not already in vm-mode, since there's probably a good
-      ;; reason for this.
       (setq vm-folder-read-only (or preserve-auto-save-file read-only
 				    (default-value 'vm-folder-read-only)
 				    (and first-time buffer-read-only)))
@@ -278,11 +209,15 @@ See the documentation for vm-mode for more information."
 	    ;; user's default face charset, rather than as octal
 	    ;; escapes.
 	    (vm-fsfemacs-nonmule-display-8bit-chars)
-	    (vm-mode-internal access-method)
-	    (cond ((eq access-method 'pop)
-		   (vm-set-folder-pop-maildrop-spec remote-spec))
-		  ((eq access-method 'imap)
-		   (vm-set-folder-imap-maildrop-spec remote-spec)))
+	    (vm-mode-internal access-method reload)
+	    (if full-startup
+		(cond ((eq access-method 'pop)
+		       (vm-set-folder-pop-maildrop-spec remote-spec))
+		      ((eq access-method 'imap)
+		       (vm-set-folder-imap-maildrop-spec remote-spec)
+		       ;; (vm-register-folder-garbage 
+		       ;;  'vm-kill-folder-imap-session nil)
+		       )))
 	    ;; If the buffer is modified we don't know if the
 	    ;; folder format has been changed to be different
 	    ;; from index file, so don't read the index file in
@@ -385,15 +320,16 @@ See the documentation for vm-mode for more information."
       (if preserve-auto-save-file
 	  (message
 	   (substitute-command-keys
-	    "Auto save file is newer; consider \\[vm-recover-folder].  FOLDER IS READ ONLY.")))
+	    (concat
+	     "Auto save file is newer; consider \\[vm-recover-folder].  "
+	     "FOLDER IS READ ONLY."))))
       ;; if we're not doing a full startup or if doing more would
       ;; trash the auto save file that we need to preserve,
       ;; stop here.
       (if (or (not full-startup) preserve-auto-save-file)
 	  (throw 'done t))
       
-      (if full-startup
-	  (message totals-blurb))
+      (message totals-blurb)
 
       (if (and vm-auto-get-new-mail
 	       (not vm-block-new-mail)
@@ -1222,10 +1158,14 @@ summary buffer to select a folder."
 	      invalid-function
 	     ))))
 
+(defvar vm-postponed-folder)
+
 (defvar vm-drafts-exist nil)
 
 (defvar vm-ml-draft-count ""
   "The current number of drafts in the `vm-postponed-folder'.")
+
+(defvar vm-postponed-folder)
 
 (defun vm-update-draft-count ()
   "Check number of postponed messages in folder `vm-postponed-folder'."
@@ -1239,9 +1179,10 @@ summary buffer to select a folder."
                                           (vm-count-messages-in-file f))))))))
 
 (defun vm-session-initialization ()
+  "If this is the first time VM has been run in this Emacs session,
+do some necessary preparations.  Otherwise, update the count of
+draft messages."
   ;;  (vm-set-debug-flags)
-  ;; If this is the first time VM has been run in this Emacs session,
-  ;; do some necessary preparations.
   (if (or (not (boundp 'vm-session-beginning))
 	  vm-session-beginning)
       (progn
@@ -1263,14 +1204,13 @@ summary buffer to select a folder."
         (require 'vm-menu)
         (require 'vm-rfaddons)
 	;; The default loading of vm-pgg is disabled because it is an
-	;; add-on.  If and when it is integrated into VM, with advices
+	;; add-on.  If and when it is integrated into VM, without advices
 	;; and other add-on features, then it can be loaded by
 	;; default.  USR, 2010-01-14
         ;; (if (locate-library "pgg")
         ;;     (require 'vm-pgg)
         ;;   (message "vm-pgg disabled since pgg is missing!"))
         (add-hook 'kill-emacs-hook 'vm-garbage-collect-global)
-        (vm-version)
 	(vm-load-init-file)
 	(when vm-enable-addons
 	  (vm-rfaddons-infect-vm 0 vm-enable-addons)

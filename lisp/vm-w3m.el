@@ -1,5 +1,7 @@
 ;;; vm-w3m.el --- additional functions to make VM use emacs-w3m for HTML mails
-
+;;;
+;;; This file is part of VM
+;;
 ;; Copyright (C) 2003, 2005, 2006 Katsumi Yamaoka,
 ;; Copyright (C)             2007 Robert Widhopf-Fenk
 
@@ -38,6 +40,16 @@
 
 (eval-and-compile
   (vm-load-features '(w3m)))
+
+;; Dummy vriable declarations to suppress warnings if w3m is not
+;; loaded
+
+(defvar w3m-current-buffer)
+(defvar w3m-cid-retrieve-function-alist)
+(defvar w3m-minor-mode-map)
+(defvar url-working-buffer)
+(defvar url-current-mime-type)
+(defvar url-current-mime-headers)
 
 (defvar vm-w3m-mode-map nil
   "Keymap for w3m within VM.")
@@ -121,11 +133,12 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
   "Use emacs-w3m to inline HTML mails in the VM presentation buffer."
   (let ((w3m-display-inline-images vm-w3m-display-inline-images)
         (w3m-safe-url-regexp vm-w3m-safe-url-regexp))
-        (w3m-region start (1- end))
+    (w3m-region start (1- end))
     (add-text-properties
      start end
      (nconc (if vm-w3m-use-w3m-minor-mode-map
-                (vm-w3m-local-map-property))
+		(if (equal major-mode 'vm-presentation-mode)
+		    (vm-w3m-local-map-property)))
             ;; Put the mark meaning that this part was
             ;; inlined by emacs-w3m.
             '(text-rendered-by-emacs-w3m t)))))

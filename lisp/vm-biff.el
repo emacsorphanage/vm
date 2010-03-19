@@ -1,4 +1,6 @@
 ;;; vm-biff.el --- a xlbiff like tool for VM
+;;;
+;;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 2001 Robert Fenk
 ;;
@@ -339,6 +341,8 @@ AddToFunc SelectWindow
 
 (defvar vm-biff-message-pointer nil)
 (make-variable-buffer-local 'vm-biff-message-pointer)
+
+(defvar horizontal-scrollbar-visible-p)	; defined for XEmacs only
 
 ;;;###autoload
 (defun vm-biff-popup (&optional force)

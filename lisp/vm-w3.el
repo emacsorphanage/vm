@@ -1,7 +1,9 @@
 ;;; vm-w3.el --- additional functions to make VM use w3 for HTML mails
-
+;;;
+;;; This file is part of VM
+;;
 ;; Copyright (C) 2008 Robert Widhopf-Fenk
-
+;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
@@ -35,6 +37,12 @@
 
 (defvar vm-w3-text/html-message nil
   "The currently displayed message.")
+
+(defvar url-working-buffer)
+(defvar url-current-content-length)
+(defvar url-current-mime-encoding)
+(defvar url-current-mime-type)
+(defvar url-current-mime-headers)
 
 (defun vm-w3-cid-retrieve (url)
   "Insert content of URL."

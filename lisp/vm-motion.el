@@ -1,4 +1,6 @@
 ;;; vm-motion.el --- Commands to move around in a VM folder
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -418,6 +420,10 @@ to the subject comparisons."
     unread-mp ))
 
 (defun vm-thoughtfully-select-message ()
+  "Select a message in the current folder for the cursor position,
+which should be the first new message, if there is any, the first
+unread message, if there is any, or the position the cursor was at
+the last time the folder was visited.  USR, 2010-03-08"
   (let ((new (and vm-jump-to-new-messages (vm-find-first-unread-message t)))
 	(unread (and vm-jump-to-unread-messages
 		     (vm-find-first-unread-message nil)))
@@ -432,6 +438,10 @@ to the subject comparisons."
       nil )))
 
 (defun vm-follow-summary-cursor ()
+  "Select the message under the cursor in the summary window before
+executing commands that operate on the current message.  This occurs
+only when the summary buffer window is the selected window.  
+USR, 2010-03-08" 
   (and vm-follow-summary-cursor (eq major-mode 'vm-summary-mode)
        (let ((point (point))
 	     message-pointer message-list mp)

@@ -1,4 +1,6 @@
 ;;; vm-avirtual.el --- additional functions for virtual folder selectors
+;;;
+;;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 2000-2006 Robert Widhopf-Fenk
 ;;
@@ -133,6 +135,8 @@
            (message "Could not load feature %S.  Related functions may not work correctly!" (car feature-list))
            (beep 1))))
       (setq feature-list (cdr feature-list)))))
+
+(defvar bbdb-get-addresses-headers)	; dummyd declaration
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar vm-mail-virtual-selector-function-alist

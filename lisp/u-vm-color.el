@@ -1,4 +1,6 @@
 ;;; u-vm-color.el --- Font-lock support for VM.
+;;;
+;;; This file is an add-on for VM
 
 ;;  Copyright (C) 2001-2007 by Ulf Jasper
 

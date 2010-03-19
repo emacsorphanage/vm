@@ -139,7 +139,7 @@ sender, recipient, subject and date headers.  Typing @key{SPC}
 message as read.  Subsequent @key{SPC}'s scroll forward through the
 message, @kbd{b} or @key{DEL} scrolls backward.  When you reach the end
 of a message, typing @key{SPC} or @kbd{n} moves you forward to preview
-the next message.  @xref{Paging}.
+the next message.  @xref{Viewing}.
 
 If you do not want to read a message that's being previewed, type
 @kbd{n} and VM will move to the next message (if there is one).
@@ -386,6 +386,7 @@ retrieving any new messages from the system mailbox.
 * POP Spool Files::     How to use a POP mailbox as a spool file
 * IMAP Spool Files::    How to use an IMAP mailbox as a spool file
 * Index Files::         Using an index to speed up VM starting
+* Folder types::        About the mail folder formats handled by VM
 @end menu
 
 @node Spool Files, POP Spool Files, Local Folders, Local Folders
@@ -644,7 +645,7 @@ Here is an example:
 )
 @end example
 
-@node Index Files,,IMAP Spool Files, Local Folders
+@node Index Files, Folder types,IMAP Spool Files, Local Folders
 @unnumberedsubsec Index Files
 @cindex index file
 
@@ -660,6 +661,60 @@ file name extension, e.g.,
 @example
 (setq vm-index-file-suffix "idx")
 @end example
+
+
+@node Folder types,,Index Files, Local Folders
+@unnumberedsubsec Folder types
+@cindex folder types
+
+@vindex vm-default-folder-type
+VM can handle a variety of formats for mail folders, which differ in
+details.  The variable @code{vm-default-folder-type} can be used to
+set the default format that is suitable for your environment.  This
+setting is used when VM creates new folders.
+
+Whcn VM reads a folder from the file system, it examines contents of the
+folder to determine what format it is stored in and decodes it
+appropriately.  (However, such inference is not fully automatic.  See
+below.)
+
+@findex vm-change-folder-type
+After a folder is loaded into VM, you can convert it to a different
+format using the command @code{vm-change-folder-type}.  It is a good
+idea to keep all your mail folders in a single format in order to avoid
+incompatibilities.
+
+The system default format is referred to as @code{From_}.  It is the
+Unix mbox format described RFC 4155.  In this format, a leading
+separator line and a trailing separator line are added to each message.
+The leading separator line starts with the string ``From ''.  The
+trailing separator line is a blank line.  VM actually adds two blank lines at
+the end for clarity.
+
+A variant of this format is referred to as @code{BellFrom_}.  It has a
+leading separator line that starts with the string ``From ''.  However,
+it does not have a trailing blank line.
+
+Since VM cannot reliably infer whether a mail folder is of type
+@code{From_} or @code{BellFrom_}, you must tell VM which one your system
+uses by setting the variable @code{vm-default-From_-folder-type}.  Some
+of the old folders created by VM prior to 2000 were in the
+@code{BellFrom_} format.  If you will be using both @code{From_} and
+@code{BellFrom_} style folders, it is not possible to choose an
+appropriate setting for this variable.  It is recommended that you
+convert all the old @code{BellFrom_} folders to the @code{From_} format using
+the command @code{vm-change-folder-type}.
+
+Solaris, System V and AIX operating systems use another variant of the
+mbox format where the content-length is specified in the ``From '' line.
+VM refers to this format as @code{From_-with-Content-Length}.  Since the
+content lengths may be unreliable, you must also set the variable
+@code{vm-trust-From_-with-Content-Length} to a non-Nil value in order to
+convince VM that you really want to use this format.
+
+Two additional formats are @code{mmdf} used by MMDF systems and
+@code{babyl} used by the Emacs Rmail mode.  These formats are recognized
+automatically when read from the file system.
 
 
 @node Server Folders, Getting New Mail, Local Folders, Starting Up
@@ -1018,18 +1073,23 @@ the autosave file.  VM will not retrieve new mail for a folder
 that is in read-only mode.  VM also skips summary
 generation and MIME decoding to help catch your attention.
 
-If you want to recover the lost changes, run @kbd{M-x recover-file} or
-use the Recover toolbar button.  At the
-@samp{Recover File: } prompt press @kbd{RET}.  Emacs will then
-display a detailed directory listing showing the folder file and the
-autosave file and ask if you want to recover from the autosave file.  A
-good rule of thumb is to answer ``yes'' if the autosave file is larger
-than the folder file.  If the autosave file is significantly smaller,
-Emacs may not have completed writing the autosave file.  Or it could be
-that the smaller autosave file reflects the results of an expunge that
-you had not yet committed to disk before the crash.  If so, answering
-``no'' means you might have to do that expunge again, but this is better
-than not knowing whether the autosave file was truncated.
+@findex vm-recover-folder
+@findex recover-file
+If you want to recover the lost changes, run @kbd{M-x
+vm-recover-folder} or use the Recover Folder entry in Folder menu.  At
+the @samp{Recover File: } prompt press @kbd{RET}.  (Emacs's built-in
+@kbd{recover-file} command is not recommended for this purpose because
+VM is unable to obtain reliable data regarding the mail folders from
+Emacs.)  Emacs will then display a detailed directory listing showing
+the folder file and the autosave file and ask if you want to recover
+from the autosave file.  A good rule of thumb is to answer ``yes'' if
+the autosave file is larger than the folder file.  If the autosave
+file is significantly smaller, Emacs may not have completed writing
+the autosave file.  Or it could be that the smaller autosave file
+reflects the results of an expunge that you had not yet committed to
+disk before the crash.  If so, answering ``no'' means you might have
+to do that expunge again, but this is better than not knowing whether
+the autosave file was truncated.
 
 Assuming you answered ``yes'', the folder buffer's contents will be
 replaced by the contents of the autosave file and VM will re-parse the
@@ -1045,6 +1105,13 @@ Assuming you answered ``no'' to the recovery question, you should type
 @kbd{C-x C-q}, which is bound to @code{vm-toggle-read-only} in VM folder
 buffers.  The folder will be taken out of read-only mode and you can
 read and retrieve your mail normally.
+
+@findex vm-revert-folder
+@findex revert-file
+If you have made changes to a mail folder which you would like to
+cancel and go back to the version currently on the disk, you can use
+the function @kbd{vm-revert-folder} or the Revert Folder entry in the
+Folder menu.  (Emacs's built-in @kbd{revert-file} is not recommended.)
 
 @node Selecting Messages, Reading Messages, Starting Up, Top
 @chapter Selecting Messages
@@ -1170,11 +1237,11 @@ presentation is done in two stages: @dfn{previewing} and @dfn{paging}.
 
 @menu
 * Previewing::                  Customizing message previews.
-* Paging::                      Scrolling through the current message.
+* Viewing::                     Viewing the current message.
 * MIME Messages::               Using VM's MIME display features.
 @end menu
 
-@node Previewing, Paging, Reading Messages, Reading Messages
+@node Previewing, Viewing, Reading Messages, Reading Messages
 @section Previewing
 
 @dfn{Previewing} means showing you a small portion of a message
@@ -1243,8 +1310,8 @@ have VM preview all messages, set the value of
 Typing @kbd{t} (@code{vm-expose-hidden-headers}) makes VM toggle
 between exposing and hiding headers that would ordinarily be hidden.
 
-@node Paging, MIME Messages, Previewing, Reading Messages
-@section Paging
+@node Viewing, MIME Messages, Previewing, Reading Messages
+@section Viewing
 
 @vindex vm-auto-next-message
 Typing @key{SPC} during a message preview exposes the body of the
@@ -1269,42 +1336,49 @@ You can ``unread'' a message (so to speak) by typing @kbd{U}
 (@code{vm-unread-message}).  The current message will be flagged
 unread.
 
+@cindex longlines.el
 @cindex filling paragraphs
+@cindex visual line mode
 @vindex vm-paragraph-fill-column
 @vindex vm-fill-paragraphs-containing-long-lines
+@vindex vm-word-wrap-paragraphs
 Sometimes you will receive messages that contain lines that are
-too long to fit on your screen without wrapping.  If you set
-@code{vm-fill-paragraphs-containing-long-lines} to a positive
-numeric value @var{N}, VM will call @code{fill-paragraph} on all
-paragraphs that contain lines spanning @var{N} columns or more.
-As with other things VM does that modifies the way the
-message looks on the screen, this does not change message
-contents.  VM copies the message contents to a ``presentation''
-buffer before altering them.  The fill column that VM uses is
-controlled by @code{vm-paragraph-fill-column}.  Unlike the Emacs
-variable @code{fill-column}, this variable is not buffer-local
-by default.
+too long to fit on your screen without wrapping.  Setting
+@code{vm-word-wrap-paragraphs} to t will cause VM to use the 
+@code{longlines.el} library by Grossjohann, Schroeder and Yidong to
+carry out word wrapping.  You must have this library installed
+somewhere on your @code{load-path}.  Another way to deal with the
+problem is to use the @code{visual-line-mode} in Emacs 23.  You can
+activate it automatically for viewing messages by adding the function
+@code{turn-on-visual-line-mode} to the
+@code{vm-presentation-mode-hook}. 
 
-@cindex longlines.el
-The @code{longlines.el} library by Grossjohann, Schroeder and Yidong
-provides advanced filling functions for 'flowed text' produced by
-modern word processors.  Flowed text has only essential line breaks;
-others must be added as needed to fit the text into a window.  VM can
-use the longlines library automatically if you install it somewhere on
-your @code{load-path}.
+If you are unable to use either of these solutions, then you can use
+Emacs's paragraph filling facility.  If you set
+@code{vm-fill-paragraphs-containing-long-lines} to a positive numeric
+value @var{N}, VM will call @code{fill-paragraph} on all paragraphs that
+contain lines spanning @var{N} columns or more.  As with other things VM
+does that modifies the way the message looks on the screen, this does
+not change message contents.  VM copies the message contents to a
+``presentation'' buffer before altering them.  The fill column that VM
+uses is controlled by @code{vm-paragraph-fill-column}.  Unlike the Emacs
+variable @code{fill-column}, this variable is not buffer-local by
+default.
 
-@node MIME Messages,, Paging, Reading Messages
+
+@node MIME Messages,, Viewing, Reading Messages
 @section Reading MIME Messages
 
+@cindex MIME
 @vindex vm-display-using-mime
-If the variable @code{vm-display-using-mime} is non-@code{nil} VM will display
-messages using Multipurpose Internet Mail Extensions (MIME).  @dfn{MIME}
-is a set of extensions to the standard Internet message format that
-allows reliable transmission of arbitrary data including
-images, audio and video, as well as ordinary text.  A non-@code{nil} value for
-this variable means that VM will recognize MIME encoded messages and
+@dfn{MIME} is a set of extensions to the standard Internet message
+format that allows reliable transmission of arbitrary data including
+images, audio and video, as well as ordinary text in different
+languages.  By default, VM will recognize MIME encoded messages and
 display them as specified by the various MIME standards specifications.
-A nil value means VM will display MIME messages as plain text messages.
+This can be turned off by setting the variable
+@code{vm-display-using-mime} to @code{nil} and VM will then display MIME
+messages as plain text messages.
 
 @vindex vm-mime-base64-decoder-program
 @vindex vm-mime-base64-encoder-program
@@ -1347,6 +1421,7 @@ non-@code{nil} for VM to decode uuencoded MIME objects.
 * Attachments::                 Operating on MIME attachments
 * Internal display::            Viewing attachments internally in Emacs
 * External display::            Viewing attachments with external viewers
+* Displaying images::           Using Emacs facilities for images
 * MIME type conversion::        Converting external attachments to internal
 * Character sets::              MIME character sets
 * multipart/alternative::       MIME content in alternative formats
@@ -1383,6 +1458,7 @@ determines the format of the text in those buttons.
 @node Attachments, Internal display, Viewing MIME, MIME Messages
 @unnumberedsubsec  Operating on MIME attachments
 
+@cindex attachments
 @kindex $ |
 @kindex $ d
 @kindex $ RET
@@ -1404,23 +1480,24 @@ determines the format of the text in those buttons.
 @findex vm-mime-attach-object-from-message
 After decoding you will see either the decoded MIME objects or
 button lines that must be activated to attempt display of the
-MIME object.  The variable
-@code{vm-auto-displayed-mime-content-types} specifies the types
-that are displayed immediately.  Its value should be a list of
-MIME content types that should be displayed immediately after
-decoding.  Other types will be displayed as a button that you
-must activate to display the object.  To activate a button,
-either click the middle mouse button over it, or move the cursor
-to the line and press RET.  If you are running under a window
-system, you can use the right mouse button over a MIME button to
-display a menu of actions you can take on the MIME object.  If
-you prefer using keyboard commands, you can save the MIME object
-with @kbd{$ w}, print it with @kbd{$ p}, or pipe it to a shell
-command with @kbd{$ |}.  Use @kbd{$ s} to append an encapsulated
-message or USENET news article to a folder.  If you want to
-display the object with its characters displayed using Emacs'
-default face, use @kbd{$ RET}.  To display the object using an
-external viewer, type @kbd{$ e}.
+MIME object.  
+
+The variable @code{vm-auto-displayed-mime-content-types} specifies the
+types that are displayed immediately.  Its value should be a list of
+MIME content types that should be displayed immediately after decoding.
+Other types will be displayed as a button that you must activate to
+display the object.  
+
+To activate a button, either click the middle mouse
+button over it, or move the cursor to the line and press RET.  If you
+are running under a window system, you can use the right mouse button
+over a MIME button to display a menu of actions you can take on the MIME
+object.  If you prefer using keyboard commands, you can save the MIME
+object with @kbd{$ w}, print it with @kbd{$ p}, or pipe it to a shell
+command with @kbd{$ |}.  Use @kbd{$ s} to append an encapsulated message
+or USENET news article to a folder.  If you want to display the object
+with its characters displayed using Emacs' default face, use @kbd{$
+RET}.  To display the object using an external viewer, type @kbd{$ e}.
 
 @multitable @columnfractions .20 .80
 @item $ w   @tab @code{vm-mime-reader-map-save-file}
@@ -1434,35 +1511,30 @@ external viewer, type @kbd{$ e}.
 @item $ a   @tab @code{vm-mime-attach-object-from-message}
 @end multitable
 
-@vindex vm-mime-confirm-delete
-@findex vm-delete-mime-object
-Sometimes MIME objects are large and you may not want to save
-them along with the message that contains them.  If so, use
-@kbd{$ d} (@code{vm-delete-mime-object}) while the cursor is on
-the MIME button.  The object will be deleted and replaced with
-an object that indicates what the old object was and the fact
-that it is gone.  This is not an undoable operation, so use this
-command with care.  If you inadvertently delete an object, the
-only way to get it back is to quit visiting the current folder
-without saving and then revisit the folder.  This works because
-the object isn't removed from the disk copy of the folder until
-you save the folder.  By default VM will ask if you're sure
-about deleting an object before doing the deletion.  You can
-make VM not ask this question by setting
-@code{vm-mime-confirm-delete} to @code{nil}.
-
 @vindex vm-mime-delete-after-saving
 @vindex vm-mime-attachment-save-directory
+@vindex vm-mime-confirm-delete
 The MIME attachments can be saved to disk with @kbd{$ w}
-(@code{vm-mime-reader-map-save-file}).  They can be deleted at the same
-time by setting the variable @code{vm-mime-delete-after-saving}.  In
-this case, the attachment is deleted and replaced by a MIME part that
-refers to the saved copy.  The variable
-@code{vm-mime-attachment-save-directory} specifies the default directory
-to save the attachments in.  It is a good idea to
-@code{vm-mime-delete-after-saving} to delete saved attachments instead
-of deleting them manually, because the message will still have a handle
-to retrieve the saved copy.
+(@code{vm-mime-reader-map-save-file}).  They can be deleted at the
+same time by setting the variable @code{vm-mime-delete-after-saving}.
+In this case, the attachment is deleted and replaced by a MIME part
+that refers to the saved copy.  The variable
+@code{vm-mime-attachment-save-directory} specifies the default
+directory to save the attachments in.  The MIME attachments can also
+be deleted directly from the message bodies with @kbd{$ d}
+(@code{vm-delete-mime-object}).  The variable
+@code{vm-mime-confirm-delete} controls whether a confirmation is asked
+for.  
+
+It is a good idea to use @code{vm-mime-delete-after-saving} to delete
+saved attachments instead of deleting them manually, because with the
+former approach the message will have a handle to the saved copy,
+which can be retrieved when desired.
+
+Saving attachments to the file system and deleting them from message
+bodies has the beneficial effect of reducing the size of VM folders.
+That leads to a better utilisation of the computer resources and
+usually a faster operation of VM.
 
 @findex vm-mime-save-all-attachments
 @findex vm-mime-delete-all-attachments
@@ -1545,7 +1617,32 @@ The variable @code{vm-mime-internal-content-type-exceptions} serves as
 the exception list for @code{vm-mime-internal-content-types}.  Its value 
 should be a list of types that should not be displayed internally.
 
-@node External display, MIME type conversion, Internal display, MIME Messages
+@cindex HTML
+@vindex vm-mime-text/html-handler
+The HTML content in text/html MIME parts can be displayed in Emacs using
+a variety of packages.  VM knows about:
+
+@cindex lynx
+@cindex w3m
+@cindex w3
+@multitable @columnfractions .15 .85
+@item lynx   
+  @tab  The lynx browser used externally to convert HTML to plain text
+@item w3m    
+  @tab  The w3m browser used externally to convert HTML to plain text
+@item emacs-w3 
+  @tab  The Emacs/W3 browser used internally in Emacs
+@item emacs-w3m 
+  @tab  The Emacs/W3M browser used internally in Emacs
+@end multitable
+
+You can set the variable @code{vm-mime-text/html-handler} to one of
+these values to use the appropriate package.  A value of
+@code{auto-select} causes VM to select the best package available.  A
+value of @code{nil} asks VM not to display HTML content internally.
+
+
+@node External display, Displaying images, Internal display, MIME Messages
 @unnumberedsubsec External display of MIME attachments
 
 @vindex vm-mime-external-content-types-alist
@@ -1618,7 +1715,7 @@ The first matching list element will be used.
 
 No multipart message will ever be sent to an external viewer.
 
-External viewer processes are normally killed when you select a
+External viewer processes are normally killed when you select
 a new message in the current folder.  If you want viewer
 processes to not be killed, set
 @code{vm-mime-delete-viewer-processes} to a @code{nil} value.
@@ -1680,7 +1777,63 @@ Example:
 associated with the first type that matches will be used for the
 temporary filename.
 
-@node MIME type conversion, Character sets, External display, MIME Messages
+@node Displaying images, MIME type conversion, External display, MIME Messages
+@unnumberedsubsec Displaying inline images in messages
+
+@cindex images
+Most versions of Emacs can display images when used on graphical
+screens.  You can verify if the Emacs version is able to do so by
+calling the funciton @code{display-images-p}.  However, Emacs relies
+on external libraries to create graphical images, which are specified
+through the variable @code{image-library-alist}.  Even if Emacs has
+the ability to display some image type, it cannot display such images
+unless appropriate libraries are installed and specified to Emacs.  You
+can verify which image types are really available by calling the
+function @code{image-type-available-p} with an image type such as
+@samp{tiff} or @samp{gif} as the argument.
+
+@vindex vm-mime-internal-content-types
+@vindex vm-auto-displayed-mime-content-types
+Assuming that a particular image type, say @samp{tiff} is available,
+you can include its MIME type in
+@code{vm-mime-internal-content-types}, e.g., 
+@example
+(add-to-list 'vm-mime-internal-content-types "image/tiff")
+@end example
+You can also add the MIME type to the variable
+@code{vm-auto-displayed-mime-content-types} so that VM will
+automatically display all images of the type.  
+If the type is not included among the auto-displayed types, then the
+image is initially shown as a button with a thumbnail image.  Clicking on the
+button with the middle mouse button expands the image to its full size.
+
+@cindex ImageMagick
+@vindex vm-imagemagick-identify-program
+@vindex vm-imagemagick-convert-program
+Once an image is displayed, you can use the right mouse button to do
+various image manipulations on it, such as enlarging/reducing it,
+rotating it etc.  To do such operations, VM uses the ImageMagick
+graphics manipulation software.  You can install ImageMagick on your
+system and specify the location of its @code{identify} and
+@code{convert} programs to VM via the variables
+@code{vm-imagemagick-identify-program} and
+@code{vm-imagemagick-convert-program}.
+
+@vindex vm-mime-use-image-strips
+By default, VM displays images by slicing them into contiguous
+horizontal strips and displaying the strips in order.  This
+facilitates vertical scrolling within an image.  The variable
+@code{vm-mime-use-image-strips} controls whether VM uses strips for
+image display.  It is @samp{t} by default.
+
+VM also uses the ImageMagick's @code{convert} program to convert
+between image formats, so that an image that is not displayable in
+Emacs is converted to another format that is displayable.  You can
+turn off such conversion by setting the variable
+@code{vm-imagemagick-convert-program} to @samp{nil}.
+
+
+@node MIME type conversion, Character sets, Displaying images, MIME Messages
 @unnumberedsubsec MIME type conversion
 
 @vindex vm-mime-type-converter-alist
@@ -1868,7 +2021,7 @@ the fully featured text subpart, if VM knows how to display that type.
 VM will display the type either internally or externally.  A
 value of @code{best-internal} tells VM to use the closest subpart that
 it can display internally.  External viewers won't be used in this
-case.
+case.  A value of @code{all} asks VM to display all the alternatives.
 
 The value can also be a list of the form
 @example
@@ -1881,13 +2034,6 @@ choose the first matching alternative found that can be displayed.  If
 instead of the symbol @code{favorite}, @code{favorite-internal} is used
 then the first TYPE that matches an alternative that can be displayed
 internally will be chosen.
-
-@vindex vm-mime-show-alternatives
-Normally, one chosen alternative is shown and the other
-alternatives suppressed.  If the variable
-@code{vm-mime-show-alternatives} is set, then all the alternatives are
-shown.  In effect, multipart/alternative is treated the same as
-multipart/mixed. 
 
 @findex vm-mime-nuke-alternative-text/html
 Messages with multiple alternatives use up extra file space and slow
@@ -3688,7 +3834,7 @@ conditions.  If the current message is a MIME message that needs
 decoding, the Helper button becomes the Decode MIME button.  If the 
 current folder has an autosave file that appears to be the result 
 of an Emacs or system crash, the Helper button becomes the Recover 
-button.  Clicking on the Recover button runs @code{recover-file}, 
+button.  Clicking on the Recover button runs @code{vm-recover-folder}, 
 so you can recover your folder from an existing autosave file.
 @item mime
 The Decode MIME button.  Clicking on this button runs the command
@@ -3859,10 +4005,13 @@ The XEmacs @code{highlight-headers} package is used instead.  See the
 documentation for the function @code{highlight-headers} to find out
 how to customize header highlighting using this package.
 
+@cindex URL
 @vindex vm-highlight-url-face
 @vindex vm-url-search-limit
 URL's that occur in message bodies are displayed using the face
-named by @code{vm-highlight-url-face}.  Searching for URLs in a
+named by @code{vm-highlight-url-face}.  Typing Return on such URL's or
+clicking button-2 has the effect of sending the URL to an external web
+browser.  @xref{Using the Mouse}.  Searching for URLs in a
 large message can take a long time.  Since URLs often occur near
 the beginning and near the end of messages, VM offers a way to
 search just those parts of a message for URLs.  The variable
@@ -3884,6 +4033,7 @@ and summary buffers.
 @table @asis
 @item button-1 (left button usually)
 Unchanged.
+@cindex URL
 @item button-2 (middle button usually)
 Activate.  If you click on a summary entry, that message will be
 selected and become the current message.  If you click on a
@@ -3902,8 +4052,33 @@ of Web browsers is produced.  Otherwise the normal VM mode
 specific menu is produced.
 @end table
 
+@cindex w3m
+@cindex HTML
+These button assignments work only in plain text messsages.  For HTML
+messages, you might use an internal web browser such as w3m to display
+the content, which will have its own button assignments.  For instace,
+w3m binds button-2 to the browser function specified by
+@code{w3m-goto-article-function}.  You will need to set that variable to
+the desired browser function as well.
+
 In mail composition buffers only mouse button-3 is affected.
 Context sensitive menus are produced when that button is clicked.
+
+@findex vm-mouse-send-url-to-netscape
+@findex vm-mouse-send-url-to-xxx
+@findex browse-url
+@cindex browse-url
+@cindex web browser
+VM provides a number of browser functions that you can set as the value
+of @code{vm-url-browser}.  An example is
+@code{vm-mouse-send-url-to-netscape}, which sends the URL at mouse to the
+Netscape browser.  Other browsers supported in this way include
+@code{mosaic}, @code{mmosaic}, @code{opera}, @code{mozilla},
+@code{firefox}, and @code{konqueror}, all of which have functions of the
+form @code{vm-mouse-send-url-to-xxx}.  You can also set
+@code{vm-url-browser} to the Emacs function @code{browse-url}, and use
+the facilities defined in the @code{browse-url} library to send URL's to
+external browsers.
 
 @node Hooks, Bugs, Using the Mouse, Top
 @chapter Hooks

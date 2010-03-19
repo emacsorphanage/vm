@@ -1,4 +1,6 @@
 ;;; vm-digest.el --- Message encapsulation
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1989, 1990, 1993, 1994, 1997, 2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

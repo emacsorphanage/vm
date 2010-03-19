@@ -5652,7 +5652,7 @@ VM 5.23 released
 * made `g' go ahead and get new mail even if the current folder
   isn't the primary inbox.
 
-VM 5.22 released
+VM 5.22 released (beta-testable in Feb 22, 1991)
 
 * fixed obscure bug in vm-write-file-hook that might have bitten
   someone some day; vm-message-list vs. vm-local-message-list.
@@ -5785,7 +5785,7 @@ VM 5.10 released
 * another type of bounced message delimiter added to the searches
   in vm-resend-bounced-message.
 
-VM 5.09 released
+VM 5.09 released 
 
 * New variable: `vm-folder-read-only'
 * removed all the "clever" code at the end of vm-quit that tried
@@ -5917,7 +5917,7 @@ VM 5.01 released
 * fixed bug involving vm-totals in vm-assimilate-new-messages.
 * doc corrections
 
-VM 5.00 released for alpha testing
+VM 5.00 released for alpha testing (sometime in 1990)
 
 * `t' now toggles exposing/hiding normally invisible headers.
 * VM now writes much more cached info into its data header resulting in
@@ -6020,6 +6020,9 @@ VM 4.11 released May 30, 1989  (posted on comp.emacs)
 * VM has learned how to deal with MMDF folders
 
 VM 4.10 released May 23, 1989  (posted on comp.emacs)
+
+ The first public release of VM
+ http://groups.google.com/group/comp.emacs/browse_frm/month/1989-05 
 
 -------
 

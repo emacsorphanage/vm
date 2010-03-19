@@ -1,4 +1,6 @@
 ;;; vm-user.el --- Interface functions to VM internal data
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk

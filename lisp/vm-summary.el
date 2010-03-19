@@ -1,4 +1,6 @@
 ;;; vm-summary.el --- Summary gathering and formatting routines for VM
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1995, 2000 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -18,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(defvar scrollbar-height)		; defined for XEmacs
+
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"
 	major-mode 'vm-summary-mode
@@ -776,6 +781,8 @@ mandatory."
 	 (substring string width))
 	(t
 	 (substring string 0 width))))
+
+(defvar vm-postponed-header)		; defined vm-pine.el
 
 (defun vm-su-postponed-indicator (msg)
   (if (vm-get-header-contents msg vm-postponed-header)

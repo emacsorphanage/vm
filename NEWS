@@ -15,14 +15,7 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
-
 VM 8.1.1-devo
-
-  CHANGES:
-
-  ** vm-pgg is not loaded by default because it is an add-on that is
-     currently not being maintained.  Users should load it from their
-     .vm file.  See the comments at the beginning of vm-pgg.el.
 
   IMPROVEMENTS:
 
@@ -61,43 +54,100 @@ VM 8.1.1-devo
      reason, just delete it from the file system.  A new cache folder
      will be generated upon the next visit.
 
-  ** The commands `vm-mime-save-all-attachments' and
-    `vm-mime-delete-all-attachments' have been moved to the VM core
-    (from vm-rfaddons).  New variables:
-       vm-mime-deletable-types 
-          (formerly `vm-mime-delete-all-attachments-types')
-       vm-mime-deletable-type-exceptions
-          (formerly `vm-mime-delete-all-attachments-types-exceptions')
-       vm-mime-savable-types
-          (formerly `vm-mime-save-all-attachments-types')
-       vm-mime-savable-type-exceptions
-          (formerly `vm-mime-save-all-attachments-types-exceptions')         
-       vm-mime-attachment-save-directory
-       vm-mime-attachment-source-directory
-       vm-mime-all-attachments-directory
-    See the info file section on MIME attachments for details.
+  CHANGES
 
-    The options for vm-rfaddons.el should not include
-    `save-all-attachments' and should be removed if it is currently
-    being used.  The option `take-action-on-attachments' is not
-    included by default.
+   * The right-mouse-button context menu for URL's in messages updated
+     to eliminate obsolete web browsers.  Entries added for Firefox,
+     Mozilla and Opera.
 
-  * `vm-quit-no-change' offers to delete the auto-save file if there is
-    one.  (This wasn't getting done due to a bug in FSF Emacs.)
 
-  * `vm-delete-duplicate-messages' now works by comparing message ID's.
-    (from Noah Friedman's vm-addons).
+VM 8.1.0 (2010-03-21)
 
-  * New boolean variable `vm-sort-threads-by-youngest-date' allows
-    threads to be sorted by their youngest date or oldest date.
+  KNOWN PROBLEMS:
 
-  * `vm-yank-message' function streamlined a bit.  New variable
-    `vm-include-text-from-presentation' can be used to extract the
-    included message text from the presentation buffer.
+    * Automatic filling is turned off for some plain text messages for
+      safety reasons.  Please help us by sending us sample messages
+      for which filling fails.
 
-VM 8.1.0
+  MAJOR NEW FEATURES:
+
+    * Support for reading and replying to messages in HTML.
+
+    * Full support for IMAP servers.  (See "IMPROVEMENTS for
+      imap-folders" below.) 
+
+  CHANGES:
+
+   ** New boolean variable `vm-word-wrap-paragraphs' controls the word
+      wrapping of paragraphs in messages using the longlines library.
+      The variable is set to nil by default. When it is set to t,
+      paragraphs are word wrapped and the variable
+      `vm-fill-paragraphs-containing-long-lines' has no effect.  Set
+      it to nil to enable the usual filling functionality.
+
+   ** vm-pgg is not loaded by default because it is a set up as an
+      add-on.  Users should load it from their .emacs file by using
+      the sequence
+           (require 'vm-autoloads)
+           (require 'vm-pgg)
+
+   ** The variable `vm-mime-show-alternatives' is deprecated.  Set
+      the variable `vm-mime-alternative-select-method' to 'all to
+      get the same effect.
 
   IMPROVEMENTS:
+
+   * The variable `vm-paragraph-fill-column', previously removed in
+     earlier versions of this release, is brought back.
+
+   ** The commands `vm-mime-save-all-attachments' and
+      `vm-mime-delete-all-attachments' have been moved to the VM core
+      (from vm-rfaddons).  New variables:
+	 vm-mime-deletable-types 
+	    (formerly `vm-mime-delete-all-attachments-types')
+	 vm-mime-deletable-type-exceptions
+	    (formerly `vm-mime-delete-all-attachments-types-exceptions')
+	 vm-mime-savable-types
+	    (formerly `vm-mime-save-all-attachments-types')
+	 vm-mime-savable-type-exceptions
+	    (formerly `vm-mime-save-all-attachments-types-exceptions')         
+	 vm-mime-attachment-save-directory
+	 vm-mime-attachment-source-directory
+	 vm-mime-all-attachments-directory
+      See the info file section on MIME attachments for details.
+
+      The options for vm-rfaddons.el should not include
+      `save-all-attachments' and should be removed if it is currently
+      being used.  The option `take-action-on-attachments' is not
+      included by default.
+
+    * `vm-quit-no-change' offers to delete the auto-save file if there is
+      one.  (This wasn't getting done due to a bug in FSF Emacs.)
+
+    * `vm-delete-duplicate-messages' now works by comparing message ID's.
+      (from Noah Friedman's vm-addons).
+
+    * New boolean variable `vm-sort-threads-by-youngest-date' allows
+      threads to be sorted by their youngest date or oldest date.
+
+    * `vm-yank-message' function streamlined a bit.  New variable
+      `vm-include-text-from-presentation' can be used to extract the
+      included message text from the presentation buffer.
+
+   ** text/html handling controlled by a new variable
+      `vm-mime-text/html-handler' which is set to 'auto-select by
+      default.  It causes VM to locate the best library among
+      emacs-w3m, external w3m, w3 and lynx to display html
+      internally.  (This replaces the earlier variable
+      `vm-mime-use-w3-for-text/html'.)
+
+   ** vm-delete-duplicate-messages now works by comparing message ID's.
+      (from Noah Friedman's vm-addons).
+
+    * vm-yank-message function streamlined somewhat.  New variable
+      `vm-include-text-from-presentation' used to extract message text
+      from presentation buffer.  (This replaces the variable
+      `vm-reply-include-presentation' used in vm-rfaddons.)
 
     * The variable `vm-mime-yank-attachments' is set to nil by default,
       so that we are not surprised by unexpectedly large mail messages.
@@ -207,10 +257,22 @@ VM 8.1.0
 
   IMPROVEMENTS for imap-folders (Uday S. Reddy)
 
+   ** New variable `vm-imap-account-alist' allows multiple IMAP
+      accounts to be handled uniformly.  The variable
+      `vm-imap-server-list' is now obsolete.  IMAP folders should be
+      specified in the minibuffer using the account:mailbox format.
+      See the info node on IMAP folders.
+
+    * New variable `vm-load-headers-only' to enable headers-only
+      downloading of IMAP folders.  (This is still experimental.)
+
+    * IMAP-FCC is extended to work for virtual folders, but only if
+      the real parent message is an IMAP message.
+
     * Made server expunge more robust.  Added new variable
       `vm-imap-expunge-retries' to force retries for sluggish servers.
 
-    * Allow message attributes as well as labels to be saved on server
+    * Allow message attributes as well as labels to be saved on server.
 
     * Changed vm-imap-get-new-mail to do synchronization: reading and writing
       message attributes & labels, expunge messages in the cache.  Added
@@ -226,24 +288,18 @@ VM 8.1.0
     * New commands `vm-imap-start-bug-report' and `vm-imap-submit-bug-report'
       which track IMAP session details.
 
-    * New variable `vm-imap-account-alist' allows multiple IMAP accounts to be
-      handled uniformly.  The variable `vm-imap-server-list' is now obsolete.
-      IMAP folders should be specified in the minibuffer using the
-      account:mailbox format.  See the info node on IMAP folders.
-
-    * New variable `vm-load-headers-only' to enable headers-only
-      downloading of IMAP folders.  (This is still experimental.)
-
-    * IMAP-FCC is extended to work for virtual folders, but only if
-      the real parent message is an IMAP message.
-
-VM 8.0.14
+VM 8.0.14    2009-12-16
 
   BUGFIXES
 
-    * Removed incompatibility of a mapvector procedure with XEmacs.
+    * Removed an incompatibility of the mapvector procedure with XEmacs.
 
-VM 8.0.13
+VM 8.0.13    2009-11-29  
+
+  MANAGEMENT CHANGES:
+
+    * VM being maintained by "VM development team", vm@lists.launchpad.net,
+      consisting of Robert Fenk, Uday Reddy and Ulrich Mueller.
 
   BUGFIXES:
 
@@ -253,7 +309,7 @@ VM 8.0.13
       It causes building of the summary to fail.  Broken cache entries are now
       detected and removed while loading a folder.
 
-VM 8.0.12
+VM 8.0.12    2008-11-05
 
   IMPROVEMENTS:
 
@@ -311,14 +367,14 @@ VM 8.0.12
 
 Public bug reported:
  
-VM 8.0.11
+VM 8.0.11    2008-08-11
 
   BUGFIXES:
 
     * Removed dependency of vm-revno.el to other lisp sources to avoid
       building it in a release bundle.  (Thanks to Ralf Fassel)
 
-VM 8.0.10
+VM 8.0.10    2008-07-22
 
   NOTES:
 
@@ -381,7 +437,7 @@ VM 8.0.10
     * Added missing newline after "Content-Type" when using the command
       `vm-mime-attach-object-from-message'.  (Thanks to Dan Freed)
 
-VM 8.0.9
+VM 8.0.9    2008-02-20
 
   BUGFIXES:
 
@@ -393,7 +449,7 @@ VM 8.0.9
       8.0.8, i.e. it was showing 8.0.x-xemacs-542 instead.  Now also other
       branch related information is stored in the file vm-revno.el.
 
-VM 8.0.8
+VM 8.0.8    2008-02-11
 
   IMPROVEMENTS:
 
@@ -452,7 +508,7 @@ VM 8.0.8
     * Set correct coding-system-for-read for the real messages of
       virtual folders.  (Thanks to Julian Bradfield)
 
-VM 8.0.7
+VM 8.0.7    2008-01-05
 
   BUG FIXES:
 
@@ -469,7 +525,7 @@ VM 8.0.7
     * Removed wrongly used calls to `interactive-p'. (Thanks to Alley for
       reporting and debugging)
 
-VM 8.0.6
+VM 8.0.6    2008-01-02
 
   IMPROVEMENTS:
 
@@ -499,7 +555,7 @@ VM 8.0.6
       for those with all higher order bits set (negative ones?) (Thanks to
       Blueman for the fix.)
 
-VM 8.0.5
+VM 8.0.5    2007-11-03
 
   BUG FIXES:
 
@@ -507,7 +563,7 @@ VM 8.0.5
       is a 20-40% chance to create a new bug when fixing one.  Regression
       tests would be nice, but we do not have any for VM ;-/
 
-VM 8.0.4
+VM 8.0.4    2007-11-02
 
   IMPROVEMENTS:
 
@@ -527,7 +583,7 @@ VM 8.0.4
 
     * Honor a t in `vm-drop-buffer-name-chars' as documented.
 
-VM 8.0.3
+VM 8.0.3    2007-08-15
 
   IMPROVEMENTS:
 
@@ -553,7 +609,7 @@ VM 8.0.3
 
     * Fixed the section headers of the NEWS file.
 
-VM 8.0.2
+VM 8.0.2    2007-07-25
 
   IMPROVEMENTS:
 
@@ -596,7 +652,7 @@ VM 8.0.2
 
     * vm-summary-faces-mode does not leak extents anymore.
 
-VM 8.0.1
+VM 8.0.1    2007-06-29
 
   NOTES:
 
@@ -623,7 +679,7 @@ VM 8.0.1
     * Revised the bindings and enabled features to a hopefully less
       controversial setting. 
 
-VM 8.0.0
+VM 8.0.0    2007-05-31
 
   NOTES:
 
@@ -703,6 +759,15 @@ VM 8.0.0
 
     * vm-rfaddons.el has various stuff, look at the source if you are curious
       or miss some VM feature, as it might already be there!
+
+
+VMRF 7.19.187   2006-10-12
+
+VMRF  2006-09
+
+   Mentioned on gnu.emacs.vm.info as a fork.
+
+
 
 ;;; Local Variables: ***
 ;;; mode:text ***

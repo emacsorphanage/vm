@@ -1,4 +1,6 @@
 ;;; vm-delete.el --- Delete and expunge commands for VM.
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -204,9 +206,9 @@ unmarked messages are not hashed or considerd for deletion."
 ;;;###autoload
 (defun vm-delete-duplicate-messages-by-body ()
 "Delete duplicate messages in the current folder.
-This command works by computing an MD5 hash for the body ofeach
+This command works by computing an MD5 hash for the body of each
 non-deleted message in the folder and deleting messages that have
-a hash that has already been seen.  Messages that already deleted
+a hash that has already been seen.  Messages that are already deleted
 are never hashed, so VM will never delete the last copy of a
 message in a folder.  'Deleting' means flagging for deletion; you
 will have to expunge the messages with `vm-expunge-folder' to

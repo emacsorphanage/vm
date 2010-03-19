@@ -1,4 +1,6 @@
 ;;; vm-mark.el ---  Commands for handling messages marks
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1990, 1993, 1994 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -18,6 +20,11 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(eval-when-compile
+  (require 'vm-message)
+  (require 'vm-thread))
+
 
 ;;;###autoload
 (defun vm-clear-all-marks ()
@@ -280,7 +287,7 @@ variable vm-virtual-folder-alist for more information."
       (if (null (intern-soft (symbol-name id-sym) loop-obarray))
 	  (progn
 	    (intern (symbol-name id-sym) loop-obarray)
-	    (nconc list (copy-sequence (get id-sym 'children)))
+	    (nconc list (copy-sequence (vm-th-children-of id-sym)))
 	    (setq subject-sym (intern (vm-so-sortable-subject (car list))
 				      vm-thread-subject-obarray))
 	    (if (and (boundp subject-sym) 

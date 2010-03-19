@@ -1,4 +1,6 @@
 ;;; vm-save.el --- Saving and piping messages under VM
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1989, 1990, 1993, 1994 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -180,32 +182,34 @@ to an IMAP folder or by saving it to a local filesystem folder.
 Which is done is controlled by the type of the current vm-folder
 buffer and the variable `vm-imap-save-to-server'."
   (interactive
-   (if (and vm-imap-save-to-server
-	    (vm-imap-folder-p))
+   (if (and vm-imap-save-to-server (vm-imap-folder-p))
        ;; IMAP saving --- argument parsing taken from
        ;; vm-save-message-to-imap-folder
-       (save-excursion
-	 (vm-session-initialization)
-	 (vm-check-for-killed-folder)
-	 (vm-select-folder-buffer-if-possible)
-	 (let ((this-command this-command)
-	       (last-command last-command))
+       (let ((this-command this-command)
+	     (last-command last-command))
+	 (vm-follow-summary-cursor)
+	 (save-excursion
+	   (vm-session-initialization)
+	   (vm-select-folder-buffer)
+	   (vm-check-for-killed-summary)
+	   (vm-error-if-folder-empty)
 	   (list (vm-read-imap-folder-name "Save to IMAP folder: " t)
 		 (prefix-numeric-value current-prefix-arg))))
        ;; saving to local filesystem.  argument parsing taken from old
-       ;; vm-save-message now vm-save-message-to-local-folder
+       ;; vm-save-message (now vm-save-message-to-local-folder)
        (list
 	;; protect value of last-command
 	(let ((last-command last-command)
 	      (this-command this-command))
 	  (vm-follow-summary-cursor)
-	  (let ((default (save-excursion
-			   (vm-select-folder-buffer)
-			   (vm-check-for-killed-summary)
-			   (vm-error-if-folder-empty)
-			   (or (vm-auto-select-folder vm-message-pointer
-						      vm-auto-folder-alist)
-			       vm-last-save-folder)))
+	  (let ((default 
+		  (save-excursion
+		    (vm-select-folder-buffer)
+		    (vm-check-for-killed-summary)
+		    (vm-error-if-folder-empty)
+		    (or (vm-auto-select-folder 
+			 vm-message-pointer vm-auto-folder-alist)
+			vm-last-save-folder)))
 		(dir (or vm-folder-directory default-directory)))
 	    (cond ((and default
 			(let ((default-directory dir))
@@ -218,10 +222,9 @@ buffer and the variable `vm-imap-save-to-server'."
 		  (t
 		   (vm-read-file-name "Save in folder: " dir nil)))))
 	(prefix-numeric-value current-prefix-arg))))
-  (if (and vm-imap-save-to-server
-	   (vm-imap-folder-p))
+  (if (and vm-imap-save-to-server (vm-imap-folder-p))
       (vm-save-message-to-imap-folder folder count)
-      (vm-save-message-to-local-folder folder count)))
+    (vm-save-message-to-local-folder folder count)))
    
 ;;;###autoload
 (defun vm-save-message-to-local-folder (folder &optional count)
@@ -913,12 +916,14 @@ ignored.
 
 The saved messages are flagged as `filed'."
   (interactive
-   (save-excursion
-     (vm-session-initialization)
-     (vm-check-for-killed-folder)
-     (vm-select-folder-buffer-if-possible)
-     (let ((this-command this-command)
-	   (last-command last-command))
+   (let ((this-command this-command)
+	 (last-command last-command))
+     (vm-follow-summary-cursor)
+     (save-excursion
+       (vm-session-initialization)
+       (vm-select-folder-buffer)
+       (vm-check-for-killed-summary)
+       (vm-error-if-folder-empty)
        (list (vm-read-imap-folder-name 
 	      "Save to IMAP folder: " t nil
 	      (or vm-last-save-imap-folder vm-last-visit-imap-folder))
@@ -957,6 +962,13 @@ The saved messages are flagged as `filed'."
 		     (vm-body-to-be-retrieved-of m))
 		(error "Message %s body has not been retrieved"
 		       (vm-number-of (car mlist))))
+	    ;; Kyle Jones says:
+	    ;; have to stuff the attributes in all cases because
+	    ;; the deleted attribute may have been stuffed
+	    ;; previously and we don't want to save that attribute.
+	    ;; FIXME But stuffing attributes into the IMAP buffer is
+	    ;; not easy.  USR, 2010-03-08
+	    ;; (vm-stuff-attributes m t)
 	    (if server-to-server-p 	; economise on upstream data traffic
 		(let ((process (vm-re-establish-folder-imap-session)))
 		  (vm-imap-copy-message process m mailbox))
@@ -965,6 +977,8 @@ The saved messages are flagged as `filed'."
 	      (vm-imap-save-message process m mailbox))
 	    (unless (vm-filed-flag m)
 	      (vm-set-filed-flag m t))
+	    ;; we set the deleted flag so that the user is not
+	    ;; confused if the save doesn't go through fully.
 	    (when (and vm-delete-after-saving (not (vm-deleted-flag m)))
 	      (vm-set-deleted-flag m t))
 	    (vm-increment count)
@@ -974,6 +988,8 @@ The saved messages are flagged as `filed'."
       (when process (vm-imap-end-session process)))
     (vm-update-summary-and-mode-line)
     (setq vm-last-save-imap-folder target-folder)
+    (if (and vm-delete-after-saving (not vm-folder-read-only))
+	(vm-delete-message count))
     (message "%d message%s saved to %s"
 	     count (if (/= 1 count) "s" "")
 	     (vm-safe-imapdrop-string target-folder))

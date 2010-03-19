@@ -1,4 +1,6 @@
 ;;; tapestry.el --- Tools to configure your GNU Emacs windows
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1991, 1993, 1994, 1995, 1997 Kyle E. Jones
 ;;

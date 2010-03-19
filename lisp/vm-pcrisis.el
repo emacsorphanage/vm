@@ -1,4 +1,6 @@
 ;;; vm-pcrisis.el --- wide-ranging auto-setup for personalities in VM
+;;;
+;;; This file is an add-on for VM
 ;;
 ;; Copyright (C) 1999 Rob Hodges,
 ;;               2006 Robert Widhopf, Robert P. Goldman
@@ -50,6 +52,12 @@
      (message "%S" e)
      (message "Could not load bbdb.el.  Related functions may not work correctly!")
      (sit-for 5))))
+
+;; Dummy declarations for variables that are defined in bbdb
+
+(defvar bbdb-records)
+(defvar bbdb-file)
+(defvar bbdb-records)
 
 ;; -------------------------------------------------------------------
 ;; Variables:

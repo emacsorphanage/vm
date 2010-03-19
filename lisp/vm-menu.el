@@ -1,4 +1,6 @@
 ;;; vm-menu.el --- Menu related functions and commands
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1994 Heiko Muenkel
 ;; Copyright (C) 1995, 1997 Kyle E. Jones
@@ -89,7 +91,7 @@
     ["Quit" vm-quit-no-change t]
     ["Save & Quit" vm-quit t]
     "---"
-    "---"
+    ;; "---"
     ;; special string that marks the tail of this menu for
     ;; vm-menu-install-visited-folders-menu.
     "-------"
@@ -161,7 +163,7 @@
     ["Create Virtual Folder" vm-create-virtual-folder t]
     ["Apply Virtual Folder" vm-apply-virtual-folder t]
     "---"
-    "---"
+    ;; "---"
     ;; special string that marks the tail of this menu for
     ;; vm-menu-install-known-virtual-folders-menu.
     "-------"
@@ -447,21 +449,33 @@
     `(,@title
       ["Emacs W3" (vm-mouse-send-url-at-position (point) (quote ,w3))
        (fboundp (quote ,w3))]
-      ["Mosaic"
+      ["Firefox"
        (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-mosaic)
+				      'vm-mouse-send-url-to-firefox)
        t]
-      ["mMosaic"
+      ["Konqueror"
        (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-mmosaic)
+				      'vm-mouse-send-url-to-konqueror)
+       t]
+      ;; ["Mosaic"
+      ;;  (vm-mouse-send-url-at-position (point)
+      ;; 			      'vm-mouse-send-url-to-mosaic)
+      ;;  t]
+      ;; ["mMosaic"
+      ;;  (vm-mouse-send-url-at-position (point)
+      ;; 			      'vm-mouse-send-url-to-mmosaic)
+      ;; t]
+      ["Mozilla"
+       (vm-mouse-send-url-at-position (point)
+				      'vm-mouse-send-url-to-mozilla)
        t]
       ["Netscape"
        (vm-mouse-send-url-at-position (point)
 				      'vm-mouse-send-url-to-netscape)
        t]
-      ["Konqueror"
+      ["Opera"
        (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-konqueror)
+				      'vm-mouse-send-url-to-opera)
        t]
       ["X Clipboard"
        (vm-mouse-send-url-at-position (point)
@@ -1195,8 +1209,7 @@ set to the command name so that window configuration will be done."
       (setq menu (cons (vector "    "
 			       (list 'vm-menu-run-command
 				     ''vm-visit-virtual-folder (car folders))
-			       t
-			       (car folders))
+			       :suffix (car folders))
 		       menu)
 	    folders (cdr folders)))
     (and menu (setq menu (nreverse menu)
@@ -1237,8 +1250,7 @@ set to the command name so that window configuration will be done."
 			   (t
 			    (list 'vm-menu-run-command
 				  ''vm-visit-folder (car folders))))
-			  t
-			  (car folders))
+			  :suffix (car folders))
 		       menu)
 	    folders (cdr folders)
 	    i (1+ i)))
@@ -1260,8 +1272,7 @@ set to the command name so that window configuration will be done."
 			(list (vector "    "
 				      (list 'vm-menu-run-command
 					    ''vm-visit-folder (car folders))
-				      t
-				      (car folders))))
+				      :suffix (car folders))))
 	    folders (cdr folders)))
     (setq tail (vm-member special vm-menu-folder-menu))
     (if (and menu tail)

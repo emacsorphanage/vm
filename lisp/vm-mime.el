@@ -1,4 +1,6 @@
 ;;; vm-mime.el ---  MIME support functions
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1997-2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -24,6 +26,16 @@
 (defvar enable-multibyte-characters)
 (defvar default-enable-multibyte-characters)
 
+;; The following variables are defined in the code, depending on the
+;; Emacs version being used.  They should not be initialized here.
+
+(defvar vm-image-list)
+(defvar vm-image-type)
+(defvar vm-image-type-name)
+(defvar vm-extent-list)
+(defvar vm-overlay-list)
+
+
 (defun vm-mime-error (&rest args)
   (signal 'vm-mime-error (list (apply 'format args)))
   (error "can't return from vm-mime-error"))
@@ -40,7 +52,9 @@
 ;; A lot of the more complicated MIME character set processing is only
 ;; practical under MULE.
 (eval-when-compile 
-  (defvar latin-unity-ucs-list))
+  (defvar latin-unity-ucs-list)
+  (defvar latin-unity-character-sets)
+  (defvar coding-system-list))
 
 ;; Wrapper for coding-system-p:
 ;; The XEmacs function expects a coding-system object as its argument,
@@ -836,7 +850,8 @@ configuration.  "
 (defun vm-decode-mime-encoded-words ()
   (let ((case-fold-search t)
 	(buffer-read-only nil)
-	charset need-conversion encoding match-start match-end start end)
+	charset need-conversion encoding match-start match-end start end
+	previous-end)
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward vm-mime-encoded-word-regexp nil t)
@@ -853,6 +868,11 @@ configuration.  "
 		 (not (setq need-conversion
 			    (vm-mime-can-convert-charset charset))))
 	    nil
+	  ;; suppress whitespace between encoded words.
+	  (and previous-end
+	       (string-match "\\`[ \t\n]*\\'"
+			     (buffer-substring previous-end match-start))
+	       (setq match-start previous-end))
 	  (delete-region end match-end)
 	  (condition-case data
 	      (cond ((string-match "B" encoding)
@@ -870,6 +890,7 @@ configuration.  "
 			      charset start end)))
 	  (vm-mime-charset-decode-region charset start end)
 	  (goto-char end)
+	  (setq previous-end end)
 	  (delete-region match-start start))))))
 
 (defun vm-decode-mime-encoded-words-in-string (string)
@@ -1397,8 +1418,8 @@ source of the message."
 	(setq buffer-undo-list t)
 	(widen)
 	(let ((buffer-read-only nil)
-	      (inhibit-read-only t)
-	      (modified (buffer-modified-p)))
+	      (inhibit-read-only t))
+	  (setq modified (buffer-modified-p))
 	  (unwind-protect
 	      (progn
 		(erase-buffer)
@@ -1433,6 +1454,7 @@ source of the message."
 		(list (vm-message-access-method-of mm)) mm))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 	       (vm-fetch-message (read (current-buffer)) mm)))
+	(set-buffer-modified-p modified)
 	;; fixup the reference to the message
 	(setcar vm-message-pointer mm)))))
 
@@ -2258,7 +2280,9 @@ declarations in the attachments and make a decision independently."
   
 (defun vm-mime-display-internal-lynx-text/html (start end layout)
   (shell-command-on-region start (1- end)
-                           "lynx -force_html /dev/stdin" nil t))
+;;                           "lynx -force_html /dev/stdin" 
+			   "lynx -force_html -dump -pseudo_inlines -stdin"
+			   nil t))
 
 (defun vm-mime-display-internal-text/html (layout)
   "Dispatch handling of html to the actual html handler."
@@ -2503,7 +2527,8 @@ declarations in the attachments and make a decision independently."
     t ))
 
 (defun vm-mime-display-internal-multipart/alternative (layout)
-  (if vm-mime-show-alternatives
+  (if (or vm-mime-show-alternatives
+	  (eq vm-mime-alternative-select-method 'all))
       (let ((vm-mime-show-alternatives 'mixed))
         (vm-mime-display-internal-multipart/mixed layout))
     (vm-mime-display-internal-show-multipart/alternative layout)))
@@ -2611,7 +2636,7 @@ emacs-w3m."
 	      (setq start-part layout
 		    part-list nil)
 	    (setq part-list (cdr part-list)))))
-    (vm-decode-mime-layout start-part)))
+    (if start-part (vm-decode-mime-layout start-part))))
 
 (defun vm-mime-display-button-multipart/parallel (layout)
   (vm-mime-insert-button
@@ -5660,9 +5685,10 @@ describes what was deleted."
 	       (setq o (car o-list))
 	       (cond ((setq layout (overlay-get o 'vm-mime-layout))
 		      (setq found t)
-		      (if (eq layout
-			      (vm-mime-layout-of
-			       (vm-mm-layout-message layout)))
+		      (if (and (vm-mm-layout-message layout)
+			       (eq layout
+				   (vm-mime-layout-of
+				    (vm-mm-layout-message layout))))
 			  (error "Can't delete only MIME object; use vm-delete-message instead."))
 		      (if vm-mime-confirm-delete
 			  (or (y-or-n-p (vm-mime-sprintf "Delete %t? " layout))
@@ -5684,8 +5710,9 @@ describes what was deleted."
 	     (if (null e)
 		 (error "No MIME button found at point.")
 	       (setq layout (extent-property e 'vm-mime-layout))
-	       (if (eq layout (vm-mime-layout-of
-			       (vm-mm-layout-message layout)))
+	       (if (and (vm-mm-laytout-message layout)
+			(eq layout (vm-mime-layout-of
+				    (vm-mm-layout-message layout))))
 		   (error "Can't delete only MIME object; use vm-delete-message instead."))
 	       (if vm-mime-confirm-delete
 		   (or (y-or-n-p (vm-mime-sprintf "Delete %t? " layout))
@@ -5715,6 +5742,8 @@ describes what was deleted."
 	  (buffer-read-only nil)
 	  (m (vm-mm-layout-message layout))
 	  newid new-layout)
+      (if (null m)
+	  (error "Message body not loaded"))
       (set-buffer (vm-buffer-of m))
       (vm-save-restriction
 	(widen)
@@ -6371,7 +6400,7 @@ agent; under Unix, normally sendmail.)"
 	   ;; support enriched-mode for text/enriched composition
 	    (if enriched
 		(let ((enriched-initial-annotation ""))
-		  (enriched-encode (point-min) (point-max))))
+		  (enriched-encode (point-min) (point-max) (current-buffer))))
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
 	    (if vm-fsfemacs-mule-p

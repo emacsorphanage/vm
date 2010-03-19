@@ -1,4 +1,6 @@
 ;;; vm-vars.el --- VM user and internal variable initialization
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -106,17 +108,15 @@ A nil value means VM should not read or write index files."
 ;; This is added by Uday Reddy as a temporary measure.  2008-04-15
 ;; It should really be folder-specific and saved with the folders on
 ;; the file system.
-(defcustom vm-load-headers-only nil
+(defvar vm-load-headers-only nil
   "*If non-nil, asks VM to load headers of mail folders whenever
 possible, without loading the message bodies.
 
 This allows faster start-ups and smaller memory images of Emacs
 sessions, at the cost of short delays when messages are viewed.
 
-As of April 2008, this facility is only available for IMAP folders."
-  :group 'vm
-  :type 'boolean)
-
+As of April 2008, this facility is still experimental and is only
+available for IMAP folders.")
 
 ;; use this function to access vm-spool-files on the fly.  this
 ;; allows us to use environmental variables without setting
@@ -880,20 +880,38 @@ necessary."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-word-wrap-paragraphs nil
+  "If non-nil, causes VM to word wrap paragraphs with long lines.
+This is done using the `longlines' library, which must be installed
+for the variable to have effect."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-fill-paragraphs-containing-long-lines nil
-  "*This variable can be set to nil, a numeric value N or the
-symbol 'window-width.  When non-nil, it causes VM to fill
+  "*This variable can be set to nil, a numeric value N, the
+symbol 'window-width.  If it is numeric, it causes VM to fill
 paragraphs that contain lines spanning that many columns or more.
+Setting it to 'window-width has the effect of using the width of
+the Emacs window.
+
 Only plain text messages and text/plain MIME parts will be
 filled.  The message itself is not modified; its text is copied
-into a presentation buffer before the filling is done."
-;; Old text removed to reflect the change in revision 516:
-;; This variable determines which paragraphs are filled,
-;; but `vm-paragraph-fill-column' determines the fill column.
+into a presentation buffer before the filling is done.
+
+This variable determines which paragraphs are filled,
+but `vm-paragraph-fill-column' determines the fill column."
   :group 'vm
   :type '(choice (const nil)
                  (const window-width)
+		 (const wrap)
                  integer))
+
+(defcustom vm-paragraph-fill-column (default-value 'fill-column)
+  "*Column beyond which automatic line-wrapping should happen when
+re-filling lines longer than the value of
+`vm-fill-paragraphs-containing-long-lines'."
+  :group 'vm
+  :type 'integer)
 
 (defcustom vm-fill-long-lines-in-reply-column nil
   "*Fill lines spanning that many columns or more in replies."
@@ -1007,6 +1025,10 @@ MIME jumble.  `vm-auto-decode-mime-messages' must also be set non-nil
 for this variable to have effect."
   :group 'vm
   :type 'boolean)
+
+(defvar vm-mime-decode-for-show t
+  "*Control variable that says whether MIME messages should be decoded
+for showing the message, in addition to decoding for preview.")
 
 (defcustom vm-auto-displayed-mime-content-types 
   '("text" "image" "multipart" "message/rfc822")
@@ -1282,12 +1304,21 @@ that matches an alternative that can be displayed internally will be
 chosen."
   :group 'vm
   :type '(choice (choice (const best-internal)
-			 (const best))
+			 (const best)
+			 (const all))
 		 (cons (const favorite) (repeat string))
 		 (cons (const favorite-internal) (repeat string))))
 
 (defcustom vm-mime-text/html-handler 'auto-select
-  "*The handler used for displaying HTML messages."
+  "*The library used for displaying HTML messages.  The possible
+values are:
+  emacs-w3m  The emacs interface to the w3m viewer,
+  emacs-w3   The emacs interface to the w3 viewer,
+  w3m        The w3m viewer used externally to convert to plain text,
+  lynx       The lynx viewer used externally to convert to plain text,
+  auto-select Automatic selection among these alternatives, and
+  nil        No internal display of HTML messages.
+"
   :group 'vm
   :type '(choice (const nil :tag "Do not display HTML messages.")
                  (const auto-select :tag "Autoselect best method")
@@ -3635,14 +3666,9 @@ This means that VM will search for URLs (Uniform Resource
 Locators) in messages and make it possible for you to pass them
 to a World Wide Web browser.
 
-Clicking mouse-2 on the URL will send it to the browser.
-
-By default clicking mouse-3 on the URL will pop up a menu of
-browsers and you can pick which one you want to use.  If
-`vm-popup-menu-on-mouse-3' is set to nil, you will not see the menu.
-
-Moving point to a character within the URL and pressing RETURN
-will send the URL to the browser.
+Clicking mouse-2 on the URL will send it to the browser.  Moving point
+to a character within the URL and pressing RETURN will also send the
+URL to the browser. 
 
 If the value of `vm-url-browser' is a string, it should specify
 name of an external browser to run.  The URL will be passed to
@@ -3651,20 +3677,16 @@ specified by `vm-url-browser-switches', if any.
 
 If the value of `vm-url-browser' is a symbol, it should specify a
 Lisp function to call.  The URL will be passed to the program as
-its first and only argument.  Use
+its first and only argument.  VM defines a number of browser
+functions of the form `vm-mouse-send-url-to-xxx', where xxx is the
+name of a browser.  The `xxx' can be netscape, mmosaic, mosaic, opera,
+mozilla, konqueror, firefox, or clipboard.  If it is clipboard, the URL
+is sent to the X clipboard so that you can paste it into other browser
+windows. 
 
-   (setq vm-url-browser 'vm-mouse-send-url-to-netscape)
-
-for Netscape, and
-
-   (setq vm-url-browser 'vm-mouse-send-url-to-mmosaic)
-
-for mMosaic, and
-
-   (setq vm-url-browser 'vm-mouse-send-url-to-mosaic)
-
-for Mosaic.  The advantage of using them is that they will display
-an URL using an existing Mosaic or Netscape process, if possible.
+You might also consider specifying `vm-url-browser' to be the
+`browse-url' function defined in the browse-url library of Emacs.
+That library has a variety of browsers that can be invoked.
 
 A nil value means VM should not enable URL passing to browsers."
   :group 'vm
@@ -4156,7 +4178,9 @@ See `vm-mime-compile-format-1' for valid format specifiers."
   :type 'string)
 
 (defcustom vm-mime-show-alternatives nil
-  "*Show alternative for multipart/alternative parts."
+  "*This variable is deprecated.  You can set
+`vm-mime-alternative-select-method' to 'all to get the same effect as
+setting this one to t."
   :group 'vm
   :type 'boolean)
 
@@ -5386,13 +5410,19 @@ append a space to words that complete unambiguously.")
 (defvar vm-pop-keep-failed-trace-buffers 5)
 (defvar vm-imap-keep-failed-trace-buffers 5)
 ;; Lists of trace buffers remembered for debugging purposes
-(defvar vm-kept-pop-buffers nil)
-(make-variable-buffer-local 'vm-kept-pop-buffers)
-(defvar vm-kept-imap-buffers nil)
-(make-variable-buffer-local 'vm-kept-imap-buffers)
+(defvar vm-kept-pop-buffers nil
+  "* Variable that holds the old trace buffers of POP sessions for
+  debugging purposes.")
+(defvar vm-kept-imap-buffers nil
+  "* Variable that holds the old trace buffers of IMAP sessions for
+  debugging purposes.")
 ;; Flag to make POP/IMAP code remember old trace buffers
-(defvar vm-pop-keep-trace-buffer nil)
-(defvar vm-imap-keep-trace-buffer nil)
+(defvar vm-pop-keep-trace-buffer nil
+  "* Set this to non-nil to retain a limited number of POP session
+  trace buffers for debugging purposes.")
+(defvar vm-imap-keep-trace-buffer nil
+  "* Set this to non-nil to retain a limited number of IMAP session
+  trace buffers for debugging purposes.")
 (defvar vm-imap-session-done nil)
 (defvar vm-reply-list nil)
 (defvar vm-forward-list nil)
@@ -5436,7 +5466,7 @@ append a space to words that complete unambiguously.")
 ;; is loaded before highlight-headers.el
 (defvar highlight-headers-regexp "Subject[ \t]*:")
 (defvar vm-url-regexp
-  "<URL:\\([^>\n]+\\)>\\|\\(\\(file\\|ftp\\|gopher\\|http\\|https\\|news\\|wais\\|www\\)://[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)\\|\\(mailto:[^ \t\n\f\r\"<>|()]*[^] \t\n\f\r\"<>|.!?(){}]\\)\\|\\(file:/[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)"
+  "<URL:\\([^>\n]+\\)>\\|\\(\\(file\\|sftp\\|ftp\\|gopher\\|http\\|https\\|news\\|wais\\|www\\)://[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)\\|\\(mailto:[^ \t\n\f\r\"<>|()]*[^] \t\n\f\r\"<>|.!?(){}]\\)\\|\\(file:/[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)"
   "Regular expression that matches an absolute URL.
 The URL itself must be matched by a \\(..\\) grouping.
 VM will extract the URL by copying the lowest number grouping
@@ -5695,16 +5725,6 @@ that has a match.")
     ("message/rfc822")
     ("message/news")
    ))
-
-;; The following undocumented variables have been moved here from
-;; vm-mime.el.  USR, 2010-01-05
-
-(defvar vm-image-list nil)
-(defvar vm-image-type nil)
-(defvar vm-image-type-name nil)
-(defvar vm-extent-list nil)
-(defvar vm-overlay-list nil)
-
 
 (defconst vm-mime-encoded-word-regexp
   "=\\?\\([^?*]+\\)\\(\\*\\([^?*]+\\)\\)?\\?\\([BbQq]\\)\\?\\([^?]+\\)\\?=")

@@ -1,4 +1,6 @@
 ;;; vm-crypto.el --- Encryption and related functions for VM
+;;;
+;;; This file is part of VM
 ;;
 ;; Copyright (C) 2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
