@@ -341,7 +341,7 @@
 	(vm-mouse-send-url-to-firefox url t)))
   (message "Sending URL to Mozilla Firefox... done"))
 
-(defun vm-mouse-send-url-to-konqueror-new-browser (url)
+(defun vm-mouse-send-url-to-konqueror-new-window (url)
   (vm-mouse-send-url-to-konqueror url t))
 
 (defun vm-mouse-send-url-to-clipboard (url)

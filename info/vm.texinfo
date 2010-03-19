@@ -1338,6 +1338,7 @@ unread.
 
 @cindex longlines.el
 @cindex filling paragraphs
+@cindex word wrapping
 @cindex visual line mode
 @vindex vm-paragraph-fill-column
 @vindex vm-fill-paragraphs-containing-long-lines
@@ -4057,25 +4058,26 @@ specific menu is produced.
 These button assignments work only in plain text messsages.  For HTML
 messages, you might use an internal web browser such as w3m to display
 the content, which will have its own button assignments.  For instace,
-w3m binds button-2 to the browser function specified by
+w3m binds button-2 to the browser function specified by the variable
 @code{w3m-goto-article-function}.  You will need to set that variable to
-the desired browser function as well.
+the desired browser function to get button-2 to work in HTML messages.
 
 In mail composition buffers only mouse button-3 is affected.
 Context sensitive menus are produced when that button is clicked.
 
 @findex vm-mouse-send-url-to-netscape
 @findex vm-mouse-send-url-to-xxx
+@findex vm-mouse-send-url-to-xxx-new-window
 @findex browse-url
 @cindex browse-url
 @cindex web browser
 VM provides a number of browser functions that you can set as the value
-of @code{vm-url-browser}.  An example is
+of @code{vm-url-browser}.  An example is the function
 @code{vm-mouse-send-url-to-netscape}, which sends the URL at mouse to the
 Netscape browser.  Other browsers supported in this way include
 @code{mosaic}, @code{mmosaic}, @code{opera}, @code{mozilla},
 @code{firefox}, and @code{konqueror}, all of which have functions of the
-form @code{vm-mouse-send-url-to-xxx}.  You can also set
+form @code{vm-mouse-send-url-to-xxx} and @code{vm-mouse-send-url-to-xxx-new-window}.  You can also set
 @code{vm-url-browser} to the Emacs function @code{browse-url}, and use
 the facilities defined in the @code{browse-url} library to send URL's to
 external browsers.

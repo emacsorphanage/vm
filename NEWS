@@ -60,6 +60,9 @@ VM 8.1.1-devo
      to eliminate obsolete web browsers.  Entries added for Firefox,
      Mozilla and Opera.
 
+   * The function `vm-mouse-send-url-to-konqueror-new-browser' renamed
+     to `vm-mouse-send-url-to-konqueror-new-window', to be consistent
+     with other similar functions.
 
 VM 8.1.0 (2010-03-21)
 
