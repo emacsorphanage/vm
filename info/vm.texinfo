@@ -2387,15 +2387,21 @@ specification similar to @code{vm-summary-format}.  @xref{Summaries}.  A
 @vindex vm-included-mime-types-list
 @vindex vm-include-text-from-presentation
 By default, VM uses its MIME displaying mechanism to extract the
-included text to be cited in replies.  If this does not work correctly,
-you can set the variable @code{vm-included-mime-types-list} to a list of
-MIME types that should be covered in the included text.  The list should
-have @code{text/plain} at a minimum and could include other types such
-as @code{text/enriched} and @code{message}.  Setting the variable to nil
+included text to be cited in replies.  For instance, if the MIME display
+prefers plain text for multipart/alternative messages, that is what will
+be included.  If it prefers HTML, that will be included (after
+conversion to plain text form) and, if it displays both the plain text and
+HTML alternatives, then both versions will be
+included in the replies.  If this does not work correctly, you can set
+the variable @code{vm-included-mime-types-list} to a list of MIME types
+that should be covered in the included text.  The list should have
+@code{text/plain} at a minimum and could include other types such as
+@code{text/enriched} and @code{message}.  Setting the variable to nil
 returns you to the default behaviour.  Another possibe way to extract
 included text is to use the contents of the presentation buffer.  You
 can ask VM to do so by setting the variable
-@code{vm-include-text-from-presentation} to t.
+@code{vm-include-text-from-presentation} to t.  This might be needed
+only in abnormal circumstances.
 
 @vindex vm-in-reply-to-format
 The variable @code{vm-in-reply-to-format} specifies the format of the

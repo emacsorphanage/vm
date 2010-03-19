@@ -2506,7 +2506,8 @@ are handled by VM's MIME decoding mechanism."
 
 (defcustom vm-include-text-from-presentation nil
   "*If true a reply will include the presentation of a message.
-This might give better results when using filling or MIME encoded messages,
+This is an exeperimental feature that should not be used normally, but
+it might give better results when using filling or MIME encoded messages,
 e.g. HTML message."
   :group 'vm
   :type 'boolean)
