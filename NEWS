@@ -72,6 +72,9 @@ VM 8.1.0 (2010-03-21)
       safety reasons.  Please help us by sending us sample messages
       for which filling fails.
 
+    * IMAP folders occasionally give spurious connection errors.
+      Doing vm-get-new-mail ('g') resumes the connection.
+
   MAJOR NEW FEATURES:
 
     * Support for reading and replying to messages in HTML.
@@ -98,10 +101,21 @@ VM 8.1.0 (2010-03-21)
       the variable `vm-mime-alternative-select-method' to 'all to
       get the same effect.
 
+    * Moved Robert's user-defined summary functions to the core:
+     - S for human readable size
+     - P for indication of attachments
+     - p for indication of a postponed message
+
   IMPROVEMENTS:
 
-   * The variable `vm-paragraph-fill-column', previously removed in
-     earlier versions of this release, is brought back.
+    * Display number of drafts and postponed messages in the modeline
+      and use a more compact modeline.  To use this feature, include
+      this line in your .vm file:
+
+        (setq vm-mode-line-format vm-mode-line-format-robf)
+
+    * The variable `vm-paragraph-fill-column', previously removed in
+      earlier versions of this release, is brought back.
 
    ** The commands `vm-mime-save-all-attachments' and
       `vm-mime-delete-all-attachments' have been moved to the VM core
@@ -213,14 +227,6 @@ VM 8.1.0 (2010-03-21)
     * Improved text/html displaying by w3m.  Inline images are now extracted
       correctly and they also display now.  Added a generic handler code to
       support also other HTML handlers.
-
-    * Display number of drafts and postponed messages in the modeline and use
-      a more compact modeline.
-
-    * Moved Robert's user-defined summary functions to the core:
-     - S for human readable size
-     - P for indication of attachments
-     - p for indication of a postponed message
 
     * Added variable `vm-restore-saved-summary-formats' to restore
       each folder's summary format to what was saved previously.
