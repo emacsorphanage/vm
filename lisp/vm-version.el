@@ -19,24 +19,24 @@
 
 ;;; Code:
 (defconst vm-version
-  (eval-when-compile
-    (condition-case nil
-	(with-temp-buffer
-	  (insert-file-contents-literally
-	   (expand-file-name
-	    "version.txt"
-	    (and load-file-name (file-name-directory load-file-name))))
-	  (read (current-buffer)))
-      (file-error nil)))
+  (condition-case nil
+      (with-temp-buffer
+	(insert-file-contents-literally
+	 (expand-file-name
+	  "version.txt"
+	  (and load-file-name (file-name-directory load-file-name))))
+	(read (current-buffer)))
+    (file-error "undefined"))
   "Version number of VM.")
 
 (defun vm-version ()
   "Return the value of the variable `vm-version'."
   (interactive)
   (when (interactive-p)
-    (if (string= "?bug?" vm-version)
-        (error "Cannot determine VM version!")
-      (message "VM version is: %s" vm-version)))
+    (or (and (stringp vm-version)
+	     (string-match "[0-9]" vm-version))
+	(error "Cannot determine VM version!"))
+    (message "VM version is: %s" vm-version))
   vm-version)
 
 (defconst vm-xemacs-p
