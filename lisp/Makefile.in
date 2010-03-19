@@ -8,8 +8,7 @@ SHELL = /bin/sh
 PACKAGE_VERSION = @PACKAGE_VERSION@
 
 # the list of source files
-SOURCES = vm-version.el
-SOURCES += vm.el
+SOURCES = vm.el
 SOURCES += vm-autoload.el
 SOURCES += vm-avirtual.el
 SOURCES += vm-biff.el
