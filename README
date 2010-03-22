@@ -69,8 +69,8 @@ Eventually, we may migrate to a single site for both the facilities.
 *******************************************************************************
 Wiki
 
-The Wiki at http://www.emacswiki.org/cgi-bin/wiki?id=CategoryViewMail is
-best suited to conserve code snippets, cooking guides or feature requests.
+The Wiki at http://www.emacswiki.org/emacs/CategoryViewMail is best
+suited to conserve code snippets, cooking guides or feature requests.
 
 *******************************************************************************
 BZR (http://bazaar-vcs.org/)
