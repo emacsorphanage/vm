@@ -4605,8 +4605,6 @@ created."
 	    ;; don't let it do CR -> LF translation.
 	    (setq selective-display nil)
 	    (set-buffer work-buffer)
-	    (if vm-fsfemacs-mule-p
-		(set-buffer-multibyte nil))
 	    (vm-mime-insert-mime-body layout)
 	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
 	    (let ((pop-up-windows (and pop-up-windows
