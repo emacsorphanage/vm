@@ -352,7 +352,7 @@ VM 8.0.10    2008-07-22
     * Define and use `vm-replace-in-string' which is `replace-in-string'
       from XEmacs to avoid clashes with other GNU Emacs packages defining
       it differently. Unfortunately, GNU Emacs still does not provide this
-      handy function. (Thanks to JosÃ© Miguel Figueroa)
+      handy function. (Thanks to José Miguel Figueroa)
 
     * MIME encoding of header will automatically happen now and has been moved
       from `vm-rfaddons.el' to `vm-mime.el' and `vm-vars.el'.
