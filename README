@@ -6,7 +6,7 @@ http://www.wonderworks.com/vm and the FAQ is still hosted there.
 
 This VM is based on Robert Widhopf-Fenk's patches against VM 7.19.
 The current version is maintained by the 'VM development team'
-(vm@lists.launchpad.net) consisting of Robert, Ulrich Müller and Uday
+(vm@lists.launchpad.net) consisting of Robert, Ulrich MÃ¼ller and Uday
 Reddy.
 
 The persons who have contributed to this version of VM are:
@@ -24,7 +24,7 @@ The persons who have contributed to this version of VM are:
  * Julian Bradfield
  * Samuel Bronson
  * Brent Goodrick
- * Ulrich Müller
+ * Ulrich MÃ¼ller
  * Uday S. Reddy
  * Robert Widhopf-Fenk
 
@@ -128,3 +128,9 @@ Enhancements:
 applications, as well as replying to HTML messages.
 
 - IMAP server support by Uday Reddy
+
+
+Local Variables:
+mode: text
+coding: utf-8
+End:
