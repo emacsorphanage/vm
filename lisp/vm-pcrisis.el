@@ -47,7 +47,8 @@
   (condition-case e
       (progn 
         (require 'regexp-opt)
-        (require 'bbdb))
+        (require 'bbdb)
+        (require 'bbdb-com))
     (error
      (message "%S" e)
      (message "Could not load bbdb.el.  Related functions may not work correctly!")

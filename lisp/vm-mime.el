@@ -1533,7 +1533,8 @@ that recipient is outside of East Asia."
 	(if (or vm-xemacs-mule-p
 		(and vm-fsfemacs-mule-p enable-multibyte-characters))
 	    ;; Okay, we're on a MULE build.
-	  (if (fboundp 'check-coding-systems-region)
+	  (if (and vm-fsfemacs-mule-p
+		   (fboundp 'check-coding-systems-region))
 	      ;; check-coding-systems-region appeared in GNU Emacs 23.
 	      (let* ((preapproved (vm-get-coding-system-priorities))
 		     (ucs-list (vm-get-mime-ucs-list))
@@ -4605,8 +4606,6 @@ created."
 	    ;; don't let it do CR -> LF translation.
 	    (setq selective-display nil)
 	    (set-buffer work-buffer)
-	    (if vm-fsfemacs-mule-p
-		(set-buffer-multibyte nil))
 	    (vm-mime-insert-mime-body layout)
 	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
 	    (let ((pop-up-windows (and pop-up-windows

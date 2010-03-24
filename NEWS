@@ -1,7 +1,7 @@
 Status
 
   VM is currently being maintained by a 'VM development team'
-  consisting of Robert Widhopf-Fenk, Ulrich Mueller and Uday S Reddy.
+  consisting of Robert Widhopf-Fenk, Ulrich Müller and Uday S Reddy.
   We continue to look for more volunteers to help with the
   maintenance.
 
@@ -60,6 +60,9 @@ VM 8.1.1-devo
      to eliminate obsolete web browsers.  Entries added for Firefox,
      Mozilla and Opera.
 
+   * The function `vm-mouse-send-url-to-konqueror-new-browser' renamed
+     to `vm-mouse-send-url-to-konqueror-new-window', to be consistent
+     with other similar functions.
 
 VM 8.1.0 (2010-03-21)
 
@@ -68,6 +71,9 @@ VM 8.1.0 (2010-03-21)
     * Automatic filling is turned off for some plain text messages for
       safety reasons.  Please help us by sending us sample messages
       for which filling fails.
+
+    * IMAP folders occasionally give spurious connection errors.
+      Doing vm-get-new-mail ('g') resumes the connection.
 
   MAJOR NEW FEATURES:
 
@@ -95,10 +101,21 @@ VM 8.1.0 (2010-03-21)
       the variable `vm-mime-alternative-select-method' to 'all to
       get the same effect.
 
+    * Moved Robert's user-defined summary functions to the core:
+     - S for human readable size
+     - P for indication of attachments
+     - p for indication of a postponed message
+
   IMPROVEMENTS:
 
-   * The variable `vm-paragraph-fill-column', previously removed in
-     earlier versions of this release, is brought back.
+    * Display number of drafts and postponed messages in the modeline
+      and use a more compact modeline.  To use this feature, include
+      this line in your .vm file:
+
+        (setq vm-mode-line-format vm-mode-line-format-robf)
+
+    * The variable `vm-paragraph-fill-column', previously removed in
+      earlier versions of this release, is brought back.
 
    ** The commands `vm-mime-save-all-attachments' and
       `vm-mime-delete-all-attachments' have been moved to the VM core
@@ -211,14 +228,6 @@ VM 8.1.0 (2010-03-21)
       correctly and they also display now.  Added a generic handler code to
       support also other HTML handlers.
 
-    * Display number of drafts and postponed messages in the modeline and use
-      a more compact modeline.
-
-    * Moved Robert's user-defined summary functions to the core:
-     - S for human readable size
-     - P for indication of attachments
-     - p for indication of a postponed message
-
     * Added variable `vm-restore-saved-summary-formats' to restore
       each folder's summary format to what was saved previously.
       (Uday S. Reddy)
@@ -233,8 +242,7 @@ VM 8.1.0 (2010-03-21)
     * Allow to reorder messages headers before sending by setting the new
       variable `vm-mail-reorder-message-headers'.
 
-    * Allow UTF-8 encoded messages to be displayed on tty.  (Ulrich
-      Muller)
+    * Allow UTF-8 encoded messages to be displayed on tty.  (Ulrich Müller)
 
   BUG FIXES
 
@@ -242,7 +250,7 @@ VM 8.1.0 (2010-03-21)
       `delete-auto-save-files'. (Uday S. Reddy)
 
     * Allow the use of iso-8859-1 for outgoing mail under Emacs 23
-      (instead of spurious iso-2022-jp).  (Ulrich Mueller)
+      (instead of spurious iso-2022-jp).  (Ulrich Müller)
 
     * Coding system set to binary when reading and writing to allow
       for 8-bit content.  (Julian Bradfield)
@@ -299,7 +307,7 @@ VM 8.0.13    2009-11-29
   MANAGEMENT CHANGES:
 
     * VM being maintained by "VM development team", vm@lists.launchpad.net,
-      consisting of Robert Fenk, Uday Reddy and Ulrich Mueller.
+      consisting of Robert Fenk, Uday Reddy and Ulrich Müller.
 
   BUGFIXES:
 
@@ -314,7 +322,7 @@ VM 8.0.12    2008-11-05
   IMPROVEMENTS:
 
     * Display version info when calling `vm-version' interactively.  (Thanks
-      to Ulrich Mueller)
+      to Ulrich Müller)
 
     * Yanking of messages uses the same MIME decoding as the presentation
       now.  See the new variable `vm-mime-yank-attachments' to configure if
@@ -329,7 +337,7 @@ VM 8.0.12    2008-11-05
       `w3-about'. (Thanks to Klaus Straubinger)
 
     * vm.revno.el was not installed anymore b "make install".  (Thanks to
-      Ulrich Mueller for reporting)
+      Ulrich Müller for reporting)
 
     * Insert `emacs-version' instead of creating wrong version string for
       XEmacs, i.e. the patch level was the major version. (Thanks to Stephen
@@ -353,7 +361,7 @@ VM 8.0.12    2008-11-05
 
     * Header encoding was BASE64 instead of QP by default and it was not
       encoding whole words, but only the 8bit chars instead. (Thanks to Ulrich
-      Mueller for reporting)
+      Müller for reporting)
 
     * MIME text parts interleaved by attachments are now correctly yanked,
       e.g. when replying to a message.
@@ -393,7 +401,7 @@ VM 8.0.10    2008-07-22
     * Define and use `vm-replace-in-string' which is `replace-in-string'
       from XEmacs to avoid clashes with other GNU Emacs packages defining
       it differently. Unfortunately, GNU Emacs still does not provide this
-      handy function. (Thanks to Jos� Miguel Figueroa)
+      handy function. (Thanks to José Miguel Figueroa)
 
     * MIME encoding of header will automatically happen now and has been moved
       from `vm-rfaddons.el' to `vm-mime.el' and `vm-vars.el'.
@@ -615,7 +623,7 @@ VM 8.0.2    2007-07-25
 
     * Added --with-pixmapdir to configure the location of the pixmaps.
 
-    * DESTDIR-Patch (Ulrich Mueller).
+    * DESTDIR-Patch (Ulrich Müller).
 
   BUG FIXES:
 
@@ -648,7 +656,7 @@ VM 8.0.2    2007-07-25
     
     * Ensure we are compiling with an emacs version >= 21.
 
-    * Encode headers regexp and case-fold-search corrected. (Ulrich Mueller)
+    * Encode headers regexp and case-fold-search corrected. (Ulrich Müller)
 
     * vm-summary-faces-mode does not leak extents anymore.
 
@@ -768,7 +776,7 @@ VMRF  2006-09
    Mentioned on gnu.emacs.vm.info as a fork.
 
 
-
-;;; Local Variables: ***
-;;; mode:text ***
-;;; End: ***
+Local Variables:
+mode: text
+coding: utf-8
+End:

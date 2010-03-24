@@ -100,7 +100,8 @@ will be visible."
       (vm-th-set-date-of id-sym date)
       (if (and (null (cdr (vm-th-messages-of id-sym)))
 	       schedule-reindents)
-	  (vm-thread-mark-for-summary-update (vm-th-children-of id-sym)))
+	  (vm-thread-mark-for-summary-update 
+	   (cons m (vm-th-children-of id-sym))))
       (if parent
 	  (progn
 	    (setq parent-sym (intern parent vm-thread-obarray))
