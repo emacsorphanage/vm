@@ -20,9 +20,10 @@ Copyright @copyright{} 1999  Rob Hodges, 2006-2008 Robert Widhopf-Fenk
 
 @c ***************************************************************************
 
-@node Top, Getting Started, (dir), (dir)
-@c node-name, next, previous, up
-@chapter Personality Crisis for VM
+@ifnottex
+@node Top
+@top Personality Crisis for VM
+@end ifnottex
 
 This is the documentation for Personality Crisis for VM.
 
@@ -39,12 +40,11 @@ This manual corresponds to VM version @value{VERSION}.
 
 @menu
 * Getting Started::             
-* vmpc-conditions::             
-* vmpc-actions::                
-* Associating Conditions with Actions::  
+* Setting Up::
 * Miscellaneous Variables::     
 * Debugging::                   
-* New In This Version::         
+* Version History::         
+* Index::
 @end menu
 
 The incompete list of Roberts which have been involved in vm-pcrisis:
@@ -58,21 +58,22 @@ The incompete list of Roberts which have been involved in vm-pcrisis:
 
 @c ***************************************************************************
 
-@node Getting Started, vmpc-conditions, Top, Top
+@node Getting Started, Setting Up, Top, Top
 @c node-name, next, previous, up
 @chapter Getting Started
 
+Personality Crisis can look at the headers of a message you are replying
+to or forwarding, or a message you are composing, and you can set it up
+to do just about anything based on those.  To get some ideas about how
+this might be useful, see @ref{Common Uses}.  You can also use it to
+explicitly choose a "personality" when composing new messages.
+
 @menu
 * Installation::                
-* Quick start::                 
 * Description::                 
-* Specific Abilities::          
-* Common Uses::                 
-* Overview::                    
-* Calling Automorph::           
 @end menu
 
-@node Installation, Quick start, Getting Started, Getting Started
+@node Installation, Description, Getting Started, Getting Started
 @section Installation
 
 @enumerate
@@ -106,26 +107,26 @@ Read the rest of this manual and set up the variables it describes.
 
 @c ***************************************************************************
 
-@node Quick start, Description, Installation, Getting Started
-@section Quick start
+@c @node Quick start, Description, Installation, Getting Started
+@subsection Quick start
 
-You do not want to read a manual but solve your personal crisis now?
+@c You do not want to read a manual but solve your personal crisis now?
 
-Then add the following to your ~/.vm file:
+As a quick start, you can add the following lines to your ~/.vm file:
 
 @lisp
 (require 'vm-pcrisis)
 (vmpc-my-identities "me@@company1.nil" "me@@home.nil" "me@@alterego.nil")
 @end lisp
 
-Where you add you own email addresses to the call of
+where you add your own email addresses to the call of
 @code{vmpc-my-identities}.  This will prompt you for 
-the profile to use when first writing an message to a 
+the profile to use when first writing a message to an
 unknown email address.
 
 @c ***************************************************************************
 
-@node Description, Specific Abilities, Quick start, Getting Started
+@node Description, , Installation, Getting Started
 @section Description
 
 Personality Crisis can look at the headers of a message you are replying
@@ -136,8 +137,9 @@ explicitly choose a "personality" when composing new messages.
 
 @c ***************************************************************************
 
-@node Specific Abilities, Common Uses, Description, Getting Started
-@section Specific Abilities
+@c @node Specific Abilities, Common Uses, Description, Getting Started
+@unnumberedsubsec Specific Abilities
+@anchor{Specific Abilities}
 
 Based on the headers of a message you are replying to, you can get
 vm-pcrisis to do any number of these things:
@@ -182,9 +184,9 @@ the message you are writing.
 
 @c ***************************************************************************
 
-@node Common Uses, Overview, Specific Abilities, Getting Started
-@c node-name, next, previous, up
-@section Common Uses
+@c @node Common Uses, Overview, Specific Abilities, Getting Started
+@unnumberedsubsec Common Uses
+@anchor{Common Uses}
 
 These are some of the common uses for Personality Crisis.
 
@@ -228,8 +230,8 @@ you.  Have fun!
 
 @c ***************************************************************************
 
-@node Overview, Calling Automorph, Common Uses, Getting Started
-@section Overview
+@node Setting Up, Miscellaneous Variables, Getting Started, Top
+@chapter Setting Up
 
 When setting up variables for Personality Crisis, you begin by thinking
 about what you want it to do when a certain condition occurs, either
@@ -254,9 +256,15 @@ read @ref{Calling Automorph} to decide where you want to hook it in.
 The remainder of this manual will provide more information about how to
 do all of these things.  
 
-@c ***************************************************************************
+@menu
+* Calling Automorph::           
+* vmpc-conditions::             
+* vmpc-actions::                
+* Associating Conditions with Actions::  
+@end menu
 
-@node Calling Automorph,  , Overview, Getting Started
+
+@node Calling Automorph, vmpc-conditions, Setting Up, Setting Up
 @section Calling Automorph
 
 The @code{vmpc-automorph} function automatically sets various things in
@@ -343,17 +351,17 @@ bear this in mind when you set up the profiles!
 
 @c ***************************************************************************
 
-@node vmpc-conditions, vmpc-actions, Getting Started, Top
+@node vmpc-conditions, vmpc-actions, Calling Automorph, Setting Up
 @c node-name, next, previous, up
-@chapter vmpc-conditions
+@section vmpc-conditions
 
-@menu
-* The vmpc-conditions variable::  
-* vmpc-conditions examples::    
-@end menu
+@c @menu
+@c * The vmpc-conditions variable::  
+@c * vmpc-conditions examples::    
+@c @end menu
 
-@node The vmpc-conditions variable, vmpc-conditions examples, vmpc-conditions, vmpc-conditions
-@section The vmpc-conditions variable
+@c @node The vmpc-conditions variable, vmpc-conditions examples, vmpc-conditions, vmpc-conditions
+@unnumberedsubsec The vmpc-conditions variable
 
 The @code{vmpc-conditions} variable is a list of conditions, each of which
 can cause Personality Crisis to take a different action.  You give each
@@ -414,9 +422,10 @@ We will cover all of these in the examples that follow.
 
 @c ***************************************************************************
 
-@node vmpc-conditions examples,  , The vmpc-conditions variable, vmpc-conditions
+@c @node vmpc-conditions examples,  , The vmpc-conditions variable, vmpc-conditions
 @c node-name, next, previous, up
-@section vmpc-conditions examples
+@subsection vmpc-conditions examples
+@anchor{vmpc-conditions examples}
 
 Suppose you wanted to set up a condition that triggered when you replied 
 to messages that came from a particular mailing list.  Looking at the
@@ -703,17 +712,18 @@ enough from these examples to achieve such control.
 
 @c ***************************************************************************
 
-@node vmpc-actions, Associating Conditions with Actions, vmpc-conditions, Top
+@node vmpc-actions, Associating Conditions with Actions, vmpc-conditions, Setting Up
 @c node-name, next, previous, up
-@chapter vmpc-actions
+@section vmpc-actions
 
-@menu
-* The vmpc-actions variable::   
-* vmpc-actions examples::       
-@end menu
+@c @menu
+@c * The vmpc-actions variable::   
+@c * vmpc-actions examples::       
+@c @end menu
 
-@node The vmpc-actions variable, vmpc-actions examples, vmpc-actions, vmpc-actions
-@section The vmpc-actions variable
+@c @node The vmpc-actions variable, vmpc-actions examples, vmpc-actions, vmpc-actions
+@unnumberedsubsec The vmpc-actions variable
+@anchor{The vmpc-actions variable}
 
 The @code{vmpc-actions} variable is a list of actions, which can equally
 be referred to as "profiles".  You will set up some of them for replies,
@@ -785,9 +795,11 @@ composition buffer is created.
 
 @c ***************************************************************************
 
-@node vmpc-actions examples,  , The vmpc-actions variable, vmpc-actions
+@c @node vmpc-actions examples,  , The vmpc-actions variable, vmpc-actions
 @c node-name, next, previous, up
-@section vmpc-actions examples
+@unnumberedsubsec vmpc-actions examples
+@anchor{vmpc-actions examples}
+
 
 In your ~/.vm you'll have something like this:
 
@@ -945,23 +957,22 @@ address.  Like this:
 
 @c ***************************************************************************
 
-@node Associating Conditions with Actions, Miscellaneous Variables, vmpc-actions, Top
-@chapter Associating Conditions with Actions
+@node Associating Conditions with Actions, , vmpc-actions, Setting Up
+@section Associating Conditions with Actions
 
-@menu
-* vmpc-action-alist::           
-* vmpc-reply-alist::            
-* vmpc-automorph-alist::        
-* vmpc-forward-alist::          
-* vmpc-resend-alist::           
-* vmpc-newmail-alist::          
-@end menu
+@c @menu
+@c * vmpc-action-alist::           
+@c * vmpc-reply-alist::            
+@c * vmpc-automorph-alist::        
+@c * vmpc-forward-alist::          
+@c * vmpc-resend-alist::           
+@c * vmpc-newmail-alist::          
+@c @end menu
 
 @c ***************************************************************************
 
-@node vmpc-action-alist, vmpc-reply-alist, Associating Conditions with Actions, Associating Conditions with Actions
-@c node-name, next, previous, up
-@section vmpc-action-alist
+@unnumberedsubsec vmpc-action-alist
+@vindex vmpc-action-alist
 
 The @code{vmpc-action-alist} variable controls which actions are
 performed if various conditions are met when creating a reply.  Its
@@ -978,9 +989,9 @@ will be used as a fall back.
 
 @c ***************************************************************************
 
-@node vmpc-reply-alist, vmpc-automorph-alist, vmpc-action-alist, Associating Conditions with Actions
-@c node-name, next, previous, up
-@section vmpc-reply-alist
+@unnumberedsubsec vmpc-reply-alist
+@vindex vmpc-reply-alist
+@anchor{vmpc-reply-alist}
 
 The @code{vmpc-reply-alist} variable controls which actions are
 performed if various conditions are met when creating a reply.  Its
@@ -1008,9 +1019,9 @@ have this in our ~/.vm file:
 
 @c ***************************************************************************
 
-@node vmpc-automorph-alist, vmpc-forward-alist, vmpc-reply-alist, Associating Conditions with Actions
-@c node-name, next, previous, up
-@section vmpc-automorph-alist
+@unnumberedsubsec vmpc-automorph-alist
+@vindex vmpc-automorph-alist
+@anchor{vmpc-automorph-alist}
 
 The @code{vmpc-automorph-alist} variable has the same syntax as
 @code{vmpc-reply-alist} and follows the same principles.  (See
@@ -1019,8 +1030,8 @@ which actions are associated with which conditions when the
 @code{vmpc-automorph} function is called.
 
 @c ***************************************************************************
-@node vmpc-forward-alist, vmpc-resend-alist, vmpc-automorph-alist, Associating Conditions with Actions
-@section vmpc-forward-alist
+@unnumberedsubsec vmpc-forward-alist
+@vindex vmpc-forward-alist
 
 The @code{vmpc-forward-alist} variable has the same syntax as
 @code{vmpc-reply-alist} and follows the same principles.  (See
@@ -1029,8 +1040,8 @@ which actions are associated with which conditions when forwarding
 messages.
 
 @c ***************************************************************************
-@node vmpc-resend-alist, vmpc-newmail-alist, vmpc-forward-alist, Associating Conditions with Actions
-@section vmpc-resend-alist
+@unnumberedsubsec vmpc-resend-alist
+@vindex vmpc-resend-alist
 
 The @code{vmpc-resend-alist} variable has the same syntax as
 @code{vmpc-reply-alist} and follows the same principles.  (See
@@ -1041,8 +1052,9 @@ messages with @code{vm-resend-message}.
 
 @c ***************************************************************************
 
-@node vmpc-newmail-alist,  , vmpc-resend-alist, Associating Conditions with Actions
-@section vmpc-newmail-alist
+@unnumberedsubsec vmpc-newmail-alist
+@vindex vmpc-newmail-alist
+@anchor{vmpc-newmail-alist}
 
 The @code{vmpc-newmail-alist} variable has the same syntax as
 @code{vmpc-reply-alist} and follows the same principles.  (See
@@ -1088,25 +1100,24 @@ Finally, you'd set up @code{vmpc-newmail-alist} like this:
 
 @c ***************************************************************************
 
-@node Miscellaneous Variables, Debugging, Associating Conditions with Actions, Top
+@node Miscellaneous Variables, Debugging, Setting Up, Top
 @c node-name, next, previous, up
 @chapter Miscellaneous Variables
 
-@menu
-* vmpc-auto-profiles-file::     
-* vmpc-auto-profiles-expunge-days::  
-* vmpc-sig-face::               
-* vmpc-pre-sig-face::           
-* vmpc-intangible-sig::         
-* vmpc-intangible-pre-sig::     
-* vmpc-expect-default-signature::  
-@end menu
+@c @menu
+@c * vmpc-auto-profiles-file::     
+@c * vmpc-auto-profiles-expunge-days::  
+@c * vmpc-sig-face::               
+@c * vmpc-pre-sig-face::           
+@c * vmpc-intangible-sig::         
+@c * vmpc-intangible-pre-sig::     
+@c * vmpc-expect-default-signature::  
+@c @end menu
 
 @c ***************************************************************************
 
-@node vmpc-auto-profiles-file, vmpc-auto-profiles-expunge-days, Miscellaneous Variables, Miscellaneous Variables
-@c node-name, next, previous, up
-@section vmpc-auto-profiles-file
+@unnumberedsubsec vmpc-auto-profiles-file
+@vindex vmpc-auto-profiles-file
 
 The variable @code{vmpc-auto-profiles-file} contains the name of the
 file used for saving profiles when @code{vmpc-prompt-for-profile} is
@@ -1117,9 +1128,8 @@ By default it is set to "~/.vmpc-auto-profiles".
 
 @c ***************************************************************************
 
-@node vmpc-auto-profiles-expunge-days, vmpc-sig-face, vmpc-auto-profiles-file, Miscellaneous Variables
-@c node-name, next, previous, up
-@section vmpc-auto-profiles-expunge-days
+@unnumberedsubsec vmpc-auto-profiles-expunge-days
+@vindex vmpc-auto-profiles-expunge-days
 
 In order to keep vmpc-auto-profiles-file from becoming massive,
 Personality Crisis will check the age of profile associations in that
@@ -1130,8 +1140,8 @@ is set to 100 by default.
 
 @c ***************************************************************************
 
-@node vmpc-sig-face, vmpc-pre-sig-face, vmpc-auto-profiles-expunge-days, Miscellaneous Variables
-@section vmpc-sig-face
+@unnumberedsubsec vmpc-sig-face
+@vindex vmpc-sig-face
 
 This is the face used to highlight the signature.  You can use
 @code{set-face-foreground}, @code{set-face-background} and
@@ -1139,8 +1149,8 @@ This is the face used to highlight the signature.  You can use
 
 @c ***************************************************************************
 
-@node vmpc-pre-sig-face, vmpc-intangible-sig, vmpc-sig-face, Miscellaneous Variables
-@section vmpc-pre-sig-face
+@unnumberedsubsec vmpc-pre-sig-face
+@vindex vmpc-pre-sig-face
 
 This is the face used to highlight the pre-signature.  You can use
 @code{set-face-foreground}, @code{set-face-background} and
@@ -1148,8 +1158,9 @@ This is the face used to highlight the pre-signature.  You can use
 
 @c ***************************************************************************
 
-@node vmpc-intangible-sig, vmpc-intangible-pre-sig, vmpc-pre-sig-face, Miscellaneous Variables
-@section vmpc-intangible-sig
+@unnumberedsubsec vmpc-intangible-sig
+@vindex vmpc-intangible-sig
+@anchor{vmpc-intangible-sig}
 
 If @code{vmpc-intangible-sig} is non-nil, movement and mouse commands
 will cause your cursor to slide to one side or the other of the
@@ -1166,8 +1177,8 @@ activate this feature, just add the following to your ~/.vm file:
 
 @c ***************************************************************************
 
-@node vmpc-intangible-pre-sig, vmpc-expect-default-signature, vmpc-intangible-sig, Miscellaneous Variables
-@section vmpc-intangible-pre-sig
+@unnumberedsubsec vmpc-intangible-pre-sig
+@vindex vmpc-intangible-pre-sig
 
 The @code{vmpc-intangible-pre-sig} variable works just like
 @code{vmpc-intangible-sig}, but affects the pre-signature.  See
@@ -1175,8 +1186,8 @@ The @code{vmpc-intangible-pre-sig} variable works just like
 
 @c ***************************************************************************
 
-@node vmpc-expect-default-signature,  , vmpc-intangible-pre-sig, Miscellaneous Variables
-@section vmpc-expect-default-signature
+@unnumberedsubsec vmpc-expect-default-signature
+@vindex vmpc-expect-default-signature
 
 Traditionally, signatures are added to new mail messages using a
 signature-insertion function bound to @code{mail-mode-hook} or similar,
@@ -1192,7 +1203,7 @@ setup, provided that your signature-insertion function uses the standard
 
 @c ***************************************************************************
 
-@node Debugging, New In This Version, Miscellaneous Variables, Top
+@node Debugging, Version History, Miscellaneous Variables, Top
 @c node-name, next, previous, up
 @chapter Debugging 
 
@@ -1225,9 +1236,9 @@ If you want to run new actions you can run @code{vmpc-read-actions} and
 @c ***************************************************************************
 
 
-@node New In This Version,  , Debugging, Top
+@node Version History, Index , Debugging, Top
 @c node-name, next, previous, up
-@chapter New In This Version
+@chapter Version History
 
 Version 0.11:
 
@@ -1372,6 +1383,9 @@ be expunged.
 
 @end itemize
 
+@node Index, , Version History, Top
+@unnumbered Index
+@printindex vr
 
 
 
