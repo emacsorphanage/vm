@@ -12,7 +12,7 @@ fi
 # check for an error less build
 if [ "$1" != "test" ]; then 
   # make sure we delete the existing files containing version info
-  rm -f lisp/version.txt info/version.texi
+  rm -f lisp/vm-version.el info/vm-version.texinfo
   make all || exit 1
 fi
 
@@ -27,9 +27,6 @@ mkdir -p release
 $bzr export $dir
 
 cp configure $dir
-# The following lines are useless and misguided.  USR, 2010-03-13
-# mv lisp/version.txt $dir/lisp
-# mv info/version.texi $dir/info
 rm $dir/getversion.sh $dir/release.sh
 cd release
 tar cvfz $rdir.tgz $rdir
