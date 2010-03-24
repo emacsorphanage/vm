@@ -77,7 +77,7 @@ uninstall-pkg:
 
 ##############################################################################
 clean:
-	-$(RM) -f *.info *.info-[0-9]
+	-$(RM) -f version.texi *.info *.info-[0-9]
 
 distclean: clean
 	-$(RM) -f Makefile
