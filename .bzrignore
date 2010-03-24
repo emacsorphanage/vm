@@ -18,7 +18,7 @@ release
 snapshot
 CVS
 .cvsignore
-info/version.texi
+info/version.texinfo
 lisp/version.txt
 lisp/vm-autoloads.el
 lisp/vm-cus-load.el
