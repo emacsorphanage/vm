@@ -103,6 +103,6 @@
        ((>= emacs-major-version 21)
 	(update-autoloads-from-directories source-dir))
        (t
-	(error "Do not know how to generate autoloads")))
+	(error "Do not know how to generate autoloads"))))))
 
 (provide 'vm-build)
