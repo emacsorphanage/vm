@@ -2463,18 +2463,39 @@ remove from the recipient headers of replies.
 @section Forwarding Messages
 
 VM has three commands to forward messages: @kbd{z}
-(@code{vm-forward-message}), @key{@@} (@code{vm-send-digest}) and
+(@code{vm-forward-message}), @kbd{@@} (@code{vm-send-digest}) and
 @kbd{B} (@code{vm-resend-message}).
 
 @findex vm-forward-message
 @kindex z
 @vindex vm-forwarding-digest-type
-@vindex vm-forwarding-subject-format
 Typing @kbd{z} puts you into a VM Mail mode buffer just like @kbd{m},
-except the current message appears as the body of the message in the VM
-Mail mode buffer. The forwarded message encapsulated as specified by the
-variable @code{vm-forwarding-digest-type}.  Recognized values are
-@samp{"rfc934"}, @samp{"rfc1153"} and @samp{"mime"}.  If the variable
+except that the current message appears as the body of the message in
+the VM Mail mode buffer. The forwarded message is encapsulated as
+specified by the variable @code{vm-forwarding-digest-type}.  Recognized
+values are "rfc934", "rfc1153", "mime" or @code{nil}.  The default is
+"mime".  If it is set to @code{nil}, the forwarded message is not
+encapsulated.  But note that this is appropriate for only plain text
+messages.  MIME messages have various encodings which need to be decoded 
+by the recipient's mail client and, so, unencapsulated forwarding would
+make it difficult for the recipient to decode MIME.
+
+@vindex vm-forwarded-headers
+@vindex vm-unforwarded-header-regexp
+
+You can control which header lines are included in forwarded messages
+via the variables @code{vm-forwarded-headers} and
+@code{vm-unforwarded-header-regexp}.  By default, both of these
+variables are nil, which means that all headers should be included.
+If @code{vm-unforwarded-header-regexp} is set to a regular expression
+then all the headers matching the regular expression are omitted in
+forwarded messages.  If this variable is nil but
+@code{vm-forwarded-headers} is set to a list of headers, then only
+these headers are included in the forwarded messages.  See the
+documentation of these variables for further information.
+
+@vindex vm-forwarding-subject-format
+If the variable
 @code{vm-forwarding-subject-format} is non-@code{nil} it should specify
 the format of the Subject header of the forwarded message.  A @code{nil}
 value causes the Subject header to be left blank.  The forwarded message
@@ -2483,7 +2504,7 @@ is flagged ``forwarded'' when the message is sent.
 @findex vm-send-digest
 @vindex vm-digest-send-type
 @kindex @@
-The command @key{@@} (@code{vm-send-digest}) works like @kbd{z} except
+The command @kbd{@@} (@code{vm-send-digest}) works like @kbd{z} except
 that a digest of all the messages in the current folder is made and
 inserted into the VM Mail mode buffer.  Also, @code{vm-send-digest} can
 be applied to just marked messages.  @xref{Marking Messages}.  When applied
@@ -2513,19 +2534,6 @@ header that you should fill in with the new recipients.  Use @kbd{C-c
 C-c} as usual to send the message.  The resent message will be flagged
 as ``redistributed''.
 
-@vindex vm-forwarded-headers
-@vindex vm-unforwarded-header-regexp
-
-You can control which header lines are included in forwarded messages
-via the variables @code{vm-forwarded-headers} and
-@code{vm-unforwarded-header-regexp}.  By default, both of these
-variables are nil, which means that all headers should be included.
-If @code{vm-unforwarded-header-regexp} is set to a regular expression
-then all the headers matching the regular expression are omitted in
-forwarded messages.  If this variable is nil but
-@code{vm-forwarded-headers} is set to a list of headers, then only
-these headers are included in the forwarded messages.  See the
-documentation of these variables for further information.
 
 @node Saving Messages, Deleting Messages, Sending Messages, Top
 @chapter Saving Messages

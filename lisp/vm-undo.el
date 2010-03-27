@@ -298,12 +298,16 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
       (vm-read-string "Add labels: "
 		      (vm-obarray-to-string-list vm-label-obarray) t)
       (prefix-numeric-value current-prefix-arg))))
-  (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-read-only)
-  (vm-error-if-folder-empty)
-  (vm-add-or-delete-message-labels string count 'all))
+  (let ((ignored-labels nil))
+    (vm-follow-summary-cursor)
+    (vm-select-folder-buffer)
+    (vm-check-for-killed-summary)
+    (vm-error-if-folder-read-only)
+    (vm-error-if-folder-empty)
+    (setq ignored-labels 
+	  (vm-add-or-delete-message-labels string count 'all))
+    (if ignored-labels
+	(Message "Label %s could not be added" string))))
 
 ;;;###autoload
 (defun vm-add-existing-message-labels (string count)

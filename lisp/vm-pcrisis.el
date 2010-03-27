@@ -1007,7 +1007,8 @@ field `vmpc-profile' to the records which is a sexp not meant to be edited."
     (when vmpc-auto-profiles-expunge-days
       (setq vmpc-auto-profiles
             (mapcar (lambda (p)
-                      (if (> (- today (cddr p)) vmpc-auto-profiles-expunge-days)
+                      (if (> (- today (cddr p)) 
+			     vmpc-auto-profiles-expunge-days)
                           nil
                         p))
                     vmpc-auto-profiles))
@@ -1024,7 +1025,8 @@ If no email address in found in STR, returns nil."
       (match-string 0 str)))
 
 (defun vmpc-split (string separators)
-  "Return a list by splitting STRING at SEPARATORS and trimming all whitespace."
+  "Return a list by splitting STRING at SEPARATORS and trimming all
+whitespace." 
   (let (result
         (not-separators (concat "^" separators)))
     (save-excursion
@@ -1123,9 +1125,10 @@ PROMPT argument and call this function interactively in the composition buffer."
   (if (or (and (eq vmpc-current-buffer 'none)
 	       (not (eq vmpc-current-state 'automorph)))
 	  (eq vmpc-current-state 'automorph))
-      (let ((headers (or (assoc vmpc-current-buffer vmpc-prompt-for-profile-headers)
-                         (assoc vmpc-current-state vmpc-prompt-for-profile-headers)
-                         (assoc 'default vmpc-prompt-for-profile-headers)))
+      (let ((headers 
+	     (or (assoc vmpc-current-buffer vmpc-prompt-for-profile-headers)
+		 (assoc vmpc-current-state vmpc-prompt-for-profile-headers)
+		 (assoc 'default vmpc-prompt-for-profile-headers)))
             addrs a old-actions actions dest)
         (setq headers (car (cdr headers)))
         ;; search also other headers for known addresses 
@@ -1141,7 +1144,8 @@ PROMPT argument and call this function interactively in the composition buffer."
             (setq addrs (cdr addrs)))
           (setq headers (cdr headers)))
 
-        (setq dest (or dest vmpc-default-profile (if prompt (vmpc-read-profile))))
+        (setq dest 
+	      (or dest vmpc-default-profile (if prompt (vmpc-read-profile))))
         
         (unless actions 
           (setq actions (vmpc-get-profile-for-address dest)))
@@ -1161,27 +1165,33 @@ PROMPT argument and call this function interactively in the composition buffer."
             (setq remember t)
             (setq actions (list actions)))
 
-          ;; save the association of this profile with these actions if applicable
+          ;; save the association of this profile with these actions
+	  ;; if applicable 
           (if (and (not (equal old-actions actions))
                    (or (eq remember t)
                        (and (eq remember 'prompt)
                             (if actions 
-                                (y-or-n-p (format "Always run %s for \"%s\"? "
-                                                  actions dest))
+                                (y-or-n-p 
+				 (format "Always run %s for \"%s\"? "
+					 actions dest))
                               (if (vmpc-get-profile-for-address dest)
-                                  (yes-or-no-p (format "Delete profile for \"%s\"? "
-                                                       dest)))))))
+                                  (yes-or-no-p 
+				   (format "Delete profile for \"%s\"? "
+					   dest)))))))
               (vmpc-save-profile-for-address dest actions))
           
           ;; TODO: understand when vmpc-prompt-for-profile has to run actions 
-          ;; if we are in automorph (actually being called from within an action)
+          ;; if we are in automorph (actually being called from within
+          ;; an action) 
           (if (eq vmpc-current-state 'automorph)
               (let ((vmpc-actions-to-run actions))
                 (vmpc-run-actions))
-            ;; otherwise add the actions to the end of the list as a side effect 
+            ;; otherwise add the actions to the end of the list as a
+	    ;; side effect  
             (setq vmpc-actions-to-run (append vmpc-actions-to-run actions)))
 	
-          ;; return the actions, which makes the condition true if a profile exists 
+          ;; return the actions, which makes the condition true if a
+	  ;; profile exists  
           actions))))
 
 ;; -------------------------------------------------------------------
@@ -1246,14 +1256,16 @@ If NUM is specified return the match string NUM."
                 (if num (match-string num hdr) t))))))
 
 (defun vmpc-only-from-match (hdrfield regexp &optional clump-sep)
-  "Return non-nil if all emails from the given HDRFIELD are matched by REGEXP."
+  "Return non-nil if all emails from the given HDRFIELD are matched by
+REGEXP." 
   (let* ((content (vmpc-get-header-contents hdrfield clump-sep))
          (case-fold-search t)
          (pos 0)
          (len (length content))
          (only-from (not (null content))))
     (while (and only-from (< pos len)
-                (setq pos (string-match "[a-z0-9._-]+@[a-z0-9._-]+" content pos)))
+                (setq pos (string-match "[a-z0-9._-]+@[a-z0-9._-]+" 
+					content pos)))
       (if (not (string-match regexp (match-string 0 content)))
           (setq only-from nil))
       (setq pos (1+ pos)))
@@ -1261,8 +1273,8 @@ If NUM is specified return the match string NUM."
 
 (defun vmpc-body-match (regexp)
   "Return non-nil if the contents of the message body match REGEXP.
-For automorph, this means the body of your message; when replying it means the
-body of the message being replied to."
+For automorph, this means the body of your message; when replying it
+means the body of the message being replied to."
   (cond ((and (memq vmpc-current-state '(reply forward resend))
 	      (eq vmpc-current-buffer 'none))
 	 (string-match regexp (vmpc-get-replied-body-text)))
@@ -1303,12 +1315,14 @@ Run this function in order to test/check your conditions."
     vmpc-true-conditions))
 
 (defun vmpc-build-true-conditions-list ()
-  "Built list of true conditions and store it in variable `vmpc-true-conditions'."
+  "Build list of true conditions and store it in the variable 
+`vmpc-true-conditions'."
   (setq vmpc-true-conditions nil)
-  (mapcar (lambda (c)
-            (if (save-excursion (eval (cons 'progn (cdr c))))
-                (setq vmpc-true-conditions (cons (car c) vmpc-true-conditions))))
-          vmpc-conditions)
+  (mapcar 
+   (lambda (c)
+     (if (save-excursion (eval (cons 'progn (cdr c))))
+	 (setq vmpc-true-conditions (cons (car c) vmpc-true-conditions))))
+   vmpc-conditions)
   (setq vmpc-true-conditions (reverse vmpc-true-conditions)))
 
 (defun vmpc-build-actions-to-run-list ()
@@ -1317,7 +1331,8 @@ These are the true conditions mapped to actions.  Duplicates will be
 eliminated.  You may run it in a composition buffer in order to see what
 actions will be run."
   (interactive)
-  (if (and (interactive-p) (not (member major-mode '(vm-mail-mode mail-mode))))
+  (if (and (interactive-p) 
+	   (not (member major-mode '(vm-mail-mode mail-mode))))
       (error "Run `vmpc-build-actions-to-run-list' in a composition buffer!"))
   (let ((alist (or (symbol-value (intern (format "vmpc-%s-alist"
                                                  vmpc-current-state)))
@@ -1325,16 +1340,19 @@ actions will be run."
         (old-vmpc-actions-to-run vmpc-actions-to-run)
         actions)
     (setq vmpc-actions-to-run nil)
-    (mapcar (lambda (c)
-              (setq actions (cdr (assoc c alist)))
-              ;; TODO: warn about unbound conditions?
-              (while actions
-                (if (not (member (car actions) vmpc-actions-to-run))
-                    (setq vmpc-actions-to-run (cons (car actions) vmpc-actions-to-run)))
-                (setq actions (cdr actions))))
-            vmpc-true-conditions)
+    (mapcar 
+     (lambda (c)
+       (setq actions (cdr (assoc c alist)))
+       ;; TODO: warn about unbound conditions?
+       (while actions
+	 (if (not (member (car actions) vmpc-actions-to-run))
+	     (setq vmpc-actions-to-run 
+		   (cons (car actions) vmpc-actions-to-run)))
+	 (setq actions (cdr actions))))
+     vmpc-true-conditions)
     (setq vmpc-actions-to-run (reverse vmpc-actions-to-run))
-    (setq vmpc-actions-to-run (append vmpc-actions-to-run old-vmpc-actions-to-run)))
+    (setq vmpc-actions-to-run 
+	  (append vmpc-actions-to-run old-vmpc-actions-to-run)))
   (if (interactive-p)
       (message "VMPC actions to run: %S" vmpc-actions-to-run))
   vmpc-actions-to-run)
