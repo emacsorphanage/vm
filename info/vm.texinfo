@@ -2494,6 +2494,11 @@ forwarded messages.  If this variable is nil but
 these headers are included in the forwarded messages.  See the
 documentation of these variables for further information.
 
+@findex vm-forward-message-all-headers
+The command @code{vm-forward-message-all-headers} forwards the
+message with all headers intact, irrespective of the values of these
+vaiables. 
+
 @vindex vm-forwarding-subject-format
 If the variable
 @code{vm-forwarding-subject-format} is non-@code{nil} it should specify

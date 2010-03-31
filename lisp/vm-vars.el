@@ -2586,7 +2586,7 @@ the forwarded message."
   :group 'vm
   :type '(repeat regexp))
 
-(defcustom vm-unforwarded-header-regexp "only-drop-this-header"
+(defcustom vm-unforwarded-header-regexp nil
   "*Non-nil value should be a regular expression header that tells
 what headers should not be forwarded by `vm-forward-message'.  This
 variable along with `vm-forwarded-headers' determines which headers
