@@ -87,7 +87,7 @@ USING CONFIGURE
       will get loaded.  (ii) You can include the following line in
       your ~/.xemacs/init.el file:
 
-        (load-library "auto-autoloads")
+        (load-library "~/vm/lisp/auto-autoloads")
 
    b) make install
 

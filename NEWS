@@ -38,9 +38,10 @@ VM 8.1.0 (2010-03-21)
    ** New boolean variable `vm-word-wrap-paragraphs' controls the word
       wrapping of paragraphs in messages using the longlines library.
       The variable is set to nil by default. When it is set to t,
-      paragraphs are word wrapped and the variable
-      `vm-fill-paragraphs-containing-long-lines' has no effect.  Set
-      it to nil to enable the usual filling functionality.
+      paragraphs are word wrapped and the value of the variable
+      `vm-fill-paragraphs-containing-long-lines' is immaterial (as
+      long it is non-nil).  Set vm-word-wrap-paragraphs to nil to
+      enable the usual filling functionality.
 
    ** vm-pgg is not loaded by default because it is a set up as an
       add-on.  Users should load it from their .emacs file by using
