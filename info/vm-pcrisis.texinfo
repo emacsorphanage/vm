@@ -769,11 +769,11 @@ same, but in the composition buffer.
 @item (vmpc-prompt-for-profile arg) prompts the user for a profile
 (action) to run.  (The user would be well advised not to choose one
 which itself contains this function!)  If ARG is present, it should be
-set to 'prompt or 'always.  The presence of ARG indicates that you want
+set to 'prompt or t.  The presence of ARG indicates that you want
 it to check who your message is destined for, and remember to apply the
 profile you choose now to messages sent to that person in the future,
 instead of prompting you for a profile the next time.  If set to
-'prompt, it will ask whether it should remember; if set to 'always, it
+'prompt, it will ask whether it should remember; if set to t, it
 will always remember.  If ARG is not present, it does not remember.
 
 @end itemize
@@ -905,7 +905,7 @@ address instead of prompting, we would do it like this:
 
 @lisp
 ("prompt for a profile, and remember it automatically"
-  (vmpc-prompt-for-profile 'always))
+  (vmpc-prompt-for-profile t))
 @end lisp
 
 The associations between addresses and profiles will be stored in the
@@ -1110,7 +1110,7 @@ Finally, you'd set up @code{vmpc-newmail-alist} like this:
 
 The variable @code{vmpc-auto-profiles-file} contains the name of the
 file used for saving profiles when @code{vmpc-prompt-for-profile} is
-used with an 'always or 'prompt argument (see @ref{The vmpc-actions
+used with a non-nil argument (see @ref{The vmpc-actions
 variable} and @ref{vmpc-actions examples}).
 
 By default it is set to "~/.vmpc-auto-profiles".  
