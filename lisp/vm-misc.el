@@ -1017,7 +1017,11 @@ filling of GNU Emacs does not work correctly here!"
         (vm-replace-in-string string regexp rep literal))))
   ;; now do the filling
   (let ((buffer-read-only nil)
-        (fill-column vm-paragraph-fill-column))
+        (fill-column 
+	 (if (numberp vm-fill-paragraphs-containing-long-lines)
+	     vm-fill-paragraphs-containing-long-lines
+	   (- (window-width (get-buffer-window (current-buffer))) 1)))
+	)
     (save-excursion
       (vm-save-restriction
        ;; longlines-wrap-region contains a (forward-line -1) which is causing
