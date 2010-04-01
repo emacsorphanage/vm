@@ -36,7 +36,7 @@ notice identical to this one except for the removal of this paragraph
 @end ignore
 @end ifinfo
 @c
-@include version.texi
+@include version.texinfo
 @titlepage
 @sp 6
 @center @titlefont{VM User's Manual}
@@ -280,7 +280,7 @@ VM can work with mail folders saved on the local file system.
 @xref{Local Folders}.  It can also work with mail folders stored on
 remote mail servers, such as POP and IMAP servers.  @xref{Server
 Folders}.  Server folders have the advantage that they can be accessed
-from multiple locations on the internet.  VM might appear to have a
+from multiple locations on the Internet.  VM might appear to have a
 bias towards local folders due to its history of development.  But it
 treats server folders with equal facility.
 
@@ -673,7 +673,7 @@ details.  The variable @code{vm-default-folder-type} can be used to
 set the default format that is suitable for your environment.  This
 setting is used when VM creates new folders.
 
-Whcn VM reads a folder from the file system, it examines contents of the
+When VM reads a folder from the file system, it examines contents of the
 folder to determine what format it is stored in and decodes it
 appropriately.  (However, such inference is not fully automatic.  See
 below.)
@@ -748,7 +748,7 @@ folders are on the @emph{local} file system and only incoming mail is
 held on the servers.
 
 Server folders have the advantage that they can be transparently
-accessed from multiple locations on the internet.  However, you must
+accessed from multiple locations on the Internet.  However, you must
 ensure that you have access to enough storage on the mail server to
 store all your email.
 
@@ -777,7 +777,7 @@ For SSH, you must have the ssh program installed and the variable
 work.  When VM makes the SSH connection it must run a command on
 the remote server so that the SSH session is maintained long enough
 for the POP/IMAP connection to be established.  By default that command
-is @samp{"echo ready; sleep 10"}, but you can specify another
+is @samp{"echo ready; sleep 15"}, but you can specify another
 command by setting @code{vm-ssh-remote-command}.  Whatever
 command you use must produce some output and hold the connection
 open long enough for VM to establish a port-forwarded connection
@@ -872,7 +872,7 @@ save the changes with @code{vm-save-folder}.
 Message attributes (new, replied, filed, etc.) and labels cannot be
 stored on the POP server but they will be maintained in the local
 copy.  This means that if you access the same POP mailbox from
-multiple locations on the internet, you will see different attributes
+multiple locations on the Internet, you will see different attributes
 at different locations.  To be able to store message attributes and
 labels on the server, you should use IMAP folders (@ref{IMAP Folders})
 resident on an IMAP server.
@@ -1534,7 +1534,7 @@ which can be retrieved when desired.
 
 Saving attachments to the file system and deleting them from message
 bodies has the beneficial effect of reducing the size of VM folders.
-That leads to a better utilisation of the computer resources and
+That leads to a better utilization of the computer resources and
 usually a faster operation of VM.
 
 @findex vm-mime-save-all-attachments
@@ -1784,7 +1784,7 @@ temporary filename.
 @cindex images
 Most versions of Emacs can display images when used on graphical
 screens.  You can verify if the Emacs version is able to do so by
-calling the funciton @code{display-images-p}.  However, Emacs relies
+calling the function @code{display-images-p}.  However, Emacs relies
 on external libraries to create graphical images, which are specified
 through the variable @code{image-library-alist}.  Even if Emacs has
 the ability to display some image type, it cannot display such images
@@ -2297,7 +2297,7 @@ returns (ASCII code 13) or NULs (ASCII code 0).
 @node MIME headers, MIME preview, MIME characters, MIME Composition
 @unnumberedsec MIME headers
 
-The internet standards specify that the header lines of messages should
+The Internet standards specify that the header lines of messages should
 always be in 7 bit ASCII, even if the body of a message can use an
 8 bit character set.  If you use other non-ASCII characters in typing
 the headers then VM encodes their words using the MIME encoded-word
@@ -2625,8 +2625,8 @@ recursively.
 @vindex vm-auto-folder-case-fold-search
 Whether matching is case sensitive depends on the value of the variable
 @code{vm-auto-folder-case-fold-search}.  A non-@code{nil} value makes
-matching case insensitive.  The default value is @code{t}, which means
-matching is case insensitive.  Note that the matching of header names is
+matching case insensitive.  The default value is @code{nil}, which means
+matching is case-sensitive.  Note that the matching of header names is
 always case insensitive because the Internet message standard RFC 822
 specifies that header names are case indistinct.
 
