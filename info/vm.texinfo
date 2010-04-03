@@ -1004,8 +1004,8 @@ After fetching messages from the IMAP server into the local copy, it
 is possible to visit the local copy as if it were a normal folder.  VM
 can operate on the local copy without contacting the server.  This
 allows offline operation on the mail folders.  When the IMAP server is
-connected again, one should do the @code{vm-imap-synchronize} command
-with a prefix argument.  This causes @emph{all} the message attributes
+connected again, one should do @code{vm-imap-synchronize}
+with a @emph{prefix argument}.  This causes @emph{all} the message attributes
 and labels to be written to the server, since it may not be known
 which of them have actually changed during the offline operation.
 

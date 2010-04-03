@@ -110,12 +110,15 @@
 ;; Mollify the pesky compiler
 (defvar selectable-only)
 
-(defvar vm-imap-offline-mode nil
-  "Flag to indicate whether IMAP folder should be used offline.  If
-so, message bodies of headers-only messages will not be retrieved.
-This is reset whenever an interactive operation is done which invokes
-vm-imap-synchronize-folder.")
-(make-variable-buffer-local 'vm-imap-offline-mode)
+(defvar vm-imap-connection-mode 'online
+  "* The mode of connection to the IMAP server.  Possible values are:
+'online, 'offline and 'autoconnect.  In the 'online mode,
+synchronization works normally and message bodies of headers-only
+messages are fetched when needed.  In 'offline mode, no connection is
+established to the IMAP server and message bodies are not fetched.  In
+'autoconnect mode, message bodies are not fetched.  If a
+synchronization operation is performed, a connection to the IMAP
+server is established.")
 
 ;; the maildrop spec of the imap folder
 (defsubst vm-folder-imap-maildrop-spec ()
@@ -2544,6 +2547,11 @@ operation of the server to minimize I/O."
 		  (< (cdr **pair1) (cdr **pair2)))))	  
     (list retrieve-list expunge-list stale-list)))
 
+(defun vm-imap-server-error (msg &rest args)
+  (if (eq vm-imap-connection-mode 'online)
+      (apply (function error) msg args)
+    (message "VM working in offline mode")))
+
 ;;;###autoload
 (defun vm-imap-synchronize-folder (&optional interactive
 					     do-remote-expunges
@@ -2580,9 +2588,9 @@ operation of the server to minimize I/O."
   (if (and do-retrieves vm-block-new-mail)
       (error "Can't get new mail until you save this folder"))
   (if (or vm-global-block-new-mail
+	  (eq vm-imap-connection-mode 'offline)
 	  (null (vm-establish-new-folder-imap-session interactive)))
-      (error "Could not connect to the IMAP server")
-    (setq vm-imap-offline-mode nil)
+      (vm-imap-server-error "Could not connect to the IMAP server")
     (if do-retrieves
 	(vm-assimilate-new-messages))	; Funny that this should be
 					; necessary.  Indicates bugs?
@@ -2883,7 +2891,7 @@ either the folder buffer or the presentation buffer."
 	     (uid (vm-imap-uid-of m))
 	     (imapdrop (vm-folder-imap-maildrop-spec))
 	     (safe-imapdrop (vm-safe-imapdrop-string imapdrop))
-	     (process (and (not vm-imap-offline-mode)
+	     (process (and (eq vm-imap-connection-mode 'online)
 			   (vm-re-establish-folder-imap-session imapdrop)))
 	     (use-body-peek (vm-folder-imap-body-peek))
 	     (server-uid-validity (vm-folder-imap-uid-validity))
@@ -2891,11 +2899,12 @@ either the folder buffer or the presentation buffer."
 	     message-num message-size
 	     )
 
-	(message "Retrieving message body... ")
 	(if (null process)
-	    (progn
+	    (if (eq vm-imap-connection-mode 'offline)
+		nil
 	      (message "Could not connect to IMAP server; Type g to reconnect")
-	      (setq vm-imap-offline-mode t))
+	      (setq vm-imap-connection-mode 'autoconnect))
+	  (message "Retrieving message body... ")
 	  (condition-case error-data
 	      (save-excursion
 		(set-buffer (process-buffer process))
@@ -3112,7 +3121,8 @@ VM session.  This is useful for saving offline work."
       ;; (vm-imap-synchronize-folder t nil nil nil 
       ;; 			(if all-flags 'all t) nil)
 					; save-attributes
-      (vm-imap-synchronize-folder t t t 'full nil t)
+      (vm-imap-synchronize-folder t t t t nil t)
+					; interactive
 					; do-remote-expunges, 
 					; do-local-expunges,
 					; do-retrieves and
