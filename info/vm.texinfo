@@ -1542,9 +1542,10 @@ usually a faster operation of VM.
 @vindex vm-mime-deletable-type-exceptions
 @vindex vm-mime-savable-types
 @vindex vm-mime-savable-type-exceptions
-The commands @code{vm-mime-save-all-attachments} and
-@code{vm-mime-delete-all-attachments} can be used to save or delete
-@i{all} the attachments in a message.  An "attachment" in this context
+The commands @kbd{C-c C-s} (@code{vm-mime-save-all-attachments}) and
+@kbd{C-c C-d} (@code{vm-mime-delete-all-attachments}) can be used to
+save or delete @i{all} the attachments in a message.  An "attachment"
+in this context 
 is any MIME part that has "attachment" as its content-disposition or
 simply has a file name.  In addition, all MIME parts that have types
 matching @code{vm-mime-savable-types} or @code{vm-mime-deletable-types}
