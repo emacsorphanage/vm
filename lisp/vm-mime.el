@@ -2036,12 +2036,15 @@ that recipient is outside of East Asia."
 	   (vm-detach-extent extent)))))
 
 ;;;###autoload
-(defun vm-decode-mime-message ()
+(defun vm-decode-mime-message (&optional state)
   "Decode the MIME objects in the current message.
 
 The first time this command is run on a message, decoding is done.
 The second time, buttons for all the objects are displayed instead.
 The third time, the raw, undecoded data is displayed.
+
+The optional argument STATE can specify which decode state to display:
+'decoded, 'button or 'undecoded.
 
 If decoding, the decoded objects might be displayed immediately, or
 buttons might be displayed that you need to activate to view the
@@ -2076,22 +2079,30 @@ in the buffer.  The function is expected to make the message
 	(vm-make-presentation-copy (car vm-message-pointer))
 	(set-buffer vm-presentation-buffer)
 	(funcall vm-mime-display-function))
+    (if (null state)
+	(cond ((null vm-mime-decoded)
+	       (setq state 'decoded))
+	      ((eq vm-mime-decoded 'decoded)
+	       (setq state 'buttons))
+	      ((eq vm-mime-decoded 'buttons)
+	       (setq state 'undecoded))))
     (if vm-mime-decoded
-	(if (eq vm-mime-decoded 'decoded)
-	    (let ((vm-preview-lines nil)
-		  (vm-auto-decode-mime-messages t)
-		  (vm-honor-mime-content-disposition nil)
-		  (vm-auto-displayed-mime-content-types '("multipart"))
-		  (vm-auto-displayed-mime-content-type-exceptions nil))
-	      (setq vm-mime-decoded nil)
-	      (intern (buffer-name) vm-buffers-needing-display-update)
-	      (save-excursion
-		(vm-preview-current-message))
-	      (setq vm-mime-decoded 'buttons))
-	  (let ((vm-preview-lines nil)
-		(vm-auto-decode-mime-messages nil))
-	    (intern (buffer-name) vm-buffers-needing-display-update)
-	    (vm-preview-current-message)))
+	(cond ((eq state 'buttons)
+	       (let ((vm-preview-lines nil)
+		     (vm-auto-decode-mime-messages t)
+		     (vm-honor-mime-content-disposition nil)
+		     (vm-auto-displayed-mime-content-types '("multipart"))
+		     (vm-auto-displayed-mime-content-type-exceptions nil))
+		 (setq vm-mime-decoded nil)
+		 (intern (buffer-name) vm-buffers-needing-display-update)
+		 (save-excursion
+		   (vm-preview-current-message))
+		 (setq vm-mime-decoded 'buttons)))
+	      ((eq state 'undecoded)
+	       (let ((vm-preview-lines nil)
+		     (vm-auto-decode-mime-messages nil))
+		 (intern (buffer-name) vm-buffers-needing-display-update)
+		 (vm-preview-current-message))))
       (let ((layout (vm-mm-layout (car vm-message-pointer)))
 	    (m (car vm-message-pointer)))
 	(message "Decoding MIME message...")
