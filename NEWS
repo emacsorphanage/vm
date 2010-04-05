@@ -19,6 +19,9 @@ VM 8.2.0-devo
 
   IMPROVEMENTS:
 
+   * IMAP session dialogue restructured using UID queries, which makes
+     VM more reliable in handling real-time changes on the server side.
+
    * New variable `vm-imap-connection-mode' can be set to 'offline to
      allow IMAP cache folders to be used offline.  After connecting to
      the network, do `C-u M-x vm-imap-synchronize' to force full

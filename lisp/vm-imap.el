@@ -1273,7 +1273,7 @@ as well."
   ;;   M - a vm-message
   ;;   uid-validity -  the folder's uid-validity
   ;; Returns (msg-num: int . uid: string . size: string . flags: string list)
-  ;; Or gives an error if the message has an invalid uid
+  ;; Throws vm-imap-protocol-error for failure.
   (let ((imap-buffer (current-buffer))
 	response tok need-ok msg-num list)
     (if (not (equal (vm-imap-uid-validity-of m) uid-validity))
@@ -1308,8 +1308,7 @@ as well."
   ;;   string uid - uid of the message
   ;;   string size - message size
   ;;   (string list) flags - list of flags for the message
-  ;; or nil indicating failure
-  ;; If there are no messages in the range then (nil) is returned
+  ;; throws vm-imap-protocol-error for failure.
 
   (let ((list nil)
 	(imap-buffer (current-buffer))
@@ -1363,11 +1362,7 @@ as well."
 		    list)))
        ((vm-imap-response-matches response 'VM 'OK)
 	(setq need-ok nil))))
-    ;; returning nil means the fetch failed so return
-    ;; something other than nil if there aren't any messages.
-    (if (null list)
-	(cons nil nil)
-      list )))
+    list))
 
 (defun vm-imap-ask-about-large-message (process size n)
   (let ((work-buffer nil)
@@ -1610,14 +1605,27 @@ as well."
 		  (vm-imap-response-matches response '* 'atom 'FETCH 'list))
 	     (setq need-size nil)
 	     (setq p (cdr (nth 3 response)))
-	     (if (not (vm-imap-response-matches p 'RFC822\.SIZE 'atom))
+	     (while p
+	       (cond 
+		((vm-imap-response-matches p 'UID 'atom)
+		 (setq tok (nth 1 p))
+		 (if (not (equal uid (buffer-substring (nth 1 tok) (nth 2 tok))))
+		     (vm-imap-protocol-error
+		      "wrong UID number returned"))
+		 (setq p (nthcdr 2 p)))
+		((vm-imap-response-matches p 'RFC822\.SIZE 'atom)
+		 (setq tok (nth 1 p))
+		 (goto-char (nth 1 tok))
+		 (setq size (buffer-substring (nth 1 tok) (nth 2 tok)))
+		 (setq need-size nil)
+		 (setq p (nthcdr 2 p)))
+		(t
 		 (vm-imap-protocol-error
-		  "expected (RFC822.SIZE number) in FETCH response"))
-	     (setq tok (nth 1 p))
-	     (goto-char (nth 1 tok))
-	     (setq size (read imap-buffer)))
+		  "expected UID, RFC822.SIZE in FETCH response")))))
 	    ((vm-imap-response-matches response 'VM 'OK)
-	     (setq need-ok nil))))
+	     (setq need-ok nil))
+	    ;; Otherwise, skip the response
+	    ))
     size ))
 
 (defun vm-imap-read-capability-response (process)
@@ -2022,7 +2030,8 @@ as well."
 
 (defun vm-imap-retrieve-uid-and-flags-data ()
   "Retrieve the uid's and message flags for all the messages on the
-IMAP server in the current mail box."
+IMAP server in the current mail box.
+Throws vm-imap-protocol-error for failure."
   ;;------------------------------
   (if vm-buffer-type-debug
       (setq vm-buffer-type-trail 
@@ -2611,7 +2620,8 @@ operation of the server to minimize I/O."
 	   r-list range k mp got-some message-size old-eob
 	   (folder-buffer (current-buffer)))
       (when save-attributes
-	(let ((mp vm-message-list))
+	(let ((mp vm-message-list)
+	      (errors 0))
 	  ;;  (perm-flags (vm-folder-imap-permanent-flags))
 	  (message "Updating attributes on the IMAP server... ")
 	  (while mp
@@ -2620,9 +2630,13 @@ operation of the server to minimize I/O."
 		(condition-case nil
 		    (vm-imap-save-message-flags process (car mp))
 		  (vm-imap-protocol-error 
+		   (setq errors (1+ errors))
 		   (vm-buffer-type:set 'folder))))
 	    (setq mp (cdr mp)))
-	  (message "Updating attributes on the IMAP server... done")))
+	  (if (> errors 0)
+	      (message 
+	       "Updating attributes on the IMAP server... %d errors" errors)
+	    (message "Updating attributes on the IMAP server... done"))))
       (when retrieve-attributes
 	(let ((mp vm-message-list)
 	      (len (length vm-message-list))
@@ -2880,7 +2894,9 @@ operations")
 
 (defun vm-fetch-imap-message (m)
   "Insert the message body of M in the current buffer, which must be
-either the folder buffer or the presentation buffer."
+either the folder buffer or the presentation buffer.
+ (This is a special case of vm-fetch-message, not to be confused with
+ vm-imap-fetch-message.)"
   (let ((body-buffer (current-buffer)))
     (save-excursion
       ;;----------------------------------
@@ -2923,6 +2939,7 @@ either the folder buffer or the presentation buffer."
 		(vm-imap-retrieve-to-target process body-buffer statblob
 					    use-body-peek)
 		(vm-imap-read-ok-response process)
+		(message "Retrieving message body... done")
 		;;--------------------------------
 		(vm-buffer-type:exit)
 		;;--------------------------------
@@ -2945,7 +2962,6 @@ either the folder buffer or the presentation buffer."
 	  ;;-----------------------------
 	  (vm-imap-dump-uid-seq-num-data)
 	  ;;-----------------------------
-	  (message "Retrieving message body... done")
 	  ))
       ;;-------------------
       (vm-buffer-type:exit)
@@ -3083,7 +3099,8 @@ only marked messages are unloaded, other messages are ignored."
   ;;--------------------------
   (let* ((process (vm-folder-imap-process))
 	 (uid-validity (vm-folder-imap-uid-validity))
-	 (mp vm-message-list))
+	 (mp vm-message-list)
+	 (errors 0))
       ;;  (perm-flags (vm-folder-imap-permanent-flags))
       (message "Updating attributes on the IMAP server... ")
       ;;-----------------------------------------
@@ -3094,9 +3111,12 @@ only marked messages are unloaded, other messages are ignored."
 	    (condition-case nil
 		(vm-imap-save-message-flags process (car mp))
 	      (vm-imap-protocol-error 
+	       (setq errors (1+ errors))
 	       (vm-buffer-type:set 'folder))))
 	(setq mp (cdr mp)))
-      (message "Updating attributes on the IMAP server... done")))
+      (if (> errors 0)
+	  (message "Updating attributes on the IMAP server... %d errors" errors)
+	(message "Updating attributes on the IMAP server... done"))))
 
 
 (defun vm-imap-synchronize (&optional all-flags)
