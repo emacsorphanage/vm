@@ -19,6 +19,12 @@ VM 8.2.0-devo
 
   IMPROVEMENTS:
 
+   * The chatter of minibuffer messages during reading of mail is
+     reduced: messages about MIME decoding are emitted only if the new
+     variable `vm-emit-messages-for-mime-decoding' is non-nil, and
+     messages about end of messages are emitted only of
+     `vm-auto-next-message' is non-nil.
+
    * IMAP session dialogue restructured using UID queries, which makes
      VM more reliable in handling real-time changes on the server side.
 

@@ -230,16 +230,19 @@ Prefix argument N means scroll forward N lines."
 	 (vm-emit-eom-blurb))))
 
 (defun vm-emit-eom-blurb ()
+  "Prints a minibuffer message when the end of message is reached, but
+it is suppressed if the variable `vm-auto-next-message' is nil."
   (interactive)
-  (let ((vm-summary-uninteresting-senders-arrow "")
-	(case-fold-search nil))
-    (message (if (and (stringp vm-summary-uninteresting-senders)
-		      (string-match vm-summary-uninteresting-senders
-				    (vm-su-from (car vm-message-pointer))))
-		 "End of message %s to %s"
-	       "End of message %s from %s")
-	     (vm-number-of (car vm-message-pointer))
-	     (vm-summary-sprintf "%F" (car vm-message-pointer)))))
+  (if vm-auto-next-message
+      (let ((vm-summary-uninteresting-senders-arrow "")
+	    (case-fold-search nil))
+	(message (if (and (stringp vm-summary-uninteresting-senders)
+			  (string-match vm-summary-uninteresting-senders
+					(vm-su-from (car vm-message-pointer))))
+		     "End of message %s to %s"
+		   "End of message %s from %s")
+		 (vm-number-of (car vm-message-pointer))
+		 (vm-summary-sprintf "%F" (car vm-message-pointer))))))
 
 ;;;###autoload
 (defun vm-scroll-backward (&optional arg)
