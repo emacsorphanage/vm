@@ -21,6 +21,8 @@
 
 ;;; Code:
 
+(require 'vm-vars)
+
 ;;;###autoload
 (defun vm-scroll-forward (&optional arg)
   "Scroll forward a screenful of text.
@@ -243,6 +245,11 @@ it is suppressed if the variable `vm-auto-next-message' is nil."
 		   "End of message %s from %s")
 		 (vm-number-of (car vm-message-pointer))
 		 (vm-summary-sprintf "%F" (car vm-message-pointer))))))
+
+(defun vm-emit-mime-decoding-message (str)
+  (interactive)
+  (if vm-emit-messages-for-mime-decoding
+      (message str)))
 
 ;;;###autoload
 (defun vm-scroll-backward (&optional arg)

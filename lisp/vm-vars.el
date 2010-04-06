@@ -4185,6 +4185,12 @@ setting this one to t."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-emit-messages-for-mime-decoding nil
+  "*Flag to allow minibuffer messages about the progress of MIME
+decoding of messages."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-imap-session-preauth-hook nil
   "*List of hook functions to call to generate an preauthenticated
 IMAP session process.  This hook is only run if the
@@ -5430,15 +5436,17 @@ append a space to words that complete unambiguously.")
 (make-variable-buffer-local 'vm-imap-auth-methods)
 ;; The number of old ('failed') trace buffers to remember for debugging
 ;; purposes 
-(defvar vm-pop-keep-failed-trace-buffers 5)
-(defvar vm-imap-keep-failed-trace-buffers 5)
+(defvar vm-pop-keep-failed-trace-buffers 20)
+(defvar vm-imap-keep-failed-trace-buffers 20)
 ;; Lists of trace buffers remembered for debugging purposes
 (defvar vm-kept-pop-buffers nil
   "* Variable that holds the old trace buffers of POP sessions for
   debugging purposes.")
+(make-variable-buffer-local 'vm-kept-pop-buffers)
 (defvar vm-kept-imap-buffers nil
   "* Variable that holds the old trace buffers of IMAP sessions for
   debugging purposes.")
+(make-variable-buffer-local 'vm-kept-imap-buffers)
 ;; Flag to make POP/IMAP code remember old trace buffers
 (defvar vm-pop-keep-trace-buffer nil
   "* Set this to non-nil to retain a limited number of POP session

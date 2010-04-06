@@ -131,6 +131,13 @@ isn't a folder buffer.  USR, 2010-03-08"
 (defmacro vm-decrement (variable)
   (list 'setq variable (list '1- variable)))
 
+;; This should be turned into a defsubst eventually
+
+(defun vm-make-trace-buffer-name (session-name host)
+   (format "trace of %s session to %s at %s" 
+	   session-name host 
+	   (substring (current-time-string) 11 19)))
+
 (provide 'vm-macro)
 
 ;;; vm-macro.el ends here

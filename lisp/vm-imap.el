@@ -815,9 +815,8 @@ on all the relevant IMAP servers and then immediately expunges."
 					    vm-imap-passwords)))
 	  ;; get the trace buffer
 	  (setq process-buffer
-		(vm-make-work-buffer (format "trace of %s session to %s"
-					     session-name
-					     host)))
+		(vm-make-work-buffer 
+		 (vm-make-trace-buffer-name session-name host)))
 	  (save-excursion
 	    ;;----------------------------
 	    (vm-buffer-type:enter 'process)
@@ -1767,7 +1766,7 @@ as well."
       (cond ((< (- (point-max) (point)) 2)
 	     (setq opoint (point))
 	     (vm-imap-check-connection process)
-	     (accept-process-output process)
+	     (accept-process-output process) 
 	     (goto-char opoint))
 	    ((looking-at "\r\n")
 	     (forward-char 2)
@@ -1973,17 +1972,24 @@ as well."
   (insert "\""))
 
 (defun vm-re-establish-folder-imap-session (&optional interactive)
+  "If the IMAP session for the current folder has died, re-establish a
+new one.  Returns the IMAP process."
   (let ((process (vm-folder-imap-process)))
     (if (and (processp process)
 	     (memq (process-status process) '(open run)))
-	process
+	(progn
+	  (message "process status: %s" (process-status process))
+	  process)
+      (if (processp process)
+	  (vm-imap-end-session process))
       (vm-establish-new-folder-imap-session interactive))))
 
-;; Kill and restart the IMAP session for the current folder.  This is
-;; necessary because we might unexpected EXPUNGE responses which we
-;; don't know how to deal with.
-
 (defun vm-establish-new-folder-imap-session (&optional interactive)
+  "Kill and restart the IMAP session for the current folder.  Returns
+the IMAP process."
+;; This is necessary because we might get unexpected EXPUNGE responses
+;; which we don't know how to deal with.
+
   (let ((process (vm-folder-imap-process))
 	mailbox select mailbox-count uid-validity permanent-flags
 	read-write can-delete body-peek
@@ -2862,6 +2868,7 @@ operation of the server to minimize I/O."
 	  ;;-----------------------------
 	  (vm-set-folder-imap-mailbox-count (- mailbox-count expunge-count))
 	  ))
+      ;; Not clear one should end the session right away
       (vm-imap-end-session process)
       got-some)))
 
@@ -3003,33 +3010,34 @@ only marked messages are loaded, other messages are ignored."
 	(set-buffer (vm-buffer-of mm))
 	(if (not (eq vm-folder-access-method 'imap))
 	    (error "This is currently available only for imap folders."))
-	(vm-save-restriction
-	 (widen)
-	 (setq text-begin (marker-position (vm-text-of mm)))
-	 (setq text-end (marker-position (vm-text-end-of mm)))
-	 (narrow-to-region (marker-position (vm-headers-of mm)) text-end)
-	 (goto-char text-begin)
-	 (delete-region (point) (point-max))
-	 (apply (intern (format "vm-fetch-%s-message" "imap"))
-		mm nil)
-	 ;; delete the new headers
-	 (delete-region text-begin
-			(or (re-search-forward "\n\n" (point-max) t)
-			    (point-max)))
-	 ;; fix markers now
-	 ;; FIXME the text-end is guessed
-	 (set-marker (vm-text-of mm) text-begin)
-	 (set-marker (vm-text-end-of mm) 
-		     (save-excursion
-		       (goto-char (point-max))
-		       (end-of-line 0)	; move back one line
-		       (kill-line 1)
-		       (point)))
-	 (goto-char text-begin)
-	 ;; now care for the layout of the message
-	 (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
-	 (vm-set-body-to-be-retrieved mm nil)
-	 (setq mlist (cdr mlist)))))				
+	(when (vm-body-to-be-retrieved-of mm)
+	  (vm-save-restriction
+	   (widen)
+	   (setq text-begin (marker-position (vm-text-of mm)))
+	   (setq text-end (marker-position (vm-text-end-of mm)))
+	   (narrow-to-region (marker-position (vm-headers-of mm)) text-end)
+	   (goto-char text-begin)
+	   (delete-region (point) (point-max))
+	   (apply (intern (format "vm-fetch-%s-message" "imap"))
+		  mm nil)
+	   ;; delete the new headers
+	   (delete-region text-begin
+			  (or (re-search-forward "\n\n" (point-max) t)
+			      (point-max)))
+	   ;; fix markers now
+	   ;; FIXME the text-end is guessed
+	   (set-marker (vm-text-of mm) text-begin)
+	   (set-marker (vm-text-end-of mm) 
+		       (save-excursion
+			 (goto-char (point-max))
+			 (end-of-line 0) ; move back one line
+			 (kill-line 1)
+			 (point)))
+	   (goto-char text-begin)
+	   ;; now care for the layout of the message
+	   (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
+	   (vm-set-body-to-be-retrieved mm nil)))
+	(setq mlist (cdr mlist))))
     ))
 
 ;;;###autoload

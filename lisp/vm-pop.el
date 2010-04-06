@@ -490,9 +490,8 @@ relevant POP servers to remove the messages."
 					   vm-pop-passwords)))
 	  ;; get the trace buffer
 	  (setq process-buffer
-		(vm-make-work-buffer (format "trace of %s session to %s"
-					     session-name
-					     host)))
+		(vm-make-work-buffer 
+		 (vm-make-trace-buffer-name session-name host)))
 	  (save-excursion
 	    (set-buffer process-buffer)
 	    (setq vm-folder-type (or folder-type vm-default-folder-type))
