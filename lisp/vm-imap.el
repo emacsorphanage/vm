@@ -800,7 +800,8 @@ on all the relevant IMAP servers and then immediately expunges."
 	      (error "No password in IMAP maildrop specification, \"%s\""
 		     source))
 	  (when (and (equal pass "*") (not (equal auth "preauth")))
-	    (setq pass (car (cdr (assoc source-nopwd-nombox vm-imap-passwords))))
+	    (setq pass
+		  (car (cdr (assoc source-nopwd-nombox vm-imap-passwords))))
 	    (when (and (null pass) vm-imap-ok-to-ask)
 	      (setq pass
 		    (read-passwd (format "IMAP password for %s: " imapdrop))))
@@ -970,6 +971,7 @@ on all the relevant IMAP servers and then immediately expunges."
       (if shutdown
 	  (vm-imap-end-session process process-buffer))
       (vm-tear-down-stunnel-random-data))))
+
 
 ;;;###autoload
 (defun vm-imap-end-session (process &optional buffer keep-buffer)
@@ -1971,15 +1973,44 @@ as well."
   (goto-char (point-max))
   (insert "\""))
 
+(defun vm-imap-poke-session (process)
+  "Poke the IMAP session by sending a NOOP command, just to make sure
+that the session is active.  Returns t or nil."
+  (if (and process (memq (process-status process) '(open run))
+	   (buffer-live-p (process-buffer process)))
+      (let ((buffer (process-buffer process)))
+	(save-excursion
+	  ;;----------------------------
+	  (vm-buffer-type:enter 'process)
+	  ;;----------------------------
+	  (set-buffer buffer)
+	  (vm-imap-send-command process "NOOP")
+	  (condition-case err
+	      (let ((response nil)
+		    (need-ok t))
+		(while need-ok
+		  (setq response
+			(vm-imap-read-response-and-verify process "NOOP"))
+		  (cond ((vm-imap-response-matches response 'VM 'OK)
+			 (setq need-ok nil))))
+		;;----------------------------
+		(vm-buffer-type:exit)
+		;;----------------------------
+		t)
+	    (vm-imap-protocol-error
+	     ;;----------------------------
+	     (vm-buffer-type:exit)
+	     ;;----------------------------
+	     nil))))
+    nil))
+
 (defun vm-re-establish-folder-imap-session (&optional interactive)
   "If the IMAP session for the current folder has died, re-establish a
 new one.  Returns the IMAP process."
-  (let ((process (vm-folder-imap-process)))
-    (if (and (processp process)
-	     (memq (process-status process) '(open run)))
-	(progn
-	  (message "process status: %s" (process-status process))
-	  process)
+  (let ((process (vm-folder-imap-process)) temp)
+    (if  (and (processp process)
+	      (vm-imap-poke-session process))
+	process
       (if (processp process)
 	  (vm-imap-end-session process))
       (vm-establish-new-folder-imap-session interactive))))
