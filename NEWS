@@ -15,6 +15,17 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
+VM 8.1.1 (2010-04-??)
+
+    * Made the autoloads compatible with VM 7.19 instructions.
+
+    * Removed a few incompatibilites with XEmacs.
+
+    * Mode line format reverted to the original one in 7.19.  The new
+      mode line format is available in the variable
+      `vm-mode-line-format-robf'.  It can be installed by adding a
+      vm-mode-hook. 
+
 VM 8.1.0 (2010-03-21)
 
   KNOWN PROBLEMS:
