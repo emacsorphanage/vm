@@ -86,6 +86,10 @@ This manual corresponds to VM version @value{VERSION}.
 * Using the Mouse::     Understanding the VM mouse interface.
 * Hooks::               How you can make VM run your code at certain times.
 * Bugs::                How to report VM bugs
+* History and Administration:: Information about VM
+
+For developers:
+
 * Internals::           Information on VM internals for developers
 
 Indices:
@@ -280,7 +284,7 @@ VM can work with mail folders saved on the local file system.
 @xref{Local Folders}.  It can also work with mail folders stored on
 remote mail servers, such as POP and IMAP servers.  @xref{Server
 Folders}.  Server folders have the advantage that they can be accessed
-from multiple locations on the Internet.  VM might appear to have a
+from multiple locations on the internet.  VM might appear to have a
 bias towards local folders due to its history of development.  But it
 treats server folders with equal facility.
 
@@ -748,7 +752,7 @@ folders are on the @emph{local} file system and only incoming mail is
 held on the servers.
 
 Server folders have the advantage that they can be transparently
-accessed from multiple locations on the Internet.  However, you must
+accessed from multiple locations on the internet.  However, you must
 ensure that you have access to enough storage on the mail server to
 store all your email.
 
@@ -777,7 +781,7 @@ For SSH, you must have the ssh program installed and the variable
 work.  When VM makes the SSH connection it must run a command on
 the remote server so that the SSH session is maintained long enough
 for the POP/IMAP connection to be established.  By default that command
-is @samp{"echo ready; sleep 15"}, but you can specify another
+is @samp{"echo ready; sleep 10"}, but you can specify another
 command by setting @code{vm-ssh-remote-command}.  Whatever
 command you use must produce some output and hold the connection
 open long enough for VM to establish a port-forwarded connection
@@ -872,7 +876,7 @@ save the changes with @code{vm-save-folder}.
 Message attributes (new, replied, filed, etc.) and labels cannot be
 stored on the POP server but they will be maintained in the local
 copy.  This means that if you access the same POP mailbox from
-multiple locations on the Internet, you will see different attributes
+multiple locations on the internet, you will see different attributes
 at different locations.  To be able to store message attributes and
 labels on the server, you should use IMAP folders (@ref{IMAP Folders})
 resident on an IMAP server.
@@ -1542,10 +1546,9 @@ usually a faster operation of VM.
 @vindex vm-mime-deletable-type-exceptions
 @vindex vm-mime-savable-types
 @vindex vm-mime-savable-type-exceptions
-The commands @kbd{C-c C-s} (@code{vm-mime-save-all-attachments}) and
-@kbd{C-c C-d} (@code{vm-mime-delete-all-attachments}) can be used to
-save or delete @i{all} the attachments in a message.  An "attachment"
-in this context 
+The commands @code{vm-mime-save-all-attachments} and
+@code{vm-mime-delete-all-attachments} can be used to save or delete
+@i{all} the attachments in a message.  An "attachment" in this context
 is any MIME part that has "attachment" as its content-disposition or
 simply has a file name.  In addition, all MIME parts that have types
 matching @code{vm-mime-savable-types} or @code{vm-mime-deletable-types}
@@ -2153,7 +2156,7 @@ composing your message.
 @item C-c C-d (@code{vm-postpone-composition})
 Postpones the current composition.  The message is stored in the
 folder specified in @code{vm-postponed-folder}.  You can continue composing
-of messages by visiting @code{vm-postponed-folder}, selecting a messsage
+of messages by visiting @code{vm-postponed-folder}, selecting a massage
 and @key{m} or by directly calling the function on any message in any folder
 @kbd{M-x vm-continue-postponed-message}.  When called with a prefix argument
 @code{vm-postpone-composition} will ask you for the folder to save the draft
@@ -2294,7 +2297,7 @@ returns (ASCII code 13) or NULs (ASCII code 0).
 @node MIME headers, MIME preview, MIME characters, MIME Composition
 @unnumberedsec MIME headers
 
-The Internet standards specify that the header lines of messages should
+The internet standards specify that the header lines of messages should
 always be in 7 bit ASCII, even if the body of a message can use an
 8 bit character set.  If you use other non-ASCII characters in typing
 the headers then VM encodes their words using the MIME encoded-word
@@ -2304,7 +2307,7 @@ syntax, which is of the form @code{=?charset?encoding?encoded text?=}.
 @vindex vm-mime-encode-headers-type
 The variable @code{vm-mime-encode-headers-regexp} specifies which
 headers should be encoded in this way.  By default, @samp{Subject},
-@samp{Organization}, @samp{From}, @samp{To}, @samp{CC}, @samp{BCC} and
+@samp{Organization}, @samp{From}, @samp{To}, @samp{CC}, @samp{Bcc} and
 @samp{Resent-} header lines encoded.  The words are encoded using
 quoted-printable encoding (@code{Q}).  You can ask VM to use the base64
 encoding by setting the variable @code{vm-mime-encode-headers-type}.
@@ -2603,8 +2606,8 @@ recursively.
 @vindex vm-auto-folder-case-fold-search
 Whether matching is case sensitive depends on the value of the variable
 @code{vm-auto-folder-case-fold-search}.  A non-@code{nil} value makes
-matching case insensitive.  The default value is @code{nil}, which means
-matching is case-sensitive.  Note that the matching of header names is
+matching case insensitive.  The default value is @code{t}, which means
+matching is case insensitive.  Note that the matching of header names is
 always case insensitive because the Internet message standard RFC 822
 specifies that header names are case indistinct.
 
@@ -4310,7 +4313,7 @@ If this hook is entirely empty, i.e. @code{nil}, a default action is taken
 instead of no action.
 @end table
 
-@node Bugs, Internals, Hooks, Top
+@node Bugs, History and Administration, Hooks, Top
 @chapter Reporting Bugs
 @cindex bug reports
 
@@ -4344,7 +4347,194 @@ automatically included in the bug-report.
 
 
 
-@node Internals, Concept Index, Bugs, Top
+@node History and Administration, Internals, Bugs, Top
+@chapter History and Administration
+
+@cindex Kyle Jones
+VM was developed by Kyle Jones, starting in early 1989.  The first
+public release of VM was version 4.10, released in June of that year.
+The original development environment was GNU Emacs 18.52.  
+
+@cindex Wonderworks
+The copyright for the code was retained by Kyle Jones.  Hence, the
+package was never included GNU releases, which only contain code
+copyrighted by the Free Software Foundation.  However, Lucid/XEmacs
+shipped VM starting with version 19.9.  The other users obtained VM from
+the Wonderworks web site, which hosted Kyle Jones's work.  The home page
+of VM at this site is @uref{http://www.wonderworks.com/vm}.
+
+The last version released by Kyle Jones was 7.19, in September 2004,
+which can be found on the Wonderworks web site and its mirror sites.
+
+@cindex Robert Widhopf-Fenk
+After this release, Robert Widhopf-Fenk picked up the maintenance of
+VM, by releasing a series of patches under a separate distribution.  He
+also acquired a number of add-on's contributed by various developers,
+including himself, and included them in his distribution.  Kyle Jones
+agreed to hand over the maintenance of VM to Robert Fenk in February,
+2007.  Further releases were made by Robert Fenk under the @code{8.0.x}
+series. 
+
+@cindex Savannah
+All these releases are available from the new project page of VM hosted
+by Savannah, at the URL
+@uref{http://savannah.nongnu.org/projects/viewmail/}. 
+According to the project page, ``this site exists to continue VM development
+after version 7.19 as a community project.''
+
+@cindex Ulrich Müller
+@cindex Uday S Reddy
+Currently, VM is maintained by a ``VM Development Team,'' consisting of
+Robert Widhopf-Fenk, Ulrich Müller and Uday S Reddy.  Other potential members
+are warmly welcomed.  Robert Fenk has been inactive since November, 2008
+but he continues to be an official member of the team.  The new
+releases made by the team are numbered @code{8.1.0} and up.
+
+@cindex Launchpad
+The project code base is maintained at the Launchpad web site
+@uref{http://launchpad.net/vm}.  The ``VM Development Team'' can be
+reached here using the email address @code{vm@@launchpad.net}.
+
+@unnumberedsubsec Savannah project site
+
+The changes made in each of the releases is described in the @samp{NEWS}
+file, which can be found in the source code repository.  The changes made
+in versions up to 7.19 are described in the @samp{CHANGES} file.
+
+The @code{Download} link on the Savannah project page, takes you to the
+downloads area where all the recent releases are available.  Under the
+@code{Source Code} menu, the @code{Browse Sources Repository} takes you
+to the source files, which include, among others, the @samp{NEWS} and
+@samp{CHANGES} files mentioned above.
+
+If you have obtained VM through a secondary distribution that does not
+include all the sources, you can browse and download the sources from
+the @code{Source Code} menu.  The @code{Use Bazaar} entry in the menu
+takes you to a page that lists various version of VM source code, and
+gives instructions for downloading it via @samp{Bazaar} (@code{bzr}).
+
+@unnumberedsubsec Technical support
+
+VM has a dedicated usenet newsgroup @code{gnu.emacs.vm.info} in which
+the developers and the active users participate.  This is the first port
+of call for getting help with VM.  The archives of the newsgroup can be
+found at the Google Groups site
+@uref{http://groups.google.com/group/gnu.emacs.vm.info/topics}.
+
+A second newsgroup @code{gnu.emacs.vm.bug} is dedicated to
+discussing bugs or potential bugs in VM.  However, this is a place for
+discussion, not reporting bugs or getting them fixed.  
+
+The easiest way to report bugs that need fixing is to use the command
+@code{M-x vm-submit-bug-report} within VM.  This prepares an email
+message by including a state of your VM program which will allow the
+developers to reproduce your problem.  (Potentially sensitive information
+such as passwords are not included in this state.)  Please include a
+detailed description of the problem and how it arose.  The developers
+may need to ask you for further information or ask you to try
+alternative approaches to narrow down the problem.
+
+The best way to report bugs is via the Launchpad bug tacker.  See below.
+
+@unnumberedsubsec Get Involved
+
+VM is now supported and maintained by the user community.  So, as an
+active user, your participation is key to keep the project going.  
+
+Consider registering as a user of the Launchpad development site
+@uref{http://launchpad.net/vm}.  This 
+allows you to communicate with the developers and other users using a
+private Launchpad email address.  In particular, you can contribute bug
+reports and participate in the bug report discussions.
+
+You can download the development versions of VM and act as an ``alpha''
+tester.  This will allow you to shape the new developments and features
+and make suggestions that will be valuable to the developers.
+
+To download the development version, identify the ``branch'' that you
+would like to download, and use Bazaar version control system with an
+appropriate Launchpad URL.  For example, the command
+@command{bzr get lp:vm} can be used to download the main development
+branch. 
+
+You can also make change to the branch you have downloaded, and submit
+them to the developers for inclusion in the project.  The @code{README}
+file in the distribution explains how to do this.  Alternatively, you
+can create a separate branch in your own space on the Launchpad web
+site, and submit your changes to that branch.  The developers can review
+and merge your branch with the main development when your changes
+are ready.
+
+@unnumberedsubsec Contributors
+
+Contributions to the code from the following members of the VM community
+are gratefully acknowledged:
+
+@itemize
+@item Aidan Kehoe
+@item Glenn <unknown last name>
+@item Jens Gustedt
+@item John J Foerch
+@item Kevin Rogers
+@item Kyle Jones
+@item Rob Hodges
+@item Robert Marshall
+@item Robert P. Goldman
+@item Katsumi Yamaoka
+@item Julian Bradfield
+@item Samuel Bronson
+@item Brent Goodrick
+@item Noah Friedman
+@end itemize
+
+Please let us know if any other contributors have been missed out.
+
+@unnumberedsubsec Selected Releases of Kyle Jones
+@itemize
+@item Version 4.10, released in 1989.
+@item Version 5.00, released in 1990.
+@item Version 6.00, released 6 January, 1997.
+@item Version 7.00, released 2 December, 2001.
+@item Version 7.10, released 5 March, 2003.
+@item Version 7.15, released 3 May, 2003.
+@item Version 7.16, released 26 May, 2003.
+@item Version 7.17, released 6 July, 2003.
+@item Version 7.18, released 2 November, 2003.
+@item Version 7.19, released 29 September, 2004.
+@end itemize
+
+
+@unnumberedsubsec Releases of Robert Widhopf-Fenk
+@itemize
+@item Version 8.0.0, released 31 May, 2007.
+@item Version 8.0.1, released 29 June, 2007.
+@item Version 8.0.2, released 25 July, 2007.
+@item Version 8.0.3, released 15 August, 2007.
+@item Version 8.0.4, released 2 November, 2007.
+@item Version 8.0.5, released 3 November, 2007.
+@item Version 8.0.6, released 2 January, 2008.
+@item Version 8.0.7, released 5 January, 2008.
+@item Version 8.0.8, released 11 February, 2008.
+@item Version 8.0.9, released 20 February, 2008.
+@item Version 8.0.10, released 22 June, 2008.
+@item Version 8.0.11, released 11 August, 2008.
+@item Version 8.0.12, released 5 November, 2008.
+@item Version 8.0.13, released 29 November, 2009.
+@item Version 8.0.14, released 16 December, 2009.
+@end itemize
+
+
+@unnumberedsubsec Releases of VM development team
+@itemize
+@item Version 8.1.0, released 21 March, 2010.
+@item Version 8.1.1, planned for release on 10 April, 2010.
+@end itemize
+
+
+
+
+
+@node Internals, Concept Index, History and Administration, Top
 @chapter VM Internals
 
 This section gives a sketchy overview of the VM internals for the
