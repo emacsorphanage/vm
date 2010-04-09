@@ -73,12 +73,17 @@ The Wiki at http://www.emacswiki.org/emacs/CategoryViewMail is best
 suited to conserve code snippets, cooking guides or feature requests.
 
 *******************************************************************************
-BZR (http://bazaar-vcs.org/)
+Code Repository
 
-We maintain the source code using Bazaar.
+We maintain the source code using Bazaar (http://bazaar-vcs.org/).
 
-If you want to send us changes or start hacking on your own you may want to 
-branch from the follwing URL:
+If you want to get the latest development version of VM, or want to
+contribute changes you may want to branch from the follwing launchpad
+URI:
+
+  lp:vm
+
+which is short for the full URL:
 
   http://bazaar.launchpad.net/~vm/vm/trunk
 
@@ -91,13 +96,30 @@ bzr get lp:~vm/vm/trunk
 # get updates
 bzr pull
 # start hacking 
-xemacs vm-pgg.el
+emacs vm-pgg.el
 # commit your changes 
 bzr commit
 # Generate a bundle of your changes for merging
 bzr bundle-revisions --output=xy-changes.diff
 # Attach the bundle to a mail (rather than doing cut&paste) and send
 # it to vm @ lists.launchpad.net with a descriptive subject.  
+
+*******************************************************************************
+Get involved
+
+The project home is at 
+
+   http://launchpad.net/vm
+
+Registering on launchpad is painless process and makes it convenient
+to participate in the development of VM (or other Launchpad projects).
+
+The "Bugs" tracker is where we keep track of the bugs that need fixing
+as well as TODO items.
+
+The "Blueprints" section records our future development plans.
+
+
 
 *******************************************************************************
 COMMENTS
