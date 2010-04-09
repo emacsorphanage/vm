@@ -224,6 +224,7 @@ buffer and the variable `vm-imap-save-to-server'."
 	(prefix-numeric-value current-prefix-arg))))
   (if (and vm-imap-save-to-server (vm-imap-folder-p))
       (vm-save-message-to-imap-folder folder count)
+    (vm-load-message count)
     (vm-save-message-to-local-folder folder count)))
    
 ;;;###autoload
@@ -307,21 +308,20 @@ The saved messages are flagged as `filed'."
 				       (find-file-noselect folder)))))
 	    ((and mlist vm-visit-when-saving)
 	     (setq folder-buffer (vm-get-file-buffer folder))))
-      (if (and mlist vm-check-folder-types)
-	  (progn
+      (when (and mlist vm-check-folder-types)
 	    (setq target-type (or (vm-get-folder-type folder)
 				  vm-default-folder-type
 				  (and mlist
 				       (vm-message-type-of (car mlist)))))
 	    (if (eq target-type 'unknown)
-		(error "Folder %s's type is unrecognized" folder))))
+		(error "Folder %s's type is unrecognized" folder)))
       (unwind-protect
 	  (save-excursion
-	    (and oldmodebits (set-default-file-modes
-			      vm-default-folder-permission-bits))
+	    (when oldmodebits 
+	      (set-default-file-modes vm-default-folder-permission-bits))
 	    ;; if target folder is empty or nonexistent we need to
 	    ;; write out the folder header first.
-	    (if mlist
+	    (when mlist
 		(let ((attrs (file-attributes folder)))
 		  (if (or (null attrs) (= 0 (nth 7 attrs)))
 		      (if (null folder-buffer)
@@ -332,10 +332,8 @@ The saved messages are flagged as `filed'."
 	    (while mlist
 	      (setq m (vm-real-message-of (car mlist)))
 	      (set-buffer (vm-buffer-of m))
-	      ;; FIXME try to load the body before saving
-	      (if (vm-body-to-be-retrieved-of m)
-		  (error "Message %s body has not been retrieved"
-			 (vm-number-of (car mlist))))
+	      ;; FIXME the following shouldn't be necessary
+	      (vm-assert (not (vm-body-to-be-retrieved-of m)))
 	      (vm-save-restriction
 	       (widen)
 	       ;; have to stuff the attributes in all cases because
@@ -487,6 +485,7 @@ vm-save-message instead (normally bound to `s')."
   (vm-error-if-folder-empty)
   (vm-display nil nil '(vm-save-message-sans-headers)
 	      '(vm-save-message-sans-headers))
+  (vm-load-message count)
   (or count (setq count 1))
   (setq file (expand-file-name file))
   ;; Check and see if we are currently visiting the file
@@ -514,10 +513,8 @@ vm-save-message instead (normally bound to `s')."
 	  (while mlist
 	    (setq m (vm-real-message-of (car mlist)))
 	    (set-buffer (vm-buffer-of m))
-	    ;; FIXME try to load the body before saving
-	    (if (vm-body-to-be-retrieved-of m)
-		(error "Message %s body has not been retrieved"
-		       (vm-number-of (car mlist))))
+	    ;; FIXME the following shouldn't be necessary any more
+	    (vm-assert (not (vm-body-to-be-retrieved-of m)))
 	    (vm-save-restriction
 	     (widen)
 	     (if (null file-buffer)

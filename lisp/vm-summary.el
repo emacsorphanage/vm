@@ -274,14 +274,14 @@ mandatory."
 		  (if (not selected)
                       (if (not (get-text-property (point) 'thread-end))
                           (insert vm-summary-no-=>)
-                        (if (get-text-property (1+ (vm-su-end-of vm-summary-pointer))
-                                               'invisible)
+                        (if (get-text-property 
+			     (1+ (vm-su-end-of vm-summary-pointer)) 'invisible)
                             (insert "+ ")
                           (insert "- ")))
                     (if (not (get-text-property (point) 'thread-end))
                         (insert vm-summary-=>)
-                      (if (get-text-property (1+ (vm-su-end-of vm-summary-pointer))
-                                             'invisible)
+                      (if (get-text-property 
+			   (1+ (vm-su-end-of vm-summary-pointer)) 'invisible)
                           (insert "+>")
                         (insert "->"))))
 		  (vm-tokenized-summary-insert m (vm-su-summary m))
@@ -1269,6 +1269,8 @@ Argument msg is a message pointer."
 	 subject ))))
 
 (defun vm-su-summary (m)
+  "Returns the tokenized summary line of M, either from the stored
+entry (vm-summary-of) or recalculating it if necessary.  USR 2010-04-06" 
   (if (and (vm-virtual-message-p m) (not (vm-virtual-messages-of m)))
       (or (vm-virtual-summary-of m)
 	  (save-excursion

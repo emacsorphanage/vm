@@ -135,7 +135,7 @@ isn't a folder buffer.  USR, 2010-03-08"
 
 (defun vm-make-trace-buffer-name (session-name host)
    (format "trace of %s session to %s at %s" 
-	   session-name host 
+	   session-name host
 	   (substring (current-time-string) 11 19)))
 
 (provide 'vm-macro)

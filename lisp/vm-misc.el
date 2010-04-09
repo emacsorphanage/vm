@@ -353,6 +353,14 @@ and flexible."
 	(setq prev p p (cdr p))))
     list ))
 
+(defun vm-elems (n list)
+  (let (res)
+    (while (and list (> n 0))
+      (setq res (cons (car list) res))
+      (setq list (cdr list))
+      (setq n (1- n)))
+    (nreverse res)))
+
 (defun vm-delete-directory-file-names (list)
   (vm-delete 'file-directory-p list))
 

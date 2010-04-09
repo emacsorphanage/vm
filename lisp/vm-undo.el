@@ -457,6 +457,14 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
     ignored-labels))
 
 (defun vm-set-xxxx-flag (m flag norecord function attr-index)
+  "A generic function to set the message flag of M at ATTR-INDEX to
+  the value FLAG.  The argument FUNCTION tells the specific
+  non-generic function that invoked this one.
+The flag is also set for all the virtual messages mirroring M as well
+  as the real message underlying M. 
+Normally, a record of the change is kept for the purpose of undo, and
+  the changed attributes are stuffed into the folder, but NORECORD
+  suppresses all of this.                             USR 2010-04-06" 
   (let ((m-list nil) vmp)
     (cond
      ((and (not vm-folder-read-only)
@@ -498,6 +506,12 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 
 
 (defun vm-set-labels (m labels)
+  "Set the message labels of M to the value LABELS (a list of
+  strings). 
+The labels are also set for all the virtual messages mirroring M as
+  well as the real message underlying M. 
+A record of the change is kept for the purpose of undo, and the
+  changed attributes are stuffed into the folder.        USR 2010-04-06" 
   (let ((m-list nil)
 	(old-labels (vm-labels-of m))
 	vmp)
