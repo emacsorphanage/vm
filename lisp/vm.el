@@ -29,6 +29,13 @@
 
 (require 'vm-version)
 
+;; Ensure that vm-autoloads is loaded in case the user is using VM 7.x
+;; autoloads 
+
+(eval-when (load)
+  (if (not (featurep 'xemacs))
+      (require 'vm-autoloads)))
+
 ;;;###autoload
 (defun vm (&optional folder read-only access-method reload)
   "Read mail under Emacs.
