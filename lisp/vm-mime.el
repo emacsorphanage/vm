@@ -5884,7 +5884,8 @@ should be encoded together."
       (setq body-start (vm-marker (match-beginning 0)))
       (goto-char (point-min))
       
-      (while (re-search-forward headers body-start t)
+      (while (let ((case-fold-search t))
+	       (re-search-forward headers body-start t))
         (goto-char (match-end 0))
         (setq start (point))
         (when (not (looking-at "\\s-"))
