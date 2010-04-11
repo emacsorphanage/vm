@@ -56,6 +56,25 @@
 ;; Utilities
 ;; ------------------------------------------------------------------------
 
+;; For logging IMAP sessions
+
+(defvar vm-imap-log-sessions nil
+  "* Boolean flag to turn on or off logging of IMAP sessions.  Meant
+  for debugging IMAP server interactions.")
+
+(defvar vm-imap-tokens nil)
+
+(defsubst vm-imap-init-log ()
+  (setq vm-imap-tokens nil))
+
+(defsubst vm-imap-log-token (token)
+  (if vm-imap-log-sessions
+      (setq vm-imap-tokens (cons token vm-imap-tokens))))
+  
+(defsubst vm-imap-log-tokens (tokens)
+  (if vm-imap-log-sessions
+      (setq vm-imap-tokens (append (nreverse tokens) vm-imap-tokens))))
+
 ;; For verification of session protocol
 ;; Possible values are 
 ;; 'active - active session present
@@ -753,6 +772,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	greeting
 	host port mailbox auth user pass source-list imap-buffer
 	source-nopwd-nombox)
+    (vm-imap-log-token 'make)
     (unwind-protect
 	(catch 'end-of-session
 	  ;; parse the maildrop
@@ -794,6 +814,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	  (setq imap-buffer
 		(vm-make-work-buffer 
 		 (vm-make-trace-buffer-name session-name host)))
+	  (vm-imap-log-token imap-buffer)
 	  (save-excursion
 	    ;;----------------------------
 	    (vm-buffer-type:enter 'process)
@@ -978,6 +999,7 @@ be nil or be already closed. Optional argument IMAP-BUFFER specifies
 the process-buffer. If the optional argument KEEP-BUFFER is
 non-nil, the process buffer is retained, otherwise it is killed
 as well."
+  (vm-imap-log-token 'end-session)
   (if (and process (memq (process-status process) '(open run))
 	   (buffer-live-p (process-buffer process)))
       (save-excursion
@@ -1121,11 +1143,20 @@ as well."
 	  "IMAP process %s's buffer has been killed" process))))
 
 (defun vm-imap-send-command (process command &optional tag no-tag)
+  (vm-imap-log-token 'send)
   ;;------------------------------
   (vm-buffer-type:assert 'process)
   ;;------------------------------
   (vm-imap-check-connection process)
+  (if (not (= (point) (point-max)))
+      (vm-imap-log-tokens (list 'send1 (point) (point-max))))
   (goto-char (point-max))
+;;   try if it makes a difference to get pending output here, use timeout
+;;   (accept-process-output process 0 0.01)
+;;   (if (not (= (point) (point-max)))
+;;       (vm-imap-log-tokens (list 'send2 (point) (point-max))))
+;;   (goto-char (point-max))
+
   (or no-tag (insert-before-markers (or tag "VM") " "))
   (let ((case-fold-search t))
     (if (string-match "^LOGIN" command)
@@ -1164,6 +1195,7 @@ as well."
 	(read-write (not just-examine))
 	(can-delete t)
 	(need-ok t))
+    (vm-imap-log-token 'select-mailbox)
     (vm-imap-send-command 
      process (format "%s %s" command (vm-imap-quote-string mailbox)))
     (while need-ok
@@ -1212,6 +1244,7 @@ as well."
 	(need-ok t)
 	tok msg-num response
 	)
+    (vm-imap-log-token 'read-expunge)
     (while need-ok
       (setq response (vm-imap-read-response-and-verify process "EXPUNGE"))
       (cond ((vm-imap-response-matches response '* 'atom 'EXPUNGE)
@@ -1241,6 +1274,7 @@ as well."
 	(imap-buffer (current-buffer))
 	tok msg-num uid response p
 	(need-ok t))
+    (vm-imap-log-token 'uid-list)
     ;;----------------------------------
     (vm-imap-session-type:assert-active)
     ;;----------------------------------
@@ -1280,6 +1314,7 @@ as well."
 	response tok need-ok msg-num list)
     (if (not (equal (vm-imap-uid-validity-of m) uid-validity))
 	(vm-imap-protocol-error "message has invalid uid"))
+    (vm-imap-log-tokens (list 'message-data (current-buffer)))
     ;;----------------------------------
     (vm-imap-session-type:assert 'valid)
     ;;----------------------------------
@@ -1316,6 +1351,7 @@ as well."
 	(imap-buffer (current-buffer))
 	tok msg-num uid size flag flags response p pl
 	(need-ok t))
+    (vm-imap-log-token (list 'message-data-list (current-buffer)))
     ;;----------------------------------
     (if vm-buffer-type-debug
 	(setq vm-buffer-type-trail (cons 'message-data vm-buffer-type-trail)))
@@ -1436,6 +1472,7 @@ as well."
   ;; boolean BODYPEEK tells if the bodypeek function is available for
   ;; the IMAP server.
   (vm-assert (not (null vm-imap-read-point)))
+  (vm-imap-log-token 'retrieve)
   (let ((***start vm-imap-read-point)	; avoid dynamic binding of 'start'
 	end fetch-response list p)
     (goto-char ***start)
@@ -1573,6 +1610,7 @@ as well."
     ;;----------------------------------
     (vm-buffer-type:assert 'process)
     (vm-imap-session-type:assert 'valid)
+    (vm-imap-log-tokens (list 'message-size (current-buffer)))
     ;;----------------------------------
     (vm-imap-send-command process (format "FETCH %d:%d (RFC822.SIZE)" n n))
     (while need-ok
@@ -1600,6 +1638,7 @@ as well."
     (vm-buffer-type:assert 'process)
     (vm-imap-session-type:assert-active)
     ;;----------------------------------
+    (vm-imap-log-token 'uid-size)
     (vm-imap-send-command 
      process (format "UID FETCH %s:%s (RFC822.SIZE)" uid uid))
     (while need-ok
@@ -1635,6 +1674,7 @@ as well."
   ;;----------------------------------
   (vm-buffer-type:assert 'process)
   ;;----------------------------------
+  (vm-imap-log-token 'read-capability)
   (let (response r cap-list auth-list (need-ok t))
     (while need-ok
       (setq response (vm-imap-read-response-and-verify process "CAPABILITY"))
@@ -1675,6 +1715,7 @@ as well."
   ;;----------------------------------
   (vm-buffer-type:assert 'process)
   ;;----------------------------------
+  (vm-imap-log-token 'read-greeting)
   (let (response)
     (setq response (vm-imap-read-response process))
     (cond ((vm-imap-response-matches response '* 'OK)
@@ -1687,6 +1728,7 @@ as well."
   ;;----------------------------------
   (vm-buffer-type:assert 'process)
   ;;----------------------------------
+  (vm-imap-log-token 'read-ok)
   (let (response retval (done nil))
     (while (not done)
       (setq response (vm-imap-read-response process))
@@ -1720,6 +1762,7 @@ as well."
   (if vm-buffer-type-debug
       (setq vm-buffer-type-trail (cons 'read vm-buffer-type-trail)))
   ;;--------------------------------------------
+  (vm-imap-log-tokens (list 'response vm-imap-read-point))
   (let ((list nil) tail obj)
     (goto-char vm-imap-read-point)
     (while (not (eq (car (setq obj (vm-imap-read-object process)))
@@ -1756,6 +1799,7 @@ as well."
 	 (format "server said BYE to %s" (or command-desc "command"))))
     response))
 
+
 (defun vm-imap-read-object (process &optional skip-eol)
   ;;----------------------------------
   ;; Originally, this assertion failed often for some reason,
@@ -1764,6 +1808,7 @@ as well."
   ;; Still assertion check being disabled unless debugging is on.
   (if vm-buffer-type-debug
       (vm-buffer-type:assert 'process))
+  (vm-imap-log-tokens (list 'object (current-buffer)))
   ;;----------------------------------
   (let ((done nil)
 	opoint
@@ -1874,9 +1919,12 @@ as well."
 		     (setq done t)
 		   (vm-imap-check-connection process)
 		   (accept-process-output process)
-		   (goto-char curpoint))
+		   (goto-char curpoint)
+		   (vm-imap-log-token (buffer-substring start curpoint))
 		 (setq token (list 'atom start curpoint)))))))
     (setq vm-imap-read-point (point))
+    (vm-imap-log-token vm-imap-read-point)
+    (vm-imap-log-token token))
     token ))
 
 (defun vm-imap-response-matches (response &rest expr)
@@ -2032,6 +2080,7 @@ the IMAP process."
 	(vm-imap-ok-to-ask interactive))
     (if (processp process)
 	(vm-imap-end-session process))
+    (vm-imap-log-token 'new)
     (setq process (vm-imap-make-session (vm-folder-imap-maildrop-spec)))
     (when (processp process)
       (vm-set-folder-imap-process process)
@@ -2635,6 +2684,11 @@ operation of the server to minimize I/O."
   (if vm-buffer-type-debug
       (setq vm-buffer-type-trail (cons 'synchronize vm-buffer-type-trail)))
   (vm-buffer-type:set 'folder)
+  (vm-imap-init-log)
+  (vm-imap-log-tokens (list 'synchronize (current-buffer)
+			    (vm-folder-imap-process)
+			    (process-buffer (vm-folder-imap-process))))
+  (setq vm-buffer-type-trail nil)
   ;;--------------------------
   (if (and do-retrieves vm-block-new-mail)
       (error "Can't get new mail until you save this folder"))
