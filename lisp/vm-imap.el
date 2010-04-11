@@ -130,7 +130,10 @@
   "Accept output from PROCESS.  One could add a time out here,
   but it is likely to break VM.  VM normally asks for
   process-output only when it really needs it to proceed."
-  (accept-process-output process))
+  ;; protect against possible buffer change due to bug in Emacs
+  (let ((buf (current-buffer)))
+    (accept-process-output process)
+    (set-buffer buf)))
 
 
 ;; Mollify the pesky compiler
@@ -1746,8 +1749,8 @@ as well."
 	    ((vm-imap-response-matches response 'VM 'NO)
 	     (setq retval nil done t))
 	    (t
-	     (vm-imap-protocol-error "Did not receive OK response")))
-	retval ))
+	     (vm-imap-protocol-error "Did not receive OK response"))))
+    retval ))
 
 (defun vm-imap-cleanup-region (start end)
   (setq end (vm-marker end))
