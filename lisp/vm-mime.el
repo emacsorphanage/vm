@@ -1449,8 +1449,11 @@ source of the message."
 	(goto-char (point-min))
 	(cond ((and (vm-message-access-method-of mm)
 		    (vm-body-to-be-retrieved-of mm))
-	       (vm-fetch-message 
-		(list (vm-message-access-method-of mm)) mm))
+	       (condition-case err
+		   (vm-fetch-message 
+		    (list (vm-message-access-method-of mm)) mm)
+		 (error
+		  (message "Cannot fetch; %s" (error-message-string err)))))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 	       (vm-fetch-message (read (current-buffer)) mm)))
 	(set-buffer-modified-p modified)

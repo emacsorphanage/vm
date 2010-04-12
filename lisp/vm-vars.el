@@ -597,8 +597,15 @@ variable."
   :type '(choice (const nil) directory))
 
 (defcustom vm-imap-save-to-server nil
-  "*If this variable is non-NIL, then the save-message command should
-save to IMAP folders on the server, rather than to local files."
+  "*This variable controls the behavior of the `vm-save-message'
+  command.  
+If it is non-NIL, then messages from IMAP folders
+  are saved to other IMAP folders on the server, instead of
+  local folders.  Messages from local folders are still saved to local
+  folders.
+The specialized commands `vm-save-message-to-local-folder' and
+  `vm-save-message-to-imap-folder' can be used to obtain particular
+  behavior independent of this variable."
   :group 'vm
   :type '(choice (const nil) (const t)))
 

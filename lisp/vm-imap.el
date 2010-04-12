@@ -140,14 +140,14 @@
 (defvar selectable-only)
 
 (defvar vm-imap-connection-mode 'online
-  "* The mode of connection to the IMAP server.  Possible values are:
-'online, 'offline and 'autoconnect.  In the 'online mode,
+  "* The mode of connection to the IMAP server.  Possible values
+are: 'online, 'offline and 'autoconnect.  In the 'online mode,
 synchronization works normally and message bodies of headers-only
-messages are fetched when needed.  In 'offline mode, no connection is
-established to the IMAP server and message bodies are not fetched.  In
-'autoconnect mode, message bodies are not fetched.  If a
-synchronization operation is performed, a connection to the IMAP
-server is established.")
+messages are fetched when needed.  In 'offline mode, no
+connection is established to the IMAP server and message bodies
+are not fetched.  In the 'autoconnect mode, a connection is
+established whenever a synchronization operation is performed and the
+connection mode is then turned into 'online.")
 
 ;; the maildrop spec of the imap folder
 (defsubst vm-folder-imap-maildrop-spec ()
@@ -2697,8 +2697,7 @@ operation of the server to minimize I/O."
   (vm-buffer-type:set 'folder)
   (vm-imap-init-log)
   (vm-imap-log-tokens (list 'synchronize (current-buffer)
-			    (vm-folder-imap-process)
-			    (process-buffer (vm-folder-imap-process))))
+			    (vm-folder-imap-process)))
   (setq vm-buffer-type-trail nil)
   ;;--------------------------
   (if (and do-retrieves vm-block-new-mail)
@@ -2970,9 +2969,10 @@ operation of the server to minimize I/O."
 	  ;;-----------------------------
 	  (vm-set-folder-imap-mailbox-count (- mailbox-count expunge-count))
 	  ))
-      ;; Not clear that one should end the session right away but
-      ;; there doesn't seem anything wrong in ending it.  
-      (vm-imap-end-session process)
+      ;; Not clear that one should end the session right away.  We
+      ;; will keep it around for use with headers-only messages.
+      ;; (vm-imap-end-session process)
+      (setq vm-imap-connection-mode 'online)
       got-some)))
 
 (defvar vm-imap-message-bunch-size 10
@@ -3004,7 +3004,7 @@ operations")
 
 (defun vm-fetch-imap-message (m)
   "Insert the message body of M in the current buffer, which must be
-either the folder buffer or the presentation buffer.
+  either the folder buffer or the presentation buffer.
  (This is a special case of vm-fetch-message, not to be confused with
  vm-imap-fetch-message.)"
   (let ((body-buffer (current-buffer)))
@@ -3028,8 +3028,8 @@ either the folder buffer or the presentation buffer.
 
 	(if (null process)
 	    (if (eq vm-imap-connection-mode 'offline)
-		nil
-	      (message "Could not connect to IMAP server; Type g to reconnect")
+		(error "Working in offline mode")
+	      (error "Could not connect to IMAP server; Type g to reconnect")
 	      (setq vm-imap-connection-mode 'autoconnect))
 	  (message "Retrieving message body... ")
 	  (setq imap-buffer (process-buffer process))
@@ -3074,11 +3074,12 @@ either the folder buffer or the presentation buffer.
 	  ;;-----------------------------
 	  (vm-imap-dump-uid-seq-num-data)
 	  ;;-----------------------------
-	  ))
-      ;;-------------------
-      (vm-buffer-type:exit)
-      ;;-------------------
-      )))
+	  )
+	;;-------------------
+	(vm-buffer-type:exit)
+	;;-------------------
+	))))
+	 
 
 ;;;###autoload
 (defun vm-load-message (&optional count)
@@ -3105,6 +3106,8 @@ only marked messages are loaded, other messages are ignored."
 	(buffer-undo-list t)
 	(text-begin nil)
 	(text-end nil)
+	(errors 0)
+	fetch-method
 	m mm)
 ;;     (if (not used-marks) 
 ;; 	(setq mlist (list (car vm-message-pointer))))
@@ -3113,35 +3116,47 @@ only marked messages are loaded, other messages are ignored."
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
-	(if (not (eq vm-folder-access-method 'imap))
+	(when (not (eq vm-folder-access-method 'imap))
 	    (error "This is currently available only for imap folders."))
-	(vm-save-restriction
-	 (widen)
-	 (setq text-begin (marker-position (vm-text-of mm)))
-	 (setq text-end (marker-position (vm-text-end-of mm)))
-	 (narrow-to-region (marker-position (vm-headers-of mm)) text-end)
-	 (goto-char text-begin)
-	 (delete-region (point) (point-max))
-	 (apply (intern (format "vm-fetch-%s-message" "imap"))
-		mm nil)
-	 ;; delete the new headers
-	 (delete-region text-begin
-			(or (re-search-forward "\n\n" (point-max) t)
-			    (point-max)))
-	 ;; fix markers now
-	 ;; FIXME the text-end is guessed
-	 (set-marker (vm-text-of mm) text-begin)
-	 (set-marker (vm-text-end-of mm) 
-		     (save-excursion
-		       (goto-char (point-max))
-		       (end-of-line 0)	; move back one line
-		       (kill-line 1)
-		       (point)))
-	 (goto-char text-begin)
-	 ;; now care for the layout of the message
-	 (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
-	 (vm-set-body-to-be-retrieved mm nil)
-	 (setq mlist (cdr mlist)))))				
+	(setq fetch-method "imap")		; other methods to be added
+	(when (vm-body-to-be-retrieved-of mm)
+	  (vm-save-restriction
+	   (widen)
+	   (setq text-begin (marker-position (vm-text-of mm)))
+	   (setq text-end (marker-position (vm-text-end-of mm)))
+	   (narrow-to-region (marker-position (vm-headers-of mm)) text-end)
+	   (goto-char text-begin)
+	   (delete-region (point) (point-max))
+	   (condition-case err
+	       (apply (intern (format "vm-fetch-%s-message" fetch-method))
+		      mm nil)
+	     (error 
+	      (error "Unable to load message; %s" 
+		     (error-message-string err))))
+	   ;; delete the new headers
+	   (delete-region text-begin
+			  (or (re-search-forward "\n\n" (point-max) t)
+			      (point-max)))
+	   ;; fix markers now
+	   ;; FIXME the text-end is guessed
+	   (set-marker (vm-text-of mm) text-begin)
+	   (set-marker (vm-text-end-of mm) 
+		       (save-excursion
+			 (goto-char (point-max))
+			 ;; (end-of-line 0) ; move back one line
+			 ;; (kill-line 1)
+			 (point)))
+	   (goto-char text-begin)
+	   ;; now care for the layout of the message
+	   (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
+	   (vm-set-body-to-be-retrieved mm nil)
+	   (vm-mark-for-summary-update m)
+	   (add-to-list 'vm-messages-needing-summary-update m)))
+	(setq mlist (cdr mlist))))
+    ;; FIXME - is this needed?  Is it correct?
+    ;; (vm-display nil nil '(vm-load-message vm-refresh-message)
+    ;;    (list this-command))	
+    (vm-update-summary-and-mode-line)
     ))
 
 ;;;###autoload
@@ -3194,7 +3209,10 @@ only marked messages are unloaded, other messages are ignored."
 	 (delete-region (point) text-end)
 	 (vm-set-mime-layout-of mm nil)
 	 (vm-set-body-to-be-retrieved mm t)
-	 (setq mlist (cdr mlist)))))				
+	 (vm-mark-for-summary-update m)
+	 (add-to-list 'vm-messages-needing-summary-update m)
+	 (setq mlist (cdr mlist)))))
+    (vm-update-summary-and-mode-line)
     ))
 
 

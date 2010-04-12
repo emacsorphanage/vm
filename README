@@ -39,21 +39,19 @@ settings (in a '~/.vm' file).  Read more in the VM manual on 'info'.
 *******************************************************************************
 BUGS
 
-If you have any problems or meet a bug it is best to discuss them on
-the USENET groups gnu.emacs.vm.bugs or gnu.emacs.vm.info!  Also search
-the groups before posting as there might have been some discussion and
-a fix before.
-
-In addition to discussing the problems on the newsgroups, you are
-encouraged to file a bug report using the Emacs function 
+Please report bugs in VM using the VM function
 	   M-x vm-submit-bug-report
 This function formats an email report including the entire state of VM
-which can be used to diagnose and fix the bug.
+which can be used to diagnose and fix the bug.  Please include
+information about how to reproduce the problem.
 
-Report any problems or bugs otherwise they cannot be fixed!
+Please report any problems or bugs otherwise they cannot be fixed!
 
-Please provide the version number of VM and Emacs and how to reproduce
-the problem.
+If you are not sure that the problem is a bug or that it could be of
+general importance to other users, you are welcome to discuss it on
+the USENET groups gnu.emacs.vm.bugs or gnu.emacs.vm.info!  However, it
+is not always possible to diagnose problems without full information
+about your VM settings.  So, filing a bug report is necessary.
 
 *******************************************************************************
 Homepage

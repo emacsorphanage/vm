@@ -179,8 +179,8 @@ The saved messages are flagged as `filed'."
 (defun vm-save-message (folder &optional count)
   "Save the current message.  This may be done either by saving it
 to an IMAP folder or by saving it to a local filesystem folder.
-Which is done is controlled by the type of the current vm-folder
-buffer and the variable `vm-imap-save-to-server'."
+Which is done depends on the type of current vm folder
+and the variable `vm-imap-save-to-server' (which see)."
   (interactive
    (if (and vm-imap-save-to-server (vm-imap-folder-p))
        ;; IMAP saving --- argument parsing taken from
