@@ -17,6 +17,11 @@ Status
   
 VM 8.1.1 (2010-04-??)
 
+   ** The variable vm-always-use-presentation-buffer is deprecated.
+      Please remove all settings for this variable in your init file.
+      The default behaviour will be to always use the presentation
+      buffer.  Report any problems that might arise as a result.
+
     * Made the autoloads compatible with VM 7.19 instructions.
 
     * Removed a few incompatibilites with XEmacs.

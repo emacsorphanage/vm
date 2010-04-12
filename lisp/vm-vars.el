@@ -871,10 +871,15 @@ A nil value causes VM to preview messages only if new or unread."
   :group 'vm
   :type 'boolean)
 
-(defcustom vm-always-use-presentation-buffer nil
-  "*Non-nil means to always use a presentation buffer for displaying messages.
-It will also be used if no decoding or other modification of the message are
-necessary."
+(defcustom vm-always-use-presentation-buffer t
+  "****This variable is deprecated.  Starting from version 8.2.0, the
+  behaviour will be equivalent to setting this variable to t.  Please
+  remove all settings for this variable and report any problems that
+  you might encounter.
+
+Non-nil means to always use a presentation buffer for displaying
+  messages.  It will also be used if no decoding or other
+  modification of the message are necessary."
   :group 'vm
   :type 'boolean)
 

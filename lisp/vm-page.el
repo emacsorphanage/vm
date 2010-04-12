@@ -831,18 +831,22 @@ is done if necessary.  (USR, 2010-01-14)"
   ;; buffer as well the presentation buffer, but it is not clear if it
   ;; works correctly when invoked in the presentation buffer.  
   ;; (USR, 2010-01-21)
-  (and vm-display-using-mime
-       vm-auto-decode-mime-messages
-       (if vm-mail-buffer
-	   (not (vm-buffer-variable-value vm-mail-buffer 'vm-mime-decoded))
-	 (not vm-mime-decoded))
-       (not (vm-mime-plain-message-p (car vm-message-pointer)))
+  (if (and vm-display-using-mime
+	   vm-auto-decode-mime-messages
+	   (if vm-mail-buffer
+	       (not (vm-buffer-variable-value vm-mail-buffer 'vm-mime-decoded))
+	     (not vm-mime-decoded))
+	   (not (vm-mime-plain-message-p (car vm-message-pointer))))
 
-       (condition-case data
-	   (vm-decode-mime-message)
-	 (vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
-					       (car (cdr data)))
-			(message "%s" (car (cdr data))))))
+      (condition-case data
+	  (vm-decode-mime-message)
+	(vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
+					      (car (cdr data)))
+		       (message "%s" (car (cdr data)))))
+    ;; FIXME at this point, the folder buffer is being used for
+    ;; display
+    nil
+    )
   ;; FIXME this probably cause folder corruption by filling the folder instead
   ;; of the presentation copy  ..., RWF, 2008-07
   ;; Well, so, we will check if we are in a presentation buffer! 
