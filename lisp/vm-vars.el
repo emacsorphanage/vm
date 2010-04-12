@@ -1795,8 +1795,8 @@ with the first type that matches will be used."
   :type '(regexp))
 
 (defcustom vm-mime-encode-headers-words-regexp
-  (let ((8bit-word "\\([^ \t\n\r]*[^\x0-\x7f]+[^ \t\n\r]*\\)+"))
-    (concat "\\s-\\(" 8bit-word "\\(\\s-+" 8bit-word "\\)*\\)"))
+  (let ((8bit-word "\\([^ ,\t\n\r]*[^\x0-\x7f]+[^ ,\t\n\r]*\\)+"))
+    (concat "[ ,\t\n\r]\\(" 8bit-word "\\(\\s-+" 8bit-word "\\)*\\)"))
   "*A regexp matching a set of consecutive words which must be encoded."
   :group 'vm
   :type '(regexp))
