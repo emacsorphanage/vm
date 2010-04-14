@@ -3116,10 +3116,10 @@ only marked messages are loaded, other messages are ignored."
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
-	(when (not (eq vm-folder-access-method 'imap))
-	    (error "This is currently available only for imap folders."))
-	(setq fetch-method "imap")		; other methods to be added
 	(when (vm-body-to-be-retrieved-of mm)
+	  (when (not (eq vm-folder-access-method 'imap))
+	    (error "This is currently available only for imap folders."))
+	  (setq fetch-method "imap")	; other methods to be added
 	  (vm-save-restriction
 	   (widen)
 	   (setq text-begin (marker-position (vm-text-of mm)))
