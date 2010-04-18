@@ -339,13 +339,13 @@
   (set (aref (aref message 4) 1) list))
 (defsubst vm-set-virtual-messages-sym-of (message sym)
   (aset (aref message 4) 1 sym))
-(defun vm-set-stuff-flag-of (message val)
+(defsubst vm-set-stuff-flag-of (message val)
   (aset (aref message 4) 2 val))
 (defsubst vm-set-labels-of (message labels)
   (aset (aref message 4) 3 labels))
 (defsubst vm-set-label-string-of (message string)
   (aset (aref message 4) 4 string))
-(defun vm-set-attribute-modflag-of (message flag)
+(defsubst vm-set-attribute-modflag-of (message flag)
   (aset (aref message 4) 5 flag))
 
 (defun vm-make-message ()
@@ -383,7 +383,7 @@
       (search-forward "\n\n" (vm-text-end-of m) 0)
       (vm-set-text-of m (point-marker)))))
 
-(defun vm-virtual-message-p (m)
+(defsubst vm-virtual-message-p (m)
   (not (eq m (vm-real-message-of m))))
 
 (provide 'vm-message)

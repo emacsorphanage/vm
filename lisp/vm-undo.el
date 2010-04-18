@@ -504,6 +504,54 @@ Normally, a record of the change is kept for the purpose of undo, and
 		(vm-stuff-virtual-attributes m)
 	      (vm-set-stuff-flag-of m t))))))))
 
+(defun vm-set-xxxx-cached-data-flag (m flag norecord function attr-index)
+  "A generic function to set the cached-data flag of M at ATTR-INDEX to
+  the value FLAG.  The argument FUNCTION tells the specific
+  non-generic function that invoked this one.
+The flag is also set for all the virtual messages mirroring M as well
+  as the real message underlying M. 
+Normally, a record of the change is kept for the purpose of undo, and
+  the changed attributes are stuffed into the folder, but NORECORD
+  suppresses all of this.                             USR 2010-04-06" 
+  (let ((m-list nil) vmp)
+    (cond
+     ((and (not vm-folder-read-only)
+	   (or (not (vm-virtual-messages-of m))
+	       (not (save-excursion
+		      (set-buffer
+		       (vm-buffer-of
+			 (vm-real-message-of m)))
+		      vm-folder-read-only)))
+           ;; do nothing it is is already set 
+           (not (eq flag (aref (vm-cached-data-of m) attr-index))))
+      (cond
+       ((not norecord)
+	(setq vmp (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
+	(while vmp
+	  (if (eq (vm-cached-data-of m) (vm-cached-data-of (car vmp)))
+	      (setq m-list (cons (car vmp) m-list)))
+	  (setq vmp (cdr vmp)))
+	(if (null m-list)
+	    (setq m-list (cons m m-list)))
+	(while m-list
+	  (save-excursion
+	    (set-buffer (vm-buffer-of (car m-list)))
+	    (cond ((not (buffer-modified-p))
+		   (vm-set-buffer-modified-p t)
+		   (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
+	    (vm-undo-record (list function (car m-list) (not flag)))
+;;;	    (vm-undo-boundary)
+	    (vm-increment vm-modification-counter))
+	  (setq m-list (cdr m-list)))))
+      (aset (vm-cached-data-of m) attr-index flag)
+      (vm-mark-for-summary-update m)
+      (if (not norecord)
+	  (progn
+	    (vm-set-attribute-modflag-of m t)
+	    (if (eq vm-flush-interval t)
+		(vm-stuff-virtual-attributes m)
+	      (vm-set-stuff-flag-of m t))))))))
+
 
 (defun vm-set-labels (m labels)
   "Set the message labels of M to the value LABELS (a list of
@@ -547,6 +595,14 @@ A record of the change is kept for the purpose of undo, and the
 	  (vm-stuff-virtual-attributes m)
 	(vm-set-stuff-flag-of m t))))))
 
+
+(defun vm-set-headers-to-be-retrieved-flag (m flag &optional norecord)
+  (vm-set-xxxx-cached-data-flag 
+   m flag norecord 'vm-set-headers-to-be-retrieved-flag 21))
+
+(defun vm-set-body-to-be-retrieved-flag (m flag &optional norecord)
+  (vm-set-xxxx-cached-data-flag 
+   m flag norecord 'vm-set-body-to-be-retrieved-flag 22))
 
 (defun vm-set-new-flag (m flag &optional norecord)
   (vm-set-xxxx-flag m flag norecord 'vm-set-new-flag 0))

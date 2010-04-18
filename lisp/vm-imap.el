@@ -3149,9 +3149,8 @@ only marked messages are loaded, other messages are ignored."
 	   (goto-char text-begin)
 	   ;; now care for the layout of the message
 	   (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
-	   (vm-set-body-to-be-retrieved-of mm nil)
-	   (vm-mark-for-summary-update m)
-	   (add-to-list 'vm-messages-needing-summary-update m)))
+	   (vm-set-body-to-be-retrieved-flag mm nil)
+	   ))
 	(setq mlist (cdr mlist))))
     ;; FIXME - is this needed?  Is it correct?
     ;; (vm-display nil nil '(vm-load-message vm-refresh-message)
@@ -3209,11 +3208,11 @@ only marked messages are unloaded, other messages are ignored."
 	   (setq text-end (marker-position (vm-text-end-of mm)))
 	   (goto-char text-begin)
 	   (delete-region (point) text-end)
+	   (vm-set-buffer-modified-p t)
 	   (vm-set-mime-layout-of mm nil)
-	   (vm-set-body-to-be-retrieved-of mm t)
-	   (vm-mark-for-summary-update m)
-	   (add-to-list 'vm-messages-needing-summary-update m)))
-	 (setq mlist (cdr mlist))))
+	   (vm-set-body-to-be-retrieved-flag mm t)
+	   ))
+	(setq mlist (cdr mlist))))
     (vm-update-summary-and-mode-line)
     ))
 

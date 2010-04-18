@@ -160,29 +160,28 @@ and thread indentation."
   (cond ((eq m (vm-real-message-of m))
 	 ;; this is a real message.
 	 ;; its summary and modeline need to be updated.
-	 (if (not dont-kill-cache)
-	     ;; toss the cache.  this also tosses the cache of any
-	     ;; virtual messages mirroring this message.  the summary
-	     ;; entry cache must be cleared when an attribute of a
-	     ;; message that could appear in the summary has changed.
-	     (vm-set-summary-of m nil))
-	 (if (vm-su-start-of m)
-	     (setq vm-messages-needing-summary-update
-		   (cons m vm-messages-needing-summary-update)))
+	 (unless dont-kill-cache
+	   ;; toss the cache.  this also tosses the cache of any
+	   ;; virtual messages mirroring this message.  the summary
+	   ;; entry cache must be cleared when an attribute of a
+	   ;; message that could appear in the summary has changed.
+	   (vm-set-summary-of m nil))
+	 (when (vm-su-start-of m)
+	   (setq vm-messages-needing-summary-update
+		 (cons m vm-messages-needing-summary-update)))
 	 (intern (buffer-name (vm-buffer-of m))
 		 vm-buffers-needing-display-update)
 	 ;; find the virtual messages of this real message that
 	 ;; need a summary update.
 	 (let ((m-list (vm-virtual-messages-of m)))
 	   (while m-list
-	     (if (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
-		 (progn
-		   (and (vm-su-start-of (car m-list))
-			(setq vm-messages-needing-summary-update
-			      (cons (car m-list)
-				    vm-messages-needing-summary-update)))
-		   (intern (buffer-name (vm-buffer-of (car m-list)))
-			   vm-buffers-needing-display-update)))
+	     (when (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
+	       (and (vm-su-start-of (car m-list))
+		    (setq vm-messages-needing-summary-update
+			  (cons (car m-list)
+				vm-messages-needing-summary-update)))
+	       (intern (buffer-name (vm-buffer-of (car m-list)))
+		       vm-buffers-needing-display-update))
 	     (setq m-list (cdr m-list)))))
 	(t
 	 ;; this is a virtual message.
@@ -201,32 +200,31 @@ and thread indentation."
 	       ;; schedule updates for all the virtual message who share
 	       ;; the same cache as this message.
 	       (while m-list
-		 (if (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
-		     (progn
-		       (and (vm-su-start-of (car m-list))
-			    (setq vm-messages-needing-summary-update
-				  (cons (car m-list)
-					vm-messages-needing-summary-update)))
-		       (intern (buffer-name (vm-buffer-of (car m-list)))
-			       vm-buffers-needing-display-update)))
+		 (when (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
+		   (and (vm-su-start-of (car m-list))
+			(setq vm-messages-needing-summary-update
+			      (cons (car m-list)
+				    vm-messages-needing-summary-update)))
+		   (intern (buffer-name (vm-buffer-of (car m-list)))
+			   vm-buffers-needing-display-update))
 		 (setq m-list (cdr m-list)))
 	       ;; now take care of the real message
-	       (if (not dont-kill-cache)
-		   ;; toss the cache.  this also tosses the cache of
-		   ;; any virtual messages sharing the same cache as
-		   ;; this message.
-		   (vm-set-summary-of m nil))
-	       (and (vm-su-start-of (vm-real-message-of m))
-		    (setq vm-messages-needing-summary-update
-			  (cons (vm-real-message-of m)
-				vm-messages-needing-summary-update)))
+	       (unless dont-kill-cache
+		 ;; toss the cache.  this also tosses the cache of
+		 ;; any virtual messages sharing the same cache as
+		 ;; this message.
+		 (vm-set-summary-of m nil))
+	       (when (vm-su-start-of (vm-real-message-of m))
+		 (setq vm-messages-needing-summary-update
+		       (cons (vm-real-message-of m)
+			     vm-messages-needing-summary-update)))
 	       (intern (buffer-name (vm-buffer-of (vm-real-message-of m)))
 		       vm-buffers-needing-display-update))
-	   (if (not dont-kill-cache)
-	       (vm-set-virtual-summary-of m nil))
-	   (and (vm-su-start-of m)
-		(setq vm-messages-needing-summary-update
-		      (cons m vm-messages-needing-summary-update)))
+	   (unless dont-kill-cache
+	     (vm-set-virtual-summary-of m nil))
+	   (when (vm-su-start-of m)
+	     (setq vm-messages-needing-summary-update
+		   (cons m vm-messages-needing-summary-update)))
 	   (intern (buffer-name (vm-buffer-of m))
 		   vm-buffers-needing-display-update)))))
 
