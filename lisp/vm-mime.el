@@ -4096,6 +4096,9 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   ;; drag window point along, to a place arbitrarily far from
   ;; where it was when the user triggered the button.
   (save-excursion
+    ;; (vm-load-message 1)
+    ;; FIXME the following should be unnecessary
+    (vm-assert (not (vm-body-to-be-retrieved-of (car vm-message-pointer))))
     (let ((e (vm-find-layout-extent-at-point))
 	  retval )
       (cond ((null e) nil)
@@ -7196,6 +7199,12 @@ This is a destructive operation and cannot be undone!"
     (vm-follow-summary-cursor)
     (vm-select-folder-buffer))
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
+    (vm-load-message count)
+    ;; FIXME the following should be unnecessary
+    (mapcar
+     (lambda (m)
+       (vm-assert (not (vm-body-to-be-retrieved-of m))))
+     mlist)
     (save-excursion
       (while mlist
         (let ((count (vm-mime-nuke-alternative-text/html-internal (car mlist))))

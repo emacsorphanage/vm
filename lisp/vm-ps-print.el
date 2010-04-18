@@ -202,8 +202,9 @@ Like `vm-tokenized-summary-insert'."
 	(setq token (car tokens))
 	(cond ((stringp token)
 	       (if vm-display-using-mime
-		   (setq summary (concat summary
-					 (vm-decode-mime-encoded-words-in-string token)))
+		   (setq summary 
+			 (concat summary
+				 (vm-decode-mime-encoded-words-in-string token)))
 		 (setq summary (concat summary token))))
 	      ((eq token 'number)
 	       (setq summary (concat summary (vm-padded-number-of message))))
@@ -271,6 +272,12 @@ for customization of the output."
 	 (mlist (vm-select-marked-or-prefixed-messages count))
 	 (mcount (length mlist))
 	 (tmpbuf (get-buffer-create "*vm-ps-print*")))
+    (vm-load-message count)
+    ;; FIXME the following is really unnecessary
+    (mapcar
+     (lambda (m)
+       (vm-assert (not (vm-body-to-be-retrieved-of m))))
+     mlist)
 
     (set-buffer tmpbuf)
     (setq major-mode 'vm-mode)
@@ -397,9 +404,9 @@ If EACH it t, then replace `vm-print-message' by
 ;;;###autoload
 (defun vm-ps-print-message-infect-vm (&optional each)
   "Call this function to hook the ps-printing functions into VM.
-Arranges that the usual VM printing commands in menus and the
-toolbar use `vm-ps-print-message' or `vm-ps-print-each-message'
-(when EACH is t) instead of `vm-print-message'."
+Arranges that the usual VM printing commands in menus and the toolbar
+use `vm-ps-print-message' or `vm-ps-print-each-message' (when EACH is
+t) instead of `vm-print-message'." 
   (interactive)
   (if each (fset 'vm-toolbar-print-command 'vm-ps-print-each-message)
     (fset 'vm-toolbar-print-command 'vm-ps-print-message))

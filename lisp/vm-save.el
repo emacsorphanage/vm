@@ -332,7 +332,7 @@ The saved messages are flagged as `filed'."
 	    (while mlist
 	      (setq m (vm-real-message-of (car mlist)))
 	      (set-buffer (vm-buffer-of m))
-	      ;; FIXME the following shouldn't be necessary
+	      ;; FIXME the following isn't really necessary
 	      (vm-assert (not (vm-body-to-be-retrieved-of m)))
 	      (vm-save-restriction
 	       (widen)
@@ -603,16 +603,18 @@ Output, if any, is displayed.  The message is not altered."
 	(mlist (if (eq last-command 'vm-next-command-uses-marks)
 		   (vm-select-marked-or-prefixed-messages 0)
 		 (list (car vm-message-pointer)))))
+    (vm-load-message)
+    ;; FIXME the following is really unnecessary
+    (mapcar
+     (lambda (m)
+       (vm-assert (not (vm-body-to-be-retrieved-of m))))
+     mlist)
     (save-excursion
       (set-buffer buffer)
       (erase-buffer))
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
       (set-buffer (vm-buffer-of m))
-      ;; FIXME try to load the body before saving
-      (if (vm-body-to-be-retrieved-of m)
-	  (error "Message %s body has not been retrieved"
-		 (vm-number-of (car mlist))))
       (save-restriction
 	(widen)
 	(let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
@@ -724,6 +726,12 @@ arguments after the command finished."
 		   (vm-select-marked-or-prefixed-messages 0)
 		 (list (car vm-message-pointer))))
 	m process)
+    (vm-load-message)
+    ;; FIXME the following is really unnecessary
+    (mapcar
+     (lambda (m)
+       (vm-assert (not (vm-body-to-be-retrieved-of m))))
+     mlist)
     (save-excursion
       (set-buffer buffer)
       (erase-buffer))
@@ -745,11 +753,7 @@ arguments after the command finished."
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
       (set-buffer (vm-buffer-of m))
-      ;; FIXME try to load the body before saving
-      (if (vm-body-to-be-retrieved-of m)
-	  (error "Message %s body has not been retrieved"
-		 (vm-number-of (car mlist))))
-     (save-restriction
+      (save-restriction
 	(widen)
 	(cond ((eq vm-pipe-messages-to-command-start t)
 	       (process-send-region process 
@@ -762,8 +766,8 @@ arguments after the command finished."
 	       (process-send-region process 
 				    (vm-text-end-of m) (vm-end-of m)))
 	      (vm-pipe-messages-to-command-end
-	       (process-send-string process vm-pipe-messages-to-command-end)))
-	(setq mlist (cdr mlist))))
+	       (process-send-string process vm-pipe-messages-to-command-end))))
+      (setq mlist (cdr mlist)))
 
     (process-send-eof process)
 
@@ -838,17 +842,20 @@ Output, if any, is displayed.  The message is not altered."
 	 (m nil)
 	 (pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
 	 (mlist (vm-select-marked-or-prefixed-messages count)))
+    (vm-load-message count)
+    ;; FIXME the following is really unnecessary
+    (mapcar
+     (lambda (m)
+       (vm-assert (not (vm-body-to-be-retrieved-of m))))
+     mlist)
+
     (save-excursion
       (set-buffer buffer)
       (erase-buffer))
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
       (set-buffer (vm-buffer-of m))
-      ;; FIXME try to load the body before saving
-      (if (vm-body-to-be-retrieved-of m)
-	  (error "Message %s body has not been retrieved"
-		 (vm-number-of (car mlist))))
-     (if (and vm-display-using-mime (vectorp (vm-mm-layout m)))
+      (if (and vm-display-using-mime (vectorp (vm-mm-layout m)))
 	  (let ((work-buffer nil))
 	    (unwind-protect
 		(progn

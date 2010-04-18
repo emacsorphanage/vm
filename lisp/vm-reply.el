@@ -924,12 +924,16 @@ Subject: header manually."
       (let ((vm-digest-send-type vm-forwarding-digest-type))
 	(setq this-command 'vm-next-command-uses-marks)
 	(command-execute 'vm-send-digest))
+    ;; single message forwarding
     (let ((dir default-directory)
 	  (miming (and vm-send-using-mime
 		       (equal vm-forwarding-digest-type "mime")))
 	  reply-buffer
 	  header-end
 	  (mp (vm-select-marked-or-prefixed-messages 1)))
+      (vm-load-message)
+      ;; FIXME the following is really unnecessary
+      (vm-assert (not (vm-body-to-be-retrieved-of (car mp))))
       (save-restriction
 	(widen)
 	(vm-mail-internal
@@ -946,9 +950,6 @@ Subject: header manually."
 	      vm-forward-list (list (car mp))
 	      default-directory dir)
 	;; current-buffer is now the reply buffer
-	(if (vm-body-to-be-retrieved-of (car mp))
-	    (error "Message %s body has not been retrieved"
-		   (vm-number-of (car mp))))
 	(if miming
 	    (progn
 	      (setq reply-buffer (current-buffer))
@@ -1018,58 +1019,57 @@ you can change the recipient address before resending the message."
 	(dir default-directory)
 	(layout (vm-mm-layout (car vm-message-pointer)))
 	(lim (vm-text-end-of (car vm-message-pointer))))
-    ;; FIXME try to load the body before saving
-    (if (vm-body-to-be-retrieved-of (car vm-message-pointer))
-	(error "Message %s body has not been retrieved"
-	       (vm-number-of (car vm-message-pointer))))
-      (save-restriction
-	(widen)
-	(if (or (not (vectorp layout))
-		(not (setq layout (vm-mime-layout-contains-type
-				   layout "message/rfc822"))))
-	    (save-excursion
-	      (goto-char (vm-text-of (car vm-message-pointer)))
-	      (let ((case-fold-search t))
-		;; What a wonderful world it would be if mailers
-		;; used a single message encapsulation standard
-		;; instead of all the weird variants. It is
-		;; useless to try to cover them all.  This simple
-		;; rule should cover the sanest of the formats
-		(if (not (re-search-forward "^Received:" lim t))
-		    (error "This doesn't look like a bounced message."))
-		(beginning-of-line)
-		(setq start (point)))))
-	;; briefly nullify vm-mail-header-from to keep vm-mail-internal
-	;; from inserting another From header.
-	(let ((vm-mail-header-from nil))
-	  (vm-mail-internal
-	   (format "retry of bounce from %s"
-		   (vm-su-from (car vm-message-pointer)))))
-	(goto-char (point-min))
-	(if (vectorp layout)
-	    (progn
-	      (setq start (point))
-	      (vm-mime-insert-mime-body layout)
-	      (vm-mime-transfer-decode-region layout start (point)))
-	  (insert-buffer-substring b start lim))
-	(delete-region (point) (point-max))
-	(goto-char (point-min))
-	;; delete all but pertinent headers
-	(vm-reorder-message-headers nil nil "\\(X-VM-\\|Status:\\|Sender:\\)")
-	(vm-reorder-message-headers nil vm-resend-bounced-headers
-				    vm-resend-bounced-discard-header-regexp)
-	(if (search-forward "\n\n" nil t)
-	    (replace-match "")
-	  (goto-char (point-max)))
-	(insert ?\n mail-header-separator ?\n)
-	(goto-char (point-min))
-	(if vm-mail-header-from
-	    (insert "Resent-From: " vm-mail-header-from ?\n))
-	(if (vm-mail-mode-get-header-contents "Resent-To:")
-	    (mail-position-on-field "Resent-To")
-	  (insert "Resent-To: \n")
-	  (forward-char -1))
-	(setq default-directory dir)))
+    (vm-load-message)
+    ;; FIXME the following is really unnecessary
+    (vm-assert (not (vm-body-to-be-retrieved-of (car vm-message-pointer))))
+    (save-restriction
+      (widen)
+      (if (or (not (vectorp layout))
+	      (not (setq layout (vm-mime-layout-contains-type
+				 layout "message/rfc822"))))
+	  (save-excursion
+	    (goto-char (vm-text-of (car vm-message-pointer)))
+	    (let ((case-fold-search t))
+	      ;; What a wonderful world it would be if mailers
+	      ;; used a single message encapsulation standard
+	      ;; instead of all the weird variants. It is
+	      ;; useless to try to cover them all.  This simple
+	      ;; rule should cover the sanest of the formats
+	      (if (not (re-search-forward "^Received:" lim t))
+		  (error "This doesn't look like a bounced message."))
+	      (beginning-of-line)
+	      (setq start (point)))))
+      ;; briefly nullify vm-mail-header-from to keep vm-mail-internal
+      ;; from inserting another From header.
+      (let ((vm-mail-header-from nil))
+	(vm-mail-internal
+	 (format "retry of bounce from %s"
+		 (vm-su-from (car vm-message-pointer)))))
+      (goto-char (point-min))
+      (if (vectorp layout)
+	  (progn
+	    (setq start (point))
+	    (vm-mime-insert-mime-body layout)
+	    (vm-mime-transfer-decode-region layout start (point)))
+	(insert-buffer-substring b start lim))
+      (delete-region (point) (point-max))
+      (goto-char (point-min))
+      ;; delete all but pertinent headers
+      (vm-reorder-message-headers nil nil "\\(X-VM-\\|Status:\\|Sender:\\)")
+      (vm-reorder-message-headers nil vm-resend-bounced-headers
+				  vm-resend-bounced-discard-header-regexp)
+      (if (search-forward "\n\n" nil t)
+	  (replace-match "")
+	(goto-char (point-max)))
+      (insert ?\n mail-header-separator ?\n)
+      (goto-char (point-min))
+      (if vm-mail-header-from
+	  (insert "Resent-From: " vm-mail-header-from ?\n))
+      (if (vm-mail-mode-get-header-contents "Resent-To:")
+	  (mail-position-on-field "Resent-To")
+	(insert "Resent-To: \n")
+	(forward-char -1))
+      (setq default-directory dir)))
   (run-hooks 'vm-resend-bounced-message-hook)
   (run-hooks 'vm-mail-mode-hook))
 
@@ -1095,10 +1095,9 @@ You may also create a Resent-Cc header."
 	  (vmp vm-message-pointer)
 	  (start (vm-headers-of (car vm-message-pointer)))
 	  (lim (vm-text-end-of (car vm-message-pointer))))
-      ;; FIXME try to load the body before saving
-      (if (vm-body-to-be-retrieved-of (car vm-message-pointer))
-	  (error "Message %s body has not been retrieved"
-		 (vm-number-of (car vm-message-pointer))))
+      (vm-load-message)
+      ;; FIXME the following is really unnecessary
+      (vm-assert (not (vm-body-to-be-retrieved-of (car vm-message-pointer))))
       ;; briefly nullify vm-mail-header-from to keep vm-mail-internal
       ;; from inserting another From header.
       (let ((vm-mail-header-from nil))
@@ -1167,13 +1166,12 @@ only marked messages will be put into the digest."
 		   (vm-select-marked-or-prefixed-messages 0)
 		 vm-message-list))
 	ms start header-end boundary)
-    ;; FIXME try to load the body before saving
-    (setq ms mlist)
-    (while ms
-      (if (vm-body-to-be-retrieved-of (car ms))
-	    (error "Message %s body has not been retrieved"
-		   (vm-number-of (car ms))))
-      (setq ms (cdr ms)))
+    (vm-load-message prefix)
+    ;; FIXME the following is really unnecessary
+    (mapcar
+     (lambda (m)
+       (vm-assert (not (vm-body-to-be-retrieved-of m))))
+     mlist)
     (save-restriction
       (widen)
       (vm-mail-internal
