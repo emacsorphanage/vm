@@ -359,26 +359,24 @@ Toolbars are updated."
     (mapatoms (function
 	       (lambda (b)
 		 (setq b (get-buffer (symbol-name b)))
-		 (if b
-		     (progn
-		       (set-buffer b)
-		       (intern (buffer-name)
-			       vm-buffers-needing-undo-boundaries)
-		       (vm-check-for-killed-summary)
-		       (and vm-use-toolbar
-			    (vm-toolbar-support-possible-p)
-			    (vm-toolbar-update-toolbar))
-		       (vm-do-needed-renumbering)
-		       (if vm-summary-buffer
-			   (vm-do-needed-summary-rebuild))
-		       (vm-do-needed-mode-line-update)))))
+		 (when b
+		   (set-buffer b)
+		   (intern (buffer-name)
+			   vm-buffers-needing-undo-boundaries)
+		   (vm-check-for-killed-summary)
+		   (and vm-use-toolbar
+			(vm-toolbar-support-possible-p)
+			(vm-toolbar-update-toolbar))
+		   (vm-do-needed-renumbering)
+		   (when vm-summary-buffer
+		       (vm-do-needed-summary-rebuild))
+		   (vm-do-needed-mode-line-update))))
 	      vm-buffers-needing-display-update)
     (fillarray vm-buffers-needing-display-update 0))
-  (if vm-messages-needing-summary-update
-      (progn
-	(mapcar (function vm-update-message-summary)
-		vm-messages-needing-summary-update)
-	(setq vm-messages-needing-summary-update nil)))
+  (when vm-messages-needing-summary-update
+    (mapcar (function vm-update-message-summary)
+	    vm-messages-needing-summary-update)
+    (setq vm-messages-needing-summary-update nil))
   (vm-do-needed-folders-summary-update)
   (vm-force-mode-line-update))
 
@@ -1337,12 +1335,12 @@ Supports version 4 format of attribute storage, for backward compatibility."
                       (setq cache (make-vector vm-cache-vector-length nil))))
 
 	    (vm-set-labels-of (car mp) (nth 2 data))
-	    (vm-set-cache-of (car mp) cache)
+	    (vm-set-cached-data-of (car mp) cache)
 	    (vm-set-attributes-of (car mp) (car data)))
 	   ((and vm-berkeley-mail-compatibility
 		 (re-search-forward vm-berkeley-mail-status-header-regexp
 				    (vm-text-of (car mp)) t))
-	    (vm-set-cache-of (car mp) (make-vector vm-cache-vector-length
+	    (vm-set-cached-data-of (car mp) (make-vector vm-cache-vector-length
 						   nil))
 	    (goto-char (match-beginning 1))
 	    (vm-set-attributes-of
@@ -1350,7 +1348,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	     (make-vector vm-attributes-vector-length nil))
 	    (vm-set-unread-flag (car mp) (not (looking-at ".*R.*")) 'norecord))
 	   (t
-	    (vm-set-cache-of (car mp) (make-vector vm-cache-vector-length
+	    (vm-set-cached-data-of (car mp) (make-vector vm-cache-vector-length
 						   nil))
 	    (vm-set-attributes-of
 	     (car mp)
@@ -1434,7 +1432,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
     (while mp
       (setq attr (make-vector vm-attributes-vector-length nil)
 	    cache (make-vector vm-cache-vector-length nil))
-      (vm-set-cache-of (car mp) cache)
+      (vm-set-cached-data-of (car mp) cache)
       (vm-set-attributes-of (car mp) attr)
       ;; make message be new by default, but avoid vm-set-new-flag
       ;; because it asks for a summary update for the message.
@@ -1913,7 +1911,7 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
 		   ;; fill the summary cache if it's not done already.
 		   (vm-su-summary m)))
 	     (setq attributes (vm-attributes-of m)
-		   cache (vm-cache-of m))
+		   cache (vm-cached-data-of m))
 	     (and delflag for-other-folder
 		  (vm-set-deleted-flag-in-vector
 		   (setq attributes (copy-sequence attributes)) nil))
@@ -2595,7 +2593,7 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
 		    (setq v (car cache-list))
 		    (if (< (length v) vm-cache-vector-length)
 			(setq v (vm-extend-vector v vm-cache-vector-length)))
-		    (vm-set-cache-of m v))
+		    (vm-set-cached-data-of m v))
 		  (if (null label-list)
 		      (error "Label list is shorter than location list")
 		    (vm-set-labels-of m (car label-list)))
@@ -2778,7 +2776,7 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
 	  (while mp
 	    (setq m (car mp))
 	    (princ "  " work-buffer)
-	    (prin1 (vm-cache-of m) work-buffer)
+	    (prin1 (vm-cached-data-of m) work-buffer)
 	    (princ "\n" work-buffer)
 	    (setq mp (cdr mp)))
 	  (princ ")\n" work-buffer)

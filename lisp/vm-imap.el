@@ -2831,7 +2831,7 @@ operation of the server to minimize I/O."
 	   (while mp
 	     ;; headers-only loading is still experimental. USR, 2010-01-12
 	     (if vm-load-headers-only 
-		 (vm-set-body-to-be-retrieved (car mp) t))
+		 (vm-set-body-to-be-retrieved-of (car mp) t))
 	     (setq uid (car (car r-list)))
 	     (vm-set-imap-uid-of (car mp) uid)
 	     (vm-set-imap-uid-validity-of (car mp) uid-validity)
@@ -3149,7 +3149,7 @@ only marked messages are loaded, other messages are ignored."
 	   (goto-char text-begin)
 	   ;; now care for the layout of the message
 	   (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
-	   (vm-set-body-to-be-retrieved mm nil)
+	   (vm-set-body-to-be-retrieved-of mm nil)
 	   (vm-mark-for-summary-update m)
 	   (add-to-list 'vm-messages-needing-summary-update m)))
 	(setq mlist (cdr mlist))))
@@ -3191,27 +3191,29 @@ only marked messages are unloaded, other messages are ignored."
 	(buffer-undo-list t)
 	(text-begin nil)
 	(text-end nil)
+	(errors 0)
 	m mm)
-    ;;     (if (not used-marks) 
-    ;; 	(setq mlist (list (car vm-message-pointer))))
+;;     (if (not used-marks) 
+;; 	(setq mlist (list (car vm-message-pointer))))
     (save-excursion
       (while mlist
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
-	(if (not (eq vm-folder-access-method 'imap))
+	(unless (vm-body-to-be-retrieved-of mm)
+	  (when (not (eq vm-folder-access-method 'imap))
 	    (error "This is currently available only for imap folders."))
-	(vm-save-restriction
-	 (widen)
-	 (setq text-begin (marker-position (vm-text-of mm)))
-	 (setq text-end (marker-position (vm-text-end-of mm)))
-	 (goto-char text-begin)
-	 (delete-region (point) text-end)
-	 (vm-set-mime-layout-of mm nil)
-	 (vm-set-body-to-be-retrieved mm t)
-	 (vm-mark-for-summary-update m)
-	 (add-to-list 'vm-messages-needing-summary-update m)
-	 (setq mlist (cdr mlist)))))
+	  (vm-save-restriction
+	   (widen)
+	   (setq text-begin (marker-position (vm-text-of mm)))
+	   (setq text-end (marker-position (vm-text-end-of mm)))
+	   (goto-char text-begin)
+	   (delete-region (point) text-end)
+	   (vm-set-mime-layout-of mm nil)
+	   (vm-set-body-to-be-retrieved-of mm t)
+	   (vm-mark-for-summary-update m)
+	   (add-to-list 'vm-messages-needing-summary-update m)))
+	 (setq mlist (cdr mlist))))
     (vm-update-summary-and-mode-line)
     ))
 
@@ -3932,8 +3934,8 @@ order to capture the trace of IMAP sessions during the occurrence."
 
 
 (defun vm-imap-set-default-attributes (m)
-  (vm-set-headers-to-be-retrieved m nil)
-  (vm-set-body-to-be-retrieved m vm-load-headers-only))
+  (vm-set-headers-to-be-retrieved-of m nil)
+  (vm-set-body-to-be-retrieved-of m vm-load-headers-only))
 
 (defun vm-imap-unset-body-retrieve ()
   "Unset the body-to-be-retrieved flag of all the messages.  May
@@ -3943,7 +3945,7 @@ order to capture the trace of IMAP sessions during the occurrence."
    (vm-select-folder-buffer)
    (let ((mp vm-message-list))
      (while mp
-       (vm-set-body-to-be-retrieved (car mp) nil)
+       (vm-set-body-to-be-retrieved-of (car mp) nil)
        (setq mp (cdr mp))))
    (message "Marked %s messages as having retrieved bodies" 
 	    (length vm-message-list))
