@@ -694,6 +694,8 @@ Use mouse button 3 to choose a Web browser for the URL."
 	     (point))))
 	 (t (vm-text-end-of (car vm-message-pointer))))))
 
+
+;;;###autoload
 (defun vm-preview-current-message ()
   "Preview the current message in the Presentation Buffer.  A copy of
 the message is made in the Presentation Buffer and MIME decoding is

@@ -687,6 +687,7 @@ mandatory."
 		sexp-fmt nil)))
     (list last-match-end (if list (cons 'list list) sexp))))
 
+;;;###autoload
 (defun vm-get-header-contents (message header-name-regexp &optional clump-sep)
   (let ((contents nil)
 	regexp)
@@ -1221,6 +1222,7 @@ Argument msg is a message pointer."
 (defun vm-su-to-names (m)
   (or (vm-to-names-of m) (progn (vm-su-do-recipients m) (vm-to-names-of m))))
 				  
+;;;###autoload
 (defun vm-su-message-id (m)
   (or (vm-message-id-of m)
       (vm-set-message-id-of
@@ -1255,6 +1257,7 @@ Argument msg is a message pointer."
 	    (count-lines (vm-text-of (vm-real-message-of m))
 			 (vm-text-end-of (vm-real-message-of m)))))))))
 
+;;;###autoload
 (defun vm-su-subject (m)
   (or (vm-subject-of m)
       (vm-set-subject-of
