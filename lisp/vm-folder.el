@@ -4046,6 +4046,15 @@ Same as \\[vm-recover-file]."
                         errmsg)))
           (vm-assimilate-new-messages t))))))
 
+;;;###autoload
+(defun vm-folder-name ()
+  "Return the current folder's name (local file name, or POP/IMAP
+maildrop string)."
+  (interactive)
+  (if vm-folder-access-method
+      (aref vm-folder-access-data 0)
+    buffer-file-name))
+
 (defun vm-safe-popdrop-string (drop)
   (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]*\\):[^:]*:[^:]*:\\([^:]*\\):[^:]*" drop)
 	   (concat (substring drop (match-beginning 3) (match-end 3))

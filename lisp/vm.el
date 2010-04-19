@@ -445,9 +445,10 @@ visited folder."
 		 vm-last-visit-pop-folder folder))
 	  ((and (stringp vm-recognize-imap-maildrops)
 		(string-match vm-recognize-imap-maildrops folder)
-		(setq foo (vm-imap-find-name-for-spec folder)))
-	   (setq folder foo
-		 access-method 'imap
+		;;(setq foo (vm-imap-find-name-for-spec folder))
+		)
+	   (setq ;; folder foo
+	         access-method 'imap
 		 vm-last-visit-imap-folder folder))
 	  (t
 	   (let ((default-directory 

@@ -44,6 +44,7 @@
 (declare-function vm-su-message-id "ext:vm-summary" (m))
 (declare-function vm-su-subject "ext:vm-summary" (m))
 (declare-function vm-summarize "ext:vm-summary" (&optional display raise))
+(declare-function vm-folder-name "ext:vm-folder" ())
 (defvar vm-message-pointer)
 (defvar vm-folder-directory)
 
@@ -61,7 +62,7 @@
     (save-excursion
       (vm-select-folder-buffer)
       (let* ((message (car vm-message-pointer))
-	     (folder buffer-file-name)
+	     (folder (vm-folder-name))
 	     (subject (vm-su-subject message))
 	     (to (vm-get-header-contents message "To"))
 	     (from (vm-get-header-contents message "From"))
