@@ -34,8 +34,8 @@ isn't a folder buffer.  USR, 2010-03-08"
 	((not (memq major-mode '(vm-mode vm-virtual-mode)))
 	 (error "No VM folder buffer associated with this buffer")))
   ;;--------------------------
-  ;; This may be problematic
-  ;; (vm-buffer-type:set 'folder)
+  ;; This may be problematic - done in revno 570.  But, why?
+  (vm-buffer-type:set 'folder)
   ;;--------------------------
   )
 
@@ -45,12 +45,18 @@ could be Summary or Presentation).  Returns normally if there
 isn't a folder buffer.  USR, 2010-03-08"
   (cond ((and (bufferp vm-mail-buffer)
 	      (buffer-name vm-mail-buffer))
-	 (set-buffer vm-mail-buffer)))
-  ;;--------------------------
-  ;; This may be problematic
-  ;; (vm-buffer-type:set 'folder)
-  ;;--------------------------
-  )
+	 (set-buffer vm-mail-buffer)
+	 ;;--------------------------
+	 ;; This may be problematic - done in revno 570.  But, why?
+	 (vm-buffer-type:set 'folder)
+	 ;;--------------------------
+	 )
+	((memq major-mode '(vm-mode vm-virtual-mode))
+	 ;;--------------------------
+	 ;; This may be problematic - done in revno 570.  But, why?
+	 (vm-buffer-type:set 'folder)
+	 ;;--------------------------
+	 )))
 
 (defsubst vm-error-if-folder-read-only ()
   (while vm-folder-read-only
