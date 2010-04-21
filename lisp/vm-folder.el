@@ -2930,20 +2930,34 @@ The folder is not altered and Emacs is still visiting it."
 (defun vm-quit-no-change ()
   "Quit visiting the current folder without saving changes made to the folder."
   (interactive)
-  (vm-quit t))
+  (vm-quit t t))
+
+;;;###autoload
+(defun vm-quit-no-expunge ()
+  "Quit visiting the current folder without expunging deleted
+messages.  
+
+The setting of `vm-expunge-before-quit' is ignored."
+  (interactive)
+  (vm-quit t nil))
 
 (defvar dired-listing-switches)		; defined only in FSF Emacs?
 
 ;;;###autoload
-(defun vm-quit (&optional no-change)
-  "Quit visiting the current folder, saving changes.  Deleted messages are not expunged."
-  (interactive)
+(defun vm-quit (&optional no-expunge no-change)
+  "Quit visiting the current folder, saving changes.  
+
+If the customization variable `vm-expunge-before-quit' is set to
+  non-nil value then deleted messages are expunged.
+
+Giving a prefix argument overrides the variable and no expunge is done."  
+  (interactive "P")
   (vm-select-folder-buffer)
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
   (vm-check-for-killed-summary)
   (vm-check-for-killed-presentation)
-  (vm-display nil nil '(vm-quit vm-quit-no-change)
+  (vm-display nil nil '(vm-quit vm-quit-no-change vm-quit-no-expunge)
 	      (list this-command 'quitting))
   (let ((virtual (eq major-mode 'vm-virtual-mode)))
     (cond
@@ -2976,6 +2990,11 @@ The folder is not altered and Emacs is still visiting it."
       (error "Aborted")))
 
     (save-excursion (run-hooks 'vm-quit-hook))
+
+    (when (and vm-expunge-before-quit
+	       (not no-expunge)
+	       (not no-change))
+      (vm-expunge-folder))
 
     (vm-garbage-collect-message)
     (vm-garbage-collect-folder)
@@ -3333,10 +3352,28 @@ The folder is not altered and Emacs is still visiting it."
   (setq vm-block-new-mail nil))
 
 ;;;###autoload
+(defun vm-save-folder-no-expunge (&optional prefix)
+  "Save current folder to disk.
+Prefix arg is handled the same as for the command `save-buffer'.  
+
+Deleted messages are _not_ expunged irrespective of the variable
+`vm-expunge-before-save'.
+
+When applied to a virtual folder, this command runs itself on
+each of the underlying real folders associated with the virtual
+folder."
+  (interactive (list current-prefix-arg))
+  (let ((vm-expunge-before-save nil))
+    (vm-save-folder prefix)))
+
+
+;;;###autoload
 (defun vm-save-folder (&optional prefix)
   "Save current folder to disk.
-Deleted messages are not expunged.
 Prefix arg is handled the same as for the command `save-buffer'.
+
+If the customization variable `vm-expunge-before-save' is set to
+non-nil value then deleted messages are expunged.
 
 When applied to a virtual folder, this command runs itself on
 each of the underlying real folders associated with the virtual
@@ -3349,6 +3386,8 @@ folder."
       (vm-virtual-save-folder prefix)
     (if (buffer-modified-p)
 	(let (mp (newlist nil) (buffer-undo-list t))
+	  (when vm-expunge-before-save
+	    (vm-expunge-folder))
 	  (cond ((eq vm-folder-access-method 'pop)
 		 (vm-pop-synchronize-folder t t t nil))
 		((eq vm-folder-access-method 'imap)
@@ -3422,7 +3461,8 @@ folder."
 		     (message "%s removed" buffer-file-name))
 		 ;; no can do, oh well.
 		 (error nil)))
-          ;; remove the message summary file of Thunderbird and force it to rebuilt it
+          ;; remove the message summary file of Thunderbird and force
+	  ;; it to rebuild it 
           (let ((msf (concat buffer-file-name ".msf")))
             (if (file-exists-p msf)
                 (delete-file msf))))

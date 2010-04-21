@@ -177,10 +177,11 @@ format is user configurable, @pxref{Summaries}.
 When you are finished reading mail the current folder must be saved, so
 that the next time the folder is visited VM will know which messages
 have been already read, replied to and so on.  Typing @kbd{S}
-(@code{vm-save-folder}) saves the folder.  Note that deleted messages are
-@emph{not} expunged automatically when you save a folder.
+(@code{vm-save-folder}) saves the folder.  The default behavior is
+that deleted messages are @emph{not} expunged automatically when you
+save a folder. 
 The next time you visit the folder any deleted
-messages will still be flagged for deletion.
+messages will still be flagged for deletion.  @pxref{Deleting Messages}.
 
 @vindex vm-folder-file-precious-flag
 When a folder is first visited, the value of the variable
@@ -2773,6 +2774,29 @@ Note that the movement is done by calling @code{vm-next-message} which
 means that the value of @code{vm-circular-folders} applies to the
 post-command motion as for a motion command, not as for a non-motion
 command.
+
+@vindex vm-delete-before-save
+@vindex vm-delete-before-quit
+Normally, deleted messages are preserved in folders until an explicit
+@code{vm-expunge-folder} operation is done.  This default behavior can
+be altered by setting the variables @code{vm-expunge-before-save} and
+@code{vm-expunge-before-quit}.  If @code{vm-expunge-before-save} is
+set to non-@code{nil}, then deleted messages are expunged whenever a
+folder is saved.  This is not an undo-able operation and no
+confirmation is asked for.  So you should use this setting only if
+your normal workflow includes expunging messages as part of save.  The
+variable @code{vm-expunge-before-quit} can be similarly set to
+non-@code{nil} to cause VM to expunge deleted messages whenever you
+quit the folder.  
+
+@cindex vm-save-folder-no-expunge
+@cindex vm-quit-no-expunge
+The commands @code{vm-save-folder-no-expunge} and
+@code{vm-quit-no-expunge} can be used to preserve deleted messages in
+the saved folders, irrespective of the settings of the above
+variables.  Giving a prefix argument to the @code{vm-quit} command has
+the same effect as @code{vm-quit-no-expunge}.
+
 
 @node Editing Messages, Marking Messages, Deleting Messages, Top
 @chapter Editing Messages

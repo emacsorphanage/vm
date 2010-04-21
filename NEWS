@@ -78,6 +78,9 @@ VM 8.2.0-devo
      to `vm-mouse-send-url-to-konqueror-new-window', to be consistent
      with other similar functions.
 
+  ** New variables `vm-expunge-before-quit' and `vm-expunge-before-save'
+     introduced to allow automatic expunge.  They are nil by default.  
+
 VM 8.1.1 (2010-04-??)
 
     * Made the autoloads compatible with VM 7.19 instructions.

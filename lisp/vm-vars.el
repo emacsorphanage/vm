@@ -2086,6 +2086,19 @@ anything else you put into this file will go away."
   :group 'vm
   :type 'file)
 
+(defcustom vm-expunge-before-quit nil
+  "*Non-nil value causes VM to expunge deleted messages before
+quitting.  You can use `vm-quit-no-expunge' and `vm-quit-no-change'
+to override this behavior."
+  :group 'vm
+  :type 'boolean)
+
+(defcustom vm-expunge-before-save nil
+  "*Non-nil value causes VM to expunge deleted messages before
+saving a folder."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-confirm-quit 0
   "*Value of t causes VM to always ask for confirmation before quitting
 a VM visit of a folder.  A nil value means VM will ask only when messages
@@ -5066,6 +5079,7 @@ Its parent keymap is mail-mode-map.")
     ("vm-quit")
     ("vm-quit-just-bury")
     ("vm-quit-just-iconify")
+    ("vm-quit-no-expunge")
     ("vm-quit-no-change")
     ("vm-reply")
     ("vm-reply-include-text")
