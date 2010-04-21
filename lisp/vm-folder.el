@@ -1873,20 +1873,21 @@ Supports version 4 format of attribute storage, for backward compatibility."
 
 (defun vm-encode-words-in-cache-vector (list)
   (vm-mapvector (lambda (e)
-               (if (stringp e)
-                   (vm-mime-encode-words-in-string e)
-                 e))
-             list))
+		  (if (stringp e)
+		      (vm-mime-encode-words-in-string e)
+		    e))
+		list))
 
-;; Stuff the message attributes back into the message as headers.
-(defun vm-stuff-attributes (m &optional for-other-folder)
-  "Stuff the attributes of message M into the folder buffer.  The
-optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
-2010-03-06"
+(defun vm-stuff-message-data (m &optional for-other-folder)
+  "Stuff the soft and cached data of the message M into the
+folder buffer.  The optional argument FOR-OTHER-FOLDER indicates
+<someting unknown>.  USR 2010-03-06"
   (save-excursion
     (vm-save-restriction
      (widen)
      (let ((old-buffer-modified-p (buffer-modified-p))
+	   (vm-mime-qp-encoder-program nil) ; use internal code
+	   (vm-mime-base64-encoder-program nil) ; for speed
 	   attributes cache
 	   (case-fold-search t)
 	   (buffer-read-only nil)
@@ -1956,7 +1957,9 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
 	     )
 	 (set-buffer-modified-p old-buffer-modified-p))))))
   
-(defun vm-stuff-folder-attributes (&optional abort-if-input-pending quiet)
+(defun vm-stuff-folder-data (&optional abort-if-input-pending quiet) 
+  "Stuff the soft and cached data of all the messages that have the
+stuff-flag set in the current folder.    USR 2010-04-20"
   (let ((newlist nil) mp len (n 0))
     ;; stuff the attributes of messages that need it.
     ;; build a list of messages that need their attributes stuffed
@@ -1980,7 +1983,7 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
     (let ((vm-key-functions '(vm-sort-compare-physical-order-r)))
       (setq mp (sort newlist 'vm-sort-compare-xxxxxx)))
     (while (and mp (or (not abort-if-input-pending) (not (input-pending-p))))
-      (vm-stuff-attributes (car mp))
+      (vm-stuff-message-data (car mp))
       (setq n (1+ n))
       (if (not quiet)
 	  (message "Stuffing %d%% complete..." (* (/ (+ n 0.0) len) 100)))
@@ -1988,7 +1991,7 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
     (if mp nil t)))
 
 ;; we can be a bit lazy in this function since it's only called
-;; from within vm-stuff-attributes.  we don't worry about
+;; from within vm-stuff-message-data.  we don't worry about
 ;; restoring the modified flag, setting buffer-read-only, or
 ;; about not moving point.
 (defun vm-stuff-babyl-attributes (m for-other-folder)
@@ -2054,14 +2057,14 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
 	    labels (cdr labels)))
     (apply 'concat (nreverse list))))
 
-(defun vm-stuff-virtual-attributes (message)
+(defun vm-stuff-virtual-message-data (message)
   (let ((virtual (vm-virtual-message-p message)))
     (if (or (not virtual) (and virtual (vm-virtual-messages-of message)))
 	(save-excursion
 	  (set-buffer
 	   (vm-buffer-of
 	    (vm-real-message-of message)))
-	  (vm-stuff-attributes (vm-real-message-of message))))))
+	  (vm-stuff-message-data (vm-real-message-of message))))))
 
 (defun vm-stuff-labels ()
   (if vm-message-list
@@ -3255,7 +3258,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 		       (vm-stuff-labels)
 		       (and vm-message-order-changed
 			    (vm-stuff-message-order))
-		       (and (vm-stuff-folder-attributes t t)
+		       (and (vm-stuff-folder-data t t)
 			    (setq vm-flushed-modification-counter
 				  vm-modification-counter)))))))
 	(setq buf-list (cdr buf-list)))
@@ -3272,9 +3275,9 @@ Giving a prefix argument overrides the variable and no expunge is done."
     ;; as a safeguard against the time when other stuff is added here.
     (vm-save-restriction
      (let ((buffer-read-only))
-       (message "Stuffing attributes...")
-       (vm-stuff-folder-attributes nil)
-       (message "Stuffing attributes... done")
+       (message "Stuffing cached data...")
+       (vm-stuff-folder-data nil)
+       (message "Stuffing cached data... done")
        (if vm-message-list
 	   (progn
 	     (if (and vm-folders-summary-database buffer-file-name)
@@ -3393,9 +3396,9 @@ folder."
 		((eq vm-folder-access-method 'imap)
 		 (vm-imap-synchronize-folder t t t nil t)))
 	  ;; stuff the attributes of messages that need it.
-	  (message "Stuffing attributes...")
-	  (vm-stuff-folder-attributes nil)
-	  (message "Stuffing attributes... done")
+	  (message "Stuffing cached data...")
+	  (vm-stuff-folder-data nil)
+	  (message "Stuffing cached data... done")
 	  ;; stuff bookmark and header variable values
 	  (if vm-message-list
 	      (progn

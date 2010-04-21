@@ -501,7 +501,7 @@ Normally, a record of the change is kept for the purpose of undo, and
 	  (progn
 	    (vm-set-attribute-modflag-of m t)
 	    (if (eq vm-flush-interval t)
-		(vm-stuff-virtual-attributes m)
+		(vm-stuff-virtual-message-data m)
 	      (vm-set-stuff-flag-of m t))))))))
 
 (defun vm-set-xxxx-cached-data-flag (m flag norecord function attr-index)
@@ -549,7 +549,7 @@ Normally, a record of the change is kept for the purpose of undo, and
 	  (progn
 	    (vm-set-attribute-modflag-of m t)
 	    (if (eq vm-flush-interval t)
-		(vm-stuff-virtual-attributes m)
+		(vm-stuff-virtual-message-data m)
 	      (vm-set-stuff-flag-of m t))))))))
 
 
@@ -592,7 +592,7 @@ A record of the change is kept for the purpose of undo, and the
       (vm-set-label-string-of m nil)
       (vm-mark-for-summary-update m)
       (if (eq vm-flush-interval t)
-	  (vm-stuff-virtual-attributes m)
+	  (vm-stuff-virtual-message-data m)
 	(vm-set-stuff-flag-of m t))))))
 
 
@@ -638,9 +638,9 @@ A record of the change is kept for the purpose of undo, and the
 (defun vm-set-forwarded-flag-of (m flag) (aset (aref m 2) 6 flag))
 (defun vm-set-redistributed-flag-of (m flag) (aset (aref m 2) 8 flag))
 
-;; this is solely for the use of vm-stuff-attributes and appears here
-;; only because this function should be grouped with others of its kind
-;; for maintenance purposes.
+;; this is solely for the use of vm-stuff-message-data and
+;; appears here only because this function should be grouped with
+;; others of its kind for maintenance purposes.
 (defun vm-set-deleted-flag-in-vector (v flag)
   (aset v 2 flag))
 ;; ditto.  this is for vm-read-attributes.

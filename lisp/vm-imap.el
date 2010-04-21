@@ -3281,9 +3281,9 @@ VM session.  This is useful for saving offline work."
 					; do-retrieves and
 					; retrieve-attributes 
       ;; stuff the attributes of messages that need it.
-      ;; (message "Stuffing attributes...")
-      ;; (vm-stuff-folder-attributes nil)
-      ;; (message "Stuffing attributes... done")
+      ;; (message "Stuffing cached data...")
+      ;; (vm-stuff-folder-data nil)
+      ;; (message "Stuffing cached data... done")
       ;; stuff bookmark and header variable values
       (if vm-message-list
 	  (progn

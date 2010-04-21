@@ -113,11 +113,13 @@ mandatory."
       (vm-set-hooks-for-frame-deletion)))
 
 (defun vm-do-summary (&optional start-point)
+  "Generate summary for all the messages in the optional argument
+START-POINT (a list of messages) or all the messages in the current
+folder." 
   (let ((m-list (or start-point vm-message-list))
 	mp m tr trs tre
 	(n 0)
-	;; Just for laughs, make the update interval vary.
-	(modulus (+ (% (vm-abs (random)) 11) 10))
+	(modulus 10)
 	(do-mouse-track
 	    (and vm-mouse-track-summary
 		 (vm-mouse-support-possible-p)))
@@ -230,6 +232,8 @@ mandatory."
 	   (setq vm-need-summary-pointer-update nil)))))
 
 (defun vm-update-message-summary (m)
+  "Replace the summary line of the message M in the summary
+buffer by a regenerated summary line."
   (if (and (vm-su-start-of m)
 	   (marker-buffer (vm-su-start-of m)))
       (let ((modified (buffer-modified-p))
@@ -301,60 +305,62 @@ mandatory."
   (if vm-summary-buffer
       (let ((w (vm-get-visible-buffer-window vm-summary-buffer))
 	    (do-mouse-track
-	       (and vm-mouse-track-summary
-		    (vm-mouse-support-possible-p)))
+	     (and vm-mouse-track-summary
+		  (vm-mouse-support-possible-p)))
 	    (old-window nil))
 	(vm-save-buffer-excursion
-	  (unwind-protect
-	      (progn
-		(set-buffer vm-summary-buffer)
-		(if w
-		    (progn
-		      (setq old-window (selected-window))
-		      (select-window w)))
-		(let ((buffer-read-only nil))
-		  (if (and vm-summary-pointer
-			   (vm-su-start-of vm-summary-pointer))
-		      (progn
-			(goto-char (vm-su-start-of vm-summary-pointer))
-                        (if (not (get-text-property (point) 'thread-end))
-                            (insert vm-summary-no-=>)
-                          (if (get-text-property (1+ (vm-su-end-of vm-summary-pointer))
-                                                 'invisible)
-                              (insert "+ ")
-                            (insert "- ")))
-			(delete-char (length vm-summary-=>))
-			(and do-mouse-track
-			     (vm-mouse-set-mouse-track-highlight
-			      (vm-su-start-of vm-summary-pointer)
-			      (vm-su-end-of vm-summary-pointer)
-			      (vm-su-summary-mouse-track-overlay-of
-			       vm-summary-pointer)))))
-		  (setq vm-summary-pointer m)
-		  (goto-char (vm-su-start-of m))
-		  (let ((modified (buffer-modified-p)))
-		    (unwind-protect
-			(progn
-                          (if (not (get-text-property (point) 'thread-end))
-                              (insert vm-summary-=>)
-                            (if (get-text-property (1+ (vm-su-end-of vm-summary-pointer))
-                                                   'invisible)
-                                (insert "+>")
-                              (insert "->")))
-			  (delete-char (length vm-summary-=>))
-			  (and do-mouse-track
-			       (vm-mouse-set-mouse-track-highlight
-				(vm-su-start-of m) (vm-su-end-of m)
-				(vm-su-summary-mouse-track-overlay-of m))))
-		      (set-buffer-modified-p modified)))
-		  (forward-char (- (length vm-summary-=>)))
-		  (if vm-summary-highlight-face
-		      (vm-summary-highlight-region
-		       (vm-su-start-of m) (vm-su-end-of m)
-		       vm-summary-highlight-face))
-		  (and w vm-auto-center-summary (vm-auto-center-summary))
-		  (run-hooks 'vm-summary-pointer-update-hook)))
-	    (and old-window (select-window old-window)))))))
+	 (unwind-protect
+	     (progn
+	       (set-buffer vm-summary-buffer)
+	       (if w
+		   (progn
+		     (setq old-window (selected-window))
+		     (select-window w)))
+	       (let ((buffer-read-only nil))
+		 (if (and vm-summary-pointer
+			  (vm-su-start-of vm-summary-pointer))
+		     (progn
+		       (goto-char (vm-su-start-of vm-summary-pointer))
+		       (if (not (get-text-property (point) 'thread-end))
+			   (insert vm-summary-no-=>)
+			 (if (get-text-property 
+			      (1+ (vm-su-end-of vm-summary-pointer))
+			      'invisible)
+			     (insert "+ ")
+			   (insert "- ")))
+		       (delete-char (length vm-summary-=>))
+		       (and do-mouse-track
+			    (vm-mouse-set-mouse-track-highlight
+			     (vm-su-start-of vm-summary-pointer)
+			     (vm-su-end-of vm-summary-pointer)
+			     (vm-su-summary-mouse-track-overlay-of
+			      vm-summary-pointer)))))
+		 (setq vm-summary-pointer m)
+		 (goto-char (vm-su-start-of m))
+		 (let ((modified (buffer-modified-p)))
+		   (unwind-protect
+		       (progn
+			 (if (not (get-text-property (point) 'thread-end))
+			     (insert vm-summary-=>)
+			   (if (get-text-property 
+				(1+ (vm-su-end-of vm-summary-pointer))
+				'invisible)
+			       (insert "+>")
+			     (insert "->")))
+			 (delete-char (length vm-summary-=>))
+			 (and do-mouse-track
+			      (vm-mouse-set-mouse-track-highlight
+			       (vm-su-start-of m) (vm-su-end-of m)
+			       (vm-su-summary-mouse-track-overlay-of m))))
+		     (set-buffer-modified-p modified)))
+		 (forward-char (- (length vm-summary-=>)))
+		 (if vm-summary-highlight-face
+		     (vm-summary-highlight-region
+		      (vm-su-start-of m) (vm-su-end-of m)
+		      vm-summary-highlight-face))
+		 (and w vm-auto-center-summary (vm-auto-center-summary))
+		 (run-hooks 'vm-summary-pointer-update-hook)))
+	   (and old-window (select-window old-window)))))))
 
 (defun vm-summary-highlight-region (start end face)
   (vm-summary-xxxx-highlight-region start end face 'vm-summary-overlay))
@@ -429,6 +435,8 @@ mandatory."
 ;; - 'group-begin and 'group-end
 
 (defun vm-tokenized-summary-insert (message tokens)
+  "Insert a summary line for MESSAGE in the current buffer, using the
+tokenized summary TOKENS."
   (if (stringp tokens)
       (insert tokens)
     (let (token group-list)
@@ -1286,7 +1294,7 @@ entry (vm-summary-of) or recalculating it if necessary.  USR 2010-04-06"
 
 ;;;###autoload
 (defun vm-fix-my-summary!!! (&optional kill-local-summary)
-  "Rebuilts the summary.
+  "Rebuild the summary.
 Call this function if you made changes to `vm-summary-format'."
   (interactive "P")
   (vm-select-folder-buffer)
@@ -1301,11 +1309,13 @@ Call this function if you made changes to `vm-summary-format'."
       (vm-mark-for-summary-update (car mp))
       (vm-set-stuff-flag-of (car mp) t)
       (setq mp (cdr mp)))
-    (message "Stuffing attributes...")
-    (vm-stuff-folder-attributes nil)
-    (message "Stuffing attributes... done")
+    (message "Stuffing cached data...")
+    (vm-stuff-folder-data nil)
+    (message "Stuffing cached data... done")
     (set-buffer-modified-p t)
-    (vm-update-summary-and-mode-line))
+    (message "Recreating summary...")
+    (vm-update-summary-and-mode-line)
+    (message "Recreating summary... done"))
   (message "Fixing your summary... done"))
 
 (defun vm-su-thread-indent (m)

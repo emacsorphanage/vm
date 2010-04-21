@@ -340,7 +340,7 @@ The saved messages are flagged as `filed'."
 	       ;; the deleted attribute may have been stuffed
 	       ;; previously and we don't want to save that attribute.
 	       ;; also we don't want to save out the cached summary entry.
-	       (vm-stuff-attributes m t)
+	       (vm-stuff-message-data m t)
 	       (if (null folder-buffer)
 		   (if (or (null vm-check-folder-types)
 			   (eq target-type (vm-message-type-of m)))
@@ -972,7 +972,7 @@ The saved messages are flagged as `filed'."
 	    ;; previously and we don't want to save that attribute.
 	    ;; FIXME But stuffing attributes into the IMAP buffer is
 	    ;; not easy.  USR, 2010-03-08
-	    ;; (vm-stuff-attributes m t)
+	    ;; (vm-stuff-message-data m t)
 	    (if server-to-server-p 	; economise on upstream data traffic
 		(let ((process (vm-re-establish-folder-imap-session)))
 		  (vm-imap-copy-message process m mailbox))

@@ -4889,7 +4889,8 @@ sortable-datestring.  Date string of the sent date for sorting purposes.
 sortable-subject.  The subject string for sorting purposes.  (Prefixes
 such as ``re:'' are removed.)
 @item
-summary.  The summary string for the message.
+summary.  A tokenized summary for the message, from which the actual
+summary line can be quickly calculated.
 @item
 parent.  The parent of the message in the message thread, which is
 another message data structure.

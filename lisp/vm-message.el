@@ -272,7 +272,7 @@
   (aset (aref message 2) 7 flag)
   (vm-mark-for-summary-update message)
   (if (eq vm-flush-interval t)
-      (vm-stuff-virtual-attributes message)
+      (vm-stuff-virtual-message-data message)
     (vm-set-stuff-flag-of message t))
   (and (not (buffer-modified-p)) (vm-set-buffer-modified-p t))
   (vm-clear-modification-flag-undos))
