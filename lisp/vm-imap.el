@@ -2262,9 +2262,9 @@ Throws vm-imap-protocol-error for failure."
       )))
 
 (defun vm-imap-update-message-flags (m flags &optional norecord)
-  ;; Update the flags of the message M in the folder to FLAGS.
-  ;; Optional argument NORECORD says whether this fact should not be
-  ;; recorded in the undo stack.
+  "Update the flags of the message M in the folder to imap flags FLAGS.
+Optional argument NORECORD says whether this fact should not be
+recorded in the undo stack."
   (let (flag saw-Seen saw-Deleted saw-Flagged seen-labels labels)
     (while flags
       (setq flag (car flags))
@@ -2318,10 +2318,10 @@ Throws vm-imap-protocol-error for failure."
 	    )
       (setq flags (cdr flags)))
 
-    (if (not saw-Seen)
+    (if (not saw-Seen)			; unread if the server says so
 	(if (null (vm-unread-flag m))
 	    (vm-set-unread-flag m t norecord)))
-    (if (not saw-Deleted)
+    (if (not saw-Deleted)		; undelete if the server says so
 	(if (vm-deleted-flag m)
 	    (vm-set-deleted-flag m nil norecord)))
     (setq labels (sort (vm-labels-of m) 'string-lessp))
@@ -2752,12 +2752,10 @@ operation of the server to minimize I/O."
 	  (while mp
 	    (setq m (car mp))
 	    (setq uid (vm-imap-uid-of m))
-	    (if (and (equal (vm-imap-uid-validity-of m) uid-validity)
-		     (boundp (intern uid flags))
-		     (setq mflags (cdr (symbol-value (intern uid flags)))))
-		(vm-imap-update-message-flags m mflags t))
-	    ;; 	      (message "Retrieving message attributes and labels... %d%%" 
-	    ;; 		       (* (/ (+ n 0.0) len) 100))
+	    (when (and (equal (vm-imap-uid-validity-of m) uid-validity)
+		       (boundp (intern uid flags)))
+	      (setq mflags (cdr (symbol-value (intern uid flags))))
+	      (vm-imap-update-message-flags m mflags t))
 	    (setq mp (cdr mp)
 		  n (1+ n)))
 	  (message "Retrieving message atrributes and labels... done")
