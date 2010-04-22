@@ -2335,16 +2335,26 @@ recorded in the undo stack."
     ))
 
 (defun vm-imap-save-message-flags (process m &optional by-uid)
-  ;; Saves the message flags of a message on the IMAP server, adding
-  ;; or deleting flags on the servers as necessary.  Irreversible
-  ;; flags, however, are not deleted.
-  ;; Optional argument BY-UID says that the save messages should be
-  ;; issued by UID, not message sequence number.
+  "Saves the message flags of a message on the IMAP server,
+adding or deleting flags on the server as necessary.  Monotonic
+flags, however, are not deleted.
+
+Optional argument BY-UID says that the save commands to the
+server should be issued by UID, not message sequence number."
 
   ;; Comment by USR
   ;; According to RFC 2060, it is not an error to store flags that
   ;; are not listed in PERMANENTFLAGS.  Removed unnecessary checks to
   ;; this effect.
+
+  ;; This is a hairy routine! There are 
+  ;; - monotonic flags that can only be set, and 
+  ;; - reversible flags that can be set or unset.
+  ;; For monotonic flags that are set in VM, we set them on the
+  ;; server.
+  ;; For reversible flags, we copy the state from VM to the server.
+  ;; (We don't know which one has precedence, but we punt that issue.)
+  ;; The cache needs to be maintained consistently.
 
   ;;-----------------------------------------------------
   (vm-buffer-type:assert 'folder)
@@ -2357,10 +2367,10 @@ recorded in the undo stack."
 	 (uid-key1 (intern uid (vm-folder-imap-uid-obarray)))
 	 (uid-key2 (intern-soft uid (vm-folder-imap-flags-obarray)))
 	 (message-num (and (boundp uid-key1) (symbol-value uid-key1)))
-	 (server-flags (and (boundp uid-key2) (symbol-value uid-key2)))
+	 (cached-flags (and (boundp uid-key2) (symbol-value uid-key2)))
 					; leave uid as the dummy header
 	 (labels (vm-labels-of m))
-	 need-ok flags+ flags- response)
+	 copied-flags need-ok flags+ flags- response)
     (when message-num
       ;; Reversible flags are treated the same as labels
       (if (not (vm-unread-flag m))
@@ -2369,32 +2379,33 @@ recorded in the undo stack."
 	  (setq labels (cons "\\deleted" labels)))
       ;; Irreversible flags
       (if (and (vm-replied-flag m) 
-	       (not (member "\\answered" server-flags)))
-	  (setq flags+ (cons (intern "\\Answered") flags+)))
-      (if (and (vm-filed-flag m) (not (member "filed" server-flags)))
-	  (setq flags+ (cons 'filed flags+)))
+	       (not (member "\\answered" cached-flags)))
+	  (setq flags+ (cons "\\Answered" flags+)))
+      (if (and (vm-filed-flag m) (not (member "filed" cached-flags)))
+	  (setq flags+ (cons "filed" flags+)))
       (if (and (vm-written-flag m) 
-	       (not (member "written" server-flags)))
-	  (setq flags+ (cons 'written flags+)))
+	       (not (member "written" cached-flags)))
+	  (setq flags+ (cons "written" flags+)))
       (if (and (vm-forwarded-flag m)
-	       (not (member "forwarded" server-flags)))
-	  (setq flags+ (cons 'forwarded flags+)))
+	       (not (member "forwarded" cached-flags)))
+	  (setq flags+ (cons "forwarded" flags+)))
       (if (and (vm-redistributed-flag m)
-	       (not (member "redistributed" server-flags)))
-	  (setq flags+ (cons 'redistributed flags+)))
-      (mapcar (lambda (flag) (delete flag server-flags))
+	       (not (member "redistributed" cached-flags)))
+	  (setq flags+ (cons "redistributed" flags+)))
+      (mapcar (lambda (flag) (delete flag cached-flags))
 	      '("\\answered" "filed" "written" "forwarded" "redistributed"))
-      ;; Make a copy of labels for side effects
+      ;; make copies for side effects
+      (setq copied-flags (copy-sequence cached-flags))
       (setq labels (cons nil (copy-sequence labels)))
       ;; Ignore labels that are both in vm and the server
-      (delete-common-elements labels server-flags 'string<)
+      (delete-common-elements labels copied-flags 'string<)
       ;; Ignore reversible flags that we have locally reversed -- Why?
-      ;; (mapcar (lambda (flag) (delete flag server-flags))
+      ;; (mapcar (lambda (flag) (delete flag copied-flags))
       ;;  '("\\seen" "\\deleted" "\\flagged"))
       ;; Flags to be added to the server
-      (setq flags+ (append (mapcar 'intern (cdr labels)) flags+))
+      (setq flags+ (append (cdr labels) flags+))
       ;; Flags to be deleted from the server
-      (setq flags- (append (mapcar 'intern (cdr server-flags)) flags-))
+      (setq flags- (append (cdr copied-flags) flags-))
 
       (save-excursion
 	(set-buffer (process-buffer process))
@@ -2407,14 +2418,15 @@ recorded in the undo stack."
 	   (format "%sSTORE %s +FLAGS.SILENT %s" 
 		   (if by-uid "UID " "")
 		   (if by-uid uid message-num)
-		   flags+))
+		   (mapcar 'intern flags+)))
 	  (setq need-ok t)
 	  (while need-ok
 	    (setq response 
 		  (vm-imap-read-response-and-verify 
 		   process "STORE +FLAGS.SILENT"))
 	    (cond ((vm-imap-response-matches response 'VM 'OK)
-		   (setq need-ok nil)))))
+		   (setq need-ok nil))))
+	  (nconc cached-flags flags+))
 
 	(when flags-
 	  (vm-imap-send-command 
@@ -2422,14 +2434,17 @@ recorded in the undo stack."
 	   (format "%sSTORE %s -FLAGS.SILENT %s"
 		   (if by-uid "UID " "")
 		   (if by-uid uid message-num)
-		   flags-))
+		   (mapcar 'intern flags-)))
 	  (setq need-ok t)
 	  (while need-ok
 	    (setq response 
 		  (vm-imap-read-response-and-verify 
 		   process "STORE -FLAGS.SILENT"))
 	    (cond ((vm-imap-response-matches response 'VM 'OK)
-		   (setq need-ok nil)))))
+		   (setq need-ok nil))))
+	  (while flags-
+	    (delete (car flags-) cached-flags)
+	    (setq flags- (cdr flags-))))
 
 	(vm-set-attribute-modflag-of m nil)
 	;;-------------------
