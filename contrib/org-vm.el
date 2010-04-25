@@ -4,6 +4,7 @@
 ;;   Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
+;;	   Uday S Reddy <reddyuday at launchpad dot net>
 ;; Keywords: outlines, hypermedia, calendar, wp
 ;; Homepage: http://orgmode.org
 ;; Version: 6.35trans
@@ -62,7 +63,9 @@
     (save-excursion
       (vm-select-folder-buffer)
       (let* ((message (car vm-message-pointer))
-	     (folder (vm-folder-name))
+	     (folder (if (fboundp 'vm-folder-name) ; defined in VM 8.1.1
+			 (vm-folder-name)
+		       (buffer-file-name)))
 	     (subject (vm-su-subject message))
 	     (to (vm-get-header-contents message "To"))
 	     (from (vm-get-header-contents message "From"))

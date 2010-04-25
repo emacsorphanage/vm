@@ -22,6 +22,10 @@ VM 8.1.1 (2010-04-??)
       The default behaviour will be to always use the presentation
       buffer.  Report any problems that might arise as a result.
 
+    * Extended Org mode email links to handle POP and IMAP folders.
+      (Use org-vm.el in the VM contrib directory until the Org mode
+      distribution gets updated.)
+
     * Added autoloads for easy inter-operation with the Org mode.
 
     * Made the autoloads compatible with VM 7.19 instructions.
