@@ -103,9 +103,9 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
                    (car vm-message-pointer)))
         part
         type)
-    (setq part (vm-mime-cid-retrieve url message)
-          type (car (vm-mm-layout-type part)))
+    (setq part (vm-mime-cid-retrieve url message))
     (when part
+      (setq type (car (vm-mm-layout-type part)))
       (vm-mime-transfer-decode-region part (point-min) (point-max)))
     type))
 
