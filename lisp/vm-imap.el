@@ -1044,7 +1044,7 @@ as well."
 	(vm-buffer-type:exit)
 	;;----------------------------------
 	))
-  (if imap-buffer
+  (if (and imap-buffer (buffer-live-p imap-buffer))
       (if (and (not vm-imap-keep-trace-buffer) (not keep-buffer))
 	  (kill-buffer imap-buffer)
 	(save-excursion
@@ -3093,6 +3093,9 @@ operations")
 	;;-------------------
 	))))
 	 
+
+;; The following three functions should go into vm-folder.el or vm.el
+;; or some such place.
 
 ;;;###autoload
 (defun vm-load-message (&optional count)

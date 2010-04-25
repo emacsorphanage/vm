@@ -586,9 +586,12 @@ relevant POP servers to remove the messages."
       (if process-to-shutdown
 	  (vm-pop-end-session process-to-shutdown t))
       (vm-tear-down-stunnel-random-data))))
-
 (defun vm-pop-end-session (process &optional keep-buffer verbose)
-  (if (and (memq (process-status process) '(open run))
+  "Kill the POP session represented by PROCESS.  PROCESS could be
+nil or be already closed.  If the optional argument KEEP-BUFFER
+is non-nil, the process buffer is retained, otherwise it is
+killed as well."
+  (if (and process (memq (process-status process) '(open run))
 	   (buffer-live-p (process-buffer process)))
       (save-excursion
 	(set-buffer (process-buffer process))
@@ -608,14 +611,15 @@ relevant POP servers to remove the messages."
 	      (and verbose
 		   (message
 		    "Waiting for response to POP QUIT command... done"))))))
-  (if (and (not keep-buffer) (not vm-pop-keep-trace-buffer))
-      (if (buffer-live-p (process-buffer process))
-	  (kill-buffer (process-buffer process)))
-    (save-excursion
-      (set-buffer (process-buffer process))
-      (rename-buffer (concat "saved " (buffer-name)) t)
-      (vm-keep-some-buffers (current-buffer) 'vm-kept-pop-buffers
-			    vm-pop-keep-failed-trace-buffers)))
+  (if (and (process-buffer process)
+	   (buffer-live-p (process-buffer process)))
+      (if (and (not vm-pop-keep-trace-buffer) (not keep-buffer))
+	  (kill-buffer (process-buffer process))
+	(save-excursion
+	  (set-buffer (process-buffer process))
+	  (rename-buffer (concat "saved " (buffer-name)) t)
+	  (vm-keep-some-buffers (current-buffer) 'vm-kept-pop-buffers
+				vm-pop-keep-failed-trace-buffers))))
   (if (fboundp 'add-async-timeout)
       (add-async-timeout 2 'delete-process process)
     (run-at-time 2 nil 'delete-process process)))
