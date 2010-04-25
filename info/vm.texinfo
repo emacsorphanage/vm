@@ -85,8 +85,13 @@ This manual corresponds to VM version @value{VERSION}.
 * Faces::               How to configure VM's use of faces.
 * Using the Mouse::     Understanding the VM mouse interface.
 * Hooks::               How you can make VM run your code at certain times.
-* Bugs::                How to report VM bugs
+
+About VM:
+
 * History and Administration:: Information about VM
+* Highlights::          Most valuable features of VM, as per the users.
+* Future Plans::	Planned extensions of VM for the future
+* Bugs::                How to report VM bugs
 
 For developers:
 
@@ -4129,7 +4134,7 @@ form @code{vm-mouse-send-url-to-xxx} and @code{vm-mouse-send-url-to-xxx-new-wind
 the facilities defined in the @code{browse-url} library to send URL's to
 external browsers.
 
-@node Hooks, Bugs, Using the Mouse, Top
+@node Hooks, History and Administration, Using the Mouse, Top
 @chapter Hooks
 
 VM has many hook variables that allow you to run functions when
@@ -4390,41 +4395,7 @@ If this hook is entirely empty, i.e. @code{nil}, a default action is taken
 instead of no action.
 @end table
 
-@node Bugs, History and Administration, Hooks, Top
-@chapter Reporting Bugs
-@cindex bug reports
-
-VM has a sophisticated bug reporting system in order to provide the
-VM maintainers with adequate information about the state of VM when the
-error situation occurred.  However, it is still important for the
-users to give as full an explanation of the problem as possible.
-@xref{Bugs,,,emacs, the GNU Emacs Manual}.
-
-
-@findex vm-submit-bug-report
-The command @code{M-x vm-submit-bug-report} should be invoked from the
-VM folder buffer in which a problem is encountered.  This creates a
-mail buffer with information about the state of VM pre-filled.  Insert
-suitable text to explain the problem and send the bug-report message.
-
-@findex vm-pop-start-bug-report
-@findex vm-pop-submit-bug-report
-@findex vm-imap-start-bug-report
-@findex vm-imap-submit-bug-report
-For mail server-associated problems dealing with POP/IMAP spool files
-or POP/IMAP folders, the cause of the problem might be in the
-interaction with the mail server.  To identify the cause, it may be
-necessary for the VM maintainer to look at the server interactions
-during the problem occurrence.  To capture the server interactions,
-run @code{vm-pop-start-bug-report}/@code{vm-imap-start-bug-report}
-before the problem occurrence and @code{vm-pop-submit-bug-report}
-/@code{vm-imap-submit-bug-report} after the problem occurrence.  All
-the server interactions during the interval are captured and
-automatically included in the bug-report.
-
-
-
-@node History and Administration, Internals, Bugs, Top
+@node History and Administration, Highlights, Hooks, Top
 @chapter History and Administration
 
 @cindex Kyle Jones
@@ -4611,7 +4582,100 @@ Please let us know if any other contributors have been missed out.
 
 
 
-@node Internals, Concept Index, History and Administration, Top
+@node Highlights, Future Plans, History and Administration, Top
+@chapter Highlights
+
+Here are some of the VM features that its users find most valuable:
+
+@itemize
+@item
+VM's reliability and stability.
+@item
+Integration within Emacs, providing ease of editing and familar key
+bindings. 
+@item
+Speed of usage facilitated by keyboard commands.
+@item
+Integration with BBDB for maintaining contacts and email addresses.
+@item
+VM-Pcrisis for managing multiple mail identities.
+@item 
+Integration with emacs-w3m for viewing HTML email.
+@item
+Comprehensive MIME support.
+@item
+Ability to operate on all attachments of a message, such as saving or
+deleting. 
+@item
+Interactive virtual folders (created by @code{V C}).
+@item
+Support for IMAP folders.
+@item
+Ability to delete duplicate copies of messages.
+@end itemize
+
+
+@node Future Plans, Bugs, Highlights, Top
+@chapter Future Plans
+
+Some of the ideas being worked on for future extensions of VM are the
+following:
+
+@itemize
+@item 
+Ability to compose rich text email messages (in 'text/enriched' and
+'text/html' modes).
+@item
+Incremental search in virtual folders.
+@item
+Composite virtual folders that close all their component folders
+automatically.
+@item
+Thread-level operations such as killing an entire thread.
+@item
+Headers-only downloading of IMAP folders.
+@item
+Downloading IMAP messages without attachments.
+@item
+Support for maildir folders.
+@item
+A message migration/expiration facility.
+@end itemize
+
+
+@node Bugs, Internals, Future Plans, Top
+@chapter Reporting Bugs
+@cindex bug reports
+
+VM has a sophisticated bug reporting system in order to provide the
+VM maintainers with adequate information about the state of VM when the
+error situation occurred.  However, it is still important for the
+users to give as full an explanation of the problem as possible.
+@xref{Bugs,,,emacs, the GNU Emacs Manual}.
+
+
+@findex vm-submit-bug-report
+The command @code{M-x vm-submit-bug-report} should be invoked from the
+VM folder buffer in which a problem is encountered.  This creates a
+mail buffer with information about the state of VM pre-filled.  Insert
+suitable text to explain the problem and send the bug-report message.
+
+@findex vm-pop-start-bug-report
+@findex vm-pop-submit-bug-report
+@findex vm-imap-start-bug-report
+@findex vm-imap-submit-bug-report
+For mail server-associated problems dealing with POP/IMAP spool files
+or POP/IMAP folders, the cause of the problem might be in the
+interaction with the mail server.  To identify the cause, it may be
+necessary for the VM maintainer to look at the server interactions
+during the problem occurrence.  To capture the server interactions,
+run @code{vm-pop-start-bug-report}/@code{vm-imap-start-bug-report}
+before the problem occurrence and @code{vm-pop-submit-bug-report}
+/@code{vm-imap-submit-bug-report} after the problem occurrence.  All
+the server interactions during the interval are captured and
+automatically included in the bug-report.
+
+@node Internals, Concept Index, Bugs, Top
 @chapter VM Internals
 
 This section gives a sketchy overview of the VM internals for the
