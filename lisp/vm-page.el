@@ -904,31 +904,36 @@ is done if necessary.  (USR, 2010-01-14)"
   "Toggle exposing and hiding message headers that are normally not visible."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
-  (and vm-presentation-buffer
-       (set-buffer vm-presentation-buffer))
-  (vm-display nil nil '(vm-expose-hidden-headers)
-	      '(vm-expose-hidden-headers))
-  (let* ((exposed (= (point-min) (vm-start-of (car vm-message-pointer)))))
-    (vm-widen-page)
-    (goto-char (point-max))
-    (widen)
-    (if exposed
-	(narrow-to-region (point) (vm-vheaders-of (car vm-message-pointer)))
-      (narrow-to-region (point) (vm-start-of (car vm-message-pointer))))
-    (goto-char (point-min))
-    (let (w)
-      (setq w (vm-get-visible-buffer-window (current-buffer)))
-      (and w (set-window-point w (point-min)))
-      (and w
-	   (= (window-start w) (vm-vheaders-of (car vm-message-pointer)))
-	   (not exposed)
-	   (set-window-start w (vm-start-of (car vm-message-pointer)))))
-    (if vm-honor-page-delimiters
-	(vm-narrow-to-page))))
+  (save-excursion
+    (vm-select-folder-buffer)
+    (vm-check-for-killed-summary)
+    (vm-check-for-killed-presentation)
+    (vm-error-if-folder-empty)
+    (vm-display nil nil '(vm-expose-hidden-headers)
+		'(vm-expose-hidden-headers))
+    (vm-save-buffer-excursion
+     (vm-replace-buffer-in-windows (current-buffer) 
+				   vm-presentation-buffer))
+    (and vm-presentation-buffer
+	 (set-buffer vm-presentation-buffer))
+    (let* ((exposed (= (point-min) (vm-start-of (car vm-message-pointer)))))
+      (vm-widen-page)
+      (goto-char (point-max))
+      (widen)
+      (if exposed
+	  (narrow-to-region (point) (vm-vheaders-of (car vm-message-pointer)))
+	(narrow-to-region (point) (vm-start-of (car vm-message-pointer))))
+      (goto-char (point-min))
+      (let (w)
+	(setq w (vm-get-visible-buffer-window (current-buffer)))
+	(and w (set-window-point w (point-min)))
+	(and w
+	     (= (window-start w) (vm-vheaders-of (car vm-message-pointer)))
+	     (not exposed)
+	     (set-window-start w (vm-start-of (car vm-message-pointer)))))
+      (if vm-honor-page-delimiters
+	  (vm-narrow-to-page))))
+  )
 
 (defun vm-widen-page ()
   (if (or (> (point-min) (vm-text-of (car vm-message-pointer)))
