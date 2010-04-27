@@ -103,6 +103,7 @@ vm-search-using-regexps for this search."
   (if (eq major-mode 'vm-mode)
       (widen)))
 
+;;;###autoload
 (defun vm-isearch-narrow ()
   (if (eq major-mode 'vm-mode)
       (narrow-to-region
@@ -111,6 +112,7 @@ vm-search-using-regexps for this search."
 	 (vm-vheaders-of (car vm-message-pointer)))
        (vm-text-end-of (car vm-message-pointer)))))
 
+;;;###autoload
 (defun vm-isearch-update ()
   (if (eq major-mode 'vm-mode)
       (if (and (>= (point) (vm-start-of (car vm-message-pointer)))

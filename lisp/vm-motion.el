@@ -437,6 +437,7 @@ the last time the folder was visited.  USR, 2010-03-08"
 	  mp )
       nil )))
 
+;;;###autoload
 (defun vm-follow-summary-cursor ()
   "Select the message under the cursor in the summary window before
 executing commands that operate on the current message.  This occurs

@@ -706,6 +706,8 @@ Use mouse button 3 to choose a Web browser for the URL."
 	     (point))))
 	 (t (vm-text-end-of (car vm-message-pointer))))))
 
+
+;;;###autoload
 (defun vm-preview-current-message ()
   "Preview the current message in the Presentation Buffer.  A copy of
 the message is made in the Presentation Buffer and MIME decoding is
@@ -846,18 +848,22 @@ is done if necessary.  (USR, 2010-01-14)"
   ;; buffer as well the presentation buffer, but it is not clear if it
   ;; works correctly when invoked in the presentation buffer.  
   ;; (USR, 2010-01-21)
-  (and vm-display-using-mime
-       vm-auto-decode-mime-messages
-       (if vm-mail-buffer
-	   (not (vm-buffer-variable-value vm-mail-buffer 'vm-mime-decoded))
-	 (not vm-mime-decoded))
-       (not (vm-mime-plain-message-p (car vm-message-pointer)))
+  (if (and vm-display-using-mime
+	   vm-auto-decode-mime-messages
+	   (if vm-mail-buffer
+	       (not (vm-buffer-variable-value vm-mail-buffer 'vm-mime-decoded))
+	     (not vm-mime-decoded))
+	   (not (vm-mime-plain-message-p (car vm-message-pointer))))
 
-       (condition-case data
-	   (vm-decode-mime-message)
-	 (vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
-					       (car (cdr data)))
-			(message "%s" (car (cdr data))))))
+      (condition-case data
+	  (vm-decode-mime-message)
+	(vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
+					      (car (cdr data)))
+		       (message "%s" (car (cdr data)))))
+    ;; FIXME at this point, the folder buffer is being used for
+    ;; display
+    nil
+    )
   ;; FIXME this probably cause folder corruption by filling the folder instead
   ;; of the presentation copy  ..., RWF, 2008-07
   ;; Well, so, we will check if we are in a presentation buffer! 
@@ -913,31 +919,36 @@ is done if necessary.  (USR, 2010-01-14)"
   "Toggle exposing and hiding message headers that are normally not visible."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
-  (and vm-presentation-buffer
-       (set-buffer vm-presentation-buffer))
-  (vm-display (current-buffer) t '(vm-expose-hidden-headers)
-	      '(vm-expose-hidden-headers))
-  (let* ((exposed (= (point-min) (vm-start-of (car vm-message-pointer)))))
-    (vm-widen-page)
-    (goto-char (point-max))
-    (widen)
-    (if exposed
-	(narrow-to-region (point) (vm-vheaders-of (car vm-message-pointer)))
-      (narrow-to-region (point) (vm-start-of (car vm-message-pointer))))
-    (goto-char (point-min))
-    (let (w)
-      (setq w (vm-get-visible-buffer-window (current-buffer)))
-      (and w (set-window-point w (point-min)))
-      (and w
-	   (= (window-start w) (vm-vheaders-of (car vm-message-pointer)))
-	   (not exposed)
-	   (set-window-start w (vm-start-of (car vm-message-pointer)))))
-    (if vm-honor-page-delimiters
-	(vm-narrow-to-page))))
+  (save-excursion
+    (vm-select-folder-buffer)
+    (vm-check-for-killed-summary)
+    (vm-check-for-killed-presentation)
+    (vm-error-if-folder-empty)
+    (vm-display nil nil '(vm-expose-hidden-headers)
+		'(vm-expose-hidden-headers))
+    (vm-save-buffer-excursion
+     (vm-replace-buffer-in-windows (current-buffer) 
+				   vm-presentation-buffer))
+    (and vm-presentation-buffer
+	 (set-buffer vm-presentation-buffer))
+    (let* ((exposed (= (point-min) (vm-start-of (car vm-message-pointer)))))
+      (vm-widen-page)
+      (goto-char (point-max))
+      (widen)
+      (if exposed
+	  (narrow-to-region (point) (vm-vheaders-of (car vm-message-pointer)))
+	(narrow-to-region (point) (vm-start-of (car vm-message-pointer))))
+      (goto-char (point-min))
+      (let (w)
+	(setq w (vm-get-visible-buffer-window (current-buffer)))
+	(and w (set-window-point w (point-min)))
+	(and w
+	     (= (window-start w) (vm-vheaders-of (car vm-message-pointer)))
+	     (not exposed)
+	     (set-window-start w (vm-start-of (car vm-message-pointer)))))
+      (if vm-honor-page-delimiters
+	  (vm-narrow-to-page))))
+  )
 
 (defun vm-widen-page ()
   (if (or (> (point-min) (vm-text-of (car vm-message-pointer)))

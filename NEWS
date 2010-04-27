@@ -81,9 +81,29 @@ VM 8.2.0-devo
   ** New variables `vm-expunge-before-quit' and `vm-expunge-before-save'
      introduced to allow automatic expunge.  They are nil by default.  
 
-VM 8.1.1 (2010-04-??)
+VM 8.1.2 (2010-05-??)
+
+    * Extended Org mode email links to work for virtual folders.
+
+
+VM 8.1.1 (2010-04-26)
+
+   ** The variable vm-always-use-presentation-buffer is deprecated.
+      Please remove all settings for this variable in your init file.
+      The default behaviour will be to always use the presentation
+      buffer.  Report any problems that might arise as a result.
+
+    * Extended Org mode email links to handle POP and IMAP folders.
+      (Use org-vm.el in the VM contrib directory until the Org mode
+      distribution gets updated.)
+
+    * Added autoloads for easy inter-operation with the Org mode.
+
+    * Added a section on History and Administration in the info manual.
 
     * Made the autoloads compatible with VM 7.19 instructions.
+
+    * Fixed the build process to treat version info better.
 
     * Removed a few incompatibilites with XEmacs.
 
