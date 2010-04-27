@@ -15,7 +15,12 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
-VM 8.1.1 (2010-04-??)
+VM 8.1.2 (2010-05-??)
+
+    * Extended Org mode email links to work for virtual folders.
+
+
+VM 8.1.1 (2010-04-26)
 
    ** The variable vm-always-use-presentation-buffer is deprecated.
       Please remove all settings for this variable in your init file.
@@ -28,7 +33,11 @@ VM 8.1.1 (2010-04-??)
 
     * Added autoloads for easy inter-operation with the Org mode.
 
+    * Added a section on History and Administration in the info manual.
+
     * Made the autoloads compatible with VM 7.19 instructions.
+
+    * Fixed the build process to treat version info better.
 
     * Removed a few incompatibilites with XEmacs.
 

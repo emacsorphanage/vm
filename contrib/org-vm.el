@@ -29,6 +29,9 @@
 ;; This file implements links to VM messages and folders from within Org-mode.
 ;; Org-mode loads this module by default - if this is not what you want,
 ;; configure the variable `org-modules'.
+;;
+;; This file has been enhanced with ability to store links to POP and
+;; IMAP folders, and works only for VM versions 8.1.1 and up. USR 2010-04-26
 
 ;;; Code:
 
@@ -62,10 +65,12 @@
     (vm-follow-summary-cursor)
     (save-excursion
       (vm-select-folder-buffer)
-      (let* ((message (car vm-message-pointer))
-	     (folder (if (fboundp 'vm-folder-name) ; defined in VM 8.1.1
+      (let* ((message (vm-real-message-of (car vm-message-pointer)))
+	     (buffer (vm-buffer-of message))
+	     (folder (with-current-buffer buffer
+		       (if (fboundp 'vm-folder-name) ; defined in VM 8.1.1
 			 (vm-folder-name)
-		       (buffer-file-name)))
+		       (buffer-file-name))))
 	     (subject (vm-su-subject message))
 	     (to (vm-get-header-contents message "To"))
 	     (from (vm-get-header-contents message "From"))
