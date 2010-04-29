@@ -5003,6 +5003,59 @@ have been modified since the last save.
 
 @end itemize
 
+The MIME layout of a message, stored in the cached data of the message,
+is in turn a vector containing various pieces of data.  This vector is
+used not only for the over all message, but all its MIME parts and
+subparts as well.
+
+@itemize
+@item
+type.  A list of strings consisting of the MIME type of the part along
+with its attributes.  This comes from ``Content-Type'' header.  The type
+could be of the form `type/subtype'.  Quotation marks are stripped from
+attribute values.  An example is @code{("multipart/mixed" "boundary=----_=_NextPart_001_01AFE588.63E23840")}.
+@item
+qtype.  Like type, but the quotation marks are not stripped.
+@item
+encoding.  The MIME encoding used for the part.  It comes from the
+``Content-Transfer-Encoding'' header.
+@item
+id. The id obtained from the ``Content-ID'' header of the part.
+@item
+description.  A description string obtained from the
+``Content-Description'' header of the part.
+@item
+disposition.  A list of strings obtained from the
+``Content-Disposition'' header of the part.  Quotation marks are
+stripped from attribute values.  (An example is @code{(``attachment'',
+``filename=mydocument.doc'')}.)
+@item
+qdisposition.  Like disposition, but the quotation marks are not
+stripped. 
+@item
+header-start and 
+header-end.  Markers delineating the headers of the MIME part.  These
+could be into the Folder buffer or the Presentation buffer.
+@item
+body-start and
+body-end.  Markers delineating the body of the MIME part.  These could
+be into the Folder buffer or the Presentation buffer.
+@item
+parts. A list of MIME layouts for the individual subparts of this part.
+@item
+cache.
+@item
+message-symbol.
+@item
+display-error.  If the display of a MIME part fails, its error string is
+stored here.
+@item
+layout-is-converted.  Flag indicating that MIME type conversion has been
+performed on this part.  @pxref{MIME type conversion}.
+@item
+unconverted-layout.  If the MIME type conversion has been performed on
+this part, then this holds the original unconverted layout.
+@end itemize
 
 
 @node Concept Index, Key Index, Internals, Top

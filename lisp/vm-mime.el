@@ -202,6 +202,8 @@ configuration.  "
     s ))
 
 (defun vm-mm-layout (m)
+  "Returns the mime layout of message M, either from the cache or by
+freshly parsing the message contents."
   (or (vm-mime-layout-of m)
       (progn (vm-set-mime-layout-of m (vm-mime-parse-entity-safe m))
 	     (vm-mime-layout-of m))))
@@ -4092,11 +4094,16 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 (defun vm-mime-run-display-function-at-point (&optional function dispose)
   "Display the MIME object at point according to its type."
   (interactive)
+  ;; It is not enough to just load the message because the
+  ;; MIME buttons still have markers into the Presentation buffer.
+  ;; (save-excursion
+  ;;   (vm-load-message 1))
+  (if (vm-body-to-be-retrieved-of (car vm-message-pointer))
+      (error "Message must be loaded to view attachments"))
   ;; save excursion to keep point from moving.  its motion would
   ;; drag window point along, to a place arbitrarily far from
   ;; where it was when the user triggered the button.
   (save-excursion
-    ;; (vm-load-message 1)
     ;; FIXME the following should be unnecessary
     (vm-assert (not (vm-body-to-be-retrieved-of (car vm-message-pointer))))
     (let ((e (vm-find-layout-extent-at-point))
