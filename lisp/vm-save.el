@@ -224,7 +224,6 @@ and the variable `vm-imap-save-to-server' (which see)."
 	(prefix-numeric-value current-prefix-arg))))
   (if (and vm-imap-save-to-server (vm-imap-folder-p))
       (vm-save-message-to-imap-folder folder count)
-    (vm-load-message count)
     (vm-save-message-to-local-folder folder count)))
    
 ;;;###autoload
@@ -275,6 +274,7 @@ The saved messages are flagged as `filed'."
 					     vm-auto-folder-alist))
     (vm-display nil nil '(vm-save-message) '(vm-save-message))
     (or count (setq count 1))
+    (vm-load-message count)
     ;; Expand the filename, forcing relative paths to resolve
     ;; into the folder directory.
     (let ((default-directory
