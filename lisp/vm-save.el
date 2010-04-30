@@ -222,9 +222,13 @@ and the variable `vm-imap-save-to-server' (which see)."
 		  (t
 		   (vm-read-file-name "Save in folder: " dir nil)))))
 	(prefix-numeric-value current-prefix-arg))))
-  (if (and vm-imap-save-to-server (vm-imap-folder-p))
-      (vm-save-message-to-imap-folder folder count)
-    (vm-save-message-to-local-folder folder count)))
+  (cond ((and vm-imap-save-to-server (vm-imap-folder-p))
+	 (vm-save-message-to-imap-folder folder count))
+	((and (stringp vm-recognize-imap-maildrops)
+	      (string-match vm-recognize-imap-maildrops folder))
+	 (vm-save-message-to-imap-folder folder count))
+	(t
+	 (vm-save-message-to-local-folder folder count))))
    
 ;;;###autoload
 (defun vm-save-message-to-local-folder (folder &optional count)
