@@ -4094,12 +4094,16 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 (defun vm-mime-run-display-function-at-point (&optional function dispose)
   "Display the MIME object at point according to its type."
   (interactive)
-  ;; It is not enough to just load the message because the
-  ;; MIME buttons still have markers into the Presentation buffer.
-  ;; (save-excursion
-  ;;   (vm-load-message 1))
-  (if (vm-body-to-be-retrieved-of (car vm-message-pointer))
-      (error "Message must be loaded to view attachments"))
+  (if  (vm-body-to-be-retrieved-of (car vm-message-pointer))
+    (if (y-or-n-p "Message must be loaded to view attachments.  Load message?")
+	;; It is not enough to just load the message because the
+	;; MIME buttons still have markers into the Presentation buffer.
+	(save-excursion
+	  (vm-load-message 1)
+	  (vm-preview-current-message)
+	  (message "Message loaded.  Rerun the operation."))
+      (error "Aborted"))
+
   ;; save excursion to keep point from moving.  its motion would
   ;; drag window point along, to a place arbitrarily far from
   ;; where it was when the user triggered the button.
@@ -4114,7 +4118,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		      e))
 	    (vm-xemacs-p
 	     (funcall (or function (extent-property e 'vm-mime-function))
-		      e))))))
+		      e)))))))
 
 ;;;###autoload
 (defun vm-mime-reader-map-save-file ()
