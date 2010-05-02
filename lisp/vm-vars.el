@@ -2411,6 +2411,15 @@ format of the Resent-From header, when resending a message with
   :group 'vm
   :type '(choice (const nil) string))
 
+(defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
+  "*A list of headers to hide in `vm-mail-mode'."
+  :group 'vm
+  :type '(choice (const :tag "Disabled" nil)
+                 (set :tag "Header list"
+                      (string "References")
+                      (string "In-Reply-To")
+                      (string "X-Mailer"))))
+
 (defcustom vm-mail-header-insert-date t
   "*Non-nil value causes VM to insert a Date header into a message
 when it is sent.  If the message has a Date header, it will be
@@ -2458,6 +2467,13 @@ in a composition buffer."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-do-fcc-before-mime-encode nil
+  "*Non-nil means to FCC before encoding.  This allows saving of
+messages unencoded, specifically not to waste storage for
+attachments which are stored on disk anyway."
+  :type 'boolean
+  :group 'vm)
+  
 (defcustom vm-reply-subject-prefix nil
   "*Non-nil value should be a string that VM should add to the beginning
 of the Subject header in replies, if the string is not already present.
@@ -5843,7 +5859,7 @@ cause trouble (abbrev-mode)."
   :type '(repeat symbol))
 
 (defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
-  "*A list of header to hide in `vm-mail-mode'."
+  "*A list of headers to hide in `vm-mail-mode'."
   :group 'vm
   :type '(choice (const :tag "Disabled" nil)
                  (set :tag "Header list"

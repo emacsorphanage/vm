@@ -667,9 +667,11 @@ as replied to, forwarded, etc, if appropriate."
   (vm-mail-mode-insert-message-id-maybe)
   ;; send mail using MIME if user requests it and if the buffer
   ;; has not already been MIME encoded.
-  (if (and vm-send-using-mime
-	   (null (vm-mail-mode-get-header-contents "MIME-Version:")))
-      (vm-mime-encode-composition))
+  (when (and vm-send-using-mime
+	     (null (vm-mail-mode-get-header-contents "MIME-Version:")))
+    (if vm-do-fcc-before-mime-encode
+	(vm-do-fcc-before-mime-encode))
+    (vm-mime-encode-composition))
   (if vm-mail-reorder-message-headers
       (vm-reorder-message-headers nil vm-mail-header-order 'none))
   ;; this to prevent Emacs 19 from asking whether a message that
@@ -731,6 +733,22 @@ as replied to, forwarded, etc, if appropriate."
 	  (vm-rename-current-mail-buffer)
 	  (vm-keep-mail-buffer (current-buffer))))
     (vm-display nil nil '(vm-mail-send) '(vm-mail-send))))
+
+;;;###autoload
+(defun vm-do-fcc-before-mime-encode ()
+  "The name says it all.
+Sometimes you may want to save a message unencoded, specifically not to waste
+storage for attachments which are stored on disk anyway."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (re-search-forward (regexp-quote mail-header-separator) (point-max))
+    (delete-region (match-beginning 0) (match-end 0))
+    (let ((header-end (point-marker)))
+      (unwind-protect
+	  (mail-do-fcc header-end)
+	(goto-char header-end)
+	(insert mail-header-separator)))))
 
 ;;;###autoload
 (defun vm-mail-mode-get-header-contents (header-name-regexp)

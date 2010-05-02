@@ -68,7 +68,11 @@ VM 8.2.0-devo
      reason, just delete it from the file system.  A new cache folder
      will be generated upon the next visit.
 
-  CHANGES
+  IMPROVEMENTS
+
+   * New variable `vm-do-fcc-before-mime-encode' (formerly in
+     vm-rfaddons) allows you to save fcc copies of messages before
+     mime-encoding them.
 
    * The right-mouse-button context menu for URL's in messages updated
      to eliminate obsolete web browsers.  Entries added for Firefox,

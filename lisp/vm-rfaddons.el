@@ -330,32 +330,15 @@ This does not work when replying to multiple messages."
   (vm-reply-include-presentation count t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;###autoload
-(defun vm-do-fcc-before-mime-encode ()
-  "The name says it all.
-Sometimes you may want to save a message unencoded, specifically not to waste
-storage for attachments which are stored on disk anyway."
-  (interactive)
-  (save-excursion
-    (goto-char (point-min))
-    (re-search-forward (regexp-quote mail-header-separator) (point-max))
-    (delete-region (match-beginning 0) (match-end 0))
-    (let ((header-end (point-marker)))
-      (unwind-protect
-	  (mail-do-fcc header-end)
-	(goto-char header-end)
-	(insert mail-header-separator)))))
 
-(defcustom vm-do-fcc-before-mime-encode nil
-  "*Non-nil means to FCC before encoding."
-  :type 'boolean
-  :group 'vm-rfaddons)
-  
-(defadvice vm-mime-encode-composition
-  (before do-fcc-before-mime-encode activate)
-  "FCC before encoding attachments if `vm-do-fcc-before-mime-encode' is t."
-  (if vm-do-fcc-before-mime-encode
-      (vm-do-fcc-before-mime-encode)))
+;; This add-on is disabled becaust it has been integrated into the
+;; core.  USR, 2010-05-01
+
+;; (defadvice vm-mime-encode-composition
+;;   (before do-fcc-before-mime-encode activate)
+;;   "FCC before encoding attachments if `vm-do-fcc-before-mime-encode' is t."
+;;   (if vm-do-fcc-before-mime-encode
+;;       (vm-do-fcc-before-mime-encode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This has been moved to the VM core.  USR, 2010-03-11
