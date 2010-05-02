@@ -38,14 +38,15 @@
 ;;;###autoload
 (defun vm-fill-long-lines-in-reply ()
   (interactive)
-  (vm-fill-paragraphs-containing-long-lines
-   vm-fill-long-lines-in-reply-column
-   (save-excursion
-     (goto-char (point-min))
-     (re-search-forward (regexp-quote mail-header-separator) (point-max))
-     (forward-line 1)
-     (point))
-   (point-max)))
+  (let ((vm-word-wrap-paragraphs nil)) ; doesn't work well with fill-prefixes
+    (vm-fill-paragraphs-containing-long-lines
+     vm-fill-long-lines-in-reply-column
+     (save-excursion
+       (goto-char (point-min))
+       (re-search-forward (regexp-quote mail-header-separator) (point-max))
+       (forward-line 1)
+       (point))
+     (point-max))))
 
 ;;;###autoload
 (defun vm-do-reply (to-all include-text count)
