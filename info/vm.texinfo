@@ -2596,7 +2596,7 @@ folder on interactive saves.
 @vindex vm-imap-save-to-server
 @cindex IMAP
 A non-@code{nil} value of @code{vm-imap-save-to-server} means that
-messages from IMAP folders should be saved in other IMAP folds on the
+messages from IMAP folders should be saved in other IMAP folders on the
 same server.  Otherwise, the messages are saved to local folders. 
 
 @vindex vm-folder-directory
@@ -2626,11 +2626,11 @@ If any part of the contents of the message header named by
 @var{header-name} is matched by the regular expression
 @var{regexp}, VM will evaluate the corresponding
 @var{folder-name} and use the result as the default when
-prompting for a folder to save the message in.  If the resulting
-folder name is a relative path name it resolves to the directory
-named by @code{vm-folder-directory}, or the
-@code{default-directory} of the currently visited folder if
-@code{vm-folder-directory} is @code{nil}.
+prompting for a folder to save the message in.  The value of
+@var{folder-name} can be the absolute path name of a local folder, a
+relative path name -- relative to @code{vm-folder-directory} or the
+@code{default-directory} of the currently visited folder -- or the
+maildrop specification of an IMAP folder.
 
 When @var{folder-name} is evaluated, the current buffer will contain only
 the contents of the header named by @var{header-name}.  It is safe to

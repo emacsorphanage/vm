@@ -88,7 +88,9 @@ VM 8.2.0-devo
 VM 8.1.2 (2010-05-??)
 
     * Extended Org mode email links to work for virtual folders.
-
+    
+    * `vm-fill-long-lines-in-reply' initialized to the default value
+      of `fill-column'.
 
 VM 8.1.1 (2010-04-26)
 

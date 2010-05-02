@@ -925,7 +925,7 @@ re-filling lines longer than the value of
   :group 'vm
   :type 'integer)
 
-(defcustom vm-fill-long-lines-in-reply-column nil
+(defcustom vm-fill-long-lines-in-reply-column (default-value 'fill-column)
   "*Fill lines spanning that many columns or more in replies."
   :type '(choice (const nil)
                  (const window-width)
