@@ -3231,6 +3231,7 @@ only marked messages are unloaded, other messages are ignored."
 	   (vm-set-body-to-be-retrieved-flag mm t)
 	   ))
 	(setq mlist (cdr mlist))))
+    (message "Message body discarded")
     (vm-update-summary-and-mode-line)
     ))
 

@@ -341,9 +341,10 @@ storage for attachments which are stored on disk anyway."
     (re-search-forward (regexp-quote mail-header-separator) (point-max))
     (delete-region (match-beginning 0) (match-end 0))
     (let ((header-end (point-marker)))
-      (mail-do-fcc header-end)
-      (goto-char header-end)
-      (insert mail-header-separator))))
+      (unwind-protect
+	  (mail-do-fcc header-end)
+	(goto-char header-end)
+	(insert mail-header-separator)))))
 
 (defcustom vm-do-fcc-before-mime-encode nil
   "*Non-nil means to FCC before encoding."
