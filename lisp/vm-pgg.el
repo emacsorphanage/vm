@@ -383,6 +383,8 @@ Switch mode on/off according to ARG.
   "Prepare the composition for encrypting or signing."
   ;; encode message
   (unless (vm-mail-mode-get-header-contents "MIME-Version:")
+    (if vm-do-fcc-before-mime-encode
+	(vm-do-fcc-before-mime-encode))
     (vm-mime-encode-composition))
   (vm-mail-mode-show-headers)
   ;; ensure newline at the end
@@ -1177,6 +1179,8 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
 (defun vm-pgg-encrypt-internal (sign)
   "Do the encrypting, if SIGN is t also sign it."
   (unless (vm-mail-mode-get-header-contents "MIME-Version:")
+    (if vm-do-fcc-before-mime-encode
+	(vm-do-fcc-before-mime-encode))
     (vm-mime-encode-composition))
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
         (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))
