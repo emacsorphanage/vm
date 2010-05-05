@@ -62,7 +62,8 @@ Content-Type message"
   (let* ((mail-text-point (point))
          (mail-buffer (current-buffer))
          ;; have to write the file because org needs a path to export
-         (tmp-file (make-temp-name (expand-file-name "mail" "/tmp/")))
+         (tmp-file (make-temp-name 
+		    (expand-file-name "mail" temporary-file-directory)))
          ;; because we probably don't want to skip part of our mail
          (org-export-skip-text-before-1st-heading nil)
          ;; makes the replies with ">"s look nicer
