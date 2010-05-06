@@ -267,6 +267,10 @@ and flexible."
 	(and temp-buffer (kill-buffer temp-buffer))))))
 
 (defun vm-check-for-killed-summary ()
+  "If the current folder's summary buffer has been killed, reset
+the vm-summary-buffer variable and all the summary markers in the
+folder so that it remains a valid folder.  Take care of
+vm-folders-summary-buffer in a similar way."
   (and (bufferp vm-summary-buffer) (null (buffer-name vm-summary-buffer))
        (let ((mp vm-message-list))
 	 (setq vm-summary-buffer nil)
@@ -279,6 +283,8 @@ and flexible."
        (setq vm-folders-summary-buffer nil)))
 
 (defun vm-check-for-killed-presentation ()
+  "If the current folder's Presentation buffer has been killed, reset
+the vm-presentation-buffer variable."
   (and (bufferp vm-presentation-buffer-handle)
        (null (buffer-name vm-presentation-buffer-handle))
        (progn
@@ -287,6 +293,8 @@ and flexible."
 
 ;;;###autoload
 (defun vm-check-for-killed-folder ()
+  "If the current buffer's Folder buffer has been killed, reset the
+vm-mail-buffer variable."
   (and (bufferp vm-mail-buffer) (null (buffer-name vm-mail-buffer))
        (setq vm-mail-buffer nil)))
 

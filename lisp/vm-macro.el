@@ -58,6 +58,25 @@ isn't a folder buffer.  USR, 2010-03-08"
 	 ;;--------------------------
 	 )))
 
+(defsubst vm-select-folder-buffer-and-validate ()
+  "Select the folder buffer corresponding ot the current buffer (which
+could be Summary or Presentation) and make sure that it has valid
+references to Summary and Presentation buffers."
+  (cond (vm-mail-buffer
+	 (or (buffer-name vm-mail-buffer)
+	     (error "Folder buffer has been killed."))
+	 (set-buffer vm-mail-buffer))
+	((not (memq major-mode '(vm-mode vm-virtual-mode)))
+	 (error "No VM folder buffer associated with this buffer")))
+  ;;--------------------------
+  ;; This may be problematic - done in revno 570.  But, why?
+  (vm-buffer-type:set 'folder)
+  ;;--------------------------
+
+  (vm-check-for-killed-summary)
+  (vm-check-for-killed-presentation)
+)
+
 (defsubst vm-error-if-folder-read-only ()
   (while vm-folder-read-only
     (signal 'folder-read-only (list (current-buffer)))))

@@ -3100,6 +3100,7 @@ reliable sources of information but not all mailers provide them.
 If you don't want VM to use Subject headers, set the variable
 @code{vm-thread-using-subject} to @code{nil}.
 
+@vindex vm-summary-show-threads
 If you want VM to always display messages using threads, you should set
 the default value of the variable @code{vm-summary-show-threads}
 non-@code{nil} in your VM init file.  Example:
@@ -4811,26 +4812,33 @@ data:
 @itemize
 @item
 Location data.  This data about the location of the various parts of the
-message in the folder buffer is calculated after a folder is loaded and
-parsed. 
+message in the Folder buffer is calculated after a folder is loaded and
+parsed.  However, in reality, the message could be in any buffer which
+we will call the ``content buffer'' in the following.  For virtual
+folders, the content buffer is a separate folder buffer underlying the
+virtual folder.  For headers-only messages, the content buffer could be
+the Presentation buffer etc.
 
 @itemize
 @item
-start.  The starting position of the message, at which a leading
-separator line begins.
+start.  Marker for the starting position of the message, at which a
+leading separator line begins.
 @item
-headers. The position in the folder buffer where the headers of the message
-start.
+headers. Marker for the position in the content buffer where the headers
+of the message start.
 @item
-vheaders.  The position in the folder buffer where the visible headers of the
-message start.  (The headers are rearranged in such a way that all the
-visible headers are towards the end of the headers region.)
+vheaders.  Marker for the position in the content buffer where the
+visible headers of the message start.  (The headers are rearranged in
+such a way that all the visible headers are towards the end of the
+headers region.)
 @item
-text. The position in the folder buffer where the text of the message starts.
+text. Marker for the position in the content buffer where the text of the
+message starts.
 @item
-text-end. The position in the folder buffer where the text of the message ends
+text-end. Marker for the position in the content buffer where the text of
+the message ends.
 @item
-end. The position in the folder buffer where the message ends.
+end. Marker for the position in the content buffer where the message ends.
 @end itemize
 
 @item
@@ -4846,10 +4854,10 @@ padded number. The message number as a padded string.
 mark. Flag that indicates if the message has been marked (via
 @code{vm-mark-message}).
 @item
-su-start. The position in the summary buffer where the summary line of
+su-start. The position in the Summary buffer where the summary line of
 the message starts.
 @item
-su-end.  The position in the summary buffer where the summary line of
+su-end.  The position in the Summary buffer where the summary line of
 the message ends.
 @item
 real-message-sym.  If the message is in a virtual folder, then its
@@ -4883,7 +4891,7 @@ switched from unmirrored to mirrored.
 virtual-summary.  Summary for unmirrored virtual message.
 @item
 mime-layout.  MIME layout information; types, ids, positions, etc of
-all MIME entities.
+all MIME entities.  (See below.)
 @item
 mime-encoded-header-flag. Flag that indicates if the headers of the
 message are MIME encoded.
@@ -5042,13 +5050,9 @@ stripped from attribute values.  (An example is @code{(``attachment'',
 qdisposition.  Like disposition, but the quotation marks are not
 stripped. 
 @item
-header-start and 
-header-end.  Markers delineating the headers of the MIME part.  These
-could be into the Folder buffer or the Presentation buffer.
-@item
-body-start and
-body-end.  Markers delineating the body of the MIME part.  These could
-be into the Folder buffer or the Presentation buffer.
+header-start header-end, body-start and body-end.  Markers into the
+content buffer delineating the headers/body of
+the MIME part.
 @item
 parts. A list of MIME layouts for the individual subparts of this part.
 @item

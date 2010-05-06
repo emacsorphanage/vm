@@ -1,5 +1,9 @@
 -*-Text-*-
 
+This file contains the list of changes up to revision 7.19, developed
+by Kyle Jones.  For recent changes, please see the `NEWS' file.
+
+
 VM 7.19 released (29 September 2004)
 
 * New variables:
