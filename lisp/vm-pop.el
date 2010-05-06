@@ -306,8 +306,7 @@ into the current folder.  VM sends POP DELE commands to all the
 relevant POP servers to remove the messages."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   (vm-error-if-virtual-folder)
   (if (and (interactive-p) (eq vm-folder-access-method 'pop))
       (error "This command is not meant for POP folders.  Use the normal folder expunge instead."))

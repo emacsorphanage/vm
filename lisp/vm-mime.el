@@ -2072,10 +2072,7 @@ in the buffer.  The function is expected to make the message
 `MIME presentable' to the user in whatever manner it sees fit."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (if (and (not vm-display-using-mime)
 	   (null vm-mime-display-function))
       (error "MIME display disabled, set vm-display-using-mime non-nil to enable."))
@@ -4203,8 +4200,7 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
   (unless mlist
     (or count (setq count 1))
     (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (vm-error-if-folder-empty))
+    (vm-select-folder-buffer-and-validate 1))
 
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (save-excursion
@@ -5698,11 +5694,8 @@ The MIME object is replaced by a text/plain object that briefly
 describes what was deleted."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-folder-read-only)
-  (vm-error-if-folder-empty)
   (if (and (vm-virtual-message-p (car vm-message-pointer))
 	   (null (vm-virtual-messages-of (car vm-message-pointer))))
       (error "Can't edit unmirrored virtual messages."))
@@ -7211,9 +7204,8 @@ the first sub part of a multipart/alternative is a text/plain part."
 This is a destructive operation and cannot be undone!"
   (interactive "p")
   (when (interactive-p)
-    (vm-check-for-killed-summary)
-    (vm-follow-summary-cursor)
-    (vm-select-folder-buffer))
+    (vm-follow-summary-cursor))
+  (vm-select-folder-buffer-and-validate)
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (vm-load-message count)
     ;; FIXME the following should be unnecessary

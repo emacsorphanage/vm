@@ -586,9 +586,7 @@ all marked messages will be burst."
 	type ))))
   (or digest-type (setq digest-type vm-digest-burst-type))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-marked-or-prefixed-messages 1)))
     (vm-load-message)
@@ -697,9 +695,7 @@ all marked messages will be burst."
 	type ))))
   (or digest-type (setq digest-type vm-digest-burst-type))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-marked-or-prefixed-messages 1))
 	(work-buffer nil))

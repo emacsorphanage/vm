@@ -701,9 +701,7 @@ cleanup here after verification and decoding took place."
   (message "Verifying PGP cleartext message...")
   (when (interactive-p)
     (vm-follow-summary-cursor)
-    (vm-select-folder-buffer-if-possible)
-    (vm-check-for-killed-summary)
-    (vm-error-if-folder-empty))
+    (vm-select-folder-buffer-and-validate 1))
   
   ;; make a presentation copy
   (unless (eq major-mode 'vm-presentation-mode)
@@ -729,10 +727,8 @@ cleanup here after verification and decoding took place."
   (interactive)
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-if-possible)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-folder-read-only)
-  (vm-error-if-folder-empty)
     
   ;; make a presentation copy
   (unless (eq major-mode 'vm-presentation-mode)
@@ -995,9 +991,7 @@ cleanup here after verification and decoding took place."
   (interactive)
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (save-restriction
     ;; ensure we are in the right buffer
     (if vm-presentation-buffer

@@ -1307,9 +1307,7 @@ Run this function in order to test/check your conditions."
                                         nil t nil nil "reply"))
             vmpc-current-buffer 'none))
     (vm-follow-summary-cursor)
-    (vm-select-folder-buffer)
-    (vm-check-for-killed-summary)
-    (vm-error-if-folder-empty)
+    (vm-select-folder-buffer-and-validate 1)
     (vmpc-build-true-conditions-list)
     (message "VMPC true conditions: %S" vmpc-true-conditions)
     vmpc-true-conditions))
@@ -1487,9 +1485,7 @@ recursion nor concurrent calls."
   "*Forward a message with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   ;;  the rest is almost exactly the same as replying:
   (vmpc-init-vars 'forward)
   (vmpc-build-true-conditions-list)
@@ -1504,9 +1500,7 @@ recursion nor concurrent calls."
   "*Resent a message with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   ;; the rest is almost exactly the same as replying:
   (vmpc-init-vars 'resend)
   (vmpc-build-true-conditions-list)

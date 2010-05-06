@@ -873,9 +873,7 @@ Normal VM commands may be accessed in the reply buffer by prefixing them
 with C-c C-v."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-do-reply nil nil count))
 
 ;;;###autoload
@@ -884,9 +882,7 @@ with C-c C-v."
 from the message.  See the documentation for function vm-reply for details."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-do-reply nil t count))
 
 ;;;###autoload
@@ -895,9 +891,7 @@ from the message.  See the documentation for function vm-reply for details."
 See the documentation for the function vm-reply for details."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-do-reply t nil count))
 
 ;;;###autoload
@@ -906,9 +900,7 @@ See the documentation for the function vm-reply for details."
 the message.  See the documentation for the function vm-reply for details."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-do-reply t t count))
 
 ;;;###autoload
@@ -935,9 +927,7 @@ reply, but you must fill in the To: header and perhaps the
 Subject: header manually."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (if (and (eq last-command 'vm-next-command-uses-marks)
 	   (cdr (vm-select-marked-or-prefixed-messages 0)))
       (let ((vm-digest-send-type vm-forwarding-digest-type))
@@ -1031,9 +1021,7 @@ You will be placed in a Mail mode buffer with the extracted message and
 you can change the recipient address before resending the message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (let ((b (current-buffer)) start
 	(dir default-directory)
 	(layout (vm-mm-layout (car vm-message-pointer)))
@@ -1104,9 +1092,7 @@ this header, what happens when you send the message is undefined.
 You may also create a Resent-Cc header."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (save-restriction
     (widen)
     (let ((b (current-buffer))
@@ -1173,9 +1159,7 @@ preamble lines.
 If invoked on marked messages (via vm-next-command-uses-marks),
 only marked messages will be put into the digest."
   (interactive "P")
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (let ((dir default-directory)
 	(miming (and vm-send-using-mime (equal vm-digest-send-type "mime")))
 	mp mail-buffer b

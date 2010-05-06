@@ -64,8 +64,7 @@ The format is as described by the variable `vm-summary-format'.  Generally
 one line per message is most pleasing to the eye but this is not
 mandatory."
   (interactive "p\np")
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   (if (null vm-summary-buffer)
       (let ((b (current-buffer))
 	    (read-only vm-folder-read-only))
@@ -1300,9 +1299,7 @@ entry (vm-summary-of) or recalculating it if necessary.  USR 2010-04-06"
   "Rebuild the summary.
 Call this function if you made changes to `vm-summary-format'."
   (interactive "P")
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (if kill-local-summary
       (kill-local-variable 'vm-summary-format))
   (message "Fixing your summary... %s" vm-summary-format)

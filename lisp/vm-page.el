@@ -39,10 +39,7 @@ Prefix argument N means scroll forward N lines."
     ;; in gnu.emacs.vm.info, title "Re: synchronization of vm buffers"
     (if mp-changed (sit-for 0))
 
-    (vm-select-folder-buffer)
-    (vm-check-for-killed-summary)
-    (vm-check-for-killed-presentation)
-    (vm-error-if-folder-empty)
+    (vm-select-folder-buffer-and-validate 1)
     (setq needs-decoding (and vm-display-using-mime
 			      (not vm-mime-decoded)
 			      (not (vm-mime-plain-message-p
@@ -925,10 +922,7 @@ is done if necessary.  (USR, 2010-01-14)"
   (interactive)
   (vm-follow-summary-cursor)
   (save-excursion
-    (vm-select-folder-buffer)
-    (vm-check-for-killed-summary)
-    (vm-check-for-killed-presentation)
-    (vm-error-if-folder-empty)
+    (vm-select-folder-buffer-and-validate 1)
     (vm-display nil nil '(vm-expose-hidden-headers)
 		'(vm-expose-hidden-headers))
     (vm-save-buffer-excursion
@@ -1008,10 +1002,7 @@ is done if necessary.  (USR, 2010-01-14)"
   "Moves to the beginning of the current message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (vm-widen-page)
@@ -1035,10 +1026,7 @@ is done if necessary.  (USR, 2010-01-14)"
 as necessary."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)
@@ -1071,10 +1059,7 @@ will produce an action.  If the message is being previewed, it is
 exposed and marked as read."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)
@@ -1101,10 +1086,7 @@ will produce an action.  If the message is being previewed, it is
 exposed and marked as read."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)

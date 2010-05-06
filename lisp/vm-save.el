@@ -105,9 +105,7 @@ only marked messages are checked against vm-auto-folder-alist.
 
 The saved messages are flagged as `filed'."
   (interactive "P")
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (message "Archiving...")
   (let ((auto-folder)
 	(archived 0))
@@ -191,37 +189,34 @@ and the variable `vm-imap-save-to-server' (which see)."
 	 (save-excursion
 	   (vm-session-initialization)
 	   (vm-select-folder-buffer)
-	   (vm-check-for-killed-summary)
-	   (vm-error-if-folder-empty)
 	   (list (vm-read-imap-folder-name "Save to IMAP folder: " t)
 		 (prefix-numeric-value current-prefix-arg))))
        ;; saving to local filesystem.  argument parsing taken from old
        ;; vm-save-message (now vm-save-message-to-local-folder)
-       (list
-	;; protect value of last-command
-	(let ((last-command last-command)
-	      (this-command this-command))
-	  (vm-follow-summary-cursor)
-	  (let ((default 
-		  (save-excursion
-		    (vm-select-folder-buffer)
-		    (vm-check-for-killed-summary)
-		    (vm-error-if-folder-empty)
-		    (or (vm-auto-select-folder 
-			 vm-message-pointer vm-auto-folder-alist)
-			vm-last-save-folder)))
-		(dir (or vm-folder-directory default-directory)))
-	    (cond ((and default
-			(let ((default-directory dir))
-			  (file-directory-p default)))
-		   (vm-read-file-name "Save in folder: " dir nil nil default))
-		  (default
-		      (vm-read-file-name
-		       (format "Save in folder: (default %s) " default)
-		       dir default))
-		  (t
-		   (vm-read-file-name "Save in folder: " dir nil)))))
-	(prefix-numeric-value current-prefix-arg))))
+     (list
+      ;; protect value of last-command
+      (let ((last-command last-command)
+	    (this-command this-command))
+	(vm-follow-summary-cursor)
+	(let ((default 
+		(save-excursion
+		  (vm-select-folder-buffer)
+		  (vm-error-if-folder-empty)
+		  (or (vm-auto-select-folder 
+		       vm-message-pointer vm-auto-folder-alist)
+		      vm-last-save-folder)))
+	      (dir (or vm-folder-directory default-directory)))
+	  (cond ((and default
+		      (let ((default-directory dir))
+			(file-directory-p default)))
+		 (vm-read-file-name "Save in folder: " dir nil nil default))
+		(default
+		  (vm-read-file-name
+		   (format "Save in folder: (default %s) " default)
+		   dir default))
+		(t
+		 (vm-read-file-name "Save in folder: " dir nil)))))
+      (prefix-numeric-value current-prefix-arg))))
   (cond ((and vm-imap-save-to-server (vm-imap-folder-p))
 	 (vm-save-message-to-imap-folder folder count))
 	((and (stringp vm-recognize-imap-maildrops)
@@ -252,8 +247,6 @@ The saved messages are flagged as `filed'."
       (vm-follow-summary-cursor)
       (let ((default (save-excursion
 		       (vm-select-folder-buffer)
-		       (vm-check-for-killed-summary)
-		       (vm-error-if-folder-empty)
 		       (or (vm-auto-select-folder vm-message-pointer
 						  vm-auto-folder-alist)
 			   vm-last-save-folder)))
@@ -270,9 +263,7 @@ The saved messages are flagged as `filed'."
 	       (vm-read-file-name "Save in folder: " dir nil)))))
     (prefix-numeric-value current-prefix-arg)))
   (let (auto-folder unexpanded-folder)
-    (vm-select-folder-buffer)
-    (vm-check-for-killed-summary)
-    (vm-error-if-folder-empty)
+    (vm-select-folder-buffer-and-validate 1)
     (setq unexpanded-folder folder
 	  auto-folder (vm-auto-select-folder vm-message-pointer
 					     vm-auto-folder-alist))
@@ -484,9 +475,7 @@ vm-save-message instead (normally bound to `s')."
 	 "Write text to file: ")
        nil vm-last-written-file nil)
       (prefix-numeric-value current-prefix-arg))))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-display nil nil '(vm-save-message-sans-headers)
 	      '(vm-save-message-sans-headers))
   (vm-load-message count)
@@ -595,9 +584,7 @@ Output, if any, is displayed.  The message is not altered."
      (vm-select-folder-buffer)
      (list (read-string "Pipe to command: " vm-last-pipe-command)
 	   current-prefix-arg)))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (setq vm-last-pipe-command command)
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
 	m
@@ -718,9 +705,7 @@ arguments after the command finished."
      (vm-select-folder-buffer)
      (list (read-string "Pipe to command: " vm-last-pipe-command)
 	   current-prefix-arg)))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (setq vm-last-pipe-command command)
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
 	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
@@ -829,9 +814,7 @@ each marked message is printed, one message per vm-print-command invocation.
 Output, if any, is displayed.  The message is not altered."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (or count (setq count 1))
   (let* ((buffer (get-buffer-create "*Shell Command Output*"))
 	 (need-tempfile (string-match ".*-.*-\\(win95\\|nt\\)"
@@ -930,15 +913,12 @@ The saved messages are flagged as `filed'."
      (save-excursion
        (vm-session-initialization)
        (vm-select-folder-buffer)
-       (vm-check-for-killed-summary)
        (vm-error-if-folder-empty)
        (list (vm-read-imap-folder-name 
 	      "Save to IMAP folder: " t nil
 	      (or vm-last-save-imap-folder vm-last-visit-imap-folder))
 	     (prefix-numeric-value current-prefix-arg)))))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-display nil nil '(vm-save-message-to-imap-folder)
 	      '(vm-save-message-to-imap-folder))
   (or count (setq count 1))

@@ -311,9 +311,7 @@ or do the binding and advising on your own."
 This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (if (null vm-presentation-buffer)
       (if to-all
           (vm-followup-include-text count)
@@ -721,7 +719,7 @@ and has not been replied so far!
 See the variable `vm-handle-return-receipt-mode' for customization."
   (interactive)
   (save-excursion
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-and-validate)
     (let* ((msg (car vm-message-pointer))
            (sender (vm-get-header-contents msg  "Return-Receipt-To:"))
            (mail-signature nil)
@@ -1058,8 +1056,7 @@ save attachments.
       nil
     (let ((vm-mime-auto-save-all-attachments-avoid-recursion t))
       (vm-check-for-killed-folder)
-      (vm-select-folder-buffer)
-      (vm-check-for-killed-summary)
+      (vm-select-folder-buffer-and-validate)
       
       (vm-mime-save-all-attachments
        count
@@ -1078,8 +1075,7 @@ when deleting a message.
 See the advice in `vm-rfaddons-infect-vm'."
   (interactive "")
   (vm-check-for-killed-folder)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   (setq msg (or msg (car vm-message-pointer)))
   (if msg 
       (let ((o (vm-mm-layout msg))
@@ -1647,9 +1643,7 @@ It saves the decoded message and not the raw message like `vm-save-message'!"
      (list filename)))
     (save-excursion
       (vm-follow-summary-cursor)
-      (vm-select-folder-buffer)
-      (vm-check-for-killed-summary)
-      (vm-error-if-folder-empty)
+      (vm-select-folder-buffer-and-validate 1)
       
       (if (and (boundp 'vm-mail-buffer) (symbol-value 'vm-mail-buffer))
           (set-buffer (symbol-value 'vm-mail-buffer))

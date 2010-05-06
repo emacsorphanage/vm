@@ -671,7 +671,6 @@ visited folder."
   (vm-session-initialization)
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer-if-possible)
-  (vm-check-for-killed-summary)
   (setq vm-last-visit-imap-folder folder)
   (vm folder read-only 'imap))
 

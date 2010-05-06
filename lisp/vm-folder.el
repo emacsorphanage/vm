@@ -2861,9 +2861,7 @@ all marked messages are affected, other messages are ignored."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (let ((mlist (vm-select-marked-or-prefixed-messages count)))
     (while mlist
       (if (and (not (vm-unread-flag (car mlist)))
@@ -2880,11 +2878,9 @@ The folder is not altered and Emacs is still visiting it.  You
 can switch back to it with switch-to-buffer or by using the
 Buffer Menu."
   (interactive)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate)
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
 
   (save-excursion (run-hooks 'vm-quit-hook))
 
@@ -2908,11 +2904,9 @@ Buffer Menu."
   "Iconify the frame and bury the current VM folder and summary buffers.
 The folder is not altered and Emacs is still visiting it."
   (interactive)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate)
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
 
   (save-excursion (run-hooks 'vm-quit-hook))
 
@@ -2955,11 +2949,9 @@ If the customization variable `vm-expunge-before-quit' is set to
 
 Giving a prefix argument overrides the variable and no expunge is done."  
   (interactive "P")
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate)
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
   (vm-display nil nil '(vm-quit vm-quit-no-change vm-quit-no-expunge)
 	      (list this-command 'quitting))
   (let ((virtual (eq major-mode 'vm-virtual-mode))
@@ -3390,8 +3382,7 @@ When applied to a virtual folder, this command runs itself on
 each of the underlying real folders associated with the virtual
 folder."
   (interactive (list current-prefix-arg))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   (vm-display nil nil '(vm-save-folder) '(vm-save-folder))
   (if (eq major-mode 'vm-virtual-mode)
       (vm-virtual-save-folder prefix)
@@ -3488,8 +3479,7 @@ Expunge won't be done if folder is read-only.
 When applied to a virtual folder, this command works as if you had
 run vm-expunge-folder followed by vm-save-folder."
   (interactive (list current-prefix-arg))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   (vm-display nil nil '(vm-save-and-expunge-folder)
 	      '(vm-save-and-expunge-folder))
   (if (not vm-folder-read-only)
@@ -4184,8 +4174,7 @@ folder.  A prefix argument has no effect when this command is
 applied to virtual folder; mail is always gathered from the spool
 files."
   (interactive "P")
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   (vm-error-if-folder-read-only)
   (cond ((eq major-mode 'vm-virtual-mode)
 	 (vm-virtual-get-new-mail))
@@ -4537,10 +4526,8 @@ Interactively TYPE will be read from the minibuffer."
      (setq types (vm-delqual (symbol-name vm-folder-type)
 			     (copy-sequence types)))
      (list (intern (vm-read-string "Change folder to type: " types)))))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-virtual-folder)
-  (vm-error-if-folder-empty)
   (if (not (memq type '(From_ BellFrom_ From_-with-Content-Length mmdf babyl)))
       (error "Unknown folder type: %s" type))
   (if (or (null vm-folder-type)

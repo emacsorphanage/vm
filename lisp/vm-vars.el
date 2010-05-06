@@ -5675,11 +5675,17 @@ that has a match.")
 ;;      (setq p (cdr p)))
 ;;    v ))
 
-(defvar vm-message-garbage-alist nil)
+(defvar vm-message-garbage-alist nil
+  "An association list of files created for this message and the
+actions to be taken to destroy them.")
 (make-variable-buffer-local 'vm-message-garbage-alist)
-(defvar vm-folder-garbage-alist nil)
+(defvar vm-folder-garbage-alist nil
+  "An association list of files created for this message and the
+actions to be taken to destroy them.")
 (make-variable-buffer-local 'vm-folder-garbage-alist)
-(defvar vm-global-garbage-alist nil)
+(defvar vm-global-garbage-alist nil
+  "An association list of files created for this VM session and the
+actions to be taken to destroy them.")
 (defconst vm-mime-header-list '("MIME-Version:" "Content-"))
 (defconst vm-mime-header-regexp "\\(MIME-Version:\\|Content-\\)")
 (defconst vm-mime-mule-charset-to-coding-alist

@@ -260,9 +260,7 @@ See: `vm-ps-print-message-function'
 for customization of the output."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (or count (setq count 1))
 
   (let* ((vm-summary-faces-mode nil)
@@ -367,9 +365,7 @@ for customization of the output."
     (interactive (list (ps-print-preprint current-prefix-arg)))
     (save-excursion
       (vm-follow-summary-cursor)
-      (vm-select-folder-buffer)
-      (vm-check-for-killed-summary)
-      (vm-error-if-folder-empty)
+      (vm-select-folder-buffer-and-validate 1)
       
       (let ((folder-name (vm-ps-print-message-folder-name))
 	    (mcount 1)

@@ -532,8 +532,7 @@ into the current folder.  VM sets the \\Deleted flag on all such messages
 on all the relevant IMAP servers and then immediately expunges."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   (vm-error-if-virtual-folder)
   (let ((process nil)
 	(source nil)
@@ -3129,8 +3128,7 @@ only marked messages are loaded, other messages are ignored."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate 1)
   (when (null count) (setq count 1))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-marked-or-prefixed-messages count))
@@ -3214,8 +3212,7 @@ only marked messages are unloaded, other messages are ignored."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate 1)
   (when (null count) (setq count 1))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-marked-or-prefixed-messages count))
@@ -3294,8 +3291,7 @@ Prefix argument ALL-FLAGS says that all the messages' flags should be
 written to the server irrespective of whether they were changed in the
 VM session.  This is useful for saving offline work."
   (interactive "P")
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   (vm-display nil nil '(vm-imap-synchronize) '(vm-imap-synchronize))
   (if (not (eq vm-folder-access-method 'imap))
       (message "This is not an IMAP folder")
@@ -3683,8 +3679,8 @@ documentation for `vm-spool-files'."
      (vm-buffer-type:duplicate)
      ;;------------------------
      (vm-session-initialization)
-     (vm-check-for-killed-folder)
-     (vm-select-folder-buffer-if-possible)
+     ;; (vm-check-for-killed-folder) 	; seems no need for this
+     ;; (vm-select-folder-buffer-if-possible)
      (let ((this-command this-command)
 	   (last-command last-command)
 	   (folder (vm-read-imap-folder-name "Create IMAP folder: " nil t)))
@@ -3729,8 +3725,8 @@ documentation for `vm-spool-files'."
      (vm-buffer-type:duplicate)
      ;;------------------------
      (vm-session-initialization)
-     (vm-check-for-killed-folder)
-     (vm-select-folder-buffer-if-possible)
+     ;; (vm-check-for-killed-folder)	; seems no need for this
+     ;; (vm-select-folder-buffer-if-possible)
      (let ((this-command this-command)
 	   (last-command last-command))
        (list (vm-read-imap-folder-name "Delete IMAP folder: " nil nil)))))
@@ -3770,8 +3766,8 @@ documentation for `vm-spool-files'."
      (vm-buffer-type:duplicate)
      ;;------------------------
      (vm-session-initialization)
-     (vm-check-for-killed-folder)
-     (vm-select-folder-buffer-if-possible)
+     ;; (vm-check-for-killed-folder)	; seems no need for this
+     ;; (vm-select-folder-buffer-if-possible)
      (let ((this-command this-command)
 	   (last-command last-command)
 	   source dest)

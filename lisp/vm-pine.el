@@ -312,10 +312,7 @@ creation)."
 
   (vm-session-initialization)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
 
   (if (eq vm-system-state 'previewing)
       (vm-show-current-message))

@@ -58,10 +58,11 @@ isn't a folder buffer.  USR, 2010-03-08"
 	 ;;--------------------------
 	 )))
 
-(defsubst vm-select-folder-buffer-and-validate ()
+(defsubst vm-select-folder-buffer-and-validate (&optional minimum)
   "Select the folder buffer corresponding ot the current buffer (which
 could be Summary or Presentation) and make sure that it has valid
-references to Summary and Presentation buffers."
+references to Summary and Presentation buffers.  If MINIMUM is 1, the
+folder should be nonempty as well."
   (cond (vm-mail-buffer
 	 (or (buffer-name vm-mail-buffer)
 	     (error "Folder buffer has been killed."))
@@ -75,7 +76,9 @@ references to Summary and Presentation buffers."
 
   (vm-check-for-killed-summary)
   (vm-check-for-killed-presentation)
-)
+  (if (and minimum (= minimum 1))
+      (vm-error-if-folder-empty))
+  )
 
 (defsubst vm-error-if-folder-read-only ()
   (while vm-folder-read-only
