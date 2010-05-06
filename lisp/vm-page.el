@@ -843,11 +843,11 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 
 (defun vm-show-current-message ()
   "Show the current message in the Presentation Buffer.  MIME decoding
-is done if necessary.  (USR, 2010-01-14)" 
+is done if necessary.  (USR, 2010-01-14)"
   ;; It looks like this function can be invoked in both the folder
-  ;; buffer as well the presentation buffer, but it is not clear if it
-  ;; works correctly when invoked in the presentation buffer.  
-  ;; (USR, 2010-01-21)
+  ;; buffer as well the presentation buffer, but we need to arrange
+  ;; things so that it is always called in a presentation buffer.
+  ;; (USR, 2010-05-04)
   (if (and vm-display-using-mime
 	   vm-auto-decode-mime-messages
 	   (if vm-mail-buffer
@@ -860,10 +860,15 @@ is done if necessary.  (USR, 2010-01-14)"
 	(vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
 					      (car (cdr data)))
 		       (message "%s" (car (cdr data)))))
-    ;; FIXME at this point, the folder buffer is being used for
-    ;; display
-    nil
-    )
+    (if vm-always-use-presentation-buffer
+	nil
+;; 	(progn
+;; 	  (vm-make-presentation-copy (car vm-message-pointer))
+;; 	  (set-buffer vm-presentation-buffer))
+      ;; FIXME at this point, the folder buffer is being used for
+      ;; display
+      nil
+      ))
   ;; FIXME this probably cause folder corruption by filling the folder instead
   ;; of the presentation copy  ..., RWF, 2008-07
   ;; Well, so, we will check if we are in a presentation buffer! 

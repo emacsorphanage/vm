@@ -26,17 +26,18 @@
 ;; For discussion see "sending html mail using VM" at
 ;; http://groups.google.com/group/gnu.emacs.vm.info/browse_frm/month/2008-01
 
-(defun orgstruct-hijacker-command-11 (arg)
+(defun orgstruct-hijacker-command-21 (arg)
   "In Structure, run `org-ctrl-c-ctrl-c'. Outside of Structure
 check for a prefix argument and if buffer name contains `mail',
 and run orgstruct-send-as-html, or run the binding of
 `\C-c\C-c'."
   (interactive "p")
+  (message "calling html send mail")
   (save-excursion
     (if (org-context-p (quote headline) (quote item))
         (org-run-like-in-org-mode (quote org-ctrl-c-ctrl-c))
       (if (orgstruct-send-as-html-should-i-p arg)
-          (orgstruct-send-as-html)
+          (progn (message "sending as html mail") (orgstruct-send-as-html))
         (let (orgstruct-mode)
           (call-interactively
            (key-binding "\C-c\C-c")))))))

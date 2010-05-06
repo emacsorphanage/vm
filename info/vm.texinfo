@@ -148,7 +148,7 @@ sender, recipient, subject and date headers.  Typing @key{SPC}
 message as read.  Subsequent @key{SPC}'s scroll forward through the
 message, @kbd{b} or @key{DEL} scrolls backward.  When you reach the end
 of a message, typing @key{SPC} or @kbd{n} moves you forward to preview
-the next message.  @xref{Viewing}.
+the next message.  @xref{Paging}.
 
 If you do not want to read a message that's being previewed, type
 @kbd{n} and VM will move to the next message (if there is one).
@@ -1247,11 +1247,11 @@ presentation is done in two stages: @dfn{previewing} and @dfn{paging}.
 
 @menu
 * Previewing::                  Customizing message previews.
-* Viewing::                     Viewing the current message.
+* Paging::                      Viewing the current message.
 * MIME Messages::               Using VM's MIME display features.
 @end menu
 
-@node Previewing, Viewing, Reading Messages, Reading Messages
+@node Previewing, Paging, Reading Messages, Reading Messages
 @section Previewing
 
 @dfn{Previewing} means showing you a small portion of a message
@@ -1320,8 +1320,8 @@ have VM preview all messages, set the value of
 Typing @kbd{t} (@code{vm-expose-hidden-headers}) makes VM toggle
 between exposing and hiding headers that would ordinarily be hidden.
 
-@node Viewing, MIME Messages, Previewing, Reading Messages
-@section Viewing
+@node Paging, MIME Messages, Previewing, Reading Messages
+@section Paging
 
 @vindex vm-auto-next-message
 Typing @key{SPC} during a message preview exposes the body of the
@@ -1377,7 +1377,7 @@ variable @code{fill-column}, this variable is not buffer-local by
 default.
 
 
-@node MIME Messages,, Viewing, Reading Messages
+@node MIME Messages,, Paging, Reading Messages
 @section Reading MIME Messages
 
 @cindex MIME
