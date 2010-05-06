@@ -70,6 +70,8 @@ VM 8.2.0-devo
 
   IMPROVEMENTS
 
+   * Improved error messages arising in IMAP sessions wih the server.
+
    * New variable `vm-do-fcc-before-mime-encode' (formerly in
      vm-rfaddons) allows you to save fcc copies of messages before
      mime-encoding them.

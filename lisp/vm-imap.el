@@ -105,10 +105,24 @@
 
 (if (fboundp 'define-error)
     (progn
-      (define-error 'vm-imap-protocol-error "IMAP protocol error"))
+      (define-error 'vm-imap-protocol-error "IMAP protocol error")
+      (define-error 'vm-imap-normal-error "IMAP error" 'vm-imap-protocol-error)
+      )
   (put 'vm-imap-protocol-error 'error-conditions
        '(vm-imap-protocol-error error))
-  (put 'vm-imap-protocol-error 'error-message "IMAP protocol error"))
+  (put 'vm-imap-protocol-error 'error-message "IMAP protocol error")
+  (put 'vm-imap-normal-error 'error-conditions
+       '(vm-imap-protocol-error vm-imap-normal-error error))
+  (put 'vm-imap-normal-error 'error-message "IMAP error")
+  )
+
+(defun vm-imap-protocol-error (&rest args)
+  (set (make-local-variable 'vm-imap-keep-trace-buffer) t)
+  (signal 'vm-imap-protocol-error (list (apply 'format args))))
+
+(defun vm-imap-normal-error (&rest args)
+  (set (make-local-variable 'vm-imap-keep-trace-buffer) t)
+  (signal 'vm-imap-normal-error (list (apply 'format args))))
 
 (defun vm-imap-capability (cap &optional process)
   (if process
@@ -1038,8 +1052,8 @@ as well."
 	      (if (fboundp 'add-async-timeout)
 		  (add-async-timeout 2 'kill-imap-process process)
 		(run-at-time 2 nil 'kill-imap-process process)))
-	  (vm-imap-protocol-error
-	   nil))
+	  (vm-imap-protocol-error	; handler
+	   nil))			; ignore errors 
 	;;----------------------------------
 	(vm-buffer-type:exit)
 	;;----------------------------------
@@ -1147,7 +1161,7 @@ as well."
 
 (defun vm-imap-check-connection (process)
   (cond ((not (memq (process-status process) '(open run)))
-	 (vm-imap-protocol-error "IMAP connection not open: %s" process))
+	 (vm-imap-normal-error "not connected"))
 	((not (buffer-live-p (process-buffer process)))
 	 (vm-imap-protocol-error
 	  "IMAP process %s's buffer has been killed" process))))
@@ -1323,7 +1337,7 @@ as well."
   (let ((imap-buffer (current-buffer))
 	response tok need-ok msg-num list)
     (if (not (equal (vm-imap-uid-validity-of m) uid-validity))
-	(vm-imap-protocol-error "message has invalid uid"))
+	(vm-imap-normal-error "message has invalid uid"))
     (vm-imap-log-tokens (list 'message-data (current-buffer)))
     ;;----------------------------------
     (vm-imap-session-type:assert 'valid)
@@ -1337,7 +1351,7 @@ as well."
 	     (setq need-ok nil))
 	    ((vm-imap-response-matches response '* 'SEARCH 'atom)
 	     (if (null (setq tok (nth 2 response)))
-		 (vm-imap-protocol-error "Message not found on server"))
+		 (vm-imap-normal-error "message not found on server"))
 	     (goto-char (nth 1 tok))
 	     (setq msg-num (read imap-buffer))
 	     )))
@@ -1504,7 +1518,7 @@ as well."
       (cond ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
 	     (setq fetch-response response))
 	    (t
-	     (vm-imap-protocol-error "Expected FETCH response not received"))))
+	     (vm-imap-normal-error "cannot retrieve message from the server"))))
       
     ;; must make the read point a marker so that it stays fixed
     ;; relative to the text when we modify things below.
@@ -1610,7 +1624,7 @@ as well."
   (vm-imap-send-command process (format "STORE %d:%d +FLAGS.SILENT (\\Deleted)"
 					beg end))
   (if (null (vm-imap-read-ok-response process))
-      (vm-imap-protocol-error "STORE ... +FLAGS.SILENT (\\Deleted) failed")))
+      (vm-imap-normal-error "deletion failed")))
 
 (defun vm-imap-get-message-size (process n)
   (let ((imap-buffer (current-buffer))
@@ -1799,14 +1813,11 @@ as well."
   ;;--------------------------------------------
   (let ((response (vm-imap-read-response process)))
     (if (vm-imap-response-matches response 'VM 'NO)
-	(vm-imap-protocol-error
-	 (format "server said NO to %s" (or command-desc "command"))))
+	(vm-imap-normal-error (format "server said NO")))
     (if (vm-imap-response-matches response 'VM 'BAD)
-	(vm-imap-protocol-error 
-	 (format "server said BAD to %s" (or command-desc "command"))))
+	(vm-imap-normal-error (format "server said BAD")))
     (if (vm-imap-response-matches response '* 'BYE)
-	(vm-imap-protocol-error
-	 (format "server said BYE to %s" (or command-desc "command"))))
+	(vm-imap-normal-error (format "server disconnected")))
     response))
 
 
@@ -1908,7 +1919,7 @@ as well."
 		;; but Microsoft Exchange emits 8-bit chars.
 		((and (looking-at "[\000-\040\177]") 
 		      (= vm-imap-tolerant-of-bad-imap 0))
-		 (vm-imap-protocol-error "unexpected char (%d)"
+		 (vm-imap-protocol-error "illegal char (%d)"
 					 (char-after (point))))
 		(t
 		 (let ((start (point))
@@ -1991,10 +2002,6 @@ as well."
   (if (vm-imap-response-matches response '* 'BYE)
       (throw 'end-of-session t)))
 
-(defun vm-imap-protocol-error (&rest args)
-  (set (make-local-variable 'vm-imap-keep-trace-buffer) t)
-  (signal 'vm-imap-protocol-error (list (apply 'format args))))
-
 (defun vm-imap-scan-list-for-flag (list flag)
   (setq list (cdr list))
   (let ((case-fold-search t) e)
@@ -2061,11 +2068,11 @@ that the session is active.  Returns t or nil."
 		(vm-buffer-type:exit)
 		;;----------------------------
 		t)
-	    (vm-imap-protocol-error
-	     ;;----------------------------
+	    (vm-imap-protocol-error	; handler
+	     ;;--------------------
 	     (vm-buffer-type:exit)
-	     ;;----------------------------
-	     nil))))
+	     ;;--------------------
+	     nil))))			; ignore errors
     nil))
 
 (defun vm-re-establish-folder-imap-session (&optional interactive)
@@ -2215,7 +2222,7 @@ Throws vm-imap-protocol-error for failure."
   (let (need-ok p r flag response saw-Seen)
     (if (not (equal (vm-imap-uid-validity-of m)
 		    (vm-folder-imap-uid-validity)))
-	(vm-imap-protocol-error "message has invalid uid"))
+	(vm-imap-normal-error "message UIDVALIDITY does not match the server"))
     (save-excursion
       ;;----------------------------------
       (vm-buffer-type:enter 'process)
@@ -2362,7 +2369,7 @@ server should be issued by UID, not message sequence number."
   ;;-----------------------------------------------------
   (if (not (equal (vm-imap-uid-validity-of m)
 		  (vm-folder-imap-uid-validity)))
-      (vm-imap-protocol-error "message has invalid uid"))
+      (vm-imap-normal-error "message UIDVALIDITY does not match the server"))
   (let* ((uid (vm-imap-uid-of m))
 	 (uid-key1 (intern uid (vm-folder-imap-uid-obarray)))
 	 (uid-key2 (intern-soft uid (vm-folder-imap-flags-obarray)))
@@ -2495,8 +2502,7 @@ MAILBOX."
       (set-buffer (process-buffer process))
       (condition-case nil
 	  (vm-imap-create-mailbox process mailbox)
-	(vm-imap-protocol-error 
-	 (vm-buffer-type:set 'process)))
+	(vm-imap-protocol-error (vm-buffer-type:set 'process))); ignore errors
       ;;----------------------------------
       (vm-imap-session-type:assert-active)
       ;;----------------------------------
@@ -2551,7 +2557,7 @@ operation of the server to minimize I/O."
 		(if (null (vm-folder-imap-flags-obarray))
 		    (vm-imap-retrieve-uid-and-flags-data))
 		(vm-imap-save-message-flags process m 'by-uid))
-	    (vm-imap-protocol-error nil)))
+	    (vm-imap-protocol-error nil))) ; is this right?
 ;;       (condition-case nil
 ;; 	    (vm-imap-create-mailbox process mailbox)
 ;; 	  (vm-imap-protocol-error nil))
@@ -2751,7 +2757,7 @@ operation of the server to minimize I/O."
 		    (vm-attribute-modflag-of (car mp)))
 		(condition-case nil
 		    (vm-imap-save-message-flags process (car mp))
-		  (vm-imap-protocol-error 
+		  (vm-imap-protocol-error ; handler
 		   (setq errors (1+ errors))
 		   (vm-buffer-type:set 'folder))))
 	    (setq mp (cdr mp)))
@@ -2800,7 +2806,7 @@ operation of the server to minimize I/O."
 		       (vm-set-imap-stat-x-currmsg statblob n)
 		       (setq message-size 
 			     (vm-imap-get-message-size
-			      process (car range))) ; sloppy
+			      process (car range))) ; sloppy, one size fits all
 		       (vm-set-imap-stat-x-need statblob message-size)
 		       ;;----------------------------------
 		       (vm-imap-session-type:assert 'valid)
@@ -2816,7 +2822,9 @@ operation of the server to minimize I/O."
 		       (vm-imap-read-ok-response process)
 		       (setq r-list (cdr r-list)
 			     n (+ n (1+ (- (cdr range) (car range)))))))
-		 (vm-imap-protocol-error
+		 (vm-imap-normal-error	; handler
+		  (message "IMAP error: %s" (cadr error-data)))
+		 (vm-imap-protocol-error ; handler
 		  (message "Retrieval from %s signaled: %s" safe-imapdrop
 			   error-data))
 		 ;; Continue with whatever messages have been read
@@ -2970,12 +2978,15 @@ operation of the server to minimize I/O."
 					; try again, if the user wants us to
 		    (setq count (1+ count)))
 		  (message "Expunging messages on the server... done")))
-		(vm-imap-protocol-error 
-		 (message "Expunge from %s signalled: %s"
-			  safe-imapdrop error-data))
-		(quit 
-		 (error "Quit received during expunge from %s"
-			safe-imapdrop)))
+	    (vm-imap-normal-error	; handler
+	     (message "IMAP error: %s" (cadr error-data)))
+
+	    (vm-imap-protocol-error	; handler
+	     (message "Expunge from %s signalled: %s"
+		      safe-imapdrop error-data))
+	    (quit 			; handler
+	     (error "Quit received during expunge from %s"
+		    safe-imapdrop)))
 	  ;;-----------------------------
 	  (vm-buffer-type:exit)
 	  (vm-imap-dump-uid-seq-num-data)
@@ -3069,7 +3080,12 @@ operations")
 		(vm-buffer-type:exit)
 		;;--------------------------------
 		)
-	    (vm-imap-protocol-error
+	    (vm-imap-normal-error	; handler
+	     ;;-------------------
+	     (vm-buffer-type:exit)
+	     ;;-------------------
+	     (message "IMAP error: %s" (cadr error-data)))
+	    (vm-imap-protocol-error	; handler
 	     ;;-------------------
 	     (vm-buffer-type:exit)
 	     ;;-------------------
@@ -3260,7 +3276,7 @@ only marked messages are unloaded, other messages are ignored."
 	(if (or all-flags (vm-attribute-modflag-of (car mp)))
 	    (condition-case nil
 		(vm-imap-save-message-flags process (car mp))
-	      (vm-imap-protocol-error 
+	      (vm-imap-protocol-error 	; handler
 	       (setq errors (1+ errors))
 	       (vm-buffer-type:set 'folder))))
 	(setq mp (cdr mp)))
@@ -3615,9 +3631,9 @@ well. Returns a boolean value."
 	    ((vm-imap-response-matches response 'VM 'NO)
 	     (setq need-ok nil retval nil))
 	    ((vm-imap-response-matches response '* 'BYE)
-	     (error "server said BYE"))
+	     (vm-imap-normal-error "server disconnected"))
 	    ((vm-imap-response-matches response 'VM 'BAD)
-	     (vm-imap-protocol-error "server said BAD"))))
+	     (vm-imap-normal-error "server said BAD"))))
     retval ))
 
 (defun vm-imap-create-mailbox (process mailbox
@@ -3638,20 +3654,20 @@ well. Returns a boolean value."
   (vm-imap-send-command process (format "CREATE %s"
 					(vm-imap-quote-string mailbox)))
   (if (null (vm-imap-read-boolean-response process))
-      (vm-imap-protocol-error "IMAP CREATE of %s failed" mailbox)))
+      (vm-imap-normal-error "creation of %s failed" mailbox)))
 
 (defun vm-imap-delete-mailbox (process mailbox)
   (vm-imap-send-command process (format "DELETE %s"
 					(vm-imap-quote-string mailbox)))
   (if (null (vm-imap-read-boolean-response process))
-      (vm-imap-protocol-error "IMAP DELETE of %s failed" mailbox)))
+      (vm-imap-normal-error "deletion of %s failed" mailbox)))
 
 (defun vm-imap-rename-mailbox (process source dest)
   (vm-imap-send-command process (format "RENAME %s %s"
 					(vm-imap-quote-string source)
 					(vm-imap-quote-string dest)))
   (if (null (vm-imap-read-boolean-response process))
-      (vm-imap-protocol-error "IMAP RENAME of %s to %s failed" source dest)))
+      (vm-imap-normal-error "renaming of %s to %s failed" source dest)))
 
 ;;;###autoload
 (defun vm-create-imap-folder (folder)
@@ -3856,8 +3872,8 @@ folder."
 	    (set-buffer (process-buffer process))
 	    (condition-case nil
 		(vm-imap-create-mailbox process mailbox)
-	      (vm-imap-protocol-error 
-	       (vm-buffer-type:set 'process)))
+	      (vm-imap-protocol-error (vm-buffer-type:set 'process))) 
+					; ignore errors
 	    ;;----------------------------------
 	    (vm-imap-session-type:assert-active)
 	    ;;----------------------------------
@@ -3872,14 +3888,11 @@ folder."
 	      (while need-plus
 		(setq response (vm-imap-read-response process))
 		(cond ((vm-imap-response-matches response 'VM 'NO)
-		       (vm-imap-protocol-error
-			"server said NO to APPEND command"))
+		       (vm-imap-normal-error "server said NO"))
 		      ((vm-imap-response-matches response 'VM 'BAD)
-		       (vm-imap-protocol-error 
-			"server said BAD to APPEND command"))
+		       (vm-imap-normal-error "server said BAD"))
 		      ((vm-imap-response-matches response '* 'BYE)
-		       (vm-imap-protocol-error 
-			"server said BYE to APPEND command"))
+		       (vm-imap-normal-error "server disconnected"))
 		      ((vm-imap-response-matches response '+)
 		       (setq need-plus nil)))))
 
