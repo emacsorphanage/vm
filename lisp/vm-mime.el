@@ -4209,7 +4209,12 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (save-excursion
       (while mlist
-        (let (parts layout filename type disposition o)
+        (let (m parts layout filename type disposition o)
+	  (setq m (vm-real-message-of (car mlist)))
+	  (if (vm-body-to-be-retrieved-of m)
+	      (save-excursion
+		(set-buffer (vm-buffer-of m))
+		(vm-load-message 1)))
           (setq o (vm-mm-layout (car mlist)))
           (when (stringp o)
             (setq o 'none)
@@ -4228,11 +4233,11 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
                   (t (setq parts (list o))))
             
             (while parts
-              (if (vm-mime-composite-type-p
-                   (car (vm-mm-layout-type (car parts))))
-                  (setq parts 
-			(nconc (copy-sequence (vm-mm-layout-parts (car parts)))
-			       (cdr parts))))
+              (while (vm-mime-composite-type-p
+		      (car (vm-mm-layout-type (car parts))))
+		(setq parts 
+		      (nconc (copy-sequence (vm-mm-layout-parts (car parts)))
+			     (cdr parts))))
               
               (setq layout (car parts)
                     type (car (vm-mm-layout-type layout))
@@ -4358,7 +4363,7 @@ created."
     
     (if (> n 0)
         (message "%d attachment%s saved" n (if (= n 1) "" "s"))
-      (message "No attachments to be saved!"))))
+      (message "No attachments found"))))
 
 ;; for the karking compiler
 (defvar vm-menu-mime-dispose-menu)
