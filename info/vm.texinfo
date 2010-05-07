@@ -4767,13 +4767,6 @@ through internal variables.
 @code{vm-message-list}.  A list of message data structures for all the
 messages in the buffer.
 @item
-@code{vm-message-pointer}.  A sublist of vm-message-list starting from
-the current message that the cursor is on.  So, the first element of
-vm-message-pointer is the current message.
-@item
-@code{vm-last-message-pointer}.  Whenever the cursor is moved, the
-previous value of vm-message-pointer is remembered in this variable.
-@item
 @code{vm-folder-type}.  The type of the current folder indicating how
 the messages are stored: one of 'babyl, 'From_, 'BellFrom_,
 'From_-with-Content-Length and 'mmdf.
@@ -4799,6 +4792,38 @@ constructing it.
 @item
 @code{vm-virtual-buffers}.  A list of all the virtual folder buffers
 that the current buffer is involved in.
+@item
+@code{vm-summary-buffer}.  The Summary buffer of the folder.  (If the
+Summary buffer gets killed for any reason, the value of this variable
+becomes <killed buffer>, which is unfortunate.  Therefore, most
+interactive commands of VM check for killed Summary buffer and reset
+this variable to nil in such a case.  So, in the middle of code, this
+variable can be regarded as a valid buffer pointer.)
+@item
+@code{vm-summary-pointer}.
+@item
+@code{vm-presentation-buffer-handle}. The message Presentation buffer of the
+folder.  (Same proviso applies as for @code{vm-summary-buffer}.)
+@item
+@code{vm-presentation-buffer}. This seems to be a copy of the
+@code{vm-presentation-buffer-handle}.  Its purpose is unknown.
+@end itemize
+
+The running state of the folder buffer is represented in a number of
+buffer-local variables:
+@itemize
+@item
+@code{vm-message-pointer}.  A sublist of vm-message-list starting from
+the current message that the cursor is on.  So, the first element of
+vm-message-pointer is the current message.
+@item
+@code{vm-last-message-pointer}.  Whenever the cursor is moved, the
+previous value of vm-message-pointer is remembered in this variable.
+@item
+@code{vm-mime-decoded}. 
+@item
+@code{vm-system-state}.
+
 @end itemize
 
 

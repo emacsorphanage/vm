@@ -755,6 +755,8 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 	   (set-buffer vm-presentation-buffer)
 	   (setq vm-system-state 'previewing)
 	   (vm-narrow-for-preview))
+       ;; never used because vm-always-use-presentation-buffer is t.
+       ;; USR 2010-05-07
        (setq vm-presentation-buffer nil)
        (and vm-presentation-buffer-handle
 	    (vm-replace-buffer-in-windows vm-presentation-buffer-handle
