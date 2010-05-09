@@ -3180,7 +3180,9 @@ only marked messages are loaded, other messages are ignored."
 	   (goto-char text-begin)
 	   ;; now care for the layout of the message
 	   (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
+	   ;; update the message data
 	   (vm-set-body-to-be-retrieved-flag mm nil)
+	   (vm-set-line-count-of mm nil)
 	   ))
 	(setq mlist (cdr mlist))))
     ;; FIXME - is this needed?  Is it correct?
@@ -3242,6 +3244,7 @@ only marked messages are unloaded, other messages are ignored."
 	   (vm-set-buffer-modified-p t)
 	   (vm-set-mime-layout-of mm nil)
 	   (vm-set-body-to-be-retrieved-flag mm t)
+	   (vm-set-line-count-of mm nil)
 	   ))
 	(setq mlist (cdr mlist))))
     (message "Message body discarded")
