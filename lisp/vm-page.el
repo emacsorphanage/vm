@@ -48,6 +48,7 @@ Prefix argument N means scroll forward N lines."
 			      (eq vm-system-state 'previewing)))
     (and vm-presentation-buffer
 	 (set-buffer vm-presentation-buffer))
+    ;; We are either in the Presentation buffer or the Folder buffer
     (let ((point (point))
 	  (w (vm-get-visible-buffer-window (current-buffer))))
       (if (or (null w)
@@ -858,16 +859,7 @@ is done if necessary.  (USR, 2010-01-14)"
 	  (vm-decode-mime-message)
 	(vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
 					      (car (cdr data)))
-		       (message "%s" (car (cdr data)))))
-    (if vm-always-use-presentation-buffer
-	nil
-;; 	(progn
-;; 	  (vm-make-presentation-copy (car vm-message-pointer))
-;; 	  (set-buffer vm-presentation-buffer))
-      ;; FIXME at this point, the folder buffer is being used for
-      ;; display
-      nil
-      ))
+		       (message "%s" (car (cdr data))))))
   ;; FIXME this probably cause folder corruption by filling the folder instead
   ;; of the presentation copy  ..., RWF, 2008-07
   ;; Well, so, we will check if we are in a presentation buffer! 
@@ -875,13 +867,19 @@ is done if necessary.  (USR, 2010-01-14)"
   (when (and  vm-fill-paragraphs-containing-long-lines
 	      (vm-mime-plain-message-p (car vm-message-pointer)))
     (if (null vm-mail-buffer)		; this can't be presentation then
-	(debug "VM internal error #2010.  Please report it")
-      (vm-save-restriction
-       (widen)
-       (vm-fill-paragraphs-containing-long-lines
-	vm-fill-paragraphs-containing-long-lines
-	(vm-text-of (car vm-message-pointer))
-	(vm-text-end-of (car vm-message-pointer))))))
+	(if vm-always-use-presentation-buffer
+	    (progn
+	      (vm-make-presentation-copy (car vm-message-pointer))
+	      (set-buffer vm-presentation-buffer))
+	  ;; FIXME at this point, the folder buffer is being used for
+	  ;; display
+	(debug "VM internal error #2010.  Please report it")))
+    (vm-save-restriction
+     (widen)
+     (vm-fill-paragraphs-containing-long-lines
+      vm-fill-paragraphs-containing-long-lines
+      (vm-text-of (car vm-message-pointer))
+      (vm-text-end-of (car vm-message-pointer)))))
   (vm-save-buffer-excursion
    (save-excursion
      (save-excursion
