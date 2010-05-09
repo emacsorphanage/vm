@@ -1488,7 +1488,7 @@ source of the message."
 	       (null (buffer-name vm-fetch-buffer)))
 	   (let ((default-enable-multibyte-characters t))
 	     (setq b (generate-new-buffer (concat (buffer-name)
-						  " Message"))))
+						  " Fetch"))))
 	   (save-excursion
 	     (set-buffer b)
 	     (if (fboundp 'buffer-disable-undo)
