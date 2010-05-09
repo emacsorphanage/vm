@@ -3054,7 +3054,6 @@ operations")
 		(error "Working in offline mode")
 	      (error "Could not connect to IMAP server; Type g to reconnect")
 	      (setq vm-imap-connection-mode 'autoconnect))
-	  (message "Retrieving message body... ")
 	  (setq imap-buffer (process-buffer process))
 	  (condition-case error-data
 	      (save-excursion
@@ -3074,7 +3073,6 @@ operations")
 		(vm-imap-retrieve-to-target process body-buffer statblob
 					    use-body-peek)
 		(vm-imap-read-ok-response process)
-		(message "Retrieving message body... done")
 		;;--------------------------------
 		(vm-buffer-type:exit)
 		;;--------------------------------
@@ -3138,12 +3136,16 @@ only marked messages are loaded, other messages are ignored."
 	(text-begin nil)
 	(text-end nil)
 	(errors 0)
+	(n 0)
 	fetch-method
 	m mm)
 ;;     (if (not used-marks) 
 ;; 	(setq mlist (list (car vm-message-pointer))))
     (save-excursion
+      (message "Retrieving message body... ")
       (while mlist
+	(when (> n 0)
+	  (message "Retrieving message body... %s" n))
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
@@ -3184,7 +3186,11 @@ only marked messages are loaded, other messages are ignored."
 	   (vm-set-body-to-be-retrieved-flag mm nil)
 	   (vm-set-line-count-of mm nil)
 	   ))
-	(setq mlist (cdr mlist))))
+	(setq mlist (cdr mlist))
+	(setq n (1+ n))
+	)
+      (message "Retrieving message body... done")
+      )
     ;; FIXME - is this needed?  Is it correct?
     ;; (vm-display nil nil '(vm-load-message vm-refresh-message)
     ;;    (list this-command))	
