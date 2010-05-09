@@ -1578,7 +1578,7 @@ source of the message."
 	(set-marker (vm-end-of mm) (+ (vm-start-of mm)
 				      (- (vm-end-of real-m)
 					 (vm-start-of real-m))))
-
+	(vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
 	;; fetch the real message now
 	(goto-char (point-min))
 	(cond ((and (vm-message-access-method-of mm)

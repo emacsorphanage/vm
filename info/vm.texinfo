@@ -4832,42 +4832,72 @@ previous value of vm-message-pointer is remembered in this variable.
 @section Message Internals
 
 The message data structure is a vector containing various pieces of
-data:
+data about the message, some of which is permanent and some that is
+calculated during a VM session.  The data is organized into four
+sub-vectors:
 
 @itemize
 @item
 Location data.  This data about the location of the various parts of the
 message in the Folder buffer is calculated after a folder is loaded and
-parsed.  However, in reality, the message could be in any buffer which
-we will call the ``content buffer'' in the following.  For virtual
-folders, the content buffer is a separate folder buffer underlying the
-virtual folder.  For headers-only messages, the content buffer could be
-the Presentation buffer etc.
+parsed.
+@item
+Soft data.  This vector contains other calculated data about the
+message.
+@item
+Attributes.  All the hard-wired message attributes are stored in this
+vector.
+@item
+Cached Data.  Calculated data that is cached for each message.
+@item
+Mirror Data.  Extra data shared by virtual messages if vm-virtual-mirror
+is non-nil.
+@end itemize
+
+The attributes vector and cached data vector are stored in the
+folder on disk as the @code{X-VM-v5-Data} header of the first message.
+
+@unnumberedsubsec Location data
+
+This vector holds the data about the location of the various parts of
+the message in the folder buffer.  Every folder buffer or folder-like
+buffer (such as a Presentation buffer) has variables that contain
+message data structures.  The location data is normally expected to
+refer to locations in that very buffer.  However, this condition is
+not actually required.  (See below.)
 
 @itemize
 @item
 start.  Marker for the starting position of the message, at which a
 leading separator line begins.
 @item
-headers. Marker for the position in the content buffer where the headers
+headers. Marker for the position in the buffer where the headers
 of the message start.
 @item
-vheaders.  Marker for the position in the content buffer where the
+vheaders.  Marker for the position in the buffer where the
 visible headers of the message start.  (The headers are rearranged in
 such a way that all the visible headers are towards the end of the
 headers region.)
 @item
-text. Marker for the position in the content buffer where the text of the
+text. Marker for the position in the buffer where the text of the
 message starts.
 @item
-text-end. Marker for the position in the content buffer where the text of
+text-end. Marker for the position in the buffer where the text of
 the message ends.
 @item
-end. Marker for the position in the content buffer where the message ends.
+end. Marker for the position in the buffer where the message ends.
 @end itemize
 
-@item
-Soft data.  This vector contains other calculated data about the
+Unfortunately, in the current versions of VM, the folder buffer to
+which the location data point is not itself part of this vector.  This
+information is inferred from the context (which makes the code
+brittle).  The Folder buffer of the message can be obtained from the
+soft data vector but the location data could also point to a
+Presentation buffer.
+
+
+@unnumberedsubsec Soft data
+This vector contains other calculated data about the
 message. 
 
 @itemize
@@ -4898,9 +4928,11 @@ message-type.  A symbol indicating the type of the message according to
 its folder type, one of @code{BellFrom_}, @code{From_} and
 @code{From_-with-Content-Length}.
 @item
-message-id-number.  The unique id of the message.
+message-id-number.  A number that uniquely identifies the message
+within a VM session.
 @item
-buffer. The folder buffer of the message.
+buffer. The Folder buffer of the message.  (Messages in Presentation
+buffers also have this field set to the corresponding Folder buffer.)
 @item
 thread-indentation. Indentation level of the message in its message
 thread.
@@ -4927,8 +4959,9 @@ message-access-method.  The access-method to be used for the message,
 inherited from its real folder.
 @end itemize
 
-@item
-Attributes.  All the hard-wired message attributes are stored in this
+
+@unnumberedsubsec Attributes
+All the hard-wired message attributes are stored in this
 vector.  They also get saved as part of the @code{X-VM-v5-Data} header
 field when the folder is saved to disk.
 
@@ -4954,8 +4987,8 @@ redistributed-flag.  Flag to indicate if the message has been
 redistributed. 
 @end itemize
 
-@item
-Cached Data.  The data that is cached for the message and stored in the
+@unnumberedsubsec Cached Data
+The data that is cached for the message and stored in the
 folder on disk as the @code{X-VM-v5-Data} header field.  Even though
 this vector is only supposed to have data that can be calculated from
 the message itself, the fields pop-uidl, imap-uid and imap-uid-validity
@@ -5020,8 +5053,9 @@ server.
 spam-score.  The spam score of the message.
 @end itemize
 
-@item
-Mirror Data.  Extra data shared by virtual messages if vm-virtual-mirror
+@unnumberedsubsec Mirror Data
+
+Extra data shared by virtual messages if vm-virtual-mirror
 is non-nil.
 
 @itemize
@@ -5043,12 +5077,12 @@ attribute-modflag.  Flag to indicate if the attributes of the message
 have been modified since the last save.
 @end itemize
 
-@end itemize
+@unnumberedsubsec MIME layout
 
-The MIME layout of a message, stored in the cached data of the message,
-is in turn a vector containing various pieces of data.  This vector is
-used not only for the over all message, but all its MIME parts and
-subparts as well.
+The MIME layout of a message, stored in the soft data of the message,
+is in turn a vector containing various pieces of data.  Such a vector
+is used not only for the overall message, but for all its MIME parts
+and subparts as well.
 
 @itemize
 @item
@@ -5081,9 +5115,28 @@ the MIME part.
 @item
 parts. A list of MIME layouts for the individual subparts of this part.
 @item
-cache.
+cache. A symbol that is unique to this MIME part.  Other data is
+stored as properties of this symbol:
+@itemize
+@item vm-mime-display-external-generic.
+This property stores the id of the process used to externally display
+the MIME part as well as the name of the temporary file used. 
+@item vm-mime-display-internal-image-xxxx.
+This property stores the name of the temporary file where the image is
+stored.  For an image represented as image strips, it actually stores
+a list with a number of other data items.
+@item vm-image-modified.
+This property stores a boolean flag indicating that the image has been
+modified. 
+@item vm-mime-display-internal-audio/basic.
+This property stores the name of the temporary file where the audio
+clip is stored.
+@item vm-message-garbage.
+@end itemize
 @item
-message-symbol.
+message-symbol.  A reference to the message that contains the MIME
+part.  Represented as a symbol (that is, an interned key into a hash
+table.) 
 @item
 display-error.  If the display of a MIME part fails, its error string is
 stored here.
@@ -5094,6 +5147,27 @@ performed on this part.  @pxref{MIME type conversion}.
 unconverted-layout.  If the MIME type conversion has been performed on
 this part, then this holds the original unconverted layout.
 @end itemize
+
+@unnumberedsubsec Cross-buffer sharing of data
+
+Every Folder buffer has a @code{vm-message-list} and a
+@code{vm-message-pointer} list containing message data vectors.  
+
+Every Presentation buffer also uses a @code{vm-message-pointer} list
+with a single message (the one being presented).  The message data
+vector in the Presentation buffer has its own location data, but
+@i{shares} all other components with the message in the Folder buffer.
+This allows the Presentation buffer to, for example, change the
+attributes of the message without having to switch context to the
+Folder buffer.
+
+Virtual folders, which contain only references to messages in other
+folders, store just a single message body in the Folder buffer.
+However, they have message descriptors for all the messages in
+@code{vm-message-list}.  All the message descriptors use the same
+location data vector, because only one message body can be stored in
+the Folder buffer, but have separate soft data vectors.  The other
+sub-vectors are shared with the underlying real folders.
 
 
 @node Concept Index, Key Index, Internals, Top
