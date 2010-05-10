@@ -2213,7 +2213,9 @@ in the buffer.  The function is expected to make the message
       (progn
 	(vm-make-presentation-copy (car vm-message-pointer))
 	(set-buffer vm-presentation-buffer)
-	(funcall vm-mime-display-function))
+	(funcall vm-mime-display-function)
+	;; We are done here
+	)
     (if (null state)
 	(cond ((null vm-mime-decoded)
 	       (setq state 'decoded))
@@ -2251,6 +2253,7 @@ in the buffer.  The function is expected to make the message
 	      (vm-make-presentation-copy (car vm-message-pointer))
 	      (vm-expose-hidden-headers))
 	  (set-buffer vm-presentation-buffer))
+	;; Are we now in the Presentation buffer?  Why?  USR, 2010-05-08
 	(if (and (interactive-p) (eq vm-system-state 'previewing))
 	    (let ((vm-display-using-mime nil))
 	      (vm-show-current-message)))

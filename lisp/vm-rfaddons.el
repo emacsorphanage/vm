@@ -1458,7 +1458,7 @@ text/alternative message depending on the value of the variable
   "Indicate if there are attachments in a message.
 The summary displays a `vm-summary-attachment-indicator', which is a '$' by
 default.  In order to get this working, add a \"%1UA\" to your
-`vm-summary-format' and call `vm-fix-my-summary!!!'.
+`vm-summary-format' and call `vm-fix-my-summary'.
 
 As a sideeffect a label can be added to new messages.  Setting 
 `vm-summary-attachment-label' to a string (the label) enables this.

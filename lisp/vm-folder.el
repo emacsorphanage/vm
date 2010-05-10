@@ -372,9 +372,15 @@ Toolbars are updated."
 	      vm-buffers-needing-display-update)
     (fillarray vm-buffers-needing-display-update 0))
   (when vm-messages-needing-summary-update
-    (mapcar (function vm-update-message-summary)
-	    vm-messages-needing-summary-update)
-    (setq vm-messages-needing-summary-update nil))
+    (let ((n 1)
+	  (ms vm-messages-needing-summary-update))
+      (while ms
+	(vm-update-message-summary (car ms))
+	(if (eq (mod n 10) 0)
+	    (message "Recreating summary... %s" n))
+	(setq n (1+ n))
+	(setq ms (cdr ms)))
+      (setq vm-messages-needing-summary-update nil)))
   (vm-do-needed-folders-summary-update)
   (vm-force-mode-line-update))
 

@@ -1295,7 +1295,7 @@ entry (vm-summary-of) or recalculating it if necessary.  USR 2010-04-06"
 	  (vm-summary-of m)))))
 
 ;;;###autoload
-(defun vm-fix-my-summary!!! (&optional kill-local-summary)
+(defun vm-fix-my-summary (&optional kill-local-summary)
   "Rebuild the summary.
 Call this function if you made changes to `vm-summary-format'."
   (interactive "P")
@@ -1304,15 +1304,18 @@ Call this function if you made changes to `vm-summary-format'."
       (kill-local-variable 'vm-summary-format))
   (message "Fixing your summary... %s" vm-summary-format)
   (let ((mp vm-message-list))
+    ;; Erase all the cached summary data
     (while mp
       (vm-set-summary-of (car mp) nil)
       (vm-mark-for-summary-update (car mp))
       (vm-set-stuff-flag-of (car mp) t)
       (setq mp (cdr mp)))
-    (message "Stuffing cached data...")
-    (vm-stuff-folder-data nil)
-    (message "Stuffing cached data... done")
-    (set-buffer-modified-p t)
+    ;; Generate fresh summary data and stuff it
+;;     (message "Stuffing cached data...")
+;;     (vm-stuff-folder-data nil)
+;;     (message "Stuffing cached data... done")
+;;     (set-buffer-modified-p t)
+    ;; Regenerate the summary
     (message "Recreating summary...")
     (vm-update-summary-and-mode-line)
     (message "Recreating summary... done"))

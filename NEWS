@@ -15,23 +15,9 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
-VM 8.2.0-devo
+VM 8.1.90a
 
   IMPROVEMENTS:
-
-   * The chatter of minibuffer messages during reading of mail is
-     reduced: messages about MIME decoding are emitted only if the new
-     variable `vm-emit-messages-for-mime-decoding' is non-nil, and
-     messages about end of messages are emitted only of
-     `vm-auto-next-message' is non-nil.
-
-   * IMAP session dialogue restructured using UID queries, which makes
-     VM more reliable in handling real-time changes on the server side.
-
-   * New variable `vm-imap-connection-mode' can be set to 'offline to
-     allow IMAP cache folders to be used offline.  After connecting to
-     the network, do `C-u M-x vm-imap-synchronize' to force full
-     synchronization. 
 
   ** This version contains an experimental feature of using IMAP
      folders in "headers-only" mode, with body loaded only on demand.
@@ -68,7 +54,22 @@ VM 8.2.0-devo
      reason, just delete it from the file system.  A new cache folder
      will be generated upon the next visit.
 
-  IMPROVEMENTS
+   * The command `vm-fix-my-summary!!!' renamed to `vm-fix-my-summary'
+     to make it easier to type.
+
+   * The chatter of minibuffer messages during paging of mail is
+     reduced: messages about MIME decoding are emitted only if the new
+     variable `vm-emit-messages-for-mime-decoding' is non-nil, and
+     messages about end of messages are emitted only of
+     `vm-auto-next-message' is non-nil.
+
+   * IMAP session dialogue restructured using UID queries, which makes
+     VM more reliable in handling real-time changes on the server side.
+
+   * New variable `vm-imap-connection-mode' can be set to 'offline to
+     allow IMAP cache folders to be used offline.  After connecting to
+     the network, do `C-u M-x vm-imap-synchronize' to force full
+     synchronization. 
 
    * Improved error messages arising in IMAP sessions wih the server.
 
