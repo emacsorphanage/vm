@@ -3395,6 +3395,7 @@ specification SPEC."
 			  vm-folder-directory
 			  (getenv "HOME")))))
 
+;;;###autoload
 (defun vm-imap-normalize-spec (spec)
   (let (comps)
     (setq comps (vm-imap-parse-spec-to-list spec))
@@ -3405,6 +3406,7 @@ specification SPEC."
     (setq spec (mapconcat (function identity) comps ":"))
     spec ))
 
+;;;###autoload
 (defun vm-imap-account-name-for-spec (spec)
   "Returns the IMAP account name for maildrop specification SPEC, by
 looking up `vm-imap-account-alist' or nil if there is no such account."

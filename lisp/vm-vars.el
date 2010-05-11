@@ -5199,7 +5199,16 @@ Its parent keymap is mail-mode-map.")
   '(("X-Spam-Score:"  "[-+]?[0-9]*\\.?[0-9]+"  string-to-number)
     ("X-Spam-Status:" "[-+]?[0-9]*\\.?[0-9]+" string-to-number)
     ("X-Spam-Level:"  "\\*+"     length))
-  "A list of headers to look for spam scores."
+  "The value should be a list of lists, with each sublist of the form
+
+     (HEADER-REGEXP SCORE-REGEXP SCORE-FN)
+
+- HEADER-REGEXP is a regular expression matching the spam score
+header line in email messages,
+
+- SCORE-REGEXP is a regular expression matching the score, and
+
+- SCORE-FN is a function that converts the score string into a number."
   :group 'vm
   :type '(repeat (list (string :tag "Header regexp")
                        (regexp :tag "Regexp matching the score")
