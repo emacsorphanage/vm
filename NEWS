@@ -54,6 +54,10 @@ VM 8.1.90a
      reason, just delete it from the file system.  A new cache folder
      will be generated upon the next visit.
 
+   * New variable `vm-imap-refer-to-inbox-by-account-name' allows IMAP
+     folders named "INBOX" to be referred to by their account names
+     inside VM.
+
    * The command `vm-fix-my-summary!!!' renamed to `vm-fix-my-summary'
      to make it easier to type.
 

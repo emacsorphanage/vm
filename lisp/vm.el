@@ -117,11 +117,17 @@ See the documentation for vm-mode for more information."
 	     (setq folder (vm-pop-find-cache-file-for-spec remote-spec)))
 	    ((and full-startup (eq access-method 'imap))
 	     (setq vm-last-visit-imap-folder folder)
-	     (setq remote-spec folder
-		   folder-name (or (nth 3 (vm-imap-parse-spec-to-list
+	     (setq remote-spec folder)
+	     (setq folder (vm-imap-make-filename-for-spec remote-spec))
+	     (setq folder-name (or (nth 3 (vm-imap-parse-spec-to-list
 					   remote-spec))
-				   folder)
-		   folder (vm-imap-make-filename-for-spec remote-spec))))
+				   folder))
+	     (if (and vm-imap-refer-to-inbox-by-account-name
+		      (equal folder-name "INBOX")
+		      (setq account-name 
+			    (vm-imap-account-name-for-spec remote-spec)))
+		 (setq folder-name account-name))
+	     ))
       (setq folder-buffer
 	    (if (bufferp folder)
 		folder

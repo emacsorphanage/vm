@@ -977,6 +977,18 @@ enter an account name followed by ``:'' and a folder name.  Any folder
 that is accessible to you on the IMAP server can be specified.  For
 example, @code{becky:inbox} or @code{crickle:drafts}.
 
+@vindex vm-imap-refer-to-inbox-by-account-name
+When you visit an IMAP folder inside VM, the folder is reffered to by
+its folder name as it exists on the server.  For example, visiting
+@code{becky:INBOX} creates a folder called @code{INBOX} inside VM.  If
+you visit multiple accounts within a VM session, then you would end up
+with multiple folders buffers all names @code{INBOX}.  You can set the
+variable @code{vm-imap-refer-to-inbox-by-account-name} to t, which
+causes the folder buffers to be named by their IMAP account names
+instead.  For example, visiting @code{becky:INBOX} as well as
+@code{crickle:INBOX} would create VM folders @code{becky} and
+@code{crickle}. 
+
 @vindex vm-imap-server-list
 The customization variable @code{vm-imap-server-list}, used in older
 versions of VM, is deprecated.  Please use @code{vm-imap-account-alist}

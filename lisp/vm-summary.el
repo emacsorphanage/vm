@@ -274,19 +274,27 @@ buffer by a regenerated summary line."
                   (insert-before-markers "z")
 		  (goto-char (vm-su-start-of m))
 		  (delete-region (point) (1- (vm-su-end-of m)))
-		  (if (not selected)
-                      (if (not (get-text-property (point) 'thread-end))
-                          (insert vm-summary-no-=>)
-                        (if (get-text-property 
-			     (1+ (vm-su-end-of vm-summary-pointer)) 'invisible)
-                            (insert "+ ")
-                          (insert "- ")))
-                    (if (not (get-text-property (point) 'thread-end))
-                        (insert vm-summary-=>)
-                      (if (get-text-property 
-			   (1+ (vm-su-end-of vm-summary-pointer)) 'invisible)
-                          (insert "+>")
-                        (insert "->"))))
+		  (if vm-toggle-summary-thread-folding
+		      ;; Rob's thread-folding version
+		      (if (not selected)
+			  (if (not (get-text-property (point) 'thread-end))
+			      (insert vm-summary-no-=>)
+			    (if (get-text-property 
+				 (1+ (vm-su-end-of  vm-summary-pointer)) 
+				 'invisible)
+				(insert "+ ")
+			      (insert "- ")))
+			(if (not (get-text-property (point) 'thread-end))
+			    (insert vm-summary-=>)
+			  (if (get-text-property 
+			       (1+ (vm-su-end-of vm-summary-pointer)) 
+			       'invisible)
+			      (insert "+>")
+			    (insert "->"))))
+		    ;; Standard version
+		    (if (not selected)
+			(insert vm-summary-no-=>)
+		      (insert vm-summary-=>)))
 		  (vm-tokenized-summary-insert m (vm-su-summary m))
                   (delete-char 1)
                   (run-hooks 'vm-summary-update-hook)

@@ -3396,14 +3396,28 @@ specification SPEC."
 			  (getenv "HOME")))))
 
 (defun vm-imap-normalize-spec (spec)
-  (let (list)
-    (setq list (vm-imap-parse-spec-to-list spec))
-    (setcar (vm-last list) "*")		; scrub password
-    (setcar list "imap")		; standardise protocol name
-    (setcar (nthcdr 2 list) "*")	; scrub portnumber
-    (setcar (nthcdr 4 list) "*")	; scrub authentication method
-    (setq spec (mapconcat (function identity) list ":"))
+  (let (comps)
+    (setq comps (vm-imap-parse-spec-to-list spec))
+    (setcar (vm-last comps) "*")		; scrub password
+    (setcar comps "imap")		; standardise protocol name
+    (setcar (nthcdr 2 comps) "*")	; scrub portnumber
+    (setcar (nthcdr 4 comps) "*")	; scrub authentication method
+    (setq spec (mapconcat (function identity) comps ":"))
     spec ))
+
+(defun vm-imap-account-name-for-spec (spec)
+  "Returns the IMAP account name for maildrop specification SPEC, by
+looking up `vm-imap-account-alist' or nil if there is no such account."
+  (let (comps account-comps (alist vm-imap-account-alist))
+    (setq comps (vm-imap-parse-spec-to-list spec))
+    (catch 'return
+    (while alist
+      (setq account-comps (vm-imap-parse-spec-to-list (car (car alist))))
+      (if (and (equal (nth 1 comps) (nth 1 account-comps)) ; host
+	       (equal (nth 4 comps) (nth 4 account-comps))) ; login
+	  (throw 'return (cadr (car alist)))
+	(setq alist (cdr alist))))
+    nil)))
 
 ;;;###autoload
 (defun vm-imap-parse-spec-to-list (spec)
