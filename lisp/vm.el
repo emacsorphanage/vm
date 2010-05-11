@@ -106,7 +106,7 @@ See the documentation for vm-mode for more information."
 	  ;; not clear why full-startup isn't always true - USR, 2010-01-02
 	  (did-read-index-file nil)
 	  folder-buffer first-time totals-blurb
-	  folder-name remote-spec
+	  folder-name account-name remote-spec
 	  preserve-auto-save-file)
       (cond ((and full-startup (eq access-method 'pop))
 	     (setq vm-last-visit-pop-folder folder)

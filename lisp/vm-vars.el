@@ -576,6 +576,16 @@ Example:
   :group 'vm
   :type '(repeat (list string string)))
 
+(defcustom vm-imap-refer-to-inbox-by-account-name nil
+  "*If set to non-nil, the INBOX folders on IMAP accounts are
+referred to by their account names instead of as \"INBOX\".  The
+account names are those declared in `vm-imap-account-alist'.
+This is useful if one wants to handle multiple IMAP accounts
+during the same VM session, all of which might have an \"INBOX\"
+folder."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-imap-tolerant-of-bad-imap 0
   "*Level of tolerance that vm should use for IMAP servers that
 don't follow the IMAP specification.  Default of 0 means no

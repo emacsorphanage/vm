@@ -274,7 +274,7 @@ buffer by a regenerated summary line."
                   (insert-before-markers "z")
 		  (goto-char (vm-su-start-of m))
 		  (delete-region (point) (1- (vm-su-end-of m)))
-		  (if vm-toggle-summary-thread-folding
+		  (if vm-summary-toggle-thread-folding
 		      ;; Rob's thread-folding version
 		      (if (not selected)
 			  (if (not (get-text-property (point) 'thread-end))
