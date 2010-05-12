@@ -321,7 +321,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	  (if handler
 	      (throw 'end-of-session
 		     (funcall handler 'vm-imap-move-mail source destination)))
-	  (setq process (vm-imap-make-session source))
+	  (setq process (vm-imap-make-session source "movemail"))
 	  (or process (throw 'end-of-session nil))
 	  (setq process-buffer (process-buffer process))
 	  (save-excursion
@@ -476,7 +476,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		(if handler
 		    (throw 'end-of-session
 			   (funcall handler 'vm-imap-check-mail source)))
-		(setq process (vm-imap-make-session source))
+		(setq process (vm-imap-make-session source "checkmail"))
 		(or process (throw 'end-of-session nil))
 		(set-buffer (process-buffer process))
 		(setq source-list (vm-parse source "\\([^:]+\\):?")
@@ -586,7 +586,8 @@ on all the relevant IMAP servers and then immediately expunges."
 			  (progn
 			    (message "Opening IMAP session to %s..."
 				     imapdrop)
-			    (setq process (vm-imap-make-session source))
+			    (setq process 
+				  (vm-imap-make-session source "expunge"))
 			    (if (null process)
 				(signal 'vm-imap-protocol-error nil))
 			    ;;--------------------------
@@ -780,8 +781,9 @@ on all the relevant IMAP servers and then immediately expunges."
 ;; return it.
 
 ;;;###autoload
-(defun vm-imap-make-session (source)
-  "Create a new IMAP session for the IMAP mail box SOURCE."
+(defun vm-imap-make-session (source &optional purpose)
+  "Create a new IMAP session for the IMAP mail box SOURCE.  Optional
+argument PURPOSE is inserted in the process buffer for tracing purposes."
   (let ((shutdown nil)			; whether process is to be shutdown
 	(folder-type vm-folder-type)
 	process ooo
@@ -885,7 +887,7 @@ on all the relevant IMAP servers and then immediately expunges."
 		 (message "%s" (error-message-string err))
 		 (setq shutdown t)
 		 (throw 'end-of-session nil)))
-	      (insert-before-markers "connected\n"))
+	      (insert-before-markers (format "connected for %s\n" purpose)))
 	    (setq vm-imap-read-point (point))
 	    (process-kill-without-query process)
 	    (if (null (setq greeting (vm-imap-read-greeting process)))
@@ -2074,7 +2076,7 @@ that the session is active.  Returns t or nil."
 	     nil))))			; ignore errors
     nil))
 
-(defun vm-re-establish-folder-imap-session (&optional interactive)
+(defun vm-re-establish-folder-imap-session (&optional interactive purpose)
   "If the IMAP session for the current folder has died, re-establish a
 new one.  Returns the IMAP process."
   (let ((process (vm-folder-imap-process)) temp)
@@ -2083,11 +2085,12 @@ new one.  Returns the IMAP process."
 	process
       (if (processp process)
 	  (vm-imap-end-session process))
-      (vm-establish-new-folder-imap-session interactive))))
+      (vm-establish-new-folder-imap-session interactive purpose))))
 
-(defun vm-establish-new-folder-imap-session (&optional interactive)
-  "Kill and restart the IMAP session for the current folder.  Returns
-the IMAP process."
+(defun vm-establish-new-folder-imap-session (&optional interactive purpose)
+  "Kill and restart the IMAP session for the current folder.  Optional
+argument PURPOSE is inserted into the process buffer for tracing
+purposes. Returns the IMAP process."
 ;; This is necessary because we might get unexpected EXPUNGE responses
 ;; which we don't know how to deal with.
 
@@ -2098,7 +2101,8 @@ the IMAP process."
     (if (processp process)
 	(vm-imap-end-session process))
     (vm-imap-log-token 'new)
-    (setq process (vm-imap-make-session (vm-folder-imap-maildrop-spec)))
+    (setq process 
+	  (vm-imap-make-session (vm-folder-imap-maildrop-spec) purpose))
     (when (processp process)
       (vm-set-folder-imap-process process)
       (setq mailbox (vm-imap-parse-spec-to-list (vm-folder-imap-maildrop-spec))
@@ -2724,7 +2728,8 @@ operation of the server to minimize I/O."
       (error "Can't get new mail until you save this folder"))
   (if (or vm-global-block-new-mail
 	  (eq vm-imap-connection-mode 'offline)
-	  (null (vm-establish-new-folder-imap-session interactive)))
+	  (null (vm-establish-new-folder-imap-session 
+		 interactive "general operation")))
       (vm-imap-server-error "Could not connect to the IMAP server")
     (if do-retrieves
 	(vm-assimilate-new-messages))	; Funny that this should be
@@ -3041,7 +3046,8 @@ operations")
 	     (imapdrop (vm-folder-imap-maildrop-spec))
 	     (safe-imapdrop (vm-safe-imapdrop-string imapdrop))
 	     (process (and (eq vm-imap-connection-mode 'online)
-			   (vm-re-establish-folder-imap-session imapdrop)))
+			   (vm-re-establish-folder-imap-session 
+			    imapdrop "fetch")))
 	     (use-body-peek (vm-folder-imap-body-peek))
 	     (server-uid-validity (vm-folder-imap-uid-validity))
 	     (old-eob (point-max))
@@ -3304,7 +3310,7 @@ VM session.  This is useful for saving offline work."
   (vm-display nil nil '(vm-imap-synchronize) '(vm-imap-synchronize))
   (if (not (eq vm-folder-access-method 'imap))
       (message "This is not an IMAP folder")
-    (if (null (vm-establish-new-folder-imap-session t))
+    (if (null (vm-establish-new-folder-imap-session t "general operation"))
 	nil
 
       (vm-imap-retrieve-uid-and-flags-data)
@@ -3350,7 +3356,7 @@ interactively."
   (vm-buffer-type:set 'folder)
   ;;--------------------------
   (if (or vm-global-block-new-mail
-	  (null (vm-establish-new-folder-imap-session interactive)))
+	  (null (vm-establish-new-folder-imap-session interactive "checkmail")))
       nil
     (let ((result (car (vm-imap-get-synchronization-data))))
       (vm-imap-end-session (vm-folder-imap-process))
@@ -3462,7 +3468,7 @@ its components."
       (when (and (null mailbox-list) spec)
 	(unwind-protect
 	    (progn
-	      (setq process (vm-imap-make-session spec))
+	      (setq process (vm-imap-make-session spec "folders"))
 	      (when process
 		(setq mailbox-list 
 		      (vm-imap-mailbox-list process selectable-only))
@@ -3717,7 +3723,7 @@ documentation for `vm-spool-files'."
   (let ((vm-imap-ok-to-ask t)
 	process mailbox)
     (save-excursion
-      (setq process (vm-imap-make-session folder))
+      (setq process (vm-imap-make-session folder "create"))
       (if (null process)
 	  (error "Couldn't open IMAP session for %s"
 		 (vm-safe-imapdrop-string folder)))
@@ -3757,7 +3763,7 @@ documentation for `vm-spool-files'."
        (list (vm-read-imap-folder-name "Delete IMAP folder: " nil nil)))))
   (let ((vm-imap-ok-to-ask t)
 	process mailbox)
-    (setq process (vm-imap-make-session folder))
+    (setq process (vm-imap-make-session folder "delete folder"))
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
 	       (vm-safe-imapdrop-string folder)))
@@ -3803,7 +3809,7 @@ documentation for `vm-spool-files'."
        (list source dest))))
   (let ((vm-imap-ok-to-ask t)
 	process mailbox-source mailbox-dest)
-    (setq process (vm-imap-make-session source))
+    (setq process (vm-imap-make-session source "rename folder"))
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
 	       (vm-safe-imapdrop-string source)))
@@ -3853,7 +3859,7 @@ folder."
 	    (set-buffer (vm-buffer-of (vm-real-message-of m))))
 	(if (not (eq vm-folder-access-method 'imap))
 	    (error "Cannot do IMAP-FCC because the parent folder is not an IMAP folder"))
-	(vm-establish-new-folder-imap-session)
+	(vm-establish-new-folder-imap-session nil "IMAP-FCC")
 	(vm-imap-dump-uid-and-flags-data)
 	(setq process (vm-folder-imap-process))
 	(setq mailboxes (list (cons mailbox process)))
@@ -3870,7 +3876,7 @@ folder."
 	(setq fcc (car fcc-list))
 	(setq spec-list (vm-parse fcc "\\([^:]+\\):?"))
 	(when (member (car spec-list) '("imap" "imap-ssl" "imap-ssh"))
-	  (setq process (vm-imap-make-session fcc))
+	  (setq process (vm-imap-make-session fcc "IMAP-FCC"))
 	  (setq mailboxes (cons (cons (nth 3 spec-list) process) 
 				mailboxes)))
 	(setq fcc-list (cdr fcc-list))))

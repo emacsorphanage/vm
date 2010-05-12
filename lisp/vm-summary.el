@@ -22,6 +22,7 @@
 ;;; Code:
 
 (defvar scrollbar-height)		; defined for XEmacs
+(defvar vm-summary-debug)		; defined in vm-vars
 
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"
@@ -128,7 +129,8 @@ folder."
       (set-buffer vm-summary-buffer)
       (setq line-move-ignore-invisible vm-summary-show-threads)
       (let ((buffer-read-only nil)
-	    (modified (buffer-modified-p)))
+	    (modified (buffer-modified-p))
+	    (debug vm-summary-debug))
 	(unwind-protect
 	    (progn
 	      (if start-point
@@ -169,11 +171,14 @@ folder."
                           (delete-char 1)
                           )))))
 		(setq mp (cdr mp) n (1+ n))
-		(if (zerop (% n modulus))
-		    (message "Generating summary... %d" n)))
+		(when (zerop (% n modulus))
+		  (message "Generating summary... %d" n)
+		  (if debug (debug "vm-debug-summary: Generating summary"))
+		  (setq debug nil)))
 	      ;; now convert the ints to markers.
-	      (if (>= n modulus)
-		  (message "Generating summary markers... "))
+	      ;; no need for another message - it is fast enough
+	      ;; (if (>= n modulus)
+	      ;;    (message "Generating summary markers... "))
 	      (setq mp m-list)
 	      (while mp
 		(setq m (car mp))
@@ -669,6 +674,7 @@ tokenized summary TOKENS."
 				    (substring format
 					       (match-beginning 4)
 					       (match-end 4)))))))
+	      ;; Why do we reencode decoded strings?  USR, 2010-05-12
 	      (cond ((and (not token) vm-display-using-mime)
 		     (setcar sexp
 			     (list 'vm-reencode-mime-encoded-words-in-string

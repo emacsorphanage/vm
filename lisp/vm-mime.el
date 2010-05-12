@@ -2449,7 +2449,7 @@ declarations in the attachments and make a decision independently."
             (charset (or (vm-mime-get-parameter layout "charset")
                          "us-ascii"))
             end buffer-size)
-        (message "Inlining text/html by %s, be patient..."
+        (message "Inlining text/html by %s..."
                  vm-mime-text/html-handler)
         (vm-mime-insert-mime-body layout)
         (setq end (point-marker))
@@ -2530,7 +2530,7 @@ declarations in the attachments and make a decision independently."
 	(buffer-read-only nil)
 	(enriched-verbose t)
 	(charset (or (vm-mime-get-parameter layout "charset") "us-ascii")))
-    (vm-emit-mime-decoding-message "Decoding text/enriched, be patient...")
+    (vm-emit-mime-decoding-message "Decoding text/enriched...")
     (vm-mime-insert-mime-body layout)
     (setq end (point-marker))
     (vm-mime-transfer-decode-region layout start end)

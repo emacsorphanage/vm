@@ -3224,6 +3224,9 @@ arrow only if the summary window is not the only existing window."
   :group 'vm
   :type '(choice (const nil) (const t) (const yes-if-not-only-window)))
 
+(defvar vm-summary-debug nil
+  "Flag to turn on debug tracing of summary generation")
+
 (defcustom vm-subject-ignored-prefix "^\\(re: *\\)+"
   "*Non-nil value should be a regular expression that matches
 strings at the beginning of the Subject header that you want VM to ignore

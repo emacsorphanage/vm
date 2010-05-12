@@ -958,7 +958,8 @@ The saved messages are flagged as `filed'."
 	    ;; not easy.  USR, 2010-03-08
 	    ;; (vm-stuff-message-data m t)
 	    (if server-to-server-p 	; economise on upstream data traffic
-		(let ((process (vm-re-establish-folder-imap-session)))
+		(let ((process 
+		       (vm-re-establish-folder-imap-session nil "save")))
 		  (vm-imap-copy-message process m mailbox))
 	      (unless process
 		(setq process (vm-imap-make-session target-folder)))
