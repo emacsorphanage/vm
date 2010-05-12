@@ -501,6 +501,14 @@ tokenized summary TOKENS."
 				      (vm-th-thread-indentation message))))))
 	(setq tokens (cdr tokens))))))
 
+(defun vm-mime-encode-words-in-tokenized-summary (summary)
+  (mapcar
+   (function (lambda (token)
+	       (if (stringp token)
+		   (vm-mime-encode-words-in-string token)
+		 token)))
+   summary))
+
 (defun vm-summary-compile-format-1 (format &optional tokenize start-index)
   (or start-index (setq start-index 0))
   (let ((case-fold-search nil)
@@ -675,10 +683,10 @@ tokenized summary TOKENS."
 					       (match-beginning 4)
 					       (match-end 4)))))))
 	      ;; Why do we reencode decoded strings?  USR, 2010-05-12
-	      (cond ((and (not token) vm-display-using-mime)
-		     (setcar sexp
-			     (list 'vm-reencode-mime-encoded-words-in-string
-				   (car sexp)))))
+;; 	      (cond ((and (not token) vm-display-using-mime)
+;; 		     (setcar sexp
+;; 			     (list 'vm-reencode-mime-encoded-words-in-string
+;; 				   (car sexp)))))
 	      (setq sexp-fmt
 		    (cons (if token "" "%s")
 			  (cons (substring format
