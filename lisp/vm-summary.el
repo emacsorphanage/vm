@@ -1135,7 +1135,7 @@ was sent.                                                  USR, 2010-05-13"
 (defun vm-su-full-name (m)
   "Returns the author name of M as a string, either from
 the stored entry (vm-full-name-of) or recalculating it if necessary.
-The result is a mime-encoded string, but this is not certain.
+The result is a mime-decoded string with text-properties.
 							USR 2010-05-13"
   (or (vm-full-name-of m)
       (progn (vm-su-do-author m) (vm-full-name-of m))))
@@ -1144,7 +1144,7 @@ The result is a mime-encoded string, but this is not certain.
   "Returns the author name of M as a string, but if the author is
 \"uninteresting\" then returns the value of
 `vm-summary-uninteresting-senders-arrow' followed by recipient
-names.  The result is a mime-encoded string, but this is not certain.
+names.  The result is a mime-decoded string with text properties.
 							  USR 2010-05-13"
   (if vm-summary-uninteresting-senders
       (let ((case-fold-search nil))
@@ -1214,8 +1214,8 @@ the from and full-name entries of the cached-data vector.   USR, 2010-05-13"
  	      (substring full-name (match-beginning 1) (match-end 1))))
     (while (setq i (string-match "\n" full-name i))
       (aset full-name i ?\ ))
-    (vm-set-full-name-of m full-name)
-    (vm-set-from-of m from)))
+    (vm-set-full-name-of m (vm-decode-mime-encoded-words-in-string full-name))
+    (vm-set-from-of m (vm-decode-mime-encoded-words-in-string from))))
 
 (defun vm-default-chop-full-name (address)
   (let ((from address)

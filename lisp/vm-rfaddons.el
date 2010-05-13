@@ -982,8 +982,10 @@ date header as subdir for the attachments."
   "Return a subdir for the attachments of MSG.
 This will be done according to `vm-mime-auto-save-all-attachments-subdir'."
   (setq msg (vm-real-message-of msg))
-  (when (not (string-match (regexp-quote (vm-su-full-name msg))
-                           (vm-get-header-contents msg "From:")))
+  (when (not (string-match 
+	      (regexp-quote (vm-reencode-mime-encoded-words-in-string
+			     (vm-su-full-name msg)))
+	      (vm-get-header-contents msg "From:")))
     (backtrace)
     (if (y-or-n-p (format "Is this wrong? %s <> %s "
                          (vm-su-full-name msg)
@@ -1006,12 +1008,10 @@ This will be done according to `vm-mime-auto-save-all-attachments-subdir'."
                                 (vm-su-monthday msg)
                                 (vm-su-hour msg))
                         "--"
-                        (vm-decode-mime-encoded-words-in-string
-                         (or (vm-su-full-name msg)
-                             "unknown"))
+			(or (vm-su-full-name msg)
+			    "unknown")
                         "--"
-                        (vm-decode-mime-encoded-words-in-string
-                         (vm-su-subject msg)))))
+                         (vm-su-subject msg))))
                
            (if (and basedir vm-folder-directory
                     (string-match

@@ -372,9 +372,11 @@
     ;; zone
     (aset new-vector 6 (vm-mime-encode-words-in-string (aref vector 6)))
     ;; full-name
-    (aset new-vector 7 (vm-mime-encode-words-in-string (aref vector 7)))
+    (aset new-vector 7 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 7)))
     ;; from
-    (aset new-vector 8 (vm-mime-encode-words-in-string (aref vector 8)))
+    (aset new-vector 8 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 8)))
     ;; message-id
     (aset new-vector 9 (vm-mime-encode-words-in-string (aref vector 9)))
     ;; line-count
