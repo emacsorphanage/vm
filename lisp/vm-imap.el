@@ -1037,24 +1037,26 @@ as well."
 	;; vm-imap-end-session might have already been called on
 	;; this process, so don't logout and schedule the killing
 	;; the process again if it's already been done.
-	(condition-case nil
-	    (if vm-imap-session-done
-		;;-------------------------------------
-		(vm-imap-session-type:assert 'inactive)
-	        ;;-------------------------------------
-	      (vm-imap-send-command process "LOGOUT")
-	      (setq vm-imap-session-done t)
-	      ;; we don't care about the response.
-	      ;; try reading it anyway and trap any errors.
-	      (vm-imap-read-ok-response process)
-	      ;;----------------------------------
-	      (vm-imap-session-type:set 'inactive)
-	      ;;----------------------------------
-	      (if (fboundp 'add-async-timeout)
-		  (add-async-timeout 2 'kill-imap-process process)
-		(run-at-time 2 nil 'kill-imap-process process)))
-	  (vm-imap-protocol-error	; handler
-	   nil))			; ignore errors 
+	(unwind-protect
+	    (condition-case nil
+		(if vm-imap-session-done
+		    ;;-------------------------------------
+		    (vm-imap-session-type:assert 'inactive)
+		  ;;-------------------------------------
+		  (vm-imap-send-command process "LOGOUT")
+		  ;; we don't care about the response.
+		  ;; try reading it anyway and trap any errors.
+		  (vm-imap-read-ok-response process))
+	      (vm-imap-protocol-error ; handler
+	       nil)		      ; ignore errors 
+	      (error nil))	      ; handler
+	  (setq vm-imap-session-done t)
+	  ;;----------------------------------
+	  (vm-imap-session-type:set 'inactive)
+	  ;;----------------------------------
+	  (if (fboundp 'add-async-timeout)
+	      (add-async-timeout 2 'kill-imap-process process)
+	    (run-at-time 2 nil 'kill-imap-process process)))
 	;;----------------------------------
 	(vm-buffer-type:exit)
 	;;----------------------------------
@@ -1073,7 +1075,7 @@ as well."
 	  ;;-------------------
 	  (vm-buffer-type:exit)
 	  ;;-------------------
-	  )))
+	  )))     
   )
 
 (defun kill-imap-process (process)
