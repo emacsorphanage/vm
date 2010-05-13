@@ -380,13 +380,16 @@
     ;; line-count
     (aset new-vector 10 (vm-mime-encode-words-in-string (aref vector 10)))
     ;; subject
-    (aset new-vector 11 (vm-mime-reencode-words-in-string (aref vector 11)))
+    (aset new-vector 11 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 11)))
     ;; vheaders-regexp
     (aset new-vector 12 (vm-mime-encode-words-in-string (aref vector 12)))
     ;; to
-    (aset new-vector 13 (vm-mime-reencode-words-in-string (aref vector 13)))
+    (aset new-vector 13 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 13)))
     ;; to-names
-    (aset new-vector 14 (vm-mime-reencode-words-in-string (aref vector 14)))
+    (aset new-vector 14 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 14)))
     ;; month-number
     (aset new-vector 15 (vm-mime-encode-words-in-string (aref vector 15)))
     ;; sortable-date-string
@@ -395,7 +398,7 @@
     (aset new-vector 17 (vm-mime-encode-words-in-string (aref vector 17)))
     ;; summary
     (aset new-vector 18 
-	  (vm-mime-reencode-words-in-tokenized-summary 
+	  (vm-reencode-mime-encoded-words-in-tokenized-summary 
 	   (aref vector 18)))
     ;; parent
     (aset new-vector 19 (vm-mime-encode-words-in-string (aref vector 19)))
