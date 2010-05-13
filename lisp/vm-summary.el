@@ -501,11 +501,11 @@ tokenized summary TOKENS."
 				      (vm-th-thread-indentation message))))))
 	(setq tokens (cdr tokens))))))
 
-(defun vm-mime-encode-words-in-tokenized-summary (summary)
+(defun vm-mime-reencode-words-in-tokenized-summary (summary)
   (mapcar
    (function (lambda (token)
 	       (if (stringp token)
-		   (vm-mime-encode-words-in-string token)
+		   (vm-mime-reencode-words-in-string token)
 		 token)))
    summary))
 
@@ -650,6 +650,8 @@ tokenized summary TOKENS."
 		       (setq sexp (cons (list 'vm-su-mark
 					      'vm-su-message) sexp)))))
 	      (cond ((and (not token) vm-display-using-mime)
+		     ;; strings might have been already mime-decoded,
+		     ;; but there is no harm in doing it again. USR, 2010-05-13
 		     (setcar sexp
 			     (list 'vm-decode-mime-encoded-words-in-string
 				   (car sexp)))))
@@ -1095,10 +1097,19 @@ Argument msg is a message pointer."
 	  (funcall function message))))))
 
 (defun vm-su-full-name (m)
+  "Returns the author name of M as a string, either from
+the stored entry (vm-full-name-of) or recalculating it if necessary.
+The result is a mime-encoded string, but this is not certain.
+							USR 2010-05-13"
   (or (vm-full-name-of m)
       (progn (vm-su-do-author m) (vm-full-name-of m))))
 
 (defun vm-su-interesting-full-name (m)
+  "Returns the author name of M as a string, but if the author is
+\"uninteresting\" then returns the value of
+`vm-summary-uninteresting-senders-arrow' followed by recipient
+names.  The result is a mime-encoded string, but this is not certain.
+							  USR 2010-05-13"
   (if vm-summary-uninteresting-senders
       (let ((case-fold-search nil))
 	(if (string-match vm-summary-uninteresting-senders (vm-su-from m))
@@ -1107,10 +1118,19 @@ Argument msg is a message pointer."
     (vm-su-full-name m)))
 
 (defun vm-su-from (m)
+  "Returns the author address of M as a string, either from
+the stored entry (vm-from-of) or recalculating it if necessary.
+The result is a mime-encoded string, but this is not certain.
+							USR 2010-05-13"
   (or (vm-from-of m)
       (progn (vm-su-do-author m) (vm-from-of m))))
 
 (defun vm-su-interesting-from (m)
+  "Returns the author address of M as a string, but if the author is
+\"uninteresting\" then returns the value of
+`vm-summary-uninteresting-senders-arrow' followed by recipient
+addresses.  The result is a mime-encoded string, but this not certain.
+							  USR 2010-05-13"
   (if vm-summary-uninteresting-senders
       (let ((case-fold-search nil))
 	(if (string-match vm-summary-uninteresting-senders (vm-su-from m))
@@ -1137,6 +1157,8 @@ Argument msg is a message pointer."
 		 (match-end 1)))))))))
 
 (defun vm-su-do-author (m)
+  "Parses the From headers of the message M and stores the results in
+the from and full-name entries of the cached-data vector.   USR, 2010-05-13"
   (let ((full-name (vm-get-header-contents m "Full-Name:"))
 	(from (or (vm-get-header-contents m "From:" ", ")
 		  (vm-grok-From_-author m)))
@@ -1228,7 +1250,7 @@ Argument msg is a message pointer."
                        (message err)
                        (sit-for 5)
                        "corrupted-header")))
-    (setq list (vm-parse-addresses all))
+    (setq list (vm-parse-addresses all)) ; adds text properties for charsets
     (while list
       ;; Just like vm-su-do-author:
       (setq full-name (or (nth 0 (funcall vm-chop-full-name-function
@@ -1248,13 +1270,24 @@ Argument msg is a message pointer."
     (vm-set-to-names-of m (mapconcat 'identity names ", "))))
 
 (defun vm-su-to (m)
+  "Returns the recipient addresses of M as a string, either from
+the stored entry (vm-to-of) or recalculating them if necessary.
+The result is a mime-decoded string with text properties.  
+							USR 2010-05-13"
   (or (vm-to-of m) (progn (vm-su-do-recipients m) (vm-to-of m))))
 
 (defun vm-su-to-names (m)
+  "Returns the recipient names of M as a string, either from
+the stored entry (vm-to-names-of) or recalculating them if necessary.
+The result is a mime-decoded string with text properties.  
+							USR 2010-05-13"
   (or (vm-to-names-of m) (progn (vm-su-do-recipients m) (vm-to-names-of m))))
 				  
 ;;;###autoload
 (defun vm-su-message-id (m)
+  "Returns the subject string of M, either from the stored
+entry (vm-subject-of) or recalculating it if necessary.  It is a
+mime-encoded string with text properties.  USR 2010-05-13"
   (or (vm-message-id-of m)
       (vm-set-message-id-of
        m
@@ -1277,6 +1310,8 @@ Argument msg is a message pointer."
 	   (concat "<" (int-to-string (vm-abs (random))) "@toto.iv>")))))
 
 (defun vm-su-line-count (m)
+  "Returns the line count of M as a string, either from the stored
+entry (vm-line-count-of) or recalculating it if necessary.  USR 2010-05-13"
   (or (vm-line-count-of m)
       (vm-set-line-count-of
        m
@@ -1290,6 +1325,9 @@ Argument msg is a message pointer."
 
 ;;;###autoload
 (defun vm-su-subject (m)
+  "Returns the subject string of M, either from the stored
+entry (vm-subject-of) or recalculating it if necessary.  It is a
+mime-decoded string with text properties.  USR 2010-05-13"
   (or (vm-subject-of m)
       (vm-set-subject-of
        m
@@ -1301,8 +1339,10 @@ Argument msg is a message pointer."
 	 subject ))))
 
 (defun vm-su-summary (m)
-  "Returns the tokenized summary line of M, either from the stored
-entry (vm-summary-of) or recalculating it if necessary.  USR 2010-04-06" 
+  "Returns the tokenized summary line of M, either from the
+stored entry (vm-summary-of) or recalculating it if necessary.
+The summary line is a mime-decoded string with text properties.
+						  USR 2010-05-13"
   (if (and (vm-virtual-message-p m) (not (vm-virtual-messages-of m)))
       (or (vm-virtual-summary-of m)
 	  (save-excursion

@@ -902,6 +902,11 @@ freshly parsing the message contents."
     string ))
 
 (defun vm-reencode-mime-encoded-words ()
+  "Reencode in mime the words in the current buffer that need
+encoding.  The words that need encoding are expected to have
+text-properties set with the appropriate characte set.  This would
+have been done if the contents of the buffer are the result of a
+previous mime decoding."
   (let ((charset nil)
 	start coding pos q-encoding
 	old-size
@@ -936,6 +941,11 @@ freshly parsing the message contents."
 	(setq start pos)))))
 
 (defun vm-reencode-mime-encoded-words-in-string (string)
+  "Reencode in mime the words in STRING that need
+encoding.  The words that need encoding are expected to have
+text-properties set with the appropriate characte set.  This would
+have been done if the contents of the buffer are the result of a
+previous mime decoding."
   (if (and vm-display-using-mime
 	   (text-property-any 0 (length string) 'vm-string t string))
       (vm-with-string-as-temp-buffer string 'vm-reencode-mime-encoded-words)

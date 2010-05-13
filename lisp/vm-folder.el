@@ -1888,9 +1888,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 ;; 		list))
 
 (defun vm-stuff-message-data (m &optional for-other-folder)
-  "Stuff the soft and cached data of the message M into the
-folder buffer.  The optional argument FOR-OTHER-FOLDER indicates
-<someting unknown>.  USR 2010-03-06"
+  "Stuff the attributes, labels, soft and cached data of the
+message M into the folder buffer.  The optional argument
+FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
   (save-excursion
     (vm-save-restriction
      (widen)
