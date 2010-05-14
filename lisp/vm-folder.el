@@ -1336,7 +1336,8 @@ Supports version 4 format of attribute storage, for backward compatibility."
               (message "Bad VM cache data: %S" cache)
               (vm-set-stuff-flag-of (car mp) t)
               (setcar (cdr data)
-                      (setq cache (make-vector vm-cache-vector-length nil))))
+                      (setq cache 
+			    (make-vector vm-cache-vector-length nil))))
 
 	    (vm-set-labels-of (car mp) (nth 2 data))
 	    (vm-set-cached-data-of (car mp) cache)
@@ -1344,16 +1345,16 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	   ((and vm-berkeley-mail-compatibility
 		 (re-search-forward vm-berkeley-mail-status-header-regexp
 				    (vm-text-of (car mp)) t))
-	    (vm-set-cached-data-of (car mp) (make-vector vm-cache-vector-length
-						   nil))
+	    (vm-set-cached-data-of 
+	     (car mp) (make-vector vm-cache-vector-length nil))
 	    (goto-char (match-beginning 1))
 	    (vm-set-attributes-of
 	     (car mp)
 	     (make-vector vm-attributes-vector-length nil))
 	    (vm-set-unread-flag (car mp) (not (looking-at ".*R.*")) 'norecord))
 	   (t
-	    (vm-set-cached-data-of (car mp) (make-vector vm-cache-vector-length
-						   nil))
+	    (vm-set-cached-data-of 
+	     (car mp) (make-vector vm-cache-vector-length nil))
 	    (vm-set-attributes-of
 	     (car mp)
 	     (make-vector vm-attributes-vector-length nil))
@@ -1877,17 +1878,19 @@ Supports version 4 format of attribute storage, for backward compatibility."
       (set-marker (vm-headers-of (car mp)) opoint))))
 
 
-(defun vm-encode-words-in-cache-vector (list)
-  (vm-mapvector (lambda (e)
-		  (if (stringp e)
-		      (vm-mime-encode-words-in-string e)
-		    e))
-		list))
+;; This is now replaced by vm-mime-encode-words-in-cache-vector
+;;
+;; (defun vm-encode-words-in-cache-vector (list)
+;;   (vm-mapvector (lambda (e)
+;; 		  (if (stringp e)
+;; 		      (vm-mime-encode-words-in-string e)
+;; 		    e))
+;; 		list))
 
 (defun vm-stuff-message-data (m &optional for-other-folder)
-  "Stuff the soft and cached data of the message M into the
-folder buffer.  The optional argument FOR-OTHER-FOLDER indicates
-<someting unknown>.  USR 2010-03-06"
+  "Stuff the attributes, labels, soft and cached data of the
+message M into the folder buffer.  The optional argument
+FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
   (save-excursion
     (vm-save-restriction
      (widen)
@@ -1937,7 +1940,7 @@ folder buffer.  The optional argument FOR-OTHER-FOLDER indicates
 		(prin1-to-string attributes))
 	      "\n\t"
               (let ((print-escape-newlines t))
-                (prin1-to-string (vm-encode-words-in-cache-vector cache)))
+                (prin1-to-string (vm-mime-encode-words-in-cache-vector cache)))
               "\n\t"
 	      (let ((print-escape-newlines t))
 		(prin1-to-string (vm-labels-of m)))
