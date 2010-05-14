@@ -4855,7 +4855,7 @@ message in the Folder buffer is calculated after a folder is loaded and
 parsed.
 @item
 Soft data.  This vector contains other calculated data about the
-message.
+message that is specific to a VM session.
 @item
 Attributes.  All the hard-wired message attributes are stored in this
 vector.
@@ -4909,8 +4909,8 @@ Presentation buffer.
 
 
 @unnumberedsubsec Soft data
-This vector contains other calculated data about the
-message. 
+This vector contains other calculated data about the message that is
+specific to a VM session.
 
 @itemize
 @item
@@ -5000,12 +5000,19 @@ redistributed.
 @end itemize
 
 @unnumberedsubsec Cached Data
-The data that is cached for the message and stored in the
-folder on disk as the @code{X-VM-v5-Data} header field.  Even though
-this vector is only supposed to have data that can be calculated from
-the message itself, the fields pop-uidl, imap-uid and imap-uid-validity
-form an exception.  They are really hard data that cannot be calculated
-from anything else.
+The data that is cached for the message and stored on the disk as part
+of the @code{X-VM-v5-Data} header field.  Even though this vector is
+only supposed to have data that can be calculated from the message
+itself, the fields pop-uidl, imap-uid and imap-uid-validity form an
+exception.  They are really hard data that cannot be calculated from
+anything else.
+
+Some of the data deals with information from message headers.  The
+header fields can have MIME-encoded words in them.  The strings stored
+in the cached-data vector, however, are MIME-decoded versions of the
+header fields, but they also have text properties that store the names
+of the original character sets used in the header fields.  This allows
+the strings to be quickly reencoded for storage on disk.
 
 @itemize
 @item
@@ -5014,34 +5021,43 @@ byte-count.  The size of the message in bytes.
 weekday, monthday, month, year, hour, zone.  Data indicating the date of
 the message.
 @item 
-full-name.  The full name of the author of the message.
+full-name.  The full name of the author of the message.  This is a
+MIME-decoded string with text properties.
 @item
-from.  The email address of the author of the message.
+from.  The email address of the author of the message.  This is a
+MIME-decoded string with text properties.
 @item
 message-id.  The unique id of the message.
 @item
 line-count. The number of lines in the message.
 @item
-subject.  The subject string of the message.
+subject.  The subject string of the message.  This is a MIME-decoded
+string with text properties.
 @item
 vheaders-regexp.  A regular expression that can be used to find the
-start of the already ordered headers.
+start of the visible headers.  The headers must have been already
+ordered so that the visible headers are at the bottom of the headers
+section. 
 @item
 to.  Addresses of the recipients of the message in a comma separated
-string.
+string.  This is a MIME-decoded string with text properties.
 @item
-to-names. The full names of the recipients in a comma separated string.
-Addresses are used if full names are not available.
+to-names. The full names of the recipients in a comma separated
+string.  Addresses are used if full names are not available.  This is
+a MIME-decoded string with text properties.
 @item
 month-number.  Numeric month of the sent date.
 @item
 sortable-datestring.  Date string of the sent date for sorting purposes.
 @item
 sortable-subject.  The subject string for sorting purposes.  (Prefixes
-such as ``re:'' are removed.)
+such as ``re:'' are removed.)  This is a MIME-decoded string with text
+properties.
 @item
 summary.  A tokenized summary for the message, from which the actual
-summary line can be quickly calculated.
+summary line can be quickly calculated.  This is a list containing
+tokens, such as @code{number} and @code{thread-indent}, as well as
+MIME-decoded strings with text properties.
 @item
 parent.  The parent of the message in the message thread, which is
 another message data structure.
