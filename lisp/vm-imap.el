@@ -38,7 +38,7 @@
 ;; ------------------------------------------------------------------------
 
 ;; Folder-specific IMAP sessions are created and destroyed for each
-;; get-new-mail and synchronize-folder.  (Same as in VM 7.19)
+;; get-new-mail.  (Same as in VM 7.19)
 
 ;; check-for-new-mail also creates and destroys sessions.
 
@@ -48,9 +48,11 @@
 ;; operations like create-mailbox.  (VM 7.19 didn't destroy them in the
 ;; end, but we do.)
 
-;; Longer-lived IMAP sessions for each IMAP folder are used for
-;; fetch-imap-message and copy-message.  They are normally destroyed when
-;; the folder buffer is saved, but otherwise they get timed out.
+;; synchronize-folder creates an IMAP session but leaves it active.
+;; Since session is linked to the folder buffer, the folder can use it
+;; for other operations like fetch-imap-message and copy-message.  The
+;; next time a synchronize-folder is done, this session is killed and
+;; a fresh session is created.
 
 ;; ------------------------------------------------------------------------
 ;; Utilities
