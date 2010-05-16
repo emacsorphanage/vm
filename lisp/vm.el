@@ -1086,27 +1086,31 @@ summary buffer to select a folder."
 	     vmpc-actions vmpc-conditions 
 	     vmpc-actions-alist vmpc-reply-alist vmpc-forward-alist
 	     vmpc-resend-alist vmpc-newmail-alist vmpc-automorph-alist
+	     ;; email addresses
+	     vm-mail-header-from
+	     vm-mail-return-receipt-to
+	     vm-summary-uninteresting-senders
 	     ))
 	  ;; delete any passwords stored in maildrop strings
 	  (vm-spool-files 
 	   (if (listp (car vm-spool-files))
 	       (vm-mapcar 
 		(lambda (elem-xyz)
-		  (vm-mapcar (function vm-maildrop-sans-password)
+		  (vm-mapcar (function vm-maildrop-sans-personal-info)
 			     elem-xyz)))
-	     (vm-mapcar (function vm-maildrop-sans-password)
+	     (vm-mapcar (function vm-maildrop-sans-personal-info)
 			vm-spool-files)))
 	  (vm-pop-folder-alist 
-	   (vm-maildrop-alist-sans-password vm-pop-folder-alist))
+	   (vm-maildrop-alist-sans-personal-info vm-pop-folder-alist))
 	  (vm-imap-server-list 
-	   (vm-mapcar (function vm-maildrop-sans-password) 
+	   (vm-mapcar (function vm-maildrop-sans-personal-info) 
 		      vm-imap-server-list))
 	  (vm-imap-account-alist 
-	   (vm-maildrop-alist-sans-password vm-imap-account-alist))
+	   (vm-maildrop-alist-sans-personal-info vm-imap-account-alist))
 	  (vm-pop-auto-expunge-alist
-	   (vm-maildrop-alist-sans-password vm-pop-auto-expunge-alist))
+	   (vm-maildrop-alist-sans-personal-info vm-pop-auto-expunge-alist))
 	  (vm-imap-auto-expunge-alist
-	   (vm-maildrop-alist-sans-password vm-imap-auto-expunge-alist)))
+	   (vm-maildrop-alist-sans-personal-info vm-imap-auto-expunge-alist)))
       (while vars-to-delete
         (setq varlist (delete (car vars-to-delete) varlist)
               vars-to-delete (cdr vars-to-delete)))
@@ -1126,9 +1130,15 @@ summary buffer to select a folder."
   expected to happen and what in fact did happen and how to reproduce it.
 
 - You may attach sample messages or attachments that can be used to
-  reproduce the problem.  (They will be kept confidential.)
+  reproduce the problem.
 
-- Please remove these instructions and other stuff which is unrelated
+- Mail sent to vm@lists.launchpad.net is archived on the web at
+https://lists.launchpad.net/vm.  If it is not appropriate for
+your report to be archived, please email it to one or more of the
+members of the team listed at https://launchpad.net/~vm, all of whom
+have email addresses at launchpad.net.
+
+- You may remove these instructions and other stuff which is unrelated
   to the bug from your message.
 ")
       (goto-char (point-min))

@@ -809,7 +809,7 @@ argument PURPOSE is inserted in the process buffer for tracing purposes."
 		user (nth 5 source-list)
 		pass (nth 6 source-list)
 		source-nopwd-nombox
-		(vm-imapdrop-sans-password-and-mailbox source))
+		(vm-imapdrop-sans-personal-info source))
 	  (cond ((equal auth "preauth") t)
 		((equal "imap-ssl" (car source-list))
 		 (setq use-ssl t
