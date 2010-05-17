@@ -670,8 +670,10 @@ Use mouse button 3 to choose a Web browser for the URL."
 	(vm-display-xface))))
 
 (defun vm-narrow-for-preview (&optional just-passing-through)
+  "Hide as much of the message body as vm-preview-lines specifies.
+Optional argument JUST-PASSING-THROUGH says that no real preview
+is necessary."
   (widen)
-  ;; hide as much of the message body as vm-preview-lines specifies
   (narrow-to-region
    (vm-vheaders-of (car vm-message-pointer))
    (cond ((not (eq vm-preview-lines t))

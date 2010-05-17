@@ -1151,6 +1151,7 @@ summary buffer to select a folder."
   (vm-display nil nil '(vm-load-init-file) '(vm-load-init-file)))
 
 (defun vm-check-emacs-version ()
+  "Checks the version of Emacs and gives an error if it is unsupported."
   (cond ((and vm-xemacs-p (< emacs-major-version 21))
 	 (error "VM %s must be run on XEmacs 21 or a later version."
 		(vm-version)))

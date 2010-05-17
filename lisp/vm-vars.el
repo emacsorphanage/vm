@@ -624,6 +624,20 @@ The specialized commands `vm-save-message-to-local-folder' and
 Increase this if your IMAP server is sluggish."
   :group 'vm)
 
+(defcustom vm-imap-server-timeout nil
+  "*Number of seconds to wait for output from the IMAP server before
+timing out.  It can be set to nil to never time out."
+  :group 'vm
+  :type '(choice (const nil) integer))
+
+(defcustom vm-imap-ensure-active-sessions t
+  "*If non-NIL, ensures that an IMAP session is active before issuing
+commands to the server.  If it is not active, a new session is
+started.  This ensures a failure-proof operation, but involves
+additional overhead in checking that the session is active."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-imap-sync-on-get t
   "*If this variable is non-NIL, then the vm-get-new-mail command
 should synchronize with the IMAP mailbox on the server.  This involves
@@ -4273,41 +4287,44 @@ FCC processing."
   :group 'vm
   :type 'hook)
 
-(defvar mail-yank-hooks nil
-  "Hooks called after a message is yanked into a mail composition buffer.
+;; The following settings are disabled because they are defined in
+;; mail-mode/sendmail.el. 
 
-   (This hook is deprecated, you should use mail-citation-hook instead.)
+;; (defvar mail-yank-hooks nil
+;;   "Hooks called after a message is yanked into a mail composition buffer.
 
-The value of this hook is a list of functions to be run.
-Each hook function can find the newly yanked message between point and mark.
-Each hook function should return with point and mark around the yanked message.
+;;    (This hook is deprecated, you should use mail-citation-hook instead.)
 
-See the documentation for `vm-yank-message' to see when VM will run
-these hooks.")
+;; The value of this hook is a list of functions to be run.
+;; Each hook function can find the newly yanked message between point and mark.
+;; Each hook function should return with point and mark around the yanked message.
 
-(defcustom mail-citation-hook nil
-  "*Hook for modifying a citation just inserted in the mail buffer.
-Each hook function can find the citation between (point) and (mark t).
-And each hook function should leave point and mark around the citation
-text as modified.
+;; See the documentation for `vm-yank-message' to see when VM will run
+;; these hooks.")
 
-If this hook is entirely empty (nil), a default action is taken
-instead of no action."
-  :group 'vm
-  :type 'hook)
+;; (defcustom mail-citation-hook nil
+;;   "*Hook for modifying a citation just inserted in the mail buffer.
+;; Each hook function can find the citation between (point) and (mark t).
+;; And each hook function should leave point and mark around the citation
+;; text as modified.
 
-(defcustom mail-default-headers nil
-  "*A string containing header lines, to be inserted in outgoing messages.
-It is inserted before you edit the message,
-so you can edit or delete these lines."
-  :group 'vm
-  :type '(choice (const nil) string))
+;; If this hook is entirely empty (nil), a default action is taken
+;; instead of no action."
+;;   :group 'vm
+;;   :type 'hook)
 
-(defcustom mail-signature nil
-  "*Text inserted at end of mail buffer when a message is initialized.
-If t, it means to insert the contents of the file `~/.signature'."
-  :group 'vm
-  :type '(choice (const nil) (const t) string))
+;; (defcustom mail-default-headers nil
+;;   "*A string containing header lines, to be inserted in outgoing messages.
+;; It is inserted before you edit the message,
+;; so you can edit or delete these lines."
+;;   :group 'vm
+;;   :type '(choice (const nil) string))
+
+;; (defcustom mail-signature nil
+;;   "*Text inserted at end of mail buffer when a message is initialized.
+;; If t, it means to insert the contents of the file `~/.signature'."
+;;   :group 'vm
+;;   :type '(choice (const nil) (const t) string))
 
 (defcustom vm-rename-current-buffer-function nil
   "*Non-nil value should be a function to call to rename a buffer.

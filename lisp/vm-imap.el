@@ -143,13 +143,15 @@
   (memq auth vm-imap-auth-methods))
 
 (defsubst vm-accept-process-output (process)
-  "Accept output from PROCESS.  One could add a time out here,
-  but it is likely to break VM.  VM normally asks for
-  process-output only when it really needs it to proceed."
+  "Accept output from PROCESS.  The variable `vm-imap-server-timeout'
+specifies how many seconds to wait before timing out.  If a timeout
+occurs, typically VM cannot proceed."
   ;; protect against possible buffer change due to bug in Emacs
-  (let ((buf (current-buffer)))
-    (accept-process-output process)
-    (set-buffer buf)))
+  (let ((buf (current-buffer))
+	(got-output (accept-process-output process vm-imap-server-timeout)))
+    (if got-output
+	(set-buffer buf)
+      (vm-imap-protocol-error "No response from the IMAP server"))))
 
 
 ;; Mollify the pesky compiler
@@ -2054,30 +2056,32 @@ as well."
 that the session is active.  Returns t or nil."
   (if (and process (memq (process-status process) '(open run))
 	   (buffer-live-p (process-buffer process)))
-      (let ((buffer (process-buffer process)))
-	(save-excursion
-	  ;;----------------------------
-	  (vm-buffer-type:enter 'process)
-	  ;;----------------------------
-	  (set-buffer buffer)
-	  (vm-imap-send-command process "NOOP")
-	  (condition-case err
-	      (let ((response nil)
-		    (need-ok t))
-		(while need-ok
-		  (setq response
-			(vm-imap-read-response-and-verify process "NOOP"))
-		  (cond ((vm-imap-response-matches response 'VM 'OK)
-			 (setq need-ok nil))))
-		;;----------------------------
-		(vm-buffer-type:exit)
-		;;----------------------------
-		t)
-	    (vm-imap-protocol-error	; handler
-	     ;;--------------------
-	     (vm-buffer-type:exit)
-	     ;;--------------------
-	     nil))))			; ignore errors
+      (if vm-imap-ensure-active-sessions
+	  (let ((buffer (process-buffer process)))
+	    (save-excursion
+	      ;;----------------------------
+	      (vm-buffer-type:enter 'process)
+	      ;;----------------------------
+	      (set-buffer buffer)
+	      (vm-imap-send-command process "NOOP")
+	      (condition-case err
+		  (let ((response nil)
+			(need-ok t))
+		    (while need-ok
+		      (setq response
+			    (vm-imap-read-response-and-verify process "NOOP"))
+		      (cond ((vm-imap-response-matches response 'VM 'OK)
+			     (setq need-ok nil))))
+		    ;;----------------------------
+		    (vm-buffer-type:exit)
+		    ;;----------------------------
+		    t)
+		(vm-imap-protocol-error	; handler
+		 ;;--------------------
+		 (vm-buffer-type:exit)
+		 ;;--------------------
+		 nil))))		; ignore errors
+	t)
     nil))
 
 (defun vm-re-establish-folder-imap-session (&optional interactive purpose)
@@ -2087,7 +2091,7 @@ new one.  Returns the IMAP process."
     (if  (and (processp process)
 	      (vm-imap-poke-session process))
 	process
-      (if (processp process)
+      (if process
 	  (vm-imap-end-session process))
       (vm-establish-new-folder-imap-session interactive purpose))))
 
@@ -2102,7 +2106,7 @@ purposes. Returns the IMAP process."
 	mailbox select mailbox-count uid-validity permanent-flags
 	read-write can-delete body-peek
 	(vm-imap-ok-to-ask interactive))
-    (if (processp process)
+    (if process
 	(vm-imap-end-session process))
     (vm-imap-log-token 'new)
     (setq process 
@@ -3036,7 +3040,8 @@ operations")
 
 (defun vm-fetch-imap-message (m)
   "Insert the message body of M in the current buffer, which must be
-  either the folder buffer or the presentation buffer.
+either the folder buffer or the presentation buffer.
+
  (This is a special case of vm-fetch-message, not to be confused with
  vm-imap-fetch-message.)"
   (let ((body-buffer (current-buffer)))

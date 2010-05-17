@@ -19,8 +19,58 @@
 ;; with this program; if not, write to the Free Software Foundation, Inc.,
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+;;; Interface:
+
+;; Interactive commands:
+;;
+;; vm-yank-message: (message) -> unit
+;; vm-yank-message-other-folder: (folder) -> unit
+;; vm-mail-send-and-exit: () -> unit
+;; vm-mail-send: () -> unit
+;; vm-do-fcc-before-mime-encode: () -> unit
+;; vm-reply: (count) -> unit
+;; vm-reply-other-frame: (count) -> unit
+;; vm-reply-include-text: (count) -> unit
+;; vm-reply-include-text-other-frame: (count) -> unit
+;; vm-followup: (count) -> unit
+;; vm-followup-other-frame: (count) -> unit
+;; vm-followup-include-text: (count) -> unit
+;; vm-followup-include-text-other-frame: (count) -> unit
+;; vm-forward-message: () -> unit
+;; vm-forward-message-other-frame: () -> unit
+;; vm-forward-message-all-headers: () -> unit
+;; vm-forward-message-all-headers-other-frame: () -> unit
+;; vm-resend-message: () -> unit
+;; vm-resend-message-other-frame: () -> unit
+;; vm-resend-bounced-message: () -> unit
+;; vm-resend-bounced-message-other-frame: () -> unit
+;; vm-send-digest: (&optional preamble-line list) -> unit
+;; vm-send-digest-other-frame: (&optional preamble-line list) -> unit
+;; vm-send-rfc934-digest: (&optional preamble-line list) -> unit
+;; vm-send-rfc934-digest-other-frame: (&optional preamble-line list) -> unit
+;; vm-send-rfc1153-digest: (&optional preamble-line list) -> unit
+;; vm-send-rfc1153-digest-other-frame: (&optional preamble-line list) -> unit
+;; vm-send-mime-digest: (&optional preamble-line list) -> unit
+;; vm-send-mime-digest-other-frame: (&optional preamble-line list) -> unit
+;; vm-continue-composing-message () -> unit
+;; vm-mail-to-mailto-url: (url) -> unit
+;; vm-preview-composition: () -> unit
+;;
+;; vm-mail-mode-show-headers: () -> unit
+;; vm-mail-mode-hide-headers: () -> unit
 
 ;;; Code:
+
+(declare-function mail-strip-quoted-names "ext:mail-utils" (address))
+(declare-function mail-fetch-field "ext:mail-utils" 
+		  (field-name &optional last all list))
+(declare-function mail-send "ext:sendmail" ())
+(declare-function mail-do-fcc "ext:sendmail" (header-end))
+(declare-function mail-text "ext:sendmail" ())
+(declare-function mail-position-on-field "ext:sendmail" 
+		  (field &optional soft))
+(declare-function mail-mode "ext:sendmail" ())
+(declare-function build-mail-aliases "ext:mailalias" (&optional file))
 
 (defun vm-add-reply-subject-prefix (message &optional start)
   (when (not start)
