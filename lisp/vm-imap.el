@@ -1585,17 +1585,18 @@ as well."
       (narrow-to-region (point) end)
       (vm-convert-folder-type-headers 'baremessage vm-folder-type))
     (goto-char end)
-    (insert-before-markers (vm-trailing-message-separator))
     ;; Some IMAP servers don't understand Sun's stupid
     ;; From_-with-Content-Length style folder and assume the last
     ;; newline in the message is a separator.  And so the server
     ;; strips it, leaving us with a message that does not end
     ;; with a newline.  Add the newline if needed.
     ;;
-    ;; HP Openmail seems to have this problem.
+    ;; Added From_ folders among the ones to be repaired.  USR, 2010-05-19
     (if (and (not (eq ?\n (char-after (1- (point)))))
-	     (memq vm-folder-type '(From_-with-Content-Length BellFrom_)))
+	     (memq vm-folder-type 
+		   '(From_-with-Content-Length BellFrom_ From_)))
 	(insert-before-markers "\n"))
+    (insert-before-markers (vm-trailing-message-separator))
     (if (stringp target)
 	;; Set file type to binary for DOS/Windows.  I don't know if
 	;; this is correct to do or not; it depends on whether the
@@ -1612,7 +1613,8 @@ as well."
 	  ;;----------------------------
 	  (set-buffer target)
 	  (let ((buffer-read-only nil))
-	    (insert-buffer-substring b ***start end))
+	    (insert-buffer-substring b ***start end)
+	    )
 	  ;;-------------------
 	  (vm-buffer-type:exit)
 	  ;;-------------------
@@ -2746,7 +2748,7 @@ operation of the server to minimize I/O."
     (let* ((folder-buffer (current-buffer))
 	   (process (vm-folder-imap-process))
 	   (imap-buffer (process-buffer process))
-	   (n 1)
+	   (n 1) (pos nil)
 	   (statblob nil) (m nil) (mflags nil)
 	   (uid nil)
 	   (uid-validity (vm-folder-imap-uid-validity))
@@ -2827,9 +2829,13 @@ operation of the server to minimize I/O."
 			process (car range) (cdr range)
 			use-body-peek vm-load-headers-only)
 		       (setq k (1+ (- (cdr range) (car range))))
+		       (setq pos (with-current-buffer folder-buffer (point)))
 		       (while (> k 0)
 			 (vm-imap-retrieve-to-target process folder-buffer
 						     statblob use-body-peek)
+			 (with-current-buffer folder-buffer
+			   (if (= (point) pos)
+			       (debug "IMAP internal error #2012: the point hasn't moved")))
 			 (setq k (1- k)))
 		       (vm-imap-read-ok-response process)
 		       (setq r-list (cdr r-list)
