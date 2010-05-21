@@ -150,7 +150,14 @@ occurs, typically VM cannot proceed."
   (let ((buf (current-buffer))
 	(got-output (accept-process-output process vm-imap-server-timeout)))
     (if got-output
-	(set-buffer buf)
+	(when (not (equal (current-buffer) buf))
+	  (if (string-lessp "24" emacs-version)
+	      ;; the Emacs bug should have been fixed
+	      (message 
+	       "Emacs process output error: Buffer changed to %s" 
+	       (current-buffer)))
+	  ;; recover from the bug
+	  (set-buffer buf))
       (vm-imap-protocol-error "No response from the IMAP server"))))
 
 
@@ -3215,6 +3222,14 @@ only marked messages are loaded, other messages are ignored."
     ;; FIXME - is this needed?  Is it correct?
     ;; (vm-display nil nil '(vm-load-message vm-refresh-message)
     ;;    (list this-command))	
+    ;; Refresh the current message display so that mime is decoded
+    (cond ((eq vm-system-state 'previewing)
+	   (setq vm-mime-decoded nil)
+	   (vm-preview-current-message))
+	  ((or (eq vm-system-state 'showing) 
+	       (eq vm-system-state 'reading))
+	   (setq vm-mime-decoded nil)
+	   (vm-show-current-message)))
     (vm-update-summary-and-mode-line)
     ))
 
@@ -3242,7 +3257,8 @@ only marked messages are unloaded, other messages are ignored."
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 1)
-  (when (null count) (setq count 1))
+  (when (null count) 
+    (setq count 1))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-marked-or-prefixed-messages count))
 	(buffer-read-only nil)
