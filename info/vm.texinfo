@@ -4706,35 +4706,51 @@ developers/programmers.
 @menu
 * Folder Internals::      Structure of the folders
 * Message Internals::     Structure of the message data structure
+* Summary Internals::     Details of summary generation
 @end menu
 
 @node Folder Internals, Message Internals , , Internals
 @section Folder Internals
 
+@cindex mbox
 By default, VM stores mail folders in the Unix @code{mbox} format,
-described in the RFC 4155 specification of the Internet Engineering Task
-Force.  In this format, the mail folder is a text file consisting of a
-sequence of messages, with each message consisting of a series of
+described in the RFC 4155 specification of the Internet Engineering
+Task Force.  In this format, the mail folder is a text file consisting
+of a sequence of messages, with each message consisting of a series of
 headers followed by a message body.  The beginning of each message is
 delineated by a separator line starting with the string ``From '' and
-the end by a blank line.  To make sure that such a line exists, VM adds
-its own header line of the form ``From VM ...'' where the ``...''
-records the time at which VM first saw the message.  The format of the
+the end of the message by a blank line.  The leading separator line in
+VM folder is of the form ``From VM ...'' where the ``...''  records
+the time at which VM first saw the message.  The format of the
 individual messages is as per the RFC 2822 specification, except that
 Line-Feed characters may be used to delineate the end of lines in the
-"Unix" format.  
+"Unix" format.
 
-In addition to the Unix mbox format (which is called the @code{From_}
-format), VM also handles the MMDF format and two versions of the System
-V Unix format and the Emacs Rmail's Babyl format.  The variable
-@code{vm-folder-type} stores the type of the folder being used.
+@vindex vm-folder-type
+@cindex From_ folder type
+@cindex BellFrom_ folder type
+@cindex From_with-Content-Length folder type
+@cindex System V
+Three variants of the @code{mbox} format are recognized by VM, called
+@code{From_}, @code{BellFrom_} and @code{From_with-Content-Length}.
+In a @code{From_} type mbox, every message has a leading and trailing
+separator line, as indicated above.  In a @code{BellFrom_} type mbox,
+the trailing separator line can be missing.  (This is so that the 
+mbox's from the old System V format can be handled.)  In a
+@code{From_with-Content-Length} type mbox, the @code{From} seperator
+line stores the length of the message.  So, no trailing separator line
+is required.
 
+@cindex MMDF format
+@cindex Babyl format
+In addition to these mbox formats, VM also handles the MMDF format and
+the Emacs Rmail's Babyl format.  The variable @code{vm-folder-type}
+stores the type of the folder being used.
+
+@cindex X-VM-v5-Data header
 To every message, VM adds a header with the field name
 ``X-VM-v5-Data:'' and stores in it the information about the message it
-wishes to remember between sessions.  This header line is used merely
-for speed of processing.  If, for any reason, a VM folder is
-corrupted, it is safe to delete all the X-VM-v5-Data headers, and VM
-will generate them afresh when the folder is visited.
+wishes to remember between sessions.
 
 The first message of the VM folder file contains additional headers that
 VM uses for remembering information between sessions.
@@ -4823,6 +4839,7 @@ folder.  (Same proviso applies as for @code{vm-summary-buffer}.)
 
 The running state of the folder buffer is represented in a number of
 buffer-local variables:
+
 @itemize
 @item
 @code{vm-message-pointer}.  A sublist of vm-message-list starting from
@@ -4832,15 +4849,42 @@ vm-message-pointer is the current message.
 @code{vm-last-message-pointer}.  Whenever the cursor is moved, the
 previous value of vm-message-pointer is remembered in this variable.
 @item
-@code{vm-mime-decoded}. 
+@code{vm-mime-decoded}.  The MIME decoding state of the current message
+display: @code{undecoded} if the message is shown in undecoded plain
+text form, @code{decoded} if the message is shown decoded, and
+@code{buttons} if the message is shown as a series of buttons for all
+its MIME components.  The @code{D} command cycles through these
+states. 
 @item
-@code{vm-system-state}.
+@code{vm-system-state}.  The state of VM in a Folder buffer or
+Presentation buffer: 
 
+@itemize
+@item @code{previewing}.
+if a message is being previewed.
+@item @code{showing}.
+if a full message is being shown.
+@item @code{reading}.
+if message reading is in progress.
+@end itemize
+
+A message edit buffer is in state @code{editing}.
+
+A message composition buffer may be in one of these states:
+
+@itemize
+@item @code{forwarding}.
+if a message is being forwarded.
+@item @code{replying}.
+if a message is being replied to.
+@item @code{redistributing}.
+if a message is being redistributed.
+@end itemize
 @end itemize
 
 
 
-@node Message Internals, , Folder Internals, Internals
+@node Message Internals, Summary Internals, Folder Internals, Internals
 @section Message Internals
 
 The message data structure is a vector containing various pieces of
@@ -5197,6 +5241,65 @@ location data vector, because only one message body can be stored in
 the Folder buffer, but have separate soft data vectors.  The other
 sub-vectors are shared with the underlying real folders.
 
+
+@node Summary Internals,, Message Internals, Internals
+@section Summary Internals
+
+@vindex vm-summary-line-format
+@cindex summary line, tokenized
+Generating a summary is quite a time-consuming operation.  VM uses a
+variety of tricks to speed up the generation of summaries.  The format
+of the summary lines is specified in the variable
+@code{vm-summary-line-format}.  The information that needs to go into
+the summary line is divided into two classes:
+
+@itemize
+@item
+Information that is fixed for each message.  Examples include the
+subject, author and other header information.
+@item
+Information that is variable during a VM session.  Examples include
+the message number and thread indentation.
+@end itemize
+
+A @emph{tokenized summary line} is a list whose elements can be
+strings, representing fixed information in a message, and tokens,
+representing variable information.  VM calculates a tokenized summary
+line for each message and caches it in the cached-data vector.
+The following forms of tokens are used in tokenized summary lines:
+
+@itemize
+@item number.
+Stands for the message number in the linear order of the summary.
+@item mark.
+Stands for an indicator of message mark (whether the message is marked
+at present).
+@item thread-indent.
+Stands for the indentation to be used for the message's summary
+depending on its position in the message thread.
+@item group-begin, group-end.
+Brackets used to denote groups of items that might have particular
+formating constraints.
+@end itemize
+
+The function @code{vm-tokenized-summary-insert} converts a tokenized
+summary line into a string and inserts it in the summary buffer.  The
+minibuffer message ``Generating summary...'' is used to show the
+progress of generating summary lines from tokenized summaries.
+
+Buffer local variables in each Folder buffer responsible for
+maintaining summary information:
+
+@itemize
+@item
+@code{vm-summary-pointer}.
+@item
+@code{vm-summary-redo-start-point}.
+@item
+@code{vm-summary-redo-end-point}.
+@item
+@code{vm-messages-needing-summary-update}
+@end itemize
 
 @node Concept Index, Key Index, Internals, Top
 @unnumbered Concept Index

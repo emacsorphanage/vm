@@ -5525,11 +5525,11 @@ append a space to words that complete unambiguously.")
 (defvar vm-kept-pop-buffers nil
   "* Variable that holds the old trace buffers of POP sessions for
   debugging purposes.")
-(make-variable-buffer-local 'vm-kept-pop-buffers)
+;; (make-variable-buffer-local 'vm-kept-pop-buffers)
 (defvar vm-kept-imap-buffers nil
   "* Variable that holds the old trace buffers of IMAP sessions for
   debugging purposes.")
-(make-variable-buffer-local 'vm-kept-imap-buffers)
+;; (make-variable-buffer-local 'vm-kept-imap-buffers)
 ;; Flag to make POP/IMAP code remember old trace buffers
 (defvar vm-pop-keep-trace-buffer nil
   "* Set this to non-nil to retain a limited number of POP session

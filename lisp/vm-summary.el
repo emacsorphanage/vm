@@ -113,8 +113,9 @@ mandatory."
       (vm-set-hooks-for-frame-deletion)))
 
 (defun vm-do-summary (&optional start-point)
-  "Generate summary for all the messages in START-POINT (a list
-of messages) or all the messages in the current folder."
+  "Generate summary lines for all the messages in the optional
+argument START-POINT (a list of messages) or, if it is nil, all
+the messages in the current folder."
   (let ((m-list (or start-point vm-message-list))
 	mp m tr trs tre
 	(n 0)
@@ -129,7 +130,8 @@ of messages) or all the messages in the current folder."
       (setq line-move-ignore-invisible vm-summary-show-threads)
       (let ((buffer-read-only nil)
 	    (modified (buffer-modified-p))
-	    (debug vm-summary-debug))
+	    (debug nil) ; vm-summary-debug, if necessary
+	    )
 	(unwind-protect
 	    (progn
 	      (if start-point
@@ -194,7 +196,8 @@ of messages) or all the messages in the current folder."
 	  (set-buffer-modified-p modified))
 	(run-hooks 'vm-summary-redo-hook)))
     (if (>= n modulus)
-	(message "Generating summary... done"))))
+	(unless vm-summary-debug 
+	  (message "Generating summary... done")))))
 
 (defun vm-summary-toggle-thread-folding (&optional visible)
   "Toggle the thread folding at point."
@@ -218,6 +221,11 @@ of messages) or all the messages in the current folder."
           (delete-char 1))))))
 
 (defun vm-do-needed-summary-rebuild ()
+  "Rebuild the summary lines of all the messages starting at
+`vm-summary-redo-start-point'.  Also, reset the summary pointer
+to the current message.  Do the latter anyway if
+`vm-need-summary-pointer-update' is non-NIL.  All this, only if
+the Summary buffer exists. "
   (if (and vm-summary-redo-start-point vm-summary-buffer)
       (progn
 	(vm-copy-local-variables vm-summary-buffer 'vm-summary-show-threads)
@@ -922,6 +930,7 @@ message in bytes, kilobytes or megabytes.      USR, 2010-05.13"
            (format "%dM" size)))))
 
 (defun vm-su-spam-score-aux (m)
+  "Return the numeric spam level for M."
   (let ((spam-status (vm-get-header-contents m "X-Spam-Status:")))
     (if (string-match "\\(hits\\|score\\)=\\([+-]?[0-9.]+\\)" spam-status)
         (string-to-number (match-string 2 spam-status))
@@ -1416,7 +1425,8 @@ Call this function if you made changes to `vm-summary-format'."
     ;; Regenerate the summary
     (message "Recreating summary...")
     (vm-update-summary-and-mode-line)
-    (message "Recreating summary... done"))
+    (unless vm-summary-debug
+      (message "Recreating summary... done")))
   (message "Fixing your summary... done"))
 
 (defun vm-su-thread-indent (m)

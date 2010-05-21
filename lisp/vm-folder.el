@@ -4255,6 +4255,21 @@ files."
 				   dont-read-attributes
 				   gobble-order
 				   labels first-time)
+  ;; We are only guessing what this function does.  USR, 2010-05-20
+  ;; This is called in a Folder buffer, which already has messages
+  ;; loaded into it, but some of the messages (the "new" messages)
+  ;; have not been parsed and separated yet.  
+  ;; The function first builds a vm-message-list.
+  ;; Unless DONT-READ-ATTRIBUTES is non-nil, it reads the message
+  ;; attributes in the X-VM-v5-Data headers and stores them.
+  ;; If GOBBLE-ORDER is non-nil, it reads the X-VM-Message-Order
+  ;; header and uses it to reorder the messages.
+  ;; If vm-summary-show-threads is non-nil, it builds threads.
+  ;; If vm-ml-sort-keys is non-nil, sorts the messages accordingly.
+  ;; If LABELS is non-nil, they are added to the message labels of all 
+  ;; the new messages.
+  ;; If FIRST-TIME is non-nil, arrived-message-hook functions are
+  ;; called. 
   (let ((tail-cons (vm-last vm-message-list))
 	b-list new-messages)
     (save-excursion
