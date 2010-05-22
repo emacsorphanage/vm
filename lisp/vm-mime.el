@@ -4774,10 +4774,8 @@ created."
   ;; A message is considered plain if
   ;; - it does not have encoded headers, and
   ;; - - it does not have a MIME layout, or
-  ;; - - it has a text/plain component as its first element with a
-  ;; - -   character set in vm-mime-default-face-charsets and the
-  ;; - -   encoding is unibyte (7bit, 8bit or binary).
-  
+  ;; - - it has a text/plain component as its first element with ASCII
+  ;; - -   character set and unibyte encoding (7bit, 8bit or binary).
   (save-match-data
     (let ((o (vm-mm-layout m))
 	  (case-fold-search t))
@@ -4785,9 +4783,9 @@ created."
 	   (or (not (vectorp o))
 	       (and (vm-mime-types-match "text/plain"
 					 (car (vm-mm-layout-type o)))
-		    (let* ((charset (or (vm-mime-get-parameter o "charset")
-					"us-ascii")))
-		      (vm-mime-default-face-charset-p charset))
+		    (string-match "^us-ascii$"
+				  (or (vm-mime-get-parameter o "charset")
+				      "us-ascii"))
 		    (string-match "^\\(7bit\\|8bit\\|binary\\)$"
 				  (vm-mm-layout-encoding o))))))))
 
