@@ -3170,14 +3170,13 @@ only marked messages are loaded, other messages are ignored."
 ;;     (if (not used-marks) 
 ;; 	(setq mlist (list (car vm-message-pointer))))
     (save-excursion
-      (message "Retrieving message body... ")
       (while mlist
-	(when (> n 0)
-	  (message "Retrieving message body... %s" n))
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
 	(when (vm-body-to-be-retrieved-of mm)
+	  (when (> n 0)
+	    (message "Retrieving message body... %s" n))
 	  (when (not (eq vm-folder-access-method 'imap))
 	    (error "This is currently available only for imap folders."))
 	  (setq fetch-method "imap")	; other methods to be added
@@ -3213,11 +3212,11 @@ only marked messages are loaded, other messages are ignored."
 	   ;; update the message data
 	   (vm-set-body-to-be-retrieved-flag mm nil)
 	   (vm-set-line-count-of mm nil)
-	   ))
+	   (setq n (1+ n))))
 	(setq mlist (cdr mlist))
-	(setq n (1+ n))
 	)
-      (message "Retrieving message body... done")
+      (when (> n 0)
+	(message "Retrieving message body... done"))
       )
     ;; FIXME - is this needed?  Is it correct?
     ;; (vm-display nil nil '(vm-load-message vm-refresh-message)

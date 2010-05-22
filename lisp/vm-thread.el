@@ -45,6 +45,12 @@
 (defsubst vm-th-set-children-of (id-sym ml)
   (put id-sym 'children ml))
 
+(defsubst vm-th-descendants-of (id-sym)
+  (get id-sym 'descendants))
+
+(defsubst vm-th-set-descendants-of (id-sym ml)
+  (put id-sym 'descendants ml))
+
 (defsubst vm-th-parent-of (id-sym)
   (symbol-value id-sym))
 
@@ -241,6 +247,8 @@ will be visible."
       (setq message-list (cdr message-list)))))
 
 (defun vm-thread-list (message)
+  "Returns the thread-list, i.e., the lineage of MESSAGE, as a list of
+symbols interned in vm-thread-obarray."
   (let ((done nil)
 	(m message)
 	(loop-recovery-point nil)

@@ -4993,6 +4993,9 @@ buffers also have this field set to the corresponding Folder buffer.)
 thread-indentation. Indentation level of the message in its message
 thread.
 @item
+thread-list.  List of symbols from @code{vm-thread-obarray} that give
+this message's lieage.
+@item
 babyl-frob-flag.
 @item
 saved-virtual-attributes.  Saved attributes if the message switched from
@@ -5300,6 +5303,35 @@ maintaining summary information:
 @item
 @code{vm-messages-needing-summary-update}
 @end itemize
+
+@vindex vm-thread-obarray
+@vindex vm-subject-obarray
+Message threads required for threaded summaries are calculated using two
+hash tables @code{vm-thread-obarray} and @code{vm-subject-obarray}.  The
+former keeps track of the thread obtained by
+following parent and reference chains.  The latter keeps track of
+messages with the same subject.
+
+The unique message ID of a message is interned in each of these hash
+tables.  The @code{vm-thread-obarray} table stores the following
+information for each message ID:
+
+@itemize
+@item messages.
+The message structs that carry this message ID.  (Why are there several
+of them?)
+@item date.
+The date of the message.
+@item parent.
+The interned message ID of the parent of this message.
+@item children.
+The interned message ID's of all the children of this message.
+@item youngest-date.
+The date of the youngest message in the thread.
+@item oldest-date.
+The date of the oldest message in the thread.
+@end itemize
+
 
 @node Concept Index, Key Index, Internals, Top
 @unnumbered Concept Index
