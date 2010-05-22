@@ -90,6 +90,10 @@ will be visible."
 	(schedule-reindents message-list)
 	m parent parent-sym id id-sym date refs old-parent-sym)
     (while mp
+      ;; temporary code for debugging purposes; should be removed
+      ;; USR, 2010-05-22
+      ;; (if (equal (vm-full-name-of (car mp)) "Xuhui Li")
+      ;; 	  (debug "now the message from Xuhui"))
       (setq m (car mp)
 	    parent (vm-th-parent m)
 	    id (vm-su-message-id m)
