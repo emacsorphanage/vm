@@ -3221,14 +3221,16 @@ only marked messages are loaded, other messages are ignored."
     ;; FIXME - is this needed?  Is it correct?
     ;; (vm-display nil nil '(vm-load-message vm-refresh-message)
     ;;    (list this-command))	
+;; The following is being reverted because it is giving an error in
+;; edit-message.  (Cf. revno 796)
     ;; Refresh the current message display so that mime is decoded
-    (cond ((eq vm-system-state 'previewing)
-	   (setq vm-mime-decoded nil)
-	   (vm-preview-current-message))
-	  ((or (eq vm-system-state 'showing) 
-	       (eq vm-system-state 'reading))
-	   (setq vm-mime-decoded nil)
-	   (vm-show-current-message)))
+;;     (cond ((eq vm-system-state 'previewing)
+;; 	   (setq vm-mime-decoded nil)
+;; 	   (vm-preview-current-message))
+;; 	  ((or (eq vm-system-state 'showing) 
+;; 	       (eq vm-system-state 'reading))
+;; 	   (setq vm-mime-decoded nil)
+;; 	   (vm-show-current-message)))
     (vm-update-summary-and-mode-line)
     ))
 

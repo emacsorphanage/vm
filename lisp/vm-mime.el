@@ -4243,6 +4243,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	;; MIME buttons still have markers into the Presentation buffer.
 	(save-excursion
 	  (vm-load-message 1)
+	  (vm-preview-current-message)
 	  (message "Message loaded.  Rerun the operation."))
       (error "Aborted"))
 
