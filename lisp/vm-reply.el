@@ -413,7 +413,9 @@ specified by `vm-included-text-headers' and
     (save-excursion
       (goto-char (point-min))
       (vm-decode-mime-message-headers))
-    (vm-decode-mime-layout layout)
+    (let ((vm-mime-alternative-select-method 'best-internal))
+					; override 'all and 'best
+      (vm-decode-mime-layout layout))
     (if vm-mime-yank-attachments
 	;; FIXME This uses a function of vm-pine.el
 	(vm-decode-postponed-mime-message))))
