@@ -4775,8 +4775,8 @@ created."
   ;; - it does not have encoded headers, and
   ;; - - it does not have a MIME layout, or
   ;; - - it has a text/plain component as its first element with a
-  ;; - -   character set in vm-mime-default-charsets and the encoding
-  ;; - -   is unibyte (7bit, 8bit or binary).
+  ;; - -   character set in vm-mime-default-face-charsets and the
+  ;; - -   encoding is unibyte (7bit, 8bit or binary).
   
   (save-match-data
     (let ((o (vm-mm-layout m))
