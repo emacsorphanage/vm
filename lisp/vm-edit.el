@@ -36,19 +36,15 @@ message.  If you don't want your edited version of the message to
 replace the original, use C-c C-] and the edit will be aborted."
   (interactive "P")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-folder-read-only)
-  (vm-error-if-folder-empty)
   (if (and (vm-virtual-message-p (car vm-message-pointer))
 	   (null (vm-virtual-messages-of (car vm-message-pointer))))
       (error "Can't edit unmirrored virtual messages."))
   (if prefix-argument
-      (if (vm-edited-flag (car vm-message-pointer))
-	  (progn
-	    (vm-set-edited-flag-of (car vm-message-pointer) nil)
-	    (vm-update-summary-and-mode-line)))
+      (when (vm-edited-flag (car vm-message-pointer))
+	(vm-set-edited-flag-of (car vm-message-pointer) nil)
+	(vm-update-summary-and-mode-line))
     (let ((mp vm-message-pointer)
 	  (offset (save-excursion
 		    (if vm-presentation-buffer
@@ -56,57 +52,56 @@ replace the original, use C-c C-] and the edit will be aborted."
 		    (- (point) (vm-headers-of (car vm-message-pointer)))))
 	  (edit-buf (vm-edit-buffer-of (car vm-message-pointer)))
 	  (folder-buffer (current-buffer)))
-      ;; FIXME try to load the body before saving
-      (if (vm-body-to-be-retrieved-of (car vm-message-pointer))
-	  (error "Message %s body has not been retrieved"
-		 (vm-number-of (car vm-message-pointer))))
-      (if (not (and edit-buf (buffer-name edit-buf)))
-	  (progn
-	    (vm-save-restriction
-	      (widen)
-	      (setq edit-buf
-		    (generate-new-buffer
-		     (format "edit of %s's note re: %s"
-			     (vm-su-full-name (car vm-message-pointer))
-			     (vm-su-subject (car vm-message-pointer)))))
-	      (if vm-fsfemacs-mule-p
-		  (set-buffer-multibyte nil))
-	      (vm-set-edit-buffer-of (car mp) edit-buf)
-	      (copy-to-buffer edit-buf
-			      (vm-headers-of (car mp))
-			      (vm-text-end-of (car mp))))
-	    (set-buffer edit-buf)
-	    (set-buffer-modified-p nil)
-	    (goto-char (point-min))
-	    (if (< offset 0)
-		(search-forward "\n\n" nil t)
-	      (forward-char offset))
-	    (funcall (or vm-edit-message-mode 'text-mode))
-	    (set-keymap-parent vm-edit-message-map (current-local-map))
-	    (use-local-map vm-edit-message-map)
-	    ;; (list (car mp)) because a different message may
-	    ;; later be stuffed into a cons linked that is linked
-	    ;; into the folder's message list.
-	    (setq vm-message-pointer (list (car mp))
-		  vm-mail-buffer folder-buffer
-		  vm-system-state 'editing
-		  buffer-offer-save t)
-	    (run-hooks 'vm-edit-message-hook)
-	    (message
-	     (substitute-command-keys
-	      "Type \\[vm-edit-message-end] to end edit, \\[vm-edit-message-abort] to abort with no change.")))
-	(set-buffer edit-buf))
-      (if (and vm-mutable-frames vm-frame-per-edit
-	       (vm-multiple-frames-possible-p))
-	  (let ((w (vm-get-buffer-window edit-buf)))
-	    (if (null w)
-		(progn
-		  (vm-goto-new-frame 'edit)
-		  (vm-set-hooks-for-frame-deletion))
-	      (save-excursion
-		(select-window w)
-		(and vm-warp-mouse-to-new-frame
-		     (vm-warp-mouse-to-frame-maybe (vm-window-frame w)))))))
+      (vm-load-message)
+      ;; FIXME the following is really unnecessary
+      (vm-assert (not (vm-body-to-be-retrieved-of (car vm-message-pointer))))
+      (if (and edit-buf (buffer-name edit-buf))
+	  (set-buffer edit-buf)
+	(vm-save-restriction
+	 (widen)
+	 (setq edit-buf
+	       (generate-new-buffer
+		(format "edit of %s's note re: %s"
+			(vm-su-full-name (car vm-message-pointer))
+			(vm-su-subject (car vm-message-pointer)))))
+	 (if vm-fsfemacs-mule-p
+	     (set-buffer-multibyte nil))
+	 (vm-set-edit-buffer-of (car mp) edit-buf)
+	 (copy-to-buffer edit-buf
+			 (vm-headers-of (car mp))
+			 (vm-text-end-of (car mp))))
+	(set-buffer edit-buf)
+	(set-buffer-modified-p nil)
+	(goto-char (point-min))
+	(if (< offset 0)
+	    (search-forward "\n\n" nil t)
+	  (forward-char offset))
+	(funcall (or vm-edit-message-mode 'text-mode))
+	(set-keymap-parent vm-edit-message-map (current-local-map))
+	(use-local-map vm-edit-message-map)
+	;; (list (car mp)) because a different message may
+	;; later be stuffed into a cons linked that is linked
+	;; into the folder's message list.
+	(setq vm-message-pointer (list (car mp))
+	      vm-mail-buffer folder-buffer
+	      vm-system-state 'editing
+	      buffer-offer-save t)
+	(run-hooks 'vm-edit-message-hook)
+	(message
+	 (substitute-command-keys
+	  "Type \\[vm-edit-message-end] to end edit, \\[vm-edit-message-abort] to abort with no change."))
+	)
+      (when (and vm-mutable-frames vm-frame-per-edit
+		 (vm-multiple-frames-possible-p))
+	(let ((w (vm-get-buffer-window edit-buf)))
+	  (if (null w)
+	      (progn
+		(vm-goto-new-frame 'edit)
+		(vm-set-hooks-for-frame-deletion))
+	    (save-excursion
+	      (select-window w)
+	      (and vm-warp-mouse-to-new-frame
+		   (vm-warp-mouse-to-frame-maybe (vm-window-frame w)))))))
       (vm-display edit-buf t '(vm-edit-message vm-edit-message-other-frame)
 		  (list this-command 'editing-message)))))
 
@@ -142,10 +137,7 @@ data is discarded only from the marked messages in the current folder."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (let ((mlist (vm-select-marked-or-prefixed-messages count)))
     (vm-discard-cached-data-internal mlist))
   (vm-display nil nil '(vm-discard-cached-data) '(vm-discard-cached-data))
@@ -166,11 +158,11 @@ data is discarded only from the marked messages in the current folder."
 	    (uid-validity (vm-imap-uid-validity-of m))
 	    (headers-flag (vm-headers-to-be-retrieved-of m))
 	    (body-flag (vm-body-to-be-retrieved-of m)))
-        (fillarray (vm-cache-of m) nil)
+        (fillarray (vm-cached-data-of m) nil)
         (vm-set-imap-uid-of m uid)
 	(vm-set-imap-uid-validity-of m uid-validity)
-	(vm-set-headers-to-be-retrieved m headers-flag)
-	(vm-set-body-to-be-retrieved m body-flag))
+	(vm-set-headers-to-be-retrieved-of m headers-flag)
+	(vm-set-body-to-be-retrieved-of m body-flag))
       (vm-set-vheaders-of m nil)
       (vm-set-vheaders-regexp-of m nil)
       (vm-set-text-of m nil)

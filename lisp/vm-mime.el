@@ -203,6 +203,8 @@ configuration.  "
     s ))
 
 (defun vm-mm-layout (m)
+  "Returns the mime layout of message M, either from the cache or by
+freshly parsing the message contents."
   (or (vm-mime-layout-of m)
       (progn (vm-set-mime-layout-of m (vm-mime-parse-entity-safe m))
 	     (vm-mime-layout-of m))))
@@ -392,7 +394,7 @@ configuration.  "
 (defun vm-mime-base64-decode-region (start end &optional crlf)
   (or (markerp end) (setq end (vm-marker end)))
   (and (> (- end start) 200)
-       (message "Decoding base64..."))
+       (vm-emit-mime-decoding-message "Decoding base64..."))
   (let ((work-buffer nil)
 	(done nil)
 	(counter 0)
@@ -475,7 +477,7 @@ configuration.  "
 	    (delete-region (point) end))))
       (and work-buffer (kill-buffer work-buffer))))
   (and (> (- end start) 200)
-       (message "Decoding base64... done")))
+       (vm-emit-mime-decoding-message "Decoding base64... done")))
 
 (defun vm-mime-base64-encode-region (start end &optional crlf B-encoding)
   (or (markerp end) (setq end (vm-marker end)))
@@ -574,7 +576,7 @@ configuration.  "
 
 (defun vm-mime-qp-decode-region (start end)
   (and (> (- end start) 200)
-       (message "Decoding quoted-printable..."))
+       (vm-emit-mime-decoding-message "Decoding quoted-printable..."))
   (let ((work-buffer nil)
 	(buf (current-buffer))
 	(case-fold-search nil)
@@ -654,7 +656,7 @@ configuration.  "
 	  (delete-region (point) end))
       (and work-buffer (kill-buffer work-buffer))))
   (and (> (- end start) 200)
-       (message "Decoding quoted-printable... done")))
+       (vm-emit-mime-decoding-message "Decoding quoted-printable... done")))
 
 (defun vm-mime-qp-encode-region (start end &optional Q-encoding quote-from)
   (and (> (- end start) 200)
@@ -749,7 +751,7 @@ configuration.  "
       (and work-buffer (kill-buffer work-buffer)))))
 
 (defun vm-mime-uuencode-decode-region (start end &optional crlf)
-  (message "Decoding uuencoded stuff...")
+  (vm-emit-mime-decoding-message "Decoding uuencoded stuff...")
   (let ((work-buffer nil)
 	(region-buffer (current-buffer))
 	(case-fold-search nil)
@@ -798,7 +800,7 @@ configuration.  "
 	  (delete-region (point) end))
       (and work-buffer (kill-buffer work-buffer))
       (vm-error-free-call 'delete-file tempfile)))
-  (message "Decoding uuencoded stuff... done"))
+  (vm-emit-mime-decoding-message "Decoding uuencoded stuff... done"))
 
 (defun vm-decode-mime-message-headers (&optional m)
   (let ((case-fold-search t)
@@ -901,6 +903,11 @@ configuration.  "
     string ))
 
 (defun vm-reencode-mime-encoded-words ()
+  "Reencode in mime the words in the current buffer that need
+encoding.  The words that need encoding are expected to have
+text-properties set with the appropriate characte set.  This would
+have been done if the contents of the buffer are the result of a
+previous mime decoding."
   (let ((charset nil)
 	start coding pos q-encoding
 	old-size
@@ -935,6 +942,11 @@ configuration.  "
 	(setq start pos)))))
 
 (defun vm-reencode-mime-encoded-words-in-string (string)
+  "Reencode in mime the words in STRING that need
+encoding.  The words that need encoding are expected to have
+text-properties set with the appropriate characte set.  This would
+have been done if the contents of the buffer are the result of a
+previous mime decoding."
   (if (and vm-display-using-mime
 	   (text-property-any 0 (length string) 'vm-string t string))
       (vm-with-string-as-temp-buffer string 'vm-reencode-mime-encoded-words)
@@ -1427,7 +1439,10 @@ source of the message."
 					 (vm-start-of real-m)
 					 (vm-end-of real-m)))
 	    (set-buffer-modified-p modified)))
+	;; make a modifiable copy of the message struct
 	(setq mm (copy-sequence m))
+	;; also a modifiable copy of the location data
+	;; other data will be shared with the Folder buffer
 	(vm-set-location-data-of mm (vm-copy (vm-location-data-of m)))
 	(set-marker (vm-start-of mm) (point-min))
 	(set-marker (vm-headers-of mm) (+ (vm-start-of mm)
@@ -1450,14 +1465,145 @@ source of the message."
 	(goto-char (point-min))
 	(cond ((and (vm-message-access-method-of mm)
 		    (vm-body-to-be-retrieved-of mm))
-	       (vm-fetch-message 
-		(list (vm-message-access-method-of mm)) mm))
+	       (condition-case err
+		   (vm-fetch-message 
+		    (list (vm-message-access-method-of mm)) mm)
+		 (error
+		  (message "Cannot fetch; %s" (error-message-string err)))))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 	       (vm-fetch-message (read (current-buffer)) mm)))
 	(set-buffer-modified-p modified)
 	;; fixup the reference to the message
 	(setcar vm-message-pointer mm)))))
 
+(defun vm-make-fetch-copy-if-necessary (m)
+  "Create a copy of the message M in the Fetch Buffer if it is
+not already present.  If working in headers-only mode, the copy
+is made from the external source of the message."
+  (unless (and vm-fetch-buffer
+	       (eq (vm-real-message-sym-of m)
+		   (with-current-buffer vm-fetch-buffer
+		     (vm-real-message-sym-of (car vm-message-pointer)))))
+    (vm-make-fetch-copy m)))
+
+
+(defun vm-make-fetch-copy (m)
+  "Create a copy of the message M in the Fetch Buffer.  If
+working in headers-only mode, the copy is made from the external
+source of the message."
+  (let ((mail-buffer (current-buffer))
+	b mm
+	(real-m (vm-real-message-of m))
+	(modified (buffer-modified-p)))
+    (cond ((or (null vm-fetch-buffer)
+	       (null (buffer-name vm-fetch-buffer)))
+	   (let ((default-enable-multibyte-characters t))
+	     (setq b (generate-new-buffer (concat (buffer-name)
+						  " Fetch"))))
+	   (save-excursion
+	     (set-buffer b)
+	     (if (fboundp 'buffer-disable-undo)
+		 (buffer-disable-undo (current-buffer))
+	       ;; obfuscation to make the v19 compiler not whine
+	       ;; about obsolete functions.
+	       (let ((x 'buffer-flush-undo))
+		 (funcall x (current-buffer))))
+	     (setq mode-name "VM Message"
+		   major-mode 'vm-message-mode
+		   vm-message-pointer (list nil)
+		   vm-mail-buffer mail-buffer
+		   mode-popup-menu (and vm-use-menus
+					(vm-menu-support-possible-p)
+					(vm-menu-mode-menu))
+		   ;; Default to binary file type for DOS/NT.
+		   buffer-file-type t
+		   ;; Tell XEmacs/MULE not to mess with the text on writes.
+		   buffer-read-only t
+		   mode-line-format vm-mode-line-format)
+	     ;; scroll in place messes with scroll-up and this loses
+	     (defvar scroll-in-place)
+	     (make-local-variable 'scroll-in-place)
+	     (setq scroll-in-place nil)
+	     (if (fboundp 'set-buffer-file-coding-system)
+		 (set-buffer-file-coding-system (vm-binary-coding-system) t))
+	     (vm-fsfemacs-nonmule-display-8bit-chars)
+	     (if (and vm-mutable-frames vm-frame-per-folder
+		      (vm-multiple-frames-possible-p))
+		 (vm-set-hooks-for-frame-deletion))
+	     (use-local-map vm-mode-map)
+	     (vm-toolbar-install-or-uninstall-toolbar)
+	     (and (vm-menu-support-possible-p)
+		  (vm-menu-install-menus))
+	     (run-hooks 'vm-message-mode-hook))
+	   (setq vm-fetch-buffer b)))
+    (setq b vm-fetch-buffer)
+    (setq vm-mime-decoded nil)
+    ;; W3 or some other external mode might set some local colors
+    ;; in this buffer; remove them before displaying a different
+    ;; message here.
+    (if (fboundp 'remove-specifier)
+	(progn
+	  (remove-specifier (face-foreground 'default) b)
+	  (remove-specifier (face-background 'default) b)))
+    (save-excursion
+      (set-buffer (vm-buffer-of real-m))
+      (save-restriction
+	(widen)
+	;; must reference this now so that headers will be in
+	;; their final position before the message is copied.
+	;; otherwise the vheader offset computed below will be
+	;; wrong.
+	(vm-vheaders-of real-m)
+	(set-buffer b)
+	;; do not keep undo information in message buffers 
+	(setq buffer-undo-list t)
+	(widen)
+	(let ((buffer-read-only nil)
+	      (inhibit-read-only t))
+	  (setq modified (buffer-modified-p))
+	  (unwind-protect
+	      (progn
+		(erase-buffer)
+		(insert-buffer-substring (vm-buffer-of real-m)
+					 (vm-start-of real-m)
+					 (vm-end-of real-m)))
+	    (set-buffer-modified-p modified)))
+	(setq mm (copy-sequence m))
+	(vm-set-location-data-of mm (vm-copy (vm-location-data-of m)))
+	(vm-set-softdata-of mm (vm-copy (vm-softdata-of m)))
+	(vm-set-message-id-number-of mm 1)
+	(vm-set-buffer-of mm (current-buffer))
+	(set-marker (vm-start-of mm) (point-min))
+	(set-marker (vm-headers-of mm) (+ (vm-start-of mm)
+					  (- (vm-headers-of real-m)
+					     (vm-start-of real-m))))
+	(set-marker (vm-vheaders-of mm) (+ (vm-start-of mm)
+					   (- (vm-vheaders-of real-m)
+					      (vm-start-of real-m))))
+	(set-marker (vm-text-of mm) (+ (vm-start-of mm)
+				       (- (vm-text-of real-m)
+					  (vm-start-of real-m))))
+	(set-marker (vm-text-end-of mm) (+ (vm-start-of mm)
+					   (- (vm-text-end-of real-m)
+					      (vm-start-of real-m))))
+	(set-marker (vm-end-of mm) (+ (vm-start-of mm)
+				      (- (vm-end-of real-m)
+					 (vm-start-of real-m))))
+	(vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
+	;; fetch the real message now
+	(goto-char (point-min))
+	(cond ((and (vm-message-access-method-of mm)
+		    (vm-body-to-be-retrieved-of mm))
+	       (condition-case err
+		   (vm-fetch-message 
+		    (list (vm-message-access-method-of mm)) mm)
+		 (error
+		  (message "Cannot fetch; %s" (error-message-string err)))))
+	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
+	       (vm-fetch-message (read (current-buffer)) mm)))
+	(set-buffer-modified-p modified)
+	;; fixup the reference to the message
+	(setcar vm-message-pointer mm)))))
 
 (defun vm-fetch-message (storage mm)
   "Fetch the real message based on the \"^X-VM-Storage:\" header.
@@ -1508,6 +1654,8 @@ the actual message from the file \"message-11\"."
   "Insert the message with message descriptor MM stored in the given FILENAME."
   (insert-file-contents filename nil nil nil t))
 
+(fset 'vm-fetch-mode 'vm-mode)
+(put 'vm-fetch-mode 'mode-class 'special)
 (fset 'vm-presentation-mode 'vm-mode)
 (put 'vm-presentation-mode 'mode-class 'special)
 
@@ -2037,12 +2185,15 @@ that recipient is outside of East Asia."
 	   (vm-detach-extent extent)))))
 
 ;;;###autoload
-(defun vm-decode-mime-message ()
+(defun vm-decode-mime-message (&optional state)
   "Decode the MIME objects in the current message.
 
 The first time this command is run on a message, decoding is done.
 The second time, buttons for all the objects are displayed instead.
 The third time, the raw, undecoded data is displayed.
+
+The optional argument STATE can specify which decode state to display:
+'decoded, 'button or 'undecoded.
 
 If decoding, the decoded objects might be displayed immediately, or
 buttons might be displayed that you need to activate to view the
@@ -2065,10 +2216,7 @@ in the buffer.  The function is expected to make the message
 `MIME presentable' to the user in whatever manner it sees fit."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (if (and (not vm-display-using-mime)
 	   (null vm-mime-display-function))
       (error "MIME display disabled, set vm-display-using-mime non-nil to enable."))
@@ -2076,26 +2224,36 @@ in the buffer.  The function is expected to make the message
       (progn
 	(vm-make-presentation-copy (car vm-message-pointer))
 	(set-buffer vm-presentation-buffer)
-	(funcall vm-mime-display-function))
+	(funcall vm-mime-display-function)
+	;; We are done here
+	)
+    (if (null state)
+	(cond ((null vm-mime-decoded)
+	       (setq state 'decoded))
+	      ((eq vm-mime-decoded 'decoded)
+	       (setq state 'buttons))
+	      ((eq vm-mime-decoded 'buttons)
+	       (setq state 'undecoded))))
     (if vm-mime-decoded
-	(if (eq vm-mime-decoded 'decoded)
-	    (let ((vm-preview-lines nil)
-		  (vm-auto-decode-mime-messages t)
-		  (vm-honor-mime-content-disposition nil)
-		  (vm-auto-displayed-mime-content-types '("multipart"))
-		  (vm-auto-displayed-mime-content-type-exceptions nil))
-	      (setq vm-mime-decoded nil)
-	      (intern (buffer-name) vm-buffers-needing-display-update)
-	      (save-excursion
-		(vm-preview-current-message))
-	      (setq vm-mime-decoded 'buttons))
-	  (let ((vm-preview-lines nil)
-		(vm-auto-decode-mime-messages nil))
-	    (intern (buffer-name) vm-buffers-needing-display-update)
-	    (vm-preview-current-message)))
+	(cond ((eq state 'buttons)
+	       (let ((vm-preview-lines nil)
+		     (vm-auto-decode-mime-messages t)
+		     (vm-honor-mime-content-disposition nil)
+		     (vm-auto-displayed-mime-content-types '("multipart"))
+		     (vm-auto-displayed-mime-content-type-exceptions nil))
+		 (setq vm-mime-decoded nil)
+		 (intern (buffer-name) vm-buffers-needing-display-update)
+		 (save-excursion
+		   (vm-preview-current-message))
+		 (setq vm-mime-decoded 'buttons)))
+	      ((eq state 'undecoded)
+	       (let ((vm-preview-lines nil)
+		     (vm-auto-decode-mime-messages nil))
+		 (intern (buffer-name) vm-buffers-needing-display-update)
+		 (vm-preview-current-message))))
       (let ((layout (vm-mm-layout (car vm-message-pointer)))
 	    (m (car vm-message-pointer)))
-	(message "Decoding MIME message...")
+	(vm-emit-mime-decoding-message "Decoding MIME message...")
 	(if (stringp layout)
 	       (error "Invalid MIME message: %s" layout))
 	(if (vm-mime-plain-message-p m)
@@ -2106,6 +2264,7 @@ in the buffer.  The function is expected to make the message
 	      (vm-make-presentation-copy (car vm-message-pointer))
 	      (vm-expose-hidden-headers))
 	  (set-buffer vm-presentation-buffer))
+	;; Are we now in the Presentation buffer?  Why?  USR, 2010-05-08
 	(if (and (interactive-p) (eq vm-system-state 'previewing))
 	    (let ((vm-display-using-mime nil))
 	      (vm-show-current-message)))
@@ -2132,7 +2291,7 @@ in the buffer.  The function is expected to make the message
 			(setq vm-mime-decoded 'decoded))
 	(intern (buffer-name vm-mail-buffer) vm-buffers-needing-display-update)
 	(vm-update-summary-and-mode-line)
-	(message "Decoding MIME message... done"))))
+	(vm-emit-mime-decoding-message "Decoding MIME message... done"))))
   (vm-display nil nil '(vm-decode-mime-message)
 	      '(vm-decode-mime-message reading-message)))
 
@@ -2301,7 +2460,7 @@ declarations in the attachments and make a decision independently."
             (charset (or (vm-mime-get-parameter layout "charset")
                          "us-ascii"))
             end buffer-size)
-        (message "Inlining text/html by %s, be patient..."
+        (message "Inlining text/html by %s..."
                  vm-mime-text/html-handler)
         (vm-mime-insert-mime-body layout)
         (setq end (point-marker))
@@ -2382,7 +2541,7 @@ declarations in the attachments and make a decision independently."
 	(buffer-read-only nil)
 	(enriched-verbose t)
 	(charset (or (vm-mime-get-parameter layout "charset") "us-ascii")))
-    (message "Decoding text/enriched, be patient...")
+    (vm-emit-mime-decoding-message "Decoding text/enriched...")
     (vm-mime-insert-mime-body layout)
     (setq end (point-marker))
     (vm-mime-transfer-decode-region layout start end)
@@ -2402,7 +2561,7 @@ declarations in the attachments and make a decision independently."
 	     nil ))
     (vm-energize-urls-in-message-region start end)
     (goto-char end)
-    (message "Decoding text/enriched... done")
+    (vm-emit-mime-decoding-message "Decoding text/enriched... done")
     t ))
 
 (defun vm-mime-display-external-generic (layout)
@@ -4079,10 +4238,22 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 (defun vm-mime-run-display-function-at-point (&optional function dispose)
   "Display the MIME object at point according to its type."
   (interactive)
+  (if  (vm-body-to-be-retrieved-of (car vm-message-pointer))
+    (if (y-or-n-p "Message must be loaded to view attachments.  Load message?")
+	;; It is not enough to just load the message because the
+	;; MIME buttons still have markers into the Presentation buffer.
+	(save-excursion
+	  (vm-load-message 1)
+	  (vm-preview-current-message)
+	  (message "Message loaded.  Rerun the operation."))
+      (error "Aborted"))
+
   ;; save excursion to keep point from moving.  its motion would
   ;; drag window point along, to a place arbitrarily far from
   ;; where it was when the user triggered the button.
   (save-excursion
+    ;; FIXME the following should be unnecessary
+    (vm-assert (not (vm-body-to-be-retrieved-of (car vm-message-pointer))))
     (let ((e (vm-find-layout-extent-at-point))
 	  retval )
       (cond ((null e) nil)
@@ -4091,7 +4262,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		      e))
 	    (vm-xemacs-p
 	     (funcall (or function (extent-property e 'vm-mime-function))
-		      e))))))
+		      e)))))))
 
 ;;;###autoload
 (defun vm-mime-reader-map-save-file ()
@@ -4176,13 +4347,17 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
   (unless mlist
     (or count (setq count 1))
     (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (vm-error-if-folder-empty))
+    (vm-select-folder-buffer-and-validate 1))
 
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (save-excursion
       (while mlist
-        (let (parts layout filename type disposition o)
+        (let (m parts layout filename type disposition o)
+	  (setq m (vm-real-message-of (car mlist)))
+	  (if (vm-body-to-be-retrieved-of m)
+	      (save-excursion
+		(set-buffer (vm-buffer-of m))
+		(vm-load-message 1)))
           (setq o (vm-mm-layout (car mlist)))
           (when (stringp o)
             (setq o 'none)
@@ -4201,11 +4376,11 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
                   (t (setq parts (list o))))
             
             (while parts
-              (if (vm-mime-composite-type-p
-                   (car (vm-mm-layout-type (car parts))))
-                  (setq parts 
-			(nconc (copy-sequence (vm-mm-layout-parts (car parts)))
-			       (cdr parts))))
+              (while (vm-mime-composite-type-p
+		      (car (vm-mm-layout-type (car parts))))
+		(setq parts 
+		      (nconc (copy-sequence (vm-mm-layout-parts (car parts)))
+			     (cdr parts))))
               
               (setq layout (car parts)
                     type (car (vm-mm-layout-type layout))
@@ -4331,7 +4506,7 @@ created."
     
     (if (> n 0)
         (message "%d attachment%s saved" n (if (= n 1) "" "s"))
-      (message "No attachments to be saved!"))))
+      (message "No attachments found"))))
 
 ;; for the karking compiler
 (defvar vm-menu-mime-dispose-menu)
@@ -5666,11 +5841,8 @@ The MIME object is replaced by a text/plain object that briefly
 describes what was deleted."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-folder-read-only)
-  (vm-error-if-folder-empty)
   (if (and (vm-virtual-message-p (car vm-message-pointer))
 	   (null (vm-virtual-messages-of (car vm-message-pointer))))
       (error "Can't edit unmirrored virtual messages."))
@@ -5869,7 +6041,8 @@ describes what was deleted."
 
 ;;;###autoload
 (defun vm-mime-encode-words-in-string (string &optional encoding)
-  (vm-with-string-as-temp-buffer string 'vm-mime-encode-words))
+  (and string
+       (vm-with-string-as-temp-buffer string 'vm-mime-encode-words)))
 
 (defun vm-mime-encode-headers ()
   "Encodes the headers of a message.
@@ -5891,7 +6064,8 @@ should be encoded together."
       (setq body-start (vm-marker (match-beginning 0)))
       (goto-char (point-min))
       
-      (while (re-search-forward headers body-start t)
+      (while (let ((case-fold-search t))
+	       (re-search-forward headers body-start t))
         (goto-char (match-end 0))
         (setq start (point))
         (when (not (looking-at "\\s-"))
@@ -7178,10 +7352,15 @@ the first sub part of a multipart/alternative is a text/plain part."
 This is a destructive operation and cannot be undone!"
   (interactive "p")
   (when (interactive-p)
-    (vm-check-for-killed-summary)
-    (vm-follow-summary-cursor)
-    (vm-select-folder-buffer))
+    (vm-follow-summary-cursor))
+  (vm-select-folder-buffer-and-validate)
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
+    (vm-load-message count)
+    ;; FIXME the following should be unnecessary
+    (mapcar
+     (lambda (m)
+       (vm-assert (not (vm-body-to-be-retrieved-of m))))
+     mlist)
     (save-excursion
       (while mlist
         (let ((count (vm-mime-nuke-alternative-text/html-internal (car mlist))))

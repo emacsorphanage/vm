@@ -383,6 +383,8 @@ Switch mode on/off according to ARG.
   "Prepare the composition for encrypting or signing."
   ;; encode message
   (unless (vm-mail-mode-get-header-contents "MIME-Version:")
+    (if vm-do-fcc-before-mime-encode
+	(vm-do-fcc-before-mime-encode))
     (vm-mime-encode-composition))
   (vm-mail-mode-show-headers)
   ;; ensure newline at the end
@@ -699,9 +701,7 @@ cleanup here after verification and decoding took place."
   (message "Verifying PGP cleartext message...")
   (when (interactive-p)
     (vm-follow-summary-cursor)
-    (vm-select-folder-buffer-if-possible)
-    (vm-check-for-killed-summary)
-    (vm-error-if-folder-empty))
+    (vm-select-folder-buffer-and-validate 1))
   
   ;; make a presentation copy
   (unless (eq major-mode 'vm-presentation-mode)
@@ -727,10 +727,8 @@ cleanup here after verification and decoding took place."
   (interactive)
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-if-possible)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-folder-read-only)
-  (vm-error-if-folder-empty)
     
   ;; make a presentation copy
   (unless (eq major-mode 'vm-presentation-mode)
@@ -993,9 +991,7 @@ cleanup here after verification and decoding took place."
   (interactive)
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (save-restriction
     ;; ensure we are in the right buffer
     (if vm-presentation-buffer
@@ -1177,6 +1173,8 @@ The transfer encoding done by `vm-pgg-sign' can be controlled by the variable
 (defun vm-pgg-encrypt-internal (sign)
   "Do the encrypting, if SIGN is t also sign it."
   (unless (vm-mail-mode-get-header-contents "MIME-Version:")
+    (if vm-do-fcc-before-mime-encode
+	(vm-do-fcc-before-mime-encode))
     (vm-mime-encode-composition))
   (let ((content-type (vm-mail-mode-get-header-contents "Content-Type:"))
         (encoding (vm-mail-mode-get-header-contents "Content-Transfer-Encoding:"))

@@ -311,9 +311,7 @@ or do the binding and advising on your own."
 This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (if (null vm-presentation-buffer)
       (if to-all
           (vm-followup-include-text count)
@@ -330,31 +328,15 @@ This does not work when replying to multiple messages."
   (vm-reply-include-presentation count t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;###autoload
-(defun vm-do-fcc-before-mime-encode ()
-  "The name says it all.
-Sometimes you may want to save a message unencoded, specifically not to waste
-storage for attachments which are stored on disk anyway."
-  (interactive)
-  (save-excursion
-    (goto-char (point-min))
-    (re-search-forward (regexp-quote mail-header-separator) (point-max))
-    (delete-region (match-beginning 0) (match-end 0))
-    (let ((header-end (point-marker)))
-      (mail-do-fcc header-end)
-      (goto-char header-end)
-      (insert mail-header-separator))))
 
-(defcustom vm-do-fcc-before-mime-encode nil
-  "*Non-nil means to FCC before encoding."
-  :type 'boolean
-  :group 'vm-rfaddons)
-  
-(defadvice vm-mime-encode-composition
-  (before do-fcc-before-mime-encode activate)
-  "FCC before encoding attachments if `vm-do-fcc-before-mime-encode' is t."
-  (if vm-do-fcc-before-mime-encode
-      (vm-do-fcc-before-mime-encode)))
+;; This add-on is disabled becaust it has been integrated into the
+;; core.  USR, 2010-05-01
+
+;; (defadvice vm-mime-encode-composition
+;;   (before do-fcc-before-mime-encode activate)
+;;   "FCC before encoding attachments if `vm-do-fcc-before-mime-encode' is t."
+;;   (if vm-do-fcc-before-mime-encode
+;;       (vm-do-fcc-before-mime-encode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This has been moved to the VM core.  USR, 2010-03-11
@@ -737,7 +719,7 @@ and has not been replied so far!
 See the variable `vm-handle-return-receipt-mode' for customization."
   (interactive)
   (save-excursion
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-and-validate)
     (let* ((msg (car vm-message-pointer))
            (sender (vm-get-header-contents msg  "Return-Receipt-To:"))
            (mail-signature nil)
@@ -1000,8 +982,10 @@ date header as subdir for the attachments."
   "Return a subdir for the attachments of MSG.
 This will be done according to `vm-mime-auto-save-all-attachments-subdir'."
   (setq msg (vm-real-message-of msg))
-  (when (not (string-match (regexp-quote (vm-su-full-name msg))
-                           (vm-get-header-contents msg "From:")))
+  (when (not (string-match 
+	      (regexp-quote (vm-reencode-mime-encoded-words-in-string
+			     (vm-su-full-name msg)))
+	      (vm-get-header-contents msg "From:")))
     (backtrace)
     (if (y-or-n-p (format "Is this wrong? %s <> %s "
                          (vm-su-full-name msg)
@@ -1024,12 +1008,10 @@ This will be done according to `vm-mime-auto-save-all-attachments-subdir'."
                                 (vm-su-monthday msg)
                                 (vm-su-hour msg))
                         "--"
-                        (vm-decode-mime-encoded-words-in-string
-                         (or (vm-su-full-name msg)
-                             "unknown"))
+			(or (vm-su-full-name msg)
+			    "unknown")
                         "--"
-                        (vm-decode-mime-encoded-words-in-string
-                         (vm-su-subject msg)))))
+                         (vm-su-subject msg))))
                
            (if (and basedir vm-folder-directory
                     (string-match
@@ -1074,8 +1056,7 @@ save attachments.
       nil
     (let ((vm-mime-auto-save-all-attachments-avoid-recursion t))
       (vm-check-for-killed-folder)
-      (vm-select-folder-buffer)
-      (vm-check-for-killed-summary)
+      (vm-select-folder-buffer-and-validate)
       
       (vm-mime-save-all-attachments
        count
@@ -1094,8 +1075,7 @@ when deleting a message.
 See the advice in `vm-rfaddons-infect-vm'."
   (interactive "")
   (vm-check-for-killed-folder)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   (setq msg (or msg (car vm-message-pointer)))
   (if msg 
       (let ((o (vm-mm-layout msg))
@@ -1478,7 +1458,7 @@ text/alternative message depending on the value of the variable
   "Indicate if there are attachments in a message.
 The summary displays a `vm-summary-attachment-indicator', which is a '$' by
 default.  In order to get this working, add a \"%1UA\" to your
-`vm-summary-format' and call `vm-fix-my-summary!!!'.
+`vm-summary-format' and call `vm-fix-my-summary'.
 
 As a sideeffect a label can be added to new messages.  Setting 
 `vm-summary-attachment-label' to a string (the label) enables this.
@@ -1663,9 +1643,7 @@ It saves the decoded message and not the raw message like `vm-save-message'!"
      (list filename)))
     (save-excursion
       (vm-follow-summary-cursor)
-      (vm-select-folder-buffer)
-      (vm-check-for-killed-summary)
-      (vm-error-if-folder-empty)
+      (vm-select-folder-buffer-and-validate 1)
       
       (if (and (boundp 'vm-mail-buffer) (symbol-value 'vm-mail-buffer))
           (set-buffer (symbol-value 'vm-mail-buffer))

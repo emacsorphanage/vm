@@ -15,7 +15,15 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
-VM 8.1.1-devo
+VM 8.1.91a
+
+   * New variable `vm-imap-server-timeout' allows timeout during a wait
+     for output from an IMAP server.
+
+   * New variable `vm-imap-ensure-active-sessions' asks VM to ensure
+     that an IMAP session is active before issuing commands.
+
+VM 8.1.90a  (2010-05-11)
 
   IMPROVEMENTS:
 
@@ -54,7 +62,32 @@ VM 8.1.1-devo
      reason, just delete it from the file system.  A new cache folder
      will be generated upon the next visit.
 
-  CHANGES
+   * New variable `vm-imap-refer-to-inbox-by-account-name' allows IMAP
+     folders named "INBOX" to be referred to by their account names
+     inside VM.
+
+   * The command `vm-fix-my-summary!!!' renamed to `vm-fix-my-summary'
+     to make it easier to type.
+
+   * The chatter of minibuffer messages during paging of mail is
+     reduced: messages about MIME decoding are emitted only if the new
+     variable `vm-emit-messages-for-mime-decoding' is non-nil, and
+     messages about end of messages are emitted only of
+     `vm-auto-next-message' is non-nil.
+
+   * IMAP session dialogue restructured using UID queries, which makes
+     VM more reliable in handling real-time changes on the server side.
+
+   * New variable `vm-imap-connection-mode' can be set to 'offline to
+     allow IMAP cache folders to be used offline.  After connecting to
+     the network, do `C-u M-x vm-imap-synchronize' to force full
+     synchronization. 
+
+   * Improved error messages arising in IMAP sessions wih the server.
+
+   * New variable `vm-do-fcc-before-mime-encode' (formerly in
+     vm-rfaddons) allows you to save fcc copies of messages before
+     mime-encoding them.
 
    * The right-mouse-button context menu for URL's in messages updated
      to eliminate obsolete web browsers.  Entries added for Firefox,
@@ -63,6 +96,42 @@ VM 8.1.1-devo
    * The function `vm-mouse-send-url-to-konqueror-new-browser' renamed
      to `vm-mouse-send-url-to-konqueror-new-window', to be consistent
      with other similar functions.
+
+  ** New variables `vm-expunge-before-quit' and `vm-expunge-before-save'
+     introduced to allow automatic expunge.  They are nil by default.  
+
+VM 8.1.2 (2010-05-??)
+
+    * Extended Org mode email links to work for virtual folders.
+    
+    * `vm-fill-long-lines-in-reply' initialized to the default value
+      of `fill-column'.
+
+VM 8.1.1 (2010-04-26)
+
+   ** The variable vm-always-use-presentation-buffer is deprecated.
+      Please remove all settings for this variable in your init file.
+      The default behaviour will be to always use the presentation
+      buffer.  Report any problems that might arise as a result.
+
+    * Extended Org mode email links to handle POP and IMAP folders.
+      (Use org-vm.el in the VM contrib directory until the Org mode
+      distribution gets updated.)
+
+    * Added autoloads for easy inter-operation with the Org mode.
+
+    * Added a section on History and Administration in the info manual.
+
+    * Made the autoloads compatible with VM 7.19 instructions.
+
+    * Fixed the build process to treat version info better.
+
+    * Removed a few incompatibilites with XEmacs.
+
+    * Mode line format reverted to the original one in 7.19.  The new
+      mode line format is available in the variable
+      `vm-mode-line-format-robf'.  It can be installed by adding a
+      vm-mode-hook. 
 
 VM 8.1.0 (2010-03-21)
 
@@ -87,9 +156,10 @@ VM 8.1.0 (2010-03-21)
    ** New boolean variable `vm-word-wrap-paragraphs' controls the word
       wrapping of paragraphs in messages using the longlines library.
       The variable is set to nil by default. When it is set to t,
-      paragraphs are word wrapped and the variable
-      `vm-fill-paragraphs-containing-long-lines' has no effect.  Set
-      it to nil to enable the usual filling functionality.
+      paragraphs are word wrapped and the value of the variable
+      `vm-fill-paragraphs-containing-long-lines' is immaterial (as
+      long it is non-nil).  Set vm-word-wrap-paragraphs to nil to
+      enable the usual filling functionality.
 
    ** vm-pgg is not loaded by default because it is a set up as an
       add-on.  Users should load it from their .emacs file by using

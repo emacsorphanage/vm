@@ -119,7 +119,7 @@
 (defsubst vm-edited-flag (message) (aref (aref message 2) 7))
 (defsubst vm-redistributed-flag (message) (aref (aref message 2) 8))
 ;; message cached data
-(defsubst vm-cache-of (message) (aref message 3))
+(defsubst vm-cached-data-of (message) (aref message 3))
 ;; message size in bytes (as a string)
 (defsubst vm-byte-count-of (message) (aref (aref message 3) 0))
 ;; weekday sent
@@ -272,11 +272,11 @@
   (aset (aref message 2) 7 flag)
   (vm-mark-for-summary-update message)
   (if (eq vm-flush-interval t)
-      (vm-stuff-virtual-attributes message)
+      (vm-stuff-virtual-message-data message)
     (vm-set-stuff-flag-of message t))
   (and (not (buffer-modified-p)) (vm-set-buffer-modified-p t))
   (vm-clear-modification-flag-undos))
-(defsubst vm-set-cache-of (message cache) (aset message 3 cache))
+(defsubst vm-set-cached-data-of (message cache) (aset message 3 cache))
 (defsubst vm-set-byte-count-of (message count)
   (aset (aref message 3) 0 count))
 (defsubst vm-set-weekday-of (message val)
@@ -319,9 +319,9 @@
   (aset (aref message 3) 19 val))
 (defsubst vm-set-references-of (message val)
   (aset (aref message 3) 20 val))
-(defsubst vm-set-headers-to-be-retrieved (message val)
+(defsubst vm-set-headers-to-be-retrieved-of (message val)
   (aset (aref message 3) 21 val))
-(defsubst vm-set-body-to-be-retrieved (message val)
+(defsubst vm-set-body-to-be-retrieved-of (message val)
   (aset (aref message 3) 22 val))
 (defsubst vm-set-pop-uidl-of (message val)
   (aset (aref message 3) 23 val))
@@ -347,6 +347,79 @@
   (aset (aref message 4) 4 string))
 (defsubst vm-set-attribute-modflag-of (message flag)
   (aset (aref message 4) 5 flag))
+
+(defun vm-mime-encode-words-in-cache-vector (vector)
+  (let ((new-vector (make-vector vm-cache-vector-length nil)))
+    ;; Encode the fields of the original cache-vector as necessary.
+    ;; Some of the fields have been mime-decoded with text properties.
+    ;; And, some haven't.
+    ;; This is a mess.
+    ;; Others probably don't need any mime-encoding, but we encode
+    ;; them anyway for safety.
+
+    ;; byte-count
+    (aset new-vector 0 (aref vector 0))
+    ;; weekday
+    (aset new-vector 1 (vm-mime-encode-words-in-string (aref vector 1)))
+    ;; monthday
+    (aset new-vector 2 (vm-mime-encode-words-in-string (aref vector 2)))
+    ;; month
+    (aset new-vector 3 (vm-mime-encode-words-in-string (aref vector 3)))
+    ;; year
+    (aset new-vector 4 (vm-mime-encode-words-in-string (aref vector 4)))
+    ;; hour
+    (aset new-vector 5 (vm-mime-encode-words-in-string (aref vector 5)))
+    ;; zone
+    (aset new-vector 6 (vm-mime-encode-words-in-string (aref vector 6)))
+    ;; full-name
+    (aset new-vector 7 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 7)))
+    ;; from
+    (aset new-vector 8 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 8)))
+    ;; message-id
+    (aset new-vector 9 (vm-mime-encode-words-in-string (aref vector 9)))
+    ;; line-count
+    (aset new-vector 10 (vm-mime-encode-words-in-string (aref vector 10)))
+    ;; subject
+    (aset new-vector 11 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 11)))
+    ;; vheaders-regexp
+    (aset new-vector 12 (vm-mime-encode-words-in-string (aref vector 12)))
+    ;; to
+    (aset new-vector 13 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 13)))
+    ;; to-names
+    (aset new-vector 14 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 14)))
+    ;; month-number
+    (aset new-vector 15 (vm-mime-encode-words-in-string (aref vector 15)))
+    ;; sortable-date-string
+    (aset new-vector 16 (vm-mime-encode-words-in-string (aref vector 16)))
+    ;; sortable-subject
+    (aset new-vector 17 (vm-mime-encode-words-in-string (aref vector 17)))
+    ;; summary
+    (aset new-vector 18 
+	  (vm-reencode-mime-encoded-words-in-tokenized-summary 
+	   (aref vector 18)))
+    ;; parent
+    (aset new-vector 19 (vm-mime-encode-words-in-string (aref vector 19)))
+    ;; references
+    (aset new-vector 20 
+	  (mapcar (function vm-mime-encode-words-in-string) (aref vector 20)))
+    ;; headers-to-be-retrieved
+    (aset new-vector 21 (aref vector 21))
+    ;; body-to-be-retrieved
+    (aset new-vector 22 (aref vector 22))
+    ;; pop-uidl or imap-uid
+    (aset new-vector 23 (vm-mime-encode-words-in-string (aref vector 23)))
+    ;; imap-uid-validity
+    (aset new-vector 24 (vm-mime-encode-words-in-string (aref vector 24)))
+    ;; spam-score
+    (aset new-vector 25 (vm-mime-encode-words-in-string (aref vector 25)))
+
+    new-vector))
+
 
 (defun vm-make-message ()
   (let ((v (make-vector 5 nil)) sym)
@@ -383,7 +456,7 @@
       (search-forward "\n\n" (vm-text-end-of m) 0)
       (vm-set-text-of m (point-marker)))))
 
-(defun vm-virtual-message-p (m)
+(defsubst vm-virtual-message-p (m)
   (not (eq m (vm-real-message-of m))))
 
 (provide 'vm-message)

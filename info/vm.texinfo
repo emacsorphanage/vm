@@ -36,7 +36,7 @@ notice identical to this one except for the removal of this paragraph
 @end ignore
 @end ifinfo
 @c
-@include version.texi
+@include version.texinfo
 @titlepage
 @sp 6
 @center @titlefont{VM User's Manual}
@@ -85,7 +85,16 @@ This manual corresponds to VM version @value{VERSION}.
 * Faces::               How to configure VM's use of faces.
 * Using the Mouse::     Understanding the VM mouse interface.
 * Hooks::               How you can make VM run your code at certain times.
+
+About VM:
+
+* History and Administration:: Information about VM
+* Highlights::          Most valuable features of VM, as per the users.
+* Future Plans::	Planned extensions of VM for the future
 * Bugs::                How to report VM bugs
+
+For developers:
+
 * Internals::           Information on VM internals for developers
 
 Indices:
@@ -139,7 +148,7 @@ sender, recipient, subject and date headers.  Typing @key{SPC}
 message as read.  Subsequent @key{SPC}'s scroll forward through the
 message, @kbd{b} or @key{DEL} scrolls backward.  When you reach the end
 of a message, typing @key{SPC} or @kbd{n} moves you forward to preview
-the next message.  @xref{Viewing}.
+the next message.  @xref{Paging}.
 
 If you do not want to read a message that's being previewed, type
 @kbd{n} and VM will move to the next message (if there is one).
@@ -173,10 +182,11 @@ format is user configurable, @pxref{Summaries}.
 When you are finished reading mail the current folder must be saved, so
 that the next time the folder is visited VM will know which messages
 have been already read, replied to and so on.  Typing @kbd{S}
-(@code{vm-save-folder}) saves the folder.  Note that deleted messages are
-@emph{not} expunged automatically when you save a folder.
+(@code{vm-save-folder}) saves the folder.  The default behavior is
+that deleted messages are @emph{not} expunged automatically when you
+save a folder. 
 The next time you visit the folder any deleted
-messages will still be flagged for deletion.
+messages will still be flagged for deletion.  @pxref{Deleting Messages}.
 
 @vindex vm-folder-file-precious-flag
 When a folder is first visited, the value of the variable
@@ -673,7 +683,7 @@ details.  The variable @code{vm-default-folder-type} can be used to
 set the default format that is suitable for your environment.  This
 setting is used when VM creates new folders.
 
-Whcn VM reads a folder from the file system, it examines contents of the
+When VM reads a folder from the file system, it examines contents of the
 folder to determine what format it is stored in and decodes it
 appropriately.  (However, such inference is not fully automatic.  See
 below.)
@@ -967,6 +977,18 @@ enter an account name followed by ``:'' and a folder name.  Any folder
 that is accessible to you on the IMAP server can be specified.  For
 example, @code{becky:inbox} or @code{crickle:drafts}.
 
+@vindex vm-imap-refer-to-inbox-by-account-name
+When you visit an IMAP folder inside VM, the folder is reffered to by
+its folder name as it exists on the server.  For example, visiting
+@code{becky:INBOX} creates a folder called @code{INBOX} inside VM.  If
+you visit multiple accounts within a VM session, then you would end up
+with multiple folders buffers all names @code{INBOX}.  You can set the
+variable @code{vm-imap-refer-to-inbox-by-account-name} to t, which
+causes the folder buffers to be named by their IMAP account names
+instead.  For example, visiting @code{becky:INBOX} as well as
+@code{crickle:INBOX} would create VM folders @code{becky} and
+@code{crickle}. 
+
 @vindex vm-imap-server-list
 The customization variable @code{vm-imap-server-list}, used in older
 versions of VM, is deprecated.  Please use @code{vm-imap-account-alist}
@@ -1004,8 +1026,8 @@ After fetching messages from the IMAP server into the local copy, it
 is possible to visit the local copy as if it were a normal folder.  VM
 can operate on the local copy without contacting the server.  This
 allows offline operation on the mail folders.  When the IMAP server is
-connected again, one should do the @code{vm-imap-synchronize} command
-with a prefix argument.  This causes @emph{all} the message attributes
+connected again, one should do @code{vm-imap-synchronize}
+with a @emph{prefix argument}.  This causes @emph{all} the message attributes
 and labels to be written to the server, since it may not be known
 which of them have actually changed during the offline operation.
 
@@ -1237,11 +1259,11 @@ presentation is done in two stages: @dfn{previewing} and @dfn{paging}.
 
 @menu
 * Previewing::                  Customizing message previews.
-* Viewing::                     Viewing the current message.
+* Paging::                      Viewing the current message.
 * MIME Messages::               Using VM's MIME display features.
 @end menu
 
-@node Previewing, Viewing, Reading Messages, Reading Messages
+@node Previewing, Paging, Reading Messages, Reading Messages
 @section Previewing
 
 @dfn{Previewing} means showing you a small portion of a message
@@ -1310,8 +1332,8 @@ have VM preview all messages, set the value of
 Typing @kbd{t} (@code{vm-expose-hidden-headers}) makes VM toggle
 between exposing and hiding headers that would ordinarily be hidden.
 
-@node Viewing, MIME Messages, Previewing, Reading Messages
-@section Viewing
+@node Paging, MIME Messages, Previewing, Reading Messages
+@section Paging
 
 @vindex vm-auto-next-message
 Typing @key{SPC} during a message preview exposes the body of the
@@ -1367,7 +1389,7 @@ variable @code{fill-column}, this variable is not buffer-local by
 default.
 
 
-@node MIME Messages,, Viewing, Reading Messages
+@node MIME Messages,, Paging, Reading Messages
 @section Reading MIME Messages
 
 @cindex MIME
@@ -1534,7 +1556,7 @@ which can be retrieved when desired.
 
 Saving attachments to the file system and deleting them from message
 bodies has the beneficial effect of reducing the size of VM folders.
-That leads to a better utilisation of the computer resources and
+That leads to a better utilization of the computer resources and
 usually a faster operation of VM.
 
 @findex vm-mime-save-all-attachments
@@ -1784,7 +1806,7 @@ temporary filename.
 @cindex images
 Most versions of Emacs can display images when used on graphical
 screens.  You can verify if the Emacs version is able to do so by
-calling the funciton @code{display-images-p}.  However, Emacs relies
+calling the function @code{display-images-p}.  However, Emacs relies
 on external libraries to create graphical images, which are specified
 through the variable @code{image-library-alist}.  Even if Emacs has
 the ability to display some image type, it cannot display such images
@@ -2156,7 +2178,7 @@ composing your message.
 @item C-c C-d (@code{vm-postpone-composition})
 Postpones the current composition.  The message is stored in the
 folder specified in @code{vm-postponed-folder}.  You can continue composing
-of messages by visiting @code{vm-postponed-folder}, selecting a messsage
+of messages by visiting @code{vm-postponed-folder}, selecting a massage
 and @key{m} or by directly calling the function on any message in any folder
 @kbd{M-x vm-continue-postponed-message}.  When called with a prefix argument
 @code{vm-postpone-composition} will ask you for the folder to save the draft
@@ -2186,6 +2208,15 @@ as a Cc header in a normal message.  Mail will only be sent to
 the addresses in the Resent-To and Resent-Cc headers unless
 you delete both of those headers.  In that case the To and Cc
 headers will be used.
+
+You can save copies of outgoing mail messages in 'sent' folders by
+adding an @code{FCC:} header line to the composed message.  The
+variable @code{vm-do-fcc-before-mime-encode} allows you save the
+fcc copy to the sent folder @i{before} mime-encoding the message.
+This is useful if you want to save an unencrypted version of the message or
+avoid saving attachments.  However, the character coding of
+the sent folder should be chosen carefully to allow proper storage of
+the messages.
 
 @menu
 * MIME Composition::    Sending a message using MIME attachments.
@@ -2307,7 +2338,7 @@ syntax, which is of the form @code{=?charset?encoding?encoded text?=}.
 @vindex vm-mime-encode-headers-type
 The variable @code{vm-mime-encode-headers-regexp} specifies which
 headers should be encoded in this way.  By default, @samp{Subject},
-@samp{Organization}, @samp{From}, @samp{To}, @samp{CC}, @samp{BCC} and
+@samp{Organization}, @samp{From}, @samp{To}, @samp{CC}, @samp{Bcc} and
 @samp{Resent-} header lines encoded.  The words are encoded using
 quoted-printable encoding (@code{Q}).  You can ask VM to use the base64
 encoding by setting the variable @code{vm-mime-encode-headers-type}.
@@ -2463,18 +2494,44 @@ remove from the recipient headers of replies.
 @section Forwarding Messages
 
 VM has three commands to forward messages: @kbd{z}
-(@code{vm-forward-message}), @key{@@} (@code{vm-send-digest}) and
+(@code{vm-forward-message}), @kbd{@@} (@code{vm-send-digest}) and
 @kbd{B} (@code{vm-resend-message}).
 
 @findex vm-forward-message
 @kindex z
 @vindex vm-forwarding-digest-type
-@vindex vm-forwarding-subject-format
 Typing @kbd{z} puts you into a VM Mail mode buffer just like @kbd{m},
-except the current message appears as the body of the message in the VM
-Mail mode buffer. The forwarded message encapsulated as specified by the
-variable @code{vm-forwarding-digest-type}.  Recognized values are
-@samp{"rfc934"}, @samp{"rfc1153"} and @samp{"mime"}.  If the variable
+except that the current message appears as the body of the message in
+the VM Mail mode buffer. The forwarded message is encapsulated as
+specified by the variable @code{vm-forwarding-digest-type}.  Recognized
+values are "rfc934", "rfc1153", "mime" or @code{nil}.  The default is
+"mime".  If it is set to @code{nil}, the forwarded message is not
+encapsulated.  But note that this is appropriate for only plain text
+messages.  MIME messages have various encodings which need to be decoded 
+by the recipient's mail client and, so, unencapsulated forwarding would
+make it difficult for the recipient to decode MIME.
+
+@vindex vm-forwarded-headers
+@vindex vm-unforwarded-header-regexp
+
+You can control which header lines are included in forwarded messages
+via the variables @code{vm-forwarded-headers} and
+@code{vm-unforwarded-header-regexp}.  By default, both of these
+variables are nil, which means that all headers should be included.
+If @code{vm-unforwarded-header-regexp} is set to a regular expression
+then all the headers matching the regular expression are omitted in
+forwarded messages.  If this variable is nil but
+@code{vm-forwarded-headers} is set to a list of headers, then only
+these headers are included in the forwarded messages.  See the
+documentation of these variables for further information.
+
+@findex vm-forward-message-all-headers
+The command @code{vm-forward-message-all-headers} forwards the
+message with all headers intact, irrespective of the values of these
+vaiables. 
+
+@vindex vm-forwarding-subject-format
+If the variable
 @code{vm-forwarding-subject-format} is non-@code{nil} it should specify
 the format of the Subject header of the forwarded message.  A @code{nil}
 value causes the Subject header to be left blank.  The forwarded message
@@ -2483,7 +2540,7 @@ is flagged ``forwarded'' when the message is sent.
 @findex vm-send-digest
 @vindex vm-digest-send-type
 @kindex @@
-The command @key{@@} (@code{vm-send-digest}) works like @kbd{z} except
+The command @kbd{@@} (@code{vm-send-digest}) works like @kbd{z} except
 that a digest of all the messages in the current folder is made and
 inserted into the VM Mail mode buffer.  Also, @code{vm-send-digest} can
 be applied to just marked messages.  @xref{Marking Messages}.  When applied
@@ -2513,19 +2570,6 @@ header that you should fill in with the new recipients.  Use @kbd{C-c
 C-c} as usual to send the message.  The resent message will be flagged
 as ``redistributed''.
 
-@vindex vm-forwarded-headers
-@vindex vm-unforwarded-header-regexp
-
-You can control which header lines are included in forwarded messages
-via the variables @code{vm-forwarded-headers} and
-@code{vm-unforwarded-header-regexp}.  By default, both of these
-variables are nil, which means that all headers should be included.
-If @code{vm-unforwarded-header-regexp} is set to a regular expression
-then all the headers matching the regular expression are omitted in
-forwarded messages.  If this variable is nil but
-@code{vm-forwarded-headers} is set to a list of headers, then only
-these headers are included in the forwarded messages.  See the
-documentation of these variables for further information.
 
 @node Saving Messages, Deleting Messages, Sending Messages, Top
 @chapter Saving Messages
@@ -2564,7 +2608,7 @@ folder on interactive saves.
 @vindex vm-imap-save-to-server
 @cindex IMAP
 A non-@code{nil} value of @code{vm-imap-save-to-server} means that
-messages from IMAP folders should be saved in other IMAP folds on the
+messages from IMAP folders should be saved in other IMAP folders on the
 same server.  Otherwise, the messages are saved to local folders. 
 
 @vindex vm-folder-directory
@@ -2594,11 +2638,11 @@ If any part of the contents of the message header named by
 @var{header-name} is matched by the regular expression
 @var{regexp}, VM will evaluate the corresponding
 @var{folder-name} and use the result as the default when
-prompting for a folder to save the message in.  If the resulting
-folder name is a relative path name it resolves to the directory
-named by @code{vm-folder-directory}, or the
-@code{default-directory} of the currently visited folder if
-@code{vm-folder-directory} is @code{nil}.
+prompting for a folder to save the message in.  The value of
+@var{folder-name} can be the absolute path name of a local folder, a
+relative path name -- relative to @code{vm-folder-directory} or the
+@code{default-directory} of the currently visited folder -- or the
+maildrop specification of an IMAP folder.
 
 When @var{folder-name} is evaluated, the current buffer will contain only
 the contents of the header named by @var{header-name}.  It is safe to
@@ -2756,6 +2800,29 @@ Note that the movement is done by calling @code{vm-next-message} which
 means that the value of @code{vm-circular-folders} applies to the
 post-command motion as for a motion command, not as for a non-motion
 command.
+
+@vindex vm-delete-before-save
+@vindex vm-delete-before-quit
+Normally, deleted messages are preserved in folders until an explicit
+@code{vm-expunge-folder} operation is done.  This default behavior can
+be altered by setting the variables @code{vm-expunge-before-save} and
+@code{vm-expunge-before-quit}.  If @code{vm-expunge-before-save} is
+set to non-@code{nil}, then deleted messages are expunged whenever a
+folder is saved.  This is not an undo-able operation and no
+confirmation is asked for.  So you should use this setting only if
+your normal workflow includes expunging messages as part of save.  The
+variable @code{vm-expunge-before-quit} can be similarly set to
+non-@code{nil} to cause VM to expunge deleted messages whenever you
+quit the folder.  
+
+@cindex vm-save-folder-no-expunge
+@cindex vm-quit-no-expunge
+The commands @code{vm-save-folder-no-expunge} and
+@code{vm-quit-no-expunge} can be used to preserve deleted messages in
+the saved folders, irrespective of the settings of the above
+variables.  Giving a prefix argument to the @code{vm-quit} command has
+the same effect as @code{vm-quit-no-expunge}.
+
 
 @node Editing Messages, Marking Messages, Deleting Messages, Top
 @chapter Editing Messages
@@ -3045,6 +3112,7 @@ reliable sources of information but not all mailers provide them.
 If you don't want VM to use Subject headers, set the variable
 @code{vm-thread-using-subject} to @code{nil}.
 
+@vindex vm-summary-show-threads
 If you want VM to always display messages using threads, you should set
 the default value of the variable @code{vm-summary-show-threads}
 non-@code{nil} in your VM init file.  Example:
@@ -4088,7 +4156,7 @@ form @code{vm-mouse-send-url-to-xxx} and @code{vm-mouse-send-url-to-xxx-new-wind
 the facilities defined in the @code{browse-url} library to send URL's to
 external browsers.
 
-@node Hooks, Bugs, Using the Mouse, Top
+@node Hooks, History and Administration, Using the Mouse, Top
 @chapter Hooks
 
 VM has many hook variables that allow you to run functions when
@@ -4349,7 +4417,255 @@ If this hook is entirely empty, i.e. @code{nil}, a default action is taken
 instead of no action.
 @end table
 
-@node Bugs, Internals, Hooks, Top
+@node History and Administration, Highlights, Hooks, Top
+@chapter History and Administration
+
+@cindex Kyle Jones
+VM was developed by Kyle Jones, starting in early 1989.  The first
+public release of VM was version 4.10, released in June of that year.
+The original development environment was GNU Emacs 18.52.  
+
+@cindex Wonderworks
+The copyright for the code was retained by Kyle Jones.  Hence, the
+package was never included GNU releases, which only contain code
+copyrighted by the Free Software Foundation.  However, Lucid/XEmacs
+shipped VM starting with version 19.9.  The other users obtained VM from
+the Wonderworks web site, which hosted Kyle Jones's work.  The home page
+of VM at this site is @uref{http://www.wonderworks.com/vm}.
+
+The last version released by Kyle Jones was 7.19, in September 2004,
+which can be found on the Wonderworks web site and its mirror sites.
+
+@cindex Robert Widhopf-Fenk
+After this release, Robert Widhopf-Fenk picked up the maintenance of
+VM, by releasing a series of patches under a separate distribution.  He
+also acquired a number of add-on's contributed by various developers,
+including himself, and included them in his distribution.  Kyle Jones
+agreed to hand over the maintenance of VM to Robert Fenk in February,
+2007.  Further releases were made by Robert Fenk under the @code{8.0.x}
+series. 
+
+@cindex Savannah
+All these releases are available from the new project page of VM hosted
+by Savannah, at the URL
+@uref{http://savannah.nongnu.org/projects/viewmail/}. 
+According to the project page, ``this site exists to continue VM development
+after version 7.19 as a community project.''
+
+@cindex Ulrich Müller
+@cindex Uday S Reddy
+Currently, VM is maintained by a ``VM Development Team,'' consisting of
+Robert Widhopf-Fenk, Ulrich Müller and Uday S Reddy.  Other potential members
+are warmly welcomed.  Robert Fenk has been inactive since November, 2008
+but he continues to be an official member of the team.  The new
+releases made by the team are numbered @code{8.1.0} and up.
+
+@cindex Launchpad
+The project code base is maintained at the Launchpad web site
+@uref{http://launchpad.net/vm}.  The ``VM Development Team'' can be
+reached here using the email address @code{vm@@launchpad.net}.
+
+@unnumberedsubsec Savannah project site
+
+The changes made in each of the releases is described in the @samp{NEWS}
+file, which can be found in the source code repository.  The changes made
+in versions up to 7.19 are described in the @samp{CHANGES} file.
+
+The @code{Download} link on the Savannah project page, takes you to the
+downloads area where all the recent releases are available.  Under the
+@code{Source Code} menu, the @code{Browse Sources Repository} takes you
+to the source files, which include, among others, the @samp{NEWS} and
+@samp{CHANGES} files mentioned above.
+
+If you have obtained VM through a secondary distribution that does not
+include all the sources, you can browse and download the sources from
+the @code{Source Code} menu.  The @code{Use Bazaar} entry in the menu
+takes you to a page that lists various version of VM source code, and
+gives instructions for downloading it via @samp{Bazaar} (@code{bzr}).
+
+@unnumberedsubsec Technical support
+
+VM has a dedicated usenet newsgroup @code{gnu.emacs.vm.info} in which
+the developers and the active users participate.  This is the first port
+of call for getting help with VM.  The archives of the newsgroup can be
+found at the Google Groups site
+@uref{http://groups.google.com/group/gnu.emacs.vm.info/topics}.
+
+A second newsgroup @code{gnu.emacs.vm.bug} is dedicated to
+discussing bugs or potential bugs in VM.  However, this is a place for
+discussion, not reporting bugs or getting them fixed.  
+
+The easiest way to report bugs that need fixing is to use the command
+@code{M-x vm-submit-bug-report} within VM.  This prepares an email
+message by including a state of your VM program which will allow the
+developers to reproduce your problem.  (Potentially sensitive information
+such as passwords are not included in this state.)  Please include a
+detailed description of the problem and how it arose.  The developers
+may need to ask you for further information or ask you to try
+alternative approaches to narrow down the problem.
+
+The best way to report bugs is via the Launchpad bug tacker.  See below.
+
+@unnumberedsubsec Get Involved
+
+VM is now supported and maintained by the user community.  So, as an
+active user, your participation is key to keep the project going.  
+
+Consider registering as a user of the Launchpad development site
+@uref{http://launchpad.net/vm}.  This 
+allows you to communicate with the developers and other users using a
+private Launchpad email address.  In particular, you can contribute bug
+reports and participate in the bug report discussions.
+
+You can download the development versions of VM and act as an ``alpha''
+tester.  This will allow you to shape the new developments and features
+and make suggestions that will be valuable to the developers.
+
+To download the development version, identify the ``branch'' that you
+would like to download, and use Bazaar version control system with an
+appropriate Launchpad URL.  For example, the command
+@command{bzr get lp:vm} can be used to download the main development
+branch. 
+
+You can also make change to the branch you have downloaded, and submit
+them to the developers for inclusion in the project.  The @code{README}
+file in the distribution explains how to do this.  Alternatively, you
+can create a separate branch in your own space on the Launchpad web
+site, and submit your changes to that branch.  The developers can review
+and merge your branch with the main development when your changes
+are ready.
+
+@unnumberedsubsec Contributors
+
+Contributions to the code from the following members of the VM community
+are gratefully acknowledged:
+
+@itemize
+@item Aidan Kehoe
+@item Glenn <unknown last name>
+@item Jens Gustedt
+@item John J Foerch
+@item Kevin Rogers
+@item Kyle Jones
+@item Rob Hodges
+@item Robert Marshall
+@item Robert P. Goldman
+@item Katsumi Yamaoka
+@item Julian Bradfield
+@item Samuel Bronson
+@item Brent Goodrick
+@item Noah Friedman
+@end itemize
+
+Please let us know if any other contributors have been missed out.
+
+@unnumberedsubsec Selected Releases of Kyle Jones
+@itemize
+@item Version 4.10, released in 1989.
+@item Version 5.00, released in 1990.
+@item Version 6.00, released 6 January, 1997.
+@item Version 7.00, released 2 December, 2001.
+@item Version 7.10, released 5 March, 2003.
+@item Version 7.15, released 3 May, 2003.
+@item Version 7.16, released 26 May, 2003.
+@item Version 7.17, released 6 July, 2003.
+@item Version 7.18, released 2 November, 2003.
+@item Version 7.19, released 29 September, 2004.
+@end itemize
+
+
+@unnumberedsubsec Releases of Robert Widhopf-Fenk
+@itemize
+@item Version 8.0.0, released 31 May, 2007.
+@item Version 8.0.1, released 29 June, 2007.
+@item Version 8.0.2, released 25 July, 2007.
+@item Version 8.0.3, released 15 August, 2007.
+@item Version 8.0.4, released 2 November, 2007.
+@item Version 8.0.5, released 3 November, 2007.
+@item Version 8.0.6, released 2 January, 2008.
+@item Version 8.0.7, released 5 January, 2008.
+@item Version 8.0.8, released 11 February, 2008.
+@item Version 8.0.9, released 20 February, 2008.
+@item Version 8.0.10, released 22 June, 2008.
+@item Version 8.0.11, released 11 August, 2008.
+@item Version 8.0.12, released 5 November, 2008.
+@item Version 8.0.13, released 29 November, 2009.
+@item Version 8.0.14, released 16 December, 2009.
+@end itemize
+
+
+@unnumberedsubsec Releases of VM development team
+@itemize
+@item Version 8.1.0, released 21 March, 2010.
+@item Version 8.1.1, planned for release on 10 April, 2010.
+@end itemize
+
+
+
+
+
+@node Highlights, Future Plans, History and Administration, Top
+@chapter Highlights
+
+Here are some of the VM features that its users find most valuable:
+
+@itemize
+@item
+VM's reliability and stability.
+@item
+Integration within Emacs, providing ease of editing and familar key
+bindings. 
+@item
+Speed of usage facilitated by keyboard commands.
+@item
+Integration with BBDB for maintaining contacts and email addresses.
+@item
+VM-Pcrisis for managing multiple mail identities.
+@item 
+Integration with emacs-w3m for viewing HTML email.
+@item
+Comprehensive MIME support.
+@item
+Ability to operate on all attachments of a message, such as saving or
+deleting. 
+@item
+Interactive virtual folders (created by @code{V C}).
+@item
+Support for IMAP folders.
+@item
+Ability to delete duplicate copies of messages.
+@end itemize
+
+
+@node Future Plans, Bugs, Highlights, Top
+@chapter Future Plans
+
+Some of the ideas being worked on for future extensions of VM are the
+following:
+
+@itemize
+@item 
+Ability to compose rich text email messages (in 'text/enriched' and
+'text/html' modes).
+@item
+Incremental search in virtual folders.
+@item
+Composite virtual folders that close all their component folders
+automatically.
+@item
+Thread-level operations such as killing an entire thread.
+@item
+Headers-only downloading of IMAP folders.
+@item
+Downloading IMAP messages without attachments.
+@item
+Support for maildir folders.
+@item
+A message migration/expiration facility.
+@end itemize
+
+
+@node Bugs, Internals, Future Plans, Top
 @chapter Reporting Bugs
 @cindex bug reports
 
@@ -4381,8 +4697,6 @@ before the problem occurrence and @code{vm-pop-submit-bug-report}
 the server interactions during the interval are captured and
 automatically included in the bug-report.
 
-
-
 @node Internals, Concept Index, Bugs, Top
 @chapter VM Internals
 
@@ -4392,35 +4706,51 @@ developers/programmers.
 @menu
 * Folder Internals::      Structure of the folders
 * Message Internals::     Structure of the message data structure
+* Summary Internals::     Details of summary generation
 @end menu
 
 @node Folder Internals, Message Internals , , Internals
 @section Folder Internals
 
+@cindex mbox
 By default, VM stores mail folders in the Unix @code{mbox} format,
-described in the RFC 4155 specification of the Internet Engineering Task
-Force.  In this format, the mail folder is a text file consisting of a
-sequence of messages, with each message consisting of a series of
+described in the RFC 4155 specification of the Internet Engineering
+Task Force.  In this format, the mail folder is a text file consisting
+of a sequence of messages, with each message consisting of a series of
 headers followed by a message body.  The beginning of each message is
 delineated by a separator line starting with the string ``From '' and
-the end by a blank line.  To make sure that such a line exists, VM adds
-its own header line of the form ``From VM ...'' where the ``...''
-records the time at which VM first saw the message.  The format of the
+the end of the message by a blank line.  The leading separator line in
+VM folder is of the form ``From VM ...'' where the ``...''  records
+the time at which VM first saw the message.  The format of the
 individual messages is as per the RFC 2822 specification, except that
 Line-Feed characters may be used to delineate the end of lines in the
-"Unix" format.  
+"Unix" format.
 
-In addition to the Unix mbox format (which is called the @code{From_}
-format), VM also handles the MMDF format and two versions of the System
-V Unix format and the Emacs Rmail's Babyl format.  The variable
-@code{vm-folder-type} stores the type of the folder being used.
+@vindex vm-folder-type
+@cindex From_ folder type
+@cindex BellFrom_ folder type
+@cindex From_with-Content-Length folder type
+@cindex System V
+Three variants of the @code{mbox} format are recognized by VM, called
+@code{From_}, @code{BellFrom_} and @code{From_with-Content-Length}.
+In a @code{From_} type mbox, every message has a leading and trailing
+separator line, as indicated above.  In a @code{BellFrom_} type mbox,
+the trailing separator line can be missing.  (This is so that the 
+mbox's from the old System V format can be handled.)  In a
+@code{From_with-Content-Length} type mbox, the @code{From} seperator
+line stores the length of the message.  So, no trailing separator line
+is required.
 
+@cindex MMDF format
+@cindex Babyl format
+In addition to these mbox formats, VM also handles the MMDF format and
+the Emacs Rmail's Babyl format.  The variable @code{vm-folder-type}
+stores the type of the folder being used.
+
+@cindex X-VM-v5-Data header
 To every message, VM adds a header with the field name
 ``X-VM-v5-Data:'' and stores in it the information about the message it
-wishes to remember between sessions.  This header line is used merely
-for speed of processing.  If, for any reason, a VM folder is
-corrupted, it is safe to delete all the X-VM-v5-Data headers, and VM
-will generate them afresh when the folder is visited.
+wishes to remember between sessions.
 
 The first message of the VM folder file contains additional headers that
 VM uses for remembering information between sessions.
@@ -4465,13 +4795,6 @@ through internal variables.
 @code{vm-message-list}.  A list of message data structures for all the
 messages in the buffer.
 @item
-@code{vm-message-pointer}.  A sublist of vm-message-list starting from
-the current message that the cursor is on.  So, the first element of
-vm-message-pointer is the current message.
-@item
-@code{vm-last-message-pointer}.  Whenever the cursor is moved, the
-previous value of vm-message-pointer is remembered in this variable.
-@item
 @code{vm-folder-type}.  The type of the current folder indicating how
 the messages are stored: one of 'babyl, 'From_, 'BellFrom_,
 'From_-with-Content-Length and 'mmdf.
@@ -4497,44 +4820,141 @@ constructing it.
 @item
 @code{vm-virtual-buffers}.  A list of all the virtual folder buffers
 that the current buffer is involved in.
+@item
+@code{vm-summary-buffer}.  The Summary buffer of the folder.  (If the
+Summary buffer gets killed for any reason, the value of this variable
+becomes <killed buffer>, which is unfortunate.  Therefore, most
+interactive commands of VM check for killed Summary buffer and reset
+this variable to nil in such a case.  So, in the middle of code, this
+variable can be regarded as a valid buffer pointer.)
+@item
+@code{vm-summary-pointer}.
+@item
+@code{vm-presentation-buffer-handle}. The message Presentation buffer of the
+folder.  (Same proviso applies as for @code{vm-summary-buffer}.)
+@item
+@code{vm-presentation-buffer}. This seems to be a copy of the
+@code{vm-presentation-buffer-handle}.  Its purpose is unknown.
+@end itemize
+
+The running state of the folder buffer is represented in a number of
+buffer-local variables:
+
+@itemize
+@item
+@code{vm-message-pointer}.  A sublist of vm-message-list starting from
+the current message that the cursor is on.  So, the first element of
+vm-message-pointer is the current message.
+@item
+@code{vm-last-message-pointer}.  Whenever the cursor is moved, the
+previous value of vm-message-pointer is remembered in this variable.
+@item
+@code{vm-mime-decoded}.  The MIME decoding state of the current message
+display: @code{undecoded} if the message is shown in undecoded plain
+text form, @code{decoded} if the message is shown decoded, and
+@code{buttons} if the message is shown as a series of buttons for all
+its MIME components.  The @code{D} command cycles through these
+states. 
+@item
+@code{vm-system-state}.  The state of VM in a Folder buffer or
+Presentation buffer: 
+
+@itemize
+@item @code{previewing}.
+if a message is being previewed.
+@item @code{showing}.
+if a full message is being shown.
+@item @code{reading}.
+if message reading is in progress.
+@end itemize
+
+A message edit buffer is in state @code{editing}.
+
+A message composition buffer may be in one of these states:
+
+@itemize
+@item @code{forwarding}.
+if a message is being forwarded.
+@item @code{replying}.
+if a message is being replied to.
+@item @code{redistributing}.
+if a message is being redistributed.
+@end itemize
 @end itemize
 
 
 
-@node Message Internals, , Folder Internals, Internals
+@node Message Internals, Summary Internals, Folder Internals, Internals
 @section Message Internals
 
 The message data structure is a vector containing various pieces of
-data:
+data about the message, some of which is permanent and some that is
+calculated during a VM session.  The data is organized into four
+sub-vectors:
 
 @itemize
 @item
 Location data.  This data about the location of the various parts of the
-message in the folder buffer is calculated after a folder is loaded and
-parsed. 
+message in the Folder buffer is calculated after a folder is loaded and
+parsed.
+@item
+Soft data.  This vector contains other calculated data about the
+message that is specific to a VM session.
+@item
+Attributes.  All the hard-wired message attributes are stored in this
+vector.
+@item
+Cached Data.  Calculated data that is cached for each message.
+@item
+Mirror Data.  Extra data shared by virtual messages if vm-virtual-mirror
+is non-nil.
+@end itemize
+
+The attributes vector and cached data vector are stored in the
+folder on disk as the @code{X-VM-v5-Data} header of the first message.
+
+@unnumberedsubsec Location data
+
+This vector holds the data about the location of the various parts of
+the message in the folder buffer.  Every folder buffer or folder-like
+buffer (such as a Presentation buffer) has variables that contain
+message data structures.  The location data is normally expected to
+refer to locations in that very buffer.  However, this condition is
+not actually required.  (See below.)
 
 @itemize
 @item
-start.  The starting position of the message, at which a leading
-separator line begins.
+start.  Marker for the starting position of the message, at which a
+leading separator line begins.
 @item
-headers. The position in the folder buffer where the headers of the message
-start.
+headers. Marker for the position in the buffer where the headers
+of the message start.
 @item
-vheaders.  The position in the folder buffer where the visible headers of the
-message start.  (The headers are rearranged in such a way that all the
-visible headers are towards the end of the headers region.)
+vheaders.  Marker for the position in the buffer where the
+visible headers of the message start.  (The headers are rearranged in
+such a way that all the visible headers are towards the end of the
+headers region.)
 @item
-text. The position in the folder buffer where the text of the message starts.
+text. Marker for the position in the buffer where the text of the
+message starts.
 @item
-text-end. The position in the folder buffer where the text of the message ends
+text-end. Marker for the position in the buffer where the text of
+the message ends.
 @item
-end. The position in the folder buffer where the message ends.
+end. Marker for the position in the buffer where the message ends.
 @end itemize
 
-@item
-Soft data.  This vector contains other calculated data about the
-message. 
+Unfortunately, in the current versions of VM, the folder buffer to
+which the location data point is not itself part of this vector.  This
+information is inferred from the context (which makes the code
+brittle).  The Folder buffer of the message can be obtained from the
+soft data vector but the location data could also point to a
+Presentation buffer.
+
+
+@unnumberedsubsec Soft data
+This vector contains other calculated data about the message that is
+specific to a VM session.
 
 @itemize
 @item
@@ -4545,10 +4965,10 @@ padded number. The message number as a padded string.
 mark. Flag that indicates if the message has been marked (via
 @code{vm-mark-message}).
 @item
-su-start. The position in the summary buffer where the summary line of
+su-start. The position in the Summary buffer where the summary line of
 the message starts.
 @item
-su-end.  The position in the summary buffer where the summary line of
+su-end.  The position in the Summary buffer where the summary line of
 the message ends.
 @item
 real-message-sym.  If the message is in a virtual folder, then its
@@ -4564,12 +4984,17 @@ message-type.  A symbol indicating the type of the message according to
 its folder type, one of @code{BellFrom_}, @code{From_} and
 @code{From_-with-Content-Length}.
 @item
-message-id-number.  The unique id of the message.
+message-id-number.  A number that uniquely identifies the message
+within a VM session.
 @item
-buffer. The folder buffer of the message.
+buffer. The Folder buffer of the message.  (Messages in Presentation
+buffers also have this field set to the corresponding Folder buffer.)
 @item
 thread-indentation. Indentation level of the message in its message
 thread.
+@item
+thread-list.  List of symbols from @code{vm-thread-obarray} that give
+this message's lieage.
 @item
 babyl-frob-flag.
 @item
@@ -4582,7 +5007,7 @@ switched from unmirrored to mirrored.
 virtual-summary.  Summary for unmirrored virtual message.
 @item
 mime-layout.  MIME layout information; types, ids, positions, etc of
-all MIME entities.
+all MIME entities.  (See below.)
 @item
 mime-encoded-header-flag. Flag that indicates if the headers of the
 message are MIME encoded.
@@ -4593,8 +5018,9 @@ message-access-method.  The access-method to be used for the message,
 inherited from its real folder.
 @end itemize
 
-@item
-Attributes.  All the hard-wired message attributes are stored in this
+
+@unnumberedsubsec Attributes
+All the hard-wired message attributes are stored in this
 vector.  They also get saved as part of the @code{X-VM-v5-Data} header
 field when the folder is saved to disk.
 
@@ -4620,13 +5046,20 @@ redistributed-flag.  Flag to indicate if the message has been
 redistributed. 
 @end itemize
 
-@item
-Cached Data.  The data that is cached for the message and stored in the
-folder on disk as the @code{X-VM-v5-Data} header field.  Even though
-this vector is only supposed to have data that can be calculated from
-the message itself, the fields pop-uidl, imap-uid and imap-uid-validity
-form an exception.  They are really hard data that cannot be calculated
-from anything else.
+@unnumberedsubsec Cached Data
+The data that is cached for the message and stored on the disk as part
+of the @code{X-VM-v5-Data} header field.  Even though this vector is
+only supposed to have data that can be calculated from the message
+itself, the fields pop-uidl, imap-uid and imap-uid-validity form an
+exception.  They are really hard data that cannot be calculated from
+anything else.
+
+Some of the data deals with information from message headers.  The
+header fields can have MIME-encoded words in them.  The strings stored
+in the cached-data vector, however, are MIME-decoded versions of the
+header fields, but they also have text properties that store the names
+of the original character sets used in the header fields.  This allows
+the strings to be quickly reencoded for storage on disk.
 
 @itemize
 @item
@@ -4635,33 +5068,43 @@ byte-count.  The size of the message in bytes.
 weekday, monthday, month, year, hour, zone.  Data indicating the date of
 the message.
 @item 
-full-name.  The full name of the author of the message.
+full-name.  The full name of the author of the message.  This is a
+MIME-decoded string with text properties.
 @item
-from.  The email address of the author of the message.
+from.  The email address of the author of the message.  This is a
+MIME-decoded string with text properties.
 @item
 message-id.  The unique id of the message.
 @item
 line-count. The number of lines in the message.
 @item
-subject.  The subject string of the message.
+subject.  The subject string of the message.  This is a MIME-decoded
+string with text properties.
 @item
 vheaders-regexp.  A regular expression that can be used to find the
-start of the already ordered headers.
+start of the visible headers.  The headers must have been already
+ordered so that the visible headers are at the bottom of the headers
+section. 
 @item
 to.  Addresses of the recipients of the message in a comma separated
-string.
+string.  This is a MIME-decoded string with text properties.
 @item
-to-names. The full names of the recipients in a comma separated string.
-Addresses are used if full names are not available.
+to-names. The full names of the recipients in a comma separated
+string.  Addresses are used if full names are not available.  This is
+a MIME-decoded string with text properties.
 @item
 month-number.  Numeric month of the sent date.
 @item
 sortable-datestring.  Date string of the sent date for sorting purposes.
 @item
 sortable-subject.  The subject string for sorting purposes.  (Prefixes
-such as ``re:'' are removed.)
+such as ``re:'' are removed.)  This is a MIME-decoded string with text
+properties.
 @item
-summary.  The summary string for the message.
+summary.  A tokenized summary for the message, from which the actual
+summary line can be quickly calculated.  This is a list containing
+tokens, such as @code{number} and @code{thread-indent}, as well as
+MIME-decoded strings with text properties.
 @item
 parent.  The parent of the message in the message thread, which is
 another message data structure.
@@ -4685,8 +5128,9 @@ server.
 spam-score.  The spam score of the message.
 @end itemize
 
-@item
-Mirror Data.  Extra data shared by virtual messages if vm-virtual-mirror
+@unnumberedsubsec Mirror Data
+
+Extra data shared by virtual messages if vm-virtual-mirror
 is non-nil.
 
 @itemize
@@ -4708,8 +5152,185 @@ attribute-modflag.  Flag to indicate if the attributes of the message
 have been modified since the last save.
 @end itemize
 
+@unnumberedsubsec MIME layout
+
+The MIME layout of a message, stored in the soft data of the message,
+is in turn a vector containing various pieces of data.  Such a vector
+is used not only for the overall message, but for all its MIME parts
+and subparts as well.
+
+@itemize
+@item
+type.  A list of strings consisting of the MIME type of the part along
+with its attributes.  This comes from ``Content-Type'' header.  The type
+could be of the form `type/subtype'.  Quotation marks are stripped from
+attribute values.  An example is @code{("multipart/mixed" "boundary=----_=_NextPart_001_01AFE588.63E23840")}.
+@item
+qtype.  Like type, but the quotation marks are not stripped.
+@item
+encoding.  The MIME encoding used for the part.  It comes from the
+``Content-Transfer-Encoding'' header.
+@item
+id. The id obtained from the ``Content-ID'' header of the part.
+@item
+description.  A description string obtained from the
+``Content-Description'' header of the part.
+@item
+disposition.  A list of strings obtained from the
+``Content-Disposition'' header of the part.  Quotation marks are
+stripped from attribute values.  (An example is @code{(``attachment'',
+``filename=mydocument.doc'')}.)
+@item
+qdisposition.  Like disposition, but the quotation marks are not
+stripped. 
+@item
+header-start header-end, body-start and body-end.  Markers into the
+content buffer delineating the headers/body of
+the MIME part.
+@item
+parts. A list of MIME layouts for the individual subparts of this part.
+@item
+cache. A symbol that is unique to this MIME part.  Other data is
+stored as properties of this symbol:
+@itemize
+@item vm-mime-display-external-generic.
+This property stores the id of the process used to externally display
+the MIME part as well as the name of the temporary file used. 
+@item vm-mime-display-internal-image-xxxx.
+This property stores the name of the temporary file where the image is
+stored.  For an image represented as image strips, it actually stores
+a list with a number of other data items.
+@item vm-image-modified.
+This property stores a boolean flag indicating that the image has been
+modified. 
+@item vm-mime-display-internal-audio/basic.
+This property stores the name of the temporary file where the audio
+clip is stored.
+@item vm-message-garbage.
+@end itemize
+@item
+message-symbol.  A reference to the message that contains the MIME
+part.  Represented as a symbol (that is, an interned key into a hash
+table.) 
+@item
+display-error.  If the display of a MIME part fails, its error string is
+stored here.
+@item
+layout-is-converted.  Flag indicating that MIME type conversion has been
+performed on this part.  @pxref{MIME type conversion}.
+@item
+unconverted-layout.  If the MIME type conversion has been performed on
+this part, then this holds the original unconverted layout.
 @end itemize
 
+@unnumberedsubsec Cross-buffer sharing of data
+
+Every Folder buffer has a @code{vm-message-list} and a
+@code{vm-message-pointer} list containing message data vectors.  
+
+Every Presentation buffer also uses a @code{vm-message-pointer} list
+with a single message (the one being presented).  The message data
+vector in the Presentation buffer has its own location data, but
+@i{shares} all other components with the message in the Folder buffer.
+This allows the Presentation buffer to, for example, change the
+attributes of the message without having to switch context to the
+Folder buffer.
+
+Virtual folders, which contain only references to messages in other
+folders, store just a single message body in the Folder buffer.
+However, they have message descriptors for all the messages in
+@code{vm-message-list}.  All the message descriptors use the same
+location data vector, because only one message body can be stored in
+the Folder buffer, but have separate soft data vectors.  The other
+sub-vectors are shared with the underlying real folders.
+
+
+@node Summary Internals,, Message Internals, Internals
+@section Summary Internals
+
+@vindex vm-summary-line-format
+@cindex summary line, tokenized
+Generating a summary is quite a time-consuming operation.  VM uses a
+variety of tricks to speed up the generation of summaries.  The format
+of the summary lines is specified in the variable
+@code{vm-summary-line-format}.  The information that needs to go into
+the summary line is divided into two classes:
+
+@itemize
+@item
+Information that is fixed for each message.  Examples include the
+subject, author and other header information.
+@item
+Information that is variable during a VM session.  Examples include
+the message number and thread indentation.
+@end itemize
+
+A @emph{tokenized summary line} is a list whose elements can be
+strings, representing fixed information in a message, and tokens,
+representing variable information.  VM calculates a tokenized summary
+line for each message and caches it in the cached-data vector.
+The following forms of tokens are used in tokenized summary lines:
+
+@itemize
+@item number.
+Stands for the message number in the linear order of the summary.
+@item mark.
+Stands for an indicator of message mark (whether the message is marked
+at present).
+@item thread-indent.
+Stands for the indentation to be used for the message's summary
+depending on its position in the message thread.
+@item group-begin, group-end.
+Brackets used to denote groups of items that might have particular
+formating constraints.
+@end itemize
+
+The function @code{vm-tokenized-summary-insert} converts a tokenized
+summary line into a string and inserts it in the summary buffer.  The
+minibuffer message ``Generating summary...'' is used to show the
+progress of generating summary lines from tokenized summaries.
+
+Buffer local variables in each Folder buffer responsible for
+maintaining summary information:
+
+@itemize
+@item
+@code{vm-summary-pointer}.
+@item
+@code{vm-summary-redo-start-point}.
+@item
+@code{vm-summary-redo-end-point}.
+@item
+@code{vm-messages-needing-summary-update}
+@end itemize
+
+@vindex vm-thread-obarray
+@vindex vm-subject-obarray
+Message threads required for threaded summaries are calculated using two
+hash tables @code{vm-thread-obarray} and @code{vm-subject-obarray}.  The
+former keeps track of the thread obtained by
+following parent and reference chains.  The latter keeps track of
+messages with the same subject.
+
+The unique message ID of a message is interned in each of these hash
+tables.  The @code{vm-thread-obarray} table stores the following
+information for each message ID:
+
+@itemize
+@item messages.
+The message structs that carry this message ID.  (Why are there several
+of them?)
+@item date.
+The date of the message.
+@item parent.
+The interned message ID of the parent of this message.
+@item children.
+The interned message ID's of all the children of this message.
+@item youngest-date.
+The date of the youngest message in the thread.
+@item oldest-date.
+The date of the oldest message in the thread.
+@end itemize
 
 
 @node Concept Index, Key Index, Internals, Top

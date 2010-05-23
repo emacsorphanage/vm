@@ -684,9 +684,7 @@ format:
                                       vm-virtual-folder-alist))
             function (key-or-menu-binding (read-key-sequence "VM command: "))))
 
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)  
-  (vm-error-if-folder-empty)  
+  (vm-select-folder-buffer-and-validate 1)
 
   (let ((mlist (vm-select-marked-or-prefixed-messages (or count 1)))
         (count 0))
@@ -885,8 +883,7 @@ See the function `vm-virtual-auto-delete-message' for details.
 
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)  
+  (vm-select-folder-buffer-and-validate)
   (vm-virtual-auto-delete-message (length vm-message-pointer)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1049,8 +1046,6 @@ Like `vm-save-message' but the default folder it guessed by
       (vm-follow-summary-cursor)
       (let ((default (save-excursion
                        (vm-select-folder-buffer)
-                       (vm-check-for-killed-summary)
-                       (vm-error-if-folder-empty)
                        (or (vm-virtual-auto-select-folder)
                            vm-last-save-folder)))
             (dir (or vm-folder-directory default-directory)))
@@ -1073,9 +1068,7 @@ Like `vm-save-message' but the default folder it guessed by
 (defun vm-virtual-auto-archive-messages (&optional prompt)
   "With a prefix ARG ask user before saving." 
   (interactive "P")
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-folder-read-only)
 
   (message "Archiving...")

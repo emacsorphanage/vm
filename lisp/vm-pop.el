@@ -306,8 +306,7 @@ into the current folder.  VM sends POP DELE commands to all the
 relevant POP servers to remove the messages."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   (vm-error-if-virtual-folder)
   (if (and (interactive-p) (eq vm-folder-access-method 'pop))
       (error "This command is not meant for POP folders.  Use the normal folder expunge instead."))
@@ -490,9 +489,8 @@ relevant POP servers to remove the messages."
 					   vm-pop-passwords)))
 	  ;; get the trace buffer
 	  (setq process-buffer
-		(vm-make-work-buffer (format "trace of %s session to %s"
-					     session-name
-					     host)))
+		(vm-make-work-buffer 
+		 (vm-make-trace-buffer-name session-name host)))
 	  (save-excursion
 	    (set-buffer process-buffer)
 	    (setq vm-folder-type (or folder-type vm-default-folder-type))
@@ -587,9 +585,12 @@ relevant POP servers to remove the messages."
       (if process-to-shutdown
 	  (vm-pop-end-session process-to-shutdown t))
       (vm-tear-down-stunnel-random-data))))
-
 (defun vm-pop-end-session (process &optional keep-buffer verbose)
-  (if (and (memq (process-status process) '(open run))
+  "Kill the POP session represented by PROCESS.  PROCESS could be
+nil or be already closed.  If the optional argument KEEP-BUFFER
+is non-nil, the process buffer is retained, otherwise it is
+killed as well."
+  (if (and process (memq (process-status process) '(open run))
 	   (buffer-live-p (process-buffer process)))
       (save-excursion
 	(set-buffer (process-buffer process))
@@ -609,14 +610,15 @@ relevant POP servers to remove the messages."
 	      (and verbose
 		   (message
 		    "Waiting for response to POP QUIT command... done"))))))
-  (if (and (not keep-buffer) (not vm-pop-keep-trace-buffer))
-      (if (buffer-live-p (process-buffer process))
-	  (kill-buffer (process-buffer process)))
-    (save-excursion
-      (set-buffer (process-buffer process))
-      (rename-buffer (concat "saved " (buffer-name)) t)
-      (vm-keep-some-buffers (current-buffer) 'vm-kept-pop-buffers
-			    vm-pop-keep-failed-trace-buffers)))
+  (if (and (process-buffer process)
+	   (buffer-live-p (process-buffer process)))
+      (if (and (not vm-pop-keep-trace-buffer) (not keep-buffer))
+	  (kill-buffer (process-buffer process))
+	(save-excursion
+	  (set-buffer (process-buffer process))
+	  (rename-buffer (concat "saved " (buffer-name)) t)
+	  (vm-keep-some-buffers (current-buffer) 'vm-kept-pop-buffers
+				vm-pop-keep-failed-trace-buffers))))
   (if (fboundp 'add-async-timeout)
       (add-async-timeout 2 'delete-process process)
     (run-at-time 2 nil 'delete-process process)))
@@ -1233,8 +1235,8 @@ order to capture the trace of POP sessions during the occurrence."
   ))
 
 (defun vm-pop-set-default-attributes (m)
-  (vm-set-headers-to-be-retrieved m nil)
-  (vm-set-body-to-be-retrieved m nil))
+  (vm-set-headers-to-be-retrieved-of m nil)
+  (vm-set-body-to-be-retrieved-of m nil))
 
 
 (provide 'vm-pop)

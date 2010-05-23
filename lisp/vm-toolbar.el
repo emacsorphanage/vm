@@ -253,10 +253,8 @@ s-expression like this one in your .vm file:
 (defun vm-toolbar-delete/undelete-message (&optional prefix-arg)
   (interactive "P")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-folder-read-only)
-  (vm-error-if-folder-empty)
   (let ((current-prefix-arg prefix-arg))
     (if (vm-deleted-flag (car vm-message-pointer))
 	(call-interactively 'vm-undelete-message)
@@ -277,10 +275,8 @@ s-expression like this one in your .vm file:
 (defun vm-toolbar-autofile-message ()
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-folder-read-only)
-  (vm-error-if-folder-empty)
   (let ((file (vm-auto-select-folder vm-message-pointer vm-auto-folder-alist)))
     (if file
 	(progn

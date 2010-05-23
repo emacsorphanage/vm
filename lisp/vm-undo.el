@@ -166,8 +166,7 @@ Consecutive invocations of this command cause sequentially earlier
 changes to be undone.  After an intervening command between undos,
 the undos themselves become undoable."
   (interactive)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   (vm-error-if-folder-read-only)
   (vm-display nil nil '(vm-undo) '(vm-undo))
   (let ((modified (buffer-modified-p)))
@@ -209,10 +208,8 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
       (vm-read-string "Set attributes: " vm-supported-attribute-names t)
       (prefix-numeric-value current-prefix-arg))))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-folder-read-only)
-  (vm-error-if-folder-empty)
   (vm-display nil nil '(vm-set-message-attributes)
 	      '(vm-set-message-attributes))
   (let ((name-list (vm-parse string "[ \t]*\\([^ \t]+\\)"))
@@ -298,12 +295,14 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
       (vm-read-string "Add labels: "
 		      (vm-obarray-to-string-list vm-label-obarray) t)
       (prefix-numeric-value current-prefix-arg))))
-  (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-read-only)
-  (vm-error-if-folder-empty)
-  (vm-add-or-delete-message-labels string count 'all))
+  (let ((ignored-labels nil))
+    (vm-follow-summary-cursor)
+    (vm-select-folder-buffer-and-validate 1)
+    (vm-error-if-folder-read-only)
+    (setq ignored-labels 
+	  (vm-add-or-delete-message-labels string count 'all))
+    (if ignored-labels
+	(Message "Label %s could not be added" string))))
 
 ;;;###autoload
 (defun vm-add-existing-message-labels (string count)
@@ -339,10 +338,8 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 		      (vm-obarray-to-string-list vm-label-obarray) t)
       (prefix-numeric-value current-prefix-arg))))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-folder-read-only)
-  (vm-error-if-folder-empty)
   (let ((ignored-labels
 	 (vm-add-or-delete-message-labels string count 'existing-only)))
     (if ignored-labels
@@ -384,10 +381,8 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 		      (vm-obarray-to-string-list vm-label-obarray) t)
       (prefix-numeric-value current-prefix-arg))))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-folder-read-only)
-  (vm-error-if-folder-empty)
   (vm-add-or-delete-message-labels string count nil))
 
 (defun vm-add-or-delete-message-labels (string count add)
@@ -453,6 +448,14 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
     ignored-labels))
 
 (defun vm-set-xxxx-flag (m flag norecord function attr-index)
+  "A generic function to set the message flag of M at ATTR-INDEX to
+  the value FLAG.  The argument FUNCTION tells the specific
+  non-generic function that invoked this one.
+The flag is also set for all the virtual messages mirroring M as well
+  as the real message underlying M. 
+Normally, a record of the change is kept for the purpose of undo, and
+  the changed attributes are stuffed into the folder, but NORECORD
+  suppresses all of this.                             USR 2010-04-06" 
   (let ((m-list nil) vmp)
     (cond
      ((and (not vm-folder-read-only)
@@ -489,11 +492,65 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 	  (progn
 	    (vm-set-attribute-modflag-of m t)
 	    (if (eq vm-flush-interval t)
-		(vm-stuff-virtual-attributes m)
+		(vm-stuff-virtual-message-data m)
+	      (vm-set-stuff-flag-of m t))))))))
+
+(defun vm-set-xxxx-cached-data-flag (m flag norecord function attr-index)
+  "A generic function to set the cached-data flag of M at ATTR-INDEX to
+  the value FLAG.  The argument FUNCTION tells the specific
+  non-generic function that invoked this one.
+The flag is also set for all the virtual messages mirroring M as well
+  as the real message underlying M. 
+Normally, a record of the change is kept for the purpose of undo, and
+  the changed attributes are stuffed into the folder, but NORECORD
+  suppresses all of this.                             USR 2010-04-06" 
+  (let ((m-list nil) vmp)
+    (cond
+     ((and (not vm-folder-read-only)
+	   (or (not (vm-virtual-messages-of m))
+	       (not (save-excursion
+		      (set-buffer
+		       (vm-buffer-of
+			 (vm-real-message-of m)))
+		      vm-folder-read-only)))
+           ;; do nothing it is is already set 
+           (not (eq flag (aref (vm-cached-data-of m) attr-index))))
+      (cond
+       ((not norecord)
+	(setq vmp (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
+	(while vmp
+	  (if (eq (vm-cached-data-of m) (vm-cached-data-of (car vmp)))
+	      (setq m-list (cons (car vmp) m-list)))
+	  (setq vmp (cdr vmp)))
+	(if (null m-list)
+	    (setq m-list (cons m m-list)))
+	(while m-list
+	  (save-excursion
+	    (set-buffer (vm-buffer-of (car m-list)))
+	    (cond ((not (buffer-modified-p))
+		   (vm-set-buffer-modified-p t)
+		   (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
+	    (vm-undo-record (list function (car m-list) (not flag)))
+;;;	    (vm-undo-boundary)
+	    (vm-increment vm-modification-counter))
+	  (setq m-list (cdr m-list)))))
+      (aset (vm-cached-data-of m) attr-index flag)
+      (vm-mark-for-summary-update m)
+      (if (not norecord)
+	  (progn
+	    (vm-set-attribute-modflag-of m t)
+	    (if (eq vm-flush-interval t)
+		(vm-stuff-virtual-message-data m)
 	      (vm-set-stuff-flag-of m t))))))))
 
 
 (defun vm-set-labels (m labels)
+  "Set the message labels of M to the value LABELS (a list of
+  strings). 
+The labels are also set for all the virtual messages mirroring M as
+  well as the real message underlying M. 
+A record of the change is kept for the purpose of undo, and the
+  changed attributes are stuffed into the folder.        USR 2010-04-06" 
   (let ((m-list nil)
 	(old-labels (vm-labels-of m))
 	vmp)
@@ -526,9 +583,17 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
       (vm-set-label-string-of m nil)
       (vm-mark-for-summary-update m)
       (if (eq vm-flush-interval t)
-	  (vm-stuff-virtual-attributes m)
+	  (vm-stuff-virtual-message-data m)
 	(vm-set-stuff-flag-of m t))))))
 
+
+(defun vm-set-headers-to-be-retrieved-flag (m flag &optional norecord)
+  (vm-set-xxxx-cached-data-flag 
+   m flag norecord 'vm-set-headers-to-be-retrieved-flag 21))
+
+(defun vm-set-body-to-be-retrieved-flag (m flag &optional norecord)
+  (vm-set-xxxx-cached-data-flag 
+   m flag norecord 'vm-set-body-to-be-retrieved-flag 22))
 
 (defun vm-set-new-flag (m flag &optional norecord)
   (vm-set-xxxx-flag m flag norecord 'vm-set-new-flag 0))
@@ -564,9 +629,9 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 (defun vm-set-forwarded-flag-of (m flag) (aset (aref m 2) 6 flag))
 (defun vm-set-redistributed-flag-of (m flag) (aset (aref m 2) 8 flag))
 
-;; this is solely for the use of vm-stuff-attributes and appears here
-;; only because this function should be grouped with others of its kind
-;; for maintenance purposes.
+;; this is solely for the use of vm-stuff-message-data and
+;; appears here only because this function should be grouped with
+;; others of its kind for maintenance purposes.
 (defun vm-set-deleted-flag-in-vector (v flag)
   (aset v 2 flag))
 ;; ditto.  this is for vm-read-attributes.

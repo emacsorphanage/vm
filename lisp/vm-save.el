@@ -105,9 +105,7 @@ only marked messages are checked against vm-auto-folder-alist.
 
 The saved messages are flagged as `filed'."
   (interactive "P")
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (message "Archiving...")
   (let ((auto-folder)
 	(archived 0))
@@ -179,8 +177,8 @@ The saved messages are flagged as `filed'."
 (defun vm-save-message (folder &optional count)
   "Save the current message.  This may be done either by saving it
 to an IMAP folder or by saving it to a local filesystem folder.
-Which is done is controlled by the type of the current vm-folder
-buffer and the variable `vm-imap-save-to-server'."
+Which is done depends on the type of current vm folder
+and the variable `vm-imap-save-to-server' (which see)."
   (interactive
    (if (and vm-imap-save-to-server (vm-imap-folder-p))
        ;; IMAP saving --- argument parsing taken from
@@ -191,40 +189,41 @@ buffer and the variable `vm-imap-save-to-server'."
 	 (save-excursion
 	   (vm-session-initialization)
 	   (vm-select-folder-buffer)
-	   (vm-check-for-killed-summary)
-	   (vm-error-if-folder-empty)
 	   (list (vm-read-imap-folder-name "Save to IMAP folder: " t)
 		 (prefix-numeric-value current-prefix-arg))))
        ;; saving to local filesystem.  argument parsing taken from old
        ;; vm-save-message (now vm-save-message-to-local-folder)
-       (list
-	;; protect value of last-command
-	(let ((last-command last-command)
-	      (this-command this-command))
-	  (vm-follow-summary-cursor)
-	  (let ((default 
-		  (save-excursion
-		    (vm-select-folder-buffer)
-		    (vm-check-for-killed-summary)
-		    (vm-error-if-folder-empty)
-		    (or (vm-auto-select-folder 
-			 vm-message-pointer vm-auto-folder-alist)
-			vm-last-save-folder)))
-		(dir (or vm-folder-directory default-directory)))
-	    (cond ((and default
-			(let ((default-directory dir))
-			  (file-directory-p default)))
-		   (vm-read-file-name "Save in folder: " dir nil nil default))
-		  (default
-		      (vm-read-file-name
-		       (format "Save in folder: (default %s) " default)
-		       dir default))
-		  (t
-		   (vm-read-file-name "Save in folder: " dir nil)))))
-	(prefix-numeric-value current-prefix-arg))))
-  (if (and vm-imap-save-to-server (vm-imap-folder-p))
-      (vm-save-message-to-imap-folder folder count)
-    (vm-save-message-to-local-folder folder count)))
+     (list
+      ;; protect value of last-command
+      (let ((last-command last-command)
+	    (this-command this-command))
+	(vm-follow-summary-cursor)
+	(let ((default 
+		(save-excursion
+		  (vm-select-folder-buffer)
+		  (vm-error-if-folder-empty)
+		  (or (vm-auto-select-folder 
+		       vm-message-pointer vm-auto-folder-alist)
+		      vm-last-save-folder)))
+	      (dir (or vm-folder-directory default-directory)))
+	  (cond ((and default
+		      (let ((default-directory dir))
+			(file-directory-p default)))
+		 (vm-read-file-name "Save in folder: " dir nil nil default))
+		(default
+		  (vm-read-file-name
+		   (format "Save in folder: (default %s) " default)
+		   dir default))
+		(t
+		 (vm-read-file-name "Save in folder: " dir nil)))))
+      (prefix-numeric-value current-prefix-arg))))
+  (cond ((and vm-imap-save-to-server (vm-imap-folder-p))
+	 (vm-save-message-to-imap-folder folder count))
+	((and (stringp vm-recognize-imap-maildrops)
+	      (string-match vm-recognize-imap-maildrops folder))
+	 (vm-save-message-to-imap-folder folder count))
+	(t
+	 (vm-save-message-to-local-folder folder count))))
    
 ;;;###autoload
 (defun vm-save-message-to-local-folder (folder &optional count)
@@ -248,8 +247,6 @@ The saved messages are flagged as `filed'."
       (vm-follow-summary-cursor)
       (let ((default (save-excursion
 		       (vm-select-folder-buffer)
-		       (vm-check-for-killed-summary)
-		       (vm-error-if-folder-empty)
 		       (or (vm-auto-select-folder vm-message-pointer
 						  vm-auto-folder-alist)
 			   vm-last-save-folder)))
@@ -266,14 +263,13 @@ The saved messages are flagged as `filed'."
 	       (vm-read-file-name "Save in folder: " dir nil)))))
     (prefix-numeric-value current-prefix-arg)))
   (let (auto-folder unexpanded-folder)
-    (vm-select-folder-buffer)
-    (vm-check-for-killed-summary)
-    (vm-error-if-folder-empty)
+    (vm-select-folder-buffer-and-validate 1)
     (setq unexpanded-folder folder
 	  auto-folder (vm-auto-select-folder vm-message-pointer
 					     vm-auto-folder-alist))
     (vm-display nil nil '(vm-save-message) '(vm-save-message))
     (or count (setq count 1))
+    (vm-load-message count)
     ;; Expand the filename, forcing relative paths to resolve
     ;; into the folder directory.
     (let ((default-directory
@@ -307,21 +303,20 @@ The saved messages are flagged as `filed'."
 				       (find-file-noselect folder)))))
 	    ((and mlist vm-visit-when-saving)
 	     (setq folder-buffer (vm-get-file-buffer folder))))
-      (if (and mlist vm-check-folder-types)
-	  (progn
+      (when (and mlist vm-check-folder-types)
 	    (setq target-type (or (vm-get-folder-type folder)
 				  vm-default-folder-type
 				  (and mlist
 				       (vm-message-type-of (car mlist)))))
 	    (if (eq target-type 'unknown)
-		(error "Folder %s's type is unrecognized" folder))))
+		(error "Folder %s's type is unrecognized" folder)))
       (unwind-protect
 	  (save-excursion
-	    (and oldmodebits (set-default-file-modes
-			      vm-default-folder-permission-bits))
+	    (when oldmodebits 
+	      (set-default-file-modes vm-default-folder-permission-bits))
 	    ;; if target folder is empty or nonexistent we need to
 	    ;; write out the folder header first.
-	    (if mlist
+	    (when mlist
 		(let ((attrs (file-attributes folder)))
 		  (if (or (null attrs) (= 0 (nth 7 attrs)))
 		      (if (null folder-buffer)
@@ -332,17 +327,15 @@ The saved messages are flagged as `filed'."
 	    (while mlist
 	      (setq m (vm-real-message-of (car mlist)))
 	      (set-buffer (vm-buffer-of m))
-	      ;; FIXME try to load the body before saving
-	      (if (vm-body-to-be-retrieved-of m)
-		  (error "Message %s body has not been retrieved"
-			 (vm-number-of (car mlist))))
+	      ;; FIXME the following isn't really necessary
+	      (vm-assert (not (vm-body-to-be-retrieved-of m)))
 	      (vm-save-restriction
 	       (widen)
 	       ;; have to stuff the attributes in all cases because
 	       ;; the deleted attribute may have been stuffed
 	       ;; previously and we don't want to save that attribute.
 	       ;; also we don't want to save out the cached summary entry.
-	       (vm-stuff-attributes m t)
+	       (vm-stuff-message-data m t)
 	       (if (null folder-buffer)
 		   (if (or (null vm-check-folder-types)
 			   (eq target-type (vm-message-type-of m)))
@@ -482,11 +475,10 @@ vm-save-message instead (normally bound to `s')."
 	 "Write text to file: ")
        nil vm-last-written-file nil)
       (prefix-numeric-value current-prefix-arg))))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-display nil nil '(vm-save-message-sans-headers)
 	      '(vm-save-message-sans-headers))
+  (vm-load-message count)
   (or count (setq count 1))
   (setq file (expand-file-name file))
   ;; Check and see if we are currently visiting the file
@@ -514,10 +506,8 @@ vm-save-message instead (normally bound to `s')."
 	  (while mlist
 	    (setq m (vm-real-message-of (car mlist)))
 	    (set-buffer (vm-buffer-of m))
-	    ;; FIXME try to load the body before saving
-	    (if (vm-body-to-be-retrieved-of m)
-		(error "Message %s body has not been retrieved"
-		       (vm-number-of (car mlist))))
+	    ;; FIXME the following shouldn't be necessary any more
+	    (vm-assert (not (vm-body-to-be-retrieved-of m)))
 	    (vm-save-restriction
 	     (widen)
 	     (if (null file-buffer)
@@ -594,9 +584,7 @@ Output, if any, is displayed.  The message is not altered."
      (vm-select-folder-buffer)
      (list (read-string "Pipe to command: " vm-last-pipe-command)
 	   current-prefix-arg)))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (setq vm-last-pipe-command command)
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
 	m
@@ -606,16 +594,18 @@ Output, if any, is displayed.  The message is not altered."
 	(mlist (if (eq last-command 'vm-next-command-uses-marks)
 		   (vm-select-marked-or-prefixed-messages 0)
 		 (list (car vm-message-pointer)))))
+    (vm-load-message)
+    ;; FIXME the following is really unnecessary
+    (mapcar
+     (lambda (m)
+       (vm-assert (not (vm-body-to-be-retrieved-of m))))
+     mlist)
     (save-excursion
       (set-buffer buffer)
       (erase-buffer))
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
       (set-buffer (vm-buffer-of m))
-      ;; FIXME try to load the body before saving
-      (if (vm-body-to-be-retrieved-of m)
-	  (error "Message %s body has not been retrieved"
-		 (vm-number-of (car mlist))))
       (save-restriction
 	(widen)
 	(let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
@@ -715,9 +705,7 @@ arguments after the command finished."
      (vm-select-folder-buffer)
      (list (read-string "Pipe to command: " vm-last-pipe-command)
 	   current-prefix-arg)))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (setq vm-last-pipe-command command)
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
 	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
@@ -727,6 +715,12 @@ arguments after the command finished."
 		   (vm-select-marked-or-prefixed-messages 0)
 		 (list (car vm-message-pointer))))
 	m process)
+    (vm-load-message)
+    ;; FIXME the following is really unnecessary
+    (mapcar
+     (lambda (m)
+       (vm-assert (not (vm-body-to-be-retrieved-of m))))
+     mlist)
     (save-excursion
       (set-buffer buffer)
       (erase-buffer))
@@ -748,11 +742,7 @@ arguments after the command finished."
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
       (set-buffer (vm-buffer-of m))
-      ;; FIXME try to load the body before saving
-      (if (vm-body-to-be-retrieved-of m)
-	  (error "Message %s body has not been retrieved"
-		 (vm-number-of (car mlist))))
-     (save-restriction
+      (save-restriction
 	(widen)
 	(cond ((eq vm-pipe-messages-to-command-start t)
 	       (process-send-region process 
@@ -765,8 +755,8 @@ arguments after the command finished."
 	       (process-send-region process 
 				    (vm-text-end-of m) (vm-end-of m)))
 	      (vm-pipe-messages-to-command-end
-	       (process-send-string process vm-pipe-messages-to-command-end)))
-	(setq mlist (cdr mlist))))
+	       (process-send-string process vm-pipe-messages-to-command-end))))
+      (setq mlist (cdr mlist)))
 
     (process-send-eof process)
 
@@ -824,9 +814,7 @@ each marked message is printed, one message per vm-print-command invocation.
 Output, if any, is displayed.  The message is not altered."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (or count (setq count 1))
   (let* ((buffer (get-buffer-create "*Shell Command Output*"))
 	 (need-tempfile (string-match ".*-.*-\\(win95\\|nt\\)"
@@ -841,17 +829,20 @@ Output, if any, is displayed.  The message is not altered."
 	 (m nil)
 	 (pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
 	 (mlist (vm-select-marked-or-prefixed-messages count)))
+    (vm-load-message count)
+    ;; FIXME the following is really unnecessary
+    (mapcar
+     (lambda (m)
+       (vm-assert (not (vm-body-to-be-retrieved-of m))))
+     mlist)
+
     (save-excursion
       (set-buffer buffer)
       (erase-buffer))
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
       (set-buffer (vm-buffer-of m))
-      ;; FIXME try to load the body before saving
-      (if (vm-body-to-be-retrieved-of m)
-	  (error "Message %s body has not been retrieved"
-		 (vm-number-of (car mlist))))
-     (if (and vm-display-using-mime (vectorp (vm-mm-layout m)))
+      (if (and vm-display-using-mime (vectorp (vm-mm-layout m)))
 	  (let ((work-buffer nil))
 	    (unwind-protect
 		(progn
@@ -922,15 +913,12 @@ The saved messages are flagged as `filed'."
      (save-excursion
        (vm-session-initialization)
        (vm-select-folder-buffer)
-       (vm-check-for-killed-summary)
        (vm-error-if-folder-empty)
        (list (vm-read-imap-folder-name 
 	      "Save to IMAP folder: " t nil
 	      (or vm-last-save-imap-folder vm-last-visit-imap-folder))
 	     (prefix-numeric-value current-prefix-arg)))))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-display nil nil '(vm-save-message-to-imap-folder)
 	      '(vm-save-message-to-imap-folder))
   (or count (setq count 1))
@@ -968,9 +956,10 @@ The saved messages are flagged as `filed'."
 	    ;; previously and we don't want to save that attribute.
 	    ;; FIXME But stuffing attributes into the IMAP buffer is
 	    ;; not easy.  USR, 2010-03-08
-	    ;; (vm-stuff-attributes m t)
+	    ;; (vm-stuff-message-data m t)
 	    (if server-to-server-p 	; economise on upstream data traffic
-		(let ((process (vm-re-establish-folder-imap-session)))
+		(let ((process 
+		       (vm-re-establish-folder-imap-session nil "save")))
 		  (vm-imap-copy-message process m mailbox))
 	      (unless process
 		(setq process (vm-imap-make-session target-folder)))

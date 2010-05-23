@@ -267,6 +267,10 @@ and flexible."
 	(and temp-buffer (kill-buffer temp-buffer))))))
 
 (defun vm-check-for-killed-summary ()
+  "If the current folder's summary buffer has been killed, reset
+the vm-summary-buffer variable and all the summary markers in the
+folder so that it remains a valid folder.  Take care of
+vm-folders-summary-buffer in a similar way."
   (and (bufferp vm-summary-buffer) (null (buffer-name vm-summary-buffer))
        (let ((mp vm-message-list))
 	 (setq vm-summary-buffer nil)
@@ -279,6 +283,8 @@ and flexible."
        (setq vm-folders-summary-buffer nil)))
 
 (defun vm-check-for-killed-presentation ()
+  "If the current folder's Presentation buffer has been killed, reset
+the vm-presentation-buffer variable."
   (and (bufferp vm-presentation-buffer-handle)
        (null (buffer-name vm-presentation-buffer-handle))
        (progn
@@ -287,6 +293,8 @@ and flexible."
 
 ;;;###autoload
 (defun vm-check-for-killed-folder ()
+  "If the current buffer's Folder buffer has been killed, reset the
+vm-mail-buffer variable."
   (and (bufferp vm-mail-buffer) (null (buffer-name vm-mail-buffer))
        (setq vm-mail-buffer nil)))
 
@@ -352,6 +360,23 @@ and flexible."
 	    (setq p (cdr p)))
 	(setq prev p p (cdr p))))
     list ))
+
+(defun vm-elems (n list)
+  "Select the first N elements of LIST and return them as a list."
+  (let (res)
+    (while (and list (> n 0))
+      (setq res (cons (car list) res))
+      (setq list (cdr list))
+      (setq n (1- n)))
+    (nreverse res)))
+
+(defun vm-find (list pred)
+  "Find the first element of LIST satisfying PRED and return the position"
+  (let ((n 0))
+    (while (and list (not (apply pred (car list) nil)))
+      (setq list (cdr list))
+      (setq n (1+ n)))
+    (if list n nil)))
 
 (defun vm-delete-directory-file-names (list)
   (vm-delete 'file-directory-p list))
@@ -1019,7 +1044,11 @@ filling of GNU Emacs does not work correctly here!"
         (vm-replace-in-string string regexp rep literal))))
   ;; now do the filling
   (let ((buffer-read-only nil)
-        (fill-column vm-paragraph-fill-column))
+        (fill-column 
+	 (if (numberp vm-fill-paragraphs-containing-long-lines)
+	     vm-fill-paragraphs-containing-long-lines
+	   (- (window-width (get-buffer-window (current-buffer))) 1)))
+	)
     (save-excursion
       (vm-save-restriction
        ;; longlines-wrap-region contains a (forward-line -1) which is causing

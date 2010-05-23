@@ -29,6 +29,13 @@
 
 (require 'vm-version)
 
+;; Ensure that vm-autoloads is loaded in case the user is using VM 7.x
+;; autoloads 
+
+(eval-when (load)
+  (if (not (featurep 'xemacs))
+      (require 'vm-autoloads)))
+
 ;;;###autoload
 (defun vm (&optional folder read-only access-method reload)
   "Read mail under Emacs.
@@ -99,7 +106,7 @@ See the documentation for vm-mode for more information."
 	  ;; not clear why full-startup isn't always true - USR, 2010-01-02
 	  (did-read-index-file nil)
 	  folder-buffer first-time totals-blurb
-	  folder-name remote-spec
+	  folder-name account-name remote-spec
 	  preserve-auto-save-file)
       (cond ((and full-startup (eq access-method 'pop))
 	     (setq vm-last-visit-pop-folder folder)
@@ -110,11 +117,17 @@ See the documentation for vm-mode for more information."
 	     (setq folder (vm-pop-find-cache-file-for-spec remote-spec)))
 	    ((and full-startup (eq access-method 'imap))
 	     (setq vm-last-visit-imap-folder folder)
-	     (setq remote-spec folder
-		   folder-name (or (nth 3 (vm-imap-parse-spec-to-list
+	     (setq remote-spec folder)
+	     (setq folder (vm-imap-make-filename-for-spec remote-spec))
+	     (setq folder-name (or (nth 3 (vm-imap-parse-spec-to-list
 					   remote-spec))
-				   folder)
-		   folder (vm-imap-make-filename-for-spec remote-spec))))
+				   folder))
+	     (if (and vm-imap-refer-to-inbox-by-account-name
+		      (equal folder-name "INBOX")
+		      (setq account-name 
+			    (vm-imap-account-name-for-spec remote-spec)))
+		 (setq folder-name account-name))
+	     ))
       (setq folder-buffer
 	    (if (bufferp folder)
 		folder
@@ -443,9 +456,10 @@ visited folder."
 		 vm-last-visit-pop-folder folder))
 	  ((and (stringp vm-recognize-imap-maildrops)
 		(string-match vm-recognize-imap-maildrops folder)
-		(setq foo (vm-imap-find-name-for-spec folder)))
-	   (setq folder foo
-		 access-method 'imap
+		;;(setq foo (vm-imap-find-name-for-spec folder))
+		)
+	   (setq ;; folder foo
+	         access-method 'imap
 		 vm-last-visit-imap-folder folder))
 	  (t
 	   (let ((default-directory 
@@ -663,7 +677,6 @@ visited folder."
   (vm-session-initialization)
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer-if-possible)
-  (vm-check-for-killed-summary)
   (setq vm-last-visit-imap-folder folder)
   (vm folder read-only 'imap))
 
@@ -1138,6 +1151,7 @@ summary buffer to select a folder."
   (vm-display nil nil '(vm-load-init-file) '(vm-load-init-file)))
 
 (defun vm-check-emacs-version ()
+  "Checks the version of Emacs and gives an error if it is unsupported."
   (cond ((and vm-xemacs-p (< emacs-major-version 21))
 	 (error "VM %s must be run on XEmacs 21 or a later version."
 		(vm-version)))

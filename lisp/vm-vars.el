@@ -576,6 +576,16 @@ Example:
   :group 'vm
   :type '(repeat (list string string)))
 
+(defcustom vm-imap-refer-to-inbox-by-account-name nil
+  "*If set to non-nil, the INBOX folders on IMAP accounts are
+referred to by their account names instead of as \"INBOX\".  The
+account names are those declared in `vm-imap-account-alist'.
+This is useful if one wants to handle multiple IMAP accounts
+during the same VM session, all of which might have an \"INBOX\"
+folder."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-imap-tolerant-of-bad-imap 0
   "*Level of tolerance that vm should use for IMAP servers that
 don't follow the IMAP specification.  Default of 0 means no
@@ -597,8 +607,15 @@ variable."
   :type '(choice (const nil) directory))
 
 (defcustom vm-imap-save-to-server nil
-  "*If this variable is non-NIL, then the save-message command should
-save to IMAP folders on the server, rather than to local files."
+  "*This variable controls the behavior of the `vm-save-message'
+  command.  
+If it is non-NIL, then messages from IMAP folders
+  are saved to other IMAP folders on the server, instead of
+  local folders.  Messages from local folders are still saved to local
+  folders.
+The specialized commands `vm-save-message-to-local-folder' and
+  `vm-save-message-to-imap-folder' can be used to obtain particular
+  behavior independent of this variable."
   :group 'vm
   :type '(choice (const nil) (const t)))
 
@@ -606,6 +623,20 @@ save to IMAP folders on the server, rather than to local files."
   "*Number of retries to be performed for expunging IMAP mailboxes.
 Increase this if your IMAP server is sluggish."
   :group 'vm)
+
+(defcustom vm-imap-server-timeout nil
+  "*Number of seconds to wait for output from the IMAP server before
+timing out.  It can be set to nil to never time out."
+  :group 'vm
+  :type '(choice (const nil) integer))
+
+(defcustom vm-imap-ensure-active-sessions t
+  "*If non-NIL, ensures that an IMAP session is active before issuing
+commands to the server.  If it is not active, a new session is
+started.  This ensures a failure-proof operation, but involves
+additional overhead in checking that the session is active."
+  :group 'vm
+  :type 'boolean)
 
 (defcustom vm-imap-sync-on-get t
   "*If this variable is non-NIL, then the vm-get-new-mail command
@@ -873,10 +904,15 @@ A nil value causes VM to preview messages only if new or unread."
   :group 'vm
   :type 'boolean)
 
-(defcustom vm-always-use-presentation-buffer nil
-  "*Non-nil means to always use a presentation buffer for displaying messages.
-It will also be used if no decoding or other modification of the message are
-necessary."
+(defcustom vm-always-use-presentation-buffer t
+  "****This variable is deprecated.  Starting from version 8.2.0, the
+  behaviour will be equivalent to setting this variable to t.  Please
+  remove all settings for this variable and report any problems that
+  you might encounter.
+
+Non-nil means to always use a presentation buffer for displaying
+  messages.  It will also be used if no decoding or other
+  modification of the message are necessary."
   :group 'vm
   :type 'boolean)
 
@@ -913,7 +949,7 @@ re-filling lines longer than the value of
   :group 'vm
   :type 'integer)
 
-(defcustom vm-fill-long-lines-in-reply-column nil
+(defcustom vm-fill-long-lines-in-reply-column (default-value 'fill-column)
   "*Fill lines spanning that many columns or more in replies."
   :type '(choice (const nil)
                  (const window-width)
@@ -1788,8 +1824,8 @@ with the first type that matches will be used."
   :type '(regexp))
 
 (defcustom vm-mime-encode-headers-words-regexp
-  (let ((8bit-word "\\([^ \t\n\r]*[^\x0-\x7f]+[^ \t\n\r]*\\)+"))
-    (concat "\\s-\\(" 8bit-word "\\(\\s-+" 8bit-word "\\)*\\)"))
+  (let ((8bit-word "\\([^ ,\t\n\r]*[^\x0-\x7f]+[^ ,\t\n\r]*\\)+"))
+    (concat "[ ,\t\n\r]\\(" 8bit-word "\\(\\s-+" 8bit-word "\\)*\\)"))
   "*A regexp matching a set of consecutive words which must be encoded."
   :group 'vm
   :type '(regexp))
@@ -2078,6 +2114,19 @@ file as you update your window configuration settings, so
 anything else you put into this file will go away."
   :group 'vm
   :type 'file)
+
+(defcustom vm-expunge-before-quit nil
+  "*Non-nil value causes VM to expunge deleted messages before
+quitting.  You can use `vm-quit-no-expunge' and `vm-quit-no-change'
+to override this behavior."
+  :group 'vm
+  :type 'boolean)
+
+(defcustom vm-expunge-before-save nil
+  "*Non-nil value causes VM to expunge deleted messages before
+saving a folder."
+  :group 'vm
+  :type 'boolean)
 
 (defcustom vm-confirm-quit 0
   "*Value of t causes VM to always ask for confirmation before quitting
@@ -2386,6 +2435,15 @@ format of the Resent-From header, when resending a message with
   :group 'vm
   :type '(choice (const nil) string))
 
+(defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
+  "*A list of headers to hide in `vm-mail-mode'."
+  :group 'vm
+  :type '(choice (const :tag "Disabled" nil)
+                 (set :tag "Header list"
+                      (string "References")
+                      (string "In-Reply-To")
+                      (string "X-Mailer"))))
+
 (defcustom vm-mail-header-insert-date t
   "*Non-nil value causes VM to insert a Date header into a message
 when it is sent.  If the message has a Date header, it will be
@@ -2433,6 +2491,13 @@ in a composition buffer."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-do-fcc-before-mime-encode nil
+  "*Non-nil means to FCC before encoding.  This allows saving of
+messages unencoded, specifically not to waste storage for
+attachments which are stored on disk anyway."
+  :type 'boolean
+  :group 'vm)
+  
 (defcustom vm-reply-subject-prefix nil
   "*Non-nil value should be a string that VM should add to the beginning
 of the Subject header in replies, if the string is not already present.
@@ -2586,7 +2651,7 @@ the forwarded message."
   :group 'vm
   :type '(repeat regexp))
 
-(defcustom vm-unforwarded-header-regexp "only-drop-this-header"
+(defcustom vm-unforwarded-header-regexp "none-to-be-dropped"
   "*Non-nil value should be a regular expression header that tells
 what headers should not be forwarded by `vm-forward-message'.  This
 variable along with `vm-forwarded-headers' determines which headers
@@ -3172,6 +3237,9 @@ the arrow.  A value that is not nil and not t causes VM to center the
 arrow only if the summary window is not the only existing window."
   :group 'vm
   :type '(choice (const nil) (const t) (const yes-if-not-only-window)))
+
+(defvar vm-summary-debug nil
+  "Flag to turn on debug tracing of summary generation")
 
 (defcustom vm-subject-ignored-prefix "^\\(re: *\\)+"
   "*Non-nil value should be a regular expression that matches
@@ -4185,6 +4253,12 @@ setting this one to t."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-emit-messages-for-mime-decoding nil
+  "*Flag to allow minibuffer messages about the progress of MIME
+decoding of messages."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-imap-session-preauth-hook nil
   "*List of hook functions to call to generate an preauthenticated
 IMAP session process.  This hook is only run if the
@@ -4213,41 +4287,44 @@ FCC processing."
   :group 'vm
   :type 'hook)
 
-(defvar mail-yank-hooks nil
-  "Hooks called after a message is yanked into a mail composition buffer.
+;; The following settings are disabled because they are defined in
+;; mail-mode/sendmail.el. 
 
-   (This hook is deprecated, you should use mail-citation-hook instead.)
+;; (defvar mail-yank-hooks nil
+;;   "Hooks called after a message is yanked into a mail composition buffer.
 
-The value of this hook is a list of functions to be run.
-Each hook function can find the newly yanked message between point and mark.
-Each hook function should return with point and mark around the yanked message.
+;;    (This hook is deprecated, you should use mail-citation-hook instead.)
 
-See the documentation for `vm-yank-message' to see when VM will run
-these hooks.")
+;; The value of this hook is a list of functions to be run.
+;; Each hook function can find the newly yanked message between point and mark.
+;; Each hook function should return with point and mark around the yanked message.
 
-(defcustom mail-citation-hook nil
-  "*Hook for modifying a citation just inserted in the mail buffer.
-Each hook function can find the citation between (point) and (mark t).
-And each hook function should leave point and mark around the citation
-text as modified.
+;; See the documentation for `vm-yank-message' to see when VM will run
+;; these hooks.")
 
-If this hook is entirely empty (nil), a default action is taken
-instead of no action."
-  :group 'vm
-  :type 'hook)
+;; (defcustom mail-citation-hook nil
+;;   "*Hook for modifying a citation just inserted in the mail buffer.
+;; Each hook function can find the citation between (point) and (mark t).
+;; And each hook function should leave point and mark around the citation
+;; text as modified.
 
-(defcustom mail-default-headers nil
-  "*A string containing header lines, to be inserted in outgoing messages.
-It is inserted before you edit the message,
-so you can edit or delete these lines."
-  :group 'vm
-  :type '(choice (const nil) string))
+;; If this hook is entirely empty (nil), a default action is taken
+;; instead of no action."
+;;   :group 'vm
+;;   :type 'hook)
 
-(defcustom mail-signature nil
-  "*Text inserted at end of mail buffer when a message is initialized.
-If t, it means to insert the contents of the file `~/.signature'."
-  :group 'vm
-  :type '(choice (const nil) (const t) string))
+;; (defcustom mail-default-headers nil
+;;   "*A string containing header lines, to be inserted in outgoing messages.
+;; It is inserted before you edit the message,
+;; so you can edit or delete these lines."
+;;   :group 'vm
+;;   :type '(choice (const nil) string))
+
+;; (defcustom mail-signature nil
+;;   "*Text inserted at end of mail buffer when a message is initialized.
+;; If t, it means to insert the contents of the file `~/.signature'."
+;;   :group 'vm
+;;   :type '(choice (const nil) (const t) string))
 
 (defcustom vm-rename-current-buffer-function nil
   "*Non-nil value should be a function to call to rename a buffer.
@@ -4844,6 +4921,8 @@ Its parent keymap is mail-mode-map.")
 (defvar vm-folders-summary-buffer nil)
 (defvar vm-mail-buffer nil)
 (make-variable-buffer-local 'vm-mail-buffer)
+(defvar vm-fetch-buffer nil)
+(make-variable-buffer-local 'vm-fetch-buffer)
 (defvar vm-presentation-buffer nil)
 (make-variable-buffer-local 'vm-presentation-buffer)
 (defvar vm-presentation-buffer-handle nil)
@@ -5053,6 +5132,7 @@ Its parent keymap is mail-mode-map.")
     ("vm-quit")
     ("vm-quit-just-bury")
     ("vm-quit-just-iconify")
+    ("vm-quit-no-expunge")
     ("vm-quit-no-change")
     ("vm-reply")
     ("vm-reply-include-text")
@@ -5139,7 +5219,16 @@ Its parent keymap is mail-mode-map.")
   '(("X-Spam-Score:"  "[-+]?[0-9]*\\.?[0-9]+"  string-to-number)
     ("X-Spam-Status:" "[-+]?[0-9]*\\.?[0-9]+" string-to-number)
     ("X-Spam-Level:"  "\\*+"     length))
-  "A list of headers to look for spam scores."
+  "The value should be a list of lists, with each sublist of the form
+
+     (HEADER-REGEXP SCORE-REGEXP SCORE-FN)
+
+- HEADER-REGEXP is a regular expression matching the spam score
+header line in email messages,
+
+- SCORE-REGEXP is a regular expression matching the score, and
+
+- SCORE-FN is a function that converts the score string into a number."
   :group 'vm
   :type '(repeat (list (string :tag "Header regexp")
                        (regexp :tag "Regexp matching the score")
@@ -5430,15 +5519,17 @@ append a space to words that complete unambiguously.")
 (make-variable-buffer-local 'vm-imap-auth-methods)
 ;; The number of old ('failed') trace buffers to remember for debugging
 ;; purposes 
-(defvar vm-pop-keep-failed-trace-buffers 5)
-(defvar vm-imap-keep-failed-trace-buffers 5)
+(defvar vm-pop-keep-failed-trace-buffers 20)
+(defvar vm-imap-keep-failed-trace-buffers 20)
 ;; Lists of trace buffers remembered for debugging purposes
 (defvar vm-kept-pop-buffers nil
   "* Variable that holds the old trace buffers of POP sessions for
   debugging purposes.")
+;; (make-variable-buffer-local 'vm-kept-pop-buffers)
 (defvar vm-kept-imap-buffers nil
   "* Variable that holds the old trace buffers of IMAP sessions for
   debugging purposes.")
+;; (make-variable-buffer-local 'vm-kept-imap-buffers)
 ;; Flag to make POP/IMAP code remember old trace buffers
 (defvar vm-pop-keep-trace-buffer nil
   "* Set this to non-nil to retain a limited number of POP session
@@ -5625,11 +5716,17 @@ that has a match.")
 ;;      (setq p (cdr p)))
 ;;    v ))
 
-(defvar vm-message-garbage-alist nil)
+(defvar vm-message-garbage-alist nil
+  "An association list of files created for this message and the
+actions to be taken to destroy them.")
 (make-variable-buffer-local 'vm-message-garbage-alist)
-(defvar vm-folder-garbage-alist nil)
+(defvar vm-folder-garbage-alist nil
+  "An association list of files created for this message and the
+actions to be taken to destroy them.")
 (make-variable-buffer-local 'vm-folder-garbage-alist)
-(defvar vm-global-garbage-alist nil)
+(defvar vm-global-garbage-alist nil
+  "An association list of files created for this VM session and the
+actions to be taken to destroy them.")
 (defconst vm-mime-header-list '("MIME-Version:" "Content-"))
 (defconst vm-mime-header-regexp "\\(MIME-Version:\\|Content-\\)")
 (defconst vm-mime-mule-charset-to-coding-alist
@@ -5809,7 +5906,7 @@ cause trouble (abbrev-mode)."
   :type '(repeat symbol))
 
 (defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
-  "*A list of header to hide in `vm-mail-mode'."
+  "*A list of headers to hide in `vm-mail-mode'."
   :group 'vm
   :type '(choice (const :tag "Disabled" nil)
                  (set :tag "Header list"

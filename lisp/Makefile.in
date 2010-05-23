@@ -231,7 +231,7 @@ Makefile: @srcdir@/Makefile.in
 
 ##############################################################################
 clean:
-	-$(RM) -f *.elc vm-autoloads.el auto-autoloads.el custom-load.el
+	-$(RM) -f version.txt *.elc vm-autoloads.el auto-autoloads.el custom-load.el
 
 distclean: clean
 	-$(RM) -f Makefile

@@ -312,10 +312,7 @@ creation)."
 
   (vm-session-initialization)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
 
   (if (eq vm-system-state 'previewing)
       (vm-show-current-message))
@@ -666,8 +663,7 @@ Optional argument DONT-KILL is positive, then do not kill source message."
                  (insert (format "From: %s\n" login))))))
     
     ;; mime-encode the message if necessary 
-    (let ((vm-do-fcc-before-mime-encode nil))
-      (condition-case nil (vm-mime-encode-composition) (error t)))
+    (condition-case nil (vm-mime-encode-composition) (error t))
 
     ;; add the current date 
     (if (not (vm-mail-mode-get-header-contents "Date:"))

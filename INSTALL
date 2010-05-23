@@ -44,8 +44,8 @@ USING CONFIGURE
    b) XEmacs+BBDB users run:
 	./configure --with-emacs=xemacs --with-other-dirs=/path/to/bbdb/lisp
    
-   c) GNU Emacs+BBDB+w3m users run:
-	./configure --with-other-dirs="/absolute/path/to/bbdb/lisp;/absolute/path/to/w3m"
+   c) GNU Emacs+BBDB+Emacs-w3m users run:
+	./configure --with-other-dirs="/absolute/path/to/bbdb/lisp;/absolute/path/to/emacs-w3m"
 
    d) XEmacs with no additional packages
         ./configure --with-emacs=xemacs
@@ -77,11 +77,17 @@ USING CONFIGURE
 
          (require 'vm-autoloads)
 
-      to their ~/.emacs.  If there are any VM-related autoloads in
+      to their ~/.emacs.  If there are any old VM-related autoloads in
       your ~/.emacs file, you should remove them.  The vm-autoloads
       library takes care of all the autoloads for VM.
 
-      XEmacs: You are lucky nothing to do for you!
+      XEmacs: Since XEmacs has a built-in distribution of VM, you have two
+      options.  (i) You can delete the built-in package in the XEmacs
+      xemacs-packages directory.  Then the new copy of VM in ~/vm/lisp
+      will get loaded.  (ii) You can include the following line in
+      your ~/.xemacs/init.el file:
+
+        (load-library "~/vm/lisp/auto-autoloads")
 
    b) make install
 
@@ -90,9 +96,61 @@ USING CONFIGURE
 
 4) Add the following line to your info directory (dir):
 
-* VM: (vm.info).		VM Mail Reader
+* VM: (vm.info).		  VM Mail Reader
+* VM-PCrisis: (vm-pcrisis.info).  Personality Crisis package for VM
+
+   Note that vm-pcrisis is a separate add-on package (not officially a
+   part of VM).
 
    You are now ready to use VM.  C-h i should start up the Emacs Info
    system and if you have installed the Info documents properly you can
    use the online documentation to teach yourself how to use VM.
 
+COMPANION PACAKAGES
+===================
+
+VM uses companion packages for address book maintenance and HTML
+display.  VM will work fine even if the companion packages are
+unavailable, but the best functionality is obtained with them.
+
+* BBDB or "Big Brother Insidious DataBase" is an address book
+  application that runs within Emacs.  It is able to watch the email
+  addresses in the headers of your email addresses and record them in
+  the database.
+
+  Assuming that you have compiled VM with BBDB included in the
+  `lispdir' list, include the following lines in your .emacs to turn
+  on BBDB support:
+
+         (require 'bbdb)
+	 (bbdb-initialize 'vm)
+
+* For rendering HTML messages, VM can make use of the following Emacs
+  libraries:
+
+  - Emacs/W3 - a web browser written by William Perry in Emacs Lisp.
+    It is said to be slow and its current maintenance (in 2010) is
+    weak.
+
+  - Emacs/W3M - an Emacs interface to the text-mode web browser W3M.
+
+  For guidance on installing either of these libraries, please check
+  their EmacsWiki pages and their own installation instructions.
+
+  VM can also make use of the following external text-mode web
+  browsers (as basically converters from html to plain text).
+
+  - Lynx - A fast text-based web browser that runs under Unix.
+  Developed at the University of Kansas.
+
+  - W3M - Possibly the best text-based web browser.  Written by
+  Akinori Ito and his team, it runs fast and renders pages
+  as true to form as possible in plain text.
+  
+  VM can check the libraries available on your path and pick the best
+  one for HTML rendering, but you can also specify the choice
+  explicitly by including in your .emacs file, e.g.,
+
+          (setq vm-mime-text/html-handler 'emacs-w3m)
+
+  Other than 'emacs-w3m, you can also use 'w3, 'w3m and 'lynx.

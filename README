@@ -39,21 +39,19 @@ settings (in a '~/.vm' file).  Read more in the VM manual on 'info'.
 *******************************************************************************
 BUGS
 
-If you have any problems or meet a bug it is best to discuss them on
-the USENET groups gnu.emacs.vm.bugs or gnu.emacs.vm.info!  Also search
-the groups before posting as there might have been some discussion and
-a fix before.
-
-In addition to discussing the problems on the newsgroups, you are
-encouraged to file a bug report using the Emacs function 
+Please report bugs in VM using the VM function
 	   M-x vm-submit-bug-report
 This function formats an email report including the entire state of VM
-which can be used to diagnose and fix the bug.
+which can be used to diagnose and fix the bug.  Please include
+information about how to reproduce the problem.
 
-Report any problems or bugs otherwise they cannot be fixed!
+Please report any problems or bugs otherwise they cannot be fixed!
 
-Please provide the version number of VM and Emacs and how to reproduce
-the problem.
+If you are not sure that the problem is a bug or that it could be of
+general importance to other users, you are welcome to discuss it on
+the USENET groups gnu.emacs.vm.bugs or gnu.emacs.vm.info!  However, it
+is not always possible to diagnose problems without full information
+about your VM settings.  So, filing a bug report is necessary.
 
 *******************************************************************************
 Homepage
@@ -73,12 +71,17 @@ The Wiki at http://www.emacswiki.org/emacs/CategoryViewMail is best
 suited to conserve code snippets, cooking guides or feature requests.
 
 *******************************************************************************
-BZR (http://bazaar-vcs.org/)
+Code Repository
 
-We maintain the source code using Bazaar.
+We maintain the source code using Bazaar (http://bazaar-vcs.org/).
 
-If you want to send us changes or start hacking on your own you may want to 
-branch from the follwing URL:
+If you want to get the latest development version of VM, or want to
+contribute changes you may want to branch from the follwing launchpad
+URI:
+
+  lp:vm
+
+which is short for the full URL:
 
   http://bazaar.launchpad.net/~vm/vm/trunk
 
@@ -91,13 +94,30 @@ bzr get lp:~vm/vm/trunk
 # get updates
 bzr pull
 # start hacking 
-xemacs vm-pgg.el
+emacs vm-pgg.el
 # commit your changes 
 bzr commit
 # Generate a bundle of your changes for merging
 bzr bundle-revisions --output=xy-changes.diff
 # Attach the bundle to a mail (rather than doing cut&paste) and send
 # it to vm @ lists.launchpad.net with a descriptive subject.  
+
+*******************************************************************************
+Get involved
+
+The project home is at 
+
+   http://launchpad.net/vm
+
+Registering on launchpad is painless process and makes it convenient
+to participate in the development of VM (or other Launchpad projects).
+
+The "Bugs" tracker is where we keep track of the bugs that need fixing
+as well as TODO items.
+
+The "Blueprints" section records our future development plans.
+
+
 
 *******************************************************************************
 COMMENTS

@@ -160,29 +160,28 @@ and thread indentation."
   (cond ((eq m (vm-real-message-of m))
 	 ;; this is a real message.
 	 ;; its summary and modeline need to be updated.
-	 (if (not dont-kill-cache)
-	     ;; toss the cache.  this also tosses the cache of any
-	     ;; virtual messages mirroring this message.  the summary
-	     ;; entry cache must be cleared when an attribute of a
-	     ;; message that could appear in the summary has changed.
-	     (vm-set-summary-of m nil))
-	 (if (vm-su-start-of m)
-	     (setq vm-messages-needing-summary-update
-		   (cons m vm-messages-needing-summary-update)))
+	 (unless dont-kill-cache
+	   ;; toss the cache.  this also tosses the cache of any
+	   ;; virtual messages mirroring this message.  the summary
+	   ;; entry cache must be cleared when an attribute of a
+	   ;; message that could appear in the summary has changed.
+	   (vm-set-summary-of m nil))
+	 (when (vm-su-start-of m)
+	   (setq vm-messages-needing-summary-update
+		 (cons m vm-messages-needing-summary-update)))
 	 (intern (buffer-name (vm-buffer-of m))
 		 vm-buffers-needing-display-update)
 	 ;; find the virtual messages of this real message that
 	 ;; need a summary update.
 	 (let ((m-list (vm-virtual-messages-of m)))
 	   (while m-list
-	     (if (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
-		 (progn
-		   (and (vm-su-start-of (car m-list))
-			(setq vm-messages-needing-summary-update
-			      (cons (car m-list)
-				    vm-messages-needing-summary-update)))
-		   (intern (buffer-name (vm-buffer-of (car m-list)))
-			   vm-buffers-needing-display-update)))
+	     (when (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
+	       (and (vm-su-start-of (car m-list))
+		    (setq vm-messages-needing-summary-update
+			  (cons (car m-list)
+				vm-messages-needing-summary-update)))
+	       (intern (buffer-name (vm-buffer-of (car m-list)))
+		       vm-buffers-needing-display-update))
 	     (setq m-list (cdr m-list)))))
 	(t
 	 ;; this is a virtual message.
@@ -201,32 +200,31 @@ and thread indentation."
 	       ;; schedule updates for all the virtual message who share
 	       ;; the same cache as this message.
 	       (while m-list
-		 (if (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
-		     (progn
-		       (and (vm-su-start-of (car m-list))
-			    (setq vm-messages-needing-summary-update
-				  (cons (car m-list)
-					vm-messages-needing-summary-update)))
-		       (intern (buffer-name (vm-buffer-of (car m-list)))
-			       vm-buffers-needing-display-update)))
+		 (when (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
+		   (and (vm-su-start-of (car m-list))
+			(setq vm-messages-needing-summary-update
+			      (cons (car m-list)
+				    vm-messages-needing-summary-update)))
+		   (intern (buffer-name (vm-buffer-of (car m-list)))
+			   vm-buffers-needing-display-update))
 		 (setq m-list (cdr m-list)))
 	       ;; now take care of the real message
-	       (if (not dont-kill-cache)
-		   ;; toss the cache.  this also tosses the cache of
-		   ;; any virtual messages sharing the same cache as
-		   ;; this message.
-		   (vm-set-summary-of m nil))
-	       (and (vm-su-start-of (vm-real-message-of m))
-		    (setq vm-messages-needing-summary-update
-			  (cons (vm-real-message-of m)
-				vm-messages-needing-summary-update)))
+	       (unless dont-kill-cache
+		 ;; toss the cache.  this also tosses the cache of
+		 ;; any virtual messages sharing the same cache as
+		 ;; this message.
+		 (vm-set-summary-of m nil))
+	       (when (vm-su-start-of (vm-real-message-of m))
+		 (setq vm-messages-needing-summary-update
+		       (cons (vm-real-message-of m)
+			     vm-messages-needing-summary-update)))
 	       (intern (buffer-name (vm-buffer-of (vm-real-message-of m)))
 		       vm-buffers-needing-display-update))
-	   (if (not dont-kill-cache)
-	       (vm-set-virtual-summary-of m nil))
-	   (and (vm-su-start-of m)
-		(setq vm-messages-needing-summary-update
-		      (cons m vm-messages-needing-summary-update)))
+	   (unless dont-kill-cache
+	     (vm-set-virtual-summary-of m nil))
+	   (when (vm-su-start-of m)
+	     (setq vm-messages-needing-summary-update
+		   (cons m vm-messages-needing-summary-update)))
 	   (intern (buffer-name (vm-buffer-of m))
 		   vm-buffers-needing-display-update)))))
 
@@ -359,26 +357,30 @@ Toolbars are updated."
     (mapatoms (function
 	       (lambda (b)
 		 (setq b (get-buffer (symbol-name b)))
-		 (if b
-		     (progn
-		       (set-buffer b)
-		       (intern (buffer-name)
-			       vm-buffers-needing-undo-boundaries)
-		       (vm-check-for-killed-summary)
-		       (and vm-use-toolbar
-			    (vm-toolbar-support-possible-p)
-			    (vm-toolbar-update-toolbar))
-		       (vm-do-needed-renumbering)
-		       (if vm-summary-buffer
-			   (vm-do-needed-summary-rebuild))
-		       (vm-do-needed-mode-line-update)))))
+		 (when b
+		   (set-buffer b)
+		   (intern (buffer-name)
+			   vm-buffers-needing-undo-boundaries)
+		   (vm-check-for-killed-summary)
+		   (and vm-use-toolbar
+			(vm-toolbar-support-possible-p)
+			(vm-toolbar-update-toolbar))
+		   (vm-do-needed-renumbering)
+		   (when vm-summary-buffer
+		       (vm-do-needed-summary-rebuild))
+		   (vm-do-needed-mode-line-update))))
 	      vm-buffers-needing-display-update)
     (fillarray vm-buffers-needing-display-update 0))
-  (if vm-messages-needing-summary-update
-      (progn
-	(mapcar (function vm-update-message-summary)
-		vm-messages-needing-summary-update)
-	(setq vm-messages-needing-summary-update nil)))
+  (when vm-messages-needing-summary-update
+    (let ((n 1)
+	  (ms vm-messages-needing-summary-update))
+      (while ms
+	(vm-update-message-summary (car ms))
+	(if (eq (mod n 10) 0)
+	    (message "Recreating summary... %s" n))
+	(setq n (1+ n))
+	(setq ms (cdr ms)))
+      (setq vm-messages-needing-summary-update nil)))
   (vm-do-needed-folders-summary-update)
   (vm-force-mode-line-update))
 
@@ -1334,24 +1336,25 @@ Supports version 4 format of attribute storage, for backward compatibility."
               (message "Bad VM cache data: %S" cache)
               (vm-set-stuff-flag-of (car mp) t)
               (setcar (cdr data)
-                      (setq cache (make-vector vm-cache-vector-length nil))))
+                      (setq cache 
+			    (make-vector vm-cache-vector-length nil))))
 
 	    (vm-set-labels-of (car mp) (nth 2 data))
-	    (vm-set-cache-of (car mp) cache)
+	    (vm-set-cached-data-of (car mp) cache)
 	    (vm-set-attributes-of (car mp) (car data)))
 	   ((and vm-berkeley-mail-compatibility
 		 (re-search-forward vm-berkeley-mail-status-header-regexp
 				    (vm-text-of (car mp)) t))
-	    (vm-set-cache-of (car mp) (make-vector vm-cache-vector-length
-						   nil))
+	    (vm-set-cached-data-of 
+	     (car mp) (make-vector vm-cache-vector-length nil))
 	    (goto-char (match-beginning 1))
 	    (vm-set-attributes-of
 	     (car mp)
 	     (make-vector vm-attributes-vector-length nil))
 	    (vm-set-unread-flag (car mp) (not (looking-at ".*R.*")) 'norecord))
 	   (t
-	    (vm-set-cache-of (car mp) (make-vector vm-cache-vector-length
-						   nil))
+	    (vm-set-cached-data-of 
+	     (car mp) (make-vector vm-cache-vector-length nil))
 	    (vm-set-attributes-of
 	     (car mp)
 	     (make-vector vm-attributes-vector-length nil))
@@ -1434,7 +1437,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
     (while mp
       (setq attr (make-vector vm-attributes-vector-length nil)
 	    cache (make-vector vm-cache-vector-length nil))
-      (vm-set-cache-of (car mp) cache)
+      (vm-set-cached-data-of (car mp) cache)
       (vm-set-attributes-of (car mp) attr)
       ;; make message be new by default, but avoid vm-set-new-flag
       ;; because it asks for a summary update for the message.
@@ -1875,22 +1878,25 @@ Supports version 4 format of attribute storage, for backward compatibility."
       (set-marker (vm-headers-of (car mp)) opoint))))
 
 
-(defun vm-encode-words-in-cache-vector (list)
-  (vm-mapvector (lambda (e)
-               (if (stringp e)
-                   (vm-mime-encode-words-in-string e)
-                 e))
-             list))
+;; This is now replaced by vm-mime-encode-words-in-cache-vector
+;;
+;; (defun vm-encode-words-in-cache-vector (list)
+;;   (vm-mapvector (lambda (e)
+;; 		  (if (stringp e)
+;; 		      (vm-mime-encode-words-in-string e)
+;; 		    e))
+;; 		list))
 
-;; Stuff the message attributes back into the message as headers.
-(defun vm-stuff-attributes (m &optional for-other-folder)
-  "Stuff the attributes of message M into the folder buffer.  The
-optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
-2010-03-06"
+(defun vm-stuff-message-data (m &optional for-other-folder)
+  "Stuff the attributes, labels, soft and cached data of the
+message M into the folder buffer.  The optional argument
+FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
   (save-excursion
     (vm-save-restriction
      (widen)
      (let ((old-buffer-modified-p (buffer-modified-p))
+	   (vm-mime-qp-encoder-program nil) ; use internal code
+	   (vm-mime-base64-encoder-program nil) ; for speed
 	   attributes cache
 	   (case-fold-search t)
 	   (buffer-read-only nil)
@@ -1913,7 +1919,7 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
 		   ;; fill the summary cache if it's not done already.
 		   (vm-su-summary m)))
 	     (setq attributes (vm-attributes-of m)
-		   cache (vm-cache-of m))
+		   cache (vm-cached-data-of m))
 	     (and delflag for-other-folder
 		  (vm-set-deleted-flag-in-vector
 		   (setq attributes (copy-sequence attributes)) nil))
@@ -1934,7 +1940,7 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
 		(prin1-to-string attributes))
 	      "\n\t"
               (let ((print-escape-newlines t))
-                (prin1-to-string (vm-encode-words-in-cache-vector cache)))
+                (prin1-to-string (vm-mime-encode-words-in-cache-vector cache)))
               "\n\t"
 	      (let ((print-escape-newlines t))
 		(prin1-to-string (vm-labels-of m)))
@@ -1960,7 +1966,9 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
 	     )
 	 (set-buffer-modified-p old-buffer-modified-p))))))
   
-(defun vm-stuff-folder-attributes (&optional abort-if-input-pending quiet)
+(defun vm-stuff-folder-data (&optional abort-if-input-pending quiet) 
+  "Stuff the soft and cached data of all the messages that have the
+stuff-flag set in the current folder.    USR 2010-04-20"
   (let ((newlist nil) mp len (n 0))
     ;; stuff the attributes of messages that need it.
     ;; build a list of messages that need their attributes stuffed
@@ -1984,7 +1992,7 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
     (let ((vm-key-functions '(vm-sort-compare-physical-order-r)))
       (setq mp (sort newlist 'vm-sort-compare-xxxxxx)))
     (while (and mp (or (not abort-if-input-pending) (not (input-pending-p))))
-      (vm-stuff-attributes (car mp))
+      (vm-stuff-message-data (car mp))
       (setq n (1+ n))
       (if (not quiet)
 	  (message "Stuffing %d%% complete..." (* (/ (+ n 0.0) len) 100)))
@@ -1992,7 +2000,7 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
     (if mp nil t)))
 
 ;; we can be a bit lazy in this function since it's only called
-;; from within vm-stuff-attributes.  we don't worry about
+;; from within vm-stuff-message-data.  we don't worry about
 ;; restoring the modified flag, setting buffer-read-only, or
 ;; about not moving point.
 (defun vm-stuff-babyl-attributes (m for-other-folder)
@@ -2058,14 +2066,14 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
 	    labels (cdr labels)))
     (apply 'concat (nreverse list))))
 
-(defun vm-stuff-virtual-attributes (message)
+(defun vm-stuff-virtual-message-data (message)
   (let ((virtual (vm-virtual-message-p message)))
     (if (or (not virtual) (and virtual (vm-virtual-messages-of message)))
 	(save-excursion
 	  (set-buffer
 	   (vm-buffer-of
 	    (vm-real-message-of message)))
-	  (vm-stuff-attributes (vm-real-message-of message))))))
+	  (vm-stuff-message-data (vm-real-message-of message))))))
 
 (defun vm-stuff-labels ()
   (if vm-message-list
@@ -2595,7 +2603,7 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
 		    (setq v (car cache-list))
 		    (if (< (length v) vm-cache-vector-length)
 			(setq v (vm-extend-vector v vm-cache-vector-length)))
-		    (vm-set-cache-of m v))
+		    (vm-set-cached-data-of m v))
 		  (if (null label-list)
 		      (error "Label list is shorter than location list")
 		    (vm-set-labels-of m (car label-list)))
@@ -2778,7 +2786,7 @@ optional argument FOR-OTHER-FOLDER indicates <someting unknown>.  USR
 	  (while mp
 	    (setq m (car mp))
 	    (princ "  " work-buffer)
-	    (prin1 (vm-cache-of m) work-buffer)
+	    (prin1 (vm-cached-data-of m) work-buffer)
 	    (princ "\n" work-buffer)
 	    (setq mp (cdr mp)))
 	  (princ ")\n" work-buffer)
@@ -2862,9 +2870,7 @@ all marked messages are affected, other messages are ignored."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (let ((mlist (vm-select-marked-or-prefixed-messages count)))
     (while mlist
       (if (and (not (vm-unread-flag (car mlist)))
@@ -2881,11 +2887,9 @@ The folder is not altered and Emacs is still visiting it.  You
 can switch back to it with switch-to-buffer or by using the
 Buffer Menu."
   (interactive)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate)
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
 
   (save-excursion (run-hooks 'vm-quit-hook))
 
@@ -2909,11 +2913,9 @@ Buffer Menu."
   "Iconify the frame and bury the current VM folder and summary buffers.
 The folder is not altered and Emacs is still visiting it."
   (interactive)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate)
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
 
   (save-excursion (run-hooks 'vm-quit-hook))
 
@@ -2934,22 +2936,35 @@ The folder is not altered and Emacs is still visiting it."
 (defun vm-quit-no-change ()
   "Quit visiting the current folder without saving changes made to the folder."
   (interactive)
-  (vm-quit t))
+  (vm-quit t t))
+
+;;;###autoload
+(defun vm-quit-no-expunge ()
+  "Quit visiting the current folder without expunging deleted
+messages.  
+
+The setting of `vm-expunge-before-quit' is ignored."
+  (interactive)
+  (vm-quit t nil))
 
 (defvar dired-listing-switches)		; defined only in FSF Emacs?
 
 ;;;###autoload
-(defun vm-quit (&optional no-change)
-  "Quit visiting the current folder, saving changes.  Deleted messages are not expunged."
-  (interactive)
-  (vm-select-folder-buffer)
+(defun vm-quit (&optional no-expunge no-change)
+  "Quit visiting the current folder, saving changes.  
+
+If the customization variable `vm-expunge-before-quit' is set to
+  non-nil value then deleted messages are expunged.
+
+Giving a prefix argument overrides the variable and no expunge is done."  
+  (interactive "P")
+  (vm-select-folder-buffer-and-validate)
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-display nil nil '(vm-quit vm-quit-no-change)
+  (vm-display nil nil '(vm-quit vm-quit-no-change vm-quit-no-expunge)
 	      (list this-command 'quitting))
-  (let ((virtual (eq major-mode 'vm-virtual-mode)))
+  (let ((virtual (eq major-mode 'vm-virtual-mode))
+	(process nil))
     (cond
      ((and (not virtual) no-change (buffer-modified-p)
 	   (or buffer-file-name buffer-offer-save)
@@ -2981,6 +2996,11 @@ The folder is not altered and Emacs is still visiting it."
 
     (save-excursion (run-hooks 'vm-quit-hook))
 
+    (when (and vm-expunge-before-quit
+	       (not no-expunge)
+	       (not no-change))
+      (vm-expunge-folder))
+
     (vm-garbage-collect-message)
     (vm-garbage-collect-folder)
 
@@ -2996,7 +3016,14 @@ The folder is not altered and Emacs is still visiting it."
 	     (not no-change)
 	     (not virtual))
 	(vm-save-folder))
-    (message "")
+    (cond ((and (eq vm-folder-access-method 'pop)
+		(setq process (vm-folder-pop-process)))
+	   (vm-pop-end-session process))
+	  ((and (eq vm-folder-access-method 'imap)
+		(setq process (vm-folder-imap-process)))
+	   (vm-imap-end-session process))
+	  )
+    (message "")			; why this?  USR, 2010-05-03
     (let ((summary-buffer vm-summary-buffer)
 	  (pres-buffer vm-presentation-buffer-handle)
 	  (mail-buffer (current-buffer)))
@@ -3240,7 +3267,7 @@ The folder is not altered and Emacs is still visiting it."
 		       (vm-stuff-labels)
 		       (and vm-message-order-changed
 			    (vm-stuff-message-order))
-		       (and (vm-stuff-folder-attributes t t)
+		       (and (vm-stuff-folder-data t t)
 			    (setq vm-flushed-modification-counter
 				  vm-modification-counter)))))))
 	(setq buf-list (cdr buf-list)))
@@ -3257,9 +3284,9 @@ The folder is not altered and Emacs is still visiting it."
     ;; as a safeguard against the time when other stuff is added here.
     (vm-save-restriction
      (let ((buffer-read-only))
-       (message "Stuffing attributes...")
-       (vm-stuff-folder-attributes nil)
-       (message "Stuffing attributes... done")
+       (message "Stuffing cached data...")
+       (vm-stuff-folder-data nil)
+       (message "Stuffing cached data... done")
        (if vm-message-list
 	   (progn
 	     (if (and vm-folders-summary-database buffer-file-name)
@@ -3337,30 +3364,49 @@ The folder is not altered and Emacs is still visiting it."
   (setq vm-block-new-mail nil))
 
 ;;;###autoload
-(defun vm-save-folder (&optional prefix)
+(defun vm-save-folder-no-expunge (&optional prefix)
   "Save current folder to disk.
-Deleted messages are not expunged.
-Prefix arg is handled the same as for the command `save-buffer'.
+Prefix arg is handled the same as for the command `save-buffer'.  
+
+Deleted messages are _not_ expunged irrespective of the variable
+`vm-expunge-before-save'.
 
 When applied to a virtual folder, this command runs itself on
 each of the underlying real folders associated with the virtual
 folder."
   (interactive (list current-prefix-arg))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (let ((vm-expunge-before-save nil))
+    (vm-save-folder prefix)))
+
+
+;;;###autoload
+(defun vm-save-folder (&optional prefix)
+  "Save current folder to disk.
+Prefix arg is handled the same as for the command `save-buffer'.
+
+If the customization variable `vm-expunge-before-save' is set to
+non-nil value then deleted messages are expunged.
+
+When applied to a virtual folder, this command runs itself on
+each of the underlying real folders associated with the virtual
+folder."
+  (interactive (list current-prefix-arg))
+  (vm-select-folder-buffer-and-validate)
   (vm-display nil nil '(vm-save-folder) '(vm-save-folder))
   (if (eq major-mode 'vm-virtual-mode)
       (vm-virtual-save-folder prefix)
     (if (buffer-modified-p)
 	(let (mp (newlist nil) (buffer-undo-list t))
+	  (when vm-expunge-before-save
+	    (vm-expunge-folder))
 	  (cond ((eq vm-folder-access-method 'pop)
 		 (vm-pop-synchronize-folder t t t nil))
 		((eq vm-folder-access-method 'imap)
 		 (vm-imap-synchronize-folder t t t nil t)))
 	  ;; stuff the attributes of messages that need it.
-	  (message "Stuffing attributes...")
-	  (vm-stuff-folder-attributes nil)
-	  (message "Stuffing attributes... done")
+	  (message "Stuffing cached data...")
+	  (vm-stuff-folder-data nil)
+	  (message "Stuffing cached data... done")
 	  ;; stuff bookmark and header variable values
 	  (if vm-message-list
 	      (progn
@@ -3426,7 +3472,8 @@ folder."
 		     (message "%s removed" buffer-file-name))
 		 ;; no can do, oh well.
 		 (error nil)))
-          ;; remove the message summary file of Thunderbird and force it to rebuilt it
+          ;; remove the message summary file of Thunderbird and force
+	  ;; it to rebuild it 
           (let ((msf (concat buffer-file-name ".msf")))
             (if (file-exists-p msf)
                 (delete-file msf))))
@@ -3441,8 +3488,7 @@ Expunge won't be done if folder is read-only.
 When applied to a virtual folder, this command works as if you had
 run vm-expunge-folder followed by vm-save-folder."
   (interactive (list current-prefix-arg))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   (vm-display nil nil '(vm-save-and-expunge-folder)
 	      '(vm-save-and-expunge-folder))
   (if (not vm-folder-read-only)
@@ -4054,6 +4100,15 @@ Same as \\[vm-recover-file]."
                         errmsg)))
           (vm-assimilate-new-messages t))))))
 
+;;;###autoload
+(defun vm-folder-name ()
+  "Return the current folder's name (local file name, or POP/IMAP
+maildrop string)."
+  (interactive)
+  (if vm-folder-access-method
+      (aref vm-folder-access-data 0)
+    buffer-file-name))
+
 (defun vm-safe-popdrop-string (drop)
   (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]*\\):[^:]*:[^:]*:\\([^:]*\\):[^:]*" drop)
 	   (concat (substring drop (match-beginning 3) (match-end 3))
@@ -4128,8 +4183,7 @@ folder.  A prefix argument has no effect when this command is
 applied to virtual folder; mail is always gathered from the spool
 files."
   (interactive "P")
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   (vm-error-if-folder-read-only)
   (cond ((eq major-mode 'vm-virtual-mode)
 	 (vm-virtual-get-new-mail))
@@ -4201,6 +4255,21 @@ files."
 				   dont-read-attributes
 				   gobble-order
 				   labels first-time)
+  ;; We are only guessing what this function does.  USR, 2010-05-20
+  ;; This is called in a Folder buffer, which already has messages
+  ;; loaded into it, but some of the messages (the "new" messages)
+  ;; have not been parsed and separated yet.  
+  ;; The function first builds a vm-message-list.
+  ;; Unless DONT-READ-ATTRIBUTES is non-nil, it reads the message
+  ;; attributes in the X-VM-v5-Data headers and stores them.
+  ;; If GOBBLE-ORDER is non-nil, it reads the X-VM-Message-Order
+  ;; header and uses it to reorder the messages.
+  ;; If vm-summary-show-threads is non-nil, it builds threads.
+  ;; If vm-ml-sort-keys is non-nil, sorts the messages accordingly.
+  ;; If LABELS is non-nil, they are added to the message labels of all 
+  ;; the new messages.
+  ;; If FIRST-TIME is non-nil, arrived-message-hook functions are
+  ;; called. 
   (let ((tail-cons (vm-last vm-message-list))
 	b-list new-messages)
     (save-excursion
@@ -4481,10 +4550,8 @@ Interactively TYPE will be read from the minibuffer."
      (setq types (vm-delqual (symbol-name vm-folder-type)
 			     (copy-sequence types)))
      (list (intern (vm-read-string "Change folder to type: " types)))))
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-virtual-folder)
-  (vm-error-if-folder-empty)
   (if (not (memq type '(From_ BellFrom_ From_-with-Content-Length mmdf babyl)))
       (error "Unknown folder type: %s" type))
   (if (or (null vm-folder-type)

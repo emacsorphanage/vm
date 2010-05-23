@@ -34,8 +34,8 @@ isn't a folder buffer.  USR, 2010-03-08"
 	((not (memq major-mode '(vm-mode vm-virtual-mode)))
 	 (error "No VM folder buffer associated with this buffer")))
   ;;--------------------------
-  ;; This may be problematic
-  ;; (vm-buffer-type:set 'folder)
+  ;; This may be problematic - done in revno 570.  But, why?
+  (vm-buffer-type:set 'folder)
   ;;--------------------------
   )
 
@@ -45,11 +45,39 @@ could be Summary or Presentation).  Returns normally if there
 isn't a folder buffer.  USR, 2010-03-08"
   (cond ((and (bufferp vm-mail-buffer)
 	      (buffer-name vm-mail-buffer))
-	 (set-buffer vm-mail-buffer)))
+	 (set-buffer vm-mail-buffer)
+	 ;;--------------------------
+	 ;; This may be problematic - done in revno 570.  But, why?
+	 (vm-buffer-type:set 'folder)
+	 ;;--------------------------
+	 )
+	((memq major-mode '(vm-mode vm-virtual-mode))
+	 ;;--------------------------
+	 ;; This may be problematic - done in revno 570.  But, why?
+	 (vm-buffer-type:set 'folder)
+	 ;;--------------------------
+	 )))
+
+(defsubst vm-select-folder-buffer-and-validate (&optional minimum)
+  "Select the folder buffer corresponding ot the current buffer (which
+could be Summary or Presentation) and make sure that it has valid
+references to Summary and Presentation buffers.  If MINIMUM is 1, the
+folder should be nonempty as well."
+  (cond (vm-mail-buffer
+	 (or (buffer-name vm-mail-buffer)
+	     (error "Folder buffer has been killed."))
+	 (set-buffer vm-mail-buffer))
+	((not (memq major-mode '(vm-mode vm-virtual-mode)))
+	 (error "No VM folder buffer associated with this buffer")))
   ;;--------------------------
-  ;; This may be problematic
-  ;; (vm-buffer-type:set 'folder)
+  ;; This may be problematic - done in revno 570.  But, why?
+  (vm-buffer-type:set 'folder)
   ;;--------------------------
+
+  (vm-check-for-killed-summary)
+  (vm-check-for-killed-presentation)
+  (if (and minimum (= minimum 1))
+      (vm-error-if-folder-empty))
   )
 
 (defsubst vm-error-if-folder-read-only ()
@@ -130,6 +158,13 @@ isn't a folder buffer.  USR, 2010-03-08"
 
 (defmacro vm-decrement (variable)
   (list 'setq variable (list '1- variable)))
+
+;; This should be turned into a defsubst eventually
+
+(defun vm-make-trace-buffer-name (session-name host)
+   (format "trace of %s session to %s at %s" 
+	   session-name host
+	   (substring (current-time-string) 11 19)))
 
 (provide 'vm-macro)
 

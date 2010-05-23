@@ -45,6 +45,12 @@
 (defsubst vm-th-set-children-of (id-sym ml)
   (put id-sym 'children ml))
 
+(defsubst vm-th-descendants-of (id-sym)
+  (get id-sym 'descendants))
+
+(defsubst vm-th-set-descendants-of (id-sym ml)
+  (put id-sym 'descendants ml))
+
 (defsubst vm-th-parent-of (id-sym)
   (symbol-value id-sym))
 
@@ -65,8 +71,7 @@ When the threads display is on, the folder will be sorted by
 thread and thread indentation (via the %I summary format specifier)
 will be visible."
   (interactive)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
+  (vm-select-folder-buffer-and-validate)
   ;; get numbering of new messages done now
   ;; so that the sort code only has to worry about the
   ;; changes it needs to make.
@@ -91,6 +96,10 @@ will be visible."
 	(schedule-reindents message-list)
 	m parent parent-sym id id-sym date refs old-parent-sym)
     (while mp
+      ;; temporary code for debugging purposes; should be removed
+      ;; USR, 2010-05-22
+      ;; (if (equal (vm-full-name-of (car mp)) "Xuhui Li")
+      ;; 	  (debug "now the message from Xuhui"))
       (setq m (car mp)
 	    parent (vm-th-parent m)
 	    id (vm-su-message-id m)
@@ -238,6 +247,8 @@ will be visible."
       (setq message-list (cdr message-list)))))
 
 (defun vm-thread-list (message)
+  "Returns the thread-list, i.e., the lineage of MESSAGE, as a list of
+symbols interned in vm-thread-obarray."
   (let ((done nil)
 	(m message)
 	(loop-recovery-point nil)

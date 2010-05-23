@@ -586,11 +586,15 @@ all marked messages will be burst."
 	type ))))
   (or digest-type (setq digest-type vm-digest-burst-type))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-marked-or-prefixed-messages 1)))
+    (vm-load-message)
+    ;; FIXME the following is really unnecessary
+    (mapcar
+     (lambda (m)
+       (vm-assert (not (vm-body-to-be-retrieved-of m))))
+     mlist)
     (while mlist
       (if (vm-virtual-message-p (car mlist))
 	  (progn
@@ -691,12 +695,16 @@ all marked messages will be burst."
 	type ))))
   (or digest-type (setq digest-type vm-digest-burst-type))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-marked-or-prefixed-messages 1))
 	(work-buffer nil))
+    (vm-load-message)
+    ;; FIXME the following is really unnecessary
+    (mapcar
+     (lambda (m)
+       (vm-assert (not (vm-body-to-be-retrieved-of m))))
+     mlist)
     (unwind-protect
 	(save-excursion
 	  (setq work-buffer (generate-new-buffer

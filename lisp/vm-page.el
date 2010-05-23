@@ -21,6 +21,8 @@
 
 ;;; Code:
 
+(require 'vm-vars)
+
 ;;;###autoload
 (defun vm-scroll-forward (&optional arg)
   "Scroll forward a screenful of text.
@@ -37,10 +39,7 @@ Prefix argument N means scroll forward N lines."
     ;; in gnu.emacs.vm.info, title "Re: synchronization of vm buffers"
     (if mp-changed (sit-for 0))
 
-    (vm-select-folder-buffer)
-    (vm-check-for-killed-summary)
-    (vm-check-for-killed-presentation)
-    (vm-error-if-folder-empty)
+    (vm-select-folder-buffer-and-validate 1)
     (setq needs-decoding (and vm-display-using-mime
 			      (not vm-mime-decoded)
 			      (not (vm-mime-plain-message-p
@@ -49,6 +48,7 @@ Prefix argument N means scroll forward N lines."
 			      (eq vm-system-state 'previewing)))
     (and vm-presentation-buffer
 	 (set-buffer vm-presentation-buffer))
+    ;; We are either in the Presentation buffer or the Folder buffer
     (let ((point (point))
 	  (w (vm-get-visible-buffer-window (current-buffer))))
       (if (or (null w)
@@ -230,16 +230,24 @@ Prefix argument N means scroll forward N lines."
 	 (vm-emit-eom-blurb))))
 
 (defun vm-emit-eom-blurb ()
+  "Prints a minibuffer message when the end of message is reached, but
+it is suppressed if the variable `vm-auto-next-message' is nil."
   (interactive)
-  (let ((vm-summary-uninteresting-senders-arrow "")
-	(case-fold-search nil))
-    (message (if (and (stringp vm-summary-uninteresting-senders)
-		      (string-match vm-summary-uninteresting-senders
-				    (vm-su-from (car vm-message-pointer))))
-		 "End of message %s to %s"
-	       "End of message %s from %s")
-	     (vm-number-of (car vm-message-pointer))
-	     (vm-summary-sprintf "%F" (car vm-message-pointer)))))
+  (if vm-auto-next-message
+      (let ((vm-summary-uninteresting-senders-arrow "")
+	    (case-fold-search nil))
+	(message (if (and (stringp vm-summary-uninteresting-senders)
+			  (string-match vm-summary-uninteresting-senders
+					(vm-su-from (car vm-message-pointer))))
+		     "End of message %s to %s"
+		   "End of message %s from %s")
+		 (vm-number-of (car vm-message-pointer))
+		 (vm-summary-sprintf "%F" (car vm-message-pointer))))))
+
+(defun vm-emit-mime-decoding-message (str)
+  (interactive)
+  (if vm-emit-messages-for-mime-decoding
+      (message str)))
 
 ;;;###autoload
 (defun vm-scroll-backward (&optional arg)
@@ -662,8 +670,10 @@ Use mouse button 3 to choose a Web browser for the URL."
 	(vm-display-xface))))
 
 (defun vm-narrow-for-preview (&optional just-passing-through)
+  "Hide as much of the message body as vm-preview-lines specifies.
+Optional argument JUST-PASSING-THROUGH says that no real preview
+is necessary."
   (widen)
-  ;; hide as much of the message body as vm-preview-lines specifies
   (narrow-to-region
    (vm-vheaders-of (car vm-message-pointer))
    (cond ((not (eq vm-preview-lines t))
@@ -696,6 +706,8 @@ Use mouse button 3 to choose a Web browser for the URL."
 	     (point))))
 	 (t (vm-text-end-of (car vm-message-pointer))))))
 
+
+;;;###autoload
 (defun vm-preview-current-message ()
   "Preview the current message in the Presentation Buffer.  A copy of
 the message is made in the Presentation Buffer and MIME decoding is
@@ -746,6 +758,8 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 	   (set-buffer vm-presentation-buffer)
 	   (setq vm-system-state 'previewing)
 	   (vm-narrow-for-preview))
+       ;; never used because vm-always-use-presentation-buffer is t.
+       ;; USR 2010-05-07
        (setq vm-presentation-buffer nil)
        (and vm-presentation-buffer-handle
 	    (vm-replace-buffer-in-windows vm-presentation-buffer-handle
@@ -831,23 +845,23 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 
 (defun vm-show-current-message ()
   "Show the current message in the Presentation Buffer.  MIME decoding
-is done if necessary.  (USR, 2010-01-14)" 
+is done if necessary.  (USR, 2010-01-14)"
   ;; It looks like this function can be invoked in both the folder
-  ;; buffer as well the presentation buffer, but it is not clear if it
-  ;; works correctly when invoked in the presentation buffer.  
-  ;; (USR, 2010-01-21)
-  (and vm-display-using-mime
-       vm-auto-decode-mime-messages
-       (if vm-mail-buffer
-	   (not (vm-buffer-variable-value vm-mail-buffer 'vm-mime-decoded))
-	 (not vm-mime-decoded))
-       (not (vm-mime-plain-message-p (car vm-message-pointer)))
+  ;; buffer as well the presentation buffer, but we need to arrange
+  ;; things so that it is always called in a presentation buffer.
+  ;; (USR, 2010-05-04)
+  (if (and vm-display-using-mime
+	   vm-auto-decode-mime-messages
+	   (if vm-mail-buffer
+	       (not (vm-buffer-variable-value vm-mail-buffer 'vm-mime-decoded))
+	     (not vm-mime-decoded))
+	   (not (vm-mime-plain-message-p (car vm-message-pointer))))
 
-       (condition-case data
-	   (vm-decode-mime-message)
-	 (vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
-					       (car (cdr data)))
-			(message "%s" (car (cdr data))))))
+      (condition-case data
+	  (vm-decode-mime-message)
+	(vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
+					      (car (cdr data)))
+		       (message "%s" (car (cdr data))))))
   ;; FIXME this probably cause folder corruption by filling the folder instead
   ;; of the presentation copy  ..., RWF, 2008-07
   ;; Well, so, we will check if we are in a presentation buffer! 
@@ -855,13 +869,19 @@ is done if necessary.  (USR, 2010-01-14)"
   (when (and  vm-fill-paragraphs-containing-long-lines
 	      (vm-mime-plain-message-p (car vm-message-pointer)))
     (if (null vm-mail-buffer)		; this can't be presentation then
-	(debug "VM internal error #2010.  Please report it")
-      (vm-save-restriction
-       (widen)
-       (vm-fill-paragraphs-containing-long-lines
-	vm-fill-paragraphs-containing-long-lines
-	(vm-text-of (car vm-message-pointer))
-	(vm-text-end-of (car vm-message-pointer))))))
+	(if vm-always-use-presentation-buffer
+	    (progn
+	      (vm-make-presentation-copy (car vm-message-pointer))
+	      (set-buffer vm-presentation-buffer))
+	  ;; FIXME at this point, the folder buffer is being used for
+	  ;; display
+	(debug "VM internal error #2010.  Please report it")))
+    (vm-save-restriction
+     (widen)
+     (vm-fill-paragraphs-containing-long-lines
+      vm-fill-paragraphs-containing-long-lines
+      (vm-text-of (car vm-message-pointer))
+      (vm-text-end-of (car vm-message-pointer)))))
   (vm-save-buffer-excursion
    (save-excursion
      (save-excursion
@@ -903,31 +923,33 @@ is done if necessary.  (USR, 2010-01-14)"
   "Toggle exposing and hiding message headers that are normally not visible."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
-  (and vm-presentation-buffer
-       (set-buffer vm-presentation-buffer))
-  (vm-display (current-buffer) t '(vm-expose-hidden-headers)
-	      '(vm-expose-hidden-headers))
-  (let* ((exposed (= (point-min) (vm-start-of (car vm-message-pointer)))))
-    (vm-widen-page)
-    (goto-char (point-max))
-    (widen)
-    (if exposed
-	(narrow-to-region (point) (vm-vheaders-of (car vm-message-pointer)))
-      (narrow-to-region (point) (vm-start-of (car vm-message-pointer))))
-    (goto-char (point-min))
-    (let (w)
-      (setq w (vm-get-visible-buffer-window (current-buffer)))
-      (and w (set-window-point w (point-min)))
-      (and w
-	   (= (window-start w) (vm-vheaders-of (car vm-message-pointer)))
-	   (not exposed)
-	   (set-window-start w (vm-start-of (car vm-message-pointer)))))
-    (if vm-honor-page-delimiters
-	(vm-narrow-to-page))))
+  (save-excursion
+    (vm-select-folder-buffer-and-validate 1)
+    (vm-display nil nil '(vm-expose-hidden-headers)
+		'(vm-expose-hidden-headers))
+    (vm-save-buffer-excursion
+     (vm-replace-buffer-in-windows (current-buffer) 
+				   vm-presentation-buffer))
+    (and vm-presentation-buffer
+	 (set-buffer vm-presentation-buffer))
+    (let* ((exposed (= (point-min) (vm-start-of (car vm-message-pointer)))))
+      (vm-widen-page)
+      (goto-char (point-max))
+      (widen)
+      (if exposed
+	  (narrow-to-region (point) (vm-vheaders-of (car vm-message-pointer)))
+	(narrow-to-region (point) (vm-start-of (car vm-message-pointer))))
+      (goto-char (point-min))
+      (let (w)
+	(setq w (vm-get-visible-buffer-window (current-buffer)))
+	(and w (set-window-point w (point-min)))
+	(and w
+	     (= (window-start w) (vm-vheaders-of (car vm-message-pointer)))
+	     (not exposed)
+	     (set-window-start w (vm-start-of (car vm-message-pointer)))))
+      (if vm-honor-page-delimiters
+	  (vm-narrow-to-page))))
+  )
 
 (defun vm-widen-page ()
   (if (or (> (point-min) (vm-text-of (car vm-message-pointer)))
@@ -982,10 +1004,7 @@ is done if necessary.  (USR, 2010-01-14)"
   "Moves to the beginning of the current message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (vm-widen-page)
@@ -1009,10 +1028,7 @@ is done if necessary.  (USR, 2010-01-14)"
 as necessary."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)
@@ -1045,10 +1061,7 @@ will produce an action.  If the message is being previewed, it is
 exposed and marked as read."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)
@@ -1075,10 +1088,7 @@ will produce an action.  If the message is being previewed, it is
 exposed and marked as read."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-check-for-killed-presentation)
-  (vm-error-if-folder-empty)
+  (vm-select-folder-buffer-and-validate 1)
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)
