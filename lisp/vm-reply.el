@@ -111,38 +111,6 @@
         mp tmp tmp2 newsgroups)
     (setq mp mlist)
     (while mp
-      (cond ((add-to-list 'to
-                          (let ((reply-to
-                                 (vm-get-header-contents (car mp) "Reply-To:"
-                                                         ", ")))
-                            (if (vm-ignored-reply-to reply-to)
-                                nil
-                              reply-to ))))
-            ((add-to-list 'to (vm-get-header-contents (car mp) "From:"
-                                                      ", ")))
-            ;; bad, but better than nothing for some
-            ((add-to-list 'to (vm-grok-From_-author (car mp))))
-            (t (error "No From: or Reply-To: header in message")))
-
-      (let ((this-subject (vm-get-header-contents (car mp) "Subject:"))
-            (this-reply-to (and vm-in-reply-to-format
-                                (let ((vm-summary-uninteresting-senders nil))
-                                  (vm-summary-sprintf vm-in-reply-to-format
-                                                      (car mp))))))
-        (if (and this-subject vm-reply-subject-prefix
-                 (not (string-match vm-reply-subject-prefix this-subject)))
-            (setq this-subject (concat vm-reply-subject-prefix
-                                       this-subject)))
-	  
-        (unless subject
-          (setq subject (concat this-subject
-                                (if (cdr mlist)
-                                    (format " [and %d more messages]"
-                                            (length (cdr mlist)))))))
-        (setq in-reply-to (if in-reply-to
-                              (concat in-reply-to ",\n\t" this-reply-to)
-                            this-reply-to)))
-		
       (cond ((setq tmp (vm-get-header-contents (car mp) "Reply-To:" ", "))
              (if (not (vm-ignored-reply-to tmp))
                  (add-to-list 'to tmp)))
@@ -152,7 +120,23 @@
             ((setq tmp (vm-grok-From_-author (car mp)))
              (add-to-list 'to tmp))
             (t (error "No From: or Reply-To: header in message")))
-
+      (let ((this-subject (vm-get-header-contents (car mp) "Subject:"))
+            (this-reply-to (and vm-in-reply-to-format
+                                (let ((vm-summary-uninteresting-senders nil))
+                                  (vm-summary-sprintf vm-in-reply-to-format
+                                                      (car mp))))))
+        (if (and this-subject vm-reply-subject-prefix
+                 (not (string-match vm-reply-subject-prefix this-subject)))
+            (setq this-subject (concat vm-reply-subject-prefix
+                                       this-subject)))
+        (unless subject
+          (setq subject (concat this-subject
+                                (if (cdr mlist)
+                                    (format " [and %d more messages]"
+                                            (length (cdr mlist)))))))
+        (setq in-reply-to (if in-reply-to
+                              (concat in-reply-to ",\n\t" this-reply-to)
+                            this-reply-to)))
       (if to-all
           (progn
             (setq tmp (vm-get-header-contents (car mp) "To:" ", "))
