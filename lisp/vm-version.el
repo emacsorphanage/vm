@@ -19,7 +19,14 @@
 
 ;;; Code:
 (defconst vm-version
-  "@PACKAGE_VERSION@"
+  (condition-case nil
+      (with-temp-buffer
+	(insert-file-contents-literally
+	 (expand-file-name
+	  "version.txt"
+	  (and load-file-name (file-name-directory load-file-name))))
+	(read (current-buffer)))
+    (file-error "undefined"))
   "Version number of VM.")
 
 (defun vm-version ()

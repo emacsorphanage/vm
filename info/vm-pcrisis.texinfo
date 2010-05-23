@@ -34,7 +34,7 @@ the docs is unclear, I'd like to know so that I can improve them.  And
 if you find a bug, I'd definitely like to know.  I hope you enjoy this
 package.
 
-@include vm-version.texinfo
+@include version.texi
 This manual corresponds to VM version @value{VERSION}.
 
 @menu

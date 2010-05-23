@@ -236,8 +236,7 @@ AC_INIT([VM], [8.1.1-devo], [vm@lists.launchpad.net])
 AC_COPYRIGHT([Copyright (C) 2006-2007 Robert Widhopf-Fenk <hack@robf.de>])
 
 AC_CONFIG_SRCDIR([configure.ac])
-AC_CONFIG_FILES([Makefile vm-load.el lisp/Makefile lisp/vm-version.el
-  info/Makefile info/vm-version.texinfo src/Makefile pixmaps/Makefile])
+AC_CONFIG_FILES([Makefile lisp/Makefile info/Makefile src/Makefile pixmaps/Makefile vm-load.el])
 
 # Common system utilities checking:
 AC_PROG_MAKE_SET

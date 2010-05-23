@@ -36,9 +36,12 @@ LINKPATH = @LINKPATH@
 
 all: info
 
-vm.info:: vm-version.texinfo
+version.texi:
+	echo @set VERSION $(PACKAGE_VERSION) > $@
 
-vm-pcrisis.info:: vm-version.texinfo
+vm.info:: version.texi
+
+vm-pcrisis.info:: version.texi
 
 info: vm.info vm-pcrisis.info
 
