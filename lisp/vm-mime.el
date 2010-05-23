@@ -318,7 +318,7 @@ configuration.  "
 	  (insert-buffer-substring b b-start b-end)
 	  (setq retval (apply 'decode-coding-region (point-min) (point-max)
 			      coding-system foo))
-	  (and vm-fsfemacs-p (set-buffer-multibyte t))
+	  (and vm-fsfemacs-p (set-buffer-multibyte t)) ; is this safe?
 	  (setq start (point-min) end (point-max))
 	  (save-excursion
 	    (set-buffer b)
@@ -1945,7 +1945,8 @@ that recipient is outside of East Asia."
 	  (setq selective-display nil)
 	  (call-process-region (point-min) (point-max) shell-file-name
 			       t t nil shell-command-switch (nth 2 ooo))
-	  (and vm-fsfemacs-mule-p (set-buffer-multibyte t))
+	  (if vm-fsfemacs-mule-p 
+	      (set-buffer-multibyte t))	; is this safe?
 	  (setq start (point-min) end (point-max))
 	  (save-excursion
 	    (set-buffer b)
@@ -2722,7 +2723,7 @@ emacs-w3m."
 			 (vm-number-of
 			  (car vm-message-pointer)))))
     (if vm-fsfemacs-mule-p
-	(set-buffer-multibyte nil))
+	(set-buffer-multibyte nil))	; for new buffer
     (setq vm-folder-type vm-default-folder-type)
     (vm-mime-burst-layout layout nil)
     (set-buffer-modified-p nil)
@@ -3101,7 +3102,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 			   "")))
       (set-buffer (generate-new-buffer "assembled message"))
       (if vm-fsfemacs-mule-p
-	  (set-buffer-multibyte nil))
+	  (set-buffer-multibyte nil))	; for new buffer
       (setq vm-folder-type vm-default-folder-type)
       (vm-mime-insert-mime-headers (car (cdr (car parts))))
       (goto-char (point-min))
@@ -5222,7 +5223,7 @@ minibuffer if the command is run interactively."
 	(save-excursion
 	  (set-buffer buf)
 	  (if vm-fsfemacs-mule-p
-	      (set-buffer-multibyte nil))
+	      (set-buffer-multibyte nil)) ; for new buffer
 	  (vm-insert-region-from-buffer folder (vm-headers-of m)
 					(vm-text-end-of m))
 	  (goto-char (point-min))

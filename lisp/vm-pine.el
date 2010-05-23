@@ -1149,7 +1149,7 @@ This function is a slightly changed version of `vm-auto-select-folder'."
                         (save-excursion
                           (set-buffer buf)
                           (if vm-fsfemacs-mule-p
-                              (set-buffer-multibyte nil))
+                              (set-buffer-multibyte nil)) ; for empty buffer
                           (widen)
                           (erase-buffer)
                           (insert header)

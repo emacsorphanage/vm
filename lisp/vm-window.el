@@ -121,7 +121,7 @@
 	  (progn
 	    (set-buffer (setq work-buffer (get-buffer-create "*vm-wconfig*")))
 	    (if vm-fsfemacs-mule-p
-		(set-buffer-multibyte nil))
+		(set-buffer-multibyte nil)) ; for empty buffer
 	    (erase-buffer)
 	    (setq vm-window-configurations
 		  (condition-case ()
@@ -140,7 +140,7 @@
 	  (progn
 	    (set-buffer (setq work-buffer (get-buffer-create "*vm-wconfig*")))
 	    (if vm-fsfemacs-mule-p
-		(set-buffer-multibyte nil))
+		(set-buffer-multibyte nil)) ; for empty buffer
 	    ;; for MULE
 	    (if (fboundp 'set-buffer-file-coding-system)
 		(set-buffer-file-coding-system (vm-line-ending-coding-system)))

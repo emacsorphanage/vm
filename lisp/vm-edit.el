@@ -68,7 +68,7 @@ replace the original, use C-c C-] and the edit will be aborted."
 			     (vm-su-full-name (car vm-message-pointer))
 			     (vm-su-subject (car vm-message-pointer)))))
 	      (if vm-fsfemacs-mule-p
-		  (set-buffer-multibyte nil))
+		  (set-buffer-multibyte nil)) ; for new buffer
 	      (vm-set-edit-buffer-of (car mp) edit-buf)
 	      (copy-to-buffer edit-buf
 			      (vm-headers-of (car mp))

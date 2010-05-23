@@ -22,6 +22,11 @@ VM 8.1.2 (2010-05-??)
     * `vm-fill-long-lines-in-reply' initialized to the default value
       of `fill-column'.
 
+    * All MIME messages are now decoded in the Presentation buffer,
+      unless they have US-ASCII as their charset.  In particular,
+      messages with 8bit charsets are treated this way.  Such messages
+      are not regarded "plain messages" any more.
+
 VM 8.1.1 (2010-04-26)
 
    ** The variable vm-always-use-presentation-buffer is deprecated.

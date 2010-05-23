@@ -978,7 +978,7 @@ Subject: header manually."
 	       ;; eight bit chars will get \201 prepended if we
 	       ;; don't do this.
 	       (if vm-fsfemacs-mule-p
-		   (set-buffer-multibyte t)))
+		   (set-buffer-multibyte t))) ; is this safe?
 	      ((equal vm-forwarding-digest-type "rfc934")
 	       (vm-rfc934-encapsulate-messages
 		vm-forward-list vm-forwarded-headers
