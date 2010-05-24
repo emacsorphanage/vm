@@ -251,6 +251,15 @@ See the documentation for vm-mode for more information."
 	    (vm-gobble-summary)
 	    (vm-gobble-labels)))
 
+      ;; Recall the UID VALIDITY value stored in the cache folder
+      (cond ((eq access-method 'imap)
+	     (if vm-imap-retrieved-messages
+		 (vm-set-folder-imap-uid-validity 
+		  (vm-imap-recorded-uid-validity))))
+	    ((eq access-method 'pop)
+	     ;; FIXME yet to be filled in
+	     ))
+
       (if first-time
 	  (vm-start-itimers-if-needed))
 
