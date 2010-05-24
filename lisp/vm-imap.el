@@ -151,7 +151,7 @@ occurs, typically VM cannot proceed."
 	(got-output (accept-process-output process vm-imap-server-timeout)))
     (if got-output
 	(when (not (equal (current-buffer) buf))
-	  (if (string-lessp "24" emacs-version)
+	  (if (string-lessp "23" emacs-version)
 	      ;; the Emacs bug should have been fixed
 	      (message 
 	       "Emacs process output error: Buffer changed to %s" 
@@ -1084,8 +1084,9 @@ as well."
 	  (vm-imap-session-type:set 'inactive)
 	  ;;----------------------------------
 	  (if (fboundp 'add-async-timeout)
-	      (add-async-timeout 2 'kill-imap-process process)
-	    (run-at-time 2 nil 'kill-imap-process process)))
+	      (add-async-timeout 2 'vm-kill-imap-process process)
+	    (run-at-time 2 nil 'vm-kill-imap-process process)
+	    ))
 	;;----------------------------------
 	(vm-buffer-type:exit)
 	;;----------------------------------
@@ -1107,10 +1108,11 @@ as well."
 	  )))     
   )
 
-(defun kill-imap-process (process)
-  (set-buffer (process-buffer process))
-  (goto-char (point-max))
-  (insert "ending IMAP session " (current-time-string) "\n")
+(defun vm-kill-imap-process (process)
+  (save-excursion
+    (set-buffer (process-buffer process))
+    (goto-char (point-max))
+    (insert "ending IMAP session " (current-time-string) "\n"))
   (delete-process process))
 
 ;; Status indicator vector
@@ -3199,6 +3201,7 @@ only marked messages are loaded, other messages are ignored."
 ;;     (if (not used-marks) 
 ;; 	(setq mlist (list (car vm-message-pointer))))
     (save-excursion
+      (message "Retrieving message body...")
       (while mlist
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
