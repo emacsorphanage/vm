@@ -4212,7 +4212,8 @@ files."
 		 (message "No new mail for %s"
 			  (or buffer-file-name (buffer-name)))
 	       (message "No new mail."))
-	     (and (interactive-p) (sit-for 4) (message "")))))
+	     (and (interactive-p) (vm-sit-for 4) (message ""))
+	     )))
 	(t
 	 (let ((buffer-read-only nil)
 	       folder mcount totals-blurb)
