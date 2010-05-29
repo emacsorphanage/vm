@@ -960,9 +960,14 @@ The saved messages are flagged as `filed'."
 	    (if server-to-server-p 	; economise on upstream data traffic
 		(let ((process 
 		       (vm-re-establish-folder-imap-session nil "save")))
+		  (if (null process)
+		      (error "Could not connect to the IMAP server"))
 		  (vm-imap-copy-message process m mailbox))
 	      (unless process
-		(setq process (vm-imap-make-session target-folder)))
+		(setq process 
+		      (vm-imap-make-session target-folder t "IMAP-FCC")))
+	      (if (null process)
+		  (error "Could not connect to the IMAP server"))
 	      (vm-imap-save-message process m mailbox))
 	    (unless (vm-filed-flag m)
 	      (vm-set-filed-flag m t))

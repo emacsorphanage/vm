@@ -1217,23 +1217,27 @@ Otherwise treat `\\' in NEWTEXT as special:
 (defvar vm-buffer-type-trail nil)
 
 (defun vm-buffer-type:enter (type)
+  "Note that vm is temporarily entering a buffer of TYPE."
   (if vm-buffer-type-debug
       (setq vm-buffer-type-trail 
 	    (cons type (cons 'enter vm-buffer-type-trail))))
   (setq vm-buffer-types (cons type vm-buffer-types)))
 
 (defun vm-buffer-type:exit ()
+  "Note that vm is exiting the current temporary buffer."
   (if vm-buffer-type-debug
       (setq vm-buffer-type-trail (cons 'exit vm-buffer-type-trail)))
   (setq vm-buffer-types (cdr vm-buffer-types)))
 
 (defun vm-buffer-type:duplicate ()
+  "Note that vm is reentering the current buffer for a temporary purpose."
   (if vm-buffer-type-debug
       (setq vm-buffer-type-trail (cons (car vm-buffer-type-trail)
 				       vm-buffer-type-trail)))
   (setq vm-buffer-types (cons (car vm-buffer-types) vm-buffer-types)))
 
 (defun vm-buffer-type:set (type)
+  "Note that vm is changing to a buffer of TYPE."
   (when vm-buffer-type-debug
     (if (and (eq type 'folder) vm-buffer-types 
 	     (eq (car vm-buffer-types) 'process))
@@ -1244,6 +1248,7 @@ Otherwise treat `\\' in NEWTEXT as special:
     (setq vm-buffer-types (cons type vm-buffer-types))))
 
 (defsubst vm-buffer-type:assert (type)
+  "Check that vm is currently in a buffer of TYPE."
   (vm-assert (eq (car vm-buffer-types) type)))
 
 (provide 'vm-misc)

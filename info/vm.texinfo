@@ -5106,8 +5106,8 @@ summary line can be quickly calculated.  This is a list containing
 tokens, such as @code{number} and @code{thread-indent}, as well as
 MIME-decoded strings with text properties.
 @item
-parent.  The parent of the message in the message thread, which is
-another message data structure.
+parent.  The message ID of the parent of the message in its
+thread.
 @item
 references.  Message IDs listed in the References header of the message.
 @item

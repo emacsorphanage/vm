@@ -20,6 +20,13 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(defsubst vm-sit-for (seconds &optional nodisplay)
+  "Like sit-for, but has no effect if display-hourglass is set to t.
+Otherwise, the hourglass would be displayed while sit-for happens."
+  (unless (and (boundp 'display-hourglass) display-hourglass)
+    (sit-for seconds nodisplay)))
+
 (defsubst vm-marker (pos &optional buffer)
   (set-marker (make-marker) pos buffer))
 
