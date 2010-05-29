@@ -3245,6 +3245,9 @@ only marked messages are loaded, other messages are ignored."
 	   ;; update the message data
 	   (vm-set-body-to-be-retrieved-flag mm nil)
 	   (vm-set-line-count-of mm nil)
+	   (vm-set-byte-count-of mm nil)
+	   ;; update the virtual messages
+	   (vm-update-virtual-messages mm)
 	   (setq n (1+ n))))
 	(setq mlist (cdr mlist))
 	)
@@ -3254,23 +3257,20 @@ only marked messages are loaded, other messages are ignored."
     ;; FIXME - is this needed?  Is it correct?
     ;; (vm-display nil nil '(vm-load-message vm-refresh-message)
     ;;    (list this-command))	
-;; The following is being reverted because it is giving an error in
-;; edit-message.  (Cf. revno 796)
-    ;; Refresh the current message display so that mime is decoded
-;;     (cond ((eq vm-system-state 'previewing)
-;; 	   (setq vm-mime-decoded nil)
-;; 	   (vm-preview-current-message))
-;; 	  ((or (eq vm-system-state 'showing) 
-;; 	       (eq vm-system-state 'reading))
-;; 	   (setq vm-mime-decoded nil)
-;; 	   (vm-show-current-message)))
     (vm-update-summary-and-mode-line)
     ))
 
 ;;;###autoload
 (defun vm-refresh-message (&optional count)
-  "This is an alias for vm-load-message."
+  "Reload the message body from its permanent location.  Currently
+this facilty is only available for IMAP folders.
+
+With a prefix argument COUNT, the current message and the next 
+COUNT - 1 messages are reloaded.  A negative argument means
+the current message and the previous |COUNT| - 1 messages are
+reloaded."
   (interactive "p")
+  (call-interactively (function vm-unload-message))
   (call-interactively (function vm-load-message)))
 
 ;;;###autoload
@@ -3322,6 +3322,7 @@ only marked messages are unloaded, other messages are ignored."
 	   (vm-set-mime-layout-of mm nil)
 	   (vm-set-body-to-be-retrieved-flag mm t)
 	   (vm-set-line-count-of mm nil)
+	   (vm-update-virtual-messages mm)
 	   ))
 	(setq mlist (cdr mlist))))
     (message "Message body discarded")

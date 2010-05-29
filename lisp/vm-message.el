@@ -459,6 +459,25 @@
 (defsubst vm-virtual-message-p (m)
   (not (eq m (vm-real-message-of m))))
 
+(defun vm-update-virtual-messages (m)
+  "Update all the virtual messages of M to reflect the changes made to
+the headers/body of M."
+  (let ((v-list (vm-virtual-messages-of m)))
+    (save-excursion
+      (while v-list
+	(vm-set-mime-layout-of (car v-list) nil)
+	(vm-set-mime-encoded-header-flag-of (car v-list) nil)
+	(vm-set-line-count-of (car v-list) nil)
+	(set-buffer (vm-buffer-of (car v-list)))
+	(if (and vm-presentation-buffer
+		 (eq (car vm-message-pointer) (car v-list)))
+	    (save-excursion (vm-preview-current-message)))
+	(if (vectorp vm-thread-obarray)
+	    (vm-build-threads (list (car v-list))))
+	;; (if vm-summary-show-threads
+	;;     (intern (buffer-name) buffers-needing-thread-sort))
+	(setq v-list (cdr v-list))))))
+
 (provide 'vm-message)
 
 ;;; vm-message.el ends here
