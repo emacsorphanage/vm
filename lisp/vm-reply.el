@@ -91,7 +91,8 @@
 ;;;###autoload
 (defun vm-fill-long-lines-in-reply ()
   (interactive)
-  (let ((vm-word-wrap-paragraphs nil)) ; doesn't work well with fill-prefixes
+  (let ((vm-word-wrap-paragraphs vm-word-wrap-paragraphs-in-reply)) 
+					; doesn't work well with fill-prefixes
     (vm-fill-paragraphs-containing-long-lines
      vm-fill-long-lines-in-reply-column
      (save-excursion

@@ -923,6 +923,14 @@ for the variable to have effect."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-word-wrap-paragraphs-in-reply nil
+  "If non-nil, causes VM to word wrap paragraphs with long lines
+during message composition.  This is done using the `longlines'
+library, which must be installed for the variable to have
+effect."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-fill-paragraphs-containing-long-lines nil
   "*This variable can be set to nil, a numeric value N, the
 symbol 'window-width.  If it is numeric, it causes VM to fill
