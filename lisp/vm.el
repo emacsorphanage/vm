@@ -144,7 +144,7 @@ See the documentation for vm-mode for more information."
 	     (if (not (equal folder-name (buffer-name)))
 		 (rename-buffer folder-name t)))
       (if (and vm-fsfemacs-mule-p enable-multibyte-characters)
-	  (set-buffer-multibyte nil))
+	  (set-buffer-multibyte nil))	; is this safe?
       ;; for MULE
       ;;
       ;; If the file coding system is not a no-conversion variant,

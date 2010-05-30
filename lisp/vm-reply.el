@@ -450,7 +450,9 @@ specified by `vm-included-text-headers' and
     (save-excursion
       (goto-char (point-min))
       (vm-decode-mime-message-headers))
-    (vm-decode-mime-layout layout)
+    (let ((vm-mime-alternative-select-method 'best-internal))
+					; override 'all and 'best
+      (vm-decode-mime-layout layout))
     (if vm-mime-yank-attachments
 	;; FIXME This uses a function of vm-pine.el
 	(vm-decode-postponed-mime-message))))
@@ -1022,7 +1024,7 @@ Subject: header manually."
 	       ;; eight bit chars will get \201 prepended if we
 	       ;; don't do this.
 	       (if vm-fsfemacs-mule-p
-		   (set-buffer-multibyte t)))
+		   (set-buffer-multibyte t))) ; is this safe?
 	      ((equal vm-forwarding-digest-type "rfc934")
 	       (vm-rfc934-encapsulate-messages
 		vm-forward-list vm-forwarded-headers

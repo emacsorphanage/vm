@@ -321,7 +321,7 @@ freshly parsing the message contents."
 	  (insert-buffer-substring b b-start b-end)
 	  (setq retval (apply 'decode-coding-region (point-min) (point-max)
 			      coding-system foo))
-	  (and vm-fsfemacs-p (set-buffer-multibyte t))
+	  (and vm-fsfemacs-p (set-buffer-multibyte t)) ; is this safe?
 	  (setq start (point-min) end (point-max))
 	  (save-excursion
 	    (set-buffer b)
@@ -2102,7 +2102,8 @@ that recipient is outside of East Asia."
 	  (setq selective-display nil)
 	  (call-process-region (point-min) (point-max) shell-file-name
 			       t t nil shell-command-switch (nth 2 ooo))
-	  (and vm-fsfemacs-mule-p (set-buffer-multibyte t))
+	  (if vm-fsfemacs-mule-p 
+	      (set-buffer-multibyte t))	; is this safe?
 	  (setq start (point-min) end (point-max))
 	  (save-excursion
 	    (set-buffer b)
@@ -2890,7 +2891,7 @@ emacs-w3m."
 			 (vm-number-of
 			  (car vm-message-pointer)))))
     (if vm-fsfemacs-mule-p
-	(set-buffer-multibyte nil))
+	(set-buffer-multibyte nil))	; for new buffer
     (setq vm-folder-type vm-default-folder-type)
     (vm-mime-burst-layout layout nil)
     (set-buffer-modified-p nil)
@@ -3269,7 +3270,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 			   "")))
       (set-buffer (generate-new-buffer "assembled message"))
       (if vm-fsfemacs-mule-p
-	  (set-buffer-multibyte nil))
+	  (set-buffer-multibyte nil))	; for new buffer
       (setq vm-folder-type vm-default-folder-type)
       (vm-mime-insert-mime-headers (car (cdr (car parts))))
       (goto-char (point-min))
@@ -4956,10 +4957,8 @@ created."
   ;; A message is considered plain if
   ;; - it does not have encoded headers, and
   ;; - - it does not have a MIME layout, or
-  ;; - - it has a text/plain component as its first element with a
-  ;; - -   character set in vm-mime-default-charsets and the encoding
-  ;; - -   is unibyte (7bit, 8bit or binary).
-  
+  ;; - - it has a text/plain component as its first element with ASCII
+  ;; - -   character set and unibyte encoding (7bit, 8bit or binary).
   (save-match-data
     (let ((o (vm-mm-layout m))
 	  (case-fold-search t))
@@ -4967,9 +4966,9 @@ created."
 	   (or (not (vectorp o))
 	       (and (vm-mime-types-match "text/plain"
 					 (car (vm-mm-layout-type o)))
-		    (let* ((charset (or (vm-mime-get-parameter o "charset")
-					"us-ascii")))
-		      (vm-mime-default-face-charset-p charset))
+		    (string-match "^us-ascii$"
+				  (or (vm-mime-get-parameter o "charset")
+				      "us-ascii"))
 		    (string-match "^\\(7bit\\|8bit\\|binary\\)$"
 				  (vm-mm-layout-encoding o))))))))
 
@@ -5408,7 +5407,7 @@ minibuffer if the command is run interactively."
 	(save-excursion
 	  (set-buffer buf)
 	  (if vm-fsfemacs-mule-p
-	      (set-buffer-multibyte nil))
+	      (set-buffer-multibyte nil)) ; for new buffer
 	  (vm-insert-region-from-buffer folder (vm-headers-of m)
 					(vm-text-end-of m))
 	  (goto-char (point-min))
