@@ -4757,6 +4757,18 @@ be a regexp matching all chars to be replaced by a \"_\"."
   "Enables folding of threads in VM summary windows.  (This
 functionality is highly experimental!)")
 
+(defvar vm-summary-show-thread-count t
+  "when set to 't' and thread folding is enabled (see 
+vm-summary-toggle-thread-folding) this will display the current
+number of thread in the thread root message number indicator. 
+Note that this takes up 4 extra character in your summary")
+
+(defvar vm-summary-thread-folding-on-motion nil
+  "when set to 't' and thread folding is enabled, calling
+vm-next/previous-message-no-skip will ('N' or 'P' respectively)
+will expand or collapse the thread upon moving into or out of
+its extreme most members")
+
 (defvar vm-summary-mode-map vm-mode-map
   "Keymap for VM Summary mode")
 
