@@ -3251,9 +3251,10 @@ only marked messages are loaded, other messages are ignored."
       (when (> n 0)
 	(message "Retrieving message body... done"))
       )
+    (intern (buffer-name) vm-buffers-needing-display-update)
     ;; FIXME - is this needed?  Is it correct?
-    ;; (vm-display nil nil '(vm-load-message vm-refresh-message)
-    ;;    (list this-command))	
+    (vm-display nil nil '(vm-load-message vm-refresh-message)
+       (list this-command))	
     (vm-update-summary-and-mode-line)
     ))
 

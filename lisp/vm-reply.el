@@ -62,16 +62,16 @@
 
 ;;; Code:
 
-(declare-function mail-strip-quoted-names "ext:mail-utils" (address))
-(declare-function mail-fetch-field "ext:mail-utils" 
-		  (field-name &optional last all list))
-(declare-function mail-send "ext:sendmail" ())
-(declare-function mail-do-fcc "ext:sendmail" (header-end))
-(declare-function mail-text "ext:sendmail" ())
-(declare-function mail-position-on-field "ext:sendmail" 
-		  (field &optional soft))
-(declare-function mail-mode "ext:sendmail" ())
-(declare-function build-mail-aliases "ext:mailalias" (&optional file))
+;; (declare-function mail-strip-quoted-names "ext:mail-utils" (address))
+;; (declare-function mail-fetch-field "ext:mail-utils" 
+;; 		  (field-name &optional last all list))
+;; (declare-function mail-send "ext:sendmail" ())
+;; (declare-function mail-do-fcc "ext:sendmail" (header-end))
+;; (declare-function mail-text "ext:sendmail" ())
+;; (declare-function mail-position-on-field "ext:sendmail" 
+;; 		  (field &optional soft))
+;; (declare-function mail-mode "ext:sendmail" ())
+;; (declare-function build-mail-aliases "ext:mailalias" (&optional file))
 
 (defun vm-add-reply-subject-prefix (message &optional start)
   (when (not start)
