@@ -1054,7 +1054,7 @@ the process-buffer. If the optional argument KEEP-BUFFER is
 non-nil, the process buffer is retained, otherwise it is killed
 as well."
   (vm-imap-log-token 'end-session)
-  (if (and process (memq (process-status process) '(open run))
+  (when (and process (memq (process-status process) '(open run))
 	   (buffer-live-p (process-buffer process)))
       (save-excursion
 	(if (null imap-buffer)
@@ -1083,15 +1083,19 @@ as well."
 	  ;;----------------------------------
 	  (vm-imap-session-type:set 'inactive)
 	  ;;----------------------------------
+	  ;; This is just for tracing purposes
+	  (goto-char (point-max))
+	  (insert "ending IMAP session " (current-time-string) "\n")
+	  ;; Schedule killing of the process after a delay to allow
+	  ;; any output to be received first
 	  (if (fboundp 'add-async-timeout)
-	      (add-async-timeout 2 'vm-kill-imap-process process)
-	    (run-at-time 2 nil 'vm-kill-imap-process process)
-	    ))
+	      (add-async-timeout 2 'delete-process process)
+	    (run-at-time 2 nil 'delete-process process)))
 	;;----------------------------------
 	(vm-buffer-type:exit)
 	;;----------------------------------
 	))
-  (if (and imap-buffer (buffer-live-p imap-buffer))
+  (when (and imap-buffer (buffer-live-p imap-buffer))
       (if (and (not vm-imap-keep-trace-buffer) (not keep-buffer))
 	  (kill-buffer imap-buffer)
 	(save-excursion
@@ -1107,13 +1111,6 @@ as well."
 	  ;;-------------------
 	  )))     
   )
-
-(defun vm-kill-imap-process (process)
-  (save-excursion
-    (set-buffer (process-buffer process))
-    (goto-char (point-max))
-    (insert "ending IMAP session " (current-time-string) "\n"))
-  (delete-process process))
 
 ;; Status indicator vector
 ;; timer
