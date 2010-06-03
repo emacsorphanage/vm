@@ -207,14 +207,15 @@ the messages in the current folder."
     (vm-select-folder-buffer)
     (set-buffer vm-summary-buffer)
     (when (and vm-summary-toggle-thread-folding
-               vm-summary-show-threads (get-text-property (point) 'thread-end))
-      (let* ((m (get-text-property (point) 'vm-message))
-             (e (get-text-property (point) 'thread-end))
+               vm-summary-show-threads 
+	       (get-text-property (+ (point) 2) 'thread-end))
+      (let* ((m (get-text-property (+ (point) 2) 'vm-message))
+             (e (get-text-property (+ (point) 2) 'thread-end))
              (i (not (get-text-property (vm-su-start-of e) 'invisible))))
         (if (eq visible -1) (setq i t)
           (if (eq visible 1) (setq i nil)))
-        (put-text-property (vm-su-end-of m) (vm-su-end-of e) 'invisible i)
         (let ((buffer-read-only nil))
+	  (put-text-property (vm-su-end-of m) (vm-su-end-of e) 'invisible i)
           (goto-char (1+ (vm-su-start-of m)))
           (insert (if i "+" "-"))
           (goto-char (vm-su-start-of m))
@@ -289,14 +290,14 @@ buffer by a regenerated summary line."
 		  (if vm-summary-toggle-thread-folding
 		      ;; Rob's thread-folding version
 		      (if (not selected)
-			  (if (not (get-text-property (point) 'thread-end))
+			  (if (not (get-text-property (+ (point) 2) 'thread-end))
 			      (insert vm-summary-no-=>)
 			    (if (get-text-property 
 				 (1+ (vm-su-end-of  vm-summary-pointer)) 
 				 'invisible)
 				(insert "+ ")
 			      (insert "- ")))
-			(if (not (get-text-property (point) 'thread-end))
+			(if (not (get-text-property (+ (point) 2) 'thread-end))
 			    (insert vm-summary-=>)
 			  (if (get-text-property 
 			       (1+ (vm-su-end-of vm-summary-pointer)) 
@@ -340,7 +341,7 @@ buffer by a regenerated summary line."
 			  (vm-su-start-of vm-summary-pointer))
 		     (progn
 		       (goto-char (vm-su-start-of vm-summary-pointer))
-		       (if (not (get-text-property (point) 'thread-end))
+		       (if (not (get-text-property (+ (point) 2) 'thread-end))
 			   (insert vm-summary-no-=>)
 			 (if (get-text-property 
 			      (1+ (vm-su-end-of vm-summary-pointer))
@@ -359,7 +360,7 @@ buffer by a regenerated summary line."
 		 (let ((modified (buffer-modified-p)))
 		   (unwind-protect
 		       (progn
-			 (if (not (get-text-property (point) 'thread-end))
+			 (if (not (get-text-property (+ (point) 2) 'thread-end))
 			     (insert vm-summary-=>)
 			   (if (get-text-property 
 				(1+ (vm-su-end-of vm-summary-pointer))
