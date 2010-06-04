@@ -123,7 +123,7 @@ See the documentation for vm-mode for more information."
 					   remote-spec))
 				   folder))
 	     (if (and vm-imap-refer-to-inbox-by-account-name
-		      (equal folder-name "INBOX")
+		      (equal (downcase folder-name) "inbox")
 		      (setq account-name 
 			    (vm-imap-account-name-for-spec remote-spec)))
 		 (setq folder-name account-name))
