@@ -4123,6 +4123,13 @@ maildrop string)."
                      '("*"))
              ":"))
 
+(defun vm-popdrop-sans-personal-info (source)
+  "Return popdrop SOURCE, but replace the login and password by a \"*\"."
+  (mapconcat 'identity 
+             (append (reverse (cdr (cdr (reverse (vm-parse source "\\([^:]*\\):?")))))
+                     '("*" "*"))
+             ":"))
+
 (defun vm-safe-imapdrop-string (drop)
   (or (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*" drop)
 	   (concat (substring drop (match-beginning 4) (match-end 4))
@@ -4141,16 +4148,24 @@ maildrop string)."
 	    (nth 2 source-list) ":"
 	    (nth 3 source-list) ":"
 	    (nth 4 source-list) ":"
-	    (nth 5 source-list) ":*")))
+	    (nth 5 source-list) ":" "*")))
 
 (defun vm-imapdrop-sans-password-and-mailbox (source)
   (let (source-list)
     (setq source-list (vm-parse source "\\([^:]*\\):?"))
     (concat (nth 0 source-list) ":"
 	    (nth 1 source-list) ":"
-	    (nth 2 source-list) ":*:"
+	    (nth 2 source-list) ":" "*:"
 	    (nth 4 source-list) ":"
-	    (nth 5 source-list) ":*")))
+	    (nth 5 source-list) ":" "*")))
+
+(defun vm-imapdrop-sans-personal-info (source)
+  (let (source-list)
+    (setq source-list (vm-parse source "\\([^:]*\\):?"))
+    (concat (nth 0 source-list) ":"
+	    (nth 1 source-list) ":"
+	    (nth 2 source-list) ":" "*:"
+	    (nth 4 source-list) ":" "*:" "*")))
 
 (defun vm-maildrop-sans-password (drop)
   (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]*\\):[^:]*:[^:]*:\\([^:]*\\):[^:]*" drop)
@@ -4159,11 +4174,23 @@ maildrop string)."
 	   (vm-imapdrop-sans-passord drop))
       drop))
 
+(defun vm-maildrop-sans-personal-info (drop)
+  (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]*\\):[^:]*:[^:]*:\\([^:]*\\):[^:]*" drop)
+	   (vm-popdrop-sans-personal-info drop))
+      (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*" drop)
+	   (vm-imapdrop-sans-personal-info drop))
+      drop))
 
 (defun vm-maildrop-alist-sans-password (alist)
   (vm-mapcar 
    (lambda (pair-xxx)
      (cons (vm-maildrop-sans-password (car pair-xxx)) (cdr pair-xxx)))
+   alist))
+
+(defun vm-maildrop-alist-sans-personal-info (alist)
+  (vm-mapcar 
+   (lambda (pair-xxx)
+     (cons (vm-maildrop-sans-personal-info (car pair-xxx)) (cdr pair-xxx)))
    alist))
 
 ;;;###autoload
