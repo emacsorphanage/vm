@@ -576,6 +576,14 @@ Example:
   :group 'vm
   :type '(repeat (list string string)))
 
+(defcustom vm-imap-default-account nil
+  "*Set this variable to a string denoting the name of an IMAP account
+declared in `vm-imap-account-alist'.  The account specified here will
+be regarded as the default account for various purposes, e.g., for
+saving copies of outgoing mail."
+  :group 'vm
+  :type '(choice (const nil) string))
+
 (defcustom vm-imap-refer-to-inbox-by-account-name nil
   "*If set to non-nil, the INBOX folders on IMAP accounts are
 referred to by their account names instead of as \"INBOX\".  The

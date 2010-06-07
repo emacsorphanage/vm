@@ -2209,14 +2209,31 @@ the addresses in the Resent-To and Resent-Cc headers unless
 you delete both of those headers.  In that case the To and Cc
 headers will be used.
 
+@cindex FCC
+@cindex IMAP-FCC
+@findex vm-imap-save-composition
+@findex vm-imap-default-account
 You can save copies of outgoing mail messages in 'sent' folders by
-adding an @code{FCC:} header line to the composed message.  The
-variable @code{vm-do-fcc-before-mime-encode} allows you save the
-fcc copy to the sent folder @i{before} mime-encoding the message.
-This is useful if you want to save an unencrypted version of the message or
-avoid saving attachments.  However, the character coding of
-the sent folder should be chosen carefully to allow proper storage of
-the messages.
+adding an @code{FCC:} header line to the composed message.  The value of
+the header should be the full path name of a mail folder on the file
+system.  You can also save copies to IMAP folders by adding an
+@code{IMAP-FCC:} header line.  In this case, the value of the header
+should be a plain folder name on the ``current'' IMAP account.  You
+should also add the function @code{vm-imap-save-composition} to the
+mail-mode's @code{mail-send-hook} variable.  The ``current'' IMAP
+account will be determined by the IMAP folder from which you start
+composing the new message.  If you use multiple IMAP accounts, the
+sent messages will be saved on the current IMAP account in each case.
+If you start composing your message from a local folder, then it will be
+saved in @code{vm-imap-default-account}.
+
+@vindex vm-do-fcc-before-mime-encode
+The variable @code{vm-do-fcc-before-mime-encode} allows you save the fcc
+copy to the sent folder @i{before} mime-encoding the message.  This is
+useful if you want to save an unencrypted version of the message or
+avoid saving attachments.  However, the character coding of the sent
+folder should be chosen carefully to allow proper storage of the
+messages.
 
 @menu
 * MIME Composition::    Sending a message using MIME attachments.
@@ -2595,22 +2612,6 @@ If @var{n} is negative, the current message and the previous @var{n-1}
 messages are saved.  Messages saved with @code{vm-save-message} are
 flagged ``filed''.
 
-@findex vm-save-message-to-imap-folder
-One can save messages to remote IMAP folders by
-@code{vm-save-message-to-imap-folder}; the name of the folder can be
-entered from the minibuffer.
-
-@vindex vm-confirm-new-folders
-If the value of the variable @code{vm-confirm-new-folders} is
-non-@code{nil}, VM will ask for confirmation before creating a new
-folder on interactive saves.
-
-@vindex vm-imap-save-to-server
-@cindex IMAP
-A non-@code{nil} value of @code{vm-imap-save-to-server} means that
-messages from IMAP folders should be saved in other IMAP folders on the
-same server.  Otherwise, the messages are saved to local folders. 
-
 @vindex vm-folder-directory
 If you have a directory where you keep all your mail folders, you should
 set the variable @code{vm-folder-directory} to point to it.  If this
@@ -2621,7 +2622,65 @@ you some typing. The default value of @code{vm-folder-directory} is
 
 @vindex vm-auto-folder-alist
 Another aid to selecting folders in which to save mail is the variable
-@code{vm-auto-folder-alist}.  The value of this variable should be a
+@code{vm-auto-folder-alist}, described in detail below.  Using the data
+given in this alist, VM can examine the headers of the message and
+automatically suggest an appropriate save folder where the message
+should be saved.
+
+@vindex vm-imap-save-to-server
+@cindex IMAP
+If you use an IMAP server and prefer to save messages on other folders
+on the same IMAP server, you can set the variable
+@code{vm-imap-save-to-server} to t.  You will be prompted for the name
+of the IMAP folder in which to save the message.  The variable
+@code{vm-auto-folder-alist} can also be used to suggest appropriate save
+folders on the IMAP server.
+
+@findex vm-save-message-to-local-folder
+@findex vm-save-message-to-imap-folder
+You can override the effect of @code{vm-imap-save-to-server} by using
+the specialized commands @code{vm-save-message-to-local-folder}
+and @code{vm-save-message-to-imap-folder}, which do what their names
+indicate. 
+
+@vindex vm-confirm-new-folders
+If the value of the variable @code{vm-confirm-new-folders} is
+non-@code{nil}, VM will ask for confirmation before creating a new
+folder on interactive saves.
+
+
+@vindex vm-visit-when-saving
+VM can save messages to a folder in two distinct ways.  The message can be
+appended directly to the folder on disk, or the folder can be visited as
+Emacs would visit any other file and the message appended to that
+buffer.  In the latter method you must save the buffer yourself to change
+the on-disk copy of the folder.  The variable @code{vm-visit-when-saving}
+controls which method is used.  A value of @code{t} causes VM to always
+visit a folder before saving message to it.  A @code{nil} value causes VM
+to always append directly to the folder file.  In this case VM will not
+save messages to the disk copy of a folder that is being visited.  This
+restriction is necessary to insure that the buffer and on-disk copies of
+the folder are consistent. If the value of @code{vm-visit-when-saving} is
+not @code{nil} and not @code{t} (e.g. 0, the default), VM will append to
+the folder's buffer if the buffer is currently being visited, otherwise VM
+will append to the file itself.
+
+@vindex vm-delete-after-saving
+@vindex vm-delete-after-archiving
+After a message is saved to a folder, the usual thing to do next is to
+delete it.  If the variable @code{vm-delete-after-saving} is
+non-@code{nil}, VM will flag messages for deletion automatically after
+saving them.  This applies only to saves to folders, not for the @kbd{w}
+or @kbd{A} commands (see below).  The variable @code{vm-delete-after-archiving}
+works like @code{vm-delete-after-saving} but applies to the @kbd{A}
+(@code{vm-auto-archive-messages}) command instead.
+
+@unnumberedsubsec vm-auto-folder-alist
+
+@vindex vm-auto-folder-alist
+The variable @code{vm-auto-folder-alist} is used to specify
+pattern-matching rules by which VM can determine an appropriate folder
+in which to save a message.  The value of this variable should be a
 list of the form:
 
 @display
@@ -2661,33 +2720,7 @@ matching is case insensitive.  Note that the matching of header names is
 always case insensitive because the Internet message standard RFC 822
 specifies that header names are case indistinct.
 
-@vindex vm-visit-when-saving
-VM can save messages to a folder in two distinct ways.  The message can be
-appended directly to the folder on disk, or the folder can be visited as
-Emacs would visit any other file and the message appended to that
-buffer.  In the latter method you must save the buffer yourself to change
-the on-disk copy of the folder.  The variable @code{vm-visit-when-saving}
-controls which method is used.  A value of @code{t} causes VM to always
-visit a folder before saving message to it.  A @code{nil} value causes VM
-to always append directly to the folder file.  In this case VM will not
-save messages to the disk copy of a folder that is being visited.  This
-restriction is necessary to insure that the buffer and on-disk copies of
-the folder are consistent. If the value of @code{vm-visit-when-saving} is
-not @code{nil} and not @code{t} (e.g. 0, the default), VM will append to
-the folder's buffer if the buffer is currently being visited, otherwise VM
-will append to the file itself.
-
-@vindex vm-delete-after-saving
-@vindex vm-delete-after-archiving
-After a message is saved to a folder, the usual thing to do next is to
-delete it.  If the variable @code{vm-delete-after-saving} is
-non-@code{nil}, VM will flag messages for deletion automatically after
-saving them.  This applies only to saves to folders, not for the @kbd{w}
-or @kbd{A} commands (see below).  The variable @code{vm-delete-after-archiving}
-works like @code{vm-delete-after-saving} but applies to the @kbd{A}
-(@code{vm-auto-archive-messages}) command instead.
-
-Other commands:
+@unnumberedsubsec Other commands
 
 @table @kbd
 @findex vm-save-message-sans-headers
