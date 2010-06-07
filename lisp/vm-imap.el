@@ -1054,11 +1054,11 @@ the process-buffer. If the optional argument KEEP-BUFFER is
 non-nil, the process buffer is retained, otherwise it is killed
 as well."
   (vm-imap-log-token 'end-session)
+  (when (and process (null imap-buffer))
+    (setq imap-buffer (process-buffer process)))
   (when (and process (memq (process-status process) '(open run))
 	   (buffer-live-p (process-buffer process)))
       (save-excursion
-	(if (null imap-buffer)
-	    (setq imap-buffer (process-buffer process)))
 	;;----------------------------
 	(vm-buffer-type:enter 'process)
 	;;----------------------------
