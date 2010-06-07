@@ -3148,7 +3148,10 @@ Giving a prefix argument overrides the variable and no expunge is done."
   (setq inhibit-quit nil)
   (if (integerp vm-mail-check-interval)
       (if timer
-	  (timer-set-time timer (timer-relative-time (current-time) vm-mail-check-interval) vm-mail-check-interval)
+	  (timer-set-time 
+	   timer 
+	   (timer-relative-time (current-time) vm-mail-check-interval)
+	   vm-mail-check-interval)
 	(set-itimer-restart current-itimer vm-mail-check-interval))
     ;; user has changed the variable value to something that
     ;; isn't a number, make the timer go away.
@@ -3191,7 +3194,10 @@ Giving a prefix argument overrides the variable and no expunge is done."
   (setq inhibit-quit nil)
   (if (integerp vm-auto-get-new-mail)
       (if timer
-	  (timer-set-time timer (timer-relative-time (current-time) vm-auto-get-new-mail) vm-auto-get-new-mail)
+	  (timer-set-time 
+	   timer
+	   (timer-relative-time (current-time) vm-auto-get-new-mail)
+	   vm-auto-get-new-mail)
 	(set-itimer-restart current-itimer vm-auto-get-new-mail))
     ;; user has changed the variable value to something that
     ;; isn't a number, make the timer go away.
@@ -3236,7 +3242,10 @@ Giving a prefix argument overrides the variable and no expunge is done."
 (defun vm-flush-itimer-function (&optional timer)
   (if (integerp vm-flush-interval)
       (if timer
-	  (timer-set-time timer (timer-relative-time (current-time) vm-flush-interval) vm-flush-interval)
+	  (timer-set-time 
+	   timer
+	   (timer-relative-time (current-time) vm-flush-interval)
+	   vm-flush-interval)
 	(set-itimer-restart current-itimer vm-flush-interval)))
   ;; if no vm-mode buffers are found, we might as well shut down the
   ;; flush itimer.
@@ -4109,11 +4118,12 @@ maildrop string)."
       (aref vm-folder-access-data 0)
     buffer-file-name))
 
-(defun vm-safe-popdrop-string (drop)
-  (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]*\\):[^:]*:[^:]*:\\([^:]*\\):[^:]*" drop)
-	   (concat (substring drop (match-beginning 3) (match-end 3))
+(defun vm-safe-popdrop-string (maildrop)
+  "Return a human-readable version of a pop MAILDROP string."
+  (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]*\\):[^:]*:[^:]*:\\([^:]*\\):[^:]*" maildrop)
+	   (concat (substring maildrop (match-beginning 3) (match-end 3))
 		   "@"
-		   (substring drop (match-beginning 2) (match-end 2))))
+		   (substring maildrop (match-beginning 2) (match-end 2))))
       "???"))
 
 (defun vm-popdrop-sans-password (source)
@@ -4130,13 +4140,14 @@ maildrop string)."
                      '("*" "*"))
              ":"))
 
-(defun vm-safe-imapdrop-string (drop)
-  (or (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*" drop)
-	   (concat (substring drop (match-beginning 4) (match-end 4))
+(defun vm-safe-imapdrop-string (maildrop)
+  "Return a human-readable version of an imap MAILDROP string."
+  (or (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*" maildrop)
+	   (concat (substring maildrop (match-beginning 4) (match-end 4))
 		   "@"
-		   (substring drop (match-beginning 2) (match-end 2))
+		   (substring maildrop (match-beginning 2) (match-end 2))
 		   " ["
-		   (substring drop (match-beginning 3) (match-end 3))
+		   (substring maildrop (match-beginning 3) (match-end 3))
 		   "]"))
       "???"))
 
@@ -4641,13 +4652,25 @@ Interactively TYPE will be read from the minibuffer."
   (vm-display nil nil '(vm-change-folder-type) '(vm-change-folder-type)))
 
 (defun vm-register-global-garbage-files (files)
+  "Add global garbage collection actions to delete all of FILES."
   (while files
     (setq vm-global-garbage-alist
 	  (cons (cons (car files) 'delete-file)
 		vm-global-garbage-alist)
 	  files (cdr files))))
 
+(defun vm-garbage-collect-global ()
+  "Carry out all the registered global garbage collection actions."
+  (save-excursion
+    (while vm-global-garbage-alist
+      (condition-case nil
+	  (funcall (cdr (car vm-global-garbage-alist))
+		   (car (car vm-global-garbage-alist)))
+	(error nil))
+      (setq vm-global-garbage-alist (cdr vm-global-garbage-alist)))))
+
 (defun vm-register-folder-garbage-files (files)
+  "Add folder garbage collection actions to delete all of FILES."
   (vm-register-global-garbage-files files)
   (save-excursion
     (vm-select-folder-buffer)
@@ -4658,13 +4681,26 @@ Interactively TYPE will be read from the minibuffer."
 	    files (cdr files)))))
 
 (defun vm-register-folder-garbage (action garbage)
+  "Add a folder garbage-collection action to carry out ACTION on
+argument GARBAGE."
   (save-excursion
     (vm-select-folder-buffer)
     (setq vm-folder-garbage-alist
 	  (cons (cons garbage action)
 		vm-folder-garbage-alist))))
 
+(defun vm-garbage-collect-folder ()
+  "Carry out all the folder garbage-collection actions."
+  (save-excursion
+    (while vm-folder-garbage-alist
+      (condition-case nil
+	  (funcall (cdr (car vm-folder-garbage-alist))
+		   (car (car vm-folder-garbage-alist)))
+	(error nil))
+      (setq vm-folder-garbage-alist (cdr vm-folder-garbage-alist)))))
+
 (defun vm-register-message-garbage-files (files)
+  "Add message garbage collection actions to delete all of FILES."
   (vm-register-folder-garbage-files files)
   (save-excursion
     (vm-select-folder-buffer)
@@ -4675,6 +4711,8 @@ Interactively TYPE will be read from the minibuffer."
 	    files (cdr files)))))
 
 (defun vm-register-message-garbage (action garbage)
+  "Add a message garbage-collection action to carry out ACTION on
+argument GARBAGE."
   (vm-register-folder-garbage action garbage)
   (save-excursion
     (vm-select-folder-buffer)
@@ -4682,25 +4720,8 @@ Interactively TYPE will be read from the minibuffer."
 	  (cons (cons garbage action)
 		vm-message-garbage-alist))))
 
-(defun vm-garbage-collect-global ()
-  (save-excursion
-    (while vm-global-garbage-alist
-      (condition-case nil
-	  (funcall (cdr (car vm-global-garbage-alist))
-		   (car (car vm-global-garbage-alist)))
-	(error nil))
-      (setq vm-global-garbage-alist (cdr vm-global-garbage-alist)))))
-
-(defun vm-garbage-collect-folder ()
-  (save-excursion
-    (while vm-folder-garbage-alist
-      (condition-case nil
-	  (funcall (cdr (car vm-folder-garbage-alist))
-		   (car (car vm-folder-garbage-alist)))
-	(error nil))
-      (setq vm-folder-garbage-alist (cdr vm-folder-garbage-alist)))))
-
 (defun vm-garbage-collect-message ()
+  "Carry out all the folder garbage-collection actions."
   (save-excursion
     (while vm-message-garbage-alist
       (condition-case nil

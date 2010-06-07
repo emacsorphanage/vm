@@ -228,8 +228,8 @@ See the documentation for vm-mode for more information."
 		       (vm-set-folder-pop-maildrop-spec remote-spec))
 		      ((eq access-method 'imap)
 		       (vm-set-folder-imap-maildrop-spec remote-spec)
-		       ;; (vm-register-folder-garbage 
-		       ;;  'vm-kill-folder-imap-session nil)
+		       (vm-register-folder-garbage 
+			'vm-kill-folder-imap-session nil)
 		       )))
 	    ;; If the buffer is modified we don't know if the
 	    ;; folder format has been changed to be different

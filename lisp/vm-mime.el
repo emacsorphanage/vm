@@ -2317,11 +2317,11 @@ in the buffer.  The function is expected to make the message
     filename))
 
 (defun vm-decode-mime-layout (layout &optional dont-honor-c-d)
-  "Decode the MIME message in the current buffer using LAYOUT.  
-DONT-HONOR-C-D non-Nil, then don't honor the Content-Disposition
+  "Decode the MIME part in the current buffer using LAYOUT.  
+If DONT-HONOR-C-D non-Nil, then don't honor the Content-Disposition
 declarations in the attachments and make a decision independently."
   (let ((modified (buffer-modified-p))
-	new-layout file type type2 type-no-subtype (extent nil))
+	handler new-layout file type type2 type-no-subtype (extent nil))
     (unwind-protect
 	(progn
 	  (if (not (vectorp layout))
@@ -2345,39 +2345,30 @@ declarations in the attachments and make a decision independently."
 		       type-no-subtype (car (vm-parse type "\\([^/]+\\)")))))
 	  
 	  (cond ((and (vm-mime-should-display-button layout dont-honor-c-d)
-		      (or (condition-case nil
-			      (funcall (intern
-					(concat "vm-mime-display-button-"
-						type))
-				       layout)
-			    (void-function nil))
-			  (condition-case nil
-			      (funcall (intern
-					(concat "vm-mime-display-button-"
-						type-no-subtype))
-				       layout)
-			    (void-function nil)))))
+		      (or (fboundp 
+			   (setq handler 
+				 (intern (concat "vm-mime-display-button-"
+						 type))))
+			  (fboundp 
+			   (setq handler
+				 (intern (concat "vm-mime-display-button-"
+						 type-no-subtype))))))
+		 (funcall handler layout))
 		((and (vm-mime-should-display-internal layout)
-		      (or (condition-case nil
-			      (funcall (intern
-					(concat "vm-mime-display-internal-"
-						type))
-				       layout)
-			    (void-function nil))
-			  (condition-case nil
-			      (funcall (intern
-					(concat "vm-mime-display-internal-"
-						type-no-subtype))
-				       layout)
-			    (void-function nil)))))
+		      (or (fboundp 
+			   (setq handler 
+				 (intern (concat "vm-mime-display-internal-"
+						 type))))
+			  (fboundp 
+			   (setq handler
+				 (intern (concat "vm-mime-display-internal-"
+						 type-no-subtype))))))
+		 (funcall handler layout))
 		((vm-mime-types-match "multipart" type)
-		 (or (condition-case nil
-			 (funcall (intern
-				   (concat "vm-mime-display-internal-"
-					   type))
-				  layout)
-		       (void-function nil))
-		     (vm-mime-display-internal-multipart/mixed layout)))
+		 (if (fboundp (intern (concat "vm-mime-display-internal-"
+					     type)))
+		     (funcall handler layout)
+		   (vm-mime-display-internal-multipart/mixed layout)))
 		((and (vm-mime-can-display-external type)
 		      (vm-mime-display-external-generic layout))
 		 (and extent (vm-set-extent-property
@@ -3013,12 +3004,12 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	  (setq child-layout ob))
 	 ((eq (marker-buffer (vm-mm-layout-header-start child-layout))
 	      (marker-buffer (vm-mm-layout-body-start child-layout)))
+	  (setq work-buffer
+		(vm-make-multibyte-work-buffer
+		 (format "*%s mime object*"
+			 (car (vm-mm-layout-type child-layout)))))
 	  (condition-case data
 	      (save-excursion
-		(setq work-buffer
-		      (vm-make-multibyte-work-buffer
-		       (format "*%s mime object*"
-			       (car (vm-mm-layout-type child-layout)))))
 		(set-buffer work-buffer)
 		(if (fboundp 'set-buffer-file-coding-system)
 		    (set-buffer-file-coding-system
@@ -3049,23 +3040,31 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		    (vm-mime-insert-mime-body child-layout)
 		    (let ((vm-confirm-mail-send nil))
 		      (vm-mail-send))
-		    (message "Retrieval message sent.  Retry viewing this object after the response arrives.")
+		    (message 
+		     (concat "Retrieval message sent.  "
+			     "Retry viewing this object after "
+			     "the response arrives."))
 		    (sleep-for 2)))
 		 (t
 		  (vm-mime-error "unsupported access method: %s"
-				 access-method)))
-		(cond (child-layout
-		       (setq work-buffer nil)
-		       (vm-set-mm-layout-body-end child-layout
-						  (vm-marker (point-max)))
-		       (vm-set-mm-layout-body-start child-layout
-						    (vm-marker
-						     (point-min))))))
-	    (vm-mime-error
+				 access-method))
+		 )
+		(when child-layout
+		  (vm-set-mm-layout-body-end 
+		   child-layout (vm-marker (point-max)))
+		  (vm-set-mm-layout-body-start 
+		   child-layout (vm-marker (point-min)))))
+	    (vm-mime-error		; handler
 	     (vm-set-mm-layout-display-error layout (cdr data))
 	     (setq child-layout nil)))))
-      (and work-buffer (kill-buffer work-buffer)))
-    (and child-layout (vm-decode-mime-layout child-layout))))
+      ;; unwind-protections
+      (when work-buffer
+	(if child-layout		; refers to work-buffer
+	    (vm-register-folder-garbage 'kill-buffer work-buffer)
+	  (kill-buffer work-buffer))))
+
+    (when child-layout 
+      (vm-decode-mime-layout child-layout))))
 
 (defun vm-mime-fetch-url-with-programs (url buffer)
   (and
