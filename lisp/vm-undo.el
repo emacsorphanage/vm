@@ -587,9 +587,13 @@ A record of the change is kept for the purpose of undo, and the
 	(vm-set-stuff-flag-of m t))))))
 
 
+;; This flag is defunct, replaced by body-to-be-discarded.  USR, 2010-06-08
 (defun vm-set-headers-to-be-retrieved-flag (m flag &optional norecord)
+  nil)
+
+(defun vm-set-body-to-be-discarded-flag (m flag &optional norecord)
   (vm-set-xxxx-cached-data-flag 
-   m flag norecord 'vm-set-headers-to-be-retrieved-flag 21))
+   m flag norecord 'vm-set-body-to-be-discarded-flag 21))
 
 (defun vm-set-body-to-be-retrieved-flag (m flag &optional norecord)
   (vm-set-xxxx-cached-data-flag 

@@ -4699,6 +4699,27 @@ argument GARBAGE."
 	(error nil))
       (setq vm-folder-garbage-alist (cdr vm-folder-garbage-alist)))))
 
+(defun vm-folder-register-fetched-message (m)
+  "Register message M as having been fetched into the folder
+temporarily.  Such fetched messages are discarded before the
+folder is saved."
+  (add-to-list 'vm-folder-fetched-messages m nil 'eq)
+  (vm-set-body-to-be-discarded-of m t))
+
+(defun vm-folder-unregister-fetched-message (m)
+  "Unregister message M as a fetched message."
+  (setq vm-folder-fetched-messages (delq m vm-folder-fetched-messages))
+  (vm-set-body-to-be-discarded-of m nil))
+
+(defun vm-folder-discard-fetched-messages ()
+  "Discard the message bodies of all the fetched messages in the
+current folder."
+  (while vm-folder-fetched-messages
+    (let ((m (car vm-folder-fetched-messages)))
+      (vm-discard-fetched-message m)
+      (vm-set-body-to-be-discarded-of m nil))
+    (setq vm-folder-fetched-messages (cdr vm-folder-fetched-messages))))
+
 (defun vm-register-message-garbage-files (files)
   "Add message garbage collection actions to delete all of FILES."
   (vm-register-folder-garbage-files files)

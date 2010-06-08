@@ -1634,8 +1634,10 @@ the actual message from the file \"message-11\"."
 	(text-begin (marker-position (vm-text-of mm))))
     (goto-char text-begin)
     (delete-region (point) (point-max))
+    (message "Fetching message from external source...")
     (apply (intern (format "vm-fetch-%s-message" (car storage)))
 	   mm (cdr storage))
+    (message "Fetching message from external source... done")
     ;; delete the new headers
     (delete-region text-begin
 		   (or (re-search-forward "\n\n" (point-max) t)

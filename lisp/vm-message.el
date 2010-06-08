@@ -173,7 +173,11 @@
 ;; only valid for remote folder access methods
 ;; USR: changed the name to vm-headers-to-be-retrieved-of because all the
 ;; VM folders in the world already have nil's written in this field. 
+;; USR: changed it again to vm-body-to-be-discarded-of to allow for
+;; fetched messages to be discarded before save.  2010-06-08
 (defsubst vm-headers-to-be-retrieved-of (message)
+  nil)
+(defsubst vm-body-to-be-discarded-of (message)
   (aref (aref message 3) 21))
 ;; have we retrieved the body of this message?
 ;; only valid for remote folder access methods
@@ -320,6 +324,8 @@
 (defsubst vm-set-references-of (message val)
   (aset (aref message 3) 20 val))
 (defsubst vm-set-headers-to-be-retrieved-of (message val)
+  nil)
+(defsubst vm-set-body-to-be-discarded-of (message val)
   (aset (aref message 3) 21 val))
 (defsubst vm-set-body-to-be-retrieved-of (message val)
   (aset (aref message 3) 22 val))
@@ -407,7 +413,7 @@
     ;; references
     (aset new-vector 20 
 	  (mapcar (function vm-mime-encode-words-in-string) (aref vector 20)))
-    ;; headers-to-be-retrieved
+    ;; body-to-be-discarded (formerly headers-to-be-retrieved)
     (aset new-vector 21 (aref vector 21))
     ;; body-to-be-retrieved
     (aset new-vector 22 (aref vector 22))

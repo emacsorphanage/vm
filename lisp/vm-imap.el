@@ -2904,8 +2904,9 @@ operation of the server to minimize I/O."
            (setq r-list retrieve-list)
 	   (while mp
 	     ;; headers-only loading is still experimental. USR, 2010-01-12
-	     (if vm-load-headers-only 
-		 (vm-set-body-to-be-retrieved-of (car mp) t))
+	     (when vm-load-headers-only 
+	       (vm-set-body-to-be-retrieved-of (car mp) t)
+	       (vm-set-body-to-be-discarded-of (car mp) nil))
 	     (setq uid (car (car r-list)))
 	     (vm-set-imap-uid-of (car mp) uid)
 	     (vm-set-imap-uid-validity-of (car mp) uid-validity)
@@ -3204,7 +3205,13 @@ only marked messages are loaded, other messages are ignored."
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
-	(when (vm-body-to-be-retrieved-of mm)
+	(if (not (vm-body-to-be-retrieved-of mm))
+	    ;; body is already retrieved
+	    (if (vm-body-to-be-discarded-of mm)
+		(vm-folder-unregister-fetched-message mm)
+	      ;; else the body is already loaded
+	      )
+	  ;; retrieve the body
 	  (when (> n 0)
 	    (message "Retrieving message body... %s" n))
 	  (when (not (eq vm-folder-access-method 'imap))
@@ -3241,6 +3248,7 @@ only marked messages are loaded, other messages are ignored."
 	   (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
 	   ;; update the message data
 	   (vm-set-body-to-be-retrieved-flag mm nil)
+	   (vm-set-body-to-be-discarded-flag mm nil)
 	   (vm-set-line-count-of mm nil)
 	   (vm-set-byte-count-of mm nil)
 	   ;; update the virtual messages
@@ -3307,7 +3315,10 @@ only marked messages are unloaded, other messages are ignored."
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
-	(unless (vm-body-to-be-retrieved-of mm)
+	(unless (and (vm-body-to-be-retrieved-of mm)
+		     (not (vm-body-to-be-discarded-of mm)))
+	  ;; We might want to adjust vm-body-to-be-discarded flag
+	  ;; instead of actually discarding the message
 	  (when (not (eq vm-folder-access-method 'imap))
 	    (error "This is currently available only for imap folders."))
 	  (vm-save-restriction
@@ -3319,6 +3330,7 @@ only marked messages are unloaded, other messages are ignored."
 	   (vm-set-buffer-modified-p t)
 	   (vm-set-mime-layout-of mm nil)
 	   (vm-set-body-to-be-retrieved-flag mm t)
+	   (vm-set-body-to-be-discarded-flag mm nil)
 	   (vm-set-line-count-of mm nil)
 	   (vm-update-virtual-messages mm)
 	   ))
@@ -4059,7 +4071,8 @@ order to capture the trace of IMAP sessions during the occurrence."
 
 (defun vm-imap-set-default-attributes (m)
   (vm-set-headers-to-be-retrieved-of m nil)
-  (vm-set-body-to-be-retrieved-of m vm-load-headers-only))
+  (vm-set-body-to-be-retrieved-of m vm-load-headers-only)
+  (vm-set-body-to-be-discarded-of m nil))
 
 (defun vm-imap-unset-body-retrieve ()
   "Unset the body-to-be-retrieved flag of all the messages.  May
@@ -4070,6 +4083,7 @@ order to capture the trace of IMAP sessions during the occurrence."
    (let ((mp vm-message-list))
      (while mp
        (vm-set-body-to-be-retrieved-of (car mp) nil)
+       (vm-set-body-to-be-discarded-of (car mp) nil)
        (setq mp (cdr mp))))
    (message "Marked %s messages as having retrieved bodies" 
 	    (length vm-message-list))
