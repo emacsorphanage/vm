@@ -1002,7 +1002,7 @@ filling of GNU Emacs does not work correctly here!"
 	  (setq start (point))
 	  (vm-skip-empty-lines)
 	  (when (and (< (point) end)	; if no newline at the end
-		     (vm-forward-paragraph))
+		     (let ((fill-column width)) (vm-forward-paragraph)))
 	    (fill-region start (point))
 	    (setq filled (1+ filled))))
       

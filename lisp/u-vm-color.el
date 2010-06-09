@@ -53,8 +53,9 @@
 ;;  (defadvice vm-decode-mime-message (after u-vm-color activate)
 ;;    (u-vm-color-fontify-buffer-even-more))
 
-;;  If you are using auto-fill, ie when the variable
-;;  `vm-fill-paragraphs-containing-long-lines' is not nil, you should
+;;  If you are using auto-fill, ie when the variables
+;;  `vm-word-wrap-paragraphs' or
+;;  `vm-fill-paragraphs-containing-long-lines' is not nil, you should 
 ;;  also add this:
 ;;  (defadvice vm-fill-paragraphs-containing-long-lines
 ;;              (after u-vm-color activate)

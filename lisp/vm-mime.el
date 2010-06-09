@@ -2519,7 +2519,8 @@ declarations in the attachments and make a decision independently."
 	   (setq charset (vm-mime-charset-convert-region charset start end)))
       (vm-mime-charset-decode-region charset start end)
       (or no-highlighting (vm-energize-urls-in-message-region start end))
-      (if (and vm-fill-paragraphs-containing-long-lines
+      (if (and (or vm-word-wrap-paragraphs
+		   vm-fill-paragraphs-containing-long-lines)
 	       (not no-highlighting))
           (vm-fill-paragraphs-containing-long-lines
            vm-fill-paragraphs-containing-long-lines

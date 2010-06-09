@@ -736,11 +736,12 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
      ;; run the message select hooks.
      (save-excursion
        (vm-select-folder-buffer)
-       (and vm-select-new-message-hook (vm-new-flag (car vm-message-pointer))
+       (when (and vm-select-new-message-hook 
+		  (vm-new-flag (car vm-message-pointer)))
 	    (vm-run-message-hook (car vm-message-pointer)
 				 'vm-select-new-message-hook))
-       (and vm-select-unread-message-hook
-	    (vm-unread-flag (car vm-message-pointer))
+       (when (and vm-select-unread-message-hook
+		  (vm-unread-flag (car vm-message-pointer)))
 	    (vm-run-message-hook (car vm-message-pointer)
 				 'vm-select-unread-message-hook)))
 
@@ -834,9 +835,9 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
      (goto-char (vm-text-of (car vm-message-pointer)))
      ;; If we have a window, set window start appropriately.
      (let ((w (vm-get-visible-buffer-window (current-buffer))))
-       (if w
-	   (progn (set-window-start w (point-min))
-		  (set-window-point w (vm-text-of (car vm-message-pointer))))))
+       (when w
+	 (set-window-start w (point-min))
+	 (set-window-point w (vm-text-of (car vm-message-pointer)))))
      (if need-preview
 	 (vm-update-summary-and-mode-line)
        (vm-show-current-message))))
@@ -866,7 +867,8 @@ is done if necessary.  (USR, 2010-01-14)"
   ;; of the presentation copy  ..., RWF, 2008-07
   ;; Well, so, we will check if we are in a presentation buffer! 
   ;; USR, 2010-01-07
-  (when (and  vm-fill-paragraphs-containing-long-lines
+  (when (and  (or vm-word-wrap-paragraphs
+		  vm-fill-paragraphs-containing-long-lines)
 	      (vm-mime-plain-message-p (car vm-message-pointer)))
     (if (null vm-mail-buffer)		; this can't be presentation then
 	(if vm-always-use-presentation-buffer
