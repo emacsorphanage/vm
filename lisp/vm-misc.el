@@ -378,6 +378,15 @@ vm-mail-buffer variable."
       (setq n (1+ n)))
     (if list n nil)))
 
+(defun vm-for-all (list pred)
+  (catch 'fail
+    (progn
+      (while list
+	(if (apply pred (car list) nil)
+	    (setq list (cdr list))
+	  (throw 'fail nil)))
+      t)))
+
 (defun vm-delete-directory-file-names (list)
   (vm-delete 'file-directory-p list))
 
