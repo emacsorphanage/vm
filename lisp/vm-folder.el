@@ -4703,6 +4703,10 @@ argument GARBAGE."
   "Register message M as having been fetched into the folder
 temporarily.  Such fetched messages are discarded before the
 folder is saved."
+;;   (if vm-folder-fetched-messages
+;;       (let ((mm (car vm-folder-fetched-messages)))
+;; 	)
+;;     )
   (add-to-list 'vm-folder-fetched-messages m nil 'eq)
   (vm-set-body-to-be-discarded-of m t))
 

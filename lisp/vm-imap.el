@@ -3214,46 +3214,8 @@ only marked messages are loaded, other messages are ignored."
 	  ;; retrieve the body
 	  (when (> n 0)
 	    (message "Retrieving message body... %s" n))
-	  (when (not (eq vm-folder-access-method 'imap))
-	    (error "This is currently available only for imap folders."))
-	  (setq fetch-method "imap")	; other methods to be added
-	  (vm-save-restriction
-	   (widen)
-	   (setq text-begin (marker-position (vm-text-of mm)))
-	   (setq text-end (marker-position (vm-text-end-of mm)))
-	   (narrow-to-region (marker-position (vm-headers-of mm)) text-end)
-	   (goto-char text-begin)
-	   (delete-region (point) (point-max))
-	   (condition-case err
-	       (apply (intern (format "vm-fetch-%s-message" fetch-method))
-		      mm nil)
-	     (error 
-	      (error "Unable to load message; %s" 
-		     (error-message-string err))))
-	   ;; delete the new headers
-	   (delete-region text-begin
-			  (or (re-search-forward "\n\n" (point-max) t)
-			      (point-max)))
-	   ;; fix markers now
-	   ;; FIXME the text-end is guessed
-	   (set-marker (vm-text-of mm) text-begin)
-	   (set-marker (vm-text-end-of mm) 
-		       (save-excursion
-			 (goto-char (point-max))
-			 ;; (end-of-line 0) ; move back one line
-			 ;; (kill-line 1)
-			 (point)))
-	   (goto-char text-begin)
-	   ;; now care for the layout of the message
-	   (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
-	   ;; update the message data
-	   (vm-set-body-to-be-retrieved-flag mm nil)
-	   (vm-set-body-to-be-discarded-flag mm nil)
-	   (vm-set-line-count-of mm nil)
-	   (vm-set-byte-count-of mm nil)
-	   ;; update the virtual messages
-	   (vm-update-virtual-messages mm)
-	   (setq n (1+ n))))
+	  (vm-retrieve-message-body mm)
+	  (setq n (1+ n)))
 	(setq mlist (cdr mlist))
 	)
       (when (> n 0)
@@ -3262,9 +3224,54 @@ only marked messages are loaded, other messages are ignored."
     (intern (buffer-name) vm-buffers-needing-display-update)
     ;; FIXME - is this needed?  Is it correct?
     (vm-display nil nil '(vm-load-message vm-refresh-message)
-       (list this-command))	
+		(list this-command))	
     (vm-update-summary-and-mode-line)
     ))
+
+(defun vm-retrieve-message-body (mm)
+  "Retrieve the body of message MM from its external source and insert
+into the Folder buffer."
+  (when (not (eq vm-folder-access-method 'imap))
+    (error "This is currently available only for imap folders."))
+  (let ((fetch-method "imap")		; other methods to be added
+	(text-begin nil)
+	(text-end nil))
+    (vm-save-restriction
+     (widen)
+     (setq text-begin (marker-position (vm-text-of mm)))
+     (setq text-end (marker-position (vm-text-end-of mm)))
+     (narrow-to-region (marker-position (vm-headers-of mm)) text-end)
+     (goto-char text-begin)
+     (delete-region (point) (point-max))
+     (condition-case err
+	 (apply (intern (format "vm-fetch-%s-message" fetch-method))
+		mm nil)
+       (error 
+	(error "Unable to load message; %s" 
+	       (error-message-string err))))
+     ;; delete the new headers
+     (delete-region text-begin
+		    (or (re-search-forward "\n\n" (point-max) t)
+			(point-max)))
+     ;; fix markers now
+     ;; FIXME the text-end is guessed
+     (set-marker (vm-text-of mm) text-begin)
+     (set-marker (vm-text-end-of mm) 
+		 (save-excursion
+		   (goto-char (point-max))
+		   ;; (end-of-line 0) ; move back one line
+		   ;; (kill-line 1)
+		   (point)))
+     (goto-char text-begin)
+     ;; now care for the layout of the message
+     (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
+     ;; update the message data
+     (vm-set-body-to-be-retrieved-flag mm nil)
+     (vm-set-body-to-be-discarded-flag mm nil)
+     (vm-set-line-count-of mm nil)
+     (vm-set-byte-count-of mm nil)
+     ;; update the virtual messages
+     (vm-update-virtual-messages mm))))
 
 ;;;###autoload
 (defun vm-refresh-message (&optional count)
@@ -3319,27 +3326,31 @@ only marked messages are unloaded, other messages are ignored."
 		     (not (vm-body-to-be-discarded-of mm)))
 	  ;; We might want to adjust vm-body-to-be-discarded flag
 	  ;; instead of actually discarding the message
-	  (when (not (eq vm-folder-access-method 'imap))
-	    (error "This is currently available only for imap folders."))
-	  (vm-save-restriction
-	   (widen)
-	   (setq text-begin (marker-position (vm-text-of mm)))
-	   (setq text-end (marker-position (vm-text-end-of mm)))
-	   (goto-char text-begin)
-	   (delete-region (point) text-end)
-	   (vm-set-buffer-modified-p t)
-	   (vm-set-mime-layout-of mm nil)
-	   (vm-set-body-to-be-retrieved-flag mm t)
-	   (vm-set-body-to-be-discarded-flag mm nil)
-	   (vm-set-line-count-of mm nil)
-	   (vm-update-virtual-messages mm)
-	   ))
+	  (vm-discard-message-body mm))
 	(setq mlist (cdr mlist))))
     (message "Message body discarded")
     (vm-update-summary-and-mode-line)
     ))
 
-
+(defun vm-discard-message-body (mm)
+  "Discard the message body of MM from the Folder buffer."
+  (when (not (eq vm-folder-access-method 'imap))
+    (error "This is currently available only for imap folders."))
+  (let ((text-begin nil)
+	(text-end nil))
+  (vm-save-restriction
+   (widen)
+   (setq text-begin (marker-position (vm-text-of mm)))
+   (setq text-end (marker-position (vm-text-end-of mm)))
+   (goto-char text-begin)
+   (delete-region (point) text-end)
+   (vm-set-buffer-modified-p t)
+   (vm-set-mime-layout-of mm nil)
+   (vm-set-body-to-be-retrieved-flag mm t)
+   (vm-set-body-to-be-discarded-flag mm nil)
+   (vm-set-line-count-of mm nil)
+   (vm-update-virtual-messages mm)
+   )))
 
 (defun vm-imap-save-attributes (&optional interactive all-flags)
   "* Save the attributes of changed messages to the IMAP folder.
