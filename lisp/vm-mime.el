@@ -1406,9 +1406,9 @@ source of the message."
 		  (vm-menu-install-menus))
 	     (run-hooks 'vm-presentation-mode-hook))
 	   (setq vm-presentation-buffer-handle b)))
-    (setq b vm-presentation-buffer-handle
-	  vm-presentation-buffer vm-presentation-buffer-handle
-	  vm-mime-decoded nil)
+    (setq b vm-presentation-buffer-handle)
+    (setq vm-presentation-buffer vm-presentation-buffer-handle)
+    (setq vm-mime-decoded nil)
     ;; W3 or some other external mode might set some local colors
     ;; in this buffer; remove them before displaying a different
     ;; message here.
@@ -1628,29 +1628,31 @@ message body from the file into the current buffer.
 For example, 'X-VM-Storage: (file \"message-11\")' will fetch 
 the actual message from the file \"message-11\"."
   (goto-char (match-end 0))
-  (let ((buffer-read-only nil)
-	(inhibit-read-only t)
-	(buffer-undo-list t)
-	(text-begin (marker-position (vm-text-of mm))))
-    (goto-char text-begin)
-    (delete-region (point) (point-max))
-    (message "Fetching message from external source...")
-    (apply (intern (format "vm-fetch-%s-message" (car storage)))
-	   mm (cdr storage))
-    (message "Fetching message from external source... done")
-    ;; delete the new headers
-    (delete-region text-begin
-		   (or (re-search-forward "\n\n" (point-max) t)
-		       (point-max)))
-    ;; fix markers now
-    (set-marker (vm-text-of mm) text-begin)
-    (set-marker (vm-text-end-of mm) (point-max))	
-    (set-marker (vm-end-of mm) (point-max))
-    ;; now care for the layout of the message, old layouts are invalid as the
-    ;; presentation buffer may have been used for other messages in the
-    ;; meantime and the marker got invalid by this.
-    (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
-    ))
+  (save-excursion
+    (set-buffer (marker-buffer (vm-text-of mm)))
+    (let ((buffer-read-only nil)
+	  (inhibit-read-only t)
+	  (buffer-undo-list t)
+	  (text-begin (marker-position (vm-text-of mm))))
+      (goto-char text-begin)
+      (delete-region (point) (point-max))
+      (message "Fetching message from external source...")
+      (apply (intern (format "vm-fetch-%s-message" (car storage)))
+	     mm (cdr storage))
+      (message "Fetching message from external source... done")
+      ;; delete the new headers
+      (delete-region text-begin
+		     (or (re-search-forward "\n\n" (point-max) t)
+			 (point-max)))
+      ;; fix markers now
+      (set-marker (vm-text-of mm) text-begin)
+      (set-marker (vm-text-end-of mm) (point-max))	
+      (set-marker (vm-end-of mm) (point-max))
+      ;; now care for the layout of the message, old layouts are invalid as the
+      ;; presentation buffer may have been used for other messages in the
+      ;; meantime and the marker got invalid by this.
+      (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
+      )))
   
 (defun vm-fetch-file-message (m filename)
   "Insert the message with message descriptor MM stored in the given FILENAME."

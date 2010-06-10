@@ -4700,20 +4700,30 @@ argument GARBAGE."
       (setq vm-folder-garbage-alist (cdr vm-folder-garbage-alist)))))
 
 (defun vm-folder-register-fetched-message (m)
-  "Register message M as having been fetched into the folder
+  "Register real message M as having been fetched into its folder
 temporarily.  Such fetched messages are discarded before the
 folder is saved."
-;;   (if vm-folder-fetched-messages
-;;       (let ((mm (car vm-folder-fetched-messages)))
-;; 	)
-;;     )
-  (add-to-list 'vm-folder-fetched-messages m nil 'eq)
-  (vm-set-body-to-be-discarded-of m t))
+  (save-excursion
+    (set-buffer (vm-buffer-of m))
+    ;; FIXME (length vm-folder-fetched-messages) should be stored
+    ;; rather than calculated
+    (if (>= (length vm-folder-fetched-messages)
+	    vm-fetched-message-max)
+	(let ((mm (car vm-folder-fetched-messages)))
+	  (vm-assert (and (null (vm-body-to-be-retrieved-of mm))
+			  (vm-body-to-be-discarded-of mm)))
+	  (vm-discard-real-message-body mm)
+	  (vm-folder-unregister-fetched-message mm)))
+    (vm-assert (null (vm-body-to-be-retrieved-of m)))
+    (add-to-list 'vm-folder-fetched-messages m nil 'eq)
+    (vm-set-body-to-be-discarded-of m t)))
 
 (defun vm-folder-unregister-fetched-message (m)
-  "Unregister message M as a fetched message."
-  (setq vm-folder-fetched-messages (delq m vm-folder-fetched-messages))
-  (vm-set-body-to-be-discarded-of m nil))
+  "Unregister a real message M as a fetched message."
+  (save-excursion
+    (set-buffer (vm-buffer-of m))
+    (setq vm-folder-fetched-messages (delq m vm-folder-fetched-messages))
+    (vm-set-body-to-be-discarded-of m nil)))
 
 (defun vm-folder-discard-fetched-messages ()
   "Discard the message bodies of all the fetched messages in the

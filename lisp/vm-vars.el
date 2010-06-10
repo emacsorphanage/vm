@@ -90,6 +90,13 @@ has copied out the mail."
   :type '(choice directory 
 		 (const :tag "No not keep crash boxes" nil)))
 
+(defcustom vm-fetched-message-max 10
+  "*Should be an integer representing the maximum number of messages
+that VM should keep in the Folder buffer when the messages are
+fetched."
+  :group 'vm
+  :type 'integer)
+
 (defcustom vm-index-file-suffix nil
   "*Suffix used to construct VM index file names.
 When VM visits a folder, it checks for the existence of a file
@@ -4919,6 +4926,8 @@ Its parent keymap is mail-mode-map.")
 (make-variable-buffer-local 'vm-message-list)
 (defvar vm-folder-fetched-messages nil)
 (make-variable-buffer-local 'vm-folder-fetched-messages)
+(defvar vm-folder-fetched-message-count 0)
+(make-variable-buffer-local 'vm-folder-fetched-message-count)
 (defvar vm-virtual-folder-definition nil)
 (make-variable-buffer-local 'vm-virtual-folder-definition)
 (defvar vm-virtual-buffers nil)
