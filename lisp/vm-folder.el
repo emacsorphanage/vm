@@ -4719,15 +4719,15 @@ folder is saved."
 
       ;; FIXME (length vm-folder-fetched-messages) should be stored
       ;; rather than calculated
-      (if (and vm-fetched-message-limit
-	       (>= (length vm-folder-fetched-messages)
-		   vm-fetched-message-limit))
-	  (let ((mm (car vm-folder-fetched-messages)))
-	    ;; mm should have retrieve=nil and discard=t
-	    (vm-assert (and (null (vm-body-to-be-retrieved-of mm))
-			    (vm-body-to-be-discarded-of mm)))
-	    (vm-discard-real-message-body mm)
-	    (vm-unregister-fetched-message mm)))
+      (if vm-fetched-message-limit
+	  (while (>= (length vm-folder-fetched-messages)
+		     vm-fetched-message-limit)
+	    (let ((mm (car vm-folder-fetched-messages)))
+	      ;; mm should have retrieve=nil and discard=t
+	      (vm-assert (and (null (vm-body-to-be-retrieved-of mm))
+			      (vm-body-to-be-discarded-of mm)))
+	      (vm-discard-real-message-body mm)
+	      (vm-unregister-fetched-message mm))))
       (add-to-list 'vm-folder-fetched-messages m t 'eq)
       (vm-set-body-to-be-discarded-of m t))))
 

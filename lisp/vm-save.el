@@ -269,7 +269,8 @@ The saved messages are flagged as `filed'."
 					     vm-auto-folder-alist))
     (vm-display nil nil '(vm-save-message) '(vm-save-message))
     (or count (setq count 1))
-    (vm-load-message count)
+    ;; (vm-load-message count)
+    (vm-retrieve-marked-or-prefixed-messages count)
     ;; Expand the filename, forcing relative paths to resolve
     ;; into the folder directory.
     (let ((default-directory

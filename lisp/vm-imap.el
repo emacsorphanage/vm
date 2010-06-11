@@ -3188,9 +3188,6 @@ only marked messages are loaded, other messages are ignored."
   (when (null count) (setq count 1))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-marked-or-prefixed-messages count))
-	(buffer-undo-list t)
-	(text-begin nil)
-	(text-end nil)
 	(errors 0)
 	(n 0)
 	fetch-method
@@ -3206,19 +3203,61 @@ only marked messages are loaded, other messages are ignored."
 	(if (not (vm-body-to-be-retrieved-of mm))
 	    ;; body is already retrieved
 	    (if (vm-body-to-be-discarded-of mm)
-		(vm-unregister-fetched-message mm)
-	      ;; else the body is already loaded
-	      )
-	  ;; retrieve the body
+		(vm-unregister-fetched-message mm))
+	  ;; else retrieve the body
 	  (when (> n 0)
 	    (message "Retrieving message body... %s" n))
 	  (vm-retrieve-real-message-body mm)
 	  (setq n (1+ n)))
-	(setq mlist (cdr mlist))
-	)
+	(setq mlist (cdr mlist)))
       (when (> n 0)
-	(message "Retrieving message body... done"))
-      )
+	(message "Retrieving message body... done")))
+    (intern (buffer-name) vm-buffers-needing-display-update)
+    ;; FIXME - is this needed?  Is it correct?
+    (vm-display nil nil '(vm-load-message vm-refresh-message)
+		(list this-command))	
+    (vm-update-summary-and-mode-line)
+    ))
+
+;;;###autoload
+(defun vm-retrieve-marked-or-prefixed-messages (&optional count)
+  "Retrieve the message from from its permanent location for
+temporary use.  Currently this facility is only available for
+IMAP folders.
+
+With a prefix argument COUNT, the current message and the next 
+COUNT - 1 messages are loaded.  A negative argument means
+the current message and the previous |COUNT| - 1 messages are
+loaded.
+
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+only marked messages are loaded, other messages are ignored."
+  (vm-select-folder-buffer-and-validate 1)
+  (when (null count) (setq count 1))
+  (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
+	(mlist (vm-select-marked-or-prefixed-messages count))
+	(vm-fetched-message-limit nil)
+	(errors 0)
+	(n 0)
+	fetch-method
+	m mm)
+;;     (if (not used-marks) 
+;; 	(setq mlist (list (car vm-message-pointer))))
+    (save-excursion
+      (message "Retrieving message body...")
+      (while mlist
+	(setq m (car mlist))
+	(setq mm (vm-real-message-of m))
+	(set-buffer (vm-buffer-of mm))
+	(when (vm-body-to-be-retrieved-of mm)
+	  (when (> n 0)
+	    (message "Retrieving message body... %s" n))
+	  (vm-retrieve-real-message-body mm)
+	  (vm-register-fetched-message mm)
+	  (setq n (1+ n)))
+	(setq mlist (cdr mlist)))
+      (when (> n 0)
+	(message "Retrieving message body... done")))
     (intern (buffer-name) vm-buffers-needing-display-update)
     ;; FIXME - is this needed?  Is it correct?
     (vm-display nil nil '(vm-load-message vm-refresh-message)
@@ -3229,11 +3268,12 @@ only marked messages are loaded, other messages are ignored."
 (defun vm-retrieve-real-message-body (mm)
   "Retrieve the body of a real message MM from its external
 source and insert into the Folder buffer."
-  (when (not (eq vm-folder-access-method 'imap))
+  (when (not (eq (vm-message-access-method-of mm) 'imap))
     (error "This is currently available only for imap folders."))
-  (let ((fetch-method "imap")		; other methods to be added
+  (let ((fetch-method (vm-message-access-method-of mm))
 	(buffer-read-only nil)
 	(inhibit-read-only t)
+	(buffer-undo-list t)		; why this?  USR, 2010-06-11
 	(text-begin nil)
 	(text-end nil))
     (save-excursion
@@ -3249,12 +3289,10 @@ source and insert into the Folder buffer."
 	   (apply (intern (format "vm-fetch-%s-message" fetch-method))
 		  mm nil)
 	 (error 
-	  (error "Unable to load message; %s" 
-		 (error-message-string err))))
+	  (error "Unable to load message; %s" (error-message-string err))))
        ;; delete the new headers
        (delete-region text-begin
-		      (or (re-search-forward "\n\n" (point-max) t)
-			  (point-max)))
+		      (or (re-search-forward "\n\n" (point-max) t) (point-max)))
        ;; fix markers now
        ;; FIXME the text-end is guessed
        (set-marker (vm-text-of mm) text-begin)
@@ -3336,7 +3374,7 @@ only marked messages are unloaded, other messages are ignored."
 
 (defun vm-discard-real-message-body (mm)
   "Discard the real message body of MM from its Folder buffer."
-  (when (not (eq vm-folder-access-method 'imap))
+  (when (not (eq (vm-message-access-method-of mm) 'imap))
     (error "This is currently available only for imap folders."))
   (let ((buffer-read-only nil)
 	(inhibit-read-only t)

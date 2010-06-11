@@ -812,6 +812,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     (set-buffer buffer)
     (symbol-value var)))
 
+(defun vm-folder-buffer-value (var)
+  (with-current-buffer 
+      vm-mail-buffer
+    (symbol-value var)))
+
 (defsubst vm-with-string-as-temp-buffer (string function)
   (let ((work-buffer nil))
     (unwind-protect
