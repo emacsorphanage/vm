@@ -90,12 +90,12 @@ has copied out the mail."
   :type '(choice directory 
 		 (const :tag "No not keep crash boxes" nil)))
 
-(defcustom vm-fetched-message-max 10
+(defcustom vm-fetched-message-limit 10
   "*Should be an integer representing the maximum number of messages
 that VM should keep in the Folder buffer when the messages are
-fetched."
+fetched, or nil to signify no limit."
   :group 'vm
-  :type 'integer)
+  :type '(choice (const nil) integer))
 
 (defcustom vm-index-file-suffix nil
   "*Suffix used to construct VM index file names.
@@ -122,7 +122,7 @@ possible, without loading the message bodies.
 This allows faster start-ups and smaller memory images of Emacs
 sessions, at the cost of short delays when messages are viewed.
 
-As of April 2008, this facility is still experimental and is only
+As of May 2010, this facility is still experimental and is only
 available for IMAP folders.")
 
 ;; use this function to access vm-spool-files on the fly.  this

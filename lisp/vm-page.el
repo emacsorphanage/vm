@@ -736,7 +736,7 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
        (let ((mm (vm-real-message-of (car vm-message-pointer))))
 	 (vm-retrieve-real-message-body mm)
 	 (vm-set-body-to-be-discarded-flag mm t)
-	 (vm-folder-register-fetched-message mm)))
+	 (vm-register-fetched-message mm)))
      (when vm-real-buffers
 	 (vm-make-virtual-copy (car vm-message-pointer)))
 

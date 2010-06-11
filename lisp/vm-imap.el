@@ -3206,7 +3206,7 @@ only marked messages are loaded, other messages are ignored."
 	(if (not (vm-body-to-be-retrieved-of mm))
 	    ;; body is already retrieved
 	    (if (vm-body-to-be-discarded-of mm)
-		(vm-folder-unregister-fetched-message mm)
+		(vm-unregister-fetched-message mm)
 	      ;; else the body is already loaded
 	      )
 	  ;; retrieve the body
@@ -3326,7 +3326,7 @@ only marked messages are unloaded, other messages are ignored."
 	  (if (= count 1)
 	      ;; Register the message as fetched instead of actually
 	      ;; discarding the message
-	      (vm-folder-register-fetched-message mm)
+	      (vm-register-fetched-message mm)
 	    (vm-discard-real-message-body mm)))
 	(setq mlist (cdr mlist))
 	(setq count (1+ count))))
