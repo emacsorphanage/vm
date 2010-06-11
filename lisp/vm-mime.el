@@ -1418,10 +1418,6 @@ source of the message."
 	  (remove-specifier (face-background 'default) b)))
     (save-excursion
       (set-buffer (vm-buffer-of real-m))
-      (when (vm-body-to-be-retrieved-of real-m)
-	(vm-make-fetch-copy-if-necessary real-m)
-	(set-buffer vm-fetch-buffer)
-	(setq real-m (car vm-message-pointer)))
       (save-restriction
 	(widen)
 	;; must reference this now so that headers will be in
@@ -1448,9 +1444,6 @@ source of the message."
 	;; also a modifiable copy of the location data
 	;; other data will be shared with the Folder buffer
 	(vm-set-location-data-of mm (vm-copy (vm-location-data-of m)))
-	;; copy the mime-layout from real-m, which may not be the same
-	;; as the mime-layout of m.
-	(vm-set-mime-layout-of mm (vm-mime-layout-of real-m))
 	(set-marker (vm-start-of mm) (point-min))
 	(set-marker (vm-headers-of mm) (+ (vm-start-of mm)
 					  (- (vm-headers-of real-m)
@@ -1470,6 +1463,15 @@ source of the message."
 
 	;; fetch the real message now
 	(goto-char (point-min))
+	(cond ((and (vm-message-access-method-of mm)
+		    (vm-body-to-be-retrieved-of mm))
+	       (condition-case err
+		   (vm-fetch-message 
+		    (list (vm-message-access-method-of mm)) mm)
+		 (error
+		  (message "Cannot fetch; %s" (error-message-string err)))))
+	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
+	       (vm-fetch-message (read (current-buffer)) mm)))
 	(set-buffer-modified-p modified)
 	;; fixup the reference to the message
 	(setcar vm-message-pointer mm)))))

@@ -3273,8 +3273,7 @@ source and insert into the Folder buffer."
        (vm-set-line-count-of mm nil)
        (vm-set-byte-count-of mm nil)
        ;; update the virtual messages
-       (vm-update-virtual-messages mm)))
-    ))
+       (vm-update-virtual-messages mm)))))
 
 ;;;###autoload
 (defun vm-refresh-message (&optional count)
