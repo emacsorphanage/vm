@@ -4707,7 +4707,7 @@ temporarily.  Such fetched messages are discarded before the
 folder is saved."
   (save-excursion
     (set-buffer (vm-buffer-of m))
-    ;; m should retrieve=nil, i.e., already retrieved
+    ;; m should have retrieve=nil, i.e., already retrieved
     (vm-assert (null (vm-body-to-be-retrieved-of m)))
     (if (memq m vm-folder-fetched-messages)
 	(progn

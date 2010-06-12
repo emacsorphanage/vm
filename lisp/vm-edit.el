@@ -52,9 +52,8 @@ replace the original, use C-c C-] and the edit will be aborted."
 		    (- (point) (vm-headers-of (car vm-message-pointer)))))
 	  (edit-buf (vm-edit-buffer-of (car vm-message-pointer)))
 	  (folder-buffer (current-buffer)))
-      (vm-load-message)
-      ;; FIXME the following is really unnecessary
-      (vm-assert (not (vm-body-to-be-retrieved-of (car vm-message-pointer))))
+      ;; (vm-load-message)
+      (vm-retrieve-marked-or-prefixed-messages)
       (if (and edit-buf (buffer-name edit-buf))
 	  (set-buffer edit-buf)
 	(vm-save-restriction

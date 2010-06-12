@@ -479,7 +479,8 @@ vm-save-message instead (normally bound to `s')."
   (vm-select-folder-buffer-and-validate 1)
   (vm-display nil nil '(vm-save-message-sans-headers)
 	      '(vm-save-message-sans-headers))
-  (vm-load-message count)
+  ;; (vm-load-message count)
+  (vm-retrieve-marked-or-prefixed-messages count)
   (or count (setq count 1))
   (setq file (expand-file-name file))
   ;; Check and see if we are currently visiting the file
@@ -595,12 +596,8 @@ Output, if any, is displayed.  The message is not altered."
 	(mlist (if (eq last-command 'vm-next-command-uses-marks)
 		   (vm-select-marked-or-prefixed-messages 0)
 		 (list (car vm-message-pointer)))))
-    (vm-load-message)
-    ;; FIXME the following is really unnecessary
-    (mapcar
-     (lambda (m)
-       (vm-assert (not (vm-body-to-be-retrieved-of m))))
-     mlist)
+    ;; (vm-load-message)
+    (vm-retrieve-marked-or-prefixed-messages)
     (save-excursion
       (set-buffer buffer)
       (erase-buffer))
@@ -716,12 +713,8 @@ arguments after the command finished."
 		   (vm-select-marked-or-prefixed-messages 0)
 		 (list (car vm-message-pointer))))
 	m process)
-    (vm-load-message)
-    ;; FIXME the following is really unnecessary
-    (mapcar
-     (lambda (m)
-       (vm-assert (not (vm-body-to-be-retrieved-of m))))
-     mlist)
+    ;; (vm-load-message)
+    (vm-retrieve-marked-or-prefixed-messages)
     (save-excursion
       (set-buffer buffer)
       (erase-buffer))
@@ -830,12 +823,8 @@ Output, if any, is displayed.  The message is not altered."
 	 (m nil)
 	 (pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
 	 (mlist (vm-select-marked-or-prefixed-messages count)))
-    (vm-load-message count)
-    ;; FIXME the following is really unnecessary
-    (mapcar
-     (lambda (m)
-       (vm-assert (not (vm-body-to-be-retrieved-of m))))
-     mlist)
+    ;; (vm-load-message count)
+    (vm-retrieve-marked-or-prefixed-messages count)
 
     (save-excursion
       (set-buffer buffer)

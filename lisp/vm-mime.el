@@ -4247,7 +4247,8 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	;; It is not enough to just load the message because the
 	;; MIME buttons still have markers into the Presentation buffer.
 	(save-excursion
-	  (vm-load-message 1)
+	  ;; (vm-load-message 1)
+	  (vm-retrieve-marked-or-prefixed-messages 1)
 	  (vm-preview-current-message)
 	  (message "Message loaded.  Rerun the operation."))
       (error "Aborted"))
@@ -4361,7 +4362,8 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
 	  (if (vm-body-to-be-retrieved-of m)
 	      (save-excursion
 		(set-buffer (vm-buffer-of m))
-		(vm-load-message 1)))
+		;; (vm-load-message 1)
+		(vm-retrieve-marked-or-prefixed-messages 1)))
           (setq o (vm-mm-layout (car mlist)))
           (when (stringp o)
             (setq o 'none)
@@ -7357,12 +7359,8 @@ This is a destructive operation and cannot be undone!"
     (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate)
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
-    (vm-load-message count)
-    ;; FIXME the following should be unnecessary
-    (mapcar
-     (lambda (m)
-       (vm-assert (not (vm-body-to-be-retrieved-of m))))
-     mlist)
+    ;; (vm-load-message count)
+    (vm-retrieve-marked-or-prefixed-messages count)
     (save-excursion
       (while mlist
         (let ((count (vm-mime-nuke-alternative-text/html-internal (car mlist))))
