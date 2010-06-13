@@ -4709,43 +4709,44 @@ folder is saved."
     (set-buffer (vm-buffer-of m))
     ;; m should have retrieve=nil, i.e., already retrieved
     (vm-assert (null (vm-body-to-be-retrieved-of m)))
-    (if (memq m vm-folder-fetched-messages)
+    (if (memq m vm-fetched-messages)
 	(progn
 	  ;; at the moment, this case doesn't arise.  USR, 2010-06-11
 	  ;; move m to the rear
-	  (setq vm-folder-fetched-messages
-		(delq m vm-folder-fetched-messages))
-	  (add-to-list 'vm-folder-fetched-messages m t 'eq))
+	  (setq vm-fetched-messages
+		(delq m vm-fetched-messages))
+	  (add-to-list 'vm-fetched-messages m t 'eq))
 
-      ;; FIXME (length vm-folder-fetched-messages) should be stored
+      ;; FIXME (length vm-fetched-messages) should be stored
       ;; rather than calculated
       (if vm-fetched-message-limit
-	  (while (>= (length vm-folder-fetched-messages)
+	  (while (>= (length vm-fetched-messages)
 		     vm-fetched-message-limit)
-	    (let ((mm (car vm-folder-fetched-messages)))
+	    (let ((mm (car vm-fetched-messages)))
 	      ;; mm should have retrieve=nil and discard=t
 	      (vm-assert (and (null (vm-body-to-be-retrieved-of mm))
 			      (vm-body-to-be-discarded-of mm)))
 	      (vm-discard-real-message-body mm)
 	      (vm-unregister-fetched-message mm))))
-      (add-to-list 'vm-folder-fetched-messages m t 'eq)
+      (add-to-list 'vm-fetched-messages m t 'eq)
       (vm-set-body-to-be-discarded-of m t))))
 
 (defun vm-unregister-fetched-message (m)
-  "Unregister a real message M as a fetched message."
+  "Unregister a real message M as a fetched message.  If M was never
+registered as a fetched message, then there is no effect."
   (save-excursion
     (set-buffer (vm-buffer-of m))
-    (setq vm-folder-fetched-messages (delq m vm-folder-fetched-messages))
+    (setq vm-fetched-messages (delq m vm-fetched-messages))
     (vm-set-body-to-be-discarded-of m nil)))
 
 (defun vm-discard-fetched-messages ()
   "Discard the message bodies of all the fetched messages in the
 current folder."
-  (while vm-folder-fetched-messages
-    (let ((m (car vm-folder-fetched-messages)))
+  (while vm-fetched-messages
+    (let ((m (car vm-fetched-messages)))
       (vm-discard-real-message-body m)
       (vm-set-body-to-be-discarded-of m nil))
-    (setq vm-folder-fetched-messages (cdr vm-folder-fetched-messages))))
+    (setq vm-fetched-messages (cdr vm-fetched-messages))))
 
 (defun vm-register-message-garbage-files (files)
   "Add message garbage collection actions to delete all of FILES."

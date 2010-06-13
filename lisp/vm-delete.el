@@ -297,6 +297,7 @@ ignored."
 	    (while vms
 	      (save-excursion
 		(set-buffer (vm-buffer-of (car vms)))
+		(vm-unregister-fetched-message (car vms))
 		(setq prev (vm-reverse-link-of (car vms))
 		      curr (or (cdr prev) vm-message-list))
 		(intern (buffer-name) buffers-altered)

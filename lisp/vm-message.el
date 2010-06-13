@@ -428,30 +428,32 @@
 
 
 (defun vm-make-message ()
-  (let ((v (make-vector 5 nil)) sym)
-    (vm-set-softdata-of v (make-vector vm-softdata-vector-length nil))
+  (let ((mvec (make-vector 5 nil))
+	sym)
+    (vm-set-softdata-of mvec (make-vector vm-softdata-vector-length nil))
     (vm-set-location-data-of
-     v (make-vector vm-location-data-vector-length nil))
-    (vm-set-mirror-data-of v (make-vector vm-mirror-data-vector-length nil))
-    (vm-set-message-id-number-of v (int-to-string vm-message-id-number))
+     mvec (make-vector vm-location-data-vector-length nil))
+    (vm-set-mirror-data-of 
+     mvec (make-vector vm-mirror-data-vector-length nil))
+    (vm-set-message-id-number-of mvec (int-to-string vm-message-id-number))
     (vm-increment vm-message-id-number)
-    (vm-set-buffer-of v (current-buffer))
+    (vm-set-buffer-of mvec (current-buffer))
     ;; We use an uninterned symbol here as a level of indirection
     ;; from a purely self-referential structure.  This is
     ;; necessary so that Emacs debugger can be used on this
     ;; program.
     (setq sym (make-symbol "<<>>"))
-    (set sym v)
-    (vm-set-real-message-sym-of v sym)
+    (set sym mvec)
+    (vm-set-real-message-sym-of mvec sym)
     ;; Another uninterned symbol for the virtual messages list.
     (setq sym (make-symbol "<v>"))
     (set sym nil)
-    (vm-set-virtual-messages-sym-of v sym)
+    (vm-set-virtual-messages-sym-of mvec sym)
     ;; Another uninterned symbol for the reverse link
     ;; into the message list.
     (setq sym (make-symbol "<--"))
-    (vm-set-reverse-link-sym-of v sym)
-    v ))
+    (vm-set-reverse-link-sym-of mvec sym)
+    mvec ))
 
 (defun vm-find-and-set-text-of (m)
   (save-excursion
