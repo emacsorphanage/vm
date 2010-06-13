@@ -99,10 +99,11 @@
       (setq user-mail-address "unknown")
       (message "Please set the variable `user-mail-address'!!!")
       (sit-for 2)))
-      
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+
+; Group already defined in vm-vars.el      
+;; (defgroup vm nil
+;;   "VM"
+;;   :group 'mail)
 
 (defgroup vm-pine nil
   "Pine inspired extensions to VM."

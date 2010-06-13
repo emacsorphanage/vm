@@ -367,7 +367,7 @@ s-expression like this one in your .vm file:
 
 (defcustom vm-toolbar-height nil
   "*Desired height of the toolbar."
-  :group 'vm
+  :group 'vm-general
   :type '(choice (const  :tag "Automatic" nil) integer))
 
 (defun vm-toolbar-install-toolbar ()

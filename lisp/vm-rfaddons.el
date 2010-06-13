@@ -56,10 +56,10 @@
 ;; make things work with GNU Emacs!
 ;;
 ;;; Code:
-
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+;; Group already defined in vm-vars.el
+;; (defgroup vm nil
+;;   "VM"
+;;   :group 'mail)
 
 (defgroup vm-rfaddons nil
   "Customize vm-rfaddons.el"
@@ -1870,7 +1870,7 @@ not end the comment.  Blank lines do not get comments."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-delete-message-action "vm-next-message"
   "Command to do after deleting a message."
-  :group 'vm)
+  :group 'vm-general)
 
 ;;;###autoload
 (defun vm-delete-message-action (&optional arg)

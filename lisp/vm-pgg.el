@@ -116,9 +116,10 @@
   (defvar vm-pgg-cleartext-state nil "For interfunction communication.")
 )
 
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+; group already defined in vm-vars.el
+;(defgroup vm nil
+;  "VM"
+;  :group 'mail)
 
 (defgroup vm-pgg nil
   "PGP and PGP/MIME support for VM by PGG."

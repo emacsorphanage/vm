@@ -104,9 +104,10 @@
 
 (require 'vm-virtual)
 
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+; Group already defined in vm-vars.el
+;(defgroup vm nil
+;  "VM"
+;  :group 'mail)
 
 (defgroup vm-avirtual nil
   "VM additional virtual folder selectors and functions."

@@ -55,9 +55,10 @@
   (require 'vm-vars))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+; group already defined in vm-vars.el
+;(defgroup vm nil
+;  "VM"
+;  :group 'mail)
 
 (defgroup vm-grepmail nil
   "The VM grepmail lib"

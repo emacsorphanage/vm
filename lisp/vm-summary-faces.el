@@ -31,9 +31,10 @@
 ;;  (vm-summary-faces-mode 1)
 ;;
 
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+;; group already defined in vm-vars.el
+;; (defgroup vm nil
+;;   "VM"
+;;   :group 'mail)
 
 (defgroup vm-summary-faces nil
   "VM additional virtual folder selectors and functions."
