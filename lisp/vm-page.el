@@ -728,12 +728,19 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 ;; 	(message "Headers-only operation does not allow previews")
 ;; 	(setq need-preview nil)))
     (vm-save-buffer-excursion
-     (setq vm-system-state 'previewing
-	   vm-mime-decoded nil)
-     (if vm-real-buffers
+     (setq vm-system-state 'previewing)
+     (setq vm-mime-decoded nil)
+
+     ;; 1. make sure that the message body is present
+     (when (vm-body-to-be-retrieved-of (car vm-message-pointer))
+       (let ((mm (vm-real-message-of (car vm-message-pointer))))
+	 (vm-retrieve-real-message-body mm)
+	 (vm-set-body-to-be-discarded-flag mm t)
+	 (vm-register-fetched-message mm)))
+     (when vm-real-buffers
 	 (vm-make-virtual-copy (car vm-message-pointer)))
 
-     ;; run the message select hooks.
+     ;; 2. run the message select hooks.
      (save-excursion
        (vm-select-folder-buffer)
        (when (and vm-select-new-message-hook 
@@ -745,6 +752,7 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 	    (vm-run-message-hook (car vm-message-pointer)
 				 'vm-select-unread-message-hook)))
 
+     ;; 3. prepare the Presentation buffer
      (vm-narrow-for-preview (not need-preview))
      (if (or vm-always-use-presentation-buffer
              vm-mime-display-function
@@ -779,6 +787,7 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 ;;	   (vm-discard-cached-data)))
 ;;	   ))
      
+     ;; 4. decode MIME
      (if (and vm-display-using-mime
 	      vm-auto-decode-mime-messages
 	      vm-mime-decode-for-preview
@@ -826,18 +835,23 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 						     (car (cdr data)))
 			      (message "%s" (car (cdr data)))))
 	     (vm-narrow-for-preview)))
+       ;; if no MIME decoding is needed
        (vm-energize-urls-in-message-region)
        (vm-highlight-headers-maybe)
        (vm-energize-headers-and-xfaces))
 
+     ;; 6. Go to the text of message
      (if (and vm-honor-page-delimiters need-preview)
 	 (vm-narrow-to-page))
      (goto-char (vm-text-of (car vm-message-pointer)))
-     ;; If we have a window, set window start appropriately.
+
+     ;; 7. If we have a window, set window start appropriately.
      (let ((w (vm-get-visible-buffer-window (current-buffer))))
        (when w
 	 (set-window-start w (point-min))
 	 (set-window-point w (vm-text-of (car vm-message-pointer)))))
+
+     ;; 8. Show the full message if necessary
      (if need-preview
 	 (vm-update-summary-and-mode-line)
        (vm-show-current-message))))
@@ -876,7 +890,7 @@ is done if necessary.  (USR, 2010-01-14)"
 	      (vm-make-presentation-copy (car vm-message-pointer))
 	      (set-buffer vm-presentation-buffer))
 	  ;; FIXME at this point, the folder buffer is being used for
-	  ;; display
+	  ;; display.  Filling will corrupt the folder.
 	(debug "VM internal error #2010.  Please report it")))
     (vm-save-restriction
      (widen)

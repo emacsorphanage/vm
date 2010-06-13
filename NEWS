@@ -15,6 +15,15 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
+VM 8.1.92a
+
+  IMPROVEMENTS
+
+   * In headers-only mode, a limited number of messages can be fetched
+   on demand for message preview.  New variable
+   `vm-fetched-message-max' specifies this number.
+
+
 VM 8.1.91a
 
    * New variable `vm-imap-server-timeout' allows timeout during a wait

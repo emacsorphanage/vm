@@ -90,6 +90,13 @@ has copied out the mail."
   :type '(choice directory 
 		 (const :tag "No not keep crash boxes" nil)))
 
+(defcustom vm-fetched-message-limit 10
+  "*Should be an integer representing the maximum number of messages
+that VM should keep in the Folder buffer when the messages are
+fetched, or nil to signify no limit."
+  :group 'vm
+  :type '(choice (const nil) integer))
+
 (defcustom vm-index-file-suffix nil
   "*Suffix used to construct VM index file names.
 When VM visits a folder, it checks for the existence of a file
@@ -115,7 +122,7 @@ possible, without loading the message bodies.
 This allows faster start-ups and smaller memory images of Emacs
 sessions, at the cost of short delays when messages are viewed.
 
-As of April 2008, this facility is still experimental and is only
+As of May 2010, this facility is still experimental and is only
 available for IMAP folders.")
 
 ;; use this function to access vm-spool-files on the fly.  this
@@ -4917,6 +4924,10 @@ Its parent keymap is mail-mode-map.")
 (make-variable-buffer-local 'vm-folder-access-data)
 (defvar vm-message-list nil)
 (make-variable-buffer-local 'vm-message-list)
+(defvar vm-fetched-messages nil)
+(make-variable-buffer-local 'vm-fetched-messages)
+(defvar vm-fetched-message-count 0)
+(make-variable-buffer-local 'vm-fetched-message-count)
 (defvar vm-virtual-folder-definition nil)
 (make-variable-buffer-local 'vm-virtual-folder-definition)
 (defvar vm-virtual-buffers nil)

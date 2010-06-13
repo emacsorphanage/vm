@@ -589,12 +589,8 @@ all marked messages will be burst."
   (vm-select-folder-buffer-and-validate 1)
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-marked-or-prefixed-messages 1)))
-    (vm-load-message)
-    ;; FIXME the following is really unnecessary
-    (mapcar
-     (lambda (m)
-       (vm-assert (not (vm-body-to-be-retrieved-of m))))
-     mlist)
+    ;; (vm-load-message)
+    (vm-retrieve-marked-or-prefixed-messages)
     (while mlist
       (if (vm-virtual-message-p (car mlist))
 	  (progn
@@ -699,12 +695,8 @@ all marked messages will be burst."
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-marked-or-prefixed-messages 1))
 	(work-buffer nil))
-    (vm-load-message)
-    ;; FIXME the following is really unnecessary
-    (mapcar
-     (lambda (m)
-       (vm-assert (not (vm-body-to-be-retrieved-of m))))
-     mlist)
+    ;; (vm-load-message)
+    (vm-retrieve-marked-or-prefixed-messages)
     (unwind-protect
 	(save-excursion
 	  (setq work-buffer (generate-new-buffer

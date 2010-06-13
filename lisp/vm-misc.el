@@ -378,6 +378,15 @@ vm-mail-buffer variable."
       (setq n (1+ n)))
     (if list n nil)))
 
+(defun vm-for-all (list pred)
+  (catch 'fail
+    (progn
+      (while list
+	(if (apply pred (car list) nil)
+	    (setq list (cdr list))
+	  (throw 'fail nil)))
+      t)))
+
 (defun vm-delete-directory-file-names (list)
   (vm-delete 'file-directory-p list))
 
@@ -801,6 +810,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 (defun vm-buffer-variable-value (buffer var)
   (save-excursion
     (set-buffer buffer)
+    (symbol-value var)))
+
+(defun vm-folder-buffer-value (var)
+  (with-current-buffer 
+      vm-mail-buffer
     (symbol-value var)))
 
 (defsubst vm-with-string-as-temp-buffer (string function)

@@ -978,9 +978,8 @@ Subject: header manually."
 	  reply-buffer
 	  header-end
 	  (mp (vm-select-marked-or-prefixed-messages 1)))
-      (vm-load-message)
-      ;; FIXME the following is really unnecessary
-      (vm-assert (not (vm-body-to-be-retrieved-of (car mp))))
+      ;; (vm-load-message)
+      (vm-retrieve-marked-or-prefixed-messages)
       (save-restriction
 	(widen)
 	(vm-mail-internal
@@ -1064,9 +1063,8 @@ you can change the recipient address before resending the message."
 	(dir default-directory)
 	(layout (vm-mm-layout (car vm-message-pointer)))
 	(lim (vm-text-end-of (car vm-message-pointer))))
-    (vm-load-message)
-    ;; FIXME the following is really unnecessary
-    (vm-assert (not (vm-body-to-be-retrieved-of (car vm-message-pointer))))
+    ;; (vm-load-message)
+    (vm-retrieve-marked-or-prefixed-messages)
     (save-restriction
       (widen)
       (if (or (not (vectorp layout))
@@ -1138,9 +1136,8 @@ You may also create a Resent-Cc header."
 	  (vmp vm-message-pointer)
 	  (start (vm-headers-of (car vm-message-pointer)))
 	  (lim (vm-text-end-of (car vm-message-pointer))))
-      (vm-load-message)
-      ;; FIXME the following is really unnecessary
-      (vm-assert (not (vm-body-to-be-retrieved-of (car vm-message-pointer))))
+      ;; (vm-load-message)
+      (vm-retrieve-marked-or-prefixed-messages)
       ;; briefly nullify vm-mail-header-from to keep vm-mail-internal
       ;; from inserting another From header.
       (let ((vm-mail-header-from nil))
@@ -1207,12 +1204,8 @@ only marked messages will be put into the digest."
 		   (vm-select-marked-or-prefixed-messages 0)
 		 vm-message-list))
 	ms start header-end boundary)
-    (vm-load-message prefix)
-    ;; FIXME the following is really unnecessary
-    (mapcar
-     (lambda (m)
-       (vm-assert (not (vm-body-to-be-retrieved-of m))))
-     mlist)
+    ;; (vm-load-message prefix)
+    (vm-retrieve-marked-or-prefixed-messages prefix)
     (save-restriction
       (widen)
       (vm-mail-internal
