@@ -1857,7 +1857,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
     (if (vm-new-flag message)
         (setq status2 (logior status2 #x10000)))
     (goto-char (vm-start-of message))
-    (next-line 1)
+    (forward-line 1)
     (insert (format "X-Mozilla-Status: %4x\n" status))
     (insert (format "X-Mozilla-Status2: %4x\n" status2))))
   
