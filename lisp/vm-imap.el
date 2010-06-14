@@ -3356,8 +3356,8 @@ only marked messages are unloaded, other messages are ignored."
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
-	(unless (and (vm-body-to-be-retrieved-of mm)
-		     (not (vm-body-to-be-discarded-of mm)))
+	(when (and (null (vm-body-to-be-retrieved-of mm))
+		   (vm-body-to-be-discarded-of mm))
 	  (if (= count 1)
 	      ;; Register the message as fetched instead of actually
 	      ;; discarding the message
