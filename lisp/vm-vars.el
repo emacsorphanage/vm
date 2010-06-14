@@ -62,12 +62,37 @@
   "Hooks for the VM mail reader."
   :group 'vm)
 
+(defgroup vm-digest nil
+  "Options affecting VM's handling of digests."
+  :group 'vm)
+
+(defgroup vm-frames nil
+  "Options affecting frames and windows in VM."
+  :group 'vm)
+
+(defgroup vm-url nil
+  "Options affecting handling of URLs in VM."
+  :group 'vm)
+
+(defgroup vm-compose nil
+  "Options affecting mail composition within VM."
+  :group 'vm)
+
+(defgroup vm-presentation nil
+  "Options affecting the presentation of messages in VM."
+  :group 'vm)
+
+(defgroup vm-dispose nil
+  "Options affecting the deletion and expunging of messages in VM."
+  :group 'vm)
+
+
 ;; Custom variable definitions
 
 (defcustom vm-assimilate-new-messages-sorted nil
   "*When enabled new messages will be inserted in current sort order.
 Otherwise they are appended to the folder, which is VM default."
-  :group 'vm-general
+  :group 'vm-presentation
   :type 'boolean)
 
 (defcustom vm-init-file "~/.vm"
@@ -874,7 +899,7 @@ Otherwise all headers are displayed except those matched by
 `vm-invisible-header-regexp'.  In this case `vm-visible-headers'
 specifies the order in which headers are displayed.  Headers not
 matching `vm-visible-headers' are displayed last."
-  :group 'vm-general
+  :group 'vm-presentation
   :type '(list regexp))
 
 (defcustom vm-invisible-header-regexp nil
@@ -886,7 +911,7 @@ the presentation order of headers; headers not matched by
 
 Nil value causes VM to display ONLY those headers specified in
 `vm-visible-headers'."
-  :group 'vm-general
+  :group 'vm-presentation
   :type '(choice (const nil) regexp))
 
 (defcustom vm-highlighted-header-regexp nil
@@ -902,7 +927,7 @@ the variable `vm-use-lucid-highlighting' non-nil.  You'll need to
 set the various variables used by the highlight-headers package
 to customize highlighting.  `vm-highlighted-header-regexp' is
 ignored in this case."
-  :group 'vm-general
+  :group 'vm-presentation
   :type '(choice (const nil) regexp))
 
 (defcustom vm-use-lucid-highlighting (condition-case nil
@@ -943,13 +968,13 @@ fit in the window associated with the folder buffer.
 
 A nil value causes VM not to preview messages; no text lines are hidden and
 messages are immediately flagged as read."
-  :group 'vm-general
+  :group 'vm-presentation 
   :type '(choice boolean integer))
 
 (defcustom vm-preview-read-messages nil
   "*Non-nil value means to preview messages even if they've already been read.
 A nil value causes VM to preview messages only if new or unread."
-  :group 'vm-general
+  :group 'vm-presentation
   :type 'boolean)
 
 (defcustom vm-always-use-presentation-buffer t
@@ -961,14 +986,14 @@ A nil value causes VM to preview messages only if new or unread."
 Non-nil means to always use a presentation buffer for displaying
   messages.  It will also be used if no decoding or other
   modification of the message are necessary."
-  :group 'vm-general
+  :group 'vm-presentation 
   :type 'boolean)
 
 (defcustom vm-word-wrap-paragraphs nil
   "*If non-nil, causes VM to word wrap paragraphs with long lines.
 This is done using the `longlines' library, which must be installed
 for the variable to have effect."
-  :group 'vm-general
+  :group 'vm-compose
   :type 'boolean)
 
 (defcustom vm-word-wrap-paragraphs-in-reply nil
@@ -976,7 +1001,7 @@ for the variable to have effect."
 during message composition.  This is done using the `longlines'
 library, which must be installed for the variable to have
 effect."
-  :group 'vm-general
+  :group 'vm-compose
   :type 'boolean)
 
 (defcustom vm-fill-paragraphs-containing-long-lines nil
@@ -992,7 +1017,7 @@ into a presentation buffer before the filling is done.
 
 This variable determines which paragraphs are filled,
 but `vm-paragraph-fill-column' determines the fill column."
-  :group 'vm-general
+  :group 'vm-compose
   :type '(choice (const nil)
                  (const window-width)
 		 (const wrap)
@@ -1002,7 +1027,7 @@ but `vm-paragraph-fill-column' determines the fill column."
   "*Column beyond which automatic line-wrapping should happen when
 re-filling lines longer than the value of
 `vm-fill-paragraphs-containing-long-lines'."
-  :group 'vm-general
+  :group 'vm-compose
   :type 'integer)
 
 (defcustom vm-fill-long-lines-in-reply-column (default-value 'fill-column)
@@ -1587,7 +1612,7 @@ and VM will not use the 'convert' program."
 after the MIME object has been saved to disk.  The MIME object is replaced
 with a message/external-body object that points to the disk copy of the
 object."
-  :group 'vm-general
+  :group 'vm-dispose
   :type 'boolean)
 
 (defcustom vm-mime-confirm-delete t
@@ -2053,7 +2078,7 @@ the data."
   "*Non-nil value causes VM to use `vm-next-message' to advance to the next
 message in the folder if the user attempts to scroll past the end of the
 current messages.  A nil value disables this behavior."
-  :group 'vm-general
+  :group 'vm-summary
   :type 'boolean)
 
 (defcustom vm-honor-page-delimiters nil
@@ -2067,7 +2092,7 @@ displayed.  Scrolling backward past a page delimiter reverses this
 process.
 
 A nil value means ignore page-delimiters."
-  :group 'vm-general
+  :group 'vm-presentation 
   :type 'boolean)
 
 (defcustom vm-page-continuation-glyph "...press SPACE to see more..."
@@ -2081,7 +2106,7 @@ Under XEmacs, the value of `vm-page-continuation-glyph' can be a
 string or a glyph object.
 
 Under FSF Emacs, `vm-page-continuation-glyph' must be a string."
-  :group 'vm-general
+  :group 'vm-presentation
   :type 'boolean)
 
 (defvar vm-default-window-configuration
@@ -2168,20 +2193,20 @@ WARNING: Don't point `vm-window-configuration-file' at your .vm or
 an empty or nonexistent file.  VM will repeatedly overwrite this
 file as you update your window configuration settings, so
 anything else you put into this file will go away."
-  :group 'vm-general
+  :group 'vm-frames
   :type 'file)
 
 (defcustom vm-expunge-before-quit nil
   "*Non-nil value causes VM to expunge deleted messages before
 quitting.  You can use `vm-quit-no-expunge' and `vm-quit-no-change'
 to override this behavior."
-  :group 'vm-general
+  :group 'vm-dispose
   :type 'boolean)
 
 (defcustom vm-expunge-before-save nil
   "*Non-nil value causes VM to expunge deleted messages before
 saving a folder."
-  :group 'vm-general
+  :group 'vm-dispose
   :type 'boolean)
 
 (defcustom vm-confirm-quit 0
@@ -2462,7 +2487,7 @@ set this variable directly, rather you should use the command
 
 (defcustom vm-included-text-prefix " > "
   "*String used to prefix included text in replies."
-  :group 'vm-general
+  :group 'vm-compose
   :type 'string)
 
 (defcustom vm-keep-sent-messages 1
@@ -2480,7 +2505,7 @@ record of your outgoing mail, use the `mail-archive-file-name' variable."
 (defcustom vm-confirm-mail-send nil
   "*Non-nil means ask before sending a mail message.
 This affects `vm-mail-send' and `vm-mail-send-and-exit' in Mail mode."
-  :group 'vm-general
+  :group 'vm-compose
   :type 'boolean)
 
 (defcustom vm-mail-header-from nil
@@ -2489,12 +2514,12 @@ of the From header in outbound mail messages.  A nil value means don't
 insert a From header.  This variable also controls the inclusion and
 format of the Resent-From header, when resending a message with
 `vm-resend-message'."
-  :group 'vm-general 
+  :group 'vm-compose
   :type '(choice (const nil) string))
 
 (defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
   "*A list of headers to hide in `vm-mail-mode'."
-  :group 'vm-general 
+  :group 'vm-compose
   :type '(choice (const :tag "Disabled" nil)
                  (set :tag "Header list"
                       (string "References")
@@ -2512,7 +2537,7 @@ This is useful if you set mail-archive-file-name,
 because your archived message will contain a Date header.
 
 A nil value means don't insert a Date header."
-  :group 'vm-general 
+  :group 'vm-compose
   :type 'boolean)
 
 (defcustom vm-mail-header-insert-message-id t
@@ -2527,7 +2552,7 @@ archived messages will contain a Message-ID header, which may be
 useful later for threading messages.
 
 A nil value means don't insert a Message-ID header."
-  :group 'vm-general
+  :group 'vm-compose
   :type 'boolean)
 
 (defcustom vm-mail-header-order
@@ -2540,26 +2565,26 @@ A nil value means don't insert a Message-ID header."
     "To:" "CC:" "BCC:" "Reply-To:")
   "*Order of headers when calling `vm-reorder-message-headers' interactively
 in a composition buffer."
-  :group 'vm-general 
+  :group 'vm-compose
   :type '(list string))
 
 (defcustom vm-mail-reorder-message-headers nil
   "*Reorder message headers before sending."
-  :group 'vm-general 
+  :group 'vm-compose
   :type 'boolean)
 
 (defcustom vm-do-fcc-before-mime-encode nil
   "*Non-nil means to FCC before encoding.  This allows saving of
 messages unencoded, specifically not to waste storage for
 attachments which are stored on disk anyway."
-  :type 'boolean
-  :group 'vm-general)
+  :group 'vm-mime
+  :type 'boolean)
   
 (defcustom vm-reply-subject-prefix nil
   "*Non-nil value should be a string that VM should add to the beginning
 of the Subject header in replies, if the string is not already present.
 Nil means don't prefix the Subject header."
-  :group 'vm-general
+  :group 'vm-compose
   :type '(choice (const nil) string))
 
 (defcustom vm-reply-ignored-addresses nil
@@ -2571,7 +2596,7 @@ you see an address in the header you don't want you should remove
 it yourself.
 
 Case is ignored when matching the addresses."
-  :group 'vm-general
+  :group 'vm-compose
   :type '(repeat regexp))
 
 (defcustom vm-reply-ignored-reply-tos nil
@@ -2585,7 +2610,7 @@ Case is ignored when matching the addresses.
 This variable exists solely to provide an escape chute from
 mailing lists that add a Reply-To: mailing list header, thereby
 leaving no way to reply to just the author of a message."
-  :group 'vm-general
+  :group 'vm-compose
   :type '(repeat regexp))
 
 (defcustom vm-reply-include-presentation nil
@@ -2593,7 +2618,7 @@ leaving no way to reply to just the author of a message."
 This might give better results when using filling or MIME encoded messages,
 e.g. HTML message.
 (This variable is part of vm-rfaddons.el.)"
-  :group 'vm-general
+  :group 'vm-compose
   :type 'boolean)
 
 (defcustom vm-in-reply-to-format "%i"
@@ -2605,7 +2630,7 @@ Nil means don't put an In-Reply-To header in replies.
 
 If the format includes elements with non-ASCII characters, then
 \"In-Reply-To\" should be added to `vm-mime-encode-headers-regexp'."
-  :group 'vm-general
+  :group 'vm-compose
   :type '(choice (const nil) string))
 
 (defcustom vm-included-text-attribution-format "%F writes:\n"
@@ -2613,7 +2638,7 @@ If the format includes elements with non-ASCII characters, then
 included text from a message in a reply.  See the documentation for the
 variable `vm-summary-format' for information on what this string may contain.
 Nil means don't attribute included text in replies."
-  :group 'vm-general
+  :group 'vm-compose
   :type '(choice (const nil) string))
 
 (defcustom vm-included-mime-types-list
@@ -2631,7 +2656,7 @@ are handled by VM's MIME decoding mechanism."
 This is an exeperimental feature that should not be used normally, but
 it might give better results when using filling or MIME encoded messages,
 e.g. HTML message."
-  :group 'vm-generala
+  :group 'vm-compose
   :type 'boolean)
 
 (defcustom vm-included-text-headers nil
@@ -2654,7 +2679,7 @@ be included.  `vm-included-text-headers' determines the header
 order in that case, with headers not matching any in the
 `vm-included-text-headers' list appearing last in the header
 section of the included text."
-  :group 'vm-general
+  :group 'vm-compose
   :type '(repeat regexp))
 
 (defcustom vm-included-text-discard-header-regexp nil
@@ -2673,7 +2698,7 @@ others will be included.  `vm-included-text-headers' determines the
 header order in that case, with headers not matching any in
 the `vm-included-text-headers' list appearing last in the header
 section of the included text."
-  :group 'vm-general
+  :group 'vm-compose
   :type 'regexp)
 
 (defcustom vm-forwarding-subject-format "forwarded message from %F"
@@ -2682,7 +2707,7 @@ header that is generated for a forwarded message.  See the documentation
 for the variable `vm-summary-format' for information on what this string
 may contain.  The format should *not* end with nor contain a newline.
 Nil means leave the Subject header empty when forwarding."
-  :group 'vm-general 
+  :group 'vm-compose
   :type 'string)
 
 (defcustom vm-forwarded-headers nil
@@ -2705,7 +2730,7 @@ forwarded.  `vm-forwarded-headers' determines the forwarding order
 in that case, with headers not matching any in the
 `vm-forwarded-headers' list appearing last in the header section of
 the forwarded message."
-  :group 'vm-general
+  :group 'vm-compose
   :type '(repeat regexp))
 
 (defcustom vm-unforwarded-header-regexp "none-to-be-dropped"
@@ -2724,7 +2749,7 @@ be forwarded.  `vm-forwarded-headers' determines the forwarding
 order in that case, with headers not matching any in the
 `vm-forwarded-headers' list appearing last in the header section of
 the forwarded message."
-  :group 'vm-general
+  :group 'vm-compose
   :type '(choice
           (const nil)
           regexp))
@@ -2741,7 +2766,7 @@ nil
 
 A nil value means don't use a digest, just mark the beginning and
 end of the forwarded message."
-  :group 'vm-general
+  :group 'vm-compose
   :type '(choice
           (const "rfc934")
           (const "rfc1153")
@@ -2772,7 +2797,7 @@ message itself."
   "*Non-nil values means messages from a digest inherit the digest's labels.
 Labels are added to messages with `vm-add-message-labels', normally
 bound to `l a'."
-  :group 'vm-general
+  :group 'vm-digest
   :type 'boolean)
 
 (defcustom vm-digest-preamble-format "\"%s\" (%F)"
@@ -2782,14 +2807,14 @@ line will be generated for each message put into the digest.  See the
 documentation for the variable `vm-summary-format' for information
 on what this string may contain.  The format should *not* end
 with nor contain a newline."
-  :group 'vm-general
+  :group 'vm-digest
   :type 'string)
 
 (defcustom vm-digest-center-preamble t
   "*Non-nil value means VM will center the preamble lines that precede
 the start of a digest.  How the lines will be centered depends on the
 ambient value of fill-column.   A nil value suppresses centering."
-  :group 'vm-general
+  :group 'vm-digest
   :type 'boolean)
 
 (defcustom vm-digest-identifier-header-format "X-Digest: %s\n"
@@ -2797,7 +2822,7 @@ ambient value of fill-column.   A nil value suppresses centering."
 Value should be a format string of the same type as `vm-summary-format'
 that describes a header to be inserted into each message burst from a
 digest.  The format string must end with a newline."
-  :group 'vm-general
+  :group 'vm-digest
   :type 'string)
 
 (defcustom vm-digest-burst-type "guess"
@@ -2825,7 +2850,7 @@ boundary parameter in the Content-Type header of the digest.
 If the value is \"guess\", and you take the default
 response when `vm-burst-digest' queries you, VM will try to guess
 the digest type."
-  :group 'vm-general
+  :group 'vm-digest
   :type '(choice (const "rfc934") (const "rfc1153") (const "mime")
 		 (const "guess")))
 
@@ -2838,7 +2863,7 @@ Legal values of this variable are:
 \"mime\"
 
 "
-  :group 'vm-general
+  :group 'vm-digest
   :type '(choice (const "rfc934") (const "rfc1153") (const "mime")))
 
 (defcustom vm-rfc934-digest-headers
@@ -2868,7 +2893,7 @@ will be kept.  `vm-rfc934-digest-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-rfc934-digest-headers' list appearing last in the headers
 of the digestified messages."
-  :group 'vm-general
+  :group 'vm-digest
   :type '(repeat regexp))
 
 (defcustom vm-rfc934-digest-discard-header-regexp nil
@@ -2887,7 +2912,7 @@ will be kept.  `vm-rfc934-digest-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-rfc934-digest-headers' list appearing last in the headers
 of the digestified messages."
-  :group 'vm-general
+  :group 'vm-digest
   :type 'regexp)
 
 (defcustom vm-rfc1153-digest-headers
@@ -2917,7 +2942,7 @@ will be kept.  `vm-rfc1153-digest-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-rfc1153-digest-headers' list appearing last in the headers of
 the digestified messages."
-  :group 'vm-general
+  :group 'vm-digest
   :type '(repeat regexp))
 
 (defcustom vm-rfc1153-digest-discard-header-regexp "\\(X400-\\)?Received:"
@@ -2936,7 +2961,7 @@ will be kept.  `vm-rfc1153-digest-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-rfc1153-digest-headers' list appearing last in the headers of
 the digestified messages."
-  :group 'vm-general
+  :group 'vm-digest
   :type 'regexp)
 
 (defcustom vm-mime-digest-headers
@@ -2968,7 +2993,7 @@ will be kept.  `vm-mime-digest-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-mime-digest-headers' list appearing last in the headers
 of the digestified messages."
-  :group 'vm-general
+  :group 'vm-digest
   :type '(repeat regexp))
 
 (defcustom vm-mime-digest-discard-header-regexp nil
@@ -2987,7 +3012,7 @@ will be kept.  `vm-mime-digest-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-mime-digest-headers' list appearing last in the headers
 of the digestified messages."
-  :group 'vm-general
+  :group 'vm-digest
   :type 'regexp)
 
 (defcustom vm-resend-bounced-headers
@@ -3018,7 +3043,7 @@ will be kept.  `vm-resend-bounced-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-resend-bounced-headers' list appearing last in the headers of
 the message."
-  :group 'vm-general
+  :group 'vm-compose
   :type '(repeat regexp))
 
 (defcustom vm-resend-bounced-discard-header-regexp nil
@@ -3037,7 +3062,7 @@ will be kept.  `vm-resend-bounced-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-resend-bounced-headers' list appearing last in the headers of
 the message."
-  :group 'vm-general
+  :group 'vm-compose
   :type 'regexp)
 
 (defcustom vm-resend-headers nil
@@ -3060,7 +3085,7 @@ will be kept.  `vm-resend-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-resend-headers' list appearing last in the headers of
 the message."
-  :group 'vm-general
+  :group 'vm-compose
   :type '(repeat regexp))
 
 (defcustom vm-resend-discard-header-regexp "\\(\\(X400-\\)?Received:\\|Resent-\\)"
@@ -3079,7 +3104,7 @@ will be kept.  `vm-resend-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-resend-headers' list appearing last in the headers of
 the message."
-  :group 'vm-general
+  :group 'vm-compose
   :type 'regexp)
 
 (defcustom vm-summary-format "%n %*%a %-17.17F %-3.3m %2d %4l/%-5c %I\"%s\"\n"
@@ -3390,7 +3415,7 @@ the entire screen for its purposes.
 A value of nil restricts VM's window usage to the window from which
 it was invoked.  VM will not create, delete, or use any other windows,
 nor will it resize its own window."
-  :group 'vm-general
+  :group 'vm-frames
   :type 'boolean)
 
 (defcustom vm-mutable-frames t
@@ -3405,7 +3430,7 @@ delete frames.
 
 This variable does not apply to the VM commands whose
 names end in -other-frame, which always create a new frame."
-  :group 'vm-general
+  :group 'vm-frames
   :type 'boolean)
 
 (defcustom vm-raise-frame-at-startup t
@@ -3413,7 +3438,7 @@ names end in -other-frame, which always create a new frame."
 A value of nil means never raise the frame.
 A value of t means always raise the frame.
 Other values are reserved for future use."
-  :group 'vm-general 
+  :group 'vm-frames
   :type 'boolean)
 
 (defcustom vm-frame-per-folder t
@@ -3426,7 +3451,7 @@ This variable has no meaning if you're not running under an Emacs
 capable of displaying multiple real or virtual frames.  Note that
 Emacs supports multiple virtual frames on dumb terminals, and
 VM will use them."
-  :group 'vm-general
+  :group 'vm-frames
   :type 'boolean)
 
 (defcustom vm-frame-per-summary nil
@@ -3439,7 +3464,7 @@ This variable has no meaning if you're not running under an Emacs
 capable of displaying multiple real or virtual frames.  Note that
 Emacs supports multiple virtual frames on dumb terminals, and
 VM will use them."
-  :group 'vm-general
+  :group 'vm-frames
   :type 'boolean)
 
 (defcustom vm-frame-per-folders-summary nil
@@ -3450,7 +3475,7 @@ This variable has no meaning if you're not running under an Emacs
 capable of displaying multiple real or virtual frames.  Note that
 Emacs supports multiple virtual frames on dumb terminals, and
 VM will use them."
-  :group 'vm-general
+  :group 'vm-frames
   :type 'boolean)
 
 (defcustom vm-frame-per-composition t
@@ -3463,7 +3488,7 @@ This variable has no meaning if you're not running under an Emacs
 capable of displaying multiple real or virtual frames.  Note that
 Emacs supports multiple virtual frames on dumb terminals, and
 VM will use them."
-  :group 'vm-general
+  :group 'vm-frames
   :type 'boolean)
 
 (defcustom vm-frame-per-edit t
@@ -3476,7 +3501,7 @@ This variable has no meaning if you're not running under an Emacs
 capable of displaying multiple real or virtual frames.  Note that
 Emacs support multiple virtual frames on dumb terminals, and
 VM will use them."
-  :group 'vm-general
+  :group 'vm-frames
   :type 'boolean)
 
 (defcustom vm-frame-per-help nil
@@ -3487,7 +3512,7 @@ This variable has no meaning if you're not running under an Emacs
 capable of displaying multiple real or virtual frames.  Note that
 Emacs supports multiple virtual frames on dumb terminals, and
 VM will use them."
-  :group 'vm-general
+  :group 'vm-frames
   :type 'boolean)
 
 (defcustom vm-frame-per-completion t
@@ -3508,7 +3533,7 @@ This variable has no meaning if you're not running Emacs native
 under X Windows or some other window system that allows multiple
 real Emacs frames.  Note that Emacs supports virtual frames under
 ttys but VM will not use these to display completion information."
-  :group 'vm-general
+  :group 'vm-frames
   :type 'boolean)
 
 (defcustom vm-frame-parameter-alist nil
@@ -3541,7 +3566,7 @@ of frame that the following PARAMLIST applies to.
 
 PARAMLIST is a list of pairs as described in the documentation for
 the function `make-frame'."
-  :group 'vm-general
+  :group 'vm-frames
   :type '(repeat (cons (choice (const completion)
 			       (const composition)
 			       (const edit)
@@ -3555,7 +3580,7 @@ the function `make-frame'."
   "*Non-nil means VM should search frames other than the selected frame
 when looking for a window that is already displaying a buffer that
 VM wants to display or undisplay."
-  :group 'vm-general
+  :group 'vm-frames
   :type 'boolean)
 
 (defvar vm-configure-datadir nil
@@ -3750,7 +3775,7 @@ This is useful to give the new frame the focus under some window managers
 that randomly place newly created frames.
 
 Nil means don't move the mouse cursor."
-  :group 'vm-general
+  :group 'vm-frames
   :type 'boolean)
 
 (defcustom vm-url-retrieval-methods '(lynx wget fetch curl w3m)
@@ -3773,7 +3798,7 @@ retrieval method.
 
 If `vm-url-retrieval-methods' value is nil, VM will not try to
 use any URL retrieval methods."
-  :group 'vm-general
+  :group 'vm-url
   :type '(set (const lynx)
 	      (const wget)
 	      (const w3m)
@@ -3815,7 +3840,7 @@ You might also consider specifying `vm-url-browser' to be the
 That library has a variety of browsers that can be invoked.
 
 A nil value means VM should not enable URL passing to browsers."
-  :group 'vm-general
+  :group 'vm-url
   :type '(choice (const nil)
 		 function
 		 string))
@@ -3824,7 +3849,7 @@ A nil value means VM should not enable URL passing to browsers."
   "*List of command line flags passed to the command named by
 `vm-url-browser'.  VM uses `vm-url-browser' to display URLs
 in messages when you click on them."
-  :group 'vm-general
+  :group 'vm-url
   :type '(repeat string))
 
 (defcustom vm-highlight-url-face 'bold-italic
@@ -3841,13 +3866,13 @@ will search from the beginning of the message to a point
 `vm-url-search-limit' / 2 characters into the message.  Then VM will
 search from a point `vm-url-search-limit' / 2 characters from the
 end of the message to the end of message."
-  :group 'vm-general
+  :group 'vm-url
   :type '(choice (const nil) integer))
 
 (defcustom vm-display-xfaces nil
   "*Non-nil means display images as specified in X-Face headers.
 This requires at least XEmacs 19.12 with native xface support compiled in."
-  :group 'vm-general
+  :group 'vm-presentation
   :type 'boolean)
 
 (defcustom vm-startup-with-summary t
@@ -3861,7 +3886,7 @@ are N or more messages.
 
 A negative numeric value -N means only generate a summary if
 there are N or less messages."
-  :group 'vm-general
+  :group 'vm-summary
   :type '(choice (const t) (const nil) integer))
 
 (defcustom vm-follow-summary-cursor t
@@ -3919,7 +3944,7 @@ past the deleted messages.  A value of t means motion should
 honor the value of `vm-circular-folders'.  A value that is not t
 and not nil means that motion should be done as if
 `vm-circular-folders' is set to nil."
-  :group 'vm-general
+  :group 'vm-summary
   :type '(choice (const nil) (const t) (const skip-if-some-undeleted)))
 
 (defcustom vm-move-after-undeleting nil
@@ -3929,7 +3954,7 @@ past the undeleted messages.  A value of t means motion should
 honor the value of `vm-circular-folders'.  A value that is not t
 and not nil means that motion should be done as if
 `vm-circular-folders' is set to nil."
-  :group 'vm-general
+  :group 'vm-summary
   :type '(choice (const nil) (const t) (const skip-if-some-undeleted)))
 
 (defcustom vm-move-after-killing nil
@@ -3939,26 +3964,26 @@ to move past the deleted messages.  A value of t means motion
 should honor the value of `vm-circular-folders'.  A value that is
 not t and not nil means that motion should be done as if
 `vm-circular-folders' is set to nil."
-  :group 'vm-general
+  :group 'vm-summary
   :type '(choice (const nil) (const t) (const skip-if-some-undeleted)))
 
 (defcustom vm-delete-after-saving nil
   "*Non-nil value causes VM automatically to mark messages for deletion
 after successfully saving them to a folder."
-  :group 'vm-general
+  :group 'vm-dispose
   :type 'boolean)
 
 (defcustom vm-delete-after-archiving nil
   "*Non-nil value causes VM automatically to mark messages for deletion
 after successfully auto-archiving them with the `vm-auto-archive-messages'
 command."
-  :group 'vm-general
+  :group 'vm-dispose
   :type 'boolean)
 
 (defcustom vm-delete-after-bursting nil
   "*Non-nil value causes VM automatically to mark a message for deletion
 after it has been successfully burst by the `vm-burst-digest' command."
-  :group 'vm-general
+  :group 'vm-dispose
   :type 'boolean)
 
 (defcustom vm-circular-folders nil
@@ -4000,7 +4025,7 @@ folder itself undisturbed."
 
 (defcustom vm-edit-message-mode 'text-mode
   "*Major mode to use when editing messages in VM."
-  :group 'vm-general
+  :group 'vm-compose
   :type 'function)
 
 (defvar lpr-command)
@@ -4022,7 +4047,7 @@ messages."
   "*Non-nil means to read and write BSD Mail(1) style Status: headers.
 This makes sense if you plan to use VM to read mail archives created by
 Mail."
-  :group 'vm-general
+  :group 'vm-folders
   :type 'boolean)
 
 (defcustom vm-strip-reply-headers nil
@@ -4031,7 +4056,7 @@ from the headers generated in reply messages.  If you use the \"fakemail\"
 program as distributed with Emacs, you probably want to set this variable
 to t, because as of Emacs v18.52 \"fakemail\" could not handle unstripped
 headers."
-  :group 'vm-general
+  :group 'vm-compose
   :type 'boolean)
 
 (defcustom vm-select-new-message-hook nil
@@ -4674,7 +4699,7 @@ An older stunnel version used command line arguments instead.")
 headers of outbound mail for lines that don't end with a
 comma.  If such a line is found, an error is signaled and the
 mail is not sent."
-  :group 'vm-general
+  :group 'vm-compose
   :type 'boolean)
 
 (defun vm-octal (n)

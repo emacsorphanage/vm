@@ -1870,7 +1870,7 @@ not end the comment.  Blank lines do not get comments."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-delete-message-action "vm-next-message"
   "Command to do after deleting a message."
-  :group 'vm-general)
+  :group 'vm-dispose)
 
 ;;;###autoload
 (defun vm-delete-message-action (&optional arg)
