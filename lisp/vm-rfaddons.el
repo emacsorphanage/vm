@@ -488,7 +488,7 @@ Use `vm-rmail-toggle' to switch between normal and this mode."
          (vm-display nil nil '(rf-vm-rmail-up vm-previous-message)
                      (list this-command)))
         (t 
-         (next-line -1))))
+         (forward-line -1))))
 
 (defun vm-rmail-down ()
   (interactive)
@@ -497,7 +497,7 @@ Use `vm-rmail-toggle' to switch between normal and this mode."
          (vm-display nil nil '(rf-vm-rmail-up vm-next-message)
                      (list this-command)))
         (t 
-         (next-line 1))))
+         (forward-line 1))))
 
 (defun vm-do-with-message (count function vm-display)
   (vm-follow-summary-cursor)
