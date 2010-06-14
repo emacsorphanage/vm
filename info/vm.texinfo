@@ -4874,9 +4874,8 @@ the messages are stored: one of 'babyl, 'From_, 'BellFrom_,
 'From_-with-Content-Length and 'mmdf.
 @item
 @code{vm-folder-access-method}.  The method for accessing the server
-message store: 'pop for pop-folders as well as local folders retrieving
-messages from POP servers, 'imap for imap-folders as well as local
-folders retrieving messages from IMAP servers, and nil for all other folders.
+message store: 'pop for pop-folders and 'imap for imap-folders, and nil
+for all other folders. 
 @item
 @code{vm-folder-access-data}.  A vector of data for accessing the server
 message store.  The first two elements of the vector are the maildrop
