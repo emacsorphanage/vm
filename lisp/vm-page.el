@@ -826,8 +826,7 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 		   ;; decoding and see what happens. USR, 2010-02-01
 		   (if (and vm-mime-decode-for-show
 			    vm-mail-buffer 
-			    (not (vm-body-to-be-retrieved-of
-				  (car vm-message-pointer))))
+			    (vm-body-retrieved-of (car vm-message-pointer)))
 			(vm-set-buffer-variable vm-mail-buffer
 						'vm-mime-decoded nil))
 		   )

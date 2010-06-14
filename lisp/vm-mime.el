@@ -4258,8 +4258,6 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   ;; drag window point along, to a place arbitrarily far from
   ;; where it was when the user triggered the button.
   (save-excursion
-    ;; FIXME the following should be unnecessary
-    (vm-assert (not (vm-body-to-be-retrieved-of (car vm-message-pointer))))
     (let ((e (vm-find-layout-extent-at-point))
 	  retval )
       (cond ((null e) nil)

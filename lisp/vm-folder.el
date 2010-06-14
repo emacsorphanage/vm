@@ -4708,7 +4708,7 @@ folder is saved."
   (save-excursion
     (set-buffer (vm-buffer-of m))
     ;; m should have retrieve=nil, i.e., already retrieved
-    (vm-assert (null (vm-body-to-be-retrieved-of m)))
+    (vm-assert (vm-body-retrieved-of m))
     (if (memq m vm-fetched-messages)
 	(progn
 	  ;; at the moment, this case doesn't arise.  USR, 2010-06-11
@@ -4723,8 +4723,8 @@ folder is saved."
 	  (while (>= (length vm-fetched-messages)
 		     vm-fetched-message-limit)
 	    (let ((mm (car vm-fetched-messages)))
-	      ;; mm should have retrieve=nil and discard=t
-	      (vm-assert (and (null (vm-body-to-be-retrieved-of mm))
+	      ;; mm should have been retrieved and marked for discard
+	      (vm-assert (and (vm-body-retrieved-of mm)
 			      (vm-body-to-be-discarded-of mm)))
 	      (vm-discard-real-message-body mm)
 	      (vm-unregister-fetched-message mm))))

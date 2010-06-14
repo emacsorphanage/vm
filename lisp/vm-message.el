@@ -185,6 +185,8 @@
 ;; VM folders in the world already have nil's written in this field. 
 (defsubst vm-body-to-be-retrieved-of (message)
   (aref (aref message 3) 22))
+(defsubst vm-body-retrieved-of (message)
+  (null (aref (aref message 3) 22)))
 ;; pop UIDL value for message
 (defsubst vm-pop-uidl-of (message)
   (aref (aref message 3) 23))

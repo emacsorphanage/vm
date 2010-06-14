@@ -3195,12 +3195,12 @@ only marked messages are loaded, other messages are ignored."
 ;;     (if (not used-marks) 
 ;; 	(setq mlist (list (car vm-message-pointer))))
     (save-excursion
-      (message "Retrieving message body...")
+      ;; (message "Retrieving message body...")
       (while mlist
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
-	(if (not (vm-body-to-be-retrieved-of mm))
+	(if (vm-body-retrieved-of mm)
 	    ;; body is already retrieved
 	    (if (vm-body-to-be-discarded-of mm)
 		(vm-unregister-fetched-message mm))
@@ -3256,8 +3256,7 @@ only marked messages are loaded, other messages are ignored."
 	  (vm-register-fetched-message mm)
 	  (setq n (1+ n)))
 	(setq mlist (cdr mlist)))
-      (when (> n 0)
-	(message "Retrieving message body... done")))
+      (message "Retrieving message body... done"))
     (intern (buffer-name) vm-buffers-needing-display-update)
     (vm-update-summary-and-mode-line)
     ))
@@ -3356,8 +3355,8 @@ only marked messages are unloaded, other messages are ignored."
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
-	(when (and (null (vm-body-to-be-retrieved-of mm))
-		   (vm-body-to-be-discarded-of mm))
+	(when (and (vm-body-retrieved-of mm)
+		   (null (vm-body-to-be-discarded-of mm)))
 	  (if (= count 1)
 	      ;; Register the message as fetched instead of actually
 	      ;; discarding the message

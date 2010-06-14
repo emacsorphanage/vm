@@ -329,7 +329,7 @@ The saved messages are flagged as `filed'."
 	      (setq m (vm-real-message-of (car mlist)))
 	      (set-buffer (vm-buffer-of m))
 	      ;; FIXME the following isn't really necessary
-	      (vm-assert (not (vm-body-to-be-retrieved-of m)))
+	      (vm-assert (vm-body-retrieved-of m))
 	      (vm-save-restriction
 	       (widen)
 	       ;; have to stuff the attributes in all cases because
@@ -509,7 +509,7 @@ vm-save-message instead (normally bound to `s')."
 	    (setq m (vm-real-message-of (car mlist)))
 	    (set-buffer (vm-buffer-of m))
 	    ;; FIXME the following shouldn't be necessary any more
-	    (vm-assert (not (vm-body-to-be-retrieved-of m)))
+	    (vm-assert (vm-body-retrieved-of m))
 	    (vm-save-restriction
 	     (widen)
 	     (if (null file-buffer)
