@@ -4884,6 +4884,11 @@ connecting to the mail server.  For the 'pop access method, that is all
 there is.  But, for the 'imap access method, the vector has 9 other
 entries detailing various pieces of data about the IMAP server.
 @item
+@code{vm-folder-read-only}.  A boolean flag indicating whether the
+folder is read-only.  If so, no modifications are allowed, including
+attribute changes.  However, messages can be fetched from external
+storage for viewing.
+@item
 @code{vm-virtual-folder-definition}.  If the current folder is virtual,
 then this variable holds the data constituting its definition.
 @item
@@ -4958,9 +4963,12 @@ if a message is being replied to.
 @item @code{redistributing}.
 if a message is being redistributed.
 @end itemize
+
+@item
+@code{vm-spooled-mail-waiting}.  VM periodically checks if there is new
+mail in the spool files of the current folder and set this flag to t if
+there is new mail.
 @end itemize
-
-
 
 @node Message Internals, Summary Internals, Folder Internals, Internals
 @section Message Internals

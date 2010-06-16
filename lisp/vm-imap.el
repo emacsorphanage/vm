@@ -3185,6 +3185,7 @@ only marked messages are loaded, other messages are ignored."
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 1)
+  (vm-error-if-folder-read-only)
   (when (null count) (setq count 1))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-marked-or-prefixed-messages count))
@@ -3261,21 +3262,24 @@ only marked messages are loaded, other messages are ignored."
     (vm-update-summary-and-mode-line)
     ))
 
-(defun vm-retrieve-real-message-body (mm)
+(defun vm-retrieve-real-message-body (mm &optional fetch)
   "Retrieve the body of a real message MM from its external
-source and insert into the Folder buffer."
+source and insert it into the Folder buffer.  If the optional argument
+FETCH is t, then the retrieval is for a temporary message fetch."
   (when (not (eq (vm-message-access-method-of mm) 'imap))
     (error "This is currently available only for imap folders."))
-  (let ((fetch-method (vm-message-access-method-of mm))
-	(buffer-read-only nil)
-	(inhibit-read-only t)
-	(buffer-undo-list t)		; why this?  USR, 2010-06-11
-	(text-begin nil)
-	(text-end nil))
-    (save-excursion
-      (set-buffer (vm-buffer-of mm))
-      (vm-save-restriction
-       (widen)
+  (save-excursion
+    (set-buffer (vm-buffer-of mm))
+    (vm-save-restriction
+     (widen)
+     (let ((fetch-method (vm-message-access-method-of mm))
+	   (vm-folder-read-only (and vm-folder-read-only (not fetch)))
+	   (buffer-read-only nil)
+	   (inhibit-read-only t)
+	   (buffer-undo-list t)		; why this?  USR, 2010-06-11
+	   (modified (buffer-modified-p))
+	   (text-begin nil)
+	   (text-end nil))
        (setq text-begin (marker-position (vm-text-of mm)))
        (setq text-end (marker-position (vm-text-end-of mm)))
        (narrow-to-region (marker-position (vm-headers-of mm)) text-end)
@@ -3307,7 +3311,8 @@ source and insert into the Folder buffer."
        (vm-set-line-count-of mm nil)
        (vm-set-byte-count-of mm nil)
        ;; update the virtual messages
-       (vm-update-virtual-messages mm)))))
+       (vm-update-virtual-messages mm)
+       (set-buffer-modified-p modified)))))
 
 ;;;###autoload
 (defun vm-refresh-message (&optional count)
@@ -3340,6 +3345,7 @@ only marked messages are unloaded, other messages are ignored."
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 1)
+  (vm-error-if-folder-read-only)
   (when (null count) 
     (setq count 1))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
@@ -3372,14 +3378,15 @@ only marked messages are unloaded, other messages are ignored."
   "Discard the real message body of MM from its Folder buffer."
   (when (not (eq (vm-message-access-method-of mm) 'imap))
     (error "This is currently available only for imap folders."))
-  (let ((buffer-read-only nil)
-	(inhibit-read-only t)
-	(text-begin nil)
-	(text-end nil))
-    (save-excursion
-      (set-buffer (vm-buffer-of mm))
-      (vm-save-restriction
-       (widen)
+  (save-excursion
+    (set-buffer (vm-buffer-of mm))
+    (vm-save-restriction
+     (widen)
+     (let ((buffer-read-only nil)
+	   (inhibit-read-only t)
+	   (modified (buffer-modified-p))
+	   (text-begin nil)
+	   (text-end nil))
        (setq text-begin (marker-position (vm-text-of mm)))
        (setq text-end (marker-position (vm-text-end-of mm)))
        (goto-char text-begin)
@@ -3390,7 +3397,7 @@ only marked messages are unloaded, other messages are ignored."
        (vm-set-body-to-be-discarded-flag mm nil)
        (vm-set-line-count-of mm nil)
        (vm-update-virtual-messages mm)
-       ))))
+       (set-buffer-modified-p modified)))))
 
 (defun vm-imap-save-attributes (&optional interactive all-flags)
   "* Save the attributes of changed messages to the IMAP folder.
