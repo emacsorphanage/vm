@@ -125,13 +125,21 @@ See the documentation for vm-mode for more information."
 		folder
 	      (vm-read-folder folder remote-spec)))
       (set-buffer folder-buffer)
-      ;; notice the message summary file of Thunderbird 
+      ;; Thunderbird folders
       (let ((msf (concat (buffer-file-name) ".msf")))
-        (setq vm-sync-thunderbird-status
-              (or (file-exists-p msf)
-                  ;TODO (re-search-forward "^X-Mozilla-Status2?:"
-                  ;                   (point-max) t)
-                  )))
+	;; notice the message summary file of Thunderbird 
+        (setq vm-read-thunderbird-status 
+	      (and vm-read-thunderbird-status (file-exists-p msf)))
+	;; remember to write back Thunderbird status flags
+	(setq vm-sync-thunderbird-status 
+	      (and vm-sync-thunderbird-status 
+		   (or vm-read-thunderbird-status
+		       (save-excursion
+			 (vm-save-restriction
+			  (widen)
+			  (goto-char (point-min))
+			  (re-search-forward "^X-Mozilla-Status2?:"
+					     (point-max) t)))))))
       (when (and (stringp folder) (memq access-method '(pop imap)))
 	     (if (not (equal folder-name (buffer-name)))
 		 (rename-buffer folder-name t)))

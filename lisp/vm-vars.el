@@ -767,14 +767,14 @@ must set this variable non-nil."
   :group 'vm
   :type 'boolean)
 
-(defvar vm-sync-thunderbird-status nil
-  "If t VM synchronizes its headers with the headers of
+(defvar vm-sync-thunderbird-status t
+  "* If t VM synchronizes its headers with the headers of
 Thunderbird so that full interoperation with Thunderbird becomes
-possible.  (This is still experimental functionality.)") 
+possible.") 
 
 (make-variable-buffer-local 'vm-sync-thunderbird-status)
 
-(defvar vm-read-thunderbird-status nil
+(defvar vm-read-thunderbird-status t
   "If t VM reads the headers of Thunderbird when visiting
 folders.  This does not cause VM to write Thunderbird headers.  See
 `vm-sync-thunderbird-status' for full synchronization.")
