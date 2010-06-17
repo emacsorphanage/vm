@@ -1211,15 +1211,18 @@ vm-folder-type is initialized here."
           (vm-set-deleted-flag-of message t))
       (if (not (= 0 (logand status #x1000)))
           (vm-set-forwarded-flag-of message t)))
-    (setq status (vm-get-header-contents message "X-Mozilla-Status2"))
-    (when status
-      (setq status (string-to-number status 16))
-      (if (not (= 0 (logand status #x10000)))
-          (vm-set-new-flag-of message t))
-      (when (not (= 0 (logand status #xE000000)))
-        ;; FIXME care for message labels
-	(message "VM internal error 2011; continuing..."))
-      )))
+    ;; Disabling the reading of status2 flags because they cause
+    ;; integer overflow.  USR 2010-06-16
+    ;; (setq status (vm-get-header-contents message "X-Mozilla-Status2"))
+    ;; (when status
+    ;;   (setq status (string-to-number status 16))
+    ;;   (if (not (= 0 (logand status #x10000)))
+    ;;       (vm-set-new-flag-of message t))
+    ;;   (when (not (= 0 (logand status #xE000000)))
+    ;;     ;; FIXME care for message labels
+    ;; 	(message "VM internal error 2011; continuing..."))
+    ;;   )
+    ))
 
 (defun vm-read-attributes (message-list)
   "Reads the message attributes and cached header information.
@@ -1363,7 +1366,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	  (cond ((eq vm-folder-type 'babyl)
 		 (vm-read-babyl-attributes (car mp))))
           ;; read the status flags of Thunderbird
-          (if vm-sync-thunderbird-status
+          (if (or vm-sync-thunderbird-status vm-read-thunderbird-status)
               (vm-read-thunderbird-status (car mp))))
 	(cond ((vm-deleted-flag (car mp))
 	       (vm-increment vm-deleted-count))
