@@ -58,6 +58,65 @@
 ;; Utilities
 ;; ------------------------------------------------------------------------
 
+;; the maildrop spec of the imap folder
+(defsubst vm-folder-imap-maildrop-spec ()
+  (aref vm-folder-access-data 0))
+;; current imap process of the folder - each folder has a separate one
+(defsubst vm-folder-imap-process ()
+  (aref vm-folder-access-data 1))
+;; the uid validity value of the imap folder
+(defsubst vm-folder-imap-uid-validity ()
+  (aref vm-folder-access-data 2))
+;; the list of uid's and flags of the messages in the imap folder
+;; (msg-num . uid . size . flags list)
+(defsubst vm-folder-imap-uid-list ()
+  (aref vm-folder-access-data 3))	
+;; the number of messages in the imap folder
+(defsubst vm-folder-imap-mailbox-count ()
+  (aref vm-folder-access-data 4))
+;; flag indicating whether the imap folder allows writing
+(defsubst vm-folder-imap-read-write ()
+  (aref vm-folder-access-data 5))
+;; flag indicating whether the imap folder allows deleting
+(defsubst vm-folder-imap-can-delete ()
+  (aref vm-folder-access-data 6))
+;; flag indicating whether the imap server has body-peek functionality
+(defsubst vm-folder-imap-body-peek ()
+  (aref vm-folder-access-data 7))
+;; list of permanent flags storable on the imap server
+(defsubst vm-folder-imap-permanent-flags ()
+  (aref vm-folder-access-data 8))
+;; obarray of uid's with message numbers as their values
+(defsubst vm-folder-imap-uid-obarray ()
+  (aref vm-folder-access-data 9))	; obarray(uid, msg-num)
+;; obarray of uid's with flags lists as their values
+(defsubst vm-folder-imap-flags-obarray ()
+  (aref vm-folder-access-data 10))	; obarray(uid, (size . flags list))
+					; cons-pair shared with imap-uid-list
+
+(defsubst vm-set-folder-imap-maildrop-spec (val)
+  (aset vm-folder-access-data 0 val))
+(defsubst vm-set-folder-imap-process (val)
+  (aset vm-folder-access-data 1 val))
+(defsubst vm-set-folder-imap-uid-validity (val)
+  (aset vm-folder-access-data 2 val))
+(defsubst vm-set-folder-imap-uid-list (val)
+  (aset vm-folder-access-data 3 val))
+(defsubst vm-set-folder-imap-mailbox-count (val)
+  (aset vm-folder-access-data 4 val))
+(defsubst vm-set-folder-imap-read-write (val)
+  (aset vm-folder-access-data 5 val))
+(defsubst vm-set-folder-imap-can-delete (val)
+  (aset vm-folder-access-data 6 val))
+(defsubst vm-set-folder-imap-body-peek (val)
+  (aset vm-folder-access-data 7 val))
+(defsubst vm-set-folder-imap-permanent-flags (val)
+  (aset vm-folder-access-data 8 val))
+(defsubst vm-set-folder-imap-uid-obarray (val)
+  (aset vm-folder-access-data 9 val))
+(defsubst vm-set-folder-imap-flags-obarray (val)
+  (aset vm-folder-access-data 10 val))
+
 ;; For logging IMAP sessions
 
 (defvar vm-imap-log-sessions nil
@@ -104,6 +163,11 @@
 (defsubst vm-imap-session-type:assert-active ()
   (vm-assert (or (eq vm-imap-session-type 'active) 
 		 (eq vm-imap-session-type 'valid))))
+
+;; Simple macros
+
+(defsubst vm-imap-delete-message (process n)
+  (vm-imap-delete-messages process n n))
 
 (if (fboundp 'define-error)
     (progn
@@ -173,65 +237,6 @@ connection is established to the IMAP server and message bodies
 are not fetched.  In the 'autoconnect mode, a connection is
 established whenever a synchronization operation is performed and the
 connection mode is then turned into 'online.")
-
-;; the maildrop spec of the imap folder
-(defsubst vm-folder-imap-maildrop-spec ()
-  (aref vm-folder-access-data 0))
-;; current imap process of the folder - each folder has a separate one
-(defsubst vm-folder-imap-process ()
-  (aref vm-folder-access-data 1))
-;; the uid validity value of the imap folder
-(defsubst vm-folder-imap-uid-validity ()
-  (aref vm-folder-access-data 2))
-;; the list of uid's and flags of the messages in the imap folder
-;; (msg-num . uid . size . flags list)
-(defsubst vm-folder-imap-uid-list ()
-  (aref vm-folder-access-data 3))	
-;; the number of messages in the imap folder
-(defsubst vm-folder-imap-mailbox-count ()
-  (aref vm-folder-access-data 4))
-;; flag indicating whether the imap folder allows writing
-(defsubst vm-folder-imap-read-write ()
-  (aref vm-folder-access-data 5))
-;; flag indicating whether the imap folder allows deleting
-(defsubst vm-folder-imap-can-delete ()
-  (aref vm-folder-access-data 6))
-;; flag indicating whether the imap server has body-peek functionality
-(defsubst vm-folder-imap-body-peek ()
-  (aref vm-folder-access-data 7))
-;; list of permanent flags storable on the imap server
-(defsubst vm-folder-imap-permanent-flags ()
-  (aref vm-folder-access-data 8))
-;; obarray of uid's with message numbers as their values
-(defsubst vm-folder-imap-uid-obarray ()
-  (aref vm-folder-access-data 9))	; obarray(uid, msg-num)
-;; obarray of uid's with flags lists as their values
-(defsubst vm-folder-imap-flags-obarray ()
-  (aref vm-folder-access-data 10))	; obarray(uid, (size . flags list))
-					; cons-pair shared with imap-uid-list
-
-(defsubst vm-set-folder-imap-maildrop-spec (val)
-  (aset vm-folder-access-data 0 val))
-(defsubst vm-set-folder-imap-process (val)
-  (aset vm-folder-access-data 1 val))
-(defsubst vm-set-folder-imap-uid-validity (val)
-  (aset vm-folder-access-data 2 val))
-(defsubst vm-set-folder-imap-uid-list (val)
-  (aset vm-folder-access-data 3 val))
-(defsubst vm-set-folder-imap-mailbox-count (val)
-  (aset vm-folder-access-data 4 val))
-(defsubst vm-set-folder-imap-read-write (val)
-  (aset vm-folder-access-data 5 val))
-(defsubst vm-set-folder-imap-can-delete (val)
-  (aset vm-folder-access-data 6 val))
-(defsubst vm-set-folder-imap-body-peek (val)
-  (aset vm-folder-access-data 7 val))
-(defsubst vm-set-folder-imap-permanent-flags (val)
-  (aset vm-folder-access-data 8 val))
-(defsubst vm-set-folder-imap-uid-obarray (val)
-  (aset vm-folder-access-data 9 val))
-(defsubst vm-set-folder-imap-flags-obarray (val)
-  (aset vm-folder-access-data 10 val))
 
 (defun delete-common-elements (list1 list2 pred)
   ;; Takes two lists of unique values with dummy headers and
@@ -305,11 +310,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
   (let ((process nil)
 	(m-per-session vm-imap-messages-per-session)
 	(b-per-session vm-imap-bytes-per-session)
-	(handler (and (fboundp 'find-file-name-handler)
-		      (condition-case ()
-			  (find-file-name-handler source 'vm-imap-move-mail)
-			(wrong-number-of-arguments
-			  (find-file-name-handler source)))))
+	(handler (vm-find-file-name-handler source 'vm-imap-move-mail))
 	(imapdrop (vm-safe-imapdrop-string source))
 	(statblob nil)
 	(msgid (list nil nil (vm-imapdrop-sans-password source) 'uid))
@@ -469,11 +470,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
   (vm-buffer-type:set 'folder)
   ;;--------------------------
   (let ((process nil)
-	(handler (and (fboundp 'find-file-name-handler)
-		      (condition-case ()
-			  (find-file-name-handler source 'vm-imap-check-mail)
-			(wrong-number-of-arguments
-			 (find-file-name-handler source)))))
+	(handler (vm-find-file-name-handler source 'vm-imap-check-mail))
 	(retrieved vm-imap-retrieved-messages)
 	(imapdrop (vm-imapdrop-sans-password source))
 	(count 0)
@@ -918,7 +915,7 @@ nil if the session could not be created."
 		 (throw 'end-of-session nil)))
 	      (insert-before-markers (format "connected for %s\n" purpose)))
 	    (setq vm-imap-read-point (point))
-	    (process-kill-without-query process)
+	    (vm-process-kill-without-query process)
 	    (if (null (setq greeting (vm-imap-read-greeting process)))
 		(progn (delete-process process) ; why here?  USR
 		       (setq shutdown t)
@@ -1645,9 +1642,6 @@ as well."
 	  )))
     (delete-region ***start end)
     t ))
-
-(defsubst vm-imap-delete-message (process n)
-  (vm-imap-delete-messages process n n))
 
 (defun vm-imap-delete-messages (process beg end)
   ;;----------------------------------
@@ -2447,15 +2441,15 @@ server should be issued by UID, not message sequence number."
       (if (and (vm-redistributed-flag m)
 	       (not (member "redistributed" cached-flags)))
 	  (setq flags+ (cons "redistributed" flags+)))
-      (mapcar (lambda (flag) (delete flag cached-flags))
-	      '("\\answered" "filed" "written" "forwarded" "redistributed"))
+      (mapc (lambda (flag) (delete flag cached-flags))
+	    '("\\answered" "filed" "written" "forwarded" "redistributed"))
       ;; make copies for side effects
       (setq copied-flags (copy-sequence cached-flags))
       (setq labels (cons nil (copy-sequence labels)))
       ;; Ignore labels that are both in vm and the server
       (delete-common-elements labels copied-flags 'string<)
       ;; Ignore reversible flags that we have locally reversed -- Why?
-      ;; (mapcar (lambda (flag) (delete flag copied-flags))
+      ;; (mapc (lambda (flag) (delete flag copied-flags))
       ;;  '("\\seen" "\\deleted" "\\flagged"))
       ;; Flags to be added to the server
       (setq flags+ (append (cdr labels) flags+))
@@ -2473,7 +2467,7 @@ server should be issued by UID, not message sequence number."
 	   (format "%sSTORE %s +FLAGS.SILENT %s" 
 		   (if by-uid "UID " "")
 		   (if by-uid uid message-num)
-		   (mapcar 'intern flags+)))
+		   (mapc 'intern flags+)))
 	  (setq need-ok t)
 	  (while need-ok
 	    (setq response 
@@ -2489,7 +2483,7 @@ server should be issued by UID, not message sequence number."
 	   (format "%sSTORE %s -FLAGS.SILENT %s"
 		   (if by-uid "UID " "")
 		   (if by-uid uid message-num)
-		   (mapcar 'intern flags-)))
+		   (mapc 'intern flags-)))
 	  (setq need-ok t)
 	  (while need-ok
 	    (setq response 
@@ -2657,7 +2651,7 @@ operation of the server to minimize I/O."
 
 
 
-(defun vm-imap-get-synchronization-data (do-retrieves)
+(defun vm-imap-get-synchronization-data (&optional do-retrieves)
   ;; Compares the UID's of messages in the local cache and the IMAP
   ;; server.  Returns a list containing:
   ;; RETRIEVE-LIST: A list of pairs consisting of UID's and message
@@ -2928,7 +2922,7 @@ operation of the server to minimize I/O."
 		  (length stale-list)))
 		(vm-expunge-folder t t stale-list)
 	      (message "They will be labelled 'stale'")
-	      (mapcar 
+	      (mapc 
 	       (lambda (m)
 		 (vm-set-labels m (cons "stale" (vm-labels-of m)))
 		 (vm-set-attribute-modflag-of m t)

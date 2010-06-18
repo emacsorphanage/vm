@@ -390,6 +390,19 @@ vm-mail-buffer variable."
 	  (throw 'fail nil)))
       t)))
 
+(defun vm-abbreviate-file-name (path)
+  (if vm-xemacs-p
+      (abbreviate-file-name path t)
+    (abbreviate-file-name path)))
+
+(defun vm-find-file-name-handler (filename operation)
+  (if (fboundp 'find-file-name-handler)
+      (condition-case ()
+	  (find-file-name-handler filename handler)
+	(wrong-number-of-arguments
+	 (find-file-name-handler filename)))
+    nil))
+
 (defun vm-delete-directory-file-names (list)
   (vm-delete 'file-directory-p list))
 
@@ -1160,6 +1173,11 @@ filling of GNU Emacs does not work correctly here!"
 				   hex-digit-alist)))
 		     1)
 	(delete-region (- (point) 1) (- (point) 4))))))
+
+(defun vm-process-kill-without-query (process)
+  (if (fboundp 'process-kill-without-query)
+      (process-kill-without-query process)
+    (set-process-query-on-exit-flag process nil)))
 
 (defun vm-process-sentinel-kill-buffer (process what-happened)
   (kill-buffer (process-buffer process)))

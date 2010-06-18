@@ -1590,10 +1590,10 @@ Supports version 4 format of attribute storage, for backward compatibility."
 				 (progn (end-of-line) (point)))
 			 list (vm-parse string
 "[\000-\040,\177-\377]*\\([^\000-\040,\177-\377]+\\)[\000-\040,\177-\377]*"))
-		   (mapcar (function
-			    (lambda (s)
-			      (intern (downcase s) vm-label-obarray)))
-			   list))))
+		   (mapc (function
+			  (lambda (s)
+			    (intern (downcase s) vm-label-obarray)))
+			 list))))
 	 (goto-char (point-min))
 	 (vm-skip-past-folder-header)
 	 (vm-skip-past-leading-message-separator)
