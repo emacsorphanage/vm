@@ -1211,19 +1211,19 @@ vm-folder-type is initialized here."
       ;; answered flag
       (vm-set-replied-flag-of message (= 1 (logand status #x0002)))
       ;; flagged
-      (when (= 1 (logand status #x0004)) 
-	nil)
+      ;; (when (= 1 (logand status #x0004)) 
+      ;; 	nil)
       ;; deleted
       (vm-set-deleted-flag-of message (= 1 (logand status #x0008)))
       ;; subject with "Re:" prefix
-      (when (= 1 (logand status #x0010)) 
-	nil)
+      ;; (when (= 1 (logand status #x0010)) 
+      ;; 	nil)
       ;; thread folded
       ;; (unless (= 0 (logand status #x0020)) 
       ;; 	nil)
       ;; offline article
-      (when (= 1 (logand status #x0080)) 
-	nil)
+      ;; (when (= 1 (logand status #x0080)) 
+      ;; 	nil)
       ;; (when (= 1 (logand status #x0100)) ; watched
       ;; 	nil)
       ;; (when (= 1 (logand status #x0200)) ; authenticated sender
