@@ -1861,47 +1861,6 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	    (vm-set-stuff-flag-of (car mp) t)
 	    (setq mp (cdr mp)))))))
 
-(defun vm-set-thunderbird-status (message)
-  (let (status status2)
-    (setq status (vm-get-header-contents message "X-Mozilla-Status"))
-    (if (not status)
-        (setq status 0)
-      (setq status (string-to-number status 16))
-      ;; clear those bits we are using and keep others ...
-      (setq status (logand status (lognot (logior 1 2 4 8 #x1000))))
-      (goto-char (vm-start-of message))
-      (if (re-search-forward "^X-Mozilla-Status: [ 0-9A-Fa-f]+\n"
-			     (vm-text-of message) t)
-          (delete-region (match-beginning 0) (match-end 0))))
-    (setq status2 
-	  (substring (vm-get-header-contents message "X-Mozilla-Status2")
-		     0 -1))		; ignore the last 4 digits
-    (if (not status2)
-        (setq status2 0)
-      (setq status2 (string-to-number status2 16))
-      ;; clear those bits we are using and keep others ...
-      (setq status2 (logand status2 (lognot (logior #x1))))
-      (goto-char (vm-start-of message))
-      (if (re-search-forward "^X-Mozilla-Status2: [ 0-9A-Fa-f]+\n"
-			     (vm-text-of message) t)
-          (delete-region (match-beginning 0) (match-end 0))))
-    (unless (vm-unread-flag message)
-        (setq status (logior status 1)))
-    (when (vm-replied-flag message)
-        (setq status (logior status 2)))
-    (when (vm-mark-of message)
-        (setq status (logior status 4)))
-    (when (vm-deleted-flag message)
-        (setq status (logior status 8)))
-    (when (vm-forwarded-flag message)
-        (setq status (logior status #x1000)))
-    (when (vm-new-flag message)
-        (setq status2 (logior status2 #x1)))
-    (goto-char (vm-start-of message))
-    (forward-line 1)
-    (insert (format "X-Mozilla-Status: %04x\n" status))
-    (insert (format "X-Mozilla-Status2: %04x0000\n" status2))))
-  
 ;; Add a X-VM-Storage header
 (defun vm-add-storage-header (mp &rest args)
   (save-excursion
@@ -1960,9 +1919,8 @@ Supports version 4 format of attribute storage, for backward compatibility."
 		   (setq attributes (copy-sequence attributes)) nil))
 	     (if (eq vm-folder-type 'babyl)
 		 (vm-stuff-babyl-attributes m for-other-folder))
-             ;; set status flags of Thunderbird according to VMs
              (if vm-sync-thunderbird-status
-                 (vm-set-thunderbird-status m))
+                 (vm-stuff-thunderbird-status m))
 	     (goto-char (vm-headers-of m))
 	     (while (re-search-forward vm-attributes-header-regexp
 				       (vm-text-of m) t)
@@ -2105,6 +2063,47 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	    (vm-real-message-of message)))
 	  (vm-stuff-attributes (vm-real-message-of message))))))
 
+(defun vm-stuff-thunderbird-status (message)
+  (let (status status2)
+    (setq status (vm-get-header-contents message "X-Mozilla-Status"))
+    (if (not status)
+        (setq status 0)
+      (setq status (string-to-number status 16))
+      ;; clear those bits we are using and keep others ...
+      (setq status (logand status (lognot (logior 1 2 4 8 #x1000))))
+      (goto-char (vm-start-of message))
+      (if (re-search-forward "^X-Mozilla-Status: [ 0-9A-Fa-f]+\n"
+			     (vm-text-of message) t)
+          (delete-region (match-beginning 0) (match-end 0))))
+    (setq status2 
+	  (substring (vm-get-header-contents message "X-Mozilla-Status2")
+		     0 -1))		; ignore the last 4 digits
+    (if (not status2)
+        (setq status2 0)
+      (setq status2 (string-to-number status2 16))
+      ;; clear those bits we are using and keep others ...
+      (setq status2 (logand status2 (lognot (logior #x1))))
+      (goto-char (vm-start-of message))
+      (if (re-search-forward "^X-Mozilla-Status2: [ 0-9A-Fa-f]+\n"
+			     (vm-text-of message) t)
+          (delete-region (match-beginning 0) (match-end 0))))
+    (unless (vm-unread-flag message)
+        (setq status (logior status 1)))
+    (when (vm-replied-flag message)
+        (setq status (logior status 2)))
+    (when (vm-mark-of message)
+        (setq status (logior status 4)))
+    (when (vm-deleted-flag message)
+        (setq status (logior status 8)))
+    (when (vm-forwarded-flag message)
+        (setq status (logior status #x1000)))
+    (when (vm-new-flag message)
+        (setq status2 (logior status2 #x1)))
+    (goto-char (vm-start-of message))
+    (forward-line 1)
+    (insert-before-markers (format "X-Mozilla-Status: %04x\n" status))
+    (insert-before-markers (format "X-Mozilla-Status2: %04x0000\n" status2))))
+  
 (defun vm-stuff-labels ()
   (if vm-message-list
       (save-excursion
