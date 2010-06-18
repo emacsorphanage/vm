@@ -3274,8 +3274,8 @@ FETCH is t, then the retrieval is for a temporary message fetch."
      (widen)
      (let ((fetch-method (vm-message-access-method-of mm))
 	   (vm-folder-read-only (and vm-folder-read-only (not fetch)))
-	   (buffer-read-only nil)
 	   (inhibit-read-only t)
+	   ;; (buffer-read-only nil)    ; seems redundant
 	   (buffer-undo-list t)		; why this?  USR, 2010-06-11
 	   (modified (buffer-modified-p))
 	   (text-begin nil)
@@ -3382,8 +3382,8 @@ only marked messages are unloaded, other messages are ignored."
     (set-buffer (vm-buffer-of mm))
     (vm-save-restriction
      (widen)
-     (let ((buffer-read-only nil)
-	   (inhibit-read-only t)
+     (let ((inhibit-read-only t)
+	   ;; (buffer-read-only nil)     ; seems redundant
 	   (modified (buffer-modified-p))
 	   (text-begin nil)
 	   (text-end nil))
