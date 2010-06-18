@@ -4229,7 +4229,7 @@ maildrop string)."
   (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]*\\):[^:]*:[^:]*:\\([^:]*\\):[^:]*" drop)
 	   (vm-popdrop-sans-password drop))
       (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*" drop)
-	   (vm-imapdrop-sans-passord drop))
+	   (vm-imapdrop-sans-password drop))
       drop))
 
 (defun vm-maildrop-sans-personal-info (drop)

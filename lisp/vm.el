@@ -1090,7 +1090,7 @@ summary buffer to select a folder."
   ;; stuff to the reports.
   (let ((reporter-mailer '(vm-mail))
 	(mail-user-agent 'vm-user-agent)
-        varlist)
+        varlist (errors 0))
     (setq varlist (apropos-internal "^\\(vm\\|vmpc\\)-" 'user-variable-p)
           varlist (sort varlist
                         (lambda (v1 v2)
@@ -1110,24 +1110,40 @@ summary buffer to select a folder."
 	     ))
 	  ;; delete any passwords stored in maildrop strings
 	  (vm-spool-files 
-	   (if (listp (car vm-spool-files))
-	       (vm-mapcar 
-		(lambda (elem-xyz)
-		  (vm-mapcar (function vm-maildrop-sans-personal-info)
-			     elem-xyz)))
-	     (vm-mapcar (function vm-maildrop-sans-personal-info)
-			vm-spool-files)))
+	   (condition-case nil
+	       (if (listp (car vm-spool-files))
+		   (vm-mapcar 
+		    (lambda (elem-xyz)
+		      (vm-mapcar (function vm-maildrop-sans-personal-info)
+				 elem-xyz)))
+		 (vm-mapcar (function vm-maildrop-sans-personal-info)
+			    vm-spool-files))
+	     (error (vm-increment errors) vm-spool-files)))
 	  (vm-pop-folder-alist 
-	   (vm-maildrop-alist-sans-personal-info vm-pop-folder-alist))
+	   (condition-case nil
+	       (vm-maildrop-alist-sans-personal-info
+		vm-pop-folder-alist)
+	     (error (vm-increment errors) vm-pop-folder-alist)))
 	  (vm-imap-server-list 
-	   (vm-mapcar (function vm-maildrop-sans-personal-info) 
-		      vm-imap-server-list))
+	   (condition-case nil
+	       (vm-mapcar (function vm-maildrop-sans-personal-info) 
+		      vm-imap-server-list)
+	     (error (vm-increment errors) vm-imap-server-list)))
 	  (vm-imap-account-alist 
-	   (vm-maildrop-alist-sans-personal-info vm-imap-account-alist))
+	   (condition-case nil
+	       (vm-maildrop-alist-sans-personal-info
+		vm-imap-account-alist)
+	     (error (vm-increment errors) vm-imap-account-alist)))
 	  (vm-pop-auto-expunge-alist
-	   (vm-maildrop-alist-sans-personal-info vm-pop-auto-expunge-alist))
-	  (vm-imap-auto-expunge-alist
-	   (vm-maildrop-alist-sans-personal-info vm-imap-auto-expunge-alist)))
+	   (condition-case nil
+	       (vm-maildrop-alist-sans-personal-info
+		vm-pop-auto-expunge-alist)
+	     (error (vm-increment errors) vm-pop-auto-expunge-alist)))
+	  (vm-imap-auto-expunge-alist 
+	   (condition-case nil
+	       (vm-maildrop-alist-sans-personal-info
+		vm-imap-auto-expunge-alist)
+	     (error (vm-increment errors) vm-imap-auto-expunge-alist))))
       (while vars-to-delete
         (setq varlist (delete (car vars-to-delete) varlist)
               vars-to-delete (cdr vars-to-delete)))
@@ -1140,7 +1156,8 @@ summary buffer to select a folder."
        varlist
        nil
        nil
-       "INSTRUCTIONS:
+       (concat
+	"INSTRUCTIONS:
 - Please change the Subject header to a concise bug description.
 
 - In this report, remember to cover the basics, that is, what you
@@ -1157,7 +1174,13 @@ have email addresses at launchpad.net.
 
 - You may remove these instructions and other stuff which is unrelated
   to the bug from your message.
-")
+"
+	(if (> errors 0)
+	    "
+- The raw definitions for some of the mail configurations are included
+  below because there were errors in cleaning them.  Please replace any
+  sensitive information by xxxx."))
+	)
       (goto-char (point-min))
       (mail-position-on-field "Subject")
       (insert "VM-BUG: "))))
