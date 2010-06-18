@@ -21,6 +21,9 @@
 
 ;;; Code:
 
+;; This file contains various low-level operations that address
+;; incomaptibilities between Gnu and XEmacs.  Expect compiler warnings.
+
 ;; Taken from XEmacs as GNU Emacs is missing `replace-in-string' and defining
 ;; it may cause clashes with other packages defining it differently, in fact
 ;; we could also call the function `replace-regexp-in-string' as Roland
@@ -609,6 +612,12 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
   (let ((e (vm-make-extent start end)))
     (vm-set-extent-property e 'face face)))
 
+(fset 'vm-xemacs-set-face-foreground (function set-face-foreground))
+(fset 'vm-fsfemacs-set-face-foreground (function set-face-foreground))
+(fset 'vm-xemacs-set-face-background (function set-face-background))
+(fset 'vm-fsfemacs-set-face-background (function set-face-background))
+
+
 (defun vm-default-buffer-substring-no-properties (beg end &optional buffer)
   (let ((s (if buffer
 	       (save-excursion
@@ -1096,14 +1105,14 @@ filling of GNU Emacs does not work correctly here!"
   (if (not (eq number-to-keep t))
       (let ((extras (nthcdr (or number-to-keep 0)
 			    (symbol-value ring-variable))))
-	(mapcar (function
-		 (lambda (b)
-		   (and (buffer-name b)
-			(or (not (buffer-modified-p b))
-			    (not (vm-buffer-variable-value
-				  b buffer-offer-save)))
-			(kill-buffer b))))
-		extras)
+	(mapc (function
+	       (lambda (b)
+		 (when (and (buffer-name b)
+			    (or (not (buffer-modified-p b))
+				(not (vm-buffer-variable-value
+				      b buffer-offer-save))))
+		   (kill-buffer b))))
+	      extras)
 	(and (symbol-value ring-variable) extras
 	     (setcdr (memq (car extras) (symbol-value ring-variable))
 		     nil)))))
