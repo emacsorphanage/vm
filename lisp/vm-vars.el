@@ -815,11 +815,19 @@ must set this variable non-nil."
   :group 'vm
   :type 'boolean)
 
-(defvar vm-sync-thunderbird-status nil
-  "If t VM syncs its headers with the headers of Thunderbird.  (This is
-still experimental functionality.)")
+(defvar vm-sync-thunderbird-status t
+  "* If t VM synchronizes its headers with the headers of
+Thunderbird so that full interoperation with Thunderbird becomes
+possible.") 
 
 (make-variable-buffer-local 'vm-sync-thunderbird-status)
+
+(defvar vm-read-thunderbird-status t
+  "If t VM reads the headers of Thunderbird when visiting
+folders.  This does not cause VM to write Thunderbird headers.  See
+`vm-sync-thunderbird-status' for full synchronization.")
+
+(make-variable-buffer-local 'vm-read-thunderbird-status)
 
 (defcustom vm-visible-headers
   '("Resent-"
@@ -2236,14 +2244,16 @@ folder name when messages are saved.  The alist should be of the form
 where HEADER-NAME-REGEXP and REGEXP are strings, and FOLDER-NAME
 is a string or an s-expression that evaluates to a string.
 
-If any part of the contents of the first message header whose name
-is matched by HEADER-NAME-REGEXP is matched by the regular
+If any part of the contents of the first message header whose
+name is matched by HEADER-NAME-REGEXP is matched by the regular
 expression REGEXP, VM will evaluate the corresponding FOLDER-NAME
-and use the result as the default when prompting for a folder to
-save the message in.  If the resulting folder name is a relative
-pathname, then it will be rooted in the directory named by
-`vm-folder-directory', or the default-directory of the currently
-visited folder if `vm-folder-directory' is nil.
+and use the result as the default folder for saving the message.
+If the resulting folder name is a relative pathname, then it will
+be rooted in the directory named by `vm-folder-directory', or the
+default-directory of the currently visited folder if
+`vm-folder-directory' is nil.  If the resulting folder name is an IMAP
+maildrop specification, then the corresponding IMAP folder is used for
+saving. 
 
 When FOLDER-NAME is evaluated, the current buffer will contain
 only the contents of the header matched by HEADER-NAME-REGEXP.
