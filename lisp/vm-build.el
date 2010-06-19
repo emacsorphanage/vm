@@ -47,7 +47,7 @@
 ;; Load byte compile 
 (require 'bytecomp)
 ;; (setq byte-compile-warnings '(free-vars))
-(setq byte-compile-warnings '(not unresolved suspicious))
+(setq byte-compile-warnings '(not unresolved))
 (put 'inhibit-local-variables 'byte-obsolete-variable nil)
 
 ;; Preload these to get macros right 

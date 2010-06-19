@@ -232,8 +232,7 @@ and thread indentation."
   "Force a mode line update in all frames."
   (if (fboundp 'force-mode-line-update)
       (force-mode-line-update t)
-    (save-excursion
-      (set-buffer (other-buffer))
+    (with-current-buffer (other-buffer)
       (set-buffer-modified-p (buffer-modified-p)))))
 
 (defun vm-do-needed-mode-line-update ()
@@ -289,7 +288,6 @@ on its presentation buffer, if any."
     (setq vm-ml-message-marked (vm-mark-of (car vm-message-pointer))))
   (if vm-summary-buffer
       (let ((modified (buffer-modified-p)))
-	(save-excursion
 	  (vm-copy-local-variables vm-summary-buffer
 				   'default-directory
 				   'vm-ml-message-new
@@ -313,34 +311,33 @@ on its presentation buffer, if any."
 				   'vm-ml-labels
 				   'vm-spooled-mail-waiting
 				   'vm-message-list)
-	  (set-buffer vm-summary-buffer)
+	(with-current-buffer vm-summary-buffer
 	  (set-buffer-modified-p modified))))
   (if vm-presentation-buffer
       (let ((modified (buffer-modified-p)))
-	(save-excursion
-	  (vm-copy-local-variables vm-presentation-buffer
-				   'default-directory
-				   'vm-ml-message-new
-				   'vm-ml-message-unread
-				   'vm-ml-message-read
-				   'vm-ml-message-edited
-				   'vm-ml-message-replied
-				   'vm-ml-message-forwarded
-				   'vm-ml-message-filed
-				   'vm-ml-message-written
-				   'vm-ml-message-deleted
-				   'vm-ml-message-marked
-				   'vm-ml-message-number
-                                   'vm-ml-message-redistributed
-				   'vm-ml-highest-message-number
-				   'vm-folder-read-only
-				   'vm-folder-type
-				   'vm-virtual-folder-definition
-				   'vm-virtual-mirror
-				   'vm-ml-labels
-				   'vm-spooled-mail-waiting
-				   'vm-message-list)
-	  (set-buffer vm-presentation-buffer)
+	(vm-copy-local-variables vm-presentation-buffer
+				 'default-directory
+				 'vm-ml-message-new
+				 'vm-ml-message-unread
+				 'vm-ml-message-read
+				 'vm-ml-message-edited
+				 'vm-ml-message-replied
+				 'vm-ml-message-forwarded
+				 'vm-ml-message-filed
+				 'vm-ml-message-written
+				 'vm-ml-message-deleted
+				 'vm-ml-message-marked
+				 'vm-ml-message-number
+				 'vm-ml-message-redistributed
+				 'vm-ml-highest-message-number
+				 'vm-folder-read-only
+				 'vm-folder-type
+				 'vm-virtual-folder-definition
+				 'vm-virtual-mirror
+				 'vm-ml-labels
+				 'vm-spooled-mail-waiting
+				 'vm-message-list)
+	(with-current-buffer vm-presentation-buffer
 	  (set-buffer-modified-p modified))))
   (vm-force-mode-line-update))
 
@@ -2073,10 +2070,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 (defun vm-stuff-virtual-message-data (message)
   (let ((virtual (vm-virtual-message-p message)))
     (if (or (not virtual) (and virtual (vm-virtual-messages-of message)))
-	(save-excursion
-	  (set-buffer
-	   (vm-buffer-of
-	    (vm-real-message-of message)))
+	(with-current-buffer
+	    (vm-buffer-of (vm-real-message-of message))
 	  (vm-stuff-message-data (vm-real-message-of message))))))
 
 (defun vm-stuff-thunderbird-status (message)
@@ -2579,8 +2574,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		    v m (m-list nil) tail)
 		(message "Reading index file...")
 		(setq work-buffer (vm-make-work-buffer))
-		(save-excursion
-		  (set-buffer work-buffer)
+		(with-current-buffer work-buffer
 		  (insert-file-contents-literally index-file))
 		(goto-char (point-min))
 
@@ -2872,8 +2866,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 
 	  (message "Writing index file...")
 	  (catch 'done
-	    (save-excursion
-	      (set-buffer work-buffer)
+	    (with-current-buffer work-buffer
 	      (condition-case data
 		  (let ((coding-system-for-write (vm-binary-coding-system))
 			(selective-display nil))
@@ -3729,8 +3722,7 @@ Same as \\[vm-recover-file]."
 	    (get-buffer-create
 	     (format "*output of %s %s %s*"
 		     vm-movemail-program source destination)))
-      (save-excursion
-	(set-buffer error-buffer)
+      (with-current-buffer error-buffer
 	(erase-buffer))
       (setq status
 	    (apply 'call-process
@@ -3738,7 +3730,7 @@ Same as \\[vm-recover-file]."
 		    (list vm-movemail-program nil error-buffer t)
 		    (copy-sequence vm-movemail-program-switches)
 		    (list source destination))))
-      (save-excursion
+      (save-current-buffer
 	(set-buffer error-buffer)
 	(if (and (numberp status) (not (= 0 status)))
 	    (insert (format "\n%s exited with code %s\n"
@@ -3822,8 +3814,7 @@ Same as \\[vm-recover-file]."
 	       (set-buffer-modified-p nil))))
        (goto-char (point-max))
        (insert-buffer-substring crash-buf
-				1 (1+ (save-excursion
-					(set-buffer crash-buf)
+				1 (1+ (with-current-buffer crash-buf
 					(widen)
 					(buffer-size))))
        (setq got-mail (/= opoint-max (point-max)))
@@ -4743,7 +4734,7 @@ argument GARBAGE."
   "Register real message M as having been fetched into its folder
 temporarily.  Such fetched messages are discarded before the
 folder is saved."
-  (save-excursion
+  (save-current-buffer
     (set-buffer (vm-buffer-of m))
     ;; m should have retrieve=nil, i.e., already retrieved
     (vm-assert (vm-body-retrieved-of m))
@@ -4774,7 +4765,7 @@ folder is saved."
 (defun vm-unregister-fetched-message (m)
   "Unregister a real message M as a fetched message.  If M was never
 registered as a fetched message, then there is no effect."
-  (save-excursion
+  (save-current-buffer
     (set-buffer (vm-buffer-of m))
     (let ((vm-folder-read-only nil))
       (setq vm-fetched-messages (delq m vm-fetched-messages))
