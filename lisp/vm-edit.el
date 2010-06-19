@@ -163,7 +163,7 @@ data is discarded only from the marked messages in the current folder."
 	(vm-set-imap-uid-validity-of m uid-validity)
 	(vm-set-headers-to-be-retrieved-of m headers-flag)
 	(vm-set-body-to-be-retrieved-of m body-flag)
-	(vm-set-body-to-be-discarded-of m headers-flag))
+	(vm-set-body-to-be-discarded-of m body-discard-flag))
       (vm-set-vheaders-of m nil)
       (vm-set-vheaders-regexp-of m nil)
       (vm-set-text-of m nil)
