@@ -457,18 +457,16 @@ Normally, a record of the change is kept for the purpose of undo, and
   the changed attributes are stuffed into the folder, but NORECORD
   suppresses all of this.                             USR 2010-04-06" 
   (let ((m-list nil) vmp)
-    (cond
-     ((and (not vm-folder-read-only)
+    (when
+      (and (not vm-folder-read-only)
 	   (or (not (vm-virtual-messages-of m))
-	       (not (save-excursion
-		      (set-buffer
+	       (not (with-current-buffer
 		       (vm-buffer-of
-			 (vm-real-message-of m)))
+			 (vm-real-message-of m))
 		      vm-folder-read-only)))
            ;; do nothing it is is already set 
            (not (eq flag (aref (vm-attributes-of m) attr-index))))
-      (cond
-       ((not norecord)
+      (unless norecord
 	(setq vmp (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
 	(while vmp
 	  (if (eq (vm-attributes-of m) (vm-attributes-of (car vmp)))
@@ -485,15 +483,14 @@ Normally, a record of the change is kept for the purpose of undo, and
 	    (vm-undo-record (list function (car m-list) (not flag)))
 ;;;	    (vm-undo-boundary)
 	    (vm-increment vm-modification-counter))
-	  (setq m-list (cdr m-list)))))
+	  (setq m-list (cdr m-list))))
       (aset (vm-attributes-of m) attr-index flag)
       (vm-mark-for-summary-update m)
-      (if (not norecord)
-	  (progn
+      (unless norecord
 	    (vm-set-attribute-modflag-of m t)
 	    (if (eq vm-flush-interval t)
 		(vm-stuff-virtual-message-data m)
-	      (vm-set-stuff-flag-of m t))))))))
+	      (vm-set-stuff-flag-of m t))))))
 
 (defun vm-set-xxxx-cached-data-flag (m flag norecord function attr-index)
   "A generic function to set the cached-data flag of M at ATTR-INDEX to
@@ -505,18 +502,16 @@ Normally, a record of the change is kept for the purpose of undo, and
   the changed attributes are stuffed into the folder, but NORECORD
   suppresses all of this.                             USR 2010-04-06" 
   (let ((m-list nil) vmp)
-    (cond
-     ((and (not vm-folder-read-only)
+    (when
+     (and (not vm-folder-read-only)
 	   (or (not (vm-virtual-messages-of m))
-	       (not (save-excursion
-		      (set-buffer
+	       (not (with-current-buffer
 		       (vm-buffer-of
-			 (vm-real-message-of m)))
+			 (vm-real-message-of m))
 		      vm-folder-read-only)))
            ;; do nothing it is is already set 
            (not (eq flag (aref (vm-cached-data-of m) attr-index))))
-      (cond
-       ((not norecord)
+     (unless norecord
 	(setq vmp (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
 	(while vmp
 	  (if (eq (vm-cached-data-of m) (vm-cached-data-of (car vmp)))
@@ -533,15 +528,14 @@ Normally, a record of the change is kept for the purpose of undo, and
 	    (vm-undo-record (list function (car m-list) (not flag)))
 ;;;	    (vm-undo-boundary)
 	    (vm-increment vm-modification-counter))
-	  (setq m-list (cdr m-list)))))
+	  (setq m-list (cdr m-list))))
       (aset (vm-cached-data-of m) attr-index flag)
       (vm-mark-for-summary-update m)
-      (if (not norecord)
-	  (progn
+      (unless norecord
 	    (vm-set-attribute-modflag-of m t)
 	    (if (eq vm-flush-interval t)
 		(vm-stuff-virtual-message-data m)
-	      (vm-set-stuff-flag-of m t))))))))
+	      (vm-set-stuff-flag-of m t))))))
 
 
 (defun vm-set-labels (m labels)
@@ -587,9 +581,13 @@ A record of the change is kept for the purpose of undo, and the
 	(vm-set-stuff-flag-of m t))))))
 
 
+;; This flag is defunct, replaced by body-to-be-discarded.  USR, 2010-06-08
 (defun vm-set-headers-to-be-retrieved-flag (m flag &optional norecord)
+  nil)
+
+(defun vm-set-body-to-be-discarded-flag (m flag &optional norecord)
   (vm-set-xxxx-cached-data-flag 
-   m flag norecord 'vm-set-headers-to-be-retrieved-flag 21))
+   m flag norecord 'vm-set-body-to-be-discarded-flag 21))
 
 (defun vm-set-body-to-be-retrieved-flag (m flag &optional norecord)
   (vm-set-xxxx-cached-data-flag 

@@ -173,7 +173,11 @@
 ;; only valid for remote folder access methods
 ;; USR: changed the name to vm-headers-to-be-retrieved-of because all the
 ;; VM folders in the world already have nil's written in this field. 
+;; USR: changed it again to vm-body-to-be-discarded-of to allow for
+;; fetched messages to be discarded before save.  2010-06-08
 (defsubst vm-headers-to-be-retrieved-of (message)
+  nil)
+(defsubst vm-body-to-be-discarded-of (message)
   (aref (aref message 3) 21))
 ;; have we retrieved the body of this message?
 ;; only valid for remote folder access methods
@@ -181,6 +185,8 @@
 ;; VM folders in the world already have nil's written in this field. 
 (defsubst vm-body-to-be-retrieved-of (message)
   (aref (aref message 3) 22))
+(defsubst vm-body-retrieved-of (message)
+  (null (aref (aref message 3) 22)))
 ;; pop UIDL value for message
 (defsubst vm-pop-uidl-of (message)
   (aref (aref message 3) 23))
@@ -320,6 +326,8 @@
 (defsubst vm-set-references-of (message val)
   (aset (aref message 3) 20 val))
 (defsubst vm-set-headers-to-be-retrieved-of (message val)
+  nil)
+(defsubst vm-set-body-to-be-discarded-of (message val)
   (aset (aref message 3) 21 val))
 (defsubst vm-set-body-to-be-retrieved-of (message val)
   (aset (aref message 3) 22 val))
@@ -407,7 +415,7 @@
     ;; references
     (aset new-vector 20 
 	  (mapcar (function vm-mime-encode-words-in-string) (aref vector 20)))
-    ;; headers-to-be-retrieved
+    ;; body-to-be-discarded (formerly headers-to-be-retrieved)
     (aset new-vector 21 (aref vector 21))
     ;; body-to-be-retrieved
     (aset new-vector 22 (aref vector 22))
@@ -422,30 +430,32 @@
 
 
 (defun vm-make-message ()
-  (let ((v (make-vector 5 nil)) sym)
-    (vm-set-softdata-of v (make-vector vm-softdata-vector-length nil))
+  (let ((mvec (make-vector 5 nil))
+	sym)
+    (vm-set-softdata-of mvec (make-vector vm-softdata-vector-length nil))
     (vm-set-location-data-of
-     v (make-vector vm-location-data-vector-length nil))
-    (vm-set-mirror-data-of v (make-vector vm-mirror-data-vector-length nil))
-    (vm-set-message-id-number-of v (int-to-string vm-message-id-number))
+     mvec (make-vector vm-location-data-vector-length nil))
+    (vm-set-mirror-data-of 
+     mvec (make-vector vm-mirror-data-vector-length nil))
+    (vm-set-message-id-number-of mvec (int-to-string vm-message-id-number))
     (vm-increment vm-message-id-number)
-    (vm-set-buffer-of v (current-buffer))
+    (vm-set-buffer-of mvec (current-buffer))
     ;; We use an uninterned symbol here as a level of indirection
     ;; from a purely self-referential structure.  This is
     ;; necessary so that Emacs debugger can be used on this
     ;; program.
     (setq sym (make-symbol "<<>>"))
-    (set sym v)
-    (vm-set-real-message-sym-of v sym)
+    (set sym mvec)
+    (vm-set-real-message-sym-of mvec sym)
     ;; Another uninterned symbol for the virtual messages list.
     (setq sym (make-symbol "<v>"))
     (set sym nil)
-    (vm-set-virtual-messages-sym-of v sym)
+    (vm-set-virtual-messages-sym-of mvec sym)
     ;; Another uninterned symbol for the reverse link
     ;; into the message list.
     (setq sym (make-symbol "<--"))
-    (vm-set-reverse-link-sym-of v sym)
-    v ))
+    (vm-set-reverse-link-sym-of mvec sym)
+    mvec ))
 
 (defun vm-find-and-set-text-of (m)
   (save-excursion

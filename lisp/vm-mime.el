@@ -1406,9 +1406,9 @@ source of the message."
 		  (vm-menu-install-menus))
 	     (run-hooks 'vm-presentation-mode-hook))
 	   (setq vm-presentation-buffer-handle b)))
-    (setq b vm-presentation-buffer-handle
-	  vm-presentation-buffer vm-presentation-buffer-handle
-	  vm-mime-decoded nil)
+    (setq b vm-presentation-buffer-handle)
+    (setq vm-presentation-buffer vm-presentation-buffer-handle)
+    (setq vm-mime-decoded nil)
     ;; W3 or some other external mode might set some local colors
     ;; in this buffer; remove them before displaying a different
     ;; message here.
@@ -1628,27 +1628,31 @@ message body from the file into the current buffer.
 For example, 'X-VM-Storage: (file \"message-11\")' will fetch 
 the actual message from the file \"message-11\"."
   (goto-char (match-end 0))
-  (let ((buffer-read-only nil)
-	(inhibit-read-only t)
-	(buffer-undo-list t)
-	(text-begin (marker-position (vm-text-of mm))))
-    (goto-char text-begin)
-    (delete-region (point) (point-max))
-    (apply (intern (format "vm-fetch-%s-message" (car storage)))
-	   mm (cdr storage))
-    ;; delete the new headers
-    (delete-region text-begin
-		   (or (re-search-forward "\n\n" (point-max) t)
-		       (point-max)))
-    ;; fix markers now
-    (set-marker (vm-text-of mm) text-begin)
-    (set-marker (vm-text-end-of mm) (point-max))	
-    (set-marker (vm-end-of mm) (point-max))
-    ;; now care for the layout of the message, old layouts are invalid as the
-    ;; presentation buffer may have been used for other messages in the
-    ;; meantime and the marker got invalid by this.
-    (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
-    ))
+  (save-excursion
+    (set-buffer (marker-buffer (vm-text-of mm)))
+    (let ((buffer-read-only nil)
+	  (inhibit-read-only t)
+	  (buffer-undo-list t)
+	  (text-begin (marker-position (vm-text-of mm))))
+      (goto-char text-begin)
+      (delete-region (point) (point-max))
+      (message "Fetching message from external source...")
+      (apply (intern (format "vm-fetch-%s-message" (car storage)))
+	     mm (cdr storage))
+      (message "Fetching message from external source... done")
+      ;; delete the new headers
+      (delete-region text-begin
+		     (or (re-search-forward "\n\n" (point-max) t)
+			 (point-max)))
+      ;; fix markers now
+      (set-marker (vm-text-of mm) text-begin)
+      (set-marker (vm-text-end-of mm) (point-max))	
+      (set-marker (vm-end-of mm) (point-max))
+      ;; now care for the layout of the message, old layouts are invalid as the
+      ;; presentation buffer may have been used for other messages in the
+      ;; meantime and the marker got invalid by this.
+      (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
+      )))
   
 (defun vm-fetch-file-message (m filename)
   "Insert the message with message descriptor MM stored in the given FILENAME."
@@ -4244,7 +4248,8 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	;; It is not enough to just load the message because the
 	;; MIME buttons still have markers into the Presentation buffer.
 	(save-excursion
-	  (vm-load-message 1)
+	  ;; (vm-load-message 1)
+	  (vm-retrieve-marked-or-prefixed-messages 1)
 	  (vm-preview-current-message)
 	  (message "Message loaded.  Rerun the operation."))
       (error "Aborted"))
@@ -4253,8 +4258,6 @@ LAYOUT is the MIME layout struct for the message/external-body object."
   ;; drag window point along, to a place arbitrarily far from
   ;; where it was when the user triggered the button.
   (save-excursion
-    ;; FIXME the following should be unnecessary
-    (vm-assert (not (vm-body-to-be-retrieved-of (car vm-message-pointer))))
     (let ((e (vm-find-layout-extent-at-point))
 	  retval )
       (cond ((null e) nil)
@@ -4358,7 +4361,8 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
 	  (if (vm-body-to-be-retrieved-of m)
 	      (save-excursion
 		(set-buffer (vm-buffer-of m))
-		(vm-load-message 1)))
+		;; (vm-load-message 1)
+		(vm-retrieve-marked-or-prefixed-messages 1)))
           (setq o (vm-mm-layout (car mlist)))
           (when (stringp o)
             (setq o 'none)
@@ -7354,12 +7358,8 @@ This is a destructive operation and cannot be undone!"
     (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate)
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
-    (vm-load-message count)
-    ;; FIXME the following should be unnecessary
-    (mapcar
-     (lambda (m)
-       (vm-assert (not (vm-body-to-be-retrieved-of m))))
-     mlist)
+    ;; (vm-load-message count)
+    (vm-retrieve-marked-or-prefixed-messages count)
     (save-excursion
       (while mlist
         (let ((count (vm-mime-nuke-alternative-text/html-internal (car mlist))))

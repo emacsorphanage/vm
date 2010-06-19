@@ -152,6 +152,13 @@ has copied out the mail."
   :type '(choice directory 
 		 (const :tag "No not keep crash boxes" nil)))
 
+(defcustom vm-fetched-message-limit 10
+  "*Should be an integer representing the maximum number of messages
+that VM should keep in the Folder buffer when the messages are
+fetched, or nil to signify no limit."
+  :group 'vm
+  :type '(choice (const nil) integer))
+
 (defcustom vm-index-file-suffix nil
   "*Suffix used to construct VM index file names.
 When VM visits a folder, it checks for the existence of a file
@@ -177,7 +184,7 @@ possible, without loading the message bodies.
 This allows faster start-ups and smaller memory images of Emacs
 sessions, at the cost of short delays when messages are viewed.
 
-As of April 2008, this facility is still experimental and is only
+As of May 2010, this facility is still experimental and is only
 available for IMAP folders."
   :group 'vm-imap
   :type 'boolean)
@@ -873,11 +880,19 @@ must set this variable non-nil."
   :group 'vm-folders
   :type 'boolean)
 
-(defvar vm-sync-thunderbird-status nil
-  "If t VM syncs its headers with the headers of Thunderbird.  (This is
-still experimental functionality.)")
+(defvar vm-sync-thunderbird-status t
+  "* If t VM synchronizes its headers with the headers of
+Thunderbird so that full interoperation with Thunderbird becomes
+possible.") 
 
 (make-variable-buffer-local 'vm-sync-thunderbird-status)
+
+(defvar vm-read-thunderbird-status t
+  "If t VM reads the headers of Thunderbird when visiting
+folders.  This does not cause VM to write Thunderbird headers.  See
+`vm-sync-thunderbird-status' for full synchronization.")
+
+(make-variable-buffer-local 'vm-read-thunderbird-status)
 
 (defcustom vm-visible-headers
   '("Resent-"
@@ -2294,14 +2309,16 @@ folder name when messages are saved.  The alist should be of the form
 where HEADER-NAME-REGEXP and REGEXP are strings, and FOLDER-NAME
 is a string or an s-expression that evaluates to a string.
 
-If any part of the contents of the first message header whose name
-is matched by HEADER-NAME-REGEXP is matched by the regular
+If any part of the contents of the first message header whose
+name is matched by HEADER-NAME-REGEXP is matched by the regular
 expression REGEXP, VM will evaluate the corresponding FOLDER-NAME
-and use the result as the default when prompting for a folder to
-save the message in.  If the resulting folder name is a relative
-pathname, then it will be rooted in the directory named by
-`vm-folder-directory', or the default-directory of the currently
-visited folder if `vm-folder-directory' is nil.
+and use the result as the default folder for saving the message.
+If the resulting folder name is a relative pathname, then it will
+be rooted in the directory named by `vm-folder-directory', or the
+default-directory of the currently visited folder if
+`vm-folder-directory' is nil.  If the resulting folder name is an IMAP
+maildrop specification, then the corresponding IMAP folder is used for
+saving. 
 
 When FOLDER-NAME is evaluated, the current buffer will contain
 only the contents of the header matched by HEADER-NAME-REGEXP.
@@ -4983,6 +5000,10 @@ Its parent keymap is mail-mode-map.")
 (make-variable-buffer-local 'vm-folder-access-data)
 (defvar vm-message-list nil)
 (make-variable-buffer-local 'vm-message-list)
+(defvar vm-fetched-messages nil)
+(make-variable-buffer-local 'vm-fetched-messages)
+(defvar vm-fetched-message-count 0)
+(make-variable-buffer-local 'vm-fetched-message-count)
 (defvar vm-virtual-folder-definition nil)
 (make-variable-buffer-local 'vm-virtual-folder-definition)
 (defvar vm-virtual-buffers nil)

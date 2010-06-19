@@ -271,12 +271,8 @@ for customization of the output."
 	 (mlist (vm-select-marked-or-prefixed-messages count))
 	 (mcount (length mlist))
 	 (tmpbuf (get-buffer-create "*vm-ps-print*")))
-    (vm-load-message count)
-    ;; FIXME the following is really unnecessary
-    (mapcar
-     (lambda (m)
-       (vm-assert (not (vm-body-to-be-retrieved-of m))))
-     mlist)
+    ;; (vm-load-message count)
+    (vm-retrieve-marked-or-prefixed-messages count)
 
     (set-buffer tmpbuf)
     (setq major-mode 'vm-mode)

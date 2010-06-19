@@ -1261,6 +1261,7 @@ presentation is done in two stages: @dfn{previewing} and @dfn{paging}.
 * Previewing::                  Customizing message previews.
 * Paging::                      Viewing the current message.
 * MIME Messages::               Using VM's MIME display features.
+* Headers-only Messages::       Loading headers of messages without their bodies.
 @end menu
 
 @node Previewing, Paging, Reading Messages, Reading Messages
@@ -1389,7 +1390,7 @@ variable @code{fill-column}, this variable is not buffer-local by
 default.
 
 
-@node MIME Messages,, Paging, Reading Messages
+@node MIME Messages, Headers-only Messages, Paging, Reading Messages
 @section Reading MIME Messages
 
 @cindex MIME
@@ -2078,6 +2079,46 @@ cases the filename sent along with the mistyped file
 @code{vm-infer-mime-types} is set non-@code{nil}, VM will attempt to use 
 the filename sent with a MIME attachment to guess an attachment's 
 type if the attachment is of type @samp{application/octet-stream}.
+
+@node Headers-only Messages,, MIME Messages, Reading Messages
+@section Headers-only Messages
+
+Under certain circumstances, it is possible to maintain VM folders in
+which only the headers of messages are loaded into the Folder buffer.
+The message bodies are omitted.  The message bodies are fetched on
+demand when the messages are viewed or other operations are performed
+on them.  This results in a smaller folder size and allows faster
+operation on machines with limited resources.  However, the fetching
+of message bodies on demand can introduce short delays when messages
+are viewed.
+
+@vindex vm-load-headers-only
+To enable headers-only messages, set the variable
+@code{vm-load-headers-only} to t.  To start with, this has effect only
+in IMAP folders, but it might be extended to other forms of folders in
+future.
+
+@vindex vm-fetched-message-limit
+After fetching message bodies, VM stores them in the Folder buffer
+temporarily, so that repeated fetching is avoided.  The variable
+@code{vm-feched-message-limit} controls how many message bodies are
+stored in this way.  You can set it to an integer (10 is the default),
+or to @code{nil}, signifying that there is no limit.  All the fetched
+message bodies are flushed before folders are saved to disk.
+
+@findex vm-load-message
+@findex vm-unload-message
+You can manually load message bodies into the Folder using the command
+@code{o} (@code{vm-load-message}.  The command @code{O}
+(@code{vm-unload-message}) unloads a previosly loaded message body.
+Both the commands can take numerical prefix arguments or operate on
+marked messages.  Note that ``loading'' message body is different from
+on demand ``fetching''.  Loaded messages are permanently stored in the
+Folder buffer and written to disk when the folder is saved.  In
+contrast, fetched message bodies are always discarded before writing
+to disk.
+
+
 
 @node Sending Messages, Saving Messages, Reading Messages, Top
 @chapter Sending Messages
@@ -4833,9 +4874,8 @@ the messages are stored: one of 'babyl, 'From_, 'BellFrom_,
 'From_-with-Content-Length and 'mmdf.
 @item
 @code{vm-folder-access-method}.  The method for accessing the server
-message store: 'pop for pop-folders as well as local folders retrieving
-messages from POP servers, 'imap for imap-folders as well as local
-folders retrieving messages from IMAP servers, and nil for all other folders.
+message store: 'pop for pop-folders and 'imap for imap-folders, and nil
+for all other folders. 
 @item
 @code{vm-folder-access-data}.  A vector of data for accessing the server
 message store.  The first two elements of the vector are the maildrop
@@ -4843,6 +4883,11 @@ specification for the mail server and a reference to the process
 connecting to the mail server.  For the 'pop access method, that is all
 there is.  But, for the 'imap access method, the vector has 9 other
 entries detailing various pieces of data about the IMAP server.
+@item
+@code{vm-folder-read-only}.  A boolean flag indicating whether the
+folder is read-only.  If so, no modifications are allowed, including
+attribute changes.  However, messages can be fetched from external
+storage for viewing.
 @item
 @code{vm-virtual-folder-definition}.  If the current folder is virtual,
 then this variable holds the data constituting its definition.
@@ -4860,8 +4905,6 @@ becomes <killed buffer>, which is unfortunate.  Therefore, most
 interactive commands of VM check for killed Summary buffer and reset
 this variable to nil in such a case.  So, in the middle of code, this
 variable can be regarded as a valid buffer pointer.)
-@item
-@code{vm-summary-pointer}.
 @item
 @code{vm-presentation-buffer-handle}. The message Presentation buffer of the
 folder.  (Same proviso applies as for @code{vm-summary-buffer}.)
@@ -4881,6 +4924,13 @@ vm-message-pointer is the current message.
 @item
 @code{vm-last-message-pointer}.  Whenever the cursor is moved, the
 previous value of vm-message-pointer is remembered in this variable.
+@item
+@code{vm-summary-pointer}.
+@item
+@code{vm-fetched-messages}.  List of headers-only messages whose
+bodies were fetched for viewing or other operations.
+@code{vm-fetched-message-count}.  The number of messages in
+@code{vm-fetched-messages}.  An attempt is made to keep this below the @code{vm-fetched-message-limit}.
 @item
 @code{vm-mime-decoded}.  The MIME decoding state of the current message
 display: @code{undecoded} if the message is shown in undecoded plain
@@ -4913,9 +4963,12 @@ if a message is being replied to.
 @item @code{redistributing}.
 if a message is being redistributed.
 @end itemize
+
+@item
+@code{vm-spooled-mail-waiting}.  VM periodically checks if there is new
+mail in the spool files of the current folder and set this flag to t if
+there is new mail.
 @end itemize
-
-
 
 @node Message Internals, Summary Internals, Folder Internals, Internals
 @section Message Internals
@@ -5007,11 +5060,15 @@ the message ends.
 real-message-sym.  If the message is in a virtual folder, then its
 corresponding ``real message'' is the underlying message in another
 folder which is described by a message data structure similar to the
-current one.  The real message data structures are interned in an
-obarray and represented by ``symbols''.  This field stores the symbol
-representing the real message of the current message.
+current one.  The real message data structures are represented by
+uninterned symbols written as ``<<>>''.  This field stores the symbol
+representing the real message of the current message.  If the current
+message is a real message then this field contains its own symbol.
+The use of symbols for this purpose avoids the possibility of circular
+data structures.
 @item
-reverse-link.  Link to the previous message in the message list.
+reverse-link-sym.  Reference to the previous message in the message list,
+also represented by an uninterned symbol written as ``<--''.
 @item
 message-type.  A symbol indicating the type of the message according to
 its folder type, one of @code{BellFrom_}, @code{From_} and
@@ -5171,8 +5228,8 @@ is non-nil.
 edit-buffer.  If the message is being edited, this is the buffer being
 used.
 @item
-virtual-messages.  List of virtual messages mirroring the current real
-message. 
+virtual-messages-sym.  List of virtual messages mirroring the current real
+message, represented by an uninterned symbol written as ``<v>''. 
 @item
 stuff-flag.  Flag to indicates if the attribute changes have been
 ``stuffed'' into the folder buffer.
@@ -5244,7 +5301,8 @@ clip is stored.
 @item
 message-symbol.  A reference to the message that contains the MIME
 part.  Represented as a symbol (that is, an interned key into a hash
-table.) 
+table).  This is a different symbol from the real-message-sym of the
+message. 
 @item
 display-error.  If the display of a MIME part fails, its error string is
 stored here.
