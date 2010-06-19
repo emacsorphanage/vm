@@ -3187,22 +3187,18 @@ only marked messages are loaded, other messages are ignored."
   (vm-select-folder-buffer-and-validate 1)
   (vm-error-if-folder-read-only)
   (when (null count) (setq count 1))
-  (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist (vm-select-marked-or-prefixed-messages count))
+  (let ((mlist (vm-select-marked-or-prefixed-messages count))
 	(errors 0)
 	(n 0)
 	fetch-method
 	m mm)
-;;     (if (not used-marks) 
-;; 	(setq mlist (list (car vm-message-pointer))))
     (save-excursion
-      ;; (message "Retrieving message body...")
+      (message "Retrieving message body...")
       (while mlist
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
 	(if (vm-body-retrieved-of mm)
-	    ;; body is already retrieved
 	    (if (vm-body-to-be-discarded-of mm)
 		(vm-unregister-fetched-message mm))
 	  ;; else retrieve the body
@@ -3227,12 +3223,12 @@ temporary use.  Currently this facility is only available for
 IMAP folders.
 
 With a prefix argument COUNT, the current message and the next 
-COUNT - 1 messages are loaded.  A negative argument means
+COUNT - 1 messages are retrieved.  A negative argument means
 the current message and the previous |COUNT| - 1 messages are
-loaded.
+retrieved.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
-only marked messages are loaded, other messages are ignored."
+only marked messages are retrieved, other messages are ignored."
   (vm-select-folder-buffer-and-validate 1)
   (when (null count) (setq count 1))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
@@ -3315,20 +3311,15 @@ FETCH is t, then the retrieval is for a temporary message fetch."
        (set-buffer-modified-p modified)))))
 
 ;;;###autoload
-(defun vm-refresh-message (&optional count)
+(defun vm-refresh-message ()
   "Reload the message body from its permanent location.  Currently
-this facilty is only available for IMAP folders.
-
-With a prefix argument COUNT, the current message and the next 
-COUNT - 1 messages are reloaded.  A negative argument means
-the current message and the previous |COUNT| - 1 messages are
-reloaded."
-  (interactive "p")
-  (call-interactively (function vm-unload-message))
-  (call-interactively (function vm-load-message)))
+this facilty is only available for IMAP folders."
+  (interactive)
+  (vm-unload-message 1 t)
+  (vm-load-message))
 
 ;;;###autoload
-(defun vm-unload-message (&optional count)
+(defun vm-unload-message (&optional count physical)
   "Unload the message body, i.e., delete it from the folder
 buffer.  It can be retrieved again in future from its permanent
 external location.  Currently this facility is only available for
@@ -3340,7 +3331,11 @@ the current message and the previous |COUNT| - 1 messages are
 unloaded.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
-only marked messages are unloaded, other messages are ignored."
+only marked messages are unloaded, other messages are ignored.
+
+If the optional argument PHYSICAL is non-nil, then the message is
+physically discarded.  Otherwise, the discarding may be delayed until
+the folder is saved."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
@@ -3348,29 +3343,28 @@ only marked messages are unloaded, other messages are ignored."
   (vm-error-if-folder-read-only)
   (when (null count) 
     (setq count 1))
-  (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist (vm-select-marked-or-prefixed-messages count))
+  (let ((mlist (vm-select-marked-or-prefixed-messages count))
 	(buffer-undo-list t)
 	(errors 0)
 	m mm)
-;;     (if (not used-marks) 
-;; 	(setq mlist (list (car vm-message-pointer))))
     (save-excursion
-      (setq count 1)
+      (setq count 0)
       (while mlist
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
 	(when (and (vm-body-retrieved-of mm)
 		   (null (vm-body-to-be-discarded-of mm)))
-	  (if (= count 1)
+	  (if (and (= count 0) (not physical))
 	      ;; Register the message as fetched instead of actually
 	      ;; discarding the message
 	      (vm-register-fetched-message mm)
 	    (vm-discard-real-message-body mm)))
 	(setq mlist (cdr mlist))
 	(setq count (1+ count))))
-    (message "Message body discarded")
+    (if (= count 1) 
+	(message "Message body discarded")
+      (message "%d message bodies discarded" count))
     (vm-update-summary-and-mode-line)
     ))
 

@@ -4243,16 +4243,8 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 (defun vm-mime-run-display-function-at-point (&optional function dispose)
   "Display the MIME object at point according to its type."
   (interactive)
-  (if  (vm-body-to-be-retrieved-of (car vm-message-pointer))
-    (if (y-or-n-p "Message must be loaded to view attachments.  Load message?")
-	;; It is not enough to just load the message because the
-	;; MIME buttons still have markers into the Presentation buffer.
-	(save-excursion
-	  ;; (vm-load-message 1)
-	  (vm-retrieve-marked-or-prefixed-messages 1)
-	  (vm-preview-current-message)
-	  (message "Message loaded.  Rerun the operation."))
-      (error "Aborted"))
+  (if (vm-body-to-be-retrieved-of (car vm-message-pointer))
+      (error "Message must be loaded to view attachments" ))
 
   ;; save excursion to keep point from moving.  its motion would
   ;; drag window point along, to a place arbitrarily far from
@@ -4266,7 +4258,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		      e))
 	    (vm-xemacs-p
 	     (funcall (or function (extent-property e 'vm-mime-function))
-		      e)))))))
+		      e))))))
 
 ;;;###autoload
 (defun vm-mime-reader-map-save-file ()
@@ -4354,15 +4346,10 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
     (vm-select-folder-buffer-and-validate 1))
 
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
+    (vm-retrieve-marked-or-prefixed-messages count)
     (save-excursion
       (while mlist
         (let (m parts layout filename type disposition o)
-	  (setq m (vm-real-message-of (car mlist)))
-	  (if (vm-body-to-be-retrieved-of m)
-	      (save-excursion
-		(set-buffer (vm-buffer-of m))
-		;; (vm-load-message 1)
-		(vm-retrieve-marked-or-prefixed-messages 1)))
           (setq o (vm-mm-layout (car mlist)))
           (when (stringp o)
             (setq o 'none)
@@ -7002,8 +6989,8 @@ agent; under Unix, normally sendmail.)"
 		   "Content-Type: message/partial;\n\tid=%s;\n\tnumber=%d")
 		 id n))
 	(if vm-mime-avoid-folding-content-type
-	    (insert (format "; total=" n))
-	  (insert (format ";\n\ttotal=" n)))
+	    (insert (format "; total=%d" n))
+	  (insert (format ";\n\ttotal=%d" n)))
 	(setq total-markers (cons (point) total-markers))
 	(insert "\nContent-Transfer-Encoding: 7bit\n")
 	(goto-char (point-max))
@@ -7358,8 +7345,8 @@ This is a destructive operation and cannot be undone!"
     (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate)
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
-    ;; (vm-load-message count)
-    (vm-retrieve-marked-or-prefixed-messages count)
+    (vm-load-message count)
+    ;; (vm-retrieve-marked-or-prefixed-messages count)
     (save-excursion
       (while mlist
         (let ((count (vm-mime-nuke-alternative-text/html-internal (car mlist))))
