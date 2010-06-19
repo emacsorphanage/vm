@@ -1866,8 +1866,8 @@ message."
 (defun vm-mail-mode-show-headers ()
   "Display any hidden headers in a composition buffer."
   (interactive)
-  (mapcar 'delete-overlay (overlays-in (point-min)
-                                       (save-excursion (mail-text) (point))))
+  (mapc 'delete-overlay (overlays-in (point-min)
+				     (save-excursion (mail-text) (point))))
   (if (local-variable-p 'line-move-ignore-invisible (current-buffer))
       (setq line-move-ignore-invisible nil)))
 

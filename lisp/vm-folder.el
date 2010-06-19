@@ -2587,7 +2587,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		;; check version
 		(setq obj (read work-buffer))
 		(if (not (eq obj 1))
-		    (error "Unsupported index file version: %s") obj)
+		    (error "Unsupported index file version: %s" obj))
 
 		;; folder type
 		(setq folder-type (read work-buffer))
@@ -2695,7 +2695,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
     (widen)
     (catch 'done
       (cond ((not (consp blob))
-	     (error "Validity check object not a cons: %s"))
+	     (error "Validity check object not a cons: %s" blob))
 	    ((eq (car blob) 'file)
 	     (let (ch time time2)
 	       (setq blob (cdr blob))
@@ -3721,10 +3721,7 @@ Same as \\[vm-recover-file]."
 ;;;###autoload
 (defun vm-spool-move-mail (source destination)
   (let ((handler (and (fboundp 'find-file-name-handler)
-		      (condition-case ()
-			  (find-file-name-handler source 'vm-spool-move-mail)
-			(wrong-number-of-arguments
-			  (find-file-name-handler source)))))
+		      (vm-find-file-name-handler source 'vm-spool-move-mail)))
 	status error-buffer)
     (if handler
 	(funcall handler 'vm-spool-move-mail source destination)
@@ -3912,11 +3909,7 @@ Same as \\[vm-recover-file]."
     triples ))
 
 (defun vm-spool-check-mail (source)
-  (let ((handler (and (fboundp 'find-file-name-handler)
-		      (condition-case ()
-			  (find-file-name-handler source 'vm-spool-check-mail)
-			(wrong-number-of-arguments
-			 (find-file-name-handler source))))))
+  (let ((handler (vm-find-file-name-handler source 'vm-spool-check-mail)))
     (if handler
 	(funcall handler 'vm-spool-check-mail source)
       (let ((size (nth 7 (file-attributes source)))

@@ -106,11 +106,7 @@ a POP server, find its cache file on the file system"
   (let ((process nil)
 	(m-per-session vm-pop-messages-per-session)
 	(b-per-session vm-pop-bytes-per-session)
-	(handler (and (fboundp 'find-file-name-handler)
-		      (condition-case ()
-			  (find-file-name-handler source 'vm-pop-move-mail)
-			(wrong-number-of-arguments
-			  (find-file-name-handler source)))))
+	(handler (vm-find-file-name-handler source 'vm-pop-move-mail))
 	(popdrop (vm-safe-popdrop-string source))
 	(statblob nil)
 	(can-uidl t)
@@ -254,11 +250,7 @@ a POP server, find its cache file on the file system"
 
 (defun vm-pop-check-mail (source)
   (let ((process nil)
-	(handler (and (fboundp 'find-file-name-handler)
-		      (condition-case ()
-			  (find-file-name-handler source 'vm-pop-check-mail)
-			(wrong-number-of-arguments
-			 (find-file-name-handler source)))))
+	(handler (vm-find-file-name-handler source 'vm-pop-check-mail))
 	(retrieved vm-pop-retrieved-messages)
 	(popdrop (vm-popdrop-sans-password source))
 	(count 0)
@@ -525,7 +517,7 @@ relevant POP servers to remove the messages."
 	    (and (null process) (throw 'done nil))
 	    (insert-before-markers "connected\n")
 	    (setq vm-pop-read-point (point))
-	    (process-kill-without-query process)
+	    (vm-process-kill-without-query process)
 	    (if (null (setq greeting (vm-pop-read-response process t)))
 		(progn (delete-process process)
 		       (throw 'done nil)))
@@ -744,7 +736,7 @@ killed as well."
     (if (null response)
 	nil
       (setq list (vm-parse response "\\([^ ]+\\) *"))
-      (list (string-to-number (nth 1 list)) (string-to-int (nth 2 list))))))
+      (list (string-to-number (nth 1 list)) (string-to-number (nth 2 list))))))
 
 (defun vm-pop-read-list-response (process)
   (let ((response (vm-pop-read-response process t)))

@@ -398,10 +398,37 @@ vm-mail-buffer variable."
 (defun vm-find-file-name-handler (filename operation)
   (if (fboundp 'find-file-name-handler)
       (condition-case ()
-	  (find-file-name-handler filename handler)
+	  (find-file-name-handler filename operation)
 	(wrong-number-of-arguments
 	 (find-file-name-handler filename)))
     nil))
+
+(defun vm-get-buffer-window (buffer &optional which-frames which-devices)
+  (condition-case nil			; try XEmacs
+      (or (get-buffer-window buffer which-frames which-devices)
+	  (and vm-search-other-frames
+	       (get-buffer-window buffer t t)))
+    (wrong-number-of-arguments
+     (condition-case nil		; try recent Gnu Emacs
+	 (or (get-buffer-window buffer which-frames)
+	     (and vm-search-other-frames
+		  (get-buffer-window buffer t)))
+       (wrong-number-of-arguments	; baseline old Emacs
+	(get-buffer-window buffer))))))
+
+(defun vm-get-visible-buffer-window (buffer &optional 
+					    which-frames which-devices)
+  (condition-case nil
+      (or (get-buffer-window buffer which-frames which-devices)
+	  (and vm-search-other-frames
+	       (get-buffer-window buffer t which-devices)))
+    (wrong-number-of-arguments
+     (condition-case nil
+	 (or (get-buffer-window buffer which-frames)
+	     (and vm-search-other-frames
+		  (get-buffer-window buffer 'visible)))
+       (wrong-number-of-arguments
+	(get-buffer-window buffer))))))
 
 (defun vm-delete-directory-file-names (list)
   (vm-delete 'file-directory-p list))
