@@ -37,8 +37,8 @@
 ;;   :group 'mail)
 
 (defgroup vm-summary-faces nil
-  "VM additional virtual folder selectors and functions."
-  :group 'vm)
+  "Additional faces for the VM summary window."
+  :group 'vm-faces)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-when-compile

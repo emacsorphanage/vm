@@ -27,11 +27,16 @@
 
 (defgroup vm nil
   "The VM mail reader."
-  :link '(info-link "(vm)Top")
+  :link '(custom-manual "(vm)Top")
+  :link '(url-link :tag "VM Homepage" "http://www.nongnu.org/viewmail/")
   :group 'mail)
 
-(defgroup vm-general nil
-  "General VM configuration options."
+(defgroup vm-faces nil
+  "Faces for VM."
+  :group 'vm)
+
+(defgroup vm-misc nil
+  "Miscellaneous VM configuration options."
   :group 'vm)
 
 (defgroup vm-folders nil
@@ -86,6 +91,9 @@
   "Options affecting the deletion and expunging of messages in VM."
   :group 'vm)
 
+(defgroup vm-toolbar nil
+  "Options affecting the VM toolbar"
+  :group 'vm)
 
 ;; Custom variable definitions
 
@@ -98,7 +106,7 @@ Otherwise they are appended to the folder, which is VM default."
 (defcustom vm-init-file "~/.vm"
   "*Startup file for VM that is loaded the first time you run VM
 in an Emacs session."
-  :group 'vm-general
+  :group 'vm-misc
   :type 'file)
 
 (defcustom vm-preferences-file "~/.vm.preferences"
@@ -106,7 +114,7 @@ in an Emacs session."
 *Secondary startup file for VM, loaded after `vm-init-file'.
 This file is written and overwritten by VM and is not meant for
 users to edit directly."
-  :group 'vm-general
+  :group 'vm-misc
   :type 'file)
 
 (defcustom vm-folder-directory nil
@@ -156,7 +164,7 @@ has copied out the mail."
   "*Should be an integer representing the maximum number of messages
 that VM should keep in the Folder buffer when the messages are
 fetched, or nil to signify no limit."
-  :group 'vm
+  :group 'vm-folders
   :type '(choice (const nil) integer))
 
 (defcustom vm-index-file-suffix nil
@@ -738,7 +746,7 @@ seconds) VM should check for new mail and try to retrieve it.
 This is done asynchronously and may occur while you are editing
 other files.  It should not disturb your editing, except perhaps
 for a pause while the check is being done."
-  :group 'vm-general
+  :group 'vm-folders
   :type '(choice boolean integer))
 
 (defcustom vm-mail-check-interval 300
@@ -752,7 +760,7 @@ buffer local variable `vm-spooled-mail-waiting' is set non-nil in
 the buffers of those folders that have mail waiting.  VM
 displays \"Mail\" in the mode line of folders that have mail
 waiting."
-  :group 'vm-general
+  :group 'vm-folders
   :type '(choice (const nil) integer))
 
 (defvar vm-spooled-mail-waiting nil
@@ -954,12 +962,8 @@ ignored in this case."
 Nil means just use VM's builtin header highlighting code.
 
 FSF Emacs always uses VM's builtin highlighting code."
-  :group 'vm-general
+  :group 'vm-misc
   :type 'boolean)
-
-(defgroup vm-faces nil
-  "VM additional virtual folder selectors and functions."
-  :group 'vm)
 
 (defcustom vm-highlighted-header-face 'bold
   "*Face to be used to highlight headers.
@@ -2231,7 +2235,7 @@ will be lost unwittingly by quitting, i.e. not removed by intentional
 delete and expunge.  A value that is not nil and not t causes VM to ask
 only when there are unsaved changes to message attributes, or when messages
 will be unwittingly lost."
-  :group 'vm-general
+  :group 'vm-misc
   :type '(choice (const t) (const nil) (const if-something-will-be-lost)))
 
 (defcustom vm-confirm-new-folders nil
@@ -2516,7 +2520,7 @@ of t causes VM never to kill such buffers.
 
 Note that these buffers will vanish once you exit Emacs.  To keep a permanent
 record of your outgoing mail, use the `mail-archive-file-name' variable."
-  :group 'vm-general 
+  :group 'vm-misc 
   :type '(choice boolean integer))
 
 (defcustom vm-confirm-mail-send nil
@@ -2536,7 +2540,7 @@ format of the Resent-From header, when resending a message with
 
 (defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
   "*A list of headers to hide in `vm-mail-mode'."
-  :group 'vm-compose
+  :group 'vm-presentation
   :type '(choice (const :tag "Disabled" nil)
                  (set :tag "Header list"
                       (string "References")
@@ -3636,7 +3640,7 @@ older VM installation."
 
 (defcustom vm-image-directory nil
   "*The directory where VM finds the pixmaps for mime objects."
-  :group 'vm-general
+  :group 'vm-misc
   :type '(choice directory (const :tag "Automatic" nil)))
 
 (defun vm-image-directory ()
@@ -3661,7 +3665,7 @@ appear in the toolbar with a width of N pixels for top/bottom
 toolbars, and a height of N for left/right toolbars.
 
 See also `vm-toolbar-orientation' to control where the toolbar is placed."
-  :group 'vm-general
+  :group 'vm-toolbar
   :type '(repeat (choice integer
 			 (const autofile)
 			 (const compose)
@@ -3687,7 +3691,7 @@ value will be interpreted as `top'.
 
 This variable only has meaning under XEmacs 19.12 and beyond.
 Under FSF Emacs 21 the toolbar is always at the top of the frame."
-  :group 'vm-general
+  :group 'vm-toolbar
   :type '(choice (const left)
 		 (const right)
 		 (const top)
@@ -3695,7 +3699,7 @@ Under FSF Emacs 21 the toolbar is always at the top of the frame."
 
 (defcustom vm-toolbar-pixmap-directory nil
   "*The directory VM should find its toolbar pixmaps."
-  :group 'vm-general
+  :group 'vm-toolbar
   :type '(choice directory (const :tag "Automatic" nil)))
 
 (defvar vm-gtk-emacs-p (or (featurep 'gtk)
@@ -3723,7 +3727,7 @@ list based on the value of `vm-use-toolbar'.  `vm-use-toolbar' still
 must be set non-nil for a toolbar to appear, however.
 
 Consider this variable experimental; it may not be supported forever."
-  :group 'vm-general
+  :group 'vm-toolbar
   :type 'sexp)
 
 (defcustom vm-use-menus
@@ -3765,7 +3769,7 @@ menubar.
 This variable only has meaning in Emacs environments where menus
 are provided, which usually means Emacs has to be running under a
 window system."
-  :group 'vm-general
+  :group 'vm-toolbar
   :type '(choice (const 1)
 		 (repeat (choice (const dispose)
 				 (const emacs)
@@ -3783,7 +3787,7 @@ window system."
 (defcustom vm-popup-menu-on-mouse-3 t
   "*Non-nil value means VM should provide context-sensitive menus on mouse-3.
 A nil value means VM should not change the binding of mouse-3."
-  :group 'vm-general
+  :group 'vm-toolbar
   :type 'boolean)
 
 (defcustom vm-warp-mouse-to-new-frame nil
@@ -4028,7 +4032,7 @@ behave the same as if the value is nil."
 (defcustom vm-search-using-regexps nil
   "*Non-nil value causes VM's search command to interpret user input as a
 regular expression instead of as a literal string."
-  :group 'vm-general
+  :group 'vm-misc
   :type 'boolean)
 
 (defcustom vm-move-messages-physically nil
@@ -4037,7 +4041,7 @@ of a folder to always move the physical messages involved and not
 just change the presentation order.  Nil means that commands just
 change the order in which VM displays messages and leave the
 folder itself undisturbed."
-  :group 'vm-general
+  :group 'vm-folders
   :type 'boolean)
 
 (defcustom vm-edit-message-mode 'text-mode
@@ -4048,7 +4052,7 @@ folder itself undisturbed."
 (defvar lpr-command)
 (defcustom vm-print-command (if (boundp 'lpr-command) lpr-command "lpr")
   "*Command VM uses to print messages."
-  :group 'vm-general
+  :group 'vm-misc
   :type '(choice string (const nil)))
 
 (defvar lpr-switches)
@@ -4056,7 +4060,7 @@ folder itself undisturbed."
   "*List of command line flags passed to the command named by
 `vm-print-command'.  VM uses `vm-print-command' to print
 messages."
-  :group 'vm-general
+  :group 'vm-misc
   :type '(repeat string))
 
 (defcustom vm-berkeley-mail-compatibility
@@ -4431,7 +4435,7 @@ Value should be something that can be passed to `funcall'.  If
 this variable is non-nil, VM will use this function instead of
 its own buffer renaming code.  The buffer to be renamed will be
 the current buffer when the function is called."
-  :group 'vm-general
+  :group 'vm-misc
   :type 'function)
 
 (defvar mode-popup-menu nil
@@ -4708,7 +4712,7 @@ An older stunnel version used command line arguments instead.")
       (and (file-directory-p "C:\\") "C:\\")
       "/tmp")
   "*Name of a directory where VM can put temporary files."
-  :group 'vm-general
+  :group 'vm-misc
   :type 'directory)
 
 (defcustom vm-tale-is-an-idiot nil
@@ -4744,7 +4748,7 @@ you'd prefer something more widely used outside of Japan be used instead,
 you could load the `latin-unity' and `un-define' libraries under XEmacs
 21.4, and initialize this list to something like `(iso-8859-1 iso-8859-15
 utf-8)'. "
-  :group 'vm-general
+  :group 'vm-misc
   :type '(repeat symbol))
 
 (defcustom vm-mime-ucs-list '(utf-8 iso-2022-jp ctext escape-quoted)
@@ -4757,14 +4761,14 @@ utf-8)'. "
 If non-nil buffer names will be cleaned to avoid save problems.
 If t, 8bit chars are replaced by a \"_\", if a string it should
 be a regexp matching all chars to be replaced by a \"_\"."
-  :group 'vm-general
+  :group 'vm-misc
   :type '(choice (const :tag "Disabled" nil)
 		 (regexp :tag "Enabled" "[^ a-zA-Z0-9.,_\"'+-]")
 		 (regexp :tag "Custom regexp")))
 
 (defcustom vm-buffer-name-limit 80
   "*The limit for a generated buffer name."
-  :group 'vm-general
+  :group 'vm-misc
   :type '(choice (const :tag "Disabled" nil)
 		 (integer :tag "Enabled" 80)
                  (integer :tag "Length")))
@@ -5303,7 +5307,7 @@ Its parent keymap is mail-mode-map.")
 
 (defcustom vm-vs-attachment-regexp "^Content-Disposition: attachment"
   "Regexp used to detect attachments in a message."
-  :group 'vm-general
+  :group 'vm-misc
   :type 'regexp)
 
 (defvar vm-spam-words nil
@@ -5315,7 +5319,7 @@ Its parent keymap is mail-mode-map.")
 (defcustom vm-spam-words-file
   (expand-file-name "~/.spam-words")
   "A file storing a list of words contained in spam messages."
-  :group 'vm-general
+  :group 'vm-misc
   :type 'file)
 
 (defcustom vm-vs-spam-score-headers
@@ -5332,7 +5336,7 @@ header line in email messages,
 - SCORE-REGEXP is a regular expression matching the score, and
 
 - SCORE-FN is a function that converts the score string into a number."
-  :group 'vm-general
+  :group 'vm-misc
   :type '(repeat (list (string :tag "Header regexp")
                        (regexp :tag "Regexp matching the score")
                        (function :tag "Function converting the score to a number"))))
@@ -5974,7 +5978,7 @@ actions to be taken to destroy them.")
 Most addons are from `vm-rfaddons-infect-vm'.
 
 You must restart VM after a change to cause any effects."
-  :group 'vm-general
+  :group 'vm-misc
   :type '(set (const :tag "Enable faces in the summary buffer" 
 		     summary-faces)
 	      (const :tag "Enable shrinking of multi-line headers to one line."
@@ -6005,17 +6009,8 @@ You must restart VM after a change to cause any effects."
   "*A list of minor modes to disable before encoding a message.
 These modes may slow down (font-lock and *spell) encoding and may
 cause trouble (abbrev-mode)."
-  :group 'vm-general
+  :group 'vm-misc
   :type '(repeat symbol))
-
-(defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
-  "*A list of headers to hide in `vm-mail-mode'."
-  :group 'vm-general
-  :type '(choice (const :tag "Disabled" nil)
-                 (set :tag "Header list"
-                      (string "References")
-                      (string "In-Reply-To")
-                      (string "X-Mailer"))))
 
 (provide 'vm-vars)
 
