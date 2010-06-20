@@ -965,17 +965,16 @@ FSF Emacs always uses VM's builtin highlighting code."
   :group 'vm-misc
   :type 'boolean)
 
-(defcustom vm-highlighted-header-face 'bold
-  "*Face to be used to highlight headers.
-The headers to highlight are specified by the `vm-highlighted-header-regexp'
-variable.
+(defface vm-highlighted-header-face
+  '((t :inherit bold))
+  "Face used to highlight headers. 
+The headers to be highlighted are specified by the 
+`vm-highlighted-headers-regexp'
 
-This variable is ignored under XEmacs if `vm-use-lucid-highlighting' is
-non-nil.  XEmacs' highlight-headers package is used instead.  See the
-documentation for the function `highlight-headers' to find out how to
+This face is ignored under XEMacs if `vm-use-lucid-highlighting' is non-nil.
+Xemacs highlight-headers package is used instead. See the 
 customize header highlighting using this package."
-  :group 'vm-faces
-  :type 'symbol)
+  :group 'vm-faces)
 
 (defcustom vm-preview-lines 0
   "*Non-nil value N causes VM to display the visible headers + N lines of text
@@ -3871,12 +3870,6 @@ A nil value means VM should not enable URL passing to browsers."
 in messages when you click on them."
   :group 'vm-url
   :type '(repeat string))
-
-;; (defcustom vm-highlight-url-face 'bold-italic
-;;   "*Non-nil value should be a face to use display URLs found in messages.
-;; Nil means don't highlight URLs."
-;;   :group 'vm-faces
-;;   :type 'symbol)
 
 (defface vm-highlight-url-face
   '((t :inherit message-url))

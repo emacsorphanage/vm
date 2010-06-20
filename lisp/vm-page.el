@@ -298,7 +298,7 @@ Negative arg means scroll forward."
 	(cond ((vm-match-header vm-highlighted-header-regexp)
 	       (setq e (make-extent (vm-matched-header-contents-start)
 				    (vm-matched-header-contents-end)))
-	       (set-extent-property e 'face vm-highlighted-header-face)
+	       (set-extent-property e 'face 'vm-highlighted-header-face)
 	       (set-extent-property e 'vm-highlight t)))
 	(goto-char (vm-matched-header-end)))))
    ((fboundp 'overlay-put)
@@ -319,7 +319,7 @@ Negative arg means scroll forward."
 	(cond ((vm-match-header vm-highlighted-header-regexp)
 	       (setq p (make-overlay (vm-matched-header-contents-start)
 				     (vm-matched-header-contents-end)))
-	       (overlay-put p 'face vm-highlighted-header-face)
+	       (overlay-put p 'face 'vm-highlighted-header-face)
 	       (overlay-put p 'vm-highlight t)))
 	(goto-char (vm-matched-header-end)))))))
 
