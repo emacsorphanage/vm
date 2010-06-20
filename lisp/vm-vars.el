@@ -3872,11 +3872,16 @@ in messages when you click on them."
   :group 'vm-url
   :type '(repeat string))
 
-(defcustom vm-highlight-url-face 'bold-italic
-  "*Non-nil value should be a face to use display URLs found in messages.
-Nil means don't highlight URLs."
-  :group 'vm-faces
-  :type 'symbol)
+;; (defcustom vm-highlight-url-face 'bold-italic
+;;   "*Non-nil value should be a face to use display URLs found in messages.
+;; Nil means don't highlight URLs."
+;;   :group 'vm-faces
+;;   :type 'symbol)
+
+(defface vm-highlight-url-face
+  '((t :inherit message-url))
+  "Face used to display URLs found in messages."
+  :group 'vm-faces)
 
 (defcustom vm-url-search-limit 12000
   "*Non-nil numeric value tells VM how hard to search for URLs.

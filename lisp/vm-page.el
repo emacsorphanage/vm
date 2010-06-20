@@ -355,8 +355,8 @@ Negative arg means scroll forward."
 	      (vm-increment n))
 	    (setq e (make-extent (match-beginning n) (match-end n)))
 	    (set-extent-property e 'vm-url t)
-	    (if vm-highlight-url-face
-		(set-extent-property e 'face vm-highlight-url-face))
+	    (if (facep 'vm-highlight-url-face)
+		(set-extent-property e 'face 'vm-highlight-url-face))
 	    (if vm-url-browser
 		(let ((keymap (make-sparse-keymap))
 		      (popup-function
@@ -401,8 +401,8 @@ Negative arg means scroll forward."
 	      (vm-increment n))
 	    (setq o (make-overlay (match-beginning n) (match-end n)))
 	    (overlay-put o 'vm-url t)
-	    (if vm-highlight-url-face
-		(overlay-put o 'face vm-highlight-url-face))
+	    (if (facep 'vm-highlight-url-face)
+		(overlay-put o 'face 'vm-highlight-url-face))
 	    (if vm-url-browser
 		(let ((keymap (make-sparse-keymap))
 		      (popup-function
@@ -634,11 +634,11 @@ Use mouse button 3 to choose a Web browser for the URL."
     (or start (setq start (vm-headers-of (car vm-message-pointer))))
     (or end (setq end (vm-text-end-of (car vm-message-pointer))))
     ;; energize the URLs
-    (if (or vm-highlight-url-face vm-url-browser)
-	(save-restriction
-	  (widen)
-	  (narrow-to-region start end)
-	  (vm-energize-urls)))))
+    (if (or (facep 'vm-highlight-url-face) vm-url-browser)
+        (save-restriction
+          (widen)
+          (narrow-to-region start end)
+          (vm-energize-urls)))))
     
 (defun vm-highlight-headers-maybe ()
   ;; highlight the headers

@@ -1763,9 +1763,7 @@ You will need vm-pine.el in order to get this work."
      ((((type x)) (:foreground "green3"))))
    '(message-highlighted-header-contents
      ((((type x)) (:bold t))
-       (t (:bold t)))))
-  
-  (setq vm-highlight-url-face 'message-url))
+       (t (:bold t))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Well I like to have a different comment style a provided as default.
