@@ -3248,11 +3248,10 @@ variable's value has no effect on existing summary buffers."
   :group 'vm-summary
   :type 'string)
 
-(defcustom vm-summary-highlight-face 'bold
-  "*Face to use to highlight the summary entry for the current message.
-Nil means don't highlight the current message's summary entry."
-  :group 'vm-faces
-  :type 'symbol)
+(defface vm-summary-highlight-face
+  '((t :inherit bold))
+  "Face to use to highlight the summary entry for the current message."
+  :group 'vm-faces)
 
 (defcustom vm-mouse-track-summary t
   "*Non-nil value means highlight summary lines as the mouse passes

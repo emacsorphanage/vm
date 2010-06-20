@@ -242,7 +242,7 @@ Remove/add the `vm-summary-fontify-buffer' hook from the hook variable
           (vm-summary-faces-destroy)
           (if vm-summary-overlay
               (vm-set-extent-property vm-summary-overlay 'face
-                                      vm-summary-highlight-face))))))
+                                      'vm-summary-highlight-face))))))
 
 (defadvice vm-mouse-set-mouse-track-highlight (after vm-summary-faces activate)
   (when (and vm-summary-faces-mode
@@ -257,7 +257,7 @@ Remove/add the `vm-summary-fontify-buffer' hook from the hook variable
       (vm-set-extent-property vm-summary-overlay 'face
 			            (if vm-summary-faces-mode
 					'vm-summary-selected-face
-				      vm-summary-highlight-face))))
+				      'vm-summary-highlight-face))))
 
 (add-hook 'vm-summary-pointer-update-hook 'vm-summary-faces-fix-pointer)
 

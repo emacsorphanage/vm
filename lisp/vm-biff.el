@@ -404,7 +404,7 @@ AddToFunc SelectWindow
               (put-text-property start (point) 'vm-message-pointer mp)
 
               (vm-summary-highlight-region start (point)
-                                           vm-summary-highlight-face)
+                                           'vm-summary-highlight-face)
 
               (when do-mouse-track
                 (vm-mouse-set-mouse-track-highlight
