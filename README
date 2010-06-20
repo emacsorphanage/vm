@@ -37,6 +37,21 @@ If you are new to VM, see example.vm for example configuration
 settings (in a '~/.vm' file).  Read more in the VM manual on 'info'. 
 
 *******************************************************************************
+VERSION INFO
+
+The VM versions 8.2.0 and up are designed to work with:
+
+- XEmacs version 21.2 or higher
+
+- Gnu Emacs version 22.1 or higher
+
+They are not meant for use with any version of Emacs that does not
+have MULE support.
+
+The users of vcard's need a vcard.el package with vcard-api-version
+2.0.  (A suitable version of vcard.el is included in this distribution.)
+
+*******************************************************************************
 BUGS
 
 Please report bugs in VM using the VM function

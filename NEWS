@@ -15,16 +15,20 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
-VM 8.1.92a
+VM 8.1.91a (2010-06-22)
 
   IMPROVEMENTS
 
+   * Headers-only mode for IMAP folders is now completed.  It operates
+     by fetching messages into the Folder buffers, leading to a
+     more reliable operation.
+
    * In headers-only mode, a limited number of messages can be fetched
-   on demand for message preview.  New variable
-   `vm-fetched-message-max' specifies this number.
+     on demand for message preview.  New variable
+     `vm-fetched-message-max' specifies this number.  (Default is 10.)
 
-
-VM 8.1.91a
+   * New variable `vm-imap-default-account' allows IMAP-FCC copies to
+     be routed there.
 
    * New variable `vm-imap-server-timeout' allows timeout during a wait
      for output from an IMAP server.
@@ -109,7 +113,13 @@ VM 8.1.90a  (2010-05-11)
   ** New variables `vm-expunge-before-quit' and `vm-expunge-before-save'
      introduced to allow automatic expunge.  They are nil by default.  
 
-VM 8.1.2 (2010-05-??)
+VM 8.1.2 (yet to be released)
+
+    * VM made safe for use with Gnu Emacs 23, by removing a few calls
+      to the `next-line' function (which was redefined in this Emacs).
+
+    * Several critical problems with Thunderbird inter-operability
+      were corrected.
 
     * Extended Org mode email links to work for virtual folders.
     
@@ -356,7 +366,7 @@ VM 8.1.0 (2010-03-21)
       See the info node on IMAP folders.
 
     * New variable `vm-load-headers-only' to enable headers-only
-      downloading of IMAP folders.  (This is still experimental.)
+      downloading of IMAP folders.    (This is still experimental.)
 
     * IMAP-FCC is extended to work for virtual folders, but only if
       the real parent message is an IMAP message.
