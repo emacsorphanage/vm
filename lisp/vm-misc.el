@@ -430,6 +430,13 @@ vm-mail-buffer variable."
        (wrong-number-of-arguments
 	(get-buffer-window buffer))))))
 
+(defun vm-force-mode-line-update ()
+  "Force a mode line update in all frames."
+  (if (fboundp 'force-mode-line-update)
+      (force-mode-line-update t)
+    (with-current-buffer (other-buffer)
+      (set-buffer-modified-p (buffer-modified-p)))))
+
 (defun vm-delete-directory-file-names (list)
   (vm-delete 'file-directory-p list))
 

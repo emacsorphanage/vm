@@ -228,13 +228,6 @@ and thread indentation."
 	   (intern (buffer-name (vm-buffer-of m))
 		   vm-buffers-needing-display-update)))))
 
-(defun vm-force-mode-line-update ()
-  "Force a mode line update in all frames."
-  (if (fboundp 'force-mode-line-update)
-      (force-mode-line-update t)
-    (with-current-buffer (other-buffer)
-      (set-buffer-modified-p (buffer-modified-p)))))
-
 (defun vm-do-needed-mode-line-update ()
   "Do a modeline update for the current folder buffer.
 This means setting up all the various vm-ml attribute variables
@@ -2068,11 +2061,12 @@ stuff-flag set in the current folder.    USR 2010-04-20"
     (apply 'concat (nreverse list))))
 
 (defun vm-stuff-virtual-message-data (message)
-  (let ((virtual (vm-virtual-message-p message)))
+  (let ((virtual (vm-virtual-message-p message))
+	(real-m (vm-real-message-of message)))
     (if (or (not virtual) (and virtual (vm-virtual-messages-of message)))
 	(with-current-buffer
-	    (vm-buffer-of (vm-real-message-of message))
-	  (vm-stuff-message-data (vm-real-message-of message))))))
+	    (vm-buffer-of real-m)
+	  (vm-stuff-message-data real-m)))))
 
 (defun vm-stuff-thunderbird-status (message)
   (let (status status2)

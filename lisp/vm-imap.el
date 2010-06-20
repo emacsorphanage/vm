@@ -156,8 +156,7 @@
   (vm-assert (eq vm-imap-session-type type)))
 
 (defsubst vm-imap-folder-session-type:assert (type)
-  (save-excursion
-    (set-buffer (process-buffer (vm-folder-imap-process)))
+  (with-current-buffer (process-buffer (vm-folder-imap-process))
     (vm-assert (eq vm-imap-session-type type))))
 
 (defsubst vm-imap-session-type:assert-active ()
@@ -192,14 +191,7 @@
 
 (defun vm-imap-capability (cap &optional process)
   (if process
-      (save-excursion
-	;;----------------------------
-	(vm-buffer-type:enter 'process)
-	;;----------------------------
-	(set-buffer (process-buffer process))
-	;;-------------------
-	(vm-buffer-type:exit)
-	;;-------------------
+      (with-current-buffer (process-buffer process)
 	(memq cap vm-imap-capabilities))
     (memq cap vm-imap-capabilities)))
 
@@ -338,7 +330,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		(vm-imap-make-session source vm-imap-ok-to-ask "movemail"))
 	  (or process (throw 'end-of-session nil))
 	  (setq process-buffer (process-buffer process))
-	  (save-excursion
+	  (save-excursion		; = save-current-buffer?
 	    (set-buffer process-buffer)
 	    ;;--------------------------------
 	    (vm-buffer-type:enter 'process)
@@ -478,7 +470,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	result)
     (unwind-protect
 	(prog1
-	    (save-excursion
+	    (save-excursion		; = save-current-buffer?
 	      ;;----------------------------
 	      (vm-buffer-type:enter 'process)
 	      ;;----------------------------
@@ -866,11 +858,11 @@ nil if the session could not be created."
 		(vm-make-work-buffer 
 		 (vm-make-trace-buffer-name session-name host)))
 	  (vm-imap-log-token imap-buffer)
-	  (save-excursion
+	  (save-excursion		; = save-current-buffer?
+	    (set-buffer imap-buffer)
 	    ;;----------------------------
 	    (vm-buffer-type:enter 'process)
 	    ;;----------------------------
-	    (set-buffer imap-buffer)
 	    (setq vm-folder-type (or folder-type vm-default-folder-type))
 	    (buffer-disable-undo imap-buffer)
 	    (make-local-variable 'vm-imap-read-point)
@@ -1055,11 +1047,11 @@ as well."
     (setq imap-buffer (process-buffer process)))
   (when (and process (memq (process-status process) '(open run))
 	   (buffer-live-p (process-buffer process)))
-      (save-excursion
+      (save-excursion			; = save-current-buffer?
+	(set-buffer imap-buffer)
 	;;----------------------------
 	(vm-buffer-type:enter 'process)
 	;;----------------------------
-	(set-buffer imap-buffer)
 	;; vm-imap-end-session might have already been called on
 	;; this process, so don't logout and schedule the killing
 	;; the process again if it's already been done.
@@ -1095,11 +1087,10 @@ as well."
   (when (and imap-buffer (buffer-live-p imap-buffer))
       (if (and (not vm-imap-keep-trace-buffer) (not keep-buffer))
 	  (kill-buffer imap-buffer)
-	(save-excursion
+	(with-current-buffer imap-buffer
 	  ;;----------------------------
 	  (vm-buffer-type:enter 'process)
 	  ;;----------------------------
-	  (set-buffer imap-buffer)
 	  (rename-buffer (concat "saved " (buffer-name)) t)
 	  (vm-keep-some-buffers (current-buffer) 'vm-kept-imap-buffers
 				vm-imap-keep-failed-trace-buffers)
@@ -1585,14 +1576,7 @@ as well."
 		    (let ((attrs (file-attributes target)))
 		      (or (null attrs) (equal 0 (nth 7 attrs)))))
 		   ((bufferp target)
-		    (save-excursion
-		      ;;----------------------------
-		      (vm-buffer-type:enter 'unknown)
-		      ;;----------------------------
-		      (set-buffer target)
-		      ;;-------------------
-		      (vm-buffer-type:exit)
-		      ;;-------------------
+		    (with-current-buffer target
 		      (zerop (buffer-size))))))
 	(let ((opoint (point)))
 	  (vm-convert-folder-header nil vm-folder-type)
@@ -1628,11 +1612,10 @@ as well."
 	      (selective-display nil))
 	  (write-region ***start end target t 0))
       (let ((b (current-buffer)))
-	(save-excursion
+	(with-current-buffer target
 	  ;;----------------------------
 	  (vm-buffer-type:enter 'unknown)
 	  ;;----------------------------
-	  (set-buffer target)
 	  (let ((buffer-read-only nil))
 	    (insert-buffer-substring b ***start end)
 	    )
@@ -2078,11 +2061,11 @@ that the session is active.  Returns t or nil."
 	   (buffer-live-p (process-buffer process)))
       (if vm-imap-ensure-active-sessions
 	  (let ((buffer (process-buffer process)))
-	    (save-excursion
+	    (save-excursion		; = save-current-buffer?
+	      (set-buffer buffer)
 	      ;;----------------------------
 	      (vm-buffer-type:enter 'process)
 	      ;;----------------------------
-	      (set-buffer buffer)
 	      (vm-imap-send-command process "NOOP")
 	      (condition-case err
 		  (let ((response nil)
@@ -2136,11 +2119,11 @@ purposes. Returns the IMAP process or nil if unsuccessful."
       (vm-set-folder-imap-process process)
       (setq mailbox (vm-imap-parse-spec-to-list (vm-folder-imap-maildrop-spec))
 	    mailbox (nth 3 mailbox))
-      (save-excursion
+      (save-excursion			; = save-current-buffer?
+	(set-buffer (process-buffer process))
 	;;----------------------------
 	(vm-buffer-type:enter 'process)
 	;;----------------------------
-	(set-buffer (process-buffer process))
 	(setq select (vm-imap-select-mailbox process mailbox))
 	(setq mailbox-count (nth 0 select)
 	      uid-validity (nth 1 select)
@@ -2196,11 +2179,11 @@ Throws vm-imap-protocol-error for failure."
 	  (process (vm-folder-imap-process))
 	  (mailbox-count (vm-folder-imap-mailbox-count))
 	  list tuples tuple uid)
-      (save-excursion
+      (save-excursion			; = save-current-buffer?
+	(set-buffer (process-buffer process))
 	;;----------------------------
 	(vm-buffer-type:enter 'process)
 	;;----------------------------
-	(set-buffer (process-buffer process))
 	(if (eq mailbox-count 0)
 	    (setq list nil)
 	  (setq list (vm-imap-get-message-data-list process 1 mailbox-count)))
@@ -2230,8 +2213,7 @@ Throws vm-imap-protocol-error for failure."
     (vm-set-folder-imap-uid-obarray nil)
     (vm-set-folder-imap-flags-obarray nil)
     (if (processp (vm-folder-imap-process))
-	(save-excursion
-	  (set-buffer (process-buffer (vm-folder-imap-process)))
+	(with-current-buffer (process-buffer (vm-folder-imap-process))
 	  ;;---------------------------------
 	  (vm-imap-session-type:set 'active)
 	  ;;---------------------------------
@@ -2248,8 +2230,7 @@ Throws vm-imap-protocol-error for failure."
     (vm-set-folder-imap-uid-list nil)
     (vm-set-folder-imap-uid-obarray nil)
     (if (processp (vm-folder-imap-process))
-	(save-excursion
-	  (set-buffer (process-buffer (vm-folder-imap-process)))
+	(with-current-buffer (process-buffer (vm-folder-imap-process))
 	  ;;---------------------------------
 	  (vm-imap-session-type:set 'active)
 	  ;;---------------------------------
@@ -2265,12 +2246,12 @@ Throws vm-imap-protocol-error for failure."
     (if (not (equal (vm-imap-uid-validity-of m)
 		    (vm-folder-imap-uid-validity)))
 	(vm-imap-normal-error "message UIDVALIDITY does not match the server"))
-    (save-excursion
+    (save-excursion		  ; = save-current-buffer?
+      (set-buffer (process-buffer process))
       ;;----------------------------------
       (vm-buffer-type:enter 'process)
       (vm-imap-session-type:assert-active)
       ;;----------------------------------
-      (set-buffer (process-buffer process))
       (vm-imap-send-command process
 			    (format "UID FETCH %s (FLAGS)"
 				    (vm-imap-uid-of m)))
@@ -2456,7 +2437,7 @@ server should be issued by UID, not message sequence number."
       ;; Flags to be deleted from the server
       (setq flags- (append (cdr copied-flags) flags-))
 
-      (save-excursion
+      (save-excursion			; = save-current-buffer?
 	(set-buffer (process-buffer process))
 	;;----------------------------------
 	(vm-buffer-type:enter 'process)
@@ -2524,11 +2505,10 @@ MAILBOX."
 	(setq flags (cons (intern "\\Answered") flags)))
     (if (not (vm-unread-flag m))
 	(setq flags (cons (intern "\\Seen") flags)))
-    (save-excursion
+    (with-current-buffer (vm-buffer-of m)
       ;;----------------------------
       (vm-buffer-type:enter 'folder)
       ;;----------------------------
-      (set-buffer (vm-buffer-of m))
       (save-restriction
 	(widen)
 	(setq string (buffer-substring (vm-headers-of m) (vm-text-end-of m))
@@ -2537,11 +2517,11 @@ MAILBOX."
       (vm-buffer-type:exit)
       ;;-------------------
       )
-    (save-excursion
+    (save-excursion			; = save-current-buffer?
+      (set-buffer (process-buffer process))
       ;;----------------------------
       (vm-buffer-type:enter 'process)
       ;;----------------------------
-      (set-buffer (process-buffer process))
       (condition-case nil
 	  (vm-imap-create-mailbox process mailbox)
 	(vm-imap-protocol-error (vm-buffer-type:set 'process))); ignore errors
@@ -2833,11 +2813,11 @@ operation of the server to minimize I/O."
 	   (goto-char (point-max))
 	   (unwind-protect
 	       (condition-case error-data
-		   (save-excursion
+		   (save-excursion	; = save-current-buffer?
+		     (set-buffer (process-buffer process))
 		     ;;----------------------------
 		     (vm-buffer-type:enter 'process)
 		     ;;----------------------------
-		     (set-buffer (process-buffer process))
 		     (setq statblob (vm-imap-start-status-timer))
 		     (vm-set-imap-stat-x-box statblob safe-imapdrop)
 		     (vm-set-imap-stat-x-maxmsg statblob
@@ -2955,14 +2935,11 @@ operation of the server to minimize I/O."
 			       (- expunge-count (length uids-to-delete)))
 		      (sit-for 2)))
 		(setq expunge-count 0)	; number of messages expunged
-		(save-excursion
-		  ;;-----------------------------
-		  (vm-buffer-type:duplicate)
-		  ;;-----------------------------
+		(save-excursion		; = save-current-buffer?
+		  (set-buffer (process-buffer process))
 		  ;;---------------------------
 		  (vm-buffer-type:set 'process)
 		  ;;---------------------------
-		  (set-buffer (process-buffer process))
 		  ;; (setq uid-alist (vm-imap-get-uid-list 
 		  ;;		 process 1 mailbox-count))
 		  ;; m-list to have the message sequence numbers of
@@ -3083,10 +3060,10 @@ either the folder buffer or the presentation buffer.
   (let ((body-buffer (current-buffer)))
     (unwind-protect
 	(save-excursion
+	  (set-buffer (vm-buffer-of (vm-real-message-of m)))
 	  ;;----------------------------------
 	  (vm-buffer-type:enter 'folder)
 	  ;;----------------------------------
-	  (set-buffer (vm-buffer-of (vm-real-message-of m)))
 	  (let* ((statblob nil)
 		 (uid (vm-imap-uid-of m))
 		 (imapdrop (vm-folder-imap-maildrop-spec))
@@ -3108,7 +3085,7 @@ either the folder buffer or the presentation buffer.
 		  (setq vm-imap-connection-mode 'autoconnect))
 	      (setq imap-buffer (process-buffer process))
 	      (condition-case error-data
-		  (save-excursion
+		  (save-excursion	; = save-current-buffer?
 		    (set-buffer imap-buffer)
 		    ;;----------------------------------
 		    (vm-buffer-type:enter 'process)
@@ -3288,14 +3265,9 @@ FETCH is t, then the retrieval is for a temporary message fetch."
        (delete-region text-begin
 		      (or (re-search-forward "\n\n" (point-max) t) (point-max)))
        ;; fix markers now
-       ;; FIXME the text-end is guessed
+       ;; FIXME is the text-end correct? separator line?
        (set-marker (vm-text-of mm) text-begin)
-       (set-marker (vm-text-end-of mm) 
-		   (save-excursion
-		     (goto-char (point-max))
-		     ;; (end-of-line 0) ; move back one line
-		     ;; (kill-line 1)
-		     (point)))
+       (set-marker (vm-text-end-of mm) (point-max))
        (goto-char text-begin)
        ;; now care for the layout of the message
        (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
@@ -3501,8 +3473,7 @@ interactively."
 ;;;###autoload
 (defun vm-imap-find-spec-for-buffer (buffer)
   "Find the IMAP maildrop spec for the folder BUFFER."
-  (save-excursion
-    (set-buffer buffer)
+  (with-current-buffer buffer
     (vm-folder-imap-maildrop-spec)))
 ;;   (let ((list (mapcar 'car vm-imap-account-alist))
 ;; 	(done nil)
@@ -3676,7 +3647,7 @@ IMAP mailbox spec."
   (let ((c-list nil)
 	sep p r response need-ok)
     (vm-imap-check-connection process)
-    (save-excursion
+    (save-excursion			; = save-current-buffer?
       (set-buffer (process-buffer process))
       ;;----------------------------------
       (vm-buffer-type:enter 'process)
@@ -3710,7 +3681,7 @@ selectable mailboxes to be listed.  Returns a list of mailbox names."
   (let ((c-list nil)
 	p r response need-ok)
     (vm-imap-check-connection process)
-    (save-excursion
+    (save-excursion			; = save-current-buffer?
       (set-buffer (process-buffer process))
       ;;----------------------------------
       (vm-buffer-type:enter 'process)
@@ -3747,7 +3718,7 @@ well. Returns a boolean value."
   (let ((c-list nil)
 	p r response need-ok)
     (vm-imap-check-connection process)
-    (save-excursion
+    (save-excursion			; = save-current-buffer?
       (set-buffer (process-buffer process))
       ;;----------------------------------
       (vm-buffer-type:enter 'process)
@@ -3850,11 +3821,11 @@ documentation for `vm-spool-files'."
      ))
   (let ((vm-imap-ok-to-ask t)
 	process mailbox)
-    (save-excursion
-      (setq process (vm-imap-make-session folder t "create"))
-      (if (null process)
-	  (error "Couldn't open IMAP session for %s"
-		 (vm-safe-imapdrop-string folder)))
+    (setq process (vm-imap-make-session folder t "create"))
+    (if (null process)
+	(error "Couldn't open IMAP session for %s"
+	       (vm-safe-imapdrop-string folder)))
+    (save-current-buffer
       ;;-----------------------------
       (vm-buffer-type:enter 'process)
       ;;-----------------------------
@@ -3895,7 +3866,7 @@ documentation for `vm-spool-files'."
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
 	       (vm-safe-imapdrop-string folder)))
-    (save-excursion
+    (save-current-buffer
       ;;-----------------------------
       (vm-buffer-type:enter 'process)
       ;;-----------------------------
@@ -3941,7 +3912,7 @@ documentation for `vm-spool-files'."
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
 	       (vm-safe-imapdrop-string source)))
-    (save-excursion
+    (save-current-buffer
       ;;-----------------------------
       (vm-buffer-type:enter 'process)
       ;;-----------------------------
@@ -3977,7 +3948,7 @@ folder."
 	(vm-imap-ok-to-ask t))
     (if (null mailbox)
 	(setq mailboxes nil)
-      (save-excursion
+      (save-current-buffer
 	;;----------------------------
 	(vm-buffer-type:enter 'folder)
 	;;----------------------------
@@ -4021,7 +3992,7 @@ folder."
       (setq mailbox (car (car mailboxes)))
       (setq process (cdr (car mailboxes)))
       (unwind-protect
-	  (save-excursion
+	  (save-excursion	       ; = save-current-buffer?
 	    ;;-----------------------------
 	    (vm-buffer-type:enter 'process)
 	    ;;-----------------------------
@@ -4111,8 +4082,7 @@ order to capture the trace of IMAP sessions during the occurrence."
 		(insert "----") 
 		(insert (format "%s" buf))
 		(insert "----------\n")
-		(insert (save-excursion
-			  (set-buffer buf)
+		(insert (with-current-buffer buf
 			  (buffer-string)))
 		(setq bufs (cdr bufs)))
 	      (insert "--------------------------------------------------\n"))
@@ -4130,7 +4100,7 @@ order to capture the trace of IMAP sessions during the occurrence."
   "Unset the body-to-be-retrieved flag of all the messages.  May
   be needed if the folder has become corrupted somehow."
   (interactive)
-  (save-excursion
+  (save-current-buffer
    (vm-select-folder-buffer)
    (let ((mp vm-message-list))
      (while mp
@@ -4145,7 +4115,7 @@ order to capture the trace of IMAP sessions during the occurrence."
   "Unset the byte counts of all the messages, so that the size of the
 downloaded bodies will be displayed."
   (interactive)
-  (save-excursion
+  (save-current-buffer
    (vm-select-folder-buffer)
    (let ((mp vm-message-list))
      (while mp
