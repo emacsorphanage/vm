@@ -112,7 +112,7 @@ and flexible."
 (defun vm-parse-addresses (string)
   (if (null string)
       ()
-    (let (work-buffer (vm-make-multibyte-work-buffer))
+    (let ((work-buffer (vm-make-multibyte-work-buffer)))
       (with-current-buffer work-buffer
        (unwind-protect
 	   (let (list start s char)
