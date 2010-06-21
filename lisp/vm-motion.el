@@ -214,14 +214,13 @@ this command 'sees' marked messages as it moves."
 	(end-of-folder (setq error 'end-of-folder))))
      (t
       (condition-case ()
-	  (progn
+	  (progn	    
 	    (vm-move-message-pointer direction)
-	      (while (or (and (not (eq oldmp vm-message-pointer))
-			      (vm-should-skip-message vm-message-pointer t)			
-			      )
-			 (get-text-property (vm-su-start-of (car vm-message-pointer)) 'invisible vm-summary-buffer))
-		(vm-move-message-pointer direction))
-	    
+	    (while (or (and (not (eq oldmp vm-message-pointer))
+			    (vm-should-skip-message vm-message-pointer t)			
+			    )
+		       (get-text-property (vm-su-start-of (car vm-message-pointer)) 'invisible vm-summary-buffer))
+	      (vm-move-message-pointer direction))
 	    ;; Retry the move if we've gone a complete circle and
 	    ;; retries are allowed and there are other messages
 	    ;; besides this one.
@@ -252,6 +251,9 @@ this command 'sees' marked messages as it moves."
 	(end-of-folder
 	 ;; we bumped into the end of the folder without finding
 	 ;; a suitable stopping point; retry the move if we're allowed.
+	 (if (get-text-property (vm-su-start-of (car vm-message-pointer)) 'invisible vm-summary-buffer)
+	     (progn (setq error 'end-of-folder) (setq retry nil)))
+
 	 (setq vm-message-pointer oldmp)
 	 ;; if the retry fails, we make sure the message pointer
 	 ;; is restored to its old value.

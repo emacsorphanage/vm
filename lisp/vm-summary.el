@@ -111,6 +111,7 @@ mandatory."
       (vm-set-hooks-for-frame-deletion)))
 
 (defun vm-do-summary (&optional start-point)
+  (message "in vm-do-summary")
   (let ((m-list (or start-point vm-message-list))
 	mp m tr trs tre ntc mmmr mmm nm
 	(n 0)
@@ -121,7 +122,7 @@ mandatory."
 		 (vm-mouse-support-possible-p)))
 	summary)
     (setq mp m-list)
-    ;;(if start-point (message "i am in vm-do-summary with start point %s" start-point))
+    (if start-point (message "i am in vm-do-summary with start point %s" start-point))
     (save-excursion
       (set-buffer vm-summary-buffer)
       (setq line-move-ignore-invisible vm-summary-show-threads)
@@ -172,12 +173,16 @@ mandatory."
 				    (setq nm (get-text-property (+ (vm-su-end-of nm) 3) 'vm-message))
 				  (setq nm nil)))			      
 			      ))
-                        (when (and tr trs
-                                   (progn (goto-char (1+ (vm-su-start-of tr)))
-                                          (not (looking-at "-"))))
-			  (if (not (vm-new-flag m))
-			      (put-text-property s e 'invisible t))
-                          (put-text-property s e 'thread-root tr)
+			(progn
+			  (when (and tr trs
+				     (progn (goto-char (vm-su-start-of tr))
+					    (not (looking-at "-"))))
+			    (if (not (vm-new-flag m))
+				(put-text-property s e 'invisible t))
+			  (goto-char (vm-su-start-of tr))
+			  (delete-char 1)
+			  (insert "+"))
+			  (put-text-property s e 'thread-root tr)
 			  (setq ntc (1+ ntc))
 			  (goto-char (+ (vm-su-start-of tr) 5 (- (length (vm-padded-number-of m)) 3)))
 			  (put-text-property (vm-su-start-of tr) (vm-su-end-of tr) 'thread-count ntc)
@@ -185,10 +190,10 @@ mandatory."
 			      (progn
 				(delete-char 4)
 				(insert (format "+%-3s" ntc))))
-                          )))
-		    ))	       
-		(setq mp (cdr mp) n (1+ n))
-		)
+			)))
+		  ))    
+	      (setq mp (cdr mp) n (1+ n))
+	      )
 		;;(if (zerop (% n modulus))
 		;;    (message "Generating summary... %d" n)))
 	      ;; now convert the ints to markers.
@@ -213,7 +218,10 @@ mandatory."
 	(message "Generating summary... done"))))
 
 (defun vm-expand-thread ()
-  "expand"
+  "expand the thread associated with the message at point. This
+will make visible all invisible elements of the thread tree and
+place a '-' character at the pointer position indicated the
+thread can be collapsed."
   (interactive)
   (if (and vm-summary-toggle-thread-folding vm-summary-show-threads)
       (progn
@@ -224,13 +232,13 @@ mandatory."
 	      r nm
 	      )
 	  (setq r (get-text-property (+ (point) 3) 'thread-root))
-	  (if (null r) 
-	  (save-excursion
-	    (setq r (get-text-property (+ (point) 3) 'vm-message))	    
+	  (if (null r)
+	      (setq r (get-text-property (+ (point) 3) 'vm-message)))
+	  (save-excursion	    
 	    (goto-char (vm-su-start-of  r))
 	    (insert "-")
 	    (delete-char 1)
-	    ))
+	    )
 	  (setq nm (get-text-property (+ (vm-su-end-of r) 2) 'vm-message))
 	  (while (and  (not (null nm)) (> (vm-thread-indentation-of nm) 0) )
 	    (put-text-property (vm-su-start-of nm) (vm-su-end-of nm) 'invisible nil)
@@ -239,7 +247,12 @@ mandatory."
 	      (setq nm nil)))))))
 
 (defun vm-collapse-thread (&optional nomove)
-  "collapse"
+  "collapse the thread associated with the message at point. This
+will make invisible all read and non-new elements of the thread
+tree and will place a '+' character at the pointer position
+indicating the thread can be expanded. Optional argument nomove
+directs vm-collapse-thread to not take the default action of
+moving the pointer to the thread root after collapsing."
   (interactive "P")
   (if (and vm-summary-toggle-thread-folding vm-summary-show-threads)
       (progn
@@ -251,12 +264,12 @@ mandatory."
 	      )
 	  (setq r (get-text-property (+ (point) 3) 'thread-root))
 	  (if (null r)
-	      (save-excursion
-		(setq r (get-text-property (+ (point) 3) 'vm-message))
-		(goto-char (vm-su-start-of  r))
-		(insert "+")
-		(delete-char 1)
-		))
+	      (setq r (get-text-property (+ (point) 3) 'vm-message)))
+	  (save-excursion	    
+	    (goto-char (vm-su-start-of  r))
+	    (insert "+")
+	    (delete-char 1)
+	    )
 	  (if (< (+ (vm-su-end-of r) 3) (buffer-size))
 	      (progn
 		(setq nm (get-text-property (+ (vm-su-end-of r) 3) 'vm-message))
@@ -272,6 +285,25 @@ mandatory."
 	      (progn
 		(vm-select-folder-buffer)
 		(vm-goto-message (string-to-number (vm-number-of r)))))))))
+
+(defun vm-toggle-expand-thread ()
+  "toggle collapse/expand thread associated with message at point.
+see vm-expand-thread and vm-collapse thread for a description of
+action."
+  (interactive)
+  (if (and vm-summary-toggle-thread-folding vm-summary-show-threads)
+      (progn
+	(vm-select-folder-buffer)
+	(vm-follow-folders-summary-cursor)
+	(set-buffer vm-summary-buffer)
+	(let ((buffer-read-only nil)
+	      r nm
+	      )
+	  (setq r (get-text-property (+ (point) 3) 'thread-root))
+	  (if (null r)
+	      (setq r (get-text-property (+ (point) 3) 'vm-message)))
+	  (goto-char (vm-su-start-of r))
+	  (if (looking-at "-") (vm-collapse-thread) (vm-expand-thread))))))	  
 
 (defun vm-do-needed-summary-rebuild ()
   (if (and vm-summary-redo-start-point vm-summary-buffer)
@@ -369,10 +401,10 @@ mandatory."
 						   vm-summary-highlight-face)))
 	      (set-buffer-modified-p modified)
 	      (if (not (null r))
-		  (put-text-property s e 'thread-root r) (put-text-property s e 'thread-count n))
+		  (put-text-property s e 'thread-root r) 
+		  (put-text-property s e 'thread-count n))
 	      (put-text-property s e 'vm-message m)
 	      (put-text-property s e 'invisible i)
-	      ;;(if (and (not (null r)) (not i)) (save-excursion (goto-char (vm-su-start-of r)) (delete-char 1) (insert-char 
 	      ))))))
 
 (defun vm-set-summary-pointer (m)
@@ -394,18 +426,13 @@ mandatory."
 		  (if (and vm-summary-pointer
 			   (vm-su-start-of vm-summary-pointer))
 		      (progn
-			(goto-char (vm-su-start-of vm-summary-pointer))			
-			;;(if (not (get-text-property (point) 'thread-end))
-			;;   (insert vm-summary-no-=>))
-			;;    (if (get-text-property (+ (vm-su-end-of vm-summary-pointer) 2)
-			;;                           'invisible)
-			;;        (insert "+ ")
-			;;      (insert "- ")))
-			;;(message "text prop msg num: %s" 
+			(goto-char (vm-su-start-of vm-summary-pointer))
 			(if (not (get-text-property (+ (point) 3) 'invisible))
 			    (progn 
-			      (insert vm-summary-no-=>)
-			      (delete-char (length vm-summary-=>))			     
+			      (if (not (null (get-text-property (+ (point) 3) 'thread-count)))
+				  (if (looking-at "+") (progn (insert "+ ") (delete-char (length vm-summary-=>))) (progn (insert "- ") (delete-char (length vm-summary-=>))))
+			      (progn (insert vm-summary-no-=>)
+				     (delete-char (length vm-summary-=>))))
 			      )
 			  (progn
 			    (delete-char (length vm-summary-=>))
@@ -413,14 +440,7 @@ mandatory."
 			    ;; re-invisible it so we dont have problems
 			    (put-text-property (- (point) (length vm-summary-no-=>)) (point) 'invisible t)
 			    )
-			  ;; (progn
-			  ;;   ;; (goto-char (+ (point) 2)
-			  ;;   ;; (insert vm-summary-no-=>)
-			  ;;   ;; (delete-char (* (length vm-summary-=>) -1))
-			  ;;   (message "I am looking at message number: %s" (vm-number-of (get-text-property (+ (point) 3) 'vm-message)))
-			  ;;   )
 			  )
-
 			(and do-mouse-track
 			     (vm-mouse-set-mouse-track-highlight
 			      (vm-su-start-of vm-summary-pointer)
