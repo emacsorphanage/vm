@@ -113,7 +113,7 @@ VM 8.1.90a  (2010-05-11)
   ** New variables `vm-expunge-before-quit' and `vm-expunge-before-save'
      introduced to allow automatic expunge.  They are nil by default.  
 
-VM 8.1.2 (yet to be released)
+VM 8.1.2 
 
     * VM made safe for use with Gnu Emacs 23, by removing a few calls
       to the `next-line' function (which was redefined in this Emacs).
