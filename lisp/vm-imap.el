@@ -733,8 +733,12 @@ of the current folder."
 ;; --------------------------------------------------------------------
 ;; Server-side
 ;;
-;; vm-establish-new-folder-imap-session: (&optional interactive) -> void
-;; vm-re-establish-folder-imap-session: (&optional interactive) -> void
+;; vm-establish-new-folder-imap-session: 
+;;	(&optional interactive string) -> process
+;; vm-re-establish-folder-imap-session: 
+;;	(&optional interactive string) -> process
+;; vm-establish-writable-imap-session: 
+;;	(maildrop &optional interactive string) -> process
 ;;
 ;; -- Functions to handle the interaction with the IMAP server
 ;;
@@ -2128,12 +2132,12 @@ purposes. Returns the IMAP process or nil if unsuccessful."
 ;; This is necessary because we might get unexpected EXPUNGE responses
 ;; which we don't know how to deal with.
 
-  (let ((process (vm-folder-imap-process))
+  (let (process 
+	(vm-imap-ok-to-ask interactive)
 	mailbox select mailbox-count uid-validity permanent-flags
-	read-write can-delete body-peek
-	(vm-imap-ok-to-ask interactive))
-    (if process
-	(vm-imap-end-session process))
+	read-write can-delete body-peek)
+    (if (vm-folder-imap-process)
+	(vm-imap-end-session (vm-folder-imap-process)))
     (vm-imap-log-token 'new)
     (setq process 
 	  (vm-imap-make-session (vm-folder-imap-maildrop-spec)
@@ -2179,6 +2183,45 @@ purposes. Returns the IMAP process or nil if unsuccessful."
       (vm-imap-dump-uid-and-flags-data)
       ;;-------------------------------
       process )))
+
+(defun vm-establish-writable-imap-session (maildrop &optional 
+						    interactive purpose)
+  "Create a new writable IMAP session for MAILDROP and return the process.
+Optional argument PURPOSE is inserted into the process buffer for
+tracing purposes. Returns the IMAP process or nil if
+unsuccessful."
+  (let (process 
+	(vm-imap-ok-to-ask interactive)
+	mailbox select mailbox-count uid-validity permanent-flags
+	read-write can-delete body-peek)
+    (vm-imap-log-token 'new)
+    (setq process 
+	  (vm-imap-make-session maildrop interactive purpose))
+    (if (processp process)
+	(save-current-buffer
+	  (setq mailbox (vm-imap-parse-spec-to-list maildrop)
+		mailbox (nth 3 mailbox))
+	  ;;----------------------------
+	  (vm-buffer-type:enter 'process)
+	  ;;----------------------------
+	  (set-buffer (process-buffer process))
+	  (setq select (vm-imap-select-mailbox process mailbox))
+	  (setq mailbox-count (nth 0 select)
+		uid-validity (nth 1 select)
+		read-write (nth 2 select)
+		can-delete (nth 3 select)
+		permanent-flags (nth 4 select)
+		body-peek (vm-imap-capability 'IMAP4REV1))
+	  ;;---------------------------------
+	  (vm-imap-session-type:set 'active)
+	  (vm-buffer-type:exit)
+	  ;;---------------------------------
+	  (if read-write
+	      process
+	    (vm-imap-end-session process)
+	    nil))
+      nil)))
+
 
 (defun vm-kill-folder-imap-session  (&optional interactive)
   (let ((process (vm-folder-imap-process)))
@@ -3490,6 +3533,23 @@ interactively."
       (vm-imap-end-session (vm-folder-imap-process))
       result )))
 
+
+;; ---------------------------------------------------------------------------
+;; Utilities for maildrop specs  (this should be moved up top)
+;;
+;; A maildrop spec is of the form
+;;      protocol:hostname:port:mailbox:auth:loginid:password 
+;;             0        1    2       3    4       5        6
+;; vm-imap-find-spec-for-buffer: (buffer) -> maildrop-spec
+;; vm-imap-make-filename-for-spec: (maildrop-spec) -> string
+;; vm-imap-normalize-spec: (maildrop-spec) -> maildrop-spec
+;; vm-imap-account-name-for-spec: (maildrop-spec) -> string
+;; vm-imap-spec-for-account: (string) -> maildrop-spec
+;; vm-imap-parse-spec-to-list: (maildrop-spec) -> string list
+;; vm-imap-spec-list-to-host-alist: 
+;;	(maildrop-spec list) -> (string, maildrop-spec) alist
+;; ---------------------------------------------------------------------------
+
 ;; ----------- missing functions-----------
 ;;;###autoload
 (defun vm-imap-find-name-for-spec (spec)
@@ -3556,6 +3616,12 @@ looking up `vm-imap-account-alist' or nil if there is no such account."
     nil)))
 
 ;;;###autoload
+(defun vm-imap-spec-for-account (account)
+  "Returns the IMAP maildrop spec for ACCOUNT, by looking up
+`vm-imap-account-alist' or nil if there is no such account."
+  (car (rassoc (list account) vm-imap-account-alist)))
+
+;;;###autoload
 (defun vm-imap-parse-spec-to-list (spec)
   "Parses the IMAP maildrop specification SPEC and returns a list of
 its components."
@@ -3592,7 +3658,7 @@ its components."
     
     (when account
       (setq mailbox-list (cdr (assoc account vm-imap-account-folder-cache)))
-      (setq spec (car (rassoc (list account) vm-imap-account-alist)))
+      (setq spec (vm-imap-spec-for-account account))
       (when (and (null mailbox-list) spec)
 	(unwind-protect
 	    (progn
@@ -3661,7 +3727,7 @@ IMAP mailbox spec."
     (setq account-and-folder (vm-parse folder-input "\\([^:]+\\):?" 1 2)
 	  account (car account-and-folder)
 	  folder (cadr account-and-folder)
-	  spec (car (rassoc (list account) vm-imap-account-alist)))
+	  spec (vm-imap-spec-for-account account))
     (if (null folder)
 	(error 
 	 "IMAP folder required in the format account-name:folder-name"))
@@ -3977,26 +4043,31 @@ folder."
 	(vm-imap-ok-to-ask t))
     (if (null mailbox)
 	(setq mailboxes nil)
-      (save-excursion
-	;;----------------------------
-	(vm-buffer-type:enter 'folder)
-	;;----------------------------
-        (vm-select-folder-buffer)
-	(setq m (car vm-message-pointer))
-	(if m 
+      ;; IMAP-FCC header present
+      (when vm-mail-buffer		; has parent folder
+	(save-current-buffer
+	  ;;----------------------------
+	  (vm-buffer-type:enter 'folder)
+	  ;;----------------------------
+	  (vm-select-folder-buffer)
+	  (setq m (car vm-message-pointer))
+	  (when m 
 	    (set-buffer (vm-buffer-of (vm-real-message-of m))))
-	(if (not (eq vm-folder-access-method 'imap))
-	    (error "Cannot do IMAP-FCC because the parent folder is not an IMAP folder"))
-	(vm-establish-new-folder-imap-session nil "IMAP-FCC")
-	(vm-imap-dump-uid-and-flags-data)
-	(setq process (vm-folder-imap-process))
-	(setq mailboxes (list (cons mailbox process)))
-	;;-------------------
-	(vm-buffer-type:exit)
-	;;-------------------
-	)
-      (vm-mail-mode-remove-header "IMAP-FCC:")
-      )
+	  (if (eq vm-folder-access-method 'imap)
+	      (setq maildrop (vm-folder-imap-maildrop-spec)))
+	  ;;-------------------
+	  (vm-buffer-type:exit)
+	  ;;-------------------
+	  ))
+      (when (and (null maildrop)  vm-imap-default-account)
+	(setq maildrop 
+	      (vm-imap-spec-for-account vm-imap-default-account)))
+      (when (null maildrop)
+	(error "Set `vm-imap-default-account' to use IMAP-FCC"))
+      (setq process 
+	    (vm-imap-make-session maildrop nil "IMAP-FCC"))
+      (setq mailboxes (list (cons mailbox process)))
+      (vm-mail-mode-remove-header "IMAP-FCC:"))
 
     (when fcc-string
       (setq fcc-list (vm-parse fcc-string "\\([^,]+\\),?"))
@@ -4029,10 +4100,10 @@ folder."
 	    (set-buffer (process-buffer process))
 	    (condition-case nil
 		(vm-imap-create-mailbox process mailbox)
-	      (vm-imap-protocol-error (vm-buffer-type:set 'process))) 
-					; ignore errors
+	      (vm-imap-protocol-error 	; handler
+	       (vm-buffer-type:set 'process))) ; ignore errors
 	    ;;----------------------------------
-	    (vm-imap-session-type:assert-active)
+	    ;; (vm-imap-session-type:assert-active)
 	    ;;----------------------------------
 
 	    (vm-imap-send-command process
@@ -4058,14 +4129,15 @@ folder."
 	      (while need-ok
 
 		(setq response (vm-imap-read-response process))
-		(cond ((vm-imap-response-matches response 'VM 'NO)
-		       (vm-imap-protocol-error "server said NO to APPEND data"))
-		      ((vm-imap-response-matches response 'VM 'BAD)
-		       (vm-imap-protocol-error "server said BAD to APPEND data"))
-		      ((vm-imap-response-matches response '* 'BYE)
-		       (vm-imap-protocol-error "server said BYE to APPEND data"))
-		      ((vm-imap-response-matches response 'VM 'OK)
-		       (setq need-ok nil)))))
+		(cond
+		 ((vm-imap-response-matches response 'VM 'NO)
+		  (vm-imap-protocol-error "server said NO to APPEND data"))
+		 ((vm-imap-response-matches response 'VM 'BAD)
+		  (vm-imap-protocol-error "server said BAD to APPEND data"))
+		 ((vm-imap-response-matches response '* 'BYE)
+		  (vm-imap-protocol-error "server said BYE to APPEND data"))
+		 ((vm-imap-response-matches response 'VM 'OK)
+		  (setq need-ok nil)))))
 	    ;;-------------------
 	    (vm-buffer-type:exit)
 	    ;;-------------------
