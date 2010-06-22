@@ -393,7 +393,7 @@ freshly parsing the message contents."
 
 (defun vm-mime-base64-decode-region (start end &optional crlf)
   (or (markerp end) (setq end (vm-marker end)))
-  (and (> (- end start) 200)
+  (and (> (- end start) 10000)
        (vm-emit-mime-decoding-message "Decoding base64..."))
   (let ((work-buffer nil)
 	(done nil)
@@ -476,7 +476,7 @@ freshly parsing the message contents."
 	    (insert-buffer-substring work-buffer)
 	    (delete-region (point) end))))
       (and work-buffer (kill-buffer work-buffer))))
-  (and (> (- end start) 200)
+  (and (> (- end start) 10000)
        (vm-emit-mime-decoding-message "Decoding base64... done")))
 
 (defun vm-mime-base64-encode-region (start end &optional crlf B-encoding)
@@ -575,7 +575,7 @@ freshly parsing the message contents."
       (and work-buffer (kill-buffer work-buffer)))))
 
 (defun vm-mime-qp-decode-region (start end)
-  (and (> (- end start) 200)
+  (and (> (- end start) 10000)
        (vm-emit-mime-decoding-message "Decoding quoted-printable..."))
   (let ((work-buffer nil)
 	(buf (current-buffer))
@@ -655,7 +655,7 @@ freshly parsing the message contents."
 	  (insert-buffer-substring work-buffer)
 	  (delete-region (point) end))
       (and work-buffer (kill-buffer work-buffer))))
-  (and (> (- end start) 200)
+  (and (> (- end start) 10000)
        (vm-emit-mime-decoding-message "Decoding quoted-printable... done")))
 
 (defun vm-mime-qp-encode-region (start end &optional Q-encoding quote-from)
