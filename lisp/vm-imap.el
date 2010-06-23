@@ -3250,8 +3250,7 @@ only marked messages are loaded, other messages are ignored."
 	  (vm-retrieve-real-message-body mm)
 	  (setq n (1+ n)))
 	(setq mlist (cdr mlist)))
-      (when (> n 0)
-	(message "Retrieving message body... done")))
+      (message "Retrieving message body... done"))
     (intern (buffer-name) vm-buffers-needing-display-update)
     ;; FIXME - is this needed?  Is it correct?
     (vm-display nil nil '(vm-load-message vm-refresh-message)
