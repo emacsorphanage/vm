@@ -111,7 +111,6 @@ mandatory."
       (vm-set-hooks-for-frame-deletion)))
 
 (defun vm-do-summary (&optional start-point)
-  (message "in vm-do-summary")
   (let ((m-list (or start-point vm-message-list))
 	mp m tr trs tre ntc mmmr mmm nm
 	(n 0)
@@ -122,7 +121,6 @@ mandatory."
 		 (vm-mouse-support-possible-p)))
 	summary)
     (setq mp m-list)
-    (if start-point (message "i am in vm-do-summary with start point %s" start-point))
     (save-excursion
       (set-buffer vm-summary-buffer)
       (setq line-move-ignore-invisible vm-summary-show-threads)
