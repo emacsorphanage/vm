@@ -328,7 +328,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		(message "Retrieving message %d (of %d) from %s..."
 			 n mailbox-count imapdrop)
                 (vm-imap-fetch-message process n
-				       use-body-peek vm-load-headers-only)
+				       use-body-peek nil)
                 (vm-imap-retrieve-to-target process destination
 					    statblob use-body-peek) 
 		(vm-imap-read-ok-response process)
