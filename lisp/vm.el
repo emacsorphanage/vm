@@ -109,12 +109,12 @@ See the documentation for vm-mode for more information."
 	  folder-name remote-spec
 	  preserve-auto-save-file)
       (cond ((and full-startup (eq access-method 'pop))
-	     (setq vm-last-visit-pop-folder folder)
+	     ;; (setq vm-last-visit-pop-folder folder)
 	     (setq remote-spec folder)
 	     (setq folder-name (or (vm-pop-find-name-for-spec folder) "POP"))
 	     (setq folder (vm-pop-find-cache-file-for-spec remote-spec)))
 	    ((and full-startup (eq access-method 'imap))
-	     (setq vm-last-visit-imap-folder folder)
+	     ;; (setq vm-last-visit-imap-folder folder)
 	     (setq remote-spec folder)
 	     (setq folder-name (or (nth 3 (vm-imap-parse-spec-to-list
 					   remote-spec))
