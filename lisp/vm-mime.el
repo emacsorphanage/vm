@@ -97,27 +97,27 @@ information about the corresponding MIME character sets to VM's
 configuration.  "
   ;; Add some extra charsets that may not have been defined onto the end
   ;; of vm-mime-mule-charset-to-coding-alist.
-  (mapcar (lambda (x)
-	    (and (vm-coding-system-p x)
-		 ;; Not using vm-string-assoc because of some quoting
-		 ;; weirdness it's doing. 
-		 (if (not (assoc
-			   (format "%s" x)
-			   vm-mime-mule-charset-to-coding-alist))
-		     (add-to-list 'vm-mime-mule-charset-to-coding-alist 
-				  (list (format "%s" x) x)))))
-	  '(utf-8 iso-8859-15 iso-8859-14 iso-8859-16
-                  alternativnyj iso-8859-6 iso-8859-7 koi8-c koi8-o koi8-ru koi8-t
-                  koi8-u macintosh windows-1250 windows-1251 windows-1252
-                  windows-1253 windows-1256))
+  (mapc (lambda (x)
+	  (and (vm-coding-system-p x)
+	       ;; Not using vm-string-assoc because of some quoting
+	       ;; weirdness it's doing. 
+	       (if (not (assoc
+			 (format "%s" x)
+			 vm-mime-mule-charset-to-coding-alist))
+		   (add-to-list 'vm-mime-mule-charset-to-coding-alist 
+				(list (format "%s" x) x)))))
+	'(utf-8 iso-8859-15 iso-8859-14 iso-8859-16
+		alternativnyj iso-8859-6 iso-8859-7 koi8-c koi8-o koi8-ru koi8-t
+		koi8-u macintosh windows-1250 windows-1251 windows-1252
+		windows-1253 windows-1256))
 
   ;; And make sure that the map back from coding-systems is good for
   ;; those charsets.
-  (mapcar (lambda (x)
-	    (or (assoc (car (cdr x)) vm-mime-mule-coding-to-charset-alist)
-		(add-to-list 'vm-mime-mule-coding-to-charset-alist
-			     (list (car (cdr x)) (car x)))))
-	  vm-mime-mule-charset-to-coding-alist)
+  (mapc (lambda (x)
+	  (or (assoc (car (cdr x)) vm-mime-mule-coding-to-charset-alist)
+	      (add-to-list 'vm-mime-mule-coding-to-charset-alist
+			   (list (car (cdr x)) (car x)))))
+	vm-mime-mule-charset-to-coding-alist)
   ;; Whoops, doesn't get picked up for some reason. 
   (add-to-list 'vm-mime-mule-coding-to-charset-alist 
 	       '(iso-8859-1 "iso-8859-1")))
@@ -2410,7 +2410,7 @@ declarations in the attachments and make a decision independently."
   "Insert a content pointed by URL if it has the cid: scheme."
   (if (string-match "\\`cid:" url)
       (setq url (concat "<" (substring url (match-end 0)) ">"))
-    (error "%S is no cid url!"))
+    (error "%S is not a cid url" url))
   (let ((part-list (vm-mm-layout-parts (vm-mm-layout message)))
         part)
     (while part-list
@@ -2621,7 +2621,7 @@ declarations in the attachments and make a decision independently."
 		     (if append-file
 			 (list (concat (car program-list) " " tempfile))
 		       program-list))))
-      (process-kill-without-query process t)
+      (vm-process-kill-without-query process t)
       (message "Launching %s... done" (mapconcat 'identity
 						 program-list
 						 " "))

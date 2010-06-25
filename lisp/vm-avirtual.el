@@ -960,8 +960,8 @@ messages which are composed in order to find the right FCC."
       (when (and (not not-to-history) folder-list)
         (let ((fl (cdr folder-list)) f)
           (while fl
-            (setq f (abbreviate-file-name
-                     (expand-file-name (car fl) vm-folder-directory) t)
+            (setq f (vm-abbreviate-file-name
+                     (expand-file-name (car fl) vm-folder-directory))
                   vm-folder-history (delete f vm-folder-history)
                   vm-folder-history (nconc (list f) vm-folder-history)
                   fl (cdr fl)))))
