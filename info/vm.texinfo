@@ -2994,6 +2994,21 @@ Mark messages with the same author as the current message.
 Unmark messages with the same author as the current message.
 @end table
 
+While the above commands can be used in any VM buffer, the following
+commands can be used in a Summary buffer to mark or unmark a region of
+message summary lines.
+
+@table @kbd
+@findex vm-mark-summary-region
+@kindex M R
+@item M R (@code{vm-mark-summary-region})
+Mark all messages in the current region in a Summary buffer
+@findex vm-unmark-summary-region
+@kindex M r
+@item M r (@code{vm-unmark-summary-region})
+Unmark all messages in the current region in a Summary buffer
+@end table
+
 To apply a VM command to all marked messages you must prefix it with the
 key sequence @kbd{M N} (@code{vm-next-command-uses-marks}).  The next VM
 command will apply to all marked messages, provided the command can be
