@@ -37,9 +37,11 @@
 ;;;###autoload
 (defun vm (&optional folder read-only access-method reload)
   "Read mail under Emacs.
-Optional first arg FOLDER specifies the folder to visit.  It defaults
-to the value of vm-primary-inbox.  The folder buffer is put into VM
-mode, a major mode for reading mail.
+Optional first arg FOLDER specifies the folder to visit.  It can
+be the path name of a local folder or the maildrop specification
+of a POP or IMAP folder.  It defaults to the value of
+vm-primary-inbox.  The folder buffer is put into VM mode, a major
+mode for reading mail.
 
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute
@@ -108,18 +110,16 @@ See the documentation for vm-mode for more information."
 	  preserve-auto-save-file)
       (cond ((and full-startup (eq access-method 'pop))
 	     (setq vm-last-visit-pop-folder folder)
-	     (setq remote-spec (vm-pop-find-spec-for-name folder))
-	     (if (null remote-spec)
-		 (error "No such POP folder: %s" folder))
-	     (setq folder-name folder)
+	     (setq remote-spec folder)
+	     (setq folder-name (or (vm-pop-find-name-for-spec folder) "POP"))
 	     (setq folder (vm-pop-find-cache-file-for-spec remote-spec)))
 	    ((and full-startup (eq access-method 'imap))
 	     (setq vm-last-visit-imap-folder folder)
-	     (setq remote-spec folder
-		   folder-name (or (nth 3 (vm-imap-parse-spec-to-list
+	     (setq remote-spec folder)
+	     (setq folder-name (or (nth 3 (vm-imap-parse-spec-to-list
 					   remote-spec))
-				   folder)
-		   folder (vm-imap-make-filename-for-spec remote-spec))))
+				   folder))
+	     (setq folder (vm-imap-make-filename-for-spec remote-spec))))
       (setq folder-buffer
 	    (if (bufferp folder)
 		folder
@@ -562,16 +562,18 @@ visited folder."
 			""))
 	      completion-list)
 	     current-prefix-arg))))
-  (vm-session-initialization)
-  (vm-check-for-killed-folder)
-  (vm-select-folder-buffer-if-possible)
-  (vm-check-for-killed-summary)
-  (if (and (equal folder "") (stringp vm-last-visit-pop-folder))
-      (setq folder vm-last-visit-pop-folder))
-  (if (null (vm-pop-find-spec-for-name folder))
-      (error "No such POP folder: %s" folder))
-  (setq vm-last-visit-pop-folder folder)
-  (vm folder read-only 'pop))
+  (let (remote-spec)
+    (vm-session-initialization)
+    (vm-check-for-killed-folder)
+    (vm-select-folder-buffer-if-possible)
+    (vm-check-for-killed-summary)
+    (if (and (equal folder "") (stringp vm-last-visit-pop-folder))
+	(setq folder vm-last-visit-pop-folder))
+    (setq vm-last-visit-pop-folder folder)
+    (setq remote-spec (vm-pop-find-spec-for-name folder))
+    (if (null remote-spec)
+	(error "No such POP folder: %s" folder))
+    (vm remote-spec read-only 'pop)))
 
 ;;;###autoload
 (defun vm-visit-pop-folder-other-frame (folder &optional read-only)
