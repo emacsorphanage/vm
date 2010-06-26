@@ -503,7 +503,7 @@ spool files on remote hosts using the POP and IMAP protocols.
 
 @node POP Spool Files,IMAP Spool Files,Spool Files,Local Folders
 @unnumberedsubsec POP Spool Files
-@cindex POP
+@cindex POP spool files
 VM can access spool files on mail servers via the Post Office Protocol
 (POP).  To use a POP mailbox as a spool file, you need to use a POP
 maildrop specification (@ref{maildrop specification},
@@ -534,30 +534,31 @@ control to you.  By default, the value of both variables is nil, which
 tells VM to retrieve all the messages in the POP mailbox regardless
 of how many messages there are and how large the mailbox is.
 
-@vindex vm-pop-expunge-after-retrieving
-After VM retrieves messages from the mailbox, the default action
-is to delete the messages from there.  If you want VM to leave
-messages in the server mailbox until you explicitly request
-their removal, set @code{vm-pop-expunge-after-retrieving} to
-@code{nil}.  Messages will not be removed from the mailbox until you
-run @code{vm-expunge-pop-messages}; only those messages that VM has
-retrieved into the current folder will be expunged.
+@findex vm-expunge-pop-messages
+After VM retrieves messages from the mailbox, the default action is to
+leave the original messages on the server unchanged.  They can be
+expunged from the server by running @code{vm-expunge-pop-messages};
+only those messages that VM has retrieved into the current folder will
+be expunged.
 
+@vindex vm-pop-expunge-after-retrieving
 @vindex vm-pop-auto-expunge-alist
-The variable @code{vm-pop-auto-expunge-alist} gives you a way to specify
-on a per-mailbox basis which POP mailboxes have messages
-automatically removed when retrieved and which ones leave the
-messages on the POP server.  The value of
-@code{vm-pop-auto-expunge-alist} should be a list of POP mailboxes and
-values specifying whether messages should be automatically
-deleted from the mailbox after retrieval.  The format of the list
-is:
+If you want VM to expunge the messages automatically after retrieving
+them, you can set @code{vm-pop-expunge-after-retrieving} to @code{t}.
+But a better method is to set the variable
+@code{vm-pop-auto-expunge-alist}, which gives you a way to specify, on
+a per-mailbox basis, which POP mailboxes should have messages automatically
+removed after retrieving and which ones should leave the messages on the POP
+server.  The value of @code{vm-pop-auto-expunge-alist} should be a
+list of POP mailboxes and values specifying whether messages should
+be automatically deleted from the mailbox after retrieval.  The format
+of the list is:
 
 @example
 ((@var{MAILDROP} . @var{VAL}) (@var{MAILDROP} . @var{VAL}) ...)
 @end example
 
-@var{MAILDROP} should be an POP mailbox specification as described
+@var{MAILDROP} should be a POP mailbox specification as described
 in the documentation for the variable @code{vm-spool-files}.  If
 you have the POP password specified in the @code{vm-spool-files}
 entry, you do not have to specify it here as well.  Use @samp{*}
@@ -581,7 +582,7 @@ Here is an example:
 
 @node IMAP Spool Files, Index Files, POP Spool Files, Local Folders
 @unnumberedsubsec IMAP Spool Files
-@cindex IMAP
+@cindex IMAP spool files
 @cindex maildrop specification
 VM can also use the IMAP protocol to retrieve mail from a mail server.
 As with POP, instead of specifying a local file name in the
@@ -602,24 +603,25 @@ control to you.  By default, the value of both variables is nil, which
 tells VM to retrieve all the messages in the IMAP mailbox regardless
 of how many messages there are and how large the mailbox is.
 
-@vindex vm-imap-expunge-after-retrieving
-After VM retrieves messages from the mailbox, the default action
-is to delete the messages from there.  If you want VM to leave
-messages in the server mailbox until you explicitly request
-their removal, set @code{vm-imap-expunge-after-retrieving} to
-@code{nil}.  Messages will not be removed from the mailbox until you
-run @code{vm-expunge-imap-messages}; only those messages that VM has
-retrieved into the current folder will be expunged.
+@findex vm-expunge-imap-messages
+After VM retrieves messages from the mailbox, the default action is to
+leave the original messages on the server unchanged.  They can be
+expunged from the server by running @code{vm-expunge-imap-messages};
+only those messages that VM has retrieved into the current folder will
+be expunged.
 
+@vindex vm-imap-expunge-after-retrieving
 @vindex vm-imap-auto-expunge-alist
-The variable @code{vm-imap-auto-expunge-alist} gives you a way to specify
-on a per-mailbox basis which IMAP mailboxes have message
-automatically removed when retrieved and which ones leave the
-messages on the IMAP server.  The value of
-@code{vm-imap-auto-expunge-alist} should be a list of IMAP mailboxes and
-values specifying whether messages should be automatically
-deleted from the mailbox after retrieval.  The format of the list
-is:
+If you want VM to expunge the messages automatically after retrieving
+them, you can set @code{vm-imap-expunge-after-retrieving} to @code{t}.
+But a better method is to set the variable
+@code{vm-imap-auto-expunge-alist}, which gives you a way to specify, on
+a per-mailbox basis, which IMAP mailboxes should have messages automatically
+removed after retrieving and which ones should leave the messages on the IMAP
+server.  The value of @code{vm-imap-auto-expunge-alist} should be a
+list of IMAP mailboxes and values specifying whether messages should
+be automatically deleted from the mailbox after retrieval.  The format
+of the list is:
 
 @example
 ((@var{MAILDROP} . @var{VAL}) (@var{MAILDROP} . @var{VAL}) ...)

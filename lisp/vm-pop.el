@@ -127,7 +127,7 @@ a POP server, find its cache file on the file system"
 		       t
 		     (message 
 		      (concat "Leaving messages on POP server; "
-			      "You can customize this"))
+			      "See info under \"POP Spool Files\""))
 		     (sit-for 1)
 		     nil))))
     (unwind-protect

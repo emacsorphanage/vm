@@ -235,7 +235,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		       t
 		     (message 
 		      (concat "Leaving messages on IMAP server; "
-			      "You can customize this"))
+			      "See info under \"IMAP Spool Files\""))
 		     (sit-for 1)
 		     nil))))
 
