@@ -1229,12 +1229,16 @@ vm-folder-type is initialized here."
       ;; forwarded
       (vm-set-forwarded-flag-of message (= 1 (logand status #x1000))))
 
-    (setq status 
-	  (substring (vm-get-header-contents message "X-Mozilla-Status2")
-		     0 -1))		; ignore the last 4 bits,
-					; which are assumed to be 0000
+    (setq status (vm-get-header-contents message "X-Mozilla-Status2"))
     (when status
-      (setq status (string-to-number status 16))
+      (if (> (length status) 4)
+	  (progn
+	    (setq status (substring status 0 -4)) ; ignore the last 4 bits,
+					; which are assumed to be 0000
+	    (setq status (string-to-number status 16)))
+	;; handle badly formatted status strings written by older versions
+	(setq status (string-to-number status 16))
+	(setq status (/ status #x1000)))
       ;; new on the server
       (vm-set-new-flag-of message (= 1 (logand status #x0001)))
       ;; (unless (= 0 (logand status #x0004)) ; ignored thread
