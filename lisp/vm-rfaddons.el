@@ -286,7 +286,7 @@ or do the binding and advising on your own."
     (sit-for 3))
   
   (message "VM-RFADDONS: VM is now infected.")
-  (sit-for (or sit-for 2)))
+  (vm-sit-for (or sit-for 2)))
 
 (defun rf-vm-su-labels (m)
   "This version does some sanity checking."
