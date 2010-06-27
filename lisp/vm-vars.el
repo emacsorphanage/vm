@@ -4353,9 +4353,10 @@ setting this one to t."
   :group 'vm-mime
   :type 'boolean)
 
-(defcustom vm-emit-messages-for-mime-decoding nil
+(defcustom vm-emit-messages-for-mime-decoding t
   "*Flag to allow minibuffer messages about the progress of MIME
-decoding of messages."
+decoding of messages.  Only nontrivial decodings are normally
+reported.  So there is normally no need to change this from the default."
   :group 'vm-mime
   :type 'boolean)
 
