@@ -332,6 +332,7 @@ there are @var{n} or fewer messages.  The default value of
 @menu
 * Local Folders::     Working with folders on the local file system
 * Server Folders::    Working with folders on mail servers
+* Thunderbird Folders:: Working with folders managed by Thunderbird
 * Getting New Mail::  Retrieving mail from spool files.
 * Crash Recovery::    Recovering changes after Emacs or your system dies.
 @end menu
@@ -727,7 +728,7 @@ Two additional formats are @code{mmdf} used by MMDF systems and
 automatically when read from the file system.
 
 
-@node Server Folders, Getting New Mail, Local Folders, Starting Up
+@node Server Folders, Thunderbird Folders, Local Folders, Starting Up
 @section Server Folders
 
 @cindex primary inbox
@@ -1034,7 +1035,53 @@ which of them have actually changed during the offline operation.
 
 
 
-@node Getting New Mail, Crash Recovery, Server Folders, Starting Up
+@node Thunderbird Folders, Getting New Mail, Server Folders, Starting Up
+@section Thunderbird Folders
+
+@cindex Thunderbird
+VM can work with local folders managed by Mozilla Thunderbird.  You can
+find the location of Thunderbird's folders by examining the Account
+Settings for ``Local Folders'' inside Thunderbird.
+
+Thunderbird stores the folders in the @code{From_} folder type.
+@xref{Folder types}.  Within such folders, Thunderbird stores the
+message status flags (message attributes such as whether a message is
+read, replied to, deleted etc.) under special header fields called
+@code{X-Mozilla-Status} and @code{X-Mozilla-Status2}.  In addition to
+these headers, Thunderbird also stores a quick copy of the message
+status flags in a separate file with the extension @code{.msf}.
+
+When you visit a Thunderbird folder, VM reads the status flags stored in
+the special headers and uses them for processing.  As you make changes
+to the folder by reading messages, replying to them or deleting them,
+the changes are propagated to the Thunderbird status flags and written
+to the disk when saved.  VM also deletes the @code{.msf} file maintained
+by Thunderbird so that Thunderbird will recompute the status information
+from the headers.  Thus, the changes made to the Thunderbird folders
+will be visible inside Thunderbird.
+
+@vindex vm-sync-thunderbird-status
+The variable @code{vm-sync-thunderbird-status} controls how VM deals
+with Thunderbird folders.  The default value @code{t} gives the behavior
+described above.  You can also set it to @code{'read-only}, in which
+case VM reads the Thunderbird status flags, but makes no changes to
+them.  So, the changes made to the folders will be lost after you quit
+VM.  If you set it to @code{nil}, then VM refrains from reading and
+writing the Thunderbird status flags.  In this case, the changes made to
+the folders are visible inside VM even after revisiting, but they will have
+no effect for Thunderbird.  
+
+WARNING: Keep in mind that all this applies to changes to message
+attributes only.  If you @i{expunge} a folder, then the deleted messages
+are physically purged from the folder.  They will be lost both inside VM
+as well as Thunderbird.
+
+The variable @code{vm-sync-thunderbird-status} is a buffer-local
+variable.  You may set its default value in your @code{.vm} file.  To
+change it in a running Emacs session, you must use @code{setq-default}.
+@xref{Locals,, Local Variables, emacs, Gnu Emacs manual}.
+
+@node Getting New Mail, Crash Recovery, Thunderbird Folders, Starting Up
 @section Getting New Mail
 
 @findex vm-get-new-mail
