@@ -816,18 +816,32 @@ must set this variable non-nil."
   :type 'boolean)
 
 (defvar vm-sync-thunderbird-status t
-  "* If t VM synchronizes its headers with the headers of
+  "* If set to t, VM synchronizes its headers with the headers of
 Thunderbird so that full interoperation with Thunderbird becomes
-possible.") 
+possible.  If it is set to 'read-only then VM reads the Thunderbird
+status flags, but refrains from updating them.  If it is set to nil
+then VM makes no attempt to read or write the Thunderbird status
+flags.") 
 
 (make-variable-buffer-local 'vm-sync-thunderbird-status)
 
-(defvar vm-read-thunderbird-status t
-  "If t VM reads the headers of Thunderbird when visiting
-folders.  This does not cause VM to write Thunderbird headers.  See
-`vm-sync-thunderbird-status' for full synchronization.")
+;; (defvar vm-folder-sync-thunderbird-status t
+;;   "If t VM synchronizes its headers with the headers of
+;; Thunderbird so that full interoperation with Thunderbird becomes
+;; possible.  This is not a customization variable.  See
+;; `vm-sync-thunderbird-status' for customization.") 
 
-(make-variable-buffer-local 'vm-read-thunderbird-status)
+;; (defvar vm-read-thunderbird-status t
+;;   "* If t VM reads the headers of Thunderbird when visiting
+;; folders, but not write Thunderbird headers.  This variable has
+;; effect only if `vm-folder-sync-thunderbird-status' is nil.")
+
+(defvar vm-folder-read-thunderbird-status t
+  "If t VM reads the headers of Thunderbird when visiting
+folders.  This is not a customization variable.  See
+`vm-sync-thunderbird-status' for customization.")
+
+(make-variable-buffer-local 'vm-folder-read-thunderbird-status)
 
 (defcustom vm-visible-headers
   '("Resent-"
