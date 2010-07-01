@@ -3319,6 +3319,8 @@ FETCH is t, then the retrieval is for a temporary message fetch."
        (setq text-end (marker-position (vm-text-end-of mm)))
        (narrow-to-region (marker-position (vm-headers-of mm)) text-end)
        (goto-char text-begin)
+       ;; Check to see that we are at the right place
+       (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
        (delete-region (point) (point-max))
        (condition-case err
 	   (apply (intern (format "vm-fetch-%s-message" fetch-method))
@@ -3423,6 +3425,8 @@ the folder is saved."
        (setq text-begin (marker-position (vm-text-of mm)))
        (setq text-end (marker-position (vm-text-end-of mm)))
        (goto-char text-begin)
+       ;; Check to see that we are at the right place
+       (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
        (delete-region (point) text-end)
        (vm-set-buffer-modified-p t)
        (vm-set-mime-layout-of mm nil)
