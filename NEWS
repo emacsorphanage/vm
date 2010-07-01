@@ -16,8 +16,9 @@ Status
   using VM! - Rob, Ulrich and Uday
   
 VM 8.1.2 (2010-05-??)
-=======
 
+  IMPROVEMENTS
+  
     * VM made safe for use with Gnu Emacs 23, by removing a few calls
       to the `next-line' function (which was redefined in this Emacs).
 
@@ -26,6 +27,12 @@ VM 8.1.2 (2010-05-??)
 
     * Extended Org mode email links to work for virtual folders.
     
+  CHANGES
+
+   ** The default values of `vm-pop-expunge-after-retrieving' and
+      `vm-imap-expunge-after-retrieving' changed to nil to help new
+      users.
+
     * `vm-fill-long-lines-in-reply' initialized to the default value
       of `fill-column'.
 

@@ -224,13 +224,21 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	can-delete read-write uid-validity
 	mailbox mailbox-count message-size response
 	n (retrieved 0) retrieved-bytes process-buffer)
-    (setq auto-expunge (cond ((setq x (assoc source
-					     vm-imap-auto-expunge-alist))
-			      (cdr x))
-			     ((setq x (assoc (vm-imapdrop-sans-password source)
-					     vm-imap-auto-expunge-alist))
-			      (cdr x))
-			     (t vm-imap-expunge-after-retrieving)))
+    (setq auto-expunge 
+	  (cond ((setq x (assoc source
+				vm-imap-auto-expunge-alist))
+		 (cdr x))
+		((setq x (assoc (vm-imapdrop-sans-password source)
+				vm-imap-auto-expunge-alist))
+		 (cdr x))
+		(t (if vm-imap-expunge-after-retrieving
+		       t
+		     (message 
+		      (concat "Leaving messages on IMAP server; "
+			      "See info under \"IMAP Spool Files\""))
+		     (sit-for 1)
+		     nil))))
+
     (unwind-protect
 	(catch 'end-of-session
 	  (if handler
@@ -320,7 +328,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		(message "Retrieving message %d (of %d) from %s..."
 			 n mailbox-count imapdrop)
                 (vm-imap-fetch-message process n
-				       use-body-peek vm-load-headers-only)
+				       use-body-peek nil)
                 (vm-imap-retrieve-to-target process destination
 					    statblob use-body-peek) 
 		(vm-imap-read-ok-response process)
