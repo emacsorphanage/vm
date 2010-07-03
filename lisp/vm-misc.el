@@ -397,6 +397,14 @@ vm-mail-buffer variable."
 	 (find-file-name-handler filename)))
     nil))
 
+(defun vm-select-frame-set-input-focus (frame)
+  (if (fboundp 'select-frame-set-input-focus)
+      ;; defined in FSF Emacs 22.1
+      (select-frame-set-input-focus frame)
+    (select-frame frame)
+    (focus-frame frame)
+    (raise-frame frame)))
+
 (defun vm-get-buffer-window (buffer &optional which-frames which-devices)
   (condition-case nil			; try XEmacs
       (or (get-buffer-window buffer which-frames which-devices)

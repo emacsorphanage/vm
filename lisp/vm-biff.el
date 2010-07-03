@@ -262,9 +262,7 @@ folder selectors work."
     (vm-biff-delete-popup)
     
     (cond ((and vm-biff-folder-frame (vm-biff-x-p))
-           (select-frame vm-biff-folder-frame)
-           (focus-frame vm-biff-folder-frame)
-           (raise-frame vm-biff-folder-frame)
+	   (vm-select-frame-set-input-focus vm-biff-folder-frame)
            (run-hooks 'vm-biff-select-frame-hook)
            (select-window vm-biff-folder-window))
           (vm-biff-folder-window
@@ -451,7 +449,8 @@ AddToFunc SelectWindow
                 (make-frame-visible mf)
                 (setq wf mf)
               
-                (if vm-biff-focus-popup (focus-frame mf)
+                (if vm-biff-focus-popup 
+		    (vm-select-frame-set-input-focus mf)
                   (select-frame sf)))
 
             ;; Terminal

@@ -596,7 +596,10 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 				     (/ (frame-width frame) 2)
 				     (/ (frame-height frame) 2))
 		 ;; doc for set-mouse-position says to do this
-		 (unfocus-frame)))))))
+		 ;; but Emacs 22 doesn't say it and unfocus-frame is
+		 ;; obsolete now.  USR, 2010-07-03
+		 (unfocus-frame)
+		 ))))))
 
 (fset 'vm-selected-frame
       (symbol-function
