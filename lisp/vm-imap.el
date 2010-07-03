@@ -3733,7 +3733,7 @@ IMAP mailbox spec."
 	(error 
 	 "IMAP folder required in the format account-name:folder-name"))
     (if (null spec)
-	(error "Unknown IMAP account-name:folder-name"))
+	(error "Unknown IMAP account %s" account))
     (setq list (vm-imap-parse-spec-to-list spec))
     (setcar (nthcdr 3 list) folder)
     (setq vm-last-visit-imap-account account)
