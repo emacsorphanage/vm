@@ -3426,7 +3426,8 @@ the folder is saved."
        (setq text-end (marker-position (vm-text-end-of mm)))
        (goto-char text-begin)
        ;; Check to see that we are at the right place
-       (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
+       (vm-assert (or (eobp)
+		      (save-excursion (forward-line -1) (looking-at "\n"))))
        (delete-region (point) text-end)
        (vm-set-buffer-modified-p t)
        (vm-set-mime-layout-of mm nil)
