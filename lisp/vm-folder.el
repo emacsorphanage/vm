@@ -4776,10 +4776,12 @@ folder is saved."
 	    (while (>= vm-fetched-message-count
 		       vm-fetched-message-limit)
 	      (let ((mm (car vm-fetched-messages)))
-		;; mm should have been retrieved and marked for discard
-		(vm-assert (and (vm-body-retrieved-of mm)
-				(vm-body-to-be-discarded-of mm)))
-		(vm-discard-real-message-body mm)
+		;; mm should have been retrieved
+		(vm-assert (vm-body-retrieved-of mm))
+		;; ignore it if doesn't need to be discarded
+		;; it could have been exunged already
+		(when (vm-body-to-be-discarded-of mm)
+		    (vm-discard-real-message-body mm))
 		(vm-unregister-fetched-message mm))))
 	(add-to-list 'vm-fetched-messages m t 'eq)
 	(vm-increment vm-fetched-message-count)
