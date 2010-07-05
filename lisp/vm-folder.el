@@ -228,14 +228,6 @@ and thread indentation."
 	   (intern (buffer-name (vm-buffer-of m))
 		   vm-buffers-needing-display-update)))))
 
-(defun vm-force-mode-line-update ()
-  "Force a mode line update in all frames."
-  (if (fboundp 'force-mode-line-update)
-      (force-mode-line-update t)
-    (save-excursion
-      (set-buffer (other-buffer))
-      (set-buffer-modified-p (buffer-modified-p)))))
-
 (defun vm-do-needed-mode-line-update ()
   "Do a modeline update for the current folder buffer.
 This means setting up all the various vm-ml attribute variables
@@ -289,7 +281,6 @@ on its presentation buffer, if any."
     (setq vm-ml-message-marked (vm-mark-of (car vm-message-pointer))))
   (if vm-summary-buffer
       (let ((modified (buffer-modified-p)))
-	(save-excursion
 	  (vm-copy-local-variables vm-summary-buffer
 				   'default-directory
 				   'vm-ml-message-new
@@ -313,34 +304,33 @@ on its presentation buffer, if any."
 				   'vm-ml-labels
 				   'vm-spooled-mail-waiting
 				   'vm-message-list)
-	  (set-buffer vm-summary-buffer)
+	(with-current-buffer vm-summary-buffer
 	  (set-buffer-modified-p modified))))
   (if vm-presentation-buffer
       (let ((modified (buffer-modified-p)))
-	(save-excursion
-	  (vm-copy-local-variables vm-presentation-buffer
-				   'default-directory
-				   'vm-ml-message-new
-				   'vm-ml-message-unread
-				   'vm-ml-message-read
-				   'vm-ml-message-edited
-				   'vm-ml-message-replied
-				   'vm-ml-message-forwarded
-				   'vm-ml-message-filed
-				   'vm-ml-message-written
-				   'vm-ml-message-deleted
-				   'vm-ml-message-marked
-				   'vm-ml-message-number
-                                   'vm-ml-message-redistributed
-				   'vm-ml-highest-message-number
-				   'vm-folder-read-only
-				   'vm-folder-type
-				   'vm-virtual-folder-definition
-				   'vm-virtual-mirror
-				   'vm-ml-labels
-				   'vm-spooled-mail-waiting
-				   'vm-message-list)
-	  (set-buffer vm-presentation-buffer)
+	(vm-copy-local-variables vm-presentation-buffer
+				 'default-directory
+				 'vm-ml-message-new
+				 'vm-ml-message-unread
+				 'vm-ml-message-read
+				 'vm-ml-message-edited
+				 'vm-ml-message-replied
+				 'vm-ml-message-forwarded
+				 'vm-ml-message-filed
+				 'vm-ml-message-written
+				 'vm-ml-message-deleted
+				 'vm-ml-message-marked
+				 'vm-ml-message-number
+				 'vm-ml-message-redistributed
+				 'vm-ml-highest-message-number
+				 'vm-folder-read-only
+				 'vm-folder-type
+				 'vm-virtual-folder-definition
+				 'vm-virtual-mirror
+				 'vm-ml-labels
+				 'vm-spooled-mail-waiting
+				 'vm-message-list)
+	(with-current-buffer vm-presentation-buffer
 	  (set-buffer-modified-p modified))))
   (vm-force-mode-line-update))
 
@@ -1207,46 +1197,50 @@ vm-folder-type is initialized here."
 
 (defun vm-read-thunderbird-status (message)
   (let (status)
-    (setq status (vm-get-header-contents message "X-Mozilla-Status"))
+    (setq status (vm-get-header-contents message "X-Mozilla-Status:"))
     (when status
       (setq status (string-to-number status 16))
       ;; read flag
       (vm-set-unread-flag-of message (= 0 (logand status #x0001)))
       ;; answered flag
-      (vm-set-replied-flag-of message (= 1 (logand status #x0002)))
+      (vm-set-replied-flag-of message (not (= 0 (logand status #x0002))))
       ;; flagged
-      ;; (when (= 1 (logand status #x0004)) 
+      ;; (unless (= 0 (logand status #x0004)) 
       ;; 	nil)
       ;; deleted
-      (vm-set-deleted-flag-of message (= 1 (logand status #x0008)))
+      (vm-set-deleted-flag-of message (not (= 0 (logand status #x0008))))
       ;; subject with "Re:" prefix
-      ;; (when (= 1 (logand status #x0010)) 
+      ;; (unless (= 0 (logand status #x0010)) 
       ;; 	nil)
       ;; thread folded
       ;; (unless (= 0 (logand status #x0020)) 
       ;; 	nil)
       ;; offline article
-      ;; (when (= 1 (logand status #x0080)) 
+      ;; (unless (= 0 (logand status #x0080)) 
       ;; 	nil)
-      ;; (when (= 1 (logand status #x0100)) ; watched
+      ;; (unless (= 0 (logand status #x0100)) ; watched
       ;; 	nil)
-      ;; (when (= 1 (logand status #x0200)) ; authenticated sender
+      ;; (unless (= 0 (logand status #x0200)) ; authenticated sender
       ;; 	nil)
-      ;; (when (= 1 (logand status #x0400)) ; remote POP article
+      ;; (unless (= 0 (logand status #x0400)) ; remote POP article
       ;; 	nil)
-      ;; (when (= 1 (logand status #x0800)) ; queued
+      ;; (unless (= 0 (logand status #x0800)) ; queued
       ;; 	nil)
       ;; forwarded
-      (vm-set-forwarded-flag-of message (= 1 (logand status #x1000))))
+      (vm-set-forwarded-flag-of message (not (= 0 (logand status #x1000)))))
 
-    (setq status 
-	  (substring (vm-get-header-contents message "X-Mozilla-Status2")
-		     0 -1))		; ignore the last 4 bits,
-					; which are assumed to be 0000
+    (setq status (vm-get-header-contents message "X-Mozilla-Status2:"))
     (when status
-      (setq status (string-to-number status 16))
+      (if (> (length status) 4)
+	  (progn
+	    (setq status (substring status 0 -4)) ; ignore the last 4 bits,
+					; which are assumed to be 0000
+	    (setq status (string-to-number status 16)))
+	;; handle badly formatted status strings written by older versions
+	(setq status (string-to-number status 16))
+	(setq status (/ status #x1000)))
       ;; new on the server
-      (vm-set-new-flag-of message (= 1 (logand status #x0001)))
+      (vm-set-new-flag-of message (not (= 0 (logand status #x0001))))
       ;; (unless (= 0 (logand status #x0004)) ; ignored thread
       ;; 	nil)
       ;; (unless (= 0 (logand status #x0020)) ; deleted on the server
@@ -1590,10 +1584,10 @@ Supports version 4 format of attribute storage, for backward compatibility."
 				 (progn (end-of-line) (point)))
 			 list (vm-parse string
 "[\000-\040,\177-\377]*\\([^\000-\040,\177-\377]+\\)[\000-\040,\177-\377]*"))
-		   (mapcar (function
-			    (lambda (s)
-			      (intern (downcase s) vm-label-obarray)))
-			   list))))
+		   (mapc (function
+			  (lambda (s)
+			    (intern (downcase s) vm-label-obarray)))
+			 list))))
 	 (goto-char (point-min))
 	 (vm-skip-past-folder-header)
 	 (vm-skip-past-leading-message-separator)
@@ -2071,34 +2065,40 @@ stuff-flag set in the current folder.    USR 2010-04-20"
     (apply 'concat (nreverse list))))
 
 (defun vm-stuff-virtual-message-data (message)
-  (let ((virtual (vm-virtual-message-p message)))
+  (let ((virtual (vm-virtual-message-p message))
+	(real-m (vm-real-message-of message)))
     (if (or (not virtual) (and virtual (vm-virtual-messages-of message)))
-	(save-excursion
-	  (set-buffer
-	   (vm-buffer-of
-	    (vm-real-message-of message)))
-	  (vm-stuff-message-data (vm-real-message-of message))))))
+	(with-current-buffer
+	    (vm-buffer-of real-m)
+	  (vm-stuff-message-data real-m)))))
 
 (defun vm-stuff-thunderbird-status (message)
-  (let (status status2)
-    (setq status (vm-get-header-contents message "X-Mozilla-Status"))
+  (let (status status2 status2-hi status2-lo)
+    (setq status (vm-get-header-contents message "X-Mozilla-Status:"))
     (if (not status)
         (setq status 0)
       (setq status (string-to-number status 16))
       ;; clear those bits we are using and keep others ...
-      (setq status (logand status (lognot (logior 1 2 4 8 #x1000))))
+      (setq status (logand status (lognot (logior #x1 #x2 #x4 #x8 #x1000))))
       (goto-char (vm-start-of message))
       (if (re-search-forward "^X-Mozilla-Status: [ 0-9A-Fa-f]+\n"
 			     (vm-text-of message) t)
           (delete-region (match-beginning 0) (match-end 0))))
-    (setq status2 
-	  (substring (vm-get-header-contents message "X-Mozilla-Status2")
-		     0 -1))		; ignore the last 4 digits
+    (setq status2 (vm-get-header-contents message "X-Mozilla-Status2:"))
     (if (not status2)
-        (setq status2 0)
-      (setq status2 (string-to-number status2 16))
+        (setq status2 0
+	      status2-hi 0
+	      status2-lo 0)
+      (if (> (length status2) 4)
+	  (setq status2-hi (string-to-number (substring status2 0 -4))
+		status2-lo (string-to-number (substring status2 -4 nil)))
+	;; handle badly fomatted status strings written by old
+	;; versions
+	(setq status2 (string-to-number status2 16)
+	      status2-hi (/ status2 #x1000)
+	      status2-lo (mod status2 #x1000)))
       ;; clear those bits we are using and keep others ...
-      (setq status2 (logand status2 (lognot (logior #x1))))
+      (setq status2-hi (logand status2-hi (lognot (logior #x1))))
       (goto-char (vm-start-of message))
       (if (re-search-forward "^X-Mozilla-Status2: [ 0-9A-Fa-f]+\n"
 			     (vm-text-of message) t)
@@ -2114,11 +2114,13 @@ stuff-flag set in the current folder.    USR 2010-04-20"
     (when (vm-forwarded-flag message)
         (setq status (logior status #x1000)))
     (when (vm-new-flag message)
-        (setq status2 (logior status2 #x1)))
+        (setq status2-hi (logior status2-hi #x1)))
     (goto-char (vm-start-of message))
     (forward-line 1)
-    (insert-before-markers (format "X-Mozilla-Status: %04x\n" status))
-    (insert-before-markers (format "X-Mozilla-Status2: %04x0000\n" status2))))
+    (insert-before-markers 
+     (format "X-Mozilla-Status: %04x\n" status))
+    (insert-before-markers 
+     (format "X-Mozilla-Status2: %04x%04x\n" status2-hi status2-lo))))
   
 (defun vm-stuff-labels ()
   (if vm-message-list
@@ -2579,15 +2581,14 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		    v m (m-list nil) tail)
 		(message "Reading index file...")
 		(setq work-buffer (vm-make-work-buffer))
-		(save-excursion
-		  (set-buffer work-buffer)
+		(with-current-buffer work-buffer
 		  (insert-file-contents-literally index-file))
 		(goto-char (point-min))
 
 		;; check version
 		(setq obj (read work-buffer))
 		(if (not (eq obj 1))
-		    (error "Unsupported index file version: %s") obj)
+		    (error "Unsupported index file version: %s" obj))
 
 		;; folder type
 		(setq folder-type (read work-buffer))
@@ -2695,7 +2696,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
     (widen)
     (catch 'done
       (cond ((not (consp blob))
-	     (error "Validity check object not a cons: %s"))
+	     (error "Validity check object not a cons: %s" blob))
 	    ((eq (car blob) 'file)
 	     (let (ch time time2)
 	       (setq blob (cdr blob))
@@ -2872,8 +2873,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 
 	  (message "Writing index file...")
 	  (catch 'done
-	    (save-excursion
-	      (set-buffer work-buffer)
+	    (with-current-buffer work-buffer
 	      (condition-case data
 		  (let ((coding-system-for-write (vm-binary-coding-system))
 			(selective-display nil))
@@ -3721,10 +3721,7 @@ Same as \\[vm-recover-file]."
 ;;;###autoload
 (defun vm-spool-move-mail (source destination)
   (let ((handler (and (fboundp 'find-file-name-handler)
-		      (condition-case ()
-			  (find-file-name-handler source 'vm-spool-move-mail)
-			(wrong-number-of-arguments
-			  (find-file-name-handler source)))))
+		      (vm-find-file-name-handler source 'vm-spool-move-mail)))
 	status error-buffer)
     (if handler
 	(funcall handler 'vm-spool-move-mail source destination)
@@ -3732,8 +3729,7 @@ Same as \\[vm-recover-file]."
 	    (get-buffer-create
 	     (format "*output of %s %s %s*"
 		     vm-movemail-program source destination)))
-      (save-excursion
-	(set-buffer error-buffer)
+      (with-current-buffer error-buffer
 	(erase-buffer))
       (setq status
 	    (apply 'call-process
@@ -3741,7 +3737,7 @@ Same as \\[vm-recover-file]."
 		    (list vm-movemail-program nil error-buffer t)
 		    (copy-sequence vm-movemail-program-switches)
 		    (list source destination))))
-      (save-excursion
+      (save-current-buffer
 	(set-buffer error-buffer)
 	(if (and (numberp status) (not (= 0 status)))
 	    (insert (format "\n%s exited with code %s\n"
@@ -3825,8 +3821,7 @@ Same as \\[vm-recover-file]."
 	       (set-buffer-modified-p nil))))
        (goto-char (point-max))
        (insert-buffer-substring crash-buf
-				1 (1+ (save-excursion
-					(set-buffer crash-buf)
+				1 (1+ (with-current-buffer crash-buf
 					(widen)
 					(buffer-size))))
        (setq got-mail (/= opoint-max (point-max)))
@@ -3912,11 +3907,7 @@ Same as \\[vm-recover-file]."
     triples ))
 
 (defun vm-spool-check-mail (source)
-  (let ((handler (and (fboundp 'find-file-name-handler)
-		      (condition-case ()
-			  (find-file-name-handler source 'vm-spool-check-mail)
-			(wrong-number-of-arguments
-			 (find-file-name-handler source))))))
+  (let ((handler (vm-find-file-name-handler source 'vm-spool-check-mail)))
     (if handler
 	(funcall handler 'vm-spool-check-mail source)
       (let ((size (nth 7 (file-attributes source)))
@@ -4750,7 +4741,7 @@ argument GARBAGE."
   "Register real message M as having been fetched into its folder
 temporarily.  Such fetched messages are discarded before the
 folder is saved."
-  (save-excursion
+  (save-current-buffer
     (set-buffer (vm-buffer-of m))
     ;; m should have retrieve=nil, i.e., already retrieved
     (vm-assert (vm-body-retrieved-of m))
@@ -4781,7 +4772,7 @@ folder is saved."
 (defun vm-unregister-fetched-message (m)
   "Unregister a real message M as a fetched message.  If M was never
 registered as a fetched message, then there is no effect."
-  (save-excursion
+  (save-current-buffer
     (set-buffer (vm-buffer-of m))
     (let ((vm-folder-read-only nil))
       (setq vm-fetched-messages (delq m vm-fetched-messages))

@@ -21,6 +21,9 @@
 
 ;;; Code:
 
+;; This file contains various low-level operations that address
+;; incomaptibilities between Gnu and XEmacs.  Expect compiler warnings.
+
 ;; Taken from XEmacs as GNU Emacs is missing `replace-in-string' and defining
 ;; it may cause clashes with other packages defining it differently, in fact
 ;; we could also call the function `replace-regexp-in-string' as Roland
@@ -109,12 +112,10 @@ and flexible."
 (defun vm-parse-addresses (string)
   (if (null string)
       ()
-    (let (work-buffer)
-      (save-excursion
+    (let ((work-buffer (vm-make-multibyte-work-buffer)))
+      (with-current-buffer work-buffer
        (unwind-protect
 	   (let (list start s char)
-	     (setq work-buffer (vm-make-multibyte-work-buffer))
-	     (set-buffer work-buffer)
 	     (insert string)
 	     (goto-char (point-min))
 	     (skip-chars-forward "\t\f\n\r ")
@@ -167,8 +168,9 @@ and flexible."
 (defun vm-parse-structured-header (string &optional sepchar keep-quotes)
   (if (null string)
       ()
-    (let ((work-buffer nil))
-      (save-excursion
+    (let ((work-buffer (vm-make-work-buffer)))
+      (buffer-disable-undo work-buffer)
+      (with-current-buffer work-buffer
        (unwind-protect
 	   (let ((list nil)
 		 (nonspecials "^\"\\\\( \t\n\r\f")
@@ -176,9 +178,6 @@ and flexible."
 	     (if sepchar
 		 (setq nonspecials (concat nonspecials (list sepchar))
 		       sp+sepchar (concat "\t\f\n\r " (list sepchar))))
-	     (setq work-buffer (vm-make-work-buffer))
-	     (buffer-disable-undo work-buffer)
-	     (set-buffer work-buffer)
 	     (insert string)
 	     (goto-char (point-min))
 	     (skip-chars-forward "\t\f\n\r ")
@@ -253,11 +252,9 @@ and flexible."
 	(goto-char (point-max))
 	(let ((buffer-read-only nil))
 	  (insert string)))
-    (let ((temp-buffer nil))
+    (let ((temp-buffer (generate-new-buffer "*vm-work*")))
       (unwind-protect
-	  (save-excursion
-	    (setq temp-buffer (generate-new-buffer "*vm-work*"))
-	    (set-buffer temp-buffer)
+	  (with-current-buffer temp-buffer
 	    (setq selective-display nil)
 	    (insert string)
 	    ;; correct for VM's uses of this function---
@@ -387,6 +384,61 @@ vm-mail-buffer variable."
 	  (throw 'fail nil)))
       t)))
 
+(defun vm-abbreviate-file-name (path)
+  (if vm-xemacs-p
+      (abbreviate-file-name path t)
+    (abbreviate-file-name path)))
+
+(defun vm-find-file-name-handler (filename operation)
+  (if (fboundp 'find-file-name-handler)
+      (condition-case ()
+	  (find-file-name-handler filename operation)
+	(wrong-number-of-arguments
+	 (find-file-name-handler filename)))
+    nil))
+
+(defun vm-select-frame-set-input-focus (frame)
+  (if (fboundp 'select-frame-set-input-focus)
+      ;; defined in FSF Emacs 22.1
+      (select-frame-set-input-focus frame)
+    (select-frame frame)
+    (focus-frame frame)
+    (raise-frame frame)))
+
+(defun vm-get-buffer-window (buffer &optional which-frames which-devices)
+  (condition-case nil			; try XEmacs
+      (or (get-buffer-window buffer which-frames which-devices)
+	  (and vm-search-other-frames
+	       (get-buffer-window buffer t t)))
+    (wrong-number-of-arguments
+     (condition-case nil		; try recent Gnu Emacs
+	 (or (get-buffer-window buffer which-frames)
+	     (and vm-search-other-frames
+		  (get-buffer-window buffer t)))
+       (wrong-number-of-arguments	; baseline old Emacs
+	(get-buffer-window buffer))))))
+
+(defun vm-get-visible-buffer-window (buffer &optional 
+					    which-frames which-devices)
+  (condition-case nil
+      (or (get-buffer-window buffer which-frames which-devices)
+	  (and vm-search-other-frames
+	       (get-buffer-window buffer t which-devices)))
+    (wrong-number-of-arguments
+     (condition-case nil
+	 (or (get-buffer-window buffer which-frames)
+	     (and vm-search-other-frames
+		  (get-buffer-window buffer 'visible)))
+       (wrong-number-of-arguments
+	(get-buffer-window buffer))))))
+
+(defun vm-force-mode-line-update ()
+  "Force a mode line update in all frames."
+  (if (fboundp 'force-mode-line-update)
+      (force-mode-line-update t)
+    (with-current-buffer (other-buffer)
+      (set-buffer-modified-p (buffer-modified-p)))))
+
 (defun vm-delete-directory-file-names (list)
   (vm-delete 'file-directory-p list))
 
@@ -461,8 +513,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 
 (defun vm-copy-local-variables (buffer &rest variables)
   (let ((values (mapcar 'symbol-value variables)))
-    (save-excursion
-      (set-buffer buffer)
+    (with-current-buffer buffer
       (vm-mapc 'set variables values))))
 
 (put 'folder-empty 'error-conditions '(folder-empty error))
@@ -495,8 +546,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	(t object)))
 
 (defun vm-run-message-hook (message &optional hook-variable)
-  (save-excursion
-    (set-buffer (vm-buffer-of message))
+  (with-current-buffer (vm-buffer-of message)
     (vm-save-restriction
       (widen)
       (save-excursion
@@ -514,8 +564,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 (put 'end-of-folder 'error-message "End of folder")
 
 (defun vm-trace (&rest args)
-  (save-excursion
-    (set-buffer (get-buffer-create "*vm-trace*"))
+  (with-current-buffer (get-buffer-create "*vm-trace*")
     (apply 'insert args)))
 
 (defun vm-timezone-make-date-sortable (string)
@@ -559,12 +608,10 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	    (format "%c%02d%02d" (if (< zone 0) ?- ?+)
 		    (/ absmin 60) (% absmin 60)))
 	(error nil))
-      (let ((temp-buffer nil))
+      (let ((temp-buffer (vm-make-work-buffer)))
 	(condition-case nil
 	    (unwind-protect
-		(save-excursion
-		  (setq temp-buffer (vm-make-work-buffer))
-		  (set-buffer temp-buffer)
+		(with-current-buffer temp-buffer
 		  (call-process "date" nil temp-buffer nil)
 		  (nth 4 (vm-parse (vm-buffer-string-no-properties)
 				   " *\\([^ ]+\\)")))
@@ -609,10 +656,15 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
   (let ((e (vm-make-extent start end)))
     (vm-set-extent-property e 'face face)))
 
+(fset 'vm-xemacs-set-face-foreground (function set-face-foreground))
+(fset 'vm-fsfemacs-set-face-foreground (function set-face-foreground))
+(fset 'vm-xemacs-set-face-background (function set-face-background))
+(fset 'vm-fsfemacs-set-face-background (function set-face-background))
+
+
 (defun vm-default-buffer-substring-no-properties (beg end &optional buffer)
   (let ((s (if buffer
-	       (save-excursion
-		 (set-buffer buffer)
+	       (with-current-buffer buffer
 		 (buffer-substring beg end))
 	     (buffer-substring beg end))))
     (set-text-properties 0 (length s) nil s)
@@ -761,8 +813,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     (buffer-disable-undo work-buffer)
 ;; probably not worth doing since no one sets buffer-offer-save
 ;; non-nil globally, do they?
-;;    (save-excursion
-;;      (set-buffer work-buffer)
+;;    (with-current-buffer work-buffer
 ;;      (setq buffer-offer-save nil))
     work-buffer ))
 
@@ -773,8 +824,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     (buffer-disable-undo work-buffer)
 ;; probably not worth doing since no one sets buffer-offer-save
 ;; non-nil globally, do they?
-;;    (save-excursion
-;;      (set-buffer work-buffer)
+;;    (with-current-buffer work-buffer
 ;;      (setq buffer-offer-save nil))
     work-buffer ))
 
@@ -790,8 +840,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 (defun vm-xemacs-compatible-insert-char (char &optional count ignored buffer)
   (if (and buffer (eq buffer (current-buffer)))
       (insert-char char count)
-    (save-excursion
-      (set-buffer buffer)
+    (with-current-buffer buffer
       (insert-char char count))))
 
 (defun vm-symbol-lists-intersect-p (list1 list2)
@@ -803,13 +852,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     nil ))
 
 (defun vm-set-buffer-variable (buffer var value)
-  (save-excursion
-    (set-buffer buffer)
+  (with-current-buffer buffer
     (set var value)))
 
 (defun vm-buffer-variable-value (buffer var)
-  (save-excursion
-    (set-buffer buffer)
+  (with-current-buffer buffer
     (symbol-value var)))
 
 (defun vm-folder-buffer-value (var)
@@ -818,11 +865,9 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     (symbol-value var)))
 
 (defsubst vm-with-string-as-temp-buffer (string function)
-  (let ((work-buffer nil))
+  (let ((work-buffer (vm-make-multibyte-work-buffer)))
     (unwind-protect
-	(save-excursion
-	  (setq work-buffer (vm-make-multibyte-work-buffer))
-	  (set-buffer work-buffer)
+	(with-current-buffer work-buffer
 	  (insert string)
 	  (funcall function)
 	  (buffer-string))
@@ -896,11 +941,9 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
   (if (not (or vm-fsfemacs-mule-p vm-xemacs-mule-p vm-xemacs-file-coding-p))
       nil
     (let ((coding-system-for-read  (vm-binary-coding-system))
-	  (work-buffer nil))
+	  (work-buffer (vm-make-work-buffer)))
       (unwind-protect
-	  (save-excursion
-	    (setq work-buffer (vm-make-work-buffer))
-	    (set-buffer work-buffer)
+	  (with-current-buffer work-buffer
 	    (condition-case nil
 		(insert-file-contents file nil 0 4096)
 	      (error nil))
@@ -1096,14 +1139,14 @@ filling of GNU Emacs does not work correctly here!"
   (if (not (eq number-to-keep t))
       (let ((extras (nthcdr (or number-to-keep 0)
 			    (symbol-value ring-variable))))
-	(mapcar (function
-		 (lambda (b)
-		   (and (buffer-name b)
-			(or (not (buffer-modified-p b))
-			    (not (vm-buffer-variable-value
-				  b buffer-offer-save)))
-			(kill-buffer b))))
-		extras)
+	(mapc (function
+	       (lambda (b)
+		 (when (and (buffer-name b)
+			    (or (not (buffer-modified-p b))
+				(not (vm-buffer-variable-value
+				      b buffer-offer-save))))
+		   (kill-buffer b))))
+	      extras)
 	(and (symbol-value ring-variable) extras
 	     (setcdr (memq (car extras) (symbol-value ring-variable))
 		     nil)))))
@@ -1151,6 +1194,11 @@ filling of GNU Emacs does not work correctly here!"
 				   hex-digit-alist)))
 		     1)
 	(delete-region (- (point) 1) (- (point) 4))))))
+
+(defun vm-process-kill-without-query (process)
+  (if (fboundp 'process-kill-without-query)
+      (process-kill-without-query process)
+    (set-process-query-on-exit-flag process nil)))
 
 (defun vm-process-sentinel-kill-buffer (process what-happened)
   (kill-buffer (process-buffer process)))

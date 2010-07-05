@@ -52,7 +52,7 @@
     (error
      (message "%S" e)
      (message "Could not load bbdb.el.  Related functions may not work correctly!")
-     (sit-for 5))))
+     (vm-sit-for 5))))
 
 ;; Dummy declarations for variables that are defined in bbdb
 
@@ -1316,7 +1316,7 @@ Run this function in order to test/check your conditions."
   "Build list of true conditions and store it in the variable 
 `vmpc-true-conditions'."
   (setq vmpc-true-conditions nil)
-  (mapcar 
+  (mapc
    (lambda (c)
      (if (save-excursion (eval (cons 'progn (cdr c))))
 	 (setq vmpc-true-conditions (cons (car c) vmpc-true-conditions))))
@@ -1338,7 +1338,7 @@ actions will be run."
         (old-vmpc-actions-to-run vmpc-actions-to-run)
         actions)
     (setq vmpc-actions-to-run nil)
-    (mapcar 
+    (mapc
      (lambda (c)
        (setq actions (cdr (assoc c alist)))
        ;; TODO: warn about unbound conditions?
@@ -1383,7 +1383,7 @@ buffer to which to write diagnostic output."
   (interactive)
   
   (if (and (not vmpc-actions-to-run) (not actions) (interactive-p))
-      (setq vmpc-actions-to-run (vmpc-read-actions)))
+      (setq vmpc-actions-to-run (vmpc-read-actions "Actions: ")))
 
   (let ((actions (or actions vmpc-actions-to-run)) form)
     (while actions

@@ -345,9 +345,9 @@ The saved messages are flagged as `filed'."
 				     folder t 'quiet)
 		     (if (null vm-convert-folder-types)
 			 (if (not (vm-virtual-message-p (car mlist)))
-			     (error "Folder type mismatch: %s, %s"
+			     (error "Folder type mismatch: %s vs %s"
 				    (vm-message-type-of m) target-type)
-			   (error "Message %s type mismatches folder %s"
+			   (error "Message %s type mismatches folder %s: %s vs %s"
 				  (vm-number-of (car mlist))
 				  folder
 				  (vm-message-type-of m)
@@ -384,9 +384,9 @@ The saved messages are flagged as `filed'."
 			     (vm-start-of m) (vm-end-of m))
 			  (if (null vm-convert-folder-types)
 			      (if (not (vm-virtual-message-p (car mlist)))
-				  (error "Folder type mismatch: %s, %s"
+				  (error "Folder type mismatch: %s vs %s"
 					 (vm-message-type-of m) target-type)
-				(error "Message %s type mismatches folder %s"
+				(error "Message %s type mismatches folder %s: %s vs %s"
 				       (vm-number-of (car mlist))
 				       folder
 				       (vm-message-type-of m)

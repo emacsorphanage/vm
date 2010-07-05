@@ -182,9 +182,6 @@ A nil value means VM should not read or write index files."
   :group 'vm-folders
   :type '(choice string (const nil)))
 
-;; This is added by Uday Reddy as a temporary measure.  2008-04-15
-;; It should really be folder-specific and saved with the folders on
-;; the file system.
 (defcustom vm-load-headers-only nil
   "*If non-nil, asks VM to load headers of mail folders whenever
 possible, without loading the message bodies.
@@ -1468,7 +1465,7 @@ This is done in order to prevent loading of embedded images used to check if
 and when you read an email."
   :group 'vm-mime
   :type 'regexp)
-  
+
 (defcustom vm-mime-text/html-blocker-exceptions nil
   "*Regexp matching URL which should not be blocked."
   :group 'vm-mime

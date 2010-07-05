@@ -1004,10 +1004,8 @@ See the variable `vm-mail-priority'."
 (defun vm-mail-fcc-file-join (dir file)
   "Returns a nice path to a folder."
   (let* ((path (expand-file-name file dir)))
-    (if path
-	(if vm-xemacs-p
-	    (abbreviate-file-name path t)
-	  (abbreviate-file-name path))
+    (if path 
+	(vm-abbreviate-file-name path)
       dir)))
 
 ;;;###autoload
