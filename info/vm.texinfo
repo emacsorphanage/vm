@@ -4741,7 +4741,9 @@ Please let us know if any other contributors have been missed out.
 @unnumberedsubsec Releases of VM development team
 @itemize
 @item Version 8.1.0, released 21 March, 2010.
-@item Version 8.1.1, planned for release on 10 April, 2010.
+@item Version 8.1.1, released 25 April, 2010.
+@item Version 8.1.2, planned for release in July/August, 2010.
+@item Version 8.2.0, planned for release in August/September, 2010.
 @end itemize
 
 

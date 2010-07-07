@@ -3307,29 +3307,35 @@ FETCH is t, then the retrieval is for a temporary message fetch."
     (set-buffer (vm-buffer-of mm))
     (vm-save-restriction
      (widen)
+     (narrow-to-region (marker-position (vm-headers-of mm)) 
+		       (marker-position (vm-text-end-of mm)))
      (let ((fetch-method (vm-message-access-method-of mm))
 	   (vm-folder-read-only (and vm-folder-read-only (not fetch)))
 	   (inhibit-read-only t)
 	   ;; (buffer-read-only nil)    ; seems redundant
 	   (buffer-undo-list t)		; why this?  USR, 2010-06-11
 	   (modified (buffer-modified-p))
-	   (text-begin nil)
-	   (text-end nil))
-       (setq text-begin (marker-position (vm-text-of mm)))
-       (setq text-end (marker-position (vm-text-end-of mm)))
-       (narrow-to-region (marker-position (vm-headers-of mm)) text-end)
+	   (text-begin (marker-position (vm-text-of mm)))
+	   (text-end (marker-position (vm-text-end-of mm)))
+	   (testing 0))
        (goto-char text-begin)
        ;; Check to see that we are at the right place
        (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
+       (vm-inc testing)
+
        (delete-region (point) (point-max))
        (condition-case err
 	   (apply (intern (format "vm-fetch-%s-message" fetch-method))
 		  mm nil)
 	 (error 
 	  (error "Unable to load message; %s" (error-message-string err))))
+       (vm-assert (eq (point) text-begin))
+       (vm-inc testing)
        ;; delete the new headers
        (delete-region text-begin
 		      (or (re-search-forward "\n\n" (point-max) t) (point-max)))
+       (vm-assert (eq (point) text-begin))
+       (vm-inc testing)
        ;; fix markers now
        ;; FIXME the text-end is guessed
        (set-marker (vm-text-of mm) text-begin)
@@ -3339,7 +3345,9 @@ FETCH is t, then the retrieval is for a temporary message fetch."
 		     ;; (end-of-line 0) ; move back one line
 		     ;; (kill-line 1)
 		     (point)))
-       (goto-char text-begin)
+       (vm-assert (eq (point) text-begin))
+       (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
+       (vm-inc testing)
        ;; now care for the layout of the message
        (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
        ;; update the message data
@@ -3349,7 +3357,11 @@ FETCH is t, then the retrieval is for a temporary message fetch."
        (vm-set-byte-count-of mm nil)
        ;; update the virtual messages
        (vm-update-virtual-messages mm)
-       (set-buffer-modified-p modified)))))
+       (set-buffer-modified-p modified)
+
+       (vm-assert (eq (point) text-begin))
+       (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
+       (vm-inc testing)))))
 
 ;;;###autoload
 (defun vm-refresh-message ()
@@ -3420,22 +3432,34 @@ the folder is saved."
      (let ((inhibit-read-only t)
 	   ;; (buffer-read-only nil)     ; seems redundant
 	   (modified (buffer-modified-p))
-	   (text-begin nil)
-	   (text-end nil))
-       (setq text-begin (marker-position (vm-text-of mm)))
-       (setq text-end (marker-position (vm-text-end-of mm)))
+	   (text-begin (marker-position (vm-text-of mm)))
+	   (text-end (marker-position (vm-text-end-of mm))))
        (goto-char text-begin)
        ;; Check to see that we are at the right place
-       (vm-assert (or (eobp)
-		      (save-excursion (forward-line -1) (looking-at "\n"))))
-       (delete-region (point) text-end)
-       (vm-set-buffer-modified-p t)
-       (vm-set-mime-layout-of mm nil)
-       (vm-set-body-to-be-retrieved-flag mm t)
-       (vm-set-body-to-be-discarded-flag mm nil)
-       (vm-set-line-count-of mm nil)
-       (vm-update-virtual-messages mm)
-       (set-buffer-modified-p modified)))))
+       (if (or (bobp)
+	       (save-excursion (forward-line -1) (looking-at "\n")))
+	   (progn
+	     (delete-region (point) text-end)
+	     (vm-set-buffer-modified-p t)
+	     (vm-set-mime-layout-of mm nil)
+	     (vm-set-body-to-be-retrieved-flag mm t)
+	     (vm-set-body-to-be-discarded-flag mm nil)
+	     (vm-set-line-count-of mm nil)
+	     (vm-update-virtual-messages mm)
+	     (set-buffer-modified-p modified))
+	 (if (y-or-n-p
+	      (concat "VM internal error: "
+		       "headers of a message have been corrupted. "
+		       "Continue? "))
+	     (progn
+	       (message (concat "The damaged message, with UID %s, "
+				"is left in the folder")
+			(vm-imap-uid-of mm))
+	       (sit-for 5)
+	       (vm-set-body-to-be-discarded-flag mm nil))
+	   (error "Aborted operation")))
+       ))))
+
 
 (defun vm-imap-save-attributes (&optional interactive all-flags)
   "* Save the attributes of changed messages to the IMAP folder.
