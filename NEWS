@@ -15,10 +15,12 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
-VM 8.1.2 (2010-05-??)
+VM 8.1.2
 
   IMPROVEMENTS
   
+    * Virtual folder facility extended to work with POP and IMAP folders.
+
     * VM made safe for use with Gnu Emacs 23, by removing a few calls
       to the `next-line' function (which was redefined in this Emacs).
 

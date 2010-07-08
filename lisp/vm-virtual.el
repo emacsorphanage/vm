@@ -503,7 +503,7 @@ Prefix arg means the new virtual folder should be visited read only."
 (defun vm-vs-older-than (m arg)
   (let ((date (vm-get-header-contents m "Date:")))
     (if date
-        (>= (days-between (current-time-string) date) arg))))
+        (> (days-between (current-time-string) date) arg))))
 
 (defun vm-vs-newer-than (m arg)
   (let ((date (vm-get-header-contents m "Date:")))

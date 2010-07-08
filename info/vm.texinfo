@@ -3354,7 +3354,7 @@ Each virtual folder definition should have the following form:
 
 @example
 (@var{VIRTUAL-FOLDER-NAME}
-  ( (@var{FOLDER-NAME} ...)
+  ( (@var{FOLDER} ...)
     (@var{SELECTOR} [@var{ARG} ...]) ... )
   ... )
 @end example
@@ -3362,9 +3362,10 @@ Each virtual folder definition should have the following form:
 @var{VIRTUAL-FOLDER-NAME} is the name of the virtual folder being defined.
 This is the name by which you and VM will refer to this folder.
 
-@var{FOLDER-NAME} should be the name of a real folder.  There may
-be more than one @var{FOLDER-NAME} listed, the @var{SELECTOR}s within
-that sublist will apply to them all.  If @var{FOLDER-NAME} is a
+@var{FOLDER} should be the specification of a real folder: a file path
+for a local folder or a maildrop specification for a POP/IMAP folder.  There may
+be more than one @var{FOLDER} listed, the @var{SELECTOR}s within
+that sublist will apply to them all.  If @var{FOLDER} is a
 directory, VM will assume this to mean that all the folders in
 that directory should be searched.
 
@@ -3372,9 +3373,11 @@ The @var{SELECTOR} is a Lisp symbol that tells VM how to
 decide whether a message from one of the folders specified by
 the @var{FOLDER-NAME}s should be included in the virtual
 folder.  Some @var{SELECTOR}s require an argument @var{ARG};
-unless otherwise noted @var{ARG} may be omitted.
+unless otherwise noted, @var{ARG} may be omitted.
 
 @table @code
+@item any
+matches any message.
 @item author
 matches message if @var{ARG} matches the author; @var{ARG} should be a
 regular expression.
@@ -3382,80 +3385,29 @@ regular expression.
 matches message if @var{ARG} matches the author of
 the message or any of its recipients; @var{ARG}
 should be a regular expression.
-@item and
-matches the message if all its argument
-selectors match the message.  Example:
-@example
-(and (author "Derek McGinty") (new))
-@end example
-@noindent matches all new messages from Derek McGinty.
-@code{and} takes any number of arguments.
-@item any
-matches any message.
-@item deleted
-matches message if it is flagged for deletion.
-@item edited
-matches message if it has been edited.
-@item filed
-matches message if it has been saved with its headers.
-@item forwarded
-matches message if it has been forwarded using
-a variant of @code{vm-forward-message} or @code{vm-send-digest}.
-@item header
-matches message if @var{ARG} matches any part of the header
-portion of the message; @var{ARG} should be a
-regular expression.
-@item header-or-text
-matches message if @var{ARG} matches any part of the
-headers or the text portion of the message;
-@var{ARG} should be a regular expression.
-@item label
-matches message if message has a label named @var{ARG}.
-@item less-chars-than
-matches message if message has less than @var{ARG}
-characters.  @var{ARG} should be a number.
-@item less-lines-than
-matches message if message has less than @var{ARG}
-lines.  @var{ARG} should be a number.
-@item more-chars-than
-matches message if message has more than @var{ARG}
-characters.  @var{ARG} should be a number.
-@item more-lines-than
-matches message if message has more than @var{ARG}
-lines.  @var{ARG} should be a number.
-@item marked
-matches message if it is marked, as with
-@code{vm-mark-message}.
-@item new
-matches message if it is new.
-@item not
-matches message only if its selector argument
-does NOT match the message.  Example:
-@example
-(not (deleted))
-@end example
-@noindent matches messages that are not deleted.
-@item or
-matches the message if any of its argument
-selectors match the message.  Example:
-@example
-(or (author "Dave Weckl") (subject "drum"))
-@end example
-@noindent matches messages from Dave Weckl or messages
-with the string ``drum'' in their Subject header.
-@code{or} takes any number of arguments.
-@item read
-matches message if it is neither new nor unread.
-@item recent
-matches message if it is new.
 @item recipient
 matches message if @var{ARG} matches any part of the recipient
 list of the message.  @var{ARG} should be a regular expression.
-@item redistributed
-matches message if it has been redistributed using
-@code{vm-resend-message}.
-@item replied
-matches message if it has been replied to.
+@item outgoing
+matches message if your are the author of it, i.e. if the author matches
+@code{vm-summary-uninteresting-senders}
+@item in-bbdb
+matches if the addresses from the message are in the BBDB. With an option
+first argument you might select the address class and with an optional second
+argument if only the first address should be checked.  
+@example
+(in-bbdb authors)
+@end example
+@example
+(in-bbdb recipients t)
+@end example
+@item subject
+matches message if @var{ARG} matches any part of the message's
+subject; @var{ARG} should be a regular expression.
+@item text
+matches message if @var{ARG} matches any part of the text
+portion of the message; @var{ARG} should be a
+regular expression.
 @item sent-after
 matches message if it was sent after the date @var{ARG}.
 A fully specified date looks like this:
@@ -3478,70 +3430,122 @@ You can leave out any part and it will
 default to the current date's value for that
 part, with the exception of the hh:mm:ss
 part which defaults to midnight.
-@item subject
-matches message if @var{ARG} matches any part of the message's
-subject; @var{ARG} should be a regular expression.
-@item text
-matches message if @var{ARG} matches any part of the text
+@item older-than
+matches message if it is more than @var{ARG} days old
+@item newer-than
+matches message if it is at most @var{ARG} days old
+@item header
+matches message if @var{ARG} matches any part of the header
 portion of the message; @var{ARG} should be a
 regular expression.
-@item unanswered
-matches message if it has not been replied to.
-Same as the @code{unreplied} selector.
-@item undeleted
-matches message if it has not been deleted.
-@item unedited
-matches message if it has not been edited.
-@item unfiled
-matches message if it has not been saved with its
-headers.
-@item unforwarded
-matches message if it has not been forwarded using
-@code{vm-forward-message} or @code{vm-send-digest} or one
-of their variants.
-@item unread
-matches message if it is not new and hasn't been read.
-@item unseen
-matches message if it is not new and hasn't been read.
-Same as the @code{unread} selector.
-@item unredistributed
-matches message if it has not been redistributed using
-@code{vm-resend-message}.
-@item unreplied
-matches message if it has not been replied to.
-@item virtual-folder-member
-matches message if the message is already a
-member of some virtual folder currently
-being visited.
-@item written
-matches message if it has been saved without its headers.
-@item older-than
-matches message if it is at least @var{ARG} days old
-@item eval
-matches message if evaluating the sexpr @var{ARG} yields @code{t}.
-@item outgoing
-matches message if your are the author of it, i.e. if the author matches
-@code{vm-summary-uninteresting-senders}
+@item header-or-text
+matches message if @var{ARG} matches any part of the
+headers or the text portion of the message;
+@var{ARG} should be a regular expression.
 @item spam-score
 matches message if its spam score is at least @var{ARG}.  See
 @code{vm-vs-spam-score-headers} for configuration.
 @item spam-word
 matches message if it contains a word from @code{vm-spam-words-file}
-@item folder-name
-matches message if it is from a folder matching @code{ARG}
-@item in-bbdb
-matches if the addresses from the message are in the BBDB. With an option
-first argument you might select the address class and with an optional second
-argument if only the first address should be checked.  
-@example
-(in-bbdb authors)
-@end example
-@example
-(in-bbdb recipients t)
-@end example
+@item deleted
+matches message if it is flagged for deletion.
+@item undeleted
+matches message if it has not been deleted.
+@item edited
+matches message if it has been edited.
+@item unedited
+matches message if it has not been edited.
+@item filed
+matches message if it has been saved with its headers.
+@item unfiled
+matches message if it has not been saved with its
+headers.
+@item written
+matches message if it has been saved without its headers.
+@item new
+matches message if it is new.
+@item recent
+matches message if it is new.  Same as the @code{new} selector.
+@item read
+matches message if it is neither new nor unread.
+@item unread
+matches message if it is not new and hasn't been read.
+@item unseen
+matches message if it is not new and hasn't been read.
+Same as the @code{unread} selector.
+@item replied
+matches message if it has been replied to.
+@item answered
+matches message if it has been replied to.  Same as the @code{replied}
+selector. 
+@item unreplied
+matches message if it has not been replied to.
+@item unanswered
+matches message if it has not been replied to.
+Same as the @code{unreplied} selector.
+@item forwarded
+matches message if it has been forwarded using
+a variant of @code{vm-forward-message} or @code{vm-send-digest}.
+@item unforwarded
+matches message if it has not been forwarded using
+@code{vm-forward-message} or @code{vm-send-digest} or one
+of their variants.
+@item redistributed
+matches message if it has been redistributed using
+@code{vm-resend-message}.
+@item unredistributed
+matches message if it has not been redistributed using
+@code{vm-resend-message}.
+@item marked
+matches message if it is marked, as with
+@code{vm-mark-message}.
 @item attachment
 matches if a message contains an attachment resp. its text matched
 @code{vm-vs-attachment-regexp}
+@item less-chars-than
+matches message if message has less than @var{ARG}
+characters.  @var{ARG} should be a number.
+@item less-lines-than
+matches message if message has less than @var{ARG}
+lines.  @var{ARG} should be a number.
+@item more-chars-than
+matches message if message has more than @var{ARG}
+characters.  @var{ARG} should be a number.
+@item more-lines-than
+matches message if message has more than @var{ARG}
+lines.  @var{ARG} should be a number.
+@item eval
+matches message if evaluating the sexpr @var{ARG} yields @code{t}.
+@item and
+matches the message if all its argument
+selectors match the message.  Example:
+@example
+(and (author "Derek McGinty") (new))
+@end example
+@noindent matches all new messages from Derek McGinty.
+@code{and} takes any number of arguments.
+@item not
+matches message only if its selector argument
+does NOT match the message.  Example:
+@example
+(not (deleted))
+@end example
+@noindent matches messages that are not deleted.
+@item or
+matches the message if any of its argument
+selectors match the message.  Example:
+@example
+(or (author "Dave Weckl") (subject "drum"))
+@end example
+@noindent matches messages from Dave Weckl or messages
+with the string ``drum'' in their Subject header.
+@code{or} takes any number of arguments.
+@item folder-name
+matches message if it is from a folder matching @code{ARG}
+@item virtual-folder-member
+matches message if the message is already a
+member of some virtual folder currently
+being visited.
 @item vm-mode
 matches the message if in vm-mode and one of its argument
 selectors match the message.

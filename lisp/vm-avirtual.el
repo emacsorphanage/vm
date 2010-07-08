@@ -191,6 +191,7 @@
     (vm-mode . vm-vs-vm-mode)
     (eval . vm-mail-vs-eval)
     (older-than . vm-mail-vs-older-than)
+    (newer-than . vm-mail-vs-newer-than)
     (in-bbdb . vm-mail-vs-in-bbdb)
     ))
 
@@ -574,6 +575,11 @@ I was really missing this!"
   (let* ((date (vm-mail-mode-get-header-contents "Date:"))
          (days (and date (days-between (current-time-string) date))))
     (and days (> days arg))))
+
+(defun vm-mail-vs-newer-than (arg)
+  (let* ((date (vm-mail-mode-get-header-contents "Date:"))
+         (days (and date (days-between (current-time-string) date))))
+    (and days (<= days arg))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun vm-virtual-get-selector-member (folder-name folder-list)
