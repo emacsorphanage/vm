@@ -90,10 +90,18 @@ all the real folder buffers involved."
 	      selectors (cdr (car clauses)))
 	(while folders
 	  (setq folder (car folders))
-	  (and (stringp folder)
-	       (setq folder (expand-file-name folder vm-folder-directory)))
-	  (and (listp folder)
-	       (setq folder (eval folder)))
+	  (cond ((and (stringp folder)
+		      (stringp vm-recognize-pop-maildrops)
+		      (string-match vm-recognize-pop-maildrops folder))
+		 nil)
+		((and (stringp folder)
+		      (stringp vm-recognize-imap-maildrops)
+		      (string-match vm-recognize-imap-maildrops folder))
+		 nil)
+		((stringp folder)
+		 (setq folder (expand-file-name folder vm-folder-directory)))
+		((listp folder)
+		 (setq folder (eval folder))))
 	  (cond
 	   ((null folder)
 	    ;; folder was a s-expr which returned nil
@@ -118,31 +126,37 @@ all the real folder buffers involved."
 			 ;; set enable-local-variables to nil
 			 ;; for newer Emacses
 			 (let ((inhibit-local-variables t)
-			       (coding-system-for-read (vm-binary-coding-system))
+			       (coding-system-for-read
+				(vm-binary-coding-system))
 			       (enable-local-eval nil)
 			       (enable-local-variables nil))
-			   (find-file-noselect folder)))))
+			   (vm-visit-folder folder)
+			   (vm-select-folder-buffer)
+			   (current-buffer)))))
 	    (set-buffer (or (and (bufferp folder) folder)
 			    (vm-get-file-buffer folder)
 			    (let ((inhibit-local-variables t)
-				  (coding-system-for-read (vm-binary-coding-system))
+				  (coding-system-for-read 
+				   (vm-binary-coding-system))
 				  (enable-local-eval nil)
 				  (enable-local-variables nil))
-			      (find-file-noselect folder))))
+			      (vm-visit-folder folder)
+			      (vm-select-folder-buffer)
+			      (current-buffer))))
 	    (if (eq major-mode 'vm-virtual-mode)
-		(setq virtual t
-		      real-buffers-used
-		      (append vm-real-buffers real-buffers-used))
+		(setq 
+		 virtual t
+		 real-buffers-used (append vm-real-buffers real-buffers-used))
 	      (setq virtual nil)
-	      (if (not (memq (current-buffer) real-buffers-used))
-		  (setq real-buffers-used (cons (current-buffer)
-						real-buffers-used)))
-	      (if (not (eq major-mode 'vm-mode))
-		  (vm-mode)))
+	      (when (not (memq (current-buffer) real-buffers-used))
+		(setq real-buffers-used (cons (current-buffer)
+					      real-buffers-used)))
+	      (when (not (eq major-mode 'vm-mode))
+		(vm-mode)))
 	    ;; change (sexpr) into ("/file" "/file2" ...)
 	    ;; this assumes that there will never be (sexpr sexpr2)
 	    ;; in a virtual folder spec.
-	    (if (bufferp folder)
+	    (when (bufferp folder)
 		(if virtual
 		    (setcar (car clauses)
 			    (delq nil
@@ -484,7 +498,7 @@ Prefix arg means the new virtual folder should be visited read only."
 (defun vm-vs-older-than (m arg)
   (let ((date (vm-get-header-contents m "Date:")))
     (if date
-        (>= (days-between (current-time-string) date) arg))))
+        (> (days-between (current-time-string) date) arg))))
 
 (defun vm-vs-newer-than (m arg)
   (let ((date (vm-get-header-contents m "Date:")))

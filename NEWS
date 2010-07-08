@@ -114,6 +114,8 @@ VM 8.1.90a  (2010-05-11)
      introduced to allow automatic expunge.  They are nil by default.  
 
 VM 8.1.2
+  
+    * Virtual folder facility extended to work with POP and IMAP folders.
 
     * VM made safe for use with Gnu Emacs 23, by removing a few calls
       to the `next-line' function (which was redefined in this Emacs).
@@ -123,6 +125,12 @@ VM 8.1.2
 
     * Extended Org mode email links to work for virtual folders.
     
+  CHANGES
+
+   ** The default values of `vm-pop-expunge-after-retrieving' and
+      `vm-imap-expunge-after-retrieving' changed to nil to help new
+      users.
+
     * `vm-fill-long-lines-in-reply' initialized to the default value
       of `fill-column'.
 

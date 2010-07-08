@@ -119,12 +119,19 @@ a POP server, find its cache file on the file system"
 	auto-expunge x
 	mailbox-count mailbox-size message-size response
 	n (retrieved 0) retrieved-bytes process-buffer uidl)
-    (setq auto-expunge (cond ((setq x (assoc source vm-pop-auto-expunge-alist))
-			      (cdr x))
-			     ((setq x (assoc (vm-popdrop-sans-password source)
-					     vm-pop-auto-expunge-alist))
-			      (cdr x))
-			     (t vm-pop-expunge-after-retrieving)))
+    (setq auto-expunge 
+	  (cond ((setq x (assoc source vm-pop-auto-expunge-alist))
+		 (cdr x))
+		((setq x (assoc (vm-popdrop-sans-password source)
+				vm-pop-auto-expunge-alist))
+		 (cdr x))
+		(t (if vm-pop-expunge-after-retrieving
+		       t
+		     (message 
+		      (concat "Leaving messages on POP server; "
+			      "See info under \"POP Spool Files\""))
+		     (sit-for 1)
+		     nil))))
     (unwind-protect
 	(catch 'done
 	  (if handler

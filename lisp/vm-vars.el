@@ -382,18 +382,19 @@ A nil value means there's no limit."
   :group 'vm
   :type '(choice (const nil) integer))
 
-(defcustom vm-pop-expunge-after-retrieving t
-  "*Non-nil value means immediately delete messages from a POP mailbox
-after retrieving them.  A nil value means messages will be left
-in the POP mailbox until you run `vm-expunge-pop-messages'.
-VM can only support a nil value for this variable if the
-remote POP server supports the UIDL command.  If the server does
-not support UIDL and you've asked VM leave messages on the server,
-VM will complain about the lack of UIDL support and not retrieve
-messages from the server.
+(defcustom vm-pop-expunge-after-retrieving nil
+  "*Non-nil value means that, when a POP mailbox is used as a
+spool file, messages should be deleted after retrieving them.  A
+nil value means messages will be left in the POP mailbox until
+you run `vm-expunge-pop-messages'.  VM can only support a nil
+value for this variable if the remote POP server supports the
+UIDL command.  If the server does not support UIDL and you've
+asked VM leave messages on the server, VM will complain about the
+lack of UIDL support and not retrieve messages from the server.
 
 This variable only affects POP mailboxes not listed in
-`vm-pop-auto-expunge-alist' (which see)."
+`vm-pop-auto-expunge-alist' (which is the recommended method for
+customizing this behavior)."
   :group 'vm
   :type 'boolean)
 
@@ -503,12 +504,14 @@ A nil value means there's no limit."
   :type '(choice (const nil) integer))
 
 (defcustom vm-imap-expunge-after-retrieving t
-  "*Non-nil value means immediately remove messages from an IMAP mailbox
-after retrieving them.  A nil value means messages will be left
-in the IMAP mailbox until you run `vm-expunge-imap-messages'.
+  "*Non-nil value means that, when an IMAP mailbox is used as a
+spool file, messages should be deleted after retrieving them.  A
+nil value means messages will be left in the IMAP mailbox until
+you run `vm-expunge-imap-messages'.
 
 This variable only affects IMAP mailboxes not listed in
-`vm-imap-auto-expunge-alist' (which see)."
+`vm-imap-auto-expunge-alist' (which is the recommended method for
+customizing this behavior)."
   :group 'vm
   :type 'boolean)
 
