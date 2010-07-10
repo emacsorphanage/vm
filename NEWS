@@ -15,13 +15,17 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
-VM 8.1.91a (2010-06-25)
+VM 8.1.92a (2010-07-10)
 
   IMPROVEMENTS
 
    * Headers-only mode for IMAP folders is now completed.  It operates
      by fetching messages into the Folder buffers, leading to a
-     more reliable operation.
+     more reliable operation.  (However, there is an important
+     outstanding bug.  See the file README.headers-only.)
+
+   * New command `vm-list-imap-folders' can be used to list the
+     folders on an IMAP server.
 
    * In headers-only mode, a limited number of messages can be fetched
      on demand for message preview.  New variable
