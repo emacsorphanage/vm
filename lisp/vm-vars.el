@@ -5557,7 +5557,11 @@ append a space to words that complete unambiguously.")
 (defvar vm-pop-messages-to-expunge nil)
 (make-variable-buffer-local 'vm-pop-messages-to-expunge)
 (defvar vm-imap-read-point nil)
+;; Variable indicating whether IMAP session handling functions can ask
+;; questions to the user, typically if they are run from interactive
+;; commands. 
 (defvar vm-imap-ok-to-ask nil)
+;; Stored passwords for IMAP accounts during a VM session
 (defvar vm-imap-passwords nil)
 ;; Keep a list of messages retrieved from the IMAP maildrops
 ;; Prune the list when messages are expunged on the server

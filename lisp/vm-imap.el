@@ -3672,7 +3672,7 @@ its components."
     host-alist ))
 
 (defvar vm-imap-account-folder-cache nil
-  "Caches the list of all folders on an account.")
+  "Caches the list of all folders on an IMAP account.")
 
 (defun vm-imap-folder-completion-list (string predicate flag)
   ;; selectable-only is used via dynamic binding
@@ -4057,6 +4057,54 @@ documentation for `vm-spool-files'."
 	(vm-imap-end-session process))
       )))
 
+;; This is under development. USR, 2010-07-10
+;;;###autoload
+(defun vm-list-imap-folders (account)
+  "List all folders on an IMAP account ACCOUNT.  The account must be
+one declared in `vm-imap-account-alist'."
+;; Creates a self-contained IMAP session and destroys it at the end.
+  (interactive
+   (save-excursion
+     ;;------------------------
+     (vm-buffer-type:duplicate)
+     ;;------------------------
+     (vm-session-initialization)
+     (let ((this-command this-command)
+	   (last-command last-command)
+	   (completion-list (mapcar (function cadr) vm-imap-account-alist)))
+       (list (completing-read 
+	      "IMAP account: " completion-list nil t
+	      (if vm-last-visit-imap-account		; initial-input
+		  (format "%s" vm-last-visit-imap-account)
+		"")
+	      )))))
+  (setq vm-last-visit-imap-account account)
+  (let ((vm-imap-ok-to-ask t)
+	folder spec process mailbox-list buffer)
+    (setq spec (vm-imap-spec-for-account account))
+    (setq process (and spec (vm-imap-make-session spec t "folders")))
+    (if (null process)
+	(error "Couldn't open IMAP session for %s"
+	       (vm-safe-imapdrop-string account)))
+    (unwind-protect
+	(progn
+	  (setq mailbox-list 
+		(vm-imap-mailbox-list process nil))
+	  (when mailbox-list
+	    (add-to-list 'vm-imap-account-folder-cache 
+			 (cons account mailbox-list))))
+      ;; unwind-protection
+      (when process (vm-imap-end-session process)))
+    (setq mailbox-list (sort mailbox-list (function string-lessp)))
+    (setq buffer (get-buffer-create (format "%s folders" account)))
+    (save-current-buffer
+      (set-buffer buffer)
+      (erase-buffer)
+      (while mailbox-list
+	(insert (format "%s\n" (car mailbox-list)))
+	(setq mailbox-list (cdr mailbox-list))))
+    (switch-to-buffer-other-window buffer)
+    ))
 
 ;;; Robert Fenk's draft function for saving messages to IMAP folders.
 
