@@ -4,37 +4,11 @@ was 7.19.
 VM's home page up to version 7.19 on the World Wide Web is at
 http://www.wonderworks.com/vm and the FAQ is still hosted there.
 
-This VM is based on Robert Widhopf-Fenk's patches against VM 7.19.
-The current version is maintained by the 'VM development team'
-(vm@lists.launchpad.net) consisting of Robert, Ulrich Müller and Uday
-Reddy.
-
-The persons who have contributed to this version of VM are:
-
- * Aidan Kehoe
- * Glenn <unknown>
- * Jens Gustedt
- * John J Foerch
- * Kevin Rogers
- * Kyle Jones
- * Rob Hodges
- * Robert Marshall
- * Robert P. Goldman
- * Katsumi Yamaoka
- * Julian Bradfield
- * Samuel Bronson
- * Brent Goodrick
- * Ulrich Müller
- * Uday S. Reddy
- * Robert Widhopf-Fenk
-
-Please mail us a note, if I have forgotten someone or accidently put
-you on the list.
-
-Read INSTALL and follow the instructions to compile and setup VM.
-
-If you are new to VM, see example.vm for example configuration
-settings (in a '~/.vm' file).  Read more in the VM manual on 'info'. 
+The later versions of VM have been maintained by the user community.
+The current 'VM development team' (vm@lists.launchpad.net) consists of
+of Robert Widhof-Fenk, Ulrich Müller and Uday Reddy, but contributions
+from various other users and developers have also been incorporated in
+them.  See the info manual for a full list of contributors.
 
 *******************************************************************************
 VERSION INFO
@@ -43,13 +17,21 @@ The VM versions 8.2.0 and up are designed to work with:
 
 - XEmacs version 21.2 or higher
 
-- Gnu Emacs version 22.1 or higher
+- Gnu Emacs versions 21 or higher
 
 They are not meant for use with any version of Emacs that does not
 have MULE support.
 
 The users of vcard's need a vcard.el package with vcard-api-version
 2.0.  (A suitable version of vcard.el is included in this distribution.)
+
+********************************************************************************
+INSTALLATION
+
+Read INSTALL and follow the instructions to compile and setup VM.
+
+If you are new to VM, see example.vm for example configuration
+settings (in a '~/.vm' file).  Read more in the VM manual on 'info'. 
 
 *******************************************************************************
 BUGS
@@ -103,9 +85,9 @@ which is short for the full URL:
 
 # create your own branch from the trunk
 # the 'lp' URL's do they same job as the 'http' URL's above.
-bzr get lp:vm
+bzr get lp:vm	    # for the main trunk
 (or)
-bzr get lp:~vm/vm/trunk
+bzr get lp:vm/8.2.x # for the latest version in the 8.2.x series
 # get updates
 bzr pull
 # start hacking 
@@ -116,6 +98,9 @@ bzr commit
 bzr bundle-revisions --output=xy-changes.diff
 # Attach the bundle to a mail (rather than doing cut&paste) and send
 # it to vm @ lists.launchpad.net with a descriptive subject.  
+# Alternatively, upload it to your space on Launchpad
+bzr push lp:~username/vm/branchname
+# Then send a message to vm @ lists.launchpad.net requesting merge
 
 *******************************************************************************
 Get involved

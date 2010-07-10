@@ -1204,19 +1204,15 @@ vm-folder-type is initialized here."
       (vm-set-unread-flag-of message (= 0 (logand status #x0001)))
       ;; answered flag
       (vm-set-replied-flag-of message (not (= 0 (logand status #x0002))))
-      ;; flagged
-      ;; (unless (= 0 (logand status #x0004)) 
+      ;; (unless (= 0 (logand status #x0004))  ; flagged
       ;; 	nil)
-      ;; deleted
       (vm-set-deleted-flag-of message (not (= 0 (logand status #x0008))))
-      ;; subject with "Re:" prefix
-      ;; (unless (= 0 (logand status #x0010)) 
+					; deleted
+      ;; (unless (= 0 (logand status #x0010))  ; subject with "Re:" prefix
       ;; 	nil)
-      ;; thread folded
-      ;; (unless (= 0 (logand status #x0020)) 
+      ;; (unless (= 0 (logand status #x0020))  ; thread folded
       ;; 	nil)
-      ;; offline article
-      ;; (unless (= 0 (logand status #x0080)) 
+      ;; (unless (= 0 (logand status #x0080))  ; offline article
       ;; 	nil)
       ;; (unless (= 0 (logand status #x0100)) ; watched
       ;; 	nil)
@@ -1404,7 +1400,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	  (cond ((eq vm-folder-type 'babyl)
 		 (vm-read-babyl-attributes (car mp))))
           ;; read the status flags of Thunderbird
-          (if (or vm-sync-thunderbird-status vm-read-thunderbird-status)
+          (if vm-folder-read-thunderbird-status
               (vm-read-thunderbird-status (car mp))))
 	(cond ((vm-deleted-flag (car mp))
 	       (vm-increment vm-deleted-count))
@@ -1924,7 +1920,7 @@ FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
 		   (setq attributes (copy-sequence attributes)) nil))
 	     (if (eq vm-folder-type 'babyl)
 		 (vm-stuff-babyl-attributes m for-other-folder))
-             (if vm-sync-thunderbird-status
+             (if (eq vm-sync-thunderbird-status t)
                  (vm-stuff-thunderbird-status m))
 	     (goto-char (vm-headers-of m))
 	     (while (re-search-forward vm-attributes-header-regexp
@@ -2080,7 +2076,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
       (setq status (string-to-number status 16))
       ;; clear those bits we are using and keep others ...
       (setq status (logand status (lognot (logior #x1 #x2 #x4 #x8 #x1000))))
-      (goto-char (vm-start-of message))
+      (goto-char (vm-headers-of message))
       (if (re-search-forward "^X-Mozilla-Status: [ 0-9A-Fa-f]+\n"
 			     (vm-text-of message) t)
           (delete-region (match-beginning 0) (match-end 0))))
@@ -2099,28 +2095,25 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 	      status2-lo (mod status2 #x1000)))
       ;; clear those bits we are using and keep others ...
       (setq status2-hi (logand status2-hi (lognot (logior #x1))))
-      (goto-char (vm-start-of message))
+      (goto-char (vm-headers-of message))
       (if (re-search-forward "^X-Mozilla-Status2: [ 0-9A-Fa-f]+\n"
 			     (vm-text-of message) t)
           (delete-region (match-beginning 0) (match-end 0))))
     (unless (vm-unread-flag message)
-        (setq status (logior status 1)))
+        (setq status (logior status #x1)))
     (when (vm-replied-flag message)
-        (setq status (logior status 2)))
+        (setq status (logior status #x2)))
     (when (vm-mark-of message)
-        (setq status (logior status 4)))
+        (setq status (logior status #x4)))
     (when (vm-deleted-flag message)
-        (setq status (logior status 8)))
+        (setq status (logior status #x8)))
     (when (vm-forwarded-flag message)
         (setq status (logior status #x1000)))
     (when (vm-new-flag message)
         (setq status2-hi (logior status2-hi #x1)))
-    (goto-char (vm-start-of message))
-    (forward-line 1)
-    (insert-before-markers 
-     (format "X-Mozilla-Status: %04x\n" status))
-    (insert-before-markers 
-     (format "X-Mozilla-Status2: %04x%04x\n" status2-hi status2-lo))))
+    (goto-char (vm-headers-of message))
+    (insert (format "X-Mozilla-Status: %04x\n" status))
+    (insert (format "X-Mozilla-Status2: %04x%04x\n" status2-hi status2-lo))))
   
 (defun vm-stuff-labels ()
   (if vm-message-list
@@ -3459,6 +3452,12 @@ folder."
 		((eq vm-folder-access-method 'imap)
 		 (vm-imap-synchronize-folder t t t nil t)))
 	  (vm-discard-fetched-messages)
+          ;; remove the message summary file of Thunderbird and force
+	  ;; it to rebuild it.  Expect error if Thunderbird is active.
+          (let ((msf (concat buffer-file-name ".msf")))
+            (if (and (eq vm-sync-thunderbird-status t)
+		     (file-exists-p msf))
+                (delete-file msf)))
 	  ;; stuff the attributes of messages that need it.
 	  (message "Stuffing cached data...")
 	  (vm-stuff-folder-data nil)
@@ -3528,11 +3527,7 @@ folder."
 		     (message "%s removed" buffer-file-name))
 		 ;; no can do, oh well.
 		 (error nil)))
-          ;; remove the message summary file of Thunderbird and force
-	  ;; it to rebuild it 
-          (let ((msf (concat buffer-file-name ".msf")))
-            (if (file-exists-p msf)
-                (delete-file msf))))
+	  )
       (message "No changes need to be saved"))))
 
 ;;;###autoload
@@ -4759,10 +4754,12 @@ folder is saved."
 	    (while (>= vm-fetched-message-count
 		       vm-fetched-message-limit)
 	      (let ((mm (car vm-fetched-messages)))
-		;; mm should have been retrieved and marked for discard
-		(vm-assert (and (vm-body-retrieved-of mm)
-				(vm-body-to-be-discarded-of mm)))
-		(vm-discard-real-message-body mm)
+		;; These tests should always come out true, but we are
+		;; not confident.  A lot could have happened since the
+		;; message was first loaded.
+		(when (and (vm-body-retrieved-of mm)
+			   (vm-body-to-be-discarded-of mm))
+		    (vm-discard-real-message-body mm))
 		(vm-unregister-fetched-message mm))))
 	(add-to-list 'vm-fetched-messages m t 'eq)
 	(vm-increment vm-fetched-message-count)

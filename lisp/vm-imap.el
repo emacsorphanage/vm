@@ -313,14 +313,21 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	can-delete read-write uid-validity
 	mailbox mailbox-count message-size response
 	n (retrieved 0) retrieved-bytes process-buffer)
-    (setq auto-expunge (cond ((setq x (assoc source
-					     vm-imap-auto-expunge-alist))
-			      (cdr x))
-			     ((setq x (assoc (vm-imapdrop-sans-password source)
-					     vm-imap-auto-expunge-alist))
-			      (cdr x))
-			     (t vm-imap-expunge-after-retrieving)
-			     ))
+    (setq auto-expunge 
+	  (cond ((setq x (assoc source
+				vm-imap-auto-expunge-alist))
+		 (cdr x))
+		((setq x (assoc (vm-imapdrop-sans-password source)
+				vm-imap-auto-expunge-alist))
+		 (cdr x))
+		(t (if vm-imap-expunge-after-retrieving
+		       t
+		     (message 
+		      (concat "Leaving messages on IMAP server; "
+			      "See info under \"IMAP Spool Files\""))
+		     (sit-for 1)
+		     nil))))
+
     (unwind-protect
 	(catch 'end-of-session
 	  (if handler
@@ -3100,7 +3107,8 @@ either the folder buffer or the presentation buffer.
 
  (This is a special case of vm-fetch-message, not to be confused with
  vm-imap-fetch-message.)"
-  (let ((body-buffer (current-buffer)))
+  (let ((body-buffer (current-buffer))
+	(statblob nil))
     (unwind-protect
 	(save-excursion
 	  (set-buffer (vm-buffer-of (vm-real-message-of m)))
@@ -3114,19 +3122,21 @@ either the folder buffer or the presentation buffer.
 		 (process (and (eq vm-imap-connection-mode 'online)
 			       (vm-re-establish-folder-imap-session 
 				imapdrop "fetch")))
+		 (imap-buffer (and process (process-buffer process)))
 		 (use-body-peek (vm-folder-imap-body-peek))
 		 (server-uid-validity (vm-folder-imap-uid-validity))
 		 (old-eob (point-max))
-		 message-num message-size
-		 imap-buffer
+		 message-size
 		 )
 
 	    (if (null process)
 		(if (eq vm-imap-connection-mode 'offline)
 		    (error "Working in offline mode")
-		  (error "Could not connect to IMAP server; Type g to reconnect")
+		  (error (concat "Could not connect to IMAP server; "
+				 "Type g to reconnect"))
 		  (setq vm-imap-connection-mode 'autoconnect))
 	      (setq imap-buffer (process-buffer process))
+	      (unwind-protect
 	      (condition-case error-data
 		  (save-excursion	; = save-current-buffer?
 		    (set-buffer imap-buffer)
@@ -3140,39 +3150,33 @@ either the folder buffer or the presentation buffer.
 		    (vm-set-imap-stat-x-currmsg statblob message-num)
 		    (setq message-size (vm-imap-get-uid-message-size process uid))
 		    (vm-set-imap-stat-x-need statblob message-size)
-		    ;; (vm-imap-fetch-message process message-num use-body-peek nil)
 		    (vm-imap-fetch-uid-message process uid use-body-peek nil)
 		    (vm-imap-retrieve-to-target process body-buffer statblob
 						use-body-peek)
 		    (vm-imap-read-ok-response process)
-		    ;;--------------------------------
-		    (vm-buffer-type:exit)
-		    ;;--------------------------------
 		    )
 		(vm-imap-normal-error	; handler
-		 ;;-------------------
-		 (vm-buffer-type:exit)
-		 ;;-------------------
 		 (message "IMAP error: %s" (cadr error-data)))
 		(vm-imap-protocol-error	; handler
-		 ;;-------------------
-		 (vm-buffer-type:exit)
-		 ;;-------------------
 		 (message "Retrieval from %s signaled: %s" safe-imapdrop
 			  error-data)
 		 ;; Continue with whatever messages have been read
 		 )
 		(quit
-		 ;;-------------------
-		 (vm-buffer-type:exit)
-		 ;;-------------------
+		     ;; FIXME this is outside save-excursion!
 		 (delete-region old-eob (point-max))
 		 (error (format "Quit received during retrieval from %s"
 				safe-imapdrop))))
+		;; unwind-protections
+		(when statblob
+		  (vm-imap-stop-status-timer statblob))
+		;;-------------------
+		(vm-buffer-type:exit)
+		;;-------------------
 	      ;;-----------------------------
 	      (vm-imap-dump-uid-seq-num-data)
 	      ;;-----------------------------
-	      )))
+	      ))))
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
@@ -3281,32 +3285,47 @@ FETCH is t, then the retrieval is for a temporary message fetch."
     (set-buffer (vm-buffer-of mm))
     (vm-save-restriction
      (widen)
+     (narrow-to-region (marker-position (vm-headers-of mm)) 
+		       (marker-position (vm-text-end-of mm)))
      (let ((fetch-method (vm-message-access-method-of mm))
 	   (vm-folder-read-only (and vm-folder-read-only (not fetch)))
 	   (inhibit-read-only t)
 	   ;; (buffer-read-only nil)    ; seems redundant
 	   (buffer-undo-list t)		; why this?  USR, 2010-06-11
 	   (modified (buffer-modified-p))
-	   (text-begin nil)
-	   (text-end nil))
-       (setq text-begin (marker-position (vm-text-of mm)))
-       (setq text-end (marker-position (vm-text-end-of mm)))
-       (narrow-to-region (marker-position (vm-headers-of mm)) text-end)
+	   (text-begin (marker-position (vm-text-of mm)))
+	   (text-end (marker-position (vm-text-end-of mm)))
+	   (testing 0))
        (goto-char text-begin)
+       ;; Check to see that we are at the right place
+       (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
+       (vm-increment testing)
+
        (delete-region (point) (point-max))
        (condition-case err
 	   (apply (intern (format "vm-fetch-%s-message" fetch-method))
 		  mm nil)
 	 (error 
 	  (error "Unable to load message; %s" (error-message-string err))))
+       (vm-assert (eq (point) text-begin))
+       (vm-increment testing)
        ;; delete the new headers
        (delete-region text-begin
 		      (or (re-search-forward "\n\n" (point-max) t) (point-max)))
+       (vm-assert (eq (point) text-begin))
+       (vm-increment testing)
        ;; fix markers now
        ;; FIXME is the text-end correct? separator line?
        (set-marker (vm-text-of mm) text-begin)
-       (set-marker (vm-text-end-of mm) (point-max))
-       (goto-char text-begin)
+       (set-marker (vm-text-end-of mm) 
+		   (save-excursion
+		     (goto-char (point-max))
+		     ;; (end-of-line 0) ; move back one line
+		     ;; (kill-line 1)
+		     (point)))
+       (vm-assert (eq (point) text-begin))
+       (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
+       (vm-increment testing)
        ;; now care for the layout of the message
        (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
        ;; update the message data
@@ -3316,7 +3335,11 @@ FETCH is t, then the retrieval is for a temporary message fetch."
        (vm-set-byte-count-of mm nil)
        ;; update the virtual messages
        (vm-update-virtual-messages mm)
-       (set-buffer-modified-p modified)))))
+       (set-buffer-modified-p modified)
+
+       (vm-assert (eq (point) text-begin))
+       (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
+       (vm-increment testing)))))
 
 ;;;###autoload
 (defun vm-refresh-message ()
@@ -3387,19 +3410,34 @@ the folder is saved."
      (let ((inhibit-read-only t)
 	   ;; (buffer-read-only nil)     ; seems redundant
 	   (modified (buffer-modified-p))
-	   (text-begin nil)
-	   (text-end nil))
-       (setq text-begin (marker-position (vm-text-of mm)))
-       (setq text-end (marker-position (vm-text-end-of mm)))
+	   (text-begin (marker-position (vm-text-of mm)))
+	   (text-end (marker-position (vm-text-end-of mm))))
        (goto-char text-begin)
-       (delete-region (point) text-end)
-       (vm-set-buffer-modified-p t)
-       (vm-set-mime-layout-of mm nil)
-       (vm-set-body-to-be-retrieved-flag mm t)
-       (vm-set-body-to-be-discarded-flag mm nil)
-       (vm-set-line-count-of mm nil)
-       (vm-update-virtual-messages mm)
-       (set-buffer-modified-p modified)))))
+       ;; Check to see that we are at the right place
+       (if (or (bobp)
+	       (save-excursion (forward-line -1) (looking-at "\n")))
+	   (progn
+	     (delete-region (point) text-end)
+	     (vm-set-buffer-modified-p t)
+	     (vm-set-mime-layout-of mm nil)
+	     (vm-set-body-to-be-retrieved-flag mm t)
+	     (vm-set-body-to-be-discarded-flag mm nil)
+	     (vm-set-line-count-of mm nil)
+	     (vm-update-virtual-messages mm)
+	     (set-buffer-modified-p modified))
+	 (if (y-or-n-p
+	      (concat "VM internal error: "
+		       "headers of a message have been corrupted. "
+		       "Continue? "))
+	     (progn
+	       (message (concat "The damaged message, with UID %s, "
+				"is left in the folder")
+			(vm-imap-uid-of mm))
+	       (sit-for 5)
+	       (vm-set-body-to-be-discarded-flag mm nil))
+	   (error "Aborted operation")))
+       ))))
+
 
 (defun vm-imap-save-attributes (&optional interactive all-flags)
   "* Save the attributes of changed messages to the IMAP folder.
@@ -3604,7 +3642,7 @@ its components."
     host-alist ))
 
 (defvar vm-imap-account-folder-cache nil
-  "Caches the list of all folders on an account.")
+  "Caches the list of all folders on an IMAP account.")
 
 (defun vm-imap-folder-completion-list (string predicate flag)
   ;; selectable-only is used via dynamic binding
@@ -3696,7 +3734,7 @@ IMAP mailbox spec."
 	(error 
 	 "IMAP folder required in the format account-name:folder-name"))
     (if (null spec)
-	(error "Unknown IMAP account-name:folder-name"))
+	(error "Unknown IMAP account %s" account))
     (setq list (vm-imap-parse-spec-to-list spec))
     (setcar (nthcdr 3 list) folder)
     (setq vm-last-visit-imap-account account)
@@ -3989,6 +4027,54 @@ documentation for `vm-spool-files'."
 	(vm-imap-end-session process))
       )))
 
+;; This is under development. USR, 2010-07-10
+;;;###autoload
+(defun vm-list-imap-folders (account)
+  "List all folders on an IMAP account ACCOUNT.  The account must be
+one declared in `vm-imap-account-alist'."
+;; Creates a self-contained IMAP session and destroys it at the end.
+  (interactive
+   (save-excursion
+     ;;------------------------
+     (vm-buffer-type:duplicate)
+     ;;------------------------
+     (vm-session-initialization)
+     (let ((this-command this-command)
+	   (last-command last-command)
+	   (completion-list (mapcar (function cadr) vm-imap-account-alist)))
+       (list (completing-read 
+	      "IMAP account: " completion-list nil t
+	      (if vm-last-visit-imap-account		; initial-input
+		  (format "%s" vm-last-visit-imap-account)
+		"")
+	      )))))
+  (setq vm-last-visit-imap-account account)
+  (let ((vm-imap-ok-to-ask t)
+	folder spec process mailbox-list buffer)
+    (setq spec (vm-imap-spec-for-account account))
+    (setq process (and spec (vm-imap-make-session spec t "folders")))
+    (if (null process)
+	(error "Couldn't open IMAP session for %s"
+	       (vm-safe-imapdrop-string account)))
+    (unwind-protect
+	(progn
+	  (setq mailbox-list 
+		(vm-imap-mailbox-list process nil))
+	  (when mailbox-list
+	    (add-to-list 'vm-imap-account-folder-cache 
+			 (cons account mailbox-list))))
+      ;; unwind-protection
+      (when process (vm-imap-end-session process)))
+    (setq mailbox-list (sort mailbox-list (function string-lessp)))
+    (setq buffer (get-buffer-create (format "%s folders" account)))
+    (save-current-buffer
+      (set-buffer buffer)
+      (erase-buffer)
+      (while mailbox-list
+	(insert (format "%s\n" (car mailbox-list)))
+	(setq mailbox-list (cdr mailbox-list))))
+    (switch-to-buffer-other-window buffer)
+    ))
 
 ;;; Robert Fenk's draft function for saving messages to IMAP folders.
 

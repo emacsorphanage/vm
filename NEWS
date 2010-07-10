@@ -113,16 +113,24 @@ VM 8.1.90a  (2010-05-11)
   ** New variables `vm-expunge-before-quit' and `vm-expunge-before-save'
      introduced to allow automatic expunge.  They are nil by default.  
 
-VM 8.1.2 
+VM 8.1.2
+  
+    * Virtual folder facility extended to work with POP and IMAP folders.
 
     * VM made safe for use with Gnu Emacs 23, by removing a few calls
       to the `next-line' function (which was redefined in this Emacs).
 
     * Several critical problems with Thunderbird inter-operability
-      were corrected.
+      were corrected.  Manual section on Thunderbird folders added.
 
     * Extended Org mode email links to work for virtual folders.
     
+  CHANGES
+
+   ** The default values of `vm-pop-expunge-after-retrieving' and
+      `vm-imap-expunge-after-retrieving' changed to nil to help new
+      users.
+
     * `vm-fill-long-lines-in-reply' initialized to the default value
       of `fill-column'.
 
@@ -315,7 +323,7 @@ VM 8.1.0 (2010-03-21)
     * Added syncing of message status when visiting a mbox of Thunderbird.
       Not all message flags are interchangeable and the message summary
       file (.msf) of Thunderbird will get removed by VM in order to force
-      Thunderbird to rebuilt it.  Also VMs folder index will be skipped if
+      Thunderbird to rebuild it.  Also VMs folder index will be skipped if
       it is older than the folder in order to update VMs message status flags.
 
     * Improved text/html displaying by w3m.  Inline images are now extracted

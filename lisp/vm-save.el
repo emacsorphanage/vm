@@ -955,7 +955,7 @@ The saved messages are flagged as `filed'."
 		  (vm-imap-copy-message process m mailbox))
 	      (unless process
 		(setq process 
-		      (vm-imap-make-session target-folder t "IMAP-FCC")))
+		      (vm-imap-make-session target-folder t "save")))
 	      (if (null process)
 		  (error "Could not connect to the IMAP server"))
 	      (vm-imap-save-message process m mailbox))

@@ -332,6 +332,7 @@ there are @var{n} or fewer messages.  The default value of
 @menu
 * Local Folders::     Working with folders on the local file system
 * Server Folders::    Working with folders on mail servers
+* Thunderbird Folders:: Working with folders managed by Thunderbird
 * Getting New Mail::  Retrieving mail from spool files.
 * Crash Recovery::    Recovering changes after Emacs or your system dies.
 @end menu
@@ -509,7 +510,7 @@ spool files on remote hosts using the POP and IMAP protocols.
 
 @node POP Spool Files,IMAP Spool Files,Spool Files,Local Folders
 @unnumberedsubsec POP Spool Files
-@cindex POP
+@cindex POP spool files
 VM can access spool files on mail servers via the Post Office Protocol
 (POP).  To use a POP mailbox as a spool file, you need to use a POP
 maildrop specification (@ref{maildrop specification},
@@ -540,30 +541,31 @@ control to you.  By default, the value of both variables is nil, which
 tells VM to retrieve all the messages in the POP mailbox regardless
 of how many messages there are and how large the mailbox is.
 
-@vindex vm-pop-expunge-after-retrieving
-After VM retrieves messages from the mailbox, the default action
-is to delete the messages from there.  If you want VM to leave
-messages in the server mailbox until you explicitly request
-their removal, set @code{vm-pop-expunge-after-retrieving} to
-@code{nil}.  Messages will not be removed from the mailbox until you
-run @code{vm-expunge-pop-messages}; only those messages that VM has
-retrieved into the current folder will be expunged.
+@findex vm-expunge-pop-messages
+After VM retrieves messages from the mailbox, the default action is to
+leave the original messages on the server unchanged.  They can be
+expunged from the server by running @code{vm-expunge-pop-messages};
+only those messages that VM has retrieved into the current folder will
+be expunged.
 
+@vindex vm-pop-expunge-after-retrieving
 @vindex vm-pop-auto-expunge-alist
-The variable @code{vm-pop-auto-expunge-alist} gives you a way to specify
-on a per-mailbox basis which POP mailboxes have messages
-automatically removed when retrieved and which ones leave the
-messages on the POP server.  The value of
-@code{vm-pop-auto-expunge-alist} should be a list of POP mailboxes and
-values specifying whether messages should be automatically
-deleted from the mailbox after retrieval.  The format of the list
-is:
+If you want VM to expunge the messages automatically after retrieving
+them, you can set @code{vm-pop-expunge-after-retrieving} to @code{t}.
+But a better method is to set the variable
+@code{vm-pop-auto-expunge-alist}, which gives you a way to specify, on
+a per-mailbox basis, which POP mailboxes should have messages automatically
+removed after retrieving and which ones should leave the messages on the POP
+server.  The value of @code{vm-pop-auto-expunge-alist} should be a
+list of POP mailboxes and values specifying whether messages should
+be automatically deleted from the mailbox after retrieval.  The format
+of the list is:
 
 @example
 ((@var{MAILDROP} . @var{VAL}) (@var{MAILDROP} . @var{VAL}) ...)
 @end example
 
-@var{MAILDROP} should be an POP mailbox specification as described
+@var{MAILDROP} should be a POP mailbox specification as described
 in the documentation for the variable @code{vm-spool-files}.  If
 you have the POP password specified in the @code{vm-spool-files}
 entry, you do not have to specify it here as well.  Use @samp{*}
@@ -587,7 +589,7 @@ Here is an example:
 
 @node IMAP Spool Files, Index Files, POP Spool Files, Local Folders
 @unnumberedsubsec IMAP Spool Files
-@cindex IMAP
+@cindex IMAP spool files
 @cindex maildrop specification
 VM can also use the IMAP protocol to retrieve mail from a mail server.
 As with POP, instead of specifying a local file name in the
@@ -608,24 +610,25 @@ control to you.  By default, the value of both variables is nil, which
 tells VM to retrieve all the messages in the IMAP mailbox regardless
 of how many messages there are and how large the mailbox is.
 
-@vindex vm-imap-expunge-after-retrieving
-After VM retrieves messages from the mailbox, the default action
-is to delete the messages from there.  If you want VM to leave
-messages in the server mailbox until you explicitly request
-their removal, set @code{vm-imap-expunge-after-retrieving} to
-@code{nil}.  Messages will not be removed from the mailbox until you
-run @code{vm-expunge-imap-messages}; only those messages that VM has
-retrieved into the current folder will be expunged.
+@findex vm-expunge-imap-messages
+After VM retrieves messages from the mailbox, the default action is to
+leave the original messages on the server unchanged.  They can be
+expunged from the server by running @code{vm-expunge-imap-messages};
+only those messages that VM has retrieved into the current folder will
+be expunged.
 
+@vindex vm-imap-expunge-after-retrieving
 @vindex vm-imap-auto-expunge-alist
-The variable @code{vm-imap-auto-expunge-alist} gives you a way to specify
-on a per-mailbox basis which IMAP mailboxes have message
-automatically removed when retrieved and which ones leave the
-messages on the IMAP server.  The value of
-@code{vm-imap-auto-expunge-alist} should be a list of IMAP mailboxes and
-values specifying whether messages should be automatically
-deleted from the mailbox after retrieval.  The format of the list
-is:
+If you want VM to expunge the messages automatically after retrieving
+them, you can set @code{vm-imap-expunge-after-retrieving} to @code{t}.
+But a better method is to set the variable
+@code{vm-imap-auto-expunge-alist}, which gives you a way to specify, on
+a per-mailbox basis, which IMAP mailboxes should have messages automatically
+removed after retrieving and which ones should leave the messages on the IMAP
+server.  The value of @code{vm-imap-auto-expunge-alist} should be a
+list of IMAP mailboxes and values specifying whether messages should
+be automatically deleted from the mailbox after retrieval.  The format
+of the list is:
 
 @example
 ((@var{MAILDROP} . @var{VAL}) (@var{MAILDROP} . @var{VAL}) ...)
@@ -727,7 +730,7 @@ Two additional formats are @code{mmdf} used by MMDF systems and
 automatically when read from the file system.
 
 
-@node Server Folders, Getting New Mail, Local Folders, Starting Up
+@node Server Folders, Thunderbird Folders, Local Folders, Starting Up
 @section Server Folders
 
 @cindex primary inbox
@@ -1034,7 +1037,53 @@ which of them have actually changed during the offline operation.
 
 
 
-@node Getting New Mail, Crash Recovery, Server Folders, Starting Up
+@node Thunderbird Folders, Getting New Mail, Server Folders, Starting Up
+@section Thunderbird Folders
+
+@cindex Thunderbird
+VM can work with local folders managed by Mozilla Thunderbird.  You can
+find the location of Thunderbird's folders by examining the Account
+Settings for ``Local Folders'' inside Thunderbird.
+
+Thunderbird stores the folders in the @code{From_} folder type.
+@xref{Folder types}.  Within such folders, Thunderbird stores the
+message status flags (message attributes such as whether a message is
+read, replied to, deleted etc.) under special header fields called
+@code{X-Mozilla-Status} and @code{X-Mozilla-Status2}.  In addition to
+these headers, Thunderbird also stores a quick copy of the message
+status flags in a separate file with the extension @code{.msf}.
+
+When you visit a Thunderbird folder, VM reads the status flags stored in
+the special headers and uses them for processing.  As you make changes
+to the folder by reading messages, replying to them or deleting them,
+the changes are propagated to the Thunderbird status flags and written
+to the disk when saved.  VM also deletes the @code{.msf} file maintained
+by Thunderbird so that Thunderbird will recompute the status information
+from the headers.  Thus, the changes made to the Thunderbird folders
+will be visible inside Thunderbird.
+
+@vindex vm-sync-thunderbird-status
+The variable @code{vm-sync-thunderbird-status} controls how VM deals
+with Thunderbird folders.  The default value @code{t} gives the behavior
+described above.  You can also set it to @code{'read-only}, in which
+case VM reads the Thunderbird status flags, but makes no changes to
+them.  So, the changes made to the folders will be lost after you quit
+VM.  If you set it to @code{nil}, then VM refrains from reading and
+writing the Thunderbird status flags.  In this case, the changes made to
+the folders are visible inside VM even after revisiting, but they will have
+no effect for Thunderbird.  
+
+WARNING: Keep in mind that all this applies to changes to message
+attributes only.  If you @i{expunge} a folder, then the deleted messages
+are physically purged from the folder.  They will be lost both inside VM
+as well as Thunderbird.
+
+The variable @code{vm-sync-thunderbird-status} is a buffer-local
+variable.  You may set its default value in your @code{.vm} file.  To
+change it in a running Emacs session, you must use @code{setq-default}.
+@xref{Locals,, Local Variables, emacs, Gnu Emacs manual}.
+
+@node Getting New Mail, Crash Recovery, Thunderbird Folders, Starting Up
 @section Getting New Mail
 
 @findex vm-get-new-mail
@@ -3461,7 +3510,7 @@ Each virtual folder definition should have the following form:
 
 @example
 (@var{VIRTUAL-FOLDER-NAME}
-  ( (@var{FOLDER-NAME} ...)
+  ( (@var{FOLDER} ...)
     (@var{SELECTOR} [@var{ARG} ...]) ... )
   ... )
 @end example
@@ -3469,9 +3518,10 @@ Each virtual folder definition should have the following form:
 @var{VIRTUAL-FOLDER-NAME} is the name of the virtual folder being defined.
 This is the name by which you and VM will refer to this folder.
 
-@var{FOLDER-NAME} should be the name of a real folder.  There may
-be more than one @var{FOLDER-NAME} listed, the @var{SELECTOR}s within
-that sublist will apply to them all.  If @var{FOLDER-NAME} is a
+@var{FOLDER} should be the specification of a real folder: a file path
+for a local folder or a maildrop specification for a POP/IMAP folder.  There may
+be more than one @var{FOLDER} listed, the @var{SELECTOR}s within
+that sublist will apply to them all.  If @var{FOLDER} is a
 directory, VM will assume this to mean that all the folders in
 that directory should be searched.
 
@@ -3479,9 +3529,11 @@ The @var{SELECTOR} is a Lisp symbol that tells VM how to
 decide whether a message from one of the folders specified by
 the @var{FOLDER-NAME}s should be included in the virtual
 folder.  Some @var{SELECTOR}s require an argument @var{ARG};
-unless otherwise noted @var{ARG} may be omitted.
+unless otherwise noted, @var{ARG} may be omitted.
 
 @table @code
+@item any
+matches any message.
 @item author
 matches message if @var{ARG} matches the author; @var{ARG} should be a
 regular expression.
@@ -3489,80 +3541,29 @@ regular expression.
 matches message if @var{ARG} matches the author of
 the message or any of its recipients; @var{ARG}
 should be a regular expression.
-@item and
-matches the message if all its argument
-selectors match the message.  Example:
-@example
-(and (author "Derek McGinty") (new))
-@end example
-@noindent matches all new messages from Derek McGinty.
-@code{and} takes any number of arguments.
-@item any
-matches any message.
-@item deleted
-matches message if it is flagged for deletion.
-@item edited
-matches message if it has been edited.
-@item filed
-matches message if it has been saved with its headers.
-@item forwarded
-matches message if it has been forwarded using
-a variant of @code{vm-forward-message} or @code{vm-send-digest}.
-@item header
-matches message if @var{ARG} matches any part of the header
-portion of the message; @var{ARG} should be a
-regular expression.
-@item header-or-text
-matches message if @var{ARG} matches any part of the
-headers or the text portion of the message;
-@var{ARG} should be a regular expression.
-@item label
-matches message if message has a label named @var{ARG}.
-@item less-chars-than
-matches message if message has less than @var{ARG}
-characters.  @var{ARG} should be a number.
-@item less-lines-than
-matches message if message has less than @var{ARG}
-lines.  @var{ARG} should be a number.
-@item more-chars-than
-matches message if message has more than @var{ARG}
-characters.  @var{ARG} should be a number.
-@item more-lines-than
-matches message if message has more than @var{ARG}
-lines.  @var{ARG} should be a number.
-@item marked
-matches message if it is marked, as with
-@code{vm-mark-message}.
-@item new
-matches message if it is new.
-@item not
-matches message only if its selector argument
-does NOT match the message.  Example:
-@example
-(not (deleted))
-@end example
-@noindent matches messages that are not deleted.
-@item or
-matches the message if any of its argument
-selectors match the message.  Example:
-@example
-(or (author "Dave Weckl") (subject "drum"))
-@end example
-@noindent matches messages from Dave Weckl or messages
-with the string ``drum'' in their Subject header.
-@code{or} takes any number of arguments.
-@item read
-matches message if it is neither new nor unread.
-@item recent
-matches message if it is new.
 @item recipient
 matches message if @var{ARG} matches any part of the recipient
 list of the message.  @var{ARG} should be a regular expression.
-@item redistributed
-matches message if it has been redistributed using
-@code{vm-resend-message}.
-@item replied
-matches message if it has been replied to.
+@item outgoing
+matches message if your are the author of it, i.e. if the author matches
+@code{vm-summary-uninteresting-senders}
+@item in-bbdb
+matches if the addresses from the message are in the BBDB. With an option
+first argument you might select the address class and with an optional second
+argument if only the first address should be checked.  
+@example
+(in-bbdb authors)
+@end example
+@example
+(in-bbdb recipients t)
+@end example
+@item subject
+matches message if @var{ARG} matches any part of the message's
+subject; @var{ARG} should be a regular expression.
+@item text
+matches message if @var{ARG} matches any part of the text
+portion of the message; @var{ARG} should be a
+regular expression.
 @item sent-after
 matches message if it was sent after the date @var{ARG}.
 A fully specified date looks like this:
@@ -3585,70 +3586,122 @@ You can leave out any part and it will
 default to the current date's value for that
 part, with the exception of the hh:mm:ss
 part which defaults to midnight.
-@item subject
-matches message if @var{ARG} matches any part of the message's
-subject; @var{ARG} should be a regular expression.
-@item text
-matches message if @var{ARG} matches any part of the text
+@item older-than
+matches message if it is more than @var{ARG} days old
+@item newer-than
+matches message if it is at most @var{ARG} days old
+@item header
+matches message if @var{ARG} matches any part of the header
 portion of the message; @var{ARG} should be a
 regular expression.
-@item unanswered
-matches message if it has not been replied to.
-Same as the @code{unreplied} selector.
-@item undeleted
-matches message if it has not been deleted.
-@item unedited
-matches message if it has not been edited.
-@item unfiled
-matches message if it has not been saved with its
-headers.
-@item unforwarded
-matches message if it has not been forwarded using
-@code{vm-forward-message} or @code{vm-send-digest} or one
-of their variants.
-@item unread
-matches message if it is not new and hasn't been read.
-@item unseen
-matches message if it is not new and hasn't been read.
-Same as the @code{unread} selector.
-@item unredistributed
-matches message if it has not been redistributed using
-@code{vm-resend-message}.
-@item unreplied
-matches message if it has not been replied to.
-@item virtual-folder-member
-matches message if the message is already a
-member of some virtual folder currently
-being visited.
-@item written
-matches message if it has been saved without its headers.
-@item older-than
-matches message if it is at least @var{ARG} days old
-@item eval
-matches message if evaluating the sexpr @var{ARG} yields @code{t}.
-@item outgoing
-matches message if your are the author of it, i.e. if the author matches
-@code{vm-summary-uninteresting-senders}
+@item header-or-text
+matches message if @var{ARG} matches any part of the
+headers or the text portion of the message;
+@var{ARG} should be a regular expression.
 @item spam-score
 matches message if its spam score is at least @var{ARG}.  See
 @code{vm-vs-spam-score-headers} for configuration.
 @item spam-word
 matches message if it contains a word from @code{vm-spam-words-file}
-@item folder-name
-matches message if it is from a folder matching @code{ARG}
-@item in-bbdb
-matches if the addresses from the message are in the BBDB. With an option
-first argument you might select the address class and with an optional second
-argument if only the first address should be checked.  
-@example
-(in-bbdb authors)
-@end example
-@example
-(in-bbdb recipients t)
-@end example
+@item deleted
+matches message if it is flagged for deletion.
+@item undeleted
+matches message if it has not been deleted.
+@item edited
+matches message if it has been edited.
+@item unedited
+matches message if it has not been edited.
+@item filed
+matches message if it has been saved with its headers.
+@item unfiled
+matches message if it has not been saved with its
+headers.
+@item written
+matches message if it has been saved without its headers.
+@item new
+matches message if it is new.
+@item recent
+matches message if it is new.  Same as the @code{new} selector.
+@item read
+matches message if it is neither new nor unread.
+@item unread
+matches message if it is not new and hasn't been read.
+@item unseen
+matches message if it is not new and hasn't been read.
+Same as the @code{unread} selector.
+@item replied
+matches message if it has been replied to.
+@item answered
+matches message if it has been replied to.  Same as the @code{replied}
+selector. 
+@item unreplied
+matches message if it has not been replied to.
+@item unanswered
+matches message if it has not been replied to.
+Same as the @code{unreplied} selector.
+@item forwarded
+matches message if it has been forwarded using
+a variant of @code{vm-forward-message} or @code{vm-send-digest}.
+@item unforwarded
+matches message if it has not been forwarded using
+@code{vm-forward-message} or @code{vm-send-digest} or one
+of their variants.
+@item redistributed
+matches message if it has been redistributed using
+@code{vm-resend-message}.
+@item unredistributed
+matches message if it has not been redistributed using
+@code{vm-resend-message}.
+@item marked
+matches message if it is marked, as with
+@code{vm-mark-message}.
 @item attachment
 matches if a message contains an attachment resp. its text matched
 @code{vm-vs-attachment-regexp}
+@item less-chars-than
+matches message if message has less than @var{ARG}
+characters.  @var{ARG} should be a number.
+@item less-lines-than
+matches message if message has less than @var{ARG}
+lines.  @var{ARG} should be a number.
+@item more-chars-than
+matches message if message has more than @var{ARG}
+characters.  @var{ARG} should be a number.
+@item more-lines-than
+matches message if message has more than @var{ARG}
+lines.  @var{ARG} should be a number.
+@item eval
+matches message if evaluating the sexpr @var{ARG} yields @code{t}.
+@item and
+matches the message if all its argument
+selectors match the message.  Example:
+@example
+(and (author "Derek McGinty") (new))
+@end example
+@noindent matches all new messages from Derek McGinty.
+@code{and} takes any number of arguments.
+@item not
+matches message only if its selector argument
+does NOT match the message.  Example:
+@example
+(not (deleted))
+@end example
+@noindent matches messages that are not deleted.
+@item or
+matches the message if any of its argument
+selectors match the message.  Example:
+@example
+(or (author "Dave Weckl") (subject "drum"))
+@end example
+@noindent matches messages from Dave Weckl or messages
+with the string ``drum'' in their Subject header.
+@code{or} takes any number of arguments.
+@item folder-name
+matches message if it is from a folder matching @code{ARG}
+@item virtual-folder-member
+matches message if the message is already a
+member of some virtual folder currently
+being visited.
 @item vm-mode
 matches the message if in vm-mode and one of its argument
 selectors match the message.
@@ -4694,7 +4747,9 @@ Please let us know if any other contributors have been missed out.
 @unnumberedsubsec Releases of VM development team
 @itemize
 @item Version 8.1.0, released 21 March, 2010.
-@item Version 8.1.1, planned for release on 10 April, 2010.
+@item Version 8.1.1, released 25 April, 2010.
+@item Version 8.1.2, planned for release in July/August, 2010.
+@item Version 8.2.0, planned for release in August/September, 2010.
 @end itemize
 
 
