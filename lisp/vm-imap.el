@@ -3157,20 +3157,21 @@ either the folder buffer or the presentation buffer.
 		 message-size
 		 )
 
-	    (if (null process)
+	    (when (null process)
 		(if (eq vm-imap-connection-mode 'offline)
 		    (error "Working in offline mode")
+		  (setq vm-imap-connection-mode 'autoconnect)
 		  (error (concat "Could not connect to IMAP server; "
-				 "Type g to reconnect"))
-		  (setq vm-imap-connection-mode 'autoconnect))
-	      (unwind-protect
+				 "Type g to reconnect"))))
+	    (unwind-protect
+		(save-excursion
+		  (set-buffer imap-buffer)
+		  ;;----------------------------------
+		  (vm-buffer-type:enter 'process)
+		  (vm-imap-session-type:assert-active)
+		  ;;----------------------------------
 		  (condition-case error-data
-		      (save-excursion
-			(set-buffer imap-buffer)
-			;;----------------------------------
-			(vm-buffer-type:enter 'process)
-			(vm-imap-session-type:assert-active)
-			;;----------------------------------
+		      (progn
 			(setq statblob (vm-imap-start-status-timer))
 			(vm-set-imap-stat-x-box statblob safe-imapdrop)
 			(vm-set-imap-stat-x-maxmsg statblob 1)
@@ -3192,20 +3193,19 @@ either the folder buffer or the presentation buffer.
 		     ;; Continue with whatever messages have been read
 		     )
 		    (quit
-		     ;; FIXME this is outside save-excursion!
 		     (delete-region old-eob (point-max))
 		     (error (format "Quit received during retrieval from %s"
-				    safe-imapdrop))))
-		;; unwind-protections
-		(when statblob
-		  (vm-imap-stop-status-timer statblob))
-		;;-------------------
-		(vm-buffer-type:exit)
-		;;-------------------
-		;;-----------------------------
-		(vm-imap-dump-uid-seq-num-data)
-		;;-----------------------------
-		))))
+				    safe-imapdrop)))))
+	      ;; unwind-protections
+	      (when statblob
+		(vm-imap-stop-status-timer statblob))
+	      ;;-------------------
+	      (vm-buffer-type:exit)
+	      ;;-------------------
+	      ;;-----------------------------
+	      (vm-imap-dump-uid-seq-num-data)
+	      ;;-----------------------------
+	      )))
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
