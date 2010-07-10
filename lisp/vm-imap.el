@@ -3147,7 +3147,7 @@ either the folder buffer or the presentation buffer.
 		    (setq statblob (vm-imap-start-status-timer))
 		    (vm-set-imap-stat-x-box statblob safe-imapdrop)
 		    (vm-set-imap-stat-x-maxmsg statblob 1)
-		    (vm-set-imap-stat-x-currmsg statblob message-num)
+		    (vm-set-imap-stat-x-currmsg statblob 1)
 		    (setq message-size (vm-imap-get-uid-message-size process uid))
 		    (vm-set-imap-stat-x-need statblob message-size)
 		    (vm-imap-fetch-uid-message process uid use-body-peek nil)
@@ -3317,12 +3317,7 @@ FETCH is t, then the retrieval is for a temporary message fetch."
        ;; fix markers now
        ;; FIXME is the text-end correct? separator line?
        (set-marker (vm-text-of mm) text-begin)
-       (set-marker (vm-text-end-of mm) 
-		   (save-excursion
-		     (goto-char (point-max))
-		     ;; (end-of-line 0) ; move back one line
-		     ;; (kill-line 1)
-		     (point)))
+       (set-marker (vm-text-end-of mm) (point-max))
        (vm-assert (eq (point) text-begin))
        (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
        (vm-increment testing)
@@ -4027,7 +4022,6 @@ documentation for `vm-spool-files'."
 	(vm-imap-end-session process))
       )))
 
-;; This is under development. USR, 2010-07-10
 ;;;###autoload
 (defun vm-list-imap-folders (account)
   "List all folders on an IMAP account ACCOUNT.  The account must be
