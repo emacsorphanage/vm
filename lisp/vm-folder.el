@@ -4554,9 +4554,7 @@ folder-access-data should be preserved."
   (use-local-map vm-mode-map)
   ;; if the user saves after M-x recover-file, let them get new
   ;; mail again.
-  ;; Handle differences between emacs and xemacs re local hooks
-  (if (fboundp 'make-local-hook)
-      (make-local-hook 'after-save-hook))
+  (vm-make-local-hook 'after-save-hook)
   (add-hook 'after-save-hook 'vm-unblock-new-mail nil t)
   (and (vm-menu-support-possible-p)
        (vm-menu-install-menus))

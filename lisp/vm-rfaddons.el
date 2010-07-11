@@ -1504,11 +1504,8 @@ and add an \"%0UA\" to your `vm-summary-format'."
   "Install the open-line hooks for `vm-mail-mode'.
 Add this to `vm-mail-mode-hook'."
   ;; these are not local even when using add-hook, so we make them local
-  ;; make-local-hook needed for xemacs, but obsolete in emacs 21.1+
-  (if (fboundp 'make-local-hook)
-      (progn
-        (make-local-hook 'before-change-functions)
-        (make-local-hook 'after-change-functions)))
+  (vm-make-local-hook 'before-change-functions)
+  (vm-make-local-hook 'after-change-functions)
   (add-hook 'before-change-functions 'vm-mail-mode-open-line nil t)
   (add-hook 'after-change-functions 'vm-mail-mode-open-line nil t))
 

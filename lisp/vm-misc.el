@@ -384,6 +384,10 @@ vm-mail-buffer variable."
 	  (throw 'fail nil)))
       t)))
 
+(defun vm-make-local-hook (hook)
+  (if (fboundp 'make-local-hook)	; Emacs/XEmacs 21
+      (make-local-hook hook)))
+
 (defun vm-abbreviate-file-name (path)
   (if vm-xemacs-p
       (abbreviate-file-name path t)
