@@ -729,7 +729,7 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 	    (vm-unread-flag (car vm-message-pointer))
 	    (vm-run-message-hook (car vm-message-pointer)
 				 'vm-select-unread-message-hook)))
-     
+
      (vm-narrow-for-preview (not need-preview))
      (if (or vm-always-use-presentation-buffer
              vm-mime-display-function
@@ -890,8 +890,8 @@ is done if necessary.  (USR, 2010-01-14)"
          (vm-update-summary-and-mode-line)
 	 (vm-howl-if-eom))
      (vm-update-summary-and-mode-line)))
-  ;;(if vm-summary-toggle-thread-folding
-  ;;    (vm-summary-toggle-thread-folding 1))
+  ;; (if vm-summary-toggle-thread-folding
+  ;;     (vm-summary-toggle-thread-folding 1))
   )
 
 ;;;###autoload

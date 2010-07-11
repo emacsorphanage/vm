@@ -33,8 +33,6 @@
 (defun vm-version ()
   "Return the value of the variable `vm-version'."
   (interactive)
-  (if (not vm-version)
-      (setq vm-version "None"))
   (when (interactive-p)
     (if (string= "?bug?" vm-version)
         (error "Cannot determine VM version!")
