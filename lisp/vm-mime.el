@@ -2453,6 +2453,8 @@ declarations in the attachments and make a decision independently."
             (charset (or (vm-mime-get-parameter layout "charset")
                          "us-ascii"))
             end buffer-size)
+	(if (null vm-mime-text/html-handler)
+	    (error "No handler for internal display of text/html"))
         (message "Inlining text/html by %s..."
                  vm-mime-text/html-handler)
         (vm-mime-insert-mime-body layout)
