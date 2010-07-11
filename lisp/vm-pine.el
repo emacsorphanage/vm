@@ -354,7 +354,9 @@ creation)."
             (vm-buffer-of (vm-real-message-of (car vmp))))
       (make-local-variable 'vm-message-pointer)
       (setq vm-message-pointer vmp)
-      (make-local-hook 'mail-send-hook)
+      ;; make-local-hook used by xemacs, but not emacs 21.1+
+      (if (fboundp 'make-local-hook)
+          (make-local-hook 'mail-send-hook))
       (add-hook 'mail-send-hook 'vm-delete-postponed-message t t)
       (erase-buffer)
 
@@ -868,7 +870,9 @@ configuration."
           ((equal action 'visit)
            (funcall visit vm-postponed-folder)
            (vm-select-folder-buffer)
-           (make-local-hook 'vm-quit-hook)
+           ;; make-local-hook only needed for xemacs
+           (if (fboundp 'make-local-hook)
+               (make-local-hook 'vm-quit-hook))
            (add-hook 'vm-quit-hook 'vm-expunge-folder nil t)
            (vm-expunge-folder)
            (cond ((= (length vm-message-list) 0)
@@ -917,7 +921,8 @@ If set to nil it will never save them nor it will ask."
   :group 'vm-pine)
 
 (defun vm-add-save-killed-message-hook ()
-  (make-local-hook 'kill-buffer-hook)
+  (if (fboundp 'make-local-hook)
+      (make-local-hook 'kill-buffer-hook))
   (add-hook 'kill-buffer-hook 'vm-save-killed-message-hook nil t))
 
 (defun vm-remove-save-killed-message-hook ()

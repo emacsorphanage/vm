@@ -1446,7 +1446,9 @@ command can be invoked from external agents via an emacsclient."
 (defun vm-new-composition-buffer ()
   (setq vm-composition-buffer-count (+ 1 vm-composition-buffer-count))
   (setq vm-compositions-exist t)
-  (make-local-hook 'kill-buffer-hook)
+  ;; make-local-hook required for xemacs but obsolete in emacs 21.1+
+  (if (fboundp 'make-local-hook)
+      (make-local-hook 'kill-buffer-hook))
   (add-hook 'kill-buffer-hook 'vm-forget-composition-buffer nil t)
   (add-hook 'vm-mail-send-hook 'vm-forget-composition-buffer nil t)
   (vm-update-ml-composition-buffer-count))
