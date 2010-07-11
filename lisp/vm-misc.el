@@ -384,6 +384,31 @@ vm-mail-buffer variable."
 	  (throw 'fail nil)))
       t)))
 
+(defun vm-generate-new-unibyte-buffer (name)
+  (let* ((default-enable-multibyte-characters nil)
+					; expect warning in Emacs23
+	 (buffer (generate-new-buffer name)))
+    (if (fboundp 'set-buffer-multibyte)
+	(with-current-buffer buffer
+	  (set-buffer-multibyte nil) 
+	  buffer)
+      (if (with-current-buffer buffer (not enable-multibyte-characters))
+	  buffer
+	(error "VM internal error #1922: buffer is not unibyte")))))
+
+(defun vm-generate-new-multibyte-buffer (name)
+  (let* ((default-enable-multibyte-characters t)
+					; expect warning in Emacs23
+	 (buffer (generate-new-buffer name)))
+    (if (fboundp 'set-buffer-multibyte)
+	(with-current-buffer buffer
+	  (set-buffer-multibyte t) 
+	  buffer)
+      (if (with-current-buffer buffer enable-multibyte-characters)
+	  buffer
+	(error "VM internal error #1923: buffer is not multibyte")))))
+
+
 (defun vm-make-local-hook (hook)
   (if (fboundp 'make-local-hook)	; Emacs/XEmacs 21
       (make-local-hook hook)))
@@ -811,9 +836,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     filename ))
 
 (defun vm-make-work-buffer (&optional name)
-  (let ((default-enable-multibyte-characters nil)
-	work-buffer)
-    (setq work-buffer (generate-new-buffer (or name "*vm-workbuf*")))
+  (let ((work-buffer (vm-generate-new-unibyte-buffer 
+		      (or name "*vm-workbuf*"))))
     (buffer-disable-undo work-buffer)
 ;; probably not worth doing since no one sets buffer-offer-save
 ;; non-nil globally, do they?
@@ -822,9 +846,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     work-buffer ))
 
 (defun vm-make-multibyte-work-buffer (&optional name)
-  (let ((default-enable-multibyte-characters t)
-	work-buffer)
-    (setq work-buffer (generate-new-buffer (or name "*vm-workbuf*")))
+  (let ((work-buffer (vm-generate-new-multibyte-buffer 
+		      (or name "*vm-workbuf*"))))
     (buffer-disable-undo work-buffer)
 ;; probably not worth doing since no one sets buffer-offer-save
 ;; non-nil globally, do they?

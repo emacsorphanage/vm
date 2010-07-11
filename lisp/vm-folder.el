@@ -3568,7 +3568,12 @@ the server folder that the FOLDER might be caching."
 		(enable-local-variables nil)
 		(enable-local-eval nil)
 		;; for Emacs/MULE
-		(default-enable-multibyte-characters nil)
+		;; disabled because Emacs 23 doesn't like it, and it
+		;; is not clear if it does anything at all.  USR, 2010-07-10.
+		;; The only place this function is called from is vm,
+		;; which takes care of multibyte issues.  TX, 2010-07-03
+		;; (default-enable-multibyte-characters nil)
+
 		;; for XEmacs/Mule
 		(coding-system-for-read
 		 (vm-line-ending-coding-system)))

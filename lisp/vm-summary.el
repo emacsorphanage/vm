@@ -68,10 +68,11 @@ mandatory."
   (vm-select-folder-buffer-and-validate)
   (if (null vm-summary-buffer)
       (let ((b (current-buffer))
-	    (read-only vm-folder-read-only))
+	    (read-only vm-folder-read-only)
+	    (summary-buffer-name (format "%s Summary" (buffer-name))))
 	(setq vm-summary-buffer
-	      (let ((default-enable-multibyte-characters t))
-		(get-buffer-create (format "%s Summary" (buffer-name)))))
+	      (or (get-buffer summary-buffer-name)
+		  (vm-generate-new-multibyte-buffer summary-buffer-name)))
 	(save-excursion
 	  (set-buffer vm-summary-buffer)
 	  (abbrev-mode 0)

@@ -24,7 +24,6 @@
   (require 'cl))
 
 (defvar enable-multibyte-characters)
-(defvar default-enable-multibyte-characters)
 
 ;; The following variables are defined in the code, depending on the
 ;; Emacs version being used.  They should not be initialized here.
@@ -1367,9 +1366,8 @@ source of the message."
 	(modified (buffer-modified-p)))
     (cond ((or (null vm-presentation-buffer-handle)
 	       (null (buffer-name vm-presentation-buffer-handle)))
-	   (let ((default-enable-multibyte-characters t))
-	     (setq b (generate-new-buffer (concat (buffer-name)
-						  " Presentation"))))
+	   (setq b (vm-generate-new-multibyte-buffer (concat (buffer-name)
+							  " Presentation")))
 	   (save-excursion
 	     (set-buffer b)
 	     (if (fboundp 'buffer-disable-undo)
@@ -1497,9 +1495,8 @@ source of the message."
 	(modified (buffer-modified-p)))
     (cond ((or (null vm-fetch-buffer)
 	       (null (buffer-name vm-fetch-buffer)))
-	   (let ((default-enable-multibyte-characters t))
-	     (setq b (generate-new-buffer (concat (buffer-name)
-						  " Fetch"))))
+	   (setq b (vm-generate-new-multibyte-buffer (concat (buffer-name)
+							  " Fetch")))
 	   (save-excursion
 	     (set-buffer b)
 	     (if (fboundp 'buffer-disable-undo)

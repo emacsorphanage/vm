@@ -966,10 +966,11 @@ summary buffer to select a folder."
       (error "'vm-folders-summary-database' must be non-nil to run this command"))
   (if (null vm-folders-summary-buffer)
       (let ((folder-buffer (and (eq major-mode 'vm-mode)
-				(current-buffer))))
+				(current-buffer)))
+	    (summary-buffer-name "VM Folders Summary"))
 	(setq vm-folders-summary-buffer
-	      (let ((default-enable-multibyte-characters t))
-		(get-buffer-create "VM Folders Summary")))
+	      (or (get-buffer summary-buffer-name)
+		  (vm-generate-new-multibyte-buffer summary-buffer-name)))
 	(save-excursion
 	  (set-buffer vm-folders-summary-buffer)
 	  (abbrev-mode 0)
