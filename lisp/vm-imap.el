@@ -3111,10 +3111,10 @@ either the folder buffer or the presentation buffer.
 	(statblob nil))
     (unwind-protect
 	(save-excursion
-	  (set-buffer (vm-buffer-of (vm-real-message-of m)))
 	  ;;----------------------------------
 	  (vm-buffer-type:enter 'folder)
 	  ;;----------------------------------
+	  (set-buffer (vm-buffer-of (vm-real-message-of m)))
 	  (let* ((statblob nil)
 		 (uid (vm-imap-uid-of m))
 		 (imapdrop (vm-folder-imap-maildrop-spec))
@@ -3129,54 +3129,56 @@ either the folder buffer or the presentation buffer.
 		 message-size
 		 )
 
-	    (if (null process)
+	    (when (null process)
 		(if (eq vm-imap-connection-mode 'offline)
 		    (error "Working in offline mode")
+		  (setq vm-imap-connection-mode 'autoconnect)
 		  (error (concat "Could not connect to IMAP server; "
-				 "Type g to reconnect"))
-		  (setq vm-imap-connection-mode 'autoconnect))
+				 "Type g to reconnect"))))
 	      (setq imap-buffer (process-buffer process))
 	      (unwind-protect
-	      (condition-case error-data
 		  (save-excursion	; = save-current-buffer?
 		    (set-buffer imap-buffer)
 		    ;;----------------------------------
 		    (vm-buffer-type:enter 'process)
 		    (vm-imap-session-type:assert-active)
 		    ;;----------------------------------
-		    (setq statblob (vm-imap-start-status-timer))
-		    (vm-set-imap-stat-x-box statblob safe-imapdrop)
-		    (vm-set-imap-stat-x-maxmsg statblob 1)
-		    (vm-set-imap-stat-x-currmsg statblob 1)
-		    (setq message-size (vm-imap-get-uid-message-size process uid))
-		    (vm-set-imap-stat-x-need statblob message-size)
-		    (vm-imap-fetch-uid-message process uid use-body-peek nil)
-		    (vm-imap-retrieve-to-target process body-buffer statblob
-						use-body-peek)
-		    (vm-imap-read-ok-response process)
-		    )
-		(vm-imap-normal-error	; handler
-		 (message "IMAP error: %s" (cadr error-data)))
-		(vm-imap-protocol-error	; handler
-		 (message "Retrieval from %s signaled: %s" safe-imapdrop
-			  error-data)
-		 ;; Continue with whatever messages have been read
-		 )
-		(quit
-		     ;; FIXME this is outside save-excursion!
-		 (delete-region old-eob (point-max))
-		 (error (format "Quit received during retrieval from %s"
-				safe-imapdrop))))
-		;; unwind-protections
-		(when statblob
-		  (vm-imap-stop-status-timer statblob))
-		;;-------------------
-		(vm-buffer-type:exit)
-		;;-------------------
-	      ;;-----------------------------
-	      (vm-imap-dump-uid-seq-num-data)
-	      ;;-----------------------------
-	      ))))
+		    (condition-case error-data
+			(progn
+			  (setq statblob (vm-imap-start-status-timer))
+			  (vm-set-imap-stat-x-box statblob safe-imapdrop)
+			  (vm-set-imap-stat-x-maxmsg statblob 1)
+			  (vm-set-imap-stat-x-currmsg statblob 1)
+			  (setq message-size 
+				(vm-imap-get-uid-message-size process uid))
+			  (vm-set-imap-stat-x-need statblob message-size)
+			  (vm-imap-fetch-uid-message 
+			   process uid use-body-peek nil)
+			  (vm-imap-retrieve-to-target 
+			   process body-buffer statblob use-body-peek)
+			  (vm-imap-read-ok-response process)
+			  )
+		      (vm-imap-normal-error ; handler
+		       (message "IMAP error: %s" (cadr error-data)))
+		      (vm-imap-protocol-error ; handler
+		       (message "Retrieval from %s signaled: %s" safe-imapdrop
+				error-data)
+		       ;; Continue with whatever messages have been read
+		       )
+		      (quit
+		       (delete-region old-eob (point-max))
+		       (error (format "Quit received during retrieval from %s"
+				      safe-imapdrop))))
+		    ;; unwind-protections
+		    (when statblob
+		      (vm-imap-stop-status-timer statblob))
+		    ;;-------------------
+		    (vm-buffer-type:exit)
+		    ;;-------------------
+		    ;;-----------------------------
+		    (vm-imap-dump-uid-seq-num-data)
+		    ;;-----------------------------
+		    ))))
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
