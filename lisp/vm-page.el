@@ -239,8 +239,8 @@ it is suppressed if the variable `vm-auto-next-message' is nil."
 	(message (if (and (stringp vm-summary-uninteresting-senders)
 			  (string-match vm-summary-uninteresting-senders
 					(vm-su-from (car vm-message-pointer))))
-		     "End of message %s to %s"
-		   "End of message %s from %s")
+		     "End of message %s to %.50s..."
+		   "End of message %s from %.50s...")
 		 (vm-number-of (car vm-message-pointer))
 		 (vm-summary-sprintf "%F" (car vm-message-pointer))))))
 
@@ -929,8 +929,9 @@ is done if necessary.  (USR, 2010-01-14)"
          (vm-update-summary-and-mode-line)
 	 (vm-howl-if-eom))
      (vm-update-summary-and-mode-line)))
-  (if vm-summary-toggle-thread-folding
-      (vm-summary-toggle-thread-folding 1)))
+  ;; (if vm-summary-thread-folding
+  ;;     (vm-toggle-thread 1))
+  )
 
 ;;;###autoload
 (defun vm-expose-hidden-headers ()

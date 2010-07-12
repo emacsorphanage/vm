@@ -56,7 +56,14 @@ given."
       (if (eq vm-message-pointer cons)
 	  (vm-preview-current-message)
 	(vm-record-and-change-message-pointer vm-message-pointer cons)
-	(vm-preview-current-message)))))
+	(vm-preview-current-message)
+	;;(message "start of message you want is: %s"
+	;; (vm-su-start-of (car vm-message-pointer)))
+	(if (get-text-property 
+	     (+ (vm-su-start-of (car vm-message-pointer)) 2)
+	     'invisible vm-summary-buffer)
+	    (vm-expand-thread))
+	))))
 
 ;;;###autoload
 (defun vm-goto-message-last-seen ()
@@ -158,7 +165,8 @@ this command 'sees' marked messages as it moves."
   ;;
   ;; Note that interactively all args are 1, so error signaling
   ;; and retries apply to all interactive moves.
-  (interactive "p\np\np")
+  (interactive "p\np\np")  
+  ;;(message "running vm next message")
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate)
@@ -195,15 +203,24 @@ this command 'sees' marked messages as it moves."
 			(setq count 1)
 		      ;; reset for next pass
 		      (setq oldmp vm-message-pointer))))
-	      (vm-decrement count)))
+		(if (not (and vm-summary-toggle-thread-folding 
+			      vm-summary-show-threads 
+			      (get-text-property 
+			       (vm-su-start-of (car vm-message-pointer))
+			       'invisible vm-summary-buffer)))
+		    (vm-decrement count))
+		))
 	(beginning-of-folder (setq error 'beginning-of-folder))
 	(end-of-folder (setq error 'end-of-folder))))
      (t
       (condition-case ()
-	  (progn
+	  (progn	    
 	    (vm-move-message-pointer direction)
-	    (while (and (not (eq oldmp vm-message-pointer))
-			(vm-should-skip-message vm-message-pointer t))
+	    (while (or (and (not (eq oldmp vm-message-pointer))
+			    (vm-should-skip-message vm-message-pointer t))
+		       (get-text-property 
+			(vm-su-start-of (car vm-message-pointer))
+			'invisible vm-summary-buffer))
 	      (vm-move-message-pointer direction))
 	    ;; Retry the move if we've gone a complete circle and
 	    ;; retries are allowed and there are other messages
@@ -235,6 +252,12 @@ this command 'sees' marked messages as it moves."
 	(end-of-folder
 	 ;; we bumped into the end of the folder without finding
 	 ;; a suitable stopping point; retry the move if we're allowed.
+	 (when (get-text-property 
+		(vm-su-start-of (car vm-message-pointer))
+		'invisible vm-summary-buffer)
+	   (setq error 'end-of-folder)
+	   (setq retry nil))
+
 	 (setq vm-message-pointer oldmp)
 	 ;; if the retry fails, we make sure the message pointer
 	 ;; is restored to its old value.
@@ -281,9 +304,24 @@ ignored."
   (vm-select-folder-buffer)
   (vm-display nil nil '(vm-next-message-no-skip)
 	      '(vm-next-message-no-skip))
+
+  (if (and vm-summary-toggle-thread-folding 
+	   vm-summary-show-threads
+	   vm-summary-thread-folding-on-motion)
+      (let ((m nil))
+	(set-buffer vm-summary-buffer)
+	(setq m (get-text-property (+ (point) 3) 'vm-message))
+	(when (< (+ (vm-su-end-of m) 3) (buffer-size))
+	  (if (get-text-property (+ (vm-su-end-of m) 3) 'invisible)
+	      (vm-expand-thread))
+	  (if (not (get-text-property (+ (vm-su-end-of m) 3) 'thread-root))
+	      (vm-collapse-thread t)))
+	))
+  
   (let ((vm-skip-deleted-messages nil)
 	(vm-skip-read-messages nil))
     (vm-next-message count nil t)))
+
 ;; backward compatibility
 (fset 'vm-Next-message 'vm-next-message-no-skip)
 
@@ -296,9 +334,26 @@ ignored."
   (vm-select-folder-buffer)
   (vm-display nil nil '(vm-previous-message-no-skip)
 	      '(vm-previous-message-no-skip))
+
+  (if (and vm-summary-toggle-thread-folding 
+	   vm-summary-show-threads
+	   vm-summary-thread-folding-on-motion)
+      (let ((m nil))
+	(set-buffer vm-summary-buffer)
+	(setq m (get-text-property (+ (point) 3) 'vm-message))
+	(if (> (- (vm-su-start-of m) 3) 0)
+	    (if (get-text-property (- (vm-su-start-of m) 3) 'invisible) 
+		(save-excursion
+		  (goto-char (- (vm-su-start-of m) 4))
+		  (vm-expand-thread))))
+	(if (not (get-text-property (+ (point) 3) 'thread-root))
+	    (vm-collapse-thread))
+	))
+
   (let ((vm-skip-deleted-messages nil)
 	(vm-skip-read-messages nil))
     (vm-previous-message count)))
+
 ;; backward compatibility
 (fset 'vm-Previous-message 'vm-previous-message-no-skip)
 
@@ -446,22 +501,40 @@ USR, 2010-03-08"
 	       ;; the position at eob belongs to the last message
 	       ((and (eobp) (= (vm-su-end-of (car message-pointer)) point))
 		nil )
-	       ;; make the position at eob belong to the last message
 	       ((eobp)
-		(setq mp (vm-last message-pointer))
 		(save-excursion
-		  (set-buffer vm-mail-buffer)
-		  (vm-record-and-change-message-pointer vm-message-pointer mp)
-		  (vm-preview-current-message)
-		  ;; return non-nil so the caller will know that
-		  ;; a new message was selected.
-		  t ))
+		  (while (get-text-property (- (point) 3) 'invisible)
+		    (goto-char 
+		     (- (vm-su-start-of (get-text-property 
+					 (- (point) 3) 'vm-message))
+			3)))
+		  (vm-goto-message 
+		   (string-to-number 
+		    (vm-number-of 
+		     (get-text-property (- (point) 3) 'vm-message)))))
+		t)
+	       ;; make the position at eob belong to the last message
+	       ;; ((eobp)
+	       ;; 	(while (get-text-property (point) 'invisible)
+	       ;; 	  (goto-char (1- (point)))
+	       ;; 	  setq mp 
+	       ;; 	  ;;(setq mp (vm-last message-pointer))
+	       ;; 	(save-excursion
+	       ;; 	  (set-buffer vm-mail-buffer)
+	       ;; 	  (vm-record-and-change-message-pointer 
+	       ;;		vm-message-pointer mp)
+	       ;; 	  (vm-preview-current-message)
+	       ;; 	  ;; return non-nil so the caller will know that
+	       ;; 	  ;; a new message was selected.
+	       ;; 	  t ))
 	       (t
 		(if (< point (vm-su-start-of (car message-pointer)))
 		    (setq mp message-list)
 		  (setq mp (cdr message-pointer) message-pointer nil))
-		(while (and (not (eq mp message-pointer))
-			    (>= point (vm-su-end-of (car mp))))
+		(while (or (and (not (eq mp message-pointer))
+				(>= point (vm-su-end-of (car mp))))
+			   (get-text-property 
+			    (+ (vm-su-start-of (car mp)) 3) 'invisible))
 		  (setq mp (cdr mp)))
 		(if (not (eq mp message-pointer))
 		    (save-excursion
