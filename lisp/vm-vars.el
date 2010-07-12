@@ -4717,7 +4717,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "WD" 'vm-delete-window-configuration)
     (define-key map "W?" 'vm-window-help)
     (define-key map "\C-t" 'vm-toggle-threads-display)
-    (define-key map "\M-t" 'vm-summary-toggle-thread-folding)
+    (define-key map "\M-t" 'vm-toggle-thread)
     (define-key map "\C-x\C-s" 'vm-save-buffer)
     (define-key map "\C-x\C-w" 'vm-write-file)
     (define-key map "\C-x\C-q" 'vm-toggle-read-only)
@@ -4726,7 +4726,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\M-W" 'vm-show-no-warranty)
     (define-key map "\C-c\C-s" 'vm-mime-save-all-attachments)
     (define-key map "\C-c\C-d" 'vm-mime-delete-all-attachments)
-    (define-key map "T" 'vm-toggle-expand-thread)
+    (define-key map "T" 'vm-toggle-thread)
     ;; suppress-keymap provides these, but now that we don't use
     ;; suppress-keymap anymore...
     (define-key map "0" 'digit-argument)
@@ -4754,21 +4754,20 @@ be a regexp matching all chars to be replaced by a \"_\"."
     map )
   "Keymap for VM mode.")
 
-(defvar vm-summary-toggle-thread-folding nil
-  "Enables folding of threads in VM summary windows.  (This
-functionality is highly experimental!)")
+(defvar vm-summary-thread-folding nil
+  "*If non-nil, enables folding of threads in VM summary
+windows.  (This functionality is still experimental.)")
 
 (defvar vm-summary-show-thread-count t
-  "when set to 't' and thread folding is enabled (see 
-vm-summary-toggle-thread-folding) this will display the current
-number of thread in the thread root message number indicator. 
-Note that this takes up 4 extra character in your summary")
+  "*If non-nil, thread folding displays the count of messages in
+a thread along with the message number of the thread root.  Note
+that this takes up 4 extra character in each summary line.")
 
 (defvar vm-summary-thread-folding-on-motion nil
-  "when set to 't' and thread folding is enabled, calling
-vm-next/previous-message-no-skip will ('N' or 'P' respectively)
-will expand or collapse the thread upon moving into or out of
-its extreme most members")
+  "*If non-nil and thread folding is enabled, invoking
+vm-next/previous-message-no-skip (`N' or `P' respectively)
+will expand a thread upon moving into the thread and collapse it when 
+you move out of the thread.")
 
 (defvar vm-summary-mode-map vm-mode-map
   "Keymap for VM Summary mode")

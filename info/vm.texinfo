@@ -3009,7 +3009,7 @@ prefix argument @var{n} can specify a longer move.  The value of
 * Threading::   Using subjects and message IDs to group messages.
 @end menu
 
-@node Threading,,, Sorting Messages
+@node Threading,, Sorting Messages, Sorting Messages
 @section Threading
 @cindex threading
 A @dfn{thread} is a group of messages that are either related by subject
@@ -3093,8 +3093,35 @@ centered.  A value of @code{nil} (the default) means VM will never
 bother centering the arrow.  A value that is not @code{nil} and not
 @code{t} causes VM to center the arrow only if the summary window is not
 the only existing window.  You can change what the summary arrow looks
-like by setting vm-summary-arrow to a string depicting the new arrow.
+like by setting @code{vm-summary-arrow} to a string depicting the new arrow.
 You should set this variable before VM creates the summary buffer.
+
+
+You can have a summary generated automatically at VM startup
+by setting the variable @code{vm-startup-with-summary} non-nil.
+@xref{Starting Up}.
+
+@vindex vm-follow-summary-cursor
+All VM commands are available in the summary buffer just as they are in
+the folder buffer itself.  If you set @code{vm-follow-summary-cursor}
+non-@code{nil}, VM will select the message under the cursor in the
+summary window before executing commands that operate on the current
+message.  Note that this occurs @emph{only} when executing a command
+from the summary buffer window.
+
+@vindex vm-gargle-uucp
+A non-@code{nil} value of @code{vm-gargle-uucp} means to use a crufty
+regular expression that does surprisingly well at beautifying UUCP
+addresses that are substituted for @samp{%f} and @samp{%t} as part
+of summary and attribution formats.
+
+@menu
+* Summary Format::   Customizing the summary format
+* Thread Folding::   Collapsing message threads in the summary
+@end menu
+
+@node Summary Format, Thread Folding, Summaries, Summaries
+@section Summary Format
 
 @vindex vm-summary-format
 The variable @code{vm-summary-format} controls the format of each
@@ -3135,14 +3162,16 @@ The fifth is `f' or ` ', for messages filed.
 The sixth is `w' or ` ', for messages written.
 @*
 The seventh is `e' or ` ', for messages that have been edited.
+@vindex vm-summary-attachment-indicator
 @item P
 indicator for a message with attachments.
-The variable @vindex vm-summary-attachment-indicator
-@code{vm-summary-attachment-indicator} is the inserted string, by default a @code{$}.
+The variable @code{vm-summary-attachment-indicator} is the inserted
+string, by default a @code{$}. 
+@vindex vm-summary-postponed-indicator
 @item p
 indicator for a postponed message. 
-The variable @vindex vm-summary-postponed-indicator
-@code{vm-summary-postponed-indicator} is the inserted string, by default a @code{P}.
+The variable @code{vm-summary-postponed-indicator} is the inserted
+string, by default a @code{P}. 
 @item c
 number of characters in message (ignoring headers)
 @item S
@@ -3245,23 +3274,46 @@ into the folder and saved on the disk.  When you visit the folder
 again, you can reuse the saved summary format.  Set the variable
 @code{vm-restore-saved-summary-format} to t to achieve this effect.
 
-You can have a summary generated automatically at VM startup
-by setting the variable @code{vm-startup-with-summary} non-nil.
-@xref{Starting Up}.
+@node Thread Folding,, Summary Format, Summaries
+@section Thread Folding
 
-@vindex vm-follow-summary-cursor
-All VM commands are available in the summary buffer just as they are in
-the folder buffer itself.  If you set @code{vm-follow-summary-cursor}
-non-@code{nil}, VM will select the message under the cursor in the
-summary window before executing commands that operate on the current
-message.  Note that this occurs @emph{only} when executing a command
-from the summary buffer window.
+A new feature in VM version 8.2 is that of ``folding'' message threads
+in the summary window.  This feature allows you to collapse all the
+messages in a thread into a single line of the summary window, so that
+you can see a more compact summary of the folder.
 
-@vindex vm-gargle-uucp
-A non-@code{nil} value of @code{vm-gargle-uucp} means to use a crufty
-regular expression that does surprisingly well at beautifying UUCP
-addresses that are substituted for @samp{%f} and @samp{%t} as part
-of summary and attribution formats.
+@vindex vm-summary-thread-folding
+@findex vm-toggle-thread
+@findex vm-expand-thread
+@findex vm-collapse-thread
+Thread folding is enabled by setting the variable
+@code{vm-summary-thread-folding} to a non-nil value.  The summary
+window then has a folding indicator in the first column, with @code{-}
+for threads that are expanded and @code{+} for threads that are
+collapsed.  The command @code{T} or @code{M-t}
+(@code{vm-toggle-thread}) allows you to expand a collapsed thread or
+collapse an expanded thread.  The commands @code{vm-expand-thread} and
+@code{vm-collapse-thread} implement the more specific versions of the
+function. 
+
+@vindex vm-summary-thread-folding-on-motion
+The variable @code{vm-summary-thread-folding-on-motion} allows a more
+automatic expansion/collapsing of threads.  If the variable is set to
+a non-nil value, then the usual motion commands @code{N} and @code{P}
+(@code{vm-next-message-no-skip} and
+@code{vm-previous-message-no-skip}) cause the threads to be expanded
+or collapsed as needed as you move into or out of threads.
+
+@vindex vm-summary-show-thread-count
+The variable @code{vm-summary-show-thread-count} allows a more
+elaborate display of the thread information in the summary window.  If
+it is set to non-nil then the message number field of the summary line
+includes a count of the messages in its thread, in the format
+@code{N+C} where @code{N} is the message number and @code{C} is the
+message count in the thread.  Set the variable to nil to obtain the
+more standard format of the summary.
+
+
 
 @node Virtual Folders, Frames and Windows, Summaries, Top
 @chapter Virtual Folders
