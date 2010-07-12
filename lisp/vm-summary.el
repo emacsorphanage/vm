@@ -22,7 +22,9 @@
 ;;; Code:
 
 (defvar scrollbar-height)		; defined for XEmacs
-(defvar vm-summary-debug)		; defined in vm-vars
+
+(eval-when-compile
+  (require 'vm-vars))
 
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"

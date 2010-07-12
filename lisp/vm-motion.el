@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+(require 'vm-vars)
+
 (defun vm-record-and-change-message-pointer (old new)
   (intern (buffer-name) vm-buffers-needing-display-update)
   (vm-garbage-collect-message)
@@ -203,7 +205,7 @@ this command 'sees' marked messages as it moves."
 			(setq count 1)
 		      ;; reset for next pass
 		      (setq oldmp vm-message-pointer))))
-		(if (not (and vm-summary-toggle-thread-folding 
+		(if (not (and vm-summary-thread-folding 
 			      vm-summary-show-threads 
 			      (get-text-property 
 			       (vm-su-start-of (car vm-message-pointer))
@@ -305,7 +307,7 @@ ignored."
   (vm-display nil nil '(vm-next-message-no-skip)
 	      '(vm-next-message-no-skip))
 
-  (if (and vm-summary-toggle-thread-folding 
+  (if (and vm-summary-thread-folding 
 	   vm-summary-show-threads
 	   vm-summary-thread-folding-on-motion)
       (let ((m nil))
@@ -335,7 +337,7 @@ ignored."
   (vm-display nil nil '(vm-previous-message-no-skip)
 	      '(vm-previous-message-no-skip))
 
-  (if (and vm-summary-toggle-thread-folding 
+  (if (and vm-summary-thread-folding 
 	   vm-summary-show-threads
 	   vm-summary-thread-folding-on-motion)
       (let ((m nil))

@@ -21,7 +21,8 @@
 
 ;;; Code:
 
-(require 'vm-vars)
+(eval-when-compile
+  (require 'vm-vars))
 
 ;;;###autoload
 (defun vm-scroll-forward (&optional arg)
