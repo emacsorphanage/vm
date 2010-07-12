@@ -149,7 +149,7 @@ mandatory."
 		(vm-set-su-end-of m (point))
                 (let ((s (vm-su-start-of m)) (e (vm-su-end-of m)))
                   (put-text-property s e 'vm-message m)
-                  (when (and vm-summary-toggle-thread-folding
+                  (when (and vm-summary-thread-folding
                              vm-summary-show-threads)
                     (if (= 0 (vm-thread-indentation-of m))
                         (setq tr m trs s tre e ntc 0)
@@ -224,7 +224,7 @@ will make visible all invisible elements of the thread tree and
 place a '-' character at the pointer position indicating that the
 thread can be collapsed."
   (interactive)
-  (when (and vm-summary-toggle-thread-folding vm-summary-show-threads)
+  (when (and vm-summary-thread-folding vm-summary-show-threads)
     (vm-select-folder-buffer)
     (vm-follow-folders-summary-cursor)
     (set-buffer vm-summary-buffer)
@@ -256,7 +256,7 @@ indicating the thread can be expanded. Optional argument nomove
 directs vm-collapse-thread to not take the default action of
 moving the pointer to the thread root after collapsing."
   (interactive "P")
-  (when (and vm-summary-toggle-thread-folding vm-summary-show-threads)
+  (when (and vm-summary-thread-folding vm-summary-show-threads)
     (vm-select-folder-buffer)
     (vm-follow-folders-summary-cursor)
     (set-buffer vm-summary-buffer)
@@ -286,12 +286,12 @@ moving the pointer to the thread root after collapsing."
 	(vm-select-folder-buffer)
 	(vm-goto-message (string-to-number (vm-number-of r)))))))
 
-(defun vm-toggle-expand-thread ()
-  "toggle collapse/expand thread associated with message at point.
-see vm-expand-thread and vm-collapse thread for a description of
-action."
+(defun vm-toggle-thread ()
+  "Toggle collapse/expand thread associated with message at point.
+see `vm-expand-thread' and `vm-collapse-thread' for a description
+of action."
   (interactive)
-  (if (and vm-summary-toggle-thread-folding vm-summary-show-threads)
+  (if (and vm-summary-thread-folding vm-summary-show-threads)
       (progn
 	(vm-select-folder-buffer)
 	(vm-follow-folders-summary-cursor)
@@ -603,7 +603,7 @@ action."
 	      ((eq token 'number)
 	       (let (mynum)
 		 (if (and vm-summary-show-thread-count 
-			  vm-summary-toggle-thread-folding
+			  vm-summary-thread-folding
 			  vm-summary-show-threads)
 		     (if (> (vm-th-thread-indentation message) 0)
 			 (setq mynum (concat "  " 

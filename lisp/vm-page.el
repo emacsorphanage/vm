@@ -890,8 +890,8 @@ is done if necessary.  (USR, 2010-01-14)"
          (vm-update-summary-and-mode-line)
 	 (vm-howl-if-eom))
      (vm-update-summary-and-mode-line)))
-  ;; (if vm-summary-toggle-thread-folding
-  ;;     (vm-summary-toggle-thread-folding 1))
+  ;; (if vm-summary-thread-folding
+  ;;     (vm-toggle-thread 1))
   )
 
 ;;;###autoload
