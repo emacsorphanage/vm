@@ -120,9 +120,12 @@ mandatory."
 argument START-POINT (a list of messages) or, if it is nil, all
 the messages in the current folder."
   (let ((m-list (or start-point vm-message-list))
-	mp m tr trs tre ntc mmmr mmm nm
+	mp m 
+	tr trs tre 			; thread root, start, end
+	ntc 				; thread count
+	mmmr mmm nm
 	(n 0)
-	(modulus 10)
+	(modulus 100)
 	(do-mouse-track
 	    (and vm-mouse-track-summary
 		 (vm-mouse-support-possible-p)))
