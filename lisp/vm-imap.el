@@ -3295,32 +3295,30 @@ FETCH is t, then the retrieval is for a temporary message fetch."
 	   ;; (buffer-read-only nil)    ; seems redundant
 	   (buffer-undo-list t)		; why this?  USR, 2010-06-11
 	   (modified (buffer-modified-p))
-	   (text-begin (marker-position (vm-text-of mm)))
-	   (text-end (marker-position (vm-text-end-of mm)))
 	   (testing 0))
-       (goto-char text-begin)
+       (goto-char (vm-text-of mm))
        ;; Check to see that we are at the right place
        (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
        (vm-increment testing)
 
        (delete-region (point) (point-max))
+       ;; Remember that this does I/O and accept-process-output,
+       ;; allowing concurrent threads to run!!!  USR, 2010-07-11
        (condition-case err
 	   (apply (intern (format "vm-fetch-%s-message" fetch-method))
 		  mm nil)
 	 (error 
 	  (error "Unable to load message; %s" (error-message-string err))))
-       (vm-assert (eq (point) text-begin))
+       (vm-assert (eq (point) (marker-position (vm-text-of mm))))
        (vm-increment testing)
        ;; delete the new headers
-       (delete-region text-begin
+       (delete-region (vm-text-of mm)
 		      (or (re-search-forward "\n\n" (point-max) t) (point-max)))
-       (vm-assert (eq (point) text-begin))
+       (vm-assert (eq (point) (marker-position (vm-text-of mm))))
        (vm-increment testing)
        ;; fix markers now
-       ;; FIXME is the text-end correct? separator line?
-       (set-marker (vm-text-of mm) text-begin)
        (set-marker (vm-text-end-of mm) (point-max))
-       (vm-assert (eq (point) text-begin))
+       (vm-assert (eq (point) (marker-position (vm-text-of mm))))
        (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
        (vm-increment testing)
        ;; now care for the layout of the message
@@ -3334,7 +3332,7 @@ FETCH is t, then the retrieval is for a temporary message fetch."
        (vm-update-virtual-messages mm)
        (set-buffer-modified-p modified)
 
-       (vm-assert (eq (point) text-begin))
+       (vm-assert (eq (point) (marker-position (vm-text-of mm))))
        (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
        (vm-increment testing)))))
 
@@ -3406,15 +3404,13 @@ the folder is saved."
      (widen)
      (let ((inhibit-read-only t)
 	   ;; (buffer-read-only nil)     ; seems redundant
-	   (modified (buffer-modified-p))
-	   (text-begin (marker-position (vm-text-of mm)))
-	   (text-end (marker-position (vm-text-end-of mm))))
-       (goto-char text-begin)
+	   (modified (buffer-modified-p)))
+       (goto-char (vm-text-of mm))
        ;; Check to see that we are at the right place
        (if (or (bobp)
 	       (save-excursion (forward-line -1) (looking-at "\n")))
 	   (progn
-	     (delete-region (point) text-end)
+	     (delete-region (point) (vm-text-end-of mm))
 	     (vm-set-buffer-modified-p t)
 	     (vm-set-mime-layout-of mm nil)
 	     (vm-set-body-to-be-retrieved-flag mm t)
