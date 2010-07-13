@@ -1465,6 +1465,9 @@ source of the message."
 	(goto-char (point-min))
 	(cond ((and (vm-message-access-method-of mm)
 		    (vm-body-to-be-retrieved-of mm))
+	       ;; Remember that this does process I/O and
+	       ;; accept-process-output, allowing concurrent threads
+	       ;; to run!!!  USR, 2010-07-11
 	       (condition-case err
 		   (vm-fetch-message 
 		    (list (vm-message-access-method-of mm)) mm)
@@ -1594,6 +1597,9 @@ source of the message."
 	(goto-char (point-min))
 	(cond ((and (vm-message-access-method-of mm)
 		    (vm-body-to-be-retrieved-of mm))
+	       ;; Remember that this does process I/O and
+	       ;; accept-process-output, and hence allow concurrent
+	       ;; threads to run!!!  USR, 2010-07-11  
 	       (condition-case err
 		   (vm-fetch-message 
 		    (list (vm-message-access-method-of mm)) mm)
@@ -1632,20 +1638,20 @@ the actual message from the file \"message-11\"."
     (set-buffer (marker-buffer (vm-text-of mm)))
     (let ((buffer-read-only nil)
 	  (inhibit-read-only t)
-	  (buffer-undo-list t)
-	  (text-begin (marker-position (vm-text-of mm))))
-      (goto-char text-begin)
+	  (buffer-undo-list t))
+      (goto-char (vm-text-of mm))
       (delete-region (point) (point-max))
+      ;; Remember that this might do process I/O and accept-process-output,
+      ;; allowing other threads to run!!!  USR, 2010-07-11 
       (message "Fetching message from external source...")
       (apply (intern (format "vm-fetch-%s-message" (car storage)))
 	     mm (cdr storage))
       (message "Fetching message from external source... done")
       ;; delete the new headers
-      (delete-region text-begin
+      (delete-region (vm-text-of mm)
 		     (or (re-search-forward "\n\n" (point-max) t)
 			 (point-max)))
       ;; fix markers now
-      (set-marker (vm-text-of mm) text-begin)
       (set-marker (vm-text-end-of mm) (point-max))	
       (set-marker (vm-end-of mm) (point-max))
       ;; now care for the layout of the message, old layouts are invalid as the

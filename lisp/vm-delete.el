@@ -425,6 +425,9 @@ ignored."
 	 (function
 	  (lambda (buffer)
 	    (set-buffer (symbol-name buffer))
+	    ;; FIXME The update summary here is a heavy duty
+	    ;; operation.  Can we be more clever about it, for
+	    ;; instance avoid doing it before quitting a folder?
 	    (if (null vm-system-state)
 		(progn
 		  (vm-garbage-collect-message)
