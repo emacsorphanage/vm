@@ -4770,7 +4770,8 @@ folder is saved."
 	    ;; move m to the rear
 	    (setq vm-fetched-messages
 		  (delq m vm-fetched-messages))
-	    (add-to-list 'vm-fetched-messages m t 'eq))
+	    (setq vm-fetched-messages	; add-to-list is no good on XEmacs
+		  (nconc vm-fetched-messages (list m))))
 
 	(if vm-fetched-message-limit
 	    (while (>= vm-fetched-message-count
@@ -4783,7 +4784,8 @@ folder is saved."
 			   (vm-body-to-be-discarded-of mm))
 		    (vm-discard-real-message-body mm))
 		(vm-unregister-fetched-message mm))))
-	(add-to-list 'vm-fetched-messages m t 'eq)
+	(setq vm-fetched-messages
+	      (nconc vm-fetched-messages (list m)))
 	(vm-increment vm-fetched-message-count)
 	(vm-set-body-to-be-discarded-of m t)
 	(set-buffer-modified-p modified)))))
