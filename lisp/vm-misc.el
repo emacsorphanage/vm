@@ -605,6 +605,41 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (and (fboundp 'find-buffer-visiting)
 	   (find-buffer-visiting file))))
 
+;; The following function is not working correctly on Gnu Emacs 23.
+;; So we do it ourselves.
+(defun vm-delete-auto-save-file-if-necessary ()
+  (if vm-xemacs-p
+      (delete-auto-save-file-if-necessary)
+    (when (and buffer-auto-save-file-name delete-auto-save-files
+	       (not (string= buffer-file-name buffer-auto-save-file-name))
+	       (file-newer-than-file-p 
+		buffer-auto-save-file-name buffer-file-name))
+      (condition-case ()
+	  (if (save-window-excursion
+		(with-output-to-temp-buffer "*Directory*"
+		  (buffer-disable-undo standard-output)
+		  (save-excursion
+		    (let ((switches dired-listing-switches)
+			  (file buffer-file-name)
+			  (save-file buffer-auto-save-file-name))
+		      (if (file-symlink-p buffer-file-name)
+			  (setq switches (concat switches "L")))
+		      (set-buffer standard-output)
+		      ;; Use insert-directory-safely, not insert-directory,
+		      ;; because these files might not exist.  In particular,
+		      ;; FILE might not exist if the auto-save file was for
+		      ;; a buffer that didn't visit a file, such as "*mail*".
+		      ;; The code in v20.x called `ls' directly, so we need
+		      ;; to emulate what `ls' did in that case.
+		      (insert-directory-safely save-file switches)
+		      (insert-directory-safely file switches))))
+		(yes-or-no-p 
+		 (format "Delete auto save file %s? " 
+			 buffer-auto-save-file-name)))
+	      (delete-file buffer-auto-save-file-name))
+	(file-error nil))
+      (set-buffer-auto-saved))))
+
 (defun vm-set-region-face (start end face)
   (let ((e (vm-make-extent start end)))
     (vm-set-extent-property e 'face face)))
