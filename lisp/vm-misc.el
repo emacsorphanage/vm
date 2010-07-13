@@ -1221,10 +1221,10 @@ filling of GNU Emacs does not work correctly here!"
 		     1)
 	(delete-region (- (point) 1) (- (point) 4))))))
 
-(defun vm-process-kill-without-query (process)
+(defun vm-process-kill-without-query (process &optional flag)
   (if (fboundp 'process-kill-without-query)
-      (process-kill-without-query process)
-    (set-process-query-on-exit-flag process nil)))
+      (process-kill-without-query process flag)
+    (set-process-query-on-exit-flag process flag)))
 
 (defun vm-process-sentinel-kill-buffer (process what-happened)
   (kill-buffer (process-buffer process)))

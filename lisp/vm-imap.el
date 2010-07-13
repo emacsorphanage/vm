@@ -4111,7 +4111,7 @@ folder."
       (when (null maildrop)
 	(error "Set `vm-imap-default-account' to use IMAP-FCC"))
       (setq process 
-	    (vm-imap-make-session maildrop nil "IMAP-FCC"))
+	    (vm-imap-make-session maildrop t "IMAP-FCC"))
       (setq mailboxes (list (cons mailbox process)))
       (vm-mail-mode-remove-header "IMAP-FCC:"))
 
