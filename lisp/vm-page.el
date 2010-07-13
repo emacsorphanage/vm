@@ -793,8 +793,8 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 	      vm-mime-decode-for-preview
 	      need-preview
 	      (if vm-mail-buffer
-		  (not (vm-buffer-variable-value vm-mail-buffer
-						 'vm-mime-decoded))
+		  (not (with-current-buffer vm-mail-buffer
+			 vm-mime-decoded))
 		(not vm-mime-decoded))
 	      (not (vm-mime-plain-message-p (car vm-message-pointer))))
 	 (if (eq vm-preview-lines 0)
@@ -827,8 +827,8 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 		   (if (and vm-mime-decode-for-show
 			    vm-mail-buffer 
 			    (vm-body-retrieved-of (car vm-message-pointer)))
-			(vm-set-buffer-variable vm-mail-buffer
-						'vm-mime-decoded nil))
+			(with-current-buffer vm-mail-buffer
+			  (setq vm-mime-decoded nil)))
 		   )
 	       (vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
 						     (car (cdr data)))
@@ -866,9 +866,7 @@ is done if necessary.  (USR, 2010-01-14)"
   ;; (USR, 2010-05-04)
   (if (and vm-display-using-mime
 	   vm-auto-decode-mime-messages
-	   (if vm-mail-buffer
-	       (not (vm-buffer-variable-value vm-mail-buffer 'vm-mime-decoded))
-	     (not vm-mime-decoded))
+	   (not (vm-folder-buffer-value 'vm-mime-decoded))
 	   (not (vm-mime-plain-message-p (car vm-message-pointer))))
 
       (condition-case data
@@ -914,8 +912,8 @@ is done if necessary.  (USR, 2010-01-14)"
 	 (save-excursion
 	   (setq vm-system-state 'showing)
 	   (if vm-mail-buffer
-	       (vm-set-buffer-variable vm-mail-buffer 'vm-system-state
-				       'showing))
+	       (with-current-buffer vm-mail-buffer 
+		 (setq vm-system-state 'showing)))
 	   ;; We could be in the presentation buffer here.  Since
 	   ;; the presentation buffer's message pointer and sole
 	   ;; message are a mockup, they will cause trouble if

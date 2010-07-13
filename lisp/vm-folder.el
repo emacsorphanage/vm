@@ -3492,8 +3492,8 @@ folder."
 	  (let ((b-list vm-virtual-buffers) rb-list one-modified)
 	    (save-excursion
 	      (while b-list
-		(if (null (cdr (vm-buffer-variable-value (car b-list)
-							 'vm-real-buffers)))
+		(if (null (cdr (with-current-buffer (car b-list)
+				 vm-real-buffers)))
 		    (vm-set-buffer-modified-p nil (car b-list))
 		  (set-buffer (car b-list))
 		  (setq rb-list vm-real-buffers one-modified nil)

@@ -148,8 +148,8 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
 If the prefix arg is given, all images are considered to be safe."
   (interactive "P")
   (let ((buffer (cond ((eq major-mode 'vm-summary-mode)
-		       (vm-buffer-variable-value vm-mail-buffer
-						 'vm-presentation-buffer))
+		       (with-current-buffer vm-mail-buffer
+			 vm-presentation-buffer))
 		      ((eq major-mode 'vm-presentation-mode)
 		       (current-buffer))
 		      ((eq major-mode 'vm-mode)

@@ -413,53 +413,57 @@ vm-mail-buffer variable."
   (if (fboundp 'make-local-hook)	; Emacs/XEmacs 21
       (make-local-hook hook)))
 
+(fset 'xemacs-abbreviate-file-name 'abbreviate-file-name)
 (defun vm-abbreviate-file-name (path)
   (if vm-xemacs-p
-      (abbreviate-file-name path t)
+      (xemacs-abbreviate-file-name path t)
     (abbreviate-file-name path)))
 
+(fset 'emacs-find-file-name-handler 'find-file-name-handler)
 (defun vm-find-file-name-handler (filename operation)
   (if (fboundp 'find-file-name-handler)
       (condition-case ()
-	  (find-file-name-handler filename operation)
+	  (emacs-find-file-name-handler filename operation)
 	(wrong-number-of-arguments
-	 (find-file-name-handler filename)))
+	 (emacs-find-file-name-handler filename)))
     nil))
 
+(fset 'emacs-focus-frame 'focus-frame)
 (defun vm-select-frame-set-input-focus (frame)
   (if (fboundp 'select-frame-set-input-focus)
       ;; defined in FSF Emacs 22.1
       (select-frame-set-input-focus frame)
     (select-frame frame)
-    (focus-frame frame)
+    (emacs-focus-frame frame)
     (raise-frame frame)))
 
+(fset 'emacs-get-buffer-window 'get-buffer-window)
 (defun vm-get-buffer-window (buffer &optional which-frames which-devices)
   (condition-case nil			; try XEmacs
-      (or (get-buffer-window buffer which-frames which-devices)
+      (or (emacs-get-buffer-window buffer which-frames which-devices)
 	  (and vm-search-other-frames
-	       (get-buffer-window buffer t t)))
+	       (emacs-get-buffer-window buffer t t)))
     (wrong-number-of-arguments
      (condition-case nil		; try recent Gnu Emacs
-	 (or (get-buffer-window buffer which-frames)
+	 (or (emacs-get-buffer-window buffer which-frames)
 	     (and vm-search-other-frames
-		  (get-buffer-window buffer t)))
+		  (emacs-get-buffer-window buffer t)))
        (wrong-number-of-arguments	; baseline old Emacs
-	(get-buffer-window buffer))))))
+	(emacs-get-buffer-window buffer))))))
 
 (defun vm-get-visible-buffer-window (buffer &optional 
 					    which-frames which-devices)
   (condition-case nil
-      (or (get-buffer-window buffer which-frames which-devices)
+      (or (emacs-get-buffer-window buffer which-frames which-devices)
 	  (and vm-search-other-frames
-	       (get-buffer-window buffer t which-devices)))
+	       (emacs-get-buffer-window buffer t which-devices)))
     (wrong-number-of-arguments
      (condition-case nil
-	 (or (get-buffer-window buffer which-frames)
+	 (or (emacs-get-buffer-window buffer which-frames)
 	     (and vm-search-other-frames
 		  (get-buffer-window buffer 'visible)))
        (wrong-number-of-arguments
-	(get-buffer-window buffer))))))
+	(emacs-get-buffer-window buffer))))))
 
 (defun vm-force-mode-line-update ()
   "Force a mode line update in all frames."
@@ -855,10 +859,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 ;;      (setq buffer-offer-save nil))
     work-buffer ))
 
+(fset 'xemacs-insert-char 'insert-char)
 (defun vm-insert-char (char &optional count ignored buffer)
   (condition-case nil
       (progn
-	(insert-char char count ignored buffer)
+	(xemacs-insert-char char count ignored buffer)
 	(fset 'vm-insert-char 'insert-char))
     (wrong-number-of-arguments
      (fset 'vm-insert-char 'vm-xemacs-compatible-insert-char)
@@ -878,17 +883,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (setq list1 (cdr list1)))
     nil ))
 
-(defun vm-set-buffer-variable (buffer var value)
-  (with-current-buffer buffer
-    (set var value)))
-
-(defun vm-buffer-variable-value (buffer var)
-  (with-current-buffer buffer
-    (symbol-value var)))
-
 (defun vm-folder-buffer-value (var)
-  (with-current-buffer 
-      vm-mail-buffer
+  (if vm-mail-buffer
+      (with-current-buffer 
+	  vm-mail-buffer
+	(symbol-value var))
     (symbol-value var)))
 
 (defsubst vm-with-string-as-temp-buffer (string function)
@@ -1170,8 +1169,8 @@ filling of GNU Emacs does not work correctly here!"
 	       (lambda (b)
 		 (when (and (buffer-name b)
 			    (or (not (buffer-modified-p b))
-				(not (vm-buffer-variable-value
-				      b buffer-offer-save))))
+				(not (with-current-buffer b
+				       buffer-offer-save))))
 		   (kill-buffer b))))
 	      extras)
 	(and (symbol-value ring-variable) extras
@@ -1260,37 +1259,6 @@ If MODES is nil the take the modes from the variable
 	   (message "Could not disable mode `%S': %S" m errmsg)
 	   (setq vm-disable-modes-ignore (cons m vm-disable-modes-ignore)))
 	 nil)))))
-
-;; A copy of XEmacs version in oder to have it in GNU Emacs
-(defun vm-replace-in-string (str regexp newtext &optional literal)
-  "Replace all matches in STR for REGEXP with NEWTEXT string,
- and returns the new string.
-Optional LITERAL non-nil means do a literal replacement.
-Otherwise treat `\\' in NEWTEXT as special:
-  `\\&' in NEWTEXT means substitute original matched text.
-  `\\N' means substitute what matched the Nth `\\(...\\)'.
-       If Nth parens didn't match, substitute nothing.
-  `\\\\' means insert one `\\'.
-  `\\u' means upcase the next character.
-  `\\l' means downcase the next character.
-  `\\U' means begin upcasing all following characters.
-  `\\L' means begin downcasing all following characters.
-  `\\E' means terminate the effect of any `\\U' or `\\L'."
-  (if (> (length str) 50)
-      (let ((cfs case-fold-search))
-	(with-temp-buffer
-          (setq case-fold-search cfs)
-	  (insert str)
-	  (goto-char 1)
-	  (while (re-search-forward regexp nil t)
-	    (replace-match newtext t literal))
-	  (buffer-string)))
-    (let ((start 0) newstr)
-      (while (string-match regexp str start)
-        (setq newstr (replace-match newtext t literal str)
-              start (+ (match-end 0) (- (length newstr) (length str)))
-              str newstr))
-      str)))
 
 ;; For verification of the correct buffer protocol
 ;; Possible values are 'folder, 'presentation, 'summary, 'process
