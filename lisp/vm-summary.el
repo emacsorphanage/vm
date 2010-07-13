@@ -487,9 +487,16 @@ buffer by a regenerated summary line."
                           ;;     (insert "->")))
 			  (if (and (< (+ (vm-su-end-of m) 3) (buffer-size))
 				   (get-text-property 
-				    (+ (vm-su-end-of m) 3) 'invisible))
+				    (+ (vm-su-end-of m) 3) 'invisible)
+				   (null 
+				    (get-text-property
+				     (+ (vm-su-start-of m) 3) 'thread-root)))
 			      (insert "+>")
-			    (insert vm-summary-=>))
+			    (if (get-text-property 
+				 (+ (vm-su-start-of m) 3) 'invisible)
+				(progn (insert vm-summary-=>)
+				       (vm-expand-thread))
+			      (insert vm-summary-=>)))
 			  (delete-char (length vm-summary-=>))
 
 			  (and do-mouse-track
