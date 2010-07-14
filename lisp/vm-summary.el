@@ -413,8 +413,8 @@ buffer by a regenerated summary line."
 			(goto-char 
 			 (+ (vm-su-start-of m) 5 
 			    (- (length (vm-padded-number-of m)) 3)))
-			(delete-char 4)
-			(insert (format "+%-3s" n))))
+			(delete-char 3)
+			(insert (format "+%-2s" n))))
 		  (run-hooks 'vm-summary-update-hook)
 		  (and do-mouse-track
 		       (vm-mouse-set-mouse-track-highlight
