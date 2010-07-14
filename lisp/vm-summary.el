@@ -188,10 +188,11 @@ the messages in the current folder."
 				   (progn (goto-char (vm-su-start-of tr))
 					  (not (looking-at "-"))))
 			  (if (not (vm-new-flag m))
-			      (put-text-property s e 'invisible t))
-			  (goto-char (vm-su-start-of tr))
-			  (delete-char 1)
-			  (insert "+"))
+			      (progn
+				(put-text-property s e 'invisible t)
+				(goto-char (vm-su-start-of tr))
+				(delete-char 1)
+				(insert "+"))))
 			(put-text-property s e 'thread-root tr)
 			(setq ntc (1+ ntc))
 			(goto-char (+ (vm-su-start-of tr) 5 
@@ -278,46 +279,47 @@ moving the pointer to the thread root after collapsing."
       (setq r (get-text-property (+ (point) 3) 'thread-root))
       (when (null r)
 	(setq r (get-text-property (+ (point) 3) 'vm-message)))
-      (save-excursion	    
-	(goto-char (vm-su-start-of  r))
-	(insert "+")
-	(delete-char 1))
-      (when (< (+ (vm-su-end-of r) 3) (buffer-size))
-	(setq nm (get-text-property 
-		  (+ (vm-su-end-of r) 3) 'vm-message))
-	(while (and (not (null nm))
-		    (> (vm-thread-indentation-of nm) 0))
-	  (when (not (vm-new-flag nm))
-	    (put-text-property
-	     (vm-su-start-of nm) (vm-su-end-of nm) 'invisible t))
-	  (if (< (+ (vm-su-end-of nm) 3) (buffer-size))
-	      (setq nm (get-text-property 
-			(+ (vm-su-end-of nm) 3) 'vm-message))
-	    (setq nm nil))))
-      ;; move to the parent thread
-      (unless nomove
-	(vm-select-folder-buffer)
-	(vm-goto-message (string-to-number (vm-number-of r)))))))
-
+      (when (not (null (get-text-property (+ (vm-su-start-of r) 3) 'thread-count)))
+	(save-excursion	    
+	  (goto-char (vm-su-start-of  r))
+	  (insert "+")
+	  (delete-char 1))
+	(when (< (+ (vm-su-end-of r) 3) (buffer-size))
+	  (setq nm (get-text-property 
+		    (+ (vm-su-end-of r) 3) 'vm-message))
+	  (while (and (not (null nm))
+		      (> (vm-thread-indentation-of nm) 0))
+	    (when (not (vm-new-flag nm))
+	      (put-text-property
+	       (vm-su-start-of nm) (vm-su-end-of nm) 'invisible t))
+	    (if (< (+ (vm-su-end-of nm) 3) (buffer-size))
+		(setq nm (get-text-property 
+			  (+ (vm-su-end-of nm) 3) 'vm-message))
+	      (setq nm nil))))
+	;; move to the parent thread
+	(unless (or nomove (vm-new-flag 
+			    (get-text-property (+ (point) 3) 'vm-message)))
+	  (vm-select-folder-buffer)
+	  (vm-goto-message (string-to-number (vm-number-of r))))))))
+	
 (defun vm-toggle-thread ()
   "Toggle collapse/expand thread associated with message at point.
 see `vm-expand-thread' and `vm-collapse-thread' for a description
 of action."
   (interactive)
   (if (and vm-summary-thread-folding vm-summary-show-threads)
-      (progn
+      (let ((buffer-read-only nil)
+	    r nm)
 	(vm-select-folder-buffer)
 	(vm-follow-folders-summary-cursor)
 	(set-buffer vm-summary-buffer)
-	(let ((buffer-read-only nil)
-	      r nm)
-	  (setq r (get-text-property (+ (point) 3) 'thread-root))
-	  (when (null r)
-	      (setq r (get-text-property (+ (point) 3) 'vm-message)))
-	  (goto-char (vm-su-start-of r))
-	  (if (looking-at "-") 
-	      (vm-collapse-thread) 
-	    (vm-expand-thread))))))	  
+	(setq r (get-text-property (+ (point) 3) 'thread-root))
+	(when (null r)
+	  (setq r (get-text-property (+ (point) 3) 'vm-message)))
+	(if (save-excursion (goto-char (vm-su-start-of r))
+			    (looking-at "+"))
+	    (vm-expand-thread) 
+	  (vm-collapse-thread)))))
 
 (defun vm-do-needed-summary-rebuild ()
   "Rebuild the summary lines of all the messages starting at
@@ -472,19 +474,21 @@ buffer by a regenerated summary line."
 		  (let ((modified (buffer-modified-p)))
 		    (unwind-protect
 			(progn
-                          ;; (if (not (get-text-property (point) 'thread-end))
-                          ;;     (insert vm-summary-=>)
-                          ;;   (if (get-text-property 
-			  ;;         (+ (vm-su-end-of vm-summary-pointer) 2)
-                          ;;                          'invisible)
-                          ;;       (insert "+>")
-                          ;;     (insert "->")))
-			  (if (and (< (+ (vm-su-end-of m) 3) (buffer-size))
-				   (get-text-property 
-				    (+ (vm-su-end-of m) 3) 'invisible)
-				   (null 
-				    (get-text-property
-				     (+ (vm-su-start-of m) 3) 'thread-root)))
+			  ;;
+			  ;; when we move the cursor, the thread-state
+			  ;; indicator should have already changed,
+			  ;; check now to see if we should set the
+			  ;; cursor with indicator
+			  ;;
+			  ;; if, somehow, the cursor became on an
+			  ;; invisible message in a collapsed thread,
+			  ;; assume that there is a good reason for
+			  ;; this and expand the thread (e.g in
+			  ;; visiting a folder with bookmark on
+			  ;; sub-thread
+			  ;;
+			  (if (save-excursion (goto-char (vm-su-start-of m))
+					      (looking-at "+"))
 			      (insert "+>")
 			    (if (get-text-property 
 				 (+ (vm-su-start-of m) 3) 'invisible)
