@@ -201,8 +201,8 @@ the messages in the current folder."
 			 (vm-su-start-of tr) (vm-su-end-of tr)
 			 'thread-count ntc)
 			(when vm-summary-show-thread-count
-			  (delete-char 4)
-			  (insert (format "+%-3s" ntc)))
+			  (delete-char 3)
+			  (insert (format "+%-2s" ntc)))
 			))))    
 	      (setq mp (cdr mp) n (1+ n))
 	      (when (zerop (% n modulus))
