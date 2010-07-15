@@ -265,7 +265,7 @@ variable vm-virtual-folder-alist for more information."
       (if (null (intern-soft (symbol-name id-sym) loop-obarray))
 	  (progn
 	    (intern (symbol-name id-sym) loop-obarray)
-	    (nconc list (copy-sequence (vm-th-children-of id-sym)))
+	    (nconc list (copy-sequence (vm-th-child-messages-of id-sym)))
 	    (setq subject-sym (intern (vm-so-sortable-subject (car list))
 				      vm-thread-subject-obarray))
 	    (if (and (boundp subject-sym) 

@@ -33,6 +33,12 @@
 (defun vm-th-set-oldest-date-of (id-sym date)
   (put id-sym 'oldest-date date))
 
+(defsubst vm-th-message-of (id-sym)
+  (and (boundp id-sym) (symbol-value id-sym)))
+
+(defsubst vm-th-set-message-of (id-sym m)
+  (set id-sym m))
+
 (defsubst vm-th-messages-of (id-sym)
   (get id-sym 'messages))
 
@@ -41,6 +47,17 @@
 
 (defsubst vm-th-children-of (id-sym)
   (get id-sym 'children))
+
+(defun vm-th-child-messages-of (id-sym)
+  (let ((kids (vm-th-children-of id-sym))
+	(result nil)
+	m)
+    (while kids
+      (setq m (vm-th-message-of (car kids)))
+      (if m
+	  (setq result (cons m result)))
+      (setq kids (cdr kids)))
+    (nreverse result)))
 
 (defsubst vm-th-set-children-of (id-sym ml)
   (put id-sym 'children ml))
@@ -51,11 +68,20 @@
 (defsubst vm-th-set-descendants-of (id-sym ml)
   (put id-sym 'descendants ml))
 
+;; (defsubst vm-th-parent-of (id-sym)
+;;   (and (boundp id-sym) (symbol-value id-sym)))
+
+;; (defsubst vm-th-set-parent-of (id-sym p-sym)
+;;   (set id-sym p-sym))
+
 (defsubst vm-th-parent-of (id-sym)
-  (and (boundp id-sym) (symbol-value id-sym)))
+  (get id-sym 'parent))
 
 (defsubst vm-th-set-parent-of (id-sym p-sym)
-  (set id-sym p-sym))
+  ;; For safety, set the symbol-value to nil
+  (unless (boundp id-sym)
+    (set id-sym nil))
+  (put id-sym 'parent p-sym))
 
 (defsubst vm-th-date-of (id-sym)
   (get id-sym 'date))
@@ -104,39 +130,44 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 	    id (vm-su-message-id m)
 	    id-sym (intern id vm-thread-obarray)
 	    date (vm-so-sortable-datestring m))
+      (vm-th-set-message-of id-sym m)
       (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))
       (vm-th-set-date-of id-sym date)
       (if (and schedule-reindents (null (cdr (vm-th-messages-of id-sym))))
 	  (vm-thread-mark-for-summary-update 
-	   (cons m (vm-th-children-of id-sym))))
-      (if parent
-	  (progn
-	    (setq parent-sym (intern parent vm-thread-obarray))
-	    (cond ((or (null (vm-th-parent-of id-sym))
-		       (eq (vm-th-parent-of id-sym) parent-sym))
-		   (vm-th-set-parent-of id-sym parent-sym))
-		  (t
-		   (setq old-parent-sym (vm-th-parent-of id-sym))
-		   (vm-th-set-children-of old-parent-sym
-			(let ((kids (vm-th-children-of old-parent-sym ))
-			      (msgs (vm-th-messages-of id-sym)))
-			  (while msgs
-			    (setq kids (delq (car msgs) kids)
-				  msgs (cdr msgs)))
-			  kids ))
-		   (vm-th-set-parent-of id-sym parent-sym)
-		   (if schedule-reindents
-		       (vm-thread-mark-for-summary-update
-			(vm-messages-of id-sym)))))
-	    (vm-th-set-children-of parent-sym
-		 (cons m (vm-th-children-of parent-sym))))
-	(if (not (boundp id-sym))
-	    (vm-th-set-parent-of id-sym nil)))
+	   (cons m (vm-th-child-messages-of id-sym))))
+      (vm-th-set-parent-of id-sym nil)
+      (when parent
+	(setq parent-sym (intern parent vm-thread-obarray))
+	(cond ((or (null (vm-th-parent-of id-sym))
+		   (eq (vm-th-parent-of id-sym) parent-sym))
+	       (vm-th-set-parent-of id-sym parent-sym))
+	      (t
+	       (let ((kids (vm-th-children-of old-parent-sym ))
+		     (msgs (vm-th-messages-of id-sym))
+		     (msg-sym nil))
+		 (setq old-parent-sym (vm-th-parent-of id-sym))
+		 (while msgs
+		   (setq msg-sym 
+			 (intern (vm-su-message-id-of (car msgs))
+				 vm-thread-obarray))
+		   (setq kids (delq msg-sym kids)
+			 msgs (cdr msgs)))
+		 (vm-th-set-children-of old-parent-sym kids)
+		 (vm-th-set-parent-of id-sym parent-sym)
+		 (if schedule-reindents
+		     (vm-thread-mark-for-summary-update
+		      (vm-messages-of id-sym))))))
+	(vm-th-set-children-of 
+	 parent-sym (cons id-sym (vm-th-children-of parent-sym))))
+	;; FIXME is the parent property automatically set to nil?
+        ;; (if (not (boundp id-sym))
+	;;   (vm-th-set-parent-of id-sym nil))
       ;; use the references header to set parenting information
       ;; for ancestors of this message.  This does not override
       ;; a parent pointer for a message if it already exists.
       (if (cdr (setq refs (vm-th-references m)))
-	  (let (parent-sym id-sym msgs)
+	  (let (parent-sym id-sym msgs msg-syms)
 	    (setq parent-sym (intern (car refs) vm-thread-obarray)
 		  refs (cdr refs))
 	    (while refs
@@ -145,9 +176,21 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 		  nil
 		(vm-th-set-parent-of id-sym parent-sym)
 		(setq msgs (vm-th-messages-of id-sym))
-		(if msgs
-		    (vm-th-set-children-of parent-sym 
-			 (append msgs (vm-th-children-of parent-sym))))
+		(setq msg-syms 
+		      (mapcar 
+		       (lambda (m)
+			 (intern (vm-su-message-id m) 
+				 vm-thread-obarray))
+		       msgs))
+
+;; 		(if msgs
+;; 		    (vm-th-set-children-of 
+;; 		     parent-sym 
+;; 		     (append msg-syms (vm-th-children-of parent-sym))
+;; 		     ))
+		(vm-th-set-children-of 
+		 parent-sym 
+		 (cons id-sym (vm-th-children-of parent-sym)))
 		(if schedule-reindents
 		    (vm-thread-mark-for-summary-update msgs)))
 	      (setq parent-sym id-sym
@@ -186,8 +229,9 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 		      ;; adding it to the list of child messages
 		      ;; since we know that it will be threaded and
 		      ;; unthreaded using the parent information.
-		      (if (or (not (boundp i-sym))
-			      (null (symbol-value i-sym)))
+		      (if (null (vm-th-parent-of i-sym))
+;; 			  (or (not (boundp i-sym))
+;; 			      (null (symbol-value i-sym)))
 			  (aset vect 2 (append (vm-th-messages-of i-sym)
 					       (aref vect 2))))
 		      (aset vect 0 id-sym)
@@ -241,7 +285,7 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 	(vm-set-thread-list-of m nil)
 	(vm-set-thread-indentation-of m nil)
 	(vm-thread-mark-for-summary-update
-	 (vm-th-children-of (intern (vm-su-message-id m) vm-thread-obarray))))
+	 (vm-th-child-messages-of (intern (vm-su-message-id m) vm-thread-obarray))))
       (setq message-list (cdr message-list)))))
 
 (defun vm-thread-list (message)
@@ -350,11 +394,11 @@ The full functionality of this function is not entirely clear.
 		   id-sym (delq m (vm-th-messages-of id-sym)))
 		  ;; remove m from the children list of its erstwhile parent
 		  (vm-thread-mark-for-summary-update 
-		   (vm-th-children-of id-sym))
+		   (vm-th-child-messages-of id-sym))
 		  (setq p-sym (vm-th-parent-of id-sym))
 		  (and p-sym 
 		       (vm-th-set-children-of 
-			p-sym (delq m (vm-th-children-of p-sym))))
+			p-sym (delq id-sym (vm-th-children-of p-sym))))
 		  ;; teset the thread dates of the m
 		  (setq date (vm-so-sortable-datestring message))
 		  (vm-th-set-youngest-date-of id-sym date)
