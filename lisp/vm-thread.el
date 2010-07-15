@@ -52,7 +52,7 @@
   (put id-sym 'descendants ml))
 
 (defsubst vm-th-parent-of (id-sym)
-  (symbol-value id-sym))
+  (and (boundp id-sym) (symbol-value id-sym)))
 
 (defsubst vm-th-set-parent-of (id-sym p-sym)
   (set id-sym p-sym))
@@ -84,6 +84,9 @@ will be visible."
 
 ;;;###autoload
 (defun vm-build-threads (message-list)
+  "For all messages in MESSAGE-LIST, build thread information in the
+`vm-thread-obarray' and `vm-thread-subject-obarray'.  If MESSAGE-LIST
+is nil, do it for all the messages in the folder.  USR, 2010-07-15"
   (if (not (vectorp vm-thread-obarray))
       (setq vm-thread-obarray (make-vector 641 0)
 	    vm-thread-subject-obarray (make-vector 641 0)))
@@ -96,10 +99,6 @@ will be visible."
 	(schedule-reindents message-list)
 	m parent parent-sym id id-sym date refs old-parent-sym)
     (while mp
-      ;; temporary code for debugging purposes; should be removed
-      ;; USR, 2010-05-22
-      ;; (if (equal (vm-full-name-of (car mp)) "Xuhui Li")
-      ;; 	  (debug "now the message from Xuhui"))
       (setq m (car mp)
 	    parent (vm-th-parent m)
 	    id (vm-su-message-id m)
@@ -107,15 +106,13 @@ will be visible."
 	    date (vm-so-sortable-datestring m))
       (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))
       (vm-th-set-date-of id-sym date)
-      (if (and (null (cdr (vm-th-messages-of id-sym)))
-	       schedule-reindents)
+      (if (and schedule-reindents (null (cdr (vm-th-messages-of id-sym))))
 	  (vm-thread-mark-for-summary-update 
 	   (cons m (vm-th-children-of id-sym))))
       (if parent
 	  (progn
 	    (setq parent-sym (intern parent vm-thread-obarray))
-	    (cond ((or (not (boundp id-sym))
-		       (null (vm-th-parent-of id-sym))
+	    (cond ((or (null (vm-th-parent-of id-sym))
 		       (eq (vm-th-parent-of id-sym) parent-sym))
 		   (vm-th-set-parent-of id-sym parent-sym))
 		  (t
@@ -127,14 +124,14 @@ will be visible."
 			    (setq kids (delq (car msgs) kids)
 				  msgs (cdr msgs)))
 			  kids ))
-		   (set id-sym parent-sym)
+		   (vm-th-set-parent-of id-sym parent-sym)
 		   (if schedule-reindents
 		       (vm-thread-mark-for-summary-update
 			(vm-messages-of id-sym)))))
 	    (vm-th-set-children-of parent-sym
 		 (cons m (vm-th-children-of parent-sym))))
 	(if (not (boundp id-sym))
-	    (set id-sym nil)))
+	    (vm-th-set-parent-of id-sym nil)))
       ;; use the references header to set parenting information
       ;; for ancestors of this message.  This does not override
       ;; a parent pointer for a message if it already exists.
@@ -144,10 +141,11 @@ will be visible."
 		  refs (cdr refs))
 	    (while refs
 	      (setq id-sym (intern (car refs) vm-thread-obarray))
-	      (if (and (boundp id-sym) (symbol-value id-sym))
+	      (if (vm-th-parent-of id-sym)
 		  nil
-		(set id-sym parent-sym)
-		(if (setq msgs (vm-th-messages-of id-sym))
+		(vm-th-set-parent-of id-sym parent-sym)
+		(setq msgs (vm-th-messages-of id-sym))
+		(if msgs
 		    (vm-th-set-children-of parent-sym 
 			 (append msgs (vm-th-children-of parent-sym))))
 		(if schedule-reindents
@@ -271,9 +269,9 @@ symbols interned in vm-thread-obarray."
 	(if (or (null root-date)
 		(string< youngest-date date))
 	    (vm-th-set-youngest-date-of id-sym date))
-	(if (and (boundp id-sym) (symbol-value id-sym))
+	(if (vm-th-parent-of id-sym)
 	    (progn
-	      (setq id-sym (symbol-value id-sym)
+	      (setq id-sym (vm-th-parent-of id-sym)
 		    loop-sym (intern (symbol-name id-sym)
 				     vm-thread-loop-obarray))
 	      (if (boundp loop-sym)
@@ -327,8 +325,8 @@ but works when the message is getting expunged from its folder.)
 
 MESSAGE should be a real (non-virtual) message.
 
-The full functionality of this function is not entirely clear.  USR,
-2010-03-13"
+The full functionality of this function is not entirely clear.  
+						USR, 2010-03-13"
   (save-excursion
     (let ((mp (cons message (vm-virtual-messages-of message)))
 	  m date id-sym subject-sym vect p-sym)
@@ -377,11 +375,13 @@ The full functionality of this function is not entirely clear.  USR,
 				oldest-date (vm-so-sortable-datestring (car p))
 				p (cdr p))
 			  (while p
-			    (if (and (string-lessp (vm-so-sortable-datestring (car p))
-						   oldest-date)
+			    (if (and (string-lessp 
+				      (vm-so-sortable-datestring (car p))
+				      oldest-date)
 				     (not (eq m (car p))))
 				(setq oldest-msg (car p)
-				      oldest-date (vm-so-sortable-datestring (car p))))
+				      oldest-date 
+				      (vm-so-sortable-datestring (car p))))
 			    (setq p (cdr p)))
 			  (aset vect 0 (intern (vm-su-message-id oldest-msg)
 					       vm-thread-obarray))
