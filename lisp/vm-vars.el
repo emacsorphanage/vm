@@ -4852,6 +4852,8 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\C-c\C-s" 'vm-mime-save-all-attachments)
     (define-key map "\C-c\C-d" 'vm-mime-delete-all-attachments)
     (define-key map "T" 'vm-toggle-thread)
+    (define-key map "E" 'vm-expand-all)
+    (define-key map "C" 'vm-collapse-all)
     ;; suppress-keymap provides these, but now that we don't use
     ;; suppress-keymap anymore...
     (define-key map "0" 'digit-argument)
