@@ -204,8 +204,8 @@ the messages in the current folder."
 			 (vm-su-start-of tr) (vm-su-end-of tr)
 			 'thread-count ntc)
 			(when vm-summary-show-thread-count
-			  (delete-char 4)
-			  (insert (format "+%-3s" ntc)))
+			  (delete-char 3)
+			  (insert (format "+%-2s" ntc)))
 			))))    
 	      (setq mp (cdr mp) n (1+ n))
 	      (when (zerop (% n modulus))
@@ -305,6 +305,26 @@ moving the pointer to the thread root after collapsing."
 	  (vm-select-folder-buffer)
 	  (vm-goto-message (string-to-number (vm-number-of r))))))))
 	
+(defun vm-expand-all ()
+  (interactive)
+  (save-excursion
+    (goto-char 0)
+    (while (search-forward-regexp "^\+" nil t)
+      (vm-expand-thread))))
+
+(defun vm-collapse-all ()
+  (interactive)
+  (let ((r nil))
+    (setq r (get-text-property (+ (point) 3) 'thread-root))
+    (when (null r)
+      (setq r (get-text-property (+ (point) 3) 'vm-message)))
+    (save-excursion
+      (goto-char 0)
+      (while (search-forward-regexp "^-" nil t)
+	(vm-collapse-thread t)))
+    (vm-select-folder-buffer)
+    (vm-goto-message (string-to-number (vm-number-of r)))))
+      
 (defun vm-toggle-thread ()
   "Toggle collapse/expand thread associated with message at point.
 see `vm-expand-thread' and `vm-collapse-thread' for a description
