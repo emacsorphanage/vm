@@ -4956,8 +4956,8 @@ To every message, VM adds a header with the field name
 ``X-VM-v5-Data:'' and stores in it the information about the message it
 wishes to remember between sessions.
 
-The first message of the VM folder file contains additional headers that
-VM uses for remembering information between sessions.
+The first message of the VM folder file contains additional headers used
+by VM for remembering information between sessions.
 
 @itemize
 @item
@@ -4965,7 +4965,8 @@ X-VM-Bookmark. This header stores the position of the cursor, as a
 message number, in effect when VM saved the folder.  Upon revisiting the
 folder, VM attempts to put the cursor back at this position.
 @item
-X-VM-Last-Modified. 
+X-VM-Last-Modified.  The date and time at which the folder was last
+modified. 
 @item
 X-VM-Message-Order.  This header lists the order in which the messages
 should be listed.
@@ -4973,8 +4974,10 @@ should be listed.
 X-VM-Labels. This header lists the message labels that have been used in
 the folder.  
 @item
-X-VM-VHeader. This header lists the visible headers that should be
-displayed in message listings.
+X-VM-VHeader. This header lists the values of @code{vm-visible-headers}
+and @code{vm-invisible-header-regexp} that were in effect when the
+folder was saved.  The messages in the folder would have their headers
+arranged according to these vaiables.
 @item
 X-VM-Summary-Format.  This header stores the format string for the
 summary lines.
@@ -5472,10 +5475,11 @@ sub-vectors are shared with the underlying real folders.
 @vindex vm-summary-line-format
 @cindex summary line, tokenized
 Generating a summary is quite a time-consuming operation.  VM uses a
-variety of tricks to speed up the generation of summaries.  The format
-of the summary lines is specified in the variable
+variety of tricks to speed up the generation of summaries.  
+
+The format of the summary lines is specified in the variable
 @code{vm-summary-line-format}.  The information that needs to go into
-the summary line is divided into two classes:
+the summary lines is divided into two classes:
 
 @itemize
 @item
@@ -5516,13 +5520,42 @@ maintaining summary information:
 
 @itemize
 @item
-@code{vm-summary-pointer}.
+@code{vm-summary-pointer}.  The message selected by the cursor in the
+Summary window.
 @item
-@code{vm-summary-redo-start-point}.
+@code{vm-summary-redo-start-point}.  A pointer into the
+@code{vm-message-list} indicating the first message for which the
+summary line must be redisplayed.  All the messages from here on are
+assumed to require a summary redisplay.  The assumption is usually valid
+because the message numbers of all the succeeding messages might have
+changed.  But, if message numbers are not included in the summary lines,
+then this results in unnecessary work.
 @item
-@code{vm-summary-redo-end-point}.
+@code{vm-messages-needing-summary-update}.  The list of messages for
+which summary lines must be redisplayed.  Messages are included in this
+list by calling the function @code{vm-mark-for-summary-update}.
 @item
-@code{vm-messages-needing-summary-update}
+@code{vm-numbering-redo-start-point}.  A pointer into
+@code{vm-message-list} indicating the first message whose message number
+needs to be recalculated.
+@code{vm-numbering-redo-end-point}.  A pointer into
+@code{vm-message-list} indicating the last message whose message number
+needs to be recalculated.
+@end itemize
+
+The beginning and the ending positions of each message summary line are
+stored in the message's soft data vector. @pxref{Message Internals}.
+The positions within the summary line have text-properties set, which
+give the data about the message:
+@itemize
+@item
+@code{vm-message}.  The message struct for which this line is a summary.
+@item
+@code{thread-root}.  If this message is part of a message thread, then
+this property gives the message struct of the root of the thread.
+@item
+@code{thread-count}.  If this message is the root of a message thread,
+then this property gives the number of messages that form the thread.
 @end itemize
 
 @vindex vm-thread-obarray
