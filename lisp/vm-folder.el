@@ -3097,6 +3097,8 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	     (progn (require 'itimer) t)
 	   (error nil))
 	 (and (natnump vm-flush-interval) (not (get-itimer "vm-flush"))
+	      ;; name function time restart-time
+	      ;; ...... idle with-args args
 	      (start-itimer "vm-flush" 'vm-flush-itimer-function
 			    vm-flush-interval nil))
 	 (and (natnump vm-auto-get-new-mail) (not (get-itimer "vm-get-mail"))
@@ -3112,22 +3114,26 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	 (let (timer)
 	   (and (natnump vm-flush-interval)
 		(not (vm-timer-using 'vm-flush-itimer-function))
-		(setq timer (run-at-time vm-flush-interval vm-flush-interval
-					 'vm-flush-itimer-function nil))
+		(setq timer 
+		      ;;           time restart-time function args
+		      (run-at-time vm-flush-interval vm-flush-interval
+				   'vm-flush-itimer-function nil))
 		(timer-set-function timer 'vm-flush-itimer-function
 				    (list timer)))
 	   (and (natnump vm-mail-check-interval)
 		(not (vm-timer-using 'vm-check-mail-itimer-function))
-		(setq timer (run-at-time vm-mail-check-interval
-					 vm-mail-check-interval
-					 'vm-check-mail-itimer-function nil))
+		(setq timer 
+		      (run-at-time vm-mail-check-interval
+				   vm-mail-check-interval
+				   'vm-check-mail-itimer-function nil))
 		(timer-set-function timer 'vm-check-mail-itimer-function
 				    (list timer)))
 	   (and (natnump vm-auto-get-new-mail)
 		(not (vm-timer-using 'vm-get-mail-itimer-function))
-		(setq timer (run-at-time vm-auto-get-new-mail
-					 vm-auto-get-new-mail
-					 'vm-get-mail-itimer-function nil))
+		(setq timer 
+		      (run-at-time vm-auto-get-new-mail
+				   vm-auto-get-new-mail
+				   'vm-get-mail-itimer-function nil))
 		(timer-set-function timer 'vm-get-mail-itimer-function
 				    (list timer)))))
 	(t
