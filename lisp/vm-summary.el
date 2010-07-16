@@ -188,13 +188,14 @@ the messages in the current folder."
 					  (+ (vm-su-end-of nm) 3) 'vm-message))
 			      (setq nm nil))))
 			(when (and tr trs
-				   (progn (goto-char (vm-su-start-of tr))
-					  (not (looking-at "-"))))
+				   (save-excursion
+				     (goto-char (vm-su-start-of tr))
+				     (not (looking-at "-"))))
 			  (unless (vm-new-flag m)
-			    (put-text-property s e 'invisible t)
-			    (goto-char (vm-su-start-of tr))
-			    (delete-char 1)
-			    (insert "+")))
+			    (put-text-property s e 'invisible t))
+			  (goto-char (vm-su-start-of tr))
+			  (delete-char 1)
+			  (insert "+"))
 			(put-text-property s e 'thread-root tr)
 			(setq ntc (1+ ntc))
 			(goto-char (+ (vm-su-start-of tr) 5 
