@@ -4886,7 +4886,7 @@ windows.  (This functionality is still experimental.)")
 (defvar vm-summary-show-thread-count t
   "*If non-nil, thread folding displays the count of messages in
 a thread along with the message number of the thread root.  Note
-that this takes up 4 extra character in each summary line.")
+that this takes up 3 extra character in each summary line.")
 
 (defvar vm-summary-thread-folding-on-motion nil
   "*If non-nil and thread folding is enabled, invoking
