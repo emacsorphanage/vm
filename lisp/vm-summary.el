@@ -360,11 +360,15 @@ buffer by a regenerated summary line."
 	  (let ((buffer-read-only nil)
 		n s e r i
 		(selected nil)
+		(indicator nil)
 		(modified (buffer-modified-p)))
 	    (unwind-protect
 		(save-excursion
 		  (goto-char (vm-su-start-of m))
 		  (setq selected (looking-at "[+-]>"))
+		  (setq indicator (if (looking-at "-") "-" 
+				    (if (looking-at "+") "+"
+				      nil)))
 		  ;; We do a little dance to update the text in
 		  ;; order to make the markers in the text do
 		  ;; what we want.
@@ -393,22 +397,12 @@ buffer by a regenerated summary line."
 		  (setq r (get-text-property (+ s 2) 'thread-root))
 		  (setq n (get-text-property (+ s 2) 'thread-count))
 		  (setq i (get-text-property (+ s 2) 'invisible))
-		  (delete-region (point) (1- (vm-su-end-of m)))
-		  (if (not selected)
-                      (if (not (get-text-property (point) 'thread-end))
-                          (insert vm-summary-no-=>)
-                        (if (get-text-property 
-			     (1+ (vm-su-end-of vm-summary-pointer))
-			     'invisible)
-                            (insert "x ")
-                          (insert "u ")))
-                    (if (not (get-text-property (point) 'thread-end))
-                        (insert vm-summary-=>)
-                      (if (get-text-property 
-			   (1+ (vm-su-end-of vm-summary-pointer))
-			   'invisible)
-                          (insert "x>")
-                        (insert "y>"))))
+		  (delete-region (point) (1- (vm-su-end-of m)))		  
+		  (if (not selected)		     
+		      (insert (concat (if indicator indicator " ") " "))
+		    (if indicator
+			(insert (concat indicator ">"))
+		      (insert vm-summary-=>)))
 		  (vm-tokenized-summary-insert m (vm-su-summary m))
 	          (delete-char 1)
 		  (if (and n vm-summary-show-thread-count)
