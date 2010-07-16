@@ -203,7 +203,9 @@ the messages in the current folder."
 			(put-text-property
 			 (vm-su-start-of tr) (vm-su-end-of tr)
 			 'thread-count ntc)
-			(when vm-summary-show-thread-count
+			(when (and vm-summary-show-thread-count
+				   (eq (string-match "%-?[0-9]*\.?[0-9]*n" 
+						     vm-summary-format) 0))
 			  (delete-char 3)
 			  (insert (format "+%-2s" ntc)))
 			))))    
@@ -427,7 +429,9 @@ buffer by a regenerated summary line."
 		      (insert vm-summary-=>)))
 		  (vm-tokenized-summary-insert m (vm-su-summary m))
 	          (delete-char 1)
-		  (if (and n vm-summary-show-thread-count)
+		  (if (and n vm-summary-show-thread-count
+			   (eq (string-match "%-?[0-9]*\.?[0-9]*n" 
+					     vm-summary-format) 0))
 		      (progn
 			(goto-char 
 			 (+ (vm-su-start-of m) 5 
@@ -666,7 +670,9 @@ tokenized summary TOKENS."
 		 (if (and vm-summary-show-thread-count 
 			  vm-summary-thread-folding
 			  vm-summary-show-threads)
-		     (if (> (vm-th-thread-indentation message) 0)
+		     (if (and (> (vm-th-thread-indentation message) 0)
+			      (eq (string-match "%-?[0-9]*\.?[0-9]*n" 
+						vm-summary-format) 0))
 			 (setq mynum (concat "  " 
 					     (vm-padded-number-of message)
 					     " ")) 
