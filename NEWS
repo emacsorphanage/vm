@@ -15,6 +15,15 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
+VM 8.1.925a (2010-07-17)
+
+  BUG FIXES
+
+   * A few incompatibilities with XEmacs were corrected.
+
+   * Interference between timer taks and message loading for
+     headers-only operation removed.
+
 VM 8.1.92a (2010-07-10)
 
   IMPROVEMENTS
