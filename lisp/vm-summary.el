@@ -120,6 +120,9 @@ mandatory."
 argument START-POINT (a list of messages) or, if it is nil, all
 the messages in the current folder."
   (let ((m-list (or start-point vm-message-list))
+	(show-thread-count (and vm-summary-show-thread-count
+				(eq (string-match "%-?[0-9]*\.?[0-9]*n" 
+						  vm-summary-format) 0)))
 	mp m 
 	tr trs tre 			; thread root, start, end
 	ntc 				; thread count
@@ -203,9 +206,7 @@ the messages in the current folder."
 			(put-text-property
 			 (vm-su-start-of tr) (vm-su-end-of tr)
 			 'thread-count ntc)
-			(when (and vm-summary-show-thread-count
-				   (eq (string-match "%-?[0-9]*\.?[0-9]*n" 
-						     vm-summary-format) 0))
+			(when show-thread-count
 			  (delete-char 3)
 			  (insert (format "+%-2s" ntc)))
 			))))    
@@ -382,6 +383,11 @@ buffer by a regenerated summary line."
 	  (setq summary (vm-su-summary m))
 	  (set-buffer (marker-buffer (vm-su-start-of m)))
 	  (let ((buffer-read-only nil)
+		(show-thread-count
+		 (and vm-summary-show-thread-count
+		      (eq 0 (string-match 
+			     "%-?[0-9]*\.?[0-9]*n" 
+			     (vm-folder-buffer-value 'vm-summary-format)))))
 		n s e r i
 		(selected nil)
 		(indicator nil)
@@ -429,15 +435,12 @@ buffer by a regenerated summary line."
 		      (insert vm-summary-=>)))
 		  (vm-tokenized-summary-insert m (vm-su-summary m))
 	          (delete-char 1)
-		  (if (and n vm-summary-show-thread-count
-			   (eq (string-match "%-?[0-9]*\.?[0-9]*n" 
-					     vm-summary-format) 0))
-		      (progn
-			(goto-char 
-			 (+ (vm-su-start-of m) 5 
-			    (- (length (vm-padded-number-of m)) 3)))
-			(delete-char 3)
-			(insert (format "+%-2s" n))))
+		  (when (and n show-thread-count)
+		    (goto-char 
+		     (+ (vm-su-start-of m) 5 
+			(- (length (vm-padded-number-of m)) 3)))
+		    (delete-char 3)
+		    (insert (format "+%-2s" n)))
 		  (run-hooks 'vm-summary-update-hook)
 		  (and do-mouse-track
 		       (vm-mouse-set-mouse-track-highlight
@@ -669,10 +672,10 @@ tokenized summary TOKENS."
 	       (let (mynum)
 		 (if (and vm-summary-show-thread-count 
 			  vm-summary-thread-folding
-			  vm-summary-show-threads)
-		     (if (and (> (vm-th-thread-indentation message) 0)
-			      (eq (string-match "%-?[0-9]*\.?[0-9]*n" 
-						vm-summary-format) 0))
+			  vm-summary-show-threads
+			  (eq (string-match "%-?[0-9]*\.?[0-9]*n" 
+					    vm-summary-format) 0))
+		     (if (> (vm-th-thread-indentation message) 0)
 			 (setq mynum (concat "  " 
 					     (vm-padded-number-of message)
 					     " ")) 
