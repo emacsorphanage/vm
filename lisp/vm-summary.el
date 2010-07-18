@@ -4,6 +4,8 @@
 ;;
 ;; Copyright (C) 1989-1995, 2000 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;; Copyright (C) 2009-2010 Uday S Reddy
+;; Copyright (C) 2010 Arik Mitschang
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -269,7 +271,7 @@ thread can be collapsed."
 	  (setq nm nil))))))
 
 (defun vm-collapse-thread (&optional nomove)
-  "collapse the thread associated with the message at point. This
+  "Collapse the thread associated with the message at point. This
 will make invisible all read and non-new elements of the thread
 tree and will place a '+' character at the pointer position
 indicating the thread can be expanded. Optional argument nomove
@@ -309,6 +311,8 @@ moving the pointer to the thread root after collapsing."
 	  (vm-goto-message (string-to-number (vm-number-of r))))))))
 	
 (defun vm-expand-all ()
+  "Expand all threads in the folder, which might have been collapsed
+ (folded) earlier."
   (interactive)
   (save-excursion
     (goto-char 0)
@@ -316,6 +320,8 @@ moving the pointer to the thread root after collapsing."
       (vm-expand-thread))))
 
 (defun vm-collapse-all ()
+  "Collapse (fold) all threads in the folder so that only the roots of
+the threads are shown in the Summary window."
   (interactive)
   (let ((r nil))
     (setq r (get-text-property (+ (point) 3) 'thread-root))

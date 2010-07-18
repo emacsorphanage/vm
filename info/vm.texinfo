@@ -3526,7 +3526,7 @@ automatic expansion/collapsing of threads.  If the variable is set to
 a non-nil value, then the usual motion commands @code{N} and @code{P}
 (@code{vm-next-message-no-skip} and
 @code{vm-previous-message-no-skip}) cause the threads to be expanded
-or collapsed as needed as you move into or out of threads.
+or collapsed as needed when you move into or out of threads.
 
 @vindex vm-summary-show-thread-count
 The variable @code{vm-summary-show-thread-count} allows a more
@@ -3534,9 +3534,18 @@ elaborate display of the thread information in the summary window.  If
 it is set to non-nil then the message number field of the summary line
 includes a count of the messages in its thread, in the format
 @code{N+C} where @code{N} is the message number and @code{C} is the
-message count in the thread.  Set the variable to nil to obtain the
-more standard format of the summary.
+message count in the thread.  This takes up 3 extra columns in the
+summary lines.  Set the variable to nil to obtain the more standard
+format of the summary.
 
+@findex vm-expand-all
+@findex vm-collapse-all
+If the variable @code{vm-summary-thread-folding} is non-nil, the
+Summary window starts out with all the threads folded.  You can
+selectively expand threads using the @code{vm-toggle-thread} function.
+Alternatively, you can expand all the threads in the folder using the
+commandn @code{vm-expand-all}.  The function @code{vm-collapse-all}
+does the reverse.  It collapses all the expanded threads.
 
 
 @node Virtual Folders, Frames and Windows, Summaries, Top
