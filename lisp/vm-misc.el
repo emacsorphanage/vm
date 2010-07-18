@@ -1333,6 +1333,9 @@ If MODES is nil the take the modes from the variable
   (when vm-buffer-type-debug
     (if (and (eq type 'folder) vm-buffer-types 
 	     (eq (car vm-buffer-types) 'process))
+ 	;; This may or may not be a problem.
+ 	;; It just means that no save-excursion was done among the
+ 	;; functions currently tracked by vm-buffe-types.
 	(debug "folder buffer being entered at inner level"))
     (setq vm-buffer-type-trail (cons type vm-buffer-type-trail)))
   (if vm-buffer-types

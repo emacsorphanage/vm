@@ -5547,6 +5547,7 @@ The beginning and the ending positions of each message summary line are
 stored in the message's soft data vector. @pxref{Message Internals}.
 The positions within the summary line have text-properties set, which
 give the data about the message:
+
 @itemize
 @item
 @code{vm-message}.  The message struct for which this line is a summary.
@@ -5557,6 +5558,8 @@ this property gives the message struct of the root of the thread.
 @code{thread-count}.  If this message is the root of a message thread,
 then this property gives the number of messages that form the thread.
 @end itemize
+
+@unnumberedsubsec Threading
 
 @vindex vm-thread-obarray
 @vindex vm-subject-obarray
@@ -5592,7 +5595,7 @@ The date of the oldest message in the thread.
 @end itemize
 
 The @code{vm-thread-subject-obarray} interns each subject string found
-in the folder and maps it to a vector containing these elements:
+in the folder and maps it to a vector containing the following elements:
 
 @itemize
 @item id-sym.
