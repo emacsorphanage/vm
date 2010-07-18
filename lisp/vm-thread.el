@@ -89,6 +89,12 @@
 (defsubst vm-th-set-date-of (id-sym date)
   (put id-sym 'date date))
 
+(defsubst vm-th-thread-subtree-of (id-sym)
+  (get id-sym 'thread-subtree))
+
+(defsubst vm-th-set-thread-subtree-of (id-sym ml)
+  (put id-sym 'thread-subtree ml))
+
 
 ;;;###autoload
 (defun vm-toggle-threads-display ()
@@ -157,7 +163,7 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 		 (vm-th-set-parent-of id-sym parent-sym)
 		 (if schedule-reindents
 		     (vm-thread-mark-for-summary-update
-		      (vm-messages-of id-sym))))))
+		      (vm-th-messages-of id-sym))))))
 	(vm-th-set-children-of 
 	 parent-sym (cons id-sym (vm-th-children-of parent-sym))))
 	;; FIXME is the parent property automatically set to nil?
@@ -182,7 +188,6 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 			 (intern (vm-su-message-id m) 
 				 vm-thread-obarray))
 		       msgs))
-
 ;; 		(if msgs
 ;; 		    (vm-th-set-children-of 
 ;; 		     parent-sym 
@@ -198,6 +203,13 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
 	  (message "Building threads (by reference)... %d" n)))
+
+    ;; Calculate thread-subtrees for all the known message ID's
+    (mapatoms
+     (lambda (id-sym)
+       (vm-th-thread-subtree id-sym))
+     vm-thread-obarray)
+
     (if vm-thread-using-subject
 	(progn
 	  (setq n 0 mp (or message-list vm-message-list))
@@ -439,6 +451,7 @@ The full functionality of this function is not entirely clear.
 			    (vm-thread-mark-for-summary-update children)))))))))
 	  (setq mp (cdr mp))))))
 
+;;;###autoload
 (defun vm-th-references (m)
   "Returns the cached references list of message M.  If the cache is
 nil, retrieves the references list from the headers and caches it.
@@ -450,6 +463,7 @@ USR, 2010-03-13"
 	 (setq references (vm-get-header-contents m "References:" " "))
 	 (and references (vm-parse references "[^<]*\\(<[^>]+>\\)"))))))
 
+;;;###autoload
 (defun vm-th-parent (m)
   "Returns the cached parent message of message M (in its thread).  If
 the cache is nil, calculates the parent and caches it.  USR, 2010-03-13"
@@ -487,6 +501,52 @@ calculates the thread-list and caches it.  USR, 2010-03-13"
       (progn
 	(vm-set-thread-list-of m (vm-thread-list m))
 	(vm-thread-list-of m))))
+
+;;;###autoload
+(defun vm-th-thread-subtree (m-sym)
+  "Returns a list of messages that are in the thread subtree of
+an interned message id M-SYM.  Threads should have been built
+for this function to work.  Otherwise it returns nil."
+    (if (not (vectorp vm-thread-obarray))
+	nil
+      (or (vm-th-thread-subtree-of m-sym)
+	  ;; otherwise calcuate the thread-subtree
+	  (let ((list (list m-sym))
+		(loop-obarray (make-vector 29 0))
+		subject-sym id-sym
+		result)
+	    (while list
+	      (setq id-sym (car list))
+	      (if (and (vm-th-messages-of id-sym)
+		       (not (memq (car (vm-th-messages-of id-sym)) result)))
+		  (setq result (append (vm-th-messages-of id-sym) result)))
+	      (when (null (intern-soft (symbol-name id-sym) loop-obarray))
+		(intern (symbol-name id-sym) loop-obarray)
+		(nconc list (copy-sequence (vm-th-children-of id-sym)))
+		;; FIXME need to add symbols instead of messages in
+		;; the following
+		(mapcar 
+		 (lambda (m)
+		   (setq subject-sym (intern (vm-so-sortable-subject m)
+					     vm-thread-subject-obarray))
+		   (if (and (boundp subject-sym) 
+			    (eq id-sym (aref (symbol-value subject-sym) 0)))
+		       (nconc list (copy-sequence
+				    (aref (symbol-value subject-sym)
+					  2)))))
+		 (vm-th-messages-of id-sym)))
+	      (setq list (cdr list)))
+	    (vm-th-set-thread-subtree-of 
+	     (intern (vm-su-message-id m) vm-thread-obarray) result)
+	    result))))
+
+;;;###autoload
+(defun vm-th-thread-count (m)
+  "Returns the number of messages in the thread-subtree of message M.
+Threads should have been built for this function to work."
+  (with-current-buffer (vm-buffer-of m)
+    (length (vm-th-thread-subtree 
+	     (intern (vm-su-message-id m) vm-thread-obarray)))))
 
 (provide 'vm-thread)
 
