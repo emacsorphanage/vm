@@ -122,7 +122,7 @@
 	    (setq process
 		  (open-network-stream "TEST-CONNECTION" nil
 				       "127.0.0.1" local-port))
-	    (process-kill-without-query process))
+	    (vm-process-kill-without-query process))
 	(error nil))
       (cond ((null process)
 	     (setq process
@@ -136,7 +136,7 @@
 			   (copy-sequence vm-ssh-program-switches)
 			   (list host vm-ssh-remote-command)))
 		   done t)
-	     (process-kill-without-query process)
+	     (vm-process-kill-without-query process)
 	     (set-process-sentinel process 'vm-process-sentinel-kill-buffer))
 	    (t
 	     (delete-process process))))

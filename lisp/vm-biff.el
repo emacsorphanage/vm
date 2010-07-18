@@ -226,9 +226,7 @@ folder selectors work."
     t))
 
 (defun vm-biff-get-buffer-window (buf)
-  (if vm-xemacs-p
-      (get-buffer-window buf (vm-biff-x-p) (frame-device))
-    (get-buffer-window buf (vm-biff-x-p))))
+  (vm-get-buffer-window buf (vm-biff-x-p) (frame-device)))
 
 (defun  vm-biff-find-folder-window (msg)
   (let ((buf (vm-buffer-of msg)))
@@ -264,9 +262,7 @@ folder selectors work."
     (vm-biff-delete-popup)
     
     (cond ((and vm-biff-folder-frame (vm-biff-x-p))
-           (select-frame vm-biff-folder-frame)
-           (focus-frame vm-biff-folder-frame)
-           (raise-frame vm-biff-folder-frame)
+	   (vm-select-frame-set-input-focus vm-biff-folder-frame)
            (run-hooks 'vm-biff-select-frame-hook)
            (select-window vm-biff-folder-window))
           (vm-biff-folder-window
@@ -426,7 +422,7 @@ AddToFunc SelectWindow
           
           ;; if in the minibuffer then seletc a different window
           (if (active-minibuffer-window)
-              (other-window))
+              (other-window 1))
         
           ;; generate a own window/frame showing the messages
           (if (vm-biff-x-p)
@@ -437,9 +433,7 @@ AddToFunc SelectWindow
                                 (cons (cons 'popup ff)
                                       vm-biff-frame-properties)
                               vm-biff-frame-properties))
-                     (mf (or (and (if vm-xemacs-p
-                                      (get-buffer-window buf t (frame-device))
-                                    (get-buffer-window buf t))
+                     (mf (or (and (vm-get-buffer-window buf t (frame-device))
                                   (window-frame
                                    (vm-biff-get-buffer-window buf)))
                              (make-frame props))))
@@ -455,7 +449,8 @@ AddToFunc SelectWindow
                 (make-frame-visible mf)
                 (setq wf mf)
               
-                (if vm-biff-focus-popup (focus-frame mf)
+                (if vm-biff-focus-popup 
+		    (vm-select-frame-set-input-focus mf)
                   (select-frame sf)))
 
             ;; Terminal

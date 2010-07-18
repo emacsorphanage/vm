@@ -21,6 +21,11 @@
 
 ;;; Code:
 
+(defmacro vm-add-to-list (elem list)
+  "Like add-to-list, but compares elements by `eq' rather than `equal'."
+  `(if (not (memq ,elem ,list))
+       (setq ,list (cons ,elem ,list))))
+
 (defsubst vm-sit-for (seconds &optional nodisplay)
   "Like sit-for, but has no effect if display-hourglass is set to t.
 Otherwise, the hourglass would be displayed while sit-for happens."

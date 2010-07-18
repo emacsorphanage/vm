@@ -465,32 +465,6 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 	  (switch-to-buffer buffer)
 	(error nil)))))
 
-(defun vm-get-buffer-window (buffer)
-  (condition-case nil
-      (or (get-buffer-window buffer nil nil)
-	  (and vm-search-other-frames
-	       (get-buffer-window buffer t t)))
-    (wrong-number-of-arguments
-     (condition-case nil
-	 (or (get-buffer-window buffer nil)
-	     (and vm-search-other-frames
-		  (get-buffer-window buffer t)))
-       (wrong-number-of-arguments
-	(get-buffer-window buffer))))))
-
-(defun vm-get-visible-buffer-window (buffer)
-  (condition-case nil
-      (or (get-buffer-window buffer nil nil)
-	  (and vm-search-other-frames
-	       (get-buffer-window buffer t nil)))
-    (wrong-number-of-arguments
-     (condition-case nil
-	 (or (get-buffer-window buffer nil)
-	     (and vm-search-other-frames
-		  (get-buffer-window buffer 'visible)))
-       (wrong-number-of-arguments
-	(get-buffer-window buffer))))))
-
 (defun vm-set-hooks-for-frame-deletion ()
   (make-local-variable 'vm-undisplay-buffer-hook)
   (add-hook 'vm-undisplay-buffer-hook 'vm-delete-buffer-frame)
@@ -622,7 +596,10 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 				     (/ (frame-width frame) 2)
 				     (/ (frame-height frame) 2))
 		 ;; doc for set-mouse-position says to do this
-		 (unfocus-frame)))))))
+		 ;; but Emacs 22 doesn't say it and unfocus-frame is
+		 ;; obsolete now.  USR, 2010-07-03
+		 ;; (unfocus-frame)
+		 ))))))
 
 (fset 'vm-selected-frame
       (symbol-function

@@ -22,3 +22,4 @@ info/version.texinfo
 lisp/version.txt
 lisp/vm-autoloads.el
 lisp/vm-cus-load.el
+*.orig

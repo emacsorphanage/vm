@@ -286,7 +286,7 @@ or do the binding and advising on your own."
     (sit-for 3))
   
   (message "VM-RFADDONS: VM is now infected.")
-  (sit-for (or sit-for 2)))
+  (vm-sit-for (or sit-for 2)))
 
 (defun rf-vm-su-labels (m)
   "This version does some sanity checking."
@@ -1504,8 +1504,8 @@ and add an \"%0UA\" to your `vm-summary-format'."
   "Install the open-line hooks for `vm-mail-mode'.
 Add this to `vm-mail-mode-hook'."
   ;; these are not local even when using add-hook, so we make them local
-  (make-local-hook 'before-change-functions)
-  (make-local-hook 'after-change-functions)
+  (vm-make-local-hook 'before-change-functions)
+  (vm-make-local-hook 'after-change-functions)
   (add-hook 'before-change-functions 'vm-mail-mode-open-line nil t)
   (add-hook 'after-change-functions 'vm-mail-mode-open-line nil t))
 

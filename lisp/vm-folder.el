@@ -167,8 +167,7 @@ and thread indentation."
 	   ;; message that could appear in the summary has changed.
 	   (vm-set-summary-of m nil))
 	 (when (vm-su-start-of m)
-	   (setq vm-messages-needing-summary-update
-		 (cons m vm-messages-needing-summary-update)))
+	   (vm-add-to-list m vm-messages-needing-summary-update))
 	 (intern (buffer-name (vm-buffer-of m))
 		 vm-buffers-needing-display-update)
 	 ;; find the virtual messages of this real message that
@@ -176,10 +175,9 @@ and thread indentation."
 	 (let ((m-list (vm-virtual-messages-of m)))
 	   (while m-list
 	     (when (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
-	       (and (vm-su-start-of (car m-list))
-		    (setq vm-messages-needing-summary-update
-			  (cons (car m-list)
-				vm-messages-needing-summary-update)))
+	       (when (vm-su-start-of (car m-list))
+		 (vm-add-to-list (car m-list) 
+				 vm-messages-needing-summary-update))
 	       (intern (buffer-name (vm-buffer-of (car m-list)))
 		       vm-buffers-needing-display-update))
 	     (setq m-list (cdr m-list)))))
@@ -201,10 +199,9 @@ and thread indentation."
 	       ;; the same cache as this message.
 	       (while m-list
 		 (when (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
-		   (and (vm-su-start-of (car m-list))
-			(setq vm-messages-needing-summary-update
-			      (cons (car m-list)
-				    vm-messages-needing-summary-update)))
+		   (when (vm-su-start-of (car m-list))
+		     (vm-add-to-list (car m-list) 
+				     vm-messages-needing-summary-update))
 		   (intern (buffer-name (vm-buffer-of (car m-list)))
 			   vm-buffers-needing-display-update))
 		 (setq m-list (cdr m-list)))
@@ -215,26 +212,16 @@ and thread indentation."
 		 ;; this message.
 		 (vm-set-summary-of m nil))
 	       (when (vm-su-start-of (vm-real-message-of m))
-		 (setq vm-messages-needing-summary-update
-		       (cons (vm-real-message-of m)
-			     vm-messages-needing-summary-update)))
+		 (vm-add-to-list (vm-real-message-of m)
+				 vm-messages-needing-summary-update))
 	       (intern (buffer-name (vm-buffer-of (vm-real-message-of m)))
 		       vm-buffers-needing-display-update))
 	   (unless dont-kill-cache
 	     (vm-set-virtual-summary-of m nil))
 	   (when (vm-su-start-of m)
-	     (setq vm-messages-needing-summary-update
-		   (cons m vm-messages-needing-summary-update)))
+	     (vm-add-to-list m vm-messages-needing-summary-update))
 	   (intern (buffer-name (vm-buffer-of m))
 		   vm-buffers-needing-display-update)))))
-
-(defun vm-force-mode-line-update ()
-  "Force a mode line update in all frames."
-  (if (fboundp 'force-mode-line-update)
-      (force-mode-line-update t)
-    (save-excursion
-      (set-buffer (other-buffer))
-      (set-buffer-modified-p (buffer-modified-p)))))
 
 (defun vm-do-needed-mode-line-update ()
   "Do a modeline update for the current folder buffer.
@@ -289,7 +276,6 @@ on its presentation buffer, if any."
     (setq vm-ml-message-marked (vm-mark-of (car vm-message-pointer))))
   (if vm-summary-buffer
       (let ((modified (buffer-modified-p)))
-	(save-excursion
 	  (vm-copy-local-variables vm-summary-buffer
 				   'default-directory
 				   'vm-ml-message-new
@@ -313,34 +299,33 @@ on its presentation buffer, if any."
 				   'vm-ml-labels
 				   'vm-spooled-mail-waiting
 				   'vm-message-list)
-	  (set-buffer vm-summary-buffer)
+	(with-current-buffer vm-summary-buffer
 	  (set-buffer-modified-p modified))))
   (if vm-presentation-buffer
       (let ((modified (buffer-modified-p)))
-	(save-excursion
-	  (vm-copy-local-variables vm-presentation-buffer
-				   'default-directory
-				   'vm-ml-message-new
-				   'vm-ml-message-unread
-				   'vm-ml-message-read
-				   'vm-ml-message-edited
-				   'vm-ml-message-replied
-				   'vm-ml-message-forwarded
-				   'vm-ml-message-filed
-				   'vm-ml-message-written
-				   'vm-ml-message-deleted
-				   'vm-ml-message-marked
-				   'vm-ml-message-number
-                                   'vm-ml-message-redistributed
-				   'vm-ml-highest-message-number
-				   'vm-folder-read-only
-				   'vm-folder-type
-				   'vm-virtual-folder-definition
-				   'vm-virtual-mirror
-				   'vm-ml-labels
-				   'vm-spooled-mail-waiting
-				   'vm-message-list)
-	  (set-buffer vm-presentation-buffer)
+	(vm-copy-local-variables vm-presentation-buffer
+				 'default-directory
+				 'vm-ml-message-new
+				 'vm-ml-message-unread
+				 'vm-ml-message-read
+				 'vm-ml-message-edited
+				 'vm-ml-message-replied
+				 'vm-ml-message-forwarded
+				 'vm-ml-message-filed
+				 'vm-ml-message-written
+				 'vm-ml-message-deleted
+				 'vm-ml-message-marked
+				 'vm-ml-message-number
+				 'vm-ml-message-redistributed
+				 'vm-ml-highest-message-number
+				 'vm-folder-read-only
+				 'vm-folder-type
+				 'vm-virtual-folder-definition
+				 'vm-virtual-mirror
+				 'vm-ml-labels
+				 'vm-spooled-mail-waiting
+				 'vm-message-list)
+	(with-current-buffer vm-presentation-buffer
 	  (set-buffer-modified-p modified))))
   (vm-force-mode-line-update))
 
@@ -1590,10 +1575,10 @@ Supports version 4 format of attribute storage, for backward compatibility."
 				 (progn (end-of-line) (point)))
 			 list (vm-parse string
 "[\000-\040,\177-\377]*\\([^\000-\040,\177-\377]+\\)[\000-\040,\177-\377]*"))
-		   (mapcar (function
-			    (lambda (s)
-			      (intern (downcase s) vm-label-obarray)))
-			   list))))
+		   (mapc (function
+			  (lambda (s)
+			    (intern (downcase s) vm-label-obarray)))
+			 list))))
 	 (goto-char (point-min))
 	 (vm-skip-past-folder-header)
 	 (vm-skip-past-leading-message-separator)
@@ -2071,13 +2056,12 @@ stuff-flag set in the current folder.    USR 2010-04-20"
     (apply 'concat (nreverse list))))
 
 (defun vm-stuff-virtual-message-data (message)
-  (let ((virtual (vm-virtual-message-p message)))
+  (let ((virtual (vm-virtual-message-p message))
+	(real-m (vm-real-message-of message)))
     (if (or (not virtual) (and virtual (vm-virtual-messages-of message)))
-	(save-excursion
-	  (set-buffer
-	   (vm-buffer-of
-	    (vm-real-message-of message)))
-	  (vm-stuff-message-data (vm-real-message-of message))))))
+	(with-current-buffer
+	    (vm-buffer-of real-m)
+	  (vm-stuff-message-data real-m)))))
 
 (defun vm-stuff-thunderbird-status (message)
   (let (status status2 status2-hi status2-lo)
@@ -2585,15 +2569,14 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		    v m (m-list nil) tail)
 		(message "Reading index file...")
 		(setq work-buffer (vm-make-work-buffer))
-		(save-excursion
-		  (set-buffer work-buffer)
+		(with-current-buffer work-buffer
 		  (insert-file-contents-literally index-file))
 		(goto-char (point-min))
 
 		;; check version
 		(setq obj (read work-buffer))
 		(if (not (eq obj 1))
-		    (error "Unsupported index file version: %s") obj)
+		    (error "Unsupported index file version: %s" obj))
 
 		;; folder type
 		(setq folder-type (read work-buffer))
@@ -2701,7 +2684,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
     (widen)
     (catch 'done
       (cond ((not (consp blob))
-	     (error "Validity check object not a cons: %s"))
+	     (error "Validity check object not a cons: %s" blob))
 	    ((eq (car blob) 'file)
 	     (let (ch time time2)
 	       (setq blob (cdr blob))
@@ -2878,8 +2861,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 
 	  (message "Writing index file...")
 	  (catch 'done
-	    (save-excursion
-	      (set-buffer work-buffer)
+	    (with-current-buffer work-buffer
 	      (condition-case data
 		  (let ((coding-system-for-write (vm-binary-coding-system))
 			(selective-display nil))
@@ -3110,6 +3092,8 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	     (progn (require 'itimer) t)
 	   (error nil))
 	 (and (natnump vm-flush-interval) (not (get-itimer "vm-flush"))
+	      ;; name function time restart-time
+	      ;; ...... idle with-args args
 	      (start-itimer "vm-flush" 'vm-flush-itimer-function
 			    vm-flush-interval nil))
 	 (and (natnump vm-auto-get-new-mail) (not (get-itimer "vm-get-mail"))
@@ -3125,22 +3109,26 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	 (let (timer)
 	   (and (natnump vm-flush-interval)
 		(not (vm-timer-using 'vm-flush-itimer-function))
-		(setq timer (run-at-time vm-flush-interval vm-flush-interval
-					 'vm-flush-itimer-function nil))
+		(setq timer 
+		      ;;           time restart-time function args
+		      (run-at-time vm-flush-interval vm-flush-interval
+				   'vm-flush-itimer-function nil))
 		(timer-set-function timer 'vm-flush-itimer-function
 				    (list timer)))
 	   (and (natnump vm-mail-check-interval)
 		(not (vm-timer-using 'vm-check-mail-itimer-function))
-		(setq timer (run-at-time vm-mail-check-interval
-					 vm-mail-check-interval
-					 'vm-check-mail-itimer-function nil))
+		(setq timer 
+		      (run-at-time vm-mail-check-interval
+				   vm-mail-check-interval
+				   'vm-check-mail-itimer-function nil))
 		(timer-set-function timer 'vm-check-mail-itimer-function
 				    (list timer)))
 	   (and (natnump vm-auto-get-new-mail)
 		(not (vm-timer-using 'vm-get-mail-itimer-function))
-		(setq timer (run-at-time vm-auto-get-new-mail
-					 vm-auto-get-new-mail
-					 'vm-get-mail-itimer-function nil))
+		(setq timer 
+		      (run-at-time vm-auto-get-new-mail
+				   vm-auto-get-new-mail
+				   'vm-get-mail-itimer-function nil))
 		(timer-set-function timer 'vm-get-mail-itimer-function
 				    (list timer)))))
 	(t
@@ -3474,8 +3462,8 @@ folder."
 	  (let ((b-list vm-virtual-buffers) rb-list one-modified)
 	    (save-excursion
 	      (while b-list
-		(if (null (cdr (vm-buffer-variable-value (car b-list)
-							 'vm-real-buffers)))
+		(if (null (cdr (with-current-buffer (car b-list)
+				 vm-real-buffers)))
 		    (vm-set-buffer-modified-p nil (car b-list))
 		  (set-buffer (car b-list))
 		  (setq rb-list vm-real-buffers one-modified nil)
@@ -3550,7 +3538,12 @@ the server folder that the FOLDER might be caching."
 		(enable-local-variables nil)
 		(enable-local-eval nil)
 		;; for Emacs/MULE
-		(default-enable-multibyte-characters nil)
+		;; disabled because Emacs 23 doesn't like it, and it
+		;; is not clear if it does anything at all.  USR, 2010-07-10.
+		;; The only place this function is called from is vm,
+		;; which takes care of multibyte issues.  TX, 2010-07-03
+		;; (default-enable-multibyte-characters nil)
+
 		;; for XEmacs/Mule
 		(coding-system-for-read
 		 (vm-line-ending-coding-system)))
@@ -3698,10 +3691,7 @@ Same as \\[vm-recover-file]."
 ;;;###autoload
 (defun vm-spool-move-mail (source destination)
   (let ((handler (and (fboundp 'find-file-name-handler)
-		      (condition-case ()
-			  (find-file-name-handler source 'vm-spool-move-mail)
-			(wrong-number-of-arguments
-			  (find-file-name-handler source)))))
+		      (vm-find-file-name-handler source 'vm-spool-move-mail)))
 	status error-buffer)
     (if handler
 	(funcall handler 'vm-spool-move-mail source destination)
@@ -3709,8 +3699,7 @@ Same as \\[vm-recover-file]."
 	    (get-buffer-create
 	     (format "*output of %s %s %s*"
 		     vm-movemail-program source destination)))
-      (save-excursion
-	(set-buffer error-buffer)
+      (with-current-buffer error-buffer
 	(erase-buffer))
       (setq status
 	    (apply 'call-process
@@ -3718,7 +3707,7 @@ Same as \\[vm-recover-file]."
 		    (list vm-movemail-program nil error-buffer t)
 		    (copy-sequence vm-movemail-program-switches)
 		    (list source destination))))
-      (save-excursion
+      (save-current-buffer
 	(set-buffer error-buffer)
 	(if (and (numberp status) (not (= 0 status)))
 	    (insert (format "\n%s exited with code %s\n"
@@ -3802,8 +3791,7 @@ Same as \\[vm-recover-file]."
 	       (set-buffer-modified-p nil))))
        (goto-char (point-max))
        (insert-buffer-substring crash-buf
-				1 (1+ (save-excursion
-					(set-buffer crash-buf)
+				1 (1+ (with-current-buffer crash-buf
 					(widen)
 					(buffer-size))))
        (setq got-mail (/= opoint-max (point-max)))
@@ -3889,11 +3877,7 @@ Same as \\[vm-recover-file]."
     triples ))
 
 (defun vm-spool-check-mail (source)
-  (let ((handler (and (fboundp 'find-file-name-handler)
-		      (condition-case ()
-			  (find-file-name-handler source 'vm-spool-check-mail)
-			(wrong-number-of-arguments
-			 (find-file-name-handler source))))))
+  (let ((handler (vm-find-file-name-handler source 'vm-spool-check-mail)))
     (if handler
 	(funcall handler 'vm-spool-check-mail source)
       (let ((size (nth 7 (file-attributes source)))
@@ -4545,8 +4529,8 @@ folder-access-data should be preserved."
   (use-local-map vm-mode-map)
   ;; if the user saves after M-x recover-file, let them get new
   ;; mail again.
-  (make-local-hook 'after-save-hook)
-  (add-hook 'after-save-hook 'vm-unblock-new-mail)
+  (vm-make-local-hook 'after-save-hook)
+  (add-hook 'after-save-hook 'vm-unblock-new-mail nil t)
   (and (vm-menu-support-possible-p)
        (vm-menu-install-menus))
   (add-hook 'kill-buffer-hook 'vm-garbage-collect-folder)
@@ -4727,7 +4711,7 @@ argument GARBAGE."
   "Register real message M as having been fetched into its folder
 temporarily.  Such fetched messages are discarded before the
 folder is saved."
-  (save-excursion
+  (save-current-buffer
     (set-buffer (vm-buffer-of m))
     ;; m should have retrieve=nil, i.e., already retrieved
     (vm-assert (vm-body-retrieved-of m))
@@ -4762,7 +4746,7 @@ folder is saved."
 (defun vm-unregister-fetched-message (m)
   "Unregister a real message M as a fetched message.  If M was never
 registered as a fetched message, then there is no effect."
-  (save-excursion
+  (save-current-buffer
     (set-buffer (vm-buffer-of m))
     (let ((vm-folder-read-only nil))
       (setq vm-fetched-messages (delq m vm-fetched-messages))

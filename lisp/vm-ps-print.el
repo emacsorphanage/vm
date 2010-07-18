@@ -299,7 +299,7 @@ for customization of the output."
       (vm-energize-urls)
       (vm-highlight-headers)
       (widen)
-      (end-of-buffer)
+      (goto-char (point-max))
       (if each
 	  (progn (save-excursion
 		   (vm-ps-print-message-internal filename t folder-name

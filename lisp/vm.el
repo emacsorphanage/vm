@@ -966,10 +966,11 @@ summary buffer to select a folder."
       (error "'vm-folders-summary-database' must be non-nil to run this command"))
   (if (null vm-folders-summary-buffer)
       (let ((folder-buffer (and (eq major-mode 'vm-mode)
-				(current-buffer))))
+				(current-buffer)))
+	    (summary-buffer-name "VM Folders Summary"))
 	(setq vm-folders-summary-buffer
-	      (let ((default-enable-multibyte-characters t))
-		(get-buffer-create "VM Folders Summary")))
+	      (or (get-buffer summary-buffer-name)
+		  (vm-generate-new-multibyte-buffer summary-buffer-name)))
 	(save-excursion
 	  (set-buffer vm-folders-summary-buffer)
 	  (abbrev-mode 0)
@@ -1308,23 +1309,22 @@ draft messages."
 	    (progn
 	      (make-face 'gui-button-face)
 	      (cond ((eq window-system 'x)
-		     (set-face-foreground 'gui-button-face "black")
-		     (set-face-background 'gui-button-face "gray75"))
+		     (vm-fsfemacs-set-face-foreground 'gui-button-face "black")
+		     (vm-fsfemacs-set-face-background 'gui-button-face "gray75"))
 		    (t
 		     ;; use primary color names, since fancier
 		     ;; names may not be valid.
-		     (set-face-foreground 'gui-button-face "white")
-		     (set-face-background 'gui-button-face "red")))))
+		     (vm-fsfemacs-set-face-foreground 'gui-button-face "white")
+		     (vm-fsfemacs-set-face-background 'gui-button-face "red")))))
 	;; gui-button-face might not exist under XEmacs either.
 	;; This can happen if XEmacs is built without window
 	;; system support.  In any case, create it anyway.
-	(if (and vm-xemacs-p (not (find-face 'gui-button-face)))
-	    (progn
-	      (make-face 'gui-button-face)
-	      (set-face-foreground 'gui-button-face "black" nil '(win))
-	      (set-face-background 'gui-button-face "gray75" nil '(win))
-	      (set-face-foreground 'gui-button-face "white" nil '(tty))
-	      (set-face-background 'gui-button-face "red" nil '(tty))))
+	(when (and vm-xemacs-p (not (find-face 'gui-button-face)))
+	  (make-face 'gui-button-face)
+	  (vm-xemacs-set-face-foreground 'gui-button-face "black" nil '(win))
+	  (vm-xemacs-set-background 'gui-button-face "gray75" nil '(win))
+	  (vm-xemacs-set-foreground 'gui-button-face "white" nil '(tty))
+	  (vm-xemacs-set-background 'gui-button-face "red" nil '(tty)))
 	(and (vm-mouse-support-possible-p)
 	     (vm-mouse-install-mouse))
 	(and (vm-menu-support-possible-p)

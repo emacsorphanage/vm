@@ -15,9 +15,23 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
-VM 8.1.925a (2010-07-17)
+VM 8.1.93a (2010-07-17)
+
+  IMPROVEMENTS
+
+   * New thread-folding feature in the Summary window allows message
+     threads to be collapsed into single line summaries.  New
+     variables `vm-summary-thread-folding', `vm-summary-show-thread-count'
+     and `vm-summary-thread-folding-on-motion' control the behavior of
+     thread folding.  New commands: `vm-toggle-thread',
+     `vm-expand-all' and `vm-collapse-all'.  (Thanks to Arik Mitschang
+     for the contribution.)
 
   BUG FIXES
+
+   * Fixed various issues flagged by the Emacs 23 compiler warnings.
+
+VM 8.1.925a (2010-07-17)
 
    * A few incompatibilities with XEmacs were corrected.
 

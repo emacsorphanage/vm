@@ -1446,7 +1446,7 @@ command can be invoked from external agents via an emacsclient."
 (defun vm-new-composition-buffer ()
   (setq vm-composition-buffer-count (+ 1 vm-composition-buffer-count))
   (setq vm-compositions-exist t)
-  (make-local-hook 'kill-buffer-hook)
+  (vm-make-local-hook 'kill-buffer-hook)
   (add-hook 'kill-buffer-hook 'vm-forget-composition-buffer nil t)
   (add-hook 'vm-mail-send-hook 'vm-forget-composition-buffer nil t)
   (vm-update-ml-composition-buffer-count))
@@ -1866,8 +1866,8 @@ message."
 (defun vm-mail-mode-show-headers ()
   "Display any hidden headers in a composition buffer."
   (interactive)
-  (mapcar 'delete-overlay (overlays-in (point-min)
-                                       (save-excursion (mail-text) (point))))
+  (mapc 'delete-overlay (overlays-in (point-min)
+				     (save-excursion (mail-text) (point))))
   (if (local-variable-p 'line-move-ignore-invisible (current-buffer))
       (setq line-move-ignore-invisible nil)))
 

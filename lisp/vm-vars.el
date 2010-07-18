@@ -112,10 +112,7 @@ A nil value means VM should not read or write index files."
   :group 'vm
   :type '(choice string (const nil)))
 
-;; This is added by Uday Reddy as a temporary measure.  2008-04-15
-;; It should really be folder-specific and saved with the folders on
-;; the file system.
-(defvar vm-load-headers-only nil
+(defcustom vm-load-headers-only nil
   "*If non-nil, asks VM to load headers of mail folders whenever
 possible, without loading the message bodies.
 
@@ -123,7 +120,9 @@ This allows faster start-ups and smaller memory images of Emacs
 sessions, at the cost of short delays when messages are viewed.
 
 As of May 2010, this facility is still experimental and is only
-available for IMAP folders.")
+available for IMAP folders."
+  :group 'vm
+  :type 'boolean)
 
 ;; use this function to access vm-spool-files on the fly.  this
 ;; allows us to use environmental variables without setting
@@ -4843,7 +4842,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "WD" 'vm-delete-window-configuration)
     (define-key map "W?" 'vm-window-help)
     (define-key map "\C-t" 'vm-toggle-threads-display)
-    (define-key map "\M-t" 'vm-summary-toggle-thread-folding)
+    (define-key map "\M-t" 'vm-toggle-thread)
     (define-key map "\C-x\C-s" 'vm-save-buffer)
     (define-key map "\C-x\C-w" 'vm-write-file)
     (define-key map "\C-x\C-q" 'vm-toggle-read-only)
@@ -4852,6 +4851,9 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\M-W" 'vm-show-no-warranty)
     (define-key map "\C-c\C-s" 'vm-mime-save-all-attachments)
     (define-key map "\C-c\C-d" 'vm-mime-delete-all-attachments)
+    (define-key map "T" 'vm-toggle-thread)
+    (define-key map "E" 'vm-expand-all)
+    (define-key map "C" 'vm-collapse-all)
     ;; suppress-keymap provides these, but now that we don't use
     ;; suppress-keymap anymore...
     (define-key map "0" 'digit-argument)
@@ -4879,9 +4881,22 @@ be a regexp matching all chars to be replaced by a \"_\"."
     map )
   "Keymap for VM mode.")
 
-(defvar vm-summary-toggle-thread-folding nil
-  "Enables folding of threads in VM summary windows.  (This
-functionality is highly experimental!)")
+(defvar vm-summary-thread-folding nil
+  "*If non-nil, enables folding of threads in VM summary
+windows.  (This functionality is still experimental.)")
+
+(defvar vm-summary-show-thread-count t
+  "*If non-nil, thread folding displays the count of messages in
+a thread along with the message number of the thread root.  Note
+that this takes up 3 extra characters in each summary line, and
+will only take effect if the number specifier is the first
+position of `vm-summary-format'")
+
+(defvar vm-summary-thread-folding-on-motion nil
+  "*If non-nil and thread folding is enabled, invoking
+vm-next/previous-message-no-skip (`N' or `P' respectively)
+will expand a thread upon moving into the thread and collapse it when 
+you move out of the thread.")
 
 (defvar vm-summary-mode-map vm-mode-map
   "Keymap for VM Summary mode")
