@@ -27,6 +27,10 @@ VM 8.1.93a (2010-07-17)
      `vm-expand-all' and `vm-collapse-all'.  (Thanks to Arik Mitschang
      for the contribution.)
 
+   * The calculation of threads improved using Jamie Zawinski's
+     ideas.  Threads are correctly identified even if some of the
+     messages are missing.
+
   BUG FIXES
 
    * Fixed various issues flagged by the Emacs 23 compiler warnings.
