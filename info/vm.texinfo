@@ -3506,12 +3506,14 @@ in the summary window.  This feature allows you to collapse all the
 messages in a thread into a single line of the summary window, so that
 you can see a more compact summary of the folder.
 
-@vindex vm-summary-thread-folding
+@vindex vm-summary-enable-thread-folding
 @findex vm-toggle-thread
 @findex vm-expand-thread
 @findex vm-collapse-thread
+@findex vm-collapse-all-threads
+@findex vm-expand-all-threads
 Thread folding is enabled by setting the variable
-@code{vm-summary-thread-folding} to a non-nil value.  The summary
+@code{vm-summary-enable-thread-folding} to a non-nil value.  The summary
 window then has a folding indicator in the first column, with @code{-}
 for threads that are expanded and @code{+} for threads that are
 collapsed.  The command @code{T} or @code{M-t}
@@ -3538,14 +3540,15 @@ message count in the thread.  This takes up 3 extra columns in the
 summary lines.  Set the variable to nil to obtain the more standard
 format of the summary.
 
-@findex vm-expand-all
-@findex vm-collapse-all
-If the variable @code{vm-summary-thread-folding} is non-nil, the
-Summary window starts out with all the threads folded.  You can
+@findex vm-expand-all-threads
+@findex vm-collapse-all-threads
+If the variable @code{vm-summary-enable-thread-folding} is non-nil,
+the Summary window starts out with all the threads folded.  You can
 selectively expand threads using the @code{vm-toggle-thread} function.
 Alternatively, you can expand all the threads in the folder using the
-commandn @code{vm-expand-all}.  The function @code{vm-collapse-all}
-does the reverse.  It collapses all the expanded threads.
+commannd @code{E} (@code{vm-expand-all-threads}).  The command
+@code{C} (@code{vm-collapse-all-threads}) does the reverse.  It
+collapses all the expanded threads.
 
 
 @node Virtual Folders, Frames and Windows, Summaries, Top

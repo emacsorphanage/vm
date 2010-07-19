@@ -4852,8 +4852,8 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\C-c\C-s" 'vm-mime-save-all-attachments)
     (define-key map "\C-c\C-d" 'vm-mime-delete-all-attachments)
     (define-key map "T" 'vm-toggle-thread)
-    (define-key map "E" 'vm-expand-all)
-    (define-key map "C" 'vm-collapse-all)
+    (define-key map "E" 'vm-expand-all-threads)
+    (define-key map "C" 'vm-collapse-all-threads)
     ;; suppress-keymap provides these, but now that we don't use
     ;; suppress-keymap anymore...
     (define-key map "0" 'digit-argument)
@@ -4881,22 +4881,33 @@ be a regexp matching all chars to be replaced by a \"_\"."
     map )
   "Keymap for VM mode.")
 
-(defvar vm-summary-thread-folding nil
+(defcustom vm-summary-enable-thread-folding nil
   "*If non-nil, enables folding of threads in VM summary
-windows.  (This functionality is still experimental.)")
+windows.  (This functionality is still experimental.)"
+  :group 'vm
+  :type 'boolean)
 
-(defvar vm-summary-show-thread-count t
+(defcustom vm-summary-show-thread-count t
   "*If non-nil, thread folding displays the count of messages in
 a thread along with the message number of the thread root.  Note
 that this takes up 3 extra characters in each summary line, and
 will only take effect if the number specifier is the first
-position of `vm-summary-format'")
+position of `vm-summary-format'"
+  :group 'vm
+  :type 'boolean)
 
-(defvar vm-summary-thread-folding-on-motion nil
+(defcustom vm-summary-thread-folding-on-motion nil
   "*If non-nil and thread folding is enabled, invoking
 vm-next/previous-message-no-skip (`N' or `P' respectively)
 will expand a thread upon moving into the thread and collapse it when 
-you move out of the thread.")
+you move out of the thread."
+  :group 'vm
+  :type 'boolean)
+
+(defvar vm-summary-threads-collapsed t
+  "If non-nil, indicates that threads should be
+folded (collapsed) in VM summary windows.")
+
 
 (defvar vm-summary-mode-map vm-mode-map
   "Keymap for VM Summary mode")

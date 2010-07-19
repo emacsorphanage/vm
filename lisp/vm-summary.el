@@ -129,12 +129,11 @@ the messages in the current folder."
 	tr trs tre 			; thread root, start, end
 	ntc 				; thread count
 	mmmr mmm nm
+	summary
 	(n 0)
 	(modulus 100)
-	(do-mouse-track
-	    (and vm-mouse-track-summary
-		 (vm-mouse-support-possible-p)))
-	summary)
+	(do-mouse-track (and vm-mouse-track-summary
+			     (vm-mouse-support-possible-p))))
     (setq mp m-list)
     (save-excursion
       (set-buffer vm-summary-buffer)
@@ -166,7 +165,7 @@ the messages in the current folder."
 		(vm-set-su-end-of m (point))
                 (let ((s (vm-su-start-of m)) (e (vm-su-end-of m)))
                   (put-text-property s e 'vm-message m)
-                  (when (and vm-summary-thread-folding
+                  (when (and vm-summary-enable-thread-folding
                              vm-summary-show-threads)
                     (if (= 0 (vm-thread-indentation-of m))
                         (setq tr m trs s tre e ntc 0)
@@ -246,29 +245,34 @@ will make visible all invisible elements of the thread tree and
 place a '-' character at the pointer position indicating that the
 thread can be collapsed."
   (interactive)
-  (when (and vm-summary-thread-folding vm-summary-show-threads)
+  (unless vm-summary-enable-thread-folding 
+    (error "Thread folding not enabled"))
+  (when (interactive-p)
     (vm-select-folder-buffer)
-    (vm-follow-folders-summary-cursor)
-    (set-buffer vm-summary-buffer)
-    (let ((buffer-read-only nil)
-	  r nm)
-      (setq r (get-text-property (+ (point) 3) 'thread-root))
-      (when (null r)
-	(setq r (get-text-property (+ (point) 3) 'vm-message)))
+    (unless vm-summary-show-threads
+      (error "Summary is not sorted by threads"))
+    (vm-follow-summary-cursor)
+    (set-buffer vm-summary-buffer))
+  (let ((buffer-read-only nil)
+	root next)
+    (save-excursion
+      (forward-line 0)
+      (setq root (get-text-property (+ (point) 3) 'thread-root))
+      (when (null root)
+	(setq root (get-text-property (+ (point) 3) 'vm-message)))
       (save-excursion	    
-	(goto-char (vm-su-start-of  r))
+	(goto-char (vm-su-start-of  root))
 	(insert "-")
 	(delete-char 1))
-      (setq nm (get-text-property 
-		(+ (vm-su-end-of r) 2) 'vm-message))
-      (while (and  (not (null nm)) 
-		   (> (vm-thread-indentation-of nm) 0) )
+      (setq next (get-text-property 
+		  (+ (vm-su-end-of root) 2) 'vm-message))
+      (while (and next (> (vm-thread-indentation-of next) 0) )
 	(put-text-property 
-	 (vm-su-start-of nm) (vm-su-end-of nm) 'invisible nil)
-	(if (< (+ (vm-su-end-of nm) 2) (buffer-size))
-	    (setq nm (get-text-property 
-		      (+ (vm-su-end-of nm) 2) 'vm-message))
-	  (setq nm nil))))))
+	 (vm-su-start-of next) (vm-su-end-of next) 'invisible nil)
+	(if (< (+ (vm-su-end-of next) 2) (buffer-size))
+	    (setq next (get-text-property 
+			(+ (vm-su-end-of next) 2) 'vm-message))
+	  (setq next nil))))))
 
 (defun vm-collapse-thread (&optional nomove)
   "Collapse the thread associated with the message at point. This
@@ -278,77 +282,91 @@ indicating the thread can be expanded. Optional argument nomove
 directs vm-collapse-thread to not take the default action of
 moving the pointer to the thread root after collapsing."
   (interactive "P")
-  (when (and vm-summary-thread-folding vm-summary-show-threads)
+  (unless vm-summary-enable-thread-folding 
+    (error "Thread folding not enabled"))
+  (when (interactive-p)
     (vm-select-folder-buffer)
-    (vm-follow-folders-summary-cursor)
-    (set-buffer vm-summary-buffer)
-    (let ((buffer-read-only nil)
-	  r nm)
-      (setq r (get-text-property (+ (point) 3) 'thread-root))
-      (when (null r)
-	(setq r (get-text-property (+ (point) 3) 'vm-message)))
-      (when (get-text-property (+ (vm-su-start-of r) 3) 'thread-count)
+    (unless vm-summary-show-threads
+      (error "Summary is not sorted by threads"))
+    (vm-follow-summary-cursor)
+    (set-buffer vm-summary-buffer))
+  (let ((buffer-read-only nil)
+	root next)
+    (save-excursion
+      (setq root (get-text-property (+ (point) 3) 'thread-root))
+      (when (null root)
+	(setq root (get-text-property (+ (point) 3) 'vm-message)))
+      (when (get-text-property (+ (vm-su-start-of root) 3) 'thread-count)
 	(save-excursion	    
-	  (goto-char (vm-su-start-of  r))
+	  (goto-char (vm-su-start-of root))
 	  (insert "+")
 	  (delete-char 1))
-	(when (< (+ (vm-su-end-of r) 3) (buffer-size))
-	  (setq nm (get-text-property 
-		    (+ (vm-su-end-of r) 3) 'vm-message))
-	  (while (and (not (null nm))
-		      (> (vm-thread-indentation-of nm) 0))
-	    (when (not (vm-new-flag nm))
+	(when (< (+ (vm-su-end-of root) 3) (buffer-size))
+	  (setq next (get-text-property 
+		      (+ (vm-su-end-of root) 3) 'vm-message))
+	  (while (and next (> (vm-thread-indentation-of next) 0))
+	    (unless (vm-new-flag next)
 	      (put-text-property
-	       (vm-su-start-of nm) (vm-su-end-of nm) 'invisible t))
-	    (if (< (+ (vm-su-end-of nm) 3) (buffer-size))
-		(setq nm (get-text-property 
-			  (+ (vm-su-end-of nm) 3) 'vm-message))
-	      (setq nm nil))))
-	;; move to the parent thread
-	(unless (or nomove (vm-new-flag 
-			    (get-text-property (+ (point) 3) 'vm-message)))
-	  (vm-select-folder-buffer)
-	  (vm-goto-message (string-to-number (vm-number-of r))))))))
+	       (vm-su-start-of next) (vm-su-end-of next) 'invisible t))
+	    (if (< (+ (vm-su-end-of next) 3) (buffer-size))
+		(setq next (get-text-property 
+			    (+ (vm-su-end-of next) 3) 'vm-message))
+	      (setq next nil))))))
+    ;; move to the parent thread
+    (unless (or nomove (vm-new-flag 
+			(get-text-property (+ (point) 3) 'vm-message)))
+      (vm-select-folder-buffer)
+      (vm-goto-message (string-to-number (vm-number-of root))))))
 	
-(defun vm-expand-all ()
+(defun vm-expand-all-threads ()
   "Expand all threads in the folder, which might have been collapsed
  (folded) earlier."
   (interactive)
-  (save-excursion
-    (goto-char 0)
-    (while (search-forward-regexp "^\+" nil t)
-      (vm-expand-thread))))
+  (vm-select-folder-buffer)
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
+  (with-current-buffer vm-summary-buffer
+    (save-excursion
+      (goto-char (point-min))
+      (while (search-forward-regexp "^\+" nil t)
+	(vm-expand-thread))))
+  (setq vm-summary-threads-collapsed nil))
 
-(defun vm-collapse-all ()
+(defun vm-collapse-all-threads ()
   "Collapse (fold) all threads in the folder so that only the roots of
 the threads are shown in the Summary window."
   (interactive)
-  (let ((r nil))
-    (setq r (get-text-property (+ (point) 3) 'thread-root))
-    (when (null r)
-      (setq r (get-text-property (+ (point) 3) 'vm-message)))
-    (save-excursion
-      (goto-char 0)
-      (while (search-forward-regexp "^-" nil t)
-	(vm-collapse-thread t)))
-    (vm-select-folder-buffer)
-    (vm-goto-message (string-to-number (vm-number-of r)))))
+  (vm-select-folder-buffer)
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
+  (with-current-buffer vm-summary-buffer
+    (let ((root nil))
+      (setq root (get-text-property (+ (point) 3) 'thread-root))
+      (when (null root)
+	(setq root (get-text-property (+ (point) 3) 'vm-message)))
+      (save-excursion
+	(goto-char 0)
+	(while (search-forward-regexp "^-" nil t)
+	  (vm-collapse-thread t)))
+      (vm-goto-message (string-to-number (vm-number-of root)))))
+  (setq vm-summary-threads-collapsed t))
       
 (defun vm-toggle-thread ()
   "Toggle collapse/expand thread associated with message at point.
 see `vm-expand-thread' and `vm-collapse-thread' for a description
 of action."
   (interactive)
-  (when (and vm-summary-thread-folding vm-summary-show-threads)
+  (when (and vm-summary-enable-thread-folding vm-summary-show-threads)
     (vm-select-folder-buffer)
-    (vm-follow-folders-summary-cursor)
+    (if (interactive-p)
+	(vm-follow-summary-cursor))
     (set-buffer vm-summary-buffer)
     (let ((buffer-read-only nil)
-	  r nm)
-      (setq r (get-text-property (+ (point) 3) 'thread-root))
-      (when (null r)
-	(setq r (get-text-property (+ (point) 3) 'vm-message)))
-      (if (save-excursion (goto-char (vm-su-start-of r))
+	  root next)
+      (setq root (get-text-property (+ (point) 3) 'thread-root))
+      (when (null root)
+	(setq root (get-text-property (+ (point) 3) 'vm-message)))
+      (if (save-excursion (goto-char (vm-su-start-of root))
 			  (looking-at "+"))
 	  (vm-expand-thread) 
 	(vm-collapse-thread)))))
@@ -394,7 +412,7 @@ buffer by a regenerated summary line."
 		      (eq 0 (string-match 
 			     "%-?[0-9]*\.?[0-9]*n" 
 			     (vm-folder-buffer-value 'vm-summary-format)))))
-		n s e r i
+		n s e root i
 		(selected nil)
 		(indicator nil)
 		(modified (buffer-modified-p)))
@@ -430,7 +448,7 @@ buffer by a regenerated summary line."
 		  (goto-char (vm-su-start-of m))
 		  (setq s (vm-su-start-of m))
 		  (setq e (vm-su-end-of m))
-		  (setq r (get-text-property (+ s 2) 'thread-root))
+		  (setq root (get-text-property (+ s 2) 'thread-root))
 		  (setq n (get-text-property (+ s 2) 'thread-count))
 		  (setq i (get-text-property (+ s 2) 'invisible))
 		  (delete-region (point) (1- (vm-su-end-of m)))		  
@@ -457,8 +475,8 @@ buffer by a regenerated summary line."
 		      (vm-summary-highlight-region (vm-su-start-of m) (point)
 						   vm-summary-highlight-face)))
 	      (set-buffer-modified-p modified)
-	      (if (not (null r))
-		  (put-text-property s e 'thread-root r) 
+	      (if (not (null root))
+		  (put-text-property s e 'thread-root root) 
 		  (put-text-property s e 'thread-count n))
 	      (put-text-property s e 'vm-message m)
 	      (put-text-property s e 'invisible i)
@@ -677,7 +695,7 @@ tokenized summary TOKENS."
 	      ((eq token 'number)
 	       (let (mynum)
 		 (if (and vm-summary-show-thread-count 
-			  vm-summary-thread-folding
+			  vm-summary-enable-thread-folding
 			  vm-summary-show-threads
 			  (eq (string-match "%-?[0-9]*\.?[0-9]*n" 
 					    vm-summary-format) 0))

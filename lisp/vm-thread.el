@@ -520,7 +520,7 @@ for this function to work.  Otherwise it returns nil."
 	      (when (null (intern-soft (symbol-name id-sym) loop-obarray))
 		(intern (symbol-name id-sym) loop-obarray)
 		(nconc list (copy-sequence (vm-th-children-of id-sym)))
-		(mapcar 
+		(mapc
 		 (lambda (m)
 		   (setq subject-sym (intern (vm-so-sortable-subject m)
 					     vm-thread-subject-obarray))
@@ -548,6 +548,15 @@ Threads should have been built for this function to work."
 threading information."
   (with-current-buffer (vm-buffer-of m)
     (intern (vm-su-message-id m) vm-thread-obarray)))
+
+;;;###autoload
+(defun vm-th-thread-subject-symbol (m)
+  "Returns the interned symbol of message M which carries the
+subject-based threading information."
+  (with-current-buffer (vm-buffer-of m)
+    (intern (vm-su-subject m) vm-thread-subject-obarray)))
+
+
 
 (provide 'vm-thread)
 
