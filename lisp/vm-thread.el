@@ -33,6 +33,12 @@
 (defun vm-th-set-oldest-date-of (id-sym date)
   (put id-sym 'oldest-date date))
 
+(defsubst vm-th-message-of (id-sym)
+  (and (boundp id-sym) (symbol-value id-sym)))
+
+(defsubst vm-th-set-message-of (id-sym m)
+  (set id-sym m))
+
 (defsubst vm-th-messages-of (id-sym)
   (get id-sym 'messages))
 
@@ -41,6 +47,17 @@
 
 (defsubst vm-th-children-of (id-sym)
   (get id-sym 'children))
+
+(defun vm-th-child-messages-of (id-sym)
+  (let ((kids (vm-th-children-of id-sym))
+	(result nil)
+	m)
+    (while kids
+      (setq m (vm-th-message-of (car kids)))
+      (if m
+	  (setq result (cons m result)))
+      (setq kids (cdr kids)))
+    (nreverse result)))
 
 (defsubst vm-th-set-children-of (id-sym ml)
   (put id-sym 'children ml))
@@ -51,17 +68,32 @@
 (defsubst vm-th-set-descendants-of (id-sym ml)
   (put id-sym 'descendants ml))
 
+;; (defsubst vm-th-parent-of (id-sym)
+;;   (and (boundp id-sym) (symbol-value id-sym)))
+
+;; (defsubst vm-th-set-parent-of (id-sym p-sym)
+;;   (set id-sym p-sym))
+
 (defsubst vm-th-parent-of (id-sym)
-  (symbol-value id-sym))
+  (get id-sym 'parent))
 
 (defsubst vm-th-set-parent-of (id-sym p-sym)
-  (set id-sym p-sym))
+  ;; For safety, set the symbol-value to nil
+  (unless (boundp id-sym)
+    (set id-sym nil))
+  (put id-sym 'parent p-sym))
 
 (defsubst vm-th-date-of (id-sym)
   (get id-sym 'date))
 
 (defsubst vm-th-set-date-of (id-sym date)
   (put id-sym 'date date))
+
+(defsubst vm-th-thread-subtree-of (id-sym)
+  (get id-sym 'thread-subtree))
+
+(defsubst vm-th-set-thread-subtree-of (id-sym ml)
+  (put id-sym 'thread-subtree ml))
 
 
 ;;;###autoload
@@ -84,6 +116,9 @@ will be visible."
 
 ;;;###autoload
 (defun vm-build-threads (message-list)
+  "For all messages in MESSAGE-LIST, build thread information in the
+`vm-thread-obarray' and `vm-thread-subject-obarray'.  If MESSAGE-LIST
+is nil, do it for all the messages in the folder.  USR, 2010-07-15"
   (if (not (vectorp vm-thread-obarray))
       (setq vm-thread-obarray (make-vector 641 0)
 	    vm-thread-subject-obarray (make-vector 641 0)))
@@ -95,61 +130,67 @@ will be visible."
 	;; unless there were already messages present.
 	(schedule-reindents message-list)
 	m parent parent-sym id id-sym date refs old-parent-sym)
+    ;; Build threads using references
     (while mp
-      ;; temporary code for debugging purposes; should be removed
-      ;; USR, 2010-05-22
-      ;; (if (equal (vm-full-name-of (car mp)) "Xuhui Li")
-      ;; 	  (debug "now the message from Xuhui"))
       (setq m (car mp)
-	    parent (vm-th-parent m)
+	    parent (vm-parent m)
 	    id (vm-su-message-id m)
 	    id-sym (intern id vm-thread-obarray)
 	    date (vm-so-sortable-datestring m))
+      (vm-th-set-message-of id-sym m)
       (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))
       (vm-th-set-date-of id-sym date)
-      (if (and (null (cdr (vm-th-messages-of id-sym)))
-	       schedule-reindents)
+      (if (and schedule-reindents (null (cdr (vm-th-messages-of id-sym))))
 	  (vm-thread-mark-for-summary-update 
-	   (cons m (vm-th-children-of id-sym))))
-      (if parent
-	  (progn
-	    (setq parent-sym (intern parent vm-thread-obarray))
-	    (cond ((or (not (boundp id-sym))
-		       (null (vm-th-parent-of id-sym))
-		       (eq (vm-th-parent-of id-sym) parent-sym))
-		   (vm-th-set-parent-of id-sym parent-sym))
-		  (t
-		   (setq old-parent-sym (vm-th-parent-of id-sym))
-		   (vm-th-set-children-of old-parent-sym
-			(let ((kids (vm-th-children-of old-parent-sym ))
-			      (msgs (vm-th-messages-of id-sym)))
-			  (while msgs
-			    (setq kids (delq (car msgs) kids)
-				  msgs (cdr msgs)))
-			  kids ))
-		   (set id-sym parent-sym)
-		   (if schedule-reindents
-		       (vm-thread-mark-for-summary-update
-			(vm-messages-of id-sym)))))
-	    (vm-th-set-children-of parent-sym
-		 (cons m (vm-th-children-of parent-sym))))
-	(if (not (boundp id-sym))
-	    (set id-sym nil)))
+	   (cons m (vm-th-child-messages-of id-sym))))
+      (vm-th-set-parent-of id-sym nil)
+      (when parent
+	(setq parent-sym (intern parent vm-thread-obarray))
+	(cond ((or (null (vm-th-parent-of id-sym))
+		   (eq (vm-th-parent-of id-sym) parent-sym))
+	       (vm-th-set-parent-of id-sym parent-sym))
+	      (t
+	       (let ((kids (vm-th-children-of old-parent-sym ))
+		     (msgs (vm-th-messages-of id-sym))
+		     (msg-sym nil))
+		 (setq old-parent-sym (vm-th-parent-of id-sym))
+		 (while msgs
+		   (setq msg-sym (vm-th-thread-symbol (car msgs)))
+		   (setq kids (delq msg-sym kids)
+			 msgs (cdr msgs)))
+		 (vm-th-set-children-of old-parent-sym kids)
+		 (vm-th-set-parent-of id-sym parent-sym)
+		 (if schedule-reindents
+		     (vm-thread-mark-for-summary-update
+		      (vm-th-messages-of id-sym))))))
+	(vm-th-set-children-of 
+	 parent-sym (cons id-sym (vm-th-children-of parent-sym))))
+	;; FIXME is the parent property automatically set to nil?
+        ;; (if (not (boundp id-sym))
+	;;   (vm-th-set-parent-of id-sym nil))
       ;; use the references header to set parenting information
       ;; for ancestors of this message.  This does not override
       ;; a parent pointer for a message if it already exists.
-      (if (cdr (setq refs (vm-th-references m)))
-	  (let (parent-sym id-sym msgs)
+      (if (cdr (setq refs (vm-references m)))
+	  (let (parent-sym id-sym msgs msg-syms)
 	    (setq parent-sym (intern (car refs) vm-thread-obarray)
 		  refs (cdr refs))
 	    (while refs
 	      (setq id-sym (intern (car refs) vm-thread-obarray))
-	      (if (and (boundp id-sym) (symbol-value id-sym))
+	      (if (vm-th-parent-of id-sym)
 		  nil
-		(set id-sym parent-sym)
-		(if (setq msgs (vm-th-messages-of id-sym))
-		    (vm-th-set-children-of parent-sym 
-			 (append msgs (vm-th-children-of parent-sym))))
+		(vm-th-set-parent-of id-sym parent-sym)
+		(setq msgs (vm-th-messages-of id-sym))
+		(setq msg-syms 
+		      (mapcar 'vm-th-thread-symbol msgs))
+;; 		(if msgs
+;; 		    (vm-th-set-children-of 
+;; 		     parent-sym 
+;; 		     (append msg-syms (vm-th-children-of parent-sym))
+;; 		     ))
+		(vm-th-set-children-of 
+		 parent-sym 
+		 (cons id-sym (vm-th-children-of parent-sym)))
 		(if schedule-reindents
 		    (vm-thread-mark-for-summary-update msgs)))
 	      (setq parent-sym id-sym
@@ -157,64 +198,73 @@ will be visible."
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
 	  (message "Building threads (by reference)... %d" n)))
-    (if vm-thread-using-subject
-	(progn
-	  (setq n 0 mp (or message-list vm-message-list))
-	  (while mp
-	    (setq m (car mp)
-		  parent (vm-th-parent m)
-		  id (vm-su-message-id m)
-		  id-sym (intern id vm-thread-obarray)
-		  date (vm-so-sortable-datestring m))
-	    ;; inhibit-quit because we need to make sure the asets
-	    ;; below are an atomic group.
-	    (let* ((inhibit-quit t)
-		   (subject (vm-so-sortable-subject m))
-		   (subject-sym (intern subject vm-thread-subject-obarray)))
-	      ;; if this subject was never seen before create the
-	      ;; information vector.
-	      (if (not (boundp subject-sym))
-		  (set subject-sym
-		       (vector id-sym date
-			       nil (list m)))
-		;; this subject seen before 
-		(aset (symbol-value subject-sym) 3
-		      (cons m (aref (symbol-value subject-sym) 3)))
-		(if (string< date (aref (symbol-value subject-sym) 1))
-		    (let* ((vect (symbol-value subject-sym))
-			   (i-sym (aref vect 0)))
-		      ;; optimization: if we know that this message
-		      ;; already has a parent, then don't bother
-		      ;; adding it to the list of child messages
-		      ;; since we know that it will be threaded and
-		      ;; unthreaded using the parent information.
-		      (if (or (not (boundp i-sym))
-			      (null (symbol-value i-sym)))
-			  (aset vect 2 (append (vm-th-messages-of i-sym)
-					       (aref vect 2))))
-		      (aset vect 0 id-sym)
-		      (aset vect 1 date)
-		      ;; this loops _and_ recurses and I'm worried
-		      ;; about it going into a spin someday.  So I
-		      ;; unblock interrupts here.  It's not critical
-		      ;; that it finish... the summary will just be out
-		      ;; of sync.
-		      (if schedule-reindents
-			  (let ((inhibit-quit nil))
-			    (vm-thread-mark-for-summary-update (aref vect 2)))))
-		  ;; optimization: if we know that this message
-		  ;; already has a parent, then don't bother adding
-		  ;; it to the list of child messages, since we
-		  ;; know that it will be threaded and unthreaded
-		  ;; using the parent information.
-		  (if (null parent)
-		      (aset (symbol-value subject-sym) 2
-			    (cons m (aref (symbol-value subject-sym) 2)))))))
-	    (setq mp (cdr mp) n (1+ n))
-	    (if (zerop (% n modulus))
-		(message "Building threads (by subject)... %d" n)))))
-    (if (> n modulus)
-	(message "Building threads... done"))))
+
+    ;; Build threads using subject
+    (when vm-thread-using-subject
+      (let (subject subject-sym)
+	(setq n 0 mp (or message-list vm-message-list))
+	(while mp
+	  (setq m (car mp)
+		parent (vm-parent m)
+		id (vm-su-message-id m)
+		id-sym (intern id vm-thread-obarray)
+		date (vm-so-sortable-datestring m))
+	  (setq subject (vm-so-sortable-subject m)
+		subject-sym (intern subject vm-thread-subject-obarray))
+	  ;; inhibit-quit because we need to make sure the asets
+	  ;; below are an atomic group.
+	  (let* ((inhibit-quit t))
+	    ;; if this subject was never seen before create the
+	    ;; information vector.
+	    (if (not (boundp subject-sym))
+		(set subject-sym
+		     (vector id-sym date nil (list m)))
+	      ;; this subject seen before 
+	      (aset (symbol-value subject-sym) 3
+		    (cons m (aref (symbol-value subject-sym) 3)))
+	      (if (string< date (aref (symbol-value subject-sym) 1))
+		  (let* ((vect (symbol-value subject-sym))
+			 (i-sym (aref vect 0)))
+		    ;; optimization: if we know that this message
+		    ;; already has a parent, then don't bother
+		    ;; adding it to the list of child messages
+		    ;; since we know that it will be threaded and
+		    ;; unthreaded using the parent information.
+		    (unless (and (vm-th-parent-of i-sym)
+				 (vm-th-messages-of (vm-th-parent-of i-sym)))
+		      (aset vect 2 (cons i-sym (aref vect 2))))
+		    (aset vect 0 id-sym)
+		    (aset vect 1 date)
+		    ;; this loops _and_ recurses and I'm worried
+		    ;; about it going into a spin someday.  So I
+		    ;; unblock interrupts here.  It's not critical
+		    ;; that it finish... the summary will just be out
+		    ;; of sync.
+		    (when schedule-reindents
+		      (let ((inhibit-quit nil))
+			(vm-thread-mark-for-summary-update (aref vect 2)))))
+		;; optimization: if we know that this message
+		;; already has a parent, then don't bother adding
+		;; it to the list of child messages, since we
+		;; know that it will be threaded and unthreaded
+		;; using the parent information.
+		(unless (and parent 
+			     (vm-th-messages-of 
+			      (intern parent vm-thread-obarray)))
+		  (aset (symbol-value subject-sym) 2
+			(cons id-sym (aref (symbol-value subject-sym) 2)))))))
+	  (setq mp (cdr mp) n (1+ n))
+	  (when (zerop (% n modulus))
+	    (message "Building threads (by subject)... %d" n)))))
+
+    ;; Calculate thread-subtrees for all the known message ID's
+    (mapatoms
+     (lambda (id-sym)
+       (vm-th-thread-subtree id-sym))
+     vm-thread-obarray)
+
+    (when (> n modulus)
+      (message "Building threads... done"))))
 
 ;; used by the thread sort code.
 ;;
@@ -243,7 +293,8 @@ will be visible."
 	(vm-set-thread-list-of m nil)
 	(vm-set-thread-indentation-of m nil)
 	(vm-thread-mark-for-summary-update
-	 (vm-th-children-of (intern (vm-su-message-id m) vm-thread-obarray))))
+	 (vm-th-child-messages-of (intern 
+				   (vm-su-message-id m) vm-thread-obarray))))
       (setq message-list (cdr message-list)))))
 
 (defun vm-thread-list (message)
@@ -271,9 +322,9 @@ symbols interned in vm-thread-obarray."
 	(if (or (null root-date)
 		(string< youngest-date date))
 	    (vm-th-set-youngest-date-of id-sym date))
-	(if (and (boundp id-sym) (symbol-value id-sym))
+	(if (vm-th-parent-of id-sym)
 	    (progn
-	      (setq id-sym (symbol-value id-sym)
+	      (setq id-sym (vm-th-parent-of id-sym)
 		    loop-sym (intern (symbol-name id-sym)
 				     vm-thread-loop-obarray))
 	      (if (boundp loop-sym)
@@ -327,8 +378,8 @@ but works when the message is getting expunged from its folder.)
 
 MESSAGE should be a real (non-virtual) message.
 
-The full functionality of this function is not entirely clear.  USR,
-2010-03-13"
+The full functionality of this function is not entirely clear.  
+						USR, 2010-03-13"
   (save-excursion
     (let ((mp (cons message (vm-virtual-messages-of message)))
 	  m date id-sym subject-sym vect p-sym)
@@ -352,11 +403,11 @@ The full functionality of this function is not entirely clear.  USR,
 		   id-sym (delq m (vm-th-messages-of id-sym)))
 		  ;; remove m from the children list of its erstwhile parent
 		  (vm-thread-mark-for-summary-update 
-		   (vm-th-children-of id-sym))
+		   (vm-th-child-messages-of id-sym))
 		  (setq p-sym (vm-th-parent-of id-sym))
 		  (and p-sym 
 		       (vm-th-set-children-of 
-			p-sym (delq m (vm-th-children-of p-sym))))
+			p-sym (delq id-sym (vm-th-children-of p-sym))))
 		  ;; teset the thread dates of the m
 		  (setq date (vm-so-sortable-datestring message))
 		  (vm-th-set-youngest-date-of id-sym date)
@@ -377,11 +428,13 @@ The full functionality of this function is not entirely clear.  USR,
 				oldest-date (vm-so-sortable-datestring (car p))
 				p (cdr p))
 			  (while p
-			    (if (and (string-lessp (vm-so-sortable-datestring (car p))
-						   oldest-date)
+			    (if (and (string-lessp 
+				      (vm-so-sortable-datestring (car p))
+				      oldest-date)
 				     (not (eq m (car p))))
 				(setq oldest-msg (car p)
-				      oldest-date (vm-so-sortable-datestring (car p))))
+				      oldest-date 
+				      (vm-so-sortable-datestring (car p))))
 			    (setq p (cdr p)))
 			  (aset vect 0 (intern (vm-su-message-id oldest-msg)
 					       vm-thread-obarray))
@@ -395,7 +448,8 @@ The full functionality of this function is not entirely clear.  USR,
 			    (vm-thread-mark-for-summary-update children)))))))))
 	  (setq mp (cdr mp))))))
 
-(defun vm-th-references (m)
+;;;###autoload
+(defun vm-references (m)
   "Returns the cached references list of message M.  If the cache is
 nil, retrieves the references list from the headers and caches it.
 USR, 2010-03-13"
@@ -406,13 +460,14 @@ USR, 2010-03-13"
 	 (setq references (vm-get-header-contents m "References:" " "))
 	 (and references (vm-parse references "[^<]*\\(<[^>]+>\\)"))))))
 
-(defun vm-th-parent (m)
+;;;###autoload
+(defun vm-parent (m)
   "Returns the cached parent message of message M (in its thread).  If
 the cache is nil, calculates the parent and caches it.  USR, 2010-03-13"
   (or (vm-parent-of m)
       (vm-set-parent-of
        m
-       (or (car (vm-last (vm-th-references m)))
+       (or (car (vm-last (vm-references m)))
 	   (let (in-reply-to ids id)
 	     (setq in-reply-to (vm-get-header-contents m "In-Reply-To:" " ")
 		   ids (and in-reply-to (vm-parse in-reply-to
@@ -443,6 +498,56 @@ calculates the thread-list and caches it.  USR, 2010-03-13"
       (progn
 	(vm-set-thread-list-of m (vm-thread-list m))
 	(vm-thread-list-of m))))
+
+;;;###autoload
+(defun vm-th-thread-subtree (m-sym)
+  "Returns a list of messages that are in the thread subtree of
+an interned message id M-SYM.  Threads should have been built
+for this function to work.  Otherwise it returns nil."
+    (if (not (vectorp vm-thread-obarray))
+	nil
+      (or (vm-th-thread-subtree-of m-sym)
+	  ;; otherwise calcuate the thread-subtree
+	  (let ((list (list m-sym))
+		(loop-obarray (make-vector 29 0))
+		subject-sym id-sym
+		result)
+	    (while list
+	      (setq id-sym (car list))
+	      (if (and (vm-th-messages-of id-sym)
+		       (not (memq (car (vm-th-messages-of id-sym)) result)))
+		  (setq result (append (vm-th-messages-of id-sym) result)))
+	      (when (null (intern-soft (symbol-name id-sym) loop-obarray))
+		(intern (symbol-name id-sym) loop-obarray)
+		(nconc list (copy-sequence (vm-th-children-of id-sym)))
+		(mapcar 
+		 (lambda (m)
+		   (setq subject-sym (intern (vm-so-sortable-subject m)
+					     vm-thread-subject-obarray))
+		   (if (and (boundp subject-sym) 
+			    (eq id-sym (aref (symbol-value subject-sym) 0)))
+		       (nconc list (copy-sequence
+				    (aref (symbol-value subject-sym)
+					  2)))))
+		 (vm-th-messages-of id-sym)))
+	      (setq list (cdr list)))
+	    (vm-th-set-thread-subtree-of m-sym result)
+	    result))))
+
+;;;###autoload
+(defun vm-th-thread-count (m)
+  "Returns the number of messages in the thread-subtree of message M.
+Threads should have been built for this function to work."
+  (with-current-buffer (vm-buffer-of m)
+    (length (vm-th-thread-subtree 
+	     (intern (vm-su-message-id m) vm-thread-obarray)))))
+
+;;;###autoload
+(defun vm-th-thread-symbol (m)
+  "Returns the interned symbol of message M which carries the
+threading information."
+  (with-current-buffer (vm-buffer-of m)
+    (intern (vm-su-message-id m) vm-thread-obarray)))
 
 (provide 'vm-thread)
 

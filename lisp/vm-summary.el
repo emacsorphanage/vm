@@ -1596,6 +1596,9 @@ Call this function if you made changes to `vm-summary-format'."
       (vm-mark-for-summary-update (car mp))
       (vm-set-stuff-flag-of (car mp) t)
       (setq mp (cdr mp)))
+    ;; Erase threading information
+    (setq vm-thread-obarray nil
+	  vm-thread-subject-obarray nil)
     ;; Generate fresh summary data and stuff it
 ;;     (message "Stuffing cached data...")
 ;;     (vm-stuff-folder-data nil)

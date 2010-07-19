@@ -5556,6 +5556,7 @@ The beginning and the ending positions of each message summary line are
 stored in the message's soft data vector. @pxref{Message Internals}.
 The positions within the summary line have text-properties set, which
 give the data about the message:
+
 @itemize
 @item
 @code{vm-message}.  The message struct for which this line is a summary.
@@ -5566,6 +5567,8 @@ this property gives the message struct of the root of the thread.
 @code{thread-count}.  If this message is the root of a message thread,
 then this property gives the number of messages that form the thread.
 @end itemize
+
+@unnumberedsubsec Threading
 
 @vindex vm-thread-obarray
 @vindex vm-subject-obarray
@@ -5581,18 +5584,41 @@ information for each message ID:
 
 @itemize
 @item messages.
-The message structs that carry this message ID.  (Why are there several
-of them?)
+The message structs that carry this message ID.  (There could be
+duplicate copies of a message with the same message ID.)
 @item date.
 The date of the message.
 @item parent.
-The interned message ID of the parent of this message.
+The interned message ID of the parent of this message.  (The folder
+may or may not contain a message with this ID.)
 @item children.
-The interned message ID's of all the children of this message.
+The interned message ID's of all the children of this message.  (The
+folder may or may not contain messages with these ID's.)
+@item thread-subtree.
+A list of all the messages contained in the subtree of this message.
+(These are actual messages contained in the folder.)
 @item youngest-date.
 The date of the youngest message in the thread.
 @item oldest-date.
 The date of the oldest message in the thread.
+@end itemize
+
+The @code{vm-thread-subject-obarray} interns each subject string found
+in the folder and maps it to a vector containing the following elements:
+
+@itemize
+@item id-sym.
+The interned message ID of what is likely to be the root of the
+thread, which is, at any rate, the oldest message in this thread.
+@item date.
+The date of the root message.
+@item visible-roots.
+A list of messages in the folder that belong to this thread, but whose
+parent messages are not in the folder.  These are thus us the visible
+root messages of the thread.  The presumed real root of the thread is
+not included among these messages.
+@item messages.
+The list of all the messages in the folder that belong to this thread.
 @end itemize
 
 
