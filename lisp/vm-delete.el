@@ -47,7 +47,8 @@ only marked messages are deleted, other messages are ignored."
       (if (not (vm-deleted-flag (car mlist)))
 	  (progn
 	    (vm-set-deleted-flag (car mlist) t)
-	    (vm-increment del-count)))
+	    (vm-increment del-count)
+	    (vm-expand-thread)))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-delete-message vm-delete-message-backward)
 		(list this-command))
