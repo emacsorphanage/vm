@@ -4890,9 +4890,7 @@ windows.  (This functionality is still experimental.)"
 (defcustom vm-summary-show-thread-count t
   "*If non-nil, thread folding displays the count of messages in
 a thread along with the message number of the thread root.  Note
-that this takes up 3 extra characters in each summary line, and
-will only take effect if the number specifier is the first
-position of `vm-summary-format'"
+that this takes up 3 extra characters in each summary line."
   :group 'vm
   :type 'boolean)
 

@@ -28,6 +28,36 @@
 (eval-when-compile
   (require 'vm-vars))
 
+(defsubst vm-summary-padded-thread-count (m)
+  "Returns a formatted thread count of the message M, usable in
+summary display."
+  (let ((count (vm-th-thread-count m)))
+    (if (> count 1)
+	(format "+%-2s" (1- (vm-th-thread-count m)))
+      "   ")))
+
+(defsubst vm-summary-message-number-thread-descendant (m)
+  "Returns the message number of M, padded with spaces to display as
+an interior message of a thread."
+  (concat "  " (vm-padded-number-of m) " "))
+
+(defsubst vm-summary-thread-expanded-p (m)
+  (save-excursion
+    (goto-char (vm-su-start-of m))
+    (looking-at "-")))
+
+(defsubst vm-summary-mark-thread-collapsed (m)
+  (save-excursion
+    (goto-char (vm-su-start-of m))
+    (delete-char 1)
+    (insert "+")))
+
+(defsubst vm-summary-mark-thread-expanded (m)
+  (save-excursion
+    (goto-char (vm-su-start-of m))
+    (delete-char 1)
+    (insert "-")))
+
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"
 	major-mode 'vm-summary-mode
@@ -122,14 +152,7 @@ mandatory."
 argument START-POINT (a list of messages) or, if it is nil, all
 the messages in the current folder."
   (let ((m-list (or start-point vm-message-list))
-	(show-thread-count (and vm-summary-show-thread-count
-				(eq (string-match "%-?[0-9]*\.?[0-9]*n" 
-						  vm-summary-format) 0)))
-	mp m 
-	tr trs tre 			; thread root, start, end
-	ntc 				; thread count
-	mmmr mmm nm
-	summary
+	mp m root
 	(n 0)
 	(modulus 100)
 	(do-mouse-track (and vm-mouse-track-summary
@@ -158,7 +181,6 @@ the messages in the current folder."
 	      ;; insertions are done.
 	      (while mp
                 (setq m (car mp))
-		(setq summary (vm-su-summary m))
 		(vm-set-su-start-of m (point))
 		(insert vm-summary-no-=>)
 		(vm-tokenized-summary-insert m (vm-su-summary m))
@@ -167,58 +189,19 @@ the messages in the current folder."
                   (put-text-property s e 'vm-message m)
                   (when (and vm-summary-enable-thread-folding
                              vm-summary-show-threads)
-                    (if (= 0 (vm-thread-indentation-of m))
-                        (setq tr m trs s tre e ntc 0)
-                      (save-excursion
-			(when (null tr)
-			  (setq mmm (get-text-property 
-				     (- (vm-su-start-of m) 3) 'vm-message))
-			  (setq mmmr (vm-th-thread-root mmm))
-			  (if mmmr (setq tr mmmr) (setq tr mmm))
-			  (setq trs (vm-su-start-of tr) tre (vm-su-end-of tr))
-			  ;; this sucks, do we really have to recount
-			  ;; all of the threads 
-			  ;; for this root message? 
-			  (setq ntc -1)
-			  (setq nm (get-text-property 
-				    (+ (vm-su-end-of tr) 3) 'vm-message))
-			  ;;(message "next message is: %s" nm)
-			  (while (and (not (null nm)) 
-				      (> (vm-thread-indentation-of nm) 0))
-			    (setq ntc (1+ ntc))
-			    (if (< (+ (vm-su-end-of nm) 3) (buffer-size))
-				(setq nm (get-text-property 
-					  (+ (vm-su-end-of nm) 3) 'vm-message))
-			      (setq nm nil))))
-			(when (and tr trs
-				   (save-excursion
-				     (goto-char (vm-su-start-of tr))
-				     (not (looking-at "-"))))
-			  (unless (vm-new-flag m)
-			    (put-text-property s e 'invisible t))
-			  (goto-char (vm-su-start-of tr))
-			  (delete-char 1)
-			  (insert "+"))
-			;; (put-text-property s e 'thread-root tr)
-			(setq ntc (1+ ntc))
-			(goto-char (+ (vm-su-start-of tr) 5 
-				      (- (length (vm-padded-number-of m)) 3)))
-			(put-text-property
-			 (vm-su-start-of tr) (vm-su-end-of tr)
-			 'thread-count ntc)
-			(when show-thread-count
-			  (delete-char 3)
-			  (insert (format "+%-2s" ntc)))
-			))))    
-	      (setq mp (cdr mp) n (1+ n))
-	      (when (zerop (% n modulus))
-		(message "Generating summary... %d" n)
-		(if debug (debug "vm-debug-summary: Generating summary"))
-		(setq debug nil)))
+                    (when (> (vm-thread-indentation-of m) 0)
+		      (setq root (vm-th-thread-root m))
+		      (when (and root (not (vm-summary-thread-expanded-p root)))
+			(unless (vm-new-flag m)
+			  (put-text-property s e 'invisible t))
+			(vm-summary-mark-thread-collapsed root))
+		      )))
+		(setq mp (cdr mp) n (1+ n))
+		(when (zerop (% n modulus))
+		  (message "Generating summary... %d" n)
+		  (if debug (debug "vm-debug-summary: Generating summary"))
+		  (setq debug nil)))
 	      ;; now convert the ints to markers.
-	      ;; no need for another message - it is fast enough
-	      ;; (if (>= n modulus)
-	      ;;    (message "Generating summary markers... "))
 	      (setq mp m-list)
 	      (while mp
 		(setq m (car mp))
@@ -289,11 +272,11 @@ moving the pointer to the thread root after collapsing."
     (vm-follow-summary-cursor)
     (set-buffer vm-summary-buffer))
   (let ((buffer-read-only nil)
-	root next)
+	msg root next)
     (save-excursion
-      (setq root (vm-th-thread-root
-		  (get-text-property (+ (point) 3) 'vm-message)))
-      (when (get-text-property (+ (vm-su-start-of root) 3) 'thread-count)
+      (setq msg (get-text-property (+ (point) 3) 'vm-message))
+      (setq root (vm-th-thread-root msg))
+      (when (and (eq msg root) (> (vm-th-thread-count msg) 1))
 	(save-excursion	    
 	  (goto-char (vm-su-start-of root))
 	  (insert "+")
@@ -404,12 +387,7 @@ buffer by a regenerated summary line."
 	  (setq summary (vm-su-summary m))
 	  (set-buffer (marker-buffer (vm-su-start-of m)))
 	  (let ((buffer-read-only nil)
-		(show-thread-count
-		 (and vm-summary-show-thread-count
-		      (eq 0 (string-match 
-			     "%-?[0-9]*\.?[0-9]*n" 
-			     (vm-folder-buffer-value 'vm-summary-format)))))
-		n s e root i
+		s e root i
 		(selected nil)
 		(indicator nil)
 		(modified (buffer-modified-p)))
@@ -446,7 +424,6 @@ buffer by a regenerated summary line."
 		  (setq s (vm-su-start-of m))
 		  (setq e (vm-su-end-of m))
 		  (setq root (vm-th-thread-root m))
-		  (setq n (get-text-property (+ s 2) 'thread-count))
 		  (setq i (get-text-property (+ s 2) 'invisible))
 		  (delete-region (point) (1- (vm-su-end-of m)))		  
 		  (if (not selected)		     
@@ -456,12 +433,6 @@ buffer by a regenerated summary line."
 		      (insert vm-summary-=>)))
 		  (vm-tokenized-summary-insert m (vm-su-summary m))
 	          (delete-char 1)
-		  (when (and n show-thread-count)
-		    (goto-char 
-		     (+ (vm-su-start-of m) 5 
-			(- (length (vm-padded-number-of m)) 3)))
-		    (delete-char 3)
-		    (insert (format "+%-2s" n)))
 		  (run-hooks 'vm-summary-update-hook)
 		  (and do-mouse-track
 		       (vm-mouse-set-mouse-track-highlight
@@ -472,8 +443,6 @@ buffer by a regenerated summary line."
 		      (vm-summary-highlight-region (vm-su-start-of m) (point)
 						   vm-summary-highlight-face)))
 	      (set-buffer-modified-p modified)
-	      (if (eq m root)
-		  (put-text-property s e 'thread-count n))
 	      (put-text-property s e 'vm-message m)
 	      (put-text-property s e 'invisible i)
 	      ))))))
@@ -499,7 +468,8 @@ buffer by a regenerated summary line."
 		    (goto-char (vm-su-start-of vm-summary-pointer))
 		    (if (not (get-text-property (+ (point) 3) 'invisible))
 			(progn 
-			  (if (get-text-property (+ (point) 3) 'thread-count)
+			  (if (and (eq m (vm-th-thread-root m))
+				   (> (vm-th-thread-count m) 1))
 			      (if (looking-at "+") 
 				  (progn (insert "+ ") 
 					 (delete-char (length vm-summary-=>)))
@@ -689,20 +659,16 @@ tokenized summary TOKENS."
 						     (- end start))))))))
 		 (setq group-list (cdr group-list))))
 	      ((eq token 'number)
-	       (let (mynum)
-		 (if (and vm-summary-show-thread-count 
-			  vm-summary-enable-thread-folding
-			  vm-summary-show-threads
-			  (eq (string-match "%-?[0-9]*\.?[0-9]*n" 
-					    vm-summary-format) 0))
-		     (if (> (vm-th-thread-indentation message) 0)
-			 (setq mynum (concat "  " 
-					     (vm-padded-number-of message)
-					     " ")) 
-		       (setq mynum (concat (vm-padded-number-of message) 
-					   "   ")))
-		   (setq mynum (vm-padded-number-of message)))
-		 (insert mynum)))
+	       (if (and vm-summary-enable-thread-folding
+			vm-summary-show-threads
+			vm-summary-show-thread-count)
+		   (if (= (vm-th-thread-indentation message) 0)
+		       (insert
+			(concat (vm-padded-number-of message) 
+				(vm-summary-padded-thread-count message)))
+		     (insert
+		      (vm-summary-message-number-thread-descendant message)))
+		 (insert (vm-padded-number-of message))))
 	      ((eq token 'mark)
 	       (insert (vm-su-mark message)))
 	      ((eq token 'thread-indent)
@@ -1611,8 +1577,8 @@ Call this function if you made changes to `vm-summary-format'."
       (vm-set-stuff-flag-of (car mp) t)
       (setq mp (cdr mp)))
     ;; Erase threading information
-    (setq vm-thread-obarray nil
-	  vm-thread-subject-obarray nil)
+    (setq vm-thread-obarray 'bonk
+	  vm-thread-subject-obarray 'bonk)
     ;; Generate fresh summary data and stuff it
 ;;     (message "Stuffing cached data...")
 ;;     (vm-stuff-folder-data nil)

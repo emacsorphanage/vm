@@ -585,9 +585,6 @@ Threads should have been built for this function to work."
     (length (vm-th-thread-subtree 
 	     (intern (vm-su-message-id m) vm-thread-obarray)))))
 
-
-
-
 (provide 'vm-thread)
 
 ;;; vm-thread.el ends here

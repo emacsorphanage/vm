@@ -350,6 +350,8 @@ Toolbars are updated."
 		   (and vm-use-toolbar
 			(vm-toolbar-support-possible-p)
 			(vm-toolbar-update-toolbar))
+		   (when vm-summary-show-threads
+		     (vm-build-threads-if-unbuilt))
 		   (vm-do-needed-renumbering)
 		   (when vm-summary-buffer
 		       (vm-do-needed-summary-rebuild))
