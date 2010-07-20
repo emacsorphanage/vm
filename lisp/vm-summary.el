@@ -173,8 +173,7 @@ the messages in the current folder."
 			(when (null tr)
 			  (setq mmm (get-text-property 
 				     (- (vm-su-start-of m) 3) 'vm-message))
-			  (setq mmmr (get-text-property 
-				      (+ (vm-su-start-of mmm) 2) 'thread-root))
+			  (setq mmmr (vm-th-thread-root mmm))
 			  (if mmmr (setq tr mmmr) (setq tr mmm))
 			  (setq trs (vm-su-start-of tr) tre (vm-su-end-of tr))
 			  ;; this sucks, do we really have to recount
@@ -200,7 +199,7 @@ the messages in the current folder."
 			  (goto-char (vm-su-start-of tr))
 			  (delete-char 1)
 			  (insert "+"))
-			(put-text-property s e 'thread-root tr)
+			;; (put-text-property s e 'thread-root tr)
 			(setq ntc (1+ ntc))
 			(goto-char (+ (vm-su-start-of tr) 5 
 				      (- (length (vm-padded-number-of m)) 3)))
@@ -257,11 +256,10 @@ thread can be collapsed."
 	root next)
     (save-excursion
       (forward-line 0)
-      (setq root (get-text-property (+ (point) 3) 'thread-root))
-      (when (null root)
-	(setq root (get-text-property (+ (point) 3) 'vm-message)))
+      (setq root (vm-th-thread-root
+		  (get-text-property (+ (point) 3) 'vm-message)))
       (save-excursion	    
-	(goto-char (vm-su-start-of  root))
+	(goto-char (vm-su-start-of root))
 	(insert "-")
 	(delete-char 1))
       (setq next (get-text-property 
@@ -293,9 +291,8 @@ moving the pointer to the thread root after collapsing."
   (let ((buffer-read-only nil)
 	root next)
     (save-excursion
-      (setq root (get-text-property (+ (point) 3) 'thread-root))
-      (when (null root)
-	(setq root (get-text-property (+ (point) 3) 'vm-message)))
+      (setq root (vm-th-thread-root
+		  (get-text-property (+ (point) 3) 'vm-message)))
       (when (get-text-property (+ (vm-su-start-of root) 3) 'thread-count)
 	(save-excursion	    
 	  (goto-char (vm-su-start-of root))
@@ -343,9 +340,8 @@ the threads are shown in the Summary window."
       (vm-follow-summary-cursor))
   (with-current-buffer vm-summary-buffer
     (let ((root nil))
-      (setq root (get-text-property (+ (point) 3) 'thread-root))
-      (when (null root)
-	(setq root (get-text-property (+ (point) 3) 'vm-message)))
+      (setq root (vm-th-thread-root
+		  (get-text-property (+ (point) 3) 'vm-message)))
       (save-excursion
 	(goto-char 0)
 	(while (search-forward-regexp "^-" nil t)
@@ -365,9 +361,8 @@ of action."
     (set-buffer vm-summary-buffer)
     (let ((buffer-read-only nil)
 	  root next)
-      (setq root (get-text-property (+ (point) 3) 'thread-root))
-      (when (null root)
-	(setq root (get-text-property (+ (point) 3) 'vm-message)))
+      (setq root (vm-th-thread-root
+		  (get-text-property (+ (point) 3) 'vm-message)))
       (if (save-excursion (goto-char (vm-su-start-of root))
 			  (looking-at "+"))
 	  (vm-expand-thread) 
@@ -450,7 +445,7 @@ buffer by a regenerated summary line."
 		  (goto-char (vm-su-start-of m))
 		  (setq s (vm-su-start-of m))
 		  (setq e (vm-su-end-of m))
-		  (setq root (get-text-property (+ s 2) 'thread-root))
+		  (setq root (vm-th-thread-root m))
 		  (setq n (get-text-property (+ s 2) 'thread-count))
 		  (setq i (get-text-property (+ s 2) 'invisible))
 		  (delete-region (point) (1- (vm-su-end-of m)))		  
@@ -477,8 +472,7 @@ buffer by a regenerated summary line."
 		      (vm-summary-highlight-region (vm-su-start-of m) (point)
 						   vm-summary-highlight-face)))
 	      (set-buffer-modified-p modified)
-	      (if (not (null root))
-		  (put-text-property s e 'thread-root root) 
+	      (if (eq m root)
 		  (put-text-property s e 'thread-count n))
 	      (put-text-property s e 'vm-message m)
 	      (put-text-property s e 'invisible i)
