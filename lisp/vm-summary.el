@@ -43,20 +43,24 @@ an interior message of a thread."
 
 (defsubst vm-summary-thread-expanded-p (m)
   (save-excursion
-    (goto-char (vm-su-start-of m))
-    (looking-at "-")))
+    (and (vm-su-start-of m)
+	 (progn
+	   (goto-char (vm-su-start-of m))
+	   (looking-at "-")))))
 
 (defsubst vm-summary-mark-thread-collapsed (m)
   (save-excursion
-    (goto-char (vm-su-start-of m))
-    (delete-char 1)
-    (insert "+")))
+    (when (vm-su-start-of m)
+      (goto-char (vm-su-start-of m))
+      (delete-char 1)
+      (insert "+"))))
 
 (defsubst vm-summary-mark-thread-expanded (m)
   (save-excursion
-    (goto-char (vm-su-start-of m))
-    (delete-char 1)
-    (insert "-")))
+    (when (vm-su-start-of m)
+      (goto-char (vm-su-start-of m))
+      (delete-char 1)
+      (insert "-"))))
 
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"
