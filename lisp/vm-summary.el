@@ -248,7 +248,7 @@ thread can be collapsed."
   (unless vm-summary-enable-thread-folding 
     (error "Thread folding not enabled"))
   (when (interactive-p)
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-and-validate)
     (unless vm-summary-show-threads
       (error "Summary is not sorted by threads"))
     (vm-follow-summary-cursor)
@@ -285,7 +285,7 @@ moving the pointer to the thread root after collapsing."
   (unless vm-summary-enable-thread-folding 
     (error "Thread folding not enabled"))
   (when (interactive-p)
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-and-validate)
     (unless vm-summary-show-threads
       (error "Summary is not sorted by threads"))
     (vm-follow-summary-cursor)
@@ -313,16 +313,18 @@ moving the pointer to the thread root after collapsing."
 			    (+ (vm-su-end-of next) 3) 'vm-message))
 	      (setq next nil))))))
     ;; move to the parent thread
-    (unless (or nomove (vm-new-flag 
-			(get-text-property (+ (point) 3) 'vm-message)))
-      (vm-select-folder-buffer)
-      (vm-goto-message (string-to-number (vm-number-of root))))))
+    (unless (or nomove 
+		(vm-new-flag (get-text-property (+ (point) 3) 'vm-message)))
+      (goto-char (vm-su-start-of root))
+      (save-excursion
+	(vm-select-folder-buffer)
+	(vm-goto-message (string-to-number (vm-number-of root)))))))
 	
 (defun vm-expand-all-threads ()
   "Expand all threads in the folder, which might have been collapsed
  (folded) earlier."
   (interactive)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate)
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (with-current-buffer vm-summary-buffer
@@ -336,7 +338,7 @@ moving the pointer to the thread root after collapsing."
   "Collapse (fold) all threads in the folder so that only the roots of
 the threads are shown in the Summary window."
   (interactive)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate)
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (with-current-buffer vm-summary-buffer
@@ -357,7 +359,7 @@ see `vm-expand-thread' and `vm-collapse-thread' for a description
 of action."
   (interactive)
   (when (and vm-summary-enable-thread-folding vm-summary-show-threads)
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-and-validate)
     (if (interactive-p)
 	(vm-follow-summary-cursor))
     (set-buffer vm-summary-buffer)
