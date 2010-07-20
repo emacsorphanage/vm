@@ -21,6 +21,46 @@
 
 ;;; Code:
 
+;; --------------------------------------------------------------------------
+;; The thread-obarray and thread-subject-obarray properties
+;;
+;; vm-th-thread-symbol : message -> symbol
+;; vm-th-thread-subject-symbol : message -> symbol
+;; vm-th-messages-of : symbol -> message list
+;; vm-th-children-of : symbol -> symbol list
+;; vm-th-child-messages-of : symbol -> message list
+;; vm-th-parent-of : symbol -> symbol
+;; vm-th-date-of : symbol -> string
+;; vm-th-youngest-date-of : symbol -> string
+;; vm-th-oldest-date-of : symbol -> string
+;; vm-th-thread-subtree-of : symbol -> message list
+;;
+;; Higher level operations
+;; 
+;; vm-parent : message -> string
+;; vm-references : message -> string list
+;; vm-th-thread-indentation : message -> integer
+;; vm-th-thread-list : message -> symbol list
+;; vm-th-thread-root : message -> message
+;; vm-th-thread-count : message -> integer
+;; --------------------------------------------------------------------------
+
+
+;;;###autoload
+(defun vm-th-thread-symbol (m)
+  "Returns the interned symbol of message M which carries the
+threading information."
+  (with-current-buffer (vm-buffer-of m)
+    (intern (vm-su-message-id m) vm-thread-obarray)))
+
+;;;###autoload
+(defun vm-th-thread-subject-symbol (m)
+  "Returns the interned symbol of message M which carries the
+subject-based threading information."
+  (with-current-buffer (vm-buffer-of m)
+    (intern (vm-su-subject m) vm-thread-subject-obarray)))
+
+
 (defun vm-th-youngest-date-of (id-sym)
   (get id-sym 'youngest-date))
 
@@ -45,6 +85,15 @@
 (defsubst vm-th-set-messages-of (id-sym ml)
   (put id-sym 'messages ml))
 
+(defsubst vm-th-parent-of (id-sym)
+  (get id-sym 'parent))
+
+(defsubst vm-th-set-parent-of (id-sym p-sym)
+  ;; For safety, set the symbol-value to nil
+  (unless (boundp id-sym)
+    (set id-sym nil))
+  (put id-sym 'parent p-sym))
+
 (defsubst vm-th-children-of (id-sym)
   (get id-sym 'children))
 
@@ -61,27 +110,6 @@
 
 (defsubst vm-th-set-children-of (id-sym ml)
   (put id-sym 'children ml))
-
-(defsubst vm-th-descendants-of (id-sym)
-  (get id-sym 'descendants))
-
-(defsubst vm-th-set-descendants-of (id-sym ml)
-  (put id-sym 'descendants ml))
-
-;; (defsubst vm-th-parent-of (id-sym)
-;;   (and (boundp id-sym) (symbol-value id-sym)))
-
-;; (defsubst vm-th-set-parent-of (id-sym p-sym)
-;;   (set id-sym p-sym))
-
-(defsubst vm-th-parent-of (id-sym)
-  (get id-sym 'parent))
-
-(defsubst vm-th-set-parent-of (id-sym p-sym)
-  ;; For safety, set the symbol-value to nil
-  (unless (boundp id-sym)
-    (set id-sym nil))
-  (put id-sym 'parent p-sym))
 
 (defsubst vm-th-date-of (id-sym)
   (get id-sym 'date))
@@ -500,6 +528,21 @@ calculates the thread-list and caches it.  USR, 2010-03-13"
 	(vm-thread-list-of m))))
 
 ;;;###autoload
+(defun vm-th-thread-root (m)
+  "Returns the root message of M.  If there are multiple messages with
+the same message ID, one of them is chosen arbitrarily."
+  (let ((m-sym (vm-th-thread-symbol m))
+	(list (vm-th-thread-list m))
+	id-sym)
+    (catch 'return
+      (while list
+	(setq id-sym (car list))
+	(if (vm-th-messages-of id-sym)
+	    (throw 'return (car (vm-th-messages-of id-sym))))
+	(setq list (cdr list)))
+      nil)))
+
+;;;###autoload
 (defun vm-th-thread-subtree (m-sym)
   "Returns a list of messages that are in the thread subtree of
 an interned message id M-SYM.  Threads should have been built
@@ -542,19 +585,6 @@ Threads should have been built for this function to work."
     (length (vm-th-thread-subtree 
 	     (intern (vm-su-message-id m) vm-thread-obarray)))))
 
-;;;###autoload
-(defun vm-th-thread-symbol (m)
-  "Returns the interned symbol of message M which carries the
-threading information."
-  (with-current-buffer (vm-buffer-of m)
-    (intern (vm-su-message-id m) vm-thread-obarray)))
-
-;;;###autoload
-(defun vm-th-thread-subject-symbol (m)
-  "Returns the interned symbol of message M which carries the
-subject-based threading information."
-  (with-current-buffer (vm-buffer-of m)
-    (intern (vm-su-subject m) vm-thread-subject-obarray)))
 
 
 
