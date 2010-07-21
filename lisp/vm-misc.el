@@ -392,9 +392,11 @@ vm-mail-buffer variable."
 	(with-current-buffer buffer
 	  (set-buffer-multibyte nil) 
 	  buffer)
-      (if (with-current-buffer buffer (not enable-multibyte-characters))
-	  buffer
-	(error "VM internal error #1922: buffer is not unibyte")))))
+      ;; This error checking only works on FSF
+      (with-current-buffer buffer 
+	(when (and vm-fsfemacs-p (not enable-multibyte-characters))
+	  (error "VM internal error #1922: buffer is not unibyte")))
+      buffer)))
 
 (defun vm-generate-new-multibyte-buffer (name)
   (let* ((default-enable-multibyte-characters t)
@@ -404,10 +406,11 @@ vm-mail-buffer variable."
 	(with-current-buffer buffer
 	  (set-buffer-multibyte t) 
 	  buffer)
-      (if (with-current-buffer buffer enable-multibyte-characters)
-	  buffer
-	(error "VM internal error #1923: buffer is not multibyte")))))
-
+      ;; This error checking only works on FSF
+      (with-current-buffer buffer 
+	(when (and vm-fsfemacs-p enable-multibyte-characters)
+	  (error "VM internal error #1922: buffer is not unibyte")))
+      buffer)))
 
 (defun vm-make-local-hook (hook)
   (if (fboundp 'make-local-hook)	; Emacs/XEmacs 21
