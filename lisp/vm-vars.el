@@ -4905,7 +4905,7 @@ you move out of the thread."
 (defvar vm-summary-threads-collapsed t
   "If non-nil, indicates that threads should be
 folded (collapsed) in VM summary windows.")
-
+(make-variable-buffer-local 'vm-summary-threads-collapsed)
 
 (defvar vm-summary-mode-map vm-mode-map
   "Keymap for VM Summary mode")

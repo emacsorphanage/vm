@@ -174,6 +174,8 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
       (vm-th-set-parent-of id-sym nil)
       (when parent
 	(setq parent-sym (intern parent vm-thread-obarray))
+	(vm-th-set-thread-subtree-of
+	 parent-sym nil)	; force it to be rebuilt
 	(cond ((or (null (vm-th-parent-of id-sym))
 		   (eq (vm-th-parent-of id-sym) parent-sym))
 	       (vm-th-set-parent-of id-sym parent-sym))
@@ -203,6 +205,8 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 	  (let (parent-sym id-sym msgs msg-syms)
 	    (setq parent-sym (intern (car refs) vm-thread-obarray)
 		  refs (cdr refs))
+	    (vm-th-set-thread-subtree-of
+	     parent-sym nil)	; force it to be rebuilt
 	    (while refs
 	      (setq id-sym (intern (car refs) vm-thread-obarray))
 	      (if (vm-th-parent-of id-sym)
@@ -221,6 +225,8 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 		 (cons id-sym (vm-th-children-of parent-sym)))
 		(if schedule-reindents
 		    (vm-thread-mark-for-summary-update msgs)))
+	      (vm-th-set-thread-subtree-of
+	       id-sym nil)	; force it to be rebuilt
 	      (setq parent-sym id-sym
 		    refs (cdr refs)))))
       (setq mp (cdr mp) n (1+ n))
@@ -546,36 +552,36 @@ the same message ID, one of them is chosen arbitrarily."
 (defun vm-th-thread-subtree (m-sym)
   "Returns a list of messages that are in the thread subtree of
 an interned message id M-SYM.  Threads should have been built
-for this function to work.  Otherwise it returns nil."
-    (if (not (vectorp vm-thread-obarray))
-	nil
-      (or (vm-th-thread-subtree-of m-sym)
-	  ;; otherwise calcuate the thread-subtree
-	  (let ((list (list m-sym))
-		(loop-obarray (make-vector 29 0))
-		subject-sym id-sym
-		result)
-	    (while list
-	      (setq id-sym (car list))
-	      (if (and (vm-th-messages-of id-sym)
-		       (not (memq (car (vm-th-messages-of id-sym)) result)))
-		  (setq result (append (vm-th-messages-of id-sym) result)))
-	      (when (null (intern-soft (symbol-name id-sym) loop-obarray))
-		(intern (symbol-name id-sym) loop-obarray)
-		(nconc list (copy-sequence (vm-th-children-of id-sym)))
-		(mapc
-		 (lambda (m)
-		   (setq subject-sym (intern (vm-so-sortable-subject m)
-					     vm-thread-subject-obarray))
-		   (if (and (boundp subject-sym) 
-			    (eq id-sym (aref (symbol-value subject-sym) 0)))
-		       (nconc list (copy-sequence
-				    (aref (symbol-value subject-sym)
-					  2)))))
-		 (vm-th-messages-of id-sym)))
-	      (setq list (cdr list)))
-	    (vm-th-set-thread-subtree-of m-sym result)
-	    result))))
+for this function to work."
+  (or (vm-th-thread-subtree-of m-sym)
+      ;; otherwise calcuate the thread-subtree
+      (let ((list (list m-sym))
+	    (loop-obarray (make-vector 29 0))
+	    subject-sym id-sym
+	    result)
+	(while list
+	  (setq id-sym (car list))
+	  (if (and (vm-th-messages-of id-sym)
+		   (not (memq (car (vm-th-messages-of id-sym)) result)))
+	      (setq result (append (vm-th-messages-of id-sym) result)))
+	  (when (null (intern-soft (symbol-name id-sym) loop-obarray))
+	    (intern (symbol-name id-sym) loop-obarray)
+	    (nconc list (copy-sequence (vm-th-children-of id-sym)))
+	    (mapc
+	     (lambda (m)
+	       (setq subject-sym 
+		     (intern (vm-so-sortable-subject m)
+			     (with-current-buffer (vm-buffer-of m)
+			       vm-thread-subject-obarray)))
+	       (if (and (boundp subject-sym) 
+			(eq id-sym (aref (symbol-value subject-sym) 0)))
+		   (nconc list (copy-sequence
+				(aref (symbol-value subject-sym)
+				      2)))))
+	     (vm-th-messages-of id-sym)))
+	  (setq list (cdr list)))
+	(vm-th-set-thread-subtree-of m-sym result)
+	result)))
 
 ;;;###autoload
 (defun vm-th-thread-count (m)
