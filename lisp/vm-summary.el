@@ -451,18 +451,19 @@ buffer by a regenerated summary line."
 	  (unwind-protect
 	      (progn
 		(set-buffer vm-summary-buffer)
-		(if w
-		    (progn
-		      (setq old-window (selected-window))
-		      (select-window w)))
+		(when w
+		  (setq old-window (selected-window))
+		  (select-window w))
 		(let ((buffer-read-only nil))
 		  (when (and vm-summary-pointer
 			     (vm-su-start-of vm-summary-pointer))
 		    (goto-char (vm-su-start-of vm-summary-pointer))
 		    (if (not (get-text-property (+ (point) 3) 'invisible))
-			(progn 
-			  (if (and (eq m (vm-th-thread-root m))
-				   (> (vm-th-thread-count m) 1))
+			(let ((msg (vm-summary-message-at-point)))
+			  (if (and vm-summary-show-threads
+				   vm-summary-enable-thread-folding
+				   (eq msg (vm-th-thread-root msg))
+				   (> (vm-th-thread-count msg) 1))
 			      (if (looking-at "+") 
 				  (progn (insert "+ ") 
 					 (delete-char (length vm-summary-=>)))
