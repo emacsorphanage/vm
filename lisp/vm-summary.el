@@ -407,6 +407,9 @@ buffer by a regenerated summary line."
 		  (setq indicator (if (looking-at "-") "-" 
 				    (if (looking-at "+") "+"
 				      nil)))
+		  (unless (and (eq m (vm-th-thread-root m))
+			       (> (vm-th-thread-count m) 1))
+		    (setq indicator nil))
 		  ;; We do a little dance to update the text in
 		  ;; order to make the markers in the text do
 		  ;; what we want.
