@@ -37,12 +37,18 @@
 ;;
 ;; Higher level operations
 ;; 
+;; vm-th-thread-root : message or symbol -> message
+;; vm-th-thread-subtree : message or symbol -> message list
+;; vm-th-thread-count : message or symbol -> integer
+;;
+;; Message-level operations which appear here for some obscure reason
+;; 
 ;; vm-parent : message -> string
+;;      (aliased to vm-th-parent)
 ;; vm-references : message -> string list
-;; vm-th-thread-indentation : message -> integer
+;;	(aliased to vm-th-references)
+;; vm-th-thread-indentation : message -> integer  
 ;; vm-th-thread-list : message -> symbol list
-;; vm-th-thread-root : message -> message
-;; vm-th-thread-count : message -> integer
 ;; --------------------------------------------------------------------------
 
 
@@ -493,6 +499,7 @@ USR, 2010-03-13"
        (let (references)
 	 (setq references (vm-get-header-contents m "References:" " "))
 	 (and references (vm-parse references "[^<]*\\(<[^>]+>\\)"))))))
+(fset 'vm-th-references 'vm-references)
 
 ;;;###autoload
 (defun vm-parent (m)
@@ -512,6 +519,7 @@ the cache is nil, calculates the parent and caches it.  USR, 2010-03-13"
 	       (setq ids (cdr ids)))
 	     (and id (vm-set-references-of m (list id)))
 	     id )))))
+(fset 'vm-th-parent 'vm-parent)
 
 ;;;###autoload
 (defun vm-th-thread-indentation (m)
@@ -535,9 +543,10 @@ calculates the thread-list and caches it.  USR, 2010-03-13"
 
 ;;;###autoload
 (defun vm-th-thread-root (m)
-  "Returns the root message of M.  If there are multiple messages with
-the same message ID, one of them is chosen arbitrarily."
-  (let ((m-sym (vm-th-thread-symbol m))
+  "Returns the root message of M.  M can be either a message or
+the interned symbol of M.  If there are multiple messages with
+the same root message ID, one of them is chosen arbitrarily."
+  (let ((m-sym (if (symbolp m) m (vm-th-thread-symbol m)))
 	(list (vm-th-thread-list m))
 	id-sym)
     (catch 'return
@@ -549,13 +558,16 @@ the same message ID, one of them is chosen arbitrarily."
       nil)))
 
 ;;;###autoload
-(defun vm-th-thread-subtree (m-sym)
-  "Returns a list of messages that are in the thread subtree of
-an interned message id M-SYM.  Threads should have been built
-for this function to work."
-  (or (vm-th-thread-subtree-of m-sym)
+(defun vm-th-thread-subtree (msg)
+  "Returns the list of messages in the thread subtree of MSG.
+MSG can be a message or the interned symbol of MSG.  Threads
+should have been built for this function to work."
+  (unless (symbolp msg)
+    (with-current-buffer (vm-buffer-of msg)
+      (setq msg (intern (vm-su-message-id msg) vm-thread-obarray))))
+  (or (vm-th-thread-subtree-of msg)
       ;; otherwise calcuate the thread-subtree
-      (let ((list (list m-sym))
+      (let ((list (list msg))
 	    (loop-obarray (make-vector 29 0))
 	    subject-sym id-sym
 	    result)
@@ -580,16 +592,15 @@ for this function to work."
 				      2)))))
 	     (vm-th-messages-of id-sym)))
 	  (setq list (cdr list)))
-	(vm-th-set-thread-subtree-of m-sym result)
+	(vm-th-set-thread-subtree-of msg result)
 	result)))
 
 ;;;###autoload
 (defun vm-th-thread-count (m)
   "Returns the number of messages in the thread-subtree of message M.
-Threads should have been built for this function to work."
-  (with-current-buffer (vm-buffer-of m)
-    (length (vm-th-thread-subtree 
-	     (intern (vm-su-message-id m) vm-thread-obarray)))))
+M can be a message or the interned symbol of M.  Threads should
+have been built for this function to work."
+  (length (vm-th-thread-subtree m)))
 
 (provide 'vm-thread)
 

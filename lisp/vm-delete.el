@@ -48,6 +48,8 @@ only marked messages are deleted, other messages are ignored."
 	  (progn
 	    (vm-set-deleted-flag (car mlist) t)
 	    (vm-increment del-count)
+	    ;; The following is a temporary fix.  To be absorted into
+	    ;; vm-update-summary-and-mode-line eventually.
 	    (when (and vm-summary-enable-thread-folding
 		       vm-summary-show-threads
 		       (> (vm-th-thread-count (car mlist)) 1))
