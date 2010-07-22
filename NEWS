@@ -25,8 +25,9 @@ VM 8.1.93a (2010-07-17)
        `vm-summary-show-thread-count' and
        `vm-summary-thread-folding-on-motion' 
      New commands:
-       `vm-toggle-thread', `vm-expand-all' and `vm-collapse-all'.
-     (Thanks to Arik Mitschang for the contribution.)
+       `vm-toggle-thread' (T), `vm-expand-all-threads' (E) and 
+       `vm-collapse-all-threads' (C).
+     Thanks to Arik Mitschang for this contribution.
 
    * The calculation of threads improved using Jamie Zawinski's
      ideas.  Threads are correctly identified even if some of the
