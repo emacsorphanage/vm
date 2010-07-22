@@ -47,7 +47,7 @@ summary display."
 an interior message of a thread."
   (concat "  " (vm-padded-number-of m) " "))
 
-(defsubst vm-summary-thread-expanded-p (m)
+(defsubst vm-summary-expanded-root-p (m)
   "Checks to see if the message summary of M shows that its thread is
 currently expanded. This is done safely so that if M does not have a
 summary line then nil is returned."
@@ -57,13 +57,25 @@ summary line then nil is returned."
 	   (goto-char (vm-su-start-of m))
 	   (looking-at "-")))))
 
-(defsubst vm-summary-mark-thread-collapsed (m)
+(defsubst vm-summary-collapsed-root-p (m)
+  "Checks to see if the message summary of M shows that its thread is
+currently collapsed. This is done safely so that if M does not have a
+summary line then nil is returned."
+  (save-excursion
+    (and (vm-su-start-of m)
+	 (progn
+	   (goto-char (vm-su-start-of m))
+	   (looking-at "+")))))
+
+(defsubst vm-summary-mark-root-collapsed (m)
+  "Mark a thread root message M as collapsed."
   (save-excursion
       (goto-char (vm-su-start-of m))
       (delete-char 1)
       (insert "+")))
 
-(defsubst vm-summary-mark-thread-expanded (m)
+(defsubst vm-summary-mark-root-expanded (m)
+  "Mark a thread root message M as expanded."
   (save-excursion
       (goto-char (vm-su-start-of m))
       (delete-char 1)
@@ -203,14 +215,14 @@ the messages in the current folder."
 		    (if (= (vm-thread-indentation-of m) 0)
 			(when (> (vm-th-thread-count m) 1)
 			  (if vm-summary-threads-collapsed
-			      (vm-summary-mark-thread-collapsed m)
-			    (vm-summary-mark-thread-expanded m)))
+			      (vm-summary-mark-root-collapsed m)
+			    (vm-summary-mark-root-expanded m)))
 		      (setq root (vm-th-thread-root m))
-		      (when (and root (not (vm-summary-thread-expanded-p root)))
+		      (when (and root (not (vm-summary-expanded-root-p root)))
 			(unless (vm-new-flag m)
 			  (put-text-property s e 'invisible t))
 			;; why mess with the root here?  USR, 2010-07-20
-			;; (vm-summary-mark-thread-collapsed root)
+			;; (vm-summary-mark-root-collapsed root)
 			))))
 		(setq mp (cdr mp) n (1+ n))
 		(when (zerop (% n modulus))
@@ -254,7 +266,7 @@ thread can be collapsed."
   (let ((buffer-read-only nil)
 	root next)
     (setq root (vm-th-thread-root (vm-summary-message-at-point)))
-    (vm-summary-mark-thread-expanded root)
+    (vm-summary-mark-root-expanded root)
     (mapc
      (lambda (m) 
        (put-text-property 
@@ -283,7 +295,7 @@ moving the pointer to the thread root after collapsing."
       (setq msg (vm-summary-message-at-point))
       (setq root (vm-th-thread-root msg))
       (when (> (vm-th-thread-count root) 1)
-	(vm-summary-mark-thread-collapsed root)
+	(vm-summary-mark-root-collapsed root)
 	(mapc
 	 (lambda (m) 
 	   (unless (or (eq m root) (vm-new-flag m))
@@ -341,7 +353,7 @@ of action."
     (let ((buffer-read-only nil)
 	  root next)
       (setq root (vm-th-thread-root (vm-summary-message-at-point)))
-      (if (vm-summary-thread-expanded-p root)
+      (if (vm-summary-expanded-root-p root)
 	  (vm-collapse-thread)
 	(vm-expand-thread)))))
 
