@@ -252,11 +252,14 @@ the messages in the current folder."
 	(unless vm-summary-debug 
 	  (message "Generating summary... done")))))
 
-(defun vm-expand-thread ()
+(defun vm-expand-thread (&optional root)
   "Expand the thread associated with the message at point. This
 will make visible all invisible elements of the thread tree and
 place a '-' character at the pointer position indicating that the
-thread can be collapsed."
+thread can be collapsed.
+
+In a Lisp program, you should call it with an argument ROOT, which
+is the root of the thread you want expanded."
   (interactive)
   (unless vm-summary-enable-thread-folding 
     (error "Thread folding not enabled"))
@@ -266,9 +269,9 @@ thread can be collapsed."
       (error "Summary is not sorted by threads"))
     (vm-follow-summary-cursor)
     (set-buffer vm-summary-buffer))
-  (let ((buffer-read-only nil)
-	root next)
-    (setq root (vm-th-thread-root (vm-summary-message-at-point)))
+  (let ((buffer-read-only nil))
+    (unless root
+      (setq root (vm-th-thread-root (vm-summary-message-at-point))))
     (vm-summary-mark-root-expanded root)
     (mapc
      (lambda (m) 
@@ -276,13 +279,16 @@ thread can be collapsed."
 	(vm-su-start-of m) (vm-su-end-of m) 'invisible nil))
      (vm-th-thread-subtree (vm-th-thread-symbol root)))))
 
-(defun vm-collapse-thread (&optional nomove)
+(defun vm-collapse-thread (&optional nomove root)
   "Collapse the thread associated with the message at point. This
 will make invisible all read and non-new elements of the thread
 tree and will place a '+' character at the pointer position
 indicating the thread can be expanded. Optional argument nomove
 directs vm-collapse-thread to not take the default action of
-moving the pointer to the thread root after collapsing."
+moving the pointer to the thread root after collapsing.
+
+In a Lisp program, you should call it with an additional argument
+ROOT, which is the root of the thread you want collapsed."
   (interactive "P")
   (unless vm-summary-enable-thread-folding 
     (error "Thread folding not enabled"))
@@ -293,10 +299,11 @@ moving the pointer to the thread root after collapsing."
     (vm-follow-summary-cursor)
     (set-buffer vm-summary-buffer))
   (let ((buffer-read-only nil)
-	msg root next)
+	(msg nil))
     (save-excursion
-      (setq msg (vm-summary-message-at-point))
-      (setq root (vm-th-thread-root msg))
+      (unless root
+	(setq msg (vm-summary-message-at-point))
+	(setq root (vm-th-thread-root msg)))
       (when (> (vm-th-thread-count root) 1)
 	(vm-summary-mark-root-collapsed root)
 	(mapc
@@ -306,7 +313,7 @@ moving the pointer to the thread root after collapsing."
 	      (vm-su-start-of m) (vm-su-end-of m) 'invisible t)))
 	 (vm-th-thread-subtree (vm-th-thread-symbol root)))))
     ;; move to the parent thread
-    (unless (or nomove (vm-new-flag (vm-summary-message-at-point)))
+    (unless (or nomove (vm-new-flag msg))
       (goto-char (vm-su-start-of root))
       (save-excursion
 	(vm-select-folder-buffer)
@@ -319,11 +326,14 @@ moving the pointer to the thread root after collapsing."
   (vm-select-folder-buffer-and-validate)
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (with-current-buffer vm-summary-buffer
-    (save-excursion
-      (goto-char (point-min))
-      (while (search-forward-regexp "^\+" nil t)
-	(vm-expand-thread))))
+  (let ((ml vm-message-list))
+    (with-current-buffer vm-summary-buffer
+      (save-excursion
+	(mapc (lambda (m)
+		(when (and (eq m (vm-th-thread-root m))
+			   (> (vm-th-thread-count m) 1))
+		  (vm-expand-thread m)))
+	      ml))))
   (setq vm-summary-threads-collapsed nil))
 
 (defun vm-collapse-all-threads ()
@@ -333,14 +343,18 @@ the threads are shown in the Summary window."
   (vm-select-folder-buffer-and-validate)
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (with-current-buffer vm-summary-buffer
-    (let ((root nil))
+  (let ((ml vm-message-list)
+	root)
+    (with-current-buffer vm-summary-buffer
       (setq root (vm-th-thread-root (vm-summary-message-at-point)))
       (save-excursion
-	(goto-char 0)
-	(while (search-forward-regexp "^-" nil t)
-	  (vm-collapse-thread t)))
-      (vm-goto-message (string-to-number (vm-number-of root)))))
+	(mapc (lambda (m)
+		(when (and (eq m (vm-th-thread-root m))
+			   (> (vm-th-thread-count m) 1))
+		  (vm-collapse-thread t m)))
+	      ml)))
+    (vm-goto-message (string-to-number (vm-number-of root))))
+
   (setq vm-summary-threads-collapsed t))
       
 (defun vm-toggle-thread ()
@@ -525,7 +539,8 @@ buffer by a regenerated summary line."
 			    (if (get-text-property 
 				 (+ (vm-su-start-of m) 3) 'invisible)
 				(progn (insert vm-summary-=>)
-				       (vm-expand-thread))
+				       (vm-expand-thread 
+					(vm-th-thread-root m)))
 			      (insert vm-summary-=>)))
 			  (delete-char (length vm-summary-=>))
 

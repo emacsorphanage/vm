@@ -54,7 +54,7 @@ only marked messages are deleted, other messages are ignored."
 		       vm-summary-show-threads
 		       (> (vm-th-thread-count (car mlist)) 1))
 	      (with-current-buffer vm-summary-buffer
-		(vm-expand-thread)))))
+		(vm-expand-thread (vm-th-thread-root (car mlist)))))))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-delete-message vm-delete-message-backward)
 		(list this-command))

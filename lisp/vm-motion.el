@@ -64,7 +64,7 @@ given."
 	(if (get-text-property 
 	     (+ (vm-su-start-of (car vm-message-pointer)) 2)
 	     'invisible vm-summary-buffer)
-	    (vm-expand-thread))
+	    (vm-expand-thread (vm-th-thread-root (car vm-message-pointer))))
 	))))
 
 ;;;###autoload
@@ -310,15 +310,15 @@ ignored."
   (if (and vm-summary-enable-thread-folding 
 	   vm-summary-show-threads
 	   vm-summary-thread-folding-on-motion)
-      (let ((m nil))
-	(set-buffer vm-summary-buffer)
-	(setq m (get-text-property (+ (point) 3) 'vm-message))
-	(when (< (+ (vm-su-end-of m) 3) (buffer-size))
-	  (if (get-text-property (+ (vm-su-end-of m) 3) 'invisible)
-	      (vm-expand-thread))
-	  (if (not (get-text-property (+ (vm-su-end-of m) 3) 'thread-root))
-	      (vm-collapse-thread t)))
-	))
+      (with-current-buffer vm-summary-buffer
+	(let (m next)
+	  (setq m (get-text-property (+ (point) 3) 'vm-message))
+	  (when (< (+ (vm-su-end-of m) 3) (buffer-size))
+	    (setq next (get-text-property (+ (vm-su-end-of m) 3) 'vm-message))
+	    (when (get-text-property (+ (vm-su-end-of m) 3) 'invisible)
+	      (vm-expand-thread (vm-th-thread-root m)))
+	    (unless (eq (vm-th-thread-root m) (vm-th-thread-root next))
+	      (vm-collapse-thread t (vm-th-thread-root m)))))))
   
   (let ((vm-skip-deleted-messages nil)
 	(vm-skip-read-messages nil))
@@ -340,17 +340,15 @@ ignored."
   (if (and vm-summary-enable-thread-folding 
 	   vm-summary-show-threads
 	   vm-summary-thread-folding-on-motion)
-      (let ((m nil))
-	(set-buffer vm-summary-buffer)
-	(setq m (get-text-property (+ (point) 3) 'vm-message))
-	(if (> (- (vm-su-start-of m) 3) 0)
-	    (if (get-text-property (- (vm-su-start-of m) 3) 'invisible) 
-		(save-excursion
-		  (goto-char (- (vm-su-start-of m) 4))
-		  (vm-expand-thread))))
-	(if (not (get-text-property (+ (point) 3) 'thread-root))
-	    (vm-collapse-thread))
-	))
+      (with-current-buffer vm-summary-buffer
+	(let (m prev)
+	  (setq m (get-text-property (+ (point) 3) 'vm-message))
+	  (when (> (- (vm-su-start-of m) 3) 0)
+	    (setq prev (get-text-property (- (vm-su-start-of m) 3) 'vm-message))
+	    (when (get-text-property (- (vm-su-start-of m) 3) 'invisible)
+	      (vm-expand-thread (vm-th-thread-root prev)))
+	    (unless (eq (vm-th-thread-root m) (vm-th-thread-root prev))
+	      (vm-collapse-thread t (vm-th-thread-root m)))))))
 
   (let ((vm-skip-deleted-messages nil)
 	(vm-skip-read-messages nil))
