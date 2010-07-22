@@ -32,6 +32,9 @@
   "Returns the message of the current summary line."
   (save-excursion
     (forward-line 0)
+    ;; The point often ends up preceding the invisible stuff.  Skip it.
+    (while (invisible-p (point))
+      (forward-char))
     (get-text-property (+ (point) 3) 'vm-message)))
 
 (defsubst vm-summary-padded-thread-count (m)
