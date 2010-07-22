@@ -342,8 +342,10 @@ ignored."
 	   vm-summary-thread-folding-on-motion)
       (with-current-buffer vm-summary-buffer
 	(let (m prev)
-	  (setq m (get-text-property (+ (point) 3) 'vm-message))
-	  (when (> (- (vm-su-start-of m) 3) 0)
+	  (setq m (if (< (+ (point) 3) (point-max))
+		      (get-text-property (+ (point) 3) 'vm-message)
+		    (get-text-property (- (point) 3) 'vm-message)))
+	  (when (or (> (- (vm-su-start-of m) 3) 0) (null m))
 	    (setq prev (get-text-property (- (vm-su-start-of m) 3) 'vm-message))
 	    (when (get-text-property (- (vm-su-start-of m) 3) 'invisible)
 	      (vm-expand-thread (vm-th-thread-root prev)))
