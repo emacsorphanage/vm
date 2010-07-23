@@ -135,18 +135,9 @@ See the documentation for vm-mode for more information."
       ;; Thunderbird folders
       (let ((msf (concat (buffer-file-name) ".msf")))
 	;; notice the message summary file of Thunderbird 
-        (setq vm-read-thunderbird-status 
-	      (and vm-read-thunderbird-status (file-exists-p msf)))
-	;; remember to write back Thunderbird status flags
-	(setq vm-sync-thunderbird-status 
-	      (and vm-sync-thunderbird-status 
-		   (or vm-read-thunderbird-status
-		       (save-excursion
-			 (vm-save-restriction
-			  (widen)
-			  (goto-char (point-min))
-			  (re-search-forward "^X-Mozilla-Status2?:"
-					     (point-max) t)))))))
+        (setq vm-folder-read-thunderbird-status 
+	      (and (file-exists-p msf)
+		   vm-sync-thunderbird-status)))
       (when (and (stringp folder) (memq access-method '(pop imap)))
 	     (if (not (equal folder-name (buffer-name)))
 		 (rename-buffer folder-name t)))
@@ -975,10 +966,11 @@ summary buffer to select a folder."
       (error "'vm-folders-summary-database' must be non-nil to run this command"))
   (if (null vm-folders-summary-buffer)
       (let ((folder-buffer (and (eq major-mode 'vm-mode)
-				(current-buffer))))
+				(current-buffer)))
+	    (summary-buffer-name "VM Folders Summary"))
 	(setq vm-folders-summary-buffer
-	      (let ((default-enable-multibyte-characters t))
-		(get-buffer-create "VM Folders Summary")))
+	      (or (get-buffer summary-buffer-name)
+		  (vm-generate-new-multibyte-buffer summary-buffer-name)))
 	(save-excursion
 	  (set-buffer vm-folders-summary-buffer)
 	  (abbrev-mode 0)

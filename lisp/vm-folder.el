@@ -167,8 +167,7 @@ and thread indentation."
 	   ;; message that could appear in the summary has changed.
 	   (vm-set-summary-of m nil))
 	 (when (vm-su-start-of m)
-	   (setq vm-messages-needing-summary-update
-		 (cons m vm-messages-needing-summary-update)))
+	   (vm-add-to-list m vm-messages-needing-summary-update))
 	 (intern (buffer-name (vm-buffer-of m))
 		 vm-buffers-needing-display-update)
 	 ;; find the virtual messages of this real message that
@@ -176,10 +175,9 @@ and thread indentation."
 	 (let ((m-list (vm-virtual-messages-of m)))
 	   (while m-list
 	     (when (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
-	       (and (vm-su-start-of (car m-list))
-		    (setq vm-messages-needing-summary-update
-			  (cons (car m-list)
-				vm-messages-needing-summary-update)))
+	       (when (vm-su-start-of (car m-list))
+		 (vm-add-to-list (car m-list) 
+				 vm-messages-needing-summary-update))
 	       (intern (buffer-name (vm-buffer-of (car m-list)))
 		       vm-buffers-needing-display-update))
 	     (setq m-list (cdr m-list)))))
@@ -201,10 +199,9 @@ and thread indentation."
 	       ;; the same cache as this message.
 	       (while m-list
 		 (when (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
-		   (and (vm-su-start-of (car m-list))
-			(setq vm-messages-needing-summary-update
-			      (cons (car m-list)
-				    vm-messages-needing-summary-update)))
+		   (when (vm-su-start-of (car m-list))
+		     (vm-add-to-list (car m-list) 
+				     vm-messages-needing-summary-update))
 		   (intern (buffer-name (vm-buffer-of (car m-list)))
 			   vm-buffers-needing-display-update))
 		 (setq m-list (cdr m-list)))
@@ -215,16 +212,14 @@ and thread indentation."
 		 ;; this message.
 		 (vm-set-summary-of m nil))
 	       (when (vm-su-start-of (vm-real-message-of m))
-		 (setq vm-messages-needing-summary-update
-		       (cons (vm-real-message-of m)
-			     vm-messages-needing-summary-update)))
+		 (vm-add-to-list (vm-real-message-of m)
+				 vm-messages-needing-summary-update))
 	       (intern (buffer-name (vm-buffer-of (vm-real-message-of m)))
 		       vm-buffers-needing-display-update))
 	   (unless dont-kill-cache
 	     (vm-set-virtual-summary-of m nil))
 	   (when (vm-su-start-of m)
-	     (setq vm-messages-needing-summary-update
-		   (cons m vm-messages-needing-summary-update)))
+	     (vm-add-to-list m vm-messages-needing-summary-update))
 	   (intern (buffer-name (vm-buffer-of m))
 		   vm-buffers-needing-display-update)))))
 
@@ -355,6 +350,8 @@ Toolbars are updated."
 		   (and vm-use-toolbar
 			(vm-toolbar-support-possible-p)
 			(vm-toolbar-update-toolbar))
+		   (when vm-summary-show-threads
+		     (vm-build-threads-if-unbuilt))
 		   (vm-do-needed-renumbering)
 		   (when vm-summary-buffer
 		       (vm-do-needed-summary-rebuild))
@@ -1204,19 +1201,15 @@ vm-folder-type is initialized here."
       (vm-set-unread-flag-of message (= 0 (logand status #x0001)))
       ;; answered flag
       (vm-set-replied-flag-of message (not (= 0 (logand status #x0002))))
-      ;; flagged
-      ;; (unless (= 0 (logand status #x0004)) 
+      ;; (unless (= 0 (logand status #x0004))  ; flagged
       ;; 	nil)
-      ;; deleted
       (vm-set-deleted-flag-of message (not (= 0 (logand status #x0008))))
-      ;; subject with "Re:" prefix
-      ;; (unless (= 0 (logand status #x0010)) 
+					; deleted
+      ;; (unless (= 0 (logand status #x0010))  ; subject with "Re:" prefix
       ;; 	nil)
-      ;; thread folded
-      ;; (unless (= 0 (logand status #x0020)) 
+      ;; (unless (= 0 (logand status #x0020))  ; thread folded
       ;; 	nil)
-      ;; offline article
-      ;; (unless (= 0 (logand status #x0080)) 
+      ;; (unless (= 0 (logand status #x0080))  ; offline article
       ;; 	nil)
       ;; (unless (= 0 (logand status #x0100)) ; watched
       ;; 	nil)
@@ -1404,7 +1397,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	  (cond ((eq vm-folder-type 'babyl)
 		 (vm-read-babyl-attributes (car mp))))
           ;; read the status flags of Thunderbird
-          (if (or vm-sync-thunderbird-status vm-read-thunderbird-status)
+          (if vm-folder-read-thunderbird-status
               (vm-read-thunderbird-status (car mp))))
 	(cond ((vm-deleted-flag (car mp))
 	       (vm-increment vm-deleted-count))
@@ -1924,7 +1917,7 @@ FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
 		   (setq attributes (copy-sequence attributes)) nil))
 	     (if (eq vm-folder-type 'babyl)
 		 (vm-stuff-babyl-attributes m for-other-folder))
-             (if vm-sync-thunderbird-status
+             (if (eq vm-sync-thunderbird-status t)
                  (vm-stuff-thunderbird-status m))
 	     (goto-char (vm-headers-of m))
 	     (while (re-search-forward vm-attributes-header-regexp
@@ -2080,7 +2073,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
       (setq status (string-to-number status 16))
       ;; clear those bits we are using and keep others ...
       (setq status (logand status (lognot (logior #x1 #x2 #x4 #x8 #x1000))))
-      (goto-char (vm-start-of message))
+      (goto-char (vm-headers-of message))
       (if (re-search-forward "^X-Mozilla-Status: [ 0-9A-Fa-f]+\n"
 			     (vm-text-of message) t)
           (delete-region (match-beginning 0) (match-end 0))))
@@ -2099,28 +2092,25 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 	      status2-lo (mod status2 #x1000)))
       ;; clear those bits we are using and keep others ...
       (setq status2-hi (logand status2-hi (lognot (logior #x1))))
-      (goto-char (vm-start-of message))
+      (goto-char (vm-headers-of message))
       (if (re-search-forward "^X-Mozilla-Status2: [ 0-9A-Fa-f]+\n"
 			     (vm-text-of message) t)
           (delete-region (match-beginning 0) (match-end 0))))
     (unless (vm-unread-flag message)
-        (setq status (logior status 1)))
+        (setq status (logior status #x1)))
     (when (vm-replied-flag message)
-        (setq status (logior status 2)))
+        (setq status (logior status #x2)))
     (when (vm-mark-of message)
-        (setq status (logior status 4)))
+        (setq status (logior status #x4)))
     (when (vm-deleted-flag message)
-        (setq status (logior status 8)))
+        (setq status (logior status #x8)))
     (when (vm-forwarded-flag message)
         (setq status (logior status #x1000)))
     (when (vm-new-flag message)
         (setq status2-hi (logior status2-hi #x1)))
-    (goto-char (vm-start-of message))
-    (forward-line 1)
-    (insert-before-markers 
-     (format "X-Mozilla-Status: %04x\n" status))
-    (insert-before-markers 
-     (format "X-Mozilla-Status2: %04x%04x\n" status2-hi status2-lo))))
+    (goto-char (vm-headers-of message))
+    (insert (format "X-Mozilla-Status: %04x\n" status))
+    (insert (format "X-Mozilla-Status2: %04x%04x\n" status2-hi status2-lo))))
   
 (defun vm-stuff-labels ()
   (if vm-message-list
@@ -3089,38 +3079,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
       ;; selcetion of some other folder.
       (if buffer-file-name
 	  (vm-mark-for-folders-summary-update buffer-file-name))
-      ;; The following call is not working correctly.  So we do it
-      ;; ourselves. 
-      ;; (delete-auto-save-file-if-necessary)
-      (when (and buffer-auto-save-file-name delete-auto-save-files
-		 (not (string= buffer-file-name buffer-auto-save-file-name))
-		 (file-newer-than-file-p 
-		  buffer-auto-save-file-name buffer-file-name))
-	(condition-case ()
-	    (if (save-window-excursion
-		  (with-output-to-temp-buffer "*Directory*"
-		    (buffer-disable-undo standard-output)
-		    (save-excursion
-		      (let ((switches dired-listing-switches)
-			    (file buffer-file-name)
-			    (save-file buffer-auto-save-file-name))
-			(if (file-symlink-p buffer-file-name)
-			    (setq switches (concat switches "L")))
-			(set-buffer standard-output)
-			;; Use insert-directory-safely, not insert-directory,
-			;; because these files might not exist.  In particular,
-			;; FILE might not exist if the auto-save file was for
-			;; a buffer that didn't visit a file, such as "*mail*".
-			;; The code in v20.x called `ls' directly, so we need
-			;; to emulate what `ls' did in that case.
-			(insert-directory-safely save-file switches)
-			(insert-directory-safely file switches))))
-		  (yes-or-no-p 
-		   (format "Delete auto save file %s? " 
-			   buffer-auto-save-file-name)))
-		(delete-file buffer-auto-save-file-name))
-	  (file-error nil))
-	(set-buffer-auto-saved))
+      (vm-delete-auto-save-file-if-necessary)
       ;; this is a hack to suppress another confirmation dialogue
       ;; coming from kill-buffer
       (set-buffer-modified-p nil)
@@ -3135,6 +3094,8 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	     (progn (require 'itimer) t)
 	   (error nil))
 	 (and (natnump vm-flush-interval) (not (get-itimer "vm-flush"))
+	      ;; name function time restart-time
+	      ;; ...... idle with-args args
 	      (start-itimer "vm-flush" 'vm-flush-itimer-function
 			    vm-flush-interval nil))
 	 (and (natnump vm-auto-get-new-mail) (not (get-itimer "vm-get-mail"))
@@ -3150,22 +3111,26 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	 (let (timer)
 	   (and (natnump vm-flush-interval)
 		(not (vm-timer-using 'vm-flush-itimer-function))
-		(setq timer (run-at-time vm-flush-interval vm-flush-interval
-					 'vm-flush-itimer-function nil))
+		(setq timer 
+		      ;;           time restart-time function args
+		      (run-at-time vm-flush-interval vm-flush-interval
+				   'vm-flush-itimer-function nil))
 		(timer-set-function timer 'vm-flush-itimer-function
 				    (list timer)))
 	   (and (natnump vm-mail-check-interval)
 		(not (vm-timer-using 'vm-check-mail-itimer-function))
-		(setq timer (run-at-time vm-mail-check-interval
-					 vm-mail-check-interval
-					 'vm-check-mail-itimer-function nil))
+		(setq timer 
+		      (run-at-time vm-mail-check-interval
+				   vm-mail-check-interval
+				   'vm-check-mail-itimer-function nil))
 		(timer-set-function timer 'vm-check-mail-itimer-function
 				    (list timer)))
 	   (and (natnump vm-auto-get-new-mail)
 		(not (vm-timer-using 'vm-get-mail-itimer-function))
-		(setq timer (run-at-time vm-auto-get-new-mail
-					 vm-auto-get-new-mail
-					 'vm-get-mail-itimer-function nil))
+		(setq timer 
+		      (run-at-time vm-auto-get-new-mail
+				   vm-auto-get-new-mail
+				   'vm-get-mail-itimer-function nil))
 		(timer-set-function timer 'vm-get-mail-itimer-function
 				    (list timer)))))
 	(t
@@ -3459,6 +3424,12 @@ folder."
 		((eq vm-folder-access-method 'imap)
 		 (vm-imap-synchronize-folder t t t nil t)))
 	  (vm-discard-fetched-messages)
+          ;; remove the message summary file of Thunderbird and force
+	  ;; it to rebuild it.  Expect error if Thunderbird is active.
+          (let ((msf (concat buffer-file-name ".msf")))
+            (if (and (eq vm-sync-thunderbird-status t)
+		     (file-exists-p msf))
+                (delete-file msf)))
 	  ;; stuff the attributes of messages that need it.
 	  (message "Stuffing cached data...")
 	  (vm-stuff-folder-data nil)
@@ -3493,8 +3464,8 @@ folder."
 	  (let ((b-list vm-virtual-buffers) rb-list one-modified)
 	    (save-excursion
 	      (while b-list
-		(if (null (cdr (vm-buffer-variable-value (car b-list)
-							 'vm-real-buffers)))
+		(if (null (cdr (with-current-buffer (car b-list)
+				 vm-real-buffers)))
 		    (vm-set-buffer-modified-p nil (car b-list))
 		  (set-buffer (car b-list))
 		  (setq rb-list vm-real-buffers one-modified nil)
@@ -3528,11 +3499,7 @@ folder."
 		     (message "%s removed" buffer-file-name))
 		 ;; no can do, oh well.
 		 (error nil)))
-          ;; remove the message summary file of Thunderbird and force
-	  ;; it to rebuild it 
-          (let ((msf (concat buffer-file-name ".msf")))
-            (if (file-exists-p msf)
-                (delete-file msf))))
+	  )
       (message "No changes need to be saved"))))
 
 ;;;###autoload
@@ -3573,7 +3540,12 @@ the server folder that the FOLDER might be caching."
 		(enable-local-variables nil)
 		(enable-local-eval nil)
 		;; for Emacs/MULE
-		(default-enable-multibyte-characters nil)
+		;; disabled because Emacs 23 doesn't like it, and it
+		;; is not clear if it does anything at all.  USR, 2010-07-10.
+		;; The only place this function is called from is vm,
+		;; which takes care of multibyte issues.  TX, 2010-07-03
+		;; (default-enable-multibyte-characters nil)
+
 		;; for XEmacs/Mule
 		(coding-system-for-read
 		 (vm-line-ending-coding-system)))
@@ -4559,8 +4531,8 @@ folder-access-data should be preserved."
   (use-local-map vm-mode-map)
   ;; if the user saves after M-x recover-file, let them get new
   ;; mail again.
-  (make-local-hook 'after-save-hook)
-  (add-hook 'after-save-hook 'vm-unblock-new-mail)
+  (vm-make-local-hook 'after-save-hook)
+  (add-hook 'after-save-hook 'vm-unblock-new-mail nil t)
   (and (vm-menu-support-possible-p)
        (vm-menu-install-menus))
   (add-hook 'kill-buffer-hook 'vm-garbage-collect-folder)
@@ -4753,18 +4725,22 @@ folder is saved."
 	    ;; move m to the rear
 	    (setq vm-fetched-messages
 		  (delq m vm-fetched-messages))
-	    (add-to-list 'vm-fetched-messages m t 'eq))
+	    (setq vm-fetched-messages	; add-to-list is no good on XEmacs
+		  (nconc vm-fetched-messages (list m))))
 
 	(if vm-fetched-message-limit
 	    (while (>= vm-fetched-message-count
 		       vm-fetched-message-limit)
 	      (let ((mm (car vm-fetched-messages)))
-		;; mm should have been retrieved and marked for discard
-		(vm-assert (and (vm-body-retrieved-of mm)
-				(vm-body-to-be-discarded-of mm)))
-		(vm-discard-real-message-body mm)
+		;; These tests should always come out true, but we are
+		;; not confident.  A lot could have happened since the
+		;; message was first loaded.
+		(when (and (vm-body-retrieved-of mm)
+			   (vm-body-to-be-discarded-of mm))
+		    (vm-discard-real-message-body mm))
 		(vm-unregister-fetched-message mm))))
-	(add-to-list 'vm-fetched-messages m t 'eq)
+	(setq vm-fetched-messages
+	      (nconc vm-fetched-messages (list m)))
 	(vm-increment vm-fetched-message-count)
 	(vm-set-body-to-be-discarded-of m t)
 	(set-buffer-modified-p modified)))))

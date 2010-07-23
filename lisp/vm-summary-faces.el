@@ -149,7 +149,9 @@
     ((outgoing)  vm-summary-outgoing-face)
     ((any)       vm-summary-default-face))
   "*Alist of virtual folder conditions and corresponding faces.
-Order matters. The first matching one will be used as face."
+Order matters. The first matching one will be used as face.  
+
+See `vm-virtual-folder-alist' for a description of the conditions."
   :type '(repeat (cons (sexp) (face)))
   :group 'vm-summary-faces)
 

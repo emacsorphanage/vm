@@ -384,53 +384,87 @@ vm-mail-buffer variable."
 	  (throw 'fail nil)))
       t)))
 
+(defun vm-generate-new-unibyte-buffer (name)
+  (if vm-xemacs-p
+      (generate-new-buffer name)
+    (let* (;; (default-enable-multibyte-characters nil)
+	   ;; don't need this because of set-buffer-multibyte below
+	   (buffer (generate-new-buffer name)))
+      (when (fboundp 'set-buffer-multibyte)
+	(with-current-buffer buffer
+	  (set-buffer-multibyte nil)))
+      buffer)))
+
+(defun vm-generate-new-multibyte-buffer (name)
+  (if vm-xemacs-p
+      (generate-new-buffer name)
+    (let* (;; (default-enable-multibyte-characters t)
+	   ;; don't need this because of set-buffer-multibyte below
+	   (buffer (generate-new-buffer name)))
+      (if (fboundp 'set-buffer-multibyte)
+	  (with-current-buffer buffer
+	    (set-buffer-multibyte t))
+	;; This error checking only works on FSF
+	(with-current-buffer buffer 
+	  (unless enable-multibyte-characters
+	    (error "VM internal error #1922: buffer is not multibyte"))))
+      buffer)))
+
+(defun vm-make-local-hook (hook)
+  (if (fboundp 'make-local-hook)	; Emacs/XEmacs 21
+      (make-local-hook hook)))
+
+(fset 'xemacs-abbreviate-file-name 'abbreviate-file-name)
 (defun vm-abbreviate-file-name (path)
   (if vm-xemacs-p
-      (abbreviate-file-name path t)
+      (xemacs-abbreviate-file-name path t)
     (abbreviate-file-name path)))
 
+(fset 'emacs-find-file-name-handler 'find-file-name-handler)
 (defun vm-find-file-name-handler (filename operation)
   (if (fboundp 'find-file-name-handler)
       (condition-case ()
-	  (find-file-name-handler filename operation)
+	  (emacs-find-file-name-handler filename operation)
 	(wrong-number-of-arguments
-	 (find-file-name-handler filename)))
+	 (emacs-find-file-name-handler filename)))
     nil))
 
+(fset 'emacs-focus-frame 'focus-frame)
 (defun vm-select-frame-set-input-focus (frame)
   (if (fboundp 'select-frame-set-input-focus)
       ;; defined in FSF Emacs 22.1
       (select-frame-set-input-focus frame)
     (select-frame frame)
-    (focus-frame frame)
+    (emacs-focus-frame frame)
     (raise-frame frame)))
 
+(fset 'emacs-get-buffer-window 'get-buffer-window)
 (defun vm-get-buffer-window (buffer &optional which-frames which-devices)
   (condition-case nil			; try XEmacs
-      (or (get-buffer-window buffer which-frames which-devices)
+      (or (emacs-get-buffer-window buffer which-frames which-devices)
 	  (and vm-search-other-frames
-	       (get-buffer-window buffer t t)))
+	       (emacs-get-buffer-window buffer t t)))
     (wrong-number-of-arguments
      (condition-case nil		; try recent Gnu Emacs
-	 (or (get-buffer-window buffer which-frames)
+	 (or (emacs-get-buffer-window buffer which-frames)
 	     (and vm-search-other-frames
-		  (get-buffer-window buffer t)))
+		  (emacs-get-buffer-window buffer t)))
        (wrong-number-of-arguments	; baseline old Emacs
-	(get-buffer-window buffer))))))
+	(emacs-get-buffer-window buffer))))))
 
 (defun vm-get-visible-buffer-window (buffer &optional 
 					    which-frames which-devices)
   (condition-case nil
-      (or (get-buffer-window buffer which-frames which-devices)
+      (or (emacs-get-buffer-window buffer which-frames which-devices)
 	  (and vm-search-other-frames
-	       (get-buffer-window buffer t which-devices)))
+	       (emacs-get-buffer-window buffer t which-devices)))
     (wrong-number-of-arguments
      (condition-case nil
-	 (or (get-buffer-window buffer which-frames)
+	 (or (emacs-get-buffer-window buffer which-frames)
 	     (and vm-search-other-frames
 		  (get-buffer-window buffer 'visible)))
        (wrong-number-of-arguments
-	(get-buffer-window buffer))))))
+	(emacs-get-buffer-window buffer))))))
 
 (defun vm-force-mode-line-update ()
   "Force a mode line update in all frames."
@@ -652,6 +686,41 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (and (fboundp 'find-buffer-visiting)
 	   (find-buffer-visiting file))))
 
+;; The following function is not working correctly on Gnu Emacs 23.
+;; So we do it ourselves.
+(defun vm-delete-auto-save-file-if-necessary ()
+  (if vm-xemacs-p
+      (delete-auto-save-file-if-necessary)
+    (when (and buffer-auto-save-file-name delete-auto-save-files
+	       (not (string= buffer-file-name buffer-auto-save-file-name))
+	       (file-newer-than-file-p 
+		buffer-auto-save-file-name buffer-file-name))
+      (condition-case ()
+	  (if (save-window-excursion
+		(with-output-to-temp-buffer "*Directory*"
+		  (buffer-disable-undo standard-output)
+		  (save-excursion
+		    (let ((switches dired-listing-switches)
+			  (file buffer-file-name)
+			  (save-file buffer-auto-save-file-name))
+		      (if (file-symlink-p buffer-file-name)
+			  (setq switches (concat switches "L")))
+		      (set-buffer standard-output)
+		      ;; Use insert-directory-safely, not insert-directory,
+		      ;; because these files might not exist.  In particular,
+		      ;; FILE might not exist if the auto-save file was for
+		      ;; a buffer that didn't visit a file, such as "*mail*".
+		      ;; The code in v20.x called `ls' directly, so we need
+		      ;; to emulate what `ls' did in that case.
+		      (insert-directory-safely save-file switches)
+		      (insert-directory-safely file switches))))
+		(yes-or-no-p 
+		 (format "Delete auto save file %s? " 
+			 buffer-auto-save-file-name)))
+	      (delete-file buffer-auto-save-file-name))
+	(file-error nil))
+      (set-buffer-auto-saved))))
+
 (defun vm-set-region-face (start end face)
   (let ((e (vm-make-extent start end)))
     (vm-set-extent-property e 'face face)))
@@ -807,9 +876,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     filename ))
 
 (defun vm-make-work-buffer (&optional name)
-  (let ((default-enable-multibyte-characters nil)
-	work-buffer)
-    (setq work-buffer (generate-new-buffer (or name "*vm-workbuf*")))
+  (let ((work-buffer (vm-generate-new-unibyte-buffer 
+		      (or name "*vm-workbuf*"))))
     (buffer-disable-undo work-buffer)
 ;; probably not worth doing since no one sets buffer-offer-save
 ;; non-nil globally, do they?
@@ -818,9 +886,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     work-buffer ))
 
 (defun vm-make-multibyte-work-buffer (&optional name)
-  (let ((default-enable-multibyte-characters t)
-	work-buffer)
-    (setq work-buffer (generate-new-buffer (or name "*vm-workbuf*")))
+  (let ((work-buffer (vm-generate-new-multibyte-buffer 
+		      (or name "*vm-workbuf*"))))
     (buffer-disable-undo work-buffer)
 ;; probably not worth doing since no one sets buffer-offer-save
 ;; non-nil globally, do they?
@@ -828,10 +895,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 ;;      (setq buffer-offer-save nil))
     work-buffer ))
 
+(fset 'xemacs-insert-char 'insert-char)
 (defun vm-insert-char (char &optional count ignored buffer)
   (condition-case nil
       (progn
-	(insert-char char count ignored buffer)
+	(xemacs-insert-char char count ignored buffer)
 	(fset 'vm-insert-char 'insert-char))
     (wrong-number-of-arguments
      (fset 'vm-insert-char 'vm-xemacs-compatible-insert-char)
@@ -851,17 +919,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (setq list1 (cdr list1)))
     nil ))
 
-(defun vm-set-buffer-variable (buffer var value)
-  (with-current-buffer buffer
-    (set var value)))
-
-(defun vm-buffer-variable-value (buffer var)
-  (with-current-buffer buffer
-    (symbol-value var)))
-
 (defun vm-folder-buffer-value (var)
-  (with-current-buffer 
-      vm-mail-buffer
+  (if vm-mail-buffer
+      (with-current-buffer 
+	  vm-mail-buffer
+	(symbol-value var))
     (symbol-value var)))
 
 (defsubst vm-with-string-as-temp-buffer (string function)
@@ -1143,8 +1205,8 @@ filling of GNU Emacs does not work correctly here!"
 	       (lambda (b)
 		 (when (and (buffer-name b)
 			    (or (not (buffer-modified-p b))
-				(not (vm-buffer-variable-value
-				      b buffer-offer-save))))
+				(not (with-current-buffer b
+				       buffer-offer-save))))
 		   (kill-buffer b))))
 	      extras)
 	(and (symbol-value ring-variable) extras
@@ -1195,10 +1257,10 @@ filling of GNU Emacs does not work correctly here!"
 		     1)
 	(delete-region (- (point) 1) (- (point) 4))))))
 
-(defun vm-process-kill-without-query (process)
+(defun vm-process-kill-without-query (process &optional flag)
   (if (fboundp 'process-kill-without-query)
-      (process-kill-without-query process)
-    (set-process-query-on-exit-flag process nil)))
+      (process-kill-without-query process flag)
+    (set-process-query-on-exit-flag process flag)))
 
 (defun vm-process-sentinel-kill-buffer (process what-happened)
   (kill-buffer (process-buffer process)))
@@ -1233,37 +1295,6 @@ If MODES is nil the take the modes from the variable
 	   (message "Could not disable mode `%S': %S" m errmsg)
 	   (setq vm-disable-modes-ignore (cons m vm-disable-modes-ignore)))
 	 nil)))))
-
-;; A copy of XEmacs version in oder to have it in GNU Emacs
-(defun vm-replace-in-string (str regexp newtext &optional literal)
-  "Replace all matches in STR for REGEXP with NEWTEXT string,
- and returns the new string.
-Optional LITERAL non-nil means do a literal replacement.
-Otherwise treat `\\' in NEWTEXT as special:
-  `\\&' in NEWTEXT means substitute original matched text.
-  `\\N' means substitute what matched the Nth `\\(...\\)'.
-       If Nth parens didn't match, substitute nothing.
-  `\\\\' means insert one `\\'.
-  `\\u' means upcase the next character.
-  `\\l' means downcase the next character.
-  `\\U' means begin upcasing all following characters.
-  `\\L' means begin downcasing all following characters.
-  `\\E' means terminate the effect of any `\\U' or `\\L'."
-  (if (> (length str) 50)
-      (let ((cfs case-fold-search))
-	(with-temp-buffer
-          (setq case-fold-search cfs)
-	  (insert str)
-	  (goto-char 1)
-	  (while (re-search-forward regexp nil t)
-	    (replace-match newtext t literal))
-	  (buffer-string)))
-    (let ((start 0) newstr)
-      (while (string-match regexp str start)
-        (setq newstr (replace-match newtext t literal str)
-              start (+ (match-end 0) (- (length newstr) (length str)))
-              str newstr))
-      str)))
 
 ;; For verification of the correct buffer protocol
 ;; Possible values are 'folder, 'presentation, 'summary, 'process
@@ -1303,6 +1334,9 @@ Otherwise treat `\\' in NEWTEXT as special:
   (when vm-buffer-type-debug
     (if (and (eq type 'folder) vm-buffer-types 
 	     (eq (car vm-buffer-types) 'process))
+ 	;; This may or may not be a problem.
+ 	;; It just means that no save-excursion was done among the
+ 	;; functions currently tracked by vm-buffe-types.
 	(debug "folder buffer being entered at inner level"))
     (setq vm-buffer-type-trail (cons type vm-buffer-type-trail)))
   (if vm-buffer-types

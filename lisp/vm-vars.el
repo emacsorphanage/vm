@@ -451,19 +451,20 @@ A nil value means there's no limit."
   :group 'vm-pop
   :type '(choice (const nil) integer))
 
-(defcustom vm-pop-expunge-after-retrieving t
-  "*Non-nil value means immediately delete messages from a POP mailbox
-after retrieving them.  A nil value means messages will be left
-in the POP mailbox until you run `vm-expunge-pop-messages'.
-VM can only support a nil value for this variable if the
-remote POP server supports the UIDL command.  If the server does
-not support UIDL and you've asked VM leave messages on the server,
-VM will complain about the lack of UIDL support and not retrieve
-messages from the server.
+(defcustom vm-pop-expunge-after-retrieving nil
+  "*Non-nil value means that, when a POP mailbox is used as a
+spool file, messages should be deleted after retrieving them.  A
+nil value means messages will be left in the POP mailbox until
+you run `vm-expunge-pop-messages'.  VM can only support a nil
+value for this variable if the remote POP server supports the
+UIDL command.  If the server does not support UIDL and you've
+asked VM leave messages on the server, VM will complain about the
+lack of UIDL support and not retrieve messages from the server.
 
 This variable only affects POP mailboxes not listed in
-`vm-pop-auto-expunge-alist' (which see)."
-  :group 'vm-pop
+`vm-pop-auto-expunge-alist' (which is the recommended method for
+customizing this behavior)."
+  :group 'vm
   :type 'boolean)
 
 (defcustom vm-pop-auto-expunge-alist nil
@@ -572,12 +573,14 @@ A nil value means there's no limit."
   :type '(choice (const nil) integer))
 
 (defcustom vm-imap-expunge-after-retrieving t
-  "*Non-nil value means immediately remove messages from an IMAP mailbox
-after retrieving them.  A nil value means messages will be left
-in the IMAP mailbox until you run `vm-expunge-imap-messages'.
+  "*Non-nil value means that, when an IMAP mailbox is used as a
+spool file, messages should be deleted after retrieving them.  A
+nil value means messages will be left in the IMAP mailbox until
+you run `vm-expunge-imap-messages'.
 
 This variable only affects IMAP mailboxes not listed in
-`vm-imap-auto-expunge-alist' (which see)."
+`vm-imap-auto-expunge-alist' (which is the recommended method for
+customizing this behavior)."
   :group 'vm-imap
   :type 'boolean)
 
@@ -886,18 +889,32 @@ must set this variable non-nil."
   :type 'boolean)
 
 (defvar vm-sync-thunderbird-status t
-  "* If t VM synchronizes its headers with the headers of
+  "* If set to t, VM synchronizes its headers with the headers of
 Thunderbird so that full interoperation with Thunderbird becomes
-possible.") 
+possible.  If it is set to 'read-only then VM reads the Thunderbird
+status flags, but refrains from updating them.  If it is set to nil
+then VM makes no attempt to read or write the Thunderbird status
+flags.") 
 
 (make-variable-buffer-local 'vm-sync-thunderbird-status)
 
-(defvar vm-read-thunderbird-status t
-  "If t VM reads the headers of Thunderbird when visiting
-folders.  This does not cause VM to write Thunderbird headers.  See
-`vm-sync-thunderbird-status' for full synchronization.")
+;; (defvar vm-folder-sync-thunderbird-status t
+;;   "If t VM synchronizes its headers with the headers of
+;; Thunderbird so that full interoperation with Thunderbird becomes
+;; possible.  This is not a customization variable.  See
+;; `vm-sync-thunderbird-status' for customization.") 
 
-(make-variable-buffer-local 'vm-read-thunderbird-status)
+;; (defvar vm-read-thunderbird-status t
+;;   "* If t VM reads the headers of Thunderbird when visiting
+;; folders, but not write Thunderbird headers.  This variable has
+;; effect only if `vm-folder-sync-thunderbird-status' is nil.")
+
+(defvar vm-folder-read-thunderbird-status t
+  "If t VM reads the headers of Thunderbird when visiting
+folders.  This is not a customization variable.  See
+`vm-sync-thunderbird-status' for customization.")
+
+(make-variable-buffer-local 'vm-folder-read-thunderbird-status)
 
 (defcustom vm-visible-headers
   '("Resent-"
@@ -4890,7 +4907,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "WD" 'vm-delete-window-configuration)
     (define-key map "W?" 'vm-window-help)
     (define-key map "\C-t" 'vm-toggle-threads-display)
-    (define-key map "\M-t" 'vm-summary-toggle-thread-folding)
+    (define-key map "\M-t" 'vm-toggle-thread)
     (define-key map "\C-x\C-s" 'vm-save-buffer)
     (define-key map "\C-x\C-w" 'vm-write-file)
     (define-key map "\C-x\C-q" 'vm-toggle-read-only)
@@ -4899,6 +4916,9 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\M-W" 'vm-show-no-warranty)
     (define-key map "\C-c\C-s" 'vm-mime-save-all-attachments)
     (define-key map "\C-c\C-d" 'vm-mime-delete-all-attachments)
+    (define-key map "T" 'vm-toggle-thread)
+    (define-key map "E" 'vm-expand-all-threads)
+    (define-key map "C" 'vm-collapse-all-threads)
     ;; suppress-keymap provides these, but now that we don't use
     ;; suppress-keymap anymore...
     (define-key map "0" 'digit-argument)
@@ -4926,9 +4946,31 @@ be a regexp matching all chars to be replaced by a \"_\"."
     map )
   "Keymap for VM mode.")
 
-(defvar vm-summary-toggle-thread-folding nil
-  "Enables folding of threads in VM summary windows.  (This
-functionality is highly experimental!)")
+(defcustom vm-summary-enable-thread-folding nil
+  "*If non-nil, enables folding of threads in VM summary
+windows.  (This functionality is still experimental.)"
+  :group 'vm
+  :type 'boolean)
+
+(defcustom vm-summary-show-thread-count t
+  "*If non-nil, thread folding displays the count of messages in
+a thread along with the message number of the thread root.  Note
+that this takes up 3 extra characters in each summary line."
+  :group 'vm
+  :type 'boolean)
+
+(defcustom vm-summary-thread-folding-on-motion nil
+  "*If non-nil and thread folding is enabled, invoking
+vm-next/previous-message-no-skip (`N' or `P' respectively)
+will expand a thread upon moving into the thread and collapse it when 
+you move out of the thread."
+  :group 'vm
+  :type 'boolean)
+
+(defvar vm-summary-threads-collapsed t
+  "If non-nil, indicates that threads should be
+folded (collapsed) in VM summary windows.")
+(make-variable-buffer-local 'vm-summary-threads-collapsed)
 
 (defvar vm-summary-mode-map vm-mode-map
   "Keymap for VM Summary mode")
@@ -5604,7 +5646,11 @@ append a space to words that complete unambiguously.")
 (defvar vm-pop-messages-to-expunge nil)
 (make-variable-buffer-local 'vm-pop-messages-to-expunge)
 (defvar vm-imap-read-point nil)
+;; Variable indicating whether IMAP session handling functions can ask
+;; questions to the user, typically if they are run from interactive
+;; commands. 
 (defvar vm-imap-ok-to-ask nil)
+;; Stored passwords for IMAP accounts during a VM session
 (defvar vm-imap-passwords nil)
 ;; Keep a list of messages retrieved from the IMAP maildrops
 ;; Prune the list when messages are expunged on the server

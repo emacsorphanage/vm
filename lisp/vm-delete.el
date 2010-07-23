@@ -47,7 +47,14 @@ only marked messages are deleted, other messages are ignored."
       (if (not (vm-deleted-flag (car mlist)))
 	  (progn
 	    (vm-set-deleted-flag (car mlist) t)
-	    (vm-increment del-count)))
+	    (vm-increment del-count)
+	    ;; The following is a temporary fix.  To be absorted into
+	    ;; vm-update-summary-and-mode-line eventually.
+	    (when (and vm-summary-enable-thread-folding
+		       vm-summary-show-threads
+		       (> (vm-th-thread-count (car mlist)) 1))
+	      (with-current-buffer vm-summary-buffer
+		(vm-expand-thread (vm-th-thread-root (car mlist)))))))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-delete-message vm-delete-message-backward)
 		(list this-command))
@@ -425,6 +432,9 @@ ignored."
 	 (function
 	  (lambda (buffer)
 	    (set-buffer (symbol-name buffer))
+	    ;; FIXME The update summary here is a heavy duty
+	    ;; operation.  Can we be more clever about it, for
+	    ;; instance avoid doing it before quitting a folder?
 	    (if (null vm-system-state)
 		(progn
 		  (vm-garbage-collect-message)

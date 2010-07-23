@@ -24,7 +24,6 @@
   (require 'cl))
 
 (defvar enable-multibyte-characters)
-(defvar default-enable-multibyte-characters)
 
 ;; The following variables are defined in the code, depending on the
 ;; Emacs version being used.  They should not be initialized here.
@@ -1367,9 +1366,8 @@ source of the message."
 	(modified (buffer-modified-p)))
     (cond ((or (null vm-presentation-buffer-handle)
 	       (null (buffer-name vm-presentation-buffer-handle)))
-	   (let ((default-enable-multibyte-characters t))
-	     (setq b (generate-new-buffer (concat (buffer-name)
-						  " Presentation"))))
+	   (setq b (vm-generate-new-multibyte-buffer (concat (buffer-name)
+							  " Presentation")))
 	   (save-excursion
 	     (set-buffer b)
 	     (if (fboundp 'buffer-disable-undo)
@@ -1465,6 +1463,9 @@ source of the message."
 	(goto-char (point-min))
 	(cond ((and (vm-message-access-method-of mm)
 		    (vm-body-to-be-retrieved-of mm))
+	       ;; Remember that this does process I/O and
+	       ;; accept-process-output, allowing concurrent threads
+	       ;; to run!!!  USR, 2010-07-11
 	       (condition-case err
 		   (vm-fetch-message 
 		    (list (vm-message-access-method-of mm)) mm)
@@ -1497,9 +1498,8 @@ source of the message."
 	(modified (buffer-modified-p)))
     (cond ((or (null vm-fetch-buffer)
 	       (null (buffer-name vm-fetch-buffer)))
-	   (let ((default-enable-multibyte-characters t))
-	     (setq b (generate-new-buffer (concat (buffer-name)
-						  " Fetch"))))
+	   (setq b (vm-generate-new-multibyte-buffer (concat (buffer-name)
+							  " Fetch")))
 	   (save-excursion
 	     (set-buffer b)
 	     (if (fboundp 'buffer-disable-undo)
@@ -1594,6 +1594,9 @@ source of the message."
 	(goto-char (point-min))
 	(cond ((and (vm-message-access-method-of mm)
 		    (vm-body-to-be-retrieved-of mm))
+	       ;; Remember that this does process I/O and
+	       ;; accept-process-output, and hence allow concurrent
+	       ;; threads to run!!!  USR, 2010-07-11  
 	       (condition-case err
 		   (vm-fetch-message 
 		    (list (vm-message-access-method-of mm)) mm)
@@ -1632,20 +1635,20 @@ the actual message from the file \"message-11\"."
     (set-buffer (marker-buffer (vm-text-of mm)))
     (let ((buffer-read-only nil)
 	  (inhibit-read-only t)
-	  (buffer-undo-list t)
-	  (text-begin (marker-position (vm-text-of mm))))
-      (goto-char text-begin)
+	  (buffer-undo-list t))
+      (goto-char (vm-text-of mm))
       (delete-region (point) (point-max))
+      ;; Remember that this might do process I/O and accept-process-output,
+      ;; allowing other threads to run!!!  USR, 2010-07-11 
       (message "Fetching message from external source...")
       (apply (intern (format "vm-fetch-%s-message" (car storage)))
 	     mm (cdr storage))
       (message "Fetching message from external source... done")
       ;; delete the new headers
-      (delete-region text-begin
+      (delete-region (vm-text-of mm)
 		     (or (re-search-forward "\n\n" (point-max) t)
 			 (point-max)))
       ;; fix markers now
-      (set-marker (vm-text-of mm) text-begin)
       (set-marker (vm-text-end-of mm) (point-max))	
       (set-marker (vm-end-of mm) (point-max))
       ;; now care for the layout of the message, old layouts are invalid as the
@@ -2456,6 +2459,8 @@ declarations in the attachments and make a decision independently."
             (charset (or (vm-mime-get-parameter layout "charset")
                          "us-ascii"))
             end buffer-size)
+	(if (null vm-mime-text/html-handler)
+	    (error "No handler for internal display of text/html"))
         (message "Inlining text/html by %s..."
                  vm-mime-text/html-handler)
         (vm-mime-insert-mime-body layout)

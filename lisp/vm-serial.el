@@ -849,13 +849,13 @@ questions will bother you!"
           (run-hooks 'vm-mail-hook)
           (run-hooks 'vm-mail-mode-hook)
           (setq buffer-undo-list nil)
-          (make-local-hook 'kill-buffer-hook)
+	  (vm-make-local-hook 'kill-buffer-hook)
+	  (vm-make-local-hook 'mail-send-hook)
           (add-hook 'kill-buffer-hook
                     '(lambda ()
                        (vm-serial-send-mail-increment 'vm-serial-killed-cnt))
                     t t)
           (add-hook 'kill-buffer-hook 'vm-serial-send-mail t t)
-          (make-local-hook 'mail-send-hook)
           (add-hook 'mail-send-hook
                     '(lambda ()
                        (vm-serial-send-mail-increment 'vm-serial-sent-cnt))
