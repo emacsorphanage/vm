@@ -361,6 +361,9 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
       ;; message, or it doesn't need marking.
       (if (null (vm-thread-list-of m))
 	  nil
+	(mapc (lambda (a)
+		(vm-th-set-thread-subtree-of a nil))
+	      (vm-thread-list-of m))
 	(vm-mark-for-summary-update m t)
 	(vm-set-thread-list-of m nil)
 	(vm-set-thread-indentation-of m nil)
@@ -495,9 +498,8 @@ The full functionality of this function is not entirely clear.
 
 	    ;; remove the message from its erstwhile subject thread
 	    (when (boundp s-sym)
-	      (if (not (eq id-sym (vm-ts-root-of s-sym)))
-		  (vm-ts-set-members-of s-sym (delq m (vm-ts-members-of s-sym)))
-		(when message-changing
+	      (if (eq id-sym (vm-ts-root-of s-sym))
+		  ;; (when message-changing
 		  (if (null (cdr (vm-ts-messages-of s-sym)))
 		      (makunbound s-sym)
 		    (let ((p (vm-ts-messages-of s-sym))
@@ -528,7 +530,13 @@ The full functionality of this function is not entirely clear.
 			(mapc (lambda (c-sym)
 				(vm-thread-mark-for-summary-update 
 				 (vm-th-messages-of c-sym)))
-			      children)))))))))
+			      children))))
+		      ;; )
+		(vm-ts-set-members-of 
+		 s-sym (delq id-sym (vm-ts-members-of s-sym)))
+		(vm-ts-set-messages-of 
+		 s-sym (delq m (vm-ts-messages-of s-sym)))
+		))))
 	(setq mp (cdr mp))))))
 
 ;;;###autoload
