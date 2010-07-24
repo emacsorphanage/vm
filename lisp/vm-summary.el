@@ -33,7 +33,7 @@
   (save-excursion
     (forward-line 0)
     ;; The point often ends up preceding the invisible stuff.  Skip it.
-    (while (invisible-p (point))
+    (while (get-text-property (point) 'invisible))
       (forward-char))
     (get-text-property (+ (point) 3) 'vm-message)))
 
