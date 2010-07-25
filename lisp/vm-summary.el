@@ -212,21 +212,22 @@ the messages in the current folder."
 		(vm-tokenized-summary-insert m (vm-su-summary m))
 		(vm-set-su-end-of m (point))
                 (let ((s (vm-su-start-of m)) (e (vm-su-end-of m)))
-                  (put-text-property s e 'vm-message m)
-                  (when (and vm-summary-enable-thread-folding
-                             vm-summary-show-threads)
-		    (if (= (vm-thread-indentation-of m) 0)
-			(when (> (vm-th-thread-count m) 1)
-			  (if vm-summary-threads-collapsed
-			      (vm-summary-mark-root-collapsed m)
-			    (vm-summary-mark-root-expanded m)))
-		      (setq root (vm-th-thread-root m))
-		      (when (and root (not (vm-summary-expanded-root-p root)))
-			(unless (vm-new-flag m)
-			  (put-text-property s e 'invisible t))
-			;; why mess with the root here?  USR, 2010-07-20
-			;; (vm-summary-mark-root-collapsed root)
-			))))
+		  (when s
+		    (put-text-property s e 'vm-message m)
+		    (when (and vm-summary-enable-thread-folding
+			       vm-summary-show-threads)
+		      (if (= (vm-thread-indentation-of m) 0)
+			  (when (> (vm-th-thread-count m) 1)
+			    (if vm-summary-threads-collapsed
+				(vm-summary-mark-root-collapsed m)
+			      (vm-summary-mark-root-expanded m)))
+			(setq root (vm-th-thread-root m))
+			(when (and root (not (vm-summary-expanded-root-p root)))
+			  (unless (vm-new-flag m)
+			    (put-text-property s e 'invisible t))
+			  ;; why mess with the root here?  USR, 2010-07-20
+			  ;; (vm-summary-mark-root-collapsed root)
+			  )))))
 		(setq mp (cdr mp) n (1+ n))
 		(when (zerop (% n modulus))
 		  (message "Generating summary... %d" n)
@@ -421,9 +422,10 @@ buffer by a regenerated summary line."
 		  (setq indicator (if (looking-at "-") "-" 
 				    (if (looking-at "+") "+"
 				      nil)))
-		  (unless (and (eq m (vm-th-thread-root m))
+		  (unless (and vm-summary-show-threads
+			       (eq m (vm-th-thread-root m))
 			       (> (vm-th-thread-count m) 1))
-		    (setq indicator nil))
+			(setq indicator nil))
 		  ;; We do a little dance to update the text in
 		  ;; order to make the markers in the text do
 		  ;; what we want.
@@ -468,8 +470,9 @@ buffer by a regenerated summary line."
 		      (vm-summary-highlight-region (vm-su-start-of m) (point)
 						   vm-summary-highlight-face)))
 	      (set-buffer-modified-p modified)
-	      (put-text-property s e 'vm-message m)
-	      (put-text-property s e 'invisible i)
+	      (when s
+		(put-text-property s e 'vm-message m)
+		(put-text-property s e 'invisible i))
 	      ))))))
 
 (defun vm-set-summary-pointer (m)

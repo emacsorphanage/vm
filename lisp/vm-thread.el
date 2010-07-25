@@ -56,20 +56,30 @@
 ;; vm-th-thread-list : message -> symbol list
 ;; --------------------------------------------------------------------------
 
+(if (fboundp 'define-error)
+    (define-error 'vm-thread-error "VM internal threading error")
+  (put 'vm-thread-error 'error-conditions
+       '(vm-thread-error error))
+  (put 'vm-thread-error 'error-message "VM internal threading error")
+  )
 
 ;;;###autoload
 (defun vm-th-thread-symbol (m)
   "Returns the interned symbol of message M which carries the
-threading information."
+threading information.  Threads should have been built before this.
+Otherwise nil is returned."
   (with-current-buffer (vm-buffer-of m)
-    (intern (vm-su-message-id m) vm-thread-obarray)))
+    (and (vectorp vm-thread-obarray)
+	 (intern (vm-su-message-id m) vm-thread-obarray))))
 
 ;;;###autoload
 (defun vm-ts-subject-symbol (m)
   "Returns the interned symbol of message M which carries the
-subject-based threading information."
+subject-based threading information.  Threads should have been built
+before this.  Otherwise nil is returned."
   (with-current-buffer (vm-buffer-of m)
-    (intern (vm-su-subject m) vm-thread-subject-obarray)))
+    (and (vectorp vm-thread-subject-obarray)
+	 (intern (vm-su-subject m) vm-thread-subject-obarray))))
 
 
 (defun vm-th-youngest-date-of (id-sym)
@@ -596,12 +606,13 @@ calculates the thread-list and caches it.  USR, 2010-03-13"
 (defun vm-th-thread-root (m)
   "Returns the root message of M.  M can be either a message or
 the interned symbol of M.  If there are multiple messages with
-the same root message ID, one of them is chosen arbitrarily."
+the same root message ID, one of them is chosen arbitrarily.  Threads
+should have been built for this function to work."
   (let ((m-sym (if (symbolp m) m (vm-th-thread-symbol m)))
-	(list (vm-th-thread-list m))
-	id-sym)
-    (when (null m)
-	(debug "nil message in vm-th-thread-root"))
+	list id-sym)
+    (unless m-sym
+      (signal 'vm-thread-error (list 'vm-th-thread-root)))
+    (setq list (vm-th-thread-list m))
     (catch 'return
       (while list
 	(setq id-sym (car list))
@@ -620,6 +631,8 @@ should have been built for this function to work."
 		 (with-current-buffer (vm-buffer-of msg)
 		   (intern (vm-su-message-id msg) 
 			   vm-thread-obarray)))))
+    (unless m-sym
+      (signal 'vm-thread-error (list 'vm-th-thread-subtree)))
     (if (or (symbolp msg) (eq msg (car (vm-th-messages-of m-sym))))
 	;; canonical message for this message ID
 	(or (vm-th-thread-subtree-of m-sym)
