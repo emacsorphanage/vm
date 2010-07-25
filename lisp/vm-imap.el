@@ -852,6 +852,14 @@ nil if the session could not be created."
 	  (when (and (equal pass "*") (not (equal auth "preauth")))
 	    (setq pass
 		  (car (cdr (assoc source-nopwd-nombox vm-imap-passwords))))
+	    (when (and (null pass)
+		       (boundp 'auth-sources)
+		       (fboundp 'auth-source-user-or-password)
+		       (equal user (auth-source-user-or-password 
+				 "login" host port)))
+	      (setq pass
+		    (auth-source-user-or-password
+		     "password" host port)))
 	    (when (and (null pass) interactive)
 	      (setq pass
 		    (read-passwd (format "IMAP password for %s: " imapdrop))))

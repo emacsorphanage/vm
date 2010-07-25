@@ -858,6 +858,27 @@ first time you try to retrieve mail from the mailbox.  If the password
 is valid, VM will not ask you for the password again during this Emacs
 session.
 
+@cindex EasyPG
+@cindex epa-file library
+@cindex auth-source library
+@cindex authinfo
+@cindex passwords, storing
+If your environment has the @code{EasyPG} utility and your version of Emacs
+supports it, i.e., has the @code{epa-file} and @code{auth-source} libraries,
+then you can store password information in a file such as
+@code{.authinfo.gpg}.  The @code{EasyPG} protocol allows you to store
+this information in an encrypted form so that it cannot be read by third
+parties.  Each line in the @code{.authinfo.gpg} file should be of the
+form
+
+@example
+machine HOST login USER password PASSWORD port PORT
+@end example
+
+where HOST, USER, PASSWORD and PORT are as detailed above.  Ensure that
+the variable @code{auth-sources} is customized to refer to your
+authinfo file.  Then VM will read passwords from the
+file and you don't need to type them in when accessing mail servers.
 
 @menu
 * POP Folders::         How to use mailboxes on POP servers
