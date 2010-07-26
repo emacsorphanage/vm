@@ -21,6 +21,9 @@
 
 ;;; Code:
 
+(unless (fboundp 'declare-function)
+  (defmacro declare-function (fn file &optional arglist fileonly)))
+
 (defmacro vm-add-to-list (elem list)
   "Like add-to-list, but compares elements by `eq' rather than `equal'."
   `(if (not (memq ,elem ,list))

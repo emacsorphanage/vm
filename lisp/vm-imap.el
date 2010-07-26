@@ -24,9 +24,24 @@
 ;;; Code:
 (eval-when-compile 
   (require 'sendmail)
-  (require 'vm-vars)
-  (require 'vm-misc)
-  (require 'vm-macro))
+  (require 'vm-misc))
+
+;; For function declarations
+(eval-when-compile
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-crypto)
+  (require 'vm-mime)
+)
+
+(declare-function vm-session-initialization 
+		  "vm.el" ())
+(declare-function vm-submit-bug-report 
+		  "vm.el" (&optional pre-hooks post-hooks))
 
 (defvar selectable-only)		; used with dynamic binding
 
