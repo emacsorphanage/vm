@@ -61,9 +61,10 @@ given."
 	(vm-preview-current-message)
 	;;(message "start of message you want is: %s"
 	;; (vm-su-start-of (car vm-message-pointer)))
-	(if (get-text-property 
-	     (+ (vm-su-start-of (car vm-message-pointer)) 2)
-	     'invisible vm-summary-buffer)
+	(if (and vm-summary-show-threads
+		 (get-text-property 
+		  (+ (vm-su-start-of (car vm-message-pointer)) 2)
+		  'invisible vm-summary-buffer))
 	    (vm-expand-thread (vm-th-thread-root (car vm-message-pointer))))
 	))))
 

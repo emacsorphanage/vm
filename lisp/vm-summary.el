@@ -327,6 +327,8 @@ ROOT, which is the root of the thread you want collapsed."
   (vm-select-folder-buffer-and-validate)
   (if (interactive-p)
       (vm-follow-summary-cursor))
+  (unless vm-summary-show-threads
+    (error "Summary is not sorted by threads"))
   (let ((ml vm-message-list))
     (with-current-buffer vm-summary-buffer
       (save-excursion
@@ -344,6 +346,8 @@ the threads are shown in the Summary window."
   (vm-select-folder-buffer-and-validate)
   (if (interactive-p)
       (vm-follow-summary-cursor))
+  (unless vm-summary-show-threads
+    (error "Summary is not sorted by threads"))
   (let ((ml vm-message-list)
 	root)
     (with-current-buffer vm-summary-buffer
@@ -539,8 +543,9 @@ buffer by a regenerated summary line."
 			  (if (save-excursion (goto-char (vm-su-start-of m))
 					      (looking-at "+"))
 			      (insert "+>")
-			    (if (get-text-property 
-				 (+ (vm-su-start-of m) 3) 'invisible)
+			    (if (and vm-summary-show-threads
+				     (get-text-property 
+				      (+ (vm-su-start-of m) 3) 'invisible))
 				(progn (insert vm-summary-=>)
 				       (vm-expand-thread 
 					(vm-th-thread-root m)))

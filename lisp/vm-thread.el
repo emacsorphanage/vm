@@ -622,6 +622,15 @@ should have been built for this function to work."
       nil)))
 
 ;;;###autoload
+(defun vm-th-thread-root-p (m)
+  "Returns t if message M is known to be a thread root, nil
+otherwise."
+  (condition-case err
+      (eq m (vm-th-thread-root m))
+    (vm-thread-error
+     nil)))
+
+;;;###autoload
 (defun vm-th-thread-subtree (msg)
   "Returns the list of messages in the thread subtree of MSG.
 MSG can be a message or the interned symbol of MSG.  Threads
