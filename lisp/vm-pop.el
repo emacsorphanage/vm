@@ -473,12 +473,20 @@ relevant POP servers to remove the messages."
 	    (setq pass (car (cdr (assoc source-nopwd vm-pop-passwords))))
 	    (when (and (null pass)
 		       (boundp 'auth-sources)
-		       (fboundp 'auth-source-user-or-password)
-		       (equal user (auth-source-user-or-password 
-				    "login" host port)))
-	      (setq pass
-		    (auth-source-user-or-password
-		     "password" host port)))
+		       (fboundp 'auth-source-user-or-password))
+	      (cond ((and (setq authinfo
+				(auth-source-user-or-password
+				 '("login" "password")
+				 (vm-pop-find-name-for-spec source)
+				 port))
+			  (equal user (car authinfo)))
+		     (setq pass (cadr authinfo)))
+		    ((and (setq authinfo
+				(auth-source-user-or-password
+				 '("login" "password")
+				 host port))
+			  (equal user (car authinfo)))
+		     (setq pass (cadr authinfo)))))
 	    (when (null pass)
 	      (if (null vm-pop-ok-to-ask)
 		  (progn (message "Need password for %s" popdrop)
