@@ -2372,8 +2372,9 @@ declarations in the attachments and make a decision independently."
 						 type-no-subtype))))))
 		 (funcall handler layout))
 		((vm-mime-types-match "multipart" type)
-		 (if (fboundp (intern (concat "vm-mime-display-internal-"
-					     type)))
+		 (if (fboundp (setq handler
+				    (intern (concat "vm-mime-display-internal-"
+						    type))))
 		     (funcall handler layout)
 		   (vm-mime-display-internal-multipart/mixed layout)))
 		((and (vm-mime-can-display-external type)

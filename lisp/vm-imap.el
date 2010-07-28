@@ -839,7 +839,8 @@ nil if the session could not be created."
 	(session-name "IMAP")
 	(process-connection-type nil)
 	greeting
-	host port mailbox auth user pass source-list imap-buffer
+	host port mailbox auth user pass authinfo
+	source-list imap-buffer
 	source-nopwd-nombox)
     (vm-imap-log-token 'make)
     (unwind-protect

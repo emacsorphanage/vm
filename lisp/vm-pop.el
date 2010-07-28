@@ -424,7 +424,8 @@ relevant POP servers to remove the messages."
 	(session-name "POP")
 	(process-connection-type nil)
 	greeting timestamp ssh-process
-	host port auth user pass source-list process-buffer source-nopwd)
+	host port auth user pass authinfo
+	source-list process-buffer source-nopwd)
     (unwind-protect
 	(catch 'done
 	  ;; parse the maildrop
