@@ -927,7 +927,11 @@ filled.  The message itself is not modified; its text is copied
 into a presentation buffer before the filling is done.
 
 This variable determines which paragraphs are filled,
-but `vm-paragraph-fill-column' determines the fill column."
+but `vm-paragraph-fill-column' determines the fill column.
+
+Note that filling is carried out only if word wrapping is not in
+effect.  The variable `vm-word-wrap-paragraphs' controls word
+wrapping."
   :group 'vm
   :type '(choice (const nil)
                  (const window-width)
