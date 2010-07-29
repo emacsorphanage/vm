@@ -324,7 +324,7 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 		    (when schedule-reindents
 		      (let ((inhibit-quit nil))
 			(vm-thread-mark-for-summary-update 
-			 (vm-ts-members-of subject-sym)))))
+			 (vm-ts-messages-of subject-sym)))))
 		;; optimization: if we know that this message
 		;; already has a parent, then don't bother adding
 		;; it to the list of child messages, since we
@@ -397,9 +397,10 @@ symbols interned in vm-thread-obarray."
 	    thread-list (list id-sym))
       ;; if m is a non-canonical message for its message ID, give it
       ;; an artificial thread-list
-      (unless (eq m (car (vm-th-messages-of id-sym)))
-	(setq thread-list (list id-sym id-sym))
-	(setq done t))
+      ;; But, does this make sense?
+      ;; (unless (eq m (vm-last-elem (vm-th-messages-of id-sym)))
+      ;; 	(setq thread-list (list id-sym id-sym))
+      ;; 	(setq done t))
       (set (intern (symbol-name id-sym) vm-thread-loop-obarray) t)
       (while (not done)
 	;; save the date of the oldest message in this thread
@@ -423,7 +424,7 @@ symbols interned in vm-thread-obarray."
 		 (set loop-sym t)
 		 (setq thread-list (cons id-sym thread-list))
 		 (when (vm-th-messages-of id-sym)
-		     (setq m (car (vm-th-messages-of id-sym))))))
+		     (setq m (vm-last-elem (vm-th-messages-of id-sym))))))
 	      ((null m)
 	       (setq done t))
 	      ((null vm-thread-using-subject)
@@ -448,7 +449,7 @@ symbols interned in vm-thread-obarray."
 			 loop-recovery-point thread-list))
 		 (set loop-sym t)
 		 (setq thread-list (cons id-sym thread-list)
-		       m (car (vm-th-messages-of id-sym)))))))
+		       m (vm-last-elem (vm-th-messages-of id-sym)))))))
       thread-list )))
 
 ;; remove message struct from thread data.
@@ -569,7 +570,7 @@ the cache is nil, calculates the parent and caches it.  USR, 2010-03-13"
   (or (vm-parent-of m)
       (vm-set-parent-of
        m
-       (or (car (vm-last (vm-references m)))
+       (or (vm-last-elem (vm-references m))
 	   (let (in-reply-to ids id)
 	     (setq in-reply-to (vm-get-header-contents m "In-Reply-To:" " ")
 		   ids (and in-reply-to (vm-parse in-reply-to
@@ -617,7 +618,7 @@ should have been built for this function to work."
       (while list
 	(setq id-sym (car list))
 	(when (vm-th-messages-of id-sym)
-	    (throw 'return (car (vm-th-messages-of id-sym))))
+	    (throw 'return (vm-last-elem (vm-th-messages-of id-sym))))
 	(setq list (cdr list)))
       nil)))
 
@@ -642,7 +643,7 @@ should have been built for this function to work."
 			   vm-thread-obarray)))))
     (unless m-sym
       (signal 'vm-thread-error (list 'vm-th-thread-subtree)))
-    (if (or (symbolp msg) (eq msg (car (vm-th-messages-of m-sym))))
+    (if (or (symbolp msg) (eq msg (vm-last-elem (vm-th-messages-of m-sym))))
 	;; canonical message for this message ID
 	(or (vm-th-thread-subtree-of m-sym)
 	    ;; otherwise calcuate the thread-subtree
@@ -653,7 +654,8 @@ should have been built for this function to work."
 	      (while list
 		(setq id-sym (car list))
 		(when (and (vm-th-messages-of id-sym)
-			   (not (memq (car (vm-th-messages-of id-sym)) result)))
+			   (not (memq (vm-last-elem (vm-th-messages-of id-sym))
+				      result)))
 		  (setq result (append (vm-th-messages-of id-sym) result)))
 		(when (null (intern-soft (symbol-name id-sym) loop-obarray))
 		  (intern (symbol-name id-sym) loop-obarray)
