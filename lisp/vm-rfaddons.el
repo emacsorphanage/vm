@@ -223,13 +223,13 @@ or do the binding and advising on your own."
   ;; Shrunken header handlers
   (vm-rfaddons-check-option
    'shrunken-headers option-list
-   (if (not (boundp 'vm-always-use-presentation-buffer))
+   (if (not (boundp 'vm-always-use-presentation))
        (message "Shrunken-headers do NOT work in standard VM!")
      ;; We would corrupt the folder buffer for messages which are
      ;; not displayed by a presentation buffer, thus we must ensure
      ;; that a presentation buffer is used.  The visibility-widget
      ;; would cause "*"s to be inserted into the folder buffer.
-     (setq vm-always-use-presentation-buffer t)
+     (setq vm-always-use-presentation t)
      (defadvice vm-preview-current-message
        (after vm-shrunken-headers-pcm activate)
        "Shrink headers when previewing a message."

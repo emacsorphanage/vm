@@ -943,17 +943,24 @@ A nil value causes VM to preview messages only if new or unread."
   :group 'vm
   :type 'boolean)
 
-(defcustom vm-always-use-presentation-buffer t
-  "****This variable is deprecated.  Starting from version 8.2.0, the
-  behaviour will be equivalent to setting this variable to t.  Please
-  remove all settings for this variable and report any problems that
-  you might encounter.
-
-Non-nil means to always use a presentation buffer for displaying
+(defconst vm-always-use-presentation-buffer t
+  "Non-nil means to always use a presentation buffer for displaying
   messages.  It will also be used if no decoding or other
-  modification of the message are necessary."
-  :group 'vm
-  :type 'boolean)
+  modification of the message are necessary.")
+
+(make-obsolete-variable 'vm-always-use-presentation-buffer
+  "The current behaviour is equivalent to setting this variable
+  to t.  Please remove all settings for this variable and report
+  any problems that you might encounter."
+  "8.2.0")
+
+(defconst vm-always-use-presentation t
+  "Non-nil means to always use a presentation buffer for displaying
+  messages.  It will also be used if no decoding or other
+  modification of the message are necessary.  
+
+This constant is a place holder for the obsolete variable
+vm-always-use-presentation-buffer.  It should be removed eventually.")
 
 (defcustom vm-word-wrap-paragraphs nil
   "*If non-nil, causes VM to word wrap paragraphs with long lines.
@@ -4295,12 +4302,14 @@ See `vm-mime-compile-format-1' for valid format specifiers."
   :group 'vm
   :type 'string)
 
-(defcustom vm-mime-show-alternatives nil
+(defvar vm-mime-show-alternatives nil
   "*This variable is deprecated.  You can set
 `vm-mime-alternative-select-method' to 'all to get the same effect as
-setting this one to t."
-  :group 'vm
-  :type 'boolean)
+setting this one to t.")
+
+(make-obsolete-variable 'vm-mime-show-alternatives 
+  'vm-mime-alternative-select-method
+  "8.2.0")
 
 (defcustom vm-emit-messages-for-mime-decoding t
   "*Flag to allow minibuffer messages about the progress of MIME
