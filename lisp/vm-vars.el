@@ -1705,10 +1705,9 @@ deleting a MIME object with `vm-delete-mime-object'."
 (defvar vm-mime-auto-save-all-attachments-avoid-recursion nil
   "For internal use.")
 
-(defcustom vm-mime-button-face 'gui-button-face
+(defface vm-mime-button-face '((t :inherit widget-button))
   "*Face used for text in buttons that trigger the display of MIME objects."
-  :group 'vm-faces
-  :type 'boolean)
+  :group 'vm-faces)
 
 (defcustom vm-mime-button-format-alist
   '(("text" . "%-35.35(%d, %c%) [%k to %a]")
@@ -3929,8 +3928,7 @@ in messages when you click on them."
   :group 'vm-url
   :type '(repeat string))
 
-(defface vm-highlight-url-face
-  '((t :inherit message-url))
+(defface vm-highlight-url-face '((t :inherit link))
   "Face used to display URLs found in messages."
   :group 'vm-faces)
 

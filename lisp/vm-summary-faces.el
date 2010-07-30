@@ -37,8 +37,8 @@
 ;;   :group 'mail)
 
 (defgroup vm-summary-faces nil
-  "Additional faces for the VM summary window."
-  :group 'vm-faces)
+  "VM Add-On: Additional faces for the VM summary window."
+  :group 'vm-ext)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-when-compile
@@ -133,21 +133,21 @@
          (header "Importance: high")
          (header "X-Priority: 1")
          (label "!")
-	 (label "\\flagged")
+         (label "\\flagged")
          (header "X-VM-postponed-data:"))
-     vm-summary-high-priority-face)
-    ((deleted)   vm-summary-deleted-face)
-    ((new)       vm-summary-new-face)
-    ((unread)    vm-summary-unread-face)
-    ((filed)     vm-summary-filed-face)
-    ((written)   vm-summary-written-face)
-    ((replied)   vm-summary-replied-face)
-    ((forwarded) vm-summary-forwarded-face)
-    ((edited)    vm-summary-edited-face)
-    ((redistributed) vm-summary-redistributed-face)
-    ((marked)    vm-summary-marked-face)
-    ((outgoing)  vm-summary-outgoing-face)
-    ((any)       vm-summary-default-face))
+     'vm-summary-high-priority-face)
+    ((deleted)   'vm-summary-deleted-face)
+    ((new)       'vm-summary-new-face)
+    ((unread)    'vm-summary-unread-face)
+    ((filed)     'vm-summary-filed-face)
+    ((written)   'vm-summary-written-face)
+    ((replied)   'vm-summary-replied-face)
+    ((forwarded) 'vm-summary-forwarded-face)
+    ((edited)    'vm-summary-edited-face)
+    ((redistributed) 'vm-summary-redistributed-face)
+    ((marked)    'vm-summary-marked-face)
+    ((outgoing)  'vm-summary-outgoing-face)
+    ((any)       'vm-summary-default-face))
   "*Alist of virtual folder conditions and corresponding faces.
 Order matters. The first matching one will be used as face.  
 

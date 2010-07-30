@@ -544,7 +544,7 @@ When the button is pressed ACTION is called."
       (insert label)
       (setq o (make-overlay start (point)))
       (overlay-put o 'vm-pgg t)
-      (overlay-put o 'face vm-mime-button-face)
+      (overlay-put o 'face 'vm-mime-button-face)
       (overlay-put o 'vm-button t)
       (overlay-put o 'mouse-face 'highlight)
       (let ((keymap (make-sparse-keymap)))

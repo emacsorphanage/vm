@@ -63,7 +63,7 @@
 
 (defgroup vm-rfaddons nil
   "Customize vm-rfaddons.el"
-  :group 'vm)
+  :group 'vm-ext)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-when-compile
@@ -1171,7 +1171,7 @@ headers."
 (defface vm-shrunken-headers-face 
   '((t (:background "gray")))
   "Used for marking shrunken headers."
-  :group 'vm-faces)
+  :group 'vm-rfaddons)
 
 (defvar vm-shrunken-headers-keymap
   (let ((map (if vm-xemacs-p (make-keymap) (copy-keymap vm-mode-map))))
@@ -1868,7 +1868,7 @@ not end the comment.  Blank lines do not get comments."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-delete-message-action "vm-next-message"
   "Command to do after deleting a message."
-  :group 'vm-dispose)
+  :group 'vm-rfaddons)
 
 ;;;###autoload
 (defun vm-delete-message-action (&optional arg)
