@@ -467,7 +467,7 @@ buffer by a regenerated summary line."
 		  (if (and selected 
                    (facep 'vm-summary-highlight-face))
 		      (vm-summary-highlight-region (vm-su-start-of m) (point)
-						   vm-summary-highlight-face)))
+                                           'vm-summary-highlight-face)))
 	      (set-buffer-modified-p modified)
 	      (put-text-property s e 'vm-message m)
 	      (put-text-property s e 'invisible i)
@@ -552,10 +552,10 @@ buffer by a regenerated summary line."
 				(vm-su-summary-mouse-track-overlay-of m))))
 		      (set-buffer-modified-p modified)))
 		  (forward-char (- (length vm-summary-=>)))
-		  (if vm-summary-highlight-face
-		      (vm-summary-highlight-region
-		       (vm-su-start-of m) (vm-su-end-of m)
-		       vm-summary-highlight-face))
+		  (if (facep 'vm-summary-highlight-face)
+              (vm-summary-highlight-region
+               (vm-su-start-of m) (vm-su-end-of m)
+               'vm-summary-highlight-face))
 		  (and w vm-auto-center-summary (vm-auto-center-summary))
 		  (run-hooks 'vm-summary-pointer-update-hook)))
 	    (and old-window (select-window old-window)))))))
