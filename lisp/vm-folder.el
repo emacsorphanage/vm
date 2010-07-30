@@ -4797,15 +4797,9 @@ argument GARBAGE."
 	(error nil))
       (setq vm-message-garbage-alist (cdr vm-message-garbage-alist)))))
 
-(if (not (memq 'vm-write-file-hook write-file-hooks))
-    (setq write-file-hooks
-	  (cons 'vm-write-file-hook write-file-hooks)))
-
-(if (not (memq 'vm-handle-file-recovery find-file-hooks))
-    (setq find-file-hooks
-	  (nconc find-file-hooks
-		 '(vm-handle-file-recovery
-		   vm-handle-file-reversion))))
+(vm-add-write-file-hook 'vm-write-file-hook)
+(vm-add-find-file-hook 'vm-handle-file-recovery)
+(vm-add-find-file-hook 'vm-handle-file-reversion)
 
 ;; after-revert-hook is new to FSF v19.23
 (defvar after-revert-hook)
