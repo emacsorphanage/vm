@@ -4995,14 +4995,14 @@ be a regexp matching all chars to be replaced by a \"_\"."
 (defcustom vm-summary-enable-thread-folding nil
   "*If non-nil, enables folding of threads in VM summary
 windows.  (This functionality is still experimental.)"
-  :group 'vm
+  :group 'vm-summary
   :type 'boolean)
 
 (defcustom vm-summary-show-thread-count t
   "*If non-nil, thread folding displays the count of messages in
 a thread along with the message number of the thread root.  Note
 that this takes up 3 extra characters in each summary line."
-  :group 'vm
+  :group 'vm-summary
   :type 'boolean)
 
 (defcustom vm-summary-thread-folding-on-motion nil
@@ -5010,7 +5010,7 @@ that this takes up 3 extra characters in each summary line."
 vm-next/previous-message-no-skip (`N' or `P' respectively)
 will expand a thread upon moving into the thread and collapse it when 
 you move out of the thread."
-  :group 'vm
+  :group 'vm-summary
   :type 'boolean)
 
 (defvar vm-summary-threads-collapsed t
