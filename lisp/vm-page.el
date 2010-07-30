@@ -754,7 +754,7 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 
      ;; 3. prepare the Presentation buffer
      (vm-narrow-for-preview (not need-preview))
-     (if (or vm-always-use-presentation-buffer
+     (if (or vm-always-use-presentation
              vm-mime-display-function
              vm-fill-paragraphs-containing-long-lines
              (and vm-display-using-mime
@@ -767,7 +767,7 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 	   (set-buffer vm-presentation-buffer)
 	   (setq vm-system-state 'previewing)
 	   (vm-narrow-for-preview))
-       ;; never used because vm-always-use-presentation-buffer is t.
+       ;; never used because vm-always-use-presentation is t.
        ;; USR 2010-05-07
        (setq vm-presentation-buffer nil)
        (and vm-presentation-buffer-handle
@@ -882,7 +882,7 @@ is done if necessary.  (USR, 2010-01-14)"
 		  vm-fill-paragraphs-containing-long-lines)
 	      (vm-mime-plain-message-p (car vm-message-pointer)))
     (if (null vm-mail-buffer)		; this can't be presentation then
-	(if vm-always-use-presentation-buffer
+	(if vm-always-use-presentation
 	    (progn
 	      (vm-make-presentation-copy (car vm-message-pointer))
 	      (set-buffer vm-presentation-buffer))

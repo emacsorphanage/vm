@@ -2372,8 +2372,9 @@ declarations in the attachments and make a decision independently."
 						 type-no-subtype))))))
 		 (funcall handler layout))
 		((vm-mime-types-match "multipart" type)
-		 (if (fboundp (intern (concat "vm-mime-display-internal-"
-					     type)))
+		 (if (fboundp (setq handler
+				    (intern (concat "vm-mime-display-internal-"
+						    type))))
 		     (funcall handler layout)
 		   (vm-mime-display-internal-multipart/mixed layout)))
 		((and (vm-mime-can-display-external type)
@@ -2689,10 +2690,8 @@ declarations in the attachments and make a decision independently."
     t ))
 
 (defun vm-mime-display-internal-multipart/alternative (layout)
-  (if (or vm-mime-show-alternatives
-	  (eq vm-mime-alternative-select-method 'all))
-      (let ((vm-mime-show-alternatives 'mixed))
-        (vm-mime-display-internal-multipart/mixed layout))
+  (if (eq vm-mime-alternative-select-method 'all)
+      (vm-mime-display-internal-multipart/mixed layout)
     (vm-mime-display-internal-show-multipart/alternative layout)))
 
 (defun vm-mime-display-internal-show-multipart/alternative (layout)
@@ -7234,7 +7233,7 @@ agent; under Unix, normally sendmail.)"
     "Press RETURN"))
 
 (defun vm-mf-default-action (layout)
-  (if (eq vm-mime-show-alternatives 'mixed)
+  (if (eq vm-mime-alternative-select-method 'all)
       (concat (vm-mf-default-action-orig layout) " alternative")
     (vm-mf-default-action-orig layout)))
 

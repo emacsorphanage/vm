@@ -32,7 +32,7 @@
 	  (setq dir (car otherdirs))
 	  (if (not (file-exists-p dir))
 	      (error "Extra `load-path' directory %S does not exist!" dir))
-					;      (print (format "Adding %S" dir))
+	  ;; (print (format "Adding %S" dir))
 	  (setq load-path (cons dir load-path)
 		otherdirs (cdr otherdirs)))))
 
@@ -46,8 +46,12 @@
   
 ;; Load byte compile 
 (require 'bytecomp)
-;; (setq byte-compile-warnings '(free-vars))
+;; Current public setting
 (setq byte-compile-warnings '(not unresolved suspicious))
+;; Check for undefined functions, ignore save-excursion problems
+;; (setq byte-compile-warnings '(not suspicious))
+;; Old permissive setting
+;; (setq byte-compile-warnings '(free-vars))
 (put 'inhibit-local-variables 'byte-obsolete-variable nil)
 
 ;; Preload these to get macros right 

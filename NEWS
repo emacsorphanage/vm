@@ -33,6 +33,9 @@ VM 8.1.93a (2010-07-17)
      ideas.  Threads are correctly identified even if some of the
      messages are missing.
 
+   * Added EasyPG storage of passwords for mail server accounts.  See
+     info inxex under "passwords".
+
   BUG FIXES
 
    * Fixed various issues flagged by the Emacs 23 compiler warnings.

@@ -24,9 +24,24 @@
 ;;; Code:
 (eval-when-compile 
   (require 'sendmail)
-  (require 'vm-vars)
-  (require 'vm-misc)
-  (require 'vm-macro))
+  (require 'vm-misc))
+
+;; For function declarations
+(eval-when-compile
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-crypto)
+  (require 'vm-mime)
+)
+
+(declare-function vm-session-initialization 
+		  "vm.el" ())
+(declare-function vm-submit-bug-report 
+		  "vm.el" (&optional pre-hooks post-hooks))
 
 (defvar selectable-only)		; used with dynamic binding
 
@@ -824,7 +839,8 @@ nil if the session could not be created."
 	(session-name "IMAP")
 	(process-connection-type nil)
 	greeting
-	host port mailbox auth user pass source-list imap-buffer
+	host port mailbox auth user pass authinfo
+	source-list imap-buffer
 	source-nopwd-nombox)
     (vm-imap-log-token 'make)
     (unwind-protect
@@ -852,6 +868,22 @@ nil if the session could not be created."
 	  (when (and (equal pass "*") (not (equal auth "preauth")))
 	    (setq pass
 		  (car (cdr (assoc source-nopwd-nombox vm-imap-passwords))))
+	    (when (and (null pass)
+		       (boundp 'auth-sources)
+		       (fboundp 'auth-source-user-or-password))
+	      (cond ((and (setq authinfo
+				(auth-source-user-or-password
+				 '("login" "password")
+				 (vm-imap-account-name-for-spec source)
+				 port))
+			  (equal user (car authinfo)))
+		     (setq pass (cadr authinfo)))
+		    ((and (setq authinfo
+				(auth-source-user-or-password
+				 '("login" "password")
+				 host port))
+			  (equal user (car authinfo)))
+		     (setq pass (cadr authinfo)))))
 	    (when (and (null pass) interactive)
 	      (setq pass
 		    (read-passwd (format "IMAP password for %s: " imapdrop))))

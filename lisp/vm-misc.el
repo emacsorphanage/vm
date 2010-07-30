@@ -300,7 +300,15 @@ vm-mail-buffer variable."
 
 (defun vm-abs (n) (if (< n 0) (- n) n))
 
-(defun vm-last (list) (while (cdr-safe list) (setq list (cdr list))) list)
+(defun vm-last (list) 
+  "Return the last cons-cell of LIST."
+  (while (cdr-safe list) (setq list (cdr list)))
+  list)
+
+(defun vm-last-elem (list) 
+  "Return the last element of LIST."
+  (while (cdr-safe list) (setq list (cdr list)))
+  (car list))
 
 (defun vm-vector-to-list (vector)
   (let ((i (1- (length vector)))
