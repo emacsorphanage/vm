@@ -4977,7 +4977,6 @@ Its parent keymap is mail-mode-map.")
 (defun vm-folder-history (&rest ignored) t)
 
 ;; internal vars
-(defvar vm-skip-collapsed-sub-threads t)
 (defvar vm-folder-type nil)
 (make-variable-buffer-local 'vm-folder-type)
 (defvar vm-folder-access-method nil)
