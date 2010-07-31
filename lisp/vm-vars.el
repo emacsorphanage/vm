@@ -2275,7 +2275,10 @@ delete and expunge.  A value that is not nil and not t causes VM to ask
 only when there are unsaved changes to message attributes, or when messages
 will be unwittingly lost."
   :group 'vm-misc
-  :type '(choice (const t) (const nil) (const if-something-will-be-lost)))
+  :type '(choice (const :tag "Always ask" t) 
+                 (const :tag "Only ask if messages will be lost" nil) 
+                 (const :tag "Only ask if there are unsaved changes" 
+                        'if-something-will-be-lost)))
 
 (defcustom vm-confirm-new-folders nil
   "*Non-nil value causes interactive calls to `vm-save-message'
@@ -2563,7 +2566,9 @@ of t causes VM never to kill such buffers.
 Note that these buffers will vanish once you exit Emacs.  To keep a permanent
 record of your outgoing mail, use the `mail-archive-file-name' variable."
   :group 'vm-misc 
-  :type '(choice boolean integer))
+  :type '(choice (const :tag "Keep" Keep)
+                 (const :tag "Don't Keep" nil)
+                 (integer :tag "Keep N")))
 
 (defcustom vm-confirm-mail-send nil
   "*Non-nil means ask before sending a mail message.
@@ -4106,7 +4111,8 @@ folder itself undisturbed."
 (defcustom vm-print-command (if (boundp 'lpr-command) lpr-command "lpr")
   "*Command VM uses to print messages."
   :group 'vm-misc
-  :type '(choice string (const nil)))
+  :type '(choice (string :tag "Command")
+                 (const nil)))
 
 (defvar lpr-switches)
 (defcustom vm-print-command-switches (if (boundp 'lpr-switches) lpr-switches nil)
@@ -4114,7 +4120,8 @@ folder itself undisturbed."
 `vm-print-command'.  VM uses `vm-print-command' to print
 messages."
   :group 'vm-misc
-  :type '(repeat string))
+  :type '(repeat (const nil)
+                 (string :tag "Switch")))
 
 (defcustom vm-berkeley-mail-compatibility
   (memq system-type '(berkeley-unix netbsd))
@@ -4492,7 +4499,8 @@ this variable is non-nil, VM will use this function instead of
 its own buffer renaming code.  The buffer to be renamed will be
 the current buffer when the function is called."
   :group 'vm-misc
-  :type 'function)
+  :type '(choice (const nil)
+                function))
 
 (defvar mode-popup-menu nil
   "The mode-specific popup menu.  Automatically buffer local.
@@ -4805,7 +4813,8 @@ you could load the `latin-unity' and `un-define' libraries under XEmacs
 21.4, and initialize this list to something like `(iso-8859-1 iso-8859-15
 utf-8)'. "
   :group 'vm-misc
-  :type '(repeat symbol))
+  :type '(choice (const nil)
+                 (repeat :tag "Coding system" symbol)))
 
 (defcustom vm-mime-ucs-list '(utf-8 iso-2022-jp ctext escape-quoted)
   "*List of coding systems that can encode all characters known to emacs."
@@ -4819,14 +4828,14 @@ If t, 8bit chars are replaced by a \"_\", if a string it should
 be a regexp matching all chars to be replaced by a \"_\"."
   :group 'vm-misc
   :type '(choice (const :tag "Disabled" nil)
-		 (regexp :tag "Enabled" "[^ a-zA-Z0-9.,_\"'+-]")
-		 (regexp :tag "Custom regexp")))
+                 (regexp :tag "Enabled" "[^ a-zA-Z0-9.,_\"'+-]")
+                 (regexp :tag "Custom regexp")))
 
 (defcustom vm-buffer-name-limit 80
   "*The limit for a generated buffer name."
   :group 'vm-misc
   :type '(choice (const :tag "Disabled" nil)
-		 (integer :tag "Enabled" 80)
+                 (integer :tag "Enabled" 80)
                  (integer :tag "Length")))
 
 (defconst vm-maintainer-address "vm@lists.launchpad.net"
@@ -5401,7 +5410,7 @@ Its parent keymap is mail-mode-map.")
 (defcustom vm-spam-words-file
   (expand-file-name "~/.spam-words")
   "A file storing a list of words contained in spam messages."
-  :group 'vm-misc
+  :group 'vm-ext
   :type 'file)
 
 (defcustom vm-vs-spam-score-headers
@@ -5418,7 +5427,7 @@ header line in email messages,
 - SCORE-REGEXP is a regular expression matching the score, and
 
 - SCORE-FN is a function that converts the score string into a number."
-  :group 'vm-misc
+  :group 'vm-folders
   :type '(repeat (list (string :tag "Header regexp")
                        (regexp :tag "Regexp matching the score")
                        (function :tag "Function converting the score to a number"))))
@@ -6058,45 +6067,48 @@ actions to be taken to destroy them.")
 (defvar vm-update-composition-buffer-name-timer nil)
 
 (defcustom vm-enable-addons '(check-recipients
-			      check-for-empty-subject
-			      encode-headers)
+                              check-for-empty-subject
+                              encode-headers)
   "*A list of addons to enable, t for all and nil to disable all.
 Most addons are from `vm-rfaddons-infect-vm'.
 
 You must restart VM after a change to cause any effects."
-  :group 'vm-misc
-  :type '(set (const :tag "Enable faces in the summary buffer" 
-		     summary-faces)
-	      (const :tag "Enable shrinking of multi-line headers to one line."
-		     shrunken-headers)
-	      (const :tag "Open a line when typing in quoted text"
-		     open-line)
-	      (const :tag "Check the recipients before sending a message"
-		     check-recipients)
-	      (const :tag "Check for an empty subject before sending a message"
-		     check-for-empty-subject)
-	      (const :tag "MIME encode headers before sending a message"
-		     encode-headers)
-	      (const :tag "Clean up subject prefixes before sending a message"
-		     clean-subject)
-	      (const :tag "Do not replace Date: header when sending a message"
-		     fake-date)
-	      (const :tag "Bind '.' on attachment buttons to 'vm-mime-take-action-on-attachment'"
-		     take-action-on-attachment)
-	      (const :tag "Automatically save attachments of new messages" 
-		     auto-save-all-attachments)
-	      (const :tag "Delete external attachments of a message when expunging it." 
-		     auto-delete-message-external-body)
-	      (const :tag "Enable all addons" t)))
+  :group 'vm-ext
+  :type '(set (const :tag "Enable shrinking of multi-line headers to one line."
+                     shrunken-headers)
+              (const :tag "Open a line when typing in quoted text"
+                     open-line)
+              (const :tag "Check the recipients before sending a message"
+                     check-recipients)
+              (const :tag "Check for an empty subject before sending a message"
+                     check-for-empty-subject)
+              (const :tag "MIME encode headers before sending a message"
+                     encode-headers)
+              (const :tag "Clean up subject prefixes before sending a message"
+                     clean-subject)
+              (const :tag "Do not replace Date: header when sending a message"
+                     fake-date)
+              (const :tag "Bind '.' on attachment buttons to 'vm-mime-take-action-on-attachment'"
+                     take-action-on-attachment)
+              (const :tag "Automatically save attachments of new messages"
+                     auto-save-all-attachments)
+              (const :tag "Delete external attachments of a message when expunging it."
+                     auto-delete-message-external-body)
+              (const :tag "Enable all addons" t)))
+
+(defcustom vm-enable-summary-faces nil
+  "Enable the summary faces add on package"
+  :group 'vm-ext
+  :type 'boolean)
 
 (defcustom vm-disable-modes-before-encoding 
   '(auto-fill-mode font-lock-mode ispell-minor-mode flyspell-mode
-		   abbrev-mode adaptive-fill-mode)
+                   abbrev-mode adaptive-fill-mode)
   "*A list of minor modes to disable before encoding a message.
 These modes may slow down (font-lock and *spell) encoding and may
 cause trouble (abbrev-mode)."
   :group 'vm-misc
-  :type '(repeat symbol))
+  :type '(repeat :tag "Mode" symbol))
 
 (provide 'vm-vars)
 
