@@ -1241,7 +1241,7 @@ do some necessary preparations.  Otherwise, update the count of
 draft messages."
   ;;  (vm-set-debug-flags)
   (if (or (not (boundp 'vm-session-beginning))
-	  vm-session-beginning)
+          vm-session-beginning)
       (progn
         (vm-check-emacs-version)
         (require 'vm-vars)
@@ -1260,78 +1260,78 @@ draft messages."
         (require 'vm-window)
         (require 'vm-menu)
         (require 'vm-rfaddons)
-	;; The default loading of vm-pgg is disabled because it is an
-	;; add-on.  If and when it is integrated into VM, without advices
-	;; and other add-on features, then it can be loaded by
-	;; default.  USR, 2010-01-14
+        ;; The default loading of vm-pgg is disabled because it is an
+        ;; add-on.  If and when it is integrated into VM, without advices
+        ;; and other add-on features, then it can be loaded by
+        ;; default.  USR, 2010-01-14
         ;; (if (locate-library "pgg")
         ;;     (require 'vm-pgg)
         ;;   (message "vm-pgg disabled since pgg is missing!"))
         (add-hook 'kill-emacs-hook 'vm-garbage-collect-global)
-	(vm-load-init-file)
-	(when vm-enable-addons
-	  (vm-rfaddons-infect-vm 0 vm-enable-addons)
-	  (when (or (eq t vm-enable-addons)
-                    (member 'summary-faces vm-enable-addons))
-	    (require 'vm-summary-faces)
-	    (vm-summary-faces-mode 1)))
-	(if (not vm-window-configuration-file)
-	    (setq vm-window-configurations vm-default-window-configuration)
-	  (or (vm-load-window-configurations vm-window-configuration-file)
-	      (setq vm-window-configurations vm-default-window-configuration)))
-	(setq vm-buffers-needing-display-update (make-vector 29 0))
-	(setq vm-buffers-needing-undo-boundaries (make-vector 29 0))
-	(add-hook 'post-command-hook 'vm-add-undo-boundaries)
-	(if (if vm-xemacs-p
-		(find-face 'vm-monochrome-image)
-	      (facep 'vm-monochrome-image))
-	    nil
-	  (make-face 'vm-monochrome-image)
-	  (set-face-background 'vm-monochrome-image "white")
-	  (set-face-foreground 'vm-monochrome-image "black"))
-	(if (or (not vm-fsfemacs-p)
-		;; don't need this face under Emacs 21.
-		(fboundp 'image-type-available-p)
-		(facep 'vm-image-placeholder))
-	    nil
-	  (make-face 'vm-image-placeholder)
-	  (if (fboundp 'set-face-stipple)
-	      (set-face-stipple 'vm-image-placeholder
-				(list 16 16
-				      (concat "UU\377\377UU\377\377UU\377\377"
-					      "UU\377\377UU\377\377UU\377\377"
-					      "UU\377\377UU\377\377")))))
-	;; default value of vm-mime-button-face is 'gui-button-face
-	;; this face doesn't exist by default in FSF Emacs 19.34.
-	;; Create it and initialize it to something reasonable.
-	(if (and vm-fsfemacs-p (featurep 'faces)
-		 (not (facep 'gui-button-face)))
-	    (progn
-	      (make-face 'gui-button-face)
-	      (cond ((eq window-system 'x)
-		     (vm-fsfemacs-set-face-foreground 'gui-button-face "black")
-		     (vm-fsfemacs-set-face-background 'gui-button-face "gray75"))
-		    (t
-		     ;; use primary color names, since fancier
-		     ;; names may not be valid.
-		     (vm-fsfemacs-set-face-foreground 'gui-button-face "white")
-		     (vm-fsfemacs-set-face-background 'gui-button-face "red")))))
-	;; gui-button-face might not exist under XEmacs either.
-	;; This can happen if XEmacs is built without window
-	;; system support.  In any case, create it anyway.
-	(when (and vm-xemacs-p (not (find-face 'gui-button-face)))
-	  (make-face 'gui-button-face)
-	  (vm-xemacs-set-face-foreground 'gui-button-face "black" nil '(win))
-	  (vm-xemacs-set-background 'gui-button-face "gray75" nil '(win))
-	  (vm-xemacs-set-foreground 'gui-button-face "white" nil '(tty))
-	  (vm-xemacs-set-background 'gui-button-face "red" nil '(tty)))
-	(and (vm-mouse-support-possible-p)
-	     (vm-mouse-install-mouse))
-	(and (vm-menu-support-possible-p)
-	     vm-use-menus
-	     (vm-menu-fsfemacs-menus-p)
-	     (vm-menu-initialize-vm-mode-menu-map))
-	(setq vm-session-beginning nil)))
+        (vm-load-init-file)
+        (when vm-enable-addons
+          (vm-rfaddons-infect-vm 0 vm-enable-addons))
+        (when vm-enable-summary-faces
+          (require 'vm-summary-faces)
+          (add-hook 'vm-summary-mode-hook (lambda ()
+                                            (vm-summary-faces-mode 1))))
+        (if (not vm-window-configuration-file)
+            (setq vm-window-configurations vm-default-window-configuration)
+          (or (vm-load-window-configurations vm-window-configuration-file)
+              (setq vm-window-configurations vm-default-window-configuration)))
+        (setq vm-buffers-needing-display-update (make-vector 29 0))
+        (setq vm-buffers-needing-undo-boundaries (make-vector 29 0))
+        (add-hook 'post-command-hook 'vm-add-undo-boundaries)
+        (if (if vm-xemacs-p
+                (find-face 'vm-monochrome-image)
+              (facep 'vm-monochrome-image))
+            nil
+          (make-face 'vm-monochrome-image)
+          (set-face-background 'vm-monochrome-image "white")
+          (set-face-foreground 'vm-monochrome-image "black"))
+        (if (or (not vm-fsfemacs-p)
+                ;; don't need this face under Emacs 21.
+                (fboundp 'image-type-available-p)
+                (facep 'vm-image-placeholder))
+            nil
+          (make-face 'vm-image-placeholder)
+          (if (fboundp 'set-face-stipple)
+              (set-face-stipple 'vm-image-placeholder
+                                (list 16 16
+                                      (concat "UU\377\377UU\377\377UU\377\377"
+                                              "UU\377\377UU\377\377UU\377\377"
+                                              "UU\377\377UU\377\377")))))
+        ;; default value of vm-mime-button-face is 'gui-button-face
+        ;; this face doesn't exist by default in FSF Emacs 19.34.
+        ;; Create it and initialize it to something reasonable.
+        (if (and vm-fsfemacs-p (featurep 'faces)
+                 (not (facep 'gui-button-face)))
+            (progn
+              (make-face 'gui-button-face)
+              (cond ((eq window-system 'x)
+                     (vm-fsfemacs-set-face-foreground 'gui-button-face "black")
+                     (vm-fsfemacs-set-face-background 'gui-button-face "gray75"))
+                    (t
+                     ;; use primary color names, since fancier
+                     ;; names may not be valid.
+                     (vm-fsfemacs-set-face-foreground 'gui-button-face "white")
+                     (vm-fsfemacs-set-face-background 'gui-button-face "red")))))
+        ;; gui-button-face might not exist under XEmacs either.
+        ;; This can happen if XEmacs is built without window
+        ;; system support.  In any case, create it anyway.
+        (when (and vm-xemacs-p (not (find-face 'gui-button-face)))
+          (make-face 'gui-button-face)
+          (vm-xemacs-set-face-foreground 'gui-button-face "black" nil '(win))
+          (vm-xemacs-set-background 'gui-button-face "gray75" nil '(win))
+          (vm-xemacs-set-foreground 'gui-button-face "white" nil '(tty))
+          (vm-xemacs-set-background 'gui-button-face "red" nil '(tty)))
+        (and (vm-mouse-support-possible-p)
+             (vm-mouse-install-mouse))
+        (and (vm-menu-support-possible-p)
+             vm-use-menus
+             (vm-menu-fsfemacs-menus-p)
+             (vm-menu-initialize-vm-mode-menu-map))
+        (setq vm-session-beginning nil)))
   ;; check for postponed messages
   (vm-update-draft-count))
 

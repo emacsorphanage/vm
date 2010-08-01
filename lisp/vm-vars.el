@@ -5958,36 +5958,41 @@ actions to be taken to destroy them.")
 (defvar vm-update-composition-buffer-name-timer nil)
 
 (defcustom vm-enable-addons '(check-recipients
-			      check-for-empty-subject
-			      encode-headers)
+                              check-for-empty-subject
+                              encode-headers)
   "*A list of addons to enable, t for all and nil to disable all.
 Most addons are from `vm-rfaddons-infect-vm'.
 
 You must restart VM after a change to cause any effects."
   :group 'vm
-  :type '(set (const :tag "Enable faces in the summary buffer" 
-		     summary-faces)
-	      (const :tag "Enable shrinking of multi-line headers to one line."
-		     shrunken-headers)
-	      (const :tag "Open a line when typing in quoted text"
-		     open-line)
-	      (const :tag "Check the recipients before sending a message"
-		     check-recipients)
-	      (const :tag "Check for an empty subject before sending a message"
-		     check-for-empty-subject)
-	      (const :tag "MIME encode headers before sending a message"
-		     encode-headers)
-	      (const :tag "Clean up subject prefixes before sending a message"
-		     clean-subject)
-	      (const :tag "Do not replace Date: header when sending a message"
-		     fake-date)
-	      (const :tag "Bind '.' on attachment buttons to 'vm-mime-take-action-on-attachment'"
-		     take-action-on-attachment)
-	      (const :tag "Automatically save attachments of new messages" 
-		     auto-save-all-attachments)
-	      (const :tag "Delete external attachments of a message when expunging it." 
-		     auto-delete-message-external-body)
-	      (const :tag "Enable all addons" t)))
+  :type '(set (const :tag "Enable shrinking of multi-line headers to one line."
+                     shrunken-headers)
+              (const :tag "Open a line when typing in quoted text"
+                     open-line)
+              (const :tag "Check the recipients before sending a message"
+                     check-recipients)
+              (const :tag "Check for an empty subject before sending a message"
+                     check-for-empty-subject)
+              (const :tag "MIME encode headers before sending a message"
+                     encode-headers)
+              (const :tag "Clean up subject prefixes before sending a message"
+                     clean-subject)
+              (const :tag "Do not replace Date: header when sending a message"
+                     fake-date)
+              (const :tag "Bind '.' on attachment buttons to 'vm-mime-take-action-on-attachment'"
+                     take-action-on-attachment)
+              (const :tag "Automatically save attachments of new messages"
+                     auto-save-all-attachments)
+              (const :tag "Delete external attachments of a message when expunging it."
+                     auto-delete-message-external-body)
+              (const :tag "Enable all addons" t)))
+
+(defcustom vm-enable-summary-faces nil
+  "A non-NIL value enables the use of faces in the summary buffer.
+Note: You will need to restart VM for changes to take effect.
+This is a VM add on extension and not part of core VM."
+  :group 'vm
+  :type 'boolean)
 
 (defcustom vm-disable-modes-before-encoding 
   '(auto-fill-mode font-lock-mode ispell-minor-mode flyspell-mode
