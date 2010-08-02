@@ -31,26 +31,26 @@
 ;;  (add-hook 'vm-summary-mode-hook 'vm-summary-faces-mode)
 ;;
 
-(defgroup vm nil
-  "VM"
-  :group 'mail)
-
-(defgroup vm-summary-faces nil
-  "VM additional virtual folder selectors and functions."
-  :group 'vm)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-when-compile
   (require 'cl))
+
+(eval-when-compile
+  (require 'vm-misc))
 
 (eval-and-compile
   (require 'vm-summary)
   (require 'vm-virtual))
 
-(eval-and-compile
-  (if vm-xemacs-p (require 'overlay)))
+;; (eval-and-compile
+;;   (if vm-xemacs-p (require 'overlay)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(declare-function vm-extent-property "vm-misc.el" (overlay prop) t)
+(declare-function vm-set-extent-property "vm-misc.el" (overlay prop value) t)
+
+
+(defgroup vm-summary-faces nil
+  "VM additional virtual folder selectors and functions."
+  :group 'vm)
 
 (defface vm-summary-selected-face
   '((t ;; (:bold on)

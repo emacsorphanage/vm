@@ -20,6 +20,39 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-minibuf)
+  (require 'vm-menu)
+  (require 'vm-toolbar)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-mark)
+  (require 'vm-virtual)
+  (require 'vm-sort)
+  (require 'vm-thread)
+  (require 'vm-pop)
+  (require 'vm-imap)
+)
+
+;; vm-xemacs.el is a fake file to fool the Emacs 23 compiler
+(declare-function get-itimer "vm-xemacs.el" (name))
+(declare-function start-itimer "vm-xemacs.el"
+		  (name function value &optional restart is-idle with-args
+			&rest function-arguments))
+(declare-function set-itimer-restart "vm-xemacs.el" (itimer restart))
+
+(declare-function vm-update-draft-count "vm.el" ())
+(declare-function vm "vm.el" 
+		  (&optional folder read-only access-method reload))
+(declare-function vm-mode "vm.el" (&optional read-only))
+		  
+
+
 (defun vm-number-messages (&optional start-point end-point)
   "Set the number-of and padded-number-of slots of messages
 in vm-message-list.

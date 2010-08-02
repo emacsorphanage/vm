@@ -21,6 +21,22 @@
 
 ;;; Code:
 
+;; For function declarations
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-crypto)
+  (require 'vm-mime)
+)
+
+(declare-function vm-submit-bug-report 
+		  "vm.el" (&optional pre-hooks post-hooks))
+
 (if (fboundp 'define-error)
     (progn
       (define-error 'vm-cant-uidl "Can't use UIDL")

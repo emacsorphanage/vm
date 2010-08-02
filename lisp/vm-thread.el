@@ -21,6 +21,15 @@
 
 ;;; Code:
 
+;; For function declarations
+
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-sort)
+)
+
 ;; --------------------------------------------------------------------------
 ;; The thread-obarray and thread-subject-obarray properties
 ;;

@@ -21,6 +21,20 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'vm-misc))
+
+(declare-function vm-extent-property "vm-misc.el" (overlay prop) t)
+(declare-function vm-extent-object "vm-misc.el" (overlay) t)
+(declare-function vm-set-extent-property "vm-misc.el" (overlay prop value) t)
+(declare-function vm-set-extent-endpoints "vm-misc.el"
+		  (overlay beg end &optional buffer) t)
+(declare-function vm-make-extent "vm-misc.el"
+		  (beg end &optional buffer front-advance rear-advance) t)
+(declare-function vm-extent-end-position "vm-misc.el" (overlay) t)
+(declare-function vm-extent-start-position "vm-misc.el" (overlay) t)
+(declare-function vm-detach-extent "vm-misc.el" (overlay) t)
+
 ;; This file contains various low-level operations that address
 ;; incomaptibilities between Gnu and XEmacs.  Expect compiler warnings.
 
@@ -816,6 +830,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     (if vm-fsfemacs-p
 	(fset 'vm-detach-extent 'delete-overlay)
       (fset 'vm-detach-extent 'detach-extent)))
+
+(declare-function vm-extent-properties "vm-misc.el" (overlay) t)
 
 (if (not (fboundp 'vm-extent-properties))
     (if vm-fsfemacs-p

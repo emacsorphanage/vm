@@ -23,10 +23,24 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-folder)
+  (require 'vm-window)
+  (require 'vm-menu)
+  (require 'vm-toolbar)
+  (require 'vm-mouse)
+  (require 'vm-motion)
+  (require 'vm-mime)
+  (require 'vm-thread)
+  (require 'vm-pop)
+  (require 'vm-summary-faces)
+)
+
+(declare-function vm-visit-folder "vm.el" (folder &optional read-only))
+
 (defvar scrollbar-height)		; defined for XEmacs
 
-(eval-when-compile
-  (require 'vm-vars))
 
 (defsubst vm-summary-message-at-point ()
   "Returns the message of the current summary line."
@@ -1858,7 +1872,7 @@ Call this function if you made changes to `vm-summary-format'."
 	      (cond ((= conv-spec ?\()
 		     (save-match-data
 		       (let ((retval
-			      (vm-folder-summary-compile-format-1
+			      (vm-folders-summary-compile-format-1
 			       format
 			       (match-end 5))))
 			 (setq sexp (cons (nth 1 retval) sexp)

@@ -27,7 +27,41 @@
 ;;; Code:
 (defvar enable-multibyte-characters)
 
-(require 'vm-version)
+;; For function declarations
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-minibuf)
+  (require 'vm-menu)
+  (require 'vm-toolbar)
+  (require 'vm-mouse)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-crypto)
+  (require 'vm-mime)
+  (require 'vm-virtual)
+  (require 'vm-pop)
+  (require 'vm-imap)
+  (require 'vm-sort)
+  (require 'vm-reply)
+)
+
+;; vm-xemacs.el is a non-existent file to fool the Emacs 23 compiler
+(declare-function vm-xemacs-set-face-foreground "vm-xemacs.el" 
+		  (face color &optional locale tag-set how-to-add))
+(declare-function vm-xemacs-set-face-background "vm-xemacs.el" 
+		  (face color &optional locale tag-set how-to-add))
+(declare-function get-coding-system "vm-xemacs.el" (name))
+(declare-function find-face "vm-xemacs.el" (face-or-name))
+
+(declare-function vm-rfaddons-infect-vm "vm-rfaddons.el" 
+		  (&optional sit-for option-list exclude-option-list))
+(declare-function vm-summary-faces-mode "vm-summary-faces.el" 
+		  (&optional arg))
 
 ;; Ensure that vm-autoloads is loaded in case the user is using VM 7.x
 ;; autoloads 
@@ -1318,9 +1352,9 @@ draft messages."
 	(when (and vm-xemacs-p (not (find-face 'gui-button-face)))
 	  (make-face 'gui-button-face)
 	  (vm-xemacs-set-face-foreground 'gui-button-face "black" nil '(win))
-	  (vm-xemacs-set-background 'gui-button-face "gray75" nil '(win))
-	  (vm-xemacs-set-foreground 'gui-button-face "white" nil '(tty))
-	  (vm-xemacs-set-background 'gui-button-face "red" nil '(tty)))
+	  (vm-xemacs-set-face-background 'gui-button-face "gray75" nil '(win))
+	  (vm-xemacs-set-face-foreground 'gui-button-face "white" nil '(tty))
+	  (vm-xemacs-set-face-background 'gui-button-face "red" nil '(tty)))
 	(and (vm-mouse-support-possible-p)
 	     (vm-mouse-install-mouse))
 	(and (vm-menu-support-possible-p)
