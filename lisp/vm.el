@@ -1253,6 +1253,7 @@ draft messages."
         (require 'vm-page)
         (require 'vm-mouse)
         (require 'vm-summary)
+	(require 'vm-summary-faces)
         (require 'vm-undo)
         (require 'vm-mime)
         (require 'vm-folder)
@@ -1270,11 +1271,7 @@ draft messages."
         (add-hook 'kill-emacs-hook 'vm-garbage-collect-global)
 	(vm-load-init-file)
 	(when vm-enable-addons
-	  (vm-rfaddons-infect-vm 0 vm-enable-addons)
-	  (when (or (eq t vm-enable-addons)
-                    (member 'summary-faces vm-enable-addons))
-	    (require 'vm-summary-faces)
-	    (vm-summary-faces-mode 1)))
+	  (vm-rfaddons-infect-vm 0 vm-enable-addons))
 	(if (not vm-window-configuration-file)
 	    (setq vm-window-configurations vm-default-window-configuration)
 	  (or (vm-load-window-configurations vm-window-configuration-file)
@@ -1304,18 +1301,17 @@ draft messages."
 	;; default value of vm-mime-button-face is 'gui-button-face
 	;; this face doesn't exist by default in FSF Emacs 19.34.
 	;; Create it and initialize it to something reasonable.
-	(if (and vm-fsfemacs-p (featurep 'faces)
-		 (not (facep 'gui-button-face)))
-	    (progn
-	      (make-face 'gui-button-face)
-	      (cond ((eq window-system 'x)
-		     (vm-fsfemacs-set-face-foreground 'gui-button-face "black")
-		     (vm-fsfemacs-set-face-background 'gui-button-face "gray75"))
-		    (t
-		     ;; use primary color names, since fancier
-		     ;; names may not be valid.
-		     (vm-fsfemacs-set-face-foreground 'gui-button-face "white")
-		     (vm-fsfemacs-set-face-background 'gui-button-face "red")))))
+	(when (and vm-fsfemacs-p (featurep 'faces)
+		   (not (facep 'gui-button-face)))
+	  (make-face 'gui-button-face)
+	  (cond ((eq window-system 'x)
+		 (vm-fsfemacs-set-face-foreground 'gui-button-face "black")
+		 (vm-fsfemacs-set-face-background 'gui-button-face "gray75"))
+		(t
+		 ;; use primary color names, since fancier
+		 ;; names may not be valid.
+		 (vm-fsfemacs-set-face-foreground 'gui-button-face "white")
+		 (vm-fsfemacs-set-face-background 'gui-button-face "red"))))
 	;; gui-button-face might not exist under XEmacs either.
 	;; This can happen if XEmacs is built without window
 	;; system support.  In any case, create it anyway.

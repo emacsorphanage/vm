@@ -1347,13 +1347,14 @@ If MODES is nil the take the modes from the variable
 
 (defun vm-buffer-type:set (type)
   "Note that vm is changing to a buffer of TYPE."
-  (when vm-buffer-type-debug
-    (if (and (eq type 'folder) vm-buffer-types 
+  (when (and (eq type 'folder) vm-buffer-types 
 	     (eq (car vm-buffer-types) 'process))
  	;; This may or may not be a problem.
  	;; It just means that no save-excursion was done among the
  	;; functions currently tracked by vm-buffe-types.
-	(debug "folder buffer being entered at inner level"))
+    (if vm-buffer-type-debug
+	(debug "folder buffer being entered from %s" (car vm-buffer-types))
+      (message "folder buffer being entered from %s" (car vm-buffer-types)))
     (setq vm-buffer-type-trail (cons type vm-buffer-type-trail)))
   (if vm-buffer-types
       (rplaca vm-buffer-types type)

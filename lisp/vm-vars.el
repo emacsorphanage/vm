@@ -5997,6 +5997,9 @@ cause trouble (abbrev-mode)."
   :group 'vm
   :type '(repeat symbol))
 
+(defvar vm-summary-faces-mode nil
+  "Records whether VM Summary Faces mode is in use.")
+
 (defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
   "*A list of headers to hide in `vm-mail-mode'."
   :group 'vm

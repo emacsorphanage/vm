@@ -237,15 +237,16 @@ the messages in the current folder."
 	      (setq mp m-list)
 	      (while mp
 		(setq m (car mp))
-		(and do-mouse-track
-		     (vm-set-su-summary-mouse-track-overlay-of
-		      m
-		      (vm-mouse-set-mouse-track-highlight
-		       (vm-su-start-of m)
-		       (vm-su-end-of m)
-		       (vm-su-summary-mouse-track-overlay-of m))))
+		(when do-mouse-track
+		  (vm-set-su-summary-mouse-track-overlay-of
+		   m
+		   (vm-mouse-set-mouse-track-highlight
+		    (vm-su-start-of m)
+		    (vm-su-end-of m)
+		    (vm-su-summary-mouse-track-overlay-of m))))
 		(vm-set-su-start-of m (vm-marker (vm-su-start-of m)))
 		(vm-set-su-end-of m (vm-marker (vm-su-end-of m)))
+		(when vm-summary-faces-mode (vm-summary-faces-add m))
 		(setq mp (cdr mp))))
 	  (set-buffer-modified-p modified))
 	(run-hooks 'vm-summary-redo-hook)))
@@ -465,14 +466,17 @@ buffer by a regenerated summary line."
 		  (vm-tokenized-summary-insert m (vm-su-summary m))
 	          (delete-char 1)	; delete "z"
 		  (run-hooks 'vm-summary-update-hook)
-		  (and do-mouse-track
-		       (vm-mouse-set-mouse-track-highlight
-			(vm-su-start-of m)
-			(vm-su-end-of m)
-			(vm-su-summary-mouse-track-overlay-of m)))
-		  (if (and selected vm-summary-highlight-face)
-		      (vm-summary-highlight-region (vm-su-start-of m) (point)
-						   vm-summary-highlight-face)))
+		  (when do-mouse-track
+		    (vm-mouse-set-mouse-track-highlight
+		     (vm-su-start-of m)
+		     (vm-su-end-of m)
+		     (vm-su-summary-mouse-track-overlay-of m)))
+		  (if vm-summary-faces-mode
+		      (vm-summary-faces-add m)
+		    (if (and selected vm-summary-highlight-face)
+			(vm-summary-highlight-region 
+			 (vm-su-start-of m) (point)
+			 vm-summary-highlight-face))))
 	      (set-buffer-modified-p modified)
 	      (when s
 		(put-text-property s e 'vm-message m)
@@ -516,12 +520,14 @@ buffer by a regenerated summary line."
 		      (put-text-property 
 		       (- (point) (length vm-summary-no-=>)) (point) 
 		       'invisible t))
-		    (and do-mouse-track
-			 (vm-mouse-set-mouse-track-highlight
-			  (vm-su-start-of vm-summary-pointer)
-			  (vm-su-end-of vm-summary-pointer)
-			  (vm-su-summary-mouse-track-overlay-of
-			   vm-summary-pointer))))
+		    (when do-mouse-track
+		      (vm-mouse-set-mouse-track-highlight
+		       (vm-su-start-of vm-summary-pointer)
+		       (vm-su-end-of vm-summary-pointer)
+		       (vm-su-summary-mouse-track-overlay-of
+			vm-summary-pointer)))
+		    (when vm-summary-faces-mode 
+		      (vm-summary-faces-add vm-summary-pointer)))
 		  (setq vm-summary-pointer m)
 		  (goto-char (vm-su-start-of m))
 		  (let ((modified (buffer-modified-p)))
@@ -552,10 +558,11 @@ buffer by a regenerated summary line."
 			      (insert vm-summary-=>)))
 			  (delete-char (length vm-summary-=>))
 
-			  (and do-mouse-track
-			       (vm-mouse-set-mouse-track-highlight
-				(vm-su-start-of m) (vm-su-end-of m)
-				(vm-su-summary-mouse-track-overlay-of m))))
+			  (when do-mouse-track
+			    (vm-mouse-set-mouse-track-highlight
+			     (vm-su-start-of m) (vm-su-end-of m)
+			     (vm-su-summary-mouse-track-overlay-of m)))
+			  (when vm-summary-faces-mode (vm-summary-faces-add m)))
 		      (set-buffer-modified-p modified)))
 		  (forward-char (- (length vm-summary-=>)))
 		  (if vm-summary-highlight-face
@@ -1970,11 +1977,15 @@ Call this function if you made changes to `vm-summary-format'."
 		  (insert
 		   (vm-folders-summary-sprintf vm-folders-summary-format fs))
 		  (delete-char 1)
-		  (and do-mouse-track
-		       (vm-mouse-set-mouse-track-highlight
-			(vm-fs-start-of fs)
-			(vm-fs-end-of fs)
-			(vm-fs-mouse-track-overlay-of fs))))
+		  (when do-mouse-track
+		    (vm-mouse-set-mouse-track-highlight
+		     (vm-fs-start-of fs)
+		     (vm-fs-end-of fs)
+		     (vm-fs-mouse-track-overlay-of fs)))
+		  ;; VM Summary Faces may not work for this yet
+		  ;; (when vm-summary-faces-mode
+		  ;;   (vm-summary-faces-add fs))
+		  )
 	      (set-buffer-modified-p modified)))))))
 
 (defun vm-folders-summary-mode-internal ()
@@ -2051,12 +2062,15 @@ Call this function if you made changes to `vm-summary-format'."
 		(vm-set-fs-start-of fs (vm-marker (point)))
 		(insert (vm-folders-summary-sprintf format fs))
 		(vm-set-fs-end-of fs (vm-marker (point)))
-		(and do-mouse-track
-		     (vm-set-fs-mouse-track-overlay-of
-		      fs
-		      (vm-mouse-set-mouse-track-highlight
-		       (vm-fs-start-of fs)
-		       (vm-fs-end-of fs))))
+		(when do-mouse-track
+		  (vm-set-fs-mouse-track-overlay-of
+		   fs
+		   (vm-mouse-set-mouse-track-highlight
+		    (vm-fs-start-of fs)
+		    (vm-fs-end-of fs))))
+		;; VM Summary Faces may not work here yet
+		;; (when vm-summary-faces-mode
+		;;   (vm-summary-faces-add fs))
 		(set (intern key fs-hash) fs))
 	      (setq fp (cdr fp)))
 	    (setq dp (cdr dp)))

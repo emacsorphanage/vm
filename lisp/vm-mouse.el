@@ -21,6 +21,10 @@
 
 ;;; Code:
 (defun vm-mouse-set-mouse-track-highlight (start end &optional overlay)
+  "Create and return an overlay for mouse selection from START to
+END.  If the optional argument OVERLAY is provided then that that
+overlay is moved to cover START to END.  No new overlay is created in
+that case.                                            USR, 2010-08-01"
   (if (null overlay)
 	(cond (vm-fsfemacs-p
 	       (let ((o (make-overlay start end)))
@@ -505,7 +509,8 @@ HISTORY argument is ignored."
     (cond ((and (not string) vm-mouse-read-file-name-default)
 	   (setq start (point))
 	   (insert vm-mouse-read-file-name-default)
-	   (vm-mouse-set-mouse-track-highlight start (point)))
+	   (vm-mouse-set-mouse-track-highlight start (point))
+	   )
 	  ((not string) nil)
 	  (t (insert default-directory)))
     (insert ?\n ?\n)

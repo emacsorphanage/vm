@@ -241,7 +241,8 @@ default the local keymap of the current buffer is used."
 	(while q
 	  (setq start (point))
 	  (insert (car q))
-	  (and function (vm-mouse-set-mouse-track-highlight start (point)))
+	  (when function 
+	    (vm-mouse-set-mouse-track-highlight start (point)))
 	  (insert-char ?  (+ separation (- longest (length (car q)))))
 	  (setq q (nthcdr tabs q)))
 	(setq i (1+ i))
