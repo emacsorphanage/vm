@@ -1,6 +1,6 @@
 ;;; vm-edit.el --- Editing VM messages
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1990, 1991, 1993, 1994, 1997, 2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-edit)
 
 ;;;###autoload
 (defun vm-edit-message (&optional prefix-argument)
@@ -305,7 +307,5 @@ data is discarded only from the marked messages in the current folder."
   (set-buffer-modified-p nil)
   (kill-buffer (current-buffer))
   (message "Aborted, no change."))
-
-(provide 'vm-edit)
 
 ;;; vm-edit.el ends here

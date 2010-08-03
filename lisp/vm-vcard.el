@@ -1,6 +1,6 @@
 ;;; vm-vcard.el --- vcard parsing and formatting routines for VM
-;;;
-;;; This file is an add-on for VM
+;;
+;; This file is an add-on for VM
 
 ;; Copyright (C) 1997, 2000 Noah S. Friedman
 
@@ -27,6 +27,8 @@
 
 ;;; Commentary:
 ;;; Code:
+
+(provide 'vm-vcard)
 
 (require 'vcard)
 
@@ -74,7 +76,5 @@
 
 (defun vm-vcard-format-simple (vcard)
   (concat "\n\n--\n" (vcard-format-sample-string vcard) "\n\n"))
-
-(provide 'vm-vcard)
 
 ;;; vm-vcard.el ends here.

@@ -1,6 +1,6 @@
 ;;; vm-vars.el --- VM user and internal variable initialization
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-vars)
 
 (require 'vm-version)
 
@@ -6008,7 +6010,5 @@ cause trouble (abbrev-mode)."
                       (string "References")
                       (string "In-Reply-To")
                       (string "X-Mailer"))))
-
-(provide 'vm-vars)
 
 ;;; vm-vars.el ends here

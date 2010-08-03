@@ -1,6 +1,6 @@
 ;;; vm-misc.el --- Miscellaneous functions for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-misc)
 
 (eval-when-compile
   (require 'vm-misc))
@@ -1397,7 +1399,5 @@ Emacs 22.1. This function used to supress compiler warnings."
   (if (boundp 'find-file-hook)
       (add-hook 'find-file-hook vm-hook-fn)
     (add-hook 'find-file-hooks vm-hook-fn)))
-
-(provide 'vm-misc)
 
 ;;; vm-misc.el ends here

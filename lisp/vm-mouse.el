@@ -1,6 +1,6 @@
 ;;; vm-mouse.el --- Mouse related functions and commands
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1995-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-mouse)
+
 (defun vm-mouse-set-mouse-track-highlight (start end &optional overlay)
   "Create and return an overlay for mouse selection from START to
 END.  If the optional argument OVERLAY is provided then that that
@@ -651,7 +654,5 @@ HISTORY argument is ignored."
   (if normal-exit
       (throw 'exit nil)
     (throw 'exit t)))
-
-(provide 'vm-mouse)
 
 ;;; vm-mouse.el ends here

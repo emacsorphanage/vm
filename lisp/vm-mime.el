@@ -1,6 +1,6 @@
 ;;; vm-mime.el ---  MIME support functions
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1997-2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -10,7 +10,7 @@
 ;; the Free Software Foundation; either version 2 of the License, or
 ;; (at your option) any later version.
 ;;
-;;; This program is distributed in the hope that it will be useful,
+;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
@@ -20,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-mime)
+
 (eval-when-compile
   (require 'cl))
 
@@ -7362,7 +7365,5 @@ This is a destructive operation and cannot be undone!"
           (setq mlist (cdr mlist))))))
   (when (interactive-p)
     (vm-discard-cached-data count)))
-
-(provide 'vm-mime)
 
 ;;; vm-mime.el ends here

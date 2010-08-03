@@ -1,6 +1,6 @@
 ;;; vm-sort.el ---  Sorting and moving messages inside VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1993, 1994 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,8 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-;;; Commentary:
-;; 
+;;; Code
+
+(provide 'vm-sort)
 
 ;;;###autoload
 (defun vm-move-message-forward (count)
@@ -687,7 +688,5 @@ folder in the order in which the messages arrived."
              (car vm-sort-compare-header-history)))
     (string< (vm-get-header-contents m1 vm-sort-compare-header)
              (vm-get-header-contents m2 vm-sort-compare-header))))
-
-(provide 'vm-sort)
 
 ;;; vm-sort.el ends here

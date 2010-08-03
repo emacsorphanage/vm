@@ -1,6 +1,6 @@
 ;;; vm-grepmail.el --- VM interface for grepmail
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;; 
 ;; Copyright (C) 2001-2005 Robert Widhopf-Fenk
 ;;
@@ -39,6 +39,9 @@
 ;;
 
 ;;; Code:
+
+(provide 'vm-grepmail)
+
 (eval-when-compile
   (require 'cl))
 
@@ -257,7 +260,5 @@ END the end position in the process output buffer."
        (vm-update-summary-and-mode-line)
        (set-buffer-modified-p nil))))
   (sit-for 0))
-
-(provide 'vm-grepmail)
 
 ;;; vm-grepmail.el ends here

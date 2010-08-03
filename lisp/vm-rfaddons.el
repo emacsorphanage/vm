@@ -1,6 +1,6 @@
 ;;; vm-rfaddons.el --- a collections of various useful VM helper functions
-;;;
-;;; This file is an add-on for VM
+;;
+;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 1999-2006 Robert Widhopf-Fenk
 ;;
@@ -56,6 +56,8 @@
 ;; make things work with GNU Emacs!
 ;;
 ;;; Code:
+
+(provide 'vm-rfaddons)
 
 (defgroup vm nil
   "VM"
@@ -1965,6 +1967,4 @@ calls."
       (smtpmail-send-it))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(provide 'vm-rfaddons)
-
 ;;; vm-rfaddons.el ends here

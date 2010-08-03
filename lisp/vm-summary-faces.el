@@ -1,6 +1,6 @@
 ;;; vm-summary-faces.el --- faces support for VM summary buffers
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;; 
 ;; Copyright (C) 2001 Robert Fenk
 ;; Copyright (C) 2010 Uday S Reddy
@@ -30,6 +30,9 @@
 ;;
 ;;  (add-hook 'vm-summary-mode-hook 'vm-summary-faces-mode)
 ;;
+;;; Code
+
+(provide 'vm-summary-faces)
 
 (eval-when-compile
   (require 'cl))
@@ -288,4 +291,3 @@ fonts and colors, for easy recogniton of the message status."
 
 (add-hook 'vm-summary-pointer-update-hook 'vm-summary-faces-fix-pointer)
 
-(provide 'vm-summary-faces)

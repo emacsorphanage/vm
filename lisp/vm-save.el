@@ -1,6 +1,6 @@
 ;;; vm-save.el --- Saving and piping messages under VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989, 1990, 1993, 1994 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -24,6 +24,8 @@
 ;; 1 while strings are indexed from 0. :-(
 
 ;;; Code:
+
+(provide 'vm-save)
 
 ;;;###autoload
 (defun vm-match-data ()
@@ -978,7 +980,5 @@ The saved messages are flagged as `filed'."
 	     count (if (/= 1 count) "s" "")
 	     (vm-safe-imapdrop-string target-folder))
     target-folder ))
-
-(provide 'vm-save)
 
 ;;; vm-save.el ends here

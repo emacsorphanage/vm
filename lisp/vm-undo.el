@@ -1,6 +1,6 @@
 ;;; vm-undo.el --- Commands to undo message attribute changes in VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1995 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-undo)
+
 (defun vm-set-buffer-modified-p (flag &optional buffer)
   (save-excursion
     (and buffer (set-buffer buffer))
@@ -635,7 +638,5 @@ A record of the change is kept for the purpose of undo, and the
 ;; ditto.  this is for vm-read-attributes.
 (defun vm-set-new-flag-in-vector (v flag)
   (aset v 0 flag))
-
-(provide 'vm-undo)
 
 ;;; vm-undo.el ends here

@@ -1,6 +1,6 @@
 ;;; vm-summary.el --- Summary gathering and formatting routines for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1995, 2000 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -23,8 +23,11 @@
 
 ;;; Code:
 
+(provide 'vm-summary)
+
 (eval-when-compile
   (require 'vm-misc)
+  (require 'vm-crypto)
   (require 'vm-folder)
   (require 'vm-window)
   (require 'vm-menu)
@@ -604,9 +607,9 @@ buffer by a regenerated summary line."
 	     (overlay-put ooo 'evaporate nil)
 	     (overlay-put ooo 'face face)))
 	  (vm-xemacs-p
-	   (if (and ooo (extent-end-position ooo))
-	       (set-extent-endpoints ooo start end)
-	     (setq ooo (make-extent start end))
+	   (if (and ooo (vm-extent-end-position ooo))
+	       (vm-set-extent-endpoints ooo start end)
+	     (setq ooo (vm-make-extent start end))
 	     (set var ooo)
 	     ;; the reason this isn't needed under FSF Emacs is
 	     ;; that insert-before-markers also inserts before
@@ -614,9 +617,9 @@ buffer by a regenerated summary line."
 	     ;; before this overlay in the summary buffer won't
 	     ;; leak into the overlay, but it _will_ leak into an
 	     ;; XEmacs extent.
-	     (set-extent-property ooo 'start-open t)
-	     (set-extent-property ooo 'detachable nil)
-	     (set-extent-property ooo 'face face))))))
+	     (vm-set-extent-property ooo 'start-open t)
+	     (vm-set-extent-property ooo 'detachable nil)
+	     (vm-set-extent-property ooo 'face face))))))
 
 (defun vm-auto-center-summary ()
   (if vm-auto-center-summary
@@ -1561,7 +1564,7 @@ mime-encoded string with text properties.  USR 2010-05-13"
 	       (widen)
 	       (condition-case nil
 		   (concat "<fake-VM-id."
-			   (vm-pop-md5-string
+			   (vm-md5-string
 			    (buffer-substring
 			     (vm-text-of (vm-real-message-of m))
 			     (vm-text-end-of (vm-real-message-of m))))
@@ -2196,8 +2199,6 @@ Call this function if you made changes to `vm-summary-format'."
 		  (throw 'done t))))))
        vm-folders-summary-hash)
       nil )))
-
-(provide 'vm-summary)
 
 
 ;;; vm-summary.el ends here

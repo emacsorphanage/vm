@@ -1,6 +1,6 @@
 ;;; vm-window.el --- Window management code for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-window)
+
 (defun vm-display (buffer display commands configs
 		   &optional do-not-raise)
 ;; the clearinghouse VM display function.
@@ -677,7 +680,5 @@ Run the hooks in vm-iconify-frame-hook before doing so."
        ;; it is useful for this to be a no-op, but don't bind the
        ;; others.
        (fset 'vm-select-frame 'ignore)))
-
-(provide 'vm-window)
 
 ;;; vm-window.el ends here

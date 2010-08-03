@@ -1,6 +1,6 @@
 ;;; vm-virtual.el --- Virtual folders for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1990-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-virtual)
 
 ;;;###autoload
 (defun vm-build-virtual-message-list (new-messages &optional dont-finalize)
@@ -858,8 +860,6 @@ folder buffer (which should be the virtual folder in which M occurs)."
 					 (vm-start-of real-m))))
     (set-marker (vm-end-of m) (+ (vm-start-of m) (- (vm-end-of real-m)
 						    (vm-start-of real-m))))))
-(provide 'vm-virtual)
-
 ;; ;; now load vm-avirtual to avoid a loading loop
 ;; (require 'vm-avirtual)
 

@@ -1,6 +1,6 @@
 ;;; vm-folder.el --- VM folder related functions
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-folder)
+
 (eval-when-compile
   (require 'vm-misc)
   (require 'vm-summary)
@@ -4840,7 +4843,5 @@ argument GARBAGE."
     (setq after-revert-hook
 	  (cons 'vm-after-revert-buffer-hook after-revert-hook))
   (setq after-revert-hook (list 'vm-after-revert-buffer-hook)))
-
-(provide 'vm-folder)
 
 ;;; vm-folder.el ends here

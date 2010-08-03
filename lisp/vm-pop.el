@@ -1,6 +1,6 @@
 ;;; vm-pop.el --- Simple POP (RFC 1939) client for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1993, 1994, 1997, 1998 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-pop)
 
 ;; For function declarations
 (eval-when-compile
@@ -1268,7 +1270,5 @@ order to capture the trace of POP sessions during the occurrence."
   (vm-set-body-to-be-retrieved-of m nil)
   (vm-set-body-to-be-discarded-of m nil))
 
-
-(provide 'vm-pop)
 
 ;;; vm-pop.el ends here

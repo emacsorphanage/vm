@@ -1,6 +1,6 @@
 ;;; vm-thread.el ---  Thread support for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1994, 2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-thread)
 
 ;; For function declarations
 
@@ -694,7 +696,5 @@ should have been built for this function to work."
 M can be a message or the interned symbol of M.  Threads should
 have been built for this function to work."
   (length (vm-th-thread-subtree m)))
-
-(provide 'vm-thread)
 
 ;;; vm-thread.el ends here

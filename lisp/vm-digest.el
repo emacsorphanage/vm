@@ -1,6 +1,6 @@
 ;;; vm-digest.el --- Message encapsulation
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989, 1990, 1993, 1994, 1997, 2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-digest)
 
 ;;;###autoload
 (defun vm-no-frills-encapsulate-message (m keep-list discard-regexp)
@@ -788,7 +790,5 @@ Returns either \"rfc934\", \"rfc1153\" or \"mime\"."
 			(vm-match-header)))
 	    (vm-matched-header-contents)
 	  nil )))))
-
-(provide 'vm-digest)
 
 ;;; vm-digest.el ends here
