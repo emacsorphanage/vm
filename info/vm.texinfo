@@ -3587,21 +3587,15 @@ collapses all the expanded threads.
 @cindex faces
 @cindex summary faces
 @findex vm-summary-faces-mode
+@vindex vm-enable-summary-faces
 By default, the summary of a folder is shown in a black-and-white
-window with plain text.  You can turn on faces  support by running the command
-@code{vm-summary-faces-mode}.  
-@xref{Faces,,,emacs, the GNU Emacs Manual}.
-Better yet, you can include the
-mode in @code{vm-summary-mode-hook} by writing in your init file:
-
-@example
-(add-hook 'vm-summary-mode-hook 'vm-summary-faces-mode)
-@end example
-
-This causes the faces support to be turned on for all summary buffers.
-Once the faces support is turned on, VM decorates the summary lines
-with different faces based on the attributes of the message.  The
-following categories of faces are pre-defined:
+window with plain text.  You can turn on faces support by running the
+command @code{vm-summary-faces-mode}.  @xref{Faces,,,emacs, the GNU
+Emacs Manual}.  Setting the variable @code{vm-enable-summary-faces} to
+t in your init file causes the summary faces to be turned on
+permanently.  Then VM decorates the summary lines with different faces
+based on the attributes of the message.  The following categories of
+faces are pre-defined:
 
 @itemize
 @item high-priority:
@@ -3644,7 +3638,7 @@ summary.  It has the following form:
   ... )
 @end example
 
-The first element of each association-pair is a list of conditions in
+The first element of each association-pair is a condition in
 the same format as used for @code{vm-virtual-folder-alist}.
 @xref{Virtual Folders}.  The second element is a face name of the form
 @code{vm-summary-CAT-face} where @code{CAT} is one of the message

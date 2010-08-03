@@ -405,7 +405,7 @@ AddToFunc SelectWindow
                 (vm-mouse-set-mouse-track-highlight
                  start (point)))
 
-	      (if vm-summary-faces-mode
+	      (if vm-enable-summary-faces
 		  (vm-summary-faces-add msg)
 		(vm-summary-highlight-region start (point)
 					     vm-summary-highlight-face))

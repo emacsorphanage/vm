@@ -5966,9 +5966,7 @@ Most addons are from `vm-rfaddons-infect-vm'.
 
 You must restart VM after a change to cause any effects."
   :group 'vm
-  :type '(set (const :tag "Enable faces in the summary buffer" 
-		     summary-faces)
-	      (const :tag "Enable shrinking of multi-line headers to one line."
+  :type '(set (const :tag "Enable shrinking of multi-line headers to one line."
 		     shrunken-headers)
 	      (const :tag "Open a line when typing in quoted text"
 		     open-line)
@@ -5990,6 +5988,14 @@ You must restart VM after a change to cause any effects."
 		     auto-delete-message-external-body)
 	      (const :tag "Enable all addons" t)))
 
+(defcustom vm-enable-summary-faces nil
+  "A non-NIL value enables the use of faces in the summary buffer.
+
+You should set this variable in the init-file.  For interactive use,
+the command `vm-summary-faces-mode' should be used."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-disable-modes-before-encoding 
   '(auto-fill-mode font-lock-mode ispell-minor-mode flyspell-mode
 		   abbrev-mode adaptive-fill-mode)
@@ -6001,6 +6007,8 @@ cause trouble (abbrev-mode)."
 
 (defvar vm-summary-faces-mode nil
   "Records whether VM Summary Faces mode is in use.")
+
+(make-obsolete 'vm-summary-faces-mode 'vm-enable-summary-faces "8.2.0")
 
 (defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
   "*A list of headers to hide in `vm-mail-mode'."

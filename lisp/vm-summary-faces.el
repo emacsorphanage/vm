@@ -244,14 +244,14 @@ When it is on, the VM summary buffers are decorated with faces, i.e.,
 fonts and colors, for easy recogniton of the message status."
   (interactive "P")
   (if (null arg)
-      (setq vm-summary-faces-mode (not vm-summary-faces-mode))
+      (setq vm-enable-summary-faces (not vm-enable-summary-faces))
     (if (> (prefix-numeric-value arg) 0)
-        (setq vm-summary-faces-mode t)
-      (setq vm-summary-faces-mode nil)))
+        (setq vm-enable-summary-faces t)
+      (setq vm-enable-summary-faces nil)))
 
   (when (interactive-p)
     (message "VM summary faces mode is %s"
-             (if vm-summary-faces-mode "on" "off")))
+             (if vm-enable-summary-faces "on" "off")))
   
   (if (memq major-mode '(vm-mode vm-virtual-mode vm-summary-mode
                                  vm-presentation-mode))
@@ -259,7 +259,7 @@ fonts and colors, for easy recogniton of the message status."
         (vm-select-folder-buffer)
         (vm-summarize)
         (set-buffer vm-summary-buffer)
-        (if vm-summary-faces-mode
+        (if vm-enable-summary-faces
 	    (progn
 	      (mapc 'vm-summary-faces-add vm-message-list)
 	      (if vm-summary-overlay
@@ -275,7 +275,7 @@ fonts and colors, for easy recogniton of the message status."
 
 ;; (defadvice vm-mouse-set-mouse-track-highlight 
 ;;	(after vm-summary-faces activate)
-;;   (when (and vm-summary-faces-mode
+;;   (when (and vm-enable-summary-faces
 ;;              (eq major-mode 'vm-summary-mode)
 ;;              (boundp 'm)
 ;;              m)
@@ -285,7 +285,7 @@ fonts and colors, for easy recogniton of the message status."
 (defun vm-summary-faces-fix-pointer ()
   (if vm-summary-overlay
       (vm-set-extent-property vm-summary-overlay 'face
-			            (if vm-summary-faces-mode
+			            (if vm-enable-summary-faces
 					'vm-summary-selected-face
 				      vm-summary-highlight-face))))
 

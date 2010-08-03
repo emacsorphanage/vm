@@ -35,8 +35,8 @@ VM 8.1.93a (2010-07-17)
 
   ** New feature: vm-summary-faces-mode allows summary lists with
      faces turned on.  (This was formerly an add-on contributed by
-     Robert Fenk.)  See the info file for details as well as changes
-     from the former version.
+     Robert Fenk.)  See the info file for usage as well as to note
+     changes from the former version.
 
    * Added EasyPG storage of passwords for mail server accounts.  See
      info index under "passwords".
