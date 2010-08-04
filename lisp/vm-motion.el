@@ -158,7 +158,8 @@ given."
 	      vm-summary-enable-thread-folding
 	      vm-summary-show-threads
 	      (> (vm-th-thread-indentation (car mp)) 0)
-	      (vm-summary-collapsed-root-p (vm-th-thread-root (car mp)))))))
+	      (vm-summary-collapsed-root-p (vm-th-thread-root (car mp)))
+	      (get-text-property (vm-su-start-of (car mp)) 'invisible)))))
 
 ;;;###autoload
 (defun vm-next-message (&optional count retry signal-errors)
