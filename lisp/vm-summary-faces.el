@@ -55,6 +55,38 @@
   "VM additional virtual folder selectors and functions."
   :group 'vm)
 
+(defcustom vm-summary-faces-alist
+  '(
+    ((or (header "Priority: urgent")
+         (header "Importance: high")
+         (header "X-Priority: 1")
+         (label "!")
+	 (label "\\flagged")
+         (header "X-VM-postponed-data:"))
+     vm-summary-high-priority-face)
+    ((collapsed)        vm-summary-collapsed-face)
+    ((marked)    	vm-summary-marked-face)
+    ((deleted)   	vm-summary-deleted-face)
+    ((new)       	vm-summary-new-face)
+    ((unread)    	vm-summary-unread-face)
+    ((replied)   	vm-summary-replied-face)
+    ((or (filed)
+	 (written))     vm-summary-saved-face)
+    ((or (forwarded) 
+	 (redistributed)) vm-summary-forwarded-face)
+    ((edited)    	vm-summary-edited-face)
+    ((outgoing)  	vm-summary-outgoing-face)
+    ((expanded)  	vm-summary-expanded-face)
+    ((any)       	vm-summary-default-face))
+  "*Alist of virtual folder conditions and corresponding faces.
+Order matters. The first matching one will be used as face.  
+
+See `vm-virtual-folder-alist' for a description of the conditions."
+  :type '(repeat (cons (sexp) (face)))
+  :group 'vm-summary-faces)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defface vm-summary-selected-face
   '((t ;; (:bold on)
      (:background "grey85")
@@ -89,24 +121,32 @@
   "The face used in VM Summary buffers for saved messages."
   :group 'vm-summary-faces)
 
-;; These faces are obsolete
-(define-obsolete-face-alias 'vm-summary-filed-face
-  'vm-summary-saved-face "8.2.0")
-(define-obsolete-face-alias 'vm-summary-written-face
-  'vm-summary-saved-face "8.2.0")
+;; These faces are obsolete 
+;; (define-obsolete-face-alias 'vm-summary-filed-face
+;;   'vm-summary-saved-face "8.2.0")
+;; (define-obsolete-face-alias 'vm-summary-written-face
+;;   'vm-summary-saved-face "8.2.0")
+(put 'vm-summary-filed-face 'face-alias 'vm-summary-saved-face)
+(put 'vm-summary-written-face 'face-alias 'vm-summary-saved-face)
+(make-obsolete 'vm-summary-filed-face 'vm-summary-saved-face "8.2.0")
+(make-obsolete 'vm-summary-written-face 'vm-summary-saved-face "8.2.0")
 
 (defface vm-summary-replied-face
-  '((t (:foreground "grey50")))
+  '((t (:foreground "grey30")))
   "The face used in VM Summary buffers for replied messages."
   :group 'vm-summary-faces)
 
 (defface vm-summary-forwarded-face
-  '((t (:foreground "grey50")))
+  '((t (:foreground "grey20")))
   "The face used in VM Summary buffers for forwarded messages."
   :group 'vm-summary-faces)
 
-(define-obsolete-face-alias 'vm-summary-redistributed-face
-  'vm-summary-forwarded-face "8.2.0")
+;; (define-obsolete-face-alias 'vm-summary-redistributed-face
+;;   'vm-summary-forwarded-face "8.2.0")
+(put 'vm-summary-redistributed-face 'face-alias
+     'vm-summary-forwarded-face)
+(make-obsolete 'vm-summary-redistributed-face
+	       'vm-summary-forwarded-face "8.2.0")
 
 (defface vm-summary-edited-face 
   nil
@@ -125,7 +165,7 @@ expanded threads."
   :group 'vm-summary-faces)
 
 (defface vm-summary-collapsed-face
-  '((t (:bold t)))
+  '((t (:weight normal :slant oblique)))
   "The face used in VM Summary buffers for the root messages of
 collapsed threads."
   :group 'vm-summary-faces)
@@ -141,37 +181,7 @@ collapsed threads."
   :group 'vm-summary-faces)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defcustom vm-summary-faces-alist
-  '(
-    ((or (header "Priority: urgent")
-         (header "Importance: high")
-         (header "X-Priority: 1")
-         (label "!")
-	 (label "\\flagged")
-         (header "X-VM-postponed-data:"))
-     vm-summary-high-priority-face)
-    ((collapsed)        vm-summary-collapsed-face)
-    ((marked)    	vm-summary-marked-face)
-    ((deleted)   	vm-summary-deleted-face)
-    ((new)       	vm-summary-new-face)
-    ((unread)    	vm-summary-unread-face)
-    ((replied)   	vm-summary-replied-face)
-    ((or (filed)
-	 (written))     vm-summary-saved-face)
-    ((or (forwarded) 
-	 (redistributed)) vm-summary-forwarded-face)
-    ((edited)    	vm-summary-edited-face)
-    ((outgoing)  	vm-summary-outgoing-face)
-    ((expanded)  	vm-summary-expanded-face)
-    ((any)       	vm-summary-default-face))
-  "*Alist of virtual folder conditions and corresponding faces.
-Order matters. The first matching one will be used as face.  
 
-See `vm-virtual-folder-alist' for a description of the conditions."
-  :type '(repeat (cons (sexp) (face)))
-  :group 'vm-summary-faces)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-and-compile
   (if (fboundp 'mapcar-extents)
       (defun vm-summary-faces-list-extents () (mapcar-extents 'identity))

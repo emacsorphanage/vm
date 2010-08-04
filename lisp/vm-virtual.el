@@ -617,6 +617,9 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 (defun vm-vs-unwritten (m) (not (vm-written-flag m)))
 (defun vm-vs-unmarked (m) (not (vm-mark-of m)))
 (defun vm-vs-unedited (m) (not (vm-edited-flag m)))
+(defun vm-vs-expanded (m) (vm-summary-expanded-root-p m))
+(defun vm-vs-collapsed (m) (vm-summary-collapsed-root-p m))
+
 
 (put 'sexp 'vm-virtual-selector-clause "matching S-expression selector")
 (put 'header 'vm-virtual-selector-clause "with header matching")
@@ -657,7 +660,6 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 (put 'more-lines-than 'vm-virtual-selector-arg-type 'number)
 (put 'less-lines-than 'vm-virtual-selector-arg-type 'number)
 (put 'spam-score 'vm-virtual-selector-arg-type 'number)
-
 
 ;;;###autoload
 (defun vm-read-virtual-selector (prompt)

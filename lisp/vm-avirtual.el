@@ -184,6 +184,8 @@
     (unwritten . vm-mail-vs-unknown)
     (unedited . vm-mail-vs-unknown)
     (unmarked . vm-mail-vs-unknown)
+    (expanded . vm-mail-vs-unknown)
+    (collapsed . vm-mail-vs-unknown)
     (virtual-folder-member . vm-mail-vs-unknown)
     (label . vm-mail-vs-unknown)
     (sent-before . vm-mail-vs-unknown)

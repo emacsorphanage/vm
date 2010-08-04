@@ -5379,6 +5379,8 @@ header line in email messages,
     ("unwritten")
     ("unedited")
     ("unmarked")
+    ("expanded")
+    ("collapsed")
     ("spam-word")
     ("spam-score")
     ))
@@ -5434,6 +5436,8 @@ header line in email messages,
     (unmarked . vm-vs-unmarked)
     (spam-word . vm-vs-spam-word)
     (spam-score . vm-vs-spam-score)
+    (expanded . vm-vs-expanded)
+    (collapsed . vm-vs-collapsed)
     ))
 
 (defconst vm-supported-attribute-names
@@ -5454,11 +5458,14 @@ header line in email messages,
     "unfiled"
     "unwritten"
     "unedited"
+    "expanded"
+    "collapsed"
     ;; for babyl cogniscenti
     "recent"
     "unseen"
     "answered"
-    "unanswered"))
+    "unanswered"
+    ))
 
 (defvar vm-key-functions nil)
 (defconst vm-digest-type-alist '(("rfc934") ("rfc1153") ("mime")))
