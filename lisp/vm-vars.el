@@ -184,7 +184,8 @@ updated information about the folder.
 
 A nil value means VM should not read or write index files."
   :group 'vm-folders
-  :type '(choice string (const nil)))
+  :type '(choice (string :tag "File Suffix")
+                 (const :tag "Do not use index file" nil)))
 
 (defcustom vm-load-headers-only nil
   "*If non-nil, asks VM to load headers of mail folders whenever
@@ -402,7 +403,8 @@ for a folder.  The function will be called with one argument, the
 folder's file name.  If the folder does not have a file name,
 the function will not be called."
   :group 'vm-folders
-  :type 'function)
+  :type '(choice (const :tag "Default" nil)
+                 function))
 
 (defcustom vm-make-crash-box-name nil
   "*Non-nil value should be a function that returns a crash box file name
@@ -410,7 +412,8 @@ for a folder.  The function will be called with one argument, the
 folder's file name.  If the folder does not have a file name,
 the function will not be called."
   :group 'vm-folders
-  :type 'function)
+  :type '(choice (const :tag "Default" nil)
+                 function))
 
 (defcustom vm-pop-md5-program "md5"
   "*Program that reads a message on its standard input and writes an
