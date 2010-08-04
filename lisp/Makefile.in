@@ -125,17 +125,21 @@ version.txt:
 
 ##############################################################################
 # GNU Emacs's vm-autoload file
+# We use tr -d because Emacs under Cygwin apparently outputs CRLF
+# under Windows.  We remove the CRs.
+# Solaris 8's tr -d '\r' removes r's so we use '\015' instead.
+# the echo command can also emit CRs.
 vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	-$(RM) -f $@
 	echo > $@
 	(build_dir="`pwd`"; cd "@srcdir@"; \
 	 "$(EMACS_PROG)" $(FLAGS) -l autoload \
 		-f vm-built-autoloads "@abs_builddir@/$@" "`pwd`")
-	echo "(custom-add-load 'vm 'vm-cus-load)" >> $@
-	echo "(setq vm-configure-datadir \"${datadir}\")" >> $@
-	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" >> $@
-	echo "(require 'vm-vars)" >> $@
-	echo "(provide 'vm-autoloads)" >> $@
+	echo "(custom-add-load 'vm 'vm-cus-load)" | tr -d '\015' >> $@
+	echo "(setq vm-configure-datadir \"${datadir}\")" | tr -d '\015' >> $@
+	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" | tr -d '\015' >> $@
+	echo "(require 'vm-vars)" | tr -d '\015' >> $@
+	echo "(provide 'vm-autoloads)" | tr -d '\015' >> $@
 
 vm-cus-load.el: $(SOURCES:%=@srcdir@/%)
 	"$(EMACS_PROG)" $(FLAGS) -f vm-custom-make-dependencies .
