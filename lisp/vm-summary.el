@@ -292,11 +292,14 @@ is the root of the thread you want expanded."
     (unless root
       (setq root (vm-th-thread-root (vm-summary-message-at-point))))
     (vm-summary-mark-root-expanded root)
+    (vm-mark-for-summary-update root)
     (mapc
      (lambda (m) 
        (put-text-property 
 	(vm-su-start-of m) (vm-su-end-of m) 'invisible nil))
-     (vm-th-thread-subtree (vm-th-thread-symbol root)))))
+     (vm-th-thread-subtree (vm-th-thread-symbol root))))
+  (when (interactive-p)
+    (vm-update-summary-and-mode-line)))
 
 (defun vm-collapse-thread (&optional nomove root)
   "Collapse the thread associated with the message at point. This
@@ -325,6 +328,7 @@ ROOT, which is the root of the thread you want collapsed."
 	(setq root (vm-th-thread-root msg)))
       (when (> (vm-th-thread-count root) 1)
 	(vm-summary-mark-root-collapsed root)
+	(vm-mark-for-summary-update root)
 	(mapc
 	 (lambda (m) 
 	   (unless (or (eq m root) (vm-new-flag m))
@@ -336,7 +340,9 @@ ROOT, which is the root of the thread you want collapsed."
       (goto-char (vm-su-start-of root))
       (save-excursion
 	(vm-select-folder-buffer)
-	(vm-goto-message (string-to-number (vm-number-of root)))))))
+	(vm-goto-message (string-to-number (vm-number-of root)))))
+    (when (interactive-p)
+      (vm-update-summary-and-mode-line))))
 	
 (defun vm-expand-all-threads ()
   "Expand all threads in the folder, which might have been collapsed
@@ -355,7 +361,9 @@ ROOT, which is the root of the thread you want collapsed."
 			   (> (vm-th-thread-count m) 1))
 		  (vm-expand-thread m)))
 	      ml))))
-  (setq vm-summary-threads-collapsed nil))
+  (setq vm-summary-threads-collapsed nil)
+  (when (interactive-p)
+    (vm-update-summary-and-mode-line)))
 
 (defun vm-collapse-all-threads ()
   "Collapse (fold) all threads in the folder so that only the roots of
@@ -378,7 +386,9 @@ the threads are shown in the Summary window."
 	      ml)))
     (vm-goto-message (string-to-number (vm-number-of root))))
 
-  (setq vm-summary-threads-collapsed t))
+  (setq vm-summary-threads-collapsed t)
+  (when (interactive-p)
+    (vm-update-summary-and-mode-line)))
       
 (defun vm-toggle-thread ()
   "Toggle collapse/expand thread associated with message at point.
@@ -395,7 +405,9 @@ of action."
       (setq root (vm-th-thread-root (vm-summary-message-at-point)))
       (if (vm-summary-expanded-root-p root)
 	  (vm-collapse-thread)
-	(vm-expand-thread)))))
+	(vm-expand-thread))
+      (when (interactive-p)
+	(vm-update-summary-and-mode-line)))))
 
 (defun vm-do-needed-summary-rebuild ()
   "Rebuild the summary lines of all the messages starting at
