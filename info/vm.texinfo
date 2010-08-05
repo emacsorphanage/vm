@@ -204,9 +204,11 @@ to @code{vm-user-agent}, e.g. by @kbd{M-x} @code{customize-variable} @kbd{RET}
 @code{mail-user-agent} @kbd{RET}.
 
 To invoke VM, type @kbd{M-x vm}.  VM gathers any mail that has
-arrived in your system mailbox and appends it to a file known as your
-@dfn{primary inbox}, and visits that file for reading.  @xref{Starting Up}.
-A file visited for reading by VM is called the @dfn{current folder}.
+arrived in your system mailbox and appends it to a mail folder known as your
+@dfn{primary inbox}, and visits that folder for reading.  @xref{Starting Up}.
+Depending on how you have configured VM, the primary inbox might be a
+file on your file system (in a format understood by VM) or it could be
+a folder on a remote mail server.
 
 If you type @kbd{?} in a VM folder buffer you will get some help, i.e.
 @code{vm-help} is called.

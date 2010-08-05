@@ -1125,7 +1125,8 @@ summary buffer to select a folder."
           varlist (sort varlist
                         (lambda (v1 v2)
                           (string-lessp (format "%s" v1) (format "%s" v2)))))
-    (let ((vars-to-delete 
+    (let ((fill-column (1- (window-width)))	; turn off auto-fill
+	  (vars-to-delete 
 	   '(vm-shrunken-headers-keymap	; big and wasteful
 	     vm-auto-folder-alist	; a bit private
 	     vm-mail-folder-alist	; ditto
@@ -1196,11 +1197,8 @@ summary buffer to select a folder."
 - You may attach sample messages or attachments that can be used to
   reproduce the problem.
 
-- Mail sent to vm@lists.launchpad.net is archived on the web at
-https://lists.launchpad.net/vm.  If it is not appropriate for
-your report to be archived, please email it to one or more of the
-members of the team listed at https://launchpad.net/~vm, all of whom
-have email addresses at launchpad.net.
+- Mail sent to viewmail-bugs@nongnu.org is only viewed by VM
+  maintainers and it is not made public.  
 
 - You may remove these instructions and other stuff which is unrelated
   to the bug from your message.
@@ -1212,8 +1210,7 @@ have email addresses at launchpad.net.
   sensitive information by xxxx."))
 	)
       (goto-char (point-min))
-      (mail-position-on-field "Subject")
-      (insert "VM-BUG: "))))
+      (mail-position-on-field "Subject"))))
 
 (defun vm-edit-init-file ()
   "Edit the `vm-init-file'."
