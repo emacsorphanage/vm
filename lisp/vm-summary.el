@@ -291,15 +291,16 @@ is the root of the thread you want expanded."
   (let ((buffer-read-only nil))
     (unless root
       (setq root (vm-th-thread-root (vm-summary-message-at-point))))
-    (vm-summary-mark-root-expanded root)
-    (vm-mark-for-summary-update root)
-    (mapc
-     (lambda (m) 
-       (put-text-property 
-	(vm-su-start-of m) (vm-su-end-of m) 'invisible nil))
-     (vm-th-thread-subtree (vm-th-thread-symbol root))))
-  (when (interactive-p)
-    (vm-update-summary-and-mode-line)))
+    (when (> (vm-th-thread-count root) 1)
+      (vm-summary-mark-root-expanded root)
+      (vm-mark-for-summary-update root)
+      (mapc
+       (lambda (m) 
+	 (put-text-property 
+	  (vm-su-start-of m) (vm-su-end-of m) 'invisible nil))
+       (vm-th-thread-subtree (vm-th-thread-symbol root)))
+      (when (interactive-p)
+	(vm-update-summary-and-mode-line)))))
 
 (defun vm-collapse-thread (&optional nomove root)
   "Collapse the thread associated with the message at point. This
@@ -322,27 +323,27 @@ ROOT, which is the root of the thread you want collapsed."
     (set-buffer vm-summary-buffer))
   (let ((buffer-read-only nil)
 	(msg nil))
-    (save-excursion
-      (unless root
-	(setq msg (vm-summary-message-at-point))
-	(setq root (vm-th-thread-root msg)))
-      (when (> (vm-th-thread-count root) 1)
-	(vm-summary-mark-root-collapsed root)
-	(vm-mark-for-summary-update root)
-	(mapc
-	 (lambda (m) 
-	   (unless (or (eq m root) (vm-new-flag m))
-	     (put-text-property 
-	      (vm-su-start-of m) (vm-su-end-of m) 'invisible t)))
-	 (vm-th-thread-subtree (vm-th-thread-symbol root)))))
-    ;; move to the parent thread
-    (unless (or nomove (vm-new-flag msg))
-      (goto-char (vm-su-start-of root))
-      (save-excursion
-	(vm-select-folder-buffer)
-	(vm-goto-message (string-to-number (vm-number-of root)))))
-    (when (interactive-p)
-      (vm-update-summary-and-mode-line))))
+    (unless root
+      (setq msg (vm-summary-message-at-point))
+      (setq root (vm-th-thread-root msg)))
+    (when (> (vm-th-thread-count root) 1)
+      (vm-summary-mark-root-collapsed root)
+      (vm-mark-for-summary-update root)
+      (mapc
+       (lambda (m) 
+	 (unless (or (eq m root) (vm-new-flag m))
+	   (put-text-property 
+	    (vm-su-start-of m) (vm-su-end-of m) 'invisible t)))
+       (vm-th-thread-subtree (vm-th-thread-symbol root)))
+      ;; move to the parent thread only when not
+      ;; instructed not to, AND when the currently
+      ;; selected message will become invisible
+      (when (get-text-property (+ (vm-su-start-of msg) 3) 'invisible)
+	(unless (or nomove (vm-new-flag msg))
+	  (vm-select-folder-buffer)
+	  (vm-goto-message (string-to-number (vm-number-of root)))))
+      (when (interactive-p)
+	(vm-update-summary-and-mode-line)))))
 	
 (defun vm-expand-all-threads ()
   "Expand all threads in the folder, which might have been collapsed
