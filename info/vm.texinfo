@@ -20,7 +20,7 @@ This file documents the VM mail reader.
 @table @asis
 @item Copyright (C) 1989, 1991, 1999 Kyle E. Jones
 @item Copyright (C) 2003 - 2008 Robert Widhopf-Fenk
-@item Copyright (C) 2008 Uday S. Reddy
+@item Copyright (C) 2008 - 2010 Uday S. Reddy
 @end table
 
 Permission is granted to make and distribute verbatim copies of
@@ -56,7 +56,7 @@ are preserved on all copies.
 @end titlepage
 @page
 @ifnottex
-@node Top, Introduction,, (DIR)
+@node Top, Preface,, (DIR)
 
 This manual documents the VM mail reader, a Lisp program which runs as a
 subsystem under Emacs.  The manual is divided into the following
@@ -65,6 +65,7 @@ chapters.
 This manual corresponds to VM version @value{VERSION}.
 
 @menu
+* Preface::             What is VM?
 * Introduction::        Overview of the VM interface.
 * Starting Up::         What happens when you start VM.
 * Selecting Messages::  How to select messages for reading.
@@ -111,8 +112,84 @@ Rights:
 @end menu
 @end ifnottex
 
-@node Introduction, Starting Up, Top, Top
-@unnumbered Introduction
+@node Preface, Introduction, Top, Top
+@unnumbered What is VM?
+
+@cindex Rmail
+@cindex Gnus
+@cindex Gnu Emacs
+@cindex XEmacs
+@cindex Emacs
+VM, short for ``View Mail,'' is a mail reader that runs within the
+Emacs editor.  If you are already an Emacs-user, you will be working
+in a familiar environment.  You might have even used other Emacs-based
+mail readers such as Rmail and Gnus.  If you are new to Emacs, you can
+start using VM via the menubar and toolbar until you become familiar
+with it.  Then you can move on to keyboard shortcuts and advanced
+features.  You should be aware that there are two major strands of
+Emacs versions, called ``Gnu Emacs'' and ``XEmacs.''  VM works in both
+of them.  XEmacs might be a bit easier for new users due to its
+advanced support for menus and other interactive features.  Please be
+sure to try both of them before deciding on your choice.
+
+Emacs provides a powerful text-based user interface for VM users, with
+facilities for quick navigation, incremental searching , sophisticated
+customization and powerful add-on functions.  You also have all the
+editing features of Emacs available for composing mail, without having
+to switch environments.
+
+@cindex virtual folders
+@cindex archiving
+@cindex address book
+@cindex MIME
+@cindex encryption
+VM was developed by Kyle Jones starting in 1989.  It was a leader
+in mail-reading functionality by introducing features like thread
+management, virtual folders, automatic archiving of messages and a
+full treatment of MIME.  VM can interface to other packages
+available in Emacs, for remote file access, BBDB address book, GPG
+encryption and Org mode task management etc.  It can also invoke
+external utilities available on your system such as mail filtering
+tools and html rendering tools.
+
+@cindex POP
+@cindex IMAP
+@cindex mail servers
+@cindex mbox
+@cindex Thunderbird
+VM can read and store mail on your file system (both local and
+remote).  It can also handle mail stored in remote file servers
+running POP and IMAP protocols.  The local folders are stored in a
+Unix-standard @code{mbox} format, which is also used by most other
+mail readers including Thunderbird.  In fact, VM can seamlessly
+operate on Thunderbird folders and, if you use a remote mail server,
+you can view the same folders in VM and Thunderbird concurrently.  In
+addition, VM can also store mail in the @code{Babyl} format used by
+Emacs Rmail.  So, it is also possible to inter-operate with Rmail if
+you have archived mail in that format.
+
+@cindex maildir
+@cindex newsgroups
+@cindex RSS feeds
+@cindex S/MIME
+There are also a few things that VM cannot (yet) do.  It does not have
+the ability to deal with maildir folders.  It cannot be used to read
+newsgroups and RSS feeds.  It does not have its own mail filtering
+tools.  It does not have support for the Secure MIME (S/MIME)
+protocol.  However, active development of VM is continuing.  It may
+acquire some of these features before long.
+
+VM has been found most useful by professional users who must deal with
+large quantities of email in the course of their work, and deal with
+it efficiently and reliably.  We enjoy using VM and find that it is
+better than any other mail tool in its flexibility and efficiency.  We
+hope you will too!
+
+-- VM Development Team
+
+
+@node Introduction, Starting Up, Preface, Top
+@unnumbered Overview
 
 VM (View Mail) is an Emacs subsystem that allows UNIX mail to be read
 and disposed of within Emacs.  Commands exist to do the normal things
@@ -1009,7 +1086,7 @@ that is accessible to you on the IMAP server can be specified.  For
 example, @code{becky:inbox} or @code{crickle:drafts}.
 
 @vindex vm-imap-refer-to-inbox-by-account-name
-When you visit an IMAP folder inside VM, the folder is reffered to by
+When you visit an IMAP folder inside VM, the folder is referred to by
 its folder name as it exists on the server.  For example, visiting
 @code{becky:INBOX} creates a folder called @code{INBOX} inside VM.  If
 you visit multiple accounts within a VM session, then you would end up
@@ -2178,7 +2255,7 @@ future.
 @vindex vm-fetched-message-limit
 After fetching message bodies, VM stores them in the Folder buffer
 temporarily, so that repeated fetching is avoided.  The variable
-@code{vm-feched-message-limit} controls how many message bodies are
+@code{vm-fetched-message-limit} controls how many message bodies are
 stored in this way.  You can set it to an integer (10 is the default),
 or to @code{nil}, signifying that there is no limit.  All the fetched
 message bodies are flushed before folders are saved to disk.
@@ -2187,7 +2264,7 @@ message bodies are flushed before folders are saved to disk.
 @findex vm-unload-message
 You can manually load message bodies into the Folder using the command
 @code{o} (@code{vm-load-message}.  The command @code{O}
-(@code{vm-unload-message}) unloads a previosly loaded message body.
+(@code{vm-unload-message}) unloads a previously loaded message body.
 Both the commands can take numerical prefix arguments or operate on
 marked messages.  Note that ``loading'' message body is different from
 on demand ``fetching''.  Loaded messages are permanently stored in the
@@ -2538,7 +2615,7 @@ the variable @code{vm-included-mime-types-list} to a list of MIME types
 that should be covered in the included text.  The list should have
 @code{text/plain} at a minimum and could include other types such as
 @code{text/enriched} and @code{message}.  Setting the variable to nil
-returns you to the default behaviour.  Another possibe way to extract
+returns you to the default behaviour.  Another possible way to extract
 included text is to use the contents of the presentation buffer.  You
 can ask VM to do so by setting the variable
 @code{vm-include-text-from-presentation} to t.  This might be needed
@@ -2638,7 +2715,7 @@ documentation of these variables for further information.
 @findex vm-forward-message-all-headers
 The command @code{vm-forward-message-all-headers} forwards the
 message with all headers intact, irrespective of the values of these
-vaiables. 
+variables. 
 
 @vindex vm-forwarding-subject-format
 If the variable
@@ -3576,7 +3653,7 @@ If the variable @code{vm-summary-enable-thread-folding} is non-nil,
 the Summary window starts out with all the threads folded.  You can
 selectively expand threads using the @code{vm-toggle-thread} function.
 Alternatively, you can expand all the threads in the folder using the
-commannd @code{E} (@code{vm-expand-all-threads}).  The command
+command @code{E} (@code{vm-expand-all-threads}).  The command
 @code{C} (@code{vm-collapse-all-threads}) does the reverse.  It
 collapses all the expanded threads.
 
@@ -3643,7 +3720,7 @@ the same format as used for @code{vm-virtual-folder-alist}.
 @xref{Virtual Folders}.  The second element is a face name of the form
 @code{vm-summary-CAT-face} where @code{CAT} is one of the message
 categories listed above.  The first association-pair whose conditions
-are satisifed by the message wins, and the face listed there is used
+are satisfied by the message wins, and the face listed there is used
 to decorate its summary line.
 
 @cindex hiding summary lines
@@ -4452,9 +4529,9 @@ specific menu is produced.
 
 @cindex w3m
 @cindex HTML
-These button assignments work only in plain text messsages.  For HTML
+These button assignments work only in plain text messages.  For HTML
 messages, you might use an internal web browser such as w3m to display
-the content, which will have its own button assignments.  For instace,
+the content, which will have its own button assignments.  For instance,
 w3m binds button-2 to the browser function specified by the variable
 @code{w3m-goto-article-function}.  You will need to set that variable to
 the desired browser function to get button-2 to work in HTML messages.
@@ -4786,7 +4863,7 @@ releases made by the team are numbered @code{8.1.0} and up.
 @cindex Launchpad
 The project code base is maintained at the Launchpad web site
 @uref{http://launchpad.net/vm}.  The ``VM Development Team'' can be
-reached here using the email address @code{vm@@launchpad.net}.
+reached here using the email address @code{vm@@lists.launchpad.net}.
 
 @unnumberedsubsec Savannah project site
 
@@ -4808,15 +4885,15 @@ gives instructions for downloading it via @samp{Bazaar} (@code{bzr}).
 
 @unnumberedsubsec Technical support
 
-VM has a dedicated usenet newsgroup @code{gnu.emacs.vm.info} in which
-the developers and the active users participate.  This is the first port
-of call for getting help with VM.  The archives of the newsgroup can be
-found at the Google Groups site
-@uref{http://groups.google.com/group/gnu.emacs.vm.info/topics}.
-
-A second newsgroup @code{gnu.emacs.vm.bug} is dedicated to
-discussing bugs or potential bugs in VM.  However, this is a place for
-discussion, not reporting bugs or getting them fixed.  
+VM has a dedicated usenet newsgroup @code{gnu.emacs.vm.info} and a
+gmane newsgroup @code{gmane.emacs.viewmail}, in which the developers
+and the active users participate.  This is the first port of call for
+getting help with VM.  The archives of the newsgroup dating back to
+the very beginning can be found at the Google Groups site
+@uref{http://groups.google.com/group/gnu.emacs.vm.info/topics}.  The
+discussions can also be accessed by email via a mailing list
+@uref{viewmail-info}.  Please go to the Savannah home page to
+subscribe to it.
 
 The easiest way to report bugs that need fixing is to use the command
 @code{M-x vm-submit-bug-report} within VM.  This prepares an email
@@ -4938,7 +5015,7 @@ Here are some of the VM features that its users find most valuable:
 @item
 VM's reliability and stability.
 @item
-Integration within Emacs, providing ease of editing and familar key
+Integration within Emacs, providing ease of editing and familiar key
 bindings. 
 @item
 Speed of usage facilitated by keyboard commands.
@@ -5062,7 +5139,7 @@ In a @code{From_} type mbox, every message has a leading and trailing
 separator line, as indicated above.  In a @code{BellFrom_} type mbox,
 the trailing separator line can be missing.  (This is so that the 
 mbox's from the old System V format can be handled.)  In a
-@code{From_with-Content-Length} type mbox, the @code{From} seperator
+@code{From_with-Content-Length} type mbox, the @code{From} separator
 line stores the length of the message.  So, no trailing separator line
 is required.
 
@@ -5098,7 +5175,7 @@ the folder.
 X-VM-VHeader. This header lists the values of @code{vm-visible-headers}
 and @code{vm-invisible-header-regexp} that were in effect when the
 folder was saved.  The messages in the folder would have their headers
-arranged according to these vaiables.
+arranged according to these variables.
 @item
 X-VM-Summary-Format.  This header stores the format string for the
 summary lines.
@@ -5338,7 +5415,7 @@ thread-indentation. Indentation level of the message in its message
 thread.
 @item
 thread-list.  List of symbols from @code{vm-thread-obarray} that give
-this message's lieage.
+this message's lineage.
 @item
 babyl-frob-flag.
 @item
@@ -5404,7 +5481,7 @@ header fields can have MIME-encoded words in them.  The strings stored
 in the cached-data vector, however, are MIME-decoded versions of the
 header fields, but they also have text properties that store the names
 of the original character sets used in the header fields.  This allows
-the strings to be quickly reencoded for storage on disk.
+the strings to be quickly re-encoded for storage on disk.
 
 @itemize
 @item
@@ -5629,7 +5706,7 @@ Stands for the indentation to be used for the message's summary
 depending on its position in the message thread.
 @item group-begin, group-end.
 Brackets used to denote groups of items that might have particular
-formating constraints.
+formatting constraints.
 @end itemize
 
 The function @code{vm-tokenized-summary-insert} converts a tokenized
