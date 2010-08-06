@@ -64,11 +64,10 @@
 	 (label "\\flagged")
          (header "X-VM-postponed-data:"))
      vm-summary-high-priority-face)
-    ((collapsed)        vm-summary-collapsed-face)
-    ((marked)    	vm-summary-marked-face)
     ((deleted)   	vm-summary-deleted-face)
     ((new)       	vm-summary-new-face)
     ((unread)    	vm-summary-unread-face)
+    ((marked)    	vm-summary-marked-face)
     ((replied)   	vm-summary-replied-face)
     ((or (filed)
 	 (written))     vm-summary-saved-face)
@@ -76,10 +75,9 @@
 	 (redistributed)) vm-summary-forwarded-face)
     ((edited)    	vm-summary-edited-face)
     ((outgoing)  	vm-summary-outgoing-face)
-    ((expanded)  	vm-summary-expanded-face)
     ((any)       	vm-summary-default-face))
   "*Alist of virtual folder conditions and corresponding faces.
-Order matters. The first matching one will be used as face.  
+Order matters. The first matching one will be used as the face.  
 
 See `vm-virtual-folder-alist' for a description of the conditions."
   :type '(repeat (cons (sexp) (face)))
@@ -117,7 +115,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 (defface vm-summary-saved-face
-  '((t (:foreground "green4" :underline t)))
+  '((t (:foreground "green4")))
   "The face used in VM Summary buffers for saved messages."
   :group 'vm-summary-faces)
 
@@ -154,7 +152,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 (defface vm-summary-outgoing-face
-  '((t (:foreground "grey50")))
+  '((t (:foreground "grey30")))
   "The face used in VM Summary buffers for outgoing messages."
   :group 'vm-summary-faces)
 
@@ -232,7 +230,15 @@ of available face names."
                (vm-extent-at (vm-su-end-of msg)))))
     (while faces
       (when (apply 'vm-vs-or msg (list (caar faces)))
-        (vm-set-extent-property x 'face (cadar faces))
+	(cond ((vm-summary-collapsed-root-p msg)
+	       (vm-set-extent-property 
+		x 'face (list (cadar faces) 'vm-summary-collapsed-face)))
+	      ((vm-summary-expanded-root-p msg)
+	       (vm-set-extent-property
+		x 'face (list (cadar faces) 'vm-summary-expanded-face)))
+	      (t
+	       (vm-set-extent-property
+		x 'face (list (cadar faces)))))
         (setq faces nil))
       (setq faces (cdr faces)))))
 
