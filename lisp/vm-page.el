@@ -1,6 +1,6 @@
 ;;; vm-page.el ---  Commands to move around within a VM message
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-page)
 
 (eval-when-compile
   (require 'vm-vars))
@@ -1147,7 +1149,5 @@ exposed and marked as read."
 	(goto-char (vm-extent-start-position e))
       (goto-char old-point)
       (error "No more buttons"))))
-
-(provide 'vm-page)
 
 ;;; vm-page.el ends here

@@ -3370,6 +3370,7 @@ of summary and attribution formats.
 @menu
 * Summary Format::   Customizing the summary format
 * Thread Folding::   Collapsing message threads in the summary
+* Summary Faces::    Decorating summary with fonts and colors
 @end menu
 
 @node Summary Format, Thread Folding, Summaries, Summaries
@@ -3521,12 +3522,13 @@ Summary lines are precomputed and cached in the folder buffer.  If you
 change the @code{vm-summary-format}, you need to force the cache to be
 updated.  You can do this by the command@code{vm-fix-my-summary!!!}.
 
+@vindex vm-restore-saved-summary-format
 Every folder can have its own summary format.  The format is written
 into the folder and saved on the disk.  When you visit the folder
 again, you can reuse the saved summary format.  Set the variable
 @code{vm-restore-saved-summary-format} to t to achieve this effect.
 
-@node Thread Folding,, Summary Format, Summaries
+@node Thread Folding, Summary Faces, Summary Format, Summaries
 @section Thread Folding
 
 A new feature in VM version 8.2 is that of ``folding'' message threads
@@ -3579,6 +3581,82 @@ commannd @code{E} (@code{vm-expand-all-threads}).  The command
 collapses all the expanded threads.
 
 
+@node Summary Faces,, Thread Folding, Summaries
+@section Summary Faces
+
+@cindex faces
+@cindex summary faces
+@findex vm-summary-faces-mode
+@vindex vm-enable-summary-faces
+By default, the summary of a folder is shown in a black-and-white
+window with plain text.  You can turn on faces support by running the
+command @code{vm-summary-faces-mode}.  @xref{Faces,,,emacs, the GNU
+Emacs Manual}.  Setting the variable @code{vm-enable-summary-faces} to
+t in your init file causes the summary faces to be turned on
+permanently.  Then VM decorates the summary lines with different faces
+based on the attributes of the message.  The following categories of
+faces are pre-defined:
+
+@itemize
+@item high-priority:
+Messages that are flagged or have other priority headers.
+@item collapsed:
+Root messages of threads that are collapsed.
+@item expanded:
+Root messages of threads that are expanded.
+@item marked:
+Messages currently marked.
+@item deleted:
+Deleted messages.
+@item new:
+New messages that have arrived during the session.
+@item unread:
+Messages that have not been read.
+@item replied:
+Messages for which a reply has been sent.
+@item saved:
+Messages saved to a folder on disk.  (Subsumes the earlier categories
+filed and written.)
+@item forwarded:
+Messages forwarded to other recipients.  (Subsumes the earlier
+category redistributed.)
+@item edited:
+Messages edited after receipt.
+@item outgoing:
+Messages sent by you.
+@item default:
+Messages not matching any of the above criteria.
+@end itemize
+
+@vindex vm-summary-faces-alist
+The variable @code{vm-summary-faces-alist} defines an association list
+of conditions and the faces that should be used for the
+summary.  It has the following form:
+
+@example
+( ((@var{SELECTOR} [@var{ARG} ...])    @var{FACE})
+  ... )
+@end example
+
+The first element of each association-pair is a condition in
+the same format as used for @code{vm-virtual-folder-alist}.
+@xref{Virtual Folders}.  The second element is a face name of the form
+@code{vm-summary-CAT-face} where @code{CAT} is one of the message
+categories listed above.  The first association-pair whose conditions
+are satisifed by the message wins, and the face listed there is used
+to decorate its summary line.
+
+@cindex hiding summary lines
+@cindex vm-summary-faces-hide
+The command @code{vm-summary-faces-hide} allows you to hide the
+summary lines of messages with a particular property.  By default, it
+hides messages with the @code{deleted} property.  By invoking it with
+a prefix argument, you can specify other properties that you might
+like to hide.  (Note that @code{deleted} property does not necessarily
+mean deleted messages.  Whatever messages satisfy the conditions
+associated with the @code{vm-summary-deleted-face} in
+@code{vm-summary-faces-alist} will be hidden.)
+
 @node Virtual Folders, Frames and Windows, Summaries, Top
 @chapter Virtual Folders
 
@@ -3592,6 +3670,8 @@ virtual folder that contains a subset of messages in a real folder
 or several real folders.  A virtual folder can also contain a
 subset of messages from another virtual folder.
 
+@vindex vm-virtual-folder-alist
+@findex vm-visit-virtual-folder
 A virtual folder is defined by its name, the folders that it contains
 and its selectors.  The variable @code{vm-virtual-folder-alist} is a list of
 the definitions of all named virtual folders.  In order to visit a
@@ -3636,6 +3716,7 @@ should be a regular expression.
 @item recipient
 matches message if @var{ARG} matches any part of the recipient
 list of the message.  @var{ARG} should be a regular expression.
+@vindex vm-summary-uninteresting-senders
 @item outgoing
 matches message if your are the author of it, i.e. if the author matches
 @code{vm-summary-uninteresting-senders}
@@ -5275,7 +5356,8 @@ all MIME entities.  (See below.)
 mime-encoded-header-flag. Flag that indicates if the headers of the
 message are MIME encoded.
 @item
-su-summary-mouse-track-overlay.
+su-summary-mouse-track-overlay.  The overlay on the summary of this
+message used for selection by mouse.
 @item
 message-access-method.  The access-method to be used for the message,
 inherited from its real folder.

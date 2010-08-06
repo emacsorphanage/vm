@@ -1,6 +1,6 @@
 ;;; vm-mark.el ---  Commands for handling messages marks
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1990, 1993, 1994 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-mark)
 
 (eval-when-compile
   (require 'vm-message)
@@ -458,7 +460,5 @@ not work."
   (interactive)
   (vm-display nil nil '(vm-mark-help) '(vm-mark-help))
   (message "MM = mark, MU = unmark, Mm = mark all, Mu = unmark all, MN = use marks, ..."))
-
-(provide 'vm-mark)
 
 ;;; vm-mark.el ends here

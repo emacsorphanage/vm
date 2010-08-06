@@ -33,8 +33,13 @@ VM 8.1.93a (2010-07-17)
      ideas.  Threads are correctly identified even if some of the
      messages are missing.
 
+  ** New feature: vm-summary-faces-mode allows summary lists with
+     faces turned on.  (This was formerly an add-on contributed by
+     Robert Fenk.)  See the info file for usage as well as to note
+     changes from the former version.
+
    * Added EasyPG storage of passwords for mail server accounts.  See
-     info inxex under "passwords".
+     info index under "passwords".
 
   BUG FIXES
 

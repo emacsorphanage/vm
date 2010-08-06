@@ -1,7 +1,7 @@
 ;;; vm-message-history.el --- Move backward & forward through selected messages
 ;; -*-unibyte: t; coding: iso-8859-1;-*-
-;;;
-;;; This file is an add-on for VM
+;;
+;; This file is an add-on for VM
 
 ;; Copyright © 2003 Kevin Rodgers, 2008 Robert Widhopf-Fenk
 
@@ -50,6 +50,8 @@
 ;;; TODO: Handle Expunged messages in the history list?
 
 ;;; Code:
+
+(provide 'vm-message-history)
 
 (eval-and-compile
   (require 'easymenu)
@@ -239,7 +241,5 @@ With prefix ARG, select the ARG'th next message."
       (goto-char selected))))
 
 (add-hook 'vm-select-message-hook 'vm-message-history-add)
-
-(provide 'vm-message-history)
 
 ;;; vm-message-history.el ends here

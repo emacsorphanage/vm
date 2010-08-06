@@ -1,6 +1,6 @@
 ;;; vm-delete.el --- Delete and expunge commands for VM.
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-delete)
 
 ;;;###autoload
 (defun vm-delete-message (count)
@@ -455,7 +457,5 @@ ignored."
       (if (not shaddap)
 	  (message "Deleted messages expunged.")))
      (t (message "No messages are flagged for deletion.")))))
-
-(provide 'vm-delete)
 
 ;;; vm-delete.el ends here

@@ -1,6 +1,6 @@
 ;;; vm.el --- Entry points for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1994-1998, 2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -25,9 +25,46 @@
 ;; This file was vm-startup.el!
 
 ;;; Code:
+
+(provide 'vm)
+
 (defvar enable-multibyte-characters)
 
-(require 'vm-version)
+;; For function declarations
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-minibuf)
+  (require 'vm-menu)
+  (require 'vm-toolbar)
+  (require 'vm-mouse)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-crypto)
+  (require 'vm-mime)
+  (require 'vm-virtual)
+  (require 'vm-pop)
+  (require 'vm-imap)
+  (require 'vm-sort)
+  (require 'vm-reply)
+)
+
+;; vm-xemacs.el is a non-existent file to fool the Emacs 23 compiler
+(declare-function vm-xemacs-set-face-foreground "vm-xemacs.el" 
+		  (face color &optional locale tag-set how-to-add))
+(declare-function vm-xemacs-set-face-background "vm-xemacs.el" 
+		  (face color &optional locale tag-set how-to-add))
+(declare-function get-coding-system "vm-xemacs.el" (name))
+(declare-function find-face "vm-xemacs.el" (face-or-name))
+
+(declare-function vm-rfaddons-infect-vm "vm-rfaddons.el" 
+		  (&optional sit-for option-list exclude-option-list))
+(declare-function vm-summary-faces-mode "vm-summary-faces.el" 
+		  (&optional arg))
 
 ;; Ensure that vm-autoloads is loaded in case the user is using VM 7.x
 ;; autoloads 
@@ -1253,6 +1290,7 @@ draft messages."
         (require 'vm-page)
         (require 'vm-mouse)
         (require 'vm-summary)
+	(require 'vm-summary-faces)
         (require 'vm-undo)
         (require 'vm-mime)
         (require 'vm-folder)
@@ -1270,11 +1308,7 @@ draft messages."
         (add-hook 'kill-emacs-hook 'vm-garbage-collect-global)
 	(vm-load-init-file)
 	(when vm-enable-addons
-	  (vm-rfaddons-infect-vm 0 vm-enable-addons)
-	  (when (or (eq t vm-enable-addons)
-                    (member 'summary-faces vm-enable-addons))
-	    (require 'vm-summary-faces)
-	    (vm-summary-faces-mode 1)))
+	  (vm-rfaddons-infect-vm 0 vm-enable-addons))
 	(if (not vm-window-configuration-file)
 	    (setq vm-window-configurations vm-default-window-configuration)
 	  (or (vm-load-window-configurations vm-window-configuration-file)
@@ -1304,27 +1338,26 @@ draft messages."
 	;; default value of vm-mime-button-face is 'gui-button-face
 	;; this face doesn't exist by default in FSF Emacs 19.34.
 	;; Create it and initialize it to something reasonable.
-	(if (and vm-fsfemacs-p (featurep 'faces)
-		 (not (facep 'gui-button-face)))
-	    (progn
-	      (make-face 'gui-button-face)
-	      (cond ((eq window-system 'x)
-		     (vm-fsfemacs-set-face-foreground 'gui-button-face "black")
-		     (vm-fsfemacs-set-face-background 'gui-button-face "gray75"))
-		    (t
-		     ;; use primary color names, since fancier
-		     ;; names may not be valid.
-		     (vm-fsfemacs-set-face-foreground 'gui-button-face "white")
-		     (vm-fsfemacs-set-face-background 'gui-button-face "red")))))
+	(when (and vm-fsfemacs-p (featurep 'faces)
+		   (not (facep 'gui-button-face)))
+	  (make-face 'gui-button-face)
+	  (cond ((eq window-system 'x)
+		 (vm-fsfemacs-set-face-foreground 'gui-button-face "black")
+		 (vm-fsfemacs-set-face-background 'gui-button-face "gray75"))
+		(t
+		 ;; use primary color names, since fancier
+		 ;; names may not be valid.
+		 (vm-fsfemacs-set-face-foreground 'gui-button-face "white")
+		 (vm-fsfemacs-set-face-background 'gui-button-face "red"))))
 	;; gui-button-face might not exist under XEmacs either.
 	;; This can happen if XEmacs is built without window
 	;; system support.  In any case, create it anyway.
 	(when (and vm-xemacs-p (not (find-face 'gui-button-face)))
 	  (make-face 'gui-button-face)
 	  (vm-xemacs-set-face-foreground 'gui-button-face "black" nil '(win))
-	  (vm-xemacs-set-background 'gui-button-face "gray75" nil '(win))
-	  (vm-xemacs-set-foreground 'gui-button-face "white" nil '(tty))
-	  (vm-xemacs-set-background 'gui-button-face "red" nil '(tty)))
+	  (vm-xemacs-set-face-background 'gui-button-face "gray75" nil '(win))
+	  (vm-xemacs-set-face-foreground 'gui-button-face "white" nil '(tty))
+	  (vm-xemacs-set-face-background 'gui-button-face "red" nil '(tty)))
 	(and (vm-mouse-support-possible-p)
 	     (vm-mouse-install-mouse))
 	(and (vm-menu-support-possible-p)
@@ -1360,7 +1393,5 @@ draft messages."
 (autoload 'tapestry-remove-frame-parameters "tapestry")
 (autoload 'vm-easy-menu-define "vm-easymenu" nil 'macro)
 (autoload 'vm-easy-menu-do-define "vm-easymenu")
-
-(provide 'vm)
 
 ;;; vm.el ends here

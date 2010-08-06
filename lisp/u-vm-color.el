@@ -1,6 +1,6 @@
 ;;; u-vm-color.el --- Font-lock support for VM.
-;;;
-;;; This file is an add-on for VM
+;;
+;; This file is an add-on for VM
 
 ;;  Copyright (C) 2001-2007 by Ulf Jasper
 
@@ -11,6 +11,10 @@
 ;;  Keywords:   VM, Customization
 ;;  Time-stamp: "23. Februar 2008, 21:28:20 (ulf)"
 ;;  CVS-Version: $Id: u-vm-color.el,v 2.19 2008-02-23 20:28:57 ulf Exp $
+
+;;; Code
+
+(provide 'u-vm-color)
 
 (defconst u-vm-color-version "2.10" "Version number of u-vm-color.")
 
@@ -739,5 +743,4 @@ Search is restricted to the region between START and END."
     ;;(message "u-vm-color-fontify-even-more: %d %d" (point-min) (point-max))
     (u-vm-color-fontify-buffer)))
 
-(provide 'u-vm-color)
 ;;; u-vm-color.el ends here

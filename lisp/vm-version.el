@@ -18,6 +18,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-version)
+
 (defconst vm-version
   (condition-case nil
       (with-temp-buffer
@@ -155,7 +158,5 @@ Return the list of loaded features."
                        nil))))
                 feature-list))
   (delete nil feature-list))
-
-(provide 'vm-version)
 
 ;;; vm-version.el ends here

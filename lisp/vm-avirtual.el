@@ -1,6 +1,6 @@
 ;;; vm-avirtual.el --- additional functions for virtual folder selectors
-;;;
-;;; This file is an add-on for VM
+;;
+;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 2000-2006 Robert Widhopf-Fenk
 ;;
@@ -102,6 +102,8 @@
 ;;
 ;;; Code:
 
+(provide 'vm-avirtual)
+
 (require 'vm-virtual)
 
 ; Group already defined in vm-vars.el
@@ -183,6 +185,8 @@
     (unwritten . vm-mail-vs-unknown)
     (unedited . vm-mail-vs-unknown)
     (unmarked . vm-mail-vs-unknown)
+    (expanded . vm-mail-vs-unknown)
+    (collapsed . vm-mail-vs-unknown)
     (virtual-folder-member . vm-mail-vs-unknown)
     (label . vm-mail-vs-unknown)
     (sent-before . vm-mail-vs-unknown)
@@ -1148,6 +1152,5 @@ name."
       (error "This is no virtual folder!"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(provide 'vm-avirtual)
 
-;;; vm-rfaddons.el ends here
+;;; vm-avirtual.el ends here

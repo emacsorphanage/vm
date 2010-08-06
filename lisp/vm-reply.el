@@ -1,6 +1,6 @@
 ;;; vm-reply.el --- Mailing, forwarding, and replying commands
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -21,7 +21,7 @@
 
 ;;; Commentary:
 
-;; Interface:
+;;; Interface:
 ;; Interactive commands:
 ;;
 ;; vm-yank-message: (message) -> unit
@@ -62,16 +62,18 @@
 
 ;;; Code:
 
-;; (declare-function mail-strip-quoted-names "ext:mail-utils" (address))
-;; (declare-function mail-fetch-field "ext:mail-utils" 
-;; 		  (field-name &optional last all list))
-;; (declare-function mail-send "ext:sendmail" ())
-;; (declare-function mail-do-fcc "ext:sendmail" (header-end))
-;; (declare-function mail-text "ext:sendmail" ())
-;; (declare-function mail-position-on-field "ext:sendmail" 
-;; 		  (field &optional soft))
-;; (declare-function mail-mode "ext:sendmail" ())
-;; (declare-function build-mail-aliases "ext:mailalias" (&optional file))
+(provide 'vm-reply)
+
+(declare-function mail-strip-quoted-names "ext:mail-utils" (address))
+(declare-function mail-fetch-field "ext:mail-utils" 
+		  (field-name &optional last all list))
+(declare-function mail-send "ext:sendmail" ())
+(declare-function mail-do-fcc "ext:sendmail" (header-end))
+(declare-function mail-text "ext:sendmail" ())
+(declare-function mail-position-on-field "ext:sendmail" 
+		  (field &optional soft))
+(declare-function mail-mode "ext:sendmail" ())
+(declare-function build-mail-aliases "ext:mailalias" (&optional file))
 
 (defun vm-add-reply-subject-prefix (message &optional start)
   (when (not start)
@@ -1901,7 +1903,5 @@ With a prefix arg, call `vm-mail-mode-show-headers' instead."
       (vm-mail-mode-hide-headers)))
 
 (add-hook 'vm-mail-mode-hook 'vm-mail-mode-hide-headers-hook)
-
-(provide 'vm-reply)
 
 ;;; vm-reply.el ends here

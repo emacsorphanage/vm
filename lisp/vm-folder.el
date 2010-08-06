@@ -1,6 +1,6 @@
 ;;; vm-folder.el --- VM folder related functions
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,42 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-folder)
+
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-minibuf)
+  (require 'vm-menu)
+  (require 'vm-toolbar)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-mark)
+  (require 'vm-virtual)
+  (require 'vm-sort)
+  (require 'vm-thread)
+  (require 'vm-pop)
+  (require 'vm-imap)
+)
+
+;; vm-xemacs.el is a fake file to fool the Emacs 23 compiler
+(declare-function get-itimer "vm-xemacs.el" (name))
+(declare-function start-itimer "vm-xemacs.el"
+		  (name function value &optional restart is-idle with-args
+			&rest function-arguments))
+(declare-function set-itimer-restart "vm-xemacs.el" (itimer restart))
+
+(declare-function vm-update-draft-count "vm.el" ())
+(declare-function vm "vm.el" 
+		  (&optional folder read-only access-method reload))
+(declare-function vm-mode "vm.el" (&optional read-only))
+		  
+
+
 (defun vm-number-messages (&optional start-point end-point)
   "Set the number-of and padded-number-of slots of messages
 in vm-message-list.
@@ -4797,15 +4833,9 @@ argument GARBAGE."
 	(error nil))
       (setq vm-message-garbage-alist (cdr vm-message-garbage-alist)))))
 
-(if (not (memq 'vm-write-file-hook write-file-hooks))
-    (setq write-file-hooks
-	  (cons 'vm-write-file-hook write-file-hooks)))
-
-(if (not (memq 'vm-handle-file-recovery find-file-hooks))
-    (setq find-file-hooks
-	  (nconc find-file-hooks
-		 '(vm-handle-file-recovery
-		   vm-handle-file-reversion))))
+(vm-add-write-file-hook 'vm-write-file-hook)
+(vm-add-find-file-hook 'vm-handle-file-recovery)
+(vm-add-find-file-hook 'vm-handle-file-reversion)
 
 ;; after-revert-hook is new to FSF v19.23
 (defvar after-revert-hook)
@@ -4813,7 +4843,5 @@ argument GARBAGE."
     (setq after-revert-hook
 	  (cons 'vm-after-revert-buffer-hook after-revert-hook))
   (setq after-revert-hook (list 'vm-after-revert-buffer-hook)))
-
-(provide 'vm-folder)
 
 ;;; vm-folder.el ends here

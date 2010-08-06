@@ -1,6 +1,6 @@
 ;;; vm-license.el --- Code to show VM's warranty and copying restrictions
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989, 1994 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-license)
 
 ;;;###autoload
 (defun vm-show-copying-restrictions (&optional warranty)
@@ -50,7 +52,5 @@
   "Display \"NO WARRANTY\" section of the GNU General Public License."
   (interactive)
   (vm-show-copying-restrictions t))
-
-(provide 'vm-license)
 
 ;;; vm-license.el ends here

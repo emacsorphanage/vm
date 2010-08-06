@@ -1,7 +1,7 @@
 ;;; vm-serial.el --- automatic creation of personalized message bodies
 ;;                   and sending of personalized serial mails
-;;;
-;;; This file is an add-on for VM
+;;
+;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 2000-2005 Robert Widhopf-Fenk
 ;;
@@ -69,14 +69,12 @@
 ;; Ivan Kanis has contributed some bugfixes & enhancements.
 ;; 
 ;;; Code:
-;; group already defined in vm-vars.el
-;; (defgroup vm nil
-;;   "VM"
-;;   :group 'mail)
+
+(provide 'vm-serial)
 
 (defgroup vm-serial nil
   "Sending personalized serial mails and getting message templates."
-  :group  'vm)
+  :group  'vm-ext)
 
 (eval-when-compile
   (require 'cl))
@@ -890,6 +888,4 @@ questions will bother you!"
       (kill-this-buffer)))
 
 ;;-----------------------------------------------------------------------------
-(provide 'vm-serial)
- 
 ;;; vm-serial.el ends here

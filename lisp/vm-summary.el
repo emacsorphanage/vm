@@ -1,6 +1,6 @@
 ;;; vm-summary.el --- Summary gathering and formatting routines for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1995, 2000 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -23,10 +23,27 @@
 
 ;;; Code:
 
-(defvar scrollbar-height)		; defined for XEmacs
+(provide 'vm-summary)
 
 (eval-when-compile
-  (require 'vm-vars))
+  (require 'vm-misc)
+  (require 'vm-crypto)
+  (require 'vm-folder)
+  (require 'vm-window)
+  (require 'vm-menu)
+  (require 'vm-toolbar)
+  (require 'vm-mouse)
+  (require 'vm-motion)
+  (require 'vm-mime)
+  (require 'vm-thread)
+  (require 'vm-pop)
+  (require 'vm-summary-faces)
+)
+
+(declare-function vm-visit-folder "vm.el" (folder &optional read-only))
+
+(defvar scrollbar-height)		; defined for XEmacs
+
 
 (defsubst vm-summary-message-at-point ()
   "Returns the message of the current summary line."
@@ -237,15 +254,16 @@ the messages in the current folder."
 	      (setq mp m-list)
 	      (while mp
 		(setq m (car mp))
-		(and do-mouse-track
-		     (vm-set-su-summary-mouse-track-overlay-of
-		      m
-		      (vm-mouse-set-mouse-track-highlight
-		       (vm-su-start-of m)
-		       (vm-su-end-of m)
-		       (vm-su-summary-mouse-track-overlay-of m))))
+		(when do-mouse-track
+		  (vm-set-su-summary-mouse-track-overlay-of
+		   m
+		   (vm-mouse-set-mouse-track-highlight
+		    (vm-su-start-of m)
+		    (vm-su-end-of m)
+		    (vm-su-summary-mouse-track-overlay-of m))))
 		(vm-set-su-start-of m (vm-marker (vm-su-start-of m)))
 		(vm-set-su-end-of m (vm-marker (vm-su-end-of m)))
+		(when vm-enable-summary-faces (vm-summary-faces-add m))
 		(setq mp (cdr mp))))
 	  (set-buffer-modified-p modified))
 	(run-hooks 'vm-summary-redo-hook)))
@@ -274,11 +292,14 @@ is the root of the thread you want expanded."
     (unless root
       (setq root (vm-th-thread-root (vm-summary-message-at-point))))
     (vm-summary-mark-root-expanded root)
+    (vm-mark-for-summary-update root)
     (mapc
      (lambda (m) 
        (put-text-property 
 	(vm-su-start-of m) (vm-su-end-of m) 'invisible nil))
-     (vm-th-thread-subtree (vm-th-thread-symbol root)))))
+     (vm-th-thread-subtree (vm-th-thread-symbol root))))
+  (when (interactive-p)
+    (vm-update-summary-and-mode-line)))
 
 (defun vm-collapse-thread (&optional nomove root)
   "Collapse the thread associated with the message at point. This
@@ -307,6 +328,7 @@ ROOT, which is the root of the thread you want collapsed."
 	(setq root (vm-th-thread-root msg)))
       (when (> (vm-th-thread-count root) 1)
 	(vm-summary-mark-root-collapsed root)
+	(vm-mark-for-summary-update root)
 	(mapc
 	 (lambda (m) 
 	   (unless (or (eq m root) (vm-new-flag m))
@@ -318,7 +340,9 @@ ROOT, which is the root of the thread you want collapsed."
       (goto-char (vm-su-start-of root))
       (save-excursion
 	(vm-select-folder-buffer)
-	(vm-goto-message (string-to-number (vm-number-of root)))))))
+	(vm-goto-message (string-to-number (vm-number-of root)))))
+    (when (interactive-p)
+      (vm-update-summary-and-mode-line))))
 	
 (defun vm-expand-all-threads ()
   "Expand all threads in the folder, which might have been collapsed
@@ -337,7 +361,9 @@ ROOT, which is the root of the thread you want collapsed."
 			   (> (vm-th-thread-count m) 1))
 		  (vm-expand-thread m)))
 	      ml))))
-  (setq vm-summary-threads-collapsed nil))
+  (setq vm-summary-threads-collapsed nil)
+  (when (interactive-p)
+    (vm-update-summary-and-mode-line)))
 
 (defun vm-collapse-all-threads ()
   "Collapse (fold) all threads in the folder so that only the roots of
@@ -360,7 +386,9 @@ the threads are shown in the Summary window."
 	      ml)))
     (vm-goto-message (string-to-number (vm-number-of root))))
 
-  (setq vm-summary-threads-collapsed t))
+  (setq vm-summary-threads-collapsed t)
+  (when (interactive-p)
+    (vm-update-summary-and-mode-line)))
       
 (defun vm-toggle-thread ()
   "Toggle collapse/expand thread associated with message at point.
@@ -377,7 +405,9 @@ of action."
       (setq root (vm-th-thread-root (vm-summary-message-at-point)))
       (if (vm-summary-expanded-root-p root)
 	  (vm-collapse-thread)
-	(vm-expand-thread)))))
+	(vm-expand-thread))
+      (when (interactive-p)
+	(vm-update-summary-and-mode-line)))))
 
 (defun vm-do-needed-summary-rebuild ()
   "Rebuild the summary lines of all the messages starting at
@@ -465,15 +495,17 @@ buffer by a regenerated summary line."
 		  (vm-tokenized-summary-insert m (vm-su-summary m))
 	          (delete-char 1)	; delete "z"
 		  (run-hooks 'vm-summary-update-hook)
-		  (and do-mouse-track
-		       (vm-mouse-set-mouse-track-highlight
-			(vm-su-start-of m)
-			(vm-su-end-of m)
-			(vm-su-summary-mouse-track-overlay-of m)))
-		  (if (and selected 
-                   (facep 'vm-summary-highlight-face))
-		      (vm-summary-highlight-region (vm-su-start-of m) (point)
-                                           'vm-summary-highlight-face)))
+		  (when do-mouse-track
+		    (vm-mouse-set-mouse-track-highlight
+		     (vm-su-start-of m)
+		     (vm-su-end-of m)
+		     (vm-su-summary-mouse-track-overlay-of m)))
+		  (if vm-enable-summary-faces
+		      (vm-summary-faces-add m)
+		    (if (and selected vm-summary-highlight-face)
+			(vm-summary-highlight-region 
+			 (vm-su-start-of m) (point)
+			 vm-summary-highlight-face))))
 	      (set-buffer-modified-p modified)
 	      (when s
 		(put-text-property s e 'vm-message m)
@@ -518,12 +550,14 @@ buffer by a regenerated summary line."
 		      (put-text-property 
 		       (- (point) (length vm-summary-no-=>)) (point) 
 		       'invisible t))
-		    (and do-mouse-track
-			 (vm-mouse-set-mouse-track-highlight
-			  (vm-su-start-of vm-summary-pointer)
-			  (vm-su-end-of vm-summary-pointer)
-			  (vm-su-summary-mouse-track-overlay-of
-			   vm-summary-pointer))))
+		    (when do-mouse-track
+		      (vm-mouse-set-mouse-track-highlight
+		       (vm-su-start-of vm-summary-pointer)
+		       (vm-su-end-of vm-summary-pointer)
+		       (vm-su-summary-mouse-track-overlay-of
+			vm-summary-pointer)))
+		    (when vm-enable-summary-faces 
+		      (vm-summary-faces-add vm-summary-pointer)))
 		  (setq vm-summary-pointer m)
 		  (goto-char (vm-su-start-of m))
 		  (let ((modified (buffer-modified-p)))
@@ -554,10 +588,11 @@ buffer by a regenerated summary line."
 			      (insert vm-summary-=>)))
 			  (delete-char (length vm-summary-=>))
 
-			  (and do-mouse-track
-			       (vm-mouse-set-mouse-track-highlight
-				(vm-su-start-of m) (vm-su-end-of m)
-				(vm-su-summary-mouse-track-overlay-of m))))
+			  (when do-mouse-track
+			    (vm-mouse-set-mouse-track-highlight
+			     (vm-su-start-of m) (vm-su-end-of m)
+			     (vm-su-summary-mouse-track-overlay-of m)))
+			  (when vm-enable-summary-faces (vm-summary-faces-add m)))
 		      (set-buffer-modified-p modified)))
 		  (forward-char (- (length vm-summary-=>)))
 		  (if (facep 'vm-summary-highlight-face)
@@ -585,9 +620,9 @@ buffer by a regenerated summary line."
 	     (overlay-put ooo 'evaporate nil)
 	     (overlay-put ooo 'face face)))
 	  (vm-xemacs-p
-	   (if (and ooo (extent-end-position ooo))
-	       (set-extent-endpoints ooo start end)
-	     (setq ooo (make-extent start end))
+	   (if (and ooo (vm-extent-end-position ooo))
+	       (vm-set-extent-endpoints ooo start end)
+	     (setq ooo (vm-make-extent start end))
 	     (set var ooo)
 	     ;; the reason this isn't needed under FSF Emacs is
 	     ;; that insert-before-markers also inserts before
@@ -595,9 +630,9 @@ buffer by a regenerated summary line."
 	     ;; before this overlay in the summary buffer won't
 	     ;; leak into the overlay, but it _will_ leak into an
 	     ;; XEmacs extent.
-	     (set-extent-property ooo 'start-open t)
-	     (set-extent-property ooo 'detachable nil)
-	     (set-extent-property ooo 'face face))))))
+	     (vm-set-extent-property ooo 'start-open t)
+	     (vm-set-extent-property ooo 'detachable nil)
+	     (vm-set-extent-property ooo 'face face))))))
 
 (defun vm-auto-center-summary ()
   (if vm-auto-center-summary
@@ -1542,7 +1577,7 @@ mime-encoded string with text properties.  USR 2010-05-13"
 	       (widen)
 	       (condition-case nil
 		   (concat "<fake-VM-id."
-			   (vm-pop-md5-string
+			   (vm-md5-string
 			    (buffer-substring
 			     (vm-text-of (vm-real-message-of m))
 			     (vm-text-end-of (vm-real-message-of m))))
@@ -1853,7 +1888,7 @@ Call this function if you made changes to `vm-summary-format'."
 	      (cond ((= conv-spec ?\()
 		     (save-match-data
 		       (let ((retval
-			      (vm-folder-summary-compile-format-1
+			      (vm-folders-summary-compile-format-1
 			       format
 			       (match-end 5))))
 			 (setq sexp (cons (nth 1 retval) sexp)
@@ -1972,11 +2007,15 @@ Call this function if you made changes to `vm-summary-format'."
 		  (insert
 		   (vm-folders-summary-sprintf vm-folders-summary-format fs))
 		  (delete-char 1)
-		  (and do-mouse-track
-		       (vm-mouse-set-mouse-track-highlight
-			(vm-fs-start-of fs)
-			(vm-fs-end-of fs)
-			(vm-fs-mouse-track-overlay-of fs))))
+		  (when do-mouse-track
+		    (vm-mouse-set-mouse-track-highlight
+		     (vm-fs-start-of fs)
+		     (vm-fs-end-of fs)
+		     (vm-fs-mouse-track-overlay-of fs)))
+		  ;; VM Summary Faces may not work for this yet
+		  ;; (when vm-enable-summary-faces
+		  ;;   (vm-summary-faces-add fs))
+		  )
 	      (set-buffer-modified-p modified)))))))
 
 (defun vm-folders-summary-mode-internal ()
@@ -2053,12 +2092,15 @@ Call this function if you made changes to `vm-summary-format'."
 		(vm-set-fs-start-of fs (vm-marker (point)))
 		(insert (vm-folders-summary-sprintf format fs))
 		(vm-set-fs-end-of fs (vm-marker (point)))
-		(and do-mouse-track
-		     (vm-set-fs-mouse-track-overlay-of
-		      fs
-		      (vm-mouse-set-mouse-track-highlight
-		       (vm-fs-start-of fs)
-		       (vm-fs-end-of fs))))
+		(when do-mouse-track
+		  (vm-set-fs-mouse-track-overlay-of
+		   fs
+		   (vm-mouse-set-mouse-track-highlight
+		    (vm-fs-start-of fs)
+		    (vm-fs-end-of fs))))
+		;; VM Summary Faces may not work here yet
+		;; (when vm-enable-summary-faces
+		;;   (vm-summary-faces-add fs))
 		(set (intern key fs-hash) fs))
 	      (setq fp (cdr fp)))
 	    (setq dp (cdr dp)))
@@ -2170,8 +2212,6 @@ Call this function if you made changes to `vm-summary-format'."
 		  (throw 'done t))))))
        vm-folders-summary-hash)
       nil )))
-
-(provide 'vm-summary)
 
 
 ;;; vm-summary.el ends here

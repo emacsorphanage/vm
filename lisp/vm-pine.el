@@ -1,6 +1,6 @@
 ;;; vm-pine.el --- draft handling and other neat functions for VM
-;;;
-;;; This file is an add-on for VM
+;;
+;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 1998-2006 Robert Fenk
 ;;
@@ -83,7 +83,8 @@
 
 ;;; Code:
 
-;; Attempt to handle older/other emacs.
+(provide 'vm-pine)
+ 
 (eval-and-compile
   (require 'vm-version)
   (require 'vm-message)
@@ -1223,6 +1224,4 @@ If optional argument RETURN-ONLY is t just returns FCC."
                                                fcc)))))))))
 
 ;;-----------------------------------------------------------------------------
-(provide 'vm-pine)
- 
 ;;; vm-pine.el ends here

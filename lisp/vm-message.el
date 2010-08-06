@@ -1,7 +1,7 @@
 ;;; vm-message.el --- Macros and functions dealing with accessing VM
-;;; message struct fields 
-;;;
-;;; This file is part of VM
+;; message struct fields 
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -21,6 +21,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-message)
 
 ;; data that is always shared with virtual folders
 (defsubst vm-location-data-of (message)
@@ -487,7 +489,5 @@ the headers/body of M."
 	;; (if vm-summary-show-threads
 	;;     (intern (buffer-name) buffers-needing-thread-sort))
 	(setq v-list (cdr v-list))))))
-
-(provide 'vm-message)
 
 ;;; vm-message.el ends here

@@ -1,6 +1,6 @@
 ;;; vm-virtual.el --- Virtual folders for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1990-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-virtual)
 
 ;;;###autoload
 (defun vm-build-virtual-message-list (new-messages &optional dont-finalize)
@@ -615,6 +617,9 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 (defun vm-vs-unwritten (m) (not (vm-written-flag m)))
 (defun vm-vs-unmarked (m) (not (vm-mark-of m)))
 (defun vm-vs-unedited (m) (not (vm-edited-flag m)))
+(defun vm-vs-expanded (m) (vm-summary-expanded-root-p m))
+(defun vm-vs-collapsed (m) (vm-summary-collapsed-root-p m))
+
 
 (put 'sexp 'vm-virtual-selector-clause "matching S-expression selector")
 (put 'header 'vm-virtual-selector-clause "with header matching")
@@ -655,7 +660,6 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 (put 'more-lines-than 'vm-virtual-selector-arg-type 'number)
 (put 'less-lines-than 'vm-virtual-selector-arg-type 'number)
 (put 'spam-score 'vm-virtual-selector-arg-type 'number)
-
 
 ;;;###autoload
 (defun vm-read-virtual-selector (prompt)
@@ -858,8 +862,6 @@ folder buffer (which should be the virtual folder in which M occurs)."
 					 (vm-start-of real-m))))
     (set-marker (vm-end-of m) (+ (vm-start-of m) (- (vm-end-of real-m)
 						    (vm-start-of real-m))))))
-(provide 'vm-virtual)
-
 ;; ;; now load vm-avirtual to avoid a loading loop
 ;; (require 'vm-avirtual)
 

@@ -1,6 +1,6 @@
 ;;; vm-toolbar.el --- Toolbar related functions and commands
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1995-1997, 2000, 2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-toolbar)
+
 (eval-when-compile
   (require 'vm-vars))
 
@@ -699,7 +702,5 @@ s-expression like this one in your .vm file:
 		   (format "%s-dn.%s"
 			   name extension)
 		   dir)))))
-
-(provide 'vm-toolbar)
 
 ;;; vm-toolbar.el ends here

@@ -1,6 +1,6 @@
 ;;; vm-motion.el --- Commands to move around in a VM folder
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-motion)
+
 (require 'vm-vars)
 
 (defun vm-record-and-change-message-pointer (old new)
@@ -155,7 +158,8 @@ given."
 	      vm-summary-enable-thread-folding
 	      vm-summary-show-threads
 	      (> (vm-th-thread-indentation (car mp)) 0)
-	      (vm-summary-collapsed-root-p (vm-th-thread-root (car mp)))))))
+	      (vm-summary-collapsed-root-p (vm-th-thread-root (car mp)))
+	      (get-text-property (vm-su-start-of (car mp)) 'invisible)))))
 
 ;;;###autoload
 (defun vm-next-message (&optional count retry signal-errors)
@@ -545,7 +549,5 @@ USR, 2010-03-08"
 		      ;; return non-nil so the caller will know that
 		      ;; a new message was selected.
 		      t )))))))
-
-(provide 'vm-motion)
 
 ;;; vm-motion.el ends here

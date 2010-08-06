@@ -1,6 +1,6 @@
 ;;; vm-imap.el ---  Simple IMAP4 (RFC 2060) client for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1998, 2001, 2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -22,6 +22,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-imap)
+
 (eval-when-compile 
   (require 'sendmail)
   (require 'vm-misc))
@@ -4300,7 +4303,5 @@ downloaded bodies will be displayed."
 	    (length vm-message-list))
    ))
 
-
-(provide 'vm-imap)
 
 ;;; vm-imap.el ends here

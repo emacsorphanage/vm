@@ -1,6 +1,6 @@
 ;;; vm-ps-print.el --- PS-printing functions for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1999 Robert Fenk
 ;;
@@ -55,8 +55,9 @@
 ;; Of course you still have to set `lpr-command' and `lpr-switches' or
 ;; `ps-lpr-command' and `ps-lpr-switches' to reasonable values!
 ;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Code:
+
+(provide 'vm-ps-print)
 
 (eval-when-compile
   (require 'vm-version)
@@ -264,7 +265,7 @@ for customization of the output."
   (vm-select-folder-buffer-and-validate 1)
   (or count (setq count 1))
 
-  (let* ((vm-summary-faces-mode nil)
+  (let* ((vm-enable-summary-faces nil)
          (folder-name (vm-ps-print-message-folder-name))
          (mstart nil)
 	 (m nil)
@@ -443,7 +444,5 @@ filename and formats 1 page per sheet. (JJK)"
     (vm-ps-print-message nil filename seperate)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(provide 'vm-ps-print)
 
 ;;; vm-ps-print.el ends here

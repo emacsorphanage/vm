@@ -1,6 +1,6 @@
 ;;; vm-minibuf.el --- Minibuffer read functions for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1993, 1994 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-minibuf)
 
 (defun vm-minibuffer-complete-word (&optional exiting)
   (interactive)
@@ -241,7 +243,8 @@ default the local keymap of the current buffer is used."
 	(while q
 	  (setq start (point))
 	  (insert (car q))
-	  (and function (vm-mouse-set-mouse-track-highlight start (point)))
+	  (when function 
+	    (vm-mouse-set-mouse-track-highlight start (point)))
 	  (insert-char ?  (+ separation (- longest (length (car q)))))
 	  (setq q (nthcdr tabs q)))
 	(setq i (1+ i))
@@ -372,7 +375,5 @@ click mouse triggered the current command."
    "VM Folder: "
    (mapcar (lambda (f) (list f)) (vm-folder-list))
    nil t nil nil))
-
-(provide 'vm-minibuf)
 
 ;;; vm-minibuf.el ends here
