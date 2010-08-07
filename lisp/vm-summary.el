@@ -222,11 +222,11 @@ the messages in the current folder."
 		  (if (vm-su-start-of (car mp))
 		      (progn
 			(goto-char (vm-su-start-of (car mp)))
-			(remove-overlays (point) (point-max))
+			(vm-disable-extents (point) (point-max))
 			(delete-region (point) (point-max)))
 		    (goto-char (point-max)))
 		(goto-char (point-min))
-		(remove-overlays)
+		(vm-disable-extents)
 		(erase-buffer)
 		(setq vm-summary-pointer nil))
 	      ;; avoid doing long runs down the marker chain while
@@ -234,6 +234,7 @@ the messages in the current folder."
 	      ;; and then convert them to markers after all the
 	      ;; insertions are done.  Likewise, detach overlays and
 	      ;; re-establish them afterwards.
+	      (message "Generating summary... %d" n)
 	      (overlay-recenter (point))
 	      (while mp
 		(setq m (car mp))
@@ -262,7 +263,7 @@ the messages in the current folder."
 				(vm-summary-mark-root-collapsed m)
 			      (vm-summary-mark-root-expanded m)))
 			(setq root (vm-th-thread-root m))
-			(when (and root (not (vm-summary-expanded-root-p root)))
+			(when (and root (vm-summary-collapsed-root-p root))
 			  (unless (vm-new-flag m)
 			    (put-text-property s e 'invisible t))
 			  ;; why mess with the root here?  USR, 2010-07-20

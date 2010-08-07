@@ -36,6 +36,10 @@
 (declare-function vm-extent-end-position "vm-misc.el" (overlay) t)
 (declare-function vm-extent-start-position "vm-misc.el" (overlay) t)
 (declare-function vm-detach-extent "vm-misc.el" (overlay) t)
+(declare-function vm-disable-extents "vm-misc.el" 
+		  (&optional beg end name val) t)
+(declare-function vm-extent-properties "vm-misc.el" (overlay) t)
+
 
 ;; This file contains various low-level operations that address
 ;; incomaptibilities between Gnu and XEmacs.  Expect compiler warnings.
@@ -833,7 +837,12 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	(fset 'vm-detach-extent 'delete-overlay)
       (fset 'vm-detach-extent 'detach-extent)))
 
-(declare-function vm-extent-properties "vm-misc.el" (overlay) t)
+(if (not (fboundp 'vm-disable-extents))
+    (if vm-fsfemacs-p
+	(fset 'vm-disable-extents 'remove-overlays)
+      ;; XEamcs doesn't need to disable extents because they don't
+      ;; slow things down
+      (fset 'vm-disable-extents (lambda (&optional beg end name val) nil))))
 
 (if (not (fboundp 'vm-extent-properties))
     (if vm-fsfemacs-p

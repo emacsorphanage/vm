@@ -4,6 +4,7 @@
 ;;
 ;; Copyright (C) 1989-2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;; Copyright (C) 2008-2010 Uday S. Reddy
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

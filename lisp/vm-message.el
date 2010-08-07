@@ -24,6 +24,13 @@
 
 (provide 'vm-message)
 
+;; current message
+(defsubst vm-current-message ()
+  "Returns the currently selected message in the VM folder.  It
+works in all VM buffers."
+  (with-current-buffer (or vm-mail-buffer (current-buffer))
+    (car vm-message-pointer)))
+
 ;; data that is always shared with virtual folders
 (defsubst vm-location-data-of (message)
   (aref message 0))

@@ -43,6 +43,7 @@
 ;; vm-th-date-of : symbol -> string
 ;; vm-th-youngest-date-of : symbol -> string
 ;; vm-th-oldest-date-of : symbol -> string
+;; vm-th-youngest-or-oldest-date-of : symbol X criterion-symbol -> string
 ;; vm-th-thread-subtree-of : symbol -> message list
 ;;
 ;; vm-ts-subject-symbol : message -> symbol
@@ -104,6 +105,12 @@ before this.  Otherwise nil is returned."
 
 (defun vm-th-set-oldest-date-of (id-sym date)
   (put id-sym 'oldest-date date))
+
+(defun vm-th-youngest-or-oldest-date-of (id-sym criterion)
+  "For the message with the interned symbol ID-SYM, return the
+youngest or oldest date in its thread.  CRITERION must be one of
+'youngest-date and 'oldest-date"
+  (get id-sym criterion))
 
 (defsubst vm-th-message-of (id-sym)
   (and (boundp id-sym) (symbol-value id-sym)))
@@ -630,6 +637,26 @@ should have been built for this function to work."
 	(setq id-sym (car list))
 	(when (vm-th-messages-of id-sym)
 	    (throw 'return (vm-last-elem (vm-th-messages-of id-sym))))
+	(setq list (cdr list)))
+      nil)))
+
+;;;###autoload
+(defun vm-th-thread-root-sym (m)
+  "Returns interned symbol of the root message of M.  M can be
+either a message or the interned symbol of M.  Threads should
+have been built for this function to work.  
+
+See also: `vm-th-thread-root'."
+  (let ((m-sym (if (symbolp m) m (vm-th-thread-symbol m)))
+	list id-sym)
+    (unless m-sym
+      (signal 'vm-thread-error (list 'vm-th-thread-root)))
+    (setq list (vm-th-thread-list m))
+    (catch 'return
+      (while list
+	(setq id-sym (car list))
+	(when (vm-th-messages-of id-sym)
+	    (throw 'return id-sym))
 	(setq list (cdr list)))
       nil)))
 
