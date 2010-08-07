@@ -71,35 +71,43 @@ an interior message of a thread."
   "Checks to see if the message summary of M shows that its thread is
 currently expanded. This is done safely so that if M does not have a
 summary line then nil is returned."
-  (save-excursion
-    (and (vm-su-start-of m)
-	 (progn
-	   (goto-char (vm-su-start-of m))
-	   (looking-at "-")))))
+  (and (vm-su-start-of m)
+       (or (integerp (vm-su-start-of m))
+	   (marker-position (vm-su-start-of m)))
+       (save-excursion
+	 (goto-char (vm-su-start-of m))
+	 (looking-at "-"))))
 
 (defsubst vm-summary-collapsed-root-p (m)
   "Checks to see if the message summary of M shows that its thread is
 currently collapsed. This is done safely so that if M does not have a
 summary line then nil is returned."
-  (save-excursion
-    (and (vm-su-start-of m)
-	 (progn
-	   (goto-char (vm-su-start-of m))
-	   (looking-at "+")))))
+  (and (vm-su-start-of m)
+       (or (integerp (vm-su-start-of m))
+	   (marker-position (vm-su-start-of m)))
+       (save-excursion
+	 (goto-char (vm-su-start-of m))
+	 (looking-at "+"))))
 
 (defsubst vm-summary-mark-root-collapsed (m)
   "Mark a thread root message M as collapsed."
-  (save-excursion
+  (when (and (vm-su-start-of m)
+	     (or (integerp (vm-su-start-of m))
+		 (marker-position (vm-su-start-of m))))
+    (save-excursion
       (goto-char (vm-su-start-of m))
       (delete-char 1)
-      (insert "+")))
+      (insert "+"))))
 
 (defsubst vm-summary-mark-root-expanded (m)
   "Mark a thread root message M as expanded."
-  (save-excursion
+  (when (and (vm-su-start-of m)
+	     (or (integerp (vm-su-start-of m))
+		 (marker-position (vm-su-start-of m))))
+    (save-excursion
       (goto-char (vm-su-start-of m))
       (delete-char 1)
-      (insert "-")))
+      (insert "-"))))
 
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"
@@ -214,14 +222,29 @@ the messages in the current folder."
 		  (if (vm-su-start-of (car mp))
 		      (progn
 			(goto-char (vm-su-start-of (car mp)))
+			(remove-overlays (point) (point-max))
 			(delete-region (point) (point-max)))
 		    (goto-char (point-max)))
+		(goto-char (point-min))
+		(remove-overlays)
 		(erase-buffer)
 		(setq vm-summary-pointer nil))
 	      ;; avoid doing long runs down the marker chain while
 	      ;; building the summary.  use integers to store positions
 	      ;; and then convert them to markers after all the
-	      ;; insertions are done.
+	      ;; insertions are done.  Likewise, detach overlays and
+	      ;; re-establish them afterwards.
+	      (overlay-recenter (point))
+	      (while mp
+		(setq m (car mp))
+		(when (vm-su-start-of m)
+		  (set-marker (vm-su-start-of m) nil)
+		  (set-marker (vm-su-end-of m) nil))
+		(setq mp (cdr mp)))
+
+	      (overlay-recenter (point-max))
+
+	      (setq mp m-list)
 	      (while mp
                 (setq m (car mp))
 		(vm-set-su-start-of m (point))

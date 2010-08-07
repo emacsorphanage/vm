@@ -41,6 +41,9 @@ VM 8.1.93a (2010-07-17)
    * Added EasyPG storage of passwords for mail server accounts.  See
      info index under "passwords".
 
+   * Resolved performance problems in summary generation.  It works
+     quite fast now.
+
   BUG FIXES
 
    * Fixed various issues flagged by the Emacs 23 compiler warnings.
