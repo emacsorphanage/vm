@@ -494,7 +494,7 @@ A nil value means there's no limit."
   :group 'vm
   :type '(choice (const nil) integer))
 
-(defcustom vm-imap-expunge-after-retrieving t
+(defcustom vm-imap-expunge-after-retrieving nil
   "*Non-nil value means that, when an IMAP mailbox is used as a
 spool file, messages should be deleted after retrieving them.  A
 nil value means messages will be left in the IMAP mailbox until

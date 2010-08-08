@@ -236,7 +236,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		     (message 
 		      (concat "Leaving messages on IMAP server; "
 			      "See info under \"IMAP Spool Files\""))
-		     (sit-for 1)
+		     (sit-for 4)
 		     nil))))
 
     (unwind-protect
