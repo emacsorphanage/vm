@@ -344,14 +344,33 @@ files with other folders by setting the variable
 
 @findex vm-load-init-file
 @vindex vm-init-file
+@vindex vm-preferences-file
 @kindex L
 The first time VM is started in an Emacs session, it attempts to load
 the file specified by the variable @code{vm-init-file}, normally
-@file{~/.vm}.  If present this file should contain Lisp code, much like
-the @file{.emacs} file.  Since VM has well over one hundred
-configuration variables, use of the @file{~/.vm} can considerably reduce
-clutter in the @file{.emacs} file.  You can reload this file
-by typing @kbd{L} (@code{vm-load-init-file}) from within VM.
+@file{~/.vm}.  If present this file should contain Lisp code, much
+like the @file{.emacs} file.  It should contain the ``configuration
+settings'' for VM, i.e., variables that define where the mail folders
+are stored, where the incoming mail is to be found, the various
+directories that VM needs to use for its operation and the external
+applications that VM can invoke.  You can reload this file by typing
+@kbd{L} (@code{vm-load-init-file}) from within VM.
+
+In addition, VM also attempts to load a file specified by the variable
+@code{vm-preferences-file}, normally @file{~/.vm.preferences}.  This
+file should contain your preferential settings for various VM
+variables affecting affect how VM works.  Since VM has well over one
+hundred configuration variables, use of the @file{~/.vm.preferences}
+can considerably reduce clutter in the @file{.vm} file.
+
+Invoking @code{vm-load-init-file} with a prefix argument (e.g.,
+@kbd{C-u}) causes the @code{vm-init-file} to be loaded without the
+@code{vm-preferences-file}.  VM will work with all its default
+settings for the variables.  This is similar to invoking emacs via
+@code{emacs -Q}.  If you ever find a problem with VM's behavior, it is
+a good idea to run it without the @code{vm-preferences-file} in order
+to check if the problem might have been caused by the preferences
+settings.
 
 @findex vm
 @vindex vm-primary-inbox

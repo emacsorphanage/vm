@@ -42,10 +42,8 @@ in an Emacs session."
   :type 'file)
 
 (defcustom vm-preferences-file "~/.vm.preferences"
-  "Unused.
-*Secondary startup file for VM, loaded after `vm-init-file'.
-This file is written and overwritten by VM and is not meant for
-users to edit directly."
+  "*Secondary startup file for VM, loaded after `vm-init-file'.  It is
+meant for specifying the preferred settings for VM variables."
   :group 'vm
   :type 'file)
 
@@ -6026,5 +6024,17 @@ cause trouble (abbrev-mode)."
                       (string "References")
                       (string "In-Reply-To")
                       (string "X-Mailer"))))
+
+;; define this here so that the user can invoke it right away, if needed.
+
+(defun vm-load-init-file (&optional init-only)
+  (interactive "P")
+  (when (or (not vm-init-file-loaded) (interactive-p))
+    (when vm-init-file
+      (load vm-init-file (not (interactive-p)) (not (interactive-p)) t))
+    (when (and vm-preferences-file (not init-only))
+      (load vm-preferences-file t t t)))
+  (setq vm-init-file-loaded t)
+  (vm-display nil nil '(vm-load-init-file) '(vm-load-init-file)))
 
 ;;; vm-vars.el ends here
