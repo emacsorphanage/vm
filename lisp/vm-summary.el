@@ -362,8 +362,8 @@ ROOT, which is the root of the thread you want collapsed."
       ;; move to the parent thread only when not
       ;; instructed not to, AND when the currently
       ;; selected message will become invisible
-      (when (get-text-property (+ (vm-su-start-of msg) 3) 'invisible)
-	(unless (or nomove (vm-new-flag msg))
+      (unless (or root nomove (vm-new-flag msg))
+	(when (get-text-property (+ (vm-su-start-of msg) 3) 'invisible)
 	  (vm-select-folder-buffer)
 	  (vm-goto-message (string-to-number (vm-number-of root)))))
       (when (interactive-p)
