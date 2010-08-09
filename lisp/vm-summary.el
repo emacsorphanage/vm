@@ -363,11 +363,10 @@ ROOT, which is the root of the thread you want collapsed."
       ;; move to the parent thread only when not
       ;; instructed not to, AND when the currently
       ;; selected message will become invisible
-      (unless (or root nomove (vm-new-flag msg))
-	(when (get-text-property (+ (vm-su-start-of msg) 3) 'invisible)
-	  (vm-select-folder-buffer)
-	  (vm-goto-message (string-to-number (vm-number-of root)))))
       (when (interactive-p)
+	(unless nomove
+	  (when (get-text-property (+ (vm-su-start-of msg) 3) 'invisible)
+	    (goto-char (vm-su-start-of root))))
 	(vm-update-summary-and-mode-line)))))
 	
 (defun vm-expand-all-threads ()
@@ -401,17 +400,19 @@ the threads are shown in the Summary window."
   (unless vm-summary-show-threads
     (error "Summary is not sorted by threads"))
   (let ((ml vm-message-list)
-	root)
+	msg root)
     (with-current-buffer vm-summary-buffer
-      (setq root (vm-th-thread-root (vm-summary-message-at-point)))
+      (setq msg (vm-summary-message-at-point))
+      (setq root (vm-th-thread-root msg))
       (save-excursion
 	(mapc (lambda (m)
 		(when (and (eq m (vm-th-thread-root m))
 			   (> (vm-th-thread-count m) 1))
 		  (vm-collapse-thread t m)))
-	      ml)))
-    (vm-goto-message (string-to-number (vm-number-of root))))
-
+	      ml))
+      (when (interactive-p)
+	(when (get-text-property (+ (vm-su-start-of msg) 3) 'invisible)
+	  (goto-char (vm-su-start-of root))))))
   (setq vm-summary-threads-collapsed t)
   (when (interactive-p)
     (vm-update-summary-and-mode-line)))
@@ -430,10 +431,9 @@ of action."
 	  root next)
       (setq root (vm-th-thread-root (vm-summary-message-at-point)))
       (if (vm-summary-expanded-root-p root)
-	  (vm-collapse-thread)
-	(vm-expand-thread))
-      (when (interactive-p)
-	(vm-update-summary-and-mode-line)))))
+	  (call-interactively 'vm-collapse-thread)
+	(call-interactively 'vm-expand-thread))
+      )))
 
 (defun vm-do-needed-summary-rebuild ()
   "Rebuild the summary lines of all the messages starting at
