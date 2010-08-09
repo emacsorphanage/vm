@@ -1217,16 +1217,6 @@ summary buffer to select a folder."
   (interactive)
   (find-file-other-frame vm-init-file))
 
-(defun vm-load-init-file (&optional init-only)
-  (interactive "P")
-  (when (or (not vm-init-file-loaded) (interactive-p))
-    (when vm-init-file
-      (load vm-init-file (not (interactive-p)) (not (interactive-p)) t))
-    (when (and vm-preferences-file (not init-only))
-      (load vm-preferences-file t t t)))
-  (setq vm-init-file-loaded t)
-  (vm-display nil nil '(vm-load-init-file) '(vm-load-init-file)))
-
 (defun vm-check-emacs-version ()
   "Checks the version of Emacs and gives an error if it is unsupported."
   (cond ((and vm-xemacs-p (< emacs-major-version 21))
