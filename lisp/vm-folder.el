@@ -182,7 +182,7 @@ vm-summary-redo-start-point is set to match it."
       (setq vm-summary-redo-start-point start-point))))
 
 (defun vm-mark-for-summary-update (m &optional dont-kill-cache)
-  "Mark message M for a summary update.
+  "Mark message M and all its mirrored mesages for a summary update.
 Also mark M's buffer as needing a display update. Any virtual
 messages of M and their buffers are similarly marked for update.
 If M is a virtual message and virtual mirroring is in effect for

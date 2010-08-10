@@ -522,10 +522,10 @@ symbols interned in vm-thread-obarray."
 
 ;;;###autoload
 (defun vm-unthread-message (message &optional message-changing)
-  "Removes MESSAGE from its current thread.  If optional argument
-MESSAGE-CHANGING is non-nil, then forget information that
-might be different if the message contents changed.  (What does
-this mean?)
+  "Removes MESSAGE and all its mirrored messages from their
+current threads.  If optional argument MESSAGE-CHANGING is
+non-nil, then forget information that might be different if the
+message contents changed.  (What does this mean?)
 
 MESSAGE should be a real (non-virtual) message.
 
@@ -805,13 +805,16 @@ to the thread.  Used for testing purposes."
   ;; Check that all subtrees have correct messages
   (mapc
    (lambda (subroot)
-     (let* ((subtree (vm-th-thread-subtree subroot)))
+     (let* ((subtree (vm-th-thread-subtree subroot))
+	    (buf (vm-buffer-of subroot)))
        (mapc
 	(lambda (m)
-	  (unless (and t
+	  (unless (and (vm-th-thread-root m)
 		       (eq (vm-th-thread-root m) 
 			   (vm-th-thread-root subroot)))
-	    (debug 'spurious m)))
+	    (debug 'spurious m))
+	  (unless (eq buf (vm-buffer-of m))
+	    (debug 'wrong-buffer m)))
 	subtree)))
    ml)
   )

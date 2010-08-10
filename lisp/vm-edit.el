@@ -149,49 +149,50 @@ data is discarded only from the marked messages in the current folder."
 	m)
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
-      (vm-garbage-collect-message)
-      (if (vectorp vm-thread-obarray)
-	  (vm-unthread-message m t))
-      ;; It was a mistake to store the POP & IMAP UID data here but
-      ;; it's too late to change it now.  So keep the data from
-      ;; getting wiped.
-      (let ((uid (vm-imap-uid-of m))
-	    (uid-validity (vm-imap-uid-validity-of m))
-	    (headers-flag (vm-headers-to-be-retrieved-of m))
-	    (body-flag (vm-body-to-be-retrieved-of m))
-	    (body-discard-flag (vm-body-to-be-discarded-of m)))
-        (fillarray (vm-cached-data-of m) nil)
-        (vm-set-imap-uid-of m uid)
-	(vm-set-imap-uid-validity-of m uid-validity)
-	(vm-set-headers-to-be-retrieved-of m headers-flag)
-	(vm-set-body-to-be-retrieved-of m body-flag)
-	(vm-set-body-to-be-discarded-of m body-discard-flag))
-      (vm-set-vheaders-of m nil)
-      (vm-set-vheaders-regexp-of m nil)
-      (vm-set-text-of m nil)
-      (vm-set-mime-layout-of m nil)
-      (vm-set-mime-encoded-header-flag-of m nil)
-      (if (and vm-presentation-buffer (eq (car vm-message-pointer) m))
-	  (save-excursion (vm-preview-current-message)))
-      (if (vectorp vm-thread-obarray)
-	  (vm-build-threads (list m)))
-      (if vm-summary-show-threads
-	  (intern (buffer-name) buffers-needing-thread-sort))
-      (let ((v-list (vm-virtual-messages-of m)))
-	(save-excursion
+      (with-current-buffer (vm-buffer-of m)
+	(vm-garbage-collect-message)
+	(if (vectorp vm-thread-obarray)
+	    (vm-unthread-message m t))
+	;; It was a mistake to store the POP & IMAP UID data here but
+	;; it's too late to change it now.  So keep the data from
+	;; getting wiped.
+	(let ((uid (vm-imap-uid-of m))
+	      (uid-validity (vm-imap-uid-validity-of m))
+	      (headers-flag (vm-headers-to-be-retrieved-of m))
+	      (body-flag (vm-body-to-be-retrieved-of m))
+	      (body-discard-flag (vm-body-to-be-discarded-of m)))
+	  (fillarray (vm-cached-data-of m) nil)
+	  (vm-set-imap-uid-of m uid)
+	  (vm-set-imap-uid-validity-of m uid-validity)
+	  (vm-set-headers-to-be-retrieved-of m headers-flag)
+	  (vm-set-body-to-be-retrieved-of m body-flag)
+	  (vm-set-body-to-be-discarded-of m body-discard-flag))
+	(vm-set-vheaders-of m nil)
+	(vm-set-vheaders-regexp-of m nil)
+	(vm-set-text-of m nil)
+	(vm-set-mime-layout-of m nil)
+	(vm-set-mime-encoded-header-flag-of m nil)
+	(if (and vm-presentation-buffer (eq (car vm-message-pointer) m))
+	    (save-excursion (vm-preview-current-message)))
+	(if (vectorp vm-thread-obarray)
+	    (vm-build-threads (list m)))
+	(if vm-summary-show-threads
+	    (intern (buffer-name) buffers-needing-thread-sort))
+	(let ((v-list (vm-virtual-messages-of m)))
 	  (while v-list
-	    (vm-set-mime-layout-of (car v-list) nil)
-	    (vm-set-mime-encoded-header-flag-of (car v-list) nil)
-	    (set-buffer (vm-buffer-of (car v-list)))
-	    (if (and vm-presentation-buffer
-		     (eq (car vm-message-pointer) (car v-list)))
-		(save-excursion (vm-preview-current-message)))
-	    (if (vectorp vm-thread-obarray)
-		(vm-build-threads (list (car v-list))))
-	    (if vm-summary-show-threads
-		(intern (buffer-name) buffers-needing-thread-sort))
-	    (setq v-list (cdr v-list)))))
-      (vm-mark-for-summary-update m)
+	    (with-current-buffer (vm-buffer-of (car v-list))
+	      (vm-set-mime-layout-of (car v-list) nil)
+	      (vm-set-mime-encoded-header-flag-of (car v-list) nil)
+
+	      (if (and vm-presentation-buffer
+		       (eq (car vm-message-pointer) (car v-list)))
+		  (save-excursion (vm-preview-current-message)))
+	      (if (vectorp vm-thread-obarray)
+		  (vm-build-threads (list (car v-list))))
+	      (if vm-summary-show-threads
+		  (intern (buffer-name) buffers-needing-thread-sort))
+	      (setq v-list (cdr v-list)))))
+	(vm-mark-for-summary-update m))
       (setq mlist (cdr mlist)))
     (save-excursion
       (mapatoms (function (lambda (s)
