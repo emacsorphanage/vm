@@ -30,6 +30,10 @@ VM 8.1.93a (2010-07-17)
      Robert Fenk.)  See the info section on "Summaries" for changes
      from the original add-on.
 
+  ** Commands renamed:
+     `vm-mime-save-all-attachments' => `vm-save-all-attachments'(C-c C-s)
+     `vm-mime-delete-all-attachments' => `vm-delete-all-attachments'(C-c C-d)
+
   IMPROVEMENTS
 
    * New feature: thread-folding in the Summary window allows message
@@ -53,6 +57,13 @@ VM 8.1.93a (2010-07-17)
 
    * Resolved performance problems in summary generation.  It works
      quite fast now.
+
+   * New variable: `vm-mime-parts-display-separator' allows you to
+     insert a string as a separator between MIME parts.
+
+   * New command: `vm-save-attachments' allows you to save all the
+     attachments of a message under your own file names instead of the
+     original file names given in the message.
 
   BUG FIXES
 

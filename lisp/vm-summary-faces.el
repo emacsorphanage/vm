@@ -121,13 +121,13 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 
 ;; These faces are obsolete 
 ;; (define-obsolete-face-alias 'vm-summary-filed-face
-;;   'vm-summary-saved-face "8.2.0")
+;;   'vm-summary-saved-face "8.1.93a")
 ;; (define-obsolete-face-alias 'vm-summary-written-face
-;;   'vm-summary-saved-face "8.2.0")
+;;   'vm-summary-saved-face "8.1.93a")
 (put 'vm-summary-filed-face 'face-alias 'vm-summary-saved-face)
 (put 'vm-summary-written-face 'face-alias 'vm-summary-saved-face)
-(make-obsolete 'vm-summary-filed-face 'vm-summary-saved-face "8.2.0")
-(make-obsolete 'vm-summary-written-face 'vm-summary-saved-face "8.2.0")
+(make-obsolete 'vm-summary-filed-face 'vm-summary-saved-face "8.1.93a")
+(make-obsolete 'vm-summary-written-face 'vm-summary-saved-face "8.1.93a")
 
 (defface vm-summary-replied-face
   '((t (:foreground "grey30")))
@@ -140,11 +140,11 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 ;; (define-obsolete-face-alias 'vm-summary-redistributed-face
-;;   'vm-summary-forwarded-face "8.2.0")
+;;   'vm-summary-forwarded-face "8.1.93a")
 (put 'vm-summary-redistributed-face 'face-alias
      'vm-summary-forwarded-face)
 (make-obsolete 'vm-summary-redistributed-face
-	       'vm-summary-forwarded-face "8.2.0")
+	       'vm-summary-forwarded-face "8.1.93a")
 
 (defface vm-summary-edited-face 
   nil

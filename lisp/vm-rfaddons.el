@@ -1070,7 +1070,7 @@ save attachments.
 
 ;;;###autoload
 (defun vm-mime-auto-save-all-attachments-delete-external (msg)
-  "Deletes the external attachments created by `vm-mime-save-all-attachments'.
+  "Deletes the external attachments created by `vm-save-all-attachments'.
 You may want to use this function in order to get rid of the external files
 when deleting a message.
 
