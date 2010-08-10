@@ -4422,8 +4422,10 @@ are also included."
    vm-mime-deletable-type-exceptions)
 
   (when (interactive-p)
-    (vm-discard-cached-data)
-    (vm-preview-current-message)))
+    (vm-discard-cached-data count)
+    (vm-preview-current-message))
+
+  (vm-update-summary-and-mode-line))
                                                  
 ;;;###autoload
 (defun vm-mime-save-all-attachments (&optional count
@@ -4500,7 +4502,7 @@ created."
      vm-mime-savable-type-exceptions)
 
     (when (interactive-p)
-      (vm-discard-cached-data)
+      (vm-discard-cached-data count)
       (vm-preview-current-message))
     
     (if (> n 0)

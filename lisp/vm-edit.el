@@ -183,14 +183,14 @@ data is discarded only from the marked messages in the current folder."
 	    (with-current-buffer (vm-buffer-of (car v-list))
 	      (vm-set-mime-layout-of (car v-list) nil)
 	      (vm-set-mime-encoded-header-flag-of (car v-list) nil)
-
-	      (if (and vm-presentation-buffer
-		       (eq (car vm-message-pointer) (car v-list)))
-		  (save-excursion (vm-preview-current-message)))
 	      (if (vectorp vm-thread-obarray)
 		  (vm-build-threads (list (car v-list))))
 	      (if vm-summary-show-threads
 		  (intern (buffer-name) buffers-needing-thread-sort))
+
+	      (if (and vm-presentation-buffer
+		       (eq (car vm-message-pointer) (car v-list)))
+		  (save-excursion (vm-preview-current-message)))
 	      (setq v-list (cdr v-list)))))
 	(vm-mark-for-summary-update m))
       (setq mlist (cdr mlist)))
