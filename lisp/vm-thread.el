@@ -4,6 +4,7 @@
 ;;
 ;; Copyright (C) 1994, 2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;; Copyright (C) 2010 Uday S. Reddy
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -33,10 +34,31 @@
 )
 
 ;; --------------------------------------------------------------------------
+;; Top-level operations
+;;
+;; vm-toggle-threads-display: interactive () -> none
+;; vm-build-threads : (message list) -> none
+;; vm-build-thread-lists : () -> none
+;; vm-unthread-message : (message &optional bool) -> none
+;;
+;; vm-thread-mark-for-summary-update : message list -> none
+;;
+;; vm-parent: (message) -> message
+;; vm-references: (message) -> string list
+;;
+;; vm-th-thread-symbol : (message) -> symbol
+;; vm-th-thread-list : (message) -> symbol list
+;; vm-th-thread-root : (message or symbol) -> message
+;; vm-th-thread-root-sym : (message or symbol) -> symbol
+;; vm-th-thread-root-p : (message) -> bool
+;; vm-th-thread-indentation : (message) -> integer
+;; vm-th-thread-subtree : (message or symbol) -> message list
+;; vm-th-thread-count : (message or symbol) -> integer
+;;
 ;; The thread-obarray and thread-subject-obarray properties
 ;;
-;; vm-th-thread-symbol : message -> symbol
 ;; vm-th-messages-of : symbol -> message list
+;; vm-th-message: symbol -> message or nil
 ;; vm-th-children-of : symbol -> symbol list
 ;; vm-th-child-messages-of : symbol -> message list
 ;; vm-th-parent-of : symbol -> symbol
@@ -122,6 +144,10 @@ youngest or oldest date in its thread.  CRITERION must be one of
 
 (defsubst vm-th-messages-of (id-sym)
   (get id-sym 'messages))
+
+(defsubst vm-th-message (id-sym)
+  (and (vm-th-messages-of id-sym)
+       (vm-last-elem (vm-th-messages-of id-sym))))
 
 (defsubst vm-th-set-messages-of (id-sym ml)
   (put id-sym 'messages ml))
@@ -424,7 +450,7 @@ symbols interned in vm-thread-obarray."
       ;; if m is a non-canonical message for its message ID, give it
       ;; an artificial thread-list
       ;; But, does this make sense?
-      ;; (unless (eq m (vm-last-elem (vm-th-messages-of id-sym)))
+      ;; (unless (eq m (vm-th-message-of id-sym))
       ;; 	(setq thread-list (list id-sym id-sym))
       ;; 	(setq done t))
       (set (intern (symbol-name id-sym) vm-thread-loop-obarray) t)
@@ -450,7 +476,7 @@ symbols interned in vm-thread-obarray."
 		 (set loop-sym t)
 		 (setq thread-list (cons id-sym thread-list))
 		 (when (vm-th-messages-of id-sym)
-		     (setq m (vm-last-elem (vm-th-messages-of id-sym))))))
+		     (setq m (vm-th-message-of id-sym)))))
 	      ((null m)
 	       (setq done t))
 	      ((null vm-thread-using-subject)
@@ -473,7 +499,7 @@ symbols interned in vm-thread-obarray."
 		   ;; loop detected, bail...
 		   (setq done t thread-list (or
 					     loop-recovery-point thread-list))
-		 (setq root (vm-last-elem (vm-th-messages-of id-sym)))
+		 (setq root (vm-th-message-of id-sym))
 		 ;; the ancestors of id-sym will be added.
 		 ;; remove them if they were already added.
 		 (setq ancestors (remq id-sym (vm-th-thread-list root)))
@@ -484,7 +510,7 @@ symbols interned in vm-thread-obarray."
 		       ancestors)
 		 (set loop-sym t)
 		 (setq thread-list (cons id-sym thread-list)
-		       m (vm-last-elem (vm-th-messages-of id-sym)))))))
+		       m (vm-th-message-of id-sym))))))
       thread-list )))
 
 ;; remove message struct from thread data.
@@ -514,19 +540,22 @@ The full functionality of this function is not entirely clear.
 	(if (not (vectorp vm-thread-obarray))
 	    nil
 	  (let ((inhibit-quit t))
-	    ;; discard cached thread properties
-	    (vm-set-thread-list-of m nil)
-	    (vm-set-thread-indentation-of m nil)
 	    ;; handles for the thread and thread-subject databases
 	    (setq id-sym (intern (vm-su-message-id m) vm-thread-obarray))
 	    (setq s-sym (intern (vm-so-sortable-subject m)
 				vm-thread-subject-obarray))
-
+	    (if (and vm-debug 
+		     (member (symbol-name id-sym) vm-traced-message-ids))
+		(debug id-sym))
+	    ;; discard cached thread properties
+	    (vm-th-set-thread-subtree-of (vm-th-thread-root-sym m) nil)
+	    (vm-set-thread-list-of m nil)
+	    (vm-set-thread-indentation-of m nil)
 	    ;; remove the message from its erstwhile thread
 	    (when (boundp id-sym)
 	      ;; remove m from its thread node
 	      (vm-th-set-messages-of 
-	       id-sym (delq m (vm-th-messages-of id-sym)))
+	       id-sym (remq m (vm-th-messages-of id-sym)))
 	      (vm-thread-mark-for-summary-update 
 	       (vm-th-child-messages-of id-sym))
 	      ;; reset the thread dates of m
@@ -539,7 +568,7 @@ The full functionality of this function is not entirely clear.
 		(setq p-sym (vm-th-parent-of id-sym))
 		(when p-sym 
 		  (vm-th-set-children-of 
-		   p-sym (delq id-sym (vm-th-children-of p-sym))))
+		   p-sym (remq id-sym (vm-th-children-of p-sym))))
 		(vm-th-set-parent-of id-sym nil)))
 
 	    ;; remove the message from its erstwhile subject thread
@@ -566,10 +595,10 @@ The full functionality of this function is not entirely clear.
 		       s-sym (intern (vm-su-message-id oldest-msg)
 				     vm-thread-obarray))
 		      (vm-ts-set-root-date-of s-sym oldest-date)
-		      (setq children (delq oldest-msg (vm-ts-members-of s-sym)))
+		      (setq children (remq oldest-msg (vm-ts-members-of s-sym)))
 		      (vm-ts-set-members-of s-sym children)
 		      (vm-ts-set-messages-of
-		       s-sym (delq m (vm-ts-messages-of s-sym)))
+		       s-sym (remq m (vm-ts-messages-of s-sym)))
 		      ;; I'm not sure there aren't situations
 		      ;; where this might loop forever.
 		      (let ((inhibit-quit nil))
@@ -579,12 +608,10 @@ The full functionality of this function is not entirely clear.
 			      children))))
 		      ;; )
 		(vm-ts-set-members-of 
-		 s-sym (delq id-sym (vm-ts-members-of s-sym)))
+		 s-sym (remq id-sym (vm-ts-members-of s-sym)))
 		(vm-ts-set-messages-of 
-		 s-sym (delq m (vm-ts-messages-of s-sym)))
+		 s-sym (remq m (vm-ts-messages-of s-sym)))
 		))))
-	(if vm-debug
-	    (vm-th-check-thread-integrity))
 	(setq mp (cdr mp))))))
 
 ;;;###autoload
@@ -629,7 +656,7 @@ nil, calculates the thread-indentation and caches it.  USR, 2010-03-13"
 	(while (and p (null (vm-th-messages-of (car p))))
 	  (setq p (cdr p)))
 	(if (and (eq (car p) (vm-th-thread-symbol m))
-		 (not (eq (vm-last-elem (vm-th-messages-of (car p))) m)))
+		 (not (eq (vm-th-message-of (car p)) m)))
 	    ;; thread root is a duplicate of m
 	    (vm-set-thread-indentation-of m (length p))
 	  (vm-set-thread-indentation-of m (1- (length p))))
@@ -642,6 +669,7 @@ calculates the thread-list and caches it.  USR, 2010-03-13"
   (or (vm-thread-list-of m)
       (progn
 	(vm-set-thread-list-of m (vm-thread-list m))
+	(vm-th-set-thread-subtree-of (vm-th-thread-root-sym m) nil)
 	(vm-thread-list-of m))))
 
 ;;;###autoload
@@ -650,8 +678,12 @@ calculates the thread-list and caches it.  USR, 2010-03-13"
 the interned symbol of M.  If there are multiple messages with
 the same root message ID, one of them is chosen arbitrarily.  Threads
 should have been built for this function to work."
-  (let ((m-sym (if (symbolp m) m (vm-th-thread-symbol m)))
-	list id-sym)
+  (let (m-sym list id-sym)
+    (cond ((symbolp m) 
+	   (setq m-sym m)
+	   (setq m (vm-th-message-of m-sym)))
+	  (t
+	   (setq m-sym (vm-th-thread-symbol m))))
     (if (and vm-debug (member (symbol-name m-sym) vm-traced-message-ids))
 	(debug m-sym))
     (unless m-sym
@@ -661,7 +693,7 @@ should have been built for this function to work."
       (while list
 	(setq id-sym (car list))
 	(when (vm-th-messages-of id-sym)
-	    (throw 'return (vm-last-elem (vm-th-messages-of id-sym))))
+	    (throw 'return (vm-th-message-of id-sym)))
 	(setq list (cdr list)))
       nil)))
 
@@ -672,8 +704,12 @@ either a message or the interned symbol of M.  Threads should
 have been built for this function to work.  
 
 See also: `vm-th-thread-root'."
-  (let ((m-sym (if (symbolp m) m (vm-th-thread-symbol m)))
-	list id-sym)
+  (let (m-sym list id-sym)
+    (cond ((symbolp m) 
+	   (setq m-sym m)
+	   (setq m (vm-th-message-of m-sym)))
+	  (t
+	   (setq m-sym (vm-th-thread-symbol m))))
     (if (and vm-debug (member (symbol-name m-sym) vm-traced-message-ids))
 	(debug m-sym))
     (unless m-sym
@@ -699,16 +735,15 @@ otherwise."
 ;;;###autoload
 (defun vm-th-thread-subtree (msg)
   "Returns the list of messages in the thread subtree of MSG.
-MSG can be a message or the interned symbol of MSG.  Threads
-should have been built for this function to work."
+MSG can be a message or the interned symbol of a message.
+Threads should have been built for this function to work."
   (let ((m-sym (if (symbolp msg)
 		   msg
-		 (with-current-buffer (vm-buffer-of msg)
-		   (intern (vm-su-message-id msg) 
-			   vm-thread-obarray)))))
+		 (vm-th-thread-symbol msg))))
     (unless m-sym
       (signal 'vm-thread-error (list 'vm-th-thread-subtree)))
-    (if (or (symbolp msg) (eq msg (vm-last-elem (vm-th-messages-of m-sym))))
+    (if (or (symbolp msg) 
+	    (eq msg (vm-th-message-of m-sym)))
 	;; canonical message for this message ID
 	(or (vm-th-thread-subtree-of m-sym)
 	    ;; otherwise calcuate the thread-subtree
@@ -719,7 +754,7 @@ should have been built for this function to work."
 	      (while list
 		(setq id-sym (car list))
 		(when (and (vm-th-messages-of id-sym)
-			   (not (memq (vm-last-elem (vm-th-messages-of id-sym))
+			   (not (memq (vm-th-message-of id-sym)
 				      result)))
 		  (setq result (append (vm-th-messages-of id-sym) result)))
 		(when (null (intern-soft (symbol-name id-sym) loop-obarray))
@@ -742,7 +777,7 @@ should have been built for this function to work."
 	      (vm-th-set-thread-subtree-of m-sym result)
 	      result))
       ;; non-canonical message for this message ID
-      (list m-sym))))
+      (list msg))))
 
 ;;;###autoload
 (defun vm-th-thread-count (m)
@@ -752,18 +787,33 @@ have been built for this function to work."
   (length (vm-th-thread-subtree m)))
 
 (defun vm-th-check-thread-integrity (&optional ml)
-  "Check that all messages are members of theit threads.  Used for
-testing purposes."
+  "Check that all messages are members of their thread subtrees.
+Conversely, all members of thread subtrees should actually belong
+to the thread.  Used for testing purposes."
   (interactive)
   (unless ml
     (with-current-buffer (or vm-mail-buffer (current-buffer))
       (setq ml vm-message-list)))
+  ;; Check that all messages belong to their respective subtrees
   (mapc
    (lambda (m)
      (let* ((root (vm-th-thread-root m))
 	    (subtree (vm-th-thread-subtree root)))
        (unless (memq m subtree)
-	 (debug m))))
-   ml))
+	 (debug 'missing m))))
+   ml)
+  ;; Check that all subtrees have correct messages
+  (mapc
+   (lambda (subroot)
+     (let* ((subtree (vm-th-thread-subtree subroot)))
+       (mapc
+	(lambda (m)
+	  (unless (and t
+		       (eq (vm-th-thread-root m) 
+			   (vm-th-thread-root subroot)))
+	    (debug 'spurious m)))
+	subtree)))
+   ml)
+  )
 
 ;;; vm-thread.el ends here

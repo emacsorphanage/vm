@@ -456,6 +456,8 @@ ignored."
           (vm-sort-messages vm-ml-sort-keys))
       (if (not shaddap)
 	  (message "Deleted messages expunged.")))
-     (t (message "No messages are flagged for deletion.")))))
+     (t (message "No messages are flagged for deletion."))))
+  (when vm-debug
+    (vm-th-check-thread-integrity)))
 
 ;;; vm-delete.el ends here

@@ -535,6 +535,8 @@ folder in the order in which the messages arrived."
 		     list2 (cdr list2)))
 	     (cond ((and list1 (not list2)) nil)
 		   ((and list2 (not list1)) t)
+		   ((eq m1 (vm-th-thread-root m2)) t)
+		   ((eq m2 (vm-th-thread-root m1)) nil)
 		   (t '=)))
 	    ((eq root1 root2)
 	     ;; within the same subject thread
