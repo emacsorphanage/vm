@@ -3294,8 +3294,11 @@ arrow only if the summary window is not the only existing window."
   :group 'vm
   :type '(choice (const nil) (const t) (const yes-if-not-only-window)))
 
+(defvar vm-debug nil
+  "Flag used by developers to control localized debugging features.")
+
 (defvar vm-summary-debug nil
-  "Flag to turn on debug tracing of summary generation")
+  "Flag used by developers trace summary generation")
 
 (defcustom vm-subject-ignored-prefix "^\\(re: *\\)+"
   "*Non-nil value should be a regular expression that matches
