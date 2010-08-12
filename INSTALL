@@ -24,7 +24,7 @@ USING CONFIGURE
    The default locations are as follows:
 
    a) GNU Emacs: lisp files goto ${prefix}/share/emacs/site-lisp and
-      info files to ${prefix}/info (overridable with --with-lispdir=...
+      info files to ${prefix}/share/info (overridable with --with-lispdir=...
       and --infodir=...)
 
    b) XEmacs: lisp files goto ${prefix}/lib/xemacs/site-packages/lisp/vm and

@@ -2,7 +2,8 @@
 
 # Author:        Robert Widhopf-Fenk <hack@robf.de>
 
-# Copyright (C) 2006-2007
+# Copyright (C) 2006-2007  Robert Widhopf-Fenk <hack@robf.de>
+# Copyright (C) 2010       Uday S Reddy <reddyuday@launchpad.net>
 
 # VM is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Library General Public License as published by the Free
@@ -128,12 +129,14 @@ TEST
       if test "x$theprefix" = "xNONE"; then
   	theprefix=$ac_default_prefix
       fi
-      datadir="\$(prefix)/share"
+      datarootdir="\$(prefix)/share"
+      datadir="${datarootdir}"
       if test "$EMACS_FLAVOR" = "xemacs"; then
-          datadir="\$(prefix)/lib"
-          lispdir="${datadir}/${EMACS_FLAVOR}/site-packages/lisp/vm"
+          datarootdir="\$(prefix)/lib"
+	  datadir="${datarootdir}/${EMACS_FLAVOR}/site-packages/etc"
+          lispdir="${datarootdir}/${EMACS_FLAVOR}/site-packages/lisp/vm"
       else
-          lispdir="${datadir}/${EMACS_FLAVOR}/site-lisp/vm"
+          lispdir="${datarootdir}/${EMACS_FLAVOR}/site-lisp/vm"
       fi
       for thedir in share lib; do
   	potential=
@@ -141,7 +144,7 @@ TEST
              if test "$EMACS_FLAVOR" = "xemacs"; then
   	         lispdir="\$(prefix)/${thedir}/${EMACS_FLAVOR}/site-packages/lisp/vm"
              else
-                 lispdir="${datadir}/${EMACS_FLAVOR}/site-lisp/vm"
+                 lispdir="${datarootdir}/${EMACS_FLAVOR}/site-lisp/vm"
              fi
   	   break
   	fi
@@ -154,7 +157,7 @@ TEST
     AC_MSG_CHECKING([where pixmaps should go])
     if test -z "$pixmapdir"; then
       dnl Set default value
-      pixmapdir="${datadir}/vm"
+      pixmapdir="${datadir}/vm/pixmaps"
     fi
     AC_MSG_RESULT($pixmapdir)
     AC_SUBST(pixmapdir)

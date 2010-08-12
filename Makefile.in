@@ -2,11 +2,20 @@
 
 # location of required programms
 BZR = bzr --no-plugins
+prefix = @prefix@
+MKDIR = @MKDIR@
 TAR = @TAR@
 RM   = @RM@
 XARGS = @XARGS@
 prefix = @prefix@
 INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+srcdir = @srcdir@
+datadir= @datadir@
+datarootdir= @datarootdir@
+pixmapdir = @pixmapdir@
+# docdir = @docdir@
 
 SUBDIRS = lisp info src pixmaps
 
