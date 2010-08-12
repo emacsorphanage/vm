@@ -194,11 +194,11 @@ AC_DEFUN([VM_BUILD_FLAGS], [
 AC_DEFUN([VM_PATH_INFO_DIR], [
   AC_MSG_CHECKING([where the TeXinfo docs should go])
   dnl Set default value.  This must be an absolute path.
-  if test "$infodir" = "\${prefix}/info"; then
+  if test "$infodir" = "\${datarootdir}/info"; then
     if test "$EMACS_FLAVOR" = "xemacs"; then
       info_dir="\$(prefix)/${thedir}/${EMACS_FLAVOR}/site-packages/info"
     else
-      info_dir="\$(prefix)/share/info"
+      info_dir="\${datarootdir}/info"
     fi
   else
     info_dir=$infodir
@@ -236,7 +236,7 @@ AC_INIT([VM], [8.1.92a], [vm@lists.launchpad.net])
 # Version (release) number
 # Contact address
 
-AC_COPYRIGHT([Copyright (C) 2006-2007 Robert Widhopf-Fenk <hack@robf.de>])
+AC_COPYRIGHT([Copyright (C) 2009-2010 VM Development Team <vm@lists.launchpad.net>])
 
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_FILES([Makefile lisp/Makefile info/Makefile src/Makefile pixmaps/Makefile vm-load.el])
