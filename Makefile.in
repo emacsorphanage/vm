@@ -19,6 +19,14 @@ pixmapdir = @pixmapdir@
 
 SUBDIRS = lisp info src pixmaps
 
+# the list of source (documentation) files
+SOURCES = NEWS
+SOURCES += CHANGES
+SOURCES += README
+SOURCES += TODO
+SOURCES += COPYING
+
+
 ##############################################################################
 
 .PHONY: all install clean distclean
@@ -36,8 +44,15 @@ Makefile vm-load.el: %: config.status @srcdir@/%.in
 config.status: @srcdir@/configure
 	./config.status --recheck
 
-install:
+install: install-pkg
 	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i install) || exit 1; done
+
+install-pkg:
+	$(MKDIR) -p "$(DESTDIR)$(datadir)/vm"
+	for i in $(SOURCES) ; do                                     \
+	    echo "Installing $$i in '$(DESTDIR)$(datadir)/vm'" ;      \
+	    $(INSTALL_DATA) $$i "$(DESTDIR)$(datadir)/vm" ;           \
+	done ;
 
 clean:
 	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i clean) || exit 1; done
