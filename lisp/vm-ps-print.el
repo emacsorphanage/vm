@@ -264,7 +264,7 @@ for customization of the output."
   (vm-select-folder-buffer-and-validate 1)
   (or count (setq count 1))
 
-  (let* ((vm-enable-summary-faces nil)
+  (let* ((vm-summary-enable-faces nil)
          (folder-name (vm-ps-print-message-folder-name))
          (mstart nil)
 	 (m nil)

@@ -6018,7 +6018,7 @@ You must restart VM after a change to cause any effects."
 		     auto-delete-message-external-body)
 	      (const :tag "Enable all addons" t)))
 
-(defcustom vm-enable-summary-faces nil
+(defcustom vm-summary-enable-faces nil
   "A non-NIL value enables the use of faces in the summary buffer.
 
 You should set this variable in the init-file.  For interactive use,
@@ -6038,7 +6038,7 @@ cause trouble (abbrev-mode)."
 (defvar vm-summary-faces-mode nil
   "Records whether VM Summary Faces mode is in use.")
 
-(make-obsolete 'vm-summary-faces-mode 'vm-enable-summary-faces "8.2.0")
+(make-obsolete 'vm-summary-faces-mode 'vm-summary-enable-faces "8.1.93a")
 
 (defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
   "*A list of headers to hide in `vm-mail-mode'."

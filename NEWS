@@ -25,10 +25,10 @@ VM 8.1.93a (2010-07-17)
      users to split their init-files to make use of this feature.  See
      info section on "Starting Up".
 
-  ** New feature: vm-summary-faces-mode allows summary lists with
+  ** New feature: vm-summary-enable-faces allows summary lists with
      faces turned on.  (This was formerly an add-on contributed by
-     Robert Fenk.)  See the info section on "Summaries" for changes
-     from the original add-on.
+     Robert Fenk under the name vm-summary-faces-mode.)  See the info
+     section on "Summaries" for changes from the original add-on.
 
   ** Commands renamed:
      `vm-mime-save-all-attachments' => `vm-save-all-attachments'(C-c C-s)

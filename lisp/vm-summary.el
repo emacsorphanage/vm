@@ -208,7 +208,7 @@ the messages in the current folder."
 	(modulus 100)
 	(do-mouse-track (or (and vm-mouse-track-summary
 				 (vm-mouse-support-possible-p))
-			    vm-enable-summary-faces)))
+			    vm-summary-enable-faces)))
     (setq mp m-list)
     (save-excursion
       (set-buffer vm-summary-buffer)
@@ -288,7 +288,7 @@ the messages in the current folder."
 		    (vm-su-summary-mouse-track-overlay-of m))))
 		(vm-set-su-start-of m (vm-marker (vm-su-start-of m)))
 		(vm-set-su-end-of m (vm-marker (vm-su-end-of m)))
-		(when vm-enable-summary-faces (vm-summary-faces-add m))
+		(when vm-summary-enable-faces (vm-summary-faces-add m))
 		(setq mp (cdr mp))))
 	  (set-buffer-modified-p modified))
 	(run-hooks 'vm-summary-redo-hook)))
@@ -466,7 +466,7 @@ buffer by a regenerated summary line."
 	    (do-mouse-track
 	     (or (and vm-mouse-track-summary
 		      (vm-mouse-support-possible-p))
-		 vm-enable-summary-faces))
+		 vm-summary-enable-faces))
 	    summary)
 	(save-excursion
 	  (setq summary (vm-su-summary m))
@@ -527,7 +527,7 @@ buffer by a regenerated summary line."
 		     (vm-su-start-of m)
 		     (vm-su-end-of m)
 		     (vm-su-summary-mouse-track-overlay-of m)))
-		  (if vm-enable-summary-faces
+		  (if vm-summary-enable-faces
 		      (vm-summary-faces-add m)
 		    (if (and selected vm-summary-highlight-face)
 			(vm-summary-highlight-region 
@@ -545,7 +545,7 @@ buffer by a regenerated summary line."
 	    (do-mouse-track
 	     (or (and vm-mouse-track-summary
 		      (vm-mouse-support-possible-p))
-		 vm-enable-summary-faces))
+		 vm-summary-enable-faces))
 	    (old-window nil))
 	(vm-save-buffer-excursion
 	  (unwind-protect
@@ -583,7 +583,7 @@ buffer by a regenerated summary line."
 		       (vm-su-end-of vm-summary-pointer)
 		       (vm-su-summary-mouse-track-overlay-of
 			vm-summary-pointer)))
-		    (when vm-enable-summary-faces 
+		    (when vm-summary-enable-faces 
 		      (vm-summary-faces-add vm-summary-pointer)))
 		  (setq vm-summary-pointer m)
 		  (goto-char (vm-su-start-of m))
@@ -619,7 +619,7 @@ buffer by a regenerated summary line."
 			    (vm-mouse-set-mouse-track-highlight
 			     (vm-su-start-of m) (vm-su-end-of m)
 			     (vm-su-summary-mouse-track-overlay-of m)))
-			  (when vm-enable-summary-faces 
+			  (when vm-summary-enable-faces 
 			    (vm-summary-faces-add m)))
 		      (set-buffer-modified-p modified)))
 		  (forward-char (- (length vm-summary-=>)))
@@ -2001,7 +2001,7 @@ Call this function if you made changes to `vm-summary-format'."
 	    (do-mouse-track
 	     (or (and vm-mouse-track-summary
 		      (vm-mouse-support-possible-p))
-		 vm-enable-summary-faces))
+		 vm-summary-enable-faces))
 	    summary)
 	(save-excursion
 	  (set-buffer (marker-buffer (vm-fs-start-of fs)))
@@ -2042,7 +2042,7 @@ Call this function if you made changes to `vm-summary-format'."
 		     (vm-fs-end-of fs)
 		     (vm-fs-mouse-track-overlay-of fs)))
 		  ;; VM Summary Faces may not work for this yet
-		  ;; (when vm-enable-summary-faces
+		  ;; (when vm-summary-enable-faces
 		  ;;   (vm-summary-faces-add fs))
 		  )
 	      (set-buffer-modified-p modified)))))))
@@ -2073,7 +2073,7 @@ Call this function if you made changes to `vm-summary-format'."
           (format vm-folders-summary-format)
 	  (do-mouse-track (or (and vm-mouse-track-summary
 				   (vm-mouse-support-possible-p))
-			      vm-enable-summary-faces)))
+			      vm-summary-enable-faces)))
       (save-excursion
 	(set-buffer vm-folders-summary-buffer)
 	(erase-buffer)
@@ -2129,7 +2129,7 @@ Call this function if you made changes to `vm-summary-format'."
 		    (vm-fs-start-of fs)
 		    (vm-fs-end-of fs))))
 		;; VM Summary Faces may not work here yet
-		;; (when vm-enable-summary-faces
+		;; (when vm-summary-enable-faces
 		;;   (vm-summary-faces-add fs))
 		(set (intern key fs-hash) fs))
 	      (setq fp (cdr fp)))
