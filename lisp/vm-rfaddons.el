@@ -69,10 +69,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-when-compile
-  (require 'vm-version)
-  (require 'vm-message)
-  (require 'vm-macro)
-  (require 'vm-vars)
   (require 'cl)
   (require 'advice)
   (vm-load-features '(regexp-opt bbdb bbdb-vm gnus-group)))

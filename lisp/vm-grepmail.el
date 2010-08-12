@@ -46,8 +46,6 @@
   (require 'cl))
 
 (eval-and-compile
-  (require 'vm-version)
-  (require 'vm-macro)
   (require 'vm-misc)
   (require 'vm-undo)
   (require 'vm-startup)
@@ -55,7 +53,7 @@
   (require 'vm-summary)
   (require 'vm-folder)
   (require 'vm-window)
-  (require 'vm-vars))
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defgroup vm nil

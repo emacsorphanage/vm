@@ -5609,7 +5609,7 @@ attribute-modflag.  Flag to indicate if the attributes of the message
 have been modified since the last save.
 @end itemize
 
-@subsubheading MIME layout
+@unnumberedsubsec MIME layout
 
 The MIME layout of a message, stored in the soft data of the message,
 is in turn a vector containing various pieces of data.  Such a vector
@@ -5681,7 +5681,7 @@ unconverted-layout.  If the MIME type conversion has been performed on
 this part, then this holds the original unconverted layout.
 @end itemize
 
-@subsubheading Cross-buffer sharing of data
+@unnumberedsubsec Cross-buffer sharing of data
 
 Every Folder buffer has a @code{vm-message-list} and a
 @code{vm-message-pointer} list containing message data vectors.  

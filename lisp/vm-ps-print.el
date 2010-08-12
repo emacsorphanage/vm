@@ -59,12 +59,6 @@
 
 (provide 'vm-ps-print)
 
-(eval-when-compile
-  (require 'vm-version)
-  (require 'vm-message)
-  (require 'vm-macro)
-  (require 'vm-vars))
-
 (require 'vm-save)
 (require 'ps-print)
 

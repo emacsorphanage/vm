@@ -95,10 +95,8 @@
     (require 'pgg))
 
   (require 'easymenu)
-  (require 'vm-version)
   (require 'vm-misc)
   (require 'vm-page)
-  (require 'vm-vars)
   (require 'vm-mime)
   (require 'vm-reply)
 

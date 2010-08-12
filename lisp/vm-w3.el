@@ -28,9 +28,8 @@
 (eval-when-compile
   (require 'cl)
   (require 'advice)
-  (require 'vm-version)
   (require 'vm-mime)
-  (require 'vm-vars))
+)
 
 (eval-and-compile
   (vm-load-features '(w3)))

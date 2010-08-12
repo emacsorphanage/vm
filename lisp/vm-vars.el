@@ -23,8 +23,6 @@
 
 (provide 'vm-vars)
 
-(require 'vm-version)
-
 (defgroup vm nil
   "The VM mail reader."
   :group 'mail)

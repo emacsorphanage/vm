@@ -121,10 +121,6 @@
 (eval-and-compile
   (require 'advice)
   (require 'regexp-opt)
-  (require 'vm-version)
-  (require 'vm-message)
-  (require 'vm-macro)
-  (require 'vm-vars)
   (require 'time-date)
                            
   (let ((feature-list '(bbdb bbdb-autoloads bbdb-com)))

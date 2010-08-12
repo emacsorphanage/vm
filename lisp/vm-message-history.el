@@ -55,9 +55,8 @@
 
 (eval-and-compile
   (require 'easymenu)
-  (require 'vm-version)
   (require 'vm-menu)
-  (require 'vm-vars))
+)
 
 (defgroup vm-message-history nil
   "Message history for VM folders."

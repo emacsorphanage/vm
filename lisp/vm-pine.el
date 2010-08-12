@@ -85,11 +85,6 @@
 
 (provide 'vm-pine)
  
-(eval-and-compile
-  (require 'vm-version)
-  (require 'vm-message)
-  (require 'vm-macro)
-  (require 'vm-vars))
 
 (eval-when-compile 
   (require 'cl))
