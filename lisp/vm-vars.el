@@ -4178,19 +4178,19 @@ entries from a folder summary."
          (label "!")
 	 (label "\\flagged")
          (header "X-VM-postponed-data:"))
-     vm-summary-high-priority-face)
-    ((deleted)   	vm-summary-deleted-face)
-    ((new)       	vm-summary-new-face)
-    ((unread)    	vm-summary-unread-face)
-    ((marked)    	vm-summary-marked-face)
-    ((replied)   	vm-summary-replied-face)
+     vm-summary-high-priority)
+    ((deleted)   	vm-summary-deleted)
+    ((new)       	vm-summary-new)
+    ((unread)    	vm-summary-unread)
+    ((marked)    	vm-summary-marked)
+    ((replied)   	vm-summary-replied)
     ((or (filed)
-	 (written))     vm-summary-saved-face)
+	 (written))     vm-summary-saved)
     ((or (forwarded) 
-	 (redistributed)) vm-summary-forwarded-face)
-    ((edited)    	vm-summary-edited-face)
-    ((outgoing)  	vm-summary-outgoing-face)
-    ((any)       	vm-summary-default-face))
+	 (redistributed)) vm-summary-forwarded)
+    ((edited)    	vm-summary-edited)
+    ((outgoing)  	vm-summary-outgoing)
+    ((any)       	vm-summary-default))
   "*Alist of virtual folder conditions and corresponding faces.
 Order matters. The first matching one will be used as the face.  
 
@@ -4198,98 +4198,127 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :type '(repeat (cons (sexp) (face)))
   :group 'vm-summary-faces)
 
-(defface vm-summary-selected-face
+(defface vm-summary-selected
   '((t ;; (:bold on)
      (:background "grey85")
      ))
   "The face used in VM Summary buffers for the selected message."
   :group 'vm-summary-faces)
 
-(defface vm-summary-marked-face
+(put 'vm-summary-selected-face 'face-alias 'vm-summary-selected)
+(make-obsolete 'vm-summary-selected-face 'vm-summary-selected "8.1.93a")
+
+(defface vm-summary-marked
   '((((type x)) (:foreground "red3")))
   "The face used in VM Summary buffers for marked messages."
   :group 'vm-summary-faces)
 
-(defface vm-summary-deleted-face
+(put 'vm-summary-marked-face 'face-alias 'vm-summary-marked)
+(make-obsolete 'vm-summary-marked-face 'vm-summary-marked "8.1.93a")
+
+(defface vm-summary-deleted
      (if (featurep 'xemacs)
          '((t (:foreground "grey50" :strikethru t)))
        '((t (:foreground "grey50" :strike-through "grey70"))))
      "The face used in VM Summary buffers for deleted messages."
      :group 'vm-summary-faces)
 
-(defface vm-summary-new-face
+(put 'vm-summary-deleted-face 'face-alias 'vm-summary-deleted)
+(make-obsolete 'vm-summary-deleted-face 'vm-summary-deleted "8.1.93a")
+
+(defface vm-summary-new
   '((t (:foreground "blue")))
   "The face used in VM Summary buffers for new messages."
   :group 'vm-summary-faces)
 
-(defface vm-summary-unread-face
+(put 'vm-summary-new-face 'face-alias 'vm-summary-new)
+(make-obsolete 'vm-summary-new-face 'vm-summary-new "8.1.93a")
+
+(defface vm-summary-unread
   '((t (:foreground "blue4")))
   "The face used in VM Summary buffers for unread messages."
   :group 'vm-summary-faces)
 
-(defface vm-summary-saved-face
+(put 'vm-summary-unread-face 'face-alias 'vm-summary-unread)
+(make-obsolete 'vm-summary-unread-face 'vm-summary-unread "8.1.93a")
+
+(defface vm-summary-saved
   '((t (:foreground "green4")))
   "The face used in VM Summary buffers for saved messages."
   :group 'vm-summary-faces)
 
-;; These faces are obsolete 
-;; (define-obsolete-face-alias 'vm-summary-filed-face
-;;   'vm-summary-saved-face "8.1.93a")
-;; (define-obsolete-face-alias 'vm-summary-written-face
-;;   'vm-summary-saved-face "8.1.93a")
-(put 'vm-summary-filed-face 'face-alias 'vm-summary-saved-face)
-(put 'vm-summary-written-face 'face-alias 'vm-summary-saved-face)
-(make-obsolete 'vm-summary-filed-face 'vm-summary-saved-face "8.1.93a")
-(make-obsolete 'vm-summary-written-face 'vm-summary-saved-face "8.1.93a")
+(put 'vm-summary-filed-face 'face-alias 'vm-summary-saved)
+(make-obsolete 'vm-summary-filed 'vm-summary-saved "8.1.93a")
+(put 'vm-summary-written-face 'face-alias 'vm-summary-saved)
+(make-obsolete 'vm-summary-written 'vm-summary-saved "8.1.93a")
 
-(defface vm-summary-replied-face
+(defface vm-summary-replied
   '((t (:foreground "grey30")))
   "The face used in VM Summary buffers for replied messages."
   :group 'vm-summary-faces)
 
-(defface vm-summary-forwarded-face
+(put 'vm-summary-replied-face 'face-alias 'vm-summary-replied)
+(make-obsolete 'vm-summary-replied-face 'vm-summary-replied "8.1.93a")
+
+(defface vm-summary-forwarded
   '((t (:foreground "grey20")))
   "The face used in VM Summary buffers for forwarded messages."
   :group 'vm-summary-faces)
 
-;; (define-obsolete-face-alias 'vm-summary-redistributed-face
-;;   'vm-summary-forwarded-face "8.1.93a")
-(put 'vm-summary-redistributed-face 'face-alias
-     'vm-summary-forwarded-face)
-(make-obsolete 'vm-summary-redistributed-face
-	       'vm-summary-forwarded-face "8.1.93a")
+(put 'vm-summary-forwarded-face 'face-alias 'vm-summary-forwarded)
+(make-obsolete 'vm-summary-forwarded-face 'vm-summary-forwarded "8.1.93a")
+(put 'vm-summary-redistributed-face 'face-alias 'vm-summary-forwarded)
+(make-obsolete 'vm-summary-redistributed-face 'vm-summary-forwarded "8.1.93a")
 
-(defface vm-summary-edited-face 
+(defface vm-summary-edited 
   nil
   "The face used in VM Summary buffers for edited messages."
   :group 'vm-summary-faces)
 
-(defface vm-summary-outgoing-face
+(put 'vm-summary-edited-face 'face-alias 'vm-summary-edited)
+(make-obsolete 'vm-summary-edited-face 'vm-summary-edited "8.1.93a")
+
+(defface vm-summary-outgoing
   '((t (:foreground "grey30")))
   "The face used in VM Summary buffers for outgoing messages."
   :group 'vm-summary-faces)
 
-(defface vm-summary-expanded-face
+(put 'vm-summary-outgoing-face 'face-alias 'vm-summary-outgoing)
+(make-obsolete 'vm-summary-outgoing-face 'vm-summary-outgoing "8.1.93a")
+
+(defface vm-summary-expanded
   '((t ()))
   "The face used in VM Summary buffers for the root messages of
 expanded threads."
   :group 'vm-summary-faces)
 
-(defface vm-summary-collapsed-face
+(put 'vm-summary-expanded-face 'face-alias 'vm-summary-expanded)
+(make-obsolete 'vm-summary-expanded-face 'vm-summary-expanded "8.1.93a")
+
+(defface vm-summary-collapsed
   '((t (:weight normal :slant oblique)))
   "The face used in VM Summary buffers for the root messages of
 collapsed threads."
   :group 'vm-summary-faces)
 
-(defface vm-summary-high-priority-face
+(put 'vm-summary-collapsed-face 'face-alias 'vm-summary-collapsed)
+(make-obsolete 'vm-summary-collapsed-face 'vm-summary-collapsed "8.1.93a")
+
+(defface vm-summary-high-priority
   '((t (:foreground "red")))
   "The face used in VM Summary buffers for high-priority messages."
   :group 'vm-summary-faces)
 
-(defface vm-summary-default-face
+(put 'vm-summary-high-priority-face 'face-alias 'vm-summary-high-priority)
+(make-obsolete 'vm-summary-high-priority-face 'vm-summary-high-priority "8.1.93a")
+
+(defface vm-summary-default
   nil
   "The default face used in VM Summary buffers."
   :group 'vm-summary-faces)
+
+(put 'vm-summary-default-face 'face-alias 'vm-summary-default)
+(make-obsolete 'vm-summary-default-face 'vm-summary-default "8.1.93a")
 
 (defcustom vm-visit-folder-hook nil
   "*List of hook functions called just after VM visits a folder.

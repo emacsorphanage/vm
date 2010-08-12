@@ -797,8 +797,12 @@ to the thread.  Used for testing purposes."
   ;; Check that all messages belong to their respective subtrees
   (mapc
    (lambda (m)
-     (let* ((root (vm-th-thread-root m))
+     (let* ((root (vm-th-thread-root-sym m))
 	    (subtree (vm-th-thread-subtree root)))
+       (with-current-buffer (vm-buffer-of m)
+	 (unless (eq root 
+		     (intern-soft (symbol-name root) vm-thread-obarray))
+	   (debug 'interned-in-wrong-buffer m)))
        (unless (memq m subtree)
 	 (debug 'missing m))))
    ml)

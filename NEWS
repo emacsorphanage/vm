@@ -27,8 +27,10 @@ VM 8.1.93a (2010-07-17)
 
   ** New feature: vm-summary-enable-faces allows summary lists with
      faces turned on.  (This was formerly an add-on contributed by
-     Robert Fenk under the name vm-summary-faces-mode.)  See the info
-     section on "Summaries" for changes from the original add-on.
+     Robert Fenk under the name vm-summary-faces-mode. But there are
+     several changes.  In particular, the face names do not end in
+     "-face" following the Emacs naming conventions.)  See the info
+     section on "Summaries" for more information.
 
   ** Commands renamed:
      `vm-mime-save-all-attachments' => `vm-save-all-attachments'(C-c C-s)
