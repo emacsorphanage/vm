@@ -5,6 +5,7 @@
 @direntry
 * VM: (vm).                             A mail reader.
 @end direntry
+@defindex in
 
 @iftex
 @finalout
@@ -104,6 +105,7 @@ Indices:
 * Key Index::           Menus of command keys and their references.
 * Command Index::       Menus of commands and their references.
 * Variable Index::      Menus of variables and their references.
+* Internals Index::     Menus of concepts in VM Internals
 
 Rights:
 * License::             Copying and distribution terms for VM.
@@ -5150,6 +5152,7 @@ developers/programmers.
 @section Folder Internals
 
 @cindex mbox
+@inindex mbox
 By default, VM stores mail folders in the Unix @code{mbox} format,
 described in the RFC 4155 specification of the Internet Engineering
 Task Force.  In this format, the mail folder is a text file consisting
@@ -5168,6 +5171,11 @@ Line-Feed characters may be used to delineate the end of lines in the
 @cindex BellFrom_ folder type
 @cindex From_with-Content-Length folder type
 @cindex System V
+@inindex vm-folder-type
+@inindex From_ folder type
+@inindex BellFrom_ folder type
+@inindex From_with-Content-Length folder type
+@inindex System V
 Three variants of the @code{mbox} format are recognized by VM, called
 @code{From_}, @code{BellFrom_} and @code{From_with-Content-Length}.
 In a @code{From_} type mbox, every message has a leading and trailing
@@ -5180,11 +5188,14 @@ is required.
 
 @cindex MMDF format
 @cindex Babyl format
+@inindex MMDF format
+@inindex Babyl format
 In addition to these mbox formats, VM also handles the MMDF format and
 the Emacs Rmail's Babyl format.  The variable @code{vm-folder-type}
 stores the type of the folder being used.
 
 @cindex X-VM-v5-Data header
+@inindex X-VM-v5-Data header
 To every message, VM adds a header with the field name
 ``X-VM-v5-Data:'' and stores in it the information about the message it
 wishes to remember between sessions.
@@ -5193,33 +5204,41 @@ The first message of the VM folder file contains additional headers used
 by VM for remembering information between sessions.
 
 @itemize
+@inindex X-VM-Bookmark
 @item
 X-VM-Bookmark. This header stores the position of the cursor, as a
 message number, in effect when VM saved the folder.  Upon revisiting the
 folder, VM attempts to put the cursor back at this position.
 @item
+@inindex X-VM-Last-Modified
 X-VM-Last-Modified.  The date and time at which the folder was last
 modified. 
 @item
+@inindex X-VM-Message-order
 X-VM-Message-Order.  This header lists the order in which the messages
 should be listed.
 @item
+@inindex X-VM-Labels
 X-VM-Labels. This header lists the message labels that have been used in
 the folder.  
 @item
+@inindex X-VM-VHeader
 X-VM-VHeader. This header lists the values of @code{vm-visible-headers}
 and @code{vm-invisible-header-regexp} that were in effect when the
 folder was saved.  The messages in the folder would have their headers
 arranged according to these variables.
 @item
+@inindex X-VM-Summary-Format
 X-VM-Summary-Format.  This header stores the format string for the
 summary lines.
 @item
+@inindex X-VM-POP-Retrieved
 X-VM-POP-Retrieved. This header lists all the messages that have
 been retrieved from POP servers together with the identifying
 information for the POP servers.  VM refrains from retrieving these
 messages again in future in order to avoid duplication.
 @item
+@inindex X-VM-IMAP-Retrieved
 X-VM-IMAP-Retrieved. This header lists all the messages that have
 been retrieved from IMAP servers together with the identifying
 information for the IMAP servers.  VM refrains from retrieving these
@@ -5232,17 +5251,21 @@ through internal variables.
 
 @itemize
 @item
+@inindex vm-message-list
 @code{vm-message-list}.  A list of message data structures for all the
 messages in the buffer.
 @item
+@inindex vm-folder-type
 @code{vm-folder-type}.  The type of the current folder indicating how
 the messages are stored: one of 'babyl, 'From_, 'BellFrom_,
 'From_-with-Content-Length and 'mmdf.
 @item
+@inindex vm-folder-access-method
 @code{vm-folder-access-method}.  The method for accessing the server
 message store: 'pop for pop-folders and 'imap for imap-folders, and nil
 for all other folders. 
 @item
+@inindex vm-folder-access-data
 @code{vm-folder-access-data}.  A vector of data for accessing the server
 message store.  The first two elements of the vector are the maildrop
 specification for the mail server and a reference to the process
@@ -5250,21 +5273,26 @@ connecting to the mail server.  For the 'pop access method, that is all
 there is.  But, for the 'imap access method, the vector has 9 other
 entries detailing various pieces of data about the IMAP server.
 @item
+@inindex vm-folder-read-only
 @code{vm-folder-read-only}.  A boolean flag indicating whether the
 folder is read-only.  If so, no modifications are allowed, including
 attribute changes.  However, messages can be fetched from external
 storage for viewing.
 @item
+@inindex vm-virtual-folder-definition
 @code{vm-virtual-folder-definition}.  If the current folder is virtual,
 then this variable holds the data constituting its definition.
 @item
+@inindex vm-real-buffers
 @code{vm-real-buffers}.  If the current folder is virtual, then this
 variable is a list of all the real folder buffers involved in
 constructing it.
 @item
+@inindex vm-virtual-buffers
 @code{vm-virtual-buffers}.  A list of all the virtual folder buffers
 that the current buffer is involved in.
 @item
+@inindex vm-summary-buffer
 @code{vm-summary-buffer}.  The Summary buffer of the folder.  (If the
 Summary buffer gets killed for any reason, the value of this variable
 becomes <killed buffer>, which is unfortunate.  Therefore, most
@@ -5272,9 +5300,11 @@ interactive commands of VM check for killed Summary buffer and reset
 this variable to nil in such a case.  So, in the middle of code, this
 variable can be regarded as a valid buffer pointer.)
 @item
+@inindex vm-presentation-buffer-handle
 @code{vm-presentation-buffer-handle}. The message Presentation buffer of the
 folder.  (Same proviso applies as for @code{vm-summary-buffer}.)
 @item
+@inindex vm-presentation-buffer
 @code{vm-presentation-buffer}. This seems to be a copy of the
 @code{vm-presentation-buffer-handle}.  Its purpose is unknown.
 @end itemize
@@ -5284,20 +5314,28 @@ buffer-local variables:
 
 @itemize
 @item
+@inindex vm-message-pointer
 @code{vm-message-pointer}.  A sublist of vm-message-list starting from
 the current message that the cursor is on.  So, the first element of
 vm-message-pointer is the current message.
 @item
+@inindex vm-last-message-pointer
 @code{vm-last-message-pointer}.  Whenever the cursor is moved, the
 previous value of vm-message-pointer is remembered in this variable.
 @item
+@inindex vm-summary-pointer
 @code{vm-summary-pointer}.
 @item
+@inindex vm-fetched-messages
 @code{vm-fetched-messages}.  List of headers-only messages whose
 bodies were fetched for viewing or other operations.
+@inindex vm-fetched-message-count
 @code{vm-fetched-message-count}.  The number of messages in
+@inindex vm-fetched-messages
 @code{vm-fetched-messages}.  An attempt is made to keep this below the @code{vm-fetched-message-limit}.
 @item
+@inindex vm-mime-decoded
+@inindex MIME
 @code{vm-mime-decoded}.  The MIME decoding state of the current message
 display: @code{undecoded} if the message is shown in undecoded plain
 text form, @code{decoded} if the message is shown decoded, and
@@ -5305,32 +5343,47 @@ text form, @code{decoded} if the message is shown decoded, and
 its MIME components.  The @code{D} command cycles through these
 states. 
 @item
+@inindex vm-system-state
 @code{vm-system-state}.  The state of VM in a Folder buffer or
 Presentation buffer: 
 
 @itemize
-@item @code{previewing}.
+@item 
+@inindex previewing
+@code{previewing}.
 if a message is being previewed.
-@item @code{showing}.
+@item 
+@inindex showing
+@code{showing}.
 if a full message is being shown.
-@item @code{reading}.
+@item 
+@inindex reading
+@code{reading}.
 if message reading is in progress.
 @end itemize
 
+@inindex editing
 A message edit buffer is in state @code{editing}.
 
 A message composition buffer may be in one of these states:
 
 @itemize
-@item @code{forwarding}.
+@item 
+@inindex forwarding
+@code{forwarding}.
 if a message is being forwarded.
-@item @code{replying}.
+@item 
+@inindex replying
+@code{replying}.
 if a message is being replied to.
-@item @code{redistributing}.
+@item 
+@inindex redistributing
+@code{redistributing}.
 if a message is being redistributed.
 @end itemize
 
 @item
+@inindex vm-spooled-mail-waiting
 @code{vm-spooled-mail-waiting}.  VM periodically checks if there is new
 mail in the spool files of the current folder and set this flag to t if
 there is new mail.
@@ -5362,6 +5415,7 @@ Mirror Data.  Extra data shared by virtual messages if vm-virtual-mirror
 is non-nil.
 @end itemize
 
+@inindex X-VM-v5-Data
 The attributes vector and cached data vector are stored in the
 folder on disk as the @code{X-VM-v5-Data} header of the first message.
 
@@ -5374,26 +5428,33 @@ message data structures.  The location data is normally expected to
 refer to locations in that very buffer.  However, this condition is
 not actually required.  (See below.)
 
+@inindex start
 @itemize
 @item
-start.  Marker for the starting position of the message, at which a
+@code{start}.  Marker for the starting position of the message, at which a
 leading separator line begins.
+@inindex headers
 @item
-headers. Marker for the position in the buffer where the headers
+@code{headers}. Marker for the position in the buffer where the headers
 of the message start.
+@inindex vheaders
 @item
-vheaders.  Marker for the position in the buffer where the
+@code{vheaders}.  Marker for the position in the buffer where the
 visible headers of the message start.  (The headers are rearranged in
 such a way that all the visible headers are towards the end of the
 headers region.)
+@inindex text
 @item
-text. Marker for the position in the buffer where the text of the
+@code{text}. Marker for the position in the buffer where the text of the
 message starts.
+@inindex text-end
 @item
-text-end. Marker for the position in the buffer where the text of
+@code{text-end}. Marker for the position in the buffer where the text of
 the message ends.
+@inindex end
 @item
-end. Marker for the position in the buffer where the message ends.
+@code{end}. Marker for the position in the buffer where the message
+ends.
 @end itemize
 
 Unfortunately, in the current versions of VM, the folder buffer to
@@ -5408,22 +5469,28 @@ Presentation buffer.
 This vector contains other calculated data about the message that is
 specific to a VM session.
 
+@inindex number
 @itemize
 @item
-number. The message number as an integer.
+@code{number}. The message number as an integer.
+@inindex padded
 @item
-padded number. The message number as a padded string.
+@code{padded-number}. The message number as a padded string.
+@inindex mark
 @item
-mark. Flag that indicates if the message has been marked (via
+@code{mark}. Flag that indicates if the message has been marked (via
 @code{vm-mark-message}).
+@inindex su-start
 @item
-su-start. The position in the Summary buffer where the summary line of
+@code{su-start}. The position in the Summary buffer where the summary line of
 the message starts.
+@inindex su-end
 @item
-su-end.  The position in the Summary buffer where the summary line of
+@code{su-end}.  The position in the Summary buffer where the summary line of
 the message ends.
+@inindex real-message-sym
 @item
-real-message-sym.  If the message is in a virtual folder, then its
+@code{real-message-sym}.  If the message is in a virtual folder, then its
 corresponding ``real message'' is the underlying message in another
 folder which is described by a message data structure similar to the
 current one.  The real message data structures are represented by
@@ -5432,46 +5499,60 @@ representing the real message of the current message.  If the current
 message is a real message then this field contains its own symbol.
 The use of symbols for this purpose avoids the possibility of circular
 data structures.
+@inindex reverse-link-sym
 @item
-reverse-link-sym.  Reference to the previous message in the message list,
+@code{reverse-link-sym}.  Reference to the previous message in the message list,
 also represented by an uninterned symbol written as ``<--''.
+@inindex message-type
 @item
-message-type.  A symbol indicating the type of the message according to
+@code{message-type}.  A symbol indicating the type of the message according to
 its folder type, one of @code{BellFrom_}, @code{From_} and
 @code{From_-with-Content-Length}.
+@inindex message-id-number
 @item
-message-id-number.  A number that uniquely identifies the message
+@code{message-id-number}.  A number that uniquely identifies the message
 within a VM session.
+@inindex buffer
 @item
-buffer. The Folder buffer of the message.  (Messages in Presentation
+@code{buffer}. The Folder buffer of the message.  (Messages in Presentation
 buffers also have this field set to the corresponding Folder buffer.)
+@inindex thread-indentation
 @item
-thread-indentation. Indentation level of the message in its message
+@code{thread-indentation}. Indentation level of the message in its message
 thread.
+@inindex thread-list
 @item
-thread-list.  List of symbols from @code{vm-thread-obarray} that give
+@code{thread-list}.  List of symbols from @code{vm-thread-obarray} that give
 this message's lineage.
+@inindex babyl-frob-flag
 @item
-babyl-frob-flag.
+@code{babyl-frob-flag}.
+@inindex saved-virtual-attributes
 @item
 saved-virtual-attributes.  Saved attributes if the message switched from
 unmirrored to mirrored.
+@inindex saved-virtual-mirror-data
 @item
-saved-virtual-mirror-data.  Saved mirror data, if the message was
+@code{saved-virtual-mirror-data}.  Saved mirror data, if the message was
 switched from unmirrored to mirrored.
+@inindex virtual-summary
 @item
-virtual-summary.  Summary for unmirrored virtual message.
+@code{virtual-summary}.  Summary for unmirrored virtual message.
+@inindex mime-layout
 @item
-mime-layout.  MIME layout information; types, ids, positions, etc of
+@code{mime-layout}.  MIME layout information; types, ids, positions, etc of
 all MIME entities.  (See below.)
+@inindex mime-encoded-header-flag
 @item
-mime-encoded-header-flag. Flag that indicates if the headers of the
+@code{mime-encoded-header-flag}. Flag that indicates if the headers of the
 message are MIME encoded.
+@inindex su-summary-mouse-track-overlay
 @item
-su-summary-mouse-track-overlay.  The overlay on the summary of this
+@code{su-summary-mouse-track-overlay}.  The overlay on the summary of this
 message used for selection by mouse.
+@inindex message-access-method
 @item
-message-access-method.  The access-method to be used for the message,
+@code{message-access-method}.  The access-method to be used for the message,
 inherited from its real folder.
 @end itemize
 
@@ -5481,23 +5562,32 @@ All the hard-wired message attributes are stored in this
 vector.  They also get saved as part of the @code{X-VM-v5-Data} header
 field when the folder is saved to disk.
 
+@inindex new-flag
 @itemize
 @item
 new-flag.  Flag to indicate if the message is ``new''.
+@inindex unread-flag
 @item
 unread-flag.  Flag to indicate if the message is unread.
+@inindex deleted-flag
 @item
 deleted-flag.  Flag to indicate if the message has been deleted.
+@inindex filed-flag
 @item
 filed-flag.  Flag to indicate if the message has been filed.
+@inindex replied-flag
 @item
 replied-flag.  Flag to indicate if the message has been replied to.
+@inindex written-flag
 @item
 written-flag.  Flag to indicate if the message has been saved.
+@inindex forwarded-flag
 @item
 forwarded-flag.  Flag to indicate if the message has been forwarded.
+@inindex edited-flag
 @item
 edited-flag.  Flag to indicate if the message has been edited.
+@inindex redistributed-flag
 @item
 redistributed-flag.  Flag to indicate if the message has been
 redistributed. 
@@ -5518,69 +5608,90 @@ header fields, but they also have text properties that store the names
 of the original character sets used in the header fields.  This allows
 the strings to be quickly re-encoded for storage on disk.
 
+@inindex byte-count
 @itemize
 @item
 byte-count.  The size of the message in bytes.
 @item
 weekday, monthday, month, year, hour, zone.  Data indicating the date of
 the message.
+@inindex full-name
 @item 
 full-name.  The full name of the author of the message.  This is a
 MIME-decoded string with text properties.
+@inindex from
 @item
 from.  The email address of the author of the message.  This is a
 MIME-decoded string with text properties.
+@inindex message-id
 @item
 message-id.  The unique id of the message.
+@inindex line-count
 @item
 line-count. The number of lines in the message.
+@inindex subject
 @item
 subject.  The subject string of the message.  This is a MIME-decoded
 string with text properties.
+@inindex vheaders-regexp
 @item
 vheaders-regexp.  A regular expression that can be used to find the
 start of the visible headers.  The headers must have been already
 ordered so that the visible headers are at the bottom of the headers
 section. 
+@inindex to
 @item
 to.  Addresses of the recipients of the message in a comma separated
 string.  This is a MIME-decoded string with text properties.
+@inindex to-names
 @item
 to-names. The full names of the recipients in a comma separated
 string.  Addresses are used if full names are not available.  This is
 a MIME-decoded string with text properties.
+@inindex month-number
 @item
 month-number.  Numeric month of the sent date.
+@inindex sortable-datestring
 @item
 sortable-datestring.  Date string of the sent date for sorting purposes.
+@inindex sortable-subject
 @item
 sortable-subject.  The subject string for sorting purposes.  (Prefixes
 such as ``re:'' are removed.)  This is a MIME-decoded string with text
 properties.
+@inindex summary
 @item
 summary.  A tokenized summary for the message, from which the actual
 summary line can be quickly calculated.  This is a list containing
 tokens, such as @code{number} and @code{thread-indent}, as well as
 MIME-decoded strings with text properties.
+@inindex parent
 @item
 parent.  The message ID of the parent of the message in its
 thread.
+@inindex references
 @item
 references.  Message IDs listed in the References header of the message.
+@inindex headers-to-be-retrieved
 @item
 headers-to-be-retrieved.  Flag that indicates whether the headers of the
 message have not been retrieved from the mail server (for POP or IMAP
 folders).
+@inindex body-to-be-retrieved
 @item
 body-to-be-retrieved.  Flag that indicates whether the body of the
 message has not been retrieved from the mail server.
+@inindex pop-uidl
 @item
 pop-uidl.  The UIDL id of the message on the POP server.
+@inindex imap-uid
 @item
 imap-uid.  The UID of the message on the IMAP server.
+@inindex imap-uid-validity
 @item
 imap-uid-validity.  The UID-VALIDITY value of the message on the IMAP
 server. 
+@inindex spam-score
 @item
 spam-score.  The spam score of the message.
 @end itemize
@@ -5590,20 +5701,26 @@ spam-score.  The spam score of the message.
 Extra data shared by virtual messages if vm-virtual-mirror
 is non-nil.
 
+@inindex edit-buffer
 @itemize
 @item 
 edit-buffer.  If the message is being edited, this is the buffer being
 used.
+@inindex virtual-messages-sym
 @item
 virtual-messages-sym.  List of virtual messages mirroring the current real
 message, represented by an uninterned symbol written as ``<v>''. 
+@inindex stuff-flag
 @item
 stuff-flag.  Flag to indicates if the attribute changes have been
 ``stuffed'' into the folder buffer.
+@inindex labels
 @item
 labels.  List of labels attached to the message.
+@inindex label-string
 @item
 label-string.  The string of labels attached to the message.
+@inindex attribute-modflag
 @item
 attribute-modflag.  Flag to indicate if the attributes of the message
 have been modified since the last save.
@@ -5616,73 +5733,104 @@ is in turn a vector containing various pieces of data.  Such a vector
 is used not only for the overall message, but for all its MIME parts
 and subparts as well.
 
+@inindex type
+@inindex Content-Type
 @itemize
-@item
-type.  A list of strings consisting of the MIME type of the part along
+@item @code{type}.
+A list of strings consisting of the MIME type of the part along
 with its attributes.  This comes from ``Content-Type'' header.  The type
 could be of the form `type/subtype'.  Quotation marks are stripped from
 attribute values.  An example is @code{("multipart/mixed" "boundary=----_=_NextPart_001_01AFE588.63E23840")}.
+@inindex qtype
 @item
-qtype.  Like type, but the quotation marks are not stripped.
+@code{qtype}.  Like type, but the quotation marks are not stripped.
+@inindex encoding
+@inindex Content-Transfer-Encoding
 @item
-encoding.  The MIME encoding used for the part.  It comes from the
+@code{encoding}.  The MIME encoding used for the part.  It comes from the
 ``Content-Transfer-Encoding'' header.
+@inindex id
+@inindex Content-ID
 @item
-id. The id obtained from the ``Content-ID'' header of the part.
+@code{id}. The id obtained from the ``Content-ID'' header of the part.
+@inindex description
+@inindex Content-Description
 @item
-description.  A description string obtained from the
+@code{description}.  A description string obtained from the
 ``Content-Description'' header of the part.
+@inindex disposition
+@inindex Content-Disposition
 @item
-disposition.  A list of strings obtained from the
+@code{disposition}.  A list of strings obtained from the
 ``Content-Disposition'' header of the part.  Quotation marks are
 stripped from attribute values.  (An example is @code{(``attachment'',
 ``filename=mydocument.doc'')}.)
+@inindex qdisposition
 @item
-qdisposition.  Like disposition, but the quotation marks are not
+@code{qdisposition}.  Like disposition, but the quotation marks are not
 stripped. 
+@inindex header-start
 @item
-header-start header-end, body-start and body-end.  Markers into the
-content buffer delineating the headers/body of
-the MIME part.
+@code{header-start}, @code{header-end}, @code{body-start} and
+@code{body-end}.  Markers into the content buffer delineating the
+headers/body of the MIME part.
+@inindex parts
 @item
-parts. A list of MIME layouts for the individual subparts of this part.
+@code{parts}. A list of MIME layouts for the individual subparts of this part.
+@inindex cache
 @item
-cache. A symbol that is unique to this MIME part.  Other data is
+@code{cache}. A symbol that is unique to this MIME part.  Other data is
 stored as properties of this symbol:
 @itemize
-@item vm-mime-display-external-generic.
+@inindex vm-mime-display-external-generic
+@item
+@code{vm-mime-display-external-generic}.
 This property stores the id of the process used to externally display
 the MIME part as well as the name of the temporary file used. 
-@item vm-mime-display-internal-image-xxxx.
+@inindex vm-mime-display-internal-image-xxxx
+@item
+@code{vm-mime-display-internal-image-xxxx}.
 This property stores the name of the temporary file where the image is
 stored.  For an image represented as image strips, it actually stores
 a list with a number of other data items.
-@item vm-image-modified.
+@inindex vm-image-modified
+@item
+@code{vm-image-modified}.
 This property stores a boolean flag indicating that the image has been
 modified. 
-@item vm-mime-display-internal-audio/basic.
+@inindex vm-mime-display-internal-audio/basic
+@item
+@code{vm-mime-display-internal-audio/basic}.
 This property stores the name of the temporary file where the audio
 clip is stored.
-@item vm-message-garbage.
-@end itemize
+@inindex vm-message-garbage
 @item
-message-symbol.  A reference to the message that contains the MIME
+@code{vm-message-garbage}.
+@end itemize
+@inindex message-symbol
+@item
+@code{message-symbol}.  A reference to the message that contains the MIME
 part.  Represented as a symbol (that is, an interned key into a hash
 table).  This is a different symbol from the real-message-sym of the
 message. 
+@inindex display-error
 @item
-display-error.  If the display of a MIME part fails, its error string is
+@code{display-error}.  If the display of a MIME part fails, its error string is
 stored here.
+@inindex layout-is-converted
 @item
-layout-is-converted.  Flag indicating that MIME type conversion has been
+@code{layout-is-converted}.  Flag indicating that MIME type conversion has been
 performed on this part.  @pxref{MIME type conversion}.
+@inindex unconverted-layout
 @item
-unconverted-layout.  If the MIME type conversion has been performed on
+@code{unconverted-layout}.  If the MIME type conversion has been performed on
 this part, then this holds the original unconverted layout.
 @end itemize
 
 @unnumberedsubsec Cross-buffer sharing of data
 
+@inindex vm-message-list
+@inindex vm-message-pointer
 Every Folder buffer has a @code{vm-message-list} and a
 @code{vm-message-pointer} list containing message data vectors.  
 
@@ -5706,8 +5854,9 @@ sub-vectors are shared with the underlying real folders.
 @node Summary Internals,, Message Internals, Internals
 @section Summary Internals
 
-@vindex vm-summary-line-format
-@cindex summary line, tokenized
+@inindex vm-summary-line-format
+@inindex summary line, tokenized
+@inindex tokenized summary line
 Generating a summary is quite a time-consuming operation.  VM uses a
 variety of tricks to speed up the generation of summaries.  
 
@@ -5731,15 +5880,19 @@ line for each message and caches it in the cached-data vector.
 The following forms of tokens are used in tokenized summary lines:
 
 @itemize
-@item number.
+@item 
+@code{number}.
 Stands for the message number in the linear order of the summary.
-@item mark.
+@item
+@code{mark}.
 Stands for an indicator of message mark (whether the message is marked
 at present).
-@item thread-indent.
+@item 
+@code{thread-indent}.
 Stands for the indentation to be used for the message's summary
 depending on its position in the message thread.
-@item group-begin, group-end.
+@item 
+@code{group-begin}, @code{group-end}.
 Brackets used to denote groups of items that might have particular
 formatting constraints.
 @end itemize
@@ -5754,10 +5907,13 @@ maintaining summary information:
 
 @itemize
 @item
+@inindex vm-summary-pointer
 @code{vm-summary-pointer}.  The message selected by the cursor in the
 Summary window.
 @item
+@inindex vm-summary-redo-start-point
 @code{vm-summary-redo-start-point}.  A pointer into the
+@inindex vm-message-list
 @code{vm-message-list} indicating the first message for which the
 summary line must be redisplayed.  All the messages from here on are
 assumed to require a summary redisplay.  The assumption is usually valid
@@ -5765,13 +5921,17 @@ because the message numbers of all the succeeding messages might have
 changed.  But, if message numbers are not included in the summary lines,
 then this results in unnecessary work.
 @item
+@inindex vm-messages-needing-summary-update
 @code{vm-messages-needing-summary-update}.  The list of messages for
 which summary lines must be redisplayed.  Messages are included in this
 list by calling the function @code{vm-mark-for-summary-update}.
 @item
+@inindex vm-numbering-redo-start-point
 @code{vm-numbering-redo-start-point}.  A pointer into
+@inindex vm-message-list
 @code{vm-message-list} indicating the first message whose message number
 needs to be recalculated.
+@inindex vm-numbering-redo-end-point
 @code{vm-numbering-redo-end-point}.  A pointer into
 @code{vm-message-list} indicating the last message whose message number
 needs to be recalculated.
@@ -5784,67 +5944,116 @@ give the data about the message:
 
 @itemize
 @item
+@inindex vm-message
 @code{vm-message}.  The message struct for which this line is a summary.
-@item
-@code{thread-root}.  If this message is part of a message thread, then
-this property gives the message struct of the root of the thread.
-@item
-@code{thread-count}.  If this message is the root of a message thread,
-then this property gives the number of messages that form the thread.
 @end itemize
 
-@unnumberedsubsec Threading
+@subsection Threading
 
-@vindex vm-thread-obarray
-@vindex vm-subject-obarray
-Message threads required for threaded summaries are calculated using two
-hash tables @code{vm-thread-obarray} and @code{vm-subject-obarray}.  The
-former keeps track of the thread obtained by
-following parent and reference chains.  The latter keeps track of
-messages with the same subject.
+@inindex vm-thread-obarray
+@inindex vm-thread-subject-obarray
+@inindex in-reply-to
+@inindex references
+Message threads required for threaded summaries are calculated using
+message ID's, which are unique when the message was originally
+composed.  VM may still need to deal with multiple copies of the
+message received via possibly different routes.  So, message ID's are
+not unique for messages inside VM.  Thread trees are constructed using
+the ``in-reply-to'' headers and ``references'' headers found in the
+messages.  Jamie Zawinski has done a good analysis of the information
+contained in these headers which can be found on the web.  VM's
+threading algorithm is currently based on these ideas.
 
-The unique message ID of a message is interned in each of these hash
-tables.  The @code{vm-thread-obarray} table stores the following
-information for each message ID:
+@inindex vm-thread-using-subject
+In addition, VM also allows threads to be built using the subject
+headers via the option @code{vm-thread-using-subject}.  Subject-based
+threading is used in addition to reference-based threading.  So, in a
+subject-based thread, the root message would be the oldest message
+with that subject and, below it, would be reference-based threads all
+of which share the same subject.  The roots of these reference-based
+threads are referred to as the ``members'' of the subject thread.
+Subject threading is only one level deep, whereas reference threading
+can be arbitrarily deep.
+
+Threads are built using two hash tables @code{vm-thread-obarray} and
+@code{vm-thread-subject-obarray}.  The former keeps track of the thread
+obtained by following parent and reference chains.  The latter keeps
+track of messages with the same subject.
+
+The message ID's are interned in @code{vm-thread-obarray} and the
+following information is stored for each message ID:
 
 @itemize
-@item messages.
-The message structs that carry this message ID.  (There could be
-duplicate copies of a message with the same message ID.)
-@item date.
+@item messages:
+The list of messages that carry this message ID.  The last message in the list
+is regarded as the @i{canonical} message for this message ID.
+@item date:
 The date of the message.
-@item parent.
+@item parent:
 The interned message ID of the parent of this message.  (The folder
-may or may not contain a message with this ID.)
-@item children.
+may or may not contain a message with this ID)
+@item children:
 The interned message ID's of all the children of this message.  (The
 folder may or may not contain messages with these ID's.)
-@item thread-subtree.
-A list of all the messages contained in the subtree of this message.
-(These are actual messages contained in the folder.)
-@item youngest-date.
+@item youngest-date:
 The date of the youngest message in the thread.
-@item oldest-date.
+@item oldest-date:
 The date of the oldest message in the thread.
+@inindex thread-subtree
+@item thread-subtree:
+A list of all the messages contained in the subtree of the canonical
+message with this message ID.  This data is ideally stored in the
+Softdata vector of the message itself.  But it is here for now.
 @end itemize
 
 The @code{vm-thread-subject-obarray} interns each subject string found
 in the folder and maps it to a vector containing the following elements:
 
 @itemize
-@item id-sym.
+@item id-sym:
 The interned message ID of what is likely to be the root of the
-thread, which is, at any rate, the oldest message in this thread.
-@item date.
+thread, which is, at any rate, the oldest message with this subject.
+@item date:
 The date of the root message.
-@item visible-roots.
-A list of messages in the folder that belong to this thread, but whose
-parent messages are not in the folder.  These are thus us the visible
-root messages of the thread.  The presumed real root of the thread is
-not included among these messages.
-@item messages.
-The list of all the messages in the folder that belong to this thread.
+@item members:
+A list of interned message ID's for the ``members'' of the subject
+thread, which are messages without any reference-based ancestors.  The
+root message represented by @code{id-sym} is not included as a member.
+@item messages:
+The list of all the messages in the folder that have this subject.
 @end itemize
+
+@inindex threads, building
+@b{Building threads} involves calculating all the data stored with the
+@code{vm-thread-obarray}, excepting thread-subtrees, and all the data
+stored with the @code{vm-thread-subject-obarray}.  These two
+collections of data are calculated one after another, because subject
+threads are based on reference threads.  
+
+@inindex thread-subtree
+@inindex thread-list
+@inindex thread-indentation
+After the threads are built, the @code{thread-subtree} property of
+@code{vm-thread-obarray} and the @code{thread-list} and
+@code{thread-indentation} fields of the Softdata vector are calculated
+as needed on demand and cached.  These fields cannot be calculated without
+building threads first.
+
+When new messages are assimilated, they are added to the threads that
+might have been already built, and the @code{thread-subtree} property
+is erased for all their ancestors, forcing them to be recalculated.
+In addition, the @code{thread-list} and @code{thread-indentation}
+fields of all their children are erased as well.
+
+@inindex unthread
+Before messages in the folder are expunged, they are @b{unthreaded}.
+This involves removing them from their respective thread trees.  It
+also involves the erasure of the @code{thread-subtree} property of all
+their ancestors and the @code{thread-list} and
+@code{thread-indentation} fields of the children.
+
+
+
 
 
 @node Concept Index, Key Index, Internals, Top
@@ -5859,11 +6068,15 @@ The list of all the messages in the folder that belong to this thread.
 @unnumbered Command Index
 @printindex fn
 
-@node Variable Index, License, Command Index, Top
+@node Variable Index, Internals Index, Command Index, Top
 @unnumbered Variable Index
 @printindex vr
 
-@node License,, Variable Index, Top
+@node Internals Index, License, Variable Index, Top
+@unnumbered Internals Index
+@printindex in
+
+@node License,, Internals Index, Top
 @unnumbered GNU GENERAL PUBLIC LICENSE
 @center Version 2, June 1991
 

@@ -234,23 +234,10 @@ will be visible."
       (vm-sort-messages "thread")
     (vm-sort-messages "physical-order")))
 
-;;;###autoload
-(defun vm-build-threads (message-list)
-  "For all messages in MESSAGE-LIST, build thread information in the
-`vm-thread-obarray' and `vm-thread-subject-obarray'.  If MESSAGE-LIST
-is nil, do it for all the messages in the folder.  USR, 2010-07-15"
-  (if (not (vectorp vm-thread-obarray))
-      (setq vm-thread-obarray (make-vector 641 0)
-	    vm-thread-subject-obarray (make-vector 641 0)))
-  (let ((mp (or message-list vm-message-list))
-	(n 0)
-	;; Just for laughs, make the update interval vary.
-	(modulus (+ (% (vm-abs (random)) 11) 40))
-	;; no need to schedule reindents of reparented messages
-	;; unless there were already messages present.
-	(schedule-reindents message-list)
+(defun vm-build-reference-threads (mp schedule-reindents)
+  (let ((n 0)
+	(modulus 10)
 	m parent parent-sym id id-sym date refs old-parent-sym)
-    ;; Build threads using references
     (while mp
       (setq m (car mp)
 	    parent (vm-parent m)
@@ -323,74 +310,95 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 		    refs (cdr refs)))))
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
-	  (message "Building threads (by reference)... %d" n)))
+	  (message "Building threads (by reference)... %d" n)))))
 
+(defun vm-build-subject-threads (mp schedule-reindents)
+  (let ((n 0)
+	(modulus 10)
+	m parent parent-sym id id-sym date refs old-parent-sym
+	subject subject-sym)
+    (while mp
+      (setq m (car mp)
+	    parent (vm-parent m)
+	    id (vm-su-message-id m)
+	    id-sym (intern id vm-thread-obarray)
+	    date (vm-so-sortable-datestring m))
+      (setq subject (vm-so-sortable-subject m)
+	    subject-sym (intern subject vm-thread-subject-obarray))
+      ;; inhibit-quit because we need to make sure the asets
+      ;; below are an atomic group.
+      (let* ((inhibit-quit t))
+	;; if this subject was never seen before create the
+	;; information vector.
+	(if (not (boundp subject-sym))
+	    (set subject-sym
+		 (vector id-sym date nil (list m)))
+	  ;; this subject seen before 
+	  (vm-ts-set-messages-of subject-sym
+				 (cons m (vm-ts-messages-of subject-sym)))
+	  (if (string< date (vm-ts-root-date-of subject-sym))
+	      (let* ((vect (symbol-value subject-sym))
+		     (i-sym (vm-ts-root-of subject-sym)))
+		;; optimization: if we know that this message
+		;; already has a parent, then don't bother
+		;; adding it to the list of child messages
+		;; since we know that it will be threaded and
+		;; unthreaded using the parent information.
+		(unless (and (vm-th-parent-of i-sym)
+			     (vm-th-messages-of (vm-th-parent-of i-sym)))
+		  (vm-ts-set-members-of 
+		   subject-sym (cons i-sym (vm-ts-members-of subject-sym))))
+		(vm-ts-set-root-of subject-sym id-sym)
+		(vm-ts-set-root-date-of subject-sym date)
+		;; this loops _and_ recurses and I'm worried
+		;; about it going into a spin someday.  So I
+		;; unblock interrupts here.  It's not critical
+		;; that it finish... the summary will just be out
+		;; of sync.
+		(when schedule-reindents
+		  (let ((inhibit-quit nil))
+		    (vm-thread-mark-for-summary-update 
+		     (vm-ts-messages-of subject-sym)))))
+	    ;; optimization: if we know that this message
+	    ;; already has a parent, then don't bother adding
+	    ;; it to the list of child messages, since we
+	    ;; know that it will be threaded and unthreaded
+	    ;; using the parent information.
+	    (unless (and parent 
+			 (vm-th-messages-of 
+			  (intern parent vm-thread-obarray)))
+	      (vm-ts-set-members-of 
+	       subject-sym (cons id-sym (vm-ts-members-of subject-sym)))))))
+      (setq mp (cdr mp) n (1+ n))
+      (when (zerop (% n modulus))
+	(message "Building threads (by subject)... %d" n)))))
+
+;;;###autoload
+(defun vm-build-threads (message-list)
+  "For all messages in MESSAGE-LIST, build thread information in the
+`vm-thread-obarray' and `vm-thread-subject-obarray'.  If MESSAGE-LIST
+is nil, do it for all the messages in the folder.  USR, 2010-07-15"
+  (if (not (vectorp vm-thread-obarray))
+      (setq vm-thread-obarray (make-vector 641 0)
+	    vm-thread-subject-obarray (make-vector 641 0)))
+  (let ((mp (or message-list vm-message-list))
+	(n 0)
+	;; Just for laughs, make the update interval vary.
+	(modulus (+ (% (vm-abs (random)) 11) 40))
+	;; no need to schedule reindents of reparented messages
+	;; unless there were already messages present.
+	(schedule-reindents message-list)
+	m parent parent-sym id id-sym date refs old-parent-sym)
+    ;; Build threads using references
+    (vm-build-reference-threads mp schedule-reindents)
     ;; Build threads using subject
     (when vm-thread-using-subject
-      (let (subject subject-sym)
-	(setq n 0 mp (or message-list vm-message-list))
-	(while mp
-	  (setq m (car mp)
-		parent (vm-parent m)
-		id (vm-su-message-id m)
-		id-sym (intern id vm-thread-obarray)
-		date (vm-so-sortable-datestring m))
-	  (setq subject (vm-so-sortable-subject m)
-		subject-sym (intern subject vm-thread-subject-obarray))
-	  ;; inhibit-quit because we need to make sure the asets
-	  ;; below are an atomic group.
-	  (let* ((inhibit-quit t))
-	    ;; if this subject was never seen before create the
-	    ;; information vector.
-	    (if (not (boundp subject-sym))
-		(set subject-sym
-		     (vector id-sym date nil (list m)))
-	      ;; this subject seen before 
-	      (vm-ts-set-messages-of subject-sym
-		    (cons m (vm-ts-messages-of subject-sym)))
-	      (if (string< date (vm-ts-root-date-of subject-sym))
-		  (let* ((vect (symbol-value subject-sym))
-			 (i-sym (vm-ts-root-of subject-sym)))
-		    ;; optimization: if we know that this message
-		    ;; already has a parent, then don't bother
-		    ;; adding it to the list of child messages
-		    ;; since we know that it will be threaded and
-		    ;; unthreaded using the parent information.
-		    (unless (and (vm-th-parent-of i-sym)
-				 (vm-th-messages-of (vm-th-parent-of i-sym)))
-		      (vm-ts-set-members-of 
-		       subject-sym (cons i-sym (vm-ts-members-of subject-sym))))
-		    (vm-ts-set-root-of subject-sym id-sym)
-		    (vm-ts-set-root-date-of subject-sym date)
-		    ;; this loops _and_ recurses and I'm worried
-		    ;; about it going into a spin someday.  So I
-		    ;; unblock interrupts here.  It's not critical
-		    ;; that it finish... the summary will just be out
-		    ;; of sync.
-		    (when schedule-reindents
-		      (let ((inhibit-quit nil))
-			(vm-thread-mark-for-summary-update 
-			 (vm-ts-messages-of subject-sym)))))
-		;; optimization: if we know that this message
-		;; already has a parent, then don't bother adding
-		;; it to the list of child messages, since we
-		;; know that it will be threaded and unthreaded
-		;; using the parent information.
-		(unless (and parent 
-			     (vm-th-messages-of 
-			      (intern parent vm-thread-obarray)))
-		  (vm-ts-set-members-of 
-		   subject-sym (cons id-sym (vm-ts-members-of subject-sym)))))))
-	  (setq mp (cdr mp) n (1+ n))
-	  (when (zerop (% n modulus))
-	    (message "Building threads (by subject)... %d" n)))))
-
+      (vm-build-subject-threads mp schedule-reindents))
     ;; Calculate thread-subtrees for all the known message ID's
     (mapatoms
      (lambda (id-sym)
        (vm-th-thread-subtree id-sym))
      vm-thread-obarray)
-
     (when (> n modulus)
       (message "Building threads... done"))))
 
