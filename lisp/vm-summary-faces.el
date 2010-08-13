@@ -87,9 +87,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defface vm-summary-selected-face
-  '((t ;; (:bold on)
-     (:background "grey85")
-     ))
+  '((t (:inherit highlight)))
   "The face used in VM Summary buffers for the selected message."
   :group 'vm-summary-faces)
 
