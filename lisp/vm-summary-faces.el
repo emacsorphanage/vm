@@ -50,134 +50,6 @@
 (declare-function vm-extent-property "vm-misc.el" (overlay prop) t)
 (declare-function vm-set-extent-property "vm-misc.el" (overlay prop value) t)
 
-(defgroup vm-summary-faces nil
-  "Additional faces for the VM summary window."
-  :group 'vm-faces)
-
-(defcustom vm-summary-faces-alist
-  '(
-    ((or (header "Priority: urgent")
-         (header "Importance: high")
-         (header "X-Priority: 1")
-         (label "!")
-	 (label "\\flagged")
-         (header "X-VM-postponed-data:"))
-     vm-summary-high-priority-face)
-    ((collapsed)        vm-summary-collapsed-face)
-    ((marked)    	vm-summary-marked-face)
-    ((deleted)   	vm-summary-deleted-face)
-    ((new)       	vm-summary-new-face)
-    ((unread)    	vm-summary-unread-face)
-    ((replied)   	vm-summary-replied-face)
-    ((or (filed)
-	 (written))     vm-summary-saved-face)
-    ((or (forwarded) 
-	 (redistributed)) vm-summary-forwarded-face)
-    ((edited)    	vm-summary-edited-face)
-    ((outgoing)  	vm-summary-outgoing-face)
-    ((expanded)  	vm-summary-expanded-face)
-    ((any)       	vm-summary-default-face))
-  "*Alist of virtual folder conditions and corresponding faces.
-Order matters. The first matching one will be used as face.  
-
-See `vm-virtual-folder-alist' for a description of the conditions."
-  :type '(repeat (cons (sexp) (face)))
-  :group 'vm-summary-faces)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defface vm-summary-selected-face
-  '((t (:inherit highlight)))
-  "The face used in VM Summary buffers for the selected message."
-  :group 'vm-summary-faces)
-
-(defface vm-summary-marked-face
-  '((((type x)) (:foreground "red3")))
-  "The face used in VM Summary buffers for marked messages."
-  :group 'vm-summary-faces)
-
-(defface vm-summary-deleted-face
-     (if (featurep 'xemacs)
-         '((t (:foreground "grey50" :strikethru t)))
-       '((t (:foreground "grey50" :strike-through "grey70"))))
-     "The face used in VM Summary buffers for deleted messages."
-     :group 'vm-summary-faces)
-
-(defface vm-summary-new-face
-  '((t (:foreground "blue")))
-  "The face used in VM Summary buffers for new messages."
-  :group 'vm-summary-faces)
-
-(defface vm-summary-unread-face
-  '((t (:foreground "blue4")))
-  "The face used in VM Summary buffers for unread messages."
-  :group 'vm-summary-faces)
-
-(defface vm-summary-saved-face
-  '((t (:foreground "green4" :underline t)))
-  "The face used in VM Summary buffers for saved messages."
-  :group 'vm-summary-faces)
-
-;; These faces are obsolete 
-;; (define-obsolete-face-alias 'vm-summary-filed-face
-;;   'vm-summary-saved-face "8.2.0")
-;; (define-obsolete-face-alias 'vm-summary-written-face
-;;   'vm-summary-saved-face "8.2.0")
-(put 'vm-summary-filed-face 'face-alias 'vm-summary-saved-face)
-(put 'vm-summary-written-face 'face-alias 'vm-summary-saved-face)
-(make-obsolete 'vm-summary-filed-face 'vm-summary-saved-face "8.2.0")
-(make-obsolete 'vm-summary-written-face 'vm-summary-saved-face "8.2.0")
-
-(defface vm-summary-replied-face
-  '((t (:foreground "grey30")))
-  "The face used in VM Summary buffers for replied messages."
-  :group 'vm-summary-faces)
-
-(defface vm-summary-forwarded-face
-  '((t (:foreground "grey20")))
-  "The face used in VM Summary buffers for forwarded messages."
-  :group 'vm-summary-faces)
-
-;; (define-obsolete-face-alias 'vm-summary-redistributed-face
-;;   'vm-summary-forwarded-face "8.2.0")
-(put 'vm-summary-redistributed-face 'face-alias
-     'vm-summary-forwarded-face)
-(make-obsolete 'vm-summary-redistributed-face
-	       'vm-summary-forwarded-face "8.2.0")
-
-(defface vm-summary-edited-face 
-  nil
-  "The face used in VM Summary buffers for edited messages."
-  :group 'vm-summary-faces)
-
-(defface vm-summary-outgoing-face
-  '((t (:foreground "grey50")))
-  "The face used in VM Summary buffers for outgoing messages."
-  :group 'vm-summary-faces)
-
-(defface vm-summary-expanded-face
-  '((t ()))
-  "The face used in VM Summary buffers for the root messages of
-expanded threads."
-  :group 'vm-summary-faces)
-
-(defface vm-summary-collapsed-face
-  '((t (:weight normal :slant oblique)))
-  "The face used in VM Summary buffers for the root messages of
-collapsed threads."
-  :group 'vm-summary-faces)
-
-(defface vm-summary-high-priority-face
-  '((t (:foreground "red")))
-  "The face used in VM Summary buffers for high-priority messages."
-  :group 'vm-summary-faces)
-
-(defface vm-summary-default-face
-  nil
-  "The default face used in VM Summary buffers."
-  :group 'vm-summary-faces)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-and-compile
   (if (fboundp 'mapcar-extents)
       (defun vm-summary-faces-list-extents () (mapcar-extents 'identity))
@@ -228,7 +100,15 @@ of available face names."
                (vm-extent-at (vm-su-end-of msg)))))
     (while faces
       (when (apply 'vm-vs-or msg (list (caar faces)))
-        (vm-set-extent-property x 'face (cadar faces))
+	(cond ((vm-summary-collapsed-root-p msg)
+	       (vm-set-extent-property 
+		x 'face (list (cadar faces) 'vm-summary-collapsed-face)))
+	      ((vm-summary-expanded-root-p msg)
+	       (vm-set-extent-property
+		x 'face (list (cadar faces) 'vm-summary-expanded-face)))
+	      (t
+	       (vm-set-extent-property
+		x 'face (list (cadar faces)))))
         (setq faces nil))
       (setq faces (cdr faces)))))
 
@@ -250,14 +130,14 @@ When it is on, the VM summary buffers are decorated with faces, i.e.,
 fonts and colors, for easy recogniton of the message status."
   (interactive "P")
   (if (null arg)
-      (setq vm-enable-summary-faces (not vm-enable-summary-faces))
+      (setq vm-summary-enable-faces (not vm-summary-enable-faces))
     (if (> (prefix-numeric-value arg) 0)
-        (setq vm-enable-summary-faces t)
-      (setq vm-enable-summary-faces nil)))
+        (setq vm-summary-enable-faces t)
+      (setq vm-summary-enable-faces nil)))
 
   (when (interactive-p)
     (message "VM summary faces mode is %s"
-             (if vm-enable-summary-faces "on" "off")))
+             (if vm-summary-enable-faces "on" "off")))
   
   (if (memq major-mode '(vm-mode vm-virtual-mode vm-summary-mode
                                  vm-presentation-mode))
@@ -265,7 +145,7 @@ fonts and colors, for easy recogniton of the message status."
         (vm-select-folder-buffer)
         (vm-summarize)
         (set-buffer vm-summary-buffer)
-        (if vm-enable-summary-faces
+        (if vm-summary-enable-faces
 	    (progn
 	      (mapc 'vm-summary-faces-add vm-message-list)
 	      (if vm-summary-overlay
@@ -281,7 +161,7 @@ fonts and colors, for easy recogniton of the message status."
 
 ;; (defadvice vm-mouse-set-mouse-track-highlight 
 ;;	(after vm-summary-faces activate)
-;;   (when (and vm-enable-summary-faces
+;;   (when (and vm-summary-enable-faces
 ;;              (eq major-mode 'vm-summary-mode)
 ;;              (boundp 'm)
 ;;              m)
@@ -291,9 +171,9 @@ fonts and colors, for easy recogniton of the message status."
 (defun vm-summary-faces-fix-pointer ()
   (if vm-summary-overlay
       (vm-set-extent-property vm-summary-overlay 'face
-			            (if vm-enable-summary-faces
-					'vm-summary-selected-face
-				      'vm-summary-highlight-face))))
+			      (if vm-summary-enable-faces
+				  'vm-summary-selected-face
+				'vm-summary-highlight-face))))
 
 (add-hook 'vm-summary-pointer-update-hook 'vm-summary-faces-fix-pointer)
 

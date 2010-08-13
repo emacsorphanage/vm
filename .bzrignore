@@ -23,3 +23,5 @@ lisp/version.txt
 lisp/vm-autoloads.el
 lisp/vm-cus-load.el
 *.orig
+package-info
+_pkg.el

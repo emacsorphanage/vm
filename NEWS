@@ -16,9 +16,29 @@ Status
   
 VM 8.1.93a (2010-07-17)
 
+  CHANGES
+
+  ** New feature: Invoking vm-load-init-file with a prefix argument
+     loads the init-file (~/.vm) without loading the preferences-file
+     (~/.vm.preferences).  This is a good way to run VM with the
+     default settings, much like `emacs -Q'.  We are advising all
+     users to split their init-files to make use of this feature.  See
+     info section on "Starting Up".
+
+  ** New feature: vm-summary-enable-faces allows summary lists with
+     faces turned on.  (This was formerly an add-on contributed by
+     Robert Fenk under the name vm-summary-faces-mode. But there are
+     several changes.  In particular, the face names do not end in
+     "-face" following the Emacs naming conventions.)  See the info
+     section on "Summaries" for more information.
+
+  ** Commands renamed:
+     `vm-mime-save-all-attachments' => `vm-save-all-attachments'(C-c C-s)
+     `vm-mime-delete-all-attachments' => `vm-delete-all-attachments'(C-c C-d)
+
   IMPROVEMENTS
 
-   * New thread-folding feature in the Summary window allows message
+   * New feature: thread-folding in the Summary window allows message
      threads to be collapsed into single line summaries.  The
      following new variables control the behavior of thread folding.
        `vm-summary-enable-thread-folding',
@@ -27,19 +47,25 @@ VM 8.1.93a (2010-07-17)
      New commands:
        `vm-toggle-thread' (T), `vm-expand-all-threads' (E) and 
        `vm-collapse-all-threads' (C).
-     Thanks to Arik Mitschang for this contribution.
+     See the info file for details.  Thanks to Arik Mitschang for this
+     contribution. 
 
    * The calculation of threads improved using Jamie Zawinski's
      ideas.  Threads are correctly identified even if some of the
      messages are missing.
 
-  ** New feature: vm-summary-faces-mode allows summary lists with
-     faces turned on.  (This was formerly an add-on contributed by
-     Robert Fenk.)  See the info file for usage as well as to note
-     changes from the former version.
-
    * Added EasyPG storage of passwords for mail server accounts.  See
      info index under "passwords".
+
+   * Resolved performance problems in summary generation.  It works
+     quite fast now.
+
+   * New variable: `vm-mime-parts-display-separator' allows you to
+     insert a string as a separator between MIME parts.
+
+   * New command: `vm-save-attachments' allows you to save all the
+     attachments of a message under your own file names instead of the
+     original file names given in the message.
 
   BUG FIXES
 

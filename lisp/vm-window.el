@@ -23,6 +23,7 @@
 
 (provide 'vm-window)
 
+;;;###autoload
 (defun vm-display (buffer display commands configs
 		   &optional do-not-raise)
 ;; the clearinghouse VM display function.

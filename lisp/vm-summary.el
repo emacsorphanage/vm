@@ -71,35 +71,43 @@ an interior message of a thread."
   "Checks to see if the message summary of M shows that its thread is
 currently expanded. This is done safely so that if M does not have a
 summary line then nil is returned."
-  (save-excursion
-    (and (vm-su-start-of m)
-	 (progn
-	   (goto-char (vm-su-start-of m))
-	   (looking-at "-")))))
+  (and (vm-su-start-of m)
+       (or (integerp (vm-su-start-of m))
+	   (marker-position (vm-su-start-of m)))
+       (save-excursion
+	 (goto-char (vm-su-start-of m))
+	 (looking-at "-"))))
 
 (defsubst vm-summary-collapsed-root-p (m)
   "Checks to see if the message summary of M shows that its thread is
 currently collapsed. This is done safely so that if M does not have a
 summary line then nil is returned."
-  (save-excursion
-    (and (vm-su-start-of m)
-	 (progn
-	   (goto-char (vm-su-start-of m))
-	   (looking-at "+")))))
+  (and (vm-su-start-of m)
+       (or (integerp (vm-su-start-of m))
+	   (marker-position (vm-su-start-of m)))
+       (save-excursion
+	 (goto-char (vm-su-start-of m))
+	 (looking-at "+"))))
 
 (defsubst vm-summary-mark-root-collapsed (m)
   "Mark a thread root message M as collapsed."
-  (save-excursion
+  (when (and (vm-su-start-of m)
+	     (or (integerp (vm-su-start-of m))
+		 (marker-position (vm-su-start-of m))))
+    (save-excursion
       (goto-char (vm-su-start-of m))
       (delete-char 1)
-      (insert "+")))
+      (insert "+"))))
 
 (defsubst vm-summary-mark-root-expanded (m)
   "Mark a thread root message M as expanded."
-  (save-excursion
+  (when (and (vm-su-start-of m)
+	     (or (integerp (vm-su-start-of m))
+		 (marker-position (vm-su-start-of m))))
+    (save-excursion
       (goto-char (vm-su-start-of m))
       (delete-char 1)
-      (insert "-")))
+      (insert "-"))))
 
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"
@@ -198,8 +206,9 @@ the messages in the current folder."
 	mp m root
 	(n 0)
 	(modulus 100)
-	(do-mouse-track (and vm-mouse-track-summary
-			     (vm-mouse-support-possible-p))))
+	(do-mouse-track (or (and vm-mouse-track-summary
+				 (vm-mouse-support-possible-p))
+			    vm-summary-enable-faces)))
     (setq mp m-list)
     (save-excursion
       (set-buffer vm-summary-buffer)
@@ -214,14 +223,30 @@ the messages in the current folder."
 		  (if (vm-su-start-of (car mp))
 		      (progn
 			(goto-char (vm-su-start-of (car mp)))
+			(vm-disable-extents (point) (point-max))
 			(delete-region (point) (point-max)))
 		    (goto-char (point-max)))
+		(goto-char (point-min))
+		(vm-disable-extents)
 		(erase-buffer)
 		(setq vm-summary-pointer nil))
 	      ;; avoid doing long runs down the marker chain while
 	      ;; building the summary.  use integers to store positions
 	      ;; and then convert them to markers after all the
-	      ;; insertions are done.
+	      ;; insertions are done.  Likewise, detach overlays and
+	      ;; re-establish them afterwards.
+	      (message "Generating summary... %d" n)
+	      (overlay-recenter (point))
+	      (while mp
+		(setq m (car mp))
+		(when (vm-su-start-of m)
+		  (set-marker (vm-su-start-of m) nil)
+		  (set-marker (vm-su-end-of m) nil))
+		(setq mp (cdr mp)))
+
+	      (overlay-recenter (point-max))
+
+	      (setq mp m-list)
 	      (while mp
                 (setq m (car mp))
 		(vm-set-su-start-of m (point))
@@ -239,7 +264,7 @@ the messages in the current folder."
 				(vm-summary-mark-root-collapsed m)
 			      (vm-summary-mark-root-expanded m)))
 			(setq root (vm-th-thread-root m))
-			(when (and root (not (vm-summary-expanded-root-p root)))
+			(when (and root (vm-summary-collapsed-root-p root))
 			  (unless (vm-new-flag m)
 			    (put-text-property s e 'invisible t))
 			  ;; why mess with the root here?  USR, 2010-07-20
@@ -263,7 +288,7 @@ the messages in the current folder."
 		    (vm-su-summary-mouse-track-overlay-of m))))
 		(vm-set-su-start-of m (vm-marker (vm-su-start-of m)))
 		(vm-set-su-end-of m (vm-marker (vm-su-end-of m)))
-		(when vm-enable-summary-faces (vm-summary-faces-add m))
+		(when vm-summary-enable-faces (vm-summary-faces-add m))
 		(setq mp (cdr mp))))
 	  (set-buffer-modified-p modified))
 	(run-hooks 'vm-summary-redo-hook)))
@@ -338,11 +363,10 @@ ROOT, which is the root of the thread you want collapsed."
       ;; move to the parent thread only when not
       ;; instructed not to, AND when the currently
       ;; selected message will become invisible
-      (when (get-text-property (+ (vm-su-start-of msg) 3) 'invisible)
-	(unless (or nomove (vm-new-flag msg))
-	  (vm-select-folder-buffer)
-	  (vm-goto-message (string-to-number (vm-number-of root)))))
       (when (interactive-p)
+	(unless nomove
+	  (when (get-text-property (+ (vm-su-start-of msg) 3) 'invisible)
+	    (goto-char (vm-su-start-of root))))
 	(vm-update-summary-and-mode-line)))))
 	
 (defun vm-expand-all-threads ()
@@ -376,17 +400,19 @@ the threads are shown in the Summary window."
   (unless vm-summary-show-threads
     (error "Summary is not sorted by threads"))
   (let ((ml vm-message-list)
-	root)
+	msg root)
     (with-current-buffer vm-summary-buffer
-      (setq root (vm-th-thread-root (vm-summary-message-at-point)))
+      (setq msg (vm-summary-message-at-point))
+      (setq root (vm-th-thread-root msg))
       (save-excursion
 	(mapc (lambda (m)
 		(when (and (eq m (vm-th-thread-root m))
 			   (> (vm-th-thread-count m) 1))
 		  (vm-collapse-thread t m)))
-	      ml)))
-    (vm-goto-message (string-to-number (vm-number-of root))))
-
+	      ml))
+      (when (interactive-p)
+	(when (get-text-property (+ (vm-su-start-of msg) 3) 'invisible)
+	  (goto-char (vm-su-start-of root))))))
   (setq vm-summary-threads-collapsed t)
   (when (interactive-p)
     (vm-update-summary-and-mode-line)))
@@ -405,10 +431,9 @@ of action."
 	  root next)
       (setq root (vm-th-thread-root (vm-summary-message-at-point)))
       (if (vm-summary-expanded-root-p root)
-	  (vm-collapse-thread)
-	(vm-expand-thread))
-      (when (interactive-p)
-	(vm-update-summary-and-mode-line)))))
+	  (call-interactively 'vm-collapse-thread)
+	(call-interactively 'vm-expand-thread))
+      )))
 
 (defun vm-do-needed-summary-rebuild ()
   "Rebuild the summary lines of all the messages starting at
@@ -439,8 +464,9 @@ buffer by a regenerated summary line."
 	   (marker-buffer (vm-su-start-of m)))
       (let ((modified (buffer-modified-p))
 	    (do-mouse-track
-	     (and vm-mouse-track-summary
-		  (vm-mouse-support-possible-p)))
+	     (or (and vm-mouse-track-summary
+		      (vm-mouse-support-possible-p))
+		 vm-summary-enable-faces))
 	    summary)
 	(save-excursion
 	  (setq summary (vm-su-summary m))
@@ -501,7 +527,7 @@ buffer by a regenerated summary line."
 		     (vm-su-start-of m)
 		     (vm-su-end-of m)
 		     (vm-su-summary-mouse-track-overlay-of m)))
-		  (if vm-enable-summary-faces
+		  (if vm-summary-enable-faces
 		      (vm-summary-faces-add m)
 		    (if (and selected vm-summary-highlight-face)
 			(vm-summary-highlight-region 
@@ -518,8 +544,9 @@ buffer by a regenerated summary line."
   (if vm-summary-buffer
       (let ((w (vm-get-visible-buffer-window vm-summary-buffer))
 	    (do-mouse-track
-	     (and vm-mouse-track-summary
-		  (vm-mouse-support-possible-p)))
+	     (or (and vm-mouse-track-summary
+		      (vm-mouse-support-possible-p))
+		 vm-summary-enable-faces))
 	    (old-window nil))
 	(vm-save-buffer-excursion
 	  (unwind-protect
@@ -557,7 +584,7 @@ buffer by a regenerated summary line."
 		       (vm-su-end-of vm-summary-pointer)
 		       (vm-su-summary-mouse-track-overlay-of
 			vm-summary-pointer)))
-		    (when vm-enable-summary-faces 
+		    (when vm-summary-enable-faces 
 		      (vm-summary-faces-add vm-summary-pointer)))
 		  (setq vm-summary-pointer m)
 		  (goto-char (vm-su-start-of m))
@@ -593,7 +620,8 @@ buffer by a regenerated summary line."
 			    (vm-mouse-set-mouse-track-highlight
 			     (vm-su-start-of m) (vm-su-end-of m)
 			     (vm-su-summary-mouse-track-overlay-of m)))
-			  (when vm-enable-summary-faces (vm-summary-faces-add m)))
+			  (when vm-summary-enable-faces 
+			    (vm-summary-faces-add m)))
 		      (set-buffer-modified-p modified)))
 		  (forward-char (- (length vm-summary-=>)))
 		  (if (facep 'vm-summary-highlight-face)
@@ -1972,8 +2000,9 @@ Call this function if you made changes to `vm-summary-format'."
 	   (marker-buffer (vm-fs-start-of fs)))
       (let ((modified (buffer-modified-p))
 	    (do-mouse-track
-	     (and vm-mouse-track-summary
-		  (vm-mouse-support-possible-p)))
+	     (or (and vm-mouse-track-summary
+		      (vm-mouse-support-possible-p))
+		 vm-summary-enable-faces))
 	    summary)
 	(save-excursion
 	  (set-buffer (marker-buffer (vm-fs-start-of fs)))
@@ -2014,7 +2043,7 @@ Call this function if you made changes to `vm-summary-format'."
 		     (vm-fs-end-of fs)
 		     (vm-fs-mouse-track-overlay-of fs)))
 		  ;; VM Summary Faces may not work for this yet
-		  ;; (when vm-enable-summary-faces
+		  ;; (when vm-summary-enable-faces
 		  ;;   (vm-summary-faces-add fs))
 		  )
 	      (set-buffer-modified-p modified)))))))
@@ -2043,8 +2072,9 @@ Call this function if you made changes to `vm-summary-format'."
   (catch 'done
     (let ((fs-hash (make-vector 89 0)) db dp fp f key fs totals
           (format vm-folders-summary-format)
-	  (do-mouse-track (and vm-mouse-track-summary
-			       (vm-mouse-support-possible-p))))
+	  (do-mouse-track (or (and vm-mouse-track-summary
+				   (vm-mouse-support-possible-p))
+			      vm-summary-enable-faces)))
       (save-excursion
 	(set-buffer vm-folders-summary-buffer)
 	(erase-buffer)
@@ -2100,7 +2130,7 @@ Call this function if you made changes to `vm-summary-format'."
 		    (vm-fs-start-of fs)
 		    (vm-fs-end-of fs))))
 		;; VM Summary Faces may not work here yet
-		;; (when vm-enable-summary-faces
+		;; (when vm-summary-enable-faces
 		;;   (vm-summary-faces-add fs))
 		(set (intern key fs-hash) fs))
 	      (setq fp (cdr fp)))

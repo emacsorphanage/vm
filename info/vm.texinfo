@@ -204,9 +204,11 @@ to @code{vm-user-agent}, e.g. by @kbd{M-x} @code{customize-variable} @kbd{RET}
 @code{mail-user-agent} @kbd{RET}.
 
 To invoke VM, type @kbd{M-x vm}.  VM gathers any mail that has
-arrived in your system mailbox and appends it to a file known as your
-@dfn{primary inbox}, and visits that file for reading.  @xref{Starting Up}.
-A file visited for reading by VM is called the @dfn{current folder}.
+arrived in your system mailbox and appends it to a mail folder known as your
+@dfn{primary inbox}, and visits that folder for reading.  @xref{Starting Up}.
+Depending on how you have configured VM, the primary inbox might be a
+file on your file system (in a format understood by VM) or it could be
+a folder on a remote mail server.
 
 If you type @kbd{?} in a VM folder buffer you will get some help, i.e.
 @code{vm-help} is called.
@@ -342,14 +344,33 @@ files with other folders by setting the variable
 
 @findex vm-load-init-file
 @vindex vm-init-file
+@vindex vm-preferences-file
 @kindex L
 The first time VM is started in an Emacs session, it attempts to load
 the file specified by the variable @code{vm-init-file}, normally
-@file{~/.vm}.  If present this file should contain Lisp code, much like
-the @file{.emacs} file.  Since VM has well over one hundred
-configuration variables, use of the @file{~/.vm} can considerably reduce
-clutter in the @file{.emacs} file.  You can reload this file
-by typing @kbd{L} (@code{vm-load-init-file}) from within VM.
+@file{~/.vm}.  If present this file should contain Lisp code, much
+like the @file{.emacs} file.  It should contain the ``configuration
+settings'' for VM, i.e., variables that define where the mail folders
+are stored, where the incoming mail is to be found, the various
+directories that VM needs to use for its operation and the external
+applications that VM can invoke.  You can reload this file by typing
+@kbd{L} (@code{vm-load-init-file}) from within VM.
+
+In addition, VM also attempts to load a file specified by the variable
+@code{vm-preferences-file}, normally @file{~/.vm.preferences}.  This
+file should contain your preferential settings for various VM
+variables affecting affect how VM works.  Since VM has well over one
+hundred configuration variables, use of the @file{~/.vm.preferences}
+can considerably reduce clutter in the @file{.vm} file.
+
+Invoking @code{vm-load-init-file} with a prefix argument (e.g.,
+@kbd{C-u}) causes the @code{vm-init-file} to be loaded without the
+@code{vm-preferences-file}.  VM will work with all its default
+settings for the variables.  This is similar to invoking emacs via
+@code{emacs -Q}.  If you ever find a problem with VM's behavior, it is
+a good idea to run it without the @code{vm-preferences-file} in order
+to check if the problem might have been caused by the preferences
+settings.
 
 @findex vm
 @vindex vm-primary-inbox
@@ -3663,76 +3684,104 @@ collapses all the expanded threads.
 
 @cindex faces
 @cindex summary faces
-@findex vm-summary-faces-mode
-@vindex vm-enable-summary-faces
 By default, the summary of a folder is shown in a black-and-white
-window with plain text.  You can turn on faces support by running the
-command @code{vm-summary-faces-mode}.  @xref{Faces,,,emacs, the GNU
-Emacs Manual}.  Setting the variable @code{vm-enable-summary-faces} to
-t in your init file causes the summary faces to be turned on
-permanently.  Then VM decorates the summary lines with different faces
-based on the attributes of the message.  The following categories of
-faces are pre-defined:
+window with plain text.  This is suitable for terminal mode Emacs
+users.  The variable @code{vm-summary-highlight-face}, which is set to
+the standard Emacs @code{bold} face by default, is used to highlight
+the currently selected message.  You can set the variable to any other
+face, or to nil if you wan to turn off highlighting.
 
-@itemize
-@item high-priority:
-Messages that are flagged or have other priority headers.
-@item collapsed:
-Root messages of threads that are collapsed.
-@item expanded:
-Root messages of threads that are expanded.
-@item marked:
-Messages currently marked.
-@item deleted:
-Deleted messages.
-@item new:
-New messages that have arrived during the session.
-@item unread:
-Messages that have not been read.
-@item replied:
-Messages for which a reply has been sent.
-@item saved:
-Messages saved to a folder on disk.  (Subsumes the earlier categories
-filed and written.)
-@item forwarded:
-Messages forwarded to other recipients.  (Subsumes the earlier
-category redistributed.)
-@item edited:
-Messages edited after receipt.
-@item outgoing:
-Messages sent by you.
-@item default:
-Messages not matching any of the above criteria.
-@end itemize
+@findex vm-summary-faces-mode
+@vindex vm-summary-enable-faces
+You can turn on more elaborate faces support, suitable for color
+graphics terminals, by setting the variable
+@code{vm-summary-enable-faces} to t in your vm-init-file.  You can
+also run @code{M-x vm-summary-faces-mode} in the middle of a VM
+session to turn on summary faces. Then VM decorates the summary lines
+with different faces based on the attributes of the message.
+@xref{Faces,,,emacs, the GNU Emacs Manual}, for basic information on
+faces. The predefined faces used to highlight the summary window are
+listed below.  It is possible for you to change the definitions of
+these faces in your vm-init-file as well as to define new faces of
+your own.
 
 @vindex vm-summary-faces-alist
-The variable @code{vm-summary-faces-alist} defines an association list
-of conditions and the faces that should be used for the
-summary.  It has the following form:
+The variable @code{vm-summary-faces-alist} defines a list of
+condition-action pairs for decorating the summary with faces.
+It has the following form:
 
 @example
-( ((@var{SELECTOR} [@var{ARG} ...])    @var{FACE})
+( ((@var{SELECTOR} [@var{ARG} ...])    @var{vm-summary-FACE})
   ... )
 @end example
 
-The first element of each association-pair is a condition in
-the same format as used for @code{vm-virtual-folder-alist}.
-@xref{Virtual Folders}.  The second element is a face name of the form
-@code{vm-summary-CAT-face} where @code{CAT} is one of the message
-categories listed above.  The first association-pair whose conditions
-are satisfied by the message wins, and the face listed there is used
-to decorate its summary line.
+The first element of each pair is a VM selector in the same
+format as used for @code{vm-virtual-folder-alist}.  @xref{Virtual
+Folders}.  The second element is a face name of the form
+@code{vm-summary-FACE} where @code{FACE} is one of the face types
+listed below.  The first condition
+satisfied by the message wins, and the face listed there is used to
+decorate its summary line.
 
+The faces @code{vm-summary-selected}, @code{vm-summary-collapsed} and
+@code{vm-summary-expanded} are special.  They are @i{added} to the face
+specified by @code{vm-summary-faces-alist} instead of replacing it.
+This allows VM to add highlighting for the selected message and the
+collapsed/expanded thread roots, without scrubbing the natural face
+determined by the message attributes.
+
+@vindex vm-mouse-track-summary
+The variable @code{vm-mouse-track-summary} controls whether summary
+entries are highlighted when the mouse pointer passes over
+them.  The highlighting is done using the standard Emacs
+@code{highlight} face.
+
+@subsubheading Hiding summary lines
 @cindex hiding summary lines
 @cindex vm-summary-faces-hide
 The command @code{vm-summary-faces-hide} allows you to hide the
-summary lines of messages with a particular property.  By default, it
-hides messages with the @code{deleted} property.  By invoking it with
-a prefix argument, you can specify other properties that you might
-like to hide.  (Note that @code{deleted} property does not necessarily
-mean deleted messages.  Whatever messages satisfy the conditions
+summary lines of messages with a particular face type.  By default, it
+hides messages with the @code{deleted} face type.  By invoking it with
+a prefix argument, you can specify other face types that you might
+like to hide.  (Note that @code{deleted} face type does not necessarily
+mean deleted messages.  Whatever messages satisfy the condition
 associated with the @code{vm-summary-deleted-face} in
 @code{vm-summary-faces-alist} will be hidden.)
+
+@subsubheading Predefined summary faces
+@itemize
+@item vm-summary-high-priority:
+Messages that are flagged or have other priority headers.
+@item vm-summary-deleted:
+Deleted messages.
+@item vm-summary-new:
+New messages that have arrived during the session.
+@item vm-summary-unread:
+Messages that have not been read.
+@item vm-summary-marked:
+Messages currently marked.
+@item vm-summary-replied:
+Messages for which a reply has been sent.
+@item vm-summary-saved:
+Messages saved to a folder on disk.  (Subsumes the earlier categories
+filed and written.)
+@item vm-summary-forwarded:
+Messages forwarded to other recipients.  (Subsumes the earlier
+category redistributed.)
+@item vm-summary-edited:
+Messages edited after receipt.
+@item vm-summary-outgoing:
+Messages sent by you.
+@item vm-summary-default:
+Messages not matching any of the above criteria.
+@item vm-summary-collapsed:
+Root messages of threads that are collapsed.
+@item vm-summary-expanded:
+Root messages of threads that are expanded.
+@item vm-summary-selected:
+Message that is currently selected.
+@end itemize
+
 
 @node Virtual Folders, Frames and Windows, Summaries, Top
 @chapter Virtual Folders
@@ -4446,37 +4495,21 @@ the menu bar.
 
 @node Faces, Using the Mouse, Menus, Top
 @chapter Faces
-
 VM uses Emacs faces to emphasize text in the folder and summary
-buffers.  Instead of defining VM specific faces, VM's face usage
-is controlled by customization variables that can point to faces.
-This allows you to use standard Emacs faces, or to create your
-own.  So when you want to change which face is used, write code
-like this:
-
-@example
-(setq vm-summary-highlight-face 'bold-italic)
-@end example
-
-@noindent In the summary buffer, VM displays the summary entry for the
-current message using the face specified by the
-@code{vm-summary-highlight-face} variable.  The value of this variable
-should be a symbol that names a face, or nil which means don't display
-the summary entry of the current message in a special way.
-
-@vindex vm-mouse-track-summary
-The variable @code{vm-mouse-track-summary} controls whether summary
-entries are highlighted when the mouse pointer passes over
-them.  The highlighting is done using the standard Emacs
-@code{highlight} face.
+buffers.  In addition to using the predefined faces of Emacs, VM also
+defines several faces of its own.  You can do @code{M-x list-faces}
+inside Emacs to see what faces have been defined.  You can also define
+your own faces using Emacs primitives for doing so.
+@xref{Faces,,,emacs, the GNU Emacs Manual}.
 
 @vindex vm-highlighted-header-regexp
 @vindex vm-highlighted-header-face
-In the folder buffer, the header contents of headers matched by
-the @code{vm-highlighted-header-regexp} variable are displayed using
-the face named by @code{vm-highlighted-header-face}.  This variable is
-ignored under XEmacs if @code{vm-use-lucid-highlighting} is non-@code{nil}.
-The XEmacs @code{highlight-headers} package is used instead.  See the
+In the folder or presentation buffer, the header contents of headers
+matched by the @code{vm-highlighted-header-regexp} variable are
+displayed using the face named by @code{vm-highlighted-header-face}.
+This variable is ignored under XEmacs if
+@code{vm-use-lucid-highlighting} is non-@code{nil}.  The XEmacs
+@code{highlight-headers} package is used instead.  See the
 documentation for the function @code{highlight-headers} to find out
 how to customize header highlighting using this package.
 
@@ -4498,6 +4531,8 @@ will search the first @math{@var{N} / 2} characters and the last
 @vindex vm-mime-button-face
 The face named by @code{vm-mime-button-face} is used to display the
 textual buttons that trigger the display of MIME objects.
+
+@xref{Summary Faces}, for the faces support in the Summary buffer.
 
 @node Using the Mouse, Hooks, Faces, Top
 @chapter Using the Mouse
@@ -5330,7 +5365,7 @@ is non-nil.
 The attributes vector and cached data vector are stored in the
 folder on disk as the @code{X-VM-v5-Data} header of the first message.
 
-@unnumberedsubsec Location data
+@subsubheading Location data
 
 This vector holds the data about the location of the various parts of
 the message in the folder buffer.  Every folder buffer or folder-like
@@ -5369,7 +5404,7 @@ soft data vector but the location data could also point to a
 Presentation buffer.
 
 
-@unnumberedsubsec Soft data
+@subsubheading Soft data
 This vector contains other calculated data about the message that is
 specific to a VM session.
 
@@ -5441,7 +5476,7 @@ inherited from its real folder.
 @end itemize
 
 
-@unnumberedsubsec Attributes
+@subsubheading Attributes
 All the hard-wired message attributes are stored in this
 vector.  They also get saved as part of the @code{X-VM-v5-Data} header
 field when the folder is saved to disk.
@@ -5468,7 +5503,7 @@ redistributed-flag.  Flag to indicate if the message has been
 redistributed. 
 @end itemize
 
-@unnumberedsubsec Cached Data
+@subsubheading Cached Data
 The data that is cached for the message and stored on the disk as part
 of the @code{X-VM-v5-Data} header field.  Even though this vector is
 only supposed to have data that can be calculated from the message
@@ -5550,7 +5585,7 @@ server.
 spam-score.  The spam score of the message.
 @end itemize
 
-@unnumberedsubsec Mirror Data
+@subsubheading Mirror Data
 
 Extra data shared by virtual messages if vm-virtual-mirror
 is non-nil.
@@ -5574,7 +5609,7 @@ attribute-modflag.  Flag to indicate if the attributes of the message
 have been modified since the last save.
 @end itemize
 
-@unnumberedsubsec MIME layout
+@subsubheading MIME layout
 
 The MIME layout of a message, stored in the soft data of the message,
 is in turn a vector containing various pieces of data.  Such a vector
@@ -5646,7 +5681,7 @@ unconverted-layout.  If the MIME type conversion has been performed on
 this part, then this holds the original unconverted layout.
 @end itemize
 
-@unnumberedsubsec Cross-buffer sharing of data
+@subsubheading Cross-buffer sharing of data
 
 Every Folder buffer has a @code{vm-message-list} and a
 @code{vm-message-pointer} list containing message data vectors.  

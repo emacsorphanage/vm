@@ -4,6 +4,7 @@
 ;;
 ;; Copyright (C) 1989-2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;; Copyright (C) 2008-2010 Uday S. Reddy
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -181,7 +182,7 @@ vm-summary-redo-start-point is set to match it."
       (setq vm-summary-redo-start-point start-point))))
 
 (defun vm-mark-for-summary-update (m &optional dont-kill-cache)
-  "Mark message M for a summary update.
+  "Mark message M and all its mirrored mesages for a summary update.
 Also mark M's buffer as needing a display update. Any virtual
 messages of M and their buffers are similarly marked for update.
 If M is a virtual message and virtual mirroring is in effect for

@@ -366,8 +366,9 @@ AddToFunc SelectWindow
     (let* ((mp vm-message-pointer)
            (folder (buffer-name))
            (do-mouse-track
-            (and vm-mouse-track-summary
-                 (vm-mouse-support-possible-p)))
+            (or (and vm-mouse-track-summary
+		     (vm-mouse-support-possible-p))
+		vm-summary-enable-faces))
            (buf (get-buffer-create
                  (concat " *new messages in VM folder: " folder "*")))
            selector msg new-messages wf)
@@ -406,7 +407,7 @@ AddToFunc SelectWindow
                 (vm-mouse-set-mouse-track-highlight
                  start (point)))
 
-	      (if vm-enable-summary-faces
+	      (if vm-summary-enable-faces
 		  (vm-summary-faces-add msg)
 		(vm-summary-highlight-region start (point)
 					     vm-summary-highlight-face))

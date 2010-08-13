@@ -2689,7 +2689,8 @@ declarations in the attachments and make a decision independently."
   (let ((part-list (vm-mm-layout-parts layout)))
     (while part-list
       (vm-decode-mime-layout (car part-list))
-      (setq part-list (cdr part-list)))
+      (setq part-list (cdr part-list))
+      (insert vm-mime-parts-display-separator))
     t ))
 
 (defun vm-mime-display-internal-multipart/alternative (layout)
@@ -4402,7 +4403,7 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
         (setq mlist (cdr mlist))))))
 
 ;;;###autoload
-(defun vm-mime-delete-all-attachments (&optional count)
+(defun vm-delete-all-attachments (&optional count)
   "Delete all attachments from the next COUNT messages or marked
 messages.  For the purpose of this function, an \"attachment\" is
 a mime part part which has \"attachment\" as its disposition or
@@ -4422,11 +4423,19 @@ are also included."
    vm-mime-deletable-type-exceptions)
 
   (when (interactive-p)
-    (vm-discard-cached-data)
-    (vm-preview-current-message)))
-                                                 
+    (vm-discard-cached-data count)
+    (vm-preview-current-message))
+
+  (vm-update-summary-and-mode-line))
+
+;; (define-obsolete-function-alias 'vm-mime-delete-all-attachments
+;;   'vm-delete-all-attachments "8.1.93a")
+(defalias 'vm-mime-delete-all-attachments
+  'vm-delete-all-attachments)
+(make-obsolete 'vm-mime-delete-all-attachments
+	       'vm-delete-all-attachments "8.1.93a")                                                 
 ;;;###autoload
-(defun vm-mime-save-all-attachments (&optional count
+(defun vm-save-all-attachments (&optional count
                                                directory
                                                no-delete-after-saving)
   "Save all attachments in the next COUNT messages or marked
@@ -4486,7 +4495,7 @@ created."
                (setq file nil)))
          
          (when file
-           (message "Saving `%s%s" type (if file (format " (%s)" file) ""))
+           (message "Saving %s" (if file (format " (%s)" file) ""))
            (make-directory (file-name-directory file) t)
            (vm-mime-send-body-to-file layout file file)
            (if vm-mime-delete-after-saving
@@ -4500,13 +4509,96 @@ created."
      vm-mime-savable-type-exceptions)
 
     (when (interactive-p)
-      (vm-discard-cached-data)
+      (vm-discard-cached-data count)
       (vm-preview-current-message))
     
     (if (> n 0)
         (message "%d attachment%s saved" n (if (= n 1) "" "s"))
       (message "No attachments found"))))
 
+;; (define-obsolete-function-alias 'vm-mime-save-all-attachments
+;;   'vm-save-all-attachments "8.1.93a")
+(defalias 'vm-mime-save-all-attachments
+  'vm-save-all-attachments)
+(make-obsolete 'vm-mime-save-all-attachments
+  'vm-save-all-attachments "8.1.93a")
+
+(defun vm-save-attachments (&optional count
+				      no-delete-after-saving)
+  "Save all attachments in the next COUNT messages or marked
+messages.  For the purpose of this function, an \"attachment\" is
+a mime part part which has \"attachment\" as its disposition or
+simply has an associated filename.  Any mime types that match
+`vm-mime-savable-types' but not `vm-mime-savable-type-exceptions'
+are also included.
+
+The attachments are saved in file names input from the
+minibuffer.  (This is the main difference from
+`vm-save-all-attachments'.) 
+
+The variables `vm-all-attachments-directory' or
+`vm-mime-attachment-save-directory' can be used to set the
+default location.  When directory does not exist it will be
+confirmed before creating a new directory."
+  (interactive "p")
+
+  (vm-check-for-killed-summary)
+  (if (interactive-p) (vm-follow-summary-cursor))
+ 
+  (let ((n 0)
+	(directory nil))
+    (vm-mime-action-on-all-attachments
+     count
+     ;; the action to be performed BEGIN
+     (lambda (msg layout type file-name)
+       (let ((file (vm-read-file-name
+		    (if file-name			; prompt
+			(format "Save (default %s): " file-name)
+		      (format "Save %s: " type))
+		    (file-name-as-directory		; directory
+		     (or directory		      
+			 vm-mime-attachment-save-directory
+			 vm-mime-all-attachments-directory))
+		    (and file-name			; default-filename
+			 (concat
+			  (file-name-as-directory 	      
+			   (or directory		      
+			       vm-mime-attachment-save-directory
+			       vm-mime-all-attachments-directory))
+			  (or file-name "")))
+		    nil nil			      ; mustmatch initial
+		    vm-mime-save-all-attachments-history ; predicate
+		    )))
+	 (setq directory (file-name-directory file))
+         (when (file-exists-p file)
+	   (if (y-or-n-p (format "Overwrite `%s'? " file))
+	       nil 		; (delete-file file)
+	     (setq file nil)))
+	 (unless (file-exists-p directory)
+	   (if (y-or-n-p 
+		(format "Directory %s does not exist; create it?" directory))
+	       (make-directory directory t)
+	     (setq file nil)))
+         (when file
+           (message "Saving %s" (if file (format " (%s)" file) ""))
+           (vm-mime-send-body-to-file layout file file)
+           (if vm-mime-delete-after-saving
+               (let ((vm-mime-confirm-delete nil))
+                 (vm-mime-discard-layout-contents 
+		  layout (expand-file-name file))))
+           (setq n (+ 1 n)))))
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; the action to be performed END
+     ;; attachment filters 
+     vm-mime-savable-types
+     vm-mime-savable-type-exceptions)
+
+    (when (interactive-p)
+      (vm-discard-cached-data count)
+      (vm-preview-current-message))
+    
+    (if (> n 0)
+        (message "%d attachment%s saved" n (if (= n 1) "" "s"))
+      (message "No attachments found"))))
 ;; for the karking compiler
 (defvar vm-menu-mime-dispose-menu)
 
