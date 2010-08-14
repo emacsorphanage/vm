@@ -3241,6 +3241,17 @@ set this variable directly, rather you should use the command
   :type 'boolean)
 (make-variable-buffer-local 'vm-summary-show-threads)
 
+(defcustom vm-summary-thread-indentation-by-references t
+  "*If non-nil, threaded messages are indented according to their
+nesting level determined by their references headers.  This is
+likely to be their original nesting level in the discussion.  If
+it is nil, then the indentation level is determined by the number
+of thread ancestors within the folder.  When some messages in the
+thread are missing or deleted, this is likely to be less than the
+original nesting level."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-summary-thread-indent-level 2
   "*Value should be a number that specifies how much
 indentation the '%I' summary format specifier should provide per
@@ -5658,7 +5669,7 @@ Should be just a list of strings, not an alist or an obarray.")
 append a space to words that complete unambiguously.")
 (defconst vm-attributes-vector-length 9)
 (defconst vm-cache-vector-length 26)
-(defconst vm-softdata-vector-length 20)
+(defconst vm-softdata-vector-length 21)
 (defconst vm-location-data-vector-length 6)
 (defconst vm-mirror-data-vector-length 6)
 (defconst vm-folder-summary-vector-length 15)

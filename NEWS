@@ -50,6 +50,10 @@ VM 8.1.93a (2010-07-17)
      See the info file for details.  Thanks to Arik Mitschang for this
      contribution. 
 
+   * New variable: vm-summary-thread-indentation-by-references
+     controls whether threads are indented by their original nesting
+     level or according to the nesting level within the folder.
+
    * The calculation of threads improved using Jamie Zawinski's
      ideas.  Threads are correctly identified even if some of the
      messages are missing.

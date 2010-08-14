@@ -5524,6 +5524,10 @@ thread.
 @item
 @code{thread-list}.  List of symbols from @code{vm-thread-obarray} that give
 this message's lineage.
+@inindex thread-subtree
+@item
+@code{thread-subtree}.  List of messages that form the subtree under
+this message in a threaded summary display.
 @inindex babyl-frob-flag
 @item
 @code{babyl-frob-flag}.
@@ -5984,9 +5988,11 @@ The message ID's are interned in @code{vm-thread-obarray} and the
 following information is stored for each message ID:
 
 @itemize
+@item message
+The ``canonical'' message with this message ID.  It is typically the
+first message encountered by VM with the message ID.
 @item messages:
-The list of messages that carry this message ID.  The last message in the list
-is regarded as the @i{canonical} message for this message ID.
+The list of messages that carry this message ID.
 @item date:
 The date of the message.
 @item parent:
@@ -5999,11 +6005,6 @@ folder may or may not contain messages with these ID's.)
 The date of the youngest message in the thread.
 @item oldest-date:
 The date of the oldest message in the thread.
-@inindex thread-subtree
-@item thread-subtree:
-A list of all the messages contained in the subtree of the canonical
-message with this message ID.  This data is ideally stored in the
-Softdata vector of the message itself.  But it is here for now.
 @end itemize
 
 The @code{vm-thread-subject-obarray} interns each subject string found
@@ -6033,24 +6034,25 @@ threads are based on reference threads.
 @inindex thread-subtree
 @inindex thread-list
 @inindex thread-indentation
-After the threads are built, the @code{thread-subtree} property of
-@code{vm-thread-obarray} and the @code{thread-list} and
-@code{thread-indentation} fields of the Softdata vector are calculated
-as needed on demand and cached.  These fields cannot be calculated without
-building threads first.
+After the threads are built, the @code{thread-list},
+@code{thread-indentation} and the @code{thread-subtree} fields of the
+Softdata vector are calculated as needed on demand and cached.  These
+fields cannot be calculated without building threads first.
 
 When new messages are assimilated, they are added to the threads that
-might have been already built, and the @code{thread-subtree} property
-is erased for all their ancestors, forcing them to be recalculated.
-In addition, the @code{thread-list} and @code{thread-indentation}
-fields of all their children are erased as well.
+might have been already built, and the thread-related fields in the
+Soft data vector are erased, forcing them to be recalculated.  The
+@code{thread-subtree} field is erased for all the ancestors of the
+assimilated message.  The @code{thread-list} and
+@code{thread-indentation} fields are erased for all the descendants of
+the assimilated message.
 
 @inindex unthread
 Before messages in the folder are expunged, they are @b{unthreaded}.
 This involves removing them from their respective thread trees.  It
-also involves the erasure of the @code{thread-subtree} property of all
+also involves the erasure of the @code{thread-subtree} field of all
 their ancestors and the @code{thread-list} and
-@code{thread-indentation} fields of the children.
+@code{thread-indentation} fields of the descendants.
 
 
 

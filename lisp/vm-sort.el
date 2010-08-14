@@ -509,8 +509,8 @@ folder in the order in which the messages arrived."
       (cond 
 	    ;; ((not (eq (car list1) (car list2)))
 	    ;;  ;; different reference threads
-	    ;;  (let ((date1 (vm-th-criterion-date-of (car list1) criterion))
-	    ;; 	   (date2 (vm-th-criterion-date-of (car list2) criterion)))
+	    ;;  (let ((date1 (vm-th-thread-date-of (car list1) criterion))
+	    ;; 	   (date2 (vm-th-thread-date-of (car list2) criterion)))
 	    ;;    (cond ((string-lessp date1 date2) t)
 	    ;; 	     ((string-equal date1 date2)
 	    ;; 	      (string-lessp (format "%s" root1) (format "%s" root2)))
@@ -554,8 +554,8 @@ folder in the order in which the messages arrived."
 		   (t '=)))
 	    ((not (eq root1 root2))
 	     ;; different threads
-	     (let ((date1 (vm-th-criterion-date-of (car list1) criterion))
-		   (date2 (vm-th-criterion-date-of (car list2) criterion)))
+	     (let ((date1 (vm-th-thread-date-of (car list1) criterion))
+		   (date2 (vm-th-thread-date-of (car list2) criterion)))
 	       (cond ((string-lessp date1 date2) t)
 		     ((string-equal date1 date2)
 		      (string-lessp  root1  root2))
