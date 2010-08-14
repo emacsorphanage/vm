@@ -301,7 +301,14 @@ or do the binding and advising on your own."
     labels))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar vm-reply-include-presentation nil)
+(defcustom vm-reply-include-presentation nil
+  "*If true a reply will include the presentation of a message.
+This might give better results when using filling or MIME encoded messages,
+e.g. HTML message.
+(This variable is part of vm-rfaddons.el.)"
+  :group 'vm-rfaddons
+  :type 'boolean)
+
 
 ;;;###autoload
 (defun vm-reply-include-presentation (count &optional to-all)

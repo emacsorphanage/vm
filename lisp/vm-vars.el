@@ -1799,7 +1799,7 @@ the left instead of the right."
 (defcustom vm-mime-parts-display-separator "\n"
   "*String to insert between mime parts when displayed one after
 another."
-  :group 'vm
+  :group 'vm-mime
   :type 'string)
 
 (defcustom vm-mime-7bit-composition-charset "us-ascii"
@@ -2690,16 +2690,7 @@ mailing lists that add a Reply-To: mailing list header, thereby
 leaving no way to reply to just the author of a message."
   :group 'vm-compose
   :type '(choice (const nil)
-                 (repeat regexp)))
-
-; FIXME move to rfaddons
-(defcustom vm-reply-include-presentation nil
-  "*If true a reply will include the presentation of a message.
-This might give better results when using filling or MIME encoded messages,
-e.g. HTML message.
-(This variable is part of vm-rfaddons.el.)"
-  :group 'vm-ext
-  :type 'boolean)
+		 (repeat regexp)))
 
 (defcustom vm-in-reply-to-format "%i"
   "*String which specifies the format of the contents of the In-Reply-To
@@ -5589,7 +5580,7 @@ Its parent keymap is mail-mode-map.")
 (defcustom vm-spam-words-file
   (expand-file-name "~/.spam-words")
   "A file storing a list of words contained in spam messages."
-  :group 'vm-ext
+  :group 'vm-folders
   :type 'file)
 
 (defcustom vm-vs-spam-score-headers
@@ -6287,7 +6278,7 @@ You must restart VM after a change to cause any effects."
 
 You should set this variable in the init-file.  For interactive use,
 the command `vm-summary-faces-mode' should be used."
-  :group 'vm
+  :group 'vm-faces
   :type 'boolean)
 
 (defcustom vm-disable-modes-before-encoding 
@@ -6304,14 +6295,15 @@ cause trouble (abbrev-mode)."
 
 (make-obsolete 'vm-summary-faces-mode 'vm-summary-enable-faces "8.1.93a")
 
-(defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
-  "*A list of headers to hide in `vm-mail-mode'."
-  :group 'vm
-  :type '(choice (const :tag "Disabled" nil)
-                 (set :tag "Header list"
-                      (string "References")
-                      (string "In-Reply-To")
-                      (string "X-Mailer"))))
+;; Duplicate defintion. See above. TX
+;; (defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
+;;   "*A list of headers to hide in `vm-mail-mode'."
+;;   :group 'vm
+;;   :type '(choice (const :tag "Disabled" nil)
+;;                  (set :tag "Header list"
+;;                       (string "References")
+;;                       (string "In-Reply-To")
+;;                       (string "X-Mailer"))))
 
 ;; define this here so that the user can invoke it right away, if needed.
 
