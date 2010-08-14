@@ -500,7 +500,8 @@ symbols interned in vm-thread-obarray."
 			  (intern (vm-so-sortable-subject m)
 				  vm-thread-subject-obarray))
 		    (or (not (boundp subject-sym))
-			(eq (vm-ts-root-of subject-sym) id-sym)))
+			(and (eq (vm-ts-root-of subject-sym) id-sym)
+			     (eq m (vm-th-message-of id-sym)))))
 	       (setq done t))
 	      (t
 	       (setq id-sym (vm-ts-root-of subject-sym))
@@ -512,8 +513,8 @@ symbols interned in vm-thread-obarray."
 				      vm-thread-loop-obarray))
 	       (if (boundp loop-sym)
 		   ;; loop detected, bail...
-		   (setq done t thread-list (or
-					     loop-recovery-point thread-list))
+		   (setq done t 
+			 thread-list (or loop-recovery-point thread-list))
 		 (setq root (vm-th-message-of id-sym))
 		 ;; the ancestors of id-sym will be added.
 		 ;; remove them if they were already added.
