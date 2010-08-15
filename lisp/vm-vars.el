@@ -3310,7 +3310,7 @@ variable's value has no effect on existing summary buffers."
   :type 'string)
 
 (defface vm-summary-highlight-face
-  '((t :inherit bold))
+  '((t :inverse-video t))
   "Face to use to highlight the summary entry for the current message."
   :group 'vm-faces)
 
@@ -4269,7 +4269,7 @@ entries from a folder summary."
 
 (defgroup vm-summary-faces nil
   "VM additional virtual folder selectors and functions."
-  :group 'vm)
+  :group 'vm-faces)
 
 (defcustom vm-summary-faces-alist
   '(
@@ -4300,7 +4300,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 (defface vm-summary-selected
-  '((t (:inherit highlight)))
+  '((t :inverse-video t))
   "The face used in VM Summary buffers for the selected message."
   :group 'vm-summary-faces)
 
