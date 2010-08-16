@@ -234,7 +234,7 @@ will be visible."
   (vm-set-summary-redo-start-point t)
   (setq vm-summary-show-threads (not vm-summary-show-threads))
   (if vm-summary-show-threads
-      (vm-sort-messages "thread")
+      (vm-sort-messages "thread-youngest-date")
     (vm-sort-messages "physical-order")))
 
 (defun vm-build-reference-threads (mp schedule-reindents)
