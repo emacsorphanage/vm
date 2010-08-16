@@ -265,14 +265,13 @@ the folder undisturbed."
 ;;;###autoload
 (defun vm-sort-messages (keys &optional lets-get-physical)
   "Sort message in a folder by the specified KEYS.
-You may sort by more than one particular message key.  If
+KEYS is a string of sort keys, separated by spaces or tabs.  If
 messages compare equal by the first key, the second key will be
 compared and so on.  When called interactively the keys will be
 read from the minibuffer.  Valid keys are
 
 \"date\"		\"reversed-date\"
-\"thread-youngest-date\" \"reversed-thread-youngest-date\"
-\"thread-oldest-date\"	\"reversed-thread-oldest-date\"
+\"activity\" 		\"reversed-activity\"
 \"author\"		\"reversed-author\"
 \"full-name\"		\"reversed-full-name\"
 \"subject\"		\"reversed-subject\"
@@ -322,14 +321,11 @@ folder in the order in which the messages arrived."
 			    vm-move-messages-physically)
 			(not vm-folder-read-only)
 			(not virtual)))
-    (or key-list (error "No sort keys specified."))
+    (unless key-list
+      (error "No sort keys specified."))
     (while key-list
       (setq key (car key-list))
-      (cond ((equal key "thread")
-	     (vm-build-threads-if-unbuilt)
-	     (vm-build-thread-lists)
-	     (setq key-funcs (cons 'vm-sort-compare-thread key-funcs)))
-	    ((equal key "auto-folder")
+      (cond ((equal key "auto-folder")
              (setq auto-folder-p t)
              (setq key-funcs (cons 'vm-sort-compare-auto-folder key-funcs)))
 	    ((equal key "author")
@@ -344,22 +340,22 @@ folder in the order in which the messages arrived."
 	     (setq key-funcs (cons 'vm-sort-compare-date key-funcs)))
 	    ((equal key "reversed-date")
 	     (setq key-funcs (cons 'vm-sort-compare-date-r key-funcs)))
-	    ((equal key "thread-youngest-date")
+	    ((equal key "activity")
 	     (setq vm-summary-show-threads t)
-	     (setq key-funcs (cons 'vm-sort-compare-thread-youngest-date
+	     (setq key-funcs (cons 'vm-sort-compare-activity
 				   key-funcs)))
-	    ((equal key "reversed-thread-youngest-date")
+	    ((equal key "reversed-activity")
 	     (setq vm-summary-show-threads t)
-	     (setq key-funcs (cons 'vm-sort-compare-thread-youngest-date-r 
+	     (setq key-funcs (cons 'vm-sort-compare-activity-r 
 				   key-funcs)))
-	    ((equal key "thread-oldest-date")
-	     (setq vm-summary-show-threads t)
-	     (setq key-funcs (cons 'vm-sort-compare-thread-oldest-date
-				   key-funcs)))
-	    ((equal key "reversed-thread-oldest-date")
-	     (setq vm-summary-show-threads t)
-	     (setq key-funcs (cons 'vm-sort-compare-thread-oldest-date-r 
-				   key-funcs)))
+	    ;; ((equal key "thread-oldest-date")
+	    ;;  (setq vm-summary-show-threads t)
+	    ;;  (setq key-funcs (cons 'vm-sort-compare-thread-oldest-date
+	    ;; 			   key-funcs)))
+	    ;; ((equal key "reversed-thread-oldest-date")
+	    ;;  (setq vm-summary-show-threads t)
+	    ;;  (setq key-funcs (cons 'vm-sort-compare-thread-oldest-date-r 
+	    ;; 			   key-funcs)))
 	    ((equal key "subject")
 	     (setq key-funcs (cons 'vm-sort-compare-subject key-funcs)))
 	    ((equal key "reversed-subject")
@@ -388,6 +384,10 @@ folder in the order in which the messages arrived."
             ((equal key "header")
              (setq vm-sort-compare-header nil)
              (setq key-funcs (cons 'vm-sort-compare-header key-funcs)))
+	    ((equal key "thread")
+	     (vm-build-threads-if-unbuilt)
+	     (vm-build-thread-lists)
+	     (setq key-funcs (cons 'vm-sort-compare-thread key-funcs)))
 	    (t
              (let ((compare (intern (format "vm-sort-compare-%s" key))))
                (if (functionp compare)
@@ -532,9 +532,9 @@ folder in the order in which the messages arrived."
 	(root2 (vm-th-thread-root-sym m2))
 	(list1 (vm-th-thread-list m1))
 	(list2 (vm-th-thread-list m2))
-	(criterion (if vm-sort-threads-by-youngest-date 
-		       'youngest-date
-		     'oldest-date))
+	;; (criterion (if vm-sort-threads-by-youngest-date 
+	;; 	       'youngest-date
+	;; 	     'oldest-date))
 	p1 p2 d1 d2)
     (catch 'done
       (cond 
@@ -621,33 +621,33 @@ folder in the order in which the messages arrived."
 	  ((string-equal s1 s2) '=)
 	  (t t))))
 
-(defun vm-sort-compare-thread-youngest-date (m1 m2)
+(defun vm-sort-compare-activity (m1 m2)
   (let ((d1 (vm-th-youngest-date-of (vm-th-thread-symbol m1)))
 	(d2 (vm-th-youngest-date-of (vm-th-thread-symbol m2))))
     (cond ((string-lessp d1 d2) t)
 	  ((string-equal d1 d2) '=)
 	  (t nil))))
 
-(defun vm-sort-compare-thread-youngest-date-r (m1 m2)
+(defun vm-sort-compare-activity-r (m1 m2)
   (let ((d1 (vm-th-youngest-date-of (vm-th-thread-symbol m1)))
 	(d2 (vm-th-youngest-date-of (vm-th-thread-symbol m2))))
     (cond ((string-lessp d1 d2) nil)
 	  ((string-equal d1 d2) '=)
 	  (t t))))
 
-(defun vm-sort-compare-thread-oldest-date (m1 m2)
-  (let ((d1 (vm-th-oldest-date-of (vm-th-thread-symbol m1)))
-	(d2 (vm-th-oldest-date-of (vm-th-thread-symbol m2))))
-    (cond ((string-lessp d1 d2) t)
-	  ((string-equal d1 d2) '=)
-	  (t nil))))
+;; (defun vm-sort-compare-thread-oldest-date (m1 m2)
+;;   (let ((d1 (vm-th-oldest-date-of (vm-th-thread-symbol m1)))
+;; 	(d2 (vm-th-oldest-date-of (vm-th-thread-symbol m2))))
+;;     (cond ((string-lessp d1 d2) t)
+;; 	  ((string-equal d1 d2) '=)
+;; 	  (t nil))))
 
-(defun vm-sort-compare-thread-oldest-date-r (m1 m2)
-  (let ((d1 (vm-th-oldest-date-of (vm-th-thread-symbol m1)))
-	(d2 (vm-th-oldest-date-of (vm-th-thread-symbol m2))))
-    (cond ((string-lessp d1 d2) nil)
-	  ((string-equal d1 d2) '=)
-	  (t t))))
+;; (defun vm-sort-compare-thread-oldest-date-r (m1 m2)
+;;   (let ((d1 (vm-th-oldest-date-of (vm-th-thread-symbol m1)))
+;; 	(d2 (vm-th-oldest-date-of (vm-th-thread-symbol m2))))
+;;     (cond ((string-lessp d1 d2) nil)
+;; 	  ((string-equal d1 d2) '=)
+;; 	  (t t))))
 
 (defun vm-sort-compare-recipients (m1 m2)
   (let ((s1 (vm-su-to m1))

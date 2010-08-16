@@ -197,7 +197,7 @@ data is discarded only from the marked messages in the current folder."
     (save-excursion
       (mapatoms (function (lambda (s)
 			    (set-buffer (get-buffer (symbol-name s)))
-			    (vm-sort-messages "thread")))
+			    (vm-sort-messages (or vm-ml-sort-keys "activity"))))
 		buffers-needing-thread-sort))))
 
 ;;;###autoload

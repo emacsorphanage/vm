@@ -5514,6 +5514,7 @@ header line in email messages,
 
 (defconst vm-supported-sort-keys
   '("date" "reversed-date"
+    "activity" "reversed-activity"
     "author" "reversed-author"
     "full-name" "reversed-full-name"
     "subject" "reversed-subject"
