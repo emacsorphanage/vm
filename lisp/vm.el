@@ -847,7 +847,7 @@ vm-visit-virtual-folder.")
 				     (vm-menu-mode-menu)))
 	  (setq blurb (vm-emit-totals-blurb))
 	  (if vm-summary-show-threads
-	      (vm-sort-messages "thread"))
+	      (vm-sort-messages "activity"))
 	  (if bookmark
 	      (let ((mp vm-message-list))
 		(while mp

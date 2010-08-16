@@ -223,8 +223,8 @@ youngest or oldest date in its thread.  CRITERION must be one of
 (defun vm-toggle-threads-display ()
   "Toggle the threads display on and off.
 When the threads display is on, the folder will be sorted by
-thread and thread indentation (via the %I summary format specifier)
-will be visible."
+thread activity and thread indentation (via the %I summary format
+specifier) will be visible."
   (interactive)
   (vm-select-folder-buffer-and-validate)
   ;; get numbering of new messages done now
@@ -233,9 +233,18 @@ will be visible."
   (vm-update-summary-and-mode-line)
   (vm-set-summary-redo-start-point t)
   (setq vm-summary-show-threads (not vm-summary-show-threads))
+  ;; Toggle between "physical-order" and "activity" sort-keys.
+  ;; This would have been better if vm-ml-sort-keys was a list of
+  ;; sort-keys, but it is a string and this is a quick fix.
   (if vm-summary-show-threads
-      (vm-sort-messages "thread")
-    (vm-sort-messages "physical-order")))
+      (vm-sort-messages 
+       (if (member vm-ml-sort-keys '("date" "physical-order"))
+	   "activity"
+	 vm-ml-sort-keys))
+    (vm-sort-messages 
+     (if (member vm-ml-sort-keys '("activity"))
+	 "physical-order"
+       vm-ml-sort-keys))))
 
 (defun vm-build-reference-threads (mp schedule-reindents)
   (let ((n 0)

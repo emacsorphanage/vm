@@ -745,7 +745,7 @@ without recreating it."
                               vm-need-summary-pointer-update t)
                         (vm-update-summary-and-mode-line)
                         (if vm-summary-show-threads
-                            (vm-sort-messages "thread"))))))
+                            (vm-sort-messages (or vm-ml-sort-keys "activity")))))))
             (setq b-list (cdr b-list)))))
     new-messages))
 
@@ -790,7 +790,7 @@ virtual folder of all messages."
 
     (vm-update-summary-and-mode-line)
     (if vm-summary-show-threads
-        (vm-sort-messages "thread"))
+        (vm-sort-messages (or vm-ml-sort-keys "activity")))
     old-messages))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

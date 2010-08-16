@@ -38,6 +38,10 @@ VM 8.1.93a (2010-07-17)
 
   IMPROVEMENTS
 
+   * Sorting of messages extended to work with threads.  By default,
+     threads are sorted by "activity", i.e., the date of their most
+     recent activity.  But they can also be sorted by other sort keys.
+
    * New feature: thread-folding in the Summary window allows message
      threads to be collapsed into single line summaries.  The
      following new variables control the behavior of thread folding.

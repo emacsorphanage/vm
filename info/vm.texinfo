@@ -3317,6 +3317,7 @@ visible to other programs.
 Valid sort keys are:
 @multitable @columnfractions 0.35 0.60
 @item date @tab reversed-date
+@item activity @tab reversed-activity
 @item author @tab reversed-author
 @item subject @tab reversed-subject
 @item recipients @tab reversed-recipients
@@ -3325,6 +3326,12 @@ Valid sort keys are:
 @item physical-order @tab reversed-physical-order
 @item spam-score @tab reversed-spam-score
 @end multitable
+
+The sort key @code{date} represents the date and time at which the
+messages were sent.  The sort key @code{activity} represents the date
+of the most recent activity.  This is the default sort order used with
+threads.  @xref{Threading}.  It allows even old threads that have
+recent messages to be brought to the front.
 
 @vindex vm-subject-ignored-prefix
 @vindex vm-subject-ignored-suffix
@@ -3400,8 +3407,17 @@ the variable in a single buffer.  Once you've started VM you should
 not change the value of this variable.  Rather you should use
 @kbd{C-t} to control the thread display.
 
-Note that threading is really a specialized form of sorting, and so the
-value of the variable @code{vm-move-messages-physically} applies.
+Unlike in previous versions of VM, threading is not a form of sorting.
+You can sort threads by the usual sort keys and the sort order will
+apply to at least the root messages of threads.  Sorting threads by
+subject, for instance, can be a quick way to find threads with similar
+subject lines.  Sorting them by date would sort them chronologically
+according to when the threads were initiated.  Sorting them activity
+is a variant of the chronological order where the dates of latest
+activity are given prominence instead of the dates of initiation.
+
+The value of the variable @code{vm-move-messages-physically} applies
+to threading just as it applies to sorting.
 
 @node Digests, Summaries, Sorting Messages, Top
 @chapter Digests

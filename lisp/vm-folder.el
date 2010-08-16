@@ -2704,7 +2704,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		      ;; so that the sort code only has to worry about the
 		      ;; changes it needs to make.
 		      (vm-update-summary-and-mode-line)
-		      (vm-sort-messages "thread")))
+		      (vm-sort-messages (or vm-ml-sort-keys "activity"))))
 		(vm-startup-apply-summary summary)
 		(vm-startup-apply-labels labels)
 		(vm-startup-apply-header-variables vis invis)
@@ -4362,25 +4362,24 @@ files."
       (vm-save-restriction
        (widen)
        (vm-build-message-list)
-       (if (or (null tail-cons) (cdr tail-cons))
-	   (progn
-             (if (not vm-assimilate-new-messages-sorted)
-                 (setq vm-ml-sort-keys nil))
-	     (if dont-read-attributes
-		 (vm-set-default-attributes (cdr tail-cons))
-	       (vm-read-attributes (cdr tail-cons)))
-	     ;; Yuck.  This has to be done here instead of in the
-	     ;; vm function because this needs to be done before
-	     ;; any initial thread sort (so that if the thread
-	     ;; sort matches the saved order the folder won't be
-	     ;; modified) but after the message list is created.
-	     ;; Since thread sorting is done here this has to be
-	     ;; done here too.
-	     (if gobble-order
-		 (vm-gobble-message-order))
-	     (if (or (vectorp vm-thread-obarray)
-		     vm-summary-show-threads)
-		 (vm-build-threads (cdr tail-cons))))))
+       (when (or (null tail-cons) (cdr tail-cons))
+	 (unless vm-assimilate-new-messages-sorted
+	   (setq vm-ml-sort-keys nil))
+	 (if dont-read-attributes
+	     (vm-set-default-attributes (cdr tail-cons))
+	   (vm-read-attributes (cdr tail-cons)))
+	 ;; Yuck.  This has to be done here instead of in the
+	 ;; vm function because this needs to be done before
+	 ;; any initial thread sort (so that if the thread
+	 ;; sort matches the saved order the folder won't be
+	 ;; modified) but after the message list is created.
+	 ;; Since thread sorting is done here this has to be
+	 ;; done here too.
+	 (when gobble-order
+	   (vm-gobble-message-order))
+	 (when (or (vectorp vm-thread-obarray)
+		   vm-summary-show-threads)
+	     (vm-build-threads (cdr tail-cons)))))
       (setq new-messages (if tail-cons (cdr tail-cons) vm-message-list))
       (vm-set-numbering-redo-start-point new-messages)
       (vm-set-summary-redo-start-point new-messages))
@@ -4402,36 +4401,35 @@ files."
     ;; not be mangled.
     (setq new-messages (copy-sequence new-messages))
     ;; add the labels
-    (if (and new-messages labels vm-burst-digest-messages-inherit-labels)
-	(let ((mp new-messages))
-	  (while mp
-	    (vm-set-labels-of (car mp) (copy-sequence labels))
-	    (setq mp (cdr mp)))))
-    (if (and new-messages vm-summary-show-threads)
-	(progn
-	  ;; get numbering of new messages done now
-	  ;; so that the sort code only has to worry about the
-	  ;; changes it needs to make.
-	  (vm-update-summary-and-mode-line)
-	  (vm-sort-messages "thread")))
-    (if (and new-messages
-	     (or vm-arrived-message-hook vm-arrived-messages-hook)
-	     ;; Run the hooks only if this is not the first
-	     ;; time vm-assimilate-new-messages has been called
-	     ;; in this folder.
-	     (not first-time))
-	(let ((new-messages new-messages))
-	  ;; seems wise to do this so that if the user runs VM
-	  ;; commands here they start with as much of a clean
-	  ;; slate as we can provide, given we're currently deep
-	  ;; in the guts of VM.
-	  (vm-update-summary-and-mode-line)
-	  (if vm-arrived-message-hook
-	      (while new-messages
-		(vm-run-message-hook (car new-messages)
-				     'vm-arrived-message-hook)
-		(setq new-messages (cdr new-messages))))
-	  (run-hooks 'vm-arrived-messages-hook)))
+    (when (and new-messages labels vm-burst-digest-messages-inherit-labels)
+      (let ((mp new-messages))
+	(while mp
+	  (vm-set-labels-of (car mp) (copy-sequence labels))
+	  (setq mp (cdr mp)))))
+    (when (and new-messages vm-summary-show-threads)
+      ;; get numbering of new messages done now
+      ;; so that the sort code only has to worry about the
+      ;; changes it needs to make.
+      (vm-update-summary-and-mode-line)
+      (vm-sort-messages (or vm-ml-sort-keys "activity")))
+    (when (and new-messages
+	       (or vm-arrived-message-hook vm-arrived-messages-hook)
+	       ;; Run the hooks only if this is not the first
+	       ;; time vm-assimilate-new-messages has been called
+	       ;; in this folder.
+	       (not first-time))
+      (let ((new-messages new-messages))
+	;; seems wise to do this so that if the user runs VM
+	;; commands here they start with as much of a clean
+	;; slate as we can provide, given we're currently deep
+	;; in the guts of VM.
+	(vm-update-summary-and-mode-line)
+	(if vm-arrived-message-hook
+	    (while new-messages
+	      (vm-run-message-hook (car new-messages)
+				   'vm-arrived-message-hook)
+	      (setq new-messages (cdr new-messages))))
+	(run-hooks 'vm-arrived-messages-hook)))
     (if (and new-messages vm-virtual-buffers)
 	(save-excursion
 	  (setq b-list vm-virtual-buffers)
@@ -4452,15 +4450,15 @@ files."
 			 (or (cdr tail-cons) vm-message-list))
 			(vm-set-numbering-redo-start-point
 			 (or (cdr tail-cons) vm-message-list))
-			(if (null vm-message-pointer)
-			    (progn (setq vm-message-pointer vm-message-list
-					 vm-need-summary-pointer-update t)
-				   (if vm-message-pointer
-				       (vm-preview-current-message))))
-			(if vm-summary-show-threads
-			    (progn
-			      (vm-update-summary-and-mode-line)
-			      (vm-sort-messages "thread")))))))
+			(unless vm-message-pointer
+			  (setq vm-message-pointer vm-message-list
+				vm-need-summary-pointer-update t)
+			  (if vm-message-pointer
+			      (vm-preview-current-message)))
+			(when vm-summary-show-threads
+			  (vm-update-summary-and-mode-line)
+			  (vm-sort-messages (or vm-ml-sort-keys "activiity")))
+			))))
 	    (setq b-list (cdr b-list)))))
     (if (and new-messages vm-ml-sort-keys)
         (vm-sort-messages vm-ml-sort-keys))
