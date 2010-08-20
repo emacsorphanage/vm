@@ -132,7 +132,8 @@ the Content-Type header.  Otherwise nil is returned."
 	    (insert "\n--" boundary "--\n")
 	    (while boundary-positions
 	      (goto-char (car boundary-positions))
-	      (insert "\n--" boundary "\n\n")
+	      (insert "\n--" boundary "\n")
+	      (insert "Content-Type: message/rfc822\n\n")
 	      (setq boundary-positions (cdr boundary-positions)))
 	    (goto-char start)
 	    (setq n (length message-list))
