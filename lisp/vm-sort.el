@@ -562,9 +562,14 @@ folder in the order in which the messages arrived."
 		      (throw 'done 
 			     (cons (vm-th-message-of p1)
 				   (vm-th-message-of p2))))))
-	     (cond ((and list1 (null list2)) nil)
-		   ((and list2 (null list1)) t)
-		   (t (cons m1 m2))))
+	     (cond (list1 nil)			; list2=nil, m2 ancestor of m1
+		   (list2 t)			; list1=nil, m1 ancestor of m2
+		   ((not (eq (vm-th-thread-symbol m1) ; m1 and m2 different
+			     (vm-th-thread-symbol m2)))
+		    (cons m1 m2))
+		   ((eq m1 (vm-th-message-of (vm-th-thread-symbol m1)))
+		    t)			; list1=list2=nil, m2 copy of m1
+		   (t nil)))		;; list1=list2=nil, m1 copy of m2
 	    ((eq root1 root2)
 	     ;; within the same subject thread
 	     (while (null (vm-th-message-of (car list1)))
