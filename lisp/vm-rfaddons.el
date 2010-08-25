@@ -91,9 +91,9 @@
 (defun vm-rfaddons-infect-vm (&optional sit-for
                                         option-list exclude-option-list)
   "This function will setup the key bindings, advices and hooks
-necessary to use all the function of vm-rfaddons.el!
+necessary to use all the function of vm-rfaddons.el.
 
-SIT-FOR specifies the number of seconds to display the infection message!
+SIT-FOR specifies the number of seconds to display the infection message.
 The OPTION-LIST can be use to select individual option.
 The EXCLUDE-OPTION-LIST can be use to exclude individual option.
 
@@ -283,7 +283,7 @@ or do the binding and advising on your own."
     (ding)
     (sit-for 3))
   
-  (message "VM-RFADDONS: VM is now infected.")
+  (message "VM-RFADDONS: Options loaded.")
   (vm-sit-for (or sit-for 2)))
 
 (defun rf-vm-su-labels (m)
@@ -558,11 +558,11 @@ Subject header."
           (setq end (point))
           (if (re-search-backward "^Subject:" (point-min) t)
               (setq start (point))
-            (error "Could not find end of Subject header start!"))
+            (error "Could not find end of Subject header start"))
           (goto-char start)
           (if (not (re-search-forward (regexp-quote vm-reply-subject-prefix)
                                       end t))
-              (error "Cound not find vm-reply-subject-prefix `%s' in header!"
+              (error "Cound not find vm-reply-subject-prefix `%s' in header"
                      vm-reply-subject-prefix)
             (goto-char (match-end 0))
             (skip-chars-backward ": \t")
@@ -713,7 +713,7 @@ and which should return t if the return receipts should be sent."
 
 (defun vm-handle-return-receipt ()
   "Generate a reply to the current message if it requests a return receipt
-and has not been replied so far!
+and has not been replied so far.
 See the variable `vm-handle-return-receipt-mode' for customization."
   (interactive)
   (save-excursion
@@ -1031,7 +1031,7 @@ This will be done according to `vm-mime-auto-save-all-attachments-subdir'."
   (let ((subdir (vm-mime-auto-save-all-attachments-subdir
                  (vm-real-message-of msg))))
     (if (not vm-mime-attachment-save-directory)
-        (error "Set `vm-mime-attachment-save-directory' for autosaving of attachments!")
+        (error "Set `vm-mime-attachment-save-directory' for autosaving of attachments")
       (if subdir
           (if (string-match "/$" vm-mime-attachment-save-directory)
               (concat vm-mime-attachment-save-directory subdir)
@@ -1188,7 +1188,7 @@ headers."
 
 ;;;###autoload
 (defun vm-shrunken-headers-toggle-this-mouse (&optional event)
-  "Toggle display of shrunken headers!"
+  "Toggle display of shrunken headers."
   (interactive "e")
   (mouse-set-point event)
   (end-of-line)
@@ -1202,7 +1202,7 @@ headers."
 
 ;;;###autoload
 (defun vm-shrunken-headers-toggle-this ()
-  "Toggle display of shrunken headers!"
+  "Toggle display of shrunken headers."
   (interactive)
   
   (save-excursion
@@ -1484,13 +1484,13 @@ and add an \"%0UA\" to your `vm-summary-format'."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;###autoload
 (defun vm-delete-quit ()
-  "Delete mails and quit.  Expunge only if it's not the primary inbox!"
+  "Delete mails and quit.  Expunge only if it's not the primary inbox."
   (interactive)
   (save-excursion
     (vm-select-folder-buffer)
     (if (and buffer-file-name
              (string-match (regexp-quote vm-primary-inbox) buffer-file-name))
-        (message "No auto-expunge for folder `%s'!" buffer-file-name)
+        (message "No auto-expunge for folder `%s'" buffer-file-name)
       (condition-case nil
           (vm-expunge-folder)
         (error nil)))
@@ -1620,7 +1620,7 @@ B and E are the beginning and end of the marked region or the current line."
 ;;;###autoload
 (defun vm-save-message-preview (file)
   "Save preview of a message in FILE.
-It saves the decoded message and not the raw message like `vm-save-message'!"
+It saves the decoded message and not the raw message like `vm-save-message'"
   (interactive
    ;; protect value of last-command
    (let ((last-command last-command)

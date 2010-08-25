@@ -2412,7 +2412,7 @@ declarations in the attachments and make a decision independently."
         (vm-mime-insert-mime-body part)
         (setq part-list nil)))
     (unless part
-      (message "No data for cid %S!" url))
+      (message "No data for cid %S" url))
     part))
 
 (defun vm-mime-display-internal-w3m-text/html (start end layout)
@@ -4374,11 +4374,11 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
                               types
                               (vm-mime-is-type-valid type types exceptions)))
                      (when (not quiet)
-                       (message "Action on part type=%s filename=%s disposition=%s!"
+                       (message "Action on part type=%s filename=%s disposition=%s"
                                 type filename disposition))
                      (funcall action (car mlist) layout type filename))
                     ((not quiet)
-                     (message "No action on part type=%s filename=%s disposition=%s!"
+                     (message "No action on part type=%s filename=%s disposition=%s"
                               type filename disposition)))
               (setq parts (cdr parts)))))
         (setq mlist (cdr mlist))))))
@@ -4718,7 +4718,7 @@ confirmed before creating a new directory."
 ;; example filter-alist variable
 (defvar vm-mime-write-file-filter-alist
   '(("application/mac-binhex40" . "hexbin -s "))
-  "*A list of filter used when writing attachements to files!"
+  "*A list of filter used when writing attachements to files."
   )
  
 ;; function to parse vm-mime-write-file-filter-alist
