@@ -132,7 +132,7 @@ the Content-Type header.  Otherwise nil is returned."
 	    (insert "\n--" boundary "--\n")
 	    (while boundary-positions
 	      (goto-char (car boundary-positions))
-	      (insert "\n--" boundary "\n")
+	      (insert "\n--" boundary "\n\n")
 	      (setq boundary-positions (cdr boundary-positions)))
 	    (goto-char start)
 	    (setq n (length message-list))
@@ -180,8 +180,6 @@ all of them will be burst."
 		  (insert (vm-leading-message-separator folder-type))
 		  (and ident-header (insert ident-header))
 		  (setq start (point))
-		  (vm-mime-insert-mime-headers layout)
-		  (insert "\n")
 		  (vm-mime-insert-mime-body layout)
 		  (vm-munge-message-separators folder-type start (point))
 		  ;; remove any leading newlines as they will
@@ -206,8 +204,6 @@ all of them will be burst."
 		    (insert (vm-leading-message-separator folder-type))
 		    (and ident-header (insert ident-header))
 		    (setq start (point))
-		    (vm-mime-insert-mime-headers (car part-list))
-		    (insert "\n")
 		    (vm-mime-insert-mime-body (car part-list))
 		    (vm-munge-message-separators folder-type start (point))
 		    ;; remove any leading newlines as they will

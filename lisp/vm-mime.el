@@ -2129,45 +2129,26 @@ that recipient is outside of East Asia."
 	   (vm-mm-layout-disposition layout))
       (let ((case-fold-search t))
 	(string-match "^attachment$" (car (vm-mm-layout-disposition layout))))
-    (let ((i-list vm-auto-displayed-mime-content-types)
-	  (type (car (vm-mm-layout-type layout)))
-	  (matched nil))
-      (if (if (eq i-list t)
-	      nil
-	    (while (and i-list (not matched))
-	      (if (vm-mime-types-match (car i-list) type)
-		  (setq matched t)
-		(setq i-list (cdr i-list))))
-	    (not matched))
-	  t
-	(setq i-list vm-auto-displayed-mime-content-type-exceptions
-	      matched nil)
-	(while (and i-list (not matched))
-	  (if (vm-mime-types-match (car i-list) type)
-	      (setq matched t)
-	    (setq i-list (cdr i-list))))
-	matched ))))
+    (let ((type (car (vm-mm-layout-type layout))))
+      (if (or (eq vm-auto-displayed-mime-content-types t)
+	      (vm-find vm-auto-displayed-mime-content-types
+		       (lambda (i)
+			 (vm-mime-types-match i type))))
+	  (vm-find vm-auto-displayed-mime-content-type-exceptions
+		   (lambda (i)
+		     (vm-mime-types-match i type)))
+	t))))
 
 (defun vm-mime-should-display-internal (layout)
-  (let ((i-list vm-mime-internal-content-types)
-	(type (car (vm-mm-layout-type layout)))
-	(matched nil))
-    (if (if (eq i-list t)
-	    t
-	  (while (and i-list (not matched))
-	    (if (vm-mime-types-match (car i-list) type)
-		(setq matched t)
-	      (setq i-list (cdr i-list))))
-	  matched )
-	(progn
-	  (setq i-list vm-mime-internal-content-type-exceptions
-		matched nil)
-	  (while (and i-list (not matched))
-	    (if (vm-mime-types-match (car i-list) type)
-		(setq matched t)
-	      (setq i-list (cdr i-list))))
-	  (not matched))
-      nil )))
+  (let ((type (car (vm-mm-layout-type layout))))
+    (if (or (eq vm-mime-internal-content-types t)
+	    (vm-find vm-mime-internal-content-types
+		     (lambda (i)
+		       (vm-mime-types-match i type))))
+	(not (vm-find vm-mime-internal-content-type-exceptions
+		      (lambda (i)
+			(vm-mime-types-match i type))))
+      nil)))
 
 (defun vm-mime-find-external-viewer (type)
   (catch 'done

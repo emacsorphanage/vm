@@ -236,15 +236,17 @@ specifier) will be visible."
   ;; Toggle between "physical-order" and "activity" sort-keys.
   ;; This would have been better if vm-ml-sort-keys was a list of
   ;; sort-keys, but it is a string and this is a quick fix.
+  (cond ((equal vm-ml-sort-keys "physical-order")
+	 (setq vm-ml-sort-keys "activity"))
+	((equal vm-ml-sort-keys "activity")
+	 (setq vm-ml-sort-keys "physical-order"))
+	((equal vm-ml-sort-keys "reversed-physical-order")
+	 (setq vm-ml-sort-keys "reversed-activity"))
+	((equal vm-ml-sort-keys "reversed-activity")
+	 (setq vm-ml-sort-keys "reversed-physical-order")))
   (if vm-summary-show-threads
-      (vm-sort-messages 
-       (if (member vm-ml-sort-keys '("date" "physical-order"))
-	   "activity"
-	 vm-ml-sort-keys))
-    (vm-sort-messages 
-     (if (member vm-ml-sort-keys '("activity"))
-	 "physical-order"
-       vm-ml-sort-keys))))
+      (vm-sort-messages (or vm-ml-sort-keys "activity"))
+    (vm-sort-messages (or vm-ml-sort-keys "physical-order"))))
 
 (defun vm-build-reference-threads (mp schedule-reindents)
   (let ((n 0)
