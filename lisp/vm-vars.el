@@ -5044,6 +5044,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "T" 'vm-toggle-thread)
     (define-key map "E" 'vm-expand-all-threads)
     (define-key map "C" 'vm-collapse-all-threads)
+    (define-key map "K" 'vm-kill-thread-subtree)
     ;; suppress-keymap provides these, but now that we don't use
     ;; suppress-keymap anymore...
     (define-key map "0" 'digit-argument)

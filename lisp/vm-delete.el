@@ -162,6 +162,44 @@ don't move at all."
 	(vm-next-message arg t executing-kbd-macro))))
 
 ;;;###autoload
+(defun vm-kill-thread-subtree (&optional arg)
+  "Delete all messages in the thread tree rooted at the current message.
+
+The optional prefix argument ARG specifies the direction to move
+if vm-move-after-killing is non-nil.  The default direction is
+forward.  A positive prefix argument means move forward, a
+negative arugment means move backward, a zero argument means
+don't move at all."
+  (interactive "p")
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer-and-validate 1)
+  (vm-error-if-folder-read-only)
+  (vm-build-threads-if-unbuilt)
+  (let ((list (vm-th-thread-subtree
+	       (vm-th-thread-symbol (car vm-message-pointer))))
+	(n 0))
+    (while list
+      (unless (vm-deleted-flag (car list))
+	(vm-set-deleted-flag (car list) t)
+	(vm-increment n))
+      (setq list (cdr list)))
+    (when (interactive-p)
+      (if (zerop n)
+	  (message "No messages deleted.")
+	(message "%d message%s deleted" n (if (= n 1) "" "s")))))
+  (vm-display nil nil '(vm-kill-thread-subtree) '(vm-kill-thread-subtree))
+  (vm-update-summary-and-mode-line)
+  (cond ((or (not (numberp arg)) (> arg 0))
+	 (setq arg 1))
+	((< arg 0)
+	 (setq arg -1))
+	(t (setq arg 0)))
+  (if vm-move-after-killing
+      (let ((vm-circular-folders (and vm-circular-folders
+				      (eq vm-move-after-killing t))))
+	(vm-next-message arg t executing-kbd-macro))))
+
+;;;###autoload
 (defun vm-delete-duplicate-messages ()
 "Delete duplicate messages in the current folder.
 This command works by comparing the message ID's.  Messages that

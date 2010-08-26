@@ -58,6 +58,9 @@ VM 8.1.93a (2010-07-17)
      controls whether threads are indented by their original nesting
      level or according to the nesting level within the folder.
 
+   * New command: `vm-kill-thread-subtree' (K) allows a thread subtree
+     to be deleted.
+
    * The calculation of threads improved using Jamie Zawinski's
      ideas.  Threads are correctly identified even if some of the
      messages are missing.
