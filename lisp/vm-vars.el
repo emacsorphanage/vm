@@ -3267,6 +3267,12 @@ indented twice the value of `vm-summary-thread-indent-level'."
   :group 'vm
   :type 'integer)
 
+(defcustom vm-summary-maximum-thread-indentation 20
+  "*The maximum number of thread nesting levels that should be
+displayed by indentation in the folder summary."
+  :group 'vm
+  :type 'integer)
+
 (defcustom vm-thread-using-subject t
   "*Non-nil value causes VM to use the Subject header to thread messages.
 Messages with the same subject will be grouped together.

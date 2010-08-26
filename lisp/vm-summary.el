@@ -774,8 +774,11 @@ tokenized summary TOKENS."
 	      ((eq token 'thread-indent)
 	       (if (and vm-summary-show-threads
 			(natnump vm-summary-thread-indent-level))
-		   (insert-char ?\ (* vm-summary-thread-indent-level
-				      (vm-th-thread-indentation message))))))
+		   (insert-char 
+		    ?\ 
+		    (* vm-summary-thread-indent-level
+		       (min vm-summary-maximum-thread-indentation
+			    (vm-th-thread-indentation message)))))))
 	(setq tokens (cdr tokens))))))
 
 (defun vm-reencode-mime-encoded-words-in-tokenized-summary (summary)

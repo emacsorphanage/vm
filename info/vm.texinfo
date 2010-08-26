@@ -3377,6 +3377,7 @@ that those relationships are evident.
 
 @findex vm-toggle-threads-display
 @vindex vm-summary-thread-indent-level
+@vindex vm-summary-maximum-thread-indentation
 To enable and disable threading, type @kbd{C-t}
 (@code{vm-toggle-threads-display}.  In the summary buffer related
 messages are grouped together and the subject part of the summary
@@ -3384,7 +3385,10 @@ listings of messages are indented to show hierarchical relationships.
 Parent messages are displayed before their children and children are
 indented a default two spaces to the right for each level of descendence
 from their ancestors.  The amount of indentation per level is controlled by the
-variable @code{vm-summary-thread-indent-level}.
+variable @code{vm-summary-thread-indent-level}.  The default is two
+spaces.  The variable @code{vm-summary-maximum-thread-indentation}
+says how many levels should be displayed via indentation.  The default
+is 20.
 
 @vindex vm-thread-using-subject
 Message relationships are discovered by examining References,

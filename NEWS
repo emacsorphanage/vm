@@ -54,9 +54,11 @@ VM 8.1.93a (2010-07-17)
      See the info file for details.  Thanks to Arik Mitschang for this
      contribution. 
 
-   * New variable: vm-summary-thread-indentation-by-references
+   * New variables: `vm-summary-thread-indentation-by-references'
      controls whether threads are indented by their original nesting
      level or according to the nesting level within the folder.
+     `vm-summary-maximum-thread-indentation' specifies the maximum
+     depth of indentation to be displayed.
 
    * New command: `vm-kill-thread-subtree' (K) allows a thread subtree
      to be deleted.
