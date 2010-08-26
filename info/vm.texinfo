@@ -1532,6 +1532,7 @@ another @key{SPC}, at which point the text preceding the delimiter will
 become hidden.  The Emacs variable @code{page-delimiter} determines what
 VM will consider to be a page delimiter.
 
+@findex vm-unread-message
 You can ``unread'' a message (so to speak) by typing @kbd{U}
 (@code{vm-unread-message}).  The current message will be flagged
 unread.
@@ -3032,6 +3033,11 @@ messages to be undeleted.
 @item k (@code{vm-kill-subject})
 Flags all messages with the same subject as the current message (ignoring
 ``Re:'') for deletion.
+@findex vm-kill-thread-subtree
+@kindex K
+@item K (@code{vm-kill-thread-subtree})
+Flags all messages in the thread subtree of the current message for
+deletion. 
 @findex vm-delete-duplicate-messages
 @item @code{vm-delete-duplicate-messages}
 Flags duplicate messages for deletion.  The duplicate messages are
