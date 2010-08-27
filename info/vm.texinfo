@@ -1533,9 +1533,13 @@ become hidden.  The Emacs variable @code{page-delimiter} determines what
 VM will consider to be a page delimiter.
 
 @findex vm-unread-message
+@findex vm-flag-message-read
+@findex vm-flag-message-unread
 You can ``unread'' a message (so to speak) by typing @kbd{U}
-(@code{vm-unread-message}).  The current message will be flagged
-unread.
+(@code{vm-unread-message}, also called @code{vm-flag-message-unread}).
+The current message will be flagged unread.  Conversely, you can flag
+an unread message as read by typing @kbd{.}
+(@code{vm-flag-message-read}).
 
 @cindex longlines.el
 @cindex filling paragraphs

@@ -70,6 +70,9 @@ VM 8.1.93a (2010-07-17)
    * Added EasyPG storage of passwords for mail server accounts.  See
      info index under "passwords".
 
+   * Virtual folder facility extended to work with POP and IMAP
+     folders.  But, there are still some outstanding problems.  
+
    * Resolved performance problems in summary generation.  It works
      quite fast now.
 
@@ -79,6 +82,9 @@ VM 8.1.93a (2010-07-17)
    * New command: `vm-save-attachments' allows you to save all the
      attachments of a message under your own file names instead of the
      original file names given in the message.
+
+   * New command: `vm-flag-message-read' (.) allows you to mark an
+     unread or new message as read.
 
   BUG FIXES
 
@@ -188,8 +194,6 @@ VM 8.1.90a  (2010-05-11)
 
 VM 8.1.2
   
-    * Virtual folder facility extended to work with POP and IMAP folders.
-
     * VM made safe for use with Gnu Emacs 23, by removing a few calls
       to the `next-line' function (which was redefined in this Emacs).
 

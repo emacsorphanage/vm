@@ -4948,6 +4948,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\C-d" 'vm-delete-message-backward)
     (define-key map "u" 'vm-undelete-message)
     (define-key map "U" 'vm-unread-message)
+    (define-key map "." 'vm-flag-message-read)
     (define-key map "e" 'vm-edit-message)
     (define-key map "a" 'vm-set-message-attributes)
     (define-key map "j" 'vm-discard-cached-data)

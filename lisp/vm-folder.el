@@ -2951,6 +2951,33 @@ all marked messages are affected, other messages are ignored."
       (setq mlist (cdr mlist))))
   (vm-display nil nil '(vm-unread-message) '(vm-unread-message))
   (vm-update-summary-and-mode-line))
+(defalias 'vm-flag-message-unread 'vm-unread-message)
+
+;;;###autoload
+(defun vm-flag-message-read (&optional count)
+  "Flag the current message as read, i.e., set the `unread' and `new'
+attributes to nil.  If the message is already flagged read, then
+it is left unchanged.
+
+Numeric prefix argument N means to unread the current message plus the
+next N-1 messages.  A negative N means unread the current message and
+the previous N-1 messages.
+
+When invoked on marked messages (via vm-next-command-uses-marks),
+all marked messages are affected, other messages are ignored."
+  (interactive "p")
+  (or count (setq count 1))
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer-and-validate 1)
+  (let ((mlist (vm-select-marked-or-prefixed-messages count)))
+    (while mlist
+      (when (or (vm-unread-flag (car mlist))
+		(vm-new-flag (car mlist)))
+	  (vm-set-unread-flag (car mlist) nil)
+	  (vm-set-new-flag (car mlist) nil))
+      (setq mlist (cdr mlist))))
+  (vm-display nil nil '(vm-flag-message-read) '(vm-flag-message-read))
+  (vm-update-summary-and-mode-line))
 
 ;;;###autoload
 (defun vm-quit-just-bury ()
