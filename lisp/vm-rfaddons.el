@@ -249,7 +249,7 @@ or do the binding and advising on your own."
 ;; This is not needed any more becaue it is in the core  
 ;;   (vm-rfaddons-check-option
 ;;    'save-all-attachments option-list
-;;    (define-key vm-mode-map "\C-c\C-s" 'vm-mime-save-all-attachments))
+;;    (define-key vm-mode-map "\C-c\C-s" 'vm-save-all-attachments))
 
   ;; other experimental options ---------------------------------------------
   ;; Now take care of automatic saving of attachments
@@ -1056,7 +1056,7 @@ save attachments.
       (vm-check-for-killed-folder)
       (vm-select-folder-buffer-and-validate)
       
-      (vm-mime-save-all-attachments
+      (vm-save-all-attachments
        count
        'vm-mime-auto-save-all-attachments-path)
 
