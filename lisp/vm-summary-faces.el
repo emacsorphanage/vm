@@ -155,7 +155,7 @@ fonts and colors, for easy recogniton of the message status."
           (vm-summary-faces-destroy)
           (if vm-summary-overlay
               (vm-set-extent-property vm-summary-overlay 'face
-                                      vm-summary-highlight))))))
+                                      vm-summary-highlight-face))))))
 
 ;; No need for advice because the code has been integrated into 
 ;; VM.  USR, 2010-08-01 
@@ -174,7 +174,7 @@ fonts and colors, for easy recogniton of the message status."
       (vm-set-extent-property vm-summary-overlay 'face
 			      (if vm-summary-enable-faces
 				  'vm-summary-selected
-				vm-summary-highlight))))
+				vm-summary-highlight-face))))
 
 (add-hook 'vm-summary-pointer-update-hook 'vm-summary-faces-fix-pointer)
 
