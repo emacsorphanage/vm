@@ -2291,7 +2291,7 @@ message bodies are flushed before folders are saved to disk.
 @findex vm-load-message
 @findex vm-unload-message
 You can manually load message bodies into the Folder using the command
-@code{o} (@code{vm-load-message}.  The command @code{O}
+@kbd{o} (@code{vm-load-message}.  The command @kbd{O}
 (@code{vm-unload-message}) unloads a previously loaded message body.
 Both the commands can take numerical prefix arguments or operate on
 marked messages.  Note that ``loading'' message body is different from
@@ -2555,7 +2555,7 @@ The variable @code{vm-mime-encode-headers-regexp} specifies which
 headers should be encoded in this way.  By default, @samp{Subject},
 @samp{Organization}, @samp{From}, @samp{To}, @samp{CC}, @samp{Bcc} and
 @samp{Resent-} header lines encoded.  The words are encoded using
-quoted-printable encoding (@code{Q}).  You can ask VM to use the base64
+quoted-printable encoding (@kbd{Q}).  You can ask VM to use the base64
 encoding by setting the variable @code{vm-mime-encode-headers-type}.
 
 @vindex vm-mime-encode-words.regexp
@@ -3201,7 +3201,7 @@ key sequence @kbd{M N} (@code{vm-next-command-uses-marks}).  The next VM
 command will apply to all marked messages, provided the command can be
 applied to such messages in a meaningful and useful way.  Unfortunately,
 as of this writing, this mechanism works only if the next command
-invoked is a keyboard command.  Commands invoked by @code{M-x} are
+invoked is a keyboard command.  Commands invoked by @kbd{M-x} are
 unable to access the marked messages.  So, to invoke a complex command,
 you might temporarily bind it to an unused key, e.g.,
 
@@ -3549,12 +3549,12 @@ The seventh is `e' or ` ', for messages that have been edited.
 @item P
 indicator for a message with attachments.
 The variable @code{vm-summary-attachment-indicator} is the inserted
-string, by default a @code{$}. 
+string, by default a @kbd{$}. 
 @vindex vm-summary-postponed-indicator
 @item p
 indicator for a postponed message. 
 The variable @code{vm-summary-postponed-indicator} is the inserted
-string, by default a @code{P}. 
+string, by default a @kbd{P}. 
 @item c
 number of characters in message (ignoring headers)
 @item S
@@ -3676,7 +3676,7 @@ Thread folding is enabled by setting the variable
 @code{vm-summary-enable-thread-folding} to a non-nil value.  The summary
 window then has a folding indicator in the first column, with @code{-}
 for threads that are expanded and @code{+} for threads that are
-collapsed.  The command @code{T} or @code{M-t}
+collapsed.  The command @kbd{T}
 (@code{vm-toggle-thread}) allows you to expand a collapsed thread or
 collapse an expanded thread.  The commands @code{vm-expand-thread} and
 @code{vm-collapse-thread} implement the more specific versions of the
@@ -3685,7 +3685,7 @@ function.
 @vindex vm-summary-thread-folding-on-motion
 The variable @code{vm-summary-thread-folding-on-motion} allows a more
 automatic expansion/collapsing of threads.  If the variable is set to
-a non-nil value, then the usual motion commands @code{N} and @code{P}
+a non-nil value, then the usual motion commands @kbd{N} and @kbd{P}
 (@code{vm-next-message-no-skip} and
 @code{vm-previous-message-no-skip}) cause the threads to be expanded
 or collapsed as needed when you move into or out of threads.
@@ -3706,8 +3706,8 @@ If the variable @code{vm-summary-enable-thread-folding} is non-nil,
 the Summary window starts out with all the threads folded.  You can
 selectively expand threads using the @code{vm-toggle-thread} function.
 Alternatively, you can expand all the threads in the folder using the
-command @code{E} (@code{vm-expand-all-threads}).  The command
-@code{C} (@code{vm-collapse-all-threads}) does the reverse.  It
+command @kbd{E} (@code{vm-expand-all-threads}).  The command
+@kbd{C} (@code{vm-collapse-all-threads}) does the reverse.  It
 collapses all the expanded threads.
 
 
@@ -5370,7 +5370,7 @@ bodies were fetched for viewing or other operations.
 display: @code{undecoded} if the message is shown in undecoded plain
 text form, @code{decoded} if the message is shown decoded, and
 @code{buttons} if the message is shown as a series of buttons for all
-its MIME components.  The @code{D} command cycles through these
+its MIME components.  The @kbd{D} command cycles through these
 states. 
 @item
 @inindex vm-system-state
