@@ -69,7 +69,7 @@ deleted messages will be hidden or unhidden).
 With a prefix argument, the property name identifying the face is
 queried interactively.  The property is a keyword such as edited,
 collapsed or outgoing which has an associated face such as
-vm-summary-edited-face.  See `vm-summary-faces-alist' for a list
+vm-summary-edited.  See `vm-summary-faces-alist' for a list
 of available face names."
   (interactive "P")
   (if (and (listp prop) (numberp (car prop)))
@@ -83,7 +83,7 @@ of available face names."
   (vm-summarize)
   (set-buffer vm-summary-buffer)
   (let ((extents (vm-summary-faces-list-extents))
-        (face (intern (concat "vm-summary-" prop "-face")))
+        (face (intern (concat "vm-summary-" prop)))
         x)
     (while extents
       (setq x (car extents)) 
@@ -103,10 +103,10 @@ of available face names."
       (when (apply 'vm-vs-or msg (list (caar faces)))
 	(cond ((vm-summary-collapsed-root-p msg)
 	       (vm-set-extent-property 
-		x 'face (list (cadar faces) 'vm-summary-collapsed-face)))
+		x 'face (list (cadar faces) 'vm-summary-collapsed)))
 	      ((vm-summary-expanded-root-p msg)
 	       (vm-set-extent-property
-		x 'face (list (cadar faces) 'vm-summary-expanded-face)))
+		x 'face (list (cadar faces) 'vm-summary-expanded)))
 	      (t
 	       (vm-set-extent-property
 		x 'face (list (cadar faces)))))
@@ -151,11 +151,11 @@ fonts and colors, for easy recogniton of the message status."
 	      (mapc 'vm-summary-faces-add vm-message-list)
 	      (if vm-summary-overlay
 		  (vm-set-extent-property vm-summary-overlay 'face
-					  'vm-summary-selected-face)))
+					  'vm-summary-selected)))
           (vm-summary-faces-destroy)
           (if vm-summary-overlay
               (vm-set-extent-property vm-summary-overlay 'face
-                                      vm-summary-highlight-face))))))
+                                      vm-summary-highlight))))))
 
 ;; No need for advice because the code has been integrated into 
 ;; VM.  USR, 2010-08-01 
@@ -173,8 +173,8 @@ fonts and colors, for easy recogniton of the message status."
   (if vm-summary-overlay
       (vm-set-extent-property vm-summary-overlay 'face
 			      (if vm-summary-enable-faces
-				  'vm-summary-selected-face
-				vm-summary-highlight-face))))
+				  'vm-summary-selected
+				vm-summary-highlight))))
 
 (add-hook 'vm-summary-pointer-update-hook 'vm-summary-faces-fix-pointer)
 
