@@ -3726,12 +3726,15 @@ collapses all the expanded threads.
 @node Thread Operations, Summary Faces, Thread Folding, Summaries
 @section Thread Operations
 
+@vindex vm-enable-thread-operations
 When you have thread-folding enabled, you can execute VM operations
 such as saving and deleting messages on entire threads.  To obtain
-this functionality, you must set the variable
-@code{vm-enable-thread-operations} to a non-@code{nil} value, and you
-must invoke the VM operations in the Summary window with threads
-collapsed.
+this functionality, you may set the variable
+@code{vm-enable-thread-operations} to a non-@code{nil} value in your
+vm-init-file.  You can also invoke the command
+@code{vm-toggle-thread-operations} in a running VM session.  Then you
+may invoke VM operations in the Summary window with threads collapsed,
+to operate on whole threads.
 
 As an example, doing an @kbd{s} (@code{vm-save-message}) operation on
 an ordinary message saves just the single message.  However, if thread

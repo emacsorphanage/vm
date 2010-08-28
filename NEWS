@@ -54,11 +54,10 @@ VM 8.1.93a (2010-08-28)
      See the info file for details.  Thanks to Arik Mitschang for this
      contribution. 
 
-   * New experimental feature: "Thread operations" refers to a method
-     of invoking operations message threads (such as deleting or
-     saving), using a Summary window with collapsed threads.  See the
-     info file for details.  Thanks to Arik Mitschang for this
-     contribution. 
+   * New experimental feature: `vm-enable-thread-opeartions' enables
+     "thread operations", a method of invoking operations (such as
+     deleting or saving) on message threads.  See the info file for
+     details.  Thanks to Arik Mitschang for this contribution.
 
    * New variables: `vm-summary-thread-indentation-by-references'
      controls whether threads are indented by their original nesting
@@ -67,7 +66,8 @@ VM 8.1.93a (2010-08-28)
      depth of indentation to be displayed.
 
    * New command: `vm-kill-thread-subtree' (K) allows a thread subtree
-     to be deleted.
+     to be deleted.  This amounts to the same thing as
+     `vm-delete-message' invoked as a thread operation.
 
    * The calculation of threads improved using Jamie Zawinski's
      ideas.  Threads are correctly identified even if some of the
@@ -77,7 +77,7 @@ VM 8.1.93a (2010-08-28)
      info index under "passwords".
 
    * Virtual folder facility extended to work with POP and IMAP
-     folders.  But, there are still some outstanding problems.  
+     folders.  But, there are still some outstanding problems with it.
 
    * Resolved performance problems in summary generation.  It works
      quite fast now.
