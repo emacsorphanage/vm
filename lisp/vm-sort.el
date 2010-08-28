@@ -38,7 +38,7 @@ change the presentation order and leave the physical order of
 the folder undisturbed."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (if vm-move-messages-physically
       (vm-error-if-folder-read-only))
   (vm-display nil nil '(vm-move-message-forward
@@ -294,7 +294,7 @@ folder in the order in which the messages arrived."
 			   "Sort messages by: ")
 			 vm-supported-sort-keys t)
 	 current-prefix-arg)))
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   ;; only squawk if interactive.  The thread display uses this
   ;; function and doesn't expect errors.
   (if (interactive-p)

@@ -40,7 +40,7 @@ only marked messages are deleted, other messages are ignored."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-marked-or-prefixed-messages count))
@@ -94,7 +94,7 @@ only marked messages are undeleted, other messages are ignored."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-marked-or-prefixed-messages count))
@@ -132,7 +132,7 @@ negative arugment means move backward, a zero argument means
 don't move at all."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((subject (vm-so-sortable-subject (car vm-message-pointer)))
 	(mp vm-message-list)
@@ -172,7 +172,7 @@ negative arugment means move backward, a zero argument means
 don't move at all."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (vm-build-threads-if-unbuilt)
   (let ((list (vm-th-thread-subtree
@@ -212,7 +212,7 @@ When invoked on marked messages (via `vm-next-command-uses-marks'),
 only duplicate messages among the marked messages are deleted,
 unmarked messages are not hashed or considerd for deletion."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(table (make-vector 103 0))
@@ -257,7 +257,7 @@ When invoked on marked messages (via `vm-next-command-uses-marks'),
 only duplicate messages among the marked messages are deleted,
 unmarked messages are not hashed or considerd for deletion."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist vm-message-list)
@@ -307,7 +307,7 @@ When invoked on marked messages (via `vm-next-command-uses-marks'),
 only messages both marked and deleted are expunged, other messages are
 ignored."
   (interactive)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   ;; do this so we have a clean slate.  code below depends on the
   ;; fact that the numbering redo start point begins as nil in

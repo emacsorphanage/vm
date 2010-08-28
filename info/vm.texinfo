@@ -5176,6 +5176,7 @@ developers/programmers.
 * Folder Internals::      Structure of the folders
 * Message Internals::     Structure of the message data structure
 * Summary Internals::     Details of summary generation
+* User Interaction::      Handling of the user interaction
 @end menu
 
 @node Folder Internals, Message Internals , , Internals
@@ -5885,7 +5886,7 @@ the Folder buffer, but have separate soft data vectors.  The other
 sub-vectors are shared with the underlying real folders.
 
 
-@node Summary Internals,, Message Internals, Internals
+@node Summary Internals, User Interaction, Message Internals, Internals
 @section Summary Internals
 
 @inindex vm-summary-line-format
@@ -6085,7 +6086,22 @@ their ancestors and the @code{thread-list} and
 @code{thread-indentation} fields of the descendants.
 
 
+@node User Interaction,, Summary Internals, Internals
+@section User Interaction
 
+@inindex vm-mail-buffer
+@inindex vm-select-folder-buffer-and-validate
+@inindex vm-user-interaction-buffer
+VM has been designed so that the VM commands can be executed in all
+VM-related buffers: the Folder buffer, the Presentation buffer and the
+Summary buffer.  This is achieved by storing in a buffer-local
+variable @code{vm-mail-buffer}, the identity of the Folder buffer
+corresponding to any one of these buffers.  Whenever a VM command is
+invoked by the user, VM calls a function called
+@code{vm-select-folder-buffer-and-validate}, which sets the
+current-buffer to be the Folder buffer and performs various checks.
+It also stores the identity of the buffer in which the command was
+invoked in a global variable @code{vm-user-interaction-buffer}.
 
 
 @node Concept Index, Key Index, Internals, Top

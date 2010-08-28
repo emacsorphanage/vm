@@ -589,7 +589,7 @@ all marked messages will be burst."
 	type ))))
   (or digest-type (setq digest-type vm-digest-burst-type))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-marked-or-prefixed-messages 1)))
     ;; (vm-load-message)
@@ -694,7 +694,7 @@ all marked messages will be burst."
 	type ))))
   (or digest-type (setq digest-type vm-digest-burst-type))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-marked-or-prefixed-messages 1))
 	(work-buffer nil))

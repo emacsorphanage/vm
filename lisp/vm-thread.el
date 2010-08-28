@@ -226,7 +226,7 @@ When the threads display is on, the folder will be sorted by
 thread activity and thread indentation (via the %I summary format
 specifier) will be visible."
   (interactive)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   ;; get numbering of new messages done now
   ;; so that the sort code only has to worry about the
   ;; changes it needs to make.

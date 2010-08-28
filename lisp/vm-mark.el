@@ -32,7 +32,7 @@
 (defun vm-clear-all-marks ()
   "Removes all message marks in the current folder."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (message "Clearing all marks...")
   (let ((mp vm-message-list))
     (while mp
@@ -52,7 +52,7 @@
 Messages that are unmarked will become marked and messages that are
 marked will become unmarked."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (message "Toggling all marks...")
   (let ((mp vm-message-list))
     (while mp
@@ -68,7 +68,7 @@ marked will become unmarked."
 (defun vm-mark-all-messages ()
   "Mark all messages in the current folder."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (message "Marking all messages...")
   (let ((mp vm-message-list))
     (while mp
@@ -89,7 +89,7 @@ previous N-1 messages."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((direction (if (< count 0) 'backward 'forward))
 	(count (vm-abs count))
 	(oldmp vm-message-pointer)
@@ -115,7 +115,7 @@ previous N-1 messages."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((mlist (vm-select-marked-or-prefixed-messages count)))
     (while mlist
       (if (vm-mark-of (car mlist))
@@ -131,7 +131,7 @@ previous N-1 messages."
 (defun vm-mark-summary-region ()
   "Mark all messages with summary lines contained in the region."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (if (null vm-summary-buffer)
       (error "No summary."))
   (set-buffer vm-summary-buffer)
@@ -146,7 +146,7 @@ previous N-1 messages."
 (defun vm-unmark-summary-region ()
   "Remove marks from messages with summary lines contained in the region."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (if (null vm-summary-buffer)
       (error "No summary."))
   (set-buffer vm-summary-buffer)
@@ -220,7 +220,7 @@ variable vm-virtual-folder-alist for more information."
 	 (this-command this-command))
      (vm-select-folder-buffer)
      (vm-read-virtual-selector "Mark messages: ")))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-messages-with-selector t selector arg))
 
 ;;;###autoload
@@ -234,7 +234,7 @@ variable vm-virtual-folder-alist for more information."
 	 (this-command this-command))
      (vm-select-folder-buffer)
      (vm-read-virtual-selector "Unmark messages: ")))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-messages-with-selector nil selector arg))
 
 ;;;###autoload
@@ -242,7 +242,7 @@ variable vm-virtual-folder-alist for more information."
   "Mark all messages in the thread tree rooted at the current message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-thread-subtree t))
 
 ;;;###autoload
@@ -250,7 +250,7 @@ variable vm-virtual-folder-alist for more information."
   "Unmark all messages in the thread tree rooted at the current message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-thread-subtree nil))
 
 (defun vm-mark-or-unmark-thread-subtree (mark)
@@ -292,7 +292,7 @@ variable vm-virtual-folder-alist for more information."
   "Mark all messages with the same subject as the current message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-messages-same-subject t))
 
 ;;;###autoload
@@ -300,7 +300,7 @@ variable vm-virtual-folder-alist for more information."
   "Unmark all messages with the same subject as the current message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-messages-same-subject nil))
 
 (defun vm-mark-or-unmark-messages-same-subject (mark)
@@ -332,7 +332,7 @@ variable vm-virtual-folder-alist for more information."
   "Mark all messages with the same author as the current message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-messages-same-author t))
 
 ;;;###autoload
@@ -340,7 +340,7 @@ variable vm-virtual-folder-alist for more information."
   "Unmark all messages with the same author as the current message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-messages-same-author nil))
 
 (defun vm-mark-or-unmark-messages-same-author (mark)
@@ -418,7 +418,7 @@ variable vm-virtual-folder-alist for more information."
       (completing-read
        "Mark messages matching this virtual folder's selectors: "
        vm-virtual-folder-alist nil t))))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-messages-with-virtual-folder t name))
 
 ;;;###autoload
@@ -431,7 +431,7 @@ variable vm-virtual-folder-alist for more information."
       (completing-read
        "Unmark message matching this virtual folder's selectors: "
        vm-virtual-folder-alist nil t))))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-messages-with-virtual-folder nil name))
 
 ;;;###autoload

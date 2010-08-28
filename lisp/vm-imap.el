@@ -560,7 +560,7 @@ into the current folder.  VM sets the \\Deleted flag on all such messages
 on all the relevant IMAP servers and then immediately expunges."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-error-if-virtual-folder)
   (let ((process nil)
 	(source nil)
@@ -3239,7 +3239,7 @@ only marked messages are loaded, other messages are ignored."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (when (null count) (setq count 1))
   (let ((mlist (vm-select-marked-or-prefixed-messages count))
@@ -3283,7 +3283,7 @@ retrieved.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
 only marked messages are retrieved, other messages are ignored."
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (when (null count) (setq count 1))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-marked-or-prefixed-messages count))
@@ -3400,7 +3400,7 @@ the folder is saved."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (when (null count) 
     (setq count 1))
@@ -3508,7 +3508,7 @@ Prefix argument ALL-FLAGS says that all the messages' flags should be
 written to the server irrespective of whether they were changed in the
 VM session.  This is useful for saving offline work."
   (interactive "P")
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-display nil nil '(vm-imap-synchronize) '(vm-imap-synchronize))
   (if (not (eq vm-folder-access-method 'imap))
       (message "This is not an IMAP folder")
@@ -4229,7 +4229,7 @@ folder."
   "Begin to compose a bug report for IMAP support functionality."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (setq vm-kept-imap-buffers nil)
   (setq vm-imap-keep-trace-buffer t)
   (setq vm-imap-keep-failed-trace-buffers 20))
@@ -4241,7 +4241,7 @@ occurrence and this command after the problem occurrence, in
 order to capture the trace of IMAP sessions during the occurrence."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (if (or vm-imap-keep-trace-buffer
 	  (y-or-n-p "Did you run vm-imap-start-bug-report earlier? "))
       (message "Thank you. Preparing the bug report... ")
@@ -4279,7 +4279,7 @@ order to capture the trace of IMAP sessions during the occurrence."
   be needed if the folder has become corrupted somehow."
   (interactive)
   (save-current-buffer
-   (vm-select-folder-buffer)
+   (vm-select-folder-buffer-and-validate 0 (interactive-p))
    (let ((mp vm-message-list))
      (while mp
        (vm-set-body-to-be-retrieved-of (car mp) nil)
@@ -4294,7 +4294,7 @@ order to capture the trace of IMAP sessions during the occurrence."
 downloaded bodies will be displayed."
   (interactive)
   (save-current-buffer
-   (vm-select-folder-buffer)
+   (vm-select-folder-buffer-and-validate 0 (interactive-p))
    (let ((mp vm-message-list))
      (while mp
        (vm-set-byte-count-of (car mp) nil)

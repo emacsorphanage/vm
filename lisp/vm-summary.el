@@ -150,7 +150,7 @@ The format is as described by the variable `vm-summary-format'.  Generally
 one line per message is most pleasing to the eye but this is not
 mandatory."
   (interactive "p\np")
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (if (null vm-summary-buffer)
       (let ((b (current-buffer))
 	    (read-only vm-folder-read-only)
@@ -308,7 +308,7 @@ is the root of the thread you want expanded."
   (unless vm-summary-enable-thread-folding 
     (error "Thread folding not enabled"))
   (when (interactive-p)
-    (vm-select-folder-buffer-and-validate)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (unless vm-summary-show-threads
       (error "Summary is not sorted by threads"))
     (vm-follow-summary-cursor)
@@ -341,7 +341,7 @@ ROOT, which is the root of the thread you want collapsed."
   (unless vm-summary-enable-thread-folding 
     (error "Thread folding not enabled"))
   (when (interactive-p)
-    (vm-select-folder-buffer-and-validate)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (unless vm-summary-show-threads
       (error "Summary is not sorted by threads"))
     (vm-follow-summary-cursor)
@@ -373,7 +373,7 @@ ROOT, which is the root of the thread you want collapsed."
   "Expand all threads in the folder, which might have been collapsed
  (folded) earlier."
   (interactive)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (unless vm-summary-show-threads
@@ -394,7 +394,7 @@ ROOT, which is the root of the thread you want collapsed."
   "Collapse (fold) all threads in the folder so that only the roots of
 the threads are shown in the Summary window."
   (interactive)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (unless vm-summary-show-threads
@@ -423,7 +423,7 @@ see `vm-expand-thread' and `vm-collapse-thread' for a description
 of action."
   (interactive)
   (when (and vm-summary-enable-thread-folding vm-summary-show-threads)
-    (vm-select-folder-buffer-and-validate)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (if (interactive-p)
 	(vm-follow-summary-cursor))
     (set-buffer vm-summary-buffer)
@@ -1668,7 +1668,7 @@ The summary line is a mime-decoded string with text properties.
   "Rebuild the summary.
 Call this function if you made changes to `vm-summary-format'."
   (interactive "P")
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (if kill-local-summary
       (kill-local-variable 'vm-summary-format))
   (message "Fixing your summary... %s" vm-summary-format)

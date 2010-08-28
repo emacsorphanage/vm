@@ -348,7 +348,7 @@ AddToFunc SelectWindow
   (interactive (list current-prefix-arg))
 
   (save-excursion
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-and-validate 0 (interactive-p))
 
     (when (not vm-biff-folder-list)
       (setq vm-biff-folder-list

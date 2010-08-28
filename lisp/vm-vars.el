@@ -5205,18 +5205,27 @@ Its parent keymap is mail-mode-map.")
 (defvar vm-folders-summary-spool-hash nil)
 (defvar vm-folders-summary-folder-hash nil)
 (defvar vm-folders-summary-buffer nil)
-(defvar vm-mail-buffer nil)
+(defvar vm-mail-buffer nil
+  "The folder buffer of the current buffer.")
 (make-variable-buffer-local 'vm-mail-buffer)
-(defvar vm-fetch-buffer nil)
+(defvar vm-fetch-buffer nil
+  "The fetch buffer, where message bodies are fetched, for the current
+folder.  (Not in use.)")
 (make-variable-buffer-local 'vm-fetch-buffer)
-(defvar vm-presentation-buffer nil)
+(defvar vm-presentation-buffer nil
+  "The message presentation buffer for the current folder.")
 (make-variable-buffer-local 'vm-presentation-buffer)
-(defvar vm-presentation-buffer-handle nil)
+(defvar vm-presentation-buffer-handle nil
+  "The message presentation buffer for the current folder.")
 (make-variable-buffer-local 'vm-presentation-buffer-handle)
-(defvar vm-mime-decoded nil)
+(defvar vm-mime-decoded nil
+  "The MIME decoding state of the current folder.")
 (make-variable-buffer-local 'vm-mime-decoded)
-(defvar vm-summary-buffer nil)
+(defvar vm-summary-buffer nil
+  "The summary buffer for the current folder.")
 (make-variable-buffer-local 'vm-summary-buffer)
+(defvar vm-user-interaction-buffer nil
+  "The buffer in which the current VM command was invoked.")
 (defvar vm-summary-pointer nil)
 (make-variable-buffer-local 'vm-summary-pointer)
 (defvar vm-system-state nil)

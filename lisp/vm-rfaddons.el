@@ -309,7 +309,7 @@ or do the binding and advising on your own."
 This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (if (null vm-presentation-buffer)
       (if to-all
           (vm-followup-include-text count)
@@ -427,7 +427,7 @@ This does not work when replying to multiple messages."
                    d))))
 
   (switch-to-buffer folder-name)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-summarize)
   (let ((this-command 'vm-scroll-backward))
     (vm-display nil nil '(vm-scroll-forward vm-scroll-backward)
@@ -717,7 +717,7 @@ and has not been replied so far.
 See the variable `vm-handle-return-receipt-mode' for customization."
   (interactive)
   (save-excursion
-    (vm-select-folder-buffer-and-validate)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (let* ((msg (car vm-message-pointer))
            (sender (vm-get-header-contents msg  "Return-Receipt-To:"))
            (mail-signature nil)
@@ -1054,7 +1054,7 @@ save attachments.
       nil
     (let ((vm-mime-auto-save-all-attachments-avoid-recursion t))
       (vm-check-for-killed-folder)
-      (vm-select-folder-buffer-and-validate)
+      (vm-select-folder-buffer-and-validate 1 (interactive-p))
       
       (vm-save-all-attachments
        count
@@ -1073,7 +1073,7 @@ when deleting a message.
 See the advice in `vm-rfaddons-infect-vm'."
   (interactive "")
   (vm-check-for-killed-folder)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (setq msg (or msg (car vm-message-pointer)))
   (if msg 
       (let ((o (vm-mm-layout msg))
@@ -1487,7 +1487,7 @@ and add an \"%0UA\" to your `vm-summary-format'."
   "Delete mails and quit.  Expunge only if it's not the primary inbox."
   (interactive)
   (save-excursion
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-and-validate 0 (interactive-p))
     (if (and buffer-file-name
              (string-match (regexp-quote vm-primary-inbox) buffer-file-name))
         (message "No auto-expunge for folder `%s'" buffer-file-name)
@@ -1641,7 +1641,7 @@ It saves the decoded message and not the raw message like `vm-save-message'"
      (list filename)))
     (save-excursion
       (vm-follow-summary-cursor)
-      (vm-select-folder-buffer-and-validate 1)
+      (vm-select-folder-buffer-and-validate 1 (interactive-p))
       
       (if (and (boundp 'vm-mail-buffer) (symbol-value 'vm-mail-buffer))
           (set-buffer (symbol-value 'vm-mail-buffer))
@@ -1858,7 +1858,7 @@ not end the comment.  Blank lines do not get comments."
 (defun vm-isearch-presentation ()
   "Switched to the presentation or preview buffer and starts isearch."
   (interactive)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (let ((target (or vm-presentation-buffer (current-buffer))))
     (if (get-buffer-window-list target)
         (select-window (car (get-buffer-window-list target)))

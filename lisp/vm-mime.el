@@ -2208,7 +2208,7 @@ in the buffer.  The function is expected to make the message
 `MIME presentable' to the user in whatever manner it sees fit."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (if (and (not vm-display-using-mime)
 	   (null vm-mime-display-function))
       (error "MIME display disabled, set vm-display-using-mime non-nil to enable."))
@@ -4332,7 +4332,7 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
   (unless mlist
     (or count (setq count 1))
     (vm-check-for-killed-folder)
-    (vm-select-folder-buffer-and-validate 1))
+    (vm-select-folder-buffer-and-validate 1 nil))
 
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (vm-retrieve-marked-or-prefixed-messages count)
@@ -5911,7 +5911,7 @@ The MIME object is replaced by a text/plain object that briefly
 describes what was deleted."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (if (and (vm-virtual-message-p (car vm-message-pointer))
 	   (null (vm-virtual-messages-of (car vm-message-pointer))))
@@ -7353,7 +7353,7 @@ end of the path."
   (interactive "P")
   (vm-check-for-killed-summary)
   (if (interactive-p) (vm-follow-summary-cursor))
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (let ((m (car vm-message-pointer)))
     (switch-to-buffer "*VM mime part layout*")
     (erase-buffer)
@@ -7423,7 +7423,7 @@ This is a destructive operation and cannot be undone!"
   (interactive "p")
   (when (interactive-p)
     (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (vm-load-message count)
     ;; (vm-retrieve-marked-or-prefixed-messages count)

@@ -73,11 +73,16 @@ isn't a folder buffer.  USR, 2010-03-08"
 	 ;;--------------------------
 	 )))
 
-(defsubst vm-select-folder-buffer-and-validate (&optional minimum)
-  "Select the folder buffer corresponding ot the current buffer (which
+(defsubst vm-select-folder-buffer-and-validate (&optional minimum interactive-p)
+  "Select the folder buffer corresponding to the current buffer (which
 could be Summary or Presentation) and make sure that it has valid
-references to Summary and Presentation buffers.  If MINIMUM is 1, the
-folder should be nonempty as well."
+references to Summary and Presentation buffers.  
+
+If optional argument MINIMUM is 1, the folder should be nonempty
+as well.  If INTERACTIVE-p is t, then it also records the
+current-buffer in `vm-user-interaction-buffer'."
+  (when interactive-p
+    (setq vm-user-interaction-buffer (current-buffer)))
   (cond (vm-mail-buffer
 	 (or (buffer-name vm-mail-buffer)
 	     (error "Folder buffer has been killed."))

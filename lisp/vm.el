@@ -1029,7 +1029,7 @@ summary buffer to select a folder."
        (vm-check-for-killed-folder))
   (save-excursion
     (and vm-mail-buffer
-	 (vm-select-folder-buffer))
+	 (vm-select-folder-buffer-and-validate 0 (interactive-p)))
     (vm-check-for-killed-summary)
     (let ((folder-buffer (and (eq major-mode 'vm-mode)
 			      (current-buffer)))

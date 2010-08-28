@@ -308,7 +308,7 @@ creation)."
 
   (vm-session-initialization)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
 
   (if (eq vm-system-state 'previewing)
       (vm-show-current-message))
@@ -863,7 +863,7 @@ configuration."
              (vm-continue-postponed-message)))
           ((equal action 'visit)
            (funcall visit vm-postponed-folder)
-           (vm-select-folder-buffer)
+           (vm-select-folder-buffer-and-validate 0 (interactive-p))
 	   (vm-make-local-hook 'vm-quit-hook)
            (add-hook 'vm-quit-hook 'vm-expunge-folder nil t)
            (vm-expunge-folder)
