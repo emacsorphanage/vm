@@ -108,6 +108,10 @@ current-buffer in `vm-user-interaction-buffer'."
   (and (eq major-mode 'vm-virtual-mode)
        (error "%s cannot be applied to virtual folders." this-command)))
 
+(defsubst vm-summary-operation-p ()
+  (and vm-summary-buffer
+       (eq vm-summary-buffer vm-user-interaction-buffer)))
+
 (defsubst vm-build-threads-if-unbuilt ()
   (if (not (vectorp vm-thread-obarray))
       (vm-build-threads nil)))

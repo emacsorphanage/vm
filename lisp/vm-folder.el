@@ -4499,18 +4499,28 @@ of messages around vm-message-pointer equal to (abs prefix),
 either backward (prefix is negative) or forward (positive)."
   (if (eq last-command 'vm-next-command-uses-marks)
       (vm-marked-messages)
-    (let (mlist
-	  (direction (if (< prefix 0) 'backward 'forward))
+    (let ((direction (if (< prefix 0) 'backward 'forward))
 	  (count (vm-abs prefix))
-	  (vm-message-pointer vm-message-pointer))
-      (unless (eq vm-circular-folders t)
-	(vm-check-count prefix))
-      (while (not (zerop count))
-	(setq mlist (cons (car vm-message-pointer) mlist))
-	(vm-decrement count)
-	(unless (zerop count)
-	  (vm-move-message-pointer direction)))
-      (nreverse mlist))))
+	  (vm-message-pointer vm-message-pointer)
+	  (current-message (car vm-message-pointer))
+	  mlist)
+      (if (and (= prefix 1)
+	       (vm-summary-operation-p)
+	       vm-summary-enable-thread-folding
+	       vm-summary-show-threads
+	       vm-enable-thread-operations
+	       (vm-th-thread-root-p current-message)
+	       (with-current-buffer vm-summary-buffer
+		 (vm-summary-collapsed-root-p current-message)))
+	  (vm-th-thread-subtree current-message)
+	(unless (eq vm-circular-folders t)
+	  (vm-check-count prefix))
+	(while (not (zerop count))
+	  (setq mlist (cons (car vm-message-pointer) mlist))
+	  (vm-decrement count)
+	  (unless (zerop count)
+	    (vm-move-message-pointer direction)))
+	(nreverse mlist)))))
 
 (defun vm-display-startup-message ()
   (if (sit-for 5)

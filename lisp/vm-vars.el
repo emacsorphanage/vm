@@ -5108,6 +5108,15 @@ you move out of the thread."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-enable-thread-operations nil
+  "*If non-nil, VM operations on root messages of collapsed
+threads will apply to all the messages in the threads.
+
+\"Operations\" in this context include deleting, saving, setting
+attributes, adding/deleting labels etc."
+  :group 'vm
+  :type 'boolean)
+
 (defvar vm-summary-threads-collapsed t
   "If non-nil, indicates that threads should be
 folded (collapsed) in VM summary windows.")

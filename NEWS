@@ -54,6 +54,12 @@ VM 8.1.93a (2010-07-17)
      See the info file for details.  Thanks to Arik Mitschang for this
      contribution. 
 
+   * New experimental feature: "Thread operations" refers to a method
+     of invoking operations message threads (such as deleting or
+     saving), using a Summary window with collapsed threads.  See the
+     info file for details.  Thanks to Arik Mitschang for this
+     contribution. 
+
    * New variables: `vm-summary-thread-indentation-by-references'
      controls whether threads are indented by their original nesting
      level or according to the nesting level within the folder.

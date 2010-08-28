@@ -1239,6 +1239,21 @@ summary buffer to select a folder."
 	      invalid-function
 	     ))))
 
+(defun vm-toggle-thread-operations ()
+  "Toggle the variable `vm-enable-thread-operations'.
+
+If enabled, VM operations on root messages of collapsed threads
+will apply to all the messages in the threads.  If disabled, VM
+operations only apply to individual messages.
+
+\"Operations\" in this context include deleting, saving, setting
+attributes, adding/deleting labels etc."
+  (interactive)
+  (setq vm-enable-thread-operations (not vm-enable-thread-operations))
+  (if vm-enable-thread-operations
+      (message "Thread operations enabled")
+    (message "Thread operations disabled")))
+
 (defvar vm-postponed-folder)
 
 (defvar vm-drafts-exist nil)

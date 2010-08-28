@@ -1334,6 +1334,7 @@ disabled by setting the value of the variable
 can also be made to skip messages that have been read; set
 @code{vm-skip-read-messages} to @code{t} to do this.
 
+@cindex prefix argument
 The commands @kbd{n} and @kbd{p} also take prefix arguments that
 specify the number of messages to move forward or backward.  If
 the magnitude of the prefix argument is greater than 1, no
@@ -3212,6 +3213,16 @@ M N C
 
 @noindent forwards marked messages with all headers included.
 
+It is possible to use marking to execute operations on message
+threads.  For example, the sequence of key strokes:
+
+@example
+MuMTMNsMu
+@end example
+
+@noindent saves a thread of messages.  However, there are faster methods to
+operate on message threads.  @xref{Thread Operations}.
+
 @node Message Attributes, Sorting Messages, Marking Messages, Top
 @chapter Message Attributes
 @cindex message attributes
@@ -3498,9 +3509,10 @@ addresses that are substituted for @samp{%f} and @samp{%t} as part
 of summary and attribution formats.
 
 @menu
-* Summary Format::   Customizing the summary format
-* Thread Folding::   Collapsing message threads in the summary
-* Summary Faces::    Decorating summary with fonts and colors
+* Summary Format::     Customizing the summary format
+* Thread Folding::     Collapsing message threads in the summary
+* Thread Operations::  Running bulk operations on message threads
+* Summary Faces::      Decorating summary with fonts and colors
 @end menu
 
 @node Summary Format, Thread Folding, Summaries, Summaries
@@ -3658,7 +3670,7 @@ into the folder and saved on the disk.  When you visit the folder
 again, you can reuse the saved summary format.  Set the variable
 @code{vm-restore-saved-summary-format} to t to achieve this effect.
 
-@node Thread Folding, Summary Faces, Summary Format, Summaries
+@node Thread Folding, Thread Operations, Summary Format, Summaries
 @section Thread Folding
 
 A new feature in VM version 8.2 is that of ``folding'' message threads
@@ -3711,7 +3723,37 @@ command @kbd{E} (@code{vm-expand-all-threads}).  The command
 collapses all the expanded threads.
 
 
-@node Summary Faces,, Thread Folding, Summaries
+@node Thread Operations, Summary Faces, Thread Folding, Summaries
+@section Thread Operations
+
+When you have thread-folding enabled, you can execute VM operations
+such as saving and deleting messages on entire threads.  To obtain
+this functionality, you must set the variable
+@code{vm-enable-thread-operations} to a non-@code{nil} value, and you
+must invoke the VM operations in the Summary window with threads
+collapsed.
+
+As an example, doing an @kbd{s} (@code{vm-save-message}) operation on
+an ordinary message saves just the single message.  However, if thread
+operations are enabled and you invoke @kbd{s} on the
+root message of a collapsed thread, then the entire thread is saved.
+The same effect can be obtained using message marking.  @xref{Marking
+Messages}.  The following sequence of key strokes can achieve the
+effect of saving an entire thread:
+
+@example
+MuMTMNsMu
+@end example
+
+@noindent However, the thread-operation is simpler and more convenient.
+
+All operations that can be sensibly invoked on multiple messages
+extend to thread operations in this way.  They include deleting,
+undeleting, marking, unmarking, forwarding, replying, saving/deleting
+attachments etc.
+
+
+@node Summary Faces,, Thread Operations, Summaries
 @section Summary Faces
 
 @cindex faces

@@ -54,6 +54,8 @@ only marked messages are deleted, other messages are ignored."
 	    ;; vm-update-summary-and-mode-line eventually.
 	    (when (and vm-summary-enable-thread-folding
 		       vm-summary-show-threads
+		       (not (and vm-enable-thread-operations
+				 (eq count 1)))
 		       (> (vm-th-thread-count (car mlist)) 1))
 	      (with-current-buffer vm-summary-buffer
 		(vm-expand-thread (vm-th-thread-root (car mlist)))))))
