@@ -1,6 +1,6 @@
 ;;; vm-misc.el --- Miscellaneous functions for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,26 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-misc)
+
+(eval-when-compile
+  (require 'vm-misc))
+
+(declare-function vm-extent-property "vm-misc.el" (overlay prop) t)
+(declare-function vm-extent-object "vm-misc.el" (overlay) t)
+(declare-function vm-set-extent-property "vm-misc.el" (overlay prop value) t)
+(declare-function vm-set-extent-endpoints "vm-misc.el"
+		  (overlay beg end &optional buffer) t)
+(declare-function vm-make-extent "vm-misc.el"
+		  (beg end &optional buffer front-advance rear-advance) t)
+(declare-function vm-extent-end-position "vm-misc.el" (overlay) t)
+(declare-function vm-extent-start-position "vm-misc.el" (overlay) t)
+(declare-function vm-detach-extent "vm-misc.el" (overlay) t)
+(declare-function vm-disable-extents "vm-misc.el" 
+		  (&optional beg end name val) t)
+(declare-function vm-extent-properties "vm-misc.el" (overlay) t)
+
 
 ;; This file contains various low-level operations that address
 ;; incomaptibilities between Gnu and XEmacs.  Expect compiler warnings.
@@ -110,53 +130,59 @@ and flexible."
    (nreverse list)))
 
 (defun vm-parse-addresses (string)
+  "Given a STRING containing email addresses extracted from a header
+field, parse it and return a list of individual email addresses."
   (if (null string)
       ()
     (let ((work-buffer (vm-make-multibyte-work-buffer)))
       (with-current-buffer work-buffer
-       (unwind-protect
-	   (let (list start s char)
-	     (insert string)
-	     (goto-char (point-min))
-	     (skip-chars-forward "\t\f\n\r ")
-	     (setq start (point))
-	     (while (not (eobp))
-	       (skip-chars-forward "^\"\\\\,(")
-	       (setq char (following-char))
-	       (cond ((= char ?\\)
-		      (forward-char 1)
-		      (if (not (eobp))
-			  (forward-char 1)))
-		     ((= char ?,)
-		      (setq s (buffer-substring start (point)))
-		      (if (or (null (string-match "^[\t\f\n\r ]+$" s))
-			      (not (string= s "")))
-			  (setq list (cons s list)))
-		      (skip-chars-forward ",\t\f\n\r ")
-		      (setq start (point)))
-		     ((= char ?\")
-		      (re-search-forward "[^\\\\]\"" nil 0))
-		     ((= char ?\()
-		      (let ((parens 1))
-			(forward-char 1)
-			(while (and (not (eobp)) (not (zerop parens)))
-			  (re-search-forward "[()]" nil 0)
-			  (cond ((or (eobp)
-				     (= (char-after (- (point) 2)) ?\\)))
-				((= (preceding-char) ?\()
-				 (setq parens (1+ parens)))
-				(t
-				 (setq parens (1- parens)))))))))
-	     (setq s (buffer-substring start (point)))
-	     (if (and (null (string-match "^[\t\f\n\r ]+$" s))
-		      (not (string= s "")))
-		 (setq list (cons s list)))
-             (mapcar 'vmrf-fix-quoted-address (reverse list)))
-	(and work-buffer (kill-buffer work-buffer)))))))
+        (unwind-protect
+            (let (list start s char)
+              (insert string)
+              (goto-char (point-min))
+	      ;; Remove useless white space  TX
+              (while (re-search-forward "[\t\f\n\r]\\{1,\\}" nil t)
+                (replace-match " "))
+              (goto-char (point-min))
+              (skip-chars-forward " \t\f\n\r")
+              (setq start (point))
+              (while (not (eobp))
+                (skip-chars-forward "^\"\\\\,(")
+                (setq char (following-char))
+                (cond ((= char ?\\)
+                       (forward-char 1)
+                       (if (not (eobp))
+                           (forward-char 1)))
+                      ((= char ?,)
+                       (setq s (buffer-substring start (point)))
+                       (if (or (null (string-match "^[ \t\f\n\r]+$" s))
+                               (not (string= s ""))) 
+                           (setq list (cons s list)))
+                       (skip-chars-forward ", \t\f\n\r")
+                       (setq start (point)))
+                      ((= char ?\")
+                       (re-search-forward "[^\\\\]\"" nil 0))
+                      ((= char ?\()
+                       (let ((parens 1))
+                         (forward-char 1)
+                         (while (and (not (eobp)) (not (zerop parens)))
+                           (re-search-forward "[()]" nil 0)
+                           (cond ((or (eobp)
+                                      (= (char-after (- (point) 2)) ?\\)))
+                                 ((= (preceding-char) ?\()
+                                  (setq parens (1+ parens)))
+                                 (t
+                                  (setq parens (1- parens)))))))))
+              (setq s (buffer-substring start (point)))
+              (if (and (null (string-match "^[ \t\f\n\r]+$" s))
+                       (not (string= s "")))
+                  (setq list (cons s list)))
+              (mapcar 'vm-fix-quoted-address (reverse list)))
+          (and work-buffer (kill-buffer work-buffer)))))))
 
-(defun vmrf-fix-quoted-address (a)
-  "RF: evetually there are qp-encoded addresses not quoted by \" and thus we
-  need to add quotes or leave them undecoded."
+(defun vm-fix-quoted-address (a)
+  "Sometimes there are qp-encoded addresses not quoted by \" and thus we
+need to add quotes or leave them undecoded.             RWF"
   (let ((da (vm-decode-mime-encoded-words-in-string a)))
     (if (string= da a)
         a
@@ -164,6 +190,8 @@ and flexible."
               (string-match "^\\s-*\"'\\([^\"']+\\)'\"\\(.*\\)" da))
           (concat "\"" (match-string 1 da) "\" " (match-string 2 da))
         da))))
+
+(make-obsolete 'vmrf-fix-quoted-address 'vm-quoted-address "8.1.93a")
           
 (defun vm-parse-structured-header (string &optional sepchar keep-quotes)
   (if (null string)
@@ -300,7 +328,15 @@ vm-mail-buffer variable."
 
 (defun vm-abs (n) (if (< n 0) (- n) n))
 
-(defun vm-last (list) (while (cdr-safe list) (setq list (cdr list))) list)
+(defun vm-last (list) 
+  "Return the last cons-cell of LIST."
+  (while (cdr-safe list) (setq list (cdr list)))
+  list)
+
+(defun vm-last-elem (list) 
+  "Return the last element of LIST."
+  (while (cdr-safe list) (setq list (cdr list)))
+  (car list))
 
 (defun vm-vector-to-list (vector)
   (let ((i (1- (length vector)))
@@ -385,29 +421,30 @@ vm-mail-buffer variable."
       t)))
 
 (defun vm-generate-new-unibyte-buffer (name)
-  (let* ((default-enable-multibyte-characters nil)
-					; expect warning in Emacs23
-	 (buffer (generate-new-buffer name)))
-    (if (fboundp 'set-buffer-multibyte)
+  (if vm-xemacs-p
+      (generate-new-buffer name)
+    (let* (;; (default-enable-multibyte-characters nil)
+	   ;; don't need this because of set-buffer-multibyte below
+	   (buffer (generate-new-buffer name)))
+      (when (fboundp 'set-buffer-multibyte)
 	(with-current-buffer buffer
-	  (set-buffer-multibyte nil) 
-	  buffer)
-      (if (with-current-buffer buffer (not enable-multibyte-characters))
-	  buffer
-	(error "VM internal error #1922: buffer is not unibyte")))))
+	  (set-buffer-multibyte nil)))
+      buffer)))
 
 (defun vm-generate-new-multibyte-buffer (name)
-  (let* ((default-enable-multibyte-characters t)
-					; expect warning in Emacs23
-	 (buffer (generate-new-buffer name)))
-    (if (fboundp 'set-buffer-multibyte)
-	(with-current-buffer buffer
-	  (set-buffer-multibyte t) 
-	  buffer)
-      (if (with-current-buffer buffer enable-multibyte-characters)
-	  buffer
-	(error "VM internal error #1923: buffer is not multibyte")))))
-
+  (if vm-xemacs-p
+      (generate-new-buffer name)
+    (let* (;; (default-enable-multibyte-characters t)
+	   ;; don't need this because of set-buffer-multibyte below
+	   (buffer (generate-new-buffer name)))
+      (if (fboundp 'set-buffer-multibyte)
+	  (with-current-buffer buffer
+	    (set-buffer-multibyte t))
+	;; This error checking only works on FSF
+	(with-current-buffer buffer 
+	  (unless enable-multibyte-characters
+	    (error "VM internal error #1922: buffer is not multibyte"))))
+      buffer)))
 
 (defun vm-make-local-hook (hook)
   (if (fboundp 'make-local-hook)	; Emacs/XEmacs 21
@@ -800,6 +837,13 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	(fset 'vm-detach-extent 'delete-overlay)
       (fset 'vm-detach-extent 'detach-extent)))
 
+(if (not (fboundp 'vm-disable-extents))
+    (if vm-fsfemacs-p
+	(fset 'vm-disable-extents 'remove-overlays)
+      ;; XEamcs doesn't need to disable extents because they don't
+      ;; slow things down
+      (fset 'vm-disable-extents (lambda (&optional beg end name val) nil))))
+
 (if (not (fboundp 'vm-extent-properties))
     (if vm-fsfemacs-p
 	(fset 'vm-extent-properties 'overlay-properties)
@@ -1091,7 +1135,7 @@ non-nil, then the longlines package is used to word-wrap long
 lines without removing any existing line breaks.
 
 In order to fill also quoted text you will need `filladapt.el' as the adaptive
-filling of GNU Emacs does not work correctly here!"
+filling of GNU Emacs does not work correctly here."
   (if (and vm-word-wrap-paragraphs (locate-library "longlines"))
       (vm-fill-paragraphs-by-longlines start end)
     (if (eq width 'window-width)
@@ -1110,7 +1154,7 @@ filling of GNU Emacs does not work correctly here!"
 	    (needmsg (> (- end start) 12000)))
       
 	(if needmsg
-	    (message "Filling message to column %d!" fill-column))
+	    (message "Filling message to column %d" fill-column))
       
 	;; we need a marker for the end since this position might change 
 	(or (markerp end) (setq end (vm-marker end)))
@@ -1127,8 +1171,8 @@ filling of GNU Emacs does not work correctly here!"
 	;; Turning off these messages because they go by too fast and
 	;; are not particularly enlightening.  USR, 2010-01-26
 	;; (if (= filled 0)
-	;;    (message "Nothing to fill!")
-	;;  (message "Filled %s paragraph%s!"
+	;;    (message "Nothing to fill")
+	;;  (message "Filled %s paragraph%s"
 	;;           (if (> filled 1) (format "%d" filled) "one")
 	;;           (if (> filled 1) "s" "")))
 	))))
@@ -1330,10 +1374,14 @@ If MODES is nil the take the modes from the variable
 
 (defun vm-buffer-type:set (type)
   "Note that vm is changing to a buffer of TYPE."
-  (when vm-buffer-type-debug
-    (if (and (eq type 'folder) vm-buffer-types 
+  (when (and (eq type 'folder) vm-buffer-types 
 	     (eq (car vm-buffer-types) 'process))
-	(debug "folder buffer being entered at inner level"))
+ 	;; This may or may not be a problem.
+ 	;; It just means that no save-excursion was done among the
+ 	;; functions currently tracked by vm-buffe-types.
+    (if vm-buffer-type-debug
+	(debug "folder buffer being entered from %s" (car vm-buffer-types))
+      (message "folder buffer being entered from %s" (car vm-buffer-types)))
     (setq vm-buffer-type-trail (cons type vm-buffer-type-trail)))
   (if vm-buffer-types
       (rplaca vm-buffer-types type)
@@ -1343,6 +1391,22 @@ If MODES is nil the take the modes from the variable
   "Check that vm is currently in a buffer of TYPE."
   (vm-assert (eq (car vm-buffer-types) type)))
 
-(provide 'vm-misc)
+(defun vm-add-write-file-hook (vm-hook-fn)
+  "Add a function to the hook called during write-file.
+
+Emacs changed the name of write-file-hooks to write-file-functions as of 
+Emacs 22.1. This function is used to supress compiler warnings."
+  (if (boundp 'write-file-functions)
+      (add-hook 'write-file-functions vm-hook-fn)
+    (add-hook 'write-file-hooks vm-hook-fn)))
+
+(defun vm-add-find-file-hook (vm-hook-fn)
+  "Add a function to the hook called during find-file.
+
+Emacs changed the name of the hook find-file-hooks to find-file-hook in
+Emacs 22.1. This function used to supress compiler warnings."
+  (if (boundp 'find-file-hook)
+      (add-hook 'find-file-hook vm-hook-fn)
+    (add-hook 'find-file-hooks vm-hook-fn)))
 
 ;;; vm-misc.el ends here

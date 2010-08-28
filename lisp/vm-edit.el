@@ -1,6 +1,6 @@
 ;;; vm-edit.el --- Editing VM messages
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1990, 1991, 1993, 1994, 1997, 2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -21,6 +21,8 @@
 
 ;;; Code:
 
+(provide 'vm-edit)
+
 ;;;###autoload
 (defun vm-edit-message (&optional prefix-argument)
   "Edit the current message.  Prefix arg means mark as unedited instead.
@@ -36,7 +38,7 @@ message.  If you don't want your edited version of the message to
 replace the original, use C-c C-] and the edit will be aborted."
   (interactive "P")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (if (and (vm-virtual-message-p (car vm-message-pointer))
 	   (null (vm-virtual-messages-of (car vm-message-pointer))))
@@ -136,7 +138,7 @@ data is discarded only from the marked messages in the current folder."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((mlist (vm-select-marked-or-prefixed-messages count)))
     (vm-discard-cached-data-internal mlist))
   (vm-display nil nil '(vm-discard-cached-data) '(vm-discard-cached-data))
@@ -147,54 +149,55 @@ data is discarded only from the marked messages in the current folder."
 	m)
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
-      (vm-garbage-collect-message)
-      (if (vectorp vm-thread-obarray)
-	  (vm-unthread-message m t))
-      ;; It was a mistake to store the POP & IMAP UID data here but
-      ;; it's too late to change it now.  So keep the data from
-      ;; getting wiped.
-      (let ((uid (vm-imap-uid-of m))
-	    (uid-validity (vm-imap-uid-validity-of m))
-	    (headers-flag (vm-headers-to-be-retrieved-of m))
-	    (body-flag (vm-body-to-be-retrieved-of m))
-	    (body-discard-flag (vm-body-to-be-discarded-of m)))
-        (fillarray (vm-cached-data-of m) nil)
-        (vm-set-imap-uid-of m uid)
-	(vm-set-imap-uid-validity-of m uid-validity)
-	(vm-set-headers-to-be-retrieved-of m headers-flag)
-	(vm-set-body-to-be-retrieved-of m body-flag)
-	(vm-set-body-to-be-discarded-of m body-discard-flag))
-      (vm-set-vheaders-of m nil)
-      (vm-set-vheaders-regexp-of m nil)
-      (vm-set-text-of m nil)
-      (vm-set-mime-layout-of m nil)
-      (vm-set-mime-encoded-header-flag-of m nil)
-      (if (and vm-presentation-buffer (eq (car vm-message-pointer) m))
-	  (save-excursion (vm-preview-current-message)))
-      (if (vectorp vm-thread-obarray)
-	  (vm-build-threads (list m)))
-      (if vm-summary-show-threads
-	  (intern (buffer-name) buffers-needing-thread-sort))
-      (let ((v-list (vm-virtual-messages-of m)))
-	(save-excursion
+      (with-current-buffer (vm-buffer-of m)
+	(vm-garbage-collect-message)
+	(if (vectorp vm-thread-obarray)
+	    (vm-unthread-message m t))
+	;; It was a mistake to store the POP & IMAP UID data here but
+	;; it's too late to change it now.  So keep the data from
+	;; getting wiped.
+	(let ((uid (vm-imap-uid-of m))
+	      (uid-validity (vm-imap-uid-validity-of m))
+	      (headers-flag (vm-headers-to-be-retrieved-of m))
+	      (body-flag (vm-body-to-be-retrieved-of m))
+	      (body-discard-flag (vm-body-to-be-discarded-of m)))
+	  (fillarray (vm-cached-data-of m) nil)
+	  (vm-set-imap-uid-of m uid)
+	  (vm-set-imap-uid-validity-of m uid-validity)
+	  (vm-set-headers-to-be-retrieved-of m headers-flag)
+	  (vm-set-body-to-be-retrieved-of m body-flag)
+	  (vm-set-body-to-be-discarded-of m body-discard-flag))
+	(vm-set-vheaders-of m nil)
+	(vm-set-vheaders-regexp-of m nil)
+	(vm-set-text-of m nil)
+	(vm-set-mime-layout-of m nil)
+	(vm-set-mime-encoded-header-flag-of m nil)
+	(if (and vm-presentation-buffer (eq (car vm-message-pointer) m))
+	    (save-excursion (vm-preview-current-message)))
+	(if (vectorp vm-thread-obarray)
+	    (vm-build-threads (list m)))
+	(if vm-summary-show-threads
+	    (intern (buffer-name) buffers-needing-thread-sort))
+	(let ((v-list (vm-virtual-messages-of m)))
 	  (while v-list
-	    (vm-set-mime-layout-of (car v-list) nil)
-	    (vm-set-mime-encoded-header-flag-of (car v-list) nil)
-	    (set-buffer (vm-buffer-of (car v-list)))
-	    (if (and vm-presentation-buffer
-		     (eq (car vm-message-pointer) (car v-list)))
-		(save-excursion (vm-preview-current-message)))
-	    (if (vectorp vm-thread-obarray)
-		(vm-build-threads (list (car v-list))))
-	    (if vm-summary-show-threads
-		(intern (buffer-name) buffers-needing-thread-sort))
-	    (setq v-list (cdr v-list)))))
-      (vm-mark-for-summary-update m)
+	    (with-current-buffer (vm-buffer-of (car v-list))
+	      (vm-set-mime-layout-of (car v-list) nil)
+	      (vm-set-mime-encoded-header-flag-of (car v-list) nil)
+	      (if (vectorp vm-thread-obarray)
+		  (vm-build-threads (list (car v-list))))
+	      (if vm-summary-show-threads
+		  (intern (buffer-name) buffers-needing-thread-sort))
+
+	      (if (and vm-presentation-buffer
+		       (eq (car vm-message-pointer) (car v-list)))
+		  (save-excursion (vm-preview-current-message)))
+	      (setq v-list (cdr v-list)))))
+	(vm-mark-for-summary-update m))
       (setq mlist (cdr mlist)))
     (save-excursion
       (mapatoms (function (lambda (s)
 			    (set-buffer (get-buffer (symbol-name s)))
-			    (vm-sort-messages "thread")))
+			    (vm-sort-messages (or vm-ml-sort-keys "activity"))))
 		buffers-needing-thread-sort))))
 
 ;;;###autoload
@@ -305,7 +308,5 @@ data is discarded only from the marked messages in the current folder."
   (set-buffer-modified-p nil)
   (kill-buffer (current-buffer))
   (message "Aborted, no change."))
-
-(provide 'vm-edit)
 
 ;;; vm-edit.el ends here

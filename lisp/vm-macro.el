@@ -1,6 +1,6 @@
 ;;; vm-macro.el ---  Random VM macros
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(unless (fboundp 'declare-function)
+  (defmacro declare-function (fn file &optional arglist fileonly)))
 
 (defmacro vm-add-to-list (elem list)
   "Like add-to-list, but compares elements by `eq' rather than `equal'."
@@ -70,11 +73,16 @@ isn't a folder buffer.  USR, 2010-03-08"
 	 ;;--------------------------
 	 )))
 
-(defsubst vm-select-folder-buffer-and-validate (&optional minimum)
-  "Select the folder buffer corresponding ot the current buffer (which
+(defsubst vm-select-folder-buffer-and-validate (&optional minimum interactive-p)
+  "Select the folder buffer corresponding to the current buffer (which
 could be Summary or Presentation) and make sure that it has valid
-references to Summary and Presentation buffers.  If MINIMUM is 1, the
-folder should be nonempty as well."
+references to Summary and Presentation buffers.  
+
+If optional argument MINIMUM is 1, the folder should be nonempty
+as well.  If INTERACTIVE-p is t, then it also records the
+current-buffer in `vm-user-interaction-buffer'."
+  (when interactive-p
+    (setq vm-user-interaction-buffer (current-buffer)))
   (cond (vm-mail-buffer
 	 (or (buffer-name vm-mail-buffer)
 	     (error "Folder buffer has been killed."))
@@ -99,6 +107,10 @@ folder should be nonempty as well."
 (defsubst vm-error-if-virtual-folder ()
   (and (eq major-mode 'vm-virtual-mode)
        (error "%s cannot be applied to virtual folders." this-command)))
+
+(defsubst vm-summary-operation-p ()
+  (and vm-summary-buffer
+       (eq vm-summary-buffer vm-user-interaction-buffer)))
 
 (defsubst vm-build-threads-if-unbuilt ()
   (if (not (vectorp vm-thread-obarray))

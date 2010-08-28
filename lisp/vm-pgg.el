@@ -1,6 +1,6 @@
 ;;; vm-pgg.el --- PGP/MIME support for VM by pgg.el
-;;;
-;;; This file is an add-on for VM
+;;
+;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 2006 Robert Widhopf-Fenk
 ;;
@@ -95,10 +95,8 @@
     (require 'pgg))
 
   (require 'easymenu)
-  (require 'vm-version)
   (require 'vm-misc)
   (require 'vm-page)
-  (require 'vm-vars)
   (require 'vm-mime)
   (require 'vm-reply)
 
@@ -701,7 +699,7 @@ cleanup here after verification and decoding took place."
   (message "Verifying PGP cleartext message...")
   (when (interactive-p)
     (vm-follow-summary-cursor)
-    (vm-select-folder-buffer-and-validate 1))
+    (vm-select-folder-buffer-and-validate 1 (interactive-p)))
   
   ;; make a presentation copy
   (unless (eq major-mode 'vm-presentation-mode)
@@ -727,7 +725,7 @@ cleanup here after verification and decoding took place."
   (interactive)
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
     
   ;; make a presentation copy
@@ -991,7 +989,7 @@ cleanup here after verification and decoding took place."
   (interactive)
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (save-restriction
     ;; ensure we are in the right buffer
     (if vm-presentation-buffer

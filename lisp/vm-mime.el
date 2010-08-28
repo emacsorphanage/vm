@@ -1,6 +1,6 @@
 ;;; vm-mime.el ---  MIME support functions
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1997-2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -10,7 +10,7 @@
 ;; the Free Software Foundation; either version 2 of the License, or
 ;; (at your option) any later version.
 ;;
-;;; This program is distributed in the hope that it will be useful,
+;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
@@ -20,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-mime)
+
 (eval-when-compile
   (require 'cl))
 
@@ -2126,45 +2129,26 @@ that recipient is outside of East Asia."
 	   (vm-mm-layout-disposition layout))
       (let ((case-fold-search t))
 	(string-match "^attachment$" (car (vm-mm-layout-disposition layout))))
-    (let ((i-list vm-auto-displayed-mime-content-types)
-	  (type (car (vm-mm-layout-type layout)))
-	  (matched nil))
-      (if (if (eq i-list t)
-	      nil
-	    (while (and i-list (not matched))
-	      (if (vm-mime-types-match (car i-list) type)
-		  (setq matched t)
-		(setq i-list (cdr i-list))))
-	    (not matched))
-	  t
-	(setq i-list vm-auto-displayed-mime-content-type-exceptions
-	      matched nil)
-	(while (and i-list (not matched))
-	  (if (vm-mime-types-match (car i-list) type)
-	      (setq matched t)
-	    (setq i-list (cdr i-list))))
-	matched ))))
+    (let ((type (car (vm-mm-layout-type layout))))
+      (if (or (eq vm-auto-displayed-mime-content-types t)
+	      (vm-find vm-auto-displayed-mime-content-types
+		       (lambda (i)
+			 (vm-mime-types-match i type))))
+	  (vm-find vm-auto-displayed-mime-content-type-exceptions
+		   (lambda (i)
+		     (vm-mime-types-match i type)))
+	t))))
 
 (defun vm-mime-should-display-internal (layout)
-  (let ((i-list vm-mime-internal-content-types)
-	(type (car (vm-mm-layout-type layout)))
-	(matched nil))
-    (if (if (eq i-list t)
-	    t
-	  (while (and i-list (not matched))
-	    (if (vm-mime-types-match (car i-list) type)
-		(setq matched t)
-	      (setq i-list (cdr i-list))))
-	  matched )
-	(progn
-	  (setq i-list vm-mime-internal-content-type-exceptions
-		matched nil)
-	  (while (and i-list (not matched))
-	    (if (vm-mime-types-match (car i-list) type)
-		(setq matched t)
-	      (setq i-list (cdr i-list))))
-	  (not matched))
-      nil )))
+  (let ((type (car (vm-mm-layout-type layout))))
+    (if (or (eq vm-mime-internal-content-types t)
+	    (vm-find vm-mime-internal-content-types
+		     (lambda (i)
+		       (vm-mime-types-match i type))))
+	(not (vm-find vm-mime-internal-content-type-exceptions
+		      (lambda (i)
+			(vm-mime-types-match i type))))
+      nil)))
 
 (defun vm-mime-find-external-viewer (type)
   (catch 'done
@@ -2224,7 +2208,7 @@ in the buffer.  The function is expected to make the message
 `MIME presentable' to the user in whatever manner it sees fit."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (if (and (not vm-display-using-mime)
 	   (null vm-mime-display-function))
       (error "MIME display disabled, set vm-display-using-mime non-nil to enable."))
@@ -2372,8 +2356,9 @@ declarations in the attachments and make a decision independently."
 						 type-no-subtype))))))
 		 (funcall handler layout))
 		((vm-mime-types-match "multipart" type)
-		 (if (fboundp (intern (concat "vm-mime-display-internal-"
-					     type)))
+		 (if (fboundp (setq handler
+				    (intern (concat "vm-mime-display-internal-"
+						    type))))
 		     (funcall handler layout)
 		   (vm-mime-display-internal-multipart/mixed layout)))
 		((and (vm-mime-can-display-external type)
@@ -2427,7 +2412,7 @@ declarations in the attachments and make a decision independently."
         (vm-mime-insert-mime-body part)
         (setq part-list nil)))
     (unless part
-      (message "No data for cid %S!" url))
+      (message "No data for cid %S" url))
     part))
 
 (defun vm-mime-display-internal-w3m-text/html (start end layout)
@@ -2685,14 +2670,13 @@ declarations in the attachments and make a decision independently."
   (let ((part-list (vm-mm-layout-parts layout)))
     (while part-list
       (vm-decode-mime-layout (car part-list))
-      (setq part-list (cdr part-list)))
+      (setq part-list (cdr part-list))
+      (insert vm-mime-parts-display-separator))
     t ))
 
 (defun vm-mime-display-internal-multipart/alternative (layout)
-  (if (or vm-mime-show-alternatives
-	  (eq vm-mime-alternative-select-method 'all))
-      (let ((vm-mime-show-alternatives 'mixed))
-        (vm-mime-display-internal-multipart/mixed layout))
+  (if (eq vm-mime-alternative-select-method 'all)
+      (vm-mime-display-internal-multipart/mixed layout)
     (vm-mime-display-internal-show-multipart/alternative layout)))
 
 (defun vm-mime-display-internal-show-multipart/alternative (layout)
@@ -4348,7 +4332,7 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
   (unless mlist
     (or count (setq count 1))
     (vm-check-for-killed-folder)
-    (vm-select-folder-buffer-and-validate 1))
+    (vm-select-folder-buffer-and-validate 1 nil))
 
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (vm-retrieve-marked-or-prefixed-messages count)
@@ -4390,17 +4374,17 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
                               types
                               (vm-mime-is-type-valid type types exceptions)))
                      (when (not quiet)
-                       (message "Action on part type=%s filename=%s disposition=%s!"
+                       (message "Action on part type=%s filename=%s disposition=%s"
                                 type filename disposition))
                      (funcall action (car mlist) layout type filename))
                     ((not quiet)
-                     (message "No action on part type=%s filename=%s disposition=%s!"
+                     (message "No action on part type=%s filename=%s disposition=%s"
                               type filename disposition)))
               (setq parts (cdr parts)))))
         (setq mlist (cdr mlist))))))
 
 ;;;###autoload
-(defun vm-mime-delete-all-attachments (&optional count)
+(defun vm-delete-all-attachments (&optional count)
   "Delete all attachments from the next COUNT messages or marked
 messages.  For the purpose of this function, an \"attachment\" is
 a mime part part which has \"attachment\" as its disposition or
@@ -4420,11 +4404,19 @@ are also included."
    vm-mime-deletable-type-exceptions)
 
   (when (interactive-p)
-    (vm-discard-cached-data)
-    (vm-preview-current-message)))
-                                                 
+    (vm-discard-cached-data count)
+    (vm-preview-current-message))
+
+  (vm-update-summary-and-mode-line))
+
+;; (define-obsolete-function-alias 'vm-mime-delete-all-attachments
+;;   'vm-delete-all-attachments "8.1.93a")
+(defalias 'vm-mime-delete-all-attachments
+  'vm-delete-all-attachments)
+(make-obsolete 'vm-mime-delete-all-attachments
+	       'vm-delete-all-attachments "8.1.93a")                                                 
 ;;;###autoload
-(defun vm-mime-save-all-attachments (&optional count
+(defun vm-save-all-attachments (&optional count
                                                directory
                                                no-delete-after-saving)
   "Save all attachments in the next COUNT messages or marked
@@ -4484,7 +4476,7 @@ created."
                (setq file nil)))
          
          (when file
-           (message "Saving `%s%s" type (if file (format " (%s)" file) ""))
+           (message "Saving %s" (if file (format " (%s)" file) ""))
            (make-directory (file-name-directory file) t)
            (vm-mime-send-body-to-file layout file file)
            (if vm-mime-delete-after-saving
@@ -4498,13 +4490,96 @@ created."
      vm-mime-savable-type-exceptions)
 
     (when (interactive-p)
-      (vm-discard-cached-data)
+      (vm-discard-cached-data count)
       (vm-preview-current-message))
     
     (if (> n 0)
         (message "%d attachment%s saved" n (if (= n 1) "" "s"))
       (message "No attachments found"))))
 
+;; (define-obsolete-function-alias 'vm-mime-save-all-attachments
+;;   'vm-save-all-attachments "8.1.93a")
+(defalias 'vm-mime-save-all-attachments
+  'vm-save-all-attachments)
+(make-obsolete 'vm-mime-save-all-attachments
+  'vm-save-all-attachments "8.1.93a")
+
+(defun vm-save-attachments (&optional count
+				      no-delete-after-saving)
+  "Save all attachments in the next COUNT messages or marked
+messages.  For the purpose of this function, an \"attachment\" is
+a mime part part which has \"attachment\" as its disposition or
+simply has an associated filename.  Any mime types that match
+`vm-mime-savable-types' but not `vm-mime-savable-type-exceptions'
+are also included.
+
+The attachments are saved in file names input from the
+minibuffer.  (This is the main difference from
+`vm-save-all-attachments'.) 
+
+The variables `vm-all-attachments-directory' or
+`vm-mime-attachment-save-directory' can be used to set the
+default location.  When directory does not exist it will be
+confirmed before creating a new directory."
+  (interactive "p")
+
+  (vm-check-for-killed-summary)
+  (if (interactive-p) (vm-follow-summary-cursor))
+ 
+  (let ((n 0)
+	(directory nil))
+    (vm-mime-action-on-all-attachments
+     count
+     ;; the action to be performed BEGIN
+     (lambda (msg layout type file-name)
+       (let ((file (vm-read-file-name
+		    (if file-name			; prompt
+			(format "Save (default %s): " file-name)
+		      (format "Save %s: " type))
+		    (file-name-as-directory		; directory
+		     (or directory		      
+			 vm-mime-attachment-save-directory
+			 vm-mime-all-attachments-directory))
+		    (and file-name			; default-filename
+			 (concat
+			  (file-name-as-directory 	      
+			   (or directory		      
+			       vm-mime-attachment-save-directory
+			       vm-mime-all-attachments-directory))
+			  (or file-name "")))
+		    nil nil			      ; mustmatch initial
+		    vm-mime-save-all-attachments-history ; predicate
+		    )))
+	 (setq directory (file-name-directory file))
+         (when (file-exists-p file)
+	   (if (y-or-n-p (format "Overwrite `%s'? " file))
+	       nil 		; (delete-file file)
+	     (setq file nil)))
+	 (unless (file-exists-p directory)
+	   (if (y-or-n-p 
+		(format "Directory %s does not exist; create it?" directory))
+	       (make-directory directory t)
+	     (setq file nil)))
+         (when file
+           (message "Saving %s" (if file (format " (%s)" file) ""))
+           (vm-mime-send-body-to-file layout file file)
+           (if vm-mime-delete-after-saving
+               (let ((vm-mime-confirm-delete nil))
+                 (vm-mime-discard-layout-contents 
+		  layout (expand-file-name file))))
+           (setq n (+ 1 n)))))
+     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; the action to be performed END
+     ;; attachment filters 
+     vm-mime-savable-types
+     vm-mime-savable-type-exceptions)
+
+    (when (interactive-p)
+      (vm-discard-cached-data count)
+      (vm-preview-current-message))
+    
+    (if (> n 0)
+        (message "%d attachment%s saved" n (if (= n 1) "" "s"))
+      (message "No attachments found"))))
 ;; for the karking compiler
 (defvar vm-menu-mime-dispose-menu)
 
@@ -4643,7 +4718,7 @@ created."
 ;; example filter-alist variable
 (defvar vm-mime-write-file-filter-alist
   '(("application/mac-binhex40" . "hexbin -s "))
-  "*A list of filter used when writing attachements to files!"
+  "*A list of filter used when writing attachements to files."
   )
  
 ;; function to parse vm-mime-write-file-filter-alist
@@ -5836,7 +5911,7 @@ The MIME object is replaced by a text/plain object that briefly
 describes what was deleted."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (if (and (vm-virtual-message-p (car vm-message-pointer))
 	   (null (vm-virtual-messages-of (car vm-message-pointer))))
@@ -7234,7 +7309,7 @@ agent; under Unix, normally sendmail.)"
     "Press RETURN"))
 
 (defun vm-mf-default-action (layout)
-  (if (eq vm-mime-show-alternatives 'mixed)
+  (if (eq vm-mime-alternative-select-method 'all)
       (concat (vm-mf-default-action-orig layout) " alternative")
     (vm-mf-default-action-orig layout)))
 
@@ -7278,7 +7353,7 @@ end of the path."
   (interactive "P")
   (vm-check-for-killed-summary)
   (if (interactive-p) (vm-follow-summary-cursor))
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (let ((m (car vm-message-pointer)))
     (switch-to-buffer "*VM mime part layout*")
     (erase-buffer)
@@ -7348,7 +7423,7 @@ This is a destructive operation and cannot be undone!"
   (interactive "p")
   (when (interactive-p)
     (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
     (vm-load-message count)
     ;; (vm-retrieve-marked-or-prefixed-messages count)
@@ -7363,7 +7438,5 @@ This is a destructive operation and cannot be undone!"
           (setq mlist (cdr mlist))))))
   (when (interactive-p)
     (vm-discard-cached-data count)))
-
-(provide 'vm-mime)
 
 ;;; vm-mime.el ends here

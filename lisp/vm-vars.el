@@ -1,6 +1,6 @@
 ;;; vm-vars.el --- VM user and internal variable initialization
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -21,6 +21,8 @@
 
 ;;; Code:
 
+(provide 'vm-vars)
+
 (require 'vm-version)
 
 (defgroup vm nil
@@ -40,10 +42,8 @@ in an Emacs session."
   :type 'file)
 
 (defcustom vm-preferences-file "~/.vm.preferences"
-  "Unused.
-*Secondary startup file for VM, loaded after `vm-init-file'.
-This file is written and overwritten by VM and is not meant for
-users to edit directly."
+  "*Secondary startup file for VM, loaded after `vm-init-file'.  It is
+meant for specifying the preferred settings for VM variables."
   :group 'vm
   :type 'file)
 
@@ -943,17 +943,24 @@ A nil value causes VM to preview messages only if new or unread."
   :group 'vm
   :type 'boolean)
 
-(defcustom vm-always-use-presentation-buffer t
-  "****This variable is deprecated.  Starting from version 8.2.0, the
-  behaviour will be equivalent to setting this variable to t.  Please
-  remove all settings for this variable and report any problems that
-  you might encounter.
-
-Non-nil means to always use a presentation buffer for displaying
+(defconst vm-always-use-presentation-buffer t
+  "Non-nil means to always use a presentation buffer for displaying
   messages.  It will also be used if no decoding or other
-  modification of the message are necessary."
-  :group 'vm
-  :type 'boolean)
+  modification of the message are necessary.")
+
+(make-obsolete-variable 'vm-always-use-presentation-buffer
+  "The current behaviour is equivalent to setting this variable
+  to t.  Please remove all settings for this variable and report
+  any problems that you might encounter."
+  "8.2.0")
+
+(defconst vm-always-use-presentation t
+  "Non-nil means to always use a presentation buffer for displaying
+  messages.  It will also be used if no decoding or other
+  modification of the message are necessary.  
+
+This constant is a place holder for the obsolete variable
+vm-always-use-presentation-buffer.  It should be removed eventually.")
 
 (defcustom vm-word-wrap-paragraphs nil
   "*If non-nil, causes VM to word wrap paragraphs with long lines.
@@ -1708,6 +1715,12 @@ truncated.  If the value is negative, the string is truncated on
 the left instead of the right."
   :group 'vm
   :type '(repeat (cons string string)))
+
+(defcustom vm-mime-parts-display-separator "\n"
+  "*String to insert between mime parts when displayed one after
+another."
+  :group 'vm
+  :type 'string)
 
 (defcustom vm-mime-7bit-composition-charset "us-ascii"
   "*Character set that VM should assume if it finds no character codes > 128
@@ -3228,6 +3241,17 @@ set this variable directly, rather you should use the command
   :type 'boolean)
 (make-variable-buffer-local 'vm-summary-show-threads)
 
+(defcustom vm-summary-thread-indentation-by-references t
+  "*If non-nil, threaded messages are indented according to their
+nesting level determined by their references headers.  This is
+likely to be their original nesting level in the discussion.  If
+it is nil, then the indentation level is determined by the number
+of thread ancestors within the folder.  When some messages in the
+thread are missing or deleted, this is likely to be less than the
+original nesting level."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-summary-thread-indent-level 2
   "*Value should be a number that specifies how much
 indentation the '%I' summary format specifier should provide per
@@ -3240,6 +3264,12 @@ Therefore it has no ancestor and would cause %I to generate no
 indentation.  A reply to this message will be indented by the value
 of `vm-summary-thread-indent-level'.  A reply to that reply will be
 indented twice the value of `vm-summary-thread-indent-level'."
+  :group 'vm
+  :type 'integer)
+
+(defcustom vm-summary-maximum-thread-indentation 20
+  "*The maximum number of thread nesting levels that should be
+displayed by indentation in the folder summary."
   :group 'vm
   :type 'integer)
 
@@ -3287,8 +3317,11 @@ arrow only if the summary window is not the only existing window."
   :group 'vm
   :type '(choice (const nil) (const t) (const yes-if-not-only-window)))
 
+(defvar vm-debug nil
+  "Flag used by developers to control localized debugging features.")
+
 (defvar vm-summary-debug nil
-  "Flag to turn on debug tracing of summary generation")
+  "Flag used by developers trace summary generation")
 
 (defcustom vm-subject-ignored-prefix "^\\(re: *\\)+"
   "*Non-nil value should be a regular expression that matches
@@ -4150,6 +4183,160 @@ entries from a folder summary."
   :group 'vm
   :type 'hook)
 
+(defgroup vm-summary-faces nil
+  "VM additional virtual folder selectors and functions."
+  :group 'vm)
+
+(defcustom vm-summary-faces-alist
+  '(
+    ((or (header "Priority: urgent")
+         (header "Importance: high")
+         (header "X-Priority: 1")
+         (label "!")
+	 (label "\\flagged")
+         (header "X-VM-postponed-data:"))
+     vm-summary-high-priority)
+    ((deleted)   	vm-summary-deleted)
+    ((new)       	vm-summary-new)
+    ((unread)    	vm-summary-unread)
+    ((marked)    	vm-summary-marked)
+    ((replied)   	vm-summary-replied)
+    ((or (filed)
+	 (written))     vm-summary-saved)
+    ((or (forwarded) 
+	 (redistributed)) vm-summary-forwarded)
+    ((edited)    	vm-summary-edited)
+    ((outgoing)  	vm-summary-outgoing)
+    ((any)       	vm-summary-default))
+  "*Alist of virtual folder conditions and corresponding faces.
+Order matters. The first matching one will be used as the face.  
+
+See `vm-virtual-folder-alist' for a description of the conditions."
+  :type '(repeat (cons (sexp) (face)))
+  :group 'vm-summary-faces)
+
+(defface vm-summary-selected
+  '((t ;; (:bold on)
+     (:background "grey85")
+     ))
+  "The face used in VM Summary buffers for the selected message."
+  :group 'vm-summary-faces)
+
+(put 'vm-summary-selected-face 'face-alias 'vm-summary-selected)
+(make-obsolete 'vm-summary-selected-face 'vm-summary-selected "8.1.93a")
+
+(defface vm-summary-marked
+  '((((type x)) (:foreground "red3")))
+  "The face used in VM Summary buffers for marked messages."
+  :group 'vm-summary-faces)
+
+(put 'vm-summary-marked-face 'face-alias 'vm-summary-marked)
+(make-obsolete 'vm-summary-marked-face 'vm-summary-marked "8.1.93a")
+
+(defface vm-summary-deleted
+     (if (featurep 'xemacs)
+         '((t (:foreground "grey50" :strikethru t)))
+       '((t (:foreground "grey50" :strike-through "grey70"))))
+     "The face used in VM Summary buffers for deleted messages."
+     :group 'vm-summary-faces)
+
+(put 'vm-summary-deleted-face 'face-alias 'vm-summary-deleted)
+(make-obsolete 'vm-summary-deleted-face 'vm-summary-deleted "8.1.93a")
+
+(defface vm-summary-new
+  '((t (:foreground "blue")))
+  "The face used in VM Summary buffers for new messages."
+  :group 'vm-summary-faces)
+
+(put 'vm-summary-new-face 'face-alias 'vm-summary-new)
+(make-obsolete 'vm-summary-new-face 'vm-summary-new "8.1.93a")
+
+(defface vm-summary-unread
+  '((t (:foreground "blue4")))
+  "The face used in VM Summary buffers for unread messages."
+  :group 'vm-summary-faces)
+
+(put 'vm-summary-unread-face 'face-alias 'vm-summary-unread)
+(make-obsolete 'vm-summary-unread-face 'vm-summary-unread "8.1.93a")
+
+(defface vm-summary-saved
+  '((t (:foreground "green4")))
+  "The face used in VM Summary buffers for saved messages."
+  :group 'vm-summary-faces)
+
+(put 'vm-summary-filed-face 'face-alias 'vm-summary-saved)
+(make-obsolete 'vm-summary-filed 'vm-summary-saved "8.1.93a")
+(put 'vm-summary-written-face 'face-alias 'vm-summary-saved)
+(make-obsolete 'vm-summary-written 'vm-summary-saved "8.1.93a")
+
+(defface vm-summary-replied
+  '((t (:foreground "grey30")))
+  "The face used in VM Summary buffers for replied messages."
+  :group 'vm-summary-faces)
+
+(put 'vm-summary-replied-face 'face-alias 'vm-summary-replied)
+(make-obsolete 'vm-summary-replied-face 'vm-summary-replied "8.1.93a")
+
+(defface vm-summary-forwarded
+  '((t (:foreground "grey20")))
+  "The face used in VM Summary buffers for forwarded messages."
+  :group 'vm-summary-faces)
+
+(put 'vm-summary-forwarded-face 'face-alias 'vm-summary-forwarded)
+(make-obsolete 'vm-summary-forwarded-face 'vm-summary-forwarded "8.1.93a")
+(put 'vm-summary-redistributed-face 'face-alias 'vm-summary-forwarded)
+(make-obsolete 'vm-summary-redistributed-face 'vm-summary-forwarded "8.1.93a")
+
+(defface vm-summary-edited 
+  nil
+  "The face used in VM Summary buffers for edited messages."
+  :group 'vm-summary-faces)
+
+(put 'vm-summary-edited-face 'face-alias 'vm-summary-edited)
+(make-obsolete 'vm-summary-edited-face 'vm-summary-edited "8.1.93a")
+
+(defface vm-summary-outgoing
+  '((t (:foreground "grey30")))
+  "The face used in VM Summary buffers for outgoing messages."
+  :group 'vm-summary-faces)
+
+(put 'vm-summary-outgoing-face 'face-alias 'vm-summary-outgoing)
+(make-obsolete 'vm-summary-outgoing-face 'vm-summary-outgoing "8.1.93a")
+
+(defface vm-summary-expanded
+  '((t ()))
+  "The face used in VM Summary buffers for the root messages of
+expanded threads."
+  :group 'vm-summary-faces)
+
+(put 'vm-summary-expanded-face 'face-alias 'vm-summary-expanded)
+(make-obsolete 'vm-summary-expanded-face 'vm-summary-expanded "8.1.93a")
+
+(defface vm-summary-collapsed
+  '((t (:weight normal :slant oblique)))
+  "The face used in VM Summary buffers for the root messages of
+collapsed threads."
+  :group 'vm-summary-faces)
+
+(put 'vm-summary-collapsed-face 'face-alias 'vm-summary-collapsed)
+(make-obsolete 'vm-summary-collapsed-face 'vm-summary-collapsed "8.1.93a")
+
+(defface vm-summary-high-priority
+  '((t (:foreground "red")))
+  "The face used in VM Summary buffers for high-priority messages."
+  :group 'vm-summary-faces)
+
+(put 'vm-summary-high-priority-face 'face-alias 'vm-summary-high-priority)
+(make-obsolete 'vm-summary-high-priority-face 'vm-summary-high-priority "8.1.93a")
+
+(defface vm-summary-default
+  nil
+  "The default face used in VM Summary buffers."
+  :group 'vm-summary-faces)
+
+(put 'vm-summary-default-face 'face-alias 'vm-summary-default)
+(make-obsolete 'vm-summary-default-face 'vm-summary-default "8.1.93a")
+
 (defcustom vm-visit-folder-hook nil
   "*List of hook functions called just after VM visits a folder.
 It doesn't matter if the folder buffer already exists, this hook
@@ -4295,12 +4482,14 @@ See `vm-mime-compile-format-1' for valid format specifiers."
   :group 'vm
   :type 'string)
 
-(defcustom vm-mime-show-alternatives nil
+(defvar vm-mime-show-alternatives nil
   "*This variable is deprecated.  You can set
 `vm-mime-alternative-select-method' to 'all to get the same effect as
-setting this one to t."
-  :group 'vm
-  :type 'boolean)
+setting this one to t.")
+
+(make-obsolete-variable 'vm-mime-show-alternatives 
+  'vm-mime-alternative-select-method
+  "8.2.0")
 
 (defcustom vm-emit-messages-for-mime-decoding t
   "*Flag to allow minibuffer messages about the progress of MIME
@@ -4720,11 +4909,18 @@ be a regexp matching all chars to be replaced by a \"_\"."
 		 (integer :tag "Enabled" 80)
                  (integer :tag "Length")))
 
-(defconst vm-maintainer-address "vm@lists.launchpad.net"
+(defconst vm-maintainer-address "viewmail-bugs@nongnu.org"
   "Where to send VM bug reports.")
 
 (defvar vm-mode-map
   (let ((map (make-keymap)))
+    (defvar vm-mode-label-map (make-sparse-keymap))
+    (defvar vm-mode-virtual-map (make-sparse-keymap))
+    (defvar vm-mode-mark-map (make-sparse-keymap))
+    (defvar vm-mode-window-map (make-sparse-keymap))
+    (defvar vm-mode-mark-map (make-sparse-keymap))
+    (defvar vm-mode-mark-map (make-sparse-keymap))
+    (defvar vm-mode-pipe-map (make-sparse-keymap))
 ;; unneeded now that VM buffers all have buffer-read-only == t.
 ;;    (suppress-keymap map)
     (define-key map "h" 'vm-summarize)
@@ -4752,6 +4948,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\C-d" 'vm-delete-message-backward)
     (define-key map "u" 'vm-undelete-message)
     (define-key map "U" 'vm-unread-message)
+    (define-key map "." 'vm-flag-message-read)
     (define-key map "e" 'vm-edit-message)
     (define-key map "a" 'vm-set-message-attributes)
     (define-key map "j" 'vm-discard-cached-data)
@@ -4777,10 +4974,11 @@ be a regexp matching all chars to be replaced by a \"_\"."
     ;; these two key bindings are experimental
     (define-key map "o" 'vm-load-message)
     (define-key map "O" 'vm-unload-message)
-    (define-key map "||" 'vm-pipe-message-to-command)
-    (define-key map "|d" 'vm-pipe-message-to-command-discard-output)
-    (define-key map "|s" 'vm-pipe-messages-to-command)
-    (define-key map "|n" 'vm-pipe-messages-to-command-discard-output)
+    (define-key map "|" vm-mode-pipe-map)
+    (define-key vm-mode-pipe-map "|" 'vm-pipe-message-to-command)
+    (define-key vm-mode-pipe-map "d" 'vm-pipe-message-to-command-discard-output)
+    (define-key vm-mode-pipe-map "s" 'vm-pipe-messages-to-command)
+    (define-key vm-mode-pipe-map "n" 'vm-pipe-messages-to-command-discard-output)
     (define-key map "###" 'vm-expunge-folder)
     (cond ((fboundp 'set-keymap-prompt)
 	   (set-keymap-prompt (lookup-key map "#")
@@ -4803,57 +5001,57 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "=" 'vm-summarize)
     (define-key map "L" 'vm-load-init-file)
     (define-key map "\M-l" 'vm-edit-init-file)
-    (define-key map "l" (make-sparse-keymap))
-    (define-key map "la" 'vm-add-message-labels)
-    (define-key map "le" 'vm-add-existing-message-labels)
-    (define-key map "ld" 'vm-delete-message-labels)
-    (define-key map "V" (make-sparse-keymap))
-    (define-key map "VV" 'vm-visit-virtual-folder)
-    (define-key map "VC" 'vm-create-virtual-folder)
-    (define-key map "VA" 'vm-create-virtual-folder-same-author)
-    (define-key map "VS" 'vm-create-virtual-folder-same-subject)
-    (define-key map "VX" 'vm-apply-virtual-folder)
-    (define-key map "VM" 'vm-toggle-virtual-mirror)
-    (define-key map "V?" 'vm-virtual-help)
-    (define-key map "M" (make-sparse-keymap))
-    (define-key map "MN" 'vm-next-command-uses-marks)
-    (define-key map "Mn" 'vm-next-command-uses-marks)
-    (define-key map "MM" 'vm-mark-message)
-    (define-key map "MU" 'vm-unmark-message)
-    (define-key map "Mm" 'vm-mark-all-messages)
-    (define-key map "Mu" 'vm-clear-all-marks)
-    (define-key map "MC" 'vm-mark-matching-messages)
-    (define-key map "Mc" 'vm-unmark-matching-messages)
-    (define-key map "MT" 'vm-mark-thread-subtree)
-    (define-key map "Mt" 'vm-unmark-thread-subtree)
-    (define-key map "MS" 'vm-mark-messages-same-subject)
-    (define-key map "Ms" 'vm-unmark-messages-same-subject)
-    (define-key map "MA" 'vm-mark-messages-same-author)
-    (define-key map "Ma" 'vm-unmark-messages-same-author)
-    (define-key map "MR" 'vm-mark-summary-region)
-    (define-key map "Mr" 'vm-unmark-summary-region)
-    (define-key map "MV" 'vm-toggle-all-marks)
-    (define-key map "MX" 'vm-mark-matching-messages-with-virtual-folder)
-    (define-key map "Mx" 'vm-unmark-matching-messages-with-virtual-folder)
-    (define-key map "M?" 'vm-mark-help)
-    (define-key map "W" (make-sparse-keymap))
-    (define-key map "WW" 'vm-apply-window-configuration)
-    (define-key map "WS" 'vm-save-window-configuration)
-    (define-key map "WD" 'vm-delete-window-configuration)
-    (define-key map "W?" 'vm-window-help)
+    (define-key map "l" vm-mode-label-map)
+    (define-key vm-mode-label-map "a" 'vm-add-message-labels)
+    (define-key vm-mode-label-map "e" 'vm-add-existing-message-labels)
+    (define-key vm-mode-label-map "d" 'vm-delete-message-labels)
+    (define-key map "V" vm-mode-virtual-map)
+    (define-key vm-mode-virtual-map "V" 'vm-visit-virtual-folder)
+    (define-key vm-mode-virtual-map "C" 'vm-create-virtual-folder)
+    (define-key vm-mode-virtual-map "A" 'vm-create-virtual-folder-same-author)
+    (define-key vm-mode-virtual-map "S" 'vm-create-virtual-folder-same-subject)
+    (define-key vm-mode-virtual-map "X" 'vm-apply-virtual-folder)
+    (define-key vm-mode-virtual-map "M" 'vm-toggle-virtual-mirror)
+    (define-key vm-mode-virtual-map "?" 'vm-virtual-help)
+    (define-key map "M" vm-mode-mark-map)
+    (define-key vm-mode-mark-map "N" 'vm-next-command-uses-marks)
+    (define-key vm-mode-mark-map "n" 'vm-next-command-uses-marks)
+    (define-key vm-mode-mark-map "M" 'vm-mark-message)
+    (define-key vm-mode-mark-map "U" 'vm-unmark-message)
+    (define-key vm-mode-mark-map "m" 'vm-mark-all-messages)
+    (define-key vm-mode-mark-map "u" 'vm-clear-all-marks)
+    (define-key vm-mode-mark-map "C" 'vm-mark-matching-messages)
+    (define-key vm-mode-mark-map "c" 'vm-unmark-matching-messages)
+    (define-key vm-mode-mark-map "T" 'vm-mark-thread-subtree)
+    (define-key vm-mode-mark-map "t" 'vm-unmark-thread-subtree)
+    (define-key vm-mode-mark-map "S" 'vm-mark-messages-same-subject)
+    (define-key vm-mode-mark-map "s" 'vm-unmark-messages-same-subject)
+    (define-key vm-mode-mark-map "A" 'vm-mark-messages-same-author)
+    (define-key vm-mode-mark-map "a" 'vm-unmark-messages-same-author)
+    (define-key vm-mode-mark-map "R" 'vm-mark-summary-region)
+    (define-key vm-mode-mark-map "r" 'vm-unmark-summary-region)
+    (define-key vm-mode-mark-map "V" 'vm-toggle-all-marks)
+    (define-key vm-mode-mark-map "X" 'vm-mark-matching-messages-with-virtual-folder)
+    (define-key vm-mode-mark-map "x" 'vm-unmark-matching-messages-with-virtual-folder)
+    (define-key vm-mode-mark-map "?" 'vm-mark-help)
+    (define-key map "W" vm-mode-window-map)
+    (define-key vm-mode-window-map "W" 'vm-apply-window-configuration)
+    (define-key vm-mode-window-map "S" 'vm-save-window-configuration)
+    (define-key vm-mode-window-map "D" 'vm-delete-window-configuration)
+    (define-key vm-mode-window-map "?" 'vm-window-help)
     (define-key map "\C-t" 'vm-toggle-threads-display)
-    (define-key map "\M-t" 'vm-toggle-thread)
     (define-key map "\C-x\C-s" 'vm-save-buffer)
     (define-key map "\C-x\C-w" 'vm-write-file)
     (define-key map "\C-x\C-q" 'vm-toggle-read-only)
     (define-key map "%" 'vm-change-folder-type)
     (define-key map "\M-C" 'vm-show-copying-restrictions)
     (define-key map "\M-W" 'vm-show-no-warranty)
-    (define-key map "\C-c\C-s" 'vm-mime-save-all-attachments)
-    (define-key map "\C-c\C-d" 'vm-mime-delete-all-attachments)
+    (define-key map "\C-c\C-s" 'vm-save-all-attachments)
+    (define-key map "\C-c\C-d" 'vm-delete-all-attachments)
     (define-key map "T" 'vm-toggle-thread)
-    (define-key map "E" 'vm-expand-all)
-    (define-key map "C" 'vm-collapse-all)
+    (define-key map "E" 'vm-expand-all-threads)
+    (define-key map "C" 'vm-collapse-all-threads)
+    (define-key map "K" 'vm-kill-thread-subtree)
     ;; suppress-keymap provides these, but now that we don't use
     ;; suppress-keymap anymore...
     (define-key map "0" 'digit-argument)
@@ -4876,27 +5074,53 @@ be a regexp matching all chars to be replaced by a \"_\"."
 	   (set-keymap-name (lookup-key map "M")
 			    "VM mode message marks map")
 	   (set-keymap-name (lookup-key map "W")
-			    "VM mode window configuration map")))
+			    "VM mode window configuration map")
+	   (set-keymap-name (lookup-key map "|")
+			    "VM mode pipe-to-application map")))
 
     map )
-  "Keymap for VM mode.")
+  "Keymap for VM mode.  See also the following subsidiary keymaps:
+`vm-mode-label-map'    VM mode message labels map  (`l')
+`vm-mode-virtual-map'  VM mode virtual folders map (`V')
+`vm-mode-mark-map'     VM mode message marking map (`M')
+`vm-mode-window-map'   VM mode window configuration map (`W')
+`vm-mode-pipe-map'     VM mode pipe-to-application map (`|')
+")
 
-(defvar vm-summary-thread-folding nil
+(defcustom vm-summary-enable-thread-folding nil
   "*If non-nil, enables folding of threads in VM summary
-windows.  (This functionality is still experimental.)")
+windows.  (This functionality is still experimental.)"
+  :group 'vm
+  :type 'boolean)
 
-(defvar vm-summary-show-thread-count t
+(defcustom vm-summary-show-thread-count t
   "*If non-nil, thread folding displays the count of messages in
 a thread along with the message number of the thread root.  Note
-that this takes up 3 extra characters in each summary line, and
-will only take effect if the number specifier is the first
-position of `vm-summary-format'")
+that this takes up 3 extra characters in each summary line."
+  :group 'vm
+  :type 'boolean)
 
-(defvar vm-summary-thread-folding-on-motion nil
+(defcustom vm-summary-thread-folding-on-motion nil
   "*If non-nil and thread folding is enabled, invoking
 vm-next/previous-message-no-skip (`N' or `P' respectively)
 will expand a thread upon moving into the thread and collapse it when 
-you move out of the thread.")
+you move out of the thread."
+  :group 'vm
+  :type 'boolean)
+
+(defcustom vm-enable-thread-operations nil
+  "*If non-nil, VM operations on root messages of collapsed
+threads will apply to all the messages in the threads.
+
+\"Operations\" in this context include deleting, saving, setting
+attributes, adding/deleting labels etc."
+  :group 'vm
+  :type 'boolean)
+
+(defvar vm-summary-threads-collapsed t
+  "If non-nil, indicates that threads should be
+folded (collapsed) in VM summary windows.")
+(make-variable-buffer-local 'vm-summary-threads-collapsed)
 
 (defvar vm-summary-mode-map vm-mode-map
   "Keymap for VM Summary mode")
@@ -4959,6 +5183,7 @@ Its parent keymap is mail-mode-map.")
 (defun vm-folder-history (&rest ignored) t)
 
 ;; internal vars
+(defvar vm-skip-collapsed-sub-threads t)
 (defvar vm-folder-type nil)
 (make-variable-buffer-local 'vm-folder-type)
 (defvar vm-folder-access-method nil)
@@ -4989,18 +5214,27 @@ Its parent keymap is mail-mode-map.")
 (defvar vm-folders-summary-spool-hash nil)
 (defvar vm-folders-summary-folder-hash nil)
 (defvar vm-folders-summary-buffer nil)
-(defvar vm-mail-buffer nil)
+(defvar vm-mail-buffer nil
+  "The folder buffer of the current buffer.")
 (make-variable-buffer-local 'vm-mail-buffer)
-(defvar vm-fetch-buffer nil)
+(defvar vm-fetch-buffer nil
+  "The fetch buffer, where message bodies are fetched, for the current
+folder.  (Not in use.)")
 (make-variable-buffer-local 'vm-fetch-buffer)
-(defvar vm-presentation-buffer nil)
+(defvar vm-presentation-buffer nil
+  "The message presentation buffer for the current folder.")
 (make-variable-buffer-local 'vm-presentation-buffer)
-(defvar vm-presentation-buffer-handle nil)
+(defvar vm-presentation-buffer-handle nil
+  "The message presentation buffer for the current folder.")
 (make-variable-buffer-local 'vm-presentation-buffer-handle)
-(defvar vm-mime-decoded nil)
+(defvar vm-mime-decoded nil
+  "The MIME decoding state of the current folder.")
 (make-variable-buffer-local 'vm-mime-decoded)
-(defvar vm-summary-buffer nil)
+(defvar vm-summary-buffer nil
+  "The summary buffer for the current folder.")
 (make-variable-buffer-local 'vm-summary-buffer)
+(defvar vm-user-interaction-buffer nil
+  "The buffer in which the current VM command was invoked.")
 (defvar vm-summary-pointer nil)
 (make-variable-buffer-local 'vm-summary-pointer)
 (defvar vm-system-state nil)
@@ -5306,6 +5540,7 @@ header line in email messages,
 
 (defconst vm-supported-sort-keys
   '("date" "reversed-date"
+    "activity" "reversed-activity"
     "author" "reversed-author"
     "full-name" "reversed-full-name"
     "subject" "reversed-subject"
@@ -5359,6 +5594,8 @@ header line in email messages,
     ("unwritten")
     ("unedited")
     ("unmarked")
+    ("expanded")
+    ("collapsed")
     ("spam-word")
     ("spam-score")
     ))
@@ -5414,6 +5651,8 @@ header line in email messages,
     (unmarked . vm-vs-unmarked)
     (spam-word . vm-vs-spam-word)
     (spam-score . vm-vs-spam-score)
+    (expanded . vm-vs-expanded)
+    (collapsed . vm-vs-collapsed)
     ))
 
 (defconst vm-supported-attribute-names
@@ -5434,11 +5673,14 @@ header line in email messages,
     "unfiled"
     "unwritten"
     "unedited"
+    "expanded"
+    "collapsed"
     ;; for babyl cogniscenti
     "recent"
     "unseen"
     "answered"
-    "unanswered"))
+    "unanswered"
+    ))
 
 (defvar vm-key-functions nil)
 (defconst vm-digest-type-alist '(("rfc934") ("rfc1153") ("mime")))
@@ -5454,7 +5696,7 @@ Should be just a list of strings, not an alist or an obarray.")
 append a space to words that complete unambiguously.")
 (defconst vm-attributes-vector-length 9)
 (defconst vm-cache-vector-length 26)
-(defconst vm-softdata-vector-length 20)
+(defconst vm-softdata-vector-length 21)
 (defconst vm-location-data-vector-length 6)
 (defconst vm-mirror-data-vector-length 6)
 (defconst vm-folder-summary-vector-length 15)
@@ -5946,9 +6188,7 @@ Most addons are from `vm-rfaddons-infect-vm'.
 
 You must restart VM after a change to cause any effects."
   :group 'vm
-  :type '(set (const :tag "Enable faces in the summary buffer" 
-		     summary-faces)
-	      (const :tag "Enable shrinking of multi-line headers to one line."
+  :type '(set (const :tag "Enable shrinking of multi-line headers to one line."
 		     shrunken-headers)
 	      (const :tag "Open a line when typing in quoted text"
 		     open-line)
@@ -5970,6 +6210,14 @@ You must restart VM after a change to cause any effects."
 		     auto-delete-message-external-body)
 	      (const :tag "Enable all addons" t)))
 
+(defcustom vm-summary-enable-faces nil
+  "A non-NIL value enables the use of faces in the summary buffer.
+
+You should set this variable in the init-file.  For interactive use,
+the command `vm-summary-faces-mode' should be used."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-disable-modes-before-encoding 
   '(auto-fill-mode font-lock-mode ispell-minor-mode flyspell-mode
 		   abbrev-mode adaptive-fill-mode)
@@ -5978,6 +6226,11 @@ These modes may slow down (font-lock and *spell) encoding and may
 cause trouble (abbrev-mode)."
   :group 'vm
   :type '(repeat symbol))
+
+(defvar vm-summary-faces-mode nil
+  "Records whether VM Summary Faces mode is in use.")
+
+(make-obsolete 'vm-summary-faces-mode 'vm-summary-enable-faces "8.1.93a")
 
 (defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
   "*A list of headers to hide in `vm-mail-mode'."
@@ -5988,6 +6241,16 @@ cause trouble (abbrev-mode)."
                       (string "In-Reply-To")
                       (string "X-Mailer"))))
 
-(provide 'vm-vars)
+;; define this here so that the user can invoke it right away, if needed.
+
+(defun vm-load-init-file (&optional init-only)
+  (interactive "P")
+  (when (or (not vm-init-file-loaded) (interactive-p))
+    (when vm-init-file
+      (load vm-init-file (not (interactive-p)) (not (interactive-p)) t))
+    (when (and vm-preferences-file (not init-only))
+      (load vm-preferences-file t t t)))
+  (setq vm-init-file-loaded t)
+  (vm-display nil nil '(vm-load-init-file) '(vm-load-init-file)))
 
 ;;; vm-vars.el ends here

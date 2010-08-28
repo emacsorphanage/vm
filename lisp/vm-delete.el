@@ -1,6 +1,6 @@
 ;;; vm-delete.el --- Delete and expunge commands for VM.
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -21,6 +21,8 @@
 
 ;;; Code:
 
+(provide 'vm-delete)
+
 ;;;###autoload
 (defun vm-delete-message (count)
   "Add the `deleted' attribute to the current message.
@@ -38,7 +40,7 @@ only marked messages are deleted, other messages are ignored."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-marked-or-prefixed-messages count))
@@ -47,7 +49,16 @@ only marked messages are deleted, other messages are ignored."
       (if (not (vm-deleted-flag (car mlist)))
 	  (progn
 	    (vm-set-deleted-flag (car mlist) t)
-	    (vm-increment del-count)))
+	    (vm-increment del-count)
+	    ;; The following is a temporary fix.  To be absorted into
+	    ;; vm-update-summary-and-mode-line eventually.
+	    (when (and vm-summary-enable-thread-folding
+		       vm-summary-show-threads
+		       (not (and vm-enable-thread-operations
+				 (eq count 1)))
+		       (> (vm-th-thread-count (car mlist)) 1))
+	      (with-current-buffer vm-summary-buffer
+		(vm-expand-thread (vm-th-thread-root (car mlist)))))))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-delete-message vm-delete-message-backward)
 		(list this-command))
@@ -85,7 +96,7 @@ only marked messages are undeleted, other messages are ignored."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-marked-or-prefixed-messages count))
@@ -123,7 +134,7 @@ negative arugment means move backward, a zero argument means
 don't move at all."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((subject (vm-so-sortable-subject (car vm-message-pointer)))
 	(mp vm-message-list)
@@ -153,6 +164,44 @@ don't move at all."
 	(vm-next-message arg t executing-kbd-macro))))
 
 ;;;###autoload
+(defun vm-kill-thread-subtree (&optional arg)
+  "Delete all messages in the thread tree rooted at the current message.
+
+The optional prefix argument ARG specifies the direction to move
+if vm-move-after-killing is non-nil.  The default direction is
+forward.  A positive prefix argument means move forward, a
+negative arugment means move backward, a zero argument means
+don't move at all."
+  (interactive "p")
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-error-if-folder-read-only)
+  (vm-build-threads-if-unbuilt)
+  (let ((list (vm-th-thread-subtree
+	       (vm-th-thread-symbol (car vm-message-pointer))))
+	(n 0))
+    (while list
+      (unless (vm-deleted-flag (car list))
+	(vm-set-deleted-flag (car list) t)
+	(vm-increment n))
+      (setq list (cdr list)))
+    (when (interactive-p)
+      (if (zerop n)
+	  (message "No messages deleted.")
+	(message "%d message%s deleted" n (if (= n 1) "" "s")))))
+  (vm-display nil nil '(vm-kill-thread-subtree) '(vm-kill-thread-subtree))
+  (vm-update-summary-and-mode-line)
+  (cond ((or (not (numberp arg)) (> arg 0))
+	 (setq arg 1))
+	((< arg 0)
+	 (setq arg -1))
+	(t (setq arg 0)))
+  (if vm-move-after-killing
+      (let ((vm-circular-folders (and vm-circular-folders
+				      (eq vm-move-after-killing t))))
+	(vm-next-message arg t executing-kbd-macro))))
+
+;;;###autoload
 (defun vm-delete-duplicate-messages ()
 "Delete duplicate messages in the current folder.
 This command works by comparing the message ID's.  Messages that
@@ -165,7 +214,7 @@ When invoked on marked messages (via `vm-next-command-uses-marks'),
 only duplicate messages among the marked messages are deleted,
 unmarked messages are not hashed or considerd for deletion."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(table (make-vector 103 0))
@@ -210,7 +259,7 @@ When invoked on marked messages (via `vm-next-command-uses-marks'),
 only duplicate messages among the marked messages are deleted,
 unmarked messages are not hashed or considerd for deletion."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist vm-message-list)
@@ -260,7 +309,7 @@ When invoked on marked messages (via `vm-next-command-uses-marks'),
 only messages both marked and deleted are expunged, other messages are
 ignored."
   (interactive)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   ;; do this so we have a clean slate.  code below depends on the
   ;; fact that the numbering redo start point begins as nil in
@@ -447,8 +496,8 @@ ignored."
           (vm-sort-messages vm-ml-sort-keys))
       (if (not shaddap)
 	  (message "Deleted messages expunged.")))
-     (t (message "No messages are flagged for deletion.")))))
-
-(provide 'vm-delete)
+     (t (message "No messages are flagged for deletion."))))
+  (when vm-debug
+    (vm-th-check-thread-integrity)))
 
 ;;; vm-delete.el ends here

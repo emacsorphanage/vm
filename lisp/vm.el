@@ -1,6 +1,6 @@
 ;;; vm.el --- Entry points for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1994-1998, 2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -25,9 +25,46 @@
 ;; This file was vm-startup.el!
 
 ;;; Code:
+
+(provide 'vm)
+
 (defvar enable-multibyte-characters)
 
-(require 'vm-version)
+;; For function declarations
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-minibuf)
+  (require 'vm-menu)
+  (require 'vm-toolbar)
+  (require 'vm-mouse)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-crypto)
+  (require 'vm-mime)
+  (require 'vm-virtual)
+  (require 'vm-pop)
+  (require 'vm-imap)
+  (require 'vm-sort)
+  (require 'vm-reply)
+)
+
+;; vm-xemacs.el is a non-existent file to fool the Emacs 23 compiler
+(declare-function vm-xemacs-set-face-foreground "vm-xemacs.el" 
+		  (face color &optional locale tag-set how-to-add))
+(declare-function vm-xemacs-set-face-background "vm-xemacs.el" 
+		  (face color &optional locale tag-set how-to-add))
+(declare-function get-coding-system "vm-xemacs.el" (name))
+(declare-function find-face "vm-xemacs.el" (face-or-name))
+
+(declare-function vm-rfaddons-infect-vm "vm-rfaddons.el" 
+		  (&optional sit-for option-list exclude-option-list))
+(declare-function vm-summary-faces-mode "vm-summary-faces.el" 
+		  (&optional arg))
 
 ;; Ensure that vm-autoloads is loaded in case the user is using VM 7.x
 ;; autoloads 
@@ -810,7 +847,7 @@ vm-visit-virtual-folder.")
 				     (vm-menu-mode-menu)))
 	  (setq blurb (vm-emit-totals-blurb))
 	  (if vm-summary-show-threads
-	      (vm-sort-messages "thread"))
+	      (vm-sort-messages "activity"))
 	  (if bookmark
 	      (let ((mp vm-message-list))
 		(while mp
@@ -992,7 +1029,7 @@ summary buffer to select a folder."
        (vm-check-for-killed-folder))
   (save-excursion
     (and vm-mail-buffer
-	 (vm-select-folder-buffer))
+	 (vm-select-folder-buffer-and-validate 0 (interactive-p)))
     (vm-check-for-killed-summary)
     (let ((folder-buffer (and (eq major-mode 'vm-mode)
 			      (current-buffer)))
@@ -1088,7 +1125,8 @@ summary buffer to select a folder."
           varlist (sort varlist
                         (lambda (v1 v2)
                           (string-lessp (format "%s" v1) (format "%s" v2)))))
-    (let ((vars-to-delete 
+    (let ((fill-column (1- (window-width)))	; turn off auto-fill
+	  (vars-to-delete 
 	   '(vm-shrunken-headers-keymap	; big and wasteful
 	     vm-auto-folder-alist	; a bit private
 	     vm-mail-folder-alist	; ditto
@@ -1159,11 +1197,8 @@ summary buffer to select a folder."
 - You may attach sample messages or attachments that can be used to
   reproduce the problem.
 
-- Mail sent to vm@lists.launchpad.net is archived on the web at
-https://lists.launchpad.net/vm.  If it is not appropriate for
-your report to be archived, please email it to one or more of the
-members of the team listed at https://launchpad.net/~vm, all of whom
-have email addresses at launchpad.net.
+- Mail sent to viewmail-bugs@nongnu.org is only viewed by VM
+  maintainers and it is not made public.  
 
 - You may remove these instructions and other stuff which is unrelated
   to the bug from your message.
@@ -1175,23 +1210,12 @@ have email addresses at launchpad.net.
   sensitive information by xxxx."))
 	)
       (goto-char (point-min))
-      (mail-position-on-field "Subject")
-      (insert "VM-BUG: "))))
+      (mail-position-on-field "Subject"))))
 
 (defun vm-edit-init-file ()
   "Edit the `vm-init-file'."
   (interactive)
   (find-file-other-frame vm-init-file))
-
-(defun vm-load-init-file (&optional interactive)
-  (interactive "p")
-  (if (or (not vm-init-file-loaded) interactive)
-      (progn
-	(and vm-init-file
-	     (load vm-init-file (not interactive) (not interactive) t))
-	(and vm-preferences-file (load vm-preferences-file t t t))))
-  (setq vm-init-file-loaded t)
-  (vm-display nil nil '(vm-load-init-file) '(vm-load-init-file)))
 
 (defun vm-check-emacs-version ()
   "Checks the version of Emacs and gives an error if it is unsupported."
@@ -1214,6 +1238,21 @@ have email addresses at launchpad.net.
 	      void-variable
 	      invalid-function
 	     ))))
+
+(defun vm-toggle-thread-operations ()
+  "Toggle the variable `vm-enable-thread-operations'.
+
+If enabled, VM operations on root messages of collapsed threads
+will apply to all the messages in the threads.  If disabled, VM
+operations only apply to individual messages.
+
+\"Operations\" in this context include deleting, saving, setting
+attributes, adding/deleting labels etc."
+  (interactive)
+  (setq vm-enable-thread-operations (not vm-enable-thread-operations))
+  (if vm-enable-thread-operations
+      (message "Thread operations enabled")
+    (message "Thread operations disabled")))
 
 (defvar vm-postponed-folder)
 
@@ -1253,6 +1292,7 @@ draft messages."
         (require 'vm-page)
         (require 'vm-mouse)
         (require 'vm-summary)
+	(require 'vm-summary-faces)
         (require 'vm-undo)
         (require 'vm-mime)
         (require 'vm-folder)
@@ -1270,11 +1310,7 @@ draft messages."
         (add-hook 'kill-emacs-hook 'vm-garbage-collect-global)
 	(vm-load-init-file)
 	(when vm-enable-addons
-	  (vm-rfaddons-infect-vm 0 vm-enable-addons)
-	  (when (or (eq t vm-enable-addons)
-                    (member 'summary-faces vm-enable-addons))
-	    (require 'vm-summary-faces)
-	    (vm-summary-faces-mode 1)))
+	  (vm-rfaddons-infect-vm 0 vm-enable-addons))
 	(if (not vm-window-configuration-file)
 	    (setq vm-window-configurations vm-default-window-configuration)
 	  (or (vm-load-window-configurations vm-window-configuration-file)
@@ -1304,27 +1340,26 @@ draft messages."
 	;; default value of vm-mime-button-face is 'gui-button-face
 	;; this face doesn't exist by default in FSF Emacs 19.34.
 	;; Create it and initialize it to something reasonable.
-	(if (and vm-fsfemacs-p (featurep 'faces)
-		 (not (facep 'gui-button-face)))
-	    (progn
-	      (make-face 'gui-button-face)
-	      (cond ((eq window-system 'x)
-		     (vm-fsfemacs-set-face-foreground 'gui-button-face "black")
-		     (vm-fsfemacs-set-face-background 'gui-button-face "gray75"))
-		    (t
-		     ;; use primary color names, since fancier
-		     ;; names may not be valid.
-		     (vm-fsfemacs-set-face-foreground 'gui-button-face "white")
-		     (vm-fsfemacs-set-face-background 'gui-button-face "red")))))
+	(when (and vm-fsfemacs-p (featurep 'faces)
+		   (not (facep 'gui-button-face)))
+	  (make-face 'gui-button-face)
+	  (cond ((eq window-system 'x)
+		 (vm-fsfemacs-set-face-foreground 'gui-button-face "black")
+		 (vm-fsfemacs-set-face-background 'gui-button-face "gray75"))
+		(t
+		 ;; use primary color names, since fancier
+		 ;; names may not be valid.
+		 (vm-fsfemacs-set-face-foreground 'gui-button-face "white")
+		 (vm-fsfemacs-set-face-background 'gui-button-face "red"))))
 	;; gui-button-face might not exist under XEmacs either.
 	;; This can happen if XEmacs is built without window
 	;; system support.  In any case, create it anyway.
 	(when (and vm-xemacs-p (not (find-face 'gui-button-face)))
 	  (make-face 'gui-button-face)
 	  (vm-xemacs-set-face-foreground 'gui-button-face "black" nil '(win))
-	  (vm-xemacs-set-background 'gui-button-face "gray75" nil '(win))
-	  (vm-xemacs-set-foreground 'gui-button-face "white" nil '(tty))
-	  (vm-xemacs-set-background 'gui-button-face "red" nil '(tty)))
+	  (vm-xemacs-set-face-background 'gui-button-face "gray75" nil '(win))
+	  (vm-xemacs-set-face-foreground 'gui-button-face "white" nil '(tty))
+	  (vm-xemacs-set-face-background 'gui-button-face "red" nil '(tty)))
 	(and (vm-mouse-support-possible-p)
 	     (vm-mouse-install-mouse))
 	(and (vm-menu-support-possible-p)
@@ -1360,7 +1395,5 @@ draft messages."
 (autoload 'tapestry-remove-frame-parameters "tapestry")
 (autoload 'vm-easy-menu-define "vm-easymenu" nil 'macro)
 (autoload 'vm-easy-menu-do-define "vm-easymenu")
-
-(provide 'vm)
 
 ;;; vm.el ends here

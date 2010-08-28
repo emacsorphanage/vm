@@ -1,6 +1,6 @@
 ;;; vm-digest.el --- Message encapsulation
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989, 1990, 1993, 1994, 1997, 2001 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-digest)
 
 ;;;###autoload
 (defun vm-no-frills-encapsulate-message (m keep-list discard-regexp)
@@ -130,7 +132,8 @@ the Content-Type header.  Otherwise nil is returned."
 	    (insert "\n--" boundary "--\n")
 	    (while boundary-positions
 	      (goto-char (car boundary-positions))
-	      (insert "\n--" boundary "\n\n")
+	      (insert "\n--" boundary "\n")
+	      (insert "Content-Type: message/rfc822\n\n")
 	      (setq boundary-positions (cdr boundary-positions)))
 	    (goto-char start)
 	    (setq n (length message-list))
@@ -586,7 +589,7 @@ all marked messages will be burst."
 	type ))))
   (or digest-type (setq digest-type vm-digest-burst-type))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-marked-or-prefixed-messages 1)))
     ;; (vm-load-message)
@@ -691,7 +694,7 @@ all marked messages will be burst."
 	type ))))
   (or digest-type (setq digest-type vm-digest-burst-type))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-marked-or-prefixed-messages 1))
 	(work-buffer nil))
@@ -788,7 +791,5 @@ Returns either \"rfc934\", \"rfc1153\" or \"mime\"."
 			(vm-match-header)))
 	    (vm-matched-header-contents)
 	  nil )))))
-
-(provide 'vm-digest)
 
 ;;; vm-digest.el ends here

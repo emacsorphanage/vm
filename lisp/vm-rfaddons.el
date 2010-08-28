@@ -1,6 +1,6 @@
 ;;; vm-rfaddons.el --- a collections of various useful VM helper functions
-;;;
-;;; This file is an add-on for VM
+;;
+;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 1999-2006 Robert Widhopf-Fenk
 ;;
@@ -57,6 +57,8 @@
 ;;
 ;;; Code:
 
+(provide 'vm-rfaddons)
+
 (defgroup vm nil
   "VM"
   :group 'mail)
@@ -67,10 +69,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-when-compile
-  (require 'vm-version)
-  (require 'vm-message)
-  (require 'vm-macro)
-  (require 'vm-vars)
   (require 'cl)
   (require 'advice)
   (vm-load-features '(regexp-opt bbdb bbdb-vm gnus-group)))
@@ -93,9 +91,9 @@
 (defun vm-rfaddons-infect-vm (&optional sit-for
                                         option-list exclude-option-list)
   "This function will setup the key bindings, advices and hooks
-necessary to use all the function of vm-rfaddons.el!
+necessary to use all the function of vm-rfaddons.el.
 
-SIT-FOR specifies the number of seconds to display the infection message!
+SIT-FOR specifies the number of seconds to display the infection message.
 The OPTION-LIST can be use to select individual option.
 The EXCLUDE-OPTION-LIST can be use to exclude individual option.
 
@@ -223,13 +221,13 @@ or do the binding and advising on your own."
   ;; Shrunken header handlers
   (vm-rfaddons-check-option
    'shrunken-headers option-list
-   (if (not (boundp 'vm-always-use-presentation-buffer))
+   (if (not (boundp 'vm-always-use-presentation))
        (message "Shrunken-headers do NOT work in standard VM!")
      ;; We would corrupt the folder buffer for messages which are
      ;; not displayed by a presentation buffer, thus we must ensure
      ;; that a presentation buffer is used.  The visibility-widget
      ;; would cause "*"s to be inserted into the folder buffer.
-     (setq vm-always-use-presentation-buffer t)
+     (setq vm-always-use-presentation t)
      (defadvice vm-preview-current-message
        (after vm-shrunken-headers-pcm activate)
        "Shrink headers when previewing a message."
@@ -251,7 +249,7 @@ or do the binding and advising on your own."
 ;; This is not needed any more becaue it is in the core  
 ;;   (vm-rfaddons-check-option
 ;;    'save-all-attachments option-list
-;;    (define-key vm-mode-map "\C-c\C-s" 'vm-mime-save-all-attachments))
+;;    (define-key vm-mode-map "\C-c\C-s" 'vm-save-all-attachments))
 
   ;; other experimental options ---------------------------------------------
   ;; Now take care of automatic saving of attachments
@@ -285,7 +283,7 @@ or do the binding and advising on your own."
     (ding)
     (sit-for 3))
   
-  (message "VM-RFADDONS: VM is now infected.")
+  (message "VM-RFADDONS: Options loaded.")
   (vm-sit-for (or sit-for 2)))
 
 (defun rf-vm-su-labels (m)
@@ -311,7 +309,7 @@ or do the binding and advising on your own."
 This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (if (null vm-presentation-buffer)
       (if to-all
           (vm-followup-include-text count)
@@ -429,7 +427,7 @@ This does not work when replying to multiple messages."
                    d))))
 
   (switch-to-buffer folder-name)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-summarize)
   (let ((this-command 'vm-scroll-backward))
     (vm-display nil nil '(vm-scroll-forward vm-scroll-backward)
@@ -560,11 +558,11 @@ Subject header."
           (setq end (point))
           (if (re-search-backward "^Subject:" (point-min) t)
               (setq start (point))
-            (error "Could not find end of Subject header start!"))
+            (error "Could not find end of Subject header start"))
           (goto-char start)
           (if (not (re-search-forward (regexp-quote vm-reply-subject-prefix)
                                       end t))
-              (error "Cound not find vm-reply-subject-prefix `%s' in header!"
+              (error "Cound not find vm-reply-subject-prefix `%s' in header"
                      vm-reply-subject-prefix)
             (goto-char (match-end 0))
             (skip-chars-backward ": \t")
@@ -715,11 +713,11 @@ and which should return t if the return receipts should be sent."
 
 (defun vm-handle-return-receipt ()
   "Generate a reply to the current message if it requests a return receipt
-and has not been replied so far!
+and has not been replied so far.
 See the variable `vm-handle-return-receipt-mode' for customization."
   (interactive)
   (save-excursion
-    (vm-select-folder-buffer-and-validate)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (let* ((msg (car vm-message-pointer))
            (sender (vm-get-header-contents msg  "Return-Receipt-To:"))
            (mail-signature nil)
@@ -1033,7 +1031,7 @@ This will be done according to `vm-mime-auto-save-all-attachments-subdir'."
   (let ((subdir (vm-mime-auto-save-all-attachments-subdir
                  (vm-real-message-of msg))))
     (if (not vm-mime-attachment-save-directory)
-        (error "Set `vm-mime-attachment-save-directory' for autosaving of attachments!")
+        (error "Set `vm-mime-attachment-save-directory' for autosaving of attachments")
       (if subdir
           (if (string-match "/$" vm-mime-attachment-save-directory)
               (concat vm-mime-attachment-save-directory subdir)
@@ -1056,9 +1054,9 @@ save attachments.
       nil
     (let ((vm-mime-auto-save-all-attachments-avoid-recursion t))
       (vm-check-for-killed-folder)
-      (vm-select-folder-buffer-and-validate)
+      (vm-select-folder-buffer-and-validate 1 (interactive-p))
       
-      (vm-mime-save-all-attachments
+      (vm-save-all-attachments
        count
        'vm-mime-auto-save-all-attachments-path)
 
@@ -1068,14 +1066,14 @@ save attachments.
 
 ;;;###autoload
 (defun vm-mime-auto-save-all-attachments-delete-external (msg)
-  "Deletes the external attachments created by `vm-mime-save-all-attachments'.
+  "Deletes the external attachments created by `vm-save-all-attachments'.
 You may want to use this function in order to get rid of the external files
 when deleting a message.
 
 See the advice in `vm-rfaddons-infect-vm'."
   (interactive "")
   (vm-check-for-killed-folder)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (setq msg (or msg (car vm-message-pointer)))
   (if msg 
       (let ((o (vm-mm-layout msg))
@@ -1190,7 +1188,7 @@ headers."
 
 ;;;###autoload
 (defun vm-shrunken-headers-toggle-this-mouse (&optional event)
-  "Toggle display of shrunken headers!"
+  "Toggle display of shrunken headers."
   (interactive "e")
   (mouse-set-point event)
   (end-of-line)
@@ -1204,7 +1202,7 @@ headers."
 
 ;;;###autoload
 (defun vm-shrunken-headers-toggle-this ()
-  "Toggle display of shrunken headers!"
+  "Toggle display of shrunken headers."
   (interactive)
   
   (save-excursion
@@ -1486,13 +1484,13 @@ and add an \"%0UA\" to your `vm-summary-format'."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;###autoload
 (defun vm-delete-quit ()
-  "Delete mails and quit.  Expunge only if it's not the primary inbox!"
+  "Delete mails and quit.  Expunge only if it's not the primary inbox."
   (interactive)
   (save-excursion
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-and-validate 0 (interactive-p))
     (if (and buffer-file-name
              (string-match (regexp-quote vm-primary-inbox) buffer-file-name))
-        (message "No auto-expunge for folder `%s'!" buffer-file-name)
+        (message "No auto-expunge for folder `%s'" buffer-file-name)
       (condition-case nil
           (vm-expunge-folder)
         (error nil)))
@@ -1622,7 +1620,7 @@ B and E are the beginning and end of the marked region or the current line."
 ;;;###autoload
 (defun vm-save-message-preview (file)
   "Save preview of a message in FILE.
-It saves the decoded message and not the raw message like `vm-save-message'!"
+It saves the decoded message and not the raw message like `vm-save-message'"
   (interactive
    ;; protect value of last-command
    (let ((last-command last-command)
@@ -1643,7 +1641,7 @@ It saves the decoded message and not the raw message like `vm-save-message'!"
      (list filename)))
     (save-excursion
       (vm-follow-summary-cursor)
-      (vm-select-folder-buffer-and-validate 1)
+      (vm-select-folder-buffer-and-validate 1 (interactive-p))
       
       (if (and (boundp 'vm-mail-buffer) (symbol-value 'vm-mail-buffer))
           (set-buffer (symbol-value 'vm-mail-buffer))
@@ -1860,7 +1858,7 @@ not end the comment.  Blank lines do not get comments."
 (defun vm-isearch-presentation ()
   "Switched to the presentation or preview buffer and starts isearch."
   (interactive)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (let ((target (or vm-presentation-buffer (current-buffer))))
     (if (get-buffer-window-list target)
         (select-window (car (get-buffer-window-list target)))
@@ -1965,6 +1963,4 @@ calls."
       (smtpmail-send-it))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(provide 'vm-rfaddons)
-
 ;;; vm-rfaddons.el ends here

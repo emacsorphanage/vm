@@ -1,6 +1,6 @@
 ;;; vm-motion.el --- Commands to move around in a VM folder
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-motion)
+
 (require 'vm-vars)
 
 (defun vm-record-and-change-message-pointer (old new)
@@ -50,7 +53,7 @@ given."
 	     (vm-read-number "Go to message: "))))))
   (if (null n)
       ()				; nil means work has been done already
-    (vm-select-folder-buffer-and-validate 1)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (vm-display nil nil '(vm-goto-message) '(vm-goto-message))
     (let ((cons (nthcdr (1- n) vm-message-list)))
       (if (null cons)
@@ -61,17 +64,18 @@ given."
 	(vm-preview-current-message)
 	;;(message "start of message you want is: %s"
 	;; (vm-su-start-of (car vm-message-pointer)))
-	(if (get-text-property 
-	     (+ (vm-su-start-of (car vm-message-pointer)) 2)
-	     'invisible vm-summary-buffer)
-	    (vm-expand-thread))
+	(if (and vm-summary-show-threads
+		 (get-text-property 
+		  (+ (vm-su-start-of (car vm-message-pointer)) 2)
+		  'invisible vm-summary-buffer))
+	    (vm-expand-thread (vm-th-thread-root (car vm-message-pointer))))
 	))))
 
 ;;;###autoload
 (defun vm-goto-message-last-seen ()
   "Go to the message last previewed."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-display nil nil '(vm-goto-message-last-seen)
 	      '(vm-goto-message-last-seen))
   (if vm-last-message-pointer
@@ -85,7 +89,7 @@ given."
   "Go to the parent of the current message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-build-threads-if-unbuilt)
   (vm-display nil nil '(vm-goto-parent-message)
 	      '(vm-goto-parent-message))
@@ -130,6 +134,7 @@ given."
   (if skip-dogmatically
       (or (and vm-skip-deleted-messages
 	       (vm-deleted-flag (car mp)))
+	  (vm-should-skip-hidden-message mp)
 	  (and vm-skip-read-messages
 	       (or (vm-deleted-flag (car mp))
 		   (not (or (vm-new-flag (car mp))
@@ -138,12 +143,23 @@ given."
 	       (null (vm-mark-of (car mp)))))
     (or (and (eq vm-skip-deleted-messages t)
 	     (vm-deleted-flag (car mp)))
+	(vm-should-skip-hidden-message mp)
 	(and (eq vm-skip-read-messages t)
 	     (or (vm-deleted-flag (car mp))
 		 (not (or (vm-new-flag (car mp))
 			  (vm-unread-flag (car mp))))))
 	(and (eq last-command 'vm-next-command-uses-marks)
 	     (null (vm-mark-of (car mp)))))))
+
+(defun vm-should-skip-hidden-message (mp)
+  (and vm-summary-buffer
+       (with-current-buffer vm-summary-buffer
+	 (and vm-skip-collapsed-sub-threads
+	      vm-summary-enable-thread-folding
+	      vm-summary-show-threads
+	      (> (vm-th-thread-indentation (car mp)) 0)
+	      (vm-summary-collapsed-root-p (vm-th-thread-root (car mp)))
+	      (get-text-property (vm-su-start-of (car mp)) 'invisible)))))
 
 ;;;###autoload
 (defun vm-next-message (&optional count retry signal-errors)
@@ -171,7 +187,7 @@ this command 'sees' marked messages as it moves."
   ;;(message "running vm next message")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   ;; include other commands that call vm-next-message so that the
   ;; correct window configuration is applied for these particular
   ;; non-interactive calls.
@@ -205,24 +221,16 @@ this command 'sees' marked messages as it moves."
 			(setq count 1)
 		      ;; reset for next pass
 		      (setq oldmp vm-message-pointer))))
-		(if (not (and vm-summary-thread-folding 
-			      vm-summary-show-threads 
-			      (get-text-property 
-			       (vm-su-start-of (car vm-message-pointer))
-			       'invisible vm-summary-buffer)))
-		    (vm-decrement count))
-		))
+	      (if (not (vm-should-skip-hidden-message vm-message-pointer))
+		  (vm-decrement count))))
 	(beginning-of-folder (setq error 'beginning-of-folder))
 	(end-of-folder (setq error 'end-of-folder))))
      (t
       (condition-case ()
 	  (progn	    
 	    (vm-move-message-pointer direction)
-	    (while (or (and (not (eq oldmp vm-message-pointer))
-			    (vm-should-skip-message vm-message-pointer t))
-		       (get-text-property 
-			(vm-su-start-of (car vm-message-pointer))
-			'invisible vm-summary-buffer))
+	    (while (and (not (eq oldmp vm-message-pointer))
+			(vm-should-skip-message vm-message-pointer t))
 	      (vm-move-message-pointer direction))
 	    ;; Retry the move if we've gone a complete circle and
 	    ;; retries are allowed and there are other messages
@@ -293,7 +301,7 @@ ignored."
   (or count (setq count 1))
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 1 t)
   (vm-display nil nil '(vm-previous-message) '(vm-previous-message))
   (vm-next-message (- count) retry signal-errors))
 
@@ -303,25 +311,24 @@ ignored."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-display nil nil '(vm-next-message-no-skip)
 	      '(vm-next-message-no-skip))
-
-  (if (and vm-summary-thread-folding 
-	   vm-summary-show-threads
-	   vm-summary-thread-folding-on-motion)
-      (let ((m nil))
-	(set-buffer vm-summary-buffer)
-	(setq m (get-text-property (+ (point) 3) 'vm-message))
-	(when (< (+ (vm-su-end-of m) 3) (buffer-size))
-	  (if (get-text-property (+ (vm-su-end-of m) 3) 'invisible)
-	      (vm-expand-thread))
-	  (if (not (get-text-property (+ (vm-su-end-of m) 3) 'thread-root))
-	      (vm-collapse-thread t)))
-	))
-  
+  (when (and vm-summary-enable-thread-folding
+	     vm-summary-show-threads
+	     vm-summary-thread-folding-on-motion)    
+    (with-current-buffer vm-summary-buffer
+      (let ((msg (vm-summary-message-at-point))
+	    (root (vm-th-thread-root (vm-summary-message-at-point))))
+	;; if last message collapse (and do not move)
+	(if (= (string-to-number (vm-number-of msg))
+	       (+ (string-to-number (vm-number-of root)) 
+		  (- (vm-th-thread-count root) 1)))
+	    (vm-collapse-thread t)))))
   (let ((vm-skip-deleted-messages nil)
-	(vm-skip-read-messages nil))
+	(vm-skip-read-messages nil)
+	(vm-skip-collapsed-sub-threads 
+	 (not vm-summary-thread-folding-on-motion)))
     (vm-next-message count nil t)))
 
 ;; backward compatibility
@@ -333,27 +340,22 @@ ignored."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-display nil nil '(vm-previous-message-no-skip)
 	      '(vm-previous-message-no-skip))
-
-  (if (and vm-summary-thread-folding 
-	   vm-summary-show-threads
-	   vm-summary-thread-folding-on-motion)
-      (let ((m nil))
-	(set-buffer vm-summary-buffer)
-	(setq m (get-text-property (+ (point) 3) 'vm-message))
-	(if (> (- (vm-su-start-of m) 3) 0)
-	    (if (get-text-property (- (vm-su-start-of m) 3) 'invisible) 
-		(save-excursion
-		  (goto-char (- (vm-su-start-of m) 4))
-		  (vm-expand-thread))))
-	(if (not (get-text-property (+ (point) 3) 'thread-root))
-	    (vm-collapse-thread))
-	))
-
+  (when (and vm-summary-enable-thread-folding
+	     vm-summary-show-threads
+	     vm-summary-thread-folding-on-motion)    
+    (with-current-buffer vm-summary-buffer
+      (let ((msg (vm-summary-message-at-point))
+	    (root (vm-th-thread-root (vm-summary-message-at-point))))
+	;; if root message collapse (moving up)
+	(if (eq msg root)
+	    (vm-collapse-thread t)))))
   (let ((vm-skip-deleted-messages nil)
-	(vm-skip-read-messages nil))
+	(vm-skip-read-messages nil)
+	(vm-skip-collapsed-sub-threads 
+	 (not vm-summary-thread-folding-on-motion)))
     (vm-previous-message count)))
 
 ;; backward compatibility
@@ -365,7 +367,7 @@ ignored."
   (interactive)
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-display nil nil '(vm-next-unread-message) '(vm-next-unread-message))
   (condition-case ()
       (let ((vm-skip-read-messages t)
@@ -381,7 +383,7 @@ ignored."
   (interactive)
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-display nil nil '(vm-previous-unread-message)
 	      '(vm-previous-unread-message))
   (condition-case ()
@@ -400,7 +402,7 @@ to the subject comparisons."
   (interactive)
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-display nil nil '(vm-next-message-same-subject)
 	      '(vm-next-message-same-subject))
   (let ((oldmp vm-message-pointer)
@@ -429,7 +431,7 @@ to the subject comparisons."
   (interactive)
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-display nil nil '(vm-previous-message-same-subject)
 	      '(vm-previous-message-same-subject))
   (let ((oldmp vm-message-pointer)
@@ -547,7 +549,5 @@ USR, 2010-03-08"
 		      ;; return non-nil so the caller will know that
 		      ;; a new message was selected.
 		      t )))))))
-
-(provide 'vm-motion)
 
 ;;; vm-motion.el ends here

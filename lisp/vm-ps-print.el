@@ -1,6 +1,6 @@
 ;;; vm-ps-print.el --- PS-printing functions for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1999 Robert Fenk
 ;;
@@ -55,14 +55,9 @@
 ;; Of course you still have to set `lpr-command' and `lpr-switches' or
 ;; `ps-lpr-command' and `ps-lpr-switches' to reasonable values!
 ;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Code:
 
-(eval-when-compile
-  (require 'vm-version)
-  (require 'vm-message)
-  (require 'vm-macro)
-  (require 'vm-vars))
+(provide 'vm-ps-print)
 
 (require 'vm-save)
 (require 'ps-print)
@@ -260,10 +255,10 @@ See: `vm-ps-print-message-function'
 for customization of the output."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (or count (setq count 1))
 
-  (let* ((vm-summary-faces-mode nil)
+  (let* ((vm-summary-enable-faces nil)
          (folder-name (vm-ps-print-message-folder-name))
          (mstart nil)
 	 (m nil)
@@ -361,7 +356,7 @@ for customization of the output."
     (interactive (list (ps-print-preprint current-prefix-arg)))
     (save-excursion
       (vm-follow-summary-cursor)
-      (vm-select-folder-buffer-and-validate 1)
+      (vm-select-folder-buffer-and-validate 1 (interactive-p))
       
       (let ((folder-name (vm-ps-print-message-folder-name))
 	    (mcount 1)
@@ -442,7 +437,5 @@ filename and formats 1 page per sheet. (JJK)"
     (vm-ps-print-message nil filename seperate)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(provide 'vm-ps-print)
 
 ;;; vm-ps-print.el ends here

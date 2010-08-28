@@ -5,6 +5,7 @@
 @direntry
 * VM: (vm).                             A mail reader.
 @end direntry
+@defindex in
 
 @iftex
 @finalout
@@ -20,7 +21,7 @@ This file documents the VM mail reader.
 @table @asis
 @item Copyright (C) 1989, 1991, 1999 Kyle E. Jones
 @item Copyright (C) 2003 - 2008 Robert Widhopf-Fenk
-@item Copyright (C) 2008 Uday S. Reddy
+@item Copyright (C) 2008 - 2010 Uday S. Reddy
 @end table
 
 Permission is granted to make and distribute verbatim copies of
@@ -56,7 +57,7 @@ are preserved on all copies.
 @end titlepage
 @page
 @ifnottex
-@node Top, Introduction,, (DIR)
+@node Top, Preface,, (DIR)
 
 This manual documents the VM mail reader, a Lisp program which runs as a
 subsystem under Emacs.  The manual is divided into the following
@@ -65,6 +66,7 @@ chapters.
 This manual corresponds to VM version @value{VERSION}.
 
 @menu
+* Preface::             What is VM?
 * Introduction::        Overview of the VM interface.
 * Starting Up::         What happens when you start VM.
 * Selecting Messages::  How to select messages for reading.
@@ -103,6 +105,7 @@ Indices:
 * Key Index::           Menus of command keys and their references.
 * Command Index::       Menus of commands and their references.
 * Variable Index::      Menus of variables and their references.
+* Internals Index::     Menus of concepts in VM Internals
 
 Rights:
 * License::             Copying and distribution terms for VM.
@@ -111,8 +114,84 @@ Rights:
 @end menu
 @end ifnottex
 
-@node Introduction, Starting Up, Top, Top
-@unnumbered Introduction
+@node Preface, Introduction, Top, Top
+@unnumbered What is VM?
+
+@cindex Rmail
+@cindex Gnus
+@cindex Gnu Emacs
+@cindex XEmacs
+@cindex Emacs
+VM, short for ``View Mail,'' is a mail reader that runs within the
+Emacs editor.  If you are already an Emacs-user, you will be working
+in a familiar environment.  You might have even used other Emacs-based
+mail readers such as Rmail and Gnus.  If you are new to Emacs, you can
+start using VM via the menubar and toolbar until you become familiar
+with it.  Then you can move on to keyboard shortcuts and advanced
+features.  You should be aware that there are two major strands of
+Emacs versions, called ``Gnu Emacs'' and ``XEmacs.''  VM works in both
+of them.  XEmacs might be a bit easier for new users due to its
+advanced support for menus and other interactive features.  Please be
+sure to try both of them before deciding on your choice.
+
+Emacs provides a powerful text-based user interface for VM users, with
+facilities for quick navigation, incremental searching , sophisticated
+customization and powerful add-on functions.  You also have all the
+editing features of Emacs available for composing mail, without having
+to switch environments.
+
+@cindex virtual folders
+@cindex archiving
+@cindex address book
+@cindex MIME
+@cindex encryption
+VM was developed by Kyle Jones starting in 1989.  It was a leader
+in mail-reading functionality by introducing features like thread
+management, virtual folders, automatic archiving of messages and a
+full treatment of MIME.  VM can interface to other packages
+available in Emacs, for remote file access, BBDB address book, GPG
+encryption and Org mode task management etc.  It can also invoke
+external utilities available on your system such as mail filtering
+tools and html rendering tools.
+
+@cindex POP
+@cindex IMAP
+@cindex mail servers
+@cindex mbox
+@cindex Thunderbird
+VM can read and store mail on your file system (both local and
+remote).  It can also handle mail stored in remote file servers
+running POP and IMAP protocols.  The local folders are stored in a
+Unix-standard @code{mbox} format, which is also used by most other
+mail readers including Thunderbird.  In fact, VM can seamlessly
+operate on Thunderbird folders and, if you use a remote mail server,
+you can view the same folders in VM and Thunderbird concurrently.  In
+addition, VM can also store mail in the @code{Babyl} format used by
+Emacs Rmail.  So, it is also possible to inter-operate with Rmail if
+you have archived mail in that format.
+
+@cindex maildir
+@cindex newsgroups
+@cindex RSS feeds
+@cindex S/MIME
+There are also a few things that VM cannot (yet) do.  It does not have
+the ability to deal with maildir folders.  It cannot be used to read
+newsgroups and RSS feeds.  It does not have its own mail filtering
+tools.  It does not have support for the Secure MIME (S/MIME)
+protocol.  However, active development of VM is continuing.  It may
+acquire some of these features before long.
+
+VM has been found most useful by professional users who must deal with
+large quantities of email in the course of their work, and deal with
+it efficiently and reliably.  We enjoy using VM and find that it is
+better than any other mail tool in its flexibility and efficiency.  We
+hope you will too!
+
+-- VM Development Team
+
+
+@node Introduction, Starting Up, Preface, Top
+@unnumbered Overview
 
 VM (View Mail) is an Emacs subsystem that allows UNIX mail to be read
 and disposed of within Emacs.  Commands exist to do the normal things
@@ -127,9 +206,11 @@ to @code{vm-user-agent}, e.g. by @kbd{M-x} @code{customize-variable} @kbd{RET}
 @code{mail-user-agent} @kbd{RET}.
 
 To invoke VM, type @kbd{M-x vm}.  VM gathers any mail that has
-arrived in your system mailbox and appends it to a file known as your
-@dfn{primary inbox}, and visits that file for reading.  @xref{Starting Up}.
-A file visited for reading by VM is called the @dfn{current folder}.
+arrived in your system mailbox and appends it to a mail folder known as your
+@dfn{primary inbox}, and visits that folder for reading.  @xref{Starting Up}.
+Depending on how you have configured VM, the primary inbox might be a
+file on your file system (in a format understood by VM) or it could be
+a folder on a remote mail server.
 
 If you type @kbd{?} in a VM folder buffer you will get some help, i.e.
 @code{vm-help} is called.
@@ -265,14 +346,33 @@ files with other folders by setting the variable
 
 @findex vm-load-init-file
 @vindex vm-init-file
+@vindex vm-preferences-file
 @kindex L
 The first time VM is started in an Emacs session, it attempts to load
 the file specified by the variable @code{vm-init-file}, normally
-@file{~/.vm}.  If present this file should contain Lisp code, much like
-the @file{.emacs} file.  Since VM has well over one hundred
-configuration variables, use of the @file{~/.vm} can considerably reduce
-clutter in the @file{.emacs} file.  You can reload this file
-by typing @kbd{L} (@code{vm-load-init-file}) from within VM.
+@file{~/.vm}.  If present this file should contain Lisp code, much
+like the @file{.emacs} file.  It should contain the ``configuration
+settings'' for VM, i.e., variables that define where the mail folders
+are stored, where the incoming mail is to be found, the various
+directories that VM needs to use for its operation and the external
+applications that VM can invoke.  You can reload this file by typing
+@kbd{L} (@code{vm-load-init-file}) from within VM.
+
+In addition, VM also attempts to load a file specified by the variable
+@code{vm-preferences-file}, normally @file{~/.vm.preferences}.  This
+file should contain your preferential settings for various VM
+variables affecting affect how VM works.  Since VM has well over one
+hundred configuration variables, use of the @file{~/.vm.preferences}
+can considerably reduce clutter in the @file{.vm} file.
+
+Invoking @code{vm-load-init-file} with a prefix argument (e.g.,
+@kbd{C-u}) causes the @code{vm-init-file} to be loaded without the
+@code{vm-preferences-file}.  VM will work with all its default
+settings for the variables.  This is similar to invoking emacs via
+@code{emacs -Q}.  If you ever find a problem with VM's behavior, it is
+a good idea to run it without the @code{vm-preferences-file} in order
+to check if the problem might have been caused by the preferences
+settings.
 
 @findex vm
 @vindex vm-primary-inbox
@@ -858,6 +958,34 @@ first time you try to retrieve mail from the mailbox.  If the password
 is valid, VM will not ask you for the password again during this Emacs
 session.
 
+@cindex EasyPG
+@cindex epa-file library
+@cindex auth-source library
+@cindex authinfo
+@cindex passwords, storing
+If your environment has the @code{EasyPG} utility and your version of Emacs
+supports it, i.e., has the @code{epa-file} and @code{auth-source} libraries,
+then you can store password information in a file such as
+@code{.authinfo.gpg}.  The @code{EasyPG} protocol allows you to store
+this information in an encrypted form so that it cannot be read by third
+parties.  Each line in the @code{.authinfo.gpg} file should be of the
+form
+
+@example
+machine HOST login USER password PASSWORD port PORT
+@end example
+where HOST, USER, PASSWORD and PORT are as detailed above.  Ensure that
+the variable @code{auth-sources} is customized to refer to your
+authinfo file.  Then VM will read passwords from the
+file and you don't need to type them in when accessing mail servers.
+
+If you have multiple login accounts on the same HOST then VM will only
+use the first login listed in the authinfo file.  To allow for multiple
+logins, the HOST entry in the authinfo line can be replaced by an
+account name as defined internally in VM.  These account names are
+defined via the variables @code{vm-pop-folder-alist} and
+@code{vm-imap-account-alist}, described below.
+
 
 @menu
 * POP Folders::         How to use mailboxes on POP servers
@@ -981,7 +1109,7 @@ that is accessible to you on the IMAP server can be specified.  For
 example, @code{becky:inbox} or @code{crickle:drafts}.
 
 @vindex vm-imap-refer-to-inbox-by-account-name
-When you visit an IMAP folder inside VM, the folder is reffered to by
+When you visit an IMAP folder inside VM, the folder is referred to by
 its folder name as it exists on the server.  For example, visiting
 @code{becky:INBOX} creates a folder called @code{INBOX} inside VM.  If
 you visit multiple accounts within a VM session, then you would end up
@@ -1206,6 +1334,7 @@ disabled by setting the value of the variable
 can also be made to skip messages that have been read; set
 @code{vm-skip-read-messages} to @code{t} to do this.
 
+@cindex prefix argument
 The commands @kbd{n} and @kbd{p} also take prefix arguments that
 specify the number of messages to move forward or backward.  If
 the magnitude of the prefix argument is greater than 1, no
@@ -1404,9 +1533,14 @@ another @key{SPC}, at which point the text preceding the delimiter will
 become hidden.  The Emacs variable @code{page-delimiter} determines what
 VM will consider to be a page delimiter.
 
+@findex vm-unread-message
+@findex vm-flag-message-read
+@findex vm-flag-message-unread
 You can ``unread'' a message (so to speak) by typing @kbd{U}
-(@code{vm-unread-message}).  The current message will be flagged
-unread.
+(@code{vm-unread-message}, also called @code{vm-flag-message-unread}).
+The current message will be flagged unread.  Conversely, you can flag
+an unread message as read by typing @kbd{.}
+(@code{vm-flag-message-read}).
 
 @cindex longlines.el
 @cindex filling paragraphs
@@ -2150,7 +2284,7 @@ future.
 @vindex vm-fetched-message-limit
 After fetching message bodies, VM stores them in the Folder buffer
 temporarily, so that repeated fetching is avoided.  The variable
-@code{vm-feched-message-limit} controls how many message bodies are
+@code{vm-fetched-message-limit} controls how many message bodies are
 stored in this way.  You can set it to an integer (10 is the default),
 or to @code{nil}, signifying that there is no limit.  All the fetched
 message bodies are flushed before folders are saved to disk.
@@ -2158,8 +2292,8 @@ message bodies are flushed before folders are saved to disk.
 @findex vm-load-message
 @findex vm-unload-message
 You can manually load message bodies into the Folder using the command
-@code{o} (@code{vm-load-message}.  The command @code{O}
-(@code{vm-unload-message}) unloads a previosly loaded message body.
+@kbd{o} (@code{vm-load-message}.  The command @kbd{O}
+(@code{vm-unload-message}) unloads a previously loaded message body.
 Both the commands can take numerical prefix arguments or operate on
 marked messages.  Note that ``loading'' message body is different from
 on demand ``fetching''.  Loaded messages are permanently stored in the
@@ -2422,7 +2556,7 @@ The variable @code{vm-mime-encode-headers-regexp} specifies which
 headers should be encoded in this way.  By default, @samp{Subject},
 @samp{Organization}, @samp{From}, @samp{To}, @samp{CC}, @samp{Bcc} and
 @samp{Resent-} header lines encoded.  The words are encoded using
-quoted-printable encoding (@code{Q}).  You can ask VM to use the base64
+quoted-printable encoding (@kbd{Q}).  You can ask VM to use the base64
 encoding by setting the variable @code{vm-mime-encode-headers-type}.
 
 @vindex vm-mime-encode-words.regexp
@@ -2510,7 +2644,7 @@ the variable @code{vm-included-mime-types-list} to a list of MIME types
 that should be covered in the included text.  The list should have
 @code{text/plain} at a minimum and could include other types such as
 @code{text/enriched} and @code{message}.  Setting the variable to nil
-returns you to the default behaviour.  Another possibe way to extract
+returns you to the default behaviour.  Another possible way to extract
 included text is to use the contents of the presentation buffer.  You
 can ask VM to do so by setting the variable
 @code{vm-include-text-from-presentation} to t.  This might be needed
@@ -2610,7 +2744,7 @@ documentation of these variables for further information.
 @findex vm-forward-message-all-headers
 The command @code{vm-forward-message-all-headers} forwards the
 message with all headers intact, irrespective of the values of these
-vaiables. 
+variables. 
 
 @vindex vm-forwarding-subject-format
 If the variable
@@ -2904,6 +3038,11 @@ messages to be undeleted.
 @item k (@code{vm-kill-subject})
 Flags all messages with the same subject as the current message (ignoring
 ``Re:'') for deletion.
+@findex vm-kill-thread-subtree
+@kindex K
+@item K (@code{vm-kill-thread-subtree})
+Flags all messages in the thread subtree of the current message for
+deletion. 
 @findex vm-delete-duplicate-messages
 @item @code{vm-delete-duplicate-messages}
 Flags duplicate messages for deletion.  The duplicate messages are
@@ -3063,7 +3202,7 @@ key sequence @kbd{M N} (@code{vm-next-command-uses-marks}).  The next VM
 command will apply to all marked messages, provided the command can be
 applied to such messages in a meaningful and useful way.  Unfortunately,
 as of this writing, this mechanism works only if the next command
-invoked is a keyboard command.  Commands invoked by @code{M-x} are
+invoked is a keyboard command.  Commands invoked by @kbd{M-x} are
 unable to access the marked messages.  So, to invoke a complex command,
 you might temporarily bind it to an unused key, e.g.,
 
@@ -3073,6 +3212,16 @@ M N C
 @end example
 
 @noindent forwards marked messages with all headers included.
+
+It is possible to use marking to execute operations on message
+threads.  For example, the sequence of key strokes:
+
+@example
+MuMTMNsMu
+@end example
+
+@noindent saves a thread of messages.  However, there are faster methods to
+operate on message threads.  @xref{Thread Operations}.
 
 @node Message Attributes, Sorting Messages, Marking Messages, Top
 @chapter Message Attributes
@@ -3189,6 +3338,7 @@ visible to other programs.
 Valid sort keys are:
 @multitable @columnfractions 0.35 0.60
 @item date @tab reversed-date
+@item activity @tab reversed-activity
 @item author @tab reversed-author
 @item subject @tab reversed-subject
 @item recipients @tab reversed-recipients
@@ -3197,6 +3347,12 @@ Valid sort keys are:
 @item physical-order @tab reversed-physical-order
 @item spam-score @tab reversed-spam-score
 @end multitable
+
+The sort key @code{date} represents the date and time at which the
+messages were sent.  The sort key @code{activity} represents the date
+of the most recent activity.  This is the default sort order used with
+threads.  @xref{Threading}.  It allows even old threads that have
+recent messages to be brought to the front.
 
 @vindex vm-subject-ignored-prefix
 @vindex vm-subject-ignored-suffix
@@ -3242,6 +3398,7 @@ that those relationships are evident.
 
 @findex vm-toggle-threads-display
 @vindex vm-summary-thread-indent-level
+@vindex vm-summary-maximum-thread-indentation
 To enable and disable threading, type @kbd{C-t}
 (@code{vm-toggle-threads-display}.  In the summary buffer related
 messages are grouped together and the subject part of the summary
@@ -3249,7 +3406,10 @@ listings of messages are indented to show hierarchical relationships.
 Parent messages are displayed before their children and children are
 indented a default two spaces to the right for each level of descendence
 from their ancestors.  The amount of indentation per level is controlled by the
-variable @code{vm-summary-thread-indent-level}.
+variable @code{vm-summary-thread-indent-level}.  The default is two
+spaces.  The variable @code{vm-summary-maximum-thread-indentation}
+says how many levels should be displayed via indentation.  The default
+is 20.
 
 @vindex vm-thread-using-subject
 Message relationships are discovered by examining References,
@@ -3272,8 +3432,17 @@ the variable in a single buffer.  Once you've started VM you should
 not change the value of this variable.  Rather you should use
 @kbd{C-t} to control the thread display.
 
-Note that threading is really a specialized form of sorting, and so the
-value of the variable @code{vm-move-messages-physically} applies.
+Unlike in previous versions of VM, threading is not a form of sorting.
+You can sort threads by the usual sort keys and the sort order will
+apply to at least the root messages of threads.  Sorting threads by
+subject, for instance, can be a quick way to find threads with similar
+subject lines.  Sorting them by date would sort them chronologically
+according to when the threads were initiated.  Sorting them activity
+is a variant of the chronological order where the dates of latest
+activity are given prominence instead of the dates of initiation.
+
+The value of the variable @code{vm-move-messages-physically} applies
+to threading just as it applies to sorting.
 
 @node Digests, Summaries, Sorting Messages, Top
 @chapter Digests
@@ -3340,8 +3509,10 @@ addresses that are substituted for @samp{%f} and @samp{%t} as part
 of summary and attribution formats.
 
 @menu
-* Summary Format::   Customizing the summary format
-* Thread Folding::   Collapsing message threads in the summary
+* Summary Format::     Customizing the summary format
+* Thread Folding::     Collapsing message threads in the summary
+* Thread Operations::  Running bulk operations on message threads
+* Summary Faces::      Decorating summary with fonts and colors
 @end menu
 
 @node Summary Format, Thread Folding, Summaries, Summaries
@@ -3390,12 +3561,12 @@ The seventh is `e' or ` ', for messages that have been edited.
 @item P
 indicator for a message with attachments.
 The variable @code{vm-summary-attachment-indicator} is the inserted
-string, by default a @code{$}. 
+string, by default a @kbd{$}. 
 @vindex vm-summary-postponed-indicator
 @item p
 indicator for a postponed message. 
 The variable @code{vm-summary-postponed-indicator} is the inserted
-string, by default a @code{P}. 
+string, by default a @kbd{P}. 
 @item c
 number of characters in message (ignoring headers)
 @item S
@@ -3493,12 +3664,13 @@ Summary lines are precomputed and cached in the folder buffer.  If you
 change the @code{vm-summary-format}, you need to force the cache to be
 updated.  You can do this by the command@code{vm-fix-my-summary!!!}.
 
+@vindex vm-restore-saved-summary-format
 Every folder can have its own summary format.  The format is written
 into the folder and saved on the disk.  When you visit the folder
 again, you can reuse the saved summary format.  Set the variable
 @code{vm-restore-saved-summary-format} to t to achieve this effect.
 
-@node Thread Folding,, Summary Format, Summaries
+@node Thread Folding, Thread Operations, Summary Format, Summaries
 @section Thread Folding
 
 A new feature in VM version 8.2 is that of ``folding'' message threads
@@ -3506,15 +3678,17 @@ in the summary window.  This feature allows you to collapse all the
 messages in a thread into a single line of the summary window, so that
 you can see a more compact summary of the folder.
 
-@vindex vm-summary-thread-folding
+@vindex vm-summary-enable-thread-folding
 @findex vm-toggle-thread
 @findex vm-expand-thread
 @findex vm-collapse-thread
+@findex vm-collapse-all-threads
+@findex vm-expand-all-threads
 Thread folding is enabled by setting the variable
-@code{vm-summary-thread-folding} to a non-nil value.  The summary
+@code{vm-summary-enable-thread-folding} to a non-nil value.  The summary
 window then has a folding indicator in the first column, with @code{-}
 for threads that are expanded and @code{+} for threads that are
-collapsed.  The command @code{T} or @code{M-t}
+collapsed.  The command @kbd{T}
 (@code{vm-toggle-thread}) allows you to expand a collapsed thread or
 collapse an expanded thread.  The commands @code{vm-expand-thread} and
 @code{vm-collapse-thread} implement the more specific versions of the
@@ -3523,7 +3697,7 @@ function.
 @vindex vm-summary-thread-folding-on-motion
 The variable @code{vm-summary-thread-folding-on-motion} allows a more
 automatic expansion/collapsing of threads.  If the variable is set to
-a non-nil value, then the usual motion commands @code{N} and @code{P}
+a non-nil value, then the usual motion commands @kbd{N} and @kbd{P}
 (@code{vm-next-message-no-skip} and
 @code{vm-previous-message-no-skip}) cause the threads to be expanded
 or collapsed as needed when you move into or out of threads.
@@ -3538,14 +3712,149 @@ message count in the thread.  This takes up 3 extra columns in the
 summary lines.  Set the variable to nil to obtain the more standard
 format of the summary.
 
-@findex vm-expand-all
-@findex vm-collapse-all
-If the variable @code{vm-summary-thread-folding} is non-nil, the
-Summary window starts out with all the threads folded.  You can
+@findex vm-expand-all-threads
+@findex vm-collapse-all-threads
+If the variable @code{vm-summary-enable-thread-folding} is non-nil,
+the Summary window starts out with all the threads folded.  You can
 selectively expand threads using the @code{vm-toggle-thread} function.
 Alternatively, you can expand all the threads in the folder using the
-commandn @code{vm-expand-all}.  The function @code{vm-collapse-all}
-does the reverse.  It collapses all the expanded threads.
+command @kbd{E} (@code{vm-expand-all-threads}).  The command
+@kbd{C} (@code{vm-collapse-all-threads}) does the reverse.  It
+collapses all the expanded threads.
+
+
+@node Thread Operations, Summary Faces, Thread Folding, Summaries
+@section Thread Operations
+
+When you have thread-folding enabled, you can execute VM operations
+such as saving and deleting messages on entire threads.  To obtain
+this functionality, you must set the variable
+@code{vm-enable-thread-operations} to a non-@code{nil} value, and you
+must invoke the VM operations in the Summary window with threads
+collapsed.
+
+As an example, doing an @kbd{s} (@code{vm-save-message}) operation on
+an ordinary message saves just the single message.  However, if thread
+operations are enabled and you invoke @kbd{s} on the
+root message of a collapsed thread, then the entire thread is saved.
+The same effect can be obtained using message marking.  @xref{Marking
+Messages}.  The following sequence of key strokes can achieve the
+effect of saving an entire thread:
+
+@example
+MuMTMNsMu
+@end example
+
+@noindent However, the thread-operation is simpler and more convenient.
+
+All operations that can be sensibly invoked on multiple messages
+extend to thread operations in this way.  They include deleting,
+undeleting, marking, unmarking, forwarding, replying, saving/deleting
+attachments etc.
+
+
+@node Summary Faces,, Thread Operations, Summaries
+@section Summary Faces
+
+@cindex faces
+@cindex summary faces
+By default, the summary of a folder is shown in a black-and-white
+window with plain text.  This is suitable for terminal mode Emacs
+users.  The variable @code{vm-summary-highlight-face}, which is set to
+the standard Emacs @code{bold} face by default, is used to highlight
+the currently selected message.  You can set the variable to any other
+face, or to nil if you wan to turn off highlighting.
+
+@findex vm-summary-faces-mode
+@vindex vm-summary-enable-faces
+You can turn on more elaborate faces support, suitable for color
+graphics terminals, by setting the variable
+@code{vm-summary-enable-faces} to t in your vm-init-file.  You can
+also run @code{M-x vm-summary-faces-mode} in the middle of a VM
+session to turn on summary faces. Then VM decorates the summary lines
+with different faces based on the attributes of the message.
+@xref{Faces,,,emacs, the GNU Emacs Manual}, for basic information on
+faces. The predefined faces used to highlight the summary window are
+listed below.  It is possible for you to change the definitions of
+these faces in your vm-init-file as well as to define new faces of
+your own.
+
+@vindex vm-summary-faces-alist
+The variable @code{vm-summary-faces-alist} defines a list of
+condition-action pairs for decorating the summary with faces.
+It has the following form:
+
+@example
+( ((@var{SELECTOR} [@var{ARG} ...])    @var{vm-summary-FACE})
+  ... )
+@end example
+
+The first element of each pair is a VM selector in the same
+format as used for @code{vm-virtual-folder-alist}.  @xref{Virtual
+Folders}.  The second element is a face name of the form
+@code{vm-summary-FACE} where @code{FACE} is one of the face types
+listed below.  The first condition
+satisfied by the message wins, and the face listed there is used to
+decorate its summary line.
+
+The faces @code{vm-summary-selected}, @code{vm-summary-collapsed} and
+@code{vm-summary-expanded} are special.  They are @i{added} to the face
+specified by @code{vm-summary-faces-alist} instead of replacing it.
+This allows VM to add highlighting for the selected message and the
+collapsed/expanded thread roots, without scrubbing the natural face
+determined by the message attributes.
+
+@vindex vm-mouse-track-summary
+The variable @code{vm-mouse-track-summary} controls whether summary
+entries are highlighted when the mouse pointer passes over
+them.  The highlighting is done using the standard Emacs
+@code{highlight} face.
+
+@subsubheading Hiding summary lines
+@cindex hiding summary lines
+@cindex vm-summary-faces-hide
+The command @code{vm-summary-faces-hide} allows you to hide the
+summary lines of messages with a particular face type.  By default, it
+hides messages with the @code{deleted} face type.  By invoking it with
+a prefix argument, you can specify other face types that you might
+like to hide.  (Note that @code{deleted} face type does not necessarily
+mean deleted messages.  Whatever messages satisfy the condition
+associated with the @code{vm-summary-deleted-face} in
+@code{vm-summary-faces-alist} will be hidden.)
+
+@subsubheading Predefined summary faces
+@itemize
+@item vm-summary-high-priority:
+Messages that are flagged or have other priority headers.
+@item vm-summary-deleted:
+Deleted messages.
+@item vm-summary-new:
+New messages that have arrived during the session.
+@item vm-summary-unread:
+Messages that have not been read.
+@item vm-summary-marked:
+Messages currently marked.
+@item vm-summary-replied:
+Messages for which a reply has been sent.
+@item vm-summary-saved:
+Messages saved to a folder on disk.  (Subsumes the earlier categories
+filed and written.)
+@item vm-summary-forwarded:
+Messages forwarded to other recipients.  (Subsumes the earlier
+category redistributed.)
+@item vm-summary-edited:
+Messages edited after receipt.
+@item vm-summary-outgoing:
+Messages sent by you.
+@item vm-summary-default:
+Messages not matching any of the above criteria.
+@item vm-summary-collapsed:
+Root messages of threads that are collapsed.
+@item vm-summary-expanded:
+Root messages of threads that are expanded.
+@item vm-summary-selected:
+Message that is currently selected.
+@end itemize
 
 
 @node Virtual Folders, Frames and Windows, Summaries, Top
@@ -3561,6 +3870,8 @@ virtual folder that contains a subset of messages in a real folder
 or several real folders.  A virtual folder can also contain a
 subset of messages from another virtual folder.
 
+@vindex vm-virtual-folder-alist
+@findex vm-visit-virtual-folder
 A virtual folder is defined by its name, the folders that it contains
 and its selectors.  The variable @code{vm-virtual-folder-alist} is a list of
 the definitions of all named virtual folders.  In order to visit a
@@ -3605,6 +3916,7 @@ should be a regular expression.
 @item recipient
 matches message if @var{ARG} matches any part of the recipient
 list of the message.  @var{ARG} should be a regular expression.
+@vindex vm-summary-uninteresting-senders
 @item outgoing
 matches message if your are the author of it, i.e. if the author matches
 @code{vm-summary-uninteresting-senders}
@@ -4257,37 +4569,21 @@ the menu bar.
 
 @node Faces, Using the Mouse, Menus, Top
 @chapter Faces
-
 VM uses Emacs faces to emphasize text in the folder and summary
-buffers.  Instead of defining VM specific faces, VM's face usage
-is controlled by customization variables that can point to faces.
-This allows you to use standard Emacs faces, or to create your
-own.  So when you want to change which face is used, write code
-like this:
-
-@example
-(setq vm-summary-highlight-face 'bold-italic)
-@end example
-
-@noindent In the summary buffer, VM displays the summary entry for the
-current message using the face specified by the
-@code{vm-summary-highlight-face} variable.  The value of this variable
-should be a symbol that names a face, or nil which means don't display
-the summary entry of the current message in a special way.
-
-@vindex vm-mouse-track-summary
-The variable @code{vm-mouse-track-summary} controls whether summary
-entries are highlighted when the mouse pointer passes over
-them.  The highlighting is done using the standard Emacs
-@code{highlight} face.
+buffers.  In addition to using the predefined faces of Emacs, VM also
+defines several faces of its own.  You can do @code{M-x list-faces}
+inside Emacs to see what faces have been defined.  You can also define
+your own faces using Emacs primitives for doing so.
+@xref{Faces,,,emacs, the GNU Emacs Manual}.
 
 @vindex vm-highlighted-header-regexp
 @vindex vm-highlighted-header-face
-In the folder buffer, the header contents of headers matched by
-the @code{vm-highlighted-header-regexp} variable are displayed using
-the face named by @code{vm-highlighted-header-face}.  This variable is
-ignored under XEmacs if @code{vm-use-lucid-highlighting} is non-@code{nil}.
-The XEmacs @code{highlight-headers} package is used instead.  See the
+In the folder or presentation buffer, the header contents of headers
+matched by the @code{vm-highlighted-header-regexp} variable are
+displayed using the face named by @code{vm-highlighted-header-face}.
+This variable is ignored under XEmacs if
+@code{vm-use-lucid-highlighting} is non-@code{nil}.  The XEmacs
+@code{highlight-headers} package is used instead.  See the
 documentation for the function @code{highlight-headers} to find out
 how to customize header highlighting using this package.
 
@@ -4309,6 +4605,8 @@ will search the first @math{@var{N} / 2} characters and the last
 @vindex vm-mime-button-face
 The face named by @code{vm-mime-button-face} is used to display the
 textual buttons that trigger the display of MIME objects.
+
+@xref{Summary Faces}, for the faces support in the Summary buffer.
 
 @node Using the Mouse, Hooks, Faces, Top
 @chapter Using the Mouse
@@ -4340,9 +4638,9 @@ specific menu is produced.
 
 @cindex w3m
 @cindex HTML
-These button assignments work only in plain text messsages.  For HTML
+These button assignments work only in plain text messages.  For HTML
 messages, you might use an internal web browser such as w3m to display
-the content, which will have its own button assignments.  For instace,
+the content, which will have its own button assignments.  For instance,
 w3m binds button-2 to the browser function specified by the variable
 @code{w3m-goto-article-function}.  You will need to set that variable to
 the desired browser function to get button-2 to work in HTML messages.
@@ -4674,7 +4972,7 @@ releases made by the team are numbered @code{8.1.0} and up.
 @cindex Launchpad
 The project code base is maintained at the Launchpad web site
 @uref{http://launchpad.net/vm}.  The ``VM Development Team'' can be
-reached here using the email address @code{vm@@launchpad.net}.
+reached here using the email address @code{vm@@lists.launchpad.net}.
 
 @unnumberedsubsec Savannah project site
 
@@ -4696,15 +4994,15 @@ gives instructions for downloading it via @samp{Bazaar} (@code{bzr}).
 
 @unnumberedsubsec Technical support
 
-VM has a dedicated usenet newsgroup @code{gnu.emacs.vm.info} in which
-the developers and the active users participate.  This is the first port
-of call for getting help with VM.  The archives of the newsgroup can be
-found at the Google Groups site
-@uref{http://groups.google.com/group/gnu.emacs.vm.info/topics}.
-
-A second newsgroup @code{gnu.emacs.vm.bug} is dedicated to
-discussing bugs or potential bugs in VM.  However, this is a place for
-discussion, not reporting bugs or getting them fixed.  
+VM has a dedicated usenet newsgroup @code{gnu.emacs.vm.info} and a
+gmane newsgroup @code{gmane.emacs.viewmail}, in which the developers
+and the active users participate.  This is the first port of call for
+getting help with VM.  The archives of the newsgroup dating back to
+the very beginning can be found at the Google Groups site
+@uref{http://groups.google.com/group/gnu.emacs.vm.info/topics}.  The
+discussions can also be accessed by email via a mailing list
+@uref{viewmail-info}.  Please go to the Savannah home page to
+subscribe to it.
 
 The easiest way to report bugs that need fixing is to use the command
 @code{M-x vm-submit-bug-report} within VM.  This prepares an email
@@ -4826,7 +5124,7 @@ Here are some of the VM features that its users find most valuable:
 @item
 VM's reliability and stability.
 @item
-Integration within Emacs, providing ease of editing and familar key
+Integration within Emacs, providing ease of editing and familiar key
 bindings. 
 @item
 Speed of usage facilitated by keyboard commands.
@@ -4920,12 +5218,14 @@ developers/programmers.
 * Folder Internals::      Structure of the folders
 * Message Internals::     Structure of the message data structure
 * Summary Internals::     Details of summary generation
+* User Interaction::      Handling of the user interaction
 @end menu
 
 @node Folder Internals, Message Internals , , Internals
 @section Folder Internals
 
 @cindex mbox
+@inindex mbox
 By default, VM stores mail folders in the Unix @code{mbox} format,
 described in the RFC 4155 specification of the Internet Engineering
 Task Force.  In this format, the mail folder is a text file consisting
@@ -4944,23 +5244,31 @@ Line-Feed characters may be used to delineate the end of lines in the
 @cindex BellFrom_ folder type
 @cindex From_with-Content-Length folder type
 @cindex System V
+@inindex vm-folder-type
+@inindex From_ folder type
+@inindex BellFrom_ folder type
+@inindex From_with-Content-Length folder type
+@inindex System V
 Three variants of the @code{mbox} format are recognized by VM, called
 @code{From_}, @code{BellFrom_} and @code{From_with-Content-Length}.
 In a @code{From_} type mbox, every message has a leading and trailing
 separator line, as indicated above.  In a @code{BellFrom_} type mbox,
 the trailing separator line can be missing.  (This is so that the 
 mbox's from the old System V format can be handled.)  In a
-@code{From_with-Content-Length} type mbox, the @code{From} seperator
+@code{From_with-Content-Length} type mbox, the @code{From} separator
 line stores the length of the message.  So, no trailing separator line
 is required.
 
 @cindex MMDF format
 @cindex Babyl format
+@inindex MMDF format
+@inindex Babyl format
 In addition to these mbox formats, VM also handles the MMDF format and
 the Emacs Rmail's Babyl format.  The variable @code{vm-folder-type}
 stores the type of the folder being used.
 
 @cindex X-VM-v5-Data header
+@inindex X-VM-v5-Data header
 To every message, VM adds a header with the field name
 ``X-VM-v5-Data:'' and stores in it the information about the message it
 wishes to remember between sessions.
@@ -4969,33 +5277,41 @@ The first message of the VM folder file contains additional headers used
 by VM for remembering information between sessions.
 
 @itemize
+@inindex X-VM-Bookmark
 @item
 X-VM-Bookmark. This header stores the position of the cursor, as a
 message number, in effect when VM saved the folder.  Upon revisiting the
 folder, VM attempts to put the cursor back at this position.
 @item
+@inindex X-VM-Last-Modified
 X-VM-Last-Modified.  The date and time at which the folder was last
 modified. 
 @item
+@inindex X-VM-Message-order
 X-VM-Message-Order.  This header lists the order in which the messages
 should be listed.
 @item
+@inindex X-VM-Labels
 X-VM-Labels. This header lists the message labels that have been used in
 the folder.  
 @item
+@inindex X-VM-VHeader
 X-VM-VHeader. This header lists the values of @code{vm-visible-headers}
 and @code{vm-invisible-header-regexp} that were in effect when the
 folder was saved.  The messages in the folder would have their headers
-arranged according to these vaiables.
+arranged according to these variables.
 @item
+@inindex X-VM-Summary-Format
 X-VM-Summary-Format.  This header stores the format string for the
 summary lines.
 @item
+@inindex X-VM-POP-Retrieved
 X-VM-POP-Retrieved. This header lists all the messages that have
 been retrieved from POP servers together with the identifying
 information for the POP servers.  VM refrains from retrieving these
 messages again in future in order to avoid duplication.
 @item
+@inindex X-VM-IMAP-Retrieved
 X-VM-IMAP-Retrieved. This header lists all the messages that have
 been retrieved from IMAP servers together with the identifying
 information for the IMAP servers.  VM refrains from retrieving these
@@ -5008,17 +5324,21 @@ through internal variables.
 
 @itemize
 @item
+@inindex vm-message-list
 @code{vm-message-list}.  A list of message data structures for all the
 messages in the buffer.
 @item
+@inindex vm-folder-type
 @code{vm-folder-type}.  The type of the current folder indicating how
 the messages are stored: one of 'babyl, 'From_, 'BellFrom_,
 'From_-with-Content-Length and 'mmdf.
 @item
+@inindex vm-folder-access-method
 @code{vm-folder-access-method}.  The method for accessing the server
 message store: 'pop for pop-folders and 'imap for imap-folders, and nil
 for all other folders. 
 @item
+@inindex vm-folder-access-data
 @code{vm-folder-access-data}.  A vector of data for accessing the server
 message store.  The first two elements of the vector are the maildrop
 specification for the mail server and a reference to the process
@@ -5026,21 +5346,26 @@ connecting to the mail server.  For the 'pop access method, that is all
 there is.  But, for the 'imap access method, the vector has 9 other
 entries detailing various pieces of data about the IMAP server.
 @item
+@inindex vm-folder-read-only
 @code{vm-folder-read-only}.  A boolean flag indicating whether the
 folder is read-only.  If so, no modifications are allowed, including
 attribute changes.  However, messages can be fetched from external
 storage for viewing.
 @item
+@inindex vm-virtual-folder-definition
 @code{vm-virtual-folder-definition}.  If the current folder is virtual,
 then this variable holds the data constituting its definition.
 @item
+@inindex vm-real-buffers
 @code{vm-real-buffers}.  If the current folder is virtual, then this
 variable is a list of all the real folder buffers involved in
 constructing it.
 @item
+@inindex vm-virtual-buffers
 @code{vm-virtual-buffers}.  A list of all the virtual folder buffers
 that the current buffer is involved in.
 @item
+@inindex vm-summary-buffer
 @code{vm-summary-buffer}.  The Summary buffer of the folder.  (If the
 Summary buffer gets killed for any reason, the value of this variable
 becomes <killed buffer>, which is unfortunate.  Therefore, most
@@ -5048,9 +5373,11 @@ interactive commands of VM check for killed Summary buffer and reset
 this variable to nil in such a case.  So, in the middle of code, this
 variable can be regarded as a valid buffer pointer.)
 @item
+@inindex vm-presentation-buffer-handle
 @code{vm-presentation-buffer-handle}. The message Presentation buffer of the
 folder.  (Same proviso applies as for @code{vm-summary-buffer}.)
 @item
+@inindex vm-presentation-buffer
 @code{vm-presentation-buffer}. This seems to be a copy of the
 @code{vm-presentation-buffer-handle}.  Its purpose is unknown.
 @end itemize
@@ -5060,53 +5387,76 @@ buffer-local variables:
 
 @itemize
 @item
+@inindex vm-message-pointer
 @code{vm-message-pointer}.  A sublist of vm-message-list starting from
 the current message that the cursor is on.  So, the first element of
 vm-message-pointer is the current message.
 @item
+@inindex vm-last-message-pointer
 @code{vm-last-message-pointer}.  Whenever the cursor is moved, the
 previous value of vm-message-pointer is remembered in this variable.
 @item
+@inindex vm-summary-pointer
 @code{vm-summary-pointer}.
 @item
+@inindex vm-fetched-messages
 @code{vm-fetched-messages}.  List of headers-only messages whose
 bodies were fetched for viewing or other operations.
+@inindex vm-fetched-message-count
 @code{vm-fetched-message-count}.  The number of messages in
+@inindex vm-fetched-messages
 @code{vm-fetched-messages}.  An attempt is made to keep this below the @code{vm-fetched-message-limit}.
 @item
+@inindex vm-mime-decoded
+@inindex MIME
 @code{vm-mime-decoded}.  The MIME decoding state of the current message
 display: @code{undecoded} if the message is shown in undecoded plain
 text form, @code{decoded} if the message is shown decoded, and
 @code{buttons} if the message is shown as a series of buttons for all
-its MIME components.  The @code{D} command cycles through these
+its MIME components.  The @kbd{D} command cycles through these
 states. 
 @item
+@inindex vm-system-state
 @code{vm-system-state}.  The state of VM in a Folder buffer or
 Presentation buffer: 
 
 @itemize
-@item @code{previewing}.
+@item 
+@inindex previewing
+@code{previewing}.
 if a message is being previewed.
-@item @code{showing}.
+@item 
+@inindex showing
+@code{showing}.
 if a full message is being shown.
-@item @code{reading}.
+@item 
+@inindex reading
+@code{reading}.
 if message reading is in progress.
 @end itemize
 
+@inindex editing
 A message edit buffer is in state @code{editing}.
 
 A message composition buffer may be in one of these states:
 
 @itemize
-@item @code{forwarding}.
+@item 
+@inindex forwarding
+@code{forwarding}.
 if a message is being forwarded.
-@item @code{replying}.
+@item 
+@inindex replying
+@code{replying}.
 if a message is being replied to.
-@item @code{redistributing}.
+@item 
+@inindex redistributing
+@code{redistributing}.
 if a message is being redistributed.
 @end itemize
 
 @item
+@inindex vm-spooled-mail-waiting
 @code{vm-spooled-mail-waiting}.  VM periodically checks if there is new
 mail in the spool files of the current folder and set this flag to t if
 there is new mail.
@@ -5138,10 +5488,11 @@ Mirror Data.  Extra data shared by virtual messages if vm-virtual-mirror
 is non-nil.
 @end itemize
 
+@inindex X-VM-v5-Data
 The attributes vector and cached data vector are stored in the
 folder on disk as the @code{X-VM-v5-Data} header of the first message.
 
-@unnumberedsubsec Location data
+@subsubheading Location data
 
 This vector holds the data about the location of the various parts of
 the message in the folder buffer.  Every folder buffer or folder-like
@@ -5150,26 +5501,33 @@ message data structures.  The location data is normally expected to
 refer to locations in that very buffer.  However, this condition is
 not actually required.  (See below.)
 
+@inindex start
 @itemize
 @item
-start.  Marker for the starting position of the message, at which a
+@code{start}.  Marker for the starting position of the message, at which a
 leading separator line begins.
+@inindex headers
 @item
-headers. Marker for the position in the buffer where the headers
+@code{headers}. Marker for the position in the buffer where the headers
 of the message start.
+@inindex vheaders
 @item
-vheaders.  Marker for the position in the buffer where the
+@code{vheaders}.  Marker for the position in the buffer where the
 visible headers of the message start.  (The headers are rearranged in
 such a way that all the visible headers are towards the end of the
 headers region.)
+@inindex text
 @item
-text. Marker for the position in the buffer where the text of the
+@code{text}. Marker for the position in the buffer where the text of the
 message starts.
+@inindex text-end
 @item
-text-end. Marker for the position in the buffer where the text of
+@code{text-end}. Marker for the position in the buffer where the text of
 the message ends.
+@inindex end
 @item
-end. Marker for the position in the buffer where the message ends.
+@code{end}. Marker for the position in the buffer where the message
+ends.
 @end itemize
 
 Unfortunately, in the current versions of VM, the folder buffer to
@@ -5180,26 +5538,32 @@ soft data vector but the location data could also point to a
 Presentation buffer.
 
 
-@unnumberedsubsec Soft data
+@subsubheading Soft data
 This vector contains other calculated data about the message that is
 specific to a VM session.
 
+@inindex number
 @itemize
 @item
-number. The message number as an integer.
+@code{number}. The message number as an integer.
+@inindex padded
 @item
-padded number. The message number as a padded string.
+@code{padded-number}. The message number as a padded string.
+@inindex mark
 @item
-mark. Flag that indicates if the message has been marked (via
+@code{mark}. Flag that indicates if the message has been marked (via
 @code{vm-mark-message}).
+@inindex su-start
 @item
-su-start. The position in the Summary buffer where the summary line of
+@code{su-start}. The position in the Summary buffer where the summary line of
 the message starts.
+@inindex su-end
 @item
-su-end.  The position in the Summary buffer where the summary line of
+@code{su-end}.  The position in the Summary buffer where the summary line of
 the message ends.
+@inindex real-message-sym
 @item
-real-message-sym.  If the message is in a virtual folder, then its
+@code{real-message-sym}.  If the message is in a virtual folder, then its
 corresponding ``real message'' is the underlying message in another
 folder which is described by a message data structure similar to the
 current one.  The real message data structures are represented by
@@ -5208,77 +5572,105 @@ representing the real message of the current message.  If the current
 message is a real message then this field contains its own symbol.
 The use of symbols for this purpose avoids the possibility of circular
 data structures.
+@inindex reverse-link-sym
 @item
-reverse-link-sym.  Reference to the previous message in the message list,
+@code{reverse-link-sym}.  Reference to the previous message in the message list,
 also represented by an uninterned symbol written as ``<--''.
+@inindex message-type
 @item
-message-type.  A symbol indicating the type of the message according to
+@code{message-type}.  A symbol indicating the type of the message according to
 its folder type, one of @code{BellFrom_}, @code{From_} and
 @code{From_-with-Content-Length}.
+@inindex message-id-number
 @item
-message-id-number.  A number that uniquely identifies the message
+@code{message-id-number}.  A number that uniquely identifies the message
 within a VM session.
+@inindex buffer
 @item
-buffer. The Folder buffer of the message.  (Messages in Presentation
+@code{buffer}. The Folder buffer of the message.  (Messages in Presentation
 buffers also have this field set to the corresponding Folder buffer.)
+@inindex thread-indentation
 @item
-thread-indentation. Indentation level of the message in its message
+@code{thread-indentation}. Indentation level of the message in its message
 thread.
+@inindex thread-list
 @item
-thread-list.  List of symbols from @code{vm-thread-obarray} that give
-this message's lieage.
+@code{thread-list}.  List of symbols from @code{vm-thread-obarray} that give
+this message's lineage.
+@inindex thread-subtree
 @item
-babyl-frob-flag.
+@code{thread-subtree}.  List of messages that form the subtree under
+this message in a threaded summary display.
+@inindex babyl-frob-flag
+@item
+@code{babyl-frob-flag}.
+@inindex saved-virtual-attributes
 @item
 saved-virtual-attributes.  Saved attributes if the message switched from
 unmirrored to mirrored.
+@inindex saved-virtual-mirror-data
 @item
-saved-virtual-mirror-data.  Saved mirror data, if the message was
+@code{saved-virtual-mirror-data}.  Saved mirror data, if the message was
 switched from unmirrored to mirrored.
+@inindex virtual-summary
 @item
-virtual-summary.  Summary for unmirrored virtual message.
+@code{virtual-summary}.  Summary for unmirrored virtual message.
+@inindex mime-layout
 @item
-mime-layout.  MIME layout information; types, ids, positions, etc of
+@code{mime-layout}.  MIME layout information; types, ids, positions, etc of
 all MIME entities.  (See below.)
+@inindex mime-encoded-header-flag
 @item
-mime-encoded-header-flag. Flag that indicates if the headers of the
+@code{mime-encoded-header-flag}. Flag that indicates if the headers of the
 message are MIME encoded.
+@inindex su-summary-mouse-track-overlay
 @item
-su-summary-mouse-track-overlay.
+@code{su-summary-mouse-track-overlay}.  The overlay on the summary of this
+message used for selection by mouse.
+@inindex message-access-method
 @item
-message-access-method.  The access-method to be used for the message,
+@code{message-access-method}.  The access-method to be used for the message,
 inherited from its real folder.
 @end itemize
 
 
-@unnumberedsubsec Attributes
+@subsubheading Attributes
 All the hard-wired message attributes are stored in this
 vector.  They also get saved as part of the @code{X-VM-v5-Data} header
 field when the folder is saved to disk.
 
+@inindex new-flag
 @itemize
 @item
 new-flag.  Flag to indicate if the message is ``new''.
+@inindex unread-flag
 @item
 unread-flag.  Flag to indicate if the message is unread.
+@inindex deleted-flag
 @item
 deleted-flag.  Flag to indicate if the message has been deleted.
+@inindex filed-flag
 @item
 filed-flag.  Flag to indicate if the message has been filed.
+@inindex replied-flag
 @item
 replied-flag.  Flag to indicate if the message has been replied to.
+@inindex written-flag
 @item
 written-flag.  Flag to indicate if the message has been saved.
+@inindex forwarded-flag
 @item
 forwarded-flag.  Flag to indicate if the message has been forwarded.
+@inindex edited-flag
 @item
 edited-flag.  Flag to indicate if the message has been edited.
+@inindex redistributed-flag
 @item
 redistributed-flag.  Flag to indicate if the message has been
 redistributed. 
 @end itemize
 
-@unnumberedsubsec Cached Data
+@subsubheading Cached Data
 The data that is cached for the message and stored on the disk as part
 of the @code{X-VM-v5-Data} header field.  Even though this vector is
 only supposed to have data that can be calculated from the message
@@ -5291,94 +5683,121 @@ header fields can have MIME-encoded words in them.  The strings stored
 in the cached-data vector, however, are MIME-decoded versions of the
 header fields, but they also have text properties that store the names
 of the original character sets used in the header fields.  This allows
-the strings to be quickly reencoded for storage on disk.
+the strings to be quickly re-encoded for storage on disk.
 
+@inindex byte-count
 @itemize
 @item
 byte-count.  The size of the message in bytes.
 @item
 weekday, monthday, month, year, hour, zone.  Data indicating the date of
 the message.
+@inindex full-name
 @item 
 full-name.  The full name of the author of the message.  This is a
 MIME-decoded string with text properties.
+@inindex from
 @item
 from.  The email address of the author of the message.  This is a
 MIME-decoded string with text properties.
+@inindex message-id
 @item
 message-id.  The unique id of the message.
+@inindex line-count
 @item
 line-count. The number of lines in the message.
+@inindex subject
 @item
 subject.  The subject string of the message.  This is a MIME-decoded
 string with text properties.
+@inindex vheaders-regexp
 @item
 vheaders-regexp.  A regular expression that can be used to find the
 start of the visible headers.  The headers must have been already
 ordered so that the visible headers are at the bottom of the headers
 section. 
+@inindex to
 @item
 to.  Addresses of the recipients of the message in a comma separated
 string.  This is a MIME-decoded string with text properties.
+@inindex to-names
 @item
 to-names. The full names of the recipients in a comma separated
 string.  Addresses are used if full names are not available.  This is
 a MIME-decoded string with text properties.
+@inindex month-number
 @item
 month-number.  Numeric month of the sent date.
+@inindex sortable-datestring
 @item
 sortable-datestring.  Date string of the sent date for sorting purposes.
+@inindex sortable-subject
 @item
 sortable-subject.  The subject string for sorting purposes.  (Prefixes
 such as ``re:'' are removed.)  This is a MIME-decoded string with text
 properties.
+@inindex summary
 @item
 summary.  A tokenized summary for the message, from which the actual
 summary line can be quickly calculated.  This is a list containing
 tokens, such as @code{number} and @code{thread-indent}, as well as
 MIME-decoded strings with text properties.
+@inindex parent
 @item
 parent.  The message ID of the parent of the message in its
 thread.
+@inindex references
 @item
 references.  Message IDs listed in the References header of the message.
+@inindex headers-to-be-retrieved
 @item
 headers-to-be-retrieved.  Flag that indicates whether the headers of the
 message have not been retrieved from the mail server (for POP or IMAP
 folders).
+@inindex body-to-be-retrieved
 @item
 body-to-be-retrieved.  Flag that indicates whether the body of the
 message has not been retrieved from the mail server.
+@inindex pop-uidl
 @item
 pop-uidl.  The UIDL id of the message on the POP server.
+@inindex imap-uid
 @item
 imap-uid.  The UID of the message on the IMAP server.
+@inindex imap-uid-validity
 @item
 imap-uid-validity.  The UID-VALIDITY value of the message on the IMAP
 server. 
+@inindex spam-score
 @item
 spam-score.  The spam score of the message.
 @end itemize
 
-@unnumberedsubsec Mirror Data
+@subsubheading Mirror Data
 
 Extra data shared by virtual messages if vm-virtual-mirror
 is non-nil.
 
+@inindex edit-buffer
 @itemize
 @item 
 edit-buffer.  If the message is being edited, this is the buffer being
 used.
+@inindex virtual-messages-sym
 @item
 virtual-messages-sym.  List of virtual messages mirroring the current real
 message, represented by an uninterned symbol written as ``<v>''. 
+@inindex stuff-flag
 @item
 stuff-flag.  Flag to indicates if the attribute changes have been
 ``stuffed'' into the folder buffer.
+@inindex labels
 @item
 labels.  List of labels attached to the message.
+@inindex label-string
 @item
 label-string.  The string of labels attached to the message.
+@inindex attribute-modflag
 @item
 attribute-modflag.  Flag to indicate if the attributes of the message
 have been modified since the last save.
@@ -5391,73 +5810,104 @@ is in turn a vector containing various pieces of data.  Such a vector
 is used not only for the overall message, but for all its MIME parts
 and subparts as well.
 
+@inindex type
+@inindex Content-Type
 @itemize
-@item
-type.  A list of strings consisting of the MIME type of the part along
+@item @code{type}.
+A list of strings consisting of the MIME type of the part along
 with its attributes.  This comes from ``Content-Type'' header.  The type
 could be of the form `type/subtype'.  Quotation marks are stripped from
 attribute values.  An example is @code{("multipart/mixed" "boundary=----_=_NextPart_001_01AFE588.63E23840")}.
+@inindex qtype
 @item
-qtype.  Like type, but the quotation marks are not stripped.
+@code{qtype}.  Like type, but the quotation marks are not stripped.
+@inindex encoding
+@inindex Content-Transfer-Encoding
 @item
-encoding.  The MIME encoding used for the part.  It comes from the
+@code{encoding}.  The MIME encoding used for the part.  It comes from the
 ``Content-Transfer-Encoding'' header.
+@inindex id
+@inindex Content-ID
 @item
-id. The id obtained from the ``Content-ID'' header of the part.
+@code{id}. The id obtained from the ``Content-ID'' header of the part.
+@inindex description
+@inindex Content-Description
 @item
-description.  A description string obtained from the
+@code{description}.  A description string obtained from the
 ``Content-Description'' header of the part.
+@inindex disposition
+@inindex Content-Disposition
 @item
-disposition.  A list of strings obtained from the
+@code{disposition}.  A list of strings obtained from the
 ``Content-Disposition'' header of the part.  Quotation marks are
 stripped from attribute values.  (An example is @code{(``attachment'',
 ``filename=mydocument.doc'')}.)
+@inindex qdisposition
 @item
-qdisposition.  Like disposition, but the quotation marks are not
+@code{qdisposition}.  Like disposition, but the quotation marks are not
 stripped. 
+@inindex header-start
 @item
-header-start header-end, body-start and body-end.  Markers into the
-content buffer delineating the headers/body of
-the MIME part.
+@code{header-start}, @code{header-end}, @code{body-start} and
+@code{body-end}.  Markers into the content buffer delineating the
+headers/body of the MIME part.
+@inindex parts
 @item
-parts. A list of MIME layouts for the individual subparts of this part.
+@code{parts}. A list of MIME layouts for the individual subparts of this part.
+@inindex cache
 @item
-cache. A symbol that is unique to this MIME part.  Other data is
+@code{cache}. A symbol that is unique to this MIME part.  Other data is
 stored as properties of this symbol:
 @itemize
-@item vm-mime-display-external-generic.
+@inindex vm-mime-display-external-generic
+@item
+@code{vm-mime-display-external-generic}.
 This property stores the id of the process used to externally display
 the MIME part as well as the name of the temporary file used. 
-@item vm-mime-display-internal-image-xxxx.
+@inindex vm-mime-display-internal-image-xxxx
+@item
+@code{vm-mime-display-internal-image-xxxx}.
 This property stores the name of the temporary file where the image is
 stored.  For an image represented as image strips, it actually stores
 a list with a number of other data items.
-@item vm-image-modified.
+@inindex vm-image-modified
+@item
+@code{vm-image-modified}.
 This property stores a boolean flag indicating that the image has been
 modified. 
-@item vm-mime-display-internal-audio/basic.
+@inindex vm-mime-display-internal-audio/basic
+@item
+@code{vm-mime-display-internal-audio/basic}.
 This property stores the name of the temporary file where the audio
 clip is stored.
-@item vm-message-garbage.
-@end itemize
+@inindex vm-message-garbage
 @item
-message-symbol.  A reference to the message that contains the MIME
+@code{vm-message-garbage}.
+@end itemize
+@inindex message-symbol
+@item
+@code{message-symbol}.  A reference to the message that contains the MIME
 part.  Represented as a symbol (that is, an interned key into a hash
 table).  This is a different symbol from the real-message-sym of the
 message. 
+@inindex display-error
 @item
-display-error.  If the display of a MIME part fails, its error string is
+@code{display-error}.  If the display of a MIME part fails, its error string is
 stored here.
+@inindex layout-is-converted
 @item
-layout-is-converted.  Flag indicating that MIME type conversion has been
+@code{layout-is-converted}.  Flag indicating that MIME type conversion has been
 performed on this part.  @pxref{MIME type conversion}.
+@inindex unconverted-layout
 @item
-unconverted-layout.  If the MIME type conversion has been performed on
+@code{unconverted-layout}.  If the MIME type conversion has been performed on
 this part, then this holds the original unconverted layout.
 @end itemize
 
 @unnumberedsubsec Cross-buffer sharing of data
 
+@inindex vm-message-list
+@inindex vm-message-pointer
 Every Folder buffer has a @code{vm-message-list} and a
 @code{vm-message-pointer} list containing message data vectors.  
 
@@ -5478,11 +5928,12 @@ the Folder buffer, but have separate soft data vectors.  The other
 sub-vectors are shared with the underlying real folders.
 
 
-@node Summary Internals,, Message Internals, Internals
+@node Summary Internals, User Interaction, Message Internals, Internals
 @section Summary Internals
 
-@vindex vm-summary-line-format
-@cindex summary line, tokenized
+@inindex vm-summary-line-format
+@inindex summary line, tokenized
+@inindex tokenized summary line
 Generating a summary is quite a time-consuming operation.  VM uses a
 variety of tricks to speed up the generation of summaries.  
 
@@ -5506,17 +5957,21 @@ line for each message and caches it in the cached-data vector.
 The following forms of tokens are used in tokenized summary lines:
 
 @itemize
-@item number.
+@item 
+@code{number}.
 Stands for the message number in the linear order of the summary.
-@item mark.
+@item
+@code{mark}.
 Stands for an indicator of message mark (whether the message is marked
 at present).
-@item thread-indent.
+@item 
+@code{thread-indent}.
 Stands for the indentation to be used for the message's summary
 depending on its position in the message thread.
-@item group-begin, group-end.
+@item 
+@code{group-begin}, @code{group-end}.
 Brackets used to denote groups of items that might have particular
-formating constraints.
+formatting constraints.
 @end itemize
 
 The function @code{vm-tokenized-summary-insert} converts a tokenized
@@ -5529,10 +5984,13 @@ maintaining summary information:
 
 @itemize
 @item
+@inindex vm-summary-pointer
 @code{vm-summary-pointer}.  The message selected by the cursor in the
 Summary window.
 @item
+@inindex vm-summary-redo-start-point
 @code{vm-summary-redo-start-point}.  A pointer into the
+@inindex vm-message-list
 @code{vm-message-list} indicating the first message for which the
 summary line must be redisplayed.  All the messages from here on are
 assumed to require a summary redisplay.  The assumption is usually valid
@@ -5540,13 +5998,17 @@ because the message numbers of all the succeeding messages might have
 changed.  But, if message numbers are not included in the summary lines,
 then this results in unnecessary work.
 @item
+@inindex vm-messages-needing-summary-update
 @code{vm-messages-needing-summary-update}.  The list of messages for
 which summary lines must be redisplayed.  Messages are included in this
 list by calling the function @code{vm-mark-for-summary-update}.
 @item
+@inindex vm-numbering-redo-start-point
 @code{vm-numbering-redo-start-point}.  A pointer into
+@inindex vm-message-list
 @code{vm-message-list} indicating the first message whose message number
 needs to be recalculated.
+@inindex vm-numbering-redo-end-point
 @code{vm-numbering-redo-end-point}.  A pointer into
 @code{vm-message-list} indicating the last message whose message number
 needs to be recalculated.
@@ -5556,44 +6018,132 @@ The beginning and the ending positions of each message summary line are
 stored in the message's soft data vector. @pxref{Message Internals}.
 The positions within the summary line have text-properties set, which
 give the data about the message:
+
 @itemize
 @item
+@inindex vm-message
 @code{vm-message}.  The message struct for which this line is a summary.
-@item
-@code{thread-root}.  If this message is part of a message thread, then
-this property gives the message struct of the root of the thread.
-@item
-@code{thread-count}.  If this message is the root of a message thread,
-then this property gives the number of messages that form the thread.
 @end itemize
 
-@vindex vm-thread-obarray
-@vindex vm-subject-obarray
-Message threads required for threaded summaries are calculated using two
-hash tables @code{vm-thread-obarray} and @code{vm-subject-obarray}.  The
-former keeps track of the thread obtained by
-following parent and reference chains.  The latter keeps track of
-messages with the same subject.
+@subsection Threading
 
-The unique message ID of a message is interned in each of these hash
-tables.  The @code{vm-thread-obarray} table stores the following
-information for each message ID:
+@inindex vm-thread-obarray
+@inindex vm-thread-subject-obarray
+@inindex in-reply-to
+@inindex references
+Message threads required for threaded summaries are calculated using
+message ID's, which are unique when the message was originally
+composed.  VM may still need to deal with multiple copies of the
+message received via possibly different routes.  So, message ID's are
+not unique for messages inside VM.  Thread trees are constructed using
+the ``in-reply-to'' headers and ``references'' headers found in the
+messages.  Jamie Zawinski has done a good analysis of the information
+contained in these headers which can be found on the web.  VM's
+threading algorithm is currently based on these ideas.
+
+@inindex vm-thread-using-subject
+In addition, VM also allows threads to be built using the subject
+headers via the option @code{vm-thread-using-subject}.  Subject-based
+threading is used in addition to reference-based threading.  So, in a
+subject-based thread, the root message would be the oldest message
+with that subject and, below it, would be reference-based threads all
+of which share the same subject.  The roots of these reference-based
+threads are referred to as the ``members'' of the subject thread.
+Subject threading is only one level deep, whereas reference threading
+can be arbitrarily deep.
+
+Threads are built using two hash tables @code{vm-thread-obarray} and
+@code{vm-thread-subject-obarray}.  The former keeps track of the thread
+obtained by following parent and reference chains.  The latter keeps
+track of messages with the same subject.
+
+The message ID's are interned in @code{vm-thread-obarray} and the
+following information is stored for each message ID:
 
 @itemize
-@item messages.
-The message structs that carry this message ID.  (Why are there several
-of them?)
-@item date.
+@item message
+The ``canonical'' message with this message ID.  It is typically the
+first message encountered by VM with the message ID.
+@item messages:
+The list of messages that carry this message ID.
+@item date:
 The date of the message.
-@item parent.
-The interned message ID of the parent of this message.
-@item children.
-The interned message ID's of all the children of this message.
-@item youngest-date.
+@item parent:
+The interned message ID of the parent of this message.  (The folder
+may or may not contain a message with this ID)
+@item children:
+The interned message ID's of all the children of this message.  (The
+folder may or may not contain messages with these ID's.)
+@item youngest-date:
 The date of the youngest message in the thread.
-@item oldest-date.
+@item oldest-date:
 The date of the oldest message in the thread.
 @end itemize
+
+The @code{vm-thread-subject-obarray} interns each subject string found
+in the folder and maps it to a vector containing the following elements:
+
+@itemize
+@item id-sym:
+The interned message ID of what is likely to be the root of the
+thread, which is, at any rate, the oldest message with this subject.
+@item date:
+The date of the root message.
+@item members:
+A list of interned message ID's for the ``members'' of the subject
+thread, which are messages without any reference-based ancestors.  The
+root message represented by @code{id-sym} is not included as a member.
+@item messages:
+The list of all the messages in the folder that have this subject.
+@end itemize
+
+@inindex threads, building
+@b{Building threads} involves calculating all the data stored with the
+@code{vm-thread-obarray}, excepting thread-subtrees, and all the data
+stored with the @code{vm-thread-subject-obarray}.  These two
+collections of data are calculated one after another, because subject
+threads are based on reference threads.  
+
+@inindex thread-subtree
+@inindex thread-list
+@inindex thread-indentation
+After the threads are built, the @code{thread-list},
+@code{thread-indentation} and the @code{thread-subtree} fields of the
+Softdata vector are calculated as needed on demand and cached.  These
+fields cannot be calculated without building threads first.
+
+When new messages are assimilated, they are added to the threads that
+might have been already built, and the thread-related fields in the
+Soft data vector are erased, forcing them to be recalculated.  The
+@code{thread-subtree} field is erased for all the ancestors of the
+assimilated message.  The @code{thread-list} and
+@code{thread-indentation} fields are erased for all the descendants of
+the assimilated message.
+
+@inindex unthread
+Before messages in the folder are expunged, they are @b{unthreaded}.
+This involves removing them from their respective thread trees.  It
+also involves the erasure of the @code{thread-subtree} field of all
+their ancestors and the @code{thread-list} and
+@code{thread-indentation} fields of the descendants.
+
+
+@node User Interaction,, Summary Internals, Internals
+@section User Interaction
+
+@inindex vm-mail-buffer
+@inindex vm-select-folder-buffer-and-validate
+@inindex vm-user-interaction-buffer
+VM has been designed so that the VM commands can be executed in all
+VM-related buffers: the Folder buffer, the Presentation buffer and the
+Summary buffer.  This is achieved by storing in a buffer-local
+variable @code{vm-mail-buffer}, the identity of the Folder buffer
+corresponding to any one of these buffers.  Whenever a VM command is
+invoked by the user, VM calls a function called
+@code{vm-select-folder-buffer-and-validate}, which sets the
+current-buffer to be the Folder buffer and performs various checks.
+It also stores the identity of the buffer in which the command was
+invoked in a global variable @code{vm-user-interaction-buffer}.
 
 
 @node Concept Index, Key Index, Internals, Top
@@ -5608,11 +6158,15 @@ The date of the oldest message in the thread.
 @unnumbered Command Index
 @printindex fn
 
-@node Variable Index, License, Command Index, Top
+@node Variable Index, Internals Index, Command Index, Top
 @unnumbered Variable Index
 @printindex vr
 
-@node License,, Variable Index, Top
+@node Internals Index, License, Variable Index, Top
+@unnumbered Internals Index
+@printindex in
+
+@node License,, Internals Index, Top
 @unnumbered GNU GENERAL PUBLIC LICENSE
 @center Version 2, June 1991
 

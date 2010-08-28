@@ -1,6 +1,6 @@
 ;;; vm-summary.el --- Summary gathering and formatting routines for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1995, 2000 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -23,10 +23,91 @@
 
 ;;; Code:
 
-(defvar scrollbar-height)		; defined for XEmacs
+(provide 'vm-summary)
 
 (eval-when-compile
-  (require 'vm-vars))
+  (require 'vm-misc)
+  (require 'vm-crypto)
+  (require 'vm-folder)
+  (require 'vm-window)
+  (require 'vm-menu)
+  (require 'vm-toolbar)
+  (require 'vm-mouse)
+  (require 'vm-motion)
+  (require 'vm-mime)
+  (require 'vm-thread)
+  (require 'vm-pop)
+  (require 'vm-summary-faces)
+)
+
+(declare-function vm-visit-folder "vm.el" (folder &optional read-only))
+
+(defvar scrollbar-height)		; defined for XEmacs
+
+
+(defsubst vm-summary-message-at-point ()
+  "Returns the message of the current summary line."
+  (save-excursion
+    (forward-line 0)
+    ;; The point often ends up preceding the invisible stuff.  Skip it.
+    (while (get-text-property (point) 'invisible)
+      (forward-char))
+    (get-text-property (+ (point) 3) 'vm-message)))
+
+(defsubst vm-summary-padded-thread-count (m)
+  "Returns a formatted thread count of the message M, usable in
+summary display."
+  (let ((count (vm-th-thread-count m)))
+    (if (> count 1)
+	(format "+%-2s" (1- (vm-th-thread-count m)))
+      "   ")))
+
+(defsubst vm-summary-message-number-thread-descendant (m)
+  "Returns the message number of M, padded with spaces to display as
+an interior message of a thread."
+  (concat "  " (vm-padded-number-of m) " "))
+
+(defsubst vm-summary-expanded-root-p (m)
+  "Checks to see if the message summary of M shows that its thread is
+currently expanded. This is done safely so that if M does not have a
+summary line then nil is returned."
+  (and (vm-su-start-of m)
+       (or (integerp (vm-su-start-of m))
+	   (marker-position (vm-su-start-of m)))
+       (save-excursion
+	 (goto-char (vm-su-start-of m))
+	 (looking-at "-"))))
+
+(defsubst vm-summary-collapsed-root-p (m)
+  "Checks to see if the message summary of M shows that its thread is
+currently collapsed. This is done safely so that if M does not have a
+summary line then nil is returned."
+  (and (vm-su-start-of m)
+       (or (integerp (vm-su-start-of m))
+	   (marker-position (vm-su-start-of m)))
+       (save-excursion
+	 (goto-char (vm-su-start-of m))
+	 (looking-at "+"))))
+
+(defsubst vm-summary-mark-root-collapsed (m)
+  "Mark a thread root message M as collapsed."
+  (when (and (vm-su-start-of m)
+	     (or (integerp (vm-su-start-of m))
+		 (marker-position (vm-su-start-of m))))
+    (save-excursion
+      (goto-char (vm-su-start-of m))
+      (delete-char 1)
+      (insert "+"))))
+
+(defsubst vm-summary-mark-root-expanded (m)
+  "Mark a thread root message M as expanded."
+  (when (and (vm-su-start-of m)
+	     (or (integerp (vm-su-start-of m))
+		 (marker-position (vm-su-start-of m))))
+    (save-excursion
+      (goto-char (vm-su-start-of m))
+      (delete-char 1)
+      (insert "-"))))
 
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"
@@ -69,7 +150,7 @@ The format is as described by the variable `vm-summary-format'.  Generally
 one line per message is most pleasing to the eye but this is not
 mandatory."
   (interactive "p\np")
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (if (null vm-summary-buffer)
       (let ((b (current-buffer))
 	    (read-only vm-folder-read-only)
@@ -122,19 +203,12 @@ mandatory."
 argument START-POINT (a list of messages) or, if it is nil, all
 the messages in the current folder."
   (let ((m-list (or start-point vm-message-list))
-	(show-thread-count (and vm-summary-show-thread-count
-				(eq (string-match "%-?[0-9]*\.?[0-9]*n" 
-						  vm-summary-format) 0)))
-	mp m 
-	tr trs tre 			; thread root, start, end
-	ntc 				; thread count
-	mmmr mmm nm
+	mp m root
 	(n 0)
 	(modulus 100)
-	(do-mouse-track
-	    (and vm-mouse-track-summary
-		 (vm-mouse-support-possible-p)))
-	summary)
+	(do-mouse-track (or (and vm-mouse-track-summary
+				 (vm-mouse-support-possible-p))
+			    vm-summary-enable-faces)))
     (setq mp m-list)
     (save-excursion
       (set-buffer vm-summary-buffer)
@@ -149,90 +223,72 @@ the messages in the current folder."
 		  (if (vm-su-start-of (car mp))
 		      (progn
 			(goto-char (vm-su-start-of (car mp)))
+			(vm-disable-extents (point) (point-max))
 			(delete-region (point) (point-max)))
 		    (goto-char (point-max)))
+		(goto-char (point-min))
+		(vm-disable-extents)
 		(erase-buffer)
 		(setq vm-summary-pointer nil))
 	      ;; avoid doing long runs down the marker chain while
 	      ;; building the summary.  use integers to store positions
 	      ;; and then convert them to markers after all the
-	      ;; insertions are done.
+	      ;; insertions are done.  Likewise, detach overlays and
+	      ;; re-establish them afterwards.
+	      (message "Generating summary... %d" n)
+	      (overlay-recenter (point))
+	      (while mp
+		(setq m (car mp))
+		(when (vm-su-start-of m)
+		  (set-marker (vm-su-start-of m) nil)
+		  (set-marker (vm-su-end-of m) nil))
+		(setq mp (cdr mp)))
+
+	      (overlay-recenter (point-max))
+
+	      (setq mp m-list)
 	      (while mp
                 (setq m (car mp))
-		(setq summary (vm-su-summary m))
 		(vm-set-su-start-of m (point))
 		(insert vm-summary-no-=>)
 		(vm-tokenized-summary-insert m (vm-su-summary m))
 		(vm-set-su-end-of m (point))
                 (let ((s (vm-su-start-of m)) (e (vm-su-end-of m)))
-                  (put-text-property s e 'vm-message m)
-                  (when (and vm-summary-thread-folding
-                             vm-summary-show-threads)
-                    (if (= 0 (vm-thread-indentation-of m))
-                        (setq tr m trs s tre e ntc 0)
-                      (save-excursion
-			(when (null tr)
-			  (setq mmm (get-text-property 
-				     (- (vm-su-start-of m) 3) 'vm-message))
-			  (setq mmmr (get-text-property 
-				      (+ (vm-su-start-of mmm) 2) 'thread-root))
-			  (if mmmr (setq tr mmmr) (setq tr mmm))
-			  (setq trs (vm-su-start-of tr) tre (vm-su-end-of tr))
-			  ;; this sucks, do we really have to recount
-			  ;; all of the threads 
-			  ;; for this root message? 
-			  (setq ntc -1)
-			  (setq nm (get-text-property 
-				    (+ (vm-su-end-of tr) 3) 'vm-message))
-			  ;;(message "next message is: %s" nm)
-			  (while (and (not (null nm)) 
-				      (> (vm-thread-indentation-of nm) 0))
-			    (setq ntc (1+ ntc))
-			    (if (< (+ (vm-su-end-of nm) 3) (buffer-size))
-				(setq nm (get-text-property 
-					  (+ (vm-su-end-of nm) 3) 'vm-message))
-			      (setq nm nil))))
-			(when (and tr trs
-				   (save-excursion
-				     (goto-char (vm-su-start-of tr))
-				     (not (looking-at "-"))))
+		  (when s
+		    (put-text-property s e 'vm-message m)
+		    (when (and vm-summary-enable-thread-folding
+			       vm-summary-show-threads)
+		      (if (= (vm-thread-indentation-of m) 0)
+			  (when (> (vm-th-thread-count m) 1)
+			    (if vm-summary-threads-collapsed
+				(vm-summary-mark-root-collapsed m)
+			      (vm-summary-mark-root-expanded m)))
+			(setq root (vm-th-thread-root m))
+			(when (and root (vm-summary-collapsed-root-p root))
 			  (unless (vm-new-flag m)
 			    (put-text-property s e 'invisible t))
-			  (goto-char (vm-su-start-of tr))
-			  (delete-char 1)
-			  (insert "+"))
-			(put-text-property s e 'thread-root tr)
-			(setq ntc (1+ ntc))
-			(goto-char (+ (vm-su-start-of tr) 5 
-				      (- (length (vm-padded-number-of m)) 3)))
-			(put-text-property
-			 (vm-su-start-of tr) (vm-su-end-of tr)
-			 'thread-count ntc)
-			(when show-thread-count
-			  (delete-char 3)
-			  (insert (format "+%-2s" ntc)))
-			))))    
-	      (setq mp (cdr mp) n (1+ n))
-	      (when (zerop (% n modulus))
-		(message "Generating summary... %d" n)
-		(if debug (debug "vm-debug-summary: Generating summary"))
-		(setq debug nil)))
+			  ;; why mess with the root here?  USR, 2010-07-20
+			  ;; (vm-summary-mark-root-collapsed root)
+			  )))))
+		(setq mp (cdr mp) n (1+ n))
+		(when (zerop (% n modulus))
+		  (message "Generating summary... %d" n)
+		  (if debug (debug "vm-debug-summary: Generating summary"))
+		  (setq debug nil)))
 	      ;; now convert the ints to markers.
-	      ;; no need for another message - it is fast enough
-	      ;; (if (>= n modulus)
-	      ;;    (message "Generating summary markers... "))
 	      (setq mp m-list)
 	      (while mp
 		(setq m (car mp))
-		(and do-mouse-track
-		     (vm-set-su-summary-mouse-track-overlay-of
-		      m
-		      (vm-mouse-set-mouse-track-highlight
-		       (vm-su-start-of m)
-		       (vm-su-end-of m)
-		       (vm-su-summary-mouse-track-overlay-of m))))
+		(when do-mouse-track
+		  (vm-set-su-summary-mouse-track-overlay-of
+		   m
+		   (vm-mouse-set-mouse-track-highlight
+		    (vm-su-start-of m)
+		    (vm-su-end-of m)
+		    (vm-su-summary-mouse-track-overlay-of m))))
 		(vm-set-su-start-of m (vm-marker (vm-su-start-of m)))
 		(vm-set-su-end-of m (vm-marker (vm-su-end-of m)))
+		(when vm-summary-enable-faces (vm-summary-faces-add m))
 		(setq mp (cdr mp))))
 	  (set-buffer-modified-p modified))
 	(run-hooks 'vm-summary-redo-hook)))
@@ -240,118 +296,144 @@ the messages in the current folder."
 	(unless vm-summary-debug 
 	  (message "Generating summary... done")))))
 
-(defun vm-expand-thread ()
+(defun vm-expand-thread (&optional root)
   "Expand the thread associated with the message at point. This
 will make visible all invisible elements of the thread tree and
 place a '-' character at the pointer position indicating that the
-thread can be collapsed."
-  (interactive)
-  (when (and vm-summary-thread-folding vm-summary-show-threads)
-    (vm-select-folder-buffer)
-    (vm-follow-folders-summary-cursor)
-    (set-buffer vm-summary-buffer)
-    (let ((buffer-read-only nil)
-	  r nm)
-      (setq r (get-text-property (+ (point) 3) 'thread-root))
-      (when (null r)
-	(setq r (get-text-property (+ (point) 3) 'vm-message)))
-      (save-excursion	    
-	(goto-char (vm-su-start-of  r))
-	(insert "-")
-	(delete-char 1))
-      (setq nm (get-text-property 
-		(+ (vm-su-end-of r) 2) 'vm-message))
-      (while (and  (not (null nm)) 
-		   (> (vm-thread-indentation-of nm) 0) )
-	(put-text-property 
-	 (vm-su-start-of nm) (vm-su-end-of nm) 'invisible nil)
-	(if (< (+ (vm-su-end-of nm) 2) (buffer-size))
-	    (setq nm (get-text-property 
-		      (+ (vm-su-end-of nm) 2) 'vm-message))
-	  (setq nm nil))))))
+thread can be collapsed.
 
-(defun vm-collapse-thread (&optional nomove)
+In a Lisp program, you should call it with an argument ROOT, which
+is the root of the thread you want expanded."
+  (interactive)
+  (unless vm-summary-enable-thread-folding 
+    (error "Thread folding not enabled"))
+  (when (interactive-p)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (unless vm-summary-show-threads
+      (error "Summary is not sorted by threads"))
+    (vm-follow-summary-cursor)
+    (set-buffer vm-summary-buffer))
+  (let ((buffer-read-only nil))
+    (unless root
+      (setq root (vm-th-thread-root (vm-summary-message-at-point))))
+    (when (> (vm-th-thread-count root) 1)
+      (vm-summary-mark-root-expanded root)
+      (vm-mark-for-summary-update root)
+      (mapc
+       (lambda (m) 
+	 (put-text-property 
+	  (vm-su-start-of m) (vm-su-end-of m) 'invisible nil))
+       (vm-th-thread-subtree (vm-th-thread-symbol root)))
+      (when (interactive-p)
+	(vm-update-summary-and-mode-line)))))
+
+(defun vm-collapse-thread (&optional nomove root)
   "Collapse the thread associated with the message at point. This
 will make invisible all read and non-new elements of the thread
 tree and will place a '+' character at the pointer position
 indicating the thread can be expanded. Optional argument nomove
 directs vm-collapse-thread to not take the default action of
-moving the pointer to the thread root after collapsing."
+moving the pointer to the thread root after collapsing.
+
+In a Lisp program, you should call it with an additional argument
+ROOT, which is the root of the thread you want collapsed."
   (interactive "P")
-  (when (and vm-summary-thread-folding vm-summary-show-threads)
-    (vm-select-folder-buffer)
-    (vm-follow-folders-summary-cursor)
-    (set-buffer vm-summary-buffer)
-    (let ((buffer-read-only nil)
-	  r nm)
-      (setq r (get-text-property (+ (point) 3) 'thread-root))
-      (when (null r)
-	(setq r (get-text-property (+ (point) 3) 'vm-message)))
-      (when (get-text-property (+ (vm-su-start-of r) 3) 'thread-count)
-	(save-excursion	    
-	  (goto-char (vm-su-start-of  r))
-	  (insert "+")
-	  (delete-char 1))
-	(when (< (+ (vm-su-end-of r) 3) (buffer-size))
-	  (setq nm (get-text-property 
-		    (+ (vm-su-end-of r) 3) 'vm-message))
-	  (while (and (not (null nm))
-		      (> (vm-thread-indentation-of nm) 0))
-	    (when (not (vm-new-flag nm))
-	      (put-text-property
-	       (vm-su-start-of nm) (vm-su-end-of nm) 'invisible t))
-	    (if (< (+ (vm-su-end-of nm) 3) (buffer-size))
-		(setq nm (get-text-property 
-			  (+ (vm-su-end-of nm) 3) 'vm-message))
-	      (setq nm nil))))
-	;; move to the parent thread
-	(unless (or nomove (vm-new-flag 
-			    (get-text-property (+ (point) 3) 'vm-message)))
-	  (vm-select-folder-buffer)
-	  (vm-goto-message (string-to-number (vm-number-of r))))))))
+  (unless vm-summary-enable-thread-folding 
+    (error "Thread folding not enabled"))
+  (when (interactive-p)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (unless vm-summary-show-threads
+      (error "Summary is not sorted by threads"))
+    (vm-follow-summary-cursor)
+    (set-buffer vm-summary-buffer))
+  (let ((buffer-read-only nil)
+	(msg nil))
+    (unless root
+      (setq msg (vm-summary-message-at-point))
+      (setq root (vm-th-thread-root msg)))
+    (when (> (vm-th-thread-count root) 1)
+      (vm-summary-mark-root-collapsed root)
+      (vm-mark-for-summary-update root)
+      (mapc
+       (lambda (m) 
+	 (unless (or (eq m root) (vm-new-flag m))
+	   (put-text-property 
+	    (vm-su-start-of m) (vm-su-end-of m) 'invisible t)))
+       (vm-th-thread-subtree (vm-th-thread-symbol root)))
+      ;; move to the parent thread only when not
+      ;; instructed not to, AND when the currently
+      ;; selected message will become invisible
+      (when (interactive-p)
+	(unless nomove
+	  (when (get-text-property (+ (vm-su-start-of msg) 3) 'invisible)
+	    (goto-char (vm-su-start-of root))))
+	(vm-update-summary-and-mode-line)))))
 	
-(defun vm-expand-all ()
+(defun vm-expand-all-threads ()
   "Expand all threads in the folder, which might have been collapsed
  (folded) earlier."
   (interactive)
-  (save-excursion
-    (goto-char 0)
-    (while (search-forward-regexp "^\+" nil t)
-      (vm-expand-thread))))
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
+  (unless vm-summary-show-threads
+    (error "Summary is not sorted by threads"))
+  (let ((ml vm-message-list))
+    (with-current-buffer vm-summary-buffer
+      (save-excursion
+	(mapc (lambda (m)
+		(when (and (eq m (vm-th-thread-root m))
+			   (> (vm-th-thread-count m) 1))
+		  (vm-expand-thread m)))
+	      ml))))
+  (setq vm-summary-threads-collapsed nil)
+  (when (interactive-p)
+    (vm-update-summary-and-mode-line)))
 
-(defun vm-collapse-all ()
+(defun vm-collapse-all-threads ()
   "Collapse (fold) all threads in the folder so that only the roots of
 the threads are shown in the Summary window."
   (interactive)
-  (let ((r nil))
-    (setq r (get-text-property (+ (point) 3) 'thread-root))
-    (when (null r)
-      (setq r (get-text-property (+ (point) 3) 'vm-message)))
-    (save-excursion
-      (goto-char 0)
-      (while (search-forward-regexp "^-" nil t)
-	(vm-collapse-thread t)))
-    (vm-select-folder-buffer)
-    (vm-goto-message (string-to-number (vm-number-of r)))))
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
+  (unless vm-summary-show-threads
+    (error "Summary is not sorted by threads"))
+  (let ((ml vm-message-list)
+	msg root)
+    (with-current-buffer vm-summary-buffer
+      (setq msg (vm-summary-message-at-point))
+      (setq root (vm-th-thread-root msg))
+      (save-excursion
+	(mapc (lambda (m)
+		(when (and (eq m (vm-th-thread-root m))
+			   (> (vm-th-thread-count m) 1))
+		  (vm-collapse-thread t m)))
+	      ml))
+      (when (interactive-p)
+	(when (get-text-property (+ (vm-su-start-of msg) 3) 'invisible)
+	  (goto-char (vm-su-start-of root))))))
+  (setq vm-summary-threads-collapsed t)
+  (when (interactive-p)
+    (vm-update-summary-and-mode-line)))
       
 (defun vm-toggle-thread ()
   "Toggle collapse/expand thread associated with message at point.
 see `vm-expand-thread' and `vm-collapse-thread' for a description
 of action."
   (interactive)
-  (when (and vm-summary-thread-folding vm-summary-show-threads)
-    (vm-select-folder-buffer)
-    (vm-follow-folders-summary-cursor)
+  (when (and vm-summary-enable-thread-folding vm-summary-show-threads)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (if (interactive-p)
+	(vm-follow-summary-cursor))
     (set-buffer vm-summary-buffer)
     (let ((buffer-read-only nil)
-	  r nm)
-      (setq r (get-text-property (+ (point) 3) 'thread-root))
-      (when (null r)
-	(setq r (get-text-property (+ (point) 3) 'vm-message)))
-      (if (save-excursion (goto-char (vm-su-start-of r))
-			  (looking-at "+"))
-	  (vm-expand-thread) 
-	(vm-collapse-thread)))))
+	  root next)
+      (setq root (vm-th-thread-root (vm-summary-message-at-point)))
+      (if (vm-summary-expanded-root-p root)
+	  (call-interactively 'vm-collapse-thread)
+	(call-interactively 'vm-expand-thread))
+      )))
 
 (defun vm-do-needed-summary-rebuild ()
   "Rebuild the summary lines of all the messages starting at
@@ -382,19 +464,15 @@ buffer by a regenerated summary line."
 	   (marker-buffer (vm-su-start-of m)))
       (let ((modified (buffer-modified-p))
 	    (do-mouse-track
-	     (and vm-mouse-track-summary
-		  (vm-mouse-support-possible-p)))
+	     (or (and vm-mouse-track-summary
+		      (vm-mouse-support-possible-p))
+		 vm-summary-enable-faces))
 	    summary)
 	(save-excursion
 	  (setq summary (vm-su-summary m))
 	  (set-buffer (marker-buffer (vm-su-start-of m)))
 	  (let ((buffer-read-only nil)
-		(show-thread-count
-		 (and vm-summary-show-thread-count
-		      (eq 0 (string-match 
-			     "%-?[0-9]*\.?[0-9]*n" 
-			     (vm-folder-buffer-value 'vm-summary-format)))))
-		n s e r i
+		s e i
 		(selected nil)
 		(indicator nil)
 		(modified (buffer-modified-p)))
@@ -405,6 +483,10 @@ buffer by a regenerated summary line."
 		  (setq indicator (if (looking-at "-") "-" 
 				    (if (looking-at "+") "+"
 				      nil)))
+		  (unless (and vm-summary-show-threads
+			       (eq m (vm-th-thread-root m))
+			       (> (vm-th-thread-count m) 1))
+			(setq indicator nil))
 		  ;; We do a little dance to update the text in
 		  ;; order to make the markers in the text do
 		  ;; what we want.
@@ -430,62 +512,58 @@ buffer by a regenerated summary line."
 		  (goto-char (vm-su-start-of m))
 		  (setq s (vm-su-start-of m))
 		  (setq e (vm-su-end-of m))
-		  (setq r (get-text-property (+ s 2) 'thread-root))
-		  (setq n (get-text-property (+ s 2) 'thread-count))
 		  (setq i (get-text-property (+ s 2) 'invisible))
 		  (delete-region (point) (1- (vm-su-end-of m)))		  
 		  (if (not selected)		     
-		      (insert (concat (if indicator indicator " ") " "))
+		      (insert (concat (or indicator " ") " "))
 		    (if indicator
 			(insert (concat indicator ">"))
 		      (insert vm-summary-=>)))
 		  (vm-tokenized-summary-insert m (vm-su-summary m))
-	          (delete-char 1)
-		  (when (and n show-thread-count)
-		    (goto-char 
-		     (+ (vm-su-start-of m) 5 
-			(- (length (vm-padded-number-of m)) 3)))
-		    (delete-char 3)
-		    (insert (format "+%-2s" n)))
+	          (delete-char 1)	; delete "z"
 		  (run-hooks 'vm-summary-update-hook)
-		  (and do-mouse-track
-		       (vm-mouse-set-mouse-track-highlight
-			(vm-su-start-of m)
-			(vm-su-end-of m)
-			(vm-su-summary-mouse-track-overlay-of m)))
-		  (if (and selected vm-summary-highlight-face)
-		      (vm-summary-highlight-region (vm-su-start-of m) (point)
-						   vm-summary-highlight-face)))
+		  (when do-mouse-track
+		    (vm-mouse-set-mouse-track-highlight
+		     (vm-su-start-of m)
+		     (vm-su-end-of m)
+		     (vm-su-summary-mouse-track-overlay-of m)))
+		  (if vm-summary-enable-faces
+		      (vm-summary-faces-add m)
+		    (if (and selected vm-summary-highlight-face)
+			(vm-summary-highlight-region 
+			 (vm-su-start-of m) (point)
+			 vm-summary-highlight-face))))
 	      (set-buffer-modified-p modified)
-	      (if (not (null r))
-		  (put-text-property s e 'thread-root r) 
-		  (put-text-property s e 'thread-count n))
-	      (put-text-property s e 'vm-message m)
-	      (put-text-property s e 'invisible i)
+	      (when s
+		(put-text-property s e 'vm-message m)
+		(put-text-property s e 'invisible i))
 	      ))))))
 
 (defun vm-set-summary-pointer (m)
   (if vm-summary-buffer
       (let ((w (vm-get-visible-buffer-window vm-summary-buffer))
 	    (do-mouse-track
-	     (and vm-mouse-track-summary
-		  (vm-mouse-support-possible-p)))
+	     (or (and vm-mouse-track-summary
+		      (vm-mouse-support-possible-p))
+		 vm-summary-enable-faces))
 	    (old-window nil))
 	(vm-save-buffer-excursion
 	  (unwind-protect
 	      (progn
 		(set-buffer vm-summary-buffer)
-		(if w
-		    (progn
-		      (setq old-window (selected-window))
-		      (select-window w)))
+		(when w
+		  (setq old-window (selected-window))
+		  (select-window w))
 		(let ((buffer-read-only nil))
 		  (when (and vm-summary-pointer
 			     (vm-su-start-of vm-summary-pointer))
 		    (goto-char (vm-su-start-of vm-summary-pointer))
 		    (if (not (get-text-property (+ (point) 3) 'invisible))
-			(progn 
-			  (if (get-text-property (+ (point) 3) 'thread-count)
+			(let ((msg (vm-summary-message-at-point)))
+			  (if (and vm-summary-show-threads
+				   vm-summary-enable-thread-folding
+				   (eq msg (vm-th-thread-root msg))
+				   (> (vm-th-thread-count msg) 1))
 			      (if (looking-at "+") 
 				  (progn (insert "+ ") 
 					 (delete-char (length vm-summary-=>)))
@@ -499,12 +577,14 @@ buffer by a regenerated summary line."
 		      (put-text-property 
 		       (- (point) (length vm-summary-no-=>)) (point) 
 		       'invisible t))
-		    (and do-mouse-track
-			 (vm-mouse-set-mouse-track-highlight
-			  (vm-su-start-of vm-summary-pointer)
-			  (vm-su-end-of vm-summary-pointer)
-			  (vm-su-summary-mouse-track-overlay-of
-			   vm-summary-pointer))))
+		    (when do-mouse-track
+		      (vm-mouse-set-mouse-track-highlight
+		       (vm-su-start-of vm-summary-pointer)
+		       (vm-su-end-of vm-summary-pointer)
+		       (vm-su-summary-mouse-track-overlay-of
+			vm-summary-pointer)))
+		    (when vm-summary-enable-faces 
+		      (vm-summary-faces-add vm-summary-pointer)))
 		  (setq vm-summary-pointer m)
 		  (goto-char (vm-su-start-of m))
 		  (let ((modified (buffer-modified-p)))
@@ -526,17 +606,21 @@ buffer by a regenerated summary line."
 			  (if (save-excursion (goto-char (vm-su-start-of m))
 					      (looking-at "+"))
 			      (insert "+>")
-			    (if (get-text-property 
-				 (+ (vm-su-start-of m) 3) 'invisible)
+			    (if (and vm-summary-show-threads
+				     (get-text-property 
+				      (+ (vm-su-start-of m) 3) 'invisible))
 				(progn (insert vm-summary-=>)
-				       (vm-expand-thread))
+				       (vm-expand-thread 
+					(vm-th-thread-root m)))
 			      (insert vm-summary-=>)))
 			  (delete-char (length vm-summary-=>))
 
-			  (and do-mouse-track
-			       (vm-mouse-set-mouse-track-highlight
-				(vm-su-start-of m) (vm-su-end-of m)
-				(vm-su-summary-mouse-track-overlay-of m))))
+			  (when do-mouse-track
+			    (vm-mouse-set-mouse-track-highlight
+			     (vm-su-start-of m) (vm-su-end-of m)
+			     (vm-su-summary-mouse-track-overlay-of m)))
+			  (when vm-summary-enable-faces 
+			    (vm-summary-faces-add m)))
 		      (set-buffer-modified-p modified)))
 		  (forward-char (- (length vm-summary-=>)))
 		  (if vm-summary-highlight-face
@@ -564,9 +648,9 @@ buffer by a regenerated summary line."
 	     (overlay-put ooo 'evaporate nil)
 	     (overlay-put ooo 'face face)))
 	  (vm-xemacs-p
-	   (if (and ooo (extent-end-position ooo))
-	       (set-extent-endpoints ooo start end)
-	     (setq ooo (make-extent start end))
+	   (if (and ooo (vm-extent-end-position ooo))
+	       (vm-set-extent-endpoints ooo start end)
+	     (setq ooo (vm-make-extent start end))
 	     (set var ooo)
 	     ;; the reason this isn't needed under FSF Emacs is
 	     ;; that insert-before-markers also inserts before
@@ -574,9 +658,9 @@ buffer by a regenerated summary line."
 	     ;; before this overlay in the summary buffer won't
 	     ;; leak into the overlay, but it _will_ leak into an
 	     ;; XEmacs extent.
-	     (set-extent-property ooo 'start-open t)
-	     (set-extent-property ooo 'detachable nil)
-	     (set-extent-property ooo 'face face))))))
+	     (vm-set-extent-property ooo 'start-open t)
+	     (vm-set-extent-property ooo 'detachable nil)
+	     (vm-set-extent-property ooo 'face face))))))
 
 (defun vm-auto-center-summary ()
   (if vm-auto-center-summary
@@ -675,27 +759,26 @@ tokenized summary TOKENS."
 						     (- end start))))))))
 		 (setq group-list (cdr group-list))))
 	      ((eq token 'number)
-	       (let (mynum)
-		 (if (and vm-summary-show-thread-count 
-			  vm-summary-thread-folding
-			  vm-summary-show-threads
-			  (eq (string-match "%-?[0-9]*\.?[0-9]*n" 
-					    vm-summary-format) 0))
-		     (if (> (vm-th-thread-indentation message) 0)
-			 (setq mynum (concat "  " 
-					     (vm-padded-number-of message)
-					     " ")) 
-		       (setq mynum (concat (vm-padded-number-of message) 
-					   "   ")))
-		   (setq mynum (vm-padded-number-of message)))
-		 (insert mynum)))
+	       (if (and vm-summary-enable-thread-folding
+			vm-summary-show-threads
+			vm-summary-show-thread-count)
+		   (if (= (vm-th-thread-indentation message) 0)
+		       (insert
+			(concat (vm-padded-number-of message) 
+				(vm-summary-padded-thread-count message)))
+		     (insert
+		      (vm-summary-message-number-thread-descendant message)))
+		 (insert (vm-padded-number-of message))))
 	      ((eq token 'mark)
 	       (insert (vm-su-mark message)))
 	      ((eq token 'thread-indent)
 	       (if (and vm-summary-show-threads
 			(natnump vm-summary-thread-indent-level))
-		   (insert-char ?\ (* vm-summary-thread-indent-level
-				      (vm-th-thread-indentation message))))))
+		   (insert-char 
+		    ?\ 
+		    (* vm-summary-thread-indent-level
+		       (min vm-summary-maximum-thread-indentation
+			    (vm-th-thread-indentation message)))))))
 	(setq tokens (cdr tokens))))))
 
 (defun vm-reencode-mime-encoded-words-in-tokenized-summary (summary)
@@ -1525,7 +1608,7 @@ mime-encoded string with text properties.  USR 2010-05-13"
 	       (widen)
 	       (condition-case nil
 		   (concat "<fake-VM-id."
-			   (vm-pop-md5-string
+			   (vm-md5-string
 			    (buffer-substring
 			     (vm-text-of (vm-real-message-of m))
 			     (vm-text-end-of (vm-real-message-of m))))
@@ -1585,7 +1668,7 @@ The summary line is a mime-decoded string with text properties.
   "Rebuild the summary.
 Call this function if you made changes to `vm-summary-format'."
   (interactive "P")
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (if kill-local-summary
       (kill-local-variable 'vm-summary-format))
   (message "Fixing your summary... %s" vm-summary-format)
@@ -1596,6 +1679,9 @@ Call this function if you made changes to `vm-summary-format'."
       (vm-mark-for-summary-update (car mp))
       (vm-set-stuff-flag-of (car mp) t)
       (setq mp (cdr mp)))
+    ;; Erase threading information
+    (setq vm-thread-obarray 'bonk
+	  vm-thread-subject-obarray 'bonk)
     ;; Generate fresh summary data and stuff it
 ;;     (message "Stuffing cached data...")
 ;;     (vm-stuff-folder-data nil)
@@ -1619,7 +1705,7 @@ Call this function if you made changes to `vm-summary-format'."
   (or (vm-label-string-of m)
       (vm-set-label-string-of
        m
-       (mapconcat 'identity (vm-labels-of m) ","))
+       (mapconcat 'identity (sort (vm-labels-of m) 'string-lessp) ","))
       (vm-label-string-of m)))
 
 (defun vm-substring (string from &optional to)
@@ -1833,7 +1919,7 @@ Call this function if you made changes to `vm-summary-format'."
 	      (cond ((= conv-spec ?\()
 		     (save-match-data
 		       (let ((retval
-			      (vm-folder-summary-compile-format-1
+			      (vm-folders-summary-compile-format-1
 			       format
 			       (match-end 5))))
 			 (setq sexp (cons (nth 1 retval) sexp)
@@ -1916,8 +2002,9 @@ Call this function if you made changes to `vm-summary-format'."
 	   (marker-buffer (vm-fs-start-of fs)))
       (let ((modified (buffer-modified-p))
 	    (do-mouse-track
-	     (and vm-mouse-track-summary
-		  (vm-mouse-support-possible-p)))
+	     (or (and vm-mouse-track-summary
+		      (vm-mouse-support-possible-p))
+		 vm-summary-enable-faces))
 	    summary)
 	(save-excursion
 	  (set-buffer (marker-buffer (vm-fs-start-of fs)))
@@ -1951,13 +2038,16 @@ Call this function if you made changes to `vm-summary-format'."
 		  (delete-region (point) (1- (vm-fs-end-of fs)))
 		  (insert
 		   (vm-folders-summary-sprintf vm-folders-summary-format fs))
-		  
 		  (delete-char 1)
-		  (and do-mouse-track
-		       (vm-mouse-set-mouse-track-highlight
-			(vm-fs-start-of fs)
-			(vm-fs-end-of fs)
-			(vm-fs-mouse-track-overlay-of fs))))
+		  (when do-mouse-track
+		    (vm-mouse-set-mouse-track-highlight
+		     (vm-fs-start-of fs)
+		     (vm-fs-end-of fs)
+		     (vm-fs-mouse-track-overlay-of fs)))
+		  ;; VM Summary Faces may not work for this yet
+		  ;; (when vm-summary-enable-faces
+		  ;;   (vm-summary-faces-add fs))
+		  )
 	      (set-buffer-modified-p modified)))))))
 
 (defun vm-folders-summary-mode-internal ()
@@ -1984,8 +2074,9 @@ Call this function if you made changes to `vm-summary-format'."
   (catch 'done
     (let ((fs-hash (make-vector 89 0)) db dp fp f key fs totals
           (format vm-folders-summary-format)
-	  (do-mouse-track (and vm-mouse-track-summary
-			       (vm-mouse-support-possible-p))))
+	  (do-mouse-track (or (and vm-mouse-track-summary
+				   (vm-mouse-support-possible-p))
+			      vm-summary-enable-faces)))
       (save-excursion
 	(set-buffer vm-folders-summary-buffer)
 	(erase-buffer)
@@ -2034,12 +2125,15 @@ Call this function if you made changes to `vm-summary-format'."
 		(vm-set-fs-start-of fs (vm-marker (point)))
 		(insert (vm-folders-summary-sprintf format fs))
 		(vm-set-fs-end-of fs (vm-marker (point)))
-		(and do-mouse-track
-		     (vm-set-fs-mouse-track-overlay-of
-		      fs
-		      (vm-mouse-set-mouse-track-highlight
-		       (vm-fs-start-of fs)
-		       (vm-fs-end-of fs))))
+		(when do-mouse-track
+		  (vm-set-fs-mouse-track-overlay-of
+		   fs
+		   (vm-mouse-set-mouse-track-highlight
+		    (vm-fs-start-of fs)
+		    (vm-fs-end-of fs))))
+		;; VM Summary Faces may not work here yet
+		;; (when vm-summary-enable-faces
+		;;   (vm-summary-faces-add fs))
 		(set (intern key fs-hash) fs))
 	      (setq fp (cdr fp)))
 	    (setq dp (cdr dp)))
@@ -2151,8 +2245,6 @@ Call this function if you made changes to `vm-summary-format'."
 		  (throw 'done t))))))
        vm-folders-summary-hash)
       nil )))
-
-(provide 'vm-summary)
 
 
 ;;; vm-summary.el ends here

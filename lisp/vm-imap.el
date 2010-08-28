@@ -1,6 +1,6 @@
 ;;; vm-imap.el ---  Simple IMAP4 (RFC 2060) client for VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1998, 2001, 2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -22,11 +22,29 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-imap)
+
 (eval-when-compile 
   (require 'sendmail)
-  (require 'vm-vars)
-  (require 'vm-misc)
-  (require 'vm-macro))
+  (require 'vm-misc))
+
+;; For function declarations
+(eval-when-compile
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-crypto)
+  (require 'vm-mime)
+)
+
+(declare-function vm-session-initialization 
+		  "vm.el" ())
+(declare-function vm-submit-bug-report 
+		  "vm.el" (&optional pre-hooks post-hooks))
 
 (defvar selectable-only)		; used with dynamic binding
 
@@ -542,7 +560,7 @@ into the current folder.  VM sets the \\Deleted flag on all such messages
 on all the relevant IMAP servers and then immediately expunges."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-error-if-virtual-folder)
   (let ((process nil)
 	(source nil)
@@ -824,7 +842,8 @@ nil if the session could not be created."
 	(session-name "IMAP")
 	(process-connection-type nil)
 	greeting
-	host port mailbox auth user pass source-list imap-buffer
+	host port mailbox auth user pass authinfo
+	source-list imap-buffer
 	source-nopwd-nombox)
     (vm-imap-log-token 'make)
     (unwind-protect
@@ -852,6 +871,22 @@ nil if the session could not be created."
 	  (when (and (equal pass "*") (not (equal auth "preauth")))
 	    (setq pass
 		  (car (cdr (assoc source-nopwd-nombox vm-imap-passwords))))
+	    (when (and (null pass)
+		       (boundp 'auth-sources)
+		       (fboundp 'auth-source-user-or-password))
+	      (cond ((and (setq authinfo
+				(auth-source-user-or-password
+				 '("login" "password")
+				 (vm-imap-account-name-for-spec source)
+				 port))
+			  (equal user (car authinfo)))
+		     (setq pass (cadr authinfo)))
+		    ((and (setq authinfo
+				(auth-source-user-or-password
+				 '("login" "password")
+				 host port))
+			  (equal user (car authinfo)))
+		     (setq pass (cadr authinfo)))))
 	    (when (and (null pass) interactive)
 	      (setq pass
 		    (read-passwd (format "IMAP password for %s: " imapdrop))))
@@ -3204,7 +3239,7 @@ only marked messages are loaded, other messages are ignored."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (when (null count) (setq count 1))
   (let ((mlist (vm-select-marked-or-prefixed-messages count))
@@ -3248,7 +3283,7 @@ retrieved.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
 only marked messages are retrieved, other messages are ignored."
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (when (null count) (setq count 1))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-marked-or-prefixed-messages count))
@@ -3365,7 +3400,7 @@ the folder is saved."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (when (null count) 
     (setq count 1))
@@ -3473,7 +3508,7 @@ Prefix argument ALL-FLAGS says that all the messages' flags should be
 written to the server irrespective of whether they were changed in the
 VM session.  This is useful for saving offline work."
   (interactive "P")
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-display nil nil '(vm-imap-synchronize) '(vm-imap-synchronize))
   (if (not (eq vm-folder-access-method 'imap))
       (message "This is not an IMAP folder")
@@ -4194,7 +4229,7 @@ folder."
   "Begin to compose a bug report for IMAP support functionality."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (setq vm-kept-imap-buffers nil)
   (setq vm-imap-keep-trace-buffer t)
   (setq vm-imap-keep-failed-trace-buffers 20))
@@ -4206,7 +4241,7 @@ occurrence and this command after the problem occurrence, in
 order to capture the trace of IMAP sessions during the occurrence."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (if (or vm-imap-keep-trace-buffer
 	  (y-or-n-p "Did you run vm-imap-start-bug-report earlier? "))
       (message "Thank you. Preparing the bug report... ")
@@ -4244,7 +4279,7 @@ order to capture the trace of IMAP sessions during the occurrence."
   be needed if the folder has become corrupted somehow."
   (interactive)
   (save-current-buffer
-   (vm-select-folder-buffer)
+   (vm-select-folder-buffer-and-validate 0 (interactive-p))
    (let ((mp vm-message-list))
      (while mp
        (vm-set-body-to-be-retrieved-of (car mp) nil)
@@ -4259,7 +4294,7 @@ order to capture the trace of IMAP sessions during the occurrence."
 downloaded bodies will be displayed."
   (interactive)
   (save-current-buffer
-   (vm-select-folder-buffer)
+   (vm-select-folder-buffer-and-validate 0 (interactive-p))
    (let ((mp vm-message-list))
      (while mp
        (vm-set-byte-count-of (car mp) nil)
@@ -4268,7 +4303,5 @@ downloaded bodies will be displayed."
 	    (length vm-message-list))
    ))
 
-
-(provide 'vm-imap)
 
 ;;; vm-imap.el ends here

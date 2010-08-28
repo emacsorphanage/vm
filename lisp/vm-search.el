@@ -1,6 +1,6 @@
 ;;; vm-search.el --- Incremental search through a mail folder
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1994 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,8 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-search)
 
 ;;;###autoload
 (defun vm-isearch-forward (&optional arg)
@@ -53,7 +55,7 @@ vm-search-using-regexps for this search."
 
 (defun vm-isearch (forward)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-virtual-folder)
   (vm-display (current-buffer) t '(vm-isearch-forward vm-isearch-backward)
 	      (list this-command 'searching-message))
@@ -126,7 +128,5 @@ vm-search-using-regexps for this search."
 	  (setq vm-need-summary-pointer-update t)
 	  (intern (buffer-name) vm-buffers-needing-display-update)
 	  (vm-update-summary-and-mode-line)))))
-
-(provide 'vm-search)
 
 ;;; vm-search.el ends here

@@ -1,6 +1,6 @@
 ;;; vm-pcrisis.el --- wide-ranging auto-setup for personalities in VM
-;;;
-;;; This file is an add-on for VM
+;;
+;; This file is an add-on for VM
 ;;
 ;; Copyright (C) 1999 Rob Hodges,
 ;;               2006 Robert Widhopf, Robert P. Goldman
@@ -36,10 +36,10 @@
 
 ;;; Code:
 
+(provide 'vm-pcrisis)
+
 (eval-when-compile
-  (require 'vm-version)
-  (require 'vm-message)
-  (require 'vm-macro)
+  (require 'vm-misc)
   (require 'vm-reply)
   ;; get the macros we need.
   (require 'cl)
@@ -338,8 +338,8 @@ of the 'start-open and 'end-closed properties of the extent
 respectively.
 This is the XEmacs version of `vmpc-set-overlay-insertion-types'."
   ;; pretty simple huh?
-  (set-extent-property extent 'start-open start)
-  (set-extent-property extent 'end-closed end))
+  (vm-set-extent-property extent 'start-open start)
+  (vm-set-extent-property extent 'end-closed end))
 
 
 (defun vmpc-set-exerlay-insertion-types (exerlay start end)
@@ -356,28 +356,28 @@ start and end of the overlay/extent."
 (defun vmpc-exerlay-start (exerlay)
   "Return buffer position of the start of EXERLAY."
   (if vm-xemacs-p
-      (extent-start-position exerlay)
+      (vm-extent-start-position exerlay)
     (overlay-start exerlay)))
 
 
 (defun vmpc-exerlay-end (exerlay)
   "Return buffer position of the end of EXERLAY."
   (if vm-xemacs-p
-      (extent-end-position exerlay)
+      (vm-extent-end-position exerlay)
     (overlay-end exerlay)))
 
 
 (defun vmpc-move-exerlay (exerlay new-start new-end)
   "Change EXERLAY to cover region from NEW-START to NEW-END."
   (if vm-xemacs-p
-      (set-extent-endpoints exerlay new-start new-end (current-buffer))
+      (vm-set-extent-endpoints exerlay new-start new-end (current-buffer))
     (move-overlay exerlay new-start new-end (current-buffer))))
 
 
 (defun vmpc-set-exerlay-detachable-property (exerlay newval)
   "Set the 'detachable or 'evaporate property for EXERLAY to NEWVAL."
   (if vm-xemacs-p
-      (set-extent-property exerlay 'detachable newval)
+      (vm-set-extent-property exerlay 'detachable newval)
     (overlay-put exerlay 'evaporate newval)))
 
 
@@ -386,28 +386,28 @@ start and end of the overlay/extent."
   (if vm-xemacs-p
       (progn
 	(require 'atomic-extents)
-	(set-extent-property exerlay 'atomic newval))
+	(vm-set-extent-property exerlay 'atomic newval))
     (overlay-put exerlay 'intangible newval)))
 
 
 (defun vmpc-set-exerlay-face (exerlay newface)
   "Set the face used by EXERLAY to NEWFACE."
   (if vm-xemacs-p
-      (set-extent-face exerlay newface)
+      (vm-set-extent-face exerlay newface)
     (overlay-put exerlay 'face newface)))
 
 
 (defun vmpc-forcefully-detach-exerlay (exerlay)
   "Leave EXERLAY in memory but detaches it from the buffer."
   (if vm-xemacs-p
-      (detach-extent exerlay)
+      (vm-detach-extent exerlay)
     (delete-overlay exerlay)))
 
 
 (defun vmpc-make-exerlay (startpos endpos)
   "Create a new exerlay spanning from STARTPOS to ENDPOS."
   (if vm-xemacs-p
-      (make-extent startpos endpos (current-buffer))
+      (vm-make-extent startpos endpos (current-buffer))
     (make-overlay startpos endpos (current-buffer))))
 
 
@@ -1307,7 +1307,7 @@ Run this function in order to test/check your conditions."
                                         nil t nil nil "reply"))
             vmpc-current-buffer 'none))
     (vm-follow-summary-cursor)
-    (vm-select-folder-buffer-and-validate 1)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (vmpc-build-true-conditions-list)
     (message "VMPC true conditions: %S" vmpc-true-conditions)
     vmpc-true-conditions))
@@ -1485,7 +1485,7 @@ recursion nor concurrent calls."
   "*Forward a message with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   ;;  the rest is almost exactly the same as replying:
   (vmpc-init-vars 'forward)
   (vmpc-build-true-conditions-list)
@@ -1500,7 +1500,7 @@ recursion nor concurrent calls."
   "*Resent a message with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   ;; the rest is almost exactly the same as replying:
   (vmpc-init-vars 'resend)
   (vmpc-build-true-conditions-list)
@@ -1541,7 +1541,5 @@ Call `vmpc-no-automorph' to disable it for the current buffer."
     (vmpc-build-true-conditions-list)
     (vmpc-build-actions-to-run-list)
     (vmpc-run-actions)))
-
-(provide 'vm-pcrisis)
 
 ;;; vm-pcrisis.el ends here

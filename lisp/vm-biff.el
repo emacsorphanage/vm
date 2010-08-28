@@ -1,6 +1,6 @@
 ;;; vm-biff.el --- a xlbiff like tool for VM
-;;;
-;;; This file is an add-on for VM
+;;
+;; This file is an add-on for VM
 ;; 
 ;; Copyright (C) 2001 Robert Fenk
 ;;
@@ -36,7 +36,9 @@
 ;; does not make any sense!  If getting mail is slow, use fetchmail to
 ;; retrieve it to a local file and uses that file as VM spool file!
 ;; 
+;;; Code:
 
+(provide 'vm-biff)
 
 (eval-when-compile 
   (require 'cl))
@@ -346,7 +348,7 @@ AddToFunc SelectWindow
   (interactive (list current-prefix-arg))
 
   (save-excursion
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-and-validate 0 (interactive-p))
 
     (when (not vm-biff-folder-list)
       (setq vm-biff-folder-list
@@ -363,8 +365,9 @@ AddToFunc SelectWindow
     (let* ((mp vm-message-pointer)
            (folder (buffer-name))
            (do-mouse-track
-            (and vm-mouse-track-summary
-                 (vm-mouse-support-possible-p)))
+            (or (and vm-mouse-track-summary
+		     (vm-mouse-support-possible-p))
+		vm-summary-enable-faces))
            (buf (get-buffer-create
                  (concat " *new messages in VM folder: " folder "*")))
            selector msg new-messages wf)
@@ -398,12 +401,15 @@ AddToFunc SelectWindow
                                             msg t))
               (put-text-property start (point) 'vm-message-pointer mp)
 
-              (vm-summary-highlight-region start (point)
-                                           vm-summary-highlight-face)
 
               (when do-mouse-track
                 (vm-mouse-set-mouse-track-highlight
                  start (point)))
+
+	      (if vm-summary-enable-faces
+		  (vm-summary-faces-add msg)
+		(vm-summary-highlight-region start (point)
+					     vm-summary-highlight-face))
               
               (if (not new-messages) (setq new-messages mp)))
             (setq mp (cdr mp))))
@@ -485,4 +491,3 @@ AddToFunc SelectWindow
 
 (add-hook 'vm-arrived-messages-hook 'vm-biff-popup t)
 
-(provide 'vm-biff)

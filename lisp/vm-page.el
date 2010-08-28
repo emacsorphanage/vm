@@ -1,6 +1,6 @@
 ;;; vm-page.el ---  Commands to move around within a VM message
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -21,6 +21,8 @@
 
 ;;; Code:
 
+(provide 'vm-page)
+
 (eval-when-compile
   (require 'vm-vars))
 
@@ -40,7 +42,7 @@ Prefix argument N means scroll forward N lines."
     ;; in gnu.emacs.vm.info, title "Re: synchronization of vm buffers"
     (if mp-changed (sit-for 0))
 
-    (vm-select-folder-buffer-and-validate 1)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (setq needs-decoding (and vm-display-using-mime
 			      (not vm-mime-decoded)
 			      (not (vm-mime-plain-message-p
@@ -754,7 +756,7 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 
      ;; 3. prepare the Presentation buffer
      (vm-narrow-for-preview (not need-preview))
-     (if (or vm-always-use-presentation-buffer
+     (if (or vm-always-use-presentation
              vm-mime-display-function
              vm-fill-paragraphs-containing-long-lines
              (and vm-display-using-mime
@@ -767,7 +769,7 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 	   (set-buffer vm-presentation-buffer)
 	   (setq vm-system-state 'previewing)
 	   (vm-narrow-for-preview))
-       ;; never used because vm-always-use-presentation-buffer is t.
+       ;; never used because vm-always-use-presentation is t.
        ;; USR 2010-05-07
        (setq vm-presentation-buffer nil)
        (and vm-presentation-buffer-handle
@@ -882,7 +884,7 @@ is done if necessary.  (USR, 2010-01-14)"
 		  vm-fill-paragraphs-containing-long-lines)
 	      (vm-mime-plain-message-p (car vm-message-pointer)))
     (if (null vm-mail-buffer)		; this can't be presentation then
-	(if vm-always-use-presentation-buffer
+	(if vm-always-use-presentation
 	    (progn
 	      (vm-make-presentation-copy (car vm-message-pointer))
 	      (set-buffer vm-presentation-buffer))
@@ -928,7 +930,7 @@ is done if necessary.  (USR, 2010-01-14)"
          (vm-update-summary-and-mode-line)
 	 (vm-howl-if-eom))
      (vm-update-summary-and-mode-line)))
-  ;; (if vm-summary-thread-folding
+  ;; (if vm-summary-enable-thread-folding
   ;;     (vm-toggle-thread 1))
   )
 
@@ -938,7 +940,7 @@ is done if necessary.  (USR, 2010-01-14)"
   (interactive)
   (vm-follow-summary-cursor)
   (save-excursion
-    (vm-select-folder-buffer-and-validate 1)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (vm-display nil nil '(vm-expose-hidden-headers)
 		'(vm-expose-hidden-headers))
     (vm-save-buffer-excursion
@@ -1018,7 +1020,7 @@ is done if necessary.  (USR, 2010-01-14)"
   "Moves to the beginning of the current message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (vm-widen-page)
@@ -1042,7 +1044,7 @@ is done if necessary.  (USR, 2010-01-14)"
 as necessary."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)
@@ -1075,7 +1077,7 @@ will produce an action.  If the message is being previewed, it is
 exposed and marked as read."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)
@@ -1102,7 +1104,7 @@ will produce an action.  If the message is being previewed, it is
 exposed and marked as read."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)
@@ -1147,7 +1149,5 @@ exposed and marked as read."
 	(goto-char (vm-extent-start-position e))
       (goto-char old-point)
       (error "No more buttons"))))
-
-(provide 'vm-page)
 
 ;;; vm-page.el ends here

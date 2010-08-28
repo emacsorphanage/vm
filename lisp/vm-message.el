@@ -1,7 +1,7 @@
 ;;; vm-message.el --- Macros and functions dealing with accessing VM
-;;; message struct fields 
-;;;
-;;; This file is part of VM
+;; message struct fields 
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -21,6 +21,15 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-message)
+
+;; current message
+(defsubst vm-current-message ()
+  "Returns the currently selected message in the VM folder.  It
+works in all VM buffers."
+  (with-current-buffer (or vm-mail-buffer (current-buffer))
+    (car vm-message-pointer)))
 
 ;; data that is always shared with virtual folders
 (defsubst vm-location-data-of (message)
@@ -107,6 +116,9 @@
   (aref (aref message 1) 18))
 (defsubst vm-message-access-method-of (message)
   (aref (aref message 1) 19))
+(defsubst vm-thread-subtree-of (message)
+  (aref (aref message 1) 20))
+
 ;; message attribute vector
 (defsubst vm-attributes-of (message) (aref message 2))
 (defsubst vm-new-flag (message) (aref (aref message 2) 0))
@@ -272,6 +284,8 @@
   (aset (aref message 1) 18 overlay))
 (defsubst vm-set-message-access-method-of (message method)
   (aset (aref message 1) 19 method))
+(defsubst vm-set-thread-subtree-of (message list)
+  (aset (aref message 1) 20 list))
 (defsubst vm-set-attributes-of (message attrs) (aset message 2 attrs))
 ;; The other routines in attributes group are part of the undo system.
 (defun vm-set-edited-flag-of (message flag)
@@ -487,7 +501,5 @@ the headers/body of M."
 	;; (if vm-summary-show-threads
 	;;     (intern (buffer-name) buffers-needing-thread-sort))
 	(setq v-list (cdr v-list))))))
-
-(provide 'vm-message)
 
 ;;; vm-message.el ends here

@@ -1,6 +1,6 @@
 ;;; vm-save.el --- Saving and piping messages under VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989, 1990, 1993, 1994 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -24,6 +24,8 @@
 ;; 1 while strings are indexed from 0. :-(
 
 ;;; Code:
+
+(provide 'vm-save)
 
 ;;;###autoload
 (defun vm-match-data ()
@@ -105,7 +107,7 @@ only marked messages are checked against vm-auto-folder-alist.
 
 The saved messages are flagged as `filed'."
   (interactive "P")
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (message "Archiving...")
   (let ((auto-folder)
 	(archived 0))
@@ -263,7 +265,7 @@ The saved messages are flagged as `filed'."
 	       (vm-read-file-name "Save in folder: " dir nil)))))
     (prefix-numeric-value current-prefix-arg)))
   (let (auto-folder unexpanded-folder)
-    (vm-select-folder-buffer-and-validate 1)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (setq unexpanded-folder folder
 	  auto-folder (vm-auto-select-folder vm-message-pointer
 					     vm-auto-folder-alist))
@@ -476,7 +478,7 @@ vm-save-message instead (normally bound to `s')."
 	 "Write text to file: ")
        nil vm-last-written-file nil)
       (prefix-numeric-value current-prefix-arg))))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-display nil nil '(vm-save-message-sans-headers)
 	      '(vm-save-message-sans-headers))
   ;; (vm-load-message count)
@@ -586,7 +588,7 @@ Output, if any, is displayed.  The message is not altered."
      (vm-select-folder-buffer)
      (list (read-string "Pipe to command: " vm-last-pipe-command)
 	   current-prefix-arg)))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (setq vm-last-pipe-command command)
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
 	m
@@ -703,7 +705,7 @@ arguments after the command finished."
      (vm-select-folder-buffer)
      (list (read-string "Pipe to command: " vm-last-pipe-command)
 	   current-prefix-arg)))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (setq vm-last-pipe-command command)
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
 	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
@@ -808,7 +810,7 @@ each marked message is printed, one message per vm-print-command invocation.
 Output, if any, is displayed.  The message is not altered."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (or count (setq count 1))
   (let* ((buffer (get-buffer-create "*Shell Command Output*"))
 	 (need-tempfile (string-match ".*-.*-\\(win95\\|nt\\)"
@@ -908,7 +910,7 @@ The saved messages are flagged as `filed'."
 	      "Save to IMAP folder: " t nil
 	      (or vm-last-save-imap-folder vm-last-visit-imap-folder))
 	     (prefix-numeric-value current-prefix-arg)))))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-display nil nil '(vm-save-message-to-imap-folder)
 	      '(vm-save-message-to-imap-folder))
   (or count (setq count 1))
@@ -978,7 +980,5 @@ The saved messages are flagged as `filed'."
 	     count (if (/= 1 count) "s" "")
 	     (vm-safe-imapdrop-string target-folder))
     target-folder ))
-
-(provide 'vm-save)
 
 ;;; vm-save.el ends here

@@ -1,6 +1,6 @@
 ;;; vm-undo.el --- Commands to undo message attribute changes in VM
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1989-1995 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-undo)
+
 (defun vm-set-buffer-modified-p (flag &optional buffer)
   (save-excursion
     (and buffer (set-buffer buffer))
@@ -166,7 +169,7 @@ Consecutive invocations of this command cause sequentially earlier
 changes to be undone.  After an intervening command between undos,
 the undos themselves become undoable."
   (interactive)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-error-if-folder-read-only)
   (vm-display nil nil '(vm-undo) '(vm-undo))
   (let ((modified (buffer-modified-p)))
@@ -208,7 +211,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
       (vm-read-string "Set attributes: " vm-supported-attribute-names t)
       (prefix-numeric-value current-prefix-arg))))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (vm-display nil nil '(vm-set-message-attributes)
 	      '(vm-set-message-attributes))
@@ -297,7 +300,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
       (prefix-numeric-value current-prefix-arg))))
   (let ((ignored-labels nil))
     (vm-follow-summary-cursor)
-    (vm-select-folder-buffer-and-validate 1)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (vm-error-if-folder-read-only)
     (setq ignored-labels 
 	  (vm-add-or-delete-message-labels string count 'all))
@@ -338,7 +341,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 		      (vm-obarray-to-string-list vm-label-obarray) t)
       (prefix-numeric-value current-prefix-arg))))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((ignored-labels
 	 (vm-add-or-delete-message-labels string count 'existing-only)))
@@ -381,7 +384,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 		      (vm-obarray-to-string-list vm-label-obarray) t)
       (prefix-numeric-value current-prefix-arg))))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (vm-add-or-delete-message-labels string count nil))
 
@@ -635,7 +638,5 @@ A record of the change is kept for the purpose of undo, and the
 ;; ditto.  this is for vm-read-attributes.
 (defun vm-set-new-flag-in-vector (v flag)
   (aset v 0 flag))
-
-(provide 'vm-undo)
 
 ;;; vm-undo.el ends here

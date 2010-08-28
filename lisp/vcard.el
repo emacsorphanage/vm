@@ -1,6 +1,6 @@
 ;;; vcard.el --- vcard parsing and display routines
-;;;
-;;; This file is not part of VM; it is a utility used there.
+;;
+;; This file is not part of VM; it is a utility used there.
 ;;
 ;; Copyright (C) 1997, 1999, 2000 Noah S. Friedman
 
@@ -398,10 +398,10 @@ that element should never be deleted since it is the primary key."
 
 
 ;;; Vcard data filters.
-;;;
+;;
 ;;; Filters receive both the property list and value list and may modify
 ;;; either in-place.  The return value from the filters are ignored.
-;;;
+;;
 ;;; These filters can be used for purposes such as removing HTML tags or
 ;;; normalizing phone numbers into a standard form.
 

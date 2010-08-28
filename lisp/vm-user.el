@@ -1,6 +1,6 @@
 ;;; vm-user.el --- Interface functions to VM internal data
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1997 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
@@ -20,6 +20,9 @@
 ;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ;;; Code:
+
+(provide 'vm-user)
+
 (defun vm-user-composition-folder-buffer ()
   "Return the folder buffer associated with the current buffer.
 The current buffer must be a composition buffer created by VM for
@@ -55,7 +58,5 @@ by VM for a reply, resend or forward."
 		list (cdr list)))
 	newlist )
     nil ))
-
-(provide 'vm-user)
 
 ;;; vm-user.el ends here

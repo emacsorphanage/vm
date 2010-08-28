@@ -1,6 +1,6 @@
 ;;; vm-menu.el --- Menu related functions and commands
-;;;
-;;; This file is part of VM
+;;
+;; This file is part of VM
 ;;
 ;; Copyright (C) 1994 Heiko Muenkel
 ;; Copyright (C) 1995, 1997 Kyle E. Jones
@@ -50,10 +50,13 @@
 ;;    Removed the need for -A in ls flags.
 ;;    Some systems' ls don't support -A.
 
+;;; Code:
+
+(provide 'vm-menu)
+
 (eval-when-compile
   (defvar current-menubar nil))
 
-;;; Code:
 (defvar vm-menu-folders-menu
   '("Manipulate Folders"
     ["Make Folders Menu" vm-menu-hm-make-folder-menu vm-folder-directory])
@@ -780,7 +783,7 @@ set to the command name so that window configuration will be done."
 
 (defun vm-menu-create-subject-virtual-folder ()
   (interactive)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (setq this-command 'vm-create-virtual-folder)
   (vm-create-virtual-folder 'sortable-subject (regexp-quote
 	 			       (vm-so-sortable-subject
@@ -788,7 +791,7 @@ set to the command name so that window configuration will be done."
 
 (defun vm-menu-create-author-virtual-folder ()
   (interactive)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (setq this-command 'vm-create-virtual-folder)
   (vm-create-virtual-folder 'author (regexp-quote
 				     (vm-su-from (car vm-message-pointer)))))
@@ -1097,7 +1100,7 @@ set to the command name so that window configuration will be done."
   (interactive)
   (if buffer
       (set-buffer buffer)
-    (vm-select-folder-buffer))
+    (vm-select-folder-buffer-and-validate 0 (interactive-p)))
   (cond ((vm-menu-xemacs-menus-p)
 	 (if (null (car (find-menu-item current-menubar '("XEmacs"))))
 	     (set-buffer-menubar vm-menu-vm-menubar)
@@ -1583,7 +1586,5 @@ for the current directory (.) is inserted."
     menulist
     )
   )
-
-(provide 'vm-menu)
 
 ;;; vm-menu.el ends here

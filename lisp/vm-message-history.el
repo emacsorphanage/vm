@@ -1,7 +1,7 @@
 ;;; vm-message-history.el --- Move backward & forward through selected messages
 ;; -*-unibyte: t; coding: iso-8859-1;-*-
-;;;
-;;; This file is an add-on for VM
+;;
+;; This file is an add-on for VM
 
 ;; Copyright © 2003 Kevin Rodgers, 2008 Robert Widhopf-Fenk
 
@@ -51,11 +51,12 @@
 
 ;;; Code:
 
+(provide 'vm-message-history)
+
 (eval-and-compile
   (require 'easymenu)
-  (require 'vm-version)
   (require 'vm-menu)
-  (require 'vm-vars))
+)
 
 (defgroup vm-message-history nil
   "Message history for VM folders."
@@ -120,7 +121,7 @@
 With prefix ARG, select the ARG'th previous message."
   (interactive "p")
   (or arg (setq arg 1))
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (or vm-message-history
       (error "No message history"))
   (cond ((> arg 0)
@@ -167,7 +168,7 @@ With prefix ARG, select the ARG'th next message."
   "Select the message below the cursor."
   (interactive)
   (let ((mp (get-text-property (point) 'vm-message-pointer)))
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-and-validate 0 (interactive-p))
     (vm-record-and-change-message-pointer vm-message-pointer mp)
     (vm-preview-current-message)
     (vm-display nil nil '(vm-goto-message-last-seen)
@@ -187,7 +188,7 @@ With prefix ARG, select the ARG'th next message."
 (defun vm-message-history-browse ()
   "Select a message from a popup menu of the current folder's history."
   (interactive)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (or vm-message-history
       (error "No message history"))
   (let ((history vm-message-history)
@@ -239,7 +240,5 @@ With prefix ARG, select the ARG'th next message."
       (goto-char selected))))
 
 (add-hook 'vm-select-message-hook 'vm-message-history-add)
-
-(provide 'vm-message-history)
 
 ;;; vm-message-history.el ends here
