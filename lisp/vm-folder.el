@@ -1546,7 +1546,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 (defun vm-emit-totals-blurb ()
   (interactive)
   (save-excursion
-    (vm-select-folder-buffer)
+    (vm-select-folder-buffer-and-validate 0 (interactive-p))
     (if (not (equal (nth 0 vm-totals) vm-modification-counter))
 	(vm-compute-totals))
     (if (equal (nth 1 vm-totals) 0)
@@ -2704,7 +2704,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		      ;; so that the sort code only has to worry about the
 		      ;; changes it needs to make.
 		      (vm-update-summary-and-mode-line)
-		      (vm-sort-messages "thread")))
+		      (vm-sort-messages (or vm-ml-sort-keys "activity"))))
 		(vm-startup-apply-summary summary)
 		(vm-startup-apply-labels labels)
 		(vm-startup-apply-header-variables vis invis)
@@ -2942,7 +2942,7 @@ all marked messages are affected, other messages are ignored."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((mlist (vm-select-marked-or-prefixed-messages count)))
     (while mlist
       (if (and (not (vm-unread-flag (car mlist)))
@@ -2950,6 +2950,33 @@ all marked messages are affected, other messages are ignored."
 	  (vm-set-unread-flag (car mlist) t))
       (setq mlist (cdr mlist))))
   (vm-display nil nil '(vm-unread-message) '(vm-unread-message))
+  (vm-update-summary-and-mode-line))
+(defalias 'vm-flag-message-unread 'vm-unread-message)
+
+;;;###autoload
+(defun vm-flag-message-read (&optional count)
+  "Flag the current message as read, i.e., set the `unread' and `new'
+attributes to nil.  If the message is already flagged read, then
+it is left unchanged.
+
+Numeric prefix argument N means to unread the current message plus the
+next N-1 messages.  A negative N means unread the current message and
+the previous N-1 messages.
+
+When invoked on marked messages (via vm-next-command-uses-marks),
+all marked messages are affected, other messages are ignored."
+  (interactive "p")
+  (or count (setq count 1))
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (let ((mlist (vm-select-marked-or-prefixed-messages count)))
+    (while mlist
+      (when (or (vm-unread-flag (car mlist))
+		(vm-new-flag (car mlist)))
+	  (vm-set-unread-flag (car mlist) nil)
+	  (vm-set-new-flag (car mlist) nil))
+      (setq mlist (cdr mlist))))
+  (vm-display nil nil '(vm-flag-message-read) '(vm-flag-message-read))
   (vm-update-summary-and-mode-line))
 
 ;;;###autoload
@@ -2959,7 +2986,7 @@ The folder is not altered and Emacs is still visiting it.  You
 can switch back to it with switch-to-buffer or by using the
 Buffer Menu."
   (interactive)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
 
@@ -2985,7 +3012,7 @@ Buffer Menu."
   "Iconify the frame and bury the current VM folder and summary buffers.
 The folder is not altered and Emacs is still visiting it."
   (interactive)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
 
@@ -3030,7 +3057,7 @@ If the customization variable `vm-expunge-before-quit' is set to
 
 Giving a prefix argument overrides the variable and no expunge is done."  
   (interactive "P")
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
   (vm-display nil nil '(vm-quit vm-quit-no-change vm-quit-no-expunge)
@@ -3366,7 +3393,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 ;;;###autoload
 (defun vm-save-buffer (prefix)
   (interactive "P")
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-error-if-virtual-folder)
   (save-buffer prefix)
   (intern (buffer-name) vm-buffers-needing-display-update)
@@ -3382,7 +3409,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 ;;;###autoload
 (defun vm-write-file ()
   (interactive)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-error-if-virtual-folder)
   (let ((old-buffer-name (buffer-name))
 	(oldmodebits (and (fboundp 'default-file-modes)
@@ -3448,7 +3475,7 @@ When applied to a virtual folder, this command runs itself on
 each of the underlying real folders associated with the virtual
 folder."
   (interactive (list current-prefix-arg))
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-display nil nil '(vm-save-folder) '(vm-save-folder))
   (if (eq major-mode 'vm-virtual-mode)
       (vm-virtual-save-folder prefix)
@@ -3548,7 +3575,7 @@ Expunge won't be done if folder is read-only.
 When applied to a virtual folder, this command works as if you had
 run vm-expunge-folder followed by vm-save-folder."
   (interactive (list current-prefix-arg))
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-display nil nil '(vm-save-and-expunge-folder)
 	      '(vm-save-and-expunge-folder))
   (if (not vm-folder-read-only)
@@ -3707,7 +3734,7 @@ Same as \\[vm-recover-file]."
   "Display help for various VM activities."
   (interactive)
   (if (eq major-mode 'vm-summary-mode)
-      (vm-select-folder-buffer))
+      (vm-select-folder-buffer-and-validate 0 (interactive-p)))
   (let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
 	(pop-up-frames (and vm-mutable-frames vm-frame-per-help)))
     (cond
@@ -4268,7 +4295,7 @@ folder.  A prefix argument has no effect when this command is
 applied to virtual folder; mail is always gathered from the spool
 files."
   (interactive "P")
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-error-if-folder-read-only)
   (cond ((eq major-mode 'vm-virtual-mode)
 	 (vm-virtual-get-new-mail))
@@ -4362,25 +4389,24 @@ files."
       (vm-save-restriction
        (widen)
        (vm-build-message-list)
-       (if (or (null tail-cons) (cdr tail-cons))
-	   (progn
-             (if (not vm-assimilate-new-messages-sorted)
-                 (setq vm-ml-sort-keys nil))
-	     (if dont-read-attributes
-		 (vm-set-default-attributes (cdr tail-cons))
-	       (vm-read-attributes (cdr tail-cons)))
-	     ;; Yuck.  This has to be done here instead of in the
-	     ;; vm function because this needs to be done before
-	     ;; any initial thread sort (so that if the thread
-	     ;; sort matches the saved order the folder won't be
-	     ;; modified) but after the message list is created.
-	     ;; Since thread sorting is done here this has to be
-	     ;; done here too.
-	     (if gobble-order
-		 (vm-gobble-message-order))
-	     (if (or (vectorp vm-thread-obarray)
-		     vm-summary-show-threads)
-		 (vm-build-threads (cdr tail-cons))))))
+       (when (or (null tail-cons) (cdr tail-cons))
+	 (unless vm-assimilate-new-messages-sorted
+	   (setq vm-ml-sort-keys nil))
+	 (if dont-read-attributes
+	     (vm-set-default-attributes (cdr tail-cons))
+	   (vm-read-attributes (cdr tail-cons)))
+	 ;; Yuck.  This has to be done here instead of in the
+	 ;; vm function because this needs to be done before
+	 ;; any initial thread sort (so that if the thread
+	 ;; sort matches the saved order the folder won't be
+	 ;; modified) but after the message list is created.
+	 ;; Since thread sorting is done here this has to be
+	 ;; done here too.
+	 (when gobble-order
+	   (vm-gobble-message-order))
+	 (when (or (vectorp vm-thread-obarray)
+		   vm-summary-show-threads)
+	     (vm-build-threads (cdr tail-cons)))))
       (setq new-messages (if tail-cons (cdr tail-cons) vm-message-list))
       (vm-set-numbering-redo-start-point new-messages)
       (vm-set-summary-redo-start-point new-messages))
@@ -4402,36 +4428,35 @@ files."
     ;; not be mangled.
     (setq new-messages (copy-sequence new-messages))
     ;; add the labels
-    (if (and new-messages labels vm-burst-digest-messages-inherit-labels)
-	(let ((mp new-messages))
-	  (while mp
-	    (vm-set-labels-of (car mp) (copy-sequence labels))
-	    (setq mp (cdr mp)))))
-    (if (and new-messages vm-summary-show-threads)
-	(progn
-	  ;; get numbering of new messages done now
-	  ;; so that the sort code only has to worry about the
-	  ;; changes it needs to make.
-	  (vm-update-summary-and-mode-line)
-	  (vm-sort-messages "thread")))
-    (if (and new-messages
-	     (or vm-arrived-message-hook vm-arrived-messages-hook)
-	     ;; Run the hooks only if this is not the first
-	     ;; time vm-assimilate-new-messages has been called
-	     ;; in this folder.
-	     (not first-time))
-	(let ((new-messages new-messages))
-	  ;; seems wise to do this so that if the user runs VM
-	  ;; commands here they start with as much of a clean
-	  ;; slate as we can provide, given we're currently deep
-	  ;; in the guts of VM.
-	  (vm-update-summary-and-mode-line)
-	  (if vm-arrived-message-hook
-	      (while new-messages
-		(vm-run-message-hook (car new-messages)
-				     'vm-arrived-message-hook)
-		(setq new-messages (cdr new-messages))))
-	  (run-hooks 'vm-arrived-messages-hook)))
+    (when (and new-messages labels vm-burst-digest-messages-inherit-labels)
+      (let ((mp new-messages))
+	(while mp
+	  (vm-set-labels-of (car mp) (copy-sequence labels))
+	  (setq mp (cdr mp)))))
+    (when (and new-messages vm-summary-show-threads)
+      ;; get numbering of new messages done now
+      ;; so that the sort code only has to worry about the
+      ;; changes it needs to make.
+      (vm-update-summary-and-mode-line)
+      (vm-sort-messages (or vm-ml-sort-keys "activity")))
+    (when (and new-messages
+	       (or vm-arrived-message-hook vm-arrived-messages-hook)
+	       ;; Run the hooks only if this is not the first
+	       ;; time vm-assimilate-new-messages has been called
+	       ;; in this folder.
+	       (not first-time))
+      (let ((new-messages new-messages))
+	;; seems wise to do this so that if the user runs VM
+	;; commands here they start with as much of a clean
+	;; slate as we can provide, given we're currently deep
+	;; in the guts of VM.
+	(vm-update-summary-and-mode-line)
+	(if vm-arrived-message-hook
+	    (while new-messages
+	      (vm-run-message-hook (car new-messages)
+				   'vm-arrived-message-hook)
+	      (setq new-messages (cdr new-messages))))
+	(run-hooks 'vm-arrived-messages-hook)))
     (if (and new-messages vm-virtual-buffers)
 	(save-excursion
 	  (setq b-list vm-virtual-buffers)
@@ -4452,15 +4477,15 @@ files."
 			 (or (cdr tail-cons) vm-message-list))
 			(vm-set-numbering-redo-start-point
 			 (or (cdr tail-cons) vm-message-list))
-			(if (null vm-message-pointer)
-			    (progn (setq vm-message-pointer vm-message-list
-					 vm-need-summary-pointer-update t)
-				   (if vm-message-pointer
-				       (vm-preview-current-message))))
-			(if vm-summary-show-threads
-			    (progn
-			      (vm-update-summary-and-mode-line)
-			      (vm-sort-messages "thread")))))))
+			(unless vm-message-pointer
+			  (setq vm-message-pointer vm-message-list
+				vm-need-summary-pointer-update t)
+			  (if vm-message-pointer
+			      (vm-preview-current-message)))
+			(when vm-summary-show-threads
+			  (vm-update-summary-and-mode-line)
+			  (vm-sort-messages (or vm-ml-sort-keys "activiity")))
+			))))
 	    (setq b-list (cdr b-list)))))
     (if (and new-messages vm-ml-sort-keys)
         (vm-sort-messages vm-ml-sort-keys))
@@ -4474,18 +4499,28 @@ of messages around vm-message-pointer equal to (abs prefix),
 either backward (prefix is negative) or forward (positive)."
   (if (eq last-command 'vm-next-command-uses-marks)
       (vm-marked-messages)
-    (let (mlist
-	  (direction (if (< prefix 0) 'backward 'forward))
+    (let ((direction (if (< prefix 0) 'backward 'forward))
 	  (count (vm-abs prefix))
-	  (vm-message-pointer vm-message-pointer))
-      (unless (eq vm-circular-folders t)
-	(vm-check-count prefix))
-      (while (not (zerop count))
-	(setq mlist (cons (car vm-message-pointer) mlist))
-	(vm-decrement count)
-	(unless (zerop count)
-	  (vm-move-message-pointer direction)))
-      (nreverse mlist))))
+	  (vm-message-pointer vm-message-pointer)
+	  (current-message (car vm-message-pointer))
+	  mlist)
+      (if (and (= prefix 1)
+	       (vm-summary-operation-p)
+	       vm-summary-enable-thread-folding
+	       vm-summary-show-threads
+	       vm-enable-thread-operations
+	       (vm-th-thread-root-p current-message)
+	       (with-current-buffer vm-summary-buffer
+		 (vm-summary-collapsed-root-p current-message)))
+	  (vm-th-thread-subtree current-message)
+	(unless (eq vm-circular-folders t)
+	  (vm-check-count prefix))
+	(while (not (zerop count))
+	  (setq mlist (cons (car vm-message-pointer) mlist))
+	  (vm-decrement count)
+	  (unless (zerop count)
+	    (vm-move-message-pointer direction)))
+	(nreverse mlist)))))
 
 (defun vm-display-startup-message ()
   (if (sit-for 5)
@@ -4500,7 +4535,7 @@ either backward (prefix is negative) or forward (positive)."
 ;;;###autoload
 (defun vm-toggle-read-only ()
   (interactive)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (setq vm-folder-read-only (not vm-folder-read-only))
   (intern (buffer-name) vm-buffers-needing-display-update)
   (message "Folder is now %s"
@@ -4636,7 +4671,7 @@ Interactively TYPE will be read from the minibuffer."
      (setq types (vm-delqual (symbol-name vm-folder-type)
 			     (copy-sequence types)))
      (list (intern (vm-read-string "Change folder to type: " types)))))
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-virtual-folder)
   (if (not (memq type '(From_ BellFrom_ From_-with-Content-Length mmdf babyl)))
       (error "Unknown folder type: %s" type))

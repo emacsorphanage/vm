@@ -116,6 +116,9 @@ works in all VM buffers."
   (aref (aref message 1) 18))
 (defsubst vm-message-access-method-of (message)
   (aref (aref message 1) 19))
+(defsubst vm-thread-subtree-of (message)
+  (aref (aref message 1) 20))
+
 ;; message attribute vector
 (defsubst vm-attributes-of (message) (aref message 2))
 (defsubst vm-new-flag (message) (aref (aref message 2) 0))
@@ -281,6 +284,8 @@ works in all VM buffers."
   (aset (aref message 1) 18 overlay))
 (defsubst vm-set-message-access-method-of (message method)
   (aset (aref message 1) 19 method))
+(defsubst vm-set-thread-subtree-of (message list)
+  (aset (aref message 1) 20 list))
 (defsubst vm-set-attributes-of (message attrs) (aset message 2 attrs))
 ;; The other routines in attributes group are part of the undo system.
 (defun vm-set-edited-flag-of (message flag)

@@ -1135,7 +1135,7 @@ non-nil, then the longlines package is used to word-wrap long
 lines without removing any existing line breaks.
 
 In order to fill also quoted text you will need `filladapt.el' as the adaptive
-filling of GNU Emacs does not work correctly here!"
+filling of GNU Emacs does not work correctly here."
   (if (and vm-word-wrap-paragraphs (locate-library "longlines"))
       (vm-fill-paragraphs-by-longlines start end)
     (if (eq width 'window-width)
@@ -1154,7 +1154,7 @@ filling of GNU Emacs does not work correctly here!"
 	    (needmsg (> (- end start) 12000)))
       
 	(if needmsg
-	    (message "Filling message to column %d!" fill-column))
+	    (message "Filling message to column %d" fill-column))
       
 	;; we need a marker for the end since this position might change 
 	(or (markerp end) (setq end (vm-marker end)))
@@ -1171,8 +1171,8 @@ filling of GNU Emacs does not work correctly here!"
 	;; Turning off these messages because they go by too fast and
 	;; are not particularly enlightening.  USR, 2010-01-26
 	;; (if (= filled 0)
-	;;    (message "Nothing to fill!")
-	;;  (message "Filled %s paragraph%s!"
+	;;    (message "Nothing to fill")
+	;;  (message "Filled %s paragraph%s"
 	;;           (if (> filled 1) (format "%d" filled) "one")
 	;;           (if (> filled 1) "s" "")))
 	))))

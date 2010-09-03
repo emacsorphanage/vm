@@ -39,6 +39,7 @@ if [ -n "$1" -a -e "$1" ]; then
   ./$1 $dir.tgz $nick $revno
 fi
 
-if [ "$1" != "test" ]; then 
-  $bzr push --overwrite
-fi
+echo "Remember to push revisions!!!"
+# if [ "$1" != "test" ]; then 
+#   $bzr push --overwrite
+# fi

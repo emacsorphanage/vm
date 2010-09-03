@@ -85,11 +85,6 @@
 
 (provide 'vm-pine)
  
-(eval-and-compile
-  (require 'vm-version)
-  (require 'vm-message)
-  (require 'vm-macro)
-  (require 'vm-vars))
 
 (eval-when-compile 
   (require 'cl))
@@ -98,7 +93,7 @@
     (if (functionp 'user-mail-address)
         (setq user-mail-address (user-mail-address))
       (setq user-mail-address "unknown")
-      (message "Please set the variable `user-mail-address'!!!")
+      (message "Please set the variable `user-mail-address'")
       (sit-for 2)))
 
 ; Group already defined in vm-vars.el      
@@ -119,7 +114,7 @@ this function returns the \"To:\" or \"Newsgroups:\" header field with a
 \"To:\" as prefix.
 
 For example the outgoing message box will now list to whom you sent the
-messages.  Use `vm-fix-summary!!!' to update the summary of a folder! With
+messages.  Use `vm-fix-summary' to update the summary of a folder! With
 loaded BBDB it uses `vm-summary-function-B' to obtain the full name of the
 sender.  The only difference to VMs default behavior is the honoring of
 messages sent to news groups. ;c)
@@ -314,7 +309,7 @@ creation)."
 
   (vm-session-initialization)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
 
   (if (eq vm-system-state 'previewing)
       (vm-show-current-message))
@@ -869,7 +864,7 @@ configuration."
              (vm-continue-postponed-message)))
           ((equal action 'visit)
            (funcall visit vm-postponed-folder)
-           (vm-select-folder-buffer)
+           (vm-select-folder-buffer-and-validate 0 (interactive-p))
 	   (vm-make-local-hook 'vm-quit-hook)
            (add-hook 'vm-quit-hook 'vm-expunge-folder nil t)
            (vm-expunge-folder)
@@ -1013,7 +1008,7 @@ See the variable `vm-mail-priority'."
 (defcustom vm-mail-folder-alist (if (boundp 'vm-auto-folder-alist)
                                     vm-auto-folder-alist)
   "Like `vm-auto-folder-alist' but for outgoing messages.
-It should be fed to `vm-mail-select-folder'!"
+It should be fed to `vm-mail-select-folder'."
   :type 'list
   :group 'vm-pine)
 
@@ -1076,7 +1071,7 @@ Called with prefix ARG it just removes the FCC-header."
   "Add a new FCC field, with file name guessed by `vm-mail-folder-alist'.
 You likely want to add it to `vm-reply-hook' by
    (add-hook 'vm-reply-hook 'vm-mail-auto-fcc)
-or if sure about what you are doing you can add it to mail-send-hook!"
+or if sure about what you are doing you can add it to mail-send-hook."
   (interactive "")
   (expand-abbrev)
   (save-excursion

@@ -38,7 +38,7 @@ message.  If you don't want your edited version of the message to
 replace the original, use C-c C-] and the edit will be aborted."
   (interactive "P")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (if (and (vm-virtual-message-p (car vm-message-pointer))
 	   (null (vm-virtual-messages-of (car vm-message-pointer))))
@@ -138,7 +138,7 @@ data is discarded only from the marked messages in the current folder."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((mlist (vm-select-marked-or-prefixed-messages count)))
     (vm-discard-cached-data-internal mlist))
   (vm-display nil nil '(vm-discard-cached-data) '(vm-discard-cached-data))
@@ -197,7 +197,7 @@ data is discarded only from the marked messages in the current folder."
     (save-excursion
       (mapatoms (function (lambda (s)
 			    (set-buffer (get-buffer (symbol-name s)))
-			    (vm-sort-messages "thread")))
+			    (vm-sort-messages (or vm-ml-sort-keys "activity"))))
 		buffers-needing-thread-sort))))
 
 ;;;###autoload

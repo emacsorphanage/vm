@@ -323,7 +323,7 @@ into the current folder.  VM sends POP DELE commands to all the
 relevant POP servers to remove the messages."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-error-if-virtual-folder)
   (if (and (interactive-p) (eq vm-folder-access-method 'pop))
       (error "This command is not meant for POP folders.  Use the normal folder expunge instead."))
@@ -1225,7 +1225,7 @@ specification SPEC."
   "Begin to compose a bug report for POP support functionality."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (setq vm-kept-pop-buffers nil)
   (setq vm-pop-keep-trace-buffer t)
   (setq vm-pop-keep-failed-trace-buffers 20))
@@ -1237,7 +1237,7 @@ occurrence and this command after the problem occurrence, in
 order to capture the trace of POP sessions during the occurrence."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (if (or vm-pop-keep-trace-buffer
 	  (y-or-n-p "Did you run vm-pop-start-bug-report earlier? "))
       (message "Thank you. Preparing the bug report... ")

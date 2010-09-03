@@ -3358,6 +3358,17 @@ set this variable directly, rather you should use the command
   :type 'boolean)
 (make-variable-buffer-local 'vm-summary-show-threads)
 
+(defcustom vm-summary-thread-indentation-by-references t
+  "*If non-nil, threaded messages are indented according to their
+nesting level determined by their references headers.  This is
+likely to be their original nesting level in the discussion.  If
+it is nil, then the indentation level is determined by the number
+of thread ancestors within the folder.  When some messages in the
+thread are missing or deleted, this is likely to be less than the
+original nesting level."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-summary-thread-indent-level 2
   "*Value should be a number that specifies how much
 indentation the '%I' summary format specifier should provide per
@@ -3371,6 +3382,12 @@ indentation.  A reply to this message will be indented by the value
 of `vm-summary-thread-indent-level'.  A reply to that reply will be
 indented twice the value of `vm-summary-thread-indent-level'."
   :group 'vm-summary
+  :type 'integer)
+
+(defcustom vm-summary-maximum-thread-indentation 20
+  "*The maximum number of thread nesting levels that should be
+displayed by indentation in the folder summary."
+  :group 'vm
   :type 'integer)
 
 (defcustom vm-thread-using-subject t
@@ -5054,6 +5071,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\C-d" 'vm-delete-message-backward)
     (define-key map "u" 'vm-undelete-message)
     (define-key map "U" 'vm-unread-message)
+    (define-key map "." 'vm-flag-message-read)
     (define-key map "e" 'vm-edit-message)
     (define-key map "a" 'vm-set-message-attributes)
     (define-key map "j" 'vm-discard-cached-data)
@@ -5156,6 +5174,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "T" 'vm-toggle-thread)
     (define-key map "E" 'vm-expand-all-threads)
     (define-key map "C" 'vm-collapse-all-threads)
+    (define-key map "K" 'vm-kill-thread-subtree)
     ;; suppress-keymap provides these, but now that we don't use
     ;; suppress-keymap anymore...
     (define-key map "0" 'digit-argument)
@@ -5210,6 +5229,15 @@ vm-next/previous-message-no-skip (`N' or `P' respectively)
 will expand a thread upon moving into the thread and collapse it when 
 you move out of the thread."
   :group 'vm-summary
+  :type 'boolean)
+
+(defcustom vm-enable-thread-operations nil
+  "*If non-nil, VM operations on root messages of collapsed
+threads will apply to all the messages in the threads.
+
+\"Operations\" in this context include deleting, saving, setting
+attributes, adding/deleting labels etc."
+  :group 'vm
   :type 'boolean)
 
 (defvar vm-summary-threads-collapsed t
@@ -5309,18 +5337,27 @@ Its parent keymap is mail-mode-map.")
 (defvar vm-folders-summary-spool-hash nil)
 (defvar vm-folders-summary-folder-hash nil)
 (defvar vm-folders-summary-buffer nil)
-(defvar vm-mail-buffer nil)
+(defvar vm-mail-buffer nil
+  "The folder buffer of the current buffer.")
 (make-variable-buffer-local 'vm-mail-buffer)
-(defvar vm-fetch-buffer nil)
+(defvar vm-fetch-buffer nil
+  "The fetch buffer, where message bodies are fetched, for the current
+folder.  (Not in use.)")
 (make-variable-buffer-local 'vm-fetch-buffer)
-(defvar vm-presentation-buffer nil)
+(defvar vm-presentation-buffer nil
+  "The message presentation buffer for the current folder.")
 (make-variable-buffer-local 'vm-presentation-buffer)
-(defvar vm-presentation-buffer-handle nil)
+(defvar vm-presentation-buffer-handle nil
+  "The message presentation buffer for the current folder.")
 (make-variable-buffer-local 'vm-presentation-buffer-handle)
-(defvar vm-mime-decoded nil)
+(defvar vm-mime-decoded nil
+  "The MIME decoding state of the current folder.")
 (make-variable-buffer-local 'vm-mime-decoded)
-(defvar vm-summary-buffer nil)
+(defvar vm-summary-buffer nil
+  "The summary buffer for the current folder.")
 (make-variable-buffer-local 'vm-summary-buffer)
+(defvar vm-user-interaction-buffer nil
+  "The buffer in which the current VM command was invoked.")
 (defvar vm-summary-pointer nil)
 (make-variable-buffer-local 'vm-summary-pointer)
 (defvar vm-system-state nil)
@@ -5626,6 +5663,7 @@ header line in email messages,
 
 (defconst vm-supported-sort-keys
   '("date" "reversed-date"
+    "activity" "reversed-activity"
     "author" "reversed-author"
     "full-name" "reversed-full-name"
     "subject" "reversed-subject"
@@ -5781,7 +5819,7 @@ Should be just a list of strings, not an alist or an obarray.")
 append a space to words that complete unambiguously.")
 (defconst vm-attributes-vector-length 9)
 (defconst vm-cache-vector-length 26)
-(defconst vm-softdata-vector-length 20)
+(defconst vm-softdata-vector-length 21)
 (defconst vm-location-data-vector-length 6)
 (defconst vm-mirror-data-vector-length 6)
 (defconst vm-folder-summary-vector-length 15)

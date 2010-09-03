@@ -169,7 +169,7 @@ Consecutive invocations of this command cause sequentially earlier
 changes to be undone.  After an intervening command between undos,
 the undos themselves become undoable."
   (interactive)
-  (vm-select-folder-buffer-and-validate)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-error-if-folder-read-only)
   (vm-display nil nil '(vm-undo) '(vm-undo))
   (let ((modified (buffer-modified-p)))
@@ -211,7 +211,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
       (vm-read-string "Set attributes: " vm-supported-attribute-names t)
       (prefix-numeric-value current-prefix-arg))))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (vm-display nil nil '(vm-set-message-attributes)
 	      '(vm-set-message-attributes))
@@ -300,7 +300,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
       (prefix-numeric-value current-prefix-arg))))
   (let ((ignored-labels nil))
     (vm-follow-summary-cursor)
-    (vm-select-folder-buffer-and-validate 1)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (vm-error-if-folder-read-only)
     (setq ignored-labels 
 	  (vm-add-or-delete-message-labels string count 'all))
@@ -341,7 +341,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 		      (vm-obarray-to-string-list vm-label-obarray) t)
       (prefix-numeric-value current-prefix-arg))))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((ignored-labels
 	 (vm-add-or-delete-message-labels string count 'existing-only)))
@@ -384,7 +384,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 		      (vm-obarray-to-string-list vm-label-obarray) t)
       (prefix-numeric-value current-prefix-arg))))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (vm-add-or-delete-message-labels string count nil))
 

@@ -132,7 +132,8 @@ the Content-Type header.  Otherwise nil is returned."
 	    (insert "\n--" boundary "--\n")
 	    (while boundary-positions
 	      (goto-char (car boundary-positions))
-	      (insert "\n--" boundary "\n\n")
+	      (insert "\n--" boundary "\n")
+	      (insert "Content-Type: message/rfc822\n\n")
 	      (setq boundary-positions (cdr boundary-positions)))
 	    (goto-char start)
 	    (setq n (length message-list))
@@ -588,7 +589,7 @@ all marked messages will be burst."
 	type ))))
   (or digest-type (setq digest-type vm-digest-burst-type))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-marked-or-prefixed-messages 1)))
     ;; (vm-load-message)
@@ -693,7 +694,7 @@ all marked messages will be burst."
 	type ))))
   (or digest-type (setq digest-type vm-digest-burst-type))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-marked-or-prefixed-messages 1))
 	(work-buffer nil))

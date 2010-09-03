@@ -847,7 +847,7 @@ vm-visit-virtual-folder.")
 				     (vm-menu-mode-menu)))
 	  (setq blurb (vm-emit-totals-blurb))
 	  (if vm-summary-show-threads
-	      (vm-sort-messages "thread"))
+	      (vm-sort-messages "activity"))
 	  (if bookmark
 	      (let ((mp vm-message-list))
 		(while mp
@@ -1029,7 +1029,7 @@ summary buffer to select a folder."
        (vm-check-for-killed-folder))
   (save-excursion
     (and vm-mail-buffer
-	 (vm-select-folder-buffer))
+	 (vm-select-folder-buffer-and-validate 0 (interactive-p)))
     (vm-check-for-killed-summary)
     (let ((folder-buffer (and (eq major-mode 'vm-mode)
 			      (current-buffer)))
@@ -1238,6 +1238,21 @@ summary buffer to select a folder."
 	      void-variable
 	      invalid-function
 	     ))))
+
+(defun vm-toggle-thread-operations ()
+  "Toggle the variable `vm-enable-thread-operations'.
+
+If enabled, VM operations on root messages of collapsed threads
+will apply to all the messages in the threads.  If disabled, VM
+operations only apply to individual messages.
+
+\"Operations\" in this context include deleting, saving, setting
+attributes, adding/deleting labels etc."
+  (interactive)
+  (setq vm-enable-thread-operations (not vm-enable-thread-operations))
+  (if vm-enable-thread-operations
+      (message "Thread operations enabled")
+    (message "Thread operations disabled")))
 
 (defvar vm-postponed-folder)
 

@@ -14,7 +14,7 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
-VM 8.1.93a (2010-07-17)
+VM 8.1.93a (2010-08-28)
 
   CHANGES
 
@@ -38,6 +38,10 @@ VM 8.1.93a (2010-07-17)
 
   IMPROVEMENTS
 
+   * Sorting of messages extended to work with threads.  By default,
+     threads are sorted by "activity", i.e., the date of their most
+     recent activity.  But they can also be sorted by other sort keys.
+
    * New feature: thread-folding in the Summary window allows message
      threads to be collapsed into single line summaries.  The
      following new variables control the behavior of thread folding.
@@ -50,12 +54,30 @@ VM 8.1.93a (2010-07-17)
      See the info file for details.  Thanks to Arik Mitschang for this
      contribution. 
 
+   * New experimental feature: `vm-enable-thread-opeartions' enables
+     "thread operations", a method of invoking operations (such as
+     deleting or saving) on message threads.  See the info file for
+     details.  Thanks to Arik Mitschang for this contribution.
+
+   * New variables: `vm-summary-thread-indentation-by-references'
+     controls whether threads are indented by their original nesting
+     level or according to the nesting level within the folder.
+     `vm-summary-maximum-thread-indentation' specifies the maximum
+     depth of indentation to be displayed.
+
+   * New command: `vm-kill-thread-subtree' (K) allows a thread subtree
+     to be deleted.  This amounts to the same thing as
+     `vm-delete-message' invoked as a thread operation.
+
    * The calculation of threads improved using Jamie Zawinski's
      ideas.  Threads are correctly identified even if some of the
      messages are missing.
 
    * Added EasyPG storage of passwords for mail server accounts.  See
      info index under "passwords".
+
+   * Virtual folder facility extended to work with POP and IMAP
+     folders.  But, there are still some outstanding problems with it.
 
    * Resolved performance problems in summary generation.  It works
      quite fast now.
@@ -66,6 +88,9 @@ VM 8.1.93a (2010-07-17)
    * New command: `vm-save-attachments' allows you to save all the
      attachments of a message under your own file names instead of the
      original file names given in the message.
+
+   * New command: `vm-flag-message-read' (.) allows you to mark an
+     unread or new message as read.
 
   BUG FIXES
 
@@ -175,8 +200,6 @@ VM 8.1.90a  (2010-05-11)
 
 VM 8.1.2
   
-    * Virtual folder facility extended to work with POP and IMAP folders.
-
     * VM made safe for use with Gnu Emacs 23, by removing a few calls
       to the `next-line' function (which was redefined in this Emacs).
 
