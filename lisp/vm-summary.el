@@ -530,10 +530,10 @@ buffer by a regenerated summary line."
 		  (if vm-summary-enable-faces
 		      (vm-summary-faces-add m)
 		    (if (and selected 
-			     (facep 'vm-summary-highlight-face))
+			     (facep vm-summary-highlight-face))
 			(vm-summary-highlight-region 
 			 (vm-su-start-of m) (point)
-			 'vm-summary-highlight-face))))
+			 vm-summary-highlight-face))))
 	      (set-buffer-modified-p modified)
 	      (when s
 		(put-text-property s e 'vm-message m)
@@ -625,10 +625,10 @@ buffer by a regenerated summary line."
 			    (vm-summary-faces-add m)))
 		      (set-buffer-modified-p modified)))
 		  (forward-char (- (length vm-summary-=>)))
-		  (if (facep 'vm-summary-highlight-face)
+		  (if (facep vm-summary-highlight-face)
               (vm-summary-highlight-region
                (vm-su-start-of m) (vm-su-end-of m)
-               'vm-summary-highlight-face))
+               vm-summary-highlight-face))
 		  (and w vm-auto-center-summary (vm-auto-center-summary))
 		  (run-hooks 'vm-summary-pointer-update-hook)))
 	    (and old-window (select-window old-window)))))))
@@ -2159,7 +2159,7 @@ Call this function if you made changes to `vm-summary-format'."
 		       (vm-fs-end-of fs))))
 	  (vm-folders-summary-highlight-region
 	   (vm-fs-start-of fs) (vm-fs-end-of fs)
-	   'vm-summary-highlight-face)))))
+	   vm-summary-highlight-face)))))
 
 (defun vm-do-needed-folders-summary-update ()
   (if (null vm-folders-summary-buffer)

@@ -4710,7 +4710,7 @@ confirmed before creating a new directory."
     ;; for all
     (vm-set-extent-property e 'vm-button t)
     (vm-set-extent-property e 'vm-mime-disposable disposable)
-    (vm-set-extent-property e 'face 'vm-mime-button-face)
+    (vm-set-extent-property e 'face vm-mime-button-face)
     (vm-set-extent-property e 'vm-mime-layout layout)
     (vm-set-extent-property e 'vm-mime-function action)
     ;; for vm-continue-postponed-message
@@ -5648,7 +5648,7 @@ COMPOSITION's name will be read from the minibuffer."
 ;; to set point inside the tag so that a command can access the
 ;; text properties there.
 ;;	   (put-text-property start end 'intangible object)
-	   (put-text-property start end 'face 'vm-mime-button-face)
+	   (put-text-property start end 'face vm-mime-button-face)
 	   (put-text-property start end 'vm-mime-forward-local-refs fb)
 	   (put-text-property start end 'vm-mime-type type)
 	   (put-text-property start end 'vm-mime-object object)
@@ -5663,7 +5663,7 @@ COMPOSITION's name will be read from the minibuffer."
 	   (setq e (make-extent start end))
 	   (vm-mime-set-image-stamp-for-type e (or type "text/plain"))
 	   (set-extent-property e 'start-open t)
-	   (set-extent-property e 'face 'vm-mime-button-face)
+	   (set-extent-property e 'face vm-mime-button-face)
 	   (set-extent-property e 'duplicable t)
 	   (let ((keymap (make-sparse-keymap)))
 	     (if vm-popup-menu-on-mouse-3

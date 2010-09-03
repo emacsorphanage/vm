@@ -410,7 +410,7 @@ AddToFunc SelectWindow
 	      (if vm-summary-enable-faces
 		  (vm-summary-faces-add msg)
 		(vm-summary-highlight-region start (point)
-					     'vm-summary-highlight-face))
+					     vm-summary-highlight-face))
               
               (if (not new-messages) (setq new-messages mp)))
             (setq mp (cdr mp))))

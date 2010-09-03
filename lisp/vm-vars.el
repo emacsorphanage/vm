@@ -986,15 +986,21 @@ FSF Emacs always uses VM's builtin highlighting code."
   :group 'vm-misc
   :type 'boolean)
 
-(defface vm-highlighted-header-face '((t :inherit bold))
-  "Face used to highlight headers. 
-The headers to be highlighted are specified by the 
-`vm-highlighted-headers-regexp'
-
-This face is ignored under XEMacs if `vm-use-lucid-highlighting' is non-nil.
-Xemacs highlight-headers package is used instead. See the 
-customize header highlighting using this package."
+(defface vm-highlighted-header '((t :inherit bold))
+  "Default face used to highlight headers."
   :group 'vm-faces)
+
+(defcustom vm-highlighted-header-face 'vm-highlighted-header
+  "*Face to be used to highlight headers.
+The headers to highlight are specified by the `vm-highlighted-header-regexp'
+variable.
+
+This variable is ignored under XEmacs if `vm-use-lucid-highlighting' is
+non-nil.  XEmacs' highlight-headers package is used instead.  See the
+documentation for the function `highlight-headers' to find out how to
+customize header highlighting using this package."
+  :group 'vm-faces
+  :type 'symbol)
 
 (defcustom vm-preview-lines 0
   "*Non-nil value N causes VM to display the visible headers + N lines of text
@@ -1708,9 +1714,14 @@ deleting a MIME object with `vm-delete-mime-object'."
 (defvar vm-mime-auto-save-all-attachments-avoid-recursion nil
   "For internal use.")
 
-(defface vm-mime-button-face '((t :inherit widget-button))
-  "*Face used for text in buttons that trigger the display of MIME objects."
+(defface vm-mime-button '((t :inherit widget-button))
+  "Default face used for MIME buttons."
   :group 'vm-faces)
+
+(defcustom vm-mime-button-face 'vm-mime-button
+  "*Face used for text in buttons that trigger the display of MIME objects."
+  :group 'vm-faces
+  :type 'symbol)
 
 (defcustom vm-mime-button-format-alist
   '(("text" . "%-35.35(%d, %c%) [%k to %a]")
@@ -3309,10 +3320,15 @@ variable's value has no effect on existing summary buffers."
   :group 'vm-summary
   :type 'string)
 
-(defface vm-summary-highlight-face
-  '((t :inverse-video t))
-  "Face to use to highlight the summary entry for the current message."
+(defface vm-summary-highlight '((t :inverse-video t))
+  "Default face to use to highlight the summary entry for the current message."
   :group 'vm-faces)
+
+(defcustom vm-summary-highlight-face 'vm-summary-highlight
+  "*Face to use to highlight the summary entry for the current message.
+Nil means don't highlight the current message's summary entry."
+  :group 'vm-faces
+  :type 'symbol)
 
 (defcustom vm-mouse-track-summary t
   "*Non-nil value means highlight summary lines as the mouse passes
@@ -3936,9 +3952,15 @@ in messages when you click on them."
   :group 'vm-url
   :type '(repeat string))
 
-(defface vm-highlight-url-face '((t :inherit link))
-  "Face used to display URLs found in messages."
+(defface vm-highlight-url '((t :inherit link))
+  "Default face used to highlight URLs."
   :group 'vm-faces)
+
+(defcustom vm-highlight-url-face 'vm-highlight-url
+    "*Non-nil value should be a face to use display URLs found in messages.
+Nil means don't highlight URLs."
+  :group 'vm-faces
+  :type 'symbol)
 
 (defcustom vm-url-search-limit 12000
   "*Non-nil numeric value tells VM how hard to search for URLs.
@@ -4268,7 +4290,7 @@ entries from a folder summary."
   :type 'hook)
 
 (defgroup vm-summary-faces nil
-  "VM additional virtual folder selectors and functions."
+  "VM additional faces for the summary buffer."
   :group 'vm-faces)
 
 (defcustom vm-summary-faces-alist

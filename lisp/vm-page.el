@@ -301,7 +301,7 @@ Negative arg means scroll forward."
 	(cond ((vm-match-header vm-highlighted-header-regexp)
 	       (setq e (make-extent (vm-matched-header-contents-start)
 				    (vm-matched-header-contents-end)))
-	       (set-extent-property e 'face 'vm-highlighted-header-face)
+	       (set-extent-property e 'face vm-highlighted-header-face)
 	       (set-extent-property e 'vm-highlight t)))
 	(goto-char (vm-matched-header-end)))))
    ((fboundp 'overlay-put)
@@ -322,7 +322,7 @@ Negative arg means scroll forward."
 	(cond ((vm-match-header vm-highlighted-header-regexp)
 	       (setq p (make-overlay (vm-matched-header-contents-start)
 				     (vm-matched-header-contents-end)))
-	       (overlay-put p 'face 'vm-highlighted-header-face)
+	       (overlay-put p 'face vm-highlighted-header-face)
 	       (overlay-put p 'vm-highlight t)))
 	(goto-char (vm-matched-header-end)))))))
 
@@ -358,8 +358,8 @@ Negative arg means scroll forward."
 	      (vm-increment n))
 	    (setq e (make-extent (match-beginning n) (match-end n)))
 	    (set-extent-property e 'vm-url t)
-	    (if (facep 'vm-highlight-url-face)
-		(set-extent-property e 'face 'vm-highlight-url-face))
+	    (if (facep vm-highlight-url-face)
+		(set-extent-property e 'face vm-highlight-url-face))
 	    (if vm-url-browser
 		(let ((keymap (make-sparse-keymap))
 		      (popup-function
@@ -404,8 +404,8 @@ Negative arg means scroll forward."
 	      (vm-increment n))
 	    (setq o (make-overlay (match-beginning n) (match-end n)))
 	    (overlay-put o 'vm-url t)
-	    (if (facep 'vm-highlight-url-face)
-		(overlay-put o 'face 'vm-highlight-url-face))
+	    (if (facep vm-highlight-url-face)
+		(overlay-put o 'face vm-highlight-url-face))
 	    (if vm-url-browser
 		(let ((keymap (make-sparse-keymap))
 		      (popup-function
@@ -637,7 +637,7 @@ Use mouse button 3 to choose a Web browser for the URL."
     (or start (setq start (vm-headers-of (car vm-message-pointer))))
     (or end (setq end (vm-text-end-of (car vm-message-pointer))))
     ;; energize the URLs
-    (if (or (facep 'vm-highlight-url-face) vm-url-browser)
+    (if (or (facep vm-highlight-url-face) vm-url-browser)
         (save-restriction
           (widen)
           (narrow-to-region start end)
