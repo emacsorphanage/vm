@@ -3366,7 +3366,7 @@ it is nil, then the indentation level is determined by the number
 of thread ancestors within the folder.  When some messages in the
 thread are missing or deleted, this is likely to be less than the
 original nesting level."
-  :group 'vm
+  :group 'vm-summary
   :type 'boolean)
 
 (defcustom vm-summary-thread-indent-level 2
@@ -3387,7 +3387,7 @@ indented twice the value of `vm-summary-thread-indent-level'."
 (defcustom vm-summary-maximum-thread-indentation 20
   "*The maximum number of thread nesting levels that should be
 displayed by indentation in the folder summary."
-  :group 'vm
+  :group 'vm-summary
   :type 'integer)
 
 (defcustom vm-thread-using-subject t
@@ -5237,7 +5237,7 @@ threads will apply to all the messages in the threads.
 
 \"Operations\" in this context include deleting, saving, setting
 attributes, adding/deleting labels etc."
-  :group 'vm
+  :group 'vm-summary
   :type 'boolean)
 
 (defvar vm-summary-threads-collapsed t
