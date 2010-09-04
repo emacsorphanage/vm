@@ -2643,18 +2643,15 @@ A nil value means don't insert a Message-ID header."
   :group 'vm-compose
   :type 'boolean)
 
-(defcustom vm-mail-header-order
-  '("From:" "Organization:"
-    "Subject:"
-    "Date:"
-    "Priority:" "X-Priority:" "Importance:"
-    "Message-ID:"
-    "MIME-Version:" "Content-Type:"
-    "To:" "CC:" "BCC:" "Reply-To:")
+(defcustom vm-mail-header-order '("From:" "Organization:" "Subject:"
+				  "Date:" "Priority:" "X-Priority:" 
+				  "Importance:" "Message-ID:"
+				  "MIME-Version:" "Content-Type:"
+				  "To:" "CC:" "BCC:" "Reply-To:")
   "*Order of headers when calling `vm-reorder-message-headers' interactively
 in a composition buffer."
   :group 'vm-compose
-  :type '(list string))
+  :type '(repeat :tag "Header" string))
 
 (defcustom vm-mail-reorder-message-headers nil
   "*Reorder message headers before sending."
@@ -2792,7 +2789,8 @@ for the variable `vm-summary-format' for information on what this string
 may contain.  The format should *not* end with nor contain a newline.
 Nil means leave the Subject header empty when forwarding."
   :group 'vm-compose
-  :type 'string)
+  :type '(choice (const nil)
+		 (string)))
 
 (defcustom vm-forwarded-headers nil
   "*List of headers that should be forwarded by `vm-forward-message'.
@@ -2836,7 +2834,8 @@ order in that case, with headers not matching any in the
 the forwarded message."
   :group 'vm-compose
   :type '(choice
-          (const nil)
+	  (const :tag "Only forward headers listed in vm-forward-headers" nil)
+	  (const :tag "Forward all headers" "none-to-be-dropped")
           regexp))
 
 (defcustom vm-forwarding-digest-type "mime"
@@ -3199,7 +3198,8 @@ appearance in that case, with headers not matching any in the
 `vm-resend-headers' list appearing last in the headers of
 the message."
   :group 'vm-compose
-  :type 'regexp)
+  :type '(choice (const nil)
+		 regexp))
 
 (defcustom vm-summary-format "%n %*%a %-17.17F %-3.3m %2d %4l/%-5c %I\"%s\"\n"
   "*String which specifies the message summary line format.
