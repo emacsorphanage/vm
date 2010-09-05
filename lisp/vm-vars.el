@@ -169,7 +169,8 @@ has copied out the mail."
 that VM should keep in the Folder buffer when the messages are
 fetched, or nil to signify no limit."
   :group 'vm-folders
-  :type '(choice (const nil) integer))
+  :type '(choice (const :tag "No Limit" nil) 
+		 (integer :tag "Number of Mesages")))
 
 (defcustom vm-index-file-suffix nil
   "*Suffix used to construct VM index file names.
@@ -556,7 +557,8 @@ later by running `vm-get-new-mail' interactively.
 
 A nil value for `vm-imap-max-message-size' means no size limit."
   :group 'vm-imap
-  :type '(choice (const nil) integer))
+  :type '(choice (const :tag "Unlimited" nil)
+                 (integer :tag "Bytes")))
 
 (defcustom vm-imap-messages-per-session nil
   "*Non-nil value should be an integer specifying how many messages to
@@ -566,7 +568,7 @@ To retrieve more messages, type 'g' again.
 
 A nil value means there's no limit."
   :group 'vm-imap
-  :type '(choice (const nil) integer))
+  :type '(choice (const :tag "Unlimited" nil) integer))
 
 (defcustom vm-imap-bytes-per-session nil
   "*Non-nil value should be an integer specifying how many bytes to
@@ -577,7 +579,8 @@ again.
 
 A nil value means there's no limit."
   :group 'vm-imap
-  :type '(choice (const nil) integer))
+  :type '(choice (const :tag "No Limit" nil) 
+		 (integer :tag "Bytes")))
 
 (defcustom vm-imap-expunge-after-retrieving t
   "*Non-nil value means that, when an IMAP mailbox is used as a
@@ -609,7 +612,8 @@ VAL should be nil if retrieved messages should be left in the
 corresponding IMAP mailbox, t if retrieved messages should be
 deleted from the mailbox immediately after retrieval."
   :group 'vm-imap
-  :type '(repeat (cons string boolean)))
+  :type '(repeat (cons (string :tag "IMAP Folder Specificaiton")
+		       boolean)))
 
 (defcustom vm-recognize-imap-maildrops "^\\(imap\\|imap-ssl\\|imap-ssh\\):[^:]+:[^:]+:[^:]+:[^:]+:[^:]+:.+"
   "*Value if non-nil should be a regular expression that matches
@@ -617,9 +621,11 @@ spool names found in `vm-spool-files' that should be considered IMAP
 maildrops.  A nil value tells VM that all the spool names are to
 be considered files except those matched by `vm-recognize-pop-maildrops'."
   :group 'vm-imap
-  :type 'regexp)
+  :type '(choice (const :tag "Don't Recognize" nil)
+		 regexp))
 
-(defcustom vm-imap-server-list nil
+;;FIXME Mark this variable as obsolete 
+(defvar vm-imap-server-list nil
   "*List of IMAP maildrop specifications that tell VM the IMAP servers
 you have access to and how to log into them.  The IMAP maildrop
 specification in the same format used by `vm-spool-files' (which
@@ -636,9 +642,8 @@ Example:
          \"imap:crickle.lex.ky.us:143:inbox:login:becky:*\"
        )
  )"
-  :group 'vm-imap
-  :type '(repeat string))
-
+)
+;; FIXME Documentation: what is meant by (which see)
 (defcustom vm-imap-account-alist nil
   "*Alist of IMAP account specifications and names that refer to them.
 The alist format is:
@@ -660,15 +665,19 @@ Example:
  )
 "
   :group 'vm-imap
-  :type '(repeat (list string string)))
+  :type '(repeat (list (string :tag "IMAP Folder Specification") 
+		       (string :tag "Nickname"))))
 
+;; FIXME Doc clarificaiton: What is meant by IMAP account?
+;; IMAP folder specification or short folder name?
 (defcustom vm-imap-default-account nil
   "*Set this variable to a string denoting the name of an IMAP account
 declared in `vm-imap-account-alist'.  The account specified here will
 be regarded as the default account for various purposes, e.g., for
 saving copies of outgoing mail."
   :group 'vm-imap
-  :type '(choice (const nil) string))
+  :type '(choice (const :tag "None" nil) 
+		 (string :tag "IMAP Account")))
 
 (defcustom vm-imap-refer-to-inbox-by-account-name nil
   "*If set to non-nil, the INBOX folders on IMAP accounts are
@@ -680,15 +689,16 @@ folder."
   :group 'vm-imap
   :type 'boolean)
 
-(defcustom vm-imap-tolerant-of-bad-imap 0
+(defcustom vm-imap-tolerant-of-bad-imap nil
   "*Level of tolerance that vm should use for IMAP servers that
-don't follow the IMAP specification.  Default of 0 means no
+don't follow the IMAP specification.  Default of NIL or 0 means no
 tolerance.  Level 1 allows possibly harmless violations of
 prohibitions.  (But these violations could also be symptomatic of
 deeper problems.)  Use this level carefully.  Higher levels of
 violations are not currently permitted."
   :group 'vm-imap
-  :type '(choice (const nil) integer))
+  :type '(choice (const :tag "No Tolerance" nil) 
+		 (const :tag "Tolerant" 1)))
 
 (defcustom vm-imap-folder-cache-directory nil
   "*Directory where VM stores cached copies of IMAP folders.
@@ -698,7 +708,7 @@ so that they need not be retrieved each time you visit the folder.
 The cached copies are stored in the directory specified by this
 variable."
   :group 'vm-imap
-  :type '(choice (const nil) directory))
+  :type '(choice (const :tag "None" nil) directory))
 
 (defcustom vm-imap-save-to-server nil
   "*This variable controls the behavior of the `vm-save-message'
@@ -723,7 +733,8 @@ Increase this if your IMAP server is sluggish."
   "*Number of seconds to wait for output from the IMAP server before
 timing out.  It can be set to nil to never time out."
   :group 'vm-imap
-  :type '(choice (const nil) integer))
+  :type '(choice (const :tag "Never" nil) 
+		 (integer :tag "Seconds")))
 
 (defcustom vm-imap-ensure-active-sessions t
   "*If non-NIL, ensures that an IMAP session is active before issuing
@@ -754,7 +765,9 @@ This is done asynchronously and may occur while you are editing
 other files.  It should not disturb your editing, except perhaps
 for a pause while the check is being done."
   :group 'vm-folders
-  :type '(choice boolean integer))
+  :type '(choice (const :tag "No" nil)
+		 (const :tag "Yes" t)
+		 (integer :tag "Seconds")))
 
 (defcustom vm-mail-check-interval 300
   "*Numeric value specifies the number of seconds between checks
@@ -846,10 +859,10 @@ CRLF if you're on a Windows system, LF for UNIXish systems.
 `lf' mean use LF.
 `cr' means use CR (old Macs use this)."
   :group 'vm-folders
-  :type '(choice (const nil)
-                 (const crlf)
-                 (const cr)
-                 (const lf)))
+  :type '(choice (const :tag "System Default" nil)
+		 (const :tag "Windows" crlf)
+		 (const :tag "Old Mac" cr)
+		 (const :tag "Unix" lf)))
 
 (defcustom vm-check-folder-types t
   "*Non-nil value causes VM to check folder and message types for
@@ -2312,9 +2325,9 @@ A value of t means always remove the folders.
 A value of nil means never remove empty folders.
 A value that's not t or nil means ask before removing empty folders."
   :group 'vm-folders
-  :type '(choice (const nil) 
-                 (const t) 
-                 (const ask)))
+  :type '(choice (const :tag "Never" nil) 
+		 (const :tag "Always" t)
+		 (const :tag "Ask" ask)))
 
 (defcustom vm-folder-file-precious-flag t
   "*Value that `file-precious-flag' should have in visited folders.
@@ -2345,7 +2358,9 @@ buffer.  This is done non-obtrusively, so that if you type
 something while flushing is occurring, the flush will abort
 cleanly and Emacs will respond to your keystrokes as usual."
   :group 'vm-folders
-  :type '(choice boolean integer))
+  :type '(choice (const :tag  "Flush after folder/message saved" nil)
+		 (const :tag "Flush after every change" t)
+		 (integer :tag "Seconds")))
 
 (defcustom vm-visit-when-saving nil
   "*Value determines whether VM will visit folders when saving messages.
@@ -2401,7 +2416,13 @@ Whether REGEXP is matched case sensitively depends on the value
 of the variable `vm-auto-folder-case-fold-search'.  Header names
 are always matched case insensitively."
   :group 'vm-folders
-  :type '(repeat (cons regexp (repeat (cons regexp sexp)))))
+  :type '(choice (const :tag "None" nil)
+		 (repeat (cons 
+			  (regexp :tag "Header Regexp")
+			  (repeat
+			   (cons (regexp :tag "Content Regexp")
+				 (choice (string :tag "Folder Name")
+					 (sexp :tag "Folder Expresion"))))))))
 
 (defcustom vm-auto-folder-case-fold-search nil
   "*Non-nil value means VM will ignore case when matching header
@@ -2534,7 +2555,10 @@ The recognized SELECTORs are:
    written         - matches message if it has been saved without its headers.
 "
   :group 'vm-folders
-  :type 'sexp)
+  :type '(choice (const :tag "none" nil)
+		 (repeat (group (string :tag "Virtual Folder Name")
+				(repeat :tag "Folder List" string)
+				(sexp :tag "Selectors")))))
 
 (defcustom vm-virtual-mirror t
   "*Non-nil value causes the attributes of messages in virtual folders
