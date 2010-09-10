@@ -436,7 +436,8 @@ later by running `vm-get-new-mail' interactively.
 
 A nil value for `vm-pop-max-message-size' means no size limit."
   :group 'vm-pop
-  :type '(choice (const nil) integer))
+  :type '(choice (const :tag "No Limit" nil) 
+		 (integer :tag "Bytes")))
 
 (defcustom vm-pop-messages-per-session nil
   "*Non-nil value should be an integer specifying how many messages to
@@ -446,7 +447,8 @@ To retrieve more messages, type 'g' again.
 
 A nil value means there's no limit."
   :group 'vm-pop
-  :type '(choice (const nil) integer))
+  :type '(choice (const :tag "No Limit" nil) 
+		 integer))
 
 (defcustom vm-pop-bytes-per-session nil
   "*Non-nil value should be an integer specifying how many bytes to
@@ -457,7 +459,8 @@ again.
 
 A nil value means there's no limit."
   :group 'vm-pop
-  :type '(choice (const nil) integer))
+  :type '(choice (const :tag "No Limit" nil) 
+		 (integer :tag "Bytes")))
 
 (defcustom vm-pop-expunge-after-retrieving nil
   "*Non-nil value means that, when a POP mailbox is used as a
