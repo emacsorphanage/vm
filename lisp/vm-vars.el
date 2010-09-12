@@ -1661,7 +1661,8 @@ VM uses this program to convert between image formats and to slice up
 images for display.  Set this to nil and VM will not use the
 'convert' program."
   :group 'vm-helpers
-  :type '(choice string (const nil)))
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-imagemagick-identify-program
   (vm-locate-executable-file "identify")
@@ -1669,7 +1670,8 @@ images for display.  Set this to nil and VM will not use the
 VM uses this program to gather information about images.  Set this to nil
 and VM will not use the 'convert' program."
   :group 'vm-helpers
-  :type '(choice string (const nil)))
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defvar vm-mime-image-type-converter-alist
   (if (stringp vm-imagemagick-convert-program)
@@ -2094,14 +2096,15 @@ specify a full pathname.  The program should expect to read
 base64 data on its standard input and write the converted data
 to its standard output."
   :group 'vm-helpers
-  :type '(choice string 
-                 (const nil)))
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-mime-base64-decoder-switches nil
   "*List of command line flags passed to the command named by
 `vm-mime-base64-decoder-program'."
   :group 'vm-helpers
-  :type '(repeat string))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-mime-base64-encoder-program
   (vm-locate-executable-file "base64-encode")
@@ -2111,13 +2114,15 @@ specify a full pathname.  The program should expect arbitrary
 data on its standard input and write base64 data to its standard
 output."
   :group 'vm-helpers
-  :type '(choice string (const nil)))
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-mime-base64-encoder-switches nil
   "*List of command line flags passed to the command named by
 `vm-mime-base64-encoder-program'."
   :group 'vm-helpers
-  :type '(repeat string))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-mime-qp-decoder-program (vm-locate-executable-file "qp-decode")
   "*Non-nil value should be a string that names a MIME quoted-printable
@@ -2126,14 +2131,15 @@ need not specify a full pathname.  The program should expect to
 read quoted-printable data on its standard input and write the
 converted data to its standard output."
   :group 'vm-helpers
-  :type '(choice string (const nil)))
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-mime-qp-decoder-switches nil
   "*List of command line flags passed to the command named by
 `vm-mime-qp-decoder-program'."
   :group 'vm-helpers
-  :type '(choice (const nil)
-                 (repeat string)))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-mime-qp-encoder-program (vm-locate-executable-file "qp-encode")
   "*Non-nil value should be a string that names a MIME quoted-printable
@@ -2142,14 +2148,15 @@ need not specify a full pathname.  The program should expect
 arbitrary data on its standard input and write quoted-printable
 data to its standard output."
   :group 'vm-helpers
-  :type '(choice string (const nil)))
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-mime-qp-encoder-switches nil
   "*List of command line flags passed to the command named by
 `vm-mime-qp-encoder-program'."
   :group 'vm-helpers
-  :type '(choice (const nil)
-                 (repeat string)))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-mime-uuencode-decoder-program "uudecode"
   "*Non-nil value should be a string that names UUENCODE decoder.
@@ -2159,14 +2166,15 @@ uuencoded data on its standard input and write the converted
 data to the file specified in the ``begin'' line at the start of
 the data."
   :group 'vm-helpers
-  :type '(choice string (const nil)))
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-mime-uuencode-decoder-switches nil
   "*List of command line flags passed to the command named by
 `vm-mime-uuencode-decoder-program'."
   :group 'vm-helpers
-  :type '(choice (const nil)
-                 (repeat string)))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-auto-next-message t
   "*Non-nil value causes VM to use `vm-next-message' to advance to the next
@@ -4736,157 +4744,184 @@ accept as its last two arguments the spool file (or maildrop) from which
 mail is retrieved, and the local file where the retrieved mail
 should be stored."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-movemail-program-switches nil
   "*List of command line flags to pass to the movemail program
 named by `vm-movemail-program'."
   :group 'vm-helpers
-  :type '(repeat string))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-netscape-program "netscape"
   "*Name of program to use to run Netscape.
 `vm-mouse-send-url-to-netscape' uses this."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-netscape-program-switches nil
   "*List of command line switches to pass to Netscape."
   :group 'vm-helpers
-  :type '(repeat string))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-opera-program "opera"
   "*Name of program to use to run Opera.
 `vm-mouse-send-url-to-opera' uses this."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-opera-program-switches nil
   "*List of command line switches to pass to Opera."
   :group 'vm-helpers
-  :type '(repeat string))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-mozilla-program "mozilla"
   "*Name of program to use to run Mozilla.
 `vm-mouse-send-url-to-mozilla' uses this."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-mozilla-program-switches nil
   "*List of command line switches to pass to Mozilla."
   :group 'vm-helpers
-  :type '(repeat string))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-mosaic-program "Mosaic"
   "*Name of program to use to run Mosaic.
 `vm-mouse-send-url-to-mosaic' uses this."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-mosaic-program-switches nil
   "*List of command line switches to pass to Mosaic."
   :group 'vm-helpers
-  :type '(repeat string))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-mmosaic-program "mMosaic"
   "*Name of program to use to run mMosaic.
 `vm-mouse-send-url-to-mosaic' uses this."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-mmosaic-program-switches nil
   "*List of command line switches to pass to mMosaic."
   :group 'vm-helpers
-  :type '(repeat string))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-konqueror-program "konqueror"
   "*Name of program to use to run Konqueror.
 `vm-mouse-send-url-to-konqueror' uses this."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-konqueror-program-switches nil
   "*List of command line switches to pass to Konqueror."
   :group 'vm-helpers
-  :type '(repeat string))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-konqueror-client-program "kfmclient"
   "*Name of program to use to issue requests to Konqueror.
 `vm-mouse-send-url-to-konqueror' uses this."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-konqueror-client-program-switches nil
   "*List of command line switches to pass to Konqueror client."
   :group 'vm-helpers
-  :type '(repeat string))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-firefox-program "firefox"
   "*Name of program to use to run Mozilla Firefox.
 `vm-mouse-send-url-to-firefox' uses this."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-firefox-program-switches nil
   "*List of command line switches to pass to Mozilla Firefox."
   :group 'vm-helpers
-  :type '(repeat string))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-firefox-client-program "firefox"
   "*Name of program to use to issue requests to Mozilla Firefox.
 `vm-mouse-send-url-to-firefox' uses this."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-firefox-client-program-switches '("-remote")
   "*List of command line switches to pass to Mozilla Firefox client."
   :group 'vm-helpers
-  :type '(repeat string))
+  :type '(choice (const :tag "None" nil) 
+		 (repeat string)))
 
 (defcustom vm-wget-program "wget"
   "*Name of program to use to run wget.
 This is used to retrieve URLs."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-w3m-program "w3m"
   "*Name of program to use to run w3m.
 This is used to retrieve URLs."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-fetch-program "fetch"
   "*Name of program to use to run fetch.
 This is used to retrieve URLs.  Fetch is part of the standard
 FreeBSD installation."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-curl-program "curl"
   "*Name of program to use to run curl.
 This is used to retrieve URLs."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-lynx-program "lynx"
   "*Name of program to use to run lynx.
 This is used to retrieve URLs."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-grep-program "grep"
   "*Name of program to use to run grep.
 This is used to count message separators in folders.
 Set this to nil and VM will not use it."
   :group 'vm-helpers
-  :type '(choice string (const nil)))
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-stunnel-program "stunnel"
   "*Name of program to use to run stunnel.
 This is used to make SSL connections to POP and IMAP servers that
 support SSL.  Set this to nil and VM will not use it."
   :group 'vm-helpers
-  :type '(choice string (const nil)))
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-stunnel-program-switches nil
   "*List of command line switches to pass to stunnel.
@@ -4896,7 +4931,8 @@ This variable is ignored if you're running stunnel version 4 or
 later versions, since those versions of stunnel are configurable
 only with a configuration file."
   :group 'vm-helpers
-  :type '(list string))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-stunnel-program-additional-configuration-file nil
   "*Name of a configuration file to append to the config file VM creates
@@ -4915,7 +4951,8 @@ This variable is ignored if you're running stunnel versions prior
 to version 4 as VM uses command line argument to control stunnel
 in those cases."
   :group 'vm-helpers
-  :type 'string)
+  :type '(choice (const :tag "None" nil)
+		 (file :must-match t)))
 
 (defcustom vm-stunnel-random-data-method 'generate
   "*Specifies what VM should do about sending the PRNG.
@@ -4935,19 +4972,22 @@ tells VM to generate the random data.
 A nil value tells VM to do nothing and let stunnel find the data
 if it can."
   :group 'vm-helpers
-  :type '(choice (const nil) (const generate)))
+  :type '(choice (const "Leave it to stunnel" nil) 
+		 (const generate)))
 
 (defcustom vm-ssh-program "ssh"
   "*Name of program to use to run SSH.
 This is used to build an SSH tunnel to remote POP and IMAP servers.
 Set this to nil and VM will not use it."
   :group 'vm-helpers
-  :type '(choice string (const nil)))
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-ssh-program-switches nil
   "*List of command line switches to pass to SSH."
   :group 'vm-helpers
-  :type '(repeat string))
+  :type '(choice (const :tag "None" nil)
+		 (repeat string)))
 
 (defcustom vm-ssh-remote-command "echo ready; sleep 15"
   "*Shell command to run to hold open the SSH connection.
@@ -4955,7 +4995,7 @@ This command must generate one line of output and then
 sleep long enough for VM to open a port-forwarded connection.
 The default should work on UNIX systems."
   :group 'vm-helpers
-  :type 'string)
+  :type '(string :tag "Shell command"))
 
 (defcustom vm-uncompface-program (and vm-fsfemacs-p
 				   (fboundp 'image-type-available-p)
@@ -4965,7 +5005,8 @@ Or if the program version is new enough, it will be called with
 -X to produce XBM data.  This program is needed to support he
 display of X-Faces under Emacs 21."
   :group 'vm-helpers
-  :type '(choice string (const nil)))
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defcustom vm-icontopbm-program (and vm-fsfemacs-p
 				  (fboundp 'image-type-available-p)
@@ -4975,7 +5016,8 @@ This program is needed to support the display of X-Faces under
 Emacs 21 if the uncompface program can't convert X-Face image
 data to XBM data."
   :group 'vm-helpers
-  :type '(choice string (const nil)))
+  :type '(choice (const :tag "None" nil)
+		 file))
 
 (defvar vm-uncompface-accepts-dash-x
   (and vm-fsfemacs-p (fboundp 'image-type-available-p)
@@ -5035,7 +5077,7 @@ you could load the `latin-unity' and `un-define' libraries under XEmacs
 utf-8)'. "
   :group 'vm-misc
   :type '(choice (const nil)
-                 (repeat :tag "Coding system" symbol)))
+		 (repeat :tag "Coding system" symbol)))
 
 (defcustom vm-mime-ucs-list '(utf-8 iso-2022-jp ctext escape-quoted)
   "*List of coding systems that can encode all characters known to emacs."
@@ -5049,15 +5091,15 @@ If t, 8bit chars are replaced by a \"_\", if a string it should
 be a regexp matching all chars to be replaced by a \"_\"."
   :group 'vm-misc
   :type '(choice (const :tag "Disabled" nil)
-                 (regexp :tag "Enabled" "[^ a-zA-Z0-9.,_\"'+-]")
-                 (regexp :tag "Custom regexp")))
+		 (regexp :tag "Enabled" "[^ a-zA-Z0-9.,_\"'+-]")
+		 (regexp :tag "Custom regexp")))
 
 (defcustom vm-buffer-name-limit 80
   "*The limit for a generated buffer name."
   :group 'vm-misc
   :type '(choice (const :tag "Disabled" nil)
-                 (integer :tag "Enabled" 80)
-                 (integer :tag "Length")))
+		 (integer :tag "Enabled" 80)
+		 (integer :tag "Length")))
 
 (defconst vm-maintainer-address "viewmail-bugs@nongnu.org"
   "Where to send VM bug reports.")
