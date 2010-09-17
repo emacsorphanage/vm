@@ -483,7 +483,7 @@ works in all VM buffers."
 (defsubst vm-virtual-message-p (m)
   (not (eq m (vm-real-message-of m))))
 
-(defun vm-update-virtual-messages (m)
+(defsubst vm-update-virtual-messages (m)
   "Update all the virtual messages of M to reflect the changes made to
 the headers/body of M."
   (let ((v-list (vm-virtual-messages-of m)))
@@ -496,8 +496,9 @@ the headers/body of M."
 	(if (and vm-presentation-buffer
 		 (eq (car vm-message-pointer) (car v-list)))
 	    (save-excursion (vm-preview-current-message)))
-	(if (vectorp vm-thread-obarray)
-	    (vm-build-threads (list (car v-list))))
+	(when (vectorp vm-thread-obarray)
+	  (vm-unthread-message (car v-list))
+	  (vm-build-threads (list (car v-list))))
 	;; (if vm-summary-show-threads
 	;;     (intern (buffer-name) buffers-needing-thread-sort))
 	(setq v-list (cdr v-list))))))
