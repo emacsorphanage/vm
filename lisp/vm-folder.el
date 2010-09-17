@@ -2081,8 +2081,8 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	      status2-hi 0
 	      status2-lo 0)
       (if (> (length status2) 4)
-	  (setq status2-hi (string-to-number (substring status2 0 -4))
-		status2-lo (string-to-number (substring status2 -4 nil)))
+	  (setq status2-hi (string-to-number (substring status2 0 -4) 16)
+		status2-lo (string-to-number (substring status2 -4 nil) 16))
 	;; handle badly fomatted status strings written by old
 	;; versions
 	(setq status2 (string-to-number status2 16)
