@@ -915,6 +915,14 @@ for the variable to have effect."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-word-wrap-paragraphs-in-reply nil
+  "*If non-nil, causes VM to word wrap paragraphs with long lines
+during message composition.  This is done using the `longlines'
+library, which must be installed for the variable to have
+effect."
+  :group 'vm
+  :type 'boolean)
+
 (defcustom vm-fill-paragraphs-containing-long-lines nil
   "*This variable can be set to nil, a numeric value N, the
 symbol 'window-width.  If it is numeric, it causes VM to fill
@@ -938,6 +946,25 @@ wrapping."
 		 (const wrap)
                  integer))
 
+(defcustom vm-fill-paragraphs-containing-long-lines-in-reply nil
+  "*This variable can be set to nil, a numeric value N, the
+symbol 'window-width.  If it is numeric, it causes VM to fill
+included text in replies provided it has lines spanning that many
+columns or more.  Setting it to 'window-width has the effect of
+using the width of the Emacs window.
+
+This variable determines which paragraphs are filled,
+but `vm-fill-long-lines-in-reply-column' determines the fill column.
+
+Note that filling is carried out only if word wrapping is not in
+effect.  The variable `vm-word-wrap-paragraphs-in-reply' controls word
+wrapping."
+  :group 'vm
+  :type '(choice (const nil)
+                 (const window-width)
+		 (const wrap)
+                 integer))
+
 (defcustom vm-paragraph-fill-column (default-value 'fill-column)
   "*Column beyond which automatic line-wrapping should happen when
 re-filling lines longer than the value of
@@ -950,7 +977,7 @@ re-filling lines longer than the value of
   :type '(choice (const nil)
                  (const window-width)
                  integer)
-  :group 'vm-rfaddons)
+  :group 'vm)
 
 (defcustom vm-display-using-mime t
   "*Non-nil value means VM should display messages using MIME.

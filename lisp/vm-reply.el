@@ -38,9 +38,11 @@
 ;;;###autoload
 (defun vm-fill-long-lines-in-reply ()
   (interactive)
-  (let ((vm-word-wrap-paragraphs nil)) ; doesn't work well with fill-prefixes
+  (let ((vm-word-wrap-paragraphs vm-word-wrap-paragraphs-in-reply)
+					; doesn't work well with fill-prefixes
+	(vm-paragraph-fill-column vm-fill-long-lines-in-reply-column))
     (vm-fill-paragraphs-containing-long-lines
-     vm-fill-long-lines-in-reply-column
+     vm-fill-paragraphs-containing-long-lines-in-reply
      (save-excursion
        (goto-char (point-min))
        (re-search-forward (regexp-quote mail-header-separator) (point-max))
@@ -181,7 +183,7 @@
               (vm-yank-message (car mlist))
               (goto-char (point-max)))
             (setq mlist (cdr mlist)))))
-    (if vm-fill-long-lines-in-reply-column
+    (if vm-fill-paragraphs-containing-long-lines-in-reply
         (vm-fill-long-lines-in-reply))
     (run-hooks 'vm-reply-hook)
     (run-hooks 'vm-mail-mode-hook)))
