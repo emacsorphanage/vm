@@ -310,6 +310,7 @@ freshly parsing the message contents."
       (and work-buffer (kill-buffer work-buffer)))))
 
 (defun vm-decode-coding-region (b-start b-end coding-system &rest foo)
+  "This is a wrapper for decode-coding-region, having the same effect."
   (let ((work-buffer nil)
 	start end
 	oldsize
@@ -380,6 +381,9 @@ freshly parsing the message contents."
 		 (error nil)))))))
 
 (defun vm-mime-transfer-decode-region (layout start end)
+  "Decode the body of a mime part given by LAYOUT at positions START
+to END, and replace it by the decoded content.  The decoding carried
+out includes base-64, quoted-printable, uuencode and CRLF conversion."
   (let ((case-fold-search t) (crlf nil))
     (if (or (vm-mime-types-match "text" (car (vm-mm-layout-type layout)))
 	    (vm-mime-types-match "message" (car (vm-mm-layout-type layout))))
@@ -1347,14 +1351,18 @@ shorter pieces, rebuilt it from them."
   (vm-mime-set-xxx-parameter name value (cdr (vm-mm-layout-qtype layout))))
 
 (defun vm-mime-insert-mime-body (layout)
-  (vm-insert-region-from-buffer (marker-buffer (vm-mm-layout-body-start layout))
-				(vm-mm-layout-body-start layout)
-				(vm-mm-layout-body-end layout)))
+  "Insert in the current buffer the body of a mime part given by LAYOUT."
+  (vm-insert-region-from-buffer 
+   (marker-buffer (vm-mm-layout-body-start layout))
+   (vm-mm-layout-body-start layout)
+   (vm-mm-layout-body-end layout)))
 
 (defun vm-mime-insert-mime-headers (layout)
-  (vm-insert-region-from-buffer (marker-buffer (vm-mm-layout-header-start layout))
-				(vm-mm-layout-header-start layout)
-				(vm-mm-layout-header-end layout)))
+  "Insert in the current buffer the headers of a mime part given by LAYOUT."
+  (vm-insert-region-from-buffer
+   (marker-buffer (vm-mm-layout-header-start layout))
+   (vm-mm-layout-header-start layout)
+   (vm-mm-layout-header-end layout)))
 
 (defvar buffer-display-table)
 (defvar standard-display-table)
@@ -2497,6 +2505,11 @@ declarations in the attachments and make a decision independently."
   
 
 (defun vm-mime-display-internal-text/plain (layout &optional no-highlighting)
+  "Display a text/plain mime part given by LAYOUT, carrying out
+any necessary MIME-decoding, CRLF-conversion, charset-conversion
+and word-wrapping/filling.  The original text is replaced by the
+converted content.  Unless NO-HIGHLIGHTING is non-nil, the URL's
+in the text are highlighted and energized."
   (let ((start (point)) end need-conversion
 	(buffer-read-only nil)
 	(charset (or (vm-mime-get-parameter layout "charset") "us-ascii")))
@@ -2509,16 +2522,15 @@ declarations in the attachments and make a decision independently."
       (vm-mime-insert-mime-body layout)
       (setq end (point-marker))
       (vm-mime-transfer-decode-region layout start end)
-      (and need-conversion
-	   (setq charset (vm-mime-charset-convert-region charset start end)))
+      (when need-conversion
+	(setq charset (vm-mime-charset-convert-region charset start end)))
       (vm-mime-charset-decode-region charset start end)
-      (or no-highlighting (vm-energize-urls-in-message-region start end))
-      (if (and (or vm-word-wrap-paragraphs
-		   vm-fill-paragraphs-containing-long-lines)
-	       (not no-highlighting))
-          (vm-fill-paragraphs-containing-long-lines
-           vm-fill-paragraphs-containing-long-lines
-           start end))
+      (unless no-highlighting (vm-energize-urls-in-message-region start end))
+      (when (and (or vm-word-wrap-paragraphs
+		     vm-fill-paragraphs-containing-long-lines)
+		 (not no-highlighting))
+	(vm-fill-paragraphs-containing-long-lines
+	 vm-fill-paragraphs-containing-long-lines start end))
       (goto-char end)
       t )))
 
