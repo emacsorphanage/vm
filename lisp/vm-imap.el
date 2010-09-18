@@ -924,9 +924,9 @@ nil if the session could not be created."
 		       host port mailbox user pass)))
 	    (if (processp process)
 		(set-process-buffer process (current-buffer))
-	      (insert "starting " session-name
+	      (insert "Starting " session-name
 		      " session " (current-time-string) "\n")
-	      (insert (format "connecting to %s:%s\n" host port))
+	      (insert (format "-- connecting to %s:%s\n" host port))
 	      ;; open the connection to the server
 	      (condition-case err
 		  (cond 
@@ -950,14 +950,14 @@ nil if the session could not be created."
 		(error
 		 (message "%s" (error-message-string err))
 		 (setq shutdown t)
-		 (throw 'end-of-session nil)))
-	      (insert-before-markers (format "connected for %s\n" purpose)))
+		 (throw 'end-of-session nil))))
 	    (setq vm-imap-read-point (point))
 	    (vm-process-kill-without-query process)
-	    (if (null (setq greeting (vm-imap-read-greeting process)))
-		(progn (delete-process process) ; why here?  USR
-		       (setq shutdown t)
-		       (throw 'end-of-session nil)))
+	    (if (setq greeting (vm-imap-read-greeting process))
+		(insert-before-markers (format "-- connected for %s\n" purpose))
+	      (delete-process process) ; why here?  USR
+	      (setq shutdown t)
+	      (throw 'end-of-session nil))
 	    (setq shutdown t)
 	    (set (make-local-variable 'vm-imap-session-done) nil)
 	    ;; record server capabilities
