@@ -1564,13 +1564,15 @@ If you are unable to use either of these solutions, then you can use
 Emacs's paragraph filling facility.  If you set
 @code{vm-fill-paragraphs-containing-long-lines} to a positive numeric
 value @var{N}, VM will call @code{fill-paragraph} on all paragraphs that
-contain lines spanning @var{N} columns or more.  As with other things VM
-does that modifies the way the message looks on the screen, this does
-not change message contents.  VM copies the message contents to a
-``presentation'' buffer before altering them.  The fill column that VM
-uses is controlled by @code{vm-paragraph-fill-column}.  Unlike the Emacs
-variable @code{fill-column}, this variable is not buffer-local by
-default.
+contain lines spanning @var{N} columns or more.  You can also set this
+variable to the symbol @code{window-width}, in which case the width of
+the current window is used the limiting width beyond which paragraph
+filling is invoked.  As with other things that VM does for presentation
+purposes, this does not change the message contents.  VM copies the
+message contents to a ``presentation'' buffer before altering them.  The
+fill column that VM uses is controlled by
+@code{vm-paragraph-fill-column}.  Unlike the Emacs variable
+@code{fill-column}, this variable is not buffer-local by default.
 
 
 @node MIME Messages, Headers-only Messages, Paging, Reading Messages
@@ -2599,74 +2601,24 @@ your composition.
 @vindex vm-reply-subject-prefix
 VM has special commands that make it easy to reply to a message.  When a
 reply command is invoked, VM fills in the subject and recipient headers
-for you, since it is apparent to whom the message should be sent and
+for you, since it is apparent whom the message should be sent to and
 what the subject should be.  There is an old convention of prepending
-the string @samp{``Re: ''} to the subject of replies if the string isn't
-present already.  VM supports this indirectly by providing the variable
-@code{vm-reply-subject-prefix}.  Its value should be a string to prepend
-to the subject of replies, if the string isn't present already.  A
-@code{nil} value means don't prepend anything to the subject (this is
-the default).  In any case you can edit any of the message headers
-manually, if you wish.
+the string @samp{Re: } to the subject of replies if the string isn't
+present already.  You can customize the string to be prepended in this
+way by setting the variable @code{vm-reply-subject-prefix}.  Its value
+should be a string to prepend to the subject of replies, if the string
+isn't present already.  A @code{nil} value means don't prepend anything
+to the subject (this is the default).  In any case you can edit any of
+the message headers manually, if you wish.
 
 @vindex vm-included-text-prefix
-VM also helps you cite material from a message to which you are
-replying by providing @dfn{included text} as a feature of some of the
-commands.  @dfn{Included text} is a copy of the message being replied to with
-some fixed string prepended to each line so that included text can be
-distinguished from the text of the reply.  The variable
-@code{vm-included-text-prefix} specifies what the prepended string will
-be.  
-
-(Note: VM allows you to cite any messages in a message you compose.
-Your message does not have to be a reply.  Neither do the cited messages
-have to be the messages you are replying to.)
-
-@vindex vm-included-text-attribution-format
-The variable @code{vm-included-text-attribution-format} specifies the
-format for the attribution of included text.  This attribution is a line
-of text that tells who wrote the text that is to be included; it will be
-inserted before the included text.  If non-@code{nil}, the value of
-@code{vm-included-text-attribution-format} should be a string format
-specification similar to @code{vm-summary-format}.  @xref{Summaries}.  A
-@code{nil} value causes the attribution to be omitted.
-
-@vindex vm-included-mime-types-list
-@vindex vm-include-text-from-presentation
-By default, VM uses its MIME displaying mechanism to extract the
-included text to be cited in replies.  For instance, if the MIME display
-prefers plain text for multipart/alternative messages, that is what will
-be included.  If it prefers HTML, that will be included (after
-conversion to plain text form) and, if it displays both the plain text and
-HTML alternatives, then both versions will be
-included in the replies.  If this does not work correctly, you can set
-the variable @code{vm-included-mime-types-list} to a list of MIME types
-that should be covered in the included text.  The list should have
-@code{text/plain} at a minimum and could include other types such as
-@code{text/enriched} and @code{message}.  Setting the variable to nil
-returns you to the default behaviour.  Another possible way to extract
-included text is to use the contents of the presentation buffer.  You
-can ask VM to do so by setting the variable
-@code{vm-include-text-from-presentation} to t.  This might be needed
-only in abnormal circumstances.
-
-@vindex vm-in-reply-to-format
-The variable @code{vm-in-reply-to-format} specifies the format of the
-In-Reply-To header that is inserted into the header section of the reply
-buffer.  Like @code{vm-included-text-attribution-format},
-@code{vm-in-reply-to-format} should be a string similar to that of
-@code{vm-summary-format}.  A @code{nil} value causes the In-Reply-To
-header to be omitted.  If the format includes elements that can contain
-non-ASCII characters, then @samp{In-Reply-To} should be added to
-@code{vm-mime-encode-headers-regexp}.
-
-@vindex vm-strip-reply-headers
-The recipient headers generated for reply messages are created by
-copying the appropriate headers from the message to which you are
-replying.  This includes any full name information, comments, etc. in
-these headers.  If the variable @code{vm-strip-reply-headers} is
-non-@code{nil}, the recipient headers will be stripped of all information
-except the actual addresses.
+VM also helps you cite material from the message to which you are
+replying, by providing @dfn{included text} as a feature of some of the
+commands.  @dfn{Included text} is a copy of the message being replied to
+with some prefix to each line so that the included text
+can be distinguished from the text of the reply.  By default, the
+prefix string is @samp{> }.  This can be customized via the variable
+@code{vm-included-text-prefix}.
 
 The reply commands are:
 
@@ -2695,8 +2647,8 @@ present, causes VM to reply to the next (or previous if the argument is
 negative) @var{n-1} messages as well as the current message.  Also, all
 the reply commands set the ``replied'' attribute of the messages to
 which you are responding, but only when the reply is actually sent.  The
-reply commands can also be applied to marked messages,
-@pxref{Marking Messages}.
+reply commands can also be applied to marked messages. (@pxref{Marking
+Messages}.) 
 
 @vindex vm-reply-ignored-addresses
 If you are one of multiple recipients of a message and you use @kbd{f}
@@ -2704,7 +2656,84 @@ and @kbd{F}, your address will be included in the recipients of the
 reply.  You can avoid this by judicious use of the variable
 @code{vm-reply-ignored-addresses}.  Its value should be a list of
 regular expressions that match addresses that VM should automatically
-remove from the recipient headers of replies.
+remove from the recipient headers of replies.  The default value is
+@code{nil}, which means that no addresses are removed.
+
+@vindex vm-in-reply-to-format
+The variable @code{vm-in-reply-to-format} specifies the format of the
+In-Reply-To header that is inserted into the header section of the reply
+buffer.  Like @code{vm-included-text-attribution-format},
+@code{vm-in-reply-to-format} should be a string similar to that of
+@code{vm-summary-format}.  A @code{nil} value causes the In-Reply-To
+header to be omitted.  If the format includes elements that can contain
+non-ASCII characters, then @samp{In-Reply-To} should be added to
+@code{vm-mime-encode-headers-regexp}.
+
+@vindex vm-strip-reply-headers
+The recipient headers generated for reply messages are created by
+copying the appropriate headers from the message to which you are
+replying.  This includes any full name information, comments, etc. in
+these headers.  If the variable @code{vm-strip-reply-headers} is
+non-@code{nil}, the recipient headers will be stripped of all information
+except the actual addresses.
+
+@unnumberedsubsec Included text
+
+As mentioned above, the commands @code{vm-reply-include-text} and
+@code{vm-followup-include-text} provide ``included text'' from the
+original message in your reply.  In addition, you can use @kbd{C-c C-y}
+(@code{vm-yank-message}) inside a mail buffer to include text from any
+desired mail message.  This is a more general mechanism for citing
+message text in the composed message.  (The composed message does not
+have to be a reply.  Neither do the cited messages have to be the
+messages you are replying to.)
+
+@vindex vm-included-text-attribution-format
+The variable @code{vm-included-text-attribution-format} specifies the
+format for the attribution of the included text.  The @dfn{attribution} is a
+line of text that tells who wrote the text that is to be included; it
+will be inserted before the included text.  If non-@code{nil}, the value
+of @code{vm-included-text-attribution-format} should be a string format
+specification similar to @code{vm-summary-format}.  @xref{Summaries}.  A
+@code{nil} value causes the attribution to be omitted.
+
+@vindex vm-included-text-headers
+@vindex vm-included-text-discard-header-regexp
+VM normally includes only the body text from the cited messages.  If you
+wish, you can include also the message headers by customizing
+the variables @code{vm-included-text-headers} and
+@code{vm-included-text-discard-header-regexp}.
+
+@vindex vm-included-mime-types-list
+@vindex vm-include-text-from-presentation
+Citing message text is tricky business because the original message
+could be a MIME message with encoded text or formatted text along with
+embedded images and attachments.  By default, VM uses its MIME
+displaying mechanism to extract the included text to be cited in
+replies.  If this does not work correctly, you can set the variable
+@code{vm-included-mime-types-list} to selectively include the MIME types
+that should be covered in the included text.  The list should have
+@code{text/plain} at a minimum and could include other types such as
+@code{text/enriched} and @code{message}.  Setting the variable to nil
+returns you to the default behaviour.  Another possible way to extract
+included text is to use the contents of the presentation buffer.  You
+can ask VM to do so by setting the variable
+@code{vm-include-text-from-presentation} to t.
+
+@vindex vm-fill-paragraphs-containing-long-lines-in-reply
+@vindex vm-fill-long-lines-in-reply-column
+If the included text contains long lines, i.e., lines longer than the
+normal window width, you might want to fill paragraphs.  You can invoke
+automatic filling of paragraphs by setting the variable
+@code{vm-fill-paragraphs-containing-long-lines-in-reply}.  Like its
+namesake used in message presentation (@pxref{Paging}), it should be
+set to a positive numerical value N or the symbol @code{window-width}.
+Setting it to @code{nil} disables paragraph filling.  If filling is
+used, the fill column is controlled by the variable
+@code{vm-fill-long-lines-in-reply-column}.
+
+Alternatively, you can fill individual paragraphs manually using
+@kbd{C-c C-q} (@code{mail-fill-yanked-message}).
 
 @node Forwarding Messages, Saving copies, Replying, Sending Messages
 @section Forwarding Messages

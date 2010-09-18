@@ -880,6 +880,26 @@ this may take some time, since the file needs to be visited."
   :type '(choice (const :tag "Ask" nil)
                  (const :tag "Guess" guess)))
 
+(define-obsolete-variable-alias 'vm-mime-save-all-attachments-types
+  'vm-mime-savable-types
+  "8.3.0"
+  "*List of MIME types which should be saved.")
+
+(define-obsolete-variable-alias 'vm-mime-save-all-attachments-types-exceptions
+  'vm-mime-savable-type-exceptions
+  "8.3.0"
+  "*List of MIME types which should not be saved.")
+
+(define-obsolete-variable-alias 'vm-mime-delete-all-attachments-types
+  'vm-mime-deletable-types
+  "8.3.0"
+  "*List of MIME types which should be deleted.")
+
+(define-obsolete-variable-alias 'vm-mime-delete-all-attachments-types-exceptions
+  'vm-mime-deletable-type-exceptions
+  "8.3.0"
+  "*List of MIME types which should not be deleted.")
+
 (defun vm-mime-is-type-valid (type types-alist type-exceptions)
   (catch 'done
     (let ((list type-exceptions)

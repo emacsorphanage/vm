@@ -502,7 +502,7 @@ A nil value means there's no limit."
   :group 'vm
   :type '(choice (const nil) integer))
 
-(defcustom vm-imap-expunge-after-retrieving t
+(defcustom vm-imap-expunge-after-retrieving nil
   "*Non-nil value means that, when an IMAP mailbox is used as a
 spool file, messages should be deleted after retrieving them.  A
 nil value means messages will be left in the IMAP mailbox until
@@ -989,7 +989,30 @@ filled.  The message itself is not modified; its text is copied
 into a presentation buffer before the filling is done.
 
 This variable determines which paragraphs are filled,
-but `vm-paragraph-fill-column' determines the fill column."
+but `vm-paragraph-fill-column' determines the fill column.
+
+Note that filling is carried out only if word wrapping is not in
+effect.  The variable `vm-word-wrap-paragraphs' controls word
+wrapping."
+  :group 'vm
+  :type '(choice (const nil)
+                 (const window-width)
+		 (const wrap)
+                 integer))
+
+(defcustom vm-fill-paragraphs-containing-long-lines-in-reply nil
+  "*This variable can be set to nil, a numeric value N, the
+symbol 'window-width.  If it is numeric, it causes VM to fill
+included text in replies provided it has lines spanning that many
+columns or more.  Setting it to 'window-width has the effect of
+using the width of the Emacs window.
+
+This variable determines which paragraphs are filled,
+but `vm-fill-long-lines-in-reply-column' determines the fill column.
+
+Note that filling is carried out only if word wrapping is not in
+effect.  The variable `vm-word-wrap-paragraphs-in-reply' controls word
+wrapping."
   :group 'vm
   :type '(choice (const nil)
                  (const window-width)
@@ -1008,7 +1031,7 @@ re-filling lines longer than the value of
   :type '(choice (const nil)
                  (const window-width)
                  integer)
-  :group 'vm-rfaddons)
+  :group 'vm)
 
 (defcustom vm-display-using-mime t
   "*Non-nil value means VM should display messages using MIME.
