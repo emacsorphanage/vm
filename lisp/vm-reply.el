@@ -403,24 +403,32 @@ specified by `vm-included-text-headers' and
 
 (defun vm-yank-message-mime (message layout)
   ;; This is Rob's new code that uses vm-decode-mime-layout for
-  ;; creating the yanked text
-  (if (eq layout 'none)
+  ;; creating the yanked text, but use the reply-specific settings for
+  ;; filling etc.
+  (let ((vm-word-wrap-paragraphs 
+	 vm-word-wrap-paragraphs-in-reply)
+					; doesn't work well with fill-prefixes
+	(vm-fill-paragraphs-containing-long-lines
+	 vm-fill-paragraphs-containing-long-lines-in-reply)
+	(vm-paragraph-fill-column 
+	 vm-fill-long-lines-in-reply-column))
+    (if (eq layout 'none)
 
+	(vm-insert-region-from-buffer (vm-buffer-of message)
+				      (vm-headers-of message)
+				      (vm-text-end-of message))
       (vm-insert-region-from-buffer (vm-buffer-of message)
 				    (vm-headers-of message)
-				    (vm-text-end-of message))
-    (vm-insert-region-from-buffer (vm-buffer-of message)
-				  (vm-headers-of message)
-				  (vm-text-of message))
-    (save-excursion
-      (goto-char (point-min))
-      (vm-decode-mime-message-headers))
-    (let ((vm-mime-alternative-select-method 'best-internal))
+				    (vm-text-of message))
+      (save-excursion
+	(goto-char (point-min))
+	(vm-decode-mime-message-headers))
+      (let ((vm-mime-alternative-select-method 'best-internal))
 					; override 'all and 'best
-      (vm-decode-mime-layout layout))
-    (if vm-mime-yank-attachments
-	;; FIXME This uses a function of vm-pine.el
-	(vm-decode-postponed-mime-message))))
+	(vm-decode-mime-layout layout))
+      (if vm-mime-yank-attachments
+	  ;; FIXME This uses a function of vm-pine.el
+	  (vm-decode-postponed-mime-message)))))
 
 (defun vm-yank-message-text (message layout)
   ;; This is the original code for included text
