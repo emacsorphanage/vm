@@ -528,10 +528,10 @@ folder in the order in which the messages arrived."
       nil)))
 
 (defun vm-sort-compare-thread (m1 m2)
-  (let ((root1 (vm-th-thread-root-sym m1))
-	(root2 (vm-th-thread-root-sym m2))
-	(list1 (vm-th-thread-list m1))
-	(list2 (vm-th-thread-list m2))
+  (let ((root1 (vm-thread-root-sym m1))
+	(root2 (vm-thread-root-sym m2))
+	(list1 (vm-thread-list m1))
+	(list2 (vm-thread-list m2))
 	;; (criterion (if vm-sort-threads-by-youngest-date 
 	;; 	       'youngest-date
 	;; 	     'oldest-date))
@@ -564,10 +564,10 @@ folder in the order in which the messages arrived."
 				   (vm-th-message-of p2))))))
 	     (cond (list1 nil)			; list2=nil, m2 ancestor of m1
 		   (list2 t)			; list1=nil, m1 ancestor of m2
-		   ((not (eq (vm-th-thread-symbol m1) ; m1 and m2 different
-			     (vm-th-thread-symbol m2)))
+		   ((not (eq (vm-thread-symbol m1) ; m1 and m2 different
+			     (vm-thread-symbol m2)))
 		    (cons m1 m2))
-		   ((eq m1 (vm-th-message-of (vm-th-thread-symbol m1)))
+		   ((eq m1 (vm-th-message-of (vm-thread-symbol m1)))
 		    t)			; list1=list2=nil, m2 copy of m1
 		   (t nil)))		;; list1=list2=nil, m1 copy of m2
 	    ((eq root1 root2)
@@ -627,29 +627,29 @@ folder in the order in which the messages arrived."
 	  (t t))))
 
 (defun vm-sort-compare-activity (m1 m2)
-  (let ((d1 (vm-th-youngest-date-of (vm-th-thread-symbol m1)))
-	(d2 (vm-th-youngest-date-of (vm-th-thread-symbol m2))))
+  (let ((d1 (vm-th-youngest-date-of (vm-thread-symbol m1)))
+	(d2 (vm-th-youngest-date-of (vm-thread-symbol m2))))
     (cond ((string-lessp d1 d2) t)
 	  ((string-equal d1 d2) '=)
 	  (t nil))))
 
 (defun vm-sort-compare-activity-r (m1 m2)
-  (let ((d1 (vm-th-youngest-date-of (vm-th-thread-symbol m1)))
-	(d2 (vm-th-youngest-date-of (vm-th-thread-symbol m2))))
+  (let ((d1 (vm-th-youngest-date-of (vm-thread-symbol m1)))
+	(d2 (vm-th-youngest-date-of (vm-thread-symbol m2))))
     (cond ((string-lessp d1 d2) nil)
 	  ((string-equal d1 d2) '=)
 	  (t t))))
 
 ;; (defun vm-sort-compare-thread-oldest-date (m1 m2)
-;;   (let ((d1 (vm-th-oldest-date-of (vm-th-thread-symbol m1)))
-;; 	(d2 (vm-th-oldest-date-of (vm-th-thread-symbol m2))))
+;;   (let ((d1 (vm-th-oldest-date-of (vm-thread-symbol m1)))
+;; 	(d2 (vm-th-oldest-date-of (vm-thread-symbol m2))))
 ;;     (cond ((string-lessp d1 d2) t)
 ;; 	  ((string-equal d1 d2) '=)
 ;; 	  (t nil))))
 
 ;; (defun vm-sort-compare-thread-oldest-date-r (m1 m2)
-;;   (let ((d1 (vm-th-oldest-date-of (vm-th-thread-symbol m1)))
-;; 	(d2 (vm-th-oldest-date-of (vm-th-thread-symbol m2))))
+;;   (let ((d1 (vm-th-oldest-date-of (vm-thread-symbol m1)))
+;; 	(d2 (vm-th-oldest-date-of (vm-thread-symbol m2))))
 ;;     (cond ((string-lessp d1 d2) nil)
 ;; 	  ((string-equal d1 d2) '=)
 ;; 	  (t t))))

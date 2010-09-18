@@ -56,9 +56,9 @@ only marked messages are deleted, other messages are ignored."
 		       vm-summary-show-threads
 		       (not (and vm-enable-thread-operations
 				 (eq count 1)))
-		       (> (vm-th-thread-count (car mlist)) 1))
+		       (> (vm-thread-count (car mlist)) 1))
 	      (with-current-buffer vm-summary-buffer
-		(vm-expand-thread (vm-th-thread-root (car mlist)))))))
+		(vm-expand-thread (vm-thread-root (car mlist)))))))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-delete-message vm-delete-message-backward)
 		(list this-command))
@@ -177,8 +177,8 @@ don't move at all."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (vm-build-threads-if-unbuilt)
-  (let ((list (vm-th-thread-subtree
-	       (vm-th-thread-symbol (car vm-message-pointer))))
+  (let ((list (vm-thread-subtree
+	       (vm-thread-symbol (car vm-message-pointer))))
 	(n 0))
     (while list
       (unless (vm-deleted-flag (car list))
@@ -498,6 +498,6 @@ ignored."
 	  (message "Deleted messages expunged.")))
      (t (message "No messages are flagged for deletion."))))
   (when vm-debug
-    (vm-th-check-thread-integrity)))
+    (vm-check-thread-integrity)))
 
 ;;; vm-delete.el ends here

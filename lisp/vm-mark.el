@@ -255,8 +255,8 @@ variable vm-virtual-folder-alist for more information."
 
 (defun vm-mark-or-unmark-thread-subtree (mark)
   (vm-build-threads-if-unbuilt)
-  (let ((list (vm-th-thread-subtree 
-	       (vm-th-thread-symbol (car vm-message-pointer)))))
+  (let ((list (vm-thread-subtree 
+	       (vm-thread-symbol (car vm-message-pointer)))))
     (while list
       (unless (eq (vm-mark-of (car list)) mark)
 	(vm-set-mark-of (car list) mark)
@@ -270,7 +270,7 @@ variable vm-virtual-folder-alist for more information."
 ;; 	  (progn
 ;; 	    (vm-set-mark-of (car list) mark)
 ;; 	    (vm-mark-for-summary-update (car list))))
-;;       (setq id-sym (vm-last-elem (vm-th-thread-list (car list))))
+;;       (setq id-sym (vm-last-elem (vm-thread-list (car list))))
 ;;       (if (null (intern-soft (symbol-name id-sym) loop-obarray))
 ;; 	  (progn
 ;; 	    (intern (symbol-name id-sym) loop-obarray)

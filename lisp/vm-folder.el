@@ -4509,10 +4509,10 @@ either backward (prefix is negative) or forward (positive)."
 	       vm-summary-enable-thread-folding
 	       vm-summary-show-threads
 	       vm-enable-thread-operations
-	       (vm-th-thread-root-p current-message)
+	       (vm-thread-root-p current-message)
 	       (with-current-buffer vm-summary-buffer
 		 (vm-summary-collapsed-root-p current-message)))
-	  (vm-th-thread-subtree current-message)
+	  (vm-thread-subtree current-message)
 	(unless (eq vm-circular-folders t)
 	  (vm-check-count prefix))
 	(while (not (zerop count))

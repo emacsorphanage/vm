@@ -210,7 +210,7 @@ Like `vm-tokenized-summary-insert'."
 			(natnump vm-summary-thread-indent-level))
 		   (setq summary (concat summary
 					 ?\ (* vm-summary-thread-indent-level
-					       (vm-th-thread-indentation message)))))))
+					       (vm-thread-indentation message)))))))
 	(setq tokens (cdr tokens)))
       summary)))
 
