@@ -4484,7 +4484,7 @@ files."
 			      (vm-preview-current-message)))
 			(when vm-summary-show-threads
 			  (vm-update-summary-and-mode-line)
-			  (vm-sort-messages (or vm-ml-sort-keys "activiity")))
+			  (vm-sort-messages (or vm-ml-sort-keys "activity")))
 			))))
 	    (setq b-list (cdr b-list)))))
     (if (and new-messages vm-ml-sort-keys)
