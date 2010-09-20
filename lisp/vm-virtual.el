@@ -146,84 +146,87 @@ all the real folder buffers involved."
 			      (vm-select-folder-buffer)
 			      (current-buffer))))
 	    (if (eq major-mode 'vm-virtual-mode)
-		(setq 
-		 virtual t
-		 real-buffers-used (append vm-real-buffers real-buffers-used))
+		(setq virtual t
+		      real-buffers-used 
+		      (append vm-real-buffers real-buffers-used))
 	      (setq virtual nil)
 	      (when (not (memq (current-buffer) real-buffers-used))
 		(setq real-buffers-used (cons (current-buffer)
 					      real-buffers-used)))
 	      (when (not (eq major-mode 'vm-mode))
 		(vm-mode)))
+
 	    ;; change (sexpr) into ("/file" "/file2" ...)
 	    ;; this assumes that there will never be (sexpr sexpr2)
 	    ;; in a virtual folder spec.
-	    (when (bufferp folder)
-		(if virtual
-		    (setcar (car clauses)
-			    (delq nil
-				  (mapcar 'buffer-file-name vm-real-buffers)))
-		  (if buffer-file-name
-		      (setcar (car clauses) (list buffer-file-name)))))
+	    ;; But why are we doing this?  This is ugly and
+	    ;; error-prone, and breaks things for server folders!
+	    ;; USR, 2010-09-20
+	    ;; (when (bufferp folder)
+	    ;; 	(if virtual
+	    ;; 	    (setcar (car clauses)
+	    ;; 		    (delq nil
+	    ;; 			  (mapcar 'buffer-file-name vm-real-buffers)))
+	    ;; 	  (if buffer-file-name
+	    ;; 	      (setcar (car clauses) (list buffer-file-name)))))
+
 	    ;; if new-messages non-nil use it instead of the
 	    ;; whole message list
 	    (setq mp (or new-messages vm-message-list))
 	    (while mp
-	      (if (and (or dont-finalize
-			   (not (intern-soft
-				 (vm-message-id-number-of
-				  (vm-real-message-of (car mp)))
-				 message-set)))
-		       (if virtual
-			   (save-excursion
-			     (set-buffer
-			      (vm-buffer-of
-			       (vm-real-message-of
-				(car mp))))
-			     (apply 'vm-vs-or (car mp) selectors))
-			 (apply 'vm-vs-or (car mp) selectors)))
-		  (progn
-		    (or dont-finalize
-			(intern
-			 (vm-message-id-number-of
-			  (vm-real-message-of (car mp)))
-			 message-set))
-		    (setq message (copy-sequence
-				   (vm-real-message-of (car mp))))
-		    (if mirrored
-			()
-		      (vm-set-mirror-data-of
-		       message
-		       (make-vector vm-mirror-data-vector-length nil))
-		      (vm-set-virtual-messages-sym-of
-		       message (make-symbol "<v>"))
-		      (vm-set-virtual-messages-of message nil)
-		      (vm-set-attributes-of
-		       message
-		       (make-vector vm-attributes-vector-length nil)))
-		    (vm-set-location-data-of message location-vector)
-		    (vm-set-softdata-of
-		     message
-		     (make-vector vm-softdata-vector-length nil))
-		    (vm-set-real-message-sym-of
-		     message
-		     (vm-real-message-sym-of (car mp)))
-		    (vm-set-message-type-of message vm-folder-type)
-		    (vm-set-message-access-method-of
-		     message vm-folder-access-method)
-		    (vm-set-message-id-number-of message
-						 vm-message-id-number)
-		    (vm-increment vm-message-id-number)
-		    (vm-set-buffer-of message vbuffer)
-		    (vm-set-reverse-link-sym-of message (make-symbol "<--"))
-		    (vm-set-reverse-link-of message tail-cons)
-		    (if (null tail-cons)
-			(setq new-message-list (list message)
-			      tail-cons new-message-list)
-		      (setcdr tail-cons (list message))
-		      (if (null new-message-list)
-			  (setq new-message-list (cdr tail-cons)))
-		      (setq tail-cons (cdr tail-cons)))))
+	      (when (and (or dont-finalize
+			     (not (intern-soft
+				   (vm-message-id-number-of
+				    (vm-real-message-of (car mp)))
+				   message-set)))
+			 (if virtual
+			     (save-excursion
+			       (set-buffer
+				(vm-buffer-of
+				 (vm-real-message-of
+				  (car mp))))
+			       (apply 'vm-vs-or (car mp) selectors))
+			   (apply 'vm-vs-or (car mp) selectors)))
+		(unless dont-finalize
+		  (intern
+		   (vm-message-id-number-of
+		    (vm-real-message-of (car mp)))
+		   message-set))
+		(setq message (copy-sequence
+			       (vm-real-message-of (car mp))))
+		(unless mirrored
+		  (vm-set-mirror-data-of
+		   message
+		   (make-vector vm-mirror-data-vector-length nil))
+		  (vm-set-virtual-messages-sym-of
+		   message (make-symbol "<v>"))
+		  (vm-set-virtual-messages-of message nil)
+		  (vm-set-attributes-of
+		   message
+		   (make-vector vm-attributes-vector-length nil)))
+		(vm-set-location-data-of message location-vector)
+		(vm-set-softdata-of
+		 message
+		 (make-vector vm-softdata-vector-length nil))
+		(vm-set-real-message-sym-of
+		 message
+		 (vm-real-message-sym-of (car mp)))
+		(vm-set-message-type-of message vm-folder-type)
+		(vm-set-message-access-method-of
+		 message vm-folder-access-method)
+		(vm-set-message-id-number-of message
+					     vm-message-id-number)
+		(vm-increment vm-message-id-number)
+		(vm-set-buffer-of message vbuffer)
+		(vm-set-reverse-link-sym-of message (make-symbol "<--"))
+		(vm-set-reverse-link-of message tail-cons)
+		(if (null tail-cons)
+		    (setq new-message-list (list message)
+			  tail-cons new-message-list)
+		  (setcdr tail-cons (list message))
+		  (if (null new-message-list)
+		      (setq new-message-list (cdr tail-cons)))
+		  (setq tail-cons (cdr tail-cons))))
 	      (setq mp (cdr mp)))))
 	  (setq folders (cdr folders)))
 	(setq clauses (cdr clauses))))
@@ -288,7 +291,8 @@ Prefix arg means the new virtual folder should be visited read only."
 	    (list prefix))))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((use-marks (eq last-command 'vm-next-command-uses-marks))
-	vm-virtual-folder-alist)
+	vm-virtual-folder-alist ; shadow the global variable
+	)
     (if (null name)
 	(if arg
 	    (setq name (format "%s %s %s" (buffer-name) selector arg))
@@ -814,6 +818,7 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 	(set-buffer (car bp))
 	(condition-case error-data
 	    (vm-get-new-mail)
+	  ;; handlers
 	  (folder-read-only
 	   (message "Folder is read only: %s"
 		    (or buffer-file-name (buffer-name)))
