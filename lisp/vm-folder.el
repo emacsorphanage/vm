@@ -4624,10 +4624,13 @@ folder-access-data should be preserved."
   (run-hooks 'vm-mode-hooks))
 
 (defun vm-link-to-virtual-buffers ()
+  "If there are visited virtual folders that depend on the current
+real folder, then link them to the current folder and update their
+contents." 
   (let ((b-list (buffer-list))
 	(vbuffers nil)
 	(folder-buffer (current-buffer))
-	folders clauses)
+	folders folder clauses)
     (save-excursion
       (while b-list
 	(set-buffer (car b-list))
@@ -4636,10 +4639,14 @@ folder-access-data should be preserved."
 	       (while clauses
 		 (setq folders (car (car clauses)))
 		 (while folders
-		   (if (eq folder-buffer (vm-get-file-buffer
-					  (expand-file-name
-					   (car folders)
-					   vm-folder-directory)))
+		   (setq folder (car folders))
+		   (if (eq folder-buffer 
+			   (or (and (stringp folder)
+				    (vm-get-file-buffer
+				     (expand-file-name folder 
+						       vm-folder-directory)))
+			       (and (listp folder)
+				    (eval folder))))
 		       (setq vbuffers (cons (car b-list) vbuffers)
 			     vm-real-buffers (cons folder-buffer
 						   vm-real-buffers)

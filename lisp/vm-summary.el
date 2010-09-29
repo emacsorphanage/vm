@@ -1394,14 +1394,17 @@ was sent.                                                  USR, 2010-05-13"
       (vm-set-weekday-of m ""))))
 
 (defun vm-run-user-summary-function (function message)
-  (let ((message (vm-real-message-of message)))
+  ;; (condition-case nil
+  (let ((m (vm-real-message-of message)))
     (save-excursion
-      (set-buffer (vm-buffer-of message))
+      (set-buffer (vm-buffer-of m))
       (save-restriction
 	(widen)
 	(save-excursion
-	  (narrow-to-region (vm-headers-of message) (vm-text-end-of message))
-	  (funcall function message))))))
+	  (narrow-to-region (vm-headers-of m) (vm-text-end-of m))
+	  (funcall function m)))))
+  ;; (error " "))
+  )
 
 (defun vm-su-full-name (m)
   "Returns the author name of M as a string, either from

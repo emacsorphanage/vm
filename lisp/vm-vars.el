@@ -5219,8 +5219,21 @@ Its parent keymap is mail-mode-map.")
 (make-variable-buffer-local 'vm-fetched-messages)
 (defvar vm-fetched-message-count 0)
 (make-variable-buffer-local 'vm-fetched-message-count)
-(defvar vm-virtual-folder-definition nil)
+
+(defvar vm-virtual-folder-definition nil
+  "The virtual folder definition of the folder in the current buffer,
+which is normally an entry in `vm-virtual-folder-alist'.  It is of the
+form: 
+  (VIRTUAL-FOLDER-NAME
+    ((FOLDER-NAME ...)
+     (SELECTOR [ARG ...]) ...) 
+    ... )
+A FOLDER-NAME entry can be
+- the name of a local folder, or
+- an s-expression which, when evaluated, yields a folder buffer loaded
+in VM." )
 (make-variable-buffer-local 'vm-virtual-folder-definition)
+
 (defvar vm-virtual-buffers nil)
 (make-variable-buffer-local 'vm-virtual-buffers)
 (defvar vm-real-buffers nil)
