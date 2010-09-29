@@ -735,13 +735,14 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 		 ;; lock out interrupts here
 		 (inhibit-quit t))
 	     (while mp
-	       (setq vmp (vm-virtual-messages-of (car mp)))
-	       (while vmp
-		 ;; we'll clear these messages from the virtual
-		 ;; folder by looking for messages that have a "Q"
-		 ;; id number associated with them.
-		 (vm-set-message-id-number-of (car vmp) "Q")
-		 (setq vmp (cdr vmp)))
+	       ;; we'll clear these messages from the virtual
+	       ;; folder by looking for messages that have a "Q"
+	       ;; id number associated with them.
+	       (vm-mapc
+		(lambda (m)
+		  (vm-set-message-id-number-of m "Q"))
+		(vm-virtual-messages-of (car mp)))
+	       (vm-unthread-message (car mp))
 	       (vm-set-virtual-messages-of (car mp) nil)
 	       (setq mp (cdr mp)))
 	     (while bp

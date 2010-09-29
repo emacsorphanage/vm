@@ -384,11 +384,11 @@ ignored."
 	(cond
 	 ((or (not virtual-messages)
 	      (not virtual))
-	  (and (not virtual-messages) virtual
-	       (vm-set-virtual-messages-of
-		(vm-real-message-of (car mp))
-		(delq (car mp) (vm-virtual-messages-of
-				(vm-real-message-of (car mp))))))
+	  (when (and (not virtual-messages) virtual)
+	    (vm-set-virtual-messages-of
+	     (vm-real-message-of (car mp))
+	     (delq (car mp) (vm-virtual-messages-of
+			     (vm-real-message-of (car mp))))))
 	  (if (eq vm-message-pointer mp)
 	      (setq vm-system-state nil
 		    vm-message-pointer (or prev (cdr mp))))

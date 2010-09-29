@@ -359,6 +359,23 @@ vm-mail-buffer variable."
 	      blobarray)
     list ))
 
+(defun vm-zip-vectors (v1 v2)
+  (if (= (length v1) (length v2))
+      (let ((l1 (append v1 nil))
+	    (l2 (append v2 nil)))
+	(vconcat (vm-zip-lists l1 l2)))
+    (error "Attempt to zip vectors of differing length: %s and %s" 
+	   (length v1) (length v2))))
+
+(defun vm-zip-lists (l1 l2)
+  (cond ((or (null l1) (null l2))
+	 (if (and (null l1) (null l2))
+	     nil 
+	   (error "Attempt to zip lists of differing length")))
+	(t
+	 (cons (car l1) (cons (car l2) (vm-zip-lists (cdr l1) (cdr l2)))))
+	))
+
 (defun vm-mapvector (proc vec)
   (let ((new-vec (make-vector (length vec) nil))
 	(i 0)
@@ -384,7 +401,9 @@ vm-mail-buffer variable."
       (setq lists (mapcar 'cdr lists)))))
 
 (defun vm-delete (predicate list &optional reverse)
-  (let ((p list) (reverse (if reverse 'not 'identity)) prev)
+  (let ((p list) 
+	(reverse (if reverse 'not 'identity))
+	prev)
     (while p
       (if (funcall reverse (funcall predicate (car p)))
 	  (if (null prev)

@@ -397,9 +397,13 @@ Toolbars are updated."
     (fillarray vm-buffers-needing-display-update 0))
   (when vm-messages-needing-summary-update
     (let ((n 1)
-	  (ms vm-messages-needing-summary-update))
+	  (ms vm-messages-needing-summary-update)
+	  m)
       (while ms
-	(vm-update-message-summary (car ms))
+	(setq m (car ms))
+	(unless (or (eq (vm-deleted-flag m) 'expunged)
+		    (equal (vm-message-id-number-of m) "Q"))
+	  (vm-update-message-summary (car ms)))
 	(if (eq (mod n 10) 0)
 	    (message "Recreating summary... %s" n))
 	(setq n (1+ n))
