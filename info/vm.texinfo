@@ -5781,11 +5781,16 @@ thread.
 @inindex references
 @item
 references.  Message IDs listed in the References header of the message.
-@inindex headers-to-be-retrieved
+@c @inindex headers-to-be-retrieved
+@c @item
+@c headers-to-be-retrieved.  Flag that indicates whether the headers of the
+@c message have not been retrieved from the mail server (for POP or IMAP
+@c folders).
+@inindex body-to-be-discarded
 @item
-headers-to-be-retrieved.  Flag that indicates whether the headers of the
-message have not been retrieved from the mail server (for POP or IMAP
-folders).
+body-to-be-discarded.  Flag that indicates whether they body of the
+message should be discarded before the folder is saved.  (This is used
+in conjunction with the @code{body-to-be-retrieved} below.
 @inindex body-to-be-retrieved
 @item
 body-to-be-retrieved.  Flag that indicates whether the body of the
