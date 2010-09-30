@@ -5131,6 +5131,14 @@ you move out of the thread."
   :group 'vm
   :type 'boolean)
 
+(defcustom vm-summary-visible '((new))
+  "*List of selectors identifying messages that should be visible in
+folded thread summaries, i.e., such messages remain visible even if
+their threads are shown collapsed.  The selectors are the same as
+those used in `vm-virtual-folder-alist'."
+  :group 'vm
+  :type '(repeat sexp))
+
 (defcustom vm-enable-thread-operations nil
   "*If non-nil, VM operations on root messages of collapsed
 threads will apply to all the messages in the threads.

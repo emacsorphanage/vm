@@ -3723,6 +3723,14 @@ collapse an expanded thread.  The commands @code{vm-expand-thread} and
 @code{vm-collapse-thread} implement the more specific versions of the
 function. 
 
+@vindex vm-summary-visible
+When threads are folded, not all messages in the threads are hidden.
+New messages that are yet unread continue to be visible.  Which
+messages remain visible in folded threads is controlled by the
+variable @code{vm-summary-visible}, whose value must be a list of VM
+selectors in the same format as those in
+@code{vm-virtual-folder-alist}.  @xref{Virtual Folders}.
+
 @vindex vm-summary-thread-folding-on-motion
 The variable @code{vm-summary-thread-folding-on-motion} allows a more
 automatic expansion/collapsing of threads.  If the variable is set to

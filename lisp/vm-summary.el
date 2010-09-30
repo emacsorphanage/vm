@@ -109,6 +109,9 @@ summary line then nil is returned."
       (delete-char 1)
       (insert "-"))))
 
+(defsubst vm-visible-message (m)
+  (apply 'vm-vs-or m vm-summary-visible))
+
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"
 	major-mode 'vm-summary-mode
@@ -265,7 +268,7 @@ the messages in the current folder."
 			      (vm-summary-mark-root-expanded m)))
 			(setq root (vm-thread-root m))
 			(when (and root (vm-summary-collapsed-root-p root))
-			  (unless (vm-new-flag m)
+			  (unless (vm-visible-message m)
 			    (put-text-property s e 'invisible t))
 			  ;; why mess with the root here?  USR, 2010-07-20
 			  ;; (vm-summary-mark-root-collapsed root)
@@ -356,7 +359,7 @@ ROOT, which is the root of the thread you want collapsed."
       (vm-mark-for-summary-update root)
       (mapc
        (lambda (m) 
-	 (unless (or (eq m root) (vm-new-flag m))
+	 (unless (or (eq m root) (vm-visible-message m))
 	   (put-text-property 
 	    (vm-su-start-of m) (vm-su-end-of m) 'invisible t)))
        (vm-thread-subtree (vm-thread-symbol root)))
