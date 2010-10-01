@@ -42,7 +42,9 @@ Prefix argument N means scroll forward N lines."
     ;; cursor problem in the summary window, reported on May 4, 2008
     ;; in gnu.emacs.vm.info, title "Re: synchronization of vm buffers"
     ;; (if mp-changed (sit-for 0))
-    (if mp-changed (vm-preview-current-message))
+    (when mp-changed 
+      (vm-preview-current-message)
+      (sit-for 0))
 
     (setq needs-decoding (and vm-display-using-mime
 			      (not vm-mime-decoded)
