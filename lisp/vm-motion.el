@@ -545,7 +545,9 @@ USR, 2010-03-08"
 		      (set-buffer vm-mail-buffer)
 		      (vm-record-and-change-message-pointer
 		       vm-message-pointer mp)
-		      (vm-preview-current-message)
+		      ;; preview disabled to avoid message
+		      ;; loading. USR, 2010-09-30
+		      ;; (vm-preview-current-message)
 		      ;; return non-nil so the caller will know that
 		      ;; a new message was selected.
 		      t )))))))
