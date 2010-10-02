@@ -16,6 +16,12 @@ Status
   
 VM 8.1.94a
 
+  CHANGES
+  
+   * Forwarding messages as MIME attachments included all message
+     headers, ignoring the vm-forwarded-headers and
+     vm-unforwarded-header-regexp settings.
+
   IMPROVEMENTS
 
    * New variable: `vm-summary-visible' specifies which messages

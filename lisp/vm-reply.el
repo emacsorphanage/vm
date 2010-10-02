@@ -1019,8 +1019,9 @@ Subject: header manually."
 	  (setq header-end (match-beginning 0)))
 	(cond ((equal vm-forwarding-digest-type "mime")
 	       (vm-mime-encapsulate-messages (list (car mp))
-					     vm-forwarded-headers
-					     vm-unforwarded-header-regexp
+					     nil "none" ; include all headers
+					     ;; vm-forwarded-headers
+					     ;; vm-unforwarded-header-regexp
 					     nil)
 	       (goto-char header-end)
 	       (insert "MIME-Version: 1.0\n")
@@ -1037,15 +1038,18 @@ Subject: header manually."
 		   (set-buffer-multibyte t))) ; is this safe?
 	      ((equal vm-forwarding-digest-type "rfc934")
 	       (vm-rfc934-encapsulate-messages
-		vm-forward-list vm-forwarded-headers
+		vm-forward-list 
+		(append vm-forwarded-headers vm-forwarded-mime-headers)
 		vm-unforwarded-header-regexp))
 	      ((equal vm-forwarding-digest-type "rfc1153")
 	       (vm-rfc1153-encapsulate-messages
-		vm-forward-list vm-forwarded-headers
+		vm-forward-list 
+		(append vm-forwarded-headers vm-forwarded-mime-headers)
 		vm-unforwarded-header-regexp))
 	      ((equal vm-forwarding-digest-type nil)
 	       (vm-no-frills-encapsulate-message
-		(car vm-forward-list) vm-forwarded-headers
+		(car vm-forward-list) 
+		(append vm-forwarded-headers vm-forwarded-mime-headers)
 		vm-unforwarded-header-regexp)))
       (if miming
 	  (let ((b (current-buffer)))
@@ -1272,7 +1276,8 @@ only marked messages will be put into the digest."
             ((equal vm-digest-send-type nil)
              (while mlist
                (vm-no-frills-encapsulate-message
-                (car mlist) vm-forwarded-headers
+                (car mlist) 
+		(append vm-forwarded-headers vm-forwarded-mime-headers)
                 vm-unforwarded-header-regexp)
                (setq mlist (cdr mlist)))))
 

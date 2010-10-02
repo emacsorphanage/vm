@@ -2727,14 +2727,17 @@ If the value of `vm-unforwarded-header-regexp' is nil, the headers
 matched by `vm-forwarded-headers' are the only headers that will be
 forwarded.
 
-If `vm-unforwarded-header-regexp' is non-nil, then only headers
-matched by that variable will be omitted; all others will be
-forwarded.  `vm-forwarded-headers' determines the forwarding order
-in that case, with headers not matching any in the
-`vm-forwarded-headers' list appearing last in the header section of
-the forwarded message."
+If `vm-unforwarded-header-regexp' is non-nil, then headers
+matched by that variable will be omitted and all others will be
+forwarded.  In this case, `vm-forwarded-headers' determines the
+forwarding order in that case, with headers not matching any in
+the `vm-forwarded-headers' list appearing last in the header
+section of the forwarded message."
   :group 'vm
   :type '(repeat regexp))
+
+(defconst vm-forwarded-mime-headers '("MIME" "Content")
+  "List of MIME headers that are always included in forwarded messages.")
 
 (defcustom vm-unforwarded-header-regexp "none-to-be-dropped"
   "*Non-nil value should be a regular expression header that tells
