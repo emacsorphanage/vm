@@ -738,12 +738,13 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 	       ;; we'll clear these messages from the virtual
 	       ;; folder by looking for messages that have a "Q"
 	       ;; id number associated with them.
-	       (vm-mapc
-		(lambda (m)
-		  (vm-set-message-id-number-of m "Q"))
-		(vm-virtual-messages-of (car mp)))
-	       (vm-unthread-message (car mp))
-	       (vm-set-virtual-messages-of (car mp) nil)
+	       (when (vm-virtual-messages-of (car mp))
+		 (vm-mapc
+		  (lambda (m)
+		    (vm-set-message-id-number-of m "Q"))
+		  (vm-virtual-messages-of (car mp)))
+		 (vm-unthread-message (car mp))
+		 (vm-set-virtual-messages-of (car mp) nil))
 	       (setq mp (cdr mp)))
 	     (while bp
 	       (set-buffer (car bp))
