@@ -93,10 +93,11 @@
 ;;;###autoload
 (defun vm-fill-long-lines-in-reply ()
   (interactive)
-  (let ((vm-word-wrap-paragraphs vm-word-wrap-paragraphs-in-reply)) 
+  (let ((vm-word-wrap-paragraphs vm-word-wrap-paragraphs-in-reply)
 					; doesn't work well with fill-prefixes
+	(vm-paragraph-fill-column vm-fill-long-lines-in-reply-column))
     (vm-fill-paragraphs-containing-long-lines
-     vm-fill-long-lines-in-reply-column
+     vm-fill-paragraphs-containing-long-lines-in-reply
      (save-excursion
        (goto-char (point-min))
        (re-search-forward (regexp-quote mail-header-separator) (point-max))
@@ -221,7 +222,7 @@
               (vm-yank-message (car mlist))
               (goto-char (point-max)))
             (setq mlist (cdr mlist)))))
-    (if vm-fill-long-lines-in-reply-column
+    (if vm-fill-paragraphs-containing-long-lines-in-reply
         (vm-fill-long-lines-in-reply))
     (run-hooks 'vm-reply-hook)
     (run-hooks 'vm-mail-mode-hook)))
@@ -441,24 +442,31 @@ specified by `vm-included-text-headers' and
 
 (defun vm-yank-message-mime (message layout)
   ;; This is Rob's new code that uses vm-decode-mime-layout for
-  ;; creating the yanked text
-  (if (eq layout 'none)
-
+  ;; creating the yanked text, but use the reply-specific settings for
+  ;; filling etc.
+  (let ((vm-word-wrap-paragraphs 
+	 vm-word-wrap-paragraphs-in-reply)
+					; doesn't work well with fill-prefixes
+	(vm-fill-paragraphs-containing-long-lines
+	 vm-fill-paragraphs-containing-long-lines-in-reply)
+	(vm-paragraph-fill-column 
+	 vm-fill-long-lines-in-reply-column))
+    (if (eq layout 'none)
+	(vm-insert-region-from-buffer (vm-buffer-of message)
+				      (vm-headers-of message)
+				      (vm-text-end-of message))
       (vm-insert-region-from-buffer (vm-buffer-of message)
 				    (vm-headers-of message)
-				    (vm-text-end-of message))
-    (vm-insert-region-from-buffer (vm-buffer-of message)
-				  (vm-headers-of message)
-				  (vm-text-of message))
-    (save-excursion
-      (goto-char (point-min))
-      (vm-decode-mime-message-headers))
-    (let ((vm-mime-alternative-select-method 'best-internal))
+				    (vm-text-of message))
+      (save-excursion
+	(goto-char (point-min))
+	(vm-decode-mime-message-headers))
+      (let ((vm-mime-alternative-select-method 'best-internal))
 					; override 'all and 'best
-      (vm-decode-mime-layout layout))
-    (if vm-mime-yank-attachments
-	;; FIXME This uses a function of vm-pine.el
-	(vm-decode-postponed-mime-message))))
+	(vm-decode-mime-layout layout))
+      (if vm-mime-yank-attachments
+	  ;; FIXME This uses a function of vm-pine.el
+	  (vm-decode-postponed-mime-message)))))
 
 (defun vm-yank-message-text (message layout)
   ;; This is the original code for included text
@@ -1011,8 +1019,9 @@ Subject: header manually."
 	  (setq header-end (match-beginning 0)))
 	(cond ((equal vm-forwarding-digest-type "mime")
 	       (vm-mime-encapsulate-messages (list (car mp))
-					     vm-forwarded-headers
-					     vm-unforwarded-header-regexp
+					     nil "none" ; include all headers
+					     ;; vm-forwarded-headers
+					     ;; vm-unforwarded-header-regexp
 					     nil)
 	       (goto-char header-end)
 	       (insert "MIME-Version: 1.0\n")
@@ -1029,15 +1038,18 @@ Subject: header manually."
 		   (set-buffer-multibyte t))) ; is this safe?
 	      ((equal vm-forwarding-digest-type "rfc934")
 	       (vm-rfc934-encapsulate-messages
-		vm-forward-list vm-forwarded-headers
+		vm-forward-list 
+		(append vm-forwarded-headers vm-forwarded-mime-headers)
 		vm-unforwarded-header-regexp))
 	      ((equal vm-forwarding-digest-type "rfc1153")
 	       (vm-rfc1153-encapsulate-messages
-		vm-forward-list vm-forwarded-headers
+		vm-forward-list 
+		(append vm-forwarded-headers vm-forwarded-mime-headers)
 		vm-unforwarded-header-regexp))
 	      ((equal vm-forwarding-digest-type nil)
 	       (vm-no-frills-encapsulate-message
-		(car vm-forward-list) vm-forwarded-headers
+		(car vm-forward-list) 
+		(append vm-forwarded-headers vm-forwarded-mime-headers)
 		vm-unforwarded-header-regexp)))
       (if miming
 	  (let ((b (current-buffer)))
@@ -1264,7 +1276,8 @@ only marked messages will be put into the digest."
             ((equal vm-digest-send-type nil)
              (while mlist
                (vm-no-frills-encapsulate-message
-                (car mlist) vm-forwarded-headers
+                (car mlist) 
+		(append vm-forwarded-headers vm-forwarded-mime-headers)
                 vm-unforwarded-header-regexp)
                (setq mlist (cdr mlist)))))
 

@@ -397,9 +397,13 @@ Toolbars are updated."
     (fillarray vm-buffers-needing-display-update 0))
   (when vm-messages-needing-summary-update
     (let ((n 1)
-	  (ms vm-messages-needing-summary-update))
+	  (ms vm-messages-needing-summary-update)
+	  m)
       (while ms
-	(vm-update-message-summary (car ms))
+	(setq m (car ms))
+	(unless (or (eq (vm-deleted-flag m) 'expunged)
+		    (equal (vm-message-id-number-of m) "Q"))
+	  (vm-update-message-summary (car ms)))
 	(if (eq (mod n 10) 0)
 	    (message "Recreating summary... %s" n))
 	(setq n (1+ n))
@@ -2120,8 +2124,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 	      status2-hi 0
 	      status2-lo 0)
       (if (> (length status2) 4)
-	  (setq status2-hi (string-to-number (substring status2 0 -4))
-		status2-lo (string-to-number (substring status2 -4 nil)))
+	  (setq status2-hi (string-to-number (substring status2 0 -4) 16)
+		status2-lo (string-to-number (substring status2 -4 nil) 16))
 	;; handle badly fomatted status strings written by old
 	;; versions
 	(setq status2 (string-to-number status2 16)
@@ -4484,7 +4488,7 @@ files."
 			      (vm-preview-current-message)))
 			(when vm-summary-show-threads
 			  (vm-update-summary-and-mode-line)
-			  (vm-sort-messages (or vm-ml-sort-keys "activiity")))
+			  (vm-sort-messages (or vm-ml-sort-keys "activity")))
 			))))
 	    (setq b-list (cdr b-list)))))
     (if (and new-messages vm-ml-sort-keys)
@@ -4509,10 +4513,10 @@ either backward (prefix is negative) or forward (positive)."
 	       vm-summary-enable-thread-folding
 	       vm-summary-show-threads
 	       vm-enable-thread-operations
-	       (vm-th-thread-root-p current-message)
+	       (vm-thread-root-p current-message)
 	       (with-current-buffer vm-summary-buffer
 		 (vm-summary-collapsed-root-p current-message)))
-	  (vm-th-thread-subtree current-message)
+	  (vm-thread-subtree current-message)
 	(unless (eq vm-circular-folders t)
 	  (vm-check-count prefix))
 	(while (not (zerop count))
@@ -4624,10 +4628,13 @@ folder-access-data should be preserved."
   (run-hooks 'vm-mode-hooks))
 
 (defun vm-link-to-virtual-buffers ()
+  "If there are visited virtual folders that depend on the current
+real folder, then link them to the current folder and update their
+contents." 
   (let ((b-list (buffer-list))
 	(vbuffers nil)
 	(folder-buffer (current-buffer))
-	folders clauses)
+	folders folder clauses)
     (save-excursion
       (while b-list
 	(set-buffer (car b-list))
@@ -4636,10 +4643,14 @@ folder-access-data should be preserved."
 	       (while clauses
 		 (setq folders (car (car clauses)))
 		 (while folders
-		   (if (eq folder-buffer (vm-get-file-buffer
-					  (expand-file-name
-					   (car folders)
-					   vm-folder-directory)))
+		   (setq folder (car folders))
+		   (if (eq folder-buffer 
+			   (or (and (stringp folder)
+				    (vm-get-file-buffer
+				     (expand-file-name folder 
+						       vm-folder-directory)))
+			       (and (listp folder)
+				    (eval folder))))
 		       (setq vbuffers (cons (car b-list) vbuffers)
 			     vm-real-buffers (cons folder-buffer
 						   vm-real-buffers)

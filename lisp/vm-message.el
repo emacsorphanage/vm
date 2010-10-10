@@ -31,6 +31,37 @@ works in all VM buffers."
   (with-current-buffer (or vm-mail-buffer (current-buffer))
     (car vm-message-pointer)))
 
+;; message struct
+(defconst vm-message-fields 
+  [:location-data :softdata :attributes :cached-data :mirror-data])
+(defconst vm-location-data-fields
+  [:start :headers :vheaders :text :text-end :end])
+(defconst vm-softdata-fields
+  [:number :padded-number :mark :su-start :su-end :real-message-sym
+	   :reverse-link-sym :message-type :message-id-number :buffer
+	   :thread-indentation :thread-list
+	   :babyl-frob-flag :saved-virtual-attributes
+	   :saved-virtual-mirror-data :virtual-summary 
+	   :mime-layout :mime-encoded-header-flag
+	   :su-summary-mouse-track-overlay :message-access-method
+	   :thread-subtree])
+(defconst vm-attributes-fields
+  [:new-flag :unread-flag :deleted-flag :filed-flag :replied-flag
+	     :written-flag :forwarded-flag :edited-flag
+	     :redistributed-flag]) 
+(defconst vm-cached-data-fields
+  [:byte-count :weekday :monthday :month :year :hour :zone
+	       :full-name :from :message-id :line-count :subject
+	       :vheaders-regexp :to :to-names :month-number
+	       :sortable-datestring :sortable-subject 
+	       :summary :parent :references
+	       :body-to-be-discarded 
+	       :body-to-be-retrieved
+	       :uid :imap-uid-validity :spam-score])
+(defconst vm-mirror-data-fields
+  [:edit-buffer :virtual-messages-sym :stuff-flag :labels
+  :label-string :attribute-modflag])
+
 ;; data that is always shared with virtual folders
 (defsubst vm-location-data-of (message)
   (aref message 0))
@@ -483,7 +514,7 @@ works in all VM buffers."
 (defsubst vm-virtual-message-p (m)
   (not (eq m (vm-real-message-of m))))
 
-(defun vm-update-virtual-messages (m)
+(defsubst vm-update-virtual-messages (m)
   "Update all the virtual messages of M to reflect the changes made to
 the headers/body of M."
   (let ((v-list (vm-virtual-messages-of m)))
@@ -496,10 +527,26 @@ the headers/body of M."
 	(if (and vm-presentation-buffer
 		 (eq (car vm-message-pointer) (car v-list)))
 	    (save-excursion (vm-preview-current-message)))
-	(if (vectorp vm-thread-obarray)
-	    (vm-build-threads (list (car v-list))))
+	(when (vectorp vm-thread-obarray)
+	  (vm-unthread-message (car v-list))
+	  (vm-build-threads (list (car v-list))))
 	;; (if vm-summary-show-threads
 	;;     (intern (buffer-name) buffers-needing-thread-sort))
 	(setq v-list (cdr v-list))))))
+
+(defun vm-pp-message (m)
+  (pp
+   (vector 
+     ':location-data 
+     (vm-zip-vectors vm-location-data-fields (vm-location-data-of m))
+     ':softdata
+     (vm-zip-vectors vm-softdata-fields (vm-softdata-of m))
+     ':attributes
+     (vm-zip-vectors vm-attributes-fields (vm-attributes-of m))
+     ':cached-data
+     (vm-zip-vectors vm-cached-data-fields (vm-cached-data-of m))
+     ':mirror-data
+     (vm-zip-vectors vm-mirror-data-fields (vm-mirror-data-of m))))
+  nil)
 
 ;;; vm-message.el ends here

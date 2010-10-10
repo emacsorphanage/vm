@@ -585,7 +585,7 @@ A nil value means there's no limit."
   :type '(choice (const :tag "No Limit" nil) 
 		 (integer :tag "Bytes")))
 
-(defcustom vm-imap-expunge-after-retrieving t
+(defcustom vm-imap-expunge-after-retrieving nil
   "*Non-nil value means that, when an IMAP mailbox is used as a
 spool file, messages should be deleted after retrieving them.  A
 nil value means messages will be left in the IMAP mailbox until
@@ -1071,6 +1071,7 @@ effect."
   :group 'vm-compose
   :type 'boolean)
 
+;; FIXME What is the const symbol wrap?
 (defcustom vm-fill-paragraphs-containing-long-lines nil
   "*This variable can be set to nil, a numeric value N, the
 symbol 'window-width.  If it is numeric, it causes VM to fill
@@ -1083,12 +1084,35 @@ filled.  The message itself is not modified; its text is copied
 into a presentation buffer before the filling is done.
 
 This variable determines which paragraphs are filled,
-but `vm-paragraph-fill-column' determines the fill column."
-  :group 'vm-presentaton
-  :type '(choice (const nil)
-                 (const window-width)
-                 (const wrap)
-                 integer))
+but `vm-paragraph-fill-column' determines the fill column.
+
+Note that filling is carried out only if word wrapping is not in
+effect.  The variable `vm-word-wrap-paragraphs' controls word
+wrapping."
+  :group 'vm-presentation 
+  :type '(choice (const :tag "Off" nil)
+		 (const :tag "Window width" window-width)
+		 (const :tag "Wrap" wrap)
+		 (integer :tag "Fill width")))
+
+(defcustom vm-fill-paragraphs-containing-long-lines-in-reply nil
+  "*This variable can be set to nil, a numeric value N, the
+symbol 'window-width.  If it is numeric, it causes VM to fill
+included text in replies provided it has lines spanning that many
+columns or more.  Setting it to 'window-width has the effect of
+using the width of the Emacs window.
+
+This variable determines which paragraphs are filled,
+but `vm-fill-long-lines-in-reply-column' determines the fill column.
+
+Note that filling is carried out only if word wrapping is not in
+effect.  The variable `vm-word-wrap-paragraphs-in-reply' controls word
+wrapping."
+  :group 'vm-compose 
+  :type '(choice (const :tag "No" nil)
+		 (const :tag "Window width" window-width)
+		 (const :tag "Wrap" wrap)
+		 (integer :tag "Fill column")))
 
 (defcustom vm-paragraph-fill-column (default-value 'fill-column)
   "*Column beyond which automatic line-wrapping should happen when
@@ -1100,9 +1124,9 @@ re-filling lines longer than the value of
 (defcustom vm-fill-long-lines-in-reply-column (default-value 'fill-column)
   "*Fill lines spanning that many columns or more in replies."
   :group 'vm-compose
-  :type '(choice (const nil)
-                 (const window-width)
-                 integer))
+  :type '(choice (const :tag "Off" nil)
+                 (const :tag "Window width" window-width)
+                 (integer :tag "Fill column")))
 
 (defcustom vm-display-using-mime t
   "*Non-nil value means VM should display messages using MIME.
@@ -2845,15 +2869,17 @@ If the value of `vm-unforwarded-header-regexp' is nil, the headers
 matched by `vm-forwarded-headers' are the only headers that will be
 forwarded.
 
-If `vm-unforwarded-header-regexp' is non-nil, then only headers
-matched by that variable will be omitted; all others will be
-forwarded.  `vm-forwarded-headers' determines the forwarding order
-in that case, with headers not matching any in the
-`vm-forwarded-headers' list appearing last in the header section of
-the forwarded message."
+If `vm-unforwarded-header-regexp' is non-nil, then headers
+matched by that variable will be omitted and all others will be
+forwarded.  In this case, `vm-forwarded-headers' determines the
+forwarding order in that case, with headers not matching any in
+the `vm-forwarded-headers' list appearing last in the header
+section of the forwarded message."
   :group 'vm-compose
-  :type '(choice (const nil)
-                 (repeat regexp)))
+  :type '(repeat regexp))
+
+(defconst vm-forwarded-mime-headers '("MIME" "Content")
+  "List of MIME headers that are always included in forwarded messages.")
 
 (defcustom vm-unforwarded-header-regexp "none-to-be-dropped"
   "*Non-nil value should be a regular expression header that tells
@@ -5322,6 +5348,14 @@ you move out of the thread."
   :group 'vm-summary
   :type 'boolean)
 
+(defcustom vm-summary-visible '((new))
+  "*List of selectors identifying messages that should be visible in
+folded thread summaries, i.e., such messages remain visible even if
+their threads are shown collapsed.  The selectors are the same as
+those used in `vm-virtual-folder-alist'."
+  :group 'vm
+  :type '(repeat sexp))
+
 (defcustom vm-enable-thread-operations nil
   "*If non-nil, VM operations on root messages of collapsed
 threads will apply to all the messages in the threads.
@@ -5410,8 +5444,21 @@ Its parent keymap is mail-mode-map.")
 (make-variable-buffer-local 'vm-fetched-messages)
 (defvar vm-fetched-message-count 0)
 (make-variable-buffer-local 'vm-fetched-message-count)
-(defvar vm-virtual-folder-definition nil)
+
+(defvar vm-virtual-folder-definition nil
+  "The virtual folder definition of the folder in the current buffer,
+which is normally an entry in `vm-virtual-folder-alist'.  It is of the
+form: 
+  (VIRTUAL-FOLDER-NAME
+    ((FOLDER-NAME ...)
+     (SELECTOR [ARG ...]) ...) 
+    ... )
+A FOLDER-NAME entry can be
+- the name of a local folder, or
+- an s-expression which, when evaluated, yields a folder buffer loaded
+in VM." )
 (make-variable-buffer-local 'vm-virtual-folder-definition)
+
 (defvar vm-virtual-buffers nil)
 (make-variable-buffer-local 'vm-virtual-buffers)
 (defvar vm-real-buffers nil)

@@ -5,7 +5,7 @@
 ;; Copyright (C) 1998, 2001, 2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
 ;; Copyright (C) 2006 Robert P. Goldman
-;; Copyright (C) 2008 Uday S. Reddy
+;; Copyright (C) 2008-2010 Uday S. Reddy
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -321,7 +321,8 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	(m-per-session vm-imap-messages-per-session)
 	(b-per-session vm-imap-bytes-per-session)
 	(handler (vm-find-file-name-handler source 'vm-imap-move-mail))
-	(imapdrop (vm-safe-imapdrop-string source))
+	(folder (or (vm-imap-folder-for-spec source)
+		    (vm-safe-imapdrop-string source)))
 	(statblob nil)
 	(msgid (list nil nil (vm-imapdrop-sans-password source) 'uid))
 	(imap-retrieved-messages vm-imap-retrieved-messages)
@@ -343,7 +344,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		     (message 
 		      (concat "Leaving messages on IMAP server; "
 			      "See info under \"IMAP Spool Files\""))
-		     (sit-for 1)
+		     (sit-for 4)
 		     nil))))
 
     (unwind-protect
@@ -389,7 +390,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	    ;; messages as we go.
 	    (setq n 1 retrieved-bytes 0)
 	    (setq statblob (vm-imap-start-status-timer))
-	    (vm-set-imap-stat-x-box statblob imapdrop)
+	    (vm-set-imap-stat-x-mailbox statblob folder)
 	    (vm-set-imap-stat-x-maxmsg statblob mailbox-count)
 	    (while (and (<= n mailbox-count)
 			(or (not (natnump m-per-session))
@@ -408,7 +409,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 			(if vm-imap-ok-to-ask
 			    (message
 			     "Skipping message %d (of %d) from %s (retrieved already)..."
-			     n mailbox-count imapdrop))
+			     n mailbox-count folder))
 			(throw 'skip t))))
 		(setq message-size (vm-imap-get-message-size process n))
 		(vm-set-imap-stat-x-need statblob message-size)
@@ -431,17 +432,17 @@ from which mail is to be moved and DESTINATION is the VM folder."
 			    (message "Skipping message %d..." n)
 			  (message
 			   "Skipping message %d in %s, too large (%d > %d)..."
-			   n imapdrop message-size vm-imap-max-message-size)))
+			   n folder message-size vm-imap-max-message-size)))
 		      (throw 'skip t)))
 		(message "Retrieving message %d (of %d) from %s..."
-			 n mailbox-count imapdrop)
+			 n mailbox-count folder)
                 (vm-imap-fetch-message process n
 				       use-body-peek nil) ; no headers-only
                 (vm-imap-retrieve-to-target process destination
 					    statblob use-body-peek) 
 		(vm-imap-read-ok-response process)
                 (message "Retrieving message %d (of %d) from %s...done"
-                         n mailbox-count imapdrop)
+                         n mailbox-count folder)
 		(vm-increment retrieved)
 		(and b-per-session
 		     (setq retrieved-bytes (+ retrieved-bytes message-size)))
@@ -570,7 +571,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	(vm-imap-ok-to-ask t)
 	(did-delete nil)
 	msg-count can-delete read-write uid-validity
-	select-response source-list imapdrop uid-alist mailbox data mp match)
+	select-response source-list folder uid-alist mailbox data mp match)
     (unwind-protect
 	(save-excursion
 	  ;;------------------------
@@ -609,11 +610,12 @@ on all the relevant IMAP servers and then immediately expunges."
 			(setq process nil
 			      did-delete nil))
 		      (setq source (nth 2 data))
-		      (setq imapdrop (vm-safe-imapdrop-string source))
+		      (setq folder (or (vm-imap-folder-for-spec source)
+				       (vm-safe-imapdrop-string source)))
 		      (condition-case error-data
 			  (progn
 			    (message "Opening IMAP session to %s..."
-				     imapdrop)
+				     folder)
 			    (setq process 
 				  (vm-imap-make-session 
 				   source vm-imap-ok-to-ask "expunge"))
@@ -648,14 +650,14 @@ on all the relevant IMAP servers and then immediately expunges."
 			      (error "Can't delete messages in mailbox %s, skipping..." mailbox))
 			    (unless read-write
 			      (error "Mailbox %s is read-only, skipping..." mailbox))
-			    (message "Expunging messages in %s..." imapdrop))
+			    (message "Expunging messages in %s..." folder))
 			(error
 			 (if (cdr error-data)
 			     (apply 'message (cdr error-data))
 			   (message
 			    "Couldn't open IMAP session to %s, skipping..."
-			    imapdrop))
-			 (setq trouble (cons imapdrop trouble))
+			    folder))
+			 (setq trouble (cons folder trouble))
 			 (sleep-for 2)
 			 (while (equal (nth 1 (car mp)) source)
 			   (setq mp (cdr mp)))
@@ -672,11 +674,11 @@ on all the relevant IMAP servers and then immediately expunges."
 		      (setq did-delete t)
 		      (vm-increment delete-count)))
 		(error
-		 (setq trouble (cons imapdrop trouble))
+		 (setq trouble (cons folder trouble))
 		 (message "Something signaled: %s"
 			  (prin1-to-string error-data))
 		 (sleep-for 2)
-		 (message "Skipping rest of mailbox %s..." imapdrop)
+		 (message "Skipping rest of mailbox %s..." folder)
 		 (sleep-for 2)
 		 (while (equal (nth 2 (car mp)) source)
 		   (setq mp (cdr mp)))
@@ -834,7 +836,8 @@ nil if the session could not be created."
   (let ((shutdown nil)			; whether process is to be shutdown
 	(folder-type vm-folder-type)
 	process ooo
-	(imapdrop (vm-safe-imapdrop-string source))
+	(folder (or (vm-imap-folder-for-spec source)
+		    (vm-safe-imapdrop-string source)))
 	(coding-system-for-read (vm-binary-coding-system))
 	(coding-system-for-write (vm-binary-coding-system))
 	(use-ssl nil)
@@ -889,9 +892,9 @@ nil if the session could not be created."
 		     (setq pass (cadr authinfo)))))
 	    (when (and (null pass) interactive)
 	      (setq pass
-		    (read-passwd (format "IMAP password for %s: " imapdrop))))
+		    (read-passwd (format "IMAP password for %s: " folder))))
 	    (when (null pass)
-	      (message "Need password for %s" imapdrop)
+	      (message "Need password for %s" folder)
 	      (throw 'end-of-session nil)))
 	  ;; save the password for the sake of
 	  ;; vm-expunge-imap-messages, which passes password-less
@@ -924,9 +927,9 @@ nil if the session could not be created."
 		       host port mailbox user pass)))
 	    (if (processp process)
 		(set-process-buffer process (current-buffer))
-	      (insert "starting " session-name
+	      (insert "Starting " session-name
 		      " session " (current-time-string) "\n")
-	      (insert (format "connecting to %s:%s\n" host port))
+	      (insert (format "-- connecting to %s:%s\n" host port))
 	      ;; open the connection to the server
 	      (condition-case err
 		  (cond 
@@ -950,14 +953,14 @@ nil if the session could not be created."
 		(error
 		 (message "%s" (error-message-string err))
 		 (setq shutdown t)
-		 (throw 'end-of-session nil)))
-	      (insert-before-markers (format "connected for %s\n" purpose)))
+		 (throw 'end-of-session nil))))
 	    (setq vm-imap-read-point (point))
 	    (vm-process-kill-without-query process)
-	    (if (null (setq greeting (vm-imap-read-greeting process)))
-		(progn (delete-process process) ; why here?  USR
-		       (setq shutdown t)
-		       (throw 'end-of-session nil)))
+	    (if (setq greeting (vm-imap-read-greeting process))
+		(insert-before-markers (format "-- connected for %s\n" purpose))
+	      (delete-process process) ; why here?  USR
+	      (setq shutdown t)
+	      (throw 'end-of-session nil))
 	    (setq shutdown t)
 	    (set (make-local-variable 'vm-imap-session-done) nil)
 	    ;; record server capabilities
@@ -980,7 +983,7 @@ nil if the session could not be created."
 		    (setq vm-imap-passwords
 			  (delete (list source-nopwd-nombox pass)
 				  vm-imap-passwords))
-		    (message "IMAP password for %s incorrect" imapdrop)
+		    (message "IMAP password for %s incorrect" folder)
 		    ;; don't sleep unless we're running synchronously.
 		    (if vm-imap-ok-to-ask
 			(sleep-for 2))
@@ -1026,7 +1029,7 @@ nil if the session could not be created."
 		      (setq vm-imap-passwords
 			    (delete (list source-nopwd-nombox pass)
 				    vm-imap-passwords))
-		      (message "IMAP password for %s incorrect" imapdrop)
+		      (message "IMAP password for %s incorrect" folder)
 		      ;; don't sleep unless we're running synchronously.
 		      (if vm-imap-ok-to-ask
 			  (sleep-for 2))
@@ -1152,7 +1155,7 @@ as well."
 ;; whether the current status has been reported already
 (defun vm-imap-stat-did-report (o) (aref o 1))
 ;; mailbox specification
-(defun vm-imap-stat-x-box (o) (aref o 2))
+(defun vm-imap-stat-x-mailbox (o) (aref o 2))
 ;; message number (count) of the message currently being retrieved
 (defun vm-imap-stat-x-currmsg (o) (aref o 3))
 ;; total number of mesasges that need to be retrieved in this round
@@ -1162,7 +1165,7 @@ as well."
 ;; size of the current message
 (defun vm-imap-stat-x-need (o) (aref o 6))
 ;; Data for the message last reported
-(defun vm-imap-stat-y-box (o) (aref o 7))
+(defun vm-imap-stat-y-mailbox (o) (aref o 7))
 (defun vm-imap-stat-y-currmsg (o) (aref o 8))
 (defun vm-imap-stat-y-maxmsg (o) (aref o 9))
 (defun vm-imap-stat-y-got (o) (aref o 10))
@@ -1170,12 +1173,12 @@ as well."
 
 (defun vm-set-imap-stat-timer (o val) (aset o 0 val))
 (defun vm-set-imap-stat-did-report (o val) (aset o 1 val))
-(defun vm-set-imap-stat-x-box (o val) (aset o 2 val))
+(defun vm-set-imap-stat-x-mailbox (o val) (aset o 2 val))
 (defun vm-set-imap-stat-x-currmsg (o val) (aset o 3 val))
 (defun vm-set-imap-stat-x-maxmsg (o val) (aset o 4 val))
 (defun vm-set-imap-stat-x-got (o val) (aset o 5 val))
 (defun vm-set-imap-stat-x-need (o val) (aset o 6 val))
-(defun vm-set-imap-stat-y-box (o val) (aset o 7 val))
+(defun vm-set-imap-stat-y-mailbox (o val) (aset o 7 val))
 (defun vm-set-imap-stat-y-currmsg (o val) (aset o 8 val))
 (defun vm-set-imap-stat-y-maxmsg (o val) (aset o 9 val))
 (defun vm-set-imap-stat-y-got (o val) (aset o 10 val))
@@ -1184,7 +1187,7 @@ as well."
 (defun vm-imap-start-status-timer ()
   (let ((blob (make-vector 12 nil))
 	timer)
-    (setq timer (add-timeout 5 'vm-imap-report-retrieval-status blob 5))
+    (setq timer (add-timeout 2 'vm-imap-report-retrieval-status blob 2))
     (vm-set-imap-stat-timer blob timer)
     blob ))
 
@@ -1199,26 +1202,23 @@ as well."
   (vm-set-imap-stat-did-report o t)
   (cond ((null (vm-imap-stat-x-got o)) t)
 	;; should not be possible, but better safe...
-	((not (eq (vm-imap-stat-x-box o) (vm-imap-stat-y-box o))) t)
+	((not (eq (vm-imap-stat-x-mailbox o) (vm-imap-stat-y-mailbox o))) t)
 	((not (eq (vm-imap-stat-x-currmsg o) (vm-imap-stat-y-currmsg o))) t)
-	(t (message "Retrieving message %d (of %d) from %s, %s..."
-		    (vm-imap-stat-x-currmsg o)
-		    (vm-imap-stat-x-maxmsg o)
-		    (vm-imap-stat-x-box o)
-		    (if (vm-imap-stat-x-need o)
-			(format "%d%s of %d%s"
-				(vm-imap-stat-x-got o)
-				(if (> (vm-imap-stat-x-got o)
-				       (vm-imap-stat-x-need o))
-				    "!"
-				  "")
-				(vm-imap-stat-x-need o)
-				(if (eq (vm-imap-stat-x-got o)
-					(vm-imap-stat-y-got o))
-				    " (stalled)"
-				  ""))
-		      "post processing"))))
-  (vm-set-imap-stat-y-box o (vm-imap-stat-x-box o))
+	(t 
+	 (message "Retrieving message %d (of %d) from %s, %s..."
+		  (vm-imap-stat-x-currmsg o)
+		  (vm-imap-stat-x-maxmsg o)
+		  (vm-imap-stat-x-mailbox o)
+		  (if (vm-imap-stat-x-need o)
+		      (format "%d%%%s"
+			      (/ (* 100 (vm-imap-stat-x-got o))
+				 (vm-imap-stat-x-need o))
+			      (if (eq (vm-imap-stat-x-got o)
+				      (vm-imap-stat-y-got o))
+				  " (stalled)"
+				""))
+		    "post processing"))))
+  (vm-set-imap-stat-y-mailbox o (vm-imap-stat-x-mailbox o))
   (vm-set-imap-stat-y-currmsg o (vm-imap-stat-x-currmsg o))
   (vm-set-imap-stat-y-maxmsg o (vm-imap-stat-x-maxmsg o))
   (vm-set-imap-stat-y-got o (vm-imap-stat-x-got o))
@@ -1574,8 +1574,9 @@ as well."
 		     (vm-set-imap-stat-x-got statblob (- end ***start))
 		     (if (zerop (% (random) 10))
 			 (vm-imap-report-retrieval-status statblob)))))))
-	   ;; this seems to slow things down
-	   ;;(after-change-functions (cons func after-change-functions))
+	   ;; this seems to slow things down.  USR, 2008-04-25
+	   ;; reenabled.  USR, 2010-09-17
+	   (after-change-functions (cons func after-change-functions))
 	   
 	   (need-ok t)
 	   response)
@@ -1748,7 +1749,7 @@ as well."
 	     (setq need-ok nil))
 	    ;; Otherwise, skip the response
 	    ))
-    size ))
+    (string-to-number size) ))
 
 (defun vm-imap-read-capability-response (process)
   ;;----------------------------------
@@ -2847,7 +2848,8 @@ operation of the server to minimize I/O."
 	   (uid nil)
 	   (uid-validity (vm-folder-imap-uid-validity))
 	   (imapdrop (vm-folder-imap-maildrop-spec))
-	   (safe-imapdrop (vm-safe-imapdrop-string imapdrop))
+	   (folder (or (vm-imap-folder-for-spec imapdrop)
+		       (vm-safe-imapdrop-string imapdrop)))
 	   (use-body-peek (vm-folder-imap-body-peek))
 	   r-list range k mp got-some message-size old-eob
 	   (sync-data (vm-imap-get-synchronization-data do-retrieves))
@@ -2904,7 +2906,7 @@ operation of the server to minimize I/O."
 		     (vm-buffer-type:enter 'process)
 		     ;;----------------------------
 		     (setq statblob (vm-imap-start-status-timer))
-		     (vm-set-imap-stat-x-box statblob safe-imapdrop)
+		     (vm-set-imap-stat-x-mailbox statblob folder)
 		     (vm-set-imap-stat-x-maxmsg statblob
 						(length retrieve-list))
 		     (setq r-list (vm-imap-bunch-messages 
@@ -2937,13 +2939,13 @@ operation of the server to minimize I/O."
 		 (vm-imap-normal-error	; handler
 		  (message "IMAP error: %s" (cadr error-data)))
 		 (vm-imap-protocol-error ; handler
-		  (message "Retrieval from %s signaled: %s" safe-imapdrop
+		  (message "Retrieval from %s signaled: %s" folder
 			   error-data))
 		 ;; Continue with whatever messages have been read
 		 (quit
 		  (delete-region old-eob (point-max))
 		  (error (format "Quit received during retrieval from %s"
-				 safe-imapdrop))))
+				 folder))))
 	     ;; cleanup
 	     (when statblob 
 	       (vm-imap-stop-status-timer statblob))	   
@@ -3093,10 +3095,10 @@ operation of the server to minimize I/O."
 
 	    (vm-imap-protocol-error	; handler
 	     (message "Expunge from %s signalled: %s"
-		      safe-imapdrop error-data))
+		      folder error-data))
 	    (quit 			; handler
 	     (error "Quit received during expunge from %s"
-		    safe-imapdrop)))
+		    folder)))
 	  ;;-----------------------------
 	  (vm-buffer-type:exit)
 	  (vm-imap-dump-uid-seq-num-data)
@@ -3153,7 +3155,8 @@ either the folder buffer or the presentation buffer.
 	  (let* ((statblob nil)
 		 (uid (vm-imap-uid-of m))
 		 (imapdrop (vm-folder-imap-maildrop-spec))
-		 (safe-imapdrop (vm-safe-imapdrop-string imapdrop))
+		 (folder (or (vm-imap-folder-for-spec imapdrop)
+			     (vm-safe-imapdrop-string imapdrop)))
 		 (process (and (eq vm-imap-connection-mode 'online)
 			       (vm-re-establish-folder-imap-session 
 				imapdrop "fetch")))
@@ -3180,12 +3183,12 @@ either the folder buffer or the presentation buffer.
 		    ;;----------------------------------
 		    (condition-case error-data
 			(progn
-			  (setq statblob (vm-imap-start-status-timer))
-			  (vm-set-imap-stat-x-box statblob safe-imapdrop)
-			  (vm-set-imap-stat-x-maxmsg statblob 1)
-			  (vm-set-imap-stat-x-currmsg statblob 1)
 			  (setq message-size 
 				(vm-imap-get-uid-message-size process uid))
+			  (setq statblob (vm-imap-start-status-timer))
+			  (vm-set-imap-stat-x-mailbox statblob folder)
+			  (vm-set-imap-stat-x-maxmsg statblob 1)
+			  (vm-set-imap-stat-x-currmsg statblob 1)
 			  (vm-set-imap-stat-x-need statblob message-size)
 			  (vm-imap-fetch-uid-message 
 			   process uid use-body-peek nil)
@@ -3196,24 +3199,24 @@ either the folder buffer or the presentation buffer.
 		      (vm-imap-normal-error ; handler
 		       (message "IMAP error: %s" (cadr error-data)))
 		      (vm-imap-protocol-error ; handler
-		       (message "Retrieval from %s signaled: %s" safe-imapdrop
+		       (message "Retrieval from %s signaled: %s" folder
 				error-data)
 		       ;; Continue with whatever messages have been read
 		       )
 		      (quit
 		       (delete-region old-eob (point-max))
 		       (error (format "Quit received during retrieval from %s"
-				      safe-imapdrop))))
-		    ;; unwind-protections
-		    (when statblob
-		      (vm-imap-stop-status-timer statblob))
-		    ;;-------------------
-		    (vm-buffer-type:exit)
-		    ;;-------------------
-		    ;;-----------------------------
-		    (vm-imap-dump-uid-seq-num-data)
-		    ;;-----------------------------
-		    ))))
+				      folder)))))
+		;; unwind-protections
+		(when statblob
+		  (vm-imap-stop-status-timer statblob))
+		;;-------------------
+		(vm-buffer-type:exit)
+		;;-------------------
+		;;-----------------------------
+		(vm-imap-dump-uid-seq-num-data)
+		;;-----------------------------
+		)))
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
@@ -3248,7 +3251,7 @@ only marked messages are loaded, other messages are ignored."
 	fetch-method
 	m mm)
     (save-excursion
-      (message "Retrieving message body...")
+      ;; (message "Retrieving message body...")
       (while mlist
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
@@ -3257,12 +3260,13 @@ only marked messages are loaded, other messages are ignored."
 	    (if (vm-body-to-be-discarded-of mm)
 		(vm-unregister-fetched-message mm))
 	  ;; else retrieve the body
-	  (when (> n 0)
-	    (message "Retrieving message body... %s" n))
+	  (setq n (1+ n))
+	  (message "Retrieving message body... %s" n)
 	  (vm-retrieve-real-message-body mm)
-	  (setq n (1+ n)))
+	  )
 	(setq mlist (cdr mlist)))
-      (message "Retrieving message body... done"))
+      (when (> n 0)
+	(message "Retrieving message body... done")))
     (intern (buffer-name) vm-buffers-needing-display-update)
     ;; FIXME - is this needed?  Is it correct?
     (vm-display nil nil '(vm-load-message vm-refresh-message)
@@ -3300,14 +3304,13 @@ only marked messages are retrieved, other messages are ignored."
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
 	(when (vm-body-to-be-retrieved-of mm)
-	  (if (= n 0)
-	      (message "Retrieving message body...")
-	    (message "Retrieving message body... %s" n))
+	  (setq n (1+ n))
+	  (message "Retrieving message body... %s" n)
 	  (vm-retrieve-real-message-body mm)
-	  (vm-register-fetched-message mm)
-	  (setq n (1+ n)))
+	  (vm-register-fetched-message mm))
 	(setq mlist (cdr mlist)))
-      (message "Retrieving message body... done"))
+      (when (> n 0)
+	(message "Retrieving message body... done")))
     (intern (buffer-name) vm-buffers-needing-display-update)
     (vm-update-summary-and-mode-line)
     ))
@@ -3646,6 +3649,21 @@ looking up `vm-imap-account-alist' or nil if there is no such account."
     nil)))
 
 ;;;###autoload
+(defun vm-imap-folder-for-spec (spec)
+  "Returns the IMAP folder for maildrop specification SPEC in the
+format account:mailbox."
+  (let (comps account-comps (alist vm-imap-account-alist))
+    (setq comps (vm-imap-parse-spec-to-list spec))
+    (catch 'return
+    (while alist
+      (setq account-comps (vm-imap-parse-spec-to-list (car (car alist))))
+      (if (and (equal (nth 1 comps) (nth 1 account-comps)) ; host
+	       (equal (nth 4 comps) (nth 4 account-comps))) ; login
+	  (throw 'return (concat (cadr (car alist)) ":" (nth 3 comps)))
+	(setq alist (cdr alist))))
+    nil)))
+
+;;;###autoload
 (defun vm-imap-spec-for-account (account)
   "Returns the IMAP maildrop spec for ACCOUNT, by looking up
 `vm-imap-account-alist' or nil if there is no such account."
@@ -3945,7 +3963,7 @@ documentation for `vm-spool-files'."
        (list folder))
      ))
   (let ((vm-imap-ok-to-ask t)
-	process mailbox)
+	process mailbox folder-display)
     (setq process (vm-imap-make-session folder t "create"))
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
@@ -3956,8 +3974,10 @@ documentation for `vm-spool-files'."
       ;;-----------------------------
       (set-buffer (process-buffer process))
       (setq mailbox (nth 3 (vm-imap-parse-spec-to-list folder)))
+      (setq folder-display (or (vm-imap-folder-for-spec folder)
+			       (vm-safe-imapdrop-string folder)))
       (vm-imap-create-mailbox process mailbox t)
-      (message "Folder %s created" (vm-safe-imapdrop-string folder))
+      (message "Folder %s created" folder-display)
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
@@ -3986,7 +4006,7 @@ documentation for `vm-spool-files'."
 	   (last-command last-command))
        (list (vm-read-imap-folder-name "Delete IMAP folder: " nil nil)))))
   (let ((vm-imap-ok-to-ask t)
-	process mailbox)
+	process mailbox folder-display)
     (setq process (vm-imap-make-session folder t "delete folder"))
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
@@ -3997,8 +4017,10 @@ documentation for `vm-spool-files'."
       ;;-----------------------------
       (set-buffer (process-buffer process))
       (setq mailbox (nth 3 (vm-imap-parse-spec-to-list folder)))
+      (setq folder-display (or (vm-imap-folder-for-spec folder)
+			       (vm-safe-imapdrop-string folder)))
       (vm-imap-delete-mailbox process mailbox)
-      (message "Folder %s deleted" (vm-safe-imapdrop-string folder))
+      (message "Folder %s deleted" folder-display)
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
@@ -4045,8 +4067,11 @@ documentation for `vm-spool-files'."
       (setq mailbox-source (nth 3 (vm-imap-parse-spec-to-list source)))
       (setq mailbox-dest (nth 3 (vm-imap-parse-spec-to-list dest)))
       (vm-imap-rename-mailbox process mailbox-source mailbox-dest)
-      (message "Folder %s renamed to %s" (vm-safe-imapdrop-string source)
-	       (vm-safe-imapdrop-string dest))
+      (message "Folder %s renamed to %s" 
+	       (or (vm-imap-folder-for-spec source)
+		   (vm-safe-imapdrop-string source))
+	       (or (vm-imap-folder-for-spec dest)
+		   (vm-safe-imapdrop-string dest)))
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------

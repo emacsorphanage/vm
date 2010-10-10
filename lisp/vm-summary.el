@@ -57,9 +57,9 @@
 (defsubst vm-summary-padded-thread-count (m)
   "Returns a formatted thread count of the message M, usable in
 summary display."
-  (let ((count (vm-th-thread-count m)))
+  (let ((count (vm-thread-count m)))
     (if (> count 1)
-	(format "+%-2s" (1- (vm-th-thread-count m)))
+	(format "+%-2s" (1- (vm-thread-count m)))
       "   ")))
 
 (defsubst vm-summary-message-number-thread-descendant (m)
@@ -108,6 +108,9 @@ summary line then nil is returned."
       (goto-char (vm-su-start-of m))
       (delete-char 1)
       (insert "-"))))
+
+(defsubst vm-visible-message (m)
+  (apply 'vm-vs-or m vm-summary-visible))
 
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"
@@ -259,13 +262,13 @@ the messages in the current folder."
 		    (when (and vm-summary-enable-thread-folding
 			       vm-summary-show-threads)
 		      (if (= (vm-thread-indentation-of m) 0)
-			  (when (> (vm-th-thread-count m) 1)
+			  (when (> (vm-thread-count m) 1)
 			    (if vm-summary-threads-collapsed
 				(vm-summary-mark-root-collapsed m)
 			      (vm-summary-mark-root-expanded m)))
-			(setq root (vm-th-thread-root m))
+			(setq root (vm-thread-root m))
 			(when (and root (vm-summary-collapsed-root-p root))
-			  (unless (vm-new-flag m)
+			  (unless (vm-visible-message m)
 			    (put-text-property s e 'invisible t))
 			  ;; why mess with the root here?  USR, 2010-07-20
 			  ;; (vm-summary-mark-root-collapsed root)
@@ -315,15 +318,15 @@ is the root of the thread you want expanded."
     (set-buffer vm-summary-buffer))
   (let ((buffer-read-only nil))
     (unless root
-      (setq root (vm-th-thread-root (vm-summary-message-at-point))))
-    (when (> (vm-th-thread-count root) 1)
+      (setq root (vm-thread-root (vm-summary-message-at-point))))
+    (when (> (vm-thread-count root) 1)
       (vm-summary-mark-root-expanded root)
       (vm-mark-for-summary-update root)
       (mapc
        (lambda (m) 
 	 (put-text-property 
 	  (vm-su-start-of m) (vm-su-end-of m) 'invisible nil))
-       (vm-th-thread-subtree (vm-th-thread-symbol root)))
+       (vm-thread-subtree (vm-thread-symbol root)))
       (when (interactive-p)
 	(vm-update-summary-and-mode-line)))))
 
@@ -350,16 +353,16 @@ ROOT, which is the root of the thread you want collapsed."
 	(msg nil))
     (unless root
       (setq msg (vm-summary-message-at-point))
-      (setq root (vm-th-thread-root msg)))
-    (when (> (vm-th-thread-count root) 1)
+      (setq root (vm-thread-root msg)))
+    (when (> (vm-thread-count root) 1)
       (vm-summary-mark-root-collapsed root)
       (vm-mark-for-summary-update root)
       (mapc
        (lambda (m) 
-	 (unless (or (eq m root) (vm-new-flag m))
+	 (unless (or (eq m root) (vm-visible-message m))
 	   (put-text-property 
 	    (vm-su-start-of m) (vm-su-end-of m) 'invisible t)))
-       (vm-th-thread-subtree (vm-th-thread-symbol root)))
+       (vm-thread-subtree (vm-thread-symbol root)))
       ;; move to the parent thread only when not
       ;; instructed not to, AND when the currently
       ;; selected message will become invisible
@@ -382,8 +385,8 @@ ROOT, which is the root of the thread you want collapsed."
     (with-current-buffer vm-summary-buffer
       (save-excursion
 	(mapc (lambda (m)
-		(when (and (eq m (vm-th-thread-root m))
-			   (> (vm-th-thread-count m) 1))
+		(when (and (eq m (vm-thread-root m))
+			   (> (vm-thread-count m) 1))
 		  (vm-expand-thread m)))
 	      ml))))
   (setq vm-summary-threads-collapsed nil)
@@ -403,11 +406,11 @@ the threads are shown in the Summary window."
 	msg root)
     (with-current-buffer vm-summary-buffer
       (setq msg (vm-summary-message-at-point))
-      (setq root (vm-th-thread-root msg))
+      (setq root (vm-thread-root msg))
       (save-excursion
 	(mapc (lambda (m)
-		(when (and (eq m (vm-th-thread-root m))
-			   (> (vm-th-thread-count m) 1))
+		(when (and (eq m (vm-thread-root m))
+			   (> (vm-thread-count m) 1))
 		  (vm-collapse-thread t m)))
 	      ml))
       (when (interactive-p)
@@ -429,7 +432,7 @@ of action."
     (set-buffer vm-summary-buffer)
     (let ((buffer-read-only nil)
 	  root next)
-      (setq root (vm-th-thread-root (vm-summary-message-at-point)))
+      (setq root (vm-thread-root (vm-summary-message-at-point)))
       (if (vm-summary-expanded-root-p root)
 	  (call-interactively 'vm-collapse-thread)
 	(call-interactively 'vm-expand-thread))
@@ -484,8 +487,8 @@ buffer by a regenerated summary line."
 				    (if (looking-at "+") "+"
 				      nil)))
 		  (unless (and vm-summary-show-threads
-			       (eq m (vm-th-thread-root m))
-			       (> (vm-th-thread-count m) 1))
+			       (eq m (vm-thread-root m))
+			       (> (vm-thread-count m) 1))
 			(setq indicator nil))
 		  ;; We do a little dance to update the text in
 		  ;; order to make the markers in the text do
@@ -564,8 +567,8 @@ buffer by a regenerated summary line."
 			(let ((msg (vm-summary-message-at-point)))
 			  (if (and vm-summary-show-threads
 				   vm-summary-enable-thread-folding
-				   (eq msg (vm-th-thread-root msg))
-				   (> (vm-th-thread-count msg) 1))
+				   (eq msg (vm-thread-root msg))
+				   (> (vm-thread-count msg) 1))
 			      (if (looking-at "+") 
 				  (progn (insert "+ ") 
 					 (delete-char (length vm-summary-=>)))
@@ -613,7 +616,7 @@ buffer by a regenerated summary line."
 				      (+ (vm-su-start-of m) 3) 'invisible))
 				(progn (insert vm-summary-=>)
 				       (vm-expand-thread 
-					(vm-th-thread-root m)))
+					(vm-thread-root m)))
 			      (insert vm-summary-=>)))
 			  (delete-char (length vm-summary-=>))
 
@@ -764,7 +767,7 @@ tokenized summary TOKENS."
 	       (if (and vm-summary-enable-thread-folding
 			vm-summary-show-threads
 			vm-summary-show-thread-count)
-		   (if (= (vm-th-thread-indentation message) 0)
+		   (if (= (vm-thread-indentation message) 0)
 		       (insert
 			(concat (vm-padded-number-of message) 
 				(vm-summary-padded-thread-count message)))
@@ -780,7 +783,7 @@ tokenized summary TOKENS."
 		    ?\ 
 		    (* vm-summary-thread-indent-level
 		       (min vm-summary-maximum-thread-indentation
-			    (vm-th-thread-indentation message)))))))
+			    (vm-thread-indentation message)))))))
 	(setq tokens (cdr tokens))))))
 
 (defun vm-reencode-mime-encoded-words-in-tokenized-summary (summary)
@@ -1396,14 +1399,17 @@ was sent.                                                  USR, 2010-05-13"
       (vm-set-weekday-of m ""))))
 
 (defun vm-run-user-summary-function (function message)
-  (let ((message (vm-real-message-of message)))
+  ;; (condition-case nil
+  (let ((m (vm-real-message-of message)))
     (save-excursion
-      (set-buffer (vm-buffer-of message))
+      (set-buffer (vm-buffer-of m))
       (save-restriction
 	(widen)
 	(save-excursion
-	  (narrow-to-region (vm-headers-of message) (vm-text-end-of message))
-	  (funcall function message))))))
+	  (narrow-to-region (vm-headers-of m) (vm-text-end-of m))
+	  (funcall function m)))))
+  ;; (error " "))
+  )
 
 (defun vm-su-full-name (m)
   "Returns the author name of M as a string, either from
@@ -1698,7 +1704,7 @@ Call this function if you made changes to `vm-summary-format'."
 
 (defun vm-su-thread-indent (m)
   (if (and vm-summary-show-threads (natnump vm-summary-thread-indent-level))
-      (make-string (* (vm-th-thread-indentation m)
+      (make-string (* (vm-thread-indentation m)
 		      vm-summary-thread-indent-level)
 		   ?\ )
     "" ))

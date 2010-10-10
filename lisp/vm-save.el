@@ -147,7 +147,7 @@ The saved messages are flagged as `filed'."
 			      auto-folder)))
 		 (let ((vm-delete-after-saving vm-delete-after-archiving)
 		       (last-command 'vm-auto-archive-messages))
-		   (vm-save-message auto-folder)
+		   (vm-save-message auto-folder 1 'quiet)
 		   (vm-increment archived)
 		   (message "%d archived, still working..." archived)))
 	    (setq done (eq vm-message-pointer stop-point)
@@ -176,7 +176,7 @@ The saved messages are flagged as `filed'."
 ;; New shell defun to handle both IMAP and local saving.
 ;;---------------------------------------------------------------------------
 ;;;###autoload
-(defun vm-save-message (folder &optional count)
+(defun vm-save-message (folder &optional count quiet)
   "Save the current message.  This may be done either by saving it
 to an IMAP folder or by saving it to a local filesystem folder.
 Which is done depends on the type of current vm folder
@@ -220,15 +220,15 @@ and the variable `vm-imap-save-to-server' (which see)."
 		 (vm-read-file-name "Save in folder: " dir nil)))))
       (prefix-numeric-value current-prefix-arg))))
   (cond ((and vm-imap-save-to-server (vm-imap-folder-p))
-	 (vm-save-message-to-imap-folder folder count))
+	 (vm-save-message-to-imap-folder folder count quiet))
 	((and (stringp vm-recognize-imap-maildrops)
 	      (string-match vm-recognize-imap-maildrops folder))
-	 (vm-save-message-to-imap-folder folder count))
+	 (vm-save-message-to-imap-folder folder count quiet))
 	(t
-	 (vm-save-message-to-local-folder folder count))))
+	 (vm-save-message-to-local-folder folder count quiet))))
    
 ;;;###autoload
-(defun vm-save-message-to-local-folder (folder &optional count)
+(defun vm-save-message-to-local-folder (folder &optional count quiet)
   "Save the current message to a mail folder.
 If the folder already exists, the message will be appended to it.
 
@@ -258,9 +258,9 @@ The saved messages are flagged as `filed'."
 		      (file-directory-p default)))
 	       (vm-read-file-name "Save in folder: " dir nil nil default))
 	      (default
-	       (vm-read-file-name
-		(format "Save in folder: (default %s) " default)
-		dir default))
+		(vm-read-file-name
+		 (format "Save in folder: (default %s) " default)
+		 dir default))
 	      (t
 	       (vm-read-file-name "Save in folder: " dir nil)))))
     (prefix-numeric-value current-prefix-arg)))
@@ -307,12 +307,12 @@ The saved messages are flagged as `filed'."
 	    ((and mlist vm-visit-when-saving)
 	     (setq folder-buffer (vm-get-file-buffer folder))))
       (when (and mlist vm-check-folder-types)
-	    (setq target-type (or (vm-get-folder-type folder)
-				  vm-default-folder-type
-				  (and mlist
-				       (vm-message-type-of (car mlist)))))
-	    (if (eq target-type 'unknown)
-		(error "Folder %s's type is unrecognized" folder)))
+	(setq target-type (or (vm-get-folder-type folder)
+			      vm-default-folder-type
+			      (and mlist
+				   (vm-message-type-of (car mlist)))))
+	(if (eq target-type 'unknown)
+	    (error "Folder %s's type is unrecognized" folder)))
       (unwind-protect
 	  (save-excursion
 	    (when oldmodebits 
@@ -320,13 +320,13 @@ The saved messages are flagged as `filed'."
 	    ;; if target folder is empty or nonexistent we need to
 	    ;; write out the folder header first.
 	    (when mlist
-		(let ((attrs (file-attributes folder)))
-		  (if (or (null attrs) (= 0 (nth 7 attrs)))
-		      (if (null folder-buffer)
-			  (vm-write-string folder
-					   (vm-folder-header target-type))
-			(vm-write-string folder-buffer
-					 (vm-folder-header target-type))))))
+	      (let ((attrs (file-attributes folder)))
+		(if (or (null attrs) (= 0 (nth 7 attrs)))
+		    (if (null folder-buffer)
+			(vm-write-string folder
+					 (vm-folder-header target-type))
+		      (vm-write-string folder-buffer
+				       (vm-folder-header target-type))))))
 	    (while mlist
 	      (setq m (vm-real-message-of (car mlist)))
 	      (set-buffer (vm-buffer-of m))
@@ -436,12 +436,14 @@ The saved messages are flagged as `filed'."
 					   vm-buffers-needing-display-update)
 				   (vm-preview-current-message))
 			  (vm-update-summary-and-mode-line)))))
-		(message "%d message%s saved to buffer %s"
-			 count
-			 (if (/= 1 count) "s" "")
-			 (buffer-name folder-buffer)))
-	    (message "%d message%s saved to %s"
-		     count (if (/= 1 count) "s" "") folder))))
+		(unless quiet
+		  (message "%d message%s saved to buffer %s"
+			   count
+			   (if (/= 1 count) "s" "")
+			   (buffer-name folder-buffer))))
+	    (unless quiet
+	      (message "%d message%s saved to %s"
+		       count (if (/= 1 count) "s" "") folder)))))
     (if (or (null vm-last-save-folder)
 	    (not (equal unexpanded-folder auto-folder)))
 	(setq vm-last-save-folder unexpanded-folder))
@@ -450,7 +452,7 @@ The saved messages are flagged as `filed'."
     folder ))
 
 ;;;###autoload
-(defun vm-save-message-sans-headers (file &optional count)
+(defun vm-save-message-sans-headers (file &optional count quiet)
   "Save the current message to a file, without its header section.
 If the file already exists, the message body will be appended to it.
 Prefix arg COUNT means save the next COUNT message bodiess.  A
@@ -536,7 +538,7 @@ vm-save-message instead (normally bound to `s')."
 	     (vm-update-summary-and-mode-line)
 	     (setq mlist (cdr mlist)))))
       (and oldmodebits (set-default-file-modes oldmodebits)))
-    (if m
+    (when (and m (not quiet))
 	(if file-buffer
 	    (message "Message%s written to buffer %s" (if (/= 1 count) "s" "")
 		     (buffer-name file-buffer))
@@ -887,7 +889,7 @@ Output, if any, is displayed.  The message is not altered."
     (vm-switch-to-command-output-buffer command buffer nil)))
 
 ;;;###autoload
-(defun vm-save-message-to-imap-folder (target-folder &optional count)
+(defun vm-save-message-to-imap-folder (target-folder &optional count quiet)
   "Save the current message to an IMAP folder.
 Prefix arg COUNT means save this message and the next COUNT-1
 messages.  A negative COUNT means save this message and the

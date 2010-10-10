@@ -68,7 +68,7 @@ given."
 		 (get-text-property 
 		  (+ (vm-su-start-of (car vm-message-pointer)) 2)
 		  'invisible vm-summary-buffer))
-	    (vm-expand-thread (vm-th-thread-root (car vm-message-pointer))))
+	    (vm-expand-thread (vm-thread-root (car vm-message-pointer))))
 	))))
 
 ;;;###autoload
@@ -93,7 +93,7 @@ given."
   (vm-build-threads-if-unbuilt)
   (vm-display nil nil '(vm-goto-parent-message)
 	      '(vm-goto-parent-message))
-  (let ((list (vm-th-thread-list (car vm-message-pointer)))
+  (let ((list (vm-thread-list (car vm-message-pointer)))
 	message)
     (if (null (cdr list))
 	(message "Message has no parent.")
@@ -157,8 +157,8 @@ given."
 	 (and vm-skip-collapsed-sub-threads
 	      vm-summary-enable-thread-folding
 	      vm-summary-show-threads
-	      (> (vm-th-thread-indentation (car mp)) 0)
-	      (vm-summary-collapsed-root-p (vm-th-thread-root (car mp)))
+	      (> (vm-thread-indentation (car mp)) 0)
+	      (vm-summary-collapsed-root-p (vm-thread-root (car mp)))
 	      (get-text-property (vm-su-start-of (car mp)) 'invisible)))))
 
 ;;;###autoload
@@ -319,11 +319,11 @@ ignored."
 	     vm-summary-thread-folding-on-motion)    
     (with-current-buffer vm-summary-buffer
       (let ((msg (vm-summary-message-at-point))
-	    (root (vm-th-thread-root (vm-summary-message-at-point))))
+	    (root (vm-thread-root (vm-summary-message-at-point))))
 	;; if last message collapse (and do not move)
 	(if (= (string-to-number (vm-number-of msg))
 	       (+ (string-to-number (vm-number-of root)) 
-		  (- (vm-th-thread-count root) 1)))
+		  (- (vm-thread-count root) 1)))
 	    (vm-collapse-thread t)))))
   (let ((vm-skip-deleted-messages nil)
 	(vm-skip-read-messages nil)
@@ -348,7 +348,7 @@ ignored."
 	     vm-summary-thread-folding-on-motion)    
     (with-current-buffer vm-summary-buffer
       (let ((msg (vm-summary-message-at-point))
-	    (root (vm-th-thread-root (vm-summary-message-at-point))))
+	    (root (vm-thread-root (vm-summary-message-at-point))))
 	;; if root message collapse (moving up)
 	(if (eq msg root)
 	    (vm-collapse-thread t)))))
@@ -545,7 +545,9 @@ USR, 2010-03-08"
 		      (set-buffer vm-mail-buffer)
 		      (vm-record-and-change-message-pointer
 		       vm-message-pointer mp)
-		      (vm-preview-current-message)
+		      ;; preview disabled to avoid message
+		      ;; loading. USR, 2010-09-30
+		      ;; (vm-preview-current-message)
 		      ;; return non-nil so the caller will know that
 		      ;; a new message was selected.
 		      t )))))))
