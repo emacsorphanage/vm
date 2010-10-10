@@ -3337,7 +3337,7 @@ after visiting it again."
   "*Indicator shown for messages containing an attachments."
   :group 'vm-summary
   :type '(choice (string :tag "A string to display" "$")
-                 (symbol :tag "Display the number of attachments prefixed by" ?$)))
+		 (symbol :tag "Number of attachments prefixed by" ?$)))
 
 (defcustom vm-summary-attachment-mime-types nil
   "*List of MIME types which should be listed as attachment. 
@@ -3464,14 +3464,16 @@ respectively."
   :group 'vm-summary
   :type 'string)
 
-(defcustom vm-auto-center-summary 0
+(defcustom vm-auto-center-summary nil
   "*Value controls whether VM will keep the summary arrow vertically
 centered within the summary window. A value of t causes VM to always
 keep arrow centered.  A value of nil means VM will never bother centering
 the arrow.  A value that is not nil and not t causes VM to center the
 arrow only if the summary window is not the only existing window."
   :group 'vm-summary
-  :type '(choice (const nil) (const t) (const yes-if-not-only-window)))
+  :type '(choice (const :tag "No" nil) 
+		 (const :tag "Always" t) 
+		 (const :tag "Yes, if not only window" yes-if-not-only-window)))
 
 (defvar vm-debug nil
   "Flag used by developers to control localized debugging features.")
@@ -3510,7 +3512,8 @@ ignored.
 A nil value for this variable means all characters in the message
 subject are significant."
   :group 'vm-summary
-  :type '(choice (const nil) integer))
+  :type '(choice (const :tag "All Characters" nil) 
+		 (integer :tag "Number of characters")))
 
 (defcustom vm-folders-summary-database "~/.vm.folders.db"
   "*Name of Berkeley DB file used to store summary information about folders.
@@ -4047,7 +4050,9 @@ are N or more messages.
 A negative numeric value -N means only generate a summary if
 there are N or less messages."
   :group 'vm-summary
-  :type '(choice (const t) (const nil) integer))
+  :type '(choice (const :tag "Always" t) 
+		 (const :tag "Never" nil) 
+		 (integer :tag "Number of messages") ))
 
 (defcustom vm-follow-summary-cursor t
   "*Non-nil value causes VM to select the message under the cursor in the
@@ -4086,7 +4091,9 @@ A value that is not nil and not t causes deleted messages to be skipped only
 if there are other messages that are not flagged for deletion in the desired
 direction of motion."
   :group 'vm-summary
-  :type '(choice (const nil) (const t) (const skip-if-some-undeleted)))
+  :type '(choice (const :tag "No" nil) 
+		 (const :tag "Yes" t) 
+		 (const :tag "Skip if some undeleted" skip-if-some-undeleted)))
 
 (defcustom vm-skip-read-messages nil
   "*Non-nil value causes VM's `n' and `p' commands to skip over
@@ -4095,7 +4102,9 @@ A value of t causes read messages to always be skipped.  A value that is
 not nil and not t causes read messages to be skipped only if there are
 unread messages in the desired direction of motion."
   :group 'vm-summary 
-  :type '(choice (const nil) (const t) (const skip-if-some-undeleted)))
+  :type '(choice (const :tag "No" nil) 
+		 (const :tag "Yes" t) 
+		 (const :tag "Skip if some unread" skip-if-some-unread)))
 
 (defcustom vm-move-after-deleting nil
   "*Non-nil value causes VM's `d' command to automatically invoke
@@ -4105,7 +4114,9 @@ honor the value of `vm-circular-folders'.  A value that is not t
 and not nil means that motion should be done as if
 `vm-circular-folders' is set to nil."
   :group 'vm-summary
-  :type '(choice (const nil) (const t) (const skip-if-some-undeleted)))
+  :type '(choice (const :tag "No" nil) 
+		 (const :tag "Yes" t) 
+		 (const :tag "Skip if some undeleted" skip-if-some-undeleted)))
 
 (defcustom vm-move-after-undeleting nil
   "*Non-nil value causes VM's `u' command to automatically invoke
@@ -4115,7 +4126,9 @@ honor the value of `vm-circular-folders'.  A value that is not t
 and not nil means that motion should be done as if
 `vm-circular-folders' is set to nil."
   :group 'vm-summary
-  :type '(choice (const nil) (const t) (const skip-if-some-undeleted)))
+  :type '(choice (const :tag "No" nil) 
+		 (const :tag "Yes" t) 
+		 (const :tag "Skip if some undeleted" skip-if-some-undeleted)))
 
 (defcustom vm-move-after-killing nil
   "*Non-nil value causes VM's `k' command to automatically invoke
@@ -4125,7 +4138,9 @@ should honor the value of `vm-circular-folders'.  A value that is
 not t and not nil means that motion should be done as if
 `vm-circular-folders' is set to nil."
   :group 'vm-summary
-  :type '(choice (const nil) (const t) (const skip-if-some-undeleted)))
+  :type '(choice (const :tag "No" nil) 
+		 (const :tag "Yes" t) 
+		 (const :tag "Skip if some undeleted" skip-if-some-undeleted)))
 
 (defcustom vm-delete-after-saving nil
   "*Non-nil value causes VM automatically to mark messages for deletion
@@ -4166,7 +4181,9 @@ A value that is not nil and not t causes only VM's movement commands to
 consider folders circular.  Saves, deletes and undelete commands will
 behave the same as if the value is nil."
   :group 'vm-summary
-  :type '(choice (const nil) (const t) (const for-movement-only)))
+  :type '(choice (const :tag "No" nil) 
+		 (const :tag "Yes" t) 
+		 (const :tag "For movement commands only" for-movement-only)))
 
 (defcustom vm-search-using-regexps nil
   "*Non-nil value causes VM's search command to interpret user input as a
