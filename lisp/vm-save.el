@@ -270,7 +270,7 @@ The saved messages are flagged as `filed'."
 	  auto-folder (vm-auto-select-folder vm-message-pointer
 					     vm-auto-folder-alist))
     (vm-display nil nil '(vm-save-message) '(vm-save-message))
-    (or count (setq count 1))
+    (unless count (setq count 1))
     ;; (vm-load-message count)
     (vm-retrieve-marked-or-prefixed-messages count)
     ;; Expand the filename, forcing relative paths to resolve
@@ -296,7 +296,7 @@ The saved messages are flagged as `filed'."
 	     (vm-new-folder-line-ending-coding-system)))
 	  (oldmodebits (and (fboundp 'default-file-modes)
 			    (default-file-modes)))
-	  (m nil) (count 0) folder-buffer target-type)
+	  (m nil) (save-count 0) folder-buffer target-type)
       (cond ((and mlist (eq vm-visit-when-saving t))
 	     (setq folder-buffer (or (vm-get-file-buffer folder)
 				     ;; avoid letter bombs
@@ -415,7 +415,7 @@ The saved messages are flagged as `filed'."
 			     (vm-clear-modification-flag-undos)))))))
 	       (if (null (vm-filed-flag m))
 		   (vm-set-filed-flag m t))
-	       (vm-increment count)
+	       (vm-increment save-count)
 	       (vm-modify-folder-totals folder 'saved 1 m)
 	       (vm-update-summary-and-mode-line)
 	       (setq mlist (cdr mlist)))))
@@ -438,12 +438,12 @@ The saved messages are flagged as `filed'."
 			  (vm-update-summary-and-mode-line)))))
 		(unless quiet
 		  (message "%d message%s saved to buffer %s"
-			   count
-			   (if (/= 1 count) "s" "")
+			   save-count
+			   (if (/= 1 save-count) "s" "")
 			   (buffer-name folder-buffer))))
 	    (unless quiet
 	      (message "%d message%s saved to %s"
-		       count (if (/= 1 count) "s" "") folder)))))
+		       save-count (if (/= 1 save-count) "s" "") folder)))))
     (if (or (null vm-last-save-folder)
 	    (not (equal unexpanded-folder auto-folder)))
 	(setq vm-last-save-folder unexpanded-folder))
@@ -915,11 +915,11 @@ The saved messages are flagged as `filed'."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-display nil nil '(vm-save-message-to-imap-folder)
 	      '(vm-save-message-to-imap-folder))
-  (or count (setq count 1))
+  (unless count (setq count 1))
   (let (source-spec-list
 	(target-spec-list (vm-imap-parse-spec-to-list target-folder))
 	(mlist (vm-select-marked-or-prefixed-messages count))
-	(count 0)
+	(save-count 0)
 	server-to-server-p mailbox m
 	process
 	)
@@ -969,18 +969,20 @@ The saved messages are flagged as `filed'."
 	    ;; confused if the save doesn't go through fully.
 	    (when (and vm-delete-after-saving (not (vm-deleted-flag m)))
 	      (vm-set-deleted-flag m t))
-	    (vm-increment count)
-	    (message "Saving messages... %s" count)
+	    (vm-increment save-count)
+	    (message "Saving messages... %s" save-count)
 	    (vm-modify-folder-totals target-folder 'saved 1 m)
 	    (setq mlist (cdr mlist))))
-      (when process (vm-imap-end-session process)))
+      (when process (vm-imap-end-session process))
+      (message "%d message%s saved to %s"
+	       save-count (if (/= 1 save-count) "s" "")
+	       (vm-safe-imapdrop-string target-folder)))
     (vm-update-summary-and-mode-line)
     (setq vm-last-save-imap-folder target-folder)
+    ;; We call delete-message again even though the deleted-flags have
+    ;; already been set, perhaps to take care of other business?
     (if (and vm-delete-after-saving (not vm-folder-read-only))
 	(vm-delete-message count))
-    (message "%d message%s saved to %s"
-	     count (if (/= 1 count) "s" "")
-	     (vm-safe-imapdrop-string target-folder))
     target-folder ))
 
 ;;; vm-save.el ends here
