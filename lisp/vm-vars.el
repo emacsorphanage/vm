@@ -3986,7 +3986,7 @@ the program as its first argument after the program switches
 specified by `vm-url-browser-switches', if any.
 
 If the value of `vm-url-browser' is a symbol, it should specify a
-Lisp function to call.  The URL will be passed to the program as
+Lisp function to call.  The URL will be passed to the function as
 its first and only argument.  VM defines a number of browser
 functions of the form `vm-mouse-send-url-to-xxx', where xxx is the
 name of a browser.  The `xxx' can be netscape, mmosaic, mosaic, opera,
@@ -4000,9 +4000,9 @@ That library has a variety of browsers that can be invoked.
 
 A nil value means VM should not enable URL passing to browsers."
   :group 'vm-url
-  :type '(choice (const nil)
-		 function
-		 string))
+  :type '(choice (const :tag "Disable URL parsing" nil)
+		 (function :tag "Browser function")
+		 (string :tag "External browser")))
 
 (defcustom vm-url-browser-switches nil
   "*List of command line flags passed to the command named by
