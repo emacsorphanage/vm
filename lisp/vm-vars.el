@@ -1287,9 +1287,9 @@ that type are assumed to be included.
 Note that all multipart types are always handled internally.
 There is no need to list them here."
   :group 'vm-mime
-  :type '(choice (const t) 
-                 (const nil) 
-                 (repeat string)))
+  :type '(choice (const :tag "Display all interanlly when possible" t) 
+                 (const :tag "Never use Emacs' internal display capabilities" nil) 
+                 (repeat (string :tag "MIME Type"))))
 
 (defcustom vm-mime-internal-content-type-exceptions nil
   "*List of MIME content types that should not be displayed internally.
@@ -1531,7 +1531,8 @@ and when you read an email."
 (defcustom vm-mime-text/html-blocker-exceptions nil
   "*Regexp matching URL which should not be blocked."
   :group 'vm-mime
-  :type 'regexp)
+  :type '(choice (const :tag "None" nil)
+		 regexp))
 
 (defcustom vm-mime-default-face-charsets
   (if vm-fsfemacs-mule-p
@@ -1823,7 +1824,8 @@ string is longer than this value the right end of the string is
 truncated.  If the value is negative, the string is truncated on
 the left instead of the right."
   :group 'vm-mime
-  :type '(repeat (cons string string)))
+  :type '(repeat (cons (string :tag "MIME Type")
+		       (string :tag "Format"))))
 
 (defcustom vm-mime-parts-display-separator "\n"
   "*String to insert between mime parts when displayed one after
@@ -1946,7 +1948,8 @@ The value of this variable is also used to guess the MIME type of
 application/octet-stream objects for display purposes if the
 value of `vm-infer-mime-types' is non-nil."
   :group 'vm-mime
-  :type '(repeat (cons regexp string)))
+  :type '(repeat (cons regexp 
+		       (string :tag "MIME Type"))))
 
 (defcustom vm-mime-attachment-auto-suffix-alist
   '(
@@ -1987,7 +1990,8 @@ types to extensions that your external viewers will recognize.  VM
 will search the list for a matching type.  The suffix associated
 with the first type that matches will be used."
   :group 'vm-mime
-  :type '(repeat (cons string string)))
+  :type '(repeat (cons (string :tag "MIME Type") 
+		       (string :tag "File Suffix"))))
 
 (defcustom vm-mime-encode-headers-regexp
   "Subject\\|\\(\\(Resent-\\)?\\(From\\|To\\|CC\\|BCC\\)\\)\\|Organization"
@@ -2005,8 +2009,8 @@ with the first type that matches will be used."
 (defcustom vm-mime-encode-headers-type 'Q
   "*The encoding type to use for encoding headers."
   :group 'vm-mime
-  :type '(choice (const  Q)
-                 (const  B)
+  :type '(choice (const  :tag "Quoted-printable" Q)
+                 (const  :tag "Binary" B)
                  (regexp :tag "BASE64 on match of " 
                          "[^- !#-'*+/-9=?A-Z^-~]")))
 
@@ -4630,7 +4634,8 @@ will be in the presentation buffer at that time.  The normal work
 that `vm-decode-mime-message' would do is not done, because this
 function is expected to subsume all of it."
   :group 'vm-mime
-  :type 'function)
+  :type '(choice (const :tag "None" nil) 
+		'function))
 
 (defcustom vm-mime-deleted-object-label "[Deleted %f (%d;%t)]\n"
   "*The label that will be inserted instead of the original mime object.
