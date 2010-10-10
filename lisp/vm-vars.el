@@ -960,7 +960,7 @@ Otherwise all headers are displayed except those matched by
 specifies the order in which headers are displayed.  Headers not
 matching `vm-visible-headers' are displayed last."
   :group 'vm-presentation
-  :type '(list regexp))
+  :type '(repeat regexp))
 
 (defcustom vm-invisible-header-regexp nil
   "*Non-nil value should be a regular expression that tells what headers
