@@ -107,7 +107,9 @@
 
 ;;;###autoload
 (defun vm-do-reply (to-all include-text count)
-  (let ((mlist (vm-select-marked-or-prefixed-messages count))
+  (let ((mlist (let ((vm-enable-thread-operations nil)) ; disable
+					; thread operation for replies
+		 (vm-select-marked-or-prefixed-messages count)))
         (dir default-directory)
         (message-pointer vm-message-pointer)
         (case-fold-search t)
