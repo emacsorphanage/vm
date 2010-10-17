@@ -36,7 +36,10 @@ the current message and the previous |COUNT| - 1 messages are
 deleted.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
-only marked messages are deleted, other messages are ignored."
+only marked messages are deleted, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are deleted."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
@@ -92,7 +95,10 @@ the current message and the previous |COUNT| - 1 messages are
 deleted.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
-only marked messages are undeleted, other messages are ignored."
+only marked messages are undeleted, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are undeleted."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
@@ -212,7 +218,10 @@ deletion; you will have to expunge the messages with
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
 only duplicate messages among the marked messages are deleted,
-unmarked messages are not hashed or considerd for deletion."
+unmarked messages are not hashed or considerd for deletion.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then only the messages in
+the thread are considered."
   (interactive)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
@@ -257,7 +266,10 @@ really get rid of them, as usual.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
 only duplicate messages among the marked messages are deleted,
-unmarked messages are not hashed or considerd for deletion."
+unmarked messages are not hashed or considerd for deletion.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then only the messages in
+the thread are considered."
   (interactive)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)

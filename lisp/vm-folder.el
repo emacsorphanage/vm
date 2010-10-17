@@ -4496,11 +4496,12 @@ files."
     new-messages ))
 
 (defun vm-select-marked-or-prefixed-messages (prefix)
-  "Return a list of all marked messages or the messages indicated by a
-prefix argument.  If the prefix argument is supplied *and we are
-not in a vm-next-command-uses-marks context*, then return a number
-of messages around vm-message-pointer equal to (abs prefix),
-either backward (prefix is negative) or forward (positive)."
+  "Return a list of all marked messages, messages in a collapsed
+thread, or the messages indicated by a prefix argument.  The
+prefix argument is used only if the other two selection methods
+are not at play.  If it is used, return a number of messages
+around vm-message-pointer equal to (abs prefix), either
+backward (if prefix is negative) or forward (if positive)."
   (if (eq last-command 'vm-next-command-uses-marks)
       (vm-marked-messages)
     (let ((direction (if (< prefix 0) 'backward 'forward))

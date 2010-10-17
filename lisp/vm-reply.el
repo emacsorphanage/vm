@@ -978,11 +978,11 @@ Subject: header manually."
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (if (and (eq last-command 'vm-next-command-uses-marks)
-	   (cdr (vm-select-marked-or-prefixed-messages 0)))
+  (if (cdr (vm-select-marked-or-prefixed-messages 1))
       (let ((vm-digest-send-type vm-forwarding-digest-type))
-	(setq this-command 'vm-next-command-uses-marks)
-	(command-execute 'vm-send-digest))
+	;; (setq this-command 'vm-next-command-uses-marks)
+	;; (command-execute 'vm-send-digest)
+	(vm-send-digest))
     ;; single message forwarding
     (let ((dir default-directory)
 	  (miming (and vm-send-using-mime
@@ -1215,13 +1215,19 @@ only marked messages will be put into the digest."
 	(miming (and vm-send-using-mime (equal vm-digest-send-type "mime")))
 	mp mail-buffer b
 	;; prefix arg doesn't have "normal" meaning here, so only call
-	;; vm-select-marked-or-prefixed-messages if we're using marks.
-	(mlist (if (eq last-command 'vm-next-command-uses-marks)
-		   (vm-select-marked-or-prefixed-messages 0)
-		 vm-message-list))
+	;; vm-select-marked-or-prefixed-messages for marks or threads.
+	(mlist (vm-select-marked-or-prefixed-messages 1))
 	ms start header-end boundary)
-    ;; (vm-load-message prefix)
-    (vm-retrieve-marked-or-prefixed-messages prefix)
+    ;; if messages were selected use them, otherwise the whole folder
+    (cond ((cdr mlist)
+	   (vm-retrieve-marked-or-prefixed-messages 1))
+	  ((not (y-or-n-p "Send the entire folder as a digest? "))
+	   (error "aborted"))
+	  ((vm-find vm-message-list
+		    (lambda (m) (vm-body-to-be-retrieved-of m)))
+	   (error "Headers-only messages present in the folder"))
+	  (t
+	   (setq mlist vm-message-list)))
     (save-restriction
       (widen)
       (vm-mail-internal

@@ -5422,7 +5422,10 @@ folder of the composition.
 
 If this command is invoked on marked message (via
 `vm-next-command-uses-marks') the marked messages in the selected
-folder will be attached as a MIME message digest.
+folder will be attached as a MIME message digest.    If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are attached.
 
 Optional second argument DESCRIPTION is a one-line description of
 the message being attached.  This is also read from the

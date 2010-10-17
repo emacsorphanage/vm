@@ -3238,7 +3238,10 @@ the current message and the previous |COUNT| - 1 messages are
 loaded.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
-only marked messages are loaded, other messages are ignored."
+only marked messages are loaded, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are loaded."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
@@ -3286,7 +3289,10 @@ the current message and the previous |COUNT| - 1 messages are
 retrieved.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
-only marked messages are retrieved, other messages are ignored."
+only marked messages are retrieved, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are retrieved."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (when (null count) (setq count 1))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
@@ -3394,8 +3400,11 @@ COUNT - 1 messages are unloaded.  A negative argument means
 the current message and the previous |COUNT| - 1 messages are
 unloaded.
 
-When invoked on marked messages (via `vm-next-command-uses-marks'),
-only marked messages are unloaded, other messages are ignored.
+When invoked on marked messages (via `vm-next-command-uses-marks'), only 
+marked messages are unloaded, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in
+the thread are unloaded.
 
 If the optional argument PHYSICAL is non-nil, then the message is
 physically discarded.  Otherwise, the discarding may be delayed until
