@@ -2947,7 +2947,7 @@ all marked messages are affected, other messages are ignored."
   (or count (setq count 1))
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (let ((mlist (vm-select-marked-or-prefixed-messages count)))
+  (let ((mlist (vm-select-operable-messages count "Unread")))
     (while mlist
       (if (and (not (vm-unread-flag (car mlist)))
 	       (not (vm-new-flag (car mlist))))
@@ -2973,7 +2973,7 @@ all marked messages are affected, other messages are ignored."
   (or count (setq count 1))
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (let ((mlist (vm-select-marked-or-prefixed-messages count)))
+  (let ((mlist (vm-select-operable-messages count "Frag as read")))
     (while mlist
       (when (or (vm-unread-flag (car mlist))
 		(vm-new-flag (car mlist)))
@@ -4495,7 +4495,7 @@ files."
         (vm-sort-messages vm-ml-sort-keys))
     new-messages ))
 
-(defun vm-select-marked-or-prefixed-messages (prefix)
+(defun vm-select-operable-messages (prefix op-description)
   "Return a list of all marked messages, messages in a collapsed
 thread, or the messages indicated by a prefix argument.  The
 prefix argument is used only if the other two selection methods
@@ -4509,14 +4509,19 @@ backward (if prefix is negative) or forward (if positive)."
 	  (vm-message-pointer vm-message-pointer)
 	  (current-message (car vm-message-pointer))
 	  mlist)
-      (if (and (= prefix 1)
+      (if (and ;; (= prefix 1) ; ignore the prefix argument
 	       (vm-summary-operation-p)
 	       vm-summary-enable-thread-folding
 	       vm-summary-show-threads
 	       vm-enable-thread-operations
 	       (vm-thread-root-p current-message)
 	       (with-current-buffer vm-summary-buffer
-		 (vm-summary-collapsed-root-p current-message)))
+		 (vm-summary-collapsed-root-p current-message))
+	       (or (not (= prefix 1))
+		   (not (eq vm-enable-thread-operations 'ask))
+		   (y-or-n-p 
+		    (format "%s all messages in thread? " op-description)))
+	       )
 	  (vm-thread-subtree current-message)
 	(unless (eq vm-circular-folders t)
 	  (vm-check-count prefix))

@@ -4346,8 +4346,8 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
     (vm-check-for-killed-folder)
     (vm-select-folder-buffer-and-validate 1 nil))
 
-  (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
-    (vm-retrieve-marked-or-prefixed-messages count)
+  (let ((mlist (or mlist (vm-select-operable-messages count "Action on"))))
+    (vm-retrieve-operable-messages count mlist)
     (save-excursion
       (while mlist
         (let (m parts layout filename type disposition o)
@@ -5459,12 +5459,12 @@ minibuffer if the command is run interactively."
 		   (find-file-noselect file)))
 		(setq folder (current-buffer))
 		(vm-mode)
-		(setq mlist (vm-select-marked-or-prefixed-messages 0)))))
+		(setq mlist (vm-select-operable-messages 1 "Attach")))))
 	   (t
 	    (setq folder vm-mail-buffer)
 	    (save-excursion
 	      (set-buffer folder)
-	      (setq mlist (vm-select-marked-or-prefixed-messages 0)))))
+	      (setq mlist (vm-select-operable-messages 1 "Attach")))))
      (if (null mlist)
 	 (save-excursion
 	   (set-buffer folder)
@@ -7439,9 +7439,9 @@ This is a destructive operation and cannot be undone!"
   (when (interactive-p)
     (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 0 (interactive-p))
-  (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
-    (vm-load-message count)
-    ;; (vm-retrieve-marked-or-prefixed-messages count)
+  (let ((mlist (or mlist 
+		   (vm-select-operable-messages count "Nuke html of"))))
+    (vm-retrieve-operable-messages count mlist)
     (save-excursion
       (while mlist
         (let ((count (vm-mime-nuke-alternative-text/html-internal (car mlist))))

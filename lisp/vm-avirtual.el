@@ -691,7 +691,7 @@ format:
 
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
 
-  (let ((mlist (vm-select-marked-or-prefixed-messages (or count 1)))
+  (let ((mlist (vm-select-operable-messages (or count 1) "Apply to"))
         (count 0))
 
     (while mlist
@@ -713,7 +713,7 @@ without recreating it."
   (vm-select-folder-buffer-and-validate 0 (interactive-p))
 
   (let ((new-messages (or message-list
-                          (vm-select-marked-or-prefixed-messages count)))
+                          (vm-select-operable-messages count "Update")))
         b-list)
     (setq new-messages (copy-sequence new-messages))
     (if (and new-messages vm-virtual-buffers)
@@ -761,7 +761,7 @@ virtual folder of all messages."
       (error "This is no virtual folder."))
 
   (let ((old-messages (or message-list
-                          (vm-select-marked-or-prefixed-messages count)))
+                          (vm-select-operable-messages count "Omit")))
         prev curr
         (mp vm-message-list))
 
@@ -1090,7 +1090,7 @@ Like `vm-save-message' but the default folder it guessed by
         ;; shouldn't affect its value.
         (let ((vm-message-pointer
                (if (eq last-command 'vm-next-command-uses-marks)
-                   (vm-select-marked-or-prefixed-messages 0)
+                   (vm-select-operable-messages 0 "Archive")
                  vm-message-list))
               (done nil)
               stop-point

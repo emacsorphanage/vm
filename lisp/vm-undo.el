@@ -216,7 +216,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
   (vm-display nil nil '(vm-set-message-attributes)
 	      '(vm-set-message-attributes))
   (let ((name-list (vm-parse string "[ \t]*\\([^ \t]+\\)"))
-	(m-list (vm-select-marked-or-prefixed-messages count))
+	(m-list (vm-select-operable-messages count "Set attributes of"))
 	n-list name m)
     (while m-list
       (setq m (car m-list)
@@ -392,7 +392,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
   (vm-display nil nil '(vm-add-message-labels vm-delete-message-labels)
 	      (list this-command))
   (setq string (downcase string))
-  (let ((m-list (vm-select-marked-or-prefixed-messages count))
+  (let ((m-list (vm-select-operable-messages count "Add labels to"))
 	(action-labels (vm-parse string
 "[\000-\040,\177-\377]*\\([^\000-\040,\177-\377]+\\)[\000-\040,\177-\377]*"))
 	(ignored-labels nil)

@@ -116,7 +116,7 @@ previous N-1 messages."
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (let ((mlist (vm-select-marked-or-prefixed-messages count)))
+  (let ((mlist (vm-select-operable-messages count "Unmark")))
     (while mlist
       (if (vm-mark-of (car mlist))
 	  (progn

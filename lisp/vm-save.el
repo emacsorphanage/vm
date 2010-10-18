@@ -119,7 +119,7 @@ The saved messages are flagged as `filed'."
 	;; shouldn't affect its value.
 	(let ((vm-message-pointer
 	       (if (eq last-command 'vm-next-command-uses-marks)
-		   (vm-select-marked-or-prefixed-messages 0)
+		   (vm-select-operable-messages 0 "Archive")
 		 vm-message-list))
 	      (done nil)
 	      stop-point
@@ -264,15 +264,15 @@ The saved messages are flagged as `filed'."
 	      (t
 	       (vm-read-file-name "Save in folder: " dir nil)))))
     (prefix-numeric-value current-prefix-arg)))
-  (let (auto-folder unexpanded-folder)
+  (let (auto-folder unexpanded-folder mlist)
     (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (setq unexpanded-folder folder
 	  auto-folder (vm-auto-select-folder vm-message-pointer
 					     vm-auto-folder-alist))
     (vm-display nil nil '(vm-save-message) '(vm-save-message))
     (unless count (setq count 1))
-    ;; (vm-load-message count)
-    (vm-retrieve-marked-or-prefixed-messages count)
+    (mlist (vm-select-operable-messages count "Save"))
+    (vm-retrieve-operable-messages count mlist)
     ;; Expand the filename, forcing relative paths to resolve
     ;; into the folder directory.
     (let ((default-directory
@@ -289,8 +289,7 @@ The saved messages are flagged as `filed'."
     ;; that the user wants to save to.
     (if (and (not vm-visit-when-saving) (vm-get-file-buffer folder))
 	(error "Folder %s is being visited, cannot save." folder))
-    (let ((mlist (vm-select-marked-or-prefixed-messages count))
-	  (coding-system-for-write
+    (let ((coding-system-for-write
 	   (if (file-exists-p folder)
 	       (vm-get-file-line-ending-coding-system folder)
 	     (vm-new-folder-line-ending-coding-system)))
@@ -483,67 +482,66 @@ vm-save-message instead (normally bound to `s')."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-display nil nil '(vm-save-message-sans-headers)
 	      '(vm-save-message-sans-headers))
-  ;; (vm-load-message count)
-  (vm-retrieve-marked-or-prefixed-messages count)
   (or count (setq count 1))
-  (setq file (expand-file-name file))
-  ;; Check and see if we are currently visiting the file
-  ;; that the user wants to save to.
-  (if (and (not vm-visit-when-saving) (vm-get-file-buffer file))
-      (error "File %s is being visited, cannot save." file))
-  (let ((mlist (vm-select-marked-or-prefixed-messages count))
-	(oldmodebits (and (fboundp 'default-file-modes)
-			  (default-file-modes)))
-	(coding-system-for-write
-	 (vm-get-file-line-ending-coding-system file))
-	(m nil) file-buffer)
-    (cond ((and mlist (eq vm-visit-when-saving t))
-	   (setq file-buffer (or (vm-get-file-buffer file)
-				 (find-file-noselect file))))
-	  ((and mlist vm-visit-when-saving)
-	   (setq file-buffer (vm-get-file-buffer file))))
-    (if (and (not (memq (vm-get-folder-type file) '(nil unknown)))
-	     (not (y-or-n-p "This file looks like a mail folder, append to it anyway? ")))
-	(error "Aborted"))
-    (unwind-protect
-	(save-excursion
-	  (and oldmodebits (set-default-file-modes
-			    vm-default-folder-permission-bits))
-	  (while mlist
-	    (setq m (vm-real-message-of (car mlist)))
-	    (set-buffer (vm-buffer-of m))
-	    ;; FIXME the following shouldn't be necessary any more
-	    (vm-assert (vm-body-retrieved-of m))
-	    (vm-save-restriction
-	     (widen)
-	     (if (null file-buffer)
-		 (write-region (vm-text-of m)
-			       (vm-text-end-of m)
-			       file t 'quiet)
-	       (let ((start (vm-text-of m))
-		     (end (vm-text-end-of m)))
-		 (save-excursion
-		   (set-buffer file-buffer)
+  (let ((mlist (vm-select-operable-messages count "Save")))
+    (vm-retrieve-operable-messages count mlist)
+    (setq file (expand-file-name file))
+    ;; Check and see if we are currently visiting the file
+    ;; that the user wants to save to.
+    (if (and (not vm-visit-when-saving) (vm-get-file-buffer file))
+	(error "File %s is being visited, cannot save." file))
+    (let ((oldmodebits (and (fboundp 'default-file-modes)
+			    (default-file-modes)))
+	  (coding-system-for-write
+	   (vm-get-file-line-ending-coding-system file))
+	  (m nil) file-buffer)
+      (cond ((and mlist (eq vm-visit-when-saving t))
+	     (setq file-buffer (or (vm-get-file-buffer file)
+				   (find-file-noselect file))))
+	    ((and mlist vm-visit-when-saving)
+	     (setq file-buffer (vm-get-file-buffer file))))
+      (if (and (not (memq (vm-get-folder-type file) '(nil unknown)))
+	       (not (y-or-n-p "This file looks like a mail folder, append to it anyway? ")))
+	  (error "Aborted"))
+      (unwind-protect
+	  (save-excursion
+	    (and oldmodebits (set-default-file-modes
+			      vm-default-folder-permission-bits))
+	    (while mlist
+	      (setq m (vm-real-message-of (car mlist)))
+	      (set-buffer (vm-buffer-of m))
+	      ;; FIXME the following shouldn't be necessary any more
+	      (vm-assert (vm-body-retrieved-of m))
+	      (vm-save-restriction
+	       (widen)
+	       (if (null file-buffer)
+		   (write-region (vm-text-of m)
+				 (vm-text-end-of m)
+				 file t 'quiet)
+		 (let ((start (vm-text-of m))
+		       (end (vm-text-end-of m)))
 		   (save-excursion
-		     (let (buffer-read-only)
-		       (vm-save-restriction
-			(widen)
-			(save-excursion
-			  (goto-char (point-max))
-			  (insert-buffer-substring
-			   (vm-buffer-of m)
-			   start end))))))))
-	     (if (null (vm-written-flag m))
-		 (vm-set-written-flag m t))
-	     (vm-update-summary-and-mode-line)
-	     (setq mlist (cdr mlist)))))
-      (and oldmodebits (set-default-file-modes oldmodebits)))
-    (when (and m (not quiet))
+		     (set-buffer file-buffer)
+		     (save-excursion
+		       (let (buffer-read-only)
+			 (vm-save-restriction
+			  (widen)
+			  (save-excursion
+			    (goto-char (point-max))
+			    (insert-buffer-substring
+			     (vm-buffer-of m)
+			     start end))))))))
+	       (if (null (vm-written-flag m))
+		   (vm-set-written-flag m t))
+	       (vm-update-summary-and-mode-line)
+	       (setq mlist (cdr mlist)))))
+	(and oldmodebits (set-default-file-modes oldmodebits)))
+      (when (and m (not quiet))
 	(if file-buffer
 	    (message "Message%s written to buffer %s" (if (/= 1 count) "s" "")
 		     (buffer-name file-buffer))
 	  (message "Message%s written to %s" (if (/= 1 count) "s" "") file)))
-    (setq vm-last-written-file file)))
+      (setq vm-last-written-file file))))
 
 (defun vm-switch-to-command-output-buffer (command buffer discard-output)
   "Eventually switch to the output buffer of the command."
@@ -596,12 +594,9 @@ Output, if any, is displayed.  The message is not altered."
 	m
 	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
 	;; prefix arg doesn't have "normal" meaning here, so only call
-	;; vm-select-marked-or-prefixed-messages if we're using marks.
-	(mlist (if (eq last-command 'vm-next-command-uses-marks)
-		   (vm-select-marked-or-prefixed-messages 0)
-		 (list (car vm-message-pointer)))))
-    ;; (vm-load-message)
-    (vm-retrieve-marked-or-prefixed-messages)
+	;; vm-select-operable-messages for marks and threads.
+	(mlist (vm-select-operable-messages 1 "Pipe")))
+    (vm-retrieve-operable-messages 1 mlist)
     (save-excursion
       (set-buffer buffer)
       (erase-buffer))
@@ -712,13 +707,10 @@ arguments after the command finished."
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
 	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
 	;; prefix arg doesn't have "normal" meaning here, so only call
-	;; vm-select-marked-or-prefixed-messages if we're using marks.
-	(mlist (if (eq last-command 'vm-next-command-uses-marks)
-		   (vm-select-marked-or-prefixed-messages 0)
-		 (list (car vm-message-pointer))))
+	;; vm-select-operable-messages for marks and threads.
+	(mlist (vm-select-operable-messages 1 "Pipe"))
 	m process)
-    ;; (vm-load-message)
-    (vm-retrieve-marked-or-prefixed-messages)
+    (vm-retrieve-operable-messages 1 mlist)
     (save-excursion
       (set-buffer buffer)
       (erase-buffer))
@@ -826,9 +818,8 @@ Output, if any, is displayed.  The message is not altered."
 			     " "))
 	 (m nil)
 	 (pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
-	 (mlist (vm-select-marked-or-prefixed-messages count)))
-    ;; (vm-load-message count)
-    (vm-retrieve-marked-or-prefixed-messages count)
+	 (mlist (vm-select-operable-messages count "Print")))
+    (vm-retrieve-operable-messages count mlist)
 
     (save-excursion
       (set-buffer buffer)
@@ -918,7 +909,7 @@ The saved messages are flagged as `filed'."
   (unless count (setq count 1))
   (let (source-spec-list
 	(target-spec-list (vm-imap-parse-spec-to-list target-folder))
-	(mlist (vm-select-marked-or-prefixed-messages count))
+	(mlist (vm-select-operable-messages count "Save"))
 	(save-count 0)
 	server-to-server-p mailbox m
 	process

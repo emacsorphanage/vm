@@ -3248,7 +3248,7 @@ thread are loaded."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (when (null count) (setq count 1))
-  (let ((mlist (vm-select-marked-or-prefixed-messages count))
+  (let ((mlist (vm-select-operable-messages count "Load"))
 	(errors 0)
 	(n 0)
 	fetch-method
@@ -3278,7 +3278,7 @@ thread are loaded."
     ))
 
 ;;;###autoload
-(defun vm-retrieve-marked-or-prefixed-messages (&optional count)
+(defun vm-retrieve-operable-messages (&optional count mlist)
   "Retrieve the message from from its permanent location for
 temporary use.  Currently this facility is only available for
 IMAP folders.
@@ -3296,7 +3296,6 @@ thread are retrieved."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (when (null count) (setq count 1))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist (vm-select-marked-or-prefixed-messages count))
 	(vm-fetched-message-limit nil)
 	(errors 0)
 	(n 0)
@@ -3304,6 +3303,8 @@ thread are retrieved."
 	m mm)
 ;;     (if (not used-marks) 
 ;; 	(setq mlist (list (car vm-message-pointer))))
+    (unless mlist
+      (setq mlist (vm-select-operable-messages count "Retrieve")))
     (save-excursion
       (while mlist
 	(setq m (car mlist))
@@ -3416,7 +3417,7 @@ the folder is saved."
   (vm-error-if-folder-read-only)
   (when (null count) 
     (setq count 1))
-  (let ((mlist (vm-select-marked-or-prefixed-messages count))
+  (let ((mlist (vm-select-operable-messages count "Unload"))
 	(buffer-undo-list t)
 	(errors 0)
 	m mm)

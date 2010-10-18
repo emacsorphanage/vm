@@ -485,7 +485,7 @@ Use `vm-rmail-toggle' to switch between normal and this mode."
   (vm-follow-summary-cursor)
   (save-excursion
     (vm-select-folder-buffer)
-    (let ((mlist (vm-select-marked-or-prefixed-messages count)))
+    (let ((mlist (vm-select-operable-messages count "Operate on")))
       (while mlist
         (funcall function (car mlist))
         (vm-mark-for-summary-update (car mlist) t)

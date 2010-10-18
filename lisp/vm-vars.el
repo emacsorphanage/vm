@@ -5147,9 +5147,16 @@ those used in `vm-virtual-folder-alist'."
 threads will apply to all the messages in the threads.
 
 \"Operations\" in this context include deleting, saving, setting
-attributes, adding/deleting labels etc."
+attributes, adding/deleting labels etc.
+
+If the variable is set to t then thread operations are always
+carried out.  If it is set to 'ask, then the user is asked for
+confirmation whether the operation should apply to all the
+messages in the thread.  This can be overridden by invoking the
+operation with a prefix argument using `C-u' and no questions will be
+asked."
   :group 'vm
-  :type 'boolean)
+  :type '(choice (const t) (const ask) (const nil)))
 
 (defvar vm-summary-threads-collapsed t
   "If non-nil, indicates that threads should be

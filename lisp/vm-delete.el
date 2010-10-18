@@ -46,7 +46,7 @@ thread are deleted."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist (vm-select-marked-or-prefixed-messages count))
+	(mlist (vm-select-operable-messages count "Delete"))
 	(del-count 0))
     (while mlist
       (if (not (vm-deleted-flag (car mlist)))
@@ -57,8 +57,8 @@ thread are deleted."
 	    ;; vm-update-summary-and-mode-line eventually.
 	    (when (and vm-summary-enable-thread-folding
 		       vm-summary-show-threads
-		       (not (and vm-enable-thread-operations
-				 (eq count 1)))
+		       ;; (not (and vm-enable-thread-operations
+		       ;;	 (eq count 1)))
 		       (> (vm-thread-count (car mlist)) 1))
 	      (with-current-buffer vm-summary-buffer
 		(vm-expand-thread (vm-thread-root (car mlist)))))))
@@ -105,7 +105,7 @@ thread are undeleted."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist (vm-select-marked-or-prefixed-messages count))
+	(mlist (vm-select-operable-messages count "Undelete"))
 	(undel-count 0))
     (while mlist
       (if (vm-deleted-flag (car mlist))
@@ -227,12 +227,12 @@ the thread are considered."
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(table (make-vector 103 0))
-	(mp vm-message-list)
+	(mp (vm-select-operable-messages 1 "Delete duplicates among"))
         (n 0)
         (case-fold-search t)
         mid)
-    (if used-marks
-	(setq mp (vm-select-marked-or-prefixed-messages 0)))	
+    (unless (cdr mp)
+      (setq mp vm-message-list))
     (while mp
       (cond ((vm-deleted-flag (car mp)))
             (t
@@ -274,12 +274,12 @@ the thread are considered."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist vm-message-list)
+	(mlist (vm-select-operable-messages 1 "Delete duplicates among"))
 	(table (make-vector 61 0))
 	hash m
 	(del-count 0))
-    (if used-marks
-	(setq mlist (vm-select-marked-or-prefixed-messages 0)))
+    (unless (cdr mlist)
+      (setq mlist vm-message-list))
     (save-excursion
       (save-restriction
 	(widen)

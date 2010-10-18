@@ -55,7 +55,7 @@ replace the original, use C-c C-] and the edit will be aborted."
 	  (edit-buf (vm-edit-buffer-of (car vm-message-pointer)))
 	  (folder-buffer (current-buffer)))
       (vm-load-message)
-      ;; (vm-retrieve-marked-or-prefixed-messages)
+      ;; (vm-retrieve-operable-messages 1 (car vm-message-pointer))
       (if (and edit-buf (buffer-name edit-buf))
 	  (set-buffer edit-buf)
 	(vm-save-restriction
@@ -139,7 +139,7 @@ data is discarded only from the marked messages in the current folder."
   (or count (setq count 1))
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (let ((mlist (vm-select-marked-or-prefixed-messages count)))
+  (let ((mlist (vm-select-operable-messages count "Discard data of")))
     (vm-discard-cached-data-internal mlist))
   (vm-display nil nil '(vm-discard-cached-data) '(vm-discard-cached-data))
   (vm-update-summary-and-mode-line))
