@@ -24,7 +24,7 @@
 (provide 'vm-delete)
 
 ;;;###autoload
-(defun vm-delete-message (count)
+(defun vm-delete-message (count &optional mlist)
   "Add the `deleted' attribute to the current message.
 
 The message will be physically deleted from the current folder the next
@@ -46,22 +46,22 @@ thread are deleted."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist (vm-select-operable-messages count "Delete"))
 	(del-count 0))
+    (unless mlist
+      (setq mlist (vm-select-operable-messages count "Delete")))
     (while mlist
-      (if (not (vm-deleted-flag (car mlist)))
-	  (progn
-	    (vm-set-deleted-flag (car mlist) t)
-	    (vm-increment del-count)
-	    ;; The following is a temporary fix.  To be absorted into
-	    ;; vm-update-summary-and-mode-line eventually.
-	    (when (and vm-summary-enable-thread-folding
-		       vm-summary-show-threads
-		       ;; (not (and vm-enable-thread-operations
-		       ;;	 (eq count 1)))
-		       (> (vm-thread-count (car mlist)) 1))
-	      (with-current-buffer vm-summary-buffer
-		(vm-expand-thread (vm-thread-root (car mlist)))))))
+      (unless (vm-deleted-flag (car mlist))
+	(vm-set-deleted-flag (car mlist) t)
+	(vm-increment del-count))
+      ;; The following is a temporary fix.  To be absorted into
+      ;; vm-update-summary-and-mode-line eventually.
+      (when (and vm-summary-enable-thread-folding
+		 vm-summary-show-threads
+		 ;; (not (and vm-enable-thread-operations
+		 ;;	 (eq count 1)))
+		 (> (vm-thread-count (car mlist)) 1))
+	(with-current-buffer vm-summary-buffer
+	  (vm-expand-thread (vm-thread-root (car mlist)))))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-delete-message vm-delete-message-backward)
 		(list this-command))

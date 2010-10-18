@@ -264,7 +264,7 @@ The saved messages are flagged as `filed'."
 	      (t
 	       (vm-read-file-name "Save in folder: " dir nil)))))
     (prefix-numeric-value current-prefix-arg)))
-  (let (auto-folder unexpanded-folder mlist)
+  (let (auto-folder unexpanded-folder mlist ml)
     (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (setq unexpanded-folder folder
 	  auto-folder (vm-auto-select-folder vm-message-pointer
@@ -326,8 +326,9 @@ The saved messages are flagged as `filed'."
 					 (vm-folder-header target-type))
 		      (vm-write-string folder-buffer
 				       (vm-folder-header target-type))))))
-	    (while mlist
-	      (setq m (vm-real-message-of (car mlist)))
+	    (setq ml mlist)
+	    (while ml
+	      (setq m (vm-real-message-of (car ml)))
 	      (set-buffer (vm-buffer-of m))
 	      ;; FIXME the following isn't really necessary
 	      (vm-assert (vm-body-retrieved-of m))
@@ -345,11 +346,11 @@ The saved messages are flagged as `filed'."
 				     (vm-end-of m)
 				     folder t 'quiet)
 		     (if (null vm-convert-folder-types)
-			 (if (not (vm-virtual-message-p (car mlist)))
+			 (if (not (vm-virtual-message-p (car ml)))
 			     (error "Folder type mismatch: %s vs %s"
 				    (vm-message-type-of m) target-type)
 			   (error "Message %s type mismatches folder %s: %s vs %s"
-				  (vm-number-of (car mlist))
+				  (vm-number-of (car ml))
 				  folder
 				  (vm-message-type-of m)
 				  target-type))
@@ -384,11 +385,11 @@ The saved messages are flagged as `filed'."
 			     (vm-buffer-of m)
 			     (vm-start-of m) (vm-end-of m))
 			  (if (null vm-convert-folder-types)
-			      (if (not (vm-virtual-message-p (car mlist)))
+			      (if (not (vm-virtual-message-p (car ml)))
 				  (error "Folder type mismatch: %s vs %s"
 					 (vm-message-type-of m) target-type)
 				(error "Message %s type mismatches folder %s: %s vs %s"
-				       (vm-number-of (car mlist))
+				       (vm-number-of (car ml))
 				       folder
 				       (vm-message-type-of m)
 				       target-type))
@@ -417,7 +418,7 @@ The saved messages are flagged as `filed'."
 	       (vm-increment save-count)
 	       (vm-modify-folder-totals folder 'saved 1 m)
 	       (vm-update-summary-and-mode-line)
-	       (setq mlist (cdr mlist)))))
+	       (setq ml (cdr ml)))))
 	(and oldmodebits (set-default-file-modes oldmodebits)))
       (if m
 	  (if folder-buffer
@@ -447,7 +448,7 @@ The saved messages are flagged as `filed'."
 	    (not (equal unexpanded-folder auto-folder)))
 	(setq vm-last-save-folder unexpanded-folder))
     (if (and vm-delete-after-saving (not vm-folder-read-only))
-	(vm-delete-message count))
+	(vm-delete-message count mlist))
     folder ))
 
 ;;;###autoload
@@ -916,16 +917,18 @@ The saved messages are flagged as `filed'."
   (let (source-spec-list
 	(target-spec-list (vm-imap-parse-spec-to-list target-folder))
 	(mlist (vm-select-operable-messages count "Save"))
+	ml m
 	(save-count 0)
-	server-to-server-p mailbox m
+	server-to-server-p mailbox
 	process
 	)
     (setq mailbox (nth 3 target-spec-list))
     (unwind-protect
 	(save-excursion
 	  (message "Saving messages...")
-	  (while mlist
-	    (setq m (vm-real-message-of (car mlist)))
+	  (setq ml mlist)
+	  (while ml
+	    (setq m (vm-real-message-of (car ml)))
 	    (set-buffer (vm-buffer-of m))
 	    (setq source-spec-list 
 		  (and (vm-imap-folder-p)
@@ -940,7 +943,7 @@ The saved messages are flagged as `filed'."
 	    (if (and (not server-to-server-p)
 		     (vm-body-to-be-retrieved-of m))
 		(error "Message %s body has not been retrieved"
-		       (vm-number-of (car mlist))))
+		       (vm-number-of (car ml))))
 	    ;; Kyle Jones says:
 	    ;; have to stuff the attributes in all cases because
 	    ;; the deleted attribute may have been stuffed
@@ -969,7 +972,7 @@ The saved messages are flagged as `filed'."
 	    (vm-increment save-count)
 	    (message "Saving messages... %s" save-count)
 	    (vm-modify-folder-totals target-folder 'saved 1 m)
-	    (setq mlist (cdr mlist))))
+	    (setq ml (cdr ml))))
       (when process (vm-imap-end-session process))
       (message "%d message%s saved to %s"
 	       save-count (if (/= 1 save-count) "s" "")
@@ -979,7 +982,7 @@ The saved messages are flagged as `filed'."
     ;; We call delete-message again even though the deleted-flags have
     ;; already been set, perhaps to take care of other business?
     (if (and vm-delete-after-saving (not vm-folder-read-only))
-	(vm-delete-message count))
+	(vm-delete-message count mlist))
     target-folder ))
 
 ;;; vm-save.el ends here
