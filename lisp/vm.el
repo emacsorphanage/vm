@@ -468,7 +468,7 @@ that the folder should be considered read only.  No attribute
 changes, messages additions or deletions will be allowed in the
 visited folder."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -516,7 +516,7 @@ visited folder."
 (defun vm-visit-folder-other-frame (folder &optional read-only)
   "Like vm-visit-folder, but run in a newly created frame."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -547,7 +547,7 @@ visited folder."
 (defun vm-visit-folder-other-window (folder &optional read-only)
   "Like vm-visit-folder, but run in a different window."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -591,7 +591,7 @@ that the folder should be considered read only.  No attribute
 changes, messages additions or deletions will be allowed in the
 visited folder."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -626,7 +626,7 @@ visited folder."
 (defun vm-visit-pop-folder-other-frame (folder &optional read-only)
   "Like vm-visit-pop-folder, but run in a newly created frame."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -657,7 +657,7 @@ visited folder."
 (defun vm-visit-pop-folder-other-window (folder &optional read-only)
   "Like vm-visit-pop-folder, but run in a different window."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -703,7 +703,7 @@ that the folder should be considered read only.  No attribute
 changes, messages additions or deletions will be allowed in the
 visited folder."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -730,7 +730,7 @@ visited folder."
 (defun vm-visit-imap-folder-other-frame (folder &optional read-only)
   "Like vm-visit-imap-folder, but run in a newly created frame."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -755,7 +755,7 @@ visited folder."
 (defun vm-visit-imap-folder-other-window (folder &optional read-only)
   "Like vm-visit-imap-folder, but run in a different window."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)

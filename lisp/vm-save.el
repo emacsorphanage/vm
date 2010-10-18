@@ -188,7 +188,7 @@ and the variable `vm-imap-save-to-server' (which see)."
        (let ((this-command this-command)
 	     (last-command last-command))
 	 (vm-follow-summary-cursor)
-	 (save-excursion
+	 (save-current-buffer
 	   (vm-session-initialization)
 	   (vm-select-folder-buffer)
 	   (list (vm-read-imap-folder-name "Save to IMAP folder: " t)
@@ -247,7 +247,7 @@ The saved messages are flagged as `filed'."
     (let ((last-command last-command)
 	  (this-command this-command))
       (vm-follow-summary-cursor)
-      (let ((default (save-excursion
+      (let ((default (save-current-buffer
 		       (vm-select-folder-buffer)
 		       (or (vm-auto-select-folder vm-message-pointer
 						  vm-auto-folder-alist)
@@ -469,6 +469,7 @@ vm-save-message instead (normally bound to `s')."
    ;; protect value of last-command
    (let ((last-command last-command)
 	 (this-command this-command))
+     (save-current-buffer
      (vm-follow-summary-cursor)
      (vm-select-folder-buffer)
      (list
@@ -478,7 +479,7 @@ vm-save-message instead (normally bound to `s')."
 		   vm-last-written-file)
 	 "Write text to file: ")
        nil vm-last-written-file nil)
-      (prefix-numeric-value current-prefix-arg))))
+      (prefix-numeric-value current-prefix-arg)))))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-display nil nil '(vm-save-message-sans-headers)
 	      '(vm-save-message-sans-headers))
@@ -584,10 +585,11 @@ Output, if any, is displayed.  The message is not altered."
    ;; protect value of last-command
    (let ((last-command last-command)
 	 (this-command this-command))
+     (save-current-buffer
      (vm-follow-summary-cursor)
      (vm-select-folder-buffer)
      (list (read-string "Pipe to command: " vm-last-pipe-command)
-	   current-prefix-arg)))
+	   current-prefix-arg))))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (setq vm-last-pipe-command command)
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
@@ -636,10 +638,11 @@ output of the command."
    ;; protect value of last-command
    (let ((last-command last-command)
 	 (this-command this-command))
+     (save-current-buffer
      (vm-follow-summary-cursor)
      (vm-select-folder-buffer)
      (list (read-string "Pipe to command: " vm-last-pipe-command)
-	   current-prefix-arg)))
+	   current-prefix-arg))))
   (vm-pipe-message-to-command command prefix-arg t))
 
 (defun vm-pipe-command-exit-handler (process command discard-output 
@@ -698,10 +701,11 @@ arguments after the command finished."
    ;; protect value of last-command
    (let ((last-command last-command)
 	 (this-command this-command))
+     (save-current-buffer
      (vm-follow-summary-cursor)
      (vm-select-folder-buffer)
      (list (read-string "Pipe to command: " vm-last-pipe-command)
-	   current-prefix-arg)))
+	   current-prefix-arg))))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (setq vm-last-pipe-command command)
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
@@ -765,10 +769,11 @@ output of the command, but return it as a string."
    ;; protect value of last-command
    (let ((last-command last-command)
 	 (this-command this-command))
+     (save-current-buffer
      (vm-follow-summary-cursor)
      (vm-select-folder-buffer)
      (list (read-string "Pipe to command: " vm-last-pipe-command)
-	   current-prefix-arg)))
+	   current-prefix-arg))))
   (save-excursion 
     (set-buffer (vm-pipe-messages-to-command command prefix-arg t))
     (buffer-substring-no-properties (point-min) (point-max))))
@@ -782,10 +787,11 @@ output of the command."
    ;; protect value of last-command
    (let ((last-command last-command)
 	 (this-command this-command))
+     (save-current-buffer
      (vm-follow-summary-cursor)
      (vm-select-folder-buffer)
      (list (read-string "Pipe to command: " vm-last-pipe-command)
-	   current-prefix-arg)))
+	   current-prefix-arg))))
   (vm-pipe-messages-to-command command prefix-arg t))
 
 ;;;###autoload
@@ -895,7 +901,7 @@ The saved messages are flagged as `filed'."
    (let ((this-command this-command)
 	 (last-command last-command))
      (vm-follow-summary-cursor)
-     (save-excursion
+     (save-current-buffer
        (vm-session-initialization)
        (vm-select-folder-buffer)
        (vm-error-if-folder-empty)

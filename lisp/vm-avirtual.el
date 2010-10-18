@@ -1049,7 +1049,7 @@ Like `vm-save-message' but the default folder it guessed by
     (let ((last-command last-command)
           (this-command this-command))
       (vm-follow-summary-cursor)
-      (let ((default (save-excursion
+      (let ((default (save-current-buffer
                        (vm-select-folder-buffer)
                        (or (vm-virtual-auto-select-folder)
                            vm-last-save-folder)))

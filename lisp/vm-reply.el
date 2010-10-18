@@ -355,7 +355,7 @@ specified by `vm-included-text-headers' and
              prompt
              (last-command last-command)
              (this-command this-command))
-      (save-excursion
+      (save-current-buffer
 	(vm-select-folder-buffer)
 	(setq default (and vm-message-pointer
 			   (vm-number-of (car vm-message-pointer)))

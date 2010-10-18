@@ -253,6 +253,18 @@ the messages in the current folder."
 
 	      (setq mp m-list)
 	      (while mp
+		(setq m (car mp))
+		(when (vm-su-start-of m)
+		  (set-marker (vm-su-start-of m) nil)
+		  (set-marker (vm-su-end-of m) nil))
+		(when (setq o (vm-su-summary-mouse-track-overlay-of m))
+		  (vm-detach-extent o))
+		(setq mp (cdr mp)))
+
+	      (overlay-recenter (point-max))
+
+	      (setq mp m-list)
+	      (while mp
                 (setq m (car mp))
 		(if (member (vm-number-of m) vm-summary-traced-messages)
 		    (debug))

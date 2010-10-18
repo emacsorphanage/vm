@@ -292,18 +292,21 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 	 (completion-ignore-case t))
      ;; so the user can see what message they are about to
      ;; modify.
-     (vm-follow-summary-cursor)
-     (vm-select-folder-buffer)
-     (list
-      (vm-read-string "Add labels: "
-		      (vm-obarray-to-string-list vm-label-obarray) t)
-      (prefix-numeric-value current-prefix-arg))))
-  (let ((ignored-labels nil))
+     (save-current-buffer
+       (vm-follow-summary-cursor)
+       (vm-select-folder-buffer)
+       (list
+	(vm-read-string "Add labels: "
+			(vm-obarray-to-string-list vm-label-obarray) t)
+	(prefix-numeric-value current-prefix-arg)))))
+  (let ((m-list nil)
+	(ignored-labels nil))
     (vm-follow-summary-cursor)
     (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (vm-error-if-folder-read-only)
+    (setq m-list (vm-select-operable-messages count "Add labels to"))
     (setq ignored-labels 
-	  (vm-add-or-delete-message-labels string count 'all))
+	  (vm-add-or-delete-message-labels string m-list 'all))
     (if ignored-labels
 	(Message "Label %s could not be added" string))))
 
@@ -334,17 +337,19 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 	 (completion-ignore-case t))
      ;; so the user can see what message they are about to
      ;; modify.
+     (save-current-buffer
      (vm-follow-summary-cursor)
      (vm-select-folder-buffer)
      (list
       (vm-read-string "Add labels: "
 		      (vm-obarray-to-string-list vm-label-obarray) t)
-      (prefix-numeric-value current-prefix-arg))))
+      (prefix-numeric-value current-prefix-arg)))))
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
-  (let ((ignored-labels
-	 (vm-add-or-delete-message-labels string count 'existing-only)))
+  (let* ((m-list (vm-select-operable-messages count "Add labels to"))
+	(ignored-labels
+	 (vm-add-or-delete-message-labels string m-list 'existing-only)))
     (if ignored-labels
 	(progn
 	  (set-buffer (get-buffer-create "*Ignored Labels*"))
@@ -377,23 +382,24 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 	 (completion-ignore-case t))
      ;; so the user can see what message they are about to
      ;; modify.
+     (save-current-buffer
      (vm-follow-summary-cursor)
      (vm-select-folder-buffer)
      (list
       (vm-read-string "Delete labels: "
 		      (vm-obarray-to-string-list vm-label-obarray) t)
-      (prefix-numeric-value current-prefix-arg))))
+      (prefix-numeric-value current-prefix-arg)))))
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
-  (vm-add-or-delete-message-labels string count nil))
+  (let ((m-list (vm-select-operable-messages count "Delete labels to")))
+    (vm-add-or-delete-message-labels string m-list nil)))
 
-(defun vm-add-or-delete-message-labels (string count add)
+(defun vm-add-or-delete-message-labels (string m-list add)
   (vm-display nil nil '(vm-add-message-labels vm-delete-message-labels)
 	      (list this-command))
   (setq string (downcase string))
-  (let ((m-list (vm-select-operable-messages count "Add labels to"))
-	(action-labels (vm-parse string
+  (let ((action-labels (vm-parse string
 "[\000-\040,\177-\377]*\\([^\000-\040,\177-\377]+\\)[\000-\040,\177-\377]*"))
 	(ignored-labels nil)
 	labels act-labels m mm-list)

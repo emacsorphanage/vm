@@ -218,8 +218,9 @@ variable vm-virtual-folder-alist for more information."
   (interactive
    (let ((last-command last-command)
 	 (this-command this-command))
-     (vm-select-folder-buffer)
-     (vm-read-virtual-selector "Mark messages: ")))
+     (save-current-buffer
+       (vm-select-folder-buffer)
+       (vm-read-virtual-selector "Mark messages: "))))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-messages-with-selector t selector arg))
 
@@ -232,8 +233,9 @@ variable vm-virtual-folder-alist for more information."
   (interactive
    (let ((last-command last-command)
 	 (this-command this-command))
-     (vm-select-folder-buffer)
-     (vm-read-virtual-selector "Unmark messages: ")))
+     (save-current-buffer
+       (vm-select-folder-buffer)
+       (vm-read-virtual-selector "Unmark messages: "))))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-messages-with-selector nil selector arg))
 
