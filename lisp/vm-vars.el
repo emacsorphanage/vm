@@ -1295,7 +1295,7 @@ Example:
 	 (\"image/gif\" 	\"xv\")
 	 (\"image/jpeg\" 	\"xv\")
 	 (\"video/mpeg\" 	\"mpeg_play\")
-	 (\"video\" 		w32-shell-execute "open")
+	 (\"video\" 		w32-shell-execute \"open\")
 	)
  )
 
