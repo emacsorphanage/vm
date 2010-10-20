@@ -1079,7 +1079,7 @@ you can change the recipient address before resending the message."
 	(layout (vm-mm-layout (car vm-message-pointer)))
 	(lim (vm-text-end-of (car vm-message-pointer))))
     ;; We only want to select one message here
-    (vm-retrieve-operable-messages 1 (car vm-message-pointer))
+    (vm-retrieve-operable-messages 1 (list (car vm-message-pointer)))
     (save-restriction
       (widen)
       (if (or (not (vectorp layout))
@@ -1152,7 +1152,7 @@ You may also create a Resent-Cc header."
 	  (start (vm-headers-of (car vm-message-pointer)))
 	  (lim (vm-text-end-of (car vm-message-pointer))))
       ;; We only want to select one message here
-      (vm-retrieve-operable-messages 1 (car vm-message-pointer))
+      (vm-retrieve-operable-messages 1 (list (car vm-message-pointer)))
       ;; briefly nullify vm-mail-header-from to keep vm-mail-internal
       ;; from inserting another From header.
       (let ((vm-mail-header-from nil))
