@@ -1393,7 +1393,5 @@ draft messages."
 (autoload 'tapestry-replace-tapestry-element "tapestry")
 (autoload 'tapestry-nullify-tapestry-elements "tapestry")
 (autoload 'tapestry-remove-frame-parameters "tapestry")
-(autoload 'vm-easy-menu-define "vm-easymenu" nil 'macro)
-(autoload 'vm-easy-menu-do-define "vm-easymenu")
 
 ;;; vm.el ends here
