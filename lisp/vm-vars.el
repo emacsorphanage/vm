@@ -1239,6 +1239,10 @@ type.
 
 The alist format is a list of lists, each sublist having the form
 
+ (TYPE FUNCTION ARG ... )
+
+or
+
  (TYPE PROGRAM ARG ARG ... )
 
 or
@@ -1250,7 +1254,13 @@ For example \"text\" or \"image/jpeg\".  If a top-level type is
 listed without a subtype, all subtypes of that type are assumed
 to be included.
 
-In the first form, PROGRAM is a string naming a program to run to
+In the first form, FUNCTION is a lisp function that is responsible for
+displaying the attachment in an external application.  Any ARGS will
+be passed to the function as arguments.  The octets that compose the
+object will be written into a temporary file and the name of the file
+is passed as an additional argument.
+
+In the second form, PROGRAM is a string naming a program to run to
 display an object.  Any ARGS will be passed to the program as
 arguments.  The octets that compose the object will be written
 into a temporary file and the name of the file can be inserted
@@ -1281,11 +1291,11 @@ Example:
 
  (setq vm-mime-external-content-types-alist
        '(
-	 (\"text/html\" 	\"netscape\")
+	 (\"text/html\" 	browse-url-of-file)
 	 (\"image/gif\" 	\"xv\")
 	 (\"image/jpeg\" 	\"xv\")
 	 (\"video/mpeg\" 	\"mpeg_play\")
-	 (\"video\" 		\"xanim\")
+	 (\"video\" 		w32-shell-execute "open")
 	)
  )
 

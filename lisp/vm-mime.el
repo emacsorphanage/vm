@@ -2588,50 +2588,55 @@ in the text are highlighted and energized."
              (vm-register-message-garbage-files (list tempfile))
              (vm-mime-send-body-to-file layout nil tempfile t)))
 
-      ;; quote file name for shell command only
-      (or (cdr program-list)
-          (setq tempfile (shell-quote-argument tempfile)))
-      
-      ;; expand % specs
-      (let ((p program-list)
-	    (vm-mf-attachment-file tempfile))
-	(while p
-	  (if (string-match "\\([^%]\\|^\\)%f" (car p))
-	      (setq append-file nil))
-	  (setcar p (vm-mime-sprintf (car p) layout))
-	  (setq p (cdr p))))
+      (if (symbolp (car program-list))
+	  ;; use internal function if provided
+	  (apply (car program-list)
+		 (append (cdr program-list) (list tempfile)))
 
-      (message "Launching %s..." (mapconcat 'identity program-list " "))
-      (setq process
-	    (if (cdr program-list)
+	;; quote file name for shell command only
+	(or (cdr program-list)
+	    (setq tempfile (shell-quote-argument tempfile)))
+      
+	;; expand % specs
+	(let ((p program-list)
+	      (vm-mf-attachment-file tempfile))
+	  (while p
+	    (if (string-match "\\([^%]\\|^\\)%f" (car p))
+		(setq append-file nil))
+	    (setcar p (vm-mime-sprintf (car p) layout))
+	    (setq p (cdr p))))
+
+	(message "Launching %s..." (mapconcat 'identity program-list " "))
+	(setq process
+	      (if (cdr program-list)
+		  (apply 'start-process
+			 (format "view %25s"
+				 (vm-mime-sprintf
+				  (vm-mime-find-format-for-layout layout)
+				  layout))
+			 nil (if append-file
+				 (append program-list (list tempfile))
+			       program-list))
 		(apply 'start-process
 		       (format "view %25s"
 			       (vm-mime-sprintf
 				(vm-mime-find-format-for-layout layout)
 				layout))
-		       nil (if append-file
-			       (append program-list (list tempfile))
-			     program-list))
-	      (apply 'start-process
-		     (format "view %25s"
-			     (vm-mime-sprintf
-			      (vm-mime-find-format-for-layout layout)
-			      layout))
-		     nil
-		     (or shell-file-name "sh")
-		     shell-command-switch
-		     (if append-file
-			 (list (concat (car program-list) " " tempfile))
-		       program-list))))
-      (vm-process-kill-without-query process t)
-      (message "Launching %s... done" (mapconcat 'identity
-						 program-list
-						 " "))
-      (if vm-mime-delete-viewer-processes
-	  (vm-register-message-garbage 'delete-process process))
-      (put (vm-mm-layout-cache layout)
-	   'vm-mime-display-external-generic
-	   (list process tempfile))))
+		       nil
+		       (or shell-file-name "sh")
+		       shell-command-switch
+		       (if append-file
+			   (list (concat (car program-list) " " tempfile))
+			 program-list))))
+	(vm-process-kill-without-query process t)
+	(message "Launching %s... done" (mapconcat 'identity
+						   program-list
+						   " "))
+	(if vm-mime-delete-viewer-processes
+	    (vm-register-message-garbage 'delete-process process))
+	(put (vm-mm-layout-cache layout)
+	     'vm-mime-display-external-generic
+	     (list process tempfile)))))
   t )
 
 (defun vm-mime-display-internal-application/octet-stream (layout)
