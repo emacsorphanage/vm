@@ -1580,7 +1580,7 @@ the from and full-name entries of the cached-data vector.   USR, 2010-05-13"
                       (error
                        (message err)
                        (sit-for 5)
-                       "corrupted-header")))
+                       (list "corrupted-header"))))
     (setq list (vm-parse-addresses all)) ; adds text properties for charsets
     (while list
       ;; Just like vm-su-do-author:
