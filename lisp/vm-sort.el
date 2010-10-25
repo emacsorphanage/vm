@@ -481,7 +481,7 @@ folder in the order in which the messages arrived."
 	(if (and order-did-change (not vm-folder-read-only))
 	    (progn
 	      (setq vm-message-order-changed t)
-	      (vm-set-buffer-modified-p t)
+	      ;; (vm-set-buffer-modified-p t)  ; only viewing order changed
 	      (vm-clear-modification-flag-undos))))
       (setq vm-ml-sort-keys ml-keys)
       (intern (buffer-name) vm-buffers-needing-display-update)
