@@ -825,6 +825,7 @@ have been built for this function to work."
 Conversely, all members of thread subtrees should actually belong
 to the thread.  Used for testing purposes."
   (interactive)
+  (vm-select-folder-buffer)
   (when (vectorp vm-thread-obarray)
     (unless ml
       (with-current-buffer (or vm-mail-buffer (current-buffer))
@@ -833,7 +834,9 @@ to the thread.  Used for testing purposes."
     (mapc
      (lambda (m)
        (let* ((root (vm-thread-root-sym m))
-	      (subtree (vm-thread-subtree root)))
+	      (subtree (and root (vm-thread-subtree root))))
+	 (unless root
+	   (debug 'message-with-no-root m))
 	 (with-current-buffer (vm-buffer-of m)
 	   (unless (eq root 
 		       (intern-soft (symbol-name root) vm-thread-obarray))
