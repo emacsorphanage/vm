@@ -719,7 +719,8 @@ is necessary."
 the message is made in the Presentation Buffer and MIME decoding is
 done if necessary.  The type of preview is governed by the variables
 `vm-preview-lines' and `vm-preview-read-messages'.  If no preview is
-required, then the entire message is shown directly. (USR, 2010-01-14)"
+required, then the entire message is shown directly using
+`vm-show-current-message'.                         (USR, 2010-01-14)" 
 
   ;; Set new-preview if the user needs to see the
   ;; message in the previewed state.  Save some time later by not

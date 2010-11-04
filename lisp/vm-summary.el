@@ -1634,8 +1634,8 @@ mime-encoded string with text properties.  USR 2010-05-13"
 		   (concat "<fake-VM-id."
 			   (vm-md5-string
 			    (buffer-substring
-			     (vm-text-of (vm-real-message-of m))
-			     (vm-text-end-of (vm-real-message-of m))))
+			     (vm-headers-of (vm-real-message-of m))
+			     (vm-text-of (vm-real-message-of m))))
 			   "@talos.iv>")
 		 (error nil))))
 	   (concat "<" (int-to-string (vm-abs (random))) "@toto.iv>")))))
