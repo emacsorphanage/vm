@@ -201,8 +201,6 @@ mandatory."
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
-(defvar vm-summary-traced-messages nil)
-
 (defun vm-do-summary (&optional start-point)
   "Generate summary lines for all the messages in the optional
 argument START-POINT (a list of messages) or, if it is nil, all
@@ -266,7 +264,8 @@ the messages in the current folder."
 	      (setq mp m-list)
 	      (while mp
                 (setq m (car mp))
-		(if (member (vm-number-of m) vm-summary-traced-messages)
+		(if (and vm-debug
+			 (member (vm-number-of m) vm-summary-traced-messages))
 		    (debug))
 		(vm-set-su-start-of m (point))
 		(insert vm-summary-no-=>)
@@ -479,7 +478,7 @@ the Summary buffer exists. "
 (defun vm-update-message-summary (m)
   "Replace the summary line of the message M in the summary
 buffer by a regenerated summary line."
-  (if (member (vm-number-of m) vm-summary-traced-messages)
+  (if (and vm-debug (member (vm-number-of m) vm-summary-traced-messages))
       (debug))
   (if (and (vm-su-start-of m)
 	   (marker-buffer (vm-su-start-of m)))

@@ -3356,8 +3356,16 @@ arrow only if the summary window is not the only existing window."
 (defvar vm-debug nil
   "Flag used by developers to control localized debugging features.")
 
+(defvar vm-traced-message-ids nil
+  "List of message ID's whose activity is debugged.  This is for
+developers' use only.")
+
 (defvar vm-summary-debug nil
   "Flag used by developers trace summary generation")
+
+(defvar vm-summary-traced-messages nil
+  "List of message numbers whose activity is debugged during
+summary generation.  This is for developers' use only.")
 
 (defcustom vm-subject-ignored-prefix "^\\(re: *\\)+"
   "*Non-nil value should be a regular expression that matches

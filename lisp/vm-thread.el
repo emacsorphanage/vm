@@ -84,8 +84,6 @@
 ;;	(aliased to vm-thread-indentation)
 ;; --------------------------------------------------------------------------
 
-(defvar vm-traced-message-ids nil)
-
 (if (fboundp 'define-error)
     (define-error 'vm-thread-error "VM internal threading error")
   (put 'vm-thread-error 'error-conditions

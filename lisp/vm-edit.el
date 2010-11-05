@@ -54,8 +54,8 @@ replace the original, use C-c C-] and the edit will be aborted."
 		    (- (point) (vm-headers-of (car vm-message-pointer)))))
 	  (edit-buf (vm-edit-buffer-of (car vm-message-pointer)))
 	  (folder-buffer (current-buffer)))
-      (vm-load-message)
-      ;; (vm-retrieve-operable-messages 1 (list (car vm-message-pointer)))
+      ;; (vm-load-message)
+      (vm-retrieve-operable-messages 1 (list (car vm-message-pointer)))
       (if (and edit-buf (buffer-name edit-buf))
 	  (set-buffer edit-buf)
 	(vm-save-restriction
@@ -237,58 +237,57 @@ data is discarded only from the marked messages in the current folder."
 	  (insert vm-content-length-header " " (int-to-string length) "\n")))
     (let ((edit-buf (current-buffer))
 	  (mp vm-message-pointer))
-      (if (buffer-modified-p)
-	  (progn
-	    (widen)
-	    (save-excursion
-	      (set-buffer (vm-buffer-of (vm-real-message-of (car mp))))
-	      (if (not (memq (vm-real-message-of (car mp)) vm-message-list))
-		  (error "The original copy of this message has been expunged."))
-	      (vm-save-restriction
-	       (widen)
-	       (goto-char (vm-headers-of (vm-real-message-of (car mp))))
-	       (let ((vm-message-pointer mp)
-		     opoint
-		     (buffer-read-only nil))
-		 (setq opoint (point))
-		 (insert-buffer-substring edit-buf)
-		 (delete-region
-		  (point) (vm-text-end-of (vm-real-message-of (car mp))))
-		 (vm-discard-cached-data))
-	       (vm-set-edited-flag-of (car mp) t)
-	       (vm-set-edit-buffer-of (car mp) nil))
-	      (set-buffer (vm-buffer-of (car mp)))
-	      (if (eq (vm-real-message-of (car mp))
-		      (vm-real-message-of (car vm-message-pointer)))
-		  (progn
-		    (vm-preview-current-message)
-		    ;; Try to position the cursor in the message
-		    ;; window close to where it was in the edit
-		    ;; window.  This works well for non MIME
-		    ;; messages, but the cursor drifts badly for
-		    ;; MIME and for refilled messages.
-		    (vm-save-buffer-excursion
-		     (and vm-presentation-buffer
-			  (set-buffer vm-presentation-buffer))
-		     (vm-save-restriction
-		      (vm-save-buffer-excursion
-		       (widen)
-		       (let ((osw (selected-window))
-			     (new-win (vm-get-visible-buffer-window
-				       (current-buffer))))
-			 (unwind-protect
-			     (if new-win
-				 (progn
-				   (select-window new-win)
-				   (goto-char (vm-headers-of
-					       (car vm-message-pointer)))
-				   (condition-case nil
-				       (forward-char pos-offset)
-				     (error nil))))
-			   (if (not (eq osw (selected-window)))
-			       (select-window osw))))))))
-		(vm-update-summary-and-mode-line))))
-	(message "No change."))
+      (if (not (buffer-modified-p))
+	  (message "No change.")
+	(widen)
+	(save-excursion
+	  (set-buffer (vm-buffer-of (vm-real-message-of (car mp))))
+	  (if (not (memq (vm-real-message-of (car mp)) vm-message-list))
+	      (error "The original copy of this message has been expunged."))
+	  (vm-save-restriction
+	   (widen)
+	   (goto-char (vm-headers-of (vm-real-message-of (car mp))))
+	   (let ((vm-message-pointer mp)
+		 opoint
+		 (buffer-read-only nil))
+	     (setq opoint (point))
+	     (insert-buffer-substring edit-buf)
+	     (delete-region
+	      (point) (vm-text-end-of (vm-real-message-of (car mp))))
+	     (vm-discard-cached-data-internal (list (car mp))))
+	   (vm-set-edited-flag-of (car mp) t)
+	   (vm-set-edit-buffer-of (car mp) nil))
+	  (set-buffer (vm-buffer-of (car mp)))
+	  (if (eq (vm-real-message-of (car mp))
+		  (vm-real-message-of (car vm-message-pointer)))
+	      (progn
+		(vm-preview-current-message)
+		;; Try to position the cursor in the message
+		;; window close to where it was in the edit
+		;; window.  This works well for non MIME
+		;; messages, but the cursor drifts badly for
+		;; MIME and for refilled messages.
+		(vm-save-buffer-excursion
+		 (and vm-presentation-buffer
+		      (set-buffer vm-presentation-buffer))
+		 (vm-save-restriction
+		  (vm-save-buffer-excursion
+		   (widen)
+		   (let ((osw (selected-window))
+			 (new-win (vm-get-visible-buffer-window
+				   (current-buffer))))
+		     (unwind-protect
+			 (if new-win
+			     (progn
+			       (select-window new-win)
+			       (goto-char (vm-headers-of
+					   (car vm-message-pointer)))
+			       (condition-case nil
+				   (forward-char pos-offset)
+				 (error nil))))
+		       (if (not (eq osw (selected-window)))
+			   (select-window osw))))))))
+	    (vm-update-summary-and-mode-line))))
       (vm-display edit-buf nil '(vm-edit-message-end)
 		  '(vm-edit-message-end reading-message startup))
       (set-buffer-modified-p nil)

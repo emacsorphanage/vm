@@ -509,6 +509,10 @@ folder in the order in which the messages arrived."
 
 ;;;###autoload
 (defun vm-sort-compare-xxxxxx (m1 m2)
+  (if (and vm-debug
+	   (or (member (vm-number-of m1) vm-summary-traced-messages)
+	       (member (vm-number-of m2) vm-summary-traced-messages)))
+      (debug))
   (let ((key-funcs vm-key-functions) 
 	result)
     (catch 'done
