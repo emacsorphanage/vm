@@ -3107,18 +3107,19 @@ Giving a prefix argument overrides the variable and no expunge is done."
     (vm-garbage-collect-message)
     (vm-garbage-collect-folder)
 
+    (unless (or (no-change) virtual)
+      ;; this could take a while, so give the user some feedback
+      (message "Quitting...")
+      (or vm-folder-read-only (eq major-mode 'vm-virtual-mode)
+	  (vm-change-all-new-to-unread)))
+    (when (and (buffer-modified-p)
+	       (or buffer-file-name buffer-offer-save)
+	       (not no-change)
+	       (not virtual))
+      (vm-save-folder))
+
     (vm-virtual-quit)
-    (if (and (not no-change) (not virtual))
-	(progn
-	  ;; this could take a while, so give the user some feedback
-	  (message "Quitting...")
-	  (or vm-folder-read-only (eq major-mode 'vm-virtual-mode)
-	      (vm-change-all-new-to-unread))))
-    (if (and (buffer-modified-p)
-	     (or buffer-file-name buffer-offer-save)
-	     (not no-change)
-	     (not virtual))
-	(vm-save-folder))
+
     (cond ((and (eq vm-folder-access-method 'pop)
 		(setq process (vm-folder-pop-process)))
 	   (vm-pop-end-session process))
@@ -3382,6 +3383,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 		   (vm-compute-totals)
 		   (vm-store-folder-totals buffer-file-name (cdr vm-totals))))
 	     ;; get summary cache up-to-date
+	     (message "Stuffing folder data...")
 	     (vm-update-summary-and-mode-line)
 	     (vm-stuff-bookmark)
 	     (vm-stuff-pop-retrieved)
@@ -3391,7 +3393,8 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	     (vm-stuff-labels)
 	     (vm-stuff-summary)
 	     (and vm-message-order-changed
-		  (vm-stuff-message-order))))
+		  (vm-stuff-message-order))
+	     (message "Stuffing folder data... done")))
        nil ))))
 
 ;;;###autoload
@@ -3506,6 +3509,7 @@ folder."
 	  (if vm-message-list
 	      (progn
 		;; get summary cache up-to-date
+		(message "Stuffing folder data...")
 		(vm-update-summary-and-mode-line)
 		(vm-stuff-bookmark)
 		(vm-stuff-pop-retrieved)
@@ -3515,7 +3519,8 @@ folder."
 		(vm-stuff-labels)
 		(vm-stuff-summary)
 		(and vm-message-order-changed
-		     (vm-stuff-message-order))))
+		     (vm-stuff-message-order))
+		(message "Stuffing folder data... done")))
 	  (message "Saving...")
 	  (let ((vm-inhibit-write-file-hook t)
 		(oldmodebits (and (fboundp 'default-file-modes)

@@ -508,13 +508,14 @@ folder in the order in which the messages arrived."
         (vm-sort-insert-auto-folder-names))))
 
 ;;;###autoload
-(defun vm-sort-compare-xxxxxx (m1 m2)
-  (if (and vm-debug
-	   (or (member (vm-number-of m1) vm-summary-traced-messages)
-	       (member (vm-number-of m2) vm-summary-traced-messages)))
+(defun vm-sort-compare-xxxxxx (msg1 msg2)
+  (if (and vm-summary-debug
+	   (or (member (vm-number-of msg1) vm-summary-traced-messages)
+	       (member (vm-number-of msg2) vm-summary-traced-messages)))
       (debug))
   (let ((key-funcs vm-key-functions) 
-	result)
+	result
+	(m1 msg1) (m2 msg2))
     (catch 'done
       (unless key-funcs
 	(throw 'done nil))

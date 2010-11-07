@@ -3361,7 +3361,7 @@ arrow only if the summary window is not the only existing window."
 developers' use only.")
 
 (defvar vm-summary-debug nil
-  "Flag used by developers trace summary generation")
+  "Flag used by developers for tracing summary generation")
 
 (defvar vm-summary-traced-messages nil
   "List of message numbers whose activity is debugged during

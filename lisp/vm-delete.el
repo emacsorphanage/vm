@@ -454,7 +454,7 @@ ignored."
 				  (vm-imap-uid-of (vm-real-message-of (car mp)))
 				  (vm-imap-uid-validity-of
 				   (vm-real-message-of (car mp))))
-				 vm-imap-messages-to-expunge)
+				 vm-imap-messages-to-expunge))
 			   ;; Set this so that if Emacs crashes or
 			   ;; the user quits without saving, we
 			   ;; have a record of messages that were
@@ -462,7 +462,7 @@ ignored."
 			   ;; When the user does M-x recover-file
 			   ;; we won't re-retrieve messages the
 			   ;; user has already dealt with.
-			   vm-imap-retrieved-messages
+		     (setq vm-imap-retrieved-messages
 			   (cons (list (vm-imap-uid-of
 					(vm-real-message-of (car mp)))
 				       (vm-imap-uid-validity-of
