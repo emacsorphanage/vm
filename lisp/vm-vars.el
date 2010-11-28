@@ -5353,7 +5353,7 @@ you move out of the thread."
 folded thread summaries, i.e., such messages remain visible even if
 their threads are shown collapsed.  The selectors are the same as
 those used in `vm-virtual-folder-alist'."
-  :group 'vm
+  :group 'vm-summary
   :type '(repeat sexp))
 
 (defcustom vm-enable-thread-operations nil
