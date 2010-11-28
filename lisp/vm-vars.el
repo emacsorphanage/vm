@@ -1340,6 +1340,10 @@ type.
 
 The alist format is a list of lists, each sublist having the form
 
+ (TYPE FUNCTION ARG ... )
+
+or
+
  (TYPE PROGRAM ARG ARG ... )
 
 or
@@ -1351,7 +1355,13 @@ For example \"text\" or \"image/jpeg\".  If a top-level type is
 listed without a subtype, all subtypes of that type are assumed
 to be included.
 
-In the first form, PROGRAM is a string naming a program to run to
+In the first form, FUNCTION is a lisp function that is responsible for
+displaying the attachment in an external application.  Any ARGS will
+be passed to the function as arguments.  The octets that compose the
+object will be written into a temporary file and the name of the file
+is passed as an additional argument.
+
+In the second form, PROGRAM is a string naming a program to run to
 display an object.  Any ARGS will be passed to the program as
 arguments.  The octets that compose the object will be written
 into a temporary file and the name of the file can be inserted
@@ -1382,11 +1392,11 @@ Example:
 
  (setq vm-mime-external-content-types-alist
        '(
-	 (\"text/html\" 	\"netscape\")
+	 (\"text/html\" 	browse-url-of-file)
 	 (\"image/gif\" 	\"xv\")
 	 (\"image/jpeg\" 	\"xv\")
 	 (\"video/mpeg\" 	\"mpeg_play\")
-	 (\"video\" 		\"xanim\")
+	 (\"video\" 		w32-shell-execute \"open\")
 	)
  )
 
@@ -3504,8 +3514,16 @@ arrow only if the summary window is not the only existing window."
 (defvar vm-debug nil
   "Flag used by developers to control localized debugging features.")
 
+(defvar vm-traced-message-ids nil
+  "List of message ID's whose activity is debugged.  This is for
+developers' use only.")
+
 (defvar vm-summary-debug nil
-  "Flag used by developers trace summary generation")
+  "Flag used by developers for tracing summary generation")
+
+(defvar vm-summary-traced-messages nil
+  "List of message numbers whose activity is debugged during
+summary generation.  This is for developers' use only.")
 
 (defcustom vm-subject-ignored-prefix "^\\(re: *\\)+"
   "*Non-nil value should be a regular expression that matches
@@ -5361,9 +5379,18 @@ those used in `vm-virtual-folder-alist'."
 threads will apply to all the messages in the threads.
 
 \"Operations\" in this context include deleting, saving, setting
-attributes, adding/deleting labels etc."
+attributes, adding/deleting labels etc.
+
+If the variable is set to t then thread operations are always
+carried out.  If it is set to 'ask, then the user is asked for
+confirmation whether the operation should apply to all the
+messages in the thread.  This can be overridden by invoking the
+operation with a prefix argument using `C-u' and no questions will be
+asked."
   :group 'vm-summary
-  :type 'boolean)
+  :type '(choice (const t) 
+		 (const ask) 
+		 (const nil)))
 
 (defvar vm-summary-threads-collapsed t
   "If non-nil, indicates that threads should be

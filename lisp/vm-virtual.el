@@ -286,9 +286,10 @@ Prefix arg means the new virtual folder should be visited read only."
    (let ((last-command last-command)
 	 (this-command this-command)
 	 (prefix current-prefix-arg))
+     (save-current-buffer
      (vm-select-folder-buffer)
      (nconc (vm-read-virtual-selector "Create virtual folder of messages: ")
-	    (list prefix))))
+	    (list prefix)))))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((use-marks (eq last-command 'vm-next-command-uses-marks))
 	vm-virtual-folder-alist ; shadow the global variable

@@ -2588,50 +2588,55 @@ in the text are highlighted and energized."
              (vm-register-message-garbage-files (list tempfile))
              (vm-mime-send-body-to-file layout nil tempfile t)))
 
-      ;; quote file name for shell command only
-      (or (cdr program-list)
-          (setq tempfile (shell-quote-argument tempfile)))
-      
-      ;; expand % specs
-      (let ((p program-list)
-	    (vm-mf-attachment-file tempfile))
-	(while p
-	  (if (string-match "\\([^%]\\|^\\)%f" (car p))
-	      (setq append-file nil))
-	  (setcar p (vm-mime-sprintf (car p) layout))
-	  (setq p (cdr p))))
+      (if (symbolp (car program-list))
+	  ;; use internal function if provided
+	  (apply (car program-list)
+		 (append (cdr program-list) (list tempfile)))
 
-      (message "Launching %s..." (mapconcat 'identity program-list " "))
-      (setq process
-	    (if (cdr program-list)
+	;; quote file name for shell command only
+	(or (cdr program-list)
+	    (setq tempfile (shell-quote-argument tempfile)))
+      
+	;; expand % specs
+	(let ((p program-list)
+	      (vm-mf-attachment-file tempfile))
+	  (while p
+	    (if (string-match "\\([^%]\\|^\\)%f" (car p))
+		(setq append-file nil))
+	    (setcar p (vm-mime-sprintf (car p) layout))
+	    (setq p (cdr p))))
+
+	(message "Launching %s..." (mapconcat 'identity program-list " "))
+	(setq process
+	      (if (cdr program-list)
+		  (apply 'start-process
+			 (format "view %25s"
+				 (vm-mime-sprintf
+				  (vm-mime-find-format-for-layout layout)
+				  layout))
+			 nil (if append-file
+				 (append program-list (list tempfile))
+			       program-list))
 		(apply 'start-process
 		       (format "view %25s"
 			       (vm-mime-sprintf
 				(vm-mime-find-format-for-layout layout)
 				layout))
-		       nil (if append-file
-			       (append program-list (list tempfile))
-			     program-list))
-	      (apply 'start-process
-		     (format "view %25s"
-			     (vm-mime-sprintf
-			      (vm-mime-find-format-for-layout layout)
-			      layout))
-		     nil
-		     (or shell-file-name "sh")
-		     shell-command-switch
-		     (if append-file
-			 (list (concat (car program-list) " " tempfile))
-		       program-list))))
-      (vm-process-kill-without-query process t)
-      (message "Launching %s... done" (mapconcat 'identity
-						 program-list
-						 " "))
-      (if vm-mime-delete-viewer-processes
-	  (vm-register-message-garbage 'delete-process process))
-      (put (vm-mm-layout-cache layout)
-	   'vm-mime-display-external-generic
-	   (list process tempfile))))
+		       nil
+		       (or shell-file-name "sh")
+		       shell-command-switch
+		       (if append-file
+			   (list (concat (car program-list) " " tempfile))
+			 program-list))))
+	(vm-process-kill-without-query process t)
+	(message "Launching %s... done" (mapconcat 'identity
+						   program-list
+						   " "))
+	(if vm-mime-delete-viewer-processes
+	    (vm-register-message-garbage 'delete-process process))
+	(put (vm-mm-layout-cache layout)
+	     'vm-mime-display-external-generic
+	     (list process tempfile)))))
   t )
 
 (defun vm-mime-display-internal-application/octet-stream (layout)
@@ -4346,8 +4351,8 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
     (vm-check-for-killed-folder)
     (vm-select-folder-buffer-and-validate 1 nil))
 
-  (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
-    (vm-retrieve-marked-or-prefixed-messages count)
+  (let ((mlist (or mlist (vm-select-operable-messages count "Action on"))))
+    (vm-retrieve-operable-messages count mlist)
     (save-excursion
       (while mlist
         (let (m parts layout filename type disposition o)
@@ -5422,7 +5427,10 @@ folder of the composition.
 
 If this command is invoked on marked message (via
 `vm-next-command-uses-marks') the marked messages in the selected
-folder will be attached as a MIME message digest.
+folder will be attached as a MIME message digest.    If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are attached.
 
 Optional second argument DESCRIPTION is a one-line description of
 the message being attached.  This is also read from the
@@ -5456,12 +5464,12 @@ minibuffer if the command is run interactively."
 		   (find-file-noselect file)))
 		(setq folder (current-buffer))
 		(vm-mode)
-		(setq mlist (vm-select-marked-or-prefixed-messages 0)))))
+		(setq mlist (vm-select-operable-messages 1 "Attach")))))
 	   (t
 	    (setq folder vm-mail-buffer)
 	    (save-excursion
 	      (set-buffer folder)
-	      (setq mlist (vm-select-marked-or-prefixed-messages 0)))))
+	      (setq mlist (vm-select-operable-messages 1 "Attach")))))
      (if (null mlist)
 	 (save-excursion
 	   (set-buffer folder)
@@ -7436,9 +7444,9 @@ This is a destructive operation and cannot be undone!"
   (when (interactive-p)
     (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 0 (interactive-p))
-  (let ((mlist (or mlist (vm-select-marked-or-prefixed-messages count))))
-    (vm-load-message count)
-    ;; (vm-retrieve-marked-or-prefixed-messages count)
+  (let ((mlist (or mlist 
+		   (vm-select-operable-messages count "Nuke html of"))))
+    (vm-retrieve-operable-messages count mlist)
     (save-excursion
       (while mlist
         (let ((count (vm-mime-nuke-alternative-text/html-internal (car mlist))))

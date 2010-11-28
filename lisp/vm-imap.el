@@ -3238,14 +3238,17 @@ the current message and the previous |COUNT| - 1 messages are
 loaded.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
-only marked messages are loaded, other messages are ignored."
+only marked messages are loaded, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are loaded."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (when (null count) (setq count 1))
-  (let ((mlist (vm-select-marked-or-prefixed-messages count))
+  (let ((mlist (vm-select-operable-messages count "Load"))
 	(errors 0)
 	(n 0)
 	fetch-method
@@ -3275,7 +3278,7 @@ only marked messages are loaded, other messages are ignored."
     ))
 
 ;;;###autoload
-(defun vm-retrieve-marked-or-prefixed-messages (&optional count)
+(defun vm-retrieve-operable-messages (&optional count mlist)
   "Retrieve the message from from its permanent location for
 temporary use.  Currently this facility is only available for
 IMAP folders.
@@ -3286,11 +3289,13 @@ the current message and the previous |COUNT| - 1 messages are
 retrieved.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
-only marked messages are retrieved, other messages are ignored."
+only marked messages are retrieved, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are retrieved."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (when (null count) (setq count 1))
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist (vm-select-marked-or-prefixed-messages count))
 	(vm-fetched-message-limit nil)
 	(errors 0)
 	(n 0)
@@ -3298,6 +3303,8 @@ only marked messages are retrieved, other messages are ignored."
 	m mm)
 ;;     (if (not used-marks) 
 ;; 	(setq mlist (list (car vm-message-pointer))))
+    (unless mlist
+      (setq mlist (vm-select-operable-messages count "Retrieve")))
     (save-excursion
       (while mlist
 	(setq m (car mlist))
@@ -3394,8 +3401,11 @@ COUNT - 1 messages are unloaded.  A negative argument means
 the current message and the previous |COUNT| - 1 messages are
 unloaded.
 
-When invoked on marked messages (via `vm-next-command-uses-marks'),
-only marked messages are unloaded, other messages are ignored.
+When invoked on marked messages (via `vm-next-command-uses-marks'), only 
+marked messages are unloaded, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in
+the thread are unloaded.
 
 If the optional argument PHYSICAL is non-nil, then the message is
 physically discarded.  Otherwise, the discarding may be delayed until
@@ -3407,7 +3417,7 @@ the folder is saved."
   (vm-error-if-folder-read-only)
   (when (null count) 
     (setq count 1))
-  (let ((mlist (vm-select-marked-or-prefixed-messages count))
+  (let ((mlist (vm-select-operable-messages count "Unload"))
 	(buffer-undo-list t)
 	(errors 0)
 	m mm)

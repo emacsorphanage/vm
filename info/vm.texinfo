@@ -1866,6 +1866,12 @@ try to launch an external program to display that type.
 The alist format is a list of lists, each sublist having the form
 
 @example
+(@var{TYPE} @var{FUNCTION} @var{ARG} @var{ARG} ... )
+@end example
+
+@noindent or
+
+@example
 (@var{TYPE} @var{PROGRAM} @var{ARG} @var{ARG} ... )
 @end example
 
@@ -1880,7 +1886,13 @@ type/subtype pair.  For example ``text'' or ``image/jpeg''.  If a
 top-level type is listed without a subtype, all subtypes of that type
 are assumed to be included.
 
-In the first form, @var{PROGRAM} is a string naming a program to
+In the first form, @var{FUNCTION} is a lisp function that is responsible
+for displaying the attachment in an external application.  Any
+@var{ARG}s will be passed to the function as arguments.  The octets that
+compose the object will be written into a temporary file and the name of
+the file is passed as an additional argument.
+
+In the second form, @var{PROGRAM} is a string naming a program to
 run to display an object.  Any @var{ARG}s will be passed to the
 program as arguments.  The octets that compose the object will be
 written into a temporary file and the name of the file can be
@@ -1911,11 +1923,11 @@ Example:
 @example
 (setq vm-mime-external-content-types-alist
       '(
-         ("text/html"   "netscape")
+         ("text/html"   browse-url-of-file)
          ("image/gif"   "xv")
          ("image/jpeg"  "xv")
          ("video/mpeg"  "mpeg_play")
-         ("video"       "xanim")
+         ("video"       w32-shell-execute "open")
        )
 )
 @end example
@@ -2369,7 +2381,7 @@ you can kill it @key{C-k} and yank it back with @key{C-y}.
 @kindex C-c C-m
 @item C-c C-m (@code{vm-mime-attach-message})
 Attaches a mail message to the composition.  If invoked with a
-prefix argument, the name of a folder read from the minibuffer and
+prefix argument, the name of a folder is read from the minibuffer and
 the message or messages to be attached are copied from that
 folder.  You will be prompted for the message number of the
 message to be attached.  If you invoke the command on marked
@@ -3715,7 +3727,7 @@ you can see a more compact summary of the folder.
 @findex vm-expand-all-threads
 Thread folding is enabled by setting the variable
 @code{vm-summary-enable-thread-folding} to a non-nil value.  The summary
-window then has a folding indicator in the first column, with @code{-}
+window then has a folding indicator in the first column: with @code{-}
 for threads that are expanded and @code{+} for threads that are
 collapsed.  The command @kbd{T}
 (@code{vm-toggle-thread}) allows you to expand a collapsed thread or
@@ -3751,27 +3763,26 @@ format of the summary.
 
 @findex vm-expand-all-threads
 @findex vm-collapse-all-threads
-If the variable @code{vm-summary-enable-thread-folding} is non-nil,
-the Summary window starts out with all the threads folded.  You can
-selectively expand threads using the @code{vm-toggle-thread} function.
-Alternatively, you can expand all the threads in the folder using the
-command @kbd{E} (@code{vm-expand-all-threads}).  The command
-@kbd{C} (@code{vm-collapse-all-threads}) does the reverse.  It
-collapses all the expanded threads.
+When thread folding is enabled, the Summary window starts out with all
+the threads folded.  You can expand all the threads in the folder
+using the command @kbd{E} (@code{vm-expand-all-threads}).  The command
+@kbd{C} (@code{vm-collapse-all-threads}) does the reverse.
 
 
 @node Thread Operations, Summary Faces, Thread Folding, Summaries
 @section Thread Operations
 
 @vindex vm-enable-thread-operations
+@findex vm-toggle-thread-operations
 When you have thread-folding enabled, you can execute VM operations
 such as saving and deleting messages on entire threads.  To obtain
-this functionality, you may set the variable
+this functionality, set the variable
 @code{vm-enable-thread-operations} to a non-@code{nil} value in your
-vm-init-file.  You can also invoke the command
-@code{vm-toggle-thread-operations} in a running VM session.  Then you
-may invoke VM operations in the Summary window with threads collapsed,
-to operate on whole threads.
+vm-init-file.  Setting it to `t' enables thread operations
+unconditionally.  Setting it to the symbol `ask' allows a confirmation
+dialogue before a thread operation is invoked.  You can use the
+command @code{vm-toggle-thread-operations} in a running VM session to
+enable or disable thread operations.
 
 As an example, doing an @kbd{s} (@code{vm-save-message}) operation on
 an ordinary message saves just the single message.  However, if thread
@@ -3789,9 +3800,20 @@ MuMTMNsMu
 
 All operations that can be sensibly invoked on multiple messages
 extend to thread operations in this way.  They include deleting,
-undeleting, marking, unmarking, forwarding, replying, saving/deleting
-attachments etc.
+undeleting, marking, unmarking, forwarding, saving/deleting
+attachments etc.  Replying to messages cannot be invoked as a thread
+operation, to prevent the accidental sending of replies to unintended
+recipients. 
 
+The thread operations can give rise to surprising behavior.  Even
+though it appears that an operation was invoked on a single message,
+it actually applies to all the messages in a thread.  So, care and
+practice are warranted before you enable thread operations
+unconditionally.  A safer option is to set
+`vm-enable-thread-operations' to `ask'.  In that case, VM asks for
+confirmation every time an operation is applicable to all the messages
+in a collapsed thread.  You can override the confirmation dialogue by
+giving a prefix argument `C-u' to your operation.  
 
 @node Summary Faces,, Thread Operations, Summaries
 @section Summary Faces

@@ -24,7 +24,7 @@
 (provide 'vm-delete)
 
 ;;;###autoload
-(defun vm-delete-message (count)
+(defun vm-delete-message (count &optional mlist)
   "Add the `deleted' attribute to the current message.
 
 The message will be physically deleted from the current folder the next
@@ -36,29 +36,32 @@ the current message and the previous |COUNT| - 1 messages are
 deleted.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
-only marked messages are deleted, other messages are ignored."
+only marked messages are deleted, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are deleted."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist (vm-select-marked-or-prefixed-messages count))
 	(del-count 0))
+    (unless mlist
+      (setq mlist (vm-select-operable-messages count "Delete")))
     (while mlist
-      (if (not (vm-deleted-flag (car mlist)))
-	  (progn
-	    (vm-set-deleted-flag (car mlist) t)
-	    (vm-increment del-count)
-	    ;; The following is a temporary fix.  To be absorted into
-	    ;; vm-update-summary-and-mode-line eventually.
-	    (when (and vm-summary-enable-thread-folding
-		       vm-summary-show-threads
-		       (not (and vm-enable-thread-operations
-				 (eq count 1)))
-		       (> (vm-thread-count (car mlist)) 1))
-	      (with-current-buffer vm-summary-buffer
-		(vm-expand-thread (vm-thread-root (car mlist)))))))
+      (unless (vm-deleted-flag (car mlist))
+	(vm-set-deleted-flag (car mlist) t)
+	(vm-increment del-count))
+      ;; The following is a temporary fix.  To be absorted into
+      ;; vm-update-summary-and-mode-line eventually.
+      (when (and vm-summary-enable-thread-folding
+		 vm-summary-show-threads
+		 ;; (not (and vm-enable-thread-operations
+		 ;;	 (eq count 1)))
+		 (> (vm-thread-count (car mlist)) 1))
+	(with-current-buffer vm-summary-buffer
+	  (vm-expand-thread (vm-thread-root (car mlist)))))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-delete-message vm-delete-message-backward)
 		(list this-command))
@@ -92,14 +95,17 @@ the current message and the previous |COUNT| - 1 messages are
 deleted.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
-only marked messages are undeleted, other messages are ignored."
+only marked messages are undeleted, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are undeleted."
   (interactive "p")
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist (vm-select-marked-or-prefixed-messages count))
+	(mlist (vm-select-operable-messages count "Undelete"))
 	(undel-count 0))
     (while mlist
       (if (vm-deleted-flag (car mlist))
@@ -212,18 +218,21 @@ deletion; you will have to expunge the messages with
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
 only duplicate messages among the marked messages are deleted,
-unmarked messages are not hashed or considerd for deletion."
+unmarked messages are not hashed or considerd for deletion.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then only the messages in
+the thread are considered."
   (interactive)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(table (make-vector 103 0))
-	(mp vm-message-list)
+	(mp (vm-select-operable-messages 1 "Delete duplicates among"))
         (n 0)
         (case-fold-search t)
         mid)
-    (if used-marks
-	(setq mp (vm-select-marked-or-prefixed-messages 0)))	
+    (unless (cdr mp)
+      (setq mp vm-message-list))
     (while mp
       (cond ((vm-deleted-flag (car mp)))
             (t
@@ -257,17 +266,20 @@ really get rid of them, as usual.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
 only duplicate messages among the marked messages are deleted,
-unmarked messages are not hashed or considerd for deletion."
+unmarked messages are not hashed or considerd for deletion.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then only the messages in
+the thread are considered."
   (interactive)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist vm-message-list)
+	(mlist (vm-select-operable-messages 1 "Delete duplicates among"))
 	(table (make-vector 61 0))
 	hash m
 	(del-count 0))
-    (if used-marks
-	(setq mlist (vm-select-marked-or-prefixed-messages 0)))
+    (unless (cdr mlist)
+      (setq mlist vm-message-list))
     (save-excursion
       (save-restriction
 	(widen)
@@ -442,7 +454,7 @@ ignored."
 				  (vm-imap-uid-of (vm-real-message-of (car mp)))
 				  (vm-imap-uid-validity-of
 				   (vm-real-message-of (car mp))))
-				 vm-imap-messages-to-expunge)
+				 vm-imap-messages-to-expunge))
 			   ;; Set this so that if Emacs crashes or
 			   ;; the user quits without saving, we
 			   ;; have a record of messages that were
@@ -450,7 +462,7 @@ ignored."
 			   ;; When the user does M-x recover-file
 			   ;; we won't re-retrieve messages the
 			   ;; user has already dealt with.
-			   vm-imap-retrieved-messages
+		     (setq vm-imap-retrieved-messages
 			   (cons (list (vm-imap-uid-of
 					(vm-real-message-of (car mp)))
 				       (vm-imap-uid-validity-of

@@ -251,7 +251,22 @@ the messages in the current folder."
 
 	      (setq mp m-list)
 	      (while mp
+		(setq m (car mp))
+		(when (vm-su-start-of m)
+		  (set-marker (vm-su-start-of m) nil)
+		  (set-marker (vm-su-end-of m) nil))
+		(when (setq o (vm-su-summary-mouse-track-overlay-of m))
+		  (vm-detach-extent o))
+		(setq mp (cdr mp)))
+
+	      (overlay-recenter (point-max))
+
+	      (setq mp m-list)
+	      (while mp
                 (setq m (car mp))
+		(if (and vm-debug
+			 (member (vm-number-of m) vm-summary-traced-messages))
+		    (debug))
 		(vm-set-su-start-of m (point))
 		(insert vm-summary-no-=>)
 		(vm-tokenized-summary-insert m (vm-su-summary m))
@@ -463,6 +478,8 @@ the Summary buffer exists. "
 (defun vm-update-message-summary (m)
   "Replace the summary line of the message M in the summary
 buffer by a regenerated summary line."
+  (if (and vm-debug (member (vm-number-of m) vm-summary-traced-messages))
+      (debug))
   (if (and (vm-su-start-of m)
 	   (marker-buffer (vm-su-start-of m)))
       (let ((modified (buffer-modified-p))
@@ -1564,7 +1581,7 @@ the from and full-name entries of the cached-data vector.   USR, 2010-05-13"
                       (error
                        (message err)
                        (sit-for 5)
-                       "corrupted-header")))
+                       (list "corrupted-header"))))
     (setq list (vm-parse-addresses all)) ; adds text properties for charsets
     (while list
       ;; Just like vm-su-do-author:
@@ -1618,8 +1635,8 @@ mime-encoded string with text properties.  USR 2010-05-13"
 		   (concat "<fake-VM-id."
 			   (vm-md5-string
 			    (buffer-substring
-			     (vm-text-of (vm-real-message-of m))
-			     (vm-text-end-of (vm-real-message-of m))))
+			     (vm-headers-of (vm-real-message-of m))
+			     (vm-text-of (vm-real-message-of m))))
 			   "@talos.iv>")
 		 (error nil))))
 	   (concat "<" (int-to-string (vm-abs (random))) "@toto.iv>")))))

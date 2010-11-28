@@ -84,8 +84,6 @@
 ;;	(aliased to vm-thread-indentation)
 ;; --------------------------------------------------------------------------
 
-(defvar vm-traced-message-ids nil)
-
 (if (fboundp 'define-error)
     (define-error 'vm-thread-error "VM internal threading error")
   (put 'vm-thread-error 'error-conditions
@@ -825,36 +823,40 @@ have been built for this function to work."
 Conversely, all members of thread subtrees should actually belong
 to the thread.  Used for testing purposes."
   (interactive)
-  (unless ml
-    (with-current-buffer (or vm-mail-buffer (current-buffer))
-      (setq ml vm-message-list)))
-  ;; Check that all messages belong to their respective subtrees
-  (mapc
-   (lambda (m)
-     (let* ((root (vm-thread-root-sym m))
-	    (subtree (vm-thread-subtree root)))
-       (with-current-buffer (vm-buffer-of m)
-	 (unless (eq root 
-		     (intern-soft (symbol-name root) vm-thread-obarray))
-	   (debug 'interned-in-wrong-buffer m)))
-       (unless (memq m subtree)
-	 (debug 'missing m))))
-   ml)
-  ;; Check that all subtrees have correct messages
-  (mapc
-   (lambda (subroot)
-     (let* ((subtree (vm-thread-subtree subroot))
-	    (buf (vm-buffer-of subroot)))
-       (mapc
-	(lambda (m)
-	  (unless (and (vm-thread-root m)
-		       (eq (vm-thread-root m) 
-			   (vm-thread-root subroot)))
-	    (debug 'spurious m))
-	  (unless (eq buf (vm-buffer-of m))
-	    (debug 'wrong-buffer m)))
-	subtree)))
-   ml)
-  )
+  (vm-select-folder-buffer)
+  (when (vectorp vm-thread-obarray)
+    (unless ml
+      (with-current-buffer (or vm-mail-buffer (current-buffer))
+	(setq ml vm-message-list)))
+    ;; Check that all messages belong to their respective subtrees
+    (mapc
+     (lambda (m)
+       (let* ((root (vm-thread-root-sym m))
+	      (subtree (and root (vm-thread-subtree root))))
+	 (unless root
+	   (debug 'message-with-no-root m))
+	 (with-current-buffer (vm-buffer-of m)
+	   (unless (eq root 
+		       (intern-soft (symbol-name root) vm-thread-obarray))
+	     (debug 'interned-in-wrong-buffer m)))
+	 (unless (memq m subtree)
+	   (debug 'missing m))))
+     ml)
+    ;; Check that all subtrees have correct messages
+    (mapc
+     (lambda (subroot)
+       (let* ((subtree (vm-thread-subtree subroot))
+	      (buf (vm-buffer-of subroot)))
+	 (mapc
+	  (lambda (m)
+	    (unless (and (vm-thread-root m)
+			 (eq (vm-thread-root m) 
+			     (vm-thread-root subroot)))
+	      (debug 'spurious m))
+	    (unless (eq buf (vm-buffer-of m))
+	      (debug 'wrong-buffer m)))
+	  subtree)))
+     ml)
+    ))
 
 ;;; vm-thread.el ends here

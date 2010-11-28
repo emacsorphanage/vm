@@ -107,7 +107,9 @@
 
 ;;;###autoload
 (defun vm-do-reply (to-all include-text count)
-  (let ((mlist (vm-select-marked-or-prefixed-messages count))
+  (let ((mlist (let ((vm-enable-thread-operations nil)) ; disable
+					; thread operation for replies
+		 (vm-select-operable-messages count "Reply to")))
         (dir default-directory)
         (message-pointer vm-message-pointer)
         (case-fold-search t)
@@ -353,7 +355,7 @@ specified by `vm-included-text-headers' and
              prompt
              (last-command last-command)
              (this-command this-command))
-      (save-excursion
+      (save-current-buffer
 	(vm-select-folder-buffer)
 	(setq default (and vm-message-pointer
 			   (vm-number-of (car vm-message-pointer)))
@@ -976,20 +978,19 @@ Subject: header manually."
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (if (and (eq last-command 'vm-next-command-uses-marks)
-	   (cdr (vm-select-marked-or-prefixed-messages 0)))
-      (let ((vm-digest-send-type vm-forwarding-digest-type))
-	(setq this-command 'vm-next-command-uses-marks)
-	(command-execute 'vm-send-digest))
-    ;; single message forwarding
-    (let ((dir default-directory)
-	  (miming (and vm-send-using-mime
-		       (equal vm-forwarding-digest-type "mime")))
-	  reply-buffer
-	  header-end
-	  (mp (vm-select-marked-or-prefixed-messages 1)))
-      ;; (vm-load-message)
-      (vm-retrieve-marked-or-prefixed-messages)
+  (let ((dir default-directory)
+	(miming (and vm-send-using-mime
+		     (equal vm-forwarding-digest-type "mime")))
+	reply-buffer
+	header-end
+	(mp (vm-select-operable-messages 1 "Forward")))
+    (if (cdr mp)
+	(let ((vm-digest-send-type vm-forwarding-digest-type))
+	  ;; (setq this-command 'vm-next-command-uses-marks)
+	  ;; (command-execute 'vm-send-digest)
+	  (vm-send-digest nil mp))
+      ;; single message forwarding
+      (vm-retrieve-operable-messages 1 mp)
       (save-restriction
 	(widen)
 	(vm-mail-internal
@@ -1051,16 +1052,16 @@ Subject: header manually."
 		(car vm-forward-list) 
 		(append vm-forwarded-headers vm-forwarded-mime-headers)
 		vm-unforwarded-header-regexp)))
-      (if miming
-	  (let ((b (current-buffer)))
-	    (set-buffer reply-buffer)
-	    (mail-text)
-	    (vm-mime-attach-object b "message/rfc822" nil
-				   "forwarded message" t)
-	    (add-hook 'kill-buffer-hook
-		      (list 'lambda ()
-			    (list 'if (list 'eq reply-buffer '(current-buffer))
-				  (list 'kill-buffer b))))))
+	(if miming
+	    (let ((b (current-buffer)))
+	      (set-buffer reply-buffer)
+	      (mail-text)
+	      (vm-mime-attach-object b "message/rfc822" nil
+				     "forwarded message" t)
+	      (add-hook 'kill-buffer-hook
+			(list 'lambda ()
+			      (list 'if (list 'eq reply-buffer '(current-buffer))
+				    (list 'kill-buffer b))))))
 	(mail-position-on-field "To"))
       (run-hooks 'vm-forward-message-hook)
       (run-hooks 'vm-mail-mode-hook))))
@@ -1077,8 +1078,8 @@ you can change the recipient address before resending the message."
 	(dir default-directory)
 	(layout (vm-mm-layout (car vm-message-pointer)))
 	(lim (vm-text-end-of (car vm-message-pointer))))
-    ;; (vm-load-message)
-    (vm-retrieve-marked-or-prefixed-messages)
+    ;; We only want to select one message here
+    (vm-retrieve-operable-messages 1 (list (car vm-message-pointer)))
     (save-restriction
       (widen)
       (if (or (not (vectorp layout))
@@ -1150,8 +1151,8 @@ You may also create a Resent-Cc header."
 	  (vmp vm-message-pointer)
 	  (start (vm-headers-of (car vm-message-pointer)))
 	  (lim (vm-text-end-of (car vm-message-pointer))))
-      ;; (vm-load-message)
-      (vm-retrieve-marked-or-prefixed-messages)
+      ;; We only want to select one message here
+      (vm-retrieve-operable-messages 1 (list (car vm-message-pointer)))
       ;; briefly nullify vm-mail-header-from to keep vm-mail-internal
       ;; from inserting another From header.
       (let ((vm-mail-header-from nil))
@@ -1194,7 +1195,7 @@ You may also create a Resent-Cc header."
       (run-hooks 'vm-mail-mode-hook))))
 
 ;;;###autoload
-(defun vm-send-digest (&optional prefix)
+(defun vm-send-digest (&optional prefix mlist)
   "Send a digest of all messages in the current folder to recipients.
 The type of the digest is specified by the variable vm-digest-send-type.
 You will be placed in a Mail mode buffer as is usual with replies, but you
@@ -1213,13 +1214,20 @@ only marked messages will be put into the digest."
 	(miming (and vm-send-using-mime (equal vm-digest-send-type "mime")))
 	mp mail-buffer b
 	;; prefix arg doesn't have "normal" meaning here, so only call
-	;; vm-select-marked-or-prefixed-messages if we're using marks.
-	(mlist (if (eq last-command 'vm-next-command-uses-marks)
-		   (vm-select-marked-or-prefixed-messages 0)
-		 vm-message-list))
+	;; vm-select-operable-messages for marks or threads.
 	ms start header-end boundary)
-    ;; (vm-load-message prefix)
-    (vm-retrieve-marked-or-prefixed-messages prefix)
+    (unless mlist
+      (setq mlist (vm-select-operable-messages 1 "Send as digest")))
+    ;; if messages were selected use them, otherwise the whole folder
+    (cond ((cdr mlist)
+	   (vm-retrieve-operable-messages 1 mlist))
+	  ((not (y-or-n-p "Send the entire folder as a digest? "))
+	   (error "aborted"))
+	  ((vm-find vm-message-list
+		    (lambda (m) (vm-body-to-be-retrieved-of m)))
+	   (error "Headers-only messages present in the folder"))
+	  (t
+	   (setq mlist vm-message-list)))
     (save-restriction
       (widen)
       (vm-mail-internal

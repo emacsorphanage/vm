@@ -591,9 +591,8 @@ all marked messages will be burst."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((start-buffer (current-buffer)) m totals-blurb
-	(mlist (vm-select-marked-or-prefixed-messages 1)))
-    ;; (vm-load-message)
-    (vm-retrieve-marked-or-prefixed-messages)
+	(mlist (vm-select-operable-messages 1 "Burst digest of")))
+    (vm-retrieve-operable-messages 1 mlist)
     (while mlist
       (if (vm-virtual-message-p (car mlist))
 	  (progn
@@ -696,10 +695,9 @@ all marked messages will be burst."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((start-buffer (current-buffer)) m totals-blurb
-	(mlist (vm-select-marked-or-prefixed-messages 1))
+	(mlist (vm-select-operable-messages 1 "Burst digest of"))
 	(work-buffer nil))
-    ;; (vm-load-message)
-    (vm-retrieve-marked-or-prefixed-messages)
+    (vm-retrieve-operable-messages 1 mlist)
     (unwind-protect
 	(save-excursion
 	  (setq work-buffer (generate-new-buffer

@@ -27,6 +27,10 @@ VM 8.1.94a
    * New variable: `vm-summary-visible' specifies which messages
      should remain visible in folded thread summaries.
 
+   * New feature: vm-mime-external-content-types-alist allows
+     emacs-lisp functions to be used for external viewing, e.g.,
+     browse-url-of-file. 
+
 VM 8.1.93a (2010-08-28)
 
   CHANGES

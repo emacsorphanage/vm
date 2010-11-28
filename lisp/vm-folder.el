@@ -2947,7 +2947,7 @@ all marked messages are affected, other messages are ignored."
   (or count (setq count 1))
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (let ((mlist (vm-select-marked-or-prefixed-messages count)))
+  (let ((mlist (vm-select-operable-messages count "Unread")))
     (while mlist
       (if (and (not (vm-unread-flag (car mlist)))
 	       (not (vm-new-flag (car mlist))))
@@ -2973,7 +2973,7 @@ all marked messages are affected, other messages are ignored."
   (or count (setq count 1))
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (let ((mlist (vm-select-marked-or-prefixed-messages count)))
+  (let ((mlist (vm-select-operable-messages count "Frag as read")))
     (while mlist
       (when (or (vm-unread-flag (car mlist))
 		(vm-new-flag (car mlist)))
@@ -3107,18 +3107,19 @@ Giving a prefix argument overrides the variable and no expunge is done."
     (vm-garbage-collect-message)
     (vm-garbage-collect-folder)
 
+    (unless (or no-change virtual)
+      ;; this could take a while, so give the user some feedback
+      (message "Quitting...")
+      (or vm-folder-read-only (eq major-mode 'vm-virtual-mode)
+	  (vm-change-all-new-to-unread)))
+    (when (and (buffer-modified-p)
+	       (or buffer-file-name buffer-offer-save)
+	       (not no-change)
+	       (not virtual))
+      (vm-save-folder))
+
     (vm-virtual-quit)
-    (if (and (not no-change) (not virtual))
-	(progn
-	  ;; this could take a while, so give the user some feedback
-	  (message "Quitting...")
-	  (or vm-folder-read-only (eq major-mode 'vm-virtual-mode)
-	      (vm-change-all-new-to-unread))))
-    (if (and (buffer-modified-p)
-	     (or buffer-file-name buffer-offer-save)
-	     (not no-change)
-	     (not virtual))
-	(vm-save-folder))
+
     (cond ((and (eq vm-folder-access-method 'pop)
 		(setq process (vm-folder-pop-process)))
 	   (vm-pop-end-session process))
@@ -3382,6 +3383,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 		   (vm-compute-totals)
 		   (vm-store-folder-totals buffer-file-name (cdr vm-totals))))
 	     ;; get summary cache up-to-date
+	     (message "Stuffing folder data...")
 	     (vm-update-summary-and-mode-line)
 	     (vm-stuff-bookmark)
 	     (vm-stuff-pop-retrieved)
@@ -3391,7 +3393,8 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	     (vm-stuff-labels)
 	     (vm-stuff-summary)
 	     (and vm-message-order-changed
-		  (vm-stuff-message-order))))
+		  (vm-stuff-message-order))
+	     (message "Stuffing folder data... done")))
        nil ))))
 
 ;;;###autoload
@@ -3506,6 +3509,7 @@ folder."
 	  (if vm-message-list
 	      (progn
 		;; get summary cache up-to-date
+		(message "Stuffing folder data...")
 		(vm-update-summary-and-mode-line)
 		(vm-stuff-bookmark)
 		(vm-stuff-pop-retrieved)
@@ -3515,7 +3519,8 @@ folder."
 		(vm-stuff-labels)
 		(vm-stuff-summary)
 		(and vm-message-order-changed
-		     (vm-stuff-message-order))))
+		     (vm-stuff-message-order))
+		(message "Stuffing folder data... done")))
 	  (message "Saving...")
 	  (let ((vm-inhibit-write-file-hook t)
 		(oldmodebits (and (fboundp 'default-file-modes)
@@ -4495,12 +4500,13 @@ files."
         (vm-sort-messages vm-ml-sort-keys))
     new-messages ))
 
-(defun vm-select-marked-or-prefixed-messages (prefix)
-  "Return a list of all marked messages or the messages indicated by a
-prefix argument.  If the prefix argument is supplied *and we are
-not in a vm-next-command-uses-marks context*, then return a number
-of messages around vm-message-pointer equal to (abs prefix),
-either backward (prefix is negative) or forward (positive)."
+(defun vm-select-operable-messages (prefix op-description)
+  "Return a list of all marked messages, messages in a collapsed
+thread, or the messages indicated by a prefix argument.  The
+prefix argument is used only if the other two selection methods
+are not at play.  If it is used, return a number of messages
+around vm-message-pointer equal to (abs prefix), either
+backward (if prefix is negative) or forward (if positive)."
   (if (eq last-command 'vm-next-command-uses-marks)
       (vm-marked-messages)
     (let ((direction (if (< prefix 0) 'backward 'forward))
@@ -4508,14 +4514,19 @@ either backward (prefix is negative) or forward (positive)."
 	  (vm-message-pointer vm-message-pointer)
 	  (current-message (car vm-message-pointer))
 	  mlist)
-      (if (and (= prefix 1)
+      (if (and ;; (= prefix 1) ; ignore the prefix argument
 	       (vm-summary-operation-p)
 	       vm-summary-enable-thread-folding
 	       vm-summary-show-threads
 	       vm-enable-thread-operations
 	       (vm-thread-root-p current-message)
 	       (with-current-buffer vm-summary-buffer
-		 (vm-summary-collapsed-root-p current-message)))
+		 (vm-summary-collapsed-root-p current-message))
+	       (or (not (= prefix 1))
+		   (not (eq vm-enable-thread-operations 'ask))
+		   (y-or-n-p 
+		    (format "%s all messages in thread? " op-description)))
+	       )
 	  (vm-thread-subtree current-message)
 	(unless (eq vm-circular-folders t)
 	  (vm-check-count prefix))
@@ -4677,11 +4688,12 @@ Interactively TYPE will be read from the minibuffer."
    (let ((this-command this-command)
 	 (last-command last-command)
 	 (types vm-supported-folder-types))
-     (vm-select-folder-buffer)
-     (vm-error-if-virtual-folder)
-     (setq types (vm-delqual (symbol-name vm-folder-type)
-			     (copy-sequence types)))
-     (list (intern (vm-read-string "Change folder to type: " types)))))
+     (save-current-buffer
+       (vm-select-folder-buffer)
+       (vm-error-if-virtual-folder)
+       (setq types (vm-delqual (symbol-name vm-folder-type)
+			       (copy-sequence types)))
+       (list (intern (vm-read-string "Change folder to type: " types))))))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-virtual-folder)
   (if (not (memq type '(From_ BellFrom_ From_-with-Content-Length mmdf babyl)))

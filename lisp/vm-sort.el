@@ -481,7 +481,7 @@ folder in the order in which the messages arrived."
 	(if (and order-did-change (not vm-folder-read-only))
 	    (progn
 	      (setq vm-message-order-changed t)
-	      (vm-set-buffer-modified-p t)
+	      ;; (vm-set-buffer-modified-p t)  ; only viewing order changed
 	      (vm-clear-modification-flag-undos))))
       (setq vm-ml-sort-keys ml-keys)
       (intern (buffer-name) vm-buffers-needing-display-update)
@@ -508,9 +508,14 @@ folder in the order in which the messages arrived."
         (vm-sort-insert-auto-folder-names))))
 
 ;;;###autoload
-(defun vm-sort-compare-xxxxxx (m1 m2)
+(defun vm-sort-compare-xxxxxx (msg1 msg2)
+  (if (and vm-summary-debug
+	   (or (member (vm-number-of msg1) vm-summary-traced-messages)
+	       (member (vm-number-of msg2) vm-summary-traced-messages)))
+      (debug))
   (let ((key-funcs vm-key-functions) 
-	result)
+	result
+	(m1 msg1) (m2 msg2))
     (catch 'done
       (unless key-funcs
 	(throw 'done nil))

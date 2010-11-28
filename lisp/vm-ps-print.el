@@ -263,11 +263,10 @@ for customization of the output."
          (folder-name (vm-ps-print-message-folder-name))
          (mstart nil)
 	 (m nil)
-	 (mlist (vm-select-marked-or-prefixed-messages count))
+	 (mlist (vm-select-operable-messages count "Print"))
 	 (mcount (length mlist))
 	 (tmpbuf (get-buffer-create "*vm-ps-print*")))
-    ;; (vm-load-message count)
-    (vm-retrieve-marked-or-prefixed-messages count)
+    (vm-retrieve-operable-messages count mlist)
 
     (set-buffer tmpbuf)
     (setq major-mode 'vm-mode)
