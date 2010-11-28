@@ -3107,7 +3107,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
     (vm-garbage-collect-message)
     (vm-garbage-collect-folder)
 
-    (unless (or (no-change) virtual)
+    (unless (or no-change virtual)
       ;; this could take a while, so give the user some feedback
       (message "Quitting...")
       (or vm-folder-read-only (eq major-mode 'vm-virtual-mode)
