@@ -953,6 +953,9 @@ nil if the session could not be created."
 		(error
 		 (message "%s" (error-message-string err))
 		 (setq shutdown t)
+		 ;;-------------------
+		 (vm-buffer-type:exit)
+		 ;;-------------------
 		 (throw 'end-of-session nil))))
 	    (setq vm-imap-read-point (point))
 	    (vm-process-kill-without-query process)

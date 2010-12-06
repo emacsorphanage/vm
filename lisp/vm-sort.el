@@ -522,9 +522,13 @@ folder in the order in which the messages arrived."
       (when (eq (car key-funcs) 'vm-sort-compare-thread)
 	(setq result (vm-sort-compare-thread m1 m2))
 	(if (consp result)
-	    (setq m1 (car result)
-		  m2 (cdr result)
-		  key-funcs (cdr key-funcs))
+	    (progn
+	      (setq m1 (car result)
+		    m2 (cdr result)
+		    key-funcs (cdr key-funcs))
+	      (if (or (null m1) (null m2))
+		  (progn (if vm-summary-debug (debug))
+			 (throw 'done t))))
 	  (throw 'done result)))
       (while key-funcs
 	(if (eq '= (setq result (funcall (car key-funcs) m1 m2)))
