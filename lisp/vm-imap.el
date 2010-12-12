@@ -833,7 +833,7 @@ Optional argument INTERACTIVE says the operation has been invoked
 interactively, and the optional argument PURPOSE is inserted in
 the process buffer for tracing purposes.  Returns the process or
 nil if the session could not be created."
-  (let ((shutdown nil)			; whether process is to be shutdown
+  (let ((shutdown nil)		   ; whether process is to be shutdown
 	(folder-type vm-folder-type)
 	process ooo
 	(folder (or (vm-imap-folder-for-spec source)
@@ -849,64 +849,64 @@ nil if the session could not be created."
 	source-list imap-buffer
 	source-nopwd-nombox)
     (vm-imap-log-token 'make)
+    ;; parse the maildrop
+    (setq source-list (vm-parse source "\\([^:]*\\):?" 1 7)
+	  host (nth 1 source-list)
+	  port (nth 2 source-list)
+	  ;;		mailbox (nth 3 source-list)
+	  auth (nth 4 source-list)
+	  user (nth 5 source-list)
+	  pass (nth 6 source-list)
+	  source-nopwd-nombox
+	  (vm-imapdrop-sans-personal-info source))
+    (cond ((equal auth "preauth") t)
+	  ((equal "imap-ssl" (car source-list))
+	   (setq use-ssl t
+		 session-name "IMAP over SSL"))
+	  ((equal "imap-ssh" (car source-list))
+	   (setq use-ssh t
+		 session-name "IMAP over SSH")))
+    (vm-imap-check-for-server-spec source host port auth user pass
+				   use-ssl use-ssh)
+    (setq port (string-to-number port))
+    (when (and (equal pass "*") (not (equal auth "preauth")))
+      (setq pass
+	    (car (cdr (assoc source-nopwd-nombox vm-imap-passwords))))
+      (when (and (null pass)
+		 (boundp 'auth-sources)
+		 (fboundp 'auth-source-user-or-password))
+	(cond ((and (setq authinfo
+			  (auth-source-user-or-password
+			   '("login" "password")
+			   (vm-imap-account-name-for-spec source)
+			   port))
+		    (equal user (car authinfo)))
+	       (setq pass (cadr authinfo)))
+	      ((and (setq authinfo
+			  (auth-source-user-or-password
+			   '("login" "password")
+			   host port))
+		    (equal user (car authinfo)))
+	       (setq pass (cadr authinfo)))))
+      (when (and (null pass) interactive)
+	(setq pass
+	      (read-passwd (format "IMAP password for %s: " folder))))
+      (when (null pass)
+	(error "Need password for %s" folder)))
+    ;; save the password for the sake of
+    ;; vm-expunge-imap-messages, which passes password-less
+    ;; imapdrop specifications to vm-make-imap-session.
+    (if (null (assoc source-nopwd-nombox vm-imap-passwords))
+	(setq vm-imap-passwords (cons (list source-nopwd-nombox pass)
+				      vm-imap-passwords)))
+    ;; get the trace buffer
+    (setq imap-buffer
+	  (vm-make-work-buffer 
+	   (vm-make-trace-buffer-name session-name host)))
+    (vm-imap-log-token imap-buffer)
+
     (unwind-protect
 	(catch 'end-of-session
-	  ;; parse the maildrop
-	  (setq source-list (vm-parse source "\\([^:]*\\):?" 1 7)
-		host (nth 1 source-list)
-		port (nth 2 source-list)
-;;		mailbox (nth 3 source-list)
-		auth (nth 4 source-list)
-		user (nth 5 source-list)
-		pass (nth 6 source-list)
-		source-nopwd-nombox
-		(vm-imapdrop-sans-personal-info source))
-	  (cond ((equal auth "preauth") t)
-		((equal "imap-ssl" (car source-list))
-		 (setq use-ssl t
-		       session-name "IMAP over SSL"))
-		((equal "imap-ssh" (car source-list))
-		 (setq use-ssh t
-		       session-name "IMAP over SSH")))
-	  (vm-imap-check-for-server-spec source host port auth user pass
-					 use-ssl use-ssh)
-	  (setq port (string-to-number port))
-	  (when (and (equal pass "*") (not (equal auth "preauth")))
-	    (setq pass
-		  (car (cdr (assoc source-nopwd-nombox vm-imap-passwords))))
-	    (when (and (null pass)
-		       (boundp 'auth-sources)
-		       (fboundp 'auth-source-user-or-password))
-	      (cond ((and (setq authinfo
-				(auth-source-user-or-password
-				 '("login" "password")
-				 (vm-imap-account-name-for-spec source)
-				 port))
-			  (equal user (car authinfo)))
-		     (setq pass (cadr authinfo)))
-		    ((and (setq authinfo
-				(auth-source-user-or-password
-				 '("login" "password")
-				 host port))
-			  (equal user (car authinfo)))
-		     (setq pass (cadr authinfo)))))
-	    (when (and (null pass) interactive)
-	      (setq pass
-		    (read-passwd (format "IMAP password for %s: " folder))))
-	    (when (null pass)
-	      (message "Need password for %s" folder)
-	      (throw 'end-of-session nil)))
-	  ;; save the password for the sake of
-	  ;; vm-expunge-imap-messages, which passes password-less
-	  ;; imapdrop specifications to vm-make-imap-session.
-	  (if (null (assoc source-nopwd-nombox vm-imap-passwords))
-	      (setq vm-imap-passwords (cons (list source-nopwd-nombox pass)
-					    vm-imap-passwords)))
-	  ;; get the trace buffer
-	  (setq imap-buffer
-		(vm-make-work-buffer 
-		 (vm-make-trace-buffer-name session-name host)))
-	  (vm-imap-log-token imap-buffer)
 	  (save-excursion		; = save-current-buffer?
 	    (set-buffer imap-buffer)
 	    ;;----------------------------
@@ -953,15 +953,12 @@ nil if the session could not be created."
 		(error
 		 (message "%s" (error-message-string err))
 		 (setq shutdown t)
-		 ;;-------------------
-		 (vm-buffer-type:exit)
-		 ;;-------------------
 		 (throw 'end-of-session nil))))
 	    (setq vm-imap-read-point (point))
 	    (vm-process-kill-without-query process)
 	    (if (setq greeting (vm-imap-read-greeting process))
 		(insert-before-markers (format "-- connected for %s\n" purpose))
-	      (delete-process process) ; why here?  USR
+	      (delete-process process)	; why here?  USR
 	      (setq shutdown t)
 	      (throw 'end-of-session nil))
 	    (setq shutdown t)
@@ -1055,11 +1052,11 @@ nil if the session could not be created."
 		))
 	     (t (error "Don't know how to authenticate using %s" auth)))
 	    (setq shutdown nil)
-	    ;;-------------------
-	    (vm-buffer-type:exit)
-	    ;;-------------------
 	    process ))
       ;; unwind-protection
+      ;;-------------------
+      (vm-buffer-type:exit)
+      ;;-------------------
       (if shutdown
 	  (vm-imap-end-session process imap-buffer))
       (vm-tear-down-stunnel-random-data))))
