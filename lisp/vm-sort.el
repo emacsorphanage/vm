@@ -24,6 +24,20 @@
 
 (provide 'vm-sort)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-thread)
+  (require 'vm-motion)
+  (require 'vm-page)
+  (require 'vm-window)
+  (require 'vm-undo)
+  )
+
+(declare-function vm-sort-insert-auto-folder-names "vm-avirtual" ())
+
 ;;;###autoload
 (defun vm-move-message-forward (count)
   "Move a message forward in a VM folder.

@@ -23,6 +23,11 @@
 
 (provide 'vm-license)
 
+(eval-when-compile
+  (require 'vm-window))
+
+(declare-function Info-goto-node "ext:info" (nodename &optional fork))
+
 ;;;###autoload
 (defun vm-show-copying-restrictions (&optional warranty)
   "Show VM's license, i.e. the GPL."

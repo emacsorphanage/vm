@@ -56,6 +56,11 @@
 (eval-and-compile
   (require 'easymenu)
   (require 'vm-menu)
+  (require 'vm-misc)
+  (require 'vm-summary)
+  (require 'vm-page)
+  (require 'vm-window)
+  (require 'vm-motion)
 )
 
 (defgroup vm-message-history nil

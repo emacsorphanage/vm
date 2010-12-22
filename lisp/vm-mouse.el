@@ -23,6 +23,22 @@
 
 (provide 'vm-mouse)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-thread)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-menu)
+  )
+
+(declare-function vm-mail-to-mailto-url "vm-reply" (url))
+(declare-function event-window "vm-xemacs" (event))
+(declare-function event-point "vm-xemacs" (event))
+
 (defun vm-mouse-set-mouse-track-highlight (start end &optional overlay)
   "Create and return an overlay for mouse selection from START to
 END.  If the optional argument OVERLAY is provided then that that
@@ -34,15 +50,15 @@ that case.                                            USR, 2010-08-01"
 		 (overlay-put o 'mouse-face 'highlight)
 		 o ))
 	      (vm-xemacs-p
-	       (let ((o (make-extent start end)))
-		 (set-extent-property o 'start-open t)
-		 (set-extent-property o 'priority 10)
-		 (set-extent-property o 'highlight t)
+	       (let ((o (vm-make-extent start end)))
+		 (vm-set-extent-property o 'start-open t)
+		 (vm-set-extent-property o 'priority 10)
+		 (vm-set-extent-property o 'highlight t)
 		 o )))
     (cond (vm-fsfemacs-p
 	   (move-overlay overlay start end))
 	  (vm-xemacs-p
-	   (set-extent-endpoints overlay start end)))))
+	   (vm-set-extent-endpoints overlay start end)))))
 
 ;;;###autoload
 (defun vm-mouse-button-2 (event)
@@ -119,10 +135,10 @@ that case.                                            USR, 2010-08-01"
 		 (setq o-list (cdr o-list))))
 	     string ))
 	  (vm-xemacs-p
-	   (let ((e (extent-at (point) nil 'highlight)))
+	   (let ((e (vm-extent-at (point) nil 'highlight)))
 	     (if e
-		 (buffer-substring (extent-start-position e)
-				   (extent-end-position e))
+		 (buffer-substring (vm-extent-start-position e)
+				   (vm-extent-end-position e))
 	       nil)))
 	  (t nil))))
 
@@ -153,10 +169,10 @@ that case.                                            USR, 2010-08-01"
 	 (set-buffer (window-buffer (event-window event)))
 	 (and (event-point event) (goto-char (event-point event)))
 	 (let (e)
-	   (cond ((extent-at (point) (current-buffer) 'vm-url)
+	   (cond ((vm-extent-at (point) (current-buffer) 'vm-url)
 		  (vm-mouse-send-url-at-event event))
-		 ((setq e (extent-at (point) nil 'vm-mime-function))
-		  (funcall (extent-property e 'vm-mime-function) e))
+		 ((setq e (vm-extent-at (point) nil 'vm-mime-function))
+		  (funcall (vm-extent-property e 'vm-mime-function) e))
 		 (t (vm-menu-popup-context-menu event)))))))
 
 ;;;###autoload
@@ -175,12 +191,12 @@ that case.                                            USR, 2010-08-01"
   (save-restriction
     (widen)
     (cond ((vm-mouse-xemacs-mouse-p)
-	   (let ((e (extent-at pos (current-buffer) 'vm-url))
+	   (let ((e (vm-extent-at pos (current-buffer) 'vm-url))
 		 url)
 	     (if (null e)
 		 nil
-	       (setq url (buffer-substring (extent-start-position e)
-					   (extent-end-position e)))
+	       (setq url (buffer-substring (vm-extent-start-position e)
+					   (vm-extent-end-position e)))
 	       (vm-mouse-send-url url browser))))
 	  ((vm-mouse-fsfemacs-mouse-p)
 	   (let (o-list url o)

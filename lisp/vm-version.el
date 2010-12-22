@@ -21,6 +21,10 @@
 
 (provide 'vm-version)
 
+(declare-function device-type "vm-xemacs" ())
+(declare-function device-matching-specifier-tag-list "vm-xemacs" ())
+
+
 (defconst vm-version
   (condition-case nil
       (with-temp-buffer

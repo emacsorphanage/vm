@@ -64,6 +64,27 @@
 
 (provide 'vm-reply)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-menu)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-mime)
+  (require 'vm-digest)
+  (require 'vm-undo)
+  ;; (require 'vm-delete)
+  ;; (require 'vm-imap)
+  )
+
+(declare-function vm-mode "vm" (&optional read-only))
+(declare-function vm-session-initialization "vm" ())
+(declare-function vm-decode-postponed-mime-message "vm-pine" ())
+(declare-function get-itimer "vm-xemacs.el" (name))
+
 (declare-function mail-strip-quoted-names "ext:mail-utils" (address))
 (declare-function mail-fetch-field "ext:mail-utils" 
 		  (field-name &optional last all list))
@@ -1539,8 +1560,8 @@ Binds the `vm-mail-mode-map' and hooks"
     (if (boundp 'emacs-version)
 	   (insert emacs-version)
       (insert "Unknown Emacs"))
-    (if (functionp 'emacsw32-version)
-	(insert " [" (emacsw32-version) "]"))
+    ;; (if (functionp 'emacsw32-version)
+    ;; 	(insert " [" (emacsw32-version) "]"))
     (if (boundp 'system-configuration)
 	(insert " (" system-configuration ")"))
     (insert "\n")

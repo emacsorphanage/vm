@@ -23,9 +23,24 @@
 
 (provide 'vm-misc)
 
-(eval-when-compile
-  (require 'vm-misc))
+;; (eval-when-compile
+;;   (require 'vm-misc))
 
+;; Aliases for xemacs functions
+(declare-function xemacs-abbreviate-file-name "vm-misc.el" 
+		  (filename &optional hack-homedir))
+(declare-function xemacs-insert-char "vm-misc.el"
+		  (char &optional count ignored buffer))
+;; Aliases for xemacs/fsfemacs functions with different arguments
+(declare-function emacs-find-file-name-handler "vm-misc.el"
+		  (filename &optional operation))
+(declare-function emacs-focus-frame "vm-misc.el"
+		  (&rest ignore))
+(declare-function emacs-get-buffer-window "vm-misc.el"
+		  (&optional buffer-or-name frame devices))
+
+(declare-function vm-buffer-substring-no-properties "vm-misc.el"
+		  (start end))
 (declare-function vm-extent-property "vm-misc.el" (overlay prop) t)
 (declare-function vm-extent-object "vm-misc.el" (overlay) t)
 (declare-function vm-set-extent-property "vm-misc.el" (overlay prop value) t)
@@ -39,6 +54,16 @@
 (declare-function vm-disable-extents "vm-misc.el" 
 		  (&optional beg end name val) t)
 (declare-function vm-extent-properties "vm-misc.el" (overlay) t)
+
+(declare-function timezone-make-date-sortable "ext:timezone"
+		  (date &optional local timezone))
+(declare-function longlines-decode-region "ext:longlines"
+		  (start end))
+(declare-function longlines-wrap-region "ext:longlines"
+		  (start end))
+(declare-function vm-decode-mime-encoded-words "vm-mime" ())
+(declare-function vm-decode-mime-encoded-words-in-string "vm-mime" (string))
+(declare-function vm-su-subject "vm-summary" (message))
 
 
 ;; This file contains various low-level operations that address
@@ -470,6 +495,7 @@ vm-mail-buffer variable."
       (make-local-hook hook)))
 
 (fset 'xemacs-abbreviate-file-name 'abbreviate-file-name)
+
 (defun vm-abbreviate-file-name (path)
   (if vm-xemacs-p
       (xemacs-abbreviate-file-name path t)
@@ -707,6 +733,51 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	      (and temp-buffer (kill-buffer temp-buffer)))
 	  (error nil)))
       ""))
+
+(defun vm-parse-date (date)
+  (let ((weekday "")
+	(monthday "")
+	(month "")
+	(year "")
+	(hour "")
+	(timezone "")
+	(start nil)
+	string
+	(case-fold-search t))
+    (if (string-match "sun\\|mon\\|tue\\|wed\\|thu\\|fri\\|sat" date)
+	(setq weekday (substring date (match-beginning 0) (match-end 0))))
+    (if (string-match "jan\\|feb\\|mar\\|apr\\|may\\|jun\\|jul\\|aug\\|sep\\|oct\\|nov\\|dec" date)
+	(setq month (substring date (match-beginning 0) (match-end 0))))
+    (if (string-match "[0-9]?[0-9]:[0-9][0-9]\\(:[0-9][0-9]\\)?" date)
+	(setq hour (substring date (match-beginning 0) (match-end 0))))
+    (cond ((string-match "[^a-z][+---][0-9][0-9][0-9][0-9]" date)
+	   (setq timezone (substring date (1+ (match-beginning 0))
+				     (match-end 0))))
+	  ((or (string-match "e[ds]t\\|c[ds]t\\|p[ds]t\\|m[ds]t" date)
+	       (string-match "ast\\|nst\\|met\\|eet\\|jst\\|bst\\|ut" date)
+	       (string-match "gmt\\([+---][0-9]+\\)?" date))
+	   (setq timezone (substring date (match-beginning 0) (match-end 0)))))
+    (while (and (or (zerop (length monthday))
+		    (zerop (length year)))
+		(string-match "\\(^\\| \\)\\([0-9]+\\)\\($\\| \\)" date start))
+      (setq string (substring date (match-beginning 2) (match-end 2))
+	    start (match-end 0))
+      (cond ((and (zerop (length monthday))
+		  (<= (length string) 2))
+	     (setq monthday string))
+	    ((= (length string) 2)
+	     (if (< (string-to-number string) 70)
+		 (setq year (concat "20" string))
+	       (setq year (concat "19" string))))
+	    (t (setq year string))))
+    
+    (aset vm-parse-date-workspace 0 weekday)
+    (aset vm-parse-date-workspace 1 monthday)
+    (aset vm-parse-date-workspace 2 month)
+    (aset vm-parse-date-workspace 3 year)
+    (aset vm-parse-date-workspace 4 hour)
+    (aset vm-parse-date-workspace 5 timezone)
+    vm-parse-date-workspace))
 
 (defun vm-should-generate-summary ()
   (cond ((eq vm-startup-with-summary t) t)
@@ -1029,6 +1100,15 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	(reg (regexp-quote str1)))
     (and (equal 0 (string-match reg str2))
 	 (= (match-end 0) (length str2)))))
+
+(defun vm-match-data ()
+  (let ((n (1- (/ (length (match-data)) 2)))
+        (list nil))
+    (while (>= n 0)
+      (setq list (cons (match-beginning n) 
+                       (cons (match-end n) list))
+            n (1- n)))
+    list))
 
 (defun vm-time-difference (t1 t2)
   (let (usecs secs 65536-secs carry)
@@ -1357,58 +1437,6 @@ If MODES is nil the take the modes from the variable
 	   (message "Could not disable mode `%S': %S" m errmsg)
 	   (setq vm-disable-modes-ignore (cons m vm-disable-modes-ignore)))
 	 nil)))))
-
-;; For verification of the correct buffer protocol
-;; Possible values are 'folder, 'presentation, 'summary, 'process
-
-;; (defvar vm-buffer-types nil)    ; moved to vm-vars.el
-
-(defvar vm-buffer-type-debug nil
-  "*This flag can be set to t for debugging asynchronous buffer change
-  errors.")
-
-(defvar vm-buffer-type-debug nil)	; for debugging asynchronous
-					; buffer change errors
-(defvar vm-buffer-type-trail nil)
-
-(defun vm-buffer-type:enter (type)
-  "Note that vm is temporarily entering a buffer of TYPE."
-  (if vm-buffer-type-debug
-      (setq vm-buffer-type-trail 
-	    (cons type (cons 'enter vm-buffer-type-trail))))
-  (setq vm-buffer-types (cons type vm-buffer-types)))
-
-(defun vm-buffer-type:exit ()
-  "Note that vm is exiting the current temporary buffer."
-  (if vm-buffer-type-debug
-      (setq vm-buffer-type-trail (cons 'exit vm-buffer-type-trail)))
-  (setq vm-buffer-types (cdr vm-buffer-types)))
-
-(defun vm-buffer-type:duplicate ()
-  "Note that vm is reentering the current buffer for a temporary purpose."
-  (if vm-buffer-type-debug
-      (setq vm-buffer-type-trail (cons (car vm-buffer-type-trail)
-				       vm-buffer-type-trail)))
-  (setq vm-buffer-types (cons (car vm-buffer-types) vm-buffer-types)))
-
-(defun vm-buffer-type:set (type)
-  "Note that vm is changing to a buffer of TYPE."
-  (when (and (eq type 'folder) vm-buffer-types 
-	     (eq (car vm-buffer-types) 'process))
- 	;; This may or may not be a problem.
- 	;; It just means that no save-excursion was done among the
- 	;; functions currently tracked by vm-buffe-types.
-    (if vm-buffer-type-debug
-	(debug "folder buffer being entered from %s" (car vm-buffer-types))
-      (message "folder buffer being entered from %s" (car vm-buffer-types)))
-    (setq vm-buffer-type-trail (cons type vm-buffer-type-trail)))
-  (if vm-buffer-types
-      (rplaca vm-buffer-types type)
-    (setq vm-buffer-types (cons type vm-buffer-types))))
-
-(defsubst vm-buffer-type:assert (type)
-  "Check that vm is currently in a buffer of TYPE."
-  (vm-assert (eq (car vm-buffer-types) type)))
 
 (defun vm-add-write-file-hook (vm-hook-fn)
   "Add a function to the hook called during write-file.

@@ -23,6 +23,17 @@
 
 (provide 'vm-undo)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-menu)
+  (require 'vm-minibuf)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  )
+
 (defun vm-set-buffer-modified-p (flag &optional buffer)
   (save-excursion
     (and buffer (set-buffer buffer))
@@ -308,7 +319,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
     (setq ignored-labels 
 	  (vm-add-or-delete-message-labels string m-list 'all))
     (if ignored-labels
-	(Message "Label %s could not be added" string))))
+	(message "Label %s could not be added" string))))
 
 ;;;###autoload
 (defun vm-add-existing-message-labels (string count)

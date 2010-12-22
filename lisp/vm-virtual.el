@@ -23,6 +23,29 @@
 
 (provide 'vm-virtual)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-menu)
+  (require 'vm-summary)
+  (require 'vm-folder)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-save)
+  (require 'vm-reply)
+  (require 'vm-sort)
+  (require 'vm-thread)
+)
+
+(declare-function vm-visit-folder "vm" (folder &optional read-only))
+(declare-function vm-visit-virtual-folder "vm"
+		  (folder &optional read-only bookmark))
+(declare-function vm-mode "vm" (&optional read-only))
+
+
 ;;;###autoload
 (defun vm-build-virtual-message-list (new-messages &optional dont-finalize)
   "Builds a list of messages matching the virtual folder definition

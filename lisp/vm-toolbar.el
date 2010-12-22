@@ -24,9 +24,30 @@
 (provide 'vm-toolbar)
 
 (eval-when-compile
-  (require 'vm-vars))
+  (require 'vm-misc)
+  (require 'vm-window)
+  )
+
+(declare-function vm-follow-summary-cursor "vm-motion" ())
+(declare-function vm-mime-plain-message-p "vm-mime" (message))
+(declare-function vm-save-message "vm-save" (folder &optional count quiet))
+(declare-function vm-auto-select-folder "vm-save" (mp auto-folder-alist))
+
+(declare-function glyph-height "vm-xemacs" (glyph &optional window))
+(declare-function glyph-width "vm-xemacs" (glyph &optional window))
+(declare-function make-glyph "vm-xemacs" (&optional spec-list type))
+(declare-function set-specifier "vm-xemacs" 
+		  (specifier value &optional locale tag-set how-to-add))
 
 (defvar vm-toolbar-specifier nil)
+(defvar right-toolbar)
+(defvar right-toolbar-width)
+(defvar left-toolbar)
+(defvar left-toolbar-width)
+(defvar bottom-toolbar)
+(defvar bottom-toolbar-height)
+(defvar top-toolbar)
+(defvar top-toolbar-height)
 
 (defvar vm-toolbar-next-button
   [vm-toolbar-next-icon

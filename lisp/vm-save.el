@@ -27,15 +27,21 @@
 
 (provide 'vm-save)
 
-;;;###autoload
-(defun vm-match-data ()
-  (let ((n (1- (/ (length (match-data)) 2)))
-        (list nil))
-    (while (>= n 0)
-      (setq list (cons (match-beginning n) 
-                       (cons (match-end n) list))
-            n (1- n)))
-    list))
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-mime)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-imap)
+  )
+
+(declare-function vm-session-initialization "vm" ())
 
 ;;;###autoload
 (defun vm-auto-select-folder (mp auto-folder-alist)

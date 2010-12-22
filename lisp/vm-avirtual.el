@@ -106,6 +106,31 @@
 
 (require 'vm-virtual)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-summary)
+  (require 'vm-folder)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-save)
+  (require 'vm-reply)
+  (require 'vm-sort)
+  (require 'vm-thread)
+)
+  
+;; The following function is erroneously called for fsfemacs as well
+;; (declare-function key-or-menu-binding "vm-xemacs" (key &optional menu-flag))
+(declare-function bbdb-get-addresses "exp:bbdb-com"
+		  (only-first-address 
+		   uninteresting-senders 
+		   get-header-content-function
+		   &rest get-header-content-function-args))
+(declare-function bbdb-search-simple "exp:bbdb" (name net))
+
 (defgroup vm nil
   "VM"
   :group 'mail)

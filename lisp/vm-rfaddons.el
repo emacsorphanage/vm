@@ -59,6 +59,40 @@
 
 (provide 'vm-rfaddons)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-minibuf)
+  (require 'vm-menu)
+  (require 'vm-toolbar)
+  (require 'vm-mouse)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-crypto)
+  (require 'vm-mime)
+  (require 'vm-edit)
+  (require 'vm-virtual)
+  (require 'vm-pop)
+  (require 'vm-imap)
+  (require 'vm-sort)
+  (require 'vm-reply)
+  (require 'vm-pine)
+)
+
+(declare-function bbdb-record-raw-notes "ext:bbdb" (record))
+(declare-function bbdb-record-net "ext:bbdb " (record))
+(declare-function bbdb-split "ext:bbdb" (string separators))
+(declare-function bbdb-records "ext:bbdb"
+		  (&optional dont-check-disk already-in-db-buffer))
+
+(declare-function smtpmail-via-smtp-server "ext:smtpmail" ())
+(declare-function esmtpmail-send-it "ext:esmtpmail" ())
+(declare-function esmtpmail-via-smtp-server "ext:esmtpmail" ())
+
 (defgroup vm nil
   "VM"
   :group 'mail)
@@ -841,8 +875,8 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
             (let ((buffer-read-only nil)
                   (converter (assoc type vm-mime-type-converter-alist)))
               (if vm-xemacs-p
-                  (delete-region (extent-start-position xlayout)
-                                 (extent-end-position xlayout))
+                  (delete-region (vm-extent-start-position xlayout)
+                                 (vm-extent-end-position xlayout))
                 (delete-region (overlay-start xlayout) (overlay-end xlayout)))
               
               (if converter
@@ -899,21 +933,6 @@ this may take some time, since the file needs to be visited."
   'vm-mime-deletable-type-exceptions
   "8.3.0"
   "*List of MIME types which should not be deleted.")
-
-(defun vm-mime-is-type-valid (type types-alist type-exceptions)
-  (catch 'done
-    (let ((list type-exceptions)
-          (matched nil))
-      (while list
-        (if (vm-mime-types-match (car list) type)
-            (throw 'done nil)
-          (setq list (cdr list))))
-      (setq list types-alist)
-      (while (and list (not matched))
-        (if (vm-mime-types-match (car list) type)
-            (setq matched t)
-          (setq list (cdr list))))
-      matched )))
 
 ;;;###autoload
 (defun vm-mime-attach-files-in-directory (directory &optional regexp)

@@ -89,6 +89,44 @@
 (eval-when-compile 
   (require 'cl))
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-minibuf)
+  ;; (require 'vm-menu)
+  ;; (require 'vm-toolbar)
+  ;; (require 'vm-mouse)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  ;; (require 'vm-crypto)
+  (require 'vm-mime)
+  ;; (require 'vm-edit)
+  ;; (require 'vm-virtual)
+  ;; (require 'vm-pop)
+  ;; (require 'vm-imap)
+  ;; (require 'vm-sort)
+  (require 'vm-reply)
+  )
+
+(declare-function extent-list "vm-xemacs" 
+		  (&optional buffer from to flags property value))
+;; The following are errorneously called in fsfemacs 
+;; (declare-function deiconify-frame "vm-xemacs" (&optional frame))
+;; (declare-function frames-of-buffer "vm-xemacs" 
+;;			(&optional buffer visible-only))
+(declare-function user-mail-address "vm-xemacs" ())
+
+(declare-function vm-session-initialization "vm" ())
+(declare-function vm-visit-folder "vm" (folder &optional read-only))
+
+(declare-function bbdb-extract-address-components 
+		  "ext:bbdb" (adstring &optional ignore-errors))
+(declare-function bbdb/vm-alternate-full-name "ext:bbdb-vm" (address))
+
 (if (not (boundp 'user-mail-address))
     (if (functionp 'user-mail-address)
         (setq user-mail-address (user-mail-address))
@@ -478,11 +516,11 @@ creation)."
            (setq e-list
                  (sort (vm-delete
                         (function (lambda (e)
-                                    (extent-property e 'vm-mime-layout)))
+                                    (vm-extent-property e 'vm-mime-layout)))
                         e-list t)
                        (function (lambda (e1 e2)
-                                   (< (extent-end-position e1)
-                                      (extent-end-position e2))))))
+                                   (< (vm-extent-end-position e1)
+                                      (vm-extent-end-position e2))))))
            ;; Then replace the buttons, because doing it at once will result in
            ;; problems since the new buttons are from the same extent.
            (while e-list
@@ -547,9 +585,9 @@ creation)."
           (setq layout (overlay-get x 'vm-mime-layout)
                 xstart (overlay-start x)
                 xend   (overlay-end x))
-        (setq layout (extent-property x 'vm-mime-layout)
-              xstart (extent-start-position x)
-              xend   (extent-end-position x)))
+        (setq layout (vm-extent-property x 'vm-mime-layout)
+              xstart (vm-extent-start-position x)
+              xend   (vm-extent-end-position x)))
                
       (let* ((start  (vm-mm-layout-header-start layout))
              (end    (vm-mm-layout-body-end   layout))

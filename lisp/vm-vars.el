@@ -25,6 +25,16 @@
 
 (require 'vm-version)
 
+(declare-function vm-parse "vm-misc" (string regexp &optional matchn matches))
+(declare-function vm-delete-directory-names "vm-misc" (list))
+(declare-function vm-display "vm-window" 
+		  (buffer display commands configs &optional do-not-raise))
+
+(declare-function xemacs-locate-data-directory "vm-xemacs" (name))
+(fset 'xemacs-locate-data-directory 'locate-data-directory)
+(declare-function xemacs-device-type "vm-xemacs" ())
+(fset 'xemacs-device-type 'device-type)
+
 (defgroup vm nil
   "The VM mail reader."
   :group 'mail)
@@ -3650,7 +3660,7 @@ older VM installation."
                            (expand-file-name "pixmaps" vm-dir)
 			   (expand-file-name "../pixmaps" vm-dir)
 			   (let ((d (and vm-xemacs-p 
-					 (locate-data-directory "vm"))))
+					 (xemacs-locate-data-directory "vm"))))
 			     (and d (expand-file-name "pixmaps" d)))))
          image-dir)
     (while image-dirs
@@ -3729,7 +3739,7 @@ Under FSF Emacs 21 the toolbar is always at the top of the frame."
 			 (string-match "'--with-gtk'" 
 				       system-configuration-options)
 			 (and (boundp 'device-type)
-			      (eq (device-type) 'gtk)))
+			      (eq (xemacs-device-type) 'gtk)))
   "True when running in a GTK enabled Emacs.")
 
 (defun vm-toolbar-pixmap-directory ()

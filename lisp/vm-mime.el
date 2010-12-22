@@ -26,6 +26,56 @@
 (eval-when-compile
   (require 'cl))
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-toolbar)
+  (require 'vm-mouse)
+  (require 'vm-summary)
+  (require 'vm-folder)
+  (require 'vm-menu)
+  (require 'vm-crypto)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-reply)
+  (require 'vm-digest)
+  (require 'vm-edit)
+  )
+
+;; vm-xemacs.el is a fake file to fool the Emacs 23 compiler
+(declare-function get-itimer "vm-xemacs" (name))
+(declare-function start-itimer "vm-xemacs"
+		  (name function value &optional restart is-idle with-args
+			&rest function-arguments))
+(declare-function set-itimer-restart "vm-xemacs" (itimer restart))
+(declare-function find-coding-system "vm-xemacs" (coding-system-or-name))
+(declare-function coding-system-name "vm-xemacs" (coding-system))
+(declare-function latin-unity-representations-feasible-region 
+		  "vm-xemacs" (start end))
+(declare-function latin-unity-representations-present-region 
+		  "vm-xemacs" (start end))
+(declare-function latin-unity-massage-name "vm-xemacs" (a b))
+(declare-function latin-unity-maybe-remap "vm-xemacs" 
+		  (a1 a2 a3 a4 a5 a6))
+(declare-function device-type "vm-xemacs" (&optional device))
+(declare-function device-sound-enabled-p "vm-xemacs" (&optional device))
+(declare-function device-bitplanes "vm-xemacs" (&optional device))
+(declare-function font-height "vm-xemacs" (font &optional domain charset))
+(declare-function make-glyph "vm-xemacs" (&optional spec-list type))
+(declare-function set-glyph-baseline "vm-xemacs" 
+		  (glyph spec &optional locale tag-set how-to-add))
+(declare-function set-glyph-face "vm-xemacs" (glyph face))
+(declare-function delete-extent "vm-xemacs" (extent))
+(declare-function extent-list "vm-xemacs" 
+		  (&optional buffer-or-string from to flags property value))
+(declare-function extent-begin-glyph "vm-xemacs" (extent))
+(declare-function set-extent-begin-glyph "vm-xemacs" 
+		  (extent begin-glyph &optional layout))
+(declare-function extent-live-p "vm-xemacs" (object))
+
+(declare-function vm-mode "vm" (&optional read-only))
+
 (defvar enable-multibyte-characters)
 
 ;; The following variables are defined in the code, depending on the
@@ -177,6 +227,7 @@ configuration.  "
 ;; if display of MIME part fails, error string will be here.
 (defun vm-mm-layout-display-error (e) (aref e 14))
 (defun vm-mm-layout-is-converted (e) (aref e 15))
+(defun vm-mm-layout-unconverted-layout (e) (aref e 16))
 
 (defun vm-set-mm-layout-type (e type) (aset e 0 type))
 (defun vm-set-mm-layout-qtype (e type) (aset e 1 type))
@@ -192,7 +243,8 @@ configuration.  "
 (defun vm-set-mm-layout-parts (e parts) (aset e 11 parts))
 (defun vm-set-mm-layout-cache (e c) (aset e 12 c))
 (defun vm-set-mm-layout-display-error (e c) (aset e 14 c))
-(defun vm-set-mm-layout-is-converted (e c) (asef e 15 c))
+(defun vm-set-mm-layout-is-converted (e c) (aset e 15 c))
+(defun vm-set-mm-layout-unconverted-layout (e l) (aset e 16 l))
 
 (defun vm-mime-make-message-symbol (m)
   (let ((s (make-symbol "<<m>>")))
@@ -838,7 +890,7 @@ out includes base-64, quoted-printable, uuencode and CRLF conversion."
 	  (delete-region end match-end)
 	  (condition-case data
 	      (cond ((string-match "B" encoding)
-		     (vm-mime-B-decode-region start end))
+		     (vm-mime-base64-decode-region start end))
 		    ((string-match "Q" encoding)
 		     (vm-mime-Q-decode-region start end))
 		    (t (vm-mime-error "unknown encoded word encoding, %s"
@@ -884,7 +936,7 @@ out includes base-64, quoted-printable, uuencode and CRLF conversion."
 	  (delete-region end match-end)
 	  (condition-case data
 	      (cond ((string-match "B" encoding)
-		     (vm-mime-B-decode-region start end))
+		     (vm-mime-base64-decode-region start end))
 		    ((string-match "Q" encoding)
 		     (vm-mime-Q-decode-region start end))
 		    (t (vm-mime-error "unknown encoded word encoding, %s"
@@ -997,14 +1049,14 @@ PASSING-MESSAGE-ONLY is a boolean argument that says that VM is only
 	    (if (and m (not passing-message-only))
 		(progn
 		  (setq version (vm-get-header-contents m "MIME-Version:")
-			version (car (vm-mime-parse-content-header version))
+			version (car (vm-parse-structured-header version))
 			type (vm-get-header-contents m "Content-Type:")
 			version (if (or version
 					vm-mime-require-mime-version-header)
 				    version
 				  (if type "1.0" nil))
-			qtype (vm-mime-parse-content-header type ?\; t)
-			type (vm-mime-parse-content-header type ?\;)
+			qtype (vm-parse-structured-header type ?\; t)
+			type (vm-parse-structured-header type ?\;)
 			encoding (vm-get-header-contents
 				  m "Content-Transfer-Encoding:")
 			version (if (or version
@@ -1013,10 +1065,10 @@ PASSING-MESSAGE-ONLY is a boolean argument that says that VM is only
 				  (if encoding "1.0" nil))
 			encoding (or encoding "7bit")
 			encoding (or (car
-				      (vm-mime-parse-content-header encoding))
+				      (vm-parse-structured-header encoding))
 				     "7bit")
 			id (vm-get-header-contents m "Content-ID:")
-			id (car (vm-mime-parse-content-header id))
+			id (car (vm-parse-structured-header id))
 			description (vm-get-header-contents
 				     m "Content-Description:")
 			description (and description
@@ -1027,26 +1079,26 @@ PASSING-MESSAGE-ONLY is a boolean argument that says that VM is only
 			disposition (vm-get-header-contents
 				     m "Content-Disposition:")
 			qdisposition (and disposition
-					  (vm-mime-parse-content-header
+					  (vm-parse-structured-header
 					   disposition ?\; t))
 			disposition (and disposition
-					 (vm-mime-parse-content-header
+					 (vm-parse-structured-header
 					  disposition ?\;)))
 		  (widen)
 		  (narrow-to-region (vm-headers-of m) (vm-text-end-of m)))
 	      (goto-char (point-min))
 	      (setq type (vm-mime-get-header-contents "Content-Type:")
-		    qtype (or (vm-mime-parse-content-header type ?\; t)
+		    qtype (or (vm-parse-structured-header type ?\; t)
 			      default-type)
-		    type (or (vm-mime-parse-content-header type ?\;)
+		    type (or (vm-parse-structured-header type ?\;)
 			     default-type)
 		    encoding (or (vm-mime-get-header-contents
 				  "Content-Transfer-Encoding:")
 				 default-encoding)
-		    encoding (or (car (vm-mime-parse-content-header encoding))
+		    encoding (or (car (vm-parse-structured-header encoding))
 				 default-encoding)
 		    id (vm-mime-get-header-contents "Content-ID:")
-		    id (car (vm-mime-parse-content-header id))
+		    id (car (vm-parse-structured-header id))
 		    description (vm-mime-get-header-contents
 				 "Content-Description:")
 		    description (and description (if (string-match "^[ \t\n]*$"
@@ -1056,10 +1108,10 @@ PASSING-MESSAGE-ONLY is a boolean argument that says that VM is only
 		    disposition (vm-mime-get-header-contents
 				 "Content-Disposition:")
 		    qdisposition (and disposition
-				      (vm-mime-parse-content-header
+				      (vm-parse-structured-header
 				       disposition ?\; t))
 		    disposition (and disposition
-				     (vm-mime-parse-content-header
+				     (vm-parse-structured-header
 				      disposition ?\;))))
 	    (cond ((null m) t)
 		  (passing-message-only t)
@@ -2369,7 +2421,7 @@ declarations in the attachments and make a decision independently."
 						    type))))
 		     (funcall handler layout)
 		   (vm-mime-display-internal-multipart/mixed layout)))
-		((and (vm-mime-can-display-external type)
+		((and (vm-mime-find-external-viewer type)
 		      (vm-mime-display-external-generic layout))
 		 (and extent (vm-set-extent-property
 			      extent 'vm-mime-disposable nil)))
@@ -3390,7 +3442,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		       (vm-set-extent-property e 'keymap keymap)
 		       (setq extent-list (cons e extent-list))
 		       (setq strips (cdr strips)))
-		     (setq e (make-extent start (point)))
+		     (setq e (vm-make-extent start (point)))
 		     (vm-set-extent-property e 'start-open t)
 		     (vm-set-extent-property e 'vm-mime-layout layout)
 		     (vm-set-extent-property e 'vm-mime-disposable t)
@@ -3853,7 +3905,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
     (while (and strips
 		(file-exists-p (car strips))
 		(extent-live-p (car extents))
-		(extent-object (car extents)))
+		(vm-extent-object (car extents)))
       (setq g (make-glyph
 	       (list
 		(cons (list 'win)
@@ -3939,7 +3991,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
       (cond ((and sss
 		  (file-exists-p (car sss))
 		  (extent-live-p (car eee))
-		  (extent-object (car eee)))
+		  (vm-extent-object (car eee)))
 	     (setq g (make-glyph
 		      (list
 		       (cons (list 'win)
@@ -4243,7 +4295,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	     (setq o-list (cdr o-list)))
 	   retval ))
 	(vm-xemacs-p
-	 (extent-at (point) nil 'vm-mime-layout))))
+	 (vm-extent-at (point) nil 'vm-mime-layout))))
 
 ;;;###autoload
 (defun vm-mime-run-display-function-at-point (&optional function dispose)
@@ -4263,7 +4315,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	     (funcall (or function (overlay-get e 'vm-mime-function))
 		      e))
 	    (vm-xemacs-p
-	     (funcall (or function (extent-property e 'vm-mime-function))
+	     (funcall (or function (vm-extent-property e 'vm-mime-function))
 		      e))))))
 
 ;;;###autoload
@@ -4399,6 +4451,21 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
                               type filename disposition)))
               (setq parts (cdr parts)))))
         (setq mlist (cdr mlist))))))
+
+(defun vm-mime-is-type-valid (type types-alist type-exceptions)
+  (catch 'done
+    (let ((list type-exceptions)
+          (matched nil))
+      (while list
+        (if (vm-mime-types-match (car list) type)
+            (throw 'done nil)
+          (setq list (cdr list))))
+      (setq list types-alist)
+      (while (and list (not matched))
+        (if (vm-mime-types-match (car list) type)
+            (setq matched t)
+          (setq list (cdr list))))
+      matched )))
 
 ;;;###autoload
 (defun vm-delete-all-attachments (&optional count)
@@ -4694,9 +4761,9 @@ confirmed before creating a new directory."
 	;; inline text and graphics will seep into the button
 	;; overlay and then be removed when the button is removed.
 	(setq e (make-overlay start (point) nil t nil))
-      (setq e (make-extent start (point)))
-      (set-extent-property e 'start-open t)
-      (set-extent-property e 'end-open t))
+      (setq e (vm-make-extent start (point)))
+      (vm-set-extent-property e 'start-open t)
+      (vm-set-extent-property e 'end-open t))
     (vm-mime-set-image-stamp-for-type e (car (vm-mm-layout-type layout)))
     ;; for emacs
     (vm-set-extent-property e 'mouse-face 'highlight)
@@ -5661,34 +5728,34 @@ COMPOSITION's name will be read from the minibuffer."
 	   (put-text-property start end 'duplicable t)
 	   )
 	  (vm-xemacs-p
-	   (setq e (make-extent start end))
+	   (setq e (vm-make-extent start end))
 	   (vm-mime-set-image-stamp-for-type e (or type "text/plain"))
-	   (set-extent-property e 'start-open t)
-	   (set-extent-property e 'face vm-mime-button-face)
-	   (set-extent-property e 'duplicable t)
+	   (vm-set-extent-property e 'start-open t)
+	   (vm-set-extent-property e 'face vm-mime-button-face)
+	   (vm-set-extent-property e 'duplicable t)
 	   (let ((keymap (make-sparse-keymap)))
 	     (if vm-popup-menu-on-mouse-3
 		 (define-key keymap 'button3
 		   'vm-menu-popup-attachment-menu))
              (define-key keymap [return] 'vm-mime-change-content-disposition)
-	     (set-extent-property e 'keymap keymap)
-	     (set-extent-property e 'balloon-help 'vm-mouse-3-help))
-	   (set-extent-property e 'vm-mime-forward-local-refs fb)
-	   (set-extent-property e 'vm-mime-type type)
-	   (set-extent-property e 'vm-mime-object object)
-	   (set-extent-property e 'vm-mime-parameters params)
-	   (set-extent-property e 'vm-mime-description description)
-	   (set-extent-property e 'vm-mime-disposition disposition)
-	   (set-extent-property e 'vm-mime-encoding nil)
-	   (set-extent-property e 'vm-mime-encoded mimed)))))
+	     (vm-set-extent-property e 'keymap keymap)
+	     (vm-set-extent-property e 'balloon-help 'vm-mouse-3-help))
+	   (vm-set-extent-property e 'vm-mime-forward-local-refs fb)
+	   (vm-set-extent-property e 'vm-mime-type type)
+	   (vm-set-extent-property e 'vm-mime-object object)
+	   (vm-set-extent-property e 'vm-mime-parameters params)
+	   (vm-set-extent-property e 'vm-mime-description description)
+	   (vm-set-extent-property e 'vm-mime-disposition disposition)
+	   (vm-set-extent-property e 'vm-mime-encoding nil)
+	   (vm-set-extent-property e 'vm-mime-encoded mimed)))))
 
 (defun vm-mime-attachment-forward-local-refs-at-point ()
   (cond (vm-fsfemacs-p
 	 (let ((fb (get-text-property (point) 'vm-mime-forward-local-refs)))
 	   (car fb) ))
 	(vm-xemacs-p
-	 (let* ((e (extent-at (point) nil 'vm-mime-type))
-		(fb (extent-property e 'vm-mime-forward-local-refs)))
+	 (let* ((e (vm-extent-at (point) nil 'vm-mime-type))
+		(fb (vm-extent-property e 'vm-mime-forward-local-refs)))
 	   (car fb) ))))
 
 (defun vm-mime-set-attachment-forward-local-refs-at-point (val)
@@ -5696,8 +5763,8 @@ COMPOSITION's name will be read from the minibuffer."
 	 (let ((fb (get-text-property (point) 'vm-mime-forward-local-refs)))
 	   (setcar fb val) ))
 	(vm-xemacs-p
-	 (let* ((e (extent-at (point) nil 'vm-mime-type))
-		(fb (extent-property e 'vm-mime-forward-local-refs)))
+	 (let* ((e (vm-extent-at (point) nil 'vm-mime-type))
+		(fb (vm-extent-property e 'vm-mime-forward-local-refs)))
 	   (setcar fb val) ))))
 
 (defun vm-mime-delete-attachment-button ()
@@ -5705,20 +5772,20 @@ COMPOSITION's name will be read from the minibuffer."
          ;; TODO
          )
 	(vm-xemacs-p
-	 (let ((e (extent-at (point) nil 'vm-mime-type)))
-           (delete-region (extent-start-position e)
-                          (extent-end-position e))))))
+	 (let ((e (vm-extent-at (point) nil 'vm-mime-type)))
+           (delete-region (vm-extent-start-position e)
+                          (vm-extent-end-position e))))))
 
 (defun vm-mime-delete-attachment-button-keep-infos ()
   (cond (vm-fsfemacs-p
          ;; TODO
          )
 	(vm-xemacs-p
-	 (let ((e (extent-at (point) nil 'vm-mime-type)))
+	 (let ((e (vm-extent-at (point) nil 'vm-mime-type)))
            (save-excursion
-             (goto-char (1+ (extent-start-position e)))
+             (goto-char (1+ (vm-extent-start-position e)))
              (insert " --- DELETED ")
-             (goto-char (extent-end-position e))
+             (goto-char (vm-extent-end-position e))
              (insert " ---")
              (delete-extent e))))))
 
@@ -5737,8 +5804,8 @@ COMPOSITION's name will be read from the minibuffer."
 	 (let ((disp (get-text-property (point) 'vm-mime-disposition)))
 	   (intern (car disp))))
 	(vm-xemacs-p
-	 (let* ((e (extent-at (point) nil 'vm-mime-disposition))
-		(disp (extent-property e 'vm-mime-disposition)))
+	 (let* ((e (vm-extent-at (point) nil 'vm-mime-disposition))
+		(disp (vm-extent-property e 'vm-mime-disposition)))
 	   (intern (car disp))))))
 
 (defun vm-mime-set-attachment-disposition-at-point (sym)
@@ -5746,8 +5813,8 @@ COMPOSITION's name will be read from the minibuffer."
 	 (let ((disp (get-text-property (point) 'vm-mime-disposition)))
 	   (setcar disp (symbol-name sym))))
 	(vm-xemacs-p
-	 (let* ((e (extent-at (point) nil 'vm-mime-disposition))
-		(disp (extent-property e 'vm-mime-disposition)))
+	 (let* ((e (vm-extent-at (point) nil 'vm-mime-disposition))
+		(disp (vm-extent-property e 'vm-mime-disposition)))
 	   (setcar disp (symbol-name sym))))))
 
 
@@ -5755,15 +5822,17 @@ COMPOSITION's name will be read from the minibuffer."
   (cond (vm-fsfemacs-p
 	 (get-text-property (point) 'vm-mime-encoding))
 	(vm-xemacs-p
-	 (let ((e (extent-at (point) nil 'vm-mime-encoding)))
-           (if e (extent-property e 'vm-mime-encoding))))))
+	 (let ((e (vm-extent-at (point) nil 'vm-mime-encoding)))
+           (if e (vm-extent-property e 'vm-mime-encoding))))))
 
 (defun vm-mime-set-attachment-encoding-at-point (sym)
   (cond (vm-fsfemacs-p
-	 (set-text-property (point) 'vm-mime-encoding sym))
+	 ;; (set-text-property (point) 'vm-mime-encoding sym)
+	 (put-text-property (point) (point) 'vm-mime-encoding sym)
+	 )
 	(vm-xemacs-p
-	 (let ((e (extent-at (point) nil 'vm-mime-disposition)))
-           (set-extent-property e 'vm-mime-encoding sym)))))
+	 (let ((e (vm-extent-at (point) nil 'vm-mime-disposition)))
+           (vm-set-extent-property e 'vm-mime-encoding sym)))))
 
 (defun vm-disallow-overlay-endpoint-insertion (overlay after start end
 					       &optional old-size)
@@ -5967,11 +6036,11 @@ describes what was deleted."
 		  (insert label)
 		  (delete-region (point) (overlay-end o)))))))
 	  (vm-xemacs-p
-	   (let ((e (extent-at (point) nil 'vm-mime-layout)))
+	   (let ((e (vm-extent-at (point) nil 'vm-mime-layout)))
 	     (if (null e)
 		 (error "No MIME button found at point.")
-	       (setq layout (extent-property e 'vm-mime-layout))
-	       (if (and (vm-mm-laytout-message layout)
+	       (setq layout (vm-extent-property e 'vm-mime-layout))
+	       (if (and (vm-mm-layout-message layout)
 			(eq layout (vm-mime-layout-of
 				    (vm-mm-layout-message layout))))
 		   (error "Can't delete only MIME object; use vm-delete-message instead."))
@@ -5983,12 +6052,12 @@ describes what was deleted."
 		     (buffer-read-only nil))
 		 (save-excursion
 		   (vm-save-restriction
-		     (goto-char (extent-start-position e))
+		     (goto-char (vm-extent-start-position e))
 		     (setq opos (point))
                      (setq label (vm-mime-sprintf vm-mime-deleted-object-label layout))
 		     (insert label)
-		     (delete-region (point) (extent-end-position e))
-		     (set-extent-endpoints e opos (point)))))
+		     (delete-region (point) (vm-extent-end-position e))
+		     (vm-set-extent-endpoints e opos (point)))))
 	       (vm-mime-discard-layout-contents layout saved-file)))))
     (when (interactive-p)
       ;; make the change visible and place the cursor behind the removed object
@@ -6250,12 +6319,12 @@ agent; under Unix, normally sendmail.)"
       (setq e-list (extent-list nil (point) (point-max))
 	    e-list (vm-delete (function
 			       (lambda (e)
-				 (extent-property e 'vm-mime-object)))
+				 (vm-extent-property e 'vm-mime-object)))
 			      e-list t)
 	    e-list (sort e-list (function
 				 (lambda (e1 e2)
-				   (< (extent-end-position e1)
-				      (extent-end-position e2))))))
+				   (< (vm-extent-end-position e1)
+				      (vm-extent-end-position e2))))))
       ;; If there's just one attachment and no other readable
       ;; text in the buffer then make the message type just be
       ;; the attachment type rather than sending a multipart
@@ -6263,9 +6332,9 @@ agent; under Unix, normally sendmail.)"
       (setq just-one (and (= (length e-list) 1)
 			  (looking-at "[ \t\n]*")
 			  (= (match-end 0)
-			     (extent-start-position (car e-list)))
+			     (vm-extent-start-position (car e-list)))
 			  (save-excursion
-			    (goto-char (extent-end-position (car e-list)))
+			    (goto-char (vm-extent-end-position (car e-list)))
 			    (looking-at "[ \t\n]*\\'"))))
       (if (null e-list)
 	  (progn
@@ -6317,11 +6386,11 @@ agent; under Unix, normally sendmail.)"
 	  (setq e (car e-list))
 	  (if (or just-one
 		  (save-excursion
-		    (eq (extent-start-position e)
+		    (eq (vm-extent-start-position e)
 			(re-search-forward "[ \t\n]*"
-					   (extent-start-position e) t))))
-	      (delete-region (point) (extent-start-position e))
-	    (narrow-to-region (point) (extent-start-position e))
+					   (vm-extent-start-position e) t))))
+	      (delete-region (point) (vm-extent-start-position e))
+	    (narrow-to-region (point) (vm-extent-start-position e))
 	    (if enriched
 		(let ((enriched-initial-annotation ""))
 		  (enriched-encode (point-min) (point-max))))
@@ -6362,9 +6431,9 @@ agent; under Unix, normally sendmail.)"
 		(insert "Content-Description: " description "\n"))
 	    (insert "Content-Transfer-Encoding: " encoding "\n\n")
 	    (widen))
-	  (goto-char (extent-start-position e))
+	  (goto-char (vm-extent-start-position e))
 	  (narrow-to-region (point) (point))
-	  (setq object (extent-property e 'vm-mime-object))
+	  (setq object (vm-extent-property e 'vm-mime-object))
 
 	  ;; insert the object
 	  (cond ((bufferp object)
@@ -6383,7 +6452,7 @@ agent; under Unix, normally sendmail.)"
 		((stringp object)
 		 (let ((coding-system-for-read
 			(if (vm-mime-text-type-p
-			     (extent-property e 'vm-mime-type))
+			     (vm-extent-property e 'vm-mime-type))
 			    (vm-line-ending-coding-system)
 			  (vm-binary-coding-system)))
 		       ;; keep no undos 
@@ -6398,39 +6467,39 @@ agent; under Unix, normally sendmail.)"
 		       (buffer-file-coding-system (vm-binary-coding-system)))
 		   (insert-file-contents object))))
 	  ;; gather information about the object from the extent.
-	  (if (setq already-mimed (extent-property e 'vm-mime-encoded))
+	  (if (setq already-mimed (vm-extent-property e 'vm-mime-encoded))
 	      (setq layout (vm-mime-parse-entity
 			    nil (list "text/plain" "charset=us-ascii")
 			    "7bit")
-		    type (or (extent-property e 'vm-mime-type)
+		    type (or (vm-extent-property e 'vm-mime-type)
 			     (car (vm-mm-layout-type layout)))
-		    params (or (extent-property e 'vm-mime-parameters)
+		    params (or (vm-extent-property e 'vm-mime-parameters)
 			       (cdr (vm-mm-layout-qtype layout)))
 		    forward-local-refs
-		        (car (extent-property e 'vm-mime-forward-local-refs))
-		    description (extent-property e 'vm-mime-description)
+		        (car (vm-extent-property e 'vm-mime-forward-local-refs))
+		    description (vm-extent-property e 'vm-mime-description)
 		    disposition
 		      (if (not
 			   (equal
-			    (car (extent-property e 'vm-mime-disposition))
+			    (car (vm-extent-property e 'vm-mime-disposition))
 			    "unspecified"))
-			  (extent-property e 'vm-mime-disposition)
+			  (vm-extent-property e 'vm-mime-disposition)
 			(vm-mm-layout-qdisposition layout)))
-	    (setq type (extent-property e 'vm-mime-type)
-		  params (extent-property e 'vm-mime-parameters)
+	    (setq type (vm-extent-property e 'vm-mime-type)
+		  params (vm-extent-property e 'vm-mime-parameters)
 		  forward-local-refs
-		      (car (extent-property e 'vm-mime-forward-local-refs))
-		  description (extent-property e 'vm-mime-description)
+		      (car (vm-extent-property e 'vm-mime-forward-local-refs))
+		  description (vm-extent-property e 'vm-mime-description)
 		  disposition
 		    (if (not (equal
-			      (car (extent-property e 'vm-mime-disposition))
+			      (car (vm-extent-property e 'vm-mime-disposition))
 			      "unspecified"))
-			(extent-property e 'vm-mime-disposition)
+			(vm-extent-property e 'vm-mime-disposition)
 		      nil)))
 	  (cond ((vm-mime-types-match "text" type)
 		 (setq encoding
 		       (or
-                        (extent-property e 'vm-mime-encoding)
+                        (vm-extent-property e 'vm-mime-encoding)
                         (vm-determine-proper-content-transfer-encoding
                          (if already-mimed
                              (vm-mm-layout-body-start layout)
@@ -6503,11 +6572,11 @@ agent; under Unix, normally sendmail.)"
 	  (goto-char (point-max))
 	  (widen)
 	  (save-excursion
-	    (goto-char (extent-start-position e))
+	    (goto-char (vm-extent-start-position e))
 	    (vm-assert (looking-at "\\[ATTACHMENT")))
-	  (delete-region (extent-start-position e)
-			 (extent-end-position e))
-	  (detach-extent e)
+	  (delete-region (vm-extent-start-position e)
+			 (vm-extent-end-position e))
+	  (vm-detach-extent e)
 	  (if (looking-at "\n")
 	      (delete-char 1))
 	  (setq e-list (cdr e-list)))

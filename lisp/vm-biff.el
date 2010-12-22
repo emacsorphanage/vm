@@ -41,7 +41,32 @@
 (provide 'vm-biff)
 
 (eval-when-compile 
-  (require 'cl))
+  (require 'cl)
+
+  (require 'vm-misc)
+  (require 'vm-summary)
+)
+
+;; vm-xemacs.el is a fake file to fool the Emacs 23 compiler
+(declare-function get-itimer "vm-xemacs.el" (name))
+(declare-function start-itimer "vm-xemacs.el"
+		  (name function value &optional restart is-idle with-args
+			&rest function-arguments))
+(declare-function set-itimer-restart "vm-xemacs.el" (itimer restart))
+(declare-function delete-itimer "vm-xemacs" (itimer))
+(declare-function set-specifier "vm-xemacs" 
+		  (specifier value &optional locale tag-set how-to-add))
+(declare-function console-type "vm-xemacs" (&optional console))
+;; The following functions are erroneously called in fsfemacs too
+;; (declare-function frame-device "vm-xemacs" (frame))
+;; (declare-function window-displayed-height "vm-xemacs" (window))
+(defvar current-itimer)
+
+(declare-function vm-decode-mime-encoded-words-in-string "vm-mime" (string))
+(declare-function vm-goto-message "vm-motion" (n))
+(declare-function vm-mouse-set-mouse-track-highlight "vm-mouse"
+		  (start end &optional overlay))
+(declare-function vm-summary-faces-add "vm-summary-faces" (message))
 
 (when vm-xemacs-p
   (require 'overlay))

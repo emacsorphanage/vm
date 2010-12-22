@@ -23,6 +23,22 @@
 
 (provide 'vm-delete)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-summary)
+  (require 'vm-folder)
+  (require 'vm-crypto)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-sort)
+  (require 'vm-thread)
+  (require 'vm-pop)
+  (require 'vm-imap)
+)
+
+
 ;;;###autoload
 (defun vm-delete-message (count &optional mlist)
   "Add the `deleted' attribute to the current message.

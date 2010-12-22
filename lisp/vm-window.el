@@ -23,6 +23,24 @@
 
 (provide 'vm-window)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'tapestry)
+  )
+
+(declare-function frame-highest-window "vm-xemacs" (frame))
+
+(declare-function vm-selected-frame "vm-window.el" ())
+(declare-function vm-window-frame "vm-window.el" (window))
+(declare-function vm-delete-frame "vm-window.el" (&optional frame force))
+(declare-function vm-raise-frame "vm-window.el" (&optional frame))
+(declare-function vm-frame-visible-p "vm-window.el" (frame))
+(declare-function vm-frame-iconified-p "vm-window.el" (frame))
+(declare-function vm-window-frame "vm-window.el" (window))
+(declare-function vm-next-frame "vm-window.el" (&optional frame miniframe))
+(declare-function vm-select-frame "vm-window.el" (frame &optional norecord))
+(declare-function vm-frame-selected-window "vm-window.el" (&optional frame))
+
 ;;;###autoload
 (defun vm-display (buffer display commands configs
 		   &optional do-not-raise)
@@ -506,11 +524,11 @@ Run the hooks in vm-iconify-frame-hook before doing so."
     ;; running under a window system, but VM always checks for
     ;; multi-frame support before calling this function.
     (cond ((fboundp 'make-frame)
-	   (select-frame (make-frame params)))
+	   (vm-select-frame (make-frame params)))
 	  ((fboundp 'make-screen)
-	   (select-screen (make-screen params)))
+	   (vm-select-frame (make-screen params)))
 	  ((fboundp 'new-screen)
-	   (select-screen (new-screen params))))
+	   (vm-select-frame (new-screen params))))
     (vm-register-frame (vm-selected-frame))
     (and vm-warp-mouse-to-new-frame
 	 (vm-warp-mouse-to-frame-maybe (vm-selected-frame)))))
@@ -622,7 +640,7 @@ Run the hooks in vm-iconify-frame-hook before doing so."
   (cond ((fboundp 'iconify-frame)
 	 (iconify-frame frame))
 	((fboundp 'iconify-screen)
-	 (iconify-screen (or frame (selected-screen))))))
+	 (iconify-screen (or frame (vm-selected-frame))))))
 
 (fset 'vm-raise-frame
       (symbol-function

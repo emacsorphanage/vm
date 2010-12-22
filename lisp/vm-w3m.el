@@ -41,6 +41,12 @@
 (eval-and-compile
   (vm-load-features '(w3m)))
 
+(declare-function w3m-region 
+		  "ext:w3m" (start end &optional url charset))
+(declare-function w3m-safe-toggle-inline-images 
+		  "ext:w3m" (&optional force no-cache))
+
+
 ;; Dummy vriable declarations to suppress warnings if w3m is not
 ;; loaded
 
