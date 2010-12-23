@@ -1037,9 +1037,8 @@ a string, which can be used as a separator to concatenate the fields
 of multiple header lines which might match HEADER-NAME-REGEXP.
 							USR, 2010-05-13."
   (let ((contents nil)
-	regexp)
-    (setq regexp (concat "^\\(" header-name-regexp "\\)")
-	  message (vm-real-message-of message))
+	(regexp (concat "^\\(" header-name-regexp "\\)")))
+    (setq message (vm-real-message-of message))
     (save-excursion
       (set-buffer (vm-buffer-of (vm-real-message-of message)))
       (save-restriction

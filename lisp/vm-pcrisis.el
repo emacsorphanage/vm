@@ -62,6 +62,7 @@
 (declare-function set-extent-face "vm-xemacs" (extent face))
 (declare-function timezone-absolute-from-gregorian "ext:timezone" 
 		  (month day year))
+(declare-function bbdb-buffer "ext:bbdb" ())
 
 ;; Dummy declarations for variables that are defined in bbdb
 

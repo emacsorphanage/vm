@@ -584,7 +584,7 @@ Run the hooks in vm-iconify-frame-hook before doing so."
   (or frame (setq frame (vm-selected-frame)))
   (if (vm-mouse-support-possible-here-p)
       (cond ((vm-mouse-xemacs-mouse-p)
-	     (cond ((fboundp 'mouse-position);; XEmacs 19.12
+	     (cond ((fboundp 'mouse-position);; XEmacs 19.12 and up
 		    (let ((mp (mouse-position)))
 		      (if (and (car mp)
 			       (eq (window-frame (car mp)) (selected-frame)))
@@ -592,21 +592,25 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 			(set-mouse-position (frame-highest-window frame)
 					    (/ (frame-width frame) 2)
 					    (/ (frame-height frame) 2)))))
-		   (t ;; XEmacs 19.11
+		   (t 
+		    (error "Emacs version too old")
+		    ;; XEmacs 19.11
 		    ;; use (apply 'screen-...) instead of
 		    ;; (screen-...) to avoid stimulating a
 		    ;; byte-compiler bug in Emacs 19.29 that
 		    ;; happens when it encounters 'obsolete'
 		    ;; functions.  puke, puke, puke.
-		    (let ((mp (read-mouse-position frame)))
-		      (if (and (>= (car mp) 0)
-			       (<= (car mp) (apply 'screen-width frame))
-			       (>= (cdr mp) 0)
-			       (<= (cdr mp) (apply 'screen-height frame)))
-			  nil
-			(set-mouse-position frame
-					    (/ (apply 'screen-width frame) 2)
-					    (/ (apply 'screen-height frame) 2)))))))
+		    ;; (let ((mp (read-mouse-position frame)))
+		    ;;   (if (and (>= (car mp) 0)
+		    ;; 	       (<= (car mp) (apply 'screen-width frame))
+		    ;; 	       (>= (cdr mp) 0)
+		    ;; 	       (<= (cdr mp) (apply 'screen-height frame)))
+		    ;; 	  nil
+		    ;; 	(set-mouse-position 
+		    ;; 	 frame
+		    ;; 	 (/ (apply 'screen-width frame) 2)
+		    ;; 	 (/ (apply 'screen-height frame) 2))))
+		    )))
 	    ((vm-fsfemacs-p)
 	     (let ((mp (mouse-position)))
 	       (if (and (eq (car mp) frame)
@@ -626,32 +630,41 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 (fset 'vm-selected-frame
       (symbol-function
        (cond ((fboundp 'selected-frame) 'selected-frame)
-	     ((fboundp 'selected-screen) 'selected-screen)
+	     ;; ((fboundp 'selected-screen) 'selected-screen) ; Xemacs 19?
 	     (t 'ignore))))
 
 (fset 'vm-delete-frame
       (symbol-function
        (cond ((fboundp 'delete-frame) 'delete-frame)
-	     ((fboundp 'delete-screen) 'delete-screen)
+	     ;; ((fboundp 'delete-screen) 'delete-screen)  ; XEmacs 19?
 	     (t 'ignore))))
 
 ;; xxx because vm-iconify-frame is a command
 (defun vm-iconify-frame-xxx (&optional frame)
   (cond ((fboundp 'iconify-frame)
 	 (iconify-frame frame))
-	((fboundp 'iconify-screen)
-	 (iconify-screen (or frame (vm-selected-frame))))))
+	;; ((fboundp 'iconify-screen)                     ; XEmacs 19?
+	;;  (iconify-screen (or frame (vm-selected-frame))))
+	))
+
+(defun vm-deiconify-frame (frame)
+  "Deiconify FRAME."
+  (if (fboundp 'deiconify-frame)
+      (deiconify-frame frame)
+    (when (eq (frame-visible-p frame) 'icon)
+      (select-frame frame)
+      (iconify-or-deiconify-frame))))
 
 (fset 'vm-raise-frame
       (symbol-function
        (cond ((fboundp 'raise-frame) 'raise-frame)
-	     ((fboundp 'raise-screen) 'raise-screen)
+	     ;; ((fboundp 'raise-screen) 'raise-screen)   ; XEmacs 19?
 	     (t 'ignore))))
 
 (fset 'vm-frame-visible-p
       (symbol-function
        (cond ((fboundp 'frame-visible-p) 'frame-visible-p)
-	     ((fboundp 'screen-visible-p) 'screen-visible-p)
+	     ;; ((fboundp 'screen-visible-p) 'screen-visible-p) ; XEmacs 19?
 	     (t 'ignore))))
 
 (if (fboundp 'frame-iconified-p)

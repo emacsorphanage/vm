@@ -3722,7 +3722,7 @@ See also `vm-toolbar-orientation' to control where the toolbar is placed."
 Legal values are `left', `right' `top' and `bottom'.  Any other
 value will be interpreted as `top'.
 
-This variable only has meaning under XEmacs 19.12 and beyond.
+This variable only has meaning under XEmacs.
 Under FSF Emacs 21 the toolbar is always at the top of the frame."
   :group 'vm
   :type '(choice (const left)
@@ -3925,7 +3925,7 @@ end of the message to the end of message."
 
 (defcustom vm-display-xfaces nil
   "*Non-nil means display images as specified in X-Face headers.
-This requires at least XEmacs 19.12 with native xface support compiled in."
+This requires XEmacs with native xface support compiled in."
   :group 'vm
   :type 'boolean)
 

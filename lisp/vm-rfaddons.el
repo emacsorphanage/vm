@@ -108,6 +108,7 @@
   (vm-load-features '(regexp-opt bbdb bbdb-vm gnus-group)))
 
 (require 'sendmail)
+(require 'bbdb)
 
 (if vm-xemacs-p (require 'overlay))
 
@@ -338,6 +339,13 @@ or do the binding and advising on your own."
 (defvar vm-reply-include-presentation nil)
 
 ;;;###autoload
+(defun vm-followup-include-presentation (count)
+  "Include presentation instead of text.
+This does not work when replying to multiple messages."
+  (interactive "p")
+  (vm-reply-include-presentation count t))
+
+;;;###autoload
 (defun vm-reply-include-presentation (count &optional to-all)
   "Include presentation instead of text.
 This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
@@ -351,13 +359,6 @@ This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
     (let ((vm-include-text-from-presentation t)
 	  (vm-reply-include-presentation t)) ; is this variable necessary?
       (vm-do-reply to-all t count))))
-
-;;;###autoload
-(defun vm-followup-include-presentation (count)
-  "Include presentation instead of text.
-This does not work when replying to multiple messages."
-  (interactive "p")
-  (vm-reply-include-presentation count t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

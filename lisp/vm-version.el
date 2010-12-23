@@ -156,9 +156,10 @@ Return the list of loaded features."
                          f
                        (when (not silent)
                          (message "WARNING: Could not load feature %S." f)
-                         (sit-for 1)
+                         ;; (sit-for 1)
                          (message "WARNING: Related functions may not work correctly!")
-                         (sit-for 1))
+                         ;; (sit-for 1)
+			 )
                        nil))))
                 feature-list))
   (delete nil feature-list))

@@ -57,9 +57,8 @@
 (declare-function set-specifier "vm-xemacs" 
 		  (specifier value &optional locale tag-set how-to-add))
 (declare-function console-type "vm-xemacs" (&optional console))
-;; The following functions are erroneously called in fsfemacs too
-;; (declare-function frame-device "vm-xemacs" (frame))
-;; (declare-function window-displayed-height "vm-xemacs" (window))
+(declare-function frame-device "vm-xemacs" (&optional frame))
+(declare-function window-displayed-height "vm-xemacs" (&optional window))
 (defvar current-itimer)
 
 (declare-function vm-decode-mime-encoded-words-in-string "vm-mime" (string))
@@ -253,7 +252,9 @@ folder selectors work."
     t))
 
 (defun vm-biff-get-buffer-window (buf)
-  (vm-get-buffer-window buf (vm-biff-x-p) (frame-device)))
+  (if vm-xemacs-p
+      (vm-get-buffer-window buf (vm-biff-x-p) (frame-device))
+    (vm-get-buffer-window buf (vm-biff-x-p))))
 
 (defun  vm-biff-find-folder-window (msg)
   (let ((buf (vm-buffer-of msg)))
@@ -464,7 +465,10 @@ AddToFunc SelectWindow
                                 (cons (cons 'popup ff)
                                       vm-biff-frame-properties)
                               vm-biff-frame-properties))
-                     (mf (or (and (vm-get-buffer-window buf t (frame-device))
+                     (mf (or (and (if vm-xemacs-p
+				      (vm-get-buffer-window buf t 
+							    (frame-device))
+				    (vm-get-buffer-window buf t))
                                   (window-frame
                                    (vm-biff-get-buffer-window buf)))
                              (make-frame props))))
@@ -495,7 +499,9 @@ AddToFunc SelectWindow
               (switch-to-buffer buf)
               (if (> h vm-biff-max-height)
                   (setq h vm-biff-max-height))
-              (setq h (- (window-displayed-height) h))
+	      (if vm-xemacs-p
+		  (setq h (- (window-displayed-height) h))
+		(setq h (- (window-height) h)))
               (if (not (one-window-p))
                   (shrink-window h)))))
 
