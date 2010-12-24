@@ -388,7 +388,7 @@ other options are available.
 
 VM can work with mail folders saved on the local file system.
 @xref{Local Folders}.  It can also work with mail folders stored on
-remote mail servers, such as POP and IMAP servers.  @xref{Server
+remote mail servers, such as POP and IMAP servers.  @xref{POP and IMAP
 Folders}.  Server folders have the advantage that they can be accessed
 from multiple locations on the internet.  VM might appear to have a
 bias towards local folders due to its history of development.  But it
@@ -431,13 +431,13 @@ there are @var{n} or fewer messages.  The default value of
 
 @menu
 * Local Folders::     Working with folders on the local file system
-* Server Folders::    Working with folders on mail servers
+* POP and IMAP Folders::    Working with folders on mail servers
 * Thunderbird Folders:: Working with folders managed by Thunderbird
 * Getting New Mail::  Retrieving mail from spool files.
 * Crash Recovery::    Recovering changes after Emacs or your system dies.
 @end menu
 
-@node Local Folders, Server Folders, Starting Up, Starting Up
+@node Local Folders, POP and IMAP Folders, Starting Up, Starting Up
 @section Local Folders
 
 @cindex mbox
@@ -614,7 +614,7 @@ spool files on remote hosts using the POP and IMAP protocols.
 VM can access spool files on mail servers via the Post Office Protocol
 (POP).  To use a POP mailbox as a spool file, you need to use a POP
 maildrop specification (@ref{maildrop specification},
-@ref{Server Folders}).  Once this is done, VM will retrieve new mail
+@ref{POP and IMAP Folders}).  Once this is done, VM will retrieve new mail
 from the POP mailbox in the same way as it retrieves it from system
 mailbox.  The retrieved messages can be automatically removed from the
 POP mailbox or retained until a later expunge operation.
@@ -694,7 +694,7 @@ Here is an example:
 VM can also use the IMAP protocol to retrieve mail from a mail server.
 As with POP, instead of specifying a local file name in the
 @code{vm-spool-files} definition, you would give an IMAP maildrop
-specification (@ref{maildrop specification}, @ref{Server Folders}).
+specification (@ref{maildrop specification}, @ref{POP and IMAP Folders}).
 Once this is done, VM will retrieve new mail from the IMAP mailbox in
 the same way as it retrieves it from system mailbox.  The retrieved
 messages can be automatically removed from the IMAP mailbox or
@@ -830,8 +830,8 @@ Two additional formats are @code{mmdf} used by MMDF systems and
 automatically when read from the file system.
 
 
-@node Server Folders, Thunderbird Folders, Local Folders, Starting Up
-@section Server Folders
+@node POP and IMAP Folders, Thunderbird Folders, Local Folders, Starting Up
+@section POP and IMAP Folders
 
 @cindex primary inbox
 @cindex maildrop specification
@@ -992,7 +992,7 @@ defined via the variables @code{vm-pop-folder-alist} and
 * IMAP Folders::        How to use mail folders on IMAP servers
 @end menu
 
-@node POP Folders, IMAP Folders, Server Folders, Server Folders
+@node POP Folders, IMAP Folders, POP and IMAP Folders, POP and IMAP Folders
 @unnumberedsubsec POP Folders
 @cindex POP
 @cindex message attributes
@@ -1047,7 +1047,7 @@ For example:
 when @code{vm-visit-pop-folder} asks for a folder name.  There is no
 need to specify the password for POP accounts in this definition.
 
-@node IMAP Folders,, POP Folders, Server Folders
+@node IMAP Folders,, POP Folders, POP and IMAP Folders
 @unnumberedsubsec IMAP Folders
 @cindex IMAP
 @cindex message attributes 
@@ -1162,10 +1162,36 @@ with a @emph{prefix argument}.  This causes @emph{all} the message attributes
 and labels to be written to the server, since it may not be known
 which of them have actually changed during the offline operation.
 
+@anchor{UIDVALIDITY}
+@unnumberedsubsec UIDVALIDITY
+
+@cindex UIDVALIDITY
+Messages on an IMAP server have unique id numbers called UID's.
+In addition, a second id number called @dfn{UIDVALIDITY} allows the
+server to renumber messages when the id numbers within a particular
+UIDVALIDITY are exhausted.  All the messages on the server at any
+given time have the same UIDVALIDITY value.  When the server needs to
+renumber the messages, it changes the UIDVALIDITY value and issues new
+UID numbers for all the messages with new UIDVALIDITY.  This happens
+but rarely because there are over two billion UID's within each
+UIDVALIDITY.
+
+When the UIDVALIDITY changes on the IMAP server, VM has no easy way to
+identify the new UID's for the messages in its cache.  So, it marks
+all the messages in the cache as invalid and refreshes the cache with
+new copies of messages from the server.  This is a time-consuming
+operation but it happens only rarely.  VM warns you before it
+refreshes the cache and asks for confirmation.  You can abort the
+operation if you cannot spare the time, but note that it is not
+possible to perform any changes to the IMAP folder until the cache is
+refreshed.  You might consider setting the @code{vm-load-headers-only}
+flag to true before you refresh the cache so that it will be
+quicker. @pxref{Headers-only Messages}.
 
 
 
-@node Thunderbird Folders, Getting New Mail, Server Folders, Starting Up
+
+@node Thunderbird Folders, Getting New Mail, POP and IMAP Folders, Starting Up
 @section Thunderbird Folders
 
 @cindex Thunderbird
