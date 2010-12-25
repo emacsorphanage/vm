@@ -49,7 +49,7 @@
 
 (defvar selectable-only)		; used with dynamic binding
 
-;; To-Do  (USR)
+;;; To-Do  (USR)
 ;; - Need to ensure that new imap sessions get created as and when needed.
 
 ;; ------------------------------------------------------------------------
@@ -74,7 +74,7 @@
 ;; a fresh session is created.
 
 ;; ------------------------------------------------------------------------
-;; Utilities
+;;; Utilities
 ;; ------------------------------------------------------------------------
 
 ;; the maildrop spec of the imap folder
@@ -83,14 +83,14 @@
 ;; current imap process of the folder - each folder has a separate one
 (defsubst vm-folder-imap-process ()
   (aref vm-folder-access-data 1))
-;; the uid validity value of the imap folder
+;; the UIDVALIDITY value of the imap folder on the server
 (defsubst vm-folder-imap-uid-validity ()
   (aref vm-folder-access-data 2))
-;; the list of uid's and flags of the messages in the imap folder
-;; (msg-num . uid . size . flags list)
+;; the list of uid's and flags of the messages in the imap folder on
+;; the server (msg-num . uid . size . flags list)
 (defsubst vm-folder-imap-uid-list ()
   (aref vm-folder-access-data 3))	
-;; the number of messages in the imap folder
+;; the number of messages in the imap folder on the server
 (defsubst vm-folder-imap-mailbox-count ()
   (aref vm-folder-access-data 4))
 ;; flag indicating whether the imap folder allows writing
@@ -105,10 +105,10 @@
 ;; list of permanent flags storable on the imap server
 (defsubst vm-folder-imap-permanent-flags ()
   (aref vm-folder-access-data 8))
-;; obarray of uid's with message numbers as their values
+;; obarray of uid's with message numbers as their values (on the server)
 (defsubst vm-folder-imap-uid-obarray ()
   (aref vm-folder-access-data 9))	; obarray(uid, msg-num)
-;; obarray of uid's with flags lists as their values
+;; obarray of uid's with flags lists as their values (on the server)
 (defsubst vm-folder-imap-flags-obarray ()
   (aref vm-folder-access-data 10))	; obarray(uid, (size . flags list))
 					; cons-pair shared with imap-uid-list
@@ -266,7 +266,7 @@ connection mode is then turned into 'online.")
 
 
 ;; -----------------------------------------------------------------------
-;; IMAP Spool
+;;; IMAP Spool
 ;; 
 ;; -- Functions that treat IMAP mailboxes as spools to get mail
 ;; -- into local buffers and subsequently expunge on the server.
@@ -725,17 +725,18 @@ on all the relevant IMAP servers and then immediately expunges."
 (defun vm-imap-clear-invalid-retrieval-entries (source retrieved uid-validity)
   "Remove from RETRIEVED (a copy of vm-imap-retrieved-messages)
 all the entries for the password-free maildrop spec SOURCE which
-do not match the given UID-VALIDITY."
-  (let ((ret-list retrieved)
+do not match the given UID-VALIDITY.              USR, 2010-05-24"
+  (let ((list retrieved)
 	(prev nil))
-    (while ret-list
-      (if (and (equal source (nth 2 (car ret-list)))
-	       (not (equal (nth 1 (car ret-list)) uid-validity)))
+    (setq source (vm-imap-normalize-spec source))
+    (while list
+      (if (and (equal source (vm-imap-normalize-spec (nth 2 (car list))))
+	       (not (equal (nth 1 (car list)) uid-validity)))
 	  (if prev
-	      (setcdr prev (cdr ret-list))
-	    (setq retrieved (cdr retrieved))))
-      (setq prev ret-list)
-      (setq ret-list (cdr ret-list)))
+	      (setcdr prev (cdr list))
+	    (setq retrieved (cdr retrieved)))
+	(setq prev list))
+      (setq list (cdr list)))
     retrieved ))
 
 (defun vm-imap-recorded-uid-validity ()
@@ -748,7 +749,7 @@ of the current folder."
 
 
 ;; --------------------------------------------------------------------
-;; Server-side
+;;; Server-side
 ;;
 ;; vm-establish-new-folder-imap-session: 
 ;;	(&optional interactive string) -> process
@@ -1226,9 +1227,18 @@ as well."
   (vm-set-imap-stat-y-need o (vm-imap-stat-x-need o)))
 
 (defun vm-imap-check-connection (process)
+  ;;------------------------------
+  ;; (vm-buffer-type:assert 'process)
+  ;;------------------------------
   (cond ((not (memq (process-status process) '(open run)))
+	 ;;-------------------
+	 ;; (vm-buffer-type:exit)
+	 ;;-------------------
 	 (vm-imap-normal-error "not connected"))
 	((not (buffer-live-p (process-buffer process)))
+	 ;;-------------------
+	 ;; (vm-buffer-type:exit)
+	 ;;-------------------
 	 (vm-imap-protocol-error
 	  "IMAP process %s's buffer has been killed" process))))
 
@@ -2188,12 +2198,19 @@ purposes. Returns the IMAP process or nil if unsuccessful."
 	       (not (equal (vm-folder-imap-uid-validity) uid-validity)))
 	  (if (y-or-n-p 
 	       (concat "Folder's UID VALIDITY value has changed "
-		       "on the server.  Continue? "))
+		       "on the server.  Refresh cache? "))
 	      (progn
 		(message (concat "VM will download new copies of messages"
 				 " and mark the old ones for deletion"))
-		(sit-for 4))
+		(sit-for 4)
+		(setq vm-imap-retrieved-messages
+		      (vm-imap-clear-invalid-retrieval-entries
+		       (vm-folder-imap-maildrop-spec)
+		       vm-imap-retrieved-messages
+		       uid-validity))
+		(vm-set-buffer-modified-p t))
 	    (error "Aborted")))
+
       (vm-set-folder-imap-uid-validity uid-validity) ; unique per session
       (vm-set-folder-imap-mailbox-count mailbox-count)
       (vm-set-folder-imap-read-write read-write)
@@ -2697,7 +2714,8 @@ operation of the server to minimize I/O."
 
 ;; ------------------------------------------------------------------------
 ;; 
-;; interactive commands:
+;;; interactive commands:
+;;
 ;; vm-create-imap-folder: string -> void
 ;; vm-delete-imap-folder: string -> void
 ;; vm-rename-imap-folder: string & string -> void
@@ -2749,7 +2767,7 @@ operation of the server to minimize I/O."
 	(uid-validity (vm-folder-imap-uid-validity))
 	(do-full-retrieve (eq do-retrieves 'full))
 	retrieve-list expunge-list stale-list uid
-	mp)
+	mp retrieved-entry)
     (vm-imap-retrieve-uid-and-flags-data)
     (setq there (vm-folder-imap-uid-obarray))
     ;; Figure out stale uidvalidity values and messages to be expunged
@@ -2769,18 +2787,22 @@ operation of the server to minimize I/O."
     ;; Figure out messages that need to be retrieved
     (mapatoms (function
 	       (lambda (sym)
-		 (if (and (not (boundp (intern (symbol-name sym) here)))
-			  (or do-full-retrieve
-			      (not (assoc (symbol-name sym)
-					  vm-imap-retrieved-messages))))
-		     ;; don't retrieve messages that have been
-		     ;; retrieved previously
-		     ;; This is bad because if a message got lost
-		     ;; somehow, it won't be retrieved!  USR
+		 (unless  (boundp (intern (symbol-name sym) here))
+		   ;; don't retrieve messages that have been
+		   ;; retrieved previously
+		   ;; This is bad because if a message got lost
+		   ;; somehow, it won't be retrieved!  USR
+		   (setq retrieved-entry 
+			 (assoc (symbol-name sym) vm-imap-retrieved-messages))
+		   ;; double check to ensure that uid-validity matches
+		   (when (and retrieved-entry
+			      (not (equal (cadr retrieved-entry) uid-validity)))
+		     (setq retrieved-entry nil))
+		   (when (or do-full-retrieve (null retrieved-entry))
 		     (setq retrieve-list (cons
 					  (cons (symbol-name sym)
 						(symbol-value sym))
-					  retrieve-list)))))
+					  retrieve-list))))))
 	      there)
     (setq retrieve-list 
 	  (sort retrieve-list 
@@ -3323,7 +3345,7 @@ interactively."
 
 
 ;; ---------------------------------------------------------------------------
-;; Utilities for maildrop specs  (this should be moved up top)
+;;; Utilities for maildrop specs  (this should be moved up top)
 ;;
 ;; A maildrop spec is of the form
 ;;      protocol:hostname:port:mailbox:auth:loginid:password 

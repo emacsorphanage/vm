@@ -35,8 +35,9 @@
   )
 
 (defun vm-set-buffer-modified-p (flag &optional buffer)
-  (save-excursion
-    (and buffer (set-buffer buffer))
+  "Sets the buffer-modified-p of the current folder to FLAG.  Optional
+argument BUFFER can ask for it to be done for some other folder."
+  (with-current-buffer (or buffer (current-buffer))
     (set-buffer-modified-p flag)
     (vm-increment vm-modification-counter)
     (intern (buffer-name) vm-buffers-needing-display-update)
