@@ -341,18 +341,19 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		((setq x (assoc (vm-imapdrop-sans-password source)
 				vm-imap-auto-expunge-alist))
 		 (cdr x))
-		(t (if vm-imap-expunge-after-retrieving
-		       t
-		     (message 
-		      (concat "Warning: Folder is not set to auto-expunge"))
-		     (sit-for 1)
-		     nil))))
+		(vm-imap-expunge-after-retrieving
+		 t)
+		(t
+		 (message 
+		  (concat "Warning: Folder is not set to auto-expunge"))
+		 (sit-for 1)
+		 nil)))
 
     (unwind-protect
 	(catch 'end-of-session
-	  (if handler
-	      (throw 'end-of-session
-		     (funcall handler 'vm-imap-move-mail source destination)))
+	  (when handler
+	    (throw 'end-of-session
+		   (funcall handler 'vm-imap-move-mail source destination)))
 	  (setq process 
 		(vm-imap-make-session source vm-imap-ok-to-ask "movemail"))
 	  (or process (throw 'end-of-session nil))
@@ -405,36 +406,34 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		  (setq uid (cdr (car list)))
 		  (setcar msgid uid)
 		  (setcar (cdr msgid) uid-validity)
-		  (if (member msgid imap-retrieved-messages)
-		      (progn
-			(if vm-imap-ok-to-ask
-			    (message
-			     "Skipping message %d (of %d) from %s (retrieved already)..."
-			     n mailbox-count folder))
-			(throw 'skip t))))
+		  (when (member msgid imap-retrieved-messages)
+		    (if vm-imap-ok-to-ask
+			(message
+			 "Skipping message %d (of %d) from %s (retrieved already)..."
+			 n mailbox-count folder))
+		    (throw 'skip t)))
 		(setq message-size (vm-imap-get-message-size process n))
 		(vm-set-imap-stat-x-need statblob message-size)
-		(if (and (integerp vm-imap-max-message-size)
-			 (> message-size vm-imap-max-message-size)
-			 (progn
-			   (setq response
-				 (if vm-imap-ok-to-ask
-				     (vm-imap-ask-about-large-message
-				      process message-size n)
-				   'skip))
-			   (not (eq response 'retrieve))))
-		    (progn
-		      (if (and read-write can-delete (eq response 'delete))
-			  (progn
-			    (message "Deleting message %d..." n)
-			    (vm-imap-delete-message process n)
-			    (setq did-delete t))
-			(if vm-imap-ok-to-ask
-			    (message "Skipping message %d..." n)
-			  (message
-			   "Skipping message %d in %s, too large (%d > %d)..."
-			   n folder message-size vm-imap-max-message-size)))
-		      (throw 'skip t)))
+		(when (and (integerp vm-imap-max-message-size)
+			   (> message-size vm-imap-max-message-size)
+			   (progn
+			     (setq response
+				   (if vm-imap-ok-to-ask
+				       (vm-imap-ask-about-large-message
+					process message-size n)
+				     'skip))
+			     (not (eq response 'retrieve))))
+		  (cond ((and read-write can-delete (eq response 'delete))
+			 (message "Deleting message %d..." n)
+			 (vm-imap-delete-message process n)
+			 (setq did-delete t))
+			(vm-imap-ok-to-ask
+			 (message "Skipping message %d..." n))
+			(t 
+			 (message
+			  "Skipping message %d in %s, too large (%d > %d)..."
+			  n folder message-size vm-imap-max-message-size)))
+		  (throw 'skip t))
 		(message "Retrieving message %d (of %d) from %s..."
 			 n mailbox-count folder)
                 (vm-imap-fetch-message process n
@@ -448,29 +447,24 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		(and b-per-session
 		     (setq retrieved-bytes (+ retrieved-bytes message-size)))
 		(if auto-expunge
-		    ;; The user doesn't want the messages
-		    ;; kept in the mailbox.
-		    ;; Delete the message now.
-		    (if (and read-write can-delete)
-			(progn
-			  (vm-imap-delete-message process n)
-			  (setq did-delete t)))
+		    ;; The user doesn't want the messages kept in the mailbox.
+		    (when (and read-write can-delete)
+		      (vm-imap-delete-message process n)
+		      (setq did-delete t))
 		  ;; If message retained on the server, record the UID
 		  (setq imap-retrieved-messages
-			(cons (copy-sequence msgid)
-			      imap-retrieved-messages))
+			(cons (copy-sequence msgid) imap-retrieved-messages))
 		  (setq did-retain t)))
 	      (vm-increment n))
-	    (if did-delete
-		(progn
-		  ;; CLOSE forces an expunge and avoids the EXPUNGE
-		  ;; responses.
-		  (vm-imap-send-command process "CLOSE")
-		  (vm-imap-read-ok-response process)
-		  ;;----------------------------------
-		  (vm-imap-session-type:set 'inactive)
-		  ;;----------------------------------
-		  ))
+	    (when did-delete
+	      ;; CLOSE forces an expunge and avoids the EXPUNGE
+	      ;; responses.
+	      (vm-imap-send-command process "CLOSE")
+	      (vm-imap-read-ok-response process)
+	      ;;----------------------------------
+	      (vm-imap-session-type:set 'inactive)
+	      ;;----------------------------------
+	      )
 	    ;;-------------------
 	    (vm-buffer-type:exit)
 	    ;;-------------------
@@ -506,9 +500,9 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	      (vm-buffer-type:enter 'process)
 	      ;;----------------------------
 	      (catch 'end-of-session
-		(if handler
-		    (throw 'end-of-session
-			   (funcall handler 'vm-imap-check-mail source)))
+		(when handler
+		  (throw 'end-of-session
+			 (funcall handler 'vm-imap-check-mail source)))
 		(setq process 
 		      (vm-imap-make-session source nil "checkmail"))
 		(or process (throw 'end-of-session nil))
@@ -518,10 +512,9 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		(setq select (vm-imap-select-mailbox process mailbox)
 		      msg-count (car select)
 		      uid-validity (nth 1 select))
-		(if (zerop msg-count)
-		    (progn
-		      (vm-store-folder-totals source '(0 0 0 0))
-		      (throw 'end-of-session nil)))
+		(when (zerop msg-count)
+		  (vm-store-folder-totals source '(0 0 0 0))
+		  (throw 'end-of-session nil))
 		;; sweep through the retrieval list, removing entries
 		;; that have been invalidated by the new UIDVALIDITY
 		;; value.
