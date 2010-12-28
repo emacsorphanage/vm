@@ -5,7 +5,7 @@
 ;; Copyright (C) 1998, 2001, 2003 Kyle E. Jones
 ;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
 ;; Copyright (C) 2006 Robert P. Goldman
-;; Copyright (C) 2008-2010 Uday S. Reddy
+;; Copyright (C) 2008-2011 Uday S. Reddy
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -328,6 +328,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	(msgid (list nil nil (vm-imapdrop-sans-password source) 'uid))
 	(imap-retrieved-messages vm-imap-retrieved-messages)
 	(did-delete nil)
+	(did-retain nil)
 	(source-nopwd (vm-imapdrop-sans-password source))
 	use-body-peek auto-expunge x select source-list uid
 	can-delete read-write uid-validity
@@ -343,9 +344,8 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		(t (if vm-imap-expunge-after-retrieving
 		       t
 		     (message 
-		      (concat "Leaving messages on IMAP server; "
-			      "See info under \"IMAP Spool Files\""))
-		     (sit-for 4)
+		      (concat "Warning: Folder is not set to auto-expunge"))
+		     (sit-for 1)
 		     nil))))
 
     (unwind-protect
@@ -447,17 +447,19 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		(vm-increment retrieved)
 		(and b-per-session
 		     (setq retrieved-bytes (+ retrieved-bytes message-size)))
-		(setq imap-retrieved-messages
-		      (cons (copy-sequence msgid)
-			    imap-retrieved-messages))
 		(if auto-expunge
-		  ;; The user doesn't want the messages
-		  ;; kept in the mailbox.
-		  ;; Delete the message now.
-		  (if (and read-write can-delete)
-		      (progn
-			(vm-imap-delete-message process n)
-			(setq did-delete t)))))
+		    ;; The user doesn't want the messages
+		    ;; kept in the mailbox.
+		    ;; Delete the message now.
+		    (if (and read-write can-delete)
+			(progn
+			  (vm-imap-delete-message process n)
+			  (setq did-delete t)))
+		  ;; If message retained on the server, record the UID
+		  (setq imap-retrieved-messages
+			(cons (copy-sequence msgid)
+			      imap-retrieved-messages))
+		  (setq did-retain t)))
 	      (vm-increment n))
 	    (if did-delete
 		(progn
@@ -475,9 +477,11 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	    (not (equal retrieved 0))	; return result
 	    ))
       ;; unwind-protections
-      (setq vm-imap-retrieved-messages imap-retrieved-messages)
-      (if (and (eq vm-flush-interval t) (not (equal retrieved 0)))
+      (when did-retain
+	(setq vm-imap-retrieved-messages imap-retrieved-messages)
+	(when (eq vm-flush-interval t)
 	  (vm-stuff-imap-retrieved))
+	(vm-set-buffer-modified-p t))
       (when statblob 
 	(vm-imap-stop-status-timer statblob))
       (when process
@@ -669,7 +673,8 @@ on all the relevant IMAP servers and then immediately expunges."
 			(throw 'replay t))
 		      (setq uid-alist
 			    (vm-imap-get-uid-list
-			     process 1 msg-count)))
+			     process 1 msg-count))
+		      (vm-imap-session-type:make-active))
 		    (when (setq match (rassoc (car data) uid-alist))
 		      (vm-imap-delete-message process (car match))
 		      (setq did-delete t)
@@ -720,7 +725,9 @@ on all the relevant IMAP servers and then immediately expunges."
 	  ;;-------------------
 	  )
       (and process (vm-imap-end-session process)))
-    (or trouble (setq vm-imap-retrieved-messages nil))))
+    (unless trouble 
+      (setq vm-imap-retrieved-messages nil)
+      (vm-set-buffer-modified-p t))))
 
 (defun vm-imap-clear-invalid-retrieval-entries (source retrieved uid-validity)
   "Remove from RETRIEVED (a copy of vm-imap-retrieved-messages)
@@ -1394,11 +1401,14 @@ as well."
 		   list (cons (cons msg-num uid) list)))
 	    ((vm-imap-response-matches response 'VM 'OK)
 	     (setq need-ok nil))))
-      ;; returning nil means the uid fetch failed so return
-      ;; something other than nil if there aren't any messages.
-      (if (null list)
-	  (cons nil nil)
-	list )))
+    ;;-------------------------------
+    (vm-imap-session-type:set 'valid)
+    ;;-------------------------------
+    ;; returning nil means the uid fetch failed so return
+    ;; something other than nil if there aren't any messages.
+    (if (null list)
+	(cons nil nil)
+      list )))
 
 ;; This function is not recommended, but is available to use when
 ;; caching uid-and-flags data might be too expensive.
@@ -1559,9 +1569,12 @@ as well."
 	    ;;-------------------
 	    (vm-buffer-type:exit)
 	    ;;-------------------
-	    (if (y-or-n-p (format "Retrieve message %d (size = %d)? " n size))
+	    (if (y-or-n-p 
+		 (format "Retrieve message %d (size = %d)? " n size))
 		'retrieve
-	      (if (y-or-n-p (format "Delete message %d from maildrop? " n))
+	      (if (y-or-n-p 
+		   (format "Delete message %d (size = %d) from maildrop? " 
+			   n size))
 		  'delete
 		'skip))))
       (and work-buffer (kill-buffer work-buffer)))))
