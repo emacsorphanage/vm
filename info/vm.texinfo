@@ -2239,12 +2239,49 @@ you delete both of those headers.  In that case the To and Cc
 headers will be used.
 
 @menu
+* Sending Options::     Variables that control mail sending.
 * MIME Composition::    Sending a message using MIME attachments.
 * Replying::            Describes the various ways to reply to a message.
 * Forwarding Messages:: How to forward a message to a third party.
 @end menu
 
-@node MIME Composition, Replying, Sending Messages, Sending Messages
+@node Sending Options, MIME Composition, Sending Messages, Sending Messages
+@section Mail Sending Options
+
+As already mentioned, VM uses Emacs @ref{Mail Mode,,,emacs, the Gnu
+Emacs Manual} for sending email.  Therefore, Mail Mode options
+should be set to configure the mail sending.  The extra options
+provided by VM are described below.
+
+@vindex vm-mail-header-from
+@vindex vm-mail-mode-hidden-headers
+When a mail composition buffer is created, VM initializes it with
+header lines that you can fill in.  The @code{From} header is usually
+standard and contains your email address.  You can have VM fill it in
+for you
+automatically by setting the variable @code{vm-mail-header-from}.  (It is
+@code{nil} by default.)  The variable
+@code{vm-mail-mode-hidden-headers} can be used to hide some of the
+header lines from the mail composition buffer.  By default, the
+headers ``References'', ``In-Reply-To'' and ``X-Mailer'' are hidden. 
+
+@vindex vm-mail-header-insert-date
+@vindex vm-mail-header-insert-message-id
+@vindex vm-mail-reorder-message-headers
+@vindex vm-mail-header-order
+Additional header lines are created by VM before the composed message
+is sent.  The variable @code{vm-mail-header-insert-date} can be set to
+@code{t} (which is the default value) asking VM to insert a Date
+header into a message before it is sent.  You should set it to
+@code{nil} if you would like to insert a Date header yourself.  The
+variable @code{vm-mail-header-insert-mesasge-id} asks VM to insert a
+Message-ID header before sending the message. The variable
+@code{vm-mail-reorder-message-headers} asks VM to reorder the message
+headers into a particular order before sending.  The order is
+determined by the variable @code{vm-mail-header-order}.
+
+
+@node MIME Composition, Replying, Sending Options, Sending Messages
 @section MIME Composition
 
 @vindex vm-send-using-mime
