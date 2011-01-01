@@ -130,6 +130,26 @@ default for it if it's nil.  "
 	  (delq list-item res)))
       res)))
 
+(defun vm-mime-charset-to-coding (charset)
+  "Return the Emacs coding system corresonding to the given mime CHARSET."
+  ;; We can depend on the fact that, in FSF Emacsen, coding systems
+  ;; have aliases that correspond to MIME charset names.
+  (let ((tmp nil))
+    (cond (vm-fsfemacs-mule-p
+	   (cond ((coding-system-p (setq tmp (intern (downcase charset))))
+		   tmp)
+		  ((eq charset "us-ascii")
+		   'raw-text)
+		  ((eq charset "unknown")
+		   'iso-8859-1)
+		  (t 'undecided)))
+	  (t
+	   (setq tmp (vm-string-assoc charset
+				      vm-mime-mule-charset-to-coding-alist))
+	   (if tmp (cadr tmp) 'undecided))
+	  )))
+		  
+
 (defun vm-get-mime-ucs-list ()
   "Return the value of `vm-mime-ucs-list', or a reasonable default for it if
 it's nil.  This is used instead of `vm-mime-ucs-list' directly in order to
@@ -399,18 +419,14 @@ freshly parsing the message contents."
 		 (vm-mime-tty-can-display-mime-charset charset)
 		 nil)
 	     (let ((buffer-read-only nil)
-		   (cell (cdr (vm-string-assoc
-			       charset
-			       vm-mime-mule-charset-to-coding-alist)))
+		   (coding (vm-mime-charset-to-coding charset))
 		   (opoint (point)))
-	       (if cell
-		   (progn
-		     ;; decode 8-bit indeterminate char to correct
-		     ;; char in correct charset.
-		     (vm-decode-coding-region start end (car cell))
-		     (put-text-property start end 'vm-string t)
-		     (put-text-property start end 'vm-charset charset)
-		     (put-text-property start end 'vm-coding (car cell))))
+	       ;; decode 8-bit indeterminate char to correct
+	       ;; char in correct charset.
+	       (vm-decode-coding-region start end coding)
+	       (put-text-property start end 'vm-string t)
+	       (put-text-property start end 'vm-charset charset)
+	       (put-text-property start end 'vm-coding coding)
 	       ;; In XEmacs 20.0 beta93 decode-coding-region moves point.
 	       (goto-char opoint))))
 	((not (vm-multiple-fonts-possible-p)) nil)
@@ -5157,22 +5173,19 @@ confirmed before creating a new directory."
                               'alias-coding-systems))
                             (coding-system-base
                              (console-tty-output-coding-system))))))
-	 (or (eq ourtermcs (car 
-			    (cdr 
-			     (vm-string-assoc 
-			      name vm-mime-mule-charset-to-coding-alist))))
+	 (or (eq ourtermcs (vm-mime-charset-to-coding name))
 	     ;; The vm-mime-mule-charset-to-coding-alist check is to make
 	     ;; sure it does the right thing with a nonsense MIME character
 	     ;; set name.
 	     (and (memq ourtermcs (vm-get-mime-ucs-list))
-		  (vm-string-assoc name vm-mime-mule-charset-to-coding-alist) 
+		  (vm-mime-charset-to-coding name) 
 		  t)
 	     (vm-mime-default-face-charset-p name)))))
 
 (defun vm-mime-charset-internally-displayable-p (name)
   "Can the given MIME charset be displayed within emacs by by VM?"
   (cond ((and vm-xemacs-mule-p (memq (device-type) '(x gtk mswindows)))
-	 (or (vm-string-assoc name vm-mime-mule-charset-to-coding-alist)
+	 (or (vm-mime-charset-to-coding name)
 	     (vm-mime-default-face-charset-p name)))
 
 	;; vm-mime-tty-can-display-mime-charset (called below) fails
@@ -6177,8 +6190,7 @@ describes what was deleted."
             end   (vm-marker (match-end 0))
             charset (or (vm-determine-proper-charset start end)
                         vm-mime-8bit-composition-charset)
-            coding (vm-string-assoc charset vm-mime-mule-charset-to-coding-alist)
-            coding (and coding (cadr coding)))
+            coding (vm-mime-charset-to-coding charset))
       ;; encode coding system body
       (when (and  coding (not (eq coding 'no-conversion)))
         (if vm-xemacs-p
@@ -6360,8 +6372,7 @@ agent; under Unix, normally sendmail.)"
 		 ;; vm-mime-mule-coding-to-charset-alist to being (format
 		 ;; "%s" coding-system), if necessary.)
                  
-		 (car (cdr (vm-string-assoc 
-			    charset vm-mime-mule-charset-to-coding-alist)))))
+		 (vm-mime-charset-to-coding charset)))
 
             (enriched-mode -1)
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -6411,8 +6422,7 @@ agent; under Unix, normally sendmail.)"
 		 ;; vm-mime-mule-coding-to-charset-alist to being (format
 		 ;; "%s" coding-system), if necessary.)
 
-		 (car (cdr (vm-string-assoc
-			    charset vm-mime-mule-charset-to-coding-alist)))))
+		 (vm-mime-charset-to-coding charseet)))
 
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
 			    (point-min)
@@ -6603,8 +6613,7 @@ agent; under Unix, normally sendmail.)"
 	       ;; vm-mime-mule-coding-to-charset-alist to being (format "%s"
 	       ;; coding-system), if necessary.)
 
-		 (car (cdr (vm-string-assoc
-			    charset vm-mime-mule-charset-to-coding-alist)))))
+	       (vm-mime-charset-to-coding charset)))
 
 	  (setq encoding (vm-determine-proper-content-transfer-encoding
 			  (point)
@@ -6737,9 +6746,7 @@ agent; under Unix, normally sendmail.)"
 						       (point-max)))
 	    (if vm-fsfemacs-mule-p
 		(let ((coding-system
-		       (car (cdr (vm-string-assoc
-				  charset
-				  vm-mime-mule-charset-to-coding-alist)))))
+		       (vm-mime-charset-to-coding charset)))
 		  (if (null coding-system)
 		      (error "Can't find a coding system for charset %s"
 			     charset)
@@ -6789,9 +6796,7 @@ agent; under Unix, normally sendmail.)"
 						       (point-max)))
 	    (if vm-fsfemacs-mule-p
 		(let ((coding-system
-		       (car (cdr (vm-string-assoc
-				  charset
-				  vm-mime-mule-charset-to-coding-alist)))))
+		       (vm-mime-charset-to-coding charset)))
 		  (if (null coding-system)
 		      (error "Can't find a coding system for charset %s"
 			     charset)
@@ -7016,9 +7021,7 @@ agent; under Unix, normally sendmail.)"
 						     (point-max)))
 	  (if vm-fsfemacs-mule-p
 	      (let ((coding-system
-		     (car (cdr (vm-string-assoc
-				charset
-				vm-mime-mule-charset-to-coding-alist)))))
+		     (vm-mime-charset-to-coding charset)))
 		(if (null coding-system)
 		    (error "Can't find a coding system for charset %s"
 			   charset)
