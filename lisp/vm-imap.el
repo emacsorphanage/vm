@@ -1097,7 +1097,7 @@ as well."
   (when (and process (null imap-buffer))
     (setq imap-buffer (process-buffer process)))
   (when (and process (memq (process-status process) '(open run))
-	   (buffer-live-p (process-buffer process)))
+	     (buffer-live-p (process-buffer process)))
       (save-excursion			; = save-current-buffer?
 	(set-buffer imap-buffer)
 	;;----------------------------
@@ -1136,19 +1136,12 @@ as well."
 	;;----------------------------------
 	))
   (when (and imap-buffer (buffer-live-p imap-buffer))
-      (if (and (not vm-imap-keep-trace-buffer) (not keep-buffer))
-	  (kill-buffer imap-buffer)
-	(with-current-buffer imap-buffer
-	  ;;----------------------------
-	  (vm-buffer-type:enter 'process)
-	  ;;----------------------------
-	  (rename-buffer (concat "saved " (buffer-name)) t)
-	  (vm-keep-some-buffers (current-buffer) 'vm-kept-imap-buffers
-				vm-imap-keep-failed-trace-buffers)
-	  ;;-------------------
-	  (vm-buffer-type:exit)
-	  ;;-------------------
-	  )))     
+    (if (and (not vm-imap-keep-trace-buffer) (not keep-buffer))
+	(kill-buffer imap-buffer)
+      (vm-keep-some-buffers imap-buffer 'vm-kept-imap-buffers
+			    vm-imap-keep-failed-trace-buffers
+			    "saved ")
+      ))
   )
 
 ;; Status indicator vector

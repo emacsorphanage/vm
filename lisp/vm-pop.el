@@ -645,11 +645,9 @@ killed as well."
 	   (buffer-live-p (process-buffer process)))
       (if (and (not vm-pop-keep-trace-buffer) (not keep-buffer))
 	  (kill-buffer (process-buffer process))
-	(save-excursion
-	  (set-buffer (process-buffer process))
-	  (rename-buffer (concat "saved " (buffer-name)) t)
-	  (vm-keep-some-buffers (current-buffer) 'vm-kept-pop-buffers
-				vm-pop-keep-failed-trace-buffers))))
+	(vm-keep-some-buffers (process-buffer process) 'vm-kept-pop-buffers
+			      vm-pop-keep-failed-trace-buffers
+			      "saved ")))
   (if (fboundp 'add-async-timeout)
       (add-async-timeout 2 'delete-process process)
     (run-at-time 2 nil 'delete-process process)))

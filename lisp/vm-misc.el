@@ -1334,9 +1334,17 @@ filling of GNU Emacs does not work correctly here."
 	    (random 1000000)
 	    hostname)))
 
-(defun vm-keep-some-buffers (buffer ring-variable number-to-keep)
+(defun vm-keep-some-buffers (buffer ring-variable number-to-keep 
+				    &optional rename-prefix)
+  "Keep the BUFFER in the variable RING-VARIABLE, with NUMBER-TO-KEEP
+being the maximum number of buffers kept.  If necessary, the
+RING-VARIABLE is pruned.  If the optional argument string
+RENAME-PREFIX is given BUFFER is renamed by adding the prefix at the
+front before adding it to the RING-VARIABLE."
   (if (memq buffer (symbol-value ring-variable))
-      (set ring-variable (delq buffer (symbol-value ring-variable))))
+      (set ring-variable (delq buffer (symbol-value ring-variable)))
+    (with-current-buffer buffer
+      (rename-buffer (concat "saved " (buffer-name)) t)))
   (set ring-variable (cons buffer (symbol-value ring-variable)))
   (set ring-variable (vm-delete 'buffer-name
 				(symbol-value ring-variable) t))
