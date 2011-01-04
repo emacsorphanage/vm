@@ -337,7 +337,7 @@ When invoked on marked messages (via `vm-next-command-uses-marks'),
 only messages both marked and deleted are expunged, other messages are
 ignored."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-error-if-folder-read-only)
   ;; do this so we have a clean slate.  code below depends on the
   ;; fact that the numbering redo start point begins as nil in
