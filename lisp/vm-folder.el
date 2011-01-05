@@ -37,6 +37,7 @@
   (require 'vm-delete)
   (require 'vm-mark)
   (require 'vm-virtual)
+  (require 'vm-mime)
   (require 'vm-sort)
   (require 'vm-thread)
   (require 'vm-pop)

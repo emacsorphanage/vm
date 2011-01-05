@@ -6422,7 +6422,7 @@ agent; under Unix, normally sendmail.)"
 		 ;; vm-mime-mule-coding-to-charset-alist to being (format
 		 ;; "%s" coding-system), if necessary.)
 
-		 (vm-mime-charset-to-coding charseet)))
+		 (vm-mime-charset-to-coding charset)))
 
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
 			    (point-min)
