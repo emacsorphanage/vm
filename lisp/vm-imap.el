@@ -1759,7 +1759,9 @@ as well."
 	     (setq need-ok nil))
 	    ;; Otherwise, skip the response
 	    ))
-    (string-to-number size) ))
+    (if need-size
+	1
+      (string-to-number size) )))
 
 (defun vm-imap-read-capability-response (process)
   ;;----------------------------------

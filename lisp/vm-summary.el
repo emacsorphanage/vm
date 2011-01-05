@@ -245,15 +245,6 @@ the messages in the current folder."
 	      ;; re-establish them afterwards.
 	      (message "Generating summary... %d" n)
 	      (overlay-recenter (point))
-	      (while mp
-		(setq m (car mp))
-		(when (vm-su-start-of m)
-		  (set-marker (vm-su-start-of m) nil)
-		  (set-marker (vm-su-end-of m) nil))
-		(setq mp (cdr mp)))
-
-	      (overlay-recenter (point-max))
-
 	      (setq mp m-list)
 	      (while mp
 		(setq m (car mp))
@@ -1145,6 +1136,8 @@ message has attachments.  The indicator string is the value of
 attachments.  					USR, 2010-05-13."
   (let ((attachments 0))
     (setq msg (vm-real-message-of msg))
+    ;; If this calls back vm-update-summary-and-mode-line
+    ;; an infinite regress happens!
     (vm-mime-action-on-all-attachments
      nil
      (lambda (msg layout type file)

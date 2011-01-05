@@ -4994,9 +4994,10 @@ thread are retrieved."
 	  (vm-register-fetched-message mm))
 	(setq mlist (cdr mlist)))
       (when (> n 0)
-	(message "Retrieving message body... done")))
-    (intern (buffer-name) vm-buffers-needing-display-update)
-    (vm-update-summary-and-mode-line)
+	(message "Retrieving message body... done")
+	(intern (buffer-name) vm-buffers-needing-display-update)
+	(when (interactive-p)
+	  (vm-update-summary-and-mode-line))))
     ))
 
 (defun vm-retrieve-real-message-body (mm &optional fetch)
