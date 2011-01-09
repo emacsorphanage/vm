@@ -64,6 +64,27 @@
 
 (provide 'vm-reply)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-menu)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-mime)
+  (require 'vm-digest)
+  (require 'vm-undo)
+  ;; (require 'vm-delete)
+  ;; (require 'vm-imap)
+  )
+
+(declare-function vm-mode "vm" (&optional read-only))
+(declare-function vm-session-initialization "vm" ())
+(declare-function vm-decode-postponed-mime-message "vm-pine" ())
+(declare-function get-itimer "vm-xemacs.el" (name))
+
 (declare-function mail-strip-quoted-names "ext:mail-utils" (address))
 (declare-function mail-fetch-field "ext:mail-utils" 
 		  (field-name &optional last all list))
@@ -683,6 +704,37 @@ folder, that message is marked as having been replied to."
 	      (vm-mail-mode-remove-header "Resent-Date:")
 	      (setq resent t))
 	  (vm-mail-mode-remove-header "Date:")))))
+
+;;;###autoload
+(defun vm-mail-get-header-contents (header-name-regexp &optional clump-sep)
+  "Return the contents of the header(s) matching HEADER-NAME-REGEXP
+for the message in the current-buffer.    The result will be a string that is
+mime-encoded.  The optional argument CLUMP-SEP, if present, should be
+a string, which can be used as a separator to concatenate the fields
+of multiple header lines which might match HEADER-NAME-REGEXP.
+
+This function is a variant of `vm-get-header-contents'."
+  (let ((contents nil)
+        (text-of-message 0)
+        (regexp (concat "^\\(" header-name-regexp "\\)")))
+    (save-excursion
+      (goto-char (point-min))
+      (if (re-search-forward (regexp-quote mail-header-separator)
+                             (point-max) t)
+          (setq text-of-message (match-end 0))
+        (error "No mail header separator found!"))
+
+      (goto-char (point-min))
+      (let ((case-fold-search t))
+        (while (and (or (null contents) clump-sep)
+                    (re-search-forward regexp text-of-message t)
+                    (save-excursion (goto-char (match-beginning 0))
+                                    (vm-match-header)))
+          (if contents
+              (setq contents
+                    (concat contents clump-sep (vm-matched-header-contents)))
+            (setq contents (vm-matched-header-contents)))))
+      contents)))
 
 (defvar vm-dont-ask-coding-system-question nil)
 
@@ -1539,8 +1591,8 @@ Binds the `vm-mail-mode-map' and hooks"
     (if (boundp 'emacs-version)
 	   (insert emacs-version)
       (insert "Unknown Emacs"))
-    (if (functionp 'emacsw32-version)
-	(insert " [" (emacsw32-version) "]"))
+    ;; (if (functionp 'emacsw32-version)
+    ;; 	(insert " [" (emacsw32-version) "]"))
     (if (boundp 'system-configuration)
 	(insert " (" system-configuration ")"))
     (insert "\n")

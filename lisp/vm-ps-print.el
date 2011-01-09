@@ -62,6 +62,8 @@
 (require 'vm-save)
 (require 'ps-print)
 
+(declare-function vm-marked-messages "vm-mark" ())
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; group already defined in vm-vars.el
 ;; (defgroup vm nil

@@ -26,7 +26,6 @@
 (require 'vm-version)
 
 ;; Custom group definitions
-
 (defgroup vm nil
   "The VM mail reader."
   :link '(custom-manual "(vm)Top")
@@ -3809,7 +3808,7 @@ older VM installation."
                            (expand-file-name "pixmaps" vm-dir)
 			   (expand-file-name "../pixmaps" vm-dir)
 			   (let ((d (and vm-xemacs-p 
-					 (locate-data-directory "vm"))))
+					 (xemacs-locate-data-directory "vm"))))
 			     (and d (expand-file-name "pixmaps" d)))))
          image-dir)
     (while image-dirs
@@ -3871,7 +3870,7 @@ See also `vm-toolbar-orientation' to control where the toolbar is placed."
 Legal values are `left', `right' `top' and `bottom'.  Any other
 value will be interpreted as `top'.
 
-This variable only has meaning under XEmacs 19.12 and beyond.
+This variable only has meaning under XEmacs.
 Under FSF Emacs 21 the toolbar is always at the top of the frame."
   :group 'vm-toolbar
   :type '(choice (const left)
@@ -3888,7 +3887,7 @@ Under FSF Emacs 21 the toolbar is always at the top of the frame."
 			 (string-match "'--with-gtk'" 
 				       system-configuration-options)
 			 (and (boundp 'device-type)
-			      (eq (device-type) 'gtk)))
+			      (eq (xemacs-device-type) 'gtk)))
   "True when running in a GTK enabled Emacs.")
 
 (defun vm-toolbar-pixmap-directory ()
@@ -4078,7 +4077,7 @@ end of the message to the end of message."
 
 (defcustom vm-display-xfaces nil
   "*Non-nil means display images as specified in X-Face headers.
-This requires at least XEmacs 19.12 with native xface support compiled in."
+This requires XEmacs with native xface support compiled in."
   :group 'vm-presentation
   :type 'boolean)
 
@@ -6359,6 +6358,7 @@ actions to be taken to destroy them.")
 ;	   ("iso-8859-6"	iso-8859-6)
 	   ("iso-8859-7"	iso-8859-7)
 	   ("iso-8859-8"	iso-8859-8)
+	   ("iso-8859-8-i"	iso-8859-8)
 	   ("iso-8859-9"	iso-8859-9)
 	   ("iso-2022-jp"	iso-2022-jp)
 	   ("big5"		big5)

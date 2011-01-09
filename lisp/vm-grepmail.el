@@ -47,6 +47,7 @@
 
 (eval-and-compile
   (require 'vm-misc)
+  (require 'vm-minibuf)
   (require 'vm-undo)
   (require 'vm-startup)
   (require 'vm-motion)

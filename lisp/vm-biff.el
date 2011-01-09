@@ -41,7 +41,31 @@
 (provide 'vm-biff)
 
 (eval-when-compile 
-  (require 'cl))
+  (require 'cl)
+
+  (require 'vm-misc)
+  (require 'vm-summary)
+)
+
+;; vm-xemacs.el is a fake file to fool the Emacs 23 compiler
+(declare-function get-itimer "vm-xemacs.el" (name))
+(declare-function start-itimer "vm-xemacs.el"
+		  (name function value &optional restart is-idle with-args
+			&rest function-arguments))
+(declare-function set-itimer-restart "vm-xemacs.el" (itimer restart))
+(declare-function delete-itimer "vm-xemacs" (itimer))
+(declare-function set-specifier "vm-xemacs" 
+		  (specifier value &optional locale tag-set how-to-add))
+(declare-function console-type "vm-xemacs" (&optional console))
+(declare-function frame-device "vm-xemacs" (&optional frame))
+(declare-function window-displayed-height "vm-xemacs" (&optional window))
+(defvar current-itimer)
+
+(declare-function vm-decode-mime-encoded-words-in-string "vm-mime" (string))
+(declare-function vm-goto-message "vm-motion" (n))
+(declare-function vm-mouse-set-mouse-track-highlight "vm-mouse"
+		  (start end &optional overlay))
+(declare-function vm-summary-faces-add "vm-summary-faces" (message))
 
 (when vm-xemacs-p
   (require 'overlay))
@@ -229,7 +253,9 @@ folder selectors work."
     t))
 
 (defun vm-biff-get-buffer-window (buf)
-  (vm-get-buffer-window buf (vm-biff-x-p) (frame-device)))
+  (if vm-xemacs-p
+      (vm-get-buffer-window buf (vm-biff-x-p) (frame-device))
+    (vm-get-buffer-window buf (vm-biff-x-p))))
 
 (defun  vm-biff-find-folder-window (msg)
   (let ((buf (vm-buffer-of msg)))
@@ -440,7 +466,10 @@ AddToFunc SelectWindow
                                 (cons (cons 'popup ff)
                                       vm-biff-frame-properties)
                               vm-biff-frame-properties))
-                     (mf (or (and (vm-get-buffer-window buf t (frame-device))
+                     (mf (or (and (if vm-xemacs-p
+				      (vm-get-buffer-window buf t 
+							    (frame-device))
+				    (vm-get-buffer-window buf t))
                                   (window-frame
                                    (vm-biff-get-buffer-window buf)))
                              (make-frame props))))
@@ -471,7 +500,9 @@ AddToFunc SelectWindow
               (switch-to-buffer buf)
               (if (> h vm-biff-max-height)
                   (setq h vm-biff-max-height))
-              (setq h (- (window-displayed-height) h))
+	      (if vm-xemacs-p
+		  (setq h (- (window-displayed-height) h))
+		(setq h (- (window-height) h)))
               (if (not (one-window-p))
                   (shrink-window h)))))
 

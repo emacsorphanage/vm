@@ -23,6 +23,16 @@
 
 (provide 'vm-edit)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-summary)
+  (require 'vm-folder)
+  (require 'vm-window)
+  ;; (require 'vm-page)
+  ;; (require 'vm-motion)
+)
+
+
 ;;;###autoload
 (defun vm-edit-message (&optional prefix-argument)
   "Edit the current message.  Prefix arg means mark as unedited instead.

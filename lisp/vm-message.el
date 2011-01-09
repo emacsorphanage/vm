@@ -24,6 +24,32 @@
 
 (provide 'vm-message)
 
+
+(declare-function vm-mime-encode-words-in-string "vm-mime" (string))
+(declare-function vm-reencode-mime-encoded-words-in-string 
+		  "vm-mime" (string))
+(declare-function vm-reencode-mime-encoded-words-in-tokenized-summary
+		  "vm-mime" (summary))
+(declare-function vm-mark-for-summary-update 
+		  "vm-folder" (m &optional dont-kill-cache))
+(declare-function vm-stuff-virtual-message-data 
+		  "vm-folder" (message))
+(declare-function vm-reorder-message-headers 
+		  "vm-folder" (message keep-list discard-regexp))
+(declare-function vm-set-buffer-modified-p
+		  "vm-undo" (flag &optional buffer))
+(declare-function vm-clear-modification-flag-undos 
+		  "vm-undo" ())
+(declare-function vm-build-threads 
+		  "vm-undo" (message-list))
+(declare-function vm-unthread-message 
+		  "vm-thread" (message &optional message-changing))
+(declare-function vm-preview-current-message 
+		  "vm-page" ())
+(declare-function vm-zip-vectors "vm-misc" (v1 v2))
+
+
+
 ;; current message
 (defsubst vm-current-message ()
   "Returns the currently selected message in the VM folder.  It

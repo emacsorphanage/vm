@@ -394,7 +394,7 @@ See the documentation for vm-mode for more information."
 	  (progn
 	    (message "Checking for new mail for %s..."
 		     (or buffer-file-name (buffer-name)))
-	    (if (vm-get-spooled-mail t)
+	    (if (vm-get-spooled-mail nil) ; automatic is non-interactive!
 		(progn
 		  (setq totals-blurb (vm-emit-totals-blurb))
 		  (if (vm-thoughtfully-select-message)

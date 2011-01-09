@@ -55,7 +55,36 @@
 (provide 'vm-menu)
 
 (eval-when-compile
+  (require 'vm-misc)
+
   (defvar current-menubar nil))
+
+(declare-function event-window "vm-xemacs" (event))
+(declare-function event-point "vm-xemacs" (event))
+(declare-function popup-mode-menu "vm-xemacs" (&optional event))
+(declare-function event-closest-point "vm-xemacs" (event))
+(declare-function find-menu-item "vm-xemacs" 
+		  (menubar item-path-list &optional parent))
+(declare-function add-menu-button "vm-xemacs" 
+		  (menu-path menu-leaf &optional before in-menu))
+(declare-function add-menu-item "vm-xemacs" 
+		  (menu-path item-name function enabled-p &optional before))
+(declare-function add-menu "vm-xemacs" 
+		  (menu-path menu-name menu-items &optional before))
+(declare-function set-menubar-dirty-flag "vm-xemacs" ())
+(declare-function set-buffer-menubar "vm-xemacs" (menubar))
+
+
+(declare-function vm-pop-find-name-for-spec "vm-pop" (spec))
+(declare-function vm-mime-plain-message-p "vm-mime" (message))
+(declare-function vm-yank-message "vm-reply" (message))
+(declare-function vm-mail-mode-get-header-contents "vm-reply"
+		  (header-name-regexp))
+(declare-function vm-create-virtual-folder "vm-virtual"
+		  (selector &optional arg read-only name bookmark))
+(declare-function vm-so-sortable-subject "vm-sort" (message))
+(declare-function vm-su-from "vm-summary" (message))
+
 
 (defvar vm-menu-folders-menu
   '("Manipulate Folders"

@@ -96,12 +96,16 @@
 
   (require 'easymenu)
   (require 'vm-misc)
+  (require 'vm-folder)
+  (require 'vm-window)
   (require 'vm-page)
   (require 'vm-mime)
   (require 'vm-reply)
+  (require 'vm-motion)
 
   (require 'advice))
   
+(declare-function rfc822-addresses "ext:rfc822" (header-text))
 
 (eval-when-compile
   (require 'cl)
@@ -1038,7 +1042,7 @@ cleanup here after verification and decoding took place."
                                (concat "filename=\"" pgg-default-user-id ".asc\"")))
             (end (point)))
         (if (featurep 'xemacs)
-            (set-extent-property (extent-at start nil 'vm-mime-disposition)
+            (vm-set-extent-property (vm-extent-at start nil 'vm-mime-disposition)
                                  'vm-mime-disposition disposition)
           (put-text-property start end 'vm-mime-disposition disposition))))))
 

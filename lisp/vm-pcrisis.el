@@ -40,6 +40,10 @@
 
 (eval-when-compile
   (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-motion)
   (require 'vm-reply)
   ;; get the macros we need.
   (require 'cl)
@@ -52,7 +56,13 @@
     (error
      (message "%S" e)
      (message "Could not load bbdb.el.  Related functions may not work correctly!")
-     (vm-sit-for 5))))
+     ;; (vm-sit-for 5)
+     )))
+
+(declare-function set-extent-face "vm-xemacs" (extent face))
+(declare-function timezone-absolute-from-gregorian "ext:timezone" 
+		  (month day year))
+(declare-function bbdb-buffer "ext:bbdb" ())
 
 ;; Dummy declarations for variables that are defined in bbdb
 
@@ -393,7 +403,7 @@ start and end of the overlay/extent."
 (defun vmpc-set-exerlay-face (exerlay newface)
   "Set the face used by EXERLAY to NEWFACE."
   (if vm-xemacs-p
-      (vm-set-extent-face exerlay newface)
+      (set-extent-face exerlay newface)
     (overlay-put exerlay 'face newface)))
 
 

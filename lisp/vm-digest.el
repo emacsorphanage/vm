@@ -23,6 +23,20 @@
 
 (provide 'vm-digest)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-summary)
+  (require 'vm-folder)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-mime)
+  (require 'vm-undo)
+  (require 'vm-delete)
+)
+
+(declare-function vm-mode "vm-mode" (&optional read-only))
+
 ;;;###autoload
 (defun vm-no-frills-encapsulate-message (m keep-list discard-regexp)
   "Encapsulate a message M for forwarding, simply.

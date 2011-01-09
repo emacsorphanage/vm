@@ -23,6 +23,18 @@
 
 (provide 'vm-search)
 
+(eval-and-compile
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-undo)
+  (require 'vm-startup)
+  (require 'vm-motion)
+  (require 'vm-summary)
+  (require 'vm-folder)
+  (require 'vm-window)
+)
+
+
 ;;;###autoload
 (defun vm-isearch-forward (&optional arg)
   "Incrementally search forward through the current folder's messages.

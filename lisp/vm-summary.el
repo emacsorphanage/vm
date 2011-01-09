@@ -40,6 +40,10 @@
   (require 'vm-summary-faces)
 )
 
+(declare-function set-specifier "vm-xemacs" 
+		  (specifier value &optional locale tag-set how-to-add))
+(declare-function rfc822-addresses "ext:rfc822" (header-text))
+
 (declare-function vm-visit-folder "vm.el" (folder &optional read-only))
 
 (defvar scrollbar-height)		; defined for XEmacs
@@ -219,6 +223,7 @@ the messages in the current folder."
       (let ((buffer-read-only nil)
 	    (modified (buffer-modified-p))
 	    (debug nil) ; vm-summary-debug, if necessary
+	    o
 	    )
 	(unwind-protect
 	    (progn
@@ -240,15 +245,6 @@ the messages in the current folder."
 	      ;; re-establish them afterwards.
 	      (message "Generating summary... %d" n)
 	      (overlay-recenter (point))
-	      (while mp
-		(setq m (car mp))
-		(when (vm-su-start-of m)
-		  (set-marker (vm-su-start-of m) nil)
-		  (set-marker (vm-su-end-of m) nil))
-		(setq mp (cdr mp)))
-
-	      (overlay-recenter (point-max))
-
 	      (setq mp m-list)
 	      (while mp
 		(setq m (car mp))
@@ -1034,9 +1030,8 @@ a string, which can be used as a separator to concatenate the fields
 of multiple header lines which might match HEADER-NAME-REGEXP.
 							USR, 2010-05-13."
   (let ((contents nil)
-	regexp)
-    (setq regexp (concat "^\\(" header-name-regexp "\\)")
-	  message (vm-real-message-of message))
+	(regexp (concat "^\\(" header-name-regexp "\\)")))
+    (setq message (vm-real-message-of message))
     (save-excursion
       (set-buffer (vm-buffer-of (vm-real-message-of message)))
       (save-restriction
@@ -1143,6 +1138,8 @@ message has attachments.  The indicator string is the value of
 attachments.  					USR, 2010-05-13."
   (let ((attachments 0))
     (setq msg (vm-real-message-of msg))
+    ;; If this calls back vm-update-summary-and-mode-line
+    ;; an infinite regress happens!
     (vm-mime-action-on-all-attachments
      nil
      (lambda (msg layout type file)
@@ -1286,51 +1283,6 @@ was sent.                                                  USR, 2010-05-13"
 		(vm-buffer-substring-no-properties
 		 (match-beginning 1)
 		 (match-end 1)))))))))
-
-(defun vm-parse-date (date)
-  (let ((weekday "")
-	(monthday "")
-	(month "")
-	(year "")
-	(hour "")
-	(timezone "")
-	(start nil)
-	string
-	(case-fold-search t))
-    (if (string-match "sun\\|mon\\|tue\\|wed\\|thu\\|fri\\|sat" date)
-	(setq weekday (substring date (match-beginning 0) (match-end 0))))
-    (if (string-match "jan\\|feb\\|mar\\|apr\\|may\\|jun\\|jul\\|aug\\|sep\\|oct\\|nov\\|dec" date)
-	(setq month (substring date (match-beginning 0) (match-end 0))))
-    (if (string-match "[0-9]?[0-9]:[0-9][0-9]\\(:[0-9][0-9]\\)?" date)
-	(setq hour (substring date (match-beginning 0) (match-end 0))))
-    (cond ((string-match "[^a-z][+---][0-9][0-9][0-9][0-9]" date)
-	   (setq timezone (substring date (1+ (match-beginning 0))
-				     (match-end 0))))
-	  ((or (string-match "e[ds]t\\|c[ds]t\\|p[ds]t\\|m[ds]t" date)
-	       (string-match "ast\\|nst\\|met\\|eet\\|jst\\|bst\\|ut" date)
-	       (string-match "gmt\\([+---][0-9]+\\)?" date))
-	   (setq timezone (substring date (match-beginning 0) (match-end 0)))))
-    (while (and (or (zerop (length monthday))
-		    (zerop (length year)))
-		(string-match "\\(^\\| \\)\\([0-9]+\\)\\($\\| \\)" date start))
-      (setq string (substring date (match-beginning 2) (match-end 2))
-	    start (match-end 0))
-      (cond ((and (zerop (length monthday))
-		  (<= (length string) 2))
-	     (setq monthday string))
-	    ((= (length string) 2)
-	     (if (< (string-to-number string) 70)
-		 (setq year (concat "20" string))
-	       (setq year (concat "19" string))))
-	    (t (setq year string))))
-    
-    (aset vm-parse-date-workspace 0 weekday)
-    (aset vm-parse-date-workspace 1 monthday)
-    (aset vm-parse-date-workspace 2 month)
-    (aset vm-parse-date-workspace 3 year)
-    (aset vm-parse-date-workspace 4 hour)
-    (aset vm-parse-date-workspace 5 timezone)
-    vm-parse-date-workspace))
 
 (defun vm-su-do-date (m)
   (let ((case-fold-search t)

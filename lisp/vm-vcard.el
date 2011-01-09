@@ -32,6 +32,9 @@
 
 (require 'vcard)
 
+(eval-when-compile
+  (require 'vm-mime))
+
 (and (string-lessp vcard-api-version "2.0")
      (error "vm-vcard.el requires vcard API version 2.0 or later."))
 

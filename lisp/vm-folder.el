@@ -37,6 +37,7 @@
   (require 'vm-delete)
   (require 'vm-mark)
   (require 'vm-virtual)
+  (require 'vm-mime)
   (require 'vm-sort)
   (require 'vm-thread)
   (require 'vm-pop)
@@ -4902,5 +4903,260 @@ argument GARBAGE."
     (setq after-revert-hook
 	  (cons 'vm-after-revert-buffer-hook after-revert-hook))
   (setq after-revert-hook (list 'vm-after-revert-buffer-hook)))
+
+;;;###autoload
+(defun vm-load-message (&optional count)
+  "Load the message by retrieving its body from its
+permanent location.  Currently this facility is only available for IMAP
+folders.
+
+With a prefix argument COUNT, the current message and the next 
+COUNT - 1 messages are loaded.  A negative argument means
+the current message and the previous |COUNT| - 1 messages are
+loaded.
+
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+only marked messages are loaded, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are loaded."
+  (interactive "p")
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-error-if-folder-read-only)
+  (when (null count) (setq count 1))
+  (let ((mlist (vm-select-operable-messages count "Load"))
+	(errors 0)
+	(n 0)
+	fetch-method
+	m mm)
+    (save-excursion
+      ;; (message "Retrieving message body...")
+      (while mlist
+	(setq m (car mlist))
+	(setq mm (vm-real-message-of m))
+	(set-buffer (vm-buffer-of mm))
+	(if (vm-body-retrieved-of mm)
+	    (if (vm-body-to-be-discarded-of mm)
+		(vm-unregister-fetched-message mm))
+	  ;; else retrieve the body
+	  (setq n (1+ n))
+	  (message "Retrieving message body... %s" n)
+	  (vm-retrieve-real-message-body mm)
+	  )
+	(setq mlist (cdr mlist)))
+      (when (> n 0)
+	(message "Retrieving message body... done")))
+    (intern (buffer-name) vm-buffers-needing-display-update)
+    ;; FIXME - is this needed?  Is it correct?
+    (vm-display nil nil '(vm-load-message vm-refresh-message)
+		(list this-command))	
+    (vm-update-summary-and-mode-line)
+    ))
+
+;;;###autoload
+(defun vm-retrieve-operable-messages (&optional count mlist)
+  "Retrieve the message from from its permanent location for
+temporary use.  Currently this facility is only available for
+IMAP folders.
+
+With a prefix argument COUNT, the current message and the next 
+COUNT - 1 messages are retrieved.  A negative argument means
+the current message and the previous |COUNT| - 1 messages are
+retrieved.
+
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+only marked messages are retrieved, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are retrieved."
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (when (null count) (setq count 1))
+  (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
+	(vm-fetched-message-limit nil)
+	(errors 0)
+	(n 0)
+	fetch-method
+	m mm)
+;;     (if (not used-marks) 
+;; 	(setq mlist (list (car vm-message-pointer))))
+    (unless mlist
+      (setq mlist (vm-select-operable-messages count "Retrieve")))
+    (save-excursion
+      (while mlist
+	(setq m (car mlist))
+	(setq mm (vm-real-message-of m))
+	(set-buffer (vm-buffer-of mm))
+	(when (vm-body-to-be-retrieved-of mm)
+	  (setq n (1+ n))
+	  (message "Retrieving message body... %s" n)
+	  (vm-retrieve-real-message-body mm)
+	  (vm-register-fetched-message mm))
+	(setq mlist (cdr mlist)))
+      (when (> n 0)
+	(message "Retrieving message body... done")
+	(intern (buffer-name) vm-buffers-needing-display-update)
+	(when (interactive-p)
+	  (vm-update-summary-and-mode-line))))
+    ))
+
+(defun vm-retrieve-real-message-body (mm &optional fetch)
+  "Retrieve the body of a real message MM from its external
+source and insert it into the Folder buffer.  If the optional argument
+FETCH is t, then the retrieval is for a temporary message fetch."
+  (when (not (eq (vm-message-access-method-of mm) 'imap))
+    (error "This is currently available only for imap folders."))
+  (save-excursion
+    (set-buffer (vm-buffer-of mm))
+    (vm-save-restriction
+     (widen)
+     (narrow-to-region (marker-position (vm-headers-of mm)) 
+		       (marker-position (vm-text-end-of mm)))
+     (let ((fetch-method (vm-message-access-method-of mm))
+	   (vm-folder-read-only (and vm-folder-read-only (not fetch)))
+	   (inhibit-read-only t)
+	   ;; (buffer-read-only nil)    ; seems redundant
+	   (buffer-undo-list t)		; why this?  USR, 2010-06-11
+	   (modified (buffer-modified-p))
+	   (testing 0))
+       (goto-char (vm-text-of mm))
+       ;; Check to see that we are at the right place
+       (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
+       (vm-increment testing)
+
+       (delete-region (point) (point-max))
+       ;; Remember that this does I/O and accept-process-output,
+       ;; allowing concurrent threads to run!!!  USR, 2010-07-11
+       (condition-case err
+	   (apply (intern (format "vm-fetch-%s-message" fetch-method))
+		  mm nil)
+	 (error 
+	  (error "Unable to load message; %s" (error-message-string err))))
+       (vm-assert (eq (point) (marker-position (vm-text-of mm))))
+       (vm-increment testing)
+       ;; delete the new headers
+       (delete-region (vm-text-of mm)
+		      (or (re-search-forward "\n\n" (point-max) t) (point-max)))
+       (vm-assert (eq (point) (marker-position (vm-text-of mm))))
+       (vm-increment testing)
+       ;; fix markers now
+       (set-marker (vm-text-end-of mm) (point-max))
+       (vm-assert (eq (point) (marker-position (vm-text-of mm))))
+       (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
+       (vm-increment testing)
+       ;; now care for the layout of the message
+       (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
+       ;; update the message data
+       (vm-set-body-to-be-retrieved-flag mm nil)
+       (vm-set-body-to-be-discarded-flag mm nil)
+       (vm-set-line-count-of mm nil)
+       (vm-set-byte-count-of mm nil)
+       ;; update the virtual messages
+       (vm-update-virtual-messages mm)
+       (set-buffer-modified-p modified)
+
+       (vm-assert (eq (point) (marker-position (vm-text-of mm))))
+       (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
+       (vm-increment testing)))))
+
+;;;###autoload
+(defun vm-refresh-message ()
+  "Reload the message body from its permanent location.  Currently
+this facilty is only available for IMAP folders."
+  (interactive)
+  (vm-unload-message 1 t)
+  (vm-load-message))
+
+;;;###autoload
+(defun vm-unload-message (&optional count physical)
+  "Unload the message body, i.e., delete it from the folder
+buffer.  It can be retrieved again in future from its permanent
+external location.  Currently this facility is only available for
+IMAP folders.
+
+With a prefix argument COUNT, the current message and the next 
+COUNT - 1 messages are unloaded.  A negative argument means
+the current message and the previous |COUNT| - 1 messages are
+unloaded.
+
+When invoked on marked messages (via `vm-next-command-uses-marks'), only 
+marked messages are unloaded, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in
+the thread are unloaded.
+
+If the optional argument PHYSICAL is non-nil, then the message is
+physically discarded.  Otherwise, the discarding may be delayed until
+the folder is saved."
+  (interactive "p")
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-error-if-folder-read-only)
+  (when (null count) 
+    (setq count 1))
+  (let ((mlist (vm-select-operable-messages count "Unload"))
+	(buffer-undo-list t)
+	(errors 0)
+	m mm)
+    (save-excursion
+      (setq count 0)
+      (while mlist
+	(setq m (car mlist))
+	(setq mm (vm-real-message-of m))
+	(set-buffer (vm-buffer-of mm))
+	(when (and (vm-body-retrieved-of mm)
+		   (null (vm-body-to-be-discarded-of mm)))
+	  (if (and (= count 0) (not physical))
+	      ;; Register the message as fetched instead of actually
+	      ;; discarding the message
+	      (vm-register-fetched-message mm)
+	    (vm-discard-real-message-body mm)))
+	(setq mlist (cdr mlist))
+	(setq count (1+ count))))
+    (if (= count 1) 
+	(message "Message body discarded")
+      (message "%d message bodies discarded" count))
+    (vm-update-summary-and-mode-line)
+    ))
+
+(defun vm-discard-real-message-body (mm)
+  "Discard the real message body of MM from its Folder buffer."
+  (when (not (eq (vm-message-access-method-of mm) 'imap))
+    (error "This is currently available only for imap folders."))
+  (save-excursion
+    (set-buffer (vm-buffer-of mm))
+    (vm-save-restriction
+     (widen)
+     (let ((inhibit-read-only t)
+	   ;; (buffer-read-only nil)     ; seems redundant
+	   (modified (buffer-modified-p)))
+       (goto-char (vm-text-of mm))
+       ;; Check to see that we are at the right place
+       (if (or (bobp)
+	       (save-excursion (forward-line -1) (looking-at "\n")))
+	   (progn
+	     (delete-region (point) (vm-text-end-of mm))
+	     (vm-set-buffer-modified-p t)
+	     (vm-set-mime-layout-of mm nil)
+	     (vm-set-body-to-be-retrieved-flag mm t)
+	     (vm-set-body-to-be-discarded-flag mm nil)
+	     (vm-set-line-count-of mm nil)
+	     (vm-update-virtual-messages mm)
+	     (set-buffer-modified-p modified))
+	 (if (y-or-n-p
+	      (concat "VM internal error: "
+		       "headers of a message have been corrupted. "
+		       "Continue? "))
+	     (progn
+	       (message (concat "The damaged message, with UID %s, "
+				"is left in the folder")
+			(vm-imap-uid-of mm))
+	       (sit-for 5)
+	       (vm-set-body-to-be-discarded-flag mm nil))
+	   (error "Aborted operation")))
+       ))))
+
 
 ;;; vm-folder.el ends here

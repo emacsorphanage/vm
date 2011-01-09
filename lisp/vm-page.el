@@ -24,7 +24,36 @@
 (provide 'vm-page)
 
 (eval-when-compile
-  (require 'vm-vars))
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-thread)
+  (require 'vm-window)
+  (require 'vm-motion)
+  (require 'vm-menu)
+  (require 'vm-mouse)
+  (require 'vm-mime)
+  (require 'vm-undo)
+  )
+
+(declare-function vm-make-virtual-copy "vm-virtual" (message))
+(declare-function vm-make-presentation-copy "vm-mime" (message))
+(declare-function vm-decode-mime-message "vm-mime" (&optional state))
+(declare-function vm-mime-plain-message-p "vm-mime" (message))
+;; (declare-funciton vm-mm-layout "vm-mime" (message))
+
+(declare-function delete-extent "vm-xemacs" (extent))
+(declare-function map-extents "vm-xemacs" 
+		  (function &optional object from to maparg 
+			    flags property value))
+(declare-function find-face "vm-xemacs" (face-or-name))
+(declare-function make-glyph "vm-xemacs" (&optional spec-list type))
+(declare-function set-glyph-face "vm-xemacs" (glyph face))
+(declare-function glyphp "vm-xemacs" (object))
+(declare-function set-extent-begin-glyph "vm-xemacs" 
+		  (extent begin-glyph &optional layout))
+(declare-function highlight-headers "vm-xemacs" (start end hack-sig))
 
 ;;;###autoload
 (defun vm-scroll-forward (&optional arg)
@@ -295,17 +324,17 @@ Negative arg means scroll forward."
     (let (e)
       (map-extents (function
 		    (lambda (e ignore)
-		      (if (extent-property e 'vm-highlight)
+		      (if (vm-extent-property e 'vm-highlight)
 			  (delete-extent e))
 		      nil))
 		   (current-buffer) (point-min) (point-max))
       (goto-char (point-min))
       (while (vm-match-header)
 	(cond ((vm-match-header vm-highlighted-header-regexp)
-	       (setq e (make-extent (vm-matched-header-contents-start)
+	       (setq e (vm-make-extent (vm-matched-header-contents-start)
 				    (vm-matched-header-contents-end)))
-	       (set-extent-property e 'face vm-highlighted-header-face)
-	       (set-extent-property e 'vm-highlight t)))
+	       (vm-set-extent-property e 'face vm-highlighted-header-face)
+	       (vm-set-extent-property e 'vm-highlight t)))
 	(goto-char (vm-matched-header-end)))))
    ((fboundp 'overlay-put)
     (let (o-lists p)
@@ -348,7 +377,7 @@ Negative arg means scroll forward."
       (let (e)
 	(map-extents (function
 		      (lambda (e ignore)
-			(if (extent-property e 'vm-url)
+			(if (vm-extent-property e 'vm-url)
 			    (delete-extent e))
 			nil))
 		     (current-buffer) (point-min) (point-max))
@@ -359,10 +388,10 @@ Negative arg means scroll forward."
 	    (setq n 1)
 	    (while (null (match-beginning n))
 	      (vm-increment n))
-	    (setq e (make-extent (match-beginning n) (match-end n)))
-	    (set-extent-property e 'vm-url t)
-	    (if (facep vm-highlight-url-face)
-		(set-extent-property e 'face vm-highlight-url-face))
+	    (setq e (vm-make-extent (match-beginning n) (match-end n)))
+	    (vm-set-extent-property e 'vm-url t)
+	    (if vm-highlight-url-face
+		(vm-set-extent-property e 'face vm-highlight-url-face))
 	    (if vm-url-browser
 		(let ((keymap (make-sparse-keymap))
 		      (popup-function
@@ -377,12 +406,12 @@ Negative arg means scroll forward."
 		  (define-key keymap "\r"
 		    (function (lambda () (interactive)
 				(vm-mouse-send-url-at-position (point)))))
-		  (set-extent-property e 'vm-button t)
-		  (set-extent-property e 'keymap keymap)
-		  (set-extent-property e 'balloon-help 'vm-url-help)
-		  (set-extent-property e 'highlight t)
+		  (vm-set-extent-property e 'vm-button t)
+		  (vm-set-extent-property e 'keymap keymap)
+		  (vm-set-extent-property e 'balloon-help 'vm-url-help)
+		  (vm-set-extent-property e 'highlight t)
 		  ;; for vm-continue-postponed-message
-;		  (set-extent-property e 'duplicable t)
+;		  (vm-set-extent-property e 'duplicable t)
 		  )))
 	  (setq search-pairs (cdr search-pairs))))))
      ((and vm-fsfemacs-p
@@ -436,7 +465,7 @@ Negative arg means scroll forward."
 	  regexp menu keymap e)
       (map-extents (function
 		    (lambda (e ignore)
-		      (if (extent-property e 'vm-header)
+		      (if (vm-extent-property e 'vm-header)
 			  (delete-extent e))
 		      nil))
 		   (current-buffer) (point-min) (point-max))
@@ -446,9 +475,9 @@ Negative arg means scroll forward."
 	      menu (symbol-value (nth 1 (car search-tuples))))
 	(while (re-search-forward regexp nil t)
 	  (save-excursion (goto-char (match-beginning 0)) (vm-match-header))
-	  (setq e (make-extent (vm-matched-header-contents-start)
+	  (setq e (vm-make-extent (vm-matched-header-contents-start)
 			       (vm-matched-header-contents-end)))
-	  (set-extent-property e 'vm-header t)
+	  (vm-set-extent-property e 'vm-header t)
 	  (setq keymap (make-sparse-keymap))
 	  ;; Might as well make button2 do what button3 does in
 	  ;; this case, since there is no default 'select'
@@ -460,9 +489,9 @@ Negative arg means scroll forward."
 	      (define-key keymap 'button3
 		(list 'lambda () '(interactive)
 		      (list 'popup-menu (list 'quote menu)))))
-	  (set-extent-property e 'keymap keymap)
-	  (set-extent-property e 'balloon-help 'vm-mouse-3-help)
-	  (set-extent-property e 'highlight t))
+	  (vm-set-extent-property e 'keymap keymap)
+	  (vm-set-extent-property e 'balloon-help 'vm-mouse-3-help)
+	  (vm-set-extent-property e 'highlight t))
 	(setq search-tuples (cdr search-tuples)))))
    ((and vm-fsfemacs-p
 	 (fboundp 'overlay-put))
@@ -505,7 +534,7 @@ Negative arg means scroll forward."
   (let ((case-fold-search t) e g h)
     (if (map-extents (function
 		      (lambda (e ignore)
-			(if (extent-property e 'vm-xface)
+			(if (vm-extent-property e 'vm-xface)
 			    t
 			  nil)))
 		     (current-buffer) (point-min) (point-max))
@@ -533,9 +562,9 @@ Negative arg means scroll forward."
 	      ;; bottom of the glyph in 19.12
 	      ;;(set-glyph-baseline g 100)
 	      (set-glyph-face g 'vm-xface))
-	    (setq e (make-extent (vm-vheaders-of (car vm-message-pointer))
+	    (setq e (vm-make-extent (vm-vheaders-of (car vm-message-pointer))
 				 (vm-vheaders-of (car vm-message-pointer))))
-	    (set-extent-property e 'vm-xface t)
+	    (vm-set-extent-property e 'vm-xface t)
 	    (set-extent-begin-glyph e g))))))
 
 (defun vm-display-xface-fsfemacs ()
@@ -991,15 +1020,15 @@ is done if necessary.  (USR, 2010-01-14)"
 	       (overlay-put vm-page-end-overlay 'evaporate nil))))
 	(vm-xemacs-p
 	 (if (not (and vm-page-end-overlay
-		       (extent-end-position vm-page-end-overlay)))
+		       (vm-extent-end-position vm-page-end-overlay)))
 	     (let ((g vm-page-continuation-glyph))
 	       (cond ((not (glyphp g))
 		      (setq g (make-glyph g))
 		      (set-glyph-face g 'italic)))
-	       (setq vm-page-end-overlay (make-extent (point) (point)))
+	       (setq vm-page-end-overlay (vm-make-extent (point) (point)))
 	       (vm-set-extent-property vm-page-end-overlay 'vm-glyph g)
 	       (vm-set-extent-property vm-page-end-overlay 'begin-glyph g)
-	       (set-extent-property vm-page-end-overlay 'detachable nil)))))
+	       (vm-set-extent-property vm-page-end-overlay 'detachable nil)))))
   (save-excursion
     (let (min max (e vm-page-end-overlay))
       (if (or (bolp) (not (save-excursion

@@ -23,9 +23,21 @@
 
 (provide 'vm-undo)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-menu)
+  (require 'vm-minibuf)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  )
+
 (defun vm-set-buffer-modified-p (flag &optional buffer)
-  (save-excursion
-    (and buffer (set-buffer buffer))
+  "Sets the buffer-modified-p of the current folder to FLAG.  Optional
+argument BUFFER can ask for it to be done for some other folder."
+  (with-current-buffer (or buffer (current-buffer))
     (set-buffer-modified-p flag)
     (vm-increment vm-modification-counter)
     (intern (buffer-name) vm-buffers-needing-display-update)
@@ -308,7 +320,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
     (setq ignored-labels 
 	  (vm-add-or-delete-message-labels string m-list 'all))
     (if ignored-labels
-	(Message "Label %s could not be added" string))))
+	(message "Label %s could not be added" string))))
 
 ;;;###autoload
 (defun vm-add-existing-message-labels (string count)
@@ -396,6 +408,14 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
     (vm-add-or-delete-message-labels string m-list nil)))
 
 (defun vm-add-or-delete-message-labels (string m-list add)
+  "Add or delete the labels given in STRING for all messages in
+M-LIST.  The third parameter ADD is one of:
+
+nil	       delete the label
+'all           add the label in all cases
+'existing-only add the label only if it is already existing in the folder
+							USR, 2010-12-20
+"
   (vm-display nil nil '(vm-add-message-labels vm-delete-message-labels)
 	      (list this-command))
   (setq string (downcase string))
@@ -403,7 +423,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 "[\000-\040,\177-\377]*\\([^\000-\040,\177-\377]+\\)[\000-\040,\177-\377]*"))
 	(ignored-labels nil)
 	labels act-labels m mm-list)
-    (if (and add m-list)
+    (when (and add m-list)
 	(if (eq add 'all)
 	    (progn
 	      (setq act-labels action-labels)
@@ -418,27 +438,25 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 		(setq ignored-labels (cons (car act-labels) ignored-labels)))
 	      (setq act-labels (cdr act-labels)))
 	    (setq action-labels newlist))))
-    (if (null action-labels)
+    (unless action-labels
 	(setq m-list nil))
     (while m-list
       (setq m (car m-list))
-      (if (and add (vm-virtual-message-p m))
+      (when (and add (vm-virtual-message-p m))
+	(let ((labels action-labels))
+	  (with-current-buffer (vm-buffer-of (vm-real-message-of m))
+	    (while labels
+	      (intern (car labels) vm-label-obarray)
+	      (setq labels (cdr labels))))))
+      (when add
+	(setq mm-list (vm-virtual-messages-of m))
+	(while mm-list
 	  (let ((labels action-labels))
-	    (save-excursion
-	      (set-buffer (vm-buffer-of (vm-real-message-of m)))
+	    (with-current-buffer (vm-buffer-of (car mm-list))
 	      (while labels
 		(intern (car labels) vm-label-obarray)
-		(setq labels (cdr labels))))))
-      (if add
-	  (save-excursion
-	    (setq mm-list (vm-virtual-messages-of m))
-	    (while mm-list
-	      (let ((labels action-labels))
-		(set-buffer (vm-buffer-of (car mm-list)))
-		(while labels
-		  (intern (car labels) vm-label-obarray)
-		  (setq labels (cdr labels))))
-	      (setq mm-list (cdr mm-list)))))
+		(setq labels (cdr labels))))
+	    (setq mm-list (cdr mm-list)))))
       (setq act-labels action-labels
 	    labels (copy-sequence (vm-labels-of (car m-list))))
       (if add
@@ -448,8 +466,8 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 	(while act-labels
 	  (setq labels (vm-delqual (car act-labels) labels)
 		act-labels (cdr act-labels))))
-      (if add
-	  (setq labels (vm-delete-duplicates labels)))
+      (when add
+	(setq labels (vm-delete-duplicates labels)))
       (vm-set-labels (car m-list) labels)
       (vm-set-attribute-modflag-of (car m-list) t) ; added by USR
       (setq m-list (cdr m-list)))

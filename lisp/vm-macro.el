@@ -21,8 +21,15 @@
 
 ;;; Code:
 
+(provide 'vm-macro)
+
 (unless (fboundp 'declare-function)
   (defmacro declare-function (fn file &optional arglist fileonly)))
+
+(declare-function vm-check-for-killed-summary "vm-misc" ())
+(declare-function vm-check-for-killed-presentation "vm-misc" ())
+(declare-function vm-error-if-folder-empty "vm-misc" ())
+(declare-function vm-build-threads "vm-thread" (message-list))
 
 (defmacro vm-add-to-list (elem list)
   "Like add-to-list, but compares elements by `eq' rather than `equal'."
@@ -190,6 +197,56 @@ current-buffer in `vm-user-interaction-buffer'."
 	   session-name host
 	   (substring (current-time-string) 11 19)))
 
-(provide 'vm-macro)
+;; For verification of the correct buffer protocol
+;; Possible values are 'folder, 'presentation, 'summary, 'process
+
+;; (defvar vm-buffer-types nil)    ; moved to vm-vars.el
+
+(defvar vm-buffer-type-debug nil
+  "*This flag can be set to t for debugging asynchronous buffer change
+  errors.")
+
+(defvar vm-buffer-type-debug nil)	; for debugging asynchronous
+					; buffer change errors
+(defvar vm-buffer-type-trail nil)
+
+(defsubst vm-buffer-type:enter (type)
+  "Note that vm is temporarily entering a buffer of TYPE."
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail 
+	    (cons type (cons 'enter vm-buffer-type-trail))))
+  (setq vm-buffer-types (cons type vm-buffer-types)))
+
+(defsubst vm-buffer-type:exit ()
+  "Note that vm is exiting the current temporary buffer."
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail (cons 'exit vm-buffer-type-trail)))
+  (setq vm-buffer-types (cdr vm-buffer-types)))
+
+(defsubst vm-buffer-type:duplicate ()
+  "Note that vm is reentering the current buffer for a temporary purpose."
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail (cons (car vm-buffer-type-trail)
+				       vm-buffer-type-trail)))
+  (setq vm-buffer-types (cons (car vm-buffer-types) vm-buffer-types)))
+
+(defun vm-buffer-type:set (type)
+  "Note that vm is changing to a buffer of TYPE."
+  (when (and (eq type 'folder) vm-buffer-types 
+	     (eq (car vm-buffer-types) 'process))
+ 	;; This may or may not be a problem.
+ 	;; It just means that no save-excursion was done among the
+ 	;; functions currently tracked by vm-buffe-types.
+    (if vm-buffer-type-debug
+	(debug "folder buffer being entered from %s" (car vm-buffer-types))
+      (message "folder buffer being entered from %s" (car vm-buffer-types)))
+    (setq vm-buffer-type-trail (cons type vm-buffer-type-trail)))
+  (if vm-buffer-types
+      (rplaca vm-buffer-types type)
+    (setq vm-buffer-types (cons type vm-buffer-types))))
+
+(defsubst vm-buffer-type:assert (type)
+  "Check that vm is currently in a buffer of TYPE."
+  (vm-assert (eq (car vm-buffer-types) type)))
 
 ;;; vm-macro.el ends here

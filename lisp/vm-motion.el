@@ -23,7 +23,17 @@
 
 (provide 'vm-motion)
 
-(require 'vm-vars)
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-thread)
+  (require 'vm-window)
+  (require 'vm-page)
+  )
+
+(declare-function vm-so-sortable-subject "vm-sort" (message))
 
 (defun vm-record-and-change-message-pointer (old new)
   (intern (buffer-name) vm-buffers-needing-display-update)

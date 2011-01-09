@@ -89,6 +89,34 @@
 (eval-when-compile 
   (require 'cl))
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-minibuf)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-mime)
+  (require 'vm-reply)
+  )
+
+(declare-function extent-list "vm-xemacs" 
+		  (&optional buffer from to flags property value))
+(declare-function deiconify-frame "vm-xemacs" (&optional frame))
+(declare-function frames-of-buffer "vm-xemacs" 
+		  (&optional buffer visible-only))
+(declare-function user-mail-address "vm-xemacs" ())
+
+(declare-function vm-session-initialization "vm" ())
+(declare-function vm-visit-folder "vm" (folder &optional read-only))
+
+(declare-function bbdb-extract-address-components 
+		  "ext:bbdb" (adstring &optional ignore-errors))
+(declare-function bbdb/vm-alternate-full-name "ext:bbdb-vm" (address))
+
 (if (not (boundp 'user-mail-address))
     (if (functionp 'user-mail-address)
         (setq user-mail-address (user-mail-address))
@@ -479,11 +507,11 @@ creation)."
            (setq e-list
                  (sort (vm-delete
                         (function (lambda (e)
-                                    (extent-property e 'vm-mime-layout)))
+                                    (vm-extent-property e 'vm-mime-layout)))
                         e-list t)
                        (function (lambda (e1 e2)
-                                   (< (extent-end-position e1)
-                                      (extent-end-position e2))))))
+                                   (< (vm-extent-end-position e1)
+                                      (vm-extent-end-position e2))))))
            ;; Then replace the buttons, because doing it at once will result in
            ;; problems since the new buttons are from the same extent.
            (while e-list
@@ -548,9 +576,9 @@ creation)."
           (setq layout (overlay-get x 'vm-mime-layout)
                 xstart (overlay-start x)
                 xend   (overlay-end x))
-        (setq layout (extent-property x 'vm-mime-layout)
-              xstart (extent-start-position x)
-              xend   (extent-end-position x)))
+        (setq layout (vm-extent-property x 'vm-mime-layout)
+              xstart (vm-extent-start-position x)
+              xend   (vm-extent-end-position x)))
                
       (let* ((start  (vm-mm-layout-header-start layout))
              (end    (vm-mm-layout-body-end   layout))
@@ -814,7 +842,7 @@ Drafts in other folders are not recognized!"
                     (not (vm-deleted-flag (car vm-message-pointer))))
               (message "Please select a draft!")
               (select-window (car (get-buffer-window-list buffer nil 0)))
-              (if (frames-of-buffer buffer)
+              (if (and vm-xemacs-p (frames-of-buffer buffer))
                   (deiconify-frame (car (frames-of-buffer buffer))))
               (setq action 'none))
           (setq action 'visit)))
@@ -1085,33 +1113,6 @@ or if sure about what you are doing you can add it to mail-send-hook."
               (error "Folder `%s' in no file, but a directory!" fcc)
             (progn (mail-position-on-field "FCC")
                    (insert (vm-mail-fcc-file-join dir fcc))))))))
-
-;;;###autoload
-(defun vm-mail-get-header-contents (header-name-regexp &optional clump-sep)
-  "Return the contents of the header(s) matching HEADER-NAME-REGEXP.
-This function is a slightly changed version of `vm-get-header-contents'.
-Optional argument CLUMP-SEP usually a \",\"."
-  (let ((contents nil)
-        (text-of-message 0)
-        (regexp (concat "^\\(" header-name-regexp "\\)")))
-    (save-excursion
-      (goto-char (point-min))
-      (if (re-search-forward (regexp-quote mail-header-separator)
-                             (point-max) t)
-          (setq text-of-message (match-end 0))
-        (error "No mail header separator found!"))
-
-      (goto-char (point-min))
-      (let ((case-fold-search t))
-        (while (and (or (null contents) clump-sep)
-                    (re-search-forward regexp text-of-message t)
-                    (save-excursion (goto-char (match-beginning 0))
-                                    (vm-match-header)))
-          (if contents
-              (setq contents
-                    (concat contents clump-sep (vm-matched-header-contents)))
-            (setq contents (vm-matched-header-contents)))))
-      contents)))
 
 ;;;###autoload
 (defun vm-mail-select-folder (folder-alist)
