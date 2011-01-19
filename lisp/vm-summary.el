@@ -461,15 +461,14 @@ the Summary buffer exists. "
 	(vm-do-summary (and (consp vm-summary-redo-start-point)
 			    vm-summary-redo-start-point))
 	(setq vm-summary-redo-start-point nil)
-	(and vm-message-pointer
-	     (vm-set-summary-pointer (car vm-message-pointer)))
+	(when vm-message-pointer
+	  (vm-set-summary-pointer (car vm-message-pointer)))
 	(setq vm-need-summary-pointer-update nil))
-    (and vm-need-summary-pointer-update
-	 vm-summary-buffer
-	 vm-message-pointer
-	 (progn
-	   (vm-set-summary-pointer (car vm-message-pointer))
-	   (setq vm-need-summary-pointer-update nil)))))
+    (when (and vm-need-summary-pointer-update
+	       vm-summary-buffer
+	       vm-message-pointer)
+      (vm-set-summary-pointer (car vm-message-pointer))
+      (setq vm-need-summary-pointer-update nil))))
 
 (defun vm-update-message-summary (m)
   "Replace the summary line of the message M in the summary
@@ -556,6 +555,8 @@ buffer by a regenerated summary line."
 	      ))))))
 
 (defun vm-set-summary-pointer (m)
+  "Set the summary-pointer in the summary window to the message M.
+Move the cursor there as well."
   (if vm-summary-buffer
       (let ((w (vm-get-visible-buffer-window vm-summary-buffer))
 	    (do-mouse-track
@@ -601,6 +602,7 @@ buffer by a regenerated summary line."
 			vm-summary-pointer)))
 		    (when vm-summary-enable-faces 
 		      (vm-summary-faces-add vm-summary-pointer)))
+
 		  (setq vm-summary-pointer m)
 		  (goto-char (vm-su-start-of m))
 		  (let ((modified (buffer-modified-p)))
