@@ -108,7 +108,7 @@
   (vm-load-features '(regexp-opt bbdb bbdb-vm gnus-group)))
 
 (require 'sendmail)
-(require 'bbdb)
+(vm-load-features '(bbdb))
 
 (if vm-xemacs-p (require 'overlay))
 
