@@ -7530,6 +7530,7 @@ This is a destructive operation and cannot be undone!"
                        count (if (> count 1) "s" ""))))
           (setq mlist (cdr mlist))))))
   (when (interactive-p)
-    (vm-discard-cached-data count)))
+    (vm-discard-cached-data count)
+    (vm-preview-current-message)))
 
 ;;; vm-mime.el ends here
