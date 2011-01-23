@@ -74,7 +74,8 @@ given."
 	(vm-preview-current-message)
 	;;(message "start of message you want is: %s"
 	;; (vm-su-start-of (car vm-message-pointer)))
-	(if (and vm-summary-show-threads
+	(if (and (vm-summary-operation-p)
+		 vm-summary-show-threads
 		 (get-text-property 
 		  (+ (vm-su-start-of (car vm-message-pointer)) 2)
 		  'invisible vm-summary-buffer))
@@ -200,7 +201,7 @@ this command 'sees' marked messages as it moves."
   ;;(message "running vm next message")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate (if signal-errors 1 0) (interactive-p))
   ;; include other commands that call vm-next-message so that the
   ;; correct window configuration is applied for these particular
   ;; non-interactive calls.
@@ -209,7 +210,6 @@ this command 'sees' marked messages as it moves."
 			vm-undelete-message
 			vm-scroll-forward)
 	      (list this-command))
-  (and signal-errors (vm-error-if-folder-empty))
   (or count (setq count 1))
   (let ((oldmp vm-message-pointer)
 	(use-marks (eq last-command 'vm-next-command-uses-marks))
@@ -275,9 +275,10 @@ this command 'sees' marked messages as it moves."
 	(end-of-folder
 	 ;; we bumped into the end of the folder without finding
 	 ;; a suitable stopping point; retry the move if we're allowed.
-	 (when (get-text-property 
-		(vm-su-start-of (car vm-message-pointer))
-		'invisible vm-summary-buffer)
+	 (when (and (vm-summary-operation-p)
+		    (get-text-property 
+		     (vm-su-start-of (car vm-message-pointer))
+		     'invisible vm-summary-buffer))
 	   (setq error 'end-of-folder)
 	   (setq retry nil))
 
