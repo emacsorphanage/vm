@@ -153,13 +153,15 @@ TEST
     AC_MSG_RESULT($lispdir)
     AC_SUBST(lispdir)
 
-    AC_ARG_WITH(pixmapdir,[  --with-pixmapdir=DIR    where to install pixmap files], pixmapdir=${withval})
-    AC_MSG_CHECKING([where pixmaps should go])
-    if test -z "$pixmapdir"; then
+    AC_ARG_WITH(etcdir,[  --with-etcdir=DIR    where to install data files], etcdir=${withval})
+    AC_MSG_CHECKING([where data files should go])
+    if test -z "$etcdir"; then
       dnl Set default value
-      pixmapdir="${datadir}/vm/pixmaps"
+      etcdir="${datadir}/vm"
     fi
-    AC_MSG_RESULT($pixmapdir)
+    pixmapdir="${etcdir}/pixmaps"
+    AC_MSG_RESULT($etcdir)
+    AC_SUBST(etcdir)
     AC_SUBST(pixmapdir)
 
 #    if test "x${EMACS_FLAVOR}" = "xemacs" ; then

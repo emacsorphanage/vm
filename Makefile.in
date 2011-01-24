@@ -14,6 +14,7 @@ INSTALL_DATA = @INSTALL_DATA@
 srcdir = @srcdir@
 datadir= @datadir@
 datarootdir= @datarootdir@
+etcdir = @etcdir@
 pixmapdir = @pixmapdir@
 # docdir = @docdir@
 
@@ -50,8 +51,8 @@ install: install-pkg
 install-pkg:
 	$(MKDIR) -p "$(DESTDIR)$(datadir)/vm"
 	for i in $(SOURCES) ; do                                     \
-	    echo "Installing $$i in '$(DESTDIR)$(datadir)/vm'" ;      \
-	    $(INSTALL_DATA) $$i "$(DESTDIR)$(datadir)/vm" ;           \
+	    echo "Installing $$i in '$(DESTDIR)$(etcdir)'" ;      \
+	    $(INSTALL_DATA) $$i "$(DESTDIR)$(etcdir)" ;           \
 	done ;
 
 clean:
