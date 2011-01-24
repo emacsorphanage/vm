@@ -529,7 +529,8 @@ creation)."
                                     (overlay-end e2))))))
            (while o-list
              (vm-decode-postponed-mime-button (car o-list))
-             (setq o-list (cdr o-list)))))
+             (setq o-list (cdr o-list)))
+	   (goto-char (point-max))))
         (t
          (error "don't know how to MIME dencode composition for %s"
                 (emacs-version)))))
@@ -545,32 +546,30 @@ creation)."
 	(while (not done)
 	  (setq object (get-text-property pos 'vm-mime-layout))
 	  (setq pos (next-single-property-change pos 'vm-mime-layout))
-	  (or pos (setq pos (point-max) done t))
-	  (if object
-	      (progn
-		(setq o (make-overlay start pos))
-		(overlay-put o 'insert-in-front-hooks
-			     '(vm-disallow-overlay-endpoint-insertion))
-		(overlay-put o 'insert-behind-hooks
-			     '(vm-disallow-overlay-endpoint-insertion))
-		(setq props (append (list 'vm-mime-object t)
-				    (text-properties-at start)))
-		(while props
-		  (overlay-put o (car props) (car (cdr props)))
-		  (setq props (cdr (cdr props))))
-		(setq o-list (cons o o-list))))
+	  (unless pos 
+	    (setq pos (point-max) 
+		  done t))
+	  (when object
+	    (setq o (make-overlay start pos))
+	    (overlay-put o 'insert-in-front-hooks
+			 '(vm-disallow-overlay-endpoint-insertion))
+	    (overlay-put o 'insert-behind-hooks
+			 '(vm-disallow-overlay-endpoint-insertion))
+	    (setq props (append (list 'vm-mime-object t)
+				(text-properties-at start)))
+	    (while props
+	      (overlay-put o (car props) (cadr props))
+	      (setq props (nthcdr 2 props)))
+	    (setq o-list (cons o o-list)))
 	  (setq start pos))
 	o-list ))))
 
 ;;-----------------------------------------------------------------------------
 (defun vm-decode-postponed-mime-button (x)
-  "Replace the mime button specified by X."
+  "Replace the mime button specified by X by an attachment button."
 
   (save-excursion
-    (let (layout
-          xstart
-          xend)
-
+    (let (layout xstart xend)
       (if vm-fsfemacs-p
           (setq layout (overlay-get x 'vm-mime-layout)
                 xstart (overlay-start x)
@@ -581,18 +580,18 @@ creation)."
                
       (let* ((start  (vm-mm-layout-header-start layout))
              (end    (vm-mm-layout-body-end   layout))
-             (b      (marker-buffer start))
+             (buf    (marker-buffer start))
              (desc   (or (vm-mm-layout-description layout)
                          "message body text"))
              (disp   (or (vm-mm-layout-disposition layout)
                          '("inline")))
              (file   (vm-mime-get-disposition-parameter layout "filename"))
-             filename
+             (filename nil)
              (type   (vm-mm-layout-type layout)))
 
-        (if (and type
-                 (string= (car type) "message/external-body")
-                 (string= (cadr type) "access-type=local-file"))
+        (when (and type
+		   (string= (car type) "message/external-body")
+		   (string= (cadr type) "access-type=local-file"))
           (save-excursion
             (setq filename (substring (caddr type) 5))
             (vm-select-folder-buffer)
@@ -613,13 +612,14 @@ creation)."
         (goto-char xstart)
         (delete-region xstart xend)
         ;; and insert an attached-object-button
-        (if filename
-            (vm-mime-attach-file filename (car type))
-          (if file
-              (vm-mime-attach-object (list b start end disp file)
-                                     (car type) nil desc t)
-            (vm-mime-attach-object (list b start end disp)
-                                   (car type) nil desc t)))))))
+        (cond (filename
+	       (vm-mime-attach-file filename (car type)))
+	      (file
+	       (vm-mime-attach-object (list buf start end disp file)
+				      (car type) nil desc t))
+	      (t
+	       (vm-mime-attach-object (list buf start end disp)
+				      (car type) nil desc t)))))))
 
 ;;-----------------------------------------------------------------------------
 (define-key vm-mail-mode-map "\C-c\C-d" 'vm-postpone-message)

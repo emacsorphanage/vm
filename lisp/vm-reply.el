@@ -484,8 +484,13 @@ specified by `vm-included-text-headers' and
       (save-excursion
 	(goto-char (point-min))
 	(vm-decode-mime-message-headers))
-      (let ((vm-mime-alternative-select-method 'best-internal))
+      (let ((vm-mime-alternative-select-method 'best-internal)
 					; override 'all and 'best
+	    (vm-auto-displayed-mime-content-types 
+	     '("text" "message"))       ; include only text and message types
+	    (vm-mime-parts-display-separator "")
+					; default separator for multipart
+	    )
 	(vm-decode-mime-layout layout))
       (if vm-mime-yank-attachments
 	  ;; FIXME This uses a function of vm-pine.el

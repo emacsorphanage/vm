@@ -2206,14 +2206,16 @@ that recipient is outside of East Asia."
       (let ((case-fold-search t))
 	(string-match "^attachment$" (car (vm-mm-layout-disposition layout))))
     (let ((type (car (vm-mm-layout-type layout))))
-      (if (or (eq vm-auto-displayed-mime-content-types t)
-	      (vm-find vm-auto-displayed-mime-content-types
-		       (lambda (i)
-			 (vm-mime-types-match i type))))
-	  (vm-find vm-auto-displayed-mime-content-type-exceptions
+      (cond ((vm-mime-types-match "multipart" type)
+	     nil)
+	    ((or (eq vm-auto-displayed-mime-content-types t)
+		 (vm-find vm-auto-displayed-mime-content-types
+			  (lambda (i)
+			    (vm-mime-types-match i type))))
+	     (vm-find vm-auto-displayed-mime-content-type-exceptions
 		   (lambda (i)
-		     (vm-mime-types-match i type)))
-	t))))
+		     (vm-mime-types-match i type))))
+	    (t t)))))
 
 (defun vm-mime-should-display-internal (layout)
   (let ((type (car (vm-mm-layout-type layout))))
