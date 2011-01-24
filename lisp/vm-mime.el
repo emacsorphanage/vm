@@ -5869,19 +5869,20 @@ COMPOSITION's name will be read from the minibuffer."
 	(while (not done)
 	  (setq object (get-text-property pos 'vm-mime-object))
 	  (setq pos (next-single-property-change pos 'vm-mime-object))
-	  (or pos (setq pos (point-max) done t))
-	  (if object
-	      (progn
-		(setq o (make-overlay start pos))
-		(overlay-put o 'insert-in-front-hooks
-			     '(vm-disallow-overlay-endpoint-insertion))
-		(overlay-put o 'insert-behind-hooks
-			     '(vm-disallow-overlay-endpoint-insertion))
-		(setq props (text-properties-at start))
-		(while props
-		  (overlay-put o (car props) (car (cdr props)))
-		  (setq props (cdr (cdr props))))
-		(setq o-list (cons o o-list))))
+	  (unless pos 
+	    (setq pos (point-max) 
+		  done t))
+	  (when object
+	    (setq o (make-overlay start pos))
+	    (overlay-put o 'insert-in-front-hooks
+			 '(vm-disallow-overlay-endpoint-insertion))
+	    (overlay-put o 'insert-behind-hooks
+			 '(vm-disallow-overlay-endpoint-insertion))
+	    (setq props (text-properties-at start))
+	    (while props
+	      (overlay-put o (car props) (cadr props))
+	      (setq props (cddr props)))
+	    (setq o-list (cons o o-list)))
 	  (setq start pos))
 	o-list ))))
 

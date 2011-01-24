@@ -559,7 +559,7 @@ creation)."
 				(text-properties-at start)))
 	    (while props
 	      (overlay-put o (car props) (cadr props))
-	      (setq props (nthcdr 2 props)))
+	      (setq props (cddr props)))
 	    (setq o-list (cons o o-list)))
 	  (setq start pos))
 	o-list ))))

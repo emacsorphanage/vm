@@ -548,7 +548,10 @@ folder in the order in which the messages arrived."
 	(if (eq '= (setq result (funcall (car key-funcs) m1 m2)))
 	    (setq key-funcs (cdr key-funcs))
 	  (throw 'done result)))
-      nil)))
+      ;; if all else fails try physical order
+      (if (eq m1 m2)
+	  nil
+	(vm-sort-compare-physical-order m1 m2)))))
 
 (defun vm-sort-compare-thread (m1 m2)
   (let ((root1 (vm-thread-root-sym m1))
