@@ -4513,11 +4513,11 @@ are also included."
   (vm-update-summary-and-mode-line))
 
 ;; (define-obsolete-function-alias 'vm-mime-delete-all-attachments
-;;   'vm-delete-all-attachments "8.1.93a")
+;;   'vm-delete-all-attachments "8.2.0")
 (defalias 'vm-mime-delete-all-attachments
   'vm-delete-all-attachments)
 (make-obsolete 'vm-mime-delete-all-attachments
-	       'vm-delete-all-attachments "8.1.93a")                                                 
+	       'vm-delete-all-attachments "8.2.0")                                                 
 ;;;###autoload
 (defun vm-save-all-attachments (&optional count
                                                directory
@@ -4601,11 +4601,11 @@ created."
       (message "No attachments found"))))
 
 ;; (define-obsolete-function-alias 'vm-mime-save-all-attachments
-;;   'vm-save-all-attachments "8.1.93a")
+;;   'vm-save-all-attachments "8.2.0")
 (defalias 'vm-mime-save-all-attachments
   'vm-save-all-attachments)
 (make-obsolete 'vm-mime-save-all-attachments
-  'vm-save-all-attachments "8.1.93a")
+  'vm-save-all-attachments "8.2.0")
 
 (defun vm-save-attachments (&optional count
 				      no-delete-after-saving)
