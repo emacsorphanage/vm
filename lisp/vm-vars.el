@@ -1978,10 +1978,17 @@ attach, any relative pathnames will be relative to this directory."
 (defvar vm-mime-save-all-attachments-history nil
   "Directory history to where the attachments should go.")
 
-(defcustom vm-mime-yank-attachments nil
-  "*Non-nil value enables yanking of attachments.
-Otherwise only the button label will be yanked.
-(This functionally is currently part of vm-pine.el.)"
+(defvar vm-mime-yank-attachments nil
+  "*This variable, originally from vm-pine, is deprecated.  It is
+replaced by `vm-include-mime-attachments'.")
+
+(make-obsolete-variable 'vm-mime-yank-attachments
+  'vm-include-mime-attachments
+  "8.2.0")			
+
+(defcustom vm-include-mime-attachments nil
+  "*Non-nil value enables attachments to be included in quoted text in
+a reply message.  Otherwise only the button label will be included."
   :group 'vm
   :type 'boolean)
 
@@ -2666,7 +2673,7 @@ Nil means don't attribute included text in replies."
 
 (defcustom vm-included-mime-types-list
   nil
-"*If non-nil, the list of mime types that should be included in quote
+"*If non-nil, the list of mime types that should be included in quoted
 text in a reply message.  A suitable value could be
   '(\"text/plain\" \"text/enriched\" \"message/rfc822\")
 By default, this variable is nil, which means include all types that

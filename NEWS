@@ -2,22 +2,23 @@ Status
 
   VM is currently being maintained by a 'VM development team'
   consisting of Robert Widhopf-Fenk, Ulrich Müller and Uday S Reddy.
-  In recent months, Arik Mitschang, Tim Cross and Paul Michael Reilly
-  have joined us as contributors.  More volunteers to help with the
-  maintenance are quite welcome.
-
-  We are working towards a new version of VM, 8.2.0, which will
-  support remote IMAP folders with only headers downloaded, summary
-  windows with thread folding, more accurate support for threads, and
-  seamless support for Thunderbird folders etc.
+  In recent months, Arik Mitschang and Tim Cross have joined us as
+  contributors.  More volunteers to help with the maintenance are
+  quite welcome.
 
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
-VM 8.1.94a
+VM 8.2.0b (2011-02-28)
 
   CHANGES
-  
+
+   * New variable `vm-include-mime-attachments' allows the inclusion of
+     MIME attachments in replies.  This functionality was originally
+     part of vm-pine.el under the name `vm-mime-yank-attachments'.
+     That functionality is now obsolete.  Replace references to
+     `vm-mime-yank-attachments' in your customization by the new variable.
+     
    * Forwarding messages as MIME attachments included all message
      headers, ignoring the vm-forwarded-headers and
      vm-unforwarded-header-regexp settings.
