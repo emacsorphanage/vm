@@ -82,7 +82,6 @@
 
 (declare-function vm-mode "vm" (&optional read-only))
 (declare-function vm-session-initialization "vm" ())
-(declare-function vm-decode-postponed-mime-message "vm-pine" ())
 (declare-function get-itimer "vm-xemacs.el" (name))
 
 (declare-function mail-strip-quoted-names "ext:mail-utils" (address))
@@ -463,6 +462,16 @@ specified by `vm-included-text-headers' and
       (if (looking-at "From ")
           (delete-region start (1+ (line-end-position)))))))
 
+(defconst vm-mime-yanked-button-format-alist
+  '(
+    ("text" .        "[DELETED ATTACHMENT %f, %t]")
+    ("message" .     "[DELETED ATTACHMENT %f, %t]")
+    ("audio" .       "[DELETED ATTACHMENT %f, %t]")
+    ("video" .       "[DELETED ATTACHMENT %f, %t]")
+    ("image" .       "[DELETED ATTACHMENT %f, %t]")
+    ("application" . "[DELETED ATTACHMENT %f, %t]")
+    ))
+
 (defun vm-yank-message-mime (message layout)
   ;; This is Rob's new code that uses vm-decode-mime-layout for
   ;; creating the yanked text, but use the reply-specific settings for
@@ -484,12 +493,17 @@ specified by `vm-included-text-headers' and
       (save-excursion
 	(goto-char (point-min))
 	(vm-decode-mime-message-headers))
-      (let ((vm-mime-alternative-select-method 'best-internal))
+      (let ((vm-mime-alternative-select-method 'best-internal)
 					; override 'all and 'best
+	    (vm-auto-displayed-mime-content-types 
+	     '("text" "message"))       ; include only text and message types
+	    (vm-mime-parts-display-separator "")
+					; default separator for multipart
+	    (vm-mime-button-format-alist vm-mime-yanked-button-format-alist)
+	    )
 	(vm-decode-mime-layout layout))
-      (if vm-mime-yank-attachments
-	  ;; FIXME This uses a function of vm-pine.el
-	  (vm-decode-postponed-mime-message)))))
+      (if vm-include-mime-attachments
+	  (vm-mime-encode-mime-attachments)))))
 
 (defun vm-yank-message-text (message layout)
   ;; This is the original code for included text

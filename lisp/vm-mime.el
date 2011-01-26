@@ -2206,14 +2206,16 @@ that recipient is outside of East Asia."
       (let ((case-fold-search t))
 	(string-match "^attachment$" (car (vm-mm-layout-disposition layout))))
     (let ((type (car (vm-mm-layout-type layout))))
-      (if (or (eq vm-auto-displayed-mime-content-types t)
-	      (vm-find vm-auto-displayed-mime-content-types
-		       (lambda (i)
-			 (vm-mime-types-match i type))))
-	  (vm-find vm-auto-displayed-mime-content-type-exceptions
+      (cond ((vm-mime-types-match "multipart" type)
+	     nil)
+	    ((or (eq vm-auto-displayed-mime-content-types t)
+		 (vm-find vm-auto-displayed-mime-content-types
+			  (lambda (i)
+			    (vm-mime-types-match i type))))
+	     (vm-find vm-auto-displayed-mime-content-type-exceptions
 		   (lambda (i)
-		     (vm-mime-types-match i type)))
-	t))))
+		     (vm-mime-types-match i type))))
+	    (t t)))))
 
 (defun vm-mime-should-display-internal (layout)
   (let ((type (car (vm-mm-layout-type layout))))
@@ -4317,7 +4319,8 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 (defun vm-mime-run-display-function-at-point (&optional function dispose)
   "Display the MIME object at point according to its type."
   (interactive)
-  (if (vm-body-to-be-retrieved-of (car vm-message-pointer))
+  (if (and (memq major-mode '(vm-mode vm-virtual-mode))
+	   (vm-body-to-be-retrieved-of (car vm-message-pointer)))
       (error "Message must be loaded to view attachments" ))
 
   ;; save excursion to keep point from moving.  its motion would
@@ -4510,11 +4513,11 @@ are also included."
   (vm-update-summary-and-mode-line))
 
 ;; (define-obsolete-function-alias 'vm-mime-delete-all-attachments
-;;   'vm-delete-all-attachments "8.1.93a")
+;;   'vm-delete-all-attachments "8.2.0")
 (defalias 'vm-mime-delete-all-attachments
   'vm-delete-all-attachments)
 (make-obsolete 'vm-mime-delete-all-attachments
-	       'vm-delete-all-attachments "8.1.93a")                                                 
+	       'vm-delete-all-attachments "8.2.0")                                                 
 ;;;###autoload
 (defun vm-save-all-attachments (&optional count
                                                directory
@@ -4598,11 +4601,11 @@ created."
       (message "No attachments found"))))
 
 ;; (define-obsolete-function-alias 'vm-mime-save-all-attachments
-;;   'vm-save-all-attachments "8.1.93a")
+;;   'vm-save-all-attachments "8.2.0")
 (defalias 'vm-mime-save-all-attachments
   'vm-save-all-attachments)
 (make-obsolete 'vm-mime-save-all-attachments
-  'vm-save-all-attachments "8.1.93a")
+  'vm-save-all-attachments "8.2.0")
 
 (defun vm-save-attachments (&optional count
 				      no-delete-after-saving)
@@ -5125,11 +5128,12 @@ confirmed before creating a new directory."
     result ))
   
 (defun vm-mime-plain-message-p (m)
-  ;; A message is considered plain if
-  ;; - it does not have encoded headers, and
-  ;; - - it does not have a MIME layout, or
-  ;; - - it has a text/plain component as its first element with ASCII
-  ;; - -   character set and unibyte encoding (7bit, 8bit or binary).
+  "A message M is considered plain if
+   - it does not have encoded headers, and
+   - - it does not have a MIME layout, or
+   - - it has a text/plain component as its first element with ASCII
+   - -   character set and unibyte encoding (7bit, 8bit or binary).
+Returns non-NIL value M is a plain message."
   (save-match-data
     (let ((o (vm-mm-layout m))
 	  (case-fold-search t))
@@ -5649,8 +5653,9 @@ COMPOSITION's name will be read from the minibuffer."
 		   (vm-find-composition-buffer) t))))
   (if (null vm-send-using-mime)
       (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
+  ;; Can't see why these checks are needed.  USR, 2011-01-25
+  ;; (vm-check-for-killed-summary)
+  ;; (vm-error-if-folder-empty)
 
   (let (e layout (work-buffer nil) buf start w)
     (setq e (vm-find-layout-extent-at-point)
@@ -5866,19 +5871,20 @@ COMPOSITION's name will be read from the minibuffer."
 	(while (not done)
 	  (setq object (get-text-property pos 'vm-mime-object))
 	  (setq pos (next-single-property-change pos 'vm-mime-object))
-	  (or pos (setq pos (point-max) done t))
-	  (if object
-	      (progn
-		(setq o (make-overlay start pos))
-		(overlay-put o 'insert-in-front-hooks
-			     '(vm-disallow-overlay-endpoint-insertion))
-		(overlay-put o 'insert-behind-hooks
-			     '(vm-disallow-overlay-endpoint-insertion))
-		(setq props (text-properties-at start))
-		(while props
-		  (overlay-put o (car props) (car (cdr props)))
-		  (setq props (cdr (cdr props))))
-		(setq o-list (cons o o-list))))
+	  (unless pos 
+	    (setq pos (point-max) 
+		  done t))
+	  (when object
+	    (setq o (make-overlay start pos))
+	    (overlay-put o 'insert-in-front-hooks
+			 '(vm-disallow-overlay-endpoint-insertion))
+	    (overlay-put o 'insert-behind-hooks
+			 '(vm-disallow-overlay-endpoint-insertion))
+	    (setq props (text-properties-at start))
+	    (while props
+	      (overlay-put o (car props) (cadr props))
+	      (setq props (cddr props)))
+	    (setq o-list (cons o o-list)))
 	  (setq start pos))
 	o-list ))))
 
@@ -7529,6 +7535,136 @@ This is a destructive operation and cannot be undone!"
                        count (if (> count 1) "s" ""))))
           (setq mlist (cdr mlist))))))
   (when (interactive-p)
-    (vm-discard-cached-data count)))
+    (vm-discard-cached-data count)
+    (vm-preview-current-message)))
+
+;;-----------------------------------------------------------------------------
+;; The following functions are taken from vm-pine.el
+;; Copyright (C) Robert Widhopf-Fenk
+
+;;;###autoload
+(defun vm-mime-encode-mime-attachments ()
+  "Replace the mime buttons by attachment buttons."
+  (interactive)
+  (cond (vm-xemacs-p
+         (let ((e-list (extent-list nil (point-min) (point-max))))
+           ;; First collect the extents
+           (setq e-list
+                 (sort (vm-delete
+                        (function (lambda (e)
+                                    (vm-extent-property e 'vm-mime-layout)))
+                        e-list t)
+                       (function (lambda (e1 e2)
+                                   (< (vm-extent-end-position e1)
+                                      (vm-extent-end-position e2))))))
+           ;; Then replace the buttons, because doing it at once will result in
+           ;; problems since the new buttons are from the same extent.
+           (while e-list
+             (vm-mime-encode-mime-button (car e-list))
+             (setq e-list (cdr e-list)))))
+        (vm-fsfemacs-p
+         (let ((o-list (vm-mime-re-fake-attachment-overlays (point-min)
+                                                         (point-max))))
+           (setq o-list (sort (vm-delete
+                               (function (lambda (o)
+                                           (overlay-get o 'vm-mime-layout)))
+                               o-list t)
+                              (function
+                               (lambda (e1 e2)
+                                 (< (overlay-end e1)
+                                    (overlay-end e2))))))
+           (while o-list
+             (vm-mime-encode-mime-button (car o-list))
+             (setq o-list (cdr o-list)))
+	   (goto-char (point-max))))
+        (t
+         (error "don't know how to MIME dencode composition for %s"
+                (emacs-version)))))
+
+(defun vm-mime-re-fake-attachment-overlays (start end)
+  (let ((o-list nil)
+	(done nil)
+	(pos start)
+	object props o)
+    (save-excursion
+      (save-restriction
+	(narrow-to-region start end)
+	(while (not done)
+	  (setq object (get-text-property pos 'vm-mime-layout))
+	  (setq pos (next-single-property-change pos 'vm-mime-layout))
+	  (unless pos 
+	    (setq pos (point-max) 
+		  done t))
+	  (when object
+	    (setq o (make-overlay start pos))
+	    (overlay-put o 'insert-in-front-hooks
+			 '(vm-disallow-overlay-endpoint-insertion))
+	    (overlay-put o 'insert-behind-hooks
+			 '(vm-disallow-overlay-endpoint-insertion))
+	    (setq props (append (list 'vm-mime-object t)
+				(text-properties-at start)))
+	    (while props
+	      (overlay-put o (car props) (cadr props))
+	      (setq props (cddr props)))
+	    (setq o-list (cons o o-list)))
+	  (setq start pos))
+	o-list ))))
+
+(defun vm-mime-encode-mime-button (x)
+  "Replace the mime button specified by X by an attachment button."
+
+  (save-excursion
+    (let (layout xstart xend)
+      (if vm-fsfemacs-p
+          (setq layout (overlay-get x 'vm-mime-layout)
+                xstart (overlay-start x)
+                xend   (overlay-end x))
+        (setq layout (vm-extent-property x 'vm-mime-layout)
+              xstart (vm-extent-start-position x)
+              xend   (vm-extent-end-position x)))
+               
+      (let* ((start  (vm-mm-layout-header-start layout))
+             (end    (vm-mm-layout-body-end   layout))
+             (buf    (marker-buffer start))
+             (desc   (or (vm-mm-layout-description layout)
+                         "message body text"))
+             (disp   (or (vm-mm-layout-disposition layout)
+                         '("inline")))
+             (file   (vm-mime-get-disposition-parameter layout "filename"))
+             (filename nil)
+             (type   (vm-mm-layout-type layout)))
+
+        (when (and type
+		   (string= (car type) "message/external-body")
+		   (string= (cadr type) "access-type=local-file"))
+          (save-excursion
+            (setq filename (substring (caddr type) 5))
+            (vm-select-folder-buffer)
+            (save-restriction
+              (let ((start (vm-mm-layout-body-start layout))
+                    (end   (vm-mm-layout-body-end layout)))
+                (set-buffer (marker-buffer (vm-mm-layout-body-start layout)))
+                (widen)
+                (goto-char start)
+                (if (not (re-search-forward
+                          "Content-Type: \"?\\([^ ;\" \n\t]+\\)\"?;?"
+                          end t))
+                    (error "No `Content-Type' header found in: %s"
+                           (buffer-substring start end))
+                  (setq type (list (match-string 1))))))))
+        
+        ;; delete the mime-button
+        (goto-char xstart)
+        (delete-region xstart xend)
+        ;; and insert an attached-object-button
+        (cond (filename
+	       (vm-mime-attach-file filename (car type)))
+	      (file
+	       (vm-mime-attach-object (list buf start end disp file)
+				      (car type) nil desc t))
+	      (t
+	       (vm-mime-attach-object (list buf start end disp)
+				      (car type) nil desc t)))))))
+
 
 ;;; vm-mime.el ends here

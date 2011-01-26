@@ -1059,12 +1059,14 @@ summary buffer to select a folder."
 		(list this-command)))
   (vm-update-summary-and-mode-line))
 
+(defvar mail-reply-action)
 (defvar mail-send-actions)
+(defvar mail-return-action)
 
 ;;;###autoload
 (defun vm-compose-mail (&optional to subject other-headers continue
 		        switch-function yank-action
-			send-actions)
+			send-actions return-action &rest ignored)
   (interactive)
   (vm-session-initialization)
   (if continue
@@ -1106,7 +1108,9 @@ summary buffer to select a folder."
 		  (mail-yank-hooks (run-hooks 'mail-yank-hooks))
 		  (t (vm-mail-yank-default)))))
       (make-local-variable 'mail-send-actions)
-      (setq mail-send-actions send-actions))))
+      (setq mail-send-actions send-actions)
+      (make-local-variable 'mail-return-action)
+      (setq mail-return-action return-action))))
 
 ;;;###autoload
 (defun vm-submit-bug-report (&optional pre-hooks post-hooks)

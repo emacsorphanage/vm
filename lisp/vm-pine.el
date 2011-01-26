@@ -432,7 +432,7 @@ creation)."
       (put-text-property (point-min) (point-max) 'invisible nil)
       
       ;; and add the buttons for attachments
-      (vm-decode-postponed-mime-message)))
+      (vm-mime-encode-mime-attachments)))
 
   (when (not silent)
     (run-hooks 'mail-setup-hook)
@@ -497,130 +497,24 @@ creation)."
         (error "Folder buffer closed before deletion of source message."))))
 
 ;;-----------------------------------------------------------------------------
-;;;###autoload
-(defun vm-decode-postponed-mime-message ()
-  "Replace the mime buttons by attachment buttons."
-  (interactive)
-  (cond (vm-xemacs-p
-         (let ((e-list (extent-list nil (point-min) (point-max))))
-           ;; First collect the extents
-           (setq e-list
-                 (sort (vm-delete
-                        (function (lambda (e)
-                                    (vm-extent-property e 'vm-mime-layout)))
-                        e-list t)
-                       (function (lambda (e1 e2)
-                                   (< (vm-extent-end-position e1)
-                                      (vm-extent-end-position e2))))))
-           ;; Then replace the buttons, because doing it at once will result in
-           ;; problems since the new buttons are from the same extent.
-           (while e-list
-             (vm-decode-postponed-mime-button (car e-list))
-             (setq e-list (cdr e-list)))))
-        (vm-fsfemacs-p
-         (let ((o-list (vm-pine-fake-attachment-overlays (point-min)
-                                                         (point-max))))
-           (setq o-list (sort (vm-delete
-                               (function (lambda (o)
-                                           (overlay-get o 'vm-mime-layout)))
-                               o-list t)
-                              (function
-                               (lambda (e1 e2)
-                                 (< (overlay-end e1)
-                                    (overlay-end e2))))))
-           (while o-list
-             (vm-decode-postponed-mime-button (car o-list))
-             (setq o-list (cdr o-list)))))
-        (t
-         (error "don't know how to MIME dencode composition for %s"
-                (emacs-version)))))
 
-(defun vm-pine-fake-attachment-overlays (start end)
-  (let ((o-list nil)
-	(done nil)
-	(pos start)
-	object props o)
-    (save-excursion
-      (save-restriction
-	(narrow-to-region start end)
-	(while (not done)
-	  (setq object (get-text-property pos 'vm-mime-layout))
-	  (setq pos (next-single-property-change pos 'vm-mime-layout))
-	  (or pos (setq pos (point-max) done t))
-	  (if object
-	      (progn
-		(setq o (make-overlay start pos))
-		(overlay-put o 'insert-in-front-hooks
-			     '(vm-disallow-overlay-endpoint-insertion))
-		(overlay-put o 'insert-behind-hooks
-			     '(vm-disallow-overlay-endpoint-insertion))
-		(setq props (append (list 'vm-mime-object t)
-				    (text-properties-at start)))
-		(while props
-		  (overlay-put o (car props) (car (cdr props)))
-		  (setq props (cdr (cdr props))))
-		(setq o-list (cons o o-list))))
-	  (setq start pos))
-	o-list ))))
+;; The following functions have been integrated into vm-mime.el
+;; USR, 2011-01-25
 
-;;-----------------------------------------------------------------------------
-(defun vm-decode-postponed-mime-button (x)
-  "Replace the mime button specified by X."
+(defalias 'vm-decode-postponed-mime-message
+  'vm-mime-encode-mime-attachments)
+(make-obsolete 'vm-decode-postponed-mime-message
+	       'vm-mime-encode-mime-attachments "8.2.0")
 
-  (save-excursion
-    (let (layout
-          xstart
-          xend)
+(defalias 'vm-pine-fake-attachment-overlays
+  'vm-mime-re-fake-attachment-overlays)
+(make-obsolete 'vm-pine-fake-attachment-overlays
+	       'vm-mime-re-fake-attachment-overlays "8.2.0")
 
-      (if vm-fsfemacs-p
-          (setq layout (overlay-get x 'vm-mime-layout)
-                xstart (overlay-start x)
-                xend   (overlay-end x))
-        (setq layout (vm-extent-property x 'vm-mime-layout)
-              xstart (vm-extent-start-position x)
-              xend   (vm-extent-end-position x)))
-               
-      (let* ((start  (vm-mm-layout-header-start layout))
-             (end    (vm-mm-layout-body-end   layout))
-             (b      (marker-buffer start))
-             (desc   (or (vm-mm-layout-description layout)
-                         "message body text"))
-             (disp   (or (vm-mm-layout-disposition layout)
-                         '("inline")))
-             (file   (vm-mime-get-disposition-parameter layout "filename"))
-             filename
-             (type   (vm-mm-layout-type layout)))
-
-        (if (and type
-                 (string= (car type) "message/external-body")
-                 (string= (cadr type) "access-type=local-file"))
-          (save-excursion
-            (setq filename (substring (caddr type) 5))
-            (vm-select-folder-buffer)
-            (save-restriction
-              (let ((start (vm-mm-layout-body-start layout))
-                    (end   (vm-mm-layout-body-end layout)))
-                (set-buffer (marker-buffer (vm-mm-layout-body-start layout)))
-                (widen)
-                (goto-char start)
-                (if (not (re-search-forward
-                          "Content-Type: \"?\\([^ ;\" \n\t]+\\)\"?;?"
-                          end t))
-                    (error "No `Content-Type' header found in: %s"
-                           (buffer-substring start end))
-                  (setq type (list (match-string 1))))))))
-        
-        ;; delete the mime-button
-        (goto-char xstart)
-        (delete-region xstart xend)
-        ;; and insert an attached-object-button
-        (if filename
-            (vm-mime-attach-file filename (car type))
-          (if file
-              (vm-mime-attach-object (list b start end disp file)
-                                     (car type) nil desc t)
-            (vm-mime-attach-object (list b start end disp)
-                                   (car type) nil desc t)))))))
+(defalias 'vm-decode-postponed-mime-button
+  'vm-mime-encode-mime-button)
+(make-obsolete 'vm-decode-postponed-mime-button
+	       'vm-mime-encode-mime-button "8.2.0")
 
 ;;-----------------------------------------------------------------------------
 (define-key vm-mail-mode-map "\C-c\C-d" 'vm-postpone-message)

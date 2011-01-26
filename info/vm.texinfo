@@ -2738,25 +2738,27 @@ specification similar to @code{vm-summary-format}.  @xref{Summaries}.  A
 @vindex vm-included-text-headers
 @vindex vm-included-text-discard-header-regexp
 VM normally includes only the body text from the cited messages.  If you
-wish, you can include also the message headers by customizing
+wish to include also the message headers, you should customize
 the variables @code{vm-included-text-headers} and
 @code{vm-included-text-discard-header-regexp}.
 
-@vindex vm-included-mime-types-list
-@vindex vm-include-text-from-presentation
-Citing message text is tricky business because the original message
+@vindex vm-include-mime-attachments
+Citing message text is a tricky business because the original message
 could be a MIME message with encoded text or formatted text along with
 embedded images and attachments.  By default, VM uses its MIME
 displaying mechanism to extract the included text to be cited in
-replies.  If this does not work correctly, you can set the variable
-@code{vm-included-mime-types-list} to selectively include the MIME types
-that should be covered in the included text.  The list should have
-@code{text/plain} at a minimum and could include other types such as
-@code{text/enriched} and @code{message}.  Setting the variable to nil
-returns you to the default behaviour.  Another possible way to extract
-included text is to use the contents of the presentation buffer.  You
-can ask VM to do so by setting the variable
-@code{vm-include-text-from-presentation} to t.
+replies.  It does not include the MIME attachments by default, but it
+shows them in the message composition buffer with buttons labelled
+similar to:
+@example
+[DELETED ATTACHMENT mary.jpg, image/jpeg]
+@end example
+@noindent If you set the variable @code{vm-include-mime-attachments} then
+the attachment buttons are converted to actual attachments before the
+message is sent.  The format of the button in this case looks like:
+@example
+[ATTACHMENT mary.jpg, image/jpeg]
+@end example
 
 @vindex vm-fill-paragraphs-containing-long-lines-in-reply
 @vindex vm-fill-long-lines-in-reply-column
@@ -2772,6 +2774,28 @@ used, the fill column is controlled by the variable
 
 Alternatively, you can fill individual paragraphs manually using
 @kbd{C-c C-q} (@code{mail-fill-yanked-message}).
+
+@unnumberedsubsec Alternative methods to include text
+
+The method of MIME decoding for included text is relatively new in VM.
+The older methods are the inclusion of plain text, due to Kyle Jones,
+and the inclusion of text from the Presentation buffer, due to Robert
+Fenk. 
+
+@vindex vm-included-mime-types-list
+The Kyle Jones method of plain text inclusion is enabled by setting the
+variable @code{vm-included-mime-types-list} to a non-nil list.  Its
+value should be the list of MIME types that should be covered in the
+included text.  The list should have @code{text/plain} at a minimum and
+could include other types such as @code{text/enriched} and
+@code{message}.  Setting the variable to nil returns you to the default
+behaviour.
+
+@vindex vm-include-text-from-presentation
+The Robert Fenk method of text inclusion from the Presentation buffer is
+enabled by setting the variable @code{vm-include-text-from-presentation}
+to t.  In this case, the text display from the Presentation buffer is
+copied verbatim as the quoted text.
 
 @node Forwarding Messages, Saving copies, Replying, Sending Messages
 @section Forwarding Messages

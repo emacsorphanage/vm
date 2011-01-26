@@ -28,7 +28,7 @@
   (require 'vm-summary)
   (require 'vm-folder)
   (require 'vm-window)
-  ;; (require 'vm-page)
+  (require 'vm-page)
   ;; (require 'vm-motion)
 )
 
@@ -150,11 +150,11 @@ data is discarded only from the marked messages in the current folder."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((mlist (vm-select-operable-messages count "Discard data of")))
-    (vm-discard-cached-data-internal mlist))
+    (vm-discard-cached-data-internal mlist (interactive-p) ))
   (vm-display nil nil '(vm-discard-cached-data) '(vm-discard-cached-data))
   (vm-update-summary-and-mode-line))
 
-(defun vm-discard-cached-data-internal (mlist)
+(defun vm-discard-cached-data-internal (mlist &optional interactive-p)
   (let ((buffers-needing-thread-sort (make-vector 29 0))
 	m)
     (while mlist
@@ -182,7 +182,8 @@ data is discarded only from the marked messages in the current folder."
 	(vm-set-text-of m nil)
 	(vm-set-mime-layout-of m nil)
 	(vm-set-mime-encoded-header-flag-of m nil)
-	(if (and vm-presentation-buffer (eq (car vm-message-pointer) m))
+	(if (and interactive-p vm-presentation-buffer
+		 (eq (car vm-message-pointer) m))
 	    (save-excursion (vm-preview-current-message)))
 	(if (vectorp vm-thread-obarray)
 	    (vm-build-threads (list m)))

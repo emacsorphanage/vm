@@ -216,7 +216,7 @@ need to add quotes or leave them undecoded.             RWF"
           (concat "\"" (match-string 1 da) "\" " (match-string 2 da))
         da))))
 
-(make-obsolete 'vmrf-fix-quoted-address 'vm-quoted-address "8.1.93a")
+(make-obsolete 'vmrf-fix-quoted-address 'vm-quoted-address "8.2.0")
           
 (defun vm-parse-structured-header (string &optional sepchar keep-quotes)
   (if (null string)

@@ -461,15 +461,14 @@ the Summary buffer exists. "
 	(vm-do-summary (and (consp vm-summary-redo-start-point)
 			    vm-summary-redo-start-point))
 	(setq vm-summary-redo-start-point nil)
-	(and vm-message-pointer
-	     (vm-set-summary-pointer (car vm-message-pointer)))
+	(when vm-message-pointer
+	  (vm-set-summary-pointer (car vm-message-pointer)))
 	(setq vm-need-summary-pointer-update nil))
-    (and vm-need-summary-pointer-update
-	 vm-summary-buffer
-	 vm-message-pointer
-	 (progn
-	   (vm-set-summary-pointer (car vm-message-pointer))
-	   (setq vm-need-summary-pointer-update nil)))))
+    (when (and vm-need-summary-pointer-update
+	       vm-summary-buffer
+	       vm-message-pointer)
+      (vm-set-summary-pointer (car vm-message-pointer))
+      (setq vm-need-summary-pointer-update nil))))
 
 (defun vm-update-message-summary (m)
   "Replace the summary line of the message M in the summary
@@ -558,6 +557,8 @@ buffer by a regenerated summary line."
 
 
 (defun vm-set-summary-pointer (m)
+  "Set the summary-pointer in the summary window to the message M.
+Also move the cursor (point and window-point)."
   (if vm-summary-buffer
       (let ((w (vm-get-visible-buffer-window vm-summary-buffer))
 	    (do-mouse-track
@@ -565,89 +566,89 @@ buffer by a regenerated summary line."
 		      (vm-mouse-support-possible-p))
 		 vm-summary-enable-faces))
 	    (old-window nil))
-	(vm-save-buffer-excursion
+	(with-current-buffer vm-summary-buffer
+	  (when w
+	    (setq old-window (selected-window))
+	    (select-window w))
 	  (unwind-protect
-	      (progn
-		(set-buffer vm-summary-buffer)
-		(when w
-		  (setq old-window (selected-window))
-		  (select-window w))
-		(let ((buffer-read-only nil))
-		  (when (and vm-summary-pointer
-			     (vm-su-start-of vm-summary-pointer))
-		    (goto-char (vm-su-start-of vm-summary-pointer))
-		    (if (not (get-text-property (+ (point) 3) 'invisible))
-			(let ((msg (vm-summary-message-at-point)))
-			  (if (and vm-summary-show-threads
-				   vm-summary-enable-thread-folding
-				   (eq msg (vm-thread-root msg))
-				   (> (vm-thread-count msg) 1))
-			      (if (looking-at "+") 
-				  (progn (insert "+ ") 
-					 (delete-char (length vm-summary-=>)))
-				(progn (insert "- ")
-				       (delete-char (length vm-summary-=>))))
-			    (insert vm-summary-no-=>)
-			    (delete-char (length vm-summary-=>))))
-		      (delete-char (length vm-summary-=>))
-		      (insert vm-summary-no-=>)
-		      ;; re-invisible it so we dont have problems
-		      (put-text-property 
-		       (- (point) (length vm-summary-no-=>)) (point) 
-		       'invisible t))
-		    (when do-mouse-track
-		      (vm-mouse-set-mouse-track-highlight
-		       (vm-su-start-of vm-summary-pointer)
-		       (vm-su-end-of vm-summary-pointer)
-		       (vm-su-summary-mouse-track-overlay-of
-			vm-summary-pointer)))
-		    (when vm-summary-enable-faces 
-		      (vm-summary-faces-add vm-summary-pointer)))
-		  (setq vm-summary-pointer m)
-		  (goto-char (vm-su-start-of m))
-		  (let ((modified (buffer-modified-p)))
-		    (unwind-protect
-			(progn
-			  ;;
-			  ;; when we move the cursor, the thread-state
-			  ;; indicator should have already changed,
-			  ;; check now to see if we should set the
-			  ;; cursor with indicator
-			  ;;
-			  ;; if, somehow, the cursor became on an
-			  ;; invisible message in a collapsed thread,
-			  ;; assume that there is a good reason for
-			  ;; this and expand the thread (e.g in
-			  ;; visiting a folder with bookmark on
-			  ;; sub-thread
-			  ;;
-			  (if (save-excursion (goto-char (vm-su-start-of m))
-					      (looking-at "+"))
-			      (insert "+>")
-			    (if (and vm-summary-show-threads
-				     (get-text-property 
-				      (+ (vm-su-start-of m) 3) 'invisible))
-				(progn (insert vm-summary-=>)
-				       (vm-expand-thread 
-					(vm-thread-root m)))
-			      (insert vm-summary-=>)))
-			  (delete-char (length vm-summary-=>))
+	      (let ((buffer-read-only nil))
+		(when (and vm-summary-pointer
+			   (vm-su-start-of vm-summary-pointer))
+		  (goto-char (vm-su-start-of vm-summary-pointer))
+		  (if (not (get-text-property (+ (point) 3) 'invisible))
+		      (let ((msg (vm-summary-message-at-point)))
+			(if (and vm-summary-show-threads
+				 vm-summary-enable-thread-folding
+				 (eq msg (vm-thread-root msg))
+				 (> (vm-thread-count msg) 1))
+			    (if (looking-at "+") 
+				(progn (insert "+ ") 
+				       (delete-char (length vm-summary-=>)))
+			      (progn (insert "- ")
+				     (delete-char (length vm-summary-=>))))
+			  (insert vm-summary-no-=>)
+			  (delete-char (length vm-summary-=>))))
+		    (delete-char (length vm-summary-=>))
+		    (insert vm-summary-no-=>)
+		    ;; re-invisible it so we dont have problems
+		    (put-text-property 
+		     (- (point) (length vm-summary-no-=>)) (point) 
+		     'invisible t))
+		  (when do-mouse-track
+		    (vm-mouse-set-mouse-track-highlight
+		     (vm-su-start-of vm-summary-pointer)
+		     (vm-su-end-of vm-summary-pointer)
+		     (vm-su-summary-mouse-track-overlay-of
+		      vm-summary-pointer)))
+		  (when vm-summary-enable-faces 
+		    (vm-summary-faces-add vm-summary-pointer)))
 
-			  (when do-mouse-track
-			    (vm-mouse-set-mouse-track-highlight
-			     (vm-su-start-of m) (vm-su-end-of m)
-			     (vm-su-summary-mouse-track-overlay-of m)))
-			  (when vm-summary-enable-faces 
-			    (vm-summary-faces-add m)))
-		      (set-buffer-modified-p modified)))
-		  (forward-char (- (length vm-summary-=>)))
-		  (if (facep vm-summary-highlight-face)
-              (vm-summary-highlight-region
-               (vm-su-start-of m) (vm-su-end-of m)
-               vm-summary-highlight-face))
-		  (and w vm-auto-center-summary (vm-auto-center-summary))
-		  (run-hooks 'vm-summary-pointer-update-hook)))
-	    (and old-window (select-window old-window)))))))
+		(setq vm-summary-pointer m)
+		(goto-char (vm-su-start-of m))
+		(let ((modified (buffer-modified-p)))
+		  (unwind-protect
+		      (progn
+			;;
+			;; when we move the cursor, the thread-state
+			;; indicator should have already changed,
+			;; check now to see if we should set the
+			;; cursor with indicator
+			;;
+			;; if, somehow, the cursor became on an
+			;; invisible message in a collapsed thread,
+			;; assume that there is a good reason for
+			;; this and expand the thread (e.g in
+			;; visiting a folder with bookmark on
+			;; sub-thread
+			;;
+			(if (save-excursion (goto-char (vm-su-start-of m))
+					    (looking-at "+"))
+			    (insert "+>")
+			  (if (and vm-summary-show-threads
+				   (get-text-property 
+				    (+ (vm-su-start-of m) 3) 'invisible))
+			      (progn (insert vm-summary-=>)
+				     (vm-expand-thread 
+				      (vm-thread-root m)))
+			    (insert vm-summary-=>)))
+			(delete-char (length vm-summary-=>))
+			(when do-mouse-track
+			  (vm-mouse-set-mouse-track-highlight
+			   (vm-su-start-of m) (vm-su-end-of m)
+			   (vm-su-summary-mouse-track-overlay-of m)))
+			(when vm-summary-enable-faces 
+			  (vm-summary-faces-add m)))
+		    (set-buffer-modified-p modified)))
+		(forward-char (- (length vm-summary-=>)))
+		(when vm-summary-highlight-face
+		  (vm-summary-highlight-region
+		   (vm-su-start-of m) (vm-su-end-of m)
+		   vm-summary-highlight-face))
+		(when (and w vm-auto-center-summary)
+		  (vm-auto-center-summary))
+		(run-hooks 'vm-summary-pointer-update-hook))
+	    ;; unwind-protections
+	    (when old-window (select-window old-window)))))))
 
 (defun vm-summary-highlight-region (start end face)
   (vm-summary-xxxx-highlight-region start end face 'vm-summary-overlay))

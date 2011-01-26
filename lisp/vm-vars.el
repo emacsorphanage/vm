@@ -2085,10 +2085,17 @@ attach, any relative pathnames will be relative to this directory."
 (defvar vm-mime-save-all-attachments-history nil
   "Directory history to where the attachments should go.")
 
-(defcustom vm-mime-yank-attachments nil
-  "*Non-nil value enables yanking of attachments.
-Otherwise only the button label will be yanked.
-(This functionally is currently part of vm-pine.el.)"
+(defvar vm-mime-yank-attachments nil
+  "*This variable, originally from vm-pine, is deprecated.  It is
+replaced by `vm-include-mime-attachments'.")
+
+(make-obsolete-variable 'vm-mime-yank-attachments
+  'vm-include-mime-attachments
+  "8.2.0")			
+
+(defcustom vm-include-mime-attachments nil
+  "*Non-nil value enables attachments to be included in quoted text in
+a reply message.  Otherwise only the button label will be included."
   :group 'vm-mime
   :type 'boolean)
 
@@ -2792,8 +2799,9 @@ Nil means don't attribute included text in replies."
   :group 'vm-compose
   :type '(choice (const nil) string))
 
-(defcustom vm-included-mime-types-list nil
-"*If non-nil, the list of mime types that should be included in quote
+(defcustom vm-included-mime-types-list
+  nil
+"*If non-nil, the list of mime types that should be included in quoted
 text in a reply message.  A suitable value could be
   '(\"text/plain\" \"text/enriched\" \"message/rfc822\")
 By default, this variable is nil, which means include all types that
@@ -4443,7 +4451,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-selected-face 'face-alias 'vm-summary-selected)
-(make-obsolete 'vm-summary-selected-face 'vm-summary-selected "8.1.93a")
+(make-obsolete 'vm-summary-selected-face 'vm-summary-selected "8.2.0")
 
 (defface vm-summary-marked
   '((((type x)) (:foreground "red3")))
@@ -4451,7 +4459,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-marked-face 'face-alias 'vm-summary-marked)
-(make-obsolete 'vm-summary-marked-face 'vm-summary-marked "8.1.93a")
+(make-obsolete 'vm-summary-marked-face 'vm-summary-marked "8.2.0")
 
 (defface vm-summary-deleted
      (if (featurep 'xemacs)
@@ -4461,7 +4469,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
      :group 'vm-summary-faces)
 
 (put 'vm-summary-deleted-face 'face-alias 'vm-summary-deleted)
-(make-obsolete 'vm-summary-deleted-face 'vm-summary-deleted "8.1.93a")
+(make-obsolete 'vm-summary-deleted-face 'vm-summary-deleted "8.2.0")
 
 (defface vm-summary-new
   '((t (:foreground "blue")))
@@ -4469,7 +4477,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-new-face 'face-alias 'vm-summary-new)
-(make-obsolete 'vm-summary-new-face 'vm-summary-new "8.1.93a")
+(make-obsolete 'vm-summary-new-face 'vm-summary-new "8.2.0")
 
 (defface vm-summary-unread
   '((t (:foreground "blue4")))
@@ -4477,7 +4485,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-unread-face 'face-alias 'vm-summary-unread)
-(make-obsolete 'vm-summary-unread-face 'vm-summary-unread "8.1.93a")
+(make-obsolete 'vm-summary-unread-face 'vm-summary-unread "8.2.0")
 
 (defface vm-summary-saved
   '((t (:foreground "green4")))
@@ -4485,9 +4493,9 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-filed-face 'face-alias 'vm-summary-saved)
-(make-obsolete 'vm-summary-filed 'vm-summary-saved "8.1.93a")
+(make-obsolete 'vm-summary-filed 'vm-summary-saved "8.2.0")
 (put 'vm-summary-written-face 'face-alias 'vm-summary-saved)
-(make-obsolete 'vm-summary-written 'vm-summary-saved "8.1.93a")
+(make-obsolete 'vm-summary-written 'vm-summary-saved "8.2.0")
 
 (defface vm-summary-replied
   '((t (:foreground "grey30")))
@@ -4495,7 +4503,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-replied-face 'face-alias 'vm-summary-replied)
-(make-obsolete 'vm-summary-replied-face 'vm-summary-replied "8.1.93a")
+(make-obsolete 'vm-summary-replied-face 'vm-summary-replied "8.2.0")
 
 (defface vm-summary-forwarded
   '((t (:foreground "grey20")))
@@ -4503,9 +4511,9 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-forwarded-face 'face-alias 'vm-summary-forwarded)
-(make-obsolete 'vm-summary-forwarded-face 'vm-summary-forwarded "8.1.93a")
+(make-obsolete 'vm-summary-forwarded-face 'vm-summary-forwarded "8.2.0")
 (put 'vm-summary-redistributed-face 'face-alias 'vm-summary-forwarded)
-(make-obsolete 'vm-summary-redistributed-face 'vm-summary-forwarded "8.1.93a")
+(make-obsolete 'vm-summary-redistributed-face 'vm-summary-forwarded "8.2.0")
 
 (defface vm-summary-edited 
   nil
@@ -4513,7 +4521,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-edited-face 'face-alias 'vm-summary-edited)
-(make-obsolete 'vm-summary-edited-face 'vm-summary-edited "8.1.93a")
+(make-obsolete 'vm-summary-edited-face 'vm-summary-edited "8.2.0")
 
 (defface vm-summary-outgoing
   '((t (:foreground "grey30")))
@@ -4521,7 +4529,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-outgoing-face 'face-alias 'vm-summary-outgoing)
-(make-obsolete 'vm-summary-outgoing-face 'vm-summary-outgoing "8.1.93a")
+(make-obsolete 'vm-summary-outgoing-face 'vm-summary-outgoing "8.2.0")
 
 (defface vm-summary-expanded
   '((t ()))
@@ -4530,7 +4538,7 @@ expanded threads."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-expanded-face 'face-alias 'vm-summary-expanded)
-(make-obsolete 'vm-summary-expanded-face 'vm-summary-expanded "8.1.93a")
+(make-obsolete 'vm-summary-expanded-face 'vm-summary-expanded "8.2.0")
 
 (defface vm-summary-collapsed
   '((t (:weight normal :slant oblique)))
@@ -4539,7 +4547,7 @@ collapsed threads."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-collapsed-face 'face-alias 'vm-summary-collapsed)
-(make-obsolete 'vm-summary-collapsed-face 'vm-summary-collapsed "8.1.93a")
+(make-obsolete 'vm-summary-collapsed-face 'vm-summary-collapsed "8.2.0")
 
 (defface vm-summary-high-priority
   '((t (:foreground "red")))
@@ -4547,7 +4555,7 @@ collapsed threads."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-high-priority-face 'face-alias 'vm-summary-high-priority)
-(make-obsolete 'vm-summary-high-priority-face 'vm-summary-high-priority "8.1.93a")
+(make-obsolete 'vm-summary-high-priority-face 'vm-summary-high-priority "8.2.0")
 
 (defface vm-summary-default
   nil
@@ -4555,7 +4563,7 @@ collapsed threads."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-default-face 'face-alias 'vm-summary-default)
-(make-obsolete 'vm-summary-default-face 'vm-summary-default "8.1.93a")
+(make-obsolete 'vm-summary-default-face 'vm-summary-default "8.2.0")
 
 (defcustom vm-visit-folder-hook nil
   "*List of hook functions called just after VM visits a folder.
@@ -6518,7 +6526,7 @@ cause trouble (abbrev-mode)."
 (defvar vm-summary-faces-mode nil
   "Records whether VM Summary Faces mode is in use.")
 
-(make-obsolete 'vm-summary-faces-mode 'vm-summary-enable-faces "8.1.93a")
+(make-obsolete 'vm-summary-faces-mode 'vm-summary-enable-faces "8.2.0")
 
 ;; Duplicate defintion. See above. TX
 ;; (defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")

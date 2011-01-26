@@ -74,7 +74,8 @@ given."
 	(vm-preview-current-message)
 	;;(message "start of message you want is: %s"
 	;; (vm-su-start-of (car vm-message-pointer)))
-	(if (and vm-summary-show-threads
+	(if (and (vm-summary-operation-p)
+		 vm-summary-show-threads
 		 (get-text-property 
 		  (+ (vm-su-start-of (car vm-message-pointer)) 2)
 		  'invisible vm-summary-buffer))
@@ -125,6 +126,8 @@ given."
 	(signal 'beginning-of-folder nil))))
 
 (defun vm-move-message-pointer (direction)
+  "Move vm-message-pointer along DIRECTION by one position.  DIRECTION
+is one of 'forward and 'backward.                     USR, 2011-01-18"
   (let ((mp vm-message-pointer))
     (if (eq direction 'forward)
 	(progn
@@ -141,27 +144,28 @@ given."
     (setq vm-message-pointer mp)))
 
 (defun vm-should-skip-message (mp &optional skip-dogmatically)
-  (if skip-dogmatically
-      (or (and vm-skip-deleted-messages
-	       (vm-deleted-flag (car mp)))
-	  (vm-should-skip-hidden-message mp)
-	  (and vm-skip-read-messages
-	       (or (vm-deleted-flag (car mp))
-		   (not (or (vm-new-flag (car mp))
-			    (vm-unread-flag (car mp))))))
-	  (and (eq last-command 'vm-next-command-uses-marks)
-	       (null (vm-mark-of (car mp)))))
-    (or (and (eq vm-skip-deleted-messages t)
-	     (vm-deleted-flag (car mp)))
-	(vm-should-skip-hidden-message mp)
-	(and (eq vm-skip-read-messages t)
-	     (or (vm-deleted-flag (car mp))
-		 (not (or (vm-new-flag (car mp))
-			  (vm-unread-flag (car mp))))))
-	(and (eq last-command 'vm-next-command-uses-marks)
-	     (null (vm-mark-of (car mp)))))))
+  "Checks various preference settings and message attributes to
+determine whether the current message should be skipped during
+movement.  The first argument MP is a pointer into the message-list.
+The optional argument SKIP-DOGMATICALLY asks it to follow a strong
+interpretation of the preferences.                  USR, 2011-01-18"
+  (or (and (if skip-dogmatically 
+	       vm-skip-deleted-messages
+	     (eq vm-skip-deleted-messages t))
+	   (vm-deleted-flag (car mp)))
+      (vm-should-skip-hidden-message mp)
+      (and (if skip-dogmatically 
+	       vm-skip-read-messages
+	     (eq vm-skip-read-messages t))
+	   (or (vm-deleted-flag (car mp))
+	       (not (or (vm-new-flag (car mp))
+			(vm-unread-flag (car mp))))))
+      (and (eq last-command 'vm-next-command-uses-marks)
+	   (null (vm-mark-of (car mp))))))
 
 (defun vm-should-skip-hidden-message (mp)
+  "Checks if the current message in MP should be skipped as a hidden
+message in the summary buffer."
   (and vm-summary-buffer
        (with-current-buffer vm-summary-buffer
 	 (and vm-skip-collapsed-sub-threads
@@ -197,7 +201,7 @@ this command 'sees' marked messages as it moves."
   ;;(message "running vm next message")
   (if (interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate (if signal-errors 1 0) (interactive-p))
   ;; include other commands that call vm-next-message so that the
   ;; correct window configuration is applied for these particular
   ;; non-interactive calls.
@@ -206,7 +210,6 @@ this command 'sees' marked messages as it moves."
 			vm-undelete-message
 			vm-scroll-forward)
 	      (list this-command))
-  (and signal-errors (vm-error-if-folder-empty))
   (or count (setq count 1))
   (let ((oldmp vm-message-pointer)
 	(use-marks (eq last-command 'vm-next-command-uses-marks))
@@ -272,9 +275,10 @@ this command 'sees' marked messages as it moves."
 	(end-of-folder
 	 ;; we bumped into the end of the folder without finding
 	 ;; a suitable stopping point; retry the move if we're allowed.
-	 (when (get-text-property 
-		(vm-su-start-of (car vm-message-pointer))
-		'invisible vm-summary-buffer)
+	 (when (and (vm-summary-operation-p)
+		    (get-text-property 
+		     (vm-su-start-of (car vm-message-pointer))
+		     'invisible vm-summary-buffer))
 	   (setq error 'end-of-folder)
 	   (setq retry nil))
 
@@ -293,11 +297,10 @@ this command 'sees' marked messages as it moves."
 		      (setq error 'end-of-folder)
 		      oldmp )))
 	   (setq error 'end-of-folder))))))
-    (if (not (eq vm-message-pointer oldmp))
-	(progn
-	  (vm-record-and-change-message-pointer oldmp vm-message-pointer)
-	  (vm-preview-current-message)))
-    (and error signal-errors
+    (unless (eq vm-message-pointer oldmp)
+      (vm-record-and-change-message-pointer oldmp vm-message-pointer)
+      (vm-preview-current-message))
+    (when (and error signal-errors)
 	 (signal error nil))))
 
 ;;;###autoload
