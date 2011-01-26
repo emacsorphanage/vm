@@ -928,7 +928,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (fset 'vm-detach-extent 'detach-extent)))
 
 (if (not (fboundp 'vm-disable-extents))
-    (if vm-fsfemacs-p
+    (if (and vm-fsfemacs-p (fboundp 'remove-overlays))
 	(fset 'vm-disable-extents 'remove-overlays)
       ;; XEamcs doesn't need to disable extents because they don't
       ;; slow things down

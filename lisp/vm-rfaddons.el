@@ -105,7 +105,9 @@
 (eval-when-compile
   (require 'cl)
   (require 'advice)
-  (vm-load-features '(regexp-opt bbdb bbdb-vm gnus-group)))
+  (vm-load-features '(regexp-opt bbdb bbdb-vm))
+  ;; gnus-group removed from features because it gives errors.  USR, 2011-01-26
+  )
 
 (require 'sendmail)
 (vm-load-features '(bbdb))
@@ -915,25 +917,43 @@ this may take some time, since the file needs to be visited."
   :type '(choice (const :tag "Ask" nil)
                  (const :tag "Guess" guess)))
 
-(define-obsolete-variable-alias 'vm-mime-save-all-attachments-types
-  'vm-mime-savable-types
-  "8.3.0"
-  "*List of MIME types which should be saved.")
+;; (define-obsolete-variable-alias 'vm-mime-save-all-attachments-types
+;;   'vm-mime-savable-types
+;;   "8.3.0"
+;;   "*List of MIME types which should be saved.")
+(defvaralias 'vm-mime-savable-types
+  'vm-mime-save-all-attachments-types)
+(make-obsolete-variable 'vm-mime-save-all-attachments-types
+			'vm-mime-savable-types "8.1.1")
 
-(define-obsolete-variable-alias 'vm-mime-save-all-attachments-types-exceptions
-  'vm-mime-savable-type-exceptions
-  "8.3.0"
-  "*List of MIME types which should not be saved.")
+;; (define-obsolete-variable-alias 
+;;   'vm-mime-save-all-attachments-types-exceptions
+;;   'vm-mime-savable-type-exceptions
+;;   "8.3.0"
+;;   "*List of MIME types which should not be saved.")
+(defvaralias 'vm-mime-savable-type-exceptions
+  'vm-mime-save-all-attachments-types-exceptions)
+(make-obsolete-variable 'vm-mime-save-all-attachments-types-exceptions
+			'vm-mime-savable-type-exceptions "8.1.1")
 
-(define-obsolete-variable-alias 'vm-mime-delete-all-attachments-types
-  'vm-mime-deletable-types
-  "8.3.0"
-  "*List of MIME types which should be deleted.")
+;; (define-obsolete-variable-alias 'vm-mime-delete-all-attachments-types
+;;   'vm-mime-deletable-types
+;;   "8.3.0"
+;;   "*List of MIME types which should be deleted.")
+(defvaralias 'vm-mime-deletable-types
+  'vm-mime-delete-all-attachments-types)
+(make-obsolete-variable 'vm-mime-delete-all-attachments-types
+			'vm-mime-deletable-types "8.1.1")
 
-(define-obsolete-variable-alias 'vm-mime-delete-all-attachments-types-exceptions
-  'vm-mime-deletable-type-exceptions
-  "8.3.0"
-  "*List of MIME types which should not be deleted.")
+;; (define-obsolete-variable-alias 
+;;   'vm-mime-delete-all-attachments-types-exceptions
+;;   'vm-mime-deletable-type-exceptions
+;;   "8.3.0"
+;;   "*List of MIME types which should not be deleted.")
+(defvaralias 'vm-mime-deletable-type-exceptions
+  'vm-mime-delete-all-attachments-types-exceptions)
+(make-obsolete-variable 'vm-mime-delete-all-attachments-types-exceptions
+			'vm-mime-deletable-type-exceptions "8.1.1")
 
 ;;;###autoload
 (defun vm-mime-attach-files-in-directory (directory &optional regexp)
