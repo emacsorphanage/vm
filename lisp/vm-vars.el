@@ -1154,7 +1154,7 @@ for this variable to have effect."
 for showing the message, in addition to decoding for preview.")
 
 (defcustom vm-auto-displayed-mime-content-types 
-  '("text" "image" "multipart" "message/rfc822")
+  '("text" "image" "message/rfc822")
   "*List of MIME content types that should be displayed immediately
 after decoding.  Other types will be displayed as a button that
 you must activate to display the object.
@@ -1170,8 +1170,8 @@ should all be types or type/subtype pairs.  Example:
 If a top-level type is listed without a subtype, all subtypes of
 that type are assumed to be included.
 
-Note that some types are processed specially, and this variable does not
-apply to them.
+Note that all multipart types are processed specially, and this
+variable does not apply to them.  In particular,
 
    multipart/digest messages are always displayed as a button to
    avoid automatically visiting a new folder while you are moving
@@ -1208,7 +1208,7 @@ that type are assumed to be included."
 (defcustom vm-mime-internal-content-types t
   "*List of MIME content types that should be displayed internally
 if Emacs is capable of doing so.  A value of t means that VM
-display all types internally if possible.  A list of exceptions
+displays all types internally if possible.  A list of exceptions
 can be specified via `vm-mime-internal-content-type-exceptions'.
 A nil value means never display MIME objects internally, which
 means VM must run an external viewer to display MIME objects.
