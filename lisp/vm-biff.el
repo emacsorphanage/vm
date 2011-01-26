@@ -73,9 +73,10 @@
 (when vm-fsfemacs-p
   (defvar horizontal-scrollbar-visible-p nil))
 
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+; group already defined in vm-vars.el
+;(defgroup vm nil
+;  "VM"
+;  :group 'mail)
 
 (defgroup vm-biff nil
   "The VM biff lib"
@@ -428,7 +429,7 @@ AddToFunc SelectWindow
               (put-text-property start (point) 'vm-message-pointer mp)
 
 
-              (when do-mouse-track
+			  (when do-mouse-track
                 (vm-mouse-set-mouse-track-highlight
                  start (point)))
 

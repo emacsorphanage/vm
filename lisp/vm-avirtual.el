@@ -131,9 +131,10 @@
 		   &rest get-header-content-function-args))
 (declare-function bbdb-search-simple "exp:bbdb" (name net))
 
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+; group already defined in vm-vars
+;(defgroup vm nil
+;  "VM"
+;  :group 'mail)
 
 (defgroup vm-avirtual nil
   "VM additional virtual folder selectors and functions."

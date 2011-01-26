@@ -93,13 +93,9 @@
 (declare-function esmtpmail-send-it "ext:esmtpmail" ())
 (declare-function esmtpmail-via-smtp-server "ext:esmtpmail" ())
 
-(defgroup vm nil
-  "VM"
-  :group 'mail)
-
 (defgroup vm-rfaddons nil
   "Customize vm-rfaddons.el"
-  :group 'vm)
+  :group 'vm-ext)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-when-compile
@@ -338,7 +334,14 @@ or do the binding and advising on your own."
     labels))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar vm-reply-include-presentation nil)
+(defcustom vm-reply-include-presentation nil
+  "*If true a reply will include the presentation of a message.
+This might give better results when using filling or MIME encoded messages,
+e.g. HTML message.
+(This variable is part of vm-rfaddons.el.)"
+  :group 'vm-rfaddons
+  :type 'boolean)
+
 
 ;;;###autoload
 (defun vm-followup-include-presentation (count)
@@ -1229,7 +1232,7 @@ headers."
 (defface vm-shrunken-headers-face 
   '((t (:background "gray")))
   "Used for marking shrunken headers."
-  :group 'vm-faces)
+  :group 'vm-rfaddons)
 
 (defvar vm-shrunken-headers-keymap
   (let ((map (if vm-xemacs-p (make-keymap) (copy-keymap vm-mode-map))))
@@ -1822,9 +1825,7 @@ You will need vm-pine.el in order to get this work."
      ((((type x)) (:foreground "green3"))))
    '(message-highlighted-header-contents
      ((((type x)) (:bold t))
-       (t (:bold t)))))
-  
-  (setq vm-highlight-url-face 'message-url))
+       (t (:bold t))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Well I like to have a different comment style a provided as default.
@@ -1929,7 +1930,7 @@ not end the comment.  Blank lines do not get comments."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-delete-message-action "vm-next-message"
   "Command to do after deleting a message."
-  :group 'vm)
+  :group 'vm-rfaddons)
 
 ;;;###autoload
 (defun vm-delete-message-action (&optional arg)

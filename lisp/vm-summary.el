@@ -544,7 +544,8 @@ buffer by a regenerated summary line."
 		     (vm-su-summary-mouse-track-overlay-of m)))
 		  (if vm-summary-enable-faces
 		      (vm-summary-faces-add m)
-		    (if (and selected vm-summary-highlight-face)
+		    (if (and selected 
+			     (facep vm-summary-highlight-face))
 			(vm-summary-highlight-region 
 			 (vm-su-start-of m) (point)
 			 vm-summary-highlight-face))))

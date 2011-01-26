@@ -74,13 +74,9 @@
  
 (require 'vm-reply)
 
-(defgroup vm nil
-  "VM"
-  :group 'mail)
-
 (defgroup vm-serial nil
   "Sending personalized serial mails and getting message templates."
-  :group  'vm)
+  :group  'vm-ext)
 
 (eval-when-compile
   (require 'cl))

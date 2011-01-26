@@ -4194,7 +4194,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 
 (defcustom vm-mime-thumbnail-max-geometry "80x80"
   "*Max width and height of image thumbnail."
-  :group 'vm
+  :group 'vm-mime
   :type '(choice string
 		 (const :tag "Disable thumbnails." nil)))
 

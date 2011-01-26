@@ -65,9 +65,10 @@
 (declare-function vm-marked-messages "vm-mark" ())
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+;; group already defined in vm-vars.el
+;; (defgroup vm nil
+;;   "VM"
+;;   :group 'mail)
 
 (defgroup vm-psprint nil
   "The VM ps-print lib"

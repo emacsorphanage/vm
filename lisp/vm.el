@@ -1341,6 +1341,9 @@ draft messages."
 				      (concat "UU\377\377UU\377\377UU\377\377"
 					      "UU\377\377UU\377\377UU\377\377"
 					      "UU\377\377UU\377\377")))))
+	;; FIXME: Changed definiton of vm-mime-button-face to use 
+	;; defface vm-mime-button in vm-vars.el. Need to verify Xemacs 
+	;; compatibility and clean up this messy bit of code. TX
 	;; default value of vm-mime-button-face is 'gui-button-face
 	;; this face doesn't exist by default in FSF Emacs 19.34.
 	;; Create it and initialize it to something reasonable.
