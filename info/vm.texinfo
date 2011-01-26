@@ -2474,13 +2474,50 @@ you delete both of those headers.  In that case the To and Cc
 headers will be used.
 
 @menu
+* Sending Options::     Variables that control mail sending.
 * MIME Composition::    Sending a message using MIME attachments.
 * Replying::            Describes the various ways to reply to a message.
 * Forwarding Messages:: How to forward a message to a third party.
 * Saving copies::       Saving copies of sent mail.
 @end menu
 
-@node MIME Composition, Replying, Sending Messages, Sending Messages
+@node Sending Options, MIME Composition, Sending Messages, Sending Messages
+@section Mail Sending Options
+
+As already mentioned, VM uses Emacs @ref{Mail Mode,,,emacs, the Gnu
+Emacs Manual} for sending email.  Therefore, Mail Mode options
+should be set to configure the mail sending.  The extra options
+provided by VM are described below.
+
+@vindex vm-mail-header-from
+@vindex vm-mail-mode-hidden-headers
+When a mail composition buffer is created, VM initializes it with
+header lines that you can fill in.  The @code{From} header is usually
+standard and contains your email address.  You can have VM fill it in
+for you
+automatically by setting the variable @code{vm-mail-header-from}.  (It is
+@code{nil} by default.)  The variable
+@code{vm-mail-mode-hidden-headers} can be used to hide some of the
+header lines from the mail composition buffer.  By default, the
+headers ``References'', ``In-Reply-To'' and ``X-Mailer'' are hidden. 
+
+@vindex vm-mail-header-insert-date
+@vindex vm-mail-header-insert-message-id
+@vindex vm-mail-reorder-message-headers
+@vindex vm-mail-header-order
+Additional header lines are created by VM before the composed message
+is sent.  The variable @code{vm-mail-header-insert-date} can be set to
+@code{t} (which is the default value) asking VM to insert a Date
+header into a message before it is sent.  You should set it to
+@code{nil} if you would like to insert a Date header yourself.  The
+variable @code{vm-mail-header-insert-mesasge-id} asks VM to insert a
+Message-ID header before sending the message. The variable
+@code{vm-mail-reorder-message-headers} asks VM to reorder the message
+headers into a particular order before sending.  The order is
+determined by the variable @code{vm-mail-header-order}.
+
+
+@node MIME Composition, Replying, Sending Options, Sending Messages
 @section MIME Composition
 
 @vindex vm-send-using-mime
@@ -2726,30 +2763,14 @@ message text in the composed message.  (The composed message does not
 have to be a reply.  Neither do the cited messages have to be the
 messages you are replying to.)
 
-@vindex vm-included-text-attribution-format
-The variable @code{vm-included-text-attribution-format} specifies the
-format for the attribution of the included text.  The @dfn{attribution} is a
-line of text that tells who wrote the text that is to be included; it
-will be inserted before the included text.  If non-@code{nil}, the value
-of @code{vm-included-text-attribution-format} should be a string format
-specification similar to @code{vm-summary-format}.  @xref{Summaries}.  A
-@code{nil} value causes the attribution to be omitted.
-
-@vindex vm-included-text-headers
-@vindex vm-included-text-discard-header-regexp
-VM normally includes only the body text from the cited messages.  If you
-wish to include also the message headers, you should customize
-the variables @code{vm-included-text-headers} and
-@code{vm-included-text-discard-header-regexp}.
-
-@vindex vm-include-mime-attachments
 Citing message text is a tricky business because the original message
 could be a MIME message with encoded text or formatted text along with
 embedded images and attachments.  By default, VM uses its MIME
 displaying mechanism to extract the included text to be cited in
-replies.  It does not include the MIME attachments by default, but it
-shows them in the message composition buffer with buttons labelled
-similar to:
+replies.  The quoted text is then similar to what appears in the
+message Presentation buffer.  However, the MIME attachments are not
+included by default.  They are shown in the message composition buffer
+with buttons labelled similar to:
 @example
 [DELETED ATTACHMENT mary.jpg, image/jpeg]
 @end example
@@ -2796,6 +2817,24 @@ The Robert Fenk method of text inclusion from the Presentation buffer is
 enabled by setting the variable @code{vm-include-text-from-presentation}
 to t.  In this case, the text display from the Presentation buffer is
 copied verbatim as the quoted text.
+
+@unnumberedsubsec Options
+
+@vindex vm-included-text-attribution-format
+The variable @code{vm-included-text-attribution-format} specifies the
+format for the attribution of the included text.  The @dfn{attribution} is a
+line of text that tells who wrote the text that is to be included; it
+will be inserted before the included text.  If non-@code{nil}, the value
+of @code{vm-included-text-attribution-format} should be a string format
+specification similar to @code{vm-summary-format}.  @xref{Summaries}.  A
+@code{nil} value causes the attribution to be omitted.
+
+@vindex vm-included-text-headers
+@vindex vm-included-text-discard-header-regexp
+VM normally includes only the body text from the cited messages.  If you
+wish, you can include also the message headers by customizing
+the variables @code{vm-included-text-headers} and
+@code{vm-included-text-discard-header-regexp}.
 
 @node Forwarding Messages, Saving copies, Replying, Sending Messages
 @section Forwarding Messages

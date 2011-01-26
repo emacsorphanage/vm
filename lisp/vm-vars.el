@@ -2647,7 +2647,7 @@ leaving no way to reply to just the author of a message."
   "*If true a reply will include the presentation of a message.
 This might give better results when using filling or MIME encoded messages,
 e.g. HTML message.
-(This variable is part of vm-rfaddons.el.)"
+ (This variable is part of vm-rfaddons.el.)"
   :group 'vm
   :type 'boolean)
 
@@ -2671,13 +2671,15 @@ Nil means don't attribute included text in replies."
   :group 'vm
   :type '(choice (const nil) string))
 
-(defcustom vm-included-mime-types-list
-  nil
-"*If non-nil, the list of mime types that should be included in quoted
-text in a reply message.  A suitable value could be
+(defcustom vm-included-mime-types-list nil
+"*If non-nil, the list of mime type/subtype pairs that should be
+included in quoted text in a reply message.  A suitable value could be
   '(\"text/plain\" \"text/enriched\" \"message/rfc822\")
-By default, this variable is nil, which means include all types that
-are handled by VM's MIME decoding mechanism." 
+If it is nil, it means that the default MIME displaying mechanism of
+VM is used to generate the included text, as controlled by variables
+like `vm-auto-displayed-mime-content-types'.
+
+The defaut value is nil." 
   :group 'vm
   :type '(repeat string))
 
