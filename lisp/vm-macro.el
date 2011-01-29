@@ -23,6 +23,26 @@
 
 (provide 'vm-macro)
 
+;; Definitions for things that aren't in all Emacsen and that we really
+;; prefer not to live without.
+(eval-and-compile
+  (if (fboundp 'unless) nil
+    (defmacro unless (bool &rest forms) `(if ,bool nil ,@forms))
+    (defmacro when (bool &rest forms) `(if ,bool (progn ,@forms))))
+  (unless (fboundp 'save-current-buffer)
+    (defalias 'save-current-buffer 'save-excursion))
+  (if (fboundp 'mapc)
+      (defalias 'bbdb-mapc 'mapc)
+    (defalias 'bbdb-mapc 'mapcar))
+  )
+
+(unless (fboundp 'with-current-buffer)
+  (defmacro with-current-buffer (buf &rest body)
+    `(save-current-buffer (set-buffer ,buf) ,@body)))
+
+(unless (fboundp 'defvaralias)
+  (defun defvaralias (&rest args)))
+
 (unless (fboundp 'declare-function)
   (defmacro declare-function (fn file &optional arglist fileonly)))
 
