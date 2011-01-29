@@ -1268,7 +1268,7 @@ vm-folder-type is initialized here."
     (when status
       (if (> (length status) 4)
 	  (progn
-	    (setq status (substring status 0 -4)) ; ignore the last 4 bits,
+	    (setq status (substring status 0 -4)) ; ignore the last 4 hextets,
 					; which are assumed to be 0000
 	    (setq status (string-to-number status 16)))
 	;; handle badly formatted status strings written by older versions

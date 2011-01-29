@@ -4492,7 +4492,7 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
 messages.  For the purpose of this function, an \"attachment\" is
 a mime part part which has \"attachment\" as its disposition or
 simply has an associated filename.  Any mime types that match
-`vm-mime-deletable-types' but not `vm-mime-deletable-type-exceptions'
+`vm-mime-deleteable-types' but not `vm-mime-deleteable-type-exceptions'
 are also included."
   (interactive "p")
   (vm-check-for-killed-summary)
@@ -4503,8 +4503,8 @@ are also included."
    (lambda (msg layout type file)
      (message "Deleting `%s%s" type (if file (format " (%s)" file) ""))
      (vm-mime-discard-layout-contents layout))
-   vm-mime-deletable-types
-   vm-mime-deletable-type-exceptions)
+   vm-mime-deleteable-types
+   vm-mime-deleteable-type-exceptions)
 
   (when (interactive-p)
     (vm-discard-cached-data count)
@@ -4526,7 +4526,7 @@ are also included."
 messages.  For the purpose of this function, an \"attachment\" is
 a mime part part which has \"attachment\" as its disposition or
 simply has an associated filename.  Any mime types that match
-`vm-mime-savable-types' but not `vm-mime-savable-type-exceptions'
+`vm-mime-saveable-types' but not `vm-mime-saveable-type-exceptions'
 are also included.
 
 The attachments are saved to the specified DIRECTORY.  The
@@ -4589,8 +4589,8 @@ created."
            (setq n (+ 1 n)))))
      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; the action to be performed END
      ;; attachment filters 
-     vm-mime-savable-types
-     vm-mime-savable-type-exceptions)
+     vm-mime-saveable-types
+     vm-mime-saveable-type-exceptions)
 
     (when (interactive-p)
       (vm-discard-cached-data count)
@@ -4613,7 +4613,7 @@ created."
 messages.  For the purpose of this function, an \"attachment\" is
 a mime part part which has \"attachment\" as its disposition or
 simply has an associated filename.  Any mime types that match
-`vm-mime-savable-types' but not `vm-mime-savable-type-exceptions'
+`vm-mime-saveable-types' but not `vm-mime-saveable-type-exceptions'
 are also included.
 
 The attachments are saved in file names input from the
@@ -4673,8 +4673,8 @@ confirmed before creating a new directory."
            (setq n (+ 1 n)))))
      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; the action to be performed END
      ;; attachment filters 
-     vm-mime-savable-types
-     vm-mime-savable-type-exceptions)
+     vm-mime-saveable-types
+     vm-mime-saveable-type-exceptions)
 
     (when (interactive-p)
       (vm-discard-cached-data count)

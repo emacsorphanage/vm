@@ -440,14 +440,15 @@ of action."
     (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (if (interactive-p)
 	(vm-follow-summary-cursor))
-    (set-buffer vm-summary-buffer)
-    (let ((buffer-read-only nil)
-	  root next)
-      (setq root (vm-thread-root (vm-summary-message-at-point)))
-      (if (vm-summary-expanded-root-p root)
-	  (call-interactively 'vm-collapse-thread)
-	(call-interactively 'vm-expand-thread))
-      )))
+    (when vm-summary-buffer
+      (set-buffer vm-summary-buffer)
+      (let ((buffer-read-only nil)
+	    root next)
+	(setq root (vm-thread-root (vm-summary-message-at-point)))
+	(if (vm-summary-expanded-root-p root)
+	    (call-interactively 'vm-collapse-thread)
+	  (call-interactively 'vm-expand-thread))
+	))))
 
 (defun vm-do-needed-summary-rebuild ()
   "Rebuild the summary lines of all the messages starting at

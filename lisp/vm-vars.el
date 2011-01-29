@@ -1744,7 +1744,7 @@ deleting a MIME object with `vm-delete-mime-object'."
   :group 'vm-mime
   :type 'boolean)
 
-(defcustom vm-mime-savable-types
+(defcustom vm-mime-saveable-types
   (append
    '("application" "x-unknown" "application/x-gzip")
    (mapcar (lambda (a) (car a))
@@ -1752,14 +1752,18 @@ deleting a MIME object with `vm-delete-mime-object'."
   "*List of MIME types which should be saved."
     :group 'vm-mime
     :type '(repeat (string :tag "MIME type" nil)))
+(defvaralias 'vm-mime-savable-types
+  'vm-mime-saveable-types)
 
-(defcustom vm-mime-savable-type-exceptions
+(defcustom vm-mime-saveable-type-exceptions
   '("text")
   "*List of MIME types which should not be saved."
   :group 'vm-mime
   :type '(repeat (string :tag "MIME type" nil)))
+(defvaralias 'vm-mime-savable-type-exceptions
+  'vm-mime-saveable-type-exceptions)
 
-(defcustom vm-mime-deletable-types
+(defcustom vm-mime-deleteable-types
   (append
    '("application" "x-unknown" "application/x-gzip")
    (mapcar (lambda (a) (car a))
@@ -1767,11 +1771,15 @@ deleting a MIME object with `vm-delete-mime-object'."
   "*List of MIME types which should be deleted."
     :group 'vm-mime
     :type '(repeat (string :tag "MIME type" nil)))
+(defvaralias 'vm-mime-deletable-types
+  'vm-mime-deleteable-types)
 
-(defcustom vm-mime-deletable-type-exceptions '("text")
+(defcustom vm-mime-deleteable-type-exceptions '("text")
   "*List of MIME types which should not be deleted."
   :group 'vm-mime
   :type '(repeat (string :tag "MIME type" nil)))
+(defvaralias 'vm-mime-deletable-type-exceptions
+  'vm-mime-deleteable-type-exceptions)
 
 (defvar vm-mime-auto-save-all-attachments-avoid-recursion nil
   "For internal use.")

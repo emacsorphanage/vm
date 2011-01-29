@@ -921,42 +921,42 @@ this may take some time, since the file needs to be visited."
                  (const :tag "Guess" guess)))
 
 ;; (define-obsolete-variable-alias 'vm-mime-save-all-attachments-types
-;;   'vm-mime-savable-types
+;;   'vm-mime-saveable-types
 ;;   "8.3.0"
 ;;   "*List of MIME types which should be saved.")
-(defvaralias 'vm-mime-savable-types
-  'vm-mime-save-all-attachments-types)
+(defvaralias 'vm-mime-save-all-attachments-types
+  'vm-mime-saveable-types)
 (make-obsolete-variable 'vm-mime-save-all-attachments-types
-			'vm-mime-savable-types "8.1.1")
+			'vm-mime-saveable-types "8.1.1")
 
 ;; (define-obsolete-variable-alias 
 ;;   'vm-mime-save-all-attachments-types-exceptions
-;;   'vm-mime-savable-type-exceptions
+;;   'vm-mime-saveable-type-exceptions
 ;;   "8.3.0"
 ;;   "*List of MIME types which should not be saved.")
-(defvaralias 'vm-mime-savable-type-exceptions
-  'vm-mime-save-all-attachments-types-exceptions)
+(defvaralias 'vm-mime-save-all-attachments-types-exceptions
+  'vm-mime-saveable-type-exceptions)
 (make-obsolete-variable 'vm-mime-save-all-attachments-types-exceptions
-			'vm-mime-savable-type-exceptions "8.1.1")
+			'vm-mime-saveable-type-exceptions "8.1.1")
 
 ;; (define-obsolete-variable-alias 'vm-mime-delete-all-attachments-types
-;;   'vm-mime-deletable-types
+;;   'vm-mime-deleteable-types
 ;;   "8.3.0"
 ;;   "*List of MIME types which should be deleted.")
-(defvaralias 'vm-mime-deletable-types
-  'vm-mime-delete-all-attachments-types)
+(defvaralias 'vm-mime-delete-all-attachments-types
+  'vm-mime-deleteable-types)
 (make-obsolete-variable 'vm-mime-delete-all-attachments-types
-			'vm-mime-deletable-types "8.1.1")
+			'vm-mime-deleteable-types "8.1.1")
 
 ;; (define-obsolete-variable-alias 
 ;;   'vm-mime-delete-all-attachments-types-exceptions
-;;   'vm-mime-deletable-type-exceptions
+;;   'vm-mime-deleteable-type-exceptions
 ;;   "8.3.0"
 ;;   "*List of MIME types which should not be deleted.")
-(defvaralias 'vm-mime-deletable-type-exceptions
-  'vm-mime-delete-all-attachments-types-exceptions)
+(defvaralias 'vm-mime-delete-all-attachments-types-exceptions
+  'vm-mime-deleteable-type-exceptions)
 (make-obsolete-variable 'vm-mime-delete-all-attachments-types-exceptions
-			'vm-mime-deletable-type-exceptions "8.1.1")
+			'vm-mime-deleteable-type-exceptions "8.1.1")
 
 ;;;###autoload
 (defun vm-mime-attach-files-in-directory (directory &optional regexp)
