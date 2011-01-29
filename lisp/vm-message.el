@@ -74,7 +74,9 @@ works in all VM buffers."
 (defconst vm-attributes-fields
   [:new-flag :unread-flag :deleted-flag :filed-flag :replied-flag
 	     :written-flag :forwarded-flag :edited-flag
-	     :redistributed-flag]) 
+	     :redistributed-flag
+	     :flagged-flag :folded-flag :watched-flag :ignored-flag
+	     :read-receipt-flag :read-receipt-sent-flag :attachments-flag]) 
 (defconst vm-cached-data-fields
   [:byte-count :weekday :monthday :month :year :hour :zone
 	       :full-name :from :message-id :line-count :subject
@@ -187,6 +189,14 @@ works in all VM buffers."
 (defsubst vm-forwarded-flag (message) (aref (aref message 2) 6))
 (defsubst vm-edited-flag (message) (aref (aref message 2) 7))
 (defsubst vm-redistributed-flag (message) (aref (aref message 2) 8))
+(defsubst vm-flagged-flag (message) (aref (aref message 2) 9))
+(defsubst vm-folded-flag (message) (aref (aref message 2) 10))
+(defsubst vm-watched-flag (message) (aref (aref message 2) 11))
+(defsubst vm-ignored-flag (message) (aref (aref message 2) 12))
+(defsubst vm-read-receipt-flag (message) (aref (aref message 2) 13))
+(defsubst vm-read-receipt-sent-flag (message) (aref (aref message 2) 14))
+(defsubst vm-attachments-flag (message) (aref (aref message 2) 15))
+
 ;; message cached data
 (defsubst vm-cached-data-of (message) (aref message 3))
 ;; message size in bytes (as a string)

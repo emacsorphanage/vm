@@ -25,6 +25,10 @@ VM 8.2.0b (2011-02-28)
 
   IMPROVEMENTS
 
+   * New command: `!' (`vm-toggle-flag-message') allows you to flag a
+     message as being important.  This adds a "!" mark in the Summary
+     line for the message and highlights it with the high-priority face.
+
    * New variable: `vm-summary-visible' specifies which messages
      should remain visible in folded thread summaries.
 

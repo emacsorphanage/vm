@@ -543,7 +543,8 @@ Prefix arg means the new virtual folder should be visited read only."
                 (vm-get-header-contents m "From:")))
 
 (defun vm-vs-attachment (m)
-  (vm-vs-text m vm-vs-attachment-regexp))
+  (or (vm-attachments-flag m)
+      (vm-vs-text m vm-vs-attachment-regexp)))
 
 (defun vm-vs-spam-word (m &optional selector)
   (if (and (not vm-spam-words)
@@ -624,6 +625,8 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 (defun vm-vs-unread (m) (vm-unread-flag m))
 (fset 'vm-vs-unseen 'vm-vs-unread)
 (defun vm-vs-read (m) (not (or (vm-new-flag m) (vm-unread-flag m))))
+(defun vm-vs-flagged (m) (vm-flagged-flag m))
+(defun vm-vs-unflagged (m) (not (vm-flagged-flag m)))
 (defun vm-vs-deleted (m) (vm-deleted-flag m))
 (defun vm-vs-replied (m) (vm-replied-flag m))
 (fset 'vm-vs-answered 'vm-vs-replied)

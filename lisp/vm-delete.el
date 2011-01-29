@@ -144,6 +144,59 @@ thread are undeleted."
 	  (vm-next-message count t executing-kbd-macro)))))
 
 ;;;###autoload
+(defun vm-toggle-flag-message (count &optional mlist)
+  "Toggle the `flagged' attribute to the current message, i.e., if it 
+has not been flagged then it will be flagged and, if it is already
+flagged, then it will be unflagged.
+
+With a prefix argument COUNT, the current message and the next
+COUNT - 1 messages are flagged/unflagged.  A negative argument means
+the current message and the previous |COUNT| - 1 messages are
+flagged/unflagged.
+
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+only marked messages are flagged/unflagged, other messages are
+ignored.  If applied to collapsed threads in summary and thread
+operations are enabled via `vm-enable-thread-operations' then all
+messages in the thread are flagged/unflagged."
+  (interactive "p")
+  (if (interactive-p)
+      (vm-follow-summary-cursor))
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-error-if-folder-read-only)
+  (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
+	(flagged-count 0)
+	(new-flagged nil))
+    (unless mlist
+      (setq mlist (vm-select-operable-messages count "Flag")))
+    (when mlist
+      (setq new-flagged (not (vm-flagged-flag (car mlist)))))
+    (while mlist
+      (vm-set-flagged-flag (car mlist) new-flagged)
+      (vm-increment flagged-count)
+      ;; The following is a temporary fix.  To be absorted into
+      ;; vm-update-summary-and-mode-line eventually.
+      (when (and vm-summary-enable-thread-folding
+		 vm-summary-show-threads
+		 ;; (not (and vm-enable-thread-operations
+		 ;;	 (eq count 1)))
+		 (> (vm-thread-count (car mlist)) 1))
+	(with-current-buffer vm-summary-buffer
+	  (vm-expand-thread (vm-thread-root (car mlist)))))
+      (setq mlist (cdr mlist)))
+    (vm-display nil nil '(vm-toggle-flag-message)
+		(list this-command))
+    (if (and used-marks (interactive-p))
+	(if (zerop flagged-count)
+	    (message "No messages flagged/unflagged")
+	  (message "%d message%s %sflagged"
+		   flagged-count
+		   (if (= 1 flagged-count) "" "s")
+		   (if new-flagged "" "un"))))
+    (vm-update-summary-and-mode-line)))
+
+
+;;;###autoload
 (defun vm-kill-subject (&optional arg)
 "Delete all messages with the same subject as the current message.
 Message subjects are compared after ignoring parts matched by

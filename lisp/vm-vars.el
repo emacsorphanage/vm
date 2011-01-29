@@ -4442,6 +4442,7 @@ entries from a folder summary."
     ((or (header "Priority: urgent")
          (header "Importance: high")
          (header "X-Priority: 1")
+	 (flagged)
          (label "!")
 	 (label "\\flagged")
          (header "X-VM-postponed-data:"))
@@ -4576,6 +4577,11 @@ collapsed threads."
 
 (put 'vm-summary-high-priority-face 'face-alias 'vm-summary-high-priority)
 (make-obsolete 'vm-summary-high-priority-face 'vm-summary-high-priority "8.2.0")
+
+(defface vm-summary-low-priority
+  '((t (:foreground "grey50")))
+  "The face used in VM Summary buffers for low-priority messages."
+  :group 'vm-summary-faces)
 
 (defface vm-summary-default
   nil
@@ -5234,6 +5240,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "u" 'vm-undelete-message)
     (define-key map "U" 'vm-unread-message)
     (define-key map "." 'vm-flag-message-read)
+    (define-key map "!" 'vm-toggle-flag-message)
     (define-key map "e" 'vm-edit-message)
     (define-key map "a" 'vm-set-message-attributes)
     (define-key map "j" 'vm-discard-cached-data)
@@ -5277,7 +5284,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\C-_" 'vm-undo)
     (define-key map [(control /)] 'vm-undo)
     (define-key map "\C-xu" 'vm-undo)
-    (define-key map "!" 'shell-command)
+    ;; (define-key map "!" 'shell-command)
     (define-key map "<" 'vm-beginning-of-message)
     (define-key map ">" 'vm-end-of-message)
     (define-key map "[" 'vm-move-to-previous-button)
@@ -5893,6 +5900,8 @@ header line in email messages,
     ("read")
     ("unseen")
     ("recent")
+    ("flagged")
+    ("unflagged")
     ("deleted")
     ("replied")
     ("forwarded")
@@ -5946,6 +5955,8 @@ header line in email messages,
     (read . vm-vs-read)
     (unseen . vm-vs-unseen)
     (recent . vm-vs-recent)
+    (flagged . vm-vs-flagged)
+    (unflagged . vm-vs-unflagged)
     (deleted . vm-vs-deleted)
     (replied . vm-vs-replied)
     (answered . vm-vs-answered)
@@ -5993,6 +6004,8 @@ header line in email messages,
     ;; for babyl cogniscenti
     "recent"
     "unseen"
+    "flagged"
+    "unflagged"
     "answered"
     "unanswered"
     ))
@@ -6009,7 +6022,7 @@ Should be just a list of strings, not an alist or an obarray.")
 (defvar vm-completion-auto-space t
   "Non-nil value means that `vm-minibuffer-complete-word' should automatically
 append a space to words that complete unambiguously.")
-(defconst vm-attributes-vector-length 9)
+(defconst vm-attributes-vector-length 16)
 (defconst vm-cache-vector-length 26)
 (defconst vm-softdata-vector-length 21)
 (defconst vm-location-data-vector-length 6)

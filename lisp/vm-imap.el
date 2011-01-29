@@ -2382,6 +2382,8 @@ Throws vm-imap-protocol-error for failure."
 			  (vm-set-replied-flag m t norecord))
 			 ((string= flag "\\deleted")
 			  (vm-set-deleted-flag m t norecord))
+			 ((string= flag "\\flagged")
+			  (vm-set-flagged-flag m t norecord))
 			 ((string= flag "\\seen")
 			  (vm-set-unread-flag m nil norecord)
 			  (vm-set-new-flag m nil norecord)
@@ -2413,6 +2415,12 @@ recorded in the undo stack."
 	       (vm-set-deleted-flag m t norecord)
 	       (vm-set-stuff-flag-of m t))
 	     (setq saw-Deleted t))
+
+	    ((string= flag "\\flagged")
+	     (when (null (vm-flagged-flag m))
+	       (vm-set-flagged-flag m t norecord)
+	       (vm-set-stuff-flag-of m t))
+	     (setq saw-Flagged t))
 
 	    ((string= flag "\\seen")
 	     (when (vm-unread-flag m)
@@ -2512,6 +2520,8 @@ server should be issued by UID, not message sequence number."
 	  (setq labels (cons "\\seen" labels)))
       (if (vm-deleted-flag m)
 	  (setq labels (cons "\\deleted" labels)))
+      (if (vm-flagged-flag m)
+	  (setq labels (cons "\\flagged" labels)))
       ;; Irreversible flags
       (if (and (vm-replied-flag m) 
 	       (not (member "\\answered" cached-flags)))

@@ -1243,18 +1243,18 @@ vm-folder-type is initialized here."
       (vm-set-unread-flag-of message (= 0 (logand status #x0001)))
       ;; answered flag
       (vm-set-replied-flag-of message (not (= 0 (logand status #x0002))))
-      ;; (unless (= 0 (logand status #x0004))  ; flagged
-      ;; 	nil)
+      ;; flagged flag
+      (vm-set-flagged-flag-of message (not (= 0 (logand status #x0004))))
+      ;; deleted flag
       (vm-set-deleted-flag-of message (not (= 0 (logand status #x0008))))
-					; deleted
       ;; (unless (= 0 (logand status #x0010))  ; subject with "Re:" prefix
       ;; 	nil)
-      ;; (unless (= 0 (logand status #x0020))  ; thread folded
-      ;; 	nil)
+      ;; folded flag
+      (vm-set-folded-flag-of message (not (= 0 (logand status #x0020))))
       ;; (unless (= 0 (logand status #x0080))  ; offline article
       ;; 	nil)
-      ;; (unless (= 0 (logand status #x0100)) ; watched
-      ;; 	nil)
+      ;; watched flag
+      (vm-set-watched-flag-of message (not (= 0 (logand status #x0100))))
       ;; (unless (= 0 (logand status #x0200)) ; authenticated sender
       ;; 	nil)
       ;; (unless (= 0 (logand status #x0400)) ; remote POP article
@@ -1276,17 +1276,18 @@ vm-folder-type is initialized here."
 	(setq status (/ status #x1000)))
       ;; new on the server
       (vm-set-new-flag-of message (not (= 0 (logand status #x0001))))
-      ;; (unless (= 0 (logand status #x0004)) ; ignored thread
-      ;; 	nil)
+      ;; ignored thread
+      (vm-set-ignored-flag-of message (not (= 0 (logand status #x0004))))
       ;; (unless (= 0 (logand status #x0020)) ; deleted on the server
       ;; 	nil)
-      ;; (unless (= 0 (logand status #x0040)) ; read-receipt requested
-      ;; 	nil)
-      ;; (unless (= 0 (logand status #x0080)) ; read-receipt sent
-      ;; 	nil)
+      ;; read-receipt requested
+      (vm-set-read-receipt-flag-of message (not (= 0 (logand status #x0040)))) 
+      ;; read-receipt sent
+      (vm-set-read-receipt-sent-flag-of message (not (logand status #x0080)))
       ;; (unless (= 0 (logand status #x0100)) ; template
       ;; 	nil)
-      ;; (unless (= 0 (logand status #x1000)) ; has attachments
+      ;; has attachments
+      (vm-set-attachments-flag-of message (not (= 0 (logand status #x1000))))
       ;; 	nil)
       ;; (unless (= 0 (logand status #x0E00))
       ;; 	nil)
@@ -2142,14 +2143,26 @@ stuff-flag set in the current folder.    USR 2010-04-20"
         (setq status (logior status #x1)))
     (when (vm-replied-flag message)
         (setq status (logior status #x2)))
-    (when (vm-mark-of message)
+    (when (vm-flagged-flag message)
         (setq status (logior status #x4)))
     (when (vm-deleted-flag message)
         (setq status (logior status #x8)))
+    (when (vm-folded-flag message)
+        (setq status (logior status #x0020)))
+    (when (vm-watched-flag message)
+        (setq status (logior status #x0100)))
     (when (vm-forwarded-flag message)
         (setq status (logior status #x1000)))
     (when (vm-new-flag message)
-        (setq status2-hi (logior status2-hi #x1)))
+        (setq status2-hi (logior status2-hi #x0001)))
+    (when (vm-ignored-flag message)
+        (setq status2-hi (logior status2-hi #x0004)))
+    (when (vm-read-receipt-flag message)
+        (setq status2-hi (logior status2-hi #x0040)))
+    (when (vm-read-receipt-sent-flag message)
+        (setq status2-hi (logior status2-hi #x0080)))
+    (when (vm-attachments-flag message)
+        (setq status2-hi (logior status2-hi #x1000)))
     (goto-char (vm-headers-of message))
     (insert (format "X-Mozilla-Status: %04x\n" status))
     (insert (format "X-Mozilla-Status2: %04x%04x\n" status2-hi status2-lo))))

@@ -644,6 +644,27 @@ A record of the change is kept for the purpose of undo, and the
 (defun vm-set-redistributed-flag (m flag &optional norecord)
   (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 8))
 
+(defun vm-set-flagged-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 9))
+
+(defun vm-set-folded-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 10))
+
+(defun vm-set-watched-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 11))
+
+(defun vm-set-ignored-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 12))
+
+(defun vm-set-read-receipt-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 13))
+
+(defun vm-set-read-receipt-sent-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 14))
+
+(defun vm-set-attachments-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 15))
+
 ;; use these to avoid undo and summary update.
 (defun vm-set-new-flag-of (m flag) (aset (aref m 2) 0 flag))
 (defun vm-set-unread-flag-of (m flag) (aset (aref m 2) 1 flag))
@@ -653,6 +674,13 @@ A record of the change is kept for the purpose of undo, and the
 (defun vm-set-written-flag-of (m flag) (aset (aref m 2) 5 flag))
 (defun vm-set-forwarded-flag-of (m flag) (aset (aref m 2) 6 flag))
 (defun vm-set-redistributed-flag-of (m flag) (aset (aref m 2) 8 flag))
+(defun vm-set-flagged-flag-of (m flag) (aset (aref m 2) 9 flag))
+(defun vm-set-folded-flag-of (m flag) (aset (aref m 2) 10 flag))
+(defun vm-set-watched-flag-of (m flag) (aset (aref m 2) 11 flag))
+(defun vm-set-ignored-flag-of (m flag) (aset (aref m 2) 12 flag))
+(defun vm-set-read-receipt-flag-of (m flag) (aset (aref m 2) 13 flag))
+(defun vm-set-read-receipt-sent-flag-of (m flag) (aset (aref m 2) 14 flag))
+(defun vm-set-attachments-flag-of (m flag) (aset (aref m 2) 15 flag))
 
 ;; this is solely for the use of vm-stuff-message-data and
 ;; appears here only because this function should be grouped with

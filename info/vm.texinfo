@@ -1466,6 +1466,7 @@ presentation is done in two stages: @dfn{previewing} and @dfn{paging}.
 * Paging::                      Viewing the current message.
 * MIME Messages::               Using VM's MIME display features.
 * Headers-only Messages::       Loading headers of messages without their bodies.
+* Flagging Messages::           Flagging important messages
 @end menu
 
 @node Previewing, Paging, Reading Messages, Reading Messages
@@ -2303,7 +2304,7 @@ cases the filename sent along with the mistyped file
 the filename sent with a MIME attachment to guess an attachment's 
 type if the attachment is of type @samp{application/octet-stream}.
 
-@node Headers-only Messages,, MIME Messages, Reading Messages
+@node Headers-only Messages, Flagging Messages, MIME Messages, Reading Messages
 @section Headers-only Messages
 
 Under certain circumstances, it is possible to maintain VM folders in
@@ -2341,6 +2342,17 @@ Folder buffer and written to disk when the folder is saved.  In
 contrast, fetched message bodies are always discarded before writing
 to disk.
 
+@node Flagging Messages,, Headers-only Messages, Reading Messages
+@section Flagging Messages
+
+@findex vm-toggle-flag-message
+As you read messages, you might want to flag important messages so
+that you can come back to them later.  You can do so by typing
+@code{!} (@code{vm-toggle-flag-message}).  You can also turn off the
+flag on a flagged message by typing @code{!} again.
+
+In the Summary display, the flagged messages are highlighted using the
+@code{vm-summary-high-priority-face}.  (@xref{predefined summary faces}.)
 
 
 @node Sending Messages, Saving Messages, Reading Messages, Top
@@ -3789,10 +3801,10 @@ The summary format need not be one line per message but it must end with
 a newline, otherwise the message pointer will not be displayed correctly
 in the summary window.
 
-@findex vm-fix-my-summary!!!
+@findex vm-fix-my-summary
 Summary lines are precomputed and cached in the folder buffer.  If you
 change the @code{vm-summary-format}, you need to force the cache to be
-updated.  You can do this by the command@code{vm-fix-my-summary!!!}.
+updated.  You can do this by the command@code{vm-fix-my-summary}.
 
 @vindex vm-restore-saved-summary-format
 Every folder can have its own summary format.  The format is written
@@ -3974,9 +3986,13 @@ associated with the @code{vm-summary-deleted-face} in
 @code{vm-summary-faces-alist} will be hidden.)
 
 @subsubheading Predefined summary faces
+@cindex predefined summary faces
+@anchor{predefined summary faces}
 @itemize
 @item vm-summary-high-priority:
 Messages that are flagged or have other priority headers.
+@item vm-summary-low-priority:
+Messages that might be of low priority, by user-defined criteria.
 @item vm-summary-deleted:
 Deleted messages.
 @item vm-summary-new:
@@ -4153,6 +4169,10 @@ matches message if it is not new and hasn't been read.
 @item unseen
 matches message if it is not new and hasn't been read.
 Same as the @code{unread} selector.
+@item flagged
+matches message if it is flagged.
+@item unflagged
+matches message if it is not flagged.
 @item replied
 matches message if it has been replied to.
 @item answered
