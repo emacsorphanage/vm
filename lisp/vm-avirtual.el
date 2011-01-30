@@ -138,7 +138,7 @@
 
 (defgroup vm-avirtual nil
   "VM additional virtual folder selectors and functions."
-  :group 'vm)
+  :group 'vm-ext)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-when-compile

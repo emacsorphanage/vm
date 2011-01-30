@@ -155,7 +155,7 @@
 
 (defgroup u-vm-color nil
   "Font-lock support for vm."
-  :group 'vm)
+  :group 'vm-ext)
 
 (defcustom u-vm-color-use-gnus-faces nil
   "Use corresponding face definitions from Gnus."

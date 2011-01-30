@@ -131,7 +131,7 @@
 
 (defgroup vm-pine nil
   "Pine inspired extensions to VM."
-  :group  'vm)
+  :group  'vm-ext)
 
 ;;-----------------------------------------------------------------------------
 ;;;###autoload
