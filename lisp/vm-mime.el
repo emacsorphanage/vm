@@ -2527,6 +2527,7 @@ declarations in the attachments and make a decision independently."
         (message "Inlining text/html by %s..."
                  vm-mime-text/html-handler)
         (vm-mime-insert-mime-body layout)
+	(unless (bolp) (insert "\n"))
         (setq end (point-marker))
         (vm-mime-transfer-decode-region layout start end)
         (vm-mime-charset-decode-region charset start end)
@@ -2590,6 +2591,7 @@ in the text are highlighted and energized."
 	   layout (concat "Undisplayable charset: " charset))
 	  nil)
       (vm-mime-insert-mime-body layout)
+      (unless (bolp) (insert "\n"))
       (setq end (point-marker))
       (vm-mime-transfer-decode-region layout start end)
       (when need-conversion
@@ -2612,6 +2614,7 @@ in the text are highlighted and energized."
 	(charset (or (vm-mime-get-parameter layout "charset") "us-ascii")))
     (vm-emit-mime-decoding-message "Decoding text/enriched...")
     (vm-mime-insert-mime-body layout)
+    (unless (bolp) (insert "\n"))
     (setq end (point-marker))
     (vm-mime-transfer-decode-region layout start end)
     (vm-mime-charset-decode-region charset start end)
@@ -2741,6 +2744,7 @@ in the text are highlighted and energized."
 (defun vm-mime-display-button-application (layout)
   (vm-mime-display-button-xxxx layout nil))
 
+
 (defun vm-mime-display-button-audio (layout)
   (vm-mime-display-button-xxxx layout nil))
 
@@ -2756,10 +2760,19 @@ in the text are highlighted and energized."
 (defun vm-mime-display-internal-multipart/mixed (layout)
   (let ((part-list (vm-mm-layout-parts layout)))
     (while part-list
-      (vm-decode-mime-layout (car part-list))
-      (setq part-list (cdr part-list))
-      (insert vm-mime-parts-display-separator))
-    t ))
+      (let ((part (car part-list)))
+        (vm-decode-mime-layout part)
+        (setq part-list (cdr part-list))
+        (cond ((and part-list
+		    (not (vm-mime-should-display-button part nil))
+		    (vm-mime-should-display-button (car part-list) nil))
+	       nil)
+	      ((and part-list
+		    (not (vm-mime-should-display-button part nil))
+		    (not (vm-mime-should-display-button (car part-list) nil)))
+	       (insert vm-mime-parts-display-separator)))))
+    t))
+
 
 (defun vm-mime-display-internal-multipart/alternative (layout)
   (if (eq vm-mime-alternative-select-method 'all)
@@ -4199,7 +4212,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		 (const :tag "Disable thumbnails." nil)))
 
 (defun vm-mime-display-button-image (layout)
-  "Displays an button for the image and when possible a thumbnail."
+  "Displays a button for the image and when possible a thumbnail."
   (if (not (and vm-imagemagick-convert-program
                 vm-mime-thumbnail-max-geometry
                 (vm-images-possible-here-p)))

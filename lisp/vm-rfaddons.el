@@ -1741,41 +1741,14 @@ It saves the decoded message and not the raw message like `vm-save-message'"
           'vm-mime-pipe-body-to-queried-command-discard-output))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Subject: RE: How to configure for more obvious 'auto decode' attachement.
-;; Newsgroups: gnu.emacs.vm.info
-;; Date: Mon, 20 Sep 1999 21:48:37 GMT
-;; Organization: Deja.com - Share what you know. Learn what you don't.
-;; From: rmirani
-(defcustom vm-mime-display-internal-multipart/mixed-separater
-  "\n----------------------------------------------------------------------\n"
-  "*The separator which is inserted between the parts of a multipart message."
-  :group 'vm-rfaddons
-  :type '(choice (string :tag "Separator")
-                 (const :tag "No Separator" nil)))
+;; This functionality has now been integrated into VM core.  USR, 2011-01-30
 
-;;;###autoload
-(defun vm-mime-display-internal-multipart/mixed (layout)
-  "A replacement for VMs default function adding separators.
-LAYOUT specifies the layout."
-  
-  (let ((part-list (vm-mm-layout-parts layout)))
-    (while part-list
-      (let ((cur (car part-list)))
-        (vm-decode-mime-layout cur)
-        (setq part-list (cdr part-list))
-        (cond
-         ((and part-list
-               (not (vm-mime-should-display-button cur nil))
-               (vm-mime-should-display-button (car part-list) nil))
-	  ;; do nothing 
-	  )
-         ((and part-list
-               (not (vm-mime-should-display-button cur nil))
-               (not (vm-mime-should-display-button (car part-list) nil))
-               vm-mime-display-internal-multipart/mixed-separater)
-          (insert vm-mime-display-internal-multipart/mixed-separater)))))
-    t))
+(defvaralias 'vm-mime-display-internal-multipart/mixed-separator
+  'vm-mime-parts-display-separator)
 
+(make-obsolete-variable 'vm-mime-display-internal-multipart/mixed-separator
+			'vm-mime-parts-display-separator
+			"8.2.0")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;###autoload
 (defun vm-assimilate-outlook-message ()

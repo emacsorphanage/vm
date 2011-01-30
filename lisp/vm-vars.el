@@ -1884,9 +1884,10 @@ the left instead of the right."
   :type '(repeat (cons (string :tag "MIME Type")
 		       (string :tag "Format"))))
 
-(defcustom vm-mime-parts-display-separator "\n"
-  "*String to insert between mime parts when displayed one after
-another."
+(defcustom vm-mime-parts-display-separator
+  "\n----------------------------------------------------------------------\n"
+  "*Separator string to insert between mime parts when displayed
+one after another."
   :group 'vm-mime
   :type 'string)
 
