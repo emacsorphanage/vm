@@ -5389,6 +5389,8 @@ developers/programmers.
 * Folder Internals::      Structure of the folders
 * Message Internals::     Structure of the message data structure
 * Summary Internals::     Details of summary generation
+* Threading Internals::   Details of message threads handling
+* Sorting Internals::     Details of how messages are sorted
 * User Interaction::      Handling of the user interaction
 * Coding Systems::        How VM handles character coding
 @end menu
@@ -5665,6 +5667,7 @@ The attributes vector and cached data vector are stored in the
 folder on disk as the @code{X-VM-v5-Data} header of the first message.
 
 @subsubheading Location data
+@anchor{Location data vector}
 
 This vector holds the data about the location of the various parts of
 the message in the folder buffer.  Every folder buffer or folder-like
@@ -5711,6 +5714,7 @@ Presentation buffer.
 
 
 @subsubheading Soft data
+@anchor{Soft data vector}
 This vector contains other calculated data about the message that is
 specific to a VM session.
 
@@ -5807,6 +5811,7 @@ inherited from its real folder.
 
 
 @subsubheading Attributes
+@anchor{Attributes vector}
 All the hard-wired message attributes are stored in this
 vector.  They also get saved as part of the @code{X-VM-v5-Data} header
 field when the folder is saved to disk.
@@ -5843,6 +5848,8 @@ redistributed.
 @end itemize
 
 @subsubheading Cached Data
+@anchor{Cached data vector}
+
 The data that is cached for the message and stored on the disk as part
 of the @code{X-VM-v5-Data} header field.  Even though this vector is
 only supposed to have data that can be calculated from the message
@@ -5951,7 +5958,7 @@ spam-score.  The spam score of the message.
 @end itemize
 
 @subsubheading Mirror Data
-
+@anchor{Mirror data vector}
 Extra data shared by virtual messages if vm-virtual-mirror
 is non-nil.
 
@@ -6105,7 +6112,7 @@ the Folder buffer, but have separate soft data vectors.  The other
 sub-vectors are shared with the underlying real folders.
 
 
-@node Summary Internals, User Interaction, Message Internals, Internals
+@node Summary Internals, Threading Internals, Message Internals, Internals
 @section Summary Internals
 
 @inindex vm-summary-line-format
@@ -6202,7 +6209,8 @@ give the data about the message:
 @code{vm-message}.  The message struct for which this line is a summary.
 @end itemize
 
-@subsection Threading
+@node Threading Internals, Sorting Internals, Summary Internals, Internals
+@section Threading Internals
 
 @inindex vm-thread-obarray
 @inindex vm-thread-subject-obarray
@@ -6210,13 +6218,24 @@ give the data about the message:
 @inindex references
 Message threads required for threaded summaries are calculated using
 message ID's, which are unique when the message was originally
-composed.  VM may still need to deal with multiple copies of the
-message received via possibly different routes.  So, message ID's are
-not unique for messages inside VM.  Thread trees are constructed using
-the ``in-reply-to'' headers and ``references'' headers found in the
-messages.  Jamie Zawinski has done a good analysis of the information
-contained in these headers which can be found on the web.  VM's
-threading algorithm is currently based on these ideas.
+composed.  However, VM may need to deal with multiple copies of the
+same message received via possibly different routes.  So, message ID's are
+not unique for messages inside VM.  
+
+Messages composed as replies generally have an ``in-reply-to'' header.
+The message mentioned in this header is referred to as the parent of
+the message.  In addition, messages also arrive with a ``references''
+header which lists all the ancestors of the message, with the oldest
+message being listed first.  The last message listed in the
+``references'' header is the direct parent of message.  It is
+important to keep in mind that all the messages listed in the
+``references'' header may not be present in the VM folder.
+
+Thread trees are constructed using the ``in-reply-to'' headers and
+``references'' headers.  Jamie Zawinski has done a good analysis of
+the information contained in these headers which can be found on the
+web.  VM's threading algorithm is currently based on these ideas.
+These trees are called reference-based threads.
 
 @inindex vm-thread-using-subject
 In addition, VM also allows threads to be built using the subject
@@ -6238,23 +6257,25 @@ The message ID's are interned in @code{vm-thread-obarray} and the
 following information is stored for each message ID:
 
 @itemize
-@item message
+@item message:
 The ``canonical'' message with this message ID.  It is typically the
-first message encountered by VM with the message ID.
+first message encountered by VM with this message ID.
 @item messages:
 The list of messages that carry this message ID.
 @item date:
 The date of the message.
 @item parent:
 The interned message ID of the parent of this message.  (The folder
-may or may not contain a message with this ID)
+may or may not contain a message with this ID.)
 @item children:
 The interned message ID's of all the children of this message.  (The
 folder may or may not contain messages with these ID's.)
 @item youngest-date:
-The date of the youngest message in the thread.
+The date of the youngest message in the thread, among all the messages
+present in the folder.
 @item oldest-date:
-The date of the oldest message in the thread.
+The date of the oldest message in the thread, among the messages
+present in the folder.
 @end itemize
 
 The @code{vm-thread-subject-obarray} interns each subject string found
@@ -6276,10 +6297,9 @@ The list of all the messages in the folder that have this subject.
 
 @inindex threads, building
 @b{Building threads} involves calculating all the data stored with the
-@code{vm-thread-obarray}, excepting thread-subtrees, and all the data
-stored with the @code{vm-thread-subject-obarray}.  These two
-collections of data are calculated one after another, because subject
-threads are based on reference threads.  
+@code{vm-thread-obarray} and @code{vm-thread-subject-obarray}.  These two
+collections of data are calculated in sequence, because the subject
+threads are based on the reference threads.  
 
 @inindex thread-subtree
 @inindex thread-list
@@ -6291,7 +6311,8 @@ fields cannot be calculated without building threads first.
 
 When new messages are assimilated, they are added to the threads that
 might have been already built, and the thread-related fields in the
-Soft data vector are erased, forcing them to be recalculated.  The
+Soft data vector are erased so that they will be recalculated.
+(@xref{Soft data vector}.)  The
 @code{thread-subtree} field is erased for all the ancestors of the
 assimilated message.  The @code{thread-list} and
 @code{thread-indentation} fields are erased for all the descendants of
@@ -6305,7 +6326,52 @@ their ancestors and the @code{thread-list} and
 @code{thread-indentation} fields of the descendants.
 
 
-@node User Interaction, Coding Systems, Summary Internals, Internals
+@node Sorting Internals, User Interaction, Threading Internals, Internals
+@section Sorting Internals
+
+@inindex vm-key-functions
+Sorting of messages in VM is carried out using the Emacs built-in
+sorting function, which is generic in the comparison
+operation to be used for sorting.  The required comparison operation
+is expressed as a sequence of basic comparison operations such as
+comparison by date, by author, by subject etc.  The dynamic
+variable @code{vm-key-functions} is bound to a list of comparison
+functions before calling the Emacs sort function.
+
+@inindex vm-sort-compare-xxxxxx
+The function @code{vm-sort-compare-xxxxxx} uses the functions listed
+in @code{vm-key-functions} to do the overall comparison.  It compares
+the given messages using the key functions in sequence.  If the first
+key function decides one of the messages to precede the other, then
+the comparison is over.  If the messages are found to be equivalent
+according to the first key function then the second key function is
+tried and, if they are still equivalent, then the next key
+function is tried and so on.  This is called the lexicographic
+combination of the given key functions.
+
+@inindex vm-sort-compare-thread
+Sorting by threads is special.  When messages are to be sorted by
+threads, all the messages belonging to a thread should appear
+together.  The required effect is achieved by using
+@code{vm-sort-compare-thread} as the first key function in the
+sequence.  This function checks to see if the two messages belonging
+to the same thread.  If they do then the farthest ancestors of the two
+messages that share the same parent are returned so that the remaining
+comparison operations can be applied to these ancestors.  The
+rationale is that these ancestors are the roots of the thread subtrees
+that the two messages belong to.  So, the relative ordering of the
+messages should be the same as the relative ordering of these
+ancestors.  If the two messages belong to different threads then the
+thread roots of the two messages are returned, again with the same
+rationale.
+
+Threaded summaries can be sorted by any key, e.g., by author
+(full-name).  It is most common to sort them by ``acrtivity,'' i.e.,
+the order of the most recent message in the thread or subthread.
+Sorting them by ``date'' means using the date of the root message of
+the thread or subthread.
+
+@node User Interaction, Coding Systems, Sorting Internals, Internals
 @section User Interaction
 
 @inindex vm-mail-buffer
