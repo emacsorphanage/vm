@@ -1784,7 +1784,13 @@ deleting a MIME object with `vm-delete-mime-object'."
 (defvar vm-mime-auto-save-all-attachments-avoid-recursion nil
   "For internal use.")
 
-(defface vm-mime-button '((t :inherit widget-button))
+(defface vm-mime-button 
+  '((((type x w32 mac) (class color))
+     :background "lightgrey" :foreground "black"
+     :box (:line-width 2 :style released-button))
+    (((class color) (background light)) (:foreground "cyan" :underline t))
+    (((class color) (background dark)) (:foreground "red" :underline t))
+    (t (:underline t)))
   "Default face used for MIME buttons."
   :group 'vm-faces)
 
@@ -3422,7 +3428,7 @@ variable's value has no effect on existing summary buffers."
   :group 'vm-summary
   :type 'string)
 
-(defface vm-summary-highlight '((t :inverse-video t))
+(defface vm-summary-highlight '((t :inherit bold))
   "Default face to use to highlight the summary entry for the current message."
   :group 'vm-faces)
 
@@ -4467,7 +4473,9 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :group 'vm-summary-faces)
 
 (defface vm-summary-selected
-  '((t :inverse-video t))
+  '((t ;; (:bold on)
+     (:background "grey85")
+     ))
   "The face used in VM Summary buffers for the selected message."
   :group 'vm-summary-faces)
 
