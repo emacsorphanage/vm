@@ -73,13 +73,15 @@ USING CONFIGURE
          (add-to-list 'Info-default-directory-list
 	              (expand-file-name "~/vm/info"))
 
-      GNU Emacs users, have to load the autoloads by hand by adding
+      IMPORTANT: If there are any old VM-related autoloads in your
+      emacs init file, you should remove them.  The current version of
+      VM takes care of its own autoloading.
+
+      GNU Emacs: Load the autoloads by hand by adding
 
          (require 'vm-autoloads)
 
-      to their ~/.emacs.  If there are any old VM-related autoloads in
-      your ~/.emacs file, you should remove them.  The vm-autoloads
-      library takes care of all the autoloads for VM.
+      to their ~/.emacs.  
 
       XEmacs: Since XEmacs has a built-in distribution of VM, you have two
       options.  (i) You can delete the built-in package in the XEmacs

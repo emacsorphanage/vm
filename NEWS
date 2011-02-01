@@ -13,6 +13,11 @@ VM 8.2.0b (2011-02-28)
 
   CHANGES
 
+   * The attributes vector has been expanded to 16 elements for
+     compatibility with Mozilla Thunderbird.  The first time a folder
+     is written, this will cause extra time to be taken for "stuffing"
+     the attributes.  But this is only a one-time cost.
+
    * New variable `vm-include-mime-attachments' allows the inclusion of
      MIME attachments in replies.  This functionality was originally
      part of vm-pine.el under the name `vm-mime-yank-attachments'.
