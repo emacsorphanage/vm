@@ -850,16 +850,17 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
         (real-mime-type (vm-mime-find-type-of-message/external-body layout)))
     (vm-mime-insert-button
      (vm-replace-in-string
-      (format " external: %s %s"
+      (format " external: %s, %s"
               (if (vm-mime-get-parameter layout "name")
                   (file-name-nondirectory (vm-mime-get-parameter layout "name"))
                 "")
               (let ((tmplayout (copy-tree layout t))
                     format)
                 (aset tmplayout 0 (list real-mime-type))
-                (setq format (vm-mime-find-format-for-layout tmplayout))
-                (setq format (vm-replace-in-string format "^%-[0-9]+.[0-9]+"
-                                                "%-15.15" t))
+                ;; (setq format (vm-mime-find-format-for-layout tmplayout))
+                ;; (setq format (vm-replace-in-string format "^%-[0-9]+.[0-9]+"
+                ;;                                 "%-15.15" t))
+		(setq format "%-20.20(%d%) [%a]")
                 (vm-mime-sprintf format tmplayout)))
       "save to a file\\]"
       "display as text]")
