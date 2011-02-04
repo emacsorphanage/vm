@@ -4112,11 +4112,13 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	(save-excursion
 	  (setq work-buffer (vm-make-work-buffer))
 	  (set-buffer work-buffer)
+	  (set-buffer-file-coding-system (vm-binary-coding-system))
           ;; convert just the first page "[0]" and enforce PNG output by "png:"
-	  (setq success
-		(eq 0 (apply 'call-process vm-imagemagick-convert-program
-			     tempfile t nil
-			     (append convert-args (list "-[0]" "png:-")))))
+	  (let ((coding-system-for-read (vm-binary-coding-system)))
+	    (setq success
+		  (eq 0 (apply 'call-process vm-imagemagick-convert-program
+			       tempfile t nil
+			       (append convert-args (list "-[0]" "png:-"))))))
 	  (if success
 	      (progn
 		(write-region (point-min) (point-max) tempfile nil 0)
