@@ -6233,7 +6233,7 @@ describes what was deleted."
 (defun vm-mime-encode-words-in-string (string &optional encoding)
   (and string
        (vm-with-string-as-temp-buffer 
-	(substring-no-properties string)
+	(vm-substring-no-properties string 0)
 	'vm-mime-encode-words)))
 
 (defun vm-mime-encode-headers ()
