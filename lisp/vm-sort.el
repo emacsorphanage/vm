@@ -246,6 +246,9 @@ the folder undisturbed."
 
 ;;;###autoload
 (defun vm-so-sortable-subject (m)
+  "Returns the subject string of M, after stripping redundant prefixes
+and suffixes, which is suitable for sorting by subject.  The string is
+MIME-decoded with possible properties."
   (or (vm-sortable-subject-of m)
       (progn
 	(vm-set-sortable-subject-of

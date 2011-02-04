@@ -6393,13 +6393,13 @@ invoked in a global variable @code{vm-user-interaction-buffer}.
 
 @inindex coding system
 A Coding System is a way of encoding characters as bit patterns.
-@pxref{Coding System Basics,, Coding System Basics, elisp, Emacs Lisp manual}.
-US-ASCII is a coding system for English.  Other coding systems are
-used encode the various languages of the world, e.g., @code{iso-latin-1} for
-Western European languages, and @code{hebrew-iso-8bit} for Hebrew.
-Emacs also uses its 
-own internal coding system, which can encode all character sets
-currently in existence, but the internal coding system can vary in
+@pxref{Coding System Basics,, Coding System Basics, elisp, Emacs Lisp
+manual}.  US-ASCII is a coding system for English.  Other coding
+systems are used to encode the various languages of the world, e.g.,
+@code{iso-latin-1} for Western European languages, and
+@code{hebrew-iso-8bit} for Hebrew.  Emacs also uses its own internal
+coding system for characters, which can encode all character sets
+currently in existence.  But the internal coding system can vary between
 different vesions of Emacs.
 
 @inindex mime-charset
@@ -6407,32 +6407,37 @@ different vesions of Emacs.
 @inindex charset
 @inindex vm-mime-mule-coding-to-charset-alist
 @inindex vm-mime-mule-charset-to-coding-alist
-Emacs defines @code{mime-charset} property for each implemented coding
-system, which is the official preferred name of the MIME charset that it
-corresponds to.  For example, @code{iso-latin-1} corresponds to the
-MIME charset @code{iso-8859-1}, and @code{hebrew-iso-8bit} corresponds
-to the MIME charset @code{iso-8859-8}.  These charset names are obtained
-using the Emacs function @code{coding-system-get}.  VM stores all the
-coding systems and the corresponding MIME charsets in its internal
-variables @code{vm-mime-mule-coding-to-charset-alist} and
+Emacs defines a property called @code{mime-charset} for each
+implemented coding system, which is the official preferred name of the
+MIME character set that it corresponds to.  For example,
+@code{iso-latin-1} corresponds to the MIME charset @code{iso-8859-1},
+and @code{hebrew-iso-8bit} corresponds to the MIME charset
+@code{iso-8859-8}.  The Emacs function @code{coding-system-get} can be
+used to extract the @code{mime-charset} property of a coding system.
+VM stores all the known coding systems and the corresponding MIME
+charsets in its internal variables
+@code{vm-mime-mule-coding-to-charset-alist} and
 @code{vm-mime-mule-charset-to-coding-alist}.
 
 @inindex Content-Type
 @inindex decode-coding-region
 @inindex encode-coding-region
-MIME messages specify the charset that their content is in, in the
+MIME messages specify the character set that their content is in, in the
 Content-Type header.  VM uses this information to decode the content
 to the Emacs internal coding system.  This is done using the function
 @code{decode-coding-region}.
 Conversely, VM encodes the outgoing messages into the default or
-chosen MIME charset using the function @code{encode-coding-region}.
+chosen MIME character set using the function @code{encode-coding-region}.
 
 @inindex decode-coding-string
 @inindex encode-coding-string
 @inindex base 64
 @inindex quoted printable
-The headers of email messages can use MIME charsets by using special
-annotations of the form @code{=?charset?B?}.  Such annotations apply
+The headers of email messages can only be in US-ASCII.  So header fields
+in other character sets are encoded using either base-64 or
+quoted-printable encoding (whcih give ASCII strings) and annotated
+with the name of the original character set.  Such annotations look
+like @code{=?charset?B?}.  They can apply
 to individual words or sequences of words appearing the in the
 headers.  Note that the annotation @code{?B?} signifies base-64
 encoding of the byte stream.  Similarly the annotation @code{?Q?} might

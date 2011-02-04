@@ -467,7 +467,8 @@ works in all VM buffers."
     (aset new-vector 8 
 	  (vm-reencode-mime-encoded-words-in-string (aref vector 8)))
     ;; message-id
-    (aset new-vector 9 (vm-mime-encode-words-in-string (aref vector 9)))
+    (aset new-vector 9 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 9)))
     ;; line-count
     (aset new-vector 10 (vm-mime-encode-words-in-string (aref vector 10)))
     ;; subject
@@ -482,20 +483,25 @@ works in all VM buffers."
     (aset new-vector 14 
 	  (vm-reencode-mime-encoded-words-in-string (aref vector 14)))
     ;; month-number
-    (aset new-vector 15 (vm-mime-encode-words-in-string (aref vector 15)))
+    (aset new-vector 15 
+	  (vm-mime-encode-words-in-string (aref vector 15)))
     ;; sortable-date-string
-    (aset new-vector 16 (vm-mime-encode-words-in-string (aref vector 16)))
+    (aset new-vector 16 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 16)))
     ;; sortable-subject
-    (aset new-vector 17 (vm-mime-encode-words-in-string (aref vector 17)))
+    (aset new-vector 17 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 17)))
     ;; summary
     (aset new-vector 18 
 	  (vm-reencode-mime-encoded-words-in-tokenized-summary 
 	   (aref vector 18)))
     ;; parent
-    (aset new-vector 19 (vm-mime-encode-words-in-string (aref vector 19)))
+    (aset new-vector 19 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 19)))
     ;; references
     (aset new-vector 20 
-	  (mapcar (function vm-mime-encode-words-in-string) (aref vector 20)))
+	  (mapcar (function vm-reencode-mime-encoded-words-in-string)
+		  (aref vector 20)))
     ;; body-to-be-discarded (formerly headers-to-be-retrieved)
     (aset new-vector 21 (aref vector 21))
     ;; body-to-be-retrieved

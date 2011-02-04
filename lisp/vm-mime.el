@@ -6232,7 +6232,9 @@ describes what was deleted."
 ;;;###autoload
 (defun vm-mime-encode-words-in-string (string &optional encoding)
   (and string
-       (vm-with-string-as-temp-buffer string 'vm-mime-encode-words)))
+       (vm-with-string-as-temp-buffer 
+	(substring-no-properties string)
+	'vm-mime-encode-words)))
 
 (defun vm-mime-encode-headers ()
   "Encodes the headers of a message.
