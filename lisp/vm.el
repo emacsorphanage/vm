@@ -1289,8 +1289,8 @@ draft messages."
 	  vm-session-beginning)
       (progn
         (vm-check-emacs-version)
-        (require 'vm-vars)
         (require 'vm-macro)
+        (require 'vm-vars)
         (require 'vm-misc)
         (require 'vm-message)
         (require 'vm-minibuf)
