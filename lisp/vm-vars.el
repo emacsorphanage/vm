@@ -1011,7 +1011,6 @@ FSF Emacs always uses VM's builtin highlighting code."
   :group 'vm-misc
   :type 'boolean)
 
-;; This is breaking in XEmacs
 (defface vm-highlighted-header '((t (:inherit bold)))
  "Default face used to highlight headers."
  :group 'vm-faces)
@@ -3443,7 +3442,6 @@ variable's value has no effect on existing summary buffers."
   :group 'vm-summary
   :type 'string)
 
-;; This is breaking in XEmacs
 (defface vm-summary-highlight '((t (:inherit bold)))
  "Default face to use to highlight the summary entry for the current message."
  :group 'vm-faces)
@@ -4105,11 +4103,10 @@ in messages when you click on them."
   :group 'vm-url
   :type '(repeat string))
 
-;; This is breaking in XEmacs
 (defface vm-highlight-url '((t (:inherit link)))
  "Default face used to highlight URLs."
  :group 'vm-faces)
-(copy-face 'bold-italic 'vm-highlight-url)
+;; (copy-face 'bold-italic 'vm-highlight-url)
 
 (defcustom vm-highlight-url-face 'vm-highlight-url
     "*Non-nil value should be a face to use display URLs found in messages.

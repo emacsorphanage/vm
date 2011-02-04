@@ -28,6 +28,8 @@
 
 (provide 'vm)
 
+(require 'vm-version)
+
 (defvar enable-multibyte-characters)
 
 ;; For function declarations
