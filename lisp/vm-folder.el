@@ -1343,15 +1343,16 @@ Supports version 4 format of attribute storage, for backward compatibility."
 		  (setq oldpoint (point)
 			data (read (current-buffer))
                         cache (cadr data))
-		  (if (and (or (not (listp data)) (not (> (length data) 1)))
-			   (not (vectorp data)))
-                      (progn
-			(error "Bad x-vm-v5-data at %d in buffer %s: %S"
-			       oldpoint (buffer-name) data)))
+		  (when (and (or (not (listp data)) (not (> (length data) 1)))
+			     (not (vectorp data)))
+		    (error "Bad x-vm-v5-data at %d in buffer %s: %S"
+			   oldpoint (buffer-name) data)
+		    (sit-for 1))
 		  data)
 	      (error
 	       (message "Bad x-vm-v5-data header at %d in buffer %s, ignoring"
 			oldpoint (buffer-name))
+	       (sit-for 1)
 	       (setq data
 		     (list
 		      (make-vector vm-attributes-vector-length nil)
@@ -1591,13 +1592,15 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	       (progn
 		 (setq oldpoint (point)
 		       time (read (current-buffer)))
-		 (if (not (consp time))
-		     (error "Bad last-modified header at %d in buffer %s"
-			    oldpoint (buffer-name)))
+		 (unless (consp time)
+		   (error "Bad last-modified header at %d in buffer %s"
+			  oldpoint (buffer-name))
+		   (sit-for 1))
 		 time )
 	     (error
 	      (message "Bad last-modified header at %d in buffer %s, ignoring"
 		       oldpoint (buffer-name))
+	      (sit-for 1)
 	      (setq time '(0 0 0)))))))
     time ))
 
@@ -1638,13 +1641,15 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	       (condition-case ()
 		   (progn
 		     (setq list (read (current-buffer)))
-		     (if (not (listp list))
-			 (error "Bad global label list at %d in buffer %s"
-				oldpoint (buffer-name)))
+		     (unless (listp list)
+		       (error "Bad global label list at %d in buffer %s"
+			      oldpoint (buffer-name))
+		       (sit-for 1))
 		     list )
 		 (error
 		  (message "Bad global label list at %d in buffer %s, ignoring"
 			   oldpoint (buffer-name))
+		  (sit-for 1)
 		  (setq list nil) ))
 	       (vm-startup-apply-labels list))))))
     t ))
@@ -1674,13 +1679,15 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	       (progn
 		 (setq oldpoint (point)
 		       n (read (current-buffer)))
-		 (if (not (natnump n))
-		     (error "Bad bookmark at %d in buffer %s"
-			    oldpoint (buffer-name)))
+		 (unless (natnump n)
+		   (error "Bad bookmark at %d in buffer %s"
+			  oldpoint (buffer-name))
+		   (sit-for 1))
 		 n )
 	     (error
 	      (message "Bad bookmark at %d in buffer %s, ignoring"
 		       oldpoint (buffer-name))
+	      (sit-for 1)
 	      (setq n 1))))))
     (vm-startup-apply-bookmark n)
     t ))
@@ -1710,13 +1717,15 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	       (progn
 		 (setq oldpoint (point)
 		       ob (read (current-buffer)))
-		 (if (not (listp ob))
-		     (error "Bad pop-retrieved header at %d in buffer %s"
-			    oldpoint (buffer-name)))
+		 (unless (listp ob)
+		   (error "Bad pop-retrieved header at %d in buffer %s"
+			  oldpoint (buffer-name))
+		   (sit-for 1))
 		 (setq vm-pop-retrieved-messages ob))
 	     (error
 	      (message "Bad pop-retrieved header at %d in buffer %s, ignoring"
-		       oldpoint (buffer-name)))))))
+		       oldpoint (buffer-name))
+	      (sit-for 1))))))
     t ))
 
 (defun vm-gobble-imap-retrieved ()
@@ -1738,13 +1747,15 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	       (progn
 		 (setq oldpoint (point)
 		       ob (read (current-buffer)))
-		 (if (not (listp ob))
-		     (error "Bad imap-retrieved header at %d in buffer %s"
-			    oldpoint (buffer-name)))
+		 (unless (listp ob)
+		   (error "Bad imap-retrieved header at %d in buffer %s"
+			  oldpoint (buffer-name))
+		   (sit-for 1))
 		 (setq vm-imap-retrieved-messages ob))
 	     (error
 	      (message "Bad imap-retrieved header at %d in buffer %s, ignoring"
-		       oldpoint (buffer-name)))))))
+		       oldpoint (buffer-name))
+	      (sit-for 1))))))
     t ))
 
 (defun vm-gobble-visible-header-variables ()
@@ -1805,13 +1816,15 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	      (condition-case nil
 		  (progn
 		    (setq order (read (current-buffer)))
-		    (if (not (listp order))
-			(error "Bad order header at %d in buffer %s"
-			       oldpoint (buffer-name)))
+		    (unless (listp order)
+		      (error "Bad order header at %d in buffer %s"
+			     oldpoint (buffer-name))
+		      (sit-for 1))
 		    order )
 		(error
 		 (message "Bad order header at %d in buffer %s, ignoring"
 			  oldpoint (buffer-name))
+		 (sit-for 1)
 		 (setq order nil)))
 	      (if order
 		  (progn
@@ -1879,6 +1892,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	       (error
 		(message "Bad summary header at %d in buffer %s, ignoring"
 			 oldpoint (buffer-name))
+		(sit-for 1)
 		(setq summary "")))
 	     (vm-startup-apply-summary summary)))))))
 
