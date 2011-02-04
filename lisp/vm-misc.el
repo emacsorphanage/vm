@@ -41,6 +41,8 @@
 
 (declare-function vm-buffer-substring-no-properties "vm-misc.el"
 		  (start end))
+(declare-function substring-no-properties "vm-misc.el"
+		  (string from &optional to))
 (declare-function vm-extent-property "vm-misc.el" (overlay prop) t)
 (declare-function vm-extent-object "vm-misc.el" (overlay) t)
 (declare-function vm-set-extent-property "vm-misc.el" (overlay prop value) t)
@@ -874,6 +876,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 
 (defun vm-buffer-string-no-properties ()
   (vm-buffer-substring-no-properties (point-min) (point-max)))
+
+(fset 'vm-substring-no-properties
+      (cond ((fboundp 'substring-no-properties)
+	     (function substring-no-properties))
+	    (t (function substring))))
 
 (defun vm-insert-region-from-buffer (buffer &optional start end)
   (let ((target-buffer (current-buffer)))

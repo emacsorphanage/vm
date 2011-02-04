@@ -1011,9 +1011,11 @@ FSF Emacs always uses VM's builtin highlighting code."
   :group 'vm-misc
   :type 'boolean)
 
-(defface vm-highlighted-header '((t :inherit bold))
-  "Default face used to highlight headers."
-  :group 'vm-faces)
+;; This is breaking in XEmacs
+(defface vm-highlighted-header '((t (:inherit bold)))
+ "Default face used to highlight headers."
+ :group 'vm-faces)
+;; (copy-face 'bold 'vm-highlighted-header)
 
 (defcustom vm-highlighted-header-face 'vm-highlighted-header
   "*Face to be used to highlight headers.
@@ -1785,11 +1787,11 @@ deleting a MIME object with `vm-delete-mime-object'."
   "For internal use.")
 
 (defface vm-mime-button 
-  '((((type x w32 mac) (class color))
-     :background "lightgrey" :foreground "black"
-     :box (:line-width 2 :style released-button))
-    (((class color) (background light)) (:foreground "cyan" :underline t))
-    (((class color) (background dark)) (:foreground "red" :underline t))
+  '((((type x w32 mswindows mac) (class color))
+     (:background "lightgrey" :foreground "black"
+		  :box (:line-width 2 :style released-button)))
+    (((class color) (background light)) (:foreground "blue" :underline t))
+    (((class color) (background dark)) (:foreground "cyan" :underline t))
     (t (:underline t)))
   "Default face used for MIME buttons."
   :group 'vm-faces)
@@ -3441,9 +3443,11 @@ variable's value has no effect on existing summary buffers."
   :group 'vm-summary
   :type 'string)
 
-(defface vm-summary-highlight '((t :inherit bold))
-  "Default face to use to highlight the summary entry for the current message."
-  :group 'vm-faces)
+;; This is breaking in XEmacs
+(defface vm-summary-highlight '((t (:inherit bold)))
+ "Default face to use to highlight the summary entry for the current message."
+ :group 'vm-faces)
+;; (copy-face 'bold 'vm-summary-highlight)
 
 (defcustom vm-summary-highlight-face 'vm-summary-highlight
   "*Face to use to highlight the summary entry for the current message.
@@ -4101,9 +4105,11 @@ in messages when you click on them."
   :group 'vm-url
   :type '(repeat string))
 
-(defface vm-highlight-url '((t :inherit link))
-  "Default face used to highlight URLs."
-  :group 'vm-faces)
+;; This is breaking in XEmacs
+(defface vm-highlight-url '((t (:inherit link)))
+ "Default face used to highlight URLs."
+ :group 'vm-faces)
+(copy-face 'bold-italic 'vm-highlight-url)
 
 (defcustom vm-highlight-url-face 'vm-highlight-url
     "*Non-nil value should be a face to use display URLs found in messages.
