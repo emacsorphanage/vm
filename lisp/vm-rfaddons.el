@@ -809,20 +809,11 @@ See the variable `vm-handle-return-receipt-mode' for customization."
       )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun vm-mime-find-type-of-message/external-body (layout)
-  (save-excursion
-    (vm-select-folder-buffer)
-    (save-restriction
-      (set-buffer (marker-buffer (vm-mm-layout-body-start layout)))
-      (widen)
-      (goto-char (vm-mm-layout-body-start layout))
-      (if (not (re-search-forward "Content-Type: \"?\\([^ ;\" \n\t]+\\)\"?;?"
-                                  (vm-mm-layout-body-end layout)
-                                  t))
-          (error "No `Content-Type' header found in: %s"
-                 (buffer-substring (vm-mm-layout-body-start layout)
-                                   (vm-mm-layout-body-end layout)))
-        (match-string 1)))))
+
+(defalias 'vm-mime-find-type-of-message/external-body
+  'vm-mf-external-body-content-type)
+(make-obsolete 'vm-mime-find-type-of-message/external-body
+	       'vm-mf-external-body-content-type "8.2.0")
 
 ;; This is a hack in order to get the right MIME button 
 ;(defadvice vm-mime-set-extent-glyph-for-type
@@ -832,73 +823,6 @@ See the variable `vm-handle-return-receipt-mode' for customization."
 ;      (ad-set-arg 1 real-mime-type))
 ;  ad-do-it)
       
-;;;###autoload
-(defun vm-mime-display-button-message/external-body (layout)
-  "Return a button usable for viewing message/external-body MIME parts.
-When you apply `vm-mime-send-body-to-file' with `vm-mime-delete-after-saving'
-set to t one will get theses message/external-body parts which point
-to the external file.
-In order to view these we search for the right viewer hopefully listed
-in `vm-mime-external-content-types-alist' and invoke it as it would
-have happened before saving.  Otherwise we display the contents as text/plain.
-Probably we should be more clever here in order to fake a layout if internal
-displaying is possible ...
-
-But nevertheless this allows for keeping folders smaller without
-loosing basic functionality when using `vm-mime-auto-save-all-attachments'." 
-  (let ((buffer-read-only nil)
-        (real-mime-type (vm-mime-find-type-of-message/external-body layout)))
-    (vm-mime-insert-button
-     (vm-replace-in-string
-      (format " external: %s, %s"
-              (if (vm-mime-get-parameter layout "name")
-                  (file-name-nondirectory (vm-mime-get-parameter layout "name"))
-                "")
-              (let ((tmplayout (copy-tree layout t))
-                    format)
-                (aset tmplayout 0 (list real-mime-type))
-                ;; (setq format (vm-mime-find-format-for-layout tmplayout))
-                ;; (setq format (vm-replace-in-string format "^%-[0-9]+.[0-9]+"
-                ;;                                 "%-15.15" t))
-		(setq format "%-20.20(%d%) [%a]")
-                (vm-mime-sprintf format tmplayout)))
-      "save to a file\\]"
-      "display as text]")
-     (function
-      (lambda (xlayout)
-        (setq layout (if vm-xemacs-p
-                         (vm-extent-property xlayout 'vm-mime-layout)
-                       (overlay-get xlayout 'vm-mime-layout)))
-        (let* ((type (vm-mime-find-type-of-message/external-body layout))
-               (viewer (vm-mime-find-external-viewer type))
-               (filename (vm-mime-get-parameter layout "name")))
-          (if (car viewer)
-              (progn
-                (message "Viewing %s with %s" filename (car viewer))
-                (start-process (format "Viewing %s" filename)
-                               nil
-                               (car viewer)
-                               filename))
-            (let ((buffer-read-only nil)
-                  (converter (assoc type vm-mime-type-converter-alist)))
-              (if vm-xemacs-p
-                  (delete-region (vm-extent-start-position xlayout)
-                                 (vm-extent-end-position xlayout))
-                (delete-region (overlay-start xlayout) (overlay-end xlayout)))
-              
-              (if converter
-                  (shell-command (concat (caddr converter) " < '" filename "'")
-                                 1)
-                (message "Could not find viewer for type %s!" type)
-                (insert-file-contents filename))))
-          )))
-     layout
-      nil)))
-
-;;;###autoload
-;(defun vm-mime-display-internal-message/external-body (layout)
-;  "Display the text of the message/external-body MIME part."
-;  (vm-mime-display-internal-text/plain layout))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar vm-mime-attach-files-in-directory-regexps-history nil

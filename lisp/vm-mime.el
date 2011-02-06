@@ -1390,33 +1390,35 @@ shorter pieces, rebuilt it from them."
                 content (concat content p)))
         content)))
 
-(defun vm-mime-get-parameter (layout name)
-  (let ((string (vm-mime-get-xxx-parameter name (cdr (vm-mm-layout-type layout)))))
+(defun vm-mime-get-parameter (layout param)
+  (let ((string (vm-mime-get-xxx-parameter 
+		 param (cdr (vm-mm-layout-type layout)))))
     (if string (vm-decode-mime-encoded-words-in-string string))))
 
-(defun vm-mime-get-disposition-parameter (layout name)
-  (let ((string (vm-mime-get-xxx-parameter name (cdr (vm-mm-layout-disposition layout)))))
+(defun vm-mime-get-disposition-parameter (layout param)
+  (let ((string (vm-mime-get-xxx-parameter 
+		 param (cdr (vm-mm-layout-disposition layout)))))
     (if string (vm-decode-mime-encoded-words-in-string string))))
 
-(defun vm-mime-set-xxx-parameter (name value param-list)
-  (let ((match-end (1+ (length name)))
-	(name-regexp (concat (regexp-quote name) "="))
+(defun vm-mime-set-xxx-parameter (param value param-list)
+  (let ((match-end (1+ (length param)))
+	(param-regexp (concat (regexp-quote param) "="))
 	(case-fold-search t)
 	(done nil))
     (while (and param-list (not done))
-      (if (and (string-match name-regexp (car param-list))
+      (if (and (string-match param-regexp (car param-list))
 	       (= (match-end 0) match-end))
 	  (setq done t)
 	(setq param-list (cdr param-list))))
     (and (car param-list)
-	 (setcar param-list (concat name "=" value)))))
+	 (setcar param-list (concat param "=" value)))))
 
-(defun vm-mime-set-parameter (layout name value)
-  (vm-mime-set-xxx-parameter name value (cdr (vm-mm-layout-type layout))))
+(defun vm-mime-set-parameter (layout param value)
+  (vm-mime-set-xxx-parameter param value (cdr (vm-mm-layout-type layout))))
 
-(defun vm-mime-set-qparameter (layout name value)
+(defun vm-mime-set-qparameter (layout param value)
   (setq value (concat "\"" value "\""))
-  (vm-mime-set-xxx-parameter name value (cdr (vm-mm-layout-qtype layout))))
+  (vm-mime-set-xxx-parameter param value (cdr (vm-mm-layout-qtype layout))))
 
 (defun vm-mime-insert-mime-body (layout)
   "Insert in the current buffer the body of a mime part given by LAYOUT."
@@ -3159,6 +3161,69 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 
     (when child-layout 
       (vm-decode-mime-layout child-layout))))
+
+(defun vm-mime-display-button-message/external-body (layout)
+  "Return a button usable for viewing message/external-body MIME parts.
+When you apply `vm-mime-send-body-to-file' with `vm-mime-delete-after-saving'
+set to t one will get theses message/external-body parts which point
+to the external file.
+In order to view these we search for the right viewer hopefully listed
+in `vm-mime-external-content-types-alist' and invoke it as it would
+have happened before saving.  Otherwise we display the contents as text/plain.
+Probably we should be more clever here in order to fake a layout if internal
+displaying is possible ...
+
+But nevertheless this allows for keeping folders smaller without
+loosing basic functionality when using `vm-mime-auto-save-all-attachments'." 
+  (let ((buffer-read-only nil)
+	(tmplayout (copy-tree (car (vm-mm-layout-parts layout)) t))
+	(filename "external: ")
+	format)
+    (when (vm-mime-get-parameter layout "name")
+      (setq filename 
+	    (concat filename
+		    (file-name-nondirectory 
+		     (vm-mime-get-parameter layout "name")))))
+    (vm-mime-set-parameter tmplayout "name" filename)
+    (vm-mime-set-xxx-parameter "filename" filename 
+			       (vm-mm-layout-disposition tmplayout))
+    (setq format (vm-mime-find-format-for-layout tmplayout))
+    (vm-mime-insert-button
+     (vm-replace-in-string
+      (vm-mime-sprintf format tmplayout)	      
+      "save to a file\\]"
+      "display as text]")
+     (function
+      (lambda (xlayout)
+        (setq layout (if vm-xemacs-p
+                         (vm-extent-property xlayout 'vm-mime-layout)
+                       (overlay-get xlayout 'vm-mime-layout)))
+        (let* ((type (vm-mf-external-body-content-type layout))
+               (viewer (vm-mime-find-external-viewer type))
+               (filename (vm-mime-get-parameter layout "name")))
+          (if (car viewer)
+              (progn
+                (message "Viewing %s with %s" filename (car viewer))
+                (start-process (format "Viewing %s" filename)
+                               nil
+                               (car viewer)
+                               filename))
+            (let ((buffer-read-only nil)
+                  (converter (assoc type vm-mime-type-converter-alist)))
+              (if vm-xemacs-p
+                  (delete-region (vm-extent-start-position xlayout)
+                                 (vm-extent-end-position xlayout))
+                (delete-region (overlay-start xlayout) (overlay-end xlayout)))
+              
+              (if converter
+                  (shell-command (concat (caddr converter) " < '" filename "'")
+                                 1)
+                (message "Could not find viewer for type %s!" type)
+                (insert-file-contents filename))))
+          )))
+     layout
+      nil)))
+
 
 (defun vm-mime-fetch-url-with-programs (url buffer)
   (and
@@ -7444,7 +7509,7 @@ agent; under Unix, normally sendmail.)"
 		   nil )))
 	      ((setq cons (vm-mime-can-convert
 			   (car (vm-mm-layout-type layout))))
-	       (format "convert to %s and display" (nth 1 cons)))
+	       (format "display as %s" (nth 1 cons)))
 	      (t "save to a file")))
       ;; should not be reached
       "burn in the raging fires of hell forever"))

@@ -457,6 +457,25 @@ vm-mail-buffer variable."
       (setq n (1+ n)))
     (if list n nil)))
 
+(defun vm-find-all (list pred)
+  "Find all the elements of LIST satisfying PRED"
+  (let ((n 0) (res nil))
+    (while list 
+      (when (apply pred (car list) nil)
+	(setq res (cons (car list) res)))
+      (setq list (cdr list))
+      (setq n (1+ n)))
+    (nreverse res)))
+
+(defun vm-elems-of (list)
+  "Return the set of elements of LIST as a list."
+  (let ((res nil))
+    (while list
+      (unless (member (car list) res)
+	(setq res (cons (car list) res)))
+      (setq list (cdr list)))
+    (nreverse res)))
+
 (defun vm-for-all (list pred)
   (catch 'fail
     (progn

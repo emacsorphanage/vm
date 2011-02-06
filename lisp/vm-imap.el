@@ -1857,6 +1857,9 @@ as well."
   ;;--------------------------------------------
   (vm-imap-log-tokens (list 'response vm-imap-read-point))
   (let ((list nil) tail obj)
+    (when vm-buffer-type-debug
+      (unless vm-imap-read-point
+	(debug nil "vm-imap-read-response: null vm-imap-read-point")))
     (goto-char vm-imap-read-point)
     (while (not (eq (car (setq obj (vm-imap-read-object process)))
 		    'end-of-line))
