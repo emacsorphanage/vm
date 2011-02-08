@@ -3332,22 +3332,25 @@ Recognized specifiers are:
    p - indicator for postponed messages 
    P - indicator for attachments, see `vm-summary-attachment-indicator'
    a - attribute indicators (always four characters wide)
-       The first char is  `D', `N', `U' or ` ' for deleted, new, unread
-       and read messages respectively.
+       The first char is  `D', `N', `U', ` ' or `!' for deleted, new, unread,
+       read and flagged messages respectively.
        The second char is `F', `W' or ` ' for filed (saved) or written
        messages.
        The third char is `R', `Z' or ` ' for messages replied to,
        and forwarded messages.
        The fourth char is `E' if the message has been edited, ` ' otherwise.
    A - longer version of attributes indicators (seven characters wide)
-       The first char is  `D', `N', `U' or ` ' for deleted, new, unread
-       and read messages respectively.
+       The first char is  `D', `N', `U', ` ' or `!' for deleted, new, unread
+       read and flagged messages respectively.
        The second is `r' or ` ', for message replied to.
        The third is `z' or ` ', for messages forwarded.
        The fourth is `b' or ` ', for messages redistributed.
        The fifth is `f' or ` ', for messages filed.
        The sixth is `w' or ` ', for messages written.
        The seventh is `e' or ` ', for messages that have been edited.
+   b - shorter version of attribute indicators (1 character wide)
+       The first char is  `D', `N', `U', ` ' or `!' for deleted, new, unread
+       read and flagged messages respectively.
    c - number of characters in message (ignoring headers)
    S - human readable size of the message
    d - numeric day of month message sent

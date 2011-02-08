@@ -700,10 +700,9 @@ Otherwise, it is a string in mime-decoded form with text-properties.
 			'vm-summary-tokenized-compiled-format-alist
 		      'vm-summary-untokenized-compiled-format-alist))
 	 (match (assoc format (symbol-value alist-var))))
-    (if (null match)
-	(progn
-	  (vm-summary-compile-format format tokenize)
-	  (setq match (assoc format (symbol-value alist-var)))))
+    (unless match
+      (vm-summary-compile-format format tokenize)
+      (setq match (assoc format (symbol-value alist-var))))
     ;; The local variable name `vm-su-message' is mandatory here for
     ;; the format s-expression to work.
     (let ((vm-su-message message))
@@ -829,11 +828,11 @@ mime.  It is used for writing summary lines to disk.   USR, 2010-05-13."
       (while
 	  (and (not saw-close-group) (not token)
 	       (string-match
-		"%\\(-\\)?\\([0-9]+\\)?\\(\\.\\(-?[0-9]+\\)\\)?\\([()pPaAcSdfFhHiIlLmMnstTwyz*%]\\|U[A-Za-z]\\)"
+		"%\\(-\\)?\\([0-9]+\\)?\\(\\.\\(-?[0-9]+\\)\\)?\\([()pPaAbcSdfFhHiIlLmMnstTwyz*%]\\|U[A-Za-z]\\)"
 		format last-match-end))
 	(setq conv-spec (aref format (match-beginning 5)))
 	(setq new-match-end (match-end 0))
-	(if (and (memq conv-spec '(?\( ?\) ?p ?P ?a ?A ?c ?S ?d ?f ?F ?h ?H ?i ?I
+	(if (and (memq conv-spec '(?\( ?\) ?p ?P ?a ?A ?b ?c ?S ?d ?f ?F ?h ?H ?i ?I
 				   ?l ?L ?M ?m ?n ?s ?t ?T ?U ?w ?y ?z ?* ))
 		 ;; for the non-tokenized path, we don't want
 		 ;; the close group spcifier processed here, we
@@ -870,6 +869,9 @@ mime.  It is used for writing summary lines to disk.   USR, 2010-05-13."
 					    'vm-su-message) sexp)))
 		    ((= conv-spec ?A)
 		     (setq sexp (cons (list 'vm-su-attribute-indicators-long
+					    'vm-su-message) sexp)))
+		    ((= conv-spec ?b)
+		     (setq sexp (cons (list 'vm-su-attribute-indicators-short
 					    'vm-su-message) sexp)))
 		    ((= conv-spec ?c)
 		     (setq sexp (cons (list 'vm-su-byte-count
@@ -1173,6 +1175,16 @@ message.  The string is 4 characters long. 		USR, 2010-05-13."
 	 ((vm-redistributed-flag m) "B")
 	 (t " "))
    (cond ((vm-edited-flag m) "E")
+	 (t " "))))
+
+(defun vm-su-attribute-indicators-short (m)
+  "Given a MESSAGE, ruturns a short string showing the attributes of the
+message.  The string is 1 character long. 		USR, 2011-01-08."
+  (concat
+   (cond ((vm-deleted-flag m) "D")
+	 ((vm-new-flag m) "N")
+	 ((vm-unread-flag m) "U")
+	 ((vm-flagged-flag m) "!")
 	 (t " "))))
 
 (defun vm-su-attribute-indicators-long (m)
