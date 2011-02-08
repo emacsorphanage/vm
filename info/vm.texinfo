@@ -1466,7 +1466,6 @@ presentation is done in two stages: @dfn{previewing} and @dfn{paging}.
 * Paging::                      Viewing the current message.
 * MIME Messages::               Using VM's MIME display features.
 * Headers-only Messages::       Loading headers of messages without their bodies.
-* Flagging Messages::           Flagging important messages
 @end menu
 
 @node Previewing, Paging, Reading Messages, Reading Messages
@@ -1561,13 +1560,23 @@ become hidden.  The Emacs variable @code{page-delimiter} determines what
 VM will consider to be a page delimiter.
 
 @findex vm-unread-message
-@findex vm-flag-message-read
-@findex vm-flag-message-unread
+@findex vm-mark-message-read
+@findex vm-mark-message-unread
 You can ``unread'' a message (so to speak) by typing @kbd{U}
-(@code{vm-unread-message}, also called @code{vm-flag-message-unread}).
-The current message will be flagged unread.  Conversely, you can flag
+(@code{vm-unread-message}, also called @code{vm-mark-message-unread}).
+The current message will be marked unread.  Conversely, you can mark
 an unread message as read by typing @kbd{.}
-(@code{vm-flag-message-read}).
+(@code{vm-mark-message-read}).
+
+@findex vm-toggle-flag-message
+As you read messages, you might want to flag important messages so
+that you can come back to them later.  You can do so by typing
+@code{!} (@code{vm-toggle-flag-message}).  You can also turn off the
+flag on a flagged message by typing @code{!} again.  In the Summary
+display, the flagged messages are highlighted using the
+@code{vm-summary-high-priority-face}.  (@xref{predefined summary
+faces}.)
+
 
 @cindex longlines.el
 @cindex filling paragraphs
@@ -2304,7 +2313,7 @@ cases the filename sent along with the mistyped file
 the filename sent with a MIME attachment to guess an attachment's 
 type if the attachment is of type @samp{application/octet-stream}.
 
-@node Headers-only Messages, Flagging Messages, MIME Messages, Reading Messages
+@node Headers-only Messages,, MIME Messages, Reading Messages
 @section Headers-only Messages
 
 Under certain circumstances, it is possible to maintain VM folders in
@@ -2341,19 +2350,6 @@ on demand ``fetching''.  Loaded messages are permanently stored in the
 Folder buffer and written to disk when the folder is saved.  In
 contrast, fetched message bodies are always discarded before writing
 to disk.
-
-@node Flagging Messages,, Headers-only Messages, Reading Messages
-@section Flagging Messages
-
-@findex vm-toggle-flag-message
-As you read messages, you might want to flag important messages so
-that you can come back to them later.  You can do so by typing
-@code{!} (@code{vm-toggle-flag-message}).  You can also turn off the
-flag on a flagged message by typing @code{!} again.
-
-In the Summary display, the flagged messages are highlighted using the
-@code{vm-summary-high-priority-face}.  (@xref{predefined summary faces}.)
-
 
 @node Sending Messages, Saving Messages, Reading Messages, Top
 @chapter Sending Messages

@@ -2962,12 +2962,12 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 
 ;;;###autoload
 (defun vm-unread-message (&optional count)
-  "Set the `unread' attribute for the current message.  If the message is
-already new or unread, then it is left unchanged.
+  "Mark the current message as unread.  If the message is already
+new or unread, then it is left unchanged.
 
-Numeric prefix argument N means to unread the current message plus the
-next N-1 messages.  A negative N means unread the current message and
-the previous N-1 messages.
+Numeric prefix argument N means to mark the current message plus
+the next N-1 messages as unread.  A negative N means mark the
+current message and the previous N-1 messages as unread.
 
 When invoked on marked messages (via vm-next-command-uses-marks),
 all marked messages are affected, other messages are ignored."
@@ -2984,16 +2984,19 @@ all marked messages are affected, other messages are ignored."
   (vm-display nil nil '(vm-unread-message) '(vm-unread-message))
   (vm-update-summary-and-mode-line))
 (defalias 'vm-flag-message-unread 'vm-unread-message)
+(defalias 'vm-mark-message-unread 'vm-unread-message)
+(make-obsolete 'vm-flag-message-unread 
+	       'vm-mark-message-unread "8.2.0")
 
 ;;;###autoload
-(defun vm-flag-message-read (&optional count)
-  "Flag the current message as read, i.e., set the `unread' and `new'
-attributes to nil.  If the message is already flagged read, then
+(defun vm-mark-message-read (&optional count)
+  "Mark the current message as read, i.e., set the `unread' and `new'
+attributes to nil.  If the message is already marked as read, then
 it is left unchanged.
 
 Numeric prefix argument N means to unread the current message plus the
-next N-1 messages.  A negative N means unread the current message and
-the previous N-1 messages.
+next N-1 messages.  A negative N means mark the current message and
+the previous N-1 messages as read.
 
 When invoked on marked messages (via vm-next-command-uses-marks),
 all marked messages are affected, other messages are ignored."
@@ -3001,7 +3004,7 @@ all marked messages are affected, other messages are ignored."
   (or count (setq count 1))
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (let ((mlist (vm-select-operable-messages count "Frag as read")))
+  (let ((mlist (vm-select-operable-messages count "Mark as read")))
     (while mlist
       (when (or (vm-unread-flag (car mlist))
 		(vm-new-flag (car mlist)))
@@ -3010,6 +3013,10 @@ all marked messages are affected, other messages are ignored."
       (setq mlist (cdr mlist))))
   (vm-display nil nil '(vm-flag-message-read) '(vm-flag-message-read))
   (vm-update-summary-and-mode-line))
+(defalias 'vm-flag-message-read 'vm-mark-message-read)
+(make-obsolete 'vm-flag-message-read 
+	       'vm-mark-message-read "8.2.0")
+
 
 ;;;###autoload
 (defun vm-quit-just-bury ()
