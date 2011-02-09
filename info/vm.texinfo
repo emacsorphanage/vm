@@ -1241,6 +1241,7 @@ change it in a running Emacs session, you must use @code{setq-default}.
 @section Getting New Mail
 
 @findex vm-get-new-mail
+@kindex g
 Pressing @kbd{g} runs @code{vm-get-new-mail}, which will retrieve
 mail from all the spool files associated with the current folder.
 @xref{Local Folders}.  For POP folders, any newly arrived messages
@@ -1418,7 +1419,7 @@ Other commands to select messages:
 @item RET (@code{vm-goto-message})
 Go to message number @var{n}.  @var{n} is the prefix argument, if
 provided, otherwise it is prompted for in the minibuffer.
-@findex vm-goto-message
+@findex vm-goto-message-last-seen
 @kindex TAB
 @item TAB (@code{vm-goto-message-last-seen})
 Go to message last previewed or read.
@@ -1534,6 +1535,7 @@ have VM preview all messages, set the value of
 @code{vm-preview-read-messages} to @code{t}.
 
 @findex vm-expose-hidden-headers
+@kindex t
 Typing @kbd{t} (@code{vm-expose-hidden-headers}) makes VM toggle
 between exposing and hiding headers that would ordinarily be hidden.
 
@@ -1562,6 +1564,8 @@ VM will consider to be a page delimiter.
 @findex vm-unread-message
 @findex vm-mark-message-read
 @findex vm-mark-message-unread
+@kindex U
+@kindex .
 You can ``unread'' a message (so to speak) by typing @kbd{U}
 (@code{vm-unread-message}, also called @code{vm-mark-message-unread}).
 The current message will be marked unread.  Conversely, you can mark
@@ -1569,6 +1573,7 @@ an unread message as read by typing @kbd{.}
 (@code{vm-mark-message-read}).
 
 @findex vm-toggle-flag-message
+@kindex !
 As you read messages, you might want to flag important messages so
 that you can come back to them later.  You can do so by typing
 @code{!} (@code{vm-toggle-flag-message}).  You can also turn off the
@@ -1700,6 +1705,29 @@ button or tag line in its place that describes the object and what you
 have to do to display it.  The value of @code{vm-mime-button-format-alist}
 determines the format of the text in those buttons.
 
+After decoding you will see either the decoded MIME objects or
+button lines that must be activated to attempt display of the
+MIME object.  
+
+@vindex vm-auto-displayed-mime-content-types
+@vindex vm-auto-displayed-mime-content-type-exceptions
+The variable @code{vm-auto-displayed-mime-content-types} specifies the
+types that are displayed immediately.  Its value should be a list of
+MIME content types that should be displayed immediately after decoding.
+Other types will be displayed as a button that you must activate to
+display the object.  The variable
+@code{vm-auto-displayed-mime-content-type-exceptions} can be used to
+specify any exceptions to the types listed in
+@code{vm-auto-displayed-mime-content-types}.
+
+@findex vm-next-attachment
+@findex vm-previous-attachment
+@kindex [
+@kindex ]
+The commands @kbd{[} and @kbd{]} (@code{vm-previous-attachment}) and
+@code{vm-next-attachment}, respectively) can be
+used move to particular buttons within the message presentation.
+
 @node Attachments, Internal display, Viewing MIME, MIME Messages
 @unnumberedsubsec  Operating on MIME attachments
 
@@ -1712,7 +1740,6 @@ determines the format of the text in those buttons.
 @kindex $ p
 @kindex $ d
 @kindex $ e  
-@vindex vm-auto-displayed-mime-content-types
 @findex vm-mime-reader-map-pipe-to-command
 @findex vm-delete-mime-object
 @findex vm-mime-reader-map-display-using-default
@@ -1723,16 +1750,6 @@ determines the format of the text in those buttons.
 @findex vm-delete-mime-object
 @findex vm-mime-reader-map-display-using-external-viewer
 @findex vm-mime-attach-object-from-message
-After decoding you will see either the decoded MIME objects or
-button lines that must be activated to attempt display of the
-MIME object.  
-
-The variable @code{vm-auto-displayed-mime-content-types} specifies the
-types that are displayed immediately.  Its value should be a list of
-MIME content types that should be displayed immediately after decoding.
-Other types will be displayed as a button that you must activate to
-display the object.  
-
 To activate a button, either click the middle mouse
 button over it, or move the cursor to the line and press RET.  If you
 are running under a window system, you can use the right mouse button
@@ -1781,14 +1798,14 @@ bodies has the beneficial effect of reducing the size of VM folders.
 That leads to a better utilization of the computer resources and
 usually a faster operation of VM.
 
-@findex vm-mime-save-all-attachments
-@findex vm-mime-delete-all-attachments
+@findex vm-save-all-attachments
+@findex vm-delete-all-attachments
 @vindex vm-mime-deletable-types
 @vindex vm-mime-deletable-type-exceptions
 @vindex vm-mime-savable-types
 @vindex vm-mime-savable-type-exceptions
-The commands @code{vm-mime-save-all-attachments} and
-@code{vm-mime-delete-all-attachments} can be used to save or delete
+The commands @code{vm-save-all-attachments} and
+@code{vm-delete-all-attachments} can be used to save or delete
 @i{all} the attachments in a message.  An "attachment" in this context
 is any MIME part that has "attachment" as its content-disposition or
 simply has a file name.  In addition, all MIME parts that have types
@@ -2292,11 +2309,11 @@ instead of the symbol @code{favorite}, @code{favorite-internal} is used
 then the first TYPE that matches an alternative that can be displayed
 internally will be chosen.
 
-@findex vm-mime-nuke-alternative-text/html
+@findex vm-nuke-alternative-text/html
 Messages with multiple alternatives use up extra file space and slow
 down the operation of vm.  If you would like keep the text/plain
 alternatives but erase the text/html alternatives, you can use the
-'vm-mime-nuke-alternative-text/html' command.
+@code{vm-nuke-alternative-text/html} command.
 
 @node Bad MIME, , multipart/alternative, MIME Messages
 @unnumberedsubsec Dealing with bad MIME
@@ -2341,6 +2358,9 @@ message bodies are flushed before folders are saved to disk.
 
 @findex vm-load-message
 @findex vm-unload-message
+@findex vm-refresh-message
+@kindex o
+@kindex O
 You can manually load message bodies into the Folder using the command
 @kbd{o} (@code{vm-load-message}.  The command @kbd{O}
 (@code{vm-unload-message}) unloads a previously loaded message body.
@@ -2349,7 +2369,8 @@ marked messages.  Note that ``loading'' message body is different from
 on demand ``fetching''.  Loaded messages are permanently stored in the
 Folder buffer and written to disk when the folder is saved.  In
 contrast, fetched message bodies are always discarded before writing
-to disk.
+to disk.  The command @code{vm-refresh-message} reloads an already
+loaded message with a fresh copy retrieved from the server.
 
 @node Sending Messages, Saving Messages, Reading Messages, Top
 @chapter Sending Messages
@@ -2939,7 +2960,7 @@ add the function @code{vm-imap-save-composition} to the mail-mode's
 @code{mail-send-hook} variable.
 
 @cindex IMAP-FCC
-@findex vm-imap-default-account
+@vindex vm-imap-default-account
 If you have multiple IMAP accounts, you might wish to save copies of
 your replies separately in each IMAP account.  This can be done by
 adding an @code{IMAP-FCC:} header line.  The value of the header field
@@ -3822,6 +3843,7 @@ you can see a more compact summary of the folder.
 @findex vm-collapse-thread
 @findex vm-collapse-all-threads
 @findex vm-expand-all-threads
+@kindex T
 Thread folding is enabled by setting the variable
 @code{vm-summary-enable-thread-folding} to a non-nil value.  The summary
 window then has a folding indicator in the first column: with @code{-}
@@ -3860,6 +3882,8 @@ format of the summary.
 
 @findex vm-expand-all-threads
 @findex vm-collapse-all-threads
+@kindex E
+@kindex C
 When thread folding is enabled, the Summary window starts out with all
 the threads folded.  You can expand all the threads in the folder
 using the command @kbd{E} (@code{vm-expand-all-threads}).  The command
@@ -4035,6 +4059,7 @@ subset of messages from another virtual folder.
 
 @vindex vm-virtual-folder-alist
 @findex vm-visit-virtual-folder
+@kindex V V
 A virtual folder is defined by its name, the folders that it contains
 and its selectors.  The variable @code{vm-virtual-folder-alist} is a list of
 the definitions of all named virtual folders.  In order to visit a
@@ -5389,6 +5414,7 @@ developers/programmers.
 * Sorting Internals::     Details of how messages are sorted
 * User Interaction::      Handling of the user interaction
 * Coding Systems::        How VM handles character coding
+* MIME Display::          How VM displays MIME messages
 @end menu
 
 @node Folder Internals, Message Internals , , Internals
@@ -6384,7 +6410,7 @@ current-buffer to be the Folder buffer and performs various checks.
 It also stores the identity of the buffer in which the command was
 invoked in a global variable @code{vm-user-interaction-buffer}.
 
-@node Coding Systems,, User Interaction , Internals
+@node Coding Systems, MIME Display, User Interaction , Internals
 @section Coding Systems
 
 @inindex coding system
@@ -6441,6 +6467,40 @@ be used to denote the quoted-printable encoding.
 VM decodes such strings using the function @code{decode-coding-string}.
 Conversely, the headers of outgoing messages are encoded using
 @code{encode-coding-string}
+
+@node MIME Display,, Coding Systems, Internals
+@section MIME Display
+
+@inindex vm-decode-mime-layout
+The MIME layout of a message is stored in the @code{mime-layout} field
+of the Soft data vector of the message.  (@xref{Soft data vector}.)
+The MIME layout is in general a tree structure of ``MIME parts''.  The
+function @code{vm-decode-mime-layout} is responsible for traversing
+the tree structure at each MIME part and displaying it appropriately.
+
+The function @code{vm-decode-mime-layout} goes through the following
+sequence of decisions: 
+
+@enumerate
+@item
+If the MIME part is a @code{multipart} type, then the subparts are
+displayed as needed.  If it is a single part, it proceeds as follows.
+@item 
+If the MIME part should not be displayed automatically, it is
+displayed as a button.  (An automatically displayed MIME type is one
+listed in @code{vm-auto-displayed-mime-content-types}
+but not listed in the corresponding exceptions.)
+@item
+If the MIME part should be displayed internally and VM is able to do
+so, then it is displayed internally.  (An internally displayed MIME
+type is one listed in @code{vm-mime-internal-content-types} but not
+listed in the corresponding exceptions.)
+@item
+Otherwise, the MIME part is displayed externally.  An external viewer
+is found from
+@code{vm-mime-external-content-types-alist} and it is invoked to
+display the MIME part.
+@end enumerate
 
 @node Concept Index, Key Index, Internals, Top
 @unnumbered Concept Index

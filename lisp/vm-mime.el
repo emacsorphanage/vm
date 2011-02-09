@@ -2390,16 +2390,25 @@ in the buffer.  The function is expected to make the message
 (defun vm-decode-mime-layout (layout &optional dont-honor-c-d)
   "Decode the MIME part in the current buffer using LAYOUT.  
 If DONT-HONOR-C-D non-Nil, then don't honor the Content-Disposition
-declarations in the attachments and make a decision independently."
+declarations in the attachments and make a decision independently.
+
+LAYOUT can be a mime layout can be a layout vector.  It can also be an
+overlay of a button in the current buffer, in which case the
+'vm-mime-layout property of the overlay will be extracted.
+                                                USR, 2011-02-08"
   (let ((modified (buffer-modified-p))
 	handler new-layout file type type2 type-no-subtype (extent nil))
+    (unless (vectorp layout)
+      ;; handle a button extent
+      (setq extent layout
+	    layout (vm-extent-property extent 'vm-mime-layout))
+      (goto-char (vm-extent-start-position extent))
+      ;; if the button is for external-body, use the external-body
+      (setq type (downcase (car (vm-mm-layout-type layout))))
+      (when (vm-mime-types-match type "message/external-body")
+	(setq layout (car (vm-mm-layout-parts layout)))))
     (unwind-protect
 	(progn
-	  (if (not (vectorp layout))
-	      (progn
-		(setq extent layout
-		      layout (vm-extent-property extent 'vm-mime-layout))
-		(goto-char (vm-extent-start-position extent))))
 	  (setq type (downcase (car (vm-mm-layout-type layout)))
 		type-no-subtype (car (vm-parse type "\\([^/]+\\)")))
 	  (cond ((and vm-infer-mime-types
@@ -2639,6 +2648,10 @@ in the text are highlighted and energized."
     t ))
 
 (defun vm-mime-display-external-generic (layout)
+  "Display mime object with LAYOUT in an external viewer, as
+determined by `vm-mime-external-content-types-alist'."
+  ;;  Optional argument FILE indicates that the content should be
+  ;;  taken from it.
   (let ((program-list (copy-sequence
 		       (vm-mime-find-external-viewer
 			(car (vm-mm-layout-type layout)))))
@@ -2765,14 +2778,10 @@ in the text are highlighted and energized."
       (let ((part (car part-list)))
         (vm-decode-mime-layout part)
         (setq part-list (cdr part-list))
-        (cond ((and part-list
-		    (not (vm-mime-should-display-button part nil))
-		    (vm-mime-should-display-button (car part-list) nil))
-	       nil)
-	      ((and part-list
-		    (not (vm-mime-should-display-button part nil))
-		    (not (vm-mime-should-display-button (car part-list) nil)))
-	       (insert vm-mime-parts-display-separator)))))
+	;; we always put separator because it is cleaner, and buttons
+	;; may get expanded to documents in any case. USR, 2011-02-09
+	(when part-list
+	  (insert vm-mime-parts-display-separator))))
     t))
 
 
@@ -3081,32 +3090,32 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 				(format "%s" (cdr data)))))))))))
 
 
-(defun vm-mime-display-internal-message/external-body (layout)
+(defun vm-mime-display-internal-message/external-body (layout
+						       &optional extent)
+  "Display the external-body content described by LAYOUT.  The
+optional argument EXTENT, if present, gives the extent of the MIME
+button that this LAYOUT comes from."
   (let ((child-layout (car (vm-mm-layout-parts layout)))
 	(access-method (downcase (vm-mime-get-parameter layout "access-type")))
 	ob
 	(work-buffer nil))
-    ;; Normal objects have the header and body in the same
-    ;; buffer.  A retrieved external-body has the body in a
-    ;; different buffer from the header, so we use this as an
-    ;; indicator of whether the retrieval work has been dnoe
-    ;; yet.
     (unwind-protect
 	(cond
-	 ((and (eq access-method "mail-server")
+	 ((and (string= access-method "mail-server")
 	       (vm-mm-layout-id child-layout)
 	       (setq ob (vm-mime-find-leaf-content-id-in-layout-folder
 			 layout (vm-mm-layout-id child-layout))))
 	  (setq child-layout ob))
 	 ((eq (marker-buffer (vm-mm-layout-header-start child-layout))
 	      (marker-buffer (vm-mm-layout-body-start child-layout)))
+	  ;; if the "body" is in the same buffer, that means that the
+	  ;; external-body has not been retrieved yet
 	  (setq work-buffer
 		(vm-make-multibyte-work-buffer
 		 (format "*%s mime object*"
 			 (car (vm-mm-layout-type child-layout)))))
 	  (condition-case data
-	      (save-excursion
-		(set-buffer work-buffer)
+	      (with-current-buffer work-buffer
 		(if (fboundp 'set-buffer-file-coding-system)
 		    (set-buffer-file-coding-system
 		     (vm-binary-coding-system) t))
@@ -3160,7 +3169,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	  (kill-buffer work-buffer))))
 
     (when child-layout 
-      (vm-decode-mime-layout child-layout))))
+      (vm-decode-mime-layout (or extent child-layout)))))
 
 (defun vm-mime-display-button-message/external-body (layout)
   "Return a button usable for viewing message/external-body MIME parts.
@@ -3194,35 +3203,18 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
       "save to a file\\]"
       "display as text]")
      (function
-      (lambda (xlayout)
-        (setq layout (if vm-xemacs-p
-                         (vm-extent-property xlayout 'vm-mime-layout)
-                       (overlay-get xlayout 'vm-mime-layout)))
-        (let* ((type (vm-mf-external-body-content-type layout))
-               (viewer (vm-mime-find-external-viewer type))
-               (filename (vm-mime-get-parameter layout "name")))
-          (if (car viewer)
-              (progn
-                (message "Viewing %s with %s" filename (car viewer))
-                (start-process (format "Viewing %s" filename)
-                               nil
-                               (car viewer)
-                               filename))
-            (let ((buffer-read-only nil)
-                  (converter (assoc type vm-mime-type-converter-alist)))
-              (if vm-xemacs-p
-                  (delete-region (vm-extent-start-position xlayout)
-                                 (vm-extent-end-position xlayout))
-                (delete-region (overlay-start xlayout) (overlay-end xlayout)))
-              
-              (if converter
-                  (shell-command (concat (caddr converter) " < '" filename "'")
-                                 1)
-                (message "Could not find viewer for type %s!" type)
-                (insert-file-contents filename))))
-          )))
+      (lambda (extent)
+	;; reuse the internal display code, but make sure that no new
+	;; buttons should be created for the external-body content.
+	(let ((layout (if vm-xemacs-p
+                         (vm-extent-property extent 'vm-mime-layout)
+                       (overlay-get extent 'vm-mime-layout)))
+	      (vm-auto-displayed-mime-content-types t)
+	      (vm-auto-displayed-mime-content-type-exceptions nil))
+	  (vm-mime-display-internal-message/external-body 
+	   layout extent))))
      layout
-      nil)))
+     nil)))
 
 
 (defun vm-mime-fetch-url-with-programs (url buffer)
@@ -7528,7 +7520,7 @@ end of the path."
         (vm-mime-map-layout-parts m function (car parts) (cons layout path))
         (setq parts (cdr parts))))))
 
-(defun vm-mime-list-part-structure (&optional verbose)
+(defun vm-list-mime-part-structure (&optional verbose)
   "List mime part structure of the current message."
   (interactive "P")
   (vm-check-for-killed-summary)
@@ -7553,9 +7545,13 @@ end of the path."
                            (if desc (format " desc=%S" desc) ""))
                          (let ((dispo (vm-mm-layout-disposition layout)))
                            (if dispo (format " %S" dispo) "")))))))))
+(defalias 'vm-mime-list-part-structure
+  'vm-list-mime-part-structure)
+(make-obsolete 'vm-mime-list-part-structure
+	       'vm-list-mime-part-structure "8.2.0")
 
 ;;;###autoload
-(defun vm-mime-nuke-alternative-text/html-internal (m)
+(defun vm-nuke-alternative-text/html-internal (m)
   "Delete all text/html parts of multipart/alternative parts of message M.
 Returns the number of deleted parts.  text/html parts are only deleted iff
 the first sub part of a multipart/alternative is a text/plain part."
@@ -7596,7 +7592,7 @@ the first sub part of a multipart/alternative is a text/plain part."
     deleted-count))
 
 ;;;###autoload
-(defun vm-mime-nuke-alternative-text/html (&optional count mlist)
+(defun vm-nuke-alternative-text/html (&optional count mlist)
   "Removes the text/html part of all multipart/alternative message parts.
 
 This is a destructive operation and cannot be undone!"
@@ -7609,7 +7605,7 @@ This is a destructive operation and cannot be undone!"
     (vm-retrieve-operable-messages count mlist)
     (save-excursion
       (while mlist
-        (let ((count (vm-mime-nuke-alternative-text/html-internal (car mlist))))
+        (let ((count (vm-nuke-alternative-text/html-internal (car mlist))))
           (when (interactive-p)
             (if (= count 0)
                 (message "No text/html parts found.")
@@ -7619,6 +7615,10 @@ This is a destructive operation and cannot be undone!"
   (when (interactive-p)
     (vm-discard-cached-data count)
     (vm-preview-current-message)))
+(defalias 'vm-mime-nuke-alternative-text/html
+  'vm-nuke-alterantive-text/html)
+(make-obsolete 'vm-mime-nuke-alternative-text/html
+	       'vm-nuke-alternative-text/html "8.2.0")
 
 ;;-----------------------------------------------------------------------------
 ;; The following functions are taken from vm-pine.el

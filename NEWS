@@ -28,14 +28,23 @@ VM 8.2.0b (2011-02-28)
      headers, ignoring the vm-forwarded-headers and
      vm-unforwarded-header-regexp settings.
 
+   * The command `vm-flag-message-read' (.) introduced in 8.1.93a is
+     renamed to `vm-mark-message-read' for consistency of terminology.
+
   IMPROVEMENTS
+
+   * Better support for message/external-body MIME type, with
+     external-bodies loaded on demand.  If you have this in
+     `vm-auto-displayed-mime-content-types', you can remove it to
+     access the new functionality.
+
+   * Newly documented commands: `[' (`vm-previous-attachment') and `]'
+     (`vm-next-attachment') allow navigation inside message
+     presentation buffers.
 
    * New command: `!' (`vm-toggle-flag-message') allows you to flag a
      message as being important.  This adds a "!" mark in the Summary
      line for the message and highlights it with the high-priority face.
-
-   * The command `vm-flag-message-read' (.) introduced in 8.1.93a is
-     renamed to `vm-mark-message-read' for consistency of terminology.
 
    * New variable: `vm-summary-visible' specifies which messages
      should remain visible in folded thread summaries.

@@ -4758,7 +4758,7 @@ function is expected to subsume all of it."
   :type '(choice (const :tag "None" nil) 
 		'function))
 
-(defcustom vm-mime-deleted-object-label "[Deleted %f (%d;%t)]\n"
+(defcustom vm-mime-deleted-object-label "[Deleted %f (%t)]\n"
   "*The label that will be inserted instead of the original mime object.
 See `vm-mime-compile-format-1' for valid format specifiers."
   :group 'vm-mime
