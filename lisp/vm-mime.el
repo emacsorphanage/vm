@@ -2098,9 +2098,17 @@ that recipient is outside of East Asia."
         (if (= (length ooo) 2)
             (if (search-forward-regexp "\n\n" (point-max) t)
                 (delete-region (point-min) (match-beginning 0)))
-	  (let ((coding-system-for-write 'binary))
-	    (setq ex (call-process-region (point-min) (point-max) shell-file-name
-                                        t t nil shell-command-switch (nth 2 ooo)))))
+	  ;; it is arguable that if the type to be converted is text,
+	  ;; we should convert from the object's native encoding to
+	  ;; the default encoding. However, converting from text is
+	  ;; likely to be rare, so we'll have that argument another
+	  ;; time.  JCB, 2011-02-04
+	  (let ((coding-system-for-write 'binary)
+		(coding-system-for-read 'binary)
+		)
+	    (setq ex (call-process-region 
+		      (point-min) (point-max) shell-file-name
+		      t t nil shell-command-switch (nth 2 ooo)))))
 	(if (not (eq ex 0))
 	    (progn
               (switch-to-buffer work-buffer)
@@ -2111,27 +2119,46 @@ that recipient is outside of East Asia."
               (sit-for 5)
 	      (throw 'done nil)))
 	(goto-char (point-min))
-	(insert "Content-Type: " (nth 1 ooo) "\n")
-	(insert "Content-Transfer-Encoding: binary\n\n")
-	(set-buffer-modified-p nil)
-	(message "Converting %s to %s... done"
-		 (car (vm-mm-layout-type layout))
-		 (nth 1 ooo))
-	(vector (append (list (nth 1 ooo)) (cdr (vm-mm-layout-type layout)))
-		(append (list (nth 1 ooo)) (cdr (vm-mm-layout-type layout)))
-		"binary"
-		(vm-mm-layout-id layout)
-		(vm-mm-layout-description layout)
-		(vm-mm-layout-disposition layout)
-		(vm-mm-layout-qdisposition layout)
-		(vm-marker (point-min))
-		(vm-marker (1- (point)))
-		(vm-marker (point))
-		(vm-marker (point-max))
-		nil
-		(vm-mime-make-cache-symbol)
-		(vm-mime-make-message-symbol (vm-mm-layout-message layout))
-		nil t )))))
+	;; if the to-type is text, then we will assume that the conversion
+	;; process output text in the default encoding.
+	;; Really we ought to look at process-coding-system-alist etc,
+	;; but I suspect that this is rarely used, and will become even
+	;; less used as utf-8 becomes universal.  JCB, 2011-02-04
+	(let* ((coding (coding-system-change-eol-conversion
+			buffer-file-coding-system nil))
+	       (charset (cadr (assq coding 
+				    vm-mime-mule-coding-to-charset-alist))))
+	  (insert "Content-Type: " (nth 1 ooo) 
+		  (if (string-match "^text" (nth 1 ooo))
+		      (concat "; charset=" charset)
+		    "")
+		  "\n")
+	  (insert "Content-Transfer-Encoding: binary\n\n")
+	  (set-buffer-modified-p nil)
+	  (message "Converting %s to %s... done"
+		   (car (vm-mm-layout-type layout))
+		   (nth 1 ooo))
+	  ;; irritatingly, we need to set the coding system here as well
+	  (vector
+	   (append (list (nth 1 ooo))
+		   (append (cdr (vm-mm-layout-type layout))
+			   (if (string-match "^text" (nth 1 ooo))
+			       (list (concat 
+				      "charset=" charset)))))
+	   (append (list (nth 1 ooo)) (cdr (vm-mm-layout-type layout)))
+	   "binary"
+	   (vm-mm-layout-id layout)
+	   (vm-mm-layout-description layout)
+	   (vm-mm-layout-disposition layout)
+	   (vm-mm-layout-qdisposition layout)
+	   (vm-marker (point-min))
+	   (vm-marker (1- (point)))
+	   (vm-marker (point))
+	   (vm-marker (point-max))
+	   nil
+	   (vm-mime-make-cache-symbol)
+	   (vm-mime-make-message-symbol (vm-mm-layout-message layout))
+	   nil t ))))))
 
 (defun vm-mime-can-convert-charset (charset)
   (vm-mime-can-convert-charset-0 charset vm-mime-charset-converter-alist))
