@@ -208,6 +208,10 @@ configuration.  "
   (unless (featurep 'latin-unity)
     (eval-after-load "latin-unity" `(vm-update-mime-charset-maps))))
 
+;;----------------------------------------------------------------------------
+;;; MIME layout structs (vm-mm)
+;;----------------------------------------------------------------------------
+
 (defun vm-make-layout (&rest plist)
   (vector
    (plist-get plist 'type)
@@ -299,6 +303,10 @@ freshly parsing the message contents."
 					     (vm-text-of m) t)
 			  'none))))))
 	     (vm-mime-encoded-header-flag-of m))))
+
+;;----------------------------------------------------------------------------
+;;; MIME encoding/decoding
+;;----------------------------------------------------------------------------
 
 (defun vm-mime-Q-decode-region (start end)
   (interactive "r")
@@ -1026,6 +1034,10 @@ previous mime decoding."
       (vm-with-string-as-temp-buffer string 'vm-reencode-mime-encoded-words)
     string ))
 
+;;----------------------------------------------------------------------------
+;;; MIME parsing
+;;----------------------------------------------------------------------------
+
 (fset 'vm-mime-parse-content-header 'vm-parse-structured-header)
 
 (defun vm-mime-get-header-contents (header-name-regexp)
@@ -1362,6 +1374,10 @@ DEFAULT-TRANSFER-ENCODING, unless specified, is assumed to be 7bit.
       'message-symbol (vm-mime-make-message-symbol m)
       )))))
 
+;;----------------------------------------------------------------------------
+;;; MIME layout operations
+;;----------------------------------------------------------------------------
+
 (defun vm-mime-get-xxx-parameter-internal (name param-list)
   "Return the parameter NAME from PARAM-LIST."
   (let ((match-end (1+ (length name)))
@@ -1419,6 +1435,10 @@ shorter pieces, rebuilt it from them."
 (defun vm-mime-set-qparameter (layout param value)
   (setq value (concat "\"" value "\""))
   (vm-mime-set-xxx-parameter param value (cdr (vm-mm-layout-qtype layout))))
+
+;;----------------------------------------------------------------------------
+;;; Working with MIME layouts
+;;----------------------------------------------------------------------------
 
 (defun vm-mime-insert-mime-body (layout)
   "Insert in the current buffer the body of a mime part given by LAYOUT."
@@ -1953,6 +1973,10 @@ that recipient is outside of East Asia."
 
 	"7bit"))))
 
+;;----------------------------------------------------------------------------
+;;; Predicates on MIME types and layouts
+;;----------------------------------------------------------------------------
+
 (defun vm-mime-types-match (type type/subtype)
   (let ((case-fold-search t))
     (cond ((null type/subtype)
@@ -2405,7 +2429,7 @@ overlay of a button in the current buffer, in which case the
       (goto-char (vm-extent-start-position extent))
       ;; if the button is for external-body, use the external-body
       (setq type (downcase (car (vm-mm-layout-type layout))))
-      (when (vm-mime-types-match type "message/external-body")
+      (when (vm-mime-types-match "message/external-body" type)
 	(setq layout (car (vm-mm-layout-parts layout)))))
     (unwind-protect
 	(progn
@@ -2467,7 +2491,7 @@ overlay of a button in the current buffer, in which case the
 				extent
 				(or (vm-mm-layout-display-error layout)
 				    "no external viewer defined for type")))
-		   (if (vm-mime-types-match type "message/external-body")
+		   (if (vm-mime-types-match "message/external-body" type)
 		       (if (null extent)
 			   (vm-mime-display-button-xxxx layout t)
 			 (setq extent nil))
@@ -3089,12 +3113,10 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		 (error (signal 'vm-mime-error
 				(format "%s" (cdr data)))))))))))
 
-
-(defun vm-mime-display-internal-message/external-body (layout
-						       &optional extent)
-  "Display the external-body content described by LAYOUT.  The
-optional argument EXTENT, if present, gives the extent of the MIME
-button that this LAYOUT comes from."
+(defun vm-mime-fetch-message/external-body (layout)
+  "Fetch the external-body content described by LAYOUT and store
+it in an internal buffer.  Update the LAYOUT so that it refers to the
+fetched content."
   (let ((child-layout (car (vm-mm-layout-parts layout)))
 	(access-method (downcase (vm-mime-get-parameter layout "access-type")))
 	ob
@@ -3166,8 +3188,22 @@ button that this LAYOUT comes from."
       (when work-buffer
 	(if child-layout		; refers to work-buffer
 	    (vm-register-folder-garbage 'kill-buffer work-buffer)
-	  (kill-buffer work-buffer))))
+	  (kill-buffer work-buffer))))))
 
+(defun vm-mime-display-external-message/external-body (layout)
+  "Display the external-body content described by LAYOUT."
+  (vm-mime-fetch-message/external-body layout)
+  (let ((child-layout (car (vm-mm-layout-parts layout))))
+    (when child-layout 
+      (vm-mime-display-external-generic child-layout))))
+
+(defun vm-mime-display-internal-message/external-body (layout
+						       &optional extent)
+  "Display the external-body content described by LAYOUT.  The
+optional argument EXTENT, if present, gives the extent of the MIME
+button that this LAYOUT comes from."
+  (vm-mime-fetch-message/external-body layout)
+  (let ((child-layout (car (vm-mm-layout-parts layout))))
     (when child-layout 
       (vm-decode-mime-layout (or extent child-layout)))))
 
@@ -3218,70 +3254,65 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 
 
 (defun vm-mime-fetch-url-with-programs (url buffer)
-  (and
-   (eq t (cond ((if (and (memq 'wget vm-url-retrieval-methods)
-			 (condition-case data
-			     (vm-run-command-on-region (point) (point)
-						       buffer
-						       vm-wget-program
-						       "-q" "-O" "-" url)
-			   (error nil)))
-		    t
-		  (save-excursion
-		    (set-buffer buffer)
-		    (erase-buffer)
-		    nil )))
-	       ((if (and (memq 'w3m vm-url-retrieval-methods)
-			 (condition-case data
-			     (vm-run-command-on-region (point) (point)
-						       buffer
-						       vm-w3m-program
-						       "-dump_source" url)
-			   (error nil)))
-		    t
-		  (save-excursion
-		    (set-buffer buffer)
-		    (erase-buffer)
-		    nil )))
-	       ((if (and (memq 'fetch vm-url-retrieval-methods)
-			 (condition-case data
-			     (vm-run-command-on-region (point) (point)
-						       buffer
-						       vm-fetch-program
-						       "-o" "-" url)
-			   (error nil)))
-		    t
-		  (save-excursion
-		    (set-buffer buffer)
-		    (erase-buffer)
-		    nil )))
-	       ((if (and (memq 'curl vm-url-retrieval-methods)
-			 (condition-case data
-			     (vm-run-command-on-region (point) (point)
-						       buffer
-						       vm-curl-program
-						       url)
-			   (error nil)))
-		    t
-		  (save-excursion
-		    (set-buffer buffer)
-		    (erase-buffer)
-		    nil )))
-	       ((if (and (memq 'lynx vm-url-retrieval-methods)
-			 (condition-case data
-			     (vm-run-command-on-region (point) (point)
-						       buffer
-						       vm-lynx-program
-						       "-source" url)
-			   (error nil)))
-		    t
-		  (save-excursion
-		    (set-buffer buffer)
-		    (erase-buffer)
-		    nil )))))
-   (save-excursion
-     (set-buffer buffer)
-     (not (zerop (buffer-size))))))
+  (when
+      (eq t (cond ((if (and (memq 'wget vm-url-retrieval-methods)
+			    (condition-case data
+				(vm-run-command-on-region 
+				 (point) (point) buffer
+				 vm-wget-program "-q" "-O" "-" url)
+			      (error nil)))
+		       t
+		     (save-excursion
+		       (set-buffer buffer)
+		       (erase-buffer)
+		       nil )))
+		  ((if (and (memq 'w3m vm-url-retrieval-methods)
+			    (condition-case data
+				(vm-run-command-on-region 
+				 (point) (point) buffer
+				 vm-w3m-program "-dump_source" url)
+			      (error nil)))
+		       t
+		     (save-excursion
+		       (set-buffer buffer)
+		       (erase-buffer)
+		       nil )))
+		  ((if (and (memq 'fetch vm-url-retrieval-methods)
+			    (condition-case data
+				(vm-run-command-on-region 
+				 (point) (point) buffer
+				 vm-fetch-program "-o" "-" url)
+			      (error nil)))
+		       t
+		     (save-excursion
+		       (set-buffer buffer)
+		       (erase-buffer)
+		       nil )))
+		  ((if (and (memq 'curl vm-url-retrieval-methods)
+			    (condition-case data
+				(vm-run-command-on-region 
+				 (point) (point) buffer
+				 vm-curl-program url)
+			      (error nil)))
+		       t
+		     (save-excursion
+		       (set-buffer buffer)
+		       (erase-buffer)
+		       nil )))
+		  ((if (and (memq 'lynx vm-url-retrieval-methods)
+			    (condition-case data
+				(vm-run-command-on-region 
+				 (point) (point) buffer
+				 vm-lynx-program "-source" url)
+			      (error nil)))
+		       t
+		     (save-excursion
+		       (set-buffer buffer)
+		       (erase-buffer)
+		       nil )))))
+    (save-excursion
+      (set-buffer buffer)
+      (not (zerop (buffer-size))))))
 
 (defun vm-mime-internalize-local-external-bodies (layout)
   (cond ((vm-mime-types-match "message/external-body"
@@ -3365,34 +3396,41 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 		  (if (null p-total)
 		      nil
 		    (setq p-total (string-to-number p-total))
-		    (if (< p-total 1)
-			(vm-mime-error "message/partial specified part total < 1, %d" p-total))
+		    (when (< p-total 1)
+		      (vm-mime-error 
+		       "message/partial specified part total < 1, %d"
+		       p-total))
 		    (if total
-			(if (not (= total p-total))
-			    (vm-mime-error "message/partial specified total differs between parts, (%d != %d)" p-total total))
+			(unless (= total p-total)
+			  (vm-mime-error 
+			   (concat "message/partial specified total differs "
+				   "between parts, (%d != %d)")
+			   p-total total))
 		      (setq total p-total)))
 		  (setq p-number (vm-mime-get-parameter (car p-list) "number"))
-		  (if (null p-number)
-		      (vm-mime-error
-		       "message/partial message missing number parameter"))
+		  (when (null p-number)
+		    (vm-mime-error
+		     "message/partial message missing number parameter"))
 		  (setq p-number (string-to-number p-number))
-		  (if (< p-number 1)
-		      (vm-mime-error "message/partial part number < 1, %d"
-				     p-number))
-		  (if (and total (> p-number total))
-		      (vm-mime-error "message/partial part number greater than expected number of parts, (%d > %d)" p-number total))
-		  (setq parts (cons (list p-number (car p-list)) parts)
-			p-list (cdr p-list))))
+		  (when (< p-number 1)
+		    (vm-mime-error 
+		     "message/partial part number < 1, %d" p-number))
+		  (when (and total (> p-number total))
+		    (vm-mime-error 
+		     (concat "message/partial part number greater than "
+			     " expected number of parts, (%d > %d)")
+		     p-number total))
+		  (setq parts (cons (list p-number (car p-list)) parts))
+		  (setq p-list (cdr p-list))))
 	      (goto-char (vm-mm-layout-body-end o))))))
-      (if (null total)
-	  (vm-mime-error "total number of parts not specified in any message/partial part"))
+      (when (null total)
+	(vm-mime-error 
+	 "total number of parts not specified in any message/partial part"))
       (setq parts (sort parts
 			(function
-			 (lambda (p q)
-			   (< (car p)
-			      (car q))))))
-      (setq i 0
-	    p-list parts)
+			 (lambda (p q) (< (car p) (car q))))))
+      (setq i 0)
+      (setq p-list parts)
       (while p-list
 	(cond ((< i (car (car p-list)))
 	       (vm-increment i)
@@ -3408,16 +3446,14 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 	(vm-increment i)
 	(setq missing (cons i missing)))
       (if missing
-	  (vm-mime-error "part%s %s%s missing"
-			 (if (cdr missing) "s" "")
-			 (mapconcat
-			  (function identity)
-			  (nreverse (mapcar 'int-to-string
-					    (or (cdr missing) missing)))
-			  ", ")
-			 (if (cdr missing)
-			     (concat " and " (car missing))
-			   "")))
+	  (vm-mime-error 
+	   "part%s %s%s missing"
+	   (if (cdr missing) "s" "")
+	   (mapconcat
+	    (function identity)
+	    (nreverse (mapcar 'int-to-string (or (cdr missing) missing)))
+	    ", ")
+	   (if (cdr missing) (concat " and " (car missing)) "")))
       (set-buffer (generate-new-buffer "assembled message"))
       (if vm-fsfemacs-mule-p
 	  (set-buffer-multibyte nil))	; for new buffer
@@ -4374,6 +4410,10 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
    (function vm-mime-display-generic)
    layout disposable))
 
+;;----------------------------------------------------------------------------
+;;; MIME buttons
+;;----------------------------------------------------------------------------
+
 (defun vm-find-layout-extent-at-point ()
   (cond (vm-fsfemacs-p
 	 (let (o-list o retval (found nil))
@@ -4455,7 +4495,8 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 (defun vm-mime-reader-map-pipe-to-printer ()
   "Print the MIME object at point."
   (interactive)
-  (vm-mime-run-display-function-at-point 'vm-mime-send-body-to-printer))
+  (vm-mime-run-display-function-at-point 
+   'vm-mime-send-body-to-printer))
 
 ;;;###autoload
 (defun vm-mime-reader-map-display-using-external-viewer ()
@@ -4468,13 +4509,15 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 (defun vm-mime-reader-map-display-using-default ()
   "Display the MIME object at point using the `default' face."
   (interactive)
-  (vm-mime-run-display-function-at-point 'vm-mime-display-body-as-text))
+  (vm-mime-run-display-function-at-point 
+   'vm-mime-display-body-as-text))
 
 ;;;###autoload
 (defun vm-mime-reader-map-display-object-as-type ()
   "Display the MIME object at point as some other type."
   (interactive)
-  (vm-mime-run-display-function-at-point 'vm-mime-display-object-as-type))
+  (vm-mime-run-display-function-at-point 
+   'vm-mime-display-object-as-type))
 
 ;;;###autoload
 (defun vm-mime-action-on-all-attachments 
@@ -4530,16 +4573,19 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
               
               (cond ((or filename
                          (and disposition (string= disposition "attachment"))
-                         (and (not (vm-mime-types-match "message/external-body" type))
+                         (and (not (vm-mime-types-match 
+				    "message/external-body" type))
                               types
                               (vm-mime-is-type-valid type types exceptions)))
                      (when (not quiet)
-                       (message "Action on part type=%s filename=%s disposition=%s"
-                                type filename disposition))
+                       (message 
+			"Action on part type=%s filename=%s disposition=%s"
+			type filename disposition))
                      (funcall action (car mlist) layout type filename))
                     ((not quiet)
-                     (message "No action on part type=%s filename=%s disposition=%s"
-                              type filename disposition)))
+                     (message 
+		      "No action on part type=%s filename=%s disposition=%s"
+		      type filename disposition)))
               (setq parts (cdr parts)))))
         (setq mlist (cdr mlist))))))
 
@@ -4557,6 +4603,10 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
             (setq matched t)
           (setq list (cdr list))))
       matched )))
+
+;;----------------------------------------------------------------------------
+;;; MIME-related commands
+;;----------------------------------------------------------------------------
 
 ;;;###autoload
 (defun vm-delete-all-attachments (&optional count)
@@ -4589,11 +4639,12 @@ are also included."
 (defalias 'vm-mime-delete-all-attachments
   'vm-delete-all-attachments)
 (make-obsolete 'vm-mime-delete-all-attachments
-	       'vm-delete-all-attachments "8.2.0")                                                 
+	       'vm-delete-all-attachments "8.2.0")
+
 ;;;###autoload
 (defun vm-save-all-attachments (&optional count
-                                               directory
-                                               no-delete-after-saving)
+					  directory
+					  no-delete-after-saving)
   "Save all attachments in the next COUNT messages or marked
 messages.  For the purpose of this function, an \"attachment\" is
 a mime part part which has \"attachment\" as its disposition or
@@ -5097,10 +5148,14 @@ confirmed before creating a new directory."
   (let ((layout (vm-extent-property button 'vm-mime-layout))
 	(vm-mime-external-content-type-exceptions nil))
     (goto-char (vm-extent-start-position button))
-    (if (not (vm-mime-find-external-viewer (car (vm-mm-layout-type layout))))
-	(error "No viewer defined for type %s"
-	       (car (vm-mm-layout-type layout)))
-      (vm-mime-display-external-generic layout))))
+    (when (vm-mime-types-match "message/external-body"
+			       (car (vm-mm-layout-type layout)))
+      (vm-mime-fetch-message/external-body layout)
+      (setq layout (car (vm-mm-layout-parts layout))))
+    (if (vm-mime-find-external-viewer (car (vm-mm-layout-type layout)))
+	(vm-mime-display-external-generic layout)
+      (error "No viewer defined for type %s"
+	     (car (vm-mm-layout-type layout))))))
 
 (defun vm-mime-convert-body-then-display (button)
   (let ((layout (vm-mime-convert-undisplayable-layout
