@@ -4381,9 +4381,10 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
       ;; insert the button and correct the image 
       (setq start (point))
       (vm-mime-display-button-xxxx layout t)
-      (if vm-xemacs-p
-          (set-extent-begin-glyph (vm-extent-at start) glyph)
-        (put-text-property start (1+ start) 'display glyph))
+      (when glyph
+	(if vm-xemacs-p
+	    (set-extent-begin-glyph (vm-extent-at start) glyph)
+	  (put-text-property start (1+ start) 'display glyph)))
       ;; force redisplay in original size 
       (put (vm-mm-layout-cache layout)
            'vm-mime-display-internal-image-xxxx
