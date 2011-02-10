@@ -41,7 +41,7 @@
     `(save-current-buffer (set-buffer ,buf) ,@body)))
 
 (unless (fboundp 'defvaralias)
-  (defun defvaralias (&rest args)))
+  (defmacro defvaralias (&rest args)))
 
 (unless (fboundp 'declare-function)
   (defmacro declare-function (fn file &optional arglist fileonly)))
