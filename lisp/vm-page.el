@@ -842,10 +842,12 @@ required, then the entire message is shown directly using
 	   ;; decode-for-preview is meant to allow a numeric
 	   ;; vm-preview-lines to be useful in the face of multipart
 	   ;; messages.
+	   ;; But why restrict the external viewers?  USR, 2011-02-08
 	   (let ((vm-auto-displayed-mime-content-type-exceptions
 		  (cons "message/external-body"
 			vm-auto-displayed-mime-content-type-exceptions))
-		 (vm-mime-external-content-types-alist nil))
+		 ;; (vm-mime-external-content-types-alist nil)
+		 )
 	     (condition-case data
 		 (progn
 		   (vm-decode-mime-message)
