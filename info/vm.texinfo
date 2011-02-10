@@ -3559,22 +3559,26 @@ that those relationships are evident.
 @vindex vm-summary-thread-indent-level
 @vindex vm-summary-maximum-thread-indentation
 To enable and disable threading, type @kbd{C-t}
-(@code{vm-toggle-threads-display}.  In the summary buffer related
-messages are grouped together and the subject part of the summary
-listings of messages are indented to show hierarchical relationships.
+(@code{vm-toggle-threads-display}).  You will find that, in the
+summary buffer, all related messages are grouped together and the
+subject titles are indented to show hierarchical relationships.
 Parent messages are displayed before their children and children are
-indented a default two spaces to the right for each level of descendence
-from their ancestors.  The amount of indentation per level is controlled by the
-variable @code{vm-summary-thread-indent-level}.  The default is two
-spaces.  The variable @code{vm-summary-maximum-thread-indentation}
-says how many levels should be displayed via indentation.  The default
-is 20.
+indented by a default two spaces to the right.  The amount of
+indentation per level is controlled by the variable
+@code{vm-summary-thread-indent-level}.  The default is two spaces.
+The variable @code{vm-summary-maximum-thread-indentation} says how
+many levels should be displayed via indentation.  The default is 20.
 
 @vindex vm-thread-using-subject
-Message relationships are discovered by examining References,
-In-Reply-To, and Subject headers.  The first two headers are more
-reliable sources of information but not all mailers provide them.
-If you don't want VM to use Subject headers, set the variable
+@cindex header: References
+@cindex header: In-Reply-To
+@cindex header: Subject
+Message relationships are discovered by examining the
+@code{References}, @code{In-Reply-To}, and @code{Subject} headers.
+The first two headers are more reliable sources of information but not
+all mailers provide them.  Therefore, all messages with similar
+@code{Subject} headers are also grouped into threads.  If you don't
+want VM to use Subject headers for threading, set the variable
 @code{vm-thread-using-subject} to @code{nil}.
 
 @vindex vm-summary-show-threads
@@ -3598,7 +3602,16 @@ subject, for instance, can be a quick way to find threads with similar
 subject lines.  Sorting them by date would sort them chronologically
 according to when the threads were initiated.  Sorting them activity
 is a variant of the chronological order where the dates of latest
-activity are given prominence instead of the dates of initiation.
+activity are given prominence instead of the dates of the initial
+messages. 
+
+@vindex vm-sort-subthreads
+Normally, thread-based grouping applies to entire threads as well as
+all their subthreads.  You can block subthread grouping by
+setting the variable @code{vm-sort-subthreads} to @code{nil}.  In that
+case, all the internal messages of the threads are sorted by the
+chosen sort order, e.g., by date, author etc. instead of being grouped
+into subthreads.
 
 The value of the variable @code{vm-move-messages-physically} applies
 to threading just as it applies to sorting.

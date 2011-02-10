@@ -3525,14 +3525,25 @@ threading messages."
   :group 'vm-summary
   :type 'boolean)
 
-(defcustom vm-sort-threads-by-youngest-date t
-"*Non-nil values causes VM to sort threads by their youngest date,
-i.e., a thread A will appear before B if the youngest message in the
-thread A is dated before the youngest message in the thread B.  If the
-variable is nil, threads are sorted by their oldest date."
+(defcustom vm-sort-subthreads t
+"*Non-nil values causes VM to sort threads as well as their subthreads
+by chosen sorting criteria.  Nil value causes it to sort all the
+messages in a thread without grouping them into subthreads.  This
+might be useful for very long threads."
   :group 'vm-summary
   :type 'boolean)
 
+;; This variable is not used any more because threads can be sorted by
+;; "activity".  USR, 2011-02-09.
+;; (defcustom vm-sort-threads-by-youngest-date t
+;; "*Non-nil values causes VM to sort threads by their youngest date,
+;; i.e., a thread A will appear before B if the youngest message in the
+;; thread A is dated before the youngest message in the thread B.  If the
+;; variable is nil, threads are sorted by their oldest date."
+;;   :group 'vm-summary
+;;   :type 'boolean)
+(make-obsolete 'vm-sort-threads-by-youngest-date
+	       'vm-sort-messages "8.2.0")
 
 (defcustom vm-summary-uninteresting-senders nil
   "*Non-nil value should be a regular expression that matches

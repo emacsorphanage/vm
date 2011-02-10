@@ -33,6 +33,10 @@ VM 8.2.0b (2011-02-28)
 
   IMPROVEMENTS
 
+   * New variable `vm-sort-subthreads' allows the internal messages of
+     threads to be sorted into subthreads (the default) or via the
+     normal sorting criteria.
+
    * Better support for message/external-body MIME type, with
      external-bodies loaded on demand.  If you have this in
      `vm-auto-displayed-mime-content-types', you can remove it to
@@ -80,6 +84,7 @@ VM 8.1.93a (2010-08-28)
    * Sorting of messages extended to work with threads.  By default,
      threads are sorted by "activity", i.e., the date of their most
      recent activity.  But they can also be sorted by other sort keys.
+     (The variable `vm-sort-threads-by-youngest-date' is now defunct.)
 
    * New feature: thread-folding in the Summary window allows message
      threads to be collapsed into single line summaries.  The

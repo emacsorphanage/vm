@@ -578,19 +578,23 @@ folder in the order in which the messages arrived."
 	    ((eq (car list1) (car list2))
 	     ;; within the same reference thread
 	     (setq list1 (cdr list1) list2 (cdr list2))
-	     (while (and list1 list2)
-	       (setq p1 (car list1) p2 (car list2))
-	       (cond ((null (vm-th-message-of p1))
-		      (setq list1 (cdr list1)))
-		     ((null (vm-th-message-of p2))
-		      (setq list2 (cdr list2)))
-		     ((string-equal p1 p2)
-		      (setq list1 (cdr list1)
-			    list2 (cdr list2)))
-		     (t
-		      (throw 'done 
-			     (cons (vm-th-message-of p1)
-				   (vm-th-message-of p2))))))
+	     (if (not vm-sort-subthreads)
+		 ;; no further sorting for internal messages of threads
+		 (when (and list1 list2)
+		   (throw 'done (cons m1 m2)))
+	       (while (and list1 list2)
+		 (setq p1 (car list1) p2 (car list2))
+		 (cond ((null (vm-th-message-of p1))
+			(setq list1 (cdr list1)))
+		       ((null (vm-th-message-of p2))
+			(setq list2 (cdr list2)))
+		       ((string-equal p1 p2)
+			(setq list1 (cdr list1)
+			      list2 (cdr list2)))
+		       (t
+			(throw 'done 
+			       (cons (vm-th-message-of p1)
+				     (vm-th-message-of p2)))))))
 	     (cond (list1 nil)			; list2=nil, m2 ancestor of m1
 		   (list2 t)			; list1=nil, m1 ancestor of m2
 		   ((not (eq (vm-thread-symbol m1) ; m1 and m2 different
