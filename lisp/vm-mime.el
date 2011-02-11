@@ -2162,7 +2162,8 @@ assuming that it is text."
 		      (and coding
 			   (not (memq (vm-coding-system-name-no-eol coding)
 				      '(raw-text no-conversion))))))))
-    (setq coding-system (nth n coding-systems))
+    (when n
+      (setq coding-system (nth n coding-systems)))
     ;; If no informative coding-system detected then use the default
     ;; buffer-file-coding-system 
     (when (or (null coding-system)
