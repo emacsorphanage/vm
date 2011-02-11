@@ -1269,6 +1269,7 @@ attributes, adding/deleting labels etc."
 
 (defvar vm-postponed-folder)
 
+;;;###autoload
 (defun vm-update-draft-count ()
   "Check number of postponed messages in folder `vm-postponed-folder'."
   (let ((f (expand-file-name vm-postponed-folder vm-folder-directory)))
@@ -1280,6 +1281,7 @@ attributes, adding/deleting labels etc."
           (setq vm-ml-draft-count (format "%d postponed"
                                           (vm-count-messages-in-file f))))))))
 
+;;;###autoload
 (defun vm-session-initialization ()
   "If this is the first time VM has been run in this Emacs session,
 do some necessary preparations.  Otherwise, update the count of
