@@ -50,7 +50,6 @@
 			&rest function-arguments))
 (declare-function set-itimer-restart "vm-xemacs" (itimer restart))
 (declare-function find-coding-system "vm-xemacs" (coding-system-or-name))
-(declare-function coding-system-name "vm-xemacs" (coding-system))
 (declare-function latin-unity-representations-feasible-region 
 		  "vm-xemacs" (start end))
 (declare-function latin-unity-representations-present-region 
@@ -108,16 +107,6 @@
   (defvar latin-unity-character-sets)
   (defvar coding-system-list))
 
-;; Wrapper for coding-system-p:
-;; The XEmacs function expects a coding-system object as its argument,
-;; the GNU Emacs function expects a symbol.
-;; In the non-MULE case, return nil (is this the right fallback?).
-(defun vm-coding-system-p (name)
-  (cond (vm-xemacs-mule-p
-	 (coding-system-p (find-coding-system name)))
-	(vm-fsfemacs-mule-p
-	 (coding-system-p name))))
-
 (defun vm-get-coding-system-priorities ()
   "Return the value of `vm-coding-system-priorities', or a reasonable
 default for it if it's nil.  "
@@ -136,11 +125,11 @@ default for it if it's nil.  "
   ;; have aliases that correspond to MIME charset names.
   (let ((tmp nil))
     (cond (vm-fsfemacs-mule-p
-	   (cond ((coding-system-p (setq tmp (intern (downcase charset))))
+	   (cond ((vm-coding-system-p (setq tmp (intern (downcase charset))))
 		   tmp)
-		  ((eq charset "us-ascii")
+		  ((equal charset "us-ascii")
 		   'raw-text)
-		  ((eq charset "unknown")
+		  ((equal charset "unknown")
 		   'iso-8859-1)
 		  (t 'undecided)))
 	  (t
@@ -5315,7 +5304,7 @@ Returns non-NIL value M is a plain message."
   "Can the current TTY correctly display the given MIME character set?"
   (and (fboundp 'console-tty-output-coding-system)
        ;; Is this check too paranoid?
-       (coding-system-p (console-tty-output-coding-system))
+       (vm-coding-system-p (console-tty-output-coding-system))
        (fboundp 'coding-system-get)
        (let
 	   ;; Nnngh, latin-unity-base-name isn't doing the right thing for
@@ -5325,7 +5314,7 @@ Returns non-NIL value M is a plain message."
 	   ;; The intention is that ourtermcs is the version of the
 	   ;; coding-system without line-ending information attached to its
 	   ;; end.
-	   ((ourtermcs (coding-system-name
+	   ((ourtermcs (vm-coding-system-name
                         (or (car 
                              (coding-system-get
                               (console-tty-output-coding-system)

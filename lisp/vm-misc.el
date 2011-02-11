@@ -26,6 +26,9 @@
 ;; (eval-when-compile
 ;;   (require 'vm-misc))
 
+;; vm-xemacs.el is a fake file to fool the Emacs 23 compiler
+(declare-function find-coding-system "vm-xemacs" (coding-system-or-name))
+
 ;; Aliases for xemacs functions
 (declare-function xemacs-abbreviate-file-name "vm-misc.el" 
 		  (filename &optional hack-homedir))
@@ -1162,10 +1165,20 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       ((fboundp 'find-charset-region)
        (fset 'vm-charsets-in-region 'find-charset-region)))
 
+;; Wrapper for coding-system-p:
+;; The XEmacs function expects a coding-system object as its argument,
+;; the GNU Emacs function expects a symbol.
+;; In the non-MULE case, return nil (is this the right fallback?).
+(defun vm-coding-system-p (name)
+  (cond (vm-xemacs-mule-p
+	 (coding-system-p (find-coding-system name)))
+	(vm-fsfemacs-mule-p
+	 (coding-system-p name))))
+
 (cond ((fboundp 'coding-system-name)
        (fset 'vm-coding-system-name 'coding-system-name))
       (t
-       (fset 'vm-coding-system-name 'symbol-name)))
+       (fset 'vm-coding-system-name 'identity)))
 
 (defun vm-get-file-line-ending-coding-system (file)
   (if (not (or vm-fsfemacs-mule-p vm-xemacs-mule-p vm-xemacs-file-coding-p))
