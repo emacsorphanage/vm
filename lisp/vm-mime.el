@@ -2150,18 +2150,21 @@ that recipient is outside of East Asia."
   "Finds an appropriate MIME character set for the current buffer,
 assuming that it is text."
   (let ((coding-systems (detect-coding-region (point-min) (point-max)))
-	(coding-system nil) (coding nil) (charset nil))
+	(coding-system nil) (n nil))
     ;; XEmacs returns a single coding-system sometimes
     (unless (listp coding-systems)
       (setq coding-systems (list coding-systems)))
     ;; Skip over the uninformative coding-systems
-    (setq coding-system
+    (setq n
 	  (vm-find coding-systems
 		   (function 
 		    (lambda (coding)
 		      (and coding
 			   (not (memq (vm-coding-system-name-no-eol coding)
 				      '(raw-text no-conversion))))))))
+    (setq coding-system (nth n coding-systems))
+    ;; If no informative coding-system detected then use the default
+    ;; buffer-file-coding-system 
     (when (or (null coding-system)
 	      (eq (vm-coding-system-name-no-eol coding-system) 'undecided))
       (setq coding-system buffer-file-coding-system))
