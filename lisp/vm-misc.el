@@ -1180,6 +1180,13 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (t
        (fset 'vm-coding-system-name 'identity)))
 
+(if (fboundp 'coding-system-name)
+    (defun vm-coding-system-name-no-eol (coding-system)
+      (coding-system-name
+       (coding-system-change-eol-conversion coding-system nil)))
+  (defun vm-coding-system-name-no-eol (coding-system)
+    (coding-system-change-eol-conversion coding-system nil)))
+
 (defun vm-get-file-line-ending-coding-system (file)
   (if (not (or vm-fsfemacs-mule-p vm-xemacs-mule-p vm-xemacs-file-coding-p))
       nil

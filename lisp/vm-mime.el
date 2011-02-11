@@ -2113,12 +2113,9 @@ that recipient is outside of East Asia."
 	;; Really we ought to look at process-coding-system-alist etc,
 	;; but I suspect that this is rarely used, and will become even
 	;; less used as utf-8 becomes universal.  JCB, 2011-02-04
-	(let* ((coding (coding-system-change-eol-conversion
-			buffer-file-coding-system nil))
-	       (charset (cadr (assq coding 
-				    vm-mime-mule-coding-to-charset-alist))))
+	(let* ((charset (vm-mime-find-charset-for-binary-buffer)))
 	  (insert "Content-Type: " (nth 1 ooo) 
-		  (if (string-match "^text" (nth 1 ooo))
+		  (if (vm-mime-types-match "text" (nth 1 ooo))
 		      (concat "; charset=" charset)
 		    "")
 		  "\n")
@@ -2131,7 +2128,7 @@ that recipient is outside of East Asia."
 	  (vector
 	   (append (list (nth 1 ooo))
 		   (append (cdr (vm-mm-layout-type layout))
-			   (if (string-match "^text" (nth 1 ooo))
+			   (if (vm-mime-types-match "text" (nth 1 ooo))
 			       (list (concat 
 				      "charset=" charset)))))
 	   (append (list (nth 1 ooo)) (cdr (vm-mm-layout-type layout)))
@@ -2148,6 +2145,30 @@ that recipient is outside of East Asia."
 	   (vm-mime-make-cache-symbol)
 	   (vm-mime-make-message-symbol (vm-mm-layout-message layout))
 	   nil t ))))))
+
+(defun vm-mime-find-charset-for-binary-buffer ()
+  "Finds an appropriate MIME character set for the current buffer,
+assuming that it is text."
+  (let ((coding-systems (detect-coding-region (point-min) (point-max)))
+	(coding-system nil) (coding nil) (charset nil))
+    ;; XEmacs returns a single coding-system sometimes
+    (unless (listp coding-systems)
+      (setq coding-systems (list coding-systems)))
+    ;; Skip over the uninformative coding-systems
+    (setq coding-system
+	  (vm-find coding-systems
+		   (function 
+		    (lambda (coding)
+		      (and coding
+			   (not (memq (vm-coding-system-name-no-eol coding)
+				      '(raw-text no-conversion))))))))
+    (when (or (null coding-system)
+	      (eq (vm-coding-system-name-no-eol coding-system) 'undecided))
+      (setq coding-system buffer-file-coding-system))
+    (or (cadr (assq (vm-coding-system-name-no-eol coding-system)
+		    vm-mime-mule-coding-to-charset-alist))
+	"us-ascii")))
+    
 
 (defun vm-mime-can-convert-charset (charset)
   (vm-mime-can-convert-charset-0 charset vm-mime-charset-converter-alist))
