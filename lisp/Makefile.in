@@ -164,6 +164,7 @@ auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	echo "(setq features (delete 'vm-autoloads features))" > $@
 	cat $@.tmp >> $@
 	echo "(setq features (delete 'vm-autoloads features))" >> $@
+	echo "(require 'vm-vars)" >> $@
 	echo "(setq vm-configure-datadir \"${datadir}\")" >> $@
 	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" >> $@
 	$(RM) $@.tmp
