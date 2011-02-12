@@ -135,7 +135,7 @@ default for it if it's nil.  "
 	  (t
 	   (setq tmp (vm-string-assoc charset
 				      vm-mime-mule-charset-to-coding-alist))
-	   (if tmp (cadr tmp) 'undecided))
+	   (if tmp (cadr tmp) nil))
 	  )))
 		  
 
@@ -2072,10 +2072,9 @@ that recipient is outside of East Asia."
       (message "Converting %s to %s..."
 	       (car (vm-mm-layout-type layout))
 	       (nth 1 ooo))
-      (save-excursion
-	(setq work-buffer (vm-make-work-buffer " *mime object*"))
-	(vm-register-message-garbage 'kill-buffer work-buffer)
-	(set-buffer work-buffer)
+      (setq work-buffer (vm-make-work-buffer " *mime object*"))
+      (vm-register-message-garbage 'kill-buffer work-buffer)
+      (with-current-buffer work-buffer
 	;; call-process-region calls write-region.
 	;; don't let it do CR -> LF translation.
 	(setq selective-display nil)
@@ -2092,27 +2091,27 @@ that recipient is outside of East Asia."
 	  ;; the default encoding. However, converting from text is
 	  ;; likely to be rare, so we'll have that argument another
 	  ;; time.  JCB, 2011-02-04
-	  (let ((coding-system-for-write 'binary)
-		(coding-system-for-read 'binary)
-		)
+	  (let ((coding-system-for-write (vm-binary-coding-system))
+		(coding-system-for-read (vm-binary-coding-system)))
 	    (setq ex (call-process-region 
 		      (point-min) (point-max) shell-file-name
 		      t t nil shell-command-switch (nth 2 ooo)))))
-	(if (not (eq ex 0))
-	    (progn
-              (switch-to-buffer work-buffer)
-	      (message "Conversion from %s to %s failed (exit code %s)"
-		       (car (vm-mm-layout-type layout))
-		       (nth 1 ooo)
-		       ex)
-              (sit-for 5)
-	      (throw 'done nil)))
+	(unless (eq ex 0)
+	  (switch-to-buffer work-buffer)
+	  (message "Conversion from %s to %s failed (exit code %s)"
+		   (car (vm-mm-layout-type layout))
+		   (nth 1 ooo)
+		   ex)
+	  (sit-for 5)
+	  (throw 'done nil))
 	(goto-char (point-min))
 	;; if the to-type is text, then we will assume that the conversion
-	;; process output text in the default encoding.
+	;; process outputs text in the default encoding.
 	;; Really we ought to look at process-coding-system-alist etc,
 	;; but I suspect that this is rarely used, and will become even
 	;; less used as utf-8 becomes universal.  JCB, 2011-02-04
+	;; But we will let detect-coding-region do as much work as it
+	;; can.  USR, 2011-02-11
 	(let* ((charset (vm-mime-find-charset-for-binary-buffer)))
 	  (insert "Content-Type: " (nth 1 ooo) 
 		  (if (vm-mime-types-match "text" (nth 1 ooo))
@@ -2125,26 +2124,30 @@ that recipient is outside of East Asia."
 		   (car (vm-mm-layout-type layout))
 		   (nth 1 ooo))
 	  ;; irritatingly, we need to set the coding system here as well
-	  (vector
+	  (vm-make-layout
+	   'type
 	   (append (list (nth 1 ooo))
 		   (append (cdr (vm-mm-layout-type layout))
 			   (if (vm-mime-types-match "text" (nth 1 ooo))
 			       (list (concat 
 				      "charset=" charset)))))
+	   'qtype
 	   (append (list (nth 1 ooo)) (cdr (vm-mm-layout-type layout)))
-	   "binary"
-	   (vm-mm-layout-id layout)
-	   (vm-mm-layout-description layout)
-	   (vm-mm-layout-disposition layout)
-	   (vm-mm-layout-qdisposition layout)
-	   (vm-marker (point-min))
-	   (vm-marker (1- (point)))
-	   (vm-marker (point))
-	   (vm-marker (point-max))
-	   nil
-	   (vm-mime-make-cache-symbol)
+	   'encoding "binary"
+	   'id (vm-mm-layout-id layout)
+	   'description (vm-mm-layout-description layout)
+	   'disposition (vm-mm-layout-disposition layout)
+	   'qdisposition (vm-mm-layout-qdisposition layout)
+	   'header-start (vm-marker (point-min))
+	   'header-end (vm-marker (1- (point)))
+	   'body-start (vm-marker (point))
+	   'body-end (vm-marker (point-max))
+	   'parts nil
+	   'cache (vm-mime-make-cache-symbol)
+	   'message-symbol
 	   (vm-mime-make-message-symbol (vm-mm-layout-message layout))
-	   nil t ))))))
+	   'display-error nil 
+	   'layout-is-converted t ))))))
 
 (defun vm-mime-find-charset-for-binary-buffer ()
   "Finds an appropriate MIME character set for the current buffer,
@@ -2187,6 +2190,9 @@ assuming that it is text."
 	    (t (setq alist (cdr alist)))))
     (and alist (car alist))))
 
+;; This function from VM 7.19 is not being used anywhere.  However,
+;; see vm-mime-charset-convert-region for similar functionality.  
+;; 						   USR, 2011-02-11
 (defun vm-mime-convert-undisplayable-charset (layout)
   (let ((charset (vm-mime-get-parameter layout "charset"))
 	ooo work-buffer)
@@ -2242,27 +2248,35 @@ assuming that it is text."
 
 (defun vm-mime-charset-convert-region (charset b-start b-end)
   (let ((b (current-buffer))
-	start end oldsize work-buffer ooo)
+	start end oldsize work-buffer ooo ex)
     (setq ooo (vm-mime-can-convert-charset charset))
+    (setq work-buffer (vm-make-work-buffer " *mime object*"))
     (unwind-protect
-	(save-excursion
-	  (setq work-buffer (vm-make-work-buffer " *mime object*"))
+	(with-current-buffer work-buffer
 	  (setq oldsize (- b-end b-start))
 	  (set-buffer work-buffer)
 	  (insert-buffer-substring b b-start b-end)
 	  ;; call-process-region calls write-region.
 	  ;; don't let it do CR -> LF translation.
 	  (setq selective-display nil)
-	  (call-process-region (point-min) (point-max) shell-file-name
-			       t t nil shell-command-switch (nth 2 ooo))
-	  (if vm-fsfemacs-mule-p 
-	      (set-buffer-multibyte t))	; is this safe?
+	  (let ((coding-system-for-write (vm-binary-coding-system))
+		(coding-system-for-read (vm-binary-coding-system)))
+	    (setq ex (call-process-region 
+		      (point-min) (point-max) shell-file-name
+		      t t nil shell-command-switch (nth 2 ooo))))
+	  (unless (eq ex 0)
+	    (message "Conversion from %s to %s signalled exit code %s"
+		     (nth 0 ooo) (nth 1 ooo) ex)
+	    (sleep-for 1))
+	  ;; This cannot possibly safe.  USR, 2011-02-11
+	  ;; (if vm-fsfemacs-mule-p 
+	  ;;    (set-buffer-multibyte t))
 	  (setq start (point-min) end (point-max))
-	  (save-excursion
-	    (set-buffer b)
-	    (goto-char b-start)
-	    (insert-buffer-substring work-buffer start end)
-	    (delete-region (point) (+ (point) oldsize)))
+	  (with-current-buffer b
+	    (save-excursion
+	      (goto-char b-start)
+	      (insert-buffer-substring work-buffer start end)
+	      (delete-region (point) (+ (point) oldsize))))
 	  (nth 1 ooo))
       (and work-buffer (kill-buffer work-buffer)))))
 
@@ -2665,6 +2679,8 @@ in the text are highlighted and energized."
 	(progn
 	  (vm-set-mm-layout-display-error
 	   layout (concat "Undisplayable charset: " charset))
+	  (message "%s" (vm-mm-layout-display-error layout))
+	  (sleep-for 2)
 	  nil)
       (vm-mime-insert-mime-body layout)
       (unless (bolp) (insert "\n"))
@@ -5356,7 +5372,7 @@ Returns non-NIL value M is a plain message."
 	     (vm-mime-default-face-charset-p name)))))
 
 (defun vm-mime-charset-internally-displayable-p (name)
-  "Can the given MIME charset be displayed within emacs by by VM?"
+  "Can the given MIME charset be displayed within emacs by VM?"
   (cond ((and vm-xemacs-mule-p (memq (device-type) '(x gtk mswindows)))
 	 (or (vm-mime-charset-to-coding name)
 	     (vm-mime-default-face-charset-p name)))

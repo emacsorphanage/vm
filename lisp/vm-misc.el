@@ -1038,6 +1038,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     filename ))
 
 (defun vm-make-work-buffer (&optional name)
+  "Create a unibyte buffer with NAME for VM to do its work in
+encoding/decoding, conversions, subprocess communication etc."
   (let ((work-buffer (vm-generate-new-unibyte-buffer 
 		      (or name "*vm-workbuf*"))))
     (buffer-disable-undo work-buffer)

@@ -2161,15 +2161,30 @@ display a message properly VM needs to know how to choose a font
 for a given character set.
 
 @vindex vm-mime-default-face-charsets
+@cindex character sets
+@cindex Windows-1252
+@cindex CP1252
+@cindex GB2312
+@cindex ISO-8859-1
+@cindex US-ASCII
 The variable @code{vm-mime-default-face-charsets} tells VM what character
 sets your default face can display.  For most American and European
 users using X Windows, Emacs' default face displays the ISO-8859-1
-and US-ASCII characters, US-ASCII being a subset of ISO-8859-1.  The
-value of @code{vm-mime-default-face-charsets} must be a list of strings
-specifying the character sets that your default face can display.
-This variable is useful for making bogus, unregistered character sets
-that are slight variants of ISO-8859-1 visible.
-Example:
+and US-ASCII characters, US-ASCII being a subset of ISO-8859-1.
+Additional character sets can be included if you think that the
+messages only contain characters that your system can display.  For
+example, messages sent by a Chinese sender might declare the character
+set to be GB2312 but the message might contain only English characters
+that you might be able to display and read.  Messages sent by Microsoft
+Windows users might declare the character set to be Windows-1252 or
+CP1252, but the majority of the characters might be in ISO-8859-1.  By
+including such character sets in @code{vm-mime-default-face-charsets},
+you might be able to view the majority of the characters even if your
+system cannot fully handle the character set.
+
+The value of @code{vm-mime-default-face-charsets} must be a list of
+strings specifying the character sets that your default face can
+display.  Example:
 
 @example
 (add-to-list 'vm-mime-default-face-charsets "Windows-1251")
@@ -2177,15 +2192,13 @@ Example:
 (add-to-list 'vm-mime-default-face-charsets "Windows-1257")
 @end example
 
-@noindent Messages sent using such character sets would normally be
-considered undisplayable by VM, and a button would be displayed
-that offers to save the message body to a file.
-
-Please note that for character sets listed in this variable, VM's MIME
-decoding is bypassed.  So don't add charsets like \"utf-8\" that require
-additional decoding.
+Note that for character sets listed in this variable, VM's MIME
+decoding is bypassed.  So you should not add charsets like "UTF-8"
+that require additional decoding.
 
 @vindex vm-mime-charset-converter-alist
+@cindex UTF-8
+@cindex ISO-2022-JP
 Sometimes a charset that VM cannot display can be converted to a
 one that VM can display.  An example would be a message encoded
 using UTF-8 but in fact only contains Japanese characters.  In
@@ -2219,17 +2232,20 @@ encoded in @var{END-CHARSET} to appear at the standard output of the
 @var{COMMAND-LINE}.  @var{COMMAND-LINE} is passed to the shell, so you can
 use pipelines, shell variables and redirections.
 
+@cindex iconv
 Example:
 
 @example
 (setq vm-mime-charset-converter-alist
       '(
-         ("utf-8" "iso-2022-jp" "iconv -f utf-8 -t iso-2022-jp")
+         ("utf-8" "iso-2022-jp" "iconv -f utf-8 -t iso-2022-jp -c")
        )
 )
 @end example
 
-The first matching list element will be used.
+The first matching list element will be used.  Be sure to include the
+@code{-c} option so that unconvertible characters are ignored instead
+of causing error messages.
 
 @vindex vm-mime-charset-font-alist
 The variable @code{vm-mime-charset-font-alist} tells VM what font to use 
