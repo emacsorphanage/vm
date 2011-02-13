@@ -65,7 +65,7 @@
 
 (defgroup vm-message-history nil
   "Message history for VM folders."
-  :group 'vm)
+  :group 'vm-ext)
 
 (defcustom vm-message-history-max 32
   "The number of read or previewed messages in each folder's history."

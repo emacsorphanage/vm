@@ -78,7 +78,7 @@
 
 (defgroup vmpc nil
   "Manage personalities and more in VM."
-  :group  'vm)
+  :group  'vm-ext)
 
 (defcustom vmpc-conditions ()
   "*List of conditions which will be checked by pcrisis."
