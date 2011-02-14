@@ -133,6 +133,15 @@ default for it if it's nil.  "
 		   'iso-8859-1)
 		  (t 'undecided)))
 	  (t
+	   ;; What about the case where vm-m-m-c-t-c-a doesn't have an
+	   ;; entry for the given charset? That shouldn't happen, if
+	   ;; vm-mime-mule-coding-to-charset-alist and
+	   ;; vm-mime-mule-charset-to-coding-alist have complete and
+	   ;; matching entries. Admittedly this last is not a
+	   ;; given. Should we make it so on startup? (By setting the
+	   ;; key for any missing entries in
+	   ;; vm-mime-mule-coding-to-charset-alist to being (format
+	   ;; "%s" coding-system), if necessary.) RWF, 2005-03-25
 	   (setq tmp (vm-string-assoc charset
 				      vm-mime-mule-charset-to-coding-alist))
 	   (if tmp (cadr tmp) nil))
@@ -6046,6 +6055,11 @@ COMPOSITION's name will be read from the minibuffer."
 	 (move-overlay overlay (overlay-start overlay) start))))
 
 (defun vm-mime-fake-attachment-overlays (start end)
+  "For all attachments in the region, i.e., pieces of text with
+'vm-mime-object property, create \"fake\" attachment overlays, similar
+to those in a Presentation buffer.  They are \"fake\" in that they
+will never be used for viewing.  They are only used to communicate
+data to the encode-composition code."
   (let ((o-list nil)
 	(done nil)
 	(pos start)
@@ -6199,7 +6213,7 @@ COMPOSITION's name will be read from the minibuffer."
 
 ;;;###autoload
 (defun vm-delete-mime-object (&optional saved-file)
-  "Delete the contents of MIME object referred to by the MIME button at point.
+  "Delete the contents of the MIME object at point.
 The MIME object is replaced by a text/plain object that briefly
 describes what was deleted."
   (interactive)
@@ -6219,14 +6233,16 @@ describes what was deleted."
 	       (setq o (car o-list))
 	       (cond ((setq layout (overlay-get o 'vm-mime-layout))
 		      (setq found t)
-		      (if (and (vm-mm-layout-message layout)
-			       (eq layout
-				   (vm-mime-layout-of
-				    (vm-mm-layout-message layout))))
-			  (error "Can't delete only MIME object; use vm-delete-message instead."))
-		      (if vm-mime-confirm-delete
-			  (or (y-or-n-p (vm-mime-sprintf "Delete %t? " layout))
-			      (error "Aborted")))
+		      (when (and (vm-mm-layout-message layout)
+				 (eq layout
+				     (vm-mime-layout-of
+				      (vm-mm-layout-message layout))))
+			(error (concat "Can't delete the only MIME object; "
+				       "use vm-delete-message instead.")))
+		      (when vm-mime-confirm-delete
+			(unless (y-or-n-p 
+				 (vm-mime-sprintf "Delete %t? " layout))
+			  (error "Aborted")))
 		      (vm-mime-discard-layout-contents layout saved-file)))
 	       (setq o-list (cdr o-list)))
 	     (if (not found)
@@ -6236,7 +6252,8 @@ describes what was deleted."
 	       (save-excursion
 		 (vm-save-restriction
 		  (goto-char (overlay-start o))
-                  (setq label (vm-mime-sprintf vm-mime-deleted-object-label layout))
+                  (setq label (vm-mime-sprintf 
+			       vm-mime-deleted-object-label layout))
 		  (insert label)
 		  (delete-region (point) (overlay-end o)))))))
 	  (vm-xemacs-p
@@ -6244,13 +6261,14 @@ describes what was deleted."
 	     (if (null e)
 		 (error "No MIME button found at point.")
 	       (setq layout (vm-extent-property e 'vm-mime-layout))
-	       (if (and (vm-mm-layout-message layout)
-			(eq layout (vm-mime-layout-of
-				    (vm-mm-layout-message layout))))
-		   (error "Can't delete only MIME object; use vm-delete-message instead."))
-	       (if vm-mime-confirm-delete
-		   (or (y-or-n-p (vm-mime-sprintf "Delete %t? " layout))
-		       (error "Aborted")))
+	       (when (and (vm-mm-layout-message layout)
+			  (eq layout (vm-mime-layout-of
+				      (vm-mm-layout-message layout))))
+		 (error (concat "Can't delete the only MIME object; "
+				"use vm-delete-message instead.")))
+	       (when vm-mime-confirm-delete
+		 (unless (y-or-n-p (vm-mime-sprintf "Delete %t? " layout))
+		   (error "Aborted")))
 	       (let ((inhibit-read-only t)
 		     opos
 		     (buffer-read-only nil))
@@ -6258,7 +6276,8 @@ describes what was deleted."
 		   (vm-save-restriction
 		     (goto-char (vm-extent-start-position e))
 		     (setq opos (point))
-                     (setq label (vm-mime-sprintf vm-mime-deleted-object-label layout))
+                     (setq label (vm-mime-sprintf 
+				  vm-mime-deleted-object-label layout))
 		     (insert label)
 		     (delete-region (point) (vm-extent-end-position e))
 		     (vm-set-extent-endpoints e opos (point)))))
@@ -6483,7 +6502,7 @@ and the approriate content-type and boundary markup information is added."
 ;; vm-mime-fsfemacs-encode-composition as well.
 
 (defun vm-mime-xemacs-encode-composition ()
-  "Encode the current message using MIME.
+  "MIME encode the message composition in the current buffer.
 
 The Multipurpose Internet Message Extensions extend the original format of
 Internet mail to allow non-US-ASCII textual messages, non-textual messages,
@@ -6506,10 +6525,10 @@ message content when it's passed to the MTA (that is, the mail transfer
 agent; under Unix, normally sendmail.)"
   (save-restriction
     (widen)
-    (if (not (eq major-mode 'mail-mode))
-	(error "Command must be used in a VM Mail mode buffer."))
-    (or (null (vm-mail-mode-get-header-contents "MIME-Version:"))
-	(error "Message is already MIME encoded."))
+    (unless (eq major-mode 'mail-mode)
+      (error "Command must be used in a VM Mail mode buffer."))
+    (when (vm-mail-mode-get-header-contents "MIME-Version:")
+      (error "Message is already MIME encoded."))
     (let ((8bit nil)
 	  (just-one nil)
 	  (boundary-positions nil)
@@ -6542,79 +6561,59 @@ agent; under Unix, normally sendmail.)"
 			    (goto-char (vm-extent-end-position (car e-list)))
 			    (looking-at "[ \t\n]*\\'"))))
       (if (null e-list)
+	  ;; no attachments
 	  (progn
 	    (narrow-to-region (point) (point-max))
 	    ;; support enriched-mode for text/enriched composition
-	    (if enriched
-		(let ((enriched-initial-annotation ""))
-		  (enriched-encode (point-min) (point-max))))
+	    (when enriched
+	      (let ((enriched-initial-annotation ""))
+		(enriched-encode (point-min) (point-max))))
             
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
 	    (if vm-xemacs-mule-p
-		(encode-coding-region 
-		 (point-min) (point-max)
-                 
-		 ;; What about the case where vm-m-m-c-t-c-a doesn't have an
-		 ;; entry for the given charset? That shouldn't happen, if
-		 ;; vm-mime-mule-coding-to-charset-alist and
-		 ;; vm-mime-mule-charset-to-coding-alist have complete and
-		 ;; matching entries. Admittedly this last is not a
-		 ;; given. Should we make it so on startup? (By setting the
-		 ;; key for any missing entries in
-		 ;; vm-mime-mule-coding-to-charset-alist to being (format
-		 ;; "%s" coding-system), if necessary.)
-                 
+		(encode-coding-region (point-min) (point-max)
 		 (vm-mime-charset-to-coding charset)))
 
             (enriched-mode -1)
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
-			    (point-min)
-			    (point-max))
-		  encoding (vm-mime-transfer-encode-region encoding
-							   (point-min)
-							   (point-max)
-							   t))
+			    (point-min) (point-max))
+		  encoding (vm-mime-transfer-encode-region 
+			    encoding (point-min) (point-max) t))
 	    (widen)
 	    (vm-remove-mail-mode-header-separator)
 	    (goto-char (point-min))
 	    (vm-reorder-message-headers
-	     nil nil "\\(Content-Type:\\|Content-Transfer-Encoding\\|MIME-Version:\\)")
+	     nil nil 
+	     "\\(Content-Type:\\|Content-Transfer-Encoding\\|MIME-Version:\\)")
 	    (insert "MIME-Version: 1.0\n")
 	    (if enriched
 		(insert "Content-Type: text/enriched; charset=" charset "\n")
 	      (insert "Content-Type: text/plain; charset=" charset "\n"))
 	    (insert "Content-Transfer-Encoding: " encoding "\n")
 	    (vm-add-mail-mode-header-separator))
+	;; attachments to be handled
 	(while e-list
 	  (setq e (car e-list))
 	  (if (or just-one
 		  (save-excursion
 		    (eq (vm-extent-start-position e)
-			(re-search-forward "[ \t\n]*"
-					   (vm-extent-start-position e) t))))
+			(re-search-forward 
+			 "[ \t\n]*" (vm-extent-start-position e) t))))
+	      ;; found an attachment
 	      (delete-region (point) (vm-extent-start-position e))
+	    ;; found text
 	    (narrow-to-region (point) (vm-extent-start-position e))
-	    (if enriched
-		(let ((enriched-initial-annotation ""))
-		  (enriched-encode (point-min) (point-max))))
+	    ;; support enriched-mode for text/enriched composition
+	    (when enriched
+	      (let ((enriched-initial-annotation ""))
+		(enriched-encode (point-min) (point-max))))
 
-	    (setq charset (vm-determine-proper-charset (point-min)
-						       (point-max)))
+	    (setq charset (vm-determine-proper-charset 
+			   (point-min) (point-max)))
 	    (if vm-xemacs-mule-p
 		(encode-coding-region
 		 (point-min) (point-max)
-
-		 ;; What about the case where vm-m-m-c-t-c-a doesn't have an
-		 ;; entry for the given charset? That shouldn't happen, if
-		 ;; vm-mime-mule-coding-to-charset-alist and
-		 ;; vm-mime-mule-charset-to-coding-alist have complete and
-		 ;; matching entries. Admittedly this last is not a
-		 ;; given. Should we make it so on startup? (By setting the
-		 ;; key for any missing entries in
-		 ;; vm-mime-mule-coding-to-charset-alist to being (format
-		 ;; "%s" coding-system), if necessary.)
-
 		 (vm-mime-charset-to-coding charset)))
 
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -6630,8 +6629,8 @@ agent; under Unix, normally sendmail.)"
 	    (if enriched
 		(insert "Content-Type: text/enriched; charset=" charset "\n")
 	      (insert "Content-Type: text/plain; charset=" charset "\n"))
-	    (if description
-		(insert "Content-Description: " description "\n"))
+	    (when description
+	      (insert "Content-Description: " description "\n"))
 	    (insert "Content-Transfer-Encoding: " encoding "\n\n")
 	    (widen))
 	  (goto-char (vm-extent-start-position e))
@@ -6643,15 +6642,14 @@ agent; under Unix, normally sendmail.)"
 		 (insert-buffer-substring object))
 		((listp object)
 		 (save-restriction
-		   (save-excursion (set-buffer (nth 0 object))
-				   (widen))
-		   (setq boundary-positions (cons (point-marker)
-						  boundary-positions))
-		   (insert-buffer-substring (nth 0 object)
-					    (nth 1 object)
-					    (nth 2 object))
-		   (setq postponed-attachment t)
-		   ))
+		   (with-current-buffer (nth 0 object)
+		     (widen))
+		   (setq boundary-positions 
+			 (cons (point-marker) boundary-positions))
+		   (insert-buffer-substring 
+		    (nth 0 object) (nth 1 object) (nth 2 object))
+		   (setq postponed-attachment t)))
+		;; insert the object
 		((stringp object)
 		 (let ((coding-system-for-read
 			(if (vm-mime-text-type-p
@@ -6682,32 +6680,30 @@ agent; under Unix, normally sendmail.)"
 		        (car (vm-extent-property e 'vm-mime-forward-local-refs))
 		    description (vm-extent-property e 'vm-mime-description)
 		    disposition
-		      (if (not
-			   (equal
-			    (car (vm-extent-property e 'vm-mime-disposition))
-			    "unspecified"))
-			  (vm-extent-property e 'vm-mime-disposition)
-			(vm-mm-layout-qdisposition layout)))
+		    (if (not (equal
+			      (car (vm-extent-property e 'vm-mime-disposition))
+			      "unspecified"))
+			(vm-extent-property e 'vm-mime-disposition)
+		      (vm-mm-layout-qdisposition layout)))
 	    (setq type (vm-extent-property e 'vm-mime-type)
 		  params (vm-extent-property e 'vm-mime-parameters)
 		  forward-local-refs
 		      (car (vm-extent-property e 'vm-mime-forward-local-refs))
 		  description (vm-extent-property e 'vm-mime-description)
 		  disposition
-		    (if (not (equal
-			      (car (vm-extent-property e 'vm-mime-disposition))
-			      "unspecified"))
-			(vm-extent-property e 'vm-mime-disposition)
-		      nil)))
+		  (if (not (equal
+			    (car (vm-extent-property e 'vm-mime-disposition))
+			    "unspecified"))
+		      (vm-extent-property e 'vm-mime-disposition)
+		    nil)))
 	  (cond ((vm-mime-types-match "text" type)
 		 (setq encoding
-		       (or
-                        (vm-extent-property e 'vm-mime-encoding)
-                        (vm-determine-proper-content-transfer-encoding
-                         (if already-mimed
-                             (vm-mm-layout-body-start layout)
-                           (point-min))
-                         (point-max)))
+		       (or (vm-extent-property e 'vm-mime-encoding)
+			   (vm-determine-proper-content-transfer-encoding
+			    (if already-mimed
+				(vm-mm-layout-body-start layout)
+			      (point-min))
+			    (point-max)))
 		       encoding (vm-mime-transfer-encode-region
 				 encoding
 				 (if already-mimed
@@ -6718,17 +6714,16 @@ agent; under Unix, normally sendmail.)"
 		 (setq 8bit (or 8bit (equal encoding "8bit"))))
 		((vm-mime-composite-type-p type)
 		 (setq opoint-min (point-min))
-		 (if (not already-mimed)
-		     (progn
-		       (goto-char (point-min))
-		       (insert "Content-Type: " type "\n")
-		       ;; vm-mime-transfer-encode-layout will replace
-		       ;; this if the transfer encoding changes.
-		       (insert "Content-Transfer-Encoding: 7bit\n\n")
-		       (setq layout (vm-mime-parse-entity
-				     nil (list "text/plain" "charset=us-ascii")
-				     "7bit"))
-		       (setq already-mimed t)))
+		 (unless already-mimed
+		   (goto-char (point-min))
+		   (insert "Content-Type: " type "\n")
+		   ;; vm-mime-transfer-encode-layout will replace
+		   ;; this if the transfer encoding changes.
+		   (insert "Content-Transfer-Encoding: 7bit\n\n")
+		   (setq layout (vm-mime-parse-entity
+				 nil (list "text/plain" "charset=us-ascii")
+				 "7bit"))
+		   (setq already-mimed t))
 		 (and layout (not forward-local-refs)
 		      (vm-mime-internalize-local-external-bodies layout))
 		 (setq encoding (vm-mime-transfer-encode-layout layout))
@@ -6743,8 +6738,7 @@ agent; under Unix, normally sendmail.)"
 		     (setq encoding (vm-mime-transfer-encode-layout layout))
 		   (vm-mime-base64-encode-region (point-min) (point-max))
 		   (setq encoding "base64"))))
-	  (if (or just-one postponed-attachment)
-	      nil
+	  (unless (or just-one postponed-attachment)
 	    (goto-char (point-min))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
 	    (if (not already-mimed)
@@ -6761,16 +6755,15 @@ agent; under Unix, normally sendmail.)"
 		    (insert "; " (mapconcat 'identity params "; ") "\n")
 		  (insert ";\n\t" (mapconcat 'identity params ";\n\t") "\n"))
 	      (insert "\n"))
-	    (and description
-		 (insert "Content-Description: " description "\n"))
-	    (if disposition
-		(progn
-		  (insert "Content-Disposition: " (car disposition))
-		  (if (cdr disposition)
-		      (insert ";\n\t" (mapconcat 'identity
-						 (cdr disposition)
-						 ";\n\t")))
-		  (insert "\n")))
+	    (when description
+	      (insert "Content-Description: " description "\n"))
+	    (when disposition
+	      (insert "Content-Disposition: " (car disposition))
+	      (if (cdr disposition)
+		  (insert ";\n\t" (mapconcat 'identity
+					     (cdr disposition)
+					     ";\n\t")))
+	      (insert "\n"))
 	    (insert "Content-Transfer-Encoding: " encoding "\n\n"))
 	  (goto-char (point-max))
 	  (widen)
@@ -6787,26 +6780,25 @@ agent; under Unix, normally sendmail.)"
 	;; extent, if any.
 	(if (or just-one (looking-at "[ \t\n]*\\'"))
 	    (delete-region (point) (point-max))
-	  (if enriched
-	      (let ((enriched-initial-annotation ""))
-		(enriched-encode (point) (point-max))))
+	  ;; support enriched-mode for text/enriched composition
+	  (when enriched
+	    (let ((enriched-initial-annotation ""))
+	      (enriched-encode (point) (point-max))))
 	  (setq charset (vm-determine-proper-charset (point)
 						     (point-max)))
-	  (if vm-xemacs-mule-p
-	      (encode-coding-region
-	       (point) (point-max)
-
-	       ;; What about the case where vm-m-m-c-t-c-a doesn't have an
-	       ;; entry for the given charset? That shouldn't happen, if
-	       ;; vm-mime-mule-coding-to-charset-alist and
-	       ;; vm-mime-mule-charset-to-coding-alist have complete and
-	       ;; matching entries. Admittedly this last is not a
-	       ;; given. Should we make it so on startup? (By setting the
-	       ;; key for any missing entries in
-	       ;; vm-mime-mule-coding-to-charset-alist to being (format "%s"
-	       ;; coding-system), if necessary.)
-
-	       (vm-mime-charset-to-coding charset)))
+	  (when vm-xemacs-mule-p
+	    (encode-coding-region
+	     (point) (point-max)
+	     ;; What about the case where vm-m-m-c-t-c-a doesn't have an
+	     ;; entry for the given charset? That shouldn't happen, if
+	     ;; vm-mime-mule-coding-to-charset-alist and
+	     ;; vm-mime-mule-charset-to-coding-alist have complete and
+	     ;; matching entries. Admittedly this last is not a
+	     ;; given. Should we make it so on startup? (By setting the
+	     ;; key for any missing entries in
+	     ;; vm-mime-mule-coding-to-charset-alist to being (format "%s"
+	     ;; coding-system), if necessary.)
+	     (vm-mime-charset-to-coding charset)))
 
 	  (setq encoding (vm-determine-proper-content-transfer-encoding
 			  (point)
@@ -6821,8 +6813,8 @@ agent; under Unix, normally sendmail.)"
 	  (if enriched
 	      (insert "Content-Type: text/enriched; charset=" charset "\n")
 	    (insert "Content-Type: text/plain; charset=" charset "\n"))
-	  (if description
-	      (insert "Content-Description: " description "\n"))
+	  (when description
+	    (insert "Content-Description: " description "\n"))
 	  (insert "Content-Transfer-Encoding: " encoding "\n\n")
 	  (goto-char (point-max)))
 	(setq boundary (vm-mime-make-multipart-boundary))
@@ -6839,27 +6831,27 @@ agent; under Unix, normally sendmail.)"
 	  (goto-char (car boundary-positions))
 	  (insert "\n--" boundary "\n")
 	  (setq boundary-positions (cdr boundary-positions)))
-	(if (and just-one already-mimed)
-	    (progn
-	      (goto-char (vm-mm-layout-header-start layout))
-	      ;; trim headers
-	      (vm-reorder-message-headers nil '("Content-ID:") nil)
-	      ;; remove header/text separator
-	      (goto-char (vm-mm-layout-header-end layout))
-	      (if (looking-at "\n")
-		  (delete-char 1))
-	      ;; copy remainder to enclosing entity's header section
-	      (goto-char (point-max))
-	      (if (not just-one)
-                  (insert-buffer-substring (current-buffer)
-                                           (vm-mm-layout-header-start layout)
-					   (vm-mm-layout-body-start layout)))
-	      (delete-region (vm-mm-layout-header-start layout)
-			     (vm-mm-layout-body-start layout))))
+	(when (and just-one already-mimed)
+	  (goto-char (vm-mm-layout-header-start layout))
+	  ;; trim headers
+	  (vm-reorder-message-headers nil '("Content-ID:") nil)
+	  ;; remove header/text separator
+	  (goto-char (vm-mm-layout-header-end layout))
+	  (if (looking-at "\n")
+	      (delete-char 1))
+	  ;; copy remainder to enclosing entity's header section
+	  (goto-char (point-max))
+	  (if (not just-one)
+	      (insert-buffer-substring (current-buffer)
+				       (vm-mm-layout-header-start layout)
+				       (vm-mm-layout-body-start layout)))
+	  (delete-region (vm-mm-layout-header-start layout)
+			 (vm-mm-layout-body-start layout)))
 	(goto-char (point-min))
 	(vm-remove-mail-mode-header-separator)
 	(vm-reorder-message-headers
-	 nil nil "\\(Content-Type:\\|MIME-Version:\\|Content-Transfer-Encoding\\)")
+	 nil nil 
+	 "\\(Content-Type:\\|MIME-Version:\\|Content-Transfer-Encoding\\)")
 	(vm-add-mail-mode-header-separator)
 	(insert "MIME-Version: 1.0\n")
 	(if (not just-one)
@@ -6873,18 +6865,17 @@ agent; under Unix, normally sendmail.)"
 		  (insert "; " (mapconcat 'identity params "; ") "\n")
 		(insert ";\n\t" (mapconcat 'identity params ";\n\t") "\n"))
 	    (insert "\n")))
-	(if (and just-one description)
+	(when (and just-one description)
 	    (insert "Content-Description: " description "\n"))
-	(if (and just-one disposition)
-	    (progn
-	      (insert "Content-Disposition: " (car disposition))
-	      (if (cdr disposition)
-		  (if vm-mime-avoid-folding-content-type
-		      (insert "; " (mapconcat 'identity (cdr disposition) "; ")
-			      "\n")
-		    (insert ";\n\t" (mapconcat 'identity (cdr disposition)
-					       ";\n\t") "\n"))
-		(insert "\n"))))
+	(when (and just-one disposition)
+	  (insert "Content-Disposition: " (car disposition))
+	  (if (cdr disposition)
+	      (if vm-mime-avoid-folding-content-type
+		  (insert "; " (mapconcat 'identity (cdr disposition) "; ")
+			  "\n")
+		(insert ";\n\t" (mapconcat 'identity (cdr disposition)
+					   ";\n\t") "\n"))
+	    (insert "\n")))
 	(if just-one
 	    (insert "Content-Transfer-Encoding: " encoding "\n")
 	  (if 8bit
@@ -6894,107 +6885,112 @@ agent; under Unix, normally sendmail.)"
 ;; Non-FSF-Emacs specific changes to this function should be
 ;; made to vm-mime-xemacs-encode-composition as well.
 (defun vm-mime-fsfemacs-encode-composition ()
+  "MIME encode the message composition in the current buffer.  See
+also `vm-mime-xemacs-encode-composition'."
   (save-restriction
     (widen)
-    (if (not (eq major-mode 'mail-mode))
-	(error "Command must be used in a VM Mail mode buffer."))
-    (or (null (vm-mail-mode-get-header-contents "MIME-Version:"))
-	(error "Message is already MIME encoded."))
+    (unless (eq major-mode 'mail-mode)
+      (error "Command must be used in a VM Mail mode buffer."))
+    (when (vm-mail-mode-get-header-contents "MIME-Version:")
+      (error "Message is already MIME encoded."))
     (let ((8bit nil)
 	  (just-one nil)
 	  (boundary-positions nil)
 	  (enriched (and (boundp 'enriched-mode) enriched-mode))
-	  forward-local-refs already-mimed layout o o-list boundary
+	  forward-local-refs already-mimed layout e e-list boundary
 	  type encoding charset params description disposition object
 	  opoint-min delete-object postponed-attachment)
       (goto-char (mail-text-start))
-      (setq o-list (vm-mime-fake-attachment-overlays (point) (point-max))
-	    o-list (vm-delete (function
-			       (lambda (o)
-				 (overlay-get o 'vm-mime-object)))
-			      o-list t)
-	    o-list (sort o-list (function
+      (setq e-list (vm-mime-fake-attachment-overlays (point) (point-max))
+	    e-list (vm-delete (function
+			       (lambda (e)
+				 (vm-extent-property e 'vm-mime-object)))
+			      e-list t)
+	    e-list (sort e-list (function
 				 (lambda (e1 e2)
-				   (< (overlay-end e1)
-				      (overlay-end e2))))))
+				   (< (vm-extent-end-position e1)
+				      (vm-extent-end-position e2))))))
       ;; If there's just one attachment and no other readable
       ;; text in the buffer then make the message type just be
       ;; the attachment type rather than sending a multipart
       ;; message with one attachment
-      (setq just-one (and (= (length o-list) 1)
+      (setq just-one (and (= (length e-list) 1)
 			  (looking-at "[ \t\n]*")
 			  (= (match-end 0)
-			     (overlay-start (car o-list)))
+			     (vm-extent-start-position (car e-list)))
 			  (save-excursion
-			    (goto-char (overlay-end (car o-list)))
+			    (goto-char (vm-extent-end-position (car e-list)))
 			    (looking-at "[ \t\n]*\\'"))))
-      (if (null o-list)
+      (if (null e-list)
+	  ;; no attachments
 	  (progn
 	    (narrow-to-region (point) (point-max))
-	   ;; support enriched-mode for text/enriched composition
-	    (if enriched
-		(let ((enriched-initial-annotation ""))
-		  (enriched-encode (point-min) (point-max) (current-buffer))))
+	    ;; support enriched-mode for text/enriched composition
+	    (when enriched
+	      (let ((enriched-initial-annotation ""))
+		(enriched-encode (point-min) (point-max) (current-buffer))))
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
-	    (if vm-fsfemacs-mule-p
-		(let ((coding-system
-		       (vm-mime-charset-to-coding charset)))
-		  (if (null coding-system)
-		      (error "Can't find a coding system for charset %s"
-			     charset)
-		    (encode-coding-region (point-min) (point-max)
-					  coding-system))))
+	    (when vm-fsfemacs-mule-p
+	      (let ((coding-system
+		     (vm-mime-charset-to-coding charset)))
+		(if (null coding-system)
+		    (error "Can't find a coding system for charset %s"
+			   charset)
+		  (encode-coding-region (point-min) (point-max)
+					coding-system))))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
-			    (point-min)
-			    (point-max))
-		  encoding (vm-mime-transfer-encode-region encoding
-							   (point-min)
-							   (point-max)
-							   t))
+			    (point-min) (point-max))
+		  encoding (vm-mime-transfer-encode-region 
+			    encoding (point-min) (point-max) t))
 	    (widen)
 	    (vm-remove-mail-mode-header-separator)
 	    (goto-char (point-min))
 	    (vm-reorder-message-headers
-	     nil nil "\\(Content-Type:\\|Content-Transfer-Encoding\\|MIME-Version:\\)")
+	     nil nil 
+	     "\\(Content-Type:\\|Content-Transfer-Encoding\\|MIME-Version:\\)")
 	    (insert "MIME-Version: 1.0\n")
 	    (if enriched
 		(insert "Content-Type: text/enriched; charset=" charset "\n")
 	      (insert "Content-Type: text/plain; charset=" charset "\n"))
 	    (insert "Content-Transfer-Encoding: " encoding "\n")
 	    (vm-add-mail-mode-header-separator))
-	(while o-list
-	  (setq o (car o-list))
+	;; attachments to be handled
+	(while e-list
+	  (setq e (car e-list))
 	  (if (or just-one
 		  (save-excursion
-		    (eq (overlay-start o)
-			(re-search-forward "[ \t\n]*" (overlay-start o) t))))
-	      (delete-region (point) (overlay-start o))
-	    (narrow-to-region (point) (overlay-start o))
-	   ;; support enriched-mode for text/enriched composition
-	    (if enriched
-		(let ((enriched-initial-annotation ""))
-		  (save-excursion
-		    ;; insert/delete trick needed to avoid
-		    ;; enriched-mode tags from seeping into the
-		    ;; attachment overlays.  I really wish
-		    ;; front-advance / rear-advance overlay
-		    ;; endpoint properties actually worked.
-		    (goto-char (point-max))
-		    (insert-before-markers "\n")
-		    (enriched-encode (point-min) (1- (point)))
-		    (goto-char (point-max))
-		    (delete-char -1))))
-	    (setq charset (vm-determine-proper-charset (point-min)
-						       (point-max)))
-	    (if vm-fsfemacs-mule-p
-		(let ((coding-system
-		       (vm-mime-charset-to-coding charset)))
-		  (if (null coding-system)
-		      (error "Can't find a coding system for charset %s"
-			     charset)
-		    (encode-coding-region (point-min) (point-max)
-					  coding-system))))
+		    (eq (vm-extent-start-position e)
+			(re-search-forward 
+			 "[ \t\n]*" (vm-extent-start-position e) t))))
+	      ;; found an attachment
+	      (delete-region (point) (vm-extent-start-position e))
+	    ;; found text
+	    (narrow-to-region (point) (vm-extent-start-position e))
+	    ;; support enriched-mode for text/enriched composition
+	    (when enriched
+	      (let ((enriched-initial-annotation ""))
+		(save-excursion
+		  ;; insert/delete trick needed to avoid
+		  ;; enriched-mode tags from seeping into the
+		  ;; attachment overlays.  I really wish
+		  ;; front-advance / rear-advance overlay
+		  ;; endpoint properties actually worked.
+		  (goto-char (point-max))
+		  (insert-before-markers "\n")
+		  (enriched-encode (point-min) (1- (point)))
+		  (goto-char (point-max))
+		  (delete-char -1))))
+	    (setq charset (vm-determine-proper-charset 
+			   (point-min) (point-max)))
+	    (when vm-fsfemacs-mule-p
+	      (let ((coding-system
+		     (vm-mime-charset-to-coding charset)))
+		(if (null coding-system)
+		    (error "Can't find a coding system for charset %s"
+			   charset)
+		  (encode-coding-region 
+		   (point-min) (point-max) coding-system))))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
 			    (point-min)
 			    (point-max))
@@ -7008,14 +7004,15 @@ agent; under Unix, normally sendmail.)"
 	    (if enriched
 		(insert "Content-Type: text/enriched; charset=" charset "\n")
 	      (insert "Content-Type: text/plain; charset=" charset "\n"))
-	    (if description
-		(insert "Content-Description: " description "\n"))
+	    (when description
+	      (insert "Content-Description: " description "\n"))
 	    (insert "Content-Transfer-Encoding: " encoding "\n\n")
 	    (widen))
-	  (goto-char (overlay-start o))
+	  (goto-char (vm-extent-start-position e))
 	  (narrow-to-region (point) (point))
-	  (setq object (overlay-get o 'vm-mime-object))
+	  (setq object (vm-extent-property e 'vm-mime-object))
 	  (setq delete-object nil)
+	  ;; Why is this not a single conditional branch?  USR, 2011-02-14
 	  (cond ((bufferp object)
 		 ;; Under Emacs 20.7 inserting a unibyte buffer
 		 ;; contents that contain 8-bit characters into a
@@ -7026,24 +7023,21 @@ agent; under Unix, normally sendmail.)"
 		 (let ((tempfile (vm-make-tempfile)))
 		   ;; make note to delete the tempfile after insertion
 		   (setq delete-object t)
-		   (save-excursion
-		     (set-buffer object)
+		   (with-current-buffer object
 		     (let ((buffer-file-coding-system
-			       (vm-binary-coding-system)))
+			    (vm-binary-coding-system)))
 		       (write-region (point-min) (point-max) tempfile nil 0))
 		     (setq object tempfile)))))
-          ;; insert attachment from postponed message
+          ;; insert attachment from another folder
           (cond ((listp object)
-                 (save-restriction
-                   (save-excursion (set-buffer (nth 0 object))
-                                   (widen))
-                   (setq boundary-positions (cons (point-marker)
-                                                  boundary-positions))
-                   (insert-buffer-substring (nth 0 object)
-                                            (nth 1 object)
-                                            (nth 2 object))
-                   (setq postponed-attachment t)
-                   )))
+		 (save-restriction
+		   (with-current-buffer (nth 0 object)
+		     (widen))
+		   (setq boundary-positions 
+			 (cons (point-marker) boundary-positions))
+		   (insert-buffer-substring 
+		    (nth 0 object) (nth 1 object) (nth 2 object))
+		   (setq postponed-attachment t))))
 	  ;; insert the object
 	  (cond ((stringp object)
 		 ;; as of FSF Emacs 19.34, even with the hooks
@@ -7057,7 +7051,7 @@ agent; under Unix, normally sendmail.)"
 		 (forward-char -1)
 		 (let ((coding-system-for-read
 			(if (vm-mime-text-type-p
-			     (overlay-get o 'vm-mime-type))
+			     (vm-extent-property e 'vm-mime-type))
 			    (vm-line-ending-coding-system)
 			  (vm-binary-coding-system)))
 		       ;; keep no undos 
@@ -7077,56 +7071,56 @@ agent; under Unix, normally sendmail.)"
 		   (condition-case data
 		       (insert-file-contents object)
 		     (error
-		      (if delete-object
-			  (vm-error-free-call 'delete-file object))
+		      (when delete-object
+			(vm-error-free-call 'delete-file object))
 		      ;; font-lock could signal this error in FSF
 		      ;; Emacs versions prior to 21.0.  Catch it
 		      ;; and ignore it.
-		      (if (equal data '(error "Invalid search bound (wrong side of point)"))
+		      (if (equal data '(error 
+					"Invalid search bound (wrong side of point)"))
 			  nil
 			(signal (car data) (cdr data))))))
-		 (if delete-object
-		     (vm-error-free-call 'delete-file object))
+		 (when delete-object
+		   (vm-error-free-call 'delete-file object))
 		 (goto-char (point-max))
 		 (delete-char -1)))
 	  ;; gather information about the object from the extent.
-	  (if (setq already-mimed (overlay-get o 'vm-mime-encoded))
+	  (if (setq already-mimed (vm-extent-property e 'vm-mime-encoded))
 	      (setq layout (vm-mime-parse-entity
 			    nil (list "text/plain" "charset=us-ascii")
 			    "7bit")
-		    type (or (overlay-get o 'vm-mime-type)
+		    type (or (vm-extent-property e 'vm-mime-type)
 			     (car (vm-mm-layout-type layout)))
-		    params (or (overlay-get o 'vm-mime-parameters)
+		    params (or (vm-extent-property e 'vm-mime-parameters)
 			       (cdr (vm-mm-layout-qtype layout)))
 		    forward-local-refs
-		        (car (overlay-get o 'vm-mime-forward-local-refs))
-		    description (overlay-get o 'vm-mime-description)
+		        (car (vm-extent-property e 'vm-mime-forward-local-refs))
+		    description (vm-extent-property e 'vm-mime-description)
 		    disposition
-		    (if (not
-			 (equal
-			  (car (overlay-get o 'vm-mime-disposition))
-			  "unspecified"))
-			(overlay-get o 'vm-mime-disposition)
+		    (if (not (equal
+			      (car (vm-extent-property e 'vm-mime-disposition))
+			      "unspecified"))
+			(vm-extent-property e 'vm-mime-disposition)
 		      (vm-mm-layout-qdisposition layout)))
-	    (setq type (overlay-get o 'vm-mime-type)
-		  params (overlay-get o 'vm-mime-parameters)
+	    (setq type (vm-extent-property e 'vm-mime-type)
+		  params (vm-extent-property e 'vm-mime-parameters)
 		  forward-local-refs
-		      (car (overlay-get o 'vm-mime-forward-local-refs))
-		  description (overlay-get o 'vm-mime-description)
+		      (car (vm-extent-property e 'vm-mime-forward-local-refs))
+		  description (vm-extent-property e 'vm-mime-description)
 		  disposition
 		  (if (not (equal
-			    (car (overlay-get o 'vm-mime-disposition))
+			    (car (vm-extent-property e 'vm-mime-disposition))
 			    "unspecified"))
-		      (overlay-get o 'vm-mime-disposition)
+		      (vm-extent-property e 'vm-mime-disposition)
 		    nil)))
 	  (cond ((vm-mime-types-match "text" type)
 		 (setq encoding
-                       (or (overlay-get o 'vm-mime-encoding)
-                           (vm-determine-proper-content-transfer-encoding
-                            (if already-mimed
-                                (vm-mm-layout-body-start layout)
-                              (point-min))
-                            (point-max)))
+		       (or (vm-extent-property e 'vm-mime-encoding)
+			   (vm-determine-proper-content-transfer-encoding
+			    (if already-mimed
+				(vm-mm-layout-body-start layout)
+			      (point-min))
+			    (point-max)))
 		       encoding (vm-mime-transfer-encode-region
 				 encoding
 				 (if already-mimed
@@ -7137,17 +7131,16 @@ agent; under Unix, normally sendmail.)"
 		 (setq 8bit (or 8bit (equal encoding "8bit"))))
 		((vm-mime-composite-type-p type)
 		 (setq opoint-min (point-min))
-		 (if (not already-mimed)
-		     (progn
-		       (goto-char (point-min))
-		       (insert "Content-Type: " type "\n")
-		       ;; vm-mime-transfer-encode-layout will replace
-		       ;; this if the transfer encoding changes.
-		       (insert "Content-Transfer-Encoding: 7bit\n\n")
-		       (setq layout (vm-mime-parse-entity
-				     nil (list "text/plain" "charset=us-ascii")
-				     "7bit"))
-		       (setq already-mimed t)))
+		 (unless already-mimed
+		   (goto-char (point-min))
+		   (insert "Content-Type: " type "\n")
+		   ;; vm-mime-transfer-encode-layout will replace
+		   ;; this if the transfer encoding changes.
+		   (insert "Content-Transfer-Encoding: 7bit\n\n")
+		   (setq layout (vm-mime-parse-entity
+				 nil (list "text/plain" "charset=us-ascii")
+				 "7bit"))
+		   (setq already-mimed t))
 		 (and layout (not forward-local-refs)
 		      (vm-mime-internalize-local-external-bodies layout))
 		 (setq encoding (vm-mime-transfer-encode-layout layout))
@@ -7162,8 +7155,7 @@ agent; under Unix, normally sendmail.)"
 		     (setq encoding (vm-mime-transfer-encode-layout layout))
 		   (vm-mime-base64-encode-region (point-min) (point-max))
 		   (setq encoding "base64"))))
-	  (if (or just-one postponed-attachment)
-	      nil
+	  (unless (or just-one postponed-attachment)
 	    (goto-char (point-min))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
 	    (if (not already-mimed)
@@ -7180,46 +7172,45 @@ agent; under Unix, normally sendmail.)"
 		    (insert "; " (mapconcat 'identity params "; ") "\n")
 		  (insert ";\n\t" (mapconcat 'identity params ";\n\t") "\n"))
 	      (insert "\n"))
-	    (and description
-		 (insert "Content-Description: " description "\n"))
-	    (if disposition
-		(progn
-		  (insert "Content-Disposition: " (car disposition))
-		  (if (cdr disposition)
-		      (insert ";\n\t" (mapconcat 'identity
-						 (cdr disposition)
-						 ";\n\t")))
-		  (insert "\n")))
+	    (when description
+	      (insert "Content-Description: " description "\n"))
+	    (when disposition
+	      (insert "Content-Disposition: " (car disposition))
+	      (if (cdr disposition)
+		  (insert ";\n\t" (mapconcat 'identity
+					     (cdr disposition)
+					     ";\n\t")))
+	      (insert "\n"))
 	    (insert "Content-Transfer-Encoding: " encoding "\n\n"))
 	  (goto-char (point-max))
 	  (widen)
 	  (save-excursion
-	    (goto-char (overlay-start o))
+	    (goto-char (vm-extent-start-position e))
 	    (vm-assert (looking-at "\\[ATTACHMENT")))
-	  (delete-region (overlay-start o)
-			 (overlay-end o))
-	  (delete-overlay o)
+	  (delete-region (vm-extent-start-position e)
+			 (vm-extent-end-position e))
+	  (vm-detach-extent e)
 	  (if (looking-at "\n")
 	      (delete-char 1))
-	  (setq o-list (cdr o-list)))
+	  (setq e-list (cdr e-list)))
 	;; handle the remaining chunk of text after the last
 	;; extent, if any.
 	(if (or just-one (looking-at "[ \t\n]*\\'"))
 	    (delete-region (point) (point-max))
 	  ;; support enriched-mode for text/enriched composition
-	  (if enriched
-	      (let ((enriched-initial-annotation ""))
-		(enriched-encode (point) (point-max))))
+	  (when enriched
+	    (let ((enriched-initial-annotation ""))
+	      (enriched-encode (point) (point-max))))
 	  (setq charset (vm-determine-proper-charset (point)
 						     (point-max)))
-	  (if vm-fsfemacs-mule-p
-	      (let ((coding-system
-		     (vm-mime-charset-to-coding charset)))
-		(if (null coding-system)
-		    (error "Can't find a coding system for charset %s"
-			   charset)
-		  (encode-coding-region (point) (point-max)
-					coding-system))))
+	  (when vm-fsfemacs-mule-p
+	    (let ((coding-system
+		   (vm-mime-charset-to-coding charset)))
+	      (if (null coding-system)
+		  (error "Can't find a coding system for charset %s"
+			 charset)
+		(encode-coding-region (point) (point-max)
+				      coding-system))))
 	  (setq encoding (vm-determine-proper-content-transfer-encoding
 			  (point)
 			  (point-max))
@@ -7233,8 +7224,8 @@ agent; under Unix, normally sendmail.)"
 	  (if enriched
 	      (insert "Content-Type: text/enriched; charset=" charset "\n")
 	    (insert "Content-Type: text/plain; charset=" charset "\n"))
-	  (if description
-	      (insert "Content-Description: " description "\n"))
+	  (when description
+	    (insert "Content-Description: " description "\n"))
 	  (insert "Content-Transfer-Encoding: " encoding "\n\n")
 	  (goto-char (point-max)))
 	(setq boundary (vm-mime-make-multipart-boundary))
@@ -7251,27 +7242,27 @@ agent; under Unix, normally sendmail.)"
 	  (goto-char (car boundary-positions))
 	  (insert "\n--" boundary "\n")
 	  (setq boundary-positions (cdr boundary-positions)))
-	(if (and just-one already-mimed)
-	    (progn
-	      (goto-char (vm-mm-layout-header-start layout))
-	      ;; trim headers
-	      (vm-reorder-message-headers nil '("Content-ID:") nil)
-	      ;; remove header/text separator
-	      (goto-char (vm-mm-layout-header-end layout))
-	      (if (looking-at "\n")
-		  (delete-char 1))
-              ;; copy remainder to enclosing entity's header section
-	      (goto-char (point-max))
-	      (if (not just-one)
-                  (insert-buffer-substring (current-buffer)
-                                           (vm-mm-layout-header-start layout)
-                                           (vm-mm-layout-body-start layout)))
-	      (delete-region (vm-mm-layout-header-start layout)
-			     (vm-mm-layout-body-start layout))))
+	(when (and just-one already-mimed)
+	  (goto-char (vm-mm-layout-header-start layout))
+	  ;; trim headers
+	  (vm-reorder-message-headers nil '("Content-ID:") nil)
+	  ;; remove header/text separator
+	  (goto-char (vm-mm-layout-header-end layout))
+	  (if (looking-at "\n")
+	      (delete-char 1))
+	  ;; copy remainder to enclosing entity's header section
+	  (goto-char (point-max))
+	  (if (not just-one)
+	      (insert-buffer-substring (current-buffer)
+				       (vm-mm-layout-header-start layout)
+				       (vm-mm-layout-body-start layout)))
+	  (delete-region (vm-mm-layout-header-start layout)
+			 (vm-mm-layout-body-start layout)))
 	(goto-char (point-min))
 	(vm-remove-mail-mode-header-separator)
 	(vm-reorder-message-headers
-	 nil nil "\\(Content-Type:\\|MIME-Version:\\|Content-Transfer-Encoding\\)")
+	 nil nil 
+	 "\\(Content-Type:\\|MIME-Version:\\|Content-Transfer-Encoding\\)")
 	(vm-add-mail-mode-header-separator)
 	(insert "MIME-Version: 1.0\n")
 	(if (not just-one)
@@ -7285,18 +7276,17 @@ agent; under Unix, normally sendmail.)"
 		  (insert "; " (mapconcat 'identity params "; ") "\n")
 		(insert ";\n\t" (mapconcat 'identity params ";\n\t") "\n"))
 	    (insert "\n")))
-	(if (and just-one description)
+	(when (and just-one description)
 	    (insert "Content-Description: " description "\n"))
-	(if (and just-one disposition)
-	    (progn
-	      (insert "Content-Disposition: " (car disposition))
-	      (if (cdr disposition)
-		  (if vm-mime-avoid-folding-content-type
-		      (insert "; " (mapconcat 'identity (cdr disposition) "; ")
-			      "\n")
-		    (insert ";\n\t" (mapconcat 'identity (cdr disposition)
-					       ";\n\t") "\n"))
-		(insert "\n"))))
+	(when (and just-one disposition)
+	  (insert "Content-Disposition: " (car disposition))
+	  (if (cdr disposition)
+	      (if vm-mime-avoid-folding-content-type
+		  (insert "; " (mapconcat 'identity (cdr disposition) "; ")
+			  "\n")
+		(insert ";\n\t" (mapconcat 'identity (cdr disposition)
+					   ";\n\t") "\n"))
+	    (insert "\n")))
 	(if just-one
 	    (insert "Content-Transfer-Encoding: " encoding "\n")
 	  (if 8bit

@@ -2520,13 +2520,13 @@ headers will be used.
 
 @menu
 * Sending Options::     Variables that control mail sending.
-* MIME Composition::    Sending a message using MIME attachments.
+* Sending MIME::    Sending a message using MIME attachments.
 * Replying::            Describes the various ways to reply to a message.
 * Forwarding Messages:: How to forward a message to a third party.
 * Saving copies::       Saving copies of sent mail.
 @end menu
 
-@node Sending Options, MIME Composition, Sending Messages, Sending Messages
+@node Sending Options, Sending MIME, Sending Messages, Sending Messages
 @section Mail Sending Options
 
 As already mentioned, VM uses Emacs @ref{Mail Mode,,,emacs, the Gnu
@@ -2562,8 +2562,8 @@ headers into a particular order before sending.  The order is
 determined by the variable @code{vm-mail-header-order}.
 
 
-@node MIME Composition, Replying, Sending Options, Sending Messages
-@section MIME Composition
+@node Sending MIME, Replying, Sending Options, Sending Messages
+@section Sending MIME
 
 @vindex vm-send-using-mime
 To use VM's MIME composition features, you must have
@@ -2579,7 +2579,7 @@ MIME encode it as necessary.
 * MIME preview::        Previewing a MIME message before sending.
 @end menu
 
-@node MIME attachments, MIME characters, MIME Composition, MIME Composition, 
+@node MIME attachments, MIME characters, Sending MIME, Sending MIME, 
 @unnumberedsec MIME attachments
 
 @kindex C-c C-a
@@ -2617,7 +2617,7 @@ To attach a buffer instead of a file, use @kbd{C-c C-b} (normally
 bound to @code{vm-mime-attach-buffer}.  You must not kill the
 buffer that you attach until after the message has been sent.
 
-@node MIME characters, MIME headers, MIME attachments, MIME Composition
+@node MIME characters, MIME headers, MIME attachments, Sending MIME
 @unnumberedsec MIME characters
 
 @vindex vm-mime-7bit-composition-charset
@@ -2663,7 +2663,7 @@ example, messages with line lengths of 1000 characters or more
 are considered binary, as are messages that contain carriage
 returns (ASCII code 13) or NULs (ASCII code 0).
 
-@node MIME headers, MIME preview, MIME characters, MIME Composition
+@node MIME headers, MIME preview, MIME characters, Sending MIME
 @unnumberedsec MIME headers
 
 The internet standards specify that the header lines of messages should
@@ -2689,7 +2689,7 @@ meant by a ``word'' for VM for the purpose of encoding.  By default, the
 words are those containing any 8 bit character and delimited by white
 space characters.
 
-@node MIME preview, , MIME headers, MIME Composition
+@node MIME preview, , MIME headers, Sending MIME
 @unnumberedsec MIME preview
 
 @kindex C-c C-p
@@ -2715,7 +2715,7 @@ encoded MIME bodies back to tags and you can continue entering
 your composition.
 
 
-@node Replying, Forwarding Messages, MIME Composition, Sending Messages
+@node Replying, Forwarding Messages, Sending MIME, Sending Messages
 @section Replying
 
 @vindex vm-reply-subject-prefix
@@ -5444,6 +5444,8 @@ developers/programmers.
 * User Interaction::      Handling of the user interaction
 * Coding Systems::        How VM handles character coding
 * MIME Display::          How VM displays MIME messages
+* MIME Composition::	  How MIME messages are composed
+* Extents and Overlays::
 @end menu
 
 @node Folder Internals, Message Internals , , Internals
@@ -6497,7 +6499,7 @@ VM decodes such strings using the function @code{decode-coding-string}.
 Conversely, the headers of outgoing messages are encoded using
 @code{encode-coding-string}
 
-@node MIME Display,, Coding Systems, Internals
+@node MIME Display, MIME Composition, Coding Systems, Internals
 @section MIME Display
 
 @inindex vm-decode-mime-layout
@@ -6530,6 +6532,64 @@ is found from
 @code{vm-mime-external-content-types-alist} and it is invoked to
 display the MIME part.
 @end enumerate
+
+@node MIME Composition, Extents and Overlays, MIME Display, Internals
+@section MIME Composition
+
+@node Extents and Overlays,, MIME Composition, Internals
+@section Extents and Overlays
+
+@inindex extents
+@inindex overlays
+XEmacs and GNU Emacs differ in how they represent non-textual
+properties in buffers.  The web page on ``XEmacs vs GNU Emacs''
+describes the situation as follows:
+
+@quotation
+XEmacs uses "extents" to represent all non-textual aspects of buffers;
+GNU Emacs 19 uses two distinct objects, "text properties" and
+"overlays", which divide up the functionality between them. Extents
+are a superset of the union of the functionality of the two GNU Emacs
+data types. The full GNU Emacs 19 interface to text properties and
+overlays is supported in XEmacs (with extents being the underlying
+representation). 
+
+Extents can be made to be copied into strings, and then restored, by
+kill and yank. Thus, one can specify this behavior on either "extents"
+or "text properties", whereas in GNU Emacs 19 text properties always
+have this behavior and overlays never do. 
+@end quotation
+
+The file @code{vm-misc.el} contains definitions whereby both extents
+and overlays can be treated as a single type of ``VM extents''.
+However, this facility is not used uniformly through VM code.  There
+are several functions that have separate versions for XEmacs and GNU
+Emacs (called ``fsfemacs'' in the code).  Ideally they should be
+combined. 
+
+Independently, the XEmacs team has developed the @code{fsf-compat}
+package by which FSF-style overlays are implemented on top of
+extents.  This package is not compatible with the way VM deals with
+the two types.
+
+Some of the major differences between extents and overlays are the
+followoing:
+@enumerate
+@item 
+The beginning and ending of overlays are markers.  This has some
+advantages.  However, if a buffer has many overlays, normal editing
+operations must update all the overlay markers, which can be
+time-consuming.  (This is specifically a problem in the Summary
+buffers which have overlays for each summary line.  To avoid the
+performance problem, all the markers are reset to nil before a summary
+is regenerated and then set to correct positions afterwards.)
+@item
+The GNU Emacs function @code{overlays-at} returns all the overlays
+that are in effect at a point.  To get similar information in XEmacs,
+one needs to search all the extents in the buffer to find the ones
+that are in effect at the point.
+@end enumerate
+
 
 @node Concept Index, Key Index, Internals, Top
 @unnumbered Concept Index
