@@ -789,15 +789,36 @@ that have been used in this folder.  This is used for BABYL folders."
 	       "BABYL OPTIONS:\nVersion: 5\n\037")))
 	  (t ""))))
 
+;; This separator regexp is a bit too permissive.
+;; Jose Manuel Garcia-Patos suggests the following
+;; "^From .+[@]?.+ .+ [+-]?[0-9][0-9][0-9][0-9]$"
+(defvar vm-leading-message-separator-regexp-From_
+  "^From .*[0-9]$"
+  "Regular expression that matches the leading message separator in
+From_ type mail folders.")
+(defvar vm-leading-message-separator-regexp-BellFrom_
+  "^From .*[0-9]$"
+  "Regular expression that matches the leading message separator in
+BellFrom_ type mail folders.")
+(defvar vm-leading-message-separator-regexp-From_-with-Content-Length
+  "\\(^\\|\n+\\)From "
+  "Regular expression that matches the leading message separator in
+From_-with-Content-Length type mail folders.")
+(defvar vm-leading-message-separator-regexp-mmdf
+  "^\001\001\001\001"
+  "Regular expression that matches the leading message separator in
+mmdf_ type mail folders.")
+
+
 (defun vm-find-leading-message-separator ()
   "Find the next leading message separator in a folder.
 Returns non-nil if the separator is found, nil otherwise."
   (cond
    ((eq vm-folder-type 'From_)
-    (let ((reg1 "^From .*[0-9]$")
-	  (case-fold-search nil))
+    (let ((case-fold-search nil))
       (catch 'done
-	(while (re-search-forward reg1 nil 'no-error)
+	(while (re-search-forward  
+		vm-leading-message-separator-regexp-From_ nil 'no-error)
 	  (goto-char (match-beginning 0))
 	  (if (or (< (point) 3)
 		  (equal (char-after (- (point) 2)) ?\n))
@@ -805,23 +826,24 @@ Returns non-nil if the separator is found, nil otherwise."
 	    (forward-char 1)))
 	nil )))
    ((eq vm-folder-type 'BellFrom_)
-    (let ((reg1 "^From .*[0-9]$")
-	  (case-fold-search nil))
-      (if (re-search-forward reg1 nil 'no-error)
+    (let ((case-fold-search nil))
+      (if (re-search-forward 
+	   vm-leading-message-separator-regexp-BellFrom_ nil 'no-error)
 	  (progn
 	    (goto-char (match-beginning 0))
 	    t )
 	nil )))
    ((eq vm-folder-type 'From_-with-Content-Length)
-    (let ((reg1 "\\(^\\|\n+\\)From ")
-	  (case-fold-search nil))
-      (if (re-search-forward reg1 nil 'no-error)
+    (let ((case-fold-search nil))
+      (if (re-search-forward 
+	   vm-leading-message-separator-regexp-From_-with-Content-Length
+	   nil 'no-error)
 	  (progn (goto-char (match-end 1)) t)
 	nil )))
    ((eq vm-folder-type 'mmdf)
-    (let ((reg1 "^\001\001\001\001")
-	  (case-fold-search nil))
-      (if (re-search-forward reg1 nil 'no-error)
+    (let ((case-fold-search nil))
+      (if (re-search-forward 
+	   vm-leading-message-separator-regexp-mmdf nil 'no-error)
 	  (progn
 	    (goto-char (match-beginning 0))
 	    t )
