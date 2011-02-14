@@ -4502,10 +4502,39 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   :type '(repeat (cons (sexp) (face)))
   :group 'vm-summary-faces)
 
+;;---------------------------------------------------------------------------
+;; Color coding
+;;
+;; Face                  light bgd     dark bgd      monochrome
+;; ----                  ---------     --------      ----------
+;;
+;; deleted                grey50        grey70        dim
+;; high-priority          red
+;; low-priority           grey50
+;; marked                 purple        magenta       underlined
+;; new                    blue          cyan          italic
+;; unread                 navy          magenta       italic
+;; saved                  green
+;; replied                grey30
+;; forwarded              grey20
+;; outgoing               grey30 
+;; expanded
+;; collapsed
+;; --------------------------------------------------------------------------
+
+
 (defface vm-summary-selected
-  '((t ;; (:bold on)
-     (:background "grey85")
-     ))
+  '(
+    (((class color) (min-colors 88) (background light))
+     (:background "grey85"))
+    (((class color) (min-colors 88) (background dark))
+     (:background "SlateBlue3"))
+    (((class color) (min-colors 16) (background light))
+     (:background "grey80"))
+    (((class color) (min-colors 16) (background dark))
+     (:background "Blue3"))
+    (t 
+     (:weight bold)))
   "The face used in VM Summary buffers for the selected message."
   :group 'vm-summary-faces)
 
@@ -4513,25 +4542,89 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 (make-obsolete 'vm-summary-selected-face 'vm-summary-selected "8.2.0")
 
 (defface vm-summary-marked
-  '((((type x)) (:foreground "red3")))
+  '(
+    (((class color) (min-colors 88) (background light)) 
+     (:foreground "Purple"))
+    (((class color) (min-colors 88) (background dark))
+     (:foreground "Magenta"))
+    (((class color) (min-colors 16) (background light))
+     (:foreground "Purple"))
+    (((class color) (min-colors 16) (background dark))
+     (:foreground "Magenta"))
+    (((type tty) (class color) (background light)) ; (min-colors 8)
+     (:foreground "Magenta" :weight bold))
+    (((type tty) (class color) (background dark))
+     (:foreground "Magenta" :weight bold))
+    (t (:underline t)))
   "The face used in VM Summary buffers for marked messages."
   :group 'vm-summary-faces)
 
 (put 'vm-summary-marked-face 'face-alias 'vm-summary-marked)
 (make-obsolete 'vm-summary-marked-face 'vm-summary-marked "8.2.0")
 
-(defface vm-summary-deleted
-     (if (featurep 'xemacs)
-	 '((t (:foreground "grey50" :strikethru t)))
-       '((t (:foreground "grey50" :strike-through "grey70"))))
-     "The face used in VM Summary buffers for deleted messages."
-     :group 'vm-summary-faces)
+(if vm-xemacs-p
+    (defface vm-summary-deleted
+      '(
+	(((class color) (background light))
+	 (:foreground "grey50" :strikethru t))
+	(((class color) (background dark))
+	 (:foreground "grey70" :strikethru t))
+	(((type tty) (class color) (background light)) 
+	 (:foreground "yellow"))
+	(((type tty) (class color) (background dark)) 
+	 (:foreground "yellow"))
+	(((class grayscale) (background light))
+	 (:foreground "grey50" :strikethru t))
+	(((class grayscale) (background dark))
+	 (:foreground "grey70" :strikethru t))
+	(((class mono))
+	 (:strikethru t))
+	(((type tty)) 
+	 (:dim t))
+	(t ()))
+      "The face used in VM Summary buffers for deleted messages."
+      :group 'vm-summary-faces)
+  (defface vm-summary-deleted
+    '(
+      (((class color) (min-colors 88) (background light)) 
+       (:foreground "grey50" :strike-through "grey70"))
+      (((class color) (min-colors 88) (background dark)) 
+       (:foreground "grey70" :strike-trhough "grey50"))
+      (((class color) (min-colors 16) (background light)) 
+       (:foreground "grey50" :strike-through "grey70"))
+      (((class color) (min-colors 16) (background dark)) 
+       (:foreground "grey70" :strike-trhough "grey50"))
+      (((type tty) (class color) (background light)) ;  (min-colors 8)
+       (:foreground "yellow"))
+      (((type tty) (class color) (background dark)) 
+       (:foreground "yellow"))
+      (((class grayscale) (background light)) 
+       (:foreground "grey50" :strike-through "grey70"))
+      (((class grayscale) (background dark)) 
+       (:foreground "grey70" :strike-trhough "grey50"))
+      (((class mono))
+       (:strike-through t))
+      (((type tty)) 
+       (:dim t))
+      (t ()))
+    "The face used in VM Summary buffers for deleted messages."
+    :group 'vm-summary-faces))
 
 (put 'vm-summary-deleted-face 'face-alias 'vm-summary-deleted)
 (make-obsolete 'vm-summary-deleted-face 'vm-summary-deleted "8.2.0")
 
 (defface vm-summary-new
-  '((t (:foreground "blue")))
+  '(
+    (((class color) (background light))
+     (:foreground "blue"))
+    (((class color) (background dark))
+     (:foreground "cyan"))
+    (((class grayscale) (background light))
+     (:foreground "DimGray" :slant italic))
+    (((class grayscale) (background dark))
+     (:foreground "LightGray" :slant italic))
+    (t 
+     (:slant italic)))
   "The face used in VM Summary buffers for new messages."
   :group 'vm-summary-faces)
 
@@ -4539,7 +4632,25 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 (make-obsolete 'vm-summary-new-face 'vm-summary-new "8.2.0")
 
 (defface vm-summary-unread
-  '((t (:foreground "blue4")))
+  '(
+    (((class color) (min-colors 88) (background light))
+     (:foreground "blue3"))
+    (((class color) (min-colors 88) (background dark))
+     (:foreground "LightSkyBlue"))
+    (((class color) (min-colors 16) (background light))
+     (:foreground "blue"))
+    (((class color) (min-colors 16) (background dark))
+     (:foreground "magenta"))
+    (((type tty) (class color) (background light)) ;  (min-colors 8)
+     (:foreground "blue"))
+    (((type tty) (class color) (background dark))
+     (:foreground "magenta"))
+    (((class grayscale) (background light))
+     (:foreground "DimGray" :slant italic))
+    (((class grayscale) (background dark))
+     (:foreground "LightGray" :slant italic))
+    (t 
+     (:slant italic)))
   "The face used in VM Summary buffers for unread messages."
   :group 'vm-summary-faces)
 
@@ -4547,7 +4658,17 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 (make-obsolete 'vm-summary-unread-face 'vm-summary-unread "8.2.0")
 
 (defface vm-summary-saved
-  '((t (:foreground "green4")))
+  '(
+    (((class color) (min-colors 88) (background light))
+     (:foreground "green4"))
+    (((class color) (min-colors 88) (background dark))
+     (:foreground "PaleGreen"))
+    (((class color) (min-colors 16) (background light))
+     (:foreground "green"))
+    (((class color) (min-colors 16) (background dark))
+     (:foreground "green"))
+    (((type tty) (class color))
+     (:foreground "green")))
   "The face used in VM Summary buffers for saved messages."
   :group 'vm-summary-faces)
 
@@ -4557,7 +4678,19 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 (make-obsolete 'vm-summary-written 'vm-summary-saved "8.2.0")
 
 (defface vm-summary-replied
-  '((t (:foreground "grey30")))
+  '(
+    (((class color) (min-colors 88) (background light))
+     (:foreground "MediumOrchid4"))
+    (((class color) (min-colors 88) (background dark))
+     (:foreground "plum1"))
+    (((class color) (min-colors 16) (background light))
+     (:foreground "Orchid"))
+    (((class color) (min-colors 16) (background dark))
+     (:foreground "purple"))
+    (((type tty) (class color))
+     (:foreground "magenta"))
+    (t 
+     ()))
   "The face used in VM Summary buffers for replied messages."
   :group 'vm-summary-faces)
 
@@ -4565,7 +4698,23 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 (make-obsolete 'vm-summary-replied-face 'vm-summary-replied "8.2.0")
 
 (defface vm-summary-forwarded
-  '((t (:foreground "grey20")))
+  '(
+    (((class color) (min-colors 88) (background light))
+     (:foreground "MediumOrchid3"))
+    (((class color) (min-colors 88) (background dark))
+     (:foreground "Thistle1"))
+    (((class color) (min-colors 16) (background light))
+     (:foreground "Orchid"))
+    (((class color) (min-colors 16) (background dark))
+     (:foreground "Yellow"))
+    (((type tty) (class color))
+     (:foreground "Yellow"))
+    (((class grayscale) (background light))
+     (:foreground "LightGray"))
+    (((class grayscale) (background dark))
+     (:foreground "DimGray"))
+    (t 
+     ()))
   "The face used in VM Summary buffers for forwarded messages."
   :group 'vm-summary-faces)
 
@@ -4583,7 +4732,13 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 (make-obsolete 'vm-summary-edited-face 'vm-summary-edited "8.2.0")
 
 (defface vm-summary-outgoing
-  '((t (:foreground "grey30")))
+  '(
+    (((class color) (min-colors 16) (background light))
+     (:foreground "grey40"))
+    (((class color) (min-colors 16) (background dark))
+     (:foreground "grey80"))
+    (t 
+     ()))
   "The face used in VM Summary buffers for outgoing messages."
   :group 'vm-summary-faces)
 
@@ -4600,7 +4755,7 @@ expanded threads."
 (make-obsolete 'vm-summary-expanded-face 'vm-summary-expanded "8.2.0")
 
 (defface vm-summary-collapsed
-  '((t (:weight normal :slant oblique)))
+  '((t (:slant oblique)))
   "The face used in VM Summary buffers for the root messages of
 collapsed threads."
   :group 'vm-summary-faces)
@@ -4609,7 +4764,19 @@ collapsed threads."
 (make-obsolete 'vm-summary-collapsed-face 'vm-summary-collapsed "8.2.0")
 
 (defface vm-summary-high-priority
-  '((t (:foreground "red")))
+  '(
+    (((class color) (min-colors 88) (background light))
+     (:foreground "Red1"))
+    (((class color) (min-colors 88) (background dark))
+     (:foreground "LightSalmon"))
+    (((class color) (min-colors 16) (background light))
+     (:foreground "Red"))
+    (((class color) (min-colors 16) (background dark))
+     (:foreground "Pink"))
+    (((type tty) (class color))		;  (min-colors 8)
+     (:foreground "red"))
+    (t
+     (:inverse-video t :weight bold)))
   "The face used in VM Summary buffers for high-priority messages."
   :group 'vm-summary-faces)
 
@@ -4617,7 +4784,24 @@ collapsed threads."
 (make-obsolete 'vm-summary-high-priority-face 'vm-summary-high-priority "8.2.0")
 
 (defface vm-summary-low-priority
-  '((t (:foreground "grey50")))
+  '(
+    (((class color) (background light))
+     (:foreground "grey50"))
+    (((class color) (background dark))
+     (:foreground "grey70"))
+    (((type tty) (class color) (background light)) 
+     (:foreground "yellow"))
+    (((type tty) (class color) (background dark)) 
+     (:foreground "yellow"))
+    (((class grayscale) (background light))
+     (:foreground "grey50"))
+    (((class grayscale) (background dark))
+     (:foreground "grey70"))
+    (((class mono))
+     (:strikethru t))
+    (((type tty)) 
+     (:dim t))
+    (t ()))
   "The face used in VM Summary buffers for low-priority messages."
   :group 'vm-summary-faces)
 
