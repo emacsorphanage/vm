@@ -2519,14 +2519,14 @@ you delete both of those headers.  In that case the To and Cc
 headers will be used.
 
 @menu
-* Sending Options::     Variables that control mail sending.
-* Sending MIME::    Sending a message using MIME attachments.
-* Replying::            Describes the various ways to reply to a message.
-* Forwarding Messages:: How to forward a message to a third party.
-* Saving copies::       Saving copies of sent mail.
+* Sending Options::        Variables that control mail sending.
+* Sending MIME Messages::  Sending a message using MIME attachments.
+* Replying::               Describes the various ways to reply to a message.
+* Forwarding Messages::    How to forward a message to a third party.
+* Saving copies::          Saving copies of sent mail.
 @end menu
 
-@node Sending Options, Sending MIME, Sending Messages, Sending Messages
+@node Sending Options, Sending MIME Messages, Sending Messages, Sending Messages
 @section Mail Sending Options
 
 As already mentioned, VM uses Emacs @ref{Mail Mode,,,emacs, the Gnu
@@ -2562,8 +2562,8 @@ headers into a particular order before sending.  The order is
 determined by the variable @code{vm-mail-header-order}.
 
 
-@node Sending MIME, Replying, Sending Options, Sending Messages
-@section Sending MIME
+@node Sending MIME Messages, Replying, Sending Options, Sending Messages
+@section Sending MIME Messages
 
 @vindex vm-send-using-mime
 To use VM's MIME composition features, you must have
@@ -2579,7 +2579,7 @@ MIME encode it as necessary.
 * MIME preview::        Previewing a MIME message before sending.
 @end menu
 
-@node MIME attachments, MIME characters, Sending MIME, Sending MIME, 
+@node MIME attachments, MIME characters, Sending MIME Messages, Sending MIME Messages, 
 @unnumberedsec MIME attachments
 
 @kindex C-c C-a
@@ -2617,7 +2617,7 @@ To attach a buffer instead of a file, use @kbd{C-c C-b} (normally
 bound to @code{vm-mime-attach-buffer}.  You must not kill the
 buffer that you attach until after the message has been sent.
 
-@node MIME characters, MIME headers, MIME attachments, Sending MIME
+@node MIME characters, MIME headers, MIME attachments, Sending MIME Messages
 @unnumberedsec MIME characters
 
 @vindex vm-mime-7bit-composition-charset
@@ -2663,7 +2663,7 @@ example, messages with line lengths of 1000 characters or more
 are considered binary, as are messages that contain carriage
 returns (ASCII code 13) or NULs (ASCII code 0).
 
-@node MIME headers, MIME preview, MIME characters, Sending MIME
+@node MIME headers, MIME preview, MIME characters, Sending MIME Messages
 @unnumberedsec MIME headers
 
 The internet standards specify that the header lines of messages should
@@ -2689,7 +2689,7 @@ meant by a ``word'' for VM for the purpose of encoding.  By default, the
 words are those containing any 8 bit character and delimited by white
 space characters.
 
-@node MIME preview, , MIME headers, Sending MIME
+@node MIME preview, , MIME headers, Sending MIME Messages
 @unnumberedsec MIME preview
 
 @kindex C-c C-p
@@ -2715,7 +2715,7 @@ encoded MIME bodies back to tags and you can continue entering
 your composition.
 
 
-@node Replying, Forwarding Messages, Sending MIME, Sending Messages
+@node Replying, Forwarding Messages, Sending MIME Messages, Sending Messages
 @section Replying
 
 @vindex vm-reply-subject-prefix
@@ -5445,7 +5445,7 @@ developers/programmers.
 * Coding Systems::        How VM handles character coding
 * MIME Display::          How VM displays MIME messages
 * MIME Composition::	  How MIME messages are composed
-* Extents and Overlays::
+* Extents and Overlays::  How VM deals with XEmacs and GNU Emacs differences
 @end menu
 
 @node Folder Internals, Message Internals , , Internals
@@ -6535,6 +6535,59 @@ display the MIME part.
 
 @node MIME Composition, Extents and Overlays, MIME Display, Internals
 @section MIME Composition
+
+A MIME message is composed just like a normal message.  When objects
+are attached using commands like @code{vm-mime-attach-file},
+attachment buttons are created in the message composition buffer.  An
+attachment button is a region of text that looks like:
+
+@example
+[Attachment FILENAME]
+@end example
+
+@noindent In GNU Emacs, the region of text is given text properties that
+represent the metadata about the object.  In XEmacs, the region of
+text is given an extent, which is then given properties representing
+the metadata.
+
+The following properties are defined:
+
+@itemize
+@item @code{vm-mime-object}
+A string denoting the name of the object.
+@item @code{vm-mime-type}
+A string denoting the MIME type of the object.
+@item @code{vm-mime-description}
+A string for the MIME description of the object.
+@item @code{vm-mime-parameters}
+@item @code{vm-mime-disposition}
+A list describing the MIME disposition
+@item @code{vm-mime-encoded}
+A boolean indicating whether the object is already MIME encoded
+@item @code{vm-mime-encoding}
+The MIME encoding used, if it is already encoded
+@item @code{vm-mime-forward-local-refs}
+@item @code{fontified}
+Standard text property.
+@item @code{duplicable}
+Standard text property in XEmacs.
+@item @code{front-nonsticky} and @code{rear-nonsticky}.  
+Standard stickiness of text properties.
+@end itemize
+
+@inindex vm-mime-fake-attachment-overlays
+In FSF Emacs, the attachment buttons are converted into overlays
+before MIME encoding, in a function called
+@code{vm-mime-fake-attachment-overlays}.  It is not clear why overlays
+weren't used in the first place.  In XEmacs, extents are always used
+with the attachment buttons and no ``fake'' overlays involved.
+
+The functions @code{vm-mime-fsfemacs-encode-composition} and
+@code{vm-mime-xemacs-encode-composition} then encode the composition
+buffer, by picking up each attachment button and replacing it with the
+corresponding object.  Unless the objects were already MIME-encoded,
+they are encoded and made into MIME parts by adding suitable headers.
+
 
 @node Extents and Overlays,, MIME Composition, Internals
 @section Extents and Overlays

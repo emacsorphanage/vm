@@ -416,6 +416,11 @@ vm-mail-buffer variable."
     new-vec))
 
 (defun vm-mapcar (function &rest lists)
+  "Apply function to all the curresponding elements of the remaining
+argument lists.  The results are gathered into a list and returned.  
+
+All the argument lists should be of the same length for this to be
+well-behaved." 
   (let (arglist result)
     (while (car lists)
       (setq arglist (mapcar 'car lists))
@@ -423,14 +428,22 @@ vm-mail-buffer variable."
       (setq lists (mapcar 'cdr lists)))
     (nreverse result)))
 
-(defun vm-mapc (function &rest lists)
+(defun vm-mapc (proc &rest lists)
+  "Apply PROC to all the corresponding elements of the remaining
+argument lists.  Discard any results.
+
+All the argument lists should be of the same length for this to be
+well-behaved." 
   (let (arglist)
     (while (car lists)
       (setq arglist (mapcar 'car lists))
-      (apply function arglist)
+      (apply proc arglist)
       (setq lists (mapcar 'cdr lists)))))
 
 (defun vm-delete (predicate list &optional reverse)
+  "Delete all elements satisfying PREDICATE from LIST and return the
+resulting list.  If optional argument REVERSE is t, then delete all
+elements that do not satisfy PREDICATE."
   (let ((p list) 
 	(reverse (if reverse 'not 'identity))
 	prev)

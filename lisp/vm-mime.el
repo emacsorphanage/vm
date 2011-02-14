@@ -5538,8 +5538,9 @@ this case and not prompt you for it in the minibuffer."
          (completion-ignored-extensions nil)
 	 (charset nil)
 	 description file default-type type)
-     (if (null vm-send-using-mime)
-	 (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
+     (unless vm-send-using-mime
+	 (error (concat "MIME attachments disabled, "
+			"set vm-send-using-mime non-nil to enable.")))
      (setq file (vm-read-file-name "Attach file: "
                                    vm-mime-attachment-source-directory
                                    nil t)
@@ -5550,24 +5551,27 @@ this case and not prompt you for it in the minibuffer."
 			 default-type)
 		 vm-mime-type-completion-alist)
 	   type (if (> (length type) 0) type default-type))
-     (if (vm-mime-types-match "text" type)
-	 (setq charset (completing-read "Character set (default US-ASCII): "
-					vm-mime-charset-completion-alist)
-	       charset (if (> (length charset) 0) charset)))
+     (when (vm-mime-types-match "text" type)
+       (setq charset (completing-read "Character set (default US-ASCII): "
+				      vm-mime-charset-completion-alist)
+	     charset (if (> (length charset) 0) charset)))
      (setq description (read-string "One line description: "))
-     (if (string-match "^[ \t]*$" description)
-	 (setq description nil))
+     (when (string-match "^[ \t]*$" description)
+       (setq description nil))
      (list file type charset description nil)))
-  (if (null vm-send-using-mime)
-      (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
-  (if (file-directory-p file)
-      (error "%s is a directory, cannot attach" file))
-  (if (not (file-exists-p file))
-      (error "No such file: %s" file))
-  (if (not (file-readable-p file))
-      (error "You don't have permission to read %s" file))
-  (and charset (setq charset (list (concat "charset=" charset))))
-  (and description (setq description (vm-mime-scrub-description description)))
+  (unless vm-send-using-mime
+    (error (concat "MIME attachments disabled, "
+		   "set vm-send-using-mime non-nil to enable.")))
+  (when (file-directory-p file)
+    (error "%s is a directory, cannot attach" file))
+  (unless (file-exists-p file)
+    (error "No such file: %s" file))
+  (unless (file-readable-p file)
+    (error "You don't have permission to read %s" file))
+  (when charset 
+    (setq charset (list (concat "charset=" charset))))
+  (when description 
+    (setq description (vm-mime-scrub-description description)))
   (vm-mime-attach-object file type charset description nil))
 
 ;;;###autoload
@@ -5596,8 +5600,9 @@ should use vm-mime-attach-file to attach the file."
    (let ((last-command last-command)
 	 (this-command this-command)
 	 file type default-type)
-     (if (null vm-send-using-mime)
-	 (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
+     (unless vm-send-using-mime
+       (error (concat "MIME attachments disabled, "
+		      "set vm-send-using-mime non-nil to enable.")))
      (setq file (vm-read-file-name "Attach file: "
                                    vm-mime-attachment-source-directory
                                    nil t)
@@ -5609,14 +5614,15 @@ should use vm-mime-attach-file to attach the file."
 		 vm-mime-type-completion-alist)
 	   type (if (> (length type) 0) type default-type))
      (list file type)))
-  (if (null vm-send-using-mime)
-      (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
-  (if (file-directory-p file)
-      (error "%s is a directory, cannot attach" file))
-  (if (not (file-exists-p file))
-      (error "No such file: %s" file))
-  (if (not (file-readable-p file))
-      (error "You don't have permission to read %s" file))
+  (unless vm-send-using-mime
+    (error (concat "MIME attachments disabled, "
+		   "set vm-send-using-mime non-nil to enable.")))
+  (when (file-directory-p file)
+    (error "%s is a directory, cannot attach" file))
+  (unless (file-exists-p file)
+    (error "No such file: %s" file))
+  (unless (file-readable-p file)
+    (error "You don't have permission to read %s" file))
   (vm-mime-attach-object file type nil nil t))
 
 ;;;###autoload
@@ -5654,8 +5660,9 @@ this case and not prompt you for it in the minibuffer."
 	 (this-command this-command)
 	 (charset nil)
 	 description file default-type type buffer buffer-name)
-     (if (null vm-send-using-mime)
-	 (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
+     (unless vm-send-using-mime
+       (error (concat "MIME attachments disabled, "
+		      "set vm-send-using-mime non-nil to enable.")))
      (setq buffer-name (read-buffer "Attach buffer: " nil t)
 	   default-type (or (vm-mime-default-type-from-filename buffer-name)
 			    "application/octet-stream")
@@ -5664,20 +5671,23 @@ this case and not prompt you for it in the minibuffer."
 			 default-type)
 		 vm-mime-type-completion-alist)
 	   type (if (> (length type) 0) type default-type))
-     (if (vm-mime-types-match "text" type)
-	 (setq charset (completing-read "Character set (default US-ASCII): "
-					vm-mime-charset-completion-alist)
-	       charset (if (> (length charset) 0) charset)))
+     (when (vm-mime-types-match "text" type)
+       (setq charset (completing-read "Character set (default US-ASCII): "
+				      vm-mime-charset-completion-alist)
+	     charset (if (> (length charset) 0) charset)))
      (setq description (read-string "One line description: "))
-     (if (string-match "^[ \t]*$" description)
-	 (setq description nil))
+     (when (string-match "^[ \t]*$" description)
+       (setq description nil))
      (list buffer-name type charset description)))
-  (if (null (setq buffer (get-buffer buffer)))
-      (error "Buffer %s does not exist." buffer))
-  (if (null vm-send-using-mime)
-      (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
-  (and charset (setq charset (list (concat "charset=" charset))))
-  (and description (setq description (vm-mime-scrub-description description)))
+  (unless (setq buffer (get-buffer buffer))
+    (error "Buffer %s does not exist." buffer))
+  (unless vm-send-using-mime
+    (error (concat "MIME attachments disabled, "
+		   "set vm-send-using-mime non-nil to enable.")))
+  (when charset 
+    (setq charset (list (concat "charset=" charset))))
+  (when description 
+    (setq description (vm-mime-scrub-description description)))
   (vm-mime-attach-object buffer type charset description nil))
 
 ;;;###autoload
@@ -5719,13 +5729,14 @@ minibuffer if the command is run interactively."
 	 (this-command this-command)
 	 (result 0)
 	 mlist mp default prompt description folder)
-     (if (null vm-send-using-mime)
-	 (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
-     (if current-prefix-arg
-         (setq vm-mail-buffer (vm-read-folder-name)
-               vm-mail-buffer (if (string= vm-mail-buffer "") nil
-                                (setq current-prefix-arg nil)
-                                (get-buffer vm-mail-buffer))))
+     (unless vm-send-using-mime
+       (error (concat "MIME attachments disabled, "
+		      "set vm-send-using-mime non-nil to enable.")))
+     (when current-prefix-arg
+       (setq vm-mail-buffer (vm-read-folder-name)
+	     vm-mail-buffer (if (string= vm-mail-buffer "") nil
+			      (setq current-prefix-arg nil)
+			      (get-buffer vm-mail-buffer))))
      (cond ((or current-prefix-arg (null vm-mail-buffer)
 		(not (buffer-live-p vm-mail-buffer)))
 	    (let ((dir (if vm-folder-directory
@@ -5748,35 +5759,36 @@ minibuffer if the command is run interactively."
 	    (save-excursion
 	      (set-buffer folder)
 	      (setq mlist (vm-select-operable-messages 1 "Attach")))))
-     (if (null mlist)
-	 (save-excursion
-	   (set-buffer folder)
-	   (setq default (and vm-message-pointer
-			      (vm-number-of (car vm-message-pointer)))
-		 prompt (if default
-			    (format "Yank message number: (default %s) "
-				    default)
-			  "Yank message number: "))
-	   (while (zerop result)
-	     (setq result (read-string prompt))
-	     (and (string= result "") default (setq result default))
-	     (setq result (string-to-number result)))
-	   (if (null (setq mp (nthcdr (1- result) vm-message-list)))
-	       (error "No such message."))))
+     (when (null mlist)
+       (save-excursion
+	 (set-buffer folder)
+	 (setq default (and vm-message-pointer
+			    (vm-number-of (car vm-message-pointer)))
+	       prompt (if default
+			  (format "Yank message number: (default %s) "
+				  default)
+			"Yank message number: "))
+	 (while (zerop result)
+	   (setq result (read-string prompt))
+	   (and (string= result "") default (setq result default))
+	   (setq result (string-to-number result)))
+	 (when (null (setq mp (nthcdr (1- result) vm-message-list)))
+	   (error "No such message."))))
      (setq description (read-string "Description: "))
-     (if (string-match "^[ \t]*$" description)
-	 (setq description nil))
+     (when (string-match "^[ \t]*$" description)
+       (setq description nil))
      (list (or mlist (car mp)) description)))
-  (if (null vm-send-using-mime)
-      (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
+  (unless vm-send-using-mime
+    (error (concat "MIME attachments disabled, "
+		   "set vm-send-using-mime non-nil to enable.")))
   (if (not (consp message))
       (let* ((buf (generate-new-buffer "*attached message*"))
 	     (m (vm-real-message-of message))
 	     (folder (vm-buffer-of m)))
 	(save-excursion
 	  (set-buffer buf)
-	  (if vm-fsfemacs-mule-p
-	      (set-buffer-multibyte nil)) ; for new buffer
+	  (when vm-fsfemacs-mule-p
+	    (set-buffer-multibyte nil)) ; for new buffer
 	  (vm-insert-region-from-buffer folder (vm-headers-of m)
 					(vm-text-end-of m))
 	  (goto-char (point-min))
@@ -5811,8 +5823,8 @@ minibuffer if the command is run interactively."
 		 (point)
 		 (point-max))
 		"\n\n"))
-      (and description (setq description
-			     (vm-mime-scrub-description description)))
+      (when description 
+	(setq description (vm-mime-scrub-description description)))
       (vm-mime-attach-object buf "multipart/digest"
 			     (list (concat "boundary=\""
 					   boundary "\"")) nil t)
@@ -5845,8 +5857,9 @@ COMPOSITION's name will be read from the minibuffer."
      (list
       (read-buffer "Attach object to buffer: "
 		   (vm-find-composition-buffer) t))))
-  (if (null vm-send-using-mime)
-      (error "MIME attachments disabled, set vm-send-using-mime non-nil to enable."))
+  (unless vm-send-using-mime
+    (error (concat "MIME attachments disabled, "
+		   "set vm-send-using-mime non-nil to enable.")))
   ;; Can't see why these checks are needed.  USR, 2011-01-25
   ;; (vm-check-for-killed-summary)
   ;; (vm-error-if-folder-empty)
@@ -5890,14 +5903,14 @@ COMPOSITION's name will be read from the minibuffer."
 
 (defun vm-mime-attach-object (object type params description mimed
 			      &optional no-suggested-filename)
-  (if (not (eq major-mode 'mail-mode))
-      (error "Command must be used in a VM Mail mode buffer."))
-  (if (vm-mail-mode-get-header-contents "MIME-Version")
-      (error "Can't attach MIME object to already encoded MIME buffer."))
+  (unless (eq major-mode 'mail-mode)
+    (error "Command must be used in a VM Mail mode buffer."))
+  (when (vm-mail-mode-get-header-contents "MIME-Version")
+    (error "Can't attach MIME object to already encoded MIME buffer."))
   (let (start end e tag-string disposition
 	(fb (list vm-mime-forward-local-external-bodies)))
-    (if (< (point) (save-excursion (mail-text) (point)))
-	(mail-text))
+    (when (< (point) (save-excursion (mail-text) (point)))
+      (mail-text))
     (setq start (point))
     (if (listp object)
 	(setq tag-string (format "[ATTACHMENT %s, %s]" (nth 4 object) type))
@@ -5911,23 +5924,26 @@ COMPOSITION's name will be read from the minibuffer."
 		  (vm-mime-types-match "model" type))
 	      (setq disposition (list "attachment"))
 	    (setq disposition (list "inline")))
-	  (if (not no-suggested-filename)
-	      (setq type (concat type "; name=\"" (file-name-nondirectory object) "\"")
+	  (unless no-suggested-filename
+	      (setq type (concat type 
+				 "; name=\"" 
+				 (file-name-nondirectory object) "\"")
                     disposition (nconc disposition
                                        (list
 					(concat "filename=\""
 						(file-name-nondirectory object)
 						"\""))))))
       (setq disposition (list "unspecified")))
-    (if (listp object) (setq disposition (nth 3 object)))
+    (when (listp object) 
+      (setq disposition (nth 3 object)))
 
     (cond (vm-fsfemacs-p
 	   (put-text-property start end 'front-sticky nil)
 	   (put-text-property start end 'rear-nonsticky t)
-;; can't be intangible because menu clicking at a position needs
-;; to set point inside the tag so that a command can access the
-;; text properties there.
-;;	   (put-text-property start end 'intangible object)
+	   ;; can't be intangible because menu clicking at a position
+	   ;; needs to set point inside the tag so that a command can
+	   ;; access the text properties there.
+	   ;; (put-text-property start end 'intangible object) 
 	   (put-text-property start end 'face vm-mime-button-face)
 	   (put-text-property start end 'vm-mime-forward-local-refs fb)
 	   (put-text-property start end 'vm-mime-type type)
@@ -5946,9 +5962,9 @@ COMPOSITION's name will be read from the minibuffer."
 	   (vm-set-extent-property e 'face vm-mime-button-face)
 	   (vm-set-extent-property e 'duplicable t)
 	   (let ((keymap (make-sparse-keymap)))
-	     (if vm-popup-menu-on-mouse-3
-		 (define-key keymap 'button3
-		   'vm-menu-popup-attachment-menu))
+	     (when vm-popup-menu-on-mouse-3
+	       (define-key keymap 'button3
+		 'vm-menu-popup-attachment-menu))
              (define-key keymap [return] 'vm-mime-change-content-disposition)
 	     (vm-set-extent-property e 'keymap keymap)
 	     (vm-set-extent-property e 'balloon-help 'vm-mouse-3-help))
@@ -6054,12 +6070,18 @@ COMPOSITION's name will be read from the minibuffer."
 	((= start (overlay-end overlay))
 	 (move-overlay overlay (overlay-start overlay) start))))
 
-(defun vm-mime-fake-attachment-overlays (start end)
+(defun vm-mime-fake-attachment-overlays (start end &optional prop)
   "For all attachments in the region, i.e., pieces of text with
-'vm-mime-object property, create \"fake\" attachment overlays, similar
-to those in a Presentation buffer.  They are \"fake\" in that they
-will never be used for viewing.  They are only used to communicate
-data to the encode-composition code."
+'vm-mime-object property, create \"fake\" attachment overlays, which
+are then used during MIME encoding of the composition.  This function
+is only used with FSF Emacs.  Message compositions in XEmacs already
+have overlays (or extents).
+
+The optional argument PROP may specify a property other than
+'vm-mime-object which is then used for finding attachments. USR, 2011-02-14"
+  ;; It is not clear why this round about method is being used with
+  ;; FSF Emacs.  USR, 2011-02-14
+  (when (null prop) (setq prop 'vm-mime-object))
   (let ((o-list nil)
 	(done nil)
 	(pos start)
@@ -6068,8 +6090,8 @@ data to the encode-composition code."
       (save-restriction
 	(narrow-to-region start end)
 	(while (not done)
-	  (setq object (get-text-property pos 'vm-mime-object))
-	  (setq pos (next-single-property-change pos 'vm-mime-object))
+	  (setq object (get-text-property pos prop))
+	  (setq pos (next-single-property-change pos prop))
 	  (unless pos 
 	    (setq pos (point-max) 
 		  done t))
@@ -6080,6 +6102,8 @@ data to the encode-composition code."
 	    (overlay-put o 'insert-behind-hooks
 			 '(vm-disallow-overlay-endpoint-insertion))
 	    (setq props (text-properties-at start))
+	    (unless (eq prop 'vm-mime-object)
+	      (setq props (append (list 'vm-mime-object t) props)))
 	    (while props
 	      (overlay-put o (car props) (cadr props))
 	      (setq props (cddr props)))
@@ -6617,14 +6641,11 @@ agent; under Unix, normally sendmail.)"
 		 (vm-mime-charset-to-coding charset)))
 
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
-			    (point-min)
-			    (point-max))
-		  encoding (vm-mime-transfer-encode-region encoding
-							   (point-min)
-							   (point-max)
-							   t)
-		  description (vm-mime-text-description (point-min)
-							(point-max)))
+			    (point-min) (point-max))
+		  encoding (vm-mime-transfer-encode-region 
+			    encoding (point-min) (point-max) t)
+		  description (vm-mime-text-description 
+			       (point-min) (point-max)))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
 	    (if enriched
 		(insert "Content-Type: text/enriched; charset=" charset "\n")
@@ -6992,14 +7013,11 @@ also `vm-mime-xemacs-encode-composition'."
 		  (encode-coding-region 
 		   (point-min) (point-max) coding-system))))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
-			    (point-min)
-			    (point-max))
-		  encoding (vm-mime-transfer-encode-region encoding
-							   (point-min)
-							   (point-max)
-							   t)
-		  description (vm-mime-text-description (point-min)
-							(point-max)))
+			    (point-min) (point-max))
+		  encoding (vm-mime-transfer-encode-region 
+			    encoding (point-min) (point-max) t)
+		  description (vm-mime-text-description 
+			       (point-min) (point-max)))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
 	    (if enriched
 		(insert "Content-Type: text/enriched; charset=" charset "\n")
@@ -7748,25 +7766,31 @@ This is a destructive operation and cannot be undone!"
              (vm-mime-encode-mime-button (car e-list))
              (setq e-list (cdr e-list)))))
         (vm-fsfemacs-p
-         (let ((o-list (vm-mime-re-fake-attachment-overlays (point-min)
-                                                         (point-max))))
-           (setq o-list (sort (vm-delete
-                               (function (lambda (o)
-                                           (overlay-get o 'vm-mime-layout)))
-                               o-list t)
-                              (function
+         (let ((e-list (vm-mime-fake-attachment-overlays 
+			(point-min) (point-max) 'vm-mime-layout)))
+           (setq e-list (vm-delete
+			 (function (lambda (e)
+				     (vm-extent-property e 'vm-mime-layout)))
+			 e-list t)
+		 e-list (sort e-list
+			      (function
                                (lambda (e1 e2)
-                                 (< (overlay-end e1)
-                                    (overlay-end e2))))))
-           (while o-list
-             (vm-mime-encode-mime-button (car o-list))
-             (setq o-list (cdr o-list)))
+                                 (< (vm-extent-end-position e1)
+                                    (vm-extent-end-position e2))))))
+           (while e-list
+             (vm-mime-encode-mime-button (car e-list))
+             (setq e-list (cdr e-list)))
 	   (goto-char (point-max))))
         (t
-         (error "don't know how to MIME dencode composition for %s"
+         (error "don't know how to MIME encode composition for %s"
                 (emacs-version)))))
 
 (defun vm-mime-re-fake-attachment-overlays (start end)
+  "For all MIME buttons in the region, create \"fake\" attachment
+overlays, which are then used during MIME encoding of the
+composition.  This function is similar to
+`vm-mime-fake-attachment-overlays' and used only with FSF Emacs.
+						  USR, 2011-02-14"
   (let ((o-list nil)
 	(done nil)
 	(pos start)
