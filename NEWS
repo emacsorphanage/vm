@@ -33,6 +33,9 @@ VM 8.2.0b (2011-02-28)
 
   IMPROVEMENTS
 
+   * New drag-and-drop feature for attaching files to composed
+     messages. 
+
    * New variable `vm-sort-subthreads' allows the internal messages of
      threads to be sorted into subthreads (the default) or via the
      normal sorting criteria.

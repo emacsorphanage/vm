@@ -5860,9 +5860,8 @@ COMPOSITION's name will be read from the minibuffer."
   (unless vm-send-using-mime
     (error (concat "MIME attachments disabled, "
 		   "set vm-send-using-mime non-nil to enable.")))
-  ;; Can't see why these checks are needed.  USR, 2011-01-25
-  ;; (vm-check-for-killed-summary)
-  ;; (vm-error-if-folder-empty)
+  (vm-check-for-killed-summary)
+  (vm-error-if-folder-empty)
 
   (let (e layout (work-buffer nil) buf start w)
     (setq e (vm-find-layout-extent-at-point)
@@ -7785,39 +7784,40 @@ This is a destructive operation and cannot be undone!"
          (error "don't know how to MIME encode composition for %s"
                 (emacs-version)))))
 
-(defun vm-mime-re-fake-attachment-overlays (start end)
-  "For all MIME buttons in the region, create \"fake\" attachment
-overlays, which are then used during MIME encoding of the
-composition.  This function is similar to
-`vm-mime-fake-attachment-overlays' and used only with FSF Emacs.
-						  USR, 2011-02-14"
-  (let ((o-list nil)
-	(done nil)
-	(pos start)
-	object props o)
-    (save-excursion
-      (save-restriction
-	(narrow-to-region start end)
-	(while (not done)
-	  (setq object (get-text-property pos 'vm-mime-layout))
-	  (setq pos (next-single-property-change pos 'vm-mime-layout))
-	  (unless pos 
-	    (setq pos (point-max) 
-		  done t))
-	  (when object
-	    (setq o (make-overlay start pos))
-	    (overlay-put o 'insert-in-front-hooks
-			 '(vm-disallow-overlay-endpoint-insertion))
-	    (overlay-put o 'insert-behind-hooks
-			 '(vm-disallow-overlay-endpoint-insertion))
-	    (setq props (append (list 'vm-mime-object t)
-				(text-properties-at start)))
-	    (while props
-	      (overlay-put o (car props) (cadr props))
-	      (setq props (cddr props)))
-	    (setq o-list (cons o o-list)))
-	  (setq start pos))
-	o-list ))))
+;; This function is now unused.  USR, 2011-02-14
+;; (defun vm-mime-re-fake-attachment-overlays (start end)
+;;   "For all MIME buttons in the region, create \"fake\" attachment
+;; overlays, which are then used during MIME encoding of the
+;; composition.  This function is similar to
+;; `vm-mime-fake-attachment-overlays' and used only with FSF Emacs.
+;; 						  USR, 2011-02-14"
+;;   (let ((o-list nil)
+;; 	(done nil)
+;; 	(pos start)
+;; 	object props o)
+;;     (save-excursion
+;;       (save-restriction
+;; 	(narrow-to-region start end)
+;; 	(while (not done)
+;; 	  (setq object (get-text-property pos 'vm-mime-layout))
+;; 	  (setq pos (next-single-property-change pos 'vm-mime-layout))
+;; 	  (unless pos 
+;; 	    (setq pos (point-max) 
+;; 		  done t))
+;; 	  (when object
+;; 	    (setq o (make-overlay start pos))
+;; 	    (overlay-put o 'insert-in-front-hooks
+;; 			 '(vm-disallow-overlay-endpoint-insertion))
+;; 	    (overlay-put o 'insert-behind-hooks
+;; 			 '(vm-disallow-overlay-endpoint-insertion))
+;; 	    (setq props (append (list 'vm-mime-object t)
+;; 				(text-properties-at start)))
+;; 	    (while props
+;; 	      (overlay-put o (car props) (cadr props))
+;; 	      (setq props (cddr props)))
+;; 	    (setq o-list (cons o o-list)))
+;; 	  (setq start pos))
+;; 	o-list ))))
 
 (defun vm-mime-encode-mime-button (x)
   "Replace the mime button specified by X by an attachment button."

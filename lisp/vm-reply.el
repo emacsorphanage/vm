@@ -1495,7 +1495,7 @@ command can be invoked from external agents via an emacsclient."
     (run-hooks 'vm-mail-hook)
     (run-hooks 'vm-mail-mode-hook)))
 
-;; to quiet the v19 byte compiler
+;; external variables
 (defvar mail-mode-map)
 (defvar mail-aliases)
 (defvar mail-default-reply-to)
@@ -1515,12 +1515,14 @@ command can be invoked from external agents via an emacsclient."
   buffer-name)
 
 (defvar vm-compositions-exist nil)
-
 (defvar vm-composition-buffer-count 0
   "The current number of composition buffers.")
 
 (defvar vm-ml-composition-buffer-count ""
-  "The modeline string displayed for the current number of composition buffers.")
+  "The modeline string displayed for the current number of composition
+buffers.") 
+
+(defvar dnd-protocol-alist)
 
 (defun vm-update-ml-composition-buffer-count ()
    (setq vm-ml-composition-buffer-count
@@ -1565,18 +1567,21 @@ Binds the `vm-mail-mode-map' and hooks"
     (mail-mode)
     ;; TM infests mail mode, uninfest it if VM's MIME stuff is in
     ;; use.
-    (if vm-send-using-mime
-	(vm-mail-mode-remove-tm-hooks))
+    (when vm-send-using-mime
+      (vm-mail-mode-remove-tm-hooks))
     (use-local-map vm-mail-mode-map)
     ;; make mail-mode-map the parent of this vm-mail-mode-map, if we can.
     ;; do it only once.
-    (if (not vm-mail-mode-map-parented)
-	(cond ((fboundp 'set-keymap-parents)
-	       (set-keymap-parents vm-mail-mode-map (list mail-mode-map))
-	       (setq vm-mail-mode-map-parented t))
-	      ((consp mail-mode-map)
-	       (nconc vm-mail-mode-map mail-mode-map)
-	       (setq vm-mail-mode-map-parented t))))
+    (unless vm-mail-mode-map-parented
+      (cond ((fboundp 'set-keymap-parents)
+	     (set-keymap-parents vm-mail-mode-map (list mail-mode-map))
+	     (setq vm-mail-mode-map-parented t))
+	    ((consp mail-mode-map)
+	     (nconc vm-mail-mode-map mail-mode-map)
+	     (setq vm-mail-mode-map-parented t))))
+    (when (boundp 'dnd-protocol-alist)
+      (set (make-local-variable 'dnd-protocol-alist)
+	   (append vm-mail-dnd-protocol-alist dnd-protocol-alist)))
     (setq vm-mail-buffer folder-buffer
 	  mode-popup-menu (and vm-use-menus
 			       (vm-menu-support-possible-p)
@@ -1585,13 +1590,12 @@ Binds the `vm-mail-mode-map' and hooks"
 	 (vm-menu-install-mail-mode-menu))
     (if (fboundp 'mail-aliases-setup) ; use mail-abbrevs.el if present
 	(mail-aliases-setup)
-      (if (eq mail-aliases t)
-	  (progn
-	    (setq mail-aliases nil)
-	    (if (file-exists-p (or mail-personal-alias-file "~/.mailrc"))
-		(build-mail-aliases)))))
-    (if (stringp vm-mail-header-from)
-	(insert "From: " vm-mail-header-from "\n"))
+      (when (eq mail-aliases t)
+	(setq mail-aliases nil)
+	(when (file-exists-p (or mail-personal-alias-file "~/.mailrc"))
+	  (build-mail-aliases))))
+    (when (stringp vm-mail-header-from)
+      (insert "From: " vm-mail-header-from "\n"))
     (setq to (if to (vm-decode-mime-encoded-words-in-string to))
 	  subject (if subject (vm-decode-mime-encoded-words-in-string subject))
 	  cc (if cc (vm-decode-mime-encoded-words-in-string cc)))
@@ -1615,53 +1619,52 @@ Binds the `vm-mail-mode-map' and hooks"
     ;; value was t.  nil is the trigger value used now.
     (and (eq mail-default-reply-to nil)
 	 (setq mail-default-reply-to (getenv "REPLYTO")))
-    (if mail-default-reply-to
-	(insert "Reply-To: " mail-default-reply-to "\n"))
-    (if mail-self-blind
-	(insert "Bcc: "
-		(cond ((and vm-xemacs-p (fboundp 'user-mail-address))
-		       (user-mail-address))
-		      ((and (boundp 'user-mail-address)
-			    (stringp user-mail-address))
-		       user-mail-address)
-		      (t (user-login-name)))
-		?\n))
-    (if mail-archive-file-name
-	(insert "FCC: " mail-archive-file-name "\n"))
-    (if mail-default-headers
-	(insert mail-default-headers))
-    (if (not (= (preceding-char) ?\n))
-	(insert ?\n))
+    (when mail-default-reply-to
+      (insert "Reply-To: " mail-default-reply-to "\n"))
+    (when mail-self-blind
+      (insert "Bcc: "
+	      (cond ((and vm-xemacs-p (fboundp 'user-mail-address))
+		     (user-mail-address))
+		    ((and (boundp 'user-mail-address)
+			  (stringp user-mail-address))
+		     user-mail-address)
+		    (t (user-login-name)))
+	      ?\n))
+    (when mail-archive-file-name
+      (insert "FCC: " mail-archive-file-name "\n"))
+    (when mail-default-headers
+      (insert mail-default-headers))
+    (unless (= (preceding-char) ?\n)
+      (insert ?\n))
     (insert mail-header-separator "\n")
-    (if mail-signature
-	(save-excursion
-	  (save-restriction
-	    (narrow-to-region (point) (point))
-	    (cond ((stringp mail-signature)
-		   (insert mail-signature))
-		  ((eq mail-signature t)
-		   (insert-file-contents (or (and (boundp 'mail-signature-file)
-						  (stringp mail-signature-file)
-						  mail-signature-file)
-					     "~/.signature")))
-		  (t
-		   (let ((str (eval mail-signature)))
-		     (if (stringp str)
-			 (insert str)))))
-	    (goto-char (point-min))
-	    (if (looking-at "\n*-- \n")
-		nil
-	      (insert "\n-- \n"))
-	    (goto-char (point-max)))))
+    (when mail-signature
+      (save-excursion
+	(save-restriction
+	  (narrow-to-region (point) (point))
+	  (cond ((stringp mail-signature)
+		 (insert mail-signature))
+		((eq mail-signature t)
+		 (insert-file-contents (or (and (boundp 'mail-signature-file)
+						(stringp mail-signature-file)
+						mail-signature-file)
+					   "~/.signature")))
+		(t
+		 (let ((str (eval mail-signature)))
+		   (if (stringp str)
+		       (insert str)))))
+	  (goto-char (point-min))
+	  (if (looking-at "\n*-- \n")
+	      nil
+	    (insert "\n-- \n"))
+	  (goto-char (point-max)))))
     ;; move this buffer to the head of the buffer list so window
     ;; config stuff will select it as the composition buffer.
     (vm-unbury-buffer (current-buffer))
     ;; make a new frame if the user wants it.
-    (if (and vm-mutable-frames vm-frame-per-composition
-	     (vm-multiple-frames-possible-p))
-	(progn
-	  (vm-goto-new-frame 'composition)
-	  (vm-set-hooks-for-frame-deletion)))
+    (when (and vm-mutable-frames vm-frame-per-composition
+	       (vm-multiple-frames-possible-p))
+      (vm-goto-new-frame 'composition)
+      (vm-set-hooks-for-frame-deletion))
     ;; now do window configuration
     (vm-display (current-buffer) t
 		'(vm-mail
@@ -1692,8 +1695,8 @@ Binds the `vm-mail-mode-map' and hooks"
 		  vm-resend-bounced-message
 		  vm-resend-bounced-message-other-frame)
 		(list this-command 'composing-message))
-    (if (null to)
-	(mail-position-on-field "To"))
+    (unless to
+      (mail-position-on-field "To"))
     (cond ((and vm-xemacs-p
 		(fboundp 'start-itimer)
 		(null (get-itimer "vm-rename-mail"))
@@ -1703,7 +1706,8 @@ Binds the `vm-mail-mode-map' and hooks"
 	  ((and (fboundp 'run-with-idle-timer)
 		(null vm-update-composition-buffer-name-timer))
 	   (setq vm-update-composition-buffer-name-timer
-		 (run-with-idle-timer 1.5 t 'vm-update-composition-buffer-name))))
+		 (run-with-idle-timer 
+		  1.5 t 'vm-update-composition-buffer-name))))
     (vm-new-composition-buffer)
     (run-hooks 'mail-setup-hook)))
 
@@ -1983,6 +1987,17 @@ With a prefix arg, call `vm-mail-mode-show-headers' instead."
           (when (not (overlay-get o 'invisible))
             (overlay-put o 'invisible t)
             (overlay-put o 'read-only t)))))))
+
+(defun vm-mail-dnd-attach-file (uri action)
+  "Insert a drag and drop file as a MIME attachment in a VM
+composition buffer.  URI is the url of the file as described in
+`dnd-protocol-alist'.  ACTION is ignored."
+  (let ((file (dnd-get-local-file-name uri t))
+	type)
+    (when (and file (file-regular-p file))
+      (setq type (or (vm-mime-default-type-from-filename file)
+		     "application/octet-stream"))
+      (vm-mime-attach-file file type))))
 
 (defun vm-mail-mode-hide-headers-hook ()
   "Hook which handles `vm-mail-mode-hidden-headers'."

@@ -2779,7 +2779,7 @@ in a composition buffer."
   "*Non-nil means to FCC before encoding.  This allows saving of
 messages unencoded, specifically not to waste storage for
 attachments which are stored on disk anyway."
-  :group 'vm-mime
+  :group 'vm-compose
   :type 'boolean)
 
 (defcustom vm-reply-subject-prefix nil
@@ -5370,6 +5370,17 @@ comma.  If such a line is found, an error is signaled and the
 mail is not sent."
   :group 'vm-compose
   :type 'boolean)
+
+(defcustom vm-mail-dnd-protocol-alist
+  '(("^file:///" . vm-mail-dnd-attach-file)
+    ("^file://"  . dnd-open-file)
+    ("^file:"    . vm-mail-dnd-attach-file))
+  "The functions to call when a drop in `mail-mode' is made.
+See `dnd-protocol-alist' for more information.  When nil, behave
+as in other buffers."
+  :group 'vm-compose
+  :type '(choice (repeat (cons (regexp) (function)))
+		 (const :tag "Behave as in other buffers" nil)))
 
 (defun vm-octal (n)
   (let ((val 0) digit (expo 1))

@@ -1730,7 +1730,7 @@ used move to particular buttons within the message presentation.
 
 @node Attachments, Internal display, Viewing MIME, MIME Messages
 @unnumberedsubsec  Operating on MIME attachments
-
+@anchor{Operating on MIME attachments}
 @cindex attachments
 @kindex $ |
 @kindex $ d
@@ -2244,7 +2244,7 @@ Example:
 @end example
 
 The first matching list element will be used.  Be sure to include the
-@code{-c} option so that unconvertible characters are ignored instead
+@code{-c} option so that nonconvertible characters are ignored instead
 of causing error messages.
 
 @vindex vm-mime-charset-font-alist
@@ -2426,7 +2426,8 @@ All VM commands may be accessed in a VM Mail mode buffer by prefixing them
 with C-c C-v.
 @kindex C-c C-a
 @vindex vm-send-using-mime
-@item C-c C-a (@code{vm-mime-attach-file})
+@cindex drag and drop
+@item C-c C-a (@code{vm-mime-attach-file}) or drag-and-drop a file
 Attaches a file to the composition.  When you send the message, VM 
 will insert the file and MIME encode it.  The variable
 @code{vm-send-using-mime} must be set non-@code{nil} for this command to work.
@@ -2555,7 +2556,7 @@ is sent.  The variable @code{vm-mail-header-insert-date} can be set to
 @code{t} (which is the default value) asking VM to insert a Date
 header into a message before it is sent.  You should set it to
 @code{nil} if you would like to insert a Date header yourself.  The
-variable @code{vm-mail-header-insert-mesasge-id} asks VM to insert a
+variable @code{vm-mail-header-insert-message-id} asks VM to insert a
 Message-ID header before sending the message. The variable
 @code{vm-mail-reorder-message-headers} asks VM to reorder the message
 headers into a particular order before sending.  The order is
@@ -2583,15 +2584,21 @@ MIME encode it as necessary.
 @unnumberedsec MIME attachments
 
 @kindex C-c C-a
+@findex vm-mime-attach-file
+@findex vm-mail-dnd-attach-file
+@cindex drag and drop
 To attach a file to your composition, use @kbd{C-c C-a}
 (@code{vm-mime-attach-file}).  VM will ask you for the name of the file, 
 its type, a brief description and its character set if it is a
-text attachment.  The attachment will be represented in the
-composition as a tag line like this
+text attachment.  You can also drag and drop a file using your Window
+system into a composition buffer (@code{vm-mail-dnd-attach-file}).
+
+The attachment will be represented in the composition as a tag line
+like this
 
   [ATTACHMENT ~/sounds/chronophasia_scream.au, audio/basic]
 
-You can type text before and after this tag and it will appear
+@noindent You can type text before and after this tag and it will appear
 before or after the text in the final MIME message when VM encodes
 it.  You can kill the tag with @kbd{C-k} and yank it back with
 @kbd{C-y} to move it to another place in the message.  You can
@@ -2613,9 +2620,29 @@ disposition for all MIME types except @samp{application} and
 @samp{model} types.
 
 @kindex C-c C-b
+@findex vm-mime-attach-buffer
 To attach a buffer instead of a file, use @kbd{C-c C-b} (normally 
 bound to @code{vm-mime-attach-buffer}.  You must not kill the
 buffer that you attach until after the message has been sent.
+
+@kindex C-c C-m
+@findex vm-mime-attach-message
+You can attach a message from another folder by using @kbd{C-c C-m}
+(@code{vm-mime-attach-message}).  By default, the folder is the parent
+folder of the message composition.  If there is no parent folder, then
+a folder name will be read from the minibuffer.  The message number of
+the message to be attached is also read from the minibuffer.
+Alternatively, you can mark one or more messages in the parent folder
+before invoking this command.  All the marked messages will be
+attached as a digest in the outgoing message.
+
+@kindex $ a
+@findex vm-mime-attach-object-from-message
+You can also attach objects that you have received as attachments in
+other messages using the @kbd{$ a}
+(@code{vm-mime-attach-object-from-message}) function.
+(@xref{Operating on MIME attachments}.)
+
 
 @node MIME characters, MIME headers, MIME attachments, Sending MIME Messages
 @unnumberedsec MIME characters
@@ -3930,7 +3957,7 @@ this functionality, set the variable
 @code{vm-enable-thread-operations} to a non-@code{nil} value in your
 vm-init-file.  Setting it to `t' enables thread operations
 unconditionally.  Setting it to the symbol `ask' allows a confirmation
-dialogue before a thread operation is invoked.  You can use the
+dialog before a thread operation is invoked.  You can use the
 command @code{vm-toggle-thread-operations} in a running VM session to
 enable or disable thread operations.
 
@@ -3962,7 +3989,7 @@ practice are warranted before you enable thread operations
 unconditionally.  A safer option is to set
 `vm-enable-thread-operations' to `ask'.  In that case, VM asks for
 confirmation every time an operation is applicable to all the messages
-in a collapsed thread.  You can override the confirmation dialogue by
+in a collapsed thread.  You can override the confirmation dialog by
 giving a prefix argument `C-u' to your operation.  
 
 @node Summary Faces,, Thread Operations, Summaries
@@ -6419,7 +6446,7 @@ thread roots of the two messages are returned, again with the same
 rationale.
 
 Threaded summaries can be sorted by any key, e.g., by author
-(full-name).  It is most common to sort them by ``acrtivity,'' i.e.,
+(full-name).  It is most common to sort them by ``activity,'' i.e.,
 the order of the most recent message in the thread or subthread.
 Sorting them by ``date'' means using the date of the root message of
 the thread or subthread.
@@ -6453,7 +6480,7 @@ systems are used to encode the various languages of the world, e.g.,
 @code{hebrew-iso-8bit} for Hebrew.  Emacs also uses its own internal
 coding system for characters, which can encode all character sets
 currently in existence.  But the internal coding system can vary between
-different vesions of Emacs.
+different versions of Emacs.
 
 @inindex mime-charset
 @inindex coding-system-get
@@ -6488,7 +6515,7 @@ chosen MIME character set using the function @code{encode-coding-region}.
 @inindex quoted printable
 The headers of email messages can only be in US-ASCII.  So header fields
 in other character sets are encoded using either base-64 or
-quoted-printable encoding (whcih give ASCII strings) and annotated
+quoted-printable encoding (which give ASCII strings) and annotated
 with the name of the original character set.  Such annotations look
 like @code{=?charset?B?}.  They can apply
 to individual words or sequences of words appearing the in the
@@ -6626,7 +6653,7 @@ extents.  This package is not compatible with the way VM deals with
 the two types.
 
 Some of the major differences between extents and overlays are the
-followoing:
+following:
 @enumerate
 @item 
 The beginning and ending of overlays are markers.  This has some
