@@ -5682,6 +5682,9 @@ folded (collapsed) in VM summary windows.")
     (define-key map "\C-c\C-y" 'vm-yank-message)
     (define-key map "\C-c\C-s" 'vm-mail-send)
     (define-key map "\C-c\C-c" 'vm-mail-send-and-exit)
+    ;; The following is a temporary binding for Mac/NextStep
+    ;; It should be removed when dnd-protocol-alist is implemented
+    (define-key map [ns-drag-text] 'vm-mail-ns-attach-file)
     (cond ((fboundp 'set-keymap-name)
 	   (set-keymap-name map 'vm-mail-mode-map)))
     map )

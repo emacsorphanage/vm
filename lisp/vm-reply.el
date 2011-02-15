@@ -1523,6 +1523,7 @@ command can be invoked from external agents via an emacsclient."
 buffers.") 
 
 (defvar dnd-protocol-alist)
+(defvar ns-input-file)
 
 (defun vm-update-ml-composition-buffer-count ()
    (setq vm-ml-composition-buffer-count
@@ -1999,6 +2000,22 @@ composition buffer.  URI is the url of the file as described in
       (error (concat "MIME attachments disabled, "
 		     "set vm-send-using-mime non-nil to enable.")))
     (when (and file (file-regular-p file))
+      (setq type (or (vm-mime-default-type-from-filename file)
+		     "application/octet-stream"))
+      (vm-mime-attach-file file type))))
+
+;;;###autoload
+(defun vm-mail-ns-attach-file ()
+  "Insert a drag and drop file as a MIME attachment in a VM
+composition buffer.  This is a version of `vm-mail-dnd-attach-file'
+that is needed for Mac and NextStep."
+  (let ((file (car ns-input-file))
+	type)
+    (unless vm-send-using-mime
+      (error (concat "MIME attachments disabled, "
+		     "set vm-send-using-mime non-nil to enable.")))
+    (when (and file (file-regular-p file))
+      (setq ns-input-file (cdr ns-input-file))
       (setq type (or (vm-mime-default-type-from-filename file)
 		     "application/octet-stream"))
       (vm-mime-attach-file file type))))
