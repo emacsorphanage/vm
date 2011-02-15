@@ -1988,12 +1988,16 @@ With a prefix arg, call `vm-mail-mode-show-headers' instead."
             (overlay-put o 'invisible t)
             (overlay-put o 'read-only t)))))))
 
+;;;###autoload
 (defun vm-mail-dnd-attach-file (uri action)
   "Insert a drag and drop file as a MIME attachment in a VM
 composition buffer.  URI is the url of the file as described in
 `dnd-protocol-alist'.  ACTION is ignored."
   (let ((file (dnd-get-local-file-name uri t))
 	type)
+    (unless vm-send-using-mime
+      (error (concat "MIME attachments disabled, "
+		     "set vm-send-using-mime non-nil to enable.")))
     (when (and file (file-regular-p file))
       (setq type (or (vm-mime-default-type-from-filename file)
 		     "application/octet-stream"))

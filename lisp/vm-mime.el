@@ -5838,7 +5838,7 @@ minibuffer if the command is run interactively."
 
 ;;;###autoload
 (defun vm-mime-attach-object-from-message (composition)
-  "Attach a object from the current message to a VM composition buffer.
+  "Attach a mime object from the current message to a VM composition buffer.
 
 The object is not inserted into the buffer and MIME encoded until
 you execute `vm-mail-send' or `vm-mail-send-and-exit'.  A visible tag

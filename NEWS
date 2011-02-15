@@ -33,16 +33,21 @@ VM 8.2.0b (2011-02-28)
 
   IMPROVEMENTS
 
+   * New vm-dired operations allow attaching of files from a dired
+     buffer to composed messages: 
+       `vm-dired-attach-file' and `vm-dired-do-attach-files'. 
+
    * New drag-and-drop feature for attaching files to composed
-     messages. 
+     messages by dragging them in the window system.
 
    * New variable `vm-sort-subthreads' allows the internal messages of
      threads to be sorted into subthreads (the default) or via the
      normal sorting criteria.
 
    * Better support for message/external-body MIME type, with
-     external-bodies loaded on demand.  If you have this in
-     `vm-auto-displayed-mime-content-types', you can remove it to
+     external-bodies loaded on demand.  If you have
+     message/external-body as an element in
+     `vm-auto-displayed-mime-content-types', you should remove it to
      access the new functionality.
 
    * Newly documented commands: `[' (`vm-previous-attachment') and `]'

@@ -2585,15 +2585,21 @@ MIME encode it as necessary.
 
 @kindex C-c C-a
 @findex vm-mime-attach-file
+@findex vm-dired-attach-file
+@findex vm-dired-do-attach-files
 @findex vm-mail-dnd-attach-file
 @cindex drag and drop
 To attach a file to your composition, use @kbd{C-c C-a}
-(@code{vm-mime-attach-file}).  VM will ask you for the name of the file, 
-its type, a brief description and its character set if it is a
-text attachment.  You can also drag and drop a file using your Window
-system into a composition buffer (@code{vm-mail-dnd-attach-file}).
+(@code{vm-mime-attach-file}).  VM will ask you for the name of the
+file, its type, a brief description and its character set if it is a
+text attachment.  Alternatively, you can visit a directory in Emacs
+(@pxref{Dired,,,emacs, the GNU Emacs Manual} and run
+@code{vm-dired-attach-file} on any file.  You can mark a set of files
+and run @code{vm-dired-do-attach-files} to attach all marked files.
+You can also drag and drop a file using your Window system into a
+composition buffer (@code{vm-mail-dnd-attach-file}).
 
-The attachment will be represented in the composition as a tag line
+An attachment will be represented in the composition as a tag line
 like this
 
   [ATTACHMENT ~/sounds/chronophasia_scream.au, audio/basic]
