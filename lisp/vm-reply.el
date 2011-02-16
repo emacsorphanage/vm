@@ -2009,6 +2009,7 @@ composition buffer.  URI is the url of the file as described in
   "Insert a drag and drop file as a MIME attachment in a VM
 composition buffer.  This is a version of `vm-mail-dnd-attach-file'
 that is needed for Mac and NextStep."
+  (interactive)
   (let ((file (car ns-input-file))
 	type)
     (unless vm-send-using-mime
