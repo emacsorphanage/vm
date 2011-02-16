@@ -136,6 +136,84 @@
 (defsubst vm-set-folder-imap-flags-obarray (val)
   (aset vm-folder-access-data 10 val))
 
+;; Status indicator vector
+;; timer
+(defsubst vm-imap-status-timer (o) (aref o 0))
+;; whether the current status has been reported already
+(defsubst vm-imap-status-did-report (o) (aref o 1))
+;; mailbox specification
+(defsubst vm-imap-status-mailbox (o) (aref o 2))
+;; message number (count) of the message currently being retrieved
+(defsubst vm-imap-status-currmsg (o) (aref o 3))
+;; total number of mesasges that need to be retrieved in this round
+(defsubst vm-imap-status-maxmsg (o) (aref o 4))
+;; amount of the current message that has been retrieved
+(defsubst vm-imap-status-got (o) (aref o 5))
+;; size of the current message
+(defsubst vm-imap-status-need (o) (aref o 6))
+;; Data for the message last reported
+(defsubst vm-imap-status-last-mailbox (o) (aref o 7))
+(defsubst vm-imap-status-last-currmsg (o) (aref o 8))
+(defsubst vm-imap-status-last-maxmsg (o) (aref o 9))
+(defsubst vm-imap-status-last-got (o) (aref o 10))
+(defsubst vm-imap-status-last-need (o) (aref o 11))
+
+(defsubst vm-set-imap-status-timer (o val) (aset o 0 val))
+(defsubst vm-set-imap-status-did-report (o val) (aset o 1 val))
+(defsubst vm-set-imap-status-mailbox (o val) (aset o 2 val))
+(defsubst vm-set-imap-status-currmsg (o val) (aset o 3 val))
+(defsubst vm-set-imap-status-maxmsg (o val) (aset o 4 val))
+(defsubst vm-set-imap-status-got (o val) (aset o 5 val))
+(defsubst vm-set-imap-status-need (o val) (aset o 6 val))
+(defsubst vm-set-imap-status-last-mailbox (o val) (aset o 7 val))
+(defsubst vm-set-imap-status-last-currmsg (o val) (aset o 8 val))
+(defsubst vm-set-imap-status-last-maxmsg (o val) (aset o 9 val))
+(defsubst vm-set-imap-status-last-got (o val) (aset o 10 val))
+(defsubst vm-set-imap-status-last-need (o val) (aset o 11 val))
+
+(defun vm-imap-start-status-timer ()
+  (let ((blob (make-vector 12 nil))
+	timer)
+    (setq timer (add-timeout 2 'vm-imap-report-retrieval-status blob 2))
+    (vm-set-imap-status-timer blob timer)
+    blob ))
+
+(defun vm-imap-stop-status-timer (status-blob)
+  (if (vm-imap-status-did-report status-blob)
+      (message ""))
+  (if (fboundp 'disable-timeout)
+      (disable-timeout (vm-imap-status-timer status-blob))
+    (cancel-timer (vm-imap-status-timer status-blob))))
+
+(defun vm-imap-report-retrieval-status (o)
+  (vm-set-imap-status-did-report o t)
+  (cond ((null (vm-imap-status-got o)) t)
+	;; should not be possible, but better safe...
+	((not (eq (vm-imap-status-mailbox o) (vm-imap-status-last-mailbox o))) 
+	 t)
+	((not (eq (vm-imap-status-currmsg o) (vm-imap-status-last-currmsg o)))
+	 t)
+	(t 
+	 (message "Retrieving message %d (of %d) from %s, %s..."
+		  (vm-imap-status-currmsg o)
+		  (vm-imap-status-maxmsg o)
+		  (vm-imap-status-mailbox o)
+		  (if (vm-imap-status-need o)
+		      (format "%d%%%s"
+			      (/ (* 100 (vm-imap-status-got o))
+				 (vm-imap-status-need o))
+			      (if (eq (vm-imap-status-got o)
+				      (vm-imap-status-last-got o))
+				  " (stalled)"
+				""))
+		    "100%")
+		  )))
+  (vm-set-imap-status-last-mailbox o (vm-imap-status-mailbox o))
+  (vm-set-imap-status-last-currmsg o (vm-imap-status-currmsg o))
+  (vm-set-imap-status-last-maxmsg o (vm-imap-status-maxmsg o))
+  (vm-set-imap-status-last-got o (vm-imap-status-got o))
+  (vm-set-imap-status-last-need o (vm-imap-status-need o)))
+
 ;; For logging IMAP sessions
 
 (defvar vm-imap-log-sessions nil
@@ -164,10 +242,10 @@
 
 ;; (defvar vm-imap-session-type nil)  ; moved to vm-vars.el
 
-(defun vm-imap-session-type:set (type)
+(defsubst vm-imap-session-type:set (type)
   (setq vm-imap-session-type type))
 
-(defun vm-imap-session-type:make-active ()
+(defsubst vm-imap-session-type:make-active ()
   (if (eq vm-imap-session-type 'inactive)
       (setq vm-imap-session-type 'active)))
 
@@ -214,7 +292,7 @@
 	(memq cap vm-imap-capabilities))
     (memq cap vm-imap-capabilities)))
 
-(defun vm-imap-auth-method (auth)
+(defsubst vm-imap-auth-method (auth)
   (memq auth vm-imap-auth-methods))
 
 (defsubst vm-accept-process-output (process)
@@ -392,15 +470,15 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	    ;; messages as we go.
 	    (setq n 1 retrieved-bytes 0)
 	    (setq statblob (vm-imap-start-status-timer))
-	    (vm-set-imap-stat-x-mailbox statblob folder)
-	    (vm-set-imap-stat-x-maxmsg statblob mailbox-count)
+	    (vm-set-imap-status-mailbox statblob folder)
+	    (vm-set-imap-status-maxmsg statblob mailbox-count)
 	    (while (and (<= n mailbox-count)
 			(or (not (natnump m-per-session))
 			    (< retrieved m-per-session))
 			(or (not (natnump b-per-session))
 			    (< retrieved-bytes b-per-session)))
 	      (catch 'skip
-		(vm-set-imap-stat-x-currmsg statblob n)
+		(vm-set-imap-status-currmsg statblob n)
 		(let (list)
 		  (setq list (vm-imap-get-uid-list process n n))
 		  (setq uid (cdr (car list)))
@@ -413,7 +491,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 			 n mailbox-count folder))
 		    (throw 'skip t)))
 		(setq message-size (vm-imap-get-message-size process n))
-		(vm-set-imap-stat-x-need statblob message-size)
+		(vm-set-imap-status-need statblob message-size)
 		(when (and (integerp vm-imap-max-message-size)
 			   (> message-size vm-imap-max-message-size)
 			   (progn
@@ -1144,81 +1222,6 @@ as well."
       ))
   )
 
-;; Status indicator vector
-;; timer
-(defun vm-imap-stat-timer (o) (aref o 0))
-;; whether the current status has been reported already
-(defun vm-imap-stat-did-report (o) (aref o 1))
-;; mailbox specification
-(defun vm-imap-stat-x-mailbox (o) (aref o 2))
-;; message number (count) of the message currently being retrieved
-(defun vm-imap-stat-x-currmsg (o) (aref o 3))
-;; total number of mesasges that need to be retrieved in this round
-(defun vm-imap-stat-x-maxmsg (o) (aref o 4))
-;; amount of the current message that has been retrieved
-(defun vm-imap-stat-x-got (o) (aref o 5))
-;; size of the current message
-(defun vm-imap-stat-x-need (o) (aref o 6))
-;; Data for the message last reported
-(defun vm-imap-stat-y-mailbox (o) (aref o 7))
-(defun vm-imap-stat-y-currmsg (o) (aref o 8))
-(defun vm-imap-stat-y-maxmsg (o) (aref o 9))
-(defun vm-imap-stat-y-got (o) (aref o 10))
-(defun vm-imap-stat-y-need (o) (aref o 11))
-
-(defun vm-set-imap-stat-timer (o val) (aset o 0 val))
-(defun vm-set-imap-stat-did-report (o val) (aset o 1 val))
-(defun vm-set-imap-stat-x-mailbox (o val) (aset o 2 val))
-(defun vm-set-imap-stat-x-currmsg (o val) (aset o 3 val))
-(defun vm-set-imap-stat-x-maxmsg (o val) (aset o 4 val))
-(defun vm-set-imap-stat-x-got (o val) (aset o 5 val))
-(defun vm-set-imap-stat-x-need (o val) (aset o 6 val))
-(defun vm-set-imap-stat-y-mailbox (o val) (aset o 7 val))
-(defun vm-set-imap-stat-y-currmsg (o val) (aset o 8 val))
-(defun vm-set-imap-stat-y-maxmsg (o val) (aset o 9 val))
-(defun vm-set-imap-stat-y-got (o val) (aset o 10 val))
-(defun vm-set-imap-stat-y-need (o val) (aset o 11 val))
-
-(defun vm-imap-start-status-timer ()
-  (let ((blob (make-vector 12 nil))
-	timer)
-    (setq timer (add-timeout 2 'vm-imap-report-retrieval-status blob 2))
-    (vm-set-imap-stat-timer blob timer)
-    blob ))
-
-(defun vm-imap-stop-status-timer (status-blob)
-  (if (vm-imap-stat-did-report status-blob)
-      (message ""))
-  (if (fboundp 'disable-timeout)
-      (disable-timeout (vm-imap-stat-timer status-blob))
-    (cancel-timer (vm-imap-stat-timer status-blob))))
-
-(defun vm-imap-report-retrieval-status (o)
-  (vm-set-imap-stat-did-report o t)
-  (cond ((null (vm-imap-stat-x-got o)) t)
-	;; should not be possible, but better safe...
-	((not (eq (vm-imap-stat-x-mailbox o) (vm-imap-stat-y-mailbox o))) t)
-	((not (eq (vm-imap-stat-x-currmsg o) (vm-imap-stat-y-currmsg o))) t)
-	(t 
-	 (message "Retrieving message %d (of %d) from %s, %s..."
-		  (vm-imap-stat-x-currmsg o)
-		  (vm-imap-stat-x-maxmsg o)
-		  (vm-imap-stat-x-mailbox o)
-		  (if (vm-imap-stat-x-need o)
-		      (format "%d%%%s"
-			      (/ (* 100 (vm-imap-stat-x-got o))
-				 (vm-imap-stat-x-need o))
-			      (if (eq (vm-imap-stat-x-got o)
-				      (vm-imap-stat-y-got o))
-				  " (stalled)"
-				""))
-		    "post processing"))))
-  (vm-set-imap-stat-y-mailbox o (vm-imap-stat-x-mailbox o))
-  (vm-set-imap-stat-y-currmsg o (vm-imap-stat-x-currmsg o))
-  (vm-set-imap-stat-y-maxmsg o (vm-imap-stat-x-maxmsg o))
-  (vm-set-imap-stat-y-got o (vm-imap-stat-x-got o))
-  (vm-set-imap-stat-y-need o (vm-imap-stat-x-need o)))
-
 (defun vm-imap-check-connection (process)
   ;;------------------------------
   ;; (vm-buffer-type:assert 'process)
@@ -1575,13 +1578,13 @@ as well."
   (let ((***start vm-imap-read-point)	; avoid dynamic binding of 'start'
 	end fetch-response list p)
     (goto-char ***start)
-    (vm-set-imap-stat-x-got statblob 0)
+    (vm-set-imap-status-got statblob 0)
     (let* ((func
 	    (function
 	     (lambda (beg end len)
 	       (if vm-imap-read-point
 		   (progn
-		     (vm-set-imap-stat-x-got statblob (- end ***start))
+		     (vm-set-imap-status-got statblob (- end ***start))
 		     (if (zerop (% (random) 10))
 			 (vm-imap-report-retrieval-status statblob)))))))
 	   ;; this seems to slow things down.  USR, 2008-04-25
@@ -1619,11 +1622,11 @@ as well."
 	    ***start (nth 1 p))))
     (goto-char (nth 2 p))
     (setq end (point-marker))
-    (vm-set-imap-stat-x-need statblob nil)
+    (vm-set-imap-status-need statblob nil)
     (vm-imap-cleanup-region ***start end)
     (vm-munge-message-separators vm-folder-type ***start end)
     (goto-char ***start)
-    (vm-set-imap-stat-x-got statblob nil)
+    (vm-set-imap-status-got statblob nil)
     ;; avoid the consing and stat() call for all but babyl
     ;; files, since this will probably slow things down.
     ;; only babyl files have the folder header, and we
@@ -2943,18 +2946,18 @@ operation of the server to minimize I/O."
 		     (vm-buffer-type:enter 'process)
 		     ;;----------------------------
 		     (setq statblob (vm-imap-start-status-timer))
-		     (vm-set-imap-stat-x-mailbox statblob folder)
-		     (vm-set-imap-stat-x-maxmsg statblob
+		     (vm-set-imap-status-mailbox statblob folder)
+		     (vm-set-imap-status-maxmsg statblob
 						(length retrieve-list))
 		     (setq r-list (vm-imap-bunch-messages 
 				   (mapcar (function cdr) retrieve-list)))
 		     (while r-list
 		       (setq range (car r-list))
-		       (vm-set-imap-stat-x-currmsg statblob n)
+		       (vm-set-imap-status-currmsg statblob n)
 		       (setq message-size 
 			     (vm-imap-get-message-size
 			      process (car range))) ; sloppy, one size fits all
-		       (vm-set-imap-stat-x-need statblob message-size)
+		       (vm-set-imap-status-need statblob message-size)
 		       ;;----------------------------------
 		       (vm-imap-session-type:assert 'valid)
 		       ;;----------------------------------
@@ -3223,10 +3226,10 @@ either the folder buffer or the presentation buffer.
 			  (setq message-size 
 				(vm-imap-get-uid-message-size process uid))
 			  (setq statblob (vm-imap-start-status-timer))
-			  (vm-set-imap-stat-x-mailbox statblob folder)
-			  (vm-set-imap-stat-x-maxmsg statblob 1)
-			  (vm-set-imap-stat-x-currmsg statblob 1)
-			  (vm-set-imap-stat-x-need statblob message-size)
+			  (vm-set-imap-status-mailbox statblob folder)
+			  (vm-set-imap-status-maxmsg statblob 1)
+			  (vm-set-imap-status-currmsg statblob 1)
+			  (vm-set-imap-status-need statblob message-size)
 			  (vm-imap-fetch-uid-message 
 			   process uid use-body-peek nil)
 			  (vm-imap-retrieve-to-target 
