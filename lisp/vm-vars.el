@@ -4516,6 +4516,10 @@ entries from a folder summary."
 
 (defcustom vm-summary-faces-alist
   '(
+    ;; Most important status info
+    ((new)       	vm-summary-new)
+    ((deleted)   	vm-summary-deleted)
+    ((marked)    	vm-summary-marked)
     ((or (header "Priority: urgent")
          (header "Importance: high")
          (header "X-Priority: 1")
@@ -4524,16 +4528,15 @@ entries from a folder summary."
 	 (label "\\flagged")
          (header "X-VM-postponed-data:"))
      vm-summary-high-priority)
-    ((deleted)   	vm-summary-deleted)
-    ((new)       	vm-summary-new)
     ((unread)    	vm-summary-unread)
-    ((marked)    	vm-summary-marked)
+    ;; less important status info
     ((replied)   	vm-summary-replied)
     ((or (filed)
 	 (written))     vm-summary-saved)
     ((or (forwarded) 
 	 (redistributed)) vm-summary-forwarded)
     ((edited)    	vm-summary-edited)
+    ;; 
     ((outgoing)  	vm-summary-outgoing)
     ((any)       	vm-summary-default))
   "*Alist of virtual folder conditions and corresponding faces.
