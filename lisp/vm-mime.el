@@ -4964,12 +4964,12 @@ confirmed before creating a new directory."
     (insert caption "\n")
     ;; we must use the same interface that the vm-extent functions
     ;; use.  if they use overlays, then we call make-overlay.
-    (if (eq (symbol-function 'vm-make-extent) 'make-overlay)
+    (if vm-fsfemacs-p
 	;; we MUST have the five arg make-overlay.  overlays must
 	;; advance when text is inserted at their start position or
 	;; inline text and graphics will seep into the button
 	;; overlay and then be removed when the button is removed.
-	(setq e (make-overlay start (point) nil t nil))
+	(setq e (vm-make-extent start (point) nil t nil))
       (setq e (vm-make-extent start (point)))
       (vm-set-extent-property e 'start-open t)
       (vm-set-extent-property e 'end-open t))
