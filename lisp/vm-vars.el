@@ -4514,8 +4514,8 @@ entries from a folder summary."
 (defcustom vm-summary-faces-alist
   '(
     ;; Most important status info
-    ((new)       	vm-summary-new)
     ((deleted)   	vm-summary-deleted)
+    ((new)       	vm-summary-new)
     ((marked)    	vm-summary-marked)
     ((or (header "Priority: urgent")
          (header "Importance: high")
