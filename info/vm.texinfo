@@ -2391,11 +2391,10 @@ loaded message with a fresh copy retrieved from the server.
 @node Sending Messages, Saving Messages, Reading Messages, Top
 @chapter Sending Messages
 
-When sending messages from within VM, you will be using the
-standard Mail major mode provided with GNU Emacs, plus some
-extensions added by VM.  @xref{Mail Mode,,,emacs, the GNU Emacs
-Manual}.  However, mail composition buffers created by VM have some
-extra command keys.
+When sending messages from within VM, you will be using the standard
+mail sending facility provided with Emacs, plus some extensions added
+by VM.  @xref{Sending Mail,,,emacs, the GNU Emacs Manual}.  However,
+mail composition buffers created by VM have some extra command keys.
 
 @table @kbd
 
