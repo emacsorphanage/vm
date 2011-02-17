@@ -375,43 +375,54 @@ Message lists are renumbered.
 Summary entries are wiped and regenerated.
 Mode lines are updated.
 Toolbars are updated."
-  (save-excursion
-    (vm-update-draft-count)
-    (mapatoms (function
-	       (lambda (b)
-		 (setq b (get-buffer (symbol-name b)))
-		 (when b
-		   (set-buffer b)
-		   (intern (buffer-name)
-			   vm-buffers-needing-undo-boundaries)
-		   (vm-check-for-killed-summary)
-		   (and vm-use-toolbar
-			(vm-toolbar-support-possible-p)
-			(vm-toolbar-update-toolbar))
-		   (when vm-summary-show-threads
-		     (vm-build-threads-if-unbuilt))
-		   (vm-do-needed-renumbering)
-		   (when vm-summary-buffer
+  (let ((regenerate-summaries 
+	 (> (length vm-messages-needing-summary-update) 200)
+	 ;; if there are a lot of messages that need to be updated, we
+	 ;; regenerate the entire summary because it is faster to do so
+	 ))
+    (save-excursion
+      (vm-update-draft-count)
+      (mapatoms (function
+		 (lambda (b)
+		   (setq b (get-buffer (symbol-name b)))
+		   (when b
+		     (set-buffer b)
+		     (intern (buffer-name)
+			     vm-buffers-needing-undo-boundaries)
+		     (vm-check-for-killed-summary)
+		     (when (and vm-use-toolbar
+				(vm-toolbar-support-possible-p))
+		       (vm-toolbar-update-toolbar))
+		     (when vm-summary-show-threads
+		       (vm-build-threads-if-unbuilt))
+		     (vm-do-needed-renumbering)
+		     (when regenerate-summaries
+		       (setq vm-summary-redo-start-point t))
+		     (when vm-summary-buffer
 		       (vm-do-needed-summary-rebuild))
-		   (vm-do-needed-mode-line-update))))
-	      vm-buffers-needing-display-update)
-    (fillarray vm-buffers-needing-display-update 0))
-  (when vm-messages-needing-summary-update
-    (let ((n 1)
-	  (ms vm-messages-needing-summary-update)
-	  m)
-      (while ms
-	(setq m (car ms))
-	(unless (or (eq (vm-deleted-flag m) 'expunged)
-		    (equal (vm-message-id-number-of m) "Q"))
-	  (vm-update-message-summary (car ms)))
-	(if (eq (mod n 10) 0)
-	    (message "Recreating summary... %s" n))
-	(setq n (1+ n))
-	(setq ms (cdr ms)))
-      (setq vm-messages-needing-summary-update nil)))
-  (vm-do-needed-folders-summary-update)
-  (vm-force-mode-line-update))
+		     ;; (when vm-message-pointer
+		     ;;   (vm-set-summary-pointer (car vm-message-pointer)))
+		     (vm-do-needed-mode-line-update))))
+		vm-buffers-needing-display-update)
+      (when regenerate-summaries
+	(setq vm-messages-needing-summary-update nil))
+      (fillarray vm-buffers-needing-display-update 0))
+    (when vm-messages-needing-summary-update
+      (let ((n 1)
+	    (ms vm-messages-needing-summary-update)
+	    m)
+	(while ms
+	  (setq m (car ms))
+	  (unless (or (eq (vm-deleted-flag m) 'expunged)
+		      (equal (vm-message-id-number-of m) "Q"))
+	    (vm-update-message-summary (car ms)))
+	  (if (eq (mod n 10) 0)
+	      (message "Recreating summary... %s" n))
+	  (setq n (1+ n))
+	  (setq ms (cdr ms)))
+	(setq vm-messages-needing-summary-update nil)))
+    (vm-do-needed-folders-summary-update)
+    (vm-force-mode-line-update)))
 
 (defun vm-reverse-link-messages ()
   "Set reverse links for all messages in vm-message-list."

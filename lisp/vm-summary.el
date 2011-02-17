@@ -456,20 +456,19 @@ of action."
 to the current message.  Do the latter anyway if
 `vm-need-summary-pointer-update' is non-NIL.  All this, only if
 the Summary buffer exists. "
-  (if (and vm-summary-redo-start-point vm-summary-buffer)
-      (progn
-	(vm-copy-local-variables vm-summary-buffer 'vm-summary-show-threads)
-	(vm-do-summary (and (consp vm-summary-redo-start-point)
-			    vm-summary-redo-start-point))
-	(setq vm-summary-redo-start-point nil)
-	(when vm-message-pointer
-	  (vm-set-summary-pointer (car vm-message-pointer)))
-	(setq vm-need-summary-pointer-update nil))
-    (when (and vm-need-summary-pointer-update
-	       vm-summary-buffer
-	       vm-message-pointer)
-      (vm-set-summary-pointer (car vm-message-pointer))
-      (setq vm-need-summary-pointer-update nil))))
+  (when vm-summary-buffer
+    (if vm-summary-redo-start-point
+	(progn
+	  (vm-copy-local-variables vm-summary-buffer 'vm-summary-show-threads)
+	  (vm-do-summary (and (consp vm-summary-redo-start-point)
+			      vm-summary-redo-start-point))
+	  (setq vm-summary-redo-start-point nil)
+	  (when vm-message-pointer
+	    (vm-set-summary-pointer (car vm-message-pointer)))
+	  (setq vm-need-summary-pointer-update nil))
+      (when (and vm-need-summary-pointer-update vm-message-pointer)
+	(vm-set-summary-pointer (car vm-message-pointer))
+	(setq vm-need-summary-pointer-update nil)))))
 
 (defun vm-update-message-summary (m)
   "Replace the summary line of the message M in the summary
