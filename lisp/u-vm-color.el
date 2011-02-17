@@ -49,7 +49,6 @@
 ;;  the following in your VM startup file (~/.emacs or ~/.vm)
 
 ;;  (require 'u-vm-color)
-;;  (add-hook 'vm-summary-mode-hook 'u-vm-color-summary-mode)
 ;;  (add-hook 'vm-select-message-hook 'u-vm-color-fontify-buffer)
 
 ;;  It may be necessary to add the following, which probably comes from
@@ -87,6 +86,9 @@
 ;; ======================================================================
 ;;; History:
 
+;;        (2011-02-17)
+;;	  Removed instructions for fontifying summary buffers because
+;;        vm-summary-faces is now built into VM.  Uday S. Reddy
 ;;  2.10: (2008-02-23)
 ;;        Bugfixes -- thanks to Martin Schwenke
 ;;  2.9:  (2007-12-19)
@@ -568,7 +570,7 @@ subexpressions."
 ;;;###autoload
 (defun u-vm-color-summary-mode (&optional arg)
   "Configure `font-lock-keywords' and add some hooks for vm-buffers.
-Optional argument ARG is not used!"
+(Optional argument ARG is not used.)"
   (interactive "P")
   (setq u-vm-color-summary-mode
 	(not (or (and (null arg) u-vm-color-summary-mode)
@@ -615,6 +617,8 @@ Optional argument ARG is not used!"
               u-vm-color-summary-keywords)
 	 (set (make-local-variable 'font-lock-keywords-only) t)
  	 (font-lock-mode 1))))
+(make-obsolete 'u-vm-color-summary-mode 
+	       'vm-summary-enable-faces "8.2.0")
 
 (defun u-vm-color-fontify-regexp (start end regexp how)
   "Search the buffer for an expression and fontify it.
