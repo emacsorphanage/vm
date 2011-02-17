@@ -5742,7 +5742,9 @@ message that is specific to a VM session.
 Attributes.  All the hard-wired message attributes are stored in this
 vector.
 @item
-Cached Data.  Calculated data that is cached for each message.
+Cached Data.  Calculated data that is cached for each message.  (Some
+of the data in this vector is actually ``hard data,'' which cannot be
+calculated.  It is still stored here for historical reasons.)
 @item
 Mirror Data.  Extra data shared by virtual messages if vm-virtual-mirror
 is non-nil.
@@ -5750,7 +5752,7 @@ is non-nil.
 
 @inindex X-VM-v5-Data
 The attributes vector and cached data vector are stored in the
-folder on disk as the @code{X-VM-v5-Data} header of the first message.
+folder on disk as the @code{X-VM-v5-Data} header of the each message.
 
 @subsubheading Location data
 @anchor{Location data vector}
@@ -6220,11 +6222,12 @@ Information that is variable during a VM session.  Examples include
 the message number and thread indentation.
 @end itemize
 
-A @emph{tokenized summary line} is a list whose elements can be
+@noindent A @emph{tokenized summary line} is a list whose elements can be
 strings, representing fixed information in a message, and tokens,
 representing variable information.  VM calculates a tokenized summary
-line for each message and caches it in the cached-data vector.
-The following forms of tokens are used in tokenized summary lines:
+line for each message and caches it in the cached-data vector in the
+@code{summary} field.  The following forms of tokens are used in
+tokenized summary lines:
 
 @itemize
 @item 
@@ -6244,56 +6247,98 @@ Brackets used to denote groups of items that might have particular
 formatting constraints.
 @end itemize
 
-The function @code{vm-tokenized-summary-insert} converts a tokenized
-summary line into a string and inserts it in the summary buffer.  The
-minibuffer message ``Generating summary...'' is used to show the
-progress of generating summary lines from tokenized summaries.
+@noindent The function @code{vm-tokenized-summary-insert} converts a
+tokenized summary line into a string and inserts it in the summary
+buffer.  The minibuffer message ``Generating summary...'' is used to
+show the progress of generating summary lines from tokenized
+summaries.
 
-Buffer local variables in each Folder buffer responsible for
-maintaining summary information:
+@inindex su-start
+@inindex su-end
+The beginning and the ending positions of each message summary line
+are stored in markers and remembered in the message's Soft data vector
+in the fields @code{su-start} and @code{su-end}. @pxref{Message
+Internals}.  These markers stay with the message and retain the
+position of its summary line even as the summary line is moved
+around in the Summary buffer.  
+
+Each summary line also has an overlay or extent placed on it.  It is
+used for decorating the summary line with faces.  In addition, the
+character positions within the summary line have text-properties set,
+which give the data about the message:
 
 @itemize
 @item
+@inindex vm-message
+@code{vm-message}.  The message struct for which this line is a summary.
+@item
+@code{invisible}. Used to make the summary line of a message invisible
+(for thread folding or hiding of deleted messages).
+@end itemize
+
 @inindex vm-summary-pointer
-@code{vm-summary-pointer}.  The message selected by the cursor in the
-Summary window.
+@inindex vm-message-pointer
+@inindex vm-set-summary-pointer
+In addition to the message summaries, the Summary buffer also shows a
+pointer to the ``current message'' that is currently selected.  This
+position is remembered internally in a buffer-local variable
+@code{vm-summary-pointer} in the Folder buffer, which is a pointer
+into the @code{vm-message-list} of the folder.  Whenever current
+message changes, i.e., @code{vm-message-pointer} changes, this pointer
+is also updated.  (See function @code{vm-set-summary-pointer}.)
+
+@unnumberedsubsubsec Updating Summaries
+
+@inindex vm-messages-needing-summary-update
+@inindex vm-mark-for-summary-update
+When a message's attributes change, its summary line may need to be
+updated.  Such updates are done in a ``batched'' fashion in order to
+avoid multiple redisplays of the same summary line and also to take
+account of mirrored messages in virtual folders.  Messages that need
+summary updates are rememebered in the global variable
+@code{vm-messages-needing-summary-update}.  (See function
+@code{vm-mark-for-summary-update}). 
+
+@inindex vm-do-needed-summary-rebuild
+@inindex vm-do-needed-renumbering
+Updating summary lines one at a time can be expensive because of the
+markers and overlays surrounding the summary lines.  If done naively,
+it can result in O(n^2) amount of work for rebuilding a folder's
+summary.  The function @code{vm-do-needed-summary-rebuild} implements
+a bulk operation for rebuilding summary lines of consecutive messages
+more efficiently.  It resets the markers and overlays before
+rebuilding the summary and restores them at the end.  Renumbering
+consecutive messages is also done in a bulk fashion by the function
+@code{vm-do-needed-renumbering}.  The following buffer-local variables
+maintain the status information required by these functions.
+
+@itemize
 @item
 @inindex vm-summary-redo-start-point
-@code{vm-summary-redo-start-point}.  A pointer into the
 @inindex vm-message-list
+@code{vm-summary-redo-start-point}.  A pointer into the
 @code{vm-message-list} indicating the first message for which the
-summary line must be redisplayed.  All the messages from here on are
-assumed to require a summary redisplay.  The assumption is usually valid
-because the message numbers of all the succeeding messages might have
-changed.  But, if message numbers are not included in the summary lines,
-then this results in unnecessary work.
-@item
-@inindex vm-messages-needing-summary-update
-@code{vm-messages-needing-summary-update}.  The list of messages for
-which summary lines must be redisplayed.  Messages are included in this
-list by calling the function @code{vm-mark-for-summary-update}.
+summary line must be redisplayed.  All the messages from here on will
+have their summary redisplayed.  The variable can also be set to
+@code{t}, in which case all the messages in the folder have their
+summary redisplayed.
 @item
 @inindex vm-numbering-redo-start-point
-@code{vm-numbering-redo-start-point}.  A pointer into
 @inindex vm-message-list
+@code{vm-numbering-redo-start-point}.  A pointer into
 @code{vm-message-list} indicating the first message whose message number
 needs to be recalculated.
+@item
 @inindex vm-numbering-redo-end-point
 @code{vm-numbering-redo-end-point}.  A pointer into
 @code{vm-message-list} indicating the last message whose message number
 needs to be recalculated.
 @end itemize
 
-The beginning and the ending positions of each message summary line are
-stored in the message's soft data vector. @pxref{Message Internals}.
-The positions within the summary line have text-properties set, which
-give the data about the message:
-
-@itemize
-@item
-@inindex vm-message
-@code{vm-message}.  The message struct for which this line is a summary.
-@end itemize
+@inindex vm-update-summary-and-mode-line
+@noindent The function @code{vm-update-summary-and-mode-line} is
+called strategically to update all the required summary lines and mode
+lines using the status information stored in these variables.
 
 @node Threading Internals, Sorting Internals, Summary Internals, Internals
 @section Threading Internals
@@ -6382,10 +6427,14 @@ The list of all the messages in the folder that have this subject.
 @end itemize
 
 @inindex threads, building
+@inindex vm-build-threads
 @b{Building threads} involves calculating all the data stored with the
 @code{vm-thread-obarray} and @code{vm-thread-subject-obarray}.  These two
 collections of data are calculated in sequence, because the subject
-threads are based on the reference threads.  
+threads are based on the reference threads.  This is done in the
+function @code{vm-build-threads}.  The fields @code{youngest-date} and
+@code{oldest-date} are not filled in this function, because they can
+only be calculated @i{after} threads are built.
 
 @inindex thread-subtree
 @inindex thread-list
@@ -6393,7 +6442,10 @@ threads are based on the reference threads.
 After the threads are built, the @code{thread-list},
 @code{thread-indentation} and the @code{thread-subtree} fields of the
 Softdata vector are calculated as needed on demand and cached.  These
-fields cannot be calculated without building threads first.
+fields cannot be calculated without building threads first.  The
+fields @code{youngest-date} and @code{oldest-date} of
+@code{vm-thread-obarray} are filled when the @code{thread-list} of a
+message is calculated.  (Function @code{vm-build-thread-list}.)
 
 When new messages are assimilated, they are added to the threads that
 might have been already built, and the thread-related fields in the

@@ -397,11 +397,9 @@ Toolbars are updated."
 		       (vm-build-threads-if-unbuilt))
 		     (vm-do-needed-renumbering)
 		     (when regenerate-summaries
-		       (setq vm-summary-redo-start-point t))
+		       (vm-set-summary-redo-start-point t))
 		     (when vm-summary-buffer
 		       (vm-do-needed-summary-rebuild))
-		     ;; (when vm-message-pointer
-		     ;;   (vm-set-summary-pointer (car vm-message-pointer)))
 		     (vm-do-needed-mode-line-update))))
 		vm-buffers-needing-display-update)
       (when regenerate-summaries
@@ -411,6 +409,7 @@ Toolbars are updated."
       (let ((n 1)
 	    (ms vm-messages-needing-summary-update)
 	    m)
+	(message "Recreating summary...")
 	(while ms
 	  (setq m (car ms))
 	  (unless (or (eq (vm-deleted-flag m) 'expunged)
@@ -420,6 +419,7 @@ Toolbars are updated."
 	      (message "Recreating summary... %s" n))
 	  (setq n (1+ n))
 	  (setq ms (cdr ms)))
+	(message "Recreating summary... done")
 	(setq vm-messages-needing-summary-update nil)))
     (vm-do-needed-folders-summary-update)
     (vm-force-mode-line-update)))
