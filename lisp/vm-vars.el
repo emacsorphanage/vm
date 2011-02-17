@@ -1081,7 +1081,6 @@ effect."
   :group 'vm-compose
   :type 'boolean)
 
-;; FIXME What is the const symbol wrap?
 (defcustom vm-fill-paragraphs-containing-long-lines nil
   "*This variable can be set to nil, a numeric value N, the
 symbol 'window-width.  If it is numeric, it causes VM to fill
@@ -1102,7 +1101,6 @@ wrapping."
   :group 'vm-presentation 
   :type '(choice (const :tag "Off" nil)
 		 (const :tag "Window width" window-width)
-		 (const :tag "Wrap" wrap)
 		 (integer :tag "Fill width")))
 
 (defcustom vm-fill-paragraphs-containing-long-lines-in-reply nil
@@ -1121,7 +1119,6 @@ wrapping."
   :group 'vm-compose 
   :type '(choice (const :tag "No" nil)
 		 (const :tag "Window width" window-width)
-		 (const :tag "Wrap" wrap)
 		 (integer :tag "Fill column")))
 
 (defcustom vm-paragraph-fill-column (default-value 'fill-column)
