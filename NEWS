@@ -81,7 +81,11 @@ VM 8.1.93a (2010-08-28)
      Robert Fenk under the name vm-summary-faces-mode. But there are
      several changes.  In particular, the face names do not end in
      "-face" following the Emacs naming conventions.)  See the info
-     section on "Summaries" for more information.
+     section on "Summaries" for more information.  If you currently
+     use the u-vm-color package for colorizing the Summary buffers,
+     please remove the feature, i.e., delete a line like 
+      (add-hook 'vm-summary-mode-hook 'u-vm-color-summary-mode)
+     from your VM initialization file.
 
   ** Commands renamed:
      `vm-mime-save-all-attachments' => `vm-save-all-attachments'(C-c C-s)
