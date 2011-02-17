@@ -456,20 +456,19 @@ of action."
 to the current message.  Do the latter anyway if
 `vm-need-summary-pointer-update' is non-NIL.  All this, only if
 the Summary buffer exists. "
-  (if (and vm-summary-redo-start-point vm-summary-buffer)
-      (progn
-	(vm-copy-local-variables vm-summary-buffer 'vm-summary-show-threads)
-	(vm-do-summary (and (consp vm-summary-redo-start-point)
-			    vm-summary-redo-start-point))
-	(setq vm-summary-redo-start-point nil)
-	(when vm-message-pointer
-	  (vm-set-summary-pointer (car vm-message-pointer)))
-	(setq vm-need-summary-pointer-update nil))
-    (when (and vm-need-summary-pointer-update
-	       vm-summary-buffer
-	       vm-message-pointer)
-      (vm-set-summary-pointer (car vm-message-pointer))
-      (setq vm-need-summary-pointer-update nil))))
+  (when vm-summary-buffer
+    (if vm-summary-redo-start-point
+	(progn
+	  (vm-copy-local-variables vm-summary-buffer 'vm-summary-show-threads)
+	  (vm-do-summary (and (consp vm-summary-redo-start-point)
+			      vm-summary-redo-start-point))
+	  (setq vm-summary-redo-start-point nil)
+	  (when vm-message-pointer
+	    (vm-set-summary-pointer (car vm-message-pointer)))
+	  (setq vm-need-summary-pointer-update nil))
+      (when (and vm-need-summary-pointer-update vm-message-pointer)
+	(vm-set-summary-pointer (car vm-message-pointer))
+	(setq vm-need-summary-pointer-update nil)))))
 
 (defun vm-update-message-summary (m)
   "Replace the summary line of the message M in the summary
@@ -1666,25 +1665,29 @@ Call this function if you made changes to `vm-summary-format'."
       (kill-local-variable 'vm-summary-format))
   (message "Fixing your summary... %s" vm-summary-format)
   (let ((mp vm-message-list))
-    ;; Erase all the cached summary data
+    ;; Erase all the cached summary and threading data
     (while mp
       (vm-set-summary-of (car mp) nil)
       (vm-mark-for-summary-update (car mp))
       (vm-set-stuff-flag-of (car mp) t)
+      (vm-set-thread-list-of (car mp) nil)
+      (vm-set-thread-indentation-of (car mp) nil)
+      (vm-set-thread-subtree-of (car mp) nil)
       (setq mp (cdr mp)))
+
     ;; Erase threading information
     (setq vm-thread-obarray 'bonk
 	  vm-thread-subject-obarray 'bonk)
-    ;; Generate fresh summary data and stuff it
-;;     (message "Stuffing cached data...")
-;;     (vm-stuff-folder-data nil)
-;;     (message "Stuffing cached data... done")
-;;     (set-buffer-modified-p t)
+
+    ;; Originally the new data was getting stuffed here, long delays.
+    ;; But, there is no urgency for stuffing.  So we don't do it here.
+    ;; (message "Stuffing cached data...")
+    ;; (vm-stuff-folder-data nil)
+    ;; (message "Stuffing cached data... done")
+    ;; (set-buffer-modified-p t)
+
     ;; Regenerate the summary
-    (message "Recreating summary...")
-    (vm-update-summary-and-mode-line)
-    (unless vm-summary-debug
-      (message "Recreating summary... done")))
+    (vm-update-summary-and-mode-line))
   (message "Fixing your summary... done"))
 
 (defun vm-su-thread-indent (m)
