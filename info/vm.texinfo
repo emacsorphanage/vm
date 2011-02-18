@@ -6618,6 +6618,30 @@ is found from
 display the MIME part.
 @end enumerate
 
+MIME buttons are displayed as regions of text displaying button
+labels.  In addition, they have an overlay/extent placed on them,
+which has a number of properties associated with it:
+
+@itemize
+@item @code{vm-button}.
+Always @code{t}.
+@item @code{vm-mime-layout}.  
+Gives the layout of the MIME part.
+@item @code{vm-mime-function}.
+The function that carries out the action represented by pressing the
+button.
+@item @code{vm-mime-disposable}.
+Set to true if the button should be removed when it is replaced by the
+MIME object.
+@inindex vm-mime-button-face
+@item @code{face}.
+Set to the value of @code{vm-mime-button-face}.
+@item @code{local-map} (FSF Emacs) or @code{keymap} (XEmacs).
+Set to a keymap that includes @code{vm-mime-reader-map}, binding the
+@kbd{$} keys.
+@end itemize
+
+
 @node MIME Composition, Extents and Overlays, MIME Display, Internals
 @section MIME Composition
 

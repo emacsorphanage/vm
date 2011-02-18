@@ -493,15 +493,21 @@ specified by `vm-included-text-headers' and
       (save-excursion
 	(goto-char (point-min))
 	(vm-decode-mime-message-headers))
-      (let ((vm-mime-alternative-select-method 'best-internal)
-					; override 'all and 'best
-	    (vm-auto-displayed-mime-content-types 
-	     '("text" "message"))       ; include only text and message types
+
+      ;; Use normal MIME decoding but override normal parameter settings
+      (let (;; select best-internal alternatives - override 'all and 'best
+	    (vm-mime-alternative-select-method 'best-internal)
+	    ;; include only text and message types
+	    (vm-auto-displayed-mime-content-types '("text" "message"))       
+	    ;; don't include separator for multipart
 	    (vm-mime-parts-display-separator "")
-					; default separator for multipart
+	    ;; make MIME buttons look normal and and use different labels
+	    (vm-mime-button-face 'default)
 	    (vm-mime-button-format-alist vm-mime-yanked-button-format-alist)
 	    )
 	(vm-decode-mime-layout layout))
+
+      ;; Make the MIME buttons attachment buttons
       (if vm-include-mime-attachments
 	  (vm-mime-encode-mime-attachments)))))
 

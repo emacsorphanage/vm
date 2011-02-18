@@ -4466,12 +4466,17 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
     nil ))
 
 (defun vm-mime-display-generic (layout)
+  "Display the mime object described by LAYOUT, irrespective of
+whether it is meant to be to be displayed automatically."
   (save-excursion
     (let ((vm-auto-displayed-mime-content-types t)
 	  (vm-auto-displayed-mime-content-type-exceptions nil))
       (vm-decode-mime-layout layout t))))
 
 (defun vm-mime-display-button-xxxx (layout disposable)
+  "Display a button for the mime object described by LAYOUT.  If
+DISPOSABLE is true, then the button will be removed when it is
+expanded to display the mime object."
   (vm-mime-insert-button
    (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
    (function vm-mime-display-generic)
@@ -4952,6 +4957,10 @@ confirmed before creating a new directory."
 					 ':file file))))))))
 
 (defun vm-mime-insert-button (caption action layout disposable)
+  "Display a button for a mime object, using CAPTION as the label (a
+string) and ACTION as the default action (a function).  The mime object
+is described by LAYOUT.  If DISPOSABLE is true, then the button will
+be removed when it is expanded to display the mime object."
   (let ((start (point))	e
 	(keymap vm-mime-reader-map)
 	(buffer-read-only nil))
@@ -7824,13 +7833,9 @@ This is a destructive operation and cannot be undone!"
 
   (save-excursion
     (let (layout xstart xend)
-      (if vm-fsfemacs-p
-          (setq layout (overlay-get x 'vm-mime-layout)
-                xstart (overlay-start x)
-                xend   (overlay-end x))
-        (setq layout (vm-extent-property x 'vm-mime-layout)
-              xstart (vm-extent-start-position x)
-              xend   (vm-extent-end-position x)))
+      (setq layout (vm-extent-property x 'vm-mime-layout)
+	    xstart (vm-extent-start-position x)
+	    xend   (vm-extent-end-position x))
                
       (let* ((start  (vm-mm-layout-header-start layout))
              (end    (vm-mm-layout-body-end   layout))
