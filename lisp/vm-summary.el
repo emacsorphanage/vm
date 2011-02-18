@@ -75,43 +75,21 @@ an interior message of a thread."
   "Checks to see if the message summary of M shows that its thread is
 currently expanded. This is done safely so that if M does not have a
 summary line then nil is returned."
-  (and (vm-su-start-of m)
-       (or (integerp (vm-su-start-of m))
-	   (marker-position (vm-su-start-of m)))
-       (save-excursion
-	 (goto-char (vm-su-start-of m))
-	 (looking-at "-"))))
+  (null (vm-folded-flag m)))
 
 (defsubst vm-summary-collapsed-root-p (m)
   "Checks to see if the message summary of M shows that its thread is
 currently collapsed. This is done safely so that if M does not have a
 summary line then nil is returned."
-  (and (vm-su-start-of m)
-       (or (integerp (vm-su-start-of m))
-	   (marker-position (vm-su-start-of m)))
-       (save-excursion
-	 (goto-char (vm-su-start-of m))
-	 (looking-at "+"))))
+  (vm-folded-flag m))
 
 (defsubst vm-summary-mark-root-collapsed (m)
   "Mark a thread root message M as collapsed."
-  (when (and (vm-su-start-of m)
-	     (or (integerp (vm-su-start-of m))
-		 (marker-position (vm-su-start-of m))))
-    (save-excursion
-      (goto-char (vm-su-start-of m))
-      (delete-char 1)
-      (insert "+"))))
+  (vm-set-folded-flag m t))
 
 (defsubst vm-summary-mark-root-expanded (m)
   "Mark a thread root message M as expanded."
-  (when (and (vm-su-start-of m)
-	     (or (integerp (vm-su-start-of m))
-		 (marker-position (vm-su-start-of m))))
-    (save-excursion
-      (goto-char (vm-su-start-of m))
-      (delete-char 1)
-      (insert "-"))))
+  (vm-set-folded-flag m nil))
 
 (defsubst vm-visible-message (m)
   (apply 'vm-vs-or m vm-summary-visible))
@@ -495,13 +473,11 @@ buffer by a regenerated summary line."
 		(save-excursion
 		  (goto-char (vm-su-start-of m))
 		  (setq selected (looking-at "[+-]>"))
-		  (setq indicator (if (looking-at "-") "-" 
-				    (if (looking-at "+") "+"
-				      nil)))
-		  (unless (and vm-summary-show-threads
-			       (eq m (vm-thread-root m))
-			       (> (vm-thread-count m) 1))
-			(setq indicator nil))
+		  (if (and vm-summary-show-threads
+			   (eq m (vm-thread-root m))
+			   (> (vm-thread-count m) 1))
+		      (setq indicator (if (vm-folded-flag m) "+" "-"))
+		    (setq indicator nil))
 		  ;; We do a little dance to update the text in
 		  ;; order to make the markers in the text do
 		  ;; what we want.
@@ -580,7 +556,7 @@ Also move the cursor (point and window-point)."
 				 vm-summary-enable-thread-folding
 				 (eq msg (vm-thread-root msg))
 				 (> (vm-thread-count msg) 1))
-			    (if (looking-at "+") 
+			    (if (vm-folded-flag msg)
 				(progn (insert "+ ") 
 				       (delete-char (length vm-summary-=>)))
 			      (progn (insert "- ")
@@ -620,8 +596,7 @@ Also move the cursor (point and window-point)."
 			;; visiting a folder with bookmark on
 			;; sub-thread
 			;;
-			(if (save-excursion (goto-char (vm-su-start-of m))
-					    (looking-at "+"))
+			(if (vm-folded-flag m)
 			    (insert "+>")
 			  (if (and vm-summary-show-threads
 				   (get-text-property 
