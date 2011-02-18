@@ -13,6 +13,15 @@ VM 8.2.0b (2011-02-28)
 
   CHANGES
 
+   * New variable `vm-include-text-basic' can be used to enable the
+     fallback method of quoting message text in replies.  It should
+     normally left with the default value of nil.
+
+   * The meaning of the variable `vm-included-mime-types-list' is
+     changed.  It need only mention MIME type/subtype pairs that are
+     not handled by default.  The types "text/plain", "text/enriched"
+     and "message/rfc822" are now handled by default.
+
    * The attributes vector has been expanded to 16 elements for
      compatibility with Mozilla Thunderbird.  The first time a folder
      is written, this will cause extra time to be taken for "stuffing"
@@ -24,7 +33,7 @@ VM 8.2.0b (2011-02-28)
      That functionality is now obsolete.  Replace references to
      `vm-mime-yank-attachments' in your customization by the new variable.
      
-   * Forwarding messages as MIME attachments included all message
+   * Forwarding messages as MIME attachments includes all message
      headers, ignoring the vm-forwarded-headers and
      vm-unforwarded-header-regexp settings.
 

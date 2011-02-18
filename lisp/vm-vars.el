@@ -2875,18 +2875,12 @@ Nil means don't attribute included text in replies."
   :group 'vm-compose
   :type '(choice (const nil) string))
 
-(defcustom vm-included-mime-types-list nil
-"*If non-nil, the list of mime type/subtype pairs that should be
-included in quoted text in a reply message.  A suitable value could be
-  '(\"text/plain\" \"text/enriched\" \"message/rfc822\")
-If it is nil, it means that the default MIME displaying mechanism of
-VM is used to generate the included text, as controlled by variables
-like `vm-auto-displayed-mime-content-types'.
-
-The defaut value is nil." 
-  :group 'vm-mime
-  :type '(choice (const nil)
-                 (repeat string)))
+(defcustom vm-include-text-basic nil
+  "*If true a reply will include the basic text of a message.
+This is an old method for citing messages and should not be used
+normally." 
+  :group 'vm-compose
+  :type 'boolean)
 
 (defcustom vm-include-text-from-presentation nil
   "*If true a reply will include the presentation of a message.
@@ -2895,6 +2889,20 @@ it might give better results when using filling or MIME encoded messages,
 e.g. HTML message."
   :group 'vm-compose
   :type 'boolean)
+
+(defcustom vm-included-mime-types-list nil
+  "*If non-nil, the list of mime type/subtype pairs that should be
+included in quoted text in a reply message in addition to the default
+types.
+
+This variable currently has an effect only if `vm-include-text-basic'
+is true.  It has no effect for the default text quotation mechanism
+based on MIME decoding.
+
+The defaut value is nil." 
+  :group 'vm-compose
+  :type '(choice (const nil)
+                 (repeat string)))
 
 (defcustom vm-included-text-headers nil
   "*List of headers that should be retained in a message included in

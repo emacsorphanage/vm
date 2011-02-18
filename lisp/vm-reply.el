@@ -406,11 +406,11 @@ specified by `vm-included-text-headers' and
 		 (vm-body-to-be-retrieved-of message))
 	     (vm-yank-message-presentation message)
 	     (setq end (point-marker)))
-	    ((null vm-included-mime-types-list)
-	     (vm-yank-message-mime message layout)
+	    (vm-include-text-basic
+	     (vm-yank-message-text message layout)
 	     (setq end (point-marker)))
 	    (t
-	     (vm-yank-message-text message layout)
+	     (vm-yank-message-mime message layout)
 	     (setq end (point-marker)))
 	    )
       ;; decode MIME encoded words so supercite and other
@@ -427,17 +427,17 @@ specified by `vm-included-text-headers' and
                               (current-buffer)))
     (push-mark end)
     (save-excursion
-      ;; Move point above the headers which should be at the top of the buffer by
-      ;; this point, and given the push-mark above, mark should now be after the
-      ;; message text. This is the invariant needed by the hook functions called
-      ;; by mail-citation-hook whose doc string states "Each hook function can
-      ;; find the citation between (point) and (mark t)." The upshot of that is
-      ;; that if point equals mark at the end of the buffer, some citation
-      ;; functions will fail with messages similar to "doesn't conform to RFC
-      ;; 822." -- Brent Goodrick, 2009-01-24 
-      ;; But this yanks wrongly!  
-      ;; The following line reverted by Uday Reddy, 2009-12-07
-      ;; (goto-char (point-min))
+      ;; Move point above the headers which should be at the top of
+      ;; the buffer by this point, and given the push-mark above, mark
+      ;; should now be after the message text. This is the invariant
+      ;; needed by the hook functions called by mail-citation-hook
+      ;; whose doc string states "Each hook function can find the
+      ;; citation between (point) and (mark t)." The upshot of that is
+      ;; that if point equals mark at the end of the buffer, some
+      ;; citation functions will fail with messages similar to
+      ;; "doesn't conform to RFC 822." -- Brent Goodrick, 2009-01-24
+      ;; But this yanks wrongly!  The following line reverted by Uday
+      ;; Reddy, 2009-12-07 (goto-char (point-min))
       (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
 	    (mail-yank-hooks (run-hooks 'mail-yank-hooks))
 	    (t (vm-mail-yank-default message))))))
@@ -518,24 +518,25 @@ specified by `vm-included-text-headers' and
 	    (append-to-buffer b (vm-headers-of message)
 			      (vm-text-end-of message))
 	    (set-buffer b)))
-      (setq type (car (vm-mm-layout-type layout))
-	    alternatives 0
-	    parts (list layout))
+      (setq type (car (vm-mm-layout-type layout)))
+      (setq parts (list layout))
+      (setq alternatives 0)
 
-      (vm-insert-region-from-buffer (vm-buffer-of message)
-				    (vm-headers-of message)
-				    (vm-text-of message))
+      (vm-insert-region-from-buffer 
+       (vm-buffer-of message) (vm-headers-of message) (vm-text-of message))
       (while parts
 	(setq layout (car parts))
 	(cond ((vm-mime-text-type-layout-p layout)
 	       (cond ((vm-mime-types-match
-		       "text/enriched"
-		       (car (vm-mm-layout-type layout)))
+		       "text/plain" (car (vm-mm-layout-type layout)))
+		      (setq res (vm-mime-display-internal-text/plain
+				 layout t)))
+		     ((vm-mime-types-match
+		       "text/enriched" (car (vm-mm-layout-type layout)))
 		      (setq res (vm-mime-display-internal-text/enriched
 				 layout)))
 		     ((vm-mime-types-match
-		       "message/rfc822"
-		       (car (vm-mm-layout-type layout)))
+		       "message/rfc822" (car (vm-mm-layout-type layout)))
 		      (setq res (vm-mime-display-internal-message/rfc822
 				 layout)))
 		     ;; no text/html for now
@@ -544,48 +545,38 @@ specified by `vm-included-text-headers' and
 		     ;;   (car (vm-mm-layout-type layout)))
 		     ;;  (setq res (vm-mime-display-internal-text/html
 		     ;; 	      layout)))
-		     ((member (downcase (car (vm-mm-layout-type
-					      layout)))
+		     ((member (downcase (car (vm-mm-layout-type layout)))
 			      vm-included-mime-types-list)
-		      (setq res (vm-mime-display-internal-text/plain
-				 layout t)))
-		     ;; convert the layout if possible
-		     ((and (not (vm-mm-layout-is-converted layout))
-			   (vm-mime-can-convert (car (vm-mm-layout-type
-						      layout)))
-			   (setq new-layout
-				 (vm-mime-convert-undisplayable-layout
-				  layout)))
-		      (setq res (vm-decode-mime-layout new-layout))))
+		      (if (and (not (vm-mm-layout-is-converted layout))
+			       (vm-mime-can-convert 
+				(car (vm-mm-layout-type layout)))
+			       (setq new-layout
+				     (vm-mime-convert-undisplayable-layout
+				      layout)))
+			  (setq res (vm-decode-mime-layout new-layout))
+			(setq res (vm-mime-display-internal-text/plain
+				   layout t)))))
 	       (if res
-		   ;; we have found a part to insert, thus skip the
-		   ;; remaining alternatives  
 		   (while (> alternatives 1)
-		     (setq parts (cdr parts)
-			   alternatives (1- alternatives)))
-			 
-		 (if (not (member (downcase (car (vm-mm-layout-type
-						  layout)))
-				  vm-included-mime-types-list))
-		     nil
+		     (setq parts (cdr parts))
+		     (setq alternatives (1- alternatives)))
+		 (when (member (downcase (car (vm-mm-layout-type layout)))
+			       vm-included-mime-types-list)
 		   ;; charset problems probably
 		   ;; just dump the raw bits
 		   (setq insert-start (point))
 		   (vm-mime-insert-mime-body layout)
-		   (vm-mime-transfer-decode-region layout
-						   insert-start
-						   (point))))
-	       (setq alternatives (1- alternatives))
+		   (vm-mime-transfer-decode-region 
+		    layout insert-start (point))))
 	       (setq parts (cdr parts)))
-	      ;; burst composite types 
-	      ((vm-mime-composite-type-p
-		(car (vm-mm-layout-type layout)))
-	       (setq alternatives (length (vm-mm-layout-parts (car parts))))
+	      ((vm-mime-composite-type-p (car (vm-mm-layout-type layout)))
+	       (when (vm-mime-types-match 
+		      "multipart/alternative" (car (vm-mm-layout-type layout)))
+		 (setq alternatives (length (vm-mm-layout-parts (car parts)))))
 	       (setq parts (nconc (copy-sequence
 				   (vm-mm-layout-parts
 				    (car parts)))
 				  (cdr parts))))
-	      ;; skip non-text parts 
 	      (t
 	       (setq alternatives (1- alternatives))
 	       (setq parts (cdr parts))))))))

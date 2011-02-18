@@ -2881,13 +2881,14 @@ and the inclusion of text from the Presentation buffer, due to Robert
 Fenk. 
 
 @vindex vm-included-mime-types-list
-The Kyle Jones method of plain text inclusion is enabled by setting the
-variable @code{vm-included-mime-types-list} to a non-nil list.  Its
-value should be the list of MIME types that should be covered in the
-included text.  The list should have @code{text/plain} at a minimum and
-could include other types such as @code{text/enriched} and
-@code{message}.  Setting the variable to nil returns you to the default
-behaviour.
+@vindex vm-include-text-basic
+The Kyle Jones method of plain text inclusion is enabled by setting
+the variable @code{vm-include-text-basic} to @code{t}.  Setting the
+variable to nil returns you to the default behaviour.  You can set the
+variable @code{vm-included-mime-types-list} to additional MIME
+type/subtype pairs that should be included in cited text.  But it may
+not produce good results because the handling of MIME types is not
+available in the basic text inclusion method.
 
 @vindex vm-include-text-from-presentation
 The Robert Fenk method of text inclusion from the Presentation buffer is
