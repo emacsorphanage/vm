@@ -407,7 +407,7 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 ;;
 ;; vm-thread-list initializes the oldest-date property on
 ;; the message-id symbols.  Since this property is used as an
-;; ordering key by the thread sort, the oldest-date properties
+;; ordering key by the thread sort the oldest-date properties
 ;; must be computed before the sort begins, not during it.
 ;; Otherwise the sort won't be stable and there will be chaos.
 
