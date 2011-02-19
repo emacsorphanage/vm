@@ -2493,7 +2493,7 @@ cleanly and Emacs will respond to your keystrokes as usual."
 		 (const :tag "Flush after every change" t)
 		 (integer :tag "Seconds")))
 
-(defcustom vm-visit-when-saving nil
+(defcustom vm-visit-when-saving 'not-always
   "*Value determines whether VM will visit folders when saving messages.
 `Visiting' means that VM will read the folder into Emacs and append the
 message to the buffer instead of appending to the folder file directly.
@@ -2508,11 +2508,12 @@ that is being visited.  The latter restriction is necessary to insure
 that the buffer and disk copies of the folder being visited remain
 consistent.
 
-A value that is not nil and not t means VM will save to a folder's
-buffer if that folder is being visited, otherwise VM saves to the folder
-file itself."
+A value other than nil or t means that VM will save to the folder
+buffer if it is visited or to the file otherwise."
   :group 'vm-folders
-  :type '(choice boolean (const if-already-visited)))
+  :type '(choice (const :tag "Always" t)
+		 (const :tag "Never" nil)
+		 (const :tag "Not always" not-always)))
 
 (defcustom vm-auto-folder-alist nil
   "*Non-nil value should be an alist that VM will use to choose a default
