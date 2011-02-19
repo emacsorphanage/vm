@@ -1412,7 +1412,15 @@ The first matching list element will be used.
 No multipart message will ever be sent to an external viewer."
   :group 'vm-mime
   :type '(choice (const nil)
-                 (repeat (list string string))))
+                 (alist :key-type (string :tag "MIME Type")
+			:value-type (choice 
+				     (group :tag "Function"
+					    (function :tag "Function")
+					    (repeat :inline t 
+						    (string :tag "Args")))
+				     (group :tag "Program" (file :tag "Program")
+					    (repeat :inline t (string :tag "Args")))
+				     (string :tag "Shell Command")))))
 
 (defcustom vm-mime-external-content-type-exceptions nil
   "*List of MIME content types that should not be displayed externally
