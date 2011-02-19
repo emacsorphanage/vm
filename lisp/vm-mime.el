@@ -65,7 +65,6 @@
 (declare-function set-glyph-baseline "vm-xemacs" 
 		  (glyph spec &optional locale tag-set how-to-add))
 (declare-function set-glyph-face "vm-xemacs" (glyph face))
-(declare-function delete-extent "vm-xemacs" (extent))
 (declare-function extent-list "vm-xemacs" 
 		  (&optional buffer-or-string from to flags property value))
 (declare-function extent-begin-glyph "vm-xemacs" (extent))
@@ -4487,17 +4486,7 @@ expanded to display the mime object."
 ;;----------------------------------------------------------------------------
 
 (defun vm-find-layout-extent-at-point ()
-  (cond (vm-fsfemacs-p
-	 (let (o-list o retval (found nil))
-	   (setq o-list (overlays-at (point)))
-	   (while (and o-list (not found))
-	     (cond ((overlay-get (car o-list) 'vm-mime-layout)
-		    (setq found t)
-		    (setq retval (car o-list))))
-	     (setq o-list (cdr o-list)))
-	   retval ))
-	(vm-xemacs-p
-	 (vm-extent-at (point) nil 'vm-mime-layout))))
+  (vm-extent-at (point) 'vm-mime-layout))
 
 ;;;###autoload
 (defun vm-mime-run-display-function-at-point (&optional function dispose)
@@ -4514,10 +4503,7 @@ expanded to display the mime object."
     (let ((e (vm-find-layout-extent-at-point))
 	  retval )
       (cond ((null e) nil)
-	    (vm-fsfemacs-p
-	     (funcall (or function (overlay-get e 'vm-mime-function))
-		      e))
-	    (vm-xemacs-p
+	    (t
 	     (funcall (or function (vm-extent-property e 'vm-mime-function))
 		      e))))))
 
@@ -5915,7 +5901,7 @@ COMPOSITION's name will be read from the minibuffer."
     (error "Command must be used in a VM Mail mode buffer."))
   (when (vm-mail-mode-get-header-contents "MIME-Version")
     (error "Can't attach MIME object to already encoded MIME buffer."))
-  (let (start end e tag-string disposition
+  (let (start end e tag-string disposition file-name
 	(fb (list vm-mime-forward-local-external-bodies)))
     (when (< (point) (save-excursion (mail-text) (point)))
       (mail-text))
@@ -5926,24 +5912,22 @@ COMPOSITION's name will be read from the minibuffer."
 			     (or type "MIME file"))))
     (insert tag-string "\n")
     (setq end (1- (point)))
-    (if (and (stringp object) (not mimed))
-	(progn
+    (cond ((and (stringp object) (not mimed))
 	  (if (or (vm-mime-types-match "application" type)
 		  (vm-mime-types-match "model" type))
 	      (setq disposition (list "attachment"))
 	    (setq disposition (list "inline")))
 	  (unless no-suggested-filename
-	      (setq type (concat type 
-				 "; name=\"" 
-				 (file-name-nondirectory object) "\"")
-                    disposition (nconc disposition
-                                       (list
-					(concat "filename=\""
-						(file-name-nondirectory object)
-						"\""))))))
-      (setq disposition (list "unspecified")))
-    (when (listp object) 
-      (setq disposition (nth 3 object)))
+	    (setq file-name (file-name-nondirectory object))
+	    (setq type 
+		  (concat type "; name=\"" file-name "\""))
+	    (setq disposition 
+		  (nconc disposition
+			 (list (concat "filename=\"" file-name "\""))))))
+	  ((listp object) 
+	   (setq disposition (nth 3 object)))
+	  (t
+	   (setq disposition (list "unspecified"))))
 
     (cond (vm-fsfemacs-p
 	   (put-text-property start end 'front-sticky nil)
@@ -5990,7 +5974,7 @@ COMPOSITION's name will be read from the minibuffer."
 	 (let ((fb (get-text-property (point) 'vm-mime-forward-local-refs)))
 	   (car fb) ))
 	(vm-xemacs-p
-	 (let* ((e (vm-extent-at (point) nil 'vm-mime-type))
+	 (let* ((e (vm-extent-at (point) 'vm-mime-type))
 		(fb (vm-extent-property e 'vm-mime-forward-local-refs)))
 	   (car fb) ))))
 
@@ -5999,7 +5983,7 @@ COMPOSITION's name will be read from the minibuffer."
 	 (let ((fb (get-text-property (point) 'vm-mime-forward-local-refs)))
 	   (setcar fb val) ))
 	(vm-xemacs-p
-	 (let* ((e (vm-extent-at (point) nil 'vm-mime-type))
+	 (let* ((e (vm-extent-at (point) 'vm-mime-type))
 		(fb (vm-extent-property e 'vm-mime-forward-local-refs)))
 	   (setcar fb val) ))))
 
@@ -6008,7 +5992,7 @@ COMPOSITION's name will be read from the minibuffer."
          ;; TODO
          )
 	(vm-xemacs-p
-	 (let ((e (vm-extent-at (point) nil 'vm-mime-type)))
+	 (let ((e (vm-extent-at (point) 'vm-mime-type)))
            (delete-region (vm-extent-start-position e)
                           (vm-extent-end-position e))))))
 
@@ -6017,13 +6001,13 @@ COMPOSITION's name will be read from the minibuffer."
          ;; TODO
          )
 	(vm-xemacs-p
-	 (let ((e (vm-extent-at (point) nil 'vm-mime-type)))
+	 (let ((e (vm-extent-at (point) 'vm-mime-type)))
            (save-excursion
              (goto-char (1+ (vm-extent-start-position e)))
              (insert " --- DELETED ")
              (goto-char (vm-extent-end-position e))
              (insert " ---")
-             (delete-extent e))))))
+             (vm-delete-extent e))))))
 
 ;;;###autoload
 (defun vm-mime-change-content-disposition ()
@@ -6040,7 +6024,7 @@ COMPOSITION's name will be read from the minibuffer."
 	 (let ((disp (get-text-property (point) 'vm-mime-disposition)))
 	   (intern (car disp))))
 	(vm-xemacs-p
-	 (let* ((e (vm-extent-at (point) nil 'vm-mime-disposition))
+	 (let* ((e (vm-extent-at (point) 'vm-mime-disposition))
 		(disp (vm-extent-property e 'vm-mime-disposition)))
 	   (intern (car disp))))))
 
@@ -6049,7 +6033,7 @@ COMPOSITION's name will be read from the minibuffer."
 	 (let ((disp (get-text-property (point) 'vm-mime-disposition)))
 	   (setcar disp (symbol-name sym))))
 	(vm-xemacs-p
-	 (let* ((e (vm-extent-at (point) nil 'vm-mime-disposition))
+	 (let* ((e (vm-extent-at (point) 'vm-mime-disposition))
 		(disp (vm-extent-property e 'vm-mime-disposition)))
 	   (setcar disp (symbol-name sym))))))
 
@@ -6058,7 +6042,7 @@ COMPOSITION's name will be read from the minibuffer."
   (cond (vm-fsfemacs-p
 	 (get-text-property (point) 'vm-mime-encoding))
 	(vm-xemacs-p
-	 (let ((e (vm-extent-at (point) nil 'vm-mime-encoding)))
+	 (let ((e (vm-extent-at (point) 'vm-mime-encoding)))
            (if e (vm-extent-property e 'vm-mime-encoding))))))
 
 (defun vm-mime-set-attachment-encoding-at-point (sym)
@@ -6067,16 +6051,25 @@ COMPOSITION's name will be read from the minibuffer."
 	 (put-text-property (point) (point) 'vm-mime-encoding sym)
 	 )
 	(vm-xemacs-p
-	 (let ((e (vm-extent-at (point) nil 'vm-mime-disposition)))
+	 (let ((e (vm-extent-at (point) 'vm-mime-disposition)))
            (vm-set-extent-property e 'vm-mime-encoding sym)))))
 
-(defun vm-disallow-overlay-endpoint-insertion (overlay after start end
-					       &optional old-size)
-  (cond ((null after) nil)
-	((= start (overlay-start overlay))
-	 (move-overlay overlay end (overlay-end overlay)))
-	((= start (overlay-end overlay))
-	 (move-overlay overlay (overlay-start overlay) start))))
+(defun vm-disallow-overlay-endpoint-insertion 
+  (overlay after start end &optional old-size)
+  "Hook function called before and after text is inserted at the
+endpoint of an OVERLAY.  AFTER is true if the call is being made after
+insertion.  Otherwise, it is being made before insertion.  START and
+END denote the range of the text inserted.  Optional argument
+OLD-SIZE is ignored.
+
+This hook does nothing when called before insertion.  When it is
+called after insertion, it moves the overlay so that the inserted is
+excluded from the overlay."
+  (when after
+    (cond ((= start (overlay-start overlay))
+	   (move-overlay overlay end (overlay-end overlay)))
+	  ((= start (overlay-end overlay))
+	   (move-overlay overlay (overlay-start overlay) start)))))
 
 (defun vm-mime-fake-attachment-overlays (start end &optional prop)
   "For all attachments in the region, i.e., pieces of text with
@@ -6289,7 +6282,7 @@ describes what was deleted."
 		  (insert label)
 		  (delete-region (point) (overlay-end o)))))))
 	  (vm-xemacs-p
-	   (let ((e (vm-extent-at (point) nil 'vm-mime-layout)))
+	   (let ((e (vm-extent-at (point) 'vm-mime-layout)))
 	     (if (null e)
 		 (error "No MIME button found at point.")
 	       (setq layout (vm-extent-property e 'vm-mime-layout))
@@ -6572,11 +6565,7 @@ agent; under Unix, normally sendmail.)"
       ;;Make sure we don't double encode UTF-8 (for example) text.
       (setq buffer-file-coding-system (vm-binary-coding-system))
       (goto-char (mail-text-start))
-      (setq e-list (extent-list nil (point) (point-max))
-	    e-list (vm-delete (function
-			       (lambda (e)
-				 (vm-extent-property e 'vm-mime-object)))
-			      e-list t)
+      (setq e-list (vm-extent-list (point) (point-max) 'vm-mime-object)
 	    e-list (sort e-list (function
 				 (lambda (e1 e2)
 				   (< (vm-extent-end-position e1)
@@ -7758,7 +7747,7 @@ This is a destructive operation and cannot be undone!"
   "Replace the mime buttons by attachment buttons."
   (interactive)
   (cond (vm-xemacs-p
-         (let ((e-list (extent-list nil (point-min) (point-max))))
+         (let ((e-list (vm-extent-list (point-min) (point-max))))
            ;; First collect the extents
            (setq e-list
                  (sort (vm-delete

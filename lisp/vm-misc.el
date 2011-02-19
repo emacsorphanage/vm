@@ -56,6 +56,7 @@
 (declare-function vm-extent-end-position "vm-misc.el" (overlay) t)
 (declare-function vm-extent-start-position "vm-misc.el" (overlay) t)
 (declare-function vm-detach-extent "vm-misc.el" (overlay) t)
+(declare-function vm-delete-extent "vm-misc.el" (overlay) t)
 (declare-function vm-disable-extents "vm-misc.el" 
 		  (&optional beg end name val) t)
 (declare-function vm-extent-properties "vm-misc.el" (overlay) t)
@@ -969,6 +970,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	(fset 'vm-detach-extent 'delete-overlay)
       (fset 'vm-detach-extent 'detach-extent)))
 
+(if (not (fboundp 'vm-delete-extent))
+    (if vm-fsfemacs-p
+	(fset 'vm-delete-extent 'identity)
+      (fset 'vm-delete-extent 'delete-extent)))
+
 (if (not (fboundp 'vm-disable-extents))
     (if (and vm-fsfemacs-p (fboundp 'remove-overlays))
 	(fset 'vm-disable-extents 'remove-overlays)
@@ -981,9 +987,14 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	(fset 'vm-extent-properties 'overlay-properties)
       (fset 'vm-extent-properties 'extent-properties)))
 
-(defun vm-extent-at (pos &optional object property)
+(defun vm-extent-at (pos &optional property)
+  "Find an extent at POS in the current buffer having PROPERTY.
+PROPERTY defaults nil, meaning any extent will do.
+
+In XEmacs, the extent is the \"smallest\" extent at POS.  In FSF Emacs,
+this may not be the case."
   (if (fboundp 'extent-at)
-      (extent-at pos object property)
+      (extent-at pos nil property)
     (let ((o-list (overlays-at pos))
 	  (o nil))
       (if (null property)
@@ -994,6 +1005,18 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 		    o-list nil)
 	    (setq o-list (cdr o-list))))
 	o ))))
+
+(defun vm-extent-list (beg end &optional property)
+  "Returns a list of the extents that overlap the positions BEG to END.
+If PROPERTY is given, then only the extents have PROPERTY are returned."
+  (if (fboundp 'extent-list)
+      (extent-list nil beg end nil property)
+    (let ((o-list (overlays-in beg end)))
+      (if property
+	  (vm-delete (function (lambda (e)
+				 (vm-extent-property e property)))
+		     o-list t)
+	o-list))))
 
 (defun vm-copy-extent (e)
   (let ((props (vm-extent-properties e))

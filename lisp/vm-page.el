@@ -563,7 +563,7 @@ Negative arg means scroll forward."
 	      ;;(set-glyph-baseline g 100)
 	      (set-glyph-face g 'vm-xface))
 	    (setq e (vm-make-extent (vm-vheaders-of (car vm-message-pointer))
-				 (vm-vheaders-of (car vm-message-pointer))))
+				    (vm-vheaders-of (car vm-message-pointer))))
 	    (vm-set-extent-property e 'vm-xface t)
 	    (set-extent-begin-glyph e g))))))
 

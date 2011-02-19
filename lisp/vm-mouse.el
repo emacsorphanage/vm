@@ -135,7 +135,7 @@ that case.                                            USR, 2010-08-01"
 		 (setq o-list (cdr o-list))))
 	     string ))
 	  (vm-xemacs-p
-	   (let ((e (vm-extent-at (point) nil 'highlight)))
+	   (let ((e (vm-extent-at (point) 'highlight)))
 	     (if e
 		 (buffer-substring (vm-extent-start-position e)
 				   (vm-extent-end-position e))
@@ -169,9 +169,9 @@ that case.                                            USR, 2010-08-01"
 	 (set-buffer (window-buffer (event-window event)))
 	 (and (event-point event) (goto-char (event-point event)))
 	 (let (e)
-	   (cond ((vm-extent-at (point) (current-buffer) 'vm-url)
+	   (cond ((vm-extent-at (point) 'vm-url)
 		  (vm-mouse-send-url-at-event event))
-		 ((setq e (vm-extent-at (point) nil 'vm-mime-function))
+		 ((setq e (vm-extent-at (point) 'vm-mime-function))
 		  (funcall (vm-extent-property e 'vm-mime-function) e))
 		 (t (vm-menu-popup-context-menu event)))))))
 
@@ -191,7 +191,7 @@ that case.                                            USR, 2010-08-01"
   (save-restriction
     (widen)
     (cond ((vm-mouse-xemacs-mouse-p)
-	   (let ((e (vm-extent-at pos (current-buffer) 'vm-url))
+	   (let ((e (vm-extent-at pos 'vm-url))
 		 url)
 	     (if (null e)
 		 nil

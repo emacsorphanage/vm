@@ -1042,7 +1042,7 @@ cleanup here after verification and decoding took place."
                                (concat "filename=\"" pgg-default-user-id ".asc\"")))
             (end (point)))
         (if (featurep 'xemacs)
-            (vm-set-extent-property (vm-extent-at start nil 'vm-mime-disposition)
+            (vm-set-extent-property (vm-extent-at start 'vm-mime-disposition)
                                  'vm-mime-disposition disposition)
           (put-text-property start end 'vm-mime-disposition disposition))))))
 

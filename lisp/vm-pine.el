@@ -103,8 +103,6 @@
   (require 'vm-reply)
   )
 
-(declare-function extent-list "vm-xemacs" 
-		  (&optional buffer from to flags property value))
 (declare-function deiconify-frame "vm-xemacs" (&optional frame))
 (declare-function frames-of-buffer "vm-xemacs" 
 		  (&optional buffer visible-only))

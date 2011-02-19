@@ -416,9 +416,7 @@ start and end of the overlay/extent."
 
 (defun vmpc-make-exerlay (startpos endpos)
   "Create a new exerlay spanning from STARTPOS to ENDPOS."
-  (if vm-xemacs-p
-      (vm-make-extent startpos endpos (current-buffer))
-    (make-overlay startpos endpos (current-buffer))))
+  (vm-make-extent startpos endpos))
 
 
 (defun vmpc-create-sig-and-pre-sig-exerlays ()
