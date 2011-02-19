@@ -2047,10 +2047,12 @@ stuff-flag set in the current folder.    USR 2010-04-20"
       (if (vm-stuff-flag-of (car mp))
 	  (setq newlist (cons (car mp) newlist)))
       (setq mp (cdr mp)))
-    (if (and newlist (not quiet))
-	(progn
-	  (setq len (length newlist))
-	  (message "%d message%s to stuff" len (if (= 1 len) "" "s"))))
+    (when (and newlist (not quiet))
+      (setq len (length newlist))
+      (message "%d message%s to stuff" len (if (= 1 len) "" "s"))
+      ;; temporary debug trap
+      (when (and vm-debug (> len 10))
+	(debug 'vm-stuff-folder-folder-data)))
     ;; now sort the list by physical order so that we
     ;; reduce the amount of gap motion induced by modifying
     ;; the buffer.  what we want to avoid is updating
@@ -4471,7 +4473,7 @@ files."
 	 (when gobble-order
 	   (vm-gobble-message-order))
 	 (when (or (vectorp vm-thread-obarray)
-		   vm-summary-show-threads)
+		   (and vm-summary-buffer vm-summary-show-threads))
 	     (vm-build-threads (cdr tail-cons)))))
       (setq new-messages (if tail-cons (cdr tail-cons) vm-message-list))
       (vm-set-numbering-redo-start-point new-messages)

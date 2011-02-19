@@ -60,39 +60,20 @@ works in all VM buffers."
 ;; message struct
 (defconst vm-message-fields 
   [:location-data :softdata :attributes :cached-data :mirror-data])
-(defconst vm-location-data-fields
-  [:start :headers :vheaders :text :text-end :end])
-(defconst vm-softdata-fields
-  [:number :padded-number :mark :su-start :su-end :real-message-sym
-	   :reverse-link-sym :message-type :message-id-number :buffer
-	   :thread-indentation :thread-list
-	   :babyl-frob-flag :saved-virtual-attributes
-	   :saved-virtual-mirror-data :virtual-summary 
-	   :mime-layout :mime-encoded-header-flag
-	   :su-summary-mouse-track-overlay :message-access-method
-	   :thread-subtree])
-(defconst vm-attributes-fields
-  [:new-flag :unread-flag :deleted-flag :filed-flag :replied-flag
-	     :written-flag :forwarded-flag :edited-flag
-	     :redistributed-flag
-	     :flagged-flag :folded-flag :watched-flag :ignored-flag
-	     :read-receipt-flag :read-receipt-sent-flag :attachments-flag]) 
-(defconst vm-cached-data-fields
-  [:byte-count :weekday :monthday :month :year :hour :zone
-	       :full-name :from :message-id :line-count :subject
-	       :vheaders-regexp :to :to-names :month-number
-	       :sortable-datestring :sortable-subject 
-	       :summary :parent :references
-	       :body-to-be-discarded 
-	       :body-to-be-retrieved
-	       :uid :imap-uid-validity :spam-score])
-(defconst vm-mirror-data-fields
-  [:edit-buffer :virtual-messages-sym :stuff-flag :labels
-  :label-string :attribute-modflag])
+(defsubst vm-location-data-of (message) (aref message 0))
+(defsubst vm-softdata-of (message) (aref message 1))
+(defsubst vm-attributes-of (message) (aref message 2))
+(defsubst vm-cached-data-of (message) (aref message 3))
+(defsubst vm-mirror-data-of (message) (aref message 4))
+(defsubst vm-set-location-data-of (message vdata) (aset message 0 vdata))
+(defsubst vm-set-softdata-of (message data) (aset message 1 data))
+(defsubst vm-set-attributes-of (message attrs) (aset message 2 attrs))
+(defsubst vm-set-cached-data-of (message cache) (aset message 3 cache))
+(defsubst vm-set-mirror-data-of (message data) (aset message 4 data))
 
 ;; data that is always shared with virtual folders
-(defsubst vm-location-data-of (message)
-  (aref message 0))
+(defconst vm-location-data-fields
+  [:start :headers :vheaders :text :text-end :end])
 ;; where message begins starting at the message separator in the folder
 (defsubst vm-start-of (message)
   (aref (aref message 0) 0))
@@ -114,9 +95,17 @@ works in all VM buffers."
 ;; where message ends
 (defsubst vm-end-of (message)
   (aref (aref message 0) 5))
+
 ;; soft data vector
-(defsubst vm-softdata-of (message)
-  (aref message 1))
+(defconst vm-softdata-fields
+  [:number :padded-number :mark :su-start :su-end :real-message-sym
+	   :reverse-link-sym :message-type :message-id-number :buffer
+	   :thread-indentation :thread-list
+	   :babyl-frob-flag :saved-virtual-attributes
+	   :saved-virtual-mirror-data :virtual-summary 
+	   :mime-layout :mime-encoded-header-flag
+	   :su-summary-mouse-track-overlay :message-access-method
+	   :thread-subtree])
 (defsubst vm-number-of (message)
   (aref (aref message 1) 0))
 (defsubst vm-padded-number-of (message)
@@ -179,7 +168,12 @@ works in all VM buffers."
   (aref (aref message 1) 20))
 
 ;; message attribute vector
-(defsubst vm-attributes-of (message) (aref message 2))
+(defconst vm-attributes-fields
+  [:new-flag :unread-flag :deleted-flag :filed-flag :replied-flag
+	     :written-flag :forwarded-flag :edited-flag
+	     :redistributed-flag
+	     :flagged-flag :folded-flag :watched-flag :ignored-flag
+	     :read-receipt-flag :read-receipt-sent-flag :attachments-flag]) 
 (defsubst vm-new-flag (message) (aref (aref message 2) 0))
 (defsubst vm-unread-flag (message) (aref (aref message 2) 1))
 (defsubst vm-deleted-flag (message) (aref (aref message 2) 2))
@@ -198,7 +192,15 @@ works in all VM buffers."
 (defsubst vm-attachments-flag (message) (aref (aref message 2) 15))
 
 ;; message cached data
-(defsubst vm-cached-data-of (message) (aref message 3))
+(defconst vm-cached-data-fields
+  [:byte-count :weekday :monthday :month :year :hour :zone
+	       :full-name :from :message-id :line-count :subject
+	       :vheaders-regexp :to :to-names :month-number
+	       :sortable-datestring :sortable-subject 
+	       :summary :parent :references
+	       :body-to-be-discarded 
+	       :body-to-be-retrieved
+	       :uid :imap-uid-validity :spam-score])
 ;; message size in bytes (as a string)
 (defsubst vm-byte-count-of (message) (aref (aref message 3) 0))
 ;; weekday sent
@@ -277,8 +279,11 @@ works in all VM buffers."
   (aref (aref message 3) 24))
 (defsubst vm-spam-score-of (message)
   (aref (aref message 3) 25))
+
 ;; extra data shared by virtual messages if vm-virtual-mirror is non-nil
-(defsubst vm-mirror-data-of (message) (aref message 4))
+(defconst vm-mirror-data-fields
+  [:edit-buffer :virtual-messages-sym :stuff-flag :labels
+  :label-string :attribute-modflag])
 ;; if message is being edited, this is the buffer being used.
 (defsubst vm-edit-buffer-of (message) (aref (aref message 4) 0))
 ;; list of virtual messages mirroring the underlying real message
@@ -294,7 +299,6 @@ works in all VM buffers."
 ;; non-nil if attributes need to be saved
 (defsubst vm-attribute-modflag-of (message) (aref (aref message 4) 5))
 
-(defsubst vm-set-location-data-of (message vdata) (aset message 0 vdata))
 (defsubst vm-set-start-of (message start)
   (aset (aref message 0) 0 start))
 (defsubst vm-set-headers-of (message h)
@@ -307,8 +311,6 @@ works in all VM buffers."
   (aset (aref message 0) 4 text))
 (defsubst vm-set-end-of (message end)
   (aset (aref message 0) 5 end))
-(defsubst vm-set-softdata-of (message data)
-  (aset message 1 data))
 (defsubst vm-set-number-of (message n)
   (aset (aref message 1) 0 n))
 (defsubst vm-set-padded-number-of (message n)
@@ -353,7 +355,6 @@ works in all VM buffers."
   (aset (aref message 1) 19 method))
 (defsubst vm-set-thread-subtree-of (message list)
   (aset (aref message 1) 20 list))
-(defsubst vm-set-attributes-of (message attrs) (aset message 2 attrs))
 ;; The other routines in attributes group are part of the undo system.
 (defun vm-set-edited-flag-of (message flag)
   (aset (aref message 2) 7 flag)
@@ -363,7 +364,6 @@ works in all VM buffers."
     (vm-set-stuff-flag-of message t))
   (and (not (buffer-modified-p)) (vm-set-buffer-modified-p t))
   (vm-clear-modification-flag-undos))
-(defsubst vm-set-cached-data-of (message cache) (aset message 3 cache))
 (defsubst vm-set-byte-count-of (message count)
   (aset (aref message 3) 0 count))
 (defsubst vm-set-weekday-of (message val)
@@ -420,8 +420,6 @@ works in all VM buffers."
   (aset (aref message 3) 24 val))
 (defsubst vm-set-spam-score-of (message val)
   (aset (aref message 3) 25 val))
-(defsubst vm-set-mirror-data-of (message data)
-  (aset message 4 data))
 (defsubst vm-set-edit-buffer-of (message buf)
   (aset (aref message 4) 0 buf))
 (defsubst vm-set-virtual-messages-of (message list)

@@ -3633,6 +3633,11 @@ developers' use only.")
   "List of message numbers whose activity is debugged during
 summary generation.  This is for developers' use only.")
 
+(defvar vm-thread-debug t
+  "Flag that enables the integrity checking of threads.  It is enabled
+by default because some errors are being found with threads databases.
+					USR, 2011-02-19")
+
 (defcustom vm-subject-ignored-prefix "^\\(re: *\\)+"
   "*Non-nil value should be a regular expression that matches
 strings at the beginning of the Subject header that you want VM to ignore

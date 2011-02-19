@@ -417,7 +417,7 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
     (while mp
       (vm-thread-list (car mp))
       (setq mp (cdr mp))))
-  (if vm-debug
+  (if vm-thread-debug
       (vm-check-thread-integrity vm-message-list))
   )
 
@@ -824,6 +824,7 @@ Conversely, all members of thread subtrees should actually belong
 to the thread.  Used for testing purposes."
   (interactive)
   (vm-select-folder-buffer)
+  (let ((errors-found nil))
   (when (vectorp vm-thread-obarray)
     (unless ml
       (with-current-buffer (or vm-mail-buffer (current-buffer))
@@ -834,13 +835,16 @@ to the thread.  Used for testing purposes."
        (let* ((root (vm-thread-root-sym m))
 	      (subtree (and root (vm-thread-subtree root))))
 	 (unless root
-	   (debug 'message-with-no-root m))
+	   (debug 'message-with-no-root m)
+	   (setq errors-found t))
 	 (with-current-buffer (vm-buffer-of m)
 	   (unless (eq root 
 		       (intern-soft (symbol-name root) vm-thread-obarray))
-	     (debug 'interned-in-wrong-buffer m)))
+	     (debug 'interned-in-wrong-buffer m)
+	     (setq errors-found t)))
 	 (unless (memq m subtree)
-	   (debug 'missing m))))
+	   (debug 'missing m)
+	   (setq errors-found t))))
      ml)
     ;; Check that all subtrees have correct messages
     (mapc
@@ -852,11 +856,18 @@ to the thread.  Used for testing purposes."
 	    (unless (and (vm-thread-root m)
 			 (eq (vm-thread-root m) 
 			     (vm-thread-root subroot)))
-	      (debug 'spurious m))
+	      (debug 'spurious m)
+	      (setq errors-found t))
 	    (unless (eq buf (vm-buffer-of m))
-	      (debug 'wrong-buffer m)))
+	      (debug 'wrong-buffer m)
+	      (setq errors-found t)))
 	  subtree)))
      ml)
-    ))
+    ;; Recover from errors
+    (when errors-found
+      (message "Thread information damaged; discarding it")
+      (setq vm-thread-obarray 'bonk)
+      (setq vm-thread-subject-obarray 'bonk))
+    )))
 
 ;;; vm-thread.el ends here
