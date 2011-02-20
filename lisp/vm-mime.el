@@ -4969,13 +4969,13 @@ be removed when it is expanded to display the mime object."
       (vm-set-extent-property e 'start-open t)
       (vm-set-extent-property e 'end-open t))
     (vm-mime-set-image-stamp-for-type e (car (vm-mm-layout-type layout)))
-    ;; for emacs
-    (vm-set-extent-property e 'mouse-face 'highlight)
-    (vm-set-extent-property e 'local-map keymap)
-    ;; for xemacs
-    (vm-set-extent-property e 'highlight t)
-    (vm-set-extent-property e 'keymap keymap)
-    (vm-set-extent-property e 'balloon-help 'vm-mouse-3-help)
+    (when vm-fsfemacs-p
+      (vm-set-extent-property e 'mouse-face 'highlight)
+      (vm-set-extent-property e 'local-map keymap))
+    (when vm-xemacs-p
+      (vm-set-extent-property e 'highlight t)
+      (vm-set-extent-property e 'keymap keymap)
+      (vm-set-extent-property e 'balloon-help 'vm-mouse-3-help))
     ;; for all
     (vm-set-extent-property e 'vm-button t)
     (vm-set-extent-property e 'vm-mime-disposable disposable)
@@ -4983,8 +4983,9 @@ be removed when it is expanded to display the mime object."
     (vm-set-extent-property e 'vm-mime-layout layout)
     (vm-set-extent-property e 'vm-mime-function action)
     ;; for vm-continue-postponed-message
-    (if vm-xemacs-p
-	(vm-set-extent-property e 'duplicable t)
+    (when vm-xemacs-p
+      (vm-set-extent-property e 'duplicable t))
+    (when vm-fsfemacs-p
       (put-text-property (overlay-start e)
 			 (overlay-end e)
 			 'vm-mime-layout layout))
@@ -5937,6 +5938,7 @@ COMPOSITION's name will be read from the minibuffer."
 	   ;; access the text properties there.
 	   ;; (put-text-property start end 'intangible object) 
 	   (put-text-property start end 'face vm-mime-button-face)
+	   (put-text-property start end 'font-lock-face vm-mime-button-face)
 	   (put-text-property start end 'vm-mime-forward-local-refs fb)
 	   (put-text-property start end 'vm-mime-type type)
 	   (put-text-property start end 'vm-mime-object object)
@@ -5945,7 +5947,7 @@ COMPOSITION's name will be read from the minibuffer."
 	   (put-text-property start end 'vm-mime-disposition disposition)
 	   (put-text-property start end 'vm-mime-encoding nil)
 	   (put-text-property start end 'vm-mime-encoded mimed)
-	   (put-text-property start end 'duplicable t)
+	   ;; (put-text-property start end 'duplicable t)
 	   )
 	  (vm-xemacs-p
 	   (setq e (vm-make-extent start end))
@@ -6072,16 +6074,16 @@ excluded from the overlay."
 	   (move-overlay overlay (overlay-start overlay) start)))))
 
 (defun vm-mime-fake-attachment-overlays (start end &optional prop)
-  "For all attachments in the region, i.e., pieces of text with
-'vm-mime-object property, create \"fake\" attachment overlays, which
-are then used during MIME encoding of the composition.  This function
-is only used with FSF Emacs.  Message compositions in XEmacs already
-have overlays (or extents).
+  "For all attachment buttons in the region, i.e., pieces of text
+with the given text property PROP, create \"fake\" attachment
+overlays with the 'vm-mime-object property.  The list of these
+overlays is returned.
 
-The optional argument PROP may specify a property other than
-'vm-mime-object which is then used for finding attachments. USR, 2011-02-14"
-  ;; It is not clear why this round about method is being used with
-  ;; FSF Emacs.  USR, 2011-02-14
+This function is only used with GNU Emacs, not XEmacs.  USR, 2011-02-19"
+  ;; This round about method is being used because in GNU Emacs,
+  ;; only text properties are preserved under killing and yanking.
+  ;; So, text properties are normally used for attachment buttons and
+  ;; converted to overlays just before MIME encoding.  USR, 2011-02-19
   (when (null prop) (setq prop 'vm-mime-object))
   (let ((o-list nil)
 	(done nil)
@@ -6097,11 +6099,11 @@ The optional argument PROP may specify a property other than
 	    (setq pos (point-max) 
 		  done t))
 	  (when object
-	    (setq o (make-overlay start pos))
-	    (overlay-put o 'insert-in-front-hooks
-			 '(vm-disallow-overlay-endpoint-insertion))
-	    (overlay-put o 'insert-behind-hooks
-			 '(vm-disallow-overlay-endpoint-insertion))
+	    (setq o (make-overlay start pos nil t nil))
+	    ;; (overlay-put o 'insert-in-front-hooks
+	    ;; 		 '(vm-disallow-overlay-endpoint-insertion))
+	    ;; (overlay-put o 'insert-behind-hooks
+	    ;; 		 '(vm-disallow-overlay-endpoint-insertion))
 	    (setq props (text-properties-at start))
 	    (unless (eq prop 'vm-mime-object)
 	      (setq props (append (list 'vm-mime-object t) props)))
@@ -6919,11 +6921,8 @@ also `vm-mime-xemacs-encode-composition'."
 	  type encoding charset params description disposition object
 	  opoint-min delete-object postponed-attachment)
       (goto-char (mail-text-start))
-      (setq e-list (vm-mime-fake-attachment-overlays (point) (point-max))
-	    e-list (vm-delete (function
-			       (lambda (e)
-				 (vm-extent-property e 'vm-mime-object)))
-			      e-list t)
+      (setq e-list (vm-mime-fake-attachment-overlays 
+		    (point) (point-max) 'vm-mime-object)
 	    e-list (sort e-list (function
 				 (lambda (e1 e2)
 				   (< (vm-extent-end-position e1)
@@ -7743,39 +7742,32 @@ This is a destructive operation and cannot be undone!"
 ;; Copyright (C) Robert Widhopf-Fenk
 
 ;;;###autoload
-(defun vm-mime-encode-mime-attachments ()
-  "Replace the mime buttons by attachment buttons."
+(defun vm-mime-convert-to-attachment-buttons ()
+  "Replace all mime buttons in the current buffer by attachment buttons."
   (interactive)
   (cond (vm-xemacs-p
-         (let ((e-list (vm-extent-list (point-min) (point-max))))
-           ;; First collect the extents
+         (let ((e-list (vm-extent-list 
+			(point-min) (point-max) 'vm-mime-layout)))
            (setq e-list
-                 (sort (vm-delete
-                        (function (lambda (e)
-                                    (vm-extent-property e 'vm-mime-layout)))
-                        e-list t)
+                 (sort e-list
                        (function (lambda (e1 e2)
                                    (< (vm-extent-end-position e1)
                                       (vm-extent-end-position e2))))))
            ;; Then replace the buttons, because doing it at once will result in
            ;; problems since the new buttons are from the same extent.
            (while e-list
-             (vm-mime-encode-mime-button (car e-list))
+             (vm-mime-replace-by-attachment-button (car e-list))
              (setq e-list (cdr e-list)))))
         (vm-fsfemacs-p
          (let ((e-list (vm-mime-fake-attachment-overlays 
 			(point-min) (point-max) 'vm-mime-layout)))
-           (setq e-list (vm-delete
-			 (function (lambda (e)
-				     (vm-extent-property e 'vm-mime-layout)))
-			 e-list t)
-		 e-list (sort e-list
+           (setq e-list (sort e-list
 			      (function
                                (lambda (e1 e2)
                                  (< (vm-extent-end-position e1)
                                     (vm-extent-end-position e2))))))
            (while e-list
-             (vm-mime-encode-mime-button (car e-list))
+             (vm-mime-replace-by-attachment-button (car e-list))
              (setq e-list (cdr e-list)))
 	   (goto-char (point-max))))
         (t
@@ -7817,57 +7809,57 @@ This is a destructive operation and cannot be undone!"
 ;; 	  (setq start pos))
 ;; 	o-list ))))
 
-(defun vm-mime-encode-mime-button (x)
+(defun vm-mime-replace-by-attachment-button (x)
   "Replace the mime button specified by X by an attachment button."
-
   (save-excursion
-    (let (layout xstart xend)
-      (setq layout (vm-extent-property x 'vm-mime-layout)
-	    xstart (vm-extent-start-position x)
-	    xend   (vm-extent-end-position x))
-               
-      (let* ((start  (vm-mm-layout-header-start layout))
-             (end    (vm-mm-layout-body-end   layout))
-             (buf    (marker-buffer start))
-             (desc   (or (vm-mm-layout-description layout)
-                         "message body text"))
-             (disp   (or (vm-mm-layout-disposition layout)
-                         '("inline")))
-             (file   (vm-mime-get-disposition-parameter layout "filename"))
-             (filename nil)
-             (type   (vm-mm-layout-type layout)))
+    (let* ((layout (vm-extent-property x 'vm-mime-layout))
+	   (xstart (vm-extent-start-position x))
+	   (xend   (vm-extent-end-position x))
+	   (start  (vm-mm-layout-header-start layout))
+	   (end    (vm-mm-layout-body-end   layout))
+	   (buf    (marker-buffer start))
+	   (desc   (or (vm-mm-layout-description layout)
+		       "message body text"))
+	   (disp   (or (vm-mm-layout-disposition layout)
+		       '("inline")))
+	   (file   (vm-mime-get-disposition-parameter layout "filename"))
+	   (filename nil)
+	   (type   (vm-mm-layout-type layout)))
 
-        (when (and type
-		   (string= (car type) "message/external-body")
-		   (string= (cadr type) "access-type=local-file"))
-          (save-excursion
-            (setq filename (substring (caddr type) 5))
-            (vm-select-folder-buffer)
-            (save-restriction
-              (let ((start (vm-mm-layout-body-start layout))
-                    (end   (vm-mm-layout-body-end layout)))
-                (set-buffer (marker-buffer (vm-mm-layout-body-start layout)))
-                (widen)
-                (goto-char start)
-                (if (not (re-search-forward
-                          "Content-Type: \"?\\([^ ;\" \n\t]+\\)\"?;?"
-                          end t))
-                    (error "No `Content-Type' header found in: %s"
-                           (buffer-substring start end))
-                  (setq type (list (match-string 1))))))))
+      ;; special case of message/external-body
+      (when (and type
+		 (string= (car type) "message/external-body")
+		 (string= (cadr type) "access-type=local-file"))
+	(save-excursion
+	  (setq filename (substring (caddr type) 5))
+	  (vm-select-folder-buffer)
+	  (save-restriction
+	    (let ((start (vm-mm-layout-body-start layout))
+		  (end   (vm-mm-layout-body-end layout)))
+	      (set-buffer (marker-buffer (vm-mm-layout-body-start layout)))
+	      (widen)
+	      (goto-char start)
+	      (if (not (re-search-forward
+			"Content-Type: \"?\\([^ ;\" \n\t]+\\)\"?;?"
+			end t))
+		  (error "No `Content-Type' header found in: %s"
+			 (buffer-substring start end))
+		(setq type (list (match-string 1))))))))
         
-        ;; delete the mime-button
-        (goto-char xstart)
-        (delete-region xstart xend)
-        ;; and insert an attached-object-button
-        (cond (filename
-	       (vm-mime-attach-file filename (car type)))
-	      (file
-	       (vm-mime-attach-object (list buf start end disp file)
-				      (car type) nil desc t))
-	      (t
-	       (vm-mime-attach-object (list buf start end disp)
-				      (car type) nil desc t)))))))
+      ;; insert an attached-object-button
+      (goto-char xstart)
+      (cond (filename
+	     (vm-mime-attach-file filename (car type)))
+	    (file
+	     (vm-mime-attach-object (list buf start end disp file)
+				    (car type) nil desc t))
+	    (t
+	     (vm-mime-attach-object (list buf start end disp)
+				    (car type) nil desc t)))
+      ;; delete the mime-button
+      (delete-region (vm-extent-start-position x)
+		     (vm-extent-end-position x))
+      (vm-detach-extent x))))
 
 
 ;;; vm-mime.el ends here

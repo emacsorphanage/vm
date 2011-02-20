@@ -501,15 +501,18 @@ specified by `vm-included-text-headers' and
 	    (vm-auto-displayed-mime-content-types '("text" "message"))       
 	    ;; don't include separator for multipart
 	    (vm-mime-parts-display-separator "")
-	    ;; make MIME buttons look normal and and use different labels
-	    (vm-mime-button-face 'default)
+	    ;; make MIME buttons look like text unless they are included
+	    (vm-mime-button-face (if vm-include-mime-attachments
+				     vm-mime-button-face
+				   'default))
+	    ;; use different labels
 	    (vm-mime-button-format-alist vm-mime-yanked-button-format-alist)
 	    )
 	(vm-decode-mime-layout layout))
 
       ;; Make the MIME buttons attachment buttons
       (if vm-include-mime-attachments
-	  (vm-mime-encode-mime-attachments)))))
+	  (vm-mime-convert-to-attachment-buttons)))))
 
 (defun vm-yank-message-text (message layout)
   ;; This is the original code for included text

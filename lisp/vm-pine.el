@@ -430,7 +430,7 @@ creation)."
       (put-text-property (point-min) (point-max) 'invisible nil)
       
       ;; and add the buttons for attachments
-      (vm-mime-encode-mime-attachments)))
+      (vm-mime-convert-to-attachment-buttons)))
 
   (when (not silent)
     (run-hooks 'mail-setup-hook)
@@ -500,9 +500,9 @@ creation)."
 ;; USR, 2011-01-25
 
 (defalias 'vm-decode-postponed-mime-message
-  'vm-mime-encode-mime-attachments)
+  'vm-mime-convert-to-attachment-buttons)
 (make-obsolete 'vm-decode-postponed-mime-message
-	       'vm-mime-encode-mime-attachments "8.2.0")
+	       'vm-mime-convert-to-attachment-buttons "8.2.0")
 
 (defalias 'vm-pine-fake-attachment-overlays
   'vm-mime-re-fake-attachment-overlays)
@@ -510,9 +510,9 @@ creation)."
 	       'vm-mime-re-fake-attachment-overlays "8.2.0")
 
 (defalias 'vm-decode-postponed-mime-button
-  'vm-mime-encode-mime-button)
+  'vm-mime-replace-by-attachment-button)
 (make-obsolete 'vm-decode-postponed-mime-button
-	       'vm-mime-encode-mime-button "8.2.0")
+	       'vm-mime-replace-by-attachment-button "8.2.0")
 
 ;;-----------------------------------------------------------------------------
 (define-key vm-mail-mode-map "\C-c\C-d" 'vm-postpone-message)

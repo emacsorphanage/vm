@@ -1700,8 +1700,9 @@ requested.  Type @kbd{D} (@code{vm-decode-mime-message}) to
 manually initiate MIME decoding.
 
 @vindex vm-mime-button-format-alist
-When VM does not display a MIME object immediately, it displays a
-button or tag line in its place that describes the object and what you
+@cindex MIME button
+When VM does not display a MIME object immediately, it displays a @b{MIME
+button} or tag line in its place that describes the object and what you
 have to do to display it.  The value of @code{vm-mime-button-format-alist}
 determines the format of the text in those buttons.
 
@@ -2840,6 +2841,7 @@ message text in the composed message.  (The composed message does not
 have to be a reply.  Neither do the cited messages have to be the
 messages you are replying to.)
 
+@cindex attachment button
 Citing message text is a tricky business because the original message
 could be a MIME message with encoded text or formatted text along with
 embedded images and attachments.  By default, VM uses its MIME
@@ -2847,7 +2849,7 @@ displaying mechanism to extract the included text to be cited in
 replies.  The quoted text is then similar to what appears in the
 message Presentation buffer.  However, the MIME attachments are not
 included by default.  They are shown in the message composition buffer
-with buttons labelled similar to:
+with @b{attachment buttons} labelled similar to:
 @example
 [DELETED ATTACHMENT mary.jpg, image/jpeg]
 @end example
@@ -6566,6 +6568,7 @@ is found from
 display the MIME part.
 @end enumerate
 
+@inindex MIME button
 MIME buttons are displayed as regions of text displaying button
 labels.  In addition, they have an overlay/extent placed on them,
 which has a number of properties associated with it:
@@ -6593,57 +6596,94 @@ Set to a keymap that includes @code{vm-mime-reader-map}, binding the
 @node MIME Composition, Extents and Overlays, MIME Display, Internals
 @section MIME Composition
 
+@inindex attachment button
 A MIME message is composed just like a normal message.  When objects
 are attached using commands like @code{vm-mime-attach-file},
-attachment buttons are created in the message composition buffer.  An
+@b{attachment buttons} are created in the message composition buffer.  An
 attachment button is a region of text that looks like:
 
 @example
-[Attachment FILENAME]
+[Attachment mary.jpeg, image/jpeg]
 @end example
 
-@noindent In GNU Emacs, the region of text is given text properties that
-represent the metadata about the object.  In XEmacs, the region of
-text is given an extent, which is then given properties representing
-the metadata.
+@noindent Various text properties are associated with an attachment
+button, allowing it to be turned into an actual attachment when the
+message is sent.
 
-The following properties are defined:
+The representation of the attachment buttons differs in GNU Emacs and
+XEmacs.  In GNU Emacs, the region of text is given @i{text properties}
+that represent the metadata about the object.  In XEmacs, the region
+of text is given an @i{extent}, which is then given properties
+representing the metadata.  The reason for the  different
+representations is that in GNU Emacs, only text properties are
+preserved under killing and yanking.
+
+The following properties are defined for attachment buttons:
 
 @itemize
-@item @code{vm-mime-object}
-A string denoting the name of the object.
-@item @code{vm-mime-type}
+@item @code{vm-mime-object}.
+A string denoting the name of the object.  If the attachment is
+another MIME object in a VM folder then this property is set to
+@code{t}, and a @code{vm-mime-layout} property describes the rest of
+the metadata.
+@item @code{vm-mime-type}.
 A string denoting the MIME type of the object.
-@item @code{vm-mime-description}
+@item @code{vm-mime-description}.
 A string for the MIME description of the object.
-@item @code{vm-mime-parameters}
-@item @code{vm-mime-disposition}
-A list describing the MIME disposition
-@item @code{vm-mime-encoded}
-A boolean indicating whether the object is already MIME encoded
-@item @code{vm-mime-encoding}
-The MIME encoding used, if it is already encoded
-@item @code{vm-mime-forward-local-refs}
-@item @code{fontified}
+@item @code{vm-mime-parameters}.
+@item @code{vm-mime-disposition}.
+A list describing the MIME disposition.
+@item @code{vm-mime-encoded}.
+A boolean indicating whether the object is already MIME encoded.
+@item @code{vm-mime-encoding}.
+The MIME encoding used, if it is already encoded.
+@item @code{vm-mime-forward-local-refs}.
+@item @code{fontified}.
 Standard text property.
-@item @code{duplicable}
-Standard text property in XEmacs.
+@item @code{duplicable}.
+Set to @code{t} in XEmacs allowing the extent to be
+preserved under killing and yanking.
 @item @code{front-nonsticky} and @code{rear-nonsticky}.  
-Standard stickiness of text properties.
+Standard stickiness of text properties in GNU Emacs.
 @end itemize
 
 @inindex vm-mime-fake-attachment-overlays
-In FSF Emacs, the attachment buttons are converted into overlays
-before MIME encoding, in a function called
-@code{vm-mime-fake-attachment-overlays}.  It is not clear why overlays
-weren't used in the first place.  In XEmacs, extents are always used
-with the attachment buttons and no ``fake'' overlays involved.
+When a composed message is sent, the attachment buttons are replaced
+by actual attachment objects.  In FSF Emacs, the attachment buttons
+are first converted into ``fake'' overlays before MIME encoding, in a
+function called @code{vm-mime-fake-attachment-overlays}.  This allows
+the next stage to treat both FSF Emacs and XEmacs using the same
+logic.
 
 The functions @code{vm-mime-fsfemacs-encode-composition} and
 @code{vm-mime-xemacs-encode-composition} then encode the composition
-buffer, by picking up each attachment button and replacing it with the
+buffer, by selecting each attachment button and replacing it with the
 corresponding object.  Unless the objects were already MIME-encoded,
-they are encoded and made into MIME parts by adding suitable headers.
+they are MIME-encoded and made into MIME parts by adding suitable
+headers.
+
+@unnumberedsubsec Yanking MIME Messages
+@inindex yank
+@inindex include
+@inindex vm-include-mime-attachments
+When another message is yanked or ``included'' in a message
+composition, the handling of attachments depends on the variable
+@code{vm-include-mime-attachments}.  If the variable is @code{nil},
+then the attachments are displayed as token buttons that have text of
+the form
+
+@example
+[DELETED ATTACHMENT mary.jpg, image/jpeg]
+@end example
+
+@noindent These buttons are sent as plain text in the encoded
+message.  If @code{vm-include-mime-attachments} is @code{t}, then the
+attachments are generated as MIME buttons by
+@code{vm-decode-mime-layout}.  These are replaced by attachment
+buttons using a function called
+@code{vm-mime-convert-to-attachment-buttons}.  These attachment
+buttons are then handled as described above.
+
 
 
 @node Extents and Overlays,, MIME Composition, Internals
