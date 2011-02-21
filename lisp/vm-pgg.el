@@ -548,7 +548,7 @@ When the button is pressed ACTION is called."
       (overlay-put o 'vm-pgg t)
       (overlay-put o 'face vm-mime-button-face)
       (overlay-put o 'vm-button t)
-      (overlay-put o 'mouse-face 'highlight)
+      (overlay-put o 'mouse-face 'vm-mime-button-mouse-face)
       (let ((keymap (make-sparse-keymap)))
         (define-key keymap [mouse-2] action)
         (define-key keymap "\r"  action)

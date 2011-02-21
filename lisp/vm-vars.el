@@ -1800,8 +1800,33 @@ deleting a MIME object with `vm-delete-mime-object'."
   "Default face used for MIME buttons."
   :group 'vm-faces)
 
+(defface vm-mime-button-mouse
+  '((((type x w32 mac) (class color))
+     (:background "DarkSeaGreen1" :foreground "black"
+		  :box (:line-width 2 :style released-button)))
+    (((class color) (background light)) (:foreground "cyan" :underline t))
+    (((class color) (background dark)) (:foreground "red" :underline t))
+    (t (:underline t)))
+  "*Face to fontify focused MIME buttons."
+  :group 'w3m-face)
+
+(defface vm-mime-button-pressed-face
+  '((((type x w32 mac) (class color))
+     (:background "lightgrey" :foreground "black"
+		  :box (:line-width 2 :style pressed-button)))
+    (((class color) (background light)) (:foreground "cyan" :underline t))
+    (((class color) (background dark)) (:foreground "red" :underline t))
+    (t (:underline t)))
+  "*Face to fontify pressed MIME buttons. (This is not yet used in VM.)"
+  :group 'w3m-face)
+
 (defcustom vm-mime-button-face 'vm-mime-button
   "*Face used for text in buttons that trigger the display of MIME objects."
+  :group 'vm-faces
+  :type 'symbol)
+
+(defcustom vm-mime-button-mouse-face 'vm-mime-button-mouse
+  "*Face used for text in MIME buttons when mouse is hovering."
   :group 'vm-faces
   :type 'symbol)
 

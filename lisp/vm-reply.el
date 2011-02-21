@@ -505,6 +505,9 @@ specified by `vm-included-text-headers' and
 	    (vm-mime-button-face (if vm-include-mime-attachments
 				     vm-mime-button-face
 				   'default))
+	    (vm-mime-button-mouse-face (if vm-include-mime-attachments
+					   vm-mime-button-mouse-face
+					 'default))
 	    ;; use different labels
 	    (vm-mime-button-format-alist vm-mime-yanked-button-format-alist)
 	    )

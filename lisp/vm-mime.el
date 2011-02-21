@@ -4970,7 +4970,6 @@ be removed when it is expanded to display the mime object."
       (vm-set-extent-property e 'end-open t))
     (vm-mime-set-image-stamp-for-type e (car (vm-mm-layout-type layout)))
     (when vm-fsfemacs-p
-      (vm-set-extent-property e 'mouse-face 'highlight)
       (vm-set-extent-property e 'local-map keymap))
     (when vm-xemacs-p
       (vm-set-extent-property e 'highlight t)
@@ -4980,6 +4979,7 @@ be removed when it is expanded to display the mime object."
     (vm-set-extent-property e 'vm-button t)
     (vm-set-extent-property e 'vm-mime-disposable disposable)
     (vm-set-extent-property e 'face vm-mime-button-face)
+    (vm-set-extent-property e 'mouse-face vm-mime-button-mouse-face)
     (vm-set-extent-property e 'vm-mime-layout layout)
     (vm-set-extent-property e 'vm-mime-function action)
     ;; for vm-continue-postponed-message
@@ -5939,6 +5939,7 @@ COMPOSITION's name will be read from the minibuffer."
 	   ;; (put-text-property start end 'intangible object) 
 	   (put-text-property start end 'face vm-mime-button-face)
 	   (put-text-property start end 'font-lock-face vm-mime-button-face)
+	   (put-text-property start end 'mouse-face vm-mime-button-mouse-face)
 	   (put-text-property start end 'vm-mime-forward-local-refs fb)
 	   (put-text-property start end 'vm-mime-type type)
 	   (put-text-property start end 'vm-mime-object object)
@@ -5954,6 +5955,7 @@ COMPOSITION's name will be read from the minibuffer."
 	   (vm-mime-set-image-stamp-for-type e (or type "text/plain"))
 	   (vm-set-extent-property e 'start-open t)
 	   (vm-set-extent-property e 'face vm-mime-button-face)
+	   (vm-set-extent-property e 'mouse-face vm-mime-button-mouse-face)
 	   (vm-set-extent-property e 'duplicable t)
 	   (let ((keymap (make-sparse-keymap)))
 	     (when vm-popup-menu-on-mouse-3
