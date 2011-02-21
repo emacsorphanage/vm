@@ -24,8 +24,15 @@
 (provide 'vm-mark)
 
 (eval-when-compile
-  (require 'vm-message)
-  (require 'vm-thread))
+  (require 'vm-misc)
+  (require 'vm-folder)
+  (require 'vm-motion)
+  (require 'vm-thread)
+  (require 'vm-summary)
+  (require 'vm-sort)
+  (require 'vm-virtual)
+  (require 'vm-window)
+  )
 
 
 ;;;###autoload
@@ -317,17 +324,17 @@ variable vm-virtual-folder-alist for more information."
 	    (vm-increment mark-count)
 	    (vm-mark-for-summary-update (car mp) t)))
       (setq mp (cdr mp)))
+    (vm-display nil nil
+		'(vm-mark-messages-same-subject
+		  vm-unmark-messages-same-subject)
+		(list this-command 'marking-message))
+    (vm-update-summary-and-mode-line)
     (if (zerop mark-count)
 	(message "No messages %smarked" (if mark "" "un"))
       (message "%d message%s %smarked"
 	       mark-count
 	       (if (= 1 mark-count) "" "s")
-	       (if mark "" "un"))))
-  (vm-display nil nil
-	      '(vm-mark-messages-same-subject
-		vm-unmark-messages-same-subject)
-	      (list this-command 'marking-message))
-  (vm-update-summary-and-mode-line))
+	       (if mark "" "un")))))
 
 ;;;###autoload
 (defun vm-mark-messages-same-author ()
@@ -357,17 +364,17 @@ variable vm-virtual-folder-alist for more information."
 	    (vm-increment mark-count)
 	    (vm-mark-for-summary-update (car mp) t)))
       (setq mp (cdr mp)))
+    (vm-display nil nil
+		'(vm-mark-messages-same-author
+		  vm-unmark-messages-same-author)
+		(list this-command 'marking-message))
+    (vm-update-summary-and-mode-line)
     (if (zerop mark-count)
 	(message "No messages %smarked" (if mark "" "un"))
       (message "%d message%s %smarked"
 	       mark-count
 	       (if (= 1 mark-count) "" "s")
-	       (if mark "" "un"))))
-  (vm-display nil nil
-	      '(vm-mark-messages-same-author
-		vm-unmark-messages-same-author)
-	      (list this-command 'marking-message))
-  (vm-update-summary-and-mode-line))
+	       (if mark "" "un")))))
 
 (defun vm-mark-or-unmark-messages-with-virtual-folder (val name)
   (let* ((vfolder (assoc name vm-virtual-folder-alist))
