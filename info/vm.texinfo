@@ -6710,36 +6710,48 @@ or "text properties", whereas in GNU Emacs 19 text properties always
 have this behavior and overlays never do. 
 @end quotation
 
+While extents and overlays look similar on the surface, they differ
+fundamentally in that extents are attached to text and, so, can be
+killed and yanked, whereas overlays are not attached to text.  XEmacs
+has implemented GNU-like text properties on top of extents.  So, text
+properties may work more uniformly in both the Emacsen, but VM was
+developed in the early days of the forking and does not use these
+common features.
+
 The file @code{vm-misc.el} contains definitions whereby both extents
 and overlays can be treated as a single type of ``VM extents''.
-However, this facility is not used uniformly through VM code.  There
-are several functions that have separate versions for XEmacs and GNU
-Emacs (called ``fsfemacs'' in the code).  Ideally they should be
-combined. 
+Wherever such VM extents can be used, there is some uniformity in the
+code but, in other places, there is not.  (Independently, the XEmacs
+team has developed the @code{fsf-compat} package by which FSF-style
+overlays are implemented on top of extents.  This package is not
+compatible with the way VM deals with the two types.)
 
-Independently, the XEmacs team has developed the @code{fsf-compat}
-package by which FSF-style overlays are implemented on top of
-extents.  This package is not compatible with the way VM deals with
-the two types.
-
-Some of the major differences between extents and overlays are the
-following:
-@enumerate
-@item 
-The beginning and ending of overlays are markers.  This has some
+Another major differences between extents and overlays is that the
+beginning and ending of overlays are markers.  This has some
 advantages.  However, if a buffer has many overlays, normal editing
 operations must update all the overlay markers, which can be
-time-consuming.  (This is specifically a problem in the Summary
-buffers which have overlays for each summary line.  To avoid the
-performance problem, all the markers are reset to nil before a summary
-is regenerated and then set to correct positions afterwards.)
-@item
-The GNU Emacs function @code{overlays-at} returns all the overlays
-that are in effect at a point.  To get similar information in XEmacs,
-one needs to search all the extents in the buffer to find the ones
-that are in effect at the point.
-@end enumerate
+time-consuming.  
 
+The major applications of extents and overlays in VM are the following:
+
+@enumerate
+@item
+The Summary buffers have extents/overlays for each summary line.
+These are implemented uniformly but, to avoid the performance problem
+in GNU Emacs, all the markers are reset to nil before a summary is
+regenerated and then set to correct positions afterwards.  Not doing
+this correctly can seriously degrade the performance of summary
+generation.
+@item
+The Presentation buffers use extents/overlays for MIME buttons.  These
+are implemented uniformly.
+@item
+The message composition buffers use attachment buttons.  These are
+implemented using text properties in GNU Emacs and extents in
+overlays.  The difference is necessary because VM allows the
+attachment buttons to be killed and yanked.  It is not possible to
+implement this functionality using overlays.
+@end enumerate
 
 @node Concept Index, Key Index, Internals, Top
 @unnumbered Concept Index
