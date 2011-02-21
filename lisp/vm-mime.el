@@ -26,8 +26,10 @@
 (eval-when-compile
   (require 'cl))
 
+(eval-and-compile
+  (require 'vm-misc))
+
 (eval-when-compile
-  (require 'vm-misc)
   (require 'vm-minibuf)
   (require 'vm-toolbar)
   (require 'vm-mouse)
