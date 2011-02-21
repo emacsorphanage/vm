@@ -279,10 +279,10 @@ it is suppressed if the variable `vm-auto-next-message' is nil."
 		 (vm-number-of (car vm-message-pointer))
 		 (vm-summary-sprintf "%F" (car vm-message-pointer))))))
 
-(defun vm-emit-mime-decoding-message (str)
+(defun vm-emit-mime-decoding-message (&rest args)
   (interactive)
-  (if vm-emit-messages-for-mime-decoding
-      (message str)))
+  (when vm-emit-messages-for-mime-decoding
+    (apply 'message args)))
 
 ;;;###autoload
 (defun vm-scroll-backward (&optional arg)
@@ -332,11 +332,11 @@ Negative arg means scroll forward."
       (while (vm-match-header)
 	(cond ((vm-match-header vm-highlighted-header-regexp)
 	       (setq e (vm-make-extent (vm-matched-header-contents-start)
-				    (vm-matched-header-contents-end)))
+				       (vm-matched-header-contents-end)))
 	       (vm-set-extent-property e 'face vm-highlighted-header-face)
 	       (vm-set-extent-property e 'vm-highlight t)))
 	(goto-char (vm-matched-header-end)))))
-   ((fboundp 'overlay-put)
+   (vm-fsfemacs-p
     (let (o-lists p)
       (setq o-lists (overlay-lists)
 	    p (car o-lists))
@@ -411,7 +411,7 @@ Negative arg means scroll forward."
 		  (vm-set-extent-property e 'balloon-help 'vm-url-help)
 		  (vm-set-extent-property e 'highlight t)
 		  ;; for vm-continue-postponed-message
-;		  (vm-set-extent-property e 'duplicable t)
+		  (vm-set-extent-property e 'duplicable t)
 		  )))
 	  (setq search-pairs (cdr search-pairs))))))
      ((and vm-fsfemacs-p
@@ -476,7 +476,7 @@ Negative arg means scroll forward."
 	(while (re-search-forward regexp nil t)
 	  (save-excursion (goto-char (match-beginning 0)) (vm-match-header))
 	  (setq e (vm-make-extent (vm-matched-header-contents-start)
-			       (vm-matched-header-contents-end)))
+				  (vm-matched-header-contents-end)))
 	  (vm-set-extent-property e 'vm-header t)
 	  (setq keymap (make-sparse-keymap))
 	  ;; Might as well make button2 do what button3 does in

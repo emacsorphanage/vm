@@ -2622,8 +2622,8 @@ overlay of a button in the current buffer, in which case the
             end buffer-size)
 	(if (null vm-mime-text/html-handler)
 	    (error "No handler for internal display of text/html"))
-        (message "Inlining text/html by %s..."
-                 vm-mime-text/html-handler)
+        (vm-emit-mime-decoding-message
+	 "Inlining text/html by %s..." vm-mime-text/html-handler)
         (vm-mime-insert-mime-body layout)
 	(unless (bolp) (insert "\n"))
         (setq end (point-marker))
