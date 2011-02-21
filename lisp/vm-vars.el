@@ -1791,9 +1791,10 @@ deleting a MIME object with `vm-delete-mime-object'."
   "For internal use.")
 
 (defface vm-mime-button 
-  '((((type x w32 mswindows mac) (class color))
-     (:background "lightgrey" :foreground "black"
-		  :box (:line-width 2 :style released-button)))
+  '((((type x w32 mswindows mac) (class color) (background light))
+     (:background "lightgrey" :box (:line-width 2 :style released-button)))
+    (((type x w32 mswindows mac) (class color) (background dark))
+     (:background "grey50" :box (:line-width 2 :style released-button)))
     (((class color) (background light)) (:foreground "blue" :underline t))
     (((class color) (background dark)) (:foreground "cyan" :underline t))
     (t (:underline t)))
@@ -1802,23 +1803,19 @@ deleting a MIME object with `vm-delete-mime-object'."
 
 (defface vm-mime-button-mouse
   '((((type x w32 mac) (class color))
-     (:background "DarkSeaGreen1" :foreground "black"
-		  :box (:line-width 2 :style released-button)))
-    (((class color) (background light)) (:foreground "cyan" :underline t))
-    (((class color) (background dark)) (:foreground "red" :underline t))
-    (t (:underline t)))
+     (:inherit highlight :box (:line-width 2 :style released-button)))
+    (((class color)) (:inherit highlight))
+    (t (:inherit highlight)))
   "*Face to fontify focused MIME buttons."
-  :group 'w3m-face)
+  :group 'vm-faces)
 
 (defface vm-mime-button-pressed-face
   '((((type x w32 mac) (class color))
-     (:background "lightgrey" :foreground "black"
-		  :box (:line-width 2 :style pressed-button)))
-    (((class color) (background light)) (:foreground "cyan" :underline t))
-    (((class color) (background dark)) (:foreground "red" :underline t))
-    (t (:underline t)))
+     (:inherit vm-mime-button :box (:line-width 2 :style pressed-button)))
+    (((class color)) (:inherit vm-mime-button))
+    (t (:inherit vm-mime-button)))
   "*Face to fontify pressed MIME buttons. (This is not yet used in VM.)"
-  :group 'w3m-face)
+  :group 'vm-faces)
 
 (defcustom vm-mime-button-face 'vm-mime-button
   "*Face used for text in buttons that trigger the display of MIME objects."
@@ -4677,7 +4674,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
       (((class color) (min-colors 88) (background light)) 
        (:foreground "grey50" :strike-through "grey70"))
       (((class color) (min-colors 88) (background dark)) 
-       (:foreground "grey70" :strike-trhough "grey50"))
+       (:foreground "grey70" :strike-trhough t))
       (((class color) (min-colors 16) (background light)) 
        (:foreground "grey50" :strike-through "grey70"))
       (((class color) (min-colors 16) (background dark)) 
