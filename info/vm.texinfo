@@ -6736,17 +6736,17 @@ The major applications of extents and overlays in VM are the following:
 
 @enumerate
 @item
-The Summary buffers have extents/overlays for each summary line.
-These are implemented uniformly but, to avoid the performance problem
-in GNU Emacs, all the markers are reset to nil before a summary is
-regenerated and then set to correct positions afterwards.  Not doing
-this correctly can seriously degrade the performance of summary
+Summary buffers use extents/overlays for each summary line.  These are
+implemented uniformly but, to avoid the performance problem in GNU
+Emacs, all the markers are reset to nil before a summary is
+regenerated and then set to their correct positions afterwards.  Not
+doing this correctly can seriously degrade the performance of summary
 generation.
 @item
-The Presentation buffers use extents/overlays for MIME buttons.  These
+Presentation buffers use extents/overlays for MIME buttons.  These
 are implemented uniformly.
 @item
-The message composition buffers use attachment buttons.  These are
+The message composition buffers have attachment buttons.  These are
 implemented using text properties in GNU Emacs and extents in
 overlays.  The difference is necessary because VM allows the
 attachment buttons to be killed and yanked.  It is not possible to
