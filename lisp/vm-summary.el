@@ -1641,9 +1641,12 @@ Call this function if you made changes to `vm-summary-format'."
       (kill-local-variable 'vm-summary-format))
   (message "Fixing your summary... %s" vm-summary-format)
   (let ((mp vm-message-list))
-    ;; Erase all the cached summary data
+    ;; Erase all the cached summary and threading data
     (while mp
       (vm-set-summary-of (car mp) nil)
+      (vm-set-thread-indentation-of (car mp) nil)
+      (vm-set-thread-list-of (car mp) nil)
+      (vm-set-thread-subtree-of (car mp) nil)
       (vm-mark-for-summary-update (car mp))
       (vm-set-stuff-flag-of (car mp) t)
       (setq mp (cdr mp)))
