@@ -168,7 +168,7 @@ messages in the thread are flagged/unflagged."
 	(flagged-count 0)
 	(new-flagged nil))
     (unless mlist
-      (setq mlist (vm-select-operable-messages count "Flag")))
+      (setq mlist (vm-select-operable-messages count "Flag/unflag")))
     (when mlist
       (setq new-flagged (not (vm-flagged-flag (car mlist)))))
     (while mlist

@@ -315,12 +315,13 @@ Prefix arg means the new virtual folder should be visited read only."
 	    (list prefix)))))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((use-marks (eq last-command 'vm-next-command-uses-marks))
+	(parent-summary-format vm-summary-format)
 	vm-virtual-folder-alist ; shadow the global variable
 	)
-    (if (null name)
-	(if arg
-	    (setq name (format "%s %s %s" (buffer-name) selector arg))
-	  (setq name (format "%s %s" (buffer-name) selector))))
+    (unless name
+      (if arg
+	  (setq name (format "%s %s %s" (buffer-name) selector arg))
+	(setq name (format "%s %s" (buffer-name) selector))))
     (setq vm-virtual-folder-alist
 	  (list
 	   (list name
@@ -329,7 +330,8 @@ Prefix arg means the new virtual folder should be visited read only."
 			   (list 'and '(marked)
 				 (if arg (list selector arg) (list selector)))
 			 (if arg (list selector arg) (list selector)))))))
-    (vm-visit-virtual-folder name read-only bookmark))
+    (vm-visit-virtual-folder name read-only bookmark)
+    (setq vm-summary-format parent-summary-format))
   ;; have to do this again here because the known virtual
   ;; folder menu is now hosed because we installed it while
   ;; vm-virtual-folder-alist was bound to the temp value above
