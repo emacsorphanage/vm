@@ -798,7 +798,8 @@ on all the relevant IMAP servers and then immediately expunges."
       (and process (vm-imap-end-session process)))
     (unless trouble 
       (setq vm-imap-retrieved-messages nil)
-      (vm-set-buffer-modified-p t))))
+      (when (> delete-count 0)
+	(vm-set-buffer-modified-p t)))))
 
 (defun vm-imap-clear-invalid-retrieval-entries (source retrieved uid-validity)
   "Remove from RETRIEVED (a copy of vm-imap-retrieved-messages)
