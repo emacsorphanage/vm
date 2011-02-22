@@ -4473,8 +4473,9 @@ files."
 	 (when gobble-order
 	   (vm-gobble-message-order))
 	 (when (or (vectorp vm-thread-obarray)
-		   (and vm-summary-buffer vm-summary-show-threads))
-	     (vm-build-threads (cdr tail-cons)))))
+		   vm-summary-show-threads)
+	   ;; may need threads for sorting
+	   (vm-build-threads (cdr tail-cons)))))
       (setq new-messages (if tail-cons (cdr tail-cons) vm-message-list))
       (vm-set-numbering-redo-start-point new-messages)
       (vm-set-summary-redo-start-point new-messages))
@@ -4506,7 +4507,10 @@ files."
       ;; so that the sort code only has to worry about the
       ;; changes it needs to make.
       (vm-update-summary-and-mode-line)
-      (vm-sort-messages (or vm-ml-sort-keys "activity")))
+      (vm-sort-messages (or vm-ml-sort-keys 
+			    (if vm-summary-show-threads
+				"activity"
+			      "date"))))
     (when (and new-messages
 	       (or vm-arrived-message-hook vm-arrived-messages-hook)
 	       ;; Run the hooks only if this is not the first

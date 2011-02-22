@@ -716,6 +716,8 @@ should have been built for this function to work."
     (if (and vm-debug (member (symbol-name m-sym) vm-traced-message-ids))
 	(debug m-sym))
     (unless m-sym
+      (when vm-thread-debug
+	(debug 'vm-thread-root m-sym))
       (signal 'vm-thread-error (list 'vm-thread-root)))
     (setq list (vm-thread-list m))
     (catch 'return
@@ -742,6 +744,8 @@ See also: `vm-thread-root'."
     (if (and vm-debug (member (symbol-name m-sym) vm-traced-message-ids))
 	(debug m-sym))
     (unless m-sym
+      (when vm-thread-debug
+	(debug 'vm-thread-root-sym m-sym))
       (signal 'vm-thread-error (list 'vm-thread-root)))
     (setq list (vm-thread-list m))
     (catch 'return
@@ -772,6 +776,8 @@ Threads should have been built for this function to work."
 	      msg (vm-th-message-of msg))
       (setq m-sym (vm-thread-symbol msg)))
     (unless m-sym
+      (when vm-thread-debug
+	(debug 'vm-thread-subtree m-sym))
       (signal 'vm-thread-error (list 'vm-thread-subtree)))
     (if (eq msg (vm-th-message-of m-sym))
 	;; canonical message for this message ID
@@ -818,6 +824,7 @@ M can be a message or the interned symbol of M.  Threads should
 have been built for this function to work."
   (length (vm-thread-subtree m)))
 
+;;;###autoload
 (defun vm-check-thread-integrity (&optional ml)
   "Check that all messages are members of their thread subtrees.
 Conversely, all members of thread subtrees should actually belong
