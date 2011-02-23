@@ -81,26 +81,29 @@
 Optional first arg FOLDER specifies the folder to visit.  It can
 be the path name of a local folder or the maildrop specification
 of a POP or IMAP folder.  It defaults to the value of
-vm-primary-inbox.  The folder buffer is put into VM mode, a major
-mode for reading mail.
+`vm-primary-inbox'.  The folder is visited in a VM buffer is put
+into VM mode, a major mode for reading mail.  (See `vm-mode'.)
 
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute
 changes, message additions or deletions will be allowed in the
 visited folder.
 
-Visiting the primary inbox normally causes any contents of the system
-mailbox to be moved and appended to the resulting buffer.  You can
-disable this automatic fetching of mail by setting
-`vm-auto-get-new-mail' to nil. 
+Visiting a folder normally causes any contents of its spool files
+to be moved and appended to the folder buffer.  You can disable
+this automatic fetching of mail by setting `vm-auto-get-new-mail'
+to nil.
 
 All the messages can be read by repeatedly pressing SPC.  Use `n'ext and
 `p'revious to move about in the folder.  Messages are marked for
 deletion with `d', and saved to another folder with `s'.  Quitting VM
 with `q' saves the buffered folder to disk, but does not expunge
-deleted messages.  Use `###' to expunge deleted messages.
+deleted messages.  Use `###' to expunge deleted messages."
 
-See the documentation for vm-mode for more information."
+  ;; Additional documentation for internal calls to vm:
+
+  ;; *** Note that this function causes the folder buffer to become
+  ;; *** the current-buffer.
 
   ;; Internally, this function may also be called with a buffer as the
   ;; FOLDER argument.  In that case, the function sets up the buffer
@@ -574,6 +577,57 @@ visited folder."
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
     (vm-visit-folder folder read-only)))
+
+;;;###autoload
+(defun vm-visit-thunderbird-folder (folder &optional read-only)
+  "Visit a mail file maintained by Thunderbird.
+VM will parse and present its messages to you in the usual way.
+
+First arg FOLDER specifies the mail file to visit.  When this
+command is called interactively the file name is read from the
+minibuffer.
+
+Prefix arg or optional second arg READ-ONLY non-nil indicates
+that the folder should be considered read only.  No attribute
+changes, messages additions or deletions will be allowed in the
+visited folder.
+
+This function differs from `vm-visit-folder' in that it remembers that
+the folder is a foreign folder maintained by Thunderbird.  Saving
+of messages is carried out preferentially to other Thunderbird folders."
+  (interactive
+   (save-current-buffer
+     (vm-session-initialization)
+     (vm-check-for-killed-folder)
+     (vm-select-folder-buffer-if-possible)
+     (let ((default-directory 
+	     (if vm-thunderbird-folder-directory
+		 (expand-file-name vm-thunderbird-folder-directory)
+	       default-directory))
+	   (default (or vm-last-visit-folder vm-last-save-folder))
+	   (this-command this-command)
+	   (last-command last-command))
+       (list (vm-read-file-name
+	      (format "Visit%s folder:%s "
+		      (if current-prefix-arg " read only" "")
+		      (if default
+			  (format " (default %s)" default)
+			""))
+	      default-directory default nil nil 'vm-folder-history)
+	     current-prefix-arg))))
+  (vm-session-initialization)
+  (vm-check-for-killed-folder)
+  (vm-select-folder-buffer-if-possible)
+  (vm-check-for-killed-summary)
+  (setq vm-last-visit-folder folder)
+  (let ((default-directory 
+	  (or vm-thunderbird-folder-directory default-directory)))
+    (setq folder (expand-file-name folder)
+	  vm-last-visit-folder folder))
+  (vm folder read-only)
+  (set (make-local-variable 'vm-foreign-folder-directory)
+       vm-thunderbird-folder-directory)
+  )
 
 ;;;###autoload
 (defun vm-visit-pop-folder (folder &optional read-only)

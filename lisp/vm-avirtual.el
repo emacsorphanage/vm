@@ -1067,7 +1067,7 @@ messages which are composed in order to find the right FCC."
 ;;;###autoload
 (defun vm-virtual-save-message (&optional folder count)
   "Save the current message to a mail folder.
-Like `vm-save-message' but the default folder it guessed by
+Like `vm-save-message' but the default folder is guessed by
 `vm-virtual-auto-select-folder'."
   (interactive
    (list

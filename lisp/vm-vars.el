@@ -135,6 +135,20 @@ meant for specifying the preferred settings for VM variables."
   :group 'vm-folders
   :type '(choice (const nil) directory))
 
+(defcustom vm-thunderbird-folder-directory nil
+  "*Directory where Thunderbird's local folders are kept.  This
+setting is used in `vm-vivist-thunderbird-folder'.  
+
+Note that only Thunderbird's local folders can be visited in VM,
+not its IMAP folders. "
+  :group 'vm-folders
+  :type '(choice (const nil) directory))
+
+(defvar vm-foreign-folder-directory nil
+  "If the current folder is a \"foreign\" folder, i.e., maintained by
+anothe mail client such as Thunderbird, then this variable holds its
+directory.")
+
 (defcustom vm-primary-inbox "~/INBOX"
   "*Mail is moved from the system mailbox to this file for reading."
   :group 'vm-folders
@@ -147,11 +161,20 @@ during this mail transfer, any missing mail will be found in this
 file.  VM will do crash recovery from this file automatically at
 startup, as necessary.
 
-If nil, `vm-primary-inbox' with `vm-crash-box-suffix' appende will be used as
-crash boxdot set."
+If the variable is to nil, a crash box name is created by appending
+`vm-primary-inbox' and `vm-crash-box-suffix'."
   :group 'vm-folders
   :type '(choice file 
-		 (const :tag "Automatic" nil)))
+		 (const :tag "Use vm-crash-box-suffix" nil)))
+
+(defcustom vm-crash-box-suffix ".crash"
+  "*String suffix used to create possible crash box file names for folders.
+When VM uses `vm-spool-file-suffixes' to create a spool file name,
+it will append the value of `vm-crash-box-suffix' to the folder's
+file name to create a crash box name."
+  :group 'vm-folders
+  :type '(choice string
+		 (const :tag "No crash boxes" nil)))
 
 (defcustom vm-keep-crash-boxes nil
   "*Non-nil value should be a string specifying a directory where
@@ -398,14 +421,6 @@ The value of `vm-spool-files-suffixes' will not be used unless
 required for all mail retrieval from spool files."
   :group 'vm-folders
   :type '(repeat string))
-
-(defcustom vm-crash-box-suffix ".crash"
-  "*String suffix used to create possible crash box file names for folders.
-When VM uses `vm-spool-file-suffixes' to create a spool file name,
-it will append the value of `vm-crash-box-suffix' to the folder's
-file name to create a crash box name."
-  :group 'vm-folders
-  :type 'string)
 
 (defcustom vm-make-spool-file-name nil
   "*Non-nil value should be a function that returns a spool file name

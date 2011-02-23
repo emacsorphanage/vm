@@ -2681,7 +2681,7 @@ MAILBOX."
   "Use IMAP session PROCESS to copy message M to MAILBOX.  The PROCESS
 is expected to have logged in and selected the current folder.
 
-This is similar to vm-imap-save-message but uses the internal copy
+This is similar to `vm-imap-save-message' but uses the internal copy
 operation of the server to minimize I/O."
   ;;-----------------------------
   (vm-buffer-type:set 'folder)

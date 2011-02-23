@@ -174,7 +174,7 @@ The saved messages are flagged as `filed'."
 
 (defun vm-imap-folder-p ()
   "Is the current folder an IMAP folder?"
-  (save-excursion
+  (save-current-buffer
     (vm-select-folder-buffer)
     (eq vm-folder-access-method 'imap)))
 
@@ -206,14 +206,15 @@ and the variable `vm-imap-save-to-server' (which see)."
       (let ((last-command last-command)
 	    (this-command this-command))
 	(vm-follow-summary-cursor)
-	(let ((default 
-		(save-excursion
-		  (vm-select-folder-buffer)
-		  (vm-error-if-folder-empty)
-		  (or (vm-auto-select-folder 
-		       vm-message-pointer vm-auto-folder-alist)
-		      vm-last-save-folder)))
-	      (dir (or vm-folder-directory default-directory)))
+	(let (default dir)
+	  (save-current-buffer
+	    (vm-select-folder-buffer)
+	    (vm-error-if-folder-empty)
+	    (setq default (or (vm-auto-select-folder 
+			       vm-message-pointer vm-auto-folder-alist)
+			      vm-last-save-folder))
+	    (setq dir (or vm-foreign-folder-directory
+			  vm-folder-directory default-directory)))
 	  (cond ((and default
 		      (let ((default-directory dir))
 			(file-directory-p default)))
@@ -225,6 +226,7 @@ and the variable `vm-imap-save-to-server' (which see)."
 		(t
 		 (vm-read-file-name "Save in folder: " dir nil)))))
       (prefix-numeric-value current-prefix-arg))))
+
   (cond ((and vm-imap-save-to-server (vm-imap-folder-p))
 	 (vm-save-message-to-imap-folder folder count quiet))
 	((and (stringp vm-recognize-imap-maildrops)
@@ -253,12 +255,14 @@ The saved messages are flagged as `filed'."
     (let ((last-command last-command)
 	  (this-command this-command))
       (vm-follow-summary-cursor)
-      (let ((default (save-current-buffer
-		       (vm-select-folder-buffer)
-		       (or (vm-auto-select-folder vm-message-pointer
-						  vm-auto-folder-alist)
-			   vm-last-save-folder)))
-	    (dir (or vm-folder-directory default-directory)))
+      (let (default dir)
+	(save-current-buffer
+	  (vm-select-folder-buffer)
+	  (setq default (or (vm-auto-select-folder vm-message-pointer
+						   vm-auto-folder-alist)
+			    vm-last-save-folder))
+	  (setq dir (or vm-foreign-folder-directory
+			vm-folder-directory default-directory)))
 	(cond ((and default
 		    (let ((default-directory dir))
 		      (file-directory-p default)))
@@ -270,6 +274,7 @@ The saved messages are flagged as `filed'."
 	      (t
 	       (vm-read-file-name "Save in folder: " dir nil)))))
     (prefix-numeric-value current-prefix-arg)))
+
   (let (auto-folder unexpanded-folder mlist ml)
     (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (setq unexpanded-folder folder
@@ -282,7 +287,8 @@ The saved messages are flagged as `filed'."
     ;; Expand the filename, forcing relative paths to resolve
     ;; into the folder directory.
     (let ((default-directory
-	    (expand-file-name (or vm-folder-directory default-directory))))
+	    (expand-file-name (or vm-foreign-folder-directory
+				  vm-folder-directory default-directory))))
       (setq folder (expand-file-name folder)))
     ;; Confirm new folders, if the user requested this.
     (if (and vm-confirm-new-folders

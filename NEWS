@@ -42,6 +42,10 @@ VM 8.2.0b (2011-02-28)
 
   IMPROVEMENTS
 
+   * New variable `vm-thunderbird-folder-directory' and command
+     `vm-visit-thunderbird-folder' allow the handling of Thunderbird
+     folders without interference with VM's own folders.
+
    * New vm-dired operations allow attaching of files from a dired
      buffer to composed messages: 
        `vm-dired-attach-file' and `vm-dired-do-attach-files'. 

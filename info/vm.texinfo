@@ -448,18 +448,23 @@ A local mail folder is simply a file that can be stored on the local
 file system.  VM works with the Unix @dfn{mbox} format to store
 messages in folders.  It can also work with the @dfn{Babyl} format
 used by the Emacs Rmail package.  The subtypes of mboxes handled by VM
-are listed in the documentation of the variable
-@code{vm-default-folder-type}.
+are listed under @b{Folder types} below.
+
+@vindex vm-folder-directory
+It is a good idea to create directory, e.g., @code{~/Mail}, where all
+of VM's local folders will be kept.  If you create such a directory,
+you should set the variable @code{vm-folder-directory} to point to it.
 
 @cindex spool file
 @vindex vm-spool-files
 @cindex file locking
 A @dfn{spool file} is a file where the mail transport system delivers
 messages intended for you.  On Unix systems, a program called
-@file{/bin/mail} or @file{/bin/mail.local} does this delivery,
-although agents such as @file{procmail}, @file{filter} and
-@file{slocal} can be invoked from a user's @file{~/.forward} or
-@file{~/.qmail} files.  On other systems, incoming mail is typically
+@file{/bin/mail} or @file{/bin/mail.local} does this delivery.
+It is also possible for agents such as @file{procmail}, @file{filter} and
+@file{slocal} to be invoked from a user's @file{~/.forward} or
+@file{~/.qmail} files, sorting the incoming mail into separate spool
+files.  On other systems, incoming mail may be
 delivered to mailboxes on remote mail servers, from where it can be
 retrieved through protocols like POP and IMAP.  No matter what the
 delivery agent, what all spool files have in common is that mail is
@@ -469,23 +474,26 @@ file locking protocol.
 
 @vindex vm-movemail-program
 @vindex vm-movemail-program-switches
-VM leaves the task of accessing spool files to @file{movemail}, a
-program distributed with Emacs that is written for this purpose.
-The variable @code{vm-movemail-program} specifies the name of the
-movemail program and defaults to @samp{"movemail"}.  The variable
-@code{vm-movemail-program-switches} lets you specify some initial
-command line argument to pass to the movemail program.
+When spool files are on the local file system, VM uses the program
+@file{movemail}, a program distributed with Emacs to extract mail from
+a spool file.  The variable @code{vm-movemail-program} specifies the
+name of the movemail program and defaults to @samp{"movemail"}.  The
+variable @code{vm-movemail-program-switches} lets you specify some
+initial command line argument to pass to the movemail program.
 
 @cindex crash box
 @vindex vm-crash-box
 VM transfers the mail from a spool file to a folder via a
 temporary file known as the @dfn{crash box}.  The variable
 @code{vm-crash-box} names the crash box file for the primary inbox.
-VM first copies the mail to the crash box, truncates the system
-mailbox to zero messages, merges the crash box contents into the
+Or a crash-box name may be created from @code{vm-crash-box-suffix}
+described below. 
+(@pxref{Spool Files}.)
+VM first copies the mail to the crash box, truncates the spool file
+to zero messages, merges the crash box contents into the
 primary inbox, and then deletes the crash box.  If the system or Emacs
 should crash in the midst of this activity, any message not present in
-the primary inbox will be either in the system mailbox or the crash
+the primary inbox will be either in the spool file or the crash
 box.  Some messages may be duplicated but no mail will be lost.
 
 If the file named by @code{vm-crash-box} already exists when VM is
@@ -1236,6 +1244,25 @@ The variable @code{vm-sync-thunderbird-status} is a buffer-local
 variable.  You may set its default value in your @code{.vm} file.  To
 change it in a running Emacs session, you must use @code{setq-default}.
 @xref{Locals,, Local Variables, emacs, Gnu Emacs manual}.
+
+@findex vm-visit-thunderbird-folder
+@vindex vm-thunderbird-folder-directory
+A new experimental feature allows you to visit Thunderbird's local
+folders using the command @code{M-x vm-visit-thunderbird-folder}.
+This works the same way as @code{vm-visit-folder} except for the
+difference that the default directory for visiting folders as well as
+saving messages will be taken from the variable
+@code{vm-thunderbird-folder-directory}.  You should set this variable to the
+directory where Thunderbird stores its folders.  The folders visited
+using @code{M-x vm-visit-folder} will continue to be found in
+@code{vm-folder-directory}, thus allowing you to manage the two spaces
+separately. 
+
+If, on the other hand, you want to maintain a single space where VM
+and Thunderbird can jointly operate, then you should set the variable
+@code{vm-folder-directory} to point to that place and leave
+@code{vm-thunderbird-folder-directory} with its default value of
+@code{nil}.
 
 @node Getting New Mail, Crash Recovery, Thunderbird Folders, Starting Up
 @section Getting New Mail
@@ -3055,12 +3082,13 @@ messages are saved.  Messages saved with @code{vm-save-message} are
 flagged ``filed''.
 
 @vindex vm-folder-directory
-If you have a directory where you keep all your mail folders, you should
-set the variable @code{vm-folder-directory} to point to it.  If this
-variable is set, @code{vm-save-message} will insert this directory name
-into the minibuffer before prompting you for a folder name; this will save
-you some typing. The default value of @code{vm-folder-directory} is 
-@code{~/Mail}.
+@vindex vm-thunderbird-folder-directory
+If @code{vm-folder-directory} is set, @code{vm-save-message} will
+insert this directory name into the minibuffer before prompting you
+for a folder name; this will save you some typing.   If
+@code{vm-thunderbird-folder-directory} is set and you enter a Thunderbird
+folder using @code{vm-visit-thunderbird-folder}, then that directory
+will be the default place for saving messages.
 
 @vindex vm-auto-folder-alist
 Another aid to selecting folders in which to save mail is the variable
