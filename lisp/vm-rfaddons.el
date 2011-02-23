@@ -362,7 +362,8 @@ This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
           (vm-followup-include-text count)
         (vm-reply-include-text count))
     (let ((vm-include-text-from-presentation t)
-	  (vm-reply-include-presentation t)) ; is this variable necessary?
+	  (vm-reply-include-presentation t)  ; is this variable necessary?
+	  (vm-enable-thread-operations nil)) 
       (vm-do-reply to-all t count))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

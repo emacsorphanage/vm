@@ -127,9 +127,18 @@
 
 ;;;###autoload
 (defun vm-do-reply (to-all include-text count)
-  (let ((mlist (let ((vm-enable-thread-operations nil)) ; disable
-					; thread operation for replies
-		 (vm-select-operable-messages count "Reply to")))
+  "Set up a VM composition buffer for sending a reply (and switch the
+focus to that buffer?).  The reply is sent to the current message in
+the folder buffer or other selected messages.  The dynamically bound
+variable `vm-enable-thread-operations' should be bound to nil before
+calling this function in order to avoid surprises for the user.
+
+The argument TO-ALL says whether the reply should go to all the
+recipients of the original messages.  INCLUDE-TEXT says whether
+the body of those messages should be included in the reply.
+COUNT is the prefix argument indicating how many consecutive
+messages of the folder are involved in this reply."
+  (let ((mlist (vm-select-operable-messages count "Reply to"))
         (dir default-directory)
         (message-pointer vm-message-pointer)
         (case-fold-search t)
@@ -993,7 +1002,8 @@ with C-c C-v."
   (interactive "p")
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (vm-do-reply nil nil count))
+  (let ((vm-enable-thread-operations nil))
+    (vm-do-reply nil nil count)))
 
 ;;;###autoload
 (defun vm-reply-include-text (count)
@@ -1002,7 +1012,8 @@ from the message.  See the documentation for function vm-reply for details."
   (interactive "p")
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (vm-do-reply nil t count))
+  (let ((vm-enable-thread-operations nil))
+    (vm-do-reply nil t count)))
 
 ;;;###autoload
 (defun vm-followup (count)
@@ -1011,7 +1022,8 @@ See the documentation for the function vm-reply for details."
   (interactive "p")
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (vm-do-reply t nil count))
+  (let ((vm-enable-thread-operations nil))
+    (vm-do-reply t nil count)))
 
 ;;;###autoload
 (defun vm-followup-include-text (count)
@@ -1020,11 +1032,12 @@ the message.  See the documentation for the function vm-reply for details."
   (interactive "p")
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (vm-do-reply t t count))
+  (let ((vm-enable-thread-operations nil))
+    (vm-do-reply t t count)))
 
 ;;;###autoload
 (defun vm-forward-message-all-headers ()
-  "Like vm-forward-message but always forwards all the headers."
+  "Like `vm-forward-message' but forwards all the headers."
   (interactive)
   (let ((vm-forwarded-headers nil)
 	(vm-unforwarded-header-regexp "only-drop-this-header")
@@ -1042,8 +1055,8 @@ the message.  See the documentation for the function vm-reply for details."
 (defun vm-forward-message ()
   "Forward the current message to one or more recipients.
 You will be placed in a Mail mode buffer as you would with a
-reply, but you must fill in the To: header and perhaps the
-Subject: header manually."
+reply, but you must fill in the \"To:\" header and perhaps the
+\"Subject:\" header manually."
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
