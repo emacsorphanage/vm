@@ -788,9 +788,10 @@ you must always use `vm-get-new-mail' to pull in newly arrived messages.
 
 If the value is a number, then it specifies how often (in
 seconds) VM should check for new mail and try to retrieve it.
-This is done asynchronously and may occur while you are editing
-other files.  It should not disturb your editing, except perhaps
-for a pause while the check is being done."
+This is done asynchronously using a timer task and may occur
+while you are editing other files.  It should not disturb your
+editing, except perhaps for a pause while the check is being
+done."
   :group 'vm-folders
   :type '(choice (const :tag "No" nil)
 		 (const :tag "Yes" t)
@@ -798,7 +799,8 @@ for a pause while the check is being done."
 
 (defcustom vm-mail-check-interval 300
   "*Numeric value specifies the number of seconds between checks
-for new mail.  The maildrops for all visited folders are checked.
+for new mail, carried out using a timer task.  The maildrops for all
+visited folders are checked. 
 
 A nil value means don't check for new mail.
 
@@ -2515,10 +2517,11 @@ folder without the use of a temporary file."
   :type 'boolean)
 
 (defcustom vm-flush-interval 90
-  "*Non-nil value specifies how often VM flushes its cached internal
-data.  A numeric value gives the number of seconds between
-flushes.  A value of t means flush every time there is a change.
-Nil means don't do flushing until a message or folder is saved.
+  "*Non-nil value specifies how often VM flushes its cached
+internal data using a timer task.  A numeric value gives the
+number of seconds between flushes.  A value of t means flush
+every time there is a change.  Nil means don't do flushing until
+a message or folder is saved.
 
 Normally when a message attribute is changed. VM keeps the record
 of the change in its internal memory and doesn't insert the

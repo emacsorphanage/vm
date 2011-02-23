@@ -3565,9 +3565,10 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
    (vm-xemacs-p
     (vm-mime-display-internal-image-xemacs-xxxx layout image-type name))
    ((and vm-fsfemacs-p (fboundp 'image-type-available-p))
-    (vm-mime-display-internal-image-fsfemacs-21-xxxx layout image-type name))
-   (vm-fsfemacs-p
-    (vm-mime-display-internal-image-fsfemacs-19-xxxx layout image-type name))))
+    (vm-mime-display-internal-image-fsfemacs-xxxx layout image-type name))
+   (t
+    (message "Unsupported Emacs version"))
+   ))
 
 (defun vm-mime-display-internal-image-xemacs-xxxx (layout image-type name)
   (if (and (vm-images-possible-here-p)
@@ -3692,7 +3693,7 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 
 (defvar vm-menu-fsfemacs-image-menu)
 
-(defun vm-mime-display-internal-image-fsfemacs-21-xxxx (layout image-type name)
+(defun vm-mime-display-internal-image-fsfemacs-xxxx (layout image-type name)
   (if (and (vm-images-possible-here-p)
 	   (vm-image-type-available-p image-type))
       (let (start end tempfile image work-buffer
@@ -3736,6 +3737,8 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 		     (setq process (car strips)
 			   strips (cdr strips)
 			   image-list strips)
+		     (if (null (process-buffer process))
+			 (error "ImageMagick conversion failed"))
 		     (vm-register-message-garbage-files strips)
 		     (setq start (point))
 		     (while strips
@@ -3791,175 +3794,176 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 	t )
     nil ))
 
-(defun vm-mime-display-internal-image-fsfemacs-19-xxxx (layout image-type name)
-  (if (and (vm-images-possible-here-p)
-	   (vm-image-type-available-p image-type))
-      (catch 'done
-	(let ((selective-display nil)
-	      start end origfile workfile image work-buffer
-	      (hroll (if vm-fsfemacs-mule-p
-			 (+ (cdr (assq 'internal-border-width
-				       (frame-parameters)))
-			    (if (memq (cdr (assq 'vertical-scroll-bars
-						 (frame-parameters)))
-				      '(t left))
-				(vm-fsfemacs-scroll-bar-width)
-			      0))
-		       (cdr (assq 'internal-border-width
-				  (frame-parameters)))))
-	      (vroll (cdr (assq 'internal-border-width (frame-parameters))))
-	      (reverse (eq (cdr (assq 'background-mode (frame-parameters)))
-			   'dark))
-	      blob strips
-	      dims width height char-width char-height
-	      horiz-pad vert-pad trash-list
-	      (buffer-read-only nil))
-	  (if (and (setq blob (get (vm-mm-layout-cache layout)
-				   'vm-mime-display-internal-image-xxxx))
-		   (file-exists-p (car blob))
-		   (progn
-		     (setq origfile (car blob)
-			   workfile (nth 1 blob)
-			   width (nth 2 blob)
-			   height (nth 3 blob)
-			   char-width (nth 4 blob)
-			   char-height (nth 5 blob))
-		     (and (= char-width (frame-char-width))
-			  (= char-height (frame-char-height)))))
-	      (setq strips (nth 6 blob))
-	    (unwind-protect
-		(progn
-		  (save-excursion
-		    (setq work-buffer (vm-make-work-buffer))
-		    (set-buffer work-buffer)
-		    (if (and origfile (file-exists-p origfile))
-			(progn
-			  (insert-file-contents origfile)
-			  (setq start (point-min)
-				end (vm-marker (point-max))))
-		      (setq start (point))
-		      (vm-mime-insert-mime-body layout)
-		      (setq end (point-marker))
-		      (vm-mime-transfer-decode-region layout start end)
-		      (setq origfile (vm-make-tempfile))
-		      (setq trash-list (cons origfile trash-list))
-		      (let ((coding-system-for-write (vm-binary-coding-system)))
-			(write-region start end origfile nil 0)))
-		    (setq dims (condition-case error-data
-				   (vm-get-image-dimensions origfile)
-				 (error
-				  (message "Failed getting image dimensions: %s"
-					   error-data)
-				  (throw 'done nil)))
-			  width (nth 0 dims)
-			  height (nth 1 dims)
-			  char-width (frame-char-width)
-			  char-height (frame-char-height)
-			  horiz-pad (if (< width char-width)
-					(- char-width width)
-				      (% width char-width))
-			  horiz-pad (if (zerop horiz-pad)
-					horiz-pad
-				      (- char-width horiz-pad))
-			  vert-pad (if (< height char-height)
-				       (- char-height height)
-				     (% height char-height))
-			  vert-pad (if (zerop vert-pad)
-				       vert-pad
-				     (- char-height vert-pad)))
-		    ;; crop one line from the bottom of the image
-		    ;; if vertical padding needed is odd so that
-		    ;; the image height plus the padding will be an
-		    ;; exact multiple of the char height.
-		    (if (not (zerop (% vert-pad 2)))
-			(setq height (1- height)
-			      vert-pad (1+ vert-pad)))
-		    (call-process-region start end
-					 vm-imagemagick-convert-program
-					 t t nil
-					 (if reverse "-negate" "-matte")
-					 "-crop"
-					 (format "%dx%d+0+0" width height)
-					 "-page"
-					 (format "%dx%d+0+0" width height)
-					 "-mattecolor" "white"
-					 "-frame"
-					 (format "%dx%d+0+0"
-						 (/ (1+ horiz-pad) 2)
-						 (/ vert-pad 2))
-					 "-"
-					 "-")
-		    (setq width (+ width (* 2 (/ (1+ horiz-pad) 2)))
-			  height (+ height (* 2 (/ vert-pad 2))))
-		    (if (null workfile)
-			(setq workfile (vm-make-tempfile)
-			      trash-list (cons workfile trash-list)))
-		    (let ((coding-system-for-write (vm-binary-coding-system)))
-		      (write-region (point-min) (point-max) workfile nil 0))
-		    (put (vm-mm-layout-cache layout)
-			 'vm-mime-display-internal-image-xxxx
-			 (list origfile workfile width height
-			       char-width char-height)))
-		  (and trash-list
-		       (vm-register-folder-garbage-files trash-list)))
-	      (and work-buffer (kill-buffer work-buffer))))
-	  (if (not (bolp))
-	      (insert-char ?\n 1))
-	  (condition-case error-data
-	      (let (o i-start start process image-list overlay-list)
-		(if (and strips (file-exists-p (car strips)))
-		    (setq image-list strips)
-		  (setq strips (vm-make-image-strips workfile char-height
-						     image-type t nil
-						     hroll vroll)
-			process (car strips)
-			strips (cdr strips)
-			image-list strips)
-		  (put (vm-mm-layout-cache layout)
-		       'vm-mime-display-internal-image-xxxx
-		       (list origfile workfile width height
-			     char-width char-height
-			     strips))
-		  (vm-register-message-garbage-files strips))
-		(setq i-start (point))
-		(while strips
-		  (setq start (point))
-		  (insert-char ?\  (/ width char-width))
-		  (put-text-property start (point) 'face 'vm-image-placeholder)
-		  (setq o (make-overlay start (point) nil t))
-		  (overlay-put o 'evaporate t)
-		  (setq overlay-list (cons o overlay-list))
-		  (insert "\n")
-		  (setq strips (cdr strips)))
-		(setq o (make-overlay i-start (point) nil t nil))
-		(overlay-put o 'vm-mime-layout layout)
-		(overlay-put o 'vm-mime-disposable t)
-		(if vm-use-menus
-		    (overlay-put o 'vm-image vm-menu-fsfemacs-image-menu))
-		(if process
-		    (save-excursion
-		      (set-buffer (process-buffer process))
-		      (set (make-local-variable 'vm-image-list) image-list)
-		      (set (make-local-variable 'vm-image-type) image-type)
-		      (set (make-local-variable 'vm-image-type-name)
-			   name)
-		      (set (make-local-variable 'vm-overlay-list)
-			   (nreverse overlay-list))
-		      ;; incremental strip display intentionally
-		      ;; omitted because it makes the Emacs 19
-		      ;; display completely repaint for each new
-		      ;; strip.
-		      (set-process-sentinel
-		       process
-		       'vm-process-sentinel-display-image-strips))
-		  (vm-display-image-strips-on-overlay-regions image-list
-							      (nreverse
-							       overlay-list)
-							      image-type)))
-	    (error
-	     (message "Failed making image strips: %s" error-data)))
-	  t ))
-    nil ))
+;; FSF Emacs 19 is not supported any more.  USR, 2011-02-23
+;; (defun vm-mime-display-internal-image-fsfemacs-19-xxxx (layout image-type name)
+;;   (if (and (vm-images-possible-here-p)
+;; 	   (vm-image-type-available-p image-type))
+;;       (catch 'done
+;; 	(let ((selective-display nil)
+;; 	      start end origfile workfile image work-buffer
+;; 	      (hroll (if vm-fsfemacs-mule-p
+;; 			 (+ (cdr (assq 'internal-border-width
+;; 				       (frame-parameters)))
+;; 			    (if (memq (cdr (assq 'vertical-scroll-bars
+;; 						 (frame-parameters)))
+;; 				      '(t left))
+;; 				(vm-fsfemacs-scroll-bar-width)
+;; 			      0))
+;; 		       (cdr (assq 'internal-border-width
+;; 				  (frame-parameters)))))
+;; 	      (vroll (cdr (assq 'internal-border-width (frame-parameters))))
+;; 	      (reverse (eq (cdr (assq 'background-mode (frame-parameters)))
+;; 			   'dark))
+;; 	      blob strips
+;; 	      dims width height char-width char-height
+;; 	      horiz-pad vert-pad trash-list
+;; 	      (buffer-read-only nil))
+;; 	  (if (and (setq blob (get (vm-mm-layout-cache layout)
+;; 				   'vm-mime-display-internal-image-xxxx))
+;; 		   (file-exists-p (car blob))
+;; 		   (progn
+;; 		     (setq origfile (car blob)
+;; 			   workfile (nth 1 blob)
+;; 			   width (nth 2 blob)
+;; 			   height (nth 3 blob)
+;; 			   char-width (nth 4 blob)
+;; 			   char-height (nth 5 blob))
+;; 		     (and (= char-width (frame-char-width))
+;; 			  (= char-height (frame-char-height)))))
+;; 	      (setq strips (nth 6 blob))
+;; 	    (unwind-protect
+;; 		(progn
+;; 		  (save-excursion
+;; 		    (setq work-buffer (vm-make-work-buffer))
+;; 		    (set-buffer work-buffer)
+;; 		    (if (and origfile (file-exists-p origfile))
+;; 			(progn
+;; 			  (insert-file-contents origfile)
+;; 			  (setq start (point-min)
+;; 				end (vm-marker (point-max))))
+;; 		      (setq start (point))
+;; 		      (vm-mime-insert-mime-body layout)
+;; 		      (setq end (point-marker))
+;; 		      (vm-mime-transfer-decode-region layout start end)
+;; 		      (setq origfile (vm-make-tempfile))
+;; 		      (setq trash-list (cons origfile trash-list))
+;; 		      (let ((coding-system-for-write (vm-binary-coding-system)))
+;; 			(write-region start end origfile nil 0)))
+;; 		    (setq dims (condition-case error-data
+;; 				   (vm-get-image-dimensions origfile)
+;; 				 (error
+;; 				  (message "Failed getting image dimensions: %s"
+;; 					   error-data)
+;; 				  (throw 'done nil)))
+;; 			  width (nth 0 dims)
+;; 			  height (nth 1 dims)
+;; 			  char-width (frame-char-width)
+;; 			  char-height (frame-char-height)
+;; 			  horiz-pad (if (< width char-width)
+;; 					(- char-width width)
+;; 				      (% width char-width))
+;; 			  horiz-pad (if (zerop horiz-pad)
+;; 					horiz-pad
+;; 				      (- char-width horiz-pad))
+;; 			  vert-pad (if (< height char-height)
+;; 				       (- char-height height)
+;; 				     (% height char-height))
+;; 			  vert-pad (if (zerop vert-pad)
+;; 				       vert-pad
+;; 				     (- char-height vert-pad)))
+;; 		    ;; crop one line from the bottom of the image
+;; 		    ;; if vertical padding needed is odd so that
+;; 		    ;; the image height plus the padding will be an
+;; 		    ;; exact multiple of the char height.
+;; 		    (if (not (zerop (% vert-pad 2)))
+;; 			(setq height (1- height)
+;; 			      vert-pad (1+ vert-pad)))
+;; 		    (call-process-region start end
+;; 					 vm-imagemagick-convert-program
+;; 					 t t nil
+;; 					 (if reverse "-negate" "-matte")
+;; 					 "-crop"
+;; 					 (format "%dx%d+0+0" width height)
+;; 					 "-page"
+;; 					 (format "%dx%d+0+0" width height)
+;; 					 "-mattecolor" "white"
+;; 					 "-frame"
+;; 					 (format "%dx%d+0+0"
+;; 						 (/ (1+ horiz-pad) 2)
+;; 						 (/ vert-pad 2))
+;; 					 "-"
+;; 					 "-")
+;; 		    (setq width (+ width (* 2 (/ (1+ horiz-pad) 2)))
+;; 			  height (+ height (* 2 (/ vert-pad 2))))
+;; 		    (if (null workfile)
+;; 			(setq workfile (vm-make-tempfile)
+;; 			      trash-list (cons workfile trash-list)))
+;; 		    (let ((coding-system-for-write (vm-binary-coding-system)))
+;; 		      (write-region (point-min) (point-max) workfile nil 0))
+;; 		    (put (vm-mm-layout-cache layout)
+;; 			 'vm-mime-display-internal-image-xxxx
+;; 			 (list origfile workfile width height
+;; 			       char-width char-height)))
+;; 		  (and trash-list
+;; 		       (vm-register-folder-garbage-files trash-list)))
+;; 	      (and work-buffer (kill-buffer work-buffer))))
+;; 	  (if (not (bolp))
+;; 	      (insert-char ?\n 1))
+;; 	  (condition-case error-data
+;; 	      (let (o i-start start process image-list overlay-list)
+;; 		(if (and strips (file-exists-p (car strips)))
+;; 		    (setq image-list strips)
+;; 		  (setq strips (vm-make-image-strips workfile char-height
+;; 						     image-type t nil
+;; 						     hroll vroll)
+;; 			process (car strips)
+;; 			strips (cdr strips)
+;; 			image-list strips)
+;; 		  (put (vm-mm-layout-cache layout)
+;; 		       'vm-mime-display-internal-image-xxxx
+;; 		       (list origfile workfile width height
+;; 			     char-width char-height
+;; 			     strips))
+;; 		  (vm-register-message-garbage-files strips))
+;; 		(setq i-start (point))
+;; 		(while strips
+;; 		  (setq start (point))
+;; 		  (insert-char ?\  (/ width char-width))
+;; 		  (put-text-property start (point) 'face 'vm-image-placeholder)
+;; 		  (setq o (make-overlay start (point) nil t))
+;; 		  (overlay-put o 'evaporate t)
+;; 		  (setq overlay-list (cons o overlay-list))
+;; 		  (insert "\n")
+;; 		  (setq strips (cdr strips)))
+;; 		(setq o (make-overlay i-start (point) nil t nil))
+;; 		(overlay-put o 'vm-mime-layout layout)
+;; 		(overlay-put o 'vm-mime-disposable t)
+;; 		(if vm-use-menus
+;; 		    (overlay-put o 'vm-image vm-menu-fsfemacs-image-menu))
+;; 		(if process
+;; 		    (save-excursion
+;; 		      (set-buffer (process-buffer process))
+;; 		      (set (make-local-variable 'vm-image-list) image-list)
+;; 		      (set (make-local-variable 'vm-image-type) image-type)
+;; 		      (set (make-local-variable 'vm-image-type-name)
+;; 			   name)
+;; 		      (set (make-local-variable 'vm-overlay-list)
+;; 			   (nreverse overlay-list))
+;; 		      ;; incremental strip display intentionally
+;; 		      ;; omitted because it makes the Emacs 19
+;; 		      ;; display completely repaint for each new
+;; 		      ;; strip.
+;; 		      (set-process-sentinel
+;; 		       process
+;; 		       'vm-process-sentinel-display-image-strips))
+;; 		  (vm-display-image-strips-on-overlay-regions image-list
+;; 							      (nreverse
+;; 							       overlay-list)
+;; 							      image-type)))
+;; 	    (error
+;; 	     (message "Failed making image strips: %s" error-data)))
+;; 	  t ))
+;;     nil ))
 
 (defun vm-get-image-dimensions (file)
   (let (work-buffer width height)
@@ -4018,6 +4022,8 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 	    (setq newfile (vm-make-tempfile))
 	    (if async
 		(progn
+		  ;; Problem - we have no way of knowing whether these
+		  ;; calls succeed or not.  USR, 2011-02-23
 		  (insert vm-imagemagick-convert-program
 			  " -crop"
 			  (format " %dx%d+0+%d"
@@ -4032,9 +4038,8 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 				     (if (zerop remainder) 0 1)))
 			  (format " -roll +%d+%d" hroll vroll)
 			  " \"" file "\" \"" output-type newfile "\"\n")
-		  (if incremental
-		      (progn
-			(insert "echo XZXX" (int-to-string i) "XZXX\n")))
+		  (when incremental
+			(insert "echo XZXX" (int-to-string i) "XZXX\n"))
 		  (setq i (1+ i)))
 	      (call-process vm-imagemagick-convert-program nil nil nil
 			    "-crop"
@@ -4055,8 +4060,7 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 		  starty (+ starty min-height adjustment
 			    (if (zerop remainder) 0 1))
 		  remainder (if (= 0 remainder) 0 (1- remainder))))
-	  (if (not async)
-	      nil
+	  (when async
 	    (goto-char (point-max))
 	    (insert "exit\n")
 	    (setq process
@@ -6765,8 +6769,7 @@ agent; under Unix, normally sendmail.)"
 	  (unless (or just-one postponed-attachment)
 	    (goto-char (point-min))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
-	    (if (not already-mimed)
-		nil
+	    (unless already-mimed
 	      ;; trim headers
 	      (vm-reorder-message-headers nil '("Content-ID:") nil)
 	      ;; remove header/text separator
@@ -6865,7 +6868,7 @@ agent; under Unix, normally sendmail.)"
 	      (delete-char 1))
 	  ;; copy remainder to enclosing entity's header section
 	  (goto-char (point-max))
-	  (if (not just-one)
+	  (unless just-one
 	      (insert-buffer-substring (current-buffer)
 				       (vm-mm-layout-header-start layout)
 				       (vm-mm-layout-body-start layout)))
@@ -7176,8 +7179,7 @@ also `vm-mime-xemacs-encode-composition'."
 	  (unless (or just-one postponed-attachment)
 	    (goto-char (point-min))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
-	    (if (not already-mimed)
-		nil
+	    (unless already-mimed
 	      ;; trim headers
 	      (vm-reorder-message-headers nil '("Content-ID:") nil)
 	      ;; remove header/text separator
@@ -7270,10 +7272,10 @@ also `vm-mime-xemacs-encode-composition'."
 	      (delete-char 1))
 	  ;; copy remainder to enclosing entity's header section
 	  (goto-char (point-max))
-	  (if (not just-one)
-	      (insert-buffer-substring (current-buffer)
-				       (vm-mm-layout-header-start layout)
-				       (vm-mm-layout-body-start layout)))
+	  (unless just-one
+	    (insert-buffer-substring (current-buffer)
+				     (vm-mm-layout-header-start layout)
+				     (vm-mm-layout-body-start layout)))
 	  (delete-region (vm-mm-layout-header-start layout)
 			 (vm-mm-layout-body-start layout)))
 	(goto-char (point-min))
@@ -7526,11 +7528,11 @@ also `vm-mime-xemacs-encode-composition'."
 				       (match-beginning 0))
 			    sexp-fmt))))
 	(setq last-match-end new-match-end))
-      (if (not done)
-	  (setq sexp-fmt
-		(cons (substring format last-match-end (length format))
-		      sexp-fmt)
-		done t))
+      (unless done
+	(setq sexp-fmt
+	      (cons (substring format last-match-end (length format))
+		    sexp-fmt)
+	      done t))
       (setq sexp-fmt (apply 'concat (nreverse sexp-fmt)))
       (if sexp
 	  (setq sexp (cons 'format (cons sexp-fmt (nreverse sexp))))

@@ -2052,7 +2052,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
       (message "%d message%s to stuff" len (if (= 1 len) "" "s"))
       ;; temporary debug trap
       (when (and vm-debug (> len 10))
-	(debug 'vm-stuff-folder-folder-data)))
+	(debug 'vm-stuff-folder-folder-data len)))
     ;; now sort the list by physical order so that we
     ;; reduce the amount of gap motion induced by modifying
     ;; the buffer.  what we want to avoid is updating
