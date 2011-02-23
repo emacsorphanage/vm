@@ -1714,9 +1714,14 @@ as well."
 		  (vm-imap-response-matches response '* 'atom 'FETCH 'list))
 	     (setq need-size nil)
 	     (setq p (cdr (nth 3 response)))
-	     (if (not (vm-imap-response-matches p 'RFC822\.SIZE 'atom))
-		 (vm-imap-protocol-error
-		  "expected (RFC822.SIZE number) in FETCH response"))
+	     (catch 'done
+	       (while p
+		 (if (vm-imap-response-matches p 'RFC822\.SIZE 'atom)
+		     (throw 'done nil)
+		   (setq p (nthcdr 2 p))
+		   (if (null p)
+		       (vm-imap-protocol-error
+			"expected (RFC822.SIZE number) in FETCH response")))))
 	     (setq tok (nth 1 p))
 	     (goto-char (nth 1 tok))
 	     (setq size (read imap-buffer)))
