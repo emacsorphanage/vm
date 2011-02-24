@@ -7179,7 +7179,7 @@ also `vm-mime-xemacs-encode-composition'."
 	  (unless (or just-one postponed-attachment)
 	    (goto-char (point-min))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
-	    (unless already-mimed
+	    (when already-mimed
 	      ;; trim headers
 	      (vm-reorder-message-headers nil '("Content-ID:") nil)
 	      ;; remove header/text separator
