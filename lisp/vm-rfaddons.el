@@ -1167,7 +1167,7 @@ headers."
         (define-key map [(button2)]  'vm-shrunken-headers-toggle-this-mouse)
       (define-key map [(mouse-2)]  'vm-shrunken-headers-toggle-this-mouse))
     map)
-  "*Keymap used for shrunken-headers glyphs.")
+  "Keymap used for shrunken-headers glyphs.")
 
 ;;;###autoload
 (defun vm-shrunken-headers-toggle ()

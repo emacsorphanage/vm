@@ -1185,10 +1185,13 @@ summary buffer to select a folder."
           varlist (sort varlist
                         (lambda (v1 v2)
                           (string-lessp (format "%s" v1) (format "%s" v2)))))
+    (when (and (eq vm-mime-text/html-handler 'emacs-w3m)
+	       (boundp 'emacs-w3m-version))
+      (nconc varlist (list 'emacs-w3m-version 'w3m-version 
+			   'w3m-goto-article-function)))
     (let ((fill-column (1- (window-width)))	; turn off auto-fill
 	  (vars-to-delete 
-	   '(vm-shrunken-headers-keymap	; big and wasteful
-	     vm-auto-folder-alist	; a bit private
+	   '(vm-auto-folder-alist	; a bit private
 	     vm-mail-folder-alist	; ditto
 	     ;; vm-mail-fcc-default - is this private?
 	     vmpc-actions vmpc-conditions 
