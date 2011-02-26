@@ -273,7 +273,7 @@
 
 (defvar vm-menu-help-menu
   '("Help"
-    ["Switch to Emacs Toolbar" vm-menu-toggle-menubar]
+    ["Switch to Emacs Menubar" vm-menu-toggle-menubar t]
     "---"
     ["What Now?" vm-help t]
     ["Describe Mode" describe-mode t]
@@ -1123,7 +1123,13 @@ set to the command name so that window configuration will be done."
   (cond ((vm-menu-xemacs-menus-p)
 	 (set-menubar-dirty-flag))
 	((vm-menu-fsfemacs-menus-p)
-	 (force-mode-line-update))))
+	 ;; This 'dummy' message added to work around a redisplay bug
+	 ;; affecting menu redisplay. Without this, selecting the 
+	 ;; "Switch to Emacs Menubar" does not refresh the menu bar display
+	 ;; until some other action (mouse click, keyboard event or timer runs)
+	 ;; This is temporary kludge fix
+	 (message "")
+	 (force-mode-line-update t))))
 
 (defun vm-menu-toggle-menubar (&optional buffer)
   (interactive)
@@ -1156,9 +1162,11 @@ set to the command name so that window configuration will be done."
 	     (define-key vm-mode-map [menu-bar]
 	       (lookup-key vm-mode-menu-map [rootmenu vm]))
 	   (define-key vm-mode-map [menu-bar]
-	     (make-sparse-keymap))
+	     (make-sparse-keymap "Menu"))
 	   (define-key vm-mode-map [menu-bar vm]
-	     (cons "[VM]" 'vm-menu-toggle-menubar)))
+	     (cons "VM" (make-sparse-keymap "VM")))
+	   (define-key vm-mode-map [menu-bar vm vm-toggle]
+	     '(menu-item "Switch to VM Menubar" vm-menu-toggle-menubar)))
 	 (vm-menu-set-menubar-dirty-flag))))
 
 (defun vm-menu-install-menubar ()
