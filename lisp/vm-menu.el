@@ -1127,7 +1127,8 @@ set to the command name so that window configuration will be done."
 	 ;; 21, 22, and 23.  USR, 2011-02-26
 	 ;; (force-mode-line-update t)
 	 (set-buffer-modified-p (buffer-modified-p))
-	 (when vm-user-interaction-buffer
+	 (when (and vm-user-interaction-buffer
+		    (buffer-live-p vm-user-interaction-buffer))
 	   (with-current-buffer vm-user-interaction-buffer
 	     (set-buffer-modified-p (buffer-modified-p)))))))
 
