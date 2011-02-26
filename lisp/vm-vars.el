@@ -4628,13 +4628,13 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 
 (defface vm-summary-selected
   '(
-    (((class color) (min-colors 88) (background light))
+    (((type x w32 mac) (class color) (background light))
      (:background "grey85"))
-    (((class color) (min-colors 88) (background dark))
+    (((type x w32 mac) (class color) (background dark))
      (:background "SlateBlue3"))
-    (((class color) (min-colors 16) (background light))
+    (((class color) (background light))
      (:background "grey80"))
-    (((class color) (min-colors 16) (background dark))
+    (((class color) (background dark))
      (:background "Blue3"))
     (t 
      (:weight bold)))
@@ -4646,17 +4646,17 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 
 (defface vm-summary-marked
   '(
-    (((class color) (min-colors 88) (background light)) 
+    (((type x w32 mac) (class color) (background light)) 
      (:foreground "Purple"))
-    (((class color) (min-colors 88) (background dark))
+    (((type x w32 mac) (class color) (background dark))
      (:foreground "Magenta"))
-    (((class color) (min-colors 16) (background light))
-     (:foreground "Purple"))
-    (((class color) (min-colors 16) (background dark))
-     (:foreground "Magenta"))
-    (((type tty) (class color) (background light)) ; (min-colors 8)
+    ;; (((class color) (min-colors 16) (background light))
+    ;;  (:foreground "Purple"))
+    ;; (((class color) (min-colors 16) (background dark))
+    ;;  (:foreground "Magenta"))
+    (((class color) (background light)) ; (min-colors 8)
      (:foreground "Magenta" :weight bold))
-    (((type tty) (class color) (background dark))
+    (((class color) (background dark))
      (:foreground "Magenta" :weight bold))
     (t (:underline t)))
   "The face used in VM Summary buffers for marked messages."
@@ -4689,17 +4689,17 @@ See `vm-virtual-folder-alist' for a description of the conditions."
       :group 'vm-summary-faces)
   (defface vm-summary-deleted
     '(
-      (((class color) (min-colors 88) (background light)) 
+      (((type x w32 mac) (class color) (background light)) 
        (:foreground "grey50" :strike-through "grey70"))
-      (((class color) (min-colors 88) (background dark)) 
+      (((type x w32 mac) (class color) (background dark)) 
        (:foreground "grey70" :strike-trhough t))
-      (((class color) (min-colors 16) (background light)) 
-       (:foreground "grey50" :strike-through "grey70"))
-      (((class color) (min-colors 16) (background dark)) 
-       (:foreground "grey70" :strike-trhough "grey50"))
-      (((type tty) (class color) (background light)) ;  (min-colors 8)
+      ;; (((class color) (min-colors 16) (background light)) 
+      ;;  (:foreground "grey50" :strike-through "grey70"))
+      ;; (((class color) (min-colors 16) (background dark)) 
+      ;;  (:foreground "grey70" :strike-trhough "grey50"))
+      (((class color) (background light)) ;  (min-colors 8)
        (:foreground "yellow"))
-      (((type tty) (class color) (background dark)) 
+      (((class color) (background dark)) 
        (:foreground "yellow"))
       (((class grayscale) (background light)) 
        (:foreground "grey50" :strike-through "grey70"))
@@ -4736,17 +4736,17 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 
 (defface vm-summary-unread
   '(
-    (((class color) (min-colors 88) (background light))
+    (((type x w32 mac) (class color) (background light))
      (:foreground "blue3"))
-    (((class color) (min-colors 88) (background dark))
+    (((type x w32 mac) (class color) (background dark))
      (:foreground "LightSkyBlue"))
-    (((class color) (min-colors 16) (background light))
+    ;; (((class color) (min-colors 16) (background light))
+    ;;  (:foreground "blue"))
+    ;; (((class color) (min-colors 16) (background dark))
+    ;;  (:foreground "magenta"))
+    (((class color) (background light)) ;  (min-colors 8)
      (:foreground "blue"))
-    (((class color) (min-colors 16) (background dark))
-     (:foreground "magenta"))
-    (((type tty) (class color) (background light)) ;  (min-colors 8)
-     (:foreground "blue"))
-    (((type tty) (class color) (background dark))
+    (((class color) (background dark))
      (:foreground "magenta"))
     (((class grayscale) (background light))
      (:foreground "DimGray" :slant italic))
@@ -4762,15 +4762,15 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 
 (defface vm-summary-saved
   '(
-    (((class color) (min-colors 88) (background light))
+    (((type x w32 mac) (class color) (background light))
      (:foreground "green4"))
-    (((class color) (min-colors 88) (background dark))
+    (((type x w32 mac) (class color) (background dark))
      (:foreground "PaleGreen"))
-    (((class color) (min-colors 16) (background light))
-     (:foreground "green"))
-    (((class color) (min-colors 16) (background dark))
-     (:foreground "green"))
-    (((type tty) (class color))
+    ;; (((class color) (min-colors 16) (background light))
+    ;;  (:foreground "green"))
+    ;; (((class color) (min-colors 16) (background dark))
+    ;;  (:foreground "green"))
+    (((class color))
      (:foreground "green")))
   "The face used in VM Summary buffers for saved messages."
   :group 'vm-summary-faces)
@@ -4782,15 +4782,15 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 
 (defface vm-summary-replied
   '(
-    (((class color) (min-colors 88) (background light))
+    (((type x w32 mac) (class color) (background light))
      (:foreground "MediumOrchid4"))
-    (((class color) (min-colors 88) (background dark))
+    (((type x w32 mac) (class color) (background dark))
      (:foreground "plum1"))
-    (((class color) (min-colors 16) (background light))
-     (:foreground "Orchid"))
-    (((class color) (min-colors 16) (background dark))
-     (:foreground "purple"))
-    (((type tty) (class color))
+    ;; (((class color) (min-colors 16) (background light))
+    ;;  (:foreground "Orchid"))
+    ;; (((class color) (min-colors 16) (background dark))
+    ;;  (:foreground "purple"))
+    (((class color))
      (:foreground "magenta"))
     (t 
      ()))
@@ -4802,15 +4802,15 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 
 (defface vm-summary-forwarded
   '(
-    (((class color) (min-colors 88) (background light))
+    (((type x w32 mac) (class color) (background light))
      (:foreground "MediumOrchid3"))
-    (((class color) (min-colors 88) (background dark))
+    (((type x w32 mac) (class color) (background dark))
      (:foreground "Thistle1"))
-    (((class color) (min-colors 16) (background light))
-     (:foreground "Orchid"))
-    (((class color) (min-colors 16) (background dark))
-     (:foreground "Yellow"))
-    (((type tty) (class color))
+    ;; (((class color) (min-colors 16) (background light))
+    ;;  (:foreground "Orchid"))
+    ;; (((class color) (min-colors 16) (background dark))
+    ;;  (:foreground "Yellow"))
+    (((class color))
      (:foreground "Yellow"))
     (((class grayscale) (background light))
      (:foreground "LightGray"))
@@ -4836,9 +4836,9 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 
 (defface vm-summary-outgoing
   '(
-    (((class color) (min-colors 16) (background light))
+    (((class color) (background light))
      (:foreground "grey40"))
-    (((class color) (min-colors 16) (background dark))
+    (((class color) (background dark))
      (:foreground "grey80"))
     (t 
      ()))
@@ -4868,15 +4868,15 @@ collapsed threads."
 
 (defface vm-summary-high-priority
   '(
-    (((class color) (min-colors 88) (background light))
+    (((type x w32 mac) (class color) (background light))
      (:foreground "Red1"))
-    (((class color) (min-colors 88) (background dark))
+    (((type x w32 mac) (class color) (background dark))
      (:foreground "LightSalmon"))
-    (((class color) (min-colors 16) (background light))
-     (:foreground "Red"))
-    (((class color) (min-colors 16) (background dark))
-     (:foreground "Pink"))
-    (((type tty) (class color))		;  (min-colors 8)
+    ;; (((class color) (min-colors 16) (background light))
+    ;;  (:foreground "Red"))
+    ;; (((class color) (min-colors 16) (background dark))
+    ;;  (:foreground "Pink"))
+    (((class color))		;  (min-colors 8)
      (:foreground "red"))
     (t
      (:inverse-video t :weight bold)))
