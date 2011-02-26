@@ -38,13 +38,14 @@
 
 (provide 'vm-pcrisis)
 
-(eval-when-compile
+(eval-and-compile
   (require 'vm-misc)
   (require 'vm-minibuf)
   (require 'vm-folder)
   (require 'vm-summary)
   (require 'vm-motion)
-  (require 'vm-reply)
+  (require 'vm-reply))
+(eval-when-compile
   ;; get the macros we need.
   (require 'cl)
   (require 'advice)
