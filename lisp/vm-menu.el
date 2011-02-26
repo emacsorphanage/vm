@@ -289,7 +289,7 @@
   )
 
 (defvar vm-menu-emacs-button
-  ["XEmacs" vm-menu-toggle-menubar t]
+  ["Emacs" vm-menu-toggle-menubar t]
   )
 
 (defvar vm-menu-vm-button
@@ -1123,13 +1123,13 @@ set to the command name so that window configuration will be done."
   (cond ((vm-menu-xemacs-menus-p)
 	 (set-menubar-dirty-flag))
 	((vm-menu-fsfemacs-menus-p)
-	 ;; This 'dummy' message added to work around a redisplay bug
-	 ;; affecting menu redisplay. Without this, selecting the 
-	 ;; "Switch to Emacs Menubar" does not refresh the menu bar display
-	 ;; until some other action (mouse click, keyboard event or timer runs)
-	 ;; This is temporary kludge fix
-	 (message "")
-	 (force-mode-line-update t))))
+	 ;; force-mode-line-update seems to have been buggy in Emacs
+	 ;; 21, 22, and 23.  USR, 2011-02-26
+	 ;; (force-mode-line-update t)
+	 (set-buffer-modified-p (buffer-modified-p))
+	 (when vm-user-interaction-buffer
+	   (with-current-buffer vm-user-interaction-buffer
+	     (set-buffer-modified-p (buffer-modified-p)))))))
 
 (defun vm-menu-toggle-menubar (&optional buffer)
   (interactive)
@@ -1137,7 +1137,7 @@ set to the command name so that window configuration will be done."
       (set-buffer buffer)
     (vm-select-folder-buffer-and-validate 0 (interactive-p)))
   (cond ((vm-menu-xemacs-menus-p)
-	 (if (null (car (find-menu-item current-menubar '("XEmacs"))))
+	 (if (null (car (find-menu-item current-menubar '("Emacs"))))
 	     (set-buffer-menubar vm-menu-vm-menubar)
 	   ;; copy the current menubar in case it has been changed.
 	   (make-local-variable 'vm-menu-vm-menubar)
