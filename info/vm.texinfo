@@ -1855,10 +1855,10 @@ type/subtype pairs.  Example:
 (setq vm-auto-displayed-mime-content-types '("text" "image/jpeg"))
 @end example
 
-@noindent If a top-level type is listed without a subtype, all
+@noindent If a top-level type is listed without a subtype then all
 subtypes of that type are assumed to be included.  The example above
-specifies that all text types are displayed immediately, but only JPEG
-images are displayed this way.
+says that all text types should be displayed immediately, but only
+JPEG images should be displayed this way.
 
 @vindex vm-auto-displayed-mime-content-type-exceptions
 The variable @code{vm-auto-displayed-mime-content-type-exceptions}
@@ -1868,36 +1868,31 @@ an exception list for @code{vm-auto-displayed-mime-content-types};
 all types listed there will be auto-displayed except those in
 the exception list.
 
-The value of @code{vm-auto-displayed-mime-content-type-exceptions}
-should be either nil or a list of strings.  The strings should
-all be types or type/subtype pairs.  Example:
-
 @example
 (setq vm-auto-displayed-mime-content-type-exceptions '("text/html"))
 @end example
 
-@noindent Again, if a top-level type is listed without a subtype, all
-subtypes of that type are assumed to be included.
+@noindent If ``code'' has been included in
+@code{vm-auto-displayed-mime-content-types} then the effect of this
+setting is to allow the auto-display of all text types @i{except} for
+html.
 
 @vindex vm-mime-internal-content-types
-The variable @code{vm-mime-internal-content-types} specifies
-which types should be displayed internally within Emacs.  Like
-@code{vm-auto-displayed-mime-content-types} its value should be a
-list of MIME content types.  A value of t means that VM
-should always display an object internally if possible.  VM
-knows which object types can be displayed internally, so you
-can specify the types you want without worrying about errors
-if Emacs can't handle them.  A @code{nil} value means never
-display MIME objects internally, which means VM will have to
-run an external viewer to display all MIME objects.
-
-If the value is a list, it should be a list of strings.  Example:
+The variable @code{vm-mime-internal-content-types} specifies which
+types should be displayed internally within Emacs.  Like
+@code{vm-auto-displayed-mime-content-types} its value should be a list
+of MIME content types.  A value of t means that VM should always
+display an object internally if possible.  VM knows which object types
+can be displayed internally, so you can specify the types you want
+without worrying about potential errors.  If the value is a list, it
+should be a list of strings.  Example:
 
 @example
 (setq vm-mime-internal-content-types '("text" "message" "image/jpeg"))
 @end example
 
-@noindent If a top-level type is listed without a subtype, all
+@cindex multipart types
+@noindent If a top-level type is listed without a subtype then all
 subtypes of that type are assumed to be included.  Note that multipart
 types are always handled internally regardless of the setting of this
 variable.
@@ -1930,6 +1925,10 @@ You can set the variable @code{vm-mime-text/html-handler} to one of
 these values to use the appropriate package.  A value of
 @code{auto-select} causes VM to select the best package available.  A
 value of @code{nil} asks VM not to display HTML content internally.
+The default value is @code{auto-select}, allowing VM to give you the
+best display possible in your environment.  If you do not like the
+results, you may set the variable to a different value or
+@code{nil}.
 
 
 @node External display, Displaying images, Internal display, MIME Messages
@@ -3159,19 +3158,26 @@ list of the form:
   ...)
 @end display
 
-where @var{header-name} and @var{regexp} are strings, and
+@noindent where @var{header-name} and @var{regexp} are strings, and
 @var{folder-name} is a string or an s-expression that evaluates to a
-string.
+string.  The value of @var{folder-name} can be 
+
+@itemize
+@item 
+the absolute path name of a local folder,
+@item 
+a relative path name -- relative to @code{vm-folder-directory} or the
+@code{default-directory} of the currently visited folder, whichever is
+non-nil, or
+@item
+the maildrop specification of an IMAP folder.
+@end itemize
 
 If any part of the contents of the message header named by
 @var{header-name} is matched by the regular expression
 @var{regexp}, VM will evaluate the corresponding
 @var{folder-name} and use the result as the default when
-prompting for a folder to save the message in.  The value of
-@var{folder-name} can be the absolute path name of a local folder, a
-relative path name -- relative to @code{vm-folder-directory} or the
-@code{default-directory} of the currently visited folder -- or the
-maildrop specification of an IMAP folder.
+prompting for a folder to save the message in.  
 
 When @var{folder-name} is evaluated, the current buffer will contain only
 the contents of the header named by @var{header-name}.  It is safe to
@@ -3183,11 +3189,11 @@ be treated as another auto-folder-alist and will be descended
 recursively.
 
 @vindex vm-auto-folder-case-fold-search
-Whether matching is case sensitive depends on the value of the variable
+Whether matching is case-sensitive depends on the value of the variable
 @code{vm-auto-folder-case-fold-search}.  A non-@code{nil} value makes
-matching case insensitive.  The default value is @code{t}, which means
-matching is case insensitive.  Note that the matching of header names is
-always case insensitive because the Internet message standard RFC 822
+matching case-insensitive.  The default value is @code{t}, which means
+matching is case-insensitive.  Note that the matching of header names is
+always case-insensitive because the Internet message standard RFC 822
 specifies that header names are case indistinct.
 
 @unnumberedsubsec Other commands
