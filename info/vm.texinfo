@@ -6499,16 +6499,73 @@ the thread or subthread.
 @inindex vm-mail-buffer
 @inindex vm-select-folder-buffer-and-validate
 @inindex vm-user-interaction-buffer
-VM has been designed so that the VM commands can be executed in all
-VM-related buffers: the Folder buffer, the Presentation buffer and the
-Summary buffer.  This is achieved by storing in a buffer-local
-variable @code{vm-mail-buffer}, the identity of the Folder buffer
-corresponding to any one of these buffers.  Whenever a VM command is
-invoked by the user, VM calls a function called
-@code{vm-select-folder-buffer-and-validate}, which sets the
-current-buffer to be the Folder buffer and performs various checks.
-It also stores the identity of the buffer in which the command was
-invoked in a global variable @code{vm-user-interaction-buffer}.
+For each mail folder, VM creates three kinds of buffers in Emacs: the
+Folder buffer, the Presentation buffer and the Summary buffer.  All
+three types of buffers have the same user interface as far as
+possible: the same key bindings, menu bars, tool bars and also the
+same @i{commands}.  The  functions implementing the commands must
+therefore work irrespective which of the three buffers they are
+invoked in.  This makes VM quite different from most Emacs modes.
+
+@inindex vm-mail-buffer
+@inindex vm-summary-buffer
+@inindex vm-presentation-buffer
+VM stores the identity of the Folder buffer in a buffer-local variable
+@code{vm-mail-buffer} in each of the other types of buffers.
+Conversely, each Folder buffer uses buffer-local variables
+@code{vm-summary-buffer} and @code{vm-presentation-buffer} to store
+the identity of the other buffers.
+
+@inindex vm-user-interaction-buffer
+@inindex vm-select-folder-buffer-and-validate
+Whenever a VM command is invoked by the user, VM calls a function
+called @code{vm-select-folder-buffer-and-validate}, which sets the
+current-buffer to the Folder buffer.  It also stores the identity of
+the buffer with the user's focus in a global variable called
+@code{vm-user-interaction-buffer}.  Thus, at every point during the
+command execution, VM has knowledge of all the buffers involved as
+well as the buffer in which the command execution was initiated.
+
+[More to be filled in on @code{vm-display} etc.]
+
+@inindex vm-mode-menu-map
+The default menu bar of VM contains VM-specific menus, replacing the
+standard Emacs menus.  This is achieved by setting the buffer-specific
+menu bar to one in which the Emacs menus are @code{undefined} (at
+least in Gnu Emacs).  
+
+VM computes its standard menu bar and stores it internally:
+
+@itemize
+@item 
+In Gnu Emacs, this is stored in the keymap @code{vm-mode-menu-map}. 
+@item
+In XEmacs ...
+@end itemize
+
+@noindent
+The menu bar also has a menu, or a menu item, to switch back to the
+standard Emacs menu bar.
+@inindex vm-use-menus
+The computed menu bar is then installed depending on the setting of
+@code{vm-use-menus}.
+If the user selects the action to revert to the standard Emacs menu
+bar, the installation is easily reverted.  
+
+@itemize
+@item
+In Gnu Emacs, the installation involves inserting a key binding for
+@code{menu-bar}. 
+@item
+In XEmacs, ...
+@end itemize
+
+@inindex vm-menu-toggle-menubar
+@noindent When the user picks a menu item to revert to the
+Emacs menu bar, the function @code{vm-menu-toggle-menubar} is invoked,
+which installs a fresh menu bar retaining the standard Emacs menus.
+The same function is used to reinstall the dedicated VM menu bar when
+needed. 
 
 @node Coding Systems, MIME Display, User Interaction , Internals
 @section Coding Systems

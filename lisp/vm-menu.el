@@ -714,7 +714,9 @@
       "---"
       ,vm-menu-help-menu)))
 
-(defvar vm-mode-menu-map nil)
+(defvar vm-mode-menu-map nil
+  "If running in FSF Emacs, this variable stores the standard
+menu bar of VM internally.                  USR, 2011-02-27")
 
 (defun vm-menu-run-command (command &rest args)
   "Run COMMAND almost interactively, with ARGS.
@@ -1133,6 +1135,8 @@ set to the command name so that window configuration will be done."
 	     (set-buffer-modified-p (buffer-modified-p)))))))
 
 (defun vm-menu-toggle-menubar (&optional buffer)
+  "Toggle between the VM's dedicated menu bar and the standard Emacs
+menu bar.                                             USR, 2011-02-27"
   (interactive)
   (if buffer
       (set-buffer buffer)
@@ -1171,6 +1175,7 @@ set to the command name so that window configuration will be done."
 	 (vm-menu-set-menubar-dirty-flag))))
 
 (defun vm-menu-install-menubar ()
+  "Install the dedicated menu bar of VM.              USR, 2011-02-27"
   (cond ((vm-menu-xemacs-menus-p)
 	 (setq vm-menu-vm-menubar (vm-menu-make-xemacs-menubar))
 	 (set-buffer-menubar vm-menu-vm-menubar)
@@ -1184,6 +1189,8 @@ set to the command name so that window configuration will be done."
 	   (lookup-key vm-mode-menu-map [rootmenu vm])))))
 
 (defun vm-menu-install-menubar-item ()
+  "Install VM's menu on the current - presumably the standard - menu
+bar.						     USR, 2011-02-27"
   (cond ((and (vm-menu-xemacs-menus-p) (vm-menu-xemacs-global-menubar))
 	 (set-buffer-menubar (copy-sequence (vm-menu-xemacs-global-menubar)))
 	 (add-menu nil "VM" (cdr vm-menu-vm-menu)))
@@ -1195,6 +1202,7 @@ set to the command name so that window configuration will be done."
 	   (lookup-key vm-mode-menu-map [rootmenu])))))
 
 (defun vm-menu-install-vm-mode-menu ()
+  "This function strangely does nothing!               USR, 2011-02-27."
   ;; nothing to do here.
   ;; handled in vm-mouse.el
   (cond ((vm-menu-xemacs-menus-p)
@@ -1229,6 +1237,9 @@ set to the command name so that window configuration will be done."
 	       'vm-menu-popup-context-menu)))))
 
 (defun vm-menu-install-menus ()
+  "Install VM menus, either in the current menu bar or in a
+separate dedicated menu bar, depending on the value of
+`vm-use-menus'.                           USR, 2011-02-27"
   (cond ((consp vm-use-menus)
 	 (vm-menu-install-vm-mode-menu)
 	 (vm-menu-install-menubar)
