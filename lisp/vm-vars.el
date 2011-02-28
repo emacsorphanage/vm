@@ -5827,6 +5827,10 @@ Its parent keymap is mail-mode-map.")
 (defvar vm-folder-history nil
   "List of folders visited this Emacs session.")
 
+;; Do we need this variable in addition to the above?
+(defvar vm-switch-to-folder-history nil
+  "List of folders used with `vm-switch-to-folder'.")
+
 ;; for sixth arg of read-file-name in early version of Emacs 21.
 (defun vm-folder-history (&rest ignored) t)
 

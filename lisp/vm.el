@@ -831,6 +831,40 @@ visited folder."
 	(vm-search-other-frames nil))
     (vm-visit-imap-folder folder read-only)))
 
+;; The following function is from vm-rfaddons.el.       USR, 2011-02-28
+
+;;;###autoload
+(defun vm-switch-to-folder (folder-name)
+  "Switch to another opened VM folder and rearrange windows as with a scroll."
+  (interactive (list
+                (let ((fl (vm-folder-list))
+                      (f vm-switch-to-folder-history) d)
+                  (if (member major-mode
+                              '(vm-mode vm-presentation-mode
+                                        vm-summary-mode))
+                      (save-excursion
+                        (vm-select-folder-buffer)
+                        (setq fl (delete (buffer-name) fl))))
+                  (while f
+                    (setq d (car f) f (cdr f))
+                    (if (member d fl)
+                        (setq f nil)))
+                  (completing-read
+                   (format "Foldername%s: " (if d (format " (%s)" d) ""))
+                   (mapcar (lambda (f) (list f)) (vm-folder-list))
+                   nil t nil
+                   'vm-switch-to-folder-history
+                   d))))
+
+  (switch-to-buffer folder-name)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-summarize)
+  (let ((this-command 'vm-scroll-backward))
+    (vm-display nil nil '(vm-scroll-forward vm-scroll-backward)
+                (list this-command 'reading-message))
+    (vm-update-summary-and-mode-line)))
+
+
 (put 'vm-virtual-mode 'mode-class 'special)
 
 (defun vm-virtual-mode (&rest ignored)

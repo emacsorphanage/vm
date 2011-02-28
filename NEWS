@@ -13,6 +13,13 @@ VM 8.2.0b (2011-02-28)
 
   CHANGES
 
+   * New command `vm-switch-to-folder' to quickly return to a
+     previosly buried folder.  (Previously in vm-rfaddons.)
+
+   * New custom command `vm-toggle-best-mime' in vm-rfaddons to toggle
+     between 'best and 'best-internal MIME altrenatives.  (Thanks to
+     Alley Stoughton.)
+
    * New variable `vm-include-text-basic' can be used to enable the
      fallback method of quoting message text in replies.  It should
      normally left with the default value of nil.

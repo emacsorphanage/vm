@@ -442,38 +442,8 @@ This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
       (vm-edit-message-end))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar vm-switch-to-folder-history nil)
 
-;;;###autoload
-(defun vm-switch-to-folder (folder-name)
-"Switch to another opened VM folder and rearrange windows as with a scroll."
-  (interactive (list
-                (let ((fl (vm-folder-list))
-                      (f vm-switch-to-folder-history) d)
-                  (if (member major-mode
-                              '(vm-mode vm-presentation-mode
-                                        vm-summary-mode))
-                      (save-excursion
-                        (vm-select-folder-buffer)
-                        (setq fl (delete (buffer-name) fl))))
-                  (while f
-                    (setq d (car f) f (cdr f))
-                    (if (member d fl)
-                        (setq f nil)))
-                  (completing-read
-                   (format "Foldername%s: " (if d (format " (%s)" d) ""))
-                   (mapcar (lambda (f) (list f)) (vm-folder-list))
-                   nil t nil
-                   'vm-switch-to-folder-history
-                   d))))
-
-  (switch-to-buffer folder-name)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
-  (vm-summarize)
-  (let ((this-command 'vm-scroll-backward))
-    (vm-display nil nil '(vm-scroll-forward vm-scroll-backward)
-                (list this-command 'reading-message))
-    (vm-update-summary-and-mode-line)))
+;; vm-switch-to-folder moved to vm.el.   USR, 2011-02-28
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defcustom vm-rmail-mode nil
@@ -1924,4 +1894,23 @@ calls."
       (smtpmail-send-it))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Contributed by Alley Stoughton
+;; gnu.emacs.vm.info, 2011-02-26
+
+(defun vm-toggle-best-mime ()
+  "Toggle between best-internal and best mime decoding modes"
+  (interactive)
+  (if (eq vm-mime-alternative-select-method 'best-internal)
+      (progn
+	(vm-decode-mime-message 'undecoded)
+	(setq vm-mime-alternative-select-method 'best)
+	(vm-decode-mime-message 'decoded)
+	(message "using best MIME decoding"))
+    (progn
+      (vm-decode-mime-message 'undecoded)
+      (setq vm-mime-alternative-select-method 'best-internal)
+      (vm-decode-mime-message 'decoded)
+      (message "using best internal MIME decoding"))))
+
 ;;; vm-rfaddons.el ends here

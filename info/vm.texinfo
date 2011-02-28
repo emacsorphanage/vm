@@ -88,6 +88,11 @@ This manual corresponds to VM version @value{VERSION}.
 * Using the Mouse::     Understanding the VM mouse interface.
 * Hooks::               How you can make VM run your code at certain times.
 
+Add-ons and Customizations:
+
+* Preface to Add-ons::  What are these?
+* Customizations::	Making VM behave the way you might want.
+
 About VM:
 
 * History and Administration:: Information about VM
@@ -306,11 +311,13 @@ there are unsaved changes to message attributes or when messages
 will be lost.
 
 @findex vm-quit-just-bury
+@findex vm-switch-to-folder
 You do not have to quit a folder to continue using Emacs for other
-purposes.  (@code{vm-quit-just-bury}) buries the buffers associated with
+purposes.  @code{M-x vm-quit-just-bury} buries the buffers associated with
 the current folder deep in Emacs' stack of buffers, but otherwise leaves
-the folder visited so that you can resume reading messages quickly.  You
-can locate the folder's buffers again by using @code{list-buffers},
+the folder visited so that you can resume reading messages quickly.
+You can return to the folder using @code{M-x vm-switch-to-folder}.
+Or, you can locate the folder's buffers again by using @code{list-buffers},
 which is normally bound to @kbd{C-x C-b}.
 
 @findex vm-quit-just-iconify
@@ -2316,6 +2323,7 @@ MULE and VM has no control over them.
 @node multipart/alternative, Bad MIME, Character sets, MIME Messages
 @unnumberedsubsec MIME multipart/alternative
 
+@cindex MIME alternatives
 MIME allows a message to be sent with its content encoded in multiple
 formats, simultaneously, in the same message.  Such messages have a
 content type of multipart/alternative.  The idea is that the sender
@@ -2329,6 +2337,8 @@ subparts, one in plain text and the other in the full featured text
 formatting language that the sender used.
 
 @vindex vm-mime-alternative-select-method
+@cindex MIME alternative, best
+@cindex MIME alternative, best-internal
 To control how VM displays multipart/alternative messages, you must
 set the variable @code{vm-mime-alternative-select-method}.  Its value must be
 a symbol.  A value of @code{best} tells VM to display the message
@@ -2340,23 +2350,31 @@ value of @code{best-internal} tells VM to use the closest subpart that
 it can display internally.  External viewers won't be used in this
 case.  A value of @code{all} asks VM to display all the alternatives.
 
+@cindex MIME alternative, favorite
+@cindex MIME alternative, favorite-internal
 The value can also be a list of the form
+
 @example
   (favorite TYPE ...)
 @end example
-with the first element of the list being the symbol @code{favorite}.
+
+@noindent with the first element of the list being the symbol @code{favorite}.
 The remaining elements of the list are strings specifying MIME types.
 VM will look for each TYPE in turn in the list of alternatives and
 choose the first matching alternative found that can be displayed.  If
-instead of the symbol @code{favorite}, @code{favorite-internal} is used
-then the first TYPE that matches an alternative that can be displayed
-internally will be chosen.
+instead of the symbol @code{favorite}, @code{favorite-internal} is
+used then the first TYPE that matches an alternative that can be
+displayed internally will be chosen.
 
 @findex vm-nuke-alternative-text/html
 Messages with multiple alternatives use up extra file space and slow
 down the operation of vm.  If you would like keep the text/plain
 alternatives but erase the text/html alternatives, you can use the
-@code{vm-nuke-alternative-text/html} command.
+@code{vm-nuke-alternative-text/html} command.  This operation may not
+always be safe because the @code{text/html} alternative is often the
+most faithful representation of the sender's message and it may
+include attachments that are not replicated in the other
+alternatives.  Please use caution.
 
 @node Bad MIME, , multipart/alternative, MIME Messages
 @unnumberedsubsec Dealing with bad MIME
@@ -4955,7 +4973,7 @@ form @code{vm-mouse-send-url-to-xxx} and @code{vm-mouse-send-url-to-xxx-new-wind
 the facilities defined in the @code{browse-url} library to send URL's to
 external browsers.
 
-@node Hooks, History and Administration, Using the Mouse, Top
+@node Hooks, Preface to Add-ons, Using the Mouse, Top
 @chapter Hooks
 
 VM has many hook variables that allow you to run functions when
@@ -5216,7 +5234,114 @@ If this hook is entirely empty, i.e. @code{nil}, a default action is taken
 instead of no action.
 @end table
 
-@node History and Administration, Highlights, Hooks, Top
+@node Preface to Add-ons, Customizations, Hooks, Top
+@unnumbered What are Add-ons?
+
+Over the years, a number of users have contributed various functions
+and packages adding features and customizations to VM.  Many of them
+have been collected and included in the standard VM distribution.
+Some of the packages have their own manuals.  For example, the ``VM
+Personality Crisis'' package has a manual, @xref{top,,,VM-Pcrisis,
+Personality Crisis for VM}.  Most others have never been documented.
+
+This part of the manual is an effort to provide some rudimentary
+documentation for these add-ons.
+
+The add-ons are classified into:
+
+@itemize
+@item Customizations.
+Small functions or settings that can be tagged on top of VM to make it
+easier to use, either in general or in particular environments.
+@item Add-ons.
+More elaborate features.
+@item Packages.
+Full-blown packages that add new functionality or interface to other
+packages in your environment.
+@end itemize
+
+@node Customizations, History and Administration, Preface to Add-ons, Top
+@chapter Customizations
+Useful ways to customize VM.
+@section Reading messages
+
+@unnumberedsubsubsec Shrunken headers
+
+@cindex headers, shrunken
+@vindex vm-enable-addons
+Some messages come with huge lists of recipients and one has to page
+through them before getting to the actual content of the message.  The
+``shrunken headers'' feature, included in @code{vm-rfaddons},
+addresses this problem.  To use the feature, you must add
+@code{shrunken-headers} to the variable @code{vm-enable-addons} in
+your VM init file:
+
+@example
+(setq vm-enable-addons (cons 'shrunken-headers vm-enable-addons))
+@end example
+
+@noindent The add-on abbreviates all the message headers to
+single lines, and adds a button at the end.  You can click
+the button to expand the header to its full length.  The function
+@code{vm-shrunken-headers-toggle} can be used to expand or collapse
+all the headers of a message.  You might bind this to a key, if you
+use it often.
+
+(This add-on was provided by Robert Fenk.)
+
+@unnumberedsubsubsec MIME alternatives
+@cindex MIME alternatives
+The default setting of VM for handling MIME alternatives is
+@code{best-internal}, which means the best alternative that can be
+displayed internally in VM is chosen.  Many users have environments
+where only @code{text/plain} parts can be displayed internally.
+However, some messages come with @code{text/html} parts that are
+expected to be more faithful to the sender's composition.  On
+occasion, you might wish to see the @code{text/html} part even if it
+has to be viewed externally.
+
+@cindex MIME alternative, best
+@cindex MIME alternative, best-internal
+@findex vm-toggle-best-mime
+The function @code{vm-toggle-best-mime} function, included in
+@code{vm-rfaddons}, allows you to change VM's selection method to
+@code{best} temporarily so that you can view the @code{text/html}
+part.  You can use the same function to change the method back to
+@code{best-internal}.
+
+(Thanks to Alley Stoughton for this contribution.)
+
+@section Saving messages and attachments
+
+@unnumberedsubsubsec Auto saving attachments
+
+Messages with attachments get bulky and increase the size of VM
+folders, slowing down VM.  The functions
+@code{vm-save-all-attachments} and @code{vm-save-attachments} provide
+ways to save attachments of messages on the file system and deleting
+them from the mail folders.
+
+@findex vm-mime-auto-save-all-attachments
+@vindex vm-mime-auto-save-all-attachments-subdir
+The function @code{vm-mime-auto-save-all-attachments}, included in
+@code{vm-rfaddons}, provides enhanced functionality for saving
+attachments.  It saves the attachments in a subdirectory of
+@code{vm-mime-save-attachment-save-directory}, whose name is obtained
+by concating the ``from'', ``subject'' and ``date'' headers of the
+message.  This can be customized via the variable
+@code{vm-mime-auto-save-all-attachments-subdir}. 
+
+You can save the attachments of all new messages automatically by
+putting @code{vm-mime-auto-save-all-attachments} in
+@code{vm-select-new-message-hook}.
+
+(This add-on was provided by Robert Fenk.)
+
+@section Printing messages
+
+
+
+@node History and Administration, Highlights, Customizations, Top
 @chapter History and Administration
 
 @cindex Kyle Jones
@@ -5226,7 +5351,7 @@ The original development environment was GNU Emacs 18.52.
 
 @cindex Wonderworks
 The copyright for the code was retained by Kyle Jones.  Hence, the
-package was never included GNU releases, which only contain code
+package was never included in GNU releases, which only contain code
 copyrighted by the Free Software Foundation.  However, Lucid/XEmacs
 shipped VM starting with version 19.9.  The other users obtained VM from
 the Wonderworks web site, which hosted Kyle Jones's work.  The home page
