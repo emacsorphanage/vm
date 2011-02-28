@@ -444,7 +444,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	    ;; find out how many messages are in the box.
 	    (setq source-list (vm-parse source "\\([^:]+\\):?")
 		  mailbox (nth 3 source-list))
-	    (setq select (vm-imap-select-mailbox process mailbox))
+	    (setq select (vm-imap-select-mailbox process mailbox t))
 	    (setq mailbox-count (nth 0 select)
 		  uid-validity (nth 1 select)
 		  read-write (nth 2 select)
@@ -587,7 +587,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		(set-buffer (process-buffer process))
 		(setq source-list (vm-parse source "\\([^:]+\\):?")
 		      mailbox (nth 3 source-list))
-		(setq select (vm-imap-select-mailbox process mailbox)
+		(setq select (vm-imap-select-mailbox process mailbox t)
 		      msg-count (car select)
 		      uid-validity (nth 1 select))
 		(when (zerop msg-count)
@@ -705,7 +705,7 @@ on all the relevant IMAP servers and then immediately expunges."
 							"\\([^:]+\\):?")
 				  mailbox (nth 3 source-list)
 				  select-response (vm-imap-select-mailbox
-						   process mailbox)
+						   process mailbox t)
 				  msg-count (car select-response)
 				  uid-validity (nth 1 select-response)
 				  read-write (nth 2 select-response)
@@ -852,7 +852,7 @@ of the current folder."
 ;; -- lower level I/O
 ;; vm-imap-send-command: (process command &optional tag no-tag) ->
 ;; 				void
-;; vm-imap-select-mailbox: (process & mailbox &optional bool) -> 
+;; vm-imap-select-mailbox: (process & mailbox &optional bool bool) -> 
 ;;				(int uid-validity bool bool (flag list))
 ;; vm-imap-read-capability-response: process -> ?
 ;; vm-imap-read-greeting: process -> ?
@@ -1266,10 +1266,12 @@ as well."
       (process-send-string process (format "%s\r\n" command))
     (process-send-string process (format "%s %s\r\n" (or tag "VM") command))))
 
-(defun vm-imap-select-mailbox (process mailbox &optional just-examine)
+(defun vm-imap-select-mailbox (process mailbox &optional 
+				       just-retrieve just-examine)
   ;; I/O function to select an IMAP mailbox
   ;;   PROCESS - the IMAP process
-  ;;   MAILBOX - the name fo the mailbox to be selected
+  ;;   MAILBOX - the name of the mailbox to be selected
+  ;;   JUST-RETRIEVE - select the mailbox for retrieval, no writing
   ;;   JUST-EXAMINE - select the mailbox in a read-only (examine) mode
   ;; Returns a list containing:
   ;;   int msg-count - number of messages in the mailbox
@@ -1324,12 +1326,13 @@ as well."
     (if (null uid-validity)
 	(vm-imap-protocol-error "UIDVALIDITY missing from SELECT responses"))
     (setq can-delete (vm-imap-scan-list-for-flag flags "\\Deleted"))
-    (if (vm-imap-scan-list-for-flag permanent-flags "\\*")
-	(if (vm-imap-scan-list-for-flag flags "\\Seen")
-	    nil
-	  (message "Warning: No permanent changes permitted for the mailbox"))
-      (message "Warning: Only basic message flags available for the mailbox")
-      )
+    (unless just-retrieve
+      (if (vm-imap-scan-list-for-flag permanent-flags "\\*")
+	  (unless (vm-imap-scan-list-for-flag flags "\\Seen")
+	    (message 
+	     "Warning: No permanent changes permitted for the IMAP mailbox"))
+	(message 
+	 "Warning: No user-definable flags available for the IMAP mailbox")))
     ;;-------------------------------
     (vm-imap-session-type:set 'active)
     ;;-------------------------------
@@ -2158,7 +2161,8 @@ that the session is active.  Returns t or nil."
 	t)
     nil))
 
-(defun vm-re-establish-folder-imap-session (&optional interactive purpose)
+(defun vm-re-establish-folder-imap-session (&optional interactive purpose
+						      just-retrieve)
   "If the IMAP session for the current folder has died, re-establish a
 new one.  Returns the IMAP process or nil if unsuccessful."
   (let ((process (vm-folder-imap-process)) temp)
@@ -2167,12 +2171,16 @@ new one.  Returns the IMAP process or nil if unsuccessful."
 	process
       (if process
 	  (vm-imap-end-session process))
-      (vm-establish-new-folder-imap-session interactive purpose))))
+      (vm-establish-new-folder-imap-session 
+       interactive purpose just-retrieve))))
 
-(defun vm-establish-new-folder-imap-session (&optional interactive purpose)
-  "Kill and restart the IMAP session for the current folder.  Optional
-argument PURPOSE is inserted into the process buffer for tracing
-purposes. Returns the IMAP process or nil if unsuccessful."
+(defun vm-establish-new-folder-imap-session (&optional interactive purpose
+						       just-retrieve)
+  "Kill and restart the IMAP session for the current folder.
+Optional argument PURPOSE is inserted into the process buffer for
+tracing purposes. Optional argument JUST-RETRIEVE says whether
+the session will only be used for retrieval of mail. Returns the
+IMAP process or nil if unsuccessful."
 ;; This is necessary because we might get unexpected EXPUNGE responses
 ;; which we don't know how to deal with.
 
@@ -2195,7 +2203,7 @@ purposes. Returns the IMAP process or nil if unsuccessful."
 	;;----------------------------
 	(vm-buffer-type:enter 'process)
 	;;----------------------------
-	(setq select (vm-imap-select-mailbox process mailbox))
+	(setq select (vm-imap-select-mailbox process mailbox just-retrieve))
 	(setq mailbox-count (nth 0 select)
 	      uid-validity (nth 1 select)
 	      read-write (nth 2 select)
@@ -2235,6 +2243,17 @@ purposes. Returns the IMAP process or nil if unsuccessful."
       ;;-------------------------------
       process )))
 
+(defun vm-re-establish-writable-imap-session (&optional interactive purpose)
+  "If the IMAP session for the current folder has died, re-establish a
+new one.  Returns the IMAP process or nil if unsuccessful."
+  (let ((process (vm-folder-imap-process)) temp)
+    (if  (and (processp process)
+	      (vm-imap-poke-session process))
+	process
+      (if process
+	  (vm-imap-end-session process))
+      (vm-establish-writable-imap-session interactive purpose))))
+
 (defun vm-establish-writable-imap-session (maildrop &optional 
 						    interactive purpose)
   "Create a new writable IMAP session for MAILDROP and return the process.
@@ -2256,7 +2275,7 @@ unsuccessful."
 	  (vm-buffer-type:enter 'process)
 	  ;;----------------------------
 	  (set-buffer (process-buffer process))
-	  (setq select (vm-imap-select-mailbox process mailbox))
+	  (setq select (vm-imap-select-mailbox process mailbox nil))
 	  (setq mailbox-count (nth 0 select)
 		uid-validity (nth 1 select)
 		read-write (nth 2 select)
@@ -2880,7 +2899,7 @@ operation of the server to minimize I/O."
   (if (or vm-global-block-new-mail
 	  (eq vm-imap-connection-mode 'offline)
 	  (null (vm-establish-new-folder-imap-session 
-		 interactive "general operation")))
+		 interactive "general operation" nil)))
       (vm-imap-server-error "Could not connect to the IMAP server")
     (if do-retrieves
 	(vm-assimilate-new-messages))	; Funny that this should be
@@ -3314,7 +3333,7 @@ VM session.  This is useful for saving offline work."
   (vm-display nil nil '(vm-imap-synchronize) '(vm-imap-synchronize))
   (if (not (eq vm-folder-access-method 'imap))
       (message "This is not an IMAP folder")
-    (if (null (vm-establish-new-folder-imap-session t "general operation"))
+    (if (null (vm-establish-new-folder-imap-session t "general operation" nil))
 	nil
 
       (vm-imap-retrieve-uid-and-flags-data)
@@ -3360,7 +3379,8 @@ interactively."
   (vm-buffer-type:set 'folder)
   ;;--------------------------
   (if (or vm-global-block-new-mail
-	  (null (vm-establish-new-folder-imap-session interactive "checkmail")))
+	  (null (vm-establish-new-folder-imap-session 
+		 interactive "checkmail" t)))
       nil
     (let ((result (car (vm-imap-get-synchronization-data))))
       (vm-imap-end-session (vm-folder-imap-process))
