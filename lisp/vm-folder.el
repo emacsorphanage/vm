@@ -3304,24 +3304,22 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	(if (not (buffer-live-p (car b-list)))
 	    nil
 	  (set-buffer (car b-list))
-	  (if (and (eq major-mode 'vm-mode)
-		   (setq found-one t)
-		   ;; to avoid reentrance into the pop and imap code
-		   (not vm-global-block-new-mail))
-	      (progn
-		(setq oldval vm-spooled-mail-waiting)
-		(setq vm-spooled-mail-waiting (vm-check-for-spooled-mail nil t))
-		(if (not (eq oldval vm-spooled-mail-waiting))
-		    (progn
-		      (intern (buffer-name) vm-buffers-needing-display-update)
-		      (run-hooks 'vm-spooled-mail-waiting-hook)))))))
+	  (when (and (eq major-mode 'vm-mode)
+		     (setq found-one t)
+		     ;; to avoid reentrance into the pop and imap code
+		     (not vm-global-block-new-mail))
+	    (setq oldval vm-spooled-mail-waiting)
+	    (setq vm-spooled-mail-waiting (vm-check-for-spooled-mail nil t))
+	    (unless (eq oldval vm-spooled-mail-waiting)
+	      (intern (buffer-name) vm-buffers-needing-display-update)
+	      (run-hooks 'vm-spooled-mail-waiting-hook)))))
       (setq b-list (cdr b-list)))
     (vm-update-summary-and-mode-line)
     ;; make the timer go away if we didn't encounter a vm-mode buffer.
-    (if (and (not found-one) (null b-list))
-	(if timer
-	    (cancel-timer timer)
-	  (set-itimer-restart current-itimer nil)))))
+    (when (and (not found-one) (null b-list))
+      (if timer
+	  (cancel-timer timer)
+	(set-itimer-restart current-itimer nil)))))
 
 ;; support for numeric vm-auto-get-new-mail
 ;; if timer argument is present, this means we're using the Emacs
@@ -4095,11 +4093,9 @@ Same as \\[vm-recover-file]."
 	      ;; so skip it.
 	      nil
 	    (setq this-buffer (eq (current-buffer) (vm-get-file-buffer in)))
-	    (if (or this-buffer (not this-buffer-only))
-		(progn
+	    (when (or this-buffer (not this-buffer-only))
 		  (if (file-exists-p crash)
-		      (progn
-			(setq mail-waiting t))
+		      (setq mail-waiting t)
 		    (cond ((and vm-recognize-imap-maildrops
 				(string-match vm-recognize-imap-maildrops
 					      maildrop))
@@ -4118,7 +4114,7 @@ Same as \\[vm-recover-file]."
 			  (error nil))
 		      (setq mail-waiting
 			    (or mail-waiting
-				(funcall meth maildrop))))))))
+				(funcall meth maildrop)))))))
 	  (setq triples (cdr triples)))
 	mail-waiting ))))
 
@@ -4188,57 +4184,53 @@ Same as \\[vm-recover-file]."
 		 (setq retrieval-function 'vm-pop-move-mail))
 		(t (setq retrieval-function 'vm-spool-move-mail)))
 	  (setq crash (expand-file-name crash vm-folder-directory))
-	  (if (eq (current-buffer) (vm-get-file-buffer in))
-	      (progn
-		(if (file-exists-p crash)
-		    (progn
-		      (message "Recovering messages from %s..." crash)
-		      (setq got-mail (or (vm-gobble-crash-box crash) got-mail))
-		      (message "Recovering messages from %s... done" crash)))
-		(if (or non-file-maildrop
-			(and (not (equal 0 (nth 7 (file-attributes maildrop))))
-			     (file-readable-p maildrop)))
-		    (progn
-		      (if (not non-file-maildrop)
-			  (setq maildrop 
-				(expand-file-name maildrop 
-						  vm-folder-directory)))
-		      (if (if got-mail
-			      ;; don't allow errors to be signaled unless no
-			      ;; mail has been appended to the incore
-			      ;; copy of the folder.  otherwise the
-			      ;; user will wonder where the mail is,
-			      ;; since it is not in the crash box or
-			      ;; the spool file and doesn't _appear_ to
-			      ;; be in the folder either.
-			      (condition-case error-data
-				  (funcall retrieval-function maildrop crash)
-				(error (message "%s signaled: %s"
-						retrieval-function
-						error-data)
-				       (sleep-for 2)
-				       ;; we don't know if mail was
-				       ;; put into the crash box or
-				       ;; not, so return t just to be
-				       ;; safe.
-				       t )
-				(quit (message "quitting from %s..."
-					       retrieval-function)
-				      (sleep-for 2)
-				      ;; we don't know if mail was
-				      ;; put into the crash box or
-				      ;; not, so return t just to be
-				      ;; safe.
-				      t ))
-			    (funcall retrieval-function maildrop crash))
-			  (if (vm-gobble-crash-box crash)
-			      (progn
-				(setq got-mail t)
-				(if (not non-file-maildrop)
-				    (vm-store-folder-totals maildrop
-							    '(0 0 0 0)))
-				(message "Got mail from %s."
-					 safe-maildrop))))))))
+	  (when (eq (current-buffer) (vm-get-file-buffer in))
+	    (when (file-exists-p crash)
+	      (message "Recovering messages from %s..." crash)
+	      (setq got-mail (or (vm-gobble-crash-box crash) got-mail))
+	      (message "Recovering messages from %s... done" crash))
+	    (when (or non-file-maildrop
+		      (and (not (equal 0 (nth 7 (file-attributes maildrop))))
+			   (file-readable-p maildrop)))
+	      (unless non-file-maildrop
+		(setq maildrop 
+		      (expand-file-name maildrop 
+					vm-folder-directory)))
+	      (when (if got-mail
+			;; don't allow errors to be signaled unless no
+			;; mail has been appended to the incore
+			;; copy of the folder.  otherwise the
+			;; user will wonder where the mail is,
+			;; since it is not in the crash box or
+			;; the spool file and doesn't _appear_ to
+			;; be in the folder either.
+			(condition-case error-data
+			    (funcall retrieval-function maildrop crash)
+			  (error (message "%s signaled: %s"
+					  retrieval-function
+					  error-data)
+				 (sleep-for 2)
+				 ;; we don't know if mail was
+				 ;; put into the crash box or
+				 ;; not, so return t just to be
+				 ;; safe.
+				 t )
+			  (quit (message "quitting from %s..."
+					 retrieval-function)
+				(sleep-for 2)
+				;; we don't know if mail was
+				;; put into the crash box or
+				;; not, so return t just to be
+				;; safe.
+				t ))
+		      (funcall retrieval-function maildrop crash))
+		(when (vm-gobble-crash-box crash)
+		  (setq got-mail t)
+		  (when (not non-file-maildrop)
+		    (vm-store-folder-totals maildrop
+					    '(0 0 0 0)))
+		  (message "Got mail from %s."
+			   safe-maildrop)))))
 	  (setq triples (cdr triples)))
 	;; not really correct, but it is what the user expects to see.
 	(setq vm-spooled-mail-waiting nil)
@@ -4247,8 +4239,10 @@ Same as \\[vm-recover-file]."
 	(when got-mail
           (condition-case errmsg
               (run-hooks 'vm-retrieved-spooled-mail-hook)
-            (t (message "Ignoring error while running vm-retrieved-spooled-mail-hook. %S"
-                        errmsg)))
+            (t 
+	     (message 
+	      "Ignoring error while running vm-retrieved-spooled-mail-hook. %S"
+	      errmsg)))
           (vm-assimilate-new-messages t))))))
 
 ;;;###autoload

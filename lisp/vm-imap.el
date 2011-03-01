@@ -3333,9 +3333,7 @@ VM session.  This is useful for saving offline work."
   (vm-display nil nil '(vm-imap-synchronize) '(vm-imap-synchronize))
   (if (not (eq vm-folder-access-method 'imap))
       (message "This is not an IMAP folder")
-    (if (null (vm-establish-new-folder-imap-session t "general operation" nil))
-	nil
-
+    (when (vm-establish-new-folder-imap-session t "general operation" nil)
       (vm-imap-retrieve-uid-and-flags-data)
       (vm-imap-save-attributes all-flags)
       ;; (vm-imap-synchronize-folder t nil nil nil 
@@ -3352,22 +3350,21 @@ VM session.  This is useful for saving offline work."
       ;; (vm-stuff-folder-data nil)
       ;; (message "Stuffing cached data... done")
       ;; stuff bookmark and header variable values
-      (if vm-message-list
-	  (progn
-	    ;; get summary cache up-to-date
-	    (message "Updating summary... ")
-	    (vm-update-summary-and-mode-line)
-	    (message "Updating summary... done")
-	    ;; 	  (vm-stuff-bookmark)
-	    ;; 	  (vm-stuff-pop-retrieved)
-	    ;; 	  (vm-stuff-imap-retrieved)
-	    ;; 	  (vm-stuff-last-modified)
-	    ;; 	  (vm-stuff-header-variables)
-	    ;; 	  (vm-stuff-labels)
-	    ;; 	  (vm-stuff-summary)
-	    ;; 	  (and vm-message-order-changed
-	    ;; 	       (vm-stuff-message-order))
-	    )))))
+      (when vm-message-list
+	;; get summary cache up-to-date
+	(message "Updating summary... ")
+	(vm-update-summary-and-mode-line)
+	(message "Updating summary... done")
+	;; 	  (vm-stuff-bookmark)
+	;; 	  (vm-stuff-pop-retrieved)
+	;; 	  (vm-stuff-imap-retrieved)
+	;; 	  (vm-stuff-last-modified)
+	;; 	  (vm-stuff-header-variables)
+	;; 	  (vm-stuff-labels)
+	;; 	  (vm-stuff-summary)
+	;; 	  (and vm-message-order-changed
+	;; 	       (vm-stuff-message-order))
+	))))
   
 
 ;;;###autoload
@@ -3378,13 +3375,20 @@ interactively."
   ;;--------------------------
   (vm-buffer-type:set 'folder)
   ;;--------------------------
-  (if (or vm-global-block-new-mail
-	  (null (vm-establish-new-folder-imap-session 
-		 interactive "checkmail" t)))
-      nil
-    (let ((result (car (vm-imap-get-synchronization-data))))
-      (vm-imap-end-session (vm-folder-imap-process))
-      result )))
+  (when vm-debug
+    (message "Checking for new mail in %s... " (buffer-name (current-buffer))))
+  (cond (vm-global-block-new-mail
+	 nil)
+	((null (vm-establish-new-folder-imap-session 
+		interactive "checkmail" t))
+	 nil)
+	(t
+	 (let ((result (car (vm-imap-get-synchronization-data))))
+	   (vm-imap-end-session (vm-folder-imap-process))
+	   (when vm-debug
+	     (message "Checking for new mail in %s... done"
+		      (buffer-name (current-buffer))))
+	   result))))
 
 
 ;; ---------------------------------------------------------------------------
