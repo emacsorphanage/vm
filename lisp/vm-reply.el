@@ -98,7 +98,9 @@
 (defun vm-add-reply-subject-prefix (message &optional start)
   (when (not start)
     (goto-char (point-min))
-    (re-search-forward (regexp-quote mail-header-separator) (point-max))
+    (re-search-forward 
+     (concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
+     (point-max))
     (forward-char 1)
     (setq start (point)))
   (goto-char start)
@@ -120,7 +122,9 @@
      vm-fill-paragraphs-containing-long-lines-in-reply
      (save-excursion
        (goto-char (point-min))
-       (re-search-forward (regexp-quote mail-header-separator) (point-max))
+       (re-search-forward 
+	(concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
+	(point-max))
        (forward-line 1)
        (point))
      (point-max))))
@@ -745,8 +749,9 @@ This function is a variant of `vm-get-header-contents'."
         (regexp (concat "^\\(" header-name-regexp "\\)")))
     (save-excursion
       (goto-char (point-min))
-      (if (re-search-forward (regexp-quote mail-header-separator)
-                             (point-max) t)
+      (if (re-search-forward 
+	   (concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
+	   (point-max) t)
           (setq text-of-message (match-end 0))
         (error "No mail header separator found!"))
 
@@ -871,7 +876,9 @@ storage for attachments which are stored on disk anyway."
   (interactive)
   (save-excursion
     (goto-char (point-min))
-    (re-search-forward (regexp-quote mail-header-separator) (point-max))
+    (re-search-forward
+     (concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
+     (point-max))
     (delete-region (match-beginning 0) (match-end 0))
     (let ((header-end (point-marker)))
       (unwind-protect

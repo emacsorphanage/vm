@@ -6478,7 +6478,7 @@ should be encoded together."
           body-start
           start end)
       (goto-char (point-min))
-      (search-forward mail-header-separator)
+      (search-forward (concat "\n" mail-header-separator "\n"))
       (setq body-start (vm-marker (match-beginning 0)))
       (goto-char (point-min))
       

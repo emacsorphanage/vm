@@ -269,8 +269,9 @@ It will ensure that pcrisis correctly handles the signature .")
 If point is not in a header field, returns nil."
   (save-excursion
     (unless (save-excursion
-	      (re-search-backward (regexp-quote mail-header-separator)
-				  (point-min) t))
+	      (re-search-backward 
+               (concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
+	       (point-min) t))
       (re-search-backward "^\\([^ \t\n:]+\\):")
       (match-string 1))))
 

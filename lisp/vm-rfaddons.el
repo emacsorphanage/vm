@@ -548,7 +548,9 @@ Subject header."
   (save-excursion
     ;; cleanup
     (goto-char (point-min))
-    (re-search-forward (regexp-quote mail-header-separator) (point-max))
+    (re-search-forward 
+     (concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
+     (point-max))
     (let ((case-fold-search t)
           (rpl vm-mail-subject-prefix-replacements))
       (while rpl

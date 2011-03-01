@@ -455,7 +455,9 @@ creation)."
     (save-excursion
       (vm-continue-postponed-message t)
       (goto-char (point-min))
-      (re-search-forward (regexp-quote mail-header-separator) (point-max))
+      (re-search-forward 
+       (concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
+       (point-max))
       (forward-char 1)
       (setq reply-buffer (current-buffer)
             start (point)
@@ -611,7 +613,9 @@ Optional argument DONT-KILL is positive, then do not kill source message."
 
     ;; delete mail header separator
     (goto-char (point-min))
-    (if (re-search-forward (regexp-quote mail-header-separator) nil t)
+    (if (re-search-forward 
+	 (concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
+	 nil t)
         (delete-region (match-beginning 0) (match-end 0)))
 
 
