@@ -6263,11 +6263,11 @@ describes what was deleted."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
-  (if (and (vm-virtual-message-p (car vm-message-pointer))
-	   (null (vm-virtual-messages-of (car vm-message-pointer))))
-      (error "Can't edit unmirrored virtual messages."))
-  (and vm-presentation-buffer
-       (set-buffer vm-presentation-buffer))
+  (when (and (vm-virtual-message-p (car vm-message-pointer))
+	     (null (vm-virtual-messages-of (car vm-message-pointer))))
+    (error "Can't edit unmirrored virtual messages."))
+  (when vm-presentation-buffer
+    (set-buffer vm-presentation-buffer))
   (let (layout label)
     (cond (vm-fsfemacs-p
 	   (let (o-list o (found nil))
@@ -6295,6 +6295,8 @@ describes what was deleted."
 	       (save-excursion
 		 (vm-save-restriction
 		  (goto-char (overlay-start o))
+		  ;; Remember the label of the deleted object so that
+		  ;; we can come back there after redisplay.
                   (setq label (vm-mime-sprintf 
 			       vm-mime-deleted-object-label layout))
 		  (insert label)

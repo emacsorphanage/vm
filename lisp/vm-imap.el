@@ -410,7 +410,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	(source-nopwd (vm-imapdrop-sans-password source))
 	use-body-peek auto-expunge x select source-list uid
 	can-delete read-write uid-validity
-	mailbox mailbox-count message-size response
+	mailbox mailbox-count recent-count message-size response
 	n (retrieved 0) retrieved-bytes process-buffer)
     (setq auto-expunge 
 	  (cond ((setq x (assoc source
@@ -446,9 +446,10 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		  mailbox (nth 3 source-list))
 	    (setq select (vm-imap-select-mailbox process mailbox t))
 	    (setq mailbox-count (nth 0 select)
-		  uid-validity (nth 1 select)
-		  read-write (nth 2 select)
-		  can-delete (nth 3 select)
+		  recent-count (nth 1 select)
+		  uid-validity (nth 2 select)
+		  read-write (nth 3 select)
+		  can-delete (nth 4 select)
 		  use-body-peek (vm-imap-capability 'IMAP4REV1))
 	    ;;--------------------------------
 	    (vm-imap-session-type:set 'valid)
@@ -569,7 +570,8 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	(retrieved vm-imap-retrieved-messages)
 	(imapdrop (vm-imapdrop-sans-password source))
 	(count 0)
-	msg-count uid-validity x response select mailbox source-list
+	msg-count recent-count uid-validity 
+	x response select mailbox source-list
 	result)
     (unwind-protect
 	(prog1
@@ -589,7 +591,8 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		      mailbox (nth 3 source-list))
 		(setq select (vm-imap-select-mailbox process mailbox t)
 		      msg-count (car select)
-		      uid-validity (nth 1 select))
+		      recent-count (nth 1 select)
+		      uid-validity (nth 2 select))
 		(when (zerop msg-count)
 		  (vm-store-folder-totals source '(0 0 0 0))
 		  (throw 'end-of-session nil))
@@ -655,16 +658,14 @@ on all the relevant IMAP servers and then immediately expunges."
 	  ;;------------------------
 	  (setq vm-imap-retrieved-messages
 		(sort vm-imap-retrieved-messages
-		      (function (lambda (a b)
-				  (cond ((string-lessp (nth 2 a) (nth 2 b)) t)
-					((string-lessp (nth 2 b)
-						       (nth 2 a))
-					 nil)
-					((string-lessp (nth 1 a) (nth 1 b)) t)
-					((string-lessp (nth 1 b) (nth 1 a))
-					 nil)
-					((string-lessp (nth 0 a) (nth 0 b)) t)
-					(t nil))))))
+		      (function 
+		       (lambda (a b)
+			 (cond ((string-lessp (nth 2 a) (nth 2 b)) t)
+			       ((string-lessp (nth 2 b) (nth 2 a)) nil)
+			       ((string-lessp (nth 1 a) (nth 1 b)) t)
+			       ((string-lessp (nth 1 b) (nth 1 a)) nil)
+			       ((string-lessp (nth 0 a) (nth 0 b)) t)
+			       (t nil))))))
 	  (setq mp vm-imap-retrieved-messages)
 	  (while mp
 	    (catch 'replay
@@ -707,14 +708,12 @@ on all the relevant IMAP servers and then immediately expunges."
 				  select-response (vm-imap-select-mailbox
 						   process mailbox t)
 				  msg-count (car select-response)
-				  uid-validity (nth 1 select-response)
-				  read-write (nth 2 select-response)
-				  can-delete (nth 3 select-response))
+				  uid-validity (nth 2 select-response)
+				  read-write (nth 3 select-response)
+				  can-delete (nth 4 select-response))
 			    (setq mp
 				  (vm-imap-clear-invalid-retrieval-entries
-				   source
-				   mp
-				   uid-validity))
+				   source mp uid-validity))
 			    (unless (eq data (car mp))
 				;; this entry must have been
 				;; discarded as invalid, so
@@ -742,9 +741,8 @@ on all the relevant IMAP servers and then immediately expunges."
 			(while (equal (nth 1 (car mp)) source)
 			  (setq mp (cdr mp)))
 			(throw 'replay t))
-		      (setq uid-alist
-			    (vm-imap-get-uid-list
-			     process 1 msg-count))
+		      (setq uid-alist (vm-imap-get-uid-list
+				       process 1 msg-count))
 		      (vm-imap-session-type:make-active))
 		    (when (setq match (rassoc (car data) uid-alist))
 		      (vm-imap-delete-message process (car match))
@@ -795,7 +793,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	  (vm-buffer-type:exit)
 	  ;;-------------------
 	  )
-      (and process (vm-imap-end-session process)))
+      (when process (vm-imap-end-session process)))
     (unless trouble 
       (setq vm-imap-retrieved-messages nil)
       (when (> delete-count 0)
@@ -853,7 +851,7 @@ of the current folder."
 ;; vm-imap-send-command: (process command &optional tag no-tag) ->
 ;; 				void
 ;; vm-imap-select-mailbox: (process & mailbox &optional bool bool) -> 
-;;				(int uid-validity bool bool (flag list))
+;;				(int int uid-validity bool bool (flag list))
 ;; vm-imap-read-capability-response: process -> ?
 ;; vm-imap-read-greeting: process -> ?
 ;; vm-imap-read-ok-response: process -> ?
@@ -1275,6 +1273,7 @@ as well."
   ;;   JUST-EXAMINE - select the mailbox in a read-only (examine) mode
   ;; Returns a list containing:
   ;;   int msg-count - number of messages in the mailbox
+  ;;   int recent-count - number of recent messages in the mailbox
   ;;   string uid-validity - the UID validity value of the mailbox
   ;;   bool read-write - whether the mailbox is writable
   ;;   bool can-delete - whether the mailbox allows message deletion
@@ -1290,6 +1289,7 @@ as well."
 	(flags nil)
 	(permanent-flags nil)
 	(msg-count nil)
+	(recent-count nil)
 	(uid-validity nil)
 	(read-write (not just-examine))
 	(can-delete t)
@@ -1313,6 +1313,10 @@ as well."
 	     (setq tok (nth 1 response))
 	     (goto-char (nth 1 tok))
 	     (setq msg-count (read imap-buffer)))
+	    ((vm-imap-response-matches response '* 'atom 'RECENT)
+	     (setq tok (nth 1 response))
+	     (goto-char (nth 1 tok))
+	     (setq recent-count (read imap-buffer)))
 	    ((vm-imap-response-matches response 'VM 'OK '(vector READ-WRITE))
 	     (setq need-ok nil read-write t))
 	    ((vm-imap-response-matches response 'VM 'OK '(vector READ-ONLY))
@@ -1336,7 +1340,8 @@ as well."
     ;;-------------------------------
     (vm-imap-session-type:set 'active)
     ;;-------------------------------
-    (list msg-count uid-validity read-write can-delete permanent-flags)))
+    (list msg-count recent-count
+	  uid-validity read-write can-delete permanent-flags)))
 
 (defun vm-imap-read-expunge-response (process)
   (let ((list nil)
@@ -2205,10 +2210,10 @@ IMAP process or nil if unsuccessful."
 	;;----------------------------
 	(setq select (vm-imap-select-mailbox process mailbox just-retrieve))
 	(setq mailbox-count (nth 0 select)
-	      uid-validity (nth 1 select)
-	      read-write (nth 2 select)
-	      can-delete (nth 3 select)
-	      permanent-flags (nth 4 select)
+	      uid-validity (nth 2 select)
+	      read-write (nth 3 select)
+	      can-delete (nth 4 select)
+	      permanent-flags (nth 5 select)
 	      body-peek (vm-imap-capability 'IMAP4REV1))
 	;;---------------------------------
 	(vm-imap-session-type:set 'active)
@@ -2277,10 +2282,10 @@ unsuccessful."
 	  (set-buffer (process-buffer process))
 	  (setq select (vm-imap-select-mailbox process mailbox nil))
 	  (setq mailbox-count (nth 0 select)
-		uid-validity (nth 1 select)
-		read-write (nth 2 select)
-		can-delete (nth 3 select)
-		permanent-flags (nth 4 select)
+		uid-validity (nth 2 select)
+		read-write (nth 3 select)
+		can-delete (nth 4 select)
+		permanent-flags (nth 5 select)
 		body-peek (vm-imap-capability 'IMAP4REV1))
 	  ;;---------------------------------
 	  (vm-imap-session-type:set 'active)
