@@ -4699,7 +4699,7 @@ are also included."
       (let ((vm-preview-lines nil))
 	(vm-preview-current-message)))
     (if (> n 0)
-	(message "%d attachment%s deleted" n (if - n 1) "" "s")
+	(message "%d attachment%s deleted" n (if (= n 1) "" "s"))
       (message "No attachments found")))
   (vm-update-summary-and-mode-line))
 
