@@ -4685,18 +4685,22 @@ are also included."
   (vm-check-for-killed-summary)
   (if (interactive-p) (vm-follow-summary-cursor))
   
-  (vm-mime-action-on-all-attachments
-   count
-   (lambda (msg layout type file)
-     (message "Deleting `%s%s" type (if file (format " (%s)" file) ""))
-     (vm-mime-discard-layout-contents layout))
-   vm-mime-deleteable-types
-   vm-mime-deleteable-type-exceptions)
-
-  (when (interactive-p)
-    (vm-discard-cached-data count)
-    (vm-preview-current-message))
-
+  (let ((n 0))
+    (vm-mime-action-on-all-attachments
+     count
+     (lambda (msg layout type file)
+       (message "Deleting `%s%s" type (if file (format " (%s)" file) ""))
+       (vm-mime-discard-layout-contents layout)
+       (setq n (+ 1 n)))
+     vm-mime-deleteable-types
+     vm-mime-deleteable-type-exceptions)
+    (when (interactive-p)
+      (vm-discard-cached-data count)
+      (let ((vm-preview-lines nil))
+	(vm-preview-current-message)))
+    (if (> n 0)
+	(message "%d attachment%s deleted" n (if - n 1) "" "s")
+      (message "No attachments found")))
   (vm-update-summary-and-mode-line))
 
 ;; (define-obsolete-function-alias 'vm-mime-delete-all-attachments
@@ -4782,7 +4786,8 @@ created."
 
     (when (interactive-p)
       (vm-discard-cached-data count)
-      (vm-preview-current-message))
+      (let ((vm-preview-lines nil))
+	(vm-preview-current-message)))
     
     (if (> n 0)
         (message "%d attachment%s saved" n (if (= n 1) "" "s"))

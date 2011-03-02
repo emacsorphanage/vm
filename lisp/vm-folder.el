@@ -5131,7 +5131,10 @@ FETCH is t, then the retrieval is for a temporary message fetch."
 this facilty is only available for IMAP folders."
   (interactive)
   (vm-unload-message 1 t)
-  (vm-load-message))
+  (vm-load-message)
+  (intern (buffer-name) vm-buffers-needing-display-update)
+  (let ((vm-preview-lines nil))
+    (vm-preview-current-message)))
 
 ;;;###autoload
 (defun vm-unload-message (&optional count physical)
@@ -5172,13 +5175,16 @@ the folder is saved."
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
-	(when (and (vm-body-retrieved-of mm)
-		   (null (vm-body-to-be-discarded-of mm)))
-	  (if (and (= count 0) (not physical))
-	      ;; Register the message as fetched instead of actually
-	      ;; discarding the message
-	      (vm-register-fetched-message mm)
-	    (vm-discard-real-message-body mm)))
+	(cond ((vm-body-to-be-retrieved-of mm))
+	      ((vm-body-to-be-discarded-of mm)
+	       (if physical
+		   (vm-discard-real-message-body mm)))
+	      (t
+	       (if physical
+		   (vm-discard-real-message-body mm)
+		 ;; Register the message as fetched instead of actually
+		 ;; discarding the message
+		 (vm-register-fetched-message mm))))
 	(setq mlist (cdr mlist))
 	(setq count (1+ count))))
     (if (= count 1) 
