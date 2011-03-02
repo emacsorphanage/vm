@@ -228,7 +228,8 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
   (vm-display nil nil '(vm-set-message-attributes)
 	      '(vm-set-message-attributes))
   (let ((name-list (vm-parse string "[ \t]*\\([^ \t]+\\)"))
-	(m-list (vm-select-operable-messages count "Set attributes of"))
+	(m-list (vm-select-operable-messages 
+		 count (interactive-p) "Set attributes of"))
 	n-list name m)
     (while m-list
       (setq m (car m-list)
@@ -316,7 +317,8 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
     (vm-follow-summary-cursor)
     (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (vm-error-if-folder-read-only)
-    (setq m-list (vm-select-operable-messages count "Add labels to"))
+    (setq m-list (vm-select-operable-messages
+		  count (interactive-p) "Add labels to"))
     (setq ignored-labels 
 	  (vm-add-or-delete-message-labels string m-list 'all))
     (if ignored-labels
@@ -359,7 +361,8 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
-  (let* ((m-list (vm-select-operable-messages count "Add labels to"))
+  (let* ((m-list (vm-select-operable-messages
+		  count (interactive-p) "Add labels to"))
 	(ignored-labels
 	 (vm-add-or-delete-message-labels string m-list 'existing-only)))
     (if ignored-labels
@@ -404,7 +407,8 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
-  (let ((m-list (vm-select-operable-messages count "Delete labels to")))
+  (let ((m-list (vm-select-operable-messages
+		 count (interactive-p) "Delete labels to")))
     (vm-add-or-delete-message-labels string m-list nil)))
 
 (defun vm-add-or-delete-message-labels (string m-list add)

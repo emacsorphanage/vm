@@ -142,7 +142,8 @@ recipients of the original messages.  INCLUDE-TEXT says whether
 the body of those messages should be included in the reply.
 COUNT is the prefix argument indicating how many consecutive
 messages of the folder are involved in this reply."
-  (let ((mlist (vm-select-operable-messages count "Reply to"))
+  (let ((mlist (vm-select-operable-messages
+		count (interactive-p) "Reply to"))
         (dir default-directory)
         (message-pointer vm-message-pointer)
         (case-fold-search t)
@@ -1072,7 +1073,8 @@ reply, but you must fill in the \"To:\" header and perhaps the
 		     (equal vm-forwarding-digest-type "mime")))
 	reply-buffer
 	header-end
-	(mp (vm-select-operable-messages 1 "Forward")))
+	(mp (vm-select-operable-messages
+	     1 (interactive-p) "Forward")))
     (if (cdr mp)
 	(let ((vm-digest-send-type vm-forwarding-digest-type))
 	  ;; (setq this-command 'vm-next-command-uses-marks)
@@ -1302,11 +1304,12 @@ only marked messages will be put into the digest."
   (let ((dir default-directory)
 	(miming (and vm-send-using-mime (equal vm-digest-send-type "mime")))
 	mp mail-buffer b
-	;; prefix arg doesn't have "normal" meaning here, so only call
-	;; vm-select-operable-messages for marks or threads.
 	ms start header-end boundary)
     (unless mlist
-      (setq mlist (vm-select-operable-messages 1 "Send as digest")))
+      ;; prefix arg doesn't have "normal" meaning here, so only call
+      ;; vm-select-operable-messages for marks or threads.
+      (setq mlist (vm-select-operable-messages 
+		   1 (interactive-p) "Send as digest")))
     ;; if messages were selected use them, otherwise the whole folder
     (cond ((cdr mlist)
 	   (vm-retrieve-operable-messages 1 mlist))

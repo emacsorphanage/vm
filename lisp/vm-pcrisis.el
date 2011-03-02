@@ -616,7 +616,8 @@ return the contents of all header fields which match that regexp,
 separated from each other by CLUMP-SEP."
   (if (and (eq vmpc-current-buffer 'none)
 	   (memq vmpc-current-state '(reply forward resend)))
-      (let ((mp (car (vm-select-operable-messages 1 "Operate on")))
+      (let ((mp (car (vm-select-operable-messages
+		      1 (interactive-p) "Operate on")))
             content c)
         (if (not (listp hdrfield))
            (setq hdrfield (list hdrfield)))
@@ -639,7 +640,8 @@ separated from each other by CLUMP-SEP."
   (if (and (eq vmpc-current-buffer 'none)
 	   (memq vmpc-current-state '(reply forward resend)))
       (save-excursion
-	(let* ((mp (car (vm-select-operable-messages 1 "Operate on")))
+	(let* ((mp (car (vm-select-operable-messages
+			 1 (interactive-p) "Operate on")))
 	       (message (vm-real-message-of mp))
 	       start end)
 	  (set-buffer (vm-buffer-of message))

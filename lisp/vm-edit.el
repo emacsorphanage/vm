@@ -149,7 +149,8 @@ data is discarded only from the marked messages in the current folder."
   (or count (setq count 1))
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (let ((mlist (vm-select-operable-messages count "Discard data of")))
+  (let ((mlist (vm-select-operable-messages
+		count (interactive-p) "Discard data of")))
     (vm-discard-cached-data-internal mlist (interactive-p) ))
   (vm-display nil nil '(vm-discard-cached-data) '(vm-discard-cached-data))
   (vm-update-summary-and-mode-line))

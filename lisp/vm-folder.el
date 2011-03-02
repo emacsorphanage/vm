@@ -2999,7 +2999,8 @@ all marked messages are affected, other messages are ignored."
   (or count (setq count 1))
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (let ((mlist (vm-select-operable-messages count "Unread")))
+  (let ((mlist (vm-select-operable-messages
+		count (interactive-p) "Unread")))
     (while mlist
       (if (and (not (vm-unread-flag (car mlist)))
 	       (not (vm-new-flag (car mlist))))
@@ -3028,7 +3029,8 @@ all marked messages are affected, other messages are ignored."
   (or count (setq count 1))
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (let ((mlist (vm-select-operable-messages count "Mark as read")))
+  (let ((mlist (vm-select-operable-messages
+		count (interactive-p) "Mark as read")))
     (while mlist
       (when (or (vm-unread-flag (car mlist))
 		(vm-new-flag (car mlist)))
@@ -4557,42 +4559,47 @@ files."
         (vm-sort-messages vm-ml-sort-keys))
     new-messages ))
 
-(defun vm-select-operable-messages (prefix op-description)
-  "Return a list of all marked messages, messages in a collapsed
-thread, or the messages indicated by a prefix argument.  The
-prefix argument is used only if the other two selection methods
-are not at play.  If it is used, return a number of messages
-around vm-message-pointer equal to (abs prefix), either
-backward (if prefix is negative) or forward (if positive)."
-  (if (eq last-command 'vm-next-command-uses-marks)
-      (vm-marked-messages)
-    (let ((direction (if (< prefix 0) 'backward 'forward))
-	  (count (vm-abs prefix))
-	  (vm-message-pointer vm-message-pointer)
-	  (current-message (car vm-message-pointer))
-	  mlist)
-      (if (and ;; (= prefix 1) ; ignore the prefix argument
-	       (vm-summary-operation-p)
-	       vm-summary-enable-thread-folding
-	       vm-summary-show-threads
-	       vm-enable-thread-operations
-	       (vm-thread-root-p current-message)
-	       (with-current-buffer vm-summary-buffer
-		 (vm-summary-collapsed-root-p current-message))
-	       (or (not (= prefix 1))
-		   (not (eq vm-enable-thread-operations 'ask))
-		   (y-or-n-p 
-		    (format "%s all messages in thread? " op-description)))
-	       )
-	  (vm-thread-subtree current-message)
-	(unless (eq vm-circular-folders t)
-	  (vm-check-count prefix))
-	(while (not (zerop count))
-	  (setq mlist (cons (car vm-message-pointer) mlist))
-	  (vm-decrement count)
-	  (unless (zerop count)
-	    (vm-move-message-pointer direction)))
-	(nreverse mlist)))))
+(defun vm-select-operable-messages (prefix interactive op-description)
+  "Return a list of all marked messages, messages indicated by
+the PREFIX argument or messages in a collapsed thread, in that
+order.  Marked messages are returned only if the previous command
+was `vm-next-command-uses-marks'.  PREFIX is used if it is not 1
+or INTERACTIVE is nil, returning a number of messages around
+`vm-message-pointer' equal to (abs prefix), either backward (if
+prefix is negative) or forward (if positive).
+
+OP-DESCRIPTION is a string describing the opeartion being peformed,
+which is used in interactive confirmations."
+  (cond ((eq last-command 'vm-next-command-uses-marks)
+	 (vm-marked-messages))
+	((not (= prefix 1))
+	 (let ((direction (if (< prefix 0) 'backward 'forward))
+	       (count (vm-abs prefix))
+	       (vm-message-pointer vm-message-pointer) ; why this?
+	       mlist)
+	   (unless (eq vm-circular-folders t)
+	     (vm-check-count prefix))
+	   (while (not (zerop count))
+	     (setq mlist (cons (car vm-message-pointer) mlist))
+	     (vm-decrement count)
+	     (unless (zerop count)
+	       (vm-move-message-pointer direction)))
+	   (nreverse mlist)))
+	((and interactive
+	      (vm-summary-operation-p)
+	      vm-summary-enable-thread-folding
+	      vm-summary-show-threads
+	      vm-enable-thread-operations
+	      (vm-thread-root-p (vm-current-message))
+	      (with-current-buffer vm-summary-buffer
+		(vm-summary-collapsed-root-p (vm-current-message)))
+	      (or (eq vm-enable-thread-operations t)
+		  (y-or-n-p 
+		   (format "%s all messages in thread? " op-description))))
+	 (vm-thread-subtree (vm-current-message)))
+	(t
+	 (list (vm-current-message)))
+	))
 
 (defun vm-display-startup-message ()
   (if (sit-for 5)
@@ -4982,7 +4989,8 @@ thread are loaded."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (when (null count) (setq count 1))
-  (let ((mlist (vm-select-operable-messages count "Load"))
+  (let ((mlist (vm-select-operable-messages
+		count (interactive-p) "Load"))
 	(errors 0)
 	(n 0)
 	fetch-method
@@ -5038,7 +5046,8 @@ thread are retrieved."
 ;;     (if (not used-marks) 
 ;; 	(setq mlist (list (car vm-message-pointer))))
     (unless mlist
-      (setq mlist (vm-select-operable-messages count "Retrieve")))
+      (setq mlist (vm-select-operable-messages
+		   count (interactive-p) "Retrieve")))
     (save-excursion
       (while mlist
 	(setq m (car mlist))
@@ -5152,7 +5161,8 @@ the folder is saved."
   (vm-error-if-folder-read-only)
   (when (null count) 
     (setq count 1))
-  (let ((mlist (vm-select-operable-messages count "Unload"))
+  (let ((mlist (vm-select-operable-messages
+		count (interactive-p) "Unload"))
 	(buffer-undo-list t)
 	(errors 0)
 	m mm)

@@ -265,7 +265,8 @@ for customization of the output."
          (folder-name (vm-ps-print-message-folder-name))
          (mstart nil)
 	 (m nil)
-	 (mlist (vm-select-operable-messages count "Print"))
+	 (mlist (vm-select-operable-messages
+		 count (interactive-p) "Print"))
 	 (mcount (length mlist))
 	 (tmpbuf (get-buffer-create "*vm-ps-print*")))
     (vm-retrieve-operable-messages count mlist)

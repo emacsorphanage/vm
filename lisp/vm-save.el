@@ -125,7 +125,8 @@ The saved messages are flagged as `filed'."
 	;; shouldn't affect its value.
 	(let ((vm-message-pointer
 	       (if (eq last-command 'vm-next-command-uses-marks)
-		   (vm-select-operable-messages 0 "Archive")
+		   (vm-select-operable-messages
+		    0 (interactive-p) "Archive")
 		 vm-message-list))
 	      (done nil)
 	      stop-point
@@ -282,7 +283,8 @@ The saved messages are flagged as `filed'."
 					     vm-auto-folder-alist))
     (vm-display nil nil '(vm-save-message) '(vm-save-message))
     (unless count (setq count 1))
-    (setq mlist (vm-select-operable-messages count "Save"))
+    (setq mlist (vm-select-operable-messages
+		 count (interactive-p) "Save"))
     (vm-retrieve-operable-messages count mlist)
     ;; Expand the filename, forcing relative paths to resolve
     ;; into the folder directory.
@@ -497,7 +499,8 @@ vm-save-message instead (normally bound to `s')."
   (vm-display nil nil '(vm-save-message-sans-headers)
 	      '(vm-save-message-sans-headers))
   (or count (setq count 1))
-  (let ((mlist (vm-select-operable-messages count "Save")))
+  (let ((mlist (vm-select-operable-messages
+		count (interactive-p) "Save")))
     (vm-retrieve-operable-messages count mlist)
     (setq file (expand-file-name file))
     ;; Check and see if we are currently visiting the file
@@ -610,7 +613,7 @@ Output, if any, is displayed.  The message is not altered."
 	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
 	;; prefix arg doesn't have "normal" meaning here, so only call
 	;; vm-select-operable-messages for marks and threads.
-	(mlist (vm-select-operable-messages 1 "Pipe")))
+	(mlist (vm-select-operable-messages 1 (interactive-p) "Pipe")))
     (vm-retrieve-operable-messages 1 mlist)
     (save-excursion
       (set-buffer buffer)
@@ -725,7 +728,7 @@ arguments after the command finished."
 	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
 	;; prefix arg doesn't have "normal" meaning here, so only call
 	;; vm-select-operable-messages for marks and threads.
-	(mlist (vm-select-operable-messages 1 "Pipe"))
+	(mlist (vm-select-operable-messages 1 (interactive-p) "Pipe"))
 	m process)
     (vm-retrieve-operable-messages 1 mlist)
     (save-excursion
@@ -837,7 +840,7 @@ Output, if any, is displayed.  The message is not altered."
 			     " "))
 	 (m nil)
 	 (pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
-	 (mlist (vm-select-operable-messages count "Print")))
+	 (mlist (vm-select-operable-messages count (interactive-p) "Print")))
     (vm-retrieve-operable-messages count mlist)
 
     (save-excursion
@@ -928,7 +931,7 @@ The saved messages are flagged as `filed'."
   (unless count (setq count 1))
   (let (source-spec-list
 	(target-spec-list (vm-imap-parse-spec-to-list target-folder))
-	(mlist (vm-select-operable-messages count "Save"))
+	(mlist (vm-select-operable-messages count (interactive-p) "Save"))
 	ml m
 	(save-count 0)
 	server-to-server-p mailbox

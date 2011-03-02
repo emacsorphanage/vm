@@ -64,7 +64,8 @@ thread are deleted."
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(del-count 0))
     (unless mlist
-      (setq mlist (vm-select-operable-messages count "Delete")))
+      (setq mlist (vm-select-operable-messages 
+		   count (interactive-p) "Delete")))
     (while mlist
       (unless (vm-deleted-flag (car mlist))
 	(vm-set-deleted-flag (car mlist) t)
@@ -121,7 +122,8 @@ thread are undeleted."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist (vm-select-operable-messages count "Undelete"))
+	(mlist (vm-select-operable-messages 
+		count (interactive-p) "Undelete"))
 	(undel-count 0))
     (while mlist
       (if (vm-deleted-flag (car mlist))
@@ -168,7 +170,8 @@ messages in the thread are flagged/unflagged."
 	(flagged-count 0)
 	(new-flagged nil))
     (unless mlist
-      (setq mlist (vm-select-operable-messages count "Flag/unflag")))
+      (setq mlist (vm-select-operable-messages 
+		   count (interactive-p) "Flag/unflag")))
     (when mlist
       (setq new-flagged (not (vm-flagged-flag (car mlist)))))
     (while mlist
@@ -296,7 +299,8 @@ the thread are considered."
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(table (make-vector 103 0))
-	(mp (vm-select-operable-messages 1 "Delete duplicates among"))
+	(mp (vm-select-operable-messages 
+	     1 (interactive-p) "Delete duplicates among"))
         (n 0)
         (case-fold-search t)
         mid)
@@ -343,7 +347,8 @@ the thread are considered."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist (vm-select-operable-messages 1 "Delete duplicates among"))
+	(mlist (vm-select-operable-messages
+		1 (interactive-p) "Delete duplicates among"))
 	(table (make-vector 61 0))
 	hash m
 	(del-count 0))
