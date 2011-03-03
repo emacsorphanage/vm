@@ -47,7 +47,7 @@
 (declare-function vm-preview-current-message 
 		  "vm-page" ())
 (declare-function vm-zip-vectors "vm-misc" (v1 v2))
-
+(declare-function vm-zip-lists "vm-misc.el" (list1 list2) t)
 
 
 ;; current message

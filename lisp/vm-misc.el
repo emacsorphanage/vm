@@ -77,6 +77,14 @@
 ;; This file contains various low-level operations that address
 ;; incomaptibilities between Gnu and XEmacs.  Expect compiler warnings.
 
+;; garbage-collector result
+(defconst gc-fields '(:conses :syms :miscs 
+			      :chars :vector 
+			      :floats :intervals :strings))
+
+(defsubst vm-garbage-collect ()
+  (pp (vm-zip-lists gc-fields (garbage-collect))))
+
 ;; Taken from XEmacs as GNU Emacs is missing `replace-in-string' and defining
 ;; it may cause clashes with other packages defining it differently, in fact
 ;; we could also call the function `replace-regexp-in-string' as Roland
@@ -986,7 +994,9 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 
 (if (not (fboundp 'vm-delete-extent))
     (if vm-fsfemacs-p
-	(fset 'vm-delete-extent 'identity)
+	;; This doesn't actually destroy the overlay, but it is the
+	;; best there is.
+	(fset 'vm-delete-extent 'delete-overlay)
       (fset 'vm-delete-extent 'delete-extent)))
 
 (if (not (fboundp 'vm-disable-extents))

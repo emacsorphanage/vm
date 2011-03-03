@@ -43,7 +43,6 @@
 (declare-function vm-mime-plain-message-p "vm-mime" (message))
 ;; (declare-funciton vm-mm-layout "vm-mime" (message))
 
-(declare-function delete-extent "vm-xemacs" (extent))
 (declare-function map-extents "vm-xemacs" 
 		  (function &optional object from to maparg 
 			    flags property value))
@@ -324,8 +323,8 @@ Negative arg means scroll forward."
     (let (e)
       (map-extents (function
 		    (lambda (e ignore)
-		      (if (vm-extent-property e 'vm-highlight)
-			  (delete-extent e))
+		      (when (vm-extent-property e 'vm-highlight)
+			(vm-delete-extent e))
 		      nil))
 		   (current-buffer) (point-min) (point-max))
       (goto-char (point-min))
@@ -341,13 +340,13 @@ Negative arg means scroll forward."
       (setq o-lists (overlay-lists)
 	    p (car o-lists))
       (while p
-	(and (overlay-get (car p) 'vm-highlight)
-	     (delete-overlay (car p)))
+	(when (overlay-get (car p) 'vm-highlight)
+	  (vm-delete-extent (car p)))
 	(setq p (cdr p)))
       (setq p (cdr o-lists))
       (while p
-	(and (overlay-get (car p) 'vm-highlight)
-	     (delete-overlay (car p)))
+	(when (overlay-get (car p) 'vm-highlight)
+	  (vm-delete-extent (car p)))
 	(setq p (cdr p)))
       (goto-char (point-min))
       (while (vm-match-header)
@@ -377,8 +376,8 @@ Negative arg means scroll forward."
       (let (e)
 	(map-extents (function
 		      (lambda (e ignore)
-			(if (vm-extent-property e 'vm-url)
-			    (delete-extent e))
+			(when (vm-extent-property e 'vm-url)
+			  (vm-delete-extent e))
 			nil))
 		     (current-buffer) (point-min) (point-max))
 	(if clean-only (message "Energy from urls removed!")
@@ -420,13 +419,13 @@ Negative arg means scroll forward."
 	(setq o-lists (overlay-lists)
 	      p (car o-lists))
 	(while p
-	  (and (overlay-get (car p) 'vm-url)
-	       (delete-overlay (car p)))
+	  (when (overlay-get (car p) 'vm-url)
+	    (vm-delete-extent (car p)))
 	  (setq p (cdr p)))
 	(setq p (cdr o-lists))
 	(while p
-	  (and (overlay-get (car p) 'vm-url)
-	       (delete-overlay (car p)))
+	  (when (overlay-get (car p) 'vm-url)
+	    (vm-delete-extent (car p)))
 	  (setq p (cdr p)))
 	(while search-pairs
 	  (goto-char (car (car search-pairs)))
@@ -465,8 +464,8 @@ Negative arg means scroll forward."
 	  regexp menu keymap e)
       (map-extents (function
 		    (lambda (e ignore)
-		      (if (vm-extent-property e 'vm-header)
-			  (delete-extent e))
+		      (when (vm-extent-property e 'vm-header)
+			(vm-delete-extent e))
 		      nil))
 		   (current-buffer) (point-min) (point-max))
       (while search-tuples
@@ -502,13 +501,13 @@ Negative arg means scroll forward."
       (setq o-lists (overlay-lists)
 	    p (car o-lists))
       (while p
-	(and (overlay-get (car p) 'vm-header)
-	     (delete-overlay (car p)))
+	(when (overlay-get (car p) 'vm-header)
+	  (vm-delete-extent (car p)))
 	(setq p (cdr p)))
       (setq p (cdr o-lists))
       (while p
-	(and (overlay-get (car p) 'vm-header)
-	     (delete-overlay (car p)))
+	(when (overlay-get (car p) 'vm-header)
+	  (vm-delete-extent (car p)))
 	(setq p (cdr p)))
       (while search-tuples
 	(goto-char (point-min))
@@ -572,8 +571,8 @@ Negative arg means scroll forward."
     (let ((case-fold-search t) i g h ooo)
       (setq ooo (overlays-in (point-min) (point-max)))
       (while ooo
-	(if (overlay-get (car ooo) 'vm-xface)
-	    (delete-overlay (car ooo)))
+	(when (overlay-get (car ooo) 'vm-xface)
+	  (vm-delete-extent (car ooo)))
 	(setq ooo (cdr ooo)))
       (goto-char (point-min))
       (if (re-search-forward "^X-Face:" nil t)

@@ -3902,7 +3902,7 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 ;; 			 'vm-mime-display-internal-image-xxxx
 ;; 			 (list origfile workfile width height
 ;; 			       char-width char-height)))
-;; 		  (and trash-list
+;; 		  (when trash-list
 ;; 		       (vm-register-folder-garbage-files trash-list)))
 ;; 	      (and work-buffer (kill-buffer work-buffer))))
 ;; 	  (if (not (bolp))
