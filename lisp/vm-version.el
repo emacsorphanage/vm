@@ -121,6 +121,14 @@
 	(vm-fsfemacs-p
 	 (fboundp 'menu-bar-mode))))
  
+(defun vm-menubar-buttons-possible-p ()
+  "Menubar buttons are menus that have an immediate action.  Some
+Windowing toolkits do not allow such buttons.  This says whether such
+buttons are possible under the current windowing system."
+  (cond (vm-xemacs-p (not (memq (device-type) '(gtk ns))))
+	(vm-fsfemacs-p (not (or (and (eq window-system 'x) (featurep 'gtk))
+				(eq window-system 'ns))))))
+
 (defun vm-toolbar-support-possible-p ()
   (or (and vm-xemacs-p (featurep 'toolbar))
       (and vm-fsfemacs-p (fboundp 'tool-bar-mode) (boundp 'tool-bar-map))))
