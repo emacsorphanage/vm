@@ -1435,38 +1435,12 @@ draft messages."
 				      (concat "UU\377\377UU\377\377UU\377\377"
 					      "UU\377\377UU\377\377UU\377\377"
 					      "UU\377\377UU\377\377")))))
-	;; FIXME: Changed definiton of vm-mime-button-face to use 
-	;; defface vm-mime-button in vm-vars.el. Need to verify Xemacs 
-	;; compatibility and clean up this messy bit of code. TX
-	;; default value of vm-mime-button-face is 'gui-button-face
-	;; this face doesn't exist by default in FSF Emacs 19.34.
-	;; Create it and initialize it to something reasonable.
-	(when (and vm-fsfemacs-p (featurep 'faces)
-		   (not (facep 'gui-button-face)))
-	  (make-face 'gui-button-face)
-	  (cond ((eq window-system 'x)
-		 (vm-fsfemacs-set-face-foreground 'gui-button-face "black")
-		 (vm-fsfemacs-set-face-background 'gui-button-face "gray75"))
-		(t
-		 ;; use primary color names, since fancier
-		 ;; names may not be valid.
-		 (vm-fsfemacs-set-face-foreground 'gui-button-face "white")
-		 (vm-fsfemacs-set-face-background 'gui-button-face "red"))))
-	;; gui-button-face might not exist under XEmacs either.
-	;; This can happen if XEmacs is built without window
-	;; system support.  In any case, create it anyway.
-	(when (and vm-xemacs-p (not (find-face 'gui-button-face)))
-	  (make-face 'gui-button-face)
-	  (vm-xemacs-set-face-foreground 'gui-button-face "black" nil '(win))
-	  (vm-xemacs-set-face-background 'gui-button-face "gray75" nil '(win))
-	  (vm-xemacs-set-face-foreground 'gui-button-face "white" nil '(tty))
-	  (vm-xemacs-set-face-background 'gui-button-face "red" nil '(tty)))
-	(when (vm-mouse-support-possible-p)
-	  (vm-mouse-install-mouse))
-	(when (and (vm-menu-fsfemacs-menus-p)
-		   (vm-menu-support-possible-p)
-		   vm-use-menus)
-	  (vm-menu-initialize-vm-mode-menu-map))
+	(and (vm-mouse-support-possible-p)
+	     (vm-mouse-install-mouse))
+	(and (vm-menu-support-possible-p)
+	     vm-use-menus
+	     (vm-menu-fsfemacs-menus-p)
+	     (vm-menu-initialize-vm-mode-menu-map))
 	(setq vm-session-beginning nil)))
   ;; check for postponed messages
   (vm-update-draft-count))
