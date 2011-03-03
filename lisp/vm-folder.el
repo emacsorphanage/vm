@@ -2993,8 +2993,11 @@ Numeric prefix argument N means to mark the current message plus
 the next N-1 messages as unread.  A negative N means mark the
 current message and the previous N-1 messages as unread.
 
-When invoked on marked messages (via vm-next-command-uses-marks),
-all marked messages are affected, other messages are ignored."
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+all marked messages are affected, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are affected."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)
@@ -3023,8 +3026,11 @@ Numeric prefix argument N means to unread the current message plus the
 next N-1 messages.  A negative N means mark the current message and
 the previous N-1 messages as read.
 
-When invoked on marked messages (via vm-next-command-uses-marks),
-all marked messages are affected, other messages are ignored."
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+all marked messages are affected, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are affected."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)

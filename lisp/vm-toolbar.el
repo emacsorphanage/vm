@@ -30,7 +30,8 @@
 
 (declare-function vm-follow-summary-cursor "vm-motion" ())
 (declare-function vm-mime-plain-message-p "vm-mime" (message))
-(declare-function vm-save-message "vm-save" (folder &optional count quiet))
+(declare-function vm-save-message "vm-save" (folder 
+					     &optional count mlist quiet))
 (declare-function vm-auto-select-folder "vm-save" (mp auto-folder-alist))
 
 (declare-function glyph-height "vm-xemacs" (glyph &optional window))

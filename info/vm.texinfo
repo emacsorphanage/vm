@@ -3092,14 +3092,14 @@ on disk'' message when you try to save the folder.
 The VM command to save a message to a folder is @kbd{s}
 (@code{vm-save-message}); invoking this command causes the current
 message to be saved to a folder whose name you specify in the
-minibuffer.  If @code{vm-save-message} is given a prefix argument
-@var{n}, the current message plus the next @var{n-1} messages are saved.
-If @var{n} is negative, the current message and the previous @var{n-1}
-messages are saved.  Messages saved with @code{vm-save-message} are
-flagged ``filed''.
+minibuffer.  It can be given a prefix argument @var{n} to indicate how
+many messages should be saved.  Messages saved with
+@code{vm-save-message} are flagged ``filed''.
 
 @vindex vm-folder-directory
 @vindex vm-thunderbird-folder-directory
+Messages can be saved to folders on the local file system or to
+folders on an IMAP server.
 If @code{vm-folder-directory} is set, @code{vm-save-message} will
 insert this directory name into the minibuffer before prompting you
 for a folder name; this will save you some typing.   If

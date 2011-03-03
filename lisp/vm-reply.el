@@ -993,7 +993,7 @@ Numeric prefix argument N means to reply to the current message plus the
 next N-1 messages.  A negative N means reply to the current message and
 the previous N-1 messages.
 
-If invoked on marked messages (via vm-next-command-uses-marks),
+If invoked on marked messages (via `vm-next-command-uses-marks'),
 all marked messages will be replied to.
 
 You will be placed into a standard Emacs Mail mode buffer to compose and
@@ -1001,7 +1001,7 @@ send your message.  See the documentation for the function `mail' for
 more info.
 
 Note that the normal binding of C-c C-y in the reply buffer is
-automatically changed to vm-yank-message during a reply.  This
+automatically changed to `vm-yank-message' during a reply.  This
 allows you to yank any message from the current folder into a
 reply.
 
@@ -1297,8 +1297,11 @@ the digest.  One line is generated for each message being digestified.
 The variable vm-digest-preamble-format determines the format of the
 preamble lines.
 
-If invoked on marked messages (via vm-next-command-uses-marks),
-only marked messages will be put into the digest."
+If invoked on marked messages (via `vm-next-command-uses-marks'),
+only marked messages will be put into the digest.  If applied to
+collapsed threads in summary and thread operations are enabled via
+`vm-enable-thread-operations' then all messages in the thread are
+included in the digest."
   (interactive "P")
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((dir default-directory)

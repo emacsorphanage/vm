@@ -103,13 +103,13 @@
 ;;;###autoload
 (defun vm-auto-archive-messages (&optional arg)
   "Save all unfiled messages that auto-match a folder via
-vm-auto-folder-alist to their appropriate folders.  Messages that
+`vm-auto-folder-alist' to their appropriate folders.  Messages that
 are flagged for deletion are not saved.
 
 Prefix arg means to ask user for confirmation before saving each message.
 
-When invoked on marked messages (via vm-next-command-uses-marks),
-only marked messages are checked against vm-auto-folder-alist.
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+only marked messages are checked against `vm-auto-folder-alist'.  
 
 The saved messages are flagged as `filed'."
   (interactive "P")
@@ -154,7 +154,7 @@ The saved messages are flagged as `filed'."
 			      auto-folder)))
 		 (let ((vm-delete-after-saving vm-delete-after-archiving)
 		       (last-command 'vm-auto-archive-messages))
-		   (vm-save-message auto-folder 1 'quiet)
+		   (vm-save-message auto-folder 1 nil 'quiet)
 		   (vm-increment archived)
 		   (message "%d archived, still working..." archived)))
 	    (setq done (eq vm-message-pointer stop-point)
@@ -183,11 +183,21 @@ The saved messages are flagged as `filed'."
 ;; New shell defun to handle both IMAP and local saving.
 ;;---------------------------------------------------------------------------
 ;;;###autoload
-(defun vm-save-message (folder &optional count quiet)
-  "Save the current message.  This may be done either by saving it
-to an IMAP folder or by saving it to a local filesystem folder.
-Which is done depends on the type of current vm folder
-and the variable `vm-imap-save-to-server' (which see)."
+(defun vm-save-message (folder &optional count mlist quiet)
+  "Save the current message to another FOLDER, queried via the
+mini-buffer.  The FOLDER may be a local file system folder or an
+IMAP folder.  You can specify a preference by setting the
+variable `vm-imap-save-to-server'.
+
+Prefix arg COUNT means save this message and the next COUNT-1
+messages.  A negative COUNT means save this message and the
+previous COUNT-1 messages.
+
+When invoked on marked messages (via `vm-next-command-uses-marks'),       
+all marked messages in the current folder are saved; other messages are
+ignored.  If applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are saved."
   (interactive
    (if (and vm-imap-save-to-server (vm-imap-folder-p))
        ;; IMAP saving --- argument parsing taken from
@@ -228,16 +238,19 @@ and the variable `vm-imap-save-to-server' (which see)."
 		 (vm-read-file-name "Save in folder: " dir nil)))))
       (prefix-numeric-value current-prefix-arg))))
 
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (unless mlist
+    (setq mlist (vm-select-operable-messages count (interactive-p) "Save")))
   (cond ((and vm-imap-save-to-server (vm-imap-folder-p))
-	 (vm-save-message-to-imap-folder folder count quiet))
+	 (vm-save-message-to-imap-folder folder count mlist quiet))
 	((and (stringp vm-recognize-imap-maildrops)
 	      (string-match vm-recognize-imap-maildrops folder))
-	 (vm-save-message-to-imap-folder folder count quiet))
+	 (vm-save-message-to-imap-folder folder count mlist quiet))
 	(t
-	 (vm-save-message-to-local-folder folder count quiet))))
+	 (vm-save-message-to-local-folder folder count mlist quiet))))
    
 ;;;###autoload
-(defun vm-save-message-to-local-folder (folder &optional count quiet)
+(defun vm-save-message-to-local-folder (folder &optional count mlist quiet)
   "Save the current message to a mail folder.
 If the folder already exists, the message will be appended to it.
 
@@ -245,9 +258,11 @@ Prefix arg COUNT means save this message and the next COUNT-1
 messages.  A negative COUNT means save this message and the
 previous COUNT-1 messages.
 
-When invoked on marked messages (via vm-next-command-uses-marks),
+When invoked on marked messages (via `vm-next-command-uses-marks'),
 all marked messages in the current folder are saved; other messages are
-ignored.
+ignored.  If  applied to collapsed threads in summary and thread
+operations are enabled via `vm-enable-thread-operations' then all messages
+in the thread are saved.
 
 The saved messages are flagged as `filed'."
   (interactive
@@ -276,15 +291,16 @@ The saved messages are flagged as `filed'."
 	       (vm-read-file-name "Save in folder: " dir nil)))))
     (prefix-numeric-value current-prefix-arg)))
 
-  (let (auto-folder unexpanded-folder mlist ml)
+  (let (auto-folder unexpanded-folder ml)
     (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (setq unexpanded-folder folder
 	  auto-folder (vm-auto-select-folder vm-message-pointer
 					     vm-auto-folder-alist))
     (vm-display nil nil '(vm-save-message) '(vm-save-message))
     (unless count (setq count 1))
-    (setq mlist (vm-select-operable-messages
-		 count (interactive-p) "Save"))
+    (unless mlist
+      (setq mlist (vm-select-operable-messages
+		   count (interactive-p) "Save")))
     (vm-retrieve-operable-messages count mlist)
     ;; Expand the filename, forcing relative paths to resolve
     ;; into the folder directory.
@@ -472,14 +488,16 @@ If the file already exists, the message body will be appended to it.
 Prefix arg COUNT means save the next COUNT message bodiess.  A
 negative COUNT means save the previous COUNT bodies.
 
-When invoked on marked messages (via vm-next-command-uses-marks),
+When invoked on marked messages (via `vm-next-command-uses-marks'),
 only the next COUNT marked messages are saved; other intervening
-messages are ignored.
+messages are ignored.  If applied to collapsed threads in summary and
+thread operations are enabled via `vm-enable-thread-operations' then all
+messages in the thread are saved.
 
 The saved messages are flagged as `written'.
 
 This command should NOT be used to save message to mail folders; use
-vm-save-message instead (normally bound to `s')."
+`vm-save-message' instead (normally bound to `s')."
   (interactive
    ;; protect value of last-command
    (let ((last-command last-command)
@@ -592,9 +610,11 @@ With two \\[universal-argument]'s the header portion of the message is used.
 With three \\[universal-argument]'s the visible header portion of the message
 plus the text portion is used.
 
-When invoked on marked messages (via vm-next-command-uses-marks),
-each marked message is successively piped to the shell command,
-one message per command invocation.
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+each marked message is successively piped to the shell command, one
+message per command invocation.  If  applied to collapsed threads in 
+summary and thread operations are enabled via
+`vm-enable-thread-operations' then all messages in the thread are piped. 
 
 Output, if any, is displayed.  The message is not altered."
   (interactive
@@ -820,8 +840,11 @@ The variable `vm-print-command' controls what command is run to
 print the message, and `vm-print-command-switches' is a list of switches
 to pass to the command.
 
-When invoked on marked messages (via vm-next-command-uses-marks),
-each marked message is printed, one message per vm-print-command invocation.
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+each marked message is printed, one message per vm-print-command
+invocation.  If applied to collapsed threads in summary and thread
+operations are enabled via `vm-enable-thread-operations' then all messages
+in the thread are printed.
 
 Output, if any, is displayed.  The message is not altered."
   (interactive "p")
@@ -902,15 +925,17 @@ Output, if any, is displayed.  The message is not altered."
     (vm-switch-to-command-output-buffer command buffer nil)))
 
 ;;;###autoload
-(defun vm-save-message-to-imap-folder (target-folder &optional count quiet)
+(defun vm-save-message-to-imap-folder (folder &optional count mlist quiet)
   "Save the current message to an IMAP folder.
 Prefix arg COUNT means save this message and the next COUNT-1
 messages.  A negative COUNT means save this message and the
 previous COUNT-1 messages.
 
-When invoked on marked messages (via vm-next-command-uses-marks),
+When invoked on marked messages (via `vm-next-command-uses-marks'),
 all marked messages in the current folder are saved; other messages are
-ignored.
+ignored.  If applied to collapsed threads in summary and thread
+operations are enabled via `vm-enable-thread-operations' then all
+messages in the thread are saved.
 
 The saved messages are flagged as `filed'."
   (interactive
@@ -930,13 +955,14 @@ The saved messages are flagged as `filed'."
 	      '(vm-save-message-to-imap-folder))
   (unless count (setq count 1))
   (let (source-spec-list
-	(target-spec-list (vm-imap-parse-spec-to-list target-folder))
-	(mlist (vm-select-operable-messages count (interactive-p) "Save"))
+	(target-spec-list (vm-imap-parse-spec-to-list folder))
 	ml m
 	(save-count 0)
 	server-to-server-p mailbox
 	process
 	)
+    (unless mlist
+      (setq mlist (vm-select-operable-messages count (interactive-p) "Save")))
     (setq mailbox (nth 3 target-spec-list))
     (unwind-protect
 	(save-excursion
@@ -974,7 +1000,7 @@ The saved messages are flagged as `filed'."
 		  (vm-imap-copy-message process m mailbox))
 	      (unless process
 		(setq process 
-		      (vm-imap-make-session target-folder t "save")))
+		      (vm-imap-make-session folder t "save")))
 	      (if (null process)
 		  (error "Could not connect to the IMAP server"))
 	      (vm-imap-save-message process m mailbox))
@@ -986,18 +1012,18 @@ The saved messages are flagged as `filed'."
 	      (vm-set-deleted-flag m t))
 	    (vm-increment save-count)
 	    (message "Saving messages... %s" save-count)
-	    (vm-modify-folder-totals target-folder 'saved 1 m)
+	    (vm-modify-folder-totals folder 'saved 1 m)
 	    (setq ml (cdr ml))))
       (when process (vm-imap-end-session process))
       (message "%d message%s saved to %s"
 	       save-count (if (/= 1 save-count) "s" "")
-	       (vm-safe-imapdrop-string target-folder)))
+	       (vm-safe-imapdrop-string folder)))
     (vm-update-summary-and-mode-line)
-    (setq vm-last-save-imap-folder target-folder)
+    (setq vm-last-save-imap-folder folder)
     ;; We call delete-message again even though the deleted-flags have
     ;; already been set, perhaps to take care of other business?
     (if (and vm-delete-after-saving (not vm-folder-read-only))
 	(vm-delete-message count mlist))
-    target-folder ))
+    folder ))
 
 ;;; vm-save.el ends here

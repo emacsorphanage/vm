@@ -740,14 +740,14 @@ variable."
 
 (defcustom vm-imap-save-to-server nil
   "*This variable controls the behavior of the `vm-save-message'
-  command.  
-If it is non-NIL, then messages from IMAP folders
-  are saved to other IMAP folders on the server, instead of
-  local folders.  Messages from local folders are still saved to local
-  folders.
+command.  If it is non-NIL, then messages from IMAP folders
+are saved to other IMAP folders on the server, instead of
+local folders.  Messages from local folders are still saved to local
+folders.
+
 The specialized commands `vm-save-message-to-local-folder' and
-  `vm-save-message-to-imap-folder' can be used to obtain particular
-  behavior independent of this variable."
+`vm-save-message-to-imap-folder' can be used to obtain particular
+behavior independent of this variable."
   :group 'vm-imap
   :type 'boolean)
 

@@ -586,8 +586,11 @@ of digest the current message is.  If it is not given the value
 defaults to the value of vm-digest-burst-type.  When called
 interactively DIGEST-TYPE will be read from the minibuffer.
 
-If invoked on marked messages (via vm-next-command-uses-marks),
-all marked messages will be burst."
+If invoked on marked messages (via `vm-next-command-uses-marks'),
+all marked messages will be burst.  If applied to collapsed
+threads in summary and thread operations are enabled via
+`vm-enable-thread-operations' then all messages in the thread are
+burst."
   (interactive
    (list
     (let ((type nil)
@@ -691,8 +694,11 @@ of digest the current message is.  If it is not given the value
 defaults to the value of vm-digest-burst-type.  When called
 interactively DIGEST-TYPE will be read from the minibuffer.
 
-If invoked on marked messages (via vm-next-command-uses-marks),
-all marked messages will be burst."
+If invoked on marked messages (via `vm-next-command-uses-marks'),
+all marked messages will be burst.  If applied to collapsed
+threads in summary and thread operations are enabled via
+`vm-enable-thread-operations' then all messages in the thread are
+burst."
   (interactive
    (list
     (let ((type nil)

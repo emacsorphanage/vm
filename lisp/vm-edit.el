@@ -29,7 +29,9 @@
   (require 'vm-folder)
   (require 'vm-window)
   (require 'vm-page)
-  ;; (require 'vm-motion)
+  (require 'vm-thread)
+  (require 'vm-sort)
+  (require 'vm-motion)
 )
 
 
@@ -143,8 +145,11 @@ Numeric prefix argument N means to discard data from the current message
 plus the next N-1 messages.  A negative N means discard data from the
 current message and the previous N-1 messages.
 
-When invoked on marked messages (via vm-next-command-uses-marks),
-data is discarded only from the marked messages in the current folder."
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+data is discarded only from the marked messages in the current folder.
+If applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread have their cached data discarded."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)
