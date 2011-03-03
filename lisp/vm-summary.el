@@ -109,18 +109,18 @@ summary line then nil is returned."
 	truncate-lines t)
   ;; horizontal scrollbar off by default
   ;; user can turn it on in summary hook if desired.
-  (and vm-xemacs-p (featurep 'scrollbar)
-       (set-specifier scrollbar-height (cons (current-buffer) 0)))
+  (when (and vm-xemacs-p (featurep 'scrollbar))
+    (set-specifier scrollbar-height (cons (current-buffer) 0)))
   (use-local-map vm-summary-mode-map)
-  (and (vm-menu-support-possible-p)
-       (vm-menu-install-menus))
+  (when (vm-menu-support-possible-p)
+    (vm-menu-install-menus))
 ;; using the 'mouse-face property gives faster highlighting than this.
 ;;  (and vm-mouse-track-summary
 ;;       (vm-mouse-support-possible-p)
 ;;       (vm-mouse-xemacs-mouse-p)
 ;;       (add-hook 'mode-motion-hook 'mode-motion-highlight-line))
-  (if (and vm-mutable-frames (or vm-frame-per-folder vm-frame-per-summary))
-      (vm-set-hooks-for-frame-deletion))
+  (when (and vm-mutable-frames (or vm-frame-per-folder vm-frame-per-summary))
+    (vm-set-hooks-for-frame-deletion))
   (run-hooks 'vm-summary-mode-hook)
   ;; Lucid Emacs apparently used this name
   (run-hooks 'vm-summary-mode-hooks))
@@ -2032,13 +2032,13 @@ Call this function if you made changes to `vm-summary-format'."
 	buffer-read-only t
 	buffer-offer-save nil
 	truncate-lines t)
-  (and vm-xemacs-p (featurep 'scrollbar)
-       (set-specifier scrollbar-height (cons (current-buffer) 0)))
+  (when (and vm-xemacs-p (featurep 'scrollbar))
+    (set-specifier scrollbar-height (cons (current-buffer) 0)))
   (use-local-map vm-folders-summary-mode-map)
-  (and (vm-menu-support-possible-p)
-       (vm-menu-install-menus))
-  (if (and vm-mutable-frames vm-frame-per-folders-summary)
-      (vm-set-hooks-for-frame-deletion))
+  (when (vm-menu-support-possible-p)
+    (vm-menu-install-menus))
+  (when (and vm-mutable-frames vm-frame-per-folders-summary)
+    (vm-set-hooks-for-frame-deletion))
   (run-hooks 'vm-folders-summary-mode-hook))
 
 (defun vm-do-folders-summary ()

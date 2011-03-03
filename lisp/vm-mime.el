@@ -59,7 +59,6 @@
 (declare-function latin-unity-massage-name "vm-xemacs" (a b))
 (declare-function latin-unity-maybe-remap "vm-xemacs" 
 		  (a1 a2 a3 a4 a5 a6))
-(declare-function device-type "vm-xemacs" (&optional device))
 (declare-function device-sound-enabled-p "vm-xemacs" (&optional device))
 (declare-function device-bitplanes "vm-xemacs" (&optional device))
 (declare-function font-height "vm-xemacs" (font &optional domain charset))
@@ -421,7 +420,7 @@ freshly parsing the message contents."
 (defun vm-mime-charset-decode-region (charset start end)
   (or (markerp end) (setq end (vm-marker end)))
   (cond ((or vm-xemacs-mule-p vm-fsfemacs-mule-p)
-	 (if (or (and vm-xemacs-p (memq (device-type) '(x gtk mswindows)))
+	 (if (or (and vm-xemacs-p (memq (vm-device-type) '(x gtk mswindows)))
 		 vm-fsfemacs-p
 		 (vm-mime-tty-can-display-mime-charset charset)
 		 nil)
@@ -1492,16 +1491,16 @@ source of the message."
 	     (defvar scroll-in-place)
 	     (make-local-variable 'scroll-in-place)
 	     (setq scroll-in-place nil)
-	     (if (fboundp 'set-buffer-file-coding-system)
-		 (set-buffer-file-coding-system (vm-binary-coding-system) t))
+	     (when (fboundp 'set-buffer-file-coding-system)
+	       (set-buffer-file-coding-system (vm-binary-coding-system) t))
 	     (vm-fsfemacs-nonmule-display-8bit-chars)
 	     (if (and vm-mutable-frames vm-frame-per-folder
 		      (vm-multiple-frames-possible-p))
 		 (vm-set-hooks-for-frame-deletion))
 	     (use-local-map vm-mode-map)
 	     (vm-toolbar-install-or-uninstall-toolbar)
-	     (and (vm-menu-support-possible-p)
-		  (vm-menu-install-menus))
+	     (when (vm-menu-support-possible-p)
+	       (vm-menu-install-menus))
 	     (run-hooks 'vm-presentation-mode-hook))
 	   (setq vm-presentation-buffer-handle b)))
     (setq b vm-presentation-buffer-handle)
@@ -1510,10 +1509,9 @@ source of the message."
     ;; W3 or some other external mode might set some local colors
     ;; in this buffer; remove them before displaying a different
     ;; message here.
-    (if (fboundp 'remove-specifier)
-	(progn
-	  (remove-specifier (face-foreground 'default) b)
-	  (remove-specifier (face-background 'default) b)))
+    (when (fboundp 'remove-specifier)
+      (remove-specifier (face-foreground 'default) b)
+      (remove-specifier (face-background 'default) b))
     (save-excursion
       (set-buffer (vm-buffer-of real-m))
       (save-restriction
@@ -1632,8 +1630,8 @@ source of the message."
 		 (vm-set-hooks-for-frame-deletion))
 	     (use-local-map vm-mode-map)
 	     (vm-toolbar-install-or-uninstall-toolbar)
-	     (and (vm-menu-support-possible-p)
-		  (vm-menu-install-menus))
+	     (when (vm-menu-support-possible-p)
+	       (vm-menu-install-menus))
 	     (run-hooks 'vm-message-mode-hook))
 	   (setq vm-fetch-buffer b)))
     (setq b vm-fetch-buffer)
@@ -2030,7 +2028,7 @@ that recipient is outside of East Asia."
 		(or (device-sound-enabled-p)
 		    (and (featurep 'native-sound)
 			 (not native-sound-only-on-console)
-			 (memq (device-type) '(x gtk))))))
+			 (memq (vm-device-type) '(x gtk))))))
 	  ((vm-mime-types-match "multipart" type) t)
 	  ((vm-mime-types-match "message/external-body" type)
 	   (or (not deep)
@@ -4445,7 +4443,7 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 	   (or (device-sound-enabled-p)
 	       (and (featurep 'native-sound)
 		    (not native-sound-only-on-console)
-		    (memq (device-type) '(x gtk)))))
+		    (memq (vm-device-type) '(x gtk)))))
       (let ((start (point-marker)) end tempfile
 	    (selective-display nil)
 	    (buffer-read-only nil))
@@ -5390,7 +5388,7 @@ Returns non-NIL value M is a plain message."
 
 (defun vm-mime-charset-internally-displayable-p (name)
   "Can the given MIME charset be displayed within emacs by VM?"
-  (cond ((and vm-xemacs-mule-p (memq (device-type) '(x gtk mswindows)))
+  (cond ((and vm-xemacs-mule-p (memq (vm-device-type) '(x gtk mswindows)))
 	 (or (vm-mime-charset-to-coding name)
 	     (vm-mime-default-face-charset-p name)))
 

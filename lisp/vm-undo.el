@@ -113,17 +113,17 @@ argument BUFFER can ask for it to be done for some other folder."
     (if (equal '(nil) vm-undo-record-list)
 	(setq vm-undo-record-list nil)))
   ;; for the Undo button on the menubar, if present
-  (and (null vm-undo-record-list)
-       (vm-menu-support-possible-p)
-       (vm-menu-xemacs-menus-p)
-       (vm-menu-set-menubar-dirty-flag)))
+  (when (and (null vm-undo-record-list)
+	     (vm-menu-support-possible-p)
+	     (vm-menu-xemacs-menus-p))
+    (vm-menu-set-menubar-dirty-flag)))
 	    
 (defun vm-undo-record (sexp)
   ;; for the Undo button on the menubar, if present
-  (and (null vm-undo-record-list)
-       (vm-menu-support-possible-p)
-       (vm-menu-xemacs-menus-p)
-       (vm-menu-set-menubar-dirty-flag))
+  (when (and (null vm-undo-record-list)
+	     (vm-menu-support-possible-p)
+	     (vm-menu-xemacs-menus-p))
+    (vm-menu-set-menubar-dirty-flag))
   (setq vm-undo-record-list (cons sexp vm-undo-record-list)))
 
 (defun vm-undo-describe (record)

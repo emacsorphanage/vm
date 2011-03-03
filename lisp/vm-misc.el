@@ -42,6 +42,8 @@
 (declare-function emacs-get-buffer-window "vm-misc.el"
 		  (&optional buffer-or-name frame devices))
 
+(declare-function vm-device-type "vm-misc.el"
+		  (&optional device))
 (declare-function vm-buffer-substring-no-properties "vm-misc.el"
 		  (start end))
 (declare-function substring-no-properties "vm-misc.el"
@@ -501,6 +503,18 @@ elements that do not satisfy PREDICATE."
 	    (setq list (cdr list))
 	  (throw 'fail nil)))
       t)))
+
+(fset 'vm-device-type
+      (cond (vm-xemacs-p 'device-type)
+	    (vm-fsfemacs-p 'vm-fsfemacs-device-type)))
+
+(defun vm-fsfemacs-device-type (&optional device)
+  "An FSF Emacs emulation for XEmacs `device-type' function.  Returns
+the type of the current screen device: one of 'x, 'gtk, 'w32, 'ns and
+'pc.  The optional argument DEVICE is ignored."
+  (if (eq window-system 'x)
+      (if (featurep 'gtk) 'gtk)
+    window-system))
 
 (defun vm-generate-new-unibyte-buffer (name)
   (if vm-xemacs-p

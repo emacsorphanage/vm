@@ -21,6 +21,7 @@
 
 (provide 'vm-version)
 
+;; Don't use vm-device-type here because it may not not be loaded yet.
 (declare-function device-type "vm-xemacs" ())
 (declare-function device-matching-specifier-tag-list "vm-xemacs" ())
 

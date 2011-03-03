@@ -32,8 +32,9 @@
 
 (declare-function xemacs-locate-data-directory "vm-xemacs" (name))
 (fset 'xemacs-locate-data-directory 'locate-data-directory)
-(declare-function xemacs-device-type "vm-xemacs" ())
-(fset 'xemacs-device-type 'device-type)
+;; Don't use vm-device-type here because it may not be loaded yet.
+(declare-function device-type "vm-xemacs" ())
+;; (fset 'xemacs-device-type 'device-type)
 
 ;; Custom group definitions
 (defgroup vm nil
@@ -4050,7 +4051,7 @@ Under FSF Emacs 21 the toolbar is always at the top of the frame."
 			 (string-match "'--with-gtk'" 
 				       system-configuration-options)
 			 (and (boundp 'device-type)
-			      (eq (xemacs-device-type) 'gtk)))
+			      (eq (device-type) 'gtk)))
   "True when running in a GTK enabled Emacs.")
 
 (defun vm-toolbar-pixmap-directory ()

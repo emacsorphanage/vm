@@ -325,12 +325,11 @@ deleted messages.  Use `###' to expunge deleted messages."
 
       ;; say this NOW, before the non-previewers read a message,
       ;; alter the new message count and confuse themselves.
-      (if full-startup
-	  (progn
-	    ;; save blurb so we can repeat it later as necessary.
-	    (setq totals-blurb (vm-emit-totals-blurb))
-	    (and buffer-file-name
-		 (vm-store-folder-totals buffer-file-name (cdr vm-totals)))))
+      (when full-startup
+	;; save blurb so we can repeat it later as necessary.
+	(setq totals-blurb (vm-emit-totals-blurb))
+	(and buffer-file-name
+	     (vm-store-folder-totals buffer-file-name (cdr vm-totals))))
 
       (vm-thoughtfully-select-message)
       (vm-update-summary-and-mode-line)
@@ -338,8 +337,8 @@ deleted messages.  Use `###' to expunge deleted messages."
       ;; toolbar sets frame-specific height and width specifiers.
       (vm-toolbar-install-or-uninstall-toolbar)
 
-      (and vm-use-menus (vm-menu-support-possible-p)
-	   (vm-menu-install-visited-folders-menu))
+      (when (and vm-use-menus (vm-menu-support-possible-p))
+	(vm-menu-install-visited-folders-menu))
 
       (if full-startup
 	  (progn
@@ -922,8 +921,8 @@ vm-visit-virtual-folder.")
 	  (setq scroll-in-place nil)
 	  (vm-build-virtual-message-list nil)
 	  (use-local-map vm-mode-map)
-	  (and (vm-menu-support-possible-p)
-	       (vm-menu-install-menus))
+	  (when (vm-menu-support-possible-p)
+	    (vm-menu-install-menus))
 	  (add-hook 'kill-buffer-hook 'vm-garbage-collect-folder)
 	  (add-hook 'kill-buffer-hook 'vm-garbage-collect-message)
 	  ;; save this for last in case the user interrupts.
@@ -936,8 +935,8 @@ vm-visit-virtual-folder.")
 				     (vm-menu-support-possible-p)
 				     (vm-menu-mode-menu)))
 	  (setq blurb (vm-emit-totals-blurb))
-	  (if vm-summary-show-threads
-	      (vm-sort-messages "activity"))
+	  (when vm-summary-show-threads
+	    (vm-sort-messages "activity"))
 	  (if bookmark
 	      (let ((mp vm-message-list))
 		(while mp
@@ -948,10 +947,10 @@ vm-visit-virtual-folder.")
 			(vm-preview-current-message)
 			(setq mp nil))
 		    (setq mp (cdr mp))))))
-	  (if (null vm-message-pointer)
-	      (if (vm-thoughtfully-select-message)
-		  (vm-preview-current-message)
-		(vm-update-summary-and-mode-line)))
+	  (unless vm-message-pointer
+	    (if (vm-thoughtfully-select-message)
+		(vm-preview-current-message)
+	      (vm-update-summary-and-mode-line)))
 	  (message blurb)))
     ;; make a new frame if the user wants one.  reuse an
     ;; existing frame that is showing this folder.
@@ -1462,12 +1461,12 @@ draft messages."
 	  (vm-xemacs-set-face-background 'gui-button-face "gray75" nil '(win))
 	  (vm-xemacs-set-face-foreground 'gui-button-face "white" nil '(tty))
 	  (vm-xemacs-set-face-background 'gui-button-face "red" nil '(tty)))
-	(and (vm-mouse-support-possible-p)
-	     (vm-mouse-install-mouse))
-	(and (vm-menu-support-possible-p)
-	     vm-use-menus
-	     (vm-menu-fsfemacs-menus-p)
-	     (vm-menu-initialize-vm-mode-menu-map))
+	(when (vm-mouse-support-possible-p)
+	  (vm-mouse-install-mouse))
+	(when (and (vm-menu-fsfemacs-menus-p)
+		   (vm-menu-support-possible-p)
+		   vm-use-menus)
+	  (vm-menu-initialize-vm-mode-menu-map))
 	(setq vm-session-beginning nil)))
   ;; check for postponed messages
   (vm-update-draft-count))

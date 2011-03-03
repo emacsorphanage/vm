@@ -4684,8 +4684,8 @@ folder-access-data should be preserved."
   ;; mail again.
   (vm-make-local-hook 'after-save-hook)
   (add-hook 'after-save-hook 'vm-unblock-new-mail nil t)
-  (and (vm-menu-support-possible-p)
-       (vm-menu-install-menus))
+  (when (vm-menu-support-possible-p)
+    (vm-menu-install-menus))
   (add-hook 'kill-buffer-hook 'vm-garbage-collect-folder)
   (add-hook 'kill-buffer-hook 'vm-garbage-collect-message)
   ;; avoid the XEmacs file dialog box.
