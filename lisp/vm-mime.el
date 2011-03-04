@@ -2479,7 +2479,7 @@ in the buffer.  The function is expected to make the message
 If DONT-HONOR-C-D non-Nil, then don't honor the Content-Disposition
 declarations in the attachments and make a decision independently.
 
-LAYOUT can be a mime layout can be a layout vector.  It can also be an
+LAYOUT can be a mime layout vector.  It can also be an
 overlay of a button in the current buffer, in which case the
 'vm-mime-layout property of the overlay will be extracted.
                                                 USR, 2011-02-08"
@@ -2963,7 +2963,8 @@ determined by `vm-mime-external-content-types-alist'."
 	       (setq favs (cdr favs)))
 	     (setq best-layout (or best second-best
 				   (car (vm-mm-layout-parts layout)))))))
-    (and best-layout (vm-decode-mime-layout best-layout))))
+    (when best-layout 
+      (vm-decode-mime-layout best-layout))))
 
 (defun vm-mime-display-internal-multipart/related (layout)
   "Decode multipart/related body parts.

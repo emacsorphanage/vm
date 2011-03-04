@@ -4525,47 +4525,48 @@ files."
 	;; slate as we can provide, given we're currently deep
 	;; in the guts of VM.
 	(vm-update-summary-and-mode-line)
-	(if vm-arrived-message-hook
-	    (while new-messages
-	      (vm-run-message-hook (car new-messages)
-				   'vm-arrived-message-hook)
-	      (setq new-messages (cdr new-messages))))
+	(when (and vm-arrived-message-hook
+		   (not (eq vm-folder-access-method 'imap)))
+	  (while new-messages
+	    (vm-run-message-hook (car new-messages)
+				 'vm-arrived-message-hook)
+	    (setq new-messages (cdr new-messages))))
 	(run-hooks 'vm-arrived-messages-hook)))
-    (if (and new-messages vm-virtual-buffers)
-	(save-excursion
-	  (setq b-list vm-virtual-buffers)
-	  (while b-list
-	    ;; buffer might be dead
-	    (if (buffer-name (car b-list))
-		(let (tail-cons)
-		  (set-buffer (car b-list))
-		  (setq tail-cons (vm-last vm-message-list))
-		  (vm-build-virtual-message-list new-messages)
-		  (if (or (null tail-cons) (cdr tail-cons))
-		      (progn
-                        (if (not vm-assimilate-new-messages-sorted)
-                            (setq vm-ml-sort-keys nil))
-			(if (vectorp vm-thread-obarray)
-			    (vm-build-threads (cdr tail-cons)))
-			(vm-set-summary-redo-start-point
-			 (or (cdr tail-cons) vm-message-list))
-			(vm-set-numbering-redo-start-point
-			 (or (cdr tail-cons) vm-message-list))
-			(unless vm-message-pointer
-			  (setq vm-message-pointer vm-message-list
-				vm-need-summary-pointer-update t)
-			  (if vm-message-pointer
-			      (vm-preview-current-message)))
-			(when vm-summary-show-threads
-			  (vm-update-summary-and-mode-line)
-			  (vm-sort-messages (or vm-ml-sort-keys "activity")))
-			))))
-	    (setq b-list (cdr b-list)))))
-    (if (and new-messages vm-ml-sort-keys)
-        (vm-sort-messages vm-ml-sort-keys))
+    (when (and new-messages vm-virtual-buffers)
+      (save-excursion
+	(setq b-list vm-virtual-buffers)
+	(while b-list
+	  ;; buffer might be dead
+	  (when (buffer-name (car b-list))
+	    (let (tail-cons)
+	      (set-buffer (car b-list))
+	      (setq tail-cons (vm-last vm-message-list))
+	      (vm-build-virtual-message-list new-messages)
+	      (when (or (null tail-cons) (cdr tail-cons))
+		(if (not vm-assimilate-new-messages-sorted)
+		    (setq vm-ml-sort-keys nil))
+		(if (vectorp vm-thread-obarray)
+		    (vm-build-threads (cdr tail-cons)))
+		(vm-set-summary-redo-start-point
+		 (or (cdr tail-cons) vm-message-list))
+		(vm-set-numbering-redo-start-point
+		 (or (cdr tail-cons) vm-message-list))
+		(unless vm-message-pointer
+		  (setq vm-message-pointer vm-message-list
+			vm-need-summary-pointer-update t)
+		  (if vm-message-pointer
+		      (vm-preview-current-message)))
+		(when vm-summary-show-threads
+		  (vm-update-summary-and-mode-line)
+		  (vm-sort-messages (or vm-ml-sort-keys "activity")))
+		)))
+	  (setq b-list (cdr b-list)))))
+    (when (and new-messages vm-ml-sort-keys)
+      (vm-sort-messages vm-ml-sort-keys))
     new-messages ))
 
-(defun vm-select-operable-messages (prefix interactive op-description)
+(defun vm-select-operable-messages (prefix 
+				    &optional interactive op-description)
   "Return a list of all marked messages, messages indicated by
 the PREFIX argument or messages in a collapsed thread, in that
 order.  Marked messages are returned only if the previous command

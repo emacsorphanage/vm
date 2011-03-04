@@ -2921,7 +2921,7 @@ operation of the server to minimize I/O."
 	   (folder (or (vm-imap-folder-for-spec imapdrop)
 		       (vm-safe-imapdrop-string imapdrop)))
 	   (use-body-peek (vm-folder-imap-body-peek))
-	   r-list range k mp got-some message-size old-eob
+	   r-list range k mp new-messages message-size old-eob
 	   (sync-data (vm-imap-get-synchronization-data do-retrieves))
 	   (retrieve-list (nth 0 sync-data))
 	   (expunge-list (nth 1 sync-data))
@@ -3029,12 +3029,11 @@ operation of the server to minimize I/O."
 	   (message "Updating summary... ")
 	   (vm-update-summary-and-mode-line)
 	   (setq mp (vm-assimilate-new-messages t))
-	   (setq got-some mp)
-           (if got-some
+	   (setq new-messages mp)
+           (if new-messages
                (vm-increment vm-modification-counter))
            (setq r-list retrieve-list)
 	   (while mp
-	     ;; headers-only loading is still experimental. USR, 2010-01-12
 	     (when vm-load-headers-only 
 	       (vm-set-body-to-be-retrieved-of (car mp) t)
 	       (vm-set-body-to-be-discarded-of (car mp) nil))
@@ -3047,6 +3046,12 @@ operation of the server to minimize I/O."
 	      (car mp) (cdr (symbol-value (intern uid flags))) t)
 	     (setq mp (cdr mp)
 		   r-list (cdr r-list)))
+	   (setq mp new-messages)
+	   (when vm-arrived-message-hook
+	     (while mp
+	       (vm-run-message-hook (car mp) 'vm-arrived-message-hook)
+	       (setq mp (cdr mp))))
+	   (run-hooks 'vm-arrived-messages-hook)
 	   )))
 
       (when do-local-expunges
@@ -3179,7 +3184,7 @@ operation of the server to minimize I/O."
       ;; will keep it around for use with headers-only messages.
       ;; (vm-imap-end-session process)
       (setq vm-imap-connection-mode 'online)
-      got-some)))
+      new-messages)))
 
 (defvar vm-imap-message-bunch-size 10
   "* Number of messages in a bunch to be used for IMAP server

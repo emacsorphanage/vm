@@ -353,8 +353,8 @@ files with other folders by setting the variable
 
 @findex vm-load-init-file
 @vindex vm-init-file
-@vindex vm-preferences-file
 @kindex L
+@cindex .vm
 The first time VM is started in an Emacs session, it attempts to load
 the file specified by the variable @code{vm-init-file}, normally
 @file{~/.vm}.  If present this file should contain Lisp code, much
@@ -365,6 +365,8 @@ directories that VM needs to use for its operation and the external
 applications that VM can invoke.  You can reload this file by typing
 @kbd{L} (@code{vm-load-init-file}) from within VM.
 
+@vindex vm-preferences-file
+@cindex .vm.preferences
 In addition, VM also attempts to load a file specified by the variable
 @code{vm-preferences-file}, normally @file{~/.vm.preferences}.  This
 file should contain your preferential settings for various VM
@@ -635,6 +637,8 @@ mailbox.  The retrieved messages can be automatically removed from the
 POP mailbox or retained until a later expunge operation.
 
 @vindex vm-pop-max-message-size
+@findex vm-get-new-mail
+@vindex vm-auto-get-new-mail
 By default VM will retrieve all the messages from a POP mailbox
 before returning control of Emacs to you.  If the mailbox is
 large, the wait could be considerable.  If you set
@@ -1014,6 +1018,9 @@ defined via the variables @code{vm-pop-folder-alist} and
 
 
 @findex vm-visit-pop-folder
+@findex vm-save-folder
+@vindex vm-folder-directory
+@vindex vm-pop-folder-cache-directory
 The command @code{vm-visit-pop-folder} allows you to visit a POP
 mailbox as a folder.  When you visit a POP folder, VM will download
 copies of the messages that it finds there for you to read.  These
@@ -1076,6 +1083,9 @@ the minibuffer in the format account-name:folder-name.  Here,
 @code{vm-imap-account-alist} and ``folder-name'' is the name of an IMAP
 mailbox in this account.
 
+@findex vm-save-folder
+@vindex vm-folder-directory
+@vindex vm-imap-folder-cache-directory
 When you visit an IMAP folder, VM will
 download copies of the messages that it finds there for you to read.
 These messages are saved locally in a folder on the disk, in the 
@@ -1142,6 +1152,7 @@ instead.
 
 @anchor{IMAP Synchronization}
 @unnumberedsubsec IMAP Synchronization
+@vindex vm-get-new-mail
 The local copy and the folder on the IMAP server are partially
 synchronized every time @code{vm-get-new-mail} is invoked.  This
 involves (i) writing the changed attributes and labels to the server,
@@ -1149,12 +1160,14 @@ involves (i) writing the changed attributes and labels to the server,
 server data, (iii) expunging messages in the local copy that have been
 expunged on the server (through perhaps a concurrent access to the
 IMAP folder), and finally, (iv) retrieving any new messages on the
-server.  The variable @code{vm-imap-sync-on-get} specifies whether
-such synchronization should be done as part of @code{vm-get-new-mail}.
+server.
 @vindex vm-imap-sync-on-get
+The variable @code{vm-imap-sync-on-get} specifies whether
+such synchronization should be done as part of @code{vm-get-new-mail}.
 If the variable is set to nil then @code{vm-get-new-mail} simply
 retrieves any new messages.
 
+@findex vm-save-folder
 The local copy and the folder on the IMAP server are also synchronized
 every time @code{vm-save-folder} is invoked.  This involves (i)
 writing the changed attributes and labels to the server, (ii) updating
@@ -1723,6 +1736,7 @@ type that can, or be displayed using an external viewer.
 
 @vindex vm-auto-decode-mime-messages
 @vindex vm-mime-decode-for-preview
+@kindex D
 The first step in displaying a MIME message is decoding it to
 determine what object types it contains.  The variable
 @code{vm-auto-decode-mime-messages} controls when this happens.
@@ -2510,10 +2524,11 @@ Attaches an Emacs buffer to the composition.
 
 @findex vm-mime-encode-composition
 @kindex C-c C-e
+@kindex C-c C-c
 @item C-c C-e (@code{vm-mime-encode-composition})
 Encodes the composition using MIME, but does not send it.  This
 is useful if you want to use PGP to sign a message before sending
-it.  After signing the message, you would use C-c C-c as usual to
+it.  After signing the message, you would use @kbd{C-c C-c} as usual to
 send the message.  Emacs' @code{undo} command can be used to undo
 the encoding, so that you can continue composing the unencoded
 message.
@@ -2779,6 +2794,7 @@ folder will return you to your composition where you can make
 further changes.
 
 @kindex C-c C-e
+@kindex C-c C-c
 To encode a MIME message without sending it, use @kbd{C-c C-e}
 (@code{vm-mime-encode-composition}).  This is useful if you use
 PGP and want to sign a message before sending it.  VM will encode
@@ -3355,15 +3371,39 @@ the saved folders, irrespective of the settings of the above
 variables.  Giving a prefix argument to the @code{vm-quit} command has
 the same effect as @code{vm-quit-no-expunge}.
 
+@findex
+The function @code{vm-delete-duplicate-messages} can be used to delete
+duplicate copies of messages that arrive through various means.  For
+instance, if you are a member of a mailing list, every time somebody
+responds to one of your messages, they might send the response to you
+as well as the mailing list.  You then receive two copies of the
+response.  If you get a lot of such duplicate copies, you might
+consider invoking @code{vm-delete-duplicate-messages} automatically.
+For instance, the customization in your VM init file can have:
+
+@example
+(add-hook 'vm-arrived-messages-hook 'vm-delete-duplicate-messages)
+@end example
+
+@noindent This causes the duplicate-deletion function
+to be invoked every time new messages arrive so that you don't have to
+worry about the duplicate copies any further.  (@xref{Hooks}.)
+
 
 @node Editing Messages, Marking Messages, Deleting Messages, Top
 @chapter Editing Messages
 
+@kindex e
+@findex vm-edit-message
 To edit a message, type @kbd{e} (@code{vm-edit-message}).  The current
 message is copied into a temporary buffer, and this buffer is selected
 for editing.  The major mode of this buffer is controlled by the
 variable @code{vm-edit-message-mode}.  The default is Text mode.
 
+@kindex C-c ESC
+@findex vm-edit-message-end
+@kindex C-c C-]
+@findex vm-edit-message-abort
 Use @kbd{C-c ESC} (@code{vm-edit-message-end}) when you have finished
 editing the message.  The message will be inserted into its folder,
 replacing the old version of the message.  If you want to quit the edit
@@ -3519,6 +3559,8 @@ The message has been forwarded with the
 The message has been replied to.
 @end table
 
+@kindex a
+@findex vm-set-message-attributes
 You can set and unset these attributes directly by using @kbd{a}
 (@code{vm-set-message-attributes}).  You will be prompted in the
 minibuffer for names of the attributes and you can enter them with
@@ -4417,6 +4459,8 @@ for strings in messages.  It is better than the
 @code{vm-isearch-forward/backward} functions because it avoids searching
 inside encoded attachments, hence faster.
 
+@findex vm-get-new-mail
+@findex vm-save-folder
 Again, you visit virtual folders you have defined in
 @code{vm-virtual-folder-alist} with @kbd{V V}.  Once you've
 visited a virtual folder most VM commands work as they do in a
@@ -4458,6 +4502,8 @@ buffers.
 (setq-default vm-virtual-mirror nil)
 @end example
 
+@findex vm-toggle-virtual-mirror
+@kindex V M
 @noindent If you want to change whether the currently visited virtual 
 folder shares attributes with the underlying real folders, use the 
 command @code{vm-toggle-virtual-mirror} (bound to @kbd{V M}).  If the
@@ -4465,6 +4511,8 @@ virtual folder is currently sharing attributes it will no longer
 be.  If it is not sharing attributes with the underlying folders
 then it will be.
 
+@findex vm-create-virtual-folder
+@kindex V C
 The command @code{vm-create-virtual-folder} (bound to @kbd{V C}) lets
 you interactively create a virtual folder from the messages of
 the current folder, using exactly one selector to choose the
@@ -4472,31 +4520,47 @@ messages.  If you type @kbd{V C header RET pigs}, VM will create
 a folder containing only those messages that contain the string
 @samp{pigs} in the header.
 
+@findex vm-apply-virtual-folder
+@kindex V X
 The command @code{vm-apply-virtual-folder} (bound to @kbd{V X}) tries
 the selectors of a named virtual folder against the messages of
 the current folder and creates a virtual folder containing the
 matching messages.
 
+@kindex V S
+@kindex V A
+@findex vm-create-virtual-folder-same-subject
+@findex vm-create-virtual-folder-same-author
 The keys @kbd{V S} and @kbd{V A} invoke
 @code{vm-create-virtual-folder-same-subject} and
 @code{vm-create-virtual-folder-same-author} which create virtual folders
 containing all the messages in the current folder with the same
 subject or author as the current message.
 
+@kindex V O
+@findex vm-virtual-omit-message
+@kindex V U
+@findex vm-virtual-update-folders
 The keys @kbd{V O} @code{vm-virtual-omit-message} will omit a message from the
 virtual folder and @kbd{V U} @code{vm-virtual-update-folders} will force an
 update of the virtual folder.
 
+@findex vm-virtual-check-selector-interactive
 @kbd{M-x vm-virtual-check-selector-interactive} allows to test selectors
 interactively and will emit debug information when called with a prefix
 argument.
 
+@findex vm-virtual-auto-delete-message
+@findex vm-virtual-auto-delete-messages
+@vindex vm-arrived-messages-hook
 Automatic marking of messages for deletion based on a selector can be
 achieved with @code{vm-virtual-auto-delete-message} for interactive use and the
 function and @code{vm-virtual-auto-delete-messages} when added to the VM hook
 @code{vm-arrived-messages-hook}.  This can be quite handy for marking spam for
 deletion.
 
+@findex vm-virtual-save-message
+@findex vm-virtual-auto-archive-messages
 @kbd{M-x vm-virtual-save-message} can be used to save messages to the 
 folder corresponding to the first matching selector and the function 
 @kbd{vm-virtual-auto-archive-messages} can file messages based on
@@ -4626,6 +4690,8 @@ the function @code{make-frame}.
 @node Window Configuration,, Frame Configuration, Frames and Windows
 @section Window Configuration
 
+@findex vm-save-window-configuration
+@kindex W S
 Window configurations allow you to specify how the windows within
 a frame should look for a particular command or class of
 commands.  Each command can have a configuration associated with
@@ -4671,14 +4737,19 @@ a particular window, make sure you invoke
 that you can invoke the command with @kbd{M-x} if VM's normal
 key map is not in effect.
 
+@kindex W D
+@findex vm-delete-window-configuration
 To delete a window configuration, use @kbd{W D} which is bound to
 @code{vm-delete-window-configuration}.  You will be prompted for the
 name of the configuration to delete.
 
+@kindex W W
+@findex vm-apply-window-configuration
 To see what an existing configuration looks like, type @kbd{W W}
 which invokes @code{vm-apply-window-configuration}.
 
 @vindex vm-window-configuration-file
+@cindex .vm.windows
 VM saves information about your window configurations in the file
 named by the variable @code{vm-window-configuration-file}.  The default
 location of the configuration file is @samp{"~/.vm.windows"}.
@@ -5022,6 +5093,7 @@ for a folder.  The folder buffer will be current when the hooks are
 run.
 
 @item vm-arrived-messages-hook
+@findex vm-get-new-mail
 @vindex vm-arrived-messages-hook
 List of hook functions called after VM has gathered a group
 of messages from the system mail spool, or from another
@@ -5688,7 +5760,6 @@ In addition to these mbox formats, VM also handles the MMDF format and
 the Emacs Rmail's Babyl format.  The variable @code{vm-folder-type}
 stores the type of the folder being used.
 
-@cindex X-VM-v5-Data header
 @inindex X-VM-v5-Data header
 To every message, VM adds a header with the field name
 ``X-VM-v5-Data:'' and stores in it the information about the message it
@@ -5969,7 +6040,7 @@ specific to a VM session.
 @itemize
 @item
 @code{number}. The message number as an integer.
-@inindex padded
+@inindex padded-number
 @item
 @code{padded-number}. The message number as a padded string.
 @inindex mark
@@ -6097,6 +6168,8 @@ redistributed.
 @subsubheading Cached Data
 @anchor{Cached data vector}
 
+@cindex cached data
+@inindex X-VM-v5-Data header
 The data that is cached for the message and stored on the disk as part
 of the @code{X-VM-v5-Data} header field.  Even though this vector is
 only supposed to have data that can be calculated from the message

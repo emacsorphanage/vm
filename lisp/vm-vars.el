@@ -5839,10 +5839,14 @@ Its parent keymap is mail-mode-map.")
 (defvar vm-skip-collapsed-sub-threads t)
 (defvar vm-folder-type nil)
 (make-variable-buffer-local 'vm-folder-type)
-(defvar vm-folder-access-method nil)
+(defvar vm-folder-access-method nil
+  "Indicates how a VM folder is accessed: 'pop for POP folders, 'imap
+for IMAP folders and nil for local folders.")
 (make-variable-buffer-local 'vm-folder-access-method)
+
 (defvar vm-folder-access-data nil)
 (make-variable-buffer-local 'vm-folder-access-data)
+
 (defvar vm-message-list nil)
 (make-variable-buffer-local 'vm-message-list)
 (defvar vm-fetched-messages nil)
@@ -6600,6 +6604,7 @@ that has a match.")
 ;; messages have their own cache; this is for the virtual folder
 ;; alist selectors.
 (defvar vm-sortable-date-alist nil)
+(make-variable-buffer-local 'vm-sortable-date-alist)
 (defvar vm-summary-=> nil)
 (defvar vm-summary-no-=> nil)
 (defvar vm-summary-overlay nil)

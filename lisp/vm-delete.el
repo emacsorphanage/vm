@@ -290,22 +290,19 @@ deletion; you will have to expunge the messages with
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
 only duplicate messages among the marked messages are deleted,
-unmarked messages are not hashed or considerd for deletion.  If
-applied to collapsed threads in summary and thread operations are
-enabled via `vm-enable-thread-operations' then only the messages in
-the thread are considered."
+unmarked messages are not hashed or considerd for deletion."
   (interactive)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(table (make-vector 103 0))
-	(mp (vm-select-operable-messages 
-	     1 (interactive-p) "Delete duplicates among"))
+	(mp vm-message-list)
         (n 0)
         (case-fold-search t)
         mid)
-    (unless (cdr mp)
-      (setq mp vm-message-list))
+    (if used-marks
+	(let ((vm-enable-thread-operations nil))
+	  (setq mp (vm-select-operable-messages 0))))
     (while mp
       (cond ((vm-deleted-flag (car mp)))
             (t
@@ -317,13 +314,11 @@ the thread are considered."
 		 (setq n (1+ n)))
 	       (intern mid table))))
       (setq mp (cdr mp)))
-    (and (interactive-p)
-         (message "%d duplicate%s marked deleted" n (if (= n 1) "" "s")))
+    (when (interactive-p)
+      (if (zerop n)
+	  (message "No messages deleted")
+	(message "%d message%s deleted" n (if (= 1 n) "" "s"))))
     (vm-update-summary-and-mode-line)
-    (when vm-move-after-killing
-      (let ((vm-circular-folders (and vm-circular-folders
-                                      (eq vm-move-after-killing t))))
-        (vm-next-message 1 t executing-kbd-macro)))
     n))
 
 ;;;###autoload
@@ -339,21 +334,18 @@ really get rid of them, as usual.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
 only duplicate messages among the marked messages are deleted,
-unmarked messages are not hashed or considerd for deletion.  If
-applied to collapsed threads in summary and thread operations are
-enabled via `vm-enable-thread-operations' then only the messages in
-the thread are considered."
+unmarked messages are not hashed or considerd for deletion."
   (interactive)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(mlist (vm-select-operable-messages
-		1 (interactive-p) "Delete duplicates among"))
+	(mlist vm-message-list)
 	(table (make-vector 61 0))
 	hash m
 	(del-count 0))
-    (unless (cdr mlist)
-      (setq mlist vm-message-list))
+    (when used-marks
+      (let ((vm-enable-thread-operations nil))
+	(setq mlist (vm-select-operable-messages 0))))
     (save-excursion
       (save-restriction
 	(widen)
@@ -371,12 +363,13 @@ the thread are considered."
 	  (setq mlist (cdr mlist)))))
     (vm-display nil nil '(vm-delete-duplicate-messages)
 		(list this-command))
-    (if (zerop del-count)
-	(message "No messages deleted")
-      (message "%d message%s deleted"
-	       del-count
-	       (if (= 1 del-count) "" "s")))
-    (vm-update-summary-and-mode-line)))
+    (when (interactive-p)
+      (if (zerop del-count)
+	  (message "No messages deleted")
+	(message "%d message%s deleted" 
+		 del-count (if (= 1 del-count) "" "s"))))
+    (vm-update-summary-and-mode-line)
+    del-count))
 
 ;;;###autoload
 (defun vm-expunge-folder (&optional shaddap just-these-messages

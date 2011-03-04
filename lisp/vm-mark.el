@@ -173,7 +173,9 @@ previous N-1 messages."
 	(end (mark))
 	tmp m)
     (if (> beg end)
-	(setq tmp beg beg end end tmp))
+	(setq tmp beg 
+	      beg end 
+	      end tmp))
     (while mp
       (setq m (car mp))
       (if (not (eq (not markit) (not (vm-mark-of m))))

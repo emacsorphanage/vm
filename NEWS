@@ -49,6 +49,9 @@ VM 8.2.0b (2011-02-28)
 
   IMPROVEMENTS
 
+   * Hooks `vm-arrived-message-hook' and `vm-arrived-messages-hook'
+     made to work correctly for IMAP folders.
+
    * New variable `vm-thunderbird-folder-directory' and command
      `vm-visit-thunderbird-folder' allow the handling of Thunderbird
      folders without interference with VM's own folders.
