@@ -4714,52 +4714,6 @@ See `vm-virtual-folder-alist' for a description of the conditions."
     "The face used in VM Summary buffers for deleted messages."
     :group 'vm-summary-faces))
 
-;; (defface vm-summary-deleted
-;;   (if vm-xemacs-p
-;;       '(
-;;  	(((class color) (background light))
-;;  	 (:foreground "grey50" :strikethru t))
-;;  	(((class color) (background dark))
-;;  	 (:foreground "grey70" :strikethru t))
-;;  	(((type tty) (class color) (background light)) 
-;;  	 (:foreground "yellow"))
-;;  	(((type tty) (class color) (background dark)) 
-;;  	 (:foreground "yellow"))
-;;  	(((class grayscale) (background light))
-;;  	 (:foreground "grey50" :strikethru t))
-;;  	(((class grayscale) (background dark))
-;;  	 (:foreground "grey70" :strikethru t))
-;;  	(((class mono))
-;;  	 (:strikethru t))
-;;  	(((type tty)) 
-;;  	 (:dim t))
-;;  	(t ()))
-;;     '(
-;;        (((type x w32 mac) (class color) (background light)) 
-;;         (:foreground "grey50" :strike-through t))
-;;        (((type x w32 mac) (class color) (background dark)) 
-;;         (:foreground "grey70" :strike-through t))
-;;        ;; (((class color) (min-colors 16) (background light)) 
-;;        ;;  (:foreground "grey50" :strike-through "grey70"))
-;;        ;; (((class color) (min-colors 16) (background dark)) 
-;;        ;;  (:foreground "grey70" :strike-trhough "grey50"))
-;;        (((class color) (background light)) ;  (min-colors 8)
-;;         (:foreground "yellow"))
-;;        (((class color) (background dark)) 
-;;         (:foreground "yellow"))
-;;        (((class grayscale) (background light)) 
-;;         (:foreground "grey50" :strike-through t))
-;;        (((class grayscale) (background dark)) 
-;;         (:foreground "grey70" :strike-trhough t))
-;;        (((class mono))
-;;         (:strike-through t))
-;;        (((type tty)) 
-;;         (:dim t))
-;;        (t ())))
-;;      "The face used in VM Summary buffers for deleted messages."
-;;      :group 'vm-summary-faces)
-
-
 (put 'vm-summary-deleted-face 'face-alias 'vm-summary-deleted)
 (make-obsolete 'vm-summary-deleted-face 'vm-summary-deleted "8.2.0")
 
