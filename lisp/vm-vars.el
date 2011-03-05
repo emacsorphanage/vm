@@ -4125,6 +4125,12 @@ window system."
 				 (const virtual)
 				 (const nil)))))
 
+(defcustom vm-use-menubar-buttons t
+  "*Non-nil value means that VM should use buttons on menubars, such
+as [Emacs] and [VM], in environments that support such buttons."
+  :group 'vm-toolbar
+  :type 'boolean)
+
 (defcustom vm-popup-menu-on-mouse-3 t
   "*Non-nil value means VM should provide context-sensitive menus on mouse-3.
 A nil value means VM should not change the binding of mouse-3."

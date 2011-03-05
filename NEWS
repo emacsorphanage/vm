@@ -49,6 +49,11 @@ VM 8.2.0b (2011-02-28)
 
   IMPROVEMENTS
 
+   * Restored the [Emacs] and [Undo] menu buttons that were removed in
+     8.0.8.  For environments that do not support such buttons,
+     drop-down menus will be used instead.  The variable
+     `vm-use-menubar-buttons' can be used to use drop-down menus always.
+
    * Hooks `vm-arrived-message-hook' and `vm-arrived-messages-hook'
      made to work correctly for IMAP folders.
 

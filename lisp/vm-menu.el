@@ -284,8 +284,8 @@
     ["Quit Without Saving" vm-quit-no-change t]
     ))
 
-(defvar vm-menu-undo-button
-  ["[Undo]" vm-undo (vm-menu-can-undo-p)]
+(defvar vm-menu-xemacs-undo-button
+  ["[Undo]" vm-undo t]			; (vm-menu-can-undo-p) doesn't work
   )
 
 (defvar vm-menu-fsfemacs-undo-menu
@@ -946,11 +946,13 @@ set to the command name so that window configuration will be done."
 		 (virtual
 		  (cons "Virtual" vm-menu-fsfemacs-virtual-menu))
 		 (emacs
-		  (if (vm-menubar-buttons-possible-p)
+		  (if (and (vm-menubar-buttons-possible-p) 
+			   vm-use-menubar-buttons)
 		      (cons "[Emacs]" 'vm-menu-toggle-menubar)
 		    (cons "Emacs" vm-menu-fsfemacs-emacs-menu)))
 		 (undo
-		  (if (vm-menubar-buttons-possible-p)
+		  (if (and (vm-menubar-buttons-possible-p)
+			   vm-use-menubar-buttons)
 		      (cons "[Undo]" 'vm-undo)
 		    (cons "Undo" vm-menu-fsfemacs-undo-menu)))))
 	      (cons nil)
@@ -960,7 +962,7 @@ set to the command name so that window configuration will be done."
 	      (menu-list
 	       (if (consp vm-use-menus)
 		   (reverse vm-use-menus)
-		 (list 'help nil 'emacs 'dispose 'undo 'virtual 'sort
+		 (list 'help nil 'dispose 'undo 'virtual 'sort
 		       'label 'mark 'send 'motion 'folder)))
 	      (menu nil))
 	  (while menu-list
@@ -987,7 +989,7 @@ set to the command name so that window configuration will be done."
 	   (sort . vm-menu-sort-menu)
 	   (virtual . vm-menu-virtual-menu)
 	   (emacs . vm-menu-emacs-button)
-	   (undo . vm-menu-undo-button)))
+	   (undo . vm-menu-xemacs-undo-button)))
 	cons
 	(menubar nil)
 	(menu-list vm-use-menus))
@@ -1161,7 +1163,7 @@ set to the command name so that window configuration will be done."
 (defun vm-menu-fsfemacs-add-vm-menu ()
   "Add a menu or a menubar button to the Emacs menubar for switching
 to a VM menubar."
-  (if (vm-menubar-buttons-possible-p)
+  (if (and (vm-menubar-buttons-possible-p) vm-use-menubar-buttons)
       (define-key vm-mode-map [menu-bar vm]
 	'(menu-item "[VM]" vm-menu-toggle-menubar))
     (define-key vm-mode-map [menu-bar vm]
@@ -1177,7 +1179,7 @@ menu bar.                                             USR, 2011-02-27"
       (set-buffer buffer)
     (vm-select-folder-buffer-and-validate 0 (interactive-p)))
   (cond ((vm-menu-xemacs-menus-p)
-	 (if (null (car (find-menu-item current-menubar '("Emacs"))))
+	 (if (null (car (find-menu-item current-menubar '("[Emacs]"))))
 	     (set-buffer-menubar vm-menu-vm-menubar)
 	   ;; copy the current menubar in case it has been changed.
 	   (make-local-variable 'vm-menu-vm-menubar)

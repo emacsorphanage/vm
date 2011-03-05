@@ -4890,32 +4890,49 @@ not need to set it.
 @chapter Menus
 
 @vindex vm-popup-menu-on-mouse-3
-VM uses Emacs' menu bar and pop-up menus when they are available to 
-give you access to more of VM's commands.  By default VM puts a
-context sensitive pop-up menu on mouse button 3 (usually the
+@cindex menu bar
+VM uses Emacs' menu bar and pop-up menus whenever they are available
+using which you can readily access VM's commands.  By default, VM puts
+a context-sensitive pop-up menu on mouse button 3 (usually the
 rightmost mouse button).  If you don't want this menu, set the
 variable @code{vm-popup-menu-on-mouse-3} to nil.
 
 @vindex vm-use-menus
 If you set @code{vm-use-menus} to nil, VM will not generate a menu bar
-for VM folder buffers and VM won't use pop-up menus either.  If
-you set @code{vm-use-menus} to @samp{1}, VM will add a single @samp{VM}
-entry to the existing menu bar instead of using the whole menu bar
-for its purposes.  That single entry will have all the VM command
-submenus under it.
+for VM folder buffers and VM won't use pop-up menus either.  If you
+set @code{vm-use-menus} to @samp{1}, VM will add a single @samp{VM}
+menu to the existing menu bar and provide various submenus under it
+for the VM operations.
 
-To make VM use the whole menu bar, you must set variable @code{vm-use-menus}
-to a list of symbols.  The symbols and the order in which they are listed
-determine which menus will be in the menu bar and how they are ordered.
-Valid symbol values are:
+By default, @code{vm-use-menus} is set to a list of symbols indicating
+which menus should appear in the menu bar.  These menus will replace
+the standard Emacs menus whenever VM folder are being viewed.  You can
+switch to the Emacs menu bar when necessary by clicking on the menu
+labelled @code{[Emacs]} (on some systems, thre will be a drop-down
+menu labelled @code{Emacs}).  From the Emacs menu bar, you can return
+to the VM menu bar by clicking on the menu labelled @code{[VM]} (or
+under the drop-down menu labelled @code{VM}).
+
+@cindex graphics toolkit
+On some graphics toolkits, menu bar cannot have ``buttons'' that
+invoke immediate actions (such as @code{[Emacs]}).  VM knows about
+some of those toolkits and automatically uses drop-down menus instead
+of buttons.  If your system shows buttons but they are not
+operational, then you should set @code{vm-use-menubar-buttons} to nil
+in your init file.  That will cause VM use to drop-down menus instead
+of buttons on the menu bar.
+
+The available menus for the VM menubar are the following:
+
 @table @code
 @item dispose
 This is menu of commands that are commonly used to dispose of a
 message.  E.g. reply, print, save, delete.
 @item emacs
-This is actually a menu button that causes the menu bar to change
-to the global Emacs menu bar.  On that menu bar you will find
-a VM button that will return you to the VM menu bar.
+This provides a menu button labelled @code{[Emacs]} that causes the
+menu bar to change to the global Emacs menu bar.  On that menu bar you
+will find a @code{[VM]} button that can return you to the VM menu
+bar.  
 @item folder
 This is a menu of folder related commands.  You can visit a
 folder, save a folder, quit a folder and so on.
@@ -4936,7 +4953,7 @@ This is a menu of commands you use to compose and send messages.
 @item sort
 This is a menu of commands to sort a folder by various criteria.
 @item undo
-This is a menu button that invokes the @code{vm-undo} command.
+This provides a menu button that invokes the @code{vm-undo} command.
 @item virtual
 This is a menu of commands that let you visit and create virtual
 folders.
