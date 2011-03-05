@@ -447,7 +447,13 @@ do not allow menubar buttons.")
       ["Display using External Viewer"
        (vm-mime-run-display-function-at-point
 	'vm-mime-display-body-using-external-viewer) t]
+      ["Convert to Text and Display"
+       (vm-mime-run-display-function-at-point
+	'vm-mime-convert-body-then-display)
+       (vm-menu-can-convert-to-text/plain
+	(car (vm-mm-layout-type (vm-mime-get-button-layout e))))]
       ;; FSF Emacs does not allow a non-string menu element name.
+      ;; This is not working on XEmacs either.  USR, 2011-03-05
       ,@(if (vm-menu-can-eval-item-name)
 	    (list [(format "Convert to %s and Display"
 			   (or (nth 1 (vm-mime-can-convert
@@ -807,6 +813,10 @@ set to the command name so that window configuration will be done."
 ;;	     (not vm-mime-decoded)
 	     (not (vm-mime-plain-message-p (car vm-message-pointer)))))
     (error nil)))
+
+(defun vm-menu-can-convert-to-text/plain (type)
+  (equal (nth 1 (vm-mime-can-convert type)) "text/plain"))
+
 
 (defun vm-menu-can-expunge-pop-messages-p ()
   (condition-case nil

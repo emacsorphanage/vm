@@ -2049,6 +2049,8 @@ that recipient is outside of East Asia."
 	  (t nil))))
 
 (defun vm-mime-can-convert (type)
+  "If given mime TYPE is convertible to some other type, return a
+triple (source-type target-type command).  Otherwise, return nil."
   (or (vm-mime-can-convert-0 type vm-mime-type-converter-alist)
       (vm-mime-can-convert-0 type vm-mime-image-type-converter-alist)))
 
