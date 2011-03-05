@@ -289,8 +289,8 @@ deletion; you will have to expunge the messages with
 `vm-expunge-folder' to really get rid of them, as usual.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
-only duplicate messages among the marked messages are deleted,
-unmarked messages are not hashed or considerd for deletion."
+only duplicate messages among the marked messages are deleted;
+unmarked messages are not considerd for deletion."
   (interactive)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)

@@ -5076,7 +5076,9 @@ thread are retrieved."
 (defun vm-retrieve-real-message-body (mm &optional fetch)
   "Retrieve the body of a real message MM from its external
 source and insert it into the Folder buffer.  If the optional argument
-FETCH is t, then the retrieval is for a temporary message fetch."
+FETCH is t, then the retrieval is for a temporary message fetch.
+
+Gives an error if unable to retrieve message."
   (when (not (eq (vm-message-access-method-of mm) 'imap))
     (error "This is currently available only for imap folders."))
   (save-excursion
