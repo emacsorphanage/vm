@@ -367,15 +367,19 @@ that case.                                            USR, 2010-08-01"
 (defun vm-mouse-send-url-to-konqueror-new-window (url)
   (vm-mouse-send-url-to-konqueror url t))
 
+(defun vm-mouse-send-url-to-window-system (url &optional type)
+  (unless type (setq type 'PRIMARY))
+  (message "Sending URL to %s..." type)
+  (cond ((fboundp 'own-selection)	; XEmacs
+	 (own-selection url type))
+	((fboundp 'x-set-selection)	; Gnu Emacs
+	 (x-set-selection type url))
+	((fboundp 'x-own-selection)	; lselect for Emacs21?
+	 (x-own-selection url type)))
+  (message "Sending URL to %s... done" type))
+
 (defun vm-mouse-send-url-to-clipboard (url)
-  (message "Sending URL to X Clipboard...")
-  (cond ((fboundp 'own-selection)
-	 (own-selection url 'CLIPBOARD))
-	((fboundp 'x-own-clipboard)
-	 (x-own-clipboard url))
-	((fboundp 'x-own-selection-internal)
-	 (x-own-selection-internal 'CLIPBOARD url)))
-  (message "Sending URL to X Clipboard... done"))
+  (vm-mouse-send-url-to-window-system url 'CLIPBOARD))
 
 ;;;###autoload
 (defun vm-mouse-install-mouse ()

@@ -500,40 +500,50 @@ do not allow menubar buttons.")
 		   'w3-fetch)
 		  (t 'w3-fetch-other-frame))))
     `(,@title
-      ["Emacs W3" (vm-mouse-send-url-at-position (point) (quote ,w3))
-       (fboundp (quote ,w3))]
-      ["Firefox"
-       (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-firefox)
-       t]
-      ["Konqueror"
-       (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-konqueror)
-       t]
-      ;; ["Mosaic"
-      ;;  (vm-mouse-send-url-at-position (point)
-      ;; 			      'vm-mouse-send-url-to-mosaic)
-      ;;  t]
-      ;; ["mMosaic"
-      ;;  (vm-mouse-send-url-at-position (point)
-      ;; 			      'vm-mouse-send-url-to-mmosaic)
-      ;; t]
-      ["Mozilla"
-       (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-mozilla)
-       t]
-      ["Netscape"
-       (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-netscape)
-       t]
-      ["Opera"
-       (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-opera)
+      ["Primary (Copy)"
+       (vm-mouse-send-url-at-position 
+	(point) 'vm-mouse-send-url-to-window-system)
        t]
       ["X Clipboard"
-       (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-clipboard)
-       t])))
+       (vm-mouse-send-url-at-position 
+	(point) 'vm-mouse-send-url-to-clipboard)
+       t]
+      ["browse-url"
+       (vm-mouse-send-url-at-position (point) 'browse-url) 
+       browse-url-browser-function]
+      ["Emacs W3" (vm-mouse-send-url-at-position (point) (quote ,w3))
+       (fboundp (quote ,w3))]
+      ["Emacs W3M" (vm-mouse-send-url-at-position (point) 'w3m-browse-url)
+       (fboundp 'w3m-browse-url)]
+      "---"
+      ["Firefox"
+       (vm-mouse-send-url-at-position 
+	(point) 'vm-mouse-send-url-to-firefox)
+       vm-firefox-client-program]
+      ["Konqueror"
+       (vm-mouse-send-url-at-position 
+	(point) 'vm-mouse-send-url-to-konqueror)
+       vm-konqueror-client-program]
+      ;; ["Mosaic"
+      ;;  (vm-mouse-send-url-at-position 
+      ;;  (point) 'vm-mouse-send-url-to-mosaic)
+      ;;  vm-mosaic-program]
+      ;; ["mMosaic"
+      ;;  (vm-mouse-send-url-at-position 
+      ;; 	(point) 'vm-mouse-send-url-to-mmosaic)
+      ;;  vm-mmosaic-program]
+      ["Mozilla"
+       (vm-mouse-send-url-at-position 
+	(point) 'vm-mouse-send-url-to-mozilla)
+       vm-mozilla-program]
+      ["Netscape"
+       (vm-mouse-send-url-at-position 
+	(point) 'vm-mouse-send-url-to-netscape)
+       vm-netscape-program]
+      ["Opera"
+       (vm-mouse-send-url-at-position 
+	(point) 'vm-mouse-send-url-to-opera)
+       vm-opera-program])))
 
 (defvar vm-menu-mailto-url-browser-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)

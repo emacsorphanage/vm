@@ -5207,7 +5207,7 @@ named by `vm-movemail-program'."
   :type '(choice (const :tag "None" nil)
 		 (repeat string)))
 
-(defcustom vm-mozilla-program "mozilla"
+(defcustom vm-mozilla-program nil
   "*Name of program to use to run Mozilla.
 `vm-mouse-send-url-to-mozilla' uses this."
   :group 'vm-helpers
@@ -5220,7 +5220,7 @@ named by `vm-movemail-program'."
   :type '(choice (const :tag "None" nil)
 		 (repeat string)))
 
-(defcustom vm-mosaic-program "Mosaic"
+(defcustom vm-mosaic-program nil
   "*Name of program to use to run Mosaic.
 `vm-mouse-send-url-to-mosaic' uses this."
   :group 'vm-helpers
@@ -5233,7 +5233,7 @@ named by `vm-movemail-program'."
   :type '(choice (const :tag "None" nil)
 		 (repeat string)))
 
-(defcustom vm-mmosaic-program "mMosaic"
+(defcustom vm-mmosaic-program nil
   "*Name of program to use to run mMosaic.
 `vm-mouse-send-url-to-mosaic' uses this."
   :group 'vm-helpers
