@@ -250,25 +250,33 @@
 
 (defvar vm-menu-sort-menu
   '("Sort"
+    "By ascending"
+    "---"
+    ["Date" (vm-sort-messages "date") vm-message-list]
+    ["Activity" (vm-sort-messages "activity") vm-message-list]
+    ["Subject" (vm-sort-messages "subject") vm-message-list]
+    ["Author" (vm-sort-messages "author") vm-message-list]
+    ["Recipients" (vm-sort-messages "recipients") vm-message-list]
+    ["Lines" (vm-sort-messages "line-count") vm-message-list]
+    ["Bytes" (vm-sort-messages "byte-count") vm-message-list]
+    "---"
+    "By descending"
+    "---"
+    ["Date" (vm-sort-messages "reversed-date") vm-message-list]
+    ["Activity" (vm-sort-messages "reversed-activity") vm-message-list]
+    ["Subject" (vm-sort-messages "reversed-subject") vm-message-list]
+    ["Author" (vm-sort-messages "reversed-author") vm-message-list]
+    ["Recipients" (vm-sort-messages "reversed-recipients") vm-message-list]
+    ["Lines" (vm-sort-messages "reversed-line-count") vm-message-list]
+    ["Bytes" (vm-sort-messages "reversed-byte-count") vm-message-list]
+    "---"
     ["By Multiple Fields..." vm-sort-messages vm-message-list]
-    "---"
-    ["By Date" (vm-sort-messages "date") vm-message-list]
-    ["By Subject" (vm-sort-messages "subject") vm-message-list]
-    ["By Author" (vm-sort-messages "author") vm-message-list]
-    ["By Recipients" (vm-sort-messages "recipients") vm-message-list]
-    ["By Lines" (vm-sort-messages "line-count") vm-message-list]
-    ["By Bytes" (vm-sort-messages "byte-count") vm-message-list]
-    "---"
-    ["By Date (backward)" (vm-sort-messages "reversed-date") vm-message-list]
-    ["By Subject (backward)" (vm-sort-messages "reversed-subject") vm-message-list]
-    ["By Author (backward)" (vm-sort-messages "reversed-author") vm-message-list]
-    ["By Recipients (backward)" (vm-sort-messages "reversed-recipients") vm-message-list]
-    ["By Lines (backward)" (vm-sort-messages "reversed-line-count") vm-message-list]
-    ["By Bytes (backward)" (vm-sort-messages "reversed-byte-count") vm-message-list]
+    ["Revert to Physical Order" (vm-sort-messages "physical-order" t) vm-message-list]
     "---"
     ["Toggle Threading" vm-toggle-threads-display t]
-    "---"
-    ["Revert to Physical Order" (vm-sort-messages "physical-order" t) vm-message-list]
+    ["Expand/Collapse Thread" vm-toggle-thread t]
+    ["Expand All Threads" vm-expand-all-threads t]
+    ["Collapse All Threads" vm-collapse-all-threads t]
     ))
 
 (defvar vm-menu-help-menu
