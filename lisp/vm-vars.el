@@ -4077,13 +4077,9 @@ Consider this variable experimental; it may not be supported forever."
 
 (defcustom vm-use-menus
   (nconc (list 'folder 'motion 'send 'mark 'label 'sort 'virtual)
-	 (cond ((string-match ".*-.*-\\(win95\\|nt\\)" system-configuration)
-		nil)
-	       (t (list 'undo)))
+	 (list 'undo)
 	 (list 'dispose)
-	 (cond ((string-match ".*-.*-\\(win95\\|nt\\)" system-configuration)
-		nil)
-	       (t (list 'emacs)))
+	 (list 'emacs)
 	 (list nil 'help))
   "*Non-nil value causes VM to provide a menu interface.
 A value that is a list causes VM to install its own menubar.

@@ -284,16 +284,29 @@
     ["Quit Without Saving" vm-quit-no-change t]
     ))
 
-(defvar vm-menu-undo-menu
-  ["Undo" vm-undo (vm-menu-can-undo-p)]
+(defvar vm-menu-undo-button
+  ["[Undo]" vm-undo (vm-menu-can-undo-p)]
   )
+
+(defvar vm-menu-fsfemacs-undo-menu
+  '("Undo"
+    ["Undo" vm-undo (vm-menu-can-undo-p)]
+    )
+  "Undo menu for FSF Emacs builds that do not allow menubar buttons.")
 
 (defvar vm-menu-emacs-button
-  ["Emacs" vm-menu-toggle-menubar t]
+  ["[Emacs]" vm-menu-toggle-menubar t]
   )
 
+(defvar vm-menu-fsfemacs-emacs-menu
+  '("Emacs"
+    ["Switch to Emacs Menubar" vm-menu-toggle-menubar t]
+    )
+  "Menu with a \"Swich to Emacs\" action meant for FSF Emacs builds that
+do not allow menubar buttons.")
+
 (defvar vm-menu-vm-button
-  ["VM" vm-menu-toggle-menubar t]
+  ["[VM]" vm-menu-toggle-menubar t]
   )
 
 (defvar vm-menu-mail-menu
@@ -847,8 +860,10 @@ set to the command name so that window configuration will be done."
 			     (cons "Dispose" (nthcdr 4 vm-menu-dispose-menu)))
 	(easy-menu-define vm-menu-fsfemacs-dispose-popup-menu (list dummy) nil
 			     vm-menu-dispose-menu)
-;;	(easy-menu-define vm-menu-fsfemacs-undo-menu (list dummy) nil
-;;			     (list "Undo" vm-menu-undo-menu))
+	(easy-menu-define vm-menu-fsfemacs-undo-menu (list dummy) nil
+	  		     vm-menu-fsfemacs-undo-menu)
+	(easy-menu-define vm-menu-fsfemacs-emacs-menu (list dummy) nil
+			     vm-menu-fsfemacs-emacs-menu)
 	(easy-menu-define vm-menu-fsfemacs-virtual-menu (list dummy) nil
 			     vm-menu-virtual-menu)
 	(easy-menu-define vm-menu-fsfemacs-sort-menu (list dummy) nil
@@ -929,24 +944,33 @@ set to the command name so that window configuration will be done."
 		 (sort
 		  (cons "Sort" vm-menu-fsfemacs-sort-menu))
 		 (virtual
-		  (cons "Virtual" vm-menu-fsfemacs-virtual-menu))))
-	      cons (vec (vector 'rootmenu 'vm nil))
+		  (cons "Virtual" vm-menu-fsfemacs-virtual-menu))
+		 (emacs
+		  (if (vm-menubar-buttons-possible-p)
+		      (cons "[Emacs]" 'vm-menu-toggle-menubar)
+		    (cons "Emacs" vm-menu-fsfemacs-emacs-menu)))
+		 (undo
+		  (if (vm-menubar-buttons-possible-p)
+		      (cons "[Undo]" 'vm-undo)
+		    (cons "Undo" vm-menu-fsfemacs-undo-menu)))))
+	      (cons nil)
+	      (vec (vector 'rootmenu 'vm nil))
 	      ;; menus appear in the opposite order that we
 	      ;; define-key them.
 	      (menu-list
 	       (if (consp vm-use-menus)
 		   (reverse vm-use-menus)
-		 (list 'help nil 'dispose 'virtual 'sort
-		       'label 'mark 'send 'motion 'folder))))
+		 (list 'help nil 'emacs 'dispose 'undo 'virtual 'sort
+		       'label 'mark 'send 'motion 'folder)))
+	      (menu nil))
 	  (while menu-list
-	    (if (null (car menu-list))
+	    (setq menu (car menu-list))
+	    (if (null menu)
 		nil;; no flushright support in FSF Emacs
-	      (aset vec 2 (intern (concat "vm-menubar-"
-					  (symbol-name
-					   (car menu-list)))))
-	      (setq cons (assq (car menu-list) menu-alist))
+	      (aset vec 2 (intern (concat "vm-menubar-" (symbol-name menu))))
+	      (setq cons (assq menu menu-alist))
 	      (if cons
-		  (define-key map vec (eval (car (cdr cons))))))
+		  (define-key map vec (eval (cadr cons)))))
 	    (setq menu-list (cdr menu-list))))
 	(setq vm-mode-menu-map map)
 	(run-hooks 'vm-menu-setup-hook))))
@@ -963,7 +987,7 @@ set to the command name so that window configuration will be done."
 	   (sort . vm-menu-sort-menu)
 	   (virtual . vm-menu-virtual-menu)
 	   (emacs . vm-menu-emacs-button)
-	   (undo . vm-menu-undo-menu)))
+	   (undo . vm-menu-undo-button)))
 	cons
 	(menubar nil)
 	(menu-list vm-use-menus))
