@@ -293,7 +293,7 @@
     ))
 
 (defvar vm-menu-xemacs-undo-button
-  ["[Undo]" vm-undo t]			; (vm-menu-can-undo-p) doesn't work
+  ["[Undo]" vm-undo (vm-menu-can-undo-p)]
   )
 
 (defvar vm-menu-fsfemacs-undo-menu
@@ -542,10 +542,10 @@ do not allow menubar buttons.")
        (vm-mouse-send-url-at-position 
 	(point) 'vm-mouse-send-url-to-mozilla)
        vm-mozilla-program]
-      ["Netscape"
-       (vm-mouse-send-url-at-position 
-	(point) 'vm-mouse-send-url-to-netscape)
-       vm-netscape-program]
+;;       ["Netscape"
+;;        (vm-mouse-send-url-at-position 
+;; 	(point) 'vm-mouse-send-url-to-netscape)
+;;        vm-netscape-program]
       ["Opera"
        (vm-mouse-send-url-at-position 
 	(point) 'vm-mouse-send-url-to-opera)
