@@ -949,6 +949,8 @@ set to the command name so that window configuration will be done."
 		  (define-key map vec (eval (car (cdr cons))))))
 	    (setq menu-list (cdr menu-list))))
 	(setq vm-mode-menu-map map)
+	(vm-menu-fsfemacs-add-emacs-menu)
+	(vm-menu-fsfemacs-add-undo-menu)
 	(run-hooks 'vm-menu-setup-hook))))
 
 (defun vm-menu-make-xemacs-menubar ()
@@ -1133,6 +1135,33 @@ set to the command name so that window configuration will be done."
 		    (buffer-live-p vm-user-interaction-buffer))
 	   (with-current-buffer vm-user-interaction-buffer
 	     (set-buffer-modified-p (buffer-modified-p)))))))
+
+(defun vm-menu-fsfemacs-add-emacs-menu ()
+  "Add Emacs/[Emacs] menu/button to the VM menubar."
+  (if (vm-menubar-buttons-possible-p)
+      (define-key-after 
+	(lookup-key vm-mode-menu-map [rootmenu vm])
+	[vm-menubar-emacs] '("[Emacs]" . vm-menu-toggle-menubar) 'vm-menubar-dispose)
+    (define-key-after 
+      (lookup-key vm-mode-menu-map [rootmenu vm])
+      [vm-menubar-emacs] (cons "Emacs" (make-sparse-keymap "Emacs")) 'vm-menubar-dispose)
+    (define-key 
+      (lookup-key vm-mode-menu-map [rootmenu vm vm-menubar-emacs])
+      [emacs-toggle] '(menu-item "Switch to Emacs Menubar" vm-menu-toggle-menubar))))
+
+(defun vm-menu-fsfemacs-add-undo-menu ()
+  "Add Undo/[Undo] menu/button to the VM menubar."
+  (if (vm-menubar-buttons-possible-p)
+      (define-key-after 
+	(lookup-key vm-mode-menu-map [rootmenu vm])
+	[vm-menubar-undo] '(menu-item "[Undo]" vm-undo :enable (vm-menu-can-undo-p)) 
+	'vm-menubar-virtual)
+    (define-key-after 
+      (lookup-key vm-mode-menu-map [rootmenu vm])
+      [vm-menubar-undo] (cons "Undo" (make-sparse-keymap "Emacs")) 'vm-menubar-virtual)
+    (define-key 
+      (lookup-key vm-mode-menu-map [rootmenu vm vm-menubar-undo])
+      [undo] '(menu-item "Undo" vm-undo :enable (vm-menu-can-undo-p)))))
 
 (defun vm-menu-fsfemacs-add-vm-menu ()
   "Return definition for a VM menu to add to emacs standard menubar."
