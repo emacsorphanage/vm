@@ -1134,6 +1134,17 @@ set to the command name so that window configuration will be done."
 	   (with-current-buffer vm-user-interaction-buffer
 	     (set-buffer-modified-p (buffer-modified-p)))))))
 
+(defun vm-menu-fsfemacs-add-vm-menu ()
+  "Add a menu or a menubar button to the Emacs menubar for switching
+to a VM menubar."
+  (if (vm-menubar-buttons-possible-p)
+      (define-key vm-mode-map [menu-bar vm]
+	'(menu-item "[VM]" vm-menu-toggle-menubar))
+    (define-key vm-mode-map [menu-bar vm]
+      (cons "VM" (make-sparse-keymap "VM")))
+    (define-key vm-mode-map [menu-bar vm vm-toggle]
+      '(menu-item "Switch to VM Menubar" vm-menu-toggle-menubar))))
+      
 (defun vm-menu-toggle-menubar (&optional buffer)
   "Toggle between the VM's dedicated menu bar and the standard Emacs
 menu bar.                                             USR, 2011-02-27"
@@ -1168,10 +1179,7 @@ menu bar.                                             USR, 2011-02-27"
 	       (lookup-key vm-mode-menu-map [rootmenu vm]))
 	   (define-key vm-mode-map [menu-bar]
 	     (make-sparse-keymap "Menu"))
-	   (define-key vm-mode-map [menu-bar vm]
-	     (cons "VM" (make-sparse-keymap "VM")))
-	   (define-key vm-mode-map [menu-bar vm vm-toggle]
-	     '(menu-item "Switch to VM Menubar" vm-menu-toggle-menubar)))
+	   (vm-menu-fsfemacs-add-vm-menu))
 	 (vm-menu-set-menubar-dirty-flag))))
 
 (defun vm-menu-install-menubar ()
