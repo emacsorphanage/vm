@@ -65,6 +65,7 @@
 (provide 'vm-reply)
 
 (eval-when-compile
+  (require 'cl)
   (require 'vm-misc)
   (require 'vm-minibuf)
   (require 'vm-menu)
@@ -152,7 +153,7 @@ messages of the folder are involved in this reply."
     (setq mp mlist)
     (while mp
       (cond ((setq tmp (vm-get-header-contents (car mp) "Reply-To:" ", "))
-             (if (not (vm-ignored-reply-to tmp))
+             (unless (vm-ignored-reply-to tmp)
                  (add-to-list 'to tmp)))
             ((setq tmp (vm-get-header-contents (car mp) "From:" ", "))
              (add-to-list 'to tmp))
@@ -177,18 +178,17 @@ messages of the folder are involved in this reply."
         (setq in-reply-to (if in-reply-to
                               (concat in-reply-to ",\n\t" this-reply-to)
                             this-reply-to)))
-      (if to-all
-          (progn
-            (setq tmp (vm-get-header-contents (car mp) "To:" ", "))
-            (setq tmp2 (vm-get-header-contents (car mp) "Cc:" ", "))
-            (if tmp
-                (if cc
-                    (setq cc (concat cc "," tmp))
-                  (setq cc tmp)))
-            (if tmp2
-                (if cc
-                    (setq cc (concat cc "," tmp2))
-                  (setq cc tmp2)))))
+      (when to-all
+	(setq tmp (vm-get-header-contents (car mp) "To:" ", "))
+	(setq tmp2 (vm-get-header-contents (car mp) "Cc:" ", "))
+	(when tmp
+	  (if cc
+	      (setq cc (concat cc "," tmp))
+	    (setq cc tmp)))
+	(when tmp2
+	  (if cc
+	      (setq cc (concat cc "," tmp2))
+	    (setq cc tmp2))))
       (setq references
             (cons (or (vm-get-header-contents (car mp) "References:" " ")
                       (vm-get-header-contents (car mp) "In-reply-to:" " "))
@@ -196,13 +196,13 @@ messages of the folder are involved in this reply."
                         references)))
       (setq newsgroups
             (cons (or (and to-all
-                           (vm-get-header-contents (car mp)
-                                                   "Followup-To:" ","))
+                           (vm-get-header-contents 
+			    (car mp) "Followup-To:" ","))
                       (vm-get-header-contents (car mp) "Newsgroups:" ","))
                   newsgroups))
       (setq mp (cdr mp)))
 
-    (if (null to) nil
+    (when to
       (setq tmp (car to))
       (setq to (cdr to))
       (while to
@@ -210,23 +210,23 @@ messages of the folder are involved in this reply."
         (setq to (cdr to)))
       (setq to tmp))
 
-    (if vm-strip-reply-headers
-        (let ((mail-use-rfc822 t))
-          (and to (setq to (mail-strip-quoted-names to)))
-          (and cc (setq cc (mail-strip-quoted-names cc)))))
+    (when vm-strip-reply-headers
+      (let ((mail-use-rfc822 t))
+	(and to (setq to (mail-strip-quoted-names to)))
+	(and cc (setq cc (mail-strip-quoted-names cc)))))
     (setq to (vm-parse-addresses to)
           cc (vm-parse-addresses cc))
-    (if vm-reply-ignored-addresses
-        (setq to (vm-strip-ignored-addresses to)
-              cc (vm-strip-ignored-addresses cc)))
+    (when vm-reply-ignored-addresses
+      (setq to (vm-strip-ignored-addresses to)
+	    cc (vm-strip-ignored-addresses cc)))
     (setq to (vm-delete-duplicates to nil t))
     (setq cc (vm-delete-duplicates
               (append (vm-delete-duplicates cc nil t)
                       to (copy-sequence to))
               t t))
-    (and to (setq to (mapconcat 'identity to ",\n    ")))
-    (and cc (setq cc (mapconcat 'identity cc ",\n    ")))
-    (and (null to) (setq to cc cc nil))
+    (when to (setq to (mapconcat 'identity to ",\n    ")))
+    (when cc (setq cc (mapconcat 'identity cc ",\n    ")))
+    (when (null to) (setq to cc cc nil))
     (setq references (delq nil references)
           references (mapconcat 'identity references " ")
           references (vm-parse references "[^<]*\\(<[^>]+>\\)")
@@ -245,21 +245,21 @@ messages of the folder are involved in this reply."
     (setq vm-system-state 'replying
           vm-reply-list mlist
           default-directory dir)
-    (if include-text
-        (save-excursion
-          (goto-char (point-min))
-          (let ((case-fold-search nil))
-            (re-search-forward
-             (concat "^" (regexp-quote mail-header-separator) "$") nil 0))
-          (forward-char 1)
-          (while mlist
-            (save-restriction
-              (narrow-to-region (point) (point))
-              (vm-yank-message (car mlist))
-              (goto-char (point-max)))
-            (setq mlist (cdr mlist)))))
-    (if vm-fill-paragraphs-containing-long-lines-in-reply
-        (vm-fill-long-lines-in-reply))
+    (when include-text
+      (save-excursion
+	(goto-char (point-min))
+	(let ((case-fold-search nil))
+	  (re-search-forward
+	   (concat "^" (regexp-quote mail-header-separator) "$") nil 0))
+	(forward-char 1)
+	(while mlist
+	  (save-restriction
+	    (narrow-to-region (point) (point))
+	    (vm-yank-message (car mlist))
+	    (goto-char (point-max)))
+	  (setq mlist (cdr mlist)))))
+    (when vm-fill-paragraphs-containing-long-lines-in-reply
+      (vm-fill-long-lines-in-reply))
     (run-hooks 'vm-reply-hook)
     (run-hooks 'vm-mail-mode-hook)))
 
@@ -270,8 +270,8 @@ messages of the folder are involved in this reply."
     (while re-list
       (setq addr-list addresses)
       (while addr-list
-	(if (string-match (car re-list) (car addr-list))
-	    (setq addresses (delq (car addr-list) addresses)))
+	(when (string-match (car re-list) (car addr-list))
+	  (setq addresses (delq (car addr-list) addresses)))
 	(setq addr-list (cdr addr-list)))
       (setq re-list (cdr re-list))))
   addresses )
@@ -290,15 +290,16 @@ messages of the folder are involved in this reply."
 (defun vm-mail-yank-default (&optional message)
   "The default message yank handler when `mail-citation-hook' is set to nil."
   (save-excursion
-    (vm-reorder-message-headers nil vm-included-text-headers
-				vm-included-text-discard-header-regexp)
+    (vm-reorder-message-headers 
+     nil :keep-list vm-included-text-headers
+     :discard-regexp vm-included-text-discard-header-regexp)
     ;; if all the headers are gone, delete the trailing blank line, too.
-    (if (eq (following-char) ?\n)
-	(delete-char 1))
-    (if (and message vm-included-text-attribution-format)
-	(let ((vm-summary-uninteresting-senders nil))
-	  (insert (vm-summary-sprintf vm-included-text-attribution-format
-				      message))))
+    (when (eq (following-char) ?\n)
+      (delete-char 1))
+    (when (and message vm-included-text-attribution-format)
+      (let ((vm-summary-uninteresting-senders nil))
+	(insert (vm-summary-sprintf vm-included-text-attribution-format
+				    message))))
     ;; turn off zmacs-regions for Lucid Emacs 19
     ;; and get around transient-mark-mode in FSF Emacs 19
     ;; all this so that (mark) does what it did in v18, sheesh.
@@ -327,12 +328,12 @@ Don't call this function from a program."
   (let ((b (current-buffer)) newbuf sumbuf default result prompt mp)
     (set-buffer (or (vm-get-file-buffer folder) (find-file-noselect folder)))
     (setq newbuf (current-buffer))
-    (if (not (eq major-mode 'vm-mode))
-	(vm-mode))
-    (if vm-presentation-buffer-handle
-	(vm-bury-buffer vm-presentation-buffer-handle))
-    (if (null vm-message-pointer)
-	(error "No messages in folder %s" folder))
+    (unless (eq major-mode 'vm-mode)
+      (vm-mode))
+    (when vm-presentation-buffer-handle
+      (vm-bury-buffer vm-presentation-buffer-handle))
+    (when (null vm-message-pointer)
+      (error "No messages in folder %s" folder))
     (setq default (vm-number-of (car vm-message-pointer)))
     (save-excursion
       (save-window-excursion
@@ -347,8 +348,8 @@ Don't call this function from a program."
 	  (setq result (read-string prompt))
 	  (and (string= result "") default (setq result default))
 	  (setq result (string-to-number result)))
-	(if (null (setq mp (nthcdr (1- result) vm-message-list)))
-	    (error "No such message."))))
+	(when (null (setq mp (nthcdr (1- result) vm-message-list)))
+	  (error "No such message."))))
     (set-buffer b)
     (unwind-protect
 	(let ((vm-mail-buffer newbuf))
@@ -401,14 +402,14 @@ specified by `vm-included-text-headers' and
 	  (setq result (read-string prompt))
 	  (and (string= result "") default (setq result default))
 	  (setq result (string-to-number result)))
-	(if (null (setq mp (nthcdr (1- result) vm-message-list)))
-	    (error "No such message.")))
+	(when (null (setq mp (nthcdr (1- result) vm-message-list)))
+	  (error "No such message.")))
       (car mp))))
-  (if (not (bufferp vm-mail-buffer))
-      (error "This is not a VM Mail mode buffer."))
-  (if (null (buffer-name vm-mail-buffer))
-      (error "The folder buffer containing message %d has been killed."
-	     (vm-number-of message)))
+  (unless (bufferp vm-mail-buffer)
+    (error "This is not a VM Mail mode buffer."))
+  (unless (buffer-name vm-mail-buffer)
+    (error "The folder buffer containing message %d has been killed."
+	   (vm-number-of message)))
   (vm-display nil nil '(vm-yank-message) '(vm-yank-message composing-message))
   (setq message (vm-real-message-of message))
   (let ((layout (vm-mm-layout message))
@@ -429,10 +430,10 @@ specified by `vm-included-text-headers' and
 	    )
       ;; decode MIME encoded words so supercite and other
       ;; mail-citation-hook denizens won't have to eat 'em.
-      (if vm-display-using-mime
-	  (save-restriction
-	    (narrow-to-region start end)
-	    (vm-decode-mime-encoded-words))))
+      (when vm-display-using-mime
+	(save-restriction
+	  (narrow-to-region start end)
+	  (vm-decode-mime-encoded-words))))
     ;; get rid of read-only text properties on the text, as
     ;; they will only cause trouble.
     (let ((inhibit-read-only t))
@@ -468,13 +469,13 @@ specified by `vm-included-text-headers' and
        ;; ensure the current message is presented 
        (vm-show-current-message)
        (vm-select-folder-buffer)
-       (if vm-presentation-buffer
+       (when vm-presentation-buffer
 	   (set-buffer vm-presentation-buffer))
        (current-buffer)))
     (save-excursion
       (goto-char start)
-      (if (looking-at "From ")
-          (delete-region start (1+ (line-end-position)))))))
+      (when (looking-at "From ")
+	(delete-region start (1+ (line-end-position)))))))
 
 (defconst vm-mime-yanked-button-format-alist
   '(
@@ -615,10 +616,10 @@ is deleted.  If the composition is a reply to a message in a currently visited
 folder, that message is marked as having been replied to."  
   (interactive "P")
   (vm-check-for-killed-folder)
-  (if (and (boundp 'mail-alias-file)
-	   mail-alias-file
-	   (not (eq (user-uid) 0)))
-      (error "Must be superuser to use mail-alias-file.  Please set mail-alias-file to nil."))
+  (when (and (boundp 'mail-alias-file)
+	     mail-alias-file
+	     (not (eq (user-uid) 0)))
+    (error "Must be superuser to use mail-alias-file.  Please set mail-alias-file to nil."))
   (let ((b (current-buffer)))
     (vm-mail-send)
     (cond ((null (buffer-name b)) ;; dead buffer
@@ -652,8 +653,7 @@ folder, that message is marked as having been replied to."
 	(goto-char (vm-matched-header-end))))))
 
 (defun vm-mail-mode-insert-message-id-maybe ()
-  (if (not vm-mail-header-insert-message-id)
-      nil
+  (when vm-mail-header-insert-message-id
     (save-restriction
       (save-excursion
 	(let ((resent nil))
@@ -793,9 +793,9 @@ as replied to, forwarded, etc, if appropriate."
       (vm-help-tale))
   ;; protect value of this-command from minibuffer read
   (let ((this-command this-command))
-    (if (and vm-confirm-mail-send
-	     (not (y-or-n-p "Send the message? ")))
-	(error "Message not sent.")))
+    (when (and vm-confirm-mail-send
+	       (not (y-or-n-p "Send the message? ")))
+      (error "Message not sent.")))
   (vm-mail-mode-show-headers)
   (save-excursion (run-hooks 'vm-mail-send-hook))
   (vm-mail-mode-insert-date-maybe)
@@ -804,11 +804,12 @@ as replied to, forwarded, etc, if appropriate."
   ;; has not already been MIME encoded.
   (when (and vm-send-using-mime
 	     (null (vm-mail-mode-get-header-contents "MIME-Version:")))
-    (if vm-do-fcc-before-mime-encode
-	(vm-do-fcc-before-mime-encode))
+    (when vm-do-fcc-before-mime-encode
+      (vm-do-fcc-before-mime-encode))
     (vm-mime-encode-composition))
-  (if vm-mail-reorder-message-headers
-      (vm-reorder-message-headers nil vm-mail-header-order 'none))
+  (when vm-mail-reorder-message-headers
+    (vm-reorder-message-headers
+     nil :keep-list vm-mail-header-order :discard-regexp 'none))
   ;; this to prevent Emacs 19 from asking whether a message that
   ;; has already been sent should be sent again.  VM renames mail
   ;; buffers after the message has been sent, so the user should
@@ -857,16 +858,15 @@ as replied to, forwarded, etc, if appropriate."
 	  (mail-send))))
     ;; be careful, something could have killed the composition
     ;; buffer inside mail-send.
-    (if (eq (current-buffer) composition-buffer)
-	(progn
-	  (cond ((eq vm-system-state 'replying)
-		 (vm-mail-mark-replied))
-		((eq vm-system-state 'forwarding)
-		 (vm-mail-mark-forwarded))
-		((eq vm-system-state 'redistributing)
-		 (vm-mail-mark-redistributed)))
-	  (vm-rename-current-mail-buffer)
-	  (vm-keep-mail-buffer (current-buffer))))
+    (when (eq (current-buffer) composition-buffer)
+      (cond ((eq vm-system-state 'replying)
+	     (vm-mail-mark-replied))
+	    ((eq vm-system-state 'forwarding)
+	     (vm-mail-mark-forwarded))
+	    ((eq vm-system-state 'redistributing)
+	     (vm-mail-mark-redistributed)))
+      (vm-rename-current-mail-buffer)
+      (vm-keep-mail-buffer (current-buffer)))
     (vm-display nil nil '(vm-mail-send) '(vm-mail-send))))
 
 ;;;###autoload
@@ -1075,7 +1075,8 @@ reply, but you must fill in the \"To:\" header and perhaps the
 	header-end
 	(mp (vm-select-operable-messages
 	     1 (interactive-p) "Forward")))
-    (if (cdr mp)
+    (if (cdr mp)			
+	;; multiple message forwarding
 	(let ((vm-digest-send-type vm-forwarding-digest-type))
 	  ;; (setq this-command 'vm-next-command-uses-marks)
 	  ;; (command-execute 'vm-send-digest)
@@ -1126,8 +1127,8 @@ reply, but you must fill in the \"To:\" header and perhaps the
 	       (insert "Content-Description: forwarded message\n")
 	       ;; eight bit chars will get \201 prepended if we
 	       ;; don't do this.
-	       (if vm-fsfemacs-mule-p
-		   (set-buffer-multibyte t))) ; is this safe?
+	       (when vm-fsfemacs-mule-p
+		 (set-buffer-multibyte t))) ; is this safe?
 	      ((equal vm-forwarding-digest-type "rfc934")
 	       (vm-rfc934-encapsulate-messages
 		vm-forward-list 
@@ -1142,17 +1143,23 @@ reply, but you must fill in the \"To:\" header and perhaps the
 	       (vm-no-frills-encapsulate-message
 		(car vm-forward-list) 
 		(append vm-forwarded-headers vm-forwarded-mime-headers)
-		vm-unforwarded-header-regexp)))
-	(if miming
-	    (let ((b (current-buffer)))
-	      (set-buffer reply-buffer)
-	      (mail-text)
-	      (vm-mime-attach-object b "message/rfc822" nil
-				     "forwarded message" t)
-	      (add-hook 'kill-buffer-hook
-			(list 'lambda ()
-			      (list 'if (list 'eq reply-buffer '(current-buffer))
-				    (list 'kill-buffer b))))))
+		vm-unforwarded-header-regexp)
+;; 	       (let ((vm-include-mime-attachments t) ; override the defaults
+;; 		     (vm-include-text-basic nil)
+;; 		     (vm-include-text-from-presentation nil))
+;; 		 (vm-yank-message (car vm-forward-list)))
+	       ))
+	(when miming
+	  (let ((b (current-buffer)))
+	    (set-buffer reply-buffer)
+	    (mail-text)
+	    (vm-mime-attach-object b "message/rfc822" nil
+				   "forwarded message" t)
+	    (add-hook 'kill-buffer-hook
+		      `(lambda ()
+			 (if (eq ,reply-buffer (current-buffer))
+			     (kill-buffer ,b)))
+		      )))
 	(mail-position-on-field "To"))
       (run-hooks 'vm-forward-message-hook)
       (run-hooks 'vm-mail-mode-hook))))
@@ -1204,9 +1211,11 @@ you can change the recipient address before resending the message."
       (delete-region (point) (point-max))
       (goto-char (point-min))
       ;; delete all but pertinent headers
-      (vm-reorder-message-headers nil nil "\\(X-VM-\\|Status:\\|Sender:\\)")
-      (vm-reorder-message-headers nil vm-resend-bounced-headers
-				  vm-resend-bounced-discard-header-regexp)
+      (vm-reorder-message-headers
+       nil :keep-list nil :discard-regexp "\\(X-VM-\\|Status:\\|Sender:\\)")
+      (vm-reorder-message-headers 
+       nil :keep-list vm-resend-bounced-headers
+       :discard-regexp vm-resend-bounced-discard-header-regexp)
       (if (search-forward "\n\n" nil t)
 	  (replace-match "")
 	(goto-char (point-max)))
@@ -1270,9 +1279,11 @@ You may also create a Resent-Cc header."
       (if mail-archive-file-name
 	  (insert "FCC: " mail-archive-file-name ?\n))
       ;; delete all but pertinent headers
-      (vm-reorder-message-headers nil nil "\\(X-VM-\\|Status:\\|Sender:\\)")
-      (vm-reorder-message-headers nil vm-resend-headers
-				  vm-resend-discard-header-regexp)
+      (vm-reorder-message-headers
+       nil :keep-list nil :discard-regexp "\\(X-VM-\\|Status:\\|Sender:\\)")
+      (vm-reorder-message-headers 
+       nil :keep-list vm-resend-headers
+       :discard-regexp vm-resend-discard-header-regexp)
       (if (search-forward "\n\n" nil t)
 	  (replace-match ""))
       (insert ?\n mail-header-separator ?\n)
@@ -1924,7 +1935,8 @@ message."
 	       (null (vm-mail-mode-get-header-contents "MIME-Version:"))
 	       (vm-mime-encode-composition))
           (if vm-mail-reorder-message-headers
-              (vm-reorder-message-headers nil vm-mail-header-order 'none))
+              (vm-reorder-message-headers 
+	       nil :keep-list vm-mail-header-order :discard-regexp 'none))
   	  (vm-remove-mail-mode-header-separator)
 	  (vm-munge-message-separators 'mmdf (point-min) (point-max))
 	  (goto-char (point-min))

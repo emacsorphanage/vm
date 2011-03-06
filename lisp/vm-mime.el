@@ -3065,8 +3065,9 @@ emacs-w3m."
 	(insert ?\n)
 	(save-excursion
 	  (goto-char start)
-	  (vm-reorder-message-headers nil vm-visible-headers
-				      vm-invisible-header-regexp))
+	  (vm-reorder-message-headers
+	   nil :keep-list vm-visible-headers
+	   :discard-regexp vm-invisible-header-regexp))
 	(save-restriction
 	  (narrow-to-region start (point))
 	  (vm-decode-mime-encoded-words))
@@ -3529,7 +3530,8 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
       (vm-mime-insert-mime-headers (car (cdr (car parts))))
       (goto-char (point-min))
       (vm-reorder-message-headers
-       nil nil
+       nil :keep-list nil
+       :discard-regexp
 "\\(Encrypted\\|Content-\\|MIME-Version\\|Message-ID\\|Subject\\|X-VM-\\|Status\\)")
       (goto-char (point-max))
       (setq part-header-pos (point))
@@ -3538,7 +3540,9 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 	(setq parts (cdr parts)))
       (goto-char part-header-pos)
       (vm-reorder-message-headers
-       nil '("Subject" "MIME-Version" "Content-" "Message-ID" "Encrypted") nil)
+       nil 
+       :keep-list '("Subject" "MIME-Version" "Content-" "Message-ID" "Encrypted")
+       :discard-regexp nil)
       (vm-munge-message-separators vm-folder-type (point-min) (point-max))
       (goto-char (point-min))
       (insert (vm-leading-message-separator))
@@ -5803,8 +5807,9 @@ minibuffer if the command is run interactively."
 	  (vm-insert-region-from-buffer folder (vm-headers-of m)
 					(vm-text-end-of m))
 	  (goto-char (point-min))
-	  (vm-reorder-message-headers nil nil
-				      vm-internal-unforwarded-header-regexp))
+	  (vm-reorder-message-headers
+	   nil :keep-list nil
+	   :discard-regexp vm-internal-unforwarded-header-regexp))
 	(and description (setq description
 			       (vm-mime-scrub-description description)))
 	(vm-mime-attach-object buf "message/rfc822" nil description nil)
@@ -5889,7 +5894,8 @@ COMPOSITION's name will be read from the minibuffer."
 	    (vm-mime-insert-mime-body layout)
 	    (vm-mime-transfer-decode-region layout start (point-max))
 	    (goto-char (point-min))
-	    (vm-reorder-message-headers nil nil "Content-Transfer-Encoding:")
+	    (vm-reorder-message-headers 
+	     nil :keep-list nil :discard-regexp "Content-Transfer-Encoding:")
 	    (insert "Content-Transfer-Encoding: binary\n")
 	    (set-buffer composition)
 	    (vm-mime-attach-object work-buffer
@@ -6231,7 +6237,8 @@ This function is only used with GNU Emacs, not XEmacs.  USR, 2011-02-19"
 	(save-restriction
 	  (goto-char (vm-mm-layout-header-start layout))
 	  (narrow-to-region (point) (vm-mm-layout-header-end layout))
-	  (vm-reorder-message-headers nil nil "Content-Transfer-Encoding:")
+	  (vm-reorder-message-headers 
+	   nil :keep-list nil :discard-regexp "Content-Transfer-Encoding:")
 	  (if (not (equal encoding "7bit"))
 	      (insert "CONTENT-TRANSFER-ENCODING: " encoding "\n"))
 	  encoding )))))
@@ -6523,7 +6530,8 @@ and the approriate content-type and boundary markup information is added."
   (vm-mime-encode-headers)
 
   (if vm-mail-reorder-message-headers
-      (vm-reorder-message-headers nil vm-mail-header-order 'none))
+      (vm-reorder-message-headers 
+       nil :keep-list vm-mail-header-order :discard-regexp 'none))
   
   (buffer-enable-undo)
   (let ((unwind-needed t)
@@ -6626,7 +6634,8 @@ agent; under Unix, normally sendmail.)"
 	    (vm-remove-mail-mode-header-separator)
 	    (goto-char (point-min))
 	    (vm-reorder-message-headers
-	     nil nil 
+	     nil :keep-list nil 
+	     :discard-regexp
 	     "\\(Content-Type:\\|Content-Transfer-Encoding\\|MIME-Version:\\)")
 	    (insert "MIME-Version: 1.0\n")
 	    (if enriched
@@ -6782,7 +6791,8 @@ agent; under Unix, normally sendmail.)"
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
 	    (unless already-mimed
 	      ;; trim headers
-	      (vm-reorder-message-headers nil '("Content-ID:") nil)
+	      (vm-reorder-message-headers 
+	       nil :keep-list '("Content-ID:") :discard-regexp nil)
 	      ;; remove header/text separator
 	      (goto-char (1- (vm-mm-layout-body-start layout)))
 	      (if (looking-at "\n")
@@ -6872,7 +6882,8 @@ agent; under Unix, normally sendmail.)"
 	(when (and just-one already-mimed)
 	  (goto-char (vm-mm-layout-header-start layout))
 	  ;; trim headers
-	  (vm-reorder-message-headers nil '("Content-ID:") nil)
+	  (vm-reorder-message-headers
+	   nil :keep-list '("Content-ID:") :discard-regexp nil)
 	  ;; remove header/text separator
 	  (goto-char (vm-mm-layout-header-end layout))
 	  (if (looking-at "\n")
@@ -6888,7 +6899,8 @@ agent; under Unix, normally sendmail.)"
 	(goto-char (point-min))
 	(vm-remove-mail-mode-header-separator)
 	(vm-reorder-message-headers
-	 nil nil 
+	 nil :keep-list nil 
+	 :discard-regexp
 	 "\\(Content-Type:\\|MIME-Version:\\|Content-Transfer-Encoding\\)")
 	(vm-add-mail-mode-header-separator)
 	(insert "MIME-Version: 1.0\n")
@@ -6982,7 +6994,8 @@ also `vm-mime-xemacs-encode-composition'."
 	    (vm-remove-mail-mode-header-separator)
 	    (goto-char (point-min))
 	    (vm-reorder-message-headers
-	     nil nil 
+	     nil :keep-list nil 
+	     :discard-regexp
 	     "\\(Content-Type:\\|Content-Transfer-Encoding\\|MIME-Version:\\)")
 	    (insert "MIME-Version: 1.0\n")
 	    (if enriched
@@ -7192,7 +7205,8 @@ also `vm-mime-xemacs-encode-composition'."
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
 	    (when already-mimed
 	      ;; trim headers
-	      (vm-reorder-message-headers nil '("Content-ID:") nil)
+	      (vm-reorder-message-headers 
+	       nil :keep-list '("Content-ID:") :discard-regexp nil)
 	      ;; remove header/text separator
 	      (goto-char (1- (vm-mm-layout-body-start layout)))
 	      (if (looking-at "\n")
@@ -7276,7 +7290,8 @@ also `vm-mime-xemacs-encode-composition'."
 	(when (and just-one already-mimed)
 	  (goto-char (vm-mm-layout-header-start layout))
 	  ;; trim headers
-	  (vm-reorder-message-headers nil '("Content-ID:") nil)
+	  (vm-reorder-message-headers 
+	   nil :keep-list '("Content-ID:") :discard-regexp nil)
 	  ;; remove header/text separator
 	  (goto-char (vm-mm-layout-header-end layout))
 	  (if (looking-at "\n")
@@ -7292,7 +7307,8 @@ also `vm-mime-xemacs-encode-composition'."
 	(goto-char (point-min))
 	(vm-remove-mail-mode-header-separator)
 	(vm-reorder-message-headers
-	 nil nil 
+	 nil :keep-list nil 
+	 :discard-regexp
 	 "\\(Content-Type:\\|MIME-Version:\\|Content-Transfer-Encoding\\)")
 	(vm-add-mail-mode-header-separator)
 	(insert "MIME-Version: 1.0\n")
@@ -7366,7 +7382,9 @@ also `vm-mime-xemacs-encode-composition'."
 	(setq vm-send-using-mime nil)
 	(insert-buffer-substring master-buffer header-start header-end)
 	(goto-char (point-min))
-	(vm-reorder-message-headers nil nil
+	(vm-reorder-message-headers 
+	 nil :keep-list nil
+	 :discard-regedp
          "\\(Content-Type:\\|MIME-Version:\\|Content-Transfer-Encoding\\)")
 	(insert "MIME-Version: 1.0\n")
 	(insert (format

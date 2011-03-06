@@ -25,6 +25,7 @@
 (provide 'vm-folder)
 
 (eval-when-compile
+  (require 'cl)
   (require 'vm-misc)
   (require 'vm-summary)
   (require 'vm-window)
@@ -1055,7 +1056,8 @@ vm-folder-type is initialized here."
 ;; are ordered according to the order of the keep list.
 
 ;;;###autoload
-(defun vm-reorder-message-headers (message keep-list discard-regexp)
+(defun vm-reorder-message-headers (message 
+				   &key keep-list discard-regexp)
   (interactive
    (progn 
      (goto-char (point-min))

@@ -24,6 +24,7 @@
 (provide 'vm-digest)
 
 (eval-when-compile
+  (require 'cl)
   (require 'vm-misc)
   (require 'vm-summary)
   (require 'vm-folder)
@@ -67,11 +68,14 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 	  (save-excursion
 	    (set-buffer target-buffer)
 	    (let ((beg (point)))
-	      (insert-buffer-substring source-buffer (vm-headers-of m)
-				       (vm-text-end-of m))
+	      (insert-buffer-substring 
+	       source-buffer (vm-headers-of m) (vm-text-end-of m))
 	      (goto-char beg)
-	      (vm-reorder-message-headers nil nil vm-internal-unforwarded-header-regexp)
-	      (vm-reorder-message-headers nil keep-list discard-regexp)
+	      (vm-reorder-message-headers 
+	       nil :keep-list nil 
+	       :discard-regexp vm-internal-unforwarded-header-regexp)
+	      (vm-reorder-message-headers 
+	       nil :keep-list keep-list :discard-regexp discard-regexp)
               (vm-decode-mime-message-headers)))))
       (goto-char (point-max))
       (insert "------- end of forwarded message -------\n"))))
@@ -121,15 +125,17 @@ the Content-Type header.  Otherwise nil is returned."
 	    (goto-char beg)
 	    ;; remove the Berkeley and VM status headers and sort
 	    ;; the MIME headers to the top of the message.
-	    (vm-reorder-message-headers nil vm-mime-header-list
-					vm-internal-unforwarded-header-regexp)
+	    (vm-reorder-message-headers 
+	     nil :keep-list vm-mime-header-list
+	     :discard-regexp vm-internal-unforwarded-header-regexp)
 	    ;; skip past the MIME headers so that when the
 	    ;; user's header filters are applied they won't
 	    ;; remove the MIME headers.
 	    (while (and (vm-match-header) (looking-at vm-mime-header-regexp))
 	      (goto-char (vm-matched-header-end)))
 	    ;; apply the user's header filters.
-	    (vm-reorder-message-headers nil keep-list discard-regexp)
+	    (vm-reorder-message-headers 
+	     nil :keep-list keep-list :discard-regexp discard-regexp)
 	    (goto-char (point-max))
 	    (setq mlist (cdr mlist)))
 	  (if (and (< (length message-list) 2) (not always-use-digest))
@@ -319,8 +325,9 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 		    (goto-char beg)
 		    ;; remove the Berkeley and VM status headers and sort
 		    ;; the MIME headers to the top of the message.
-		    (vm-reorder-message-headers nil vm-mime-header-list
-						vm-internal-unforwarded-header-regexp)
+		    (vm-reorder-message-headers
+		     nil :keep-list vm-mime-header-list
+		     :discard-regexp vm-internal-unforwarded-header-regexp)
 		    ;; skip past the MIME headers so that when the
 		    ;; user's header filters are applied they won't
 		    ;; remove the MIME headers.
@@ -328,7 +335,8 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 				(looking-at vm-mime-header-regexp))
 		      (goto-char (vm-matched-header-end)))
 		    ;; apply the user's header filters.
-		    (vm-reorder-message-headers nil keep-list discard-regexp)
+		    (vm-reorder-message-headers 
+		     nil :keep-list keep-list :discard-regexp discard-regexp)
 		    (vm-rfc934-char-stuff-region beg (point-max))))))
 	    (goto-char (point-max))
 	    (insert "---------------")
@@ -412,8 +420,9 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 		    (goto-char beg)
 		    ;; remove the Berkeley and VM status headers and sort
 		    ;; the MIME headers to the top of the message.
-		    (vm-reorder-message-headers nil vm-mime-header-list
-						vm-internal-unforwarded-header-regexp)
+		    (vm-reorder-message-headers 
+		     nil :keep-list vm-mime-header-list
+		     :discard-regexp vm-internal-unforwarded-header-regexp)
 		    ;; skip past the MIME headers so that when the
 		    ;; user's header filters are applied they won't
 		    ;; remove the MIME headers.
@@ -421,7 +430,8 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 				(looking-at vm-mime-header-regexp))
 		      (goto-char (vm-matched-header-end)))
 		    ;; apply the user's header filters.
-		    (vm-reorder-message-headers nil keep-list discard-regexp)
+		    (vm-reorder-message-headers 
+		     nil :keep-list keep-list :discard-regexp discard-regexp)
 		    (vm-rfc1153-char-stuff-region beg (point-max))))))
 	    (goto-char (point-max))
 	    (insert "\n---------------")

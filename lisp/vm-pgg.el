@@ -433,8 +433,9 @@ Switch mode on/off according to ARG.
     (forward-line 1)
     (let ((buffer-read-only nil))
       (delete-region (point-min) (point))
-      (vm-reorder-message-headers nil vm-visible-headers
-                                  vm-invisible-header-regexp)
+      (vm-reorder-message-headers 
+       nil :keep-list vm-visible-headers 
+       :discard-regexp vm-invisible-header-regexp)
       (vm-decode-mime-message-headers m)
       (when (vectorp layout)
         ;; skip headers otherwise they get removed 
