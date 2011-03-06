@@ -25,6 +25,7 @@
 
 ;; For function declarations
 (eval-when-compile
+  (require 'cl)
   (require 'vm-misc)
   (require 'vm-folder)
   (require 'vm-summary)
@@ -848,8 +849,8 @@ killed as well."
 		      (progn
 			(goto-char (match-beginning 0))
 			(vm-reorder-message-headers
-			 nil vm-visible-headers
-			 vm-invisible-header-regexp)))
+			 nil :keep-list vm-visible-headers
+			 :discard-regexp vm-invisible-header-regexp)))
 		  (set-window-point (selected-window) (point))))
 	    (if (y-or-n-p (format "Retrieve message %d (size = %d)? " n size))
 		'retrieve

@@ -56,6 +56,7 @@
 
 (eval-when-compile
   (require 'vm-misc)
+  (require 'vm-mime)
 
   (defvar current-menubar nil))
 

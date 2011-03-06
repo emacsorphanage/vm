@@ -24,6 +24,8 @@
 
 (provide 'vm-message)
 
+(eval-when-compile
+  (require 'cl))
 
 (declare-function vm-mime-encode-words-in-string "vm-mime" (string))
 (declare-function vm-reencode-mime-encoded-words-in-string 
@@ -35,7 +37,7 @@
 (declare-function vm-stuff-virtual-message-data 
 		  "vm-folder" (message))
 (declare-function vm-reorder-message-headers 
-		  "vm-folder" (message keep-list discard-regexp))
+		  "vm-folder" (message &optional keep-list discard-regexp))
 (declare-function vm-set-buffer-modified-p
 		  "vm-undo" (flag &optional buffer))
 (declare-function vm-clear-modification-flag-undos 
@@ -81,14 +83,15 @@ works in all VM buffers."
 (defsubst vm-headers-of (message)
   (aref (aref message 0) 1))
 ;; where visible headers start
-(defsubst vm-vheaders-of (message)
+(defun vm-vheaders-of (message)
   (or (aref (aref message 0) 2)
-      (progn (vm-reorder-message-headers message nil nil)
+      (progn (vm-reorder-message-headers message)
 	     (aref (aref message 0) 2))))
 ;; where text section starts
 (defsubst vm-text-of (message)
-  (or (aref (aref message 0) 3) (progn (vm-find-and-set-text-of message)
-				       (aref (aref message 0) 3))))
+  (or (aref (aref message 0) 3) 
+      (progn (vm-find-and-set-text-of message)
+	     (aref (aref message 0) 3))))
 ;; where text portion of message ends
 (defsubst vm-text-end-of (message)
   (aref (aref message 0) 4))

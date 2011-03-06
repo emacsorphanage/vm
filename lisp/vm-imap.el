@@ -26,6 +26,7 @@
 (provide 'vm-imap)
 
 (eval-when-compile 
+  (require 'cl)
   (require 'sendmail)
   (require 'vm-misc))
 
@@ -1561,8 +1562,8 @@ as well."
 		(progn
 		  (goto-char (match-beginning 0))
 		  (vm-reorder-message-headers
-		   nil vm-visible-headers
-		   vm-invisible-header-regexp)))
+		   nil :keep-list vm-visible-headers
+		   :discard-regexp vm-invisible-header-regexp)))
 	    (set-window-point (selected-window) (point))
 	    ;;-------------------
 	    (vm-buffer-type:exit)

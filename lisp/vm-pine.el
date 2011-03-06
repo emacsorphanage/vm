@@ -401,14 +401,15 @@ creation)."
       (insert-buffer-substring folder-buffer hstart tstart)
       (goto-char (point-min))
       (cond ((or (vm-mime-plain-message-p (car vmp)) is-decoded)
-             (vm-reorder-message-headers nil
-                 vm-postponed-message-headers
-                 vm-postponed-message-discard-header-regexp))
+             (vm-reorder-message-headers
+	      nil :keep-list vm-postponed-message-headers
+	      :discard-regexp vm-postponed-message-discard-header-regexp))
             (t ; copy undecoded messages with mime headers
-             (vm-reorder-message-headers nil
-                  (append '("MIME-Version:" "Content-type:")
-                      vm-postponed-message-headers)
-                  vm-postponed-message-discard-header-regexp)))
+             (vm-reorder-message-headers 
+	      nil
+	      :keep-list (append '("MIME-Version:" "Content-type:")
+				 vm-postponed-message-headers)
+	      :discard-regexp vm-postponed-message-discard-header-regexp)))
       (vm-decode-mime-encoded-words)
       (search-forward-regexp "\n\n")
       (replace-match (concat "\n" mail-header-separator "\n") t t)

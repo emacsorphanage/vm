@@ -25,6 +25,7 @@
 (provide 'vm-folder)
 
 (eval-when-compile
+  (require 'cl)
   (require 'vm-misc)
   (require 'vm-summary)
   (require 'vm-window)
@@ -1055,7 +1056,9 @@ vm-folder-type is initialized here."
 ;; are ordered according to the order of the keep list.
 
 ;;;###autoload
-(defun vm-reorder-message-headers (message keep-list discard-regexp)
+(defun* vm-reorder-message-headers (message &optional
+				   &key (keep-list nil)
+				   (discard-regexp nil))
   (interactive
    (progn 
      (goto-char (point-min))
@@ -5002,28 +5005,29 @@ thread are loaded."
 	(n 0)
 	fetch-method
 	m mm)
-    (save-excursion
-      ;; (message "Retrieving message body...")
-      (while mlist
-	(setq m (car mlist))
-	(setq mm (vm-real-message-of m))
-	(set-buffer (vm-buffer-of mm))
-	(if (vm-body-retrieved-of mm)
-	    (if (vm-body-to-be-discarded-of mm)
-		(vm-unregister-fetched-message mm))
-	  ;; else retrieve the body
-	  (setq n (1+ n))
-	  (message "Retrieving message body... %s" n)
-	  (vm-retrieve-real-message-body mm)
-	  )
-	(setq mlist (cdr mlist)))
-      (when (> n 0)
-	(message "Retrieving message body... done")))
-    (intern (buffer-name) vm-buffers-needing-display-update)
-    ;; FIXME - is this needed?  Is it correct?
-    (vm-display nil nil '(vm-load-message vm-refresh-message)
-		(list this-command))	
-    (vm-update-summary-and-mode-line)
+    (unwind-protect
+	(save-excursion
+	  ;; (message "Retrieving message body...")
+	  (while mlist
+	    (setq m (car mlist))
+	    (setq mm (vm-real-message-of m))
+	    (set-buffer (vm-buffer-of mm))
+	    (if (vm-body-retrieved-of mm)
+		(if (vm-body-to-be-discarded-of mm)
+		    (vm-unregister-fetched-message mm))
+	      ;; else retrieve the body
+	      (setq n (1+ n))
+	      (message "Retrieving message body... %s" n)
+	      (vm-retrieve-real-message-body mm)
+	      )
+	    (setq mlist (cdr mlist)))
+	  (when (> n 0)
+	    (message "Retrieving message body... done")))
+      (intern (buffer-name) vm-buffers-needing-display-update)
+      ;; FIXME - is this needed?  Is it correct?
+      (vm-display nil nil '(vm-load-message vm-refresh-message)
+		  (list this-command))	
+      (vm-update-summary-and-mode-line))
     ))
 
 ;;;###autoload

@@ -59,6 +59,9 @@
 
 (provide 'vm-ps-print)
 
+(eval-when-compile
+  (require 'cl))
+
 (require 'vm-save)
 (require 'ps-print)
 
@@ -284,9 +287,9 @@ for customization of the output."
       (setq mstart (point-max))
       (vm-insert-region-from-buffer
        (vm-buffer-of m) (vm-vheaders-of m) (vm-end-of m))
-      (vm-reorder-message-headers nil
-				  vm-visible-headers
-				  vm-invisible-header-regexp)
+      (vm-reorder-message-headers
+       nil :keep-list vm-visible-headers
+       :discard-regexp vm-invisible-header-regexp)
       (vm-decode-mime-encoded-words)
       (goto-char mstart)
       (re-search-forward "\n\n") ;; skip headers
