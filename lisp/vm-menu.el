@@ -507,7 +507,7 @@ do not allow menubar buttons.")
 		   'w3-fetch)
 		  (t 'w3-fetch-other-frame))))
     `(,@title
-      ["Primary (Copy)"
+      ["Window system (Copy)"
        (vm-mouse-send-url-at-position 
 	(point) 'vm-mouse-send-url-to-window-system)
        t]

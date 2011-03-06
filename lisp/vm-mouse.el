@@ -367,8 +367,18 @@ that case.                                            USR, 2010-08-01"
 (defun vm-mouse-send-url-to-konqueror-new-window (url)
   (vm-mouse-send-url-to-konqueror url t))
 
-(defun vm-mouse-send-url-to-window-system (url &optional type)
-  (unless type (setq type 'PRIMARY))
+(defvar vm-warn-for-interprogram-cut-function t)
+
+(defun vm-mouse-send-url-to-window-system (url)
+  (unless interprogram-cut-function
+    (when vm-warn-for-interprogram-cut-function 
+      (message "Copying to kill ring only; Customize interprogram-cut-function to copy to Window system")
+      (sleep-for 2)
+      (setq vm-warn-for-interprogram-cut-function nil)))
+  (kill-new url))
+
+(defun vm-mouse-send-url-to-clipboard (url &optional type)
+  (unless type (setq type 'CLIPBOARD))
   (message "Sending URL to %s..." type)
   (cond ((fboundp 'own-selection)	; XEmacs
 	 (own-selection url type))
@@ -377,9 +387,6 @@ that case.                                            USR, 2010-08-01"
 	((fboundp 'x-own-selection)	; lselect for Emacs21?
 	 (x-own-selection url type)))
   (message "Sending URL to %s... done" type))
-
-(defun vm-mouse-send-url-to-clipboard (url)
-  (vm-mouse-send-url-to-window-system url 'CLIPBOARD))
 
 ;;;###autoload
 (defun vm-mouse-install-mouse ()

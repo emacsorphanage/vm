@@ -85,6 +85,10 @@
 (defsubst vm-garbage-collect ()
   (pp (vm-zip-lists gc-fields (garbage-collect))))
 
+;; Make sure that interprogram-cut-function is defined
+(unless (boundp 'interprogram-cut-function)
+  (defvar interprogram-cut-function nil))
+
 ;; Taken from XEmacs as GNU Emacs is missing `replace-in-string' and defining
 ;; it may cause clashes with other packages defining it differently, in fact
 ;; we could also call the function `replace-regexp-in-string' as Roland
