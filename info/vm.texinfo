@@ -6325,7 +6325,7 @@ have been modified since the last save.
 @end itemize
 
 @unnumberedsubsec MIME layout
-
+@anchor{MIME layout}
 The MIME layout of a message, stored in the soft data of the message,
 is in turn a vector containing various pieces of data.  Such a vector
 is used not only for the overall message, but for all its MIME parts
@@ -6845,7 +6845,7 @@ Conversely, the headers of outgoing messages are encoded using
 
 @inindex vm-decode-mime-layout
 The MIME layout of a message is stored in the @code{mime-layout} field
-of the Soft data vector of the message.  (@xref{Soft data vector}.)
+of the Soft data vector of the message.  (@xref{MIME layout}.)
 The MIME layout is in general a tree structure of ``MIME parts''.  The
 function @code{vm-decode-mime-layout} is responsible for traversing
 the tree structure at each MIME part and displaying it appropriately.
@@ -6928,19 +6928,22 @@ The following properties are defined for attachment buttons:
 
 @itemize
 @item @code{vm-mime-object}.
-A string denoting the name of the object.  If the attachment is
-another MIME object in a VM folder then this property is set to
-@code{t}, and a @code{vm-mime-layout} property describes the rest of
-the metadata.
+The object denoting the MIME attachment.  It is either a string
+denoting the file name, a buffer that contains the file to be
+attached, or @code{t} indicating that the attachment is another MIME
+object in a VM folder.  In the last case, the @code{vm-mime-layout}
+property describes the rest of the metadata.
 @item @code{vm-mime-type}.
-A string denoting the MIME type of the object.
+A string denoting the MIME type of the object.  (Note that it is a
+single string, unlike the @code{type} component of a MIME layout.)
+@item @code{vm-mime-parameters}.
+A list of strings denoting the parameters of the MIME type.
 @item @code{vm-mime-description}.
 A string for the MIME description of the object.
-@item @code{vm-mime-parameters}.
 @item @code{vm-mime-disposition}.
 A list describing the MIME disposition.
 @item @code{vm-mime-encoded}.
-A boolean indicating whether the object is already MIME encoded.
+A boolean indicating whether the object has MIME headers.
 @item @code{vm-mime-encoding}.
 The MIME encoding used, if it is already encoded.
 @item @code{vm-mime-forward-local-refs}.

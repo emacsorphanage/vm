@@ -5951,15 +5951,18 @@ there is no file name for this object.             USR, 2011-03-07"
 	     (setq disposition (list "inline")))
 	   (unless no-suggested-filename
 	     (setq file-name (file-name-nondirectory object))
-	     (setq type 
-		   (concat type "; name=\"" file-name "\""))
+	     ;; why fuse things together?  USR, 2011-03-17
+;; 	     (setq type 
+;; 		   (concat type "; name=\"" file-name "\""))
+	     (setq params
+		   (list (concat "name=\"" file-name "\"")))
 	     (setq disposition 
 		   (nconc disposition
 			  (list (concat "filename=\"" file-name "\""))))))
 	  ((listp object) 
 	   (setq file-name (nth 4 object))
 	   (setq disposition (nth 3 object)))
-	  (t
+	  (t				; buffer or mimed file
 	   (setq disposition (list "unspecified"))))
     (when (< (point) (save-excursion (mail-text) (point)))
       (mail-text))
