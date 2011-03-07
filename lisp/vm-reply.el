@@ -1153,8 +1153,8 @@ reply, but you must fill in the \"To:\" header and perhaps the
 	  (let ((b (current-buffer)))
 	    (set-buffer reply-buffer)
 	    (mail-text)
-	    (vm-mime-attach-object b "message/rfc822" nil
-				   "forwarded message" t)
+	    (vm-mime-attach-object 
+	     b "message/rfc822" nil :description "forwarded message" :mimed t)
 	    (add-hook 'kill-buffer-hook
 		      `(lambda ()
 			 (if (eq ,reply-buffer (current-buffer))
@@ -1401,9 +1401,9 @@ included in the digest."
 	  (let ((b (current-buffer)))
 	    (set-buffer mail-buffer)
 	    (mail-text)
-	    (vm-mime-attach-object b "multipart/digest"
-				   (list (concat "boundary=\""
-						 boundary "\"")) nil t)
+	    (vm-mime-attach-object
+	     b "multipart/digest" (list (concat "boundary=\"" boundary "\"")) 
+	     :description nil :mimed t)
 	    (add-hook 'kill-buffer-hook
 		      (list 'lambda ()
 			    (list 'if (list 'eq mail-buffer '(current-buffer))

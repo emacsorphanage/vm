@@ -1033,14 +1033,14 @@ cleanup here after verification and decoding took place."
       (goto-char (point-max))
       (insert "\n")
       (setq start (point))
-      (vm-mime-attach-object buffer
-                             "application/pgp-keys"
-                             (list (concat "name=\"" pgg-default-user-id ".asc\""))
-                             description
-                             nil)
+      (vm-mime-attach-object
+       buffer "application/pgp-keys"
+       (list (concat "name=\"" pgg-default-user-id ".asc\""))
+       :description description)
       ;; a crude hack to set the disposition
       (let ((disposition (list "attachment"
-                               (concat "filename=\"" pgg-default-user-id ".asc\"")))
+                               (concat "filename=\"" 
+				       pgg-default-user-id ".asc\"")))
             (end (point)))
         (if (featurep 'xemacs)
             (vm-set-extent-property (vm-extent-at start 'vm-mime-disposition)

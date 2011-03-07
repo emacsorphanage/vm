@@ -5521,6 +5521,8 @@ Returns non-NIL value M is a plain message."
     suffix ))
 
 ;;;###autoload
+
+
 (defun vm-mime-attach-file (file type &optional charset description
 			    no-suggested-filename)
   "Attach a file to a VM composition buffer to be sent along with the message.
@@ -5590,7 +5592,7 @@ this case and not prompt you for it in the minibuffer."
     (setq charset (list (concat "charset=" charset))))
   (when description 
     (setq description (vm-mime-scrub-description description)))
-  (vm-mime-attach-object file type charset description nil))
+  (vm-mime-attach-object file type charset :description description :mimed nil))
 
 ;;;###autoload
 (defun vm-mime-attach-mime-file (file type)
@@ -5641,7 +5643,7 @@ should use vm-mime-attach-file to attach the file."
     (error "No such file: %s" file))
   (unless (file-readable-p file)
     (error "You don't have permission to read %s" file))
-  (vm-mime-attach-object file type nil nil t))
+  (vm-mime-attach-object file type nil :description nil :mimed t))
 
 ;;;###autoload
 (defun vm-mime-attach-buffer (buffer type &optional charset description)
@@ -5706,7 +5708,8 @@ this case and not prompt you for it in the minibuffer."
     (setq charset (list (concat "charset=" charset))))
   (when description 
     (setq description (vm-mime-scrub-description description)))
-  (vm-mime-attach-object buffer type charset description nil))
+  (vm-mime-attach-object buffer type charset
+			 :description description))
 
 ;;;###autoload
 (defun vm-mime-attach-message (message &optional description)
@@ -5817,7 +5820,8 @@ minibuffer if the command is run interactively."
 	   :discard-regexp vm-internal-unforwarded-header-regexp))
 	(and description (setq description
 			       (vm-mime-scrub-description description)))
-	(vm-mime-attach-object buf "message/rfc822" nil description nil)
+	(vm-mime-attach-object buf "message/rfc822" nil 
+			       :description description)
 	(make-local-variable 'vm-forward-list)
 	(setq vm-system-state 'forwarding
 	      vm-forward-list (list message))
@@ -5847,8 +5851,8 @@ minibuffer if the command is run interactively."
       (when description 
 	(setq description (vm-mime-scrub-description description)))
       (vm-mime-attach-object buf "multipart/digest"
-			     (list (concat "boundary=\""
-					   boundary "\"")) nil t)
+			     (list (concat "boundary=\"" boundary "\"")) 
+			     :description nil :mimed t)
       (make-local-variable 'vm-forward-list)
       (setq vm-system-state 'forwarding
 	    vm-forward-list (copy-sequence message))
@@ -5903,11 +5907,10 @@ COMPOSITION's name will be read from the minibuffer."
 	     nil :keep-list nil :discard-regexp "Content-Transfer-Encoding:")
 	    (insert "Content-Transfer-Encoding: binary\n")
 	    (set-buffer composition)
-	    (vm-mime-attach-object work-buffer
-				   (car (vm-mm-layout-type layout))
-				   (cdr (vm-mm-layout-type layout))
-				   (vm-mm-layout-description layout)
-				   t)
+	    (vm-mime-attach-object 
+	     work-buffer 
+	     (car (vm-mm-layout-type layout)) (cdr (vm-mm-layout-type layout))
+	     :description (vm-mm-layout-description layout) :mimed t)
 	    ;; move windwo point forward so that if this command
 	    ;; is used consecutively, the insertions will be in
 	    ;; the correct order in the composition buffer.
@@ -5922,39 +5925,56 @@ COMPOSITION's name will be read from the minibuffer."
 				  (list 'kill-buffer buf))))))
       (and work-buffer (kill-buffer work-buffer)))))
 
-(defun vm-mime-attach-object (object type params description mimed
-			      &optional no-suggested-filename)
+(defun* vm-mime-attach-object (object type params &key description 
+				      (mimed nil)
+				      (no-suggested-filename nil))
+  "Attach a MIME OBJECT to the mail composition in the current
+buffer.  The OBJECT could be:
+- the full path name of a file
+- a buffer, or
+- a list with the elements: buffer, start position, end position,
+  disposition and optional file name.
+TYPE, PARAMS and DESCRIPTION are the standard MIME properties.
+MIMED says whether the OBJECT already has MIME headers.
+Optional argument NO-SUGGESTED-FILENAME is a boolean indicating that
+there is no file name for this object.             USR, 2011-03-07"
   (unless (eq major-mode 'mail-mode)
     (error "Command must be used in a VM Mail mode buffer."))
   (when (vm-mail-mode-get-header-contents "MIME-Version")
     (error "Can't attach MIME object to already encoded MIME buffer."))
   (let (start end e tag-string disposition file-name
 	(fb (list vm-mime-forward-local-external-bodies)))
-    (when (< (point) (save-excursion (mail-text) (point)))
-      (mail-text))
-    (setq start (point))
-    (if (listp object)
-	(setq tag-string (format "[ATTACHMENT %s, %s]" (nth 4 object) type))
-      (setq tag-string (format "[ATTACHMENT %s, %s]" object
-			     (or type "MIME file"))))
-    (insert tag-string "\n")
-    (setq end (1- (point)))
     (cond ((and (stringp object) (not mimed))
-	  (if (or (vm-mime-types-match "application" type)
-		  (vm-mime-types-match "model" type))
-	      (setq disposition (list "attachment"))
-	    (setq disposition (list "inline")))
-	  (unless no-suggested-filename
-	    (setq file-name (file-name-nondirectory object))
-	    (setq type 
-		  (concat type "; name=\"" file-name "\""))
-	    (setq disposition 
-		  (nconc disposition
-			 (list (concat "filename=\"" file-name "\""))))))
+	   (if (or (vm-mime-types-match "application" type)
+		   (vm-mime-types-match "model" type))
+	       (setq disposition (list "attachment"))
+	     (setq disposition (list "inline")))
+	   (unless no-suggested-filename
+	     (setq file-name (file-name-nondirectory object))
+	     (setq type 
+		   (concat type "; name=\"" file-name "\""))
+	     (setq disposition 
+		   (nconc disposition
+			  (list (concat "filename=\"" file-name "\""))))))
 	  ((listp object) 
+	   (setq file-name (nth 4 object))
 	   (setq disposition (nth 3 object)))
 	  (t
 	   (setq disposition (list "unspecified"))))
+    (when (< (point) (save-excursion (mail-text) (point)))
+      (mail-text))
+    (setq start (point))
+    (setq tag-string (format "[ATTACHMENT %s, %s]" 
+			     (or file-name description "") 
+			     (or type "MIME file")))
+;;     (if (listp object)
+;; 	(setq tag-string (format "[ATTACHMENT %s, %s]" 
+;; 				 (or (nth 4 object) "") type))
+;;       (setq tag-string (format "[ATTACHMENT %s, %s]" object
+;; 			     (or type "MIME file"))))
+    (insert tag-string "\n")
+    (setq end (1- (point)))
+
 
     (cond (vm-fsfemacs-p
 	   (put-text-property start end 'front-sticky nil)
@@ -7892,14 +7912,15 @@ This is a destructive operation and cannot be undone!"
       (cond (filename
 	     (vm-mime-attach-file filename (car type)))
 	    (file
-	     (vm-mime-attach-object (list buf start end disp file)
-				    (car type) nil desc t))
+	     (vm-mime-attach-object 
+	      (list buf start end disp file) (car type) nil 
+	      :description desc :mimed t))
 	    (t
-	     (vm-mime-attach-object (list buf start end disp)
-				    (car type) nil desc t)))
+	     (vm-mime-attach-object 
+	      (list buf start end disp) (car type) nil 
+	      :description desc :mimed t)))
       ;; delete the mime-button
-      (delete-region (vm-extent-start-position x)
-		     (vm-extent-end-position x))
+      (delete-region (vm-extent-start-position x) (vm-extent-end-position x))
       (vm-detach-extent x))))
 
 
