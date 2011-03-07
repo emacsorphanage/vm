@@ -62,6 +62,8 @@ that case.                                            USR, 2010-08-01"
 
 ;;;###autoload
 (defun vm-mouse-button-2 (event)
+  "The immediate action event in VM buffers, depending on where the
+mouse is clicked.  See Info node `(VM) Using the Mouse'."
   (interactive "e")
   ;; go to where the event occurred
   (cond ((vm-mouse-xemacs-mouse-p)
@@ -88,6 +90,9 @@ that case.                                            USR, 2010-08-01"
 
 ;;;###autoload
 (defun vm-mouse-button-3 (event)
+  "Brings up the context-sensitive menu in VM buffers, depending
+on where the mouse is clicked.  See Info node `(VM) Using the
+Mouse'."
   (interactive "e")
   (if vm-use-menus
       (progn

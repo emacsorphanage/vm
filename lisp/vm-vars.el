@@ -4174,20 +4174,13 @@ use any URL retrieval methods."
 	      (const curl)
 	      (const url-w3)))
 
-(defcustom vm-url-browser
-  (cond ((fboundp 'w3-fetch-other-frame)
-	 'w3-fetch-other-frame)
-	((fboundp 'w3-fetch)
-	 'w3-fetch)
-	(t 'vm-mouse-send-url-to-netscape))
-  "*Non-nil value means VM should enable URL passing.
-This means that VM will search for URLs (Uniform Resource
-Locators) in messages and make it possible for you to pass them
-to a World Wide Web browser.
+(defcustom vm-url-browser 'browse-url
+  "*The default web browser to be used for following URLs (hyperlinks)
+in messages.  
 
-Clicking mouse-2 on the URL will send it to the browser.  Moving point
-to a character within the URL and pressing RETURN will also send the
-URL to the browser. 
+Clicking mouse-2 on a URL will send it to the default browser.
+Moving point to a character within the URL and pressing RETURN
+will also send the URL to the default browser.
 
 If the value of `vm-url-browser' is a string, it should specify
 name of an external browser to run.  The URL will be passed to
@@ -4196,16 +4189,16 @@ specified by `vm-url-browser-switches', if any.
 
 If the value of `vm-url-browser' is a symbol, it should specify a
 Lisp function to call.  The URL will be passed to the function as
-its first and only argument.  VM defines a number of browser
-functions of the form `vm-mouse-send-url-to-xxx', where xxx is the
-name of a browser.  The `xxx' can be netscape, mmosaic, mosaic, opera,
-mozilla, konqueror, firefox, or clipboard.  If it is clipboard, the URL
-is sent to the X clipboard so that you can paste it into other browser
-windows. 
+its first and only argument.  The Emacs `browse-url' function is
+an excellent choice.  It is the default value of the variable.
+VM also defines a number of browser functions of the form
+`vm-mouse-send-url-to-xxx', where xxx is the name of a browser.
+The `xxx' can be netscape, mmosaic, mosaic, opera, mozilla,
+konqueror, firefox, window-system or clipboard.  If it is
+window-system then the URL is passed to the window system's
+\"copy\" mechanism so that it can be pasted somwhere else.  If it
+is clipboard, the URL is sent to the X clipboard.
 
-You might also consider specifying `vm-url-browser' to be the
-`browse-url' function defined in the browse-url library of Emacs.
-That library has a variety of browsers that can be invoked.
 
 A nil value means VM should not enable URL passing to browsers."
   :group 'vm-url
