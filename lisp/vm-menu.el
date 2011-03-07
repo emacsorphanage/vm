@@ -430,7 +430,7 @@ do not allow menubar buttons.")
       ["Encode MIME, But Don't Send" vm-mime-encode-composition
        (and vm-send-using-mime
 	    (null (vm-mail-mode-get-header-contents "MIME-Version:")))]
-      ["Preview MIME Before Sending" vm-mime-preview-composition
+      ["Preview MIME Before Sending" vm-preview-composition
        vm-send-using-mime]
       )))
 
@@ -452,7 +452,7 @@ do not allow menubar buttons.")
        (vm-mime-run-display-function-at-point
 	'vm-mime-convert-body-then-display)
        (vm-menu-can-convert-to-text/plain
-	(car (vm-mm-layout-type (vm-mime-get-button-layout e))))]
+	(car (vm-mm-layout-type (vm-mime-get-button-layout))))]
       ;; FSF Emacs does not allow a non-string menu element name.
       ;; This is not working on XEmacs either.  USR, 2011-03-05
       ,@(if (vm-menu-can-eval-item-name)
@@ -460,22 +460,19 @@ do not allow menubar buttons.")
 			   (or (nth 1 (vm-mime-can-convert
 				       (car
 					(vm-mm-layout-type
-					 (vm-mime-get-button-layout e)))))
+					 (vm-mime-get-button-layout)))))
 			       "different type"))
 		   (vm-mime-run-display-function-at-point
 		    'vm-mime-convert-body-then-display)
 		   (vm-mime-can-convert
 		    (car (vm-mm-layout-type
-			  (vm-mime-get-button-layout e))))]))
+			  (vm-mime-get-button-layout))))]))
       "---"
       ["Undo" vm-undo]
       "---"
       ["Save to File" vm-mime-reader-map-save-file t]
       ["Save to Folder" vm-mime-reader-map-save-message
-       (let ((layout (vm-mime-run-display-function-at-point
-		      (function
-		       (lambda (e)
-			 (vm-extent-property e 'vm-mime-layout))))))
+       (let ((layout (vm-get-button-layout)))
 	 (if (null layout)
 	     nil
 	   (or (vm-mime-types-match "message/rfc822"

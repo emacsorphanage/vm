@@ -4497,11 +4497,14 @@ expanded to display the mime object."
 ;;----------------------------------------------------------------------------
 
 (defun vm-find-layout-extent-at-point ()
+  "Return the MIME layout of the MIME button at point."
   (vm-extent-at (point) 'vm-mime-layout))
 
 ;;;###autoload
-(defun vm-mime-run-display-function-at-point (&optional function dispose)
-  "Display the MIME object at point according to its type."
+(defun vm-mime-run-display-function-at-point (&optional function)
+  "Run the 'vm-mime-function for the MIME button at point.
+If optional argument FUNCTION is given, run it instead.
+					          USR, 2011-03-07"
   (interactive)
   (if (and (memq major-mode '(vm-mode vm-virtual-mode))
 	   (vm-body-to-be-retrieved-of (car vm-message-pointer)))
@@ -4511,12 +4514,13 @@ expanded to display the mime object."
   ;; drag window point along, to a place arbitrarily far from
   ;; where it was when the user triggered the button.
   (save-excursion
-    (let ((e (vm-find-layout-extent-at-point))
+    (let ((extent (vm-find-layout-extent-at-point))
 	  retval )
-      (cond ((null e) nil)
+      (cond ((null extent) nil)
 	    (t
-	     (funcall (or function (vm-extent-property e 'vm-mime-function))
-		      e))))))
+	     (funcall (or function 
+			  (vm-extent-property extent 'vm-mime-function))
+		      extent))))))
 
 ;;;###autoload
 (defun vm-mime-reader-map-save-file ()
@@ -5247,11 +5251,12 @@ be removed when it is expanded to display the mime object."
       (goto-char (vm-extent-start-position button))
       (vm-decode-mime-layout button t))))
 
-(defun vm-mime-get-button-layout (e)
+(defun vm-mime-get-button-layout ()
+  "Return the MIME layout of the MIME button at point.   USR, 2011-03-07"
   (vm-mime-run-display-function-at-point
    (function
-    (lambda (e)
-      (vm-extent-property e 'vm-mime-layout)))))
+    (lambda (extent)
+      (vm-extent-property extent 'vm-mime-layout)))))
 
 (defun vm-mime-scrub-description (string)
   (let ((work-buffer nil))
