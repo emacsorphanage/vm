@@ -45,8 +45,19 @@
   (require 'vm-mime)
   (require 'vm-digest)
   (require 'vm-undo)
-  (require 'dired)
   )
+
+(eval-and-compile
+  (require 'dired))
+
+(declare-function vm-dired-file-name-at-point "vm-dired.el" ())
+
+(cond ((boundp 'dired-file-name-at-point) ; Emacs 23 dired
+       (fset 'vm-dired-file-name-at-point 'dired-file-name-at-point))
+      ((boundp 'dired-filename-at-point) ; Emacs 22 dired-x
+       (fset 'vm-dired-file-name-at-point 'dired-filename-at-point))
+      (t
+       (error "Emacs version %s does not support vm-dired" emacs-version)))
 
 ;;;###autoload
 (defun vm-dired-attach-file (composition)
@@ -72,7 +83,7 @@ COMPOSITION's name will be read from the minibuffer."
   (unless vm-send-using-mime
     (error (concat "MIME attachments disabled, "
 		   "set vm-send-using-mime non-nil to enable.")))
-  (let ((file (dired-file-name-at-point))
+  (let ((file (vm-dired-file-name-at-point))
 	type)
     (when (and file (file-regular-p file))
       (setq type (or (vm-mime-default-type-from-filename file)
