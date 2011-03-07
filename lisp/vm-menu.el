@@ -145,6 +145,7 @@
       ["Reply to All (citing original)" vm-followup-include-text
        vm-message-list]
       ["Forward" vm-forward-message vm-message-list]
+      ["Forward as Attachment" vm-forward-message-encapsulated vm-message-list]
       ["Resend" vm-resend-message vm-message-list]
       ["Retry Bounce" vm-resend-bounced-message vm-message-list]
       "---"

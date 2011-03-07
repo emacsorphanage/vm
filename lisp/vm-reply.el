@@ -37,8 +37,10 @@
 ;; vm-followup-other-frame: (count) -> unit
 ;; vm-followup-include-text: (count) -> unit
 ;; vm-followup-include-text-other-frame: (count) -> unit
-;; vm-forward-message: () -> unit
+;; vm-forward-message: (&optional bool message-list) -> unit
+;; vm-forward-message-encapsulated: () -> unit
 ;; vm-forward-message-other-frame: () -> unit
+;; vm-forward-message-encapsulated-other-frame: () -> unit
 ;; vm-forward-message-all-headers: () -> unit
 ;; vm-forward-message-all-headers-other-frame: () -> unit
 ;; vm-resend-message: () -> unit
@@ -1060,29 +1062,56 @@ the message.  See the documentation for the function vm-reply for details."
     (vm-forward-message)))
 
 ;;;###autoload
-(defun vm-forward-message ()
+(defun vm-forward-message-encapsulated ()
+  "Forward the current message with encapsulation to one or more
+recipients.  You will be placed in a Mail mode buffer as you
+would with a reply, but you must fill in the \"To:\" header and
+perhaps the \"Subject:\" header manually.
+
+If invoked on marked messages (via `vm-next-command-uses-marks'),
+all marked messages will be replied to."
+  (interactive)
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-forward-message t (vm-select-operable-messages
+			 1 (interactive-p) "Forward")))
+
+;;;###autoload
+(defun vm-forward-message (&optional encapsulated mlist)
   "Forward the current message to one or more recipients.
 You will be placed in a Mail mode buffer as you would with a
 reply, but you must fill in the \"To:\" header and perhaps the
-\"Subject:\" header manually."
+\"Subject:\" header manually.
+
+When called internally, the optional argument ENCAPSULATED says
+whether the forwarded message should be encapsulated.  For interactive
+use, see `vm-forward-message-encapsulated'."
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((dir default-directory)
 	(miming (and vm-send-using-mime
+		     encapsulated
 		     (equal vm-forwarding-digest-type "mime")))
 	reply-buffer
-	header-end
-	(mp (vm-select-operable-messages
-	     1 (interactive-p) "Forward")))
-    (if (cdr mp)			
+	header-end)
+    (unless mlist
+	(setq mlist (vm-select-operable-messages
+		     1 (interactive-p) "Forward")))
+    (if (cdr mlist)
 	;; multiple message forwarding
-	(let ((vm-digest-send-type vm-forwarding-digest-type))
-	  ;; (setq this-command 'vm-next-command-uses-marks)
-	  ;; (command-execute 'vm-send-digest)
-	  (vm-send-digest nil mp))
+	(progn
+	  (unless (or encapsulated
+		      (y-or-n-p 
+		       "Use encapsulated forwarding for multiple messages? "))
+	      (error "Aborted"))
+	  (setq encapsulated t)
+	  (let ((vm-digest-send-type vm-forwarding-digest-type))
+	    ;; (setq this-command 'vm-next-command-uses-marks)
+	    ;; (command-execute 'vm-send-digest)
+	    (vm-send-digest nil mlist)))
       ;; single message forwarding
-      (vm-retrieve-operable-messages 1 mp)
+      (vm-retrieve-operable-messages 1 mlist)
       (save-restriction
 	(widen)
 	(vm-mail-internal
@@ -1090,13 +1119,13 @@ reply, but you must fill in the \"To:\" header and perhaps the
 		 (vm-su-full-name (car vm-message-pointer))
 		 (vm-su-subject (car vm-message-pointer)))
 	 nil
-	 (and vm-forwarding-subject-format
-	      (let ((vm-summary-uninteresting-senders nil))
-		(vm-summary-sprintf vm-forwarding-subject-format
-				    (car mp)))))
+	 (when vm-forwarding-subject-format
+	   (let ((vm-summary-uninteresting-senders nil))
+	     (vm-summary-sprintf vm-forwarding-subject-format
+				 (car mlist)))))
 	(make-local-variable 'vm-forward-list)
 	(setq vm-system-state 'forwarding
-	      vm-forward-list (list (car mp))
+	      vm-forward-list mlist
 	      default-directory dir)
 	;; current-buffer is now the reply buffer
 	(if miming
@@ -1110,8 +1139,18 @@ reply, but you must fill in the \"To:\" header and perhaps the
 				     "\n"))
 	  (goto-char (match-end 0))
 	  (setq header-end (match-beginning 0)))
-	(cond ((equal vm-forwarding-digest-type "mime")
-	       (vm-mime-encapsulate-messages (list (car mp))
+	(cond ((not encapsulated)
+	       ;; (vm-no-frills-encapsulate-message
+	       ;; 	(car vm-forward-list) 
+	       ;; 	(append vm-forwarded-headers vm-forwarded-mime-headers)
+	       ;; 	vm-unforwarded-header-regexp)
+	       (let ((vm-include-mime-attachments t) ; override the defaults
+		     (vm-include-text-basic nil)
+		     (vm-include-text-from-presentation nil)
+		     (mail-citation-hook (list 'vm-cite-forwarded-message)))
+		 (vm-yank-message (car vm-forward-list))))
+	      ((equal vm-forwarding-digest-type "mime")
+	       (vm-mime-encapsulate-messages mlist
 					     nil "none" ; include all headers
 					     ;; vm-forwarded-headers
 					     ;; vm-unforwarded-header-regexp
@@ -1138,17 +1177,7 @@ reply, but you must fill in the \"To:\" header and perhaps the
 	       (vm-rfc1153-encapsulate-messages
 		vm-forward-list 
 		(append vm-forwarded-headers vm-forwarded-mime-headers)
-		vm-unforwarded-header-regexp))
-	      ((equal vm-forwarding-digest-type nil)
-	       (vm-no-frills-encapsulate-message
-		(car vm-forward-list) 
-		(append vm-forwarded-headers vm-forwarded-mime-headers)
-		vm-unforwarded-header-regexp)
-;; 	       (let ((vm-include-mime-attachments t) ; override the defaults
-;; 		     (vm-include-text-basic nil)
-;; 		     (vm-include-text-from-presentation nil))
-;; 		 (vm-yank-message (car vm-forward-list)))
-	       ))
+		vm-unforwarded-header-regexp)))
 	(when miming
 	  (let ((b (current-buffer)))
 	    (set-buffer reply-buffer)
@@ -1163,6 +1192,14 @@ reply, but you must fill in the \"To:\" header and perhaps the
 	(mail-position-on-field "To"))
       (run-hooks 'vm-forward-message-hook)
       (run-hooks 'vm-mail-mode-hook))))
+
+(defun vm-cite-forwarded-message ()
+  "The message citation handler for a forwarded message."
+  (save-excursion
+    (vm-reorder-message-headers
+     nil :keep-list vm-forwarded-headers :discard-regexp nil)
+    (insert vm-forwarded-message-preamble-format)
+    ))
 
 ;;;###autoload
 (defun vm-resend-bounced-message ()
@@ -1403,7 +1440,7 @@ included in the digest."
 	    (mail-text)
 	    (vm-mime-attach-object
 	     b "multipart/digest" (list (concat "boundary=\"" boundary "\"")) 
-	     :description nil :mimed t)
+	     :description "forwarded messages" :mimed t)
 	    (add-hook 'kill-buffer-hook
 		      (list 'lambda ()
 			    (list 'if (list 'eq mail-buffer '(current-buffer))
@@ -1756,145 +1793,157 @@ Binds the `vm-mail-mode-map' and hooks"
 (defun vm-reply-other-frame (count)
   "Like vm-reply, but run in a newly created frame."
   (interactive "p")
-  (if (vm-multiple-frames-possible-p)
-      (vm-goto-new-frame 'composition))
+  (when (vm-multiple-frames-possible-p)
+    (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
     (vm-reply count))
-  (if (vm-multiple-frames-possible-p)
-      (vm-set-hooks-for-frame-deletion)))
+  (when (vm-multiple-frames-possible-p)
+    (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
 (defun vm-reply-include-text-other-frame (count)
   "Like vm-reply-include-text, but run in a newly created frame."
   (interactive "p")
-  (if (vm-multiple-frames-possible-p)
-      (vm-goto-new-frame 'composition))
+  (when (vm-multiple-frames-possible-p)
+    (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
     (vm-reply-include-text count))
-  (if (vm-multiple-frames-possible-p)
-      (vm-set-hooks-for-frame-deletion)))
+  (when (vm-multiple-frames-possible-p)
+    (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
 (defun vm-followup-other-frame (count)
   "Like vm-followup, but run in a newly created frame."
   (interactive "p")
-  (if (vm-multiple-frames-possible-p)
-      (vm-goto-new-frame 'composition))
+  (when (vm-multiple-frames-possible-p)
+    (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
     (vm-followup count))
-  (if (vm-multiple-frames-possible-p)
-      (vm-set-hooks-for-frame-deletion)))
+  (when (vm-multiple-frames-possible-p)
+    (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
 (defun vm-followup-include-text-other-frame (count)
   "Like vm-followup-include-text, but run in a newly created frame."
   (interactive "p")
-  (if (vm-multiple-frames-possible-p)
-      (vm-goto-new-frame 'composition))
+  (when (vm-multiple-frames-possible-p)
+    (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
     (vm-followup-include-text count))
-  (if (vm-multiple-frames-possible-p)
-      (vm-set-hooks-for-frame-deletion)))
+  (when (vm-multiple-frames-possible-p)
+    (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
 (defun vm-forward-message-all-headers-other-frame ()
   "Like vm-forward-message-all-headers, but run in a newly created frame."
   (interactive)
-  (if (vm-multiple-frames-possible-p)
-      (vm-goto-new-frame 'composition))
+  (when (vm-multiple-frames-possible-p)
+    (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
     (vm-forward-message-all-headers))
-  (if (vm-multiple-frames-possible-p)
-      (vm-set-hooks-for-frame-deletion)))
+  (when (vm-multiple-frames-possible-p)
+    (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
 (defun vm-forward-message-other-frame ()
   "Like vm-forward-message, but run in a newly created frame."
   (interactive)
-  (if (vm-multiple-frames-possible-p)
-      (vm-goto-new-frame 'composition))
+  (when (vm-multiple-frames-possible-p)
+    (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
     (vm-forward-message))
-  (if (vm-multiple-frames-possible-p)
-      (vm-set-hooks-for-frame-deletion)))
+  (when (vm-multiple-frames-possible-p)
+    (vm-set-hooks-for-frame-deletion)))
+
+;;;###autoload
+(defun vm-forward-message-encapsulated-other-frame ()
+  "Like vm-forward-message-encapsulated, but run in a newly created frame."
+  (interactive)
+  (when (vm-multiple-frames-possible-p)
+    (vm-goto-new-frame 'composition))
+  (let ((vm-frame-per-composition nil)
+	(vm-search-other-frames nil))
+    (vm-forward-message-encapsulated))
+  (when (vm-multiple-frames-possible-p)
+    (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
 (defun vm-resend-message-other-frame ()
   "Like vm-resend-message, but run in a newly created frame."
   (interactive)
-  (if (vm-multiple-frames-possible-p)
-      (vm-goto-new-frame 'composition))
+  (when (vm-multiple-frames-possible-p)
+    (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
     (vm-resend-message))
-  (if (vm-multiple-frames-possible-p)
-      (vm-set-hooks-for-frame-deletion)))
+  (when (vm-multiple-frames-possible-p)
+    (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
 (defun vm-resend-bounced-message-other-frame ()
   "Like vm-resend-bounced-message, but run in a newly created frame."
   (interactive)
-  (if (vm-multiple-frames-possible-p)
-      (vm-goto-new-frame 'composition))
+  (when (vm-multiple-frames-possible-p)
+    (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
     (vm-resend-bounced-message))
-  (if (vm-multiple-frames-possible-p)
-      (vm-set-hooks-for-frame-deletion)))
+  (when (vm-multiple-frames-possible-p)
+    (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
 (defun vm-send-digest-other-frame (&optional prefix)
   "Like vm-send-digest, but run in a newly created frame."
   (interactive "P")
-  (if (vm-multiple-frames-possible-p)
-      (vm-goto-new-frame 'composition))
+  (when (vm-multiple-frames-possible-p)
+    (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
     (vm-send-digest prefix))
-  (if (vm-multiple-frames-possible-p)
-      (vm-set-hooks-for-frame-deletion)))
+  (when (vm-multiple-frames-possible-p)
+    (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
 (defun vm-send-rfc934-digest-other-frame (&optional prefix)
   "Like vm-send-rfc934-digest, but run in a newly created frame."
   (interactive "P")
-  (if (vm-multiple-frames-possible-p)
-      (vm-goto-new-frame 'composition))
+  (when (vm-multiple-frames-possible-p)
+    (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
     (vm-send-rfc934-digest prefix))
-  (if (vm-multiple-frames-possible-p)
-      (vm-set-hooks-for-frame-deletion)))
+  (when (vm-multiple-frames-possible-p)
+    (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
 (defun vm-send-rfc1153-digest-other-frame (&optional prefix)
   "Like vm-send-rfc1153-digest, but run in a newly created frame."
   (interactive "P")
-  (if (vm-multiple-frames-possible-p)
-      (vm-goto-new-frame 'composition))
+  (when (vm-multiple-frames-possible-p)
+    (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
     (vm-send-rfc1153-digest prefix))
-  (if (vm-multiple-frames-possible-p)
-      (vm-set-hooks-for-frame-deletion)))
+  (when (vm-multiple-frames-possible-p)
+    (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
 (defun vm-send-mime-digest-other-frame (&optional prefix)
   "Like vm-send-mime-digest, but run in a newly created frame."
   (interactive "P")
-  (if (vm-multiple-frames-possible-p)
-      (vm-goto-new-frame 'composition))
+  (when (vm-multiple-frames-possible-p)
+    (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
     (vm-send-mime-digest prefix))
-  (if (vm-multiple-frames-possible-p)
-      (vm-set-hooks-for-frame-deletion)))
+  (when (vm-multiple-frames-possible-p)
+    (vm-set-hooks-for-frame-deletion)))
 
 (defvar enriched-mode)
 
@@ -1906,8 +1955,8 @@ mail composition buffer and displays it as a mail folder.
 Type `q' to quit this temp folder and return to composing your
 message."
   (interactive)
-  (if (not (eq major-mode 'mail-mode))
-      (error "Command must be used in a VM Mail mode buffer."))
+  (when (not (eq major-mode 'mail-mode))
+    (error "Command must be used in a VM Mail mode buffer."))
   (let ((temp-buffer nil)
 	(mail-buffer (current-buffer))
 	(enriched (and (boundp 'enriched-mode) enriched-mode))
@@ -1921,35 +1970,34 @@ message."
 	  (set (make-local-variable 'enriched-mode) enriched)
 	  (vm-insert-region-from-buffer mail-buffer)
 	  (goto-char (point-min))
-	  (or (vm-mail-mode-get-header-contents "From")
-	      (insert "From: " (user-login-name) "\n"))
-	  (or (vm-mail-mode-get-header-contents "Message-ID")
-	      (insert (format "Message-ID: <fake.%d.%d@fake.fake>\n"
-			      (random 1000000) (random 1000000))))
-	  (or (vm-mail-mode-get-header-contents "Date")
-	      (insert "Date: "
-		      (format-time-string "%a, %d %b %Y %H%M%S %Z"
-					  (current-time))
-		      "\n"))
-	  (and vm-send-using-mime
-	       (null (vm-mail-mode-get-header-contents "MIME-Version:"))
-	       (vm-mime-encode-composition))
-          (if vm-mail-reorder-message-headers
-              (vm-reorder-message-headers 
-	       nil :keep-list vm-mail-header-order :discard-regexp 'none))
+	  (unless (vm-mail-mode-get-header-contents "From")
+	    (insert "From: " (user-login-name) "\n"))
+	  (unless (vm-mail-mode-get-header-contents "Message-ID")
+	    (insert (format "Message-ID: <fake.%d.%d@fake.fake>\n"
+			    (random 1000000) (random 1000000))))
+	  (unless (vm-mail-mode-get-header-contents "Date")
+	    (insert "Date: "
+		    (format-time-string "%a, %d %b %Y %H%M%S %Z"
+					(current-time))
+		    "\n"))
+	  (when (and vm-send-using-mime
+		     (null (vm-mail-mode-get-header-contents "MIME-Version:")))
+	    (vm-mime-encode-composition))
+          (when vm-mail-reorder-message-headers
+	    (vm-reorder-message-headers 
+	     nil :keep-list vm-mail-header-order :discard-regexp 'none))
   	  (vm-remove-mail-mode-header-separator)
 	  (vm-munge-message-separators 'mmdf (point-min) (point-max))
 	  (goto-char (point-min))
 	  (insert (vm-leading-message-separator 'mmdf))
 	  (goto-char (point-max))
-	  (if (not (eq (preceding-char) ?\n))
-	      (insert ?\n))
+	  (unless (eq (preceding-char) ?\n)
+	    (insert ?\n))
 	  (insert (vm-trailing-message-separator 'mmdf))
 	  (set-buffer-modified-p nil)
 	  ;; point of no return, don't kill it if the user quits
 	  (setq temp-buffer nil)
-	  (let ((vm-auto-decode-mime-messages t)
-		(vm-auto-displayed-mime-content-types t))
+	  (let ((vm-auto-decode-mime-messages t))
 	    (vm-save-buffer-excursion
 	     (vm-goto-new-folder-frame-maybe 'folder)
 	     (vm-mode)))
@@ -1960,34 +2008,33 @@ message."
 	  (setq buffer-offer-save nil)
 	  (vm-display (or vm-presentation-buffer (current-buffer)) t
 		      (list this-command) '(vm-mode startup)))
-      (and temp-buffer (kill-buffer temp-buffer)))))
+      (when temp-buffer (kill-buffer temp-buffer)))))
 
 (defun vm-update-composition-buffer-name ()
-  (if (and (eq major-mode 'mail-mode)
-           (save-match-data (string-match "^\\(mail\\|reply\\) to "
-					  (buffer-name))))
-      (let ((to (mail-fetch-field "To"))
-            (cc (mail-fetch-field "Cc"))
-	    (curbufname (buffer-name))
-	    (deactivate-mark)
-	    fmt newbufname
-            (ellipsis ""))
-	(cond (vm-reply-list (setq fmt "reply to %s%s"))
-	      (t (setq fmt "mail to %s%s on \"%s\"")))
-        (setq to (vm-parse-addresses to)
-              cc (vm-parse-addresses cc))
-        (if (or (cdr to)
+  (when (and (eq major-mode 'mail-mode)
+	     (save-match-data (string-match "^\\(mail\\|reply\\) to "
+					    (buffer-name))))
+    (let ((to (mail-fetch-field "To"))
+	  (cc (mail-fetch-field "Cc"))
+	  (curbufname (buffer-name))
+	  (deactivate-mark)
+	  fmt newbufname
+	  (ellipsis ""))
+      (cond (vm-reply-list (setq fmt "reply to %s%s"))
+	    (t (setq fmt "mail to %s%s on \"%s\"")))
+      (setq to (vm-parse-addresses to)
+	    cc (vm-parse-addresses cc))
+      (when (or (cdr to)
                 (and (car to) (car cc)))
-            (setq ellipsis ", ..."))
-        (setq newbufname (or (car to) (car cc) "foo (?)")
-              newbufname (funcall vm-chop-full-name-function newbufname)
-              newbufname (or (car newbufname) (car (cdr newbufname)))
-              newbufname (format fmt newbufname ellipsis
-                                 (mail-fetch-field "Subject")))
-        (if (equal newbufname curbufname)
-            nil
-          (setq newbufname (vm-sanitize-buffer-name newbufname))
-          (rename-buffer newbufname t)))))
+	(setq ellipsis ", ..."))
+      (setq newbufname (or (car to) (car cc) "foo (?)")
+	    newbufname (funcall vm-chop-full-name-function newbufname)
+	    newbufname (or (car newbufname) (car (cdr newbufname)))
+	    newbufname (format fmt newbufname ellipsis
+			       (mail-fetch-field "Subject")))
+      (unless (equal newbufname curbufname)
+	(setq newbufname (vm-sanitize-buffer-name newbufname))
+	(rename-buffer newbufname t)))))
 
 ;;;###autoload
 (defun vm-mail-mode-remove-tm-hooks ()
@@ -2064,8 +2111,8 @@ that is needed for Mac and NextStep."
 
 (defun vm-mail-mode-hide-headers-hook ()
   "Hook which handles `vm-mail-mode-hidden-headers'."
-  (if vm-mail-mode-hidden-headers
-      (vm-mail-mode-hide-headers)))
+  (when vm-mail-mode-hidden-headers
+    (vm-mail-mode-hide-headers)))
 
 (add-hook 'vm-mail-mode-hook 'vm-mail-mode-hide-headers-hook)
 

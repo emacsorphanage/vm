@@ -3008,26 +3008,35 @@ Nil means leave the Subject header empty when forwarding."
   :type '(choice (const nil)
 		 (string)))
 
-(defcustom vm-forwarded-headers nil
-  "*List of headers that should be forwarded by `vm-forward-message'.
-These should be listed in the order you wish them to appear in
-the forwarded message.  Regular expressions are allowed.
-There's no need to anchor patterns with \"^\", as searches always
-start at the beginning of a line.  Put a colon at the end of
-patterns to get exact matches.  (E.g. \"Date\" matches \"Date\"
-and \"Date-Sent\".)  Header names are always matched case
-insensitively.
+(defcustom vm-forwarded-message-preamble-format
+  "\n---------- Original Message ----------\n"
+  "*String which specifies the preamble for a forwarded message."
+  :group 'vm-compose
+  :type 'string)
 
-If the value of `vm-unforwarded-header-regexp' is nil, the headers
-matched by `vm-forwarded-headers' are the only headers that will be
-forwarded.
+(defcustom vm-forwarded-headers 	; originally nil
+  '("From:" "To:" "Subject:" "Date:" "In-Reply-To:" "References:")
+  "*List of headers that should be forwarded by
+`vm-forward-message' and its variants.  These should be listed in
+the order you wish them to appear in the forwarded message.
+Regular expressions are allowed.  There's no need to anchor
+patterns with \"^\", as searches always start at the beginning of
+a line.  Put a colon at the end of patterns to get exact
+matches.  (E.g. \"Date\" matches \"Date\" and \"Date-Sent\".)
+Header names are always matched case insensitively.
 
-If `vm-unforwarded-header-regexp' is non-nil, then headers
-matched by that variable will be omitted and all others will be
-forwarded.  In this case, `vm-forwarded-headers' determines the
-forwarding order in that case, with headers not matching any in
-the `vm-forwarded-headers' list appearing last in the header
-section of the forwarded message."
+For normally forwarded messages, this variable lists all the headers
+that will be included.
+
+For encapsulated forwarding, the value of`vm-unforwarded-header-regexp' 
+is also consulted.  If it is nil, then the headers matched by
+`vm-forwarded-headers' are the only headers that will be
+forwarded.  If `vm-unforwarded-header-regexp' is non-nil, then
+headers matched by that variable will be omitted and all others
+will be forwarded.  In this case, `vm-forwarded-headers'
+determines the forwarding order in that case, with headers not
+matching any in the `vm-forwarded-headers' list appearing last in
+the header section of the forwarded message."
   :group 'vm-compose
   :type '(repeat regexp))
 
@@ -3035,10 +3044,11 @@ section of the forwarded message."
   "List of MIME headers that are always included in forwarded messages.")
 
 (defcustom vm-unforwarded-header-regexp "none-to-be-dropped"
-  "*Non-nil value should be a regular expression header that tells
-what headers should not be forwarded by `vm-forward-message'.  This
-variable along with `vm-forwarded-headers' determines which headers
-are forwarded.
+  "*Non-nil value should be a regular expression header that
+tells what headers should not be forwarded by
+`vm-forward-message-encapsulated' and `vm-send-digest'.  This
+variable along with `vm-forwarded-headers' determines which
+headers are forwarded.
 
 If the value of `vm-unforwarded-header-regexp' is nil, the headers
 matched by `vm-forwarded-headers' are the only headers that will be
@@ -3058,22 +3068,20 @@ the forwarded message."
 
 (defcustom vm-forwarding-digest-type "mime"
   "*Non-nil value should be a string that specifies the type of
-message encapsulation format to use when forwarding a message.
+message encapsulation format to use when forwarding messages.
 Legal values of this variable are:
 
+\"mime\"
 \"rfc934\"
 \"rfc1153\"
-\"mime\"
 nil
 
-A nil value means don't use a digest, just mark the beginning and
-end of the forwarded message."
+A nil value has the same effect as \"mime\"."
   :group 'vm-compose
   :type '(choice
-          (const "rfc934")
-          (const "rfc1153")
           (const "mime")
-          (const :tag "Do not use digests" nil)))
+          (const "rfc934")
+          (const "rfc1153")))
 
 (defcustom vm-mime-forward-local-external-bodies nil
   "*Non-nil value means forward messages that contain
@@ -3081,7 +3089,7 @@ message/external-body parts that use the `local-file' access
 method.  A nil value means copy the externally referenced objects
 into the message before forwarding.  This copying is only done
 for objects accessed with the `local-file' access method.  Objects
-referenced with other method are not copied.
+referenced with other methods are not copied.
 
 Messages that use the mesage/external-body type contain a
 reference to an object (image, audio, etc.) instead of the object
@@ -5584,6 +5592,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\M-r" 'vm-resend-bounced-message)
     (define-key map "B" 'vm-resend-message)
     (define-key map "z" 'vm-forward-message)
+    (define-key map "Z" 'vm-forward-message-encapsulated)
     (define-key map "c" 'vm-continue-composing-message)
     (define-key map "@" 'vm-send-digest)
     (define-key map "*" 'vm-burst-digest)
@@ -6047,9 +6056,11 @@ folder.  (Not in use.)")
     ("vm-followup-include-text-other-frame")
     ("vm-followup-other-frame")
     ("vm-forward-message")
+    ("vm-forward-message-encapsulated")
     ("vm-forward-message-all-headers")
     ("vm-forward-message-all-headers-other-frame")
     ("vm-forward-message-other-frame")
+    ("vm-forward-message-encapsulated-other-frame")
     ("vm-get-new-mail")
     ("vm-goto-message")
     ("vm-goto-message-last-seen")

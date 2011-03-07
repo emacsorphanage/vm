@@ -68,3 +68,6 @@ release::
 
 snapshot::
 	./release.sh snapshot
+
+tags::
+	etags lisp/*.el contrib/*.el info/vm.texinfo NEWS

@@ -13,12 +13,24 @@ VM 8.2.0b (2011-02-28)
 
   CHANGES
 
-   * New command `vm-switch-to-folder' to quickly return to a
-     previosly buried folder.  (Previously in vm-rfaddons.)
+   * The default message forwarding is changed to plain text "no
+     frills" forawrding.  The attachments of the original message are
+     still copied to the forwarded message.  So, there is no need to
+     forward the messages in a MIME-encapsulated form.
+
+     There is a new key binding of `Z' to
+     `vm-forward-message-encapsulated' which forwards messages in
+     encapsulated form (mime, rfc934 or rfc1153).  The setting of
+     `vm-forwarding-digest-type' controls this command and the default
+     is "mime".  You are advised to remove any setting of
+     `vm-forwarding-digest-type' from your init file.
+
+   * New command `vm-switch-to-folder' defined to quickly return to a
+     previously buried folder.  (Originally in vm-rfaddons.)
 
    * New custom command `vm-toggle-best-mime' in vm-rfaddons to toggle
      between 'best and 'best-internal MIME altrenatives.  (Thanks to
-     Alley Stoughton.)
+     Alley Stoughton for this addition.)
 
    * New variable `vm-include-text-basic' can be used to enable the
      fallback method of quoting message text in replies.  It should
@@ -50,9 +62,10 @@ VM 8.2.0b (2011-02-28)
   IMPROVEMENTS
 
    * Restored the [Emacs] and [Undo] menu buttons that were removed in
-     8.0.8.  For environments that do not support such buttons,
+     version 8.0.8.  For environments that do not support such buttons,
      drop-down menus will be used instead.  The variable
-     `vm-use-menubar-buttons' can be used to use drop-down menus always.
+     `vm-use-menubar-buttons' can be used to use drop-down menus
+     always.  (Thanks to Tim Cross for the fixes.)
 
    * Hooks `vm-arrived-message-hook' and `vm-arrived-messages-hook'
      made to work correctly for IMAP folders.
@@ -91,7 +104,7 @@ VM 8.2.0b (2011-02-28)
 
    * New feature: vm-mime-external-content-types-alist allows
      emacs-lisp functions to be used for external viewing, e.g.,
-     browse-url-of-file. 
+     you can use `browse-url-of-file' to view html . 
 
 VM 8.1.93a (2010-08-28)
 

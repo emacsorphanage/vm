@@ -2984,36 +2984,41 @@ the variables @code{vm-included-text-headers} and
 @node Forwarding Messages, Saving copies, Replying, Sending Messages
 @section Forwarding Messages
 
-VM has three commands to forward messages: @kbd{z}
-(@code{vm-forward-message}), @kbd{@@} (@code{vm-send-digest}) and
+VM has four commands to forward messages: @kbd{z}
+(@code{vm-forward-message}), 
+@kbd{Z} (@code{vm-forward-message-encapsulated},
+@kbd{@@} (@code{vm-send-digest}) and
 @kbd{B} (@code{vm-resend-message}).
 
 @findex vm-forward-message
 @kindex z
-@vindex vm-forwarding-digest-type
-Typing @kbd{z} puts you into a VM Mail mode buffer just like @kbd{m},
-except that the current message appears as the body of the message in
-the VM Mail mode buffer. The forwarded message is encapsulated as
-specified by the variable @code{vm-forwarding-digest-type}.  Recognized
-values are "rfc934", "rfc1153", "mime" or @code{nil}.  The default is
-"mime".  If it is set to @code{nil}, the forwarded message is not
-encapsulated.  But note that this is appropriate for only plain text
-messages.  MIME messages have various encodings which need to be decoded 
-by the recipient's mail client and, so, unencapsulated forwarding would
-make it difficult for the recipient to decode MIME.
-
 @vindex vm-forwarded-headers
-@vindex vm-unforwarded-header-regexp
+Typing @kbd{z} (@code{vm-forward-message}) puts you into a VM Mail
+mode buffer just like @kbd{m}, except that the current message appears
+as the body of the message in the VM Mail mode buffer.  Any
+attachments of the original message appear as attachment buttons in
+the composition.  They will be replaced by actual attachments when the
+message is sent.  You can control which header lines are included in
+forwarded messages via the variables @code{vm-forwarded-headers}.
 
-You can control which header lines are included in forwarded messages
-via the variables @code{vm-forwarded-headers} and
-@code{vm-unforwarded-header-regexp}.  By default, both of these
-variables are nil, which means that all headers should be included.
-If @code{vm-unforwarded-header-regexp} is set to a regular expression
-then all the headers matching the regular expression are omitted in
-forwarded messages.  If this variable is nil but
+@findex vm-forward-message-encapsulated
+@kindex Z
+@vindex vm-forwarding-digest-type
+Typing @kbd{Z} (@code{vm-forward-message-encapsulated}) forwards the message
+in an encapsulated form.  You can forward multiple messages in
+this way and they are referred to as ``digests''.  The
+variable @code{vm-forwarding-digest-type} specifies the form in which
+the messages are encapsulated.  The recognized values are "mime",
+"rfc934" and "rfc1153".  The default is "mime".
+
+@vindex vm-unforwarded-header-regexp
+By default, forwarded digests include all the messages headers of the
+original messages.  You can limit the headers by customizing the
+variable @code{vm-unforwarded-header-regexp}.  The variable should be
+set to a regular expression matching all the headers that should be
+omitted in forwarded messages.  If this variable is nil but
 @code{vm-forwarded-headers} is set to a list of headers, then only
-these headers are included in the forwarded messages.  See the
+those headers are included in the forwarded messages.  See the
 documentation of these variables for further information.
 
 @findex vm-forward-message-all-headers
@@ -3053,19 +3058,23 @@ will be centered.
 
 @findex vm-resend-message
 @kindex B
-If you wish to forward a message and want to send it without the
-encapsulation used by @code{vm-forward-message}, use @kbd{B}
-(@code{vm-resend-message}).  Instead of encapsulating the message, VM
-will use essentially the same message and headers and add a Resent-To
-header that you should fill in with the new recipients.  Use @kbd{C-c
-C-c} as usual to send the message.  The resent message will be flagged
-as ``redistributed''.
-
+@cindex resending messages
+@cindex Resent-To header
+If you wish to forward a message as is, without appearing to
+intervene, you can use @kbd{B} (@code{vm-resend-message}).  VM will
+resend the same original message and with its original headers and add
+a @code{Resent-To} header that you should fill in with the new
+recipients.  Use @kbd{C-c C-c} as usual to send the message.  The
+resent message will be flagged as ``redistributed''.  Note that a
+re-sent message will appear to the recipients as if they came from the
+original sender.  They will notice that you have re-sent the message
+only if they are careful to look for the @code{Resent-To} header.
 
 @node Saving copies,, Forwarding Messages, Sending Messages
 @section Saving copies of sent mail
 
 @cindex FCC
+@cindex file CC
 @findex vm-imap-save-composition
 You can save copies of outgoing mail messages in 'sent' folders by
 adding an @code{FCC:} header line to the composed message.  The value
@@ -3556,7 +3565,7 @@ The message is deleted and will be removed from the folder
 at the next expunge.
 @item forwarded
 The message has been forwarded with either
-@code{vm-forward-message} or @code{vm-send-digest}.
+@code{vm-forward-message}, @code{vm-send-digest} or one of their variants.
 @item redistributed
 The message has been forwarded with the
 @code{vm-resend-message} command.
@@ -4369,10 +4378,11 @@ matches message if it has not been replied to.
 Same as the @code{unreplied} selector.
 @item forwarded
 matches message if it has been forwarded using
-a variant of @code{vm-forward-message} or @code{vm-send-digest}.
+a variant of @code{vm-forward-message}, @code{vm-send-digest} or one
+of their variants.
 @item unforwarded
 matches message if it has not been forwarded using
-@code{vm-forward-message} or @code{vm-send-digest} or one
+@code{vm-forward-message}, @code{vm-send-digest} or one
 of their variants.
 @item redistributed
 matches message if it has been redistributed using
