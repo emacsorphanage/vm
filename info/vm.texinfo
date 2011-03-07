@@ -2452,8 +2452,13 @@ loaded message with a fresh copy retrieved from the server.
 
 When sending messages from within VM, you will be using the standard
 mail sending facility provided with Emacs, plus some extensions added
-by VM.  @xref{Sending Mail,,,emacs, the GNU Emacs Manual}.  However,
-mail composition buffers created by VM have some extra command keys.
+by VM.  @xref{Sending Mail,,,emacs, the GNU Emacs Manual}.  Emacs
+comes with two versions of mail sending packages, called ``mail mode''
+and ``message mode''.  VM currently uses the ``mail mode'' package,
+which is not to dissimilar to the ``message mode'' package.
+
+Even though VM's mail composition buffers will be in ``mail mode'',
+they have some extra command keys.
 
 @table @kbd
 
