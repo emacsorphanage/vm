@@ -3383,6 +3383,7 @@ VM session.  This is useful for saving offline work."
   "Check if there is new mail in th current IMAP folder.  The optional
 argument INTERACTIVE says if the function is being invoked
 interactively."
+  (vm-buffer-type:wait-for-imap-session)
   ;;--------------------------
   (vm-buffer-type:set 'folder)
   ;;--------------------------

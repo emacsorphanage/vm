@@ -76,8 +76,10 @@ isn't a folder buffer.  USR, 2010-03-08"
 	((not (memq major-mode '(vm-mode vm-virtual-mode)))
 	 (error "No VM folder buffer associated with this buffer")))
   ;;--------------------------
-  ;; This may be problematic - done in revno 570.  But, why?
-  (vm-buffer-type:set 'folder)
+  ;; This may be problematic - done in revno 570.
+  ;; All kinds of operations call vm-select-folder-buffer, including
+  ;; asynchronous things like the toolbar.
+  ;; (vm-buffer-type:set 'folder)
   ;;--------------------------
   )
 
@@ -89,14 +91,14 @@ isn't a folder buffer.  USR, 2010-03-08"
 	      (buffer-name vm-mail-buffer))
 	 (set-buffer vm-mail-buffer)
 	 ;;--------------------------
-	 ;; This may be problematic - done in revno 570.  But, why?
-	 (vm-buffer-type:set 'folder)
+	 ;; This may be problematic - done in revno 570.
+	 ;; (vm-buffer-type:set 'folder)
 	 ;;--------------------------
 	 )
 	((memq major-mode '(vm-mode vm-virtual-mode))
 	 ;;--------------------------
-	 ;; This may be problematic - done in revno 570.  But, why?
-	 (vm-buffer-type:set 'folder)
+	 ;; This may be problematic - done in revno 570.
+	 ;; (vm-buffer-type:set 'folder)
 	 ;;--------------------------
 	 )))
 
@@ -117,8 +119,8 @@ current-buffer in `vm-user-interaction-buffer'."
 	((not (memq major-mode '(vm-mode vm-virtual-mode)))
 	 (error "No VM folder buffer associated with this buffer")))
   ;;--------------------------
-  ;; This may be problematic - done in revno 570.  But, why?
-  (vm-buffer-type:set 'folder)
+  ;; This may be problematic - done in revno 570.
+  ;; (vm-buffer-type:set 'folder)
   ;;--------------------------
 
   (vm-check-for-killed-summary)
@@ -268,5 +270,13 @@ current-buffer in `vm-user-interaction-buffer'."
 (defsubst vm-buffer-type:assert (type)
   "Check that vm is currently in a buffer of TYPE."
   (vm-assert (eq (car vm-buffer-types) type)))
+
+(defsubst vm-buffer-type:wait-for-imap-session ()
+  "Wait until the IMAP session is free to use, based on the
+vm-buffer-types stack."
+  (while (and vm-buffer-types 
+	      (eq (car vm-buffer-types) 'process))
+    (sleep-for 1)))
+
 
 ;;; vm-macro.el ends here
