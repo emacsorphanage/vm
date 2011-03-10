@@ -91,6 +91,11 @@
   (put 'vm-thread-error 'error-message "VM internal threading error")
   )
 
+(defsubst vm-thread-debug (message arg)
+  (if vm-thread-debug
+      (debug message arg)))
+
+
 ;;;###autoload
 (defun vm-thread-symbol (m)
   "Returns the interned symbol of message M which carries the
@@ -413,6 +418,9 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 
 ;;;###autoload
 (defun vm-build-thread-lists ()
+  "Fill in the thread-list fields of the Soft data vector for all
+messages in the folder.  Threads should have been built before this
+function is called."
   (let ((mp vm-message-list))
     (while mp
       (vm-thread-list (car mp))
@@ -716,8 +724,7 @@ should have been built for this function to work."
     (if (and vm-debug (member (symbol-name m-sym) vm-traced-message-ids))
 	(debug m-sym))
     (unless m-sym
-      (when vm-thread-debug
-	(debug 'vm-thread-root m-sym))
+      (vm-thread-debug 'vm-thread-root m-sym)
       (signal 'vm-thread-error (list 'vm-thread-root)))
     (setq list (vm-thread-list m))
     (catch 'return
@@ -744,8 +751,7 @@ See also: `vm-thread-root'."
     (if (and vm-debug (member (symbol-name m-sym) vm-traced-message-ids))
 	(debug m-sym))
     (unless m-sym
-      (when vm-thread-debug
-	(debug 'vm-thread-root-sym m-sym))
+      (vm-thread-debug 'vm-thread-root-sym m-sym)
       (signal 'vm-thread-error (list 'vm-thread-root)))
     (setq list (vm-thread-list m))
     (catch 'return
@@ -776,8 +782,7 @@ Threads should have been built for this function to work."
 	      msg (vm-th-message-of msg))
       (setq m-sym (vm-thread-symbol msg)))
     (unless m-sym
-      (when vm-thread-debug
-	(debug 'vm-thread-subtree m-sym))
+      (vm-thread-debug 'vm-thread-subtree m-sym)
       (signal 'vm-thread-error (list 'vm-thread-subtree)))
     (if (eq msg (vm-th-message-of m-sym))
 	;; canonical message for this message ID
@@ -842,15 +847,15 @@ to the thread.  Used for testing purposes."
        (let* ((root (vm-thread-root-sym m))
 	      (subtree (and root (vm-thread-subtree root))))
 	 (unless root
-	   (debug 'message-with-no-root m)
+	   (vm-thread-debug 'message-with-no-root m)
 	   (setq errors-found t))
 	 (with-current-buffer (vm-buffer-of m)
 	   (unless (eq root 
 		       (intern-soft (symbol-name root) vm-thread-obarray))
-	     (debug 'interned-in-wrong-buffer m)
+	     (vm-thread-debug 'interned-in-wrong-buffer m)
 	     (setq errors-found t)))
 	 (unless (memq m subtree)
-	   (debug 'missing m)
+	   (vm-thread-debug 'missing m)
 	   (setq errors-found t))))
      ml)
     ;; Check that all subtrees have correct messages
@@ -863,10 +868,10 @@ to the thread.  Used for testing purposes."
 	    (unless (and (vm-thread-root m)
 			 (eq (vm-thread-root m) 
 			     (vm-thread-root subroot)))
-	      (debug 'spurious m)
+	      (vm-thread-debug 'spurious m)
 	      (setq errors-found t))
 	    (unless (eq buf (vm-buffer-of m))
-	      (debug 'wrong-buffer m)
+	      (vm-thread-debug 'wrong-buffer m)
 	      (setq errors-found t)))
 	  subtree)))
      ml)

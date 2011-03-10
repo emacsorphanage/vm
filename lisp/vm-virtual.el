@@ -116,11 +116,9 @@ all the real folder buffers involved."
 	(while folders
 	  (setq folder (car folders))
 	  (cond ((and (stringp folder)
-		      (stringp vm-recognize-pop-maildrops)
 		      (string-match vm-recognize-pop-maildrops folder))
 		 nil)
 		((and (stringp folder)
-		      (stringp vm-recognize-imap-maildrops)
 		      (string-match vm-recognize-imap-maildrops folder))
 		 nil)
 		((stringp folder)
@@ -219,26 +217,29 @@ all the real folder buffers involved."
 			       (vm-real-message-of (car mp))))
 		(unless mirrored
 		  (vm-set-mirror-data-of
-		   message
-		   (make-vector vm-mirror-data-vector-length nil))
+		   message (make-vector vm-mirror-data-vector-length nil))
 		  (vm-set-virtual-messages-sym-of
 		   message (make-symbol "<v>"))
 		  (vm-set-virtual-messages-of message nil)
 		  (vm-set-attributes-of
-		   message
-		   (make-vector vm-attributes-vector-length nil)))
+		   message (make-vector vm-attributes-vector-length nil)))
 		(vm-set-location-data-of message location-vector)
 		(vm-set-softdata-of
-		 message
-		 (make-vector vm-softdata-vector-length nil))
+		 message (make-vector vm-softdata-vector-length nil))
+		(if (eq (symbol-value (vm-mirrored-message-sym-of (car mp)))
+			(car mp))
+		    (vm-set-mirrored-message-sym-of
+		     message (vm-mirrored-message-sym-of (car mp)))
+		  (let ((sym (make-symbol "<<>>")))
+		    (set sym (car mp))
+		    (vm-set-mirrored-message-sym-of message sym)))
 		(vm-set-real-message-sym-of
-		 message
-		 (vm-real-message-sym-of (car mp)))
+		 message (vm-real-message-sym-of (car mp)))
 		(vm-set-message-type-of message vm-folder-type)
 		(vm-set-message-access-method-of
 		 message vm-folder-access-method)
-		(vm-set-message-id-number-of message
-					     vm-message-id-number)
+		(vm-set-message-id-number-of 
+		 message vm-message-id-number)
 		(vm-increment vm-message-id-number)
 		(vm-set-buffer-of message vbuffer)
 		(vm-set-reverse-link-sym-of message (make-symbol "<--"))
@@ -728,10 +729,13 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
       real-selector)))
 
 
-;; clear away links between real and virtual folders when
-;; a vm-quit is performed in either type folder.
 ;;;###autoload
 (defun vm-virtual-quit ()
+  "Quit a virtual folder.  Clear away links between real and virtual
+folders when a `vm-quit' is performed in either type folder.
+
+This is an internal function.  Use `vm-quit' to quit a virtual folder
+interactively." 
   (save-excursion
     (cond ((eq major-mode 'vm-virtual-mode)
 	   ;; don't trust blindly, user might have killed some of
@@ -740,8 +744,17 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 	   (let ((bp vm-real-buffers)
 		 (mp vm-message-list)
 		 (b (current-buffer))
+		 (mirrored-m nil)
 		 ;; lock out interrupts here
 		 (inhibit-quit t))
+	     ;; Move the message-pointer of the original buffer to the
+	     ;; current message in the virtual folder
+	     (setq mirrored-m (vm-mirrored-message-of 
+			       (car vm-message-pointer)))
+	     (when (and mirrored-m (vm-buffer-of mirrored-m))
+	       (with-current-buffer (vm-buffer-of mirrored-m)
+		 (vm-record-and-change-message-pointer
+		  vm-message-pointer (vm-message-position mirrored-m))))
 	     (while bp
 	       (set-buffer (car bp))
 	       (setq vm-virtual-buffers (delq b vm-virtual-buffers)

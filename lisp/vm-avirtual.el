@@ -123,13 +123,13 @@
 )
   
 ;; The following function is erroneously called for fsfemacs as well
-;; (declare-function key-or-menu-binding "vm-xemacs" (key &optional menu-flag))
-(declare-function bbdb-get-addresses "exp:bbdb-com"
+(declare-function key-or-menu-binding "vm-xemacs" (key &optional menu-flag))
+(declare-function bbdb-get-addresses "ext:bbdb-com"
 		  (only-first-address 
 		   uninteresting-senders 
 		   get-header-content-function
 		   &rest get-header-content-function-args))
-(declare-function bbdb-search-simple "exp:bbdb" (name net))
+(declare-function bbdb-search-simple "ext:bbdb" (name net))
 
 ; group already defined in vm-vars
 ;(defgroup vm nil
@@ -160,7 +160,7 @@
            (beep 1))))
       (setq feature-list (cdr feature-list)))))
 
-(defvar bbdb-get-addresses-headers)	; dummyd declaration
+(defvar bbdb-get-addresses-headers)	; dummy declaration
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar vm-mail-virtual-selector-function-alist
@@ -487,8 +487,9 @@ I was really missing this!"
   (let ((selector (car arg))
         (arglist (cdr arg))
         result)
-    (setq result (apply (cdr (assq selector vm-mail-virtual-selector-function-alist))
-                        arglist))
+    (setq result (apply 
+		  (cdr (assq selector vm-mail-virtual-selector-function-alist))
+		  arglist))
     (if vm-virtual-check-diagnostics
         (princ (format "%snot: %s for (%S%s)\n"
                        (make-string vm-virtual-check-level ? )
@@ -712,8 +713,12 @@ format:
       (vm-follow-summary-cursor)
       (setq selector (vm-virtual-get-selector
                       (vm-read-string "Virtual folder: "
-                                      vm-virtual-folder-alist))
-            function (key-or-menu-binding (read-key-sequence "VM command: "))))
+                                      vm-virtual-folder-alist)))
+      (if vm-xemacs-p
+	  (setq function 
+		(key-or-menu-binding (read-key-sequence "VM command: ")))
+	(setq function
+		(key-binding (read-key-sequence "VM command: ")))))
 
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
 

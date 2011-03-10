@@ -59,6 +59,11 @@
 		  
 
 
+(defun vm-message-position (m)
+  "Return a message-pointer pointing to the message M in the
+`vm-message-list'." 
+  (memq m vm-message-list))
+
 (defun vm-number-messages (&optional start-point end-point)
   "Set the number-of and padded-number-of slots of messages
 in vm-message-list.

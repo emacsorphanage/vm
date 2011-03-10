@@ -154,8 +154,7 @@ With prefix ARG, select the ARG'th previous message."
       (vm-preview-current-message)
     (vm-record-and-change-message-pointer
      vm-message-pointer
-     (memq (car vm-message-history-pointer)
-           vm-message-list))
+     (vm-message-position (car vm-message-history-pointer)))
     (vm-preview-current-message))
   (vm-message-history-browse))
 

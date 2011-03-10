@@ -4229,14 +4229,88 @@ virtual folder that contains a subset of messages in a real folder
 or several real folders.  A virtual folder can also contain a
 subset of messages from another virtual folder.
 
+@cindex search folders
+@cindex interactive virtual folders
+There are two ways of working with virtual folders.  When you are
+visiting a folder, you can use one or more selectors or search keys to
+interactively create a virtual folder.  You can browse through the
+messages in the virtual folder and carry out actions on them which
+will be reflected back to the original folder.  When you are done, you
+can quit the virtual folder and return to the original folder.  We
+call such virtual folders ``interactive'' virtual folders.  Some other
+mail clients use the term ``search folders'' for the same concept.
+
+@cindex composite virtual folders
+@vindex vm-virtual-folder-alist
+@kindex V V
+@findex vm-visit-virtual-folder
+A second way of using virtual folders is to define them through the
+variable @code{vm-virtual-folder-alist}.  You can visit such virtual
+folders by typing @kbd{V V} (@code{vm-visit-virtual-folder}).  Any
+actions carried out on the virtual folder messages will be reflected
+back to the underlying real folders.  We call such virtual folders
+``composite'' virtual folders.
+
+@menu
+* Interactive VFs::	Virtual folders created interactively
+* Composite VFs::	Virtual folders defined in advance
+* Virtual Selectors::	Selectors used for creating virtual folders
+* Working with VFs::	What you can do in a virtual folder
+* vm-avirtual::		Automatic operations using virtual selectors
+@end menu
+
+@node Interactive VFs, Composite VFs, Virtual Folders, Virtual Folders
+@section Interactive Virtual Folders
+
+@findex vm-create-virtual-folder
+@kindex V C
+The command @code{vm-create-virtual-folder} (bound to @kbd{V C}) lets
+you interactively create a virtual folder from the messages of
+the current folder, using exactly one selector to choose the
+messages.  If you type @kbd{V C header RET greeting}, VM will create
+a folder containing only those messages that contain the string
+@samp{greeting} in one of its headers.
+
+@findex vm-apply-virtual-folder
+@kindex V X
+The command @code{vm-apply-virtual-folder} (bound to @kbd{V X}) tries
+the selectors of a composite virtual folder against the messages of
+the current folder and creates a virtual folder containing the
+matching messages.
+
+@kindex V S
+@kindex V A
+@findex vm-create-virtual-folder-same-subject
+@findex vm-create-virtual-folder-same-author
+The keys @kbd{V S} (@code{vm-create-virtual-folder-same-subject}) and
+@kbd{V A} (@code{vm-create-virtual-folder-same-author}) create virtual folders
+containing all the messages in the current folder with the same
+subject or author as the current message.
+
+@cindex searching
+When you quit a virtual folder, the currently selected message in the
+virtual folder becomes the current message in the underlying folder.
+So, you can use the virtual folder facility to search for particular
+messages.  For example, if you knew that one of the messages with the
+subject @samp{greeting} had a hotel offer and you wanted to find it,
+you can first create a virtual folder of messages with that subject,
+browse through them to find the message that had the hotel offer, and
+then quit the virtual folder.  VM will return you the original folder
+with the cursor positioned on the @samp{greeting} message with the
+hotel offer.
+
+@node Composite VFs, Working with VFs, Interactive VFs, Virtual Folders
+@section Composite Virtual Folders
+
 @vindex vm-virtual-folder-alist
 @findex vm-visit-virtual-folder
 @kindex V V
-A virtual folder is defined by its name, the folders that it contains
-and its selectors.  The variable @code{vm-virtual-folder-alist} is a list of
-the definitions of all named virtual folders.  In order to visit a
-virtual folder with the @code{vm-visit-virtual-folder} (@kbd{V V}) command,
-a virtual folder must have an entry in vm-virtual-folder-alist.
+A composite virtual folder is defined by its name, the folders that it
+contains and its selectors.  The variable
+@code{vm-virtual-folder-alist} is a list of the definitions of all
+such virtual folders.  You can  visit a virtual folder listed in
+@code{vm-virtual-folder-alist} with the
+@code{vm-visit-virtual-folder} (@kbd{V V}) command.
 
 Each virtual folder definition should have the following form:
 
@@ -4258,14 +4332,66 @@ directory, VM will assume this to mean that all the folders in
 that directory should be searched.
 
 The @var{SELECTOR} is a Lisp symbol that tells VM how to
-decide whether a message from one of the folders specified by
-the @var{FOLDER-NAME}s should be included in the virtual
-folder.  Some @var{SELECTOR}s require an argument @var{ARG};
-unless otherwise noted, @var{ARG} may be omitted.
+decide whether a message should be included in the virtual
+folder.  (See below for a complete list of the possible selectors.)
+Some @var{SELECTOR}s require an argument @var{ARG};
+unless otherwise noted, @var{ARG} may be omitted.  When several
+selectors are listed, messages matching any one of them are included.
+
+@cindex searching
+@findex vm-isearch-forward
+@findex vm-isearch-backward
+The @code{text} selector provides a particularly effective way to search
+for strings in messages.  It is better than the
+@code{vm-isearch-forward/backward} functions because it avoids searching
+inside encoded attachments, hence faster.
+
+Here is an example that you may find useful as a template to
+create virtual folder definitions.
+
+@example
+(setq vm-virtual-folder-alist
+   '(
+     ;; start virtual folder definition
+     ("virtual-folder-name"
+      (("/path/to/folder" "/path/to/folder2")
+       (header "foo")
+       (header "bar")
+      )
+      (("/path/to/folder3" "/path/to/folder4")
+       (and (header "baz") (header "woof"))
+      )
+     )
+     ;; end of virtual folder definition
+   )
+)
+@end example
+
+@subsection Virtual Selectors
+@anchor{Virtual Selectors}
+
+@unnumberedsubsubsec Generic selectors
 
 @table @code
 @item any
 matches any message.
+@item header
+matches message if @var{ARG} matches any part of the header
+portion of the message; @var{ARG} should be a
+regular expression.
+@item text
+matches message if @var{ARG} matches any part of the text
+portion of the message; @var{ARG} should be a
+regular expression.
+@item header-or-text
+matches message if @var{ARG} matches any part of the
+headers or the text portion of the message;
+@var{ARG} should be a regular expression.
+@end table
+
+@unnumberedsubsubsec Selectors based on message headers
+
+@table @code
 @item author
 matches message if @var{ARG} matches the author; @var{ARG} should be a
 regular expression.
@@ -4279,11 +4405,15 @@ list of the message.  @var{ARG} should be a regular expression.
 @vindex vm-summary-uninteresting-senders
 @item outgoing
 matches message if your are the author of it, i.e. if the author matches
-@code{vm-summary-uninteresting-senders}
+@code{vm-summary-uninteresting-senders}.
+@cindex BBDB
 @item in-bbdb
-matches if the addresses from the message are in the BBDB. With an option
-first argument you might select the address class and with an optional second
-argument if only the first address should be checked.  
+matches message if its addresses are in the BBDB.  With an optional
+first argument you can specify the address class (@code{authors} or
+@code{recipients}) .  With an optional second argument @code{t}, the
+selector checks only the first address specified in the message.
+Examples: 
+
 @example
 (in-bbdb authors)
 @end example
@@ -4293,10 +4423,6 @@ argument if only the first address should be checked.
 @item subject
 matches message if @var{ARG} matches any part of the message's
 subject; @var{ARG} should be a regular expression.
-@item text
-matches message if @var{ARG} matches any part of the text
-portion of the message; @var{ARG} should be a
-regular expression.
 @item sent-after
 matches message if it was sent after the date @var{ARG}.
 A fully specified date looks like this:
@@ -4323,19 +4449,14 @@ part which defaults to midnight.
 matches message if it is more than @var{ARG} days old
 @item newer-than
 matches message if it is at most @var{ARG} days old
-@item header
-matches message if @var{ARG} matches any part of the header
-portion of the message; @var{ARG} should be a
-regular expression.
-@item header-or-text
-matches message if @var{ARG} matches any part of the
-headers or the text portion of the message;
-@var{ARG} should be a regular expression.
 @item spam-score
 matches message if its spam score is at least @var{ARG}.  See
 @code{vm-vs-spam-score-headers} for configuration.
-@item spam-word
-matches message if it contains a word from @code{vm-spam-words-file}
+@end table
+
+@unnumberedsubsubsec Selectors based on message attributes
+
+@table @code
 @item deleted
 matches message if it is flagged for deletion.
 @item undeleted
@@ -4393,9 +4514,14 @@ matches message if it has not been redistributed using
 @item marked
 matches message if it is marked, as with
 @code{vm-mark-message}.
+@end table
+
+@unnumberedsubsubsec Selectors based on analysing the text
+
+@table @code
 @item attachment
-matches if a message contains an attachment resp. its text matched
-@code{vm-vs-attachment-regexp}
+matches if a message contains an attachment, i.e., its text matches
+@code{vm-vs-attachment-regexp}.
 @item less-chars-than
 matches message if message has less than @var{ARG}
 characters.  @var{ARG} should be a number.
@@ -4408,6 +4534,11 @@ characters.  @var{ARG} should be a number.
 @item more-lines-than
 matches message if message has more than @var{ARG}
 lines.  @var{ARG} should be a number.
+@end table
+
+@unnumberedsubsubsec Complex selector operations
+
+@table @code
 @item eval
 matches message if evaluating the sexpr @var{ARG} yields @code{t}.
 @item and
@@ -4434,6 +4565,11 @@ selectors match the message.  Example:
 @noindent matches messages from Dave Weckl or messages
 with the string ``drum'' in their Subject header.
 @code{or} takes any number of arguments.
+@end table
+
+@unnumberedsubsubsec Selectors based on context
+
+@table @code
 @item folder-name
 matches message if it is from a folder matching @code{ARG}
 @item virtual-folder-member
@@ -4441,54 +4577,29 @@ matches message if the message is already a
 member of some virtual folder currently
 being visited.
 @item vm-mode
-matches the message if in vm-mode and one of its argument
-selectors match the message.
+matches the message if the current-buffer is in vm-mode and one of its
+argument selectors matches the message.
 @item mail-mode
-matches the message if in mail-mode and one of its argument
-selectors match the message.
+matches the message if the current-buffer is in mail-mode and one of
+its argument selectors matches the message.
 @end table
 
-Here is an example that you may find useful as a template to
-create virtual folder definitions.
-
-@example
-(setq vm-virtual-folder-alist
-   '(
-     ;; start virtual folder definition
-     ("virtual-folder-name"
-      (("/path/to/folder" "/path/to/folder2")
-       (header "foo")
-       (header "bar")
-      )
-      (("/path/to/folder3" "/path/to/folder4")
-       (and (header "baz") (header "woof"))
-      )
-     )
-     ;; end of virtual folder definition
-   )
-)
-@end example
-
-The @code{text} selector provides a particularly effective way to search
-for strings in messages.  It is better than the
-@code{vm-isearch-forward/backward} functions because it avoids searching
-inside encoded attachments, hence faster.
+@node Working with VFs, vm-avirtual, Composite VFs,Virtual Folders
+@section Working with Virtual Folders
 
 @findex vm-get-new-mail
 @findex vm-save-folder
-Again, you visit virtual folders you have defined in
-@code{vm-virtual-folder-alist} with @kbd{V V}.  Once you've
+Once you've
 visited a virtual folder most VM commands work as they do in a
 normal folder.  There are exceptions.  If you use @kbd{S}
-(@code{vm-save-folder}, the folder save command will be invoked
+(@code{vm-save-folder}), the folder save command will be invoked
 on each real folder in turn.  Similarly if you use @kbd{g}
-(@code{vm-get-new-mail} in a virtual folder, mail is retrieved
+(@code{vm-get-new-mail}) in a virtual folder, mail is retrieved
 from the spool files associated with each of the real folders.
 If any of the retrieved messages are matched by the virtual
-folder's selector, they will be added to the virtual folder.
+folder's selectors, they will be added to the virtual folder.
 
-These commands will signal an error when invoked if the current
-folder is a virtual folder:
+These commands will signal an error when invoked in a virtual folder:
 
 @display
     vm-save-buffer
@@ -4502,7 +4613,7 @@ Normally messages in a virtual folder share attributes with the
 underlying real messages.  For example, if you delete a message
 in a virtual folder, it is also flagged as deleted in the real
 folder.  If you then run @code{vm-expunge-folder} in the virtual folder,
-the deleted message is expunged from the virtual folder and from
+the deleted message is expunged from the virtual folder as well as
 the real folder.  Labels are shared between virtual and real
 messages.  However virtual folders have their own set of message
 marks.
@@ -4519,38 +4630,19 @@ buffers.
 
 @findex vm-toggle-virtual-mirror
 @kindex V M
-@noindent If you want to change whether the currently visited virtual 
-folder shares attributes with the underlying real folders, use the 
-command @code{vm-toggle-virtual-mirror} (bound to @kbd{V M}).  If the
-virtual folder is currently sharing attributes it will no longer
-be.  If it is not sharing attributes with the underlying folders
-then it will be.
+@noindent If you want to change virtual mirror status of a particular
+virtual folder, use the command @code{vm-toggle-virtual-mirror} (bound
+to @kbd{V M}).  If the virtual folder is currently sharing attributes
+with real folders, it will no longer be.  If it is not sharing
+attributes with the underlying folders then it will be.
 
-@findex vm-create-virtual-folder
-@kindex V C
-The command @code{vm-create-virtual-folder} (bound to @kbd{V C}) lets
-you interactively create a virtual folder from the messages of
-the current folder, using exactly one selector to choose the
-messages.  If you type @kbd{V C header RET pigs}, VM will create
-a folder containing only those messages that contain the string
-@samp{pigs} in the header.
+@node vm-avirtual,, Working with VFs, Virtual Folders
+@section vm-avirtual Package
 
-@findex vm-apply-virtual-folder
-@kindex V X
-The command @code{vm-apply-virtual-folder} (bound to @kbd{V X}) tries
-the selectors of a named virtual folder against the messages of
-the current folder and creates a virtual folder containing the
-matching messages.
-
-@kindex V S
-@kindex V A
-@findex vm-create-virtual-folder-same-subject
-@findex vm-create-virtual-folder-same-author
-The keys @kbd{V S} and @kbd{V A} invoke
-@code{vm-create-virtual-folder-same-subject} and
-@code{vm-create-virtual-folder-same-author} which create virtual folders
-containing all the messages in the current folder with the same
-subject or author as the current message.
+@cindex vm-avirtual
+The @code{vm-avirtual} add-on created by Robert Widhopf-Fenk provides
+various automatic operations based on virtual selectors.  These
+facilities are only partially documented.
 
 @kindex V O
 @findex vm-virtual-omit-message
@@ -4560,17 +4652,12 @@ The keys @kbd{V O} @code{vm-virtual-omit-message} will omit a message from the
 virtual folder and @kbd{V U} @code{vm-virtual-update-folders} will force an
 update of the virtual folder.
 
-@findex vm-virtual-check-selector-interactive
-@kbd{M-x vm-virtual-check-selector-interactive} allows to test selectors
-interactively and will emit debug information when called with a prefix
-argument.
-
 @findex vm-virtual-auto-delete-message
 @findex vm-virtual-auto-delete-messages
 @vindex vm-arrived-messages-hook
 Automatic marking of messages for deletion based on a selector can be
 achieved with @code{vm-virtual-auto-delete-message} for interactive use and the
-function and @code{vm-virtual-auto-delete-messages} when added to the VM hook
+function @code{vm-virtual-auto-delete-messages} when added to the VM hook
 @code{vm-arrived-messages-hook}.  This can be quite handy for marking spam for
 deletion.
 
@@ -4580,6 +4667,12 @@ deletion.
 folder corresponding to the first matching selector and the function 
 @kbd{vm-virtual-auto-archive-messages} can file messages based on
 selectors (see also @code{vm-auto-archive-messages}). 
+
+@findex vm-virtual-check-selector-interactive
+The command @kbd{M-x vm-virtual-check-selector-interactive} allows you
+to test selectors interactively and will emit debug information when
+called with a prefix argument.
+
 
 @node Frames and Windows, Toolbar, Virtual Folders, Top
 @chapter Frames and Windows
@@ -5929,9 +6022,10 @@ has the summary pointer in the Summary buffer.
 bodies were fetched for viewing or other operations.
 @item
 @inindex vm-fetched-message-count
-@code{vm-fetched-message-count}.  The number of messages in
 @inindex vm-fetched-messages
-@code{vm-fetched-messages}.  An attempt is made to keep this below the @code{vm-fetched-message-limit}.
+@code{vm-fetched-message-count}.  The number of messages in
+@code{vm-fetched-messages}.  An attempt is made to keep this below the
+@code{vm-fetched-message-limit}. 
 @item
 @inindex vm-mime-decoded
 @inindex MIME
@@ -6112,6 +6206,11 @@ representing the real message of the current message.  If the current
 message is a real message then this field contains its own symbol.
 The use of symbols for this purpose avoids the possibility of circular
 data structures.
+@inindex mirrored-message-sym
+@item
+@code{mirrored-message-sym}.  This is similar to the
+@code{real-message-sym}, except that it points to the message directly
+mirrored by the current virtual folder message.
 @inindex reverse-link-sym
 @item
 @code{reverse-link-sym}.  Reference to the previous message in the message list,
@@ -6580,25 +6679,25 @@ give the data about the message:
 
 @inindex vm-thread-obarray
 @inindex vm-thread-subject-obarray
-@inindex in-reply-to
-@inindex references
+@inindex In-Reply-To header
+@inindex References header
 Message threads required for threaded summaries are calculated using
 message ID's, which are unique when the message was originally
 composed.  However, VM may need to deal with multiple copies of the
 same message received via possibly different routes.  So, message ID's are
 not unique for messages inside VM.  
 
-Messages composed as replies generally have an ``in-reply-to'' header.
+Messages composed as replies generally have an ``In-Reply-To'' header.
 The message mentioned in this header is referred to as the parent of
-the message.  In addition, messages also arrive with a ``references''
+the message.  In addition, messages also arrive with a ``References''
 header which lists all the ancestors of the message, with the oldest
 message being listed first.  The last message listed in the
-``references'' header is the direct parent of message.  It is
+``References'' header is the direct parent of message.  It is
 important to keep in mind that all the messages listed in the
-``references'' header may not be present in the VM folder.
+``References'' header may not be present in the VM folder.
 
-Thread trees are constructed using the ``in-reply-to'' headers and
-``references'' headers.  Jamie Zawinski has done a good analysis of
+Thread trees are constructed using the ``In-Reply-To'' headers and
+``References'' headers.  Jamie Zawinski has done a good analysis of
 the information contained in these headers which can be found on the
 web.  VM's threading algorithm is currently based on these ideas.
 These trees are called reference-based threads.
@@ -6623,16 +6722,20 @@ The message ID's are interned in @code{vm-thread-obarray} and the
 following information is stored for each message ID:
 
 @itemize
+@item messages:
+The list of messages that carry this message ID in the folder.  There
+could be none, if we only know this message from its appearance in
+other ``References'' headers.
 @item message:
 The ``canonical'' message with this message ID.  It is typically the
-first message encountered by VM with this message ID.
-@item messages:
-The list of messages that carry this message ID.
+first message encountered by VM with this message ID.  If there are no
+messages with this ID, then the field is @code{nil}.
 @item date:
 The date of the message.
 @item parent:
 The interned message ID of the parent of this message.  (The folder
-may or may not contain a message with this ID.)
+may or may not contain a message with this ID.)  If there is no
+parent, then this is @code{nil}
 @item children:
 The interned message ID's of all the children of this message.  (The
 folder may or may not contain messages with these ID's.)
@@ -6672,13 +6775,13 @@ threads are based on the reference threads.
 @inindex thread-indentation
 After the threads are built, the @code{thread-list},
 @code{thread-indentation} and the @code{thread-subtree} fields of the
-Softdata vector are calculated as needed on demand and cached.  These
-fields cannot be calculated without building threads first.
+Soft data vector are calculated as needed on demand and cached.
+(@xref{Soft data vector}.)  These fields cannot be calculated without
+building threads first.
 
 When new messages are assimilated, they are added to the threads that
 might have been already built, and the thread-related fields in the
-Soft data vector are erased so that they will be recalculated.
-(@xref{Soft data vector}.)  The
+Soft data vector are erased so that they will be recalculated.  The
 @code{thread-subtree} field is erased for all the ancestors of the
 assimilated message.  The @code{thread-list} and
 @code{thread-indentation} fields are erased for all the descendants of

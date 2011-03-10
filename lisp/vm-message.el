@@ -108,7 +108,7 @@ works in all VM buffers."
 	   :saved-virtual-mirror-data :virtual-summary 
 	   :mime-layout :mime-encoded-header-flag
 	   :su-summary-mouse-track-overlay :message-access-method
-	   :thread-subtree])
+	   :thread-subtree :mirrored-message-sym])
 (defsubst vm-number-of (message)
   (aref (aref message 1) 0))
 (defsubst vm-padded-number-of (message)
@@ -169,6 +169,10 @@ works in all VM buffers."
   (aref (aref message 1) 19))
 (defsubst vm-thread-subtree-of (message)
   (aref (aref message 1) 20))
+(defsubst vm-mirrored-message-sym-of (message)
+  (aref (aref message 1) 21))
+(defsubst vm-mirrored-message-of (message)
+  (symbol-value (aref (aref message 1) 21)))
 
 ;; message attribute vector
 (defconst vm-attributes-fields
@@ -358,6 +362,8 @@ works in all VM buffers."
   (aset (aref message 1) 19 method))
 (defsubst vm-set-thread-subtree-of (message list)
   (aset (aref message 1) 20 list))
+(defsubst vm-set-mirrored-message-sym-of (message sym)
+  (aset (aref message 1) 21 sym))
 ;; The other routines in attributes group are part of the undo system.
 (defun vm-set-edited-flag-of (message flag)
   (aset (aref message 2) 7 flag)
@@ -518,6 +524,7 @@ works in all VM buffers."
 
 
 (defun vm-make-message ()
+  "Create a new blank message struct."
   (let ((mvec (make-vector 5 nil))
 	sym)
     (vm-set-softdata-of mvec (make-vector vm-softdata-vector-length nil))
@@ -535,6 +542,7 @@ works in all VM buffers."
     (setq sym (make-symbol "<<>>"))
     (set sym mvec)
     (vm-set-real-message-sym-of mvec sym)
+    (vm-set-mirrored-message-sym-of mvec sym)
     ;; Another uninterned symbol for the virtual messages list.
     (setq sym (make-symbol "<v>"))
     (set sym nil)

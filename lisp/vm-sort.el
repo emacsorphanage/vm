@@ -760,8 +760,8 @@ folder in the order in which the messages arrived."
 
 ;;;###autoload
 (defun vm-sort-compare-physical-order (m1 m2)
-  (let ((n1 (vm-start-of m1))
-	(n2 (vm-start-of m2)))
+  (let ((n1 (vm-start-of (vm-real-message-of m1)))
+	(n2 (vm-start-of (vm-real-message-of m2))))
     (cond ((< n1 n2) t)
 	  ((= n1 n2) '=)
 	  (t nil))))

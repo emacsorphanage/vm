@@ -36,6 +36,8 @@
 (declare-function vm-so-sortable-subject "vm-sort" (message))
 
 (defun vm-record-and-change-message-pointer (old new)
+  "Change the `vm-message-pointer' of the folder from OLD to NEW, both
+of which must be pointers into the `vm-message-list'."
   (intern (buffer-name) vm-buffers-needing-display-update)
   (vm-garbage-collect-message)
   (setq vm-last-message-pointer old
@@ -114,7 +116,7 @@ given."
       (if (null message)
 	  (message "Parent message is not in this folder.")
 	(vm-record-and-change-message-pointer vm-message-pointer
-					      (memq message vm-message-list))
+					      (vm-message-position message))
 	(vm-preview-current-message)))))
 
 (defun vm-check-count (count)
