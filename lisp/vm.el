@@ -892,66 +892,65 @@ vm-visit-virtual-folder.")
       current-prefix-arg)))
   (vm-session-initialization)
   (require 'vm-virtual)
-  (if (not (assoc folder-name vm-virtual-folder-alist))
-      (error "No such virtual folder, %s" folder-name))
+  (unless (assoc folder-name vm-virtual-folder-alist)
+    (error "No such virtual folder, %s" folder-name))
   (let ((buffer-name (concat "(" folder-name ")"))
 	first-time blurb)
     (set-buffer (get-buffer-create buffer-name))
     (setq first-time (not (eq major-mode 'vm-virtual-mode)))
-    (if first-time
-	(progn
-	  (if (fboundp 'buffer-disable-undo)
-	      (buffer-disable-undo (current-buffer))
-	    ;; obfuscation to make the v19 compiler not whine
-	    ;; about obsolete functions.
-	    (let ((x 'buffer-flush-undo))
-	      (funcall x (current-buffer))))
-	  (abbrev-mode 0)
-	  (auto-fill-mode 0)
-	  (vm-fsfemacs-nonmule-display-8bit-chars)
-	  (setq mode-name "VM Virtual"
-		mode-line-format vm-mode-line-format
-		buffer-read-only t
-		vm-folder-read-only read-only
-		vm-label-obarray (make-vector 29 0)
-		vm-virtual-folder-definition
-		  (assoc folder-name vm-virtual-folder-alist))
-	  ;; scroll in place messes with scroll-up and this loses
-	  (make-local-variable 'scroll-in-place)
-	  (setq scroll-in-place nil)
-	  (vm-build-virtual-message-list nil)
-	  (use-local-map vm-mode-map)
-	  (when (vm-menu-support-possible-p)
-	    (vm-menu-install-menus))
-	  (add-hook 'kill-buffer-hook 'vm-garbage-collect-folder)
-	  (add-hook 'kill-buffer-hook 'vm-garbage-collect-message)
-	  ;; save this for last in case the user interrupts.
-	  ;; an interrupt anywhere before this point will cause
-	  ;; everything to be redone next revisit.
-	  (setq major-mode 'vm-virtual-mode)
-	  (run-hooks 'vm-virtual-mode-hook)
-	  ;; must come after the setting of major-mode
-	  (setq mode-popup-menu (and vm-use-menus
-				     (vm-menu-support-possible-p)
-				     (vm-menu-mode-menu)))
-	  (setq blurb (vm-emit-totals-blurb))
-	  (when vm-summary-show-threads
-	    (vm-sort-messages "activity"))
-	  (if bookmark
-	      (let ((mp vm-message-list))
-		(while mp
-		  (if (eq bookmark (vm-real-message-of (car mp)))
-		      (progn
-			(vm-record-and-change-message-pointer
-			 vm-message-pointer mp)
-			(vm-preview-current-message)
-			(setq mp nil))
-		    (setq mp (cdr mp))))))
-	  (unless vm-message-pointer
-	    (if (vm-thoughtfully-select-message)
-		(vm-preview-current-message)
-	      (vm-update-summary-and-mode-line)))
-	  (message blurb)))
+    (when first-time
+      (if (fboundp 'buffer-disable-undo)
+	  (buffer-disable-undo (current-buffer))
+	;; obfuscation to make the v19 compiler not whine
+	;; about obsolete functions.
+	(let ((x 'buffer-flush-undo))
+	  (funcall x (current-buffer))))
+      (abbrev-mode 0)
+      (auto-fill-mode 0)
+      (vm-fsfemacs-nonmule-display-8bit-chars)
+      (setq mode-name "VM Virtual"
+	    mode-line-format vm-mode-line-format
+	    buffer-read-only t
+	    vm-folder-read-only read-only
+	    vm-label-obarray (make-vector 29 0)
+	    vm-virtual-folder-definition
+	    (assoc folder-name vm-virtual-folder-alist))
+      ;; scroll in place messes with scroll-up and this loses
+      (make-local-variable 'scroll-in-place)
+      (setq scroll-in-place nil)
+      (vm-build-virtual-message-list nil)
+      (use-local-map vm-mode-map)
+      (when (vm-menu-support-possible-p)
+	(vm-menu-install-menus))
+      (add-hook 'kill-buffer-hook 'vm-garbage-collect-folder)
+      (add-hook 'kill-buffer-hook 'vm-garbage-collect-message)
+      ;; save this for last in case the user interrupts.
+      ;; an interrupt anywhere before this point will cause
+      ;; everything to be redone next revisit.
+      (setq major-mode 'vm-virtual-mode)
+      (run-hooks 'vm-virtual-mode-hook)
+      ;; must come after the setting of major-mode
+      (setq mode-popup-menu (and vm-use-menus
+				 (vm-menu-support-possible-p)
+				 (vm-menu-mode-menu)))
+      (setq blurb (vm-emit-totals-blurb))
+      (when vm-summary-show-threads
+	(vm-sort-messages "activity"))
+      (if bookmark
+	  (let ((mp vm-message-list))
+	    (while mp
+	      (if (eq bookmark (vm-real-message-of (car mp)))
+		  (progn
+		    (vm-record-and-change-message-pointer
+		     vm-message-pointer mp)
+		    (vm-preview-current-message)
+		    (setq mp nil))
+		(setq mp (cdr mp))))))
+      (unless vm-message-pointer
+	(if (vm-thoughtfully-select-message)
+	    (vm-preview-current-message)
+	  (vm-update-summary-and-mode-line)))
+      (message blurb))
     ;; make a new frame if the user wants one.  reuse an
     ;; existing frame that is showing this folder.
     (vm-goto-new-folder-frame-maybe 'folder)
@@ -959,35 +958,34 @@ vm-visit-virtual-folder.")
 	(vm-raise-frame))
     (vm-display nil nil (list this-command) (list this-command 'startup))
     (vm-toolbar-install-or-uninstall-toolbar)
-    (if first-time
-	(progn
-	  (if (vm-should-generate-summary)
-	      (progn (vm-summarize t nil)
-		     (message blurb)))
-	  ;; raise the summary frame if the user wants frames
-	  ;; raised and if there is a summary frame.
-	  (if (and vm-summary-buffer
-		   vm-mutable-frames
-		   vm-frame-per-summary
-		   vm-raise-frame-at-startup)
-	      (vm-raise-frame))
-	  ;; if vm-mutable-windows is nil, the startup
-	  ;; configuration can't be applied, so do
-	  ;; something to get a VM buffer on the screen
-	  (if vm-mutable-windows
-	      (vm-display nil nil (list this-command)
-			  (list (or this-command 'vm) 'startup))
-	    (save-excursion
-	      (switch-to-buffer (or vm-summary-buffer
-				    vm-presentation-buffer
-				    (current-buffer)))))))
+    (when first-time
+      (when (vm-should-generate-summary)
+	(vm-summarize t nil)
+	(message blurb))
+      ;; raise the summary frame if the user wants frames
+      ;; raised and if there is a summary frame.
+      (when (and vm-summary-buffer
+		 vm-mutable-frames
+		 vm-frame-per-summary
+		 vm-raise-frame-at-startup)
+	(vm-raise-frame))
+      ;; if vm-mutable-windows is nil, the startup
+      ;; configuration can't be applied, so do
+      ;; something to get a VM buffer on the screen
+      (if vm-mutable-windows
+	  (vm-display nil nil (list this-command)
+		      (list (or this-command 'vm) 'startup))
+	(save-excursion
+	  (switch-to-buffer (or vm-summary-buffer
+				vm-presentation-buffer
+				(current-buffer))))))
 
     ;; check interactive-p so as not to bog the user down if they
     ;; run this function from within another function.
-    (and (interactive-p)
-	 (not vm-startup-message-displayed)
-	 (vm-display-startup-message)
-	 (message blurb))))
+    (when (and (interactive-p)
+	       (not vm-startup-message-displayed))
+      (vm-display-startup-message)
+      (message blurb))))
 
 ;;;###autoload
 (defun vm-visit-virtual-folder-other-frame (folder-name &optional read-only)

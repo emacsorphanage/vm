@@ -3193,7 +3193,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	       (not virtual))
       (vm-save-folder))
 
-    (vm-virtual-quit)
+    (vm-virtual-quit no-expunge no-change)
 
     (cond ((and (eq vm-folder-access-method 'pop)
 		(setq process (vm-folder-pop-process)))

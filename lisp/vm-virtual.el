@@ -49,17 +49,17 @@
 ;;;###autoload
 (defun vm-build-virtual-message-list (new-messages &optional dont-finalize)
   "Builds a list of messages matching the virtual folder definition
-stored in the variable vm-virtual-folder-definition.
+stored in the variable `vm-virtual-folder-definition'.
 
 If the NEW-MESSAGES argument is nil, the message list is
 derived from the folders listed in the virtual folder
 definition and selected by the various selectors.  The
-resulting message list is assigned to vm-message-list unless
+resulting message list is assigned to `vm-message-list' unless
 DONT-FINALIZE is non-nil.
 
 If NEW-MESSAGES is non-nil then it is a list of messages to
 be tried against the selector parts of the virtual folder
-definition.  Matching messages are added to vm-message-list,
+definition.  Matching messages are added to `vm-message-list',
 instead of replacing it.
 
 The messages in the NEW-MESSAGES list, if any, must all be in the
@@ -67,11 +67,11 @@ same real folder.
 
 The list of matching virtual messages is returned.
 
-If DONT-FINALIZE is nil, in addition to vm-message-list being
+If DONT-FINALIZE is nil, in addition to `vm-message-list' being
 set, the virtual messages are added to the virtual message
 lists of their real messages, the current buffer is added to
-vm-virtual-buffers list of each real folder buffer represented
-in the virtual list, and vm-real-buffers is set to a list of
+`vm-virtual-buffers' list of each real folder buffer represented
+in the virtual list, and `vm-real-buffers' is set to a list of
 all the real folder buffers involved."
   (let ((clauses (cdr vm-virtual-folder-definition))
 	(message-set (make-vector 311 0))
@@ -81,9 +81,9 @@ all the real folder buffers involved."
 	(tail-cons (if dont-finalize nil (vm-last vm-message-list)))
 	(new-message-list nil)
 	virtual location-vector
-	message mp folders folder
+	message folders folder buffer
 	selectors sel-list selector arglist i
-	real-buffers-used)
+	real-buffers-used components)
     (if dont-finalize
 	nil
       ;; Since there is at most one virtual message in the folder
@@ -103,27 +103,29 @@ all the real folder buffers involved."
       ;; To keep track of the messages in a virtual folder to
       ;; prevent duplicates we create and maintain a set that
       ;; contain all the real messages.
-      (setq mp vm-message-list)
-      (while mp
-	(intern (vm-message-id-number-of (vm-real-message-of (car mp)))
-		message-set)
-	(setq mp (cdr mp))))
+      (dolist (m vm-message-list)
+	(intern (vm-message-id-number-of (vm-real-message-of m))
+		message-set)))
     ;; now select the messages
     (save-excursion
-      (while clauses
-	(setq folders (car (car clauses))
-	      selectors (cdr (car clauses)))
-	(while folders
+      (dolist (clause clauses)
+	(setq folders (car clause)
+	      selectors (cdr clause))
+	(while folders			; folders can change below
 	  (setq folder (car folders))
 	  (cond ((and (stringp folder)
 		      (string-match vm-recognize-pop-maildrops folder))
+		 ;; POP folder, fine
 		 nil)
 		((and (stringp folder)
 		      (string-match vm-recognize-imap-maildrops folder))
+		 ;; IMAP folder, fine
 		 nil)
 		((stringp folder)
+		 ;; Local folder, use full path
 		 (setq folder (expand-file-name folder vm-folder-directory)))
 		((listp folder)
+		 ;; Sexpr, eval it
 		 (setq folder (eval folder))))
 	  (cond
 	   ((null folder)
@@ -131,6 +133,7 @@ all the real folder buffers involved."
 	    ;; skip it
 	    nil )
 	   ((and (stringp folder) (file-directory-p folder))
+	    ;; an entire directory!
 	    (setq folders (nconc folders
 				 (vm-delete-backup-file-names
 				  (vm-delete-auto-save-file-names
@@ -156,25 +159,35 @@ all the real folder buffers involved."
 			   (vm-visit-folder folder)
 			   (vm-select-folder-buffer)
 			   (current-buffer)))))
-	    (set-buffer (or (and (bufferp folder) folder)
-			    (vm-get-file-buffer folder)
-			    (let ((inhibit-local-variables t)
-				  (coding-system-for-read 
-				   (vm-binary-coding-system))
-				  (enable-local-eval nil)
-				  (enable-local-variables nil))
-			      (vm-visit-folder folder)
-			      (vm-select-folder-buffer)
-			      (current-buffer))))
+
+	    ;; Check if the folder is already visited, or visit it
+	    (cond ((bufferp folder)
+		   (setq buffer folder)
+		   (setq components (cons (cons buffer nil) components))
+		   (set-buffer folder))
+		  ((setq buffer (vm-get-file-buffer folder))
+		   (setq components (cons (cons buffer nil) components))
+		   (set-buffer buffer))
+		  (t
+		   (let ((inhibit-local-variables t)
+			 (coding-system-for-read 
+			  (vm-binary-coding-system))
+			 (enable-local-eval nil)
+			 (enable-local-variables nil))
+		     (vm-visit-folder folder)
+		     (vm-select-folder-buffer)
+		     (setq buffer (current-buffer))
+		     (setq components (cons (cons buffer t) components))
+		     (set-buffer buffer))))
 	    (if (eq major-mode 'vm-virtual-mode)
 		(setq virtual t
 		      real-buffers-used 
 		      (append vm-real-buffers real-buffers-used))
 	      (setq virtual nil)
-	      (when (not (memq (current-buffer) real-buffers-used))
+	      (unless (memq (current-buffer) real-buffers-used)
 		(setq real-buffers-used (cons (current-buffer)
 					      real-buffers-used)))
-	      (when (not (eq major-mode 'vm-mode))
+	      (unless (eq major-mode 'vm-mode)
 		(vm-mode)))
 
 	    ;; change (sexpr) into ("/file" "/file2" ...)
@@ -193,28 +206,23 @@ all the real folder buffers involved."
 
 	    ;; if new-messages non-nil use it instead of the
 	    ;; whole message list
-	    (setq mp (or new-messages vm-message-list))
-	    (while mp
+	    (dolist (m (or new-messages vm-message-list))
 	      (when (and (or dont-finalize
 			     (not (intern-soft
 				   (vm-message-id-number-of
-				    (vm-real-message-of (car mp)))
+				    (vm-real-message-of m))
 				   message-set)))
 			 (if virtual
 			     (save-excursion
 			       (set-buffer
-				(vm-buffer-of
-				 (vm-real-message-of
-				  (car mp))))
-			       (apply 'vm-vs-or (car mp) selectors))
-			   (apply 'vm-vs-or (car mp) selectors)))
+				(vm-buffer-of (vm-real-message-of m)))
+			       (apply 'vm-vs-or m selectors))
+			   (apply 'vm-vs-or m selectors)))
 		(unless dont-finalize
 		  (intern
-		   (vm-message-id-number-of
-		    (vm-real-message-of (car mp)))
+		   (vm-message-id-number-of (vm-real-message-of m))
 		   message-set))
-		(setq message (copy-sequence
-			       (vm-real-message-of (car mp))))
+		(setq message (copy-sequence (vm-real-message-of m)))
 		(unless mirrored
 		  (vm-set-mirror-data-of
 		   message (make-vector vm-mirror-data-vector-length nil))
@@ -226,15 +234,14 @@ all the real folder buffers involved."
 		(vm-set-location-data-of message location-vector)
 		(vm-set-softdata-of
 		 message (make-vector vm-softdata-vector-length nil))
-		(if (eq (symbol-value (vm-mirrored-message-sym-of (car mp)))
-			(car mp))
+		(if (eq m (symbol-value (vm-mirrored-message-sym-of m)))
 		    (vm-set-mirrored-message-sym-of
-		     message (vm-mirrored-message-sym-of (car mp)))
+		     message (vm-mirrored-message-sym-of m))
 		  (let ((sym (make-symbol "<<>>")))
-		    (set sym (car mp))
+		    (set sym m)
 		    (vm-set-mirrored-message-sym-of message sym)))
 		(vm-set-real-message-sym-of
-		 message (vm-real-message-sym-of (car mp)))
+		 message (vm-real-message-sym-of m))
 		(vm-set-message-type-of message vm-folder-type)
 		(vm-set-message-access-method-of
 		 message vm-folder-access-method)
@@ -250,10 +257,8 @@ all the real folder buffers involved."
 		  (setcdr tail-cons (list message))
 		  (if (null new-message-list)
 		      (setq new-message-list (cdr tail-cons)))
-		  (setq tail-cons (cdr tail-cons))))
-	      (setq mp (cdr mp)))))
-	  (setq folders (cdr folders)))
-	(setq clauses (cdr clauses))))
+		  (setq tail-cons (cdr tail-cons)))))))
+	  (setq folders (cdr folders)))))
     (if dont-finalize
 	new-message-list
       ;; this doesn't need to work currently, but it might someday
@@ -269,26 +274,25 @@ all the real folder buffers involved."
       ;; uninterruptible.
       (let ((inhibit-quit t)
 	    (label-obarray vm-label-obarray))
-	(if (null vm-real-buffers)
-	    (setq vm-real-buffers real-buffers-used))
+	(unless vm-real-buffers
+	  (setq vm-real-buffers real-buffers-used))
+	(unless vm-component-buffers
+	  (setq vm-component-buffers components))
 	(save-excursion
-	  (while real-buffers-used
-	    (set-buffer (car real-buffers-used))
+	  (dolist (real-buffer real-buffers-used)
+	    (set-buffer real-buffer)
 	    ;; inherit the global label lists of all the associated
 	    ;; real folders.
 	    (mapatoms (function (lambda (x) (intern (symbol-name x)
 						    label-obarray)))
 		      vm-label-obarray)
-	    (if (not (memq vbuffer vm-virtual-buffers))
-		(setq vm-virtual-buffers (cons vbuffer vm-virtual-buffers)))
-	    (setq real-buffers-used (cdr real-buffers-used))))
-	(setq mp new-message-list)
-	(while mp
+	    (unless (memq vbuffer vm-virtual-buffers)
+	      (setq vm-virtual-buffers (cons vbuffer
+					     vm-virtual-buffers)))))
+	(dolist (m new-message-list)
 	  (vm-set-virtual-messages-of
-	   (vm-real-message-of (car mp))
-	   (cons (car mp) (vm-virtual-messages-of
-			   (vm-real-message-of (car mp)))))
-	  (setq mp (cdr mp)))
+	   (vm-real-message-of m)
+	   (cons m (vm-virtual-messages-of (vm-real-message-of m)))))
 	(if vm-message-list
 	    (progn
 	      (vm-set-summary-redo-start-point new-message-list)
@@ -314,6 +318,7 @@ Prefix arg means the new virtual folder should be visited read only."
      (vm-select-folder-buffer)
      (nconc (vm-read-virtual-selector "Create virtual folder of messages: ")
 	    (list prefix)))))
+
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((use-marks (eq last-command 'vm-next-command-uses-marks))
 	(parent-summary-format vm-summary-format)
@@ -327,6 +332,7 @@ Prefix arg means the new virtual folder should be visited read only."
 	  (list
 	   (list name
 		 (list (list (list 'get-buffer (buffer-name)))
+					; sexpr that will be eval'ed
 		       (if use-marks
 			   (list 'and '(marked)
 				 (if arg (list selector arg) (list selector)))
@@ -336,8 +342,8 @@ Prefix arg means the new virtual folder should be visited read only."
   ;; have to do this again here because the known virtual
   ;; folder menu is now hosed because we installed it while
   ;; vm-virtual-folder-alist was bound to the temp value above
-  (if vm-use-menus
-      (vm-menu-install-known-virtual-folders-menu)))
+  (when vm-use-menus
+    (vm-menu-install-known-virtual-folders-menu)))
 
 
 ;;;###autoload
@@ -730,7 +736,7 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 
 
 ;;;###autoload
-(defun vm-virtual-quit ()
+(defun vm-virtual-quit (&optional no-expunge no-change)
   "Quit a virtual folder.  Clear away links between real and virtual
 folders when a `vm-quit' is performed in either type folder.
 
@@ -740,63 +746,67 @@ interactively."
     (cond ((eq major-mode 'vm-virtual-mode)
 	   ;; don't trust blindly, user might have killed some of
 	   ;; these buffers.
-	   (setq vm-real-buffers (vm-delete 'buffer-name vm-real-buffers t))
-	   (let ((bp vm-real-buffers)
-		 (mp vm-message-list)
-		 (b (current-buffer))
-		 (mirrored-m nil)
+	   (setq vm-component-buffers 
+		 (vm-delete (lambda (pair)
+			      (buffer-name (car pair)))
+			    vm-component-buffers t))
+	   (setq vm-real-buffers 
+		 (vm-delete 'buffer-name vm-real-buffers t))
+	   (let ((b (current-buffer))
+		 (mirrored-msg nil)
+		 (real-m nil)
 		 ;; lock out interrupts here
 		 (inhibit-quit t))
 	     ;; Move the message-pointer of the original buffer to the
 	     ;; current message in the virtual folder
-	     (setq mirrored-m (vm-mirrored-message-of 
+	     (setq mirrored-msg (vm-mirrored-message-of 
 			       (car vm-message-pointer)))
-	     (when (and mirrored-m (vm-buffer-of mirrored-m))
-	       (with-current-buffer (vm-buffer-of mirrored-m)
+	     (when (and mirrored-msg (vm-buffer-of mirrored-msg))
+	       (with-current-buffer (vm-buffer-of mirrored-msg)
 		 (vm-record-and-change-message-pointer
-		  vm-message-pointer (vm-message-position mirrored-m))))
-	     (while bp
-	       (set-buffer (car bp))
-	       (setq vm-virtual-buffers (delq b vm-virtual-buffers)
-		     bp (cdr bp)))
-	     (while mp
+		  vm-message-pointer (vm-message-position mirrored-msg))))
+	     (dolist (real-buf vm-real-buffers)
+	       (with-current-buffer real-buf
+		 (setq vm-virtual-buffers (delq b vm-virtual-buffers))))
+	     (dolist (m vm-message-list)
+	       (setq real-m (vm-real-message-of m))
 	       (vm-set-virtual-messages-of
-		(vm-real-message-of (car mp))
-		(delq (car mp) (vm-virtual-messages-of
-				(vm-real-message-of (car mp)))))
-	       (setq mp (cdr mp)))))
+		real-m (delq m (vm-virtual-messages-of real-m))))
+	     (condition-case error-data
+		 (dolist (pair vm-component-buffers)
+		   (when (cdr pair)
+		     (with-current-buffer (car pair)
+		       ;; Use dynamic non-local bindings from vm-quit
+		       (vm-quit no-expunge no-change))))
+	       (error 
+		(message "Unable to quit component folders: %s"
+			 (prin1-to-string error-data))))))
 	  ((eq major-mode 'vm-mode)
 	   ;; don't trust blindly, user might have killed some of
 	   ;; these buffers.
 	   (setq vm-virtual-buffers
 		 (vm-delete 'buffer-name vm-virtual-buffers t))
-	   (let ((bp vm-virtual-buffers)
-		 (mp vm-message-list)
-		 vmp
+	   (let (vmp
 		 (b (current-buffer))
 		 ;; lock out interrupts here
 		 (inhibit-quit t))
-	     (while mp
+	     (dolist (m vm-message-list)
 	       ;; we'll clear these messages from the virtual
 	       ;; folder by looking for messages that have a "Q"
 	       ;; id number associated with them.
-	       (when (vm-virtual-messages-of (car mp))
-		 (vm-mapc
-		  (lambda (m)
-		    (vm-set-message-id-number-of m "Q"))
-		  (vm-virtual-messages-of (car mp)))
-		 (vm-unthread-message (car mp))
-		 (vm-set-virtual-messages-of (car mp) nil))
-	       (setq mp (cdr mp)))
-	     (while bp
-	       (set-buffer (car bp))
+	       (when (vm-virtual-messages-of m)
+		 (dolist (v-m (vm-virtual-messages-of m))
+		   (vm-set-message-id-number-of v-m "Q"))
+		 (vm-unthread-message m)
+		 (vm-set-virtual-messages-of m nil)))
+	     (dolist (virtual-buf vm-virtual-buffers)
+	       (set-buffer virtual-buf)
 	       (setq vm-real-buffers (delq b vm-real-buffers))
 	       ;; set the message pointer to a new value if it is
 	       ;; now invalid.
-	       (cond
-		((and vm-message-pointer
-		      (equal "Q" (vm-message-id-number-of
-				  (car vm-message-pointer))))
+	       (when (and vm-message-pointer
+			  (equal "Q" (vm-message-id-number-of
+				      (car vm-message-pointer))))
 		 (vm-garbage-collect-message)
 		 (setq vmp vm-message-pointer)
 		 (while (and vm-message-pointer
@@ -806,15 +816,13 @@ interactively."
 			 (cdr vm-message-pointer)))
 		 ;; if there were no good messages ahead, try going
 		 ;; backward.
-		 (if (null vm-message-pointer)
-		     (progn
-		       (setq vm-message-pointer vmp)
-		       (while (and vm-message-pointer
-				   (equal "Q" (vm-message-id-number-of
-					       (car vm-message-pointer))))
-			 (setq vm-message-pointer
-			       (vm-reverse-link-of
-				(car vm-message-pointer))))))))
+		 (unless vm-message-pointer
+		   (setq vm-message-pointer vmp)
+		   (while (and vm-message-pointer
+			       (equal "Q" (vm-message-id-number-of
+					   (car vm-message-pointer))))
+		     (setq vm-message-pointer
+			   (vm-reverse-link-of (car vm-message-pointer))))))
 	       ;; expunge the virtual messages associated with
 	       ;; real messages that are going away.
 	       (setq vm-message-list
@@ -833,8 +841,7 @@ interactively."
 	       (vm-set-summary-redo-start-point t)
 	       (if vm-message-pointer
 		   (vm-preview-current-message)
-		 (vm-update-summary-and-mode-line))
-	       (setq bp (cdr bp))))))))
+		 (vm-update-summary-and-mode-line))))))))
 
 ;;;###autoload
 (defun vm-virtual-save-folder (prefix)
@@ -842,11 +849,9 @@ interactively."
     ;; don't trust blindly, user might have killed some of
     ;; these buffers.
     (setq vm-real-buffers (vm-delete 'buffer-name vm-real-buffers t))
-    (let ((bp vm-real-buffers))
-      (while bp
-	(set-buffer (car bp))
-	(vm-save-folder prefix)
-	(setq bp (cdr bp)))))
+    (dolist (real-buf vm-real-buffers)
+	(set-buffer real-buf)
+	(vm-save-folder prefix)))
   (vm-set-buffer-modified-p nil)
   (vm-clear-modification-flag-undos)
   (vm-update-summary-and-mode-line))
@@ -857,21 +862,19 @@ interactively."
     ;; don't trust blindly, user might have killed some of
     ;; these buffers.
     (setq vm-real-buffers (vm-delete 'buffer-name vm-real-buffers t))
-    (let ((bp vm-real-buffers))
-      (while bp
-	(set-buffer (car bp))
-	(condition-case error-data
-	    (vm-get-new-mail)
-	  ;; handlers
-	  (folder-read-only
-	   (message "Folder is read only: %s"
-		    (or buffer-file-name (buffer-name)))
-	   (sit-for 1))
-	  (unrecognized-folder-type
-	   (message "Folder type is unrecognized: %s"
-		    (or buffer-file-name (buffer-name)))
-	   (sit-for 1)))
-	(setq bp (cdr bp)))))
+    (dolist (real-buf vm-real-buffers)
+      (set-buffer real-buf)
+      (condition-case error-data
+	  (vm-get-new-mail)
+	;; handlers
+	(folder-read-only
+	 (message "Folder is read only: %s"
+		  (or buffer-file-name (buffer-name)))
+	 (sit-for 1))
+	(unrecognized-folder-type
+	 (message "Folder type is unrecognized: %s"
+		  (or buffer-file-name (buffer-name)))
+	 (sit-for 1)))))
   (vm-emit-totals-blurb))
 
 ;;;###autoload

@@ -61,9 +61,13 @@ VM 8.2.0b (2011-02-28)
 
   IMPROVEMENTS
 
-   * When a virtual folder is quit, the message pointer in the virtual
-     folder is transferred to the original folder.  This facility can
-     be used to search for particular messages by using virtual folders.
+   * When a predefined virtual folder is quit, all the component
+     folders that it depends on will also be quit automatically.
+
+   * When an interactive virtual folder is quit, the message pointer
+     in the virtual folder is transferred to the original folder.
+     This facility can be used to search for particular messages by
+     using virtual folders.
 
    * Restored the [Emacs] and [Undo] menu buttons that were removed in
      version 8.0.8.  For environments that do not support such buttons,

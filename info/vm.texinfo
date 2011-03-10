@@ -4240,7 +4240,7 @@ can quit the virtual folder and return to the original folder.  We
 call such virtual folders ``interactive'' virtual folders.  Some other
 mail clients use the term ``search folders'' for the same concept.
 
-@cindex composite virtual folders
+@cindex predefined virtual folders
 @vindex vm-virtual-folder-alist
 @kindex V V
 @findex vm-visit-virtual-folder
@@ -4249,17 +4249,17 @@ variable @code{vm-virtual-folder-alist}.  You can visit such virtual
 folders by typing @kbd{V V} (@code{vm-visit-virtual-folder}).  Any
 actions carried out on the virtual folder messages will be reflected
 back to the underlying real folders.  We call such virtual folders
-``composite'' virtual folders.
+``predefined virtual folders.
 
 @menu
 * Interactive VFs::	Virtual folders created interactively
-* Composite VFs::	Virtual folders defined in advance
+* Predefined VFs::	Virtual folders defined in advance
 * Virtual Selectors::	Selectors used for creating virtual folders
 * Working with VFs::	What you can do in a virtual folder
 * vm-avirtual::		Automatic operations using virtual selectors
 @end menu
 
-@node Interactive VFs, Composite VFs, Virtual Folders, Virtual Folders
+@node Interactive VFs, Predefined VFs, Virtual Folders, Virtual Folders
 @section Interactive Virtual Folders
 
 @findex vm-create-virtual-folder
@@ -4274,7 +4274,7 @@ a folder containing only those messages that contain the string
 @findex vm-apply-virtual-folder
 @kindex V X
 The command @code{vm-apply-virtual-folder} (bound to @kbd{V X}) tries
-the selectors of a composite virtual folder against the messages of
+the selectors of a predefined virtual folder against the messages of
 the current folder and creates a virtual folder containing the
 matching messages.
 
@@ -4288,24 +4288,24 @@ containing all the messages in the current folder with the same
 subject or author as the current message.
 
 @cindex searching
-When you quit a virtual folder, the currently selected message in the
-virtual folder becomes the current message in the underlying folder.
-So, you can use the virtual folder facility to search for particular
-messages.  For example, if you knew that one of the messages with the
-subject @samp{greeting} had a hotel offer and you wanted to find it,
-you can first create a virtual folder of messages with that subject,
-browse through them to find the message that had the hotel offer, and
-then quit the virtual folder.  VM will return you the original folder
-with the cursor positioned on the @samp{greeting} message with the
-hotel offer.
+When you quit an interactive virtual folder, the currently selected
+message in the virtual folder becomes the current message in the
+underlying folder.  So, you can use the virtual folder facility to
+search for particular messages.  For example, if you knew that one of
+the messages with the subject @samp{greeting} had a hotel offer and
+you wanted to find it, you can first create a virtual folder of
+messages with that subject, browse through them to find the message
+that had the hotel offer, and then quit the virtual folder.  VM will
+return you to the original folder with the cursor positioned on the
+@samp{greeting} message with the hotel offer.
 
-@node Composite VFs, Working with VFs, Interactive VFs, Virtual Folders
-@section Composite Virtual Folders
+@node Predefined VFs, Working with VFs, Interactive VFs, Virtual Folders
+@section Predefined Virtual Folders
 
 @vindex vm-virtual-folder-alist
 @findex vm-visit-virtual-folder
 @kindex V V
-A composite virtual folder is defined by its name, the folders that it
+A predefined virtual folder is defined by its name, the folders that it
 contains and its selectors.  The variable
 @code{vm-virtual-folder-alist} is a list of the definitions of all
 such virtual folders.  You can  visit a virtual folder listed in
@@ -4346,8 +4346,8 @@ for strings in messages.  It is better than the
 @code{vm-isearch-forward/backward} functions because it avoids searching
 inside encoded attachments, hence faster.
 
-Here is an example that you may find useful as a template to
-create virtual folder definitions.
+Here is an example that you may find useful as a template for
+creating virtual folder definitions.
 
 @example
 (setq vm-virtual-folder-alist
@@ -4366,6 +4366,13 @@ create virtual folder definitions.
    )
 )
 @end example
+
+When you visit a predefined virtual folder, all the underlying folders
+that it depends on will be visited automatically.  Likewise, when you
+quit the virtual folder, all the underlying folders that were
+purposely visited as part of the virtual folder will be closed
+automatically.  But any other underlying folders that you might have
+previously visited for independent reasons will remain open.
 
 @subsection Virtual Selectors
 @anchor{Virtual Selectors}
@@ -4584,7 +4591,7 @@ matches the message if the current-buffer is in mail-mode and one of
 its argument selectors matches the message.
 @end table
 
-@node Working with VFs, vm-avirtual, Composite VFs,Virtual Folders
+@node Working with VFs, vm-avirtual, Predefined VFs,Virtual Folders
 @section Working with Virtual Folders
 
 @findex vm-get-new-mail
@@ -5773,9 +5780,6 @@ Ability to compose rich text email messages (in 'text/enriched' and
 @item
 Incremental search in virtual folders.
 @item
-Composite virtual folders that close all their component folders
-automatically.
-@item
 Thread-level operations such as killing an entire thread.
 @item
 Headers-only downloading of IMAP folders.
@@ -5981,6 +5985,13 @@ constructing it.
 @inindex vm-virtual-buffers
 @code{vm-virtual-buffers}.  A list of all the virtual folder buffers
 that the current buffer is involved in.
+@item
+@inindex vm-component-buffers
+@code{vm-component-buffers}.  An a-list containing all the folder
+buffers (real or virtual) that make up the components of the current
+virtual folder, and a flag indicating whether those folders were
+visited as part of visiting the virtual folder.  When the virtual
+folder is closed, all the folders purposely visited will also be closed..
 @item
 @inindex vm-summary-buffer
 @code{vm-summary-buffer}.  The Summary buffer of the folder.  (If the

@@ -540,13 +540,14 @@ t."
   :group 'vm-pop
   :type 'boolean)
 
-(defcustom vm-recognize-pop-maildrops "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?[^:]+:[^:]+:[^:]+:[^:]+:.+"
+(defcustom vm-recognize-pop-maildrops "^\\(pop\\|pop-ssl\\|pop-ssh\\):[^:]+:[^:]+:[^:]+:[^:]+:.+"
   "*Value if non-nil should be a regular expression that matches
 spool names found in `vm-spool-files' that should be considered POP
 maildrops.  A nil value tells VM that all the spool names are to
 be considered files except those matched by `vm-recognize-imap-maildrops'."
   :group 'vm-pop
-  :type 'regexp)
+  :type '(choice (const :tag "Don't Recognize" nil)
+		 regexp))
 
 (defcustom vm-pop-folder-alist nil
   "*Alist of POP maildrop specifications and names that refer to them.
@@ -5876,6 +5877,13 @@ in VM." )
 (make-variable-buffer-local 'vm-virtual-buffers)
 (defvar vm-real-buffers nil)
 (make-variable-buffer-local 'vm-real-buffers)
+(defvar vm-component-buffers nil
+  "An a-list of folder buffers that make up the components of the current
+virtual folder, and a flag indicating whether they are being visited
+as a part of visiting this virtual folder.  All such folders will be
+closed when the virtual folder is closed.")
+(make-variable-buffer-local 'vm-component-buffers)
+
 (defvar vm-message-pointer nil
   "A pointer into the `vm-message-list' indicating the position of the
 current message.")
