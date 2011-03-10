@@ -1133,7 +1133,7 @@ headers."
   "Used for marking shrunken headers."
   :group 'vm-rfaddons)
 
-(defvar vm-shrunken-headers-keymap
+(defconst vm-shrunken-headers-keymap
   (let ((map (if vm-xemacs-p (make-keymap) (copy-keymap vm-mode-map))))
     (define-key map [(return)]   'vm-shrunken-headers-toggle-this)
     (if vm-xemacs-p

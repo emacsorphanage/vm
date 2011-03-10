@@ -230,7 +230,9 @@ current-buffer in `vm-user-interaction-buffer'."
 
 (defvar vm-buffer-type-debug nil)	; for debugging asynchronous
 					; buffer change errors
-(defvar vm-buffer-type-trail nil)
+(defvar vm-buffer-type-trail nil
+  "List of VM buffer types entered and exited, used for debugging
+purposes.") 
 
 (defsubst vm-buffer-type:enter (type)
   "Note that vm is temporarily entering a buffer of TYPE."

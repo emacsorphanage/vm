@@ -34,6 +34,13 @@
   (require 'vm-motion)
   )
 
+;; vm-undo-record-list is a buffer-local-variable containing
+;; undo-records.
+;; An undo-record has:
+;; - action
+;; - message
+;; - args
+
 (defun vm-set-buffer-modified-p (flag &optional buffer)
   "Sets the buffer-modified-p of the current folder to FLAG.  Optional
 argument BUFFER can ask for it to be done for some other folder."
@@ -53,10 +60,9 @@ argument BUFFER can ask for it to be done for some other folder."
     (mapatoms (function
 	       (lambda (b)
 		 (setq b (get-buffer (symbol-name b)))
-		 (if b
-		     (progn
-		       (set-buffer b)
-		       (vm-undo-boundary)))))
+		 (when b
+		   (set-buffer b)
+		   (vm-undo-boundary))))
 	      vm-buffers-needing-undo-boundaries)
     (fillarray vm-buffers-needing-undo-boundaries 0)))
 
@@ -185,10 +191,10 @@ the undos themselves become undoable."
   (vm-error-if-folder-read-only)
   (vm-display nil nil '(vm-undo) '(vm-undo))
   (let ((modified (buffer-modified-p)))
-    (if (not (eq last-command 'vm-undo))
-	(setq vm-undo-record-pointer vm-undo-record-list))
-    (if (not vm-undo-record-pointer)
-	(error "No further VM undo information available"))
+    (unless (eq last-command 'vm-undo)
+      (setq vm-undo-record-pointer vm-undo-record-list))
+    (unless vm-undo-record-pointer
+      (error "No further VM undo information available"))
     ;; skip current record boundary
     (setq vm-undo-record-pointer (cdr vm-undo-record-pointer))
     (while (car vm-undo-record-pointer)
@@ -196,8 +202,8 @@ the undos themselves become undoable."
       (vm-undo-describe (car vm-undo-record-pointer))
       (eval (car vm-undo-record-pointer))
       (setq vm-undo-record-pointer (cdr vm-undo-record-pointer)))
-    (and modified (not (buffer-modified-p))
-	 (delete-auto-save-file-if-necessary))
+    (when (and modified (not (buffer-modified-p)))
+      (delete-auto-save-file-if-necessary))
     (vm-update-summary-and-mode-line)))
 
 ;;;###autoload

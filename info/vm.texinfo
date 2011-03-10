@@ -5921,11 +5921,13 @@ vm-message-pointer is the current message.
 previous value of vm-message-pointer is remembered in this variable.
 @item
 @inindex vm-summary-pointer
-@code{vm-summary-pointer}.
+@code{vm-summary-pointer}.  The message struct of the message which
+has the summary pointer in the Summary buffer.
 @item
 @inindex vm-fetched-messages
 @code{vm-fetched-messages}.  List of headers-only messages whose
 bodies were fetched for viewing or other operations.
+@item
 @inindex vm-fetched-message-count
 @code{vm-fetched-message-count}.  The number of messages in
 @inindex vm-fetched-messages
@@ -5984,6 +5986,18 @@ if a message is being redistributed.
 @code{vm-spooled-mail-waiting}.  VM periodically checks if there is new
 mail in the spool files of the current folder and set this flag to t if
 there is new mail.
+@item
+@inindex vm-undo-record-list
+@code{vm-undo-record-list}.  A list of undo records describing the
+actions to be performed if an undo operation is invoked.  Each undo
+record has an action, the message, if any, to which the action
+applies, and any arguments needed for the action.
+@item
+@inindex vm-undo-record-pointer
+@code{vm-undo-record-pointer}.  A pointer into the
+@code{vm-undo-record-list} indicating the current position of the
+undoing cycle.
+
 @end itemize
 
 @node Message Internals, Summary Internals, Folder Internals, Internals

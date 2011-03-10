@@ -2379,7 +2379,7 @@ Under FSF Emacs, `vm-page-continuation-glyph' must be a string."
   :group 'vm-presentation
   :type 'boolean)
 
-(defvar vm-default-window-configuration
+(defconst vm-default-window-configuration
   ;; startup = folder on bottom, summary on top
   ;; quitting = full screen folder
   ;; reading-message = folder on bottom, summary on top
@@ -5913,11 +5913,14 @@ folder.  (Not in use.)")
 (make-variable-buffer-local 'vm-summary-pointer)
 (defvar vm-system-state nil)
 (make-variable-buffer-local 'vm-system-state)
-(defvar vm-undo-record-list nil)
+(defvar vm-undo-record-list nil
+  "The list of undo records for the folder.")
 (make-variable-buffer-local 'vm-undo-record-list)
-(defvar vm-saved-undo-record-list nil)
+(defvar vm-saved-undo-record-list nil
+  "A saved version of the undo record list used in `vm-toggle-virtual-mirror'.")
 (make-variable-buffer-local 'vm-saved-undo-record-list)
-(defvar vm-undo-record-pointer nil)
+(defvar vm-undo-record-pointer nil
+  "A pointer into the `vm-undo-undo-record-list'.")
 (make-variable-buffer-local 'vm-undo-record-pointer)
 (defvar vm-last-save-folder nil)
 (make-variable-buffer-local 'vm-last-save-folder)
@@ -5941,15 +5944,27 @@ folder.  (Not in use.)")
 (make-variable-buffer-local 'vm-flushed-modification-counter)
 (defvar vm-tempfile-counter 0)
 (defvar vm-messages-needing-summary-update nil)
-(defvar vm-buffers-needing-display-update nil)
-(defvar vm-buffers-needing-undo-boundaries nil)
-(defvar vm-numbering-redo-start-point nil)
+(defvar vm-buffers-needing-display-update nil
+  "Obarray containing the names of VM buffers that need display
+update.")
+(defvar vm-buffers-needing-undo-boundaries nil
+  "Obarray containing the names of VM buffers that need undo
+boundaries.") 
+(defvar vm-numbering-redo-start-point nil
+  "A pointer into `vm-message-list' indicating the position from which
+messages may need to be renumbered.")
 (make-variable-buffer-local 'vm-numbering-redo-start-point)
-(defvar vm-numbering-redo-end-point nil)
+(defvar vm-numbering-redo-end-point nil
+  "A pointer into `vm-message-list' indicating the stopping point
+for any needed message renumbering.")
 (make-variable-buffer-local 'vm-numbering-redo-end-point)
-(defvar vm-summary-redo-start-point nil)
+(defvar vm-summary-redo-start-point nil
+  "A pointer into `vm-message-list' indicating the position from which
+summary lines may need to be redisplayed.")
 (make-variable-buffer-local 'vm-summary-redo-start-point)
-(defvar vm-need-summary-pointer-update nil)
+(defvar vm-need-summary-pointer-update nil
+  "A boolean indicating whether the summary pointer for the current
+folder needs to be updated.")
 (make-variable-buffer-local 'vm-need-summary-pointer-update)
 (defvar vm-thread-obarray 'bonk)
 (make-variable-buffer-local 'vm-thread-obarray)
@@ -6389,7 +6404,7 @@ append a space to words that complete unambiguously.")
     "VM comes with ABSOLUTELY NO WARRANTY; type \\[vm-show-no-warranty] for full details"))
 (defconst vm-startup-message-displayed nil)
 ;; for the mode line
-(defvar vm-mode-line-format-robf
+(defconst vm-mode-line-format-robf
   '("- " 
     (vm-compositions-exist ("" vm-ml-composition-buffer-count " / "))
     (vm-drafts-exist ("" vm-ml-draft-count " / "))
@@ -6413,7 +6428,7 @@ append a space to words that complete unambiguously.")
     " (VM " vm-version ")"
     global-mode-string
     "%-"))
-(defvar vm-mode-line-format-classic
+(defconst vm-mode-line-format-classic
   '("" "  %&%& "
     ("VM " vm-version ": "
      (vm-folder-read-only "read-only ")
@@ -6432,10 +6447,11 @@ append a space to words that complete unambiguously.")
       (vm-ml-labels ("; " vm-ml-labels)) " %]    ")
      ("  %[%]   "))
     "%p" "   " global-mode-string))
-(defvar vm-mode-line-format vm-mode-line-format-classic)
+
+(defconst vm-mode-line-format vm-mode-line-format-classic)
 
 
-(defvar vm-ml-message-attributes-alist
+(defconst vm-ml-message-attributes-alist
   '((vm-ml-message-new
      "new"
      (vm-ml-message-unread
@@ -6576,8 +6592,8 @@ append a space to words that complete unambiguously.")
 (defvar vm-fsfemacs-toolbar-installed-p nil)
 ;; this defvar matches the XEmacs one so it doesn't matter if VM
 ;; is loaded before highlight-headers.el
-(defvar highlight-headers-regexp "Subject[ \t]*:")
-(defvar vm-url-regexp
+(defconst highlight-headers-regexp "Subject[ \t]*:")
+(defconst vm-url-regexp
   "<URL:\\([^>\n]+\\)>\\|\\(\\(file\\|sftp\\|ftp\\|gopher\\|http\\|https\\|news\\|wais\\|www\\)://[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)\\|\\(mailto:[^ \t\n\f\r\"<>|()]*[^] \t\n\f\r\"<>|.!?(){}]\\)\\|\\(file:/[^ \t\n\f\r\"<>|()]*[^ \t\n\f\r\"<>|.!?(){}]\\)"
   "Regular expression that matches an absolute URL.
 The URL itself must be matched by a \\(..\\) grouping.
@@ -6632,7 +6648,7 @@ that has a match.")
 (defvar vm-xface-cache (make-vector 29 0))
 (defvar vm-mf-default-action nil)
 (defvar vm-mime-compiled-format-alist nil)
-(defvar vm-mime-default-action-string-alist
+(defconst vm-mime-default-action-string-alist
   '(("text" . "display text")
     ("multipart/alternative" . "display selected part")
     ("multipart/digest" . "read digest")
@@ -6649,7 +6665,7 @@ that has a match.")
     ("application/msword" . "display Word document")
     ("application" . "display attachment")))
 
-(defvar vm-mime-type-description-alist
+(defconst vm-mime-type-description-alist
   '(("multipart/digest" . "digest")
     ("multipart/alternative" . "multipart alternative")
     ("multipart/parallel" . "multipart parallel")
@@ -6770,7 +6786,7 @@ actions to be taken to destroy them.")
 	 ))
   "Alist that maps MIME character sets to MULE coding systems.")
 	  
-(defvar vm-mime-mule-charset-to-charset-alist
+(defconst vm-mime-mule-charset-to-charset-alist
   '(
     (latin-iso8859-1	"iso-8859-1")
     (latin-iso8859-2	"iso-8859-2")
@@ -6789,7 +6805,7 @@ actions to be taken to destroy them.")
    )
   "Alist that maps MULE character sets to matching MIME character sets.")
 
-(defvar vm-mime-mule-coding-to-charset-alist
+(defconst vm-mime-mule-coding-to-charset-alist
   (cond (vm-fsfemacs-mule-p
 	 (let ((coding-systems (coding-system-list))
 	       (alist nil)

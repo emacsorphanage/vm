@@ -2340,6 +2340,15 @@ Throws vm-imap-protocol-error for failure."
 	(vm-buffer-type:exit)
 	;;-------------------------------
 	)
+      ;; Clear the old obarrays to make sure no space leaks
+      (let ((uid-obarray (vm-folder-imap-uid-obarray))
+	    (flags-obarray (vm-folder-imap-flags-obarray)))
+	(mapc (function 
+	       (lambda (uid)
+		 (unintern uid uid-obarray)
+		 (unintern uid flags-obarray)))
+	      (vm-folder-imap-uid-list)))
+      ;; Assign the new data
       (vm-set-folder-imap-uid-list list)
       (vm-set-folder-imap-uid-obarray there)
       (vm-set-folder-imap-flags-obarray flags))))

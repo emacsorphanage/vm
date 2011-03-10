@@ -4895,7 +4895,7 @@ confirmed before creating a new directory."
    (vm-fsfemacs-p
     (vm-mime-fsfemacs-set-image-stamp-for-type e type))))
 
-(defvar vm-mime-type-images
+(defconst vm-mime-type-images
   '(("text" "text.xpm")
     ("image" "image.xpm")
     ("audio" "audio.xpm")

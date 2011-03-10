@@ -87,12 +87,13 @@
 (declare-function vm-su-from "vm-summary" (message))
 
 
+;; This will be extended in code
 (defvar vm-menu-folders-menu
   '("Manipulate Folders"
     ["Make Folders Menu" vm-menu-hm-make-folder-menu vm-folder-directory])
   "VM folder menu list.")
 
-(defvar vm-menu-folder-menu
+(defconst vm-menu-folder-menu
   `("Folder"
     ,(if vm-fsfemacs-p
 	["Manipulate Folders" ignore (ignore)]
@@ -130,7 +131,7 @@
     "-------"
     ))
 
-(defvar vm-menu-dispose-menu
+(defconst vm-menu-dispose-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Dispose"
 			 "Dispose"
@@ -162,7 +163,7 @@
       ["Decode MIME" vm-decode-mime-message (vm-menu-can-decode-mime-p)]
       )))
 
-(defvar vm-menu-motion-menu
+(defconst vm-menu-motion-menu
   '("Motion"
     ["Page Up" vm-scroll-backward vm-message-list]
     ["Page Down" vm-scroll-forward vm-message-list]
@@ -189,7 +190,7 @@
     ["Go to Parent Message" vm-goto-parent-message t]
     ))
 
-(defvar vm-menu-virtual-menu
+(defconst vm-menu-virtual-menu
   '("Virtual"
     ["Visit Virtual Folder" vm-visit-virtual-folder t]
     ["Visit Virtual Folder Same Author" vm-visit-virtual-folder-same-author t]
@@ -203,7 +204,7 @@
     "-------"
     ))
 
-(defvar vm-menu-send-menu
+(defconst vm-menu-send-menu
   '("Send"
     ["Compose" vm-mail t]
     ["Continue Composing" vm-continue-composing-message vm-message-list]
@@ -219,7 +220,7 @@
     ["Send MIME Digest" vm-send-mime-digest vm-message-list]
     ))
 
-(defvar vm-menu-mark-menu
+(defconst vm-menu-mark-menu
   '("Mark"
     ["Next Command Uses Marks..." vm-next-command-uses-marks
      :active vm-message-list
@@ -243,14 +244,14 @@
     ["Unmark Thread Subtree" vm-unmark-thread-subtree vm-message-list]
     ))
 
-(defvar vm-menu-label-menu
+(defconst vm-menu-label-menu
   '("Label"
     ["Add Label" vm-add-message-labels vm-message-list]
     ["Add Existing Label" vm-add-existing-message-labels vm-message-list]
     ["Remove Label" vm-delete-message-labels vm-message-list]
     ))
 
-(defvar vm-menu-sort-menu
+(defconst vm-menu-sort-menu
   '("Sort"
     "By ascending"
     "---"
@@ -281,7 +282,7 @@
     ["Collapse All Threads" vm-collapse-all-threads t]
     ))
 
-(defvar vm-menu-help-menu
+(defconst vm-menu-help-menu
   '("Help"
     ["Switch to Emacs Menubar" vm-menu-toggle-menubar t]
     "---"
@@ -294,32 +295,32 @@
     ["Quit Without Saving" vm-quit-no-change t]
     ))
 
-(defvar vm-menu-xemacs-undo-button
+(defconst vm-menu-xemacs-undo-button
   ["[Undo]" vm-undo (vm-menu-can-undo-p)]
   )
 
-(defvar vm-menu-fsfemacs-undo-menu
+(defconst vm-menu-undo-menu
   '("Undo"
     ["Undo" vm-undo (vm-menu-can-undo-p)]
     )
   "Undo menu for FSF Emacs builds that do not allow menubar buttons.")
 
-(defvar vm-menu-emacs-button
+(defconst vm-menu-emacs-button
   ["[Emacs]" vm-menu-toggle-menubar t]
   )
 
-(defvar vm-menu-fsfemacs-emacs-menu
+(defconst vm-menu-emacs-menu
   '("Emacs"
     ["Switch to Emacs Menubar" vm-menu-toggle-menubar t]
     )
   "Menu with a \"Swich to Emacs\" action meant for FSF Emacs builds that
 do not allow menubar buttons.")
 
-(defvar vm-menu-vm-button
+(defconst vm-menu-vm-button
   ["[VM]" vm-menu-toggle-menubar t]
   )
 
-(defvar vm-menu-mail-menu
+(defconst vm-menu-mail-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Mail Commands"
 			 "Mail Commands"
@@ -435,7 +436,7 @@ do not allow menubar buttons.")
        vm-send-using-mime]
       )))
 
-(defvar vm-menu-mime-dispose-menu
+(defconst vm-menu-mime-dispose-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Take Action on MIME body ..."
 			 "Take Action on MIME body ..."
@@ -492,7 +493,7 @@ do not allow menubar buttons.")
        vm-mime-attach-object-from-message t]
       ["Delete" vm-delete-mime-object t])))
 
-(defvar vm-menu-url-browser-menu
+(defconst vm-menu-url-browser-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Send URL to ..."
 			 "Send URL to ..."
@@ -550,7 +551,7 @@ do not allow menubar buttons.")
 	(point) 'vm-mouse-send-url-to-opera)
        vm-opera-program])))
 
-(defvar vm-menu-mailto-url-browser-menu
+(defconst vm-menu-mailto-url-browser-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Send Mail using ..."
 			 "Send Mail using ..."
@@ -560,7 +561,7 @@ do not allow menubar buttons.")
     `(,@title
       ["VM" (vm-mouse-send-url-at-position (point) 'ignore) t])))
 
-(defvar vm-menu-subject-menu
+(defconst vm-menu-subject-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Take Action on Subject..."
 			 "Take Action on Subject..."
@@ -581,7 +582,7 @@ do not allow menubar buttons.")
        vm-message-list]
       )))
 
-(defvar vm-menu-author-menu
+(defconst vm-menu-author-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Take Action on Author..."
 			 "Take Action on Author..."
@@ -597,7 +598,7 @@ do not allow menubar buttons.")
        vm-message-list]
       )))
 
-(defvar vm-menu-attachment-menu
+(defconst vm-menu-attachment-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Fiddle With Attachment"
 			 "Fiddle With Attachment"
@@ -687,7 +688,7 @@ do not allow menubar buttons.")
        :style button]
       )))
 
-(defvar vm-menu-image-menu
+(defconst vm-menu-image-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Redisplay Image"
 			 "Redisplay Image"
@@ -729,7 +730,7 @@ do not allow menubar buttons.")
 
 (defvar vm-menu-vm-menubar nil)
 
-(defvar vm-menu-vm-menu
+(defconst vm-menu-vm-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "VM"
 			 "VM"
@@ -888,9 +889,9 @@ set to the command name so that window configuration will be done."
 	(easy-menu-define vm-menu-fsfemacs-dispose-popup-menu (list dummy) nil
 			     vm-menu-dispose-menu)
 	(easy-menu-define vm-menu-fsfemacs-undo-menu (list dummy) nil
-	  		     vm-menu-fsfemacs-undo-menu)
+	  		     vm-menu-undo-menu)
 	(easy-menu-define vm-menu-fsfemacs-emacs-menu (list dummy) nil
-			     vm-menu-fsfemacs-emacs-menu)
+			     vm-menu-emacs-menu)
 	(easy-menu-define vm-menu-fsfemacs-virtual-menu (list dummy) nil
 			     vm-menu-virtual-menu)
 	(easy-menu-define vm-menu-fsfemacs-sort-menu (list dummy) nil
@@ -976,12 +977,12 @@ set to the command name so that window configuration will be done."
 		  (if (and (vm-menubar-buttons-possible-p) 
 			   vm-use-menubar-buttons)
 		      (cons "[Emacs]" 'vm-menu-toggle-menubar)
-		    (cons "Emacs" vm-menu-fsfemacs-emacs-menu)))
+		    (cons "Emacs" vm-menu-emacs-menu)))
 		 (undo
 		  (if (and (vm-menubar-buttons-possible-p)
 			   vm-use-menubar-buttons)
 		      (cons "[Undo]" 'vm-undo)
-		    (cons "Undo" vm-menu-fsfemacs-undo-menu)))))
+		    (cons "Undo" vm-menu-undo-menu)))))
 	      (cons nil)
 	      (vec (vector 'rootmenu 'vm nil))
 	      ;; menus appear in the opposite order that we
@@ -1045,7 +1046,7 @@ set to the command name so that window configuration will be done."
   (interactive "e")
   ;; We should not need to do anything here for XEmacs.  The
   ;; default binding of mouse-3 is popup-mode-menu which does
-  ;; what we want for the normal case.  For special contexts,
+  ;; what we want for the normal case.  For special context,s
   ;; like when the mouse is over an URL, XEmacs has local keymap
   ;; support for extents.  Any context sensitive area should be
   ;; contained in an extent with a keymap that has mouse-3 bound
@@ -1407,7 +1408,7 @@ separate dedicated menu bar, depending on the value of
 (defvar vm-menu-hm-no-hidden-dirs t
   "*Hidden directories are suppressed in the folder menus, if non nil.")
 
-(defvar vm-menu-hm-hidden-file-list '("^\\..*" ".*\\.~[0-9]+~"))
+(defconst vm-menu-hm-hidden-file-list '("^\\..*" ".*\\.~[0-9]+~"))
 
 (defun vm-menu-hm-delete-folder (folder)
   "Query deletes a folder."
@@ -1544,7 +1545,7 @@ separate dedicated menu bar, depending on the value of
 
 ;;; Muenkel tree-menu code
 
-(defvar vm-menu-hm-tree-ls-flags "-aFLR"
+(defconst vm-menu-hm-tree-ls-flags "-aFLR"
   "*A String with the flags used in the function
 vm-menu-hm-tree-ls-in-temp-buffer for the ls command.
 Be careful if you want to change this variable.
@@ -1567,7 +1568,7 @@ The original flags are -aFLR.")
   (goto-char (point-min)))
 
 
-(defvar vm-menu-hm-tree-temp-buffername "*tree*"
+(defconst vm-menu-hm-tree-temp-buffername "*tree*"
   "Name of the temp buffers in tree.")
 
 

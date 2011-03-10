@@ -458,7 +458,8 @@ well-behaved."
 (defun vm-delete (predicate list &optional reverse)
   "Delete all elements satisfying PREDICATE from LIST and return the
 resulting list.  If optional argument REVERSE is t, then delete all
-elements that do not satisfy PREDICATE."
+elements that do not satisfy PREDICATE.  The original LIST is
+permanently modified." 
   (let ((p list) 
 	(reverse (if reverse 'not 'identity))
 	prev)
@@ -708,6 +709,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (signal 'folder-empty nil))))
 
 (defun vm-copy (object)
+  "Make a copy of OBJECT, which could be a list, vector, string or marker."
   (cond ((consp object)
 	 (let (return-value cons)
 	   (setq return-value (cons (vm-copy (car object)) nil)
