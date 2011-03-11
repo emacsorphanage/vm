@@ -474,7 +474,7 @@ do not allow menubar buttons.")
       "---"
       ["Save to File" vm-mime-reader-map-save-file t]
       ["Save to Folder" vm-mime-reader-map-save-message
-       (let ((layout (vm-get-button-layout)))
+       (let ((layout (vm-mime-get-button-layout)))
 	 (if (null layout)
 	     nil
 	   (or (vm-mime-types-match "message/rfc822"
