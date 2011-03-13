@@ -737,11 +737,9 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 
 ;;;###autoload
 (defun vm-virtual-quit (&optional no-expunge no-change)
-  "Quit a virtual folder.  Clear away links between real and virtual
-folders when a `vm-quit' is performed in either type folder.
-
-This is an internal function.  Use `vm-quit' to quit a virtual folder
-interactively." 
+  "Clear away links between real and virtual folders when a
+`vm-quit' is performed in the current folder (which could be either
+real or virtual)."
   (save-excursion
     (cond ((eq major-mode 'vm-virtual-mode)
 	   ;; don't trust blindly, user might have killed some of
@@ -754,13 +752,14 @@ interactively."
 		 (vm-delete 'buffer-name vm-real-buffers t))
 	   (let ((b (current-buffer))
 		 (mirrored-msg nil)
-		 (real-m nil)
+		 (real-msg nil)
 		 ;; lock out interrupts here
 		 (inhibit-quit t))
 	     ;; Move the message-pointer of the original buffer to the
 	     ;; current message in the virtual folder
-	     (setq mirrored-msg (vm-mirrored-message-of 
-			       (car vm-message-pointer)))
+	     (setq mirrored-msg (and vm-message-pointer
+				     (vm-mirrored-message-of 
+				      (car vm-message-pointer))))
 	     (when (and mirrored-msg (vm-buffer-of mirrored-msg))
 	       (with-current-buffer (vm-buffer-of mirrored-msg)
 		 (vm-record-and-change-message-pointer
@@ -769,9 +768,9 @@ interactively."
 	       (with-current-buffer real-buf
 		 (setq vm-virtual-buffers (delq b vm-virtual-buffers))))
 	     (dolist (m vm-message-list)
-	       (setq real-m (vm-real-message-of m))
+	       (setq real-msg (vm-real-message-of m))
 	       (vm-set-virtual-messages-of
-		real-m (delq m (vm-virtual-messages-of real-m))))
+		real-msg (delq m (vm-virtual-messages-of real-msg))))
 	     (condition-case error-data
 		 (dolist (pair vm-component-buffers)
 		   (when (cdr pair)

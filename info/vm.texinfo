@@ -150,6 +150,9 @@ to switch environments.
 @cindex address book
 @cindex MIME
 @cindex encryption
+@cindex BBDB
+@cindex Org mode
+@cindex GPG
 VM was developed by Kyle Jones starting in 1989.  It was a leader
 in mail-reading functionality by introducing features like thread
 management, virtual folders, automatic archiving of messages and a
@@ -993,10 +996,11 @@ form
 @example
 machine HOST login USER password PASSWORD port PORT
 @end example
-where HOST, USER, PASSWORD and PORT are as detailed above.  Ensure that
-the variable @code{auth-sources} is customized to refer to your
-authinfo file.  Then VM will read passwords from the
-file and you don't need to type them in when accessing mail servers.
+
+@noindent where HOST, USER, PASSWORD and PORT are as detailed above.
+Ensure that the variable @code{auth-sources} is customized to refer to
+your authinfo file.  Then VM will read passwords from the file and you
+don't need to type them in when accessing mail servers.
 
 If you have multiple login accounts on the same HOST then VM will only
 use the first login listed in the authinfo file.  To allow for multiple
@@ -4379,6 +4383,7 @@ previously visited for independent reasons will remain open.
 
 @unnumberedsubsubsec Generic selectors
 
+@cindex BBDB
 @table @code
 @item any
 matches any message.
@@ -5739,6 +5744,11 @@ Please let us know if any other contributors have been missed out.
 
 Here are some of the VM features that its users find most valuable:
 
+@cindex BBDB
+@cindex IMAP
+@cindex HTML
+@cindex MIME
+@cindex virtual folders
 @itemize
 @item
 VM's reliability and stability.
