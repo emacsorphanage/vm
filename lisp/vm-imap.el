@@ -653,7 +653,7 @@ on all the relevant IMAP servers and then immediately expunges."
 	msg-count can-delete read-write uid-validity
 	select-response source-list folder uid-alist mailbox data mp match)
     (unwind-protect
-	(save-excursion
+	(save-excursion			; save-current-buffer?
 	  ;;------------------------
 	  (vm-buffer-type:duplicate)
 	  ;;------------------------
@@ -1520,7 +1520,7 @@ as well."
 	list p
 	start end)
     (unwind-protect
-	(save-excursion
+	(save-excursion			; save-current-buffer?
 	  ;;------------------------
 	  (vm-buffer-type:duplicate)
 	  ;;------------------------
@@ -2145,8 +2145,7 @@ that the session is active.  Returns t or nil."
 	   (buffer-live-p (process-buffer process)))
       (if vm-imap-ensure-active-sessions
 	  (let ((buffer (process-buffer process)))
-	    (save-excursion		; = save-current-buffer?
-	      (set-buffer buffer)
+	    (with-current-buffer buffer
 	      ;;----------------------------
 	      (vm-buffer-type:enter 'process)
 	      ;;----------------------------
@@ -2208,8 +2207,7 @@ IMAP process or nil if unsuccessful."
       (vm-set-folder-imap-process process)
       (setq mailbox (vm-imap-parse-spec-to-list (vm-folder-imap-maildrop-spec))
 	    mailbox (nth 3 mailbox))
-      (save-excursion			; = save-current-buffer?
-	(set-buffer (process-buffer process))
+      (with-current-buffer (process-buffer process)
 	;;----------------------------
 	(vm-buffer-type:enter 'process)
 	;;----------------------------
@@ -2325,8 +2323,7 @@ Throws vm-imap-protocol-error for failure."
 	  (process (vm-folder-imap-process))
 	  (mailbox-count (vm-folder-imap-mailbox-count))
 	  list tuples tuple uid)
-      (save-excursion			; = save-current-buffer?
-	(set-buffer (process-buffer process))
+      (with-current-buffer (process-buffer process)
 	;;----------------------------
 	(vm-buffer-type:enter 'process)
 	;;----------------------------
@@ -2401,8 +2398,7 @@ Throws vm-imap-protocol-error for failure."
     (if (not (equal (vm-imap-uid-validity-of m)
 		    (vm-folder-imap-uid-validity)))
 	(vm-imap-normal-error "message UIDVALIDITY does not match the server"))
-    (save-excursion		  ; = save-current-buffer?
-      (set-buffer (process-buffer process))
+   (with-current-buffer (process-buffer process)
       ;;----------------------------------
       (vm-buffer-type:enter 'process)
       (vm-imap-session-type:assert-active)
@@ -3236,7 +3232,7 @@ either the folder buffer or the presentation buffer.
   (let ((body-buffer (current-buffer))
 	(statblob nil))
     (unwind-protect
-	(save-excursion
+	(save-excursion		  ; save-current-buffer?
 	  ;;----------------------------------
 	  (vm-buffer-type:enter 'folder)
 	  ;;----------------------------------
@@ -3672,8 +3668,7 @@ selectable mailboxes to be listed.  Returns a list of mailbox names."
   (let ((c-list nil)
 	p r response need-ok)
     (vm-imap-check-connection process)
-    (save-excursion			; = save-current-buffer?
-      (set-buffer (process-buffer process))
+    (with-current-buffer (process-buffer process)
       ;;----------------------------------
       (vm-buffer-type:enter 'process)
       (vm-imap-session-type:assert-active)
@@ -3709,8 +3704,7 @@ well. Returns a boolean value."
   (let ((c-list nil)
 	p r response need-ok)
     (vm-imap-check-connection process)
-    (save-excursion			; = save-current-buffer?
-      (set-buffer (process-buffer process))
+    (with-current-buffer (process-buffer process)
       ;;----------------------------------
       (vm-buffer-type:enter 'process)
       (vm-imap-session-type:assert-active)
@@ -3816,11 +3810,10 @@ documentation for `vm-spool-files'."
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
 	       (vm-safe-imapdrop-string folder)))
-    (save-current-buffer
+    (with-current-buffer (process-buffer process)
       ;;-----------------------------
       (vm-buffer-type:enter 'process)
       ;;-----------------------------
-      (set-buffer (process-buffer process))
       (setq mailbox (nth 3 (vm-imap-parse-spec-to-list folder)))
       (setq folder-display (or (vm-imap-folder-for-spec folder)
 			       (vm-safe-imapdrop-string folder)))
