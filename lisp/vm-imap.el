@@ -1707,6 +1707,8 @@ as well."
       (vm-imap-normal-error "deletion failed")))
 
 (defun vm-imap-get-message-size (process n)
+  "Use imap PROCESS to query the size the message with sequence number
+N.  Returns the size."
   (let ((imap-buffer (current-buffer))
 	tok size response p
 	(need-size t)
@@ -1739,6 +1741,8 @@ as well."
     size ))
 
 (defun vm-imap-get-uid-message-size (process uid)
+  "Uses imap PROCESS to get the size of the message with UID.  Returns
+the size."
   (let ((imap-buffer (current-buffer))
 	tok size response p
 	(need-size t)
@@ -1754,32 +1758,30 @@ as well."
       (setq response (vm-imap-read-response-and-verify process "size FETCH"))
       (cond ((and need-size
 		  (vm-imap-response-matches response '* 'atom 'FETCH 'list))
-	     (setq need-size nil)
 	     (setq p (cdr (nth 3 response)))
 	     (while p
 	       (cond 
 		((vm-imap-response-matches p 'UID 'atom)
 		 (setq tok (nth 1 p))
-		 (if (not (equal uid (buffer-substring (nth 1 tok) (nth 2 tok))))
-		     (vm-imap-protocol-error
-		      "wrong UID number returned"))
+		 (unless (equal uid (buffer-substring (nth 1 tok) (nth 2 tok)))
+		     (vm-imap-protocol-error 
+		      "UID number mismatch in SIZE query"))
 		 (setq p (nthcdr 2 p)))
 		((vm-imap-response-matches p 'RFC822\.SIZE 'atom)
 		 (setq tok (nth 1 p))
-		 (goto-char (nth 1 tok))
-		 (setq size (buffer-substring (nth 1 tok) (nth 2 tok)))
+		 (setq size (read imap-buffer))
 		 (setq need-size nil)
 		 (setq p (nthcdr 2 p)))
 		(t
-		 (vm-imap-protocol-error
-		  "expected UID, RFC822.SIZE in FETCH response")))))
+		 (setq p (nthcdr 2 p))))))
 	    ((vm-imap-response-matches response 'VM 'OK)
 	     (setq need-ok nil))
 	    ;; Otherwise, skip the response
 	    ))
     (if need-size
-	1
-      (string-to-number size) )))
+	(vm-imap-protocol-error
+	 "expected UID, RFC822.SIZE in FETCH response")
+      size )))
 
 (defun vm-imap-read-capability-response (process)
   ;;----------------------------------
