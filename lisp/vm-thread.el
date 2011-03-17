@@ -355,7 +355,7 @@ all affected messages to be updated."
 		    refs (cdr refs)))))
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
-	  (message "Building threads (by reference)... %d" n)))))
+	  (message "Building threads... %d" n)))))
 
 (defun vm-build-subject-threads (mp schedule-reindents)
   (let ((n 0)
@@ -416,7 +416,7 @@ all affected messages to be updated."
 	       subject-sym (cons id-sym (vm-ts-members-of subject-sym)))))))
       (setq mp (cdr mp) n (1+ n))
       (when (zerop (% n modulus))
-	(message "Building threads (by subject)... %d" n)))))
+	(message "Building threads... %d" n)))))
 
 ;; used by the thread sort code.
 ;;

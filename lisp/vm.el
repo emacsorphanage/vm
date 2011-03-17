@@ -172,7 +172,7 @@ deleted messages.  Use `###' to expunge deleted messages."
       (setq folder-buffer
 	    (if (bufferp folder)
 		folder
-	      (vm-read-folder folder remote-spec)))
+	      (vm-read-folder folder remote-spec folder-name)))
       (set-buffer folder-buffer)
       ;; Thunderbird folders
       (let ((msf (concat (buffer-file-name) ".msf")))
@@ -180,9 +180,6 @@ deleted messages.  Use `###' to expunge deleted messages."
         (setq vm-folder-read-thunderbird-status 
 	      (and (file-exists-p msf)
 		   vm-sync-thunderbird-status)))
-      (when (and (stringp folder) (memq access-method '(pop imap)))
-	     (if (not (equal folder-name (buffer-name)))
-		 (rename-buffer folder-name t)))
       (if (and vm-fsfemacs-mule-p enable-multibyte-characters)
 	  (set-buffer-multibyte nil))	; is this safe?
       ;; for MULE

@@ -3594,7 +3594,7 @@ folder."
 		(and vm-message-order-changed
 		     (vm-stuff-message-order))
 		(message "Stuffing folder data... done")))
-	  (message "Saving...")
+	  (message "Saving folder %s..." (buffer-name))
 	  (let ((vm-inhibit-write-file-hook t)
 		(oldmodebits (and (fboundp 'default-file-modes)
 				  (default-file-modes))))
@@ -3667,11 +3667,13 @@ run vm-expunge-folder followed by vm-save-folder."
   (vm-save-folder prefix))
 
 ;;;###autoload
-(defun vm-read-folder (folder &optional remote-spec)
+(defun vm-read-folder (folder &optional remote-spec folder-name)
   "Reads the FOLDER from the file system and creates a buffer.
 Returns the buffer created.
 Optional argument REMOTE-SPEC gives the maildrop specification for
-the server folder that the FOLDER might be caching."
+the server folder that the FOLDER might be caching.
+Optional argument FOLDER-NAME gives the name of the folder that should
+be used as the name of the buffer."
   (let ((file (or folder (expand-file-name vm-primary-inbox
 					   vm-folder-directory))))
     (if (file-directory-p file)
@@ -3695,15 +3697,18 @@ the server folder that the FOLDER might be caching."
 		;; for XEmacs/Mule
 		(coding-system-for-read
 		 (vm-line-ending-coding-system)))
-	    (message "Reading %s..." file)
-	    (prog1 (find-file-noselect file t)
+	    (message "Reading folder %s..." (or folder-name file))
+	    (let ((buffer (find-file-noselect file t))
+		  (hist-item (or remote-spec folder vm-primary-inbox)))
+	      (when folder-name
+		(with-current-buffer buffer
+		  (rename-buffer folder-name t)))
 	      ;; update folder history
-	      (let ((item (or remote-spec folder
-			      vm-primary-inbox)))
-		(if (not (equal item (car vm-folder-history)))
+	      (if (not (equal hist-item (car vm-folder-history)))
 		    (setq vm-folder-history
-			  (cons item vm-folder-history))))
-	      (message "Reading %s... done" file)))))))
+			  (cons hist-item vm-folder-history)))
+	      (message "Reading folder %s... done" (or folder-name file))
+	      buffer))))))
 
 ;;;###autoload
 (defun vm-revert-buffer ()

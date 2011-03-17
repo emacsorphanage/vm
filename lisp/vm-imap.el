@@ -1791,6 +1791,7 @@ the size."
 		 (setq p (nthcdr 2 p)))
 		((vm-imap-response-matches p 'RFC822\.SIZE 'atom)
 		 (setq tok (nth 1 p))
+		 (goto-char (nth 1 tok))
 		 (setq size (read imap-buffer))
 		 (setq need-size nil)
 		 (setq p (nthcdr 2 p)))
@@ -2273,6 +2274,8 @@ IMAP process or nil if unsuccessful."
 
       (vm-set-folder-imap-uid-validity uid-validity) ; unique per session
       (vm-set-folder-imap-mailbox-count mailbox-count)
+      (unless (vm-folder-imap-retrieved-count)
+	(vm-set-folder-imap-retrieved-count mailbox-count))
       (vm-set-folder-imap-recent-count recent-count)
       (vm-set-folder-imap-read-write read-write)
       (vm-set-folder-imap-can-delete can-delete)
@@ -3222,7 +3225,8 @@ operation of the server to minimize I/O."
 	  (vm-buffer-type:exit)
 	  (vm-imap-dump-uid-seq-num-data)
 	  ;;-----------------------------
-	  (vm-set-folder-imap-mailbox-count (- mailbox-count expunge-count))
+	  (vm-set-folder-imap-mailbox-count 
+	   (- mailbox-count expunge-count))
 	  (vm-set-folder-imap-retrieved-count
 	   (- (vm-folder-imap-retrieved-count) expunge-count))
 	  ))
