@@ -655,8 +655,8 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 (defun vm-vs-unwritten (m) (not (vm-written-flag m)))
 (defun vm-vs-unmarked (m) (not (vm-mark-of m)))
 (defun vm-vs-unedited (m) (not (vm-edited-flag m)))
-(defun vm-vs-expanded (m) (vm-summary-expanded-root-p m))
-(defun vm-vs-collapsed (m) (vm-summary-collapsed-root-p m))
+(defun vm-vs-expanded (m) (vm-expanded-root-p m))
+(defun vm-vs-collapsed (m) (vm-collapsed-root-p m))
 
 
 (put 'sexp 'vm-virtual-selector-clause "matching S-expression selector")
@@ -797,7 +797,7 @@ real or virtual)."
 	       (when (vm-virtual-messages-of m)
 		 (dolist (v-m (vm-virtual-messages-of m))
 		   (vm-set-message-id-number-of v-m "Q"))
-		 (vm-unthread-message m)
+		 (vm-unthread-message-and-mirrors m)
 		 (vm-set-virtual-messages-of m nil)))
 	     (dolist (virtual-buf vm-virtual-buffers)
 	       (set-buffer virtual-buf)

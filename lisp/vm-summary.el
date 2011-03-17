@@ -71,17 +71,19 @@ summary display."
 an interior message of a thread."
   (concat "  " (vm-padded-number-of m) " "))
 
-(defsubst vm-summary-expanded-root-p (m)
+(defsubst vm-expanded-root-p (m)
   "Checks to see if the message summary of M shows that its thread is
 currently expanded. This is done safely so that if M does not have a
 summary line then nil is returned."
-  (null (vm-folded-flag m)))
+  (and (vm-thread-root-p m)
+       (null (vm-folded-flag m))))
 
-(defsubst vm-summary-collapsed-root-p (m)
+(defsubst vm-collapsed-root-p (m)
   "Checks to see if the message summary of M shows that its thread is
 currently collapsed. This is done safely so that if M does not have a
 summary line then nil is returned."
-  (vm-folded-flag m))
+  (and (vm-thread-root-p m)
+       (vm-folded-flag m)))
 
 (defsubst vm-summary-mark-root-collapsed (m)
   "Mark a thread root message M as collapsed."
@@ -256,7 +258,7 @@ the messages in the current folder."
 				(vm-summary-mark-root-collapsed m)
 			      (vm-summary-mark-root-expanded m)))
 			(setq root (vm-thread-root m))
-			(when (and root (vm-summary-collapsed-root-p root))
+			(when (and root (vm-collapsed-root-p root))
 			  (unless (vm-visible-message m)
 			    (put-text-property s e 'invisible t))
 			  ;; why mess with the root here?  USR, 2010-07-20
@@ -423,7 +425,7 @@ of action."
       (let ((buffer-read-only nil)
 	    root next)
 	(setq root (vm-thread-root (vm-summary-message-at-point)))
-	(if (vm-summary-expanded-root-p root)
+	(if (vm-expanded-root-p root)
 	    (call-interactively 'vm-collapse-thread)
 	  (call-interactively 'vm-expand-thread))
 	))))
@@ -477,7 +479,7 @@ buffer by a regenerated summary line."
 		  (if (and vm-summary-show-threads
 			   (eq m (vm-thread-root m))
 			   (> (vm-thread-count m) 1))
-		      (setq indicator (if (vm-folded-flag m) "+" "-"))
+		      (setq indicator (if (vm-collapsed-root-p m) "+" "-"))
 		    (setq indicator nil))
 		  ;; We do a little dance to update the text in
 		  ;; order to make the markers in the text do
@@ -557,7 +559,7 @@ Also move the cursor (point and window-point)."
 				 vm-summary-enable-thread-folding
 				 (eq msg (vm-thread-root msg))
 				 (> (vm-thread-count msg) 1))
-			    (if (vm-folded-flag msg)
+			    (if (vm-collapsed-root-p msg)
 				(progn (insert "+ ") 
 				       (delete-char (length vm-summary-=>)))
 			      (progn (insert "- ")
@@ -597,15 +599,16 @@ Also move the cursor (point and window-point)."
 			;; visiting a folder with bookmark on
 			;; sub-thread
 			;;
-			(if (vm-folded-flag m)
-			    (insert "+>")
-			  (if (and vm-summary-show-threads
-				   (get-text-property 
-				    (+ (vm-su-start-of m) 3) 'invisible))
-			      (progn (insert vm-summary-=>)
-				     (vm-expand-thread 
-				      (vm-thread-root m)))
-			    (insert vm-summary-=>)))
+			(if vm-summary-show-threads
+			    (if (vm-collapsed-root-p m)
+				(insert "+>")
+			      (if (get-text-property 
+				   (+ (vm-su-start-of m) 3) 'invisible)
+				  (progn (insert vm-summary-=>)
+					 (vm-expand-thread 
+					  (vm-thread-root m)))
+				(insert vm-summary-=>)))
+			  (insert vm-summary-=>))
 			(delete-char (length vm-summary-=>))
 
 			(when do-mouse-track

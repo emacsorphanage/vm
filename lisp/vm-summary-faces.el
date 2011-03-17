@@ -98,10 +98,10 @@ of available face names."
                (vm-extent-at (vm-su-end-of msg)))))
     (while faces
       (when (apply 'vm-vs-or msg (list (caar faces)))
-	(cond ((vm-summary-collapsed-root-p msg)
+	(cond ((vm-collapsed-root-p msg)
 	       (vm-set-extent-property 
 		x 'face (list (cadar faces) 'vm-summary-collapsed)))
-	      ((vm-summary-expanded-root-p msg)
+	      ((vm-expanded-root-p msg)
 	       (vm-set-extent-property
 		x 'face (list (cadar faces) 'vm-summary-expanded)))
 	      (t

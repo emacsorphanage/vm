@@ -180,7 +180,7 @@ message in the summary buffer."
 	      vm-summary-enable-thread-folding
 	      vm-summary-show-threads
 	      (> (vm-thread-indentation (car mp)) 0)
-	      (vm-summary-collapsed-root-p (vm-thread-root (car mp)))
+	      (vm-collapsed-root-p (vm-thread-root (car mp)))
 	      (get-text-property (vm-su-start-of (car mp)) 'invisible)))))
 
 ;;;###autoload

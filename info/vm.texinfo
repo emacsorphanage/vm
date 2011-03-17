@@ -6604,8 +6604,12 @@ folders, store just a single message body in the Folder buffer.
 However, they have message descriptors for all the messages in
 @code{vm-message-list}.  All the message descriptors use the same
 location data vector, because only one message body can be stored in
-the Folder buffer, but have separate soft data vectors.  The other
-sub-vectors are shared with the underlying real folders.
+the Folder buffer, but have separate Soft data vectors.  (This allows,
+for instance, virtual folders to have their own threads, which could
+in general be different from the threads in the underlying folders.)  
+The other sub-vectors are shared with the underlying real folders.  (In
+particular, the tokenized summary line is the same in the virual
+folders and their underlying folders.)
 
 
 @node Summary Internals, Threading Internals, Message Internals, Internals

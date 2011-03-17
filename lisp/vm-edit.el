@@ -168,7 +168,7 @@ thread have their cached data discarded."
       (with-current-buffer (vm-buffer-of m)
 	(vm-garbage-collect-message)
 	(if (vectorp vm-thread-obarray)
-	    (vm-unthread-message m t))
+	    (vm-unthread-message-and-mirrors m t))
 	;; It was a mistake to store the POP & IMAP UID data here but
 	;; it's too late to change it now.  So keep the data from
 	;; getting wiped.

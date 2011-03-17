@@ -41,7 +41,7 @@
 		  "vm-undo" ())
 (declare-function vm-build-threads 
 		  "vm-undo" (message-list))
-(declare-function vm-unthread-message 
+(declare-function vm-unthread-message
 		  "vm-thread" (message &optional message-changing))
 (declare-function vm-preview-current-message 
 		  "vm-page" ())
@@ -576,7 +576,7 @@ the headers/body of M."
 		 (eq (car vm-message-pointer) v-m))
 	    (save-excursion (vm-preview-current-message)))
 	(when (vectorp vm-thread-obarray)
-	  (vm-unthread-message v-m)
+	  (vm-unthread-message m)
 	  (vm-build-threads (list v-m)))
 	;; (if vm-summary-show-threads
 	;;     (intern (buffer-name) buffers-needing-thread-sort))

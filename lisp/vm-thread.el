@@ -39,6 +39,7 @@
 ;; vm-toggle-threads-display: interactive () -> none
 ;; vm-build-threads : (message list) -> none
 ;; vm-build-thread-lists : () -> none
+;; vm-unthread-message-and-mirrors : (message &optional bool) -> none
 ;; vm-unthread-message : (message &optional bool) -> none
 ;;
 ;; vm-check-thread-integrity: (&optional message list) -> none
@@ -241,9 +242,9 @@ specifier) will be visible."
   "For all messages in MESSAGE-LIST, build thread information in the
 `vm-thread-obarray' and `vm-thread-subject-obarray'.  If MESSAGE-LIST
 is nil, do it for all the messages in the folder.  USR, 2010-07-15"
-  (if (not (vectorp vm-thread-obarray))
-      (setq vm-thread-obarray (make-vector 641 0)
-	    vm-thread-subject-obarray (make-vector 641 0)))
+  (unless (vectorp vm-thread-obarray)
+    (setq vm-thread-obarray (make-vector 641 0)
+	  vm-thread-subject-obarray (make-vector 641 0)))
   (let ((mp (or message-list vm-message-list))
 	(n 0)
 	;; Just for laughs, make the update interval vary.
@@ -267,27 +268,36 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
       (message "Building threads... done"))))
 
 (defun vm-build-reference-threads (mp schedule-reindents)
+  "Build reference threads for all the messages in MP.  If threads are
+already built, then just insert these messages into the threads
+database.
+
+If SCHEDULE-REINDENTS is non-nil, then ask for the summary lines of
+all affected messages to be updated."
   (let ((n 0)
 	(modulus 10)
 	m parent parent-sym id id-sym date refs old-parent-sym)
     (while mp
       (setq m (car mp)
-	    parent (vm-parent m)
 	    id (vm-su-message-id m)
 	    id-sym (intern id vm-thread-obarray)
 	    date (vm-so-sortable-datestring m))
       (vm-th-set-message-of id-sym m)
       (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))
       (vm-th-set-date-of id-sym date)
-      (if (and schedule-reindents (null (cdr (vm-th-messages-of id-sym))))
-	  (vm-thread-mark-for-summary-update 
-	   (cons m (vm-th-child-messages-of id-sym))))
+      (when (and schedule-reindents (null (cdr (vm-th-messages-of id-sym))))
+	(vm-thread-mark-for-summary-update 
+	 (cons m (vm-th-child-messages-of id-sym))))
+      ;; Thread using the parent
       (vm-th-set-parent-of id-sym nil)
+      (setq parent (vm-parent m))
       (when parent
 	(setq parent-sym (intern parent vm-thread-obarray))
+	;; force the subtree to be rebuilt
 	(when (vm-th-message-of parent-sym)
-	  (vm-set-thread-subtree-of
-	   (vm-th-message-of parent-sym) nil))	; force it to be rebuilt
+	  (vm-set-thread-subtree-of (vm-th-message-of parent-sym) nil))	
+	;; set the parent of m.
+	;; if there was a parent already, update it consistently.
 	(cond ((or (null (vm-th-parent-of id-sym))
 		   (eq (vm-th-parent-of id-sym) parent-sym))
 	       (vm-th-set-parent-of id-sym parent-sym))
@@ -305,25 +315,25 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 		 (if schedule-reindents
 		     (vm-thread-mark-for-summary-update
 		      (vm-th-messages-of id-sym))))))
+	;; FIXME it is possible that id-sym is already among the children
 	(vm-th-set-children-of 
 	 parent-sym (cons id-sym (vm-th-children-of parent-sym))))
 	;; FIXME is the parent property automatically set to nil?
         ;; (if (not (boundp id-sym))
 	;;   (vm-th-set-parent-of id-sym nil))
-      ;; use the references header to set parenting information
+      ;; use the References header to set parenting information
       ;; for ancestors of this message.  This does not override
       ;; a parent pointer for a message if it already exists.
       (if (cdr (setq refs (vm-references m)))
 	  (let (parent-sym id-sym msgs msg-syms)
 	    (setq parent-sym (intern (car refs) vm-thread-obarray)
 		  refs (cdr refs))
+	    ;; force the subtree to be rebuilt
 	    (when (vm-th-message-of parent-sym)	
-	      (vm-set-thread-subtree-of	; force it to be rebuilt
-	       (vm-th-message-of parent-sym) nil))
+	      (vm-set-thread-subtree-of (vm-th-message-of parent-sym) nil))
 	    (while refs
 	      (setq id-sym (intern (car refs) vm-thread-obarray))
-	      (if (vm-th-parent-of id-sym)
-		  nil
+	      (unless (vm-th-parent-of id-sym)
 		(vm-th-set-parent-of id-sym parent-sym)
 		(setq msgs (vm-th-messages-of id-sym))
 		(setq msg-syms 
@@ -421,13 +431,10 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
   "Fill in the thread-list fields of the Soft data vector for all
 messages in the folder.  Threads should have been built before this
 function is called."
-  (let ((mp vm-message-list))
-    (while mp
-      (vm-thread-list (car mp))
-      (setq mp (cdr mp))))
+  (dolist (m vm-message-list)
+    (vm-thread-list m))
   (if vm-thread-debug
-      (vm-check-thread-integrity vm-message-list))
-  )
+      (vm-check-thread-integrity vm-message-list)))
 
 ;;;###autoload
 (defun vm-thread-mark-for-summary-update (message-list)
@@ -450,18 +457,17 @@ function is called."
   "Returns the thread-list, i.e., the lineage of MESSAGE, as a list of
 symbols interned in vm-thread-obarray."
   (let ((done nil)
-	(m message)
 	(loop-recovery-point nil)
 	(date (vm-so-sortable-datestring message))
-	thread-list id-sym subject-sym loop-sym root-date youngest-date
+	m thread-list id-sym subject-sym loop-sym root-date youngest-date
 	root ancestors)
-    (save-excursion
-      (set-buffer (vm-buffer-of m))
+    (setq m message)
+    (with-current-buffer (vm-buffer-of m)
       (fillarray vm-thread-loop-obarray 0)
       (setq id-sym (intern (vm-su-message-id m) vm-thread-obarray)
 	    thread-list (list id-sym))
-      (if (and vm-debug (member (symbol-name id-sym) vm-traced-message-ids))
-	  (debug id-sym))
+      (when (and vm-debug (member (symbol-name id-sym) vm-traced-message-ids))
+	(debug id-sym))
       ;; if m is a non-canonical message for its message ID, give it
       ;; an artificial thread-list
       ;; But, does this make sense?
@@ -472,14 +478,14 @@ symbols interned in vm-thread-obarray."
       (while (not done)
 	;; save the date of the oldest message in this thread
 	(setq root-date (vm-th-oldest-date-of id-sym))
-	(if (or (null root-date)
-		(string< date root-date))
-	    (vm-th-set-oldest-date-of id-sym date))
+	(when (or (null root-date)
+		  (string< date root-date))
+	  (vm-th-set-oldest-date-of id-sym date))
 	;; save the date of the youngest message in this thread
 	(setq youngest-date (vm-th-youngest-date-of id-sym))
-	(if (or (null root-date)
-		(string< youngest-date date))
-	    (vm-th-set-youngest-date-of id-sym date))
+	(when (or (null root-date)
+		  (string< youngest-date date))
+	  (vm-th-set-youngest-date-of id-sym date))
 	(cond ((vm-th-parent-of id-sym)
 	       (setq id-sym (vm-th-parent-of id-sym)
 		     loop-sym (intern (symbol-name id-sym)
@@ -537,7 +543,7 @@ symbols interned in vm-thread-obarray."
 ;; message must be a real (non-virtual) message
 
 ;;;###autoload
-(defun vm-unthread-message (message &optional message-changing)
+(defun vm-unthread-message-and-mirrors (message &optional message-changing)
   "Removes MESSAGE and all its mirrored messages from their
 current threads.  If optional argument MESSAGE-CHANGING is
 non-nil, then forget information that might be different if the
@@ -547,91 +553,97 @@ MESSAGE should be a real (non-virtual) message.
 
 The full functionality of this function is not entirely clear.  
 						USR, 2010-07-24"
-  (save-excursion
-    (let ((mp (cons message (vm-virtual-messages-of message)))
-	  m date id-sym s-sym p-sym)
-      (dolist (m mp)
-	;; Don't trust blindly.  The user could have killed some of
-	;; these buffers.
-	(when (buffer-name (vm-buffer-of m))
-	  (set-buffer (vm-buffer-of m))
-	  (if (not (vectorp vm-thread-obarray))
-	      nil
-	    (let ((inhibit-quit t))
-	      ;; handles for the thread and thread-subject databases
-	      (setq id-sym (intern (vm-su-message-id m) vm-thread-obarray))
-	      (setq s-sym (intern (vm-so-sortable-subject m)
-				  vm-thread-subject-obarray))
-	      (if (and vm-debug 
-		       (member (symbol-name id-sym) vm-traced-message-ids))
-		  (debug id-sym))
-	      ;; discard cached thread properties
-	      (dolist (a (vm-thread-list-of m))
-		(when (vm-th-message-of a)
-		  (vm-set-thread-subtree-of (vm-th-message-of a) nil)))
-	      (vm-set-thread-list-of m nil)
-	      (vm-set-thread-indentation-of m nil)
-	      ;; remove the message from its erstwhile thread
-	      (when (boundp id-sym)
-		;; remove m from its thread node
-		(vm-th-set-messages-of 
-		 id-sym (remq m (vm-th-messages-of id-sym)))
-		(vm-thread-mark-for-summary-update 
-		 (vm-th-child-messages-of id-sym))
-		;; reset the thread dates of m
-		(setq date (vm-so-sortable-datestring message))
-		(vm-th-set-youngest-date-of id-sym date)
-		(vm-th-set-oldest-date-of id-sym date)
-		;; if message changed, remove it from the thread tree
-		;; not clear what is going on.  USR, 2010-07-24
-		(when message-changing
-		  (setq p-sym (vm-th-parent-of id-sym))
-		  (when p-sym 
-		    (vm-th-set-children-of 
-		     p-sym (remq id-sym (vm-th-children-of p-sym))))
-		  (vm-th-set-parent-of id-sym nil)))
+  (save-current-buffer
+    (dolist (m (cons message (vm-virtual-messages-of message)))
+      ;; Don't trust blindly.  The user could have killed some of
+      ;; these buffers.
+      (when (buffer-name (vm-buffer-of m))
+	(set-buffer (vm-buffer-of m))
+	(when (vectorp vm-thread-obarray)
+	  (vm-unthread-message m message-changing))))))
 
-	      ;; remove the message from its erstwhile subject thread
-	      (when (boundp s-sym)
-		(if (eq id-sym (vm-ts-root-of s-sym))
-		    ;; (when message-changing
-		    (if (null (cdr (vm-ts-messages-of s-sym)))
-			(makunbound s-sym)
-		      (let ((p (vm-ts-messages-of s-sym))
-			    oldest-msg oldest-date children)
-			(setq oldest-msg (car p))
-			(setq oldest-date (vm-so-sortable-datestring (car p)))
-			(setq p (cdr p))
-			(while p
-			  (when (and (string-lessp 
-				      (vm-so-sortable-datestring (car p))
-				      oldest-date)
-				     (not (eq m (car p))))
-			    (setq oldest-msg (car p)
-				  oldest-date 
-				  (vm-so-sortable-datestring (car p))))
-			  (setq p (cdr p)))
-			(vm-ts-set-root-of 
-			 s-sym (intern (vm-su-message-id oldest-msg)
-				       vm-thread-obarray))
-			(vm-ts-set-root-date-of s-sym oldest-date)
-			(setq children (remq oldest-msg (vm-ts-members-of s-sym)))
-			(vm-ts-set-members-of s-sym children)
-			(vm-ts-set-messages-of
-			 s-sym (remq m (vm-ts-messages-of s-sym)))
-			;; I'm not sure there aren't situations
-			;; where this might loop forever.
-			(let ((inhibit-quit nil))
-			  (mapc (lambda (c-sym)
-				  (vm-thread-mark-for-summary-update 
-				   (vm-th-messages-of c-sym)))
-				children))))
-		  ;; )
-		  (vm-ts-set-members-of 
-		   s-sym (remq id-sym (vm-ts-members-of s-sym)))
-		  (vm-ts-set-messages-of 
-		   s-sym (remq m (vm-ts-messages-of s-sym)))
-		  )))))))))
+;;;###autoload
+(defun vm-unthread-message (m &optional message-changing)
+  "Removes message M from its thread.  If optional argument
+MESSAGE-CHANGING is non-nil, then forget information that might
+be different if the message contents changed.  (What does this
+mean?)                                         USR, 2011-03-17"
+  (let ((inhibit-quit t)
+	date id-sym s-sym p-sym)
+    ;; handles for the thread and thread-subject databases
+    (setq id-sym (intern (vm-su-message-id m) vm-thread-obarray))
+    (setq s-sym (intern (vm-so-sortable-subject m)
+			vm-thread-subject-obarray))
+    (if (and vm-debug 
+	     (member (symbol-name id-sym) vm-traced-message-ids))
+	(debug id-sym))
+    ;; discard cached thread properties
+    (dolist (a (vm-thread-list-of m))
+      (when (vm-th-message-of a)
+	(vm-set-thread-subtree-of (vm-th-message-of a) nil)))
+    (vm-set-thread-list-of m nil)
+    (vm-set-thread-indentation-of m nil)
+    ;; remove the message from its erstwhile thread
+    (when (boundp id-sym)
+      ;; remove m from its thread node
+      (vm-th-set-messages-of 
+       id-sym (remq m (vm-th-messages-of id-sym)))
+      (vm-thread-mark-for-summary-update 
+       (vm-th-child-messages-of id-sym))
+      ;; reset the thread dates of m
+      (setq date (vm-so-sortable-datestring m))
+      (vm-th-set-youngest-date-of id-sym date)
+      (vm-th-set-oldest-date-of id-sym date)
+      ;; if message changed, remove it from the thread tree
+      ;; not clear what is going on.  USR, 2010-07-24
+      (when message-changing
+	(setq p-sym (vm-th-parent-of id-sym))
+	(when p-sym 
+	  (vm-th-set-children-of 
+	   p-sym (remq id-sym (vm-th-children-of p-sym))))
+	(vm-th-set-parent-of id-sym nil)))
+
+    ;; remove the message from its erstwhile subject thread
+    (when (boundp s-sym)
+      (if (eq id-sym (vm-ts-root-of s-sym))
+	  ;; (when message-changing
+	  (if (null (cdr (vm-ts-messages-of s-sym)))
+	      (makunbound s-sym)
+	    (let ((p (vm-ts-messages-of s-sym))
+		  oldest-msg oldest-date children)
+	      (setq oldest-msg (car p))
+	      (setq oldest-date (vm-so-sortable-datestring (car p)))
+	      (setq p (cdr p))
+	      (while p
+		(when (and (string-lessp 
+			    (vm-so-sortable-datestring (car p))
+			    oldest-date)
+			   (not (eq m (car p))))
+		  (setq oldest-msg (car p)
+			oldest-date 
+			(vm-so-sortable-datestring (car p))))
+		(setq p (cdr p)))
+	      (vm-ts-set-root-of 
+	       s-sym (intern (vm-su-message-id oldest-msg)
+			     vm-thread-obarray))
+	      (vm-ts-set-root-date-of s-sym oldest-date)
+	      (setq children (remq oldest-msg (vm-ts-members-of s-sym)))
+	      (vm-ts-set-members-of s-sym children)
+	      (vm-ts-set-messages-of
+	       s-sym (remq m (vm-ts-messages-of s-sym)))
+	      ;; I'm not sure there aren't situations
+	      ;; where this might loop forever.
+	      (let ((inhibit-quit nil))
+		(mapc (lambda (c-sym)
+			(vm-thread-mark-for-summary-update 
+			 (vm-th-messages-of c-sym)))
+		      children))))
+	;; )
+	(vm-ts-set-members-of 
+	 s-sym (remq id-sym (vm-ts-members-of s-sym)))
+	(vm-ts-set-messages-of 
+	 s-sym (remq m (vm-ts-messages-of s-sym)))
+	))))
 
 ;;;###autoload
 (defun vm-references (m)
@@ -839,39 +851,35 @@ to the thread.  Used for testing purposes."
       (with-current-buffer (or vm-mail-buffer (current-buffer))
 	(setq ml vm-message-list)))
     ;; Check that all messages belong to their respective subtrees
-    (mapc
-     (lambda (m)
-       (let* ((root (vm-thread-root-sym m))
-	      (subtree (and root (vm-thread-subtree root))))
-	 (unless root
-	   (vm-thread-debug 'message-with-no-root m)
-	   (setq errors-found t))
-	 (with-current-buffer (vm-buffer-of m)
-	   (unless (eq root 
-		       (intern-soft (symbol-name root) vm-thread-obarray))
-	     (vm-thread-debug 'interned-in-wrong-buffer m)
-	     (setq errors-found t)))
-	 (unless (memq m subtree)
-	   (vm-thread-debug 'missing m)
-	   (setq errors-found t))))
-     ml)
+    (dolist (m ml)
+      (let* ((root (vm-thread-root-sym m))
+	     (subtree (and root (vm-thread-subtree root))))
+	(if (vm-th-messages-of (vm-thread-symbol m))
+	  (unless root
+	    (vm-thread-debug 'message-with-no-root m)
+	    (setq errors-found t))
+	  (vm-thread-debug 'message-lost m)
+	  (setq errors-found t))
+	(with-current-buffer (vm-buffer-of m)
+	  (unless (eq root 
+		      (intern-soft (symbol-name root) vm-thread-obarray))
+	    (vm-thread-debug 'interned-in-wrong-buffer m)
+	    (setq errors-found t)))
+	(unless (memq m subtree)
+	  (vm-thread-debug 'missing m))))
     ;; Check that all subtrees have correct messages
-    (mapc
-     (lambda (subroot)
-       (let* ((subtree (vm-thread-subtree subroot))
-	      (buf (vm-buffer-of subroot)))
-	 (mapc
-	  (lambda (m)
-	    (unless (and (vm-thread-root m)
-			 (eq (vm-thread-root m) 
-			     (vm-thread-root subroot)))
-	      (vm-thread-debug 'spurious m)
-	      (setq errors-found t))
-	    (unless (eq buf (vm-buffer-of m))
-	      (vm-thread-debug 'wrong-buffer m)
-	      (setq errors-found t)))
-	  subtree)))
-     ml)
+    (dolist (subroot ml)
+      (let* ((subtree (vm-thread-subtree subroot))
+	     (buf (vm-buffer-of subroot)))
+	(dolist (m subtree)
+	  (unless (and (vm-thread-root m)
+		       (eq (vm-thread-root m) 
+			   (vm-thread-root subroot)))
+	    (vm-thread-debug 'spurious m)
+	    (setq errors-found t))
+	  (unless (eq buf (vm-buffer-of m))
+	    (vm-thread-debug 'wrong-buffer m)
+	    (setq errors-found t)))))
     ;; Recover from errors
     (when errors-found
       (message "Thread information damaged; discarding it")

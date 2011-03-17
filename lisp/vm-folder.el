@@ -4606,8 +4606,7 @@ which is used in interactive confirmations."
 	      vm-summary-show-threads
 	      vm-enable-thread-operations
 	      (vm-thread-root-p (vm-current-message))
-	      (with-current-buffer vm-summary-buffer
-		(vm-summary-collapsed-root-p (vm-current-message)))
+	      (vm-collapsed-root-p (vm-current-message))
 	      (or (eq vm-enable-thread-operations t)
 		  (y-or-n-p 
 		   (format "%s all messages in thread? " op-description))))
