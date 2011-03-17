@@ -195,22 +195,21 @@ thread have their cached data discarded."
 	    (vm-build-threads (list m)))
 	(if vm-summary-show-threads
 	    (intern (buffer-name) buffers-needing-thread-sort))
-	(let ((v-list (vm-virtual-messages-of m)))
-	  (while v-list
-	    (with-current-buffer (vm-buffer-of (car v-list))
-	      (vm-set-mime-layout-of (car v-list) nil)
-	      (vm-set-mime-encoded-header-flag-of (car v-list) nil)
+	(dolist (v-m (vm-virtual-messages-of m))
+	  (when (buffer-name (vm-buffer-of v-m))
+	    (with-current-buffer (vm-buffer-of v-m)
+	      (vm-set-mime-layout-of v-m nil)
+	      (vm-set-mime-encoded-header-flag-of v-m nil)
 	      (if (vectorp vm-thread-obarray)
-		  (vm-build-threads (list (car v-list))))
+		  (vm-build-threads (list v-m)))
 	      (if vm-summary-show-threads
 		  (intern (buffer-name) buffers-needing-thread-sort))
 
 	      (if (and vm-presentation-buffer
-		       (eq (car vm-message-pointer) (car v-list)))
-		  (save-excursion (vm-preview-current-message)))
-	      (setq v-list (cdr v-list)))))
-	(vm-mark-for-summary-update m))
-      (setq mlist (cdr mlist)))
+		       (eq (car vm-message-pointer) v-m))
+		  (save-excursion (vm-preview-current-message))))))
+	(vm-mark-for-summary-update m)
+	(setq mlist (cdr mlist))))
     (save-excursion
       (mapatoms (function (lambda (s)
 			    (set-buffer (get-buffer (symbol-name s)))

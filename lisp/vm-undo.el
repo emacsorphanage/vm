@@ -459,14 +459,13 @@ nil	       delete the label
 	      (intern (car labels) vm-label-obarray)
 	      (setq labels (cdr labels))))))
       (when add
-	(setq mm-list (vm-virtual-messages-of m))
-	(while mm-list
+	(dolist (mm (vm-virtual-messages-of m))
 	  (let ((labels action-labels))
-	    (with-current-buffer (vm-buffer-of (car mm-list))
-	      (while labels
-		(intern (car labels) vm-label-obarray)
-		(setq labels (cdr labels))))
-	    (setq mm-list (cdr mm-list)))))
+	    (when (buffer-name (vm-buffer-of mm))
+	      (with-current-buffer (vm-buffer-of mm)
+		(while labels
+		  (intern (car labels) vm-label-obarray)
+		  (setq labels (cdr labels))))))))
       (setq act-labels action-labels
 	    labels (copy-sequence (vm-labels-of (car m-list))))
       (if add
@@ -494,33 +493,30 @@ Normally, a record of the change is kept for the purpose of undo, and
   the changed attributes are stuffed into the folder, but NORECORD
   suppresses all of this.                             USR 2010-04-06" 
   (let ((m-list nil) vmp)
-    (when
-      (and (not vm-folder-read-only)
-	   (or (not (vm-virtual-messages-of m))
-	       (not (with-current-buffer
-		       (vm-buffer-of
-			 (vm-real-message-of m))
-		      vm-folder-read-only)))
-           ;; do nothing it is is already set 
-           (not (eq flag (aref (vm-attributes-of m) attr-index))))
+    (when (and (not vm-folder-read-only)
+	       (or (not (vm-virtual-messages-of m))
+		   (not (with-current-buffer
+			    (vm-buffer-of
+			     (vm-real-message-of m))
+			  vm-folder-read-only)))
+	       ;; do nothing it is is already set 
+	       (not (eq flag (aref (vm-attributes-of m) attr-index))))
       (unless norecord
-	(setq vmp (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
-	(while vmp
-	  (if (eq (vm-attributes-of m) (vm-attributes-of (car vmp)))
-	      (setq m-list (cons (car vmp) m-list)))
-	  (setq vmp (cdr vmp)))
+	(dolist (v-m (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
+	  (if (eq (vm-attributes-of m) (vm-attributes-of v-m))
+	      (setq m-list (cons v-m m-list))))
 	(if (null m-list)
 	    (setq m-list (cons m m-list)))
-	(while m-list
-	  (save-excursion
-	    (set-buffer (vm-buffer-of (car m-list)))
-	    (cond ((not (buffer-modified-p))
-		   (vm-set-buffer-modified-p t)
-		   (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
-	    (vm-undo-record (list function (car m-list) (not flag)))
-;;;	    (vm-undo-boundary)
-	    (vm-increment vm-modification-counter))
-	  (setq m-list (cdr m-list))))
+	(save-excursion
+	  (dolist (mm m-list)
+	    (when (buffer-name (vm-buffer-of mm))
+	      (set-buffer (vm-buffer-of mm))
+	      (cond ((not (buffer-modified-p))
+		     (vm-set-buffer-modified-p t)
+		     (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
+	      (vm-undo-record (list function mm (not flag)))
+	      ;; (vm-undo-boundary)
+	      (vm-increment vm-modification-counter)))))
       (aset (vm-attributes-of m) attr-index flag)
       (vm-mark-for-summary-update m)
       (unless norecord
@@ -549,23 +545,21 @@ Normally, a record of the change is kept for the purpose of undo, and
            ;; do nothing it is is already set 
            (not (eq flag (aref (vm-cached-data-of m) attr-index))))
      (unless norecord
-	(setq vmp (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
-	(while vmp
-	  (if (eq (vm-cached-data-of m) (vm-cached-data-of (car vmp)))
-	      (setq m-list (cons (car vmp) m-list)))
-	  (setq vmp (cdr vmp)))
+	(dolist (v-m (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
+	  (if (eq (vm-cached-data-of m) (vm-cached-data-of v-m))
+	      (setq m-list (cons v-m m-list))))
 	(if (null m-list)
 	    (setq m-list (cons m m-list)))
-	(while m-list
-	  (save-excursion
-	    (set-buffer (vm-buffer-of (car m-list)))
-	    (cond ((not (buffer-modified-p))
-		   (vm-set-buffer-modified-p t)
-		   (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
-	    (vm-undo-record (list function (car m-list) (not flag)))
-;;;	    (vm-undo-boundary)
-	    (vm-increment vm-modification-counter))
-	  (setq m-list (cdr m-list))))
+	(save-excursion
+	  (dolist (mm m-list)
+	    (when (buffer-name (vm-buffer-of mm))
+	      (set-buffer (vm-buffer-of mm))
+	      (cond ((not (buffer-modified-p))
+		     (vm-set-buffer-modified-p t)
+		     (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
+	      (vm-undo-record (list function mm (not flag)))
+	      ;; (vm-undo-boundary)
+	      (vm-increment vm-modification-counter)))))
       (aset (vm-cached-data-of m) attr-index flag)
       (vm-mark-for-summary-update m)
       (unless norecord
@@ -583,8 +577,7 @@ The labels are also set for all the virtual messages mirroring M as
 A record of the change is kept for the purpose of undo, and the
   changed attributes are stuffed into the folder.        USR 2010-04-06" 
   (let ((m-list nil)
-	(old-labels (vm-labels-of m))
-	vmp)
+	(old-labels (vm-labels-of m)))
     (cond
      ((and (not vm-folder-read-only)
 	   (or (not (vm-virtual-messages-of m))
@@ -593,23 +586,21 @@ A record of the change is kept for the purpose of undo, and the
 		       (vm-buffer-of
 			 (vm-real-message-of m)))
 		      vm-folder-read-only))))
-      (setq vmp (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
-      (while vmp
-	(if (eq (vm-attributes-of m) (vm-attributes-of (car vmp)))
-	    (setq m-list (cons (car vmp) m-list)))
-	(setq vmp (cdr vmp)))
+      (dolist (v-m (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
+	(if (eq (vm-attributes-of m) (vm-attributes-of v-m))
+	    (setq m-list (cons v-m m-list))))
       (if (null m-list)
 	  (setq m-list (cons m m-list)))
-      (while m-list
-	(save-excursion
-	  (set-buffer (vm-buffer-of (car m-list)))
-	  (cond ((not (buffer-modified-p))
-		 (vm-set-buffer-modified-p t)
-		 (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
-	  (vm-undo-record (list 'vm-set-labels m old-labels))
-;;;	  (vm-undo-boundary)
-	  (vm-increment vm-modification-counter))
-	(setq m-list (cdr m-list)))
+      (save-excursion
+	(dolist (mm m-list)
+	  (when (buffer-name (vm-buffer-of mm))
+	    (set-buffer (vm-buffer-of mm))
+	    (cond ((not (buffer-modified-p))
+		   (vm-set-buffer-modified-p t)
+		   (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
+	    (vm-undo-record (list 'vm-set-labels m old-labels))
+	    ;; (vm-undo-boundary)
+	    (vm-increment vm-modification-counter))))
       (vm-set-labels-of m labels)
       (vm-set-label-string-of m nil)
       (vm-mark-for-summary-update m)

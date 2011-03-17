@@ -25,7 +25,6 @@
 (provide 'vm-folder)
 
 (eval-when-compile
-  (require 'cl)
   (require 'vm-misc)
   (require 'vm-summary)
   (require 'vm-window)
@@ -216,15 +215,16 @@ and thread indentation."
 		 vm-buffers-needing-display-update)
 	 ;; find the virtual messages of this real message that
 	 ;; need a summary update.
-	 (let ((m-list (vm-virtual-messages-of m)))
-	   (while m-list
-	     (when (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
-	       (when (vm-su-start-of (car m-list))
-		 (vm-add-to-list (car m-list) 
-				 vm-messages-needing-summary-update))
-	       (intern (buffer-name (vm-buffer-of (car m-list)))
-		       vm-buffers-needing-display-update))
-	     (setq m-list (cdr m-list)))))
+	 (dolist (v-m (vm-virtual-messages-of m))
+	   (when (eq (vm-attributes-of m) (vm-attributes-of v-m))
+	     (when (vm-su-start-of v-m)
+	       (vm-add-to-list v-m 
+			       vm-messages-needing-summary-update))
+	     ;; don't trust blindly.  The user could have killed some
+	     ;; of these buffers
+	     (when (buffer-name (vm-buffer-of v-m))
+	       (intern (buffer-name (vm-buffer-of v-m))
+		       vm-buffers-needing-display-update)))))
 	(t
 	 ;; this is a virtual message.
 	 ;;
@@ -238,17 +238,17 @@ and thread indentation."
 	 ;; message is not mirroring its real message so we need
 	 ;; only take care of this one message.
 	 (if (vm-virtual-messages-of m)
-	     (let ((m-list (vm-virtual-messages-of m)))
+	     (progn
 	       ;; schedule updates for all the virtual message who share
 	       ;; the same cache as this message.
-	       (while m-list
-		 (when (eq (vm-attributes-of m) (vm-attributes-of (car m-list)))
-		   (when (vm-su-start-of (car m-list))
-		     (vm-add-to-list (car m-list) 
+	       (dolist (v-m (vm-virtual-messages-of m))
+		 (when (eq (vm-attributes-of m) (vm-attributes-of v-m))
+		   (when (vm-su-start-of v-m)
+		     (vm-add-to-list v-m 
 				     vm-messages-needing-summary-update))
-		   (intern (buffer-name (vm-buffer-of (car m-list)))
-			   vm-buffers-needing-display-update))
-		 (setq m-list (cdr m-list)))
+		   (when (buffer-name (vm-buffer-of v-m))
+		     (intern (buffer-name (vm-buffer-of v-m))
+			     vm-buffers-needing-display-update))))
 	       ;; now take care of the real message
 	       (unless dont-kill-cache
 		 ;; toss the cache.  this also tosses the cache of
@@ -3237,46 +3237,47 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	((condition-case data
 	     (progn (require 'itimer) t)
 	   (error nil))
-	 (and (natnump vm-flush-interval) (not (get-itimer "vm-flush"))
-	      ;; name function time restart-time
-	      ;; ...... idle with-args args
-	      (start-itimer "vm-flush" 'vm-flush-itimer-function
-			    vm-flush-interval nil))
-	 (and (natnump vm-auto-get-new-mail) (not (get-itimer "vm-get-mail"))
-	      (start-itimer "vm-get-mail" 'vm-get-mail-itimer-function
-			    vm-auto-get-new-mail nil))
-	 (and (natnump vm-mail-check-interval)
-	      (not (get-itimer "vm-check-mail"))
-	      (start-itimer "vm-check-mail" 'vm-check-mail-itimer-function
-			    vm-mail-check-interval nil)))
+	 (when (and (natnump vm-flush-interval) (not (get-itimer "vm-flush")))
+	   ;; name function time restart-time
+	   ;; ...... idle with-args args
+	   (start-itimer "vm-flush" 'vm-flush-itimer-function
+			 vm-flush-interval nil))
+	 (when (and (natnump vm-auto-get-new-mail)
+		    (not (get-itimer "vm-get-mail")))
+	   (start-itimer "vm-get-mail" 'vm-get-mail-itimer-function
+			 vm-auto-get-new-mail nil))
+	 (when (and (natnump vm-mail-check-interval)
+		    (not (get-itimer "vm-check-mail")))
+	   (start-itimer "vm-check-mail" 'vm-check-mail-itimer-function
+			 vm-mail-check-interval nil)))
 	((condition-case data
 	     (progn (require 'timer) t)
 	   (error nil))
 	 (let (timer)
-	   (and (natnump vm-flush-interval)
-		(not (vm-timer-using 'vm-flush-itimer-function))
-		(setq timer 
-		      ;;           time restart-time function args
-		      (run-at-time vm-flush-interval vm-flush-interval
-				   'vm-flush-itimer-function nil))
-		(timer-set-function timer 'vm-flush-itimer-function
-				    (list timer)))
-	   (and (natnump vm-mail-check-interval)
-		(not (vm-timer-using 'vm-check-mail-itimer-function))
-		(setq timer 
-		      (run-at-time vm-mail-check-interval
-				   vm-mail-check-interval
-				   'vm-check-mail-itimer-function nil))
-		(timer-set-function timer 'vm-check-mail-itimer-function
-				    (list timer)))
-	   (and (natnump vm-auto-get-new-mail)
-		(not (vm-timer-using 'vm-get-mail-itimer-function))
-		(setq timer 
-		      (run-at-time vm-auto-get-new-mail
-				   vm-auto-get-new-mail
-				   'vm-get-mail-itimer-function nil))
-		(timer-set-function timer 'vm-get-mail-itimer-function
-				    (list timer)))))
+	   (when (and (natnump vm-flush-interval)
+		      (not (vm-timer-using 'vm-flush-itimer-function))
+		      (setq timer 
+			    ;; time restart-time function args
+			    (run-at-time vm-flush-interval vm-flush-interval
+					 'vm-flush-itimer-function nil)))
+	     (timer-set-function timer 'vm-flush-itimer-function
+				 (list timer)))
+	   (when (and (natnump vm-mail-check-interval)
+		      (not (vm-timer-using 'vm-check-mail-itimer-function))
+		      (setq timer 
+			    (run-at-time vm-mail-check-interval
+					 vm-mail-check-interval
+					 'vm-check-mail-itimer-function nil)))
+	     (timer-set-function timer 'vm-check-mail-itimer-function
+				 (list timer)))
+	   (when (and (natnump vm-auto-get-new-mail)
+		      (not (vm-timer-using 'vm-get-mail-itimer-function))
+		      (setq timer 
+			    (run-at-time vm-auto-get-new-mail
+					 vm-auto-get-new-mail
+					 'vm-get-mail-itimer-function nil)))
+	     (timer-set-function timer 'vm-get-mail-itimer-function
+				 (list timer)))))
 	(t
 	 (setq vm-flush-interval t
 	       vm-auto-get-new-mail t))))
@@ -3315,21 +3316,22 @@ Giving a prefix argument overrides the variable and no expunge is done."
   (let ((b-list (buffer-list))
 	(found-one nil)
 	oldval)
-    (while (and (not (input-pending-p)) b-list)
-      (save-excursion
-	(if (not (buffer-live-p (car b-list)))
-	    nil
+    (save-excursion
+      (while (and (not (input-pending-p)) b-list)
+	(when (buffer-live-p (car b-list))
 	  (set-buffer (car b-list))
 	  (when (and (eq major-mode 'vm-mode)
 		     (setq found-one t)
+		     (or (not vm-spooled-mail-waiting)
+			 vm-mail-check-always)
 		     ;; to avoid reentrance into the pop and imap code
 		     (not vm-global-block-new-mail))
 	    (setq oldval vm-spooled-mail-waiting)
 	    (setq vm-spooled-mail-waiting (vm-check-for-spooled-mail nil t))
 	    (unless (eq oldval vm-spooled-mail-waiting)
 	      (intern (buffer-name) vm-buffers-needing-display-update)
-	      (run-hooks 'vm-spooled-mail-waiting-hook)))))
-      (setq b-list (cdr b-list)))
+	      (run-hooks 'vm-spooled-mail-waiting-hook))))
+	(setq b-list (cdr b-list))))
     (vm-update-summary-and-mode-line)
     ;; make the timer go away if we didn't encounter a vm-mode buffer.
     (when (and (not found-one) (null b-list))
@@ -3360,51 +3362,49 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	(found-one nil))
     (while (and (not (input-pending-p)) b-list)
       (save-excursion
-	(if (not (buffer-live-p (car b-list)))
-	    nil
+	(when (buffer-live-p (car b-list))
 	  (set-buffer (car b-list))
-	  (if (and (eq major-mode 'vm-mode)
-		   (setq found-one t)
-		   (not vm-global-block-new-mail)
-		   (not vm-block-new-mail)
-		   (not vm-folder-read-only)
- 		   (not (and (not (buffer-modified-p))
-			     buffer-file-name
-			     (file-newer-than-file-p
-			      (make-auto-save-file-name)
-			      buffer-file-name)))
-		   (vm-get-spooled-mail nil))
-	      (progn
-		;; don't move the message pointer unless the folder
-		;; was empty.
-		(if (and (null vm-message-pointer)
-			 (vm-thoughtfully-select-message))
-		    (vm-preview-current-message)
-		  (vm-update-summary-and-mode-line))))))
+	  (when (and (eq major-mode 'vm-mode)
+		     (setq found-one t)
+		     (not vm-global-block-new-mail)
+		     (not vm-block-new-mail)
+		     (not vm-folder-read-only)
+		     (not (and (not (buffer-modified-p))
+			       buffer-file-name
+			       (file-newer-than-file-p
+				(make-auto-save-file-name)
+				buffer-file-name)))
+		     (vm-get-spooled-mail nil))
+	    ;; don't move the message pointer unless the folder
+	    ;; was empty.
+	    (if (and (null vm-message-pointer)
+		     (vm-thoughtfully-select-message))
+		(vm-preview-current-message)
+	      (vm-update-summary-and-mode-line)))))
       (setq b-list (cdr b-list)))
     ;; make the timer go away if we didn't encounter a vm-mode buffer.
-    (if (and (not found-one) (null b-list))
-	(if timer
-	    (cancel-timer timer)
-	  (set-itimer-restart current-itimer nil)))))
+    (when (and (not found-one) (null b-list))
+      (if timer
+	  (cancel-timer timer)
+	(set-itimer-restart current-itimer nil)))))
 
 ;; support for numeric vm-flush-interval
 ;; if timer argument is present, this means we're using the Emacs
 ;; 'timer package rather than the 'itimer package.
 (defun vm-flush-itimer-function (&optional timer)
-  (if (integerp vm-flush-interval)
-      (if timer
-	  (timer-set-time 
-	   timer
-	   (timer-relative-time (current-time) vm-flush-interval)
-	   vm-flush-interval)
-	(set-itimer-restart current-itimer vm-flush-interval)))
+  (when (integerp vm-flush-interval)
+    (if timer
+	(timer-set-time 
+	 timer
+	 (timer-relative-time (current-time) vm-flush-interval)
+	 vm-flush-interval)
+      (set-itimer-restart current-itimer vm-flush-interval)))
   ;; if no vm-mode buffers are found, we might as well shut down the
   ;; flush itimer.
-  (if (not (vm-flush-cached-data))
-      (if timer
-	  (cancel-timer timer)
-	(set-itimer-restart current-itimer nil))))
+  (unless (vm-flush-cached-data)
+    (if timer
+	(cancel-timer timer)
+      (set-itimer-restart current-itimer nil))))
 
 ;; flush cached data in all vm-mode buffers.
 ;; returns non-nil if any vm-mode buffers were found.
@@ -4086,9 +4086,9 @@ Same as \\[vm-recover-file]."
       nil
     (if (and vm-folder-access-method this-buffer-only)
 	(cond ((eq vm-folder-access-method 'pop)
-	       (vm-pop-folder-check-for-mail interactive))
+	       (vm-pop-folder-check-mail interactive))
 	      ((eq vm-folder-access-method 'imap)
-	       (vm-imap-folder-check-for-mail interactive)))
+	       (vm-imap-folder-check-mail interactive)))
       (let ((triples (vm-compute-spool-files (not this-buffer-only)))
 	    ;; since we could accept-process-output here (POP code),
 	    ;; a timer process might try to start retrieving mail
@@ -4689,11 +4689,13 @@ folder-access-data should be preserved."
    vm-folder-type (vm-get-folder-type))
   (when (not reload)
     (cond ((eq access-method 'pop)
-	   (setq vm-folder-access-method 'pop
-		 vm-folder-access-data (make-vector 2 nil)))
+	   (setq vm-folder-access-method 'pop)
+	   (setq vm-folder-access-data 
+		 (make-vector vm-folder-pop-access-data-length nil)))
 	  ((eq access-method 'imap)
-	   (setq vm-folder-access-method 'imap
-		 vm-folder-access-data (make-vector 11 nil)))))
+	   (setq vm-folder-access-method 'imap)
+	   (setq vm-folder-access-data 
+		 (make-vector vm-folder-imap-access-data-length nil)))))
   (use-local-map vm-mode-map)
   ;; if the user saves after M-x recover-file, let them get new
   ;; mail again.

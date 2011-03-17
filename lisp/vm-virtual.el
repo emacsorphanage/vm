@@ -780,6 +780,7 @@ real or virtual)."
 	       (error 
 		(message "Unable to quit component folders: %s"
 			 (prin1-to-string error-data))))))
+
 	  ((eq major-mode 'vm-mode)
 	   ;; don't trust blindly, user might have killed some of
 	   ;; these buffers.

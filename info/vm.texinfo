@@ -1307,10 +1307,19 @@ every @var{n} seconds for all folders currently being visited.  If new
 mail is present, VM will retrieve it.
 
 @vindex vm-mail-check-interval
+@vindex vm-mail-check-always
 If the value of the variable @code{vm-mail-check-interval} is a
 positive integer @var{n}, VM will check for new mail every @var{n}
-seconds, but instead of retrieving mail, the word ``Mail'' will
-appear on the Emacs mode line of folders that have mail waiting.
+seconds, but instead of retrieving mail, the word ``Mail'' will appear
+on the Emacs mode line of folders that have mail waiting.  Normally,
+once VM finds new mail, it will turn on the ``Mail'' indicator and
+refrain from checking again until you retrieve the new mail.  However,
+if multiple mail clients are trying to retrieve mail from the same
+spool, it is possible that the new mail might get retrieved into
+another mail client and your ``Mail'' indicator won't reflect the
+situation.  If you need to be particular about new mail in such a
+situation, then you should set the variable
+@code{vm-mail-check-always}. 
 
 @node Crash Recovery,, Getting New Mail, Starting Up
 @section Crash Recovery
@@ -5851,6 +5860,7 @@ developers/programmers.
 * MIME Display::          How VM displays MIME messages
 * MIME Composition::	  How MIME messages are composed
 * Extents and Overlays::  How VM deals with XEmacs and GNU Emacs differences
+* Timers and Concurrency:: How VM runs asynchronous timers
 @end menu
 
 @node Folder Internals, Message Internals , , Internals
@@ -7148,7 +7158,7 @@ buttons are then handled as described above.
 
 
 
-@node Extents and Overlays,, MIME Composition, Internals
+@node Extents and Overlays, Timers and Concurrency, MIME Composition, Internals
 @section Extents and Overlays
 
 @inindex extents
@@ -7214,6 +7224,34 @@ overlays.  The difference is necessary because VM allows the
 attachment buttons to be killed and yanked.  It is not possible to
 implement this functionality using overlays.
 @end enumerate
+
+@node Timers and Concurrency,, Extents and Overlays, Internals
+@section Timers and Concurrency
+
+VM has been designed as mainly a sequential program.  However, there
+three timer tasks that get scheduled to occur at regular intervals:
+
+@table @code
+@inindex vm-flush-itimer-function
+@item vm-flush-itimer-function
+Stores message attributes in the folder so that they will be saved
+when an autosave is done.  This is controlled by the variable
+@code{vm-flush-interval}. 
+@inindex vm-get-mail-itimer-function
+@item vm-get-mail-itimer-function
+Moves new mail from maildrops into the folder.  This is controlled by
+the variable @code{vm-auto-get-new-mail}.
+@inindex vm-check-mail-itimer-function
+@item vm-check-mail-itimer-function
+Checks the maildrops for any new mail.  This is controlled by the
+variable @code{vm-mail-check-interval}.
+@end table
+
+@noindent These timer tasks are scheduled using the @code{itimer} package in
+XEmacs and the @code{timer} package in Gnu Emacs.
+
+
+
 
 @node Concept Index, Key Index, Internals, Top
 @unnumbered Concept Index

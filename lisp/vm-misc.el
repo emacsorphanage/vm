@@ -499,6 +499,16 @@ permanently modified."
       (setq n (1+ n)))
     (nreverse res)))
 
+(defun vm-find2 (list1 list2 pred)
+  "Find the first pair of elements of LIST1 and LIST2 satisfying
+PRED and return the position"
+  (let ((n 0))
+    (while (and list1 list2 (not (apply pred (car list1) (car list2) nil)))
+      (setq list1 (cdr list2)
+	    list2 (cdr list2))
+      (setq n (1+ n)))
+    (if (and list1 list2) n nil)))
+
 (defun vm-elems-of (list)
   "Return the set of elements of LIST as a list."
   (let ((res nil))

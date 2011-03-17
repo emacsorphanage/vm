@@ -25,7 +25,6 @@
 (provide 'vm-sort)
 
 (eval-when-compile
-  (require 'cl)
   (require 'vm-misc)
   (require 'vm-minibuf)
   (require 'vm-folder)

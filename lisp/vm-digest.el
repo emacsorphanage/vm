@@ -24,7 +24,6 @@
 (provide 'vm-digest)
 
 (eval-when-compile
-  (require 'cl)
   (require 'vm-misc)
   (require 'vm-summary)
   (require 'vm-folder)

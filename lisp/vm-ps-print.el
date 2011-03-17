@@ -59,9 +59,6 @@
 
 (provide 'vm-ps-print)
 
-(eval-when-compile
-  (require 'cl))
-
 (require 'vm-save)
 (require 'ps-print)
 

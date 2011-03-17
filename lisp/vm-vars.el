@@ -814,6 +814,13 @@ waiting."
   :group 'vm-folders
   :type '(choice (const nil) integer))
 
+(defcustom vm-mail-check-always nil
+  "*Set this variable to `t' if you want VM's mail-check to run
+continuously and take into account multiple mail clients reading from
+the same mail spool."
+  :group 'vm-folders
+  :type 'boolean)
+
 (defvar vm-spooled-mail-waiting nil
   "Value is non-nil if there is mail waiting for the current folder.
 This variable's value is local in all buffers.
@@ -5849,8 +5856,12 @@ Its parent keymap is mail-mode-map.")
 for IMAP folders and nil for local folders.")
 (make-variable-buffer-local 'vm-folder-access-method)
 
-(defvar vm-folder-access-data nil)
+(defvar vm-folder-access-data nil
+  "Holds a vector of data about the mailbox on a mail server that this
+folder is meant to access.")
 (make-variable-buffer-local 'vm-folder-access-data)
+(defconst vm-folder-pop-access-data-length 2)
+(defconst vm-folder-imap-access-data-length 13)
 
 (defvar vm-message-list nil)
 (make-variable-buffer-local 'vm-message-list)
@@ -6442,7 +6453,7 @@ append a space to words that complete unambiguously.")
     "%-"))
 (defconst vm-mode-line-format-classic
   '("" "  %&%& "
-    ("VM " vm-version ": "
+    ("VM: "
      (vm-folder-read-only "read-only ")
      (vm-virtual-folder-definition (vm-virtual-mirror "mirrored "))
      "%b"
@@ -6523,7 +6534,12 @@ append a space to words that complete unambiguously.")
 ;; list of messages to be expunged on the server during the next save
 (defvar vm-pop-messages-to-expunge nil)
 (make-variable-buffer-local 'vm-pop-messages-to-expunge)
-(defvar vm-imap-read-point nil)
+
+(defvar vm-imap-read-point nil
+  "Position in an IMAP process buffer where the next read must
+take place.  In general, IMAP process reading functions move the
+point.  No save-excursion's are used.  This variable holds the
+position for the next read.")
 ;; Variable indicating whether IMAP session handling functions can ask
 ;; questions to the user, typically if they are run from interactive
 ;; commands. 

@@ -42,9 +42,6 @@
 
 (provide 'vm-grepmail)
 
-(eval-when-compile
-  (require 'cl))
-
 (eval-and-compile
   (require 'vm-misc)
   (require 'vm-minibuf)

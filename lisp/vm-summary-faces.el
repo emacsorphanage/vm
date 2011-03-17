@@ -35,9 +35,6 @@
 (provide 'vm-summary-faces)
 
 (eval-when-compile
-  (require 'cl))
-
-(eval-when-compile
   (require 'vm-misc))
 
 (eval-and-compile

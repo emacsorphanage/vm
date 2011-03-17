@@ -24,9 +24,6 @@
 
 (provide 'vm-message)
 
-(eval-when-compile
-  (require 'cl))
-
 (declare-function vm-mime-encode-words-in-string "vm-mime" (string))
 (declare-function vm-reencode-mime-encoded-words-in-string 
 		  "vm-mime" (string))
@@ -565,25 +562,25 @@ works in all VM buffers."
 (defsubst vm-virtual-message-p (m)
   (not (eq m (vm-real-message-of m))))
 
-(defsubst vm-update-virtual-messages (m)
+(defun vm-update-virtual-messages (m)
   "Update all the virtual messages of M to reflect the changes made to
 the headers/body of M."
-  (let ((v-list (vm-virtual-messages-of m)))
-    (save-excursion
-      (while v-list
-	(vm-set-mime-layout-of (car v-list) nil)
-	(vm-set-mime-encoded-header-flag-of (car v-list) nil)
-	(vm-set-line-count-of (car v-list) nil)
-	(set-buffer (vm-buffer-of (car v-list)))
+  (save-excursion
+    (dolist (v-m (vm-virtual-messages-of m))
+      (vm-set-mime-layout-of v-m nil)
+      (vm-set-mime-encoded-header-flag-of v-m nil)
+      (vm-set-line-count-of v-m nil)
+      (when (buffer-name (vm-buffer-of v-m))
+	(set-buffer (vm-buffer-of v-m))
 	(if (and vm-presentation-buffer
-		 (eq (car vm-message-pointer) (car v-list)))
+		 (eq (car vm-message-pointer) v-m))
 	    (save-excursion (vm-preview-current-message)))
 	(when (vectorp vm-thread-obarray)
-	  (vm-unthread-message (car v-list))
-	  (vm-build-threads (list (car v-list))))
+	  (vm-unthread-message v-m)
+	  (vm-build-threads (list v-m)))
 	;; (if vm-summary-show-threads
 	;;     (intern (buffer-name) buffers-needing-thread-sort))
-	(setq v-list (cdr v-list))))))
+	))))
 
 (defun vm-pp-message (m)
   (pp

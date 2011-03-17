@@ -61,6 +61,10 @@ VM 8.2.0b (2011-02-28)
 
   IMPROVEMENTS
 
+   * VM refrains from repeatedly checking for new mail once it has
+     found some new mail on the spool. Set `vm-mail-check-always' to
+     override this behavior.  
+
    * When a predefined virtual folder is quit, all the component
      folders that it depends on will also be quit automatically.
 

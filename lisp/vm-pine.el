@@ -85,10 +85,6 @@
 
 (provide 'vm-pine)
  
-
-(eval-when-compile 
-  (require 'cl))
-
 (eval-when-compile
   (require 'vm-misc)
   (require 'vm-folder)

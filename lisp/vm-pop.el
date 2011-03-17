@@ -25,7 +25,6 @@
 
 ;; For function declarations
 (eval-when-compile
-  (require 'cl)
   (require 'vm-misc)
   (require 'vm-folder)
   (require 'vm-summary)
@@ -1147,13 +1146,22 @@ popdrop
       got-some)))
 
 ;;;###autoload
-(defun vm-pop-folder-check-for-mail (&optional interactive)
+(defun vm-pop-folder-check-mail (&optional interactive)
+  "Check if there is new mail on the POP server for the current POP
+folder.
+
+Optional argument INTERACTIVE says whether this function is being
+called from an interactive use of a command."
   (if (or vm-global-block-new-mail
 	  (null (vm-establish-new-folder-pop-session interactive)))
       nil
     (let ((result (car (vm-pop-get-synchronization-data))))
       (vm-pop-end-session (vm-folder-pop-process))
       result )))
+(defalias 'vm-pop-folder-check-for-mail 'vm-pop-folder-check-mail)
+(make-obsolete 'vm-pop-folder-check-for-mail
+	       'vm-pop-folder-check-mail "8.2.0")
+
 
 ;;;###autoload
 (defun vm-pop-find-spec-for-name (name)

@@ -23,9 +23,6 @@
 
 (provide 'vm-mime)
 
-(eval-when-compile
-  (require 'cl))
-
 (eval-and-compile
   (require 'vm-misc))
 
