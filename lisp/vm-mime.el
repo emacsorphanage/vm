@@ -880,60 +880,23 @@ out includes base-64, quoted-printable, uuencode and CRLF conversion."
   (vm-emit-mime-decoding-message "Decoding uuencoded stuff... done"))
 
 (defun vm-decode-mime-message-headers (&optional m)
-  (let ((case-fold-search t)
-	(buffer-read-only nil)
-	charset need-conversion encoding match-start match-end start end
-	previous-end)
-    (save-excursion
-      (if m (goto-char (vm-headers-of m)))
-      (while (re-search-forward vm-mime-encoded-word-regexp
-                                (if m (vm-text-of m) (point-max)) t)
-	(setq match-start (match-beginning 0)
-	      match-end (match-end 0)
-	      charset (buffer-substring (match-beginning 1) (match-end 1))
-              need-conversion nil
-	      encoding (buffer-substring (match-beginning 4) (match-end 4))
-	      start (match-beginning 5)
-	      end (vm-marker (match-end 5)))
-	;; don't change anything if we can't display the
-	;; character set properly.
-	(if (and (not (vm-mime-charset-internally-displayable-p charset))
-		 (not (setq need-conversion
-			    (vm-mime-can-convert-charset charset))))
-	    nil
-	  ;; suppress whitespace between encoded words.
-	  (and previous-end
-	       (string-match "\\`[ \t\n]*\\'"
-			     (buffer-substring previous-end match-start))
-	       (setq match-start previous-end))
-	  (delete-region end match-end)
-	  (condition-case data
-	      (cond ((string-match "B" encoding)
-		     (vm-mime-base64-decode-region start end))
-		    ((string-match "Q" encoding)
-		     (vm-mime-Q-decode-region start end))
-		    (t (vm-mime-error "unknown encoded word encoding, %s"
-				      encoding)))
-	    (vm-mime-error (apply 'message (cdr data))
-			   (goto-char start)
-			   (insert "**invalid encoded word**")
-			   (delete-region (point) end)))
-	  (and need-conversion
-	       (setq charset (vm-mime-charset-convert-region
-			      charset start end)))
-	  (vm-mime-charset-decode-region charset start end)
-	  (goto-char end)
-	  (setq previous-end end)
-	  (delete-region match-start start))))))
+  (vm-decode-mime-encoded-words 
+   ;; the starting point with null m is (point) to match the
+   ;; previous duplicated code here. Not sure whether it's
+   ;; necessary. JCB, 2011-01-03
+   (if m (vm-headers-of m) (point))
+   (if m (vm-text-of m) (point-max))))
 
-(defun vm-decode-mime-encoded-words ()
+;; optional argument rstart and rend delimit the region in
+;; which to decode
+(defun vm-decode-mime-encoded-words (&optional rstart rend)
   (let ((case-fold-search t)
 	(buffer-read-only nil)
 	charset need-conversion encoding match-start match-end start end
 	previous-end)
     (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward vm-mime-encoded-word-regexp nil t)
+      (goto-char (or rstart (point-min)))
+      (while (re-search-forward vm-mime-encoded-word-regexp rend t)
 	(setq match-start (match-beginning 0)
 	      match-end (match-end 0)
 	      charset (buffer-substring (match-beginning 1) (match-end 1))
