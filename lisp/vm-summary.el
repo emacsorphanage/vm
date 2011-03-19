@@ -228,8 +228,9 @@ the messages in the current folder."
 	      (setq mp m-list)
 	      (while mp
 		(setq m (car mp))
-		(when (vm-su-start-of m)
-		  (set-marker (vm-su-start-of m) nil)
+		(when (markerp (vm-su-start-of m))
+		  (set-marker (vm-su-start-of m) nil))
+		(when (markerp (vm-su-end-of m))
 		  (set-marker (vm-su-end-of m) nil))
 		(when (setq o (vm-su-summary-mouse-track-overlay-of m))
 		  (vm-detach-extent o))

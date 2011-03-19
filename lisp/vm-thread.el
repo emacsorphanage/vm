@@ -93,7 +93,7 @@
   )
 
 (defsubst vm-thread-debug (message arg)
-  (if vm-thread-debug
+  (if (and vm-thread-debug vm-summary-show-threads (vectorp vm-thread-obarray))
       (debug message arg)))
 
 
