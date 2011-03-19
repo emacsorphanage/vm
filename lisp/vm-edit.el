@@ -84,7 +84,7 @@ replace the original, use C-c C-] and the edit will be aborted."
 			 (vm-headers-of (car mp))
 			 (vm-text-end-of (car mp))))
 	(set-buffer edit-buf)
-	(set-buffer-modified-p nil)
+	(set-buffer-modified-p nil)	; edit-buf
 	(goto-char (point-min))
 	(if (< offset 0)
 	    (search-forward "\n\n" nil t)
@@ -306,21 +306,22 @@ thread have their cached data discarded."
 	    (vm-update-summary-and-mode-line))))
       (vm-display edit-buf nil '(vm-edit-message-end)
 		  '(vm-edit-message-end reading-message startup))
-      (set-buffer-modified-p nil)
+      (set-buffer-modified-p nil)	; edit-buf
       (kill-buffer edit-buf))))
 
 (defun vm-edit-message-abort ()
   "Abort the edit of a message, forgetting changes to the message."
   (interactive)
-  (if (null vm-message-pointer)
-      (error "This is not a VM message edit buffer."))
-  (if (null (buffer-name (vm-buffer-of (vm-real-message-of (car vm-message-pointer)))))
-      (error "The folder buffer for this message has been killed."))
+  (unless vm-message-pointer
+    (error "This is not a VM message edit buffer."))
+  (unless (buffer-name 
+	   (vm-buffer-of (vm-real-message-of (car vm-message-pointer))))
+    (error "The folder buffer for this message has been killed."))
   (vm-set-edit-buffer-of (car vm-message-pointer) nil)
   (vm-display (current-buffer) nil
 	      '(vm-edit-message-abort)
 	      '(vm-edit-message-abort reading-message startup))
-  (set-buffer-modified-p nil)
+  (set-buffer-modified-p nil)		; edit-buffer
   (kill-buffer (current-buffer))
   (message "Aborted, no change."))
 

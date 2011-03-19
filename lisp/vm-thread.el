@@ -774,7 +774,8 @@ See also: `vm-thread-root'."
 ;;;###autoload
 (defun vm-thread-root-p (m)
   "Returns t if message M is known to be a thread root, nil
-otherwise."
+otherwise.  No exceptions are thrown for errors."
+  ;; Threads may not be turned on.  So, ignore errors.
   (condition-case err
       (eq m (vm-thread-root m))
     (vm-thread-error

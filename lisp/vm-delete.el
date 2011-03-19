@@ -458,7 +458,7 @@ ignored."
 		    (and (cdr curr)
 			 (vm-set-reverse-link-of (car (cdr curr)) prev)))
 		  (vm-set-virtual-messages-of (car mp) (cdr vms))
-		  (vm-set-buffer-modified-p t)))
+		  (vm-mark-folder-modified-p (vm-buffer-of (car vms)))))
 	      (setq vms (cdr vms))))))
 	(cond
 	 ((or (not virtual-messages)
@@ -492,7 +492,7 @@ ignored."
 	    ;; disable any summary update that may have
 	    ;; already been scheduled.
 	    (vm-set-su-start-of (car mp) nil)
-	    (vm-set-buffer-modified-p t)
+	    (vm-mark-folder-modified-p (current-buffer))
 	    (vm-increment vm-modification-counter))))
 	(if (eq (vm-attributes-of (car mp))
 		(vm-attributes-of (vm-real-message-of (car mp))))

@@ -1180,7 +1180,7 @@ set to the command name so that window configuration will be done."
 	 (set-menubar-dirty-flag))
 	((vm-menu-fsfemacs-menus-p)
 	 ;; force-mode-line-update seems to have been buggy in Emacs
-	 ;; 21, 22, and 23.  USR, 2011-02-26
+	 ;; 21, 22, and 23.  So we do it ourselves.  USR, 2011-02-26
 	 ;; (force-mode-line-update t)
 	 (set-buffer-modified-p (buffer-modified-p))
 	 (when (and vm-user-interaction-buffer

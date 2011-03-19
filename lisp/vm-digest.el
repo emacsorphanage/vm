@@ -254,7 +254,8 @@ all of them will be burst."
 			(inhibit-quit t))
 		    (goto-char (point-max))
 		    (insert-buffer-substring work-buffer)
-		    (set-buffer-modified-p old-buffer-modified-p)
+		    (vm-restore-buffer-modified-p 
+		     old-buffer-modified-p folder-buffer)
 		    ;; return non-nil so caller knows we found some messages
 		    t ))
 		 ;; return nil so the caller knows we didn't find anything
@@ -567,12 +568,13 @@ RFC 1153.  Otherwise assume RFC 934 digests."
 			  (inhibit-quit t))
 		      (goto-char (point-max))
 		      (insert-buffer-substring work-buffer)
-		      (set-buffer-modified-p old-buffer-modified-p)
+		      (vm-restore-buffer-modified-p 
+		       old-buffer-modified-p folder-buffer)
 		      ;; return non-nil so caller knows we found some messages
 		      t ))
 		   ;; return nil so the caller knows we didn't find anything
 		   (t nil)))
-	 (and work-buffer (kill-buffer work-buffer)))))))
+	 (when work-buffer (kill-buffer work-buffer)))))))
 
 (defun vm-rfc934-burst-message (m)
   "Burst messages from the RFC 934 digest message M.
@@ -643,9 +645,9 @@ burst."
 	      (t (error "Unknown digest type: %s" digest-type)))
 	(message "Bursting %s digest... done" digest-type)
 	(vm-clear-modification-flag-undos)
-	(vm-set-buffer-modified-p t)
+	(vm-mark-folder-modified-p (current-buffer))
 	(vm-increment vm-modification-counter)
-	(and vm-delete-after-bursting
+	(when vm-delete-after-bursting
 	     ;; if start folder was virtual, we're now in the wrong
 	     ;; buffer.  switch back.
 	     (save-excursion
@@ -730,7 +732,7 @@ burst."
 	(work-buffer nil))
     (vm-retrieve-operable-messages 1 mlist)
     (unwind-protect
-	(save-excursion
+	(save-excursion			; to go to work-buffer
 	  (setq work-buffer (generate-new-buffer
 			     (format "digest from %s/%s%s"
 				     (current-buffer)
@@ -765,7 +767,7 @@ burst."
  		   (let ((vm-move-after-deleting nil))
  		     (vm-delete-message 1))))
 	    (setq mlist (cdr mlist)))
-	  (set-buffer-modified-p nil)
+	  (set-buffer-modified-p nil)	; work-buffer
 	  (vm-save-buffer-excursion
 	   (vm-goto-new-folder-frame-maybe 'folder)
 	   (vm-mode)
@@ -778,7 +780,7 @@ burst."
 	  (vm-display (or vm-presentation-buffer (current-buffer)) t
 		      (list this-command) '(vm-mode startup))
 	  (setq work-buffer nil))
-      (and work-buffer (kill-buffer work-buffer)))))
+      (when work-buffer (kill-buffer work-buffer)))))
 
 (defun vm-guess-digest-type (m)
   "Guess the digest type of the message M.

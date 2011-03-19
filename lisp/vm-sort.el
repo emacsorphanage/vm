@@ -101,7 +101,7 @@ the folder undisturbed."
 	(if (not vm-folder-read-only)
 	    (progn
 	      (setq vm-message-order-changed t)
-	      (vm-set-buffer-modified-p t)
+	      (vm-mark-folder-modified-p (current-buffer))
 	      (vm-clear-modification-flag-undos))))
       (cond ((null ovmp-prev)
 	     (setq vm-numbering-redo-start-point vm-message-list
@@ -493,12 +493,13 @@ folder in the order in which the messages arrived."
 		  ;; message in front of it.
 		  (setq mp-new (cdr mp-new)))))
 	    (message "Moving messages... done")
-	    (vm-set-buffer-modified-p t)
+	    (vm-mark-folder-modified-p (current-buffer))
 	    (vm-clear-modification-flag-undos))
 	(if (and order-did-change (not vm-folder-read-only))
 	    (progn
 	      (setq vm-message-order-changed t)
-	      ;; (vm-set-buffer-modified-p t)  ; only viewing order changed
+	      ;; only viewing order changed here
+	      ;; (vm-mark-folder-modified-p (current-buffer))
 	      (vm-clear-modification-flag-undos))))
       (setq vm-ml-sort-keys ml-keys)
       (intern (buffer-name) vm-buffers-needing-display-update)

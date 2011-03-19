@@ -41,16 +41,6 @@
 ;; - message
 ;; - args
 
-(defun vm-set-buffer-modified-p (flag &optional buffer)
-  "Sets the buffer-modified-p of the current folder to FLAG.  Optional
-argument BUFFER can ask for it to be done for some other folder."
-  (with-current-buffer (or buffer (current-buffer))
-    (set-buffer-modified-p flag)
-    (vm-increment vm-modification-counter)
-    (intern (buffer-name) vm-buffers-needing-display-update)
-    (if (null flag)
-	(setq vm-messages-not-on-disk 0))))
-
 (defun vm-undo-boundary ()
   (if (car vm-undo-record-list)
       (setq vm-undo-record-list (cons nil vm-undo-record-list))))
@@ -512,7 +502,7 @@ Normally, a record of the change is kept for the purpose of undo, and
 	    (when (buffer-name (vm-buffer-of mm))
 	      (set-buffer (vm-buffer-of mm))
 	      (cond ((not (buffer-modified-p))
-		     (vm-set-buffer-modified-p t)
+		     (vm-mark-folder-modified-p (vm-buffer-of mm))
 		     (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
 	      (vm-undo-record (list function mm (not flag)))
 	      ;; (vm-undo-boundary)
@@ -555,7 +545,7 @@ Normally, a record of the change is kept for the purpose of undo, and
 	    (when (buffer-name (vm-buffer-of mm))
 	      (set-buffer (vm-buffer-of mm))
 	      (cond ((not (buffer-modified-p))
-		     (vm-set-buffer-modified-p t)
+		     (vm-mark-folder-modified-p (vm-buffer-of mm))
 		     (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
 	      (vm-undo-record (list function mm (not flag)))
 	      ;; (vm-undo-boundary)
@@ -596,7 +586,7 @@ A record of the change is kept for the purpose of undo, and the
 	  (when (buffer-name (vm-buffer-of mm))
 	    (set-buffer (vm-buffer-of mm))
 	    (cond ((not (buffer-modified-p))
-		   (vm-set-buffer-modified-p t)
+		   (vm-mark-folder-modified-p (vm-buffer-of mm))
 		   (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
 	    (vm-undo-record (list 'vm-set-labels m old-labels))
 	    ;; (vm-undo-boundary)

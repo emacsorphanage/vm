@@ -852,7 +852,7 @@ real or virtual)."
     (dolist (real-buf vm-real-buffers)
 	(set-buffer real-buf)
 	(vm-save-folder prefix)))
-  (vm-set-buffer-modified-p nil)
+  (vm-unmark-folder-modified-p (current-buffer)) 
   (vm-clear-modification-flag-undos)
   (vm-update-summary-and-mode-line))
 

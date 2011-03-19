@@ -575,7 +575,7 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	(setq vm-imap-retrieved-messages imap-retrieved-messages)
 	(when (eq vm-flush-interval t)
 	  (vm-stuff-imap-retrieved))
-	(vm-set-buffer-modified-p t))
+	(vm-mark-folder-modified-p (current-buffer)))
       (when statblob 
 	(vm-imap-stop-status-timer statblob))
       (when process
@@ -820,7 +820,7 @@ on all the relevant IMAP servers and then immediately expunges."
     (unless trouble 
       (setq vm-imap-retrieved-messages nil)
       (when (> delete-count 0)
-	(vm-set-buffer-modified-p t)))))
+	(vm-mark-folder-modified-p (current-buffer))))))
 
 (defun vm-imap-clear-invalid-retrieval-entries (source retrieved uid-validity)
   "Remove from RETRIEVED (a copy of vm-imap-retrieved-messages)
@@ -2269,7 +2269,7 @@ IMAP process or nil if unsuccessful."
 		       (vm-folder-imap-maildrop-spec)
 		       vm-imap-retrieved-messages
 		       uid-validity))
-		(vm-set-buffer-modified-p t))
+		(vm-mark-folder-modified-p (current-buffer)))
 	    (error "Aborted")))
 
       (vm-set-folder-imap-uid-validity uid-validity) ; unique per session

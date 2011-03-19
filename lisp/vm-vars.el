@@ -5956,7 +5956,10 @@ folder.  (Not in use.)")
 (defvar vm-last-visit-imap-account nil)
 (defvar vm-last-pipe-command nil)
 (make-variable-buffer-local 'vm-last-pipe-command)
-(defvar vm-messages-not-on-disk 0)
+(defvar vm-messages-not-on-disk 0
+  "Number of messages in the folder that are not on the disk copy
+of the folder.  This is the count from the user's point of view but
+may include some messages that are really on disk.")
 (make-variable-buffer-local 'vm-messages-not-on-disk)
 (defvar vm-totals nil)
 (make-variable-buffer-local 'vm-totals)
@@ -5971,7 +5974,7 @@ folder.  (Not in use.)")
 update.")
 (defvar vm-buffers-needing-undo-boundaries nil
   "Obarray containing the names of VM buffers that need undo
-boundaries.") 
+boundaries.") 				; whatever they are!
 (defvar vm-numbering-redo-start-point nil
   "A pointer into `vm-message-list' indicating the position from which
 messages may need to be renumbered.")

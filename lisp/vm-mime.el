@@ -1420,15 +1420,16 @@ shorter pieces, rebuilt it from them."
 working in headers-only mode, the copy is made from the external
 source of the message."
   (let ((mail-buffer (current-buffer))
-	b mm
+	pres-buf mm
 	(real-m (vm-real-message-of m))
 	(modified (buffer-modified-p)))
     (cond ((or (null vm-presentation-buffer-handle)
 	       (null (buffer-name vm-presentation-buffer-handle)))
-	   (setq b (vm-generate-new-multibyte-buffer (concat (buffer-name)
-							  " Presentation")))
+	   ;; Create a new Presentation buffer
+	   (setq pres-buf (vm-generate-new-multibyte-buffer 
+			   (concat (buffer-name) " Presentation")))
 	   (save-excursion
-	     (set-buffer b)
+	     (set-buffer pres-buf)
 	     (if (fboundp 'buffer-disable-undo)
 		 (buffer-disable-undo (current-buffer))
 	       ;; obfuscation to make the v19 compiler not whine
@@ -1462,16 +1463,16 @@ source of the message."
 	     (when (vm-menu-support-possible-p)
 	       (vm-menu-install-menus))
 	     (run-hooks 'vm-presentation-mode-hook))
-	   (setq vm-presentation-buffer-handle b)))
-    (setq b vm-presentation-buffer-handle)
+	   (setq vm-presentation-buffer-handle pres-buf)))
+    (setq pres-buf vm-presentation-buffer-handle)
     (setq vm-presentation-buffer vm-presentation-buffer-handle)
     (setq vm-mime-decoded nil)
     ;; W3 or some other external mode might set some local colors
     ;; in this buffer; remove them before displaying a different
     ;; message here.
     (when (fboundp 'remove-specifier)
-      (remove-specifier (face-foreground 'default) b)
-      (remove-specifier (face-background 'default) b))
+      (remove-specifier (face-foreground 'default) pres-buf)
+      (remove-specifier (face-background 'default) pres-buf))
     (save-excursion
       (set-buffer (vm-buffer-of real-m))
       (save-restriction
@@ -1481,20 +1482,22 @@ source of the message."
 	;; otherwise the vheader offset computed below will be
 	;; wrong.
 	(vm-vheaders-of real-m)
-	(set-buffer b)
+	(set-buffer pres-buf)
 	;; do not keep undo information in presentation buffers 
 	(setq buffer-undo-list t)
 	(widen)
 	(let ((buffer-read-only nil)
 	      (inhibit-read-only t))
-	  (setq modified (buffer-modified-p))
+	  ;; We don't care about the buffer-modified-p flag of the
+	  ;; Presentation buffer.  Only that of the folder matters.
+	  ;; (setq modified (buffer-modified-p)) 
 	  (unwind-protect
 	      (progn
 		(erase-buffer)
 		(insert-buffer-substring (vm-buffer-of real-m)
 					 (vm-start-of real-m)
 					 (vm-end-of real-m)))
-	    (set-buffer-modified-p modified)))
+	    (vm-reset-buffer-modified-p modified pres-buf)))
 	;; make a modifiable copy of the message struct
 	(setq mm (copy-sequence m))
 	;; also a modifiable copy of the location data
@@ -1531,7 +1534,8 @@ source of the message."
 		  (message "Cannot fetch; %s" (error-message-string err)))))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 	       (vm-fetch-message (read (current-buffer)) mm)))
-	(set-buffer-modified-p modified)
+	;; This might be redundant.  Wasn't in revision 717.
+	;; (vm-reset-buffer-modified-p modified (current-buffer)) 
 	;; fixup the reference to the message
 	(setcar vm-message-pointer mm)))))
 
@@ -1551,15 +1555,15 @@ is made from the external source of the message."
 working in headers-only mode, the copy is made from the external
 source of the message."
   (let ((mail-buffer (current-buffer))
-	b mm
+	fetch-buf mm
 	(real-m (vm-real-message-of m))
 	(modified (buffer-modified-p)))
     (cond ((or (null vm-fetch-buffer)
 	       (null (buffer-name vm-fetch-buffer)))
-	   (setq b (vm-generate-new-multibyte-buffer (concat (buffer-name)
-							  " Fetch")))
+	   (setq fetch-buf (vm-generate-new-multibyte-buffer 
+			    (concat (buffer-name) " Fetch")))
 	   (save-excursion
-	     (set-buffer b)
+	     (set-buffer fetch-buf)
 	     (if (fboundp 'buffer-disable-undo)
 		 (buffer-disable-undo (current-buffer))
 	       ;; obfuscation to make the v19 compiler not whine
@@ -1593,16 +1597,16 @@ source of the message."
 	     (when (vm-menu-support-possible-p)
 	       (vm-menu-install-menus))
 	     (run-hooks 'vm-message-mode-hook))
-	   (setq vm-fetch-buffer b)))
-    (setq b vm-fetch-buffer)
+	   (setq vm-fetch-buffer fetch-buf)))
+    (setq fetch-buf vm-fetch-buffer)
     (setq vm-mime-decoded nil)
     ;; W3 or some other external mode might set some local colors
     ;; in this buffer; remove them before displaying a different
     ;; message here.
     (if (fboundp 'remove-specifier)
 	(progn
-	  (remove-specifier (face-foreground 'default) b)
-	  (remove-specifier (face-background 'default) b)))
+	  (remove-specifier (face-foreground 'default) fetch-buf)
+	  (remove-specifier (face-background 'default) fetch-buf)))
     (save-excursion
       (set-buffer (vm-buffer-of real-m))
       (save-restriction
@@ -1612,20 +1616,20 @@ source of the message."
 	;; otherwise the vheader offset computed below will be
 	;; wrong.
 	(vm-vheaders-of real-m)
-	(set-buffer b)
+	(set-buffer fetch-buf)
 	;; do not keep undo information in message buffers 
 	(setq buffer-undo-list t)
 	(widen)
 	(let ((buffer-read-only nil)
 	      (inhibit-read-only t))
-	  (setq modified (buffer-modified-p))
+	  ;; (setq modified (buffer-modified-p)) ; why this? USR, 2011-03-18
 	  (unwind-protect
 	      (progn
 		(erase-buffer)
 		(insert-buffer-substring (vm-buffer-of real-m)
 					 (vm-start-of real-m)
 					 (vm-end-of real-m)))
-	    (set-buffer-modified-p modified)))
+	    (vm-restore-buffer-modified-p modified fetch-buf)))
 	(setq mm (copy-sequence m))
 	(vm-set-location-data-of mm (vm-copy (vm-location-data-of m)))
 	(vm-set-softdata-of mm (vm-copy (vm-softdata-of m)))
@@ -1662,7 +1666,7 @@ source of the message."
 		  (message "Cannot fetch; %s" (error-message-string err)))))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 	       (vm-fetch-message (read (current-buffer)) mm)))
-	(set-buffer-modified-p modified)
+	(vm-reset-buffer-modified-p modified fetch-buf)
 	;; fixup the reference to the message
 	(setcar vm-message-pointer mm)))))
 
@@ -4581,8 +4585,7 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
             (setq o 'none)
             (backtrace)
             (message "There is a bug, please report it with *backtrace*"))
-          (if (eq 'none o)
-              nil;; this is no mime message
+          (unless (eq o 'none)
             (setq type (car (vm-mm-layout-type o)))
             
             (cond ((or (vm-mime-types-match "multipart/alternative" type)
@@ -4669,7 +4672,7 @@ are also included."
 	(vm-preview-current-message)))
     (if (> n 0)
 	(message "%d attachment%s deleted" n (if (= n 1) "" "s"))
-      (message "No attachments found")))
+      (message "No attachments deleted")))
   (vm-update-summary-and-mode-line))
 
 ;; (define-obsolete-function-alias 'vm-mime-delete-all-attachments
@@ -4760,7 +4763,7 @@ created."
     
     (if (> n 0)
         (message "%d attachment%s saved" n (if (= n 1) "" "s"))
-      (message "No attachments found"))))
+      (message "No attachments saved"))))
 
 ;; (define-obsolete-function-alias 'vm-mime-save-all-attachments
 ;;   'vm-save-all-attachments "8.2.0")
@@ -4844,7 +4847,7 @@ confirmed before creating a new directory."
     
     (if (> n 0)
         (message "%d attachment%s saved" n (if (= n 1) "" "s"))
-      (message "No attachments found"))))
+      (message "No attachments saved"))))
 ;; for the karking compiler
 (defvar vm-menu-mime-dispose-menu)
 

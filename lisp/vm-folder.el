@@ -58,6 +58,49 @@
 		  
 
 
+(defun vm-set-buffer-modified-p (flag &optional buffer)
+  "Sets the `buffer-modified-p' of the current folder to FLAG.  Optional
+argument BUFFER can ask for it to be done for some other folder. 
+
+This function is deprecated.  Use `vm-mark-folder-modified-p' or
+  `vm-unmark-folder-modified-p' instead."
+  (if flag
+      (vm-mark-folder-modified-p buffer)
+    (vm-unmark-folder-modified-p buffer)))
+
+(defun vm-mark-folder-modified-p (&optional buffer)
+  "Sets the `buffer-modified-p' flag of the current folder to t.  Optional
+argument BUFFER can ask for it to be done for some other folder. 
+
+This function also zeroes `vm-messages-not-on-disk' and schedules the
+folder for redisplay."
+  (with-current-buffer (or buffer (current-buffer))
+    (set-buffer-modified-p t)
+    (vm-increment vm-modification-counter)
+    (intern (buffer-name) vm-buffers-needing-display-update)
+    (setq vm-messages-not-on-disk 0)))
+
+(defun vm-unmark-folder-modified-p (buffer)
+  "Sets the `buffer-modified-p' flag of the current folder to nil."
+  (with-current-buffer (or buffer (current-buffer))
+    (set-buffer-modified-p nil)
+    (vm-increment vm-modification-counter)
+    (intern (buffer-name) vm-buffers-needing-display-update)))
+
+(defun vm-reset-buffer-modified-p (value buffer)
+  "Sets the `buffer-modified-p' flag of BUFFER to VALUE.  This
+is not meant for changing the flag for folders.  Use
+`vm-mark-folder-modified-p' or `vm-unset-folder-modified-p' instead."
+  (with-current-buffer buffer
+    (set-buffer-modified-p value)))
+
+(defun vm-restore-buffer-modified-p (value buffer)
+  "Restores the `buffer-modified-p' flag of BUFFER to a saved VALUE. 
+This is the same as `vm-reset-buffer-modified-p' but represents a
+different intent."  
+  (with-current-buffer buffer
+    (set-buffer-modified-p value)))
+
 (defun vm-message-position (m)
   "Return a message-pointer pointing to the message M in the
 `vm-message-list'." 
@@ -290,15 +333,14 @@ on its presentation buffer, if any."
 		  (omodified (buffer-modified-p)))
 	      (unwind-protect
 		  (erase-buffer)
-		(set-buffer-modified-p omodified))))
+		(vm-restore-buffer-modified-p omodified (current-buffer)))))
 	(if vm-presentation-buffer
 	    (let ((omodified (buffer-modified-p)))
 	      (unwind-protect
-		  (save-excursion
-		    (set-buffer vm-presentation-buffer)
+		  (with-current-buffer vm-presentation-buffer
 		    (let ((buffer-read-only nil))
 		      (erase-buffer)))
-		(set-buffer-modified-p omodified)))))
+		(vm-restore-buffer-modified-p omodified (current-buffer))))))
     ;; try to avoid calling vm-su-labels if possible so as to
     ;; avoid loading vm-summary.el.
     (if (vm-labels-of (car vm-message-pointer))
@@ -343,8 +385,7 @@ on its presentation buffer, if any."
 				   'vm-ml-labels
 				   'vm-spooled-mail-waiting
 				   'vm-message-list)
-	(with-current-buffer vm-summary-buffer
-	  (set-buffer-modified-p modified))))
+	  (vm-reset-buffer-modified-p modified vm-summary-buffer)))
   (if vm-presentation-buffer
       (let ((modified (buffer-modified-p)))
 	(vm-copy-local-variables vm-presentation-buffer
@@ -369,8 +410,7 @@ on its presentation buffer, if any."
 				 'vm-ml-labels
 				 'vm-spooled-mail-waiting
 				 'vm-message-list)
-	(with-current-buffer vm-presentation-buffer
-	  (set-buffer-modified-p modified))))
+	(vm-reset-buffer-modified-p modified vm-presentation-buffer)))
   (vm-force-mode-line-update))
 
 (defun vm-update-summary-and-mode-line ()
@@ -1069,11 +1109,10 @@ vm-folder-type is initialized here."
      (goto-char (point-min))
      (list nil vm-mail-header-order "NO_MATCH_ON_HEADERS:")))
   (save-excursion
-    (if message
-	(progn
-	  (set-buffer (vm-buffer-of message))
-	  (setq keep-list vm-visible-headers
-		discard-regexp vm-invisible-header-regexp)))
+    (when message
+      (with-current-buffer (vm-buffer-of message)
+	(setq keep-list vm-visible-headers
+	      discard-regexp vm-invisible-header-regexp)))
     (save-excursion
       (save-restriction
 	(widen)
@@ -1242,8 +1281,9 @@ vm-folder-type is initialized here."
 			 (goto-char (vm-headers-of message))
 			 (insert-buffer-substring work-buffer)
 			 (delete-region (point) (vm-text-of message))
-			 (set-buffer-modified-p old-buffer-modified-p))))
-	       (and work-buffer (kill-buffer work-buffer)))
+			 (vm-restore-buffer-modified-p ; folder-buffer
+			  old-buffer-modified-p (current-buffer)))))
+	       (when work-buffer (kill-buffer work-buffer)))
 	     (if message
 		 (progn
 		   (vm-set-vheaders-of message
@@ -1999,13 +2039,13 @@ FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
 		   (vm-su-summary m)))
 	     (setq attributes (vm-attributes-of m)
 		   cache (vm-cached-data-of m))
-	     (and delflag for-other-folder
-		  (vm-set-deleted-flag-in-vector
-		   (setq attributes (copy-sequence attributes)) nil))
-	     (if (eq vm-folder-type 'babyl)
-		 (vm-stuff-babyl-attributes m for-other-folder))
-             (if (eq vm-sync-thunderbird-status t)
-                 (vm-stuff-thunderbird-status m))
+	     (when (and delflag for-other-folder)
+	       (vm-set-deleted-flag-in-vector
+		(setq attributes (copy-sequence attributes)) nil))
+	     (when (eq vm-folder-type 'babyl)
+	       (vm-stuff-babyl-attributes m for-other-folder))
+             (when (eq vm-sync-thunderbird-status t)
+	       (vm-stuff-thunderbird-status m))
 	     (goto-char (vm-headers-of m))
 	     (while (re-search-forward vm-attributes-header-regexp
 				       (vm-text-of m) t)
@@ -2042,7 +2082,8 @@ FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
 		 (vm-set-stuff-flag-of m nil) ; same effect as VM 7.19
 	       (vm-set-stuff-flag-of m nil))  ; new
 	     )
-	 (set-buffer-modified-p old-buffer-modified-p))))))
+	 (vm-restore-buffer-modified-p	; folder-buffer
+	  old-buffer-modified-p (current-buffer)))))))
   
 (defun vm-stuff-folder-data (&optional abort-if-input-pending quiet) 
   "Stuff the soft and cached data of all the messages that have the
@@ -2268,7 +2309,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 			       vm-label-obarray)
 		     (prin1-to-string list))
 		   "\n")
-	   (set-buffer-modified-p old-buffer-modified-p))))))
+	   (vm-restore-buffer-modified-p ; folder-buffer
+	    old-buffer-modified-p (current-buffer)))))))
 
 ;; Insert a bookmark into the first message in the folder.
 (defun vm-stuff-bookmark ()
@@ -2311,7 +2353,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 	   (insert vm-bookmark-header " "
 		   (vm-number-of (car vm-message-pointer))
 		   "\n")
-	   (set-buffer-modified-p old-buffer-modified-p))))))
+	   (vm-restore-buffer-modified-p ; folder-buffer
+	    old-buffer-modified-p (current-buffer)))))))
 
 (defun vm-stuff-last-modified ()
   (if vm-message-list
@@ -2353,7 +2396,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 	   (insert vm-last-modified-header " "
 		   (prin1-to-string (current-time))
 		   "\n")
-	   (set-buffer-modified-p old-buffer-modified-p))))))
+	   (vm-restore-buffer-modified-p ; folder-buffer
+	    old-buffer-modified-p (current-buffer)))))))
 
 (defun vm-stuff-pop-retrieved ()
   (if vm-message-list
@@ -2405,7 +2449,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 	       (insert "\n")
 	       (setq p (cdr p)))
 	     (insert "   )\n"))
-	   (set-buffer-modified-p old-buffer-modified-p))))))
+	   (vm-restore-buffer-modified-p ; folder-buffer
+	    old-buffer-modified-p (current-buffer)))))))
 
 (defun vm-stuff-imap-retrieved ()
   (if vm-message-list
@@ -2457,7 +2502,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 	       (insert "\n")
 	       (setq p (cdr p)))
 	     (insert "   )\n"))
-	   (set-buffer-modified-p old-buffer-modified-p))))))
+	   (vm-restore-buffer-modified-p ; folder-buffer
+	    old-buffer-modified-p (current-buffer)))))))
 
 ;; Insert the summary format variable header into the first message.
 (defun vm-stuff-summary ()
@@ -2503,7 +2549,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		   (let ((print-escape-newlines t))
 		     (prin1-to-string vm-summary-format))
 		   "\n")
-	   (set-buffer-modified-p old-buffer-modified-p))))))
+	   (vm-restore-buffer-modified-p ; folder-buffer
+	    old-buffer-modified-p (current-buffer)))))))
 
 ;; stuff the current values of the header variables for future messages.
 (defun vm-stuff-header-variables ()
@@ -2549,7 +2596,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		   (prin1-to-string vm-visible-headers) " "
 		   (prin1-to-string vm-invisible-header-regexp)
 		   "\n")
-	   (set-buffer-modified-p old-buffer-modified-p))))))
+	   (vm-restore-buffer-modified-p ; folder-buffer
+	    old-buffer-modified-p (current-buffer)))))))
 
 ;; Insert a header into the first message of the folder that lists
 ;; the folder's message order.
@@ -2607,7 +2655,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 	   (insert ")\n")
 	   (setq vm-message-order-changed nil
 		 vm-message-order-header-present t)
-	   (set-buffer-modified-p old-buffer-modified-p))))))
+	   (vm-restore-buffer-modified-p ; folder-buffer
+	    old-buffer-modified-p (current-buffer)))))))
 
 ;; Remove the message order header.
 (defun vm-remove-message-order ()
@@ -2639,7 +2688,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 			(delete-region (vm-matched-header-start)
 				       (vm-matched-header-end)))))
 	   (setq vm-message-order-header-present nil)
-	   (set-buffer-modified-p old-buffer-modified-p))))))
+	   (vm-restore-buffer-modified-p ; folder-buffer
+	    old-buffer-modified-p (current-buffer)))))))
 
 (defun vm-make-index-file-name ()
   (concat (file-name-directory buffer-file-name)
@@ -3226,7 +3276,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
       (vm-delete-auto-save-file-if-necessary)
       ;; this is a hack to suppress another confirmation dialogue
       ;; coming from kill-buffer
-      (set-buffer-modified-p nil)
+      (set-buffer-modified-p nil)	; folder buffer
       (kill-buffer (current-buffer)))
     (vm-update-summary-and-mode-line)))
 
@@ -3604,7 +3654,7 @@ folder."
 				    vm-default-folder-permission-bits))
 		  (save-buffer prefix))
 	      (and oldmodebits (set-default-file-modes oldmodebits))))
-	  (vm-set-buffer-modified-p nil)
+	  (vm-unmark-folder-modified-p (current-buffer)) ; folder buffer
 	  ;; clear the modified flag in virtual folders if all the
 	  ;; real buffers associated with them are unmodified.
 	  (let ((b-list vm-virtual-buffers) rb-list one-modified)
@@ -3612,7 +3662,7 @@ folder."
 	      (while b-list
 		(if (null (cdr (with-current-buffer (car b-list)
 				 vm-real-buffers)))
-		    (vm-set-buffer-modified-p nil (car b-list))
+		    (vm-unmark-folder-modified-p (car b-list))
 		  (set-buffer (car b-list))
 		  (setq rb-list vm-real-buffers one-modified nil)
 		  (while rb-list
@@ -3620,7 +3670,7 @@ folder."
 			(setq one-modified t rb-list nil)
 		      (setq rb-list (cdr rb-list))))
 		  (if (not one-modified)
-		      (vm-set-buffer-modified-p nil (car b-list))))
+		      (vm-unmark-folder-modified-p (car b-list))))
 		(setq b-list (cdr b-list)))))
 	  (vm-clear-modification-flag-undos)
 	  (setq vm-messages-not-on-disk 0)
@@ -3919,7 +3969,7 @@ Same as \\[vm-recover-file]."
 				   vm-default-folder-type)
 				  ;; so that kill-buffer won't ask a
 				  ;; question later...
-				  (set-buffer-modified-p nil))
+				  (set-buffer-modified-p nil)) ; crash-buf
 			      (error "crash box %s mismatches vm-default-folder-type: %s, %s"
 				     crash-box crash-folder-type
 				     vm-default-folder-type)))))
@@ -3930,18 +3980,17 @@ Same as \\[vm-recover-file]."
 						  inbox-folder-type)
 			  ;; so that kill-buffer won't ask a
 			  ;; question later...
-			  (set-buffer-modified-p nil))
+			  (set-buffer-modified-p nil)) ; crash-buf
 		      (error "crash box %s mismatches %s's folder type: %s, %s"
 			     crash-box inbox-buffer-file
 			     crash-folder-type inbox-folder-type)))))
 	 ;; toss the folder header if the inbox is not empty
 	 (goto-char (point-min))
 	 (if (not inbox-empty)
-	     (progn
-	       (vm-convert-folder-header (or inbox-folder-type
-					     vm-default-folder-type)
-					 nil)
-	       (set-buffer-modified-p nil))))
+	     (vm-convert-folder-header (or inbox-folder-type
+					   vm-default-folder-type)
+				       nil)
+	   (set-buffer-modified-p nil))) ; crash-buf
        (goto-char (point-max))
        (insert-buffer-substring crash-buf
 				1 (1+ (with-current-buffer crash-buf
@@ -3954,7 +4003,8 @@ Same as \\[vm-recover-file]."
 	       (selective-display nil))
 	   (write-region opoint-max (point-max) buffer-file-name t t))
 	 (vm-increment vm-modification-counter)
-	 (set-buffer-modified-p old-buffer-modified-p))
+	 (vm-restore-buffer-modified-p	; folder-buffer
+	  old-buffer-modified-p (current-buffer)))
        (kill-buffer crash-buf)
        (if (not (stringp vm-keep-crash-boxes))
 	   (vm-error-free-call 'delete-file crash-box)
@@ -4923,7 +4973,8 @@ folder is saved."
 	      (nconc vm-fetched-messages (list m)))
 	(vm-increment vm-fetched-message-count)
 	(vm-set-body-to-be-discarded-of m t)
-	(set-buffer-modified-p modified)))))
+	(vm-restore-buffer-modified-p
+	 modified (vm-buffer-of m))))))
 
 (defun vm-unregister-fetched-message (m)
   "Unregister a real message M as a fetched message.  If M was never
@@ -5143,7 +5194,7 @@ Gives an error if unable to retrieve message."
        (vm-set-byte-count-of mm nil)
        ;; update the virtual messages
        (vm-update-virtual-messages mm)
-       (set-buffer-modified-p modified)
+       (vm-restore-buffer-modified-p modified (vm-buffer-of mm))
 
        (vm-assert (eq (point) (marker-position (vm-text-of mm))))
        (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
@@ -5221,7 +5272,7 @@ the folder is saved."
   "Discard the real message body of MM from its Folder buffer."
   (when (not (eq (vm-message-access-method-of mm) 'imap))
     (error "This is currently available only for imap folders."))
-  (save-excursion
+  (save-current-buffer
     (set-buffer (vm-buffer-of mm))
     (vm-save-restriction
      (widen)
@@ -5234,13 +5285,13 @@ the folder is saved."
 	       (save-excursion (forward-line -1) (looking-at "\n")))
 	   (progn
 	     (delete-region (point) (vm-text-end-of mm))
-	     (vm-set-buffer-modified-p t)
+	     ;; (vm-mark-folder-modified-p (current-buffer)) ; do we need this?
 	     (vm-set-mime-layout-of mm nil)
 	     (vm-set-body-to-be-retrieved-flag mm t)
 	     (vm-set-body-to-be-discarded-flag mm nil)
 	     (vm-set-line-count-of mm nil)
 	     (vm-update-virtual-messages mm)
-	     (set-buffer-modified-p modified))
+	     (vm-restore-buffer-modified-p modified (vm-buffer-of mm)))
 	 (if (y-or-n-p
 	      (concat "VM internal error: "
 		       "headers of a message have been corrupted. "

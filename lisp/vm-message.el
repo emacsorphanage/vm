@@ -35,8 +35,8 @@
 		  "vm-folder" (message))
 (declare-function vm-reorder-message-headers 
 		  "vm-folder" (message &optional keep-list discard-regexp))
-(declare-function vm-set-buffer-modified-p
-		  "vm-undo" (flag &optional buffer))
+(declare-function vm-mark-folder-modified-p
+		  "vm-folder" (buffer))
 (declare-function vm-clear-modification-flag-undos 
 		  "vm-undo" ())
 (declare-function vm-build-threads 
@@ -368,7 +368,8 @@ works in all VM buffers."
   (if (eq vm-flush-interval t)
       (vm-stuff-virtual-message-data message)
     (vm-set-stuff-flag-of message t))
-  (and (not (buffer-modified-p)) (vm-set-buffer-modified-p t))
+  (unless (buffer-modified-p)
+    (vm-mark-folder-modified-p (current-buffer)))
   (vm-clear-modification-flag-undos))
 (defsubst vm-set-byte-count-of (message count)
   (aset (aref message 3) 0 count))

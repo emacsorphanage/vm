@@ -16,6 +16,10 @@
 
 (provide 'u-vm-color)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-folder))
+
 (defconst u-vm-color-version "2.10" "Version number of u-vm-color.")
 
 ;;  This program is free software; you can redistribute it and/or modify it
@@ -681,7 +685,7 @@ Search is restricted to the region between START and END."
   ;;(message "u-vm-color-fontify-buffer")
   (let ((continued-header-contents "\\(.*\\(\n[ \t]+.*\\)*\\)")
 	(pmin (point-min))
-	(buffer-has-been-modified-before (buffer-modified-p))
+	(buffer-modified (buffer-modified-p))
 	(header-end (or
 		     (save-excursion
 		       (goto-char (point-min))
@@ -737,7 +741,7 @@ Search is restricted to the region between START and END."
 			       (concat "^Content preview:"
 				       "\\([^\n]*\n\\( +[^\n]*\n\\)*\\)")
 			       '((1 u-vm-color-spamassassin-face)))
-    (set-buffer-modified-p buffer-has-been-modified-before)))
+    (vm-restore-buffer-modified-p  buffer-modified (current-buffer))))
 
 ;;;###autoload
 (defun u-vm-color-fontify-buffer-even-more ()

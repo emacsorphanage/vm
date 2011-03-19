@@ -459,7 +459,7 @@ buffer by a regenerated summary line."
       (debug))
   (if (and (vm-su-start-of m)
 	   (marker-buffer (vm-su-start-of m)))
-      (let ((modified (buffer-modified-p))
+      (let ((modified (buffer-modified-p)) ; Folder or Presentation
 	    (do-mouse-track
 	     (or (and vm-mouse-track-summary
 		      (vm-mouse-support-possible-p))
@@ -472,7 +472,7 @@ buffer by a regenerated summary line."
 		s e i
 		(selected nil)
 		(indicator nil)
-		(modified (buffer-modified-p)))
+		(modified (buffer-modified-p))) ; Summary buffer
 	    (unwind-protect
 		(save-excursion
 		  (goto-char (vm-su-start-of m))
@@ -529,10 +529,11 @@ buffer by a regenerated summary line."
 			(vm-summary-highlight-region 
 			 (vm-su-start-of m) (point)
 			 vm-summary-highlight-face))))
-	      (set-buffer-modified-p modified)
 	      (when s
 		(put-text-property s e 'vm-message m)
 		(put-text-property s e 'invisible i))
+	      (vm-reset-buffer-modified-p  ; Summary buffer
+	       modified (current-buffer))
 	      ))))))
 
 (defun vm-set-summary-pointer (m)

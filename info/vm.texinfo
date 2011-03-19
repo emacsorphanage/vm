@@ -3201,9 +3201,10 @@ After a message is saved to a folder, the usual thing to do next is to
 delete it.  If the variable @code{vm-delete-after-saving} is
 non-@code{nil}, VM will flag messages for deletion automatically after
 saving them.  This applies only to saves to folders, not for the @kbd{w}
-or @kbd{A} commands (see below).  The variable @code{vm-delete-after-archiving}
+command.  There is a separate variable
+@code{vm-delete-after-archiving}, which
 works like @code{vm-delete-after-saving} but applies to the @kbd{A}
-(@code{vm-auto-archive-messages}) command instead.
+(@code{vm-auto-archive-messages}) command (see below).
 
 @unnumberedsubsec vm-auto-folder-alist
 
