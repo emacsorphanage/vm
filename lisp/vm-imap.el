@@ -3538,7 +3538,7 @@ looking up `vm-imap-account-alist' or nil if there is no such account."
     (while alist
       (setq account-comps (vm-imap-parse-spec-to-list (car (car alist))))
       (if (and (equal (nth 1 comps) (nth 1 account-comps)) ; host
-	       (equal (nth 4 comps) (nth 4 account-comps))) ; login
+	       (equal (nth 5 comps) (nth 5 account-comps))) ; login
 	  (throw 'return (cadr (car alist)))
 	(setq alist (cdr alist))))
     nil)))
