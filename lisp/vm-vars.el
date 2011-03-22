@@ -2241,12 +2241,16 @@ and the type corresponding to the first match found is used."
   :group 'vm-mime
   :type 'boolean)
 
-(defcustom vm-mime-attachment-infer-type-for-text-attachments nil
+(defcustom vm-infer-mime-types-for-text nil
   "*Non-nil value means VM should try to infer a MIME object's
   type from its filename also for text attachments, not only for
   application/octet-stream."
    :group 'vm-mime
    :type 'boolean)
+(defvaralias 'vm-mime-attachment-infer-type-for-text-attachments
+  'vm-infer-mime-types-for-text)
+(make-obsolete 'vm-mime-attachment-infer-type-for-text-attachments
+	       'vm-infer-mime-types-for-text "8.2.0")
 
 (defcustom vm-mime-avoid-folding-content-type t
   "*Non-nil means don't send folded Content- headers in MIME messages.

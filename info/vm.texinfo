@@ -1735,7 +1735,7 @@ non-@code{nil} for VM to decode uuencoded MIME objects.
 * MIME type conversion::        Converting external attachments to internal
 * Character sets::              MIME character sets
 * multipart/alternative::       MIME content in alternative formats
-* Bad MIME::                    Dealing with bad MIME
+* Inferring MIME types::        Inferring types from attachment file names
 @end menu
 
 
@@ -2347,7 +2347,7 @@ any XEmacs version compiled with MULE support, the value of
 because all characters are displayed using fonts discovered by
 MULE and VM has no control over them.
 
-@node multipart/alternative, Bad MIME, Character sets, MIME Messages
+@node multipart/alternative, Inferring MIME types, Character sets, MIME Messages
 @unnumberedsubsec MIME multipart/alternative
 
 @cindex MIME alternatives
@@ -2403,20 +2403,28 @@ most faithful representation of the sender's message and it may
 include attachments that are not replicated in the other
 alternatives.  Please use caution.
 
-@node Bad MIME, , multipart/alternative, MIME Messages
-@unnumberedsubsec Dealing with bad MIME
+@node Inferring MIME types, , multipart/alternative, MIME Messages
+@unnumberedsubsec Inferring MIME types
 
-@vindex vm-infer-mime-types
 Some mailers incorrectly use the generic
 @samp{application/octet-stream} type when sending files that
 really have a specific MIME type.  For example, a JPEG image
 might be sent using @samp{application/octet-stream} type instead
 of @samp{image/jpeg}, which would be the correct type.  In many
 cases the filename sent along with the mistyped file
-(e.g. @file{foo.jpg}) suggests the correct type.  If the variable
+(e.g. @file{foo.jpg}) suggests the correct type.  
+
+@vindex vm-infer-mime-types
+If the variable
 @code{vm-infer-mime-types} is set non-@code{nil}, VM will attempt to use 
 the filename sent with a MIME attachment to guess an attachment's 
 type if the attachment is of type @samp{application/octet-stream}.
+
+@vindex vm-infer-mime-types-for-text
+If the variable
+@code{vm-infer-mime-types-for-text} is set non-@code{nil}, VM will
+attempt to use filenames for attachments of type @samp{text/plain} as
+well. 
 
 @node Headers-only Messages,, MIME Messages, Reading Messages
 @section Headers-only Messages
