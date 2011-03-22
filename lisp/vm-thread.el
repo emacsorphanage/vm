@@ -807,7 +807,7 @@ Threads should have been built for this function to work."
 		(when (and (vm-th-messages-of id-sym)
 			   (not (memq (vm-th-message-of id-sym)
 				      result)))
-		  (setq result (append (vm-th-messages-of id-sym) result)))
+		  (setq result (append result (vm-th-messages-of id-sym))))
 		(when (null (intern-soft (symbol-name id-sym) loop-obarray))
 		  (intern (symbol-name id-sym) loop-obarray)
 		  (nconc list (copy-sequence (vm-th-children-of id-sym)))

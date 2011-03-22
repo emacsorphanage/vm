@@ -1100,11 +1100,11 @@ use, see `vm-forward-message-encapsulated'."
     (if (cdr mlist)
 	;; multiple message forwarding
 	(progn
-	  (unless (or encapsulated
-		      (y-or-n-p 
-		       "Use encapsulated forwarding for multiple messages? "))
-	      (error "Aborted"))
-	  (setq encapsulated t)
+	  ;; (unless (or encapsulated
+	  ;; 	      (y-or-n-p 
+	  ;; 	       "Use encapsulated forwarding for multiple messages? "))
+	  ;;     (error "Aborted"))
+	  ;; (setq encapsulated t)
 	  (let ((vm-digest-send-type vm-forwarding-digest-type))
 	    ;; (setq this-command 'vm-next-command-uses-marks)
 	    ;; (command-execute 'vm-send-digest)
@@ -1143,17 +1143,19 @@ use, see `vm-forward-message-encapsulated'."
 	       ;; 	(car vm-forward-list) 
 	       ;; 	(append vm-forwarded-headers vm-forwarded-mime-headers)
 	       ;; 	vm-unforwarded-header-regexp)
+	       ;; Reusing yank-message code here!  USR, 2011-03-21
 	       (let ((vm-include-mime-attachments t) ; override the defaults
 		     (vm-include-text-basic nil)
 		     (vm-include-text-from-presentation nil)
 		     (mail-citation-hook (list 'vm-cite-forwarded-message)))
 		 (vm-yank-message (car vm-forward-list))))
 	      ((equal vm-forwarding-digest-type "mime")
-	       (vm-mime-encapsulate-messages mlist
-					     nil "none" ; include all headers
-					     ;; vm-forwarded-headers
-					     ;; vm-unforwarded-header-regexp
-					     nil)
+	       (vm-mime-encapsulate-messages 
+		mlist
+		;; :keep-list nil :discard-regexp "none" 
+		:keep-list vm-forwarded-headers  
+		:discard-regexp vm-unforwarded-header-regexp
+		:always-use-digest nil)
 	       (goto-char header-end)
 	       (insert "MIME-Version: 1.0\n")
 	       (insert "Content-Type: message/rfc822\n")
@@ -1178,15 +1180,16 @@ use, see `vm-forward-message-encapsulated'."
 		(append vm-forwarded-headers vm-forwarded-mime-headers)
 		vm-unforwarded-header-regexp)))
 	(when miming
-	  (let ((b (current-buffer)))
-	    (set-buffer reply-buffer)
+	  (let ((work-buffer (current-buffer)))
+	    (set-buffer reply-buffer)	; intended buffer change
 	    (mail-text)
-	    (vm-mime-attach-object 
-	     b "message/rfc822" nil :description "forwarded message" :mimed t)
+	    (vm-mime-attach-object work-buffer
+				   :type "message/rfc822" :params nil 
+				   :description "forwarded message" :mimed t)
 	    (add-hook 'kill-buffer-hook
 		      `(lambda ()
 			 (if (eq ,reply-buffer (current-buffer))
-			     (kill-buffer ,b)))
+			     (kill-buffer ,work-buffer)))
 		      )))
 	(mail-position-on-field "To"))
       (run-hooks 'vm-forward-message-hook)
@@ -1335,13 +1338,13 @@ You may also create a Resent-Cc header."
 ;;;###autoload
 (defun vm-send-digest (&optional prefix mlist)
   "Send a digest of all messages in the current folder to recipients.
-The type of the digest is specified by the variable vm-digest-send-type.
+The type of the digest is specified by the variable `vm-digest-send-type'.
 You will be placed in a Mail mode buffer as is usual with replies, but you
-must fill in the To: and Subject: headers manually.
+must fill in the \"To:\" and \"Subject:\" headers manually.
 
 Prefix arg means to insert a list of preamble lines at the beginning of
 the digest.  One line is generated for each message being digestified.
-The variable vm-digest-preamble-format determines the format of the
+The variable `vm-digest-preamble-format' determines the format of the
 preamble lines.
 
 If invoked on marked messages (via `vm-next-command-uses-marks'),
@@ -1353,7 +1356,7 @@ included in the digest."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((dir default-directory)
 	(miming (and vm-send-using-mime (equal vm-digest-send-type "mime")))
-	mp mail-buffer b
+	mp mail-buffer work-buffer b
 	ms start header-end boundary)
     (unless mlist
       ;; prefix arg doesn't have "normal" meaning here, so only call
@@ -1381,14 +1384,17 @@ included in the digest."
                       (if (cdr mlist)
                           (format " [and %d more messages]"
                                   (length (cdr mlist))))))))
+      ;; current buffer is mail-buffer
+      (setq mail-buffer (current-buffer))
       (make-local-variable 'vm-forward-list)
       (setq vm-system-state 'forwarding
 	    vm-forward-list mlist
 	    default-directory dir)
       (if miming
 	  (progn
-	    (setq mail-buffer (current-buffer))
-	    (set-buffer (vm-make-work-buffer "*vm-digest-buffer*"))
+	    ;; buffer is changed for only the mime case
+	    (setq work-buffer (vm-make-work-buffer "*vm-digest-buffer*"))
+	    (set-buffer work-buffer)
 	    (setq header-end (point))
 	    (insert "\n")
 	    (setq start (point-marker)))
@@ -1400,10 +1406,11 @@ included in the digest."
 	      header-end (match-beginning 0)))
       (message "Building %s digest..." vm-digest-send-type)
       (cond ((equal vm-digest-send-type "mime")
-	     (setq boundary (vm-mime-encapsulate-messages
-			     mlist vm-mime-digest-headers
-			     vm-mime-digest-discard-header-regexp
-			     t))
+	     (setq boundary 
+		   (vm-mime-encapsulate-messages
+		    mlist :keep-list vm-mime-digest-headers
+		    :discard-regexp vm-mime-digest-discard-header-regexp
+		    :always-use-digest t))
 	     (goto-char header-end)
 	     (insert "MIME-Version: 1.0\n")
 	     (insert (if vm-mime-avoid-folding-content-type
@@ -1428,39 +1435,43 @@ included in the digest."
                (vm-no-frills-encapsulate-message
                 (car mlist) 
 		(append vm-forwarded-headers vm-forwarded-mime-headers)
-                vm-unforwarded-header-regexp)
+                ;; vm-unforwarded-header-regexp
+		nil)
+	       (insert "\n")
                (setq mlist (cdr mlist)))))
 
       (goto-char start)
       (setq mp mlist)
-      (if miming
-	  (let ((b (current-buffer)))
-	    (set-buffer mail-buffer)
-	    (mail-text)
-	    (vm-mime-attach-object
-	     b "multipart/digest" (list (concat "boundary=\"" boundary "\"")) 
-	     :description "forwarded messages" :mimed t)
-	    (add-hook 'kill-buffer-hook
-		      (list 'lambda ()
-			    (list 'if (list 'eq mail-buffer '(current-buffer))
-				  (list 'kill-buffer b))))))
-      (if prefix
-	  (save-excursion
-	    (message "Building digest preamble...")
-	    (if miming
-		(progn
-		  (set-buffer mail-buffer)
-		  (mail-text)))
-	    (while mp
-	      (let ((vm-summary-uninteresting-senders nil))
-		(insert (vm-summary-sprintf vm-digest-preamble-format
-					    (car mp)) "\n"))
-	      (if vm-digest-center-preamble
-		  (progn
-		    (forward-char -1)
-		    (center-line)
-		    (forward-char 1)))
-	      (setq mp (cdr mp)))))
+      (when miming
+	;; restore buffer in the mime case
+	(set-buffer mail-buffer)
+	(mail-text)
+	(save-excursion
+	  (vm-mime-attach-object work-buffer
+				 :type "multipart/digest" 
+				 :params (list (concat "boundary=\"" 
+						       boundary "\"")) 
+				 :description "forwarded messages" :mimed t)
+	  (add-hook 'kill-buffer-hook
+		    `(lambda ()
+		       (if (eq (current-buffer) ,mail-buffer)
+			   (kill-buffer ,work-buffer))))))
+      (when prefix
+	(message "Building digest preamble...")
+	;; (if miming
+	;;     (progn
+	;;       (set-buffer mail-buffer)
+	;;       (mail-text)))
+	(while mp
+	  (let ((vm-summary-uninteresting-senders nil))
+	    (insert (vm-summary-sprintf vm-digest-preamble-format
+					(car mp)) "\n"))
+	  (if vm-digest-center-preamble
+	      (progn
+		(forward-char -1)
+		(center-line)
+		(forward-char 1)))
+	  (setq mp (cdr mp))))
       (mail-position-on-field "To")
       (message "Building %s digest... done" vm-digest-send-type)))
   (run-hooks 'vm-send-digest-hook)

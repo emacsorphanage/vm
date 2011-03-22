@@ -5565,7 +5565,8 @@ this case and not prompt you for it in the minibuffer."
     (setq charset (list (concat "charset=" charset))))
   (when description 
     (setq description (vm-mime-scrub-description description)))
-  (vm-mime-attach-object file type charset :description description :mimed nil))
+  (vm-mime-attach-object file :type type :params charset 
+			 :description description :mimed nil))
 
 ;;;###autoload
 (defun vm-mime-attach-mime-file (file type)
@@ -5616,7 +5617,8 @@ should use vm-mime-attach-file to attach the file."
     (error "No such file: %s" file))
   (unless (file-readable-p file)
     (error "You don't have permission to read %s" file))
-  (vm-mime-attach-object file type nil :description nil :mimed t))
+  (vm-mime-attach-object file :type type :params nil 
+			 :description nil :mimed t))
 
 ;;;###autoload
 (defun vm-mime-attach-buffer (buffer type &optional charset description)
@@ -5681,13 +5683,13 @@ this case and not prompt you for it in the minibuffer."
     (setq charset (list (concat "charset=" charset))))
   (when description 
     (setq description (vm-mime-scrub-description description)))
-  (vm-mime-attach-object buffer type charset
-			 :description description))
+  (vm-mime-attach-object buffer :type type :params charset
+			 :description description :mimed nil))
 
 ;;;###autoload
 (defun vm-mime-attach-message (message &optional description)
-  "Attach a message from a folder to a VM composition buffer
-to be sent along with the message.
+  "Attach a message from a VM folder to the current VM
+composition.
 
 The message is not inserted into the buffer and MIME encoded until
 you execute `vm-mail-send' or `vm-mail-send-and-exit'.  A visible tag
@@ -5723,6 +5725,8 @@ minibuffer if the command is run interactively."
 	 (this-command this-command)
 	 (result 0)
 	 mlist mp default prompt description folder)
+     (unless (eq major-mode 'mail-mode)
+       (error "Command must be used in a VM Mail mode buffer."))
      (unless vm-send-using-mime
        (error (concat "MIME attachments disabled, "
 		      "set vm-send-using-mime non-nil to enable.")))
@@ -5741,29 +5745,23 @@ minibuffer if the command is run interactively."
 		    (this-command this-command))
 		(setq file (read-file-name "Attach message from folder: "
 					   dir nil t)))
-	      (save-excursion
-		(set-buffer
-		 (let ((coding-system-for-read (vm-binary-coding-system)))
-		   (find-file-noselect file)))
-		(setq folder (current-buffer))
+	      (let ((coding-system-for-read (vm-binary-coding-system)))
+		(setq folder (find-file-noselect file)))
+	      (with-current-buffer folder
 		(vm-mode)
-		(setq mlist (vm-select-operable-messages
-			     1 (interactive-p) "Attach")))))
+		(setq mlist (vm-select-operable-messages 1 t "Attach")))))
 	   (t
 	    (setq folder vm-mail-buffer)
-	    (save-excursion
-	      (set-buffer folder)
-	      (setq mlist (vm-select-operable-messages
-			   1 (interactive-p) "Attach")))))
+	    (with-current-buffer folder
+	      (setq mlist (vm-select-operable-messages 1 t "Attach")))))
      (when (null mlist)
-       (save-excursion
-	 (set-buffer folder)
+       (with-current-buffer folder
 	 (setq default (and vm-message-pointer
 			    (vm-number-of (car vm-message-pointer)))
 	       prompt (if default
-			  (format "Yank message number: (default %s) "
+			  (format "Attach message number: (default %s) "
 				  default)
-			"Yank message number: "))
+			"Attach message number: "))
 	 (while (zerop result)
 	   (setq result (read-string prompt))
 	   (and (string= result "") default (setq result default))
@@ -5774,15 +5772,15 @@ minibuffer if the command is run interactively."
      (when (string-match "^[ \t]*$" description)
        (setq description nil))
      (list (or mlist (car mp)) description)))
+
   (unless vm-send-using-mime
     (error (concat "MIME attachments disabled, "
 		   "set vm-send-using-mime non-nil to enable.")))
   (if (not (consp message))
-      (let* ((buf (generate-new-buffer "*attached message*"))
+      (let* ((work-buffer (generate-new-buffer "*attached message*"))
 	     (m (vm-real-message-of message))
 	     (folder (vm-buffer-of m)))
-	(save-excursion
-	  (set-buffer buf)
+	(with-current-buffer work-buffer
 	  (when vm-fsfemacs-mule-p
 	    (set-buffer-multibyte nil)) ; for new buffer
 	  (vm-insert-region-from-buffer folder (vm-headers-of m)
@@ -5793,23 +5791,24 @@ minibuffer if the command is run interactively."
 	   :discard-regexp vm-internal-unforwarded-header-regexp))
 	(and description (setq description
 			       (vm-mime-scrub-description description)))
-	(vm-mime-attach-object buf "message/rfc822" nil 
+	(vm-mime-attach-object work-buffer 
+			       :type "message/rfc822" :params nil 
 			       :description description)
 	(make-local-variable 'vm-forward-list)
 	(setq vm-system-state 'forwarding
 	      vm-forward-list (list message))
 	(add-hook 'kill-buffer-hook
-		  (list 'lambda ()
-			(list 'if (list 'eq (current-buffer) '(current-buffer))
-			      (list 'kill-buffer buf)))))
-    (let ((buf (generate-new-buffer "*attached messages*"))
+		  `(lambda ()
+		     (if (eq (current-buffer) ,(current-buffer))
+		  	 (kill-buffer ,work-buffer)))
+		  ))
+    (let ((work-buffer (generate-new-buffer "*attached messages*"))
 	  boundary)
-      (save-excursion
-	(set-buffer buf)
+      (with-current-buffer work-buffer
 	(setq boundary (vm-mime-encapsulate-messages
-			message vm-mime-digest-headers
-			vm-mime-digest-discard-header-regexp
-			t))
+			message :keep-list vm-mime-digest-headers
+			:discard-regexp vm-mime-digest-discard-header-regexp
+			:always-use-digest t))
 	(goto-char (point-min))
 	(insert "MIME-Version: 1.0\n")
 	(insert (if vm-mime-avoid-folding-content-type
@@ -5823,16 +5822,17 @@ minibuffer if the command is run interactively."
 		"\n\n"))
       (when description 
 	(setq description (vm-mime-scrub-description description)))
-      (vm-mime-attach-object buf "multipart/digest"
-			     (list (concat "boundary=\"" boundary "\"")) 
+      (vm-mime-attach-object work-buffer :type "multipart/digest"
+			     :params (list (concat "boundary=\"" 
+						   boundary "\"")) 
 			     :description nil :mimed t)
       (make-local-variable 'vm-forward-list)
       (setq vm-system-state 'forwarding
 	    vm-forward-list (copy-sequence message))
       (add-hook 'kill-buffer-hook
-		(list 'lambda ()
-		      (list 'if (list 'eq (current-buffer) '(current-buffer))
-			    (list 'kill-buffer buf)))))))
+		`(lambda ()
+		   (if (eq (current-buffer) ,(current-buffer))
+		       (kill-buffer ,work-buffer)))))))
 
 ;;;###autoload
 (defun vm-mime-attach-object-from-message (composition)
@@ -5867,9 +5867,8 @@ COMPOSITION's name will be read from the minibuffer."
     (unwind-protect
 	(if (null layout)
 	    (error "No MIME object found at point.")
-	  (save-excursion
-	    (setq work-buffer (vm-make-work-buffer))
-	    (set-buffer work-buffer)
+	  (setq work-buffer (vm-make-work-buffer))
+	  (with-current-buffer work-buffer
 	    (vm-mime-insert-mime-headers layout)
 	    (insert "\n")
 	    (setq start (point))
@@ -5880,25 +5879,28 @@ COMPOSITION's name will be read from the minibuffer."
 	     nil :keep-list nil :discard-regexp "Content-Transfer-Encoding:")
 	    (insert "Content-Transfer-Encoding: binary\n")
 	    (set-buffer composition)
-	    (vm-mime-attach-object 
-	     work-buffer 
-	     (car (vm-mm-layout-type layout)) (cdr (vm-mm-layout-type layout))
-	     :description (vm-mm-layout-description layout) :mimed t)
-	    ;; move windwo point forward so that if this command
+	    (vm-mime-attach-object work-buffer 
+				   :type (car (vm-mm-layout-type layout)) 
+				   :params (cdr (vm-mm-layout-type layout))
+				   :description (vm-mm-layout-description 
+						 layout)
+				   :mimed t)
+	    ;; move window point forward so that if this command
 	    ;; is used consecutively, the insertions will be in
 	    ;; the correct order in the composition buffer.
 	    (setq w (vm-get-buffer-window composition))
 	    (and w (set-window-point w (point)))
 	    (setq buf work-buffer
-		  work-buffer nil)
+		  work-buffer nil)	; schedule to be killed later
 	    (add-hook 'kill-buffer-hook
-		      (list 'lambda ()
-			    (list 'if (list 'eq (current-buffer)
-					    '(current-buffer))
-				  (list 'kill-buffer buf))))))
-      (and work-buffer (kill-buffer work-buffer)))))
+		      `(lambda ()
+			 (if (eq (current-buffer) ,(current-buffer))
+			     (kill-buffer ,buf))))
+	    ))
+      ;; unwind-protection
+      (when work-buffer (kill-buffer work-buffer)))))
 
-(defun* vm-mime-attach-object (object type params &key description 
+(defun* vm-mime-attach-object (object &key type params description 
 				      (mimed nil)
 				      (no-suggested-filename nil))
   "Attach a MIME OBJECT to the mail composition in the current
@@ -5912,7 +5914,7 @@ MIMED says whether the OBJECT already has MIME headers.
 Optional argument NO-SUGGESTED-FILENAME is a boolean indicating that
 there is no file name for this object.             USR, 2011-03-07"
   (unless (eq major-mode 'mail-mode)
-    (error "Command must be used in a VM Mail mode buffer."))
+    (error "VM internal error: vm-mime-attach-object not in Mail mode buffer."))
   (when (vm-mail-mode-get-header-contents "MIME-Version")
     (error "Can't attach MIME object to already encoded MIME buffer."))
   (let (start end e tag-string disposition file-name
@@ -7888,13 +7890,13 @@ This is a destructive operation and cannot be undone!"
       (cond (filename
 	     (vm-mime-attach-file filename (car type)))
 	    (file
-	     (vm-mime-attach-object 
-	      (list buf start end disp file) (car type) nil 
-	      :description desc :mimed t))
+	     (vm-mime-attach-object (list buf start end disp file) 
+				    :type (car type) :params nil 
+				    :description desc :mimed t))
 	    (t
-	     (vm-mime-attach-object 
-	      (list buf start end disp) (car type) nil 
-	      :description desc :mimed t)))
+	     (vm-mime-attach-object (list buf start end disp)
+				    :type (car type) :params nil 
+				    :description desc :mimed t)))
       ;; delete the mime-button
       (delete-region (vm-extent-start-position x) (vm-extent-end-position x))
       (vm-detach-extent x))))

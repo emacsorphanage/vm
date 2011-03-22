@@ -1033,10 +1033,12 @@ cleanup here after verification and decoding took place."
       (goto-char (point-max))
       (insert "\n")
       (setq start (point))
-      (vm-mime-attach-object
-       buffer "application/pgp-keys"
-       (list (concat "name=\"" pgg-default-user-id ".asc\""))
-       :description description)
+      (vm-mime-attach-object buffer 
+			     :type "application/pgp-keys"
+			     :params (list (concat "name=\"" 
+						   pgg-default-user-id 
+						   ".asc\""))
+			     :description description)
       ;; a crude hack to set the disposition
       (let ((disposition (list "attachment"
                                (concat "filename=\"" 

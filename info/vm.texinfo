@@ -3007,7 +3007,7 @@ the variables @code{vm-included-text-headers} and
 
 VM has four commands to forward messages: @kbd{z}
 (@code{vm-forward-message}), 
-@kbd{Z} (@code{vm-forward-message-encapsulated},
+@kbd{Z} (@code{vm-forward-message-encapsulated}),
 @kbd{@@} (@code{vm-send-digest}) and
 @kbd{B} (@code{vm-resend-message}).
 
@@ -3029,8 +3029,12 @@ Typing @kbd{Z} (@code{vm-forward-message-encapsulated}) forwards the message
 in an encapsulated form.  You can forward multiple messages in
 this way and they are referred to as ``digests''.  The
 variable @code{vm-forwarding-digest-type} specifies the form in which
-the messages are encapsulated.  The recognized values are "mime",
-"rfc934" and "rfc1153".  The default is "mime".
+the messages are encapsulated.  The recognized values are @code{nil}, "mime",
+"rfc934" and "rfc1153".  The default is "mime".  If you use @code{nil}
+as the value, then a form of plain text digests is used.  Unless your
+recipients use VM, they will likely see undecoded MIME interspersed
+with plain text content.  So, it is preferable to use MIME digests
+which can be dedoced in any MIME-capable mail client.
 
 @vindex vm-unforwarded-header-regexp
 By default, forwarded digests include all the messages headers of the
@@ -3087,9 +3091,12 @@ resend the same original message and with its original headers and add
 a @code{Resent-To} header that you should fill in with the new
 recipients.  Use @kbd{C-c C-c} as usual to send the message.  The
 resent message will be flagged as ``redistributed''.  Note that a
-re-sent message will appear to the recipients as if they came from the
+re-sent message will appear to the recipients as if it came from the
 original sender.  They will notice that you have re-sent the message
-only if they are careful to look for the @code{Resent-To} header.
+only if they are careful to look for the @code{Resent-To} header.  If
+they reply to the message, the reply will go to the original sender.
+This behavior can be confusing to many users and, so, should be used
+with caution.
 
 @node Saving copies,, Forwarding Messages, Sending Messages
 @section Saving copies of sent mail

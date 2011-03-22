@@ -80,8 +80,10 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
       (insert "------- end of forwarded message -------\n"))))
 
 ;;;###autoload
-(defun vm-mime-encapsulate-messages (message-list keep-list discard-regexp
-				     always-use-digest)
+(defun* vm-mime-encapsulate-messages (message-list &key
+						   (keep-list nil)
+						   (discard-regexp "none")
+						   (always-use-digest nil))
   "Encapsulate the messages in MESSAGE-LIST as per the MIME spec.
 The resulting digest is inserted at point in the current buffer.
 Point is not moved.

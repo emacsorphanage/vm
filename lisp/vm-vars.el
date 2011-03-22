@@ -3046,9 +3046,9 @@ is also consulted.  If it is nil, then the headers matched by
 forwarded.  If `vm-unforwarded-header-regexp' is non-nil, then
 headers matched by that variable will be omitted and all others
 will be forwarded.  In this case, `vm-forwarded-headers'
-determines the forwarding order in that case, with headers not
-matching any in the `vm-forwarded-headers' list appearing last in
-the header section of the forwarded message."
+determines the forwarding order, with headers not matching any in the
+`vm-forwarded-headers' list appearing last in the header section of
+the forwarded message." 
   :group 'vm-compose
   :type '(repeat regexp))
 
@@ -3066,12 +3066,12 @@ If the value of `vm-unforwarded-header-regexp' is nil, the headers
 matched by `vm-forwarded-headers' are the only headers that will be
 forwarded.
 
-If `vm-unforwarded-header-regexp' is non-nil, then only headers
-matched by this variable will not be forwarded; all others will
+If `vm-unforwarded-header-regexp' is non-nil, then only the
+headers matched by this variable will be omitted; all the  qothers will
 be forwarded.  `vm-forwarded-headers' determines the forwarding
 order in that case, with headers not matching any in the
-`vm-forwarded-headers' list appearing last in the header section of
-the forwarded message."
+`vm-forwarded-headers' list appearing last in the header section
+of the forwarded message."
   :group 'vm-compose
   :type '(choice
 	  (const :tag "Only forward headers listed in vm-forward-headers" nil)
@@ -3088,12 +3088,13 @@ Legal values of this variable are:
 \"rfc1153\"
 nil
 
-A nil value has the same effect as \"mime\"."
+A nil value means to use plain text digests."
   :group 'vm-compose
   :type '(choice
           (const "mime")
           (const "rfc934")
-          (const "rfc1153")))
+          (const "rfc1153")
+	  (const nil)))
 
 (defcustom vm-mime-forward-local-external-bodies nil
   "*Non-nil value means forward messages that contain
@@ -3185,12 +3186,14 @@ Legal values of this variable are:
 \"rfc934\"
 \"rfc1153\"
 \"mime\"
+nil
 
-"
+A nil value means to use plain text digests."
   :group 'vm-digest
-  :type '(choice (const "rfc934") 
+  :type '(choice (const "mime")
+		 (const "rfc934") 
                  (const "rfc1153") 
-                 (const "mime")))
+		 (const nil)))
 
 (defcustom vm-rfc934-digest-headers
   '("Resent-"
@@ -6049,7 +6052,7 @@ folder needs to be updated.")
 (defconst vm-berkeley-mail-status-header "Status: ")
 (defconst vm-berkeley-mail-status-header-regexp "^Status: \\(..?\\)\n")
 (defconst vm-internal-unforwarded-header-regexp
-  "\\(X-VM-\\|Status:\\|Content-Length:\\)")
+  "\\(X-VM-\\|X-Mozilla-\\|Status:\\|Content-Length:\\)")
 (defvar vm-matched-header-vector (make-vector 6 nil))
 (defconst vm-supported-folder-types
   '("From_" "BellFrom_" "From_-with-Content-Length" "mmdf" "babyl"))

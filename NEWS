@@ -9,32 +9,24 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM! - Rob, Ulrich and Uday
   
-VM 8.2.0b (2011-02-28)
+VM 8.2.0a (2011-02-28)
 
   CHANGES
 
-   * The default message forwarding is changed to plain text "no
-     frills" forawrding.  The attachments of the original message are
-     still copied to the forwarded message.  So, there is no need to
-     forward the messages in a MIME-encapsulated form.
+   * The variable name `vm-mime-attachment-infer-type-for-text-attachments'
+     changed to `vm-infer-mime-types-for-text'.  (See the info manual
+
+   * Plain text forwarding has been extended to deal with MIME
+     attachments.  The `z' command uses this method, i.e., it does
+     NOT encapsulate forwarded messages (unlike in version 8.1.x).
 
      There is a new key binding of `Z' to
      `vm-forward-message-encapsulated' which forwards messages in
      encapsulated form (mime, rfc934 or rfc1153).  The setting of
-     `vm-forwarding-digest-type' controls this command and the default
-     is "mime".  You are advised to remove any setting of
-     `vm-forwarding-digest-type' from your init file.
-
-   * New command `vm-switch-to-folder' defined to quickly return to a
-     previously buried folder.  (Originally in vm-rfaddons.)
-
-   * New custom command `vm-toggle-best-mime' in vm-rfaddons to toggle
-     between 'best and 'best-internal MIME altrenatives.  (Thanks to
-     Alley Stoughton for this addition.)
-
-   * New variable `vm-include-text-basic' can be used to enable the
-     fallback method of quoting message text in replies.  It should
-     normally left with the default value of nil.
+     `vm-forwarding-digest-type' controls this command.  The default
+     forwarding-digest-type is "mime".  You should check and remove
+     any setting of this variable in your init file, unless you want a
+     forwarding-digest-type different from MIME.
 
    * The meaning of the variable `vm-included-mime-types-list' is
      changed.  It need only mention MIME type/subtype pairs that are
@@ -52,14 +44,21 @@ VM 8.2.0b (2011-02-28)
      That functionality is now obsolete.  Replace references to
      `vm-mime-yank-attachments' in your customization by the new variable.
      
-   * Forwarding messages as MIME attachments includes all message
-     headers, ignoring the vm-forwarded-headers and
-     vm-unforwarded-header-regexp settings.
-
    * The command `vm-flag-message-read' (.) introduced in 8.1.93a is
      renamed to `vm-mark-message-read' for consistency of terminology.
 
   IMPROVEMENTS
+
+   * New command `vm-switch-to-folder' defined to quickly return to a
+     previously buried folder.  (Originally in vm-rfaddons.)
+
+   * New custom command `vm-toggle-best-mime' in vm-rfaddons to toggle
+     between 'best and 'best-internal' MIME altrenatives.  (Thanks to
+     Alley Stoughton for this addition.)
+
+   * New variable `vm-include-text-basic' can be used to enable the
+     fallback method of quoting message text in replies.  It should
+     be normally left with the default value of nil.
 
    * VM refrains from repeatedly checking for new mail once it has
      found some new mail on the spool. Set `vm-mail-check-always' to
