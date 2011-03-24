@@ -5523,7 +5523,7 @@ minibuffer.
 
 This command is for attaching files that do not have a MIME
 header section at the top.  For files with MIME headers, you
-should use vm-mime-attach-mime-file to attach such a file.  VM
+should use `vm-mime-attach-mime-file' to attach such a file.  VM
 will extract the content type information from the headers in
 this case and not prompt you for it in the minibuffer."
   (interactive
@@ -5576,7 +5576,7 @@ this case and not prompt you for it in the minibuffer."
 along with the message.
 
 The file is not inserted into the buffer until you execute
-vm-mail-send or vm-mail-send-and-exit.  A visible tag indicating
+`vm-mail-send' or `vm-mail-send-and-exit'.  A visible tag indicating
 the existence of the attachment is placed in the composition
 buffer.  You can move the attachment around or remove it entirely
 with normal text editing commands.  If you remove the attachment
@@ -5590,7 +5590,7 @@ The second argument, TYPE, is the MIME Content-Type of the object.
 
 This command is for attaching files that have a MIME
 header section at the top.  For files without MIME headers, you
-should use vm-mime-attach-file to attach the file."
+should use `vm-mime-attach-file' to attach the file."
   (interactive
    ;; protect value of last-command and this-command
    (let ((last-command last-command)
@@ -5648,7 +5648,7 @@ minibuffer.
 
 This command is for attaching files that do not have a MIME
 header section at the top.  For files with MIME headers, you
-should use vm-mime-attach-mime-file to attach such a file.  VM
+should use `vm-mime-attach-mime-file' to attach such a file.  VM
 will extract the content type information from the headers in
 this case and not prompt you for it in the minibuffer."
   (interactive
@@ -5793,6 +5793,7 @@ minibuffer if the command is run interactively."
 			       (vm-mime-scrub-description description)))
 	(vm-mime-attach-object work-buffer 
 			       :type "message/rfc822" :params nil 
+			       :disposition '("inline")
 			       :description description)
 	(make-local-variable 'vm-forward-list)
 	(setq vm-system-state 'forwarding
@@ -5825,6 +5826,7 @@ minibuffer if the command is run interactively."
       (vm-mime-attach-object work-buffer :type "multipart/digest"
 			     :params (list (concat "boundary=\"" 
 						   boundary "\"")) 
+			     :disposition '("inline")
 			     :description nil :mimed t)
       (make-local-variable 'vm-forward-list)
       (setq vm-system-state 'forwarding
@@ -5902,6 +5904,7 @@ minibuffer if the command is run interactively."
     (with-current-buffer composition
       (vm-mime-attach-object work-buffer 
 			     :type "message/rfc822" :params nil 
+			     :disposition '("inline")
 			     :description description)
       (make-local-variable 'vm-forward-list)
       (setq vm-system-state 'forwarding
@@ -5961,6 +5964,7 @@ COMPOSITION's name will be read from the minibuffer."
 	     nil :keep-list nil :discard-regexp "Content-Transfer-Encoding:")
 	    (insert "Content-Transfer-Encoding: binary\n")
 	    (set-buffer composition)
+	    ;; FIXME need to copy the disposition from the original
 	    (vm-mime-attach-object work-buffer 
 				   :type (car (vm-mm-layout-type layout)) 
 				   :params (cdr (vm-mm-layout-type layout))
@@ -5989,14 +5993,16 @@ COMPOSITION's name will be read from the minibuffer."
 
 (defun* vm-mime-attach-object (object &key type params description 
 				      (mimed nil)
+				      (disposition '("unspecified"))
 				      (no-suggested-filename nil))
   "Attach a MIME OBJECT to the mail composition in the current
 buffer.  The OBJECT could be:
-- the full path name of a file
-- a buffer, or
-- a list with the elements: buffer, start position, end position,
-  disposition and optional file name.
-TYPE, PARAMS and DESCRIPTION are the standard MIME properties.
+  - the full path name of a file
+  - a buffer, or
+  - a list with the elements: buffer, start position, end position,
+    disposition and optional file name.
+TYPE, PARAMS and DESCRIPTION and DISPOSITION are the standard MIME
+properties. 
 MIMED says whether the OBJECT already has MIME headers.
 Optional argument NO-SUGGESTED-FILENAME is a boolean indicating that
 there is no file name for this object.             USR, 2011-03-07"
@@ -6004,7 +6010,7 @@ there is no file name for this object.             USR, 2011-03-07"
     (error "VM internal error: vm-mime-attach-object not in Mail mode buffer."))
   (when (vm-mail-mode-get-header-contents "MIME-Version")
     (error "Can't attach MIME object to already encoded MIME buffer."))
-  (let (start end e tag-string disposition file-name
+  (let (start end e tag-string file-name
 	(fb (list vm-mime-forward-local-external-bodies)))
     (cond ((and (stringp object) (not mimed))
 	   (if (or (vm-mime-types-match "application" type)
@@ -6023,9 +6029,7 @@ there is no file name for this object.             USR, 2011-03-07"
 			  (list (concat "filename=\"" file-name "\""))))))
 	  ((listp object) 
 	   (setq file-name (nth 4 object))
-	   (setq disposition (nth 3 object)))
-	  (t				; buffer or mimed file
-	   (setq disposition (list "unspecified"))))
+	   (setq disposition (nth 3 object))))
     (when (< (point) (save-excursion (mail-text) (point)))
       (mail-text))
     (setq start (point))
@@ -7510,6 +7514,7 @@ also `vm-mime-xemacs-encode-composition'."
 (fset 'vm-mime-preview-composition 'vm-preview-composition)
 
 (defun vm-mime-composite-type-p (type)
+  "Check if TYPE is a MIME type that might have subparts."
   (or (vm-mime-types-match "message/rfc822" type)
       (vm-mime-types-match "message/news" type)
       (vm-mime-types-match "multipart" type)))
@@ -7936,7 +7941,7 @@ This is a destructive operation and cannot be undone!"
 ;; 	o-list ))))
 
 (defun vm-mime-replace-by-attachment-button (x)
-  "Replace the mime button specified by X by an attachment button."
+  "Replace the MIME button specified by X by an attachment button."
   (save-excursion
     (let* ((layout (vm-extent-property x 'vm-mime-layout))
 	   (xstart (vm-extent-start-position x))

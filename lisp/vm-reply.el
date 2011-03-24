@@ -1185,6 +1185,7 @@ use, see `vm-forward-message-encapsulated'."
 	    (mail-text)
 	    (vm-mime-attach-object work-buffer
 				   :type "message/rfc822" :params nil 
+				   :disposition '("inline")
 				   :description "forwarded message" :mimed t)
 	    (add-hook 'kill-buffer-hook
 		      `(lambda ()
@@ -1451,6 +1452,7 @@ included in the digest."
 				 :type "multipart/digest" 
 				 :params (list (concat "boundary=\"" 
 						       boundary "\"")) 
+				 :disposition '("inline")
 				 :description "forwarded messages" :mimed t)
 	  (add-hook 'kill-buffer-hook
 		    `(lambda ()

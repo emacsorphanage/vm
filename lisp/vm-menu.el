@@ -158,6 +158,8 @@
       ["Edit" vm-edit-message vm-message-list]
       ["Print" vm-print-message vm-message-list]
       ["Pipe to Command" vm-pipe-message-to-command vm-message-list]
+      ["Attach to Message Composition"
+       vm-mime-attach-message-to-composition vm-message-list] 
       "---"
       ["Burst Message as Digest" (vm-burst-digest "guess") vm-message-list]
       ["Decode MIME" vm-decode-mime-message (vm-menu-can-decode-mime-p)]
