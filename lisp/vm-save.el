@@ -882,7 +882,7 @@ Output, if any, is displayed.  The message is not altered."
 		   (vm-buffer-of m) (vm-vheaders-of m) (vm-text-of m))
 		  (vm-decode-mime-encoded-words)
 		  (goto-char (point-max))
-		  (let ((vm-auto-displayed-mime-content-types
+		  (let ((vm-mime-auto-displayed-content-types
 			 '("text" "multipart"))
 			(vm-mime-internal-content-types
 			 '("text" "multipart"))

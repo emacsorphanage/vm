@@ -13,8 +13,13 @@ VM 8.2.0a (2011-02-28)
 
   CHANGES
 
+   * The variable name `vm-auto-displayed-mime-content-types' changed
+     to `vm-mime-auto-displayed-content-types' for consistency with
+     other variable names.  (The corresponding `-exceptions' variable
+     changed as well.)
+
    * The variable name `vm-mime-attachment-infer-type-for-text-attachments'
-     changed to `vm-infer-mime-types-for-text'.  (See the info manual
+     changed to `vm-infer-mime-types-for-text'.
 
    * Plain text forwarding has been extended to deal with MIME
      attachments.  The `z' command uses this method, i.e., it does
@@ -99,7 +104,7 @@ VM 8.2.0a (2011-02-28)
    * Better support for message/external-body MIME type, with
      external-bodies loaded on demand.  If you have
      message/external-body as an element in
-     `vm-auto-displayed-mime-content-types', you should remove it to
+     `vm-mime-auto-displayed-content-types', you should remove it to
      access the new functionality.
 
    * Newly documented commands: `[' (`vm-previous-attachment') and `]'

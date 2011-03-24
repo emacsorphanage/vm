@@ -1271,7 +1271,7 @@ for this variable to have effect."
   "*Control variable that says whether MIME messages should be decoded
 for showing the message, in addition to decoding for preview.")
 
-(defcustom vm-auto-displayed-mime-content-types 
+(defcustom vm-mime-auto-displayed-content-types 
   '("text" "image" "message/rfc822")
   "*List of MIME content types that should be displayed immediately
 after decoding.  Other types will be displayed as a button that
@@ -1283,7 +1283,7 @@ A nil value means never display MIME objects immediately; only use buttons.
 If the value is a list, it should be a list of strings, which
 should all be types or type/subtype pairs.  Example:
 
- (setq vm-auto-displayed-mime-content-types '(\"text\" \"image/jpeg\"))
+ (setq vm-mime-auto-displayed-content-types '(\"text\" \"image/jpeg\"))
 
 If a top-level type is listed without a subtype, all subtypes of
 that type are assumed to be included.
@@ -1306,25 +1306,29 @@ object to a file."
   :type '(choice (const t) 
                  (const nil)
                  (repeat string)))
+(defalias 'vm-auto-displayed-mime-content-types
+  'vm-mime-auto-displayed-content-types)
 
-(defcustom vm-auto-displayed-mime-content-type-exceptions nil
+(defcustom vm-mime-auto-displayed-content-type-exceptions nil
   "*List of MIME content types that should not be displayed immediately
 after decoding.  These types will be displayed as a button that you
 must activate to display the object.  This is an exception list for
-the types listed in `vm-auto-displayed-mime-content-types'; all types
+the types listed in `vm-mime-auto-displayed-content-types'; all types
 listed there will be auto-displayed except those in the exception
 list.
 
 The value should be either nil or a list of strings.  The strings
 should all be types or type/subtype pairs.  Example:
 
- (setq vm-auto-displayed-mime-content-type-exceptions '(\"text/html\"))
+ (setq vm-mime-auto-displayed-content-type-exceptions '(\"text/html\"))
 
 If a top-level type is listed without a subtype, all subtypes of
 that type are assumed to be included."
   :group 'vm-mime
   :type '(choice (const nil)
                  (repeat string)))
+(defalias 'vm-auto-displayed-mime-content-type-exceptions
+  'vm-mime-auto-displayed-content-type-exceptions)
 
 (defcustom vm-mime-internal-content-types t
   "*List of MIME content types that should be displayed internally

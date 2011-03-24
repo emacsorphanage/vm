@@ -36,7 +36,7 @@
 ;; 
 ;;      (and (locate-library "vm-pgg") (require 'vm-pgg))
 ;;
-;; If you set `vm-auto-displayed-mime-content-types' and/or
+;; If you set `vm-mime-auto-displayed-content-types' and/or
 ;; `vm-mime-internal-content-types' make sure that they contain
 ;; "application/pgp-keys" or set them before loading vm-pgg.
 ;; Otherwise public  keys are not detected automatically .
@@ -946,8 +946,8 @@ cleanup here after verification and decoding took place."
 
 ;; we must add these in order to force VM to call our handler
 (eval-and-compile
-;; (if (listp vm-auto-displayed-mime-content-types)
-;;       (add-to-list 'vm-auto-displayed-mime-content-types "application/pgp-keys"))
+;; (if (listp vm-mime-auto-displayed-content-types)
+;;       (add-to-list 'vm-mime-auto-displayed-content-types "application/pgp-keys"))
   (if (listp vm-mime-internal-content-types)
       (add-to-list 'vm-mime-internal-content-types "application/pgp-keys"))
   (add-to-list 'vm-mime-button-format-alist

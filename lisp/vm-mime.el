@@ -2269,11 +2269,11 @@ assuming that it is text."
     (let ((type (car (vm-mm-layout-type layout))))
       (cond ((vm-mime-types-match "multipart" type)
 	     nil)
-	    ((or (eq vm-auto-displayed-mime-content-types t)
-		 (vm-find vm-auto-displayed-mime-content-types
+	    ((or (eq vm-mime-auto-displayed-content-types t)
+		 (vm-find vm-mime-auto-displayed-content-types
 			  (lambda (i)
 			    (vm-mime-types-match i type))))
-	     (vm-find vm-auto-displayed-mime-content-type-exceptions
+	     (vm-find vm-mime-auto-displayed-content-type-exceptions
 		   (lambda (i)
 		     (vm-mime-types-match i type))))
 	    (t t)))))
@@ -2330,8 +2330,8 @@ If decoding, the decoded objects might be displayed immediately, or
 buttons might be displayed that you need to activate to view the
 object.  See the documentation for the variables
 
-    vm-auto-displayed-mime-content-types
-    vm-auto-displayed-mime-content-type-exceptions
+    vm-mime-auto-displayed-content-types
+    vm-mime-auto-displayed-content-type-exceptions
     vm-mime-internal-content-types
     vm-mime-internal-content-type-exceptions
     vm-mime-external-content-types-alist
@@ -2370,8 +2370,8 @@ in the buffer.  The function is expected to make the message
 	       (let ((vm-preview-lines nil)
 		     (vm-auto-decode-mime-messages t)
 		     (vm-honor-mime-content-disposition nil)
-		     (vm-auto-displayed-mime-content-types '("multipart"))
-		     (vm-auto-displayed-mime-content-type-exceptions nil))
+		     (vm-mime-auto-displayed-content-types '("multipart"))
+		     (vm-mime-auto-displayed-content-type-exceptions nil))
 		 (setq vm-mime-decoded nil)
 		 (intern (buffer-name) vm-buffers-needing-display-update)
 		 (save-excursion
@@ -2977,8 +2977,8 @@ emacs-w3m."
    (function
     (lambda (layout)
       (save-excursion
-	(let ((vm-auto-displayed-mime-content-types t)
-	      (vm-auto-displayed-mime-content-type-exceptions nil))
+	(let ((vm-mime-auto-displayed-content-types t)
+	      (vm-mime-auto-displayed-content-type-exceptions nil))
 	  (vm-decode-mime-layout layout t)))))
    layout t))
 
@@ -3292,8 +3292,8 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 	(let ((layout (if vm-xemacs-p
                          (vm-extent-property extent 'vm-mime-layout)
                        (overlay-get extent 'vm-mime-layout)))
-	      (vm-auto-displayed-mime-content-types t)
-	      (vm-auto-displayed-mime-content-type-exceptions nil))
+	      (vm-mime-auto-displayed-content-types t)
+	      (vm-mime-auto-displayed-content-type-exceptions nil))
 	  (vm-mime-display-internal-message/external-body 
 	   layout extent))))
      layout
@@ -4455,8 +4455,8 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
   "Display the mime object described by LAYOUT, irrespective of
 whether it is meant to be to be displayed automatically."
   (save-excursion
-    (let ((vm-auto-displayed-mime-content-types t)
-	  (vm-auto-displayed-mime-content-type-exceptions nil))
+    (let ((vm-mime-auto-displayed-content-types t)
+	  (vm-mime-auto-displayed-content-type-exceptions nil))
       (vm-decode-mime-layout layout t))))
 
 (defun vm-mime-display-button-xxxx (layout disposable)
@@ -5180,8 +5180,8 @@ be removed when it is expanded to display the mime object."
 				layout))
 
 (defun vm-mime-display-body-as-text (button)
-  (let ((vm-auto-displayed-mime-content-types '("text/plain"))
-	(vm-auto-displayed-mime-content-type-exceptions nil)
+  (let ((vm-mime-auto-displayed-content-types '("text/plain"))
+	(vm-mime-auto-displayed-content-type-exceptions nil)
 	(layout (copy-sequence (vm-extent-property button 'vm-mime-layout))))
     (vm-set-extent-property button 'vm-mime-disposable t)
     (vm-set-extent-property button 'vm-mime-layout layout)
@@ -5191,8 +5191,8 @@ be removed when it is expanded to display the mime object."
     (vm-decode-mime-layout button t)))
 
 (defun vm-mime-display-object-as-type (button)
-  (let ((vm-auto-displayed-mime-content-types t)
-	(vm-auto-displayed-mime-content-type-exceptions nil)
+  (let ((vm-mime-auto-displayed-content-types t)
+	(vm-mime-auto-displayed-content-type-exceptions nil)
 	(old-layout (vm-extent-property button 'vm-mime-layout))
 	layout
 	(type (read-string "View as MIME type: ")))

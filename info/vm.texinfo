@@ -1771,16 +1771,16 @@ After decoding you will see either the decoded MIME objects or
 button lines that must be activated to attempt display of the
 MIME object.  
 
-@vindex vm-auto-displayed-mime-content-types
-@vindex vm-auto-displayed-mime-content-type-exceptions
-The variable @code{vm-auto-displayed-mime-content-types} specifies the
+@vindex vm-mime-auto-displayed-content-types
+@vindex vm-mime-auto-displayed-content-type-exceptions
+The variable @code{vm-mime-auto-displayed-content-types} specifies the
 types that are displayed immediately.  Its value should be a list of
 MIME content types that should be displayed immediately after decoding.
 Other types will be displayed as a button that you must activate to
 display the object.  The variable
-@code{vm-auto-displayed-mime-content-type-exceptions} can be used to
+@code{vm-mime-auto-displayed-content-type-exceptions} can be used to
 specify any exceptions to the types listed in
-@code{vm-auto-displayed-mime-content-types}.
+@code{vm-mime-auto-displayed-content-types}.
 
 @findex vm-next-attachment
 @findex vm-previous-attachment
@@ -1877,16 +1877,16 @@ matching @code{vm-mime-savable-types} or @code{vm-mime-deletable-types}
 @node Internal display, External display, Attachments, MIME Messages
 @unnumberedsubsec Internal display of MIME attachments
 
-@vindex vm-auto-displayed-mime-content-types
-A value of t for @code{vm-auto-displayed-mime-content-types} means that
+@vindex vm-mime-auto-displayed-content-types
+A value of t for @code{vm-mime-auto-displayed-content-types} means that
 all types should be displayed immediately.  A nil value means
 never display MIME objects immediately; only use buttons.  If
-the value of @code{vm-auto-displayed-mime-content-types} is a list, it
+the value of @code{vm-mime-auto-displayed-content-types} is a list, it
 should be a list of strings, which should all be MIME types or
 type/subtype pairs.  Example:
 
 @example
-(setq vm-auto-displayed-mime-content-types '("text" "image/jpeg"))
+(setq vm-mime-auto-displayed-content-types '("text" "image/jpeg"))
 @end example
 
 @noindent If a top-level type is listed without a subtype then all
@@ -1894,27 +1894,27 @@ subtypes of that type are assumed to be included.  The example above
 says that all text types should be displayed immediately, but only
 JPEG images should be displayed this way.
 
-@vindex vm-auto-displayed-mime-content-type-exceptions
-The variable @code{vm-auto-displayed-mime-content-type-exceptions}
+@vindex vm-mime-auto-displayed-content-type-exceptions
+The variable @code{vm-mime-auto-displayed-content-type-exceptions}
 should be a list of MIME content types that should not be
 displayed immediately after decoding.  This variable acts as
-an exception list for @code{vm-auto-displayed-mime-content-types};
+an exception list for @code{vm-mime-auto-displayed-content-types};
 all types listed there will be auto-displayed except those in
 the exception list.
 
 @example
-(setq vm-auto-displayed-mime-content-type-exceptions '("text/html"))
+(setq vm-mime-auto-displayed-content-type-exceptions '("text/html"))
 @end example
 
 @noindent If ``code'' has been included in
-@code{vm-auto-displayed-mime-content-types} then the effect of this
+@code{vm-mime-auto-displayed-content-types} then the effect of this
 setting is to allow the auto-display of all text types @i{except} for
 html.
 
 @vindex vm-mime-internal-content-types
 The variable @code{vm-mime-internal-content-types} specifies which
 types should be displayed internally within Emacs.  Like
-@code{vm-auto-displayed-mime-content-types} its value should be a list
+@code{vm-mime-auto-displayed-content-types} its value should be a list
 of MIME content types.  A value of t means that VM should always
 display an object internally if possible.  VM knows which object types
 can be displayed internally, so you can specify the types you want
@@ -2128,7 +2128,7 @@ function @code{image-type-available-p} with an image type such as
 @samp{tiff} or @samp{gif} as the argument.
 
 @vindex vm-mime-internal-content-types
-@vindex vm-auto-displayed-mime-content-types
+@vindex vm-mime-auto-displayed-content-types
 Assuming that a particular image type, say @samp{tiff} is available,
 you can include its MIME type in
 @code{vm-mime-internal-content-types}, e.g., 
@@ -2136,7 +2136,7 @@ you can include its MIME type in
 (add-to-list 'vm-mime-internal-content-types "image/tiff")
 @end example
 You can also add the MIME type to the variable
-@code{vm-auto-displayed-mime-content-types} so that VM will
+@code{vm-mime-auto-displayed-content-types} so that VM will
 automatically display all images of the type.  
 If the type is not included among the auto-displayed types, then the
 image is initially shown as a button with a thumbnail image.  Clicking on the
@@ -7043,7 +7043,7 @@ displayed as needed.  If it is a single part, it proceeds as follows.
 @item 
 If the MIME part should not be displayed automatically, it is
 displayed as a button.  (An automatically displayed MIME type is one
-listed in @code{vm-auto-displayed-mime-content-types}
+listed in @code{vm-mime-auto-displayed-content-types}
 but not listed in the corresponding exceptions.)
 @item
 If the MIME part should be displayed internally and VM is able to do
