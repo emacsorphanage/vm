@@ -1811,7 +1811,7 @@ used move to particular buttons within the message presentation.
 @findex vm-mime-reader-map-pipe-to-printer
 @findex vm-delete-mime-object
 @findex vm-mime-reader-map-display-using-external-viewer
-@findex vm-mime-attach-object-from-message
+@findex vm-mime-attach-object-to-composition
 To activate a button, either click the middle mouse
 button over it, or move the cursor to the line and press RET.  If you
 are running under a window system, you can use the right mouse button
@@ -1832,7 +1832,7 @@ RET}.  To display the object using an external viewer, type @kbd{$ e}.
 @item $ e   @tab @code{vm-mime-reader-map-display-using-external-viewer}
 @item $ v   @tab @code{vm-mime-reader-map-display-object-as-type}
 @item $ d   @tab @code{vm-delete-mime-object}
-@item $ a   @tab @code{vm-mime-attach-object-from-message}
+@item $ a   @tab @code{vm-mime-attach-object-to-composition}
 @end multitable
 
 @vindex vm-mime-delete-after-saving
@@ -2728,10 +2728,10 @@ before invoking this command.  All the marked messages will be
 attached as a digest in the outgoing message.
 
 @kindex $ a
-@findex vm-mime-attach-object-from-message
+@findex vm-mime-attach-object-to-composition
 You can also attach objects that you have received as attachments in
 other messages using the @kbd{$ a}
-(@code{vm-mime-attach-object-from-message}) function.
+(@code{vm-mime-attach-object-to-composition}) function.
 (@xref{Operating on MIME attachments}.)
 
 
@@ -3025,16 +3025,16 @@ forwarded messages via the variables @code{vm-forwarded-headers}.
 @findex vm-forward-message-encapsulated
 @kindex Z
 @vindex vm-forwarding-digest-type
-Typing @kbd{Z} (@code{vm-forward-message-encapsulated}) forwards the message
-in an encapsulated form.  You can forward multiple messages in
-this way and they are referred to as ``digests''.  The
+Typing @kbd{Z} (@code{vm-forward-message-encapsulated}) forwards the
+message in an encapsulated form.  You can forward multiple messages in
+this way in what are called ``digests''.  (@xref{Digests}.)  The
 variable @code{vm-forwarding-digest-type} specifies the form in which
-the messages are encapsulated.  The recognized values are @code{nil}, "mime",
-"rfc934" and "rfc1153".  The default is "mime".  If you use @code{nil}
-as the value, then a form of plain text digests is used.  Unless your
-recipients use VM, they will likely see undecoded MIME interspersed
-with plain text content.  So, it is preferable to use MIME digests
-which can be dedoced in any MIME-capable mail client.
+the messages are encapsulated.  The recognized values are @code{nil},
+"mime", "rfc934" and "rfc1153".  The default is "mime".  If you use
+@code{nil} as the value, then a form of plain text digests is used.
+Unless your recipients use VM, they will likely see undecoded MIME
+interspersed with plain text content.  So, it is preferable to use
+MIME digests which can be dedoced in any MIME-capable mail client.
 
 @vindex vm-unforwarded-header-regexp
 By default, forwarded digests include all the messages headers of the

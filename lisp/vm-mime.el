@@ -207,6 +207,12 @@ configuration.  "
 ;;; MIME layout structs (vm-mm)
 ;;----------------------------------------------------------------------------
 
+(defconst vm-mime-layout-fields
+  '[:type :qtype :encoding :id :description :disposition :qdisposition
+	  :header-start :header-end :body-start :body-end
+	  :parts :cache :message-symbol :display-error 
+	  :layout-is-converted :unconverted-layout])
+
 (defun vm-make-layout (&rest plist)
   (vector
    (plist-get plist 'type)
@@ -3048,13 +3054,11 @@ emacs-w3m."
 	(vm-mime-display-internal-multipart/mixed layout))
     (goto-char (vm-extent-start-position layout))
     (setq layout (vm-extent-property layout 'vm-mime-layout))
-    (set-buffer (generate-new-buffer
+    (set-buffer (vm-generate-new-unibyte-buffer
 		 (format "message from %s/%s"
 			 (buffer-name vm-mail-buffer)
 			 (vm-number-of
 			  (car vm-message-pointer)))))
-    (if vm-fsfemacs-mule-p
-	(set-buffer-multibyte nil))	; for new buffer
     (setq vm-folder-type vm-default-folder-type)
     (vm-mime-burst-layout layout nil)
     (set-buffer-modified-p nil)
@@ -3497,9 +3501,7 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 	    (nreverse (mapcar 'int-to-string (or (cdr missing) missing)))
 	    ", ")
 	   (if (cdr missing) (concat " and " (car missing)) "")))
-      (set-buffer (generate-new-buffer "assembled message"))
-      (if vm-fsfemacs-mule-p
-	  (set-buffer-multibyte nil))	; for new buffer
+      (set-buffer (vm-generate-new-unibyte-buffer "assembled message"))
       (setq vm-folder-type vm-default-folder-type)
       (vm-mime-insert-mime-headers (car (cdr (car parts))))
       (goto-char (point-min))
@@ -5777,12 +5779,10 @@ minibuffer if the command is run interactively."
     (error (concat "MIME attachments disabled, "
 		   "set vm-send-using-mime non-nil to enable.")))
   (if (not (consp message))
-      (let* ((work-buffer (generate-new-buffer "*attached message*"))
+      (let* ((work-buffer (vm-generate-new-unibyte-buffer "*attached message*"))
 	     (m (vm-real-message-of message))
 	     (folder (vm-buffer-of m)))
 	(with-current-buffer work-buffer
-	  (when vm-fsfemacs-mule-p
-	    (set-buffer-multibyte nil)) ; for new buffer
 	  (vm-insert-region-from-buffer folder (vm-headers-of m)
 					(vm-text-end-of m))
 	  (goto-char (point-min))
@@ -5802,7 +5802,7 @@ minibuffer if the command is run interactively."
 		     (if (eq (current-buffer) ,(current-buffer))
 		  	 (kill-buffer ,work-buffer)))
 		  ))
-    (let ((work-buffer (generate-new-buffer "*attached messages*"))
+    (let ((work-buffer (vm-generate-new-unibyte-buffer "*attached messages*"))
 	  boundary)
       (with-current-buffer work-buffer
 	(setq boundary (vm-mime-encapsulate-messages
@@ -5835,7 +5835,89 @@ minibuffer if the command is run interactively."
 		       (kill-buffer ,work-buffer)))))))
 
 ;;;###autoload
-(defun vm-mime-attach-object-from-message (composition)
+(defun vm-mime-attach-message-to-composition (composition &optional description)
+  "Attach the current message from the current VM folder to a VM
+composition.
+
+The message is not inserted into the buffer and MIME encoded until
+you execute `vm-mail-send' or `vm-mail-send-and-exit'.  A visible tag
+indicating the existence of the attachment is placed in the
+composition buffer.  You can move the attachment around or remove
+it entirely with normal text editing commands.  If you remove the
+attachment tag, the attachment will not be sent.
+
+First argument COMPOSITION is the buffer into which the object
+will be inserted.  When this function is called interactively
+COMPOSITION's name will be read from the minibuffer.
+
+If this command is invoked on marked message (via
+`vm-next-command-uses-marks') the marked messages in the selected
+folder will be attached as a MIME message digest.    If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are attached.
+
+Optional second argument DESCRIPTION is a one-line description of
+the message being attached.  This is also read from the
+minibuffer if the command is run interactively."
+  (interactive
+   ;; protect value of last-command and this-command
+   (let ((last-command last-command)
+	 (this-command this-command)
+	 description)
+     (vm-select-folder-buffer-and-validate 1 t)
+     (unless (memq major-mode '(vm-mode vm-virtual-mode))
+       (error "Command must be used in a VM buffer."))
+     (unless vm-send-using-mime
+       (error (concat "MIME attachments disabled, "
+		      "set vm-send-using-mime non-nil to enable.")))
+     (list
+      (read-buffer "Attach object to buffer: "
+		   (vm-find-composition-buffer) t)
+      (progn (setq description (read-string "Description: "))
+	     (when (string-match "^[ \t]*$" description)
+	       (setq description nil))
+	     description))))
+
+  (unless vm-send-using-mime
+    (error (concat "MIME attachments disabled, "
+		   "set vm-send-using-mime non-nil to enable.")))
+  (vm-check-for-killed-summary)
+  (vm-error-if-folder-empty)
+
+  (let* ((work-buffer (vm-generate-new-unibyte-buffer "*attached message*"))
+	 (m (vm-real-message-of (vm-current-message)))
+	 (folder (vm-buffer-of m))
+	 w)
+    (with-current-buffer work-buffer
+      (vm-insert-region-from-buffer folder (vm-headers-of m)
+				    (vm-text-end-of m))
+      (goto-char (point-min))
+      (vm-reorder-message-headers
+       nil :keep-list nil
+       :discard-regexp vm-internal-unforwarded-header-regexp)
+      (when description 
+	(setq description
+	      (vm-mime-scrub-description description))))
+    (with-current-buffer composition
+      (vm-mime-attach-object work-buffer 
+			     :type "message/rfc822" :params nil 
+			     :description description)
+      (make-local-variable 'vm-forward-list)
+      (setq vm-system-state 'forwarding
+	    vm-forward-list (list m))
+      ;; move window point forward so that if this command
+      ;; is used consecutively, the insertions will be in
+      ;; the correct order in the composition buffer.
+      (setq w (vm-get-buffer-window composition))
+      (and w (set-window-point w (point)))
+      (add-hook 'kill-buffer-hook
+		`(lambda ()
+		   (if (eq (current-buffer) ,(current-buffer))
+		       (kill-buffer ,work-buffer)))))))
+		      
+;;;###autoload
+(defun vm-mime-attach-object-to-composition (composition)
   "Attach a mime object from the current message to a VM composition buffer.
 
 The object is not inserted into the buffer and MIME encoded until
@@ -5899,6 +5981,11 @@ COMPOSITION's name will be read from the minibuffer."
 	    ))
       ;; unwind-protection
       (when work-buffer (kill-buffer work-buffer)))))
+(defalias 'vm-mime-attach-object-from-message 
+  'vm-mime-attach-object-to-composition)
+(make-obsolete 'vm-mime-attach-object-from-message
+	       'vm-mime-attach-object-to-composition "8.2.0")
+
 
 (defun* vm-mime-attach-object (object &key type params description 
 				      (mimed nil)

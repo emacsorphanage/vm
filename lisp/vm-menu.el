@@ -490,7 +490,7 @@ do not allow menubar buttons.")
        (vm-mime-run-display-function-at-point
 	'vm-mime-pipe-body-to-queried-command-discard-output) t]
       ["Attach to Message Composition Buffer"
-       vm-mime-attach-object-from-message t]
+       vm-mime-attach-object-to-composition t]
       ["Delete" vm-delete-mime-object t])))
 
 (defconst vm-menu-url-browser-menu

@@ -3101,7 +3101,7 @@ thread are affected."
 	  (vm-set-unread-flag (car mlist) nil)
 	  (vm-set-new-flag (car mlist) nil))
       (setq mlist (cdr mlist))))
-  (vm-display nil nil '(vm-flag-message-read) '(vm-flag-message-read))
+  (vm-display nil nil '(vm-mark-message-read) '(vm-mark-message-read))
   (vm-update-summary-and-mode-line))
 (defalias 'vm-flag-message-read 'vm-mark-message-read)
 (make-obsolete 'vm-flag-message-read 

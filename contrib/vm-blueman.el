@@ -54,7 +54,7 @@
 		(easy-menu-add-item vm-menu-fsfemacs-attachment-menu
 			 nil
 			 ["Attach to message..."
-			  (call-interactively 'vm-mime-attach-object-from-message)
+			  (call-interactively 'vm-mime-attach-object-to-composition)
 			  t ]
 			 "Set Content Disposition..." )
 		(easy-menu-add-item vm-menu-fsfemacs-attachment-menu

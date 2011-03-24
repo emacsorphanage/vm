@@ -3094,7 +3094,7 @@ A nil value means to use plain text digests."
           (const "mime")
           (const "rfc934")
           (const "rfc1153")
-	  (const nil)))
+	  (const nil :tag "Forward in plain text")))
 
 (defcustom vm-mime-forward-local-external-bodies nil
   "*Non-nil value means forward messages that contain
@@ -3193,7 +3193,7 @@ A nil value means to use plain text digests."
   :type '(choice (const "mime")
 		 (const "rfc934") 
                  (const "rfc1153") 
-		 (const nil)))
+		 (const nil "Plain text digests")))
 
 (defcustom vm-rfc934-digest-headers
   '("Resent-"
@@ -5593,7 +5593,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\C-d" 'vm-delete-message-backward)
     (define-key map "u" 'vm-undelete-message)
     (define-key map "U" 'vm-unread-message)
-    (define-key map "." 'vm-flag-message-read)
+    (define-key map "." 'vm-mark-message-read)
     (define-key map "!" 'vm-toggle-flag-message)
     (define-key map "e" 'vm-edit-message)
     (define-key map "a" 'vm-set-message-attributes)
@@ -5834,7 +5834,7 @@ Its parent keymap is mail-mode-map.")
     (define-key map "$s" 'vm-mime-reader-map-save-message)
     (define-key map "$p" 'vm-mime-reader-map-pipe-to-printer)
     (define-key map "$|" 'vm-mime-reader-map-pipe-to-command)
-    (define-key map "$a" 'vm-mime-attach-object-from-message)
+    (define-key map "$a" 'vm-mime-attach-object-to-composition)
     (define-key map "$d" 'vm-delete-mime-object)
     (cond ((vm-mouse-xemacs-mouse-p)
 	   (define-key map 'button3 'vm-menu-popup-mime-dispose-menu)))
@@ -6134,7 +6134,8 @@ folder needs to be updated.")
     ("vm-mime-attach-file")
     ("vm-mime-attach-message")
     ("vm-mime-attach-mime-file")
-    ("vm-mime-attach-object-from-message")
+    ("vm-mime-attach-object-to-composition")
+    ("vm-mime-attach-message-to-composition")
     ("vm-mode")
     ("vm-move-message-backward")
     ("vm-move-message-backward-physically")
@@ -6589,9 +6590,15 @@ position for the next read.")
   "* Set this to non-nil to retain a limited number of IMAP session
   trace buffers for debugging purposes.")
 (defvar vm-imap-session-done nil)
-(defvar vm-reply-list nil)
-(defvar vm-forward-list nil)
-(defvar vm-redistribute-list nil)
+(defvar vm-reply-list nil
+  "Buffer local variable in Composition buffers that holds the set of
+  messages to which this composition is a reply.")
+(defvar vm-forward-list nil
+  "Buffer local variable in Composition buffers that holds the set of
+  messages that are forwarded in this composition.")
+(defvar vm-redistribute-list nil
+  "Buffer local variable in Composition buffers that holds the set of
+  messages that are redistributed in this composition.")
 
 ;; For verification of assertions
 
