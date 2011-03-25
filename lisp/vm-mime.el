@@ -213,6 +213,10 @@ configuration.  "
 	  :parts :cache :message-symbol :display-error 
 	  :layout-is-converted :unconverted-layout])
 
+(defun vm-pp-mime-layout (layout)
+  (pp (vm-zip-vectors vm-mime-layout-fields layout))
+  nil)
+
 (defun vm-make-layout (&rest plist)
   (vector
    (plist-get plist 'type)
@@ -2258,7 +2262,8 @@ assuming that it is text."
 	      (insert-buffer-substring work-buffer start end)
 	      (delete-region (point) (+ (point) oldsize))))
 	  (nth 1 ooo))
-      (and work-buffer (kill-buffer work-buffer)))))
+      ;; unwind-protection
+      (when work-buffer (kill-buffer work-buffer)))))
 
 (defun vm-mime-should-display-button (layout dont-honor-content-disposition)
   (if (and vm-honor-mime-content-disposition
@@ -2451,10 +2456,13 @@ in the buffer.  The function is expected to make the message
 If DONT-HONOR-C-D non-Nil, then don't honor the Content-Disposition
 declarations in the attachments and make a decision independently.
 
-LAYOUT can be a mime layout vector.  It can also be an
-overlay of a button in the current buffer, in which case the
-'vm-mime-layout property of the overlay will be extracted.
-                                                USR, 2011-02-08"
+LAYOUT can be a mime layout vector.  It can also be a button
+extent in the current buffer, in which case the 'vm-mime-layout
+property of the overlay will be extracted.  The button may be
+deleted. 
+
+Returns t if the display was successful.  Not clear what happens if it
+is not successful.                                   USR, 2011-03-25"
   (let ((modified (buffer-modified-p))
 	handler new-layout file type type2 type-no-subtype (extent nil))
     (unless (vectorp layout)
@@ -2484,6 +2492,8 @@ overlay of a button in the current buffer, in which case the
 		       type-no-subtype (car (vm-parse type "\\([^/]+\\)")))))
 	  
 	  (cond ((and (vm-mime-should-display-button layout dont-honor-c-d)
+		      ;; original conditional-cases changed to fboundp
+		      ;; checks.  USR, 2011-03-25
 		      (or (fboundp 
 			   (setq handler 
 				 (intern (concat "vm-mime-display-button-"
@@ -2534,12 +2544,15 @@ overlay of a button in the current buffer, in which case the
 			       extent
 			       (or (vm-mm-layout-display-error layout)
 				   "no external viewer defined for type")))
-		 (if (vm-mime-types-match "message/external-body" type)
-		     (if (null extent)
-			 (vm-mime-display-button-xxxx layout t)
-		       (setq extent nil))
-		   (vm-mime-display-internal-application/octet-stream
-		    (or extent layout)))
+		 (cond ((vm-mime-types-match "message/external-body" type)
+			(if (null extent)
+			    (vm-mime-display-button-xxxx layout t)
+			  (setq extent nil)))
+		       ((vm-mime-types-match "application/octet-stream" type)
+			(vm-mime-display-internal-application/octet-stream
+			 (or extent layout)))
+		       ;; if everything else fails, do nothing
+		       )
 		 ))
 	  (when extent (vm-mime-delete-button-maybe extent)))
       ;; unwind-protection
@@ -2799,6 +2812,8 @@ determined by `vm-mime-external-content-types-alist'."
   t )
 
 (defun vm-mime-display-internal-application/octet-stream (layout)
+  "Display a button for the MIME LAYOUT.  If a button extent is
+given as the argument instead, then nothing is done.   USR, 2011-03-25"
   (if (vectorp layout)
       (let ((buffer-read-only nil)
 	    (vm-mf-default-action "save to a file"))
@@ -2807,27 +2822,35 @@ determined by `vm-mime-external-content-types-alist'."
 	 (function
 	  (lambda (layout)
 	    (save-excursion
-	      (vm-mime-display-internal-application/octet-stream layout))))
-	 layout nil))
+	      (vm-mime-save-application/octet-stream layout))))
+	 layout nil)))
+  t)
+
+(defun vm-mime-save-application/octet-stream (layout)
+  "Save an application/octet-stream object with LAYOUT to the
+stated filename.  A button extent with a layout can also be given as
+the argument.                                        USR, 2011-03-25"
+  (unless (vectorp layout)
     (goto-char (vm-extent-start-position layout))
-    (setq layout (vm-extent-property layout 'vm-mime-layout))
-    ;; support old "name" paramater for application/octet-stream
-    ;; but don't override the "filename" parameter extracted from
-    ;; Content-Disposition, if any.
-    (let ((default-filename (vm-mime-get-disposition-filename layout))
-	  (file nil))
-      (setq file (vm-mime-send-body-to-file layout default-filename))
-      (if vm-mime-delete-after-saving
-	  (let ((vm-mime-confirm-delete nil))
-	    ;; we don't care if the delete fails
-	    (condition-case nil
-		(vm-delete-mime-object (expand-file-name file))
-	      (error nil))))))
+    (setq layout (vm-extent-property layout 'vm-mime-layout)))
+  ;; support old "name" paramater for application/octet-stream
+  ;; but don't override the "filename" parameter extracted from
+  ;; Content-Disposition, if any.
+  (let ((default-filename (vm-mime-get-disposition-filename layout))
+	(file nil))
+    (setq file (vm-mime-send-body-to-file layout default-filename))
+    (if vm-mime-delete-after-saving
+	(let ((vm-mime-confirm-delete nil))
+	  ;; we don't care if the delete fails
+	  (condition-case nil
+	      (vm-delete-mime-object (expand-file-name file))
+	    (error nil)))))
   t )
 (fset 'vm-mime-display-button-application/octet-stream
       'vm-mime-display-internal-application/octet-stream)
 
 (defun vm-mime-display-button-application (layout)
+  "Display button for an application type object described by LAYOUT."
   (vm-mime-display-button-xxxx layout nil))
 
 
@@ -3542,6 +3565,9 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
       'vm-mime-display-internal-message/partial)
 
 (defun vm-mime-display-internal-image-xxxx (layout image-type name)
+  "Display the image object described by LAYOUT internally.
+IMAGE-TYPE is its image type (png, jpeg etc.).  NAME is a string
+describing the image type.                             USR, 2011-03-25"
   (cond
    (vm-xemacs-p
     (vm-mime-display-internal-image-xemacs-xxxx layout image-type name))
@@ -3675,6 +3701,9 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 (defvar vm-menu-fsfemacs-image-menu)
 
 (defun vm-mime-display-internal-image-fsfemacs-xxxx (layout image-type name)
+  "Display the image object described by LAYOUT internally.
+IMAGE-TYPE is its image type (png, jpeg etc.).  NAME is a string
+describing the image type.                            USR, 2011-03-25"
   (if (and (vm-images-possible-here-p)
 	   (vm-image-type-available-p image-type))
       (let (start end tempfile image work-buffer
@@ -3773,6 +3802,7 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 		 (if vm-use-menus
 		     (overlay-put o 'vm-image vm-menu-fsfemacs-image-menu)))))
 	t )
+    ;; otherwise, image-type not available here
     nil ))
 
 ;; FSF Emacs 19 is not supported any more.  USR, 2011-02-23
@@ -4242,6 +4272,14 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
   (vm-mime-display-internal-image-xxxx layout 'xbm "XBM"))
 
 (defun vm-mime-frob-image-xxxx (extent &rest convert-args)
+  "Create and display a thumbnail (a PNG image) for the MIME
+object described by EXTENT.  The thumbnail is stored in a file
+whose identity is saved in the MIME layout cache of the object.
+
+The remaining arguments CONVERT-ARGS are passed to the ImageMagick
+convert program during the creation of the thumbnail image.  
+
+The return value does not seem to be meaningful.     USR, 2011-03-25"
   (let* ((layout (vm-extent-property extent 'vm-mime-layout))
 	 (blob (get (vm-mm-layout-cache layout)
 		    'vm-mime-display-internal-image-xxxx))
@@ -4253,10 +4291,9 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
     (if (consp blob)
 	(setq tempfile (car blob))
       (setq tempfile blob))
+    (setq work-buffer (vm-make-work-buffer))
     (unwind-protect
-	(save-excursion
-	  (setq work-buffer (vm-make-work-buffer))
-	  (set-buffer work-buffer)
+	(with-current-buffer work-buffer
 	  (set-buffer-file-coding-system (vm-binary-coding-system))
           ;; convert just the first page "[0]" and enforce PNG output by "png:"
 	  (let ((coding-system-for-read (vm-binary-coding-system)))
@@ -4264,19 +4301,20 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 		  (eq 0 (apply 'call-process vm-imagemagick-convert-program
 			       tempfile t nil
 			       (append convert-args (list "-[0]" "png:-"))))))
-	  (if success
-	      (progn
-		(write-region (point-min) (point-max) tempfile nil 0)
-		(if (consp blob)
-		    (setcar (nthcdr 5 blob) 0))
-		(put (vm-mm-layout-cache layout) 'vm-image-modified t))))
-      (and work-buffer (kill-buffer work-buffer)))
-    (when success
-      ;; the output is always PNG now, so fix it for displaying, but restore
-      ;; it for the layout afterwards
-      (vm-set-mm-layout-type layout '("image/png"))
-      (vm-mark-image-tempfile-as-message-garbage-once layout tempfile)
-      (vm-mime-display-generic extent)
+	  (when success
+	    (write-region (point-min) (point-max) tempfile nil 0)
+	    (when (consp blob)
+	      (setcar (nthcdr 5 blob) 0))
+	    (put (vm-mm-layout-cache layout) 'vm-image-modified t)))
+      ;; unwind-protection
+      (when work-buffer (kill-buffer work-buffer)))
+    (unwind-protect
+	(when success
+	  ;; the output is always PNG now, so fix it for displaying, but restore
+	  ;; it for the layout afterwards
+	  (vm-set-mm-layout-type layout '("image/png"))
+	  (vm-mark-image-tempfile-as-message-garbage-once layout tempfile)
+	  (vm-mime-display-internal-generic extent))
       (vm-set-mm-layout-type layout saved-type))))
 
 (defun vm-mark-image-tempfile-as-message-garbage-once (layout tempfile)
@@ -4353,68 +4391,71 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
 				     (int-to-string (/ (nth 1 dims) 2))))))
 
 (defcustom vm-mime-thumbnail-max-geometry "80x80"
-  "*Max width and height of image thumbnail."
+  "If thumbnails should be displayed as part of MIME buttons, then set
+this variable to a string describing the geometry, e.g., \"80x80\".
+Otherwise, set it to nil.                              USR, 2011-03-25"
   :group 'vm-mime
   :type '(choice string
 		 (const :tag "Disable thumbnails." nil)))
 
 (defun vm-mime-display-button-image (layout)
-  "Displays a button for the image and when possible a thumbnail."
-  (if (not (and vm-imagemagick-convert-program
-                vm-mime-thumbnail-max-geometry
-                (vm-images-possible-here-p)))
-      ;; just display the normal button
-      (vm-mime-display-button-xxxx layout t)
-    ;; otherwise create a thumb and display it
-    (let (tempfile start end x glyph)
-      ;; fake an extent to display the image as thumb
-      (setq start (point))
-      (insert " ")
-      (setq x (vm-make-extent start (point)))
-      (vm-set-extent-property x 'vm-mime-layout layout)
-      (vm-set-extent-property x 'vm-mime-disposable nil)
-      (vm-set-extent-property x 'start-open t)
-      ;; write out the image data 
-      (save-excursion 
-        (set-buffer (vm-make-work-buffer))
-        (vm-mime-insert-mime-body layout)
-        (vm-mime-transfer-decode-region layout (point-min) (point-max))
-        (setq tempfile (vm-make-tempfile))
-        (let ((coding-system-for-write (vm-binary-coding-system)))
-          (write-region (point-min) (point-max) tempfile nil 0))
-        (kill-buffer (current-buffer)))
-      ;; store the temp filename
-      (put (vm-mm-layout-cache layout)
-           'vm-mime-display-internal-image-xxxx
-           tempfile)
-      (vm-register-folder-garbage-files (list tempfile))
-      ;; force display
-      (let ((vm-mime-internal-content-types '("image"))
-            (vm-mime-internal-content-type-exceptions nil)
-            (vm-mime-use-image-strips nil))
-        (vm-mime-frob-image-xxxx x
-                                 "-thumbnail" 
-                                 vm-mime-thumbnail-max-geometry))
-      ;; extract image data 
-      (setq glyph (if vm-xemacs-p
-                      (let ((e1 (vm-extent-at start))
-                            (e2 (vm-extent-at (1+ start))))
-                        (or (and e1 (extent-begin-glyph e1))
-                            (and e2 (extent-begin-glyph e2))))
-                    (get-text-property start 'display)))
-      (delete-region start (point))
-      ;; insert the button and correct the image 
-      (setq start (point))
-      (vm-mime-display-button-xxxx layout t)
-      (when glyph
-	(if vm-xemacs-p
-	    (set-extent-begin-glyph (vm-extent-at start) glyph)
-	  (put-text-property start (1+ start) 'display glyph)))
-      ;; force redisplay in original size 
-      (put (vm-mm-layout-cache layout)
-           'vm-mime-display-internal-image-xxxx
-           nil)
-      t)))
+  "Displays a button for the MIME LAYOUT and includes a thumbnail
+image when possible."
+  (if (and vm-imagemagick-convert-program
+	   vm-mime-thumbnail-max-geometry
+	   (vm-images-possible-here-p))
+      ;; create a thumbnail and display it
+      (let (tempfile start end thumb-extent glyph)
+	;; fake an extent to display the image as thumb
+	(setq start (point))
+	(insert " ")
+	(setq thumb-extent (vm-make-extent start (point)))
+	(vm-set-extent-property thumb-extent 'vm-mime-layout layout)
+	(vm-set-extent-property thumb-extent 'vm-mime-disposable nil)
+	(vm-set-extent-property thumb-extent 'start-open t)
+	;; write out the image data 
+	(with-current-buffer (vm-make-work-buffer)
+	  (vm-mime-insert-mime-body layout)
+	  (vm-mime-transfer-decode-region layout (point-min) (point-max))
+	  (setq tempfile (vm-make-tempfile))
+	  (let ((coding-system-for-write (vm-binary-coding-system)))
+	    (write-region (point-min) (point-max) tempfile nil 0))
+	  (kill-buffer (current-buffer)))
+	;; store the temp filename
+	(put (vm-mm-layout-cache layout)
+	     'vm-mime-display-internal-image-xxxx
+	     tempfile)
+	(vm-register-folder-garbage-files (list tempfile))
+	;; display a thumbnail over the fake extent
+	(let ((vm-mime-internal-content-types '("image"))
+	      (vm-mime-internal-content-type-exceptions nil)
+	      (vm-mime-use-image-strips nil))
+	  (vm-mime-frob-image-xxxx thumb-extent
+				   "-thumbnail" 
+				   vm-mime-thumbnail-max-geometry))
+	;; extract image data, don't need the image itself!
+	;; if the display was not successful, glyph will be nil
+	(setq glyph (if vm-xemacs-p
+			(let ((e1 (vm-extent-at start))
+			      (e2 (vm-extent-at (1+ start))))
+			  (or (and e1 (extent-begin-glyph e1))
+			      (and e2 (extent-begin-glyph e2))))
+		      (get-text-property start 'display)))
+	(delete-region start (point))
+	;; insert the button and replace the image 
+	(setq start (point))
+	(vm-mime-display-button-xxxx layout t)
+	(when glyph
+	  (if vm-xemacs-p
+	      (set-extent-begin-glyph (vm-extent-at start) glyph)
+	    (put-text-property start (1+ start) 'display glyph)))
+	;; remove the cached thumb so that full sized image will be shown
+	(put (vm-mm-layout-cache layout)
+	     'vm-mime-display-internal-image-xxxx
+	     nil)
+	t)
+    ;; just display the normal button
+    (vm-mime-display-button-xxxx layout t)))
 
 (defun vm-mime-display-button-application/pdf (layout)
   (vm-mime-display-button-image layout))
@@ -4457,6 +4498,16 @@ whether it is meant to be to be displayed automatically."
   (save-excursion
     (let ((vm-mime-auto-displayed-content-types t)
 	  (vm-mime-auto-displayed-content-type-exceptions nil))
+      (vm-decode-mime-layout layout t))))
+
+(defun vm-mime-display-internal-generic (layout)
+  "Display the mime object described by LAYOUT internally,
+irrespective of whether it is meant to be to be displayed
+automatically.  No external viewers are tried.     USR, 2011-03-25"
+  (save-excursion
+    (let ((vm-mime-auto-displayed-content-types t)
+	  (vm-mime-auto-displayed-content-type-exceptions nil)
+	  (vm-mime-external-content-types-alist nil))
       (vm-decode-mime-layout layout t))))
 
 (defun vm-mime-display-button-xxxx (layout disposable)
@@ -4864,6 +4915,8 @@ confirmed before creating a new directory."
 (defvar vm-menu-mime-dispose-menu)
 
 (defun vm-mime-set-image-stamp-for-type (e type)
+  "Set an image stamp for MIME button extent E as appropriate for
+TYPE.                                                 USR, 2011-03-25"
   (cond
    (vm-xemacs-p
     (vm-mime-xemacs-set-image-stamp-for-type e type))
@@ -4880,6 +4933,8 @@ confirmed before creating a new directory."
     ("multipart" "multipart.xpm")))
 
 (defun vm-mime-xemacs-set-image-stamp-for-type (e type)
+  "Set an image stamp for MIME button extent E as appropriate for
+TYPE.                                                  USR, 2011-03-25"
   (if (and (vm-images-possible-here-p)
 	   (vm-image-type-available-p 'xpm)
 	   (> (device-bitplanes) 7))
@@ -4906,6 +4961,12 @@ confirmed before creating a new directory."
 	(and glyph (set-extent-begin-glyph e glyph)))))
 
 (defun vm-mime-fsfemacs-set-image-stamp-for-type (e type)
+  "Set an image stamp for MIME button extent E as appropriate for
+TYPE.
+
+This is done by extending the extent with one character position at
+the front and placing the image there as the display text property.
+                                                         USR, 2011-03-25"
   (if (and (vm-images-possible-here-p)
 	   (vm-image-type-available-p 'xpm))
       (let ((dir (vm-image-directory))

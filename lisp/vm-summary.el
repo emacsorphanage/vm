@@ -1209,7 +1209,8 @@ message in bytes, kilobytes or megabytes.      USR, 2010-05.13"
 (defun vm-su-spam-score-aux (m)
   "Return the numeric spam level for M."
   (let ((spam-status (vm-get-header-contents m "X-Spam-Status:")))
-    (if (string-match "\\(hits\\|score\\)=\\([+-]?[0-9.]+\\)" spam-status)
+    (if (and spam-status
+	     (string-match "\\(hits\\|score\\)=\\([+-]?[0-9.]+\\)" spam-status))
         (string-to-number (match-string 2 spam-status))
       0)))
 

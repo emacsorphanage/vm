@@ -1306,7 +1306,7 @@ object to a file."
   :type '(choice (const t) 
                  (const nil)
                  (repeat string)))
-(defalias 'vm-auto-displayed-mime-content-types
+(defvaralias 'vm-auto-displayed-mime-content-types
   'vm-mime-auto-displayed-content-types)
 
 (defcustom vm-mime-auto-displayed-content-type-exceptions nil
@@ -1327,7 +1327,7 @@ that type are assumed to be included."
   :group 'vm-mime
   :type '(choice (const nil)
                  (repeat string)))
-(defalias 'vm-auto-displayed-mime-content-type-exceptions
+(defvaralias 'vm-auto-displayed-mime-content-type-exceptions
   'vm-mime-auto-displayed-content-type-exceptions)
 
 (defcustom vm-mime-internal-content-types t

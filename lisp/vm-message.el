@@ -515,8 +515,7 @@ works in all VM buffers."
     (aset new-vector 23 (vm-mime-encode-words-in-string (aref vector 23)))
     ;; imap-uid-validity
     (aset new-vector 24 (vm-mime-encode-words-in-string (aref vector 24)))
-    ;; spam-score
-    (aset new-vector 25 (vm-mime-encode-words-in-string (aref vector 25)))
+    ;; spam-score is a number.  nothing to do
 
     new-vector))
 
