@@ -4714,11 +4714,11 @@ See `vm-virtual-folder-alist' for a description of the conditions."
       (((type x w32 mac) (class color) (background light)) 
        (:foreground "grey50" :strike-through "grey70"))
       (((type x w32 mac) (class color) (background dark)) 
-       (:foreground "grey70" :strike-trhough t))
+       (:foreground "grey70" :strike-through t))
       ;; (((class color) (min-colors 16) (background light)) 
       ;;  (:foreground "grey50" :strike-through "grey70"))
       ;; (((class color) (min-colors 16) (background dark)) 
-      ;;  (:foreground "grey70" :strike-trhough "grey50"))
+      ;;  (:foreground "grey70" :strike-trhough t))
       (((class color) (background light)) ;  (min-colors 8)
        (:foreground "yellow"))
       (((class color) (background dark)) 
@@ -4726,7 +4726,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
       (((class grayscale) (background light)) 
        (:foreground "grey50" :strike-through "grey70"))
       (((class grayscale) (background dark)) 
-       (:foreground "grey70" :strike-trhough "grey50"))
+       (:foreground "grey70" :strike-trhough t))
       (((class mono))
        (:strike-through t))
       (((type tty)) 
@@ -4849,7 +4849,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
 (make-obsolete 'vm-summary-redistributed-face 'vm-summary-forwarded "8.2.0")
 
 (defface vm-summary-edited 
-  nil
+  '((t ()))
   "The face used in VM Summary buffers for edited messages."
   :group 'vm-summary-faces)
 
@@ -4931,7 +4931,7 @@ collapsed threads."
   :group 'vm-summary-faces)
 
 (defface vm-summary-default
-  nil
+  '((t ()))
   "The default face used in VM Summary buffers."
   :group 'vm-summary-faces)
 

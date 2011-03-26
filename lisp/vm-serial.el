@@ -226,7 +226,7 @@ randomly select one of them during expansion."
   :group 'vm-serial
   :type '(repeat (list (string :tag "Tagname")
                        (choice (repeat :tag "List of strings" (string))
-                               (sexp :tag "SExp evaluating to a string"))
+                               (sexp :tag "Sexp evaluating to a string"))
                        (string :tag "Documentation"))))
 
 (defcustom vm-serial-mails-alist

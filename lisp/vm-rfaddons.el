@@ -1136,7 +1136,11 @@ headers."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defface vm-shrunken-headers-face 
-  '((t (:background "gray")))
+  '((((class color) (background light))
+     (:background "grey"))
+    (((class color) (background dark))
+     (:background "DimGrey"))
+    (t (:dim t)))
   "Used for marking shrunken headers."
   :group 'vm-rfaddons)
 
