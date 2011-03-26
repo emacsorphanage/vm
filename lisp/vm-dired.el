@@ -89,7 +89,7 @@ COMPOSITION's name will be read from the minibuffer."
       (setq type (or (vm-mime-default-type-from-filename file)
 		     "application/octet-stream"))
       (with-current-buffer composition
-	(vm-mime-attach-file file type)))))
+	(vm-attach-file file type)))))
 
 ;;;###autoload
 (defun vm-dired-do-attach-files (composition)
@@ -121,7 +121,7 @@ COMPOSITION's name will be read from the minibuffer."
      (setq type (or (vm-mime-default-type-from-filename file)
 		    "application/octet-stream"))
      (with-current-buffer composition
-       (vm-mime-attach-file file type)))
+       (vm-attach-file file type)))
    nil))
 
 ;;; vm-dired.el ends here

@@ -5559,7 +5559,7 @@ Returns non-NIL value M is a plain message."
 ;;;###autoload
 
 
-(defun vm-mime-attach-file (file type &optional charset description
+(defun vm-attach-file (file type &optional charset description
 			    no-suggested-filename)
   "Attach a file to a VM composition buffer to be sent along with the message.
 The file is not inserted into the buffer and MIME encoded until
@@ -5584,7 +5584,7 @@ minibuffer.
 
 This command is for attaching files that do not have a MIME
 header section at the top.  For files with MIME headers, you
-should use `vm-mime-attach-mime-file' to attach such a file.  VM
+should use `vm-attach-mime-file' to attach such a file.  VM
 will extract the content type information from the headers in
 this case and not prompt you for it in the minibuffer."
   (interactive
@@ -5628,11 +5628,12 @@ this case and not prompt you for it in the minibuffer."
     (setq charset (list (concat "charset=" charset))))
   (when description 
     (setq description (vm-mime-scrub-description description)))
-  (vm-mime-attach-object file :type type :params charset 
+  (vm-attach-object file :type type :params charset 
 			 :description description :mimed nil))
+(defalias 'vm-mime-attach-file 'vm-attach-file)
 
 ;;;###autoload
-(defun vm-mime-attach-mime-file (file type)
+(defun vm-attach-mime-file (file type)
   "Attach a MIME encoded file to a VM composition buffer to be sent
 along with the message.
 
@@ -5651,7 +5652,7 @@ The second argument, TYPE, is the MIME Content-Type of the object.
 
 This command is for attaching files that have a MIME
 header section at the top.  For files without MIME headers, you
-should use `vm-mime-attach-file' to attach the file."
+should use `vm-attach-file' to attach the file."
   (interactive
    ;; protect value of last-command and this-command
    (let ((last-command last-command)
@@ -5680,11 +5681,12 @@ should use `vm-mime-attach-file' to attach the file."
     (error "No such file: %s" file))
   (unless (file-readable-p file)
     (error "You don't have permission to read %s" file))
-  (vm-mime-attach-object file :type type :params nil 
+  (vm-attach-object file :type type :params nil 
 			 :description nil :mimed t))
+(defalias 'vm-mime-attach-mime-file 'vm-attach-mime-file)
 
 ;;;###autoload
-(defun vm-mime-attach-buffer (buffer type &optional charset description)
+(defun vm-attach-buffer (buffer type &optional charset description)
   "Attach a buffer to a VM composition buffer to be sent along with
 the message.
 
@@ -5709,7 +5711,7 @@ minibuffer.
 
 This command is for attaching files that do not have a MIME
 header section at the top.  For files with MIME headers, you
-should use `vm-mime-attach-mime-file' to attach such a file.  VM
+should use `vm-attach-mime-file' to attach such a file.  VM
 will extract the content type information from the headers in
 this case and not prompt you for it in the minibuffer."
   (interactive
@@ -5746,11 +5748,13 @@ this case and not prompt you for it in the minibuffer."
     (setq charset (list (concat "charset=" charset))))
   (when description 
     (setq description (vm-mime-scrub-description description)))
-  (vm-mime-attach-object buffer :type type :params charset
+  (vm-attach-object buffer :type type :params charset
 			 :description description :mimed nil))
+(defalias 'vm-mime-attach-buffer 'vm-attach-buffer)
+
 
 ;;;###autoload
-(defun vm-mime-attach-message (message &optional description)
+(defun vm-attach-message (message &optional description)
   "Attach a message from a VM folder to the current VM
 composition.
 
@@ -5852,7 +5856,7 @@ minibuffer if the command is run interactively."
 	   :discard-regexp vm-internal-unforwarded-header-regexp))
 	(and description (setq description
 			       (vm-mime-scrub-description description)))
-	(vm-mime-attach-object work-buffer 
+	(vm-attach-object work-buffer 
 			       :type "message/rfc822" :params nil 
 			       :disposition '("inline")
 			       :description description)
@@ -5884,7 +5888,7 @@ minibuffer if the command is run interactively."
 		"\n\n"))
       (when description 
 	(setq description (vm-mime-scrub-description description)))
-      (vm-mime-attach-object work-buffer :type "multipart/digest"
+      (vm-attach-object work-buffer :type "multipart/digest"
 			     :params (list (concat "boundary=\"" 
 						   boundary "\"")) 
 			     :disposition '("inline")
@@ -5896,9 +5900,11 @@ minibuffer if the command is run interactively."
 		`(lambda ()
 		   (if (eq (current-buffer) ,(current-buffer))
 		       (kill-buffer ,work-buffer)))))))
+(defalias 'vm-mime-attach-message 'vm-attach-message)
+
 
 ;;;###autoload
-(defun vm-mime-attach-message-to-composition (composition &optional description)
+(defun vm-attach-message-to-composition (composition &optional description)
   "Attach the current message from the current VM folder to a VM
 composition.
 
@@ -5963,7 +5969,7 @@ minibuffer if the command is run interactively."
 	(setq description
 	      (vm-mime-scrub-description description))))
     (with-current-buffer composition
-      (vm-mime-attach-object work-buffer 
+      (vm-attach-object work-buffer 
 			     :type "message/rfc822" :params nil 
 			     :disposition '("inline")
 			     :description description)
@@ -5979,9 +5985,11 @@ minibuffer if the command is run interactively."
 		`(lambda ()
 		   (if (eq (current-buffer) ,(current-buffer))
 		       (kill-buffer ,work-buffer)))))))
+(defalias 'vm-mime-attach-message-to-composition
+  'vm-attach-message-to-composition)
 		      
 ;;;###autoload
-(defun vm-mime-attach-object-to-composition (composition)
+(defun vm-attach-object-to-composition (composition)
   "Attach a mime object from the current message to a VM composition buffer.
 
 The object is not inserted into the buffer and MIME encoded until
@@ -6026,7 +6034,7 @@ COMPOSITION's name will be read from the minibuffer."
 	    (insert "Content-Transfer-Encoding: binary\n")
 	    (set-buffer composition)
 	    ;; FIXME need to copy the disposition from the original
-	    (vm-mime-attach-object work-buffer 
+	    (vm-attach-object work-buffer 
 				   :type (car (vm-mm-layout-type layout)) 
 				   :params (cdr (vm-mm-layout-type layout))
 				   :description (vm-mm-layout-description 
@@ -6046,13 +6054,15 @@ COMPOSITION's name will be read from the minibuffer."
 	    ))
       ;; unwind-protection
       (when work-buffer (kill-buffer work-buffer)))))
+(defalias 'vm-mime-attach-object-to-composition
+  'vm-attach-object-to-composition)
 (defalias 'vm-mime-attach-object-from-message 
-  'vm-mime-attach-object-to-composition)
+  'vm-attach-object-to-composition)
 (make-obsolete 'vm-mime-attach-object-from-message
-	       'vm-mime-attach-object-to-composition "8.2.0")
+	       'vm-attach-object-to-composition "8.2.0")
 
 
-(defun* vm-mime-attach-object (object &key type params description 
+(defun* vm-attach-object (object &key type params description 
 				      (mimed nil)
 				      (disposition '("unspecified"))
 				      (no-suggested-filename nil))
@@ -6068,7 +6078,7 @@ MIMED says whether the OBJECT already has MIME headers.
 Optional argument NO-SUGGESTED-FILENAME is a boolean indicating that
 there is no file name for this object.             USR, 2011-03-07"
   (unless (eq major-mode 'mail-mode)
-    (error "VM internal error: vm-mime-attach-object not in Mail mode buffer."))
+    (error "VM internal error: vm-attach-object not in Mail mode buffer."))
   (when (vm-mail-mode-get-header-contents "MIME-Version")
     (error "Can't attach MIME object to already encoded MIME buffer."))
   (let (start end e tag-string file-name
@@ -6148,6 +6158,7 @@ there is no file name for this object.             USR, 2011-03-07"
 	   (vm-set-extent-property e 'vm-mime-disposition disposition)
 	   (vm-set-extent-property e 'vm-mime-encoding nil)
 	   (vm-set-extent-property e 'vm-mime-encoded mimed)))))
+(defalias 'vm-mime-attach-object 'vm-attach-object)
 
 (defun vm-mime-attachment-forward-local-refs-at-point ()
   (cond (vm-fsfemacs-p
@@ -6674,7 +6685,7 @@ should be encoded together."
 ;;;###autoload
 (defun vm-mime-encode-composition ()
  "MIME encode the current mail composition buffer.
-Attachment tags added to the buffer with `vm-mime-attach-file' are expanded
+Attachment tags added to the buffer with `vm-attach-file' are expanded
 and the approriate content-type and boundary markup information is added."
   (interactive)
 
@@ -8041,13 +8052,13 @@ This is a destructive operation and cannot be undone!"
       ;; insert an attached-object-button
       (goto-char xstart)
       (cond (filename
-	     (vm-mime-attach-file filename (car type)))
+	     (vm-attach-file filename (car type)))
 	    (file
-	     (vm-mime-attach-object (list buf start end disp file) 
+	     (vm-attach-object (list buf start end disp file) 
 				    :type (car type) :params nil 
 				    :description desc :mimed t))
 	    (t
-	     (vm-mime-attach-object (list buf start end disp)
+	     (vm-attach-object (list buf start end disp)
 				    :type (car type) :params nil 
 				    :description desc :mimed t)))
       ;; delete the mime-button

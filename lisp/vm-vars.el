@@ -2108,7 +2108,7 @@ REGEXP is a string that specifies a regular expression.
 TYPE is a string specifying a MIME content type.
 
 When a file is attached to a MIME composition buffer using
-`vm-mime-attach-file', this list will be scanned until a REGEXP
+`vm-attach-file', this list will be scanned until a REGEXP
 matches the file's name.  The corresponding TYPE will be
 offered as a default when you are prompted for the file's
 type.
@@ -2206,7 +2206,7 @@ any relative pathnames will be relative to this directory."
 
 (defcustom vm-mime-attachment-source-directory (expand-file-name "~/")
   "*Non-nil value is a default source directory for MIME attachments.
-When `vm-mime-attach-file' prompts you for the name of a file to
+When `vm-attach-file' prompts you for the name of a file to
 attach, any relative pathnames will be relative to this directory."
   :group 'vm-mime
   :type '(choice (const nil) 
@@ -5496,10 +5496,10 @@ mail is not sent."
   :group 'vm-compose
   :type 'boolean)
 
-(defcustom vm-mail-dnd-protocol-alist
-  '(("^file:///" . vm-mail-dnd-attach-file)
+(defcustom vm-dnd-protocol-alist
+  '(("^file:///" . vm-dnd-attach-file)
     ("^file://"  . dnd-open-file)
-    ("^file:"    . vm-mail-dnd-attach-file))
+    ("^file:"    . vm-dnd-attach-file))
   "The functions to call when a drop in `mail-mode' is made.
 See `dnd-protocol-alist' for more information.  When nil, behave
 as in other buffers."
@@ -5802,15 +5802,15 @@ folded (collapsed) in VM summary windows.")
     (define-key map "\C-c\C-p" 'vm-preview-composition)
     (define-key map "\C-c\C-d" 'vm-postpone-message)
     (define-key map "\C-c\C-e" 'vm-mime-encode-composition)
-    (define-key map "\C-c\C-a" 'vm-mime-attach-file)
-    (define-key map "\C-c\C-b" 'vm-mime-attach-buffer)
-    (define-key map "\C-c\C-m" 'vm-mime-attach-message)
+    (define-key map "\C-c\C-a" 'vm-attach-file)
+    (define-key map "\C-c\C-b" 'vm-attach-buffer)
+    (define-key map "\C-c\C-m" 'vm-attach-message)
     (define-key map "\C-c\C-y" 'vm-yank-message)
     (define-key map "\C-c\C-s" 'vm-mail-send)
     (define-key map "\C-c\C-c" 'vm-mail-send-and-exit)
     ;; The following is a temporary binding for Mac/NextStep
     ;; It should be removed when dnd-protocol-alist is implemented
-    (define-key map [ns-drag-file] 'vm-mail-ns-attach-file)
+    (define-key map [ns-drag-file] 'vm-ns-attach-file)
     (cond ((fboundp 'set-keymap-name)
 	   (set-keymap-name map 'vm-mail-mode-map)))
     map )
@@ -5838,7 +5838,7 @@ Its parent keymap is mail-mode-map.")
     (define-key map "$s" 'vm-mime-reader-map-save-message)
     (define-key map "$p" 'vm-mime-reader-map-pipe-to-printer)
     (define-key map "$|" 'vm-mime-reader-map-pipe-to-command)
-    (define-key map "$a" 'vm-mime-attach-object-to-composition)
+    (define-key map "$a" 'vm-attach-object-to-composition)
     (define-key map "$d" 'vm-delete-mime-object)
     (cond ((vm-mouse-xemacs-mouse-p)
 	   (define-key map 'button3 'vm-menu-popup-mime-dispose-menu)))
@@ -6134,12 +6134,12 @@ folder needs to be updated.")
     ("vm-mark-messages-same-subject")
     ("vm-mark-summary-region")
     ("vm-mark-thread-subtree")
-    ("vm-mime-attach-buffer")
-    ("vm-mime-attach-file")
-    ("vm-mime-attach-message")
-    ("vm-mime-attach-mime-file")
-    ("vm-mime-attach-object-to-composition")
-    ("vm-mime-attach-message-to-composition")
+    ("vm-attach-buffer")
+    ("vm-attach-file")
+    ("vm-attach-message")
+    ("vm-attach-mime-file")
+    ("vm-attach-object-to-composition")
+    ("vm-attach-message-to-composition")
     ("vm-mode")
     ("vm-move-message-backward")
     ("vm-move-message-backward-physically")

@@ -159,7 +159,7 @@
       ["Print" vm-print-message vm-message-list]
       ["Pipe to Command" vm-pipe-message-to-command vm-message-list]
       ["Attach to Message Composition"
-       vm-mime-attach-message-to-composition vm-message-list] 
+       vm-attach-message-to-composition vm-message-list] 
       "---"
       ["Burst Message as Digest" (vm-burst-digest "guess") vm-message-list]
       ["Decode MIME" vm-decode-mime-message (vm-menu-can-decode-mime-p)]
@@ -429,8 +429,8 @@ do not allow menubar buttons.")
 	:style radio
 	:selected (eq vm-mime-8bit-text-transfer-encoding 'base64)])
       "----"
-      ["Attach File..."	vm-mime-attach-file vm-send-using-mime]
-      ["Attach MIME Message..." vm-mime-attach-mime-file vm-send-using-mime]
+      ["Attach File..."	vm-attach-file vm-send-using-mime]
+      ["Attach MIME Message..." vm-attach-mime-file vm-send-using-mime]
       ["Encode MIME, But Don't Send" vm-mime-encode-composition
        (and vm-send-using-mime
 	    (null (vm-mail-mode-get-header-contents "MIME-Version:")))]
@@ -492,7 +492,7 @@ do not allow menubar buttons.")
        (vm-mime-run-display-function-at-point
 	'vm-mime-pipe-body-to-queried-command-discard-output) t]
       ["Attach to Message Composition Buffer"
-       vm-mime-attach-object-to-composition t]
+       vm-attach-object-to-composition t]
       ["Delete" vm-delete-mime-object t])))
 
 (defconst vm-menu-url-browser-menu

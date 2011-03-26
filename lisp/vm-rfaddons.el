@@ -136,7 +136,7 @@ The following options are possible.
  - rf-faces: change some faces
 
 `vm-mail-mode' options:
- - attach-save-files: bind [C-c C-a] to `vm-mime-attach-files-in-directory' 
+ - attach-save-files: bind [C-c C-a] to `vm-attach-files-in-directory' 
  - check-recipients: add `vm-mail-check-recipients' to `mail-send-hook' in
    order to check if the recipients headers are correct.
  - encode-headers: add `vm-mime-encode-headers' to `mail-send-hook' in
@@ -215,7 +215,7 @@ or do the binding and advising on your own."
   ;; vm-mail-mode -----------------------------------------------------------
   (vm-rfaddons-check-option
    'attach-save-files option-list
-   (define-key vm-mail-mode-map "\C-c\C-a" 'vm-mime-attach-files-in-directory))
+   (define-key vm-mail-mode-map "\C-c\C-a" 'vm-attach-files-in-directory))
   
   ;; check recipients headers for errors before sending
   (vm-rfaddons-check-option
@@ -799,18 +799,22 @@ See the variable `vm-handle-return-receipt-mode' for customization."
       
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar vm-mime-attach-files-in-directory-regexps-history nil
+(defvar vm-attach-files-in-directory-regexps-history nil
   "Regexp history for matching files.")
+(defvaralias 'vm-mime-attach-files-in-directory-regexps-history
+  'vm-attach-files-in-directory-regexps-history)
 
-(defcustom vm-mime-attach-files-in-directory-default-type nil
+(defcustom vm-attach-files-in-directory-default-type nil
   "*The default MIME-type for attached files.
 If set to nil you will be asked for the type if it cannot be guessed.
 For guessing mime-types we use `vm-mime-attachment-auto-type-alist'."
   :group 'vm-rfaddons
   :type '(choice (const :tag "Ask" nil)
                  (string "application/octet-stream")))
+(defvaralias 'vm-mime-attach-files-in-directory-default-type
+  'vm-attach-files-in-directory-default-type)
 
-(defcustom vm-mime-attach-files-in-directory-default-charset 'guess
+(defcustom vm-attach-files-in-directory-default-charset 'guess
   "*The default charset used for attached files of type `text'.
 If set to nil you will be asked for the charset.
 If set to 'guess it will be determined by `vm-determine-proper-charset', but
@@ -818,6 +822,8 @@ this may take some time, since the file needs to be visited."
   :group 'vm-rfaddons
   :type '(choice (const :tag "Ask" nil)
                  (const :tag "Guess" guess)))
+(defvaralias 'vm-mime-attach-files-in-directory-default-charset
+  'vm-attach-files-in-directory-default-charset)
 
 ;; (define-obsolete-variable-alias 'vm-mime-save-all-attachments-types
 ;;   'vm-mime-saveable-types
@@ -858,7 +864,7 @@ this may take some time, since the file needs to be visited."
 			'vm-mime-deleteable-type-exceptions "8.1.1")
 
 ;;;###autoload
-(defun vm-mime-attach-files-in-directory (directory &optional regexp)
+(defun vm-attach-files-in-directory (directory &optional regexp)
   "Attach all files in DIRECTORY matching REGEXP.
 The optional argument MATCH might specify a regexp matching all files
 which should be attached, when empty all files will be attached.
@@ -876,7 +882,7 @@ match."
                       vm-mime-attachment-save-directory
                       default-directory)
                   nil nil
-                  vm-mime-attach-files-in-directory-regexps-history)))
+                  vm-attach-files-in-directory-regexps-history)))
        (list (file-name-directory file)
              (file-name-nondirectory file)))))
 
@@ -896,7 +902,7 @@ match."
         (if (file-directory-p file)
             nil ;; should we add recursion here?
           (setq type (or (vm-mime-default-type-from-filename file)
-                         vm-mime-attach-files-in-directory-default-type))
+                         vm-attach-files-in-directory-default-type))
           (message "Attaching file %s with type %s ..." file type)
           (if (null type)
               (let ((default-type (or (vm-mime-default-type-from-filename file)
@@ -908,7 +914,7 @@ match."
                             vm-mime-type-completion-alist)
                       type (if (> (length type) 0) type default-type))))
           (if (not (vm-mime-types-match "text" type)) nil
-            (setq charset vm-mime-attach-files-in-directory-default-charset)
+            (setq charset vm-attach-files-in-directory-default-charset)
             (cond ((eq 'guess charset)
                    (save-excursion
                      (let ((b (get-file-buffer file)))
@@ -923,8 +929,9 @@ match."
                                   file)
                           vm-mime-charset-completion-alist)
                          charset (if (> (length charset) 0) charset)))))
-          (vm-mime-attach-file file type charset))
+          (vm-attach-file file type charset))
         (setq files (cdr files))))))
+(defalias 'vm-mime-attach-files-in-directory 'vm-attach-files-in-directory)
 
 (defcustom vm-mime-auto-save-all-attachments-subdir
   nil

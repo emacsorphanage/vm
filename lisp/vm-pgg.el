@@ -1033,7 +1033,7 @@ cleanup here after verification and decoding took place."
       (goto-char (point-max))
       (insert "\n")
       (setq start (point))
-      (vm-mime-attach-object buffer 
+      (vm-attach-object buffer 
 			     :type "application/pgp-keys"
 			     :params (list (concat "name=\"" 
 						   pgg-default-user-id 

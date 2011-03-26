@@ -1811,7 +1811,7 @@ used move to particular buttons within the message presentation.
 @findex vm-mime-reader-map-pipe-to-printer
 @findex vm-delete-mime-object
 @findex vm-mime-reader-map-display-using-external-viewer
-@findex vm-mime-attach-object-to-composition
+@findex vm-attach-object-to-composition
 To activate a button, either click the middle mouse
 button over it, or move the cursor to the line and press RET.  If you
 are running under a window system, you can use the right mouse button
@@ -1832,7 +1832,7 @@ RET}.  To display the object using an external viewer, type @kbd{$ e}.
 @item $ e   @tab @code{vm-mime-reader-map-display-using-external-viewer}
 @item $ v   @tab @code{vm-mime-reader-map-display-object-as-type}
 @item $ d   @tab @code{vm-delete-mime-object}
-@item $ a   @tab @code{vm-mime-attach-object-to-composition}
+@item $ a   @tab @code{vm-attach-object-to-composition}
 @end multitable
 
 @vindex vm-mime-delete-after-saving
@@ -2511,7 +2511,7 @@ with C-c C-v.
 @kindex C-c C-a
 @vindex vm-send-using-mime
 @cindex drag and drop
-@item C-c C-a (@code{vm-mime-attach-file}) or drag-and-drop a file
+@item C-c C-a (@code{vm-attach-file}) or drag-and-drop a file
 Attaches a file to the composition.  When you send the message, VM 
 will insert the file and MIME encode it.  The variable
 @code{vm-send-using-mime} must be set non-@code{nil} for this command to work.
@@ -2535,7 +2535,7 @@ If you want to move the attachment to some other part of the message,
 you can kill it @key{C-k} and yank it back with @key{C-y}.
 
 @kindex C-c C-m
-@item C-c C-m (@code{vm-mime-attach-message})
+@item C-c C-m (@code{vm-attach-message})
 Attaches a mail message to the composition.  If invoked with a
 prefix argument, the name of a folder is read from the minibuffer and
 the message or messages to be attached are copied from that
@@ -2545,7 +2545,7 @@ messages by running
 @code{vm-next-command-uses-marks} first, the marked messages in
 the selected folder will be attached as a MIME digest.
 @kindex C-c C-b
-@item C-c C-b (@code{vm-mime-attach-buffer})
+@item C-c C-b (@code{vm-attach-buffer})
 Attaches an Emacs buffer to the composition.
 
 @findex vm-mime-encode-composition
@@ -2669,20 +2669,11 @@ MIME encode it as necessary.
 @unnumberedsec MIME attachments
 
 @kindex C-c C-a
-@findex vm-mime-attach-file
-@findex vm-dired-attach-file
-@findex vm-dired-do-attach-files
-@findex vm-mail-dnd-attach-file
-@cindex drag and drop
+@findex vm-attach-file
 To attach a file to your composition, use @kbd{C-c C-a}
-(@code{vm-mime-attach-file}).  VM will ask you for the name of the
+(@code{vm-attach-file}).  VM will ask you for the name of the
 file, its type, a brief description and its character set if it is a
-text attachment.  Alternatively, you can visit a directory in Emacs
-(@pxref{Dired,,,emacs, the GNU Emacs Manual} and run
-@code{vm-dired-attach-file} on any file.  You can mark a set of files
-and run @code{vm-dired-do-attach-files} to attach all marked files.
-You can also drag and drop a file using your Window system into a
-composition buffer (@code{vm-mail-dnd-attach-file}).
+text attachment.  
 
 An attachment will be represented in the composition as a tag line
 like this
@@ -2700,10 +2691,10 @@ won't appear in the message when it is sent.
 If you click the right mouse button on the attachment tag, a menu
 will appear that allows you to change the content disposition of
 the attachment.  The @dfn{content disposition} of a MIME object
-gives a mail reader a hint as to whether an object should be
+gives a mail reader a hint as to whether the object should be
 displayed inline or as an inert tag or button that you must
 activate in some fashion.  @dfn{Inline} display usually means
-that the object will be display within or alongside the message
+that the object will be displayed within or alongside the message
 text, if that is possible.  @dfn{Attachment}, when used as a
 content disposition, means that the object will likely be
 displayed as a tag.  By default, VM specifies an inline
@@ -2711,15 +2702,15 @@ disposition for all MIME types except @samp{application} and
 @samp{model} types.
 
 @kindex C-c C-b
-@findex vm-mime-attach-buffer
+@findex vm-attach-buffer
 To attach a buffer instead of a file, use @kbd{C-c C-b} (normally 
-bound to @code{vm-mime-attach-buffer}.  You must not kill the
+bound to @code{vm-attach-buffer}.  You must not kill the
 buffer that you attach until after the message has been sent.
 
 @kindex C-c C-m
-@findex vm-mime-attach-message
+@findex vm-attach-message
 You can attach a message from another folder by using @kbd{C-c C-m}
-(@code{vm-mime-attach-message}).  By default, the folder is the parent
+(@code{vm-attach-message}).  By default, the folder is the parent
 folder of the message composition.  If there is no parent folder, then
 a folder name will be read from the minibuffer.  The message number of
 the message to be attached is also read from the minibuffer.
@@ -2727,12 +2718,41 @@ Alternatively, you can mark one or more messages in the parent folder
 before invoking this command.  All the marked messages will be
 attached as a digest in the outgoing message.
 
+@unnumberedsubsubsec Point-to-point attachment operations
+
+@cindex point-to-point attachment operations
+A number of ``point-to-point'' operations allow you to attach objects
+from other editing contexts to a message you are composing.
+
+@findex vm-dired-attach-file
+@findex vm-dired-do-attach-files
+You can visit a directory in Emacs (@pxref{Dired,,,emacs, the GNU
+Emacs Manual}), and run @code{vm-dired-attach-file} on any file.  The
+file be attached to your message composition.  You can also mark a set
+of files in Dired and run @code{vm-dired-do-attach-files} to attach
+all of them.
+
+@findex vm-dnd-attach-file
+@cindex drag and drop
+You can use your Window system to drag and drop a file into a
+composition buffer (@code{vm-dnd-attach-file}).
+
 @kindex $ a
-@findex vm-mime-attach-object-to-composition
-You can also attach objects that you have received as attachments in
-other messages using the @kbd{$ a}
-(@code{vm-mime-attach-object-to-composition}) function.
-(@xref{Operating on MIME attachments}.)
+@findex vm-attach-object-to-composition
+@findex vm-attach-message-to-composition
+When you visit a folder in VM, you can attach a message from the
+folder by running @code{vm-attach-message-to-composition}.  When
+viewing a message that has MIME attachments, you can attach any of
+those attachments to your message composition by using the @kbd{$ a}
+(@code{vm-attach-object-to-composition}) function.
+(@xref{Operating on MIME attachments}.)  This operation is also
+available on the pop-menu for attachments.
+
+In all these cases, you will be prompted for the message composition
+buffer to which you would like to attach the objects.  The default is
+the latest message you have been composing, as indicated by the Emacs
+buffer ring.
+
 
 
 @node MIME characters, MIME headers, MIME attachments, Sending MIME Messages
@@ -7087,7 +7107,7 @@ Set to a keymap that includes @code{vm-mime-reader-map}, binding the
 
 @inindex attachment button
 A MIME message is composed just like a normal message.  When objects
-are attached using commands like @code{vm-mime-attach-file},
+are attached using commands like @code{vm-attach-file},
 @b{attachment buttons} are created in the message composition buffer.  An
 attachment button is a region of text that looks like:
 

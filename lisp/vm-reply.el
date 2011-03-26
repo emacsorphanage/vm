@@ -1183,7 +1183,7 @@ use, see `vm-forward-message-encapsulated'."
 	  (let ((work-buffer (current-buffer)))
 	    (set-buffer reply-buffer)	; intended buffer change
 	    (mail-text)
-	    (vm-mime-attach-object work-buffer
+	    (vm-attach-object work-buffer
 				   :type "message/rfc822" :params nil 
 				   :disposition '("inline")
 				   :description "forwarded message" :mimed t)
@@ -1448,7 +1448,7 @@ included in the digest."
 	(set-buffer mail-buffer)
 	(mail-text)
 	(save-excursion
-	  (vm-mime-attach-object work-buffer
+	  (vm-attach-object work-buffer
 				 :type "multipart/digest" 
 				 :params (list (concat "boundary=\"" 
 						       boundary "\"")) 
@@ -1671,7 +1671,7 @@ Binds the `vm-mail-mode-map' and hooks"
 	     (setq vm-mail-mode-map-parented t))))
     (when (boundp 'dnd-protocol-alist)
       (set (make-local-variable 'dnd-protocol-alist)
-	   (append vm-mail-dnd-protocol-alist dnd-protocol-alist)))
+	   (append vm-dnd-protocol-alist dnd-protocol-alist)))
     (setq vm-mail-buffer folder-buffer
 	  mode-popup-menu (and vm-use-menus
 			       (vm-menu-support-possible-p)
@@ -2090,7 +2090,7 @@ With a prefix arg, call `vm-mail-mode-show-headers' instead."
             (overlay-put o 'read-only t)))))))
 
 ;;;###autoload
-(defun vm-mail-dnd-attach-file (uri action)
+(defun vm-dnd-attach-file (uri action)
   "Insert a drag and drop file as a MIME attachment in a VM
 composition buffer.  URI is the url of the file as described in
 `dnd-protocol-alist'.  ACTION is ignored."
@@ -2102,12 +2102,12 @@ composition buffer.  URI is the url of the file as described in
     (when (and file (file-regular-p file))
       (setq type (or (vm-mime-default-type-from-filename file)
 		     "application/octet-stream"))
-      (vm-mime-attach-file file type))))
+      (vm-attach-file file type))))
 
 ;;;###autoload
-(defun vm-mail-ns-attach-file ()
+(defun vm-ns-attach-file ()
   "Insert a drag and drop file as a MIME attachment in a VM
-composition buffer.  This is a version of `vm-mail-dnd-attach-file'
+composition buffer.  This is a version of `vm-dnd-attach-file'
 that is needed for Mac and NextStep."
   (interactive)
   (let ((file (car ns-input-file))
@@ -2119,7 +2119,7 @@ that is needed for Mac and NextStep."
       (setq ns-input-file (cdr ns-input-file))
       (setq type (or (vm-mime-default-type-from-filename file)
 		     "application/octet-stream"))
-      (vm-mime-attach-file file type))))
+      (vm-attach-file file type))))
 
 (defun vm-mail-mode-hide-headers-hook ()
   "Hook which handles `vm-mail-mode-hidden-headers'."
