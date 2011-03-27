@@ -68,6 +68,9 @@
 (defun vm-fsfemacs-p () vm-fsfemacs-p)
 (defun vm-fsfemacs-mule-p () vm-fsfemacs-mule-p)
 
+(defun vm-emacs-mule-p ()
+  (or vm-xemacs-mule-p vm-fsfemacs-mule-p))
+
 (defun vm-mouse-fsfemacs-mouse-p ()
   (and vm-fsfemacs-p
        (fboundp 'set-mouse-position)))

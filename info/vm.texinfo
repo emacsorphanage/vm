@@ -7167,12 +7167,11 @@ function called @code{vm-mime-fake-attachment-overlays}.  This allows
 the next stage to treat both FSF Emacs and XEmacs using the same
 logic.
 
-The functions @code{vm-mime-fsfemacs-encode-composition} and
-@code{vm-mime-xemacs-encode-composition} then encode the composition
-buffer, by selecting each attachment button and replacing it with the
-corresponding object.  Unless the objects were already MIME-encoded,
-they are MIME-encoded and made into MIME parts by adding suitable
-headers.
+The function @code{vm-mime-encode-composition} then encodes the
+composition buffer, by selecting each attachment button and replacing
+it with the corresponding object.  Unless the objects were already
+MIME-encoded, they are MIME-encoded and made into MIME parts by adding
+suitable headers.
 
 @unnumberedsubsec Yanking MIME Messages
 @inindex yank
