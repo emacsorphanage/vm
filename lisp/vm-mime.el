@@ -7303,8 +7303,12 @@ also `vm-mime-xemacs-encode-composition'."
 			  :default-type (list "text/plain" "charset=us-ascii")
 			  :default-encoding "7bit"))
 		   (setq already-mimed t))
-		 (and layout (not forward-local-refs)
-		      (vm-mime-internalize-local-external-bodies layout))
+		 (when (and layout (not forward-local-refs))
+		   (vm-mime-internalize-local-external-bodies layout)
+		   ; update the cached data that might now be stale
+		   (setq type (car (vm-mm-layout-type layout))
+			 params (cdr (vm-mm-layout-qtype layout))
+			 disposition (vm-mm-layout-qdisposition layout)))
 		 (setq encoding (vm-mime-transfer-encode-layout layout))
 		 (setq 8bit (or 8bit (equal encoding "8bit")))
 		 (goto-char (point-max))
@@ -7312,7 +7316,11 @@ also `vm-mime-xemacs-encode-composition'."
 		 (narrow-to-region opoint-min (point)))
 		((not postponed-attachment)
 		 (when (and layout (not forward-local-refs))
-		   (vm-mime-internalize-local-external-bodies layout))
+		   (vm-mime-internalize-local-external-bodies layout)
+		   ; update the cached data that might now be stale
+		   (setq type (car (vm-mm-layout-type layout))
+			 params (cdr (vm-mm-layout-qtype layout))
+			 disposition (vm-mm-layout-qdisposition layout)))
 		 (if already-mimed
 		     (setq encoding (vm-mime-transfer-encode-layout layout))
 		   (vm-mime-base64-encode-region (point-min) (point-max))
@@ -7321,14 +7329,14 @@ also `vm-mime-xemacs-encode-composition'."
 	    (goto-char (point-min))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
 	    (when already-mimed
-	      ;; trim headers
+	      ;; trim headers - why remove perfectly good headers?  USR
 	      (vm-reorder-message-headers 
 	       nil :keep-list '("Content-ID:") :discard-regexp nil)
 	      ;; remove header/text separator
 	      (goto-char (1- (vm-mm-layout-body-start layout)))
 	      (when (looking-at "\n")
 		(delete-char 1)))
-	    (insert "Content-Type: " type)
+	    (insert "Content-Type: " type) ; stale data, layout is uptodate
 	    (if params
 		(if vm-mime-avoid-folding-content-type
 		    (insert "; " (mapconcat 'identity params "; ") "\n")
@@ -7362,6 +7370,7 @@ also `vm-mime-xemacs-encode-composition'."
 	  (setq marker (vm-mime-fsfemacs-encode-text-part
 			(point) (point-max) nil))
 	  (setq boundary-positions (cons marker boundary-positions))
+	  ;; FIXME is this needed?
 	  ;; (setq 8bit (or 8bit (equal encoding "8bit")))
 	  (goto-char (point-max)))
 	(setq boundary (vm-mime-make-multipart-boundary))
