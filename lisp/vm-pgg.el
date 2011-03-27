@@ -859,7 +859,8 @@ cleanup here after verification and decoding took place."
              (save-excursion
                (set-buffer pgg-output-buffer)
                (vm-pgg-crlf-cleanup (point-min) (point-max))
-               (setq message (vm-mime-parse-entity-safe nil nil nil t)))
+               (setq message (vm-mime-parse-entity-safe 
+			      nil :passing-message-only t)))
              (if message
                  (vm-decode-mime-layout message)
                (insert-buffer-substring pgg-output-buffer))

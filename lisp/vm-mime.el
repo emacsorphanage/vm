@@ -1021,8 +1021,10 @@ previous mime decoding."
 	    (vm-matched-header-contents)
 	  nil )))))
 
-(defun vm-mime-parse-entity (&optional m default-type default-encoding
-				       passing-message-only)
+(defun* vm-mime-parse-entity (&optional m &key
+					(default-type nil)
+					(default-encoding nil)
+					(passing-message-only nil))
   "Parse a MIME message M and return its mime-layout.
 Optional arguments:
 DEFAULT-TYPE is the type to use if no Content-Type is specified.
@@ -1206,7 +1208,10 @@ PASSING-MESSAGE-ONLY is a boolean argument that says that VM is only
 			   'parts (list
 				   (save-restriction
 				     (narrow-to-region (point) (point-max))
-				     (vm-mime-parse-entity-safe m c-t c-t-e t)))
+				     (vm-mime-parse-entity-safe 
+				      m :default-type c-t 
+				      :default-encoding c-t-e 
+				      :passing-message-only t)))
 			   'cache (vm-mime-make-cache-symbol)
 			   'message-symbol (vm-mime-make-message-symbol m)
 			   )))
@@ -1274,7 +1279,10 @@ PASSING-MESSAGE-ONLY is a boolean argument that says that VM is only
 		(save-restriction
 		  (narrow-to-region start end)
 		  (setq multipart-list
-			(cons (vm-mime-parse-entity-safe m c-t c-t-e t)
+			(cons (vm-mime-parse-entity-safe 
+			       m :default-type c-t 
+			       :default-encoding c-t-e 
+			       :passing-message-only t)
 			      multipart-list)))))
 	    (goto-char (point-min))
 	    (or (re-search-forward "^\n\\|\n\\'" nil t)
@@ -1296,32 +1304,37 @@ PASSING-MESSAGE-ONLY is a boolean argument that says that VM is only
 	     'message-symbol (vm-mime-make-message-symbol m)
 	     )))))))
 
-(defun vm-mime-parse-entity-safe (&optional m c-t c-t-e p-m-only)
+(defun* vm-mime-parse-entity-safe (&optional m &key
+					    (default-type nil)
+					    (default-encoding nil)
+					    (passing-message-only nil))
   "Like vm-mime-parse-entity, but recovers from any errors.
 DEFAULT-TYPE, unless specified, is assumed to be text/plain.
 DEFAULT-TRANSFER-ENCODING, unless specified, is assumed to be 7bit.
 						(USR, 2010-01-12)"
 
-  (or c-t (setq c-t '("text/plain" "charset=us-ascii")))
-  (or c-t-e (setq c-t-e "7bit"))
+  (or default-type (setq default-type '("text/plain" "charset=us-ascii")))
+  (or default-encoding (setq default-encoding "7bit"))
   ;; don't let subpart parse errors make the whole parse fail.  use default
   ;; type if the parse fails.
   (condition-case error-data
-      (vm-mime-parse-entity m c-t c-t-e p-m-only)
+      (vm-mime-parse-entity m :default-type default-type 
+			    :default-encoding default-encoding 
+			    :passing-message-only passing-message-only)
     (vm-mime-error
      (message "%s" (car (cdr error-data)))
 ;;; don't sleep, no one cares about MIME syntax errors
 ;;;     (sleep-for 2)
-     (let ((header (if (and m (not p-m-only))
+     (let ((header (if (and m (not passing-message-only))
 		       (vm-headers-of m)
 		     (vm-marker (point-min))))
-	   (text (if (and m (not p-m-only))
+	   (text (if (and m (not passing-message-only))
 		     (vm-text-of m)
 		   (save-excursion
 		     (re-search-forward "^\n\\|\n\\'"
 					nil 0)
 		     (vm-marker (point)))))
-	   (text-end (if (and m (not p-m-only))
+	   (text-end (if (and m (not passing-message-only))
 			 (vm-text-end-of m)
 		       (vm-marker (point-max)))))
      (vm-make-layout
@@ -6883,9 +6896,10 @@ agent; under Unix, normally sendmail.)"
 		   (insert-file-contents object))))
 	  ;; gather information about the object from the extent.
 	  (if (setq already-mimed (vm-extent-property e 'vm-mime-encoded))
-	      (setq layout (vm-mime-parse-entity
-			    nil (list "text/plain" "charset=us-ascii")
-			    "7bit")
+	      (setq layout 
+		    (vm-mime-parse-entity
+		     nil :default-type (list "text/plain" "charset=us-ascii")
+		     :default-encoding "7bit")
 		    type (or (vm-extent-property e 'vm-mime-type)
 			     (car (vm-mm-layout-type layout)))
 		    params (or (vm-extent-property e 'vm-mime-parameters)
@@ -6934,9 +6948,11 @@ agent; under Unix, normally sendmail.)"
 		   ;; vm-mime-transfer-encode-layout will replace
 		   ;; this if the transfer encoding changes.
 		   (insert "Content-Transfer-Encoding: 7bit\n\n")
-		   (setq layout (vm-mime-parse-entity
-				 nil (list "text/plain" "charset=us-ascii")
-				 "7bit"))
+		   (setq layout 
+			 (vm-mime-parse-entity
+			  nil 
+			  :default-type (list "text/plain" "charset=us-ascii")
+			  :default-encoding "7bit"))
 		   (setq already-mimed t))
 		 (and layout (not forward-local-refs)
 		      (vm-mime-internalize-local-external-bodies layout))
@@ -7112,7 +7128,7 @@ also `vm-mime-xemacs-encode-composition'."
     (let ((8bit nil)
 	  (just-one nil)
 	  (boundary-positions nil)
-	  (enriched (and (boundp 'enriched-mode) enriched-mode))
+	  marker
 	  forward-local-refs already-mimed layout e e-list boundary
 	  type encoding charset params description disposition object
 	  opoint-min delete-object postponed-attachment)
@@ -7136,39 +7152,7 @@ also `vm-mime-xemacs-encode-composition'."
 			    (looking-at "[ \t\n]*\\'"))))
       (if (null e-list)
 	  ;; no attachments
-	  (progn
-	    (narrow-to-region (point) (point-max))
-	    ;; support enriched-mode for text/enriched composition
-	    (when enriched
-	      (let ((enriched-initial-annotation ""))
-		(enriched-encode (point-min) (point-max) (current-buffer))))
-	    (setq charset (vm-determine-proper-charset (point-min)
-						       (point-max)))
-	    (when vm-fsfemacs-mule-p
-	      (let ((coding-system
-		     (vm-mime-charset-to-coding charset)))
-		(if (null coding-system)
-		    (error "Can't find a coding system for charset %s"
-			   charset)
-		  (encode-coding-region (point-min) (point-max)
-					coding-system))))
-	    (setq encoding (vm-determine-proper-content-transfer-encoding
-			    (point-min) (point-max))
-		  encoding (vm-mime-transfer-encode-region 
-			    encoding (point-min) (point-max) t))
-	    (widen)
-	    (vm-remove-mail-mode-header-separator)
-	    (goto-char (point-min))
-	    (vm-reorder-message-headers
-	     nil :keep-list nil 
-	     :discard-regexp
-	     "\\(Content-Type:\\|Content-Transfer-Encoding\\|MIME-Version:\\)")
-	    (insert "MIME-Version: 1.0\n")
-	    (if enriched
-		(insert "Content-Type: text/enriched; charset=" charset "\n")
-	      (insert "Content-Type: text/plain; charset=" charset "\n"))
-	    (insert "Content-Transfer-Encoding: " encoding "\n")
-	    (vm-add-mail-mode-header-separator))
+	  (vm-mime-fsfemacs-encode-text-part (point) (point-max) t)
 	;; attachments to be handled
 	(while e-list
 	  (setq e (car e-list))
@@ -7180,45 +7164,9 @@ also `vm-mime-xemacs-encode-composition'."
 	      ;; found an attachment
 	      (delete-region (point) (vm-extent-start-position e))
 	    ;; found text
-	    (narrow-to-region (point) (vm-extent-start-position e))
-	    ;; support enriched-mode for text/enriched composition
-	    (when enriched
-	      (let ((enriched-initial-annotation ""))
-		(save-excursion
-		  ;; insert/delete trick needed to avoid
-		  ;; enriched-mode tags from seeping into the
-		  ;; attachment overlays.  I really wish
-		  ;; front-advance / rear-advance overlay
-		  ;; endpoint properties actually worked.
-		  (goto-char (point-max))
-		  (insert-before-markers "\n")
-		  (enriched-encode (point-min) (1- (point)))
-		  (goto-char (point-max))
-		  (delete-char -1))))
-	    (setq charset (vm-determine-proper-charset 
-			   (point-min) (point-max)))
-	    (when vm-fsfemacs-mule-p
-	      (let ((coding-system
-		     (vm-mime-charset-to-coding charset)))
-		(if (null coding-system)
-		    (error "Can't find a coding system for charset %s"
-			   charset)
-		  (encode-coding-region 
-		   (point-min) (point-max) coding-system))))
-	    (setq encoding (vm-determine-proper-content-transfer-encoding
-			    (point-min) (point-max))
-		  encoding (vm-mime-transfer-encode-region 
-			    encoding (point-min) (point-max) t)
-		  description (vm-mime-text-description 
-			       (point-min) (point-max)))
-	    (setq boundary-positions (cons (point-marker) boundary-positions))
-	    (if enriched
-		(insert "Content-Type: text/enriched; charset=" charset "\n")
-	      (insert "Content-Type: text/plain; charset=" charset "\n"))
-	    (when description
-	      (insert "Content-Description: " description "\n"))
-	    (insert "Content-Transfer-Encoding: " encoding "\n\n")
-	    (widen))
+	    (setq marker (vm-mime-fsfemacs-encode-text-part
+			  (point) (vm-extent-start-position e) nil))
+	    (setq boundary-positions (cons marker boundary-positions)))
 	  (goto-char (vm-extent-start-position e))
 	  (narrow-to-region (point) (point))
 	  (setq object (vm-extent-property e 'vm-mime-object))
@@ -7297,9 +7245,10 @@ also `vm-mime-xemacs-encode-composition'."
 		 (delete-char -1)))
 	  ;; gather information about the object from the extent.
 	  (if (setq already-mimed (vm-extent-property e 'vm-mime-encoded))
-	      (setq layout (vm-mime-parse-entity
-			    nil (list "text/plain" "charset=us-ascii")
-			    "7bit")
+	      (setq layout 
+		    (vm-mime-parse-entity
+		     nil :default-type (list "text/plain" "charset=us-ascii")
+		     :default-encoding "7bit")
 		    type (or (vm-extent-property e 'vm-mime-type)
 			     (car (vm-mm-layout-type layout)))
 		    params (or (vm-extent-property e 'vm-mime-parameters)
@@ -7348,9 +7297,11 @@ also `vm-mime-xemacs-encode-composition'."
 		   ;; vm-mime-transfer-encode-layout will replace
 		   ;; this if the transfer encoding changes.
 		   (insert "Content-Transfer-Encoding: 7bit\n\n")
-		   (setq layout (vm-mime-parse-entity
-				 nil (list "text/plain" "charset=us-ascii")
-				 "7bit"))
+		   (setq layout 
+			 (vm-mime-parse-entity
+			  nil 
+			  :default-type (list "text/plain" "charset=us-ascii")
+			  :default-encoding "7bit"))
 		   (setq already-mimed t))
 		 (and layout (not forward-local-refs)
 		      (vm-mime-internalize-local-external-bodies layout))
@@ -7360,8 +7311,8 @@ also `vm-mime-xemacs-encode-composition'."
 		 (widen)
 		 (narrow-to-region opoint-min (point)))
 		((not postponed-attachment)
-		 (and layout (not forward-local-refs)
-		      (vm-mime-internalize-local-external-bodies layout))
+		 (when (and layout (not forward-local-refs))
+		   (vm-mime-internalize-local-external-bodies layout))
 		 (if already-mimed
 		     (setq encoding (vm-mime-transfer-encode-layout layout))
 		   (vm-mime-base64-encode-region (point-min) (point-max))
@@ -7375,8 +7326,8 @@ also `vm-mime-xemacs-encode-composition'."
 	       nil :keep-list '("Content-ID:") :discard-regexp nil)
 	      ;; remove header/text separator
 	      (goto-char (1- (vm-mm-layout-body-start layout)))
-	      (if (looking-at "\n")
-		  (delete-char 1)))
+	      (when (looking-at "\n")
+		(delete-char 1)))
 	    (insert "Content-Type: " type)
 	    (if params
 		(if vm-mime-avoid-folding-content-type
@@ -7387,10 +7338,10 @@ also `vm-mime-xemacs-encode-composition'."
 	      (insert "Content-Description: " description "\n"))
 	    (when disposition
 	      (insert "Content-Disposition: " (car disposition))
-	      (if (cdr disposition)
-		  (insert ";\n\t" (mapconcat 'identity
-					     (cdr disposition)
-					     ";\n\t")))
+	      (when (cdr disposition)
+		(insert ";\n\t" (mapconcat 'identity
+					   (cdr disposition)
+					   ";\n\t")))
 	      (insert "\n"))
 	    (insert "Content-Transfer-Encoding: " encoding "\n\n"))
 	  (goto-char (point-max))
@@ -7408,36 +7359,10 @@ also `vm-mime-xemacs-encode-composition'."
 	;; extent, if any.
 	(if (or just-one (looking-at "[ \t\n]*\\'"))
 	    (delete-region (point) (point-max))
-	  ;; support enriched-mode for text/enriched composition
-	  (when enriched
-	    (let ((enriched-initial-annotation ""))
-	      (enriched-encode (point) (point-max))))
-	  (setq charset (vm-determine-proper-charset (point)
-						     (point-max)))
-	  (when vm-fsfemacs-mule-p
-	    (let ((coding-system
-		   (vm-mime-charset-to-coding charset)))
-	      (if (null coding-system)
-		  (error "Can't find a coding system for charset %s"
-			 charset)
-		(encode-coding-region (point) (point-max)
-				      coding-system))))
-	  (setq encoding (vm-determine-proper-content-transfer-encoding
-			  (point)
-			  (point-max))
-		encoding (vm-mime-transfer-encode-region encoding
-							 (point)
-							 (point-max)
-							 t)
-		description (vm-mime-text-description (point) (point-max)))
-	  (setq 8bit (or 8bit (equal encoding "8bit")))
-	  (setq boundary-positions (cons (point-marker) boundary-positions))
-	  (if enriched
-	      (insert "Content-Type: text/enriched; charset=" charset "\n")
-	    (insert "Content-Type: text/plain; charset=" charset "\n"))
-	  (when description
-	    (insert "Content-Description: " description "\n"))
-	  (insert "Content-Transfer-Encoding: " encoding "\n\n")
+	  (setq marker (vm-mime-fsfemacs-encode-text-part
+			(point) (point-max) nil))
+	  (setq boundary-positions (cons marker boundary-positions))
+	  ;; (setq 8bit (or 8bit (equal encoding "8bit")))
 	  (goto-char (point-max)))
 	(setq boundary (vm-mime-make-multipart-boundary))
 	(mail-text)
@@ -7506,6 +7431,71 @@ also `vm-mime-xemacs-encode-composition'."
 	      (insert "Content-Transfer-Encoding: 8bit\n")
 	    (insert "Content-Transfer-Encoding: 7bit\n")))))))
 
+(defun vm-mime-fsfemacs-encode-text-part (beg end whole-message)
+  "Encode the text from BEG to END in a composition buffer
+as MIME part and add appropriate MIME headers.  If WHOLE-MESSAGE is
+true, then encode it as the entire message.
+
+Returns marker pointing to the start of the encoded MIME part."
+  (let ((enriched (and (boundp 'enriched-mode) enriched-mode))
+	type encoding charset params description marker)
+    (narrow-to-region beg end)
+    ;; support enriched-mode for text/enriched composition
+    (when enriched
+      (let ((enriched-initial-annotation ""))
+	(save-excursion
+	  ;; insert/delete trick needed to avoid
+	  ;; enriched-mode tags from seeping into the
+	  ;; attachment overlays.  I really wish
+	  ;; front-advance / rear-advance overlay
+	  ;; endpoint properties actually worked.
+	  (goto-char (point-max))
+	  (insert-before-markers "\n")
+	  (enriched-encode (point-min) (1- (point)))
+	  (goto-char (point-max))
+	  (delete-char -1))))
+    (setq charset (vm-determine-proper-charset 
+		   (point-min) (point-max)))
+    (when vm-fsfemacs-mule-p
+      (let ((coding-system
+	     (vm-mime-charset-to-coding charset)))
+	(if (null coding-system)
+	    (error "Can't find a coding system for charset %s" charset)
+	  (encode-coding-region (point-min) (point-max)
+				coding-system))))
+    (setq encoding (vm-determine-proper-content-transfer-encoding
+		    (point-min) (point-max))
+	  encoding (vm-mime-transfer-encode-region 
+		    encoding (point-min) (point-max) t)
+	  description (vm-mime-text-description 
+		       (point-min) (point-max)))
+    (if whole-message
+	(progn
+	  (widen)
+	  (vm-remove-mail-mode-header-separator)
+	  (goto-char (point-min))
+	  (vm-reorder-message-headers
+	   nil :keep-list nil 
+	   :discard-regexp
+	   "\\(Content-Type:\\|Content-Transfer-Encoding\\|MIME-Version:\\)")
+	  (insert "MIME-Version: 1.0\n")
+	  (if enriched
+	      (insert "Content-Type: text/enriched; charset=" charset "\n")
+	    (insert "Content-Type: text/plain; charset=" charset "\n"))
+	  (insert "Content-Transfer-Encoding: " encoding "\n")
+	  (vm-add-mail-mode-header-separator))
+
+      (setq marker (point-marker))
+      (if enriched
+	  (insert "Content-Type: text/enriched; charset=" charset "\n")
+	(insert "Content-Type: text/plain; charset=" charset "\n"))
+      (when description
+	(insert "Content-Description: " description "\n"))
+      (insert "Content-Transfer-Encoding: " encoding "\n\n")
+      (widen)
+      marker)))
+
+
 (defun vm-mime-fragment-composition (size)
   (save-restriction
     (widen)
@@ -7524,8 +7514,10 @@ also `vm-mime-xemacs-encode-composition'."
 		 'quoted-printable
 	       vm-mime-8bit-text-transfer-encoding)))
 	(vm-mime-transfer-encode-layout
-	 (vm-mime-parse-entity nil (list "text/plain" "charset=us-ascii")
-			       "7bit")))
+	 (vm-mime-parse-entity
+	  nil 
+	  :default-type (list "text/plain" "charset=us-ascii")
+	  :default-encoding "7bit")))
       (goto-char (point-min))
       (setq header-start (point))
       (search-forward "\n\n")

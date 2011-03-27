@@ -2203,14 +2203,18 @@ that the session is active.  Returns t or nil."
 
 (defun vm-re-establish-folder-imap-session (&optional interactive purpose
 						      just-retrieve)
-  "If the IMAP session for the current folder has died, re-establish a
-new one.  Returns the IMAP process or nil if unsuccessful."
+  "If the IMAP session for the current folder has died,
+re-establish a new one.  Optional argument PURPOSE is inserted
+into the process buffer for tracing purposes. Optional argument
+JUST-RETRIEVE says whether the session will only be used for
+retrieval of mail. Returns the IMAP process or nil if
+unsuccessful."
   (let ((process (vm-folder-imap-process)) temp)
-    (if  (and (processp process)
-	      (vm-imap-poke-session process))
+    (if (and (processp process)
+	     (vm-imap-poke-session process))
 	process
-      (if process
-	  (vm-imap-end-session process))
+      (when process
+	(vm-imap-end-session process))
       (vm-establish-new-folder-imap-session 
        interactive purpose just-retrieve))))
 
@@ -2301,8 +2305,7 @@ new one.  Returns the IMAP process or nil if unsuccessful."
 						    interactive purpose)
   "Create a new writable IMAP session for MAILDROP and return the process.
 Optional argument PURPOSE is inserted into the process buffer for
-tracing purposes. Returns the IMAP process or nil if
-unsuccessful."
+tracing purposes. Returns the IMAP process or nil if unsuccessful."
   (let (process 
 	(vm-imap-ok-to-ask interactive)
 	mailbox select mailbox-count recent-count uid-validity permanent-flags

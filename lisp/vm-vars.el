@@ -6614,14 +6614,13 @@ position for the next read.")
 
 (defvar vm-buffer-types (cons nil nil))
 
-;; For verification of imap session protocol
-;; Possible values are 
-;; 'active - active session present
-;; 'valid - message sequence numbers are valid 
-;;	validity is preserved by FETCH, STORE and SEARCH operations
-;; 'inactive - session is inactive
-
-(defvar vm-imap-session-type nil)
+(defvar vm-imap-session-type nil
+  "This buffer-local variable holds the status of the IMAP session.
+Possible values are 
+'active - active session present
+'valid - message sequence numbers are valid 
+	validity is preserved by FETCH, STORE and SEARCH operations
+'inactive - session is inactive")
 (make-variable-buffer-local 'vm-imap-session-type)
 
 (eval-when-compile
