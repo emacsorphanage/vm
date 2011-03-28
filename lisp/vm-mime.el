@@ -6802,8 +6802,8 @@ and the approriate content-type and boundary markup information is added."
       (error "Message is already MIME encoded."))
     (let ((8bit nil)
 	  (just-one nil)
-	  (boundary-positions nil)	; markers for the start of parts
-	  marker
+	  (boundary-positions nil)	; position markers for the parts
+	  text-result			; results from text encodings
 	  forward-local-refs already-mimed layout e e-list boundary
 	  type encoding charset params description disposition object
 	  opoint-min postponed-attachment)
@@ -6838,9 +6838,12 @@ and the approriate content-type and boundary markup information is added."
 	      ;; found an attachment
 	      (delete-region (point) (vm-extent-start-position e))
 	    ;; found text
-	    (setq marker (vm-mime-encode-text-part
-			  (point) (vm-extent-start-position e) nil))
-	    (setq boundary-positions (cons marker boundary-positions)))
+	    (setq text-result 
+		  (vm-mime-encode-text-part
+		   (point) (vm-extent-start-position e) nil))
+	    (setq boundary-positions 
+		  (cons (car text-result) boundary-positions))
+	    (setq 8bit (or 8bit (equal (cdr text-result) "8bit"))))
 	  (goto-char (vm-extent-start-position e))
 	  (narrow-to-region (point) (point))
 	  (setq object (vm-extent-property e 'vm-mime-object))
@@ -6987,10 +6990,9 @@ and the approriate content-type and boundary markup information is added."
 	;; extent, if any.
 	(if (or just-one (looking-at "[ \t\n]*\\'"))
 	    (delete-region (point) (point-max))
-	  (setq marker (vm-mime-encode-text-part (point) (point-max) nil))
-	  (setq boundary-positions (cons marker boundary-positions))
-	  ;; FIXME is this needed?
-	  ;; (setq 8bit (or 8bit (equal encoding "8bit")))
+	  (setq text-result (vm-mime-encode-text-part (point) (point-max) nil))
+	  (setq boundary-positions (cons (car text-result) boundary-positions))
+	  (setq 8bit (or 8bit (equal (cdr text-result) "8bit")))
 	  (goto-char (point-max)))
 
 	;; Create and insert boundary lines
@@ -7060,7 +7062,9 @@ and the approriate content-type and boundary markup information is added."
 as MIME part and add appropriate MIME headers.  If WHOLE-MESSAGE is
 true, then encode it as the entire message.
 
-Returns marker pointing to the start of the encoded MIME part."
+Returns a pair consisting of a marker pointing to the start of the
+encoded MIME part and the transfer-encoding used.  But if
+WHOLE-MESSAGE is true then nil is returned."
   (let ((enriched (and (boundp 'enriched-mode) enriched-mode))
 	type encoding charset params description marker)
     (narrow-to-region beg end)
@@ -7122,7 +7126,8 @@ Returns marker pointing to the start of the encoded MIME part."
 	      (insert "Content-Type: text/enriched; charset=" charset "\n")
 	    (insert "Content-Type: text/plain; charset=" charset "\n"))
 	  (insert "Content-Transfer-Encoding: " encoding "\n")
-	  (vm-add-mail-mode-header-separator))
+	  (vm-add-mail-mode-header-separator)
+	  nil)
 
       (setq marker (point-marker))
       (if enriched
@@ -7132,7 +7137,7 @@ Returns marker pointing to the start of the encoded MIME part."
 	(insert "Content-Description: " description "\n"))
       (insert "Content-Transfer-Encoding: " encoding "\n\n")
       (widen)
-      marker)))
+      (cons marker encoding))))
 
 
 ;; This function is now defunct.   Use vm-mime-encode-composition.
