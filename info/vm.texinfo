@@ -7150,6 +7150,8 @@ A boolean indicating whether the object has MIME headers.
 @item @code{vm-mime-encoding}.
 The MIME encoding used, if it is already encoded.
 @item @code{vm-mime-forward-local-refs}.
+Whether or not references to local external-body objects should be
+forwarded as is.
 @item @code{fontified}.
 Standard text property.
 @item @code{duplicable}.
@@ -7167,34 +7169,38 @@ function called @code{vm-mime-fake-attachment-overlays}.  This allows
 the next stage to treat both FSF Emacs and XEmacs using the same
 logic.
 
-The functions @code{vm-mime-fsfemacs-encode-composition} and
-@code{vm-mime-xemacs-encode-composition} then encode the composition
-buffer, by selecting each attachment button and replacing it with the
-corresponding object.  Unless the objects were already MIME-encoded,
-they are MIME-encoded and made into MIME parts by adding suitable
-headers.
+The function @code{vm-mime-encode-composition} then encodes the
+composition buffer, by selecting each attachment button and replacing it
+with the corresponding object.  The bodies of @samp{external-body}
+objects are also retrieved at this stage.  Unless the objects were
+already MIME-encoded, they are MIME-encoded and made into MIME parts by
+adding suitable headers.  The message itself is given MIME headers
+describing its content and then handed to Emacs message-sending
+functions. 
 
-@unnumberedsubsec Yanking MIME Messages
+@unnumberedsubsec Yanking or Forwarding MIME Messages
 @inindex yank
 @inindex include
 @inindex vm-include-mime-attachments
-When another message is yanked or ``included'' in a message
-composition, the handling of attachments depends on the variable
-@code{vm-include-mime-attachments}.  If the variable is @code{nil},
-then the attachments are displayed as token buttons that have text of
-the form
+When another message is yanked or ``included'' in a message composition,
+the handling of attachments depends on the variable
+@code{vm-include-mime-attachments}.  If the variable is @code{nil}, then
+the attachments are displayed as token buttons in @i{plain text} that
+appear similar to:
 
 @example
 [DELETED ATTACHMENT mary.jpg, image/jpeg]
 @end example
 
-@noindent These buttons are sent as plain text in the encoded
-message.  If @code{vm-include-mime-attachments} is @code{t}, then the
-attachments are generated as MIME buttons by
-@code{vm-decode-mime-layout}.  These are replaced by attachment
-buttons using a function called
-@code{vm-mime-convert-to-attachment-buttons}.  These attachment
-buttons are then handled as described above.
+@noindent The function @code{vm-decode-mime-layout} is employed to
+generate the yanked text along with such token buttons.
+
+If @code{vm-include-mime-attachments} is @code{t}, then first the
+@code{vm-decode-mime-layout} function is employed to generate proper
+MIME buttons for all the attachments.  In a second step, the MIME
+buttons are replaced by attachment buttons using a function called
+@code{vm-mime-convert-to-attachment-buttons}.  These attachment buttons
+are then handled as described above.
 
 
 
