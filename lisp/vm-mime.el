@@ -6130,7 +6130,11 @@ there is no file name for this object.             USR, 2011-03-07"
 			  (list (concat "filename=\"" file-name "\""))))))
 	  ((listp object) 
 	   (setq file-name (nth 4 object))
-	   (setq disposition (nth 3 object))))
+	   (setq disposition (nth 3 object)))
+	  (t
+	   (setq file-name 
+		 (or (vm-mime-get-xxx-parameter "name" params)
+		     (vm-mime-get-xxx-parameter "filename" params)))))
     (when (< (point) (save-excursion (mail-text) (point)))
       (mail-text))
     (setq start (point))
