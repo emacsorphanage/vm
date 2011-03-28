@@ -237,6 +237,14 @@ configuration.  "
    (plist-get plist 'layout-is-converted)
    (plist-get plist 'unconverted-layout)))
 
+(defun vm-mime-copy-layout (from to)
+  "Copy a MIME layout FROM to the layout TO.  The previous contents of
+TO are overwritten.                                    USR, 2011-03-27"
+  (let ((i (1- (length from))))
+    (while (>= i 0)
+      (aset to i (aref from i))
+      (setq i (1- i)))))
+
 (defun vm-mm-layout-type (e) (aref e 0))
 (defun vm-mm-layout-qtype (e) (aref e 1))
 (defun vm-mm-layout-encoding (e) (aref e 2))
@@ -3408,40 +3416,38 @@ loosing basic functionality when using `vm-mime-auto-save-all-attachments'."
       (not (zerop (buffer-size))))))
 
 (defun vm-mime-internalize-local-external-bodies (layout)
+  "Given a LAYOUT representing a message/external-body object, convert
+it to an internal object by retrieving the body.       USR, 2011-03-28"
   (cond ((vm-mime-types-match "message/external-body"
 			      (car (vm-mm-layout-type layout)))
-	 (if (not (string= (downcase
-			    (vm-mime-get-parameter layout "access-type"))
-			   "local-file"))
-	     nil
-	   (let ((work-buffer nil))
+	 (when (string= (downcase
+			 (vm-mime-get-parameter layout "access-type"))
+			"local-file")
+	   (let* ((child-layout 
+		   (car (vm-mm-layout-parts layout)))
+		  (work-buffer 
+		   (vm-make-multibyte-work-buffer
+		    (format "*%s mime object*"
+			    (car (vm-mm-layout-type child-layout))))))
 	     (unwind-protect
-		 (let ((child-layout (car (vm-mm-layout-parts layout)))
-		       oldsize
-		       (i (1- (length layout))))
-		   (save-excursion
-		     (setq work-buffer
-			   (vm-make-multibyte-work-buffer
-			    (format "*%s mime object*"
-				    (car (vm-mm-layout-type child-layout)))))
-		     (set-buffer work-buffer)
+		 (let (oldsize)
+		   (with-current-buffer work-buffer
 		     (vm-mime-retrieve-external-body layout))
 		   (goto-char (vm-mm-layout-body-start child-layout))
 		   (setq oldsize (buffer-size))
 		   (condition-case data
 		       (insert-buffer-substring work-buffer)
 		     (error (signal 'vm-mime-error (cdr data))))
-		   (goto-char (+ (point) (- (buffer-size) oldsize)))
+		   ;; This is redundant because insertion moves point
+		   ;; (goto-char (+ (point) (- (buffer-size) oldsize)))
 		   (if (< (point) (vm-mm-layout-body-end child-layout))
 		       (delete-region (point)
 				      (vm-mm-layout-body-end child-layout))
 		     (vm-set-mm-layout-body-end child-layout (point-marker)))
 		   (delete-region (vm-mm-layout-header-start layout)
 				  (vm-mm-layout-body-start layout))
-		   (while (>= i 0)
-		     (aset layout i (aref child-layout i))
-		     (setq i (1- i)))))
-	     (and work-buffer (kill-buffer work-buffer)))))
+		   (vm-mime-copy-layout child-layout layout)))
+	     (when work-buffer (kill-buffer work-buffer)))))
 	((vm-mime-composite-type-p (car (vm-mm-layout-type layout)))
 	 (let ((p (vm-mm-layout-parts layout)))
 	   (while p
@@ -6432,20 +6438,20 @@ quoted-printable or binary).                            USR, 2011-03-27"
 	       (setq encoding "8bit"))
 	   (setq list (cdr list))))
 	(t
-	 (if (and (vm-mime-types-match "message/partial" type)
-		  (not (memq vm-mime-8bit-text-transfer-encoding
-			     '(quoted-printable base64))))
-		(setq vm-mime-8bit-text-transfer-encoding
-		      'quoted-printable))
+	 (when (and (vm-mime-types-match "message/partial" type)
+		    (not (memq vm-mime-8bit-text-transfer-encoding
+			       '(quoted-printable base64))))
+	   (setq vm-mime-8bit-text-transfer-encoding 'quoted-printable))
 	 (setq encoding
 	       (vm-mime-transfer-encode-region (vm-mm-layout-encoding layout)
 					       (vm-mm-layout-body-start layout)
 					       (vm-mm-layout-body-end layout)
 					       (vm-mime-text-type-layout-p
 						layout)))))
-  ;; oiginally encoding was being compared to a type, which didn't make
-  ;; sense.   USR, 2011-03-27
-  (if (not (equal encoding (downcase (car (vm-mm-layout-encoding layout)))))
+  ;; seems redundant because an encoding can never be equal to a type.
+  ;; but it wasn't meant to be encoding becuase it woundn't be a list.
+  ;; who knows that is supposed to be?  USR, 2011-03-27
+  (unless (equal encoding (downcase (car (vm-mm-layout-type layout))))
       (save-excursion
 	(save-restriction
 	  (goto-char (vm-mm-layout-header-start layout))
@@ -6888,6 +6894,7 @@ and the approriate content-type and boundary markup information is added."
 			    "unspecified"))
 		      (vm-extent-property e 'vm-mime-disposition)
 		    nil)))
+	  ;; encode the attachment if necessary
 	  (cond ((vm-mime-types-match "text" type)
 		 (setq encoding
 		       (or (vm-extent-property e 'vm-mime-encoding)
@@ -6940,6 +6947,7 @@ and the approriate content-type and boundary markup information is added."
 		     (setq encoding (vm-mime-transfer-encode-layout layout))
 		   (vm-mime-base64-encode-region (point-min) (point-max))
 		   (setq encoding "base64"))))
+	  ;; add the required MIME headers
 	  (unless (or just-one postponed-attachment)
 	    (goto-char (point-min))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
@@ -6958,12 +6966,13 @@ and the approriate content-type and boundary markup information is added."
 	      (insert "Content-Description: " description "\n"))
 	    (when disposition
 	      (insert "Content-Disposition: "
-		      (vm-mime-type-with-params
+		      (vm-mime-type-with-params 
 		       (car disposition) (cdr disposition))
 		      "\n"))
 	    (insert "Content-Transfer-Encoding: " encoding "\n\n"))
 	  (goto-char (point-max))
 	  (widen)
+	  ;; delete the original attachment button
 	  (save-excursion
 	    (goto-char (vm-extent-start-position e))
 	    (vm-assert (looking-at "\\[ATTACHMENT")))
@@ -6973,6 +6982,7 @@ and the approriate content-type and boundary markup information is added."
 	  (if (looking-at "\n")
 	      (delete-char 1))
 	  (setq e-list (cdr e-list)))
+
 	;; handle the remaining chunk of text after the last
 	;; extent, if any.
 	(if (or just-one (looking-at "[ \t\n]*\\'"))
@@ -6982,6 +6992,8 @@ and the approriate content-type and boundary markup information is added."
 	  ;; FIXME is this needed?
 	  ;; (setq 8bit (or 8bit (equal encoding "8bit")))
 	  (goto-char (point-max)))
+
+	;; Create and insert boundary lines
 	(setq boundary (vm-mime-make-multipart-boundary))
 	(mail-text)
 	(while (re-search-forward (concat "^--"
@@ -6991,11 +7003,13 @@ and the approriate content-type and boundary markup information is added."
 	  (setq boundary (vm-mime-make-multipart-boundary))
 	  (mail-text))
 	(goto-char (point-max))
-	(or just-one (insert "\n--" boundary "--\n"))
+	(unless just-one (insert "\n--" boundary "--\n"))
 	(while boundary-positions
 	  (goto-char (car boundary-positions))
 	  (insert "\n--" boundary "\n")
 	  (setq boundary-positions (cdr boundary-positions)))
+
+	;; Add MIME headers to the message
 	(when (and just-one already-mimed)
 	  (goto-char (vm-mm-layout-header-start layout))
 	  ;; trim headers
@@ -7027,8 +7041,7 @@ and the approriate content-type and boundary markup information is added."
 		    "\n")
 	  (insert "Content-Type: "
 		  (vm-mime-type-with-params 
-		   "multipart/mixed"
-		   (list (format "boundary=\"%s\"" boundary)))
+		   "multipart/mixed" (list (format "boundary=\"%s\"" boundary)))
 		  "\n"))
 	(when (and just-one description)
 	    (insert "Content-Description: " description "\n"))
@@ -7122,8 +7135,8 @@ Returns marker pointing to the start of the encoded MIME part."
       marker)))
 
 
-;; This function is now defunct.   USR, 2011-03-27
-
+;; This function is now defunct.   Use vm-mime-encode-composition.
+;; USR, 2011-03-27
 (defun vm-mime-fsfemacs-encode-composition ()
   "MIME encode the message composition in the current buffer."
   (save-restriction
@@ -7377,6 +7390,8 @@ Returns marker pointing to the start of the encoded MIME part."
 	  (if 8bit
 	      (insert "Content-Transfer-Encoding: 8bit\n")
 	    (insert "Content-Transfer-Encoding: 7bit\n")))))))
+(make-obsolete 'vm-mime-fsfemacs-encode-composition
+	       'vm-mime-encode-composition-internal "8.2.0")
 
 (defun vm-mime-fsfemacs-encode-text-part (beg end whole-message)
   "Encode the text from BEG to END in a composition buffer
@@ -7441,6 +7456,8 @@ Returns marker pointing to the start of the encoded MIME part."
       (insert "Content-Transfer-Encoding: " encoding "\n\n")
       (widen)
       marker)))
+(make-obsolete 'vm-mime-fsfemacs-encode-text-part
+	       'vm-mime-encode-text-part "8.2.0")
 
 
 (defun vm-mime-fragment-composition (size)
@@ -8028,7 +8045,7 @@ buffer."
     ;; font-lock is enabled.  Explaining why is
     ;; beyond the scope of this comment and I
     ;; don't know the answer anyway.  This
-    ;; insertion dance work to prevent it.
+    ;; insertion dance works to prevent it.
     (insert-before-markers " ")
     (forward-char -1)
     (let ((coding-system-for-read
@@ -8055,8 +8072,7 @@ buffer."
 	 ;; font-lock could signal this error in FSF
 	 ;; Emacs versions prior to 21.0.  Catch it
 	 ;; and ignore it.
-	 (if (equal data '(error 
-			   "Invalid search bound (wrong side of point)"))
+	 (if (equal data '(error "Invalid search bound (wrong side of point)"))
 	     nil
 	   (signal (car data) (cdr data)))))
       (goto-char (point-max))
