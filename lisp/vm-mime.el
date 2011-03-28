@@ -6801,36 +6801,37 @@ and the approriate content-type and boundary markup information is added."
     (when (vm-mail-mode-get-header-contents "MIME-Version:")
       (error "Message is already MIME encoded."))
     (let ((8bit nil)
-	  (just-one nil)
+	  (multipart t)		        ; start off asuming multipart
 	  (boundary-positions nil)	; position markers for the parts
 	  text-result			; results from text encodings
 	  forward-local-refs already-mimed layout e e-list boundary
 	  type encoding charset params description disposition object
-	  opoint-min postponed-attachment)
+	  opoint-min encoded-attachment)
       (when vm-xemacs-p
 	;;Make sure we don't double encode UTF-8 (for example) text.
 	(setq buffer-file-coding-system (vm-binary-coding-system)))
       (goto-char (mail-text-start))
       (setq e-list (vm-mime-attachment-button-extents 
 		    (point) (point-max) 'vm-mime-object))
-      ;; If there's just one attachment and no other readable
-      ;; text in the buffer then make the message type just be
-      ;; the attachment type rather than sending a multipart
-      ;; message with one attachment
-      (setq just-one (and (= (length e-list) 1)
-			  (looking-at "[ \t\n]*")
-			  (= (match-end 0)
-			     (vm-extent-start-position (car e-list)))
-			  (save-excursion
-			    (goto-char (vm-extent-end-position (car e-list)))
-			    (looking-at "[ \t\n]*\\'"))))
+      ;; We have a multipart message unless there's just one
+      ;; attachment and no other readable text in the buffer.
+      (when (and (= (length e-list) 1)
+		 (looking-at "[ \t\n]*")
+		 (= (match-end 0)
+		    (vm-extent-start-position (car e-list)))
+		 (save-excursion
+		   (goto-char (vm-extent-end-position (car e-list)))
+		   (looking-at "[ \t\n]*\\'")))
+	(setq multipart nil))
+      ;; 1. Insert the text parts and attachments
       (if (null e-list)
 	  ;; no attachments
 	  (vm-mime-encode-text-part (point) (point-max) t)
 	;; attachments to be handled
 	(while e-list
 	  (setq e (car e-list))
-	  (if (or just-one
+	  ;; 1a. Insert the text part
+	  (if (or (not multipart)
 		  (save-excursion
 		    (eq (vm-extent-start-position e)
 			(re-search-forward 
@@ -6844,11 +6845,13 @@ and the approriate content-type and boundary markup information is added."
 	    (setq boundary-positions 
 		  (cons (car text-result) boundary-positions))
 	    (setq 8bit (or 8bit (equal (cdr text-result) "8bit"))))
+
+	  ;; 1b. Prepare for the object
 	  (goto-char (vm-extent-start-position e))
 	  (narrow-to-region (point) (point))
 	  (setq object (vm-extent-property e 'vm-mime-object))
 
-	  ;; insert the object
+	  ;; 1c. Insert the object
 	  (cond ((bufferp object)
 		 (vm-mime-insert-buffer-substring 
 		  object (vm-extent-property e 'vm-mime-type)))
@@ -6861,13 +6864,13 @@ and the approriate content-type and boundary markup information is added."
 			 (cons (point-marker) boundary-positions))
 		   (insert-buffer-substring 
 		    (nth 0 object) (nth 1 object) (nth 2 object))
-		   (setq postponed-attachment t)))
+		   (setq encoded-attachment t)))
 		;; insert file
 		((stringp object)
 		 (vm-mime-insert-file-contents 
 		  object (vm-extent-property e 'vm-mime-type))))
 
-	  ;; gather information about the object from the extent.
+	  ;; 1d. Gather information about the object from the extent.
 	  (if (setq already-mimed (vm-extent-property e 'vm-mime-encoded))
 	      (setq layout 
 		    (vm-mime-parse-entity
@@ -6897,7 +6900,7 @@ and the approriate content-type and boundary markup information is added."
 			    "unspecified"))
 		      (vm-extent-property e 'vm-mime-disposition)
 		    nil)))
-	  ;; encode the attachment if necessary
+	  ;; 1e. Encode the object if necessary
 	  (cond ((vm-mime-types-match "text" type)
 		 (setq encoding
 		       (or (vm-extent-property e 'vm-mime-encoding)
@@ -6914,6 +6917,7 @@ and the approriate content-type and boundary markup information is added."
 				 (point-max)
 				 t))
 		 (setq 8bit (or 8bit (equal encoding "8bit"))))
+
 		((vm-mime-composite-type-p type)
 		 (setq opoint-min (point-min))
 		 (unless already-mimed
@@ -6939,19 +6943,23 @@ and the approriate content-type and boundary markup information is added."
 		 (goto-char (point-max))
 		 (widen)
 		 (narrow-to-region opoint-min (point)))
-		((not postponed-attachment)
+
+		((not encoded-attachment)
 		 (when (and layout (not forward-local-refs))
 		   (vm-mime-internalize-local-external-bodies layout)
 		   ; update the cached data that might now be stale
+		   ; but retain the disposition if nothing new
 		   (setq type (car (vm-mm-layout-type layout))
 			 params (cdr (vm-mm-layout-qtype layout))
-			 disposition (vm-mm-layout-qdisposition layout)))
+			 disposition (or (vm-mm-layout-qdisposition layout)
+					 disposition)))
 		 (if already-mimed
 		     (setq encoding (vm-mime-transfer-encode-layout layout))
 		   (vm-mime-base64-encode-region (point-min) (point-max))
 		   (setq encoding "base64"))))
-	  ;; add the required MIME headers
-	  (unless (or just-one postponed-attachment)
+
+	  ;; 1f. Add the required MIME headers
+	  (unless (or (not multipart) encoded-attachment)
 	    (goto-char (point-min))
 	    (setq boundary-positions (cons (point-marker) boundary-positions))
 	    (when already-mimed
@@ -6975,55 +6983,57 @@ and the approriate content-type and boundary markup information is added."
 	    (insert "Content-Transfer-Encoding: " encoding "\n\n"))
 	  (goto-char (point-max))
 	  (widen)
-	  ;; delete the original attachment button
+
+	  ;; 1g. Delete the original attachment button
 	  (save-excursion
 	    (goto-char (vm-extent-start-position e))
 	    (vm-assert (looking-at "\\[ATTACHMENT")))
 	  (delete-region (vm-extent-start-position e)
 			 (vm-extent-end-position e))
 	  (vm-detach-extent e)
-	  (if (looking-at "\n")
-	      (delete-char 1))
+	  (when (looking-at "\n") (delete-char 1))
 	  (setq e-list (cdr e-list)))
 
-	;; handle the remaining chunk of text after the last
+	;; 2. Handle the remaining chunk of text after the last
 	;; extent, if any.
-	(if (or just-one (looking-at "[ \t\n]*\\'"))
-	    (delete-region (point) (point-max))
-	  (setq text-result (vm-mime-encode-text-part (point) (point-max) nil))
-	  (setq boundary-positions (cons (car text-result) boundary-positions))
-	  (setq 8bit (or 8bit (equal (cdr text-result) "8bit")))
-	  (goto-char (point-max)))
+	(if (and multipart (not (looking-at "[ \t\n]*\\'")))
+	    (progn
+	      (setq text-result 
+		    (vm-mime-encode-text-part (point) (point-max) nil))
+	      (setq boundary-positions 
+		    (cons (car text-result) boundary-positions))
+	      (setq 8bit (or 8bit (equal (cdr text-result) "8bit")))
+	      (goto-char (point-max)))
+	  (delete-region (point) (point-max)))
 
-	;; Create and insert boundary lines
-	(setq boundary (vm-mime-make-multipart-boundary))
-	(mail-text)
-	(while (re-search-forward (concat "^--"
-					  (regexp-quote boundary)
-					  "\\(--\\)?$")
-				  nil t)
+	;; 3. Create and insert boundary lines
+	(when multipart 
 	  (setq boundary (vm-mime-make-multipart-boundary))
-	  (mail-text))
-	(goto-char (point-max))
-	(unless just-one (insert "\n--" boundary "--\n"))
-	(while boundary-positions
-	  (goto-char (car boundary-positions))
-	  (insert "\n--" boundary "\n")
-	  (setq boundary-positions (cdr boundary-positions)))
+	  (mail-text)
+	  (while (re-search-forward 
+		  (concat "^--" (regexp-quote boundary) "\\(--\\)?$")
+		  nil t)
+	    (setq boundary (vm-mime-make-multipart-boundary))
+	    (mail-text))
+	  (goto-char (point-max))
+	  (insert "\n--" boundary "--\n")
+	  (while boundary-positions
+	    (goto-char (car boundary-positions))
+	    (insert "\n--" boundary "\n")
+	    (setq boundary-positions (cdr boundary-positions))))
 
-	;; Add MIME headers to the message
-	(when (and just-one already-mimed)
+	;; 4. Add MIME headers to the message
+	(when (and (not multipart) already-mimed)
 	  (goto-char (vm-mm-layout-header-start layout))
 	  ;; trim headers
 	  (vm-reorder-message-headers
 	   nil :keep-list '("Content-ID:") :discard-regexp nil)
 	  ;; remove header/text separator
 	  (goto-char (vm-mm-layout-header-end layout))
-	  (if (looking-at "\n")
-	      (delete-char 1))
+	  (when (looking-at "\n") (delete-char 1))
 	  ;; copy remainder to enclosing entity's header section
 	  (goto-char (point-max))
-	  (unless just-one
+	  (when multipart
 	    (insert-buffer-substring (current-buffer)
 				     (vm-mm-layout-header-start layout)
 				     (vm-mm-layout-body-start layout)))
@@ -7037,25 +7047,24 @@ and the approriate content-type and boundary markup information is added."
 	 "\\(Content-Type:\\|MIME-Version:\\|Content-Transfer-Encoding\\)")
 	(vm-add-mail-mode-header-separator)
 	(insert "MIME-Version: 1.0\n")
-	(if just-one
-	    (insert "Content-Type: " 
-		    (vm-mime-type-with-params type params)
-		    "\n")
-	  (insert "Content-Type: "
-		  (vm-mime-type-with-params 
-		   "multipart/mixed" (list (format "boundary=\"%s\"" boundary)))
-		  "\n"))
-	(when (and just-one description)
-	    (insert "Content-Description: " description "\n"))
-	(when (and just-one disposition)
-	  (insert "Content-Disposition: " 
-		  (vm-mime-type-with-params (car disposition) (cdr disposition))
-		  "\n"))
-	(if just-one
-	    (insert "Content-Transfer-Encoding: " encoding "\n")
-	  (if 8bit
-	      (insert "Content-Transfer-Encoding: 8bit\n")
-	    (insert "Content-Transfer-Encoding: 7bit\n")))))))
+	(if multipart
+	    (progn
+	      (insert "Content-Type: "
+		      (vm-mime-type-with-params 
+		       "multipart/mixed" 
+		       (list (format "boundary=\"%s\"" boundary)))
+		      "\n")
+	      (when description
+		(insert "Content-Description: " description "\n"))
+	      (when disposition
+		(insert "Content-Disposition: " 
+			(vm-mime-type-with-params 
+			 (car disposition) (cdr disposition))
+			"\n"))
+	      (insert "Content-Transfer-Encoding: "
+		      (if 8bit "8bit" "7bit") "\n"))
+	  (insert "Content-Type: " (vm-mime-type-with-params type params) "\n")
+	  (insert "Content-Transfer-Encoding: " encoding "\n"))))))
 
 (defun vm-mime-encode-text-part (beg end whole-message)
   "Encode the text from BEG to END in a composition buffer
