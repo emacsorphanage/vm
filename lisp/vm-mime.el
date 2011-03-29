@@ -6157,9 +6157,11 @@ there is no file name for this object.             USR, 2011-03-07"
 	   ;; needs to set point inside the tag so that a command can
 	   ;; access the text properties there.
 	   ;; (put-text-property start end 'intangible object) 
-	   (put-text-property start end 'face vm-mime-button-face)
-	   (put-text-property start end 'font-lock-face vm-mime-button-face)
-	   (put-text-property start end 'mouse-face vm-mime-button-mouse-face)
+	   (put-text-property start end 'face vm-attachment-button-face)
+	   (put-text-property start end 'font-lock-face 
+			      vm-attachment-button-face)
+	   (put-text-property start end 'mouse-face 
+			      vm-attachment-button-mouse-face)
 	   (put-text-property start end 'vm-mime-forward-local-refs fb)
 	   (put-text-property start end 'vm-mime-type type)
 	   (put-text-property start end 'vm-mime-object object)

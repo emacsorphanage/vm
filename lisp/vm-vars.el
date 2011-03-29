@@ -1857,6 +1857,43 @@ deleting a MIME object with `vm-delete-mime-object'."
   :group 'vm-faces
   :type 'symbol)
 
+(defface vm-attachment-button 
+  '((((type x w32 mswindows mac) (class color) (background light))
+     (:background "LavenderBlush3" :box (:line-width 2 :style released-button)))
+    (((type x w32 mswindows mac) (class color) (background dark))
+     (:background "LavenderBlush4" :box (:line-width 2 :style released-button)))
+    (((class color) (background light)) (:foreground "blue" :underline t))
+    (((class color) (background dark)) (:foreground "cyan" :underline t))
+    (t (:underline t)))
+  "Default face used for MIME buttons."
+  :group 'vm-faces)
+
+(defface vm-attachment-button-mouse
+  '((((type x w32 mac) (class color))
+     (:inherit highlight :box (:line-width 2 :style released-button)))
+    (((class color)) (:inherit highlight))
+    (t (:inherit highlight)))
+  "*Face to fontify focused MIME buttons."
+  :group 'vm-faces)
+
+(defface vm-attachment-button-pressed-face
+  '((((type x w32 mac) (class color))
+     (:inherit vm-attachment-button :box (:line-width 2 :style pressed-button)))
+    (((class color)) (:inherit vm-attachment-button))
+    (t (:inherit vm-attachment-button)))
+  "*Face to fontify pressed MIME buttons. (This is not yet used in VM.)"
+  :group 'vm-faces)
+
+(defcustom vm-attachment-button-face 'vm-attachment-button
+  "*Face used for text in buttons that trigger the display of MIME objects."
+  :group 'vm-faces
+  :type 'symbol)
+
+(defcustom vm-attachment-button-mouse-face 'vm-attachment-button-mouse
+  "*Face used for text in MIME buttons when mouse is hovering."
+  :group 'vm-faces
+  :type 'symbol)
+
 (defcustom vm-mime-button-format-alist
   '(("text" . "%-50.50(%t, %d, %c%) [%a]")
     ("multipart/alternative" . "%-50.50(%d%) [%a]")
@@ -4712,7 +4749,7 @@ See `vm-virtual-folder-alist' for a description of the conditions."
   (defface vm-summary-deleted
     '(
       (((type x w32 mac) (class color) (background light)) 
-       (:foreground "grey50" :strike-through "grey70"))
+       (:foreground "grey50" :strike-through "grey80"))
       (((type x w32 mac) (class color) (background dark)) 
        (:foreground "grey70" :strike-through "grey50"))
       ;; (((class color) (min-colors 16) (background light)) 
