@@ -52,12 +52,12 @@
 
 (declare-function vm-dired-file-name-at-point "vm-dired.el" ())
 
-(cond ((boundp 'dired-file-name-at-point) ; Emacs 23 dired
+(cond ((fboundp 'dired-file-name-at-point) ; Emacs 23 dired
        (fset 'vm-dired-file-name-at-point 'dired-file-name-at-point))
-      ((boundp 'dired-filename-at-point) ; Emacs 22 dired-x
+      ((fboundp 'dired-filename-at-point) ; Emacs 22 dired-x
        (fset 'vm-dired-file-name-at-point 'dired-filename-at-point))
       (t
-       (error "Emacs version %s does not support vm-dired" emacs-version)))
+       (error "vm-dired not supported in Emacs version %s" emacs-version)))
 
 ;;;###autoload
 (defun vm-dired-attach-file (composition)
