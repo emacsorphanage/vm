@@ -151,6 +151,10 @@ messages of the folder are involved in this reply."
         (case-fold-search t)
         to cc subject in-reply-to references
         mp tmp tmp2 newsgroups)
+    (vm-retrieve-operable-messages count mlist)
+    (when (and include-text vm-include-text-from-presentation
+	       (> (length mlist) 1))
+      (error "Including presentation is possible for only a single message"))
     (setq mp mlist)
     (while mp
       (cond ((setq tmp (vm-get-header-contents (car mp) "Reply-To:" ", "))
@@ -412,14 +416,14 @@ specified by `vm-included-text-headers' and
     (error "The folder buffer containing message %d has been killed."
 	   (vm-number-of message)))
   (vm-display nil nil '(vm-yank-message) '(vm-yank-message composing-message))
+  (vm-retrieve-operable-messages 1 (list message))
   (setq message (vm-real-message-of message))
   (let ((layout (vm-mm-layout message))
 	(start (point))
         (end (point-marker)))
      (save-excursion
-      (cond ((or (and vm-include-text-from-presentation
-		      (not (vm-mime-plain-message-p message)))
-		 (vm-body-to-be-retrieved-of message))
+      (cond ((and vm-include-text-from-presentation
+		  (not (vm-mime-plain-message-p message)))
 	     (vm-yank-message-presentation message)
 	     (setq end (point-marker)))
 	    (vm-include-text-basic
@@ -468,6 +472,7 @@ specified by `vm-included-text-headers' and
      (save-excursion
        (vm-select-folder-buffer-and-validate 1 (interactive-p))
        ;; ensure the current message is presented 
+       (vm-preview-current-message)
        (vm-show-current-message)
        (vm-select-folder-buffer)
        (when vm-presentation-buffer

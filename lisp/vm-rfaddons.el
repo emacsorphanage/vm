@@ -334,14 +334,18 @@ or do the binding and advising on your own."
     labels))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; This add-on is now obsolete because
+;; vm-include-text-from-presentation in core VM enables the same
+;; functionality.   USR, 2011-03-30
+
 (defcustom vm-reply-include-presentation nil
   "*If true a reply will include the presentation of a message.
 This might give better results when using filling or MIME encoded messages,
 e.g. HTML message.
-(This variable is part of vm-rfaddons.el.)"
+ (This variable is part of vm-rfaddons.el.)"
   :group 'vm-rfaddons
   :type 'boolean)
-
 
 ;;;###autoload
 (defun vm-followup-include-presentation (count)
@@ -349,6 +353,8 @@ e.g. HTML message.
 This does not work when replying to multiple messages."
   (interactive "p")
   (vm-reply-include-presentation count t))
+(make-obsolete 'vm-followup-include-presentation
+	       'vm-include-text-from-presentation "8.2.0")
 
 ;;;###autoload
 (defun vm-reply-include-presentation (count &optional to-all)
@@ -365,6 +371,9 @@ This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
 	  (vm-reply-include-presentation t)  ; is this variable necessary?
 	  (vm-enable-thread-operations nil)) 
       (vm-do-reply to-all t count))))
+(make-obsolete 'vm-reply-include-presentation
+	       'vm-include-text-from-presentation "8.2.0")
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

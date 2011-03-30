@@ -85,35 +85,33 @@ Prefix argument N means scroll forward N lines."
     ;; We are either in the Presentation buffer or the Folder buffer
     (let ((point (point))
 	  (w (vm-get-visible-buffer-window (current-buffer))))
-      (if (or (null w)
-	      (not (vm-frame-totally-visible-p (vm-window-frame w))))
-	  (progn
-	    (vm-display (current-buffer) t
-			'(vm-scroll-forward vm-scroll-backward)
-			(list this-command 'reading-message))
-	    ;; window start sticks to end of clip region when clip
-	    ;; region moves back past it in the buffer.  fix it.
-	    (setq w (vm-get-visible-buffer-window (current-buffer)))
-	    (if (= (window-start w) (point-max))
-		(set-window-start w (point-min)))
-	    (setq was-invisible t))))
+      (unless (and w (vm-frame-totally-visible-p (vm-window-frame w)))
+	(vm-display (current-buffer) t
+		    '(vm-scroll-forward vm-scroll-backward)
+		    (list this-command 'reading-message))
+	;; window start sticks to end of clip region when clip
+	;; region moves back past it in the buffer.  fix it.
+	(setq w (vm-get-visible-buffer-window (current-buffer)))
+	(if (= (window-start w) (point-max))
+	    (set-window-start w (point-min)))
+	(setq was-invisible t)))
     (if (or mp-changed was-invisible needs-decoding
 	    (and (eq vm-system-state 'previewing)
 		 (pos-visible-in-window-p
 		  (point-max)
 		  (vm-get-visible-buffer-window (current-buffer)))))
 	(progn
-	  (if (not was-invisible)
-	      (let ((w (vm-get-visible-buffer-window (current-buffer)))
-		    old-w-start)
-		(setq old-w-start (window-start w))
-		;; save-excursion to avoid possible buffer change
-		(save-excursion (vm-select-frame (window-frame w)))
-		(vm-raise-frame (window-frame w))
-		(vm-display nil nil '(vm-scroll-forward vm-scroll-backward)
-			    (list this-command 'reading-message))
-		(setq w (vm-get-visible-buffer-window (current-buffer)))
-		(and w (set-window-start w old-w-start))))
+	  (unless was-invisible
+	    (let ((w (vm-get-visible-buffer-window (current-buffer)))
+		  old-w-start)
+	      (setq old-w-start (window-start w))
+	      ;; save-excursion to avoid possible buffer change
+	      (save-excursion (vm-select-frame (window-frame w)))
+	      (vm-raise-frame (window-frame w))
+	      (vm-display nil nil '(vm-scroll-forward vm-scroll-backward)
+			  (list this-command 'reading-message))
+	      (setq w (vm-get-visible-buffer-window (current-buffer)))
+	      (and w (set-window-start w old-w-start))))
 	  (cond ((eq vm-system-state 'previewing)
 		 (vm-show-current-message)
 		 ;; The window start marker sometimes drifts forward
@@ -130,8 +128,8 @@ Prefix argument N means scroll forward N lines."
 	    (msg-buf (current-buffer))
 	    (h-diff 0)
 	    w old-w old-w-height old-w-start result)
-	(if (eq vm-system-state 'previewing)
-	    (vm-show-current-message))
+	(when (eq vm-system-state 'previewing)
+	  (vm-show-current-message))
 	(setq vm-system-state 'reading)
 	(setq old-w (vm-get-visible-buffer-window msg-buf)
 	      old-w-height (window-height old-w)
@@ -187,8 +185,8 @@ Prefix argument N means scroll forward N lines."
 	      (t
 	       (and (> (prefix-numeric-value arg) 0)
 		    (vm-howl-if-eom)))))))
-  (if (not vm-startup-message-displayed)
-      (vm-display-startup-message)))
+  (unless vm-startup-message-displayed
+    (vm-display-startup-message)))
 
 (defun vm-scroll-forward-internal (arg)
   (let ((direction (prefix-numeric-value arg))

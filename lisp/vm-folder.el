@@ -5098,6 +5098,9 @@ thread are loaded."
 temporary use.  Currently this facility is only available for
 IMAP folders.
 
+If the optional argument MLIST is non-nil, then the messages in
+MLIST are retrieved.  Otherwise, the following applies.
+
 With a prefix argument COUNT, the current message and the next 
 COUNT - 1 messages are retrieved.  A negative argument means
 the current message and the previous |COUNT| - 1 messages are
@@ -5108,36 +5111,37 @@ only marked messages are retrieved, other messages are ignored.  If
 applied to collapsed threads in summary and thread operations are
 enabled via `vm-enable-thread-operations' then all messages in the
 thread are retrieved."
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (when (null count) (setq count 1))
-  (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	(vm-fetched-message-limit nil)
-	(errors 0)
-	(n 0)
-	fetch-method
-	m mm)
-;;     (if (not used-marks) 
-;; 	(setq mlist (list (car vm-message-pointer))))
-    (unless mlist
-      (setq mlist (vm-select-operable-messages
-		   count (interactive-p) "Retrieve")))
-    (save-excursion
-      (while mlist
-	(setq m (car mlist))
-	(setq mm (vm-real-message-of m))
-	(set-buffer (vm-buffer-of mm))
-	(when (vm-body-to-be-retrieved-of mm)
-	  (setq n (1+ n))
-	  (message "Retrieving message body... %s" n)
-	  (vm-retrieve-real-message-body mm)
-	  (vm-register-fetched-message mm))
-	(setq mlist (cdr mlist)))
-      (when (> n 0)
-	(message "Retrieving message body... done")
-	(intern (buffer-name) vm-buffers-needing-display-update)
-	(when (interactive-p)
-	  (vm-update-summary-and-mode-line))))
-    ))
+  (save-current-buffer
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (when (null count) (setq count 1))
+    (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
+	  (vm-fetched-message-limit nil)
+	  (errors 0)
+	  (n 0)
+	  fetch-method
+	  m mm)
+      ;;     (if (not used-marks) 
+      ;; 	(setq mlist (list (car vm-message-pointer))))
+      (unless mlist
+	(setq mlist (vm-select-operable-messages
+		     count (interactive-p) "Retrieve")))
+      (save-excursion
+	(while mlist
+	  (setq m (car mlist))
+	  (setq mm (vm-real-message-of m))
+	  (set-buffer (vm-buffer-of mm))
+	  (when (vm-body-to-be-retrieved-of mm)
+	    (setq n (1+ n))
+	    (message "Retrieving message body... %s" n)
+	    (vm-retrieve-real-message-body mm)
+	    (vm-register-fetched-message mm))
+	  (setq mlist (cdr mlist)))
+	(when (> n 0)
+	  (message "Retrieving message body... done")
+	  (intern (buffer-name) vm-buffers-needing-display-update)
+	  (when (interactive-p)
+	    (vm-update-summary-and-mode-line))))
+      )))
 
 (defun vm-retrieve-real-message-body (mm &optional fetch)
   "Retrieve the body of a real message MM from its external

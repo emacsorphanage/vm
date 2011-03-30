@@ -511,7 +511,8 @@ the last time the folder was visited.  USR, 2010-03-08"
   "Select the message under the cursor in the summary window before
 executing commands that operate on the current message.  This occurs
 only when the summary buffer window is the selected window.  
-USR, 2010-03-08" 
+
+If a new message is selected then return t, otherwise nil. USR, 2010-03-08" 
   (and vm-follow-summary-cursor (eq major-mode 'vm-summary-mode)
        (let ((point (point))
 	     message-pointer message-list mp)
