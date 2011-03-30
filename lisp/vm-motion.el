@@ -71,9 +71,9 @@ given."
       (if (null cons)
 	  (error "No such message."))
       (if (eq vm-message-pointer cons)
-	  (vm-preview-current-message)
+	  (vm-present-current-message)
 	(vm-record-and-change-message-pointer vm-message-pointer cons)
-	(vm-preview-current-message)
+	(vm-present-current-message)
 	;;(message "start of message you want is: %s"
 	;; (vm-su-start-of (car vm-message-pointer)))
 	(if (and (vm-summary-operation-p)
@@ -95,7 +95,7 @@ given."
       (progn
 	(vm-record-and-change-message-pointer vm-message-pointer
 					      vm-last-message-pointer)
-	(vm-preview-current-message))))
+	(vm-present-current-message))))
 
 ;;;###autoload
 (defun vm-goto-parent-message ()
@@ -123,7 +123,7 @@ given."
       (setq message (car (vm-th-messages-of (car lineage))))
       (vm-record-and-change-message-pointer vm-message-pointer
 					    (vm-message-position message))
-      (vm-preview-current-message))))
+      (vm-present-current-message))))
 
 (defun vm-check-count (count)
   (if (>= count 0)
@@ -307,7 +307,7 @@ this command 'sees' marked messages as it moves."
 	   (setq error 'end-of-folder))))))
     (unless (eq vm-message-pointer oldmp)
       (vm-record-and-change-message-pointer oldmp vm-message-pointer)
-      (vm-preview-current-message))
+      (vm-present-current-message))
     (when (and error signal-errors)
 	 (signal error nil))))
 
@@ -439,7 +439,7 @@ to the subject comparisons."
 		       (vm-so-sortable-subject (car vm-message-pointer)))
 		(setq done t)))
 	  (vm-record-and-change-message-pointer oldmp vm-message-pointer)
-	  (vm-preview-current-message))
+	  (vm-present-current-message))
       (end-of-folder
        (setq vm-message-pointer oldmp)
        (message "No next message with the same subject")))))
@@ -468,7 +468,7 @@ to the subject comparisons."
 		       (vm-so-sortable-subject (car vm-message-pointer)))
 		(setq done t)))
 	  (vm-record-and-change-message-pointer oldmp vm-message-pointer)
-	  (vm-preview-current-message))
+	  (vm-present-current-message))
       (beginning-of-folder
        (setq vm-message-pointer oldmp)
        (message "No previous message with the same subject")))))
@@ -549,7 +549,7 @@ If a new message is selected then return t, otherwise nil. USR, 2010-03-08"
 	       ;; 	  (set-buffer vm-mail-buffer)
 	       ;; 	  (vm-record-and-change-message-pointer 
 	       ;;		vm-message-pointer mp)
-	       ;; 	  (vm-preview-current-message)
+	       ;; 	  (vm-present-current-message)
 	       ;; 	  ;; return non-nil so the caller will know that
 	       ;; 	  ;; a new message was selected.
 	       ;; 	  t ))
@@ -569,7 +569,7 @@ If a new message is selected then return t, otherwise nil. USR, 2010-03-08"
 		       vm-message-pointer mp)
 		      ;; preview disabled to avoid message
 		      ;; loading. USR, 2010-09-30
-		      ;; (vm-preview-current-message)
+		      ;; (vm-present-current-message)
 		      ;; return non-nil so the caller will know that
 		      ;; a new message was selected.
 		      t )))))))

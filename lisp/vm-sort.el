@@ -147,7 +147,7 @@ the folder undisturbed."
 		 (< (car p) (car q))))))))))
   (if vm-move-messages-physically
       ;; clip region is messed up
-      (vm-preview-current-message)
+      (vm-present-current-message)
     (vm-update-summary-and-mode-line)))
 
 ;;;###autoload
@@ -519,7 +519,7 @@ folder in the order in which the messages arrived."
 	     order-did-change
 	     (or lets-get-physical vm-move-messages-physically))
 	;; clip region is most likely messed up
-	(vm-preview-current-message)
+	(vm-present-current-message)
       (vm-update-summary-and-mode-line))
 
     (if auto-folder-p

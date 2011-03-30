@@ -840,7 +840,7 @@ real or virtual)."
 	       (vm-set-numbering-redo-start-point t)
 	       (vm-set-summary-redo-start-point t)
 	       (if vm-message-pointer
-		   (vm-preview-current-message)
+		   (vm-present-current-message)
 		 (vm-update-summary-and-mode-line))))))))
 
 ;;;###autoload

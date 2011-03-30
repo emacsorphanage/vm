@@ -261,7 +261,7 @@ or do the binding and advising on your own."
      ;; that a presentation buffer is used.  The visibility-widget
      ;; would cause "*"s to be inserted into the folder buffer.
      (setq vm-always-use-presentation t)
-     (defadvice vm-preview-current-message
+     (defadvice vm-present-current-message
        (after vm-shrunken-headers-pcm activate)
        "Shrink headers when previewing a message."
        (vm-shrunken-headers))
@@ -293,7 +293,7 @@ or do the binding and advising on your own."
    (defadvice vm-mime-send-body-to-file
      (after vm-do-preview-again activate)
      (if vm-mime-delete-after-saving
-         (vm-preview-current-message)))
+         (vm-present-current-message)))
    (add-hook 'vm-select-new-message-hook 'vm-mime-auto-save-all-attachments))
    
    (vm-rfaddons-check-option
@@ -1040,7 +1040,7 @@ save attachments.
 
       (when (interactive-p)
         (vm-discard-cached-data)
-        (vm-preview-current-message)))))
+        (vm-present-current-message)))))
 
 ;;;###autoload
 (defun vm-mime-auto-save-all-attachments-delete-external (msg)

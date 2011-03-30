@@ -672,7 +672,7 @@ burst."
 			  vm-burst-rfc1153-digest)
 		(list this-command))
     (if (vm-thoughtfully-select-message)
-	(vm-preview-current-message)
+	(vm-present-current-message)
       (vm-update-summary-and-mode-line))
     (message totals-blurb)))
 

@@ -369,7 +369,7 @@ vm-retrieved-spooled-mail-hook."
 	  (delete-region (point) (vm-text-end-of message)))
 	(vm-discard-cached-data)
 	(message "Message re-classified and tagged as %s." text)
-	(vm-preview-current-message)
+	(vm-present-current-message)
 	(vm-update-summary-and-mode-line)
 	)))))
 

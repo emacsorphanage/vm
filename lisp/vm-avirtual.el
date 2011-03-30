@@ -772,7 +772,7 @@ without recreating it."
                             (progn (setq vm-message-pointer vm-message-list
                                          vm-need-summary-pointer-update t)
                                    (if vm-message-pointer
-                                       (vm-preview-current-message))))
+                                       (vm-present-current-message))))
                         (setq vm-messages-needing-summary-update new-messages
                               vm-need-summary-pointer-update t)
                         (vm-update-summary-and-mode-line)

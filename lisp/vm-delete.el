@@ -563,7 +563,7 @@ ignored."
 		      ;; folder is now empty
 		      (progn (setq vm-folder-type nil)
 			     (vm-update-summary-and-mode-line))
-		    (vm-preview-current-message)))
+		    (vm-present-current-message)))
 	      (vm-update-summary-and-mode-line))
 	    (if (not (eq major-mode 'vm-virtual-mode))
 		(setq vm-message-order-changed

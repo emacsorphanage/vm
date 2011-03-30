@@ -370,7 +370,7 @@ deleted messages.  Use `###' to expunge deleted messages."
 	  (let ((vm-auto-decode-mime-messages
 		 (and vm-auto-decode-mime-messages
 		      (not preserve-auto-save-file))))
-	    (vm-preview-current-message)))
+	    (vm-present-current-message)))
 
       (run-hooks 'vm-visit-folder-hook)
 
@@ -399,7 +399,7 @@ deleted messages.  Use `###' to expunge deleted messages."
 		(progn
 		  (setq totals-blurb (vm-emit-totals-blurb))
 		  (if (vm-thoughtfully-select-message)
-		      (vm-preview-current-message)
+		      (vm-present-current-message)
 		    (vm-update-summary-and-mode-line))))
 	    (message totals-blurb)))
 
@@ -940,12 +940,12 @@ vm-visit-virtual-folder.")
 		  (progn
 		    (vm-record-and-change-message-pointer
 		     vm-message-pointer mp)
-		    (vm-preview-current-message)
+		    (vm-present-current-message)
 		    (setq mp nil))
 		(setq mp (cdr mp))))))
       (unless vm-message-pointer
 	(if (vm-thoughtfully-select-message)
-	    (vm-preview-current-message)
+	    (vm-present-current-message)
 	  (vm-update-summary-and-mode-line)))
       (message blurb))
     ;; make a new frame if the user wants one.  reuse an

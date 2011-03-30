@@ -3429,7 +3429,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	    ;; was empty.
 	    (if (and (null vm-message-pointer)
 		     (vm-thoughtfully-select-message))
-		(vm-preview-current-message)
+		(vm-present-current-message)
 	      (vm-update-summary-and-mode-line)))))
       (setq b-list (cdr b-list)))
     ;; make the timer go away if we didn't encounter a vm-mode buffer.
@@ -4450,7 +4450,7 @@ files."
 		 (setq totals-blurb (vm-emit-totals-blurb))
 		 (vm-display nil nil '(vm-get-new-mail) '(vm-get-new-mail))
 		 (if (vm-thoughtfully-select-message)
-		     (vm-preview-current-message)
+		     (vm-present-current-message)
 		   (vm-update-summary-and-mode-line))
 		 (message totals-blurb))
 	     (if (consp (car (vm-spool-files)))
@@ -4483,7 +4483,7 @@ files."
 		 (setq totals-blurb (vm-emit-totals-blurb))
 		 (vm-display nil nil '(vm-get-new-mail) '(vm-get-new-mail))
 		 (if (vm-thoughtfully-select-message)
-		     (vm-preview-current-message)
+		     (vm-present-current-message)
 		   (vm-update-summary-and-mode-line))
 		 (message totals-blurb)
 		 ;; The gathered messages are actually still on disk
@@ -4618,7 +4618,7 @@ files."
 		  (setq vm-message-pointer vm-message-list
 			vm-need-summary-pointer-update t)
 		  (if vm-message-pointer
-		      (vm-preview-current-message)))
+		      (vm-present-current-message)))
 		(when vm-summary-show-threads
 		  (vm-update-summary-and-mode-line)
 		  (vm-sort-messages (or vm-ml-sort-keys "activity")))
@@ -5213,7 +5213,7 @@ this facilty is only available for IMAP folders."
   (vm-load-message)
   (intern (buffer-name) vm-buffers-needing-display-update)
   (let ((vm-preview-lines nil))
-    (vm-preview-current-message)))
+    (vm-present-current-message)))
 
 ;;;###autoload
 (defun vm-unload-message (&optional count physical)

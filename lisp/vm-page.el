@@ -56,7 +56,7 @@
 
 ;;;###autoload
 (defun vm-scroll-forward (&optional arg)
-  "Scroll forward a screenful of text.
+  "Scrolls forward a screenful of text.
 If the current message is being previewed, the message body is revealed.
 If at the end of the current message, moves to the next message iff the
 value of vm-auto-next-message is non-nil.
@@ -71,7 +71,7 @@ Prefix argument N means scroll forward N lines."
     ;; in gnu.emacs.vm.info, title "Re: synchronization of vm buffers"
     ;; (if mp-changed (sit-for 0))
     (when mp-changed 
-      (vm-preview-current-message)
+      (vm-present-current-message)
       (sit-for 0))
 
     (setq needs-decoding (and vm-display-using-mime
@@ -738,15 +738,16 @@ is necessary."
 	     (point))))
 	 (t (vm-text-end-of (car vm-message-pointer))))))
 
+;; This function was originally famous as `vm-preview-current-buffer',
+;; but it was a misnomer because it does both previewing and showing.
 
 ;;;###autoload
-(defun vm-preview-current-message ()
-  "Preview the current message in the Presentation Buffer.  A copy of
-the message is made in the Presentation Buffer and MIME decoding is
-done if necessary.  The type of preview is governed by the variables
-`vm-preview-lines' and `vm-preview-read-messages'.  If no preview is
-required, then the entire message is shown directly using
-`vm-show-current-message'.                         (USR, 2010-01-14)" 
+(defun vm-present-current-message ()
+  "Display the current message in the Presentation Buffer.  A
+copy of the message is made in the Presentation Buffer and MIME
+decoding is done if necessary.  The displayed content might be a
+preview or the full message, governed by the the variables
+`vm-preview-lines' and `vm-preview-read-messages'.  USR,2010-01-14"
 
   ;; Set new-preview if the user needs to see the
   ;; message in the previewed state.  Save some time later by not
@@ -891,6 +892,8 @@ required, then the entire message is shown directly using
 
   (vm-run-message-hook (car vm-message-pointer) 'vm-select-message-hook))
 
+(defalias 'vm-preview-current-message 'vm-present-current-message)
+
 (defun vm-show-current-message ()
   "Show the current message in the Presentation Buffer.  MIME decoding
 is done if necessary.  (USR, 2010-01-14)"
@@ -922,7 +925,7 @@ is done if necessary.  (USR, 2010-01-14)"
 	      (set-buffer vm-presentation-buffer))
 	  ;; FIXME at this point, the folder buffer is being used for
 	  ;; display.  Filling will corrupt the folder.
-	(debug "VM internal error #2010.  Please report it")))
+	  (debug "VM internal error #2010.  Please report it")))
     (vm-save-restriction
      (widen)
      (vm-fill-paragraphs-containing-long-lines

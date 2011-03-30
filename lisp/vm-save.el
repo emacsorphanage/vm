@@ -464,7 +464,7 @@ The saved messages are flagged as `filed'."
 					 vm-need-summary-pointer-update t)
 				   (intern (buffer-name)
 					   vm-buffers-needing-display-update)
-				   (vm-preview-current-message))
+				   (vm-present-current-message))
 			  (vm-update-summary-and-mode-line)))))
 		(unless quiet
 		  (message "%d message%s saved to buffer %s"

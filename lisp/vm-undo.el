@@ -168,7 +168,7 @@
 	;; make folder read-only to avoid modifications when we
 	;; do this.
 	(let ((vm-folder-read-only t))
-	  (vm-preview-current-message)))))
+	  (vm-present-current-message)))))
 
 ;;;###autoload
 (defun vm-undo ()

@@ -2384,8 +2384,7 @@ in the buffer.  The function is expected to make the message
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (if (and (not vm-display-using-mime)
-	   (null vm-mime-display-function))
+  (unless (or vm-display-using-mime vm-mime-display-function)
       (error "MIME display disabled, set vm-display-using-mime non-nil to enable."))
   (if vm-mime-display-function
       (progn
@@ -2394,13 +2393,13 @@ in the buffer.  The function is expected to make the message
 	(funcall vm-mime-display-function)
 	;; We are done here
 	)
-    (if (null state)
-	(cond ((null vm-mime-decoded)
-	       (setq state 'decoded))
-	      ((eq vm-mime-decoded 'decoded)
-	       (setq state 'buttons))
-	      ((eq vm-mime-decoded 'buttons)
-	       (setq state 'undecoded))))
+    (when (null state)
+      (cond ((null vm-mime-decoded)
+	     (setq state 'decoded))
+	    ((eq vm-mime-decoded 'decoded)
+	     (setq state 'buttons))
+	    ((eq vm-mime-decoded 'buttons)
+	     (setq state 'undecoded))))
     (if vm-mime-decoded
 	(cond ((eq state 'buttons)
 	       (let ((vm-preview-lines nil)
@@ -2411,20 +2410,20 @@ in the buffer.  The function is expected to make the message
 		 (setq vm-mime-decoded nil)
 		 (intern (buffer-name) vm-buffers-needing-display-update)
 		 (save-excursion
-		   (vm-preview-current-message))
+		   (vm-present-current-message))
 		 (setq vm-mime-decoded 'buttons)))
 	      ((eq state 'undecoded)
 	       (let ((vm-preview-lines nil)
 		     (vm-auto-decode-mime-messages nil))
 		 (intern (buffer-name) vm-buffers-needing-display-update)
-		 (vm-preview-current-message))))
+		 (vm-present-current-message))))
       (let ((layout (vm-mm-layout (car vm-message-pointer)))
 	    (m (car vm-message-pointer)))
 	(vm-emit-mime-decoding-message "Decoding MIME message...")
-	(if (stringp layout)
-	       (error "Invalid MIME message: %s" layout))
-	(if (vm-mime-plain-message-p m)
-	    (error "Message needs no decoding."))
+	(when (stringp layout)
+	  (error "Invalid MIME message: %s" layout))
+	(when (vm-mime-plain-message-p m)
+	  (error "Message needs no decoding."))
 	(if (not vm-presentation-buffer)
 	    ;; maybe user killed it - make a new one
 	    (progn
@@ -2432,9 +2431,9 @@ in the buffer.  The function is expected to make the message
 	      (vm-expose-hidden-headers))
 	  (set-buffer vm-presentation-buffer))
 	;; Are we now in the Presentation buffer?  Why?  USR, 2010-05-08
-	(if (and (interactive-p) (eq vm-system-state 'previewing))
-	    (let ((vm-display-using-mime nil))
-	      (vm-show-current-message)))
+	(when (and (interactive-p) (eq vm-system-state 'previewing))
+	  (let ((vm-display-using-mime nil))
+	    (vm-show-current-message)))
 	(setq m (car vm-message-pointer))
 	(vm-save-restriction
 	 (widen)
@@ -2443,13 +2442,12 @@ in the buffer.  The function is expected to make the message
 	       (modified (buffer-modified-p)))
 	   (unwind-protect
 	       (save-excursion
-		 (and (not (eq (vm-mm-encoded-header m) 'none))
-		      (vm-decode-mime-message-headers m))
-		 (if (vectorp layout)
-		     (progn
-		       (vm-decode-mime-layout layout)
-		       ;; Delete the original presentation copy
-		       (delete-region (point) (point-max))))
+		 (unless (eq (vm-mm-encoded-header m) 'none)
+		   (vm-decode-mime-message-headers m))
+		 (when (vectorp layout)
+		   (vm-decode-mime-layout layout)
+		   ;; Delete the original presentation copy
+		   (delete-region (point) (point-max)))
 		 (vm-energize-urls)
 		 (vm-highlight-headers-maybe)
 		 (vm-energize-headers-and-xfaces))
@@ -4761,7 +4759,7 @@ are also included."
     (when (interactive-p)
       (vm-discard-cached-data count)
       (let ((vm-preview-lines nil))
-	(vm-preview-current-message)))
+	(vm-present-current-message)))
     (if (> n 0)
 	(message "%d attachment%s deleted" n (if (= n 1) "" "s"))
       (message "No attachments deleted")))
@@ -4851,7 +4849,7 @@ created."
     (when (interactive-p)
       (vm-discard-cached-data count)
       (let ((vm-preview-lines nil))
-	(vm-preview-current-message)))
+	(vm-present-current-message)))
     
     (if (> n 0)
         (message "%d attachment%s saved" n (if (= n 1) "" "s"))
@@ -4935,7 +4933,7 @@ confirmed before creating a new directory."
 
     (when (interactive-p)
       (vm-discard-cached-data count)
-      (vm-preview-current-message))
+      (vm-present-current-message))
     
     (if (> n 0)
         (message "%d attachment%s saved" n (if (= n 1) "" "s"))
@@ -7910,7 +7908,7 @@ This is a destructive operation and cannot be undone!"
           (setq mlist (cdr mlist))))))
   (when (interactive-p)
     (vm-discard-cached-data count)
-    (vm-preview-current-message)))
+    (vm-present-current-message)))
 (defalias 'vm-mime-nuke-alternative-text/html
   'vm-nuke-alterantive-text/html)
 (make-obsolete 'vm-mime-nuke-alternative-text/html

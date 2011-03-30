@@ -604,7 +604,7 @@ When the button is pressed ACTION is called."
               (t
                (error "This should never happen!")))))))
 
-(defadvice vm-preview-current-message (after vm-pgg-cleartext-automode activate)
+(defadvice vm-present-current-message (after vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages."
   (vm-pgg-state-set)
   (when (and vm-pgg-cleartext-decoded
@@ -804,7 +804,7 @@ cleanup here after verification and decoding took place."
   (setq vm-pgg-state nil)
   (if (vm-mime-plain-message-p (car vm-message-pointer))
       (if vm-pgg-cleartext-decoded
-          (vm-preview-current-message))
+          (vm-present-current-message))
     (let ((vm-pgg-recursion t))
       ad-do-it)))
 

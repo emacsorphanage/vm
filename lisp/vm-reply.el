@@ -472,7 +472,7 @@ specified by `vm-included-text-headers' and
      (save-excursion
        (vm-select-folder-buffer-and-validate 1 (interactive-p))
        ;; ensure the current message is presented 
-       (vm-preview-current-message)
+       (vm-present-current-message)
        (vm-show-current-message)
        (vm-select-folder-buffer)
        (when vm-presentation-buffer

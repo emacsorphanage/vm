@@ -190,7 +190,7 @@ thread have their cached data discarded."
 	(vm-set-mime-encoded-header-flag-of m nil)
 	(if (and interactive-p vm-presentation-buffer
 		 (eq (car vm-message-pointer) m))
-	    (save-excursion (vm-preview-current-message)))
+	    (save-excursion (vm-present-current-message)))
 	(if (vectorp vm-thread-obarray)
 	    (vm-build-threads (list m)))
 	(if vm-summary-show-threads
@@ -207,7 +207,7 @@ thread have their cached data discarded."
 
 	      (if (and vm-presentation-buffer
 		       (eq (car vm-message-pointer) v-m))
-		  (save-excursion (vm-preview-current-message))))))
+		  (save-excursion (vm-present-current-message))))))
 	(vm-mark-for-summary-update m)
 	(setq mlist (cdr mlist))))
     (save-excursion
@@ -277,7 +277,7 @@ thread have their cached data discarded."
 	  (if (eq (vm-real-message-of (car mp))
 		  (vm-real-message-of (car vm-message-pointer)))
 	      (progn
-		(vm-preview-current-message)
+		(vm-present-current-message)
 		;; Try to position the cursor in the message
 		;; window close to where it was in the edit
 		;; window.  This works well for non MIME

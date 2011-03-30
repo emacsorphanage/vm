@@ -38,7 +38,7 @@
 (require 'org)
 
 ;; Declare external functions and variables
-(declare-function vm-preview-current-message "ext:vm-page" ())
+(declare-function vm-present-current-message "ext:vm-page" ())
 (declare-function vm-follow-summary-cursor "ext:vm-motion" ())
 (declare-function vm-get-header-contents "ext:vm-summary"
 		  (message header-name-regexp &optional clump-sep))
@@ -71,8 +71,8 @@
 	     (buffer (vm-buffer-of message))
 	     (folder (with-current-buffer buffer
 		       (if (fboundp 'vm-folder-name) ; defined in VM 8.1.1
-			 (vm-folder-name)
-		       (buffer-file-name))))
+			   (vm-folder-name)
+			 (buffer-file-name))))
 	     (subject (vm-su-subject message))
 	     (to (vm-su-to-names message)) 
 	     (from (vm-su-full-name message))
@@ -134,7 +134,7 @@
 	    (error "Could not find the specified message in this folder"))
 	(vm-isearch-update)
 	(vm-isearch-narrow)
-	(vm-preview-current-message)
+	(vm-present-current-message)
 	(vm-summarize)))))
 
 (provide 'org-vm)

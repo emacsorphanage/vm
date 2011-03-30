@@ -43,7 +43,7 @@
 		  "vm-undo" (message-list))
 (declare-function vm-unthread-message
 		  "vm-thread" (message &optional message-changing))
-(declare-function vm-preview-current-message 
+(declare-function vm-present-current-message 
 		  "vm-page" ())
 (declare-function vm-zip-vectors "vm-misc" (v1 v2))
 (declare-function vm-zip-lists "vm-misc.el" (list1 list2) t)
@@ -574,7 +574,7 @@ the headers/body of M."
 	(set-buffer (vm-buffer-of v-m))
 	(if (and vm-presentation-buffer
 		 (eq (car vm-message-pointer) v-m))
-	    (save-excursion (vm-preview-current-message)))
+	    (save-excursion (vm-present-current-message)))
 	(when (vectorp vm-thread-obarray)
 	  (vm-unthread-message m)
 	  (vm-build-threads (list v-m)))
