@@ -97,7 +97,7 @@ is not meant for changing the flag for folders.  Use
 (defun vm-restore-buffer-modified-p (value buffer)
   "Restores the `buffer-modified-p' flag of BUFFER to a saved VALUE. 
 This is the same as `vm-reset-buffer-modified-p' but represents a
-different intent."  
+specific intent."  
   (with-current-buffer buffer
     (set-buffer-modified-p value)))
 
@@ -5067,6 +5067,7 @@ thread are loaded."
 	(n 0)
 	fetch-method
 	m mm)
+    (setq count 0)
     (unwind-protect
 	(save-excursion
 	  ;; (message "Retrieving message body...")
@@ -5082,14 +5083,19 @@ thread are loaded."
 	      (message "Retrieving message body... %s" n)
 	      (vm-retrieve-real-message-body mm)
 	      )
+	    (setq count (1+ count))
 	    (setq mlist (cdr mlist)))
 	  (when (> n 0)
-	    (message "Retrieving message body... done")))
+	    (message "Retrieving message body... done"))
       (intern (buffer-name) vm-buffers-needing-display-update)
       ;; FIXME - is this needed?  Is it correct?
       (vm-display nil nil '(vm-load-message vm-refresh-message)
 		  (list this-command))	
+      (vm-mark-folder-modified-p)
       (vm-update-summary-and-mode-line))
+      (if (= count 1)
+	  (message "Message body loaded")
+	(message "%d message bodies loaded" count)))
     ))
 
 ;;;###autoload
@@ -5269,6 +5275,7 @@ the folder is saved."
     (if (= count 1) 
 	(message "Message body discarded")
       (message "%d message bodies discarded" count))
+    (vm-mark-folder-modified-p)
     (vm-update-summary-and-mode-line)
     ))
 
