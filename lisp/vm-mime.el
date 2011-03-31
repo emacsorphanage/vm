@@ -279,6 +279,7 @@ TO are overwritten.                                    USR, 2011-03-27"
 (defun vm-set-mm-layout-body-end (e end) (aset e 10 end))
 (defun vm-set-mm-layout-parts (e parts) (aset e 11 parts))
 (defun vm-set-mm-layout-cache (e c) (aset e 12 c))
+(defun vm-set-mm-layout-message-symbol (e s) (aset e 13 s))
 (defun vm-set-mm-layout-display-error (e c) (aset e 14 c))
 (defun vm-set-mm-layout-is-converted (e c) (aset e 15 c))
 (defun vm-set-mm-layout-unconverted-layout (e l) (aset e 16 l))
@@ -1340,8 +1341,8 @@ DEFAULT-TRANSFER-ENCODING, unless specified, is assumed to be 7bit.
 			    :passing-message-only passing-message-only)
     (vm-mime-error
      (message "%s" (car (cdr error-data)))
-;;; don't sleep, no one cares about MIME syntax errors
-;;;     (sleep-for 2)
+     ;; don't sleep, no one cares about MIME syntax errors
+     ;;     (sleep-for 2)
      (let ((header (if (and m (not passing-message-only))
 		       (vm-headers-of m)
 		     (vm-marker (point-min))))
@@ -2351,6 +2352,11 @@ assuming that it is text."
 			  (vm-extent-end-position extent))
 	   (vm-detach-extent extent)))))
 
+;;------------------------------------------------------------------------------
+;;; MIME decoding
+;;------------------------------------------------------------------------------
+
+
 ;;;###autoload
 (defun vm-decode-mime-message (&optional state)
   "Decode the MIME objects in the current message.
@@ -2493,7 +2499,8 @@ deleted.
 Returns t if the display was successful.  Not clear what happens if it
 is not successful.                                   USR, 2011-03-25"
   (let ((modified (buffer-modified-p))
-	handler new-layout file type type2 type-no-subtype (extent nil))
+	handler new-layout file type type2 type-no-subtype 
+	(extent nil))
     (unless (vectorp layout)
       ;; handle a button extent
       (setq extent layout
@@ -2868,12 +2875,12 @@ the argument.                                        USR, 2011-03-25"
   (let ((default-filename (vm-mime-get-disposition-filename layout))
 	(file nil))
     (setq file (vm-mime-send-body-to-file layout default-filename))
-    (if vm-mime-delete-after-saving
-	(let ((vm-mime-confirm-delete nil))
-	  ;; we don't care if the delete fails
-	  (condition-case nil
-	      (vm-delete-mime-object (expand-file-name file))
-	    (error nil)))))
+    (when (and file vm-mime-delete-after-saving)
+      (let ((vm-mime-confirm-delete nil))
+	;; we don't care if the delete fails
+	(condition-case nil
+	    (vm-delete-mime-object (expand-file-name file))
+	  (error nil)))))
   t )
 (fset 'vm-mime-display-button-application/octet-stream
       'vm-mime-display-internal-application/octet-stream)
@@ -3307,18 +3314,7 @@ button that this LAYOUT comes from."
       (vm-decode-mime-layout (or extent child-layout)))))
 
 (defun vm-mime-display-button-message/external-body (layout)
-  "Return a button usable for viewing message/external-body MIME parts.
-When you apply `vm-mime-send-body-to-file' with `vm-mime-delete-after-saving'
-set to t one will get theses message/external-body parts which point
-to the external file.
-In order to view these we search for the right viewer hopefully listed
-in `vm-mime-external-content-types-alist' and invoke it as it would
-have happened before saving.  Otherwise we display the contents as text/plain.
-Probably we should be more clever here in order to fake a layout if internal
-displaying is possible ...
-
-But nevertheless this allows for keeping folders smaller without
-loosing basic functionality when using `vm-mime-auto-save-all-attachments'." 
+  "Return a button usable for viewing message/external-body MIME parts."
   (let ((buffer-read-only nil)
 	(tmplayout (copy-tree (car (vm-mm-layout-parts layout)) t))
 	(filename "external: ")
@@ -4548,6 +4544,18 @@ expanded to display the mime object."
 
 ;;----------------------------------------------------------------------------
 ;;; MIME buttons
+;;
+;; vm-find-layout-extent-at-point: () -> extent
+;; vm-mime-run-display-funciton-at-point: (layout -> 'a) -> 'a
+;; vm-mime-reader-map-save-file: () -> file
+;; vm-mime-reader-map-save-message: () -> file
+;; vm-mime-reader-map-pipe-to-command: () -> void
+;; vm-mime-reader-map-pipe-to-command-discard-output: () -> void
+;; vm-mime-reader-map-pipe-to-printer: () -> void
+;; vm-mime-reader-map-display-using-external-viewer: () -> void
+;; vm-mime-reader-map-display-using-default: () -> void
+;; vm-mime-reader-map-display-object-as-type: () -> void
+;; vm-mime-reader-map-attach-to-composition: () -> void
 ;;----------------------------------------------------------------------------
 
 (defun vm-find-layout-extent-at-point ()
@@ -4570,11 +4578,10 @@ If optional argument FUNCTION is given, run it instead.
   (save-excursion
     (let ((extent (vm-find-layout-extent-at-point))
 	  retval )
-      (cond ((null extent) nil)
-	    (t
-	     (funcall (or function 
-			  (vm-extent-property extent 'vm-mime-function))
-		      extent))))))
+      (and extent
+	   (funcall 
+	    (or function (vm-extent-property extent 'vm-mime-function))
+	    extent)))))
 
 ;;;###autoload
 (defun vm-mime-reader-map-save-file ()
@@ -4586,12 +4593,9 @@ If optional argument FUNCTION is given, run it instead.
     (save-excursion
       (setq file (vm-mime-run-display-function-at-point
 		  'vm-mime-send-body-to-file)))
-    (if vm-mime-delete-after-saving
-	(let ((vm-mime-confirm-delete nil))
-	  ;; we don't care if the delete fails
-	  (condition-case nil
-	      (vm-delete-mime-object (expand-file-name file))
-	    (error nil))))
+    (when (and file vm-mime-delete-after-saving)
+      (let ((extent (vm-find-layout-extent-at-point)))
+	(vm-mime-delete-body-after-saving extent file)))
     file ))
 
 ;;;###autoload
@@ -4604,12 +4608,10 @@ If optional argument FUNCTION is given, run it instead.
     (save-excursion
       (setq folder (vm-mime-run-display-function-at-point
 		    'vm-mime-send-body-to-folder)))
-    (if vm-mime-delete-after-saving
-	(let ((vm-mime-confirm-delete nil))
-	  ;; we don't care if the delete fails
-	  (condition-case nil
-	      (vm-delete-mime-object folder)
-	    (error nil))))))
+    (when (and folder vm-mime-delete-after-saving)
+      (let ((extent (vm-find-layout-extent-at-point)))
+	(vm-mime-delete-body-after-saving extent folder)))
+    folder ))
 
 ;;;###autoload
 (defun vm-mime-reader-map-pipe-to-command ()
@@ -4617,6 +4619,13 @@ If optional argument FUNCTION is given, run it instead.
   (interactive)
   (vm-mime-run-display-function-at-point
    'vm-mime-pipe-body-to-queried-command))
+
+;;;###autoload
+(defun vm-mime-reader-map-pipe-to-command-discard-output ()
+  "Pipe the MIME object at point to a shell command."
+  (interactive)
+  (vm-mime-run-display-function-at-point
+   'vm-mime-pipe-body-to-queried-command-discard-output))
 
 ;;;###autoload
 (defun vm-mime-reader-map-pipe-to-printer ()
@@ -4645,6 +4654,30 @@ If optional argument FUNCTION is given, run it instead.
   (interactive)
   (vm-mime-run-display-function-at-point 
    'vm-mime-display-object-as-type))
+
+;;;###autoload
+(defun vm-mime-reader-map-convert-then-display ()
+  "Convert the MIME object at point to text and display it."
+  (interactive)
+  (vm-mime-run-display-function-at-point 
+   'vm-mime-convert-body-then-display))
+
+;;;###autoload
+(defun vm-mime-reader-map-attach-to-composition ()
+  "Attach the MIME object at point to a message being composed.  The
+buffer for message composition is queried from the minibufer."
+  (interactive)
+  (vm-mime-run-display-function-at-point
+   'vm-mime-attach-body-to-composition))
+
+;;----------------------------------------------------------------------------
+;;; MIME-related commands
+;;
+;; vm-mime-action-on-all-attachments :
+;;	(int, ((message, layout, type, filename) -> void),
+;;	 &optional type list, message list, bool) 
+;;	-> void
+;;----------------------------------------------------------------------------
 
 ;;;###autoload
 (defun vm-mime-action-on-all-attachments 
@@ -4730,10 +4763,6 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
             (setq matched t)
           (setq list (cdr list))))
       matched )))
-
-;;----------------------------------------------------------------------------
-;;; MIME-related commands
-;;----------------------------------------------------------------------------
 
 ;;;###autoload
 (defun vm-delete-all-attachments (&optional count)
@@ -5084,6 +5113,24 @@ be removed when it is expanded to display the mime object."
     (vm-set-extent-endpoints button start (vm-extent-end-position button))
     (delete-region (point) (vm-extent-end-position button))))
 
+
+;;---------------------------------------------------------------------------
+;;; MIME button operations
+;;
+;; vm-mime-send-body-to-file: (extent-or-layout 
+;;		               &optional filename filename bool) -> filename
+;; vm-mime-send-body-to-folder: (extent-or-layout 
+;;		                 &optional filename) -> filename
+;; vm-mime-delete-body-after-saving: (extent) -> void
+;; vm-mime-pipe-body-to-queried-command: (extent &optional bool) -> bool
+;; vm-mime-pipe-body-to-queried-command-discard-output: (extent) -> bool
+;; vm-mime-send-body-to-printer: (extent) -> bool
+;; vm-mime-display-body-as-text: (extent) -> ?
+;; vm-mime-display-object-as-type: (extent) -> ?
+;; vm-mime-display-body-using-external-viewer: (extent) -> ?
+;; vm-mime-convert-body-then-display: (extent) -> ?
+;; vm-mime-attach-body-to-composition: (extent) -> ?
+;;---------------------------------------------------------------------------
  
 ;; From: Eric E. Dors
 ;; Date: 1999/04/01
@@ -5105,21 +5152,34 @@ be removed when it is expanded to display the mime object."
 	(setq e-alist (cdr e-alist))))
     matched))
 
+(defun vm-mime-delete-body-after-saving (layout file)
+  (unless (vectorp layout)
+    (setq layout (vm-extent-property layout 'vm-mime-layout)))
+  (unless (vm-mime-types-match "message/external-body"
+			       (car (vm-mm-layout-type layout)))
+    (let ((vm-mime-confirm-delete nil))
+      ;; we don't care if the delete fails
+      (condition-case nil
+	  (vm-delete-mime-object (expand-file-name file))
+	(error nil)))))
+
 (defun vm-mime-send-body-to-file (layout &optional default-filename file
                                          overwrite)
-  (if (not (vectorp layout))
-      (setq layout (vm-extent-property layout 'vm-mime-layout)))
-  (if (not default-filename)
-      (setq default-filename (vm-mime-get-disposition-filename layout)))
-  (and default-filename
-       (setq default-filename (file-name-nondirectory default-filename)))
-  (let ((work-buffer nil)
-	;; evade the XEmacs dialog box, yeccch.
+  (unless (vectorp layout)
+    (setq layout (vm-extent-property layout 'vm-mime-layout)))
+  (when (vm-mime-types-match "message/external-body"
+			     (car (vm-mm-layout-type layout)))
+    (vm-mime-fetch-message/external-body layout)
+    (setq layout (car (vm-mm-layout-parts layout))))
+  (unless default-filename
+    (setq default-filename (vm-mime-get-disposition-filename layout)))
+  (when default-filename
+    (setq default-filename (file-name-nondirectory default-filename)))
+  (let (;; evade the XEmacs dialog box, yeccch.
 	(use-dialog-box nil)
 	(dir vm-mime-attachment-save-directory)
 	(done nil))
-    (if file
-	nil
+    (unless file
       (while (not done)
 	(setq file
 	      (read-file-name
@@ -5131,15 +5191,14 @@ be removed when it is expanded to display the mime object."
 	      file (expand-file-name file dir))
 	(if (not (file-directory-p file))
 	    (setq done t)
-	  (if (null default-filename)
-	      (error "%s is a directory" file))
+	  (unless default-filename
+	    (error "%s is a directory" file))
 	  (setq file (expand-file-name default-filename file)
 		done t))))
-    (save-excursion
+    (let ((work-buffer (vm-make-work-buffer))
+	  (coding-system-for-read (vm-binary-coding-system)))
       (unwind-protect
-	  (let ((coding-system-for-read (vm-binary-coding-system)))
-	    (setq work-buffer (vm-make-work-buffer))
-	    (set-buffer work-buffer)
+	  (with-current-buffer work-buffer
 	    (setq selective-display nil)
 	    ;; Tell DOS/Windows NT whether the file is binary
 	    (setq buffer-file-type (not (vm-mime-text-type-layout-p layout)))
@@ -5167,23 +5226,25 @@ be removed when it is expanded to display the mime object."
 		(write-region (point-min) (point-max) file nil nil)))
 	    
 	    file )
-	(and work-buffer (kill-buffer work-buffer))))))
+	(when work-buffer (kill-buffer work-buffer))))))
 
 (defun vm-mime-send-body-to-folder (layout &optional default-filename)
-  (if (not (vectorp layout))
-      (setq layout (vm-extent-property layout 'vm-mime-layout)))
-  (let ((work-buffer nil)
-	(type (car (vm-mm-layout-type layout)))
+  (unless (vectorp layout)
+    (setq layout (vm-extent-property layout 'vm-mime-layout)))
+  (when (vm-mime-types-match "message/external-body"
+			     (car (vm-mm-layout-type layout)))
+    (vm-mime-fetch-message/external-body layout)
+    (setq layout (car (vm-mm-layout-parts layout))))
+  (let ((type (car (vm-mm-layout-type layout)))
 	file)
     (if (not (or (vm-mime-types-match type "message/rfc822")
 		 (vm-mime-types-match type "message/news")))
 	(vm-mime-send-body-to-file layout default-filename)
-      (save-excursion
+      (let ((work-buffer (vm-make-work-buffer))
+	    (coding-system-for-read (vm-binary-coding-system))
+	    (coding-system-for-write (vm-binary-coding-system)))
 	(unwind-protect
-	    (let ((coding-system-for-read (vm-binary-coding-system))
-		  (coding-system-for-write (vm-binary-coding-system)))
-	      (setq work-buffer (vm-make-work-buffer))
-	      (set-buffer work-buffer)
+	    (with-current-buffer work-buffer
 	      (setq selective-display nil)
 	      ;; Tell DOS/Windows NT whether the file is binary
 	      (setq buffer-file-type t)
@@ -5205,27 +5266,27 @@ be removed when it is expanded to display the mime object."
 		(setq file (call-interactively 'vm-save-message)))
 	      (vm-quit-no-change)
 	      file )
-	  (and work-buffer (kill-buffer work-buffer)))))))
+	  (when work-buffer (kill-buffer work-buffer)))))))
 
 (defun vm-mime-pipe-body-to-command (command layout &optional discard-output)
-  (if (not (vectorp layout))
-      (setq layout (vm-extent-property layout 'vm-mime-layout)))
+  (unless (vectorp layout)
+    (setq layout (vm-extent-property layout 'vm-mime-layout)))
+  (when (vm-mime-types-match "message/external-body"
+			     (car (vm-mm-layout-type layout)))
+    (vm-mime-fetch-message/external-body layout)
+    (setq layout (car (vm-mm-layout-parts layout))))
   (let ((output-buffer (if discard-output
 			   0
-			 (get-buffer-create "*Shell Command Output*")))
-	(work-buffer nil))
-    (save-excursion
-      (if (bufferp output-buffer)
-	  (progn
-	    (set-buffer output-buffer)
-	    (erase-buffer)))
+			 (get-buffer-create "*Shell Command Output*"))))
+    (when (bufferp output-buffer)
+      (with-current-buffer output-buffer
+	(erase-buffer)))
+    (let ((work-buffer (vm-make-work-buffer)))
       (unwind-protect
-	  (progn
-	    (setq work-buffer (vm-make-work-buffer))
+	  (with-current-buffer work-buffer
 	    ;; call-process-region calls write-region.
 	    ;; don't let it do CR -> LF translation.
 	    (setq selective-display nil)
-	    (set-buffer work-buffer)
 	    (vm-mime-insert-mime-body layout)
 	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
 	    (let ((pop-up-windows (and pop-up-windows
@@ -5242,30 +5303,28 @@ be removed when it is expanded to display the mime object."
 				   (or shell-file-name "sh")
 				   nil output-buffer nil
 				   shell-command-switch command)))
-	(and work-buffer (kill-buffer work-buffer)))
-      (if (bufferp output-buffer)
-	  (progn
-	    (set-buffer output-buffer)
-	    (if (not (zerop (buffer-size)))
-		(vm-display output-buffer t (list this-command)
-			    '(vm-pipe-message-to-command))
-	      (vm-display nil nil (list this-command)
-			  '(vm-pipe-message-to-command)))))))
-  t )
+	(when work-buffer (kill-buffer work-buffer))))
+    (when (bufferp output-buffer)
+      (if (not (zerop (with-current-buffer output-buffer (buffer-size))))
+	  (vm-display output-buffer t (list this-command)
+		      '(vm-pipe-message-to-command))
+	(vm-display nil nil (list this-command)
+		    '(vm-pipe-message-to-command))))
+    t ))
 
-(defun vm-mime-pipe-body-to-queried-command (layout &optional discard-output)
+(defun vm-mime-pipe-body-to-queried-command (button &optional discard-output)
   (let ((command (read-string "Pipe object to command: ")))
-    (vm-mime-pipe-body-to-command command layout discard-output)))
+    (vm-mime-pipe-body-to-command command button discard-output)))
 
-(defun vm-mime-pipe-body-to-queried-command-discard-output (layout)
-  (vm-mime-pipe-body-to-queried-command layout t))
+(defun vm-mime-pipe-body-to-queried-command-discard-output (button)
+  (vm-mime-pipe-body-to-queried-command button t))
 
-(defun vm-mime-send-body-to-printer (layout)
+(defun vm-mime-send-body-to-printer (button)
   (vm-mime-pipe-body-to-command (mapconcat (function identity)
 					   (nconc (list vm-print-command)
 						  vm-print-command-switches)
 					   " ")
-				layout))
+				button))
 
 (defun vm-mime-display-body-as-text (button)
   (let ((vm-mime-auto-displayed-content-types '("text/plain"))
@@ -5294,7 +5353,6 @@ be removed when it is expanded to display the mime object."
 (defun vm-mime-display-body-using-external-viewer (button)
   (let ((layout (vm-extent-property button 'vm-mime-layout))
 	(vm-mime-external-content-type-exceptions nil))
-    (goto-char (vm-extent-start-position button))
     (when (vm-mime-types-match "message/external-body"
 			       (car (vm-mm-layout-type layout)))
       (vm-mime-fetch-message/external-body layout)
@@ -5305,14 +5363,29 @@ be removed when it is expanded to display the mime object."
 	     (car (vm-mm-layout-type layout))))))
 
 (defun vm-mime-convert-body-then-display (button)
-  (let ((layout (vm-mime-convert-undisplayable-layout
-		 (vm-extent-property button 'vm-mime-layout))))
+  (let ((layout (vm-extent-property button 'vm-mime-layout)))
+    (when (vm-mime-types-match "message/external-body"
+			       (car (vm-mm-layout-type layout)))
+      (vm-mime-fetch-message/external-body layout)
+      (setq layout (car (vm-mm-layout-parts layout))))
+    (setq layout (vm-mime-convert-undisplayable-layout layout))
     (if (null layout)
 	nil
       (vm-set-extent-property button 'vm-mime-disposable t)
       (vm-set-extent-property button 'vm-mime-layout layout)
       (goto-char (vm-extent-start-position button))
       (vm-decode-mime-layout button t))))
+
+
+(defun vm-mime-attach-body-to-composition (button)
+  (let ((layout (vm-extent-property button 'vm-mime-layout))
+	(vm-mime-external-content-type-exceptions nil))
+    (goto-char (vm-extent-start-position button))
+    (when (vm-mime-types-match "message/external-body"
+			       (car (vm-mm-layout-type layout)))
+      (vm-mime-fetch-message/external-body layout)
+      (setq layout (car (vm-mm-layout-parts layout))))
+    (vm-attach-object-to-composition layout)))
 
 (defun vm-mime-get-button-layout ()
   "Return the MIME layout of the MIME button at point.   USR, 2011-03-07"
@@ -6017,8 +6090,8 @@ minibuffer if the command is run interactively."
   'vm-attach-message-to-composition)
 		      
 ;;;###autoload
-(defun vm-attach-object-to-composition (composition)
-  "Attach a mime object from the current message to a VM composition buffer.
+(defun vm-attach-object-to-composition (layout &optional composition)
+  "Attach the mime object described by LAYOUT to a VM composition buffer.
 
 The object is not inserted into the buffer and MIME encoded until
 you execute `vm-mail-send' or `vm-mail-send-and-exit'.  A visible tag
@@ -6027,59 +6100,51 @@ composition buffer.  You can move the object around or remove
 it entirely with normal text editing commands.  If you remove the
 object tag, the object will not be sent.
 
-First argument COMPOSITION is the buffer into which the object
+The optional argument COMPOSITION is the buffer into which the object
 will be inserted.  When this function is called interactively
 COMPOSITION's name will be read from the minibuffer."
-  (interactive
-   ;; protect value of last-command and this-command
-   (let ((last-command last-command)
-	 (this-command this-command))
-     (list
-      (read-buffer "Attach object to buffer: "
-		   (vm-find-composition-buffer) t))))
+  (unless composition
+    (setq composition (read-buffer "Attach object to buffer: "
+				   (vm-find-composition-buffer) t)))
   (unless vm-send-using-mime
     (error (concat "MIME attachments disabled, "
 		   "set vm-send-using-mime non-nil to enable.")))
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
 
-  (let (e layout (work-buffer nil) buf start w)
-    (setq e (vm-find-layout-extent-at-point)
-	  layout (and e (vm-extent-property e 'vm-mime-layout)))
+  (let ((work-buffer (vm-make-work-buffer)) 
+	buf start w)
     (unwind-protect
-	(if (null layout)
-	    (error "No MIME object found at point.")
-	  (setq work-buffer (vm-make-work-buffer))
-	  (with-current-buffer work-buffer
-	    (vm-mime-insert-mime-headers layout)
-	    (insert "\n")
-	    (setq start (point))
-	    (vm-mime-insert-mime-body layout)
-	    (vm-mime-transfer-decode-region layout start (point-max))
-	    (goto-char (point-min))
-	    (vm-reorder-message-headers 
-	     nil :keep-list nil :discard-regexp "Content-Transfer-Encoding:")
-	    (insert "Content-Transfer-Encoding: binary\n")
-	    (set-buffer composition)
-	    ;; FIXME need to copy the disposition from the original
-	    (vm-attach-object work-buffer 
-				   :type (car (vm-mm-layout-type layout)) 
-				   :params (cdr (vm-mm-layout-type layout))
-				   :description (vm-mm-layout-description 
-						 layout)
-				   :mimed t)
-	    ;; move window point forward so that if this command
-	    ;; is used consecutively, the insertions will be in
-	    ;; the correct order in the composition buffer.
-	    (setq w (vm-get-buffer-window composition))
-	    (and w (set-window-point w (point)))
-	    (setq buf work-buffer
-		  work-buffer nil)	; schedule to be killed later
-	    (add-hook 'kill-buffer-hook
-		      `(lambda ()
-			 (if (eq (current-buffer) ,(current-buffer))
-			     (kill-buffer ,buf))))
-	    ))
+	(with-current-buffer work-buffer
+	  (vm-mime-insert-mime-headers layout)
+	  (insert "\n")
+	  (setq start (point))
+	  (vm-mime-insert-mime-body layout)
+	  (vm-mime-transfer-decode-region layout start (point-max))
+	  (goto-char (point-min))
+	  (vm-reorder-message-headers 
+	   nil :keep-list nil :discard-regexp "Content-Transfer-Encoding:")
+	  (insert "Content-Transfer-Encoding: binary\n")
+	  (set-buffer composition)
+	  ;; FIXME need to copy the disposition from the original
+	  (vm-attach-object work-buffer 
+			    :type (car (vm-mm-layout-type layout)) 
+			    :params (cdr (vm-mm-layout-type layout))
+			    :description (vm-mm-layout-description 
+					  layout)
+			    :mimed t)
+	  ;; move window point forward so that if this command
+	  ;; is used consecutively, the insertions will be in
+	  ;; the correct order in the composition buffer.
+	  (setq w (vm-get-buffer-window composition))
+	  (and w (set-window-point w (point)))
+	  (setq buf work-buffer
+		work-buffer nil)	; schedule to be killed later
+	  (add-hook 'kill-buffer-hook
+		    `(lambda ()
+		       (if (eq (current-buffer) ,(current-buffer))
+			   (kill-buffer ,buf))))
+	  )
       ;; unwind-protection
       (when work-buffer (kill-buffer work-buffer)))))
 (defalias 'vm-mime-attach-object-to-composition
@@ -6500,64 +6565,31 @@ describes what was deleted."
   (when vm-presentation-buffer
     (set-buffer vm-presentation-buffer))
   (let (layout label)
-    (cond (vm-fsfemacs-p
-	   (let (o-list o (found nil))
-	     (setq o-list (overlays-at (point)))
-	     (while (and o-list (not found))
-	       (setq o (car o-list))
-	       (cond ((setq layout (overlay-get o 'vm-mime-layout))
-		      (setq found t)
-		      (when (and (vm-mm-layout-message layout)
-				 (eq layout
-				     (vm-mime-layout-of
-				      (vm-mm-layout-message layout))))
-			(error (concat "Can't delete the only MIME object; "
-				       "use vm-delete-message instead.")))
-		      (when vm-mime-confirm-delete
-			(unless (y-or-n-p 
-				 (vm-mime-sprintf "Delete %t? " layout))
-			  (error "Aborted")))
-		      (vm-mime-discard-layout-contents layout saved-file)))
-	       (setq o-list (cdr o-list)))
-	     (if (not found)
-		 (error "No MIME button found at point."))
-	     (let ((inhibit-read-only t)
-		   (buffer-read-only nil))
-	       (save-excursion
-		 (vm-save-restriction
-		  (goto-char (overlay-start o))
-		  ;; Remember the label of the deleted object so that
-		  ;; we can come back there after redisplay.
-                  (setq label (vm-mime-sprintf 
-			       vm-mime-deleted-object-label layout))
-		  (insert label)
-		  (delete-region (point) (overlay-end o)))))))
-	  (vm-xemacs-p
-	   (let ((e (vm-extent-at (point) 'vm-mime-layout)))
-	     (if (null e)
-		 (error "No MIME button found at point.")
-	       (setq layout (vm-extent-property e 'vm-mime-layout))
-	       (when (and (vm-mm-layout-message layout)
-			  (eq layout (vm-mime-layout-of
-				      (vm-mm-layout-message layout))))
-		 (error (concat "Can't delete the only MIME object; "
-				"use vm-delete-message instead.")))
-	       (when vm-mime-confirm-delete
-		 (unless (y-or-n-p (vm-mime-sprintf "Delete %t? " layout))
-		   (error "Aborted")))
-	       (let ((inhibit-read-only t)
-		     opos
-		     (buffer-read-only nil))
-		 (save-excursion
-		   (vm-save-restriction
-		     (goto-char (vm-extent-start-position e))
-		     (setq opos (point))
-                     (setq label (vm-mime-sprintf 
-				  vm-mime-deleted-object-label layout))
-		     (insert label)
-		     (delete-region (point) (vm-extent-end-position e))
-		     (vm-set-extent-endpoints e opos (point)))))
-	       (vm-mime-discard-layout-contents layout saved-file)))))
+    (let ((e (vm-extent-at (point) 'vm-mime-layout)))
+      (if (null e)
+	  (error "No MIME button found at point.")
+	(setq layout (vm-extent-property e 'vm-mime-layout))
+	(when (and (vm-mm-layout-message layout)
+		   (eq layout (vm-mime-layout-of
+			       (vm-mm-layout-message layout))))
+	  (error (concat "Can't delete the only MIME object; "
+			 "use vm-delete-message instead.")))
+	(when vm-mime-confirm-delete
+	  (unless (y-or-n-p (vm-mime-sprintf "Delete %t? " layout))
+	    (error "Aborted")))
+	(let ((inhibit-read-only t)
+	      opos
+	      (buffer-read-only nil))
+	  (save-excursion
+	    (vm-save-restriction
+	     (goto-char (vm-extent-start-position e))
+	     (setq opos (point))
+	     (setq label (vm-mime-sprintf 
+			  vm-mime-deleted-object-label layout))
+	     (insert label)
+	     (delete-region (point) (vm-extent-end-position e))
+	     (vm-set-extent-endpoints e opos (point)))))
+	(vm-mime-discard-layout-contents layout saved-file)))
     (when (interactive-p)
       ;; make the change visible and place the cursor behind the removed object
       (vm-discard-cached-data)
@@ -6637,13 +6669,9 @@ describes what was deleted."
 		 (narrow-to-region (vm-mm-layout-header-start layout)
 				   (vm-mm-layout-body-end layout))
 		 (setq new-layout (vm-mime-parse-entity-safe))
-		 ;; should use accessor and mutator functions
-		 ;; to copy the layout struct members, but i'm
-		 ;; tired.
-		 (let ((i (1- (length layout))))
-		   (while (>= i 0)
-		     (aset layout i (aref new-layout i))
-		     (setq i (1- i))))))
+		 (vm-set-mm-layout-message-symbol
+		  new-layout (vm-mm-layout-message-symbol layout))
+		 (vm-mime-copy-layout new-layout layout)))
 	      (t
 	       (vm-set-mm-layout-type layout '("text/plain"))
 	       (vm-set-mm-layout-qtype layout '("text/plain"))

@@ -447,35 +447,34 @@ do not allow menubar buttons.")
 		 (list "Take Action on MIME body ..."))))
     `(,@title
       ["Display as Text (in default face)"
-       (vm-mime-run-display-function-at-point
-	'vm-mime-display-body-as-text) t]
+       vm-mime-reader-map-display-using-default t]
       ["Display using External Viewer"
-       (vm-mime-run-display-function-at-point
-	'vm-mime-display-body-using-external-viewer) t]
+       vm-mime-reader-map-display-using-external-viewer t]
       ["Convert to Text and Display"
-       (vm-mime-run-display-function-at-point
-	'vm-mime-convert-body-then-display)
-       (vm-menu-can-convert-to-text/plain
-	(car (vm-mm-layout-type (vm-mime-get-button-layout))))]
+       vm-mime-reader-map-convert-then-display
+       (vm-menu-can-convert-to-text/plain (vm-mime-get-button-layout))]
       ;; FSF Emacs does not allow a non-string menu element name.
       ;; This is not working on XEmacs either.  USR, 2011-03-05
-      ,@(if (vm-menu-can-eval-item-name)
-	    (list [(format "Convert to %s and Display"
-			   (or (nth 1 (vm-mime-can-convert
-				       (car
-					(vm-mm-layout-type
-					 (vm-mime-get-button-layout)))))
-			       "different type"))
-		   (vm-mime-run-display-function-at-point
-		    'vm-mime-convert-body-then-display)
-		   (vm-mime-can-convert
-		    (car (vm-mm-layout-type
-			  (vm-mime-get-button-layout))))]))
+      ;; ,@(if (vm-menu-can-eval-item-name)
+      ;; 	    (list [(format "Convert to %s and Display"
+      ;; 			   (or (nth 1 (vm-mime-can-convert
+      ;; 				       (car
+      ;; 					(vm-mm-layout-type
+      ;; 					 (vm-mime-get-button-layout)))))
+      ;; 			       "different type"))
+      ;; 		   (vm-mime-run-display-function-at-point
+      ;; 		    'vm-mime-convert-body-then-display)
+      ;; 		   (vm-mime-can-convert
+      ;; 		    (car (vm-mm-layout-type
+      ;; 			  (vm-mime-get-button-layout))))]))
       "---"
-      ["Undo" vm-undo]
+      ["Undo" 
+       vm-undo]
       "---"
-      ["Save to File" vm-mime-reader-map-save-file t]
-      ["Save to Folder" vm-mime-reader-map-save-message
+      ["Save to File" 
+       vm-mime-reader-map-save-file t]
+      ["Save to Folder" 
+       vm-mime-reader-map-save-message
        (let ((layout (vm-mime-get-button-layout)))
 	 (if (null layout)
 	     nil
@@ -483,16 +482,14 @@ do not allow menubar buttons.")
 				    (car (vm-mm-layout-type layout)))
 	       (vm-mime-types-match "message/news"
 				    (car (vm-mm-layout-type layout))))))]
-      ["Send to Printer" (vm-mime-run-display-function-at-point
-			  'vm-mime-send-body-to-printer) t]
+      ["Send to Printer" 
+       vm-mime-reader-map-pipe-to-printer t]
       ["Pipe to Shell Command (display output)"
-       (vm-mime-run-display-function-at-point
-	'vm-mime-pipe-body-to-queried-command) t]
+       vm-mime-reader-map-pipe-to-command t]
       ["Pipe to Shell Command (discard output)"
-       (vm-mime-run-display-function-at-point
-	'vm-mime-pipe-body-to-queried-command-discard-output) t]
+       vm-mime-reader-map-pipe-to-command-discard-output t]
       ["Attach to Message Composition Buffer"
-       vm-attach-object-to-composition t]
+       vm-mime-reader-map-attach-to-composition t]
       ["Delete" vm-delete-mime-object t])))
 
 (defconst vm-menu-url-browser-menu
@@ -816,9 +813,12 @@ set to the command name so that window configuration will be done."
 	     (not (vm-mime-plain-message-p (car vm-message-pointer)))))
     (error nil)))
 
-(defun vm-menu-can-convert-to-text/plain (type)
-  (equal (nth 1 (vm-mime-can-convert type)) "text/plain"))
-
+(defun vm-menu-can-convert-to-text/plain (layout)
+  (let ((type (car (vm-mm-layout-type layout))))
+    (or (equal (nth 1 (vm-mime-can-convert type)) "text/plain")
+	(and (equal type "message/external-body")
+	     (vm-menu-can-convert-to-text/plain
+	      (car (vm-mm-layout-parts layout)))))))
 
 (defun vm-menu-can-expunge-pop-messages-p ()
   (condition-case nil

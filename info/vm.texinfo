@@ -1811,7 +1811,7 @@ used move to particular buttons within the message presentation.
 @findex vm-mime-reader-map-pipe-to-printer
 @findex vm-delete-mime-object
 @findex vm-mime-reader-map-display-using-external-viewer
-@findex vm-attach-object-to-composition
+@findex vm-mime-reader-map-attach-to-composition
 To activate a button, either click the middle mouse
 button over it, or move the cursor to the line and press RET.  If you
 are running under a window system, you can use the right mouse button
@@ -1832,7 +1832,7 @@ RET}.  To display the object using an external viewer, type @kbd{$ e}.
 @item $ e   @tab @code{vm-mime-reader-map-display-using-external-viewer}
 @item $ v   @tab @code{vm-mime-reader-map-display-object-as-type}
 @item $ d   @tab @code{vm-delete-mime-object}
-@item $ a   @tab @code{vm-attach-object-to-composition}
+@item $ a   @tab @code{vm-mime-reader-map-attach-to-composition}
 @end multitable
 
 @vindex vm-mime-delete-after-saving
@@ -2738,13 +2738,13 @@ You can use your Window system to drag and drop a file into a
 composition buffer (@code{vm-dnd-attach-file}).
 
 @kindex $ a
-@findex vm-attach-object-to-composition
+@findex vm-mime-reader-map-attach-to-composition
 @findex vm-attach-message-to-composition
 When you visit a folder in VM, you can attach a message from the
 folder by running @code{vm-attach-message-to-composition}.  When
 viewing a message that has MIME attachments, you can attach any of
 those attachments to your message composition by using the @kbd{$ a}
-(@code{vm-attach-object-to-composition}) function.
+(@code{vm-reader-map-attach-to-composition}) function.
 (@xref{Operating on MIME attachments}.)  This operation is also
 available on the pop-menu for attachments.
 

@@ -59,7 +59,7 @@ VM 8.2.0a (2011-02-28)
      - `vm-dired-attach-file' and `vm-dired-do-attach-files' from
      dired buffers.
      - `vm-attach-message-to-composition' and
-     `vm-attach-object-to-composition' from VM folders.
+     `vm-reader-map-attach-to-composition' from VM folders.
      - a drag-and-drop feature that can be used in the window system.
 
    * New command `vm-switch-to-folder' defined to quickly return to a
