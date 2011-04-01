@@ -92,9 +92,9 @@
   (put 'vm-thread-error 'error-message "VM internal threading error")
   )
 
-(defsubst vm-thread-debug (message arg)
+(defsubst vm-thread-debug (message &rest args)
   (if (and vm-thread-debug vm-summary-show-threads (vectorp vm-thread-obarray))
-      (debug message arg)))
+      (apply 'debug message args)))
 
 
 ;;;###autoload
@@ -175,6 +175,19 @@ youngest or oldest date in its thread.  CRITERION must be one of
 
 (defsubst vm-th-set-children-of (id-sym ml)
   (put id-sym 'children ml))
+
+(defun vm-th-add-child (parent-sym id-sym)
+  (if (member (symbol-name id-sym) (car vm-traced-message-ids))
+      (vm-thread-debug 'vm-th-add-child id-sym))
+  (unless (member id-sym (vm-th-children-of parent-sym))
+    (vm-th-set-children-of
+     parent-sym (cons id-sym (vm-th-children-of parent-sym)))))
+
+(defun vm-th-delete-child (parent-sym id-sym)
+  (if (member (symbol-name id-sym) (car vm-traced-message-ids) )
+      (vm-thread-debug 'vm-th-delete-child id-sym))
+  (let ((kids (vm-th-children-of parent-sym)))
+    (vm-th-set-children-of parent-sym (remq id-sym kids))))
 
 (defsubst vm-th-date-of (id-sym)
   (get id-sym 'date))
@@ -280,8 +293,14 @@ all affected messages to be updated."
     (while mp
       (setq m (car mp)
 	    id (vm-su-message-id m)
-	    id-sym (intern id vm-thread-obarray)
+	    id-sym (intern-soft id vm-thread-obarray)
 	    date (vm-so-sortable-datestring m))
+      (if (member id vm-traced-message-ids)
+	  (vm-thread-debug 'vm-build-reference-threads m))
+      (unless id-sym
+	(setq id-sym (intern id vm-thread-obarray))
+	(vm-th-set-parent-of id-sym nil)
+	(vm-th-set-children-of id-sym nil))
       (vm-th-set-message-of id-sym m)
       (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))
       (vm-th-set-date-of id-sym date)
@@ -289,38 +308,28 @@ all affected messages to be updated."
 	(vm-thread-mark-for-summary-update 
 	 (cons m (vm-th-child-messages-of id-sym))))
       ;; Thread using the parent
-      (vm-th-set-parent-of id-sym nil)
       (setq parent (vm-parent m))
       (when parent
 	(setq parent-sym (intern parent vm-thread-obarray))
 	;; force the subtree to be rebuilt
-	(when (vm-th-message-of parent-sym)
-	  (vm-set-thread-subtree-of (vm-th-message-of parent-sym) nil))	
+	(vm-th-clear-subtree-of parent-sym)	
 	;; set the parent of m.
 	;; if there was a parent already, update it consistently.
-	(cond ((or (null (vm-th-parent-of id-sym))
-		   (eq (vm-th-parent-of id-sym) parent-sym))
-	       (vm-th-set-parent-of id-sym parent-sym))
-	      (t
-	       (let ((kids (vm-th-children-of old-parent-sym ))
-		     (msgs (vm-th-messages-of id-sym))
-		     (msg-sym nil))
-		 (setq old-parent-sym (vm-th-parent-of id-sym))
-		 (while msgs
-		   (setq msg-sym (vm-thread-symbol (car msgs)))
-		   (setq kids (delq msg-sym kids)
-			 msgs (cdr msgs)))
-		 (vm-th-set-children-of old-parent-sym kids)
+	(when (vm-th-safe-parent-p id-sym parent-sym)
+	  (if (member (symbol-name id-sym) vm-traced-message-ids)
+	      (vm-thread-debug 'vm-build-reference-threads-1 id-sym))	  
+	  (cond ((or (null (vm-th-parent-of id-sym))
+		     (eq (vm-th-parent-of id-sym) parent-sym))
 		 (vm-th-set-parent-of id-sym parent-sym)
+		 (vm-th-add-child parent-sym id-sym))
+		(t
+		 (setq old-parent-sym (vm-th-parent-of id-sym))
+		 (vm-th-delete-child old-parent-sym id-sym)
+		 (vm-th-set-parent-of id-sym parent-sym)
+		 (vm-th-add-child parent-sym id-sym)
 		 (if schedule-reindents
 		     (vm-thread-mark-for-summary-update
-		      (vm-th-messages-of id-sym))))))
-	;; FIXME it is possible that id-sym is already among the children
-	(vm-th-set-children-of 
-	 parent-sym (cons id-sym (vm-th-children-of parent-sym))))
-	;; FIXME is the parent property automatically set to nil?
-        ;; (if (not (boundp id-sym))
-	;;   (vm-th-set-parent-of id-sym nil))
+		      (vm-th-messages-of id-sym)))))))
       ;; use the References header to set parenting information
       ;; for ancestors of this message.  This does not override
       ;; a parent pointer for a message if it already exists.
@@ -329,33 +338,51 @@ all affected messages to be updated."
 	    (setq parent-sym (intern (car refs) vm-thread-obarray)
 		  refs (cdr refs))
 	    ;; force the subtree to be rebuilt
-	    (when (vm-th-message-of parent-sym)	
-	      (vm-set-thread-subtree-of (vm-th-message-of parent-sym) nil))
+	    (vm-th-clear-subtree-of parent-sym)
 	    (while refs
 	      (setq id-sym (intern (car refs) vm-thread-obarray))
-	      (unless (vm-th-parent-of id-sym)
+	      (when (and (null (vm-th-parent-of id-sym))
+			 (vm-th-safe-parent-p id-sym parent-sym))
+		(if (member (symbol-name id-sym) vm-traced-message-ids)
+		    (vm-thread-debug 'vm-build-reference-threads-2 id-sym))
 		(vm-th-set-parent-of id-sym parent-sym)
-		(setq msgs (vm-th-messages-of id-sym))
-		(setq msg-syms 
-		      (mapcar 'vm-thread-symbol msgs))
-;; 		(if msgs
-;; 		    (vm-th-set-children-of 
-;; 		     parent-sym 
-;; 		     (append msg-syms (vm-th-children-of parent-sym))
-;; 		     ))
-		(vm-th-set-children-of 
-		 parent-sym 
-		 (cons id-sym (vm-th-children-of parent-sym)))
+		;; (setq msgs (vm-th-messages-of id-sym))
+		;; (setq msg-syms 
+		;;       (mapcar 'vm-thread-symbol msgs))
+		;; (if msgs
+		;;     (vm-th-set-children-of 
+		;;      parent-sym 
+		;;      (append msg-syms (vm-th-children-of parent-sym))
+		;;      ))
+		(vm-th-add-child parent-sym id-sym)
 		(if schedule-reindents
 		    (vm-thread-mark-for-summary-update msgs)))
-	      (when (vm-th-message-of id-sym)
-		(vm-set-thread-subtree-of
-		 (vm-th-message-of id-sym) nil))	; force it to be rebuilt
+	      (vm-th-clear-subtree-of id-sym)	; force it to be rebuilt
 	      (setq parent-sym id-sym
 		    refs (cdr refs)))))
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
 	  (message "Building threads... %d" n)))))
+
+(defun vm-th-clear-subtree-of (sym)
+  "Clear the thread-subtree of the message with id-symbol SYM, i.e.,
+set it to nil.  It will get recalculated on demand."
+  (when (vm-th-message-of sym)
+    (vm-set-thread-subtree-of (vm-th-message-of sym) nil)))
+
+(defun vm-th-safe-parent-p (sym parent-sym)
+  "Check if it is safe to set the parent of SYM to PARENT-SYM."
+  ;; Check to make sure that SYM is not an ancestor of PARENT-SYM
+  (if (or (member (symbol-name sym) vm-traced-message-ids)
+	  (member (symbol-name parent-sym) vm-traced-message-ids))
+      (vm-thread-debug 'vm-thread-safe-parent-p sym parent-sym))
+  (let ((ancestor parent-sym))
+    (catch 'return
+      (while ancestor
+	(when (eq ancestor sym)
+	  (throw 'return nil))
+	(setq ancestor (vm-th-parent-of ancestor)))
+      t)))
 
 (defun vm-build-subject-threads (mp schedule-reindents)
   (let ((n 0)
@@ -444,9 +471,7 @@ function is called."
     ;; message, or it doesn't need marking.
     (if (null (vm-thread-list-of m))
 	nil
-      (dolist (a (vm-thread-list-of m))
-	(when (vm-th-message-of a)
-	  (vm-set-thread-subtree-of (vm-th-message-of a) nil)))
+      (mapc 'vm-th-clear-subtree-of (vm-thread-list-of m))
       (vm-mark-for-summary-update m t)
       (vm-set-thread-list-of m nil)
       (vm-set-thread-indentation-of m nil)
@@ -466,8 +491,8 @@ symbols interned in vm-thread-obarray."
       (fillarray vm-thread-loop-obarray 0)
       (setq id-sym (intern (vm-su-message-id m) vm-thread-obarray)
 	    thread-list (list id-sym))
-      (when (and vm-debug (member (symbol-name id-sym) vm-traced-message-ids))
-	(debug id-sym))
+      (when (member (symbol-name id-sym) vm-traced-message-ids)
+	(vm-thread-debug 'vm-build-thread-list id-sym))
       ;; if m is a non-canonical message for its message ID, give it
       ;; an artificial thread-list
       ;; But, does this make sense?
@@ -574,13 +599,10 @@ mean?)                                         USR, 2011-03-17"
     (setq id-sym (intern (vm-su-message-id m) vm-thread-obarray))
     (setq s-sym (intern (vm-so-sortable-subject m)
 			vm-thread-subject-obarray))
-    (if (and vm-debug 
-	     (member (symbol-name id-sym) vm-traced-message-ids))
-	(debug id-sym))
+    (if (member (symbol-name id-sym) vm-traced-message-ids)
+	(vm-thread-debug 'vm-unthread-message id-sym))
     ;; discard cached thread properties
-    (dolist (a (vm-thread-list-of m))
-      (when (vm-th-message-of a)
-	(vm-set-thread-subtree-of (vm-th-message-of a) nil)))
+    (mapc 'vm-th-clear-subtree-of (vm-thread-list-of m))
     (vm-set-thread-list-of m nil)
     (vm-set-thread-indentation-of m nil)
     ;; remove the message from its erstwhile thread
@@ -599,8 +621,7 @@ mean?)                                         USR, 2011-03-17"
       (when message-changing
 	(setq p-sym (vm-th-parent-of id-sym))
 	(when p-sym 
-	  (vm-th-set-children-of 
-	   p-sym (remq id-sym (vm-th-children-of p-sym))))
+	  (vm-th-delete-child p-sym id-sym))
 	(vm-th-set-parent-of id-sym nil)))
 
     ;; remove the message from its erstwhile subject thread
@@ -711,10 +732,7 @@ calculates the thread-list and caches it.  USR, 2010-03-13"
       (progn
 	(vm-set-thread-list-of m (vm-build-thread-list m))
 	;; reset the thread-subtrees, forcing them to be rebuilt
-	(mapc (lambda (a)
-		(when (vm-th-message-of a)
-		  (vm-set-thread-subtree-of (vm-th-message-of a) nil)))
-	      (vm-thread-list-of m))
+	(mapc 'vm-th-clear-subtree-of (vm-thread-list-of m))
 	(vm-thread-list-of m))))
 (fset 'vm-th-thread-list 'vm-thread-list)
 
@@ -731,7 +749,7 @@ should have been built for this function to work."
 	  (t
 	   (setq m-sym (vm-thread-symbol m))))
     (if (and vm-debug (member (symbol-name m-sym) vm-traced-message-ids))
-	(debug m-sym))
+	(debug 'vm-thread-root m-sym))
     (unless m-sym
       (vm-thread-debug 'vm-thread-root m-sym)
       (signal 'vm-thread-error (list 'vm-thread-root)))
@@ -777,7 +795,8 @@ See also: `vm-thread-root'."
 otherwise.  No exceptions are thrown for errors."
   ;; Threads may not be turned on.  So, ignore errors.
   (condition-case err
-      (eq m (vm-thread-root m))
+      (and (eq m (vm-thread-root m))
+	   (> (vm-thread-count m) 1))
     (vm-thread-error
      nil)))
 
@@ -794,6 +813,8 @@ Threads should have been built for this function to work."
     (unless m-sym
       (vm-thread-debug 'vm-thread-subtree m-sym)
       (signal 'vm-thread-error (list 'vm-thread-subtree)))
+    (if (member (vm-su-message-id msg) vm-traced-message-ids)
+	(vm-thread-debug 'vm-thread-subtree (vm-su-message-id msg)))
     (if (eq msg (vm-th-message-of m-sym))
 	;; canonical message for this message ID
 	(or (vm-thread-subtree-of msg)

@@ -72,16 +72,14 @@ an interior message of a thread."
   (concat "  " (vm-padded-number-of m) " "))
 
 (defsubst vm-expanded-root-p (m)
-  "Checks to see if the message summary of M shows that its thread is
-currently expanded. This is done safely so that if M does not have a
-summary line then nil is returned."
+  "Returns t if M is the root of a thread that is currently shown
+expanded (using the folded attribute of the message)."
   (and (vm-thread-root-p m)
        (null (vm-folded-flag m))))
 
 (defsubst vm-collapsed-root-p (m)
-  "Checks to see if the message summary of M shows that its thread is
-currently collapsed. This is done safely so that if M does not have a
-summary line then nil is returned."
+  "Returns t if M is the root fo a thread that is currently shown
+  collapsed (usint the folded attribute of the message)."
   (and (vm-thread-root-p m)
        (vm-folded-flag m)))
 
