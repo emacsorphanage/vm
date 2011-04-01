@@ -4663,10 +4663,14 @@ entries from a folder summary."
     ;; 
     ((outgoing)  	vm-summary-outgoing)
     ((any)       	vm-summary-default))
-  "*Alist of virtual folder conditions and corresponding faces.
-Order matters. The first matching one will be used as the face.  
+  "List of condition-face pairs for deciding the faces for summary
+lines.  Each element of the list is a pair, i.e., a two-element list.
+The first element is a virtual folder condition as described in the
+documentation of `vm-virtual-folder-alist'.  The second element is a
+face name.
 
-See `vm-virtual-folder-alist' for a description of the conditions."
+The order matters. The first condition that matches the message will
+decide the face."
   :type '(repeat (cons (sexp) (face)))
   :group 'vm-summary-faces)
 
