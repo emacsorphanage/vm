@@ -280,16 +280,19 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
     (when (> n modulus)
       (message "Building threads... done"))))
 
-(defun vm-build-reference-threads (mp schedule-reindents)
-  "Build reference threads for all the messages in MP.  If threads are
+(defun vm-build-reference-threads (mlist schedule-reindents)
+  "Build reference threads for all the messages in MLIST.  If threads are
 already built, then just insert these messages into the threads
 database.
 
 If SCHEDULE-REINDENTS is non-nil, then ask for the summary lines of
 all affected messages to be updated."
   (let ((n 0)
-	(modulus 10)
+	(mp mlist)
+	modulus total
 	m parent parent-sym id id-sym date refs old-parent-sym)
+    (setq total (* 2 (length mlist)))
+    (setq modulus (/ (length mlist) 50))
     (while mp
       (setq m (car mp)
 	    id (vm-su-message-id m)
@@ -330,9 +333,19 @@ all affected messages to be updated."
 		 (if schedule-reindents
 		     (vm-thread-mark-for-summary-update
 		      (vm-th-messages-of id-sym)))))))
-      ;; use the References header to set parenting information
-      ;; for ancestors of this message.  This does not override
-      ;; a parent pointer for a message if it already exists.
+      (setq mp (cdr mp) n (1+ n))
+      (if (zerop (% n modulus))
+	  (message "Building threads... %d%%" (* (/ (+ n 0.0) total) 100))))
+
+    ;; use the References header to set parenting information
+    ;; for ancestors of this message.  This does not override
+    ;; a parent pointer for a message if it already exists.
+    (setq mp mlist)
+    (while mp
+      (setq m (car mp)
+	    id (vm-su-message-id m))
+      (if (member id vm-traced-message-ids)
+	  (vm-thread-debug 'vm-build-reference-threads m))
       (if (cdr (setq refs (vm-references m)))
 	  (let (parent-sym id-sym msgs msg-syms)
 	    (setq parent-sym (intern (car refs) vm-thread-obarray)
@@ -362,7 +375,8 @@ all affected messages to be updated."
 		    refs (cdr refs)))))
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
-	  (message "Building threads... %d" n)))))
+	  (message "Building threads... %d%%" (* (/ (+ n 0.0) total) 100)))
+      )))
 
 (defun vm-th-clear-subtree-of (sym)
   "Clear the thread-subtree of the message with id-symbol SYM, i.e.,
