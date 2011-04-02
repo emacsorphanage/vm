@@ -292,7 +292,7 @@ all affected messages to be updated."
 	modulus total
 	m parent parent-sym id id-sym date refs old-parent-sym)
     (setq total (* 2 (length mlist)))
-    (setq modulus (/ (length mlist) 50))
+    (setq modulus (max 10 (/ (length mlist) 50)))
     (while mp
       (setq m (car mp)
 	    id (vm-su-message-id m)
