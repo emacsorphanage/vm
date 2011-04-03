@@ -531,7 +531,6 @@ function is called."
 ;;;###autoload
 (defun vm-thread-mark-for-summary-update (message-list)
   (dolist (m message-list)
-    (setq m (car message-list))
     ;; if thread-list is null then we've already marked this
     ;; message, or it doesn't need marking.
     (if (null (vm-thread-list-of m))
