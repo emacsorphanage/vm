@@ -42,7 +42,7 @@
 (declare-function vm-build-threads 
 		  "vm-undo" (message-list))
 (declare-function vm-unthread-message
-		  "vm-thread" (message &optional message-changing))
+		  "vm-thread" (message &key message-changing))
 (declare-function vm-present-current-message 
 		  "vm-page" ())
 (declare-function vm-zip-vectors "vm-misc" (v1 v2))
@@ -576,7 +576,7 @@ the headers/body of M."
 		 (eq (car vm-message-pointer) v-m))
 	    (save-excursion (vm-present-current-message)))
 	(when (vectorp vm-thread-obarray)
-	  (vm-unthread-message m)
+	  (vm-unthread-message m :message-changing nil)
 	  (vm-build-threads (list v-m)))
 	;; (if vm-summary-show-threads
 	;;     (intern (buffer-name) buffers-needing-thread-sort))

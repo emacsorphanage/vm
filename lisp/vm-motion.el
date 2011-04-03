@@ -96,6 +96,7 @@ given."
 	(vm-record-and-change-message-pointer vm-message-pointer
 					      vm-last-message-pointer)
 	(vm-present-current-message))))
+(defalias 'vm-goto-last-message-seen 'vm-goto-message-last-seen)
 
 ;;;###autoload
 (defun vm-goto-parent-message ()

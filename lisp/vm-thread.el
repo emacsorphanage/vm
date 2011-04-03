@@ -39,8 +39,10 @@
 ;; vm-toggle-threads-display: interactive () -> none
 ;; vm-build-threads : (message list) -> none
 ;; vm-build-thread-lists : () -> none
-;; vm-unthread-message-and-mirrors : (message &optional bool) -> none
-;; vm-unthread-message : (message &optional bool) -> none
+;; vm-unthread-message-and-mirrors : (message &key
+;;                                    :message-changing bool) -> none
+;; vm-unthread-message : (message &key
+;;                                    :message-changing bool) -> none
 ;;
 ;; vm-check-thread-integrity: (&optional message list) -> none
 ;;
@@ -582,7 +584,7 @@ symbols interned in vm-thread-obarray."
 ;; message must be a real (non-virtual) message
 
 ;;;###autoload
-(defun vm-unthread-message-and-mirrors (message &optional message-changing)
+(defun* vm-unthread-message-and-mirrors (message &key message-changing)
   "Removes MESSAGE and all its mirrored messages from their
 current threads.  If optional argument MESSAGE-CHANGING is
 non-nil, then forget information that might be different if the
@@ -599,10 +601,11 @@ The full functionality of this function is not entirely clear.
       (when (buffer-name (vm-buffer-of m))
 	(set-buffer (vm-buffer-of m))
 	(when (vectorp vm-thread-obarray)
-	  (vm-unthread-message m message-changing))))))
+	  (vm-unthread-message 
+	   m :message-changing message-changing))))))
 
 ;;;###autoload
-(defun vm-unthread-message (m &optional message-changing)
+(defun* vm-unthread-message (m &key message-changing)
   "Removes message M from its thread.  If optional argument
 MESSAGE-CHANGING is non-nil, then forget information that might
 be different if the message contents changed.  (What does this
