@@ -57,6 +57,7 @@ works in all VM buffers."
     (car vm-message-pointer)))
 
 ;; message struct
+(defconst vm-location-data-vector-length 6)
 (defconst vm-message-fields 
   [:location-data :softdata :attributes :cached-data :mirror-data])
 (defsubst vm-location-data-of (message) (aref message 0))
@@ -97,6 +98,7 @@ works in all VM buffers."
   (aref (aref message 0) 5))
 
 ;; soft data vector
+(defconst vm-softdata-vector-length 23)
 (defconst vm-softdata-fields
   [:number :padded-number :mark :su-start :su-end :real-message-sym
 	   :reverse-link-sym :message-type :message-id-number :buffer
@@ -105,7 +107,7 @@ works in all VM buffers."
 	   :saved-virtual-mirror-data :virtual-summary 
 	   :mime-layout :mime-encoded-header-flag
 	   :su-summary-mouse-track-overlay :message-access-method
-	   :thread-subtree :mirrored-message-sym])
+	   :thread-subtree :mirrored-message-sym :thread-indentation-offset])
 (defsubst vm-number-of (message)
   (aref (aref message 1) 0))
 (defsubst vm-padded-number-of (message)
@@ -170,8 +172,11 @@ works in all VM buffers."
   (aref (aref message 1) 21))
 (defsubst vm-mirrored-message-of (message)
   (symbol-value (aref (aref message 1) 21)))
+(defsubst vm-thread-indentation-offset-of (message)
+  (aref (aref message 1) 22))
 
 ;; message attribute vector
+(defconst vm-attributes-vector-length 16)
 (defconst vm-attributes-fields
   [:new-flag :unread-flag :deleted-flag :filed-flag :replied-flag
 	     :written-flag :forwarded-flag :edited-flag
@@ -196,6 +201,7 @@ works in all VM buffers."
 (defsubst vm-attachments-flag (message) (aref (aref message 2) 15))
 
 ;; message cached data
+(defconst vm-cached-data-vector-length 26)
 (defconst vm-cached-data-fields
   [:byte-count :weekday :monthday :month :year :hour :zone
 	       :full-name :from :message-id :line-count :subject
@@ -285,6 +291,7 @@ works in all VM buffers."
   (aref (aref message 3) 25))
 
 ;; extra data shared by virtual messages if vm-virtual-mirror is non-nil
+(defconst vm-mirror-data-vector-length 6)
 (defconst vm-mirror-data-fields
   [:edit-buffer :virtual-messages-sym :stuff-flag :labels
   :label-string :attribute-modflag])
@@ -361,6 +368,9 @@ works in all VM buffers."
   (aset (aref message 1) 20 list))
 (defsubst vm-set-mirrored-message-sym-of (message sym)
   (aset (aref message 1) 21 sym))
+(defsubst vm-set-thread-indentation-offset-of (message offset)
+  (aset (aref message 1) 22 offset))
+
 ;; The other routines in attributes group are part of the undo system.
 (defun vm-set-edited-flag-of (message flag)
   (aset (aref message 2) 7 flag)
@@ -443,7 +453,7 @@ works in all VM buffers."
   (aset (aref message 4) 5 flag))
 
 (defun vm-mime-encode-words-in-cache-vector (vector)
-  (let ((new-vector (make-vector vm-cache-vector-length nil)))
+  (let ((new-vector (make-vector vm-cached-data-vector-length nil)))
     ;; Encode the fields of the original cache-vector as necessary.
     ;; Some of the fields have been mime-decoded with text properties.
     ;; And, some haven't.

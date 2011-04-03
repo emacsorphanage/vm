@@ -29,6 +29,7 @@
 (eval-when-compile
   (require 'vm-misc)
   (require 'vm-folder)
+  (require 'vm-motion)
   (require 'vm-summary)
   (require 'vm-sort)
 )
@@ -251,6 +252,54 @@ specifier) will be visible."
   (if vm-summary-show-threads
       (vm-sort-messages (or vm-ml-sort-keys "activity"))
     (vm-sort-messages (or vm-ml-sort-keys "physical-order"))))
+
+;;;###autoload
+(defun vm-decrease-thread-indentation (n)
+  "Decrease the thread indentation of the current message and its
+subthread by $N$ steps (provided as a prefix argument).  
+
+The case $N$ being 0 is a special case.  It means to decrease the
+indentation all the way to 0."
+  (interactive "p")
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (let ((modified (buffer-modified-p))
+	(msg (car vm-message-pointer))
+	(indent 0))
+    (if (= n 0)				; special case, set to 0
+      (let ((indent (or (vm-thread-indentation-of msg) 0)))
+	(mapc (lambda (m)
+		(vm-set-thread-indentation-offset-of m (- indent)))
+	      (vm-thread-subtree msg)))
+      (mapc (lambda (m)
+	      (vm-set-thread-indentation-offset-of 
+	       m (- (or (vm-thread-indentation-offset-of m) 0)
+		      n)))
+	    (vm-thread-subtree msg)))
+    (vm-thread-mark-for-summary-update (vm-thread-subtree msg))
+    (vm-update-summary-and-mode-line)))
+
+;;;###autoload
+(defun vm-increase-thread-indentation (n)
+  "Increase the thread indentation of the current message and its
+subthread by $N$ steps (provided as a prefix argument).  
+
+The case $N$ being 0 is a special case.  It means to reset the
+indentation back to the normal indentation, i.e., no offset is used."
+  (interactive "p")
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (let ((modified (buffer-modified-p))
+	(msg (car vm-message-pointer)))
+    (if (= n 0)
+	(mapc (lambda (m) (vm-set-thread-indentation-offset-of m 0))
+	      (vm-thread-subtree msg))
+      (mapc (lambda (m)
+	      (vm-set-thread-indentation-offset-of 
+	       m (+ (or (vm-thread-indentation-offset-of m) 0) n)))
+	    (vm-thread-subtree msg)))
+    (vm-thread-mark-for-summary-update (vm-thread-subtree msg))
+    (vm-update-summary-and-mode-line)))
 
 ;;;###autoload
 (defun vm-build-threads (message-list)
@@ -694,7 +743,7 @@ USR, 2010-03-13"
        (let (references)
 	 (setq references (vm-get-header-contents m "References:" " "))
 	 (and references (vm-parse references "[^<]*\\(<[^>]+>\\)"))))))
-(fset 'vm-th-references 'vm-references)
+(defalias 'vm-th-references 'vm-references)
 
 ;;;###autoload
 (defun vm-parent (m)
@@ -714,32 +763,38 @@ the cache is nil, calculates the parent and caches it.  USR, 2010-03-13"
 	       (setq ids (cdr ids)))
 	     (and id (vm-set-references-of m (list id)))
 	     id )))))
-(fset 'vm-th-parent 'vm-parent)
+(defalias 'vm-th-parent 'vm-parent)
 
 ;;;###autoload
 (defun vm-thread-indentation (m)
   "Returns the cached thread-indentation of message M.  If the cache is
-nil, calculates the thread-indentation and caches it.  USR, 2010-03-13"
-  (or (vm-thread-indentation-of m)
-      (let ((p (vm-thread-list m))
-	    (n 0))
-	(catch 'done
-	  (while p 
-	    (cond ((null (vm-th-messages-of (car p)))
-		   (setq p (cdr p)))
-		  (vm-summary-thread-indentation-by-references
-		   (setq n (length p))
-		   (throw 'done nil))
-		  (t
-		   (setq n (1+ n)
-			 p (cdr p))))))
-	(if (and (eq (car p) (vm-thread-symbol m))
-		 (not (eq (vm-th-message-of (car p)) m)))
-	    ;; thread root is a duplicate of m
-	    (vm-set-thread-indentation-of m n)
-	  (vm-set-thread-indentation-of m (1- n)))
-	(vm-thread-indentation-of m))))
-(fset 'vm-th-thread-indentation 'vm-thread-indentation)
+nil, calculates the thread-indentation and caches it.  It also applies
+any thread-indentation-offset that has been defined for a subthread.
+							USR, 2011-04-03"
+  (+ (or (vm-thread-indentation-of m)
+	 (let ((p (vm-thread-list m))
+	       (n 0))
+	   (catch 'done
+	     (while p 
+	       (cond ((null (vm-th-messages-of (car p)))
+		      (setq p (cdr p)))
+		     (vm-summary-thread-indentation-by-references
+		      (setq n (length p))
+		      (throw 'done nil))
+		     (t
+		      (setq n (1+ n)
+			    p (cdr p))))))
+	   (if (and (eq (car p) (vm-thread-symbol m))
+		    (not (eq (vm-th-message-of (car p)) m)))
+	       ;; thread root is a duplicate of m
+	       (vm-set-thread-indentation-of m n)
+	     (vm-set-thread-indentation-of m (1- n)))
+	   (vm-thread-indentation-of m)))
+     (or (vm-thread-indentation-offset-of m)
+	 0)
+     ))
+
+(defalias 'vm-th-thread-indentation 'vm-thread-indentation)
 
 ;;;###autoload
 (defun vm-thread-list (m)
@@ -751,7 +806,7 @@ calculates the thread-list and caches it.  USR, 2010-03-13"
 	;; reset the thread-subtrees, forcing them to be rebuilt
 	(mapc 'vm-th-clear-subtree-of (vm-thread-list-of m))
 	(vm-thread-list-of m))))
-(fset 'vm-th-thread-list 'vm-thread-list)
+(defalias 'vm-th-thread-list 'vm-thread-list)
 
 ;;;###autoload
 (defun vm-thread-root (m)
@@ -767,15 +822,15 @@ should have been built for this function to work."
 	   (setq m-sym (vm-thread-symbol m))))
     (if (and vm-debug (member (symbol-name m-sym) vm-traced-message-ids))
 	(debug 'vm-thread-root m-sym))
-    (unless m-sym
-      (vm-thread-debug 'vm-thread-root m-sym)
-      (signal 'vm-thread-error (list 'vm-thread-root)))
-    (setq list (vm-thread-list m))
     (catch 'return
+      (unless m-sym
+	(vm-thread-debug 'vm-thread-root m-sym)
+	(throw 'return m))
+      (setq list (vm-thread-list m))
       (while list
 	(setq id-sym (car list))
 	(when (vm-th-messages-of id-sym)
-	    (throw 'return (vm-th-message-of id-sym)))
+	  (throw 'return (vm-th-message-of id-sym)))
 	(setq list (cdr list)))
       nil)))
 
@@ -794,11 +849,11 @@ See also: `vm-thread-root'."
 	   (setq m-sym (vm-thread-symbol m))))
     (if (and vm-debug (member (symbol-name m-sym) vm-traced-message-ids))
 	(debug m-sym))
+    (catch 'return
     (unless m-sym
       (vm-thread-debug 'vm-thread-root-sym m-sym)
-      (signal 'vm-thread-error (list 'vm-thread-root)))
+      (throw 'return nil))
     (setq list (vm-thread-list m))
-    (catch 'return
       (while list
 	(setq id-sym (car list))
 	(when (vm-th-messages-of id-sym)

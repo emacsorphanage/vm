@@ -210,8 +210,8 @@ message forwarding, and organizing message presentation according to
 various criteria.
 
 You can make VM your default mail user agent by setting @code{mail-user-agent}
-to @code{vm-user-agent}, e.g. by @kbd{M-x} @code{customize-variable} @kbd{RET}
-@code{mail-user-agent} @kbd{RET}.
+to @code{vm-user-agent}, e.g. by @kbd{M-x} @code{customize-variable} @key{RET}
+@code{mail-user-agent} @key{RET}.
 
 To invoke VM, type @kbd{M-x vm}.  VM gathers any mail that has
 arrived in your system mailbox and appends it to a mail folder known as your
@@ -225,9 +225,9 @@ If you type @kbd{?} in a VM folder buffer you will get some help, i.e.
 
 @findex vm-scroll-forward
 @findex vm-scroll-backward
-@kindex SPC
+@kindex @key{SPC}
 @kindex b
-@kindex DEL
+@kindex @key{DEL}
 If there are any messages in the primary inbox, VM selects the first new
 or unread message, and previews it.  @dfn{Previewing} is VM's way of
 showing you part of a message and allowing you to decide whether you want
@@ -235,7 +235,7 @@ to read it.  @xref{Previewing}.  By default VM shows you the message's
 sender, recipient, subject and date headers.  Typing @key{SPC}
 (@code{vm-scroll-forward}) exposes the body of the message and flags the
 message as read.  Subsequent @key{SPC}'s scroll forward through the
-message, @kbd{b} or @key{DEL} scrolls backward.  When you reach the end
+message, @key{DEL} scrolls backward.  When you reach the end
 of a message, typing @key{SPC} or @kbd{n} moves you forward to preview
 the next message.  @xref{Paging}.
 
@@ -1363,7 +1363,7 @@ generation and MIME decoding to help catch your attention.
 @findex recover-file
 If you want to recover the lost changes, run @kbd{M-x
 vm-recover-folder} or use the Recover Folder entry in Folder menu.  At
-the @samp{Recover File: } prompt press @kbd{RET}.  (Emacs's built-in
+the @samp{Recover File: } prompt press @key{RET}.  (Emacs's built-in
 @kbd{recover-file} command is not recommended for this purpose because
 VM is unable to obtain reliable data regarding the mail folders from
 Emacs.)  Emacs will then display a detailed directory listing showing
@@ -1450,8 +1450,8 @@ will behave as if the value is @code{nil}.  The default value of
 @vindex vm-follow-summary-cursor
 You can also select messages by using the summary window.
 @xref{Summaries}.  Move the cursor to the summary line for the message
-you want to select and press @kbd{RET}.  VM will select this message.
-Instead of pressing @kbd{RET} you could run some other VM command that
+you want to select and press @key{RET}.  VM will select this message.
+Instead of pressing @key{RET} you could run some other VM command that
 operates based on the notion of a `current message'.  VM will select the
 message under the cursor in the summary window before executing such
 commands.  Example, if you type @kbd{d}, VM will select the message
@@ -1475,12 +1475,12 @@ Other commands to select messages:
 
 @table @kbd
 @findex vm-goto-message
-@kindex RET
+@kindex @key{RET}
 @item RET (@code{vm-goto-message})
 Go to message number @var{n}.  @var{n} is the prefix argument, if
 provided, otherwise it is prompted for in the minibuffer.
 @findex vm-goto-message-last-seen
-@kindex TAB
+@kindex @key{TAB}
 @item TAB (@code{vm-goto-message-last-seen})
 Go to message last previewed or read.
 @findex vm-next-message-no-skip
@@ -1602,11 +1602,13 @@ between exposing and hiding headers that would ordinarily be hidden.
 @node Paging, MIME Messages, Previewing, Reading Messages
 @section Paging
 
+@kindex @key{SPC}
+@kindex @key{DEL}
 @vindex vm-auto-next-message
 Typing @key{SPC} during a message preview exposes the body of the
 message.  If the message was new or previously unread, it will be
 flagged ``read''.  At this point you can use @key{SPC} to scroll
-forward, and @kbd{b} or @key{DEL} to scroll backward a windowful of
+forward, and @key{DEL} to scroll backward a windowful of
 text at a time.  A prefix argument @var{n} applied to these commands
 causes VM to scroll forward or backward @var{n} lines.  Typing space
 at the end of a message moves you to the next message.  If the value
@@ -2458,7 +2460,7 @@ message bodies are flushed before folders are saved to disk.
 @kindex o
 @kindex O
 You can manually load message bodies into the Folder using the command
-@kbd{o} (@code{vm-load-message}.  The command @kbd{O}
+@kbd{o} (@code{vm-load-message}).  The command @kbd{O}
 (@code{vm-unload-message}) unloads a previously loaded message body.
 Both the commands can take numerical prefix arguments or operate on
 marked messages.  Note that ``loading'' message body is different from
@@ -3770,12 +3772,6 @@ To enable and disable threading, type @kbd{C-t}
 (@code{vm-toggle-threads-display}).  You will find that, in the
 summary buffer, all related messages are grouped together and the
 subject titles are indented to show hierarchical relationships.
-Parent messages are displayed before their children and children are
-indented by a default two spaces to the right.  The amount of
-indentation per level is controlled by the variable
-@code{vm-summary-thread-indent-level}.  The default is two spaces.
-The variable @code{vm-summary-maximum-thread-indentation} says how
-many levels should be displayed via indentation.  The default is 20.
 
 @vindex vm-thread-using-subject
 @cindex header: References
@@ -3788,20 +3784,6 @@ all mailers provide them.  Therefore, all messages with similar
 @code{Subject} headers are also grouped into threads.  If you don't
 want VM to use Subject headers for threading, set the variable
 @code{vm-thread-using-subject} to @code{nil}.
-
-@vindex vm-summary-show-threads
-If you want VM to always display messages using threads, you should set
-the default value of the variable @code{vm-summary-show-threads}
-non-@code{nil} in your VM init file.  Example:
-
-@example
-(setq-default vm-summary-show-threads t)
-@end example
-
-@noindent Do not use @code{setq}, as this will only set the value of
-the variable in a single buffer.  Once you've started VM you should
-not change the value of this variable.  Rather you should use
-@kbd{C-t} to control the thread display.
 
 Unlike in previous versions of VM, threading is not a form of sorting.
 You can sort threads by the usual sort keys and the sort order will
@@ -3835,8 +3817,7 @@ individual messages.  These messages can then be handled like any other
 messages under VM.
 
 @findex vm-burst-digest
-@kindex *
-The command @kbd{*} (@code{vm-burst-digest}) bursts a digest into its
+The command (@code{vm-burst-digest}) bursts a digest into its
 individual messages and appends them to the current folder.  These
 messages are then assimilated into the current folder as new messages.
 The original digest message is not altered, and the messages extracted
@@ -3890,12 +3871,13 @@ of summary and attribution formats.
 
 @menu
 * Summary Format::     Customizing the summary format
+* Threaded Summaries:: How threading affects summaries
 * Thread Folding::     Collapsing message threads in the summary
 * Thread Operations::  Running bulk operations on message threads
 * Summary Faces::      Decorating summary with fonts and colors
 @end menu
 
-@node Summary Format, Thread Folding, Summaries, Summaries
+@node Summary Format, Threaded Summaries, Summaries, Summaries
 @section Summary Format
 
 @vindex vm-summary-format
@@ -4050,7 +4032,66 @@ into the folder and saved on the disk.  When you visit the folder
 again, you can reuse the saved summary format.  Set the variable
 @code{vm-restore-saved-summary-format} to t to achieve this effect.
 
-@node Thread Folding, Thread Operations, Summary Format, Summaries
+@node Threaded Summaries, Thread Folding, Summary Format, Summaries
+@section Threaded Summaries
+
+@findex vm-toggle-threads-display
+@vindex vm-summary-thread-indent-level
+@vindex vm-summary-maximum-thread-indentation
+When message threading is enabled (@pxref{Threading}),
+you will find that the 
+Summary buffer has all related messages are grouped together and the
+subject titles are indented to show hierarchical relationships.
+Parent messages are displayed before their children and children are
+indented by a default two spaces to the right.  The amount of
+indentation per level is controlled by the variable
+@code{vm-summary-thread-indent-level}.  The default is two spaces.
+The variable @code{vm-summary-maximum-thread-indentation} says how
+many levels should be displayed via indentation.  The default is 20.
+
+@vindex vm-summary-show-threads
+If you want VM to always display summaries using threads, you should
+set the default value of the variable @code{vm-summary-show-threads}
+non-@code{nil} in your VM init file.  Example:
+
+@example
+(setq-default vm-summary-show-threads t)
+@end example
+
+@noindent Do not use @code{setq}, as this will only set the value of
+the variable in a single buffer.  Once you've started VM you should
+not change the value of this variable.  Rather you should use
+@kbd{C-t} to control the thread display.  @xref{Threading}. 
+
+@unnumberedsubsec Manual control of thread indentation
+
+When you deal with long discussions in mailing lists or newsgroups,
+you would find that threads get very deep and their indentation in the
+Summary window is not entirely helpful.  You can temporarily promote
+the subthreads to higher level so that you can view the threading
+relationships more clearly.
+
+The command @kbd{M-x vm-decrease-thread-indentation} temporarily
+decreases the indentation of the current message and its subthread by
+one step.  You can give the command a numeric prefix argument N asking
+it to decreasing indentation by N steps.  Giving 0 as the prefix
+argument has a special meaning.  It says that the current message
+should not be indented at all, effectively making it appear as the
+root message of a thread.
+
+The command @kbd{M-x vm-increase-thread-indentation} does the
+opposite.  It increases the indentation of the current message and its
+subthread.  You can specify the level of increased indentation as the
+prefix argument.  Giving 0 as the prefix argument has the special
+meaning of asking VM to return the message to its standard indentation
+as determined by its thread level.
+
+Both of these commands alter the thread indentation for the current
+session only.  The next time you visit the folder, the threads will be
+displayed using the standard indentation.
+
+
+@node Thread Folding, Thread Operations, Threaded Summaries, Summaries
 @section Thread Folding
 
 A new feature in VM version 8.2 is that of ``folding'' message threads

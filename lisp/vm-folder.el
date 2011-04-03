@@ -1426,7 +1426,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	       (setq data
 		     (list
 		      (make-vector vm-attributes-vector-length nil)
-		      (make-vector vm-cache-vector-length nil)
+		      (make-vector vm-cached-data-vector-length nil)
 		      nil))
 	       ;; In lieu of a valid attributes header
 	       ;; assume the message is new.  avoid
@@ -1457,7 +1457,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 					(car data)
 					vm-attributes-vector-length))))
 		   (cond ((< (length cache)
-			     vm-cache-vector-length)
+			     vm-cached-data-vector-length)
 			  ;; tink the message stuff flag so that if
 			  ;; the user saves we get rid of the old
 			  ;; short vector.  otherwise we could be
@@ -1467,20 +1467,20 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			  (setcar (cdr data)
 				  (vm-extend-vector
 				   cache
-				   vm-cache-vector-length))
+				   vm-cached-data-vector-length))
 			  (setq cache (cadr data))))))
 	    ;; data list might not be long enough for (nth 2 ...)  but
 	    ;; that's OK because nth returns nil if you overshoot the
 	    ;; end of the list.
             (unless (and (vectorp cache)
-			 (= (length cache) vm-cache-vector-length)
+			 (= (length cache) vm-cached-data-vector-length)
 			 (or (null (aref cache 7)) (stringp (aref cache 7)))
 			 (or (null (aref cache 11)) (stringp (aref cache 11))))
               (message "Bad VM cache data: %S" cache)
               (vm-set-stuff-flag-of (car mp) t)
               (setcar (cdr data)
                       (setq cache 
-			    (make-vector vm-cache-vector-length nil))))
+			    (make-vector vm-cached-data-vector-length nil))))
 
 	    (vm-set-labels-of (car mp) (nth 2 data))
 	    (vm-set-cached-data-of (car mp) cache)
@@ -1489,7 +1489,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 		 (re-search-forward vm-berkeley-mail-status-header-regexp
 				    (vm-text-of (car mp)) t))
 	    (vm-set-cached-data-of 
-	     (car mp) (make-vector vm-cache-vector-length nil))
+	     (car mp) (make-vector vm-cached-data-vector-length nil))
 	    (goto-char (match-beginning 1))
 	    (vm-set-attributes-of
 	     (car mp)
@@ -1497,7 +1497,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	    (vm-set-unread-flag (car mp) (not (looking-at ".*R.*")) 'norecord))
 	   (t
 	    (vm-set-cached-data-of 
-	     (car mp) (make-vector vm-cache-vector-length nil))
+	     (car mp) (make-vector vm-cached-data-vector-length nil))
 	    (vm-set-attributes-of
 	     (car mp)
 	     (make-vector vm-attributes-vector-length nil))
@@ -1579,7 +1579,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
   (let ((mp (or message-list vm-message-list)) attr access-method cache)
     (while mp
       (setq attr (make-vector vm-attributes-vector-length nil)
-	    cache (make-vector vm-cache-vector-length nil))
+	    cache (make-vector vm-cached-data-vector-length nil))
       (vm-set-cached-data-of (car mp) cache)
       (vm-set-attributes-of (car mp) attr)
       ;; make message be new by default, but avoid vm-set-new-flag
@@ -1640,7 +1640,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 		      (make-list (- vm-attributes-vector-length
 				    (length data))
 				 nil)))
-	(make-vector vm-cache-vector-length nil)))
+	(make-vector vm-cached-data-vector-length nil)))
 
 (defun vm-gobble-last-modified ()
   (let ((case-fold-search t)
@@ -2788,8 +2788,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		  (if (null cache-list)
 		      (error "Cache list is shorter than location list")
 		    (setq v (car cache-list))
-		    (if (< (length v) vm-cache-vector-length)
-			(setq v (vm-extend-vector v vm-cache-vector-length)))
+		    (if (< (length v) vm-cached-data-vector-length)
+			(setq v (vm-extend-vector v vm-cached-data-vector-length)))
 		    (vm-set-cached-data-of m v))
 		  (if (null label-list)
 		      (error "Label list is shorter than location list")

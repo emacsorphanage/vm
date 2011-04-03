@@ -5635,7 +5635,6 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "^" 'vm-goto-parent-message)
     (define-key map "t" 'vm-expose-hidden-headers)
     (define-key map " " 'vm-scroll-forward)
-    (define-key map "b" 'vm-scroll-backward)
     (define-key map "\C-?" 'vm-scroll-backward)
     (define-key map [delete] 'vm-scroll-backward)
     (define-key map [backspace] 'vm-scroll-backward)
@@ -5660,7 +5659,6 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "Z" 'vm-forward-message-encapsulated)
     (define-key map "c" 'vm-continue-composing-message)
     (define-key map "@" 'vm-send-digest)
-    (define-key map "*" 'vm-burst-digest)
     (define-key map "m" 'vm-mail)
     (define-key map "g" 'vm-get-new-mail)
     (define-key map "G" 'vm-sort-messages)
@@ -5691,8 +5689,6 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map [(control /)] 'vm-undo)
     (define-key map "\C-xu" 'vm-undo)
     ;; (define-key map "!" 'shell-command)
-    (define-key map "<" 'vm-beginning-of-message)
-    (define-key map ">" 'vm-end-of-message)
     (define-key map "[" 'vm-move-to-previous-button)
     (define-key map "]" 'vm-move-to-next-button)
     (define-key map "\M-s" 'vm-isearch-forward)
@@ -5784,6 +5780,15 @@ be a regexp matching all chars to be replaced by a \"_\"."
 `vm-mode-window-map'   VM mode window configuration map (`W')
 `vm-mode-pipe-map'     VM mode pipe-to-application map (`|')
 ")
+
+(defun vm-optional-keys ()
+  "Install optional key bindings for VM modes."
+  (interactive)
+  (define-key vm-mode-map "<" 'vm-beginning-of-message)
+  (define-key vm-mode-map ">" 'vm-end-of-message)
+  (define-key vm-mode-map "b" 'vm-scroll-backward)
+  (define-key vm-mode-map "*" 'vm-burst-digest)
+  )
 
 (defcustom vm-summary-enable-thread-folding nil
   "*If non-nil, enables folding of threads in VM summary
@@ -6001,7 +6006,7 @@ folder.  (Not in use.)")
   "A saved version of the undo record list used in `vm-toggle-virtual-mirror'.")
 (make-variable-buffer-local 'vm-saved-undo-record-list)
 (defvar vm-undo-record-pointer nil
-  "A pointer into the `vm-undo-undo-record-list'.")
+  "A pointer into the `vm-undo-record-list'.")
 (make-variable-buffer-local 'vm-undo-record-pointer)
 (defvar vm-last-save-folder nil)
 (make-variable-buffer-local 'vm-last-save-folder)
@@ -6476,11 +6481,6 @@ Should be just a list of strings, not an alist or an obarray.")
 (defvar vm-completion-auto-space t
   "Non-nil value means that `vm-minibuffer-complete-word' should automatically
 append a space to words that complete unambiguously.")
-(defconst vm-attributes-vector-length 16)
-(defconst vm-cache-vector-length 26)
-(defconst vm-softdata-vector-length 22)
-(defconst vm-location-data-vector-length 6)
-(defconst vm-mirror-data-vector-length 6)
 (defconst vm-folder-summary-vector-length 15)
 (defconst vm-startup-message-lines
   '("Please use \\[vm-submit-bug-report] to report bugs."
