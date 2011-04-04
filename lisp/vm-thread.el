@@ -763,6 +763,32 @@ mean?)                                         USR, 2011-03-17"
 	 s-sym (remq m (vm-ts-messages-of s-sym)))
 	))))
 
+;; This function is still under development.  USR, 2011-04-04
+
+;;;###autoload
+(defun vm-attach-to-thread ()
+  "Attach the current message as a child of the message last visited."
+  (interactive)
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-error-if-folder-read-only)
+  (vm-build-threads-if-unbuilt)
+  (unless vm-last-message-pointer
+    (error "No last message visited"))
+  (let ((new-parent (car vm-last-message-pointer))
+	(p-sym (vm-thread-symbol (car vm-last-message-pointer)))
+	(m (car vm-message-pointer))
+	(m-sym (vm-thread-symbol (car vm-message-pointer))))
+    ;; (vm-thread-mark-for-summary-update (list m))
+    (vm-unthread-message m)
+    (unless (vm-th-safe-parent-p m-sym p-sym)
+      (error "Attaching to thread will create a cycle"))
+    (vm-th-set-parent-of m-sym p-sym)
+    (vm-th-add-child p-sym m-sym))
+    (message "Message attached to thread")
+    (vm-update-summary-and-mode-line)
+    )
+
 ;;;###autoload
 (defun vm-references (m)
   "Returns the cached references list of message M.  If the cache is
