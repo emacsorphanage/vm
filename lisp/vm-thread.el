@@ -116,7 +116,7 @@ subject-based threading information.  Threads should have been built
 before this.  Otherwise nil is returned."
   (with-current-buffer (vm-buffer-of m)
     (and (vectorp vm-thread-subject-obarray)
-	 (intern (vm-su-subject m) vm-thread-subject-obarray))))
+	 (intern (vm-so-sortable-subject m) vm-thread-subject-obarray))))
 
 
 (defsubst vm-th-youngest-date-of (id-sym)
@@ -534,8 +534,7 @@ all its ancestors, followed via the parent links."
 	    ;; know that it will be threaded and unthreaded
 	    ;; using the parent information.
 	    (unless (and parent 
-			 (vm-th-messages-of 
-			  (intern parent vm-thread-obarray)))
+			 (vm-th-messages-of (vm-th-parent-of id-sym)))
 	      (vm-ts-set-members-of 
 	       subject-sym (cons id-sym (vm-ts-members-of subject-sym)))))))
       (setq mp (cdr mp) n (1+ n))
