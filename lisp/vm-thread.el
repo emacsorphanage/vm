@@ -276,7 +276,7 @@ indentation all the way to 0."
 	       m (- (or (vm-thread-indentation-offset-of m) 0)
 		      n)))
 	    (vm-thread-subtree msg)))
-    (vm-thread-mark-for-summary-update (vm-thread-subtree msg))
+    (vm-thread-mark-for-summary-update (list msg))
     (vm-update-summary-and-mode-line)))
 
 ;;;###autoload
@@ -298,7 +298,7 @@ indentation back to the normal indentation, i.e., no offset is used."
 	      (vm-set-thread-indentation-offset-of 
 	       m (+ (or (vm-thread-indentation-offset-of m) 0) n)))
 	    (vm-thread-subtree msg)))
-    (vm-thread-mark-for-summary-update (vm-thread-subtree msg))
+    (vm-thread-mark-for-summary-update (list msg))
     (vm-update-summary-and-mode-line)))
 
 ;; Dependency of threading information
@@ -312,10 +312,8 @@ indentation back to the normal indentation, i.e., no offset is used."
   "For all messages in MESSAGE-LIST, build thread information in the
 `vm-thread-obarray' and `vm-thread-subject-obarray'.  If MESSAGE-LIST
 is nil, do it for all the messages in the folder.  USR, 2010-07-15"
-  (unless (vectorp vm-thread-obarray)
-    (setq vm-thread-obarray (make-vector 641 0)
-	  vm-thread-subject-obarray (make-vector 641 0)))
-  (let ((mp (or message-list vm-message-list))
+  (let ((initializing (not (vectorp vm-thread-obarray)))
+	(mp (or message-list vm-message-list))
 	(n 0)
 	;; Just for laughs, make the update interval vary.
 	(modulus (+ (% (vm-abs (random)) 11) 40))
@@ -323,11 +321,14 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 	;; unless there were already messages present.
 	(schedule-reindents message-list)
 	m parent parent-sym id id-sym date refs old-parent-sym)
+  (when initializing
+    (setq vm-thread-obarray (make-vector 641 0)
+	  vm-thread-subject-obarray (make-vector 641 0)))
     ;; Build threads using references
-    (vm-build-reference-threads mp schedule-reindents)
+    (vm-build-reference-threads mp schedule-reindents initializing)
     ;; Build threads using subject
     (when vm-thread-using-subject
-      (vm-build-subject-threads mp schedule-reindents))
+      (vm-build-subject-threads mp schedule-reindents initializing))
     ;; Calculate thread-subtrees for all the known message ID's
     (mapatoms
      (lambda (id-sym)
@@ -337,13 +338,16 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
     (when (> n modulus)
       (message "Building threads... done"))))
 
-(defun vm-build-reference-threads (mlist schedule-reindents)
+(defun vm-build-reference-threads (mlist schedule-reindents initializing)
   "Build reference threads for all the messages in MLIST.  If threads are
 already built, then just insert these messages into the threads
 database.
 
 If SCHEDULE-REINDENTS is non-nil, then ask for the summary lines of
-all affected messages to be updated."
+all affected messages to be updated.
+
+If INITIALIZING is non-nil, then assume that the threads database is
+being initialized."
   (let ((n 0)
 	(mp mlist)
 	modulus total
@@ -356,7 +360,7 @@ all affected messages to be updated."
 	    id-sym (intern-soft id vm-thread-obarray)
 	    date (vm-so-sortable-datestring m))
       (if (member id vm-traced-message-ids)
-	  (vm-thread-debug 'vm-build-reference-threads m))
+	  (vm-thread-debug 'vm-build-reference-threads id m))
       (unless id-sym
 	(setq id-sym (intern id vm-thread-obarray))
 	(vm-th-set-parent-of id-sym nil)
@@ -365,14 +369,13 @@ all affected messages to be updated."
       (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))
       (vm-th-set-date-of id-sym date)
       (when (and schedule-reindents (null (cdr (vm-th-messages-of id-sym))))
+	;; vm-th-clear-subtree done below
 	(vm-thread-mark-for-summary-update 
 	 (cons m (vm-th-child-messages-of id-sym))))
       ;; Thread using the parent
       (setq parent (vm-parent m))
       (when parent
 	(setq parent-sym (intern parent vm-thread-obarray))
-	;; force the subtree to be rebuilt
-	(vm-th-clear-subtree-of parent-sym)	
 	;; set the parent of m.
 	;; if there was a parent already, update it consistently.
 	(when (vm-th-safe-parent-p id-sym parent-sym)
@@ -380,14 +383,19 @@ all affected messages to be updated."
 	      (vm-thread-debug 'vm-build-reference-threads-1 id-sym))	  
 	  (cond ((or (null (vm-th-parent-of id-sym))
 		     (eq (vm-th-parent-of id-sym) parent-sym))
+		 (unless initializing (vm-th-clear-subtree parent-sym))
 		 (vm-th-set-parent-of id-sym parent-sym)
 		 (vm-th-add-child parent-sym id-sym))
 		(t
 		 (setq old-parent-sym (vm-th-parent-of id-sym))
+		 (unless initializing 
+		   (vm-th-clear-subtree old-parent-sym)	
+		   (vm-th-clear-subtree parent-sym))
 		 (vm-th-delete-child old-parent-sym id-sym)
 		 (vm-th-set-parent-of id-sym parent-sym)
 		 (vm-th-add-child parent-sym id-sym)
 		 (if schedule-reindents
+		     ;; vm-th-clear-subtree done above
 		     (vm-thread-mark-for-summary-update
 		      (vm-th-messages-of id-sym)))))))
       (setq mp (cdr mp) n (1+ n))
@@ -407,14 +415,13 @@ all affected messages to be updated."
 	  (let (parent-sym id-sym msgs msg-syms)
 	    (setq parent-sym (intern (car refs) vm-thread-obarray)
 		  refs (cdr refs))
-	    ;; force the subtree to be rebuilt
-	    (vm-th-clear-subtree-of parent-sym)
 	    (while refs
 	      (setq id-sym (intern (car refs) vm-thread-obarray))
 	      (when (and (null (vm-th-parent-of id-sym))
 			 (vm-th-safe-parent-p id-sym parent-sym))
 		(if (member (symbol-name id-sym) vm-traced-message-ids)
 		    (vm-thread-debug 'vm-build-reference-threads-2 id-sym))
+		(unless initializing (vm-th-clear-subtree parent-sym))
 		(vm-th-set-parent-of id-sym parent-sym)
 		;; (setq msgs (vm-th-messages-of id-sym))
 		;; (setq msg-syms 
@@ -426,8 +433,8 @@ all affected messages to be updated."
 		;;      ))
 		(vm-th-add-child parent-sym id-sym)
 		(if schedule-reindents
+		    ;; vm-th-clear-subtree done above
 		    (vm-thread-mark-for-summary-update msgs)))
-	      (vm-th-clear-subtree-of id-sym)	; force it to be rebuilt
 	      (setq parent-sym id-sym
 		    refs (cdr refs)))))
       (setq mp (cdr mp) n (1+ n))
@@ -435,11 +442,26 @@ all affected messages to be updated."
 	  (message "Building threads... %d%%" (* (/ (+ n 0.0) total) 100)))
       )))
 
+(defun vm-th-clear-thread-lists (m)
+  "Clear the thread-list and thread-indentation fields of the message
+M and all its descendants, found via the `vm-thread-subtree' field."
+  (mapc (lambda (d)
+	  (vm-set-thread-list-of d nil)
+	  (vm-set-thread-indentation-of d nil))
+	(vm-thread-subtree m)))
+
 (defun vm-th-clear-subtree-of (id-sym)
   "Clear the thread-subtree of the canonical message with ID-SYM, i.e.,
 set it to nil.  It will get recalculated on demand."
   (when (vm-th-message-of id-sym)
     (vm-set-thread-subtree-of (vm-th-message-of id-sym) nil)))
+
+(defun vm-th-clear-subtree (id-sym)
+  "Clear the thread subtrees of the messages with id-symbol ID-SYM and
+all its ancestors, followed via the parent links."
+  (while id-sym
+    (vm-th-clear-subtree-of id-sym)
+    (setq id-sym (vm-th-parent-of id-sym))))
 
 (defun vm-th-safe-parent-p (id-sym parent-sym)
   "Check if it is safe to set the parent of ID-SYM to PARENT-SYM."
@@ -455,7 +477,7 @@ set it to nil.  It will get recalculated on demand."
 	(setq ancestor (vm-th-parent-of ancestor)))
       t)))
 
-(defun vm-build-subject-threads (mp schedule-reindents)
+(defun vm-build-subject-threads (mp schedule-reindents initializing)
   (let ((n 0)
 	(modulus 10)
 	m parent parent-sym id id-sym date refs old-parent-sym
@@ -503,6 +525,7 @@ set it to nil.  It will get recalculated on demand."
 		;; of sync.
 		(when schedule-reindents
 		  (let ((inhibit-quit nil))
+		    ;; there might be need for vm-th-clear-subtree here
 		    (vm-thread-mark-for-summary-update 
 		     (vm-ts-messages-of subject-sym)))))
 	    ;; optimization: if we know that this message
@@ -539,17 +562,20 @@ function is called."
 
 ;;;###autoload
 (defun vm-thread-mark-for-summary-update (message-list)
-  (dolist (m message-list)
-    ;; if thread-list is null then we've already marked this
-    ;; message, or it doesn't need marking.
-    (if (null (vm-thread-list-of m))
-	nil
-      (mapc 'vm-th-clear-subtree-of (vm-thread-list-of m))
-      (vm-mark-for-summary-update m t)
-      (vm-set-thread-list-of m nil)
-      (vm-set-thread-indentation-of m nil)
-      (vm-thread-mark-for-summary-update
-       (vm-th-child-messages-of (vm-thread-symbol m))))))
+  "Mark the messages in MESSAGE-LIST and all their descendants for
+summary update.  This function does not depend on cached
+thread-subtrees.                                USR, 2011-04-03" 
+  (mapc (lambda (m)
+	  ;; if thread-list is null then we've already marked this
+	  ;; message, or it doesn't need marking.
+	  (if (null (vm-thread-list-of m))
+	      nil
+	    (vm-mark-for-summary-update m t)
+	    (vm-set-thread-list-of m nil)
+	    (vm-set-thread-indentation-of m nil)
+	    (vm-thread-mark-for-summary-update
+	     (vm-th-child-messages-of (vm-thread-symbol m)))))
+	message-list))
 
 (defun vm-build-thread-list (message)
   "Returns the thread-list, i.e., the lineage of MESSAGE, as a list of
@@ -675,17 +701,17 @@ mean?)                                         USR, 2011-03-17"
 			vm-thread-subject-obarray))
     (if (member (symbol-name id-sym) vm-traced-message-ids)
 	(vm-thread-debug 'vm-unthread-message id-sym))
-    ;; discard cached thread properties
-    (mapc 'vm-th-clear-subtree-of (vm-thread-list-of m))
-    (vm-set-thread-list-of m nil)
-    (vm-set-thread-indentation-of m nil)
+    ;; mark the subtree for summary update before we change it
+    (vm-thread-mark-for-summary-update (vm-thread-subtree m))
+    ;; discard cached thread properties of descendants
+    (vm-th-clear-thread-lists m)
+    ;; discard cached thread properties of ancestors
+    (vm-th-clear-subtree (vm-thread-symbol m))
     ;; remove the message from its erstwhile thread
     (when (boundp id-sym)
       ;; remove m from its thread node
       (vm-th-set-messages-of 
        id-sym (remq m (vm-th-messages-of id-sym)))
-      (vm-thread-mark-for-summary-update 
-       (vm-th-child-messages-of id-sym))
       ;; reset the thread dates of m
       (setq date (vm-so-sortable-datestring m))
       (vm-th-set-youngest-date-of id-sym date)
@@ -812,7 +838,7 @@ calculates the thread-list and caches it.  USR, 2010-03-13"
       (progn
 	(vm-set-thread-list-of m (vm-build-thread-list m))
 	;; reset the thread-subtrees, forcing them to be rebuilt
-	(mapc 'vm-th-clear-subtree-of (vm-thread-list-of m))
+	;; (mapc 'vm-th-clear-subtree-of (vm-thread-list-of m))
 	(vm-thread-list-of m))))
 (defalias 'vm-th-thread-list 'vm-thread-list)
 
