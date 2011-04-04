@@ -459,9 +459,21 @@ set it to nil.  It will get recalculated on demand."
 (defun vm-th-clear-subtree (id-sym)
   "Clear the thread subtrees of the messages with id-symbol ID-SYM and
 all its ancestors, followed via the parent links."
-  (while id-sym
+  (let ((msg (vm-th-message-of id-sym))
+	subject subject-sym)
     (vm-th-clear-subtree-of id-sym)
-    (setq id-sym (vm-th-parent-of id-sym))))
+    (while (vm-th-parent-of id-sym)
+      (setq id-sym (vm-th-parent-of id-sym))
+      (vm-th-clear-subtree-of id-sym)
+      (when (vm-th-message-of id-sym) 
+	(setq msg (vm-th-message-of id-sym))))
+    (when msg 
+      (setq subject-sym (intern-soft 
+			 (vm-so-sortable-subject msg)
+			 vm-thread-subject-obarray)))
+    (when subject-sym
+      (setq id-sym (vm-ts-root-of subject-sym))
+      (vm-th-clear-subtree-of id-sym))))
 
 (defun vm-th-safe-parent-p (id-sym parent-sym)
   "Check if it is safe to set the parent of ID-SYM to PARENT-SYM."
@@ -517,6 +529,7 @@ with other ancestors."
 	  (if (string< date (vm-ts-root-date-of subject-sym))
 	      (let* ((vect (symbol-value subject-sym))
 		     (i-sym (vm-ts-root-of subject-sym)))
+		(vm-th-clear-subtree i-sym)
 		(unless (vm-th-belongs-to-reference-thread i-sym)
 		  (vm-ts-set-members-of 
 		   subject-sym (cons i-sym (vm-ts-members-of subject-sym))))
@@ -533,6 +546,7 @@ with other ancestors."
 		    (vm-thread-mark-for-summary-update 
 		     (vm-ts-messages-of subject-sym)))))
 	    (unless (vm-th-belongs-to-reference-thread id-sym)
+	      (vm-th-clear-subtree (vm-ts-root-of subject-sym))
 	      (vm-ts-set-members-of 
 	       subject-sym (cons id-sym (vm-ts-members-of subject-sym)))))))
       (setq mp (cdr mp) n (1+ n))
@@ -942,7 +956,7 @@ Threads should have been built for this function to work."
     (unless m-sym
       (vm-thread-debug 'vm-thread-subtree m-sym)
       (signal 'vm-thread-error (list 'vm-thread-subtree)))
-    (if (member (vm-su-message-id msg) vm-traced-message-ids)
+    (if (and vm-debug (member (vm-su-message-id msg) vm-traced-message-ids))
 	(vm-thread-debug 'vm-thread-subtree (vm-su-message-id msg)))
     (if (eq msg (vm-th-message-of m-sym))
 	;; canonical message for this message ID
