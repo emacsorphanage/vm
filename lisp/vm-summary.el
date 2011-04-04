@@ -1683,27 +1683,6 @@ Call this function if you made changes to `vm-summary-format'."
        (mapconcat 'identity (sort (vm-labels-of m) 'string-lessp) ","))
       (vm-label-string-of m)))
 
-(defun vm-substring (string from &optional to)
-  (let ((work-buffer nil))
-    (unwind-protect
-	(save-excursion
-	  (setq work-buffer (vm-make-work-buffer))
-	  (set-buffer work-buffer)
-	  (insert string)
-	  (if (null to)
-	      (setq to (length string))
-	    (if (< to 0)
-		(setq to (+ (length string) to))))
-	  ;; string indices start at 0, buffers start at 1.
-	  (setq from (1+ from)
-		to (1+ to))
-	  (if (> from (point-min))
-	      (delete-region (point-min) from))
-	  (if (< to (point-max))
-	      (delete-region to (point-max)))
-	  (buffer-string))
-      (and work-buffer (kill-buffer work-buffer)))))
-
 (defun vm-make-folder-summary ()
   (make-vector vm-folder-summary-vector-length nil))
 
