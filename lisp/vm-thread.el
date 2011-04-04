@@ -361,17 +361,17 @@ being initialized."
 	    date (vm-so-sortable-datestring m))
       (if (member id vm-traced-message-ids)
 	  (vm-thread-debug 'vm-build-reference-threads id m))
-      (unless id-sym
+      (unless id-sym			; first occurrence now
 	(setq id-sym (intern id vm-thread-obarray))
 	(vm-th-set-parent-of id-sym nil)
 	(vm-th-set-children-of id-sym nil))
-      (vm-th-set-message-of id-sym m)
-      (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))
-      (vm-th-set-date-of id-sym date)
-      (when (and schedule-reindents (null (cdr (vm-th-messages-of id-sym))))
-	;; vm-th-clear-subtree done below
-	(vm-thread-mark-for-summary-update 
-	 (cons m (vm-th-child-messages-of id-sym))))
+      (if (vm-th-messages-of id-sym)	; registered already
+	  (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))
+	(vm-th-set-messages-of id-sym (list m))
+	(vm-th-set-message-of id-sym m)
+	(vm-th-set-date-of id-sym date)
+	(when schedule-reindents
+	  (vm-thread-mark-for-summary-update (list m))))
       ;; Thread using the parent
       (setq parent (vm-parent m))
       (when parent
@@ -381,21 +381,22 @@ being initialized."
 	(when (vm-th-safe-parent-p id-sym parent-sym)
 	  (if (member (symbol-name id-sym) vm-traced-message-ids)
 	      (vm-thread-debug 'vm-build-reference-threads-1 id-sym))	  
-	  (cond ((or (null (vm-th-parent-of id-sym))
-		     (eq (vm-th-parent-of id-sym) parent-sym))
-		 (unless initializing (vm-th-clear-subtree parent-sym))
+	  (cond ((null (vm-th-parent-of id-sym))
+		 (unless initializing 
+		   (vm-th-clear-subtree parent-sym)
+		   (vm-th-clear-thread-lists id-sym))
 		 (vm-th-set-parent-of id-sym parent-sym)
 		 (vm-th-add-child parent-sym id-sym))
-		(t
-		 (setq old-parent-sym (vm-th-parent-of id-sym))
+		((not (eq (vm-th-parent-of id-sym) parent-sym))
 		 (unless initializing 
 		   (vm-th-clear-subtree old-parent-sym)	
-		   (vm-th-clear-subtree parent-sym))
+		   (vm-th-clear-subtree parent-sym)
+		   (vm-th-clear-thread-lists id-sym))
+		 (setq old-parent-sym (vm-th-parent-of id-sym))
 		 (vm-th-delete-child old-parent-sym id-sym)
 		 (vm-th-set-parent-of id-sym parent-sym)
 		 (vm-th-add-child parent-sym id-sym)
 		 (if schedule-reindents
-		     ;; vm-th-clear-subtree done above
 		     (vm-thread-mark-for-summary-update
 		      (vm-th-messages-of id-sym)))))))
       (setq mp (cdr mp) n (1+ n))
@@ -421,20 +422,14 @@ being initialized."
 			 (vm-th-safe-parent-p id-sym parent-sym))
 		(if (member (symbol-name id-sym) vm-traced-message-ids)
 		    (vm-thread-debug 'vm-build-reference-threads-2 id-sym))
-		(unless initializing (vm-th-clear-subtree parent-sym))
+		(unless initializing 
+		  (vm-th-clear-subtree parent-sym)
+		  (vm-th-clear-thread-lists id-sym))
 		(vm-th-set-parent-of id-sym parent-sym)
-		;; (setq msgs (vm-th-messages-of id-sym))
-		;; (setq msg-syms 
-		;;       (mapcar 'vm-thread-symbol msgs))
-		;; (if msgs
-		;;     (vm-th-set-children-of 
-		;;      parent-sym 
-		;;      (append msg-syms (vm-th-children-of parent-sym))
-		;;      ))
 		(vm-th-add-child parent-sym id-sym)
 		(if schedule-reindents
-		    ;; vm-th-clear-subtree done above
-		    (vm-thread-mark-for-summary-update msgs)))
+		    (vm-thread-mark-for-summary-update 
+		     (vm-th-messages-of id-sym))))
 	      (setq parent-sym id-sym
 		    refs (cdr refs)))))
       (setq mp (cdr mp) n (1+ n))
@@ -529,7 +524,9 @@ with other ancestors."
 	  (if (string< date (vm-ts-root-date-of subject-sym))
 	      (let* ((vect (symbol-value subject-sym))
 		     (i-sym (vm-ts-root-of subject-sym)))
-		(vm-th-clear-subtree i-sym)
+		(unless initializing
+		  (vm-th-clear-subtree i-sym)
+		  (vm-th-clear-thread-lists (vm-ts-members-of subject-sym)))
 		(unless (vm-th-belongs-to-reference-thread i-sym)
 		  (vm-ts-set-members-of 
 		   subject-sym (cons i-sym (vm-ts-members-of subject-sym))))
