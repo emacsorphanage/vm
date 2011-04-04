@@ -193,6 +193,8 @@ thread have their cached data discarded."
 	    (save-excursion (vm-present-current-message)))
 	(if (vectorp vm-thread-obarray)
 	    (vm-build-threads (list m)))
+	(if vm-thread-debug
+	    (vm-check-thread-integrity))
 	(if vm-summary-show-threads
 	    (intern (buffer-name) buffers-needing-thread-sort))
 	(dolist (v-m (vm-virtual-messages-of m))

@@ -1667,6 +1667,8 @@ Call this function if you made changes to `vm-summary-format'."
     (vm-update-summary-and-mode-line)
     (unless vm-summary-debug
       (message "Recreating summary... done")))
+  (if vm-thread-debug
+      (vm-check-thread-integrity))
   (message "Fixing your summary... done"))
 
 (defun vm-su-thread-indent (m)
