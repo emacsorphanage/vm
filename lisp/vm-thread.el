@@ -477,14 +477,24 @@ all its ancestors, followed via the parent links."
 	(setq ancestor (vm-th-parent-of ancestor)))
       t)))
 
+(defun vm-th-belongs-to-reference-thread (id-sym)
+  "Check if ID-SYM is the symbol of a message in a reference thread
+with other ancestors."
+  (let ((parent (vm-th-parent-of id-sym)))
+    (catch 'return
+      (while parent
+	(if (vm-th-messages-of parent)
+	    (throw 'return t)
+	  (setq parent (vm-th-parent-of parent))))
+      nil)))
+
 (defun vm-build-subject-threads (mp schedule-reindents initializing)
   (let ((n 0)
 	(modulus 10)
-	m parent parent-sym id id-sym date refs old-parent-sym
+	m id id-sym date
 	subject subject-sym)
     (while mp
       (setq m (car mp)
-	    parent (vm-parent m)
 	    id (vm-su-message-id m)
 	    id-sym (intern id vm-thread-obarray)
 	    date (vm-so-sortable-datestring m))
@@ -507,13 +517,7 @@ all its ancestors, followed via the parent links."
 	  (if (string< date (vm-ts-root-date-of subject-sym))
 	      (let* ((vect (symbol-value subject-sym))
 		     (i-sym (vm-ts-root-of subject-sym)))
-		;; optimization: if we know that this message
-		;; already has a parent, then don't bother
-		;; adding it to the list of child messages
-		;; since we know that it will be threaded and
-		;; unthreaded using the parent information.
-		(unless (and (vm-th-parent-of i-sym)
-			     (vm-th-messages-of (vm-th-parent-of i-sym)))
+		(unless (vm-th-belongs-to-reference-thread i-sym)
 		  (vm-ts-set-members-of 
 		   subject-sym (cons i-sym (vm-ts-members-of subject-sym))))
 		(vm-ts-set-root-of subject-sym id-sym)
@@ -528,13 +532,7 @@ all its ancestors, followed via the parent links."
 		    ;; there might be need for vm-th-clear-subtree here
 		    (vm-thread-mark-for-summary-update 
 		     (vm-ts-messages-of subject-sym)))))
-	    ;; optimization: if we know that this message
-	    ;; already has a parent, then don't bother adding
-	    ;; it to the list of child messages, since we
-	    ;; know that it will be threaded and unthreaded
-	    ;; using the parent information.
-	    (unless (and parent 
-			 (vm-th-messages-of (vm-th-parent-of id-sym)))
+	    (unless (vm-th-belongs-to-reference-thread id-sym)
 	      (vm-ts-set-members-of 
 	       subject-sym (cons id-sym (vm-ts-members-of subject-sym)))))))
       (setq mp (cdr mp) n (1+ n))
