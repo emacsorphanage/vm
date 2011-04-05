@@ -437,13 +437,15 @@ being initialized."
 	  (message "Building threads... %d%%" (* (/ (+ n 0.0) total) 100)))
       )))
 
-(defun vm-th-clear-thread-lists (m)
-  "Clear the thread-list and thread-indentation fields of the message
-M and all its descendants, found via the `vm-thread-subtree' field."
+(defun vm-th-clear-thread-lists (id-sym)
+  "Clear the thread-list and thread-indentation fields of the
+message with ID-SYM and all its descendants."
   (mapc (lambda (d)
 	  (vm-set-thread-list-of d nil)
 	  (vm-set-thread-indentation-of d nil))
-	(vm-thread-subtree m)))
+	(vm-th-messages-of id-sym))
+  (mapc 'vm-th-clear-thread-lists
+	(vm-th-children-of id-sym)))
 
 (defun vm-th-clear-subtree-of (id-sym)
   "Clear the thread-subtree of the canonical message with ID-SYM, i.e.,
@@ -505,12 +507,11 @@ with other ancestors."
 	    id (vm-su-message-id m)
 	    id-sym (intern id vm-thread-obarray)
 	    date (vm-so-sortable-datestring m))
-      (if (member id vm-traced-message-ids)
-	  (vm-thread-debug 'vm-build-subject-threads id m))
+      (when (member id vm-traced-message-ids)
+	(vm-thread-debug 'vm-build-subject-threads id m))
       (setq subject (vm-so-sortable-subject m)
 	    subject-sym (intern subject vm-thread-subject-obarray))
-      ;; inhibit-quit because we need to make sure the asets
-      ;; below are an atomic group.
+      ;; -------------- atomic block -------------------------------
       (let* ((inhibit-quit t))
 	;; if this subject was never seen before create the
 	;; information vector.
@@ -526,7 +527,8 @@ with other ancestors."
 		     (i-sym (vm-ts-root-of subject-sym)))
 		(unless initializing
 		  (vm-th-clear-subtree i-sym)
-		  (vm-th-clear-thread-lists (vm-ts-members-of subject-sym)))
+		  (mapc 'vm-th-clear-thread-lists 
+			(vm-ts-members-of subject-sym)))
 		(unless (vm-th-belongs-to-reference-thread i-sym)
 		  (vm-ts-set-members-of 
 		   subject-sym (cons i-sym (vm-ts-members-of subject-sym))))
@@ -544,8 +546,10 @@ with other ancestors."
 		     (vm-ts-messages-of subject-sym)))))
 	    (unless (vm-th-belongs-to-reference-thread id-sym)
 	      (vm-th-clear-subtree (vm-ts-root-of subject-sym))
+	      ;; no need to clear thread-lists; ts-root is unchanged
 	      (vm-ts-set-members-of 
 	       subject-sym (cons id-sym (vm-ts-members-of subject-sym)))))))
+      ;; -------------- end atomic block ----------------------------------
       (setq mp (cdr mp) n (1+ n))
       (when (zerop (% n modulus))
 	(message "Building threads... %d" n)))))
@@ -701,6 +705,7 @@ The full functionality of this function is not entirely clear.
 MESSAGE-CHANGING is non-nil, then forget information that might
 be different if the message contents changed.  (What does this
 mean?)                                         USR, 2011-03-17"
+  ;; -------------- atomic block -------------------------------
   (let ((inhibit-quit t)
 	date id-sym s-sym p-sym)
     ;; handles for the thread and thread-subject databases
@@ -710,11 +715,11 @@ mean?)                                         USR, 2011-03-17"
     (if (member (symbol-name id-sym) vm-traced-message-ids)
 	(vm-thread-debug 'vm-unthread-message id-sym))
     ;; mark the subtree for summary update before we change it
-    (vm-thread-mark-for-summary-update (vm-thread-subtree m))
+    (vm-thread-mark-for-summary-update (list m))
     ;; discard cached thread properties of descendants
-    (vm-th-clear-thread-lists m)
+    (vm-th-clear-thread-lists id-sym)
     ;; discard cached thread properties of ancestors
-    (vm-th-clear-subtree (vm-thread-symbol m))
+    (vm-th-clear-subtree id-sym)
     ;; remove the message from its erstwhile thread
     (when (boundp id-sym)
       ;; remove m from its thread node
@@ -772,7 +777,9 @@ mean?)                                         USR, 2011-03-17"
 	 s-sym (remq id-sym (vm-ts-members-of s-sym)))
 	(vm-ts-set-messages-of 
 	 s-sym (remq m (vm-ts-messages-of s-sym)))
-	))))
+	)))
+  ;; -------------- atomic block -------------------------------
+  )
 
 ;; This function is still under development.  USR, 2011-04-04
 
