@@ -468,12 +468,12 @@ all its ancestors, followed via the parent links."
       (when (vm-th-message-of id-sym) 
 	(setq msg (vm-th-message-of id-sym))))
     (when msg 
-      (setq subject-sym (intern-soft 
+      (setq subject-sym (intern
 			 (vm-so-sortable-subject msg)
-			 vm-thread-subject-obarray)))
-    (when subject-sym
-      (setq id-sym (vm-ts-root-of subject-sym))
-      (vm-th-clear-subtree-of id-sym))))
+			 vm-thread-subject-obarray))
+      (when (boundp subject-sym)
+	(setq id-sym (vm-ts-root-of subject-sym))
+	(vm-th-clear-subtree-of id-sym)))))
 
 (defun vm-th-safe-parent-p (id-sym parent-sym)
   "Check if it is safe to set the parent of ID-SYM to PARENT-SYM."
