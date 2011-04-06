@@ -444,9 +444,13 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		 (cdr x))
 		(vm-imap-expunge-after-retrieving
 		 t)
+		((member source vm-imap-auto-expunge-warned)
+		 nil)
 		(t
 		 (message 
-		  (concat "Warning: Folder is not set to auto-expunge"))
+		  (concat "Warning: IMAP folder is not set to auto-expunge"))
+		 (setq vm-imap-auto-expunge-warned
+		       (cons source vm-imap-auto-expunge-warned))
 		 (sit-for 1)
 		 nil)))
 

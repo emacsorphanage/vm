@@ -139,13 +139,17 @@ a POP server, find its cache file on the file system"
 		((setq x (assoc (vm-popdrop-sans-password source)
 				vm-pop-auto-expunge-alist))
 		 (cdr x))
-		(t (if vm-pop-expunge-after-retrieving
-		       t
-		     (message 
-		      (concat "Leaving messages on POP server; "
-			      "See info under \"POP Spool Files\""))
-		     (sit-for 4)
-		     nil))))
+		(vm-pop-expunge-after-retrieving
+		 t)
+		((member source vm-pop-auto-expunge-warned)
+		 nil)
+		(t
+		 (message 
+		  (concat "Warning: POP folder is not set to auto-expunge"))
+		 (setq vm-pop-auto-expunge-warned
+		       (cons source vm-pop-auto-expunge-warned))
+		 (sit-for 1)
+		 nil)))
     (unwind-protect
 	(catch 'done
 	  (if handler

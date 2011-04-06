@@ -529,6 +529,10 @@ messages from the server."
   :group 'vm-pop
   :type '(repeat (cons string boolean)))
 
+(defvar vm-pop-auto-expunge-warned nil
+  "List of POP mailboxes for which warning has been given about the
+lack of settings for auto-expunge.")
+
 (defcustom vm-pop-read-quit-response t
   "*Non-nil value tells VM to read the response to the POP QUIT command.
 Sometimes, for reasons unknown, the QUIT response never arrives
@@ -643,6 +647,10 @@ deleted from the mailbox immediately after retrieval."
   :group 'vm-imap
   :type '(repeat (cons (string :tag "IMAP Folder Specificaiton")
 		       boolean)))
+
+(defvar vm-imap-auto-expunge-warned nil
+  "List of IMAP mailboxes for which warning has been given about the
+lack of settings for auto-expunge.")
 
 (defcustom vm-recognize-imap-maildrops "^\\(imap\\|imap-ssl\\|imap-ssh\\):[^:]+:[^:]+:[^:]+:[^:]+:[^:]+:.+"
   "*Value if non-nil should be a regular expression that matches
