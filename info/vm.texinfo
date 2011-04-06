@@ -732,6 +732,7 @@ control to you.  By default, the value of both variables is nil, which
 tells VM to retrieve all the messages in the IMAP mailbox regardless
 of how many messages there are and how large the mailbox is.
 
+@cindex expunging, IMAP messages
 @findex vm-expunge-imap-messages
 After VM retrieves messages from the mailbox, the default action is to
 leave the original messages on the server unchanged.  They can be
@@ -779,6 +780,49 @@ Here is an example:
     )
 )
 @end example
+
+@unnumberedsubsubsec Multiple access to IMAP spool files
+
+A principal idea behind the IMAP protocol is that messages can be
+retained on the server so that you can read them from multiple
+locations, e.g., from office and home, or from other places on the
+Internet while you travel.  If you access your IMAP mailbox from
+multiple locations then you would need to plan your strategy for
+expunging messages carefully.  For instance, if you access your work
+mailbox from home, and both your office machine and home machine
+expunge messages after retrieving them, then some of your mail will
+end up on your office machine and some on your home machine.  That is
+unlikely to be a successful strategy.
+
+The best way to access IMAP mailboxes from multiple locations is to
+use the facility of IMAP folders.  (@xref{POP and IMAP Folders}.)
+However, if you prefer to download all mail to local folders, then
+your best bet is to designate one of your machines as the principal
+location for downloading mail and treat the other machines as
+temporary mail reading sites.  In that case, you should set the
+principal downloading location to expunge messages on the server and
+set the other reading sites to leave the messages on the server
+intact.  You can also manually run @code{vm-expunge-imap-messages} if
+you are careful to remember which site should expunge messages and
+which site should retain them.
+
+@cindex X-VM-IMAP-Retrieved header
+VM remembers the messages you have downloaded from an IMAP spool file
+so that it can avoid downloading them again on your next visit.  The
+list of these messages is written into a special mail header titled
+@code{X-VM-IMAP-Retrieved} in your mail folder.  When you expunge IMAP
+messages, their entries are deleted from the list.  However, when you
+designate one of your machines as a reading site and never expunge
+messages from there, then the @code{X-VM-IMAP-Retrieved} header on
+that machine will only grow over time.  When the list gets excessively
+long, it will slow down the saving of folders.
+
+@findex vm-prune-imap-retrieved-list
+To avoid the problem, you should prediodically run the command
+@code{vm-prune-imap-retrieved-list}.  It will examine the IMAP server
+to see which messages still exist and retain only their information in
+the @code{X-VM-IMAP-Retrieved} header.
+
 
 @node Index Files, Folder types,IMAP Spool Files, Local Folders
 @unnumberedsubsec Index Files
