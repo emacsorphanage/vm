@@ -13,14 +13,21 @@ VM 8.2.0a (2011-02-28)
 
   CHANGES
 
+   * If you download mail from IMAP spool files, the 8.1.x versions of
+     VM had a bug which allowed the the `X-VM-IMAP-Retrieved' headers
+     to grow unnecessarily.  This can slow down the saving of folders
+     into which you downloaded IMAP mail.  To solve the problem, run
+     the command `vm-prune-imap-retrieved-list' after installing
+     version 8.2.0.  (See info under "IMAP Spool Files".)
+
    * A set of inessential key bindings (b, <, >, *) have been removed
      from the standard VM key bindings.  If you would like to use
      them, add the line:
 
               (vm-optional-keys)
 
-     in your vm-preferences-file (~/.vm.preferences).  Or, you might
-     bind the keys to some other operations of your choice.
+     to your vm-preferences-file (~/.vm.preferences).  Or, you might
+     bind these keys to some other operations of your choice.
 
    * The variable name `vm-auto-displayed-mime-content-types' changed
      to `vm-mime-auto-displayed-content-types' for consistency with
@@ -32,7 +39,7 @@ VM 8.2.0a (2011-02-28)
 
    * Plain text forwarding has been extended to deal with MIME
      attachments.  The `z' command uses this method, i.e., it does
-     NOT encapsulate forwarded messages (unlike in version 8.1.x).
+     NOT encapsulate forwarded messages (unlike in versions 8.1.x).
 
      There is a new key binding of `Z' to
      `vm-forward-message-encapsulated' which forwards messages in

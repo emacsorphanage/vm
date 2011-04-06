@@ -379,7 +379,9 @@ connection mode is then turned into 'online.")
 ;; interactive commands:
 ;; vm-expunge-imap-messages: () -> void
 ;;
-;; vm-imap-clear-invalid-retrieval-entries: ... 
+;; vm-imap-prune-retrieval-entries: (string & list &
+;;				     (retrieval-entry -> bool) -> list
+;; vm-imap-clear-invalid-retrieval-entries: (string & list & string) -> list
 ;; ------------------------------------------------------------------------
 
 
@@ -822,16 +824,78 @@ on all the relevant IMAP servers and then immediately expunges."
       (when (> delete-count 0)
 	(vm-mark-folder-modified-p (current-buffer))))))
 
-(defun vm-imap-clear-invalid-retrieval-entries (source retrieved uid-validity)
-  "Remove from RETRIEVED (a copy of vm-imap-retrieved-messages)
-all the entries for the password-free maildrop spec SOURCE which
-do not match the given UID-VALIDITY.              USR, 2010-05-24"
+(defun vm-prune-imap-retrieved-list (source)
+  "Prune the X-VM-IMAP-Retrieved header of the current folder by
+examining which messages are still present in SOURCE.  SOURCE
+should be a maildrop folder on an IMAP server.         USR, 2011-04-06"
+  (interactive
+   (let ((this-command this-command)
+	 (last-command last-command))
+     (vm-follow-summary-cursor)
+     (save-current-buffer
+       (vm-session-initialization)
+       (vm-select-folder-buffer)
+       (vm-error-if-folder-empty)
+       (list (vm-read-imap-folder-name 
+	      "Prune messages from IMAP folder: " t nil nil)))))
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-display nil nil '(vm-prune-imap-retrieved-list) 
+	      '(vm-prune-imap-retrieved-list))
+  ;;--------------------------
+  (vm-buffer-type:set 'folder)
+  ;;--------------------------
+  (let* ((imapdrop (vm-imapdrop-sans-password source))
+	 (process (vm-imap-make-session imapdrop nil "list"))
+	 (uid-obarray (make-vector 67 0))
+	 mailbox select mailbox-count uid-validity
+	 list retrieved-count pruned-count)
+    (unwind-protect
+	(with-current-buffer (process-buffer process)
+	  ;;-----------------------------
+	  (vm-buffer-type:enter 'process)
+	  ;;-----------------------------
+	  (setq mailbox (nth 3 (vm-parse source "\\([^:]+\\):?")))
+	  (setq select (vm-imap-select-mailbox process mailbox t)
+		mailbox-count (nth 0 select)
+		uid-validity (nth 2 select))
+	  (unless (eq mailbox-count 0)
+	    (setq list (vm-imap-get-message-data-list process 1 mailbox-count)))
+	  (mapc (lambda (tuple)
+		  (set (intern (cadr tuple) uid-obarray) (car tuple)))
+		list))
+      ;; unwind-protections
+      ;;-----------------------------
+      (vm-buffer-type:exit)
+      ;;-----------------------------
+      (when process (vm-imap-end-session process)))
+    (setq retrieved-count (length vm-imap-retrieved-messages))
+    (setq vm-imap-retrieved-messages
+     (vm-imap-prune-retrieval-entries 
+      imapdrop vm-imap-retrieved-messages
+      (lambda (tuple) 
+	(and (equal (nth 1 tuple) uid-validity)
+	     (intern-soft (car tuple) uid-obarray)))))
+    (setq pruned-count (- retrieved-count (length vm-imap-retrieved-messages)))
+    (if (= pruned-count 0)
+	(message "No messages to be pruned")
+      (vm-mark-folder-modified-p)
+      (vm-update-summary-and-mode-line)
+      (message "%d message%s pruned" 
+	       pruned-count (if (= pruned-count 1) "" "s")))
+    ))
+    
+(defun vm-imap-prune-retrieval-entries (source retrieved pred)
+  "Prune RETRIEVED (a copy of `vm-imap-retrieved-messages') by
+keeping only those messages from SOURCE that satisfy PRED.
+SOURCE must be an IMAP maildrop spec without password info.  
+                                                   USR, 2011-04-06"
   (let ((list retrieved)
 	(prev nil))
     (setq source (vm-imap-normalize-spec source))
     (while list
       (if (and (equal source (vm-imap-normalize-spec (nth 2 (car list))))
-	       (not (equal (nth 1 (car list)) uid-validity)))
+	       (not (apply pred (car list) nil)))
 	  (if prev
 	      (setcdr prev (cdr list))
 	    (setq retrieved (cdr retrieved)))
@@ -839,11 +903,20 @@ do not match the given UID-VALIDITY.              USR, 2010-05-24"
       (setq list (cdr list)))
     retrieved ))
 
+
+(defun vm-imap-clear-invalid-retrieval-entries (source retrieved uid-validity)
+  "Remove from RETRIEVED (a copy of `vm-imap-retrieved-messages')
+all the entries for the password-free maildrop spec SOURCE which
+do not match the given UID-VALIDITY.              USR, 2010-05-24"
+  (vm-imap-prune-retrieval-entries
+   source retrieved
+   (lambda (tuple) (equal (nth 1 tuple) uid-validity))))
+
 (defun vm-imap-recorded-uid-validity ()
   "Return the UID-VALIDITY value recorded in the X-IMAP-Retrieved header
 of the current folder."
   (let ((pos (vm-find vm-imap-retrieved-messages
-			 (lambda (record) (nth 1 record)))))
+		      (lambda (record) (nth 1 record)))))
     (nth 1 (nth pos vm-imap-retrieved-messages))))
 
 
@@ -2347,7 +2420,9 @@ tracing purposes. Returns the IMAP process or nil if unsuccessful."
 
 (defun vm-imap-retrieve-uid-and-flags-data ()
   "Retrieve the uid's and message flags for all the messages on the
-IMAP server in the current mail box.
+IMAP server in the current mail box.  The results are stored in
+`vm-folder-access-data' in the fields uid-list, uid-obarray and
+flags-obarray.
 Throws vm-imap-protocol-error for failure."
   ;;------------------------------
   (if vm-buffer-type-debug
@@ -3556,7 +3631,7 @@ format account:mailbox."
     (while alist
       (setq account-comps (vm-imap-parse-spec-to-list (car (car alist))))
       (if (and (equal (nth 1 comps) (nth 1 account-comps)) ; host
-	       (equal (nth 4 comps) (nth 4 account-comps))) ; login
+	       (equal (nth 5 comps) (nth 5 account-comps))) ; login
 	  (throw 'return (concat (cadr (car alist)) ":" (nth 3 comps)))
 	(setq alist (cdr alist))))
     nil)))
