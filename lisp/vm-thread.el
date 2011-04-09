@@ -74,11 +74,26 @@
 ;; vm-th-thread-date-of : symbol X criterion-symbol -> string
 ;; vm-th-canonical-message-p : message -> bool
 ;;
+;; vm-th-new-thread-symbol: message -> symbol
+;; vm-th-add-message-to-symbol: symbol X message -> void
+;; vm-th-init-thread-symbol: symbol X message -> void
+;; vm-th-set-parent : symbol X symbol -> void
+;; vm-th-add-child: symbol X symbol -> void
+;; vm-th-delete-child: symbol X symbol -> void
+;; 
+;; vm-th-clear-cached-data: symbol X symbol -> void
+;;
+;;
 ;; vm-ts-subject-symbol : message -> symbol
 ;; vm-ts-root-of : symbol -> symbol
 ;; vm-ts-root-date-of : symbol -> date
 ;; vm-ts-members-of : symbol -> symbol list
 ;; vm-ts-messages-of : symbol -> message list
+;;
+;; vm-ts-add-member: symbol X symbol -> void
+;; vm-ts-add-message: symbol X message -> void
+;;
+;; vm-ts-clear-cached-data: symbol X symbol -> void
 ;;
 ;; vm-th-parent : message -> string
 ;;      (aliased to vm-parent)
@@ -223,6 +238,59 @@ youngest or oldest date in its thread.  CRITERION must be one of
   (aset (symbol-value subject-sym) 3 ml))
 
 
+;;; thread tree - basic operations
+
+(defun vm-th-new-thread-symbol (m)
+  "Create a new thread symbol for message M and intitialize its parent
+and child pointers."
+  (let ((id-sym (intern (vm-su-message-id m) vm-thread-obarray)))
+    (vm-th-set-parent-of id-sym nil)
+    (vm-th-set-children-of id-sym nil)
+    id-sym))
+
+(defsubst vm-th-add-message-to-symbol (id-sym m)
+  "Add message M to ID-SYM as one of the messages with its id."
+  (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym))))
+
+(defsubst vm-th-init-thread-symbol (id-sym m)
+  "Initialize thread symbol ID-SYM to the message M."
+  (vm-th-set-message-of id-sym m)
+  (vm-th-set-messages-of id-sym (list m))
+  (vm-th-set-date-of id-sym (vm-so-sortable-datestring m)))
+
+(defsubst vm-th-set-parent (id-sym parent-sym)
+  "Set the parent of ID-SYM to PARENT-SYM."
+  (vm-th-set-parent-of id-sym parent-sym)
+  (vm-th-add-child parent-sym id-sym))
+
+(defsubst vm-th-clear-cached-data (id-sym parent-sym)
+  "Clear the cached thread-subtree and thread-list information that is
+invalidated by setting the parent of ID-SYM to PARENT-SYM.  This
+involves the thread-subtrees of PARENT-SYM and all its ancestors.
+It also invovles thread-lists of ID-SYM and all its descendants."
+  (vm-th-clear-subtree parent-sym)
+  (vm-th-clear-thread-lists id-sym))
+
+(defsubst vm-ts-add-member (subject-sym id-sym)
+  "Add ID-SYM as a member of SUBJECT-SYM."
+  (vm-ts-set-members-of 
+   subject-sym (cons id-sym (vm-ts-members-of subject-sym))))
+
+(defsubst vm-ts-add-message (subject-sym m)
+  "Add M as a message in the subject thread of SUBJECT-SYM."
+  (vm-ts-set-messages-of 
+   subject-sym (cons m (vm-ts-messages-of subject-sym))))
+
+(defsubst vm-ts-clear-cached-data (id-sym subject-sym)
+  "Clear the cached thread-subtree and thread-list information
+for ID-SYM, which is the subject root of SUBJECT-SYM.  This
+involves clearing the thread-subtree of ID-SYM and the
+thread-lists of all members of SUBJEC-SYM. (not entirely clear if this
+is right).                                           USR, 2011-04-08"
+  (vm-th-clear-subtree id-sym)
+  (mapc 'vm-th-clear-thread-lists 
+	(vm-ts-members-of subject-sym)))
+
 
 ;;;###autoload
 (defun vm-toggle-threads-display ()
@@ -357,21 +425,16 @@ being initialized."
     (while mp
       (setq m (car mp)
 	    id (vm-su-message-id m)
-	    id-sym (intern-soft id vm-thread-obarray)
-	    date (vm-so-sortable-datestring m))
+	    id-sym (intern-soft id vm-thread-obarray))
       (if (member id vm-traced-message-ids)
 	  (vm-thread-debug 'vm-build-reference-threads id m))
-      (unless id-sym
-	(setq id-sym (intern id vm-thread-obarray))
-	(vm-th-set-parent-of id-sym nil)
-	(vm-th-set-children-of id-sym nil))
-      (vm-th-set-message-of id-sym m)
-      (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))
-      (vm-th-set-date-of id-sym date)
-      (when (and schedule-reindents (null (cdr (vm-th-messages-of id-sym))))
-	;; vm-th-clear-subtree done below
-	(vm-thread-mark-for-summary-update 
-	 (cons m (vm-th-child-messages-of id-sym))))
+      (unless id-sym			; first occurrence now
+	(setq id-sym (vm-th-new-thread-symbol m)))
+      (if (vm-th-messages-of id-sym)	; registered already
+	  (vm-th-add-message-to-symbol id-sym m)
+	(vm-th-init-thread-symbol id-sym m))
+      (when schedule-reindents
+	(vm-thread-mark-for-summary-update (list m)))
       ;; Thread using the parent
       (setq parent (vm-parent m))
       (when parent
@@ -381,21 +444,20 @@ being initialized."
 	(when (vm-th-safe-parent-p id-sym parent-sym)
 	  (if (member (symbol-name id-sym) vm-traced-message-ids)
 	      (vm-thread-debug 'vm-build-reference-threads-1 id-sym))	  
-	  (cond ((or (null (vm-th-parent-of id-sym))
-		     (eq (vm-th-parent-of id-sym) parent-sym))
-		 (unless initializing (vm-th-clear-subtree parent-sym))
-		 (vm-th-set-parent-of id-sym parent-sym)
-		 (vm-th-add-child parent-sym id-sym))
+	  (cond ((null (vm-th-parent-of id-sym))
+		 (unless initializing 
+		   (vm-th-clear-cached-data id-sym parent-sym))
+		 (vm-th-set-parent id-sym parent-sym))
+		((eq (vm-th-parent-of id-sym) parent-sym)
+		 nil)
 		(t
 		 (setq old-parent-sym (vm-th-parent-of id-sym))
 		 (unless initializing 
 		   (vm-th-clear-subtree old-parent-sym)	
-		   (vm-th-clear-subtree parent-sym))
+		   (vm-th-clear-cached-data id-sym parent-sym))
 		 (vm-th-delete-child old-parent-sym id-sym)
-		 (vm-th-set-parent-of id-sym parent-sym)
-		 (vm-th-add-child parent-sym id-sym)
+		 (vm-th-set-parent id-sym parent-sym)
 		 (if schedule-reindents
-		     ;; vm-th-clear-subtree done above
 		     (vm-thread-mark-for-summary-update
 		      (vm-th-messages-of id-sym)))))))
       (setq mp (cdr mp) n (1+ n))
@@ -421,20 +483,12 @@ being initialized."
 			 (vm-th-safe-parent-p id-sym parent-sym))
 		(if (member (symbol-name id-sym) vm-traced-message-ids)
 		    (vm-thread-debug 'vm-build-reference-threads-2 id-sym))
-		(unless initializing (vm-th-clear-subtree parent-sym))
-		(vm-th-set-parent-of id-sym parent-sym)
-		;; (setq msgs (vm-th-messages-of id-sym))
-		;; (setq msg-syms 
-		;;       (mapcar 'vm-thread-symbol msgs))
-		;; (if msgs
-		;;     (vm-th-set-children-of 
-		;;      parent-sym 
-		;;      (append msg-syms (vm-th-children-of parent-sym))
-		;;      ))
-		(vm-th-add-child parent-sym id-sym)
+		(unless initializing 
+		  (vm-th-clear-cached-data id-sym parent-sym))
+		(vm-th-set-parent id-sym parent-sym)
 		(if schedule-reindents
-		    ;; vm-th-clear-subtree done above
-		    (vm-thread-mark-for-summary-update msgs)))
+		    (vm-thread-mark-for-summary-update 
+		     (vm-th-messages-of id-sym))))
 	      (setq parent-sym id-sym
 		    refs (cdr refs)))))
       (setq mp (cdr mp) n (1+ n))
@@ -442,13 +496,15 @@ being initialized."
 	  (message "Building threads... %d%%" (* (/ (+ n 0.0) total) 100)))
       )))
 
-(defun vm-th-clear-thread-lists (m)
-  "Clear the thread-list and thread-indentation fields of the message
-M and all its descendants, found via the `vm-thread-subtree' field."
+(defun vm-th-clear-thread-lists (id-sym)
+  "Clear the thread-list and thread-indentation fields of the
+message with ID-SYM and all its descendants."
   (mapc (lambda (d)
 	  (vm-set-thread-list-of d nil)
 	  (vm-set-thread-indentation-of d nil))
-	(vm-thread-subtree m)))
+	(vm-th-messages-of id-sym))
+  (mapc 'vm-th-clear-thread-lists
+	(vm-th-children-of id-sym)))
 
 (defun vm-th-clear-subtree-of (id-sym)
   "Clear the thread-subtree of the canonical message with ID-SYM, i.e.,
@@ -510,29 +566,27 @@ with other ancestors."
 	    id (vm-su-message-id m)
 	    id-sym (intern id vm-thread-obarray)
 	    date (vm-so-sortable-datestring m))
-      (if (member id vm-traced-message-ids)
-	  (vm-thread-debug 'vm-build-subject-threads id m))
+      (when (member id vm-traced-message-ids)
+	(vm-thread-debug 'vm-build-subject-threads id m))
       (setq subject (vm-so-sortable-subject m)
 	    subject-sym (intern subject vm-thread-subject-obarray))
-      ;; inhibit-quit because we need to make sure the asets
-      ;; below are an atomic group.
+      ;; -------------- atomic block -------------------------------
       (let* ((inhibit-quit t))
 	;; if this subject was never seen before create the
 	;; information vector.
 	(if (not (boundp subject-sym))
 	    ;; new subject
-	    (set subject-sym
-		 (vector id-sym date nil (list m)))
+	    (set subject-sym (vector id-sym date nil (list m)))
 	  ;; this subject seen before 
-	  (vm-ts-set-messages-of subject-sym
-				 (cons m (vm-ts-messages-of subject-sym)))
+	  (vm-ts-add-message subject-sym m)
+	  ;; if older than the rest, make m the root
 	  (if (string< date (vm-ts-root-date-of subject-sym))
-	      (let* ((vect (symbol-value subject-sym))
-		     (i-sym (vm-ts-root-of subject-sym)))
-		(vm-th-clear-subtree i-sym)
+	      (let* ((i-sym (vm-ts-root-of subject-sym)))
+		(unless initializing
+		  (vm-ts-clear-cached-data i-sym subject-sym))
 		(unless (vm-th-belongs-to-reference-thread i-sym)
-		  (vm-ts-set-members-of 
-		   subject-sym (cons i-sym (vm-ts-members-of subject-sym))))
+		  ;; strange.  why would i-sym ever be in a ref thread?
+		  (vm-ts-add-member subject-sym i-sym))
 		(vm-ts-set-root-of subject-sym id-sym)
 		(vm-ts-set-root-date-of subject-sym date)
 		;; this loops _and_ recurses and I'm worried
@@ -547,8 +601,9 @@ with other ancestors."
 		     (vm-ts-messages-of subject-sym)))))
 	    (unless (vm-th-belongs-to-reference-thread id-sym)
 	      (vm-th-clear-subtree (vm-ts-root-of subject-sym))
-	      (vm-ts-set-members-of 
-	       subject-sym (cons id-sym (vm-ts-members-of subject-sym)))))))
+	      ;; no need to clear thread-lists; ts-root is unchanged
+	      (vm-ts-add-member subject-sym id-sym)))))
+      ;; -------------- end atomic block ----------------------------------
       (setq mp (cdr mp) n (1+ n))
       (when (zerop (% n modulus))
 	(message "Building threads... %d" n)))))
@@ -704,6 +759,7 @@ The full functionality of this function is not entirely clear.
 MESSAGE-CHANGING is non-nil, then forget information that might
 be different if the message contents changed.  (What does this
 mean?)                                         USR, 2011-03-17"
+  ;; -------------- atomic block -------------------------------
   (let ((inhibit-quit t)
 	date id-sym s-sym p-sym)
     ;; handles for the thread and thread-subject databases
@@ -713,11 +769,9 @@ mean?)                                         USR, 2011-03-17"
     (if (member (symbol-name id-sym) vm-traced-message-ids)
 	(vm-thread-debug 'vm-unthread-message id-sym))
     ;; mark the subtree for summary update before we change it
-    (vm-thread-mark-for-summary-update (vm-thread-subtree m))
-    ;; discard cached thread properties of descendants
-    (vm-th-clear-thread-lists m)
-    ;; discard cached thread properties of ancestors
-    (vm-th-clear-subtree (vm-thread-symbol m))
+    (vm-thread-mark-for-summary-update (list m))
+    ;; discard cached thread properties of descendants and ancestors
+    (vm-th-clear-cached-data id-sym id-sym)
     ;; remove the message from its erstwhile thread
     (when (boundp id-sym)
       ;; remove m from its thread node
@@ -775,7 +829,9 @@ mean?)                                         USR, 2011-03-17"
 	 s-sym (remq id-sym (vm-ts-members-of s-sym)))
 	(vm-ts-set-messages-of 
 	 s-sym (remq m (vm-ts-messages-of s-sym)))
-	))))
+	)))
+  ;; -------------- end atomic block -------------------------------
+  )
 
 ;; This function is still under development.  USR, 2011-04-04
 

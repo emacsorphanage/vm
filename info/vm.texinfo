@@ -6950,6 +6950,33 @@ also involves the erasure of the @code{thread-subtree} field of all
 their ancestors and the @code{thread-list} and
 @code{thread-indentation} fields of the descendants.
 
+@unnumberedsubsec Error handling
+
+The code for threading has to be robust in the presence of erroneous
+information in the message headers.  We have no control over the mail
+clients that produce those messages and faulty information should not
+lead to VM hanging or producing errors.  It should just do the best
+job it can in the presence of imperfect information.
+
+It is possible that the information in the headers give rise to cycles
+in the thread trees.  Kyle Jones's original implementation allowed
+these cycles to exist, but all functions that traversed the thread
+trees were protected to detect cycles.  However, since thread trees
+are updated when new messages are received or existing messages are
+expunged, this led to unstable results.
+
+Following Jamie Zawinski's recommendation, VM now avoids cycles in
+thread trees.  Loop detection is still carried out during traversal as
+a double safeguard.
+
+VM gives priority to the parent information contained in the
+``In-Reply-To'' headers in preference to the information in the
+``References'' headers.  However, if an ``In-Reply-To'' header gives
+rise to a cycle, it is ignored, and then ``References'' headers might
+be used to fill in the missing information.
+
+
+
 
 @node Sorting Internals, User Interaction, Threading Internals, Internals
 @section Sorting Internals
