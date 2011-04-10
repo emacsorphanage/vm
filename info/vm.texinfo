@@ -373,7 +373,7 @@ applications that VM can invoke.  You can reload this file by typing
 In addition, VM also attempts to load a file specified by the variable
 @code{vm-preferences-file}, normally @file{~/.vm.preferences}.  This
 file should contain your preferential settings for various VM
-variables affecting affect how VM works.  Since VM has well over one
+variables affecting how VM works.  Since VM has well over one
 hundred configuration variables, use of the @file{~/.vm.preferences}
 can considerably reduce clutter in the @file{.vm} file.
 
@@ -573,7 +573,7 @@ For example, you can set @code{vm-spool-files} like this
 @noindent The folder @file{~/INBOX} has two spool files associated
 with it in this 
 example, @file{/var/spool/mail/kyle} and @file{~/Mailbox}.  Another
-folder, @file{"~/Mail/bugs"} has one folder
+folder, @file{"~/Mail/bugs"} has one spool file
 @file{/var/spool/mail/answerman} associated with it.  Note that both of
 the @file{~/INBOX} entries used the same crash box.  The crash box can be
 the same if the folder name is the same.  Different folders should use
@@ -921,10 +921,10 @@ VM retrieves mail from the server folders into internal Emacs buffers
 for its normal operation.  It also saves copies of the folders on the
 local file system for speed of operation.  However, the @emph{only}
 permanent copies of the folders are on the mail server.  This should
-be contrasted with using server mailboxes as spool files (
-@ref{POP Spool Files} and @ref{IMAP Spool Files}), where the permanent
-folders are on the @emph{local} file system and only incoming mail is
-held on the servers.
+be contrasted with using server mailboxes as spool files (@pxref{POP
+Spool Files} and @pxref{IMAP Spool Files}), where the permanent
+folders are on the @emph{local} file system and only the incoming mail
+is held on the servers.
 
 Server folders have the advantage that they can be transparently
 accessed from multiple locations on the internet.  However, you must
@@ -1337,11 +1337,11 @@ and Thunderbird can jointly operate, then you should set the variable
 
 @findex vm-get-new-mail
 @kindex g
-Pressing @kbd{g} runs @code{vm-get-new-mail}, which will retrieve
-mail from all the spool files associated with the current folder.
-@xref{Local Folders}.  For POP folders, any newly arrived messages
-at the POP server will be incorporated into the local copy of the
-POP folder.
+Pressing @kbd{g} runs @code{vm-get-new-mail}, which will retrieve mail
+from all the spool files associated with the current folder.
+@xref{Local Folders}.  For POP and IMAP folders, any newly arrived
+messages at the mail server will be incorporated into the local copy
+of the folders.
 
 @vindex vm-auto-get-new-mail
 If the value of the variable @code{vm-auto-get-new-mail} is non-@code{nil} VM
