@@ -1185,13 +1185,14 @@ example, @code{becky:inbox} or @code{crickle:drafts}.
 When you visit an IMAP folder inside VM, the folder is referred to by
 its folder name as it exists on the server.  For example, visiting
 @code{becky:INBOX} creates a folder called @code{INBOX} inside VM.  If
-you visit multiple accounts within a VM session, then you would end up
-with multiple folders buffers all names @code{INBOX}.  You can set the
+you visit multiple IMAP accounts within a VM session, then you would end up
+with multiple folder buffers all named @code{INBOX}.  To avoid this
+problem, you can set the
 variable @code{vm-imap-refer-to-inbox-by-account-name} to t, which
-causes the folder buffers to be named by their IMAP account names
-instead.  For example, visiting @code{becky:INBOX} as well as
-@code{crickle:INBOX} would create VM folders @code{becky} and
-@code{crickle}. 
+causes the @code{INBOX} folder buffers to be named by their IMAP account names
+instead.  For example, visiting @code{becky:INBOX} would create a VM
+folder named @code{becky} and visiting @code{crickle:INBOX} would create
+a VM folder named @code{crickle}. 
 
 @vindex vm-imap-server-list
 The customization variable @code{vm-imap-server-list}, used in older
@@ -1407,7 +1408,7 @@ generation and MIME decoding to help catch your attention.
 @findex recover-file
 If you want to recover the lost changes, run @kbd{M-x
 vm-recover-folder} or use the Recover Folder entry in Folder menu.  At
-the @samp{Recover File: } prompt press @key{RET}.  (Emacs's built-in
+the @samp{Recover File:} prompt press @key{RET}.  (Emacs's built-in
 @kbd{recover-file} command is not recommended for this purpose because
 VM is unable to obtain reliable data regarding the mail folders from
 Emacs.)  Emacs will then display a detailed directory listing showing
@@ -1435,6 +1436,19 @@ Assuming you answered ``no'' to the recovery question, you should type
 @kbd{C-x C-q}, which is bound to @code{vm-toggle-read-only} in VM folder
 buffers.  The folder will be taken out of read-only mode and you can
 read and retrieve your mail normally.
+
+If you are visiting a POP or IMAP folder (rather than a local folder)
+that was modified during a previous crash, the process of recovery is
+similar.  However, there will be less useful information in the
+autosave file in this case.  When you synchronize an IMAP folder with
+the server, only the changes made during the current VM session are
+saved to the server.  Changes stored in the autosave file were made in
+a previous session of VM and, so, cannot be saved to the server.  So,
+saying ``no'' to the recovery question and toggling the read-only
+status (@kbd{C-x C-q}) is a better option in the case of server
+folders. 
+
+@unnumberedsubsec Discarding changes
 
 @findex vm-revert-folder
 @findex revert-file

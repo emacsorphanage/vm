@@ -449,7 +449,12 @@ being initialized."
 		   (vm-th-clear-cached-data id-sym parent-sym))
 		 (vm-th-set-parent id-sym parent-sym))
 		((eq (vm-th-parent-of id-sym) parent-sym)
-		 nil)
+		 ;; could be a duplicate copy of a message
+		 (unless initializing
+		   (vm-th-clear-subtree parent-sym))
+		 (when schedule-reindents
+		   (vm-thread-mark-for-summary-update
+		    (vm-th-messages-of parent-sym))))
 		(t
 		 (setq old-parent-sym (vm-th-parent-of id-sym))
 		 (unless initializing 
@@ -457,9 +462,11 @@ being initialized."
 		   (vm-th-clear-cached-data id-sym parent-sym))
 		 (vm-th-delete-child old-parent-sym id-sym)
 		 (vm-th-set-parent id-sym parent-sym)
-		 (if schedule-reindents
-		     (vm-thread-mark-for-summary-update
-		      (vm-th-messages-of id-sym)))))))
+		 (when schedule-reindents
+		   (vm-thread-mark-for-summary-update
+		    (vm-th-messages-of id-sym))
+		   (vm-mark-for-summary-update
+		    (vm-th-message-of old-parent-sym)))))))
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
 	  (message "Building threads... %d%%" (* (/ (+ n 0.0) total) 100))))
