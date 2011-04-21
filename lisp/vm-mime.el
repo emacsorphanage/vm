@@ -2645,63 +2645,67 @@ is not successful.                                   USR, 2011-03-25"
   ;; based upon a heuristic about available packages, so call it for its
   ;; side-effect now.  -- Brent Goodrick, 2008-12-08
   (vm-mime-text/html-handler)
-  (condition-case error-data
-      (let ((buffer-read-only nil)
-            (start (point))
-            (charset (or (vm-mime-get-parameter layout "charset")
-                         "us-ascii"))
-            end buffer-size)
-	(if (null vm-mime-text/html-handler)
-	    (error "No handler for internal display of text/html"))
-        (vm-emit-mime-decoding-message
-	 "Inlining text/html by %s..." vm-mime-text/html-handler)
-        (vm-mime-insert-mime-body layout)
-	(unless (bolp) (insert "\n"))
-        (setq end (point-marker))
-        (vm-mime-transfer-decode-region layout start end)
-        (vm-mime-charset-decode-region charset start end)
-        ;; block remote images by prefixing the link
-        (goto-char start)
-        (let ((case-fold-search t))
-          (while (re-search-forward vm-mime-text/html-blocker end t)
-            (goto-char (match-end 0))
-            (if (or t (and vm-mime-text/html-blocker-exceptions
-                         (looking-at vm-mime-text/html-blocker-exceptions))
-                    (looking-at "cid:"))
-                (progn
-                  ;; TODO: write the image to a file and replace the link
-                  )
-              (insert "blocked:"))))
-        ;; w3-region apparently deletes all the text in the
-        ;; region and then insert new text.  This makes the
-        ;; end == start.  The fix is to move the end marker
-        ;; forward with a placeholder character so that when
-        ;; w3-region delete all the text, end will still be
-        ;; ahead of the insertion point and so will be moved
-        ;; forward when the new text is inserted.  We'll
-        ;; delete the placeholder afterward.
-        (goto-char end)
-        (insert-before-markers "z")
-        ;; the view port (scrollbar) is sometimes messed up, try to avoid it
-        (save-window-excursion
-          ;; dispatch to actual handler
-          (funcall (intern (format "vm-mime-display-internal-%s-text/html"
-                                   vm-mime-text/html-handler))
-                   start end layout))
-        ;; do clean up
-        (goto-char end)
-        (delete-char -1)
-        (message "Inlining text/html by %s... done."
-                 vm-mime-text/html-handler)
-        t)
-    (error (vm-set-mm-layout-display-error
-            layout
-            (format "Inline text/html by %s display failed: %s"
-                    vm-mime-text/html-handler
-                    (prin1-to-string error-data)))
-           (message "%s" (vm-mm-layout-display-error layout))
-           (sleep-for 2)
-           nil)))
+  (if vm-mime-text/html-handler
+      (condition-case error-data
+	  (let ((buffer-read-only nil)
+		(start (point))
+		(charset (or (vm-mime-get-parameter layout "charset")
+			     "us-ascii"))
+		end buffer-size)
+	    (vm-emit-mime-decoding-message
+	     "Inlining text/html by %s..." vm-mime-text/html-handler)
+	    (vm-mime-insert-mime-body layout)
+	    (unless (bolp) (insert "\n"))
+	    (setq end (point-marker))
+	    (vm-mime-transfer-decode-region layout start end)
+	    (vm-mime-charset-decode-region charset start end)
+	    ;; block remote images by prefixing the link
+	    (goto-char start)
+	    (let ((case-fold-search t))
+	      (while (re-search-forward vm-mime-text/html-blocker end t)
+		(goto-char (match-end 0))
+		(if (or t 
+			(and vm-mime-text/html-blocker-exceptions
+			     (looking-at vm-mime-text/html-blocker-exceptions))
+			(looking-at "cid:"))
+		    (progn
+		      ;; TODO: write the image to a file and replace the link
+		      )
+		  (insert "blocked:"))))
+	    ;; w3-region apparently deletes all the text in the
+	    ;; region and then insert new text.  This makes the
+	    ;; end == start.  The fix is to move the end marker
+	    ;; forward with a placeholder character so that when
+	    ;; w3-region delete all the text, end will still be
+	    ;; ahead of the insertion point and so will be moved
+	    ;; forward when the new text is inserted.  We'll
+	    ;; delete the placeholder afterward.
+	    (goto-char end)
+	    (insert-before-markers "z")
+	    ;; the view port (scrollbar) is sometimes messed up, try to avoid it
+	    (save-window-excursion
+	      ;; dispatch to actual handler
+	      (funcall (intern (format "vm-mime-display-internal-%s-text/html"
+				       vm-mime-text/html-handler))
+		       start end layout))
+	    ;; do clean up
+	    (goto-char end)
+	    (delete-char -1)
+	    (message "Inlining text/html by %s... done."
+		     vm-mime-text/html-handler)
+	    t)
+	(error (vm-set-mm-layout-display-error
+		layout
+		(format "Inline text/html by %s display failed: %s"
+			vm-mime-text/html-handler
+			(error-message-string error-data)))
+	       (message "%s" (vm-mm-layout-display-error layout))
+	       (sleep-for 2)
+	       nil))
+    ;; no handler
+    (message "No handler available for internal display of text/html")
+    (sleep-for 2)
+    nil))
   
 
 (defun vm-mime-display-internal-text/plain (layout &optional no-highlighting)
