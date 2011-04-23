@@ -6622,8 +6622,10 @@ position for the next read.")
 ;; messages that need to be expunged on the server
 (defvar vm-imap-retrieved-messages nil)
 (make-variable-buffer-local 'vm-imap-retrieved-messages)
-;; list of messages to be expunged on the server during the next save
-(defvar vm-imap-messages-to-expunge nil)
+(defvar vm-imap-messages-to-expunge nil
+  "Buffer local variable indicating messages to be expunged on the
+server.  It is a list of pairs containing the UID and the
+UIDVALIDITY for each message to be expunged.")
 (make-variable-buffer-local 'vm-imap-messages-to-expunge)
 (defvar vm-imap-capabilities nil)
 (make-variable-buffer-local 'vm-imap-capabilities)

@@ -372,8 +372,10 @@ unmarked messages are not hashed or considerd for deletion."
     del-count))
 
 ;;;###autoload
-(defun vm-expunge-folder (&optional shaddap just-these-messages
-				    messages-to-expunge)
+(defun* vm-expunge-folder (&key (quiet nil) 
+				((:just-these-messages message-list)
+				 nil	; default value
+				 just-these-messages))
   "Expunge messages with the `deleted' attribute.
 For normal folders this means that the deleted messages are
 removed from the message list and the message contents are
@@ -394,8 +396,8 @@ ignored."
   ;; fact that the numbering redo start point begins as nil in
   ;; all folder buffers.
   (vm-update-summary-and-mode-line)
-  (if (not shaddap)
-      (message "Expunging..."))
+  (unless quiet
+    (message "Expunging..."))
   (let ((use-marks (and (eq last-command 'vm-next-command-uses-marks)
 			(null just-these-messages)))
 	(mp vm-message-list)
@@ -405,7 +407,7 @@ ignored."
     (while mp
       (cond
        ((if just-these-messages
-	    (memq (car mp) messages-to-expunge)
+	    (memq (car mp) message-list)
 	  (and (vm-deleted-flag (car mp))
 	       (or (not use-marks)
 		   (vm-mark-of (car mp)))))
@@ -573,8 +575,8 @@ ignored."
 	 buffers-altered))
       (if vm-ml-sort-keys
           (vm-sort-messages vm-ml-sort-keys))
-      (if (not shaddap)
-	  (message "Deleted messages expunged.")))
+      (unless quiet
+	(message "Deleted messages expunged.")))
      (t (message "No messages are flagged for deletion."))))
   (when vm-debug
     (vm-check-thread-integrity)))

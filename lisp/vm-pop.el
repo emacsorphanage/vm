@@ -1055,10 +1055,11 @@ popdrop
     (list retrieve-list expunge-list)))
 
 ;;;###autoload
-(defun vm-pop-synchronize-folder (&optional interactive
-					    do-remote-expunges
-					    do-local-expunges
-					    do-retrieves)
+(defun* vm-pop-synchronize-folder (&optional 
+				  &key (interactive nil)
+				  (do-remote-expunges nil)
+				  (do-local-expunges nil)
+				  (do-retrieves nil))
   (if (and do-retrieves vm-block-new-mail)
       (error "Can't get new mail until you save this folder."))
   (if (or vm-global-block-new-mail
@@ -1127,7 +1128,7 @@ popdrop
 	       (setq mp (cdr mp)
 		     r-list (cdr r-list))))))
       (if do-local-expunges
-	  (vm-expunge-folder t t local-expunge-list))
+	  (vm-expunge-folder :quiet t :just-these-messages local-expunge-list))
       (if (and do-remote-expunges
 	       vm-pop-messages-to-expunge)
 	  (let ((process (vm-folder-pop-process)))

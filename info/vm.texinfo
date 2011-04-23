@@ -917,9 +917,11 @@ following formats:
 to as @dfn{server folders} (and @dfn{POP folders} or @dfn{IMAP
 folders}, more specifically).
 
+@cindex cache folders
 VM retrieves mail from the server folders into internal Emacs buffers
 for its normal operation.  It also saves copies of the folders on the
-local file system for speed of operation.  However, the @emph{only}
+local file system for speed of operation.  These are referred to as
+``cache'' folders.  However, the @emph{only}
 permanent copies of the folders are on the mail server.  This should
 be contrasted with using server mailboxes as spool files (@pxref{POP
 Spool Files} and @pxref{IMAP Spool Files}), where the permanent
@@ -1072,7 +1074,7 @@ defined via the variables @code{vm-pop-folder-alist} and
 The command @code{vm-visit-pop-folder} allows you to visit a POP
 mailbox as a folder.  When you visit a POP folder, VM will download
 copies of the messages that it finds there for you to read.  These
-messages are saved locally in the file system, in the directory
+messages are saved locally in cache folders, in the directory
 specified by @code{vm-pop-folder-cache-directory} (or
 @code{vm-folder-directory} if the former is not defined).
 @vindex vm-pop-folder-cache-directory
@@ -1081,8 +1083,8 @@ corresponding messages on the POP server will be removed when you
 save the changes with @code{vm-save-folder}.
 
 Message attributes (new, replied, filed, etc.) and labels cannot be
-stored on the POP server but they will be maintained in the local
-copy.  This means that if you access the same POP mailbox from
+stored on the POP server but they will be maintained in the cache folder.
+This means that if you access the same POP mailbox from 
 multiple locations on the internet, you will see different attributes
 at different locations.  To be able to store message attributes and
 labels on the server, you should use IMAP folders (@ref{IMAP Folders})
@@ -1136,12 +1138,12 @@ mailbox in this account.
 @vindex vm-imap-folder-cache-directory
 When you visit an IMAP folder, VM will
 download copies of the messages that it finds there for you to read.
-These messages are saved locally in a folder on the disk, in the 
+These messages are saved locally in a cache folder on the disk, in the 
 directory specified by @code{vm-imap-folder-cache-directory} (or
 @code{vm-folder-directory} if the former is not defined).
 @vindex vm-imap-folder-cache-directory
 If you delete and expunge messages, these changes are made to both the
-local copy of the folder and the folder on the IMAP server when saved
+cache folder and the folder on the IMAP server when saved
 with @code{vm-save-folder}.
 
 Message attributes (new, replied, filed, etc.) are stored on the IMAP
@@ -1202,14 +1204,12 @@ instead.
 @anchor{IMAP Synchronization}
 @unnumberedsubsec IMAP Synchronization
 @vindex vm-get-new-mail
-The local copy and the folder on the IMAP server are partially
-synchronized every time @code{vm-get-new-mail} is invoked.  This
-involves (i) writing the changed attributes and labels to the server,
-(ii) updating the attributes and labels in the local copy based on the
-server data, (iii) expunging messages in the local copy that have been
-expunged on the server (through perhaps a concurrent access to the
-IMAP folder), and finally, (iv) retrieving any new messages on the
-server.
+The cache folder and the folder on the IMAP server are partially
+synchronized every time @code{vm-get-new-mail} is invoked.  This involves
+(i) writing the changed attributes and labels to the server, (ii) updating
+the attributes and labels in the cache folder based on the server data,
+(iii) expunging messages in the cache folder that have been expunged on the
+server, and finally, (iv) retrieving any new messages on the server.
 @vindex vm-imap-sync-on-get
 The variable @code{vm-imap-sync-on-get} specifies whether
 such synchronization should be done as part of @code{vm-get-new-mail}.
@@ -1217,11 +1217,11 @@ If the variable is set to nil then @code{vm-get-new-mail} simply
 retrieves any new messages.
 
 @findex vm-save-folder
-The local copy and the folder on the IMAP server are also synchronized
+The cache folder and the folder on the IMAP server are also synchronized
 every time @code{vm-save-folder} is invoked.  This involves (i)
 writing the changed attributes and labels to the server, (ii) updating
-the attributes and labels in the local copy based on the server data,
-(iii) expunging messages in the local copy that have been expunged on
+the attributes and labels in the cache folder based on the server data,
+(iii) expunging messages in the cache folder that have been expunged on
 the server (through perhaps a concurrent access to the IMAP folder),
 (iv) deleting the locally expunged messages on the server, and
 finally, (v) saving a copy of the folder on the file system.
@@ -1230,14 +1230,17 @@ finally, (v) saving a copy of the folder on the file system.
 The command @code{vm-imap-synchronize} can always be used to perform
 full synchronization with the server.
 
-After fetching messages from the IMAP server into the local copy, it
-is possible to visit the local copy as if it were a normal folder.  VM
-can operate on the local copy without contacting the server.  This
+After fetching messages from the IMAP server into the cache folder, it
+is possible to visit the cache folder as if it were a normal folder.  VM
+can operate on the cache folder without contacting the server.  This
 allows offline operation on the mail folders.  When the IMAP server is
-connected again, one should do @code{vm-imap-synchronize}
+connected again, one should run @kbd{C-u M-x vm-imap-synchronize}, i.e.,
+call it
 with a @emph{prefix argument}.  This causes @emph{all} the message attributes
 and labels to be written to the server, since it may not be known
 which of them have actually changed during the offline operation.
+Similarly, @emph{all} the messages that may have been expunged in the cache
+folder are expunged on the server.
 
 @anchor{UIDVALIDITY}
 @unnumberedsubsec UIDVALIDITY

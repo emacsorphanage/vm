@@ -890,7 +890,7 @@ into VM!"
               (setq mlist (cdr mlist)))))
       ;; expunge them 
       (if vm-virtual-auto-delete-message-expunge
-          (vm-expunge-folder t t spammlist)))
+          (vm-expunge-folder :quiet t :just-these-messages spammlist)))
     
     (vm-display nil nil '(vm-delete-message vm-delete-message-backward)
                 (list this-command))

@@ -3611,9 +3611,16 @@ folder."
 	  (when vm-expunge-before-save
 	    (vm-expunge-folder))
 	  (cond ((eq vm-folder-access-method 'pop)
-		 (vm-pop-synchronize-folder t t t nil))
+		 (vm-pop-synchronize-folder :interactive t 
+					    :do-remote-expunges t 
+					    :do-local-expunges t 
+					    :do-retrieves nil))
 		((eq vm-folder-access-method 'imap)
-		 (vm-imap-synchronize-folder t t t nil t)))
+		 (vm-imap-synchronize-folder :interactive t 
+					     :do-remote-expunges t 
+					     :do-local-expunges t 
+					     :do-retrieves nil
+					     :save-attributes t)))
 	  (vm-discard-fetched-messages)
           ;; remove the message summary file of Thunderbird and force
 	  ;; it to rebuild it.  Expect error if Thunderbird is active.
@@ -3710,7 +3717,7 @@ run vm-expunge-folder followed by vm-save-folder."
   (if (not vm-folder-read-only)
       (progn
 	(message "Expunging...")
-	(vm-expunge-folder t)))
+	(vm-expunge-folder :quiet t)))
   (vm-save-folder prefix))
 
 ;;;###autoload
@@ -4190,17 +4197,20 @@ Same as \\[vm-recover-file]."
   (if vm-block-new-mail
       (error "Can't get new mail until you save this folder."))
   (cond ((eq vm-folder-access-method 'pop)
-	 (vm-pop-synchronize-folder interactive nil nil t))
+	 (vm-pop-synchronize-folder :interactive interactive 
+				    :do-retrieves t))
 	((eq vm-folder-access-method 'imap)
 	 (if vm-imap-sync-on-get
 	     (progn
-;;	       (vm-imap-synchronize-folder interactive nil nil nil t nil)
-					; save-attributes
-	       (vm-imap-synchronize-folder interactive nil t t t t))
-					; do-local-expunges
-					; do-retrieves
-					; retrieve-attributes
-	   (vm-imap-synchronize-folder interactive nil nil t nil nil)))
+;;	       (vm-imap-synchronize-folder :interactive interactive
+;;                                         :save-attributes t)
+	       (vm-imap-synchronize-folder :interactive interactive
+					   :do-local-expunges t 
+					   :do-retrieves t 
+					   :save-attributes t 
+					   :retrieve-attributes t))
+	   (vm-imap-synchronize-folder :interactive interactive 
+				       :do-retrieves t)))
 	(t (vm-get-spooled-mail-normal interactive))))
 
 (defun vm-get-spooled-mail-normal (&optional interactive)
