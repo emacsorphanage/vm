@@ -3234,7 +3234,7 @@ operation of the server to minimize I/O."
 	(let ((mailbox-count (vm-folder-imap-mailbox-count))
 	      (expunge-count (length vm-imap-messages-to-expunge))
 	      (uid-obarray (vm-folder-imap-uid-obarray))
-	      uids-to-delete m-list message e-list count)
+	      uids-to-delete m-list d-list message e-list count)
 	  ;; uids-to-delete to have UID's of all UID-valid messages in
 	  ;; vm-imap-messages-to-expunge 
 	  (condition-case error-data
@@ -3255,28 +3255,32 @@ operation of the server to minimize I/O."
 		  ;;---------------------------
 		  (vm-buffer-type:set 'process)
 		  ;;---------------------------
-		  ;; (setq uid-alist (vm-imap-get-uid-list 
-		  ;;		 process 1 mailbox-count))
-		  ;; m-list to have the message sequence numbers of
-		  ;; messages to be expunged, in descending order.
-		  ;; the message sequence numbers don't change in the
-		  ;; process, according to the IMAP4 protocol
+		  ;; m-list to have the uid's and message sequence
+		  ;; numbers of messages to be expunged, in descending
+		  ;; order.  the message sequence numbers don't change
+		  ;; in the process, according to the IMAP4 protocol
 		  (setq m-list
 			(mapcar 
 			 (lambda (uid)
 			   (let* ((key (intern uid uid-obarray)))
 			     (and (boundp key)
-				  (progn
-				    (vm-imap-delete-message 
-				     process (symbol-value key))
-				    (cons uid (symbol-value key))))))
+				  (cons uid (symbol-value key)))))
 			 uids-to-delete))
 		  (setq m-list (delete nil m-list))
 		  (setq m-list 
-			(cons nil (sort m-list 
-					(lambda (**pair1 **pair2) 
-					  (> (cdr **pair1) (cdr **pair2))))))
-					; dummy header added
+			(sort m-list 
+			      (lambda (**pair1 **pair2) 
+				(> (cdr **pair1) (cdr **pair2)))))
+		  ;; d-list to have ranges of message sequence numbers
+		  ;; of messages to be expuntged, in ascending order.
+		  (setq d-list (vm-imap-bunch-messages
+				(nreverse (mapcar (function cdr) m-list))))
+		  (mapc (lambda (range)
+			  (vm-imap-delete-messages
+			   process (car range) (cdr range)))
+			d-list)
+		  ;; now expunge and verify that all messages are gone
+		  (setq m-list (cons nil m-list)) ; dummy header added
 		  (setq count 0)
 		  (while (and (cdr m-list) (<= count vm-imap-expunge-retries))
 		    ;;----------------------------------
@@ -3352,14 +3356,10 @@ operation of the server to minimize I/O."
       (setq vm-imap-connection-mode 'online)
       new-messages)))
 
-(defvar vm-imap-message-bunch-size 10
-  "* Number of messages in a bunch to be used for IMAP server
-operations")
-
 (defun vm-imap-bunch-messages (seq-nums)
-  ;; Given a sorted list of message sequence numbers, creates a list
-  ;; of bunched message sequences, each of the form 
-  ;; (begin-num . end-num)
+  "Given a sorted list of message sequence numbers, creates a
+  list of bunched message sequences, each of the form 
+  (begin-num . end-num)."
   (let ((seqs nil)
 	beg last next diff)
     (when seq-nums

@@ -781,6 +781,13 @@ additional overhead in checking that the session is active."
   :group 'vm-imap
   :type 'boolean)
 
+(defcustom vm-imap-message-bunch-size 10
+  "*Number of messages to be bunched together in IMAP server
+operations.  This permits faster interation with the IMAP servers.  To
+disable bunching, set it to 1."
+  :group 'vm-imap
+  :type 'integer)
+
 (defcustom vm-imap-sync-on-get t
   "*If this variable is non-NIL, then the vm-get-new-mail command
 should synchronize with the IMAP mailbox on the server.  This involves
