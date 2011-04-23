@@ -1107,8 +1107,8 @@ nil if the session could not be created."
 	    (if (processp process)
 		(set-process-buffer process (current-buffer))
 	      (insert "Starting " session-name
-		      " session " (current-time-string) "\n")
-	      (insert (format "-- connecting to %s:%s\n" host port))
+		      " session " (current-time-string) "\r\n")
+	      (insert (format "-- connecting to %s:%s\r\n" host port))
 	      ;; open the connection to the server
 	      (condition-case err
 		  (cond 
@@ -1136,7 +1136,8 @@ nil if the session could not be created."
 	    (setq vm-imap-read-point (point))
 	    (vm-process-kill-without-query process)
 	    (if (setq greeting (vm-imap-read-greeting process))
-		(insert-before-markers (format "-- connected for %s\n" purpose))
+		(insert-before-markers 
+		 (format "-- connected for %s\r\n" purpose))
 	      (delete-process process)	; why here?  USR
 	      (setq shutdown t)
 	      (throw 'end-of-session nil))
@@ -1302,7 +1303,7 @@ as well."
 	  ;;----------------------------------
 	  ;; This is just for tracing purposes
 	  (goto-char (point-max))
-	  (insert "ending IMAP session " (current-time-string) "\n")
+	  (insert "ending IMAP session " (current-time-string) "\r\n")
 	  ;; Schedule killing of the process after a delay to allow
 	  ;; any output to be received first
 	  (if (fboundp 'add-async-timeout)
@@ -2040,6 +2041,9 @@ the size."
 		((looking-at "\r\n")
 		 (forward-char 2)
 		 (setq token '(end-of-line) done (not skip-eol)))
+		((looking-at "\n")
+		 (vm-imap-protocol-error 
+		  "missing CR before LF - possible connection problem"))
 		((looking-at "\\[")
 		 (forward-char 1)
 		 (let* ((list (list 'vector))
