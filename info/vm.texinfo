@@ -1218,13 +1218,12 @@ retrieves any new messages.
 
 @findex vm-save-folder
 The cache folder and the folder on the IMAP server are also synchronized
-every time @code{vm-save-folder} is invoked.  This involves (i)
-writing the changed attributes and labels to the server, (ii) updating
-the attributes and labels in the cache folder based on the server data,
-(iii) expunging messages in the cache folder that have been expunged on
-the server (through perhaps a concurrent access to the IMAP folder),
-(iv) deleting the locally expunged messages on the server, and
-finally, (v) saving a copy of the folder on the file system.
+every time @code{vm-save-folder} is invoked.  This involves (i) writing the
+changed attributes and labels to the server, (ii) updating the attributes
+and labels in the cache folder based on the server data, (iii) expunging
+messages in the cache folder that have been expunged on the server, (iv)
+deleting and expunging the locally expunged messages on the server folder,
+and finally, (v) saving a copy of the folder on the file system.
 
 @findex vm-imap-synchronize
 The command @code{vm-imap-synchronize} can always be used to perform

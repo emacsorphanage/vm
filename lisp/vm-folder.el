@@ -5146,8 +5146,7 @@ thread are retrieved."
 	  (when (vm-body-to-be-retrieved-of mm)
 	    (setq n (1+ n))
 	    (message "Retrieving message body... %s" n)
-	    (vm-retrieve-real-message-body mm)
-	    (vm-register-fetched-message mm))
+	    (vm-retrieve-real-message-body mm :register t))
 	  (setq mlist (cdr mlist)))
 	(when (> n 0)
 	  (message "Retrieving message body... done")
@@ -5156,10 +5155,12 @@ thread are retrieved."
 	    (vm-update-summary-and-mode-line))))
       )))
 
-(defun vm-retrieve-real-message-body (mm &optional fetch)
+(defun* vm-retrieve-real-message-body (mm &key (fetch nil) (register nil))
   "Retrieve the body of a real message MM from its external
 source and insert it into the Folder buffer.  If the optional argument
-FETCH is t, then the retrieval is for a temporary message fetch.
+FETCH is t, then the retrieval is for a temporary message fetch.  If
+the optional argument REGISTER is t, then register it as a fetched
+message. 
 
 Gives an error if unable to retrieve message."
   (when (not (eq (vm-message-access-method-of mm) 'imap))
@@ -5176,6 +5177,7 @@ Gives an error if unable to retrieve message."
 	   ;; (buffer-read-only nil)    ; seems redundant
 	   (buffer-undo-list t)		; why this?  USR, 2010-06-11
 	   (modified (buffer-modified-p))
+	   (fetch-result nil)
 	   (testing 0))
        (goto-char (vm-text-of mm))
        ;; Check to see that we are at the right place
@@ -5186,36 +5188,41 @@ Gives an error if unable to retrieve message."
        ;; Remember that this does I/O and accept-process-output,
        ;; allowing concurrent threads to run!!!  USR, 2010-07-11
        (condition-case err
-	   (apply (intern (format "vm-fetch-%s-message" fetch-method))
-		  mm nil)
+	   (setq fetch-result
+		 (apply (intern (format "vm-fetch-%s-message" fetch-method))
+			mm nil))
 	 (error 
-	  (error "Unable to load message; %s" (error-message-string err))))
-       (vm-assert (eq (point) (marker-position (vm-text-of mm))))
-       (vm-increment testing)
-       ;; delete the new headers
-       (delete-region (vm-text-of mm)
-		      (or (re-search-forward "\n\n" (point-max) t) (point-max)))
-       (vm-assert (eq (point) (marker-position (vm-text-of mm))))
-       (vm-increment testing)
-       ;; fix markers now
-       (set-marker (vm-text-end-of mm) (point-max))
-       (vm-assert (eq (point) (marker-position (vm-text-of mm))))
-       (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
-       (vm-increment testing)
-       ;; now care for the layout of the message
-       (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
-       ;; update the message data
-       (vm-set-body-to-be-retrieved-flag mm nil)
-       (vm-set-body-to-be-discarded-flag mm nil)
-       (vm-set-line-count-of mm nil)
-       (vm-set-byte-count-of mm nil)
-       ;; update the virtual messages
-       (vm-update-virtual-messages mm)
-       (vm-restore-buffer-modified-p modified (vm-buffer-of mm))
+	  (message "Unable to load message; %s" (error-message-string err))))
+       (when fetch-result
+	 (vm-assert (eq (point) (marker-position (vm-text-of mm))))
+	 (vm-increment testing)
+	 ;; delete the new headers
+	 (delete-region 
+	  (vm-text-of mm)
+	  (or (re-search-forward "\n\n" (point-max) t) (point-max)))
+	 (vm-assert (eq (point) (marker-position (vm-text-of mm))))
+	 (vm-increment testing)
+	 ;; fix markers now
+	 (set-marker (vm-text-end-of mm) (point-max))
+	 (vm-assert (eq (point) (marker-position (vm-text-of mm))))
+	 (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
+	 (vm-increment testing)
+	 ;; now care for the layout of the message
+	 (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe mm))
+	 ;; update the message data
+	 (vm-set-body-to-be-retrieved-flag mm nil)
+	 (vm-set-body-to-be-discarded-flag mm nil)
+	 (vm-set-line-count-of mm nil)
+	 (vm-set-byte-count-of mm nil)
+	 ;; update the virtual messages
+	 (vm-update-virtual-messages mm)
+	 (vm-restore-buffer-modified-p modified (vm-buffer-of mm))
 
-       (vm-assert (eq (point) (marker-position (vm-text-of mm))))
-       (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
-       (vm-increment testing)))))
+	 (vm-assert (eq (point) (marker-position (vm-text-of mm))))
+	 (vm-assert (save-excursion (forward-line -1) (looking-at "\n")))
+	 (vm-increment testing)
+	 (when register
+	   (vm-register-fetched-message mm)))))))
 
 ;;;###autoload
 (defun vm-refresh-message ()

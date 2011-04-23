@@ -3377,10 +3377,12 @@ operations")
 
 (defun vm-fetch-imap-message (m)
   "Insert the message body of M in the current buffer, which must be
-either the folder buffer or the presentation buffer.
+either the folder buffer or the presentation buffer.  Returns a
+boolean indicating success: t if the message was fully fetched and nil
+otherwise.
 
- (This is a special case of vm-fetch-message, not to be confused with
- vm-imap-fetch-message.)"
+(This is a special case of vm-fetch-message, not to be confused with
+vm-imap-fetch-message.)"
   (let ((body-buffer (current-buffer))
 	(statblob nil))
     (unwind-protect
@@ -3432,12 +3434,14 @@ either the folder buffer or the presentation buffer.
 			  (vm-imap-retrieve-to-target 
 			   process body-buffer statblob use-body-peek)
 			  (vm-imap-read-ok-response process)
-			  )
+			  t)
 		      (vm-imap-normal-error ; handler
-		       (message "IMAP error: %s" (cadr error-data)))
+		       (message "IMAP error: %s" (cadr error-data))
+		       nil)
 		      (vm-imap-protocol-error ; handler
 		       (message "Retrieval from %s signaled: %s" folder
 				error-data)
+		       nil
 		       ;; Continue with whatever messages have been read
 		       )
 		      (quit

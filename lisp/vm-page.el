@@ -768,8 +768,7 @@ preview or the full message, governed by the the variables
      ;; 1. make sure that the message body is present
      (when (vm-body-to-be-retrieved-of (car vm-message-pointer))
        (let ((mm (vm-real-message-of (car vm-message-pointer))))
-	 (vm-retrieve-real-message-body mm t)
-	 (vm-register-fetched-message mm)))
+	 (vm-retrieve-real-message-body mm :fetch t :register t)))
      (when vm-real-buffers
 	 (vm-make-virtual-copy (car vm-message-pointer)))
 

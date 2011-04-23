@@ -1572,7 +1572,8 @@ source of the message."
 		   (vm-fetch-message 
 		    (list (vm-message-access-method-of mm)) mm)
 		 (error
-		  (message "Cannot fetch; %s" (error-message-string err)))))
+		  (message "Cannot fetch message; %s" 
+			   (error-message-string err)))))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 	       (vm-fetch-message (read (current-buffer)) mm)))
 	;; This might be redundant.  Wasn't in revision 717.
@@ -1738,31 +1739,36 @@ the actual message from the file \"message-11\"."
     (set-buffer (marker-buffer (vm-text-of mm)))
     (let ((buffer-read-only nil)
 	  (inhibit-read-only t)
-	  (buffer-undo-list t))
+	  (buffer-undo-list t)
+	  (fetch-result nil))
       (goto-char (vm-text-of mm))
       (delete-region (point) (point-max))
       ;; Remember that this might do process I/O and accept-process-output,
       ;; allowing other threads to run!!!  USR, 2010-07-11 
       (message "Fetching message from external source...")
-      (apply (intern (format "vm-fetch-%s-message" (car storage)))
-	     mm (cdr storage))
-      (message "Fetching message from external source... done")
-      ;; delete the new headers
-      (delete-region (vm-text-of mm)
-		     (or (re-search-forward "\n\n" (point-max) t)
-			 (point-max)))
-      ;; fix markers now
-      (set-marker (vm-text-end-of mm) (point-max))	
-      (set-marker (vm-end-of mm) (point-max))
-      ;; now care for the layout of the message, old layouts are invalid as the
-      ;; presentation buffer may have been used for other messages in the
-      ;; meantime and the marker got invalid by this.
-      (vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
-      )))
+      (setq fetch-result
+	    (apply (intern (format "vm-fetch-%s-message" (car storage)))
+		   mm (cdr storage)))
+      (when fetch-result
+	(message "Fetching message from external source... done")
+	;; delete the new headers
+	(delete-region (vm-text-of mm)
+		       (or (re-search-forward "\n\n" (point-max) t)
+			   (point-max)))
+	;; fix markers now
+	(set-marker (vm-text-end-of mm) (point-max))	
+	(set-marker (vm-end-of mm) (point-max))
+	;; now care for the layout of the message, old layouts are
+	;; invalid as the presentation buffer may have been used for
+	;; other messages in the meantime and the marker got invalid
+	;; by this.
+	(vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
+	))))
   
 (defun vm-fetch-file-message (m filename)
   "Insert the message with message descriptor MM stored in the given FILENAME."
-  (insert-file-contents filename nil nil nil t))
+  (insert-file-contents filename nil nil nil t)
+  t)
 
 (fset 'vm-fetch-mode 'vm-mode)
 (put 'vm-fetch-mode 'mode-class 'special)
