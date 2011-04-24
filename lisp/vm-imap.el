@@ -3269,7 +3269,7 @@ operation of the server to minimize I/O."
 				  (cons uid (symbol-value key)))))
 			 uids-to-delete))
 		  (setq m-list 
-			(sort m-list 
+			(sort (delete nil m-list)
 			      (lambda (**pair1 **pair2) 
 				(> (cdr **pair1) (cdr **pair2)))))
 		  ;; d-list to have ranges of message sequence numbers

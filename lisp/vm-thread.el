@@ -805,27 +805,29 @@ mean?)                                         USR, 2011-03-17"
     (when (boundp s-sym)
       (if (eq id-sym (vm-ts-root-of s-sym))
 	  ;; (when message-changing
-	  (if (null (cdr (vm-ts-messages-of s-sym)))
+	  (if (null (remq m (vm-ts-messages-of s-sym)))
 	      (makunbound s-sym)
-	    (let ((p (vm-ts-messages-of s-sym))
+	    (let ((p (remq m (vm-ts-messages-of s-sym)))
 		  oldest-msg oldest-date children)
-	      (setq oldest-msg (car p))
+	      (setq oldest-msg (vm-th-message-of (vm-thread-symbol (car p))))
 	      (setq oldest-date (vm-so-sortable-datestring (car p)))
 	      (setq p (cdr p))
 	      (while p
 		(when (and (string-lessp 
 			    (vm-so-sortable-datestring (car p))
 			    oldest-date)
-			   (not (eq m (car p))))
-		  (setq oldest-msg (car p)
-			oldest-date 
-			(vm-so-sortable-datestring (car p))))
+			   (not (eq m (vm-th-message-of
+				       (vm-thread-symbol (car p))))))
+		  (setq oldest-msg (vm-th-message-of 
+				    (vm-thread-symbol (car p)))
+			oldest-date (vm-so-sortable-datestring (car p))))
 		(setq p (cdr p)))
 	      (vm-ts-set-root-of 
 	       s-sym (intern (vm-su-message-id oldest-msg)
 			     vm-thread-obarray))
 	      (vm-ts-set-root-date-of s-sym oldest-date)
-	      (setq children (remq oldest-msg (vm-ts-members-of s-sym)))
+	      (setq children (remq (vm-thread-symbol oldest-msg)
+				   (vm-ts-members-of s-sym)))
 	      (vm-ts-set-members-of s-sym children)
 	      (vm-ts-set-messages-of
 	       s-sym (remq m (vm-ts-messages-of s-sym)))
