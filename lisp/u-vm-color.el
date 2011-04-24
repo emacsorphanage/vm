@@ -59,6 +59,10 @@
 ;;  a bug in my code...
 ;;  (defadvice vm-decode-mime-message (after u-vm-color activate)
 ;;    (u-vm-color-fontify-buffer-even-more))
+;;
+;;  m.sujith@gmail.com recommends adding: (Launchpad Bug 674383)
+;;  (defadvice vm-show-current-message (after u-vm-color activate)
+;;    (u-vm-color-fontify-buffer-even-more))
 
 ;;  If you are using auto-fill, ie when the variables
 ;;  `vm-word-wrap-paragraphs' or

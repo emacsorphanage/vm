@@ -498,53 +498,52 @@ ignored."
 	    (vm-increment vm-modification-counter))))
 	(if (eq (vm-attributes-of (car mp))
 		(vm-attributes-of (vm-real-message-of (car mp))))
-	    (save-excursion
-	      (set-buffer (vm-buffer-of (vm-real-message-of (car mp))))
-	      (cond ((eq vm-folder-access-method 'pop)
-		     (setq vm-pop-messages-to-expunge
-			   (cons (vm-pop-uidl-of (vm-real-message-of (car mp)))
-				 vm-pop-messages-to-expunge)
-			   ;; Set this so that if Emacs crashes or
-			   ;; the user quits without saving, we
-			   ;; have a record of messages that were
-			   ;; retrieved and expunged locally.
-			   ;; When the user does M-x recover-file
-			   ;; we won't re-retrieve messages the
-			   ;; user has already dealt with.
-			   vm-pop-retrieved-messages
-			   (cons (list (vm-pop-uidl-of
-					(vm-real-message-of (car mp)))
-				       (vm-folder-pop-maildrop-spec)
-				       'uidl)
-				 vm-pop-retrieved-messages)))
-		    ((eq vm-folder-access-method 'imap)
-		     (setq vm-imap-messages-to-expunge
-			   (cons (cons
-				  (vm-imap-uid-of (vm-real-message-of (car mp)))
-				  (vm-imap-uid-validity-of
-				   (vm-real-message-of (car mp))))
-				 vm-imap-messages-to-expunge))
-			   ;; Set this so that if Emacs crashes or
-			   ;; the user quits without saving, we
-			   ;; have a record of messages that were
-			   ;; retrieved and expunged locally.
-			   ;; When the user does M-x recover-file
-			   ;; we won't re-retrieve messages the
-			   ;; user has already dealt with.
-		     (setq vm-imap-retrieved-messages
-			   (cons (list (vm-imap-uid-of
-					(vm-real-message-of (car mp)))
-				       (vm-imap-uid-validity-of
-					(vm-real-message-of (car mp)))
-				       (vm-folder-imap-maildrop-spec)
-				       'uid)
-				 vm-imap-retrieved-messages))))
-	      (vm-increment vm-modification-counter)
-	      (vm-save-restriction
-	       (widen)
-	       (let ((buffer-read-only nil))
-		 (delete-region (vm-start-of (vm-real-message-of (car mp)))
-				(vm-end-of (vm-real-message-of (car mp)))))))))
+	    (let ((real-m (vm-real-message-of (car mp))))
+	      (save-excursion
+		(set-buffer (vm-buffer-of real-m))
+		(cond ((eq vm-folder-access-method 'pop)
+		       (setq vm-pop-messages-to-expunge
+			     (cons (vm-pop-uidl-of real-m)
+				   vm-pop-messages-to-expunge)
+			     ;; Set this so that if Emacs crashes or
+			     ;; the user quits without saving, we
+			     ;; have a record of messages that were
+			     ;; retrieved and expunged locally.
+			     ;; When the user does M-x recover-file
+			     ;; we won't re-retrieve messages the
+			     ;; user has already dealt with.
+			     vm-pop-retrieved-messages
+			     (cons (list (vm-pop-uidl-of real-m)
+					 (vm-folder-pop-maildrop-spec)
+					 'uidl)
+				   vm-pop-retrieved-messages)))
+		      ((eq vm-folder-access-method 'imap)
+		       (setq vm-imap-messages-to-expunge
+			     (cons (cons
+				    (vm-imap-uid-of real-m)
+				    (vm-imap-uid-validity-of real-m))
+				   vm-imap-messages-to-expunge))
+		       ;; Set this so that if Emacs crashes or
+		       ;; the user quits without saving, we
+		       ;; have a record of messages that were
+		       ;; retrieved and expunged locally.
+		       ;; When the user does M-x recover-file
+		       ;; we won't re-retrieve messages the
+		       ;; user has already dealt with.
+		       (vm-assert (and (vm-imap-uid-of real-m)
+				       (vm-imap-uid-validity-of real-m)))
+		       (setq vm-imap-retrieved-messages
+			     (cons (list (vm-imap-uid-of real-m)
+					 (vm-imap-uid-validity-of real-m)
+					 (vm-folder-imap-maildrop-spec)
+					 'uid)
+				   vm-imap-retrieved-messages))))
+		(vm-increment vm-modification-counter)
+		(vm-save-restriction
+		 (widen)
+		 (let ((buffer-read-only nil))
+		   (delete-region (vm-start-of real-m)
+				  (vm-end-of real-m))))))))
        (t (setq prev mp)))
       (setq mp (cdr mp)))
     (vm-display nil nil '(vm-expunge-folder) '(vm-expunge-folder))
