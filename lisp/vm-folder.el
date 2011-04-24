@@ -53,7 +53,8 @@
 
 (declare-function vm-update-draft-count "vm.el" ())
 (declare-function vm "vm.el" 
-		  (&optional folder read-only access-method reload))
+		  (&optional folder 
+			     &key read-only access-method reload revisit))
 (declare-function vm-mode "vm.el" (&optional read-only))
 		  
 
@@ -3785,7 +3786,7 @@ Same as \\[vm-revert-folder]."
     (call-interactively 'revert-buffer)
     (setq vm-folder-access-data access-data) ; restore preserved data
     (setq vm-folder-access-method access-method)
-    (vm (current-buffer) nil access-method 'reload)))
+    (vm (current-buffer) :access-method access-method :reload 'reload)))
 
 ;;;###autoload
 (defun vm-revert-folder ()
@@ -3815,7 +3816,7 @@ Same as \\[vm-recover-folder]."
     (call-interactively 'recover-file)
     (setq vm-folder-access-method access-method)
     (setq vm-folder-access-data access-data) ; restore data
-    (vm (current-buffer) nil access-method 'reload)))
+    (vm (current-buffer) :access-method access-method :reload 'reload)))
 
 ;;;###autoload
 (defun vm-recover-folder ()
@@ -3842,7 +3843,7 @@ Same as \\[vm-recover-file]."
 		     (vm-pop-find-name-for-buffer (current-buffer)))
 		    ((eq vm-folder-access-method 'imap)
 		     (vm-imap-find-spec-for-buffer (current-buffer))))))
-    (vm (or name buffer-file-name) nil vm-folder-access-method)))
+    (vm (or name buffer-file-name) :access-method vm-folder-access-method)))
 
 ;; detect if a recover-file is being performed
 ;; and handle things properly.
@@ -4321,7 +4322,7 @@ Same as \\[vm-recover-file]."
 	     (message 
 	      "Ignoring error while running vm-retrieved-spooled-mail-hook. %S"
 	      errmsg)))
-          (vm-assimilate-new-messages t))))))
+          (vm-assimilate-new-messages :dont-read-attributes t))))))
 
 ;;;###autoload
 (defun vm-folder-name ()
@@ -4504,10 +4505,9 @@ files."
 	     (message "No messages gathered."))))))
 
 ;; returns list of new messages if there were any new messages, nil otherwise
-(defun vm-assimilate-new-messages (&optional
-				   dont-read-attributes
-				   gobble-order
-				   labels first-time)
+(defun* vm-assimilate-new-messages (&key
+				    dont-read-attributes
+				    gobble-order labels first-time)
   ;; We are only guessing what this function does.  USR, 2010-05-20
   ;; This is called in a Folder buffer, which already has messages
   ;; loaded into it, but some of the messages (the "new" messages)

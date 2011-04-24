@@ -76,7 +76,8 @@
       (require 'vm-autoloads)))
 
 ;;;###autoload
-(defun vm (&optional folder read-only access-method reload)
+(defun* vm (&optional folder &key (read-only nil) (access-method nil)
+		      (reload nil) (revisit nil))
   "Read mail under Emacs.
 Optional first arg FOLDER specifies the folder to visit.  It can
 be the path name of a local folder or the maildrop specification
@@ -119,14 +120,19 @@ deleted messages.  Use `###' to expunge deleted messages."
   ;; an existing buffer.  All initialisations must be performed but
   ;; some variables need to be preserved, e.g., vm-folder-access-data.
 
+  ;; REVISIT, if non-nil, means that, if the folder has already been
+  ;; visited, then it should be just selected.  No further processing
+  ;; should be done.
+
   ;; The functions find-name-for-spec and find-spec-for-name translate
   ;; between folder names and maildrop specs for the server folders.
 
-  (interactive (list nil current-prefix-arg))
+  (interactive (list nil :read-only current-prefix-arg))
   (vm-session-initialization)
   ;; recursive call to vm in order to allow defadvice on its first call
   (unless (boundp 'vm-session-beginning)
-    (vm folder read-only access-method reload))
+    (vm folder :read-only read-only :access-method access-method
+	:reload reload :revisit revisit))
   ;; set inhibit-local-variables non-nil to protect
   ;; against letter bombs.
   ;; set enable-local-variables to nil for newer Emacses
@@ -147,7 +153,9 @@ deleted messages.  Use `###' to expunge deleted messages."
 		 (setq access-method 'pop
 		       folder f)))))
     (let ((full-startup (and (not reload) (not (bufferp folder))))
-	  ;; not clear why full-startup isn't always true - USR, 2010-01-02
+	  ;; if we have been asked to visit a folder that is already
+	  ;; visited, then we don't do a full-startup unless we are
+	  ;; reloading.  but what exactly do we do? - USR, 2011-04-24
 	  (did-read-index-file nil)
 	  folder-buffer first-time totals-blurb
 	  folder-name account-name remote-spec
@@ -237,7 +245,8 @@ deleted messages.  Use `###' to expunge deleted messages."
       (vm-check-for-killed-presentation)
       ;; If the buffer's not modified then we know that there can be no
       ;; messages in the folder that are not on disk.
-      (or (buffer-modified-p) (setq vm-messages-not-on-disk 0))
+      (unless (buffer-modified-p) 
+	(setq vm-messages-not-on-disk 0))
       (setq first-time (not (eq major-mode 'vm-mode))
 	    preserve-auto-save-file (and buffer-file-name
 					  (not (buffer-modified-p))
@@ -277,7 +286,10 @@ deleted messages.  Use `###' to expunge deleted messages."
 
       ;; builds message list, reads attributes if they weren't
       ;; read from an index file.
-      (vm-assimilate-new-messages nil (not did-read-index-file) nil t)
+      ;; but that is not what the code is doing! - USR, 2011-04-24
+      (vm-assimilate-new-messages :dont-read-attributes nil 
+				  :gobble-order (not did-read-index-file) 
+				  :first-time t)
 
       (if (and first-time (not did-read-index-file))
 	  (progn
@@ -320,13 +332,17 @@ deleted messages.  Use `###' to expunge deleted messages."
 	    (if vm-raise-frame-at-startup
 		(vm-raise-frame))))
 
+      ;; if the folder is being revisited, nothing more to be done
+      (if (and revisit (not first-time))
+	  (throw 'done t))
+
       ;; say this NOW, before the non-previewers read a message,
       ;; alter the new message count and confuse themselves.
       (when full-startup
 	;; save blurb so we can repeat it later as necessary.
 	(setq totals-blurb (vm-emit-totals-blurb))
-	(and buffer-file-name
-	     (vm-store-folder-totals buffer-file-name (cdr vm-totals))))
+	(if buffer-file-name
+	    (vm-store-folder-totals buffer-file-name (cdr vm-totals))))
 
       (vm-thoughtfully-select-message)
       (vm-update-summary-and-mode-line)
@@ -337,31 +353,30 @@ deleted messages.  Use `###' to expunge deleted messages."
       (when (and vm-use-menus (vm-menu-support-possible-p))
 	(vm-menu-install-visited-folders-menu))
 
-      (if full-startup
-	  (progn
-	    (if (and (vm-should-generate-summary)
-		     ;; don't generate a summary if recover-file is
-		     ;; likely to happen, since recover-file does
-		     ;; not work in a summary buffer.
-		     (not preserve-auto-save-file))
-		(vm-summarize t nil))
-	    ;; raise the summary frame if the user wants frames
-	    ;; raised and if there is a summary frame.
-	    (if (and vm-summary-buffer
-		     vm-mutable-frames
-		     vm-frame-per-summary
-		     vm-raise-frame-at-startup)
-		(vm-raise-frame))
-	    ;; if vm-mutable-windows is nil, the startup
-	    ;; configuration can't be applied, so do
-	    ;; something to get a VM buffer on the screen
-	    (if vm-mutable-windows
-		(vm-display nil nil (list this-command)
-			    (list (or this-command 'vm) 'startup))
-	      (save-excursion
-		(switch-to-buffer (or vm-summary-buffer
-				      vm-presentation-buffer
-				      (current-buffer)))))))
+      (when full-startup
+	(if (and (vm-should-generate-summary)
+		 ;; don't generate a summary if recover-file is
+		 ;; likely to happen, since recover-file does
+		 ;; not work in a summary buffer.
+		 (not preserve-auto-save-file))
+	    (vm-summarize t nil))
+	;; raise the summary frame if the user wants frames
+	;; raised and if there is a summary frame.
+	(if (and vm-summary-buffer
+		 vm-mutable-frames
+		 vm-frame-per-summary
+		 vm-raise-frame-at-startup)
+	    (vm-raise-frame))
+	;; if vm-mutable-windows is nil, the startup
+	;; configuration can't be applied, so do
+	;; something to get a VM buffer on the screen
+	(if vm-mutable-windows
+	    (vm-display nil nil (list this-command)
+			(list (or this-command 'vm) 'startup))
+	  (save-excursion
+	    (switch-to-buffer (or vm-summary-buffer
+				  vm-presentation-buffer
+				  (current-buffer))))))
 
       (if vm-message-list
 	  ;; don't decode MIME if recover-file is
@@ -387,7 +402,8 @@ deleted messages.  Use `###' to expunge deleted messages."
       (if (or (not full-startup) preserve-auto-save-file)
 	  (throw 'done t))
       
-      (message totals-blurb)
+      (if (interactive-p)
+	  (message totals-blurb))
 
       (if (and vm-auto-get-new-mail
 	       (not vm-block-new-mail)
@@ -404,11 +420,10 @@ deleted messages.  Use `###' to expunge deleted messages."
 	    (message totals-blurb)))
 
       ;; Display copyright and copying info.
-      (if (and (interactive-p) (not vm-startup-message-displayed))
-	  (progn
-	    (vm-display-startup-message)
-	    (if (not (input-pending-p))
-		(message totals-blurb)))))))
+      (when (and (interactive-p) (not vm-startup-message-displayed))
+	(vm-display-startup-message)
+	(if (not (input-pending-p))
+	    (message totals-blurb))))))
 
 ;;;###autoload
 (defun vm-other-frame (&optional folder read-only)
@@ -421,7 +436,7 @@ deleted messages.  Use `###' to expunge deleted messages."
 	(vm-goto-new-frame 'primary-folder 'folder)))
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm folder read-only))
+    (vm folder :read-only read-only))
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
@@ -435,7 +450,7 @@ deleted messages.  Use `###' to expunge deleted messages."
   (other-window 1)
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm folder read-only)))
+    (vm folder :read-only read-only)))
 
 (put 'vm-mode 'mode-class 'special)
 
@@ -452,11 +467,11 @@ Commands:
 
 Customize VM by setting variables and store them in the `vm-init-file'."
   (interactive "P")
-  (vm (current-buffer) read-only)
+  (vm (current-buffer) :read-only read-only)
   (vm-display nil nil '(vm-mode) '(vm-mode)))
 
 ;;;###autoload
-(defun vm-visit-folder (folder &optional read-only)
+(defun vm-visit-folder (folder &optional read-only revisit)
   "Visit a mail file.
 VM will parse and present its messages to you in the usual way.
 
@@ -467,7 +482,11 @@ minibuffer.
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute
 changes, messages additions or deletions will be allowed in the
-visited folder."
+visited folder.
+
+The optional third arg REVISIT says that, if the folder is already
+visited, then it should be merely selected without doing further
+processing (such as moving the message-pointer or getting new mail)."
   (interactive
    (save-current-buffer
      (vm-session-initialization)
@@ -511,7 +530,8 @@ visited folder."
 		   (or vm-folder-directory default-directory)))
 	     (setq folder (expand-file-name folder)
 		   vm-last-visit-folder folder))))
-    (vm folder read-only access-method)))
+    (vm folder 
+	:read-only read-only :access-method access-method :revisit revisit)))
 
 ;;;###autoload
 (defun vm-visit-folder-other-frame (folder &optional read-only)
@@ -620,7 +640,7 @@ of messages is carried out preferentially to other Thunderbird folders."
 	  (or vm-thunderbird-folder-directory default-directory)))
     (setq folder (expand-file-name folder)
 	  vm-last-visit-folder folder))
-  (vm folder read-only)
+  (vm folder :read-only read-only)
   (set (make-local-variable 'vm-foreign-folder-directory)
        vm-thunderbird-folder-directory)
   )
@@ -672,7 +692,7 @@ visited folder."
     (setq remote-spec (vm-pop-find-spec-for-name folder))
     (if (null remote-spec)
 	(error "No such POP folder: %s" folder))
-    (vm remote-spec read-only 'pop)))
+    (vm remote-spec :read-only read-only :access-method 'pop)))
 
 ;;;###autoload
 (defun vm-visit-pop-folder-other-frame (folder &optional read-only)
@@ -776,7 +796,7 @@ visited folder."
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer-if-possible)
   (setq vm-last-visit-imap-folder folder)
-  (vm folder read-only 'imap))
+  (vm folder :read-only read-only :access-method 'imap))
 
 ;;;###autoload
 (defun vm-visit-imap-folder-other-frame (folder &optional read-only)

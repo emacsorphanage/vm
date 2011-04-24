@@ -40,10 +40,12 @@
   (require 'vm-thread)
 )
 
-(declare-function vm-visit-folder "vm" (folder &optional read-only))
+(declare-function vm-visit-folder "vm" 
+		  (folder &optional read-only revisit))
 (declare-function vm-visit-virtual-folder "vm"
 		  (folder &optional read-only bookmark))
-(declare-function vm-mode "vm" (&optional read-only))
+(declare-function vm-mode "vm" 
+		  (&optional read-only))
 
 
 ;;;###autoload
@@ -156,7 +158,7 @@ all the real folder buffers involved."
 				(vm-binary-coding-system))
 			       (enable-local-eval nil)
 			       (enable-local-variables nil))
-			   (vm-visit-folder folder)
+			   (vm-visit-folder folder nil t)
 			   (vm-select-folder-buffer)
 			   (current-buffer)))))
 
@@ -174,7 +176,7 @@ all the real folder buffers involved."
 			  (vm-binary-coding-system))
 			 (enable-local-eval nil)
 			 (enable-local-variables nil))
-		     (vm-visit-folder folder)
+		     (vm-visit-folder folder nil t)
 		     (vm-select-folder-buffer)
 		     (setq buffer (current-buffer))
 		     (setq components (cons (cons buffer t) components))

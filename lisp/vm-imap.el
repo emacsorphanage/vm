@@ -3178,7 +3178,7 @@ operation of the server to minimize I/O."
 	   (intern (buffer-name) vm-buffers-needing-display-update)
 	   (message "Updating summary... ")
 	   (vm-update-summary-and-mode-line)
-	   (setq mp (vm-assimilate-new-messages t))
+	   (setq mp (vm-assimilate-new-messages :dont-read-attributes t))
 	   (setq new-messages mp)
            (if new-messages
                (vm-increment vm-modification-counter))
