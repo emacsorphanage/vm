@@ -530,14 +530,14 @@ ignored."
 		       ;; When the user does M-x recover-file
 		       ;; we won't re-retrieve messages the
 		       ;; user has already dealt with.
-		       (vm-assert (and (vm-imap-uid-of real-m)
-				       (vm-imap-uid-validity-of real-m)))
-		       (setq vm-imap-retrieved-messages
-			     (cons (list (vm-imap-uid-of real-m)
-					 (vm-imap-uid-validity-of real-m)
-					 (vm-folder-imap-maildrop-spec)
-					 'uid)
-				   vm-imap-retrieved-messages))))
+		       (when (and (vm-imap-uid-of real-m)
+				  (vm-imap-uid-validity-of real-m))
+			 (setq vm-imap-retrieved-messages
+			       (cons (list (vm-imap-uid-of real-m)
+					   (vm-imap-uid-validity-of real-m)
+					   (vm-folder-imap-maildrop-spec)
+					   'uid)
+				     vm-imap-retrieved-messages)))))
 		(vm-increment vm-modification-counter)
 		(vm-save-restriction
 		 (widen)

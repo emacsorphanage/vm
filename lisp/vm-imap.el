@@ -3239,12 +3239,14 @@ operation of the server to minimize I/O."
 	  ;; vm-imap-messages-to-expunge 
 	  (condition-case error-data
 	      (progn
-		(while vm-imap-messages-to-expunge
-		  (setq message (car vm-imap-messages-to-expunge))
-		  (if (equal (cdr message) uid-validity)
-		      (setq uids-to-delete (cons (car message) uids-to-delete)))
-		  (setq vm-imap-messages-to-expunge 
-			(cdr vm-imap-messages-to-expunge)))
+		(setq uids-to-delete
+		      (mapcar
+		       (lambda (message)
+			 (if (equal (cdr message) uid-validity)
+			     (car message)
+			   nil))
+		       vm-imap-messages-to-expunge))
+		(setq uids-to-delete (delete nil uids-to-delete))
 		(unless (equal expunge-count (length uids-to-delete))
 		  (message "%s stale deleted messages are ignored"
 			   (- expunge-count (length uids-to-delete)))
@@ -3266,7 +3268,6 @@ operation of the server to minimize I/O."
 			     (and (boundp key)
 				  (cons uid (symbol-value key)))))
 			 uids-to-delete))
-		  (setq m-list (delete nil m-list))
 		  (setq m-list 
 			(sort m-list 
 			      (lambda (**pair1 **pair2) 
@@ -3365,17 +3366,17 @@ operation of the server to minimize I/O."
     (when seq-nums
       (setq beg (car seq-nums))
       (setq last beg)
-      (setq seq-nums (cdr seq-nums)))
-    (while seq-nums
-      (setq next (car seq-nums))
-      (if (and (= (- next last) 1)
-	       (< (- next beg) vm-imap-message-bunch-size))
-	  (setq last next)
-	(setq seqs (cons (cons beg last) seqs))
-	(setq beg next)
-	(setq last next))
-      (setq seq-nums (cdr seq-nums)))
-    (setq seqs (cons (cons beg last) seqs))
+      (setq seq-nums (cdr seq-nums))
+      (while seq-nums
+	(setq next (car seq-nums))
+	(if (and (= (- next last) 1)
+		 (< (- next beg) vm-imap-message-bunch-size))
+	    (setq last next)
+	  (setq seqs (cons (cons beg last) seqs))
+	  (setq beg next)
+	  (setq last next))
+	(setq seq-nums (cdr seq-nums)))
+      (setq seqs (cons (cons beg last) seqs)))
     (nreverse seqs)))
 
 
@@ -3385,8 +3386,9 @@ either the folder buffer or the presentation buffer.  Returns a
 boolean indicating success: t if the message was fully fetched and nil
 otherwise.
 
-(This is a special case of vm-fetch-message, not to be confused with
-vm-imap-fetch-message.)"
+ (This is a special case of vm-fetch-message, not to be confused with
+  vm-imap-fetch-message.)"
+
   (let ((body-buffer (current-buffer))
 	(statblob nil))
     (unwind-protect
@@ -3411,57 +3413,60 @@ vm-imap-fetch-message.)"
 		 )
 
 	    (when (null process)
-		(if (eq vm-imap-connection-mode 'offline)
-		    (error "Working in offline mode")
-		  (setq vm-imap-connection-mode 'autoconnect)
-		  (error (concat "Could not connect to IMAP server; "
-				 "Type g to reconnect"))))
-	      (setq imap-buffer (process-buffer process))
-	      (unwind-protect
-		  (save-excursion	; = save-current-buffer?
-		    (set-buffer imap-buffer)
-		    ;;----------------------------------
-		    (vm-buffer-type:enter 'process)
-		    (vm-imap-session-type:assert-active)
-		    ;;----------------------------------
-		    (condition-case error-data
-			(progn
-			  (setq message-size 
-				(vm-imap-get-uid-message-size process uid))
-			  (setq statblob (vm-imap-start-status-timer))
-			  (vm-set-imap-status-mailbox statblob folder)
-			  (vm-set-imap-status-maxmsg statblob 1)
-			  (vm-set-imap-status-currmsg statblob 1)
-			  (vm-set-imap-status-need statblob message-size)
-			  (vm-imap-fetch-uid-message 
-			   process uid use-body-peek nil)
-			  (vm-imap-retrieve-to-target 
-			   process body-buffer statblob use-body-peek)
-			  (vm-imap-read-ok-response process)
-			  t)
-		      (vm-imap-normal-error ; handler
-		       (message "IMAP error: %s" (cadr error-data))
-		       nil)
-		      (vm-imap-protocol-error ; handler
-		       (message "Retrieval from %s signaled: %s" folder
-				error-data)
-		       nil
-		       ;; Continue with whatever messages have been read
-		       )
-		      (quit
-		       (delete-region old-eob (point-max))
-		       (error (format "Quit received during retrieval from %s"
-				      folder)))))
-		;; unwind-protections
-		(when statblob
-		  (vm-imap-stop-status-timer statblob))
-		;;-------------------
-		(vm-buffer-type:exit)
-		;;-------------------
-		;;-----------------------------
-		(vm-imap-dump-uid-seq-num-data)
-		;;-----------------------------
-		)))
+	      (if (eq vm-imap-connection-mode 'offline)
+		  (error "Working in offline mode")
+		(setq vm-imap-connection-mode 'autoconnect)
+		(error (concat "Could not connect to IMAP server; "
+			       "Type g to reconnect"))))
+	    (unless (equal (vm-imap-uid-validity-of m)
+			   server-uid-validity)
+	      (error "Message has an invalid UID"))
+	    (setq imap-buffer (process-buffer process))
+	    (unwind-protect
+		(save-excursion		; = save-current-buffer?
+		  (set-buffer imap-buffer)
+		  ;;----------------------------------
+		  (vm-buffer-type:enter 'process)
+		  (vm-imap-session-type:assert-active)
+		  ;;----------------------------------
+		  (condition-case error-data
+		      (progn
+			(setq message-size 
+			      (vm-imap-get-uid-message-size process uid))
+			(setq statblob (vm-imap-start-status-timer))
+			(vm-set-imap-status-mailbox statblob folder)
+			(vm-set-imap-status-maxmsg statblob 1)
+			(vm-set-imap-status-currmsg statblob 1)
+			(vm-set-imap-status-need statblob message-size)
+			(vm-imap-fetch-uid-message 
+			 process uid use-body-peek nil)
+			(vm-imap-retrieve-to-target 
+			 process body-buffer statblob use-body-peek)
+			(vm-imap-read-ok-response process)
+			t)
+		    (vm-imap-normal-error ; handler
+		     (message "IMAP error: %s" (cadr error-data))
+		     nil)
+		    (vm-imap-protocol-error ; handler
+		     (message "Retrieval from %s signaled: %s" folder
+			      error-data)
+		     nil
+		     ;; Continue with whatever messages have been read
+		     )
+		    (quit
+		     (delete-region old-eob (point-max))
+		     (error (format "Quit received during retrieval from %s"
+				    folder)))))
+	      ;; unwind-protections
+	      (when statblob
+		(vm-imap-stop-status-timer statblob))
+	      ;;-------------------
+	      (vm-buffer-type:exit)
+	      ;;-------------------
+	      ;;-----------------------------
+	      (vm-imap-dump-uid-seq-num-data)
+	      ;;-----------------------------
+	      )))
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
