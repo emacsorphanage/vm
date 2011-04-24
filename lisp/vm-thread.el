@@ -76,6 +76,7 @@
 ;;
 ;; vm-th-new-thread-symbol: message -> symbol
 ;; vm-th-add-message-to-symbol: symbol X message -> void
+;; vm-th-remove-message-from-symbol: symbol X message -> void
 ;; vm-th-init-thread-symbol: symbol X message -> void
 ;; vm-th-set-parent : symbol X symbol -> void
 ;; vm-th-add-child: symbol X symbol -> void
@@ -250,7 +251,12 @@ and child pointers."
 
 (defsubst vm-th-add-message-to-symbol (id-sym m)
   "Add message M to ID-SYM as one of the messages with its id."
-  (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym))))
+  (unless (memq m (vm-th-messages-of id-sym))
+    (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))))
+
+(defsubst vm-th-remove-message-from-symbol (id-sym m)
+  "Delete message M from ID-SYM as one of the messages with its id."
+  (vm-th-set-messages-of id-sym (remq m (vm-th-messages-of id-sym))))
 
 (defsubst vm-th-init-thread-symbol (id-sym m)
   "Initialize thread symbol ID-SYM to the message M."
@@ -782,8 +788,7 @@ mean?)                                         USR, 2011-03-17"
     ;; remove the message from its erstwhile thread
     (when (boundp id-sym)
       ;; remove m from its thread node
-      (vm-th-set-messages-of 
-       id-sym (remq m (vm-th-messages-of id-sym)))
+      (vm-th-remove-message-from-symbol id-sym m)
       ;; reset the thread dates of m
       (setq date (vm-so-sortable-datestring m))
       (vm-th-set-youngest-date-of id-sym date)
@@ -1019,8 +1024,6 @@ Threads should have been built for this function to work."
     (unless m-sym
       (vm-thread-debug 'vm-thread-subtree m-sym)
       (signal 'vm-thread-error (list 'vm-thread-subtree)))
-    (if (member (vm-su-message-id msg) vm-traced-message-ids)
-	(vm-thread-debug 'vm-thread-subtree (vm-su-message-id msg)))
     (if (eq msg (vm-th-message-of m-sym))
 	;; canonical message for this message ID
 	(or (vm-thread-subtree-of msg)
@@ -1029,6 +1032,8 @@ Threads should have been built for this function to work."
 		  (loop-obarray (make-vector 29 0))
 		  subject-sym id-sym
 		  result)
+	      (if (member (vm-su-message-id msg) vm-traced-message-ids)
+		  (vm-thread-debug 'vm-thread-subtree (vm-su-message-id msg)))
 	      (while list
 		(setq id-sym (car list))
 		(when (and (vm-th-messages-of id-sym)
