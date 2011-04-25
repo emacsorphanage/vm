@@ -477,8 +477,12 @@ being initialized."
 		 (when schedule-reindents
 		   (vm-thread-mark-for-summary-update
 		    (vm-th-messages-of id-sym))
-		   (vm-mark-for-summary-update
-		    (vm-th-message-of old-parent-sym)))))))
+		   (if (vm-th-message-of old-parent-sym)
+		       (vm-mark-for-summary-update
+			(vm-th-message-of old-parent-sym))
+		     (vm-thread-debug 'vm-build-reference-threads 
+				      'old-parent-sym old-parent-sym)
+		     ))))))
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
 	  (message "Building threads... %d%%" (* (/ (+ n 0.0) total) 100))))
