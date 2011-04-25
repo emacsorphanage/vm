@@ -3761,6 +3761,10 @@ arrow only if the summary window is not the only existing window."
   "List of message ID's whose activity is debugged.  This is for
 developers' use only.")
 
+(defvar vm-traced-message-subjects nil
+  "List of message subjectss whose activity is debugged.  This is for
+developers' use only.")
+
 (defvar vm-summary-debug nil
   "Flag used by developers for tracing summary generation")
 
@@ -5660,7 +5664,6 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "U" 'vm-unread-message)
     (define-key map "." 'vm-mark-message-read)
     (define-key map "!" 'vm-toggle-flag-message)
-    (define-key map "e" 'vm-edit-message)
     (define-key map "a" 'vm-set-message-attributes)
     (define-key map "j" 'vm-discard-cached-data)
     (define-key map "k" 'vm-kill-subject)
@@ -5802,6 +5805,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
   (define-key vm-mode-map "<" 'vm-beginning-of-message)
   (define-key vm-mode-map ">" 'vm-end-of-message)
   (define-key vm-mode-map "b" 'vm-scroll-backward)
+  (define-key vm-mode-map "e" 'vm-edit-message)
   (define-key vm-mode-map "*" 'vm-burst-digest)
   )
 

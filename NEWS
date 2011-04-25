@@ -20,7 +20,7 @@ VM 8.2.0a (2011-02-28)
      the command `vm-prune-imap-retrieved-list' after installing
      version 8.2.0.  (See info under "IMAP Spool Files".)
 
-   * A set of inessential key bindings (b, <, >, *) have been removed
+   * A set of inessential key bindings (b, e, <, >, *) have been removed
      from the standard VM key bindings.  If you would like to use
      them, add the line:
 
