@@ -38,16 +38,11 @@ VM 8.2.0a (2011-02-28)
      changed to `vm-infer-mime-types-for-text'.
 
    * Plain text forwarding has been extended to deal with MIME
-     attachments.  The `z' command uses this method, i.e., it does
-     NOT encapsulate forwarded messages (unlike in versions 8.1.x).
-
-     There is a new key binding of `Z' to
-     `vm-forward-message-encapsulated' which forwards messages in
-     encapsulated form (mime, rfc934 or rfc1153).  The setting of
-     `vm-forwarding-digest-type' controls this command.  The default
-     forwarding-digest-type is "mime".  You should check and remove
-     any setting of this variable in your init file, unless you want a
-     forwarding-digest-type different from MIME.
+     attachments.  The command `vm-forward-message-plain' (bound to `Z') uses
+     this method, i.e., it does NOT encapsulate forwarded messages.  The
+     normal `z' key forwards messages encapsulated using
+     `vm-forwarding-digest-type'.  There are also associated variables
+     `vm-forwarded-headers-plain' and `vm-unforwarded-header-regexp-plain'. 
 
    * The meaning of the variable `vm-included-mime-types-list' is
      changed.  It need only mention MIME type/subtype pairs that are

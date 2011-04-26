@@ -38,9 +38,9 @@
 ;; vm-followup-include-text: (count) -> unit
 ;; vm-followup-include-text-other-frame: (count) -> unit
 ;; vm-forward-message: (&optional bool message-list) -> unit
-;; vm-forward-message-encapsulated: () -> unit
+;; vm-forward-message-plain: () -> unit
 ;; vm-forward-message-other-frame: () -> unit
-;; vm-forward-message-encapsulated-other-frame: () -> unit
+;; vm-forward-message-plain-other-frame: () -> unit
 ;; vm-forward-message-all-headers: () -> unit
 ;; vm-forward-message-all-headers-other-frame: () -> unit
 ;; vm-resend-message: () -> unit
@@ -1066,36 +1066,43 @@ the message.  See the documentation for the function vm-reply for details."
     (vm-forward-message)))
 
 ;;;###autoload
-(defun vm-forward-message-encapsulated ()
-  "Forward the current message with encapsulation to one or more
+(defun vm-forward-message-plain ()
+  "Forward the current message in plain text to one or more
 recipients.  You will be placed in a Mail mode buffer as you
 would with a reply, but you must fill in the \"To:\" header and
 perhaps the \"Subject:\" header manually.
 
-If invoked on marked messages (via `vm-next-command-uses-marks'),
-all marked messages will be replied to."
+Any MIME attachments in the forwarded message will be attached
+to the outgoing message.
+
+See `vm-forward-message' for other forms of forwarding."
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (vm-forward-message t (vm-select-operable-messages
-			 1 (interactive-p) "Forward")))
+  (let ((vm-forwarded-headers vm-forwarded-headers-plain)
+	(vm-unforwarded-header-regexp vm-unforwarded-header-regexp-plain))
+    (vm-forward-message t (vm-select-operable-messages
+			   1 (interactive-p) "Forward"))))
 
 ;;;###autoload
-(defun vm-forward-message (&optional encapsulated mlist)
+(defun vm-forward-message (&optional plain mlist)
   "Forward the current message to one or more recipients.
 You will be placed in a Mail mode buffer as you would with a
 reply, but you must fill in the \"To:\" header and perhaps the
 \"Subject:\" header manually.
 
-When called internally, the optional argument ENCAPSULATED says
-whether the forwarded message should be encapsulated.  For interactive
-use, see `vm-forward-message-encapsulated'."
+See `vm-forward-message-plain' for forwarding messages in plain text."
+  ;; The optional argument PLAIN says that the forwarding should be
+  ;; done as plain text, irrespective of the value of
+  ;; `vm-forwarding-digest-type'.
+  ;; The optional argument MLIST is the list of messages to be
+  ;; forwarded. 
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((dir default-directory)
 	(miming (and vm-send-using-mime
-		     encapsulated
+		     (not plain)
 		     (equal vm-forwarding-digest-type "mime")))
 	reply-buffer
 	header-end)
@@ -1105,11 +1112,11 @@ use, see `vm-forward-message-encapsulated'."
     (if (cdr mlist)
 	;; multiple message forwarding
 	(progn
-	  ;; (unless (or encapsulated
+	  ;; (unless (or (not plain)
 	  ;; 	      (y-or-n-p 
 	  ;; 	       "Use encapsulated forwarding for multiple messages? "))
 	  ;;     (error "Aborted"))
-	  ;; (setq encapsulated t)
+	  ;; (setq plain nil)
 	  (let ((vm-digest-send-type vm-forwarding-digest-type))
 	    ;; (setq this-command 'vm-next-command-uses-marks)
 	    ;; (command-execute 'vm-send-digest)
@@ -1143,17 +1150,11 @@ use, see `vm-forward-message-encapsulated'."
 				     "\n"))
 	  (goto-char (match-end 0))
 	  (setq header-end (match-beginning 0)))
-	(cond ((not encapsulated)
-	       ;; (vm-no-frills-encapsulate-message
-	       ;; 	(car vm-forward-list) 
-	       ;; 	(append vm-forwarded-headers vm-forwarded-mime-headers)
-	       ;; 	vm-unforwarded-header-regexp)
-	       ;; Reusing yank-message code here!  USR, 2011-03-21
-	       (let ((vm-include-mime-attachments t) ; override the defaults
-		     (vm-include-text-basic nil)
-		     (vm-include-text-from-presentation nil)
-		     (mail-citation-hook (list 'vm-cite-forwarded-message)))
-		 (vm-yank-message (car vm-forward-list))))
+	(cond ((or plain (null vm-forwarding-digest-type))
+	       (vm-no-frills-encapsulate-message
+	       	(car vm-forward-list) 
+	       	(append vm-forwarded-headers vm-forwarded-mime-headers)
+	       	vm-unforwarded-header-regexp))
 	      ((equal vm-forwarding-digest-type "mime")
 	       (vm-mime-encapsulate-messages 
 		mlist
@@ -1189,9 +1190,9 @@ use, see `vm-forward-message-encapsulated'."
 	    (set-buffer reply-buffer)	; intended buffer change
 	    (mail-text)
 	    (vm-attach-object work-buffer
-				   :type "message/rfc822" :params nil 
-				   :disposition '("inline")
-				   :description "forwarded message" :mimed t)
+			      :type "message/rfc822" :params nil 
+			      :disposition '("inline")
+			      :description "forwarded message" :mimed t)
 	    (add-hook 'kill-buffer-hook
 		      `(lambda ()
 			 (if (eq ,reply-buffer (current-buffer))
@@ -1200,14 +1201,6 @@ use, see `vm-forward-message-encapsulated'."
 	(mail-position-on-field "To"))
       (run-hooks 'vm-forward-message-hook)
       (run-hooks 'vm-mail-mode-hook))))
-
-(defun vm-cite-forwarded-message ()
-  "The message citation handler for a forwarded message."
-  (save-excursion
-    (vm-reorder-message-headers
-     nil :keep-list vm-forwarded-headers :discard-regexp nil)
-    (insert vm-forwarded-message-preamble-format)
-    ))
 
 ;;;###autoload
 (defun vm-resend-bounced-message ()
@@ -1386,7 +1379,8 @@ included in the digest."
        nil
        (and vm-forwarding-subject-format
             (let ((vm-summary-uninteresting-senders nil))
-              (concat (vm-summary-sprintf vm-forwarding-subject-format (car mlist))
+              (concat (vm-summary-sprintf 
+		       vm-forwarding-subject-format (car mlist))
                       (if (cdr mlist)
                           (format " [and %d more messages]"
                                   (length (cdr mlist))))))))
@@ -1441,8 +1435,7 @@ included in the digest."
                (vm-no-frills-encapsulate-message
                 (car mlist) 
 		(append vm-forwarded-headers vm-forwarded-mime-headers)
-                ;; vm-unforwarded-header-regexp
-		nil)
+                vm-unforwarded-header-regexp) ; nil?
 	       (insert "\n")
                (setq mlist (cdr mlist)))))
 
@@ -1879,14 +1872,14 @@ Binds the `vm-mail-mode-map' and hooks"
     (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
-(defun vm-forward-message-encapsulated-other-frame ()
-  "Like vm-forward-message-encapsulated, but run in a newly created frame."
+(defun vm-forward-message-plain-other-frame ()
+  "Like vm-forward-message-plain, but run in a newly created frame."
   (interactive)
   (when (vm-multiple-frames-possible-p)
     (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
-    (vm-forward-message-encapsulated))
+    (vm-forward-message-plain))
   (when (vm-multiple-frames-possible-p)
     (vm-set-hooks-for-frame-deletion)))
 

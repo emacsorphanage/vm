@@ -67,17 +67,34 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 	  (save-excursion
 	    (set-buffer target-buffer)
 	    (let ((beg (point)))
-	      (insert-buffer-substring 
-	       source-buffer (vm-headers-of m) (vm-text-end-of m))
+	      ;; (insert-buffer-substring 
+	      ;;  source-buffer (vm-headers-of m) (vm-text-end-of m))
+	      (let ((vm-include-mime-attachments t) ; override the defaults
+		    (vm-include-text-basic nil)
+		    (vm-include-text-from-presentation nil)
+		    (mail-citation-hook (list 'vm-cite-forwarded-message)))
+		(vm-yank-message (car vm-forward-list)))
 	      (goto-char beg)
-	      (vm-reorder-message-headers 
-	       nil :keep-list nil 
-	       :discard-regexp vm-internal-unforwarded-header-regexp)
-	      (vm-reorder-message-headers 
-	       nil :keep-list keep-list :discard-regexp discard-regexp)
-              (vm-decode-mime-message-headers)))))
+	      ;; (vm-reorder-message-headers 
+	      ;;  nil :keep-list nil 
+	      ;;  :discard-regexp vm-internal-unforwarded-header-regexp)
+	      ;; (vm-reorder-message-headers 
+	      ;;  nil :keep-list keep-list :discard-regexp discard-regexp)
+              (vm-decode-mime-message-headers)
+	      ))))
       (goto-char (point-max))
       (insert "------- end of forwarded message -------\n"))))
+
+(defun vm-cite-forwarded-message ()
+  "The message citation handler for a forwarded message."
+  (save-excursion
+    (vm-reorder-message-headers 
+     nil :keep-list nil 
+     :discard-regexp vm-internal-unforwarded-header-regexp)
+    (vm-reorder-message-headers
+     nil :keep-list vm-forwarded-headers 
+     :discard-regexp vm-unforwarded-header-regexp)
+    ))
 
 ;;;###autoload
 (defun* vm-mime-encapsulate-messages (message-list &key

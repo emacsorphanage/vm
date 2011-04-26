@@ -146,7 +146,7 @@
       ["Reply to All (citing original)" vm-followup-include-text
        vm-message-list]
       ["Forward" vm-forward-message vm-message-list]
-      ["Forward as Attachment" vm-forward-message-encapsulated vm-message-list]
+      ["Forward in Plain Text" vm-forward-message-plain vm-message-list]
       ["Resend" vm-resend-message vm-message-list]
       ["Retry Bounce" vm-resend-bounced-message vm-message-list]
       "---"
@@ -215,6 +215,7 @@
     ["Reply to Author (citing original)" vm-reply-include-text vm-message-list]
     ["Reply to All (citing original)" vm-followup-include-text vm-message-list]
     ["Forward Message" vm-forward-message vm-message-list]
+    ["Forward Message in Plain Text" vm-forward-message-plain vm-message-list]
     ["Resend Message" vm-resend-message vm-message-list]
     ["Retry Bounced Message" vm-resend-bounced-message vm-message-list]
     ["Send Digest (RFC934)" vm-send-rfc934-digest vm-message-list]

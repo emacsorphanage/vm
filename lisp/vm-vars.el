@@ -138,7 +138,7 @@ meant for specifying the preferred settings for VM variables."
 
 (defcustom vm-thunderbird-folder-directory nil
   "*Directory where Thunderbird's local folders are kept.  This
-setting is used in `vm-vivist-thunderbird-folder'.  
+setting is used in `vm-visit-thunderbird-folder'.  
 
 Note that only Thunderbird's local folders can be visited in VM,
 not its IMAP folders. "
@@ -1256,7 +1256,7 @@ MIME messages."
   "*Non-nil value means use information from the Content-Disposition header
 to display MIME messages.  The Content-Disposition header
 specifies whether a MIME object should be displayed inline or
-treated as an attachment.  For VM, ``inline'' display means
+treated as an attachment.  For VM, \"inline\" display means
 displaying the object in the Emacs buffer, if possible.
 Attachments will be displayed as a button that you can use
 mouse-2 to activate or mouse-3 to pull up a menu of options."
@@ -3042,10 +3042,10 @@ If the value of `vm-included-text-discard-header-regexp' is nil,
 the headers matched by `vm-included-text-headers' are the only
 headers that will be retained.
 
-If `vm-included-text-discard-header-regexp' is non-nil, then only
-headers matched by that variable will be omitted; all others will
-be included.  `vm-included-text-headers' determines the header
-order in that case, with headers not matching any in the
+If `vm-included-text-discard-header-regexp' is non-nil, then the
+headers matched by that variable will be omitted; all the others
+will be included.  `vm-included-text-headers' determines the
+header order in that case, with headers not matching any in the
 `vm-included-text-headers' list appearing last in the header
 section of the included text."
   :group 'vm-compose
@@ -3053,9 +3053,9 @@ section of the included text."
                  (repeat regexp)))
 
 (defcustom vm-included-text-discard-header-regexp nil
-  "*Non-nil value should be a regular expression header that tells
-what headers should not be retained in a message included in a
-reply.  This variable along with `vm-included-text-headers' determines
+  "*Non-nil value should be a regular expression that tells what
+headers should not be retained in a message included in a reply.
+This variable along with `vm-included-text-headers' determines
 which headers are retained.
 
 If the value of `vm-included-text-discard-header-regexp' is nil,
@@ -3088,57 +3088,99 @@ Nil means leave the Subject header empty when forwarding."
   :group 'vm-compose
   :type 'string)
 
-(defcustom vm-forwarded-headers 	; originally nil
-  '("From:" "To:" "Subject:" "Date:" "In-Reply-To:" "References:")
-  "*List of headers that should be forwarded by
-`vm-forward-message' and its variants.  These should be listed in
-the order you wish them to appear in the forwarded message.
-Regular expressions are allowed.  There's no need to anchor
-patterns with \"^\", as searches always start at the beginning of
-a line.  Put a colon at the end of patterns to get exact
-matches.  (E.g. \"Date\" matches \"Date\" and \"Date-Sent\".)
-Header names are always matched case insensitively.
+(defcustom vm-forwarded-headers nil
+  "*List of headers that should be forwarded by `vm-forward-message'.
+The headers should be listed in the order you wish them to appear
+in the forwarded message.  Regular expressions are allowed.
+There's no need to anchor patterns with \"^\", as searches always
+start at the beginning of a line.  Put a colon at the end of
+patterns to get exact matches.  (E.g. \"Date\" matches \"Date\"
+and \"Date-Sent\".)  Header names are always matched
+case-insensitively.
 
-For normally forwarded messages, this variable lists all the headers
-that will be included.
+If the value of `vm-unforwarded-header-regexp' is nil, the headers
+matched by `vm-forwarded-headers' are the only headers that will be
+forwarded.
 
-For encapsulated forwarding, the value of`vm-unforwarded-header-regexp' 
-is also consulted.  If it is nil, then the headers matched by
-`vm-forwarded-headers' are the only headers that will be
-forwarded.  If `vm-unforwarded-header-regexp' is non-nil, then
-headers matched by that variable will be omitted and all others
-will be forwarded.  In this case, `vm-forwarded-headers'
-determines the forwarding order, with headers not matching any in the
-`vm-forwarded-headers' list appearing last in the header section of
-the forwarded message." 
+If `vm-unforwarded-header-regexp' is non-nil, then the headers
+matched by that variable will be omitted and all the others will
+be forwarded.  `vm-forwarded-headers' determines the forwarding
+order in that case, with headers not matching any in the
+`vm-forwarded-headers' list appearing last in the header section
+of the forwarded message."
   :group 'vm-compose
   :type '(repeat regexp))
 
-(defconst vm-forwarded-mime-headers '("MIME" "Content")
-  "List of MIME headers that are always included in forwarded messages.")
-
 (defcustom vm-unforwarded-header-regexp "none-to-be-dropped"
-  "*Non-nil value should be a regular expression header that
-tells what headers should not be forwarded by
-`vm-forward-message-encapsulated' and `vm-send-digest'.  This
-variable along with `vm-forwarded-headers' determines which
-headers are forwarded.
+  "*Non-nil value should be a regular expression that tells what
+headers should not be forwarded by `vm-forward-message' and
+`vm-send-digest'.  This variable along with `vm-forwarded-headers'
+determines which headers are forwarded. 
 
 If the value of `vm-unforwarded-header-regexp' is nil, the headers
 matched by `vm-forwarded-headers' are the only headers that will be
 forwarded.
 
 If `vm-unforwarded-header-regexp' is non-nil, then only the
-headers matched by this variable will be omitted; all the  qothers will
-be forwarded.  `vm-forwarded-headers' determines the forwarding
-order in that case, with headers not matching any in the
-`vm-forwarded-headers' list appearing last in the header section
+headers matched by this variable will be omitted; all the others will
+be forwarded.  `vm-forwarded-headers' determines the forwarding 
+order in that case, with headers not matching any in the 
+`vm-forwarded-headers' list appearing last in the header section 
 of the forwarded message."
   :group 'vm-compose
   :type '(choice
 	  (const :tag "Only forward headers listed in vm-forward-headers" nil)
 	  (const :tag "Forward all headers" "none-to-be-dropped")
           regexp))
+
+(defcustom vm-forwarded-headers-plain
+  '("From:" "To:" "Cc:" "Subject:" "Date:" "In-Reply-To:")
+  "*List of headers that should be forwarded by `vm-forward-message-plain'.
+The headers should be listed in the order you wish them to appear in the
+forwarded message.  Regular expressions are allowed.  There's no need to
+anchor patterns with \"^\", as searches always start at the beginning of a
+line.  Put a colon at the end of patterns to get exact matches. (E.g.,
+\"Date\" matches \"Date\" and \"Date-Sent\".)  Header names are always 
+matched case-insensitively.
+
+If the value of `vm-unforwarded-header-regexp-plain' is nil, the headers
+matched by `vm-forwarded-headers' are the only headers that will be
+forwarded.
+
+If `vm-unforwarded-header-regexp-plain' is non-nil, then the headers
+matched by that variable will be omitted and all the others will be
+forwarded.  In this case, `vm-forwarded-headers-plain' determines the
+forwarding order in that case, with headers not matching any in the
+`vm-forwarded-headers-plain' list appearing last in the header section
+of the forwarded message."
+  :group 'vm-compose
+  :type '(repeat regexp))
+
+(defcustom vm-unforwarded-header-regexp-plain nil
+  "*Non-nil value should be a regular expression that tells what
+headers should not be forwarded by `vm-forward-message-plain'.  This
+variable along with `vm-forwarded-headers-plain' determines which headers
+are forwarded.
+
+If the value of `vm-unforwarded-header-regexp-plain' is nil, the
+headers matched by `vm-forwarded-headers-plain' are the only
+headers that will be forwarded.
+
+If `vm-unforwarded-header-regexp-plain' is non-nil, then only the
+headers matched by this variable will be omitted; all the others
+will be forwarded.  `vm-forwarded-headers-plain' determines the
+forwarding order in that case, with headers not matching any in
+the `vm-forwarded-headers-plain' list appearing last in the
+header section of the forwarded message."
+  :group 'vm-compose
+  :type '(choice
+	  (const :tag "Only forward headers listed in vm-forward-headers-plain" nil)
+	  (const :tag "Forward all headers" "none-to-be-dropped")
+          regexp))
+
+(defconst vm-forwarded-mime-headers '("MIME" "Content")
+  "List of MIME headers that are always included in messages forwarded with
+encapsulation.") 
 
 (defcustom vm-forwarding-digest-type "mime"
   "*Non-nil value should be a string that specifies the type of
@@ -3150,7 +3192,7 @@ Legal values of this variable are:
 \"rfc1153\"
 nil
 
-A nil value means to use plain text digests."
+A nil value means to use plain text forwarding."
   :group 'vm-compose
   :type '(choice
           (const "mime")
@@ -3288,7 +3330,7 @@ of the digestified messages."
   :type '(repeat regexp))
 
 (defcustom vm-rfc934-digest-discard-header-regexp nil
-  "*Non-nil value should be a regular expression header that tells
+  "*Non-nil value should be a regular expression that tells
 what headers should not appear in RFC 934 digests created by VM.  This
 variable along with `vm-rfc934-digest-headers' determines which headers
 are kept and which are discarded.
@@ -3338,7 +3380,7 @@ the digestified messages."
   :type '(repeat regexp))
 
 (defcustom vm-rfc1153-digest-discard-header-regexp "\\(X400-\\)?Received:"
-  "*Non-nil value should be a regular expression header that tells
+  "*Non-nil value should be a regular expression that tells
 what headers should not appear in RFC 1153 digests created by VM.  This
 variable along with `vm-rfc1153-digest-headers' determines which headers
 are kept and which headers are discarded.
@@ -3390,7 +3432,7 @@ of the digestified messages."
   :type '(repeat regexp))
 
 (defcustom vm-mime-digest-discard-header-regexp nil
-  "*Non-nil value should be a regular expression header that tells
+  "*Non-nil value should be a regular expression that tells
 which headers should not appear in MIME digests created
 by VM.  This variable along with `vm-mime-digest-headers'
 determines which headers are kept and which are discarded.
@@ -5674,7 +5716,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\M-r" 'vm-resend-bounced-message)
     (define-key map "B" 'vm-resend-message)
     (define-key map "z" 'vm-forward-message)
-    (define-key map "Z" 'vm-forward-message-encapsulated)
+    (define-key map "Z" 'vm-forward-message-plain)
     (define-key map "c" 'vm-continue-composing-message)
     (define-key map "@" 'vm-send-digest)
     (define-key map "m" 'vm-mail)

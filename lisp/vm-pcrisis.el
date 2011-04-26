@@ -1508,8 +1508,8 @@ recursion nor concurrent calls."
   (vmpc-make-vars-local)
   (vmpc-run-actions))
 
-(defadvice vm-forward-message-encapsulated (around vmpc-forward activate)
-  "*Forward an encapsulated message with pcrisis voodoo."
+(defadvice vm-forward-message-plain (around vmpc-forward activate)
+  "*Forward a message in plain text with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))

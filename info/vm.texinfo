@@ -3085,48 +3085,69 @@ the variables @code{vm-included-text-headers} and
 @code{vm-included-text-discard-header-regexp}.
 
 @node Forwarding Messages, Saving copies, Replying, Sending Messages
+
 @section Forwarding Messages
 
 VM has four commands to forward messages: @kbd{z}
 (@code{vm-forward-message}), 
-@kbd{Z} (@code{vm-forward-message-encapsulated}),
+@kbd{Z} (@code{vm-forward-message-plain}),
 @kbd{@@} (@code{vm-send-digest}) and
 @kbd{B} (@code{vm-resend-message}).
 
+@unnumberedsubsec Forwarding
+
 @findex vm-forward-message
 @kindex z
-@vindex vm-forwarded-headers
 Typing @kbd{z} (@code{vm-forward-message}) puts you into a VM Mail
 mode buffer just like @kbd{m}, except that the current message appears
-as the body of the message in the VM Mail mode buffer.  Any
-attachments of the original message appear as attachment buttons in
-the composition.  They will be replaced by actual attachments when the
-message is sent.  You can control which header lines are included in
-forwarded messages via the variables @code{vm-forwarded-headers}.
+as the body of the message in the VM Mail mode buffer.  
 
-@findex vm-forward-message-encapsulated
-@kindex Z
 @vindex vm-forwarding-digest-type
-Typing @kbd{Z} (@code{vm-forward-message-encapsulated}) forwards the
-message in an encapsulated form.  You can forward multiple messages in
-this way in what are called ``digests''.  (@xref{Digests}.)  The
-variable @code{vm-forwarding-digest-type} specifies the form in which
-the messages are encapsulated.  The recognized values are @code{nil},
-"mime", "rfc934" and "rfc1153".  The default is "mime".  If you use
-@code{nil} as the value, then a form of plain text digests is used.
-Unless your recipients use VM, they will likely see undecoded MIME
-interspersed with plain text content.  So, it is preferable to use
-MIME digests which can be dedoced in any MIME-capable mail client.
+The forwarded message is encapsulated as specified by the variable
+@code{vm-forwarding-digest-type}.  Recognized values are @code{nil}, "mime",
+"rfc934" and "rfc1153".  The default is "mime".  
 
+If @code{vm-forwarding-digest-type} is set to @code{nil}, the forwarded
+message is not encapsulated.  It is included in a plain text form.  Any
+attachments of the original message appear as attachment buttons in the
+composition.  They will be replaced by actual attachments when the message
+is sent.
+
+@findex vm-forward-message-plain
+@kindex Z
+The key @kbd{Z} (@code{vm-forward-message-plain}) allows you to use
+plain-text forwarding directly, without needing to alter
+@code{vm-forwarding-digest-type}.
+
+@vindex vm-forwarded-headers
 @vindex vm-unforwarded-header-regexp
-By default, forwarded digests include all the messages headers of the
-original messages.  You can limit the headers by customizing the
-variable @code{vm-unforwarded-header-regexp}.  The variable should be
-set to a regular expression matching all the headers that should be
-omitted in forwarded messages.  If this variable is nil but
-@code{vm-forwarded-headers} is set to a list of headers, then only
-those headers are included in the forwarded messages.  See the
-documentation of these variables for further information.
+@vindex vm-forwarded-headers-plain
+@vindex vm-unforwarded-header-regexp-plain
+You can control which header lines are included in forwarded messages via
+the variables @code{vm-forwarded-headers} and
+@code{vm-unforwarded-header-regexp} (and their counterparts
+@code{vm-forwarded-headers-plain} and
+@code{vm-unforwarded-header-regexp-plain} for plain-text forwarding).  How
+they are used differs based on the form of forwarding used.
+
+@itemize
+@item 
+For encapsulated forwarding, the default is to forward all
+the headers, but you can limit the forwarded headers by setting
+@code{vm-unforwarded-header-regexp} to a regular expression.  All the
+headers matching the regular expression will be omitted.  If this variable
+is set to @code{nil}, then its value is ignored and only the headers listed
+in @code{vm-forwarded-headers} are forwarded.
+@item
+For plain-text forwarding, done by the @kbd{Z} command, the variables
+@code{vm-forwarded-headers-plain} and
+@code{vm-unforwarded-header-regexp-plain} are used in a similar way.  If the
+latter is set to a regular expression, then the headers matching it are
+omitted.  Otherwise, only the headers listed in
+@code{vm-forwarded-headers-plain} are included.  The default settings
+forward only the headers ``From'', ``To'', ``Cc'', ``Subject'', ``Date'' and
+``In-Reply-To''. 
+@end itemize
 
 @findex vm-forward-message-all-headers
 The command @code{vm-forward-message-all-headers} forwards the
@@ -3139,6 +3160,8 @@ If the variable
 the format of the Subject header of the forwarded message.  A @code{nil}
 value causes the Subject header to be left blank.  The forwarded message
 is flagged ``forwarded'' when the message is sent.
+
+@unnumberedsubsec Digests
 
 @findex vm-send-digest
 @vindex vm-digest-send-type
@@ -3162,6 +3185,8 @@ digestified message.  The variable @code{vm-digest-preamble-format}
 determines the format of the preamble lines.  If the value of
 @code{vm-digest-center-preamble} is non-@code{nil}, the preamble lines
 will be centered.
+
+@unnumberedsubsec Resending
 
 @findex vm-resend-message
 @kindex B
