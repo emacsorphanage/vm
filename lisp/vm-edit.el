@@ -100,7 +100,7 @@ replace the original, use C-c C-] and the edit will be aborted."
 	      vm-system-state 'editing
 	      buffer-offer-save t)
 	(run-hooks 'vm-edit-message-hook)
-	(message
+	(vm-inform 5
 	 (substitute-command-keys
 	  "Type \\[vm-edit-message-end] to end edit, \\[vm-edit-message-abort] to abort with no change."))
 	)
@@ -256,7 +256,7 @@ thread have their cached data discarded."
     (let ((edit-buf (current-buffer))
 	  (mp vm-message-pointer))
       (if (not (buffer-modified-p))
-	  (message "No change.")
+	  (vm-inform 5 "No change.")
 	(widen)
 	(save-excursion
 	  (set-buffer (vm-buffer-of (vm-real-message-of (car mp))))
@@ -325,6 +325,6 @@ thread have their cached data discarded."
 	      '(vm-edit-message-abort reading-message startup))
   (set-buffer-modified-p nil)		; edit-buffer
   (kill-buffer (current-buffer))
-  (message "Aborted, no change."))
+  (vm-inform 5 "Aborted, no change."))
 
 ;;; vm-edit.el ends here

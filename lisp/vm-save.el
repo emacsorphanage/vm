@@ -114,7 +114,7 @@ only marked messages are checked against `vm-auto-folder-alist'.
 The saved messages are flagged as `filed'."
   (interactive "P")
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (message "Archiving...")
+  (vm-inform 5 "Archiving...")
   (let ((auto-folder)
 	(archived 0))
     (unwind-protect
@@ -156,15 +156,15 @@ The saved messages are flagged as `filed'."
 		       (last-command 'vm-auto-archive-messages))
 		   (vm-save-message auto-folder 1 nil 'quiet)
 		   (vm-increment archived)
-		   (message "%d archived, still working..." archived)))
+		   (vm-inform 6 "%d archived, still working..." archived)))
 	    (setq done (eq vm-message-pointer stop-point)
 		  vm-message-pointer (cdr vm-message-pointer))))
       ;; fix mode line
       (intern (buffer-name) vm-buffers-needing-display-update)
       (vm-update-summary-and-mode-line))
     (if (zerop archived)
-	(message "No messages were archived")
-      (message "%d message%s archived"
+	(vm-inform 5 "No messages were archived")
+      (vm-inform 5 "%d message%s archived"
 	       archived (if (= 1 archived) "" "s")))))
 
 ;;;---------------------------------------------------------------------------
@@ -467,12 +467,12 @@ The saved messages are flagged as `filed'."
 				   (vm-present-current-message))
 			  (vm-update-summary-and-mode-line)))))
 		(unless quiet
-		  (message "%d message%s saved to buffer %s"
+		  (vm-inform 7 "%d message%s saved to buffer %s"
 			   save-count
 			   (if (/= 1 save-count) "s" "")
 			   (buffer-name folder-buffer))))
 	    (unless quiet
-	      (message "%d message%s saved to %s"
+	      (vm-inform 7 "%d message%s saved to %s"
 		       save-count (if (/= 1 save-count) "s" "") folder)))))
     (if (or (null vm-last-save-folder)
 	    (not (equal unexpanded-folder auto-folder)))
@@ -573,18 +573,18 @@ This command should NOT be used to save message to mail folders; use
 	(and oldmodebits (set-default-file-modes oldmodebits)))
       (when (and m (not quiet))
 	(if file-buffer
-	    (message "Message%s written to buffer %s" (if (/= 1 count) "s" "")
+	    (vm-inform 5 "Message%s written to buffer %s" (if (/= 1 count) "s" "")
 		     (buffer-name file-buffer))
-	  (message "Message%s written to %s" (if (/= 1 count) "s" "") file)))
+	  (vm-inform 5 "Message%s written to %s" (if (/= 1 count) "s" "") file)))
       (setq vm-last-written-file file))))
 
 (defun vm-switch-to-command-output-buffer (command buffer discard-output)
   "Eventually switch to the output buffer of the command."
   (let ((output-bytes (save-excursion (set-buffer buffer) (buffer-size))))
     (if (zerop output-bytes)
-	(message "Command '%s' produced no output." command)
+	(vm-inform 5 "Command '%s' produced no output." command)
       (if discard-output
-	  (message "Command '%s' produced %d bytes of output." 
+	  (vm-inform 5 "Command '%s' produced %d bytes of output." 
 		   command output-bytes)
 	(display-buffer buffer)))))
 
@@ -690,7 +690,7 @@ If non-nil call EXIT-HANDLER with the two arguments COMMAND and OUTPUT-BUFFER."
 	(buffer (process-buffer process))
 	(process-command (process-command process)))
   (if (not (zerop exit-code))
-      (message "Command '%s' exit code is %d." command exit-code))
+      (vm-inform 0 "Command '%s' exit code is %d." command exit-code))
   (vm-display nil nil '(vm-pipe-message-to-command)
 	      '(vm-pipe-message-to-command))
   (vm-switch-to-command-output-buffer command buffer discard-output)
@@ -767,7 +767,7 @@ arguments after the command finished."
 		 process ,command ,discard-output 
 		 (if (and ,no-wait (functionp ,no-wait))
 		     ,no-wait)))
-	  (message "Command '%s' changed state to %s."
+	  (vm-inform 1 "Command '%s' changed state to %s."
 		   ,command status))))
     (while mlist
       (setq m (vm-real-message-of (car mlist)))
@@ -966,7 +966,7 @@ The saved messages are flagged as `filed'."
     (setq mailbox (nth 3 target-spec-list))
     (unwind-protect
 	(save-excursion
-	  (message "Saving messages...")
+	  (vm-inform 5 "Saving messages...")
 	  (setq ml mlist)
 	  (while ml
 	    (setq m (vm-real-message-of (car ml)))
@@ -1011,11 +1011,11 @@ The saved messages are flagged as `filed'."
 	    (when (and vm-delete-after-saving (not (vm-deleted-flag m)))
 	      (vm-set-deleted-flag m t))
 	    (vm-increment save-count)
-	    (message "Saving messages... %s" save-count)
+	    (vm-inform 6 "Saving messages... %s" save-count)
 	    (vm-modify-folder-totals folder 'saved 1 m)
 	    (setq ml (cdr ml))))
       (when process (vm-imap-end-session process))
-      (message "%d message%s saved to %s"
+      (vm-inform 5 "%d message%s saved to %s"
 	       save-count (if (/= 1 save-count) "s" "")
 	       (vm-safe-imapdrop-string folder)))
     (vm-update-summary-and-mode-line)

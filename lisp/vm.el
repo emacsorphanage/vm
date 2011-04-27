@@ -391,7 +391,7 @@ deleted messages.  Use `###' to expunge deleted messages."
 
       ;; Warn user about auto save file, if appropriate.
       (if preserve-auto-save-file
-	  (message
+	  (vm-inform 0
 	   (substitute-command-keys
 	    (concat
 	     "Auto save file is newer; consider \\[vm-recover-folder].  "
@@ -403,13 +403,13 @@ deleted messages.  Use `###' to expunge deleted messages."
 	  (throw 'done t))
       
       (if (interactive-p)
-	  (message totals-blurb))
+	  (vm-inform 5 totals-blurb))
 
       (if (and vm-auto-get-new-mail
 	       (not vm-block-new-mail)
 	       (not vm-folder-read-only))
 	  (progn
-	    (message "Checking for new mail for %s..."
+	    (vm-inform 6 "Checking for new mail for %s..."
 		     (or buffer-file-name (buffer-name)))
 	    (if (vm-get-spooled-mail nil) ; automatic is non-interactive!
 		(progn
@@ -417,13 +417,13 @@ deleted messages.  Use `###' to expunge deleted messages."
 		  (if (vm-thoughtfully-select-message)
 		      (vm-present-current-message)
 		    (vm-update-summary-and-mode-line))))
-	    (message totals-blurb)))
+	    (vm-inform 5 totals-blurb)))
 
       ;; Display copyright and copying info.
       (when (and (interactive-p) (not vm-startup-message-displayed))
 	(vm-display-startup-message)
 	(if (not (input-pending-p))
-	    (message totals-blurb))))))
+	    (vm-inform 5 totals-blurb))))))
 
 ;;;###autoload
 (defun vm-other-frame (&optional folder read-only)
@@ -967,7 +967,7 @@ vm-visit-virtual-folder.")
 	(if (vm-thoughtfully-select-message)
 	    (vm-present-current-message)
 	  (vm-update-summary-and-mode-line)))
-      (message blurb))
+      (vm-inform 5 blurb))
     ;; make a new frame if the user wants one.  reuse an
     ;; existing frame that is showing this folder.
     (vm-goto-new-folder-frame-maybe 'folder)
@@ -978,7 +978,7 @@ vm-visit-virtual-folder.")
     (when first-time
       (when (vm-should-generate-summary)
 	(vm-summarize t nil)
-	(message blurb))
+	(vm-inform 5 blurb))
       ;; raise the summary frame if the user wants frames
       ;; raised and if there is a summary frame.
       (when (and vm-summary-buffer
@@ -1002,7 +1002,7 @@ vm-visit-virtual-folder.")
     (when (and (interactive-p)
 	       (not vm-startup-message-displayed))
       (vm-display-startup-message)
-      (message blurb))))
+      (vm-inform 5 blurb))))
 
 ;;;###autoload
 (defun vm-visit-virtual-folder-other-frame (folder-name &optional read-only)
@@ -1362,8 +1362,8 @@ attributes, adding/deleting labels etc."
   (interactive)
   (setq vm-enable-thread-operations (not vm-enable-thread-operations))
   (if vm-enable-thread-operations
-      (message "Thread operations enabled")
-    (message "Thread operations disabled")))
+      (vm-inform 5 "Thread operations enabled")
+    (vm-inform 5 "Thread operations disabled")))
 
 (defvar vm-postponed-folder)
 

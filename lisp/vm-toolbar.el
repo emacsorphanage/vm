@@ -306,7 +306,7 @@ s-expression like this one in your .vm file:
     (if file
 	(progn
 	  (vm-save-message file 1)
-	  (message "Message saved to %s" file))
+	  (vm-inform 5 "Message saved to %s" file))
       (error "No match for message in vm-auto-folder-alist."))))
 
 (defun vm-toolbar-can-recover-p ()
@@ -407,8 +407,8 @@ s-expression like this one in your .vm file:
 	  (vm-toolbar-fsfemacs-install-toolbar))
     (if (not (vm-toolbar-pixmap-directory))
 	(progn
-	  (message "Bad toolbar pixmap directory, can't setup toolbar.")
-	  (sit-for 2))
+	  (vm-warn 
+	   0 2 "Bad toolbar pixmap directory, can't setup toolbar."))
       (vm-toolbar-initialize)
       (let ((height (or vm-toolbar-height
 			(+ 5 (glyph-height (car vm-toolbar-help-icon)))))

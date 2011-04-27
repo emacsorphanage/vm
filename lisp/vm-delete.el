@@ -84,10 +84,10 @@ thread are deleted."
 		(list this-command))
     (if (and used-marks (interactive-p))
 	(if (zerop del-count)
-	    (message "No messages deleted")
-	  (message "%d message%s deleted"
-		   del-count
-		   (if (= 1 del-count) "" "s"))))
+	    (vm-inform 5 "No messages deleted")
+	  (vm-inform 5 "%d message%s deleted"
+		      del-count
+		      (if (= 1 del-count) "" "s"))))
     (vm-update-summary-and-mode-line)
     (if (and vm-move-after-deleting (not used-marks))
 	(let ((vm-circular-folders (and vm-circular-folders
@@ -133,11 +133,11 @@ thread are undeleted."
       (setq mlist (cdr mlist)))
     (if (and used-marks (interactive-p))
 	(if (zerop undel-count)
-	    (message "No messages undeleted")
-	  (message "%d message%s undeleted"
-		   undel-count
-		   (if (= 1 undel-count)
-		       "" "s"))))
+	    (vm-inform 5 "No messages undeleted")
+	  (vm-inform 5 "%d message%s undeleted"
+		      undel-count
+		      (if (= 1 undel-count)
+			  "" "s"))))
     (vm-display nil nil '(vm-undelete-message) '(vm-undelete-message))
     (vm-update-summary-and-mode-line)
     (if (and vm-move-after-undeleting (not used-marks))
@@ -191,11 +191,11 @@ messages in the thread are flagged/unflagged."
 		(list this-command))
     (if (and used-marks (interactive-p))
 	(if (zerop flagged-count)
-	    (message "No messages flagged/unflagged")
-	  (message "%d message%s %sflagged"
-		   flagged-count
-		   (if (= 1 flagged-count) "" "s")
-		   (if new-flagged "" "un"))))
+	    (vm-inform 5 "No messages flagged/unflagged")
+	  (vm-inform 5 "%d message%s %sflagged"
+		      flagged-count
+		      (if (= 1 flagged-count) "" "s")
+		      (if new-flagged "" "un"))))
     (vm-update-summary-and-mode-line)))
 
 
@@ -227,8 +227,8 @@ don't move at all."
       (setq mp (cdr mp)))
     (and (interactive-p)
 	 (if (zerop n)
-	     (message "No messages deleted.")
-	   (message "%d message%s deleted" n (if (= n 1) "" "s")))))
+	     (vm-inform 5 "No messages deleted.")
+	   (vm-inform 5 "%d message%s deleted" n (if (= n 1) "" "s")))))
   (vm-display nil nil '(vm-kill-subject) '(vm-kill-subject))
   (vm-update-summary-and-mode-line)
   (cond ((or (not (numberp arg)) (> arg 0))
@@ -265,8 +265,8 @@ don't move at all."
       (setq list (cdr list)))
     (when (interactive-p)
       (if (zerop n)
-	  (message "No messages deleted.")
-	(message "%d message%s deleted" n (if (= n 1) "" "s")))))
+	  (vm-inform 5 "No messages deleted.")
+	(vm-inform 5 "%d message%s deleted" n (if (= n 1) "" "s")))))
   (vm-display nil nil '(vm-kill-thread-subtree) '(vm-kill-thread-subtree))
   (vm-update-summary-and-mode-line)
   (cond ((or (not (numberp arg)) (> arg 0))
@@ -316,8 +316,8 @@ unmarked messages are not considerd for deletion."
       (setq mp (cdr mp)))
     (when (interactive-p)
       (if (zerop n)
-	  (message "No messages deleted")
-	(message "%d message%s deleted" n (if (= 1 n) "" "s"))))
+	  (vm-inform 5 "No messages deleted")
+	(vm-inform 5 "%d message%s deleted" n (if (= 1 n) "" "s"))))
     (vm-update-summary-and-mode-line)
     n))
 
@@ -365,8 +365,8 @@ unmarked messages are not hashed or considerd for deletion."
 		(list this-command))
     (when (interactive-p)
       (if (zerop del-count)
-	  (message "No messages deleted")
-	(message "%d message%s deleted" 
+	  (vm-inform 5 "No messages deleted")
+	(vm-inform 5 "%d message%s deleted" 
 		 del-count (if (= 1 del-count) "" "s"))))
     (vm-update-summary-and-mode-line)
     del-count))
@@ -397,7 +397,7 @@ ignored."
   ;; all folder buffers.
   (vm-update-summary-and-mode-line)
   (unless quiet
-    (message "Expunging..."))
+    (vm-inform 5 "Expunging..."))
   (let ((use-marks (and (eq last-command 'vm-next-command-uses-marks)
 			(null just-these-messages)))
 	(mp vm-message-list)
@@ -575,8 +575,8 @@ ignored."
       (if vm-ml-sort-keys
           (vm-sort-messages vm-ml-sort-keys))
       (unless quiet
-	(message "Deleted messages expunged.")))
-     (t (message "No messages are flagged for deletion."))))
+	(vm-inform 5 "Deleted messages expunged.")))
+     (t (vm-inform 5 "No messages are flagged for deletion."))))
   (when vm-debug
     (vm-check-thread-integrity)))
 

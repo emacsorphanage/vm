@@ -157,7 +157,8 @@ all the real folder buffers involved."
 			       (coding-system-for-read
 				(vm-binary-coding-system))
 			       (enable-local-eval nil)
-			       (enable-local-variables nil))
+			       (enable-local-variables nil)
+			       (vm-verbosity (1- vm-verbosity)))
 			   (vm-visit-folder folder nil t)
 			   (vm-select-folder-buffer)
 			   (current-buffer)))))
@@ -175,7 +176,8 @@ all the real folder buffers involved."
 			 (coding-system-for-read 
 			  (vm-binary-coding-system))
 			 (enable-local-eval nil)
-			 (enable-local-variables nil))
+			 (enable-local-variables nil)
+			 (vm-verbosity (1- vm-verbosity)))
 		     (vm-visit-folder folder nil t)
 		     (vm-select-folder-buffer)
 		     (setq buffer (current-buffer))
@@ -464,7 +466,7 @@ Prefix arg means the new virtual folder should be visited read only."
     (setq vm-virtual-mirror (not vm-virtual-mirror))
     (vm-increment vm-modification-counter))
   (vm-update-summary-and-mode-line)
-  (message "Virtual folder now %s the underlying real folder%s."
+  (vm-inform 5 "Virtual folder now %s the underlying real folder%s."
 	   (if vm-virtual-mirror "mirrors" "does not mirror")
 	   (if (cdr vm-real-buffers) "s" "")))
 
@@ -472,7 +474,7 @@ Prefix arg means the new virtual folder should be visited read only."
 (defun vm-virtual-help ()
 (interactive)
   (vm-display nil nil '(vm-virtual-help) '(vm-virtual-help))
-  (message "VV = visit, VX = apply selectors, VC = create, VM = toggle virtual mirror"))
+  (vm-inform 0 "VV = visit, VX = apply selectors, VC = create, VM = toggle virtual mirror"))
 
 (defun vm-vs-or (m &rest selectors)
   (let ((result nil) selector arglist function)
@@ -780,7 +782,7 @@ real or virtual)."
 		       ;; Use dynamic non-local bindings from vm-quit
 		       (vm-quit no-expunge no-change))))
 	       (error 
-		(message "Unable to quit component folders: %s"
+		(vm-inform 0 "Unable to quit component folders: %s"
 			 (prin1-to-string error-data))))))
 
 	  ((eq major-mode 'vm-mode)
@@ -870,11 +872,11 @@ real or virtual)."
 	  (vm-get-new-mail)
 	;; handlers
 	(folder-read-only
-	 (message "Folder is read only: %s"
+	 (vm-inform 0 "Folder is read only: %s"
 		  (or buffer-file-name (buffer-name)))
 	 (sit-for 1))
 	(unrecognized-folder-type
-	 (message "Folder type is unrecognized: %s"
+	 (vm-inform 0 "Folder type is unrecognized: %s"
 		  (or buffer-file-name (buffer-name)))
 	 (sit-for 1)))))
   (vm-emit-totals-blurb))

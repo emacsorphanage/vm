@@ -196,7 +196,7 @@
 
 (defun vm-imap-stop-status-timer (status-blob)
   (if (vm-imap-status-did-report status-blob)
-      (message ""))
+      (vm-inform 6 ""))
   (if (fboundp 'disable-timeout)
       (disable-timeout (vm-imap-status-timer status-blob))
     (cancel-timer (vm-imap-status-timer status-blob))))
@@ -214,7 +214,7 @@
 			(vm-imap-status-last-currmsg o)))
 	       t)
 	      (t 
-	       (message "Retrieving message %d (of %d) from %s, %s..."
+	       (vm-inform 7 "Retrieving message %d (of %d) from %s, %s..."
 			(vm-imap-status-currmsg o)
 			(vm-imap-status-maxmsg o)
 			(vm-imap-status-mailbox o)
@@ -327,7 +327,7 @@ occurs, typically VM cannot proceed."
 	(when (not (equal (current-buffer) buf))
 	  (when (string-lessp "24" emacs-version)
 	    ;; the Emacs bug should have been fixed in version 24
-	    (message 
+	    (vm-inform 0 
 	     "Emacs process output error: Buffer changed to %s" 
 	     (current-buffer)))
 	  ;; recover from the bug
@@ -447,11 +447,10 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		((member source vm-imap-auto-expunge-warned)
 		 nil)
 		(t
-		 (message 
-		  (concat "Warning: IMAP folder is not set to auto-expunge"))
+		 (vm-warn 6 1 
+			  "Warning: IMAP folder is not set to auto-expunge")
 		 (setq vm-imap-auto-expunge-warned
 		       (cons source vm-imap-auto-expunge-warned))
-		 (sit-for 1)
 		 nil)))
 
     (unwind-protect
@@ -514,7 +513,8 @@ from which mail is to be moved and DESTINATION is the VM folder."
 		  (setcar (cdr msgid) uid-validity)
 		  (when (member msgid imap-retrieved-messages)
 		    (if vm-imap-ok-to-ask
-			(message
+			(vm-inform 
+			 7 
 			 "Skipping message %d (of %d) from %s (retrieved already)..."
 			 n mailbox-count folder))
 		    (throw 'skip t)))
@@ -530,24 +530,25 @@ from which mail is to be moved and DESTINATION is the VM folder."
 				     'skip))
 			     (not (eq response 'retrieve))))
 		  (cond ((and read-write can-delete (eq response 'delete))
-			 (message "Deleting message %d..." n)
+			 (vm-inform 6 "Deleting message %d..." n)
 			 (vm-imap-delete-message process n)
 			 (setq did-delete t))
 			(vm-imap-ok-to-ask
-			 (message "Skipping message %d..." n))
+			 (vm-inform 7 "Skipping message %d..." n))
 			(t 
-			 (message
+			 (vm-inform 
+			  5
 			  "Skipping message %d in %s, too large (%d > %d)..."
 			  n folder message-size vm-imap-max-message-size)))
 		  (throw 'skip t))
-		(message "Retrieving message %d (of %d) from %s..."
+		(vm-inform 7 "Retrieving message %d (of %d) from %s..."
 			 n mailbox-count folder)
                 (vm-imap-fetch-message process n
 				       use-body-peek nil) ; no headers-only
                 (vm-imap-retrieve-to-target process destination
 					    statblob use-body-peek) 
 		(vm-imap-read-ok-response process)
-                (message "Retrieving message %d (of %d) from %s...done"
+                (vm-inform 7 "Retrieving message %d (of %d) from %s...done"
                          n mailbox-count folder)
 		(vm-increment retrieved)
 		(and b-per-session
@@ -720,7 +721,7 @@ on all the relevant IMAP servers and then immediately expunges."
 				       (vm-safe-imapdrop-string source)))
 		      (condition-case error-data
 			  (progn
-			    (message "Opening IMAP session to %s..."
+			    (vm-inform 6 "Opening IMAP session to %s..."
 				     folder)
 			    (setq process 
 				  (vm-imap-make-session 
@@ -754,11 +755,11 @@ on all the relevant IMAP servers and then immediately expunges."
 			      (error "Can't delete messages in mailbox %s, skipping..." mailbox))
 			    (unless read-write
 			      (error "Mailbox %s is read-only, skipping..." mailbox))
-			    (message "Expunging messages in %s..." folder))
+			    (vm-inform 6 "Expunging messages in %s..." folder))
 			(error
 			 (if (cdr error-data)
 			     (apply 'message (cdr error-data))
-			   (message
+			   (vm-inform 0
 			    "Couldn't open IMAP session to %s, skipping..."
 			    folder))
 			 (setq trouble (cons folder trouble))
@@ -779,10 +780,10 @@ on all the relevant IMAP servers and then immediately expunges."
 		      (vm-increment delete-count)))
 		(error
 		 (setq trouble (cons folder trouble))
-		 (message "Something signaled: %s"
+		 (vm-inform 0 "Something signaled: %s"
 			  (prin1-to-string error-data))
 		 (sleep-for 2)
-		 (message "Skipping rest of mailbox %s..." folder)
+		 (vm-inform 0 "Skipping rest of mailbox %s..." folder)
 		 (sleep-for 2)
 		 (while (equal (nth 2 (car mp)) source)
 		   (setq mp (cdr mp)))
@@ -815,7 +816,7 @@ on all the relevant IMAP servers and then immediately expunges."
 		  (setq mp (cdr mp)))
 		(setq buffer-read-only t)
 		(display-buffer (current-buffer)))
-	    (message "%s IMAP message%s expunged."
+	    (vm-inform 5 "%s IMAP message%s expunged."
 		     (if (zerop delete-count) "No" delete-count)
 		     (if (= delete-count 1) "" "s")))
 	  ;;-------------------
@@ -882,10 +883,10 @@ should be a maildrop folder on an IMAP server.         USR, 2011-04-06"
 	     (intern-soft (car tuple) uid-obarray)))))
     (setq pruned-count (- retrieved-count (length vm-imap-retrieved-messages)))
     (if (= pruned-count 0)
-	(message "No messages to be pruned")
+	(vm-inform 5 "No messages to be pruned")
       (vm-mark-folder-modified-p)
       (vm-update-summary-and-mode-line)
-      (message "%d message%s pruned" 
+      (vm-inform 5 "%d message%s pruned" 
 	       pruned-count (if (= pruned-count 1) "" "s")))
     ))
     
@@ -1130,7 +1131,7 @@ nil if the session could not be created."
 						       imap-buffer
 						       host port))))
 		(error
-		 (message "%s" (error-message-string err))
+		 (vm-inform 0 "%s" (error-message-string err))
 		 (setq shutdown t)
 		 (throw 'end-of-session nil))))
 	    (setq vm-imap-read-point (point))
@@ -1163,7 +1164,7 @@ nil if the session could not be created."
 		    (setq vm-imap-passwords
 			  (delete (list source-nopwd-nombox pass)
 				  vm-imap-passwords))
-		    (message "IMAP password for %s incorrect" folder)
+		    (vm-inform 0 "IMAP password for %s incorrect" folder)
 		    ;; don't sleep unless we're running synchronously.
 		    (if vm-imap-ok-to-ask
 			(sleep-for 2))
@@ -1209,7 +1210,7 @@ nil if the session could not be created."
 		      (setq vm-imap-passwords
 			    (delete (list source-nopwd-nombox pass)
 				    vm-imap-passwords))
-		      (message "IMAP password for %s incorrect" folder)
+		      (vm-inform 0 "IMAP password for %s incorrect" folder)
 		      ;; don't sleep unless we're running synchronously.
 		      (if vm-imap-ok-to-ask
 			  (sleep-for 2))
@@ -1221,7 +1222,7 @@ nil if the session could not be created."
 	     ((equal auth "preauth")
 	      (if (not (eq greeting 'preauth))
 		  (progn
-		    (message "IMAP session was not pre-authenticated")
+		    (vm-inform 0 "IMAP session was not pre-authenticated")
 		    ;; don't sleep unless we're running synchronously.
 		    (if vm-imap-ok-to-ask
 			(sleep-for 2))
@@ -1434,9 +1435,9 @@ as well."
     (unless just-retrieve
       (if (vm-imap-scan-list-for-flag permanent-flags "\\*")
 	  (unless (vm-imap-scan-list-for-flag flags "\\Seen")
-	    (message 
+	    (vm-inform 5 
 	     "Warning: No permanent changes permitted for the IMAP mailbox"))
-	(message 
+	(vm-inform 5 
 	 "Warning: No user-definable flags available for the IMAP mailbox")))
     ;;-------------------------------
     (vm-imap-session-type:set 'active)
@@ -2346,9 +2347,9 @@ IMAP process or nil if unsuccessful."
 	       (concat "Folder's UID VALIDITY value has changed "
 		       "on the server.  Refresh cache? "))
 	      (progn
-		(message (concat "VM will download new copies of messages"
+		(vm-warn 5 4
+			 (concat "VM will download new copies of messages"
 				 " and mark the old ones for deletion"))
-		(sit-for 4)
 		(setq vm-imap-retrieved-messages
 		      (vm-imap-clear-invalid-retrieval-entries
 		       (vm-folder-imap-maildrop-spec)
@@ -3005,7 +3006,7 @@ operation of the server to minimize I/O."
 (defun vm-imap-server-error (msg &rest args)
   (if (eq vm-imap-connection-mode 'online)
       (apply (function error) msg args)
-    (message "VM working in offline mode")))
+    (vm-inform 1 "VM working in offline mode")))
 
 ;;;###autoload
 (defun* vm-imap-synchronize-folder (&key 
@@ -3056,7 +3057,7 @@ operation of the server to minimize I/O."
     (if do-retrieves
 	(vm-assimilate-new-messages))	; Funny that this should be
 					; necessary.  Indicates bugs?
-    (message "Logging into the IMAP server...")
+    (vm-inform 6 "Logging into the IMAP server...")
     (let* ((folder-buffer (current-buffer))
 	   (process (vm-folder-imap-process))
 	   (imap-buffer (process-buffer process))
@@ -3079,7 +3080,7 @@ operation of the server to minimize I/O."
 	(let ((mp vm-message-list)
 	      (errors 0))
 	  ;;  (perm-flags (vm-folder-imap-permanent-flags))
-	  (message "Updating attributes on the IMAP server... ")
+	  (vm-inform 6 "Updating attributes on the IMAP server... ")
 	  (while mp
 	    (if (or (eq save-attributes 'all)
 		    (vm-attribute-modflag-of (car mp)))
@@ -3090,14 +3091,14 @@ operation of the server to minimize I/O."
 		   (vm-buffer-type:set 'folder))))
 	    (setq mp (cdr mp)))
 	  (if (> errors 0)
-	      (message 
+	      (vm-inform 3
 	       "Updating attributes on the IMAP server... %d errors" errors)
-	    (message "Updating attributes on the IMAP server... done"))))
+	    (vm-inform 6 "Updating attributes on the IMAP server... done"))))
       (when retrieve-attributes
 	(let ((mp vm-message-list)
 	      (len (length vm-message-list))
 	      (n 0))
-	  (message "Retrieving message attributes and labels... ")
+	  (vm-inform 6 "Retrieving message attributes and labels... ")
 	  (while mp
 	    (setq m (car mp))
 	    (setq uid (vm-imap-uid-of m))
@@ -3107,11 +3108,11 @@ operation of the server to minimize I/O."
 	      (vm-imap-update-message-flags m mflags t))
 	    (setq mp (cdr mp)
 		  n (1+ n)))
-	  (message "Retrieving message atrributes and labels... done")
+	  (vm-inform 6 "Retrieving message atrributes and labels... done")
 	  ))
       (when (and do-retrieves retrieve-list)
 	(save-excursion
-	  (message "Retrieving new messages... ")
+	  (vm-inform 6 "Retrieving new messages... ")
 	  (vm-save-restriction
 	   (widen)
 	   (setq old-eob (point-max))
@@ -3155,9 +3156,9 @@ operation of the server to minimize I/O."
 		       (setq r-list (cdr r-list)
 			     n (+ n (1+ (- (cdr range) (car range)))))))
 		 (vm-imap-normal-error	; handler
-		  (message "IMAP error: %s" (cadr error-data)))
+		  (vm-inform 0 "IMAP error: %s" (cadr error-data)))
 		 (vm-imap-protocol-error ; handler
-		  (message "Retrieval from %s signaled: %s" folder
+		  (vm-inform 0 "Retrieval from %s signaled: %s" folder
 			   error-data))
 		 ;; Continue with whatever messages have been read
 		 (quit
@@ -3176,7 +3177,7 @@ operation of the server to minimize I/O."
 	   (vm-set-folder-imap-retrieved-count 
 	    (vm-folder-imap-mailbox-count))
 	   (intern (buffer-name) vm-buffers-needing-display-update)
-	   (message "Updating summary... ")
+	   (vm-inform 6 "Updating summary... ")
 	   (vm-update-summary-and-mode-line)
 	   (setq mp (vm-assimilate-new-messages :dont-read-attributes t))
 	   (setq new-messages mp)
@@ -3205,7 +3206,7 @@ operation of the server to minimize I/O."
 	   )))
 
       (when do-local-expunges
-	(message "Expunging messages in cache... ")
+	(vm-inform 6 "Expunging messages in cache... ")
 	(vm-expunge-folder :quiet t :just-these-messages local-expunge-list)
 	(if (and interactive stale-list)
 	    (if (y-or-n-p 
@@ -3213,7 +3214,7 @@ operation of the server to minimize I/O."
 		  "Found %s messages with invalid UIDs.  Expunge them? "
 		  (length stale-list)))
 		(vm-expunge-folder :quiet t :just-these-messages stale-list)
-	      (message "They will be labelled 'stale'")
+	      (vm-inform 1 "They will be labelled 'stale'")
 	      (mapc 
 	       (lambda (m)
 		 (vm-set-labels m (cons "stale" (vm-labels-of m)))
@@ -3221,7 +3222,7 @@ operation of the server to minimize I/O."
 		 (vm-set-stuff-flag-of m t))
 	       stale-list)
 	      ))
-	(message "Expunging messages in cache... done"))
+	(vm-inform 6 "Expunging messages in cache... done"))
 
       (when (and do-remote-expunges
 		 (if (eq do-remote-expunges 'all)
@@ -3230,7 +3231,7 @@ operation of the server to minimize I/O."
 		   vm-imap-messages-to-expunge))
 	;; New code.  Kyle's version was piggybacking on IMAP spool
 	;; file code and wasn't ideal.
-	(message "Expunging messages on the server... ")
+	(vm-inform 6 "Expunging messages on the server... ")
 	(let ((mailbox-count (vm-folder-imap-mailbox-count))
 	      (expunge-count (length vm-imap-messages-to-expunge))
 	      (uid-obarray (vm-folder-imap-uid-obarray))
@@ -3248,9 +3249,8 @@ operation of the server to minimize I/O."
 		       vm-imap-messages-to-expunge))
 		(setq uids-to-delete (delete nil uids-to-delete))
 		(unless (equal expunge-count (length uids-to-delete))
-		  (message "%s stale deleted messages are ignored"
-			   (- expunge-count (length uids-to-delete)))
-		  (sit-for 2))
+		  (vm-warn 3 2 "%s stale deleted messages are ignored"
+			   (- expunge-count (length uids-to-delete))))
 		(setq expunge-count 0)	; number of messages expunged
 		(save-excursion		; = save-current-buffer?
 		  (set-buffer (process-buffer process))
@@ -3326,17 +3326,17 @@ operation of the server to minimize I/O."
 		    ;; m-list has message sequence numbers of messages
 		    ;; that haven't yet been expunged
 		    (if (cdr m-list)
-			(message "%s messages yet to be expunged"
+			(vm-inform 7 "%s messages yet to be expunged"
 				 (length (cdr m-list))))
 					; try again, if the user wants us to
 		    (setq count (1+ count)))
-		  (message "Expunging messages on the server... done")))
+		  (vm-inform 6 "Expunging messages on the server... done")))
 
 	    (vm-imap-normal-error	; handler
-	     (message "IMAP error: %s" (cadr error-data)))
+	     (vm-inform 0 "IMAP error: %s" (cadr error-data)))
 
 	    (vm-imap-protocol-error	; handler
-	     (message "Expunge from %s signalled: %s"
+	     (vm-inform 0 "Expunge from %s signalled: %s"
 		      folder error-data))
 	    (quit 			; handler
 	     (error "Quit received during expunge from %s"
@@ -3445,10 +3445,10 @@ otherwise.
 			(vm-imap-read-ok-response process)
 			t)
 		    (vm-imap-normal-error ; handler
-		     (message "IMAP error: %s" (cadr error-data))
+		     (vm-inform 0 "IMAP error: %s" (cadr error-data))
 		     nil)
 		    (vm-imap-protocol-error ; handler
-		     (message "Retrieval from %s signaled: %s" folder
+		     (vm-inform 0 "Retrieval from %s signaled: %s" folder
 			      error-data)
 		     nil
 		     ;; Continue with whatever messages have been read
@@ -3490,7 +3490,7 @@ otherwise.
 	 (mp vm-message-list)
 	 (errors 0))
       ;;  (perm-flags (vm-folder-imap-permanent-flags))
-      (message "Updating attributes on the IMAP server... ")
+      (vm-inform 6 "Updating attributes on the IMAP server... ")
       ;;-----------------------------------------
       (vm-imap-folder-session-type:assert 'valid)
       ;;-----------------------------------------
@@ -3503,8 +3503,8 @@ otherwise.
 	       (vm-buffer-type:set 'folder))))
 	(setq mp (cdr mp)))
       (if (> errors 0)
-	  (message "Updating attributes on the IMAP server... %d errors" errors)
-	(message "Updating attributes on the IMAP server... done"))))
+	  (vm-inform 3 "Updating attributes on the IMAP server... %d errors" errors)
+	(vm-inform 6 "Updating attributes on the IMAP server... done"))))
 
 
 (defun vm-imap-synchronize (&optional full)
@@ -3524,7 +3524,7 @@ This is useful for saving offline work on the cache folder."
   ;;--------------------------
   (vm-display nil nil '(vm-imap-synchronize) '(vm-imap-synchronize))
   (if (not (eq vm-folder-access-method 'imap))
-      (message "This is not an IMAP folder")
+      (vm-inform 0 "This is not an IMAP folder")
     (when (vm-establish-new-folder-imap-session t "general operation" nil)
       (vm-imap-retrieve-uid-and-flags-data)
       (vm-imap-save-attributes :interactive t :all-flags full)
@@ -3536,15 +3536,15 @@ This is useful for saving offline work on the cache folder."
 				  :do-retrieves t
 				  :retrieve-attributes t)
       ;; stuff the attributes of messages that need it.
-      ;; (message "Stuffing cached data...")
+      ;; (vm-inform 7 "Stuffing cached data...")
       ;; (vm-stuff-folder-data nil)
-      ;; (message "Stuffing cached data... done")
+      ;; (vm-inform 7 "Stuffing cached data... done")
       ;; stuff bookmark and header variable values
       (when vm-message-list
 	;; get summary cache up-to-date
-	(message "Updating summary... ")
+	(vm-inform 6 "Updating summary... ")
 	(vm-update-summary-and-mode-line)
-	(message "Updating summary... done")
+	(vm-inform 6 "Updating summary... done")
 	;; 	  (vm-stuff-bookmark)
 	;; 	  (vm-stuff-pop-retrieved)
 	;; 	  (vm-stuff-imap-retrieved)
@@ -3566,8 +3566,8 @@ is being invoked interactively."
   ;;--------------------------
   (vm-buffer-type:set 'folder)
   ;;--------------------------
-  (when vm-debug
-    (message "Checking for new mail in %s... " (buffer-name (current-buffer))))
+  (vm-inform 10 
+	      "Checking for new mail in %s... " (buffer-name (current-buffer)))
   (cond (vm-global-block-new-mail
 	 nil)
 	((null (vm-establish-new-folder-imap-session 
@@ -3583,9 +3583,8 @@ is being invoked interactively."
 		  (setq result (> (vm-folder-imap-mailbox-count) 
 				  (vm-folder-imap-retrieved-count)))))
 	   (vm-imap-end-session (vm-folder-imap-process))
-	   (when vm-debug
-	     (message "Checking for new mail in %s... done"
-		      (buffer-name (current-buffer))))
+	   (vm-inform 10 "Checking for new mail in %s... done"
+		       (buffer-name (current-buffer)))
 	   result))))
 (defalias 'vm-imap-folder-check-for-mail 'vm-imap-folder-check-mail)
 (make-obsolete 'vm-imap-folder-check-for-mail
@@ -3999,7 +3998,7 @@ documentation for `vm-spool-files'."
       (setq folder-display (or (vm-imap-folder-for-spec folder)
 			       (vm-safe-imapdrop-string folder)))
       (vm-imap-create-mailbox process mailbox t)
-      (message "Folder %s created" folder-display)
+      (vm-inform 5 "Folder %s created" folder-display)
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
@@ -4042,7 +4041,7 @@ documentation for `vm-spool-files'."
       (setq folder-display (or (vm-imap-folder-for-spec folder)
 			       (vm-safe-imapdrop-string folder)))
       (vm-imap-delete-mailbox process mailbox)
-      (message "Folder %s deleted" folder-display)
+      (vm-inform 5 "Folder %s deleted" folder-display)
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
@@ -4089,7 +4088,7 @@ documentation for `vm-spool-files'."
       (setq mailbox-source (nth 3 (vm-imap-parse-spec-to-list source)))
       (setq mailbox-dest (nth 3 (vm-imap-parse-spec-to-list dest)))
       (vm-imap-rename-mailbox process mailbox-source mailbox-dest)
-      (message "Folder %s renamed to %s" 
+      (vm-inform 5 "Folder %s renamed to %s" 
 	       (or (vm-imap-folder-for-spec source)
 		   (vm-safe-imapdrop-string source))
 	       (or (vm-imap-folder-for-spec dest)
@@ -4291,8 +4290,8 @@ order to capture the trace of IMAP sessions during the occurrence."
   (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (if (or vm-imap-keep-trace-buffer
 	  (y-or-n-p "Did you run vm-imap-start-bug-report earlier? "))
-      (message "Thank you. Preparing the bug report... ")
-    (message "Consider running vm-imap-start-bug-report before the problem occurrence"))
+      (vm-inform 5 "Thank you. Preparing the bug report... ")
+    (vm-inform 1 "Consider running vm-imap-start-bug-report before the problem occurrence"))
   (let ((process (vm-folder-imap-process)))
     (if process
 	(vm-imap-end-session (vm-folder-imap-process))))
@@ -4332,7 +4331,7 @@ order to capture the trace of IMAP sessions during the occurrence."
        (vm-set-body-to-be-retrieved-of (car mp) nil)
        (vm-set-body-to-be-discarded-of (car mp) nil)
        (setq mp (cdr mp))))
-   (message "Marked %s messages as having retrieved bodies" 
+   (vm-inform 5 "Marked %s messages as having retrieved bodies" 
 	    (length vm-message-list))
    ))
 
@@ -4346,7 +4345,7 @@ downloaded bodies will be displayed."
      (while mp
        (vm-set-byte-count-of (car mp) nil)
        (setq mp (cdr mp))))
-   (message "Unset the byte counts of %s messages" 
+   (vm-inform 5 "Unset the byte counts of %s messages" 
 	    (length vm-message-list))
    ))
 

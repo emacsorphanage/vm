@@ -94,7 +94,7 @@
 	(set-process-sentinel
 	 (start-process "Fetchmail" "*Fetchmail*" vm-fetchmail-function)
 	 'vm-fetchmail-sentinel)
-	(message "Fetching new mail..."))
+	(vm-inform 5 "Fetching new mail..."))
    (t (error "Error: Fetchmail not found on system!"))))
 
 (defvar vm-fetchmail-function "/usr/bin/fetchmail"
@@ -103,7 +103,7 @@
 (defun vm-fetchmail-sentinel (process status)
   (beep t)
   (setq status (substring status -2 -1))
-  (message "Finished fetching... %s"
+  (vm-inform 5 "Finished fetching... %s"
    (if (string= status "d") "*New mail*"
 	 (setq status (string-to-number status))
 	 (cond

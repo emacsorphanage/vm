@@ -1404,7 +1404,7 @@ included in the digest."
 	(goto-char (match-end 0))
 	(setq start (point-marker)
 	      header-end (match-beginning 0)))
-      (message "Building %s digest..." vm-digest-send-type)
+      (vm-inform 5 "Building %s digest..." vm-digest-send-type)
       (cond ((equal vm-digest-send-type "mime")
 	     (setq boundary 
 		   (vm-mime-encapsulate-messages
@@ -1457,7 +1457,7 @@ included in the digest."
 		       (if (eq (current-buffer) ,mail-buffer)
 			   (kill-buffer ,work-buffer))))))
       (when prefix
-	(message "Building digest preamble...")
+	(vm-inform 6 "Building digest preamble...")
 	;; (if miming
 	;;     (progn
 	;;       (set-buffer mail-buffer)
@@ -1473,7 +1473,7 @@ included in the digest."
 		(forward-char 1)))
 	  (setq mp (cdr mp))))
       (mail-position-on-field "To")
-      (message "Building %s digest... done" vm-digest-send-type)))
+      (vm-inform 5 "Building %s digest... done" vm-digest-send-type)))
   (run-hooks 'vm-send-digest-hook)
   (run-hooks 'vm-mail-mode-hook))
 
@@ -1533,7 +1533,7 @@ found, the current buffer remains selected."
 		(vm-set-hooks-for-frame-deletion)))
 	  (vm-display b t '(vm-continue-composing-message)
 		      '(vm-continue-composing-message composing-message)))
-      (message "No composition buffers found"))))
+      (vm-inform 5 "No composition buffers found"))))
 
 ;;;###autoload
 (defun vm-mail-to-mailto-url (url)
@@ -2011,7 +2011,7 @@ message."
 	    (vm-save-buffer-excursion
 	     (vm-goto-new-folder-frame-maybe 'folder)
 	     (vm-mode)))
-	  (message
+	  (vm-inform 5
 	   (substitute-command-keys
 	    "Type \\[vm-quit] to continue composing your message"))
 	  ;; temp buffer, don't offer to save it.

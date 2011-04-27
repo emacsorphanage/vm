@@ -40,7 +40,7 @@
   "Removes all message marks in the current folder."
   (interactive)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (message "Clearing all marks...")
+  (vm-inform 5 "Clearing all marks...")
   (let ((mp vm-message-list))
     (while mp
       (if (vm-mark-of (car mp))
@@ -51,7 +51,7 @@
   (vm-display nil nil '(vm-clear-all-marks)
 	      '(vm-clear-all-marks marking-message))
   (vm-update-summary-and-mode-line)
-  (message "Clearing all marks... done"))
+  (vm-inform 5 "Clearing all marks... done"))
 
 ;;;###autoload
 (defun vm-toggle-all-marks ()
@@ -60,7 +60,7 @@ Messages that are unmarked will become marked and messages that are
 marked will become unmarked."
   (interactive)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (message "Toggling all marks...")
+  (vm-inform 5 "Toggling all marks...")
   (let ((mp vm-message-list))
     (while mp
       (vm-set-mark-of (car mp) (not (vm-mark-of (car mp))))
@@ -69,14 +69,14 @@ marked will become unmarked."
   (vm-display nil nil '(vm-toggle-all-marks)
 	      '(vm-toggle-all-marks marking-message))
   (vm-update-summary-and-mode-line)
-  (message "Toggling all marks... done"))
+  (vm-inform 5 "Toggling all marks... done"))
 
 ;;;###autoload
 (defun vm-mark-all-messages ()
   "Mark all messages in the current folder."
   (interactive)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (message "Marking all messages...")
+  (vm-inform 5 "Marking all messages...")
   (let ((mp vm-message-list))
     (while mp
       (vm-set-mark-of (car mp) t)
@@ -85,7 +85,7 @@ marked will become unmarked."
   (vm-display nil nil '(vm-mark-all-messages)
 	      '(vm-mark-all-messages marking-message))
   (vm-update-summary-and-mode-line)
-  (message "Marking all messages... done"))
+  (vm-inform 5 "Marking all messages... done"))
 
 ;;;###autoload
 (defun vm-mark-message (count)
@@ -214,7 +214,7 @@ previous N-1 messages."
 		'(vm-mark-matching-messages vm-unmark-matching-messages)
 		(list this-command 'marking-message))
     (vm-update-summary-and-mode-line)
-    (message "%s message%s %smarked"
+    (vm-inform 5 "%s message%s %smarked"
 	     (if (> count 0) count "No")
 	     (if (= 1 count) "" "s")
 	     (if val "" "un"))))
@@ -333,8 +333,8 @@ variable vm-virtual-folder-alist for more information."
 		(list this-command 'marking-message))
     (vm-update-summary-and-mode-line)
     (if (zerop mark-count)
-	(message "No messages %smarked" (if mark "" "un"))
-      (message "%d message%s %smarked"
+	(vm-inform 5 "No messages %smarked" (if mark "" "un"))
+      (vm-inform 5 "%d message%s %smarked"
 	       mark-count
 	       (if (= 1 mark-count) "" "s")
 	       (if mark "" "un")))))
@@ -373,8 +373,8 @@ variable vm-virtual-folder-alist for more information."
 		(list this-command 'marking-message))
     (vm-update-summary-and-mode-line)
     (if (zerop mark-count)
-	(message "No messages %smarked" (if mark "" "un"))
-      (message "%d message%s %smarked"
+	(vm-inform 5 "No messages %smarked" (if mark "" "un"))
+      (vm-inform 5 "%d message%s %smarked"
 	       mark-count
 	       (if (= 1 mark-count) "" "s")
 	       (if mark "" "un")))))
@@ -415,7 +415,7 @@ variable vm-virtual-folder-alist for more information."
 		  vm-unmark-matching-messages-with-virtual-folder)
 		(list this-command 'marking-message))
     (vm-update-summary-and-mode-line)
-    (message "%s message%s %smarked"
+    (vm-inform 5 "%s message%s %smarked"
 	     (if (> count 0) count "No")
 	     (if (= 1 count) "" "s")
 	     (if val "" "un"))))
@@ -454,7 +454,7 @@ commands bound to key, menu or button press events.  M-x vm-command will
 not work."
   (interactive)
   (setq this-command 'vm-next-command-uses-marks)
-  (message "Next command uses marks...")
+  (vm-inform 5 "Next command uses marks...")
   (vm-display nil nil '(vm-next-command-uses-marks)
 	      '(vm-next-command-uses-marks)))
 
@@ -471,6 +471,6 @@ not work."
 (defun vm-mark-help ()
   (interactive)
   (vm-display nil nil '(vm-mark-help) '(vm-mark-help))
-  (message "MM = mark, MU = unmark, Mm = mark all, Mu = unmark all, MN = use marks, ..."))
+  (vm-inform 0 "MM = mark, MU = unmark, Mm = mark all, Mu = unmark all, MN = use marks, ..."))
 
 ;;; vm-mark.el ends here

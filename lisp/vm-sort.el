@@ -419,7 +419,7 @@ folder in the order in which the messages arrived."
       (vm-build-threads-if-unbuilt)
       (vm-build-thread-lists)
       (setq key-funcs (cons 'vm-sort-compare-thread key-funcs)))
-    (message "Sorting messages...")
+    (vm-inform 6 "Sorting messages...")
     (let ((vm-key-functions key-funcs))
       (setq new-message-list (sort (copy-sequence old-message-list)
 				   'vm-sort-compare-xxxxxx))
@@ -429,7 +429,7 @@ folder in the order in which the messages arrived."
 	  (setq vm-key-functions '(vm-sort-compare-physical-order)
 		physical-order-list (sort (copy-sequence old-message-list)
 					  'vm-sort-compare-xxxxxx))))
-    (message "Sorting messages... done")
+    (vm-inform 6 "Sorting messages... done")
     (let ((inhibit-quit t))
       (setq mp-old old-message-list
 	    mp-new new-message-list)
@@ -469,7 +469,7 @@ folder in the order in which the messages arrived."
 	    ;; order header from being stuffed later.
 	    (vm-remove-message-order)
 	    (setq vm-message-order-changed nil)
-	    (message "Moving messages... ")
+	    (vm-inform 6 "Moving messages... ")
 	    (widen)
 	    (setq mp-old physical-order-list
 		  mp-new new-message-list)
@@ -492,7 +492,7 @@ folder in the order in which the messages arrived."
 		  ;; mp-old down one message by inserting a
 		  ;; message in front of it.
 		  (setq mp-new (cdr mp-new)))))
-	    (message "Moving messages... done")
+	    (vm-inform 6 "Moving messages... done")
 	    (vm-mark-folder-modified-p (current-buffer))
 	    (vm-clear-modification-flag-undos))
 	(if (and order-did-change (not vm-folder-read-only))

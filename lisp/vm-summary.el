@@ -221,7 +221,7 @@ the messages in the current folder."
 	      ;; and then convert them to markers after all the
 	      ;; insertions are done.  Likewise, detach overlays and
 	      ;; re-establish them afterwards.
-	      (message "Generating summary... %d" n)
+	      (vm-inform 7 "Generating summary... %d" n)
 	      (overlay-recenter (point))
 	      (setq mp m-list)
 	      (while mp
@@ -265,7 +265,7 @@ the messages in the current folder."
 			  )))))
 		(setq mp (cdr mp) n (1+ n))
 		(when (zerop (% n modulus))
-		  (message "Generating summary... %d" n)
+		  (vm-inform 7 "Generating summary... %d" n)
 		  (if debug (debug "vm-debug-summary: Generating summary"))
 		  (setq debug nil)))
 	      ;; now convert the ints to markers.
@@ -287,7 +287,7 @@ the messages in the current folder."
 	(run-hooks 'vm-summary-redo-hook)))
     (if (>= n modulus)
 	(unless vm-summary-debug 
-	  (message "Generating summary... done")))))
+	  (vm-inform 7 "Generating summary... done")))))
 
 (defun vm-expand-thread (&optional root)
   "Expand the thread associated with the message at point. This
@@ -1526,8 +1526,7 @@ the from and full-name entries of the cached-data vector.   USR, 2010-05-13"
 	  addresses (condition-case err
                         (rfc822-addresses all)
                       (error
-                       (message err)
-                       (sit-for 5)
+                       (vm-warn 0 5 err)
                        (list "corrupted-header"))))
     (setq list (vm-parse-addresses all)) ; adds text properties for charsets
     (while list
@@ -1643,7 +1642,7 @@ Call this function if you made changes to `vm-summary-format'."
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (if kill-local-summary
       (kill-local-variable 'vm-summary-format))
-  (message "Fixing your summary... %s" vm-summary-format)
+  (vm-inform 5 "Fixing your summary... %s" vm-summary-format)
   (let ((mp vm-message-list))
     ;; Erase all the cached summary and threading data
     (while mp
@@ -1658,18 +1657,18 @@ Call this function if you made changes to `vm-summary-format'."
     (setq vm-thread-obarray 'bonk
 	  vm-thread-subject-obarray 'bonk)
     ;; Generate fresh summary data and stuff it
-;;     (message "Stuffing cached data...")
+;;     (vm-inform 7 "Stuffing cached data...")
 ;;     (vm-stuff-folder-data nil)
-;;     (message "Stuffing cached data... done")
+;;     (vm-inform 7 "Stuffing cached data... done")
 ;;     (set-buffer-modified-p t)
     ;; Regenerate the summary
-    (message "Recreating summary...")
+    (vm-inform 5 "Recreating summary...")
     (vm-update-summary-and-mode-line)
     (unless vm-summary-debug
-      (message "Recreating summary... done")))
+      (vm-inform 5 "Recreating summary... done")))
   (if vm-thread-debug
       (vm-check-thread-integrity))
-  (message "Fixing your summary... done"))
+  (vm-inform 5 "Fixing your summary... done"))
 
 (defun vm-su-thread-indent (m)
   (if (and vm-summary-show-threads (natnump vm-summary-thread-indent-level))
@@ -1737,8 +1736,7 @@ Call this function if you made changes to `vm-summary-format'."
 (defun vm-open-folders-summary-database (mode)
   (condition-case data
       (open-database vm-folders-summary-database 'berkeley-db 'hash mode)
-    (error (message "open-database signaled: %S" data)
-	   (sleep-for 2)
+    (error (vm-warn 0 2 "open-database signaled: %S" data)
 	   nil )))
 
 (defun vm-get-folder-totals (folder)

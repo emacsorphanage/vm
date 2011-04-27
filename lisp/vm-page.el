@@ -268,7 +268,7 @@ it is suppressed if the variable `vm-auto-next-message' is nil."
   (if vm-auto-next-message
       (let ((vm-summary-uninteresting-senders-arrow "")
 	    (case-fold-search nil))
-	(message (if (and (stringp vm-summary-uninteresting-senders)
+	(vm-inform 6 (if (and (stringp vm-summary-uninteresting-senders)
 			  (string-match vm-summary-uninteresting-senders
 					(vm-su-from (car vm-message-pointer))))
 		     "End of message %s to %.50s..."
@@ -378,7 +378,7 @@ Negative arg means scroll forward."
 			  (vm-delete-extent e))
 			nil))
 		     (current-buffer) (point-min) (point-max))
-	(if clean-only (message "Energy from urls removed!")
+	(if clean-only (vm-inform 1 "Energy from urls removed!")
 	(while search-pairs
 	  (goto-char (car (car search-pairs)))
 	  (while (re-search-forward vm-url-regexp (cdr (car search-pairs)) t)
@@ -759,7 +759,7 @@ preview or the full message, governed by the the variables
 		       vm-preview-read-messages))))
 ;;     (when vm-load-headers-only
 ;;       (when (not need-preview)
-;; 	(message "Headers-only operation does not allow previews")
+;; 	(vm-inform 1 "Headers-only operation does not allow previews")
 ;; 	(setq need-preview nil)))
     (vm-save-buffer-excursion
      (setq vm-system-state 'previewing)
@@ -813,8 +813,8 @@ preview or the full message, governed by the the variables
 ;;     (let ((real-m (car vm-message-pointer)))
 ;;        (if (= (1+ (marker-position (vm-text-of real-m)))
 ;; 	      (marker-position (vm-text-end-of real-m)))
-;;            (message "must fetch the body of %s ..." (vm-imap-uid-of real-m))
-;; 	 (message "must NOT fetch the body of %s ..." (vm-imap-uid-of real-m))
+;;            (vm-inform 1 "must fetch the body of %s ..." (vm-imap-uid-of real-m))
+;; 	 (vm-inform 1 "must NOT fetch the body of %s ..." (vm-imap-uid-of real-m))
 ;;	 (let ((vm-message-pointer nil))
 ;;	   (vm-discard-cached-data)))
 ;;	   ))
@@ -866,7 +866,7 @@ preview or the full message, governed by the the variables
 		   )
 	       (vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
 						     (car (cdr data)))
-			      (message "%s" (car (cdr data)))))
+			      (vm-inform 0 "%s" (car (cdr data)))))
 	     (vm-narrow-for-preview)))
        ;; if no MIME decoding is needed
        (vm-energize-urls-in-message-region)
@@ -909,7 +909,7 @@ is done if necessary.  (USR, 2010-01-14)"
 	  (vm-decode-mime-message)
 	(vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
 					      (car (cdr data)))
-		       (message "%s" (car (cdr data))))))
+		       (vm-inform 0 "%s" (car (cdr data))))))
   ;; FIXME this probably cause folder corruption by filling the folder instead
   ;; of the presentation copy  ..., RWF, 2008-07
   ;; Well, so, we will check if we are in a presentation buffer! 

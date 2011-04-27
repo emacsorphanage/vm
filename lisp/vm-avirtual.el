@@ -435,7 +435,7 @@ I was really missing this!"
   (if (get-file-buffer vm-spam-words-file)
       (kill-buffer (get-file-buffer vm-spam-words-file)))
   (vm-vs-spam-word nil)
-  (message "%d spam words are installed!" (length vm-spam-words)))
+  (vm-inform 5 "%d spam words are installed!" (length vm-spam-words)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mail virtual folder selectors 
@@ -1111,7 +1111,7 @@ Like `vm-save-message' but the default folder is guessed by
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
 
-  (message "Archiving...")
+  (vm-inform 5 "Archiving...")
   
   (let ((auto-folder)
         (folder-list (list (buffer-name)))
@@ -1154,15 +1154,15 @@ Like `vm-save-message' but the default folder is guessed by
                  (let ((vm-delete-after-saving vm-delete-after-archiving))
                    (vm-save-message auto-folder)
                    (vm-increment archived)
-                   (message "%d archived, still working..." archived)))
+                   (vm-inform 6 "%d archived, still working..." archived)))
             (setq done (eq vm-message-pointer stop-point)
                   vm-message-pointer (cdr vm-message-pointer))))
       ;; fix mode line
       (intern (buffer-name) vm-buffers-needing-display-update)
       (vm-update-summary-and-mode-line))
     (if (zerop archived)
-        (message "No messages were archived")
-      (message "%d message%s archived"
+        (vm-inform 5 "No messages were archived")
+      (vm-inform 5 "%d message%s archived"
                archived (if (= 1 archived) "" "s")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1177,7 +1177,7 @@ name."
         (let ((file (substring (buffer-name) 1 -1)))
           (vm-goto-message 0)
           (vm-save-message file (length vm-message-list))
-          (message "Saved virtual folder in file \"%s\"" file))
+          (vm-inform 5 "Saved virtual folder in file \"%s\"" file))
       (error "This is no virtual folder!"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

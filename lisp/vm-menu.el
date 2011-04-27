@@ -1422,11 +1422,11 @@ separate dedicated menu bar, depending on the value of
 	    (if (file-directory-p folder)
 		(delete-directory folder)
 	      (delete-file folder))
-	    (message "Folder deleted.")
+	    (vm-inform 5 "Folder deleted.")
 	    (vm-menu-hm-make-folder-menu)
 	    (vm-menu-hm-install-menu)
 	    )
-	(message "Aborted"))
+	(vm-inform 0 "Aborted"))
     (error "Folder %s does not exist." folder)
     (vm-menu-hm-make-folder-menu)
     (vm-menu-hm-install-menu)
@@ -1468,7 +1468,7 @@ separate dedicated menu bar, depending on the value of
 (defun vm-menu-hm-make-folder-menu ()
   "Makes a menu with the mail folders of the directory `vm-folder-directory'."
   (interactive)
-  (message "Building folders menu...")
+  (vm-inform 5 "Building folders menu...")
   (let ((folder-list (vm-menu-hm-tree-make-file-list vm-folder-directory))
 	(inbox-list (if (listp (car vm-spool-files))
 			(mapcar 'car vm-spool-files)
@@ -1525,7 +1525,7 @@ separate dedicated menu bar, depending on the value of
 		      "----"
 		      ["Rebuild Folders Menu" vm-menu-hm-make-folder-menu vm-folder-directory]
 		      ))))
-  (message "Building folders menu... done")
+  (vm-inform 5 "Building folders menu... done")
   (vm-menu-hm-install-menu))
 
 (defun vm-menu-hm-install-menu ()

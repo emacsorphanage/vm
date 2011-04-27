@@ -200,7 +200,7 @@ has copied out the mail."
 (defcustom vm-fetched-message-limit 10
   "*Should be an integer representing the maximum number of messages
 that VM should keep in the Folder buffer when the messages are
-fetched, or nil to signify no limit."
+fetched on demand, or nil to signify no limit."
   :group 'vm-folders
   :type '(choice (const :tag "No Limit" nil) 
 		 (integer :tag "Number of Mesages")))
@@ -1052,6 +1052,14 @@ FSF Emacs always uses VM's builtin highlighting code."
   :group 'vm-misc
   :type 'boolean)
 
+(defcustom vm-verbosity 8
+  "*Level of chattiness in progress messages displayed in the
+minibuffer.  Indicative levels are:
+  1 - extremely quiet
+  5 - normally level
+  7 - detailed level
+ 10 - debugging information")
+
 (defface vm-highlighted-header '((t (:inherit bold)))
  "Default face used to highlight headers."
  :group 'vm-faces)
@@ -1747,7 +1755,7 @@ them all at once.  See `vm-mime-use-image-strips'."
 	      file (expand-file-name name vmdir))
 	(if (file-exists-p file)
 	    file
-;	  (message "VM could not find executable %S!" name)
+;	  (vm-inform 0 "VM could not find executable %S!" name)
 	  nil))))
 
 (defcustom vm-imagemagick-convert-program (vm-locate-executable-file "convert")
@@ -6380,10 +6388,8 @@ folder needs to be updated.")
     ("vm-yank-message-other-folder")
 ))
 
-(defcustom vm-vs-attachment-regexp "^Content-Disposition: attachment"
-  "Regexp used to detect attachments in a message."
-  :group 'vm-misc
-  :type 'regexp)
+(defconst vm-vs-attachment-regexp "^Content-Disposition: attachment"
+  "Regexp used to detect attachments in a message.")
 
 (defvar vm-spam-words nil
   "A list of words often contained in spam messages.")

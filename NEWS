@@ -63,6 +63,10 @@ VM 8.2.0a (2011-02-28)
 
   IMPROVEMENTS
 
+   * Added a variable `vm-verbosity' to control the granularity of
+     informative messages displayed by VM.  Levels 5-8 are recommended, with
+     8 corresponding to the current level.
+
    * New operations for manual control of thread indentation for
      dealing with long (and deep) message threads.  See info under
      "Threaded Summaries".

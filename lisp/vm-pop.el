@@ -144,11 +144,10 @@ a POP server, find its cache file on the file system"
 		((member source vm-pop-auto-expunge-warned)
 		 nil)
 		(t
-		 (message 
-		  (concat "Warning: POP folder is not set to auto-expunge"))
+		 (vm-warn 1 1
+			  "Warning: POP folder is not set to auto-expunge")
 		 (setq vm-pop-auto-expunge-warned
 		       (cons source vm-pop-auto-expunge-warned))
-		 (sit-for 1)
 		 nil)))
     (unwind-protect
 	(catch 'done
@@ -195,20 +194,20 @@ a POP server, find its cache file on the file system"
 			  (if (null uidl)
 			      (signal 'vm-cant-uidl nil))
 			  (setcar msgid uidl)
-			  (if (member msgid pop-retrieved-messages)
-			      (progn
-				(if vm-pop-ok-to-ask
-				    (message
-				     "Skipping message %d (of %d) from %s (retrieved already)..."
-				     n mailbox-count popdrop))
-				(throw 'skip t))))
+			  (when (member msgid pop-retrieved-messages)
+			    (if vm-pop-ok-to-ask
+				(vm-inform
+				 6
+				 "Skipping message %d (of %d) from %s (retrieved already)..."
+				 n mailbox-count popdrop))
+			    (throw 'skip t)))
 		      (vm-cant-uidl
 		       ;; something failed, so UIDL must not be working.
 		       (if (and (not auto-expunge)
 				(or (not vm-pop-ok-to-ask)
 				    (not (vm-pop-ask-about-no-uidl popdrop))))
 			   (progn
-			     (message "Skipping mailbox %s (no UIDL support)"
+			     (vm-inform 0 "Skipping mailbox %s (no UIDL support)"
 				      popdrop)
 			     (throw 'done (not (equal retrieved 0))))
 			 ;; user doesn't care, so go ahead and
@@ -230,17 +229,18 @@ a POP server, find its cache file on the file system"
 		    (progn
 		      (if (eq response 'delete)
 			  (progn
-			    (message "Deleting message %d..." n)
+			    (vm-inform 6 "Deleting message %d..." n)
 			    (vm-pop-send-command process (format "DELE %d" n))
 			    (and (null (vm-pop-read-response process))
 				 (throw 'done (not (equal retrieved 0)))))
 			(if vm-pop-ok-to-ask
-			    (message "Skipping message %d..." n)
-			  (message
+			    (vm-inform 6 "Skipping message %d..." n)
+			  (vm-inform
+			   5
 			   "Skipping message %d in %s, too large (%d > %d)..."
 			   n popdrop message-size vm-pop-max-message-size)))
 		      (throw 'skip t)))
-		(message "Retrieving message %d (of %d) from %s..."
+		(vm-inform 6 "Retrieving message %d (of %d) from %s..."
 			 n mailbox-count popdrop)
 		(vm-pop-send-command process (format "RETR %d" n))
 		(and (null (vm-pop-read-response process))
@@ -248,7 +248,7 @@ a POP server, find its cache file on the file system"
 		(and (null (vm-pop-retrieve-to-target process destination
 						      statblob))
 		     (throw 'done (not (equal retrieved 0))))
-		(message "Retrieving message %d (of %d) from %s...done"
+		(vm-inform 6 "Retrieving message %d (of %d) from %s...done"
 	 	 n mailbox-count popdrop)
 		(vm-increment retrieved)
 		(and b-per-session
@@ -366,17 +366,18 @@ relevant POP servers to remove the messages."
 			(setq popdrop (vm-safe-popdrop-string source))
 			(condition-case nil
 			    (progn
-			      (message "Opening POP session to %s..." popdrop)
+			      (vm-inform 6 
+					 "Opening POP session to %s..." popdrop)
 			      (setq process (vm-pop-make-session source))
 			      (if (null process)
 				  (signal 'error nil))
-			      (message "Expunging messages in %s..." popdrop))
+			      (vm-inform 6 
+					 "Expunging messages in %s..." popdrop))
 			  (error
-			   (message
-			    "Couldn't open POP session to %s, skipping..."
-			    popdrop)
+			   (vm-warn 0 2
+				    "Couldn't open POP session to %s, skipping..."
+				    popdrop)
 			   (setq trouble (cons popdrop trouble))
-			   (sleep-for 2)
 			   (while (equal (nth 1 (car mp)) source)
 			     (setq mp (cdr mp)))
 			   (throw 'replay t)))
@@ -396,18 +397,18 @@ relevant POP servers to remove the messages."
 			(vm-increment delete-count)))
 		  (setq mp (cdr mp)))
 	      (vm-dele-failed
-	       (message "DELE %s failed on %s, skipping rest of mailbox..."
-			(car match) popdrop)
+	       (vm-warn 
+		0 2 "DELE %s failed on %s, skipping rest of mailbox..."
+		(car match) popdrop)
 	       (setq trouble (cons popdrop trouble))
-	       (sleep-for 2)
 	       (while (equal (nth 1 (car mp)) source)
 		 (setq mp (cdr mp)))
 	       (throw 'replay t))
 	      (vm-uidl-failed
-	       (message "UIDL %s failed on %s, skipping this mailbox..."
-			(car match) popdrop)
+	       (vm-warn 
+		0 2 "UIDL %s failed on %s, skipping this mailbox..."
+		(car match) popdrop)
 	       (setq trouble (cons popdrop trouble))
-	       (sleep-for 2)
 	       (while (equal (nth 1 (car mp)) source)
 		 (setq mp (cdr mp)))
 	       (throw 'replay t))))
@@ -427,7 +428,7 @@ relevant POP servers to remove the messages."
 		  (setq mp (cdr mp)))
 		(setq buffer-read-only t)
 		(display-buffer (current-buffer)))
-	    (message "%s POP message%s expunged."
+	    (vm-inform 5 "%s POP message%s expunged."
 		     (if (zerop delete-count) "No" delete-count)
 		     (if (= delete-count 1) "" "s"))))
       (and process (vm-pop-end-session process)))
@@ -512,7 +513,7 @@ relevant POP servers to remove the messages."
 		     (setq pass (cadr authinfo)))))
 	    (when (null pass)
 	      (if (null vm-pop-ok-to-ask)
-		  (progn (message "Need password for %s" popdrop)
+		  (progn (vm-inform 0 "Need password for %s" popdrop)
 			 (throw 'done nil))
 		(setq pass
 		      (read-passwd
@@ -577,7 +578,7 @@ relevant POP servers to remove the messages."
 		     (setq vm-pop-passwords
 			   (delete (list source-nopwd pass)
 				   vm-pop-passwords))
-		     (message "POP password for %s incorrect" popdrop)
+		     (vm-inform 0 "POP password for %s incorrect" popdrop)
 		     ;; don't sleep unless we're running synchronously.
 		     (when vm-pop-ok-to-ask
 		       (sleep-for 2))
@@ -595,7 +596,7 @@ relevant POP servers to remove the messages."
 		   (when (null timestamp)
 		     (goto-char (point-max))
      (insert-before-markers "<<< ooops, no timestamp found in greeting! >>>\n")
-		     (message "Server of %s does not support APOP" popdrop)
+		     (vm-inform 0 "Server of %s does not support APOP" popdrop)
 		     ;; don't sleep unless we're running synchronously
 		     (if vm-pop-ok-to-ask
 			 (sleep-for 2))
@@ -609,7 +610,7 @@ relevant POP servers to remove the messages."
 		     (setq vm-pop-passwords
 			   (delete (list source-nopwd pass)
 				   vm-pop-passwords))
-		     (message "POP password for %s incorrect" popdrop)
+		     (vm-inform 0 "POP password for %s incorrect" popdrop)
 		     (when vm-pop-ok-to-ask
 		       (sleep-for 2))
 		     (throw 'done nil)))
@@ -640,10 +641,10 @@ killed as well."
 	(if vm-pop-read-quit-response
 	    (progn
 	      (and verbose
-		   (message "Waiting for response to POP QUIT command..."))
+		   (vm-inform 5 "Waiting for response to POP QUIT command..."))
 	      (vm-pop-read-response process)
 	      (and verbose
-		   (message
+		   (vm-inform 5
 		    "Waiting for response to POP QUIT command... done"))))))
   (if (and (process-buffer process)
 	   (buffer-live-p (process-buffer process)))
@@ -691,7 +692,7 @@ killed as well."
 
 (defun vm-pop-stop-status-timer (status-blob)
   (if (vm-pop-stat-did-report status-blob)
-      (message ""))
+      (vm-inform 5 ""))
   (if (fboundp 'disable-timeout)
       (disable-timeout (vm-pop-stat-timer status-blob))
     (cancel-timer (vm-pop-stat-timer status-blob))))
@@ -702,7 +703,7 @@ killed as well."
 	;; should not be possible, but better safe...
 	((not (eq (vm-pop-stat-x-box o) (vm-pop-stat-y-box o))) t)
 	((not (eq (vm-pop-stat-x-currmsg o) (vm-pop-stat-y-currmsg o))) t)
-	(t (message "Retrieving message %d (of %d) from %s, %s..."
+	(t (vm-inform 6 "Retrieving message %d (of %d) from %s, %s..."
 		    (vm-pop-stat-x-currmsg o)
 		    (vm-pop-stat-x-maxmsg o)
 		    (vm-pop-stat-x-box o)
@@ -1107,10 +1108,10 @@ popdrop
 		     (setq r-list (cdr r-list)
 			   n (1+ n))))
 	       (error
-		(message "Retrieval from %s signaled: %s" safe-popdrop
+		(vm-inform 0 "Retrieval from %s signaled: %s" safe-popdrop
 			 error-data))
 	       (quit
-		(message "Quit received during retrieval from %s"
+		(vm-inform 0 "Quit received during retrieval from %s"
 			 safe-popdrop)))
 	     (and statblob (vm-pop-stop-status-timer statblob))
 	     ;; to make the "Mail" indicator go away
@@ -1252,8 +1253,8 @@ order to capture the trace of POP sessions during the occurrence."
   (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (if (or vm-pop-keep-trace-buffer
 	  (y-or-n-p "Did you run vm-pop-start-bug-report earlier? "))
-      (message "Thank you. Preparing the bug report... ")
-    (message "Consider running vm-pop-start-bug-report before the problem occurrence"))
+      (vm-inform 5 "Thank you. Preparing the bug report... ")
+    (vm-inform 1 "Consider running vm-pop-start-bug-report before the problem occurrence"))
   (let ((process (vm-folder-pop-process)))
     (if process
 	(vm-pop-end-session process)))

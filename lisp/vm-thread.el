@@ -413,7 +413,7 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 	 (vm-thread-subtree id-sym)))
      vm-thread-obarray)
     (when (> n modulus)
-      (message "Building threads... done"))))
+      (vm-inform 6 "Building threads... done"))))
 
 (defun vm-build-reference-threads (mlist schedule-reindents initializing)
   "Build reference threads for all the messages in MLIST.  If threads are
@@ -485,7 +485,7 @@ being initialized."
 		     ))))))
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
-	  (message "Building threads... %d%%" (* (/ (+ n 0.0) total) 100))))
+	  (vm-inform 7 "Building threads... %d%%" (* (/ (+ n 0.0) total) 100))))
 
     ;; use the References header to set parenting information
     ;; for ancestors of this message.  This does not override
@@ -516,7 +516,7 @@ being initialized."
 		    refs (cdr refs)))))
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
-	  (message "Building threads... %d%%" (* (/ (+ n 0.0) total) 100)))
+	  (vm-inform 7 "Building threads... %d%%" (* (/ (+ n 0.0) total) 100)))
       )))
 
 (defun vm-th-clear-thread-lists (id-sym)
@@ -637,7 +637,7 @@ with other ancestors."
       ;; -------------- end atomic block ----------------------------------
       (setq mp (cdr mp) n (1+ n))
       (when (zerop (% n modulus))
-	(message "Building threads... %d" n)))))
+	(vm-inform 7 "Building threads... %d" n)))))
 
 ;; used by the thread sort code.
 ;;
@@ -896,7 +896,7 @@ mean?)                                         USR, 2011-03-17"
       (error "Attaching to thread will create a cycle"))
     (vm-th-set-parent-of m-sym p-sym)
     (vm-th-add-child p-sym m-sym))
-    (message "Message attached to thread")
+    (vm-inform 5 "Message attached to thread")
     (vm-update-summary-and-mode-line)
     )
 
@@ -1147,7 +1147,7 @@ to the thread.  Used for testing purposes."
 	  ml)
     ;; Recover from errors
     (when errors-found
-      (message (concat "Problem detected with the threads database; "
+      (vm-inform 0 (concat "Problem detected with the threads database; "
 		       "try vm-fix-my-summary"))
       ;; (setq vm-thread-obarray 'bonk)
       ;; (setq vm-thread-subject-obarray 'bonk)

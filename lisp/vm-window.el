@@ -301,7 +301,7 @@ window configurations."
       (setq vm-window-configurations
 	    (cons (list tag map) vm-window-configurations)))
     (vm-store-window-configurations vm-window-configuration-file)
-    (message "%s configuration recorded" tag)))
+    (vm-inform 5 "%s configuration recorded" tag)))
 
 (defun vm-buffer-to-label (buf)
   (save-excursion
@@ -350,7 +350,7 @@ The action will be read from the minibuffer."
 	  (setq vm-window-configurations (delq p vm-window-configurations)))
       (error "No window configuration set for %s" tag)))
   (vm-store-window-configurations vm-window-configuration-file)
-  (message "%s configuration deleted" tag))
+  (vm-inform 5 "%s configuration deleted" tag))
 
 ;;;###autoload
 (defun vm-apply-window-configuration (tag)
@@ -372,7 +372,7 @@ from the minibuffer."
 
 (defun vm-window-help ()
   (interactive)
-  (message "WS = save configuration, WD = delete configuration, WW = apply configuration"))
+  (vm-inform 0 "WS = save configuration, WD = delete configuration, WW = apply configuration"))
 
 (defun vm-iconify-frame ()
   "Iconify the current frame.

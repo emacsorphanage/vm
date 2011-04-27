@@ -137,7 +137,7 @@ fonts and colors, for easy recogniton of the message status."
       (setq vm-summary-enable-faces nil)))
 
   (when (interactive-p)
-    (message "VM summary faces mode is %s"
+    (vm-inform 1 "VM summary faces mode is %s"
              (if vm-summary-enable-faces "on" "off")))
   
   (if (memq major-mode '(vm-mode vm-virtual-mode vm-summary-mode

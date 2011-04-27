@@ -74,7 +74,7 @@ given."
 	  (vm-present-current-message)
 	(vm-record-and-change-message-pointer vm-message-pointer cons)
 	(vm-present-current-message)
-	;;(message "start of message you want is: %s"
+	;;(vm-inform 0 "start of message you want is: %s"
 	;; (vm-su-start-of (car vm-message-pointer)))
 	(if (and (vm-summary-operation-p)
 		 vm-summary-show-threads
@@ -110,7 +110,7 @@ given."
   (let ((lineage (cdr (reverse (vm-thread-list (car vm-message-pointer)))))
 	(message nil))
     (cond ((null lineage)
-	   (message "Message has no parent listed."))
+	   (vm-inform 5 "Message has no parent listed."))
 	  ((vm-th-messages-of (car lineage))
 	   (setq message (car lineage)))
 	  ((y-or-n-p (concat "Parent message is not in this folder. "
@@ -118,7 +118,7 @@ given."
 	   (while (and lineage (null (vm-th-messages-of (car lineage))))
 	     (setq lineage (cdr lineage)))
 	   (if (null lineage)
-	       (message "Message has no ancestors in this folder")
+	       (vm-inform 5 "Message has no ancestors in this folder")
 	     (setq message (car lineage)))))
     (when message
       (setq message (car (vm-th-messages-of (car lineage))))
@@ -207,7 +207,7 @@ this command 'sees' marked messages as it moves."
   ;; Note that interactively all args are 1, so error signaling
   ;; and retries apply to all interactive moves.
   (interactive "p\np\np")  
-  ;;(message "running vm next message")
+  ;;(vm-inform 8 "running vm next message")
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate (if signal-errors 1 0) (interactive-p))
@@ -397,7 +397,7 @@ ignored."
 	(vm-next-message 1 nil t)
 	;; in case vm-circular-folders is non-nil
 	(and (eq vm-message-pointer oldmp) (signal 'end-of-folder nil)))
-    (end-of-folder (message "No next unread message"))))
+    (end-of-folder (vm-inform 5 "No next unread message"))))
 
 ;;;###autoload
 (defun vm-previous-unread-message ()
@@ -414,7 +414,7 @@ ignored."
 	(vm-previous-message)
 	;; in case vm-circular-folders is non-nil
 	(and (eq vm-message-pointer oldmp) (signal 'beginning-of-folder nil)))
-    (beginning-of-folder (message "No previous unread message"))))
+    (beginning-of-folder (vm-inform 5 "No previous unread message"))))
 
 ;;;###autoload
 (defun vm-next-message-same-subject ()
@@ -443,7 +443,7 @@ to the subject comparisons."
 	  (vm-present-current-message))
       (end-of-folder
        (setq vm-message-pointer oldmp)
-       (message "No next message with the same subject")))))
+       (vm-inform 5 "No next message with the same subject")))))
 
 ;;;###autoload
 (defun vm-previous-message-same-subject ()
@@ -472,7 +472,7 @@ to the subject comparisons."
 	  (vm-present-current-message))
       (beginning-of-folder
        (setq vm-message-pointer oldmp)
-       (message "No previous message with the same subject")))))
+       (vm-inform 5 "No previous message with the same subject")))))
 
 (defun vm-find-first-unread-message (new)
   (let (mp unread-mp)

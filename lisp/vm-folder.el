@@ -453,7 +453,7 @@ Toolbars are updated."
 		    (equal (vm-message-id-number-of m) "Q"))
 	  (vm-update-message-summary (car ms)))
 	(if (eq (mod n 10) 0)
-	    (message "Recreating summary... %s" n))
+	    (vm-inform 6 "Recreating summary... %s" n))
 	(setq n (1+ n))
 	(setq ms (cdr ms)))
       (setq vm-messages-needing-summary-update nil)))
@@ -1034,10 +1034,8 @@ vm-folder-type is initialized here."
 	(if (and (memq vm-folder-type '(From_ BellFrom_
 					From_-with-Content-Length))
 		 (= (following-char) ?\n))
-	    (progn
-	      (message "Warning: newline found at beginning of folder, %s"
-		       (or buffer-file-name (buffer-name)))
-	      (sleep-for 2)))
+	    (vm-warn 0 2 "Warning: newline found at beginning of folder, %s"
+		     (or buffer-file-name (buffer-name))))
 	(vm-skip-past-folder-header))
       (setq last-end (point))
       ;; parse the messages, set the markers that specify where
@@ -1062,16 +1060,15 @@ vm-folder-type is initialized here."
 	  (setq tail-cons (cdr tail-cons)))
 	(vm-increment n)
 	(if (zerop (% n modulus))
-	    (message "Parsing messages... %d" n)))
+	    (vm-inform 7 "Parsing messages... %d" n)))
       (if (>= n modulus)
-	  (message "Parsing messages... done"))
+	  (vm-inform 7 "Parsing messages... done"))
       (if (and (not (= last-end (point-max)))
 	       (not (eq vm-folder-type 'unknown)))
-	  (progn
-	    (message "Warning: garbage found at end of folder, %s, starting at %d"
-		     (or buffer-file-name (buffer-name))
-		     last-end)
-	    (sleep-for 2))))))
+	  (vm-warn 1 2 
+		   "Warning: garbage found at end of folder, %s, starting at %d"
+		   (or buffer-file-name (buffer-name))
+	   last-end)))))
 
 (defun vm-build-header-order-alist (vheaders)
   (let ((order-alist (cons nil nil))
@@ -1421,9 +1418,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 		    (sit-for 1))
 		  data)
 	      (error
-	       (message "Bad x-vm-v5-data header at %d in buffer %s, ignoring"
+	       (vm-warn 1 1
+			"Bad x-vm-v5-data header at %d in buffer %s, ignoring"
 			oldpoint (buffer-name))
-	       (sit-for 1)
 	       (setq data
 		     (list
 		      (make-vector vm-attributes-vector-length nil)
@@ -1477,7 +1474,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			 (= (length cache) vm-cached-data-vector-length)
 			 (or (null (aref cache 7)) (stringp (aref cache 7)))
 			 (or (null (aref cache 11)) (stringp (aref cache 11))))
-              (message "Bad VM cache data: %S" cache)
+              (vm-inform 0 "Bad VM cache data: %S" cache)
               (vm-set-stuff-flag-of (car mp) t)
               (setcar (cdr data)
                       (setq cache 
@@ -1521,10 +1518,10 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	      ((vm-unread-flag (car mp))
 	       (vm-increment vm-unread-count)))
 	(if (zerop (% vm-total-count modulus))
-	    (message "Reading attributes... %d" vm-total-count))
+	    (vm-inform 6 "Reading attributes... %d" vm-total-count))
 	(setq mp (cdr mp)))
       (if (>= vm-total-count modulus)
-	  (message "Reading attributes... done"))
+	  (vm-inform 6 "Reading attributes... done"))
       (if (null message-list)
 	  (setq vm-totals (list vm-modification-counter
 				vm-total-count
@@ -1628,8 +1625,8 @@ Supports version 4 format of attribute storage, for backward compatibility."
     (if (not (equal (nth 0 vm-totals) vm-modification-counter))
 	(vm-compute-totals))
     (if (equal (nth 1 vm-totals) 0)
-	(message "No messages.")
-      (message "%d message%s, %d new, %d unread, %d deleted"
+	(vm-inform 5 "No messages.")
+      (vm-inform 5 "%d message%s, %d new, %d unread, %d deleted"
 	       (nth 1 vm-totals) (if (= (nth 1 vm-totals) 1) "" "s")
 	       (nth 2 vm-totals)
 	       (nth 3 vm-totals)
@@ -1669,9 +1666,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 		   (sit-for 1))
 		 time )
 	     (error
-	      (message "Bad last-modified header at %d in buffer %s, ignoring"
+	      (vm-warn 1 1 
+		       "Bad last-modified header at %d in buffer %s, ignoring"
 		       oldpoint (buffer-name))
-	      (sit-for 1)
 	      (setq time '(0 0 0)))))))
     time ))
 
@@ -1718,9 +1715,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 		       (sit-for 1))
 		     list )
 		 (error
-		  (message "Bad global label list at %d in buffer %s, ignoring"
+		  (vm-warn 1 1 
+			   "Bad global label list at %d in buffer %s, ignoring"
 			   oldpoint (buffer-name))
-		  (sit-for 1)
 		  (setq list nil) ))
 	       (vm-startup-apply-labels list))))))
     t ))
@@ -1756,9 +1753,8 @@ Supports version 4 format of attribute storage, for backward compatibility."
 		   (sit-for 1))
 		 n )
 	     (error
-	      (message "Bad bookmark at %d in buffer %s, ignoring"
+	      (vm-warn 1 1 "Bad bookmark at %d in buffer %s, ignoring"
 		       oldpoint (buffer-name))
-	      (sit-for 1)
 	      (setq n 1))))))
     (vm-startup-apply-bookmark n)
     t ))
@@ -1794,9 +1790,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 		   (sit-for 1))
 		 (setq vm-pop-retrieved-messages ob))
 	     (error
-	      (message "Bad pop-retrieved header at %d in buffer %s, ignoring"
-		       oldpoint (buffer-name))
-	      (sit-for 1))))))
+	      (vm-warn 1 1 
+		       "Bad pop-retrieved header at %d in buffer %s, ignoring"
+		       oldpoint (buffer-name)))))))
     t ))
 
 (defun vm-gobble-imap-retrieved ()
@@ -1824,9 +1820,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 		   (sit-for 1))
 		 (setq vm-imap-retrieved-messages ob))
 	     (error
-	      (message "Bad imap-retrieved header at %d in buffer %s, ignoring"
-		       oldpoint (buffer-name))
-	      (sit-for 1))))))
+	      (vm-warn 1 1 
+		       "Bad imap-retrieved header at %d in buffer %s, ignoring"
+		       oldpoint (buffer-name)))))))
     t ))
 
 (defun vm-gobble-visible-header-variables ()
@@ -1860,7 +1856,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
   (and (or (not (equal vis vm-visible-headers))
 	   (not (equal invis vm-invisible-header-regexp)))
        (let ((mp vm-message-list))
-	 (message "Discarding visible header info...")
+	 (vm-inform 6 "Discarding visible header info...")
 	 (while mp
 	   (vm-set-vheaders-regexp-of (car mp) nil)
 	   (vm-set-vheaders-of (car mp) nil)
@@ -1893,15 +1889,15 @@ Supports version 4 format of attribute storage, for backward compatibility."
 		      (sit-for 1))
 		    order )
 		(error
-		 (message "Bad order header at %d in buffer %s, ignoring"
+		 (vm-warn 1 1 
+			  "Bad order header at %d in buffer %s, ignoring"
 			  oldpoint (buffer-name))
-		 (sit-for 1)
 		 (setq order nil)))
 	      (if order
 		  (progn
-		    (message "Reordering messages...")
+		    (vm-inform 6 "Reordering messages...")
 		    (vm-startup-apply-message-order order)
-		    (message "Reordering messages... done")))))))))
+		    (vm-inform 6 "Reordering messages... done")))))))))
 
 (defun vm-has-message-order ()
   (let ((case-fold-search t)
@@ -1961,9 +1957,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	     (condition-case ()
 		 (setq summary (read (current-buffer)))
 	       (error
-		(message "Bad summary header at %d in buffer %s, ignoring"
+		(vm-warn 1 1 
+			 "Bad summary header at %d in buffer %s, ignoring"
 			 oldpoint (buffer-name))
-		(sit-for 1)
 		(setq summary "")))
 	     (vm-startup-apply-summary summary)))))))
 
@@ -2099,7 +2095,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
       (setq mp (cdr mp)))
     (when (and newlist (not quiet))
       (setq len (length newlist))
-      (message "%d message%s to stuff" len (if (= 1 len) "" "s")))
+      (vm-inform 7 "%d message%s to stuff" len (if (= 1 len) "" "s")))
     ;; now sort the list by physical order so that we
     ;; reduce the amount of gap motion induced by modifying
     ;; the buffer.  what we want to avoid is updating
@@ -2107,14 +2103,14 @@ stuff-flag set in the current folder.    USR 2010-04-20"
     ;; large chunks of memory to be copied repeatedly as
     ;; the gap moves to accomodate the insertions.
     (if (not quiet)
-	(message "Ordering updates..."))
+	(vm-inform 6 "Ordering updates..."))
     (let ((vm-key-functions '(vm-sort-compare-physical-order-r)))
       (setq mp (sort newlist 'vm-sort-compare-xxxxxx)))
     (while (and mp (or (not abort-if-input-pending) (not (input-pending-p))))
       (vm-stuff-message-data (car mp))
       (setq n (1+ n))
       (if (not quiet)
-	  (message "Stuffing %d%% complete..." (* (/ (+ n 0.0) len) 100)))
+	  (vm-inform 6 "Stuffing %d%% complete..." (* (/ (+ n 0.0) len) 100)))
       (setq mp (cdr mp)))
     (if mp nil t)))
 
@@ -2718,7 +2714,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		    validity-check vis invis folder-type
 		    bookmark summary labels pop-retrieved imap-retrieved order
 		    v m (m-list nil) tail)
-		(message "Reading index file...")
+		(vm-inform 5 "Reading index file...")
 		(setq work-buffer (vm-make-work-buffer))
 		(with-current-buffer work-buffer
 		  (insert-file-contents-literally index-file))
@@ -2821,14 +2817,12 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		(vm-startup-apply-labels labels)
 		(vm-startup-apply-header-variables vis invis)
 
-		(message "Reading index file... done")
+		(vm-inform 5 "Reading index file... done")
 		t )
 	    (and work-buffer (kill-buffer work-buffer))))
-      (error (message "Index file read of %s signaled: %s"
+      (error (vm-warn 1 2 "Index file read of %s signaled: %s"
 		      index-file error-data)
-	     (sleep-for 2)
-	     (message "Ignoring index file...")
-	     (sleep-for 2)))))
+	     (vm-warn 1 2 "Ignoring index file...")))))
 
 (defun vm-check-index-file-validity (blob)
   (save-excursion
@@ -2879,10 +2873,10 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 	(let ((print-escape-newlines t)
 	      (print-length nil)
 	      m-list mp m)
-	  (message "Sorting for index file...")
+	  (vm-inform 6 "Sorting for index file...")
 	  (setq m-list (sort (copy-sequence vm-message-list)
 			     (function vm-sort-compare-physical-order)))
-	  (message "Stuffing index file...")
+	  (vm-inform 6 "Stuffing index file...")
 	  (setq work-buffer (vm-make-work-buffer))
 
 	  (princ ";; index file version\n" work-buffer)
@@ -3010,7 +3004,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 
 	  (princ ";; end of index file\n" work-buffer)
 
-	  (message "Writing index file...")
+	  (vm-inform 6 "Writing index file...")
 	  (catch 'done
 	    (with-current-buffer work-buffer
 	      (condition-case data
@@ -3018,11 +3012,10 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 			(selective-display nil))
 		    (write-region (point-min) (point-max) index-file))
 		(error
-		 (message "Write of %s signaled: %s" index-file data)
-		 (sleep-for 2)
+		 (vm-warn 1 2 "Write of %s signaled: %s" index-file data)
 		 (throw 'done nil))))
 	    (vm-error-free-call 'set-file-modes index-file (vm-octal 600))
-	    (message "Writing index file... done")
+	    (vm-inform 6 "Writing index file... done")
 	    t ))
       (and work-buffer (kill-buffer work-buffer)))))
 
@@ -3232,7 +3225,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 
     (unless (or no-change virtual)
       ;; this could take a while, so give the user some feedback
-      (message "Quitting...")
+      (vm-inform 5 "Quitting...")
       (or vm-folder-read-only (eq major-mode 'vm-virtual-mode)
 	  (vm-change-all-new-to-unread)))
     (when (and (buffer-modified-p)
@@ -3494,9 +3487,9 @@ Giving a prefix argument overrides the variable and no expunge is done."
     (vm-save-restriction
      (let ((buffer-read-only))
        (vm-discard-fetched-messages)
-       (message "Stuffing cached data...")
+       (vm-inform 6 "Stuffing cached data...")
        (vm-stuff-folder-data nil)
-       (message "Stuffing cached data... done")
+       (vm-inform 6 "Stuffing cached data... done")
        (if vm-message-list
 	   (progn
 	     (if (and vm-folders-summary-database buffer-file-name)
@@ -3504,7 +3497,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 		   (vm-compute-totals)
 		   (vm-store-folder-totals buffer-file-name (cdr vm-totals))))
 	     ;; get summary cache up-to-date
-	     (message "Stuffing folder data...")
+	     (vm-inform 6 "Stuffing folder data...")
 	     (vm-update-summary-and-mode-line)
 	     (vm-stuff-bookmark)
 	     (vm-stuff-pop-retrieved)
@@ -3515,7 +3508,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	     (vm-stuff-summary)
 	     (and vm-message-order-changed
 		  (vm-stuff-message-order))
-	     (message "Stuffing folder data... done")))
+	     (vm-inform 6 "Stuffing folder data... done")))
        nil ))))
 
 ;;;###autoload
@@ -3634,14 +3627,14 @@ folder."
 		     (file-exists-p msf))
                 (delete-file msf)))
 	  ;; stuff the attributes of messages that need it.
-	  (message "Stuffing cached data...")
+	  (vm-inform 6 "Stuffing cached data...")
 	  (vm-stuff-folder-data nil)
-	  (message "Stuffing cached data... done")
+	  (vm-inform 6 "Stuffing cached data... done")
 	  ;; stuff bookmark and header variable values
 	  (if vm-message-list
 	      (progn
 		;; get summary cache up-to-date
-		(message "Stuffing folder data...")
+		(vm-inform 6 "Stuffing folder data...")
 		(vm-update-summary-and-mode-line)
 		(vm-stuff-bookmark)
 		(vm-stuff-pop-retrieved)
@@ -3652,8 +3645,8 @@ folder."
 		(vm-stuff-summary)
 		(and vm-message-order-changed
 		     (vm-stuff-message-order))
-		(message "Stuffing folder data... done")))
-	  (message "Saving folder %s..." (buffer-name))
+		(vm-inform 6 "Stuffing folder data... done")))
+	  (vm-inform 5 "Saving folder %s..." (buffer-name))
 	  (let ((vm-inhibit-write-file-hook t)
 		(oldmodebits (and (fboundp 'default-file-modes)
 				  (default-file-modes))))
@@ -3701,11 +3694,11 @@ folder."
 		     (delete-file buffer-file-name)
 		     (vm-delete-index-file)
 		     (clear-visited-file-modtime)
-		     (message "%s removed" buffer-file-name))
+		     (vm-inform 5 "%s removed" buffer-file-name))
 		 ;; no can do, oh well.
 		 (error nil)))
 	  )
-      (message "No changes need to be saved"))))
+      (vm-inform 5 "No changes need to be saved"))))
 
 ;;;###autoload
 (defun vm-save-and-expunge-folder (&optional prefix)
@@ -3721,7 +3714,7 @@ run vm-expunge-folder followed by vm-save-folder."
 	      '(vm-save-and-expunge-folder))
   (if (not vm-folder-read-only)
       (progn
-	(message "Expunging...")
+	(vm-inform 6 "Expunging...")
 	(vm-expunge-folder :quiet t)))
   (vm-save-folder prefix))
 
@@ -3756,7 +3749,7 @@ be used as the name of the buffer."
 		;; for XEmacs/Mule
 		(coding-system-for-read
 		 (vm-line-ending-coding-system)))
-	    (message "Reading folder %s..." (or folder-name file))
+	    (vm-inform 5 "Reading folder %s..." (or folder-name file))
 	    (let ((buffer (find-file-noselect file t))
 		  (hist-item (or remote-spec folder vm-primary-inbox)))
 	      (when folder-name
@@ -3766,7 +3759,7 @@ be used as the name of the buffer."
 	      (if (not (equal hist-item (car vm-folder-history)))
 		    (setq vm-folder-history
 			  (cons hist-item vm-folder-history)))
-	      (message "Reading folder %s... done" (or folder-name file))
+	      (vm-inform 5 "Reading folder %s... done" (or folder-name file))
 	      buffer))))))
 
 ;;;###autoload
@@ -3877,15 +3870,15 @@ Same as \\[vm-recover-folder]."
      ((eq last-command 'vm-help)
       (describe-function major-mode))
      ((eq vm-system-state 'previewing)
-      (message "Type SPC to read message, n previews next message   (? gives more help)"))
+      (vm-inform 0 "Type SPC to read message, n previews next message   (? gives more help)"))
      ((memq vm-system-state '(showing reading))
-      (message "SPC and b scroll, (d)elete, (s)ave, (n)ext, (r)eply   (? gives more help)"))
+      (vm-inform 0 "SPC and b scroll, (d)elete, (s)ave, (n)ext, (r)eply   (? gives more help)"))
      ((eq vm-system-state 'editing)
-      (message
+      (vm-inform 0
        (substitute-command-keys
 	"Type \\[vm-edit-message-end] to end edit, \\[vm-edit-message-abort] to abort with no change.")))
      ((eq major-mode 'mail-mode)
-      (message
+      (vm-inform 0
        (substitute-command-keys
 	"Type \\[vm-mail-send-and-exit] to send message, \\[kill-buffer] to discard this composition")))
      (t (describe-mode)))))
@@ -3919,9 +3912,8 @@ Same as \\[vm-recover-folder]."
 	      (vm-display-buffer error-buffer)
 	      (if (and (numberp status) (not (= 0 status)))
 		  (error "Failed getting new mail from %s" source)
-		(message "Warning: unexpected output from %s"
-			 vm-movemail-program)
-		(sleep-for 2)))
+		(vm-warn 1 2 "Warning: unexpected output from %s"
+			 vm-movemail-program)))
 	  ;; nag, nag, nag.
 	  (kill-buffer error-buffer))
 	t ))))
@@ -4114,13 +4106,14 @@ Same as \\[vm-recover-folder]."
 		     (setq regexp "^\037")))
 	      (condition-case data
 		  (progn
-		    (or quietly (message "Counting messages in %s..." file))
+		    (unless quietly 
+		      (vm-inform 6 "Counting messages in %s..." file))
 		    (call-process vm-grep-program nil t nil "-c" regexp
 				  (expand-file-name file))
-		    (or quietly (message "Counting messages in %s... done" file)))
-		(error (message "Attempt to run %s on %s signaled: %s"
+		    (unless quietly 
+		      (vm-inform 6 "Counting messages in %s... done" file)))
+		(error (vm-warn 1 2 "Attempt to run %s on %s signaled: %s"
 				vm-grep-program file data)
-		       (sleep-for 2)
 		       (setq vm-grep-program nil)))
 	      (setq count (string-to-number (buffer-string)))
 	      (cond ((memq type '(From_ BellFrom_ From_-with-Content-Length))
@@ -4230,9 +4223,9 @@ Same as \\[vm-recover-folder]."
 			  "Folder %s changed on disk, discard those changes? "
 			  (buffer-name (current-buffer)))))))
 	  (progn
-	    (message "Folder %s changed on disk, consider M-x revert-buffer"
+	    (vm-warn 0 2 
+		     "Folder %s changed on disk, consider M-x revert-buffer"
 		     (buffer-name (current-buffer)))
-	    (sleep-for 2)
 	    nil )
 	(while triples
 	  (setq in (expand-file-name (nth 0 (car triples)) vm-folder-directory))
@@ -4259,9 +4252,9 @@ Same as \\[vm-recover-folder]."
 	  (setq crash (expand-file-name crash vm-folder-directory))
 	  (when (eq (current-buffer) (vm-get-file-buffer in))
 	    (when (file-exists-p crash)
-	      (message "Recovering messages from %s..." crash)
+	      (vm-inform 1 "Recovering messages from %s..." crash)
 	      (setq got-mail (or (vm-gobble-crash-box crash) got-mail))
-	      (message "Recovering messages from %s... done" crash))
+	      (vm-inform 1 "Recovering messages from %s... done" crash))
 	    (when (or non-file-maildrop
 		      (and (not (equal 0 (nth 7 (file-attributes maildrop))))
 			   (file-readable-p maildrop)))
@@ -4279,18 +4272,16 @@ Same as \\[vm-recover-folder]."
 			;; be in the folder either.
 			(condition-case error-data
 			    (funcall retrieval-function maildrop crash)
-			  (error (message "%s signaled: %s"
+			  (error (vm-warn 0 2 "%s signaled: %s"
 					  retrieval-function
 					  error-data)
-				 (sleep-for 2)
 				 ;; we don't know if mail was
 				 ;; put into the crash box or
 				 ;; not, so return t just to be
 				 ;; safe.
 				 t )
-			  (quit (message "quitting from %s..."
+			  (quit (vm-warn 0 2 "quitting from %s..."
 					 retrieval-function)
-				(sleep-for 2)
 				;; we don't know if mail was
 				;; put into the crash box or
 				;; not, so return t just to be
@@ -4302,7 +4293,7 @@ Same as \\[vm-recover-folder]."
 		  (when (not non-file-maildrop)
 		    (vm-store-folder-totals maildrop
 					    '(0 0 0 0)))
-		  (message "Got mail from %s."
+		  (vm-inform 5 "Got mail from %s."
 			   safe-maildrop)))))
 	  (setq triples (cdr triples)))
 	;; not really correct, but it is what the user expects to see.
@@ -4313,7 +4304,7 @@ Same as \\[vm-recover-folder]."
           (condition-case errmsg
               (run-hooks 'vm-retrieved-spooled-mail-hook)
             (t 
-	     (message 
+	     (vm-inform 0 
 	      "Ignoring error while running vm-retrieved-spooled-mail-hook. %S"
 	      errmsg)))
           (vm-assimilate-new-messages :dont-read-attributes t))))))
@@ -4440,9 +4431,9 @@ files."
 	 (if (not (eq major-mode 'vm-mode))
 	     (vm-mode))
 	 (if (consp (car (vm-spool-files)))
-	     (message "Checking for new mail for %s..."
+	     (vm-inform 5 "Checking for new mail for %s..."
 		      (or buffer-file-name (buffer-name)))
-	   (message "Checking for new mail..."))
+	   (vm-inform 5 "Checking for new mail..."))
 	 (let (totals-blurb)
 	   (if (vm-get-spooled-mail t)
 	       (progn
@@ -4454,12 +4445,12 @@ files."
 		 (if (vm-thoughtfully-select-message)
 		     (vm-present-current-message)
 		   (vm-update-summary-and-mode-line))
-		 (message totals-blurb))
+		 (vm-inform 5 totals-blurb))
 	     (if (consp (car (vm-spool-files)))
-		 (message "No new mail for %s"
+		 (vm-inform 5 "No new mail for %s"
 			  (or buffer-file-name (buffer-name)))
-	       (message "No new mail."))
-	     (and (interactive-p) (vm-sit-for 4) (message ""))
+	       (vm-inform 5 "No new mail."))
+	     (and (interactive-p) (vm-sit-for 4) (vm-inform 5 ""))
 	     )))
 	(t
 	 (let ((buffer-read-only nil)
@@ -4487,7 +4478,7 @@ files."
 		 (if (vm-thoughtfully-select-message)
 		     (vm-present-current-message)
 		   (vm-update-summary-and-mode-line))
-		 (message totals-blurb)
+		 (vm-inform 5 totals-blurb)
 		 ;; The gathered messages are actually still on disk
 		 ;; unless the user deletes the folder himself.
 		 ;; However, users may not understand what happened if
@@ -4496,7 +4487,7 @@ files."
 		       (+ vm-messages-not-on-disk
 			  (- (length vm-message-list)
 			     mcount))))
-	     (message "No messages gathered."))))))
+	     (vm-inform 5 "No messages gathered."))))))
 
 ;; returns list of new messages if there were any new messages, nil otherwise
 (defun* vm-assimilate-new-messages (&key
@@ -4674,12 +4665,12 @@ which is used in interactive confirmations."
 (defun vm-display-startup-message ()
   (if (sit-for 5)
       (let ((lines vm-startup-message-lines))
-	(message "VM %s. Type ? for help." (vm-version))
+	(vm-inform 8 "VM %s. Type ? for help." (vm-version))
 	(setq vm-startup-message-displayed t)
 	(while (and (sit-for 4) lines)
-	  (message (substitute-command-keys (car lines)))
+	  (vm-inform 8 (substitute-command-keys (car lines)))
 	  (setq lines (cdr lines)))))
-  (message ""))
+  (vm-inform 8 ""))
 
 ;;;###autoload
 (defun vm-toggle-read-only ()
@@ -4687,7 +4678,7 @@ which is used in interactive confirmations."
   (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (setq vm-folder-read-only (not vm-folder-read-only))
   (intern (buffer-name) vm-buffers-needing-display-update)
-  (message "Folder is now %s"
+  (vm-inform 5 "Folder is now %s"
 	   (if vm-folder-read-only "read-only" "modifiable"))
   (vm-display nil nil '(vm-toggle-read-only) '(vm-toggle-read-only))
   (vm-update-summary-and-mode-line))
@@ -4882,11 +4873,11 @@ Interactively TYPE will be read from the minibuffer."
 	 ;; process slower.
 	 (setq mp (cdr mp) n (1+ n))
 	 (if (zerop (% n modulus))
-	     (message "Converting... %d" n))))))
+	     (vm-inform 5 "Converting... %d" n))))))
   (vm-clear-modification-flag-undos)
   (intern (buffer-name) vm-buffers-needing-display-update)
   (vm-update-summary-and-mode-line)
-  (message "Conversion complete.")
+  (vm-inform 5 "Conversion complete.")
   ;; message separator strings may have leaked into view
   (if (> (point-max) (vm-text-end-of (car vm-message-pointer)))
       (narrow-to-region (point-min) (vm-text-end-of (car vm-message-pointer))))
@@ -5071,7 +5062,7 @@ thread are loaded."
     (setq count 0)
     (unwind-protect
 	(save-excursion
-	  ;; (message "Retrieving message body...")
+	  (vm-inform 8 "Retrieving message body...")
 	  (while mlist
 	    (setq m (car mlist))
 	    (setq mm (vm-real-message-of m))
@@ -5081,13 +5072,13 @@ thread are loaded."
 		    (vm-unregister-fetched-message mm))
 	      ;; else retrieve the body
 	      (setq n (1+ n))
-	      (message "Retrieving message body... %s" n)
+	      (vm-inform 8 "Retrieving message body... %s" n)
 	      (vm-retrieve-real-message-body mm)
 	      )
 	    (setq count (1+ count))
 	    (setq mlist (cdr mlist)))
 	  (when (> n 0)
-	    (message "Retrieving message body... done"))
+	    (vm-inform 8 "Retrieving message body... done"))
       (intern (buffer-name) vm-buffers-needing-display-update)
       ;; FIXME - is this needed?  Is it correct?
       (vm-display nil nil '(vm-load-message vm-refresh-message)
@@ -5095,8 +5086,8 @@ thread are loaded."
       (vm-mark-folder-modified-p)
       (vm-update-summary-and-mode-line))
       (if (= count 1)
-	  (message "Message body loaded")
-	(message "%d message bodies loaded" count)))
+	  (vm-inform 5 "Message body loaded")
+	(vm-inform 5 "%d message bodies loaded" count)))
     ))
 
 ;;;###autoload
@@ -5139,11 +5130,11 @@ thread are retrieved."
 	  (set-buffer (vm-buffer-of mm))
 	  (when (vm-body-to-be-retrieved-of mm)
 	    (setq n (1+ n))
-	    (message "Retrieving message body... %s" n)
+	    (vm-inform 8 "Retrieving message body... %s" n)
 	    (vm-retrieve-real-message-body mm :register t))
 	  (setq mlist (cdr mlist)))
 	(when (> n 0)
-	  (message "Retrieving message body... done")
+	  (vm-inform 8 "Retrieving message body... done")
 	  (intern (buffer-name) vm-buffers-needing-display-update)
 	  (when (interactive-p)
 	    (vm-update-summary-and-mode-line))))
@@ -5186,7 +5177,7 @@ Gives an error if unable to retrieve message."
 		 (apply (intern (format "vm-fetch-%s-message" fetch-method))
 			mm nil))
 	 (error 
-	  (message "Unable to load message; %s" (error-message-string err))))
+	  (vm-inform 0 "Unable to load message; %s" (error-message-string err))))
        (when fetch-result
 	 (vm-assert (eq (point) (marker-position (vm-text-of mm))))
 	 (vm-increment testing)
@@ -5281,8 +5272,8 @@ the folder is saved."
 	(setq mlist (cdr mlist))
 	(setq count (1+ count))))
     (if (= count 1) 
-	(message "Message body discarded")
-      (message "%d message bodies discarded" count))
+	(vm-inform 5 "Message body discarded")
+      (vm-inform 5 "%d message bodies discarded" count))
     (vm-mark-folder-modified-p)
     (vm-update-summary-and-mode-line)
     ))
@@ -5316,10 +5307,9 @@ the folder is saved."
 		       "headers of a message have been corrupted. "
 		       "Continue? "))
 	     (progn
-	       (message (concat "The damaged message, with UID %s, "
-				"is left in the folder")
+	       (vm-warn 1 5 (concat "The damaged message, with UID %s, "
+				    "is left in the folder")
 			(vm-imap-uid-of mm))
-	       (sit-for 5)
 	       (vm-set-body-to-be-discarded-flag mm nil))
 	   (error "Aborted operation")))
        ))))

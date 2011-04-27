@@ -136,7 +136,7 @@
 	(m (nth 1 record))
 	labels)
     (cond (cell
-	   (message "VM Undo! %s/%s %s -> %s"
+	   (vm-inform 1 "VM Undo! %s/%s %s -> %s"
 		    (buffer-name (vm-buffer-of m))
 		    (vm-number-of m)
 		    (if (nth 2 record)
@@ -147,7 +147,7 @@
 		      (nth 2 cell))))
 	  ((eq (car cell) 'vm-set-labels)
 	   (setq labels (nth 2 record))
-	   (message "VM Undo! %s/%s %s%s"
+	   (vm-inform 1 "VM Undo! %s/%s %s%s"
 		    (buffer-name (vm-buffer-of m))
 		    (vm-number-of m)
 		    (if (null labels)
@@ -318,7 +318,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
     (setq ignored-labels 
 	  (vm-add-or-delete-message-labels string m-list 'all))
     (if ignored-labels
-	(message "Label %s could not be added" string))))
+	(vm-inform 1 "Label %s could not be added" string))))
 
 ;;;###autoload
 (defun vm-add-existing-message-labels (string count)

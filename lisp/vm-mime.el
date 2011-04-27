@@ -587,7 +587,7 @@ out includes base-64, quoted-printable, uuencode and CRLF conversion."
 (defun vm-mime-base64-encode-region (start end &optional crlf B-encoding)
   (or (markerp end) (setq end (vm-marker end)))
   (and (> (- end start) 200)
-       (message "Encoding base64..."))
+       (vm-inform 7 "Encoding base64..."))
   (let ((work-buffer nil)
 	(buffer-undo-list t)
 	(counter 0)
@@ -675,7 +675,7 @@ out includes base-64, quoted-printable, uuencode and CRLF conversion."
 	    (insert-buffer-substring work-buffer)
 	    (delete-region (point) end)))
 	  (and (> (- end start) 200)
-	       (message "Encoding base64... done"))
+	       (vm-inform 7 "Encoding base64... done"))
 	  (- end start))
       (and work-buffer (kill-buffer work-buffer)))))
 
@@ -765,7 +765,7 @@ out includes base-64, quoted-printable, uuencode and CRLF conversion."
 
 (defun vm-mime-qp-encode-region (start end &optional Q-encoding quote-from)
   (and (> (- end start) 200)
-       (message "Encoding quoted-printable..."))
+       (vm-inform 7 "Encoding quoted-printable..."))
   (let ((work-buffer nil)
 	(buf (current-buffer))
 	(cols 0)
@@ -851,7 +851,7 @@ out includes base-64, quoted-printable, uuencode and CRLF conversion."
 	  (insert-buffer-substring work-buffer)
 	  (delete-region (point) end)
 	  (and (> (- end start) 200)
-	       (message "Encoding quoted-printable... done"))
+	       (vm-inform 7 "Encoding quoted-printable... done"))
 	  (- end start))
       (and work-buffer (kill-buffer work-buffer)))))
 
@@ -1340,7 +1340,7 @@ DEFAULT-TRANSFER-ENCODING, unless specified, is assumed to be 7bit.
 			    :default-encoding default-encoding 
 			    :passing-message-only passing-message-only)
     (vm-mime-error
-     (message "%s" (car (cdr error-data)))
+     (vm-inform 0 "%s" (car (cdr error-data)))
      ;; don't sleep, no one cares about MIME syntax errors
      ;;     (sleep-for 2)
      (let ((header (if (and m (not passing-message-only))
@@ -1572,7 +1572,7 @@ source of the message."
 		   (vm-fetch-message 
 		    (list (vm-message-access-method-of mm)) mm)
 		 (error
-		  (message "Cannot fetch message; %s" 
+		  (vm-inform 0 "Cannot fetch message; %s" 
 			   (error-message-string err)))))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 	       (vm-fetch-message (read (current-buffer)) mm)))
@@ -1705,7 +1705,7 @@ source of the message."
 		   (vm-fetch-message 
 		    (list (vm-message-access-method-of mm)) mm)
 		 (error
-		  (message "Cannot fetch; %s" (error-message-string err)))))
+		  (vm-inform 0 "Cannot fetch; %s" (error-message-string err)))))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 	       (vm-fetch-message (read (current-buffer)) mm)))
 	(vm-reset-buffer-modified-p modified fetch-buf)
@@ -1745,12 +1745,12 @@ the actual message from the file \"message-11\"."
       (delete-region (point) (point-max))
       ;; Remember that this might do process I/O and accept-process-output,
       ;; allowing other threads to run!!!  USR, 2010-07-11 
-      (message "Fetching message from external source...")
+      (vm-inform 6 "Fetching message from external source...")
       (setq fetch-result
 	    (apply (intern (format "vm-fetch-%s-message" (car storage)))
 		   mm (cdr storage)))
       (when fetch-result
-	(message "Fetching message from external source... done")
+	(vm-inform 6 "Fetching message from external source... done")
 	;; delete the new headers
 	(delete-region (vm-text-of mm)
 		       (or (re-search-forward "\n\n" (point-max) t)
@@ -2090,7 +2090,7 @@ triple (source-type target-type command).  Otherwise, return nil."
   (catch 'done
     (let ((ooo (vm-mime-can-convert (car (vm-mm-layout-type layout))))
 	  ex work-buffer)
-      (message "Converting %s to %s..."
+      (vm-inform 6 "Converting %s to %s..."
 	       (car (vm-mm-layout-type layout))
 	       (nth 1 ooo))
       (setq work-buffer (vm-make-work-buffer " *mime object*"))
@@ -2119,11 +2119,9 @@ triple (source-type target-type command).  Otherwise, return nil."
 		      t t nil shell-command-switch (nth 2 ooo)))))
 	(unless (eq ex 0)
 	  (switch-to-buffer work-buffer)
-	  (message "Conversion from %s to %s failed (exit code %s)"
-		   (car (vm-mm-layout-type layout))
-		   (nth 1 ooo)
-		   ex)
-	  (sit-for 5)
+	  (vm-warn 0 5 
+		   "Conversion from %s to %s failed (exit code %s)"
+		   (car (vm-mm-layout-type layout)) (nth 1 ooo) ex)
 	  (throw 'done nil))
 	(goto-char (point-min))
 	;; if the to-type is text, then we will assume that the conversion
@@ -2142,7 +2140,7 @@ triple (source-type target-type command).  Otherwise, return nil."
 		  "\n")
 	  (insert "Content-Transfer-Encoding: binary\n\n")
 	  (set-buffer-modified-p nil)
-	  (message "Converting %s to %s... done"
+	  (vm-inform 6 "Converting %s to %s... done"
 		   (car (vm-mm-layout-type layout))
 		   (nth 1 ooo))
 	  ;; irritatingly, we need to set the coding system here as well
@@ -2219,7 +2217,7 @@ assuming that it is text."
   (let ((charset (vm-mime-get-parameter layout "charset"))
 	ooo work-buffer)
     (setq ooo (vm-mime-can-convert-charset charset))
-    (message "Converting charset %s to %s..."
+    (vm-inform 6 "Converting charset %s to %s..."
 	     charset
 	     (nth 1 ooo))
     (save-excursion
@@ -2263,7 +2261,7 @@ assuming that it is text."
 			       "\n"))
       (insert-before-markers "Content-Transfer-Encoding: binary\n\n")
       (set-buffer-modified-p nil)
-      (message "Converting charset %s to %s... done"
+      (vm-inform 6 "Converting charset %s to %s... done"
 	       charset
 	       (nth 1 ooo))
       layout)))
@@ -2287,9 +2285,8 @@ assuming that it is text."
 		      (point-min) (point-max) shell-file-name
 		      t t nil shell-command-switch (nth 2 ooo))))
 	  (unless (eq ex 0)
-	    (message "Conversion from %s to %s signalled exit code %s"
-		     (nth 0 ooo) (nth 1 ooo) ex)
-	    (sleep-for 1))
+	    (vm-warn 0 1 "Conversion from %s to %s signalled exit code %s"
+		     (nth 0 ooo) (nth 1 ooo) ex))
 	  ;; This cannot possibly safe.  USR, 2011-02-11
 	  ;; (if vm-fsfemacs-mule-p 
 	  ;;    (set-buffer-multibyte t))
@@ -2625,7 +2622,7 @@ is not successful.                                   USR, 2011-03-25"
         (vm-mime-insert-mime-body part)
         (setq part-list nil)))
     (unless part
-      (message "No data for cid %S" url))
+      (vm-inform 5 "No data for cid %S" url))
     part))
 
 (defun vm-mime-display-internal-w3m-text/html (start end layout)
@@ -2697,7 +2694,7 @@ is not successful.                                   USR, 2011-03-25"
 	    ;; do clean up
 	    (goto-char end)
 	    (delete-char -1)
-	    (message "Inlining text/html by %s... done."
+	    (vm-inform 6 "Inlining text/html by %s... done."
 		     vm-mime-text/html-handler)
 	    t)
 	(error (vm-set-mm-layout-display-error
@@ -2705,12 +2702,10 @@ is not successful.                                   USR, 2011-03-25"
 		(format "Inline text/html by %s display failed: %s"
 			vm-mime-text/html-handler
 			(error-message-string error-data)))
-	       (message "%s" (vm-mm-layout-display-error layout))
-	       (sleep-for 2)
+	       (vm-warn 0 2 "%s" (vm-mm-layout-display-error layout))
 	       nil))
     ;; no handler
-    (message "No handler available for internal display of text/html")
-    (sleep-for 2)
+    (vm-warn 0 2 "No handler available for internal display of text/html")
     nil))
   
 
@@ -2728,8 +2723,7 @@ in the text are highlighted and energized."
 	(progn
 	  (vm-set-mm-layout-display-error
 	   layout (concat "Undisplayable charset: " charset))
-	  (message "%s" (vm-mm-layout-display-error layout))
-	  (sleep-for 2)
+	  (vm-warn 0 2 "%s" (vm-mm-layout-display-error layout))
 	  nil)
       (vm-mime-insert-mime-body layout)
       (unless (bolp) (insert "\n"))
@@ -2769,8 +2763,7 @@ in the text are highlighted and energized."
 	(enriched-decode start end)
       (error (vm-set-mm-layout-display-error
 	      layout (format "enriched-decode signaled %s" errdata))
-	     (message "%s" (vm-mm-layout-display-error layout))
-	     (sleep-for 2)
+	     (vm-warn 0 2 "%s" (vm-mm-layout-display-error layout))
 	     nil ))
     (vm-energize-urls-in-message-region start end)
     (goto-char end)
@@ -2824,7 +2817,7 @@ determined by `vm-mime-external-content-types-alist'."
 	    (setcar p (vm-mime-sprintf (car p) layout))
 	    (setq p (cdr p))))
 
-	(message "Launching %s..." (mapconcat 'identity program-list " "))
+	(vm-inform 6 "Launching %s..." (mapconcat 'identity program-list " "))
 	(setq process
 	      (if (cdr program-list)
 		  (apply 'start-process
@@ -2847,7 +2840,7 @@ determined by `vm-mime-external-content-types-alist'."
 			   (list (concat (car program-list) " " tempfile))
 			 program-list))))
 	(vm-process-kill-without-query process t)
-	(message "Launching %s... done" (mapconcat 'identity
+	(vm-inform 6 "Launching %s... done" (mapconcat 'identity
 						   program-list
 						   " "))
 	(if vm-mime-delete-viewer-processes
@@ -3283,11 +3276,10 @@ fetched content."
 		    (vm-mime-insert-mime-body child-layout)
 		    (let ((vm-confirm-mail-send nil))
 		      (vm-mail-send))
-		    (message 
-		     (concat "Retrieval message sent.  "
-			     "Retry viewing this object after "
-			     "the response arrives."))
-		    (sleep-for 2)))
+		    (vm-warn 0 2
+			     (concat "Retrieval message sent.  "
+				     "Retry viewing this object after "
+				     "the response arrives."))))
 		 (t
 		  (vm-mime-error "unsupported access method: %s"
 				 access-method))
@@ -3469,7 +3461,7 @@ it to an internal object by retrieving the body.       USR, 2011-03-28"
 	    (save-excursion
 	      (vm-mime-display-internal-message/partial layout))))
 	 layout nil))
-    (message "Assembling message...")
+    (vm-inform 6 "Assembling message...")
     (let ((parts nil)
 	  (missing nil)
 	  (work-buffer nil)
@@ -3581,7 +3573,7 @@ it to an internal object by retrieving the body.       USR, 2011-03-28"
       (goto-char (point-max))
       (insert (vm-trailing-message-separator))
       (set-buffer-modified-p nil)
-      (message "Assembling message... done")
+      (vm-inform 6 "Assembling message... done")
       (vm-save-buffer-excursion
        (vm-goto-new-folder-frame-maybe 'folder)
        (vm-mode)
@@ -3607,7 +3599,7 @@ describing the image type.                             USR, 2011-03-25"
    ((and vm-fsfemacs-p (fboundp 'image-type-available-p))
     (vm-mime-display-internal-image-fsfemacs-xxxx layout image-type name))
    (t
-    (message "Unsupported Emacs version"))
+    (vm-inform 0 "Unsupported Emacs version"))
    ))
 
 (defun vm-mime-display-internal-image-xemacs-xxxx (layout image-type name)
@@ -3697,11 +3689,11 @@ describing the image type.                             USR, 2011-03-25"
 		 (vm-image-too-small
 		  (setq do-strips nil))
 		 (error
-		  (message "Failed making image strips: %s" error-data)
+		  (vm-inform 0 "Failed making image strips: %s" error-data)
 		  ;; fallback to the non-strips way
 		  (setq do-strips nil)))))
 	(cond ((not do-strips)
-	       (message "Creating %s glyph..." name)
+	       (vm-inform 6 "Creating %s glyph..." name)
 	       (setq g (make-glyph
 			(list
 			 (cons (list 'win)
@@ -3715,7 +3707,7 @@ describing the image type.                             USR, 2011-03-25"
 			       (vector 'string
 				       ':data
 				       (format "[%s image]\n" name))))))
-	       (message "")
+	       (vm-inform 6 "")
 	       ;; XEmacs 21.2 can pixel scroll images (sort of)
 	       ;; if the entire image is above the baseline.
 	       (set-glyph-baseline g 100)
@@ -3818,7 +3810,7 @@ describing the image type.                            USR, 2011-03-25"
 		 (vm-image-too-small
 		  (setq do-strips nil))
 		 (error
-		  (message "Failed making image strips: %s" error-data)
+		  (vm-inform 0 "Failed making image strips: %s" error-data)
 		  ;; fallback to the non-strips way
 		  (setq do-strips nil)))))
 	(cond ((not do-strips)
@@ -3896,7 +3888,7 @@ describing the image type.                            USR, 2011-03-25"
 ;; 		    (setq dims (condition-case error-data
 ;; 				   (vm-get-image-dimensions origfile)
 ;; 				 (error
-;; 				  (message "Failed getting image dimensions: %s"
+;; 				  (vm-inform 0 "Failed getting image dimensions: %s"
 ;; 					   error-data)
 ;; 				  (throw 'done nil)))
 ;; 			  width (nth 0 dims)
@@ -4005,7 +3997,7 @@ describing the image type.                            USR, 2011-03-25"
 ;; 							       overlay-list)
 ;; 							      image-type)))
 ;; 	    (error
-;; 	     (message "Failed making image strips: %s" error-data)))
+;; 	     (vm-inform 0 "Failed making image strips: %s" error-data)))
 ;; 	  t ))
 ;;     nil ))
 
@@ -4717,7 +4709,7 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
           (when (stringp o)
             (setq o 'none)
             (backtrace)
-            (message "There is a bug, please report it with *backtrace*"))
+            (vm-inform 0 "There is a bug, please report it with *backtrace*"))
           (unless (eq o 'none)
             (setq type (car (vm-mm-layout-type o)))
             
@@ -4748,12 +4740,12 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
                               types
                               (vm-mime-is-type-valid type types exceptions)))
                      (when (not quiet)
-                       (message 
+                       (vm-inform 8
 			"Action on part type=%s filename=%s disposition=%s"
 			type filename disposition))
                      (funcall action (car mlist) layout type filename))
                     ((not quiet)
-                     (message 
+                     (vm-inform 8
 		      "No action on part type=%s filename=%s disposition=%s"
 		      type filename disposition)))
               (setq parts (cdr parts)))))
@@ -4790,7 +4782,7 @@ are also included."
     (vm-mime-action-on-all-attachments
      count
      (lambda (msg layout type file)
-       (message "Deleting `%s%s" type (if file (format " (%s)" file) ""))
+       (vm-inform 7 "Deleting `%s%s" type (if file (format " (%s)" file) ""))
        (vm-mime-discard-layout-contents layout)
        (setq n (+ 1 n)))
      vm-mime-deleteable-types
@@ -4800,8 +4792,8 @@ are also included."
       (let ((vm-preview-lines nil))
 	(vm-present-current-message)))
     (if (> n 0)
-	(message "%d attachment%s deleted" n (if (= n 1) "" "s"))
-      (message "No attachments deleted")))
+	(vm-inform 5 "%d attachment%s deleted" n (if (= n 1) "" "s"))
+      (vm-inform 5 "No attachments deleted")))
   (vm-update-summary-and-mode-line))
 
 ;; (define-obsolete-function-alias 'vm-mime-delete-all-attachments
@@ -4872,7 +4864,7 @@ created."
                (setq file nil)))
          
          (when file
-           (message "Saving %s" (if file (format " (%s)" file) ""))
+           (vm-inform 5 "Saving %s" (if file (format " (%s)" file) ""))
            (make-directory (file-name-directory file) t)
            (vm-mime-send-body-to-file layout file file)
            (if vm-mime-delete-after-saving
@@ -4891,8 +4883,8 @@ created."
 	(vm-present-current-message)))
     
     (if (> n 0)
-        (message "%d attachment%s saved" n (if (= n 1) "" "s"))
-      (message "No attachments saved"))))
+        (vm-inform 5 "%d attachment%s saved" n (if (= n 1) "" "s"))
+      (vm-inform 5 "No attachments saved"))))
 
 ;; (define-obsolete-function-alias 'vm-mime-save-all-attachments
 ;;   'vm-save-all-attachments "8.2.0")
@@ -4958,7 +4950,7 @@ confirmed before creating a new directory."
 	       (make-directory directory t)
 	     (setq file nil)))
          (when file
-           (message "Saving %s" (if file (format " (%s)" file) ""))
+           (vm-inform 5 "Saving %s" (if file (format " (%s)" file) ""))
            (vm-mime-send-body-to-file layout file file)
            (if vm-mime-delete-after-saving
                (let ((vm-mime-confirm-delete nil))
@@ -4975,8 +4967,8 @@ confirmed before creating a new directory."
       (vm-present-current-message))
     
     (if (> n 0)
-        (message "%d attachment%s saved" n (if (= n 1) "" "s"))
-      (message "No attachments saved"))))
+        (vm-inform 5 "%d attachment%s saved" n (if (= n 1) "" "s"))
+      (vm-inform 5 "No attachments saved"))))
 ;; for the karking compiler
 (defvar vm-menu-mime-dispose-menu)
 
@@ -7519,7 +7511,7 @@ Returns marker pointing to the start of the encoded MIME part."
 (defun vm-mime-fragment-composition (size)
   (save-restriction
     (widen)
-    (message "Fragmenting message...")
+    (vm-inform 5 "Fragmenting message...")
     (let ((buffers nil)
 	  (total-markers nil)
 	  (id (vm-mime-make-multipart-boundary))
@@ -7591,7 +7583,7 @@ Returns marker pointing to the start of the encoded MIME part."
 	  (setq bufs (cdr bufs)
 		total-markers (cdr total-markers)))
 	(set-buffer master-buffer))
-      (message "Fragmenting message... done")
+      (vm-inform 5 "Fragmenting message... done")
       (nreverse buffers))))
 
 ;; moved to vm-reply.el, not MIME-specific.
@@ -7940,8 +7932,8 @@ This is a destructive operation and cannot be undone!"
         (let ((count (vm-nuke-alternative-text/html-internal (car mlist))))
           (when (interactive-p)
             (if (= count 0)
-                (message "No text/html parts found.")
-              (message "%d text/html part%s deleted."
+                (vm-inform 5 "No text/html parts found.")
+              (vm-inform 5 "%d text/html part%s deleted."
                        count (if (> count 1) "s" ""))))
           (setq mlist (cdr mlist))))))
   (when (interactive-p)

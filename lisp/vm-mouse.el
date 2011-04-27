@@ -226,16 +226,16 @@ Mouse'."
       (cond ((symbolp browser)
 	     (funcall browser url))
 	    ((stringp browser)
-	     (message "Sending URL to %s..." browser)
+	     (vm-inform 5 "Sending URL to %s..." browser)
 	     (apply 'vm-run-background-command browser
 		    (append switches (list url)))
-	     (message "Sending URL to %s... done" browser))))))
+	     (vm-inform 5 "Sending URL to %s... done" browser))))))
 
 (defun vm-mouse-send-url-to-netscape (url &optional new-netscape new-window)
   ;; Change commas to %2C to avoid confusing Netscape -remote.
   (while (string-match "," url)
     (setq url (replace-match "%2C" nil t url)))
-  (message "Sending URL to Netscape...")
+  (vm-inform 5 "Sending URL to Netscape...")
   (if new-netscape
       (apply 'vm-run-background-command vm-netscape-program
 	     (append vm-netscape-program-switches (list url)))
@@ -246,13 +246,13 @@ Mouse'."
 					      (if new-window ",new-window" "")
 					      ")")))))
 	(vm-mouse-send-url-to-netscape url t new-window)))
-  (message "Sending URL to Netscape... done"))
+  (vm-inform 5 "Sending URL to Netscape... done"))
 
 (defun vm-mouse-send-url-to-opera (url &optional new-opera new-window)
   ;; Change commas to %2C to avoid confusing Netscape -remote.
   (while (string-match "," url)
     (setq url (replace-match "%2C" nil t url)))
-  (message "Sending URL to Opera...")
+  (vm-inform 5 "Sending URL to Opera...")
   (if new-opera
       (apply 'vm-run-background-command vm-opera-program
 	     (append vm-opera-program-switches (list url)))
@@ -262,14 +262,14 @@ Mouse'."
 				      (concat "openURL(" url
 					      ")")))))
 	(vm-mouse-send-url-to-opera url t new-window)))
-  (message "Sending URL to Opera... done"))
+  (vm-inform 5 "Sending URL to Opera... done"))
 
 
 (defun vm-mouse-send-url-to-mozilla (url &optional new-mozilla new-window)
   ;; Change commas to %2C to avoid confusing Netscape -remote.
   (while (string-match "," url)
     (setq url (replace-match "%2C" nil t url)))
-  (message "Sending URL to Mozilla...")
+  (vm-inform 5 "Sending URL to Mozilla...")
   (if new-mozilla
       (apply 'vm-run-background-command vm-mozilla-program
 	     (append vm-mozilla-program-switches (list url)))
@@ -280,7 +280,7 @@ Mouse'."
 					      (if new-window ",new-window" "")
 					      ")")))))
 	(vm-mouse-send-url-to-mozilla url t new-window)))
-  (message "Sending URL to Mozilla... done"))
+  (vm-inform 5 "Sending URL to Mozilla... done"))
 
 (defun vm-mouse-send-url-to-netscape-new-window (url)
   (vm-mouse-send-url-to-netscape url nil t))
@@ -303,7 +303,7 @@ Mouse'."
 					 new-mosaic new-window)
   (let ((what (cond ((eq m-type 'mmosaic) "mMosaic")
 		    (t "Mosaic"))))
-    (message "Sending URL to %s..." what)
+    (vm-inform 5 "Sending URL to %s..." what)
     (if (null new-mosaic)
 	(let ((pid-file (cond ((eq m-type 'mmosaic)
 			       "~/.mMosaic/.mosaicpid")
@@ -342,13 +342,13 @@ Mouse'."
 	       (append (cond ((eq m-type 'mmosaic) vm-mmosaic-program-switches)
 			     (t vm-mosaic-program-switches))
 		       (list url))))
-    (message "Sending URL to %s... done" what)))
+    (vm-inform 5 "Sending URL to %s... done" what)))
 
 (defun vm-mouse-send-url-to-mosaic-new-window (url)
   (vm-mouse-send-url-to-mosaic url nil t))
 
 (defun vm-mouse-send-url-to-konqueror (url &optional new-konqueror)
-  (message "Sending URL to Konqueror...")
+  (vm-inform 5 "Sending URL to Konqueror...")
   (if new-konqueror
       (apply 'vm-run-background-command vm-konqueror-program
 	     (append vm-konqueror-program-switches (list url)))
@@ -356,10 +356,10 @@ Mouse'."
 			(append vm-konqueror-client-program-switches
 				(list "openURL" url))))
 	(vm-mouse-send-url-to-konqueror url t)))
-  (message "Sending URL to Konqueror... done"))
+  (vm-inform 5 "Sending URL to Konqueror... done"))
 
 (defun vm-mouse-send-url-to-firefox (url &optional new-window)
-  (message "Sending URL to Mozilla Firefox...")
+  (vm-inform 5 "Sending URL to Mozilla Firefox...")
   (if new-window
       (apply 'vm-run-background-command vm-firefox-program
 	     (append vm-firefox-program-switches (list url)))
@@ -367,7 +367,7 @@ Mouse'."
 			(append vm-firefox-client-program-switches
 				(list (format "openURL(%s)" url)))))
 	(vm-mouse-send-url-to-firefox url t)))
-  (message "Sending URL to Mozilla Firefox... done"))
+  (vm-inform 5 "Sending URL to Mozilla Firefox... done"))
 
 (defun vm-mouse-send-url-to-konqueror-new-window (url)
   (vm-mouse-send-url-to-konqueror url t))
@@ -377,21 +377,22 @@ Mouse'."
 (defun vm-mouse-send-url-to-window-system (url)
   (unless interprogram-cut-function
     (when vm-warn-for-interprogram-cut-function 
-      (message "Copying to kill ring only; Customize interprogram-cut-function to copy to Window system")
-      (sleep-for 2)
+      (vm-warn 1 2 
+	       (concat "Copying to kill ring only; "
+		       "Customize interprogram-cut-function to copy to Window system"))
       (setq vm-warn-for-interprogram-cut-function nil)))
   (kill-new url))
 
 (defun vm-mouse-send-url-to-clipboard (url &optional type)
   (unless type (setq type 'CLIPBOARD))
-  (message "Sending URL to %s..." type)
+  (vm-inform 5 "Sending URL to %s..." type)
   (cond ((fboundp 'own-selection)	; XEmacs
 	 (own-selection url type))
 	((fboundp 'x-set-selection)	; Gnu Emacs
 	 (x-set-selection type url))
 	((fboundp 'x-own-selection)	; lselect for Emacs21?
 	 (x-own-selection url type)))
-  (message "Sending URL to %s... done" type))
+  (vm-inform 5 "Sending URL to %s... done" type))
 
 ;;;###autoload
 (defun vm-mouse-install-mouse ()
@@ -407,14 +408,14 @@ Mouse'."
 	       (define-key vm-mode-map [down-mouse-3] 'vm-mouse-button-3))))))
 
 (defun vm-run-background-command (command &rest arg-list)
-  (message "vm-run-background-command: %S %S" command arg-list)
+  (vm-inform 5 "vm-run-background-command: %S %S" command arg-list)
   (apply (function call-process) command
          nil
          0
          nil arg-list))
 
 (defun vm-run-command (command &rest arg-list)
-  (message "vm-run-command: %S %S" command arg-list)
+  (vm-inform 5 "vm-run-command: %S %S" command arg-list)
   (apply (function call-process) command
          nil
          (get-buffer-create (concat " *" command "*"))
@@ -450,10 +451,10 @@ Mouse'."
 		;; succeeded.  I have tried to just use exit status
 		;; as the failure criterion and users complained.
 		((equal (nth 7 (file-attributes tempfile)) 0)
-		 (message "%s exited non-zero (code %s)" command status)
+		 (vm-inform 0 "%s exited non-zero (code %s)" command status)
 		 t)
 		(t (save-excursion
-		     (message "%s exited non-zero (code %s)" command status)
+		     (vm-inform 0 "%s exited non-zero (code %s)" command status)
 		     (set-buffer (find-file-noselect tempfile))
 		     (setq errstring (buffer-string))
 		     (kill-buffer nil)

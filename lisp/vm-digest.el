@@ -654,7 +654,7 @@ burst."
 	    (setq digest-type (vm-guess-digest-type m))
 	    (if (null digest-type)
 		(error "Couldn't guess digest type."))))
-      (message "Bursting %s digest..." digest-type)
+      (vm-inform 5 "Bursting %s digest..." digest-type)
       (cond
        ((cond ((equal digest-type "mime")
 	       (vm-mime-burst-message m))
@@ -663,7 +663,7 @@ burst."
 	      ((equal digest-type "rfc1153")
 	       (vm-rfc1153-burst-message m))
 	      (t (error "Unknown digest type: %s" digest-type)))
-	(message "Bursting %s digest... done" digest-type)
+	(vm-inform 5 "Bursting %s digest... done" digest-type)
 	(vm-clear-modification-flag-undos)
 	(vm-mark-folder-modified-p (current-buffer))
 	(vm-increment vm-modification-counter)
@@ -693,7 +693,7 @@ burst."
     (if (vm-thoughtfully-select-message)
 	(vm-present-current-message)
       (vm-update-summary-and-mode-line))
-    (message totals-blurb)))
+    (vm-inform 5 totals-blurb)))
 
 ;;;###autoload
 (defun vm-burst-rfc934-digest ()
@@ -771,7 +771,7 @@ burst."
 		  (setq digest-type (vm-guess-digest-type m))
 		  (if (null digest-type)
 		      (error "Couldn't guess digest type."))))
-	    (message "Bursting %s digest to folder..." digest-type)
+	    (vm-inform 5 "Bursting %s digest to folder..." digest-type)
 	    (cond ((equal digest-type "mime")
 		   (vm-mime-burst-message m))
 		  ((equal digest-type "rfc934")
@@ -779,7 +779,7 @@ burst."
 		  ((equal digest-type "rfc1153")
 		   (vm-rfc1153-burst-message m))
 		  (t (error "Unknown digest type: %s" digest-type)))
-	    (message "Bursting %s digest... done" digest-type)
+	    (vm-inform 5 "Bursting %s digest... done" digest-type)
             (and vm-delete-after-bursting
  		 (yes-or-no-p (format "Delete message %s? " (vm-number-of m)))
  		 (save-excursion

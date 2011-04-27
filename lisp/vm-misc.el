@@ -77,6 +77,23 @@
 ;; This file contains various low-level operations that address
 ;; incomaptibilities between Gnu and XEmacs.  Expect compiler warnings.
 
+;; messages in the minibuffer
+
+;; the chattiness levels are:
+;; 0 - extremely quiet
+;; 5 - medium
+;; 7 - normal level
+;; 10 - heavy debugging info
+
+(defun vm-inform (level &rest args)
+  (when (<= level vm-verbosity)
+    (apply 'message args)))
+
+(defun vm-warn (level sit-for &rest args)
+  (when (<= level vm-verbosity)
+    (apply 'message args)
+    (sit-for sit-for)))
+
 ;; garbage-collector result
 (defconst gc-fields '(:conses :syms :miscs 
 			      :chars :vector 
@@ -1397,7 +1414,7 @@ filling of GNU Emacs does not work correctly here."
 	    (needmsg (> (- end start) 12000)))
       
 	(if needmsg
-	    (message "Filling message to column %d" fill-column))
+	    (vm-inform 5 "Filling message to column %d" fill-column))
       
 	;; we need a marker for the end since this position might change 
 	(or (markerp end) (setq end (vm-marker end)))
@@ -1414,8 +1431,8 @@ filling of GNU Emacs does not work correctly here."
 	;; Turning off these messages because they go by too fast and
 	;; are not particularly enlightening.  USR, 2010-01-26
 	;; (if (= filled 0)
-	;;    (message "Nothing to fill")
-	;;  (message "Filled %s paragraph%s"
+	;;    (vm-inform 7 "Nothing to fill")
+	;;  (vm-inform 7 "Filled %s paragraph%s"
 	;;           (if (> filled 1) (format "%d" filled) "one")
 	;;           (if (> filled 1) "s" "")))
 	))))
@@ -1586,7 +1603,7 @@ If MODES is nil the take the modes from the variable
               (funcall m -1))
 	(error 
 	 (when (not (member m vm-disable-modes-ignore))
-	   (message "Could not disable mode `%S': %S" m errmsg)
+	   (vm-inform 0 "Could not disable mode `%S': %S" m errmsg)
 	   (setq vm-disable-modes-ignore (cons m vm-disable-modes-ignore)))
 	 nil)))))
 
