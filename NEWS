@@ -1,13 +1,11 @@
 Status
 
-  VM is currently being maintained by a 'VM development team'
-  consisting of Robert Widhopf-Fenk, Ulrich Müller and Uday S Reddy.
-  In recent months, Arik Mitschang and Tim Cross have joined us as
-  contributors.  More volunteers to help with the maintenance are
-  quite welcome.
+  VM is currently being maintained by a 'VM development team' consisting of
+  Uday S Reddy, Ulrich Müller, Tim Cross and Arik Mitschang.  More
+  volunteers to help with the maintenance are quite welcome.
 
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
-  using VM! - Rob, Ulrich and Uday
+  using VM!
   
 VM 8.2.0a (2011-02-28)
 
@@ -18,16 +16,16 @@ VM 8.2.0a (2011-02-28)
      to grow unnecessarily.  This can slow down the saving of folders
      into which you downloaded IMAP mail.  To solve the problem, run
      the command `vm-prune-imap-retrieved-list' after installing
-     version 8.2.0.  (See info under "IMAP Spool Files".)
+     version 8.2.0.  (See the info manual under "IMAP Spool Files".)
 
-   * A set of inessential key bindings (b, e, <, >, *) have been removed
-     from the standard VM key bindings.  If you would like to use
-     them, add the line:
-
-              (vm-optional-keys)
-
-     to your vm-preferences-file (~/.vm.preferences).  Or, you might
-     bind these keys to some other operations of your choice.
+   * A set of inessential key bindings (a, b, e, i, w, L, M-l, !, <, >, *,
+     %) have been removed from the standard VM key bindings.  If you would
+     like to use them, add the line:
+              (vm-legacy-key-bindings)
+     to your vm-preferences-file (~/.vm.preferences).  To use the current
+     key bindings instead, use the line
+              (vm-current-key-bindings)
+     Or, you might bind these keys to some other operations of your choice.
 
    * The variable name `vm-auto-displayed-mime-content-types' changed
      to `vm-mime-auto-displayed-content-types' for consistency with
@@ -37,12 +35,12 @@ VM 8.2.0a (2011-02-28)
    * The variable name `vm-mime-attachment-infer-type-for-text-attachments'
      changed to `vm-infer-mime-types-for-text'.
 
-   * Plain text forwarding has been extended to deal with MIME
-     attachments.  The command `vm-forward-message-plain' (bound to `Z') uses
-     this method, i.e., it does NOT encapsulate forwarded messages.  The
-     normal `z' key forwards messages encapsulated using
-     `vm-forwarding-digest-type'.  There are also associated variables
-     `vm-forwarded-headers-plain' and `vm-unforwarded-header-regexp-plain'. 
+   * Plain text forwarding has been extended to deal with MIME attachments.
+     The command `vm-forward-message-plain' (bound to `Z') uses this method.
+     (The normal `z' key forwards messages encapsulated using
+     `vm-forwarding-digest-type'.)  There are also associated variables
+     `vm-forwarded-headers-plain' and `vm-unforwarded-header-regexp-plain',
+     which determine the headers included in the forwards.
 
    * The meaning of the variable `vm-included-mime-types-list' is
      changed.  It need only mention MIME type/subtype pairs that are
@@ -123,8 +121,8 @@ VM 8.2.0a (2011-02-28)
      `vm-mime-auto-displayed-content-types', you should remove it to
      access the new functionality.
 
-   * Newly documented commands: `[' (`vm-previous-attachment') and `]'
-     (`vm-next-attachment') allow navigation inside message
+   * Newly documented commands: `[' (`vm-previous-button') and `]'
+     (`vm-next-button') allow navigation inside message
      presentation buffers.
 
    * New command: `!' (`vm-toggle-flag-message') allows you to flag a

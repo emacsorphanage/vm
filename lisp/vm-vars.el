@@ -5669,6 +5669,41 @@ be a regexp matching all chars to be replaced by a \"_\"."
 (defconst vm-maintainer-address "viewmail-bugs@nongnu.org"
   "Where to send VM bug reports.")
 
+(defvar vm-use-v7-key-bindings nil
+  "*Retain all the optional key bindings of VM as per version 7.19.")
+
+(defun vm-v8-key-bindings ()
+  "Install optional key bindings for VM modes, as per versions 8.x."
+  (interactive)
+  (define-key vm-mode-map "!" 'vm-toggle-flag-message)
+  (define-key vm-mode-map "<" 'vm-promote-subthread)
+  (define-key vm-mode-map ">" 'vm-demote-subthread)
+  )
+(defalias 'vm-current-key-bindings 'vm-v8-key-bindings)
+
+(defun vm-v7-key-bindings ()
+  "Install optional key bindings for VM modes, as per version 7.19.
+
+These key bindings are considered optional.  They can be rebound by
+the users or bound to other functions in future versions of VM."
+  (interactive)
+  (define-key vm-mode-map "<" 'vm-beginning-of-message) ; infrequent
+  (define-key vm-mode-map ">" 'vm-end-of-message) ; infrequent
+  (define-key vm-mode-map "b" 'vm-scroll-backward) ; redundant, use <BSP>
+  (define-key vm-mode-map "e" 'vm-edit-message) ; infrequent and dangerous
+  (define-key vm-mode-map "w" 'vm-save-message-sans-headers) ; infrequent
+  (define-key vm-mode-map "a" 'vm-set-message-attributes) ; infrequent
+  (define-key vm-mode-map "i" 'vm-iconify-frame) ; redundant, C-x C-z
+  (define-key vm-mode-map "*" 'vm-burst-digest) ; specialized
+  (define-key vm-mode-map "!" 'shell-command) ; Emacs has a key binding
+  (define-key vm-mode-map  "=" 'vm-summarize) ; redundant, use `h'
+  (define-key vm-mode-map "L" 'vm-load-init-file) ; infrequent
+  (define-key vm-mode-map "\M-l" 'vm-edit-init-file) ; infrequent
+  (define-key vm-mode-map "%" 'vm-change-folder-type) ; infrequent
+  (define-key vm-mode-map "\M-g" 'vm-goto-message)    ; redundant, use <RET>
+  )
+(defalias 'vm-legacy-key-bindings 'vm-v7-key-bindings)
+
 (defvar vm-mode-map
   (let ((map (make-keymap)))
     (defvar vm-mode-label-map (make-sparse-keymap))
@@ -5678,8 +5713,9 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (defvar vm-mode-mark-map (make-sparse-keymap))
     (defvar vm-mode-mark-map (make-sparse-keymap))
     (defvar vm-mode-pipe-map (make-sparse-keymap))
-;; unneeded now that VM buffers all have buffer-read-only == t.
-;;    (suppress-keymap map)
+    ;; unneeded now that VM buffers all have buffer-read-only == t. 
+    ;; but no harm in suppressing.  USR, 2011-04-27
+    (suppress-keymap map)
     (define-key map "h" 'vm-summarize)
     (define-key map "H" 'vm-folders-summarize)
     (define-key map "\M-n" 'vm-next-unread-message)
@@ -5692,10 +5728,11 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\C-\M-p" 'vm-move-message-backward)
     (define-key map "\t" 'vm-goto-message-last-seen)
     (define-key map "\r" 'vm-goto-message)
-    (define-key map "\M-g" 'vm-goto-message)
+    (define-key map "\M-g" 'vm-optional-key)
     (define-key map "^" 'vm-goto-parent-message)
     (define-key map "t" 'vm-expose-hidden-headers)
     (define-key map " " 'vm-scroll-forward)
+    (define-key map "b" 'vm-optional-key)
     (define-key map "\C-?" 'vm-scroll-backward)
     (define-key map [delete] 'vm-scroll-backward)
     (define-key map [backspace] 'vm-scroll-backward)
@@ -5703,10 +5740,10 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "d" 'vm-delete-message)
     (define-key map "\C-d" 'vm-delete-message-backward)
     (define-key map "u" 'vm-undelete-message)
-    (define-key map "U" 'vm-unread-message)
+    (define-key map "U" 'vm-mark-message-unread)
     (define-key map "." 'vm-mark-message-read)
-    (define-key map "!" 'vm-toggle-flag-message)
-    (define-key map "a" 'vm-set-message-attributes)
+    (define-key map "e" 'vm-optional-key)
+    (define-key map "a" 'vm-optional-key)
     (define-key map "j" 'vm-discard-cached-data)
     (define-key map "k" 'vm-kill-subject)
     (define-key map "f" 'vm-followup)
@@ -5719,12 +5756,13 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "Z" 'vm-forward-message-plain)
     (define-key map "c" 'vm-continue-composing-message)
     (define-key map "@" 'vm-send-digest)
+    (define-key map "*" 'vm-optional-key)
     (define-key map "m" 'vm-mail)
     (define-key map "g" 'vm-get-new-mail)
     (define-key map "G" 'vm-sort-messages)
     (define-key map "v" 'vm-visit-folder)
     (define-key map "s" 'vm-save-message)
-    (define-key map "w" 'vm-save-message-sans-headers)
+    (define-key map "w" 'vm-optional-key)
     (define-key map "A" 'vm-auto-archive-messages)
     (define-key map "S" 'vm-save-folder)
     ;; these two key bindings are experimental
@@ -5743,18 +5781,18 @@ be a regexp matching all chars to be replaced by a \"_\"."
 			       "(Type # once more to expunge)")))
     (define-key map "q" 'vm-quit)
     (define-key map "x" 'vm-quit-no-change)
-    (define-key map "i" 'vm-iconify-frame)
+    (define-key map "i" 'vm-optional-key)
     (define-key map "?" 'vm-help)
     (define-key map "\C-_" 'vm-undo)
     (define-key map [(control /)] 'vm-undo)
     (define-key map "\C-xu" 'vm-undo)
-    ;; (define-key map "!" 'shell-command)
+    (define-key map "!" 'vm-optional-key)
     (define-key map "[" 'vm-move-to-previous-button)
     (define-key map "]" 'vm-move-to-next-button)
     (define-key map "\M-s" 'vm-isearch-forward)
-    (define-key map "=" 'vm-summarize)
-    (define-key map "L" 'vm-load-init-file)
-    (define-key map "\M-l" 'vm-edit-init-file)
+    (define-key map "=" 'vm-optional-key)
+    (define-key map "L" 'vm-optional-key)
+    (define-key map "\M-l" 'vm-optional-key)
     (define-key map "l" vm-mode-label-map)
     (define-key vm-mode-label-map "a" 'vm-add-message-labels)
     (define-key vm-mode-label-map "e" 'vm-add-existing-message-labels)
@@ -5797,7 +5835,7 @@ be a regexp matching all chars to be replaced by a \"_\"."
     (define-key map "\C-x\C-s" 'vm-save-buffer)
     (define-key map "\C-x\C-w" 'vm-write-file)
     (define-key map "\C-x\C-q" 'vm-toggle-read-only)
-    (define-key map "%" 'vm-change-folder-type)
+    (define-key map "%" 'vm-optional-key)
     (define-key map "\M-C" 'vm-show-copying-restrictions)
     (define-key map "\M-W" 'vm-show-no-warranty)
     (define-key map "\C-c\C-s" 'vm-save-all-attachments)
@@ -5831,7 +5869,6 @@ be a regexp matching all chars to be replaced by a \"_\"."
 			    "VM mode window configuration map")
 	   (set-keymap-name (lookup-key map "|")
 			    "VM mode pipe-to-application map")))
-
     map )
   "Keymap for VM mode.  See also the following subsidiary keymaps:
 `vm-mode-label-map'    VM mode message labels map  (`l')
@@ -5841,15 +5878,13 @@ be a regexp matching all chars to be replaced by a \"_\"."
 `vm-mode-pipe-map'     VM mode pipe-to-application map (`|')
 ")
 
-(defun vm-optional-keys ()
-  "Install optional key bindings for VM modes."
+(defun vm-optional-key ()
+  "Certain VM keys have optional bindings in VM, which differ from
+version to version.  Include \"(vm-legacy-key-bindings)\" in your
+`vm-preferences-file' in order to bind them as in version 7.19.  For
+other possibilities, see the NEWS file of VM."
   (interactive)
-  (define-key vm-mode-map "<" 'vm-beginning-of-message)
-  (define-key vm-mode-map ">" 'vm-end-of-message)
-  (define-key vm-mode-map "b" 'vm-scroll-backward)
-  (define-key vm-mode-map "e" 'vm-edit-message)
-  (define-key vm-mode-map "*" 'vm-burst-digest)
-  )
+  (error "This key has an optional binding in VM.  Do C-h k for help."))
 
 (defcustom vm-summary-enable-thread-folding nil
   "*If non-nil, enables folding of threads in VM summary
@@ -6325,7 +6360,8 @@ folder needs to be updated.")
     ("vm-unmark-messages-same-subject")
     ("vm-unmark-summary-region")
     ("vm-unmark-thread-subtree")
-    ("vm-unread-message")
+    ("vm-mark-message-unread")
+    ("vm-mark-message-read")
     ("vm-virtual-help")
     ("vm-visit-folder")
     ("vm-visit-folder-other-frame")

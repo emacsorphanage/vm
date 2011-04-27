@@ -3041,7 +3041,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
       (setq mp (cdr mp)))))
 
 ;;;###autoload
-(defun vm-unread-message (&optional count)
+(defun vm-mark-message-unread (&optional count)
   "Mark the current message as unread.  If the message is already
 new or unread, then it is left unchanged.
 
@@ -3065,10 +3065,10 @@ thread are affected."
 	       (not (vm-new-flag (car mlist))))
 	  (vm-set-unread-flag (car mlist) t))
       (setq mlist (cdr mlist))))
-  (vm-display nil nil '(vm-unread-message) '(vm-unread-message))
+  (vm-display nil nil '(vm-mark-message-unread) '(vm-mark-message-unread))
   (vm-update-summary-and-mode-line))
-(defalias 'vm-flag-message-unread 'vm-unread-message)
-(defalias 'vm-mark-message-unread 'vm-unread-message)
+(defalias 'vm-unread-message 'vm-mark-message-unread)
+(defalias 'vm-flag-message-unread 'vm-mark-message-unread)
 (make-obsolete 'vm-flag-message-unread 
 	       'vm-mark-message-unread "8.2.0")
 
@@ -3520,6 +3520,8 @@ Giving a prefix argument overrides the variable and no expunge is done."
 
 ;;;###autoload
 (defun vm-save-buffer (prefix)
+  ;; This function hasn't been documented.  Not clear why it is
+  ;; different from vm-save-folder.  USR, 2011-04-27
   (interactive "P")
   (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-error-if-virtual-folder)
@@ -3536,6 +3538,8 @@ Giving a prefix argument overrides the variable and no expunge is done."
 
 ;;;###autoload
 (defun vm-write-file ()
+  ;; This function hasn't been documented.  Not clear what it does.
+  ;; 						  USR, 2011-04-27
   (interactive)
   (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-error-if-virtual-folder)
@@ -3788,12 +3792,7 @@ Same as \\[vm-revert-folder]."
     (setq vm-folder-access-method access-method)
     (vm (current-buffer) :access-method access-method :reload 'reload)))
 
-;;;###autoload
-(defun vm-revert-folder ()
-"Revert the current folder to its version on the disk.
-Same as \\[vm-revert-buffer]."
-  (interactive)
-  (call-interactively 'vm-revert-buffer))
+(defalias 'vm-revert-folder 'vm-revert-buffer)
 
 ;;;###autoload
 (defun vm-recover-file ()
@@ -3818,12 +3817,7 @@ Same as \\[vm-recover-folder]."
     (setq vm-folder-access-data access-data) ; restore data
     (vm (current-buffer) :access-method access-method :reload 'reload)))
 
-;;;###autoload
-(defun vm-recover-folder ()
-"Recover the autosave file for the current folder.
-Same as \\[vm-recover-file]."
-  (interactive)
-  (call-interactively 'vm-recover-file))
+(defalias 'vm-recover-folder 'vm-recover-file)
 
 ;; It doesn't seem that any of these recover/reversion handlers are
 ;; working any more.  Not on GNU Emacs.  USR, 2010-01-23

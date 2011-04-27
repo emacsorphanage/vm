@@ -226,7 +226,6 @@ If you type @kbd{?} in a VM folder buffer you will get some help, i.e.
 @findex vm-scroll-forward
 @findex vm-scroll-backward
 @kindex @key{SPC}
-@kindex b
 @kindex @key{DEL}
 If there are any messages in the primary inbox, VM selects the first new
 or unread message, and previews it.  @dfn{Previewing} is VM's way of
@@ -356,7 +355,6 @@ files with other folders by setting the variable
 
 @findex vm-load-init-file
 @vindex vm-init-file
-@kindex L
 @cindex .vm
 The first time VM is started in an Emacs session, it attempts to load
 the file specified by the variable @code{vm-init-file}, normally
@@ -366,7 +364,7 @@ settings'' for VM, i.e., variables that define where the mail folders
 are stored, where the incoming mail is to be found, the various
 directories that VM needs to use for its operation and the external
 applications that VM can invoke.  You can reload this file by typing
-@kbd{L} (@code{vm-load-init-file}) from within VM.
+@code{M-x vm-load-init-file} from within VM.
 
 @vindex vm-preferences-file
 @cindex .vm.preferences
@@ -1844,12 +1842,12 @@ display the object.  The variable
 specify any exceptions to the types listed in
 @code{vm-mime-auto-displayed-content-types}.
 
-@findex vm-next-attachment
-@findex vm-previous-attachment
+@findex vm-next-button
+@findex vm-previous-button
 @kindex [
 @kindex ]
-The commands @kbd{[} and @kbd{]} (@code{vm-previous-attachment}) and
-@code{vm-next-attachment}, respectively) can be
+The commands @kbd{[} and @kbd{]} (@code{vm-previous-button}) and
+@code{vm-next-button}, respectively) can be
 used move to particular buttons within the message presentation.
 
 @node Attachments, Internal display, Viewing MIME, MIME Messages
@@ -3384,8 +3382,7 @@ specifies that header names are case indistinct.
 
 @table @kbd
 @findex vm-save-message-sans-headers
-@kindex w
-@item w (@code{vm-save-message-sans-headers})
+@item M-x vm-save-message-sans-headers
 Saves a message or messages to a file without their headers.  This
 command responds to a prefix argument exactly as @code{vm-save-message}
 does.  Messages saved this way are flagged ``written''.
@@ -3521,7 +3518,7 @@ the saved folders, irrespective of the settings of the above
 variables.  Giving a prefix argument to the @code{vm-quit} command has
 the same effect as @code{vm-quit-no-expunge}.
 
-@findex
+@findex vm-delete-duplicate-messages
 The function @code{vm-delete-duplicate-messages} can be used to delete
 duplicate copies of messages that arrive through various means.  For
 instance, if you are a member of a mailing list, every time somebody
@@ -3543,9 +3540,8 @@ worry about the duplicate copies any further.  (@xref{Hooks}.)
 @node Editing Messages, Marking Messages, Deleting Messages, Top
 @chapter Editing Messages
 
-@kindex e
 @findex vm-edit-message
-To edit a message, type @kbd{e} (@code{vm-edit-message}).  The current
+To edit a message, type (@code{M-x vm-edit-message}).  The current
 message is copied into a temporary buffer, and this buffer is selected
 for editing.  The major mode of this buffer is controlled by the
 variable @code{vm-edit-message-mode}.  The default is Text mode.
@@ -3709,10 +3705,9 @@ The message has been forwarded with the
 The message has been replied to.
 @end table
 
-@kindex a
 @findex vm-set-message-attributes
-You can set and unset these attributes directly by using @kbd{a}
-(@code{vm-set-message-attributes}).  You will be prompted in the
+You can set and unset these attributes directly by using 
+@code{M-x vm-set-message-attributes}.  You will be prompted in the
 minibuffer for names of the attributes and you can enter them with
 completion.  Every attribute has an ``un-'' prefixed name you can use
 to unset the attribute, excepting ``new'' and ``unread'', which are both
@@ -4156,7 +4151,9 @@ Summary window is not entirely helpful.  You can temporarily promote
 the subthreads to higher level so that you can view the threading
 relationships more clearly.
 
-The command @kbd{M-x vm-decrease-thread-indentation} temporarily
+@kindex <
+@findex vm-promote-subthread
+The command @kbd{<} (@code{vm-promote-subthread}) temporarily
 decreases the indentation of the current message and its subthread by
 one step.  You can give the command a numeric prefix argument N asking
 it to decreasing indentation by N steps.  Giving 0 as the prefix
@@ -4164,7 +4161,9 @@ argument has a special meaning.  It says that the current message
 should not be indented at all, effectively making it appear as the
 root message of a thread.
 
-The command @kbd{M-x vm-increase-thread-indentation} does the
+@kindex >
+@findex vm-demote-subthread
+The command @kbd{>} (@code{M-x vm-demote-subthread}) does the
 opposite.  It increases the indentation of the current message and its
 subthread.  You can specify the level of increased indentation as the
 prefix argument.  Giving 0 as the prefix argument has the special

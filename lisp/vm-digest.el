@@ -36,6 +36,7 @@
 )
 
 (declare-function vm-mode "vm-mode" (&optional read-only))
+(declare-function vm-yank-message "vm-reply" (message))
 
 ;;;###autoload
 (defun vm-no-frills-encapsulate-message (m keep-list discard-regexp)

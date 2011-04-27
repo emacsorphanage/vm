@@ -1100,7 +1100,7 @@ as necessary."
       (vm-narrow-to-page)))
 
 ;;;###autoload
-(defun vm-next-attachment (count)
+(defun vm-next-button (count)
   "Moves to the next button in the current message.
 Prefix argument N means move to the Nth next button.
 Negative N means move to the Nth previous button.
@@ -1125,10 +1125,10 @@ exposed and marked as read."
       (vm-move-to-xxxx-button (vm-abs count) (>= count 0))
     (if vm-honor-page-delimiters
 	(vm-narrow-to-page))))
-(defalias 'vm-move-to-next-button 'vm-next-attachment)
+(defalias 'vm-move-to-next-button 'vm-next-button)
 
 ;;;###autoload
-(defun vm-previous-attachment (count)
+(defun vm-previous-button (count)
   "Moves to the previous button in the current message.
 Prefix argument N means move to the Nth previous button.
 Negative N means move to the Nth next button.
@@ -1153,7 +1153,7 @@ exposed and marked as read."
       (vm-move-to-xxxx-button (vm-abs count) (< count 0))
     (if vm-honor-page-delimiters
 	(vm-narrow-to-page))))
-(defalias 'vm-move-to-previous-button 'vm-previous-attachment)
+(defalias 'vm-move-to-previous-button 'vm-previous-button)
 
 (defun vm-move-to-xxxx-button (count next)
   (let ((old-point (point))

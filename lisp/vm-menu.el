@@ -154,7 +154,7 @@
       ["Delete" vm-delete-message vm-message-list]
       ["Undelete"	vm-undelete-message vm-message-list]
       ["Kill Current Subject" vm-kill-subject vm-message-list]
-      ["Mark Unread" vm-unread-message vm-message-list]
+      ["Mark Unread" vm-mark-message-unread vm-message-list]
       ["Edit" vm-edit-message vm-message-list]
       ["Print" vm-print-message vm-message-list]
       ["Pipe to Command" vm-pipe-message-to-command vm-message-list]

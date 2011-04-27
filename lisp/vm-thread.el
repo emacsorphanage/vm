@@ -331,7 +331,7 @@ specifier) will be visible."
     (vm-sort-messages (or vm-ml-sort-keys "physical-order"))))
 
 ;;;###autoload
-(defun vm-decrease-thread-indentation (n)
+(defun vm-promote-subthread (n)
   "Decrease the thread indentation of the current message and its
 subthread by $N$ steps (provided as a prefix argument).  
 
@@ -357,7 +357,7 @@ indentation all the way to 0."
     (vm-update-summary-and-mode-line)))
 
 ;;;###autoload
-(defun vm-increase-thread-indentation (n)
+(defun vm-demote-subthread (n)
   "Increase the thread indentation of the current message and its
 subthread by $N$ steps (provided as a prefix argument).  
 
