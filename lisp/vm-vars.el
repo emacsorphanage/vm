@@ -992,7 +992,7 @@ folders.  This is not a customization variable.  See
 (defcustom vm-visible-headers
   '("Resent-"
     "From:" "Sender:"
-    "To:" "Apparently-To:" "Cc:"
+    "To:" "Newsgroups:" "Apparently-To:" "Cc:"
     "Subject:"
     "Date:")
   "*List of headers that should be visible when VM first displays a message.
@@ -1806,8 +1806,11 @@ deleting a MIME object with `vm-delete-mime-object'."
 (defcustom vm-mime-saveable-types
   (append
    '("application" "x-unknown" "application/x-gzip")
-   (mapcar (lambda (a) (car a))
-           vm-mime-external-content-types-alist))
+   ;; These are eliminated because they depend on evaluation order.
+   ;; USR, 2011-04-28
+   ;; (mapcar (lambda (a) (car a))
+   ;;         vm-mime-external-content-types-alist)
+   )
   "*List of MIME types which should be saved."
     :group 'vm-mime
     :type '(repeat (string :tag "MIME type" nil)))
@@ -1825,8 +1828,11 @@ deleting a MIME object with `vm-delete-mime-object'."
 (defcustom vm-mime-deleteable-types
   (append
    '("application" "x-unknown" "application/x-gzip")
-   (mapcar (lambda (a) (car a))
-           vm-mime-external-content-types-alist))
+   ;; These are eliminated because they depend on evaluation order.
+   ;; USR, 2011-04-28
+   ;; (mapcar (lambda (a) (car a))
+   ;;         vm-mime-external-content-types-alist)
+   )
   "*List of MIME types which should be deleted."
     :group 'vm-mime
     :type '(repeat (string :tag "MIME type" nil)))
@@ -2928,7 +2934,7 @@ A nil value means don't insert a Message-ID header."
 				  "Date:" "Priority:" "X-Priority:" 
 				  "Importance:" "Message-ID:"
 				  "MIME-Version:" "Content-Type:"
-				  "To:" "CC:" "BCC:" "Reply-To:")
+				  "To:" "Newsgroups:" "CC:" "BCC:" "Reply-To:")
   "*Order of headers when calling `vm-reorder-message-headers' interactively
 in a composition buffer."
   :group 'vm-compose
@@ -3142,7 +3148,7 @@ of the forwarded message."
           regexp))
 
 (defcustom vm-forwarded-headers-plain
-  '("From:" "To:" "Cc:" "Subject:" "Date:" "In-Reply-To:")
+  '("From:" "To:" "Newsgroups:" "Cc:" "Subject:" "Date:" "In-Reply-To:")
   "*List of headers that should be forwarded by `vm-forward-message-plain'.
 The headers should be listed in the order you wish them to appear in the
 forwarded message.  Regular expressions are allowed.  There's no need to
@@ -3310,7 +3316,7 @@ A nil value means to use plain text digests."
 (defcustom vm-rfc934-digest-headers
   '("Resent-"
     "From:" "Sender:"
-    "To:" "Cc:"
+    "To:" "Newsgroups:" "Cc:"
     "Subject:"
     "Date:"
     "Message-ID:"
@@ -3361,7 +3367,7 @@ of the digestified messages."
   '("Resent-"
     "Date:"
     "From:" "Sender:"
-    "To:" "Cc:"
+    "To:" "Newsgroups:" "Cc:"
     "Subject:"
     "Message-ID:"
     "Keywords:")
@@ -3410,7 +3416,7 @@ the digestified messages."
 (defcustom vm-mime-digest-headers
   '("Resent-"
     "From:" "Sender:"
-    "To:" "Cc:"
+    "To:" "Newsgroups:" "Cc:"
     "Subject:"
     "Date:"
     "Message-ID:"
@@ -3462,7 +3468,7 @@ of the digestified messages."
 (defcustom vm-resend-bounced-headers
   '("MIME-Version:" "Content-"
     "From:" "Sender:" "Reply-To:"
-    "To:" "Cc:"
+    "To:" "Newsgroups:" "Cc:"
     "Subject:"
     "Newsgroups:"
     "In-Reply-To:" "References:"
