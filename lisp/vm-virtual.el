@@ -168,7 +168,7 @@ all the real folder buffers involved."
 		   (setq buffer folder)
 		   (setq components (cons (cons buffer nil) components))
 		   (set-buffer folder))
-		  ((setq buffer (vm-get-file-buffer folder))
+		  ((setq buffer (vm-get-folder-buffer folder))
 		   (setq components (cons (cons buffer nil) components))
 		   (set-buffer buffer))
 		  (t

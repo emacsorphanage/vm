@@ -847,30 +847,48 @@ visited folder."
 	(vm-search-other-frames nil))
     (vm-visit-imap-folder folder read-only)))
 
-;; The following function is from vm-rfaddons.el.       USR, 2011-02-28
 
+;;;###autoload
+(defun vm-folder-buffers (&optional non-virtual)
+  "Return the list of buffer names that are currently visiting VM
+folders.  The optional argument NON-VIRTUAL says that only 
+non-virtual folders should be returned."
+  (save-excursion
+    (let ((buffers (buffer-list))
+          (modes (if non-virtual '(vm-mode) '(vm-mode vm-virtual-mode)))
+          folders)
+      (while buffers
+        (set-buffer (car buffers))
+        (if (member major-mode modes)
+            (setq folders (cons (buffer-name) folders)))
+        (setq buffers (cdr buffers)))
+      folders)))
+(defalias 'vm-folder-list 'vm-folder-buffers)
+
+;; The following function is from vm-rfaddons.el.       USR, 2011-02-28
 ;;;###autoload
 (defun vm-switch-to-folder (folder-name)
   "Switch to another opened VM folder and rearrange windows as with a scroll."
   (interactive (list
-                (let ((fl (vm-folder-list))
-                      (f vm-switch-to-folder-history) d)
+                (let* ((buffers (vm-folder-buffers))
+		       (history vm-switch-to-folder-history) 
+		       pos default)
                   (if (member major-mode
                               '(vm-mode vm-presentation-mode
                                         vm-summary-mode))
                       (save-excursion
                         (vm-select-folder-buffer)
-                        (setq fl (delete (buffer-name) fl))))
-                  (while f
-                    (setq d (car f) f (cdr f))
-                    (if (member d fl)
-                        (setq f nil)))
+                        (setq buffers (delete (buffer-name) buffers))))
+		  (setq pos (vm-find history
+				     (lambda (f) (member f buffers))))
+		  (if pos (setq default (nth pos history)))
                   (completing-read
-                   (format "Foldername%s: " (if d (format " (%s)" d) ""))
-                   (mapcar (lambda (f) (list f)) (vm-folder-list))
+                   (format "Foldername%s: " 
+			   (if default (format " (%s)" default) ""))
+                   (mapcar (lambda (b) (list b)) (vm-folder-buffers))
                    nil t nil
                    'vm-switch-to-folder-history
-                   d))))
+                   default))))
 
   (switch-to-buffer folder-name)
   (vm-select-folder-buffer-and-validate 0 (interactive-p))
@@ -879,6 +897,18 @@ visited folder."
     (vm-display nil nil '(vm-scroll-forward vm-scroll-backward)
                 (list this-command 'reading-message))
     (vm-update-summary-and-mode-line)))
+
+;;;###autoload
+(defun vm-get-folder-buffer (folder)
+  "Returns the buffer visiting FOLDER if it exists, nil otherwise."
+  (let ((buffers (vm-folder-buffers))
+	pos)
+    (setq pos 
+	  (vm-find buffers
+		   (lambda (b) 
+		     (with-current-buffer b
+		       (equal folder (vm-folder-name))))))
+    (and pos (get-buffer (nth pos buffers)))))
 
 
 (put 'vm-virtual-mode 'mode-class 'special)

@@ -1574,7 +1574,7 @@ B and E are the beginning and end of the marked region or the current line."
   "Save all VM folder buffers, BBDB and newsrc if GNUS is started."
   (interactive)
   (save-excursion
-    (let ((folders (vm-folder-list)))
+    (let ((folders (vm-folder-buffers)))
       (while folders
         (set-buffer (car folders))
         (message "Saving <%S>" (car folders))

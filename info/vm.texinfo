@@ -5384,6 +5384,15 @@ current buffer will be the folder containing the message and the
 start and end of the message will be bracketed by (point-min) and
 (point-max).
 
+@item vm-save-message-hook
+@vindex vm-save-message-hook
+List of hook fucntions called every time a message is saved to a folder.
+When the hooks are called, the current buffer will be the folder containing
+the message and the start and end of the message will be bracketed by
+(point-min) and (point-max).  The hooks are calle with one argument, a
+string denoting the folder where the message was saved.  The folder could be
+a file name or the maildrop specification of an IMAP mailbox.
+
 @item vm-arrived-message-hook
 @vindex vm-arrived-message-hook
 List of hook functions called once for each message gathered from the
