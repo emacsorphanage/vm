@@ -3156,7 +3156,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 	     (if (not (file-exists-p name))
 		 (vm-mime-error "file %s does not exist" name))
 	     (condition-case data
-		 (insert-file-contents name)
+		 (insert-file-contents-literally name)
 	       (error (signal 'vm-mime-error (cdr data))))))
 	  ((and (string= access-method "url")
 		vm-url-retrieval-methods)
@@ -3218,7 +3218,7 @@ LAYOUT is the MIME layout struct for the message/external-body object."
 		      (setq name (concat "/" user "@" site ":"
 					 name))))
 	       (condition-case data
-		   (insert-file-contents name)
+		     (insert-file-contents-literally name)
 		 (error (signal 'vm-mime-error
 				(format "%s" (cdr data)))))))))))
 
