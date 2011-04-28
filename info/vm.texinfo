@@ -3540,10 +3540,11 @@ worry about the duplicate copies any further.  (@xref{Hooks}.)
 @node Editing Messages, Marking Messages, Deleting Messages, Top
 @chapter Editing Messages
 
+@kindex C-c C-e
 @findex vm-edit-message
-To edit a message, type (@code{M-x vm-edit-message}).  The current
-message is copied into a temporary buffer, and this buffer is selected
-for editing.  The major mode of this buffer is controlled by the
+To edit a message, type @kbd{C-c C-e} (@code{vm-edit-message}).  The
+current message is copied into a temporary buffer, and this buffer is
+selected for editing.  The major mode of this buffer is controlled by the
 variable @code{vm-edit-message-mode}.  The default is Text mode.
 
 @kindex C-c ESC

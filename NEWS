@@ -27,6 +27,14 @@ VM 8.2.0a (2011-02-28)
               (vm-current-key-bindings)
      Or, you might bind these keys to some other operations of your choice.
 
+     However, `vm-edit-message' is available via a new key binding `C-c
+     C-e'. 
+
+   * The default settings of `vm-mime-deleteable-types' and
+     `vm-mime-saveable-types' do not include the types listed in
+     `vm-mime-external-content-types-alist'.  You might need to add them
+     explicitly in your vm-preferences-file.
+
    * The variable name `vm-auto-displayed-mime-content-types' changed
      to `vm-mime-auto-displayed-content-types' for consistency with
      other variable names.  (The corresponding `-exceptions' variable

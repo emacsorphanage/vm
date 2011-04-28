@@ -5757,6 +5757,7 @@ the users or bound to other functions in future versions of VM."
     (define-key map "U" 'vm-mark-message-unread)
     (define-key map "." 'vm-mark-message-read)
     (define-key map "e" 'vm-optional-key)
+    (define-key map "\C-c\C-e" 'vm-edit-message)
     (define-key map "a" 'vm-optional-key)
     (define-key map "j" 'vm-discard-cached-data)
     (define-key map "k" 'vm-kill-subject)
