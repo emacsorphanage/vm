@@ -60,9 +60,11 @@
 ;; vm-thread-indentation : (message) -> integer
 ;; vm-thread-subtree : (message or symbol) -> message list
 ;; vm-thread-count : (message or symbol) -> integer
+;; vm-subject-symbol: (message) -> symbol
 ;;
 ;; The thread-obarray and thread-subject-obarray properties
 ;;
+;; vm-th-thread-symbol: (message) -> symbol
 ;; vm-th-messages-of : symbol -> message list
 ;; vm-th-message-of : symbol -> message or nil
 ;; vm-th-children-of : symbol -> symbol list
@@ -126,7 +128,7 @@ Otherwise nil is returned."
 	 (intern (vm-su-message-id m) vm-thread-obarray))))
 
 ;;;###autoload
-(defun vm-ts-subject-symbol (m)
+(defun vm-subject-symbol (m)
   "Returns the interned symbol of message M which carries the
 subject-based threading information.  Threads should have been built
 before this.  Otherwise nil is returned."
@@ -134,6 +136,9 @@ before this.  Otherwise nil is returned."
     (and (vectorp vm-thread-subject-obarray)
 	 (intern (vm-so-sortable-subject m) vm-thread-subject-obarray))))
 
+
+(defsubst vm-th-thread-symbol (m)
+  (intern (vm-su-message-id m) vm-thread-obarray))
 
 (defsubst vm-th-youngest-date-of (id-sym)
   (get id-sym 'youngest-date))
@@ -214,6 +219,9 @@ youngest or oldest date in its thread.  CRITERION must be one of
 (defsubst vm-th-set-date-of (id-sym date)
   (put id-sym 'date date))
 
+(defsubst vm-ts-subject-symbol (m)
+  (intern (vm-so-sortable-subject m) vm-thread-subject-obarray))
+
 (defsubst vm-ts-root-of (subject-sym)
   (aref (symbol-value subject-sym) 0))
 
@@ -244,7 +252,7 @@ youngest or oldest date in its thread.  CRITERION must be one of
 (defun vm-th-new-thread-symbol (m)
   "Create a new thread symbol for message M and intitialize its parent
 and child pointers."
-  (let ((id-sym (intern (vm-su-message-id m) vm-thread-obarray)))
+  (let ((id-sym (vm-th-thread-symbol m)))
     (vm-th-set-parent-of id-sym nil)
     (vm-th-set-children-of id-sym nil)
     id-sym))
@@ -551,9 +559,7 @@ all its ancestors, followed via the parent links."
       (when (vm-th-message-of id-sym) 
 	(setq msg (vm-th-message-of id-sym))))
     (when msg 
-      (setq subject-sym (intern
-			 (vm-so-sortable-subject msg)
-			 vm-thread-subject-obarray))
+      (setq subject-sym (vm-ts-subject-symbol msg))
       (when (boundp subject-sym)
 	(setq id-sym (vm-ts-root-of subject-sym))
 	(vm-th-clear-subtree-of id-sym)))))
@@ -591,12 +597,12 @@ with other ancestors."
     (while mp
       (setq m (car mp)
 	    id (vm-su-message-id m)
-	    id-sym (intern id vm-thread-obarray)
+	    id-sym (vm-th-thread-symbol m)
 	    date (vm-so-sortable-datestring m))
       (when (member id vm-traced-message-ids)
 	(vm-thread-debug 'vm-build-subject-threads id m))
       (setq subject (vm-so-sortable-subject m)
-	    subject-sym (intern subject vm-thread-subject-obarray))
+	    subject-sym (vm-ts-subject-symbol m))
       (when (member subject vm-traced-message-subjects)
 	(vm-thread-debug 'vm-build-subject-threads id m))
       ;; -------------- atomic block -------------------------------
@@ -689,7 +695,7 @@ symbols interned in vm-thread-obarray."
     (setq m message)
     (with-current-buffer (vm-buffer-of m)
       (fillarray vm-thread-loop-obarray 0)
-      (setq id-sym (intern (vm-su-message-id m) vm-thread-obarray)
+      (setq id-sym (vm-th-thread-symbol m)
 	    thread-list (list id-sym))
       (when (member (symbol-name id-sym) vm-traced-message-ids)
 	(vm-thread-debug 'vm-build-thread-list id-sym))
@@ -727,9 +733,7 @@ symbols interned in vm-thread-obarray."
 	       (setq done t))
 	      ((null vm-thread-using-subject)
 	       (setq done t))
-	      ((and (setq subject-sym
-			  (intern (vm-so-sortable-subject m)
-				  vm-thread-subject-obarray))
+	      ((and (setq subject-sym (vm-ts-subject-symbol m))
 		    (or (not (boundp subject-sym))
 			(and (eq (vm-ts-root-of subject-sym) id-sym)
 			     (eq m (vm-th-message-of id-sym)))))
@@ -798,9 +802,8 @@ mean?)                                         USR, 2011-03-17"
   (let ((inhibit-quit t)
 	date id-sym s-sym p-sym root-sym)
     ;; handles for the thread and thread-subject databases
-    (setq id-sym (intern (vm-su-message-id m) vm-thread-obarray))
-    (setq s-sym (intern (vm-so-sortable-subject m)
-			vm-thread-subject-obarray))
+    (setq id-sym (vm-th-thread-symbol m))
+    (setq s-sym (vm-ts-subject-symbol m))
     (if (member (symbol-name id-sym) vm-traced-message-ids)
 	(vm-thread-debug 'vm-unthread-message id-sym))
     (if (member (symbol-name s-sym) vm-traced-message-subjects)
@@ -819,7 +822,7 @@ mean?)                                         USR, 2011-03-17"
       (vm-th-set-oldest-date-of id-sym date)
       ;; if message changed, remove it from the thread tree
       ;; not clear what is going on.  USR, 2010-07-24
-      (when message-changing
+      (when (and message-changing (null (vm-th-message-of id-sym)))
 	(setq p-sym (vm-th-parent-of id-sym))
 	(when p-sym 
 	  (vm-th-delete-child p-sym id-sym))
@@ -842,7 +845,7 @@ mean?)                                         USR, 2011-03-17"
 	   (t
 	    (let ((p (remq m (vm-ts-messages-of s-sym)))
 		  oldest-msg oldest-date children)
-	      (setq oldest-msg (vm-th-message-of (vm-thread-symbol (car p))))
+	      (setq oldest-msg (vm-th-message-of (vm-th-thread-symbol (car p))))
 	      (setq oldest-date (vm-so-sortable-datestring (car p)))
 	      (setq p (cdr p))
 	      (while p
@@ -850,10 +853,10 @@ mean?)                                         USR, 2011-03-17"
 			    (vm-so-sortable-datestring (car p))
 			    oldest-date))
 		  (setq oldest-msg (vm-th-message-of 
-				    (vm-thread-symbol (car p)))
+				    (vm-th-thread-symbol (car p)))
 			oldest-date (vm-so-sortable-datestring (car p))))
 		(setq p (cdr p)))
-	      (setq root-sym (vm-thread-symbol oldest-msg))
+	      (setq root-sym (vm-th-thread-symbol oldest-msg))
 	      (vm-th-clear-cached-data root-sym root-sym)
 	      (vm-ts-set-root-of s-sym root-sym)
 	      (vm-ts-set-root-date-of s-sym oldest-date)
@@ -1053,7 +1056,7 @@ Threads should have been built for this function to work."
     (if (symbolp msg)
 	(setq m-sym msg
 	      msg (vm-th-message-of msg))
-      (setq m-sym (vm-thread-symbol msg)))
+      (setq m-sym (vm-th-thread-symbol msg)))
     (unless m-sym
       (vm-thread-debug 'vm-thread-subtree m-sym)
       (signal 'vm-thread-error (list 'vm-thread-subtree)))
