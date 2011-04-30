@@ -31,7 +31,7 @@
 (declare-function button-press-event-p "vm-xemacs" (object))
 (declare-function button-release-event-p "vm-xemacs" (object))
 (declare-function menu-event-p "vm-xemacs" (object))
-
+(declare-function vm-folder-buffers "vm" ())
 
 (defun vm-minibuffer-complete-word (&optional exiting)
   (interactive)

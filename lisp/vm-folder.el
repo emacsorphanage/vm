@@ -5200,7 +5200,7 @@ Gives an error if unable to retrieve message."
 	 (vm-set-line-count-of mm nil)
 	 (vm-set-byte-count-of mm nil)
 	 ;; update the virtual messages
-	 (vm-update-virtual-messages mm)
+	 (vm-update-virtual-messages mm :message-changing nil)
 	 (vm-restore-buffer-modified-p modified (vm-buffer-of mm))
 
 	 (vm-assert (eq (point) (marker-position (vm-text-of mm))))
@@ -5300,7 +5300,7 @@ the folder is saved."
 	     (vm-set-body-to-be-retrieved-flag mm t)
 	     (vm-set-body-to-be-discarded-flag mm nil)
 	     (vm-set-line-count-of mm nil)
-	     (vm-update-virtual-messages mm)
+	     (vm-update-virtual-messages mm :message-changing nil)
 	     (vm-restore-buffer-modified-p modified (vm-buffer-of mm)))
 	 (if (y-or-n-p
 	      (concat "VM internal error: "

@@ -530,10 +530,14 @@ message with ID-SYM and all its descendants."
 	(vm-th-children-of id-sym)))
 
 (defun vm-th-clear-subtree-of (id-sym)
-  "Clear the thread-subtree of the canonical message with ID-SYM, i.e.,
-set it to nil.  It will get recalculated on demand."
-  (when (vm-th-message-of id-sym)
-    (vm-set-thread-subtree-of (vm-th-message-of id-sym) nil)))
+  "Clear the thread-subtrees of the messages with ID-SYM, i.e.,
+set them to nil.  They will get recalculated on demand."
+  ;; (when (vm-th-message-of id-sym)
+  ;;   (vm-set-thread-subtree-of (vm-th-message-of id-sym) nil))
+  (mapc (lambda (m) 
+  	  (vm-set-thread-subtree-of m nil))
+  	(vm-th-messages-of id-sym))
+  )
 
 (defun vm-th-clear-subtree (id-sym)
   "Clear the thread subtrees of the messages with id-symbol ID-SYM and
@@ -792,7 +796,7 @@ be different if the message contents changed.  (What does this
 mean?)                                         USR, 2011-03-17"
   ;; -------------- atomic block -------------------------------
   (let ((inhibit-quit t)
-	date id-sym s-sym p-sym)
+	date id-sym s-sym p-sym root-sym)
     ;; handles for the thread and thread-subject databases
     (setq id-sym (intern (vm-su-message-id m) vm-thread-obarray))
     (setq s-sym (intern (vm-so-sortable-subject m)
@@ -826,7 +830,7 @@ mean?)                                         USR, 2011-03-17"
       (if (eq id-sym (vm-ts-root-of s-sym))
 	  ;; (when message-changing
 	  (cond
-	   ;; duplicate copy present
+	   ;; duplicate copy present, so keep the root id-sym.
 	   ;; FIXME the thread-subtree of the duplicate copy has to be
 	   ;; cleared somehow.
 	   ((vm-th-message-of id-sym)	
@@ -849,12 +853,11 @@ mean?)                                         USR, 2011-03-17"
 				    (vm-thread-symbol (car p)))
 			oldest-date (vm-so-sortable-datestring (car p))))
 		(setq p (cdr p)))
-	      (vm-ts-set-root-of 
-	       s-sym (intern (vm-su-message-id oldest-msg)
-			     vm-thread-obarray))
+	      (setq root-sym (vm-thread-symbol oldest-msg))
+	      (vm-th-clear-cached-data root-sym root-sym)
+	      (vm-ts-set-root-of s-sym root-sym)
 	      (vm-ts-set-root-date-of s-sym oldest-date)
-	      (setq children (remq (vm-thread-symbol oldest-msg)
-				   (vm-ts-members-of s-sym)))
+	      (setq children (remq root-sym (vm-ts-members-of s-sym)))
 	      (vm-ts-set-members-of s-sym children)
 	      (vm-ts-set-messages-of
 	       s-sym (remq m (vm-ts-messages-of s-sym)))
@@ -866,8 +869,9 @@ mean?)                                         USR, 2011-03-17"
 			 (vm-th-messages-of c-sym)))
 		      children)))))
 	;; )
-	(vm-ts-set-members-of 
-	 s-sym (remq id-sym (vm-ts-members-of s-sym)))
+	(unless (vm-th-message-of id-sym)
+	  (vm-ts-set-members-of 
+	   s-sym (remq id-sym (vm-ts-members-of s-sym))))
 	(vm-ts-set-messages-of 
 	 s-sym (remq m (vm-ts-messages-of s-sym)))
 	)))
@@ -891,7 +895,7 @@ mean?)                                         USR, 2011-03-17"
 	(m (car vm-message-pointer))
 	(m-sym (vm-thread-symbol (car vm-message-pointer))))
     ;; (vm-thread-mark-for-summary-update (list m))
-    (vm-unthread-message m)
+    (vm-unthread-message m :message-changing t)
     (unless (vm-th-safe-parent-p m-sym p-sym)
       (error "Attaching to thread will create a cycle"))
     (vm-th-set-parent-of m-sym p-sym)

@@ -46,6 +46,8 @@
 		  (folder &optional read-only bookmark))
 (declare-function vm-mode "vm" 
 		  (&optional read-only))
+(declare-function vm-get-folder-buffer "vm"
+		  (folder))
 
 
 ;;;###autoload
@@ -801,7 +803,7 @@ real or virtual)."
 	       (when (vm-virtual-messages-of m)
 		 (dolist (v-m (vm-virtual-messages-of m))
 		   (vm-set-message-id-number-of v-m "Q"))
-		 (vm-unthread-message-and-mirrors m)
+		 (vm-unthread-message-and-mirrors m :message-changing nil)
 		 (vm-set-virtual-messages-of m nil)))
 	     (dolist (virtual-buf vm-virtual-buffers)
 	       (set-buffer virtual-buf)

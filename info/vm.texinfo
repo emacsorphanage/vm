@@ -6124,10 +6124,16 @@ information for the POP servers.  VM refrains from retrieving these
 messages again in future in order to avoid duplication.
 @item
 @inindex X-VM-IMAP-Retrieved
-X-VM-IMAP-Retrieved. This header lists all the messages that have
-been retrieved from IMAP servers together with the identifying
-information for the IMAP servers.  VM refrains from retrieving these
-messages again in future in order to avoid duplication.
+X-VM-IMAP-Retrieved. This header lists messages that have been retrieved
+from IMAP servers together with their identifying information on the IMAP
+servers (UID and UIDVALIDITY).  VM refrains from retrieving these messages
+again in future in order to avoid duplication.  (For local folders, this
+lists all the retrieved messages except those known to be expunged on the
+server.  For IMAP folders, it does not list all the retrieved messages
+because they are normally the same as those on the server.  Only the
+messages locally expunged in the cache folder but not known to be expunged
+on the server are listed.  In the normal cases, the variable is just nil in
+IMAP folders.)
 @end itemize
 
 Internal to Emacs, VM stores the folder as simply a text buffer.  However, it

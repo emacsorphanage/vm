@@ -413,7 +413,8 @@ ignored."
 		   (vm-mark-of (car mp)))))
 	;; remove the message from the thread tree.
 	(if (vectorp vm-thread-obarray)
-	    (vm-unthread-message-and-mirrors (vm-real-message-of (car mp))))
+	    (vm-unthread-message-and-mirrors 
+	     (vm-real-message-of (car mp)) :message-changing t))
 	;; expunge from the virtual side first, removing all
 	;; references to this message before actually removing
 	;; the message itself.

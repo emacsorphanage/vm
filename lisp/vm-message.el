@@ -572,25 +572,28 @@ works in all VM buffers."
 (defsubst vm-virtual-message-p (m)
   (not (eq m (vm-real-message-of m))))
 
-(defun vm-update-virtual-messages (m)
+(defun vm-update-virtual-messages (m &key message-changing)
   "Update all the virtual messages of M to reflect the changes made to
 the headers/body of M."
   (save-excursion
-    (dolist (v-m (vm-virtual-messages-of m))
-      (vm-set-mime-layout-of v-m nil)
-      (vm-set-mime-encoded-header-flag-of v-m nil)
-      (vm-set-line-count-of v-m nil)
-      (when (buffer-name (vm-buffer-of v-m))
-	(set-buffer (vm-buffer-of v-m))
-	(if (and vm-presentation-buffer
-		 (eq (car vm-message-pointer) v-m))
-	    (save-excursion (vm-present-current-message)))
-	(when (vectorp vm-thread-obarray)
-	  (vm-unthread-message m :message-changing nil)
-	  (vm-build-threads (list v-m)))
-	;; (if vm-summary-show-threads
-	;;     (intern (buffer-name) buffers-needing-thread-sort))
-	))))
+    (mapc (lambda (v-m)
+	    (vm-set-mime-layout-of v-m nil)
+	    (vm-set-mime-encoded-header-flag-of v-m nil)
+	    (vm-set-line-count-of v-m nil)
+	    (when (buffer-name (vm-buffer-of v-m))
+	      (set-buffer (vm-buffer-of v-m))
+	      (if (and vm-presentation-buffer
+		       (eq (car vm-message-pointer) v-m))
+		  (save-excursion (vm-present-current-message)))
+	      (when (vectorp vm-thread-obarray)
+		;; this was changed from v-m to m in revision 1148, but it
+		;; doesn't make sense. USR, 2011-04-28 
+		(vm-unthread-message v-m :message-changing message-changing)
+		(vm-build-threads (list v-m)))
+	      ;; (if vm-summary-show-threads
+	      ;;     (intern (buffer-name) buffers-needing-thread-sort))
+	      ))
+	  (vm-virtual-messages-of m))))
 
 (defun vm-pp-message (m)
   (pp
