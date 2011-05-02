@@ -484,9 +484,10 @@ that the folder should be considered read only.  No attribute
 changes, messages additions or deletions will be allowed in the
 visited folder.
 
-The optional third arg REVISIT says that, if the folder is already
-visited, then it should be merely selected without doing further
-processing (such as moving the message-pointer or getting new mail)."
+The optional third arg REVISIT (not available interactively) says
+that, if the folder is already visited, then it should be merely
+selected without doing further processing (such as moving the
+message-pointer or getting new mail)."
   (interactive
    (save-current-buffer
      (vm-session-initialization)

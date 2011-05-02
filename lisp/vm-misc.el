@@ -492,16 +492,16 @@ well-behaved."
       (apply proc arglist)
       (setq lists (mapcar 'cdr lists)))))
 
-(defun vm-delete (predicate list &optional reverse)
-  "Delete all elements satisfying PREDICATE from LIST and return the
-resulting list.  If optional argument REVERSE is t, then delete all
-elements that do not satisfy PREDICATE.  The original LIST is
-permanently modified." 
+(defun vm-delete (predicate list &optional retain)
+  "Delete all elements satisfying PREDICATE from LIST and return
+the resulting list.  If optional argument RETAIN is t, then
+retain all elements that satisfy PREDICATE rather than deleting
+them.  The original LIST is permanently modified."
   (let ((p list) 
-	(reverse (if reverse 'not 'identity))
+	(retain (if retain 'not 'identity))
 	prev)
     (while p
-      (if (funcall reverse (funcall predicate (car p)))
+      (if (funcall retain (funcall predicate (car p)))
 	  (if (null prev)
 	      (setq list (cdr list) p list)
 	    (setcdr prev (cdr p))

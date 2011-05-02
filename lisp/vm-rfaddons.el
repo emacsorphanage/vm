@@ -81,6 +81,8 @@
   (require 'vm-sort)
   (require 'vm-reply)
   (require 'vm-pine)
+  (require 'wid-edit)
+  (require 'vm)
 )
 
 (declare-function bbdb-record-raw-notes "ext:bbdb" (record))
@@ -92,12 +94,8 @@
 (declare-function smtpmail-via-smtp-server "ext:smtpmail" ())
 (declare-function esmtpmail-send-it "ext:esmtpmail" ())
 (declare-function esmtpmail-via-smtp-server "ext:esmtpmail" ())
+(declare-function vm-folder-buffers "ext:vm" (&optional non-virtual))
 
-(defgroup vm-rfaddons nil
-  "Customize vm-rfaddons.el"
-  :group 'vm-ext)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-when-compile
   (require 'cl)
   (require 'advice)
@@ -109,6 +107,12 @@
 (vm-load-features '(bbdb))
 
 (if vm-xemacs-p (require 'overlay))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defgroup vm-rfaddons nil
+  "Customize vm-rfaddons.el"
+  :group 'vm-ext)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro vm-rfaddons-check-option (option option-list &rest body)
@@ -215,6 +219,7 @@ or do the binding and advising on your own."
   ;; vm-mail-mode -----------------------------------------------------------
   (vm-rfaddons-check-option
    'attach-save-files option-list
+   ;; this binding overrides the VM binding of C-c C-a to `vm-attach-file'
    (define-key vm-mail-mode-map "\C-c\C-a" 'vm-attach-files-in-directory))
   
   ;; check recipients headers for errors before sending
@@ -269,6 +274,7 @@ or do the binding and advising on your own."
        (after vm-shrunken-headers-ehh activate)
        "Shrink headers when viewing hidden headers."
        (vm-shrunken-headers))
+     ;; this overrides the VM binding of "T" to `vm-toggle-thread'
      (define-key vm-mode-map "T" 'vm-shrunken-headers-toggle)))
 
 ;; This is not needed any more because VM has $ commands to take
@@ -277,6 +283,7 @@ or do the binding and advising on your own."
   ;; take action on attachment binding
   (vm-rfaddons-check-option
    'take-action-on-attachment option-list
+   ;; this overrides the VM binding of "." to `vm-mark-message-as-read'
    (define-key vm-mode-map "."  'vm-mime-take-action-on-attachment))
   
 ;; This is not needed any more becaue it is in the core  

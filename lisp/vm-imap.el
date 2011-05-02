@@ -3715,19 +3715,29 @@ its components."
   "Caches the list of all folders on an IMAP account.")
 
 (defun vm-imap-folder-completion-list (string predicate flag)
+  "Find completions for STRING as an IMAP folder name, satisfying
+  PREDICATE.  The third argument FLAG is one of:
+
+`nil' - try-completion, returns string if there are mult possibilities,
+`t' - all-completions, returns a list of all completions,
+`lambda' - test-completion, test if the string is an exact match for a
+           possibility , and
+a pair (boundaries. SUFFIX) - completion-boundaries.
+
+See Info node `(elisp)Programmed Completion'."
   ;; selectable-only is used via dynamic binding
-  (let ((completion-list (mapcar (lambda (a) (list (concat (cadr a) ":")))
-				 vm-imap-account-alist))
-	folder account spec process mailbox-list)
+
+  (let ((account-list (mapcar (lambda (a) (list (concat (cadr a) ":")))
+			      vm-imap-account-alist))
+	completion-list folder account spec process mailbox-list)
     
     ;; check for account 
-    (setq folder (try-completion (or string "") completion-list predicate))
-    
-    ;; get folders of this account
+    (setq folder (try-completion (or string "") account-list predicate))
     (if (stringp folder)
 	(setq account (car (vm-parse folder "\\([^:]+\\):?" 1)))
       (setq account (car (vm-parse string "\\([^:]+\\):?" 1))))
     
+    ;; get folders of this account
     (when account
       (setq mailbox-list (cdr (assoc account vm-imap-account-folder-cache)))
       (setq spec (vm-imap-spec-for-account account))
@@ -3744,16 +3754,21 @@ its components."
 	  ;; unwind-protection
 	  (when process (vm-imap-end-session process))))
       (setq completion-list 
-	    (mapcar '(lambda (m) (list (format "%s:%s" account m))) mailbox-list))
+	    (mapcar '(lambda (m) (list (format "%s:%s" account m)))
+		    mailbox-list))
       (setq folder (try-completion (or string "") completion-list predicate)))
     
-    (setq folder (or folder ""))
+    (setq folder (or folder string))
     (if (eq folder t)
 	(setq folder string))
     (cond ((null flag)
 	   folder)
 	  ((or (eq t flag) (string= " " folder))
-	   (mapcar 'car completion-list))
+	   (mapcar 'car
+		   (vm-delete (lambda (c)
+				(string-prefix-p folder (car c)))
+			      completion-list t))
+	   )
 	  ((eq 'lambda flag)
 	   (try-completion folder completion-list predicate)))))
 
@@ -3784,7 +3799,7 @@ IMAP mailbox spec."
 	    (if (and default-account default-folder)
 		(format "(default %s:%s) " default-account default-folder)
 	      ""))
-	   'vm-imap-folder-completion-list
+	   'vm-imap-folder-completion-list ; collection
 	   nil				; predicate
 	   nil				; require-match
 	   (if default-account		; initial-input
