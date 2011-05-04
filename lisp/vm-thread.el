@@ -1056,7 +1056,7 @@ Threads should have been built for this function to work."
     (if (symbolp msg)
 	(setq m-sym msg
 	      msg (vm-th-message-of msg))
-      (setq m-sym (vm-th-thread-symbol msg)))
+      (setq m-sym (vm-thread-symbol msg)))
     (unless m-sym
       (vm-thread-debug 'vm-thread-subtree m-sym)
       (signal 'vm-thread-error (list 'vm-thread-subtree)))
