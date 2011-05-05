@@ -5034,7 +5034,7 @@ argument GARBAGE."
 (defun vm-headers-only-possible-p (m)
   "Check if the message M can be used in headers-only mode."
   (and vm-load-headers-only
-       (eq (vm-message-access-method-of mm) 'imap)))
+       (eq (vm-message-access-method-of m) 'imap)))
 
 ;;;###autoload
 (defun vm-load-message (&optional count)
@@ -5073,8 +5073,9 @@ thread are loaded."
 	    (setq mm (vm-real-message-of m))
 	    (set-buffer (vm-buffer-of mm))
 	    (if (vm-body-retrieved-of mm)
-		(if (vm-body-to-be-discarded-of mm)
-		    (vm-unregister-fetched-message mm))
+		(when (vm-body-to-be-discarded-of mm)
+		  (vm-unregister-fetched-message mm)
+		  (setq count (1+ count)))
 	      ;; else retrieve the body
 	      (setq n (1+ n))
 	      (vm-inform 8 "Retrieving message body... %s" n)
@@ -5087,7 +5088,7 @@ thread are loaded."
       ;; FIXME - is this needed?  Is it correct?
       (vm-display nil nil '(vm-load-message vm-refresh-message)
 		  (list this-command))	
-      (vm-mark-folder-modified-p)
+      (when (> count 0) (vm-mark-folder-modified-p))
       (vm-update-summary-and-mode-line))
       (if (= count 1)
 	  (vm-inform 5 "Message body loaded")
