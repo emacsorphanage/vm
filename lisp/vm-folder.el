@@ -5031,6 +5031,11 @@ argument GARBAGE."
 	  (cons 'vm-after-revert-buffer-hook after-revert-hook))
   (setq after-revert-hook (list 'vm-after-revert-buffer-hook)))
 
+(defun vm-headers-only-possible-p (m)
+  "Check if the message M can be used in headers-only mode."
+  (and vm-load-headers-only
+       (eq (vm-message-access-method-of mm) 'imap)))
+
 ;;;###autoload
 (defun vm-load-message (&optional count)
   "Load the message by retrieving its body from its
@@ -5074,11 +5079,10 @@ thread are loaded."
 	      (setq n (1+ n))
 	      (vm-inform 8 "Retrieving message body... %s" n)
 	      (vm-retrieve-real-message-body mm)
-	      )
-	    (setq count (1+ count))
+	      (setq count (1+ count))
+	      (when (> n 0)
+		(vm-inform 8 "Retrieving message body... done")))
 	    (setq mlist (cdr mlist)))
-	  (when (> n 0)
-	    (vm-inform 8 "Retrieving message body... done"))
       (intern (buffer-name) vm-buffers-needing-display-update)
       ;; FIXME - is this needed?  Is it correct?
       (vm-display nil nil '(vm-load-message vm-refresh-message)
@@ -5087,7 +5091,8 @@ thread are loaded."
       (vm-update-summary-and-mode-line))
       (if (= count 1)
 	  (vm-inform 5 "Message body loaded")
-	(vm-inform 5 "%d message bodies loaded" count)))
+	(vm-inform 5 "%s message bodies loaded" 
+		   (if (= count 0) "No" count))))
     ))
 
 ;;;###autoload
@@ -5259,60 +5264,62 @@ the folder is saved."
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
-	(cond ((vm-body-to-be-retrieved-of mm))
+	(cond ((null (vm-headers-only-possible-p mm)))
+	      ((vm-body-to-be-retrieved-of mm))
 	      ((vm-body-to-be-discarded-of mm)
-	       (if physical
-		   (vm-discard-real-message-body mm)))
+	       (when physical
+		 (vm-discard-real-message-body mm)
+		 (setq count (1+ count))))
 	      (t
 	       (if physical
 		   (vm-discard-real-message-body mm)
 		 ;; Register the message as fetched instead of actually
 		 ;; discarding the message
-		 (vm-register-fetched-message mm))))
-	(setq mlist (cdr mlist))
-	(setq count (1+ count))))
+		 (vm-register-fetched-message mm))
+	       (setq count (1+ count))))
+	(setq mlist (cdr mlist))))
     (if (= count 1) 
 	(vm-inform 5 "Message body discarded")
-      (vm-inform 5 "%d message bodies discarded" count))
+      (vm-inform 5 "%s message bodies discarded" 
+		 (if (= count 0) "No" count)))
     (vm-mark-folder-modified-p)
     (vm-update-summary-and-mode-line)
     ))
 
 (defun vm-discard-real-message-body (mm)
   "Discard the real message body of MM from its Folder buffer."
-  (when (not (eq (vm-message-access-method-of mm) 'imap))
-    (error "This is currently available only for imap folders."))
-  (save-current-buffer
-    (set-buffer (vm-buffer-of mm))
-    (vm-save-restriction
-     (widen)
-     (let ((inhibit-read-only t)
-	   ;; (buffer-read-only nil)     ; seems redundant
-	   (modified (buffer-modified-p)))
-       (goto-char (vm-text-of mm))
-       ;; Check to see that we are at the right place
-       (if (or (bobp)
-	       (save-excursion (forward-line -1) (looking-at "\n")))
-	   (progn
-	     (delete-region (point) (vm-text-end-of mm))
-	     ;; (vm-mark-folder-modified-p (current-buffer)) ; do we need this?
-	     (vm-set-mime-layout-of mm nil)
-	     (vm-set-body-to-be-retrieved-flag mm t)
-	     (vm-set-body-to-be-discarded-flag mm nil)
-	     (vm-set-line-count-of mm nil)
-	     (vm-update-virtual-messages mm :message-changing nil)
-	     (vm-restore-buffer-modified-p modified (vm-buffer-of mm)))
-	 (if (y-or-n-p
-	      (concat "VM internal error: "
-		       "headers of a message have been corrupted. "
-		       "Continue? "))
+  (if (not (vm-headers-only-possible-p mm))
+      (vm-set-body-to-be-discarded-flag mm nil)
+    (save-current-buffer
+      (set-buffer (vm-buffer-of mm))
+      (vm-save-restriction
+       (widen)
+       (let ((inhibit-read-only t)
+	     ;; (buffer-read-only nil)     ; seems redundant
+	     (modified (buffer-modified-p)))
+	 (goto-char (vm-text-of mm))
+	 ;; Check to see that we are at the right place
+	 (if (or (bobp)
+		 (save-excursion (forward-line -1) (looking-at "\n")))
 	     (progn
-	       (vm-warn 1 5 (concat "The damaged message, with UID %s, "
-				    "is left in the folder")
-			(vm-imap-uid-of mm))
-	       (vm-set-body-to-be-discarded-flag mm nil))
-	   (error "Aborted operation")))
-       ))))
+	       (delete-region (point) (vm-text-end-of mm))
+	       (vm-set-mime-layout-of mm nil)
+	       (vm-set-body-to-be-retrieved-flag mm t)
+	       (vm-set-body-to-be-discarded-flag mm nil)
+	       (vm-set-line-count-of mm nil)
+	       (vm-update-virtual-messages mm :message-changing nil)
+	       (vm-restore-buffer-modified-p modified (vm-buffer-of mm)))
+	   (if (y-or-n-p
+		(concat "VM internal error: "
+			"headers of a message have been corrupted. "
+			"Continue? "))
+	       (progn
+		 (vm-warn 1 5 (concat "The damaged message, with UID %s, "
+				      "is left in the folder")
+			  (vm-imap-uid-of mm))
+		 (vm-set-body-to-be-discarded-flag mm nil))
+	     (error "Aborted operation")))
+	 )))))
 
 
 ;;; vm-folder.el ends here
