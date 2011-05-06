@@ -152,6 +152,46 @@
 (defsubst vm-set-folder-imap-retrieved-count (val)
   (aset vm-folder-access-data 12 val))
 
+;; The following functions are based on cached folder-access-data.
+;; They will only function when the IMAP process is "valid" and the
+;; server message data is non-nil.
+
+(defun vm-folder-imap-msn-uid (n)
+  "Returns the UID of the message sequence number N on the IMAP
+server, using cached data."
+  (let ((cell (assq n (vm-folder-imap-uid-list))))
+    (nth 1 cell)))
+
+(defun vm-folder-imap-msn-size (n)
+  "Returns the message size of the message sequence number N on the
+IMAP server, using cached data."
+  (let ((cell (assq n (vm-folder-imap-uid-list))))
+    (nth 2 cell)))
+
+(defun vm-folder-imap-msn--flags (n)
+  "Returns the message flags of the message sequence number N on the
+IMAP server, using cached data."
+  (let ((cell (assq n (vm-folder-imap-uid-list))))
+    (nthcdr 2 cell)))
+
+(defun vm-folder-imap-message-msn (m)
+  "Returns the message sequence number of message M on the IMAP
+server, using cached data."
+  (let ((uid-key (intern (vm-imap-uid-of m) (vm-folder-imap-uid-obarray))))
+    (and (boundp uid-key) (symbol-value uid-key))))
+
+(defun vm-folder-imap-message-size (m)
+  "Returns the size of the message M on the IMAP server,
+using cached data."
+  (let ((uid-key (intern (vm-imap-uid-of m) (vm-folder-imap-flags-obarray))))
+    (and (boundp uid-key) (car (symbol-value uid-key)))))
+
+(defun vm-folder-imap-message-flags (m)
+  "Returns the flags of the message M on the IMAP server,
+using cached data."
+  (let ((uid-key (intern (vm-imap-uid-of m) (vm-folder-imap-flags-obarray))))
+    (and (boundp uid-key) (cdr (symbol-value uid-key)))))
+
 ;; Status indicator vector
 ;; timer
 (defsubst vm-imap-status-timer (o) (aref o 0))
@@ -387,10 +427,18 @@ connection mode is then turned into 'online.")
 
 (defsubst vm-imap-fetch-message (process n use-body-peek 
 					   &optional headers-only)
+  "Fetch IMAP message with sequence number N via PROCESS, which
+must be a network connection to an IMAP server.  If the optional
+argument HEADERS-ONLY is non-nil, then only the headers are
+retrieved."
   (vm-imap-fetch-messages process n n use-body-peek headers-only))
 
 (defun vm-imap-fetch-messages (process beg end use-body-peek 
 				       &optional headers-only) 
+  "Fetch IMAP message with sequence numbers in the range BEG and
+END via PROCESS, which must be a network connection to an IMAP
+server.  If the optional argument HEADERS-ONLY is non-nil, then
+only the headers are retrieved."
   (let ((fetchcmd
          (if headers-only
              (if use-body-peek "(BODY.PEEK[HEADER])" "(RFC822.HEADER)")
@@ -399,6 +447,9 @@ connection mode is then turned into 'online.")
 
 (defsubst vm-imap-fetch-uid-message (process uid use-body-peek 
 					   &optional headers-only)
+  "Fetch IMAP message with UID via PROCESS, which must be a
+network connection to an IMAP server.  If the optional argument
+HEADERS-ONLY is non-nil, then only the headers are retrieved."
   (let ((fetchcmd
          (if headers-only
              (if use-body-peek "(BODY.PEEK[HEADER])" "(RFC822.HEADER)")
@@ -1003,9 +1054,6 @@ of the current folder."
 ;; numbers.  In this state, the IMAP session is "active", but not
 ;; "valid".  Only UID-based commands can be issued in this state.
 
-;; Create a process for a new IMAP session to the account SOURCE and
-;; return it.
-
 ;;;###autoload
 (defun vm-imap-make-session (source &optional interactive purpose)
   "Create a new IMAP session for the IMAP mail box SOURCE.
@@ -1371,18 +1419,18 @@ as well."
 
 (defun vm-imap-select-mailbox (process mailbox &optional 
 				       just-retrieve just-examine)
-  ;; I/O function to select an IMAP mailbox
-  ;;   PROCESS - the IMAP process
-  ;;   MAILBOX - the name of the mailbox to be selected
-  ;;   JUST-RETRIEVE - select the mailbox for retrieval, no writing
-  ;;   JUST-EXAMINE - select the mailbox in a read-only (examine) mode
-  ;; Returns a list containing:
-  ;;   int msg-count - number of messages in the mailbox
-  ;;   int recent-count - number of recent messages in the mailbox
-  ;;   string uid-validity - the UID validity value of the mailbox
-  ;;   bool read-write - whether the mailbox is writable
-  ;;   bool can-delete - whether the mailbox allows message deletion
-  ;;   server-response permanent-flags - permanent flags used in the mailbox
+  "I/O function to select an IMAP mailbox
+    PROCESS - the IMAP process
+    MAILBOX - the name of the mailbox to be selected
+    JUST-RETRIEVE - select the mailbox for retrieval, no writing
+    JUST-EXAMINE - select the mailbox in a read-only (examine) mode
+Returns a list containing:
+    int msg-count - number of messages in the mailbox
+    int recent-count - number of recent messages in the mailbox
+    string uid-validity - the UID validity value of the mailbox
+    bool read-write - whether the mailbox is writable
+    bool can-delete - whether the mailbox allows message deletion
+    server-response permanent-flags - permanent flags used in the mailbox."
 
   ;;------------------------------
   (vm-buffer-type:assert 'process)
@@ -1470,15 +1518,17 @@ as well."
     (nreverse list)))
 
 (defun vm-imap-get-uid-list (process first last)
-  ;; I/O function to read the uid's of a message range
-  ;;   PROCESS - the IMAP process
-  ;;   FIRST - message sequence number of the first message in the range
-  ;;   LAST - message sequene number of the last message in the range
-  ;; Returns an assoc list with pairs 
-  ;;   int msg-num - message sequence number of a message
-  ;;   string uid - uid of the message
-  ;; or nil indicating failure
-  ;; If there are no messages in the range then (nil) is returned
+  "I/O function to read the uid's of a message range
+    PROCESS - the IMAP process
+    FIRST - message sequence number of the first message in the range
+    LAST - message sequene number of the last message in the range
+Returns an alist with pairs 
+    int msg-num - message sequence number of a message
+    string uid - uid of the message
+or nil indicating failure
+If there are no messages in the range then (nil) is returned.
+
+See also `vm-imap-get-message-data-list' for a newer version of this function."
 
   (let ((list nil)
 	(imap-buffer (current-buffer))
@@ -1517,12 +1567,15 @@ as well."
 ;; caching uid-and-flags data might be too expensive.
 
 (defun vm-imap-get-message-data (process m uid-validity)
-  ;; I/O function to read the flags of a message
-  ;;   PROCESS  - The IMAP process
-  ;;   M - a vm-message
-  ;;   uid-validity -  the folder's uid-validity
-  ;; Returns (msg-num: int . uid: string . size: string . flags: string list)
-  ;; Throws vm-imap-protocol-error for failure.
+  "I/O function to read the flags of a message
+    PROCESS  - The IMAP process
+    M - a vm-message
+    uid-validity -  the folder's uid-validity
+Returns (msg-num: int . uid: string . size: string . flags: string list)
+Throws vm-imap-protocol-error for failure.
+
+See also `vm-imap-get-message-list' for a bulk version of this function."
+
   (let ((imap-buffer (current-buffer))
 	response tok need-ok msg-num list)
     (if (not (equal (vm-imap-uid-validity-of m) uid-validity))
@@ -1549,16 +1602,19 @@ as well."
 	
 
 (defun vm-imap-get-message-data-list (process first last)
-  ;; I/O function to read the flags of a message range
-  ;;   PROCESS - the IMAP process
-  ;;   FIRST - message sequence number of the first message in the range
-  ;;   LAST - message sequene number of the last message in the range
-  ;; Returns an assoc list with entries
-  ;;   int msg-num - message sequence number of a message
-  ;;   string uid - uid of the message
-  ;;   string size - message size
-  ;;   (string list) flags - list of flags for the message
-  ;; throws vm-imap-protocol-error for failure.
+  "I/O function to read the flags of a message range
+    PROCESS - the IMAP process
+    FIRST - message sequence number of the first message in the range
+    LAST - message sequene number of the last message in the range
+Returns an assoc list with entries
+    int msg-num - message sequence number of a message
+    string uid - uid of the message
+    string size - message size
+    (string list) flags - list of flags for the message
+throws vm-imap-protocol-error for failure.
+
+See `vm-imap-get-message-data' for getting the data for individual
+messages.  `vm-imap-get-uid-list' is an older version of this function."
 
   (let ((list nil)
 	(imap-buffer (current-buffer))
@@ -1684,10 +1740,10 @@ as well."
       (when work-buffer (kill-buffer work-buffer)))))
 
 (defun vm-imap-retrieve-to-target (process target statblob bodypeek)
-  ;; Read a mail message from PROCESS and store it in TARGET, which is
-  ;; either a file or a buffer.  Report status using STATBLOB.  The
-  ;; boolean BODYPEEK tells if the bodypeek function is available for
-  ;; the IMAP server.
+  "Read a mail message from PROCESS and store it in TARGET, which
+is either a file or a buffer.  Report status using STATBLOB.  The
+boolean BODYPEEK tells if the bodypeek function is available for
+the IMAP server."
   (vm-assert (not (null vm-imap-read-point)))
   (vm-imap-log-token 'retrieve)
   (let ((***start vm-imap-read-point)	; avoid dynamic binding of 'start'
@@ -1813,7 +1869,9 @@ as well."
 
 (defun vm-imap-get-message-size (process n)
   "Use imap PROCESS to query the size the message with sequence number
-N.  Returns the size."
+N.  Returns the size.
+
+See also `vm-imap-get-uid-message-size'."
   (let ((imap-buffer (current-buffer))
 	tok size response p
 	(need-size t)
@@ -1847,7 +1905,9 @@ N.  Returns the size."
 
 (defun vm-imap-get-uid-message-size (process uid)
   "Uses imap PROCESS to get the size of the message with UID.  Returns
-the size."
+the size.
+
+See also `vm-imap-get-message-size'."
   (let ((imap-buffer (current-buffer))
 	tok size response p
 	(need-size t)
@@ -2445,7 +2505,10 @@ tracing purposes. Returns the IMAP process or nil if unsuccessful."
 IMAP server in the current mail box.  The results are stored in
 `vm-folder-access-data' in the fields uid-list, uid-obarray and
 flags-obarray.
-Throws vm-imap-protocol-error for failure."
+Throws vm-imap-protocol-error for failure.
+
+This function is preferable to `vm-imap-get-uid-list' because it
+fetches flags in addition to uid's and stores them in obarrays."
   ;;------------------------------
   (if vm-buffer-type-debug
       (setq vm-buffer-type-trail 
@@ -2681,7 +2744,7 @@ server should be issued by UID, not message sequence number."
   ;; are not listed in PERMANENTFLAGS.  Removed unnecessary checks to
   ;; this effect.
 
-  ;; This is a hairy routine! There are 
+  ;; There are 
   ;; - monotonic flags that can only be set, and 
   ;; - reversible flags that can be set or unset.
   ;; For monotonic flags that are set in VM, we set them on the
@@ -2955,24 +3018,24 @@ operation of the server to minimize I/O."
 
 
 (defun vm-imap-get-synchronization-data (&optional do-retrieves)
-  ;; Compares the UID's of messages in the local cache and the IMAP
-  ;; server.  Returns a list containing:
-  ;; RETRIEVE-LIST: A list of pairs consisting of UID's and message
-  ;; sequence numbers of the messages that are not present in the
-  ;; local cache and not retrieved previously, and, hence, need to be
-  ;; retrieved now.
-  ;; REMOTE-EXPUNGE-LIST: A list of pairs consisting of UID's and message
-  ;; sequence numbers of the messages that are not present in the local cache,
-  ;; but have been retrieved previously and, hence, need to be expunged on the
-  ;; server. 
-  ;; LOCAL-EXPUNGE-LIST: A list of message descriptors for messages in the
-  ;; local cache which are not present on the server and, hence, need
-  ;; to expunged locally.
-  ;; STALE-LIST: A list of message descriptors for messages in the
-  ;; local cache whose uidvalidity values are stale.
-  ;; If the argument DO-RETRIEVES is 'full, then all the messages that
-  ;; are not presently in cache are retrieved.  Otherwise, the
-  ;; messages previously retrieved are ignored.
+  "Compares the UID's of messages in the local cache and the IMAP
+server.  Returns a list containing:
+  RETRIEVE-LIST: A list of pairs consisting of UID's and message
+  sequence numbers of the messages that are not present in the
+  local cache and not retrieved previously, and, hence, need to be
+  retrieved now.
+  REMOTE-EXPUNGE-LIST: A list of pairs consisting of UID's and message
+  sequence numbers of the messages that are not present in the local cache,
+  but have been retrieved previously and, hence, need to be expunged on the
+  server. 
+  LOCAL-EXPUNGE-LIST: A list of message descriptors for messages in the
+  local cache which are not present on the server and, hence, need
+  to expunged locally.
+  STALE-LIST: A list of message descriptors for messages in the
+  local cache whose uidvalidity values are stale.
+If the argument DO-RETRIEVES is 'full, then all the messages that
+are not presently in cache are retrieved.  Otherwise, the
+messages previously retrieved are ignored."
 
   ;; Comments by USR
   ;; - Originally, messages with stale UIDVALIDITY values were

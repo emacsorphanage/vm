@@ -6299,7 +6299,65 @@ applies, and any arguments needed for the action.
 @code{vm-undo-record-pointer}.  A pointer into the
 @code{vm-undo-record-list} indicating the current position of the
 undoing cycle.
+@end itemize
 
+@unnumberedsubsubsec POP and IMAP folders
+
+The component @code{vm-folder-access-data} of ?? is a vector storing data
+about the state of the mail server.  It contains the following items:
+
+@itemize
+@item
+@code{pop-maildrop-spec} or @code{imap-maildrop-spec}.
+MAILDROP specification of the server folder.
+@item
+@code{pop-process} or @code{imap-process}.
+The Emacs process being used to communicate with the server for this
+folder.  (Each folder uses a separate process to avoid unwanted
+interference.) 
+@item
+@code{imap-uid-validity}.
+The UIDVALIDITY value of the IMAP folder.
+@item
+@code{imap-read-write}.
+A boolean flag indicating whether the folder is writable.
+@item
+@code{imap-can-delete}.
+A boolean flag indicating whether the folder allows deletions.
+@item
+@code{imap-body-peek}.
+A boolean flag indicating whether the folder allows the @code{BODYPEEK}
+command of IMAP.
+@item
+@code{imap-permanent-flags}.
+The list of permananet flags that have been stored in the folder.
+@item
+@code{imap-mailbox-count}.
+The number of messages in the folder.
+@item
+@code{imap-recent-count}.
+The number of messages in the folder that are considered ``recent'' by the
+server.
+@item
+@code{imap-retrieved-count}.
+The number of messages present in the folder when messages were last
+retrieved.  This would have been the value of @code{imap-mailbox-count} at
+that time.
+@item
+@code{imap-uid-list}.
+The list of UID's and flags of the messages in the folder,
+using cons cells of the form (msg-num . uid . size . flags list).
+@item
+@code{imap-uid-obarray}.
+An obarray that binds all the UIDs of messages in the folder to their
+message sequence numbers.
+@item
+@code{imap-flags-obarray}.
+An obarray that binds all the UIDs of messages in the folder to cons cells
+of the form (size . flags list).  These cons cells are the same as those
+occurring in the @code{imap-uid-list} field.  So, any updates will be
+shared.  Both of these obarrays bind exactly the same set of UIDs.  The
+reason for their separation seems to be historical. 
 @end itemize
 
 @node Message Internals, Summary Internals, Folder Internals, Internals
