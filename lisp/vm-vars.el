@@ -1260,16 +1260,24 @@ MIME messages."
   :group 'vm-mime
   :type 'boolean)
 
-(defcustom vm-honor-mime-content-disposition nil
-  "*Non-nil value means use information from the Content-Disposition header
-to display MIME messages.  The Content-Disposition header
-specifies whether a MIME object should be displayed inline or
-treated as an attachment.  For VM, \"inline\" display means
-displaying the object in the Emacs buffer, if possible.
-Attachments will be displayed as a button that you can use
-mouse-2 to activate or mouse-3 to pull up a menu of options."
+(defcustom vm-mime-honor-content-disposition nil
+  "*Non-nil value means use information from the Content-Disposition
+header to display MIME messages.  Possible values are `t', to mean that the
+Content-Disposition header should always be honored or 'internal-only,
+to mean that it should be honored for only internally-displayable types.
+
+The Content-Disposition header specifies whether a MIME object
+should be displayed inline or treated as an attachment.  For VM,
+\"inline\" display means displaying the object in the Emacs
+buffer, if possible.  Attachments will be displayed as a button
+that you can use mouse-2 to activate or mouse-3 to pull up a menu
+of options."
   :group 'vm-mime
-  :type 'boolean)
+  :type '(choice (const :tag "Ignore it" nil)
+		 (const :tag "Honor it always" t)
+		 (const :tag "Honor it for internal types" internal-only)))
+(defvaralias 'vm-honor-mime-content-disposition
+  'vm-mime-honor-content-disposition)
 
 (defcustom vm-auto-decode-mime-messages t
   "*Non-nil value causes MIME decoding to occur automatically

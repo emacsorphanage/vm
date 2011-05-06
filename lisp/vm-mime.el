@@ -2301,11 +2301,14 @@ assuming that it is text."
       (when work-buffer (kill-buffer work-buffer)))))
 
 (defun vm-mime-should-display-button (layout dont-honor-content-disposition)
-  (if (and vm-honor-mime-content-disposition
+  (if (and vm-mime-honor-content-disposition
 	   (not dont-honor-content-disposition)
 	   (vm-mm-layout-disposition layout))
-      (let ((case-fold-search t))
-	(string-match "^attachment$" (car (vm-mm-layout-disposition layout))))
+      (or (let ((case-fold-search t))
+	    (string-match "^attachment$" 
+			  (car (vm-mm-layout-disposition layout))))
+	  (and (eq vm-mime-honor-content-disposition 'internal-only)
+	       (not (vm-mime-should-display-internal layout))))
     (let ((type (car (vm-mm-layout-type layout))))
       (cond ((vm-mime-types-match "multipart" type)
 	     nil)
@@ -2413,7 +2416,7 @@ in the buffer.  The function is expected to make the message
 	(cond ((eq state 'buttons)
 	       (let ((vm-preview-lines nil)
 		     (vm-auto-decode-mime-messages t)
-		     (vm-honor-mime-content-disposition nil)
+		     (vm-mime-honor-content-disposition nil)
 		     (vm-mime-auto-displayed-content-types '("multipart"))
 		     (vm-mime-auto-displayed-content-type-exceptions nil))
 		 (setq vm-mime-decoded nil)

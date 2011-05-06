@@ -1842,6 +1842,25 @@ display the object.  The variable
 specify any exceptions to the types listed in
 @code{vm-mime-auto-displayed-content-types}.
 
+@cindex Content-Disposition
+@vindex vm-mime-honor-content-disposition
+@cindex attachments
+The MIME objects in messages come with a header called
+@strong{Content-Disposition}, which specifies whether the MIME object should
+be displayed as part of the message display (the ``inline'' disposition) or
+whether it should be displayed as a button that should be invoked to view
+the object (the ``attachment'' disposition).  However, not all mail clients
+do a good job of adding this header.  It is not uncommon to find mail
+clients that declare all MIME objects to be ``inline'' and others that
+declare all MIME objects to be ``attachment''.  The variable
+@code{vm-mime-honor-content-disposition} can be customized to tell VM
+whether it should follow the suggestions in the Content-Disposition headers.
+A value of @code{t} means that they should be always honored and a value of
+@code{nil} means that they should be ignored.  It can also be set to the
+symbol @code{internal-only}, which means that the Content-Disposition
+suggestions should be honored for only the internally displayable types.
+(@xref{Internal display of MIME attachments}.)
+
 @findex vm-next-button
 @findex vm-previous-button
 @kindex [
@@ -1936,6 +1955,7 @@ matching @code{vm-mime-savable-types} or @code{vm-mime-deletable-types}
 
 @node Internal display, External display, Attachments, MIME Messages
 @unnumberedsubsec Internal display of MIME attachments
+@anchor{Internal display of MIME attachments}
 
 @vindex vm-mime-auto-displayed-content-types
 A value of t for @code{vm-mime-auto-displayed-content-types} means that
@@ -2748,9 +2768,10 @@ yank back the tag multiple times to duplicate the attachment in
 the message.  Or you can leave the tag killed and the attachment
 won't appear in the message when it is sent.
 
+@cindex Content-Disposition
 If you click the right mouse button on the attachment tag, a menu
 will appear that allows you to change the content disposition of
-the attachment.  The @dfn{content disposition} of a MIME object
+the attachment.  The @dfn{Content-Disposition} of a MIME object
 gives a mail reader a hint as to whether the object should be
 displayed inline or as an inert tag or button that you must
 activate in some fashion.  @dfn{Inline} display usually means

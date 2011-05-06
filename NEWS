@@ -71,6 +71,10 @@ VM 8.2.0a (2011-02-28)
 
   IMPROVEMENTS
 
+   * New option 'internal-only for `vm-mime-honor-content-disposition',
+     which means the content-disposition will be honored for only internally
+     displayable types.
+
    * New variable `vm-mime-alternative-yank-method' controls the selection
      of MIME alternatives during yanking of messages (as well including and
      forwarding).
