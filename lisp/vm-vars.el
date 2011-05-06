@@ -1605,6 +1605,17 @@ chosen."
                  (cons (const favorite) (repeat string))
                  (cons (const favorite-internal) (repeat string))))
 
+(defcustom vm-mime-alternative-yank-method 'best-internal
+  "*Value tells how to choose which multipart/alternative part to
+yank, i.e., include, in replies.  It is similar to
+`vm-mime-alternative-select-method' (which see)."
+  :group 'vm-mime
+  :type '(choice (choice (const best-internal)
+                         (const best)
+                         (const all))
+                 (cons (const favorite) (repeat string))
+                 (cons (const favorite-internal) (repeat string))))
+
 (defcustom vm-mime-text/html-handler 'auto-select
   "*The library used for displaying HTML messages.  The possible
 values are:

@@ -3026,6 +3026,14 @@ message is sent.  The format of the button in this case looks like:
 [ATTACHMENT mary.jpg, image/jpeg]
 @end example
 
+@cindex MIME alternatives
+@vindex vm-mime-alternative-yank-method
+When citing a @code{multipart/alternative} MIME component, VM chooses the
+alternative specified by the variable
+@code{vm-mime-alternative-yank-method}.  It can 
+be defined similar to the variable
+@code{vm-mime-alternative-select-method}. (@pxref{multipart/alternative}.) 
+
 @vindex vm-fill-paragraphs-containing-long-lines-in-reply
 @vindex vm-fill-long-lines-in-reply-column
 If the included text contains long lines, i.e., lines longer than the

@@ -71,6 +71,10 @@ VM 8.2.0a (2011-02-28)
 
   IMPROVEMENTS
 
+   * New variable `vm-mime-alternative-yank-method' controls the selection
+     of MIME alternatives during yanking of messages (as well including and
+     forwarding).
+
    * Added a variable `vm-verbosity' to control the granularity of
      informative messages displayed by VM.  Levels 5-8 are recommended, with
      8 corresponding to the current level.
