@@ -757,9 +757,9 @@ preview or the full message, governed by the the variables
 		   (or (vm-new-flag (car vm-message-pointer))
 		       (vm-unread-flag (car vm-message-pointer))
 		       vm-preview-read-messages))))
-;;     (when vm-load-headers-only
+;;     (when vm-enable-external-messages
 ;;       (when (not need-preview)
-;; 	(vm-inform 1 "Headers-only operation does not allow previews")
+;; 	(vm-inform 1 "External messages cannot be previewed")
 ;; 	(setq need-preview nil)))
     (vm-save-buffer-excursion
      (setq vm-system-state 'previewing)

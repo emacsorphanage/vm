@@ -221,17 +221,27 @@ A nil value means VM should not read or write index files."
   :type '(choice (string :tag "File Suffix")
                  (const :tag "Do not use index file" nil)))
 
-(defcustom vm-load-headers-only nil
-  "*If non-nil, asks VM to load headers of mail folders whenever
-possible, without loading the message bodies.
+(defcustom vm-enable-external-messages nil
+  "*Non-nil value should be a list of contexts in which VM may
+use message bodies stored externally.  External messages are
+those stored in external sources such as the file system or
+remote mail servers.  In some cases, VM is able to work with
+minimal header information of the messages, without loading the
+entire message bodies into the folder buffers.
 
-This allows faster start-ups and smaller memory images of Emacs
-sessions, at the cost of short delays when messages are viewed.
+This allows faster start-up times and smaller memory images of
+Emacs sessions, at the cost of short delays when messages are
+viewed.
 
-As of May 2010, this facility is still experimental and is only
-available for IMAP folders."
-  :group 'vm-imap
-  :type 'boolean)
+As of version 8.2.0, this facility is only available for IMAP
+folders (context name `imap')."
+  :group 'vm-folders
+  :type '(repeat (choice (const imap))))
+
+(defvar vm-load-headers-only nil
+  "This variable is replaced by `vm-enable-external-messages'.")
+(make-obsolete-variable 'vm-load-headers-only 
+			'vm-enable-external-messages "8.2.0")
 
 ;; use this function to access vm-spool-files on the fly.  this
 ;; allows us to use environmental variables without setting

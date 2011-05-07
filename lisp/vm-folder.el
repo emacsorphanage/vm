@@ -5031,9 +5031,9 @@ argument GARBAGE."
 	  (cons 'vm-after-revert-buffer-hook after-revert-hook))
   (setq after-revert-hook (list 'vm-after-revert-buffer-hook)))
 
-(defun vm-headers-only-possible-p (m)
-  "Check if the message M can be used in headers-only mode."
-  (and vm-load-headers-only
+(defun vm-message-can-be-external (m)
+  "Check if the message M can be used in external (headers-only) mode."
+  (and (memq 'imap vm-enable-external-messages)
        (eq (vm-message-access-method-of m) 'imap)))
 
 ;;;###autoload
@@ -5265,7 +5265,7 @@ the folder is saved."
 	(setq m (car mlist))
 	(setq mm (vm-real-message-of m))
 	(set-buffer (vm-buffer-of mm))
-	(cond ((null (vm-headers-only-possible-p mm)))
+	(cond ((null (vm-message-can-be-external mm)))
 	      ((vm-body-to-be-retrieved-of mm))
 	      ((vm-body-to-be-discarded-of mm)
 	       (when physical
@@ -5289,7 +5289,7 @@ the folder is saved."
 
 (defun vm-discard-real-message-body (mm)
   "Discard the real message body of MM from its Folder buffer."
-  (if (not (vm-headers-only-possible-p mm))
+  (if (not (vm-message-can-be-external mm))
       (vm-set-body-to-be-discarded-flag mm nil)
     (save-current-buffer
       (set-buffer (vm-buffer-of mm))

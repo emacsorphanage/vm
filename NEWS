@@ -11,6 +11,14 @@ VM 8.2.0a (2011-02-28)
 
   CHANGES
 
+   * The configuration of headers-only messages, introduced in 8.1.90a, has
+     changed.  The variable `vm-load-headers-only' has been replaced by a
+     new variable `vm-enable-external-messages'.  For IMAP folders, enabling
+     external messages causes any messages larger than
+     `vm-imap-max-message-size' to be loaded in headers-only form.  Smaller
+     messages are loaded immediately.  You need to customie
+     `vm-imap-max-message-size' for enabling headers-only operation.
+
    * If you download mail from IMAP spool files, the 8.1.x versions of
      VM had a bug which allowed the the `X-VM-IMAP-Retrieved' headers
      to grow unnecessarily.  This can slow down the saving of folders

@@ -440,9 +440,10 @@ there are @var{n} or fewer messages.  The default value of
 @code{vm-startup-with-summary} is @code{t}.
 
 @menu
-* Local Folders::     Working with folders on the local file system
-* POP and IMAP Folders::    Working with folders on mail servers
-* Thunderbird Folders:: Working with folders managed by Thunderbird
+* Local Folders::       Working with folders on the local file system
+* POP and IMAP Folders::        Working with folders on mail servers
+* Thunderbird Folders::         Working with folders managed by Thunderbird
+* External Messages::           Working with messages stored externally.
 * Getting New Mail::  Retrieving mail from spool files.
 * Crash Recovery::    Recovering changes after Emacs or your system dies.
 @end menu
@@ -1261,14 +1262,14 @@ operation but it happens only rarely.  VM warns you before it
 refreshes the cache and asks for confirmation.  You can abort the
 operation if you cannot spare the time, but note that it is not
 possible to perform any changes to the IMAP folder until the cache is
-refreshed.  You might consider setting the @code{vm-load-headers-only}
-flag to true before you refresh the cache so that it will be
-quicker. @pxref{Headers-only Messages}.
+refreshed.  You might consider setting the @code{vm-enable-external-messages}
+flag to @code{(imap)} before you refresh the cache so that it will be
+quicker. @pxref{External Messages}.
 
 
 
 
-@node Thunderbird Folders, Getting New Mail, POP and IMAP Folders, Starting Up
+@node Thunderbird Folders, External Messages, POP and IMAP Folders, Starting Up
 @section Thunderbird Folders
 
 @cindex Thunderbird
@@ -1333,7 +1334,59 @@ and Thunderbird can jointly operate, then you should set the variable
 @code{vm-thunderbird-folder-directory} with its default value of
 @code{nil}.
 
-@node Getting New Mail, Crash Recovery, Thunderbird Folders, Starting Up
+@node External Messages, Getting New Mail, Thunderbird Folders, Starting Up
+@section External Messages
+
+Under certain circumstances, it is possible to maintain VM folders in which
+only the headers of messages are loaded into the Folder buffer.  The message
+bodies are retained in external sources (file system or remote servers) and
+fetched on demand when the messages are viewed or other operations are
+performed on them.  Using external messages results in a smaller folder size
+and allows a faster operation on machines with limited resources.  However,
+the fetching of message bodies on demand can introduce short delays when
+messages are viewed.  It is also not possible to search in the message
+bodies of external messages.
+
+@vindex vm-enable-external-messages
+To enable external messages, set the variable
+@code{vm-enable-external-messages} to a list of contexts in which external
+messages may be maintained by VM.
+
+@vindex vm-imap-max-message-size
+As of version 8.2.0, the only context in which external messages are
+implemented is that of IMAP folders.  Setting
+@code{vm-enable-external-messages} to @code{(imap)} enables IMAP messages to
+be maintained externally.  When new messages are retrieved, this causes all
+messages with size below @code{vm-imap-max-message-size} to be loaded
+immediately, and larger messages will be left on the server to be fetched on
+demand.  To treat all messages as external messages, you can set
+@code{vm-imap-max-message-size} to 0.
+
+@vindex vm-fetched-message-limit
+After fetching the bodies of external messages, VM stores them in the Folder
+buffer temporarily, so that repeated fetching is avoided.  The variable
+@code{vm-fetched-message-limit} controls how many message bodies are stored
+in this way.  You can set it to an integer (10 is the default), or to
+@code{nil}, signifying that there is no limit.  All the fetched message
+bodies are flushed before folders are saved to disk.
+
+@findex vm-load-message
+@findex vm-unload-message
+@findex vm-refresh-message
+@kindex o
+@kindex O
+You can manually load message bodies into the Folder using the command
+@kbd{o} (@code{vm-load-message}).  The command @kbd{O}
+(@code{vm-unload-message}) unloads a previously loaded message body.  Both
+the commands can take numerical prefix arguments or operate on marked
+messages.  Note that ``loading'' a message body is different from on demand
+``fetching''.  Loaded messages are permanently stored in the Folder buffer
+and written to disk when the folder is saved.  In contrast, fetched message
+bodies are always discarded before writing to disk.  The command
+@code{vm-refresh-message} reloads an already loaded message with a fresh
+copy retrieved from the server.
+
+@node Getting New Mail, Crash Recovery, External Messages, Starting Up
 @section Getting New Mail
 
 @findex vm-get-new-mail
@@ -1584,7 +1637,6 @@ presentation is done in two stages: @dfn{previewing} and @dfn{paging}.
 * Previewing::                  Customizing message previews.
 * Paging::                      Viewing the current message.
 * MIME Messages::               Using VM's MIME display features.
-* Headers-only Messages::       Loading headers of messages without their bodies.
 @end menu
 
 @node Previewing, Paging, Reading Messages, Reading Messages
@@ -1736,7 +1788,7 @@ fill column that VM uses is controlled by
 @code{fill-column}, this variable is not buffer-local by default.
 
 
-@node MIME Messages, Headers-only Messages, Paging, Reading Messages
+@node MIME Messages,, Paging, Reading Messages
 @section Reading MIME Messages
 
 @cindex MIME
@@ -2505,48 +2557,6 @@ If the variable
 @code{vm-infer-mime-types-for-text} is set non-@code{nil}, VM will
 attempt to use filenames for attachments of type @samp{text/plain} as
 well. 
-
-@node Headers-only Messages,, MIME Messages, Reading Messages
-@section Headers-only Messages
-
-Under certain circumstances, it is possible to maintain VM folders in
-which only the headers of messages are loaded into the Folder buffer.
-The message bodies are omitted.  The message bodies are fetched on
-demand when the messages are viewed or other operations are performed
-on them.  This results in a smaller folder size and allows faster
-operation on machines with limited resources.  However, the fetching
-of message bodies on demand can introduce short delays when messages
-are viewed.
-
-@vindex vm-load-headers-only
-To enable headers-only messages, set the variable
-@code{vm-load-headers-only} to t.  To start with, this has effect only
-in IMAP folders, but it might be extended to other forms of folders in
-future.
-
-@vindex vm-fetched-message-limit
-After fetching message bodies, VM stores them in the Folder buffer
-temporarily, so that repeated fetching is avoided.  The variable
-@code{vm-fetched-message-limit} controls how many message bodies are
-stored in this way.  You can set it to an integer (10 is the default),
-or to @code{nil}, signifying that there is no limit.  All the fetched
-message bodies are flushed before folders are saved to disk.
-
-@findex vm-load-message
-@findex vm-unload-message
-@findex vm-refresh-message
-@kindex o
-@kindex O
-You can manually load message bodies into the Folder using the command
-@kbd{o} (@code{vm-load-message}).  The command @kbd{O}
-(@code{vm-unload-message}) unloads a previously loaded message body.
-Both the commands can take numerical prefix arguments or operate on
-marked messages.  Note that ``loading'' message body is different from
-on demand ``fetching''.  Loaded messages are permanently stored in the
-Folder buffer and written to disk when the folder is saved.  In
-contrast, fetched message bodies are always discarded before writing
-to disk.  The command @code{vm-refresh-message} reloads an already
-loaded message with a fresh copy retrieved from the server.
 
 @node Sending Messages, Saving Messages, Reading Messages, Top
 @chapter Sending Messages
@@ -6255,7 +6265,7 @@ previous value of vm-message-pointer is remembered in this variable.
 has the summary pointer in the Summary buffer.
 @item
 @inindex vm-fetched-messages
-@code{vm-fetched-messages}.  List of headers-only messages whose
+@code{vm-fetched-messages}.  List of external messages whose
 bodies were fetched for viewing or other operations.
 @item
 @inindex vm-fetched-message-count

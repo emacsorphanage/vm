@@ -399,7 +399,7 @@ occurs, typically VM cannot proceed."
 (defvar vm-imap-connection-mode 'online
   "* The mode of connection to the IMAP server.  Possible values
 are: 'online, 'offline and 'autoconnect.  In the 'online mode,
-synchronization works normally and message bodies of headers-only
+synchronization works normally and message bodies of external
 messages are fetched when needed.  In 'offline mode, no
 connection is established to the IMAP server and message bodies
 are not fetched.  In the 'autoconnect mode, a connection is
@@ -3253,12 +3253,13 @@ messages previously retrieved are ignored."
       new-messages)))
 
 (defun vm-imap-retrieve-messages (retrieve-list)
-  "Retrieve into the current folder messages listed in RETRIEVE-LIST
-and return the list of the retrieved messages.
-The RETRIEVE-LIST is a list of cons-pairs (uid . n) of the
-UID's and message sequence numbers of messages on the IMAP server.
-If `vm-load-headers-only' is t, then messages larger than
-`vm-imap-max-message-size' are retrieved in headers-only form." 
+  "Retrieve into the current folder messages listed in
+RETRIEVE-LIST and return the list of the retrieved messages.  The
+RETRIEVE-LIST is a list of cons-pairs (uid . n) of the UID's and
+message sequence numbers of messages on the IMAP server.  If
+`vm-enable-external-messages' includes 'imap, then messages
+larger than `vm-imap-max-message-size' are retrieved in
+headers-only form."
   (let* ((folder-buffer (current-buffer))
 	 (process (vm-folder-imap-process))
 	 (imapdrop (vm-folder-imap-maildrop-spec))
@@ -3266,8 +3267,8 @@ If `vm-load-headers-only' is t, then messages larger than
 		     (vm-safe-imapdrop-string imapdrop)))
 	 (use-body-peek (vm-folder-imap-body-peek))
 	 (uid-validity (vm-folder-imap-uid-validity))
-	 uid r-list range new-messages message-size 
-	 statblob old-eob pos k mp 
+	 uid r-list r-entry range new-messages message-size 
+	 statblob old-eob pos k mp pair headers-only
 	 (n 0))
     (save-excursion
       (vm-inform 6 "Retrieving new messages... ")
@@ -3275,7 +3276,18 @@ If `vm-load-headers-only' is t, then messages larger than
        (widen)
        (setq old-eob (point-max))
        (goto-char (point-max))
-       (setq r-list (vm-imap-bunch-messages 
+       ;; Annotate retrieve-list with headers-only flags
+       (setq retrieve-list
+	     (mapcar 
+	      (lambda (pair)
+		(if (and (integerp vm-imap-max-message-size)
+			 (> (read (vm-folder-imap-uid-message-size (car pair)))
+			    vm-imap-max-message-size))
+		    (list (car pair) (cdr pair) 
+			  (memq 'imap vm-enable-external-messages))
+		  (list (car pair) (cdr pair) nil)))
+	      retrieve-list))
+       (setq r-list (vm-imap-bunch-retrieve-list 
 		     (mapcar (function cdr) retrieve-list)))
        (unwind-protect
 	   (condition-case error-data
@@ -3289,7 +3301,9 @@ If `vm-load-headers-only' is t, then messages larger than
 		 (vm-set-imap-status-maxmsg statblob
 					    (length retrieve-list))
 		 (while r-list
-		   (setq range (car r-list))
+		   (setq pair (car r-list)
+			 range (car pair)
+			 headers-only (cadr pair))
 		   (vm-set-imap-status-currmsg statblob n)
 		   (setq message-size 
 			 (vm-imap-get-message-size
@@ -3300,7 +3314,7 @@ If `vm-load-headers-only' is t, then messages larger than
 		   ;;----------------------------------
 		   (vm-imap-fetch-messages 
 		    process (car range) (cdr range)
-		    use-body-peek vm-load-headers-only)
+		    use-body-peek headers-only)
 		   (setq k (1+ (- (cdr range) (car range))))
 		   (setq pos (with-current-buffer folder-buffer (point)))
 		   (while (> k 0)
@@ -3342,10 +3356,12 @@ If `vm-load-headers-only' is t, then messages larger than
 	   (vm-increment vm-modification-counter))
        (setq r-list retrieve-list)
        (while mp
-	 (when vm-load-headers-only 
+	 (setq r-entry (car r-list)
+	       uid (car r-entry)
+	       headers-only (nth 2 r-entry))
+	 (when headers-only 
 	   (vm-set-body-to-be-retrieved-of (car mp) t)
 	   (vm-set-body-to-be-discarded-of (car mp) nil))
-	 (setq uid (car (car r-list)))
 	 (vm-set-imap-uid-of (car mp) uid)
 	 (vm-set-imap-uid-validity-of (car mp) uid-validity)
 	 (vm-set-byte-count-of 
@@ -3496,6 +3512,35 @@ If `vm-load-headers-only' is t, then messages larger than
     (vm-mark-folder-modified-p)
     ))
 
+(defun vm-imap-bunch-retrieve-list (retrieve-list)
+  "Given a sorted list of pairs consisting of message sequence numbers
+and headers-only flags, creates a list of bunched message sequences,
+each of the form (begin-num . end-num), along with their headers-only flags."  
+  (let ((ranges nil)
+	pair headers-only
+	beg last last-headers-only next diff)
+    (when retrieve-list
+      (setq pair (car retrieve-list)
+	    beg (car pair)
+	    headers-only (cadr pair))
+      (setq last beg
+	    last-headers-only headers-only)
+      (setq retrieve-list (cdr retrieve-list))
+      (while retrieve-list
+	(setq pair (car retrieve-list)
+	      next (car pair)
+	      headers-only (cadr pair))
+	(if (and (= (- next last) 1)
+		 (eq last-headers-only headers-only)
+		 (< (- next beg) vm-imap-message-bunch-size))
+	    (setq last next)
+	  (setq ranges (cons (list (cons beg last) last-headers-only) ranges))
+	  (setq beg next)
+	  (setq last next)
+	  (setq last-headers-only headers-only))
+	(setq retrieve-list (cdr retrieve-list)))
+      (setq ranges (cons (list (cons beg last) last-headers-only) ranges)))
+    (nreverse ranges)))
 
 (defun vm-imap-bunch-messages (seq-nums)
   "Given a sorted list of message sequence numbers, creates a
@@ -4488,7 +4533,7 @@ order to capture the trace of IMAP sessions during the occurrence."
 
 (defun vm-imap-set-default-attributes (m)
   (vm-set-headers-to-be-retrieved-of m nil)
-  (vm-set-body-to-be-retrieved-of m vm-load-headers-only)
+  (vm-set-body-to-be-retrieved-of m nil)
   (vm-set-body-to-be-discarded-of m nil))
 
 (defun vm-imap-unset-body-retrieve ()

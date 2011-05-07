@@ -1458,7 +1458,7 @@ shorter pieces, rebuilt it from them."
 (defvar buffer-file-type)
 (defun vm-make-presentation-copy (m)
   "Create a copy of the message M in the Presentation Buffer.  If
-working in headers-only mode, the copy is made from the external
+the message is external then the copy is made from the external
 source of the message."
   (let ((mail-buffer (current-buffer))
 	pres-buf mm
@@ -1581,136 +1581,138 @@ source of the message."
 	;; fixup the reference to the message
 	(setcar vm-message-pointer mm)))))
 
-(defun vm-make-fetch-copy-if-necessary (m)
-  "Create a copy of the message M in the Fetch Buffer if it is
-not already present.  If working in headers-only mode, the copy
-is made from the external source of the message."
-  (unless (and vm-fetch-buffer
-	       (eq (vm-real-message-sym-of m)
-		   (with-current-buffer vm-fetch-buffer
-		     (vm-real-message-sym-of (car vm-message-pointer)))))
-    (vm-make-fetch-copy m)))
+;; This experimental code is now discarded.  USR, 2011-05-07
+
+;; (defun vm-make-fetch-copy-if-necessary (m)
+;;   "Create a copy of the message M in the Fetch Buffer if it is
+;; not already present.  If it is an external message, the copy
+;; is made from the external source of the message."
+;;   (unless (and vm-fetch-buffer
+;; 	       (eq (vm-real-message-sym-of m)
+;; 		   (with-current-buffer vm-fetch-buffer
+;; 		     (vm-real-message-sym-of (car vm-message-pointer)))))
+;;     (vm-make-fetch-copy m)))
 
 
-(defun vm-make-fetch-copy (m)
-  "Create a copy of the message M in the Fetch Buffer.  If
-working in headers-only mode, the copy is made from the external
-source of the message."
-  (let ((mail-buffer (current-buffer))
-	fetch-buf mm
-	(real-m (vm-real-message-of m))
-	(modified (buffer-modified-p)))
-    (cond ((or (null vm-fetch-buffer)
-	       (null (buffer-name vm-fetch-buffer)))
-	   (setq fetch-buf (vm-generate-new-multibyte-buffer 
-			    (concat (buffer-name) " Fetch")))
-	   (save-excursion
-	     (set-buffer fetch-buf)
-	     (if (fboundp 'buffer-disable-undo)
-		 (buffer-disable-undo (current-buffer))
-	       ;; obfuscation to make the v19 compiler not whine
-	       ;; about obsolete functions.
-	       (let ((x 'buffer-flush-undo))
-		 (funcall x (current-buffer))))
-	     (setq mode-name "VM Message"
-		   major-mode 'vm-message-mode
-		   vm-message-pointer (list nil)
-		   vm-mail-buffer mail-buffer
-		   mode-popup-menu (and vm-use-menus
-					(vm-menu-support-possible-p)
-					(vm-menu-mode-menu))
-		   ;; Default to binary file type for DOS/NT.
-		   buffer-file-type t
-		   ;; Tell XEmacs/MULE not to mess with the text on writes.
-		   buffer-read-only t
-		   mode-line-format vm-mode-line-format)
-	     ;; scroll in place messes with scroll-up and this loses
-	     (defvar scroll-in-place)
-	     (make-local-variable 'scroll-in-place)
-	     (setq scroll-in-place nil)
-	     (if (fboundp 'set-buffer-file-coding-system)
-		 (set-buffer-file-coding-system (vm-binary-coding-system) t))
-	     (vm-fsfemacs-nonmule-display-8bit-chars)
-	     (if (and vm-mutable-frames vm-frame-per-folder
-		      (vm-multiple-frames-possible-p))
-		 (vm-set-hooks-for-frame-deletion))
-	     (use-local-map vm-mode-map)
-	     (vm-toolbar-install-or-uninstall-toolbar)
-	     (when (vm-menu-support-possible-p)
-	       (vm-menu-install-menus))
-	     (run-hooks 'vm-message-mode-hook))
-	   (setq vm-fetch-buffer fetch-buf)))
-    (setq fetch-buf vm-fetch-buffer)
-    (setq vm-mime-decoded nil)
-    ;; W3 or some other external mode might set some local colors
-    ;; in this buffer; remove them before displaying a different
-    ;; message here.
-    (if (fboundp 'remove-specifier)
-	(progn
-	  (remove-specifier (face-foreground 'default) fetch-buf)
-	  (remove-specifier (face-background 'default) fetch-buf)))
-    (save-excursion
-      (set-buffer (vm-buffer-of real-m))
-      (save-restriction
-	(widen)
-	;; must reference this now so that headers will be in
-	;; their final position before the message is copied.
-	;; otherwise the vheader offset computed below will be
-	;; wrong.
-	(vm-vheaders-of real-m)
-	(set-buffer fetch-buf)
-	;; do not keep undo information in message buffers 
-	(setq buffer-undo-list t)
-	(widen)
-	(let ((buffer-read-only nil)
-	      (inhibit-read-only t))
-	  ;; (setq modified (buffer-modified-p)) ; why this? USR, 2011-03-18
-	  (unwind-protect
-	      (progn
-		(erase-buffer)
-		(insert-buffer-substring (vm-buffer-of real-m)
-					 (vm-start-of real-m)
-					 (vm-end-of real-m)))
-	    (vm-restore-buffer-modified-p modified fetch-buf)))
-	(setq mm (copy-sequence m))
-	(vm-set-location-data-of mm (vm-copy (vm-location-data-of m)))
-	(vm-set-softdata-of mm (vm-copy (vm-softdata-of m)))
-	(vm-set-message-id-number-of mm 1)
-	(vm-set-buffer-of mm (current-buffer))
-	(set-marker (vm-start-of mm) (point-min))
-	(set-marker (vm-headers-of mm) (+ (vm-start-of mm)
-					  (- (vm-headers-of real-m)
-					     (vm-start-of real-m))))
-	(set-marker (vm-vheaders-of mm) (+ (vm-start-of mm)
-					   (- (vm-vheaders-of real-m)
-					      (vm-start-of real-m))))
-	(set-marker (vm-text-of mm) (+ (vm-start-of mm)
-				       (- (vm-text-of real-m)
-					  (vm-start-of real-m))))
-	(set-marker (vm-text-end-of mm) (+ (vm-start-of mm)
-					   (- (vm-text-end-of real-m)
-					      (vm-start-of real-m))))
-	(set-marker (vm-end-of mm) (+ (vm-start-of mm)
-				      (- (vm-end-of real-m)
-					 (vm-start-of real-m))))
-	(vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
-	;; fetch the real message now
-	(goto-char (point-min))
-	(cond ((and (vm-message-access-method-of mm)
-		    (vm-body-to-be-retrieved-of mm))
-	       ;; Remember that this does process I/O and
-	       ;; accept-process-output, and hence allow concurrent
-	       ;; threads to run!!!  USR, 2010-07-11  
-	       (condition-case err
-		   (vm-fetch-message 
-		    (list (vm-message-access-method-of mm)) mm)
-		 (error
-		  (vm-inform 0 "Cannot fetch; %s" (error-message-string err)))))
-	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
-	       (vm-fetch-message (read (current-buffer)) mm)))
-	(vm-reset-buffer-modified-p modified fetch-buf)
-	;; fixup the reference to the message
-	(setcar vm-message-pointer mm)))))
+;; (defun vm-make-fetch-copy (m)
+;;   "Create a copy of the message M in the Fetch Buffer.  If
+;; it is an external message, the copy is made from the external
+;; source of the message."
+;;   (let ((mail-buffer (current-buffer))
+;; 	fetch-buf mm
+;; 	(real-m (vm-real-message-of m))
+;; 	(modified (buffer-modified-p)))
+;;     (cond ((or (null vm-fetch-buffer)
+;; 	       (null (buffer-name vm-fetch-buffer)))
+;; 	   (setq fetch-buf (vm-generate-new-multibyte-buffer 
+;; 			    (concat (buffer-name) " Fetch")))
+;; 	   (save-excursion
+;; 	     (set-buffer fetch-buf)
+;; 	     (if (fboundp 'buffer-disable-undo)
+;; 		 (buffer-disable-undo (current-buffer))
+;; 	       ;; obfuscation to make the v19 compiler not whine
+;; 	       ;; about obsolete functions.
+;; 	       (let ((x 'buffer-flush-undo))
+;; 		 (funcall x (current-buffer))))
+;; 	     (setq mode-name "VM Message"
+;; 		   major-mode 'vm-message-mode
+;; 		   vm-message-pointer (list nil)
+;; 		   vm-mail-buffer mail-buffer
+;; 		   mode-popup-menu (and vm-use-menus
+;; 					(vm-menu-support-possible-p)
+;; 					(vm-menu-mode-menu))
+;; 		   ;; Default to binary file type for DOS/NT.
+;; 		   buffer-file-type t
+;; 		   ;; Tell XEmacs/MULE not to mess with the text on writes.
+;; 		   buffer-read-only t
+;; 		   mode-line-format vm-mode-line-format)
+;; 	     ;; scroll in place messes with scroll-up and this loses
+;; 	     (defvar scroll-in-place)
+;; 	     (make-local-variable 'scroll-in-place)
+;; 	     (setq scroll-in-place nil)
+;; 	     (if (fboundp 'set-buffer-file-coding-system)
+;; 		 (set-buffer-file-coding-system (vm-binary-coding-system) t))
+;; 	     (vm-fsfemacs-nonmule-display-8bit-chars)
+;; 	     (if (and vm-mutable-frames vm-frame-per-folder
+;; 		      (vm-multiple-frames-possible-p))
+;; 		 (vm-set-hooks-for-frame-deletion))
+;; 	     (use-local-map vm-mode-map)
+;; 	     (vm-toolbar-install-or-uninstall-toolbar)
+;; 	     (when (vm-menu-support-possible-p)
+;; 	       (vm-menu-install-menus))
+;; 	     (run-hooks 'vm-message-mode-hook))
+;; 	   (setq vm-fetch-buffer fetch-buf)))
+;;     (setq fetch-buf vm-fetch-buffer)
+;;     (setq vm-mime-decoded nil)
+;;     ;; W3 or some other external mode might set some local colors
+;;     ;; in this buffer; remove them before displaying a different
+;;     ;; message here.
+;;     (if (fboundp 'remove-specifier)
+;; 	(progn
+;; 	  (remove-specifier (face-foreground 'default) fetch-buf)
+;; 	  (remove-specifier (face-background 'default) fetch-buf)))
+;;     (save-excursion
+;;       (set-buffer (vm-buffer-of real-m))
+;;       (save-restriction
+;; 	(widen)
+;; 	;; must reference this now so that headers will be in
+;; 	;; their final position before the message is copied.
+;; 	;; otherwise the vheader offset computed below will be
+;; 	;; wrong.
+;; 	(vm-vheaders-of real-m)
+;; 	(set-buffer fetch-buf)
+;; 	;; do not keep undo information in message buffers 
+;; 	(setq buffer-undo-list t)
+;; 	(widen)
+;; 	(let ((buffer-read-only nil)
+;; 	      (inhibit-read-only t))
+;; 	  ;; (setq modified (buffer-modified-p)) ; why this? USR, 2011-03-18
+;; 	  (unwind-protect
+;; 	      (progn
+;; 		(erase-buffer)
+;; 		(insert-buffer-substring (vm-buffer-of real-m)
+;; 					 (vm-start-of real-m)
+;; 					 (vm-end-of real-m)))
+;; 	    (vm-restore-buffer-modified-p modified fetch-buf)))
+;; 	(setq mm (copy-sequence m))
+;; 	(vm-set-location-data-of mm (vm-copy (vm-location-data-of m)))
+;; 	(vm-set-softdata-of mm (vm-copy (vm-softdata-of m)))
+;; 	(vm-set-message-id-number-of mm 1)
+;; 	(vm-set-buffer-of mm (current-buffer))
+;; 	(set-marker (vm-start-of mm) (point-min))
+;; 	(set-marker (vm-headers-of mm) (+ (vm-start-of mm)
+;; 					  (- (vm-headers-of real-m)
+;; 					     (vm-start-of real-m))))
+;; 	(set-marker (vm-vheaders-of mm) (+ (vm-start-of mm)
+;; 					   (- (vm-vheaders-of real-m)
+;; 					      (vm-start-of real-m))))
+;; 	(set-marker (vm-text-of mm) (+ (vm-start-of mm)
+;; 				       (- (vm-text-of real-m)
+;; 					  (vm-start-of real-m))))
+;; 	(set-marker (vm-text-end-of mm) (+ (vm-start-of mm)
+;; 					   (- (vm-text-end-of real-m)
+;; 					      (vm-start-of real-m))))
+;; 	(set-marker (vm-end-of mm) (+ (vm-start-of mm)
+;; 				      (- (vm-end-of real-m)
+;; 					 (vm-start-of real-m))))
+;; 	(vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
+;; 	;; fetch the real message now
+;; 	(goto-char (point-min))
+;; 	(cond ((and (vm-message-access-method-of mm)
+;; 		    (vm-body-to-be-retrieved-of mm))
+;; 	       ;; Remember that this does process I/O and
+;; 	       ;; accept-process-output, and hence allow concurrent
+;; 	       ;; threads to run!!!  USR, 2010-07-11  
+;; 	       (condition-case err
+;; 		   (vm-fetch-message 
+;; 		    (list (vm-message-access-method-of mm)) mm)
+;; 		 (error
+;; 		  (vm-inform 0 "Cannot fetch; %s" (error-message-string err)))))
+;; 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
+;; 	       (vm-fetch-message (read (current-buffer)) mm)))
+;; 	(vm-reset-buffer-modified-p modified fetch-buf)
+;; 	;; fixup the reference to the message
+;; 	(setcar vm-message-pointer mm)))))
 
 (defun vm-fetch-message (storage mm)
   "Fetch the real message based on the \"^X-VM-Storage:\" header.

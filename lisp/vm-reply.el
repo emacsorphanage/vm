@@ -1369,7 +1369,7 @@ included in the digest."
 	   (error "aborted"))
 	  ((vm-find vm-message-list
 		    (lambda (m) (vm-body-to-be-retrieved-of m)))
-	   (error "Headers-only messages present in the folder"))
+	   (error "Headers-only external messages present in the folder"))
 	  (t
 	   (setq mlist vm-message-list)))
     (save-restriction
