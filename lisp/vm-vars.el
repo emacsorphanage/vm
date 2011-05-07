@@ -1890,7 +1890,7 @@ deleting a MIME object with `vm-delete-mime-object'."
   :group 'vm-faces)
 
 (defface vm-mime-button-mouse
-  '((((type x w32 mac) (class color))
+  '((((type x w32 mswindows mac) (class color))
      (:inherit highlight :box (:line-width 2 :style released-button)))
     (((class color)) (:inherit highlight))
     (t (:inherit highlight)))
@@ -1898,7 +1898,7 @@ deleting a MIME object with `vm-delete-mime-object'."
   :group 'vm-faces)
 
 (defface vm-mime-button-pressed-face
-  '((((type x w32 mac) (class color))
+  '((((type x w32 mswindows mac) (class color))
      (:inherit vm-mime-button :box (:line-width 2 :style pressed-button)))
     (((class color)) (:inherit vm-mime-button))
     (t (:inherit vm-mime-button)))
@@ -1927,7 +1927,7 @@ deleting a MIME object with `vm-delete-mime-object'."
   :group 'vm-faces)
 
 (defface vm-attachment-button-mouse
-  '((((type x w32 mac) (class color))
+  '((((type x w32 mswindows mac) (class color))
      (:inherit highlight :box (:line-width 2 :style released-button)))
     (((class color)) (:inherit highlight))
     (t (:inherit highlight)))
@@ -1935,7 +1935,7 @@ deleting a MIME object with `vm-delete-mime-object'."
   :group 'vm-faces)
 
 (defface vm-attachment-button-pressed-face
-  '((((type x w32 mac) (class color))
+  '((((type x w32 mswindows mac) (class color))
      (:inherit vm-attachment-button :box (:line-width 2 :style pressed-button)))
     (((class color)) (:inherit vm-attachment-button))
     (t (:inherit vm-attachment-button)))
@@ -4801,9 +4801,9 @@ decide the face."
 
 (defface vm-summary-selected
   '(
-    (((type x w32 mac) (class color) (background light))
+    (((type x w32 mswindows mac) (class color) (background light))
      (:background "grey85"))
-    (((type x w32 mac) (class color) (background dark))
+    (((type x w32 mswindows mac) (class color) (background dark))
      (:background "SlateBlue3"))
     (((class color) (background light))
      (:background "grey80"))
@@ -4819,9 +4819,9 @@ decide the face."
 
 (defface vm-summary-marked
   '(
-    (((type x w32 mac) (class color) (background light)) 
+    (((type x w32 mswindows mac) (class color) (background light)) 
      (:foreground "Purple"))
-    (((type x w32 mac) (class color) (background dark))
+    (((type x w32 mswindows mac) (class color) (background dark))
      (:foreground "Magenta"))
     ;; (((class color) (min-colors 16) (background light))
     ;;  (:foreground "Purple"))
@@ -4862,9 +4862,9 @@ decide the face."
       :group 'vm-summary-faces)
   (defface vm-summary-deleted
     '(
-      (((type x w32 mac) (class color) (background light)) 
+      (((type x w32 mswindows mac) (class color) (background light)) 
        (:foreground "grey50" :strike-through "grey80"))
-      (((type x w32 mac) (class color) (background dark)) 
+      (((type x w32 mswindows mac) (class color) (background dark)) 
        (:foreground "grey70" :strike-through "grey50"))
       ;; (((class color) (min-colors 16) (background light)) 
       ;;  (:foreground "grey50" :strike-through "grey70"))
@@ -4909,9 +4909,9 @@ decide the face."
 
 (defface vm-summary-unread
   '(
-    (((type x w32 mac) (class color) (background light))
+    (((type x w32 mswindows mac) (class color) (background light))
      (:foreground "blue3"))
-    (((type x w32 mac) (class color) (background dark))
+    (((type x w32 mswindows mac) (class color) (background dark))
      (:foreground "LightSkyBlue"))
     ;; (((class color) (min-colors 16) (background light))
     ;;  (:foreground "blue"))
@@ -4935,9 +4935,9 @@ decide the face."
 
 (defface vm-summary-saved
   '(
-    (((type x w32 mac) (class color) (background light))
+    (((type x w32 mswindows mac) (class color) (background light))
      (:foreground "green4"))
-    (((type x w32 mac) (class color) (background dark))
+    (((type x w32 mswindows mac) (class color) (background dark))
      (:foreground "PaleGreen"))
     ;; (((class color) (min-colors 16) (background light))
     ;;  (:foreground "green"))
@@ -4955,9 +4955,9 @@ decide the face."
 
 (defface vm-summary-replied
   '(
-    (((type x w32 mac) (class color) (background light))
+    (((type x w32 mswindows mac) (class color) (background light))
      (:foreground "MediumOrchid4"))
-    (((type x w32 mac) (class color) (background dark))
+    (((type x w32 mswindows mac) (class color) (background dark))
      (:foreground "plum1"))
     ;; (((class color) (min-colors 16) (background light))
     ;;  (:foreground "Orchid"))
@@ -4975,9 +4975,9 @@ decide the face."
 
 (defface vm-summary-forwarded
   '(
-    (((type x w32 mac) (class color) (background light))
+    (((type x w32 mswindows mac) (class color) (background light))
      (:foreground "MediumOrchid3"))
-    (((type x w32 mac) (class color) (background dark))
+    (((type x w32 mswindows mac) (class color) (background dark))
      (:foreground "Thistle1"))
     ;; (((class color) (min-colors 16) (background light))
     ;;  (:foreground "Orchid"))
@@ -5041,9 +5041,9 @@ collapsed threads."
 
 (defface vm-summary-high-priority
   '(
-    (((type x w32 mac) (class color) (background light))
+    (((type x w32 mswindows mac) (class color) (background light))
      (:foreground "Red1"))
-    (((type x w32 mac) (class color) (background dark))
+    (((type x w32 mswindows mac) (class color) (background dark))
      (:foreground "LightSalmon"))
     ;; (((class color) (min-colors 16) (background light))
     ;;  (:foreground "Red"))
