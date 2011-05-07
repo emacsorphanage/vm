@@ -168,7 +168,7 @@ IMAP server, using cached data."
   (let ((cell (assq n (vm-folder-imap-uid-list))))
     (nth 2 cell)))
 
-(defun vm-folder-imap-msn--flags (n)
+(defun vm-folder-imap-msn-flags (n)
   "Returns the message flags of the message sequence number N on the
 IMAP server, using cached data."
   (let ((cell (assq n (vm-folder-imap-uid-list))))
@@ -181,7 +181,7 @@ server, using cached data."
     (and (boundp uid-key) (symbol-value uid-key))))
 
 (defun vm-folder-imap-message-size (m)
-  "Returns the size of the message M on the IMAP server,
+  "Returns the size of the message M on the IMAP server (as a string),
 using cached data."
   (let ((uid-key (intern (vm-imap-uid-of m) (vm-folder-imap-flags-obarray))))
     (and (boundp uid-key) (car (symbol-value uid-key)))))
@@ -190,6 +190,24 @@ using cached data."
   "Returns the flags of the message M on the IMAP server,
 using cached data."
   (let ((uid-key (intern (vm-imap-uid-of m) (vm-folder-imap-flags-obarray))))
+    (and (boundp uid-key) (cdr (symbol-value uid-key)))))
+
+(defun vm-folder-imap-uid-msn (uid)
+  "Returns the message sequence number of message with UID on the IMAP
+server, using cached data."
+  (let ((uid-key (intern uid (vm-folder-imap-uid-obarray))))
+    (and (boundp uid-key) (symbol-value uid-key))))
+
+(defun vm-folder-imap-uid-message-size (uid)
+  "Returns the size of the message with UID on the IMAP server (as a
+string), using cached data."
+  (let ((uid-key (intern uid (vm-folder-imap-flags-obarray))))
+    (and (boundp uid-key) (car (symbol-value uid-key)))))
+
+(defun vm-folder-imap-uid-message-flags (uid)
+  "Returns the flags of the message with UID on the IMAP server,
+using cached data."
+  (let ((uid-key (intern uid (vm-folder-imap-flags-obarray))))
     (and (boundp uid-key) (cdr (symbol-value uid-key)))))
 
 ;; Status indicator vector
@@ -3155,21 +3173,16 @@ messages previously retrieved are ignored."
     (let* ((folder-buffer (current-buffer))
 	   (process (vm-folder-imap-process))
 	   (imap-buffer (process-buffer process))
-	   (n 1) (pos nil)
-	   (statblob nil) (m nil) (mflags nil)
-	   (uid nil)
 	   (uid-validity (vm-folder-imap-uid-validity))
 	   (imapdrop (vm-folder-imap-maildrop-spec))
 	   (folder (or (vm-imap-folder-for-spec imapdrop)
 		       (vm-safe-imapdrop-string imapdrop)))
-	   (use-body-peek (vm-folder-imap-body-peek))
-	   r-list range k mp new-messages message-size old-eob
+	   new-messages
 	   (sync-data (vm-imap-get-synchronization-data do-retrieves))
 	   (retrieve-list (nth 0 sync-data))
 	   (remote-expunge-list (nth 1 sync-data))
 	   (local-expunge-list (nth 2 sync-data))
-	   (stale-list (nth 3 sync-data))
-	   (flags (vm-folder-imap-flags-obarray)))
+	   (stale-list (nth 3 sync-data)))
       (when save-attributes
 	(let ((mp vm-message-list)
 	      (errors 0))
@@ -3191,113 +3204,22 @@ messages previously retrieved are ignored."
       (when retrieve-attributes
 	(let ((mp vm-message-list)
 	      (len (length vm-message-list))
-	      (n 0))
+	      (n 0)
+	      uid m mflags)
 	  (vm-inform 6 "Retrieving message attributes and labels... ")
 	  (while mp
 	    (setq m (car mp))
 	    (setq uid (vm-imap-uid-of m))
 	    (when (and (equal (vm-imap-uid-validity-of m) uid-validity)
-		       (boundp (intern uid flags)))
-	      (setq mflags (cdr (symbol-value (intern uid flags))))
+		       (vm-folder-imap-uid-msn uid))
+	      (setq mflags (vm-folder-imap-uid-message-flags uid))
 	      (vm-imap-update-message-flags m mflags t))
 	    (setq mp (cdr mp)
 		  n (1+ n)))
 	  (vm-inform 6 "Retrieving message atrributes and labels... done")
 	  ))
       (when (and do-retrieves retrieve-list)
-	(save-excursion
-	  (vm-inform 6 "Retrieving new messages... ")
-	  (vm-save-restriction
-	   (widen)
-	   (setq old-eob (point-max))
-	   (goto-char (point-max))
-	   (unwind-protect
-	       (condition-case error-data
-		   (save-excursion	; = save-current-buffer?
-		     (set-buffer (process-buffer process))
-		     ;;----------------------------
-		     (vm-buffer-type:enter 'process)
-		     ;;----------------------------
-		     (setq statblob (vm-imap-start-status-timer))
-		     (vm-set-imap-status-mailbox statblob folder)
-		     (vm-set-imap-status-maxmsg statblob
-						(length retrieve-list))
-		     (setq r-list (vm-imap-bunch-messages 
-				   (mapcar (function cdr) retrieve-list)))
-		     (while r-list
-		       (setq range (car r-list))
-		       (vm-set-imap-status-currmsg statblob n)
-		       (setq message-size 
-			     (vm-imap-get-message-size
-			      process (car range))) ; sloppy, one size fits all
-		       (vm-set-imap-status-need statblob message-size)
-		       ;;----------------------------------
-		       (vm-imap-session-type:assert 'valid)
-		       ;;----------------------------------
-		       (vm-imap-fetch-messages 
-			process (car range) (cdr range)
-			use-body-peek vm-load-headers-only)
-		       (setq k (1+ (- (cdr range) (car range))))
-		       (setq pos (with-current-buffer folder-buffer (point)))
-		       (while (> k 0)
-			 (vm-imap-retrieve-to-target process folder-buffer
-						     statblob use-body-peek)
-			 (with-current-buffer folder-buffer
-			   (if (= (point) pos)
-			       (debug "IMAP internal error #2012: the point hasn't moved")))
-			 (setq k (1- k)))
-		       (vm-imap-read-ok-response process)
-		       (setq r-list (cdr r-list)
-			     n (+ n (1+ (- (cdr range) (car range)))))))
-		 (vm-imap-normal-error	; handler
-		  (vm-inform 0 "IMAP error: %s" (cadr error-data)))
-		 (vm-imap-protocol-error ; handler
-		  (vm-inform 0 "Retrieval from %s signaled: %s" folder
-			   error-data))
-		 ;; Continue with whatever messages have been read
-		 (quit
-		  (delete-region old-eob (point-max))
-		  (error (format "Quit received during retrieval from %s"
-				 folder))))
-	     ;; unwind-protections
-	     (when statblob 
-	       (vm-imap-stop-status-timer statblob))	   
-	     ;;-------------------
-	     (vm-buffer-type:exit)
-	     ;;-------------------
-	     )
-	   ;; to make the "Mail" indicator go away
-	   (setq vm-spooled-mail-waiting nil)
-	   (vm-set-folder-imap-retrieved-count 
-	    (vm-folder-imap-mailbox-count))
-	   (intern (buffer-name) vm-buffers-needing-display-update)
-	   (vm-inform 6 "Updating summary... ")
-	   (vm-update-summary-and-mode-line)
-	   (setq mp (vm-assimilate-new-messages :dont-read-attributes t))
-	   (setq new-messages mp)
-           (if new-messages
-               (vm-increment vm-modification-counter))
-           (setq r-list retrieve-list)
-	   (while mp
-	     (when vm-load-headers-only 
-	       (vm-set-body-to-be-retrieved-of (car mp) t)
-	       (vm-set-body-to-be-discarded-of (car mp) nil))
-	     (setq uid (car (car r-list)))
-	     (vm-set-imap-uid-of (car mp) uid)
-	     (vm-set-imap-uid-validity-of (car mp) uid-validity)
-	     (vm-set-byte-count-of 
-	      (car mp) (car (symbol-value (intern uid flags))))
-	     (vm-imap-update-message-flags 
-	      (car mp) (cdr (symbol-value (intern uid flags))) t)
-	     (setq mp (cdr mp)
-		   r-list (cdr r-list)))
-	   (setq mp new-messages)
-	   (when vm-arrived-message-hook
-	     (while mp
-	       (vm-run-message-hook (car mp) 'vm-arrived-message-hook)
-	       (setq mp (cdr mp))))
-	   (run-hooks 'vm-arrived-messages-hook)
-	   )))
+	(setq new-messages (vm-imap-retrieve-messages retrieve-list)))
 
       (when do-local-expunges
 	(vm-inform 6 "Expunging messages in cache... ")
@@ -3323,136 +3245,257 @@ messages previously retrieved are ignored."
 		     (setq vm-imap-messages-to-expunge 
 			   remote-expunge-list)
 		   vm-imap-messages-to-expunge))
-	;; New code.  Kyle's version was piggybacking on IMAP spool
-	;; file code and wasn't ideal.
-	(vm-inform 6 "Expunging messages on the server... ")
-	(let ((mailbox-count (vm-folder-imap-mailbox-count))
-	      (expunge-count (length vm-imap-messages-to-expunge))
-	      (uid-obarray (vm-folder-imap-uid-obarray))
-	      uids-to-delete m-list d-list message e-list count)
-	  ;; uids-to-delete to have UID's of all UID-valid messages in
-	  ;; vm-imap-messages-to-expunge 
-	  (unwind-protect
-	      (condition-case error-data
-		  (progn
-		    (setq uids-to-delete
-			  (mapcar
-			   (lambda (message)
-			     (if (equal (cdr message) uid-validity)
-				 (car message)
-			       nil))
-			   vm-imap-messages-to-expunge))
-		    (setq uids-to-delete (delete nil uids-to-delete))
-		    (unless (equal expunge-count (length uids-to-delete))
-		      (vm-warn 3 2 "%s stale deleted messages are ignored"
-			       (- expunge-count (length uids-to-delete))))
-		    (setq expunge-count 0) ; number of messages expunged
-		    (save-excursion	   ; = save-current-buffer?
-		      (set-buffer (process-buffer process))
-		      ;;---------------------------
-		      (vm-buffer-type:set 'process)
-		      ;;---------------------------
-		      ;; m-list to have the uid's and message sequence
-		      ;; numbers of messages to be expunged, in descending
-		      ;; order.  the message sequence numbers don't change
-		      ;; in the process, according to the IMAP4 protocol
-		      (setq m-list
-			    (mapcar 
-			     (lambda (uid)
-			       (let* ((key (intern uid uid-obarray)))
-				 (and (boundp key)
-				      (cons uid (symbol-value key)))))
-			     uids-to-delete))
-		      (setq m-list 
-			    (sort (delete nil m-list)
-				  (lambda (**pair1 **pair2) 
-				    (> (cdr **pair1) (cdr **pair2)))))
-		      ;; d-list to have ranges of message sequence numbers
-		      ;; of messages to be expuntged, in ascending order.
-		      (setq d-list (vm-imap-bunch-messages
-				    (nreverse (mapcar (function cdr) m-list))))
-		      (mapc (lambda (range)
-			      (vm-imap-delete-messages
-			       process (car range) (cdr range)))
-			    d-list)
-		      ;; now expunge and verify that all messages are gone
-		      (setq m-list (cons nil m-list)) ; dummy header added
-		      (setq count 0)
-		      (while (and (cdr m-list) (<= count vm-imap-expunge-retries))
-			;;----------------------------------
-			(vm-imap-session-type:assert-active)
-			;;----------------------------------
-			(vm-imap-send-command process "EXPUNGE")
-			;;--------------------------------
-			(vm-imap-session-type:set 'active)
-			;;--------------------------------
-			;; e-list to have the message sequence numbers of
-			;; messages that got expunged
-			(setq e-list (sort 
-				      (vm-imap-read-expunge-response process)
-				      '>))
-			(setq expunge-count (+ expunge-count (length e-list)))
-			(mapc 
-			 (lambda (e)
-			   (let ((m-cons m-list)
-				 (m-pair nil)) ; uid . msn
-			     (catch 'done
-			       (while (cdr m-cons)
-				 (setq m-pair (car (cdr m-cons)))
-				 (if (> (cdr m-pair) e) 
-					; decrement the message sequence
-					; numbers following e in m-list
-				     (rplacd m-pair (1- (cdr m-pair)))
-				   (when (= (cdr m-pair) e)
-				     (rplacd m-cons (cdr (cdr m-cons))))
-				   ;; if (< (cdr m-pair) e) it is already expunged
-				   ;; clear the message from
-				   ;; vm-imap-retrieved-messages 
-				   (with-current-buffer folder-buffer
-				     (setq vm-imap-retrieved-messages
-					   (vm-delete
-					    (lambda (ret)
-					      (and (equal (car ret) (car m-pair))
-						   (equal (cadr ret) uid-validity)))
-					    vm-imap-retrieved-messages)))
-				   (throw 'done t))
-				 (setq m-cons (cdr m-cons))))))
-			 e-list)
-			;; m-list has message sequence numbers of messages
-			;; that haven't yet been expunged
-			(if (cdr m-list)
-			    (vm-inform 7 "%s messages yet to be expunged"
-				       (length (cdr m-list))))
-					; try again, if the user wants us to
-			(setq count (1+ count)))
-		      (vm-inform 6 "Expunging messages on the server... done")))
-
-		(vm-imap-normal-error	; handler
-		 (vm-inform 0 "IMAP error: %s" (cadr error-data)))
-
-		(vm-imap-protocol-error	; handler
-		 (vm-inform 0 "Expunge from %s signalled: %s"
-			    folder error-data))
-		(quit 			; handler
-		 (error "Quit received during expunge from %s"
-			folder)))
-	    ;; unwind-protections
-	    ;;-----------------------------
-	    (vm-buffer-type:exit)
-	    (vm-imap-dump-uid-seq-num-data)
-	    ;;-----------------------------
-	    )
-	  (vm-set-folder-imap-mailbox-count 
-	   (- mailbox-count expunge-count))
-	  (vm-set-folder-imap-retrieved-count
-	   (- (vm-folder-imap-retrieved-count) expunge-count))
-	  (vm-mark-folder-modified-p)
-	  ))
+	(vm-imap-expunge-remote-messages))
       ;; Not clear that one should end the session right away.  We
       ;; will keep it around for use with headers-only messages.
       ;; (vm-imap-end-session process)
       (setq vm-imap-connection-mode 'online)
       new-messages)))
+
+(defun vm-imap-retrieve-messages (retrieve-list)
+  "Retrieve into the current folder messages listed in RETRIEVE-LIST
+and return the list of the retrieved messages.
+The RETRIEVE-LIST is a list of cons-pairs (uid . n) of the
+UID's and message sequence numbers of messages on the IMAP server.
+If `vm-load-headers-only' is t, then messages larger than
+`vm-imap-max-message-size' are retrieved in headers-only form." 
+  (let* ((folder-buffer (current-buffer))
+	 (process (vm-folder-imap-process))
+	 (imapdrop (vm-folder-imap-maildrop-spec))
+	 (folder (or (vm-imap-folder-for-spec imapdrop)
+		     (vm-safe-imapdrop-string imapdrop)))
+	 (use-body-peek (vm-folder-imap-body-peek))
+	 (uid-validity (vm-folder-imap-uid-validity))
+	 uid r-list range new-messages message-size 
+	 statblob old-eob pos k mp 
+	 (n 0))
+    (save-excursion
+      (vm-inform 6 "Retrieving new messages... ")
+      (vm-save-restriction
+       (widen)
+       (setq old-eob (point-max))
+       (goto-char (point-max))
+       (setq r-list (vm-imap-bunch-messages 
+		     (mapcar (function cdr) retrieve-list)))
+       (unwind-protect
+	   (condition-case error-data
+	       (save-excursion		; = save-current-buffer?
+		 (set-buffer (process-buffer process))
+		 ;;----------------------------
+		 (vm-buffer-type:enter 'process)
+		 ;;----------------------------
+		 (setq statblob (vm-imap-start-status-timer))
+		 (vm-set-imap-status-mailbox statblob folder)
+		 (vm-set-imap-status-maxmsg statblob
+					    (length retrieve-list))
+		 (while r-list
+		   (setq range (car r-list))
+		   (vm-set-imap-status-currmsg statblob n)
+		   (setq message-size 
+			 (vm-imap-get-message-size
+			  process (car range))) ; sloppy, one size fits all
+		   (vm-set-imap-status-need statblob message-size)
+		   ;;----------------------------------
+		   (vm-imap-session-type:assert 'valid)
+		   ;;----------------------------------
+		   (vm-imap-fetch-messages 
+		    process (car range) (cdr range)
+		    use-body-peek vm-load-headers-only)
+		   (setq k (1+ (- (cdr range) (car range))))
+		   (setq pos (with-current-buffer folder-buffer (point)))
+		   (while (> k 0)
+		     (vm-imap-retrieve-to-target process folder-buffer
+						 statblob use-body-peek)
+		     (with-current-buffer folder-buffer
+		       (if (= (point) pos)
+			   (debug "IMAP internal error #2012: the point hasn't moved")))
+		     (setq k (1- k)))
+		   (vm-imap-read-ok-response process)
+		   (setq r-list (cdr r-list)
+			 n (+ n (1+ (- (cdr range) (car range)))))))
+	     (vm-imap-normal-error	; handler
+	      (vm-inform 0 "IMAP error: %s" (cadr error-data)))
+	     (vm-imap-protocol-error	; handler
+	      (vm-inform 0 "Retrieval from %s signaled: %s" folder
+			 error-data))
+	     ;; Continue with whatever messages have been read
+	     (quit
+	      (delete-region old-eob (point-max))
+	      (error (format "Quit received during retrieval from %s"
+			     folder))))
+	 ;; unwind-protections
+	 (when statblob 
+	   (vm-imap-stop-status-timer statblob))	   
+	 ;;-------------------
+	 (vm-buffer-type:exit)
+	 ;;-------------------
+	 )
+       ;; to make the "Mail" indicator go away
+       (setq vm-spooled-mail-waiting nil)
+       (vm-set-folder-imap-retrieved-count (vm-folder-imap-mailbox-count))
+       (intern (buffer-name) vm-buffers-needing-display-update)
+       (vm-inform 6 "Updating summary... ")
+       (vm-update-summary-and-mode-line)
+       (setq mp (vm-assimilate-new-messages :dont-read-attributes t))
+       (setq new-messages mp)
+       (if new-messages
+	   (vm-increment vm-modification-counter))
+       (setq r-list retrieve-list)
+       (while mp
+	 (when vm-load-headers-only 
+	   (vm-set-body-to-be-retrieved-of (car mp) t)
+	   (vm-set-body-to-be-discarded-of (car mp) nil))
+	 (setq uid (car (car r-list)))
+	 (vm-set-imap-uid-of (car mp) uid)
+	 (vm-set-imap-uid-validity-of (car mp) uid-validity)
+	 (vm-set-byte-count-of 
+	  (car mp) (vm-folder-imap-uid-message-size uid))
+	 (vm-imap-update-message-flags 
+	  (car mp) (vm-folder-imap-uid-message-flags uid) t)
+	 (setq mp (cdr mp)
+	       r-list (cdr r-list)))
+       (setq mp new-messages)
+       (when vm-arrived-message-hook
+	 (while mp
+	   (vm-run-message-hook (car mp) 'vm-arrived-message-hook)
+	   (setq mp (cdr mp))))
+       (run-hooks 'vm-arrived-messages-hook)
+       new-messages
+       ))))
+
+(defun vm-imap-expunge-remote-messages ()
+  "Expunge from the IMAP server messages listed in
+`vm-imap-messages-to-expunge'." 
+  ;; New code.  Kyle's version was piggybacking on IMAP spool
+  ;; file code and wasn't ideal.
+  (let* ((folder-buffer (current-buffer))
+	 (process (vm-folder-imap-process))
+	 (imapdrop (vm-folder-imap-maildrop-spec))
+	 (folder (or (vm-imap-folder-for-spec imapdrop)
+		     (vm-safe-imapdrop-string imapdrop)))
+	 (uid-validity (vm-folder-imap-uid-validity))
+	 (mailbox-count (vm-folder-imap-mailbox-count))
+	 (expunge-count (length vm-imap-messages-to-expunge))
+	 uids-to-delete m-list d-list message e-list count)
+    (vm-inform 6 "Expunging messages on the server... ")
+    ;; uids-to-delete to have UID's of all UID-valid messages in
+    ;; vm-imap-messages-to-expunge 
+    (unwind-protect
+	(condition-case error-data
+	    (progn
+	      (setq uids-to-delete
+		    (mapcar
+		     (lambda (message)
+		       (if (equal (cdr message) uid-validity)
+			   (car message)
+			 nil))
+		     vm-imap-messages-to-expunge))
+	      (setq uids-to-delete (delete nil uids-to-delete))
+	      (unless (equal expunge-count (length uids-to-delete))
+		(vm-warn 3 2 "%s stale deleted messages are ignored"
+			 (- expunge-count (length uids-to-delete))))
+	      ;; m-list to have the uid's and message sequence
+	      ;; numbers of messages to be expunged, in descending
+	      ;; order.  the message sequence numbers don't change
+	      ;; in the process, according to the IMAP4 protocol
+	      (setq m-list
+		    (mapcar 
+		     (lambda (uid)
+		       (let* ((msn (vm-folder-imap-uid-msn uid)))
+			 (and msn (cons uid msn))))
+		     uids-to-delete))
+	      (setq m-list 
+		    (sort (delete nil m-list)
+			  (lambda (**pair1 **pair2) 
+			    (> (cdr **pair1) (cdr **pair2)))))
+	      ;; d-list to have ranges of message sequence numbers
+	      ;; of messages to be expuntged, in ascending order.
+	      (setq d-list (vm-imap-bunch-messages
+			    (nreverse (mapcar (function cdr) m-list))))
+	      (setq expunge-count 0)	; number of messages expunged
+	      (save-excursion		; = save-current-buffer?
+		(set-buffer (process-buffer process))
+		;;---------------------------
+		(vm-buffer-type:set 'process)
+		;;---------------------------
+		(mapc (lambda (range)
+			(vm-imap-delete-messages
+			 process (car range) (cdr range)))
+		      d-list)
+		;; now expunge and verify that all messages are gone
+		(setq m-list (cons nil m-list)) ; dummy header added
+		(setq count 0)
+		(while (and (cdr m-list) (<= count vm-imap-expunge-retries))
+		  ;;----------------------------------
+		  (vm-imap-session-type:assert-active)
+		  ;;----------------------------------
+		  (vm-imap-send-command process "EXPUNGE")
+		  ;;--------------------------------
+		  (vm-imap-session-type:set 'active)
+		  ;;--------------------------------
+		  ;; e-list to have the message sequence numbers of
+		  ;; messages that got expunged
+		  (setq e-list (sort 
+				(vm-imap-read-expunge-response process)
+				'>))
+		  (setq expunge-count (+ expunge-count (length e-list)))
+		  (mapc 
+		   (lambda (e)
+		     (let ((m-cons m-list)
+			   (m-pair nil)) ; uid . msn
+		       (catch 'done
+			 (while (cdr m-cons)
+			   (setq m-pair (car (cdr m-cons)))
+			   (if (> (cdr m-pair) e) 
+					; decrement the message sequence
+					; numbers following e in m-list
+			       (rplacd m-pair (1- (cdr m-pair)))
+			     (when (= (cdr m-pair) e)
+			       (rplacd m-cons (cdr (cdr m-cons))))
+			     ;; if (< (cdr m-pair) e) it is already expunged
+			     ;; clear the message from
+			     ;; vm-imap-retrieved-messages 
+			     (with-current-buffer folder-buffer
+			       (setq vm-imap-retrieved-messages
+				     (vm-delete
+				      (lambda (ret)
+					(and (equal (car ret) (car m-pair))
+					     (equal (cadr ret) uid-validity)))
+				      vm-imap-retrieved-messages)))
+			     (throw 'done t))
+			   (setq m-cons (cdr m-cons))))))
+		   e-list)
+		  ;; m-list has message sequence numbers of messages
+		  ;; that haven't yet been expunged
+		  (if (cdr m-list)
+		      (vm-inform 7 "%s messages yet to be expunged"
+				 (length (cdr m-list))))
+					; try again, if the user wants us to
+		  (setq count (1+ count)))
+		(vm-inform 6 "Expunging messages on the server... done")))
+
+	  (vm-imap-normal-error		; handler
+	   (vm-inform 0 "IMAP error: %s" (cadr error-data)))
+
+	  (vm-imap-protocol-error	; handler
+	   (vm-inform 0 "Expunge from %s signalled: %s"
+		      folder error-data))
+	  (quit 			; handler
+	   (error "Quit received during expunge from %s"
+		  folder)))
+      ;; unwind-protections
+      ;;-----------------------------
+      (vm-buffer-type:exit)
+      (vm-imap-dump-uid-seq-num-data)
+      ;;-----------------------------
+      )
+    (vm-set-folder-imap-mailbox-count 
+     (- mailbox-count expunge-count))
+    (vm-set-folder-imap-retrieved-count
+     (- (vm-folder-imap-retrieved-count) expunge-count))
+    (vm-mark-folder-modified-p)
+    ))
+
 
 (defun vm-imap-bunch-messages (seq-nums)
   "Given a sorted list of message sequence numbers, creates a
