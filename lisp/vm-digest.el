@@ -74,7 +74,7 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 		    (vm-include-text-basic nil)
 		    (vm-include-text-from-presentation nil)
 		    (mail-citation-hook (list 'vm-cite-forwarded-message)))
-		(vm-yank-message (car vm-forward-list)))
+		(vm-yank-message m))
 	      (goto-char beg)
 	      ;; (vm-reorder-message-headers 
 	      ;;  nil :keep-list nil 

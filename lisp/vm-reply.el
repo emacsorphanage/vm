@@ -1117,7 +1117,8 @@ See `vm-forward-message-plain' for forwarding messages in plain text."
 	  ;; 	       "Use encapsulated forwarding for multiple messages? "))
 	  ;;     (error "Aborted"))
 	  ;; (setq plain nil)
-	  (let ((vm-digest-send-type vm-forwarding-digest-type))
+	  (let ((vm-digest-send-type (if plain nil
+				       vm-forwarding-digest-type)))
 	    ;; (setq this-command 'vm-next-command-uses-marks)
 	    ;; (command-execute 'vm-send-digest)
 	    (vm-send-digest nil mlist)))
@@ -1152,7 +1153,7 @@ See `vm-forward-message-plain' for forwarding messages in plain text."
 	  (setq header-end (match-beginning 0)))
 	(cond ((or plain (null vm-forwarding-digest-type))
 	       (vm-no-frills-encapsulate-message
-	       	(car vm-forward-list) 
+	       	(car mlist) 
 	       	(append vm-forwarded-headers vm-forwarded-mime-headers)
 	       	vm-unforwarded-header-regexp))
 	      ((equal vm-forwarding-digest-type "mime")
