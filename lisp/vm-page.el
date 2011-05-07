@@ -62,10 +62,16 @@ If at the end of the current message, moves to the next message iff the
 value of vm-auto-next-message is non-nil.
 Prefix argument N means scroll forward N lines."
   (interactive "P")
-  (let ((mp-changed (vm-follow-summary-cursor))
+  (let (mp-changed
 	needs-decoding 
 	(was-invisible nil))
+    (vm-follow-summary-cursor)
     (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (setq mp-changed
+	  (or (null vm-presentation-buffer)
+	      (not (equal (vm-number-of (car vm-message-pointer))
+		       (with-current-buffer vm-presentation-buffer
+			 (vm-number-of (car vm-message-pointer)))))))
     ;; the following vodoo was added by USR for fixing the jumping
     ;; cursor problem in the summary window, reported on May 4, 2008
     ;; in gnu.emacs.vm.info, title "Re: synchronization of vm buffers"
@@ -80,8 +86,8 @@ Prefix argument N means scroll forward N lines."
 				    (car vm-message-pointer)))
 			      vm-auto-decode-mime-messages
 			      (eq vm-system-state 'previewing)))
-    (and vm-presentation-buffer
-	 (set-buffer vm-presentation-buffer))
+    (when vm-presentation-buffer
+      (set-buffer vm-presentation-buffer))
     ;; We are either in the Presentation buffer or the Folder buffer
     (let ((point (point))
 	  (w (vm-get-visible-buffer-window (current-buffer))))
