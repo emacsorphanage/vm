@@ -1200,15 +1200,14 @@ nil if the session could not be created."
 		 (vm-inform 0 "%s" (error-message-string err))
 		 (setq shutdown t)
 		 (throw 'end-of-session nil))))
+	    (setq shutdown t)
 	    (setq vm-imap-read-point (point))
 	    (vm-process-kill-without-query process)
 	    (if (setq greeting (vm-imap-read-greeting process))
 		(insert-before-markers 
 		 (format "-- connected for %s\r\n" purpose))
 	      (delete-process process)	; why here?  USR
-	      (setq shutdown t)
 	      (throw 'end-of-session nil))
-	    (setq shutdown t)
 	    (set (make-local-variable 'vm-imap-session-done) nil)
 	    ;; record server capabilities
 	    (vm-imap-send-command process "CAPABILITY")
