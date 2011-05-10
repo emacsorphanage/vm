@@ -414,7 +414,7 @@ ignored."
 	;; remove the message from the thread tree.
 	(if (vectorp vm-thread-obarray)
 	    (vm-unthread-message-and-mirrors 
-	     (vm-real-message-of (car mp)) :message-changing t))
+	     (vm-real-message-of (car mp)) :message-changing nil))
 	;; expunge from the virtual side first, removing all
 	;; references to this message before actually removing
 	;; the message itself.

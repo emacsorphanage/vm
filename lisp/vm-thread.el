@@ -776,28 +776,30 @@ symbols interned in vm-thread-obarray."
   "Removes MESSAGE and all its mirrored messages from their
 current threads.  If optional argument MESSAGE-CHANGING is
 non-nil, then forget information that might be different if the
-message contents changed.  (What does this mean?)
+message contents changed.
 
 MESSAGE should be a real (non-virtual) message.
 
 The full functionality of this function is not entirely clear.  
 						USR, 2010-07-24"
   (save-current-buffer
-    (dolist (m (cons message (vm-virtual-messages-of message)))
-      ;; Don't trust blindly.  The user could have killed some of
-      ;; these buffers.
-      (when (buffer-name (vm-buffer-of m))
-	(set-buffer (vm-buffer-of m))
-	(when (vectorp vm-thread-obarray)
-	  (vm-unthread-message 
-	   m :message-changing message-changing))))))
+    (mapc 
+     (lambda (m)
+       ;; Don't trust blindly.  The user could have killed some of
+       ;; these buffers.
+       (when (buffer-name (vm-buffer-of m))
+	 (set-buffer (vm-buffer-of m))
+	 (when (vectorp vm-thread-obarray)
+	   (vm-unthread-message 
+	    m :message-changing message-changing))))
+     (cons message (vm-virtual-messages-of message)))))
 
 ;;;###autoload
 (defun* vm-unthread-message (m &key message-changing)
   "Removes message M from its thread.  If optional argument
 MESSAGE-CHANGING is non-nil, then forget information that might
-be different if the message contents changed.  (What does this
-mean?)                                         USR, 2011-03-17"
+be different if the message contents changed.  The message will be
+reinserted into an appropriate thread later.       USR, 2011-03-17"
   ;; -------------- atomic block -------------------------------
   (let ((inhibit-quit t)
 	date id-sym s-sym p-sym root-sym)
@@ -1066,33 +1068,29 @@ Threads should have been built for this function to work."
 	    ;; otherwise calcuate the thread-subtree
 	    (let ((list (list m-sym))
 		  (loop-obarray (make-vector 29 0))
-		  subject-sym id-sym
+		  subject-sym id-sym id
 		  result)
-	      (if (member (vm-su-message-id msg) vm-traced-message-ids)
-		  (vm-thread-debug 'vm-thread-subtree (vm-su-message-id msg)))
+	      (when (member (vm-su-message-id msg) vm-traced-message-ids)
+		(with-current-buffer (vm-buffer-of msg)
+		  (vm-thread-debug 'vm-thread-subtree (vm-su-message-id msg))))
 	      (while list
-		(setq id-sym (car list))
+		(setq id-sym (car list)
+		      id (symbol-name id-sym))
 		(when (and (vm-th-messages-of id-sym)
-			   (not (memq (vm-th-message-of id-sym)
-				      result)))
+			   (not (memq (vm-th-message-of id-sym) result)))
 		  (setq result (append result (vm-th-messages-of id-sym))))
-		(when (null (intern-soft (symbol-name id-sym) loop-obarray))
-		  (intern (symbol-name id-sym) loop-obarray)
+		(when (null (intern-soft id loop-obarray))
+		  (intern id loop-obarray)
 		  (nconc list (copy-sequence (vm-th-children-of id-sym)))
 		  (mapc
 		   (lambda (m)
-		     (setq subject-sym 
-			   (intern (vm-so-sortable-subject m)
-				   (with-current-buffer (vm-buffer-of m)
-				     vm-thread-subject-obarray)))
-		     (if (and (boundp subject-sym) 
-			      (eq id-sym (vm-ts-root-of subject-sym)))
-			 (nconc list (copy-sequence
-				      (vm-ts-members-of subject-sym))))
-		     )
+		     (setq subject-sym (vm-subject-symbol m))
+		     (when (and (boundp subject-sym) 
+				(eq id-sym (vm-ts-root-of subject-sym)))
+		       (nconc list 
+			      (copy-sequence (vm-ts-members-of subject-sym)))))
 		   (vm-th-messages-of id-sym)))
-		(setq list (cdr list))
-		)
+		(setq list (cdr list)))
 	      (when msg
 		(vm-set-thread-subtree-of msg result))
 	      result))
