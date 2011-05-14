@@ -671,7 +671,6 @@ be considered files except those matched by `vm-recognize-pop-maildrops'."
   :type '(choice (const :tag "Don't Recognize" nil)
 		 regexp))
 
-;;FIXME Mark this variable as obsolete 
 (defvar vm-imap-server-list nil
   "*List of IMAP maildrop specifications that tell VM the IMAP servers
 you have access to and how to log into them.  The IMAP maildrop
@@ -690,7 +689,10 @@ Example:
        )
  )"
 )
-;; FIXME Documentation: what is meant by (which see)
+
+(make-obsolete-variable 'vm-imap-server-list
+			'vm-imap-account-alist "8.1.0")
+
 (defcustom vm-imap-account-alist nil
   "*Alist of IMAP account specifications and names that refer to them.
 The alist format is:
@@ -715,13 +717,11 @@ Example:
   :type '(repeat (list (string :tag "IMAP Folder Specification") 
 		       (string :tag "Nickname"))))
 
-;; FIXME Doc clarificaiton: What is meant by IMAP account?
-;; IMAP folder specification or short folder name?
 (defcustom vm-imap-default-account nil
   "*Set this variable to a string denoting the name of an IMAP account
-declared in `vm-imap-account-alist'.  The account specified here will
-be regarded as the default account for various purposes, e.g., for
-saving copies of outgoing mail."
+ (short name) declared in `vm-imap-account-alist'.  The account
+ specified here will be regarded as the default account for
+ various purposes, e.g., for saving copies of outgoing mail."
   :group 'vm-imap
   :type '(choice (const :tag "None" nil) 
 		 (string :tag "IMAP Account")))
@@ -1123,7 +1123,7 @@ A nil value causes VM to preview messages only if new or unread."
   modification of the message are necessary.  
 
 This constant is a place holder for the obsolete variable
-vm-always-use-presentation-buffer.  It should be removed eventually.")
+`vm-always-use-presentation-buffer'.  It should be removed eventually.")
 
 (defcustom vm-word-wrap-paragraphs nil
   "*If non-nil, causes VM to word wrap paragraphs with long lines.
@@ -2320,14 +2320,15 @@ attach, any relative pathnames will be relative to this directory."
   "*This variable, originally from vm-pine, is deprecated.  It is
 replaced by `vm-include-mime-attachments'.")
 
+(defvaralias 'vm-mime-yank-attachments 'vm-include-mime-attachments)
 (make-obsolete-variable 'vm-mime-yank-attachments
-  'vm-include-mime-attachments
-  "8.2.0")			
+			'vm-include-mime-attachments
+			"8.2.0")			
 
 (defcustom vm-include-mime-attachments nil
   "*Non-nil value enables attachments to be included in quoted text in
 a reply message.  Otherwise only the button label will be included."
-  :group 'vm-mime
+  :group 'vm-compose
   :type 'boolean)
 
 (defcustom vm-infer-mime-types nil
@@ -2348,8 +2349,8 @@ and the type corresponding to the first match found is used."
    :type 'boolean)
 (defvaralias 'vm-mime-attachment-infer-type-for-text-attachments
   'vm-infer-mime-types-for-text)
-(make-obsolete 'vm-mime-attachment-infer-type-for-text-attachments
-	       'vm-infer-mime-types-for-text "8.2.0")
+(make-obsolete-variable 'vm-mime-attachment-infer-type-for-text-attachments
+			'vm-infer-mime-types-for-text "8.2.0")
 
 (defcustom vm-mime-avoid-folding-content-type t
   "*Non-nil means don't send folded Content- headers in MIME messages.
@@ -5241,8 +5242,7 @@ See `vm-mime-compile-format-1' for valid format specifiers."
 setting this one to t.")
 
 (make-obsolete-variable 'vm-mime-show-alternatives 
-  'vm-mime-alternative-select-method
-  "8.2.0")
+			'vm-mime-alternative-select-method "8.2.0")
 
 (defcustom vm-emit-messages-for-mime-decoding t
   "*Flag to allow minibuffer messages about the progress of MIME
@@ -7166,7 +7166,8 @@ cause trouble (abbrev-mode)."
 (defvar vm-summary-faces-mode nil
   "Records whether VM Summary Faces mode is in use.")
 
-(make-obsolete 'vm-summary-faces-mode 'vm-summary-enable-faces "8.2.0")
+(make-obsolete-variable 'vm-summary-faces-mode 
+			'vm-summary-enable-faces "8.2.0")
 
 ;; Duplicate defintion. See above. TX
 ;; (defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
