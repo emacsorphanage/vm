@@ -211,6 +211,7 @@ thread have their cached data discarded."
 		       (eq (car vm-message-pointer) v-m))
 		  (save-excursion (vm-present-current-message))))))
 	(vm-mark-for-summary-update m)
+	(vm-set-stuff-flag-of m t)
 	(setq mlist (cdr mlist))))
     (save-excursion
       (mapatoms (function (lambda (s)
