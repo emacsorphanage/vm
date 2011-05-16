@@ -5906,6 +5906,9 @@ are gratefully acknowledged:
 @item Julian Bradfield
 @item Samuel Bronson
 @item Brent Goodrick
+@item Tim Cross
+@item Arik Mitschang
+@item Anthony Mallet
 @item Noah Friedman
 @end itemize
 

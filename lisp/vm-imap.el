@@ -3912,7 +3912,12 @@ See Info node `(elisp)Programmed Completion'."
   (let ((account-list (mapcar (lambda (a) (list (concat (cadr a) ":")))
 			      vm-imap-account-alist))
 	completion-list folder account spec process mailbox-list)
-    
+
+    ;; handle SPC completion (remove last " " from string)
+    (and (> (length string) 0)
+         (string= " " (substring string -1))
+         (setq string (substring string 0 -1)))
+
     ;; check for account 
     (setq folder (try-completion (or string "") account-list predicate))
     (if (stringp folder)
@@ -3945,7 +3950,7 @@ See Info node `(elisp)Programmed Completion'."
 	(setq folder string))
     (cond ((null flag)
 	   folder)
-	  ((or (eq t flag) (string= " " folder))
+	  ((eq t flag)
 	   (mapcar 'car
 		   (vm-delete (lambda (c)
 				(string-prefix-p folder (car c)))
