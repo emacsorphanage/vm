@@ -2,13 +2,31 @@
 
 # location of required programms
 BZR = bzr --no-plugins
+prefix = @prefix@
+MKDIR = @MKDIR@
 TAR = @TAR@
 RM   = @RM@
 XARGS = @XARGS@
 prefix = @prefix@
 INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+srcdir = @srcdir@
+datadir= @datadir@
+datarootdir= @datarootdir@
+etcdir = @etcdir@
+pixmapdir = @pixmapdir@
+docdir = @docdir@
 
 SUBDIRS = lisp info src pixmaps
+
+# the list of source (documentation) files
+SOURCES = NEWS
+SOURCES += CHANGES
+SOURCES += README
+SOURCES += TODO
+SOURCES += COPYING
+
 
 ##############################################################################
 
@@ -27,8 +45,15 @@ Makefile vm-load.el: %: config.status @srcdir@/%.in
 config.status: @srcdir@/configure
 	./config.status --recheck
 
-install:
+install: install-pkg
 	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i install) || exit 1; done
+
+install-pkg:
+	$(MKDIR) -p "$(DESTDIR)$(docdir)"
+	for i in $(SOURCES) ; do                                     \
+	    echo "Installing $$i in '$(DESTDIR)$(docdir)'" ;      \
+	    $(INSTALL_DATA) $$i "$(DESTDIR)$(docdir)" ;           \
+	done ;
 
 clean:
 	@for i in $(SUBDIRS) ; do ($(MAKE) -C $$i clean) || exit 1; done

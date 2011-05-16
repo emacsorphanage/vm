@@ -2,7 +2,8 @@
 
 # Author:        Robert Widhopf-Fenk <hack@robf.de>
 
-# Copyright (C) 2006-2007
+# Copyright (C) 2006-2007  Robert Widhopf-Fenk <hack@robf.de>
+# Copyright (C) 2010       Uday S Reddy <reddyuday@launchpad.net>
 
 # VM is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Library General Public License as published by the Free
@@ -128,12 +129,14 @@ TEST
       if test "x$theprefix" = "xNONE"; then
   	theprefix=$ac_default_prefix
       fi
-      datadir="\$(prefix)/share"
+      datarootdir="\$(prefix)/share"
+      datadir="${datarootdir}"
       if test "$EMACS_FLAVOR" = "xemacs"; then
-          datadir="\$(prefix)/lib"
-          lispdir="${datadir}/${EMACS_FLAVOR}/site-packages/lisp/vm"
+          datarootdir="\$(prefix)/lib"
+	  datadir="${datarootdir}/${EMACS_FLAVOR}/site-packages/etc"
+          lispdir="${datarootdir}/${EMACS_FLAVOR}/site-packages/lisp/vm"
       else
-          lispdir="${datadir}/${EMACS_FLAVOR}/site-lisp/vm"
+          lispdir="${datarootdir}/${EMACS_FLAVOR}/site-lisp/vm"
       fi
       for thedir in share lib; do
   	potential=
@@ -141,7 +144,7 @@ TEST
              if test "$EMACS_FLAVOR" = "xemacs"; then
   	         lispdir="\$(prefix)/${thedir}/${EMACS_FLAVOR}/site-packages/lisp/vm"
              else
-                 lispdir="${datadir}/${EMACS_FLAVOR}/site-lisp/vm"
+                 lispdir="${datarootdir}/${EMACS_FLAVOR}/site-lisp/vm"
              fi
   	   break
   	fi
@@ -150,14 +153,29 @@ TEST
     AC_MSG_RESULT($lispdir)
     AC_SUBST(lispdir)
 
-    AC_ARG_WITH(pixmapdir,[  --with-pixmapdir=DIR    where to install pixmap files], pixmapdir=${withval})
-    AC_MSG_CHECKING([where pixmaps should go])
-    if test -z "$pixmapdir"; then
+    AC_ARG_WITH(etcdir,[  --with-etcdir=DIR    where to install data files], etcdir=${withval})
+    AC_MSG_CHECKING([where data files should go])
+    if test -z "$etcdir"; then
       dnl Set default value
-      pixmapdir="${datadir}/vm"
+      etcdir="${datadir}/vm"
     fi
-    AC_MSG_RESULT($pixmapdir)
+    pixmapdir="${etcdir}/pixmaps"
+    AC_MSG_RESULT($etcdir)
+    AC_SUBST(etcdir)
     AC_SUBST(pixmapdir)
+
+    AC_ARG_WITH(docdir,[  --with-docdir=DIR    where to install doc files], docdir=${withval})
+    AC_MSG_CHECKING([where doc files should go])
+    if test -z "$docdir"; then
+      dnl Set default value
+      if test "$EMACS_FLAVOR" = "xemacs"; then
+          docdir="${etcdir}"
+      else
+          docdir="${datarootdir}/doc/vm"
+      fi
+    fi
+    AC_MSG_RESULT($docdir)
+    AC_SUBST(docdir)
 
 #    if test "x${EMACS_FLAVOR}" = "xemacs" ; then
 #      PACKAGEDIR="${prefix}/share/emacs/site-lisp"
@@ -191,11 +209,11 @@ AC_DEFUN([VM_BUILD_FLAGS], [
 AC_DEFUN([VM_PATH_INFO_DIR], [
   AC_MSG_CHECKING([where the TeXinfo docs should go])
   dnl Set default value.  This must be an absolute path.
-  if test "$infodir" = "\${prefix}/info"; then
+  if test "$infodir" = "\${datarootdir}/info"; then
     if test "$EMACS_FLAVOR" = "xemacs"; then
       info_dir="\$(prefix)/${thedir}/${EMACS_FLAVOR}/site-packages/info"
     else
-      info_dir="\$(prefix)/share/info"
+      info_dir="\${datarootdir}/info"
     fi
   else
     info_dir=$infodir
@@ -233,7 +251,7 @@ AC_INIT([VM], [8.1.93a], [vm@lists.launchpad.net])
 # Version (release) number
 # Contact address
 
-AC_COPYRIGHT([Copyright (C) 2006-2007 Robert Widhopf-Fenk <hack@robf.de>])
+AC_COPYRIGHT([Copyright (C) 2009-2010 VM Development Team <vm@lists.launchpad.net>])
 
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_FILES([Makefile lisp/Makefile info/Makefile src/Makefile pixmaps/Makefile vm-load.el])

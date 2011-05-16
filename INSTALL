@@ -23,13 +23,25 @@ USING CONFIGURE
 
    The default locations are as follows:
 
-   a) GNU Emacs: lisp files goto ${prefix}/share/emacs/site-lisp and
-      info files to ${prefix}/info (overridable with --with-lispdir=...
-      and --infodir=...)
+   a) GNU Emacs: 
+      lisp files goto ${prefix}/share/emacs/site-lisp,
+      data files go to ${prefix}/share/vm, and 
+      doc files go to ${prefix}/share/doc/vm, and 
+      info files go to ${prefix}/share/info, (overridable with
+      --with-lispdir=..., --with-etcdir=..., --with-docdir=...
+      and --infodir=...).
 
-   b) XEmacs: lisp files goto ${prefix}/lib/xemacs/site-packages/lisp/vm and
+   b) XEmacs: 
+      lisp files go to ${prefix}/lib/xemacs/site-packages/lisp/vm, 
+      data & doc files go to ${prefix}/lib/xemacs/site-packages/etc/vm, and
       info files to ${prefix}/lib/xemacs/site-packages/info, (overridable
-      with --with-lispdir=... and --infodir=...)
+      with --with-lispdir=..., --with-etcdir=...,  and --infodir=...).
+
+      Run M-x describe-installation in XEmacs for hints on where to
+      install the files for XEmacs.
+
+   NOTE: VM 8.1.1 and older versions used an option --with-pixmapdir,
+   which is now replaced by --with-etcdir.
 
    ATTENTION: Files byte-compiled with GNU Emacs are NOT COMPATIBLE with the
    XEmacs and you may experience strange problems during startup when doing

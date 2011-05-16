@@ -137,7 +137,7 @@ vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	 "$(EMACS_PROG)" $(FLAGS) -l autoload \
 		-f vm-built-autoloads "@abs_builddir@/$@" "`pwd`")
 	echo "(custom-add-load 'vm 'vm-cus-load)" | tr -d '\015' >> $@
-	echo "(setq vm-configure-datadir \"${datadir}\")" | tr -d '\015' >> $@
+	echo "(setq vm-configure-datadir \"${datadir}/vm\")" | tr -d '\015' >> $@
 	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" | tr -d '\015' >> $@
 	echo "(require 'vm-vars)" | tr -d '\015' >> $@
 	echo "(provide 'vm-autoloads)" | tr -d '\015' >> $@
