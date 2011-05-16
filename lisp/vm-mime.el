@@ -2302,31 +2302,43 @@ assuming that it is text."
       ;; unwind-protection
       (when work-buffer (kill-buffer work-buffer)))))
 
-(defun vm-mime-should-display-button (layout dont-honor-content-disposition)
-  (if (and vm-mime-honor-content-disposition
-	   (not dont-honor-content-disposition)
-	   (vm-mm-layout-disposition layout))
-      (or (let ((case-fold-search t))
-	    (string-match "^attachment$" 
-			  (car (vm-mm-layout-disposition layout))))
-	  (and (eq vm-mime-honor-content-disposition 'internal-only)
-	       (not (vm-mime-should-display-internal layout))))
-    (let ((type (car (vm-mm-layout-type layout))))
-      (cond ((vm-mime-types-match "multipart" type)
-	     nil)
-	    ((or (eq vm-mime-auto-displayed-content-types t)
-		 (vm-find vm-mime-auto-displayed-content-types
-			  (lambda (i)
-			    (vm-mime-types-match i type))))
-	     (vm-find vm-mime-auto-displayed-content-type-exceptions
-		   (lambda (i)
-		     (vm-mime-types-match i type))))
-	    (t t)))))
+(defun* vm-mime-should-display-button (layout &key
+					      (honor-content-disposition t))
+  "Checks whether MIME object with LAYOUT should be displayed as
+a button.  Optional keyword argument HONOR-CONTENT-DISPOSITION
+says whether the Content-Disposition header of the MIME object
+should be honored (default t).  The global setting of
+`vm-mime-honor-content-disposition' also has this effect."
+  ;; Karnaugh map analysis shows that
+  ;; - all objects that are not auto-displayed should be buttons
+  ;; - attachment disposition objects are displayed as buttons only if
+  ;;   honor-content-disposition is non-nil
+  (let ((type (car (vm-mm-layout-type layout)))
+	(disposition (car (vm-mm-layout-disposition layout))))
+    (setq disposition (and disposition (downcase disposition)))
+    (setq honor-content-disposition 
+	  (and honor-content-disposition vm-mime-honor-content-disposition))
+    (cond ((vm-mime-types-match "multipart" type)
+	   nil)
+	  ((and disposition
+		(or (eq honor-content-disposition t)
+		    (and (eq honor-content-disposition 'internal-only)
+			 (vm-mime-should-display-internal layout))))
+	   (equal disposition "attachment"))
+	  (t (not (vm-mime-should-auto-display layout))))))
+
+(defun vm-mime-should-auto-display (layout)
+  (let ((type (car (vm-mm-layout-type layout))))
+    (and (or (eq vm-mime-auto-displayed-content-types t)
+	     (vm-find (cons "multipart" vm-mime-auto-displayed-content-types)
+		      (lambda (i) (vm-mime-types-match i type))))
+	 (not (vm-find vm-mime-auto-displayed-content-type-exceptions
+		       (lambda (i) (vm-mime-types-match i type)))))))
 
 (defun vm-mime-should-display-internal (layout)
   (let ((type (car (vm-mm-layout-type layout))))
     (if (or (eq vm-mime-internal-content-types t)
-	    (vm-find vm-mime-internal-content-types
+	    (vm-find (cons "multipart" vm-mime-internal-content-types)
 		     (lambda (i)
 		       (vm-mime-types-match i type))))
 	(not (vm-find vm-mime-internal-content-type-exceptions
@@ -2535,7 +2547,8 @@ is not successful.                                   USR, 2011-03-25"
 		 (setq type (downcase (car (vm-mm-layout-type layout)))
 		       type-no-subtype (car (vm-parse type "\\([^/]+\\)")))))
 	  
-	  (cond ((and (vm-mime-should-display-button layout dont-honor-c-d)
+	  (cond ((and (vm-mime-should-display-button 
+		       layout :honor-content-disposition (not dont-honor-c-d))
 		      ;; original conditional-cases changed to fboundp
 		      ;; checks.  USR, 2011-03-25
 		      (or (fboundp 
@@ -6814,13 +6827,7 @@ and the approriate content-type and boundary markup information is added."
 	(mybuffer (current-buffer)))
     (unwind-protect
 	(progn
-	  (cond (vm-xemacs-p
-		 (vm-mime-encode-composition-internal))
-		(vm-fsfemacs-p
-		 (vm-mime-encode-composition-internal))
-		(t
-		 (error "don't know how to MIME encode composition for %s"
-			(emacs-version))))
+	  (vm-mime-encode-composition-internal)
 	  (setq unwind-needed nil))
       (and unwind-needed (consp buffer-undo-list)
 	   (eq mybuffer (current-buffer))
@@ -7093,16 +7100,16 @@ and the approriate content-type and boundary markup information is added."
 		       "multipart/mixed" 
 		       (list (format "boundary=\"%s\"" boundary)))
 		      "\n")
-	      (when description
-		(insert "Content-Description: " description "\n"))
-	      (when disposition
-		(insert "Content-Disposition: " 
-			(vm-mime-type-with-params 
-			 (car disposition) (cdr disposition))
-			"\n"))
 	      (insert "Content-Transfer-Encoding: "
 		      (if 8bit "8bit" "7bit") "\n"))
 	  (insert "Content-Type: " (vm-mime-type-with-params type params) "\n")
+	  (when disposition
+	    (insert "Content-Disposition: " 
+		    (vm-mime-type-with-params 
+		     (car disposition) (cdr disposition))
+		    "\n"))
+	  (when description
+	    (insert "Content-Description: " description "\n"))
 	  (insert "Content-Transfer-Encoding: " encoding "\n"))))))
 
 (defun vm-mime-encode-text-part (beg end whole-message)
@@ -7857,7 +7864,7 @@ end of the path."
   (let ((m (car vm-message-pointer)))
     (switch-to-buffer "*VM mime part layout*")
     (erase-buffer)
-    (setq truncate-lines t)
+    ;; (setq truncate-lines t)
     (insert (format "%s\n" (vm-decode-mime-encoded-words-in-string
                             (vm-su-subject m))))
     (vm-mime-map-layout-parts
@@ -7875,8 +7882,6 @@ end of the path."
                            (if dispo (format " %S" dispo) "")))))))))
 (defalias 'vm-mime-list-part-structure
   'vm-list-mime-part-structure)
-(make-obsolete 'vm-mime-list-part-structure
-	       'vm-list-mime-part-structure "8.2.0")
 
 ;;;###autoload
 (defun vm-nuke-alternative-text/html-internal (m)

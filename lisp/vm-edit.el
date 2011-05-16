@@ -188,9 +188,6 @@ thread have their cached data discarded."
 	(vm-set-text-of m nil)
 	(vm-set-mime-layout-of m nil)
 	(vm-set-mime-encoded-header-flag-of m nil)
-	(if (and interactive-p vm-presentation-buffer
-		 (eq (car vm-message-pointer) m))
-	    (save-excursion (vm-present-current-message)))
 	(if (vectorp vm-thread-obarray)
 	    (vm-build-threads (list m)))
 	(if vm-thread-debug
@@ -212,6 +209,9 @@ thread have their cached data discarded."
 		  (save-excursion (vm-present-current-message))))))
 	(vm-mark-for-summary-update m)
 	(vm-set-stuff-flag-of m t)
+	(if (and interactive-p vm-presentation-buffer
+		 (eq (car vm-message-pointer) m))
+	    (save-excursion (vm-present-current-message)))
 	(setq mlist (cdr mlist))))
     (save-excursion
       (mapatoms (function (lambda (s)
