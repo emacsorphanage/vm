@@ -50,9 +50,11 @@ install: install-pkg
 
 install-pkg:
 	$(MKDIR) -p "$(DESTDIR)$(docdir)"
-	for i in $(SOURCES) ; do                                     \
-	    echo "Installing $$i in '$(DESTDIR)$(docdir)'" ;      \
+	$(MKDIR) -p "$(etcdir)"
+	for i in $(SOURCES) ; do                                  \
+	    echo "Installing $$i in '$(DESTDIR)$(docdir)' and '$(etcdir)'" ;  \
 	    $(INSTALL_DATA) $$i "$(DESTDIR)$(docdir)" ;           \
+	    $(INSTALL_DATA) $$i "$(etcdir)" ;                     \
 	done ;
 
 clean:
