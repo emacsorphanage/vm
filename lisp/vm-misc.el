@@ -23,9 +23,31 @@
 
 (provide 'vm-misc)
 
-(eval-when-compile
-  (require 'vm-misc))
+;; (eval-when-compile
+;;   (require 'vm-misc))
 
+;; vm-xemacs.el is a fake file to fool the Emacs 23 compiler
+(declare-function find-coding-system "vm-xemacs" (coding-system-or-name))
+
+;; Aliases for xemacs functions
+(declare-function xemacs-abbreviate-file-name "vm-misc.el" 
+		  (filename &optional hack-homedir))
+(declare-function xemacs-insert-char "vm-misc.el"
+		  (char &optional count ignored buffer))
+;; Aliases for xemacs/fsfemacs functions with different arguments
+(declare-function emacs-find-file-name-handler "vm-misc.el"
+		  (filename &optional operation))
+(declare-function emacs-focus-frame "vm-misc.el"
+		  (&rest ignore))
+(declare-function emacs-get-buffer-window "vm-misc.el"
+		  (&optional buffer-or-name frame devices))
+
+(declare-function vm-device-type "vm-misc.el"
+		  (&optional device))
+(declare-function vm-buffer-substring-no-properties "vm-misc.el"
+		  (start end))
+(declare-function substring-no-properties "vm-misc.el"
+		  (string from &optional to))
 (declare-function vm-extent-property "vm-misc.el" (overlay prop) t)
 (declare-function vm-extent-object "vm-misc.el" (overlay) t)
 (declare-function vm-set-extent-property "vm-misc.el" (overlay prop value) t)
@@ -36,13 +58,73 @@
 (declare-function vm-extent-end-position "vm-misc.el" (overlay) t)
 (declare-function vm-extent-start-position "vm-misc.el" (overlay) t)
 (declare-function vm-detach-extent "vm-misc.el" (overlay) t)
+(declare-function vm-delete-extent "vm-misc.el" (overlay) t)
 (declare-function vm-disable-extents "vm-misc.el" 
 		  (&optional beg end name val) t)
 (declare-function vm-extent-properties "vm-misc.el" (overlay) t)
 
+(declare-function timezone-make-date-sortable "ext:timezone"
+		  (date &optional local timezone))
+(declare-function longlines-decode-region "ext:longlines"
+		  (start end))
+(declare-function longlines-wrap-region "ext:longlines"
+		  (start end))
+(declare-function vm-decode-mime-encoded-words "vm-mime" ())
+(declare-function vm-decode-mime-encoded-words-in-string "vm-mime" (string))
+(declare-function vm-su-subject "vm-summary" (message))
+
 
 ;; This file contains various low-level operations that address
 ;; incomaptibilities between Gnu and XEmacs.  Expect compiler warnings.
+
+;; messages in the minibuffer
+
+;; the chattiness levels are:
+;; 0 - extremely quiet
+;; 5 - medium
+;; 7 - normal level
+;; 10 - heavy debugging info
+
+(defun vm-inform (level &rest args)
+  (when (<= level vm-verbosity)
+    (apply 'message args)))
+
+(defun vm-warn (level sit-for &rest args)
+  (when (<= level vm-verbosity)
+    (apply 'message args)
+    (sit-for sit-for)))
+
+;; garbage-collector result
+(defconst gc-fields '(:conses :syms :miscs 
+			      :chars :vector 
+			      :floats :intervals :strings))
+
+(defsubst vm-garbage-collect ()
+  (pp (vm-zip-lists gc-fields (garbage-collect))))
+
+;; Make sure that interprogram-cut-function is defined
+(unless (boundp 'interprogram-cut-function)
+  (defvar interprogram-cut-function nil))
+
+(defun vm-substring (string from &optional to)
+  (let ((work-buffer nil))
+    (set-buffer work-buffer)
+    (unwind-protect
+	(with-current-buffer work-buffer
+	  (insert string)
+	  (if (null to)
+	      (setq to (length string))
+	    (if (< to 0)
+		(setq to (+ (length string) to))))
+	  ;; string indices start at 0, buffers start at 1.
+	  (setq from (1+ from)
+		to (1+ to))
+	  (if (> from (point-min))
+	      (delete-region (point-min) from))
+	  (if (< to (point-max))
+	      (delete-region to (point-max)))
+	  (buffer-string))
+      (when work-buffer (kill-buffer work-buffer)))))
 
 ;; Taken from XEmacs as GNU Emacs is missing `replace-in-string' and defining
 ;; it may cause clashes with other packages defining it differently, in fact
@@ -191,7 +273,7 @@ need to add quotes or leave them undecoded.             RWF"
           (concat "\"" (match-string 1 da) "\" " (match-string 2 da))
         da))))
 
-(make-obsolete 'vmrf-fix-quoted-address 'vm-quoted-address "8.1.93a")
+(make-obsolete 'vmrf-fix-quoted-address 'vm-quoted-address "8.2.0")
           
 (defun vm-parse-structured-header (string &optional sepchar keep-quotes)
   (if (null string)
@@ -359,6 +441,23 @@ vm-mail-buffer variable."
 	      blobarray)
     list ))
 
+(defun vm-zip-vectors (v1 v2)
+  (if (= (length v1) (length v2))
+      (let ((l1 (append v1 nil))
+	    (l2 (append v2 nil)))
+	(vconcat (vm-zip-lists l1 l2)))
+    (error "Attempt to zip vectors of differing length: %s and %s" 
+	   (length v1) (length v2))))
+
+(defun vm-zip-lists (l1 l2)
+  (cond ((or (null l1) (null l2))
+	 (if (and (null l1) (null l2))
+	     nil 
+	   (error "Attempt to zip lists of differing length")))
+	(t
+	 (cons (car l1) (cons (car l2) (vm-zip-lists (cdr l1) (cdr l2)))))
+	))
+
 (defun vm-mapvector (proc vec)
   (let ((new-vec (make-vector (length vec) nil))
 	(i 0)
@@ -369,6 +468,11 @@ vm-mail-buffer variable."
     new-vec))
 
 (defun vm-mapcar (function &rest lists)
+  "Apply function to all the curresponding elements of the remaining
+argument lists.  The results are gathered into a list and returned.  
+
+All the argument lists should be of the same length for this to be
+well-behaved." 
   (let (arglist result)
     (while (car lists)
       (setq arglist (mapcar 'car lists))
@@ -376,17 +480,28 @@ vm-mail-buffer variable."
       (setq lists (mapcar 'cdr lists)))
     (nreverse result)))
 
-(defun vm-mapc (function &rest lists)
+(defun vm-mapc (proc &rest lists)
+  "Apply PROC to all the corresponding elements of the remaining
+argument lists.  Discard any results.
+
+All the argument lists should be of the same length for this to be
+well-behaved." 
   (let (arglist)
     (while (car lists)
       (setq arglist (mapcar 'car lists))
-      (apply function arglist)
+      (apply proc arglist)
       (setq lists (mapcar 'cdr lists)))))
 
-(defun vm-delete (predicate list &optional reverse)
-  (let ((p list) (reverse (if reverse 'not 'identity)) prev)
+(defun vm-delete (predicate list &optional retain)
+  "Delete all elements satisfying PREDICATE from LIST and return
+the resulting list.  If optional argument RETAIN is t, then
+retain all elements that satisfy PREDICATE rather than deleting
+them.  The original LIST is permanently modified."
+  (let ((p list) 
+	(retain (if retain 'not 'identity))
+	prev)
     (while p
-      (if (funcall reverse (funcall predicate (car p)))
+      (if (funcall retain (funcall predicate (car p)))
 	  (if (null prev)
 	      (setq list (cdr list) p list)
 	    (setcdr prev (cdr p))
@@ -411,6 +526,35 @@ vm-mail-buffer variable."
       (setq n (1+ n)))
     (if list n nil)))
 
+(defun vm-find-all (list pred)
+  "Find all the elements of LIST satisfying PRED"
+  (let ((n 0) (res nil))
+    (while list 
+      (when (apply pred (car list) nil)
+	(setq res (cons (car list) res)))
+      (setq list (cdr list))
+      (setq n (1+ n)))
+    (nreverse res)))
+
+(defun vm-find2 (list1 list2 pred)
+  "Find the first pair of elements of LIST1 and LIST2 satisfying
+PRED and return the position"
+  (let ((n 0))
+    (while (and list1 list2 (not (apply pred (car list1) (car list2) nil)))
+      (setq list1 (cdr list2)
+	    list2 (cdr list2))
+      (setq n (1+ n)))
+    (if (and list1 list2) n nil)))
+
+(defun vm-elems-of (list)
+  "Return the set of elements of LIST as a list."
+  (let ((res nil))
+    (while list
+      (unless (member (car list) res)
+	(setq res (cons (car list) res)))
+      (setq list (cdr list)))
+    (nreverse res)))
+
 (defun vm-for-all (list pred)
   (catch 'fail
     (progn
@@ -419,6 +563,18 @@ vm-mail-buffer variable."
 	    (setq list (cdr list))
 	  (throw 'fail nil)))
       t)))
+
+(fset 'vm-device-type
+      (cond (vm-xemacs-p 'device-type)
+	    (vm-fsfemacs-p 'vm-fsfemacs-device-type)))
+
+(defun vm-fsfemacs-device-type (&optional device)
+  "An FSF Emacs emulation for XEmacs `device-type' function.  Returns
+the type of the current screen device: one of 'x, 'gtk, 'w32, 'ns and
+'pc.  The optional argument DEVICE is ignored."
+  (if (eq window-system 'x)
+      (if (featurep 'gtk) 'gtk)
+    window-system))
 
 (defun vm-generate-new-unibyte-buffer (name)
   (if vm-xemacs-p
@@ -451,6 +607,7 @@ vm-mail-buffer variable."
       (make-local-hook hook)))
 
 (fset 'xemacs-abbreviate-file-name 'abbreviate-file-name)
+
 (defun vm-abbreviate-file-name (path)
   (if vm-xemacs-p
       (xemacs-abbreviate-file-name path t)
@@ -599,6 +756,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (signal 'folder-empty nil))))
 
 (defun vm-copy (object)
+  "Make a copy of OBJECT, which could be a list, vector, string or marker."
   (cond ((consp object)
 	 (let (return-value cons)
 	   (setq return-value (cons (vm-copy (car object)) nil)
@@ -615,13 +773,21 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	((markerp object) (copy-marker object))
 	(t object)))
 
-(defun vm-run-message-hook (message &optional hook-variable)
+(defun vm-run-message-hook (message hook-variable)
   (with-current-buffer (vm-buffer-of message)
     (vm-save-restriction
       (widen)
       (save-excursion
 	(narrow-to-region (vm-headers-of message) (vm-text-end-of message))
 	(run-hooks hook-variable)))))
+
+(defun vm-run-message-hook-with-args (message hook-variable &rest args)
+  (with-current-buffer (vm-buffer-of message)
+    (vm-save-restriction
+      (widen)
+      (save-excursion
+	(narrow-to-region (vm-headers-of message) (vm-text-end-of message))
+	(apply 'run-hook-with-args hook-variable args)))))
 
 (defun vm-error-free-call (function &rest args)
   (condition-case nil
@@ -688,6 +854,51 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	      (and temp-buffer (kill-buffer temp-buffer)))
 	  (error nil)))
       ""))
+
+(defun vm-parse-date (date)
+  (let ((weekday "")
+	(monthday "")
+	(month "")
+	(year "")
+	(hour "")
+	(timezone "")
+	(start nil)
+	string
+	(case-fold-search t))
+    (if (string-match "sun\\|mon\\|tue\\|wed\\|thu\\|fri\\|sat" date)
+	(setq weekday (substring date (match-beginning 0) (match-end 0))))
+    (if (string-match "jan\\|feb\\|mar\\|apr\\|may\\|jun\\|jul\\|aug\\|sep\\|oct\\|nov\\|dec" date)
+	(setq month (substring date (match-beginning 0) (match-end 0))))
+    (if (string-match "[0-9]?[0-9]:[0-9][0-9]\\(:[0-9][0-9]\\)?" date)
+	(setq hour (substring date (match-beginning 0) (match-end 0))))
+    (cond ((string-match "[^a-z][+---][0-9][0-9][0-9][0-9]" date)
+	   (setq timezone (substring date (1+ (match-beginning 0))
+				     (match-end 0))))
+	  ((or (string-match "e[ds]t\\|c[ds]t\\|p[ds]t\\|m[ds]t" date)
+	       (string-match "ast\\|nst\\|met\\|eet\\|jst\\|bst\\|ut" date)
+	       (string-match "gmt\\([+---][0-9]+\\)?" date))
+	   (setq timezone (substring date (match-beginning 0) (match-end 0)))))
+    (while (and (or (zerop (length monthday))
+		    (zerop (length year)))
+		(string-match "\\(^\\| \\)\\([0-9]+\\)\\($\\| \\)" date start))
+      (setq string (substring date (match-beginning 2) (match-end 2))
+	    start (match-end 0))
+      (cond ((and (zerop (length monthday))
+		  (<= (length string) 2))
+	     (setq monthday string))
+	    ((= (length string) 2)
+	     (if (< (string-to-number string) 70)
+		 (setq year (concat "20" string))
+	       (setq year (concat "19" string))))
+	    (t (setq year string))))
+    
+    (aset vm-parse-date-workspace 0 weekday)
+    (aset vm-parse-date-workspace 1 monthday)
+    (aset vm-parse-date-workspace 2 month)
+    (aset vm-parse-date-workspace 3 year)
+    (aset vm-parse-date-workspace 4 hour)
+    (aset vm-parse-date-workspace 5 timezone)
+    vm-parse-date-workspace))
 
 (defun vm-should-generate-summary ()
   (cond ((eq vm-startup-with-summary t) t)
@@ -785,6 +996,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 (defun vm-buffer-string-no-properties ()
   (vm-buffer-substring-no-properties (point-min) (point-max)))
 
+(fset 'vm-substring-no-properties
+      (cond ((fboundp 'substring-no-properties)
+	     (function substring-no-properties))
+	    (t (function substring))))
+
 (defun vm-insert-region-from-buffer (buffer &optional start end)
   (let ((target-buffer (current-buffer)))
     (set-buffer buffer)
@@ -837,8 +1053,15 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	(fset 'vm-detach-extent 'delete-overlay)
       (fset 'vm-detach-extent 'detach-extent)))
 
-(if (not (fboundp 'vm-disable-extents))
+(if (not (fboundp 'vm-delete-extent))
     (if vm-fsfemacs-p
+	;; This doesn't actually destroy the overlay, but it is the
+	;; best there is.
+	(fset 'vm-delete-extent 'delete-overlay)
+      (fset 'vm-delete-extent 'delete-extent)))
+
+(if (not (fboundp 'vm-disable-extents))
+    (if (and vm-fsfemacs-p (fboundp 'remove-overlays))
 	(fset 'vm-disable-extents 'remove-overlays)
       ;; XEamcs doesn't need to disable extents because they don't
       ;; slow things down
@@ -849,9 +1072,14 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	(fset 'vm-extent-properties 'overlay-properties)
       (fset 'vm-extent-properties 'extent-properties)))
 
-(defun vm-extent-at (pos &optional object property)
+(defun vm-extent-at (pos &optional property)
+  "Find an extent at POS in the current buffer having PROPERTY.
+PROPERTY defaults nil, meaning any extent will do.
+
+In XEmacs, the extent is the \"smallest\" extent at POS.  In FSF Emacs,
+this may not be the case."
   (if (fboundp 'extent-at)
-      (extent-at pos object property)
+      (extent-at pos nil property)
     (let ((o-list (overlays-at pos))
 	  (o nil))
       (if (null property)
@@ -862,6 +1090,18 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 		    o-list nil)
 	    (setq o-list (cdr o-list))))
 	o ))))
+
+(defun vm-extent-list (beg end &optional property)
+  "Returns a list of the extents that overlap the positions BEG to END.
+If PROPERTY is given, then only the extents have PROPERTY are returned."
+  (if (fboundp 'extent-list)
+      (extent-list nil beg end nil property)
+    (let ((o-list (overlays-in beg end)))
+      (if property
+	  (vm-delete (function (lambda (e)
+				 (vm-extent-property e property)))
+		     o-list t)
+	o-list))))
 
 (defun vm-copy-extent (e)
   (let ((props (vm-extent-properties e))
@@ -919,6 +1159,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     filename ))
 
 (defun vm-make-work-buffer (&optional name)
+  "Create a unibyte buffer with NAME for VM to do its work in
+encoding/decoding, conversions, subprocess communication etc."
   (let ((work-buffer (vm-generate-new-unibyte-buffer 
 		      (or name "*vm-workbuf*"))))
     (buffer-disable-undo work-buffer)
@@ -1011,6 +1253,15 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     (and (equal 0 (string-match reg str2))
 	 (= (match-end 0) (length str2)))))
 
+(defun vm-match-data ()
+  (let ((n (1- (/ (length (match-data)) 2)))
+        (list nil))
+    (while (>= n 0)
+      (setq list (cons (match-beginning n) 
+                       (cons (match-end n) list))
+            n (1- n)))
+    list))
+
 (defun vm-time-difference (t1 t2)
   (let (usecs secs 65536-secs carry)
     (setq usecs (- (nth 2 t1) (nth 2 t2)))
@@ -1037,10 +1288,27 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       ((fboundp 'find-charset-region)
        (fset 'vm-charsets-in-region 'find-charset-region)))
 
+;; Wrapper for coding-system-p:
+;; The XEmacs function expects a coding-system object as its argument,
+;; the GNU Emacs function expects a symbol.
+;; In the non-MULE case, return nil (is this the right fallback?).
+(defun vm-coding-system-p (name)
+  (cond (vm-xemacs-mule-p
+	 (coding-system-p (find-coding-system name)))
+	(vm-fsfemacs-mule-p
+	 (coding-system-p name))))
+
 (cond ((fboundp 'coding-system-name)
        (fset 'vm-coding-system-name 'coding-system-name))
       (t
-       (fset 'vm-coding-system-name 'symbol-name)))
+       (fset 'vm-coding-system-name 'identity)))
+
+(if (fboundp 'coding-system-name)
+    (defun vm-coding-system-name-no-eol (coding-system)
+      (coding-system-name
+       (coding-system-change-eol-conversion coding-system nil)))
+  (defun vm-coding-system-name-no-eol (coding-system)
+    (coding-system-change-eol-conversion coding-system nil)))
 
 (defun vm-get-file-line-ending-coding-system (file)
   (if (not (or vm-fsfemacs-mule-p vm-xemacs-mule-p vm-xemacs-file-coding-p))
@@ -1154,7 +1422,7 @@ filling of GNU Emacs does not work correctly here."
 	    (needmsg (> (- end start) 12000)))
       
 	(if needmsg
-	    (message "Filling message to column %d" fill-column))
+	    (vm-inform 5 "Filling message to column %d" fill-column))
       
 	;; we need a marker for the end since this position might change 
 	(or (markerp end) (setq end (vm-marker end)))
@@ -1171,8 +1439,8 @@ filling of GNU Emacs does not work correctly here."
 	;; Turning off these messages because they go by too fast and
 	;; are not particularly enlightening.  USR, 2010-01-26
 	;; (if (= filled 0)
-	;;    (message "Nothing to fill")
-	;;  (message "Filled %s paragraph%s"
+	;;    (vm-inform 7 "Nothing to fill")
+	;;  (vm-inform 7 "Filled %s paragraph%s"
 	;;           (if (> filled 1) (format "%d" filled) "one")
 	;;           (if (> filled 1) "s" "")))
 	))))
@@ -1235,9 +1503,17 @@ filling of GNU Emacs does not work correctly here."
 	    (random 1000000)
 	    hostname)))
 
-(defun vm-keep-some-buffers (buffer ring-variable number-to-keep)
+(defun vm-keep-some-buffers (buffer ring-variable number-to-keep 
+				    &optional rename-prefix)
+  "Keep the BUFFER in the variable RING-VARIABLE, with NUMBER-TO-KEEP
+being the maximum number of buffers kept.  If necessary, the
+RING-VARIABLE is pruned.  If the optional argument string
+RENAME-PREFIX is given BUFFER is renamed by adding the prefix at the
+front before adding it to the RING-VARIABLE."
   (if (memq buffer (symbol-value ring-variable))
-      (set ring-variable (delq buffer (symbol-value ring-variable))))
+      (set ring-variable (delq buffer (symbol-value ring-variable)))
+    (with-current-buffer buffer
+      (rename-buffer (concat "saved " (buffer-name)) t)))
   (set ring-variable (cons buffer (symbol-value ring-variable)))
   (set ring-variable (vm-delete 'buffer-name
 				(symbol-value ring-variable) t))
@@ -1335,61 +1611,9 @@ If MODES is nil the take the modes from the variable
               (funcall m -1))
 	(error 
 	 (when (not (member m vm-disable-modes-ignore))
-	   (message "Could not disable mode `%S': %S" m errmsg)
+	   (vm-inform 0 "Could not disable mode `%S': %S" m errmsg)
 	   (setq vm-disable-modes-ignore (cons m vm-disable-modes-ignore)))
 	 nil)))))
-
-;; For verification of the correct buffer protocol
-;; Possible values are 'folder, 'presentation, 'summary, 'process
-
-;; (defvar vm-buffer-types nil)    ; moved to vm-vars.el
-
-(defvar vm-buffer-type-debug nil
-  "*This flag can be set to t for debugging asynchronous buffer change
-  errors.")
-
-(defvar vm-buffer-type-debug nil)	; for debugging asynchronous
-					; buffer change errors
-(defvar vm-buffer-type-trail nil)
-
-(defun vm-buffer-type:enter (type)
-  "Note that vm is temporarily entering a buffer of TYPE."
-  (if vm-buffer-type-debug
-      (setq vm-buffer-type-trail 
-	    (cons type (cons 'enter vm-buffer-type-trail))))
-  (setq vm-buffer-types (cons type vm-buffer-types)))
-
-(defun vm-buffer-type:exit ()
-  "Note that vm is exiting the current temporary buffer."
-  (if vm-buffer-type-debug
-      (setq vm-buffer-type-trail (cons 'exit vm-buffer-type-trail)))
-  (setq vm-buffer-types (cdr vm-buffer-types)))
-
-(defun vm-buffer-type:duplicate ()
-  "Note that vm is reentering the current buffer for a temporary purpose."
-  (if vm-buffer-type-debug
-      (setq vm-buffer-type-trail (cons (car vm-buffer-type-trail)
-				       vm-buffer-type-trail)))
-  (setq vm-buffer-types (cons (car vm-buffer-types) vm-buffer-types)))
-
-(defun vm-buffer-type:set (type)
-  "Note that vm is changing to a buffer of TYPE."
-  (when (and (eq type 'folder) vm-buffer-types 
-	     (eq (car vm-buffer-types) 'process))
- 	;; This may or may not be a problem.
- 	;; It just means that no save-excursion was done among the
- 	;; functions currently tracked by vm-buffe-types.
-    (if vm-buffer-type-debug
-	(debug "folder buffer being entered from %s" (car vm-buffer-types))
-      (message "folder buffer being entered from %s" (car vm-buffer-types)))
-    (setq vm-buffer-type-trail (cons type vm-buffer-type-trail)))
-  (if vm-buffer-types
-      (rplaca vm-buffer-types type)
-    (setq vm-buffer-types (cons type vm-buffer-types))))
-
-(defsubst vm-buffer-type:assert (type)
-  "Check that vm is currently in a buffer of TYPE."
-  (vm-assert (eq (car vm-buffer-types) type)))
 
 (defun vm-add-write-file-hook (vm-hook-fn)
   "Add a function to the hook called during write-file.

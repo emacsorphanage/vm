@@ -24,6 +24,20 @@
 
 (provide 'vm-sort)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-thread)
+  (require 'vm-motion)
+  (require 'vm-page)
+  (require 'vm-window)
+  (require 'vm-undo)
+  )
+
+(declare-function vm-sort-insert-auto-folder-names "vm-avirtual" ())
+
 ;;;###autoload
 (defun vm-move-message-forward (count)
   "Move a message forward in a VM folder.
@@ -87,7 +101,7 @@ the folder undisturbed."
 	(if (not vm-folder-read-only)
 	    (progn
 	      (setq vm-message-order-changed t)
-	      (vm-set-buffer-modified-p t)
+	      (vm-mark-folder-modified-p (current-buffer))
 	      (vm-clear-modification-flag-undos))))
       (cond ((null ovmp-prev)
 	     (setq vm-numbering-redo-start-point vm-message-list
@@ -133,7 +147,7 @@ the folder undisturbed."
 		 (< (car p) (car q))))))))))
   (if vm-move-messages-physically
       ;; clip region is messed up
-      (vm-preview-current-message)
+      (vm-present-current-message)
     (vm-update-summary-and-mode-line)))
 
 ;;;###autoload
@@ -232,6 +246,9 @@ the folder undisturbed."
 
 ;;;###autoload
 (defun vm-so-sortable-subject (m)
+  "Returns the subject string of M, after stripping redundant prefixes
+and suffixes, which is suitable for sorting by subject.  The string is
+MIME-decoded with possible properties."
   (or (vm-sortable-subject-of m)
       (progn
 	(vm-set-sortable-subject-of
@@ -402,7 +419,7 @@ folder in the order in which the messages arrived."
       (vm-build-threads-if-unbuilt)
       (vm-build-thread-lists)
       (setq key-funcs (cons 'vm-sort-compare-thread key-funcs)))
-    (message "Sorting messages...")
+    (vm-inform 6 "Sorting messages...")
     (let ((vm-key-functions key-funcs))
       (setq new-message-list (sort (copy-sequence old-message-list)
 				   'vm-sort-compare-xxxxxx))
@@ -412,7 +429,7 @@ folder in the order in which the messages arrived."
 	  (setq vm-key-functions '(vm-sort-compare-physical-order)
 		physical-order-list (sort (copy-sequence old-message-list)
 					  'vm-sort-compare-xxxxxx))))
-    (message "Sorting messages... done")
+    (vm-inform 6 "Sorting messages... done")
     (let ((inhibit-quit t))
       (setq mp-old old-message-list
 	    mp-new new-message-list)
@@ -452,7 +469,7 @@ folder in the order in which the messages arrived."
 	    ;; order header from being stuffed later.
 	    (vm-remove-message-order)
 	    (setq vm-message-order-changed nil)
-	    (message "Moving messages... ")
+	    (vm-inform 6 "Moving messages... ")
 	    (widen)
 	    (setq mp-old physical-order-list
 		  mp-new new-message-list)
@@ -475,13 +492,14 @@ folder in the order in which the messages arrived."
 		  ;; mp-old down one message by inserting a
 		  ;; message in front of it.
 		  (setq mp-new (cdr mp-new)))))
-	    (message "Moving messages... done")
-	    (vm-set-buffer-modified-p t)
+	    (vm-inform 6 "Moving messages... done")
+	    (vm-mark-folder-modified-p (current-buffer))
 	    (vm-clear-modification-flag-undos))
 	(if (and order-did-change (not vm-folder-read-only))
 	    (progn
 	      (setq vm-message-order-changed t)
-	      (vm-set-buffer-modified-p t)
+	      ;; only viewing order changed here
+	      ;; (vm-mark-folder-modified-p (current-buffer))
 	      (vm-clear-modification-flag-undos))))
       (setq vm-ml-sort-keys ml-keys)
       (intern (buffer-name) vm-buffers-needing-display-update)
@@ -501,37 +519,49 @@ folder in the order in which the messages arrived."
 	     order-did-change
 	     (or lets-get-physical vm-move-messages-physically))
 	;; clip region is most likely messed up
-	(vm-preview-current-message)
+	(vm-present-current-message)
       (vm-update-summary-and-mode-line))
 
     (if auto-folder-p
         (vm-sort-insert-auto-folder-names))))
 
 ;;;###autoload
-(defun vm-sort-compare-xxxxxx (m1 m2)
+(defun vm-sort-compare-xxxxxx (msg1 msg2)
+  (if (and vm-summary-debug
+	   (or (member (vm-number-of msg1) vm-summary-traced-messages)
+	       (member (vm-number-of msg2) vm-summary-traced-messages)))
+      (debug))
   (let ((key-funcs vm-key-functions) 
-	result)
+	result
+	(m1 msg1) (m2 msg2))
     (catch 'done
       (unless key-funcs
 	(throw 'done nil))
       (when (eq (car key-funcs) 'vm-sort-compare-thread)
 	(setq result (vm-sort-compare-thread m1 m2))
 	(if (consp result)
-	    (setq m1 (car result)
-		  m2 (cdr result)
-		  key-funcs (cdr key-funcs))
+	    (progn
+	      (setq m1 (car result)
+		    m2 (cdr result)
+		    key-funcs (cdr key-funcs))
+	      (if (or (null m1) (null m2))
+		  (progn (if vm-summary-debug (debug))
+			 (throw 'done t))))
 	  (throw 'done result)))
       (while key-funcs
 	(if (eq '= (setq result (funcall (car key-funcs) m1 m2)))
 	    (setq key-funcs (cdr key-funcs))
 	  (throw 'done result)))
-      nil)))
+      ;; if all else fails try physical order
+      (if (eq m1 m2)
+	  nil
+	(vm-sort-compare-physical-order m1 m2)))))
 
 (defun vm-sort-compare-thread (m1 m2)
-  (let ((root1 (vm-th-thread-root-sym m1))
-	(root2 (vm-th-thread-root-sym m2))
-	(list1 (vm-th-thread-list m1))
-	(list2 (vm-th-thread-list m2))
+  (let ((root1 (vm-thread-root-sym m1))
+	(root2 (vm-thread-root-sym m2))
+	(list1 (vm-thread-list m1))
+	(list2 (vm-thread-list m2))
 	;; (criterion (if vm-sort-threads-by-youngest-date 
 	;; 	       'youngest-date
 	;; 	     'oldest-date))
@@ -549,25 +579,29 @@ folder in the order in which the messages arrived."
 	    ((eq (car list1) (car list2))
 	     ;; within the same reference thread
 	     (setq list1 (cdr list1) list2 (cdr list2))
-	     (while (and list1 list2)
-	       (setq p1 (car list1) p2 (car list2))
-	       (cond ((null (vm-th-message-of p1))
-		      (setq list1 (cdr list1)))
-		     ((null (vm-th-message-of p2))
-		      (setq list2 (cdr list2)))
-		     ((string-equal p1 p2)
-		      (setq list1 (cdr list1)
-			    list2 (cdr list2)))
-		     (t
-		      (throw 'done 
-			     (cons (vm-th-message-of p1)
-				   (vm-th-message-of p2))))))
+	     (if (not vm-sort-subthreads)
+		 ;; no further sorting for internal messages of threads
+		 (when (and list1 list2)
+		   (throw 'done (cons m1 m2)))
+	       (while (and list1 list2)
+		 (setq p1 (car list1) p2 (car list2))
+		 (cond ((null (vm-th-message-of p1))
+			(setq list1 (cdr list1)))
+		       ((null (vm-th-message-of p2))
+			(setq list2 (cdr list2)))
+		       ((string-equal p1 p2)
+			(setq list1 (cdr list1)
+			      list2 (cdr list2)))
+		       (t
+			(throw 'done 
+			       (cons (vm-th-message-of p1)
+				     (vm-th-message-of p2)))))))
 	     (cond (list1 nil)			; list2=nil, m2 ancestor of m1
 		   (list2 t)			; list1=nil, m1 ancestor of m2
-		   ((not (eq (vm-th-thread-symbol m1) ; m1 and m2 different
-			     (vm-th-thread-symbol m2)))
+		   ((not (eq (vm-thread-symbol m1) ; m1 and m2 different
+			     (vm-thread-symbol m2)))
 		    (cons m1 m2))
-		   ((eq m1 (vm-th-message-of (vm-th-thread-symbol m1)))
+		   ((eq m1 (vm-th-message-of (vm-thread-symbol m1)))
 		    t)			; list1=list2=nil, m2 copy of m1
 		   (t nil)))		;; list1=list2=nil, m1 copy of m2
 	    ((eq root1 root2)
@@ -627,29 +661,29 @@ folder in the order in which the messages arrived."
 	  (t t))))
 
 (defun vm-sort-compare-activity (m1 m2)
-  (let ((d1 (vm-th-youngest-date-of (vm-th-thread-symbol m1)))
-	(d2 (vm-th-youngest-date-of (vm-th-thread-symbol m2))))
+  (let ((d1 (vm-th-youngest-date-of (vm-thread-symbol m1)))
+	(d2 (vm-th-youngest-date-of (vm-thread-symbol m2))))
     (cond ((string-lessp d1 d2) t)
 	  ((string-equal d1 d2) '=)
 	  (t nil))))
 
 (defun vm-sort-compare-activity-r (m1 m2)
-  (let ((d1 (vm-th-youngest-date-of (vm-th-thread-symbol m1)))
-	(d2 (vm-th-youngest-date-of (vm-th-thread-symbol m2))))
+  (let ((d1 (vm-th-youngest-date-of (vm-thread-symbol m1)))
+	(d2 (vm-th-youngest-date-of (vm-thread-symbol m2))))
     (cond ((string-lessp d1 d2) nil)
 	  ((string-equal d1 d2) '=)
 	  (t t))))
 
 ;; (defun vm-sort-compare-thread-oldest-date (m1 m2)
-;;   (let ((d1 (vm-th-oldest-date-of (vm-th-thread-symbol m1)))
-;; 	(d2 (vm-th-oldest-date-of (vm-th-thread-symbol m2))))
+;;   (let ((d1 (vm-th-oldest-date-of (vm-thread-symbol m1)))
+;; 	(d2 (vm-th-oldest-date-of (vm-thread-symbol m2))))
 ;;     (cond ((string-lessp d1 d2) t)
 ;; 	  ((string-equal d1 d2) '=)
 ;; 	  (t nil))))
 
 ;; (defun vm-sort-compare-thread-oldest-date-r (m1 m2)
-;;   (let ((d1 (vm-th-oldest-date-of (vm-th-thread-symbol m1)))
-;; 	(d2 (vm-th-oldest-date-of (vm-th-thread-symbol m2))))
+;;   (let ((d1 (vm-th-oldest-date-of (vm-thread-symbol m1)))
+;; 	(d2 (vm-th-oldest-date-of (vm-thread-symbol m2))))
 ;;     (cond ((string-lessp d1 d2) nil)
 ;; 	  ((string-equal d1 d2) '=)
 ;; 	  (t t))))
@@ -726,11 +760,16 @@ folder in the order in which the messages arrived."
 
 ;;;###autoload
 (defun vm-sort-compare-physical-order (m1 m2)
-  (let ((n1 (vm-start-of m1))
-	(n2 (vm-start-of m2)))
-    (cond ((< n1 n2) t)
-	  ((= n1 n2) '=)
-	  (t nil))))
+  (let ((r1 (vm-real-message-of m1))
+	(r2 (vm-real-message-of m2))
+	n1 n2)
+    (if (and r1 r2 
+	     (setq n1 (marker-position (vm-start-of r1)))
+	     (setq n2 (marker-position (vm-start-of r2))))
+	(cond ((< n1 n2) t)
+	      ((= n1 n2) '=)
+	      (t nil))
+      '=)))
 
 ;;;###autoload
 (defun vm-sort-compare-physical-order-r (m1 m2)

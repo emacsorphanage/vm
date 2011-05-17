@@ -35,9 +35,6 @@
 (provide 'vm-summary-faces)
 
 (eval-when-compile
-  (require 'cl))
-
-(eval-when-compile
   (require 'vm-misc))
 
 (eval-and-compile
@@ -75,19 +72,22 @@ of available face names."
   (if (and (listp prop) (numberp (car prop)))
       (setq prop (completing-read "Face name: "
                                   (mapcar (lambda (f)
-                                            (list (format "%s" (caar f))))
+                                            (list (format "%s" (cadr f))))
                                           vm-summary-faces-alist)
-                                  nil t "deleted")))
-  (setq prop (or prop vm-summary-faces-hide "deleted"))
+                                  nil t "vm-summary-deleted")))
+  (setq prop (or prop vm-summary-faces-hide "vm-summary-deleted"))
   (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (vm-summarize)
   (set-buffer vm-summary-buffer)
   (let ((extents (vm-summary-faces-list-extents))
-        (face (intern (concat "vm-summary-" prop)))
-        x)
+	(hidden-face (intern prop))
+        x faces)
     (while extents
       (setq x (car extents)) 
-      (when (equal face (vm-extent-property x 'face))
+      (setq faces (vm-extent-property x 'face))
+      (unless (listp faces)
+	(setq faces (list faces)))
+      (when (memq hidden-face faces)
         (vm-set-extent-property 
 	 x 'invisible (not (vm-extent-property x 'invisible))))
       (setq extents (cdr extents)))))
@@ -101,10 +101,10 @@ of available face names."
                (vm-extent-at (vm-su-end-of msg)))))
     (while faces
       (when (apply 'vm-vs-or msg (list (caar faces)))
-	(cond ((vm-summary-collapsed-root-p msg)
+	(cond ((vm-collapsed-root-p msg)
 	       (vm-set-extent-property 
 		x 'face (list (cadar faces) 'vm-summary-collapsed)))
-	      ((vm-summary-expanded-root-p msg)
+	      ((vm-expanded-root-p msg)
 	       (vm-set-extent-property
 		x 'face (list (cadar faces) 'vm-summary-expanded)))
 	      (t
@@ -137,7 +137,7 @@ fonts and colors, for easy recogniton of the message status."
       (setq vm-summary-enable-faces nil)))
 
   (when (interactive-p)
-    (message "VM summary faces mode is %s"
+    (vm-inform 1 "VM summary faces mode is %s"
              (if vm-summary-enable-faces "on" "off")))
   
   (if (memq major-mode '(vm-mode vm-virtual-mode vm-summary-mode

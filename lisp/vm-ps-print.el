@@ -62,10 +62,13 @@
 (require 'vm-save)
 (require 'ps-print)
 
+(declare-function vm-marked-messages "vm-mark" ())
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+;; group already defined in vm-vars.el
+;; (defgroup vm nil
+;;   "VM"
+;;   :group 'mail)
 
 (defgroup vm-psprint nil
   "The VM ps-print lib"
@@ -210,7 +213,7 @@ Like `vm-tokenized-summary-insert'."
 			(natnump vm-summary-thread-indent-level))
 		   (setq summary (concat summary
 					 ?\ (* vm-summary-thread-indent-level
-					       (vm-th-thread-indentation message)))))))
+					       (vm-thread-indentation message)))))))
 	(setq tokens (cdr tokens)))
       summary)))
 
@@ -262,11 +265,11 @@ for customization of the output."
          (folder-name (vm-ps-print-message-folder-name))
          (mstart nil)
 	 (m nil)
-	 (mlist (vm-select-marked-or-prefixed-messages count))
+	 (mlist (vm-select-operable-messages
+		 count (interactive-p) "Print"))
 	 (mcount (length mlist))
 	 (tmpbuf (get-buffer-create "*vm-ps-print*")))
-    ;; (vm-load-message count)
-    (vm-retrieve-marked-or-prefixed-messages count)
+    (vm-retrieve-operable-messages count mlist)
 
     (set-buffer tmpbuf)
     (setq major-mode 'vm-mode)
@@ -281,9 +284,9 @@ for customization of the output."
       (setq mstart (point-max))
       (vm-insert-region-from-buffer
        (vm-buffer-of m) (vm-vheaders-of m) (vm-end-of m))
-      (vm-reorder-message-headers nil
-				  vm-visible-headers
-				  vm-invisible-header-regexp)
+      (vm-reorder-message-headers
+       nil :keep-list vm-visible-headers
+       :discard-regexp vm-invisible-header-regexp)
       (vm-decode-mime-encoded-words)
       (goto-char mstart)
       (re-search-forward "\n\n") ;; skip headers

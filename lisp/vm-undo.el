@@ -23,14 +23,23 @@
 
 (provide 'vm-undo)
 
-(defun vm-set-buffer-modified-p (flag &optional buffer)
-  (save-excursion
-    (and buffer (set-buffer buffer))
-    (set-buffer-modified-p flag)
-    (vm-increment vm-modification-counter)
-    (intern (buffer-name) vm-buffers-needing-display-update)
-    (if (null flag)
-	(setq vm-messages-not-on-disk 0))))
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-menu)
+  (require 'vm-minibuf)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  )
+
+;; vm-undo-record-list is a buffer-local-variable containing
+;; undo-records.
+;; An undo-record has:
+;; - action
+;; - message
+;; - args
 
 (defun vm-undo-boundary ()
   (if (car vm-undo-record-list)
@@ -41,10 +50,9 @@
     (mapatoms (function
 	       (lambda (b)
 		 (setq b (get-buffer (symbol-name b)))
-		 (if b
-		     (progn
-		       (set-buffer b)
-		       (vm-undo-boundary)))))
+		 (when b
+		   (set-buffer b)
+		   (vm-undo-boundary))))
 	      vm-buffers-needing-undo-boundaries)
     (fillarray vm-buffers-needing-undo-boundaries 0)))
 
@@ -101,17 +109,17 @@
     (if (equal '(nil) vm-undo-record-list)
 	(setq vm-undo-record-list nil)))
   ;; for the Undo button on the menubar, if present
-  (and (null vm-undo-record-list)
-       (vm-menu-support-possible-p)
-       (vm-menu-xemacs-menus-p)
-       (vm-menu-set-menubar-dirty-flag)))
+  (when (and (null vm-undo-record-list)
+	     (vm-menu-support-possible-p)
+	     (vm-menu-xemacs-menus-p))
+    (vm-menu-set-menubar-dirty-flag)))
 	    
 (defun vm-undo-record (sexp)
   ;; for the Undo button on the menubar, if present
-  (and (null vm-undo-record-list)
-       (vm-menu-support-possible-p)
-       (vm-menu-xemacs-menus-p)
-       (vm-menu-set-menubar-dirty-flag))
+  (when (and (null vm-undo-record-list)
+	     (vm-menu-support-possible-p)
+	     (vm-menu-xemacs-menus-p))
+    (vm-menu-set-menubar-dirty-flag))
   (setq vm-undo-record-list (cons sexp vm-undo-record-list)))
 
 (defun vm-undo-describe (record)
@@ -128,7 +136,7 @@
 	(m (nth 1 record))
 	labels)
     (cond (cell
-	   (message "VM Undo! %s/%s %s -> %s"
+	   (vm-inform 1 "VM Undo! %s/%s %s -> %s"
 		    (buffer-name (vm-buffer-of m))
 		    (vm-number-of m)
 		    (if (nth 2 record)
@@ -139,7 +147,7 @@
 		      (nth 2 cell))))
 	  ((eq (car cell) 'vm-set-labels)
 	   (setq labels (nth 2 record))
-	   (message "VM Undo! %s/%s %s%s"
+	   (vm-inform 1 "VM Undo! %s/%s %s%s"
 		    (buffer-name (vm-buffer-of m))
 		    (vm-number-of m)
 		    (if (null labels)
@@ -160,7 +168,7 @@
 	;; make folder read-only to avoid modifications when we
 	;; do this.
 	(let ((vm-folder-read-only t))
-	  (vm-preview-current-message)))))
+	  (vm-present-current-message)))))
 
 ;;;###autoload
 (defun vm-undo ()
@@ -173,10 +181,10 @@ the undos themselves become undoable."
   (vm-error-if-folder-read-only)
   (vm-display nil nil '(vm-undo) '(vm-undo))
   (let ((modified (buffer-modified-p)))
-    (if (not (eq last-command 'vm-undo))
-	(setq vm-undo-record-pointer vm-undo-record-list))
-    (if (not vm-undo-record-pointer)
-	(error "No further VM undo information available"))
+    (unless (eq last-command 'vm-undo)
+      (setq vm-undo-record-pointer vm-undo-record-list))
+    (unless vm-undo-record-pointer
+      (error "No further VM undo information available"))
     ;; skip current record boundary
     (setq vm-undo-record-pointer (cdr vm-undo-record-pointer))
     (while (car vm-undo-record-pointer)
@@ -184,8 +192,8 @@ the undos themselves become undoable."
       (vm-undo-describe (car vm-undo-record-pointer))
       (eval (car vm-undo-record-pointer))
       (setq vm-undo-record-pointer (cdr vm-undo-record-pointer)))
-    (and modified (not (buffer-modified-p))
-	 (delete-auto-save-file-if-necessary))
+    (when (and modified (not (buffer-modified-p)))
+      (delete-auto-save-file-if-necessary))
     (vm-update-summary-and-mode-line)))
 
 ;;;###autoload
@@ -216,7 +224,8 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
   (vm-display nil nil '(vm-set-message-attributes)
 	      '(vm-set-message-attributes))
   (let ((name-list (vm-parse string "[ \t]*\\([^ \t]+\\)"))
-	(m-list (vm-select-marked-or-prefixed-messages count))
+	(m-list (vm-select-operable-messages 
+		 count (interactive-p) "Set attributes of"))
 	n-list name m)
     (while m-list
       (setq m (car m-list)
@@ -292,20 +301,24 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 	 (completion-ignore-case t))
      ;; so the user can see what message they are about to
      ;; modify.
-     (vm-follow-summary-cursor)
-     (vm-select-folder-buffer)
-     (list
-      (vm-read-string "Add labels: "
-		      (vm-obarray-to-string-list vm-label-obarray) t)
-      (prefix-numeric-value current-prefix-arg))))
-  (let ((ignored-labels nil))
+     (save-current-buffer
+       (vm-follow-summary-cursor)
+       (vm-select-folder-buffer)
+       (list
+	(vm-read-string "Add labels: "
+			(vm-obarray-to-string-list vm-label-obarray) t)
+	(prefix-numeric-value current-prefix-arg)))))
+  (let ((m-list nil)
+	(ignored-labels nil))
     (vm-follow-summary-cursor)
     (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (vm-error-if-folder-read-only)
+    (setq m-list (vm-select-operable-messages
+		  count (interactive-p) "Add labels to"))
     (setq ignored-labels 
-	  (vm-add-or-delete-message-labels string count 'all))
+	  (vm-add-or-delete-message-labels string m-list 'all))
     (if ignored-labels
-	(Message "Label %s could not be added" string))))
+	(vm-inform 1 "Label %s could not be added" string))))
 
 ;;;###autoload
 (defun vm-add-existing-message-labels (string count)
@@ -334,17 +347,20 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 	 (completion-ignore-case t))
      ;; so the user can see what message they are about to
      ;; modify.
+     (save-current-buffer
      (vm-follow-summary-cursor)
      (vm-select-folder-buffer)
      (list
       (vm-read-string "Add labels: "
 		      (vm-obarray-to-string-list vm-label-obarray) t)
-      (prefix-numeric-value current-prefix-arg))))
+      (prefix-numeric-value current-prefix-arg)))))
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
-  (let ((ignored-labels
-	 (vm-add-or-delete-message-labels string count 'existing-only)))
+  (let* ((m-list (vm-select-operable-messages
+		  count (interactive-p) "Add labels to"))
+	(ignored-labels
+	 (vm-add-or-delete-message-labels string m-list 'existing-only)))
     (if ignored-labels
 	(progn
 	  (set-buffer (get-buffer-create "*Ignored Labels*"))
@@ -377,27 +393,37 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 	 (completion-ignore-case t))
      ;; so the user can see what message they are about to
      ;; modify.
+     (save-current-buffer
      (vm-follow-summary-cursor)
      (vm-select-folder-buffer)
      (list
       (vm-read-string "Delete labels: "
 		      (vm-obarray-to-string-list vm-label-obarray) t)
-      (prefix-numeric-value current-prefix-arg))))
+      (prefix-numeric-value current-prefix-arg)))))
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
-  (vm-add-or-delete-message-labels string count nil))
+  (let ((m-list (vm-select-operable-messages
+		 count (interactive-p) "Delete labels to")))
+    (vm-add-or-delete-message-labels string m-list nil)))
 
-(defun vm-add-or-delete-message-labels (string count add)
+(defun vm-add-or-delete-message-labels (string m-list add)
+  "Add or delete the labels given in STRING for all messages in
+M-LIST.  The third parameter ADD is one of:
+
+nil	       delete the label
+'all           add the label in all cases
+'existing-only add the label only if it is already existing in the folder
+							USR, 2010-12-20
+"
   (vm-display nil nil '(vm-add-message-labels vm-delete-message-labels)
 	      (list this-command))
   (setq string (downcase string))
-  (let ((m-list (vm-select-marked-or-prefixed-messages count))
-	(action-labels (vm-parse string
+  (let ((action-labels (vm-parse string
 "[\000-\040,\177-\377]*\\([^\000-\040,\177-\377]+\\)[\000-\040,\177-\377]*"))
 	(ignored-labels nil)
 	labels act-labels m mm-list)
-    (if (and add m-list)
+    (when (and add m-list)
 	(if (eq add 'all)
 	    (progn
 	      (setq act-labels action-labels)
@@ -412,27 +438,24 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 		(setq ignored-labels (cons (car act-labels) ignored-labels)))
 	      (setq act-labels (cdr act-labels)))
 	    (setq action-labels newlist))))
-    (if (null action-labels)
+    (unless action-labels
 	(setq m-list nil))
     (while m-list
       (setq m (car m-list))
-      (if (and add (vm-virtual-message-p m))
+      (when (and add (vm-virtual-message-p m))
+	(let ((labels action-labels))
+	  (with-current-buffer (vm-buffer-of (vm-real-message-of m))
+	    (while labels
+	      (intern (car labels) vm-label-obarray)
+	      (setq labels (cdr labels))))))
+      (when add
+	(dolist (mm (vm-virtual-messages-of m))
 	  (let ((labels action-labels))
-	    (save-excursion
-	      (set-buffer (vm-buffer-of (vm-real-message-of m)))
-	      (while labels
-		(intern (car labels) vm-label-obarray)
-		(setq labels (cdr labels))))))
-      (if add
-	  (save-excursion
-	    (setq mm-list (vm-virtual-messages-of m))
-	    (while mm-list
-	      (let ((labels action-labels))
-		(set-buffer (vm-buffer-of (car mm-list)))
+	    (when (buffer-name (vm-buffer-of mm))
+	      (with-current-buffer (vm-buffer-of mm)
 		(while labels
 		  (intern (car labels) vm-label-obarray)
-		  (setq labels (cdr labels))))
-	      (setq mm-list (cdr mm-list)))))
+		  (setq labels (cdr labels))))))))
       (setq act-labels action-labels
 	    labels (copy-sequence (vm-labels-of (car m-list))))
       (if add
@@ -442,8 +465,8 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 	(while act-labels
 	  (setq labels (vm-delqual (car act-labels) labels)
 		act-labels (cdr act-labels))))
-      (if add
-	  (setq labels (vm-delete-duplicates labels)))
+      (when add
+	(setq labels (vm-delete-duplicates labels)))
       (vm-set-labels (car m-list) labels)
       (vm-set-attribute-modflag-of (car m-list) t) ; added by USR
       (setq m-list (cdr m-list)))
@@ -460,33 +483,30 @@ Normally, a record of the change is kept for the purpose of undo, and
   the changed attributes are stuffed into the folder, but NORECORD
   suppresses all of this.                             USR 2010-04-06" 
   (let ((m-list nil) vmp)
-    (when
-      (and (not vm-folder-read-only)
-	   (or (not (vm-virtual-messages-of m))
-	       (not (with-current-buffer
-		       (vm-buffer-of
-			 (vm-real-message-of m))
-		      vm-folder-read-only)))
-           ;; do nothing it is is already set 
-           (not (eq flag (aref (vm-attributes-of m) attr-index))))
+    (when (and (not vm-folder-read-only)
+	       (or (not (vm-virtual-messages-of m))
+		   (not (with-current-buffer
+			    (vm-buffer-of
+			     (vm-real-message-of m))
+			  vm-folder-read-only)))
+	       ;; do nothing it is is already set 
+	       (not (eq flag (aref (vm-attributes-of m) attr-index))))
       (unless norecord
-	(setq vmp (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
-	(while vmp
-	  (if (eq (vm-attributes-of m) (vm-attributes-of (car vmp)))
-	      (setq m-list (cons (car vmp) m-list)))
-	  (setq vmp (cdr vmp)))
+	(dolist (v-m (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
+	  (if (eq (vm-attributes-of m) (vm-attributes-of v-m))
+	      (setq m-list (cons v-m m-list))))
 	(if (null m-list)
 	    (setq m-list (cons m m-list)))
-	(while m-list
-	  (save-excursion
-	    (set-buffer (vm-buffer-of (car m-list)))
-	    (cond ((not (buffer-modified-p))
-		   (vm-set-buffer-modified-p t)
-		   (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
-	    (vm-undo-record (list function (car m-list) (not flag)))
-;;;	    (vm-undo-boundary)
-	    (vm-increment vm-modification-counter))
-	  (setq m-list (cdr m-list))))
+	(save-excursion
+	  (dolist (mm m-list)
+	    (when (buffer-name (vm-buffer-of mm))
+	      (set-buffer (vm-buffer-of mm))
+	      (cond ((not (buffer-modified-p))
+		     (vm-mark-folder-modified-p (vm-buffer-of mm))
+		     (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
+	      (vm-undo-record (list function mm (not flag)))
+	      ;; (vm-undo-boundary)
+	      (vm-increment vm-modification-counter)))))
       (aset (vm-attributes-of m) attr-index flag)
       (vm-mark-for-summary-update m)
       (unless norecord
@@ -515,23 +535,21 @@ Normally, a record of the change is kept for the purpose of undo, and
            ;; do nothing it is is already set 
            (not (eq flag (aref (vm-cached-data-of m) attr-index))))
      (unless norecord
-	(setq vmp (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
-	(while vmp
-	  (if (eq (vm-cached-data-of m) (vm-cached-data-of (car vmp)))
-	      (setq m-list (cons (car vmp) m-list)))
-	  (setq vmp (cdr vmp)))
+	(dolist (v-m (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
+	  (if (eq (vm-cached-data-of m) (vm-cached-data-of v-m))
+	      (setq m-list (cons v-m m-list))))
 	(if (null m-list)
 	    (setq m-list (cons m m-list)))
-	(while m-list
-	  (save-excursion
-	    (set-buffer (vm-buffer-of (car m-list)))
-	    (cond ((not (buffer-modified-p))
-		   (vm-set-buffer-modified-p t)
-		   (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
-	    (vm-undo-record (list function (car m-list) (not flag)))
-;;;	    (vm-undo-boundary)
-	    (vm-increment vm-modification-counter))
-	  (setq m-list (cdr m-list))))
+	(save-excursion
+	  (dolist (mm m-list)
+	    (when (buffer-name (vm-buffer-of mm))
+	      (set-buffer (vm-buffer-of mm))
+	      (cond ((not (buffer-modified-p))
+		     (vm-mark-folder-modified-p (vm-buffer-of mm))
+		     (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
+	      (vm-undo-record (list function mm (not flag)))
+	      ;; (vm-undo-boundary)
+	      (vm-increment vm-modification-counter)))))
       (aset (vm-cached-data-of m) attr-index flag)
       (vm-mark-for-summary-update m)
       (unless norecord
@@ -549,8 +567,7 @@ The labels are also set for all the virtual messages mirroring M as
 A record of the change is kept for the purpose of undo, and the
   changed attributes are stuffed into the folder.        USR 2010-04-06" 
   (let ((m-list nil)
-	(old-labels (vm-labels-of m))
-	vmp)
+	(old-labels (vm-labels-of m)))
     (cond
      ((and (not vm-folder-read-only)
 	   (or (not (vm-virtual-messages-of m))
@@ -559,23 +576,21 @@ A record of the change is kept for the purpose of undo, and the
 		       (vm-buffer-of
 			 (vm-real-message-of m)))
 		      vm-folder-read-only))))
-      (setq vmp (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
-      (while vmp
-	(if (eq (vm-attributes-of m) (vm-attributes-of (car vmp)))
-	    (setq m-list (cons (car vmp) m-list)))
-	(setq vmp (cdr vmp)))
+      (dolist (v-m (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
+	(if (eq (vm-attributes-of m) (vm-attributes-of v-m))
+	    (setq m-list (cons v-m m-list))))
       (if (null m-list)
 	  (setq m-list (cons m m-list)))
-      (while m-list
-	(save-excursion
-	  (set-buffer (vm-buffer-of (car m-list)))
-	  (cond ((not (buffer-modified-p))
-		 (vm-set-buffer-modified-p t)
-		 (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
-	  (vm-undo-record (list 'vm-set-labels m old-labels))
-;;;	  (vm-undo-boundary)
-	  (vm-increment vm-modification-counter))
-	(setq m-list (cdr m-list)))
+      (save-excursion
+	(dolist (mm m-list)
+	  (when (buffer-name (vm-buffer-of mm))
+	    (set-buffer (vm-buffer-of mm))
+	    (cond ((not (buffer-modified-p))
+		   (vm-mark-folder-modified-p (vm-buffer-of mm))
+		   (vm-undo-record (list 'vm-set-buffer-modified-p nil))))
+	    (vm-undo-record (list 'vm-set-labels m old-labels))
+	    ;; (vm-undo-boundary)
+	    (vm-increment vm-modification-counter))))
       (vm-set-labels-of m labels)
       (vm-set-label-string-of m nil)
       (vm-mark-for-summary-update m)
@@ -620,6 +635,27 @@ A record of the change is kept for the purpose of undo, and the
 (defun vm-set-redistributed-flag (m flag &optional norecord)
   (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 8))
 
+(defun vm-set-flagged-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 9))
+
+(defun vm-set-folded-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 10))
+
+(defun vm-set-watched-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 11))
+
+(defun vm-set-ignored-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 12))
+
+(defun vm-set-read-receipt-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 13))
+
+(defun vm-set-read-receipt-sent-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 14))
+
+(defun vm-set-attachments-flag (m flag &optional norecord)
+  (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 15))
+
 ;; use these to avoid undo and summary update.
 (defun vm-set-new-flag-of (m flag) (aset (aref m 2) 0 flag))
 (defun vm-set-unread-flag-of (m flag) (aset (aref m 2) 1 flag))
@@ -629,6 +665,13 @@ A record of the change is kept for the purpose of undo, and the
 (defun vm-set-written-flag-of (m flag) (aset (aref m 2) 5 flag))
 (defun vm-set-forwarded-flag-of (m flag) (aset (aref m 2) 6 flag))
 (defun vm-set-redistributed-flag-of (m flag) (aset (aref m 2) 8 flag))
+(defun vm-set-flagged-flag-of (m flag) (aset (aref m 2) 9 flag))
+(defun vm-set-folded-flag-of (m flag) (aset (aref m 2) 10 flag))
+(defun vm-set-watched-flag-of (m flag) (aset (aref m 2) 11 flag))
+(defun vm-set-ignored-flag-of (m flag) (aset (aref m 2) 12 flag))
+(defun vm-set-read-receipt-flag-of (m flag) (aset (aref m 2) 13 flag))
+(defun vm-set-read-receipt-sent-flag-of (m flag) (aset (aref m 2) 14 flag))
+(defun vm-set-attachments-flag-of (m flag) (aset (aref m 2) 15 flag))
 
 ;; this is solely for the use of vm-stuff-message-data and
 ;; appears here only because this function should be grouped with

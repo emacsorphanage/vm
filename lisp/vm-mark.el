@@ -24,8 +24,15 @@
 (provide 'vm-mark)
 
 (eval-when-compile
-  (require 'vm-message)
-  (require 'vm-thread))
+  (require 'vm-misc)
+  (require 'vm-folder)
+  (require 'vm-motion)
+  (require 'vm-thread)
+  (require 'vm-summary)
+  (require 'vm-sort)
+  (require 'vm-virtual)
+  (require 'vm-window)
+  )
 
 
 ;;;###autoload
@@ -33,7 +40,7 @@
   "Removes all message marks in the current folder."
   (interactive)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (message "Clearing all marks...")
+  (vm-inform 5 "Clearing all marks...")
   (let ((mp vm-message-list))
     (while mp
       (if (vm-mark-of (car mp))
@@ -44,7 +51,7 @@
   (vm-display nil nil '(vm-clear-all-marks)
 	      '(vm-clear-all-marks marking-message))
   (vm-update-summary-and-mode-line)
-  (message "Clearing all marks... done"))
+  (vm-inform 5 "Clearing all marks... done"))
 
 ;;;###autoload
 (defun vm-toggle-all-marks ()
@@ -53,7 +60,7 @@ Messages that are unmarked will become marked and messages that are
 marked will become unmarked."
   (interactive)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (message "Toggling all marks...")
+  (vm-inform 5 "Toggling all marks...")
   (let ((mp vm-message-list))
     (while mp
       (vm-set-mark-of (car mp) (not (vm-mark-of (car mp))))
@@ -62,14 +69,14 @@ marked will become unmarked."
   (vm-display nil nil '(vm-toggle-all-marks)
 	      '(vm-toggle-all-marks marking-message))
   (vm-update-summary-and-mode-line)
-  (message "Toggling all marks... done"))
+  (vm-inform 5 "Toggling all marks... done"))
 
 ;;;###autoload
 (defun vm-mark-all-messages ()
   "Mark all messages in the current folder."
   (interactive)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (message "Marking all messages...")
+  (vm-inform 5 "Marking all messages...")
   (let ((mp vm-message-list))
     (while mp
       (vm-set-mark-of (car mp) t)
@@ -78,7 +85,7 @@ marked will become unmarked."
   (vm-display nil nil '(vm-mark-all-messages)
 	      '(vm-mark-all-messages marking-message))
   (vm-update-summary-and-mode-line)
-  (message "Marking all messages... done"))
+  (vm-inform 5 "Marking all messages... done"))
 
 ;;;###autoload
 (defun vm-mark-message (count)
@@ -116,7 +123,8 @@ previous N-1 messages."
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
-  (let ((mlist (vm-select-marked-or-prefixed-messages count)))
+  (let ((mlist (vm-select-operable-messages
+		count (interactive-p) "Unmark")))
     (while mlist
       (if (vm-mark-of (car mlist))
 	  (progn
@@ -165,7 +173,9 @@ previous N-1 messages."
 	(end (mark))
 	tmp m)
     (if (> beg end)
-	(setq tmp beg beg end end tmp))
+	(setq tmp beg 
+	      beg end 
+	      end tmp))
     (while mp
       (setq m (car mp))
       (if (not (eq (not markit) (not (vm-mark-of m))))
@@ -204,7 +214,7 @@ previous N-1 messages."
 		'(vm-mark-matching-messages vm-unmark-matching-messages)
 		(list this-command 'marking-message))
     (vm-update-summary-and-mode-line)
-    (message "%s message%s %smarked"
+    (vm-inform 5 "%s message%s %smarked"
 	     (if (> count 0) count "No")
 	     (if (= 1 count) "" "s")
 	     (if val "" "un"))))
@@ -218,8 +228,9 @@ variable vm-virtual-folder-alist for more information."
   (interactive
    (let ((last-command last-command)
 	 (this-command this-command))
-     (vm-select-folder-buffer)
-     (vm-read-virtual-selector "Mark messages: ")))
+     (save-current-buffer
+       (vm-select-folder-buffer)
+       (vm-read-virtual-selector "Mark messages: "))))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-messages-with-selector t selector arg))
 
@@ -232,8 +243,9 @@ variable vm-virtual-folder-alist for more information."
   (interactive
    (let ((last-command last-command)
 	 (this-command this-command))
-     (vm-select-folder-buffer)
-     (vm-read-virtual-selector "Unmark messages: ")))
+     (save-current-buffer
+       (vm-select-folder-buffer)
+       (vm-read-virtual-selector "Unmark messages: "))))
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-mark-or-unmark-messages-with-selector nil selector arg))
 
@@ -255,8 +267,8 @@ variable vm-virtual-folder-alist for more information."
 
 (defun vm-mark-or-unmark-thread-subtree (mark)
   (vm-build-threads-if-unbuilt)
-  (let ((list (vm-th-thread-subtree 
-	       (vm-th-thread-symbol (car vm-message-pointer)))))
+  (let ((list (vm-thread-subtree 
+	       (vm-thread-symbol (car vm-message-pointer)))))
     (while list
       (unless (eq (vm-mark-of (car list)) mark)
 	(vm-set-mark-of (car list) mark)
@@ -270,7 +282,7 @@ variable vm-virtual-folder-alist for more information."
 ;; 	  (progn
 ;; 	    (vm-set-mark-of (car list) mark)
 ;; 	    (vm-mark-for-summary-update (car list))))
-;;       (setq id-sym (vm-last-elem (vm-th-thread-list (car list))))
+;;       (setq id-sym (vm-last-elem (vm-thread-list (car list))))
 ;;       (if (null (intern-soft (symbol-name id-sym) loop-obarray))
 ;; 	  (progn
 ;; 	    (intern (symbol-name id-sym) loop-obarray)
@@ -315,17 +327,17 @@ variable vm-virtual-folder-alist for more information."
 	    (vm-increment mark-count)
 	    (vm-mark-for-summary-update (car mp) t)))
       (setq mp (cdr mp)))
+    (vm-display nil nil
+		'(vm-mark-messages-same-subject
+		  vm-unmark-messages-same-subject)
+		(list this-command 'marking-message))
+    (vm-update-summary-and-mode-line)
     (if (zerop mark-count)
-	(message "No messages %smarked" (if mark "" "un"))
-      (message "%d message%s %smarked"
+	(vm-inform 5 "No messages %smarked" (if mark "" "un"))
+      (vm-inform 5 "%d message%s %smarked"
 	       mark-count
 	       (if (= 1 mark-count) "" "s")
-	       (if mark "" "un"))))
-  (vm-display nil nil
-	      '(vm-mark-messages-same-subject
-		vm-unmark-messages-same-subject)
-	      (list this-command 'marking-message))
-  (vm-update-summary-and-mode-line))
+	       (if mark "" "un")))))
 
 ;;;###autoload
 (defun vm-mark-messages-same-author ()
@@ -355,17 +367,17 @@ variable vm-virtual-folder-alist for more information."
 	    (vm-increment mark-count)
 	    (vm-mark-for-summary-update (car mp) t)))
       (setq mp (cdr mp)))
+    (vm-display nil nil
+		'(vm-mark-messages-same-author
+		  vm-unmark-messages-same-author)
+		(list this-command 'marking-message))
+    (vm-update-summary-and-mode-line)
     (if (zerop mark-count)
-	(message "No messages %smarked" (if mark "" "un"))
-      (message "%d message%s %smarked"
+	(vm-inform 5 "No messages %smarked" (if mark "" "un"))
+      (vm-inform 5 "%d message%s %smarked"
 	       mark-count
 	       (if (= 1 mark-count) "" "s")
-	       (if mark "" "un"))))
-  (vm-display nil nil
-	      '(vm-mark-messages-same-author
-		vm-unmark-messages-same-author)
-	      (list this-command 'marking-message))
-  (vm-update-summary-and-mode-line))
+	       (if mark "" "un")))))
 
 (defun vm-mark-or-unmark-messages-with-virtual-folder (val name)
   (let* ((vfolder (assoc name vm-virtual-folder-alist))
@@ -403,7 +415,7 @@ variable vm-virtual-folder-alist for more information."
 		  vm-unmark-matching-messages-with-virtual-folder)
 		(list this-command 'marking-message))
     (vm-update-summary-and-mode-line)
-    (message "%s message%s %smarked"
+    (vm-inform 5 "%s message%s %smarked"
 	     (if (> count 0) count "No")
 	     (if (= 1 count) "" "s")
 	     (if val "" "un"))))
@@ -442,7 +454,7 @@ commands bound to key, menu or button press events.  M-x vm-command will
 not work."
   (interactive)
   (setq this-command 'vm-next-command-uses-marks)
-  (message "Next command uses marks...")
+  (vm-inform 5 "Next command uses marks...")
   (vm-display nil nil '(vm-next-command-uses-marks)
 	      '(vm-next-command-uses-marks)))
 
@@ -459,6 +471,6 @@ not work."
 (defun vm-mark-help ()
   (interactive)
   (vm-display nil nil '(vm-mark-help) '(vm-mark-help))
-  (message "MM = mark, MU = unmark, Mm = mark all, Mu = unmark all, MN = use marks, ..."))
+  (vm-inform 0 "MM = mark, MU = unmark, Mm = mark all, Mu = unmark all, MN = use marks, ..."))
 
 ;;; vm-mark.el ends here

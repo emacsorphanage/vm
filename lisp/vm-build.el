@@ -47,9 +47,8 @@
 ;; Load byte compile 
 (require 'bytecomp)
 ;; Current public setting
-(setq byte-compile-warnings '(not unresolved suspicious))
 ;; Check for undefined functions, ignore save-excursion problems
-;; (setq byte-compile-warnings '(not suspicious))
+(setq byte-compile-warnings '(not suspicious))
 ;; Old permissive setting
 ;; (setq byte-compile-warnings '(free-vars))
 (put 'inhibit-local-variables 'byte-obsolete-variable nil)
@@ -60,9 +59,9 @@
 
 ;; now add VM source dirs to load-path and preload some
 (setq load-path (append '("." "./lisp") load-path))
+(require 'vm-macro)
 (require 'vm-version)
 (require 'vm-message)
-(require 'vm-macro)
 (require 'vm-vars)
 
 

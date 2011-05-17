@@ -24,65 +24,100 @@
 (provide 'vm-page)
 
 (eval-when-compile
-  (require 'vm-vars))
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-thread)
+  (require 'vm-window)
+  (require 'vm-motion)
+  (require 'vm-menu)
+  (require 'vm-mouse)
+  (require 'vm-mime)
+  (require 'vm-undo)
+  )
+
+(declare-function vm-make-virtual-copy "vm-virtual" (message))
+(declare-function vm-make-presentation-copy "vm-mime" (message))
+(declare-function vm-decode-mime-message "vm-mime" (&optional state))
+(declare-function vm-mime-plain-message-p "vm-mime" (message))
+;; (declare-funciton vm-mm-layout "vm-mime" (message))
+
+(declare-function map-extents "vm-xemacs" 
+		  (function &optional object from to maparg 
+			    flags property value))
+(declare-function find-face "vm-xemacs" (face-or-name))
+(declare-function make-glyph "vm-xemacs" (&optional spec-list type))
+(declare-function set-glyph-face "vm-xemacs" (glyph face))
+(declare-function glyphp "vm-xemacs" (object))
+(declare-function set-extent-begin-glyph "vm-xemacs" 
+		  (extent begin-glyph &optional layout))
+(declare-function highlight-headers "vm-xemacs" (start end hack-sig))
 
 ;;;###autoload
 (defun vm-scroll-forward (&optional arg)
-  "Scroll forward a screenful of text.
+  "Scrolls forward a screenful of text.
 If the current message is being previewed, the message body is revealed.
 If at the end of the current message, moves to the next message iff the
 value of vm-auto-next-message is non-nil.
 Prefix argument N means scroll forward N lines."
   (interactive "P")
-  (let ((mp-changed (vm-follow-summary-cursor))
+  (let (mp-changed
 	needs-decoding 
 	(was-invisible nil))
+    (vm-follow-summary-cursor)
+    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (setq mp-changed
+	  (or (null vm-presentation-buffer)
+	      (not (equal (vm-number-of (car vm-message-pointer))
+		       (with-current-buffer vm-presentation-buffer
+			 (vm-number-of (car vm-message-pointer)))))))
     ;; the following vodoo was added by USR for fixing the jumping
     ;; cursor problem in the summary window, reported on May 4, 2008
     ;; in gnu.emacs.vm.info, title "Re: synchronization of vm buffers"
-    (if mp-changed (sit-for 0))
+    ;; (if mp-changed (sit-for 0))
+    (when mp-changed 
+      (vm-present-current-message)
+      (sit-for 0))
 
-    (vm-select-folder-buffer-and-validate 1 (interactive-p))
     (setq needs-decoding (and vm-display-using-mime
 			      (not vm-mime-decoded)
 			      (not (vm-mime-plain-message-p
 				    (car vm-message-pointer)))
 			      vm-auto-decode-mime-messages
 			      (eq vm-system-state 'previewing)))
-    (and vm-presentation-buffer
-	 (set-buffer vm-presentation-buffer))
+    (when vm-presentation-buffer
+      (set-buffer vm-presentation-buffer))
     ;; We are either in the Presentation buffer or the Folder buffer
     (let ((point (point))
 	  (w (vm-get-visible-buffer-window (current-buffer))))
-      (if (or (null w)
-	      (not (vm-frame-totally-visible-p (vm-window-frame w))))
-	  (progn
-	    (vm-display (current-buffer) t
-			'(vm-scroll-forward vm-scroll-backward)
-			(list this-command 'reading-message))
-	    ;; window start sticks to end of clip region when clip
-	    ;; region moves back past it in the buffer.  fix it.
-	    (setq w (vm-get-visible-buffer-window (current-buffer)))
-	    (if (= (window-start w) (point-max))
-		(set-window-start w (point-min)))
-	    (setq was-invisible t))))
+      (unless (and w (vm-frame-totally-visible-p (vm-window-frame w)))
+	(vm-display (current-buffer) t
+		    '(vm-scroll-forward vm-scroll-backward)
+		    (list this-command 'reading-message))
+	;; window start sticks to end of clip region when clip
+	;; region moves back past it in the buffer.  fix it.
+	(setq w (vm-get-visible-buffer-window (current-buffer)))
+	(if (= (window-start w) (point-max))
+	    (set-window-start w (point-min)))
+	(setq was-invisible t)))
     (if (or mp-changed was-invisible needs-decoding
 	    (and (eq vm-system-state 'previewing)
 		 (pos-visible-in-window-p
 		  (point-max)
 		  (vm-get-visible-buffer-window (current-buffer)))))
 	(progn
-	  (if (not was-invisible)
-	      (let ((w (vm-get-visible-buffer-window (current-buffer)))
-		    old-w-start)
-		(setq old-w-start (window-start w))
-		;; save-excursion to avoid possible buffer change
-		(save-excursion (vm-select-frame (window-frame w)))
-		(vm-raise-frame (window-frame w))
-		(vm-display nil nil '(vm-scroll-forward vm-scroll-backward)
-			    (list this-command 'reading-message))
-		(setq w (vm-get-visible-buffer-window (current-buffer)))
-		(and w (set-window-start w old-w-start))))
+	  (unless was-invisible
+	    (let ((w (vm-get-visible-buffer-window (current-buffer)))
+		  old-w-start)
+	      (setq old-w-start (window-start w))
+	      ;; save-excursion to avoid possible buffer change
+	      (save-excursion (vm-select-frame (window-frame w)))
+	      (vm-raise-frame (window-frame w))
+	      (vm-display nil nil '(vm-scroll-forward vm-scroll-backward)
+			  (list this-command 'reading-message))
+	      (setq w (vm-get-visible-buffer-window (current-buffer)))
+	      (and w (set-window-start w old-w-start))))
 	  (cond ((eq vm-system-state 'previewing)
 		 (vm-show-current-message)
 		 ;; The window start marker sometimes drifts forward
@@ -99,8 +134,8 @@ Prefix argument N means scroll forward N lines."
 	    (msg-buf (current-buffer))
 	    (h-diff 0)
 	    w old-w old-w-height old-w-start result)
-	(if (eq vm-system-state 'previewing)
-	    (vm-show-current-message))
+	(when (eq vm-system-state 'previewing)
+	  (vm-show-current-message))
 	(setq vm-system-state 'reading)
 	(setq old-w (vm-get-visible-buffer-window msg-buf)
 	      old-w-height (window-height old-w)
@@ -156,8 +191,8 @@ Prefix argument N means scroll forward N lines."
 	      (t
 	       (and (> (prefix-numeric-value arg) 0)
 		    (vm-howl-if-eom)))))))
-  (if (not vm-startup-message-displayed)
-      (vm-display-startup-message)))
+  (unless vm-startup-message-displayed
+    (vm-display-startup-message)))
 
 (defun vm-scroll-forward-internal (arg)
   (let ((direction (prefix-numeric-value arg))
@@ -239,7 +274,7 @@ it is suppressed if the variable `vm-auto-next-message' is nil."
   (if vm-auto-next-message
       (let ((vm-summary-uninteresting-senders-arrow "")
 	    (case-fold-search nil))
-	(message (if (and (stringp vm-summary-uninteresting-senders)
+	(vm-inform 6 (if (and (stringp vm-summary-uninteresting-senders)
 			  (string-match vm-summary-uninteresting-senders
 					(vm-su-from (car vm-message-pointer))))
 		     "End of message %s to %.50s..."
@@ -247,10 +282,10 @@ it is suppressed if the variable `vm-auto-next-message' is nil."
 		 (vm-number-of (car vm-message-pointer))
 		 (vm-summary-sprintf "%F" (car vm-message-pointer))))))
 
-(defun vm-emit-mime-decoding-message (str)
+(defun vm-emit-mime-decoding-message (&rest args)
   (interactive)
-  (if vm-emit-messages-for-mime-decoding
-      (message str)))
+  (when vm-emit-messages-for-mime-decoding
+    (apply 'message args)))
 
 ;;;###autoload
 (defun vm-scroll-backward (&optional arg)
@@ -292,30 +327,30 @@ Negative arg means scroll forward."
     (let (e)
       (map-extents (function
 		    (lambda (e ignore)
-		      (if (extent-property e 'vm-highlight)
-			  (delete-extent e))
+		      (when (vm-extent-property e 'vm-highlight)
+			(vm-delete-extent e))
 		      nil))
 		   (current-buffer) (point-min) (point-max))
       (goto-char (point-min))
       (while (vm-match-header)
 	(cond ((vm-match-header vm-highlighted-header-regexp)
-	       (setq e (make-extent (vm-matched-header-contents-start)
-				    (vm-matched-header-contents-end)))
-	       (set-extent-property e 'face vm-highlighted-header-face)
-	       (set-extent-property e 'vm-highlight t)))
+	       (setq e (vm-make-extent (vm-matched-header-contents-start)
+				       (vm-matched-header-contents-end)))
+	       (vm-set-extent-property e 'face vm-highlighted-header-face)
+	       (vm-set-extent-property e 'vm-highlight t)))
 	(goto-char (vm-matched-header-end)))))
-   ((fboundp 'overlay-put)
+   (vm-fsfemacs-p
     (let (o-lists p)
       (setq o-lists (overlay-lists)
 	    p (car o-lists))
       (while p
-	(and (overlay-get (car p) 'vm-highlight)
-	     (delete-overlay (car p)))
+	(when (overlay-get (car p) 'vm-highlight)
+	  (vm-delete-extent (car p)))
 	(setq p (cdr p)))
       (setq p (cdr o-lists))
       (while p
-	(and (overlay-get (car p) 'vm-highlight)
-	     (delete-overlay (car p)))
+	(when (overlay-get (car p) 'vm-highlight)
+	  (vm-delete-extent (car p)))
 	(setq p (cdr p)))
       (goto-char (point-min))
       (while (vm-match-header)
@@ -345,21 +380,21 @@ Negative arg means scroll forward."
       (let (e)
 	(map-extents (function
 		      (lambda (e ignore)
-			(if (extent-property e 'vm-url)
-			    (delete-extent e))
+			(when (vm-extent-property e 'vm-url)
+			  (vm-delete-extent e))
 			nil))
 		     (current-buffer) (point-min) (point-max))
-	(if clean-only (message "Energy from urls removed!")
+	(if clean-only (vm-inform 1 "Energy from urls removed!")
 	(while search-pairs
 	  (goto-char (car (car search-pairs)))
 	  (while (re-search-forward vm-url-regexp (cdr (car search-pairs)) t)
 	    (setq n 1)
 	    (while (null (match-beginning n))
 	      (vm-increment n))
-	    (setq e (make-extent (match-beginning n) (match-end n)))
-	    (set-extent-property e 'vm-url t)
+	    (setq e (vm-make-extent (match-beginning n) (match-end n)))
+	    (vm-set-extent-property e 'vm-url t)
 	    (if vm-highlight-url-face
-		(set-extent-property e 'face vm-highlight-url-face))
+		(vm-set-extent-property e 'face vm-highlight-url-face))
 	    (if vm-url-browser
 		(let ((keymap (make-sparse-keymap))
 		      (popup-function
@@ -374,12 +409,12 @@ Negative arg means scroll forward."
 		  (define-key keymap "\r"
 		    (function (lambda () (interactive)
 				(vm-mouse-send-url-at-position (point)))))
-		  (set-extent-property e 'vm-button t)
-		  (set-extent-property e 'keymap keymap)
-		  (set-extent-property e 'balloon-help 'vm-url-help)
-		  (set-extent-property e 'highlight t)
+		  (vm-set-extent-property e 'vm-button t)
+		  (vm-set-extent-property e 'keymap keymap)
+		  (vm-set-extent-property e 'balloon-help 'vm-url-help)
+		  (vm-set-extent-property e 'highlight t)
 		  ;; for vm-continue-postponed-message
-;		  (set-extent-property e 'duplicable t)
+		  (vm-set-extent-property e 'duplicable t)
 		  )))
 	  (setq search-pairs (cdr search-pairs))))))
      ((and vm-fsfemacs-p
@@ -388,13 +423,13 @@ Negative arg means scroll forward."
 	(setq o-lists (overlay-lists)
 	      p (car o-lists))
 	(while p
-	  (and (overlay-get (car p) 'vm-url)
-	       (delete-overlay (car p)))
+	  (when (overlay-get (car p) 'vm-url)
+	    (vm-delete-extent (car p)))
 	  (setq p (cdr p)))
 	(setq p (cdr o-lists))
 	(while p
-	  (and (overlay-get (car p) 'vm-url)
-	       (delete-overlay (car p)))
+	  (when (overlay-get (car p) 'vm-url)
+	    (vm-delete-extent (car p)))
 	  (setq p (cdr p)))
 	(while search-pairs
 	  (goto-char (car (car search-pairs)))
@@ -404,7 +439,7 @@ Negative arg means scroll forward."
 	      (vm-increment n))
 	    (setq o (make-overlay (match-beginning n) (match-end n)))
 	    (overlay-put o 'vm-url t)
-	    (if vm-highlight-url-face
+	    (if (facep vm-highlight-url-face)
 		(overlay-put o 'face vm-highlight-url-face))
 	    (if vm-url-browser
 		(let ((keymap (make-sparse-keymap))
@@ -433,8 +468,8 @@ Negative arg means scroll forward."
 	  regexp menu keymap e)
       (map-extents (function
 		    (lambda (e ignore)
-		      (if (extent-property e 'vm-header)
-			  (delete-extent e))
+		      (when (vm-extent-property e 'vm-header)
+			(vm-delete-extent e))
 		      nil))
 		   (current-buffer) (point-min) (point-max))
       (while search-tuples
@@ -443,9 +478,9 @@ Negative arg means scroll forward."
 	      menu (symbol-value (nth 1 (car search-tuples))))
 	(while (re-search-forward regexp nil t)
 	  (save-excursion (goto-char (match-beginning 0)) (vm-match-header))
-	  (setq e (make-extent (vm-matched-header-contents-start)
-			       (vm-matched-header-contents-end)))
-	  (set-extent-property e 'vm-header t)
+	  (setq e (vm-make-extent (vm-matched-header-contents-start)
+				  (vm-matched-header-contents-end)))
+	  (vm-set-extent-property e 'vm-header t)
 	  (setq keymap (make-sparse-keymap))
 	  ;; Might as well make button2 do what button3 does in
 	  ;; this case, since there is no default 'select'
@@ -457,9 +492,9 @@ Negative arg means scroll forward."
 	      (define-key keymap 'button3
 		(list 'lambda () '(interactive)
 		      (list 'popup-menu (list 'quote menu)))))
-	  (set-extent-property e 'keymap keymap)
-	  (set-extent-property e 'balloon-help 'vm-mouse-3-help)
-	  (set-extent-property e 'highlight t))
+	  (vm-set-extent-property e 'keymap keymap)
+	  (vm-set-extent-property e 'balloon-help 'vm-mouse-3-help)
+	  (vm-set-extent-property e 'highlight t))
 	(setq search-tuples (cdr search-tuples)))))
    ((and vm-fsfemacs-p
 	 (fboundp 'overlay-put))
@@ -470,13 +505,13 @@ Negative arg means scroll forward."
       (setq o-lists (overlay-lists)
 	    p (car o-lists))
       (while p
-	(and (overlay-get (car p) 'vm-header)
-	     (delete-overlay (car p)))
+	(when (overlay-get (car p) 'vm-header)
+	  (vm-delete-extent (car p)))
 	(setq p (cdr p)))
       (setq p (cdr o-lists))
       (while p
-	(and (overlay-get (car p) 'vm-header)
-	     (delete-overlay (car p)))
+	(when (overlay-get (car p) 'vm-header)
+	  (vm-delete-extent (car p)))
 	(setq p (cdr p)))
       (while search-tuples
 	(goto-char (point-min))
@@ -502,7 +537,7 @@ Negative arg means scroll forward."
   (let ((case-fold-search t) e g h)
     (if (map-extents (function
 		      (lambda (e ignore)
-			(if (extent-property e 'vm-xface)
+			(if (vm-extent-property e 'vm-xface)
 			    t
 			  nil)))
 		     (current-buffer) (point-min) (point-max))
@@ -530,9 +565,9 @@ Negative arg means scroll forward."
 	      ;; bottom of the glyph in 19.12
 	      ;;(set-glyph-baseline g 100)
 	      (set-glyph-face g 'vm-xface))
-	    (setq e (make-extent (vm-vheaders-of (car vm-message-pointer))
-				 (vm-vheaders-of (car vm-message-pointer))))
-	    (set-extent-property e 'vm-xface t)
+	    (setq e (vm-make-extent (vm-vheaders-of (car vm-message-pointer))
+				    (vm-vheaders-of (car vm-message-pointer))))
+	    (vm-set-extent-property e 'vm-xface t)
 	    (set-extent-begin-glyph e g))))))
 
 (defun vm-display-xface-fsfemacs ()
@@ -540,8 +575,8 @@ Negative arg means scroll forward."
     (let ((case-fold-search t) i g h ooo)
       (setq ooo (overlays-in (point-min) (point-max)))
       (while ooo
-	(if (overlay-get (car ooo) 'vm-xface)
-	    (delete-overlay (car ooo)))
+	(when (overlay-get (car ooo) 'vm-xface)
+	  (vm-delete-extent (car ooo)))
 	(setq ooo (cdr ooo)))
       (goto-char (point-min))
       (if (re-search-forward "^X-Face:" nil t)
@@ -637,11 +672,11 @@ Use mouse button 3 to choose a Web browser for the URL."
     (or start (setq start (vm-headers-of (car vm-message-pointer))))
     (or end (setq end (vm-text-end-of (car vm-message-pointer))))
     ;; energize the URLs
-    (if (or vm-highlight-url-face vm-url-browser)
-	(save-restriction
-	  (widen)
-	  (narrow-to-region start end)
-	  (vm-energize-urls)))))
+    (if (or (facep vm-highlight-url-face) vm-url-browser)
+        (save-restriction
+          (widen)
+          (narrow-to-region start end)
+          (vm-energize-urls)))))
     
 (defun vm-highlight-headers-maybe ()
   ;; highlight the headers
@@ -709,14 +744,16 @@ is necessary."
 	     (point))))
 	 (t (vm-text-end-of (car vm-message-pointer))))))
 
+;; This function was originally famous as `vm-preview-current-buffer',
+;; but it was a misnomer because it does both previewing and showing.
 
 ;;;###autoload
-(defun vm-preview-current-message ()
-  "Preview the current message in the Presentation Buffer.  A copy of
-the message is made in the Presentation Buffer and MIME decoding is
-done if necessary.  The type of preview is governed by the variables
-`vm-preview-lines' and `vm-preview-read-messages'.  If no preview is
-required, then the entire message is shown directly. (USR, 2010-01-14)"
+(defun vm-present-current-message ()
+  "Display the current message in the Presentation Buffer.  A
+copy of the message is made in the Presentation Buffer and MIME
+decoding is done if necessary.  The displayed content might be a
+preview or the full message, governed by the the variables
+`vm-preview-lines' and `vm-preview-read-messages'.  USR,2010-01-14"
 
   ;; Set new-preview if the user needs to see the
   ;; message in the previewed state.  Save some time later by not
@@ -726,9 +763,9 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 		   (or (vm-new-flag (car vm-message-pointer))
 		       (vm-unread-flag (car vm-message-pointer))
 		       vm-preview-read-messages))))
-;;     (when vm-load-headers-only
+;;     (when vm-enable-external-messages
 ;;       (when (not need-preview)
-;; 	(message "Headers-only operation does not allow previews")
+;; 	(vm-inform 1 "External messages cannot be previewed")
 ;; 	(setq need-preview nil)))
     (vm-save-buffer-excursion
      (setq vm-system-state 'previewing)
@@ -737,8 +774,7 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
      ;; 1. make sure that the message body is present
      (when (vm-body-to-be-retrieved-of (car vm-message-pointer))
        (let ((mm (vm-real-message-of (car vm-message-pointer))))
-	 (vm-retrieve-real-message-body mm t)
-	 (vm-register-fetched-message mm)))
+	 (vm-retrieve-real-message-body mm :fetch t :register t)))
      (when vm-real-buffers
 	 (vm-make-virtual-copy (car vm-message-pointer)))
 
@@ -783,8 +819,8 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 ;;     (let ((real-m (car vm-message-pointer)))
 ;;        (if (= (1+ (marker-position (vm-text-of real-m)))
 ;; 	      (marker-position (vm-text-end-of real-m)))
-;;            (message "must fetch the body of %s ..." (vm-imap-uid-of real-m))
-;; 	 (message "must NOT fetch the body of %s ..." (vm-imap-uid-of real-m))
+;;            (vm-inform 1 "must fetch the body of %s ..." (vm-imap-uid-of real-m))
+;; 	 (vm-inform 1 "must NOT fetch the body of %s ..." (vm-imap-uid-of real-m))
 ;;	 (let ((vm-message-pointer nil))
 ;;	   (vm-discard-cached-data)))
 ;;	   ))
@@ -809,10 +845,12 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 	   ;; decode-for-preview is meant to allow a numeric
 	   ;; vm-preview-lines to be useful in the face of multipart
 	   ;; messages.
-	   (let ((vm-auto-displayed-mime-content-type-exceptions
+	   ;; But why restrict the external viewers?  USR, 2011-02-08
+	   (let ((vm-mime-auto-displayed-content-type-exceptions
 		  (cons "message/external-body"
-			vm-auto-displayed-mime-content-type-exceptions))
-		 (vm-mime-external-content-types-alist nil))
+			vm-mime-auto-displayed-content-type-exceptions))
+		 ;; (vm-mime-external-content-types-alist nil)
+		 )
 	     (condition-case data
 		 (progn
 		   (vm-decode-mime-message)
@@ -834,7 +872,7 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 		   )
 	       (vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
 						     (car (cdr data)))
-			      (message "%s" (car (cdr data)))))
+			      (vm-inform 0 "%s" (car (cdr data)))))
 	     (vm-narrow-for-preview)))
        ;; if no MIME decoding is needed
        (vm-energize-urls-in-message-region)
@@ -859,6 +897,8 @@ required, then the entire message is shown directly. (USR, 2010-01-14)"
 
   (vm-run-message-hook (car vm-message-pointer) 'vm-select-message-hook))
 
+(defalias 'vm-preview-current-message 'vm-present-current-message)
+
 (defun vm-show-current-message ()
   "Show the current message in the Presentation Buffer.  MIME decoding
 is done if necessary.  (USR, 2010-01-14)"
@@ -875,7 +915,7 @@ is done if necessary.  (USR, 2010-01-14)"
 	  (vm-decode-mime-message)
 	(vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
 					      (car (cdr data)))
-		       (message "%s" (car (cdr data))))))
+		       (vm-inform 0 "%s" (car (cdr data))))))
   ;; FIXME this probably cause folder corruption by filling the folder instead
   ;; of the presentation copy  ..., RWF, 2008-07
   ;; Well, so, we will check if we are in a presentation buffer! 
@@ -890,7 +930,7 @@ is done if necessary.  (USR, 2010-01-14)"
 	      (set-buffer vm-presentation-buffer))
 	  ;; FIXME at this point, the folder buffer is being used for
 	  ;; display.  Filling will corrupt the folder.
-	(debug "VM internal error #2010.  Please report it")))
+	  (debug "VM internal error #2010.  Please report it")))
     (vm-save-restriction
      (widen)
      (vm-fill-paragraphs-containing-long-lines
@@ -987,15 +1027,15 @@ is done if necessary.  (USR, 2010-01-14)"
 	       (overlay-put vm-page-end-overlay 'evaporate nil))))
 	(vm-xemacs-p
 	 (if (not (and vm-page-end-overlay
-		       (extent-end-position vm-page-end-overlay)))
+		       (vm-extent-end-position vm-page-end-overlay)))
 	     (let ((g vm-page-continuation-glyph))
 	       (cond ((not (glyphp g))
 		      (setq g (make-glyph g))
 		      (set-glyph-face g 'italic)))
-	       (setq vm-page-end-overlay (make-extent (point) (point)))
+	       (setq vm-page-end-overlay (vm-make-extent (point) (point)))
 	       (vm-set-extent-property vm-page-end-overlay 'vm-glyph g)
 	       (vm-set-extent-property vm-page-end-overlay 'begin-glyph g)
-	       (set-extent-property vm-page-end-overlay 'detachable nil)))))
+	       (vm-set-extent-property vm-page-end-overlay 'detachable nil)))))
   (save-excursion
     (let (min max (e vm-page-end-overlay))
       (if (or (bolp) (not (save-excursion
@@ -1066,7 +1106,7 @@ as necessary."
       (vm-narrow-to-page)))
 
 ;;;###autoload
-(defun vm-move-to-next-button (count)
+(defun vm-next-button (count)
   "Moves to the next button in the current message.
 Prefix argument N means move to the Nth next button.
 Negative N means move to the Nth previous button.
@@ -1091,9 +1131,10 @@ exposed and marked as read."
       (vm-move-to-xxxx-button (vm-abs count) (>= count 0))
     (if vm-honor-page-delimiters
 	(vm-narrow-to-page))))
+(defalias 'vm-move-to-next-button 'vm-next-button)
 
 ;;;###autoload
-(defun vm-move-to-previous-button (count)
+(defun vm-previous-button (count)
   "Moves to the previous button in the current message.
 Prefix argument N means move to the Nth previous button.
 Negative N means move to the Nth next button.
@@ -1118,6 +1159,7 @@ exposed and marked as read."
       (vm-move-to-xxxx-button (vm-abs count) (< count 0))
     (if vm-honor-page-delimiters
 	(vm-narrow-to-page))))
+(defalias 'vm-move-to-previous-button 'vm-previous-button)
 
 (defun vm-move-to-xxxx-button (count next)
   (let ((old-point (point))

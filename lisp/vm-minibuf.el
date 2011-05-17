@@ -23,6 +23,16 @@
 
 (provide 'vm-minibuf)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-mouse)
+  )
+
+(declare-function button-press-event-p "vm-xemacs" (object))
+(declare-function button-release-event-p "vm-xemacs" (object))
+(declare-function menu-event-p "vm-xemacs" (object))
+(declare-function vm-folder-buffers "vm" (&optional non-virtual))
+
 (defun vm-minibuffer-complete-word (&optional exiting)
   (interactive)
   (let ((opoint (point))
@@ -358,22 +368,10 @@ click mouse triggered the current command."
     (vm-keyboard-read-file-name prompt dir default
 				must-match initial history)))
 
-(defun vm-folder-list (&optional non-virtual)
-  (save-excursion
-    (let ((buffers (buffer-list))
-          (modes (if non-virtual '(vm-mode) '(vm-mode vm-virtual-mode)))
-          folders)
-      (while buffers
-        (set-buffer (car buffers))
-        (if (member major-mode modes)
-            (setq folders (cons (buffer-name) folders)))
-        (setq buffers (cdr buffers)))
-      folders)))
-
 (defun vm-read-folder-name ()
   (completing-read
    "VM Folder: "
-   (mapcar (lambda (f) (list f)) (vm-folder-list))
+   (mapcar (lambda (f) (list f)) (vm-folder-buffers))
    nil t nil nil))
 
 ;;; vm-minibuf.el ends here

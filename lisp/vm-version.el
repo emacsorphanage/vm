@@ -21,6 +21,11 @@
 
 (provide 'vm-version)
 
+;; Don't use vm-device-type here because it may not not be loaded yet.
+(declare-function device-type "vm-xemacs" ())
+(declare-function device-matching-specifier-tag-list "vm-xemacs" ())
+
+
 (defconst vm-version
   (condition-case nil
       (with-temp-buffer
@@ -62,6 +67,9 @@
 (defun vm-xemacs-file-coding-p () vm-xemacs-file-coding-p)
 (defun vm-fsfemacs-p () vm-fsfemacs-p)
 (defun vm-fsfemacs-mule-p () vm-fsfemacs-mule-p)
+
+(defun vm-emacs-mule-p ()
+  (or vm-xemacs-mule-p vm-fsfemacs-mule-p))
 
 (defun vm-mouse-fsfemacs-mouse-p ()
   (and vm-fsfemacs-p
@@ -116,6 +124,14 @@
 	(vm-fsfemacs-p
 	 (fboundp 'menu-bar-mode))))
  
+(defun vm-menubar-buttons-possible-p ()
+  "Menubar buttons are menus that have an immediate action.  Some
+Windowing toolkits do not allow such buttons.  This says whether such
+buttons are possible under the current windowing system."
+  (cond (vm-xemacs-p (not (memq (device-type) '(gtk ns))))
+	(vm-fsfemacs-p (not (or (and (eq window-system 'x) (featurep 'gtk))
+				(eq window-system 'ns))))))
+
 (defun vm-toolbar-support-possible-p ()
   (or (and vm-xemacs-p (featurep 'toolbar))
       (and vm-fsfemacs-p (fboundp 'tool-bar-mode) (boundp 'tool-bar-map))))
@@ -152,9 +168,10 @@ Return the list of loaded features."
                          f
                        (when (not silent)
                          (message "WARNING: Could not load feature %S." f)
-                         (sit-for 1)
+                         ;; (sit-for 1)
                          (message "WARNING: Related functions may not work correctly!")
-                         (sit-for 1))
+                         ;; (sit-for 1)
+			 )
                        nil))))
                 feature-list))
   (delete nil feature-list))

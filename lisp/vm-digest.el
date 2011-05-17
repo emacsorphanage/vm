@@ -23,6 +23,21 @@
 
 (provide 'vm-digest)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-summary)
+  (require 'vm-folder)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-mime)
+  (require 'vm-undo)
+  (require 'vm-delete)
+)
+
+(declare-function vm-mode "vm-mode" (&optional read-only))
+(declare-function vm-yank-message "vm-reply" (message))
+
 ;;;###autoload
 (defun vm-no-frills-encapsulate-message (m keep-list discard-regexp)
   "Encapsulate a message M for forwarding, simply.
@@ -53,18 +68,40 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 	  (save-excursion
 	    (set-buffer target-buffer)
 	    (let ((beg (point)))
-	      (insert-buffer-substring source-buffer (vm-headers-of m)
-				       (vm-text-end-of m))
+	      ;; (insert-buffer-substring 
+	      ;;  source-buffer (vm-headers-of m) (vm-text-end-of m))
+	      (let ((vm-include-mime-attachments t) ; override the defaults
+		    (vm-include-text-basic nil)
+		    (vm-include-text-from-presentation nil)
+		    (mail-citation-hook (list 'vm-cite-forwarded-message)))
+		(vm-yank-message m))
 	      (goto-char beg)
-	      (vm-reorder-message-headers nil nil vm-internal-unforwarded-header-regexp)
-	      (vm-reorder-message-headers nil keep-list discard-regexp)
-              (vm-decode-mime-message-headers)))))
+	      ;; (vm-reorder-message-headers 
+	      ;;  nil :keep-list nil 
+	      ;;  :discard-regexp vm-internal-unforwarded-header-regexp)
+	      ;; (vm-reorder-message-headers 
+	      ;;  nil :keep-list keep-list :discard-regexp discard-regexp)
+              (vm-decode-mime-message-headers)
+	      ))))
       (goto-char (point-max))
       (insert "------- end of forwarded message -------\n"))))
 
+(defun vm-cite-forwarded-message ()
+  "The message citation handler for a forwarded message."
+  (save-excursion
+    (vm-reorder-message-headers 
+     nil :keep-list nil 
+     :discard-regexp vm-internal-unforwarded-header-regexp)
+    (vm-reorder-message-headers
+     nil :keep-list vm-forwarded-headers 
+     :discard-regexp vm-unforwarded-header-regexp)
+    ))
+
 ;;;###autoload
-(defun vm-mime-encapsulate-messages (message-list keep-list discard-regexp
-				     always-use-digest)
+(defun* vm-mime-encapsulate-messages (message-list &key
+						   (keep-list nil)
+						   (discard-regexp "none")
+						   (always-use-digest nil))
   "Encapsulate the messages in MESSAGE-LIST as per the MIME spec.
 The resulting digest is inserted at point in the current buffer.
 Point is not moved.
@@ -107,15 +144,17 @@ the Content-Type header.  Otherwise nil is returned."
 	    (goto-char beg)
 	    ;; remove the Berkeley and VM status headers and sort
 	    ;; the MIME headers to the top of the message.
-	    (vm-reorder-message-headers nil vm-mime-header-list
-					vm-internal-unforwarded-header-regexp)
+	    (vm-reorder-message-headers 
+	     nil :keep-list vm-mime-header-list
+	     :discard-regexp vm-internal-unforwarded-header-regexp)
 	    ;; skip past the MIME headers so that when the
 	    ;; user's header filters are applied they won't
 	    ;; remove the MIME headers.
 	    (while (and (vm-match-header) (looking-at vm-mime-header-regexp))
 	      (goto-char (vm-matched-header-end)))
 	    ;; apply the user's header filters.
-	    (vm-reorder-message-headers nil keep-list discard-regexp)
+	    (vm-reorder-message-headers 
+	     nil :keep-list keep-list :discard-regexp discard-regexp)
 	    (goto-char (point-max))
 	    (setq mlist (cdr mlist)))
 	  (if (and (< (length message-list) 2) (not always-use-digest))
@@ -235,7 +274,8 @@ all of them will be burst."
 			(inhibit-quit t))
 		    (goto-char (point-max))
 		    (insert-buffer-substring work-buffer)
-		    (set-buffer-modified-p old-buffer-modified-p)
+		    (vm-restore-buffer-modified-p 
+		     old-buffer-modified-p folder-buffer)
 		    ;; return non-nil so caller knows we found some messages
 		    t ))
 		 ;; return nil so the caller knows we didn't find anything
@@ -305,8 +345,9 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 		    (goto-char beg)
 		    ;; remove the Berkeley and VM status headers and sort
 		    ;; the MIME headers to the top of the message.
-		    (vm-reorder-message-headers nil vm-mime-header-list
-						vm-internal-unforwarded-header-regexp)
+		    (vm-reorder-message-headers
+		     nil :keep-list vm-mime-header-list
+		     :discard-regexp vm-internal-unforwarded-header-regexp)
 		    ;; skip past the MIME headers so that when the
 		    ;; user's header filters are applied they won't
 		    ;; remove the MIME headers.
@@ -314,7 +355,8 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 				(looking-at vm-mime-header-regexp))
 		      (goto-char (vm-matched-header-end)))
 		    ;; apply the user's header filters.
-		    (vm-reorder-message-headers nil keep-list discard-regexp)
+		    (vm-reorder-message-headers 
+		     nil :keep-list keep-list :discard-regexp discard-regexp)
 		    (vm-rfc934-char-stuff-region beg (point-max))))))
 	    (goto-char (point-max))
 	    (insert "---------------")
@@ -398,8 +440,9 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 		    (goto-char beg)
 		    ;; remove the Berkeley and VM status headers and sort
 		    ;; the MIME headers to the top of the message.
-		    (vm-reorder-message-headers nil vm-mime-header-list
-						vm-internal-unforwarded-header-regexp)
+		    (vm-reorder-message-headers 
+		     nil :keep-list vm-mime-header-list
+		     :discard-regexp vm-internal-unforwarded-header-regexp)
 		    ;; skip past the MIME headers so that when the
 		    ;; user's header filters are applied they won't
 		    ;; remove the MIME headers.
@@ -407,7 +450,8 @@ to find out how KEEP-LIST and DISCARD-REGEXP are used."
 				(looking-at vm-mime-header-regexp))
 		      (goto-char (vm-matched-header-end)))
 		    ;; apply the user's header filters.
-		    (vm-reorder-message-headers nil keep-list discard-regexp)
+		    (vm-reorder-message-headers 
+		     nil :keep-list keep-list :discard-regexp discard-regexp)
 		    (vm-rfc1153-char-stuff-region beg (point-max))))))
 	    (goto-char (point-max))
 	    (insert "\n---------------")
@@ -544,12 +588,13 @@ RFC 1153.  Otherwise assume RFC 934 digests."
 			  (inhibit-quit t))
 		      (goto-char (point-max))
 		      (insert-buffer-substring work-buffer)
-		      (set-buffer-modified-p old-buffer-modified-p)
+		      (vm-restore-buffer-modified-p 
+		       old-buffer-modified-p folder-buffer)
 		      ;; return non-nil so caller knows we found some messages
 		      t ))
 		   ;; return nil so the caller knows we didn't find anything
 		   (t nil)))
-	 (and work-buffer (kill-buffer work-buffer)))))))
+	 (when work-buffer (kill-buffer work-buffer)))))))
 
 (defun vm-rfc934-burst-message (m)
   "Burst messages from the RFC 934 digest message M.
@@ -572,8 +617,11 @@ of digest the current message is.  If it is not given the value
 defaults to the value of vm-digest-burst-type.  When called
 interactively DIGEST-TYPE will be read from the minibuffer.
 
-If invoked on marked messages (via vm-next-command-uses-marks),
-all marked messages will be burst."
+If invoked on marked messages (via `vm-next-command-uses-marks'),
+all marked messages will be burst.  If applied to collapsed
+threads in summary and thread operations are enabled via
+`vm-enable-thread-operations' then all messages in the thread are
+burst."
   (interactive
    (list
     (let ((type nil)
@@ -591,9 +639,9 @@ all marked messages will be burst."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((start-buffer (current-buffer)) m totals-blurb
-	(mlist (vm-select-marked-or-prefixed-messages 1)))
-    ;; (vm-load-message)
-    (vm-retrieve-marked-or-prefixed-messages)
+	(mlist (vm-select-operable-messages
+		1 (interactive-p) "Burst digest of")))
+    (vm-retrieve-operable-messages 1 mlist)
     (while mlist
       (if (vm-virtual-message-p (car mlist))
 	  (progn
@@ -606,7 +654,7 @@ all marked messages will be burst."
 	    (setq digest-type (vm-guess-digest-type m))
 	    (if (null digest-type)
 		(error "Couldn't guess digest type."))))
-      (message "Bursting %s digest..." digest-type)
+      (vm-inform 5 "Bursting %s digest..." digest-type)
       (cond
        ((cond ((equal digest-type "mime")
 	       (vm-mime-burst-message m))
@@ -615,11 +663,11 @@ all marked messages will be burst."
 	      ((equal digest-type "rfc1153")
 	       (vm-rfc1153-burst-message m))
 	      (t (error "Unknown digest type: %s" digest-type)))
-	(message "Bursting %s digest... done" digest-type)
+	(vm-inform 5 "Bursting %s digest... done" digest-type)
 	(vm-clear-modification-flag-undos)
-	(vm-set-buffer-modified-p t)
+	(vm-mark-folder-modified-p (current-buffer))
 	(vm-increment vm-modification-counter)
-	(and vm-delete-after-bursting
+	(when vm-delete-after-bursting
 	     ;; if start folder was virtual, we're now in the wrong
 	     ;; buffer.  switch back.
 	     (save-excursion
@@ -627,7 +675,8 @@ all marked messages will be burst."
 	       ;; don't move message pointer when deleting the message
 	       (let ((vm-move-after-deleting nil))
 		 (vm-delete-message 1))))
-	(vm-assimilate-new-messages t nil (vm-labels-of (car mlist)))
+	(vm-assimilate-new-messages :dont-read-attributes t 
+				    :labels (vm-labels-of (car mlist)))
 	;; do this now so if we error later in another iteration
 	;; of the loop the summary and mode line will be correct.
 	(vm-update-summary-and-mode-line)))
@@ -642,9 +691,9 @@ all marked messages will be burst."
 			  vm-burst-rfc1153-digest)
 		(list this-command))
     (if (vm-thoughtfully-select-message)
-	(vm-preview-current-message)
+	(vm-present-current-message)
       (vm-update-summary-and-mode-line))
-    (message totals-blurb)))
+    (vm-inform 5 totals-blurb)))
 
 ;;;###autoload
 (defun vm-burst-rfc934-digest ()
@@ -677,8 +726,11 @@ of digest the current message is.  If it is not given the value
 defaults to the value of vm-digest-burst-type.  When called
 interactively DIGEST-TYPE will be read from the minibuffer.
 
-If invoked on marked messages (via vm-next-command-uses-marks),
-all marked messages will be burst."
+If invoked on marked messages (via `vm-next-command-uses-marks'),
+all marked messages will be burst.  If applied to collapsed
+threads in summary and thread operations are enabled via
+`vm-enable-thread-operations' then all messages in the thread are
+burst."
   (interactive
    (list
     (let ((type nil)
@@ -696,12 +748,12 @@ all marked messages will be burst."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (let ((start-buffer (current-buffer)) m totals-blurb
-	(mlist (vm-select-marked-or-prefixed-messages 1))
+	(mlist (vm-select-operable-messages
+		1 (interactive-p) "Burst digest of"))
 	(work-buffer nil))
-    ;; (vm-load-message)
-    (vm-retrieve-marked-or-prefixed-messages)
+    (vm-retrieve-operable-messages 1 mlist)
     (unwind-protect
-	(save-excursion
+	(save-excursion			; to go to work-buffer
 	  (setq work-buffer (generate-new-buffer
 			     (format "digest from %s/%s%s"
 				     (current-buffer)
@@ -719,7 +771,7 @@ all marked messages will be burst."
 		  (setq digest-type (vm-guess-digest-type m))
 		  (if (null digest-type)
 		      (error "Couldn't guess digest type."))))
-	    (message "Bursting %s digest to folder..." digest-type)
+	    (vm-inform 5 "Bursting %s digest to folder..." digest-type)
 	    (cond ((equal digest-type "mime")
 		   (vm-mime-burst-message m))
 		  ((equal digest-type "rfc934")
@@ -727,7 +779,7 @@ all marked messages will be burst."
 		  ((equal digest-type "rfc1153")
 		   (vm-rfc1153-burst-message m))
 		  (t (error "Unknown digest type: %s" digest-type)))
-	    (message "Bursting %s digest... done" digest-type)
+	    (vm-inform 5 "Bursting %s digest... done" digest-type)
             (and vm-delete-after-bursting
  		 (yes-or-no-p (format "Delete message %s? " (vm-number-of m)))
  		 (save-excursion
@@ -736,7 +788,7 @@ all marked messages will be burst."
  		   (let ((vm-move-after-deleting nil))
  		     (vm-delete-message 1))))
 	    (setq mlist (cdr mlist)))
-	  (set-buffer-modified-p nil)
+	  (set-buffer-modified-p nil)	; work-buffer
 	  (vm-save-buffer-excursion
 	   (vm-goto-new-folder-frame-maybe 'folder)
 	   (vm-mode)
@@ -749,7 +801,7 @@ all marked messages will be burst."
 	  (vm-display (or vm-presentation-buffer (current-buffer)) t
 		      (list this-command) '(vm-mode startup))
 	  (setq work-buffer nil))
-      (and work-buffer (kill-buffer work-buffer)))))
+      (when work-buffer (kill-buffer work-buffer)))))
 
 (defun vm-guess-digest-type (m)
   "Guess the digest type of the message M.

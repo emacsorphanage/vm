@@ -71,8 +71,8 @@
 	     (buffer (vm-buffer-of message))
 	     (folder (with-current-buffer buffer
 		       (if (fboundp 'vm-folder-name) ; defined in VM 8.1.1
-			 (vm-folder-name)
-		       (buffer-file-name))))
+			   (vm-folder-name)
+			 (buffer-file-name))))
 	     (subject (vm-su-subject message))
 	     (to (vm-su-to-names message)) 
 	     (from (vm-su-full-name message))

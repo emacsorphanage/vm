@@ -106,13 +106,39 @@
 
 (require 'vm-virtual)
 
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-minibuf)
+  (require 'vm-summary)
+  (require 'vm-folder)
+  (require 'vm-window)
+  (require 'vm-page)
+  (require 'vm-motion)
+  (require 'vm-undo)
+  (require 'vm-delete)
+  (require 'vm-save)
+  (require 'vm-reply)
+  (require 'vm-sort)
+  (require 'vm-thread)
+)
+  
+;; The following function is erroneously called for fsfemacs as well
+(declare-function key-or-menu-binding "vm-xemacs" (key &optional menu-flag))
+(declare-function bbdb-get-addresses "ext:bbdb-com"
+		  (only-first-address 
+		   uninteresting-senders 
+		   get-header-content-function
+		   &rest get-header-content-function-args))
+(declare-function bbdb-search-simple "ext:bbdb" (name net))
+
+; group already defined in vm-vars
+;(defgroup vm nil
+;  "VM"
+;  :group 'mail)
 
 (defgroup vm-avirtual nil
   "VM additional virtual folder selectors and functions."
-  :group 'vm)
+  :group 'vm-ext)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-when-compile
@@ -134,7 +160,7 @@
            (beep 1))))
       (setq feature-list (cdr feature-list)))))
 
-(defvar bbdb-get-addresses-headers)	; dummyd declaration
+(defvar bbdb-get-addresses-headers)	; dummy declaration
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar vm-mail-virtual-selector-function-alist
@@ -409,7 +435,7 @@ I was really missing this!"
   (if (get-file-buffer vm-spam-words-file)
       (kill-buffer (get-file-buffer vm-spam-words-file)))
   (vm-vs-spam-word nil)
-  (message "%d spam words are installed!" (length vm-spam-words)))
+  (vm-inform 5 "%d spam words are installed!" (length vm-spam-words)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; new mail virtual folder selectors 
@@ -461,8 +487,9 @@ I was really missing this!"
   (let ((selector (car arg))
         (arglist (cdr arg))
         result)
-    (setq result (apply (cdr (assq selector vm-mail-virtual-selector-function-alist))
-                        arglist))
+    (setq result (apply 
+		  (cdr (assq selector vm-mail-virtual-selector-function-alist))
+		  arglist))
     (if vm-virtual-check-diagnostics
         (princ (format "%snot: %s for (%S%s)\n"
                        (make-string vm-virtual-check-level ? )
@@ -686,12 +713,17 @@ format:
       (vm-follow-summary-cursor)
       (setq selector (vm-virtual-get-selector
                       (vm-read-string "Virtual folder: "
-                                      vm-virtual-folder-alist))
-            function (key-or-menu-binding (read-key-sequence "VM command: "))))
+                                      vm-virtual-folder-alist)))
+      (if vm-xemacs-p
+	  (setq function 
+		(key-or-menu-binding (read-key-sequence "VM command: ")))
+	(setq function
+		(key-binding (read-key-sequence "VM command: ")))))
 
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
 
-  (let ((mlist (vm-select-marked-or-prefixed-messages (or count 1)))
+  (let ((mlist (vm-select-operable-messages 
+		(or count 1) (interactive-p)"Apply to"))
         (count 0))
 
     (while mlist
@@ -713,7 +745,8 @@ without recreating it."
   (vm-select-folder-buffer-and-validate 0 (interactive-p))
 
   (let ((new-messages (or message-list
-                          (vm-select-marked-or-prefixed-messages count)))
+                          (vm-select-operable-messages
+			   count (interactive-p) "Update")))
         b-list)
     (setq new-messages (copy-sequence new-messages))
     (if (and new-messages vm-virtual-buffers)
@@ -739,7 +772,7 @@ without recreating it."
                             (progn (setq vm-message-pointer vm-message-list
                                          vm-need-summary-pointer-update t)
                                    (if vm-message-pointer
-                                       (vm-preview-current-message))))
+                                       (vm-present-current-message))))
                         (setq vm-messages-needing-summary-update new-messages
                               vm-need-summary-pointer-update t)
                         (vm-update-summary-and-mode-line)
@@ -761,7 +794,8 @@ virtual folder of all messages."
       (error "This is no virtual folder."))
 
   (let ((old-messages (or message-list
-                          (vm-select-marked-or-prefixed-messages count)))
+                          (vm-select-operable-messages
+			   count (interactive-p) "Omit")))
         prev curr
         (mp vm-message-list))
 
@@ -856,7 +890,7 @@ into VM!"
               (setq mlist (cdr mlist)))))
       ;; expunge them 
       (if vm-virtual-auto-delete-message-expunge
-          (vm-expunge-folder t t spammlist)))
+          (vm-expunge-folder :quiet t :just-these-messages spammlist)))
     
     (vm-display nil nil '(vm-delete-message vm-delete-message-backward)
                 (list this-command))
@@ -1041,7 +1075,7 @@ messages which are composed in order to find the right FCC."
 ;;;###autoload
 (defun vm-virtual-save-message (&optional folder count)
   "Save the current message to a mail folder.
-Like `vm-save-message' but the default folder it guessed by
+Like `vm-save-message' but the default folder is guessed by
 `vm-virtual-auto-select-folder'."
   (interactive
    (list
@@ -1049,7 +1083,7 @@ Like `vm-save-message' but the default folder it guessed by
     (let ((last-command last-command)
           (this-command this-command))
       (vm-follow-summary-cursor)
-      (let ((default (save-excursion
+      (let ((default (save-current-buffer
                        (vm-select-folder-buffer)
                        (or (vm-virtual-auto-select-folder)
                            vm-last-save-folder)))
@@ -1077,7 +1111,7 @@ Like `vm-save-message' but the default folder it guessed by
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vm-error-if-folder-read-only)
 
-  (message "Archiving...")
+  (vm-inform 5 "Archiving...")
   
   (let ((auto-folder)
         (folder-list (list (buffer-name)))
@@ -1090,7 +1124,7 @@ Like `vm-save-message' but the default folder it guessed by
         ;; shouldn't affect its value.
         (let ((vm-message-pointer
                (if (eq last-command 'vm-next-command-uses-marks)
-                   (vm-select-marked-or-prefixed-messages 0)
+                   (vm-select-operable-messages 0 (interactive-p) "Archive")
                  vm-message-list))
               (done nil)
               stop-point
@@ -1120,15 +1154,15 @@ Like `vm-save-message' but the default folder it guessed by
                  (let ((vm-delete-after-saving vm-delete-after-archiving))
                    (vm-save-message auto-folder)
                    (vm-increment archived)
-                   (message "%d archived, still working..." archived)))
+                   (vm-inform 6 "%d archived, still working..." archived)))
             (setq done (eq vm-message-pointer stop-point)
                   vm-message-pointer (cdr vm-message-pointer))))
       ;; fix mode line
       (intern (buffer-name) vm-buffers-needing-display-update)
       (vm-update-summary-and-mode-line))
     (if (zerop archived)
-        (message "No messages were archived")
-      (message "%d message%s archived"
+        (vm-inform 5 "No messages were archived")
+      (vm-inform 5 "%d message%s archived"
                archived (if (= 1 archived) "" "s")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1143,7 +1177,7 @@ name."
         (let ((file (substring (buffer-name) 1 -1)))
           (vm-goto-message 0)
           (vm-save-message file (length vm-message-list))
-          (message "Saved virtual folder in file \"%s\"" file))
+          (vm-inform 5 "Saved virtual folder in file \"%s\"" file))
       (error "This is no virtual folder!"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

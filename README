@@ -15,12 +15,11 @@ VERSION INFO
 
 The VM versions 8.2.0 and up are designed to work with:
 
-- XEmacs version 21.2 or higher
+- XEmacs version 21.4 or higher, with MULE support
 
-- Gnu Emacs versions 21 or higher
+- Gnu Emacs versions 22 or higher
 
-They are not meant for use with any version of Emacs that does not
-have MULE support.
+(While Gnu Emacs 21 is permitted, it is not recommended.)
 
 The users of vcard's need a vcard.el package with vcard-api-version
 2.0.  (A suitable version of vcard.el is included in this distribution.)

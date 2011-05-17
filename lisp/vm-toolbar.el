@@ -24,11 +24,33 @@
 (provide 'vm-toolbar)
 
 (eval-when-compile
-  (require 'vm-vars))
+  (require 'vm-misc)
+  (require 'vm-window)
+  )
+
+(declare-function vm-follow-summary-cursor "vm-motion" ())
+(declare-function vm-mime-plain-message-p "vm-mime" (message))
+(declare-function vm-save-message "vm-save" (folder 
+					     &optional count mlist quiet))
+(declare-function vm-auto-select-folder "vm-save" (mp auto-folder-alist))
+
+(declare-function glyph-height "vm-xemacs" (glyph &optional window))
+(declare-function glyph-width "vm-xemacs" (glyph &optional window))
+(declare-function make-glyph "vm-xemacs" (&optional spec-list type))
+(declare-function set-specifier "vm-xemacs" 
+		  (specifier value &optional locale tag-set how-to-add))
 
 (defvar vm-toolbar-specifier nil)
+(defvar right-toolbar)
+(defvar right-toolbar-width)
+(defvar left-toolbar)
+(defvar left-toolbar-width)
+(defvar bottom-toolbar)
+(defvar bottom-toolbar-height)
+(defvar top-toolbar)
+(defvar top-toolbar-height)
 
-(defvar vm-toolbar-next-button
+(defconst vm-toolbar-next-button
   [vm-toolbar-next-icon
    vm-toolbar-next-command
    (vm-toolbar-any-messages-p)
@@ -42,7 +64,7 @@ s-expression like this one in your .vm file:
 (or (fboundp 'vm-toolbar-next-command)
     (fset 'vm-toolbar-next-command 'vm-next-message))
 
-(defvar vm-toolbar-previous-button
+(defconst vm-toolbar-previous-button
   [vm-toolbar-previous-icon
    vm-toolbar-previous-command
    (vm-toolbar-any-messages-p)
@@ -56,14 +78,14 @@ s-expression like this one in your .vm file:
 (or (fboundp 'vm-toolbar-previous-command)
     (fset 'vm-toolbar-previous-command 'vm-previous-message))
 
-(defvar vm-toolbar-autofile-button
+(defconst vm-toolbar-autofile-button
   [vm-toolbar-autofile-icon
    vm-toolbar-autofile-message
    (vm-toolbar-can-autofile-p)
   "Save the current message to a folder selected using vm-auto-folder-alist."])
 (defvar vm-toolbar-autofile-icon nil)
 
-(defvar vm-toolbar-file-button
+(defconst vm-toolbar-file-button
   [vm-toolbar-file-icon vm-toolbar-file-command (vm-toolbar-any-messages-p)
    "Save the current message to a folder.\n
 The command `vm-toolbar-file-command' is run, which is normally
@@ -75,7 +97,7 @@ s-expression like this one in your .vm file:
 (or (fboundp 'vm-toolbar-file-command)
     (fset 'vm-toolbar-file-command 'vm-save-message))
 
-(defvar vm-toolbar-getmail-button
+(defconst vm-toolbar-getmail-button
   [vm-toolbar-getmail-icon vm-toolbar-getmail-command
    (vm-toolbar-mail-waiting-p)
    "Retrieve spooled mail for the current folder.\n
@@ -88,7 +110,7 @@ s-expression like this one in your .vm file:
 (or (fboundp 'vm-toolbar-getmail-command)
     (fset 'vm-toolbar-getmail-command 'vm-get-new-mail))
 
-(defvar vm-toolbar-print-button
+(defconst vm-toolbar-print-button
   [vm-toolbar-print-icon
    vm-toolbar-print-command
    (vm-toolbar-any-messages-p)
@@ -102,7 +124,7 @@ s-expression like this one in your .vm file:
 (or (fboundp 'vm-toolbar-print-command)
     (fset 'vm-toolbar-print-command 'vm-print-message))
 
-(defvar vm-toolbar-visit-button
+(defconst vm-toolbar-visit-button
   [vm-toolbar-visit-icon vm-toolbar-visit-command t
    "Visit a different folder.\n
 The command `vm-toolbar-visit-command' is run, which is normally
@@ -114,7 +136,7 @@ s-expression like this one in your .vm file:
 (or (fboundp 'vm-toolbar-visit-command)
     (fset 'vm-toolbar-visit-command 'vm-visit-folder))
 
-(defvar vm-toolbar-reply-button
+(defconst vm-toolbar-reply-button
   [vm-toolbar-reply-icon
    vm-toolbar-reply-command
    (vm-toolbar-any-messages-p)
@@ -128,7 +150,7 @@ s-expression like this one in your .vm file:
 (or (fboundp 'vm-toolbar-reply-command)
     (fset 'vm-toolbar-reply-command 'vm-followup-include-text))
 
-(defvar vm-toolbar-forward-button
+(defconst vm-toolbar-forward-button
   [vm-toolbar-forward-icon
    vm-toolbar-forward-command
    (vm-toolbar-any-messages-p)
@@ -142,7 +164,7 @@ s-expression like this one in your .vm file:
 (or (fboundp 'vm-toolbar-forward-command)
     (fset 'vm-toolbar-forward-command 'vm-forward-message))
 
-(defvar vm-toolbar-followup-button
+(defconst vm-toolbar-followup-button
   [vm-toolbar-followup-icon
    vm-toolbar-followup-command
    (vm-toolbar-any-messages-p)
@@ -156,7 +178,7 @@ s-expression like this one in your .vm file:
 (or (fboundp 'vm-toolbar-followup-command)
     (fset 'vm-toolbar-followup-command 'vm-followup))
 
-(defvar vm-toolbar-compose-button
+(defconst vm-toolbar-compose-button
   [vm-toolbar-compose-icon vm-toolbar-compose-command t
    "Compose a new message.\n
 The command `vm-toolbar-compose-command' is run, which is normally
@@ -168,7 +190,7 @@ s-expression like this one in your .vm file:
 (or (fboundp 'vm-toolbar-compose-command)
     (fset 'vm-toolbar-compose-command 'vm-mail))
 
-(defvar vm-toolbar-decode-mime-button
+(defconst vm-toolbar-decode-mime-button
   [vm-toolbar-decode-mime-icon vm-toolbar-decode-mime-command
    (vm-toolbar-can-decode-mime-p)
    "Decode the MIME objects in the current message.\n
@@ -193,7 +215,7 @@ s-expression like this one in your .vm file:
 (defvar vm-toolbar-delete-icon t)
 (defvar vm-toolbar-undelete-icon nil)
 
-(defvar vm-toolbar-delete/undelete-button
+(defconst vm-toolbar-delete/undelete-button
   [vm-toolbar-delete/undelete-icon
    vm-toolbar-delete/undelete-message
    (vm-toolbar-any-messages-p)
@@ -208,7 +230,7 @@ s-expression like this one in your .vm file:
 (defvar vm-toolbar-helper-icon nil)
 (make-variable-buffer-local 'vm-toolbar-helper-icon)
 
-(defvar vm-toolbar-help-button
+(defconst vm-toolbar-help-button
   [vm-toolbar-helper-icon vm-toolbar-helper-command
    (vm-toolbar-can-help-p)
    "Don't Panic.\n
@@ -231,7 +253,7 @@ will run 'vm-decode-mime-message'."])
   (setq this-command vm-toolbar-helper-command)
   (call-interactively vm-toolbar-helper-command))
 
-(defvar vm-toolbar-quit-button
+(defconst vm-toolbar-quit-button
   [vm-toolbar-quit-icon vm-toolbar-quit-command
    (vm-toolbar-can-quit-p)
    "Quit visiting this folder.\n
@@ -284,7 +306,7 @@ s-expression like this one in your .vm file:
     (if file
 	(progn
 	  (vm-save-message file 1)
-	  (message "Message saved to %s" file))
+	  (vm-inform 5 "Message saved to %s" file))
       (error "No match for message in vm-auto-folder-alist."))))
 
 (defun vm-toolbar-can-recover-p ()
@@ -370,7 +392,7 @@ s-expression like this one in your .vm file:
 
 (defcustom vm-toolbar-height nil
   "*Desired height of the toolbar."
-  :group 'vm
+  :group 'vm-toolbar
   :type '(choice (const  :tag "Automatic" nil) integer))
 
 (defun vm-toolbar-install-toolbar ()
@@ -385,8 +407,8 @@ s-expression like this one in your .vm file:
 	  (vm-toolbar-fsfemacs-install-toolbar))
     (if (not (vm-toolbar-pixmap-directory))
 	(progn
-	  (message "Bad toolbar pixmap directory, can't setup toolbar.")
-	  (sit-for 2))
+	  (vm-warn 
+	   0 2 "Bad toolbar pixmap directory, can't setup toolbar."))
       (vm-toolbar-initialize)
       (let ((height (or vm-toolbar-height
 			(+ 5 (glyph-height (car vm-toolbar-help-icon)))))

@@ -1,19 +1,169 @@
 Status
 
-  VM is currently being maintained by a 'VM development team'
-  consisting of Robert Widhopf-Fenk, Ulrich Müller and Uday S Reddy.
-  In recent months, Arik Mitschang, Tim Cross and Paul Michael Reilly
-  have joined us as contributors.  More volunteers to help with the
-  maintenance are quite welcome.
-
-  We are working towards a new version of VM, 8.2.0, which will
-  support remote IMAP folders with only headers downloaded, summary
-  windows with thread folding, more accurate support for threads, and
-  seamless support for Thunderbird folders etc.
+  VM is currently being maintained by a 'VM development team' consisting of
+  Uday S Reddy, Ulrich Müller, Tim Cross and Arik Mitschang.  More
+  volunteers to help with the maintenance are quite welcome.
 
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
-  using VM! - Rob, Ulrich and Uday
+  using VM!
   
+VM 8.2.0a (2011-02-28)
+
+  CHANGES
+
+   * The configuration of headers-only messages, introduced in 8.1.90a, has
+     changed.  The variable `vm-load-headers-only' has been replaced by a
+     new variable `vm-enable-external-messages'.  For IMAP folders, enabling
+     external messages causes any messages larger than
+     `vm-imap-max-message-size' to be loaded in headers-only form.  Smaller
+     messages are loaded immediately.  You need to customie
+     `vm-imap-max-message-size' for enabling headers-only operation.
+
+   * If you download mail from IMAP spool files, the 8.1.x versions of
+     VM had a bug which allowed the the `X-VM-IMAP-Retrieved' headers
+     to grow unnecessarily.  This can slow down the saving of folders
+     into which you downloaded IMAP mail.  To solve the problem, run
+     the command `vm-prune-imap-retrieved-list' after installing
+     version 8.2.0.  (See the info manual under "IMAP Spool Files".)
+
+   * A set of inessential key bindings (a, b, e, i, w, L, M-l, !, <, >, *,
+     %) have been removed from the standard VM key bindings.  If you would
+     like to use them, add the line:
+              (vm-legacy-key-bindings)
+     to your vm-preferences-file (~/.vm.preferences).  To use the current
+     key bindings instead, use the line
+              (vm-current-key-bindings)
+     Or, you might bind these keys to some other operations of your choice.
+
+     However, `vm-edit-message' is available via a new key binding `C-c
+     C-e'. 
+
+   * The default settings of `vm-mime-deleteable-types' and
+     `vm-mime-saveable-types' do not include the types listed in
+     `vm-mime-external-content-types-alist'.  You might need to add them
+     explicitly in your vm-preferences-file.
+
+   * The variable name `vm-auto-displayed-mime-content-types' changed
+     to `vm-mime-auto-displayed-content-types' for consistency with
+     other variable names.  (The corresponding `-exceptions' variable
+     changed as well.)
+
+   * The variable name `vm-mime-attachment-infer-type-for-text-attachments'
+     changed to `vm-infer-mime-types-for-text'.
+
+   * Plain text forwarding has been extended to deal with MIME attachments.
+     The command `vm-forward-message-plain' (bound to `Z') uses this method.
+     (The normal `z' key forwards messages encapsulated using
+     `vm-forwarding-digest-type'.)  There are also associated variables
+     `vm-forwarded-headers-plain' and `vm-unforwarded-header-regexp-plain',
+     which determine the headers included in the forwards.
+
+   * The meaning of the variable `vm-included-mime-types-list' is
+     changed.  It need only mention MIME type/subtype pairs that are
+     not handled by default.  The types "text/plain", "text/enriched"
+     and "message/rfc822" are now handled by default.
+
+   * The attributes vector has been expanded to 16 elements for
+     compatibility with Mozilla Thunderbird.  The first time a folder
+     is written, this will cause extra time to be taken for "stuffing"
+     the attributes.  But this is only a one-time cost.
+
+   * New variable `vm-include-mime-attachments' allows the inclusion of
+     MIME attachments in replies.  This functionality was originally
+     part of vm-pine.el under the name `vm-mime-yank-attachments'.
+     That functionality is now obsolete.  Replace references to
+     `vm-mime-yank-attachments' in your customization by the new variable.
+     
+   * The command `vm-flag-message-read' (.) introduced in 8.1.93a is
+     renamed to `vm-mark-message-read' for consistency of terminology.
+
+  IMPROVEMENTS
+
+   * New option 'internal-only for `vm-mime-honor-content-disposition',
+     which means the content-disposition will be honored for only internally
+     displayable types.
+
+   * New variable `vm-mime-alternative-yank-method' controls the selection
+     of MIME alternatives during yanking of messages (as well including and
+     forwarding).
+
+   * Added a variable `vm-verbosity' to control the granularity of
+     informative messages displayed by VM.  Levels 5-8 are recommended, with
+     8 corresponding to the current level.
+
+   * New operations for manual control of thread indentation for
+     dealing with long (and deep) message threads.  See info under
+     "Threaded Summaries".
+
+   * A number of "point-to-point" attachment operations have been
+     added: 
+     - `vm-dired-attach-file' and `vm-dired-do-attach-files' from
+     dired buffers.
+     - `vm-attach-message-to-composition' and
+     `vm-reader-map-attach-to-composition' from VM folders.
+     - a drag-and-drop feature that can be used in the window system.
+
+   * New command `vm-switch-to-folder' defined to quickly return to a
+     previously buried folder.  (Originally in vm-rfaddons.)
+
+   * New custom command `vm-toggle-best-mime' in vm-rfaddons to toggle
+     between 'best and 'best-internal' MIME altrenatives.  (Thanks to
+     Alley Stoughton for this addition.)
+
+   * New variable `vm-include-text-basic' can be used to enable the
+     fallback method of quoting message text in replies.  It should
+     be normally left with the default value of nil.
+
+   * VM refrains from repeatedly checking for new mail once it has
+     found some new mail on the spool. Set `vm-mail-check-always' to
+     override this behavior.  
+
+   * When a predefined virtual folder is quit, all the component
+     folders that it depends on will also be quit automatically.
+
+   * When an interactive virtual folder is quit, the message pointer
+     in the virtual folder is transferred to the original folder.
+     This facility can be used to search for particular messages by
+     using virtual folders.
+
+   * Restored the [Emacs] and [Undo] menu buttons that were removed in
+     version 8.0.8.  For environments that do not support such buttons,
+     drop-down menus will be used instead.  The variable
+     `vm-use-menubar-buttons' can be used to use drop-down menus
+     always.  (Thanks to Tim Cross for the fixes.)
+
+   * Hooks `vm-arrived-message-hook' and `vm-arrived-messages-hook'
+     made to work correctly for IMAP folders.
+
+   * New variable `vm-thunderbird-folder-directory' and command
+     `vm-visit-thunderbird-folder' allow the handling of Thunderbird
+     folders without interference with VM's own folders.
+
+   * New variable `vm-sort-subthreads' allows the internal messages of
+     threads to be sorted into subthreads (the default) or via the
+     normal sorting criteria.
+
+   * Better support for message/external-body MIME type, with
+     external-bodies loaded on demand.  If you have
+     message/external-body as an element in
+     `vm-mime-auto-displayed-content-types', you should remove it to
+     access the new functionality.
+
+   * Newly documented commands: `[' (`vm-previous-button') and `]'
+     (`vm-next-button') allow navigation inside message
+     presentation buffers.
+
+   * New command: `!' (`vm-toggle-flag-message') allows you to flag a
+     message as being important.  This adds a "!" mark in the Summary
+     line for the message and highlights it with the high-priority face.
+
+   * New variable: `vm-summary-visible' specifies which messages
+     should remain visible in folded thread summaries.
+
+   * New feature: vm-mime-external-content-types-alist allows
+     emacs-lisp functions to be used for external viewing, e.g.,
+     you can use `browse-url-of-file' to view html . 
+
 VM 8.1.93a (2010-08-28)
 
   CHANGES
@@ -30,7 +180,11 @@ VM 8.1.93a (2010-08-28)
      Robert Fenk under the name vm-summary-faces-mode. But there are
      several changes.  In particular, the face names do not end in
      "-face" following the Emacs naming conventions.)  See the info
-     section on "Summaries" for more information.
+     section on "Summaries" for more information.  If you currently
+     use the u-vm-color package for colorizing the Summary buffers,
+     please remove the feature, i.e., delete a line like 
+      (add-hook 'vm-summary-mode-hook 'u-vm-color-summary-mode)
+     from your VM initialization file.
 
   ** Commands renamed:
      `vm-mime-save-all-attachments' => `vm-save-all-attachments'(C-c C-s)
@@ -41,6 +195,7 @@ VM 8.1.93a (2010-08-28)
    * Sorting of messages extended to work with threads.  By default,
      threads are sorted by "activity", i.e., the date of their most
      recent activity.  But they can also be sorted by other sort keys.
+     (The variable `vm-sort-threads-by-youngest-date' is now defunct.)
 
    * New feature: thread-folding in the Summary window allows message
      threads to be collapsed into single line summaries.  The

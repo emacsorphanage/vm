@@ -56,11 +56,16 @@
 (eval-and-compile
   (require 'easymenu)
   (require 'vm-menu)
+  (require 'vm-misc)
+  (require 'vm-summary)
+  (require 'vm-page)
+  (require 'vm-window)
+  (require 'vm-motion)
 )
 
 (defgroup vm-message-history nil
   "Message history for VM folders."
-  :group 'vm)
+  :group 'vm-ext)
 
 (defcustom vm-message-history-max 32
   "The number of read or previewed messages in each folder's history."
@@ -146,12 +151,11 @@ With prefix ARG, select the ARG'th previous message."
 			   (setq pointer (cdr pointer)))
 			 pointer)))))))
   (if (eq (car vm-message-pointer) (car vm-message-history-pointer))
-      (vm-preview-current-message)
+      (vm-present-current-message)
     (vm-record-and-change-message-pointer
      vm-message-pointer
-     (memq (car vm-message-history-pointer)
-           vm-message-list))
-    (vm-preview-current-message))
+     (vm-message-position (car vm-message-history-pointer)))
+    (vm-present-current-message))
   (vm-message-history-browse))
 
 ;;;###autoload
@@ -170,7 +174,7 @@ With prefix ARG, select the ARG'th next message."
   (let ((mp (get-text-property (point) 'vm-message-pointer)))
     (vm-select-folder-buffer-and-validate 0 (interactive-p))
     (vm-record-and-change-message-pointer vm-message-pointer mp)
-    (vm-preview-current-message)
+    (vm-present-current-message)
     (vm-display nil nil '(vm-goto-message-last-seen)
                 '(vm-goto-message-last-seen))
     (vm-message-history-browse)))

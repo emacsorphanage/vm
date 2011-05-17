@@ -42,11 +42,9 @@
 
 (provide 'vm-grepmail)
 
-(eval-when-compile
-  (require 'cl))
-
 (eval-and-compile
   (require 'vm-misc)
+  (require 'vm-minibuf)
   (require 'vm-undo)
   (require 'vm-startup)
   (require 'vm-motion)
@@ -56,9 +54,10 @@
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+; group already defined in vm-vars.el
+;(defgroup vm nil
+;  "VM"
+;  :group 'mail)
 
 (defgroup vm-grepmail nil
   "The VM grepmail lib"

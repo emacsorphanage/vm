@@ -36,7 +36,7 @@
 ;; 
 ;;      (and (locate-library "vm-pgg") (require 'vm-pgg))
 ;;
-;; If you set `vm-auto-displayed-mime-content-types' and/or
+;; If you set `vm-mime-auto-displayed-content-types' and/or
 ;; `vm-mime-internal-content-types' make sure that they contain
 ;; "application/pgp-keys" or set them before loading vm-pgg.
 ;; Otherwise public  keys are not detected automatically .
@@ -96,12 +96,16 @@
 
   (require 'easymenu)
   (require 'vm-misc)
+  (require 'vm-folder)
+  (require 'vm-window)
   (require 'vm-page)
   (require 'vm-mime)
   (require 'vm-reply)
+  (require 'vm-motion)
 
   (require 'advice))
   
+(declare-function rfc822-addresses "ext:rfc822" (header-text))
 
 (eval-when-compile
   (require 'cl)
@@ -114,13 +118,14 @@
   (defvar vm-pgg-cleartext-state nil "For interfunction communication.")
 )
 
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+; group already defined in vm-vars.el
+;(defgroup vm nil
+;  "VM"
+;  :group 'mail)
 
 (defgroup vm-pgg nil
   "PGP and PGP/MIME support for VM by PGG."
-  :group  'vm)
+  :group  'vm-ext)
 
 (defface vm-pgg-bad-signature
   '((((type tty) (class color))
@@ -428,8 +433,9 @@ Switch mode on/off according to ARG.
     (forward-line 1)
     (let ((buffer-read-only nil))
       (delete-region (point-min) (point))
-      (vm-reorder-message-headers nil vm-visible-headers
-                                  vm-invisible-header-regexp)
+      (vm-reorder-message-headers 
+       nil :keep-list vm-visible-headers 
+       :discard-regexp vm-invisible-header-regexp)
       (vm-decode-mime-message-headers m)
       (when (vectorp layout)
         ;; skip headers otherwise they get removed 
@@ -543,7 +549,7 @@ When the button is pressed ACTION is called."
       (overlay-put o 'vm-pgg t)
       (overlay-put o 'face vm-mime-button-face)
       (overlay-put o 'vm-button t)
-      (overlay-put o 'mouse-face 'highlight)
+      (overlay-put o 'mouse-face 'vm-mime-button-mouse-face)
       (let ((keymap (make-sparse-keymap)))
         (define-key keymap [mouse-2] action)
         (define-key keymap "\r"  action)
@@ -598,7 +604,7 @@ When the button is pressed ACTION is called."
               (t
                (error "This should never happen!")))))))
 
-(defadvice vm-preview-current-message (after vm-pgg-cleartext-automode activate)
+(defadvice vm-present-current-message (after vm-pgg-cleartext-automode activate)
   "Decode or check signature on clear text messages."
   (vm-pgg-state-set)
   (when (and vm-pgg-cleartext-decoded
@@ -798,7 +804,7 @@ cleanup here after verification and decoding took place."
   (setq vm-pgg-state nil)
   (if (vm-mime-plain-message-p (car vm-message-pointer))
       (if vm-pgg-cleartext-decoded
-          (vm-preview-current-message))
+          (vm-present-current-message))
     (let ((vm-pgg-recursion t))
       ad-do-it)))
 
@@ -853,7 +859,8 @@ cleanup here after verification and decoding took place."
              (save-excursion
                (set-buffer pgg-output-buffer)
                (vm-pgg-crlf-cleanup (point-min) (point-max))
-               (setq message (vm-mime-parse-entity-safe nil nil nil t)))
+               (setq message (vm-mime-parse-entity-safe 
+			      nil :passing-message-only t)))
              (if message
                  (vm-decode-mime-layout message)
                (insert-buffer-substring pgg-output-buffer))
@@ -940,8 +947,8 @@ cleanup here after verification and decoding took place."
 
 ;; we must add these in order to force VM to call our handler
 (eval-and-compile
-;; (if (listp vm-auto-displayed-mime-content-types)
-;;       (add-to-list 'vm-auto-displayed-mime-content-types "application/pgp-keys"))
+;; (if (listp vm-mime-auto-displayed-content-types)
+;;       (add-to-list 'vm-mime-auto-displayed-content-types "application/pgp-keys"))
   (if (listp vm-mime-internal-content-types)
       (add-to-list 'vm-mime-internal-content-types "application/pgp-keys"))
   (add-to-list 'vm-mime-button-format-alist
@@ -1027,17 +1034,19 @@ cleanup here after verification and decoding took place."
       (goto-char (point-max))
       (insert "\n")
       (setq start (point))
-      (vm-mime-attach-object buffer
-                             "application/pgp-keys"
-                             (list (concat "name=\"" pgg-default-user-id ".asc\""))
-                             description
-                             nil)
+      (vm-attach-object buffer 
+			     :type "application/pgp-keys"
+			     :params (list (concat "name=\"" 
+						   pgg-default-user-id 
+						   ".asc\""))
+			     :description description)
       ;; a crude hack to set the disposition
       (let ((disposition (list "attachment"
-                               (concat "filename=\"" pgg-default-user-id ".asc\"")))
+                               (concat "filename=\"" 
+				       pgg-default-user-id ".asc\"")))
             (end (point)))
         (if (featurep 'xemacs)
-            (set-extent-property (extent-at start nil 'vm-mime-disposition)
+            (vm-set-extent-property (vm-extent-at start 'vm-mime-disposition)
                                  'vm-mime-disposition disposition)
           (put-text-property start end 'vm-mime-disposition disposition))))))
 

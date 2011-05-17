@@ -16,6 +16,10 @@
 
 (provide 'u-vm-color)
 
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-folder))
+
 (defconst u-vm-color-version "2.10" "Version number of u-vm-color.")
 
 ;;  This program is free software; you can redistribute it and/or modify it
@@ -49,12 +53,15 @@
 ;;  the following in your VM startup file (~/.emacs or ~/.vm)
 
 ;;  (require 'u-vm-color)
-;;  (add-hook 'vm-summary-mode-hook 'u-vm-color-summary-mode)
 ;;  (add-hook 'vm-select-message-hook 'u-vm-color-fontify-buffer)
 
 ;;  It may be necessary to add the following, which probably comes from
 ;;  a bug in my code...
 ;;  (defadvice vm-decode-mime-message (after u-vm-color activate)
+;;    (u-vm-color-fontify-buffer-even-more))
+;;
+;;  m.sujith@gmail.com recommends adding: (Launchpad Bug 674383)
+;;  (defadvice vm-show-current-message (after u-vm-color activate)
 ;;    (u-vm-color-fontify-buffer-even-more))
 
 ;;  If you are using auto-fill, ie when the variables
@@ -87,6 +94,9 @@
 ;; ======================================================================
 ;;; History:
 
+;;        (2011-02-17)
+;;	  Removed instructions for fontifying summary buffers because
+;;        vm-summary-faces is now built into VM.  Uday S. Reddy
 ;;  2.10: (2008-02-23)
 ;;        Bugfixes -- thanks to Martin Schwenke
 ;;  2.9:  (2007-12-19)
@@ -155,7 +165,7 @@
 
 (defgroup u-vm-color nil
   "Font-lock support for vm."
-  :group 'vm)
+  :group 'vm-ext)
 
 (defcustom u-vm-color-use-gnus-faces nil
   "Use corresponding face definitions from Gnus."
@@ -568,7 +578,7 @@ subexpressions."
 ;;;###autoload
 (defun u-vm-color-summary-mode (&optional arg)
   "Configure `font-lock-keywords' and add some hooks for vm-buffers.
-Optional argument ARG is not used!"
+(Optional argument ARG is not used.)"
   (interactive "P")
   (setq u-vm-color-summary-mode
 	(not (or (and (null arg) u-vm-color-summary-mode)
@@ -615,6 +625,8 @@ Optional argument ARG is not used!"
               u-vm-color-summary-keywords)
 	 (set (make-local-variable 'font-lock-keywords-only) t)
  	 (font-lock-mode 1))))
+(make-obsolete 'u-vm-color-summary-mode 
+	       'vm-summary-enable-faces "8.2.0")
 
 (defun u-vm-color-fontify-regexp (start end regexp how)
   "Search the buffer for an expression and fontify it.
@@ -677,7 +689,7 @@ Search is restricted to the region between START and END."
   ;;(message "u-vm-color-fontify-buffer")
   (let ((continued-header-contents "\\(.*\\(\n[ \t]+.*\\)*\\)")
 	(pmin (point-min))
-	(buffer-has-been-modified-before (buffer-modified-p))
+	(buffer-modified (buffer-modified-p))
 	(header-end (or
 		     (save-excursion
 		       (goto-char (point-min))
@@ -733,7 +745,7 @@ Search is restricted to the region between START and END."
 			       (concat "^Content preview:"
 				       "\\([^\n]*\n\\( +[^\n]*\n\\)*\\)")
 			       '((1 u-vm-color-spamassassin-face)))
-    (set-buffer-modified-p buffer-has-been-modified-before)))
+    (vm-restore-buffer-modified-p  buffer-modified (current-buffer))))
 
 ;;;###autoload
 (defun u-vm-color-fontify-buffer-even-more ()

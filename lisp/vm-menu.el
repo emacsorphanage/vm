@@ -55,14 +55,45 @@
 (provide 'vm-menu)
 
 (eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-mime)
+
   (defvar current-menubar nil))
 
+(declare-function event-window "vm-xemacs" (event))
+(declare-function event-point "vm-xemacs" (event))
+(declare-function popup-mode-menu "vm-xemacs" (&optional event))
+(declare-function event-closest-point "vm-xemacs" (event))
+(declare-function find-menu-item "vm-xemacs" 
+		  (menubar item-path-list &optional parent))
+(declare-function add-menu-button "vm-xemacs" 
+		  (menu-path menu-leaf &optional before in-menu))
+(declare-function add-menu-item "vm-xemacs" 
+		  (menu-path item-name function enabled-p &optional before))
+(declare-function add-menu "vm-xemacs" 
+		  (menu-path menu-name menu-items &optional before))
+(declare-function set-menubar-dirty-flag "vm-xemacs" ())
+(declare-function set-buffer-menubar "vm-xemacs" (menubar))
+
+
+(declare-function vm-pop-find-name-for-spec "vm-pop" (spec))
+(declare-function vm-mime-plain-message-p "vm-mime" (message))
+(declare-function vm-yank-message "vm-reply" (message))
+(declare-function vm-mail-mode-get-header-contents "vm-reply"
+		  (header-name-regexp))
+(declare-function vm-create-virtual-folder "vm-virtual"
+		  (selector &optional arg read-only name bookmark))
+(declare-function vm-so-sortable-subject "vm-sort" (message))
+(declare-function vm-su-from "vm-summary" (message))
+
+
+;; This will be extended in code
 (defvar vm-menu-folders-menu
   '("Manipulate Folders"
     ["Make Folders Menu" vm-menu-hm-make-folder-menu vm-folder-directory])
   "VM folder menu list.")
 
-(defvar vm-menu-folder-menu
+(defconst vm-menu-folder-menu
   `("Folder"
     ,(if vm-fsfemacs-p
 	["Manipulate Folders" ignore (ignore)]
@@ -100,7 +131,7 @@
     "-------"
     ))
 
-(defvar vm-menu-dispose-menu
+(defconst vm-menu-dispose-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Dispose"
 			 "Dispose"
@@ -115,6 +146,7 @@
       ["Reply to All (citing original)" vm-followup-include-text
        vm-message-list]
       ["Forward" vm-forward-message vm-message-list]
+      ["Forward in Plain Text" vm-forward-message-plain vm-message-list]
       ["Resend" vm-resend-message vm-message-list]
       ["Retry Bounce" vm-resend-bounced-message vm-message-list]
       "---"
@@ -122,16 +154,18 @@
       ["Delete" vm-delete-message vm-message-list]
       ["Undelete"	vm-undelete-message vm-message-list]
       ["Kill Current Subject" vm-kill-subject vm-message-list]
-      ["Mark Unread" vm-unread-message vm-message-list]
+      ["Mark Unread" vm-mark-message-unread vm-message-list]
       ["Edit" vm-edit-message vm-message-list]
       ["Print" vm-print-message vm-message-list]
       ["Pipe to Command" vm-pipe-message-to-command vm-message-list]
+      ["Attach to Message Composition"
+       vm-attach-message-to-composition vm-message-list] 
       "---"
       ["Burst Message as Digest" (vm-burst-digest "guess") vm-message-list]
       ["Decode MIME" vm-decode-mime-message (vm-menu-can-decode-mime-p)]
       )))
 
-(defvar vm-menu-motion-menu
+(defconst vm-menu-motion-menu
   '("Motion"
     ["Page Up" vm-scroll-backward vm-message-list]
     ["Page Down" vm-scroll-forward vm-message-list]
@@ -158,7 +192,7 @@
     ["Go to Parent Message" vm-goto-parent-message t]
     ))
 
-(defvar vm-menu-virtual-menu
+(defconst vm-menu-virtual-menu
   '("Virtual"
     ["Visit Virtual Folder" vm-visit-virtual-folder t]
     ["Visit Virtual Folder Same Author" vm-visit-virtual-folder-same-author t]
@@ -172,7 +206,7 @@
     "-------"
     ))
 
-(defvar vm-menu-send-menu
+(defconst vm-menu-send-menu
   '("Send"
     ["Compose" vm-mail t]
     ["Continue Composing" vm-continue-composing-message vm-message-list]
@@ -181,6 +215,7 @@
     ["Reply to Author (citing original)" vm-reply-include-text vm-message-list]
     ["Reply to All (citing original)" vm-followup-include-text vm-message-list]
     ["Forward Message" vm-forward-message vm-message-list]
+    ["Forward Message in Plain Text" vm-forward-message-plain vm-message-list]
     ["Resend Message" vm-resend-message vm-message-list]
     ["Retry Bounced Message" vm-resend-bounced-message vm-message-list]
     ["Send Digest (RFC934)" vm-send-rfc934-digest vm-message-list]
@@ -188,7 +223,7 @@
     ["Send MIME Digest" vm-send-mime-digest vm-message-list]
     ))
 
-(defvar vm-menu-mark-menu
+(defconst vm-menu-mark-menu
   '("Mark"
     ["Next Command Uses Marks..." vm-next-command-uses-marks
      :active vm-message-list
@@ -212,39 +247,47 @@
     ["Unmark Thread Subtree" vm-unmark-thread-subtree vm-message-list]
     ))
 
-(defvar vm-menu-label-menu
+(defconst vm-menu-label-menu
   '("Label"
     ["Add Label" vm-add-message-labels vm-message-list]
     ["Add Existing Label" vm-add-existing-message-labels vm-message-list]
     ["Remove Label" vm-delete-message-labels vm-message-list]
     ))
 
-(defvar vm-menu-sort-menu
+(defconst vm-menu-sort-menu
   '("Sort"
+    "By ascending"
+    "---"
+    ["Date" (vm-sort-messages "date") vm-message-list]
+    ["Activity" (vm-sort-messages "activity") vm-message-list]
+    ["Subject" (vm-sort-messages "subject") vm-message-list]
+    ["Author" (vm-sort-messages "author") vm-message-list]
+    ["Recipients" (vm-sort-messages "recipients") vm-message-list]
+    ["Lines" (vm-sort-messages "line-count") vm-message-list]
+    ["Bytes" (vm-sort-messages "byte-count") vm-message-list]
+    "---"
+    "By descending"
+    "---"
+    ["Date" (vm-sort-messages "reversed-date") vm-message-list]
+    ["Activity" (vm-sort-messages "reversed-activity") vm-message-list]
+    ["Subject" (vm-sort-messages "reversed-subject") vm-message-list]
+    ["Author" (vm-sort-messages "reversed-author") vm-message-list]
+    ["Recipients" (vm-sort-messages "reversed-recipients") vm-message-list]
+    ["Lines" (vm-sort-messages "reversed-line-count") vm-message-list]
+    ["Bytes" (vm-sort-messages "reversed-byte-count") vm-message-list]
+    "---"
     ["By Multiple Fields..." vm-sort-messages vm-message-list]
-    "---"
-    ["By Date" (vm-sort-messages "date") vm-message-list]
-    ["By Subject" (vm-sort-messages "subject") vm-message-list]
-    ["By Author" (vm-sort-messages "author") vm-message-list]
-    ["By Recipients" (vm-sort-messages "recipients") vm-message-list]
-    ["By Lines" (vm-sort-messages "line-count") vm-message-list]
-    ["By Bytes" (vm-sort-messages "byte-count") vm-message-list]
-    "---"
-    ["By Date (backward)" (vm-sort-messages "reversed-date") vm-message-list]
-    ["By Subject (backward)" (vm-sort-messages "reversed-subject") vm-message-list]
-    ["By Author (backward)" (vm-sort-messages "reversed-author") vm-message-list]
-    ["By Recipients (backward)" (vm-sort-messages "reversed-recipients") vm-message-list]
-    ["By Lines (backward)" (vm-sort-messages "reversed-line-count") vm-message-list]
-    ["By Bytes (backward)" (vm-sort-messages "reversed-byte-count") vm-message-list]
+    ["Revert to Physical Order" (vm-sort-messages "physical-order" t) vm-message-list]
     "---"
     ["Toggle Threading" vm-toggle-threads-display t]
-    "---"
-    ["Revert to Physical Order" (vm-sort-messages "physical-order" t) vm-message-list]
+    ["Expand/Collapse Thread" vm-toggle-thread t]
+    ["Expand All Threads" vm-expand-all-threads t]
+    ["Collapse All Threads" vm-collapse-all-threads t]
     ))
 
-(defvar vm-menu-help-menu
+(defconst vm-menu-help-menu
   '("Help"
-    ["Switch to Emacs Toolbar" vm-menu-toggle-menubar]
+    ["Switch to Emacs Menubar" vm-menu-toggle-menubar t]
     "---"
     ["What Now?" vm-help t]
     ["Describe Mode" describe-mode t]
@@ -255,19 +298,32 @@
     ["Quit Without Saving" vm-quit-no-change t]
     ))
 
-(defvar vm-menu-undo-menu
-  ["Undo" vm-undo (vm-menu-can-undo-p)]
+(defconst vm-menu-xemacs-undo-button
+  ["[Undo]" vm-undo (vm-menu-can-undo-p)]
   )
 
-(defvar vm-menu-emacs-button
-  ["XEmacs" vm-menu-toggle-menubar t]
+(defconst vm-menu-undo-menu
+  '("Undo"
+    ["Undo" vm-undo (vm-menu-can-undo-p)]
+    )
+  "Undo menu for FSF Emacs builds that do not allow menubar buttons.")
+
+(defconst vm-menu-emacs-button
+  ["[Emacs]" vm-menu-toggle-menubar t]
   )
 
-(defvar vm-menu-vm-button
-  ["VM" vm-menu-toggle-menubar t]
+(defconst vm-menu-emacs-menu
+  '("Emacs"
+    ["Switch to Emacs Menubar" vm-menu-toggle-menubar t]
+    )
+  "Menu with a \"Swich to Emacs\" action meant for FSF Emacs builds that
+do not allow menubar buttons.")
+
+(defconst vm-menu-vm-button
+  ["[VM]" vm-menu-toggle-menubar t]
   )
 
-(defvar vm-menu-mail-menu
+(defconst vm-menu-mail-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Mail Commands"
 			 "Mail Commands"
@@ -374,16 +430,16 @@
 	:style radio
 	:selected (eq vm-mime-8bit-text-transfer-encoding 'base64)])
       "----"
-      ["Attach File..."	vm-mime-attach-file vm-send-using-mime]
-      ["Attach MIME Message..." vm-mime-attach-mime-file vm-send-using-mime]
+      ["Attach File..."	vm-attach-file vm-send-using-mime]
+      ["Attach MIME Message..." vm-attach-mime-file vm-send-using-mime]
       ["Encode MIME, But Don't Send" vm-mime-encode-composition
        (and vm-send-using-mime
 	    (null (vm-mail-mode-get-header-contents "MIME-Version:")))]
-      ["Preview MIME Before Sending" vm-mime-preview-composition
+      ["Preview MIME Before Sending" vm-preview-composition
        vm-send-using-mime]
       )))
 
-(defvar vm-menu-mime-dispose-menu
+(defconst vm-menu-mime-dispose-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Take Action on MIME body ..."
 			 "Take Action on MIME body ..."
@@ -392,52 +448,52 @@
 		 (list "Take Action on MIME body ..."))))
     `(,@title
       ["Display as Text (in default face)"
-       (vm-mime-run-display-function-at-point
-	'vm-mime-display-body-as-text) t]
+       vm-mime-reader-map-display-using-default t]
       ["Display using External Viewer"
-       (vm-mime-run-display-function-at-point
-	'vm-mime-display-body-using-external-viewer) t]
+       vm-mime-reader-map-display-using-external-viewer t]
+      ["Convert to Text and Display"
+       vm-mime-reader-map-convert-then-display
+       (vm-menu-can-convert-to-text/plain (vm-mime-get-button-layout))]
       ;; FSF Emacs does not allow a non-string menu element name.
-      ,@(if (vm-menu-can-eval-item-name)
-	    (list [(format "Convert to %s and Display"
-			   (or (nth 1 (vm-mime-can-convert
-				       (car
-					(vm-mm-layout-type
-					 (vm-mime-get-button-layout e)))))
-			       "different type"))
-		   (vm-mime-run-display-function-at-point
-		    'vm-mime-convert-body-then-display)
-		   (vm-mime-can-convert
-		    (car (vm-mm-layout-type
-			  (vm-mime-get-button-layout e))))]))
+      ;; This is not working on XEmacs either.  USR, 2011-03-05
+      ;; ,@(if (vm-menu-can-eval-item-name)
+      ;; 	    (list [(format "Convert to %s and Display"
+      ;; 			   (or (nth 1 (vm-mime-can-convert
+      ;; 				       (car
+      ;; 					(vm-mm-layout-type
+      ;; 					 (vm-mime-get-button-layout)))))
+      ;; 			       "different type"))
+      ;; 		   (vm-mime-run-display-function-at-point
+      ;; 		    'vm-mime-convert-body-then-display)
+      ;; 		   (vm-mime-can-convert
+      ;; 		    (car (vm-mm-layout-type
+      ;; 			  (vm-mime-get-button-layout))))]))
       "---"
-      ["Undo" vm-undo]
+      ["Undo" 
+       vm-undo]
       "---"
-      ["Save to File" vm-mime-reader-map-save-file t]
-      ["Save to Folder" vm-mime-reader-map-save-message
-       (let ((layout (vm-mime-run-display-function-at-point
-		      (function
-		       (lambda (e)
-			 (vm-extent-property e 'vm-mime-layout))))))
+      ["Save to File" 
+       vm-mime-reader-map-save-file t]
+      ["Save to Folder" 
+       vm-mime-reader-map-save-message
+       (let ((layout (vm-mime-get-button-layout)))
 	 (if (null layout)
 	     nil
 	   (or (vm-mime-types-match "message/rfc822"
 				    (car (vm-mm-layout-type layout)))
 	       (vm-mime-types-match "message/news"
 				    (car (vm-mm-layout-type layout))))))]
-      ["Send to Printer" (vm-mime-run-display-function-at-point
-			  'vm-mime-send-body-to-printer) t]
+      ["Send to Printer" 
+       vm-mime-reader-map-pipe-to-printer t]
       ["Pipe to Shell Command (display output)"
-       (vm-mime-run-display-function-at-point
-	'vm-mime-pipe-body-to-queried-command) t]
+       vm-mime-reader-map-pipe-to-command t]
       ["Pipe to Shell Command (discard output)"
-       (vm-mime-run-display-function-at-point
-	'vm-mime-pipe-body-to-queried-command-discard-output) t]
+       vm-mime-reader-map-pipe-to-command-discard-output t]
       ["Attach to Message Composition Buffer"
-       vm-mime-attach-object-from-message t]
+       vm-mime-reader-map-attach-to-composition t]
       ["Delete" vm-delete-mime-object t])))
 
-(defvar vm-menu-url-browser-menu
+(defconst vm-menu-url-browser-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Send URL to ..."
 			 "Send URL to ..."
@@ -450,42 +506,52 @@
 		   'w3-fetch)
 		  (t 'w3-fetch-other-frame))))
     `(,@title
-      ["Emacs W3" (vm-mouse-send-url-at-position (point) (quote ,w3))
-       (fboundp (quote ,w3))]
-      ["Firefox"
-       (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-firefox)
-       t]
-      ["Konqueror"
-       (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-konqueror)
-       t]
-      ;; ["Mosaic"
-      ;;  (vm-mouse-send-url-at-position (point)
-      ;; 			      'vm-mouse-send-url-to-mosaic)
-      ;;  t]
-      ;; ["mMosaic"
-      ;;  (vm-mouse-send-url-at-position (point)
-      ;; 			      'vm-mouse-send-url-to-mmosaic)
-      ;; t]
-      ["Mozilla"
-       (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-mozilla)
-       t]
-      ["Netscape"
-       (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-netscape)
-       t]
-      ["Opera"
-       (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-opera)
+      ["Window system (Copy)"
+       (vm-mouse-send-url-at-position 
+	(point) 'vm-mouse-send-url-to-window-system)
        t]
       ["X Clipboard"
-       (vm-mouse-send-url-at-position (point)
-				      'vm-mouse-send-url-to-clipboard)
-       t])))
+       (vm-mouse-send-url-at-position 
+	(point) 'vm-mouse-send-url-to-clipboard)
+       t]
+      ["browse-url"
+       (vm-mouse-send-url-at-position (point) 'browse-url) 
+       browse-url-browser-function]
+      ["Emacs W3" (vm-mouse-send-url-at-position (point) (quote ,w3))
+       (fboundp (quote ,w3))]
+      ["Emacs W3M" (vm-mouse-send-url-at-position (point) 'w3m-browse-url)
+       (fboundp 'w3m-browse-url)]
+      "---"
+      ["Firefox"
+       (vm-mouse-send-url-at-position 
+	(point) 'vm-mouse-send-url-to-firefox)
+       vm-firefox-client-program]
+      ["Konqueror"
+       (vm-mouse-send-url-at-position 
+	(point) 'vm-mouse-send-url-to-konqueror)
+       vm-konqueror-client-program]
+      ;; ["Mosaic"
+      ;;  (vm-mouse-send-url-at-position 
+      ;;  (point) 'vm-mouse-send-url-to-mosaic)
+      ;;  vm-mosaic-program]
+      ;; ["mMosaic"
+      ;;  (vm-mouse-send-url-at-position 
+      ;; 	(point) 'vm-mouse-send-url-to-mmosaic)
+      ;;  vm-mmosaic-program]
+      ["Mozilla"
+       (vm-mouse-send-url-at-position 
+	(point) 'vm-mouse-send-url-to-mozilla)
+       vm-mozilla-program]
+;;       ["Netscape"
+;;        (vm-mouse-send-url-at-position 
+;; 	(point) 'vm-mouse-send-url-to-netscape)
+;;        vm-netscape-program]
+      ["Opera"
+       (vm-mouse-send-url-at-position 
+	(point) 'vm-mouse-send-url-to-opera)
+       vm-opera-program])))
 
-(defvar vm-menu-mailto-url-browser-menu
+(defconst vm-menu-mailto-url-browser-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Send Mail using ..."
 			 "Send Mail using ..."
@@ -495,7 +561,7 @@
     `(,@title
       ["VM" (vm-mouse-send-url-at-position (point) 'ignore) t])))
 
-(defvar vm-menu-subject-menu
+(defconst vm-menu-subject-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Take Action on Subject..."
 			 "Take Action on Subject..."
@@ -516,7 +582,7 @@
        vm-message-list]
       )))
 
-(defvar vm-menu-author-menu
+(defconst vm-menu-author-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Take Action on Author..."
 			 "Take Action on Author..."
@@ -532,7 +598,7 @@
        vm-message-list]
       )))
 
-(defvar vm-menu-attachment-menu
+(defconst vm-menu-attachment-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Fiddle With Attachment"
 			 "Fiddle With Attachment"
@@ -622,7 +688,7 @@
        :style button]
       )))
 
-(defvar vm-menu-image-menu
+(defconst vm-menu-image-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "Redisplay Image"
 			 "Redisplay Image"
@@ -664,7 +730,7 @@
 
 (defvar vm-menu-vm-menubar nil)
 
-(defvar vm-menu-vm-menu
+(defconst vm-menu-vm-menu
   (let ((title (if (vm-menu-fsfemacs19-menus-p)
 		   (list "VM"
 			 "VM"
@@ -685,7 +751,9 @@
       "---"
       ,vm-menu-help-menu)))
 
-(defvar vm-mode-menu-map nil)
+(defvar vm-mode-menu-map nil
+  "If running in FSF Emacs, this variable stores the standard
+menu bar of VM internally.                  USR, 2011-02-27")
 
 (defun vm-menu-run-command (command &rest args)
   "Run COMMAND almost interactively, with ARGS.
@@ -745,6 +813,13 @@ set to the command name so that window configuration will be done."
 ;;	     (not vm-mime-decoded)
 	     (not (vm-mime-plain-message-p (car vm-message-pointer)))))
     (error nil)))
+
+(defun vm-menu-can-convert-to-text/plain (layout)
+  (let ((type (car (vm-mm-layout-type layout))))
+    (or (equal (nth 1 (vm-mime-can-convert type)) "text/plain")
+	(and (equal type "message/external-body")
+	     (vm-menu-can-convert-to-text/plain
+	      (car (vm-mm-layout-parts layout)))))))
 
 (defun vm-menu-can-expunge-pop-messages-p ()
   (condition-case nil
@@ -816,8 +891,10 @@ set to the command name so that window configuration will be done."
 			     (cons "Dispose" (nthcdr 4 vm-menu-dispose-menu)))
 	(easy-menu-define vm-menu-fsfemacs-dispose-popup-menu (list dummy) nil
 			     vm-menu-dispose-menu)
-;;	(easy-menu-define vm-menu-fsfemacs-undo-menu (list dummy) nil
-;;			     (list "Undo" vm-menu-undo-menu))
+	(easy-menu-define vm-menu-fsfemacs-undo-menu (list dummy) nil
+	  		     vm-menu-undo-menu)
+	(easy-menu-define vm-menu-fsfemacs-emacs-menu (list dummy) nil
+			     vm-menu-emacs-menu)
 	(easy-menu-define vm-menu-fsfemacs-virtual-menu (list dummy) nil
 			     vm-menu-virtual-menu)
 	(easy-menu-define vm-menu-fsfemacs-sort-menu (list dummy) nil
@@ -898,24 +975,35 @@ set to the command name so that window configuration will be done."
 		 (sort
 		  (cons "Sort" vm-menu-fsfemacs-sort-menu))
 		 (virtual
-		  (cons "Virtual" vm-menu-fsfemacs-virtual-menu))))
-	      cons (vec (vector 'rootmenu 'vm nil))
+		  (cons "Virtual" vm-menu-fsfemacs-virtual-menu))
+		 (emacs
+		  (if (and (vm-menubar-buttons-possible-p) 
+			   vm-use-menubar-buttons)
+		      (cons "[Emacs]" 'vm-menu-toggle-menubar)
+		    (cons "Emacs" vm-menu-emacs-menu)))
+		 (undo
+		  (if (and (vm-menubar-buttons-possible-p)
+			   vm-use-menubar-buttons)
+		      (cons "[Undo]" 'vm-undo)
+		    (cons "Undo" vm-menu-undo-menu)))))
+	      (cons nil)
+	      (vec (vector 'rootmenu 'vm nil))
 	      ;; menus appear in the opposite order that we
 	      ;; define-key them.
 	      (menu-list
 	       (if (consp vm-use-menus)
 		   (reverse vm-use-menus)
-		 (list 'help nil 'dispose 'virtual 'sort
-		       'label 'mark 'send 'motion 'folder))))
+		 (list 'help nil 'dispose 'undo 'virtual 'sort
+		       'label 'mark 'send 'motion 'folder)))
+	      (menu nil))
 	  (while menu-list
-	    (if (null (car menu-list))
+	    (setq menu (car menu-list))
+	    (if (null menu)
 		nil;; no flushright support in FSF Emacs
-	      (aset vec 2 (intern (concat "vm-menubar-"
-					  (symbol-name
-					   (car menu-list)))))
-	      (setq cons (assq (car menu-list) menu-alist))
+	      (aset vec 2 (intern (concat "vm-menubar-" (symbol-name menu))))
+	      (setq cons (assq menu menu-alist))
 	      (if cons
-		  (define-key map vec (eval (car (cdr cons))))))
+		  (define-key map vec (eval (cadr cons)))))
 	    (setq menu-list (cdr menu-list))))
 	(setq vm-mode-menu-map map)
 	(run-hooks 'vm-menu-setup-hook))))
@@ -932,7 +1020,7 @@ set to the command name so that window configuration will be done."
 	   (sort . vm-menu-sort-menu)
 	   (virtual . vm-menu-virtual-menu)
 	   (emacs . vm-menu-emacs-button)
-	   (undo . vm-menu-undo-menu)))
+	   (undo . vm-menu-xemacs-undo-button)))
 	cons
 	(menubar nil)
 	(menu-list vm-use-menus))
@@ -961,7 +1049,7 @@ set to the command name so that window configuration will be done."
   (interactive "e")
   ;; We should not need to do anything here for XEmacs.  The
   ;; default binding of mouse-3 is popup-mode-menu which does
-  ;; what we want for the normal case.  For special contexts,
+  ;; what we want for the normal case.  For special context,s
   ;; like when the mouse is over an URL, XEmacs has local keymap
   ;; support for extents.  Any context sensitive area should be
   ;; contained in an extent with a keymap that has mouse-3 bound
@@ -1094,15 +1182,35 @@ set to the command name so that window configuration will be done."
   (cond ((vm-menu-xemacs-menus-p)
 	 (set-menubar-dirty-flag))
 	((vm-menu-fsfemacs-menus-p)
-	 (force-mode-line-update))))
+	 ;; force-mode-line-update seems to have been buggy in Emacs
+	 ;; 21, 22, and 23.  So we do it ourselves.  USR, 2011-02-26
+	 ;; (force-mode-line-update t)
+	 (set-buffer-modified-p (buffer-modified-p))
+	 (when (and vm-user-interaction-buffer
+		    (buffer-live-p vm-user-interaction-buffer))
+	   (with-current-buffer vm-user-interaction-buffer
+	     (set-buffer-modified-p (buffer-modified-p)))))))
 
+(defun vm-menu-fsfemacs-add-vm-menu ()
+  "Add a menu or a menubar button to the Emacs menubar for switching
+to a VM menubar."
+  (if (and (vm-menubar-buttons-possible-p) vm-use-menubar-buttons)
+      (define-key vm-mode-map [menu-bar vm]
+	'(menu-item "[VM]" vm-menu-toggle-menubar))
+    (define-key vm-mode-map [menu-bar vm]
+      (cons "VM" (make-sparse-keymap "VM")))
+    (define-key vm-mode-map [menu-bar vm vm-toggle]
+      '(menu-item "Switch to VM Menubar" vm-menu-toggle-menubar))))
+      
 (defun vm-menu-toggle-menubar (&optional buffer)
+  "Toggle between the VM's dedicated menu bar and the standard Emacs
+menu bar.                                             USR, 2011-02-27"
   (interactive)
   (if buffer
       (set-buffer buffer)
     (vm-select-folder-buffer-and-validate 0 (interactive-p)))
   (cond ((vm-menu-xemacs-menus-p)
-	 (if (null (car (find-menu-item current-menubar '("XEmacs"))))
+	 (if (null (car (find-menu-item current-menubar '("[Emacs]"))))
 	     (set-buffer-menubar vm-menu-vm-menubar)
 	   ;; copy the current menubar in case it has been changed.
 	   (make-local-variable 'vm-menu-vm-menubar)
@@ -1127,12 +1235,12 @@ set to the command name so that window configuration will be done."
 	     (define-key vm-mode-map [menu-bar]
 	       (lookup-key vm-mode-menu-map [rootmenu vm]))
 	   (define-key vm-mode-map [menu-bar]
-	     (make-sparse-keymap))
-	   (define-key vm-mode-map [menu-bar vm]
-	     (cons "[VM]" 'vm-menu-toggle-menubar)))
+	     (make-sparse-keymap "Menu"))
+	   (vm-menu-fsfemacs-add-vm-menu))
 	 (vm-menu-set-menubar-dirty-flag))))
 
 (defun vm-menu-install-menubar ()
+  "Install the dedicated menu bar of VM.              USR, 2011-02-27"
   (cond ((vm-menu-xemacs-menus-p)
 	 (setq vm-menu-vm-menubar (vm-menu-make-xemacs-menubar))
 	 (set-buffer-menubar vm-menu-vm-menubar)
@@ -1146,6 +1254,8 @@ set to the command name so that window configuration will be done."
 	   (lookup-key vm-mode-menu-map [rootmenu vm])))))
 
 (defun vm-menu-install-menubar-item ()
+  "Install VM's menu on the current - presumably the standard - menu
+bar.						     USR, 2011-02-27"
   (cond ((and (vm-menu-xemacs-menus-p) (vm-menu-xemacs-global-menubar))
 	 (set-buffer-menubar (copy-sequence (vm-menu-xemacs-global-menubar)))
 	 (add-menu nil "VM" (cdr vm-menu-vm-menu)))
@@ -1157,6 +1267,7 @@ set to the command name so that window configuration will be done."
 	   (lookup-key vm-mode-menu-map [rootmenu])))))
 
 (defun vm-menu-install-vm-mode-menu ()
+  "This function strangely does nothing!               USR, 2011-02-27."
   ;; nothing to do here.
   ;; handled in vm-mouse.el
   (cond ((vm-menu-xemacs-menus-p)
@@ -1191,6 +1302,9 @@ set to the command name so that window configuration will be done."
 	       'vm-menu-popup-context-menu)))))
 
 (defun vm-menu-install-menus ()
+  "Install VM menus, either in the current menu bar or in a
+separate dedicated menu bar, depending on the value of
+`vm-use-menus'.                           USR, 2011-02-27"
   (cond ((consp vm-use-menus)
 	 (vm-menu-install-vm-mode-menu)
 	 (vm-menu-install-menubar)
@@ -1297,7 +1411,7 @@ set to the command name so that window configuration will be done."
 (defvar vm-menu-hm-no-hidden-dirs t
   "*Hidden directories are suppressed in the folder menus, if non nil.")
 
-(defvar vm-menu-hm-hidden-file-list '("^\\..*" ".*\\.~[0-9]+~"))
+(defconst vm-menu-hm-hidden-file-list '("^\\..*" ".*\\.~[0-9]+~"))
 
 (defun vm-menu-hm-delete-folder (folder)
   "Query deletes a folder."
@@ -1308,11 +1422,11 @@ set to the command name so that window configuration will be done."
 	    (if (file-directory-p folder)
 		(delete-directory folder)
 	      (delete-file folder))
-	    (message "Folder deleted.")
+	    (vm-inform 5 "Folder deleted.")
 	    (vm-menu-hm-make-folder-menu)
 	    (vm-menu-hm-install-menu)
 	    )
-	(message "Aborted"))
+	(vm-inform 0 "Aborted"))
     (error "Folder %s does not exist." folder)
     (vm-menu-hm-make-folder-menu)
     (vm-menu-hm-install-menu)
@@ -1354,7 +1468,7 @@ set to the command name so that window configuration will be done."
 (defun vm-menu-hm-make-folder-menu ()
   "Makes a menu with the mail folders of the directory `vm-folder-directory'."
   (interactive)
-  (message "Building folders menu...")
+  (vm-inform 5 "Building folders menu...")
   (let ((folder-list (vm-menu-hm-tree-make-file-list vm-folder-directory))
 	(inbox-list (if (listp (car vm-spool-files))
 			(mapcar 'car vm-spool-files)
@@ -1411,7 +1525,7 @@ set to the command name so that window configuration will be done."
 		      "----"
 		      ["Rebuild Folders Menu" vm-menu-hm-make-folder-menu vm-folder-directory]
 		      ))))
-  (message "Building folders menu... done")
+  (vm-inform 5 "Building folders menu... done")
   (vm-menu-hm-install-menu))
 
 (defun vm-menu-hm-install-menu ()
@@ -1434,7 +1548,7 @@ set to the command name so that window configuration will be done."
 
 ;;; Muenkel tree-menu code
 
-(defvar vm-menu-hm-tree-ls-flags "-aFLR"
+(defconst vm-menu-hm-tree-ls-flags "-aFLR"
   "*A String with the flags used in the function
 vm-menu-hm-tree-ls-in-temp-buffer for the ls command.
 Be careful if you want to change this variable.
@@ -1457,7 +1571,7 @@ The original flags are -aFLR.")
   (goto-char (point-min)))
 
 
-(defvar vm-menu-hm-tree-temp-buffername "*tree*"
+(defconst vm-menu-hm-tree-temp-buffername "*tree*"
   "Name of the temp buffers in tree.")
 
 

@@ -21,8 +21,35 @@
 
 ;;; Code:
 
+(provide 'vm-macro)
+
+;; Definitions for things that aren't in all Emacsen and that we really
+;; prefer not to live without.
+(eval-and-compile
+  (if (fboundp 'unless) nil
+    (defmacro unless (bool &rest forms) `(if ,bool nil ,@forms))
+    (defmacro when (bool &rest forms) `(if ,bool (progn ,@forms))))
+  (unless (fboundp 'save-current-buffer)
+    (defalias 'save-current-buffer 'save-excursion))
+  (if (fboundp 'mapc)
+      (defalias 'bbdb-mapc 'mapc)
+    (defalias 'bbdb-mapc 'mapcar))
+  )
+
+(unless (fboundp 'with-current-buffer)
+  (defmacro with-current-buffer (buf &rest body)
+    `(save-current-buffer (set-buffer ,buf) ,@body)))
+
+(unless (fboundp 'defvaralias)
+  (defmacro defvaralias (&rest args)))
+
 (unless (fboundp 'declare-function)
   (defmacro declare-function (fn file &optional arglist fileonly)))
+
+(declare-function vm-check-for-killed-summary "vm-misc" ())
+(declare-function vm-check-for-killed-presentation "vm-misc" ())
+(declare-function vm-error-if-folder-empty "vm-misc" ())
+(declare-function vm-build-threads "vm-thread" (message-list))
 
 (defmacro vm-add-to-list (elem list)
   "Like add-to-list, but compares elements by `eq' rather than `equal'."
@@ -49,8 +76,10 @@ isn't a folder buffer.  USR, 2010-03-08"
 	((not (memq major-mode '(vm-mode vm-virtual-mode)))
 	 (error "No VM folder buffer associated with this buffer")))
   ;;--------------------------
-  ;; This may be problematic - done in revno 570.  But, why?
-  (vm-buffer-type:set 'folder)
+  ;; This may be problematic - done in revno 570.
+  ;; All kinds of operations call vm-select-folder-buffer, including
+  ;; asynchronous things like the toolbar.
+  ;; (vm-buffer-type:set 'folder)
   ;;--------------------------
   )
 
@@ -62,14 +91,14 @@ isn't a folder buffer.  USR, 2010-03-08"
 	      (buffer-name vm-mail-buffer))
 	 (set-buffer vm-mail-buffer)
 	 ;;--------------------------
-	 ;; This may be problematic - done in revno 570.  But, why?
-	 (vm-buffer-type:set 'folder)
+	 ;; This may be problematic - done in revno 570.
+	 ;; (vm-buffer-type:set 'folder)
 	 ;;--------------------------
 	 )
 	((memq major-mode '(vm-mode vm-virtual-mode))
 	 ;;--------------------------
-	 ;; This may be problematic - done in revno 570.  But, why?
-	 (vm-buffer-type:set 'folder)
+	 ;; This may be problematic - done in revno 570.
+	 ;; (vm-buffer-type:set 'folder)
 	 ;;--------------------------
 	 )))
 
@@ -90,8 +119,8 @@ current-buffer in `vm-user-interaction-buffer'."
 	((not (memq major-mode '(vm-mode vm-virtual-mode)))
 	 (error "No VM folder buffer associated with this buffer")))
   ;;--------------------------
-  ;; This may be problematic - done in revno 570.  But, why?
-  (vm-buffer-type:set 'folder)
+  ;; This may be problematic - done in revno 570.
+  ;; (vm-buffer-type:set 'folder)
   ;;--------------------------
 
   (vm-check-for-killed-summary)
@@ -190,6 +219,66 @@ current-buffer in `vm-user-interaction-buffer'."
 	   session-name host
 	   (substring (current-time-string) 11 19)))
 
-(provide 'vm-macro)
+;; For verification of the correct buffer protocol
+;; Possible values are 'folder, 'presentation, 'summary, 'process
+
+;; (defvar vm-buffer-types nil)    ; moved to vm-vars.el
+
+(defvar vm-buffer-type-debug nil
+  "*This flag can be set to t for debugging asynchronous buffer change
+  errors.")
+
+(defvar vm-buffer-type-debug nil)	; for debugging asynchronous
+					; buffer change errors
+(defvar vm-buffer-type-trail nil
+  "List of VM buffer types entered and exited, used for debugging
+purposes.") 
+
+(defsubst vm-buffer-type:enter (type)
+  "Note that vm is temporarily entering a buffer of TYPE."
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail 
+	    (cons type (cons 'enter vm-buffer-type-trail))))
+  (setq vm-buffer-types (cons type vm-buffer-types)))
+
+(defsubst vm-buffer-type:exit ()
+  "Note that vm is exiting the current temporary buffer."
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail (cons 'exit vm-buffer-type-trail)))
+  (setq vm-buffer-types (cdr vm-buffer-types)))
+
+(defsubst vm-buffer-type:duplicate ()
+  "Note that vm is reentering the current buffer for a temporary purpose."
+  (if vm-buffer-type-debug
+      (setq vm-buffer-type-trail (cons (car vm-buffer-type-trail)
+				       vm-buffer-type-trail)))
+  (setq vm-buffer-types (cons (car vm-buffer-types) vm-buffer-types)))
+
+(defun vm-buffer-type:set (type)
+  "Note that vm is changing to a buffer of TYPE."
+  (when (and (eq type 'folder) vm-buffer-types 
+	     (eq (car vm-buffer-types) 'process))
+ 	;; This may or may not be a problem.
+ 	;; It just means that no save-excursion was done among the
+ 	;; functions currently tracked by vm-buffe-types.
+    (if vm-buffer-type-debug
+	(debug "folder buffer being entered from %s" (car vm-buffer-types))
+      (message "folder buffer being entered from %s" (car vm-buffer-types)))
+    (setq vm-buffer-type-trail (cons type vm-buffer-type-trail)))
+  (if vm-buffer-types
+      (rplaca vm-buffer-types type)
+    (setq vm-buffer-types (cons type vm-buffer-types))))
+
+(defsubst vm-buffer-type:assert (type)
+  "Check that vm is currently in a buffer of TYPE."
+  (vm-assert (eq (car vm-buffer-types) type)))
+
+(defsubst vm-buffer-type:wait-for-imap-session ()
+  "Wait until the IMAP session is free to use, based on the
+vm-buffer-types stack."
+  (while (and vm-buffer-types 
+	      (eq (car vm-buffer-types) 'process))
+    (sleep-for 1)))
+
 
 ;;; vm-macro.el ends here

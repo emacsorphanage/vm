@@ -32,12 +32,12 @@ check for a prefix argument and if buffer name contains `mail',
 and run orgstruct-send-as-html, or run the binding of
 `\C-c\C-c'."
   (interactive "p")
-  (message "calling html send mail")
+  (vm-inform 6 "calling html send mail")
   (save-excursion
     (if (org-context-p (quote headline) (quote item))
         (org-run-like-in-org-mode (quote org-ctrl-c-ctrl-c))
       (if (orgstruct-send-as-html-should-i-p arg)
-          (progn (message "sending as html mail") (orgstruct-send-as-html))
+          (progn (vm-inform 6 "sending as html mail") (orgstruct-send-as-html))
         (let (orgstruct-mode)
           (call-interactively
            (key-binding "\C-c\C-c")))))))

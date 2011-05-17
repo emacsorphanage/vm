@@ -54,7 +54,8 @@
 		(easy-menu-add-item vm-menu-fsfemacs-attachment-menu
 			 nil
 			 ["Attach to message..."
-			  (call-interactively 'vm-mime-attach-object-from-message)
+			  (vm-mime-run-display-function-at-point
+			   'vm-attach-object-to-composition)
 			  t ]
 			 "Set Content Disposition..." )
 		(easy-menu-add-item vm-menu-fsfemacs-attachment-menu
@@ -93,7 +94,7 @@
 	(set-process-sentinel
 	 (start-process "Fetchmail" "*Fetchmail*" vm-fetchmail-function)
 	 'vm-fetchmail-sentinel)
-	(message "Fetching new mail..."))
+	(vm-inform 5 "Fetching new mail..."))
    (t (error "Error: Fetchmail not found on system!"))))
 
 (defvar vm-fetchmail-function "/usr/bin/fetchmail"
@@ -102,7 +103,7 @@
 (defun vm-fetchmail-sentinel (process status)
   (beep t)
   (setq status (substring status -2 -1))
-  (message "Finished fetching... %s"
+  (vm-inform 5 "Finished fetching... %s"
    (if (string= status "d") "*New mail*"
 	 (setq status (string-to-number status))
 	 (cond

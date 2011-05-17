@@ -38,9 +38,14 @@
 
 (provide 'vm-pcrisis)
 
-(eval-when-compile
+(eval-and-compile
   (require 'vm-misc)
-  (require 'vm-reply)
+  (require 'vm-minibuf)
+  (require 'vm-folder)
+  (require 'vm-summary)
+  (require 'vm-motion)
+  (require 'vm-reply))
+(eval-when-compile
   ;; get the macros we need.
   (require 'cl)
   (require 'advice)
@@ -52,7 +57,13 @@
     (error
      (message "%S" e)
      (message "Could not load bbdb.el.  Related functions may not work correctly!")
-     (vm-sit-for 5))))
+     ;; (vm-sit-for 5)
+     )))
+
+(declare-function set-extent-face "vm-xemacs" (extent face))
+(declare-function timezone-absolute-from-gregorian "ext:timezone" 
+		  (month day year))
+(declare-function bbdb-buffer "ext:bbdb" ())
 
 ;; Dummy declarations for variables that are defined in bbdb
 
@@ -68,7 +79,7 @@
 
 (defgroup vmpc nil
   "Manage personalities and more in VM."
-  :group  'vm)
+  :group  'vm-ext)
 
 (defcustom vmpc-conditions ()
   "*List of conditions which will be checked by pcrisis."
@@ -258,8 +269,9 @@ It will ensure that pcrisis correctly handles the signature .")
 If point is not in a header field, returns nil."
   (save-excursion
     (unless (save-excursion
-	      (re-search-backward (regexp-quote mail-header-separator)
-				  (point-min) t))
+	      (re-search-backward 
+               (concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
+	       (point-min) t))
       (re-search-backward "^\\([^ \t\n:]+\\):")
       (match-string 1))))
 
@@ -393,7 +405,7 @@ start and end of the overlay/extent."
 (defun vmpc-set-exerlay-face (exerlay newface)
   "Set the face used by EXERLAY to NEWFACE."
   (if vm-xemacs-p
-      (vm-set-extent-face exerlay newface)
+      (set-extent-face exerlay newface)
     (overlay-put exerlay 'face newface)))
 
 
@@ -406,9 +418,7 @@ start and end of the overlay/extent."
 
 (defun vmpc-make-exerlay (startpos endpos)
   "Create a new exerlay spanning from STARTPOS to ENDPOS."
-  (if vm-xemacs-p
-      (vm-make-extent startpos endpos (current-buffer))
-    (make-overlay startpos endpos (current-buffer))))
+  (vm-make-extent startpos endpos))
 
 
 (defun vmpc-create-sig-and-pre-sig-exerlays ()
@@ -606,7 +616,8 @@ return the contents of all header fields which match that regexp,
 separated from each other by CLUMP-SEP."
   (if (and (eq vmpc-current-buffer 'none)
 	   (memq vmpc-current-state '(reply forward resend)))
-      (let ((mp (car (vm-select-marked-or-prefixed-messages 1)))
+      (let ((mp (car (vm-select-operable-messages
+		      1 (interactive-p) "Operate on")))
             content c)
         (if (not (listp hdrfield))
            (setq hdrfield (list hdrfield)))
@@ -629,7 +640,8 @@ separated from each other by CLUMP-SEP."
   (if (and (eq vmpc-current-buffer 'none)
 	   (memq vmpc-current-state '(reply forward resend)))
       (save-excursion
-	(let* ((mp (car (vm-select-marked-or-prefixed-messages 1)))
+	(let* ((mp (car (vm-select-operable-messages
+			 1 (interactive-p) "Operate on")))
 	       (message (vm-real-message-of mp))
 	       start end)
 	  (set-buffer (vm-buffer-of message))
@@ -1483,6 +1495,21 @@ recursion nor concurrent calls."
 
 (defadvice vm-forward-message (around vmpc-forward activate)
   "*Forward a message with pcrisis voodoo."
+  ;; this stuff is already done when replying, but not here:
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  ;;  the rest is almost exactly the same as replying:
+  (vmpc-init-vars 'forward)
+  (vmpc-build-true-conditions-list)
+  (vmpc-build-actions-to-run-list)
+  (vmpc-run-actions)
+  ad-do-it
+  (vmpc-create-sig-and-pre-sig-exerlays)
+  (vmpc-make-vars-local)
+  (vmpc-run-actions))
+
+(defadvice vm-forward-message-plain (around vmpc-forward activate)
+  "*Forward a message in plain text with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (interactive-p))

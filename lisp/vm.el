@@ -28,6 +28,8 @@
 
 (provide 'vm)
 
+(require 'vm-version)
+
 (defvar enable-multibyte-characters)
 
 ;; For function declarations
@@ -74,31 +76,35 @@
       (require 'vm-autoloads)))
 
 ;;;###autoload
-(defun vm (&optional folder read-only access-method reload)
+(defun* vm (&optional folder &key (read-only nil) (access-method nil)
+		      (reload nil) (revisit nil))
   "Read mail under Emacs.
 Optional first arg FOLDER specifies the folder to visit.  It can
 be the path name of a local folder or the maildrop specification
 of a POP or IMAP folder.  It defaults to the value of
-vm-primary-inbox.  The folder buffer is put into VM mode, a major
-mode for reading mail.
+`vm-primary-inbox'.  The folder is visited in a VM buffer is put
+into VM mode, a major mode for reading mail.  (See `vm-mode'.)
 
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute
 changes, message additions or deletions will be allowed in the
 visited folder.
 
-Visiting the primary inbox normally causes any contents of the system
-mailbox to be moved and appended to the resulting buffer.  You can
-disable this automatic fetching of mail by setting
-`vm-auto-get-new-mail' to nil. 
+Visiting a folder normally causes any contents of its spool files
+to be moved and appended to the folder buffer.  You can disable
+this automatic fetching of mail by setting `vm-auto-get-new-mail'
+to nil.
 
 All the messages can be read by repeatedly pressing SPC.  Use `n'ext and
 `p'revious to move about in the folder.  Messages are marked for
 deletion with `d', and saved to another folder with `s'.  Quitting VM
 with `q' saves the buffered folder to disk, but does not expunge
-deleted messages.  Use `###' to expunge deleted messages.
+deleted messages.  Use `###' to expunge deleted messages."
 
-See the documentation for vm-mode for more information."
+  ;; Additional documentation for internal calls to vm:
+
+  ;; *** Note that this function causes the folder buffer to become
+  ;; *** the current-buffer.
 
   ;; Internally, this function may also be called with a buffer as the
   ;; FOLDER argument.  In that case, the function sets up the buffer
@@ -114,14 +120,19 @@ See the documentation for vm-mode for more information."
   ;; an existing buffer.  All initialisations must be performed but
   ;; some variables need to be preserved, e.g., vm-folder-access-data.
 
+  ;; REVISIT, if non-nil, means that, if the folder has already been
+  ;; visited, then it should be just selected.  No further processing
+  ;; should be done.
+
   ;; The functions find-name-for-spec and find-spec-for-name translate
   ;; between folder names and maildrop specs for the server folders.
 
-  (interactive (list nil current-prefix-arg))
+  (interactive (list nil :read-only current-prefix-arg))
   (vm-session-initialization)
   ;; recursive call to vm in order to allow defadvice on its first call
   (unless (boundp 'vm-session-beginning)
-    (vm folder read-only access-method reload))
+    (vm folder :read-only read-only :access-method access-method
+	:reload reload :revisit revisit))
   ;; set inhibit-local-variables non-nil to protect
   ;; against letter bombs.
   ;; set enable-local-variables to nil for newer Emacses
@@ -142,7 +153,9 @@ See the documentation for vm-mode for more information."
 		 (setq access-method 'pop
 		       folder f)))))
     (let ((full-startup (and (not reload) (not (bufferp folder))))
-	  ;; not clear why full-startup isn't always true - USR, 2010-01-02
+	  ;; if we have been asked to visit a folder that is already
+	  ;; visited, then we don't do a full-startup unless we are
+	  ;; reloading.  but what exactly do we do? - USR, 2011-04-24
 	  (did-read-index-file nil)
 	  folder-buffer first-time totals-blurb
 	  folder-name account-name remote-spec
@@ -167,7 +180,7 @@ See the documentation for vm-mode for more information."
       (setq folder-buffer
 	    (if (bufferp folder)
 		folder
-	      (vm-read-folder folder remote-spec)))
+	      (vm-read-folder folder remote-spec folder-name)))
       (set-buffer folder-buffer)
       ;; Thunderbird folders
       (let ((msf (concat (buffer-file-name) ".msf")))
@@ -175,9 +188,6 @@ See the documentation for vm-mode for more information."
         (setq vm-folder-read-thunderbird-status 
 	      (and (file-exists-p msf)
 		   vm-sync-thunderbird-status)))
-      (when (and (stringp folder) (memq access-method '(pop imap)))
-	     (if (not (equal folder-name (buffer-name)))
-		 (rename-buffer folder-name t)))
       (if (and vm-fsfemacs-mule-p enable-multibyte-characters)
 	  (set-buffer-multibyte nil))	; is this safe?
       ;; for MULE
@@ -235,7 +245,8 @@ See the documentation for vm-mode for more information."
       (vm-check-for-killed-presentation)
       ;; If the buffer's not modified then we know that there can be no
       ;; messages in the folder that are not on disk.
-      (or (buffer-modified-p) (setq vm-messages-not-on-disk 0))
+      (unless (buffer-modified-p) 
+	(setq vm-messages-not-on-disk 0))
       (setq first-time (not (eq major-mode 'vm-mode))
 	    preserve-auto-save-file (and buffer-file-name
 					  (not (buffer-modified-p))
@@ -275,7 +286,10 @@ See the documentation for vm-mode for more information."
 
       ;; builds message list, reads attributes if they weren't
       ;; read from an index file.
-      (vm-assimilate-new-messages nil (not did-read-index-file) nil t)
+      ;; but that is not what the code is doing! - USR, 2011-04-24
+      (vm-assimilate-new-messages :dont-read-attributes nil 
+				  :gobble-order (not did-read-index-file) 
+				  :first-time t)
 
       (if (and first-time (not did-read-index-file))
 	  (progn
@@ -318,14 +332,17 @@ See the documentation for vm-mode for more information."
 	    (if vm-raise-frame-at-startup
 		(vm-raise-frame))))
 
+      ;; if the folder is being revisited, nothing more to be done
+      (if (and revisit (not first-time))
+	  (throw 'done t))
+
       ;; say this NOW, before the non-previewers read a message,
       ;; alter the new message count and confuse themselves.
-      (if full-startup
-	  (progn
-	    ;; save blurb so we can repeat it later as necessary.
-	    (setq totals-blurb (vm-emit-totals-blurb))
-	    (and buffer-file-name
-		 (vm-store-folder-totals buffer-file-name (cdr vm-totals)))))
+      (when full-startup
+	;; save blurb so we can repeat it later as necessary.
+	(setq totals-blurb (vm-emit-totals-blurb))
+	(if buffer-file-name
+	    (vm-store-folder-totals buffer-file-name (cdr vm-totals))))
 
       (vm-thoughtfully-select-message)
       (vm-update-summary-and-mode-line)
@@ -333,34 +350,33 @@ See the documentation for vm-mode for more information."
       ;; toolbar sets frame-specific height and width specifiers.
       (vm-toolbar-install-or-uninstall-toolbar)
 
-      (and vm-use-menus (vm-menu-support-possible-p)
-	   (vm-menu-install-visited-folders-menu))
+      (when (and vm-use-menus (vm-menu-support-possible-p))
+	(vm-menu-install-visited-folders-menu))
 
-      (if full-startup
-	  (progn
-	    (if (and (vm-should-generate-summary)
-		     ;; don't generate a summary if recover-file is
-		     ;; likely to happen, since recover-file does
-		     ;; not work in a summary buffer.
-		     (not preserve-auto-save-file))
-		(vm-summarize t nil))
-	    ;; raise the summary frame if the user wants frames
-	    ;; raised and if there is a summary frame.
-	    (if (and vm-summary-buffer
-		     vm-mutable-frames
-		     vm-frame-per-summary
-		     vm-raise-frame-at-startup)
-		(vm-raise-frame))
-	    ;; if vm-mutable-windows is nil, the startup
-	    ;; configuration can't be applied, so do
-	    ;; something to get a VM buffer on the screen
-	    (if vm-mutable-windows
-		(vm-display nil nil (list this-command)
-			    (list (or this-command 'vm) 'startup))
-	      (save-excursion
-		(switch-to-buffer (or vm-summary-buffer
-				      vm-presentation-buffer
-				      (current-buffer)))))))
+      (when full-startup
+	(if (and (vm-should-generate-summary)
+		 ;; don't generate a summary if recover-file is
+		 ;; likely to happen, since recover-file does
+		 ;; not work in a summary buffer.
+		 (not preserve-auto-save-file))
+	    (vm-summarize t nil))
+	;; raise the summary frame if the user wants frames
+	;; raised and if there is a summary frame.
+	(if (and vm-summary-buffer
+		 vm-mutable-frames
+		 vm-frame-per-summary
+		 vm-raise-frame-at-startup)
+	    (vm-raise-frame))
+	;; if vm-mutable-windows is nil, the startup
+	;; configuration can't be applied, so do
+	;; something to get a VM buffer on the screen
+	(if vm-mutable-windows
+	    (vm-display nil nil (list this-command)
+			(list (or this-command 'vm) 'startup))
+	  (save-excursion
+	    (switch-to-buffer (or vm-summary-buffer
+				  vm-presentation-buffer
+				  (current-buffer))))))
 
       (if vm-message-list
 	  ;; don't decode MIME if recover-file is
@@ -369,13 +385,13 @@ See the documentation for vm-mode for more information."
 	  (let ((vm-auto-decode-mime-messages
 		 (and vm-auto-decode-mime-messages
 		      (not preserve-auto-save-file))))
-	    (vm-preview-current-message)))
+	    (vm-present-current-message)))
 
       (run-hooks 'vm-visit-folder-hook)
 
       ;; Warn user about auto save file, if appropriate.
       (if preserve-auto-save-file
-	  (message
+	  (vm-inform 0
 	   (substitute-command-keys
 	    (concat
 	     "Auto save file is newer; consider \\[vm-recover-folder].  "
@@ -386,28 +402,28 @@ See the documentation for vm-mode for more information."
       (if (or (not full-startup) preserve-auto-save-file)
 	  (throw 'done t))
       
-      (message totals-blurb)
+      (if (interactive-p)
+	  (vm-inform 5 totals-blurb))
 
       (if (and vm-auto-get-new-mail
 	       (not vm-block-new-mail)
 	       (not vm-folder-read-only))
 	  (progn
-	    (message "Checking for new mail for %s..."
+	    (vm-inform 6 "Checking for new mail for %s..."
 		     (or buffer-file-name (buffer-name)))
-	    (if (vm-get-spooled-mail t)
+	    (if (vm-get-spooled-mail nil) ; automatic is non-interactive!
 		(progn
 		  (setq totals-blurb (vm-emit-totals-blurb))
 		  (if (vm-thoughtfully-select-message)
-		      (vm-preview-current-message)
+		      (vm-present-current-message)
 		    (vm-update-summary-and-mode-line))))
-	    (message totals-blurb)))
+	    (vm-inform 5 totals-blurb)))
 
       ;; Display copyright and copying info.
-      (if (and (interactive-p) (not vm-startup-message-displayed))
-	  (progn
-	    (vm-display-startup-message)
-	    (if (not (input-pending-p))
-		(message totals-blurb)))))))
+      (when (and (interactive-p) (not vm-startup-message-displayed))
+	(vm-display-startup-message)
+	(if (not (input-pending-p))
+	    (vm-inform 5 totals-blurb))))))
 
 ;;;###autoload
 (defun vm-other-frame (&optional folder read-only)
@@ -420,7 +436,7 @@ See the documentation for vm-mode for more information."
 	(vm-goto-new-frame 'primary-folder 'folder)))
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm folder read-only))
+    (vm folder :read-only read-only))
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
@@ -434,7 +450,7 @@ See the documentation for vm-mode for more information."
   (other-window 1)
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm folder read-only)))
+    (vm folder :read-only read-only)))
 
 (put 'vm-mode 'mode-class 'special)
 
@@ -451,11 +467,11 @@ Commands:
 
 Customize VM by setting variables and store them in the `vm-init-file'."
   (interactive "P")
-  (vm (current-buffer) read-only)
+  (vm (current-buffer) :read-only read-only)
   (vm-display nil nil '(vm-mode) '(vm-mode)))
 
 ;;;###autoload
-(defun vm-visit-folder (folder &optional read-only)
+(defun vm-visit-folder (folder &optional read-only revisit)
   "Visit a mail file.
 VM will parse and present its messages to you in the usual way.
 
@@ -466,9 +482,14 @@ minibuffer.
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute
 changes, messages additions or deletions will be allowed in the
-visited folder."
+visited folder.
+
+The optional third arg REVISIT (not available interactively) says
+that, if the folder is already visited, then it should be merely
+selected without doing further processing (such as moving the
+message-pointer or getting new mail)."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -510,13 +531,14 @@ visited folder."
 		   (or vm-folder-directory default-directory)))
 	     (setq folder (expand-file-name folder)
 		   vm-last-visit-folder folder))))
-    (vm folder read-only access-method)))
+    (vm folder 
+	:read-only read-only :access-method access-method :revisit revisit)))
 
 ;;;###autoload
 (defun vm-visit-folder-other-frame (folder &optional read-only)
   "Like vm-visit-folder, but run in a newly created frame."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -547,7 +569,7 @@ visited folder."
 (defun vm-visit-folder-other-window (folder &optional read-only)
   "Like vm-visit-folder, but run in a different window."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -574,6 +596,57 @@ visited folder."
     (vm-visit-folder folder read-only)))
 
 ;;;###autoload
+(defun vm-visit-thunderbird-folder (folder &optional read-only)
+  "Visit a mail file maintained by Thunderbird.
+VM will parse and present its messages to you in the usual way.
+
+First arg FOLDER specifies the mail file to visit.  When this
+command is called interactively the file name is read from the
+minibuffer.
+
+Prefix arg or optional second arg READ-ONLY non-nil indicates
+that the folder should be considered read only.  No attribute
+changes, messages additions or deletions will be allowed in the
+visited folder.
+
+This function differs from `vm-visit-folder' in that it remembers that
+the folder is a foreign folder maintained by Thunderbird.  Saving
+of messages is carried out preferentially to other Thunderbird folders."
+  (interactive
+   (save-current-buffer
+     (vm-session-initialization)
+     (vm-check-for-killed-folder)
+     (vm-select-folder-buffer-if-possible)
+     (let ((default-directory 
+	     (if vm-thunderbird-folder-directory
+		 (expand-file-name vm-thunderbird-folder-directory)
+	       default-directory))
+	   (default (or vm-last-visit-folder vm-last-save-folder))
+	   (this-command this-command)
+	   (last-command last-command))
+       (list (vm-read-file-name
+	      (format "Visit%s folder:%s "
+		      (if current-prefix-arg " read only" "")
+		      (if default
+			  (format " (default %s)" default)
+			""))
+	      default-directory default nil nil 'vm-folder-history)
+	     current-prefix-arg))))
+  (vm-session-initialization)
+  (vm-check-for-killed-folder)
+  (vm-select-folder-buffer-if-possible)
+  (vm-check-for-killed-summary)
+  (setq vm-last-visit-folder folder)
+  (let ((default-directory 
+	  (or vm-thunderbird-folder-directory default-directory)))
+    (setq folder (expand-file-name folder)
+	  vm-last-visit-folder folder))
+  (vm folder :read-only read-only)
+  (set (make-local-variable 'vm-foreign-folder-directory)
+       vm-thunderbird-folder-directory)
+  )
+
+;;;###autoload
 (defun vm-visit-pop-folder (folder &optional read-only)
   "Visit a POP mailbox.
 VM will present its messages to you in the usual way.  Messages
@@ -591,7 +664,7 @@ that the folder should be considered read only.  No attribute
 changes, messages additions or deletions will be allowed in the
 visited folder."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -620,13 +693,13 @@ visited folder."
     (setq remote-spec (vm-pop-find-spec-for-name folder))
     (if (null remote-spec)
 	(error "No such POP folder: %s" folder))
-    (vm remote-spec read-only 'pop)))
+    (vm remote-spec :read-only read-only :access-method 'pop)))
 
 ;;;###autoload
 (defun vm-visit-pop-folder-other-frame (folder &optional read-only)
   "Like vm-visit-pop-folder, but run in a newly created frame."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -657,7 +730,7 @@ visited folder."
 (defun vm-visit-pop-folder-other-window (folder &optional read-only)
   "Like vm-visit-pop-folder, but run in a different window."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -703,7 +776,7 @@ that the folder should be considered read only.  No attribute
 changes, messages additions or deletions will be allowed in the
 visited folder."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -724,13 +797,13 @@ visited folder."
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer-if-possible)
   (setq vm-last-visit-imap-folder folder)
-  (vm folder read-only 'imap))
+  (vm folder :read-only read-only :access-method 'imap))
 
 ;;;###autoload
 (defun vm-visit-imap-folder-other-frame (folder &optional read-only)
   "Like vm-visit-imap-folder, but run in a newly created frame."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -755,7 +828,7 @@ visited folder."
 (defun vm-visit-imap-folder-other-window (folder &optional read-only)
   "Like vm-visit-imap-folder, but run in a different window."
   (interactive
-   (save-excursion
+   (save-current-buffer
      (vm-session-initialization)
      (vm-check-for-killed-folder)
      (vm-select-folder-buffer-if-possible)
@@ -774,6 +847,70 @@ visited folder."
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
     (vm-visit-imap-folder folder read-only)))
+
+
+;;;###autoload
+(defun vm-folder-buffers (&optional non-virtual)
+  "Return the list of buffer names that are currently visiting VM
+folders.  The optional argument NON-VIRTUAL says that only 
+non-virtual folders should be returned."
+  (save-excursion
+    (let ((buffers (buffer-list))
+          (modes (if non-virtual '(vm-mode) '(vm-mode vm-virtual-mode)))
+          folders)
+      (while buffers
+        (set-buffer (car buffers))
+        (if (member major-mode modes)
+            (setq folders (cons (buffer-name) folders)))
+        (setq buffers (cdr buffers)))
+      folders)))
+(defalias 'vm-folder-list 'vm-folder-buffers)
+
+;; The following function is from vm-rfaddons.el.       USR, 2011-02-28
+;;;###autoload
+(defun vm-switch-to-folder (folder-name)
+  "Switch to another opened VM folder and rearrange windows as with a scroll."
+  (interactive (list
+                (let* ((buffers (vm-folder-buffers))
+		       (history vm-switch-to-folder-history) 
+		       pos default)
+                  (if (member major-mode
+                              '(vm-mode vm-presentation-mode
+                                        vm-summary-mode))
+                      (save-excursion
+                        (vm-select-folder-buffer)
+                        (setq buffers (delete (buffer-name) buffers))))
+		  (setq pos (vm-find history
+				     (lambda (f) (member f buffers))))
+		  (if pos (setq default (nth pos history)))
+                  (completing-read
+                   (format "Foldername%s: " 
+			   (if default (format " (%s)" default) ""))
+                   (mapcar (lambda (b) (list b)) (vm-folder-buffers))
+                   nil t nil
+                   'vm-switch-to-folder-history
+                   default))))
+
+  (switch-to-buffer folder-name)
+  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-summarize)
+  (let ((this-command 'vm-scroll-backward))
+    (vm-display nil nil '(vm-scroll-forward vm-scroll-backward)
+                (list this-command 'reading-message))
+    (vm-update-summary-and-mode-line)))
+
+;;;###autoload
+(defun vm-get-folder-buffer (folder)
+  "Returns the buffer visiting FOLDER if it exists, nil otherwise."
+  (let ((buffers (vm-folder-buffers))
+	pos)
+    (setq pos 
+	  (vm-find buffers
+		   (lambda (b) 
+		     (with-current-buffer b
+		       (equal folder (vm-folder-name))))))
+    (and pos (get-buffer (nth pos buffers)))))
+
 
 (put 'vm-virtual-mode 'mode-class 'special)
 
@@ -803,66 +940,65 @@ vm-visit-virtual-folder.")
       current-prefix-arg)))
   (vm-session-initialization)
   (require 'vm-virtual)
-  (if (not (assoc folder-name vm-virtual-folder-alist))
-      (error "No such virtual folder, %s" folder-name))
+  (unless (assoc folder-name vm-virtual-folder-alist)
+    (error "No such virtual folder, %s" folder-name))
   (let ((buffer-name (concat "(" folder-name ")"))
 	first-time blurb)
     (set-buffer (get-buffer-create buffer-name))
     (setq first-time (not (eq major-mode 'vm-virtual-mode)))
-    (if first-time
-	(progn
-	  (if (fboundp 'buffer-disable-undo)
-	      (buffer-disable-undo (current-buffer))
-	    ;; obfuscation to make the v19 compiler not whine
-	    ;; about obsolete functions.
-	    (let ((x 'buffer-flush-undo))
-	      (funcall x (current-buffer))))
-	  (abbrev-mode 0)
-	  (auto-fill-mode 0)
-	  (vm-fsfemacs-nonmule-display-8bit-chars)
-	  (setq mode-name "VM Virtual"
-		mode-line-format vm-mode-line-format
-		buffer-read-only t
-		vm-folder-read-only read-only
-		vm-label-obarray (make-vector 29 0)
-		vm-virtual-folder-definition
-		  (assoc folder-name vm-virtual-folder-alist))
-	  ;; scroll in place messes with scroll-up and this loses
-	  (make-local-variable 'scroll-in-place)
-	  (setq scroll-in-place nil)
-	  (vm-build-virtual-message-list nil)
-	  (use-local-map vm-mode-map)
-	  (and (vm-menu-support-possible-p)
-	       (vm-menu-install-menus))
-	  (add-hook 'kill-buffer-hook 'vm-garbage-collect-folder)
-	  (add-hook 'kill-buffer-hook 'vm-garbage-collect-message)
-	  ;; save this for last in case the user interrupts.
-	  ;; an interrupt anywhere before this point will cause
-	  ;; everything to be redone next revisit.
-	  (setq major-mode 'vm-virtual-mode)
-	  (run-hooks 'vm-virtual-mode-hook)
-	  ;; must come after the setting of major-mode
-	  (setq mode-popup-menu (and vm-use-menus
-				     (vm-menu-support-possible-p)
-				     (vm-menu-mode-menu)))
-	  (setq blurb (vm-emit-totals-blurb))
-	  (if vm-summary-show-threads
-	      (vm-sort-messages "activity"))
-	  (if bookmark
-	      (let ((mp vm-message-list))
-		(while mp
-		  (if (eq bookmark (vm-real-message-of (car mp)))
-		      (progn
-			(vm-record-and-change-message-pointer
-			 vm-message-pointer mp)
-			(vm-preview-current-message)
-			(setq mp nil))
-		    (setq mp (cdr mp))))))
-	  (if (null vm-message-pointer)
-	      (if (vm-thoughtfully-select-message)
-		  (vm-preview-current-message)
-		(vm-update-summary-and-mode-line)))
-	  (message blurb)))
+    (when first-time
+      (if (fboundp 'buffer-disable-undo)
+	  (buffer-disable-undo (current-buffer))
+	;; obfuscation to make the v19 compiler not whine
+	;; about obsolete functions.
+	(let ((x 'buffer-flush-undo))
+	  (funcall x (current-buffer))))
+      (abbrev-mode 0)
+      (auto-fill-mode 0)
+      (vm-fsfemacs-nonmule-display-8bit-chars)
+      (setq mode-name "VM Virtual"
+	    mode-line-format vm-mode-line-format
+	    buffer-read-only t
+	    vm-folder-read-only read-only
+	    vm-label-obarray (make-vector 29 0)
+	    vm-virtual-folder-definition
+	    (assoc folder-name vm-virtual-folder-alist))
+      ;; scroll in place messes with scroll-up and this loses
+      (make-local-variable 'scroll-in-place)
+      (setq scroll-in-place nil)
+      (vm-build-virtual-message-list nil)
+      (use-local-map vm-mode-map)
+      (when (vm-menu-support-possible-p)
+	(vm-menu-install-menus))
+      (add-hook 'kill-buffer-hook 'vm-garbage-collect-folder)
+      (add-hook 'kill-buffer-hook 'vm-garbage-collect-message)
+      ;; save this for last in case the user interrupts.
+      ;; an interrupt anywhere before this point will cause
+      ;; everything to be redone next revisit.
+      (setq major-mode 'vm-virtual-mode)
+      (run-hooks 'vm-virtual-mode-hook)
+      ;; must come after the setting of major-mode
+      (setq mode-popup-menu (and vm-use-menus
+				 (vm-menu-support-possible-p)
+				 (vm-menu-mode-menu)))
+      (setq blurb (vm-emit-totals-blurb))
+      (when vm-summary-show-threads
+	(vm-sort-messages "activity"))
+      (if bookmark
+	  (let ((mp vm-message-list))
+	    (while mp
+	      (if (eq bookmark (vm-real-message-of (car mp)))
+		  (progn
+		    (vm-record-and-change-message-pointer
+		     vm-message-pointer mp)
+		    (vm-present-current-message)
+		    (setq mp nil))
+		(setq mp (cdr mp))))))
+      (unless vm-message-pointer
+	(if (vm-thoughtfully-select-message)
+	    (vm-present-current-message)
+	  (vm-update-summary-and-mode-line)))
+      (vm-inform 5 blurb))
     ;; make a new frame if the user wants one.  reuse an
     ;; existing frame that is showing this folder.
     (vm-goto-new-folder-frame-maybe 'folder)
@@ -870,35 +1006,34 @@ vm-visit-virtual-folder.")
 	(vm-raise-frame))
     (vm-display nil nil (list this-command) (list this-command 'startup))
     (vm-toolbar-install-or-uninstall-toolbar)
-    (if first-time
-	(progn
-	  (if (vm-should-generate-summary)
-	      (progn (vm-summarize t nil)
-		     (message blurb)))
-	  ;; raise the summary frame if the user wants frames
-	  ;; raised and if there is a summary frame.
-	  (if (and vm-summary-buffer
-		   vm-mutable-frames
-		   vm-frame-per-summary
-		   vm-raise-frame-at-startup)
-	      (vm-raise-frame))
-	  ;; if vm-mutable-windows is nil, the startup
-	  ;; configuration can't be applied, so do
-	  ;; something to get a VM buffer on the screen
-	  (if vm-mutable-windows
-	      (vm-display nil nil (list this-command)
-			  (list (or this-command 'vm) 'startup))
-	    (save-excursion
-	      (switch-to-buffer (or vm-summary-buffer
-				    vm-presentation-buffer
-				    (current-buffer)))))))
+    (when first-time
+      (when (vm-should-generate-summary)
+	(vm-summarize t nil)
+	(vm-inform 5 blurb))
+      ;; raise the summary frame if the user wants frames
+      ;; raised and if there is a summary frame.
+      (when (and vm-summary-buffer
+		 vm-mutable-frames
+		 vm-frame-per-summary
+		 vm-raise-frame-at-startup)
+	(vm-raise-frame))
+      ;; if vm-mutable-windows is nil, the startup
+      ;; configuration can't be applied, so do
+      ;; something to get a VM buffer on the screen
+      (if vm-mutable-windows
+	  (vm-display nil nil (list this-command)
+		      (list (or this-command 'vm) 'startup))
+	(save-excursion
+	  (switch-to-buffer (or vm-summary-buffer
+				vm-presentation-buffer
+				(current-buffer))))))
 
     ;; check interactive-p so as not to bog the user down if they
     ;; run this function from within another function.
-    (and (interactive-p)
-	 (not vm-startup-message-displayed)
-	 (vm-display-startup-message)
-	 (message blurb))))
+    (when (and (interactive-p)
+	       (not vm-startup-message-displayed))
+      (vm-display-startup-message)
+      (vm-inform 5 blurb))))
 
 ;;;###autoload
 (defun vm-visit-virtual-folder-other-frame (folder-name &optional read-only)
@@ -1059,12 +1194,14 @@ summary buffer to select a folder."
 		(list this-command)))
   (vm-update-summary-and-mode-line))
 
+(defvar mail-reply-action)
 (defvar mail-send-actions)
+(defvar mail-return-action)
 
 ;;;###autoload
 (defun vm-compose-mail (&optional to subject other-headers continue
 		        switch-function yank-action
-			send-actions)
+			send-actions return-action &rest ignored)
   (interactive)
   (vm-session-initialization)
   (if continue
@@ -1106,7 +1243,9 @@ summary buffer to select a folder."
 		  (mail-yank-hooks (run-hooks 'mail-yank-hooks))
 		  (t (vm-mail-yank-default)))))
       (make-local-variable 'mail-send-actions)
-      (setq mail-send-actions send-actions))))
+      (setq mail-send-actions send-actions)
+      (make-local-variable 'mail-return-action)
+      (setq mail-return-action return-action))))
 
 ;;;###autoload
 (defun vm-submit-bug-report (&optional pre-hooks post-hooks)
@@ -1125,10 +1264,13 @@ summary buffer to select a folder."
           varlist (sort varlist
                         (lambda (v1 v2)
                           (string-lessp (format "%s" v1) (format "%s" v2)))))
+    (when (and (eq vm-mime-text/html-handler 'emacs-w3m)
+	       (boundp 'emacs-w3m-version))
+      (nconc varlist (list 'emacs-w3m-version 'w3m-version 
+			   'w3m-goto-article-function)))
     (let ((fill-column (1- (window-width)))	; turn off auto-fill
 	  (vars-to-delete 
-	   '(vm-shrunken-headers-keymap	; big and wasteful
-	     vm-auto-folder-alist	; a bit private
+	   '(vm-auto-folder-alist	; a bit private
 	     vm-mail-folder-alist	; ditto
 	     ;; vm-mail-fcc-default - is this private?
 	     vmpc-actions vmpc-conditions 
@@ -1251,8 +1393,8 @@ attributes, adding/deleting labels etc."
   (interactive)
   (setq vm-enable-thread-operations (not vm-enable-thread-operations))
   (if vm-enable-thread-operations
-      (message "Thread operations enabled")
-    (message "Thread operations disabled")))
+      (vm-inform 5 "Thread operations enabled")
+    (vm-inform 5 "Thread operations disabled")))
 
 (defvar vm-postponed-folder)
 
@@ -1263,6 +1405,7 @@ attributes, adding/deleting labels etc."
 
 (defvar vm-postponed-folder)
 
+;;;###autoload
 (defun vm-update-draft-count ()
   "Check number of postponed messages in folder `vm-postponed-folder'."
   (let ((f (expand-file-name vm-postponed-folder vm-folder-directory)))
@@ -1274,6 +1417,7 @@ attributes, adding/deleting labels etc."
           (setq vm-ml-draft-count (format "%d postponed"
                                           (vm-count-messages-in-file f))))))))
 
+;;;###autoload
 (defun vm-session-initialization ()
   "If this is the first time VM has been run in this Emacs session,
 do some necessary preparations.  Otherwise, update the count of
@@ -1283,8 +1427,8 @@ draft messages."
 	  vm-session-beginning)
       (progn
         (vm-check-emacs-version)
-        (require 'vm-vars)
         (require 'vm-macro)
+        (require 'vm-vars)
         (require 'vm-misc)
         (require 'vm-message)
         (require 'vm-minibuf)
@@ -1337,29 +1481,6 @@ draft messages."
 				      (concat "UU\377\377UU\377\377UU\377\377"
 					      "UU\377\377UU\377\377UU\377\377"
 					      "UU\377\377UU\377\377")))))
-	;; default value of vm-mime-button-face is 'gui-button-face
-	;; this face doesn't exist by default in FSF Emacs 19.34.
-	;; Create it and initialize it to something reasonable.
-	(when (and vm-fsfemacs-p (featurep 'faces)
-		   (not (facep 'gui-button-face)))
-	  (make-face 'gui-button-face)
-	  (cond ((eq window-system 'x)
-		 (vm-fsfemacs-set-face-foreground 'gui-button-face "black")
-		 (vm-fsfemacs-set-face-background 'gui-button-face "gray75"))
-		(t
-		 ;; use primary color names, since fancier
-		 ;; names may not be valid.
-		 (vm-fsfemacs-set-face-foreground 'gui-button-face "white")
-		 (vm-fsfemacs-set-face-background 'gui-button-face "red"))))
-	;; gui-button-face might not exist under XEmacs either.
-	;; This can happen if XEmacs is built without window
-	;; system support.  In any case, create it anyway.
-	(when (and vm-xemacs-p (not (find-face 'gui-button-face)))
-	  (make-face 'gui-button-face)
-	  (vm-xemacs-set-face-foreground 'gui-button-face "black" nil '(win))
-	  (vm-xemacs-set-face-background 'gui-button-face "gray75" nil '(win))
-	  (vm-xemacs-set-face-foreground 'gui-button-face "white" nil '(tty))
-	  (vm-xemacs-set-face-background 'gui-button-face "red" nil '(tty)))
 	(and (vm-mouse-support-possible-p)
 	     (vm-mouse-install-mouse))
 	(and (vm-menu-support-possible-p)
@@ -1393,7 +1514,5 @@ draft messages."
 (autoload 'tapestry-replace-tapestry-element "tapestry")
 (autoload 'tapestry-nullify-tapestry-elements "tapestry")
 (autoload 'tapestry-remove-frame-parameters "tapestry")
-(autoload 'vm-easy-menu-define "vm-easymenu" nil 'macro)
-(autoload 'vm-easy-menu-do-define "vm-easymenu")
 
 ;;; vm.el ends here

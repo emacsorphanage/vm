@@ -72,24 +72,39 @@
 
 (provide 'vm-serial)
  
-(defgroup vm nil
-  "VM"
-  :group 'mail)
+(require 'vm-reply)
 
 (defgroup vm-serial nil
   "Sending personalized serial mails and getting message templates."
-  :group  'vm)
+  :group  'vm-ext)
 
 (eval-when-compile
   (require 'cl))
 
-(require 'vm-reply)
+(eval-when-compile
+  (require 'vm-misc)
+  (require 'vm-mime))
 
 (eval-and-compile
   (require 'vm-pine)
   (require 'mail-utils)
   (require 'mail-extr)
   (require 'advice))
+
+(declare-function bbdb-extract-address-components 
+		  "ext:bbdb-snarf" (adstring &optional ignore-errors))
+(declare-function bbdb-record-firstname "ext:bbdb" (record))
+(declare-function bbdb-record-lastname "ext:bbdb" (record))
+(declare-function bbdb-search-simple "ext:bbdb" (name net))
+(declare-function bbdb-split "ext:bbdb" (string separators))
+(declare-function bbdb/sc-consult-attr "ext:bbdb-sc" (from))
+
+;; vm-xemacs is a fake file meant to fool Emacs 23 compiler
+(declare-function region-exists-p "vm-xemacs" ())
+(declare-function zmacs-region-buffer "vm-xemacs" ())
+;; The following function is erroneously called in fsfemacs too
+;; (declare-function read-expression "vm-xemacs" 
+;; 		  (prompt &optional initial-contents history default))
 
 (let ((feature-list '(bbdb bbdb-sc)))
   (while feature-list
@@ -211,7 +226,7 @@ randomly select one of them during expansion."
   :group 'vm-serial
   :type '(repeat (list (string :tag "Tagname")
                        (choice (repeat :tag "List of strings" (string))
-                               (sexp :tag "SExp evaluating to a string"))
+                               (sexp :tag "Sexp evaluating to a string"))
                        (string :tag "Documentation"))))
 
 (defcustom vm-serial-mails-alist
