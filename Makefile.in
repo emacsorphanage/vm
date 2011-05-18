@@ -10,6 +10,7 @@ XARGS = @XARGS@
 prefix = @prefix@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
 
 srcdir = @srcdir@
 datadir= @datadir@
