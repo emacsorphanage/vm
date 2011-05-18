@@ -38,6 +38,18 @@ VM 8.2.0a (2011-02-28)
      However, `vm-edit-message' is available via a new key binding `C-c
      C-e'. 
 
+   * The default value of `vm-url-browser-function' (invoked by mouse-2) is
+     changed to 'browse-url, which is an Emacs standard web-browsing
+     function.  To invoke your favourite browser, customize
+     `browse-url-browser-function'.  Cf. Emacs manual.
+
+   * The mouse-3 context menu for URL's in messages updated to eliminate
+     obsolete web browsers.  Entries added for Firefox, Mozilla and Opera.
+
+   * The function `vm-mouse-send-url-to-konqueror-new-browser' renamed
+     to `vm-mouse-send-url-to-konqueror-new-window', to be consistent
+     with other similar functions.
+
    * The default settings of `vm-mime-deleteable-types' and
      `vm-mime-saveable-types' do not include the types listed in
      `vm-mime-external-content-types-alist'.  You might need to add them
@@ -251,6 +263,7 @@ VM 8.1.93a (2010-08-28)
 
    * Fixed various issues flagged by the Emacs 23 compiler warnings.
 
+VM 8.1.925a (2010-07-17)
 VM 8.1.92a (2010-07-10)
 
   IMPROVEMENTS
@@ -341,14 +354,6 @@ VM 8.1.90a  (2010-05-11)
    * New variable `vm-do-fcc-before-mime-encode' (formerly in
      vm-rfaddons) allows you to save fcc copies of messages before
      mime-encoding them.
-
-   * The right-mouse-button context menu for URL's in messages updated
-     to eliminate obsolete web browsers.  Entries added for Firefox,
-     Mozilla and Opera.
-
-   * The function `vm-mouse-send-url-to-konqueror-new-browser' renamed
-     to `vm-mouse-send-url-to-konqueror-new-window', to be consistent
-     with other similar functions.
 
   ** New variables `vm-expunge-before-quit' and `vm-expunge-before-save'
      introduced to allow automatic expunge.  They are nil by default.  

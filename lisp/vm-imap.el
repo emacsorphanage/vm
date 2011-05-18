@@ -3954,7 +3954,7 @@ See Info node `(elisp)Programmed Completion'."
 	   (mapcar 'car
 		   (vm-delete (lambda (c)
 				(string-prefix-p folder (car c)))
-			      completion-list t))
+			      (or completion-list account-list) t))
 	   )
 	  ((eq 'lambda flag)
 	   (try-completion folder completion-list predicate)))))
