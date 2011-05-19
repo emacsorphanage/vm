@@ -680,6 +680,8 @@ with other ancestors."
   "Fill in the thread-list fields of the Soft data vector for all
 messages in the folder.  Threads should have been built before this
 function is called."
+  ;; (if vm-thread-debug
+  ;;     (vm-check-thread-integrity vm-message-list))
   (dolist (m vm-message-list)
     (vm-thread-list m))
   (if vm-thread-debug
@@ -705,6 +707,8 @@ thread-subtrees.                                USR, 2011-04-03"
 (defun vm-build-thread-list (message)
   "Returns the thread-list, i.e., the lineage of MESSAGE, as a list of
 symbols interned in vm-thread-obarray."
+  (if (null message)
+      (vm-thread-debug 'vm-build-thread-list-null)
   (let ((done nil)
 	(loop-recovery-point nil)
 	(date (vm-so-sortable-datestring message))
@@ -783,7 +787,7 @@ symbols interned in vm-thread-obarray."
 		 (set loop-sym t)
 		 (setq thread-list (cons id-sym thread-list)
 		       m (vm-th-message-of id-sym))))))
-      thread-list )))
+      thread-list ))))
 
 ;; remove message struct from thread data.
 ;;
@@ -875,10 +879,15 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 	      (while p
 		(when (and (string-lessp 
 			    (vm-so-sortable-datestring (car p))
-			    oldest-date))
-		  (setq oldest-msg (vm-th-message-of 
-				    (vm-th-thread-symbol (car p)))
-			oldest-date (vm-so-sortable-datestring (car p))))
+			    oldest-date)
+			   ;; don't allow change of subject for the root
+			   (eq (vm-subject-symbol (car p)) s-sym))
+		  (if (null (vm-th-message-of (vm-th-thread-symbol (car p))))
+		      (vm-thread-debug 'vm-unthread-message-null
+				       (vm-th-thread-symbol (car p)))
+		    (setq oldest-msg (vm-th-message-of 
+				      (vm-th-thread-symbol (car p)))
+			  oldest-date (vm-so-sortable-datestring (car p)))))
 		(setq p (cdr p)))
 	      (setq root-sym (vm-th-thread-symbol oldest-msg))
 	      (vm-th-clear-cached-data root-sym root-sym)
@@ -1139,6 +1148,12 @@ to the thread.  Used for testing purposes."
     (unless ml
       (with-current-buffer (or vm-mail-buffer (current-buffer))
 	(setq ml vm-message-list)))
+    ;; Check that all messages have been recorded in the threads
+    ;; database
+    (mapc (lambda (m)
+	    (unless (vm-th-message-of (vm-th-thread-symbol m))
+	      (vm-thread-debug 'message-not-in-database m)))
+	  ml)
     ;; Check that all messages belong to their respective subtrees
     (mapc (lambda (m)
 	    (let* ((root (vm-thread-root-sym m))

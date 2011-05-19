@@ -455,7 +455,7 @@ the Summary buffer exists. "
 buffer by a regenerated summary line."
   (if (and vm-debug (member (vm-number-of m) vm-summary-traced-messages))
       (debug))
-  (if (and (vm-su-start-of m)
+  (if (and (markerp (vm-su-start-of m))
 	   (marker-buffer (vm-su-start-of m)))
       (let ((modified (buffer-modified-p)) ; Folder or Presentation
 	    (do-mouse-track
