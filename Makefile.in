@@ -51,11 +51,11 @@ install: install-pkg
 
 install-pkg:
 	$(MKDIR) -p "$(DESTDIR)$(docdir)"
-	$(MKDIR) -p "$(etcdir)"
+	$(MKDIR) -p "$(DESTDIR)$(etcdir)"
 	for i in $(SOURCES) ; do                                  \
-	    echo "Installing $$i in '$(DESTDIR)$(docdir)' and '$(etcdir)'" ;  \
+	    echo "Installing $$i in '$(DESTDIR)$(docdir)' and '$(DESTDIR)$(etcdir)'" ;  \
 	    $(INSTALL_DATA) $$i "$(DESTDIR)$(docdir)" ;           \
-	    $(INSTALL_DATA) $$i "$(etcdir)" ;                     \
+	    $(INSTALL_DATA) $$i "$(DESTDIR)$(etcdir)" ;                     \
 	done ;
 
 clean:

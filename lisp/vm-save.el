@@ -238,6 +238,7 @@ thread are saved."
       (prefix-numeric-value current-prefix-arg))))
 
   (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (unless count (setq count 1))
   (unless mlist
     (setq mlist (vm-select-operable-messages count (interactive-p) "Save")))
   (cond ((and vm-imap-save-to-server (vm-imap-folder-p))
