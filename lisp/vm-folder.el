@@ -432,9 +432,8 @@ Toolbars are updated."
 		   (intern (buffer-name)
 			   vm-buffers-needing-undo-boundaries)
 		   (vm-check-for-killed-summary)
-		   (and vm-use-toolbar
-			(vm-toolbar-support-possible-p)
-			(vm-toolbar-update-toolbar))
+		   (when (and vm-use-toolbar (vm-toolbar-support-possible-p))
+		     (vm-toolbar-update-toolbar))
 		   (when vm-summary-show-threads
 		     (vm-build-threads-if-unbuilt))
 		   (vm-do-needed-renumbering)
@@ -4559,7 +4558,7 @@ files."
 	(while mp
 	  (vm-set-labels-of (car mp) (copy-sequence labels))
 	  (setq mp (cdr mp)))))
-    (when (and new-messages vm-summary-show-threads)
+    (when new-messages
       ;; get numbering of new messages done now
       ;; so that the sort code only has to worry about the
       ;; changes it needs to make.
