@@ -675,7 +675,7 @@ burst."
 	       ;; don't move message pointer when deleting the message
 	       (let ((vm-move-after-deleting nil))
 		 (vm-delete-message 1))))
-	(vm-assimilate-new-messages :dont-read-attributes t 
+	(vm-assimilate-new-messages :read-attributes nil
 				    :labels (vm-labels-of (car mlist)))
 	;; do this now so if we error later in another iteration
 	;; of the loop the summary and mode line will be correct.

@@ -1118,7 +1118,7 @@ popdrop
 	     (setq vm-spooled-mail-waiting nil)
 	     (intern (buffer-name) vm-buffers-needing-display-update)
 	     (vm-update-summary-and-mode-line)
-	     (setq mp (vm-assimilate-new-messages :dont-read-attributes t))
+	     (setq mp (vm-assimilate-new-messages :read-attributes nil))
 	     (setq got-some mp)
              (if got-some
                  (vm-increment vm-modification-counter))

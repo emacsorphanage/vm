@@ -783,12 +783,12 @@ preview or the full message, governed by the the variables
        (vm-select-folder-buffer)
        (when (and vm-select-new-message-hook 
 		  (vm-new-flag (car vm-message-pointer)))
-	    (vm-run-message-hook (car vm-message-pointer)
-				 'vm-select-new-message-hook))
+	    (vm-run-hook-on-message 'vm-select-new-message-hook
+				    (car vm-message-pointer)))
        (when (and vm-select-unread-message-hook
 		  (vm-unread-flag (car vm-message-pointer)))
-	    (vm-run-message-hook (car vm-message-pointer)
-				 'vm-select-unread-message-hook)))
+	    (vm-run-hook-on-message 'vm-select-unread-message-hook
+				    (car vm-message-pointer))))
 
      ;; 3. prepare the Presentation buffer
      (vm-narrow-for-preview (not need-preview))
@@ -895,7 +895,7 @@ preview or the full message, governed by the the variables
 	 (vm-update-summary-and-mode-line)
        (vm-show-current-message))))
 
-  (vm-run-message-hook (car vm-message-pointer) 'vm-select-message-hook))
+  (vm-run-hook-on-message 'vm-select-message-hook (car vm-message-pointer)))
 
 (defalias 'vm-preview-current-message 'vm-present-current-message)
 
@@ -963,8 +963,8 @@ is done if necessary.  (USR, 2010-01-14)"
 	   ;; into the real message buffer to do attribute
 	   ;; updates.
 	   (vm-select-folder-buffer)
-           (vm-run-message-hook (car vm-message-pointer)
-                                'vm-showing-message-hook)
+           (vm-run-hook-on-message 'vm-showing-message-hook
+				   (car vm-message-pointer))
            (vm-set-new-flag (car vm-message-pointer) nil)
            (vm-set-unread-flag (car vm-message-pointer) nil))
          (vm-update-summary-and-mode-line)

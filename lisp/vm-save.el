@@ -456,17 +456,16 @@ The saved messages are flagged as `filed'."
       (when m
 	(if folder-buffer
 	    (with-current-buffer folder-buffer
-	      (if (eq major-mode 'vm-mode)
-		  (progn
-		    (vm-check-for-killed-summary)
-		    (vm-assimilate-new-messages)
-		    (if (null vm-message-pointer)
-			(progn (setq vm-message-pointer vm-message-list
-				     vm-need-summary-pointer-update t)
-			       (intern (buffer-name)
-				       vm-buffers-needing-display-update)
-			       (vm-present-current-message))
-		      (vm-update-summary-and-mode-line))))
+	      (when (eq major-mode 'vm-mode)
+		(vm-check-for-killed-summary)
+		(vm-assimilate-new-messages)
+		(if (null vm-message-pointer)
+		    (progn (setq vm-message-pointer vm-message-list
+				 vm-need-summary-pointer-update t)
+			   (intern (buffer-name)
+				   vm-buffers-needing-display-update)
+			   (vm-present-current-message))
+		  (vm-update-summary-and-mode-line)))
 	      (unless quiet
 		(vm-inform 7 "%d message%s saved to buffer %s"
 			   save-count
@@ -1005,7 +1004,7 @@ The saved messages are flagged as `filed'."
 	      (if (null process)
 		  (error "Could not connect to the IMAP server"))
 	      (vm-imap-save-message process m mailbox))
-	    (vm-run-message-hook-with-args m 'vm-save-message-hook folder)
+	    (vm-run-hook-on-message-with-args 'vm-save-message-hook m folder)
 	    (unless (vm-filed-flag m)
 	      (vm-set-filed-flag m t))
 	    ;; we set the deleted flag so that the user is not

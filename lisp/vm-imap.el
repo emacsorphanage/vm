@@ -3166,8 +3166,7 @@ messages previously retrieved are ignored."
 		 interactive "general operation" nil)))
       (vm-imap-server-error "Could not connect to the IMAP server")
     (if do-retrieves
-	(vm-assimilate-new-messages))	; Funny that this should be
-					; necessary.  Indicates bugs?
+	(vm-assimilate-new-messages))	; Just to be sure
     (vm-inform 6 "Logging into the IMAP server...")
     (let* ((folder-buffer (current-buffer))
 	   (process (vm-folder-imap-process))
@@ -3349,7 +3348,7 @@ headers-only form."
        (intern (buffer-name) vm-buffers-needing-display-update)
        (vm-inform 6 "Updating summary... ")
        (vm-update-summary-and-mode-line)
-       (setq mp (vm-assimilate-new-messages :dont-read-attributes t))
+       (setq mp (vm-assimilate-new-messages :read-attributes nil))
        (setq new-messages mp)
        (if new-messages
 	   (vm-increment vm-modification-counter))
@@ -3369,11 +3368,10 @@ headers-only form."
 	  (car mp) (vm-folder-imap-uid-message-flags uid) t)
 	 (setq mp (cdr mp)
 	       r-list (cdr r-list)))
-       (setq mp new-messages)
        (when vm-arrived-message-hook
-	 (while mp
-	   (vm-run-message-hook (car mp) 'vm-arrived-message-hook)
-	   (setq mp (cdr mp))))
+	 (mapc (lambda (m)
+		 (vm-run-hook-on-message 'vm-arrived-message-hook m))
+	       new-messages))
        (run-hooks 'vm-arrived-messages-hook)
        new-messages
        ))))
