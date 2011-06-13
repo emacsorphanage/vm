@@ -147,22 +147,27 @@ START-POINT should be a cons in vm-message-list or just t.
  (t means start from the beginning of vm-message-list.)
 If START-POINT is closer to the head of vm-message-list than
 vm-numbering-redo-start-point or is equal to t, then
-vm-numbering-redo-start-point is set to match it."
-  (intern (buffer-name) vm-buffers-needing-display-update)
-  (if (eq vm-numbering-redo-start-point t)
-      nil
-    (if (and (consp start-point) (consp vm-numbering-redo-start-point))
-	(let ((mp vm-message-list))
-	  (while (and mp
-		      (not
-		       (or (eq (car mp) (car start-point))
-			   (eq (car mp) (car vm-numbering-redo-start-point)))))
-	    (setq mp (cdr mp)))
-	  (if (null mp)
-	      (error "Something is wrong in vm-set-numbering-redo-start-point"))
-	  (if (eq (car mp) (car start-point))
-	      (setq vm-numbering-redo-start-point start-point)))
-      (setq vm-numbering-redo-start-point start-point))))
+vm-numbering-redo-start-point is set to match it.
+If START-POINT is nil, nothing is updated."
+  (when start-point
+    (intern (buffer-name) vm-buffers-needing-display-update)
+    (cond ((eq vm-numbering-redo-start-point t)
+	   nil)
+	  ((and (consp start-point) (consp vm-numbering-redo-start-point))
+	   (let ((mp vm-message-list))
+	     (while (and mp
+			 (not
+			  (or (eq (car mp) (car start-point))
+			      (eq (car mp) 
+				  (car vm-numbering-redo-start-point)))))
+	       (setq mp (cdr mp)))
+	     (when (null mp)
+	       (error 
+		"Something is wrong in vm-set-numbering-redo-start-point"))
+	     (when (eq (car mp) (car start-point))
+	       (setq vm-numbering-redo-start-point start-point))))
+	   (t
+	    (setq vm-numbering-redo-start-point start-point)))))
 
 (defun vm-set-numbering-redo-end-point (end-point)
   "Set vm-numbering-redo-end-point to END-POINT if appropriate.
@@ -174,20 +179,22 @@ If END-POINT is closer to the end of vm-message-list or is equal
 to t, then vm-numbering-redo-start-point is set to match it.
 The number-of slot is used to determine proximity to the end of
 vm-message-list, so this slot must be valid in END-POINT's message
-and the message in the cons pointed to by vm-numbering-redo-end-point."
-  (intern (buffer-name) vm-buffers-needing-display-update)
-  (cond ((eq end-point t)
-	 (setq vm-numbering-redo-end-point t))
-	((and (consp end-point)
-	      (> (string-to-number
-		  (vm-number-of
-		   (car end-point)))
-		 (string-to-number
-		  (vm-number-of
-		   (car vm-numbering-redo-end-point)))))
-	 (setq vm-numbering-redo-end-point end-point))
-	((null end-point)
-	 (setq vm-numbering-redo-end-point end-point))))
+and the message in the cons pointed to by vm-numbering-redo-end-point.
+If END-PIONT is nil, nothing is updated."
+  (when end-point
+    (intern (buffer-name) vm-buffers-needing-display-update)
+    (cond ((eq end-point t)
+	   (setq vm-numbering-redo-end-point t))
+	  ((and (consp end-point)
+		(> (string-to-number
+		    (vm-number-of
+		     (car end-point)))
+		   (string-to-number
+		    (vm-number-of
+		     (car vm-numbering-redo-end-point)))))
+	   (setq vm-numbering-redo-end-point end-point))
+	  ((null end-point)
+	   (setq vm-numbering-redo-end-point end-point)))))
 
 (defun vm-do-needed-renumbering ()
   "Number messages in vm-message-list as specified by
@@ -216,20 +223,23 @@ START-POINT should be a cons in vm-message-list or just t.
  (t means start from the beginning of vm-message-list.)
 If START-POINT is closer to the head of vm-message-list than
 vm-summary-redo-start-point or is equal to t, then
-vm-summary-redo-start-point is set to match it."
-  (intern (buffer-name) vm-buffers-needing-display-update)
-  (if (eq vm-summary-redo-start-point t)
-      nil
-    (if (and (consp start-point) (consp vm-summary-redo-start-point))
-	(let ((mp vm-message-list))
-	  (while (and mp (not (or (eq mp start-point)
-				  (eq mp vm-summary-redo-start-point))))
-	    (setq mp (cdr mp)))
-	  (if (null mp)
-	      (error "Something is wrong in vm-set-summary-redo-start-point"))
-	  (if (eq mp start-point)
-	      (setq vm-summary-redo-start-point start-point)))
-      (setq vm-summary-redo-start-point start-point))))
+vm-summary-redo-start-point is set to match it.
+If START-POINT is nil, nothing is updated."
+  (when start-point
+    (intern (buffer-name) vm-buffers-needing-display-update)
+    (cond ((eq vm-summary-redo-start-point t)
+	   nil)
+	  ((and (consp start-point) (consp vm-summary-redo-start-point))
+	   (let ((mp vm-message-list))
+	     (while (and mp (not (or (eq mp start-point)
+				     (eq mp vm-summary-redo-start-point))))
+	       (setq mp (cdr mp)))
+	     (when (null mp)
+	       (error "Something is wrong in vm-set-summary-redo-start-point"))
+	     (when (eq mp start-point)
+	       (setq vm-summary-redo-start-point start-point))))
+	  (t
+	   (setq vm-summary-redo-start-point start-point)))))
 
 (defun vm-mark-for-summary-update (m &optional dont-kill-cache)
   "Mark message M and all its mirrored mesages for a summary update.
@@ -4533,8 +4543,9 @@ files."
 	   ;; may need threads for sorting
 	   (vm-build-threads (cdr tail-cons)))))
       (setq new-messages (if tail-cons (cdr tail-cons) vm-message-list))
-      (vm-set-numbering-redo-start-point new-messages)
-      (vm-set-summary-redo-start-point new-messages))
+      (when new-messages
+	(vm-set-numbering-redo-start-point new-messages)
+	(vm-set-summary-redo-start-point new-messages)))
     ;; Only update the folders summary count here if new messages
     ;; have arrived, not when we're reading the folder for the
     ;; first time, and not if we cannot assume that all the arrived
@@ -4558,7 +4569,7 @@ files."
 	(while mp
 	  (vm-set-labels-of (car mp) (copy-sequence labels))
 	  (setq mp (cdr mp)))))
-    (when new-messages
+    (when (and new-messages vm-summary-show-threads)
       ;; get numbering of new messages done now
       ;; so that the sort code only has to worry about the
       ;; changes it needs to make.

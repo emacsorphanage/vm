@@ -300,7 +300,7 @@ all the real folder buffers involved."
 	   (vm-real-message-of m)
 	   (cons m (vm-virtual-messages-of (vm-real-message-of m)))))
 	(if vm-message-list
-	    (progn
+	    (when new-message-list
 	      (vm-set-summary-redo-start-point new-message-list)
 	      (vm-set-numbering-redo-start-point new-message-list))
 	  (vm-set-summary-redo-start-point t)
