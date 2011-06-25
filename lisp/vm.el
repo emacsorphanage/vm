@@ -287,9 +287,9 @@ deleted messages.  Use `###' to expunge deleted messages."
       ;; builds message list, reads attributes if they weren't
       ;; read from an index file.
       ;; but that is not what the code is doing! - USR, 2011-04-24
-      (vm-assimilate-new-messages :dont-read-attributes nil 
+      (vm-assimilate-new-messages :read-attributes t
 				  :gobble-order (not did-read-index-file) 
-				  :first-time t)
+				  :run-hooks nil)
 
       (if (and first-time (not did-read-index-file))
 	  (progn
@@ -787,7 +787,8 @@ visited folder."
 	   (setq vm-imap-account-alist 
 		 (mapcar 
 		  'reverse
-		  (vm-imap-spec-list-to-host-alist vm-imap-server-list))))
+		  (with-no-warnings
+		    (vm-imap-spec-list-to-host-alist vm-imap-server-list)))))
        (list (vm-read-imap-folder-name
 	      (format "Visit%s IMAP folder: "
 		      (if current-prefix-arg " read only" ""))
@@ -1280,6 +1281,8 @@ summary buffer to select a folder."
 	     vm-mail-header-from
 	     vm-mail-return-receipt-to
 	     vm-summary-uninteresting-senders
+	     ;; obsolete-variables
+	     vm-imap-server-list
 	     ))
 	  ;; delete any passwords stored in maildrop strings
 	  (vm-spool-files 
@@ -1297,11 +1300,12 @@ summary buffer to select a folder."
 	       (vm-maildrop-alist-sans-personal-info
 		vm-pop-folder-alist)
 	     (error (vm-increment errors) vm-pop-folder-alist)))
-	  (vm-imap-server-list 
-	   (condition-case nil
-	       (vm-mapcar (function vm-maildrop-sans-personal-info) 
-		      vm-imap-server-list)
-	     (error (vm-increment errors) vm-imap-server-list)))
+	  ;; (vm-imap-server-list 
+	  ;;  (with-no-warnings
+	  ;;    (condition-case nil
+	  ;; 	 (vm-mapcar (function vm-maildrop-sans-personal-info) 
+	  ;; 		    vm-imap-server-list)
+	  ;;      (error (vm-increment errors) vm-imap-server-list))))
 	  (vm-imap-account-alist 
 	   (condition-case nil
 	       (vm-maildrop-alist-sans-personal-info

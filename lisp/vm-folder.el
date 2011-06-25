@@ -147,22 +147,27 @@ START-POINT should be a cons in vm-message-list or just t.
  (t means start from the beginning of vm-message-list.)
 If START-POINT is closer to the head of vm-message-list than
 vm-numbering-redo-start-point or is equal to t, then
-vm-numbering-redo-start-point is set to match it."
-  (intern (buffer-name) vm-buffers-needing-display-update)
-  (if (eq vm-numbering-redo-start-point t)
-      nil
-    (if (and (consp start-point) (consp vm-numbering-redo-start-point))
-	(let ((mp vm-message-list))
-	  (while (and mp
-		      (not
-		       (or (eq (car mp) (car start-point))
-			   (eq (car mp) (car vm-numbering-redo-start-point)))))
-	    (setq mp (cdr mp)))
-	  (if (null mp)
-	      (error "Something is wrong in vm-set-numbering-redo-start-point"))
-	  (if (eq (car mp) (car start-point))
-	      (setq vm-numbering-redo-start-point start-point)))
-      (setq vm-numbering-redo-start-point start-point))))
+vm-numbering-redo-start-point is set to match it.
+If START-POINT is nil, nothing is updated."
+  (when start-point
+    (intern (buffer-name) vm-buffers-needing-display-update)
+    (cond ((eq vm-numbering-redo-start-point t)
+	   nil)
+	  ((and (consp start-point) (consp vm-numbering-redo-start-point))
+	   (let ((mp vm-message-list))
+	     (while (and mp
+			 (not
+			  (or (eq (car mp) (car start-point))
+			      (eq (car mp) 
+				  (car vm-numbering-redo-start-point)))))
+	       (setq mp (cdr mp)))
+	     (when (null mp)
+	       (error 
+		"Something is wrong in vm-set-numbering-redo-start-point"))
+	     (when (eq (car mp) (car start-point))
+	       (setq vm-numbering-redo-start-point start-point))))
+	   (t
+	    (setq vm-numbering-redo-start-point start-point)))))
 
 (defun vm-set-numbering-redo-end-point (end-point)
   "Set vm-numbering-redo-end-point to END-POINT if appropriate.
@@ -174,20 +179,22 @@ If END-POINT is closer to the end of vm-message-list or is equal
 to t, then vm-numbering-redo-start-point is set to match it.
 The number-of slot is used to determine proximity to the end of
 vm-message-list, so this slot must be valid in END-POINT's message
-and the message in the cons pointed to by vm-numbering-redo-end-point."
-  (intern (buffer-name) vm-buffers-needing-display-update)
-  (cond ((eq end-point t)
-	 (setq vm-numbering-redo-end-point t))
-	((and (consp end-point)
-	      (> (string-to-number
-		  (vm-number-of
-		   (car end-point)))
-		 (string-to-number
-		  (vm-number-of
-		   (car vm-numbering-redo-end-point)))))
-	 (setq vm-numbering-redo-end-point end-point))
-	((null end-point)
-	 (setq vm-numbering-redo-end-point end-point))))
+and the message in the cons pointed to by vm-numbering-redo-end-point.
+If END-PIONT is nil, nothing is updated."
+  (when end-point
+    (intern (buffer-name) vm-buffers-needing-display-update)
+    (cond ((eq end-point t)
+	   (setq vm-numbering-redo-end-point t))
+	  ((and (consp end-point)
+		(> (string-to-number
+		    (vm-number-of
+		     (car end-point)))
+		   (string-to-number
+		    (vm-number-of
+		     (car vm-numbering-redo-end-point)))))
+	   (setq vm-numbering-redo-end-point end-point))
+	  ((null end-point)
+	   (setq vm-numbering-redo-end-point end-point)))))
 
 (defun vm-do-needed-renumbering ()
   "Number messages in vm-message-list as specified by
@@ -216,20 +223,23 @@ START-POINT should be a cons in vm-message-list or just t.
  (t means start from the beginning of vm-message-list.)
 If START-POINT is closer to the head of vm-message-list than
 vm-summary-redo-start-point or is equal to t, then
-vm-summary-redo-start-point is set to match it."
-  (intern (buffer-name) vm-buffers-needing-display-update)
-  (if (eq vm-summary-redo-start-point t)
-      nil
-    (if (and (consp start-point) (consp vm-summary-redo-start-point))
-	(let ((mp vm-message-list))
-	  (while (and mp (not (or (eq mp start-point)
-				  (eq mp vm-summary-redo-start-point))))
-	    (setq mp (cdr mp)))
-	  (if (null mp)
-	      (error "Something is wrong in vm-set-summary-redo-start-point"))
-	  (if (eq mp start-point)
-	      (setq vm-summary-redo-start-point start-point)))
-      (setq vm-summary-redo-start-point start-point))))
+vm-summary-redo-start-point is set to match it.
+If START-POINT is nil, nothing is updated."
+  (when start-point
+    (intern (buffer-name) vm-buffers-needing-display-update)
+    (cond ((eq vm-summary-redo-start-point t)
+	   nil)
+	  ((and (consp start-point) (consp vm-summary-redo-start-point))
+	   (let ((mp vm-message-list))
+	     (while (and mp (not (or (eq mp start-point)
+				     (eq mp vm-summary-redo-start-point))))
+	       (setq mp (cdr mp)))
+	     (when (null mp)
+	       (error "Something is wrong in vm-set-summary-redo-start-point"))
+	     (when (eq mp start-point)
+	       (setq vm-summary-redo-start-point start-point))))
+	  (t
+	   (setq vm-summary-redo-start-point start-point)))))
 
 (defun vm-mark-for-summary-update (m &optional dont-kill-cache)
   "Mark message M and all its mirrored mesages for a summary update.
@@ -432,9 +442,8 @@ Toolbars are updated."
 		   (intern (buffer-name)
 			   vm-buffers-needing-undo-boundaries)
 		   (vm-check-for-killed-summary)
-		   (and vm-use-toolbar
-			(vm-toolbar-support-possible-p)
-			(vm-toolbar-update-toolbar))
+		   (when (and vm-use-toolbar (vm-toolbar-support-possible-p))
+		     (vm-toolbar-update-toolbar))
 		   (when vm-summary-show-threads
 		     (vm-build-threads-if-unbuilt))
 		   (vm-do-needed-renumbering)
@@ -4307,7 +4316,7 @@ Same as \\[vm-recover-folder]."
 	     (vm-inform 0 
 	      "Ignoring error while running vm-retrieved-spooled-mail-hook. %S"
 	      errmsg)))
-          (vm-assimilate-new-messages :dont-read-attributes t))))))
+          (vm-assimilate-new-messages :read-attributes nil))))))
 
 ;;;###autoload
 (defun vm-folder-name ()
@@ -4491,14 +4500,14 @@ files."
 
 ;; returns list of new messages if there were any new messages, nil otherwise
 (defun* vm-assimilate-new-messages (&key
-				    dont-read-attributes
-				    gobble-order labels first-time)
+				    (read-attributes t) (run-hooks t)
+				    gobble-order labels)
   ;; We are only guessing what this function does.  USR, 2010-05-20
   ;; This is called in a Folder buffer, which already has messages
   ;; loaded into it, but some of the messages (the "new" messages)
   ;; have not been parsed and separated yet.  
   ;; The function first builds a vm-message-list.
-  ;; Unless DONT-READ-ATTRIBUTES is non-nil, it reads the message
+  ;; If READ-ATTRIBUTES is non-nil, it reads the message
   ;; attributes in the X-VM-v5-Data headers and stores them.
   ;; If GOBBLE-ORDER is non-nil, it reads the X-VM-Message-Order
   ;; header and uses it to reorder the messages.
@@ -4506,8 +4515,10 @@ files."
   ;; If vm-ml-sort-keys is non-nil, sorts the messages accordingly.
   ;; If LABELS is non-nil, they are added to the message labels of all 
   ;; the new messages.
-  ;; If FIRST-TIME is non-nil, arrived-message-hook functions are
-  ;; called. 
+  ;; If RUN-HOOKS is t, arrived-message-hook functions are
+  ;; called.  Normally, this argument is nil for the first
+  ;; time vm-assimilate-new-messages is called in a folder.  It is
+  ;; t for subsequent calls when new mail is being incorporated.
   (let ((tail-cons (vm-last vm-message-list))
 	b-list new-messages)
     (save-excursion
@@ -4517,9 +4528,9 @@ files."
        (when (or (null tail-cons) (cdr tail-cons))
 	 (unless vm-assimilate-new-messages-sorted
 	   (setq vm-ml-sort-keys nil))
-	 (if dont-read-attributes
-	     (vm-set-default-attributes (cdr tail-cons))
-	   (vm-read-attributes (cdr tail-cons)))
+	 (if read-attributes
+	     (vm-read-attributes (cdr tail-cons))
+	   (vm-set-default-attributes (cdr tail-cons)))
 	 ;; Yuck.  This has to be done here instead of in the
 	 ;; vm function because this needs to be done before
 	 ;; any initial thread sort (so that if the thread
@@ -4534,47 +4545,43 @@ files."
 	   ;; may need threads for sorting
 	   (vm-build-threads (cdr tail-cons)))))
       (setq new-messages (if tail-cons (cdr tail-cons) vm-message-list))
-      (vm-set-numbering-redo-start-point new-messages)
-      (vm-set-summary-redo-start-point new-messages))
+      (when new-messages
+	(vm-set-numbering-redo-start-point new-messages)
+	(vm-set-summary-redo-start-point new-messages)))
     ;; Only update the folders summary count here if new messages
     ;; have arrived, not when we're reading the folder for the
     ;; first time, and not if we cannot assume that all the arrived
     ;; messages should be considered new.  Use gobble-order as a
     ;; first time indicator along with the new messages being equal
     ;; to the whole message list.
-    (if (and new-messages dont-read-attributes
-	     (or (not (eq new-messages vm-message-list))
-		 (null gobble-order)))
-	(vm-modify-folder-totals buffer-file-name 'arrived
-				 (length new-messages)))
-    ;; copy the new-messages list because sorting might scramble
-    ;; it.  Also something the user does when
-    ;; vm-arrived-message-hook is run might affect it.
-    ;; vm-assimilate-new-messages returns this value so it must
-    ;; not be mangled.
-    (setq new-messages (copy-sequence new-messages))
-    ;; add the labels
-    (when (and new-messages labels vm-burst-digest-messages-inherit-labels)
-      (let ((mp new-messages))
-	(while mp
-	  (vm-set-labels-of (car mp) (copy-sequence labels))
-	  (setq mp (cdr mp)))))
-    (when (and new-messages vm-summary-show-threads)
-      ;; get numbering of new messages done now
-      ;; so that the sort code only has to worry about the
-      ;; changes it needs to make.
-      (vm-update-summary-and-mode-line)
-      (vm-sort-messages (or vm-ml-sort-keys 
-			    (if vm-summary-show-threads
-				"activity"
-			      "date"))))
-    (when (and new-messages
-	       (or vm-arrived-message-hook vm-arrived-messages-hook)
-	       ;; Run the hooks only if this is not the first
-	       ;; time vm-assimilate-new-messages has been called
-	       ;; in this folder.
-	       (not first-time))
-      (let ((new-messages new-messages))
+    (when new-messages
+      (if (and (not read-attributes)
+	       (or (not (eq new-messages vm-message-list))
+		   (null gobble-order)))
+	  (vm-modify-folder-totals buffer-file-name 'arrived
+				   (length new-messages)))
+      ;; copy the new-messages list because sorting might scramble
+      ;; it.  Also something the user does when
+      ;; vm-arrived-message-hook is run might affect it.
+      ;; vm-assimilate-new-messages returns this value so it must
+      ;; not be mangled.
+      (setq new-messages (copy-sequence new-messages))
+      ;; add the labels
+      (when (and labels vm-burst-digest-messages-inherit-labels)
+	(mapc (lambda (m)
+		(vm-set-labels-of m (copy-sequence labels)))
+	      new-messages))
+      (when vm-summary-show-threads
+	;; get numbering of new messages done now
+	;; so that the sort code only has to worry about the
+	;; changes it needs to make.
+	(vm-update-summary-and-mode-line)
+	(vm-sort-messages (or vm-ml-sort-keys 
+			      (if vm-summary-show-threads
+				  "activity"
+				"date"))))
+      (when (and run-hooks
+		 (or vm-arrived-message-hook vm-arrived-messages-hook))
 	;; seems wise to do this so that if the user runs VM
 	;; commands here they start with as much of a clean
 	;; slate as we can provide, given we're currently deep
@@ -4582,42 +4589,41 @@ files."
 	(vm-update-summary-and-mode-line)
 	(when (and vm-arrived-message-hook
 		   (not (eq vm-folder-access-method 'imap)))
-	  (while new-messages
-	    (vm-run-message-hook (car new-messages)
-				 'vm-arrived-message-hook)
-	    (setq new-messages (cdr new-messages))))
-	(run-hooks 'vm-arrived-messages-hook)))
-    (when (and new-messages vm-virtual-buffers)
-      (save-excursion
-	(setq b-list vm-virtual-buffers)
-	(while b-list
-	  ;; buffer might be dead
-	  (when (buffer-name (car b-list))
-	    (let (tail-cons)
-	      (set-buffer (car b-list))
-	      (setq tail-cons (vm-last vm-message-list))
-	      (vm-build-virtual-message-list new-messages)
-	      (when (or (null tail-cons) (cdr tail-cons))
-		(if (not vm-assimilate-new-messages-sorted)
-		    (setq vm-ml-sort-keys nil))
-		(if (vectorp vm-thread-obarray)
-		    (vm-build-threads (cdr tail-cons)))
-		(vm-set-summary-redo-start-point
-		 (or (cdr tail-cons) vm-message-list))
-		(vm-set-numbering-redo-start-point
-		 (or (cdr tail-cons) vm-message-list))
-		(unless vm-message-pointer
-		  (setq vm-message-pointer vm-message-list
-			vm-need-summary-pointer-update t)
-		  (if vm-message-pointer
-		      (vm-present-current-message)))
-		(when vm-summary-show-threads
-		  (vm-update-summary-and-mode-line)
-		  (vm-sort-messages (or vm-ml-sort-keys "activity")))
-		)))
-	  (setq b-list (cdr b-list)))))
-    (when (and new-messages vm-ml-sort-keys)
-      (vm-sort-messages vm-ml-sort-keys))
+	  (mapc (lambda (m)
+		  (vm-run-hook-on-message 'vm-arrived-message-hook m))
+		new-messages))
+	(run-hooks 'vm-arrived-messages-hook))
+      (when vm-virtual-buffers
+	(save-excursion
+	  (setq b-list vm-virtual-buffers)
+	  (while b-list
+	    ;; buffer might be dead
+	    (when (buffer-name (car b-list))
+	      (let (tail-cons)
+		(set-buffer (car b-list))
+		(setq tail-cons (vm-last vm-message-list))
+		(vm-build-virtual-message-list new-messages)
+		(when (or (null tail-cons) (cdr tail-cons))
+		  (if (not vm-assimilate-new-messages-sorted)
+		      (setq vm-ml-sort-keys nil))
+		  (if (vectorp vm-thread-obarray)
+		      (vm-build-threads (cdr tail-cons)))
+		  (vm-set-summary-redo-start-point
+		   (or (cdr tail-cons) vm-message-list))
+		  (vm-set-numbering-redo-start-point
+		   (or (cdr tail-cons) vm-message-list))
+		  (unless vm-message-pointer
+		    (setq vm-message-pointer vm-message-list
+			  vm-need-summary-pointer-update t)
+		    (if vm-message-pointer
+			(vm-present-current-message)))
+		  (when vm-summary-show-threads
+		    (vm-update-summary-and-mode-line)
+		    (vm-sort-messages (or vm-ml-sort-keys "activity")))
+		  )))
+	    (setq b-list (cdr b-list)))))
+      (when vm-ml-sort-keys
+	(vm-sort-messages vm-ml-sort-keys)))
     new-messages ))
 
 (defun vm-select-operable-messages (prefix 

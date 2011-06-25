@@ -3535,8 +3535,8 @@ means that the value of @code{vm-circular-folders} applies to the
 post-command motion as for a motion command, not as for a non-motion
 command.
 
-@vindex vm-delete-before-save
-@vindex vm-delete-before-quit
+@vindex vm-expunge-before-save
+@vindex vm-expunge-before-quit
 Normally, deleted messages are preserved in folders until an explicit
 @code{vm-expunge-folder} operation is done.  This default behavior can
 be altered by setting the variables @code{vm-expunge-before-save} and
@@ -5580,7 +5580,10 @@ to make it presentable.  E.g. MIME decoding.
 @item vm-quit-hook
 @vindex vm-quit-hook
 List of hook functions to run when you quit VM.
-This applies to any VM quit command.
+This applies to all VM quit commands, including @code{vm-quit-no-change}.
+So you should not include in this hook any functions that alter the folder.
+For automatically expunging deleted messages, set the variable
+@code{vm-expunge-before-quit}. 
 
 @item vm-summary-pointer-update-hook
 @vindex vm-summary-pointer-update-hook
