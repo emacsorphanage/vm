@@ -980,12 +980,12 @@ set to the command name so that window configuration will be done."
 		  (if (and (vm-menubar-buttons-possible-p) 
 			   vm-use-menubar-buttons)
 		      (cons "[Emacs]" 'vm-menu-toggle-menubar)
-		    (cons "Emacs" vm-menu-emacs-menu)))
+		    (cons "Emacs" vm-menu-fsfemacs-emacs-menu)))
 		 (undo
 		  (if (and (vm-menubar-buttons-possible-p)
 			   vm-use-menubar-buttons)
 		      (cons "[Undo]" 'vm-undo)
-		    (cons "Undo" vm-menu-undo-menu)))))
+		    (cons "Undo" vm-menu-fsfemacs-undo-menu)))))
 	      (cons nil)
 	      (vec (vector 'rootmenu 'vm nil))
 	      ;; menus appear in the opposite order that we
