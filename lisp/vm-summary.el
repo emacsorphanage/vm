@@ -1205,11 +1205,17 @@ message in bytes, kilobytes or megabytes.      USR, 2010-05.13"
            (format "%dM" size)))))
 
 (defun vm-su-spam-score-aux (m)
-  "Return the numeric spam level for M."
-  (let ((spam-status (vm-get-header-contents m "X-Spam-Status:")))
-    (if (and spam-status
-	     (string-match "\\(hits\\|score\\)=\\([+-]?[0-9.]+\\)" spam-status))
-        (string-to-number (match-string 2 spam-status))
+  "Return the numeric spam level for M.  The spam level is obtained
+from any of the headers listed in `vm-spam-score-headers'."
+  (let ((spam-headers vm-spam-score-headers))
+    (catch 'done
+      (while spam-headers
+	(let* ((spam-selector (car spam-headers))
+	       (score (vm-get-header-contents m (car spam-selector))))
+	  (when (and score (string-match (nth 1 spam-selector) score))
+	    (throw 'done 
+		   (funcall (nth 2 spam-selector) (match-string 0 score))))
+	  (setq spam-headers (cdr spam-headers))))
       0)))
 
 (defun vm-su-spam-score (m)

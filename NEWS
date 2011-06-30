@@ -7,6 +7,14 @@ Status
   Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
   using VM!
   
+VM 8.2.0
+
+  CHANGES
+
+   * New customization variable `vm-spam-score-headers' allows the
+     extraction of spam scores.  (Replaces former variable
+     `vm-vs-spam-score-headers' used by vm-virtual.el.) 
+
 VM 8.2.0a (2011-02-28)
 
   CHANGES

@@ -3866,6 +3866,30 @@ significant.  Characters beyond this point in the subject string
 will be ignored.  A @code{nil} value for this variable means all
 characters in the subject are significant.
 
+@vindex vm-spam-score-headers
+@cindex spam
+The sorting by @code{spam-score} is done by extracting spam scores
+listed in the headers of the message, which are usually placed there by
+external spam scoring programs such as SpamAssassin.  Spam scores are
+expected to be numbers, either integers or real numbers.  The headers
+that should be used for extracting spam scores are listed in the variable
+@code{vm-spam-score-headers}.  The variable is a list of triples, where each
+triples contains a regular expression identifying the name of the header, a
+regular expression matching the spam-score string on that header and a
+function that VM can invoke to convert the spam-score string to a number.
+Here is an example triple:
+
+@example
+("X-Spam-Status:" "[-+]?[0-9]*\\.?[0-9]+" string-to-number)
+@end example
+
+@noindent This triple causes VM to extract a spam-score from
+@code{X-Spam-Status} headers.  The first string on the header line that
+matches the second regular expression is extracted and converted to a number
+using the @code{string-to-number} function.  The order in which the headers
+are listed in @code{vm-spam-score-headers} is significant.  The first header
+that is found in the message is used as the spam score.
+
 If you want to move messages around by hand, use @kbd{C-M-n}
 (@code{vm-move-message-forward}) and @kbd{C-M-p}
 (@code{vm-move-message-backward}).  The default is to move the current
@@ -4673,7 +4697,7 @@ matches message if it is more than @var{ARG} days old
 matches message if it is at most @var{ARG} days old
 @item spam-score
 matches message if its spam score is at least @var{ARG}.  See
-@code{vm-vs-spam-score-headers} for configuration.
+@code{vm-spam-score-headers} for configuration.
 @end table
 
 @unnumberedsubsubsec Selectors based on message attributes
