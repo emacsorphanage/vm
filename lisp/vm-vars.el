@@ -6442,7 +6442,7 @@ folder needs to be updated.")
   :group 'vm-folders
   :type 'file)
 
-(defcustom vm-vs-spam-score-headers
+(defcustom vm-spam-score-headers
   '(("X-Spam-Score:"  "[-+]?[0-9]*\\.?[0-9]+"  string-to-number)
     ("X-Spam-Status:" "[-+]?[0-9]*\\.?[0-9]+" string-to-number)
     ("X-Spam-Level:"  "\\*+"     length))
@@ -6458,8 +6458,11 @@ header line in email messages,
 - SCORE-FN is a function that converts the score string into a number."
   :group 'vm-folders
   :type '(repeat (list (string :tag "Header regexp")
-                       (regexp :tag "Regexp matching the score")
-                       (function :tag "Function converting the score to a number"))))
+                       (regexp :tag "Regexp matching the spam-score")
+                       (function :tag "Function to convert the spam-score string to a number"))))
+
+(defvaralias 'vm-vs-spam-score-headers
+  'vm-spam-score-headers)
 
 (defconst vm-supported-sort-keys
   '("date" "reversed-date"

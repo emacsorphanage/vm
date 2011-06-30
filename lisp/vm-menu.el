@@ -309,18 +309,18 @@
   "Undo menu for FSF Emacs builds that do not allow menubar buttons.")
 
 (defconst vm-menu-emacs-button
-  ["[Emacs]" vm-menu-toggle-menubar t]
+  ["[Emacs Menubar]" vm-menu-toggle-menubar t]
   )
 
 (defconst vm-menu-emacs-menu
-  '("Emacs"
+  '("Menubar"
     ["Switch to Emacs Menubar" vm-menu-toggle-menubar t]
     )
   "Menu with a \"Swich to Emacs\" action meant for FSF Emacs builds that
 do not allow menubar buttons.")
 
 (defconst vm-menu-vm-button
-  ["[VM]" vm-menu-toggle-menubar t]
+  ["[VM Menubar]" vm-menu-toggle-menubar t]
   )
 
 (defconst vm-menu-mail-menu
@@ -979,13 +979,13 @@ set to the command name so that window configuration will be done."
 		 (emacs
 		  (if (and (vm-menubar-buttons-possible-p) 
 			   vm-use-menubar-buttons)
-		      (cons "[Emacs]" 'vm-menu-toggle-menubar)
-		    (cons "Emacs" vm-menu-emacs-menu)))
+		      (cons "[Emacs Menubar]" 'vm-menu-toggle-menubar)
+		    (cons "Menubar" vm-menu-fsfemacs-emacs-menu)))
 		 (undo
 		  (if (and (vm-menubar-buttons-possible-p)
 			   vm-use-menubar-buttons)
 		      (cons "[Undo]" 'vm-undo)
-		    (cons "Undo" vm-menu-undo-menu)))))
+		    (cons "Undo" vm-menu-fsfemacs-undo-menu)))))
 	      (cons nil)
 	      (vec (vector 'rootmenu 'vm nil))
 	      ;; menus appear in the opposite order that we
@@ -1196,9 +1196,9 @@ set to the command name so that window configuration will be done."
 to a VM menubar."
   (if (and (vm-menubar-buttons-possible-p) vm-use-menubar-buttons)
       (define-key vm-mode-map [menu-bar vm]
-	'(menu-item "[VM]" vm-menu-toggle-menubar))
+	'(menu-item "[VM Menubar]" vm-menu-toggle-menubar))
     (define-key vm-mode-map [menu-bar vm]
-      (cons "VM" (make-sparse-keymap "VM")))
+      (cons "Menubar" (make-sparse-keymap "VM")))
     (define-key vm-mode-map [menu-bar vm vm-toggle]
       '(menu-item "Switch to VM Menubar" vm-menu-toggle-menubar))))
       
@@ -1210,7 +1210,7 @@ menu bar.                                             USR, 2011-02-27"
       (set-buffer buffer)
     (vm-select-folder-buffer-and-validate 0 (interactive-p)))
   (cond ((vm-menu-xemacs-menus-p)
-	 (if (null (car (find-menu-item current-menubar '("[Emacs]"))))
+	 (if (null (car (find-menu-item current-menubar '("[Emacs Menubar]"))))
 	     (set-buffer-menubar vm-menu-vm-menubar)
 	   ;; copy the current menubar in case it has been changed.
 	   (make-local-variable 'vm-menu-vm-menubar)
@@ -1219,7 +1219,7 @@ menu bar.                                             USR, 2011-02-27"
 	   (condition-case nil
 	       (add-menu-button nil vm-menu-vm-button nil)
 	     (void-function
-	      (add-menu-item nil "VM" 'vm-menu-toggle-menubar t))))
+	      (add-menu-item nil "Menubar" 'vm-menu-toggle-menubar t))))
 	 (vm-menu-set-menubar-dirty-flag)
 	 (vm-check-for-killed-summary)
 	 (and vm-summary-buffer
