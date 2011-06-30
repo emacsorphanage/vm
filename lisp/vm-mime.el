@@ -5376,6 +5376,8 @@ be removed when it is expanded to display the mime object."
     (when (vm-mime-types-match "message/external-body"
 			       (car (vm-mm-layout-type layout)))
       (vm-mime-fetch-message/external-body layout)
+      (if (vm-mm-layout-display-error layout)
+	  (apply 'error (vm-mm-layout-display-error layout)))
       (setq layout (car (vm-mm-layout-parts layout))))
     (if (vm-mime-find-external-viewer (car (vm-mm-layout-type layout)))
 	(vm-mime-display-external-generic layout)
@@ -5387,8 +5389,12 @@ be removed when it is expanded to display the mime object."
     (when (vm-mime-types-match "message/external-body"
 			       (car (vm-mm-layout-type layout)))
       (vm-mime-fetch-message/external-body layout)
+      (if (vm-mm-layout-display-error layout)
+	  (apply 'error (vm-mm-layout-display-error layout)))
       (setq layout (car (vm-mm-layout-parts layout))))
     (setq layout (vm-mime-convert-undisplayable-layout layout))
+    (if (vm-mm-layout-display-error layout)
+	(apply 'error (vm-mm-layout-display-error layout)))
     (if (null layout)
 	nil
       (vm-set-extent-property button 'vm-mime-disposable t)
