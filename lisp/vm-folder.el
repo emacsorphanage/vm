@@ -345,7 +345,7 @@ on its presentation buffer, if any."
 	      (unwind-protect
 		  (erase-buffer)
 		(vm-restore-buffer-modified-p omodified (current-buffer)))))
-	(if vm-presentation-buffer
+	(if (and vm-presentation-buffer (buffer-name vm-presentation-buffer))
 	    (let ((omodified (buffer-modified-p)))
 	      (unwind-protect
 		  (with-current-buffer vm-presentation-buffer
@@ -371,7 +371,7 @@ on its presentation buffer, if any."
     (setq vm-ml-message-redistributed (vm-redistributed-flag (car vm-message-pointer)))
     (setq vm-ml-message-deleted (vm-deleted-flag (car vm-message-pointer)))
     (setq vm-ml-message-marked (vm-mark-of (car vm-message-pointer))))
-  (if vm-summary-buffer
+  (if (and vm-summary-buffer (buffer-name vm-summary-buffer))
       (let ((modified (buffer-modified-p)))
 	  (vm-copy-local-variables vm-summary-buffer
 				   'default-directory
@@ -397,7 +397,7 @@ on its presentation buffer, if any."
 				   'vm-spooled-mail-waiting
 				   'vm-message-list)
 	  (vm-reset-buffer-modified-p modified vm-summary-buffer)))
-  (if vm-presentation-buffer
+  (if (and vm-presentation-buffer (buffer-name vm-presentation-buffer))
       (let ((modified (buffer-modified-p)))
 	(vm-copy-local-variables vm-presentation-buffer
 				 'default-directory

@@ -4405,6 +4405,8 @@ folder."
 	(error "Set `vm-imap-default-account' to use IMAP-FCC"))
       (setq process 
 	    (vm-imap-make-session maildrop t "IMAP-FCC"))
+      (if (null process)
+	  (error "Could not connect to the IMAP server for IMAP-FCC"))
       (setq mailboxes (list (cons mailbox process)))
       (vm-mail-mode-remove-header "IMAP-FCC:"))
 
@@ -4416,7 +4418,7 @@ folder."
 	(when (member (car spec-list) '("imap" "imap-ssl" "imap-ssh"))
 	  (setq process (vm-imap-make-session fcc nil "IMAP-FCC"))
 	  (if (null process)
-	      (error "Could not connect to the IMAP server"))
+	      (error "Could not connect to the IMAP server for IMAP-FCC"))
 	  (setq mailboxes (cons (cons (nth 3 spec-list) process) 
 				mailboxes)))
 	(setq fcc-list (cdr fcc-list))))
@@ -4436,6 +4438,8 @@ folder."
 	    (vm-buffer-type:enter 'process)
 	    ;;-----------------------------
 	    ;; this can go awry if the process has died...
+	    (unless process
+	      (error "No connection to IMAP server for IMAP-FCC"))
 	    (set-buffer (process-buffer process))
 	    (condition-case nil
 		(vm-imap-create-mailbox process mailbox)
