@@ -4,12 +4,11 @@
 ;;
 ;; Copyright (C) 1999 Rob Hodges,
 ;;               2006 Robert Widhopf, Robert P. Goldman
+;;		 2011 Uday S. Reddy
 ;;
 ;; Package: Personality Crisis for VM
 ;; Author: Rob Hodges
 ;;
-;; Maintainer: Robert Widhopf-Fenk <hack@robf.de>
-;; X-URL:       http://www.robf.de/Hacking/elisp
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -30,9 +29,8 @@
 ;; DOCUMENTATION:
 ;; -------------
 ;;
-;; Documentation is now in Texinfo and HTML formats.  You should have
-;; downloaded one or the other along with this package at the URL
-;; above.
+;; Documentation is now in Texinfo format, included
+;; in the standard VM distribution.
 
 ;;; Code:
 
@@ -64,6 +62,9 @@
 (declare-function timezone-absolute-from-gregorian "ext:timezone" 
 		  (month day year))
 (declare-function bbdb-buffer "ext:bbdb" ())
+(declare-function vm-imap-account-name-for-spec "vm-imap" (maildrop-spec))
+(declare-function vm-pop-find-name-for-spec "vm-pop" (maildrop-spec))
+
 
 ;; Dummy declarations for variables that are defined in bbdb
 
@@ -256,11 +257,13 @@ It will ensure that pcrisis correctly handles the signature .")
   "Setup pcrisis with the given IDENTITIES."
   (setq vmpc-conditions    '(("always true" t))
         vmpc-actions-alist '(("always true" "prompt for a profile"))
-        vmpc-actions       '(("prompt for a profile" (vmpc-prompt-for-profile t t))))
+        vmpc-actions       '(("prompt for a profile" 
+			      (vmpc-prompt-for-profile t t))))
   (setq vmpc-actions
         (append (mapcar
-                 (lambda (i)
-                   (list i (list 'vmpc-substitute-header "From" i)))
+                 (lambda (identity)
+		   `(,identity
+		     (vmpc-substitute-header "From" ,identity)))
                  identities)
                 vmpc-actions)))
 
@@ -1142,7 +1145,7 @@ PROMPT argument and call this function interactively in the composition buffer."
 		 (assoc vmpc-current-state vmpc-prompt-for-profile-headers)
 		 (assoc 'default vmpc-prompt-for-profile-headers)))
             addrs a old-actions actions dest)
-        (setq headers (car (cdr headers)))
+        (setq headers (cadr headers))
         ;; search also other headers for known addresses 
         (while (and headers (not actions))
           (setq addrs (vmpc-get-header-contents (car headers)))
@@ -1248,6 +1251,17 @@ haven't yet been checked when this one is checked."
   "Return true if the current folder name matches REGEXP."
   (string-match regexp (buffer-name)))
 
+(defun vmpc-folder-account-match (account-regexp)
+  "Return true if the current folder's POP/IMAP account name matches REGEXP."
+  (let ((account
+	 (cond ((eq vm-folder-access-method 'imap)
+		(vm-imap-account-name-for-spec (vm-folder-imap-maildrop-spec)))
+	       ((eq vm-folder-access-method 'pop)
+		(vm-pop-find-name-for-spec (vm-folder-pop-maildrop-spec)))
+	       (t "")
+	       )))
+    (string-match account-regexp account)))
+
 (defun vmpc-header-match (hdrfield regexp &optional clump-sep num)
   "Return true if the contents of specified header HDRFIELD match REGEXP.
 For automorph, this means the header in your message, when replying it means
@@ -1327,6 +1341,7 @@ Run this function in order to test/check your conditions."
 (defun vmpc-build-true-conditions-list ()
   "Build list of true conditions and store it in the variable 
 `vmpc-true-conditions'."
+  (interactive)
   (setq vmpc-true-conditions nil)
   (mapc
    (lambda (c)

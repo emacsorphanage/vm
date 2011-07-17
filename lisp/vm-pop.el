@@ -51,16 +51,6 @@
   (put 'vm-uidl-failed 'error-conditions '(vm-uidl-failed error))
   (put 'vm-uidl-failed 'error-message "UIDL command failed"))
 
-(defsubst vm-folder-pop-maildrop-spec ()
-  (aref vm-folder-access-data 0))
-(defsubst vm-folder-pop-process ()
-  (aref vm-folder-access-data 1))
-
-(defsubst vm-set-folder-pop-maildrop-spec (val)
-  (aset vm-folder-access-data 0 val))
-(defsubst vm-set-folder-pop-process (val)
-  (aset vm-folder-access-data 1 val))
-
 (defun vm-pop-find-cache-file-for-spec (remote-spec)
   "Given REMOTE-SPEC, which is a maildrop specification of a folder on
 a POP server, find its cache file on the file system"

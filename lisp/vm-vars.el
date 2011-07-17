@@ -2913,6 +2913,12 @@ This affects `vm-mail-send' and `vm-mail-send-and-exit' in Mail mode."
   :group 'vm-compose
   :type 'boolean)
 
+(defcustom vm-mail-auto-save-directory nil
+  "*Directory where messages being composed are auto-saved.  If it is
+nil, `vm-folder-directory' is used for this purpose."
+  :group 'vm-compose
+  :type '(choice (const nil) directory))
+
 (defcustom vm-mail-header-from nil
   "*Non-nil value should be a string that will be appear as the body
 of the From header in outbound mail messages.  A nil value means don't

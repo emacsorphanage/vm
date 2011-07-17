@@ -15,6 +15,14 @@ VM 8.2.0
      extraction of spam scores.  (Replaces former variable
      `vm-vs-spam-score-headers' used by vm-virtual.el.) 
 
+  IMPROVEMENTS
+
+   * New functions `vmpc-folder-match' and `vmpc-folder-account-match' in
+     the vm-pcrisis package.
+
+   * New variable `vm-mail-auto-save-directory' where message composition
+     buffers are auto-saved.
+
 VM 8.2.0a (2011-02-28)
 
   CHANGES
