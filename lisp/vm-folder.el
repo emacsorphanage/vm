@@ -58,6 +58,86 @@
 (declare-function vm-mode "vm.el" (&optional read-only))
 		  
 
+;; Operations for vm-folder-access-data
+
+(defsubst vm-folder-pop-maildrop-spec ()
+  (aref vm-folder-access-data 0))
+(defsubst vm-folder-pop-process ()
+  (aref vm-folder-access-data 1))
+
+(defsubst vm-set-folder-pop-maildrop-spec (val)
+  (aset vm-folder-access-data 0 val))
+(defsubst vm-set-folder-pop-process (val)
+  (aset vm-folder-access-data 1 val))
+
+;; the maildrop spec of the imap folder
+(defsubst vm-folder-imap-maildrop-spec ()
+  (aref vm-folder-access-data 0))
+;; current imap process of the folder - each folder has a separate one
+(defsubst vm-folder-imap-process ()
+  (aref vm-folder-access-data 1))
+;; the UIDVALIDITY value of the imap folder on the server
+(defsubst vm-folder-imap-uid-validity ()
+  (aref vm-folder-access-data 2))
+;; the list of uid's and flags of the messages in the imap folder on
+;; the server (msg-num . uid . size . flags list)
+(defsubst vm-folder-imap-uid-list ()
+  (aref vm-folder-access-data 3))	
+;; the number of messages in the imap folder on the server
+(defsubst vm-folder-imap-mailbox-count ()
+  (aref vm-folder-access-data 4))
+;; flag indicating whether the imap folder allows writing
+(defsubst vm-folder-imap-read-write ()
+  (aref vm-folder-access-data 5))
+;; flag indicating whether the imap folder allows deleting
+(defsubst vm-folder-imap-can-delete ()
+  (aref vm-folder-access-data 6))
+;; flag indicating whether the imap server has body-peek functionality
+(defsubst vm-folder-imap-body-peek ()
+  (aref vm-folder-access-data 7))
+;; list of permanent flags storable on the imap server
+(defsubst vm-folder-imap-permanent-flags ()
+  (aref vm-folder-access-data 8))
+;; obarray of uid's with message numbers as their values (on the server)
+(defsubst vm-folder-imap-uid-obarray ()
+  (aref vm-folder-access-data 9))	; obarray(uid, msg-num)
+;; obarray of uid's with flags lists as their values (on the server)
+(defsubst vm-folder-imap-flags-obarray ()
+  (aref vm-folder-access-data 10))	; obarray(uid, (size . flags list))
+					; cons-pair shared with imap-uid-list
+;; the number of recent messages in the imap folder on the server
+(defsubst vm-folder-imap-recent-count ()
+  (aref vm-folder-access-data 11))
+;; the number of messages in the imap folder on the server, when last retrieved
+(defsubst vm-folder-imap-retrieved-count ()
+  (aref vm-folder-access-data 12))
+
+(defsubst vm-set-folder-imap-maildrop-spec (val)
+  (aset vm-folder-access-data 0 val))
+(defsubst vm-set-folder-imap-process (val)
+  (aset vm-folder-access-data 1 val))
+(defsubst vm-set-folder-imap-uid-validity (val)
+  (aset vm-folder-access-data 2 val))
+(defsubst vm-set-folder-imap-uid-list (val)
+  (aset vm-folder-access-data 3 val))
+(defsubst vm-set-folder-imap-mailbox-count (val)
+  (aset vm-folder-access-data 4 val))
+(defsubst vm-set-folder-imap-read-write (val)
+  (aset vm-folder-access-data 5 val))
+(defsubst vm-set-folder-imap-can-delete (val)
+  (aset vm-folder-access-data 6 val))
+(defsubst vm-set-folder-imap-body-peek (val)
+  (aset vm-folder-access-data 7 val))
+(defsubst vm-set-folder-imap-permanent-flags (val)
+  (aset vm-folder-access-data 8 val))
+(defsubst vm-set-folder-imap-uid-obarray (val)
+  (aset vm-folder-access-data 9 val))
+(defsubst vm-set-folder-imap-flags-obarray (val)
+  (aset vm-folder-access-data 10 val))
+(defsubst vm-set-folder-imap-recent-count (val)
+  (aset vm-folder-access-data 11 val))
+(defsubst vm-set-folder-imap-retrieved-count (val)
+  (aset vm-folder-access-data 12 val))
 
 (defun vm-set-buffer-modified-p (flag &optional buffer)
   "Sets the `buffer-modified-p' of the current folder to FLAG.  Optional
@@ -345,7 +425,7 @@ on its presentation buffer, if any."
 	      (unwind-protect
 		  (erase-buffer)
 		(vm-restore-buffer-modified-p omodified (current-buffer)))))
-	(if vm-presentation-buffer
+	(if (and vm-presentation-buffer (buffer-name vm-presentation-buffer))
 	    (let ((omodified (buffer-modified-p)))
 	      (unwind-protect
 		  (with-current-buffer vm-presentation-buffer
@@ -371,7 +451,7 @@ on its presentation buffer, if any."
     (setq vm-ml-message-redistributed (vm-redistributed-flag (car vm-message-pointer)))
     (setq vm-ml-message-deleted (vm-deleted-flag (car vm-message-pointer)))
     (setq vm-ml-message-marked (vm-mark-of (car vm-message-pointer))))
-  (if vm-summary-buffer
+  (if (and vm-summary-buffer (buffer-name vm-summary-buffer))
       (let ((modified (buffer-modified-p)))
 	  (vm-copy-local-variables vm-summary-buffer
 				   'default-directory
@@ -397,7 +477,7 @@ on its presentation buffer, if any."
 				   'vm-spooled-mail-waiting
 				   'vm-message-list)
 	  (vm-reset-buffer-modified-p modified vm-summary-buffer)))
-  (if vm-presentation-buffer
+  (if (and vm-presentation-buffer (buffer-name vm-presentation-buffer))
       (let ((modified (buffer-modified-p)))
 	(vm-copy-local-variables vm-presentation-buffer
 				 'default-directory
@@ -3226,7 +3306,8 @@ Giving a prefix argument overrides the variable and no expunge is done."
 
     (when (and vm-expunge-before-quit
 	       (not no-expunge)
-	       (not no-change))
+	       (not no-change)
+	       (buffer-modified-p))
       (vm-expunge-folder))
 
     (vm-garbage-collect-message)

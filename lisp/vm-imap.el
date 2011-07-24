@@ -46,6 +46,8 @@
 		  "vm.el" ())
 (declare-function vm-submit-bug-report 
 		  "vm.el" (&optional pre-hooks post-hooks))
+(declare-function open-network-stream 
+		  "subr.el" (name buffer host service &rest parameters))
 
 (defvar selectable-only)		; used with dynamic binding
 
@@ -83,74 +85,6 @@
 ;;; Utilities
 ;; ------------------------------------------------------------------------
 
-;; the maildrop spec of the imap folder
-(defsubst vm-folder-imap-maildrop-spec ()
-  (aref vm-folder-access-data 0))
-;; current imap process of the folder - each folder has a separate one
-(defsubst vm-folder-imap-process ()
-  (aref vm-folder-access-data 1))
-;; the UIDVALIDITY value of the imap folder on the server
-(defsubst vm-folder-imap-uid-validity ()
-  (aref vm-folder-access-data 2))
-;; the list of uid's and flags of the messages in the imap folder on
-;; the server (msg-num . uid . size . flags list)
-(defsubst vm-folder-imap-uid-list ()
-  (aref vm-folder-access-data 3))	
-;; the number of messages in the imap folder on the server
-(defsubst vm-folder-imap-mailbox-count ()
-  (aref vm-folder-access-data 4))
-;; flag indicating whether the imap folder allows writing
-(defsubst vm-folder-imap-read-write ()
-  (aref vm-folder-access-data 5))
-;; flag indicating whether the imap folder allows deleting
-(defsubst vm-folder-imap-can-delete ()
-  (aref vm-folder-access-data 6))
-;; flag indicating whether the imap server has body-peek functionality
-(defsubst vm-folder-imap-body-peek ()
-  (aref vm-folder-access-data 7))
-;; list of permanent flags storable on the imap server
-(defsubst vm-folder-imap-permanent-flags ()
-  (aref vm-folder-access-data 8))
-;; obarray of uid's with message numbers as their values (on the server)
-(defsubst vm-folder-imap-uid-obarray ()
-  (aref vm-folder-access-data 9))	; obarray(uid, msg-num)
-;; obarray of uid's with flags lists as their values (on the server)
-(defsubst vm-folder-imap-flags-obarray ()
-  (aref vm-folder-access-data 10))	; obarray(uid, (size . flags list))
-					; cons-pair shared with imap-uid-list
-;; the number of recent messages in the imap folder on the server
-(defsubst vm-folder-imap-recent-count ()
-  (aref vm-folder-access-data 11))
-;; the number of messages in the imap folder on the server, when last retrieved
-(defsubst vm-folder-imap-retrieved-count ()
-  (aref vm-folder-access-data 12))
-
-(defsubst vm-set-folder-imap-maildrop-spec (val)
-  (aset vm-folder-access-data 0 val))
-(defsubst vm-set-folder-imap-process (val)
-  (aset vm-folder-access-data 1 val))
-(defsubst vm-set-folder-imap-uid-validity (val)
-  (aset vm-folder-access-data 2 val))
-(defsubst vm-set-folder-imap-uid-list (val)
-  (aset vm-folder-access-data 3 val))
-(defsubst vm-set-folder-imap-mailbox-count (val)
-  (aset vm-folder-access-data 4 val))
-(defsubst vm-set-folder-imap-read-write (val)
-  (aset vm-folder-access-data 5 val))
-(defsubst vm-set-folder-imap-can-delete (val)
-  (aset vm-folder-access-data 6 val))
-(defsubst vm-set-folder-imap-body-peek (val)
-  (aset vm-folder-access-data 7 val))
-(defsubst vm-set-folder-imap-permanent-flags (val)
-  (aset vm-folder-access-data 8 val))
-(defsubst vm-set-folder-imap-uid-obarray (val)
-  (aset vm-folder-access-data 9 val))
-(defsubst vm-set-folder-imap-flags-obarray (val)
-  (aset vm-folder-access-data 10 val))
-(defsubst vm-set-folder-imap-recent-count (val)
-  (aset vm-folder-access-data 11 val))
-(defsubst vm-set-folder-imap-retrieved-count (val)
-  (aset vm-folder-access-data 12 val))
 
 ;; The following functions are based on cached folder-access-data.
 ;; They will only function when the IMAP process is "valid" and the
@@ -1180,13 +1114,19 @@ nil if the session could not be created."
 	      (condition-case err
 		  (cond 
 		   (use-ssl
-		    (vm-setup-stunnel-random-data-if-needed)
-		    (setq process
-			  (apply 'start-process session-name imap-buffer
-				 vm-stunnel-program
-				 (nconc (vm-stunnel-configuration-args host
-								       port)
-					vm-stunnel-program-switches))))
+		    (if (null vm-stunnel-program)
+			(setq process 
+			      (open-network-stream session-name
+						   imap-buffer
+						   host port
+						   :type 'tls))
+		      (vm-setup-stunnel-random-data-if-needed)
+		      (setq process
+			    (apply 'start-process session-name imap-buffer
+				   vm-stunnel-program
+				   (nconc (vm-stunnel-configuration-args host
+									 port)
+					  vm-stunnel-program-switches)))))
 		   (use-ssh
 		    (setq process (open-network-stream
 				   session-name imap-buffer
@@ -1320,9 +1260,9 @@ nil if the session could not be created."
     (error "No user in IMAP maildrop specification, \"%s\"" source))
   (when (null pass)
     (error "No password in IMAP maildrop specification, \"%s\"" source))
-  (when use-ssl
-    (if (null vm-stunnel-program)
-	(error "vm-stunnel-program must be non-nil to use IMAP over SSL.")))
+  ;; (when use-ssl
+  ;;   (if (null vm-stunnel-program)
+  ;; 	(error "vm-stunnel-program must be non-nil to use IMAP over SSL.")))
   (when use-ssh
     (if (null vm-ssh-program)
 	(error "vm-ssh-program must be non-nil to use IMAP over SSH.")))
@@ -4405,6 +4345,8 @@ folder."
 	(error "Set `vm-imap-default-account' to use IMAP-FCC"))
       (setq process 
 	    (vm-imap-make-session maildrop t "IMAP-FCC"))
+      (if (null process)
+	  (error "Could not connect to the IMAP server for IMAP-FCC"))
       (setq mailboxes (list (cons mailbox process)))
       (vm-mail-mode-remove-header "IMAP-FCC:"))
 
@@ -4416,7 +4358,7 @@ folder."
 	(when (member (car spec-list) '("imap" "imap-ssl" "imap-ssh"))
 	  (setq process (vm-imap-make-session fcc nil "IMAP-FCC"))
 	  (if (null process)
-	      (error "Could not connect to the IMAP server"))
+	      (error "Could not connect to the IMAP server for IMAP-FCC"))
 	  (setq mailboxes (cons (cons (nth 3 spec-list) process) 
 				mailboxes)))
 	(setq fcc-list (cdr fcc-list))))
@@ -4436,6 +4378,8 @@ folder."
 	    (vm-buffer-type:enter 'process)
 	    ;;-----------------------------
 	    ;; this can go awry if the process has died...
+	    (unless process
+	      (error "No connection to IMAP server for IMAP-FCC"))
 	    (set-buffer (process-buffer process))
 	    (condition-case nil
 		(vm-imap-create-mailbox process mailbox)

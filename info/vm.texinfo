@@ -946,11 +946,11 @@ have VM speak POP over an SSL connection.  Use @samp{pop-ssh} to use
 POP over an SSH connection.  Similarly, replace @samp{imap} with
 @samp{imap-ssl} or @samp{imap-ssh}, as needed.
 
-For SSL, you must have the stunnel program installed and the
-variable @code{vm-stunnel-program} must name it in order for
-POP/IMAP over SSL to work.  The default value of this variable,
-@samp{"stunnel"}, should be sufficient if the program is
-installed in your normal command search path.
+For SSL, you must either be using a version of Emacs that has SSL capability
+or you have the stunnel program installed and the variable
+@code{vm-stunnel-program} must name it in order for POP/IMAP over SSL to
+work.  The default value of this variable, @samp{"stunnel"}, should be
+sufficient if the program is installed in your normal command search path.
 
 For SSH, you must have the ssh program installed and the variable
 @code{vm-ssh-program} must name it in order for POP/IMAP over SSH to
@@ -2709,6 +2709,11 @@ As already mentioned, VM uses Emacs @ref{Mail Mode,,,emacs, the Gnu
 Emacs Manual} for sending email.  Therefore, Mail Mode options
 should be set to configure the mail sending.  The extra options
 provided by VM are described below.
+
+@vindex vm-mail-auto-save-directory
+The variable @code{vm-mail-auto-save-directory} can be used to specify the
+directory in which the message composition buffers should be auto-saved.  If
+it is nil, the @code{vm-folder-directory} is used for auto-saving.
 
 @vindex vm-mail-header-from
 @vindex vm-mail-mode-hidden-headers

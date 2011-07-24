@@ -1651,7 +1651,9 @@ Binds the `vm-mail-mode-map' and hooks"
 	(set-buffer-file-coding-system 'raw-text))
     ;; avoid trying to write auto-save files in potentially
     ;; unwritable directories.
-    (setq default-directory (or vm-folder-directory (expand-file-name "~/")))
+    (setq default-directory 
+	  (or vm-mail-auto-save-directory vm-folder-directory 
+	      (expand-file-name "~/")))
     (auto-save-mode (if auto-save-default 1 -1))
     (mail-mode)
     ;; TM infests mail mode, uninfest it if VM's MIME stuff is in

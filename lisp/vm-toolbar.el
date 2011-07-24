@@ -368,12 +368,12 @@ s-expression like this one in your .vm file:
 	(t
 	 (setq vm-toolbar-helper-command 'vm-help
 	       vm-toolbar-helper-icon vm-toolbar-help-icon)))
-  (if vm-summary-buffer
+  (if (and vm-summary-buffer (buffer-name vm-summary-buffer))
       (vm-copy-local-variables vm-summary-buffer
 			       'vm-toolbar-delete/undelete-icon
 			       'vm-toolbar-helper-command
 			       'vm-toolbar-helper-icon))
-  (if vm-presentation-buffer
+  (if (and vm-presentation-buffer (buffer-name vm-presentation-buffer))
       (vm-copy-local-variables vm-presentation-buffer
 			       'vm-toolbar-delete/undelete-icon
 			       'vm-toolbar-helper-command

@@ -4,16 +4,43 @@ Status
   Uday S Reddy, Ulrich Müller, Tim Cross and Arik Mitschang.  More
   volunteers to help with the maintenance are quite welcome.
 
-  Bug reports should be sent by using M-x vm-submit-bug-report.  Enjoy
-  using VM!
+  The VM project is hosted at nongnu.org:
+
+         http://www.nongnu.org/viewmail
+
+  Please visit the page and bookmark it.
+
+  The email addresses for the VM mailing list and bug reports are:
+
+         viewmail-info@nongnu.org, viewmail-bugs@nongnu.org
+  
+  The best way of sending bug reports is via the `M-x vm-submit-bug-report'
+  command within VM.
+
+  The VM mailing list is also available on the gmane newsgroup (via NNTP)
+
+         server: news.gmane.org  
+	 group:  gmane.emacs.viewmail
+
+  Please DO NOT use the Usenet newsgroup gnu.emacs.vm.info because it has an
+  unreliable mail link to the mailing list.  You can however browse the
+  archives of the newsgroup at Google Groups.
   
 VM 8.2.0
 
   CHANGES
 
    * New customization variable `vm-spam-score-headers' allows the
-     extraction of spam scores.  (Replaces former variable
+     extraction of spam scores.  (Replaces the former variable
      `vm-vs-spam-score-headers' used by vm-virtual.el.) 
+
+  IMPROVEMENTS
+
+   * New functions `vmpc-folder-match' and `vmpc-folder-account-match' in
+     the vm-pcrisis package.
+
+   * New variable `vm-mail-auto-save-directory' where message composition
+     buffers are auto-saved.
 
 VM 8.2.0a (2011-02-28)
 

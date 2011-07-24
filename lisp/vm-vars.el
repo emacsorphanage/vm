@@ -297,10 +297,11 @@ SPOOLNAME can also be a POP maildrop.
        \"pop-ssh:HOST:PORT:AUTH:USER:PASSWORD\"
 
     The second form is used to speak POP over an SSL connection.
-    You must have the stunnel program installed and the variable
-    `vm-stunnel-program' naming it in order for POP over SSL to
-    work.  The SSL version of the POP server will not use the
-    same port as the non-SSL version.
+    For this to work you should either have a version of Emacs
+    with SSL capability or you have the stunnel program installed
+    and set the variable `vm-stunnel-program'.  The SSL version
+    of the POP server will not use the same port as the non-SSL
+    version.
 
     The third form is used to speak POP over an SSH connection.
     You must have the ssh program installed and the variable
@@ -348,9 +349,10 @@ SPOOLNAME can also be an IMAP maildrop.
        \"imap-ssh:HOST:PORT:MAILBOX:AUTH:USER:PASSWORD\"
 
     The second form is used to speak IMAP over an SSL connection.
-    You must have the stunnel program installed and the variable
-    `vm-stunnel-program' naming it in order for IMAP over SSL to
-    work.
+    For this to work, you should either be using a version of
+    Emacs with SSL capability or you must have the stunnel
+    program installed and the variable `vm-stunnel-program'
+    naming it.
 
     The third form is used to speak IMAP over an SSH connection.
     You must have the ssh program installed and the variable
@@ -2912,6 +2914,12 @@ record of your outgoing mail, use the `mail-archive-file-name' variable."
 This affects `vm-mail-send' and `vm-mail-send-and-exit' in Mail mode."
   :group 'vm-compose
   :type 'boolean)
+
+(defcustom vm-mail-auto-save-directory nil
+  "*Directory where messages being composed are auto-saved.  If it is
+nil, `vm-folder-directory' is used for this purpose."
+  :group 'vm-compose
+  :type '(choice (const nil) directory))
 
 (defcustom vm-mail-header-from nil
   "*Non-nil value should be a string that will be appear as the body
@@ -5515,7 +5523,10 @@ Set this to nil and VM will not use it."
 (defcustom vm-stunnel-program "stunnel"
   "*Name of program to use to run stunnel.
 This is used to make SSL connections to POP and IMAP servers that
-support SSL.  Set this to nil and VM will not use it."
+support SSL.  If this is set to nil, VM will attempt to use the
+built-in SSL functionality of Emacs.  If the version of Emacs you
+are running does not have SSL capability, then any attempt to
+contact the server will likely hang."
   :group 'vm-helpers
   :type '(choice (const :tag "None" nil)
 		 file))
