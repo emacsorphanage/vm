@@ -38,6 +38,8 @@
 
 (declare-function vm-submit-bug-report 
 		  "vm.el" (&optional pre-hooks post-hooks))
+(declare-function open-network-stream 
+		  "subr.el" (name buffer host service &rest parameters))
 
 (if (fboundp 'define-error)
     (progn
@@ -450,8 +452,10 @@ relevant POP servers to remove the messages."
 	     ((equal "pop-ssl" (car source-list))
 	      (setq use-ssl t
 		    session-name "POP over SSL")
-	      (when (null vm-stunnel-program)
-		(error "vm-stunnel-program must be non-nil to use POP over SSL.")))
+	      ;; (when (null vm-stunnel-program)
+	      ;; 	(error 
+	      ;; 	 "vm-stunnel-program must be non-nil to use POP over SSL."))
+	      )
 	     ((equal "pop-ssh" (car source-list))
 	      (setq use-ssh t
 		    session-name "POP over SSH")
@@ -534,13 +538,19 @@ relevant POP servers to remove the messages."
 	    (insert (format "connecting to %s:%s\n" host port))
 	    ;; open the connection to the server
 	    (cond (use-ssl
-		   (vm-setup-stunnel-random-data-if-needed)
-		   (setq process
-			 (apply 'start-process session-name process-buffer
-				vm-stunnel-program
-				(nconc (vm-stunnel-configuration-args host
-								      port)
-				       vm-stunnel-program-switches))))
+		   (if (null vm-stunnel-program)
+		       (setq process 
+			     (open-network-stream session-name
+						  process-buffer
+						  host port
+						  :type 'tls))
+		     (vm-setup-stunnel-random-data-if-needed)
+		     (setq process
+			   (apply 'start-process session-name process-buffer
+				  vm-stunnel-program
+				  (nconc (vm-stunnel-configuration-args host
+									port)
+					 vm-stunnel-program-switches)))))
 		  (use-ssh
 		   (setq process (open-network-stream
 				  session-name process-buffer

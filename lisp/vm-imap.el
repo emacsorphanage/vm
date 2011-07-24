@@ -46,6 +46,8 @@
 		  "vm.el" ())
 (declare-function vm-submit-bug-report 
 		  "vm.el" (&optional pre-hooks post-hooks))
+(declare-function open-network-stream 
+		  "subr.el" (name buffer host service &rest parameters))
 
 (defvar selectable-only)		; used with dynamic binding
 
@@ -1112,13 +1114,19 @@ nil if the session could not be created."
 	      (condition-case err
 		  (cond 
 		   (use-ssl
-		    (vm-setup-stunnel-random-data-if-needed)
-		    (setq process
-			  (apply 'start-process session-name imap-buffer
-				 vm-stunnel-program
-				 (nconc (vm-stunnel-configuration-args host
-								       port)
-					vm-stunnel-program-switches))))
+		    (if (null vm-stunnel-program)
+			(setq process 
+			      (open-network-stream session-name
+						   imap-buffer
+						   host port
+						   :type 'tls))
+		      (vm-setup-stunnel-random-data-if-needed)
+		      (setq process
+			    (apply 'start-process session-name imap-buffer
+				   vm-stunnel-program
+				   (nconc (vm-stunnel-configuration-args host
+									 port)
+					  vm-stunnel-program-switches)))))
 		   (use-ssh
 		    (setq process (open-network-stream
 				   session-name imap-buffer
@@ -1252,9 +1260,9 @@ nil if the session could not be created."
     (error "No user in IMAP maildrop specification, \"%s\"" source))
   (when (null pass)
     (error "No password in IMAP maildrop specification, \"%s\"" source))
-  (when use-ssl
-    (if (null vm-stunnel-program)
-	(error "vm-stunnel-program must be non-nil to use IMAP over SSL.")))
+  ;; (when use-ssl
+  ;;   (if (null vm-stunnel-program)
+  ;; 	(error "vm-stunnel-program must be non-nil to use IMAP over SSL.")))
   (when use-ssh
     (if (null vm-ssh-program)
 	(error "vm-ssh-program must be non-nil to use IMAP over SSH.")))

@@ -1,41 +1,72 @@
 \input texinfo
-@c %**start of header
 @setfilename vm-pcrisis.info
 @settitle Personality Crisis for VM
-@c %**end of header
 @dircategory Emacs
 @direntry
-* VM-pcrisis: (vm-pcrisis).             A personality crisis solver for VM
+* VM-pcrisis: (vm-pcrisis).             Personality profiles control for VM
 @end direntry
 
-@paragraphindent asis
-
+@iftex
+@finalout
+@end iftex
+@c @setchapternewpage odd               % For book style double sided manual.
+@c      @smallbook
+@tex
+\overfullrule=0pt
+%\global\baselineskip 30pt      % For printing in double spaces
+@end tex
 @ifinfo
 This is the documentation for Personality Crisis, an add-on for the
-mail reader VM which allows you to do all sorts of things
+mail reader VM which allows you to manage personality profiles
 automatically when you compose new mail messages or replies.
 
-Copyright @copyright{} 1999  Rob Hodges, 2006-2008 Robert Widhopf-Fenk
+@table @asis
+@item Copyright (C) 1999  Rob Hodges
+@item Copyright (C) 2006-2008 Robert Widhopf-Fenk
+@item Copyright (C) 2011 Uday S. Reddy
+@end table
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+@ignore
+Permission is granted to process this file through TeX and print the
+results, provided the printed document carries copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+@end ignore
 @end ifinfo
+@c
+@include version.texinfo
+@titlepage
+@sp 6
+@center @titlefont{Personality Crisis for VM}
+@sp 4
+@center VM Version @value{VERSION}
+@sp 5
+@page
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1999  Rob Hodges
+Copyright @copyright{} 2006-2008 Robert Widhopf-Fenk
+Copyright @copyright{} 2011 Uday S. Reddy
 
-@c ***************************************************************************
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
 
+@end titlepage
+@page
 @ifnottex
-@node Top
-@top Personality Crisis for VM
-@end ifnottex
+@node Top, Introduction, , (DIR)
 
-This is the documentation for Personality Crisis for VM.
+This is the documentation for VM Personality Crisis, an add-on for the VM
+mail reader allowing you to control personality profiles used in composing
+messages. 
 
 It was originally written by Rob Hodges.
 
-Please read the docs before sending email about problems you are having.
-Most problems are due to incorrect regexps.  That said, if something in
-the docs is unclear, I'd like to know so that I can improve them.  And
-if you find a bug, I'd definitely like to know.  I hope you enjoy this
-package.
-
-@include version.texinfo
 This manual corresponds to VM version @value{VERSION}.
 
 @menu
@@ -44,10 +75,12 @@ This manual corresponds to VM version @value{VERSION}.
 * Miscellaneous Variables::     
 * Debugging::                   
 * Version History::         
-* Index::
+* Variable Index::
+* Function Index::
 @end menu
+@end ifnottex
 
-The incompete list of Roberts which have been involved in vm-pcrisis:
+The incompete list of Roberts who have been involved in vm-pcrisis:
 
 @itemize @bullet
 @item Rob Hodges
@@ -56,23 +89,22 @@ The incompete list of Roberts which have been involved in vm-pcrisis:
 @item Robert Marshall
 @end itemize 
 
-@c ***************************************************************************
-
 @node Introduction, Setting Up, Top, Top
-@c node-name, next, previous, up
 @chapter Introduction
 
 The @strong{Personality Crisis} package is designed to manage multiple
 ``profiles'' (mail identities or mail accounts) during mail-sending.
-It provides a programmable condition-action rule system, which is in fact a
-lot more general than the management of profiles, and other
-applications of this technology could be developed in future.
+It is based on a programmable system of condition-action rules, which is in
+fact a lot more general than the management of profiles.  Other
+applications of this technology may be developed in future.
 
-Personality Crisis can look at the headers of a message you are replying
-to or forwarding, or a message you are composing, and use that information
-to customize the message composition.  Common customizations are to insert
-particular ``From:'' or ``Reply-To:'' headers, signatures or boilerplate text
-in the message composition.  See @ref{Common Uses} below for further ideas. 
+Personality Crisis can look at the headers of a message you are replying to
+or forwarding, or a message you are composing, and use that information to
+customize the message composition.  Common customizations include inserting
+particular ``From:'' or ``Reply-To:'' headers, inserting signatures or
+boilerplate text in the message composition and choosing a MIME character
+set for the outgoing message.  See @ref{Common Uses} below for further
+ideas.
 
 The Personality Crisis package is not automatically loaded as part of VM.
 To use it, place the following line in your @code{vm-init-file}.
@@ -88,11 +120,11 @@ As a quick start, you can also add a line similar to the following:
 @end lisp
 
 with your own email addresses.  VM-Pcrisis will set up each email address
-with a standard action of using it as the ``From'' header. 
+with a standard action for using it as the ``From'' header. 
 Every time you write message to an unknown recipient, it will prompt you
-for the ``From'' address to use.
+for the action to use, which is nothing but the ``From'' address to use.
 
-Obviously, this is a completely manual method of choosing mail profiles.
+This is a completely manual method of choosing mail profiles.
 You obtain automation by using the customization features described in the
 rest of the manual.
 
@@ -116,32 +148,44 @@ explicitly choose a profile when composing new messages.
 @anchor{Functionality}
 
 Based on the headers of a message you are replying to, you can get
-vm-pcrisis to do any number of these things:
+vm-pcrisis to perform these actions:
 
 @itemize @bullet
-@item Change or insert any headers you like in your reply.
-@item Change or insert a signature in your reply.
-@item Insert some text in the body of your reply.
-@item Change any header in your reply to the value of any of the
-headers in the message you are replying to.
-@item Call some functions before VM creates the reply.
-@item Call some functions in the reply buffer.
-@item Prompt you for a personality profile to use, and optionally,
+@item 
+Change or insert any headers you like in your reply.
+@item 
+Change or insert a signature in your reply.
+@item 
+Insert some text in the body of your reply.
+@item 
+Change any header in your reply to the value of some
+header in the message you are replying to.
+@item 
+Call a specified lisp function before VM creates the reply.
+@item 
+Call a specified lisp function in the reply buffer.
+@item 
+Prompt you for a personality profile to use, and optionally,
 remember to use that profile when sending messages to the same recipient
 in the future.
 @end itemize
 
 Similar functionality is available when forwarding messages.  
 
-Based on the headers of a message you are composing, it can do these
-things:
+Based on the headers of a message you are composing, it can perform these
+actions:
 
 @itemize @bullet
-@item Change or insert any headers you like.
-@item Change or insert a signature.
-@item Insert some text in the message body.
-@item Call some functions in the message buffer.
-@item Prompt you for a personality profile to use, and optionally,
+@item 
+Change or insert any headers of your choice.
+@item 
+Change or insert a signature.
+@item 
+Insert specified text in the message body.
+@item 
+Call some functions in the message buffer.
+@item 
+Prompt you for a personality profile to use, and optionally,
 remember to use that profile when sending messages to the same recipient
 in the future.
 @end itemize
@@ -150,10 +194,10 @@ If you wish, you can also have vm-pcrisis prompt you for a profile
 when composing new mail, which is useful if you need to set up VM
 variables for the composition.
 
-If you wish to write your own functions to do things beyond the built-in
-functionality of vm-pcrisis, ready-made functions are provided to allow you
-easy access to the contents of headers in both the message you are replying
-to, and the message you are writing.
+If you wish to write your own functions to perform actions beyond the
+built-in functionality, vm-pcrisis provides primitive functions for
+accessing the contents of headers in the message you are
+replying to as well as the message you are composing.
 
 @c ***************************************************************************
 
@@ -161,7 +205,7 @@ to, and the message you are writing.
 @unnumberedsubsec Common Uses
 @anchor{Common Uses}
 
-These are some of the common uses for Personality Crisis.
+Here are some of the common uses of vm-pcrisis.
 
 @itemize @bullet
 @item
@@ -282,39 +326,48 @@ fine-grained control over when your actions will trigger.
 
 @itemize @bullet
 
+@findex vmpc-folder-match
 @item @code{vmpc-folder-match}
 When doing replies, forwards and resends, this matches against the name of
 the folder where the original message is located.
 
+@findex vmpc-folder-account-match
 @item @code{vmpc-folder-account-match}
 When doing replies, forwards and resends, this matches against POP/IMAP
 account name of the folder where the original message is located.  (These
 are the account names defined via the variables @code{vm-pop-folder-alist}
 and @code{vm-imap-account-alist}.)
 
+@findex vmpc-header-match
 @item @code{vmpc-header-match}
 When doing replies, forwards and resends, this matches against the contents
 of a header in the original message; when using the
 @code{vmpc-automorph} function, it matches against a header in the message
 you are composing.
 
+@findex vmpc-only-from-match
 @item @code{vmpc-only-from-match} 
 When doing replies, forwards and resends, this matches against the contents
 of the given headers in the original message; it is true only when @emph{all}
 email adresses match the given regexp.
 
 
-@item @code{vmpc-body-match} is just like @code{vmpc-header-match} but 
+@findex vmpc-body-match
+@item @code{vmpc-body-match} 
+is just like @code{vmpc-header-match} but 
 allows you to match against the text in the body of the message.
 
+@findex vmpc-hceck-virtual-selector
 @item @code{vmpc-check-virtual-selector}. 
 If you are using @code{vm-avirtual.el} you can also use this
 to check a virtual folder selector.
 
+@findex vmpc-other-cond
 @item @code{vmpc-other-cond} returns true when a specified condition earlier
 in the list has been found true.  It's essentially a shortcut for
 building more complex conditions from basic ones.
 
+@findex vmpc-none-true-yet
 @item @code{vmpc-none-true-yet} returns true if none of the conditions that
 come before it in @code{vmpc-conditions} have returned true.  You can
 optionally specify exceptions, so that it can act as a
@@ -659,15 +712,22 @@ But first, we'll look at what functions are available here:
 
 @itemize @bullet
 
+@findex vmpc-signature
 @item (vmpc-signature "signature-file") will replace the signature in
 your message with the contents of the specified file, if it exists;
 otherwise the string itself will be used as the signature.
+
+@findex vmpc-pre-signature
 @item (vmpc-pre-signature "pre-signature-file") works in the same way,
 but specifies a "pre-signature" --- text that is inserted in your message
 above the signature.  
+
+@findex vmpc-substitute-header
 @item (vmpc-substitute-header "Header-Field" "new header contents") will 
 replace the contents of the specified header-field in your message with
 the new contents, creating the header field if necessary.
+
+@findex vmpc-substitute-replied-header
 @item (vmpc-substitute-replied-header "Dest-Header" "Src-Header") takes
 the contents of the Src-Header field in the message you are replying to,
 and inserts them as the contents of the Dest-Header field in your
@@ -675,6 +735,8 @@ reply, creating the Dest-Header field if necessary.  (If it's contained
 in an action which is called when you are not replying to a message, it
 does nothing.  The same is true of all of these functions: when they are
 called in an inappropriate context, they only do as much as they can.)
+
+@findex vmpc-pre-function
 @item (vmpc-pre-function (foo-function args)) evaluates the lisp
 expression 
 @lisp 
@@ -683,8 +745,12 @@ expression
 before VM creates a mail composition buffer.  (This is useful for setting 
 VM variables which need to be set at this stage, such as the message
 encoding.)  It therefore does nothing in automorph mode.  
+
+@findex vmpc-composition-buffer
 @item (vmpc-composition-buffer (foo-function args)) does the
 same, but in the composition buffer.  
+
+@findex vmpc-prompt-for-profile
 @item (vmpc-prompt-for-profile arg) prompts the user for a profile
 (action) to run.  (The user would be well advised not to choose one
 which itself contains this function!)  If ARG is present, it should be
@@ -1233,7 +1299,7 @@ If you want to run new actions you can run @code{vmpc-read-actions} and
 @c ***************************************************************************
 
 
-@node Version History, Index , Debugging, Top
+@node Version History, Variable Index , Debugging, Top
 @c node-name, next, previous, up
 @chapter Version History
 
@@ -1380,9 +1446,13 @@ be expunged.
 
 @end itemize
 
-@node Index, , Version History, Top
-@unnumbered Index
+@node Variable Index, Function Index, Version History, Top
+@unnumbered Variable Index
 @printindex vr
+
+@node Function Index, , Variable Index, Top
+@unnumbered Function Index
+@printindex fn
 
 
 
