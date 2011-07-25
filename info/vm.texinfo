@@ -2495,11 +2495,11 @@ to this dilemma.  Such a message would contain at least two text
 subparts, one in plain text and the other in the full featured text
 formatting language that the sender used.
 
-@vindex vm-mime-alternative-select-method
+@vindex vm-mime-alternative-show-method
 @cindex MIME alternative, best
 @cindex MIME alternative, best-internal
 To control how VM displays multipart/alternative messages, you must
-set the variable @code{vm-mime-alternative-select-method}.  Its value must be
+set the variable @code{vm-mime-alternative-show-method}.  Its value must be
 a symbol.  A value of @code{best} tells VM to display the message
 using the subpart closest in appearance to what the sender used to
 compose the message.  In the example above this would mean displaying
@@ -3068,7 +3068,7 @@ When citing a @code{multipart/alternative} MIME component, VM chooses the
 alternative specified by the variable
 @code{vm-mime-alternative-yank-method}.  It can 
 be defined similar to the variable
-@code{vm-mime-alternative-select-method}. (@pxref{multipart/alternative}.) 
+@code{vm-mime-alternative-show-method}. (@pxref{multipart/alternative}.) 
 
 @vindex vm-fill-paragraphs-containing-long-lines-in-reply
 @vindex vm-fill-long-lines-in-reply-column

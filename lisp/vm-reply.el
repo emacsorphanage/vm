@@ -517,7 +517,7 @@ specified by `vm-included-text-headers' and
 
       ;; Use normal MIME decoding but override normal parameter settings
       (let (;; override the alternative-select-method
-	    (vm-mime-alternative-select-method vm-mime-alternative-yank-method)
+	    (vm-mime-alternative-show-method vm-mime-alternative-yank-method)
 	    ;; include only text and message types
 	    (vm-auto-displayed-mime-content-types '("text" "message"))       
 	    ;; don't include separator for multipart

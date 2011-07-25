@@ -2937,13 +2937,13 @@ the argument.                                        USR, 2011-03-25"
 
 
 (defun vm-mime-display-internal-multipart/alternative (layout)
-  (if (eq vm-mime-alternative-select-method 'all)
+  (if (eq vm-mime-alternative-show-method 'all)
       (vm-mime-display-internal-multipart/mixed layout)
     (vm-mime-display-internal-show-multipart/alternative layout)))
 
 (defun vm-mime-display-internal-show-multipart/alternative (layout)
   (let (best-layout)
-    (cond ((eq vm-mime-alternative-select-method 'best)
+    (cond ((eq vm-mime-alternative-show-method 'best)
 	   (let ((done nil)
 		 (best nil)
 		 part-list type)
@@ -2957,7 +2957,7 @@ the argument.                                        USR, 2011-03-25"
 			 done t)
 		 (setq part-list (cdr part-list))))
 	     (setq best-layout (or best (car (vm-mm-layout-parts layout))))))
-	  ((eq vm-mime-alternative-select-method 'best-internal)
+	  ((eq vm-mime-alternative-show-method 'best-internal)
 	   (let ((done nil)
 		 (best nil)
 		 (second-best nil)
@@ -2976,14 +2976,14 @@ the argument.                                        USR, 2011-03-25"
 	       (setq part-list (cdr part-list)))
 	     (setq best-layout (or best second-best
 				   (car (vm-mm-layout-parts layout))))))
-	  ((and (consp vm-mime-alternative-select-method)
-		(eq (car vm-mime-alternative-select-method)
+	  ((and (consp vm-mime-alternative-show-method)
+		(eq (car vm-mime-alternative-show-method)
 		    'favorite-internal))
 	   (let ((done nil)
 		 (best nil)
 		 (saved-part-list
 		  (nreverse (copy-sequence (vm-mm-layout-parts layout))))
-		 (favs (cdr vm-mime-alternative-select-method))
+		 (favs (cdr vm-mime-alternative-show-method))
 		 (second-best nil)
 		 part-list type)
 	     (while (and favs (not done))
@@ -3001,13 +3001,13 @@ the argument.                                        USR, 2011-03-25"
 	       (setq favs (cdr favs)))
 	     (setq best-layout (or best second-best
 				   (car (vm-mm-layout-parts layout))))))
-	  ((and (consp vm-mime-alternative-select-method)
-		(eq (car vm-mime-alternative-select-method) 'favorite))
+	  ((and (consp vm-mime-alternative-show-method)
+		(eq (car vm-mime-alternative-show-method) 'favorite))
 	   (let ((done nil)
 		 (best nil)
 		 (saved-part-list
 		  (nreverse (copy-sequence (vm-mm-layout-parts layout))))
-		 (favs (cdr vm-mime-alternative-select-method))
+		 (favs (cdr vm-mime-alternative-show-method))
 		 (second-best nil)
 		 part-list type)
 	     (while (and favs (not done))
@@ -7822,7 +7822,7 @@ Returns marker pointing to the start of the encoded MIME part."
     "Press RETURN"))
 
 (defun vm-mf-default-action (layout)
-  (if (eq vm-mime-alternative-select-method 'all)
+  (if (eq vm-mime-alternative-show-method 'all)
       (concat (vm-mf-default-action-orig layout) " alternative")
     (vm-mf-default-action-orig layout)))
 
