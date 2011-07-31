@@ -5969,67 +5969,84 @@ minibuffer if the command is run interactively."
   (unless vm-send-using-mime
     (error (concat "MIME attachments disabled, "
 		   "set vm-send-using-mime non-nil to enable.")))
-  (if (not (consp message))
-      (let* ((work-buffer (vm-generate-new-unibyte-buffer "*attached message*"))
-	     (m (vm-real-message-of message))
-	     (folder (vm-buffer-of m)))
-	(with-current-buffer work-buffer
-	  (vm-insert-region-from-buffer folder (vm-headers-of m)
-					(vm-text-end-of m))
-	  (goto-char (point-min))
-	  (vm-reorder-message-headers
-	   nil :keep-list nil
-	   :discard-regexp vm-internal-unforwarded-header-regexp))
-	(and description (setq description
-			       (vm-mime-scrub-description description)))
-	(vm-attach-object work-buffer 
-			       :type "message/rfc822" :params nil 
-			       :disposition '("inline")
-			       :description description)
-	(make-local-variable 'vm-forward-list)
-	(setq vm-system-state 'forwarding
-	      vm-forward-list (list message))
-	(add-hook 'kill-buffer-hook
-		  `(lambda ()
-		     (if (eq (current-buffer) ,(current-buffer))
-		  	 (kill-buffer ,work-buffer)))
-		  ))
-    (let ((work-buffer (vm-generate-new-unibyte-buffer "*attached messages*"))
-	  boundary)
-      (with-current-buffer work-buffer
-	(setq boundary (vm-mime-encapsulate-messages
-			message :keep-list vm-mime-digest-headers
-			:discard-regexp vm-mime-digest-discard-header-regexp
-			:always-use-digest t))
-	(goto-char (point-min))
-	(insert "MIME-Version: 1.0\n")
-	(insert "Content-Type: "
-		(vm-mime-type-with-params 
-		 "multipart/digest"
-		 (list (concat "boundary=\"" boundary "\"")))
-		"\n")
-	(insert "Content-Transfer-Encoding: "
-		(vm-determine-proper-content-transfer-encoding
-		 (point)
-		 (point-max))
-		"\n\n"))
-      (when description 
-	(setq description (vm-mime-scrub-description description)))
-      (vm-attach-object work-buffer :type "multipart/digest"
-			     :params (list (concat "boundary=\"" 
-						   boundary "\"")) 
-			     :disposition '("inline")
-			     :description nil :mimed t)
-      (make-local-variable 'vm-forward-list)
-      (setq vm-system-state 'forwarding
-	    vm-forward-list (copy-sequence message))
-      (add-hook 'kill-buffer-hook
-		`(lambda ()
-		   (if (eq (current-buffer) ,(current-buffer))
-		       (kill-buffer ,work-buffer)))))))
+  (cond ((not (consp message))
+	 (vm-attach-message-internal message description))
+	((null (cdr message))
+	 (vm-attach-message-internal (car message) description))
+	(t
+	 (vm-attach-message-digest-internal message description))))
 (defalias 'vm-mime-attach-message 'vm-attach-message)
 
 
+(defun vm-attach-message-internal (message description)
+  "Attach MESSAGE as a mime object to the current composition.  Use
+DESCRIPTION." 
+  (let* ((work-buffer (vm-generate-new-unibyte-buffer "*attached message*"))
+	 (m (vm-real-message-of message))
+	 (folder (vm-buffer-of m)))
+    (with-current-buffer work-buffer
+      (vm-insert-region-from-buffer folder (vm-headers-of m) (vm-text-end-of m))
+      (goto-char (point-min))
+      (vm-reorder-message-headers
+       nil :keep-list nil
+       :discard-regexp vm-internal-unforwarded-header-regexp))
+    (when description 
+      (setq description (vm-mime-scrub-description description)))
+    (vm-attach-object work-buffer 
+		      :type "message/rfc822" :params nil 
+		      :disposition '("inline")
+		      :description description)
+    (make-local-variable 'vm-forward-list)
+    (setq vm-system-state 'forwarding
+	  vm-forward-list (list message))
+    ;; move window point forward so that if this command
+    ;; is used consecutively, the insertions will be in
+    ;; the correct order in the composition buffer.
+    (let ((w (vm-get-buffer-window (current-buffer))))
+      (when w (set-window-point w (point))))
+    (add-hook 'kill-buffer-hook
+	      `(lambda ()
+		 (if (eq (current-buffer) ,(current-buffer))
+		     (kill-buffer ,work-buffer))))))
+
+(defun vm-attach-message-digest-internal (mlist description)
+  "Attach MLIST as a mail digest object to the current composition.  Use
+DESCRIPTION." 
+  (let ((work-buffer (vm-generate-new-unibyte-buffer "*attached messages*"))
+	boundary)
+    (with-current-buffer work-buffer
+      (setq boundary (vm-mime-encapsulate-messages
+		      mlist :keep-list vm-mime-digest-headers
+		      :discard-regexp vm-mime-digest-discard-header-regexp
+		      :always-use-digest t))
+      (goto-char (point-min))
+      (insert "MIME-Version: 1.0\n")
+      (insert "Content-Type: "
+	      (vm-mime-type-with-params 
+	       "multipart/digest" (list (concat "boundary=\"" boundary "\"")))
+	      "\n")
+      (insert "Content-Transfer-Encoding: "
+	      (vm-determine-proper-content-transfer-encoding
+	       (point) (point-max))
+	      "\n\n"))
+    (when description 
+      (setq description (vm-mime-scrub-description description)))
+    (vm-attach-object work-buffer :type "multipart/digest"
+		      :params (list (concat "boundary=\"" boundary "\"")) 
+		      :disposition '("inline")
+		      :description description :mimed t)
+    (make-local-variable 'vm-forward-list)
+    (setq vm-system-state 'forwarding
+	  vm-forward-list (copy-sequence mlist))
+    ;; move window point forward so that if this command
+    ;; is used consecutively, the insertions will be in
+    ;; the correct order in the composition buffer.
+    (let ((w (vm-get-buffer-window (current-buffer))))
+      (when w (set-window-point w (point))))
+    (add-hook 'kill-buffer-hook
+	      `(lambda ()
+		 (if (eq (current-buffer) ,(current-buffer))
+		     (kill-buffer ,work-buffer))))))
 ;;;###autoload
 (defun vm-attach-message-to-composition (composition &optional description)
   "Attach the current message from the current VM folder to a VM
@@ -6061,57 +6078,35 @@ minibuffer if the command is run interactively."
    (let ((last-command last-command)
 	 (this-command this-command)
 	 description)
-     (vm-select-folder-buffer-and-validate 1 t)
-     (unless (memq major-mode '(vm-mode vm-virtual-mode))
-       (error "Command must be used in a VM buffer."))
-     (unless vm-send-using-mime
-       (error (concat "MIME attachments disabled, "
-		      "set vm-send-using-mime non-nil to enable.")))
-     (list
-      (read-buffer "Attach object to buffer: "
-		   (vm-find-composition-buffer) t)
-      (progn (setq description (read-string "Description: "))
-	     (when (string-match "^[ \t]*$" description)
-	       (setq description nil))
-	     description))))
+     (save-current-buffer
+       (vm-select-folder-buffer-and-validate 1 t)
+       (unless (memq major-mode '(vm-mode vm-virtual-mode))
+	 (error "Command must be used in a VM buffer."))
+       (unless vm-send-using-mime
+	 (error (concat "MIME attachments disabled, "
+			"set vm-send-using-mime non-nil to enable.")))
+       (list
+	(read-buffer "Attach object to buffer: " (vm-find-composition-buffer) t)
+	(progn (setq description (read-string "Description: "))
+	       (when (string-match "^[ \t]*$" description)
+		 (setq description nil))
+	       description)))))
 
   (unless vm-send-using-mime
     (error (concat "MIME attachments disabled, "
 		   "set vm-send-using-mime non-nil to enable.")))
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
+  (vm-follow-summary-cursor)
 
-  (let* ((work-buffer (vm-generate-new-unibyte-buffer "*attached message*"))
-	 (m (vm-real-message-of (vm-current-message)))
-	 (folder (vm-buffer-of m))
-	 w)
-    (with-current-buffer work-buffer
-      (vm-insert-region-from-buffer folder (vm-headers-of m)
-				    (vm-text-end-of m))
-      (goto-char (point-min))
-      (vm-reorder-message-headers
-       nil :keep-list nil
-       :discard-regexp vm-internal-unforwarded-header-regexp)
-      (when description 
-	(setq description
-	      (vm-mime-scrub-description description))))
+  (let ((mlist (vm-select-operable-messages 1 t "Attach")))
+    (when (null mlist)
+      (setq mlist (list (vm-current-message))))
+
     (with-current-buffer composition
-      (vm-attach-object work-buffer 
-			     :type "message/rfc822" :params nil 
-			     :disposition '("inline")
-			     :description description)
-      (make-local-variable 'vm-forward-list)
-      (setq vm-system-state 'forwarding
-	    vm-forward-list (list m))
-      ;; move window point forward so that if this command
-      ;; is used consecutively, the insertions will be in
-      ;; the correct order in the composition buffer.
-      (setq w (vm-get-buffer-window composition))
-      (and w (set-window-point w (point)))
-      (add-hook 'kill-buffer-hook
-		`(lambda ()
-		   (if (eq (current-buffer) ,(current-buffer))
-		       (kill-buffer ,work-buffer)))))))
+    (if (null (cdr mlist))		; single message
+	(vm-attach-message-internal (car mlist) description)
+      (vm-attach-message-digest-internal mlist description)))))
 (defalias 'vm-mime-attach-message-to-composition
   'vm-attach-message-to-composition)
 		      
