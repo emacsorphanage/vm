@@ -1456,6 +1456,49 @@ shorter pieces, rebuilt it from them."
 (defvar buffer-display-table)
 (defvar standard-display-table)
 (defvar buffer-file-type)
+
+(defun vm-generate-new-presentation-buffer (folder-buffer name)
+  "Generate a new Presentation buffer for FOLDER-BUFFER.  NAME is
+a string denoting the folder name."
+  (let ((pres-buf (vm-generate-new-multibyte-buffer 
+		   (concat name " Presentation"))))
+    (save-excursion
+      (set-buffer pres-buf)
+      (if (fboundp 'buffer-disable-undo)
+	  (buffer-disable-undo (current-buffer))
+	;; obfuscation to make the v19 compiler not whine
+	;; about obsolete functions.
+	(let ((x 'buffer-flush-undo))
+	  (funcall x (current-buffer))))
+      (setq mode-name "VM Presentation"
+	    major-mode 'vm-presentation-mode
+	    vm-message-pointer (list nil)
+	    vm-mail-buffer folder-buffer
+	    mode-popup-menu (and vm-use-menus
+				 (vm-menu-support-possible-p)
+				 (vm-menu-mode-menu))
+	    ;; Default to binary file type for DOS/NT.
+	    buffer-file-type t
+	    ;; Tell XEmacs/MULE not to mess with the text on writes.
+	    buffer-read-only t
+	    mode-line-format vm-mode-line-format)
+      ;; scroll in place messes with scroll-up and this loses
+      (defvar scroll-in-place)
+      (make-local-variable 'scroll-in-place)
+      (setq scroll-in-place nil)
+      (when (fboundp 'set-buffer-file-coding-system)
+	(set-buffer-file-coding-system (vm-binary-coding-system) t))
+      (vm-fsfemacs-nonmule-display-8bit-chars)
+      (if (and vm-mutable-frames vm-frame-per-folder
+	       (vm-multiple-frames-possible-p))
+	  (vm-set-hooks-for-frame-deletion))
+      (use-local-map vm-mode-map)
+      (vm-toolbar-install-or-uninstall-toolbar)
+      (when (vm-menu-support-possible-p)
+	(vm-menu-install-menus))
+      (run-hooks 'vm-presentation-mode-hook))
+    pres-buf))
+
 (defun vm-make-presentation-copy (m)
   "Create a copy of the message M in the Presentation Buffer.  If
 the message is external then the copy is made from the external
@@ -1464,47 +1507,12 @@ source of the message."
 	pres-buf mm
 	(real-m (vm-real-message-of m))
 	(modified (buffer-modified-p)))
-    (cond ((or (null vm-presentation-buffer-handle)
-	       (null (buffer-name vm-presentation-buffer-handle)))
-	   ;; Create a new Presentation buffer
-	   (setq pres-buf (vm-generate-new-multibyte-buffer 
-			   (concat (buffer-name) " Presentation")))
-	   (save-excursion
-	     (set-buffer pres-buf)
-	     (if (fboundp 'buffer-disable-undo)
-		 (buffer-disable-undo (current-buffer))
-	       ;; obfuscation to make the v19 compiler not whine
-	       ;; about obsolete functions.
-	       (let ((x 'buffer-flush-undo))
-		 (funcall x (current-buffer))))
-	     (setq mode-name "VM Presentation"
-		   major-mode 'vm-presentation-mode
-		   vm-message-pointer (list nil)
-		   vm-mail-buffer mail-buffer
-		   mode-popup-menu (and vm-use-menus
-					(vm-menu-support-possible-p)
-					(vm-menu-mode-menu))
-		   ;; Default to binary file type for DOS/NT.
-		   buffer-file-type t
-		   ;; Tell XEmacs/MULE not to mess with the text on writes.
-		   buffer-read-only t
-		   mode-line-format vm-mode-line-format)
-	     ;; scroll in place messes with scroll-up and this loses
-	     (defvar scroll-in-place)
-	     (make-local-variable 'scroll-in-place)
-	     (setq scroll-in-place nil)
-	     (when (fboundp 'set-buffer-file-coding-system)
-	       (set-buffer-file-coding-system (vm-binary-coding-system) t))
-	     (vm-fsfemacs-nonmule-display-8bit-chars)
-	     (if (and vm-mutable-frames vm-frame-per-folder
-		      (vm-multiple-frames-possible-p))
-		 (vm-set-hooks-for-frame-deletion))
-	     (use-local-map vm-mode-map)
-	     (vm-toolbar-install-or-uninstall-toolbar)
-	     (when (vm-menu-support-possible-p)
-	       (vm-menu-install-menus))
-	     (run-hooks 'vm-presentation-mode-hook))
-	   (setq vm-presentation-buffer-handle pres-buf)))
+    (when (or (null vm-presentation-buffer-handle)
+	      (null (buffer-name vm-presentation-buffer-handle)))
+      ;; Create a new Presentation buffer
+      (setq pres-buf (vm-generate-new-presentation-buffer 
+		      (current-buffer) (buffer-name)))
+      (setq vm-presentation-buffer-handle pres-buf))
     (setq pres-buf vm-presentation-buffer-handle)
     (setq vm-presentation-buffer vm-presentation-buffer-handle)
     (setq vm-mime-decoded nil)
