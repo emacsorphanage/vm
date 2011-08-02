@@ -45,6 +45,7 @@
 (declare-function rfc822-addresses "ext:rfc822" (header-text))
 
 (declare-function vm-visit-folder "vm.el" (folder &optional read-only))
+(declare-function vm-set-folded-flag "vm-undo.el" (m flag &optional norecord))
 
 (defvar scrollbar-height)		; defined for XEmacs
 
@@ -94,6 +95,9 @@ expanded (using the folded attribute of the message)."
 (defsubst vm-visible-message (m)
   (apply 'vm-vs-or m vm-summary-visible))
 
+;; This variable is only in Emacs 24
+(defvar bidi-paragraph-direction)
+
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"
 	major-mode 'vm-summary-mode
@@ -106,7 +110,9 @@ expanded (using the folded attribute of the message)."
 	vm-summary-pointer nil
 	vm-summary-=> (if (stringp vm-summary-arrow) vm-summary-arrow "")
 	vm-summary-no-=> (make-string (length vm-summary-=>) ? )
-	truncate-lines t)
+	truncate-lines t
+	;; Needed for Emacs 24 bidi display
+	bidi-paragraph-direction 'left-to-right)
   ;; horizontal scrollbar off by default
   ;; user can turn it on in summary hook if desired.
   (when (and vm-xemacs-p (featurep 'scrollbar))
