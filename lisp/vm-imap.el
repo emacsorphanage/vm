@@ -3222,7 +3222,8 @@ headers-only form."
 			 (> (read (vm-folder-imap-uid-message-size (car pair)))
 			    vm-imap-max-message-size))
 		    (list (car pair) (cdr pair) 
-			  (memq 'imap vm-enable-external-messages))
+			  (or (eq vm-enable-external-messages t)
+			      (memq 'imap vm-enable-external-messages)))
 		  (list (car pair) (cdr pair) nil)))
 	      retrieve-list))
        (setq r-list (vm-imap-bunch-retrieve-list 

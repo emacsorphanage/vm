@@ -206,7 +206,7 @@ fetched on demand, or nil to signify no limit."
 		 (integer :tag "Number of Mesages")))
 
 (defcustom vm-index-file-suffix nil
-  "*Suffix used to construct VM index file names.
+  "*Suffix used to construct VM index file names, e.g., \".inx\".
 When VM visits a folder, it checks for the existence of a file
 whose name is the folder's file name with the value of this
 variable appended to it.  If found, the file's contents will be
@@ -234,7 +234,8 @@ Emacs sessions, at the cost of short delays when messages are
 viewed.
 
 As of version 8.2.0, this facility is only available for IMAP
-folders (context name `imap')."
+folders (context name `imap').  Messages larger than
+`vm-imap-max-message-size' are treated as external messages."
   :group 'vm-folders
   :type '(repeat (choice (const imap))))
 
@@ -590,15 +591,19 @@ variable."
   :type '(choice (const nil) directory))
 
 (defcustom vm-imap-max-message-size nil
-  "*If VM is about to retrieve via IMAP a message larger than this size
-(in bytes) it will ask you whether it should retrieve the message.
+  "*The largest message size of IMAP messages that VM should retrieve
+automatically.  
 
-If VM is retrieving mail automatically because `vm-auto-get-new-mail'
-is set to a numeric value then you will not be prompted about large
-messages.  This is to avoid prompting you while you're typing in
-another buffer.  In this case the large message will be skipped with a
-warning message.  You will be able to retrieved any skipped messages
-later by running `vm-get-new-mail' interactively.
+If VM encounters an IMAP message larger than this size, the action
+is as follows:
+
+- In IMAP folders, the message is treated as an external message if
+`vm-enable-external-messages' includes 'imap.  Otherwise it is
+retrieved.
+
+- In local folders, the message is skipped if it is part of
+automatical mail retrieval.  During interactive mail retrieval, obtained by
+running `vm-get-new-mail', VM queries you whether it should be retrieved.
 
 A nil value for `vm-imap-max-message-size' means no size limit."
   :group 'vm-imap

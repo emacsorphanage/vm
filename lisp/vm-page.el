@@ -755,7 +755,7 @@ decoding is done if necessary.  The displayed content might be a
 preview or the full message, governed by the the variables
 `vm-preview-lines' and `vm-preview-read-messages'.  USR,2010-01-14"
 
-  ;; Set new-preview if the user needs to see the
+  ;; Set need-preview if the user needs to see the
   ;; message in the previewed state.  Save some time later by not
   ;; doing preview action that the user will never see anyway.
   (let ((need-preview
