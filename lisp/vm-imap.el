@@ -1015,7 +1015,7 @@ the process buffer for tracing purposes.  Returns the process or
 nil if the session could not be created."
   (let ((shutdown nil)		   ; whether process is to be shutdown
 	(folder-type vm-folder-type)
-	process ooo
+	process ooo success
 	(folder (or (vm-imap-folder-for-spec source)
 		    (vm-safe-imapdrop-string source)))
 	(coding-system-for-read (vm-binary-coding-system))
@@ -1068,17 +1068,15 @@ nil if the session could not be created."
 			   host port))
 		    (equal user (car authinfo)))
 	       (setq pass (cadr authinfo)))))
-      (when (and (null pass) interactive)
+      (while (and (null pass) interactive)
 	(setq pass
-	      (read-passwd (format "IMAP password for %s: " folder))))
+	      (read-passwd (format "IMAP password for %s: " folder)))
+	(when (equal pass "")
+	    (vm-inform 0 "Password cannot be empty")
+	    (sit-for 2)
+	    (setq pass nil)))
       (when (null pass)
 	(error "Need password for %s" folder)))
-    ;; save the password for the sake of
-    ;; vm-expunge-imap-messages, which passes password-less
-    ;; imapdrop specifications to vm-make-imap-session.
-    (if (null (assoc source-nopwd-nombox vm-imap-passwords))
-	(setq vm-imap-passwords (cons (list source-nopwd-nombox pass)
-				      vm-imap-passwords)))
     ;; get the trace buffer
     (setq imap-buffer
 	  (vm-make-work-buffer 
@@ -1164,20 +1162,19 @@ nil if the session could not be created."
 	       process
 	       (format "LOGIN %s %s" 
 		       (vm-imap-quote-string user) (vm-imap-quote-string pass)))
-	      (if (null (vm-imap-read-ok-response process))
-		  (progn
-		    (setq vm-imap-passwords
-			  (delete (list source-nopwd-nombox pass)
-				  vm-imap-passwords))
-		    (vm-inform 0 "IMAP password for %s incorrect" folder)
-		    ;; don't sleep unless we're running synchronously.
-		    (if vm-imap-ok-to-ask
-			(sleep-for 2))
-		    (throw 'end-of-session nil))
-		;;--------------------------------
-		(vm-imap-session-type:set 'active)
-		;;--------------------------------
-		))
+	      (unless (vm-imap-read-ok-response process)
+		(vm-inform 0 "IMAP password for %s incorrect" folder)
+		;; don't sleep unless we're running synchronously.
+		(if vm-imap-ok-to-ask
+		    (sleep-for 2))
+		(throw 'end-of-session nil))
+	      (unless (assoc source-nopwd-nombox vm-imap-passwords)
+		(setq vm-imap-passwords (cons (list source-nopwd-nombox pass)
+					      vm-imap-passwords)))
+	      (setq success t)
+	      ;;--------------------------------
+	      (vm-imap-session-type:set 'active))
+	      ;;--------------------------------
 	     ((equal auth "cram-md5")
 	      (if (not (vm-imap-auth-method 'CRAM-MD5))
 		  (error "CRAM-MD5 authentication unsupported by this server"))
@@ -1210,42 +1207,46 @@ nil if the session could not be created."
 			   (vm-xor-string secret ipad) challenge)))))
 		      answer (vm-mime-base64-encode-string answer))
 		(vm-imap-send-command process answer nil t)
-		(if (null (vm-imap-read-ok-response process))
-		    (progn
-		      (setq vm-imap-passwords
-			    (delete (list source-nopwd-nombox pass)
-				    vm-imap-passwords))
-		      (vm-inform 0 "IMAP password for %s incorrect" folder)
-		      ;; don't sleep unless we're running synchronously.
-		      (if vm-imap-ok-to-ask
-			  (sleep-for 2))
-		      (throw 'end-of-session nil))
-		  ;;-------------------------------
-		  (vm-imap-session-type:set 'active)
-		  ;;-------------------------------
-		  )))
+		(unless (vm-imap-read-ok-response process)
+		  (vm-inform 0 "IMAP password for %s incorrect" folder)
+		  ;; don't sleep unless we're running synchronously.
+		  (if vm-imap-ok-to-ask
+		      (sleep-for 2))
+		  (throw 'end-of-session nil))
+		(setq success t)
+		(unless (assoc source-nopwd-nombox vm-imap-passwords)
+		  (setq vm-imap-passwords (cons (list source-nopwd-nombox pass)
+						vm-imap-passwords)))
+		;;-------------------------------
+		(vm-imap-session-type:set 'active)))
+		;;-------------------------------
 	     ((equal auth "preauth")
-	      (if (not (eq greeting 'preauth))
-		  (progn
-		    (vm-inform 0 "IMAP session was not pre-authenticated")
-		    ;; don't sleep unless we're running synchronously.
-		    (if vm-imap-ok-to-ask
-			(sleep-for 2))
-		    (throw 'end-of-session nil))
-		;;-------------------------------
-		(vm-imap-session-type:set 'active)
-		;;-------------------------------
-		))
+	      (unless (eq greeting 'preauth)
+		(vm-inform 0 "IMAP session was not pre-authenticated")
+		;; don't sleep unless we're running synchronously.
+		(if vm-imap-ok-to-ask
+		    (sleep-for 2))
+		(throw 'end-of-session nil))
+	      (setq success t)
+	      ;;-------------------------------
+	      (vm-imap-session-type:set 'active)
+	      ;;-------------------------------
+	      )
 	     (t (error "Don't know how to authenticate using %s" auth)))
-	    (setq shutdown nil)
-	    process ))
+	    (setq shutdown nil)))
       ;; unwind-protection
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
       (if shutdown
 	  (vm-imap-end-session process imap-buffer))
-      (vm-tear-down-stunnel-random-data))))
+      (vm-tear-down-stunnel-random-data))
+    
+    (if process
+	process
+      ;; try again if possible
+      (when (and (not success) interactive)
+	(vm-imap-make-session source interactive purpose)))))
 
 (defun vm-imap-check-for-server-spec (source host port auth user pass 
 					     use-ssl use-ssh)
@@ -1974,6 +1975,9 @@ See also `vm-imap-get-message-size'."
 	     (setq retval t done t))
 	    ((vm-imap-response-matches response 'VM 'NO)
 	     (setq retval nil done t))
+	    ((vm-imap-response-matches response 'VM 'BAD)
+	     (setq retval nil done t)
+	     (vm-imap-normal-error "Server said BAD"))
 	    (t
 	     (vm-imap-protocol-error "Did not receive OK response"))))
     retval ))
