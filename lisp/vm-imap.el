@@ -1242,10 +1242,10 @@ nil if the session could not be created."
 	  (vm-imap-end-session process imap-buffer))
       (vm-tear-down-stunnel-random-data))
     
-    (if process
+    (if success
 	process
       ;; try again if possible
-      (when (and (not success) interactive)
+      (when interactive
 	(vm-imap-make-session source interactive purpose)))))
 
 (defun vm-imap-check-for-server-spec (source host port auth user pass 
@@ -2106,26 +2106,31 @@ See also `vm-imap-get-message-size'."
 		 ;; string ::= { n-octets } end-of-line octets...
 		 (forward-char 1)
 		 (let (start obj n-octets)
-		   (setq obj (vm-imap-read-object process))
-		   (unless (eq (car obj) 'atom)
-		     (vm-imap-protocol-error "number expected after {"))
-		   (setq n-octets (string-to-number
-				   (buffer-substring (nth 1 obj)
-						     (nth 2 obj))))
-		   (setq obj (vm-imap-read-object process))
-		   (unless (eq (car obj) 'close-brace)
-		     (vm-imap-protocol-error "} expected"))
-		   (setq obj (vm-imap-read-object process))
-		   (unless (eq (car obj) 'end-of-line)
-		     (vm-imap-protocol-error "CRLF expected"))
-		   (setq start (point))
-		   (while (< (- (point-max) start) n-octets)
-		     (vm-imap-check-connection process)
-		     ;; point might change here?  USR, 2011-03-16
-		     (vm-accept-process-output process))
-		   (goto-char (+ start n-octets))
-		   (setq token (list 'string start (point))
-			 done t)))
+		   ;; better check if we have a number here because
+		   ;; gmail sometimes puts random stuff.
+		   (if (not (save-excursion 
+			      (looking-at "[0-9]*}")))
+		       (setq token '(open-brace) done t)
+		     (setq obj (vm-imap-read-object process))
+		     (unless (eq (car obj) 'atom)
+		       (vm-imap-protocol-error "number expected after {"))
+		     (setq n-octets (string-to-number
+				     (buffer-substring (nth 1 obj)
+						       (nth 2 obj))))
+		     (setq obj (vm-imap-read-object process))
+		     (unless (eq (car obj) 'close-brace)
+		       (vm-imap-protocol-error "} expected"))
+		     (setq obj (vm-imap-read-object process))
+		     (unless (eq (car obj) 'end-of-line)
+		       (vm-imap-protocol-error "CRLF expected"))
+		     (setq start (point))
+		     (while (< (- (point-max) start) n-octets)
+		       (vm-imap-check-connection process)
+		       ;; point might change here?  USR, 2011-03-16
+		       (vm-accept-process-output process))
+		     (goto-char (+ start n-octets))
+		     (setq token (list 'string start (point))
+			   done t))))
 		((looking-at "}")
 		 (forward-char 1)
 		 (setq token '(close-brace) done t))
