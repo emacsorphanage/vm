@@ -423,8 +423,15 @@ specified by `vm-included-text-headers' and
         (end (point-marker)))
      (save-excursion
       (cond ((and vm-include-text-from-presentation
-		  (not (vm-mime-plain-message-p message)))
-	     (vm-yank-message-presentation message)
+		  (not (vm-mime-plain-message-p message))
+		  (or (eq message (car vm-message-pointer))
+		      (progn
+			(message 
+			 (concat "Can yank presentation for only the "
+				 "current message.  Using default yank."))
+			(sit-for 2)
+			nil)))
+	     (vm-yank-message-presentation)
 	     (setq end (point-marker)))
 	    (vm-include-text-basic
 	     (vm-yank-message-text message layout)
@@ -462,7 +469,7 @@ specified by `vm-included-text-headers' and
 	    (mail-yank-hooks (run-hooks 'mail-yank-hooks))
 	    (t (vm-mail-yank-default message))))))
 
-(defun vm-yank-message-presentation (message)
+(defun vm-yank-message-presentation ()
   ;; This function is the same as Rob's vm-insert-presentation.
   ;; It has been reported that it includes the entire mail box on
   ;; occasion.  See Bug #498477.  It should not be used until that
