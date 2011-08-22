@@ -1076,7 +1076,7 @@ nil if the session could not be created."
 	    (sit-for 2)
 	    (setq pass nil)))
       (when (null pass)
-	(error "Need password for %s" folder)))
+	(error "Need password for %s for %s" folder purpose)))
     ;; get the trace buffer
     (setq imap-buffer
 	  (vm-make-work-buffer 

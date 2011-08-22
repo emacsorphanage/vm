@@ -827,11 +827,14 @@ be different if the message contents changed.  The message will be
 reinserted into an appropriate thread later.       USR, 2011-03-17"
   ;; -------------- atomic block -------------------------------
   (let ((inhibit-quit t)
-	date id-sym s-sym p-sym root-sym)
+	date id-sym s-sym p-sym root root-sym)
     ;; handles for the thread and thread-subject databases
     (setq id-sym (vm-th-thread-symbol m))
-    (setq root-sym (vm-th-thread-symbol (vm-th-root id-sym)))
-    (setq s-sym (vm-ts-subject-symbol root-sym))
+    (if (setq root (vm-th-root id-sym))
+	(progn
+	  (setq root-sym (vm-th-thread-symbol root))
+	  (setq s-sym (vm-ts-subject-symbol root-sym)))
+      (vm-thread-debug 'vm-thread-message id-sym))
     (if (member (symbol-name id-sym) vm-traced-message-ids)
 	(vm-thread-debug 'vm-unthread-message id-sym))
     (if (member (symbol-name s-sym) vm-traced-message-subjects)
@@ -857,7 +860,7 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 	(vm-th-set-parent-of id-sym nil)))
 
     ;; remove the message from its erstwhile subject thread
-    (when (boundp s-sym)
+    (when (and s-sym (boundp s-sym))
       (if (eq id-sym (vm-ts-root-of s-sym))
 	  ;; (when message-changing
 	  (cond

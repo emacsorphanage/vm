@@ -576,7 +576,7 @@ relevant POP servers to remove the messages."
 		     (when vm-pop-ok-to-ask
 		       (sleep-for 2))
 		     (throw 'done nil))
-		   (when (assoc source-nopwd vm-pop-passwords)
+		   (unless (assoc source-nopwd vm-pop-passwords)
 		     (setq vm-pop-passwords (cons (list source-nopwd pass)
 						  vm-pop-passwords)))
 		   (setq success t))
@@ -608,7 +608,7 @@ relevant POP servers to remove the messages."
 		     (when vm-pop-ok-to-ask
 		       (sleep-for 2))
 		     (throw 'done nil))
-		   (when (assoc source-nopwd vm-pop-passwords)
+		   (unless (assoc source-nopwd vm-pop-passwords)
 		     (setq vm-pop-passwords (cons (list source-nopwd pass)
 						  vm-pop-passwords)))
 		   (setq success t))
