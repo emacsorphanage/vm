@@ -1012,7 +1012,7 @@ previous mime decoding."
 (defun vm-reencode-mime-encoded-words-in-string (string)
   "Reencode in mime the words in STRING that need
 encoding.  The words that need encoding are expected to have
-text-properties set with the appropriate characte set.  This would
+text-properties set with the appropriate character set.  This would
 have been done if the contents of the buffer are the result of a
 previous mime decoding."
   (if (and vm-display-using-mime
