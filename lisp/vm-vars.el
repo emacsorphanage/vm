@@ -3884,26 +3884,28 @@ arrow only if the summary window is not the only existing window."
 		 (const :tag "Always" t) 
 		 (const :tag "Yes, if not only window" yes-if-not-only-window)))
 
+;; These flags and variables are for debugging purposes
+
 (defvar vm-debug nil
-  "Flag used by developers to control localized debugging features.")
+  "*Flag used by developers to control localized debugging features.")
 
 (defvar vm-traced-message-ids nil
-  "List of message ID's whose activity is debugged.  This is for
+  "*List of message ID's whose activity is debugged.  This is for
 developers' use only.")
 
 (defvar vm-traced-message-subjects nil
-  "List of message subjectss whose activity is debugged.  This is for
+  "*List of message subjectss whose activity is debugged.  This is for
 developers' use only.")
 
 (defvar vm-summary-debug nil
-  "Flag used by developers for tracing summary generation")
+  "*Flag used by developers for tracing summary generation")
 
 (defvar vm-summary-traced-messages nil
-  "List of message numbers whose activity is debugged during
+  "*List of message numbers whose activity is debugged during
 summary generation.  This is for developers' use only.")
 
 (defvar vm-thread-debug nil
-  "Flag that enables the integrity checking of threads.  This is for
+  "*Flag that enables the integrity checking of threads.  This is for
 developers' use only.") 
 
 (defcustom vm-subject-ignored-prefix "^\\(re: *\\)+"

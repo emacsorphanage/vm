@@ -50,6 +50,17 @@
 (defvar scrollbar-height)		; defined for XEmacs
 
 
+(defun vm-summary-trace-message ()
+  (interactive)
+  (add-to-list 'vm-summary-traced-messages
+	       (vm-number-of (vm-current-message)))
+  (message "%s" vm-summary-traced-messages))
+
+(defsubst vm-summary-debug (m)
+  (if (and vm-debug
+	   (member (vm-number-of m) vm-summary-traced-messages))
+      (debug 'vm-summary m)))
+
 (defsubst vm-summary-message-at-point ()
   "Returns the message of the current summary line."
   (save-excursion
@@ -245,9 +256,7 @@ the messages in the current folder."
 	      (setq mp m-list)
 	      (while mp
                 (setq m (car mp))
-		(if (and vm-debug
-			 (member (vm-number-of m) vm-summary-traced-messages))
-		    (debug))
+		(vm-summary-debug m)
 		(vm-set-su-start-of m (point))
 		(insert vm-summary-no-=>)
 		(vm-tokenized-summary-insert m (vm-su-summary m))
@@ -459,8 +468,7 @@ the Summary buffer exists. "
 (defun vm-update-message-summary (m)
   "Replace the summary line of the message M in the summary
 buffer by a regenerated summary line."
-  (if (and vm-debug (member (vm-number-of m) vm-summary-traced-messages))
-      (debug))
+  (vm-summary-debug m)
   (if (and (markerp (vm-su-start-of m))
 	   (marker-buffer (vm-su-start-of m)))
       (let ((modified (buffer-modified-p)) ; Folder or Presentation
