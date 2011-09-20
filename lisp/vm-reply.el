@@ -1735,26 +1735,29 @@ Binds the `vm-mail-mode-map' and hooks"
     (unless (= (preceding-char) ?\n)
       (insert ?\n))
     (insert mail-header-separator "\n")
-    (when mail-signature
-      (save-excursion
-	(save-restriction
-	  (narrow-to-region (point) (point))
-	  (cond ((stringp mail-signature)
-		 (insert mail-signature))
-		((eq mail-signature t)
-		 (insert-file-contents (or (and (boundp 'mail-signature-file)
-						(stringp mail-signature-file)
-						mail-signature-file)
-					   "~/.signature")))
-		(t
-		 (let ((str (eval mail-signature)))
-		   (if (stringp str)
-		       (insert str)))))
-	  (goto-char (point-min))
-	  (if (looking-at "\n*-- \n")
-	      nil
-	    (insert "\n-- \n"))
-	  (goto-char (point-max)))))
+    (condition-case err
+	(when mail-signature
+	  (save-excursion
+	    (save-restriction
+	      (narrow-to-region (point) (point))
+	      (cond ((stringp mail-signature)
+		     (insert mail-signature))
+		    ((eq mail-signature t)
+		     (insert-file-contents 
+		      (or (and (boundp 'mail-signature-file)
+			       (stringp mail-signature-file)
+			       mail-signature-file)
+			  "~/.signature")))
+		    (t
+		     (let ((str (eval mail-signature)))
+		       (if (stringp str)
+			   (insert str)))))
+	      (goto-char (point-min))
+	      (if (looking-at "\n*-- \n")
+		  nil
+		(insert "\n-- \n"))
+	      (goto-char (point-max)))))
+      (error (vm-warn 1 2 "Cound not read signature file: %s" (cdr err))))
     ;; move this buffer to the head of the buffer list so window
     ;; config stuff will select it as the composition buffer.
     (vm-unbury-buffer (current-buffer))

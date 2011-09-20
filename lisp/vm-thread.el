@@ -1012,6 +1012,9 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 	(vm-ts-set-messages-of 
 	 s-sym (remq m (vm-ts-messages-of s-sym)))
 	)))
+  ;; This doesn't work yet
+  ;; (if vm-thread-debug
+  ;;     (vm-check-thread-integrity))
   )
 
 ;; This function is still under development.  USR, 2011-04-04
