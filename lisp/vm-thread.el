@@ -283,8 +283,8 @@ youngest or oldest date in its thread.  CRITERION must be one of
   (let ((vec (symbol-value subject-sym)))
     (aset vec 0 root)
     (aset vec 1 root-date)
-    (if members (aset vec 2 members))
-    (if messages (aset vec 3 messages))))
+    (aset vec 2 members)
+    (aset vec 3 messages)))
 
 ;;; thread tree - basic operations
 
@@ -362,9 +362,8 @@ It also invovles thread-lists of ID-SYM and all its descendants."
 	  (vm-ts-add-messages subject-sym (vm-ts-messages-of other-sym)))
       ;; other-sym is older; copy it into subject-sym
       (vm-ts-add-member subject-sym subject-root)
-      (vm-ts-set subject-sym 
-		 :root other-root
-		 :root-date (vm-ts-root-date-of other-sym))
+      (vm-ts-set-root-of subject-sym other-root)
+      (vm-ts-set-root-date-of subject-sym (vm-ts-root-date-of other-sym))
       (vm-ts-add-members subject-sym (vm-ts-members-of other-sym))
       (vm-ts-add-messages subject-sym (vm-ts-messages-of other-sym)))
     ;; destroy other-sym
@@ -720,7 +719,8 @@ with other ancestors."
 	      (unless (vm-th-belongs-to-reference-thread i-sym)
 		;; strange.  why would i-sym ever be in a ref thread?
 		(vm-ts-add-member subject-sym i-sym))
-	      (vm-ts-set subject-sym :root id-sym :root-date date)
+	      (vm-ts-set-root-of subject-sym id-sym)
+	      (vm-ts-set-root-date-of subject-sym date)
 	      ;; this loops _and_ recurses and I'm worried
 	      ;; about it going into a spin someday.  So I
 	      ;; unblock interrupts here.  It's not critical
@@ -983,8 +983,11 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 		    (setq oldest-subject-msg oldest-msg)
 		    (setq oldest-subject-date oldest-date))
 		  (setq root-sym (vm-th-thread-symbol oldest-subject-msg))
-		  (vm-th-clear-cached-data root-sym root-sym)
 		  (setq children (remq root-sym (vm-ts-members-of s-sym)))
+		  ;; (vm-th-clear-cached-data root-sym root-sym)
+		  (vm-th-clear-subtree root-sym)
+		  (vm-th-clear-thread-lists root-sym)
+		  (mapc 'vm-th-clear-thread-lists children)
 		  (vm-ts-set s-sym :root root-sym
 			     :root-date oldest-subject-date
 			     :members children
