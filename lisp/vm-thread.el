@@ -216,6 +216,16 @@ youngest or oldest date in its thread.  CRITERION must be one of
 (defsubst vm-th-children-of (id-sym)
   (get id-sym 'children))
 
+(defun vm-th-visible-children-of (id-sym)
+  (let ((kids (vm-th-children-of id-sym))
+	(result nil))
+    (while kids
+      (if (vm-th-message-of (car kids))	
+	  (setq result (cons (car kids) result)
+		kids (cdr kids))
+	(setq kids (append (vm-th-children-of (car kids)) (cdr kids)))))
+    (nreverse result)))
+
 (defun vm-th-child-messages-of (id-sym)
   (let ((kids (vm-th-children-of id-sym))
 	(result nil)
@@ -937,7 +947,7 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 
     ;; remove the message from its erstwhile subject thread
     (when (and s-sym (boundp s-sym))
-      (if (eq id-sym (vm-ts-root-of s-sym))
+      (if (eq (vm-ts-root-of s-sym) id-sym)
 	  ;; handle the subject thread root
 	  ;; (when message-changing
 	  (cond
@@ -954,7 +964,7 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 	    (let ((p (remq m (vm-ts-messages-of s-sym)))
 		  msg date children
 		  oldest-msg oldest-date 
-		  oldest-subject-msg oldest-subject-date)
+		  oldest-msg-same-sub oldest-date-same-sub)
 	      ;; find the oldest message in the subject thread
 	      (while p
 		(setq msg (vm-th-canonical-message (car p)))
@@ -964,11 +974,11 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 			    (string-lessp date oldest-date))
 		    (setq oldest-msg msg)
 		    (setq oldest-date date))
-		  (when (and (or (null oldest-subject-date)
-				 (string-lessp date oldest-subject-date))
+		  (when (and (or (null oldest-date-same-sub)
+				 (string-lessp date oldest-date-same-sub))
 			     (eq (vm-subject-symbol msg) s-sym))
-		    (setq oldest-subject-msg msg)
-		    (setq oldest-subject-date date)))
+		    (setq oldest-msg-same-sub msg)
+		    (setq oldest-date-same-sub date)))
 		(setq p (cdr p)))
 	      ;; make the oldest message the new subject root
 	      (if (null oldest-msg)	
@@ -976,21 +986,23 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 		  (makunbound s-sym)
 		;; subject thread nonempty
 		(let (new-sub new-s-sym)
-		  (when (null oldest-subject-msg) ; new subject
+		  (when (null oldest-msg-same-sub) ; new subject
 		    (setq new-sub (vm-so-sortable-subject oldest-msg))
 		    (setq new-s-sym (intern new-sub vm-thread-subject-obarray))
 		    ;; for convenience, pretend
-		    (setq oldest-subject-msg oldest-msg)
-		    (setq oldest-subject-date oldest-date))
-		  (setq root-sym (vm-th-thread-symbol oldest-subject-msg))
-		  (setq children (remq root-sym (vm-ts-members-of s-sym)))
+		    (setq oldest-msg-same-sub oldest-msg)
+		    (setq oldest-date-same-sub oldest-date))
+		  (setq root-sym (vm-th-thread-symbol oldest-msg-same-sub))
+		  (setq children (vm-th-visible-children-of id-sym))
 		  ;; (vm-th-clear-cached-data root-sym root-sym)
 		  (vm-th-clear-subtree root-sym)
-		  (vm-th-clear-thread-lists root-sym)
-		  (mapc 'vm-th-clear-thread-lists children)
+		  ;; (vm-th-clear-thread-lists root-sym)
+		  (mapc 'vm-th-clear-thread-lists (vm-ts-members-of s-sym))
 		  (vm-ts-set s-sym :root root-sym
-			     :root-date oldest-subject-date
-			     :members children
+			     :root-date oldest-date-same-sub
+			     :members (remq root-sym 
+					    (append children
+						    (vm-ts-members-of s-sym)))
 			     :messages (remq m (vm-ts-messages-of s-sym)))
 		  (when new-s-sym 	; need new subject
 		    (if (boundp new-s-sym)
@@ -1004,14 +1016,15 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 		    (mapc (lambda (c-sym)
 			    (vm-thread-mark-for-summary-update 
 			     (vm-th-messages-of c-sym)))
-			  children))
+			  (cons root-sym children)))
 		  ;; -------------- end atomic block ---------------------
 		  )))))
 	;; )
 	;; handle a non-root of subject thread
 	(unless (vm-th-message-of id-sym)
 	  (vm-ts-set-members-of 
-	   s-sym (remq id-sym (vm-ts-members-of s-sym))))
+	   s-sym (append (vm-th-visible-children-of id-sym)
+			 (remq id-sym (vm-ts-members-of s-sym)))))
 	(vm-ts-set-messages-of 
 	 s-sym (remq m (vm-ts-messages-of s-sym)))
 	)))
