@@ -206,7 +206,7 @@ fetched on demand, or nil to signify no limit."
 		 (integer :tag "Number of Mesages")))
 
 (defcustom vm-index-file-suffix nil
-  "*Suffix used to construct VM index file names.
+  "*Suffix used to construct VM index file names, e.g., \".inx\".
 When VM visits a folder, it checks for the existence of a file
 whose name is the folder's file name with the value of this
 variable appended to it.  If found, the file's contents will be
@@ -234,7 +234,8 @@ Emacs sessions, at the cost of short delays when messages are
 viewed.
 
 As of version 8.2.0, this facility is only available for IMAP
-folders (context name `imap')."
+folders (context name `imap').  Messages larger than
+`vm-imap-max-message-size' are treated as external messages."
   :group 'vm-folders
   :type '(repeat (choice (const imap))))
 
@@ -590,15 +591,19 @@ variable."
   :type '(choice (const nil) directory))
 
 (defcustom vm-imap-max-message-size nil
-  "*If VM is about to retrieve via IMAP a message larger than this size
-(in bytes) it will ask you whether it should retrieve the message.
+  "*The largest message size of IMAP messages that VM should retrieve
+automatically.  
 
-If VM is retrieving mail automatically because `vm-auto-get-new-mail'
-is set to a numeric value then you will not be prompted about large
-messages.  This is to avoid prompting you while you're typing in
-another buffer.  In this case the large message will be skipped with a
-warning message.  You will be able to retrieved any skipped messages
-later by running `vm-get-new-mail' interactively.
+If VM encounters an IMAP message larger than this size, the action
+is as follows:
+
+- In IMAP folders, the message is treated as an external message if
+`vm-enable-external-messages' includes 'imap.  Otherwise it is
+retrieved.
+
+- In local folders, the message is skipped if it is part of
+automatical mail retrieval.  During interactive mail retrieval, obtained by
+running `vm-get-new-mail', VM queries you whether it should be retrieved.
 
 A nil value for `vm-imap-max-message-size' means no size limit."
   :group 'vm-imap
@@ -1555,6 +1560,12 @@ The first matching list element will be used."
                  (repeat (list (string :tag "From type")
                                (string :tag "To type")
                                (string :tag "Converter program")))))
+(defvaralias 'vm-mime-alternative-select-method
+  'vm-mime-alternative-show-method)
+(make-obsolete-variable 'vm-mime-alternative-select-method
+			'vm-mime-alternative-show-method
+			"8.2.0")			
+
 
 (defcustom vm-mime-charset-converter-alist nil
   "*Alist of MIME charsets and programs that can convert between them.
@@ -1591,12 +1602,14 @@ The first matching list element will be used."
   :type '(choice (const nil)
                  (repeat (list string string string))))
 
-(defcustom vm-mime-alternative-select-method 'best-internal
+(defcustom vm-mime-alternative-show-method 'best-internal
   "*Value tells how to choose which multipart/alternative part to display.
 A MIME message of type multipart/alternative has multiple message
 parts containing the same information, but each part may be
 formatted differently.  VM will display only one of the parts.
 This variable tells VM how to choose which part to display.
+(There is a separate variable `vm-mime-alternative-yank-method'
+for deciding the multipart/alternative to be used in replies.)
 
 A value of 'best means choose the part that is the most faithful to
 the sender's original content that can be displayed.
@@ -1628,7 +1641,29 @@ chosen."
 (defcustom vm-mime-alternative-yank-method 'best-internal
   "*Value tells how to choose which multipart/alternative part to
 yank, i.e., include, in replies.  It is similar to
-`vm-mime-alternative-select-method' (which see)."
+`vm-mime-alternative-show-method' used for displaying messages.
+
+A value of 'best means choose the part that is the most faithful to
+the sender's original content that can be displayed.
+
+A value of 'best-internal means choose the best part that can
+be displayed internally, (i.e. with the built-in capabilities
+of Emacs) and is allowed to be displayed internally (see
+`vm-mime-internal-content-types').  If none of the parts can be
+displayed internally, behavior reverts to that of 'best.
+
+The value can also be a list of the form
+
+  (favorite TYPE ...)
+
+with the first element of the list being the symbol 'favorite'.  The
+remaining elements of the list are strings specifying MIME types.
+VM will look for each TYPE in turn in the list of alternatives and
+choose the first matching alternative found that can be displayed.
+If the symbol 'favorite' is 'favorite-internal' instead, the first TYPE
+that matches an alternative that can be displayed internally will be
+chosen."
+
   :group 'vm-mime
   :type '(choice (choice (const best-internal)
                          (const best)
@@ -3052,7 +3087,7 @@ normally."
   :group 'vm-compose
   :type 'boolean)
 
-(defcustom vm-include-text-from-presentation nil
+(defvar vm-include-text-from-presentation nil
   "*If true `vm-reply-include-text' will include the presentation
 of a message as shown in the Presentation buffer, instead of the
 normal text generated by the default VM method.
@@ -3061,10 +3096,11 @@ This is an exeperimental feature that should not be used
 normally, but it might give better results when using filling or
 MIME encoded messages, e.g. HTML message.
 
-You can only include single messages in your reply using this method.
-Marked messages, threads and prefix argument counts are not available."
-  :group 'vm-compose
-  :type 'boolean)
+You can only include the presentation of the current message in
+your reply using this method.  Marked messages, threads and
+prefix argument counts are not available.")
+(make-obsolete-variable 'vm-load-headers-only nil "8.2.0")
+			
 
 (defcustom vm-included-mime-types-list nil
   "*If non-nil, the list of mime type/subtype pairs that should be
@@ -3848,26 +3884,28 @@ arrow only if the summary window is not the only existing window."
 		 (const :tag "Always" t) 
 		 (const :tag "Yes, if not only window" yes-if-not-only-window)))
 
+;; These flags and variables are for debugging purposes
+
 (defvar vm-debug nil
-  "Flag used by developers to control localized debugging features.")
+  "*Flag used by developers to control localized debugging features.")
 
 (defvar vm-traced-message-ids nil
-  "List of message ID's whose activity is debugged.  This is for
+  "*List of message ID's whose activity is debugged.  This is for
 developers' use only.")
 
 (defvar vm-traced-message-subjects nil
-  "List of message subjectss whose activity is debugged.  This is for
+  "*List of message subjectss whose activity is debugged.  This is for
 developers' use only.")
 
 (defvar vm-summary-debug nil
-  "Flag used by developers for tracing summary generation")
+  "*Flag used by developers for tracing summary generation")
 
 (defvar vm-summary-traced-messages nil
-  "List of message numbers whose activity is debugged during
+  "*List of message numbers whose activity is debugged during
 summary generation.  This is for developers' use only.")
 
 (defvar vm-thread-debug nil
-  "Flag that enables the integrity checking of threads.  This is for
+  "*Flag that enables the integrity checking of threads.  This is for
 developers' use only.") 
 
 (defcustom vm-subject-ignored-prefix "^\\(re: *\\)+"
@@ -5246,11 +5284,11 @@ See `vm-mime-compile-format-1' for valid format specifiers."
 
 (defvar vm-mime-show-alternatives nil
   "*This variable is deprecated.  You can set
-`vm-mime-alternative-select-method' to 'all to get the same effect as
+`vm-mime-alternative-show-method' to 'all to get the same effect as
 setting this one to t.")
 
 (make-obsolete-variable 'vm-mime-show-alternatives 
-			'vm-mime-alternative-select-method "8.2.0")
+			'vm-mime-alternative-show-method "8.2.0")
 
 (defcustom vm-emit-messages-for-mime-decoding t
   "*Flag to allow minibuffer messages about the progress of MIME

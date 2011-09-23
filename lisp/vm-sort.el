@@ -530,7 +530,7 @@ folder in the order in which the messages arrived."
   (if (and vm-summary-debug
 	   (or (member (vm-number-of msg1) vm-summary-traced-messages)
 	       (member (vm-number-of msg2) vm-summary-traced-messages)))
-      (debug))
+      (debug "traced message"))
   (let ((key-funcs vm-key-functions) 
 	result
 	(m1 msg1) (m2 msg2))
@@ -545,7 +545,7 @@ folder in the order in which the messages arrived."
 		    m2 (cdr result)
 		    key-funcs (cdr key-funcs))
 	      (if (or (null m1) (null m2))
-		  (progn (if vm-summary-debug (debug))
+		  (progn (if vm-summary-debug (debug "null message"))
 			 (throw 'done t))))
 	  (throw 'done result)))
       (while key-funcs

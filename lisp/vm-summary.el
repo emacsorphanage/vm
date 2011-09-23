@@ -45,9 +45,21 @@
 (declare-function rfc822-addresses "ext:rfc822" (header-text))
 
 (declare-function vm-visit-folder "vm.el" (folder &optional read-only))
+(declare-function vm-set-folded-flag "vm-undo.el" (m flag &optional norecord))
 
 (defvar scrollbar-height)		; defined for XEmacs
 
+
+(defun vm-summary-trace-message ()
+  (interactive)
+  (add-to-list 'vm-summary-traced-messages
+	       (vm-number-of (vm-current-message)))
+  (message "%s" vm-summary-traced-messages))
+
+(defsubst vm-summary-debug (m)
+  (if (and vm-debug
+	   (member (vm-number-of m) vm-summary-traced-messages))
+      (debug 'vm-summary m)))
 
 (defsubst vm-summary-message-at-point ()
   "Returns the message of the current summary line."
@@ -94,6 +106,9 @@ expanded (using the folded attribute of the message)."
 (defsubst vm-visible-message (m)
   (apply 'vm-vs-or m vm-summary-visible))
 
+;; This variable is only in Emacs 24
+(defvar bidi-paragraph-direction)
+
 (defun vm-summary-mode-internal ()
   (setq mode-name "VM Summary"
 	major-mode 'vm-summary-mode
@@ -106,7 +121,9 @@ expanded (using the folded attribute of the message)."
 	vm-summary-pointer nil
 	vm-summary-=> (if (stringp vm-summary-arrow) vm-summary-arrow "")
 	vm-summary-no-=> (make-string (length vm-summary-=>) ? )
-	truncate-lines t)
+	truncate-lines t
+	;; Needed for Emacs 24 bidi display
+	bidi-paragraph-direction 'left-to-right)
   ;; horizontal scrollbar off by default
   ;; user can turn it on in summary hook if desired.
   (when (and vm-xemacs-p (featurep 'scrollbar))
@@ -239,9 +256,7 @@ the messages in the current folder."
 	      (setq mp m-list)
 	      (while mp
                 (setq m (car mp))
-		(if (and vm-debug
-			 (member (vm-number-of m) vm-summary-traced-messages))
-		    (debug))
+		(vm-summary-debug m)
 		(vm-set-su-start-of m (point))
 		(insert vm-summary-no-=>)
 		(vm-tokenized-summary-insert m (vm-su-summary m))
@@ -453,8 +468,7 @@ the Summary buffer exists. "
 (defun vm-update-message-summary (m)
   "Replace the summary line of the message M in the summary
 buffer by a regenerated summary line."
-  (if (and vm-debug (member (vm-number-of m) vm-summary-traced-messages))
-      (debug))
+  (vm-summary-debug m)
   (if (and (markerp (vm-su-start-of m))
 	   (marker-buffer (vm-su-start-of m)))
       (let ((modified (buffer-modified-p)) ; Folder or Presentation

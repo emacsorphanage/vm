@@ -1,27 +1,25 @@
+IMPORTANT
+
+  If you are upgrading from a previous version of VM, please look through
+  all the CHANGES sections below since that version to see how you might be
+  affected.
+
 Status
 
   VM is currently being maintained by a 'VM development team' consisting of
   Uday S Reddy, Ulrich Müller, Tim Cross and Arik Mitschang.  More
   volunteers to help with the maintenance are quite welcome.
 
-  The VM project is hosted at nongnu.org:
+  Project home page:       http://www.nongnu.org/viewmail
 
-         http://www.nongnu.org/viewmail
+  Mailing list:            viewmail-info@nongnu.org
 
-  Please visit the page and bookmark it.
+  Bug report:              viewmail-bugs@nongnu.org
+                           (Please use `M-x vm-submit-bug-report' within VM)
 
-  The email addresses for the VM mailing list and bug reports are:
-
-         viewmail-info@nongnu.org, viewmail-bugs@nongnu.org
+  News group:              gmane.emacs.viewmail on news.gmane.org  
+                           (gnu.emacs.vm.info is defunct)
   
-  The best way of sending bug reports is via the `M-x vm-submit-bug-report'
-  command within VM.
-
-  The VM mailing list is also available on the gmane newsgroup (via NNTP)
-
-         server: news.gmane.org  
-	 group:  gmane.emacs.viewmail
-
   Please DO NOT use the Usenet newsgroup gnu.emacs.vm.info because it has an
   unreliable mail link to the mailing list.  You can however browse the
   archives of the newsgroup at Google Groups.
@@ -34,7 +32,16 @@ VM 8.2.0
      extraction of spam scores.  (Replaces the former variable
      `vm-vs-spam-score-headers' used by vm-virtual.el.) 
 
+   * The variable `vm-mime-alternative-select-method' renamed to
+     `vm-mime-alternative-show-method' to make it clear that it only applies
+     to the viewing of messages.  The new variable
+     `vm-mime-alternative-yank-method' controls the selection of
+     alternatives for citation in replies.
+
   IMPROVEMENTS
+
+   * Setting `vm-stunnel-program' to nil asks VM to use the built-in SSL
+     functionality of Emacs, available in Gnu Emacs 24.
 
    * New functions `vmpc-folder-match' and `vmpc-folder-account-match' in
      the vm-pcrisis package.
@@ -48,11 +55,10 @@ VM 8.2.0a (2011-02-28)
 
    * The configuration of headers-only messages, introduced in 8.1.90a, has
      changed.  The variable `vm-load-headers-only' has been replaced by a
-     new variable `vm-enable-external-messages'.  For IMAP folders, enabling
-     external messages causes any messages larger than
-     `vm-imap-max-message-size' to be loaded in headers-only form.  Smaller
-     messages are loaded immediately.  You need to customie
-     `vm-imap-max-message-size' for enabling headers-only operation.
+     new variable `vm-enable-external-messages'.  It should be set to 'imap
+     to allow external messages in IMAP folders and
+     `vm-imap-max-message-size' be customized to control the size of
+     messages that will be external.
 
    * If you download mail from IMAP spool files, the 8.1.x versions of
      VM had a bug which allowed the the `X-VM-IMAP-Retrieved' headers
@@ -131,7 +137,7 @@ VM 8.2.0a (2011-02-28)
      displayable types.
 
    * New variable `vm-mime-alternative-yank-method' controls the selection
-     of MIME alternatives during yanking of messages (as well including and
+     of MIME alternatives during yanking of messages (as well as including and
      forwarding).
 
    * Added a variable `vm-verbosity' to control the granularity of
@@ -303,16 +309,15 @@ VM 8.1.92a (2010-07-10)
 
   IMPROVEMENTS
 
-   * Headers-only mode for IMAP folders is now completed.  It operates
-     by fetching messages into the Folder buffers, leading to a
-     more reliable operation.  (However, there is an important
-     outstanding bug.  See the file README.headers-only.)
+   * Headers-only mode (external messages) for IMAP folders is now
+     completed.  It operates by fetching messages into the Folder buffers,
+     leading to a more reliable operation.
 
    * New command `vm-list-imap-folders' can be used to list the
      folders on an IMAP server.
 
-   * In headers-only mode, a limited number of messages can be fetched
-     on demand for message preview.  New variable
+   * In headers-only mode for external messages, a limited number of
+     messages can be fetched on demand for message preview.  New variable
      `vm-fetched-message-max' specifies this number.  (Default is 10.)
 
    * New variable `vm-imap-default-account' allows IMAP-FCC copies to
@@ -328,13 +333,13 @@ VM 8.1.90a  (2010-05-11)
 
   IMPROVEMENTS:
 
-  ** This version contains an experimental feature of using IMAP
-     folders in "headers-only" mode, with body loaded only on demand.
-     This helps to keep the folder sizes small and VM to run faster.
-     However, this code is in a preliminary stage.  Please use it
+  ** This version contains an experimental feature of using IMAP folders in
+     "headers-only" mode for external server messages, with body loaded only
+     on demand.  This helps to keep the folder sizes small and VM to run
+     faster.  However, this code is in a preliminary stage.  Please use it
      with CAUTION.
 
-     variable: vm-load-headers-only
+     variable: vm-load-headers-only (or vm-enable-external-messages)
 
      If set to t, all new messages will be loaded to the cache-folder
      in headers-only mode.  The body is loaded on demand when a
@@ -342,17 +347,12 @@ VM 8.1.90a  (2010-05-11)
      temporary load and is lost as soon as you move to another
      message.  
 
-     Previewing of messages interferes with headers-only operation.
-     So, you should set `vm-preview-lines' to nil.
-
-     To load the message body into the Folder Buffer, use:
+     To permanently load a message body into the Folder Buffer, use:
 
      command: vm-load-message (bound to 'o')
 
      This command discards the current body of the message, if any,
-     and refreshes it from the server copy. Some of the VM operations,
-     e.g., vm-save-message, can only be performed if the body is
-     loaded into the Folder Buffer. 
+     and refreshes it from the server copy.
 
      command : vm-unload-message (bound to 'O')
 
@@ -478,7 +478,7 @@ VM 8.1.0 (2010-03-21)
            (require 'vm-pgg)
 
    ** The variable `vm-mime-show-alternatives' is deprecated.  Set
-      the variable `vm-mime-alternative-select-method' to 'all to
+      the variable `vm-mime-alternative-show-method' to 'all to
       get the same effect.
 
     * Moved Robert's user-defined summary functions to the core:

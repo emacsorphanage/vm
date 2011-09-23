@@ -5120,8 +5120,10 @@ argument GARBAGE."
 
 (defun vm-message-can-be-external (m)
   "Check if the message M can be used in external (headers-only) mode."
-  (and (memq 'imap vm-enable-external-messages)
-       (eq (vm-message-access-method-of m) 'imap)))
+  (and (eq (vm-message-access-method-of m) 'imap)
+       (or (eq vm-enable-external-messages t)
+	   (memq 'imap vm-enable-external-messages))
+       ))
 
 ;;;###autoload
 (defun vm-load-message (&optional count)

@@ -429,13 +429,11 @@ relevant POP servers to remove the messages."
 
 (defun vm-pop-make-session (source)
   (let ((process-to-shutdown nil)
-	process
+	process use-ssl use-ssh success
 	(folder-type vm-folder-type)
 	(popdrop (vm-safe-popdrop-string source))
 	(coding-system-for-read (vm-binary-coding-system))
 	(coding-system-for-write (vm-binary-coding-system))
-	(use-ssl nil)
-	(use-ssh nil)
 	(session-name "POP")
 	(process-connection-type nil)
 	greeting timestamp ssh-process
@@ -505,20 +503,17 @@ relevant POP servers to remove the messages."
 				 host port))
 			  (equal user (car authinfo)))
 		     (setq pass (cadr authinfo)))))
+	    (while (and (null pass) vm-pop-ok-to-ask)
+	      (setq pass
+		    (read-passwd
+		     (format "POP password for %s: " popdrop)))
+	      (when (equal pass "")
+		(vm-inform 0 "Password cannot be empty")
+		(sit-for 2)
+		(setq pass nil)))
 	    (when (null pass)
-	      (if (null vm-pop-ok-to-ask)
-		  (progn (vm-inform 0 "Need password for %s" popdrop)
-			 (throw 'done nil))
-		(setq pass
-		      (read-passwd
-		       (format "POP password for %s: "
-			       popdrop))))))
-	  ;; save the password for the sake of
-	  ;; vm-expunge-pop-messages, which passes password-less
-	  ;; popdrop specifications to vm-make-pop-session.
-	  (when (null (assoc source-nopwd vm-pop-passwords))
-	    (setq vm-pop-passwords (cons (list source-nopwd pass)
-					 vm-pop-passwords)))
+	      (vm-inform 0 "Need password for %s" popdrop)
+	      (throw 'done nil))
 	  ;; get the trace buffer
 	  (setq process-buffer
 		(vm-make-work-buffer 
@@ -574,15 +569,17 @@ relevant POP servers to remove the messages."
 		   (and (null (vm-pop-read-response process))
 			(throw 'done nil))
 		   (vm-pop-send-command process (format "PASS %s" pass))
-		   (when (null (vm-pop-read-response process))
-		     (setq vm-pop-passwords
-			   (delete (list source-nopwd pass)
-				   vm-pop-passwords))
+		   (unless (vm-pop-read-response process)
+
 		     (vm-inform 0 "POP password for %s incorrect" popdrop)
 		     ;; don't sleep unless we're running synchronously.
 		     (when vm-pop-ok-to-ask
 		       (sleep-for 2))
-		     (throw 'done nil)))
+		     (throw 'done nil))
+		   (unless (assoc source-nopwd vm-pop-passwords)
+		     (setq vm-pop-passwords (cons (list source-nopwd pass)
+						  vm-pop-passwords)))
+		   (setq success t))
 		  ((equal auth "rpop")
 		   (vm-pop-send-command process (format "USER %s" user))
 		   (when (null (vm-pop-read-response process))
@@ -606,20 +603,26 @@ relevant POP servers to remove the messages."
 		    (format "APOP %s %s"
 			    user
 			    (vm-pop-md5 (concat timestamp pass))))
-		   (when (null (vm-pop-read-response process))
-		     (setq vm-pop-passwords
-			   (delete (list source-nopwd pass)
-				   vm-pop-passwords))
+		   (unless (vm-pop-read-response process)
 		     (vm-inform 0 "POP password for %s incorrect" popdrop)
 		     (when vm-pop-ok-to-ask
 		       (sleep-for 2))
-		     (throw 'done nil)))
+		     (throw 'done nil))
+		   (unless (assoc source-nopwd vm-pop-passwords)
+		     (setq vm-pop-passwords (cons (list source-nopwd pass)
+						  vm-pop-passwords)))
+		   (setq success t))
 		  (t (error "Don't know how to authenticate using %s" auth)))
-	    (setq process-to-shutdown nil)
-	    process ))
+	    (setq process-to-shutdown nil) )))
+      ;; unwind-protection
       (if process-to-shutdown
 	  (vm-pop-end-session process-to-shutdown t))
-      (vm-tear-down-stunnel-random-data))))
+      (vm-tear-down-stunnel-random-data))
+    (if success
+	process
+      ;; try again if possible
+      (when vm-pop-ok-to-ask
+	(vm-pop-make-session source)))))
 
 (defun vm-pop-end-session (process &optional keep-buffer verbose)
   "Kill the POP session represented by PROCESS.  PROCESS could be

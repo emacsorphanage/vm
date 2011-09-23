@@ -57,12 +57,12 @@
 
 ;;  It may be necessary to add the following, which probably comes from
 ;;  a bug in my code...
+;;  (defadvice vm-show-current-message (after u-vm-color activate)
+;;    (u-vm-color-fontify-buffer-even-more))
+;;  You might also add this advice, which causes some slow down:
 ;;  (defadvice vm-decode-mime-message (after u-vm-color activate)
 ;;    (u-vm-color-fontify-buffer-even-more))
 ;;
-;;  m.sujith@gmail.com recommends adding: (Launchpad Bug 674383)
-;;  (defadvice vm-show-current-message (after u-vm-color activate)
-;;    (u-vm-color-fontify-buffer-even-more))
 
 ;;  If you are using auto-fill, ie when the variables
 ;;  `vm-word-wrap-paragraphs' or
@@ -578,7 +578,7 @@ subexpressions."
 ;;;###autoload
 (defun u-vm-color-summary-mode (&optional arg)
   "Configure `font-lock-keywords' and add some hooks for vm-buffers.
-(Optional argument ARG is not used.)"
+ (Optional argument ARG is not used.)"
   (interactive "P")
   (setq u-vm-color-summary-mode
 	(not (or (and (null arg) u-vm-color-summary-mode)

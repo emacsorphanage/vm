@@ -572,7 +572,7 @@ works in all VM buffers."
 (defsubst vm-virtual-message-p (m)
   (not (eq m (vm-real-message-of m))))
 
-(defun vm-update-virtual-messages (m &key message-changing)
+(defun* vm-update-virtual-messages (m &key message-changing)
   "Update all the virtual messages of M to reflect the changes made to
 the headers/body of M."
   (save-excursion

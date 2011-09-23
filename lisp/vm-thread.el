@@ -75,6 +75,7 @@
 ;; vm-th-oldest-date-of : symbol -> string
 ;; vm-th-thread-date-of : symbol X criterion-symbol -> string
 ;; vm-th-canonical-message-p : message -> bool
+;; vm-th-canonical-message: message -> message
 ;; vm-th-root : symbol -> message
 ;;
 ;; vm-th-new-thread-symbol: message -> symbol
@@ -93,9 +94,20 @@
 ;; vm-ts-root-date-of : symbol -> date
 ;; vm-ts-members-of : symbol -> symbol list
 ;; vm-ts-messages-of : symbol -> message list
+;; vm-ts-set-root-of: symbol X symbol -> void
+;; vm-ts-set-root-date-of: symbol X date -> void
+;; vm-ts-set-members-of: symbol X symbol list -> void
+;; vm-ts-set-messages-of: symbol X message list -> void
+;; vm-ts-set: symbol X 
+;;	      (:root symbol :root-date date 
+;;	       :members symbol list :messages message list) -> void
 ;;
 ;; vm-ts-add-member: symbol X symbol -> void
 ;; vm-ts-add-message: symbol X message -> void
+;; vm-ts-add-members: symbol X symbol list -> void
+;; vm-ts-add-messages: symbol X message list -> void
+;;
+;; vm-ts-merge : symbol X symbol -> void
 ;;
 ;; vm-ts-clear-cached-data: symbol X symbol -> void
 ;;
@@ -113,6 +125,17 @@
        '(vm-thread-error error))
   (put 'vm-thread-error 'error-message "VM internal threading error")
   )
+
+(defun vm-trace-message-id ()
+  (interactive)
+  (add-to-list 'vm-traced-message-ids (vm-su-message-id (vm-current-message)))
+  (message "%s" vm-traced-message-ids))
+
+(defun vm-trace-message-subject ()
+  (interactive)
+  (add-to-list 'vm-traced-message-subjects 
+	       (vm-so-sortable-subject (vm-current-message)))
+  (message "%s" vm-traced-message-subjects))
 
 (defsubst vm-thread-debug (message &rest args)
   (if (and vm-thread-debug vm-summary-show-threads (vectorp vm-thread-obarray))
@@ -168,6 +191,12 @@ youngest or oldest date in its thread.  CRITERION must be one of
 (defsubst vm-th-messages-of (id-sym)
   (get id-sym 'messages))
 
+(defsubst vm-th-canonical-message-p (m)
+  (eq m (vm-th-message-of (vm-th-thread-symbol m))))
+
+(defsubst vm-th-canonical-message (m)
+  (vm-th-message-of (vm-th-thread-symbol m)))
+
 ;; (defsubst vm-th-message (id-sym)
 ;;   (and (vm-th-messages-of id-sym)
 ;;        (vm-last-elem (vm-th-messages-of id-sym))))
@@ -186,6 +215,16 @@ youngest or oldest date in its thread.  CRITERION must be one of
 
 (defsubst vm-th-children-of (id-sym)
   (get id-sym 'children))
+
+(defun vm-th-visible-children-of (id-sym)
+  (let ((kids (vm-th-children-of id-sym))
+	(result nil))
+    (while kids
+      (if (vm-th-message-of (car kids))	
+	  (setq result (cons (car kids) result)
+		kids (cdr kids))
+	(setq kids (append (vm-th-children-of (car kids)) (cdr kids)))))
+    (nreverse result)))
 
 (defun vm-th-child-messages-of (id-sym)
   (let ((kids (vm-th-children-of id-sym))
@@ -250,6 +289,12 @@ youngest or oldest date in its thread.  CRITERION must be one of
 (defsubst vm-ts-set-messages-of (subject-sym ml)
   (aset (symbol-value subject-sym) 3 ml))
 
+(defun* vm-ts-set (subject-sym &key root root-date members messages)
+  (let ((vec (symbol-value subject-sym)))
+    (aset vec 0 root)
+    (aset vec 1 root-date)
+    (aset vec 2 members)
+    (aset vec 3 messages)))
 
 ;; Integrity constraints for reference threads
 
@@ -383,11 +428,51 @@ It also invovles thread-lists of ID-SYM and all its descendants."
     (vm-ts-set-members-of 
      subject-sym (cons id-sym (vm-ts-members-of subject-sym)))))
 
+(defun vm-ts-add-members (subject-sym id-sym-list)
+  "Add all the elements of ID-SYM-LIST as members of SUBJECT-SYM"
+  (mapc (lambda (id-sym) (vm-ts-add-member subject-sym id-sym))
+	id-sym-list))
+
 (defsubst vm-ts-add-message (subject-sym m)
   "Add M as a message in the subject thread of SUBJECT-SYM."
   ;; ensures: TS-MESSAGES(subject-sym)
   (vm-ts-set-messages-of 
    subject-sym (cons m (vm-ts-messages-of subject-sym))))
+
+(defun vm-ts-add-messages (subject-sym m-list)
+  "Add all the elements of M-LIST to the subject thread of SUBJECT-SYM"
+  (mapc (lambda (m) (vm-ts-add-message subject-sym m))
+	m-list))
+
+(defun vm-ts-merge (subject-sym other-sym)
+  "Merge subject symbol OTHER-SYM into SUBJECT-SYM and destroy OTHER-SYM."
+  (let ((subject-root (vm-ts-root-of subject-sym))
+	(other-root (vm-ts-root-of other-sym)))
+    (vm-th-clear-cached-data subject-root subject-root)
+    (vm-th-clear-cached-data other-root other-root)
+    (if (string< (vm-ts-root-date-of subject-sym) 
+		 (vm-ts-root-date-of other-sym))
+	;; subject-sym is older; merge other-sym
+	(progn
+	  (vm-ts-add-members subject-sym (cons other-root
+					       (vm-ts-members-of other-sym)))
+	  (vm-ts-add-messages subject-sym (vm-ts-messages-of other-sym)))
+      ;; other-sym is older; copy it into subject-sym
+      (vm-ts-add-member subject-sym subject-root)
+      (vm-ts-set-root-of subject-sym other-root)
+      (vm-ts-set-root-date-of subject-sym (vm-ts-root-date-of other-sym))
+      (vm-ts-add-members subject-sym (vm-ts-members-of other-sym))
+      (vm-ts-add-messages subject-sym (vm-ts-messages-of other-sym)))
+    ;; destroy other-sym
+    (makunbound other-sym)
+    ;; ---------------- atomic block -----------------------
+    (let ((inhibit-quit nil))
+      (mapc (lambda (c-sym)
+	      (vm-thread-mark-for-summary-update 
+	       (vm-th-messages-of c-sym)))
+	    (vm-ts-members-of subject-sym)))
+    ;; -------------- end atomic block ---------------------
+    ))
 
 (defsubst vm-ts-clear-cached-data (id-sym subject-sym)
   "Clear the cached thread-subtree and thread-list information
@@ -928,13 +1013,14 @@ The full functionality of this function is not entirely clear.
 MESSAGE-CHANGING is non-nil, then forget information that might
 be different if the message contents changed.  The message will be
 reinserted into an appropriate thread later.       USR, 2011-03-17"
-  ;; -------------- atomic block -------------------------------
-  (let ((inhibit-quit t)
-	date id-sym s-sym p-sym root-sym)
+  (let (date id-sym s-sym p-sym root root-sym)
     ;; handles for the thread and thread-subject databases
     (setq id-sym (vm-th-thread-symbol m))
-    (setq root-sym (vm-th-thread-symbol (vm-th-root id-sym)))
-    (setq s-sym (vm-ts-subject-symbol root-sym))
+    (if (setq root (vm-th-root id-sym))
+	(progn
+	  (setq root-sym (vm-th-thread-symbol root))
+	  (setq s-sym (vm-ts-subject-symbol root-sym)))
+      (vm-thread-debug 'vm-thread-message id-sym))
     (if (member (symbol-name id-sym) vm-traced-message-ids)
 	(vm-thread-debug 'vm-unthread-message id-sym))
     (if (member (symbol-name s-sym) vm-traced-message-subjects)
@@ -944,24 +1030,28 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
     ;; discard cached thread properties of descendants and ancestors
     (vm-th-clear-cached-data id-sym id-sym)
     ;; remove the message from its erstwhile thread
-    (when (boundp id-sym)
-      ;; remove m from its thread node
-      (vm-th-remove-message-from-symbol id-sym m)
-      ;; reset the thread dates of m
-      (setq date (vm-so-sortable-datestring m))
-      (vm-th-set-youngest-date-of id-sym date)
-      (vm-th-set-oldest-date-of id-sym date)
-      ;; if message changed, remove it from the thread tree
-      ;; not clear what is going on.  USR, 2010-07-24
-      (when (and message-changing (null (vm-th-message-of id-sym)))
-	(setq p-sym (vm-th-parent-of id-sym))
-	(when p-sym 
-	  (vm-th-delete-child p-sym id-sym))
-	(vm-th-set-parent-of id-sym nil)))
+    ;; -------------- atomic block -------------------------------
+    (let ((inhibit-quit t))
+      (when (boundp id-sym)
+	;; remove m from its thread node
+	(vm-th-remove-message-from-symbol id-sym m)
+	;; reset the thread dates of m
+	(setq date (vm-so-sortable-datestring m))
+	(vm-th-set-youngest-date-of id-sym date)
+	(vm-th-set-oldest-date-of id-sym date)
+	;; if message changed, remove it from the thread tree
+	;; not clear what is going on.  USR, 2010-07-24
+	(when (and message-changing (null (vm-th-message-of id-sym)))
+	  (setq p-sym (vm-th-parent-of id-sym))
+	  (when p-sym 
+	    (vm-th-delete-child p-sym id-sym))
+	  (vm-th-set-parent-of id-sym nil))))
+    ;;-------------- end atomic block ------------------------------
 
     ;; remove the message from its erstwhile subject thread
-    (when (boundp s-sym)
-      (if (eq id-sym (vm-ts-root-of s-sym))
+    (when (and s-sym (boundp s-sym))
+      (if (eq (vm-ts-root-of s-sym) id-sym)
+	  ;; handle the subject thread root
 	  ;; (when message-changing
 	  (cond
 	   ;; duplicate copy present, so keep the root id-sym.
@@ -975,46 +1065,75 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 	      (makunbound s-sym))
 	   (t
 	    (let ((p (remq m (vm-ts-messages-of s-sym)))
-		  oldest-msg oldest-date children)
-	      (setq oldest-msg (vm-th-message-of (vm-th-thread-symbol (car p))))
-	      (setq oldest-date (vm-so-sortable-datestring (car p)))
-	      (setq p (cdr p))
+		  msg date children
+		  oldest-msg oldest-date 
+		  oldest-msg-same-sub oldest-date-same-sub)
+	      ;; find the oldest message in the subject thread
 	      (while p
-		(when (and (string-lessp 
-			    (vm-so-sortable-datestring (car p))
-			    oldest-date)
-			   ;; don't allow change of subject for the root
-			   (eq (vm-subject-symbol (car p)) s-sym))
-		  (if (null (vm-th-message-of (vm-th-thread-symbol (car p))))
-		      (vm-thread-debug 'vm-unthread-message-null
-				       (vm-th-thread-symbol (car p)))
-		    (setq oldest-msg (vm-th-message-of 
-				      (vm-th-thread-symbol (car p)))
-			  oldest-date (vm-so-sortable-datestring (car p)))))
+		(setq msg (vm-th-canonical-message (car p)))
+		(when  msg
+		  (setq date (vm-so-sortable-datestring msg))
+		  (when (or (null oldest-date)
+			    (string-lessp date oldest-date))
+		    (setq oldest-msg msg)
+		    (setq oldest-date date))
+		  (when (and (or (null oldest-date-same-sub)
+				 (string-lessp date oldest-date-same-sub))
+			     (eq (vm-subject-symbol msg) s-sym))
+		    (setq oldest-msg-same-sub msg)
+		    (setq oldest-date-same-sub date)))
 		(setq p (cdr p)))
-	      (setq root-sym (vm-th-thread-symbol oldest-msg))
-	      (vm-th-clear-cached-data root-sym root-sym)
-	      (vm-ts-set-root-of s-sym root-sym)
-	      (vm-ts-set-root-date-of s-sym oldest-date)
-	      (setq children (remq root-sym (vm-ts-members-of s-sym)))
-	      (vm-ts-set-members-of s-sym children)
-	      (vm-ts-set-messages-of
-	       s-sym (remq m (vm-ts-messages-of s-sym)))
-	      ;; I'm not sure there aren't situations
-	      ;; where this might loop forever.
-	      (let ((inhibit-quit nil))
-		(mapc (lambda (c-sym)
-			(vm-thread-mark-for-summary-update 
-			 (vm-th-messages-of c-sym)))
-		      children)))))
+	      ;; make the oldest message the new subject root
+	      (if (null oldest-msg)	
+		  ;; subject thread is empty
+		  (makunbound s-sym)
+		;; subject thread nonempty
+		(let (new-sub new-s-sym)
+		  (when (null oldest-msg-same-sub) ; new subject
+		    (setq new-sub (vm-so-sortable-subject oldest-msg))
+		    (setq new-s-sym (intern new-sub vm-thread-subject-obarray))
+		    ;; for convenience, pretend
+		    (setq oldest-msg-same-sub oldest-msg)
+		    (setq oldest-date-same-sub oldest-date))
+		  (setq root-sym (vm-th-thread-symbol oldest-msg-same-sub))
+		  (setq children (vm-th-visible-children-of id-sym))
+		  ;; (vm-th-clear-cached-data root-sym root-sym)
+		  (vm-th-clear-subtree root-sym)
+		  ;; (vm-th-clear-thread-lists root-sym)
+		  (mapc 'vm-th-clear-thread-lists (vm-ts-members-of s-sym))
+		  (vm-ts-set s-sym :root root-sym
+			     :root-date oldest-date-same-sub
+			     :members (remq root-sym 
+					    (append children
+						    (vm-ts-members-of s-sym)))
+			     :messages (remq m (vm-ts-messages-of s-sym)))
+		  (when new-s-sym 	; need new subject
+		    (if (boundp new-s-sym)
+			(vm-ts-merge new-s-sym s-sym)
+		      (set new-s-sym (symbol-value s-sym))
+		      (makunbound s-sym)))
+		  ;; I'm not sure there aren't situations
+		  ;; where this might loop forever.
+		  ;; ---------------- atomic block -----------------------
+		  (let ((inhibit-quit nil))
+		    (mapc (lambda (c-sym)
+			    (vm-thread-mark-for-summary-update 
+			     (vm-th-messages-of c-sym)))
+			  (cons root-sym children)))
+		  ;; -------------- end atomic block ---------------------
+		  )))))
 	;; )
+	;; handle a non-root of subject thread
 	(unless (vm-th-message-of id-sym)
 	  (vm-ts-set-members-of 
-	   s-sym (remq id-sym (vm-ts-members-of s-sym))))
+	   s-sym (append (vm-th-visible-children-of id-sym)
+			 (remq id-sym (vm-ts-members-of s-sym)))))
 	(vm-ts-set-messages-of 
 	 s-sym (remq m (vm-ts-messages-of s-sym)))
 	)))
-  ;; -------------- end atomic block -------------------------------
+  ;; This doesn't work yet
+  ;; (if vm-thread-debug
+  ;;     (vm-check-thread-integrity))
   )
 
 ;; This function is still under development.  USR, 2011-04-04
@@ -1136,7 +1255,7 @@ should have been built for this function to work."
 	(debug 'vm-thread-root m-sym))
     (catch 'return
       (unless m-sym
-	(vm-thread-debug 'vm-thread-root m-sym)
+	(vm-thread-debug 'vm-thread-root-null m-sym)
 	(throw 'return m))
       (setq list (vm-thread-list m))
       (while list
@@ -1161,10 +1280,10 @@ See also: `vm-thread-root'."
 	  (t
 	   (setq m-sym (vm-thread-symbol m))))
     (if (and vm-debug (member (symbol-name m-sym) vm-traced-message-ids))
-	(debug m-sym))
+	(debug 'vm-thread-root-sym m-sym))
     (catch 'return
     (unless m-sym
-      (vm-thread-debug 'vm-thread-root-sym m-sym)
+      (vm-thread-debug 'vm-thread-root-sym-null m-sym)
       (throw 'return nil))
     (setq list (vm-thread-list m))
       (while list

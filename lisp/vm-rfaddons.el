@@ -1931,15 +1931,15 @@ calls."
 (defun vm-toggle-best-mime ()
   "Toggle between best-internal and best mime decoding modes"
   (interactive)
-  (if (eq vm-mime-alternative-select-method 'best-internal)
+  (if (eq vm-mime-alternative-show-method 'best-internal)
       (progn
 	(vm-decode-mime-message 'undecoded)
-	(setq vm-mime-alternative-select-method 'best)
+	(setq vm-mime-alternative-show-method 'best)
 	(vm-decode-mime-message 'decoded)
 	(message "using best MIME decoding"))
     (progn
       (vm-decode-mime-message 'undecoded)
-      (setq vm-mime-alternative-select-method 'best-internal)
+      (setq vm-mime-alternative-show-method 'best-internal)
       (vm-decode-mime-message 'decoded)
       (message "using best internal MIME decoding"))))
 

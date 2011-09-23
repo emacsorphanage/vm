@@ -755,7 +755,7 @@ decoding is done if necessary.  The displayed content might be a
 preview or the full message, governed by the the variables
 `vm-preview-lines' and `vm-preview-read-messages'.  USR,2010-01-14"
 
-  ;; Set new-preview if the user needs to see the
+  ;; Set need-preview if the user needs to see the
   ;; message in the previewed state.  Save some time later by not
   ;; doing preview action that the user will never see anyway.
   (let ((need-preview
@@ -857,11 +857,6 @@ preview or the full message, governed by the the variables
 		   ;; reset vm-mime-decoded so that when the user
 		   ;; opens the message completely, the full MIME
 		   ;; display will happen.
-		   ;; Comment by USR, 2010-10-14:
-		   ;; The decoding would have deleted the presentation
-		   ;; copy.  Where will the next decoding get its
-		   ;; presentation copy from?  This is a problem for
-		   ;; the headers-only mode.
 		   ;; As an experiment, we turn off the double
 		   ;; decoding and see what happens. USR, 2010-02-01
 		   (if (and vm-mime-decode-for-show
@@ -870,9 +865,10 @@ preview or the full message, governed by the the variables
 			(with-current-buffer vm-mail-buffer
 			  (setq vm-mime-decoded nil)))
 		   )
-	       (vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
-						     (car (cdr data)))
-			      (vm-inform 0 "%s" (car (cdr data)))))
+	       (vm-mime-error (vm-set-mm-layout-display-error
+			       (vm-mime-layout-of (car vm-message-pointer))
+			       (car (cdr data)))
+			      (vm-warn 0 "%s" (car (cdr data)))))
 	     (vm-narrow-for-preview)))
        ;; if no MIME decoding is needed
        (vm-energize-urls-in-message-region)
@@ -913,9 +909,10 @@ is done if necessary.  (USR, 2010-01-14)"
 
       (condition-case data
 	  (vm-decode-mime-message)
-	(vm-mime-error (vm-set-mime-layout-of (car vm-message-pointer)
-					      (car (cdr data)))
-		       (vm-inform 0 "%s" (car (cdr data))))))
+	(vm-mime-error (vm-set-mm-layout-display-error
+			(vm-mime-layout-of (car vm-message-pointer))
+			(car (cdr data)))
+		       (vm-warn 0 "%s" (car (cdr data))))))
   ;; FIXME this probably cause folder corruption by filling the folder instead
   ;; of the presentation copy  ..., RWF, 2008-07
   ;; Well, so, we will check if we are in a presentation buffer! 

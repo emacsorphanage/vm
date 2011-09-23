@@ -423,8 +423,15 @@ specified by `vm-included-text-headers' and
         (end (point-marker)))
      (save-excursion
       (cond ((and vm-include-text-from-presentation
-		  (not (vm-mime-plain-message-p message)))
-	     (vm-yank-message-presentation message)
+		  (not (vm-mime-plain-message-p message))
+		  (or (eq message (car vm-message-pointer))
+		      (progn
+			(message 
+			 (concat "Can yank presentation for only the "
+				 "current message.  Using default yank."))
+			(sit-for 2)
+			nil)))
+	     (vm-yank-message-presentation)
 	     (setq end (point-marker)))
 	    (vm-include-text-basic
 	     (vm-yank-message-text message layout)
@@ -462,7 +469,7 @@ specified by `vm-included-text-headers' and
 	    (mail-yank-hooks (run-hooks 'mail-yank-hooks))
 	    (t (vm-mail-yank-default message))))))
 
-(defun vm-yank-message-presentation (message)
+(defun vm-yank-message-presentation ()
   ;; This function is the same as Rob's vm-insert-presentation.
   ;; It has been reported that it includes the entire mail box on
   ;; occasion.  See Bug #498477.  It should not be used until that
@@ -517,7 +524,7 @@ specified by `vm-included-text-headers' and
 
       ;; Use normal MIME decoding but override normal parameter settings
       (let (;; override the alternative-select-method
-	    (vm-mime-alternative-select-method vm-mime-alternative-yank-method)
+	    (vm-mime-alternative-show-method vm-mime-alternative-yank-method)
 	    ;; include only text and message types
 	    (vm-auto-displayed-mime-content-types '("text" "message"))       
 	    ;; don't include separator for multipart
@@ -1728,26 +1735,29 @@ Binds the `vm-mail-mode-map' and hooks"
     (unless (= (preceding-char) ?\n)
       (insert ?\n))
     (insert mail-header-separator "\n")
-    (when mail-signature
-      (save-excursion
-	(save-restriction
-	  (narrow-to-region (point) (point))
-	  (cond ((stringp mail-signature)
-		 (insert mail-signature))
-		((eq mail-signature t)
-		 (insert-file-contents (or (and (boundp 'mail-signature-file)
-						(stringp mail-signature-file)
-						mail-signature-file)
-					   "~/.signature")))
-		(t
-		 (let ((str (eval mail-signature)))
-		   (if (stringp str)
-		       (insert str)))))
-	  (goto-char (point-min))
-	  (if (looking-at "\n*-- \n")
-	      nil
-	    (insert "\n-- \n"))
-	  (goto-char (point-max)))))
+    (condition-case err
+	(when mail-signature
+	  (save-excursion
+	    (save-restriction
+	      (narrow-to-region (point) (point))
+	      (cond ((stringp mail-signature)
+		     (insert mail-signature))
+		    ((eq mail-signature t)
+		     (insert-file-contents 
+		      (or (and (boundp 'mail-signature-file)
+			       (stringp mail-signature-file)
+			       mail-signature-file)
+			  "~/.signature")))
+		    (t
+		     (let ((str (eval mail-signature)))
+		       (if (stringp str)
+			   (insert str)))))
+	      (goto-char (point-min))
+	      (if (looking-at "\n*-- \n")
+		  nil
+		(insert "\n-- \n"))
+	      (goto-char (point-max)))))
+      (error (vm-warn 1 2 "Cound not read signature file: %s" (cdr err))))
     ;; move this buffer to the head of the buffer list so window
     ;; config stuff will select it as the composition buffer.
     (vm-unbury-buffer (current-buffer))

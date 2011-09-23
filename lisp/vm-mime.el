@@ -1012,7 +1012,7 @@ previous mime decoding."
 (defun vm-reencode-mime-encoded-words-in-string (string)
   "Reencode in mime the words in STRING that need
 encoding.  The words that need encoding are expected to have
-text-properties set with the appropriate characte set.  This would
+text-properties set with the appropriate character set.  This would
 have been done if the contents of the buffer are the result of a
 previous mime decoding."
   (if (and vm-display-using-mime
@@ -1456,6 +1456,49 @@ shorter pieces, rebuilt it from them."
 (defvar buffer-display-table)
 (defvar standard-display-table)
 (defvar buffer-file-type)
+
+(defun vm-generate-new-presentation-buffer (folder-buffer name)
+  "Generate a new Presentation buffer for FOLDER-BUFFER.  NAME is
+a string denoting the folder name."
+  (let ((pres-buf (vm-generate-new-multibyte-buffer 
+		   (concat name " Presentation"))))
+    (save-excursion
+      (set-buffer pres-buf)
+      (if (fboundp 'buffer-disable-undo)
+	  (buffer-disable-undo (current-buffer))
+	;; obfuscation to make the v19 compiler not whine
+	;; about obsolete functions.
+	(let ((x 'buffer-flush-undo))
+	  (funcall x (current-buffer))))
+      (setq mode-name "VM Presentation"
+	    major-mode 'vm-presentation-mode
+	    vm-message-pointer (list nil)
+	    vm-mail-buffer folder-buffer
+	    mode-popup-menu (and vm-use-menus
+				 (vm-menu-support-possible-p)
+				 (vm-menu-mode-menu))
+	    ;; Default to binary file type for DOS/NT.
+	    buffer-file-type t
+	    ;; Tell XEmacs/MULE not to mess with the text on writes.
+	    buffer-read-only t
+	    mode-line-format vm-mode-line-format)
+      ;; scroll in place messes with scroll-up and this loses
+      (defvar scroll-in-place)
+      (make-local-variable 'scroll-in-place)
+      (setq scroll-in-place nil)
+      (when (fboundp 'set-buffer-file-coding-system)
+	(set-buffer-file-coding-system (vm-binary-coding-system) t))
+      (vm-fsfemacs-nonmule-display-8bit-chars)
+      (if (and vm-mutable-frames vm-frame-per-folder
+	       (vm-multiple-frames-possible-p))
+	  (vm-set-hooks-for-frame-deletion))
+      (use-local-map vm-mode-map)
+      (vm-toolbar-install-or-uninstall-toolbar)
+      (when (vm-menu-support-possible-p)
+	(vm-menu-install-menus))
+      (run-hooks 'vm-presentation-mode-hook))
+    pres-buf))
+
 (defun vm-make-presentation-copy (m)
   "Create a copy of the message M in the Presentation Buffer.  If
 the message is external then the copy is made from the external
@@ -1464,47 +1507,12 @@ source of the message."
 	pres-buf mm
 	(real-m (vm-real-message-of m))
 	(modified (buffer-modified-p)))
-    (cond ((or (null vm-presentation-buffer-handle)
-	       (null (buffer-name vm-presentation-buffer-handle)))
-	   ;; Create a new Presentation buffer
-	   (setq pres-buf (vm-generate-new-multibyte-buffer 
-			   (concat (buffer-name) " Presentation")))
-	   (save-excursion
-	     (set-buffer pres-buf)
-	     (if (fboundp 'buffer-disable-undo)
-		 (buffer-disable-undo (current-buffer))
-	       ;; obfuscation to make the v19 compiler not whine
-	       ;; about obsolete functions.
-	       (let ((x 'buffer-flush-undo))
-		 (funcall x (current-buffer))))
-	     (setq mode-name "VM Presentation"
-		   major-mode 'vm-presentation-mode
-		   vm-message-pointer (list nil)
-		   vm-mail-buffer mail-buffer
-		   mode-popup-menu (and vm-use-menus
-					(vm-menu-support-possible-p)
-					(vm-menu-mode-menu))
-		   ;; Default to binary file type for DOS/NT.
-		   buffer-file-type t
-		   ;; Tell XEmacs/MULE not to mess with the text on writes.
-		   buffer-read-only t
-		   mode-line-format vm-mode-line-format)
-	     ;; scroll in place messes with scroll-up and this loses
-	     (defvar scroll-in-place)
-	     (make-local-variable 'scroll-in-place)
-	     (setq scroll-in-place nil)
-	     (when (fboundp 'set-buffer-file-coding-system)
-	       (set-buffer-file-coding-system (vm-binary-coding-system) t))
-	     (vm-fsfemacs-nonmule-display-8bit-chars)
-	     (if (and vm-mutable-frames vm-frame-per-folder
-		      (vm-multiple-frames-possible-p))
-		 (vm-set-hooks-for-frame-deletion))
-	     (use-local-map vm-mode-map)
-	     (vm-toolbar-install-or-uninstall-toolbar)
-	     (when (vm-menu-support-possible-p)
-	       (vm-menu-install-menus))
-	     (run-hooks 'vm-presentation-mode-hook))
-	   (setq vm-presentation-buffer-handle pres-buf)))
+    (when (or (null vm-presentation-buffer-handle)
+	      (null (buffer-name vm-presentation-buffer-handle)))
+      ;; Create a new Presentation buffer
+      (setq pres-buf (vm-generate-new-presentation-buffer 
+		      (current-buffer) (buffer-name)))
+      (setq vm-presentation-buffer-handle pres-buf))
     (setq pres-buf vm-presentation-buffer-handle)
     (setq vm-presentation-buffer vm-presentation-buffer-handle)
     (setq vm-mime-decoded nil)
@@ -2937,13 +2945,13 @@ the argument.                                        USR, 2011-03-25"
 
 
 (defun vm-mime-display-internal-multipart/alternative (layout)
-  (if (eq vm-mime-alternative-select-method 'all)
+  (if (eq vm-mime-alternative-show-method 'all)
       (vm-mime-display-internal-multipart/mixed layout)
     (vm-mime-display-internal-show-multipart/alternative layout)))
 
 (defun vm-mime-display-internal-show-multipart/alternative (layout)
   (let (best-layout)
-    (cond ((eq vm-mime-alternative-select-method 'best)
+    (cond ((eq vm-mime-alternative-show-method 'best)
 	   (let ((done nil)
 		 (best nil)
 		 part-list type)
@@ -2957,7 +2965,7 @@ the argument.                                        USR, 2011-03-25"
 			 done t)
 		 (setq part-list (cdr part-list))))
 	     (setq best-layout (or best (car (vm-mm-layout-parts layout))))))
-	  ((eq vm-mime-alternative-select-method 'best-internal)
+	  ((eq vm-mime-alternative-show-method 'best-internal)
 	   (let ((done nil)
 		 (best nil)
 		 (second-best nil)
@@ -2976,14 +2984,14 @@ the argument.                                        USR, 2011-03-25"
 	       (setq part-list (cdr part-list)))
 	     (setq best-layout (or best second-best
 				   (car (vm-mm-layout-parts layout))))))
-	  ((and (consp vm-mime-alternative-select-method)
-		(eq (car vm-mime-alternative-select-method)
+	  ((and (consp vm-mime-alternative-show-method)
+		(eq (car vm-mime-alternative-show-method)
 		    'favorite-internal))
 	   (let ((done nil)
 		 (best nil)
 		 (saved-part-list
 		  (nreverse (copy-sequence (vm-mm-layout-parts layout))))
-		 (favs (cdr vm-mime-alternative-select-method))
+		 (favs (cdr vm-mime-alternative-show-method))
 		 (second-best nil)
 		 part-list type)
 	     (while (and favs (not done))
@@ -3001,13 +3009,13 @@ the argument.                                        USR, 2011-03-25"
 	       (setq favs (cdr favs)))
 	     (setq best-layout (or best second-best
 				   (car (vm-mm-layout-parts layout))))))
-	  ((and (consp vm-mime-alternative-select-method)
-		(eq (car vm-mime-alternative-select-method) 'favorite))
+	  ((and (consp vm-mime-alternative-show-method)
+		(eq (car vm-mime-alternative-show-method) 'favorite))
 	   (let ((done nil)
 		 (best nil)
 		 (saved-part-list
 		  (nreverse (copy-sequence (vm-mm-layout-parts layout))))
-		 (favs (cdr vm-mime-alternative-select-method))
+		 (favs (cdr vm-mime-alternative-show-method))
 		 (second-best nil)
 		 part-list type)
 	     (while (and favs (not done))
@@ -5969,67 +5977,84 @@ minibuffer if the command is run interactively."
   (unless vm-send-using-mime
     (error (concat "MIME attachments disabled, "
 		   "set vm-send-using-mime non-nil to enable.")))
-  (if (not (consp message))
-      (let* ((work-buffer (vm-generate-new-unibyte-buffer "*attached message*"))
-	     (m (vm-real-message-of message))
-	     (folder (vm-buffer-of m)))
-	(with-current-buffer work-buffer
-	  (vm-insert-region-from-buffer folder (vm-headers-of m)
-					(vm-text-end-of m))
-	  (goto-char (point-min))
-	  (vm-reorder-message-headers
-	   nil :keep-list nil
-	   :discard-regexp vm-internal-unforwarded-header-regexp))
-	(and description (setq description
-			       (vm-mime-scrub-description description)))
-	(vm-attach-object work-buffer 
-			       :type "message/rfc822" :params nil 
-			       :disposition '("inline")
-			       :description description)
-	(make-local-variable 'vm-forward-list)
-	(setq vm-system-state 'forwarding
-	      vm-forward-list (list message))
-	(add-hook 'kill-buffer-hook
-		  `(lambda ()
-		     (if (eq (current-buffer) ,(current-buffer))
-		  	 (kill-buffer ,work-buffer)))
-		  ))
-    (let ((work-buffer (vm-generate-new-unibyte-buffer "*attached messages*"))
-	  boundary)
-      (with-current-buffer work-buffer
-	(setq boundary (vm-mime-encapsulate-messages
-			message :keep-list vm-mime-digest-headers
-			:discard-regexp vm-mime-digest-discard-header-regexp
-			:always-use-digest t))
-	(goto-char (point-min))
-	(insert "MIME-Version: 1.0\n")
-	(insert "Content-Type: "
-		(vm-mime-type-with-params 
-		 "multipart/digest"
-		 (list (concat "boundary=\"" boundary "\"")))
-		"\n")
-	(insert "Content-Transfer-Encoding: "
-		(vm-determine-proper-content-transfer-encoding
-		 (point)
-		 (point-max))
-		"\n\n"))
-      (when description 
-	(setq description (vm-mime-scrub-description description)))
-      (vm-attach-object work-buffer :type "multipart/digest"
-			     :params (list (concat "boundary=\"" 
-						   boundary "\"")) 
-			     :disposition '("inline")
-			     :description nil :mimed t)
-      (make-local-variable 'vm-forward-list)
-      (setq vm-system-state 'forwarding
-	    vm-forward-list (copy-sequence message))
-      (add-hook 'kill-buffer-hook
-		`(lambda ()
-		   (if (eq (current-buffer) ,(current-buffer))
-		       (kill-buffer ,work-buffer)))))))
+  (cond ((not (consp message))
+	 (vm-attach-message-internal message description))
+	((null (cdr message))
+	 (vm-attach-message-internal (car message) description))
+	(t
+	 (vm-attach-message-digest-internal message description))))
 (defalias 'vm-mime-attach-message 'vm-attach-message)
 
 
+(defun vm-attach-message-internal (message description)
+  "Attach MESSAGE as a mime object to the current composition.  Use
+DESCRIPTION." 
+  (let* ((work-buffer (vm-generate-new-unibyte-buffer "*attached message*"))
+	 (m (vm-real-message-of message))
+	 (folder (vm-buffer-of m)))
+    (with-current-buffer work-buffer
+      (vm-insert-region-from-buffer folder (vm-headers-of m) (vm-text-end-of m))
+      (goto-char (point-min))
+      (vm-reorder-message-headers
+       nil :keep-list nil
+       :discard-regexp vm-internal-unforwarded-header-regexp))
+    (when description 
+      (setq description (vm-mime-scrub-description description)))
+    (vm-attach-object work-buffer 
+		      :type "message/rfc822" :params nil 
+		      :disposition '("inline")
+		      :description description)
+    (make-local-variable 'vm-forward-list)
+    (setq vm-system-state 'forwarding
+	  vm-forward-list (list message))
+    ;; move window point forward so that if this command
+    ;; is used consecutively, the insertions will be in
+    ;; the correct order in the composition buffer.
+    (let ((w (vm-get-buffer-window (current-buffer))))
+      (when w (set-window-point w (point))))
+    (add-hook 'kill-buffer-hook
+	      `(lambda ()
+		 (if (eq (current-buffer) ,(current-buffer))
+		     (kill-buffer ,work-buffer))))))
+
+(defun vm-attach-message-digest-internal (mlist description)
+  "Attach MLIST as a mail digest object to the current composition.  Use
+DESCRIPTION." 
+  (let ((work-buffer (vm-generate-new-unibyte-buffer "*attached messages*"))
+	boundary)
+    (with-current-buffer work-buffer
+      (setq boundary (vm-mime-encapsulate-messages
+		      mlist :keep-list vm-mime-digest-headers
+		      :discard-regexp vm-mime-digest-discard-header-regexp
+		      :always-use-digest t))
+      (goto-char (point-min))
+      (insert "MIME-Version: 1.0\n")
+      (insert "Content-Type: "
+	      (vm-mime-type-with-params 
+	       "multipart/digest" (list (concat "boundary=\"" boundary "\"")))
+	      "\n")
+      (insert "Content-Transfer-Encoding: "
+	      (vm-determine-proper-content-transfer-encoding
+	       (point) (point-max))
+	      "\n\n"))
+    (when description 
+      (setq description (vm-mime-scrub-description description)))
+    (vm-attach-object work-buffer :type "multipart/digest"
+		      :params (list (concat "boundary=\"" boundary "\"")) 
+		      :disposition '("inline")
+		      :description description :mimed t)
+    (make-local-variable 'vm-forward-list)
+    (setq vm-system-state 'forwarding
+	  vm-forward-list (copy-sequence mlist))
+    ;; move window point forward so that if this command
+    ;; is used consecutively, the insertions will be in
+    ;; the correct order in the composition buffer.
+    (let ((w (vm-get-buffer-window (current-buffer))))
+      (when w (set-window-point w (point))))
+    (add-hook 'kill-buffer-hook
+	      `(lambda ()
+		 (if (eq (current-buffer) ,(current-buffer))
+		     (kill-buffer ,work-buffer))))))
 ;;;###autoload
 (defun vm-attach-message-to-composition (composition &optional description)
   "Attach the current message from the current VM folder to a VM
@@ -6061,57 +6086,35 @@ minibuffer if the command is run interactively."
    (let ((last-command last-command)
 	 (this-command this-command)
 	 description)
-     (vm-select-folder-buffer-and-validate 1 t)
-     (unless (memq major-mode '(vm-mode vm-virtual-mode))
-       (error "Command must be used in a VM buffer."))
-     (unless vm-send-using-mime
-       (error (concat "MIME attachments disabled, "
-		      "set vm-send-using-mime non-nil to enable.")))
-     (list
-      (read-buffer "Attach object to buffer: "
-		   (vm-find-composition-buffer) t)
-      (progn (setq description (read-string "Description: "))
-	     (when (string-match "^[ \t]*$" description)
-	       (setq description nil))
-	     description))))
+     (save-current-buffer
+       (vm-select-folder-buffer-and-validate 1 t)
+       (unless (memq major-mode '(vm-mode vm-virtual-mode))
+	 (error "Command must be used in a VM buffer."))
+       (unless vm-send-using-mime
+	 (error (concat "MIME attachments disabled, "
+			"set vm-send-using-mime non-nil to enable.")))
+       (list
+	(read-buffer "Attach object to buffer: " (vm-find-composition-buffer) t)
+	(progn (setq description (read-string "Description: "))
+	       (when (string-match "^[ \t]*$" description)
+		 (setq description nil))
+	       description)))))
 
   (unless vm-send-using-mime
     (error (concat "MIME attachments disabled, "
 		   "set vm-send-using-mime non-nil to enable.")))
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
+  (vm-follow-summary-cursor)
 
-  (let* ((work-buffer (vm-generate-new-unibyte-buffer "*attached message*"))
-	 (m (vm-real-message-of (vm-current-message)))
-	 (folder (vm-buffer-of m))
-	 w)
-    (with-current-buffer work-buffer
-      (vm-insert-region-from-buffer folder (vm-headers-of m)
-				    (vm-text-end-of m))
-      (goto-char (point-min))
-      (vm-reorder-message-headers
-       nil :keep-list nil
-       :discard-regexp vm-internal-unforwarded-header-regexp)
-      (when description 
-	(setq description
-	      (vm-mime-scrub-description description))))
+  (let ((mlist (vm-select-operable-messages 1 t "Attach")))
+    (when (null mlist)
+      (setq mlist (list (vm-current-message))))
+
     (with-current-buffer composition
-      (vm-attach-object work-buffer 
-			     :type "message/rfc822" :params nil 
-			     :disposition '("inline")
-			     :description description)
-      (make-local-variable 'vm-forward-list)
-      (setq vm-system-state 'forwarding
-	    vm-forward-list (list m))
-      ;; move window point forward so that if this command
-      ;; is used consecutively, the insertions will be in
-      ;; the correct order in the composition buffer.
-      (setq w (vm-get-buffer-window composition))
-      (and w (set-window-point w (point)))
-      (add-hook 'kill-buffer-hook
-		`(lambda ()
-		   (if (eq (current-buffer) ,(current-buffer))
-		       (kill-buffer ,work-buffer)))))))
+    (if (null (cdr mlist))		; single message
+	(vm-attach-message-internal (car mlist) description)
+      (vm-attach-message-digest-internal mlist description)))))
 (defalias 'vm-mime-attach-message-to-composition
   'vm-attach-message-to-composition)
 		      
@@ -7822,7 +7825,7 @@ Returns marker pointing to the start of the encoded MIME part."
     "Press RETURN"))
 
 (defun vm-mf-default-action (layout)
-  (if (eq vm-mime-alternative-select-method 'all)
+  (if (eq vm-mime-alternative-show-method 'all)
       (concat (vm-mf-default-action-orig layout) " alternative")
     (vm-mf-default-action-orig layout)))
 
