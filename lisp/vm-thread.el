@@ -251,6 +251,82 @@ youngest or oldest date in its thread.  CRITERION must be one of
   (aset (symbol-value subject-sym) 3 ml))
 
 
+;; Integrity constraints for reference threads
+
+;; MESSAGES:
+;;	The messages field of id-sym points to all known messages with
+;; 	this id.
+;; MESSAGE: 
+;; 	The message field of id-sym points to the canonical
+;; 	message with this id, which must be the first in the messages
+;; 	field.
+;; DATE:
+;;	The date field of id-sym contains the date of the canonical
+;; 	message with this id.
+;; BASIC:
+;;	MESSAGES /\ MESSAGE /\ DATE
+;; PARENT:
+;;	The parent field of id-sym contains the interned id of the
+;; 	parent of the message, and the parent's children field contains
+;; 	this id-sym.
+;; CHILDREN:
+;;	The children field of id-sym contains the interned id's of all
+;; 	the known children of the message.
+;; LINKS:
+;;	PARENT /\ CHILDREN
+;; YOUNGEST:
+;;	The youngest-date of id-sym contains the date of the youngest
+;; 	message in the subthread rooted in this id.
+;; OLDEST:
+;;	The oldest-date of id-sym contains the date of the oldest
+;; 	message in the thread containing this id.
+;; DATES:
+;;	YOUNGEST /\ OLDEST
+;; NODE:
+;;	BASIC /\ LINKS /\ DATES
+
+;; Integrity constraints for subject threads
+
+;; TS-ROOT:
+;;	The root of the subject symbol is the id of the canonical message of
+;;	the oldest message with the subject.
+;; TS-DATE:
+;;	The date field of the subject symbol is the date of the root
+;;	message.
+;; TS-MEMBERS:
+;;	The members field of the subject symbol contains all known
+;;	"members" of the subject thread, except for the root.
+;;	"Member" means the root of a reference thread with the given
+;;	subject.  (The descendants may have different subject lines.)
+;; TS-MESSAGES:
+;;	The messages field of the subject symbol is the list of all
+;;	the messages in the folder with this subject.  (What about
+;;	descendant of a member that may have a different subject line?)
+
+;; Cached information
+
+;; SUBTREE: 
+;;	The subtree fields of all the messages with the id contain the
+;; 	subtrees rooted at that node (as recorded in the threads database).
+;; LIST:
+;;	The thread-list fields of all the messages with the id contain
+;; 	the thread-list above that node (as recorded in the threads database).
+;; INDENTATION:
+;;	The thread-indentation field of all the messages with the id
+;; 	store the length of the thread-list.
+;; DISPLAY
+;;	The summary display shows the thread-indentation value.
+;; SUBTREE0, LIST0, INDENTATION0
+;;	Above properties hold only if the corresponding fields are
+;; 	non-nil.
+;; DISPLAY0:
+;;	If the message is not scheduled for summary-update then its
+;; 	summary display shows the thread-indentation value.
+;; CACHE:
+;;	SUBTREE /\ LIST /\ INDENTATION /\ DISPLAY
+;; CACHE0:
+;;	SUBTREE0 /\ LIST0 /\ INDENTATION0 /\ DISPLAY0
+
 ;;; thread tree - basic operations
 
 (defun vm-th-new-thread-symbol (m)
@@ -263,23 +339,31 @@ and child pointers."
 
 (defsubst vm-th-add-message-to-symbol (id-sym m)
   "Add message M to ID-SYM as one of the messages with its id."
+  ;; requires: BASIC and messages /= nil
+  ;; ensures: BASIC
   (unless (memq m (vm-th-messages-of id-sym))
     (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))))
 
 (defsubst vm-th-remove-message-from-symbol (id-sym m)
   "Delete message M from ID-SYM as one of the messages with its id."
+  ;; requires: BASIC and m in messages
+  ;; ensures: BASIC
   (vm-th-set-messages-of id-sym (remq m (vm-th-messages-of id-sym)))
   (if (eq m (vm-th-message-of id-sym))
       (vm-th-set-message-of id-sym (car (vm-th-messages-of id-sym)))))
 
 (defsubst vm-th-init-thread-symbol (id-sym m)
   "Initialize thread symbol ID-SYM to the message M."
+  ;; requires: true
+  ;; ensures: BASIC
   (vm-th-set-message-of id-sym m)
   (vm-th-set-messages-of id-sym (list m))
   (vm-th-set-date-of id-sym (vm-so-sortable-datestring m)))
 
 (defsubst vm-th-set-parent (id-sym parent-sym)
   "Set the parent of ID-SYM to PARENT-SYM."
+  ;; requires: BASIC
+  ;; ensures: BASIC /\ PARENT
   (vm-th-set-parent-of id-sym parent-sym)
   (vm-th-add-child parent-sym id-sym))
 
@@ -288,17 +372,20 @@ and child pointers."
 invalidated by setting the parent of ID-SYM to PARENT-SYM.  This
 involves the thread-subtrees of PARENT-SYM and all its ancestors.
 It also invovles thread-lists of ID-SYM and all its descendants."
+  ;; ensures: SUBTREE0(ancestors(parent-sym)), LIST0(descendents(id-sym))
   (vm-th-clear-subtree parent-sym)
   (vm-th-clear-thread-lists id-sym))
 
 (defsubst vm-ts-add-member (subject-sym id-sym)
   "Add ID-SYM as a member of SUBJECT-SYM."
+  ;; ensures: TS-MEMBERS(subject-sym)
   (unless (memq id-sym (vm-ts-members-of subject-sym))
     (vm-ts-set-members-of 
      subject-sym (cons id-sym (vm-ts-members-of subject-sym)))))
 
 (defsubst vm-ts-add-message (subject-sym m)
   "Add M as a message in the subject thread of SUBJECT-SYM."
+  ;; ensures: TS-MESSAGES(subject-sym)
   (vm-ts-set-messages-of 
    subject-sym (cons m (vm-ts-messages-of subject-sym))))
 
@@ -308,6 +395,8 @@ for ID-SYM, which is the subject root of SUBJECT-SYM.  This
 involves clearing the thread-subtree of ID-SYM and the
 thread-lists of all members of SUBJEC-SYM. (not entirely clear if this
 is right).                                           USR, 2011-04-08"
+  ;; ensures: SUBTREE0(ancestors(id-sym)) /\ 
+  ;;          LIST0(descendants(members(subject-sym)))
   (vm-th-clear-subtree id-sym)
   (mapc 'vm-th-clear-thread-lists 
 	(vm-ts-members-of subject-sym)))
@@ -451,17 +540,23 @@ being initialized."
 	  (vm-thread-debug 'vm-build-reference-threads id m))
       (unless id-sym			; first occurrence now
 	(setq id-sym (vm-th-new-thread-symbol m)))
+      ;; { BASIC0(id-sym) }
       (if (vm-th-messages-of id-sym)	; registered already
 	  (vm-th-add-message-to-symbol id-sym m)
 	(vm-th-init-thread-symbol id-sym m))
+      ;; { BASIC /\ DISPLAY0 (id-sym) }
       (when schedule-reindents
 	(vm-thread-mark-for-summary-update (list m)))
+      ;; { BASIC /\ DISPLAY0 (id-sym) }
       ;; Thread using the parent
       (setq parent (vm-parent m))
       (if (null parent)
+	  ;; {NODE /\ DISPLAY0 (id-sym)}
 	  ;; could be a duplicate copy of a message
 	  (unless initializing
 	    (vm-th-clear-subtree id-sym))
+	  ;; {NODE /\ SUBTREE0 /\ DISPLAY0 (id-sym)}
+	  ;; {NODE /\ SUBTREE0 /\ LIST0 /\ INDENTATION0 /\ DISPLAY0 (id-sym)}
 	(setq parent-sym (intern parent vm-thread-obarray))
 	;; set the parent of m.
 	;; if there was a parent already, update it consistently.
@@ -469,6 +564,7 @@ being initialized."
 	  (if (member (symbol-name id-sym) vm-traced-message-ids)
 	      (vm-thread-debug 'vm-build-reference-threads-1 id-sym))	  
 	  (cond ((null (vm-th-parent-of id-sym))
+		 ;; {BASIC /\ LINKS0 /\ DISPLAY0 (id-sym)}
 		 (unless initializing 
 		   (vm-th-clear-cached-data id-sym parent-sym))
 		 (vm-th-set-parent id-sym parent-sym))
@@ -495,6 +591,7 @@ being initialized."
 		     (vm-thread-debug 'vm-build-reference-threads 
 				      'old-parent-sym old-parent-sym)
 		     ))))))
+      ;; { NODE /\ CACHE0 (id-sym) }
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
 	  (vm-inform 7 "Building threads... %d%%" (* (/ (+ n 0.0) total) 100))))
@@ -534,6 +631,8 @@ being initialized."
 (defun vm-th-clear-thread-lists (id-sym)
   "Clear the thread-list and thread-indentation fields of the
 message with ID-SYM and all its descendants."
+  ;; requires: BASIC /\ LINKS (descendants(id-sym))
+  ;; ensures: LIST0 /\ INDENTATION0 (descendants(id-sym))
   (mapc (lambda (d)
 	  (vm-set-thread-list-of d nil)
 	  (vm-set-thread-indentation-of d nil))
@@ -554,6 +653,8 @@ set them to nil.  They will get recalculated on demand."
 (defun vm-th-clear-subtree (id-sym)
   "Clear the thread subtrees of the messages with id-symbol ID-SYM and
 all its ancestors, followed via the parent links."
+  ;; requires: BASIC /\ LINKS (ancestors(id-sym))
+  ;; ensures: TREE0(ancestors(id-sym))
   (let ((msg (vm-th-message-of id-sym))
 	subject subject-sym)
     (vm-th-clear-subtree-of id-sym)
@@ -692,6 +793,8 @@ function is called."
   "Mark the messages in MESSAGE-LIST and all their descendants for
 summary update.  This function does not depend on cached
 thread-subtrees.                                USR, 2011-04-03" 
+  ;; requires: BASIC /\ LINKS (descendants(message-list))
+  ;; ensures: LIST0 /\ INDENTATION0 /\ DISPLAY0 (descendants(message-list))
   (mapc (lambda (m)
 	  ;; if thread-list is null then we've already marked this
 	  ;; message, or it doesn't need marking.
@@ -1022,6 +1125,7 @@ calculates the thread-list and caches it.  USR, 2010-03-13"
 the interned symbol of a message.  If there are multiple messages with
 the same root message ID, one of them is chosen arbitrarily.  Threads
 should have been built for this function to work."
+  ;; requires: LIST0(m)
   (let (m-sym list id-sym)
     (cond ((symbolp m) 
 	   (setq m-sym m)
@@ -1049,6 +1153,7 @@ either a message or the interned symbol of M.  Threads should
 have been built for this function to work.  
 
 See also: `vm-thread-root'."
+  ;; requires: LIST0(m)
   (let (m-sym list id-sym)
     (cond ((symbolp m) 
 	   (setq m-sym m)
@@ -1074,6 +1179,7 @@ See also: `vm-thread-root'."
   "Returns t if message M is known to be a thread root, nil
 otherwise.  No exceptions are thrown for errors."
   ;; Threads may not be turned on.  So, ignore errors.
+  ;; requires: LIST0(m)
   (condition-case err
       (and (eq m (vm-thread-root m))
 	   (> (vm-thread-count m) 1))
