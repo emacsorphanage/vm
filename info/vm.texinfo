@@ -7059,8 +7059,12 @@ can be arbitrarily deep.
 
 Threads are built using two hash tables @code{vm-thread-obarray} and
 @code{vm-thread-subject-obarray}.  The former keeps track of the thread
-obtained by following parent and reference chains.  The latter keeps
-track of messages with the same subject.
+obtained by following parent and reference chains.  The latter keeps track
+of messages with the ``same subject''.  To prevent messages from jumping
+from one thread to another within the same VM session, the subject used is
+not the message's own subject, but rather the subject of the oldest message
+in the thread.  This subject is retained even if the oldest message is
+expunged.
 
 The message ID's are interned in @code{vm-thread-obarray} and the
 following information is stored for each message ID:
@@ -7089,6 +7093,9 @@ present in the folder.
 @item oldest-date:
 The date of the oldest message in the thread, among the messages
 present in the folder.
+@item oldest-subject:
+The subject of the oldest message in the thread, among the messages present
+in the folder.
 @end itemize
 
 The @code{vm-thread-subject-obarray} interns each subject string found
