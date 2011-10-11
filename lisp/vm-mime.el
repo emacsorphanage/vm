@@ -2548,9 +2548,12 @@ is not successful.                                   USR, 2011-03-25"
     (unwind-protect
 	(progn
 	  (setq type (downcase (car (vm-mm-layout-type layout)))
-		type-no-subtype (car (vm-parse type "\\([^/]+\\)")))
-	  (when (setq file (vm-mime-get-disposition-filename layout))
-	    (setq type2 (downcase (vm-mime-default-type-from-filename file))
+		type-no-subtype (car (vm-parse type "\\([^/]+\\)"))
+		file (vm-mime-get-disposition-filename layout)
+		type2 (when (and vm-infer-mime-types file)
+			(vm-mime-default-type-from-filename file)))
+	  (when type2
+	    (setq type2 (downcase type2)
 		  type2-no-subtype  (car (vm-parse type2 "\\([^/]+\\)"))))
 	  (cond ((and vm-infer-mime-types
 		      (or (and vm-infer-mime-types-for-text
@@ -2560,88 +2563,102 @@ is not successful.                                   USR, 2011-03-25"
 		 (vm-mime-rewrite-with-inferred-type layout type2)
 		 (setq type (downcase (car (vm-mm-layout-type layout)))
 		       type-no-subtype (car (vm-parse type "\\([^/]+\\)")))))
-	  (cond ((and (vm-mime-should-display-button 
-		       layout :honor-content-disposition (not dont-honor-c-d))
-		      ;; original conditional-cases changed to fboundp
-		      ;; checks.  USR, 2011-03-25
-		      (or (fboundp 
-			   (setq handler 
-				 (vm-mime-handler "display-button"
-						 type))) 
-			  (fboundp 
-			   (setq handler
-				 (vm-mime-handler "display-button"
-						  type-no-subtype)))
-			  (and vm-infer-mime-types
-			       (prog1
-				   (fboundp
-				    (setq handler
-					  (vm-mime-handler "display-button"
-							   type2)))
-				 (vm-mime-rewrite-with-inferred-type 
-				  layout type2)))
-			  (and vm-infer-mime-types
-			       (prog1
-				   (fboundp
-				    (setq handler
-					  (vm-mime-handler "display-button"
-							   type2-no-subtype)))
-				 (vm-mime-rewrite-with-inferred-type 
-				  layout type2)))
-			  (setq handler
-				'vm-mime-display-button-application))
+	  (cond 
+	   ((and (vm-mime-should-display-button 
+		  layout :honor-content-disposition (not dont-honor-c-d))
+		 ;; original conditional-cases changed to fboundp
+		 ;; checks.  USR, 2011-03-25
+		 (or (fboundp 
+		      (setq handler (vm-mime-handler 
+				     "display-button" type))) 
+		     (fboundp 
+		      (setq handler (vm-mime-handler 
+				     "display-button" type-no-subtype)))
+		     (and vm-infer-mime-types
+			  (prog1
+			      (fboundp 
+			       (setq handler (vm-mime-handler 
+					      "display-button" type2)))
+			    (vm-mime-rewrite-with-inferred-type 
+			     layout type2)))
+		     (and vm-infer-mime-types
+			  (prog1
+			      (fboundp 
+			       (setq handler (vm-mime-handler 
+					      "display-button" 
+					      type2-no-subtype)))
+			    (vm-mime-rewrite-with-inferred-type 
+			     layout type2)))
+		     (setq handler 'vm-mime-display-button-application))
 		      
-		      (funcall handler layout))
-		 ;; if the handler returns t, we are done
-		 )
-		((and (vm-mime-should-display-internal layout)
-		      (or (fboundp 
-			   (setq handler 
-				 (vm-mime-handler "display-internal" type)))
-			  (fboundp 
-			   (setq handler
-				 (vm-mime-handler "display-internal"
-						  type-no-subtype))))
-		      (funcall handler layout))
-		 ;; if the handler returns t, we are done
-		 )
-		((vm-mime-types-match "multipart" type)
-		 (if (fboundp (setq handler
-				    (vm-mime-handler "display-internal"
-						     type)))
-		     (funcall handler layout)
-		   (vm-mime-display-internal-multipart/mixed layout))
-		 )
-		((and (vm-mime-find-external-viewer type)
-		      (vm-mime-display-external-generic layout))
-		 ;; external viewer worked.  the button should go away.
-		 (when extent (vm-set-extent-property
-			       extent 'vm-mime-disposable nil))
-		 )
-		((and (not (vm-mm-layout-is-converted layout))
-		      (vm-mime-can-convert type)
-		      (setq new-layout
-			    (vm-mime-convert-undisplayable-layout layout)))
-		 ;; conversion worked.  the button should go away.
-		 (when extent
-		   (vm-set-extent-property extent 'vm-mime-disposable t))
-		 (vm-decode-mime-layout new-layout)
-		 )
-		(t 
-		 (when extent (vm-mime-rewrite-failed-button
-			       extent
-			       (or (vm-mm-layout-display-error layout)
-				   "no external viewer defined for type")))
-		 (cond ((vm-mime-types-match "message/external-body" type)
-			(if (null extent)
-			    (vm-mime-display-button-xxxx layout t)
-			  (setq extent nil)))
-		       ((vm-mime-types-match "application/octet-stream" type)
-			(vm-mime-display-internal-application/octet-stream
-			 (or extent layout)))
-		       ;; if everything else fails, do nothing
-		       )
-		 ))
+		 (funcall handler layout))
+	    ;; if the handler returns t, we are done
+	    )
+	   ((and (vm-mime-should-display-internal layout)
+		 (or (fboundp 
+		      (setq handler (vm-mime-handler 
+				     "display-internal" type)))
+		     (fboundp 
+		      (setq handler (vm-mime-handler 
+				     "display-internal" type-no-subtype)))
+		     (and vm-infer-mime-types
+			  (prog1
+			      (fboundp
+			       (setq handler (vm-mime-handler 
+					      "display-internal" type2)))
+			    (vm-mime-rewrite-with-inferred-type 
+			     layout type2)))
+		     (and vm-infer-mime-types
+			  (prog1
+			      (fboundp
+			       (setq handler (vm-mime-handler 
+					      "display-internal" 
+					      type2-no-subtype)))
+			    (vm-mime-rewrite-with-inferred-type 
+			     layout type2))))
+		 (funcall handler layout))
+	    ;; if the handler returns t, we are done
+	    )
+	   ((vm-mime-types-match "multipart" type)
+	    (if (fboundp 
+		 (setq handler (vm-mime-handler "display-internal" type)))
+		(funcall handler layout)
+	      (vm-mime-display-internal-multipart/mixed layout))
+	    )
+	   ((and (vm-mime-find-external-viewer type)
+		 (vm-mime-display-external-generic layout))
+	    ;; external viewer worked.  the button should go away.
+	    (when extent (vm-set-extent-property
+			  extent 'vm-mime-disposable nil))
+	    )
+	   ((and (not (vm-mm-layout-is-converted layout))
+		 (vm-mime-can-convert type)
+		 (setq new-layout
+		       (vm-mime-convert-undisplayable-layout layout)))
+	    ;; conversion worked.  the button should go away.
+	    (when extent
+	      (vm-set-extent-property extent 'vm-mime-disposable t))
+	    (vm-decode-mime-layout new-layout)
+	    )
+	   (t 
+	    (when extent (vm-mime-rewrite-failed-button
+			  extent
+			  (or (vm-mm-layout-display-error layout)
+			      "no external viewer defined for type")))
+	    (cond ((vm-mime-types-match "message/external-body" type)
+		   (if (null extent)
+		       (vm-mime-display-button-xxxx layout t)
+		     (setq extent nil)))
+		  ((vm-mime-types-match "application/octet-stream" type)
+		   (vm-mime-display-internal-application/octet-stream
+		    (or extent layout)))
+		  ;; if everything else fails, just display a button
+		  (t
+		   (vm-set-mm-layout-display-error 
+		    layout "Unknown MIME type")
+		   (vm-mime-display-button-application layout))
+		  )
+	    ))
 	  (when extent (vm-mime-delete-button-maybe extent)))
       ;; unwind-protection
       (set-buffer-modified-p modified)))

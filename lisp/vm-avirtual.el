@@ -44,7 +44,7 @@
 ;; way of specifying conditions, but they only work on messages within
 ;; folders and not on messages which are currently composed. So I decided to
 ;; extent virtual folder selectors also to message composing, although not
-;; all of the selectors are meaning full for `mail-mode'.
+;; all of the selectors are meaningful for `mail-mode'.
 ;;
 ;; I wrote functions which can replace (*) the existing ones and others that
 ;; add new (+) functionality.  Finally I came up with the following ones:
@@ -70,7 +70,7 @@
 ;; e.g. my private email-address and get the right folder for saving messages,
 ;; visiting the corresponding virtual folders, auto archiving, setting the FCC
 ;; header and setting up `vmpc-conditions'.  Do you know a mailer than can
-;; beet this?
+;; beat this?
 ;;
 ;; My default selector for spam messages:
 ;; 
@@ -98,7 +98,7 @@
 ;;               (header "=[A-F][0-9A-F]=[A-F][0-9A-F]=[A-F][0-9A-F]=[A-F][0-9A-F]=[A-F][0-9A-F]")
 ;;               ))))))
 ;;
-;;; Feel free to sent me any comments or bug reports.
+;;; Feel free to send me any comments or bug reports.
 ;;
 ;;; Code:
 
