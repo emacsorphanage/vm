@@ -97,6 +97,9 @@
   (put 'vm-mime-error 'error-conditions '(vm-mime-error error))
   (put 'vm-mime-error 'error-message "MIME error"))
 
+(defsubst vm-mime-handler (op type)
+  (intern (concat "vm-mime-" op "-" type)))
+
 ;; A lot of the more complicated MIME character set processing is only
 ;; practical under MULE.
 (eval-when-compile 
@@ -2514,6 +2517,10 @@ in the buffer.  The function is expected to make the message
           (setq filename (vm-decode-mime-encoded-words-in-string filename)))))
     filename))
 
+(defun vm-mime-rewrite-with-inferred-type (layout type2)
+  (vm-set-mm-layout-type layout (list type2))
+  (vm-set-mm-layout-qtype layout (list (concat "\"" type2 "\""))))
+
 (defun vm-decode-mime-layout (layout &optional dont-honor-c-d)
   "Decode the MIME part in the current buffer using LAYOUT.  
 If DONT-HONOR-C-D non-Nil, then don't honor the Content-Disposition
@@ -2527,7 +2534,7 @@ deleted.
 Returns t if the display was successful.  Not clear what happens if it
 is not successful.                                   USR, 2011-03-25"
   (let ((modified (buffer-modified-p))
-	handler new-layout file type type2 type-no-subtype 
+	handler new-layout file type type2 type-no-subtype type2-no-subtype
 	(extent nil))
     (unless (vectorp layout)
       ;; handle a button extent
@@ -2542,50 +2549,66 @@ is not successful.                                   USR, 2011-03-25"
 	(progn
 	  (setq type (downcase (car (vm-mm-layout-type layout)))
 		type-no-subtype (car (vm-parse type "\\([^/]+\\)")))
+	  (when (setq file (vm-mime-get-disposition-filename layout))
+	    (setq type2 (downcase (vm-mime-default-type-from-filename file))
+		  type2-no-subtype  (car (vm-parse type2 "\\([^/]+\\)"))))
 	  (cond ((and vm-infer-mime-types
 		      (or (and vm-infer-mime-types-for-text
 			       (vm-mime-types-match "text/plain" type))
 			  (vm-mime-types-match "application/octet-stream" type))
-		      (setq file (vm-mime-get-disposition-filename layout))
-		      (setq type2 (vm-mime-default-type-from-filename file))
 		      (not (vm-mime-types-match type type2)))
-		 (vm-set-mm-layout-type layout (list type2))
-		 (vm-set-mm-layout-qtype layout
-					 (list (concat "\"" type2 "\"")))
+		 (vm-mime-rewrite-with-inferred-type layout type2)
 		 (setq type (downcase (car (vm-mm-layout-type layout)))
 		       type-no-subtype (car (vm-parse type "\\([^/]+\\)")))))
-	  
 	  (cond ((and (vm-mime-should-display-button 
 		       layout :honor-content-disposition (not dont-honor-c-d))
 		      ;; original conditional-cases changed to fboundp
 		      ;; checks.  USR, 2011-03-25
 		      (or (fboundp 
 			   (setq handler 
-				 (intern (concat "vm-mime-display-button-"
-						 type))))
+				 (vm-mime-handler "display-button"
+						 type))) 
 			  (fboundp 
 			   (setq handler
-				 (intern (concat "vm-mime-display-button-"
-						 type-no-subtype)))))
+				 (vm-mime-handler "display-button"
+						  type-no-subtype)))
+			  (and vm-infer-mime-types
+			       (prog1
+				   (fboundp
+				    (setq handler
+					  (vm-mime-handler "display-button"
+							   type2)))
+				 (vm-mime-rewrite-with-inferred-type 
+				  layout type2)))
+			  (and vm-infer-mime-types
+			       (prog1
+				   (fboundp
+				    (setq handler
+					  (vm-mime-handler "display-button"
+							   type2-no-subtype)))
+				 (vm-mime-rewrite-with-inferred-type 
+				  layout type2)))
+			  (setq handler
+				'vm-mime-display-button-application))
+		      
 		      (funcall handler layout))
 		 ;; if the handler returns t, we are done
 		 )
 		((and (vm-mime-should-display-internal layout)
 		      (or (fboundp 
 			   (setq handler 
-				 (intern (concat "vm-mime-display-internal-"
-						 type))))
+				 (vm-mime-handler "display-internal" type)))
 			  (fboundp 
 			   (setq handler
-				 (intern (concat "vm-mime-display-internal-"
-						 type-no-subtype)))))
+				 (vm-mime-handler "display-internal"
+						  type-no-subtype))))
 		      (funcall handler layout))
 		 ;; if the handler returns t, we are done
 		 )
 		((vm-mime-types-match "multipart" type)
 		 (if (fboundp (setq handler
-				    (intern (concat "vm-mime-display-internal-"
-						    type))))
+				    (vm-mime-handler "display-internal"
+						     type)))
 		     (funcall handler layout)
 		   (vm-mime-display-internal-multipart/mixed layout))
 		 )
