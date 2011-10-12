@@ -2574,51 +2574,47 @@ is not successful.                                   USR, 2011-03-25"
 		     (fboundp 
 		      (setq handler (vm-mime-handler 
 				     "display-button" type-no-subtype)))
-		     (and vm-infer-mime-types
-			  (prog1
-			      (fboundp 
-			       (setq handler (vm-mime-handler 
-					      "display-button" type2)))
-			    (vm-mime-rewrite-with-inferred-type 
-			     layout type2)))
-		     (and vm-infer-mime-types
-			  (prog1
-			      (fboundp 
-			       (setq handler (vm-mime-handler 
-					      "display-button" 
-					      type2-no-subtype)))
-			    (vm-mime-rewrite-with-inferred-type 
-			     layout type2)))
+
 		     (setq handler 'vm-mime-display-button-application))
 		      
 		 (funcall handler layout))
 	    ;; if the handler returns t, we are done
 	    )
+	   ((and vm-infer-mime-types
+		 (vm-mime-should-display-button 
+		  layout :honor-content-disposition (not dont-honor-c-d))
+		 (or (fboundp 
+		      (setq handler (vm-mime-handler 
+				     "display-button" type2)))
+		     (fboundp 
+		      (setq handler (vm-mime-handler 
+				     "display-button" 
+				     type2-no-subtype))))
+		 (funcall handler layout))
+	    ;; if the handler returns t, overwrite the layout type
+	    (vm-mime-rewrite-with-inferred-type layout type2))
 	   ((and (vm-mime-should-display-internal layout)
 		 (or (fboundp 
 		      (setq handler (vm-mime-handler 
 				     "display-internal" type)))
 		     (fboundp 
 		      (setq handler (vm-mime-handler 
-				     "display-internal" type-no-subtype)))
-		     (and vm-infer-mime-types
-			  (prog1
-			      (fboundp
-			       (setq handler (vm-mime-handler 
-					      "display-internal" type2)))
-			    (vm-mime-rewrite-with-inferred-type 
-			     layout type2)))
-		     (and vm-infer-mime-types
-			  (prog1
-			      (fboundp
-			       (setq handler (vm-mime-handler 
-					      "display-internal" 
-					      type2-no-subtype)))
-			    (vm-mime-rewrite-with-inferred-type 
-			     layout type2))))
+				     "display-internal" type-no-subtype))))
 		 (funcall handler layout))
 	    ;; if the handler returns t, we are done
 	    )
+	   ((and vm-infer-mime-types
+		 (vm-mime-should-display-internal layout)
+		 (or (fboundp
+		      (setq handler (vm-mime-handler 
+				     "display-internal" type2)))
+		     (fboundp
+		      (setq handler (vm-mime-handler 
+				     "display-internal" 
+				     type2-no-subtype))))
+		 (funcall handler layout))
+	    ;; if the handler returns t, overwrite the layout type
+	    (vm-mime-rewrite-with-inferred-type layout type2))
 	   ((vm-mime-types-match "multipart" type)
 	    (if (fboundp 
 		 (setq handler (vm-mime-handler "display-internal" type)))
