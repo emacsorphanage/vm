@@ -92,6 +92,7 @@ Add-ons and Customizations:
 
 * Preface to Add-ons::  What are these?
 * Customizations::	Making VM behave the way you might want.
+* Add-ons::		Contributed packages adding functionality to VM.
 
 About VM:
 
@@ -2657,17 +2658,6 @@ temporary folder and you can read the message and interact with
 it using normal VM mode commands to see how it might look to a
 recipient.  Type @key{q} to quit the temporary folder and resume
 composing your message.
-
-@findex vm-postpone-composition
-@kindex C-c C-d
-@item C-c C-d (@code{vm-postpone-composition})
-Postpones the current composition.  The message is stored in the
-folder specified in @code{vm-postponed-folder}.  You can continue composing
-of messages by visiting @code{vm-postponed-folder}, selecting a massage
-and @key{m} or by directly calling the function on any message in any folder
-@kbd{M-x vm-continue-postponed-message}.  When called with a prefix argument
-@code{vm-postpone-composition} will ask you for the folder to save the draft
-to, i.e. you might also save it to your inbox.
 
 @end table
 
@@ -5720,7 +5710,7 @@ Full-blown packages that add new functionality or interface to other
 packages in your environment.
 @end itemize
 
-@node Customizations, History and Administration, Preface to Add-ons, Top
+@node Customizations, Add-ons, Preface to Add-ons, Top
 @chapter Customizations
 Useful ways to customize VM.
 @section Reading messages
@@ -5801,7 +5791,40 @@ putting @code{vm-mime-auto-save-all-attachments} in
 
 
 
-@node History and Administration, Highlights, Customizations, Top
+@node Add-ons, History and Administration, Customizations, Top
+@chapter Add-ons
+@section Postponing message composition
+@cindex vm-pine
+@cindex postponing message composition
+Sometimes, you might want to interrupt the composing of a message and
+continue it later.  The add-on called @code{vm-pine} provides this
+functionality. 
+
+@findex vm-postpone-composition
+@kindex C-c C-d
+@vindex vm-postponed-folder
+In a message composition buffer, the command @key{C-c C-d}
+(@code{vm-postpone-composition}) 
+postpones the current composition.  The postponed message is stored in the
+folder specified in @code{vm-postponed-folder}.   (The default is a folder
+called ``postponed'').   When called with a prefix argument,
+@code{vm-postpone-composition} will ask you for the folder to save the draft
+to.  You might also save it to your inbox in this way.
+
+@findex vm-continue-postponed-message
+You can continue composing the postponed messages by visiting
+@code{vm-postponed-folder}, selecting a message and running @kbd{M-x
+vm-continue-postponed-message}.  This constructs a new message composition
+buffer by copying the text from the VM Presentation buffer.  It also
+converts any MIME buttons into attachment buttons, which will be encoded as
+valid MIME attachments when the message is sent.  Unfortunately, any
+attachments that are displayed inline in the Presentation buffer will not be
+encoded.  This is a limitation of this package.
+
+(This add-on was provided by Robert Fenk.)
+
+
+@node History and Administration, Highlights, Add-ons, Top
 @chapter History and Administration
 
 @cindex Kyle Jones
