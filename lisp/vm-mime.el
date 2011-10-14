@@ -6833,7 +6833,7 @@ should be encoded together."
         (goto-char end)))))
 
 ;;;###autoload
-(defun vm-mime-encode-composition ()
+(defun vm-mime-encode-composition (&optional attachments-only)
  "MIME encode the current mail composition buffer.
 
 This function chooses the MIME character set(s) to use, and transforms the
@@ -6872,7 +6872,7 @@ and the approriate content-type and boundary markup information is added."
 	(mybuffer (current-buffer)))
     (unwind-protect
 	(progn
-	  (vm-mime-encode-composition-internal)
+	  (vm-mime-encode-composition-internal attachments-only)
 	  (setq unwind-needed nil))
       (and unwind-needed (consp buffer-undo-list)
 	   (eq mybuffer (current-buffer))
@@ -6883,7 +6883,7 @@ and the approriate content-type and boundary markup information is added."
 ;; This function was originally XEmacs-specific.  It has now been
 ;; generalized to both XEmacs and GNU Emacs.  USR, 2011-03-27
 
-(defun vm-mime-encode-composition-internal ()
+(defun vm-mime-encode-composition-internal (&optional attachments-only)
   "MIME encode the message composition in the current buffer."
   (save-restriction
     (widen)
@@ -6975,22 +6975,25 @@ and the approriate content-type and boundary markup information is added."
 		        (car (vm-extent-property e 'vm-mime-forward-local-refs))
 		    description (vm-extent-property e 'vm-mime-description)
 		    disposition
-		    (if (not (equal
-			      (car (vm-extent-property e 'vm-mime-disposition))
-			      "unspecified"))
-			(vm-extent-property e 'vm-mime-disposition)
-		      (vm-mm-layout-qdisposition layout)))
+		    (if (equal
+			 (car (vm-extent-property e 'vm-mime-disposition))
+			 "unspecified")
+			(vm-mm-layout-qdisposition layout)
+		      (vm-extent-property e 'vm-mime-disposition)))
 	    (setq type (vm-extent-property e 'vm-mime-type)
 		  params (vm-extent-property e 'vm-mime-parameters)
 		  forward-local-refs
 		      (car (vm-extent-property e 'vm-mime-forward-local-refs))
 		  description (vm-extent-property e 'vm-mime-description)
 		  disposition
-		  (if (not (equal
-			    (car (vm-extent-property e 'vm-mime-disposition))
-			    "unspecified"))
-		      (vm-extent-property e 'vm-mime-disposition)
-		    nil)))
+		  (if (equal
+		       (car (vm-extent-property e 'vm-mime-disposition))
+		       "unspecified")
+		      (if attachments-only '("attachment") nil)
+		    (if attachments-only
+			(cons "attachment"
+			      (cdr (vm-extent-property e 'vm-mime-disposition)))
+		      (vm-extent-property e 'vm-mime-disposition)))))
 	  ;; 1e. Encode the object if necessary
 	  (cond ((vm-mime-types-match "text" type)
 		 (setq encoding
