@@ -3316,8 +3316,8 @@ Giving a prefix argument overrides the variable and no expunge is done."
     (unless (or no-change virtual)
       ;; this could take a while, so give the user some feedback
       (vm-inform 5 "Quitting...")
-      (or vm-folder-read-only (eq major-mode 'vm-virtual-mode)
-	  (vm-change-all-new-to-unread)))
+      (unless (or vm-folder-read-only (eq major-mode 'vm-virtual-mode))
+	(vm-change-all-new-to-unread)))
     (when (and (buffer-modified-p)
 	       (or buffer-file-name buffer-offer-save)
 	       (not no-change)

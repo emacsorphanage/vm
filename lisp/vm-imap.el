@@ -1006,6 +1006,7 @@ of the current folder."
 ;; numbers.  In this state, the IMAP session is "active", but not
 ;; "valid".  Only UID-based commands can be issued in this state.
 
+
 ;;;###autoload
 (defun vm-imap-make-session (source &optional interactive purpose)
   "Create a new IMAP session for the IMAP mail box SOURCE.
@@ -1244,9 +1245,9 @@ nil if the session could not be created."
     
     (if success
 	process
-      ;; try again if possible
+      ;; try again if possible, treat it as non-interactive the next time
       (when interactive
-	(vm-imap-make-session source interactive purpose)))))
+	(vm-imap-make-session source nil purpose)))))
 
 (defun vm-imap-check-for-server-spec (source host port auth user pass 
 					     use-ssl use-ssh)
