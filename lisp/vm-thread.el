@@ -660,7 +660,9 @@ being initialized."
 	(setq parent-sym (intern parent vm-thread-obarray))
 	;; set the parent of m.
 	;; if there was a parent already, update it consistently.
-	(when (vm-th-safe-parent-p id-sym parent-sym)
+	(if (not (vm-th-safe-parent-p id-sym parent-sym))
+	    (vm-inform 10 "Unsafe thread parent detected for %s: %s"
+			   (symbol-name id-sym) (symbol-name parent-sym))
 	  (if (member (symbol-name id-sym) vm-traced-message-ids)
 	      (vm-thread-debug 'vm-build-reference-threads-1 id-sym))	  
 	  (cond ((null (vm-th-parent-of id-sym))
@@ -711,16 +713,18 @@ being initialized."
 		  refs (cdr refs))
 	    (while refs
 	      (setq id-sym (intern (car refs) vm-thread-obarray))
-	      (when (and (null (vm-th-parent-of id-sym))
-			 (vm-th-safe-parent-p id-sym parent-sym))
-		(if (member (symbol-name id-sym) vm-traced-message-ids)
-		    (vm-thread-debug 'vm-build-reference-threads-2 id-sym))
-		(unless initializing 
-		  (vm-th-clear-cached-data id-sym parent-sym))
-		(vm-th-set-parent id-sym parent-sym)
-		(if schedule-reindents
-		    (vm-thread-mark-for-summary-update 
-		     (vm-th-messages-of id-sym))))
+	      (when (null (vm-th-parent-of id-sym))
+		(if (not (vm-th-safe-parent-p id-sym parent-sym))
+		    (vm-inform 10 "Unsafe reference parent detected for %s: %s"
+			       (symbol-name id-sym) (symbol-name parent-sym))
+		  (if (member (symbol-name id-sym) vm-traced-message-ids)
+		      (vm-thread-debug 'vm-build-reference-threads-2 id-sym))
+		  (unless initializing 
+		    (vm-th-clear-cached-data id-sym parent-sym))
+		  (vm-th-set-parent id-sym parent-sym)
+		  (if schedule-reindents
+		      (vm-thread-mark-for-summary-update 
+		       (vm-th-messages-of id-sym)))))
 	      (setq parent-sym id-sym
 		    refs (cdr refs)))))
       (setq mp (cdr mp) n (1+ n))

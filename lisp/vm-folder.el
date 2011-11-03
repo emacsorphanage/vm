@@ -1672,6 +1672,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
       ;; make message be new by default, but avoid vm-set-new-flag
       ;; because it asks for a summary update for the message.
       (vm-set-new-flag-of (car mp) t)
+      (vm-set-unread-flag-of (car mp) t)
       (setq access-method (vm-message-access-method-of (car mp)))
       (cond ((eq access-method 'imap)
 	     (vm-imap-set-default-attributes (car mp)))
