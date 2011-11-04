@@ -922,10 +922,11 @@ do not match the given UID-VALIDITY.              USR, 2010-05-24"
 
 (defun vm-imap-recorded-uid-validity ()
   "Return the UID-VALIDITY value recorded in the X-IMAP-Retrieved header
-of the current folder."
+of the current folder, or nil if none has been recorded."
   (let ((pos (vm-find vm-imap-retrieved-messages
 		      (lambda (record) (nth 1 record)))))
-    (nth 1 (nth pos vm-imap-retrieved-messages))))
+    (and pos
+	 (nth 1 (nth pos vm-imap-retrieved-messages)))))
 
 
 
