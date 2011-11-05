@@ -572,6 +572,10 @@ relevant POP servers to remove the messages."
 		   (unless (vm-pop-read-response process)
 
 		     (vm-inform 0 "POP password for %s incorrect" popdrop)
+		     (setq vm-pop-passwords
+			   (vm-delete (lambda (pair)
+					(equal (car pair) source-nopwd))
+				      vm-pop-passwords))
 		     ;; don't sleep unless we're running synchronously.
 		     (when vm-pop-ok-to-ask
 		       (sleep-for 2))

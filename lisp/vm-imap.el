@@ -1166,6 +1166,10 @@ nil if the session could not be created."
 		       (vm-imap-quote-string user) (vm-imap-quote-string pass)))
 	      (unless (vm-imap-read-ok-response process)
 		(vm-inform 0 "IMAP password for %s incorrect" folder)
+		(setq vm-imap-passwords
+		      (vm-delete (lambda (pair)
+				   (equal (car pair) source-nopwd-nombox))
+				 vm-imap-passwords))
 		;; don't sleep unless we're running synchronously.
 		(if vm-imap-ok-to-ask
 		    (sleep-for 2))
