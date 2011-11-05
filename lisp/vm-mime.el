@@ -2534,7 +2534,7 @@ deleted.
 Returns t if the display was successful.  Not clear what happens if it
 is not successful.                                   USR, 2011-03-25"
   (let ((modified (buffer-modified-p))
-	handler new-layout file type type2 type-no-subtype type2-no-subtype
+	handler new-layout file type inf-type type-no-subtype inf-type-no-subtype
 	(extent nil))
     (unless (vectorp layout)
       ;; handle a button extent
@@ -2550,17 +2550,17 @@ is not successful.                                   USR, 2011-03-25"
 	  (setq type (downcase (car (vm-mm-layout-type layout)))
 		type-no-subtype (car (vm-parse type "\\([^/]+\\)"))
 		file (vm-mime-get-disposition-filename layout)
-		type2 (when (and vm-infer-mime-types file)
-			(vm-mime-default-type-from-filename file)))
-	  (when type2
-	    (setq type2 (downcase type2)
-		  type2-no-subtype  (car (vm-parse type2 "\\([^/]+\\)"))))
-	  (cond ((and vm-infer-mime-types
+		inf-type (when (and vm-infer-mime-types file)
+			   (vm-mime-default-type-from-filename file)))
+	  (when inf-type
+	    (setq inf-type (downcase inf-type)
+		  inf-type-no-subtype  (car (vm-parse inf-type "\\([^/]+\\)"))))
+	  (cond ((and vm-infer-mime-types inf-type
 		      (or (and vm-infer-mime-types-for-text
 			       (vm-mime-types-match "text/plain" type))
 			  (vm-mime-types-match "application/octet-stream" type))
-		      (not (vm-mime-types-match type type2)))
-		 (vm-mime-rewrite-with-inferred-type layout type2)
+		      (not (vm-mime-types-match type inf-type)))
+		 (vm-mime-rewrite-with-inferred-type layout inf-type)
 		 (setq type (downcase (car (vm-mm-layout-type layout)))
 		       type-no-subtype (car (vm-parse type "\\([^/]+\\)")))))
 	  (cond 
@@ -2580,19 +2580,19 @@ is not successful.                                   USR, 2011-03-25"
 		 (funcall handler layout))
 	    ;; if the handler returns t, we are done
 	    )
-	   ((and vm-infer-mime-types
+	   ((and vm-infer-mime-types inf-type
 		 (vm-mime-should-display-button 
 		  layout :honor-content-disposition (not dont-honor-c-d))
 		 (or (fboundp 
 		      (setq handler (vm-mime-handler 
-				     "display-button" type2)))
+				     "display-button" inf-type)))
 		     (fboundp 
 		      (setq handler (vm-mime-handler 
 				     "display-button" 
-				     type2-no-subtype))))
+				     inf-type-no-subtype))))
 		 (funcall handler layout))
 	    ;; if the handler returns t, overwrite the layout type
-	    (vm-mime-rewrite-with-inferred-type layout type2))
+	    (vm-mime-rewrite-with-inferred-type layout inf-type))
 	   ((and (vm-mime-should-display-internal layout)
 		 (or (fboundp 
 		      (setq handler (vm-mime-handler 
@@ -2603,18 +2603,18 @@ is not successful.                                   USR, 2011-03-25"
 		 (funcall handler layout))
 	    ;; if the handler returns t, we are done
 	    )
-	   ((and vm-infer-mime-types
+	   ((and vm-infer-mime-types inf-type
 		 (vm-mime-should-display-internal layout)
 		 (or (fboundp
 		      (setq handler (vm-mime-handler 
-				     "display-internal" type2)))
+				     "display-internal" inf-type)))
 		     (fboundp
 		      (setq handler (vm-mime-handler 
 				     "display-internal" 
-				     type2-no-subtype))))
+				     inf-type-no-subtype))))
 		 (funcall handler layout))
 	    ;; if the handler returns t, overwrite the layout type
-	    (vm-mime-rewrite-with-inferred-type layout type2))
+	    (vm-mime-rewrite-with-inferred-type layout inf-type))
 	   ((vm-mime-types-match "multipart" type)
 	    (if (fboundp 
 		 (setq handler (vm-mime-handler "display-internal" type)))
