@@ -40,6 +40,10 @@ VM 8.2.0
 
   IMPROVEMENTS
 
+   * The trace of POP/IMAP sessions are retained in buffers named "trace of
+     POP session..." or "trace of IMAP session...".  They are useful for
+     troubleshooting any problems with mail server connections.
+
    * Setting `vm-stunnel-program' to nil asks VM to use the built-in SSL
      functionality of Emacs, available in Gnu Emacs 24.
 

@@ -1055,6 +1055,27 @@ account name as defined internally in VM.  These account names are
 defined via the variables @code{vm-pop-folder-alist} and
 @code{vm-imap-account-alist}, described below.
 
+@anchor{troubleshooting mail servers}
+@unnumberedsubsec Troubleshooting mail servers
+
+Since a number of components have to be brought together to establish
+connections to mail servers, it is not uncommon for problems to arise.
+
+To find out what could be going wrong, you can look at the Emacs buffer that
+store a trace of the session with mail server.  Such buffers have names
+beginning with ``trace of POP session'' or ``trace of IMAP session''.  There
+could be multiple buffers of this kind for different servers and multiple
+sessions.  In the trace buffer, you will find the commands that VM sent to
+the server and the responses it has received.  Typical problems are protocol
+mismatches between VM and the mail server, or malfunctions in other
+components such as the @code{stunnel} program.
+
+@vindex vm-pop-keep-trace-buffer
+@vindex vm-imap-keep-trace-buffer
+The variables @code{vm-pop-keep-trace-buffer} and
+@code{vm-imap-keep-trace-buffer} specify how many trace buffers to keep for
+such server sessions.  The default is 1.  Setting these variables to nil
+will have the effect that no trace buffers are kept.
 
 @menu
 * POP Folders::         How to use mailboxes on POP servers

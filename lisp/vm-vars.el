@@ -6819,8 +6819,9 @@ UIDVALIDITY for each message to be expunged.")
 (make-variable-buffer-local 'vm-imap-auth-methods)
 ;; The number of old ('failed') trace buffers to remember for debugging
 ;; purposes 
-(defvar vm-pop-keep-failed-trace-buffers 20)
-(defvar vm-imap-keep-failed-trace-buffers 20)
+;; These are now subsumed in vm-...-keep-trace-buffer variables.  USR, 2011-11
+;; (defvar vm-pop-keep-failed-trace-buffers 20)
+;; (defvar vm-imap-keep-failed-trace-buffers 20)
 ;; Lists of trace buffers remembered for debugging purposes
 (defvar vm-kept-pop-buffers nil
   "* Variable that holds the old trace buffers of POP sessions for
@@ -6831,12 +6832,20 @@ UIDVALIDITY for each message to be expunged.")
   debugging purposes.")
 ;; (make-variable-buffer-local 'vm-kept-imap-buffers)
 ;; Flag to make POP/IMAP code remember old trace buffers
-(defvar vm-pop-keep-trace-buffer nil
-  "* Set this to non-nil to retain a limited number of POP session
-  trace buffers for debugging purposes.")
-(defvar vm-imap-keep-trace-buffer nil
-  "* Set this to non-nil to retain a limited number of IMAP session
-  trace buffers for debugging purposes.")
+(defcustom vm-pop-keep-trace-buffer 1
+  "* The number of POP session trace buffers that should be
+  retained for debugging purposes.  If it is nil, then no trace
+  buffers are kept."
+  :group 'vm-pop
+  :type '(choice (integer :tag "Number of session buffers kept"
+		 (const :tag "No session buffers kept" nil))))
+(defcustom vm-imap-keep-trace-buffer 1
+  "* The number of IMAP session trace buffers that should be
+  retained for debugging purposes.  If it is nil, then no trace
+  buffers are kept."
+  :group 'vm-imap
+  :type '(choice (integer :tag "Number of session buffers kept"
+		 (const :tag "No session buffers kept" nil))))
 (defvar vm-imap-session-done nil)
 (defvar vm-reply-list nil
   "Buffer local variable in Composition buffers that holds the set of

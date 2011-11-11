@@ -655,10 +655,10 @@ killed as well."
 		    "Waiting for response to POP QUIT command... done"))))))
   (if (and (process-buffer process)
 	   (buffer-live-p (process-buffer process)))
-      (if (and (not vm-pop-keep-trace-buffer) (not keep-buffer))
+      (if (and (null vm-pop-keep-trace-buffer) (not keep-buffer))
 	  (kill-buffer (process-buffer process))
 	(vm-keep-some-buffers (process-buffer process) 'vm-kept-pop-buffers
-			      vm-pop-keep-failed-trace-buffers
+			      vm-pop-keep-trace-buffer
 			      "saved ")))
   (if (fboundp 'add-async-timeout)
       (add-async-timeout 2 'delete-process process)
@@ -1247,8 +1247,7 @@ specification SPEC."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (setq vm-kept-pop-buffers nil)
-  (setq vm-pop-keep-trace-buffer t)
-  (setq vm-pop-keep-failed-trace-buffers 20))
+  (setq vm-pop-keep-trace-buffer 20))
 
 (defun vm-pop-submit-bug-report ()
   "Submit a bug report for VM's POP support functionality.  

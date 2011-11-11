@@ -292,11 +292,13 @@ using cached data."
   )
 
 (defun vm-imap-protocol-error (&rest args)
-  (set (make-local-variable 'vm-imap-keep-trace-buffer) t)
+  (let ((local (make-local-variable 'vm-imap-keep-trace-buffer)))
+    (unless (symbol-value local) (set local 1)))
   (signal 'vm-imap-protocol-error (list (apply 'format args))))
 
 (defun vm-imap-normal-error (&rest args)
-  (set (make-local-variable 'vm-imap-keep-trace-buffer) t)
+  (let ((local (make-local-variable 'vm-imap-keep-trace-buffer)))
+    (unless (symbol-value local) (set local 1)))
   (signal 'vm-imap-normal-error (list (apply 'format args))))
 
 (defun vm-imap-capability (cap &optional process)
@@ -1330,10 +1332,10 @@ as well."
       ;;----------------------------------
       ))
   (when (and imap-buffer (buffer-live-p imap-buffer))
-    (if (and (not vm-imap-keep-trace-buffer) (not keep-buffer))
+    (if (and (null vm-imap-keep-trace-buffer) (not keep-buffer))
 	(kill-buffer imap-buffer)
       (vm-keep-some-buffers imap-buffer 'vm-kept-imap-buffers
-			    vm-imap-keep-failed-trace-buffers
+			    vm-imap-keep-trace-buffer
 			    "saved ")
       ))
   )
@@ -4455,8 +4457,7 @@ folder."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 0 (interactive-p))
   (setq vm-kept-imap-buffers nil)
-  (setq vm-imap-keep-trace-buffer t)
-  (setq vm-imap-keep-failed-trace-buffers 20))
+  (setq vm-imap-keep-trace-buffer 20))
 
 (defun vm-imap-submit-bug-report ()
   "Submit a bug report for VM's IMAP support functionality.  
