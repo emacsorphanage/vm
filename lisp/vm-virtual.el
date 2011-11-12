@@ -512,6 +512,9 @@ Prefix arg means the new virtual folder should be visited read only."
 	(error "Invalid virtual selector: %s" selector))
     (not (apply function m arglist))))
 
+(defun vm-vs-sexp (m arg)
+  (vm-vs-and m arg))
+
 (defun vm-vs-any (m) t)
 
 (defun vm-vs-author (m arg)
@@ -730,15 +733,14 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 			      vm-label-obarray)
 			     nil)))))
 	      (t (setq arg (read-string prompt))))))
-    (let ((real-selector
+    (let ((real-arg
 	   (if (eq selector 'sexp)
 	       (let ((read-arg (read arg)))
 		 (if (listp read-arg) read-arg (list read-arg)))
-	     (list selector arg))))
-      (or (fboundp (intern (concat "vm-vs-"
-				   (symbol-name (car real-selector)))))
+	     arg)))
+      (or (fboundp (intern (concat "vm-vs-" (symbol-name selector))))
 	  (error "Invalid selector"))
-      real-selector)))
+      (list selector real-arg))))
 
 
 ;;;###autoload

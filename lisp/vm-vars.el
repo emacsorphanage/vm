@@ -6583,6 +6583,7 @@ header line in email messages,
     (and . vm-vs-and)
     (or . vm-vs-or)
     (not . vm-vs-not)
+    (sexp . vm-vs-sexp)
     (header . vm-vs-header)
     (label . vm-vs-label)
     (text . vm-vs-text)
