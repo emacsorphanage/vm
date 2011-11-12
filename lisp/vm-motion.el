@@ -65,7 +65,7 @@ given."
 	     (vm-read-number "Go to message: "))))))
   (if (null n)
       ()				; nil means work has been done already
-    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (vm-display nil nil '(vm-goto-message) '(vm-goto-message))
     (let ((cons (nthcdr (1- n) vm-message-list)))
       (if (null cons)
@@ -88,7 +88,7 @@ given."
 (defun vm-goto-message-last-seen ()
   "Go to the message last previewed."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-display nil nil '(vm-goto-message-last-seen)
 	      '(vm-goto-message-last-seen))
   (if vm-last-message-pointer
@@ -103,7 +103,7 @@ given."
   "Go to the parent of the current message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-build-threads-if-unbuilt)
   (vm-display nil nil '(vm-goto-parent-message)
 	      '(vm-goto-parent-message))
@@ -208,9 +208,9 @@ this command 'sees' marked messages as it moves."
   ;; and retries apply to all interactive moves.
   (interactive "p\np\np")  
   ;;(vm-inform 8 "running vm next message")
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate (if signal-errors 1 0) (interactive-p))
+  (vm-select-folder-buffer-and-validate (if signal-errors 1 0) (vm-interactive-p))
   ;; include other commands that call vm-next-message so that the
   ;; correct window configuration is applied for these particular
   ;; non-interactive calls.
@@ -321,7 +321,7 @@ variables vm-skip-deleted-messages and vm-skip-read-messages are
 ignored."
   (interactive "p\np\np")
   (or count (setq count 1))
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 1 t)
   (vm-display nil nil '(vm-previous-message) '(vm-previous-message))
@@ -331,9 +331,9 @@ ignored."
 (defun vm-next-message-no-skip (&optional count)
   "Like vm-next-message but will not skip deleted or read messages."
   (interactive "p")
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-display nil nil '(vm-next-message-no-skip)
 	      '(vm-next-message-no-skip))
   (when (and vm-summary-enable-thread-folding
@@ -360,9 +360,9 @@ ignored."
 (defun vm-previous-message-no-skip (&optional count)
   "Like vm-previous-message but will not skip deleted or read messages."
   (interactive "p")
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-display nil nil '(vm-previous-message-no-skip)
 	      '(vm-previous-message-no-skip))
   (when (and vm-summary-enable-thread-folding
@@ -387,9 +387,9 @@ ignored."
 (defun vm-next-unread-message ()
   "Move forward to the nearest new or unread message, if there is one."
   (interactive)
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-display nil nil '(vm-next-unread-message) '(vm-next-unread-message))
   (condition-case ()
       (let ((vm-skip-read-messages t)
@@ -403,9 +403,9 @@ ignored."
 (defun vm-previous-unread-message ()
   "Move backward to the nearest new or unread message, if there is one."
   (interactive)
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-display nil nil '(vm-previous-unread-message)
 	      '(vm-previous-unread-message))
   (condition-case ()
@@ -422,9 +422,9 @@ ignored."
 vm-subject-ignored-prefix and vm-subject-ignored-suffix will apply
 to the subject comparisons."
   (interactive)
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-display nil nil '(vm-next-message-same-subject)
 	      '(vm-next-message-same-subject))
   (let ((oldmp vm-message-pointer)
@@ -451,9 +451,9 @@ to the subject comparisons."
 vm-subject-ignored-prefix and vm-subject-ignored-suffix will apply
 to the subject comparisons."
   (interactive)
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-display nil nil '(vm-previous-message-same-subject)
 	      '(vm-previous-message-same-subject))
   (let ((oldmp vm-message-pointer)

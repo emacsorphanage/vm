@@ -858,7 +858,7 @@ set to the command name so that window configuration will be done."
 
 (defun vm-menu-create-subject-virtual-folder ()
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (setq this-command 'vm-create-virtual-folder)
   (vm-create-virtual-folder 'sortable-subject (regexp-quote
 	 			       (vm-so-sortable-subject
@@ -866,7 +866,7 @@ set to the command name so that window configuration will be done."
 
 (defun vm-menu-create-author-virtual-folder ()
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (setq this-command 'vm-create-virtual-folder)
   (vm-create-virtual-folder 'author (regexp-quote
 				     (vm-su-from (car vm-message-pointer)))))
@@ -1208,7 +1208,7 @@ menu bar.                                             USR, 2011-02-27"
   (interactive)
   (if buffer
       (set-buffer buffer)
-    (vm-select-folder-buffer-and-validate 0 (interactive-p)))
+    (vm-select-folder-buffer-and-validate 0 (vm-interactive-p)))
   (cond ((vm-menu-xemacs-menus-p)
 	 (if (null (car (find-menu-item current-menubar '("[Emacs Menubar]"))))
 	     (set-buffer-menubar vm-menu-vm-menubar)

@@ -1711,7 +1711,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 (defun vm-emit-totals-blurb ()
   (interactive)
   (save-excursion
-    (vm-select-folder-buffer-and-validate 0 (interactive-p))
+    (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
     (if (not (equal (nth 0 vm-totals) vm-modification-counter))
 	(vm-compute-totals))
     (if (equal (nth 1 vm-totals) 0)
@@ -3140,9 +3140,9 @@ thread are affected."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((mlist (vm-select-operable-messages
-		count (interactive-p) "Unread")))
+		count (vm-interactive-p) "Unread")))
     (while mlist
       (if (and (not (vm-unread-flag (car mlist)))
 	       (not (vm-new-flag (car mlist))))
@@ -3173,9 +3173,9 @@ thread are affected."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((mlist (vm-select-operable-messages
-		count (interactive-p) "Mark as read")))
+		count (vm-interactive-p) "Mark as read")))
     (while mlist
       (when (or (vm-unread-flag (car mlist))
 		(vm-new-flag (car mlist)))
@@ -3196,7 +3196,7 @@ The folder is not altered and Emacs is still visiting it.  You
 can switch back to it with switch-to-buffer or by using the
 Buffer Menu."
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
 
@@ -3222,7 +3222,7 @@ Buffer Menu."
   "Iconify the frame and bury the current VM folder and summary buffers.
 The folder is not altered and Emacs is still visiting it."
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
 
@@ -3267,7 +3267,7 @@ If the customization variable `vm-expunge-before-quit' is set to
 
 Giving a prefix argument overrides the variable and no expunge is done."  
   (interactive "P")
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
   (vm-display nil nil '(vm-quit vm-quit-no-change vm-quit-no-expunge)
@@ -3607,7 +3607,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
   ;; This function hasn't been documented.  Not clear why it is
   ;; different from vm-save-folder.  USR, 2011-04-27
   (interactive "P")
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-virtual-folder)
   (save-buffer prefix)
   (intern (buffer-name) vm-buffers-needing-display-update)
@@ -3625,7 +3625,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
   ;; This function hasn't been documented.  Not clear what it does.
   ;; 						  USR, 2011-04-27
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-virtual-folder)
   (let ((old-buffer-name (buffer-name))
 	(oldmodebits (and (fboundp 'default-file-modes)
@@ -3691,7 +3691,7 @@ When applied to a virtual folder, this command runs itself on
 each of the underlying real folders associated with the virtual
 folder."
   (interactive (list current-prefix-arg))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-display nil nil '(vm-save-folder) '(vm-save-folder))
   (if (eq major-mode 'vm-virtual-mode)
       (vm-virtual-save-folder prefix)
@@ -3800,7 +3800,7 @@ Expunge won't be done if folder is read-only.
 When applied to a virtual folder, this command works as if you had
 run vm-expunge-folder followed by vm-save-folder."
   (interactive (list current-prefix-arg))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-display nil nil '(vm-save-and-expunge-folder)
 	      '(vm-save-and-expunge-folder))
   (if (not vm-folder-read-only)
@@ -3954,7 +3954,7 @@ Same as \\[vm-recover-folder]."
   "Display help for various VM activities."
   (interactive)
   (if (eq major-mode 'vm-summary-mode)
-      (vm-select-folder-buffer-and-validate 0 (interactive-p)))
+      (vm-select-folder-buffer-and-validate 0 (vm-interactive-p)))
   (let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
 	(pop-up-frames (and vm-mutable-frames vm-frame-per-help)))
     (cond
@@ -4512,7 +4512,7 @@ folder.  A prefix argument has no effect when this command is
 applied to virtual folder; mail is always gathered from the spool
 files."
   (interactive "P")
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (cond ((eq major-mode 'vm-virtual-mode)
 	 (vm-virtual-get-new-mail))
@@ -4541,7 +4541,7 @@ files."
 		 (vm-inform 5 "No new mail for %s"
 			  (or buffer-file-name (buffer-name)))
 	       (vm-inform 5 "No new mail."))
-	     (and (interactive-p) (vm-sit-for 4) (vm-inform 5 ""))
+	     (and (vm-interactive-p) (vm-sit-for 4) (vm-inform 5 ""))
 	     )))
 	(t
 	 (let ((buffer-read-only nil)
@@ -4763,7 +4763,7 @@ which is used in interactive confirmations."
 ;;;###autoload
 (defun vm-toggle-read-only ()
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (setq vm-folder-read-only (not vm-folder-read-only))
   (intern (buffer-name) vm-buffers-needing-display-update)
   (vm-inform 5 "Folder is now %s"
@@ -4909,7 +4909,7 @@ Interactively TYPE will be read from the minibuffer."
        (setq types (vm-delqual (symbol-name vm-folder-type)
 			       (copy-sequence types)))
        (list (intern (vm-read-string "Change folder to type: " types))))))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-virtual-folder)
   (if (not (memq type '(From_ BellFrom_ From_-with-Content-Length mmdf babyl)))
       (error "Unknown folder type: %s" type))
@@ -5143,13 +5143,13 @@ applied to collapsed threads in summary and thread operations are
 enabled via `vm-enable-thread-operations' then all messages in the
 thread are loaded."
   (interactive "p")
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (when (null count) (setq count 1))
   (let ((mlist (vm-select-operable-messages
-		count (interactive-p) "Load"))
+		count (vm-interactive-p) "Load"))
 	(errors 0)
 	(n 0)
 	fetch-method
@@ -5206,7 +5206,7 @@ applied to collapsed threads in summary and thread operations are
 enabled via `vm-enable-thread-operations' then all messages in the
 thread are retrieved."
   (save-current-buffer
-    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (when (null count) (setq count 1))
     (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	  (vm-fetched-message-limit nil)
@@ -5218,7 +5218,7 @@ thread are retrieved."
       ;; 	(setq mlist (list (car vm-message-pointer))))
       (unless mlist
 	(setq mlist (vm-select-operable-messages
-		     count (interactive-p) "Retrieve")))
+		     count (vm-interactive-p) "Retrieve")))
       (save-excursion
 	(while mlist
 	  (setq m (car mlist))
@@ -5232,7 +5232,7 @@ thread are retrieved."
 	(when (> n 0)
 	  (vm-inform 8 "Retrieving message body... done")
 	  (intern (buffer-name) vm-buffers-needing-display-update)
-	  (when (interactive-p)
+	  (when (vm-interactive-p)
 	    (vm-update-summary-and-mode-line))))
       )))
 
@@ -5338,14 +5338,14 @@ If the optional argument PHYSICAL is non-nil, then the message is
 physically discarded.  Otherwise, the discarding may be delayed until
 the folder is saved."
   (interactive "p")
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (when (null count) 
     (setq count 1))
   (let ((mlist (vm-select-operable-messages
-		count (interactive-p) "Unload"))
+		count (vm-interactive-p) "Unload"))
 	(buffer-undo-list t)
 	(errors 0)
 	m mm)

@@ -2420,7 +2420,7 @@ in the buffer.  The function is expected to make the message
 `MIME presentable' to the user in whatever manner it sees fit."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (unless (or vm-display-using-mime vm-mime-display-function)
       (error "MIME display disabled, set vm-display-using-mime non-nil to enable."))
   (if vm-mime-display-function
@@ -2468,7 +2468,7 @@ in the buffer.  The function is expected to make the message
 	      (vm-expose-hidden-headers))
 	  (set-buffer vm-presentation-buffer))
 	;; Are we now in the Presentation buffer?  Why?  USR, 2010-05-08
-	(when (and (interactive-p) (eq vm-system-state 'previewing))
+	(when (and (vm-interactive-p) (eq vm-system-state 'previewing))
 	  (let ((vm-display-using-mime nil))
 	    (vm-show-current-message)))
 	(setq m (car vm-message-pointer))
@@ -4762,7 +4762,7 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
     (vm-select-folder-buffer-and-validate 1 nil))
 
   (let ((mlist (or mlist (vm-select-operable-messages
-			  count (interactive-p) "Action on"))))
+			  count (vm-interactive-p) "Action on"))))
     (vm-retrieve-operable-messages count mlist)
     (save-excursion
       (while mlist
@@ -4838,7 +4838,7 @@ simply has an associated filename.  Any mime types that match
 are also included."
   (interactive "p")
   (vm-check-for-killed-summary)
-  (if (interactive-p) (vm-follow-summary-cursor))
+  (if (vm-interactive-p) (vm-follow-summary-cursor))
   
   (let ((n 0))
     (vm-mime-action-on-all-attachments
@@ -4849,7 +4849,7 @@ are also included."
        (setq n (+ 1 n)))
      vm-mime-deleteable-types
      vm-mime-deleteable-type-exceptions)
-    (when (interactive-p)
+    (when (vm-interactive-p)
       (vm-discard-cached-data count)
       (let ((vm-preview-lines nil))
 	(vm-present-current-message)))
@@ -4895,7 +4895,7 @@ created."
           vm-mime-save-all-attachments-history)))
 
   (vm-check-for-killed-summary)
-  (if (interactive-p) (vm-follow-summary-cursor))
+  (if (vm-interactive-p) (vm-follow-summary-cursor))
  
   (let ((n 0))
     (vm-mime-action-on-all-attachments
@@ -4939,7 +4939,7 @@ created."
      vm-mime-saveable-types
      vm-mime-saveable-type-exceptions)
 
-    (when (interactive-p)
+    (when (vm-interactive-p)
       (vm-discard-cached-data count)
       (let ((vm-preview-lines nil))
 	(vm-present-current-message)))
@@ -4975,7 +4975,7 @@ confirmed before creating a new directory."
   (interactive "p")
 
   (vm-check-for-killed-summary)
-  (if (interactive-p) (vm-follow-summary-cursor))
+  (if (vm-interactive-p) (vm-follow-summary-cursor))
  
   (let ((n 0)
 	(directory nil))
@@ -5024,7 +5024,7 @@ confirmed before creating a new directory."
      vm-mime-saveable-types
      vm-mime-saveable-type-exceptions)
 
-    (when (interactive-p)
+    (when (vm-interactive-p)
       (vm-discard-cached-data count)
       (vm-present-current-message))
     
@@ -6622,7 +6622,7 @@ The MIME object is replaced by a text/plain object that briefly
 describes what was deleted."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (when (and (vm-virtual-message-p (car vm-message-pointer))
 	     (null (vm-virtual-messages-of (car vm-message-pointer))))
@@ -6655,7 +6655,7 @@ describes what was deleted."
 	     (delete-region (point) (vm-extent-end-position e))
 	     (vm-set-extent-endpoints e opos (point)))))
 	(vm-mime-discard-layout-contents layout saved-file)))
-    (when (interactive-p)
+    (when (vm-interactive-p)
       ;; make the change visible and place the cursor behind the removed object
       (vm-discard-cached-data)
       (when vm-presentation-buffer
@@ -7907,8 +7907,8 @@ end of the path."
   "List mime part structure of the current message."
   (interactive "P")
   (vm-check-for-killed-summary)
-  (if (interactive-p) (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (if (vm-interactive-p) (vm-follow-summary-cursor))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (let ((m (car vm-message-pointer)))
     (switch-to-buffer "*VM mime part layout*")
     (erase-buffer)
@@ -7978,23 +7978,23 @@ the first sub part of a multipart/alternative is a text/plain part."
 
 This is a destructive operation and cannot be undone!"
   (interactive "p")
-  (when (interactive-p)
+  (when (vm-interactive-p)
     (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (let ((mlist (or mlist 
 		   (vm-select-operable-messages
-		    count (interactive-p) "Nuke html of"))))
+		    count (vm-interactive-p) "Nuke html of"))))
     (vm-retrieve-operable-messages count mlist)
     (save-excursion
       (while mlist
         (let ((count (vm-nuke-alternative-text/html-internal (car mlist))))
-          (when (interactive-p)
+          (when (vm-interactive-p)
             (if (= count 0)
                 (vm-inform 5 "No text/html parts found.")
               (vm-inform 5 "%d text/html part%s deleted."
                        count (if (> count 1) "s" ""))))
           (setq mlist (cdr mlist))))))
-  (when (interactive-p)
+  (when (vm-interactive-p)
     (vm-discard-cached-data count)
     (vm-present-current-message)))
 (defalias 'vm-mime-nuke-alternative-text/html

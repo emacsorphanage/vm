@@ -67,7 +67,7 @@ vm-search-using-regexps for this search."
 
 (defun vm-isearch (forward)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-virtual-folder)
   (vm-display (current-buffer) t '(vm-isearch-forward vm-isearch-backward)
 	      (list this-command 'searching-message))

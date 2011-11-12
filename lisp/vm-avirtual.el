@@ -669,7 +669,7 @@ format:
    (list  (vm-read-string "Virtual folder: " vm-virtual-folder-alist)
           current-prefix-arg))
   (save-excursion
-    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (vm-follow-summary-cursor)
     (let ((msg (car vm-message-pointer))
           (virtual (eq major-mode 'vm-virtual-mode))
@@ -709,7 +709,7 @@ format:
 (defun vm-virtual-apply-function (count &optional selector function)
   "Apply a FUNCTION to the next COUNT messages matching SELECTOR." 
   (interactive "p")
-  (when (interactive-p)
+  (when (vm-interactive-p)
       (vm-follow-summary-cursor)
       (setq selector (vm-virtual-get-selector
                       (vm-read-string "Virtual folder: "
@@ -720,10 +720,10 @@ format:
 	(setq function
 		(key-binding (read-key-sequence "VM command: ")))))
 
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
 
   (let ((mlist (vm-select-operable-messages 
-		(or count 1) (interactive-p)"Apply to"))
+		(or count 1) (vm-interactive-p)"Apply to"))
         (count 0))
 
     (while mlist
@@ -742,11 +742,11 @@ E.g. when creating a folder of all marked messages one can call this
 function in order to add newly marked messages to the virtual folder
 without recreating it."
   (interactive "p")
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
 
   (let ((new-messages (or message-list
                           (vm-select-operable-messages
-			   count (interactive-p) "Update")))
+			   count (vm-interactive-p) "Update")))
         b-list)
     (setq new-messages (copy-sequence new-messages))
     (if (and new-messages vm-virtual-buffers)
@@ -788,14 +788,14 @@ without recreating it."
 IMHO allowing it for real folders makes no sense.  One rather should create a
 virtual folder of all messages."
   (interactive "p")
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
 
   (if (not (eq major-mode 'vm-virtual-mode))
       (error "This is no virtual folder."))
 
   (let ((old-messages (or message-list
                           (vm-select-operable-messages
-			   count (interactive-p) "Omit")))
+			   count (vm-interactive-p) "Omit")))
         prev curr
         (mp vm-message-list))
 
@@ -920,9 +920,9 @@ See the function `vm-virtual-auto-delete-message' for details.
 "
   (interactive)
 
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-virtual-auto-delete-message (length vm-message-pointer)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1034,10 +1034,10 @@ messages which are composed in order to find the right FCC."
 ;;;###autoload
 (defun vm-sort-insert-auto-folder-names ()
   (interactive)
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-sort-messages "auto-folder"))
   (save-excursion
-    (vm-select-folder-buffer-and-validate 0 (interactive-p))
+    (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
     ;; remove old descriptions
     (save-excursion
       (set-buffer vm-summary-buffer)
@@ -1100,7 +1100,7 @@ Like `vm-save-message' but the default folder is guessed by
               (t
                (vm-read-file-name "Save in folder: " dir nil)))))
     (prefix-numeric-value current-prefix-arg)))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-save-message folder count))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1108,7 +1108,7 @@ Like `vm-save-message' but the default folder is guessed by
 (defun vm-virtual-auto-archive-messages (&optional prompt)
   "With a prefix ARG ask user before saving." 
   (interactive "P")
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
 
   (vm-inform 5 "Archiving...")
@@ -1124,7 +1124,7 @@ Like `vm-save-message' but the default folder is guessed by
         ;; shouldn't affect its value.
         (let ((vm-message-pointer
                (if (eq last-command 'vm-next-command-uses-marks)
-                   (vm-select-operable-messages 0 (interactive-p) "Archive")
+                   (vm-select-operable-messages 0 (vm-interactive-p) "Archive")
                  vm-message-list))
               (done nil)
               stop-point
@@ -1172,7 +1172,7 @@ Like `vm-save-message' but the default folder is guessed by
 name."  
   (interactive)
   (save-excursion
-    (vm-select-folder-buffer-and-validate 0 (interactive-p))
+    (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
     (if (eq major-mode 'vm-virtual-mode)
         (let ((file (substring (buffer-name) 1 -1)))
           (vm-goto-message 0)

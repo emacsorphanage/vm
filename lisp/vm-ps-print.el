@@ -258,7 +258,7 @@ See: `vm-ps-print-message-function'
 for customization of the output."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (or count (setq count 1))
 
   (let* ((vm-summary-enable-faces nil)
@@ -266,7 +266,7 @@ for customization of the output."
          (mstart nil)
 	 (m nil)
 	 (mlist (vm-select-operable-messages
-		 count (interactive-p) "Print"))
+		 count (vm-interactive-p) "Print"))
 	 (mcount (length mlist))
 	 (tmpbuf (get-buffer-create "*vm-ps-print*")))
     (vm-retrieve-operable-messages count mlist)
@@ -359,7 +359,7 @@ for customization of the output."
     (interactive (list (ps-print-preprint current-prefix-arg)))
     (save-excursion
       (vm-follow-summary-cursor)
-      (vm-select-folder-buffer-and-validate 1 (interactive-p))
+      (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
       
       (let ((folder-name (vm-ps-print-message-folder-name))
 	    (mcount 1)

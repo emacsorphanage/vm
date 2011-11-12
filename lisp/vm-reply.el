@@ -145,7 +145,7 @@ the body of those messages should be included in the reply.
 COUNT is the prefix argument indicating how many consecutive
 messages of the folder are involved in this reply."
   (let ((mlist (vm-select-operable-messages
-		count (interactive-p) "Reply to"))
+		count (vm-interactive-p) "Reply to"))
         (dir default-directory)
         (message-pointer vm-message-pointer)
         (case-fold-search t)
@@ -477,7 +477,7 @@ specified by `vm-included-text-headers' and
   (let ((start (point)))
     (vm-insert-region-from-buffer
      (save-excursion
-       (vm-select-folder-buffer-and-validate 1 (interactive-p))
+       (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
        ;; ensure the current message is presented 
        (vm-present-current-message)
        (vm-show-current-message)
@@ -1022,7 +1022,7 @@ Normal VM commands may be accessed in the reply buffer by prefixing them
 with C-c C-v."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((vm-enable-thread-operations nil))
     (vm-do-reply nil nil count)))
 
@@ -1032,7 +1032,7 @@ with C-c C-v."
 from the message.  See the documentation for function vm-reply for details."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((vm-enable-thread-operations nil))
     (vm-do-reply nil t count)))
 
@@ -1042,7 +1042,7 @@ from the message.  See the documentation for function vm-reply for details."
 See the documentation for the function vm-reply for details."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((vm-enable-thread-operations nil))
     (vm-do-reply t nil count)))
 
@@ -1052,7 +1052,7 @@ See the documentation for the function vm-reply for details."
 the message.  See the documentation for the function vm-reply for details."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((vm-enable-thread-operations nil))
     (vm-do-reply t t count)))
 
@@ -1085,11 +1085,11 @@ to the outgoing message.
 See `vm-forward-message' for other forms of forwarding."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((vm-forwarded-headers vm-forwarded-headers-plain)
 	(vm-unforwarded-header-regexp vm-unforwarded-header-regexp-plain))
     (vm-forward-message t (vm-select-operable-messages
-			   1 (interactive-p) "Forward"))))
+			   1 (vm-interactive-p) "Forward"))))
 
 ;;;###autoload
 (defun vm-forward-message (&optional plain mlist)
@@ -1106,7 +1106,7 @@ See `vm-forward-message-plain' for forwarding messages in plain text."
   ;; forwarded. 
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((dir default-directory)
 	(miming (and vm-send-using-mime
 		     (not plain)
@@ -1115,7 +1115,7 @@ See `vm-forward-message-plain' for forwarding messages in plain text."
 	header-end)
     (unless mlist
 	(setq mlist (vm-select-operable-messages
-		     1 (interactive-p) "Forward")))
+		     1 (vm-interactive-p) "Forward")))
     (if (cdr mlist)
 	;; multiple message forwarding
 	(progn
@@ -1217,7 +1217,7 @@ You will be placed in a Mail mode buffer with the extracted message and
 you can change the recipient address before resending the message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((b (current-buffer)) start
 	(dir default-directory)
 	(layout (vm-mm-layout (car vm-message-pointer)))
@@ -1289,7 +1289,7 @@ this header, what happens when you send the message is undefined.
 You may also create a Resent-Cc header."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (save-restriction
     (widen)
     (let ((b (current-buffer))
@@ -1360,7 +1360,7 @@ collapsed threads in summary and thread operations are enabled via
 `vm-enable-thread-operations' then all messages in the thread are
 included in the digest."
   (interactive "P")
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((dir default-directory)
 	(miming (and vm-send-using-mime (equal vm-digest-send-type "mime")))
 	mp mail-buffer work-buffer b
@@ -1369,7 +1369,7 @@ included in the digest."
       ;; prefix arg doesn't have "normal" meaning here, so only call
       ;; vm-select-operable-messages for marks or threads.
       (setq mlist (vm-select-operable-messages 
-		   1 (interactive-p) "Send as digest")))
+		   1 (vm-interactive-p) "Send as digest")))
     ;; if messages were selected use them, otherwise the whole folder
     (cond ((cdr mlist)
 	   (vm-retrieve-operable-messages 1 mlist))

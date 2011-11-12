@@ -703,9 +703,9 @@ cleanup here after verification and decoding took place."
   "*Verify the signature in the current message."
   (interactive)
   (message "Verifying PGP cleartext message...")
-  (when (interactive-p)
+  (when (vm-interactive-p)
     (vm-follow-summary-cursor)
-    (vm-select-folder-buffer-and-validate 1 (interactive-p)))
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p)))
   
   ;; make a presentation copy
   (unless (eq major-mode 'vm-presentation-mode)
@@ -729,9 +729,9 @@ cleanup here after verification and decoding took place."
 (defun vm-pgg-cleartext-decrypt ()
   "*Decrypt the contents of the current message."
   (interactive)
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
     
   ;; make a presentation copy
@@ -994,9 +994,9 @@ cleanup here after verification and decoding took place."
 (defun vm-pgg-snarf-keys ()
   "*Snarf keys from the current message."
   (interactive)
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (save-restriction
     ;; ensure we are in the right buffer
     (if vm-presentation-buffer

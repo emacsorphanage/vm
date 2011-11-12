@@ -42,6 +42,8 @@
 (declare-function emacs-get-buffer-window "vm-misc.el"
 		  (&optional buffer-or-name frame devices))
 
+(declare-function vm-interactive-p "vm-misc.el"
+		  ())
 (declare-function vm-device-type "vm-misc.el"
 		  (&optional device))
 (declare-function vm-buffer-substring-no-properties "vm-misc.el"
@@ -563,6 +565,10 @@ PRED and return the position"
 	    (setq list (cdr list))
 	  (throw 'fail nil)))
       t)))
+
+(fset 'vm-interactive-p
+      (cond (vm-xemacs-p 'interactive-p)
+	    (vm-fsfemacs-p 'called-innteractively-p)))
 
 (fset 'vm-device-type
       (cond (vm-xemacs-p 'device-type)

@@ -330,7 +330,7 @@ creation)."
 
   (vm-session-initialization)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
 
   (if (eq vm-system-state 'previewing)
       (vm-show-current-message))
@@ -671,7 +671,7 @@ Optional argument DONT-KILL is positive, then do not kill source message."
         (insert (concat "FCC: " folder "\n" mail-header-separator))
       (kill-this-buffer))
 
-    (if (interactive-p)
+    (if (vm-interactive-p)
         (message "Message postponed to folder `%s'" folder))))
 
 ;;-----------------------------------------------------------------------------
@@ -784,7 +784,7 @@ configuration."
              (vm-continue-postponed-message)))
           ((equal action 'visit)
            (funcall visit vm-postponed-folder)
-           (vm-select-folder-buffer-and-validate 0 (interactive-p))
+           (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
 	   (vm-make-local-hook 'vm-quit-hook)
            (add-hook 'vm-quit-hook 'vm-expunge-folder nil t)
            (vm-expunge-folder)

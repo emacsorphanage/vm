@@ -402,7 +402,7 @@ deleted messages.  Use `###' to expunge deleted messages."
       (if (or (not full-startup) preserve-auto-save-file)
 	  (throw 'done t))
       
-      (if (interactive-p)
+      (if (vm-interactive-p)
 	  (vm-inform 5 totals-blurb))
 
       (if (and vm-auto-get-new-mail
@@ -420,7 +420,7 @@ deleted messages.  Use `###' to expunge deleted messages."
 	    (vm-inform 5 totals-blurb)))
 
       ;; Display copyright and copying info.
-      (when (and (interactive-p) (not vm-startup-message-displayed))
+      (when (and (vm-interactive-p) (not vm-startup-message-displayed))
 	(vm-display-startup-message)
 	(if (not (input-pending-p))
 	    (vm-inform 5 totals-blurb))))))
@@ -893,7 +893,7 @@ non-virtual folders should be returned."
                    default))))
 
   (switch-to-buffer folder-name)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-summarize)
   (let ((this-command 'vm-scroll-backward))
     (vm-display nil nil '(vm-scroll-forward vm-scroll-backward)
@@ -1031,7 +1031,7 @@ vm-visit-virtual-folder.")
 
     ;; check interactive-p so as not to bog the user down if they
     ;; run this function from within another function.
-    (when (and (interactive-p)
+    (when (and (vm-interactive-p)
 	       (not vm-startup-message-displayed))
       (vm-display-startup-message)
       (vm-inform 5 blurb))))
@@ -1165,7 +1165,7 @@ summary buffer to select a folder."
        (vm-check-for-killed-folder))
   (save-excursion
     (and vm-mail-buffer
-	 (vm-select-folder-buffer-and-validate 0 (interactive-p)))
+	 (vm-select-folder-buffer-and-validate 0 (vm-interactive-p)))
     (vm-check-for-killed-summary)
     (let ((folder-buffer (and (eq major-mode 'vm-mode)
 			      (current-buffer)))

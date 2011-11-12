@@ -112,7 +112,7 @@ only marked messages are checked against `vm-auto-folder-alist'.
 
 The saved messages are flagged as `filed'."
   (interactive "P")
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-inform 5 "Archiving...")
   (let ((auto-folder)
 	(archived 0))
@@ -125,7 +125,7 @@ The saved messages are flagged as `filed'."
 	(let ((vm-message-pointer
 	       (if (eq last-command 'vm-next-command-uses-marks)
 		   (vm-select-operable-messages
-		    0 (interactive-p) "Archive")
+		    0 (vm-interactive-p) "Archive")
 		 vm-message-list))
 	      (done nil)
 	      stop-point
@@ -237,10 +237,10 @@ thread are saved."
 		 (vm-read-file-name "Save in folder: " dir nil)))))
       (prefix-numeric-value current-prefix-arg))))
 
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (unless count (setq count 1))
   (unless mlist
-    (setq mlist (vm-select-operable-messages count (interactive-p) "Save")))
+    (setq mlist (vm-select-operable-messages count (vm-interactive-p) "Save")))
   (cond ((and vm-imap-save-to-server (vm-imap-folder-p))
 	 (vm-save-message-to-imap-folder folder count mlist quiet))
 	((and (stringp vm-recognize-imap-maildrops)
@@ -292,7 +292,7 @@ The saved messages are flagged as `filed'."
     (prefix-numeric-value current-prefix-arg)))
 
   (let (auto-folder unexpanded-folder ml)
-    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (setq unexpanded-folder folder)
     (setq auto-folder (vm-auto-select-folder vm-message-pointer
 					     vm-auto-folder-alist))
@@ -300,7 +300,7 @@ The saved messages are flagged as `filed'."
     (unless count (setq count 1))
     (unless mlist
       (setq mlist (vm-select-operable-messages
-		   count (interactive-p) "Save")))
+		   count (vm-interactive-p) "Save")))
     (vm-retrieve-operable-messages count mlist)
 
     ;; Expand the filename, forcing relative paths to resolve
@@ -513,12 +513,12 @@ This command should NOT be used to save message to mail folders; use
 	 "Write text to file: ")
        nil vm-last-written-file nil)
       (prefix-numeric-value current-prefix-arg)))))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-display nil nil '(vm-save-message-sans-headers)
 	      '(vm-save-message-sans-headers))
   (unless count (setq count 1))
   (let ((mlist (vm-select-operable-messages
-		count (interactive-p) "Save")))
+		count (vm-interactive-p) "Save")))
     (vm-retrieve-operable-messages count mlist)
     (setq file (expand-file-name file))
     ;; Check and see if we are currently visiting the file
@@ -626,14 +626,14 @@ Output, if any, is displayed.  The message is not altered."
      (vm-select-folder-buffer)
      (list (read-string "Pipe to command: " vm-last-pipe-command)
 	   current-prefix-arg))))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (setq vm-last-pipe-command command)
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
 	m
 	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
 	;; prefix arg doesn't have "normal" meaning here, so only call
 	;; vm-select-operable-messages for marks and threads.
-	(mlist (vm-select-operable-messages 1 (interactive-p) "Pipe")))
+	(mlist (vm-select-operable-messages 1 (vm-interactive-p) "Pipe")))
     (vm-retrieve-operable-messages 1 mlist)
     (save-excursion
       (set-buffer buffer)
@@ -742,13 +742,13 @@ arguments after the command finished."
      (vm-select-folder-buffer)
      (list (read-string "Pipe to command: " vm-last-pipe-command)
 	   current-prefix-arg))))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (setq vm-last-pipe-command command)
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
 	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
 	;; prefix arg doesn't have "normal" meaning here, so only call
 	;; vm-select-operable-messages for marks and threads.
-	(mlist (vm-select-operable-messages 1 (interactive-p) "Pipe"))
+	(mlist (vm-select-operable-messages 1 (vm-interactive-p) "Pipe"))
 	m process)
     (vm-retrieve-operable-messages 1 mlist)
     (save-excursion
@@ -849,7 +849,7 @@ in the thread are printed.
 Output, if any, is displayed.  The message is not altered."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (or count (setq count 1))
   (let* ((buffer (get-buffer-create "*Shell Command Output*"))
 	 (need-tempfile (string-match ".*-.*-\\(win95\\|nt\\)"
@@ -863,7 +863,7 @@ Output, if any, is displayed.  The message is not altered."
 			     " "))
 	 (m nil)
 	 (pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
-	 (mlist (vm-select-operable-messages count (interactive-p) "Print")))
+	 (mlist (vm-select-operable-messages count (vm-interactive-p) "Print")))
     (vm-retrieve-operable-messages count mlist)
 
     (save-excursion
@@ -950,7 +950,7 @@ The saved messages are flagged as `filed'."
 	      "Save to IMAP folder: " t nil
 	      (or vm-last-save-imap-folder vm-last-visit-imap-folder))
 	     (prefix-numeric-value current-prefix-arg)))))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-display nil nil '(vm-save-message-to-imap-folder)
 	      '(vm-save-message-to-imap-folder))
   (unless count (setq count 1))
@@ -962,7 +962,7 @@ The saved messages are flagged as `filed'."
 	process
 	)
     (unless mlist
-      (setq mlist (vm-select-operable-messages count (interactive-p) "Save")))
+      (setq mlist (vm-select-operable-messages count (vm-interactive-p) "Save")))
     (setq mailbox (nth 3 target-spec-list))
     (unwind-protect
 	(save-excursion

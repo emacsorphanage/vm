@@ -378,7 +378,7 @@ from the minibuffer."
   "Iconify the current frame.
 Run the hooks in vm-iconify-frame-hook before doing so."
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (if (vm-multiple-frames-possible-p)
       (progn
 	(run-hooks 'vm-iconify-frame-hook)

@@ -507,7 +507,7 @@ When the threads display is on, the folder will be sorted by
 thread activity and thread indentation (via the %I summary format
 specifier) will be visible."
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   ;; get numbering of new messages done now
   ;; so that the sort code only has to worry about the
   ;; changes it needs to make.
@@ -538,7 +538,7 @@ The case $N$ being 0 is a special case.  It means to decrease the
 indentation all the way to 0."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((modified (buffer-modified-p))
 	(msg (car vm-message-pointer))
 	(indent 0))
@@ -564,7 +564,7 @@ The case $N$ being 0 is a special case.  It means to reset the
 indentation back to the normal indentation, i.e., no offset is used."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((modified (buffer-modified-p))
 	(msg (car vm-message-pointer)))
     (if (= n 0)
@@ -1213,7 +1213,7 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
   "Attach the current message as a child of the message last visited."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (vm-build-threads-if-unbuilt)
   (unless vm-last-message-pointer

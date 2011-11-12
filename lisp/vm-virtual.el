@@ -325,7 +325,7 @@ Prefix arg means the new virtual folder should be visited read only."
      (nconc (vm-read-virtual-selector "Create virtual folder of messages: ")
 	    (list prefix)))))
 
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((use-marks (eq last-command 'vm-next-command-uses-marks))
 	(parent-summary-format vm-summary-format)
 	vm-virtual-folder-alist ; shadow the global variable
@@ -365,7 +365,7 @@ Prefix arg means the new virtual folder should be visited read only."
       (completing-read "Apply this virtual folder's selectors: "
 		       vm-virtual-folder-alist nil t)
       current-prefix-arg)))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((vfolder (assoc name vm-virtual-folder-alist))
 	(use-marks (eq last-command 'vm-next-command-uses-marks))
 	clauses vm-virtual-folder-alist)
@@ -392,7 +392,7 @@ Prefix arg means the new virtual folder should be visited read only."
 (defun vm-create-virtual-folder-same-subject ()
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let* ((subject (vm-so-sortable-subject (car vm-message-pointer)))
 	 (displayed-subject subject)
 	 (bookmark (if (vm-virtual-message-p (car vm-message-pointer))
@@ -410,7 +410,7 @@ Prefix arg means the new virtual folder should be visited read only."
 (defun vm-create-virtual-folder-same-author ()
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let* ((author (vm-su-from (car vm-message-pointer)))
 	 (displayed-author author)
 	 (bookmark (if (vm-virtual-message-p (car vm-message-pointer))
@@ -426,7 +426,7 @@ Prefix arg means the new virtual folder should be visited read only."
 
 (defun vm-toggle-virtual-mirror ()
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (if (not (eq major-mode 'vm-virtual-mode))
       (error "This is not a virtual folder."))
   (let ((mp vm-message-list)

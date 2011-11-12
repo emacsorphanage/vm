@@ -50,7 +50,7 @@ message.  If you don't want your edited version of the message to
 replace the original, use C-c C-] and the edit will be aborted."
   (interactive "P")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (if (and (vm-virtual-message-p (car vm-message-pointer))
 	   (null (vm-virtual-messages-of (car vm-message-pointer))))
@@ -153,10 +153,10 @@ thread have their cached data discarded."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((mlist (vm-select-operable-messages
-		count (interactive-p) "Discard data of")))
-    (vm-discard-cached-data-internal mlist (interactive-p) ))
+		count (vm-interactive-p) "Discard data of")))
+    (vm-discard-cached-data-internal mlist (vm-interactive-p) ))
   (vm-display nil nil '(vm-discard-cached-data) '(vm-discard-cached-data))
   (vm-update-summary-and-mode-line))
 

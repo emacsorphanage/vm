@@ -620,7 +620,7 @@ separated from each other by CLUMP-SEP."
   (if (and (eq vmpc-current-buffer 'none)
 	   (memq vmpc-current-state '(reply forward resend)))
       (let ((mp (car (vm-select-operable-messages
-		      1 (interactive-p) "Operate on")))
+		      1 (vm-interactive-p) "Operate on")))
             content c)
         (if (not (listp hdrfield))
            (setq hdrfield (list hdrfield)))
@@ -644,7 +644,7 @@ separated from each other by CLUMP-SEP."
 	   (memq vmpc-current-state '(reply forward resend)))
       (save-excursion
 	(let* ((mp (car (vm-select-operable-messages
-			 1 (interactive-p) "Operate on")))
+			 1 (vm-interactive-p) "Operate on")))
 	       (message (vm-real-message-of mp))
 	       start end)
 	  (set-buffer (vm-buffer-of message))
@@ -1078,7 +1078,7 @@ The special action \"none\" will result in an empty action list."
           (setq actions default)
         (setq actions (vmpc-split actions " "))
         (setq actions (reverse actions))))
-    (when (interactive-p)
+    (when (vm-interactive-p)
       (setq vmpc-actions-to-run actions)
       (message "VMPC actions to run: %S" actions))
     actions))
@@ -1333,7 +1333,7 @@ Run this function in order to test/check your conditions."
                                         nil t nil nil "reply"))
             vmpc-current-buffer 'none))
     (vm-follow-summary-cursor)
-    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (vmpc-build-true-conditions-list)
     (message "VMPC true conditions: %S" vmpc-true-conditions)
     vmpc-true-conditions))
@@ -1356,7 +1356,7 @@ These are the true conditions mapped to actions.  Duplicates will be
 eliminated.  You may run it in a composition buffer in order to see what
 actions will be run."
   (interactive)
-  (if (and (interactive-p) 
+  (if (and (vm-interactive-p) 
 	   (not (member major-mode '(vm-mail-mode mail-mode))))
       (error "Run `vmpc-build-actions-to-run-list' in a composition buffer!"))
   (let ((alist (or (symbol-value (intern (format "vmpc-%s-alist"
@@ -1378,7 +1378,7 @@ actions will be run."
     (setq vmpc-actions-to-run (reverse vmpc-actions-to-run))
     (setq vmpc-actions-to-run 
 	  (append vmpc-actions-to-run old-vmpc-actions-to-run)))
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (message "VMPC actions to run: %S" vmpc-actions-to-run))
   vmpc-actions-to-run)
 
@@ -1409,7 +1409,7 @@ If verbose is supplied, it should be a STRING, indicating the name of a
 buffer to which to write diagnostic output."
   (interactive)
   
-  (if (and (not vmpc-actions-to-run) (not actions) (interactive-p))
+  (if (and (not vmpc-actions-to-run) (not actions) (vm-interactive-p))
       (setq vmpc-actions-to-run (vmpc-read-actions "Actions: ")))
 
   (let ((actions (or actions vmpc-actions-to-run)) form)
@@ -1512,7 +1512,7 @@ recursion nor concurrent calls."
   "*Forward a message with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   ;;  the rest is almost exactly the same as replying:
   (vmpc-init-vars 'forward)
   (vmpc-build-true-conditions-list)
@@ -1527,7 +1527,7 @@ recursion nor concurrent calls."
   "*Forward a message in plain text with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   ;;  the rest is almost exactly the same as replying:
   (vmpc-init-vars 'forward)
   (vmpc-build-true-conditions-list)
@@ -1542,7 +1542,7 @@ recursion nor concurrent calls."
   "*Resent a message with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   ;; the rest is almost exactly the same as replying:
   (vmpc-init-vars 'resend)
   (vmpc-build-true-conditions-list)

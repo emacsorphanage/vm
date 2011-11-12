@@ -369,7 +369,7 @@ This does not work when replying to multiple messages."
 This does only work with my modified VM, i.e. a hacked `vm-yank-message'."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (if (null vm-presentation-buffer)
       (if to-all
           (vm-followup-include-text count)
@@ -513,7 +513,7 @@ Use `vm-rmail-toggle' to switch between normal and this mode."
   (save-excursion
     (vm-select-folder-buffer)
     (let ((mlist (vm-select-operable-messages
-		  count (interactive-p) "Operate on")))
+		  count (vm-interactive-p) "Operate on")))
       (while mlist
         (funcall function (car mlist))
         (vm-mark-for-summary-update (car mlist) t)
@@ -747,7 +747,7 @@ and has not been replied so far.
 See the variable `vm-handle-return-receipt-mode' for customization."
   (interactive)
   (save-excursion
-    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (let* ((msg (car vm-message-pointer))
            (sender (vm-get-header-contents msg  "Return-Receipt-To:"))
            (mail-signature nil)
@@ -1039,13 +1039,13 @@ save attachments.
       nil
     (let ((vm-mime-auto-save-all-attachments-avoid-recursion t))
       (vm-check-for-killed-folder)
-      (vm-select-folder-buffer-and-validate 1 (interactive-p))
+      (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
       
       (vm-save-all-attachments
        count
        'vm-mime-auto-save-all-attachments-path)
 
-      (when (interactive-p)
+      (when (vm-interactive-p)
         (vm-discard-cached-data)
         (vm-present-current-message)))))
 
@@ -1058,7 +1058,7 @@ when deleting a message.
 See the advice in `vm-rfaddons-infect-vm'."
   (interactive "")
   (vm-check-for-killed-folder)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (setq msg (or msg (car vm-message-pointer)))
   (if msg 
       (let ((o (vm-mm-layout msg))
@@ -1476,7 +1476,7 @@ and add an \"%0UA\" to your `vm-summary-format'."
   "Delete mails and quit.  Expunge only if it's not the primary inbox."
   (interactive)
   (save-excursion
-    (vm-select-folder-buffer-and-validate 0 (interactive-p))
+    (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
     (if (and buffer-file-name
              (string-match (regexp-quote vm-primary-inbox) buffer-file-name))
         (message "No auto-expunge for folder `%s'" buffer-file-name)
@@ -1631,7 +1631,7 @@ It saves the decoded message and not the raw message like `vm-save-message'"
      (list filename))))
     (save-excursion
       (vm-follow-summary-cursor)
-      (vm-select-folder-buffer-and-validate 1 (interactive-p))
+      (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
       
       (if (and (boundp 'vm-mail-buffer) (symbol-value 'vm-mail-buffer))
           (set-buffer (symbol-value 'vm-mail-buffer))
@@ -1819,7 +1819,7 @@ not end the comment.  Blank lines do not get comments."
 (defun vm-isearch-presentation ()
   "Switched to the presentation or preview buffer and starts isearch."
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (let ((target (or vm-presentation-buffer (current-buffer))))
     (if (get-buffer-window-list target)
         (select-window (car (get-buffer-window-list target)))
@@ -1872,7 +1872,7 @@ calls."
       (setq port (or port 25)
             hp (format "%s:%s" host port))
 
-      (if (interactive-p)
+      (if (vm-interactive-p)
           (setq vm-smtp-server-online-p-cache nil))
       
       (if (assoc hp vm-smtp-server-online-p-cache)
@@ -1909,7 +1909,7 @@ calls."
         ;; add to cache for further lookups 
         (add-to-list 'vm-smtp-server-online-p-cache (list hp online-p)))
     
-      (if (interactive-p)
+      (if (vm-interactive-p)
           (message "SMTP server %s is %s" hp
                    (if online-p "online" "offline")))
       online-p)))

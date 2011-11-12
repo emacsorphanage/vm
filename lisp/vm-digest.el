@@ -637,10 +637,10 @@ burst."
 	type ))))
   (or digest-type (setq digest-type vm-digest-burst-type))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-operable-messages
-		1 (interactive-p) "Burst digest of")))
+		1 (vm-interactive-p) "Burst digest of")))
     (vm-retrieve-operable-messages 1 mlist)
     (while mlist
       (if (vm-virtual-message-p (car mlist))
@@ -746,10 +746,10 @@ burst."
 	type ))))
   (or digest-type (setq digest-type vm-digest-burst-type))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-operable-messages
-		1 (interactive-p) "Burst digest of"))
+		1 (vm-interactive-p) "Burst digest of"))
 	(work-buffer nil))
     (vm-retrieve-operable-messages 1 mlist)
     (unwind-protect

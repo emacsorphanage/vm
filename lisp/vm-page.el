@@ -66,7 +66,7 @@ Prefix argument N means scroll forward N lines."
 	needs-decoding 
 	(was-invisible nil))
     (vm-follow-summary-cursor)
-    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (setq mp-changed
 	  (or (null vm-presentation-buffer)
 	      (not (equal (vm-number-of (car vm-message-pointer))
@@ -977,7 +977,7 @@ is done if necessary.  (USR, 2010-01-14)"
   (interactive)
   (vm-follow-summary-cursor)
   (save-excursion
-    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (vm-display nil nil '(vm-expose-hidden-headers)
 		'(vm-expose-hidden-headers))
     (vm-save-buffer-excursion
@@ -1057,7 +1057,7 @@ is done if necessary.  (USR, 2010-01-14)"
   "Moves to the beginning of the current message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (vm-widen-page)
@@ -1081,7 +1081,7 @@ is done if necessary.  (USR, 2010-01-14)"
 as necessary."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)
@@ -1114,7 +1114,7 @@ will produce an action.  If the message is being previewed, it is
 exposed and marked as read."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)
@@ -1142,7 +1142,7 @@ will produce an action.  If the message is being previewed, it is
 exposed and marked as read."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)

@@ -627,7 +627,7 @@ me."
                  (setq no-expand (if (and no-expand (listp no-expand))
                                      no-expand 'not))))
       
-      (if (or (interactive-p)
+      (if (or (vm-interactive-p)
               (local-variable-p 'vm-serial-body-contents (current-buffer)))
           (message "Inserting serial mail `%S'." mail)
         (let ((start (mail-text)) (end (goto-char (point-max))))
