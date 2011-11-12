@@ -4801,8 +4801,15 @@ lines.  @var{ARG} should be a number.
 @unnumberedsubsubsec Complex selector operations
 
 @table @code
+@item sexp
+matches message if the argument ``s-expression'' yields @code{t}.  (This
+selector is available in creating interactive virtual folders.  The argument
+``s-expression'' can be made up of the selectors mentioned above combined
+using the logical connectives listed below.  There would be no need to use
+the @code{sexp} selector in defining predefined virtual folders because
+those definitions can directly use ``s-expressions''.)
 @item eval
-matches message if evaluating the sexpr @var{ARG} yields @code{t}.
+matches message if evaluating the Lisp expression @var{ARG} yields @code{t}.
 @item and
 matches the message if all its argument
 selectors match the message.  Example:
