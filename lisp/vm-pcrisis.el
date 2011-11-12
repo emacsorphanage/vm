@@ -1389,17 +1389,17 @@ actions will be run."
 If called interactivly it promts for the regexp.  You may also use
 completion."
   (interactive)
-  (let ((action-names (mapcar '(lambda (a)
-                                 (list (regexp-quote (car a)) 1))
+  (let ((action-names (mapcar (lambda (a)
+				(list (regexp-quote (car a)) 1))
                               vmpc-actions)))
     (if (not action-regexp)
         (setq action-regexp (completing-read "VMPC action-regexp: "
                                              action-names)))
-    (mapcar '(lambda (action)
-               (if (string-match action-regexp (car action))
-                   (mapcar '(lambda (action-command)
-                              (eval action-command))
-                           (cdr action))))
+    (mapcar (lambda (action)
+	      (if (string-match action-regexp (car action))
+		  (mapcar (lambda (action-command)
+			    (eval action-command))
+			  (cdr action))))
             vmpc-actions)))
 
 

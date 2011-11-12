@@ -1265,22 +1265,22 @@ order to capture the trace of POP sessions during the occurrence."
     (if process
 	(vm-pop-end-session process)))
   (let ((trace-buffer-hook
-	 '(lambda ()
-	    (let ((bufs vm-kept-pop-buffers) 
-		  buf)
-	      (insert "\n\n")
-	      (insert "POP Trace buffers - most recent first\n\n")
-	      (while bufs
-		(setq buf (car bufs))
-		(insert "----") 
-		(insert (format "%s" buf))
-		(insert "----------\n")
-		(insert (save-excursion
-			  (set-buffer buf)
-			  (buffer-string)))
-		(setq bufs (cdr bufs)))
-	      (insert "--------------------------------------------------\n"))
-	    )))
+	 (lambda ()
+	   (let ((bufs vm-kept-pop-buffers) 
+		 buf)
+	     (insert "\n\n")
+	     (insert "POP Trace buffers - most recent first\n\n")
+	     (while bufs
+	       (setq buf (car bufs))
+	       (insert "----") 
+	       (insert (format "%s" buf))
+	       (insert "----------\n")
+	       (insert (save-excursion
+			 (set-buffer buf)
+			 (buffer-string)))
+	       (setq bufs (cdr bufs)))
+	     (insert "--------------------------------------------------\n"))
+	   )))
     (vm-submit-bug-report nil (list trace-buffer-hook))
   ))
 

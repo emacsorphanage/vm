@@ -3897,7 +3897,7 @@ See Info node `(elisp)Programmed Completion'."
 	  ;; unwind-protection
 	  (when process (vm-imap-end-session process))))
       (setq completion-list 
-	    (mapcar '(lambda (m) (list (format "%s:%s" account m)))
+	    (mapcar (lambda (m) (list (format "%s:%s" account m)))
 		    mailbox-list))
       (setq folder (try-completion (or string "") completion-list predicate)))
     
@@ -4475,21 +4475,21 @@ order to capture the trace of IMAP sessions during the occurrence."
     (if process
 	(vm-imap-end-session (vm-folder-imap-process))))
   (let ((trace-buffer-hook
-	 '(lambda ()
-	    (let ((bufs vm-kept-imap-buffers) 
-		  buf)
-	      (insert "\n\n")
-	      (insert "IMAP Trace buffers - most recent first\n\n")
-	      (while bufs
-		(setq buf (car bufs))
-		(insert "----") 
-		(insert (format "%s" buf))
-		(insert "----------\n")
-		(insert (with-current-buffer buf
-			  (buffer-string)))
-		(setq bufs (cdr bufs)))
-	      (insert "--------------------------------------------------\n"))
-	    )))
+	 (lambda ()
+	   (let ((bufs vm-kept-imap-buffers) 
+		 buf)
+	     (insert "\n\n")
+	     (insert "IMAP Trace buffers - most recent first\n\n")
+	     (while bufs
+	       (setq buf (car bufs))
+	       (insert "----") 
+	       (insert (format "%s" buf))
+	       (insert "----------\n")
+	       (insert (with-current-buffer buf
+			 (buffer-string)))
+	       (setq bufs (cdr bufs)))
+	     (insert "--------------------------------------------------\n"))
+	   )))
     (vm-submit-bug-report nil (list trace-buffer-hook))
   ))
 

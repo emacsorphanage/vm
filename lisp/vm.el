@@ -1372,18 +1372,20 @@ summary buffer to select a folder."
 	 (error "VM %s must be run on GNU Emacs 21 or a later version."
 		(vm-version)))))
 
-(defun vm-set-debug-flags ()
-  (or stack-trace-on-error
-      debug-on-error
-      (setq stack-trace-on-error
-	    '(
-	      wrong-type-argument
-	      wrong-number-of-arguments
-	      args-out-of-range
-	      void-function
-	      void-variable
-	      invalid-function
-	     ))))
+;; This function is now defunct.  USR, 2011-11-12
+
+;; (defun vm-set-debug-flags ()
+;;   (or stack-trace-on-error
+;;       debug-on-error
+;;       (setq stack-trace-on-error
+;; 	    '(
+;; 	      wrong-type-argument
+;; 	      wrong-number-of-arguments
+;; 	      args-out-of-range
+;; 	      void-function
+;; 	      void-variable
+;; 	      invalid-function
+;; 	     ))))
 
 (defun vm-toggle-thread-operations ()
   "Toggle the variable `vm-enable-thread-operations'.

@@ -427,7 +427,7 @@ You may remove a token by specifying just the TOKEN as argument."
                                 vm-serial-token-history))
           (value (read-expression
                   "Value: "
-                  (format "%S" (cdr (assoc var vm-serial-token-alist))))))
+                  (format "%S" (cdr (assoc token vm-serial-token-alist))))))
      (list token value)))
   (let ((tk (assoc token vm-serial-token-alist)))
     (if tk
@@ -869,13 +869,13 @@ questions will bother you!"
 	  (vm-make-local-hook 'kill-buffer-hook)
 	  (vm-make-local-hook 'mail-send-hook)
           (add-hook 'kill-buffer-hook
-                    '(lambda ()
-                       (vm-serial-send-mail-increment 'vm-serial-killed-cnt))
+                    (lambda ()
+		      (vm-serial-send-mail-increment 'vm-serial-killed-cnt))
                     t t)
           (add-hook 'kill-buffer-hook 'vm-serial-send-mail t t)
           (add-hook 'mail-send-hook
-                    '(lambda ()
-                       (vm-serial-send-mail-increment 'vm-serial-sent-cnt))
+                    (lambda ()
+		      (vm-serial-send-mail-increment 'vm-serial-sent-cnt))
                     t t)
           (remove-hook 'kill-buffer-hook 'vm-save-killed-message-hook t)
           (message "Kill or send this mail to get to the next mail!"))

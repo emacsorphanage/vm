@@ -630,8 +630,8 @@ The element gets added to the 'element-name' sublist of the
       (setq notes-field (bbdb-record-raw-notes record))
       (when (and (listp notes-field)
                  (setq folder (cdr (assq 'vm-virtual notes-field))))
-        (setq email-regexp (mapconcat '(lambda (addr)
-                                         (regexp-quote addr))
+        (setq email-regexp (mapconcat (lambda (addr)
+					(regexp-quote addr))
                                       (bbdb-record-net record) "\\|"))
         (unless (zerop (length email-regexp))
           (setq folder (or (assoc folder vm-virtual-folder-alist)
@@ -697,8 +697,8 @@ The element gets added to the 'element-name' sublist of the
           
           (when (and folder
                      (setq folder (cdr folder)
-                           email-regexp (mapconcat '(lambda (addr)
-                                                      (regexp-quote addr))
+                           email-regexp (mapconcat (lambda (addr)
+						     (regexp-quote addr))
                                                    (bbdb-record-net record)
                                                    "\\|"))
                      (> (length email-regexp) 0))
