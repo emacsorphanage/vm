@@ -143,13 +143,11 @@ deleted messages.  Use `###' to expunge deleted messages."
 	  (cond ((bufferp f)		; may be unnecessary. USR, 2010-01
 		 (setq access-method vm-folder-access-method))
 		((and (stringp f)
-		      vm-recognize-imap-maildrops
-		      (string-match vm-recognize-imap-maildrops f))
+		      (vm-imap-folder-spec-p f))
 		 (setq access-method 'imap
 		       folder f))
 		((and (stringp f)
-		      vm-recognize-pop-maildrops
-		      (string-match vm-recognize-pop-maildrops f))
+		      (vm-pop-folder-spec-p f))
 		 (setq access-method 'pop
 		       folder f)))))
     (let ((full-startup (and (not reload) (not (bufferp folder))))
@@ -513,14 +511,12 @@ message-pointer or getting new mail)."
   (vm-check-for-killed-summary)
   (setq vm-last-visit-folder folder)
   (let ((access-method nil) foo)
-    (cond ((and (stringp vm-recognize-pop-maildrops)
-		(string-match vm-recognize-pop-maildrops folder)
+    (cond ((and (vm-pop-folder-spec-p folder)
 		(setq foo (vm-pop-find-name-for-spec folder)))
 	   (setq folder foo
 		 access-method 'pop
 		 vm-last-visit-pop-folder folder))
-	  ((and (stringp vm-recognize-imap-maildrops)
-		(string-match vm-recognize-imap-maildrops folder)
+	  ((and (vm-imap-folder-spec-p folder)
 		;;(setq foo (vm-imap-find-name-for-spec folder))
 		)
 	   (setq ;; folder foo

@@ -181,6 +181,41 @@ The saved messages are flagged as `filed'."
 ;;;---------------------------------------------------------------------------
 ;; New shell defun to handle both IMAP and local saving.
 ;;---------------------------------------------------------------------------
+
+(defun vm-read-save-folder-name (&optional imap)
+  (let (default default-imap directory)
+    (save-current-buffer
+      ;; is this needed?  USR, 2011-11-12
+      ;; (vm-session-initialization)
+      (vm-select-folder-buffer)
+      (vm-error-if-folder-empty)
+      (setq default 
+	    (or (vm-auto-select-folder vm-message-pointer vm-auto-folder-alist)
+		vm-last-save-folder))
+      (setq default-imap
+	    (or (and (vm-imap-folder-spec-p default) default)
+		vm-last-save-imap-folder
+		vm-last-visit-imap-folder))
+      (setq directory 
+	    (or vm-foreign-folder-directory 
+		vm-folder-directory 
+		default-directory)))
+    (cond (imap
+	   (vm-read-imap-folder-name 
+	    "Save to IMAP folder: " t nil default-imap))
+	  ((and default
+		(let ((default-directory directory)) 
+		  (file-directory-p default)))
+	   (vm-read-file-name "Save in folder: " directory nil nil default))
+	  (default
+	    (vm-read-file-name
+	     (format "Save in folder: (default %s) " default)
+	     directory default 
+	     ;; 'confirm           ; -- this blocks the default
+	     ))
+	  (t
+	   (vm-read-file-name "Save in folder: " directory nil 'confirm)))))
+
 ;;;###autoload
 (defun vm-save-message (folder &optional count mlist quiet)
   "Save the current message to another FOLDER, queried via the
@@ -198,53 +233,22 @@ ignored.  If applied to collapsed threads in summary and thread operations are
 enabled via `vm-enable-thread-operations' then all messages in the
 thread are saved."
   (interactive
-   (if (and vm-imap-save-to-server (vm-imap-folder-p))
-       ;; IMAP saving --- argument parsing taken from
-       ;; vm-save-message-to-imap-folder
-       (let ((this-command this-command)
-	     (last-command last-command))
-	 (vm-follow-summary-cursor)
-	 (save-current-buffer
-	   (vm-session-initialization)
-	   (vm-select-folder-buffer)
-	   (list (vm-read-imap-folder-name "Save to IMAP folder: " t)
-		 (prefix-numeric-value current-prefix-arg))))
-       ;; saving to local filesystem.  argument parsing taken from old
-       ;; vm-save-message (now vm-save-message-to-local-folder)
-     (list
-      ;; protect value of last-command
-      (let ((last-command last-command)
-	    (this-command this-command))
-	(vm-follow-summary-cursor)
-	(let (default dir)
-	  (save-current-buffer
-	    (vm-select-folder-buffer)
-	    (vm-error-if-folder-empty)
-	    (setq default (or (vm-auto-select-folder 
-			       vm-message-pointer vm-auto-folder-alist)
-			      vm-last-save-folder))
-	    (setq dir (or vm-foreign-folder-directory
-			  vm-folder-directory default-directory)))
-	  (cond ((and default
-		      (let ((default-directory dir))
-			(file-directory-p default)))
-		 (vm-read-file-name "Save in folder: " dir nil nil default))
-		(default
-		  (vm-read-file-name
-		   (format "Save in folder: (default %s) " default)
-		   dir default))
-		(t
-		 (vm-read-file-name "Save in folder: " dir nil)))))
-      (prefix-numeric-value current-prefix-arg))))
+   (list
+    ;; protect value of last-command
+    (let ((last-command last-command)
+	  (this-command this-command))
+      (vm-follow-summary-cursor)
+      (vm-read-save-folder-name 
+       (and (vm-imap-folder-p) vm-imap-save-to-server)))
+    (prefix-numeric-value current-prefix-arg)))
 
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (unless count (setq count 1))
   (unless mlist
     (setq mlist (vm-select-operable-messages count (vm-interactive-p) "Save")))
-  (cond ((and vm-imap-save-to-server (vm-imap-folder-p))
+  (cond ((and (vm-imap-folder-p) vm-imap-save-to-server)
 	 (vm-save-message-to-imap-folder folder count mlist quiet))
-	((and (stringp vm-recognize-imap-maildrops)
-	      (string-match vm-recognize-imap-maildrops folder))
+	((vm-imap-folder-spec-p folder)
 	 (vm-save-message-to-imap-folder folder count mlist quiet))
 	(t
 	 (vm-save-message-to-local-folder folder count mlist quiet))))
@@ -271,24 +275,7 @@ The saved messages are flagged as `filed'."
     (let ((last-command last-command)
 	  (this-command this-command))
       (vm-follow-summary-cursor)
-      (let (default dir)
-	(save-current-buffer
-	  (vm-select-folder-buffer)
-	  (setq default (or (vm-auto-select-folder vm-message-pointer
-						   vm-auto-folder-alist)
-			    vm-last-save-folder))
-	  (setq dir (or vm-foreign-folder-directory
-			vm-folder-directory default-directory)))
-	(cond ((and default
-		    (let ((default-directory dir))
-		      (file-directory-p default)))
-	       (vm-read-file-name "Save in folder: " dir nil nil default))
-	      (default
-		(vm-read-file-name
-		 (format "Save in folder: (default %s) " default)
-		 dir default))
-	      (t
-	       (vm-read-file-name "Save in folder: " dir nil)))))
+      (vm-read-save-folder-name))
     (prefix-numeric-value current-prefix-arg)))
 
   (let (auto-folder unexpanded-folder ml)
@@ -939,17 +926,12 @@ messages in the thread are saved.
 
 The saved messages are flagged as `filed'."
   (interactive
-   (let ((this-command this-command)
-	 (last-command last-command))
-     (vm-follow-summary-cursor)
-     (save-current-buffer
-       (vm-session-initialization)
-       (vm-select-folder-buffer)
-       (vm-error-if-folder-empty)
-       (list (vm-read-imap-folder-name 
-	      "Save to IMAP folder: " t nil
-	      (or vm-last-save-imap-folder vm-last-visit-imap-folder))
-	     (prefix-numeric-value current-prefix-arg)))))
+   (list 
+    (let ((this-command this-command)
+	  (last-command last-command))
+      (vm-follow-summary-cursor)
+      (vm-read-save-folder-name t))
+    (prefix-numeric-value current-prefix-arg)))
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-display nil nil '(vm-save-message-to-imap-folder)
 	      '(vm-save-message-to-imap-folder))
@@ -962,7 +944,8 @@ The saved messages are flagged as `filed'."
 	process
 	)
     (unless mlist
-      (setq mlist (vm-select-operable-messages count (vm-interactive-p) "Save")))
+      (setq mlist 
+	    (vm-select-operable-messages count (vm-interactive-p) "Save")))
     (setq mailbox (nth 3 target-spec-list))
     (unwind-protect
 	(save-excursion

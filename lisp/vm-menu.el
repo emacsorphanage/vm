@@ -1357,9 +1357,7 @@ separate dedicated menu bar, depending on the value of
       (setq menu (cons
 		  (vector "    "
 			  (cond
-			   ((and (stringp vm-recognize-pop-maildrops)
-				 (string-match vm-recognize-pop-maildrops
-					       (car folders))
+			   ((and (vm-pop-folder-spec-p (car folders))
 				 (setq foo (vm-pop-find-name-for-spec
 					    (car folders))))
 			    (list 'vm-menu-run-command

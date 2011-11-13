@@ -65,6 +65,14 @@ Otherwise, the hourglass would be displayed while sit-for happens."
 (defsubst vm-marker (pos &optional buffer)
   (set-marker (make-marker) pos buffer))
 
+(defsubst vm-pop-folder-spec-p (folder)
+  (and vm-recognize-pop-maildrops
+       (string-match vm-recognize-pop-maildrops folder)))
+
+(defsubst vm-imap-folder-spec-p (folder)
+  (and vm-recognize-imap-maildrops
+       (string-match vm-recognize-imap-maildrops folder)))
+
 (defsubst vm-select-folder-buffer ()
   "Select the folder buffer corresponding to the current buffer (which
 could be Summary or Presentation).  Gives an error message if there

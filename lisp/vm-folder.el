@@ -4250,13 +4250,9 @@ Same as \\[vm-recover-folder]."
 	    (when (or this-buffer (not this-buffer-only))
 		  (if (file-exists-p crash)
 		      (setq mail-waiting t)
-		    (cond ((and vm-recognize-imap-maildrops
-				(string-match vm-recognize-imap-maildrops
-					      maildrop))
+		    (cond ((vm-imap-folder-spec-p maildrop)
 			   (setq meth 'vm-imap-check-mail))
-			  ((and vm-recognize-pop-maildrops
-				(string-match vm-recognize-pop-maildrops
-					      maildrop))
+			  ((vm-pop-folder-spec-p maildrop)
 			   (setq meth 'vm-pop-check-mail))
 			  (t (setq meth 'vm-spool-check-mail)))
 		    (if (not interactive)
@@ -4327,15 +4323,11 @@ Same as \\[vm-recover-folder]."
 	  (cond ((vm-movemail-specific-spool-file-p maildrop)
 		 (setq non-file-maildrop t)
 		 (setq retrieval-function 'vm-spool-move-mail))
-		((and vm-recognize-imap-maildrops
-		      (string-match vm-recognize-imap-maildrops
-				    maildrop))
+		((vm-imap-folder-spec-p maildrop)
 		 (setq non-file-maildrop t)
 		 (setq safe-maildrop (vm-safe-imapdrop-string maildrop))
 		 (setq retrieval-function 'vm-imap-move-mail))
-		((and vm-recognize-pop-maildrops
-		      (string-match vm-recognize-pop-maildrops
-				    maildrop))
+		((vm-pop-folder-spec-p maildrop)
 		 (setq non-file-maildrop t)
 		 (setq safe-maildrop (vm-safe-popdrop-string maildrop))
 		 (setq retrieval-function 'vm-pop-move-mail))

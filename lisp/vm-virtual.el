@@ -117,12 +117,10 @@ all the real folder buffers involved."
 	      selectors (cdr clause))
 	(while folders			; folders can change below
 	  (setq folder (car folders))
-	  (cond ((and (stringp folder)
-		      (string-match vm-recognize-pop-maildrops folder))
+	  (cond ((vm-pop-folder-spec-p folder)
 		 ;; POP folder, fine
 		 nil)
-		((and (stringp folder)
-		      (string-match vm-recognize-imap-maildrops folder))
+		((vm-imap-folder-spec-p folder)
 		 ;; IMAP folder, fine
 		 nil)
 		((stringp folder)

@@ -557,14 +557,10 @@ t."
   :group 'vm-pop
   :type 'boolean)
 
-(defcustom vm-recognize-pop-maildrops "^\\(pop\\|pop-ssl\\|pop-ssh\\):[^:]+:[^:]+:[^:]+:[^:]+:.+"
-  "*Value if non-nil should be a regular expression that matches
-spool names found in `vm-spool-files' that should be considered POP
-maildrops.  A nil value tells VM that all the spool names are to
-be considered files except those matched by `vm-recognize-imap-maildrops'."
-  :group 'vm-pop
-  :type '(choice (const :tag "Don't Recognize" nil)
-		 regexp))
+(defconst vm-recognize-pop-maildrops 
+  "^\\(pop\\|pop-ssl\\|pop-ssh\\):[^:]+:[^:]+:[^:]+:[^:]+:.+"
+  "Regular expression matching the maildrop specification of POP
+  folders.  It can be set to nil to prohibit POP maildrops.")
 
 (defcustom vm-pop-folder-alist nil
   "*Alist of POP maildrop specifications and names that refer to them.
@@ -669,14 +665,11 @@ deleted from the mailbox immediately after retrieval."
   "List of IMAP mailboxes for which warning has been given about the
 lack of settings for auto-expunge.")
 
-(defcustom vm-recognize-imap-maildrops "^\\(imap\\|imap-ssl\\|imap-ssh\\):[^:]+:[^:]+:[^:]+:[^:]+:[^:]+:.+"
-  "*Value if non-nil should be a regular expression that matches
-spool names found in `vm-spool-files' that should be considered IMAP
-maildrops.  A nil value tells VM that all the spool names are to
-be considered files except those matched by `vm-recognize-pop-maildrops'."
-  :group 'vm-imap
-  :type '(choice (const :tag "Don't Recognize" nil)
-		 regexp))
+(defconst vm-recognize-imap-maildrops 
+  "^\\(imap\\|imap-ssl\\|imap-ssh\\):[^:]+:[^:]+:[^:]+:[^:]+:[^:]+:.+"
+  "Regular expression matching maildrop specificaiton of IMAP
+folders.  It can be set to nil to prohibit the recognition of
+IMAP maildrops.")
 
 (defvar vm-imap-server-list nil
   "*List of IMAP maildrop specifications that tell VM the IMAP servers

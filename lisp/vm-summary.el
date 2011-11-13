@@ -1742,11 +1742,9 @@ Call this function if you made changes to `vm-summary-format'."
     (int-to-string count)))
 
 (defun vm-make-folders-summary-key (folder &optional dir)
-  (cond ((and (stringp vm-recognize-pop-maildrops)
-	      (string-match vm-recognize-pop-maildrops folder))
+  (cond ((vm-pop-folder-spec-p folder)
 	 (vm-safe-popdrop-string folder))
-	((and (stringp vm-recognize-imap-maildrops)
-	      (string-match vm-recognize-imap-maildrops folder))
+	((vm-imap-folder-spec-p folder)
 	 (vm-safe-imapdrop-string folder))
 	(t
 	 (concat "folder-summary0:"
