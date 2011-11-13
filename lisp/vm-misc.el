@@ -567,8 +567,9 @@ PRED and return the position"
       t)))
 
 (fset 'vm-interactive-p
-      (cond (vm-xemacs-p 'interactive-p)
-	    (vm-fsfemacs-p 'called-interactively-p)))
+      (if (fboundp 'interactive-p)	; Xemacs or Gnu Emacs under obsolescence
+	  'interactive-p
+	(lambda () (called-interactively-p 'any))))
 
 (fset 'vm-device-type
       (cond (vm-xemacs-p 'device-type)
