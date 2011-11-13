@@ -262,7 +262,10 @@ messages of the folder are involved in this reply."
 	    (narrow-to-region (point) (point))
 	    (vm-yank-message (car mlist))
 	    (goto-char (point-max)))
-	  (setq mlist (cdr mlist)))))
+	  (setq mlist (cdr mlist))))
+      ;; Set window-start to the top because the yanks processed by
+      ;; emacs-w3m are somehow clobbering the buffer in Emacs 24
+      (set-window-start nil (point-min)))
     (when vm-fill-paragraphs-containing-long-lines-in-reply
       (vm-fill-long-lines-in-reply))
     (run-hooks 'vm-reply-hook)
@@ -464,7 +467,8 @@ specified by `vm-included-text-headers' and
       ;; citation functions will fail with messages similar to
       ;; "doesn't conform to RFC 822." -- Brent Goodrick, 2009-01-24
       ;; But this yanks wrongly!  The following line reverted by Uday
-      ;; Reddy, 2009-12-07 (goto-char (point-min))
+      ;; Reddy, 2009-12-07 
+      ;; (goto-char (point-min))
       (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
 	    (mail-yank-hooks (run-hooks 'mail-yank-hooks))
 	    (t (vm-mail-yank-default message))))))
