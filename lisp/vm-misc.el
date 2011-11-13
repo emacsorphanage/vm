@@ -568,7 +568,7 @@ PRED and return the position"
 
 (fset 'vm-interactive-p
       (cond (vm-xemacs-p 'interactive-p)
-	    (vm-fsfemacs-p 'called-innteractively-p)))
+	    (vm-fsfemacs-p 'called-interactively-p)))
 
 (fset 'vm-device-type
       (cond (vm-xemacs-p 'device-type)
