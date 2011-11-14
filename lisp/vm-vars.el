@@ -5764,6 +5764,12 @@ and up."
   (define-key vm-mode-map "!" 'vm-toggle-flag-message)
   (define-key vm-mode-map "<" 'vm-promote-subthread)
   (define-key vm-mode-map ">" 'vm-demote-subthread)
+  (define-key vm-mode-virtual-map "O" 'vm-virtual-omit-message)
+  (define-key vm-mode-virtual-map "U" 'vm-virtual-update-folders)
+  (define-key vm-mode-virtual-map "D" 'vm-virtual-auto-delete-message)
+  ;; (define-key vm-mode-virtual-map "S" 'vm-virtual-save-message)
+  ;; (define-key vm-mode-virtual-map "A" 'vm-virtual-auto-archive-messages)
+  (define-key vm-mode-virtual-map "T" 'vm-virtual-check-selector-interactive)
   )
 (defalias 'vm-current-key-bindings 'vm-v8-key-bindings)
 
@@ -5787,6 +5793,8 @@ the users or bound to other functions in future versions of VM."
   (define-key vm-mode-map "\M-l" 'vm-edit-init-file) ; infrequent
   (define-key vm-mode-map "%" 'vm-change-folder-type) ; infrequent
   (define-key vm-mode-map "\M-g" 'vm-goto-message)    ; redundant, use <RET>
+  (define-key vm-mode-virtual-map "A" 'vm-create-virtual-folder-same-author)
+  (define-key vm-mode-virtual-map "S" 'vm-create-virtual-folder-same-subject)
   )
 (defalias 'vm-legacy-key-bindings 'vm-v7-key-bindings)
 
@@ -5889,10 +5897,19 @@ the users or bound to other functions in future versions of VM."
     (define-key map "V" vm-mode-virtual-map)
     (define-key vm-mode-virtual-map "V" 'vm-visit-virtual-folder)
     (define-key vm-mode-virtual-map "C" 'vm-create-virtual-folder)
-    (define-key vm-mode-virtual-map "A" 'vm-create-virtual-folder-same-author)
-    (define-key vm-mode-virtual-map "S" 'vm-create-virtual-folder-same-subject)
     (define-key vm-mode-virtual-map "X" 'vm-apply-virtual-folder)
     (define-key vm-mode-virtual-map "M" 'vm-toggle-virtual-mirror)
+
+    (define-key vm-mode-virtual-map "a" 'vm-create-author-virtual-folder)
+    (define-key vm-mode-virtual-map "r" 'vm-create-author-or-recipient-virtual-folder)
+    (define-key vm-mode-virtual-map "d" 'vm-create-date-virtual-folder)
+    (define-key vm-mode-virtual-map "l" 'vm-create-label-virtual-folder)
+    (define-key vm-mode-virtual-map "s" 'vm-create-subject-virtual-folder)
+    (define-key vm-mode-virtual-map "t" 'vm-create-text-virtual-folder)
+    (define-key vm-mode-virtual-map "!" 'vm-create-flagged-virtual-folder)
+    (define-key vm-mode-virtual-map "n" 'vm-create-new-virtual-folder)
+    (define-key vm-mode-virtual-map "u" 'vm-create-unseen-virtual-folder)
+
     (define-key vm-mode-virtual-map "?" 'vm-virtual-help)
     (define-key map "M" vm-mode-mark-map)
     (define-key vm-mode-mark-map "N" 'vm-next-command-uses-marks)

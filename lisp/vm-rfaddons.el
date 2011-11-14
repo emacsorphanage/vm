@@ -1817,7 +1817,7 @@ not end the comment.  Blank lines do not get comments."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun vm-isearch-presentation ()
-  "Switched to the presentation or preview buffer and starts isearch."
+  "Switches to the Presentation buffer and starts isearch."
   (interactive)
   (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (let ((target (or vm-presentation-buffer (current-buffer))))

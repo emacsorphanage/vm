@@ -3,7 +3,8 @@
 ;; This file is part of VM
 ;;
 ;; Copyright (C) 1990-1997 Kyle E. Jones
-;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;; Copyright (C) 2000-2006 Robert Widhopf-Fenk
+;; Copyright (C) 2011 Uday S. Reddy
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -117,10 +118,12 @@ all the real folder buffers involved."
 	      selectors (cdr clause))
 	(while folders			; folders can change below
 	  (setq folder (car folders))
-	  (cond ((vm-pop-folder-spec-p folder)
+	  (cond ((and (stringp folder) 
+		      (vm-pop-folder-spec-p folder))
 		 ;; POP folder, fine
 		 nil)
-		((vm-imap-folder-spec-p folder)
+		((and (stringp folder)
+		      (vm-imap-folder-spec-p folder))
 		 ;; IMAP folder, fine
 		 nil)
 		((stringp folder)
@@ -349,6 +352,7 @@ Prefix arg means the new virtual folder should be visited read only."
   (when vm-use-menus
     (vm-menu-install-known-virtual-folders-menu)))
 
+(defalias 'vm-create-search-folder 'vm-create-virtual-folder)
 
 ;;;###autoload
 (defun vm-apply-virtual-folder (name &optional read-only)
@@ -388,6 +392,8 @@ Prefix arg means the new virtual folder should be visited read only."
 
 ;;;###autoload
 (defun vm-create-virtual-folder-same-subject ()
+  "Create a virtual folder (search folder) for all messages with
+the same subject as the current message."
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
@@ -406,6 +412,8 @@ Prefix arg means the new virtual folder should be visited read only."
 
 ;;;###autoload
 (defun vm-create-virtual-folder-same-author ()
+  "Create a virtual folder (search folder) for all messages from the
+same author as the current message."
   (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
@@ -421,6 +429,139 @@ Prefix arg means the new virtual folder should be visited read only."
     (vm-create-virtual-folder
      'author author nil
      (format "%s %s %s" (buffer-name) 'author displayed-author) bookmark)))
+
+;;;###autoload
+(defun vm-create-author-virtual-folder (&optional arg read-only name)
+  "Create a virtual folder (search folder) of messages with the given
+author in the current folder. 
+
+Prefix arg means the new virtual folder should be visited read only."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command)
+	 (prefix current-prefix-arg))
+     (vm-select-folder-buffer)
+     (list (read-string "Virtual folder of author/recipient: ")
+	   prefix)))
+  (vm-create-virtual-folder 'author arg read-only name))
+
+;;;###autoload
+(defun vm-create-author-or-recipient-virtual-folder (&optional arg read-only name)
+  "Create a virtual folder (search folder) with given author or
+recipient from messages in the current folder.
+
+Prefix arg means the new virtual folder should be visited read only."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command)
+	 (prefix current-prefix-arg))
+     (vm-select-folder-buffer)
+     (list (read-string "Virtual folder of author/recipient: ")
+	   prefix)))
+  (vm-create-virtual-folder 'author-or-recipient arg read-only name))
+
+;;;###autoload
+(defun vm-create-subject-virtual-folder (&optional arg read-only subject)
+  "Create a virtual folder (search folder) with given subject from
+messages in the current folder. 
+
+Prefix arg means the new virtual folder should be visited read only."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command)
+	 (prefix current-prefix-arg))
+     (vm-select-folder-buffer)
+     (list (read-string "Virtual folder of subject: ")
+	   prefix)))
+  (vm-create-virtual-folder 'subject arg read-only subject))
+
+;;;###autoload
+(defun vm-create-text-virtual-folder (&optional arg read-only subject)
+  "Create a virtual folder (search folder) of all messsages with the
+given string in its text.
+
+Prefix arg means the new virtual folder should be visited read only."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command)
+	 (prefix current-prefix-arg))
+     (vm-select-folder-buffer)
+     (list (read-string "Virtual folder of subject: ")
+	   prefix)))
+  (vm-create-virtual-folder 'text arg read-only subject))
+
+;;;###autoload
+(defun vm-create-date-virtual-folder (&optional arg read-only subject)
+  "Create a virtual folder (search folder) of all messsages with date
+in given range.
+
+Prefix arg means the new virtual folder should be visited read only."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command)
+	 (prefix current-prefix-arg))
+     (vm-select-folder-buffer)
+     (list (read-number "Virtual folder of date in days: ")
+	   prefix)))
+  (vm-create-virtual-folder 'newer-than arg read-only subject))
+
+;;;###autoload
+(defun vm-create-label-virtual-folder (&optional arg read-only name)
+  "Create a virtual folder with given label from messages in the
+current folder.
+
+Prefix arg means the new virtual folder should be visited read only."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command)
+	 (prefix current-prefix-arg))
+     (vm-select-folder-buffer)
+     (list (read-string "Virtual folder of label: ")
+	   prefix)))
+  (vm-create-virtual-folder 'label arg read-only name))
+
+;;;###autoload
+(defun vm-create-flagged-virtual-folder (&optional read-only name)
+  "Create a virtual folder (search folder) with all the flagged
+messages in the current folder.
+
+Prefix arg means the new virtual folder should be visited read only."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command)
+	 (prefix current-prefix-arg))
+     (vm-select-folder-buffer)
+     (list prefix)))
+  (vm-create-virtual-folder 'flagged read-only name))
+
+;;;###autoload
+(defun vm-create-new-virtual-folder (&optional read-only name)
+  "Create a virtual folder (search folder) of all newly received
+messages in the current folder.
+
+Prefix arg means the new virtual folder should be visited read only."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command)
+	 (prefix current-prefix-arg))
+     (vm-select-folder-buffer)
+     (list prefix)))
+  (vm-create-virtual-folder 'new read-only name))
+
+;;;###autoload
+(defun vm-create-unseen-virtual-folder (&optional read-only name)
+  "Create a virtual folder (search folder) of all unseen from messages in the
+current folder.
+
+Prefix arg means the new virtual folder should be visited read only."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command)
+	 (prefix current-prefix-arg))
+     (vm-select-folder-buffer)
+     (list prefix)))
+  (vm-create-virtual-folder 'unseen read-only name))
+
 
 (defun vm-toggle-virtual-mirror ()
   (interactive)

@@ -729,7 +729,9 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (setq list (cdr list)))
     nil ))
 
-(fset 'vm-member (symbol-function (if (fboundp 'member) 'member 'vm-member-0)))
+(fset 'vm-member 
+      (symbol-function 
+       (if (fboundp 'member) 'member 'vm-member-0)))
 
 (defun vm-delqual (ob list)
   (let ((prev nil)
@@ -1648,5 +1650,9 @@ Emacs 22.1. This function used to supress compiler warnings."
   (if (boundp 'find-file-hook)
       (add-hook 'find-file-hook vm-hook-fn)
     (add-hook 'find-file-hooks vm-hook-fn)))
+
+;; Aliases for VM functions
+
+
 
 ;;; vm-misc.el ends here

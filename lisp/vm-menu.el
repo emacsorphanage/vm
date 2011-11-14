@@ -195,12 +195,30 @@
 (defconst vm-menu-virtual-menu
   '("Virtual"
     ["Visit Virtual Folder" vm-visit-virtual-folder t]
-    ["Visit Virtual Folder Same Author" vm-visit-virtual-folder-same-author t]
-    ["Visit Virtual Folder Same Subject" vm-visit-virtual-folder-same-subject t]
-    ["Create Virtual Folder" vm-create-virtual-folder t]
-    ["Apply Virtual Folder" vm-apply-virtual-folder t]
+    ["Apply Virtual Folder Selectors" vm-apply-virtual-folder t]
+    ["Omit Message" vm-virtual-omit-message t]
+    ["Update all" vm-virtual-update-folders]
     "---"
-    ;; "---"
+    "Search Folders"
+    ["Author" vm-create-author-virtual-folder t]
+    ["Recipients" vm-create-author-or-recipient-virtual-folder t]
+    ["Subject" vm-create-subject-virtual-folder t]
+    ["Text (Body)" vm-create-text-virtual-folder t]
+    ["Days" vm-create-date-virtual-folder t]
+    ["Label" vm-create-label-virtual-folder t]
+    ["Flagged" vm-create-flagged-virtual-folder t]
+    ["New" vm-create-new-virtual-folder t]
+    ["Unseen" vm-create-unseen-virtual-folder t]
+    ["Same Author as current" vm-create-virtual-folder-same-author t]
+    ["Same Subject as current" vm-create-virtual-folder-same-subject t]
+    ["Create General" vm-create-virtual-folder t]
+    "---"
+    "Auto operations"
+    ["Delete" vm-virtual-auto-delete-message t]
+    ["Save" vm-virtual-save-message t]
+    ["Archive" vm-virtual-auto-archive-messages t]
+    ["Update all" vm-virtual-update-folders t]
+    
     ;; special string that marks the tail of this menu for
     ;; vm-menu-install-known-virtual-folders-menu.
     "-------"

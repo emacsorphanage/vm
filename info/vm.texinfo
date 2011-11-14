@@ -4487,12 +4487,11 @@ subset of messages from another virtual folder.
 @cindex interactive virtual folders
 There are two ways of working with virtual folders.  When you are
 visiting a folder, you can use one or more selectors or search keys to
-interactively create a virtual folder.  You can browse through the
-messages in the virtual folder and carry out actions on them which
+interactively create a virtual folder.  We call such folders ``search
+folders.''  You can browse through the
+messages in the search folder and carry out actions on them which
 will be reflected back to the original folder.  When you are done, you
-can quit the virtual folder and return to the original folder.  We
-call such virtual folders ``interactive'' virtual folders.  Some other
-mail clients use the term ``search folders'' for the same concept.
+can quit the search folder and return to the original folder.
 
 @cindex predefined virtual folders
 @vindex vm-virtual-folder-alist
@@ -4502,28 +4501,32 @@ A second way of using virtual folders is to define them through the
 variable @code{vm-virtual-folder-alist}.  You can visit such virtual
 folders by typing @kbd{V V} (@code{vm-visit-virtual-folder}).  Any
 actions carried out on the virtual folder messages will be reflected
-back to the underlying real folders.  We call such virtual folders
-``predefined virtual folders.
+back to the underlying real folders.  When you quit a virtual folder, all
+its underlying real folders will also be quit, unless they were previously
+visited in the Emacs session.  We call such virtual folders
+``predefined'' virtual folders.
 
 @menu
-* Interactive VFs::	Virtual folders created interactively
+* Search Folders::	Virtual folders created interactively
 * Predefined VFs::	Virtual folders defined in advance
 * Virtual Selectors::	Selectors used for creating virtual folders
 * Working with VFs::	What you can do in a virtual folder
 * vm-avirtual::		Automatic operations using virtual selectors
 @end menu
 
-@node Interactive VFs, Predefined VFs, Virtual Folders, Virtual Folders
-@section Interactive Virtual Folders
+@node Search Folders, Predefined VFs, Virtual Folders, Virtual Folders
+@section Search Folders
 
 @findex vm-create-virtual-folder
+@findex vm-create-search-folder
 @kindex V C
-The command @code{vm-create-virtual-folder} (bound to @kbd{V C}) lets
-you interactively create a virtual folder from the messages of
-the current folder, using exactly one selector to choose the
-messages.  If you type @kbd{V C header RET greeting}, VM will create
-a folder containing only those messages that contain the string
-@samp{greeting} in one of its headers.
+The command @code{vm-create-search-folder} (bound to @kbd{V C}) lets you
+interactively create a virtual folder from the messages of the current
+folder, using exactly one selector to choose the messages.  If you type
+@kbd{V C header RET greeting}, VM will create a folder containing only those
+messages that contain the string @samp{greeting} in one of its headers.
+@xref{Virtual Selectors}, for virtual selectors you can use for this
+purpose. 
 
 @findex vm-apply-virtual-folder
 @kindex V X
@@ -4536,24 +4539,63 @@ matching messages.
 @kindex V A
 @findex vm-create-virtual-folder-same-subject
 @findex vm-create-virtual-folder-same-author
-The keys @kbd{V S} (@code{vm-create-virtual-folder-same-subject}) and
-@kbd{V A} (@code{vm-create-virtual-folder-same-author}) create virtual folders
-containing all the messages in the current folder with the same
-subject or author as the current message.
+The commands @code{vm-create-virtual-folder-same-subject} (bound to @kbd{V
+S} in version 7.19) and @code{vm-create-virtual-folder-same-author} (bound
+to @kbd{V A} in version 7.19) create virtual folders containing all the
+messages in the current folder with the same subject or author as the
+current message.  There are also short-cut key bindings for a number of
+frequently used selectors:
+
+@kindex V a
+@kindex V r
+@kindex V s
+@kindex V t
+@kindex V d
+@kindex V l
+@kindex V !
+@kindex V n
+@kindex V u
+@findex vm-create-author-virtual-folder
+@findex vm-create-author-or-recipient-virtual-folder
+@findex vm-create-subject-virtual-folder
+@findex vm-create-text-virtual-folder
+@findex vm-create-date-virtual-folder
+@findex vm-create-label-virtual-folder
+@findex vm-create-flagged-virtual-folder
+@findex vm-create-new-virtual-folder
+@findex vm-create-unseen-virtual-folder
+@table @kbd
+@item V a (@code{vm-create-author-virtual-folder})
+@item V r (@code{vm-create-author-or-recipient-virtual-folder})
+@item V s (@code{vm-create-subject-virtual-folder})
+@item V t (@code{vm-create-text-virtual-folder})
+@item V d (@code{vm-create-date-virtual-folder})
+@item V l (@code{vm-create-label-virtual-folder})
+@item V ! (@code{vm-create-flagged-virtual-folder}
+@item V n (@code{vm-create-new-virtual-folder})
+@item V u (@code{vm-create-unseen-virtual-folder})
+@end table
+
 
 @cindex searching
-When you quit an interactive virtual folder, the currently selected
-message in the virtual folder becomes the current message in the
-underlying folder.  So, you can use the virtual folder facility to
-search for particular messages.  For example, if you knew that one of
-the messages with the subject @samp{greeting} had a hotel offer and
-you wanted to find it, you can first create a virtual folder of
-messages with that subject, browse through them to find the message
-that had the hotel offer, and then quit the virtual folder.  VM will
-return you to the original folder with the cursor positioned on the
-@samp{greeting} message with the hotel offer.
+When you quit a search folder, the currently selected message
+in the virtual folder becomes the current message in the underlying folder.
+So, you can use the search folder facility to search for particular
+messages.  For example, if you knew that one of the messages with the
+subject @samp{greeting} had a hotel offer and you wanted to find it, you can
+first create a search folder of messages with subject @samp{greeting},
+browse through them to find the message that had the hotel offer, and then
+quit the virtual folder.  VM will return you to the copy of the same message
+in the original folder.
 
-@node Predefined VFs, Working with VFs, Interactive VFs, Virtual Folders
+Search folders also form an efficient way to search for some string in the
+text of messages.  The key binding @kbd{V t}
+(@code{vm-create-text-virtual-folder}) can be used to find all messages with
+the string.  This is more efficient than the @code{vm-isearch-forward}
+command (@pxref{Selecting Messages}) because it only searches in the text part
+of message bodies, not inside MIME attachments. 
+
+@node Predefined VFs, Working with VFs, Search Folders, Virtual Folders
 @section Predefined Virtual Folders
 
 @vindex vm-virtual-folder-alist
@@ -4909,7 +4951,7 @@ attributes with the underlying folders then it will be.
 @section vm-avirtual Package
 
 @cindex vm-avirtual
-The @code{vm-avirtual} add-on created by Robert Widhopf-Fenk provides
+The @code{vm-avirtual} add-on package created by Robert Widhopf-Fenk provides
 various automatic operations based on virtual selectors.  These
 facilities are only partially documented.
 
@@ -4917,31 +4959,71 @@ facilities are only partially documented.
 @findex vm-virtual-omit-message
 @kindex V U
 @findex vm-virtual-update-folders
-The keys @kbd{V O} @code{vm-virtual-omit-message} will omit a message from the
-virtual folder and @kbd{V U} @code{vm-virtual-update-folders} will force an
-update of the virtual folder.
+The command @code{M-x vm-virtual-omit-message} (bound to @kbd{V O} in
+version 8) will omit a message from a virtual folder, irrespective of
+whether it satisfies the definition of the virtual folder.  The command
+@code{M-x vm-virtual-update-folders} (bound to @kbd{V U} in version 8) will
+force an update of all the visited virtual folders to reflect the changes in
+their underlying folders.
+
+@findex vm-virtual-check-selector-interactive
+The command @kbd{M-x vm-virtual-check-selector-interactive} (bound to @kbd{V
+T} in version 8) allows you to test a selector, i.e., a virtual folder
+definition, interactively by applying it to the current message.  With a
+prefix argument, it will print diagnostic information in a separate buffer.
+This feature is useful because virtual folder selectors can get quite
+complicated and it is important to make sure that they work correctly.
+
+The vm-avirtual packages allows you to use virtual selectors to carry out
+automatic deletion of messages (e.g., for spam) and for automatic saving of
+messages to folders.
+
+@unnumberedsubsec Automatic deletion
 
 @findex vm-virtual-auto-delete-message
+@vindex vm-virtual-auto-delete-message-selector
+Automatic deletion of messages based on the virtual folder facility can be
+achieved with the command @code{vm-virtual-auto-delete-message} (bound to
+@kbd{V D} in version 8).  First, set the variable
+@code{vm-virtual-auto-delete-message-selector} to the name of a virtual
+folder whose members should be normally deleted.  Then invoking the command
+on the current message (or a COUNT number of messages with a prefix
+argument) deletes all those messages among them that belong to the virtual
+folder @code{vm-virtual-auto-delete-message-selector}.  There is no need to
+separately view the virtual folder before deleting such messages.
+
 @findex vm-virtual-auto-delete-messages
 @vindex vm-arrived-messages-hook
-Automatic marking of messages for deletion based on a selector can be
-achieved with @code{vm-virtual-auto-delete-message} for interactive use and the
-function @code{vm-virtual-auto-delete-messages} when added to the VM hook
-@code{vm-arrived-messages-hook}.  This can be quite handy for marking spam for
-deletion.
+The function @code{vm-virtual-auto-delete-messages} can be added to the VM
+hook @code{vm-arrived-messages-hook}.  This causes all the messages matching
+the @code{vm-virtual-auto-delete-message-selector} in the incoming mail
+to be automatically deleted before you view them.
+
+@unnumberedsubsec Automatic saving
 
 @findex vm-virtual-save-message
 @findex vm-virtual-auto-archive-messages
-@kbd{M-x vm-virtual-save-message} can be used to save messages to the 
-folder corresponding to the first matching selector and the function 
-@kbd{vm-virtual-auto-archive-messages} can file messages based on
-selectors (see also @code{vm-auto-archive-messages}). 
+@vindex vm-virtual-auto-folder-alist
+The commands @kbd{M-x vm-virtual-save-message} and
+@kbd{M-x vm-virtual-auto-archive-messages} provide variants of
+@code{vm-save-message} and @code{vm-auto-archive-messages} based on the
+virtual folder facility.  To use them, you must first set the variable
+@code{vm-virtual-auto-folder-alist} to an association-list of the form
 
-@findex vm-virtual-check-selector-interactive
-The command @kbd{M-x vm-virtual-check-selector-interactive} allows you
-to test selectors interactively and will emit debug information when
-called with a prefix argument.
+@example
+((@var{VIRTUAL-FOLDER-NAME} . @var{FOLDER})
+ ... )
+@end example
 
+@noindent where @var{VIRTUAL-FOLDER-NAME} is a string and @var{FOLDER} is
+either a string or an expression that evaluates to a string.  If the message
+being saved is a member of @var{VIRTUAL-FOLDER-NAME}, as per its definition
+in @code{vm-virtual-folder-alist}, then @var{FOLDER} is regarded as the
+place where it should be saved.  The command @code{vm-virtual-save-message}
+suggests this folder as the default location for saving.  The command
+@code{vm-virtual-auto-archive-messages} archives all matching messages in
+the corresponding @var{FOLDER}s, as suggested by
+@code{vm-virtual-auto-folder-alist}.
 
 @node Frames and Windows, Toolbar, Virtual Folders, Top
 @chapter Frames and Windows
