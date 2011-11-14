@@ -193,7 +193,7 @@ The saved messages are flagged as `filed'."
 	    (or (vm-auto-select-folder vm-message-pointer vm-auto-folder-alist)
 		vm-last-save-folder))
       (setq default-imap
-	    (or (and (vm-imap-folder-spec-p default) default)
+	    (or (and default (vm-imap-folder-spec-p default) default)
 		vm-last-save-imap-folder
 		vm-last-visit-imap-folder))
       (setq directory 
