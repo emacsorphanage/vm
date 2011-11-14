@@ -5793,8 +5793,6 @@ the users or bound to other functions in future versions of VM."
   (define-key vm-mode-map "\M-l" 'vm-edit-init-file) ; infrequent
   (define-key vm-mode-map "%" 'vm-change-folder-type) ; infrequent
   (define-key vm-mode-map "\M-g" 'vm-goto-message)    ; redundant, use <RET>
-  (define-key vm-mode-virtual-map "A" 'vm-create-virtual-folder-same-author)
-  (define-key vm-mode-virtual-map "S" 'vm-create-virtual-folder-same-subject)
   )
 (defalias 'vm-legacy-key-bindings 'vm-v7-key-bindings)
 
@@ -5898,6 +5896,8 @@ the users or bound to other functions in future versions of VM."
     (define-key vm-mode-virtual-map "V" 'vm-visit-virtual-folder)
     (define-key vm-mode-virtual-map "C" 'vm-create-virtual-folder)
     (define-key vm-mode-virtual-map "X" 'vm-apply-virtual-folder)
+    (define-key vm-mode-virtual-map "A" 'vm-create-virtual-folder-same-author)
+    (define-key vm-mode-virtual-map "S" 'vm-create-virtual-folder-same-subject)
     (define-key vm-mode-virtual-map "M" 'vm-toggle-virtual-mirror)
 
     (define-key vm-mode-virtual-map "a" 'vm-create-author-virtual-folder)

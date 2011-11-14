@@ -207,17 +207,15 @@
     ["Days" vm-create-date-virtual-folder t]
     ["Label" vm-create-label-virtual-folder t]
     ["Flagged" vm-create-flagged-virtual-folder t]
-    ["New" vm-create-new-virtual-folder t]
     ["Unseen" vm-create-unseen-virtual-folder t]
     ["Same Author as current" vm-create-virtual-folder-same-author t]
     ["Same Subject as current" vm-create-virtual-folder-same-subject t]
     ["Create General" vm-create-virtual-folder t]
     "---"
     "Auto operations"
-    ["Delete" vm-virtual-auto-delete-message t]
-    ["Save" vm-virtual-save-message t]
-    ["Archive" vm-virtual-auto-archive-messages t]
-    ["Update all" vm-virtual-update-folders t]
+    ["Delete Message(s)" vm-virtual-auto-delete-message t]
+    ["Save Message(s)" vm-virtual-save-message t]
+    ["Archive Messages" vm-virtual-auto-archive-messages t]
     
     ;; special string that marks the tail of this menu for
     ;; vm-menu-install-known-virtual-folders-menu.
