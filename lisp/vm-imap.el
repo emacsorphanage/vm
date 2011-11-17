@@ -4177,6 +4177,7 @@ documentation for `vm-spool-files'."
       (vm-buffer-type:exit)
       ;;-------------------
       )))
+(defalias 'vm-imap-create-folder 'vm-create-imap-folder)
 
 ;;;###autoload
 (defun vm-delete-imap-folder (folder)
@@ -4222,6 +4223,7 @@ documentation for `vm-spool-files'."
       (vm-buffer-type:exit)
       ;;-------------------
       )))
+(defalias 'vm-imap-delete-folder 'vm-delete-imap-folder)
 
 ;;;###autoload
 (defun vm-rename-imap-folder (source dest)
@@ -4274,6 +4276,7 @@ documentation for `vm-spool-files'."
 		 (memq (process-status process) '(open run)))
 	(vm-imap-end-session process))
       )))
+(defalias 'vm-rename-imap-folder 'vm-imap-rename-folder)
 
 ;;;###autoload
 (defun vm-list-imap-folders (account)
@@ -4322,6 +4325,7 @@ one declared in `vm-imap-account-alist'."
 	(setq mailbox-list (cdr mailbox-list))))
     (switch-to-buffer-other-window buffer)
     ))
+(defalias 'vm-imap-list-folders 'vm-list-imap-folders)
 
 ;;; Robert Fenk's draft function for saving messages to IMAP folders.
 
