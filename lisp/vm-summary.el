@@ -1136,14 +1136,14 @@ attachments.  					USR, 2010-05-13."
     (setq msg (vm-real-message-of msg))
     ;; If this calls back vm-update-summary-and-mode-line
     ;; an infinite regress happens!
-    (vm-mime-action-on-all-attachments
+    (vm-mime-operate-on-attachments
      nil
+     :action
      (lambda (msg layout type file)
        (setq attachments (1+ attachments)))
-     vm-summary-attachment-mime-types
-     vm-summary-attachment-mime-type-exceptions
-     (list msg)
-     t)
+     :included vm-summary-attachment-mime-types
+     :excluded vm-summary-attachment-mime-type-exceptions
+     :messages (list msg))
     (if (= attachments 0)
         ""
       (if (stringp vm-summary-attachment-indicator)

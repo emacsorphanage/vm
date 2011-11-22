@@ -4739,25 +4739,40 @@ buffer for message composition is queried from the minibufer."
 ;;
 ;; vm-mime-action-on-all-attachments :
 ;;	(int, ((message, layout, type, filename) -> void),
-;;	 &optional type list, message list, bool) 
+;;	 &optional type list, type list, message list, bool) 
+;;	-> void
+;; This function is replaced by the following, but interface retained
+;; for backward-compatibility.
+;;
+;; vm-mime-operate-on-attachments :
+;;	(int, :action ((message, layout, type, filename) -> void),
+;;	 :included type list, :excluded type list, 
+;;	 :messages message list, :name string) 
 ;;	-> void
 ;;----------------------------------------------------------------------------
 
 ;;;###autoload
-(defun vm-mime-action-on-all-attachments 
-  (count action &optional types exceptions mlist quiet)
+(defun* vm-mime-operate-on-attachments (count &key 
+					      ((:name action-name))
+					      ((:action action))
+					      ((:included types)) 
+					      ((:excluded exceptions))
+					      ((:messages mlist)))
   "On the next COUNT messages or marked messages, call the
-function ACTION on all \"attachments\".  For the purpose of this
-function, an \"attachment\" is a mime part part which has
-\"attachment\" as its disposition, or simply has an associated
-filename, or has a type that matches a regexp in TYPES but
-doesn't match one in EXCEPTIONS.
+function ACTION on all \"attachments\".  
 
-If QUIET is true no messages are generated.
+For the purpose of this function, an \"attachment\" is a mime
+part part which has \"attachment\" as its disposition, or simply
+has an associated filename, or has a type that matches a regexp
+in TYPES but doesn't match one in EXCEPTIONS.
+
+ACTION-NAME should be a human-readable string describing the
+action in minibuffer messages.  Or it can be nil to suppress
+messages. 
 
 ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME." 
   (unless mlist
-    (or count (setq count 1))
+    (unless count (setq count 1))
     (vm-check-for-killed-folder)
     (vm-select-folder-buffer-and-validate 1 nil))
 
@@ -4801,17 +4816,34 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
 				    "message/external-body" type))
                               types
                               (vm-mime-is-type-valid type types exceptions)))
-                     (when (not quiet)
+                     (when action-name
                        (vm-inform 8
-			"Action on part type=%s filename=%s disposition=%s"
-			type filename disposition))
+			"%s part type=%s filename=%s disposition=%s"
+			action-name type filename disposition))
                      (funcall action (car mlist) layout type filename))
-                    ((not quiet)
+                    (action-name
                      (vm-inform 8
-		      "No action on part type=%s filename=%s disposition=%s"
-		      type filename disposition)))
+		      "No %s on part type=%s filename=%s disposition=%s"
+		      action-name type filename disposition)))
               (setq parts (cdr parts)))))
         (setq mlist (cdr mlist))))))
+
+;;;###autoload
+(defun vm-mime-action-on-all-attachments 
+  (count action &optional types exceptions mlist quiet)
+  "On the next COUNT messages or marked messages, call the
+function ACTION on all \"attachments\".  For the purpose of this
+function, an \"attachment\" is a mime part part which has
+\"attachment\" as its disposition, or simply has an associated
+filename, or has a type that matches a regexp in TYPES but
+doesn't match one in EXCEPTIONS.
+
+If QUIET is true no messages are generated.
+
+ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME." 
+  (vm-mime-operate-on-attachments
+   count :action action :included types :excluded exceptions :messages mlist
+   :name (if quiet nil "action on")))
 
 (defun vm-mime-is-type-valid (type types-alist type-exceptions)
   (catch 'done
@@ -4840,21 +4872,23 @@ are also included."
   (vm-check-for-killed-summary)
   (if (vm-interactive-p) (vm-follow-summary-cursor))
   
-  (let ((n 0))
-    (vm-mime-action-on-all-attachments
+  (let ((successes 0))
+    (vm-mime-operate-on-attachments
      count
+     :name "deleting"
+     :action
      (lambda (msg layout type file)
        (vm-inform 7 "Deleting `%s%s" type (if file (format " (%s)" file) ""))
        (vm-mime-discard-layout-contents layout)
-       (setq n (+ 1 n)))
-     vm-mime-deleteable-types
-     vm-mime-deleteable-type-exceptions)
+       (setq successes (+ 1 successes)))
+     :included vm-mime-deleteable-types
+     :excluded vm-mime-deleteable-type-exceptions)
     (when (vm-interactive-p)
       (vm-discard-cached-data count)
       (let ((vm-preview-lines nil))
 	(vm-present-current-message)))
-    (if (> n 0)
-	(vm-inform 5 "%d attachment%s deleted" n (if (= n 1) "" "s"))
+    (if (> successes 0)
+	(vm-inform 5 "%d attachment%s deleted" successes (if (= successes 1) "" "s"))
       (vm-inform 5 "No attachments deleted")))
   (vm-update-summary-and-mode-line))
 
@@ -4897,10 +4931,15 @@ created."
   (vm-check-for-killed-summary)
   (if (vm-interactive-p) (vm-follow-summary-cursor))
  
-  (let ((n 0))
-    (vm-mime-action-on-all-attachments
+  (let ((successes 0)
+	(failures 0)
+	(result nil))
+    (vm-mime-operate-on-attachments
      count
-     ;; the action to be performed BEGIN
+     :name "saving"
+     :included vm-mime-saveable-types
+     :excluded vm-mime-saveable-type-exceptions
+     :action
      (lambda (msg layout type file)
        (let ((directory (if (functionp directory)
                             (funcall directory msg)
@@ -4925,28 +4964,33 @@ created."
                  (delete-file file)
                (setq file nil)))
          
-         (when file
+         (if (null file)
+	     (setq failures (+ 1 failures))
            (vm-inform 5 "Saving %s" (if file (format " (%s)" file) ""))
            (make-directory (file-name-directory file) t)
-           (vm-mime-send-body-to-file layout file file)
-           (if vm-mime-delete-after-saving
+           (setq result (vm-mime-send-body-to-file layout file file))
+           (when result 
+	     (when vm-mime-delete-after-saving
                (let ((vm-mime-confirm-delete nil))
                  (vm-mime-discard-layout-contents 
 		  layout (expand-file-name file))))
-           (setq n (+ 1 n)))))
-     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; the action to be performed END
-     ;; attachment filters 
-     vm-mime-saveable-types
-     vm-mime-saveable-type-exceptions)
+	     (setq successes (+ 1 successes))))))
+     )
 
     (when (vm-interactive-p)
       (vm-discard-cached-data count)
       (let ((vm-preview-lines nil))
 	(vm-present-current-message)))
     
-    (if (> n 0)
-        (vm-inform 5 "%d attachment%s saved" n (if (= n 1) "" "s"))
-      (vm-inform 5 "No attachments saved"))))
+    (if (> failures 0)
+	(if (> successes 0)
+	    (vm-inform 5 "%d attachment%s saved; %s failed" 
+		       successes (if (= successes 1) "" "s") failures)
+	  (vm-inform 5 "No attachments saved; %s failed" failures))
+	(if (> successes 0)
+	    (vm-inform 5 "%d attachment%s saved" 
+		       successes (if (= successes 1) "" "s"))
+	  (vm-inform 5 "No attachments saved")))))
 
 ;; (define-obsolete-function-alias 'vm-mime-save-all-attachments
 ;;   'vm-save-all-attachments "8.2.0")
@@ -4977,11 +5021,15 @@ confirmed before creating a new directory."
   (vm-check-for-killed-summary)
   (if (vm-interactive-p) (vm-follow-summary-cursor))
  
-  (let ((n 0)
+  (let ((successes 0)
+	(failures 0)
 	(directory nil))
-    (vm-mime-action-on-all-attachments
+    (vm-mime-operate-on-attachments
      count
-     ;; the action to be performed BEGIN
+     :included vm-mime-saveable-types
+     :excluded vm-mime-saveable-type-exceptions
+     :name "saving"
+     :action
      (lambda (msg layout type file-name)
        (let ((file (vm-read-file-name
 		    (if file-name			; prompt
@@ -5011,26 +5059,30 @@ confirmed before creating a new directory."
 		(format "Directory %s does not exist; create it?" directory))
 	       (make-directory directory t)
 	     (setq file nil)))
-         (when file
+         (if (null file)
+	     (setq failures (+ 1 failures))
            (vm-inform 5 "Saving %s" (if file (format " (%s)" file) ""))
            (vm-mime-send-body-to-file layout file file)
            (if vm-mime-delete-after-saving
                (let ((vm-mime-confirm-delete nil))
                  (vm-mime-discard-layout-contents 
 		  layout (expand-file-name file))))
-           (setq n (+ 1 n)))))
-     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; the action to be performed END
-     ;; attachment filters 
-     vm-mime-saveable-types
-     vm-mime-saveable-type-exceptions)
+           (setq successes (+ 1 successes)))))
+     )
 
     (when (vm-interactive-p)
       (vm-discard-cached-data count)
       (vm-present-current-message))
     
-    (if (> n 0)
-        (vm-inform 5 "%d attachment%s saved" n (if (= n 1) "" "s"))
-      (vm-inform 5 "No attachments saved"))))
+    (if (> failures 0)
+	(if (> successes 0)
+	    (vm-inform 5 "%d attachment%s saved; %s failed" 
+		       successes (if (= successes 1) "" "s") failures)
+	  (vm-inform 5 "No attachments saved; %s failed" failures))
+	(if (> successes 0)
+	    (vm-inform 5 "%d attachment%s saved" 
+		       successes (if (= successes 1) "" "s"))
+	  (vm-inform 5 "No attachments saved")))))
 ;; for the karking compiler
 (defvar vm-menu-mime-dispose-menu)
 
@@ -5182,7 +5234,7 @@ be removed when it is expanded to display the mime object."
 ;;; MIME button operations
 ;;
 ;; vm-mime-send-body-to-file: (extent-or-layout 
-;;		               &optional filename filename bool) -> filename
+;;		               &optional filename filepath bool) -> filename
 ;; vm-mime-send-body-to-folder: (extent-or-layout 
 ;;		                 &optional filename) -> filename
 ;; vm-mime-delete-body-after-saving: (extent) -> void
@@ -5229,6 +5281,11 @@ be removed when it is expanded to display the mime object."
 
 (defun vm-mime-send-body-to-file (layout &optional default-filename file
                                          overwrite)
+  "Writes the body of MIME object given by LAYOUT to FILE.  Returns
+boolean value indicating success or failure.
+The optional argument DEFAULT-FILENAME gives the default filename to
+be used if FILE is not specified.  OVERWRITE says whether any existing
+file with the name should be overwritten."
   (unless (vectorp layout)
     (setq layout (vm-extent-property layout 'vm-mime-layout)))
   (when (vm-mime-types-match "message/external-body"
@@ -5262,34 +5319,37 @@ be removed when it is expanded to display the mime object."
     (let ((work-buffer (vm-make-work-buffer))
 	  (coding-system-for-read (vm-binary-coding-system)))
       (unwind-protect
-	  (with-current-buffer work-buffer
-	    (setq selective-display nil)
-	    ;; Tell DOS/Windows NT whether the file is binary
-	    (setq buffer-file-type (not (vm-mime-text-type-layout-p layout)))
-	    ;; Tell XEmacs/MULE not to mess with the bits unless
-	    ;; this is a text type.
-	    (if (fboundp 'set-buffer-file-coding-system)
-		(if (vm-mime-text-type-layout-p layout)
-		    (set-buffer-file-coding-system
-		     (vm-line-ending-coding-system) nil)
-		  (set-buffer-file-coding-system (vm-binary-coding-system) t)))
-	    (vm-mime-insert-mime-body layout)
-	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
-            (unless (or overwrite (not (file-exists-p file)))
-              (or (y-or-n-p "File exists, overwrite? ")
-                  (error "Aborted")))
-	    ;; Bind the jka-compr-compression-info-list to nil so
-	    ;; that jka-compr won't compress already compressed
-	    ;; data.  This is a crock, but as usual I'm getting
-	    ;; the bug reports for somebody else's bad code.
-	    (let ((jka-compr-compression-info-list nil)
-		  (command (vm-mime-find-write-filter
-			    (car (vm-mm-layout-type layout)))))
-	      (if command (shell-command-on-region (point-min) (point-max)
-						   (concat command " > " file))
-		(write-region (point-min) (point-max) file nil nil)))
-	    
-	    file )
+	  (condition-case err
+	      (with-current-buffer work-buffer
+		(setq selective-display nil)
+		;; Tell DOS/Windows NT whether the file is binary
+		(setq buffer-file-type (not (vm-mime-text-type-layout-p layout)))
+		;; Tell XEmacs/MULE not to mess with the bits unless
+		;; this is a text type.
+		(if (fboundp 'set-buffer-file-coding-system)
+		    (if (vm-mime-text-type-layout-p layout)
+			(set-buffer-file-coding-system
+			 (vm-line-ending-coding-system) nil)
+		      (set-buffer-file-coding-system (vm-binary-coding-system) t)))
+		(vm-mime-insert-mime-body layout)
+		(vm-mime-transfer-decode-region layout (point-min) (point-max))
+		(unless (or overwrite (not (file-exists-p file)))
+		  (or (y-or-n-p "File exists, overwrite? ")
+		      (error "Aborted")))
+		;; Bind the jka-compr-compression-info-list to nil so
+		;; that jka-compr won't compress already compressed
+		;; data.  This is a crock, but as usual I'm getting
+		;; the bug reports for somebody else's bad code.
+		(let ((jka-compr-compression-info-list nil)
+		      (command (vm-mime-find-write-filter
+				(car (vm-mm-layout-type layout)))))
+		  (if command 
+		      (shell-command-on-region 
+		       (point-min) (point-max) (concat command " > " file))
+		    (write-region (point-min) (point-max) file nil nil)))
+		file )
+	    (error (vm-warn 1 2 "Error in writing %s: %s" file err)
+		   nil))
 	(when work-buffer (kill-buffer work-buffer))))))
 
 (defun vm-mime-send-body-to-folder (layout &optional default-filename)
