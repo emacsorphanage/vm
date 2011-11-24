@@ -545,6 +545,7 @@ Toolbars are updated."
 	    (vm-inform 6 "Recreating summary... %s" n))
 	(setq n (1+ n))
 	(setq ms (cdr ms)))
+      (vm-inform 6 "Recreating summary... done")
       (setq vm-messages-needing-summary-update nil)))
   (vm-do-needed-folders-summary-update)
   (vm-force-mode-line-update))
