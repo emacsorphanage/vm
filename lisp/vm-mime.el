@@ -2917,7 +2917,7 @@ determined by `vm-mime-external-content-types-alist'."
 given as the argument instead, then nothing is done.   USR, 2011-03-25"
   (if (vectorp layout)
       (let ((buffer-read-only nil)
-	    (vm-mf-default-action "save to a file"))
+	    (vm-mf-default-action "save"))
 	(vm-mime-insert-button
 	 (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
 	 (function
@@ -3395,8 +3395,8 @@ button that this LAYOUT comes from."
     (vm-mime-insert-button
      (vm-replace-in-string
       (vm-mime-sprintf format tmplayout)	      
-      "save to a file\\]"
-      "display as text]")
+      "save\\]"
+      "display]")
      (function
       (lambda (extent)
 	;; reuse the internal display code, but make sure that no new
@@ -7796,7 +7796,7 @@ Returns marker pointing to the start of the encoded MIME part."
 		     (setq sexp (cons (list 'vm-mf-parts-count-pluralizer
 					    'vm-mime-layout) sexp)))
 		    ((= conv-spec ?t)
-		     (setq sexp (cons (list 'vm-mf-content-type
+		     (setq sexp (cons (list 'vm-mf-content-type-description
 					    'vm-mime-layout) sexp)))
 		    ((= conv-spec ?T)
 		     (setq sexp (cons (list 'vm-mf-partial-total
@@ -7884,15 +7884,17 @@ Returns marker pointing to the start of the encoded MIME part."
 
 (defun vm-mf-content-description (layout)
   (or (vm-mm-layout-description layout)
-      (let ((p vm-mime-type-description-alist)
-	    (type (car (vm-mm-layout-type layout))))
-	(catch 'done
-	  (while p
-	    (if (vm-mime-types-match (car (car p)) type)
-		(throw 'done (cdr (car p)))
-	      (setq p (cdr p))))
-	  nil ))
-      (vm-mf-content-type layout)))
+      (vm-mf-content-type-description layout)))
+
+(defun vm-mf-content-type-description (layout)
+  (let ((p vm-mime-type-description-alist)
+	(type (car (vm-mm-layout-type layout))))
+    (catch 'done
+      (while p
+	(if (vm-mime-types-match (car (car p)) type)
+	    (throw 'done (cdr (car p)))
+	  (setq p (cdr p))))
+      (vm-mf-content-type layout) )))
 
 (defun vm-mf-text-charset (layout)
   (or (vm-mime-get-parameter layout "charset")
@@ -7924,7 +7926,8 @@ Returns marker pointing to the start of the encoded MIME part."
     "Press RETURN"))
 
 (defun vm-mf-default-action (layout)
-  (if (eq vm-mime-alternative-show-method 'all)
+  (if nil ;; (eq vm-mime-alternative-show-method 'all)
+      ;; This puts "alternative" on all attachments.  Silly.  USR, 2011-11-24
       (concat (vm-mf-default-action-orig layout) " alternative")
     (vm-mf-default-action-orig layout)))
 
@@ -7945,7 +7948,7 @@ Returns marker pointing to the start of the encoded MIME part."
 	      ((setq cons (vm-mime-can-convert
 			   (car (vm-mm-layout-type layout))))
 	       (format "display as %s" (nth 1 cons)))
-	      (t "save to a file")))
+	      (t "save")))
       ;; should not be reached
       "burn in the raging fires of hell forever"))
 
