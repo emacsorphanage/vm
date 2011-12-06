@@ -1983,17 +1983,17 @@ deleting a MIME object with `vm-delete-mime-object'."
   :type 'symbol)
 
 (defcustom vm-mime-button-format-alist
-  '(("text" . "%-60.60(%t: %f, %d, %c%) %10.10([%a]%)")
+  '(("text" . "%-60.60(%t (%c): %f, %d%) %10.10([%a]%)")
     ("multipart/alternative" . "%-50.50(%d%) %20.20([%a]%)")
     ("multipart/digest" . "%-50.50(%d, %n message%s%) %20.20([%a]%)")
     ("multipart" . "%-50.50(%d, %n part%s%) %20.20([%a]%)")
     ("message/partial" . "%-50.50(%d, part %N (of %T)%) %20.20([%a]%)")
-    ("message/external-body" . "%-50.50(%d%) [%a (%x)]")
+    ("message/external-body" . "%-55.55(%d%) [%a (%x)]")
     ("message" . "%-50.50(%d%) %20.20([%a]%)")
-    ("audio" . "%-50.50(%t: %f, %d%) %20.20([%a]%)")
-    ("video" . "%-50.50(%t: %f, %d%) %20.20([%a]%)")
-    ("image" . "%-50.50(%t: %f, %d%) %20.20([%a]%)")
-    ("application" . "%-60.60(%t: %f, %d%) %10.10([%a]%)"))
+    ("audio" . "%-55.55(%t: %f, %d%) %10.10([%a]%)")
+    ("video" . "%-55.55(%t: %f, %d%) %10.10([%a]%)")
+    ("image" . "%-55.55(%t: %f, %d%) %10.10([%a]%)")
+    ("application" . "%-55.55(%t: %f, %d%) %10.10([%a]%)"))
   ;; old definition
   ;; '(("text" . "%-35.35(%d, %c%) [%k to %a]")
   ;;   ("multipart/alternative" . "%-35.35(%d%) [%k to %a]")

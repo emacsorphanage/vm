@@ -7925,13 +7925,13 @@ Returns marker pointing to the start of the encoded MIME part."
       "Click mouse-2"
     "Press RETURN"))
 
-(defun vm-mf-default-action (layout)
-  (if nil ;; (eq vm-mime-alternative-show-method 'all)
-      ;; This puts "alternative" on all attachments.  Silly.  USR, 2011-11-24
-      (concat (vm-mf-default-action-orig layout) " alternative")
-    (vm-mf-default-action-orig layout)))
+;; This puts "alternative" on all attachments.  Silly.  USR, 2011-11-24
+;; (defun vm-mf-default-action (layout)
+;;   (if (eq vm-mime-alternative-show-method 'all)
+;;       (concat (vm-mf-default-action-orig layout) " alternative")
+;;     (vm-mf-default-action-orig layout)))
 
-(defun vm-mf-default-action-orig (layout)
+(defun vm-mf-default-action (layout)
   (or vm-mf-default-action
       (let (cons)
         (cond ((or (vm-mime-can-display-internal layout)
@@ -7947,7 +7947,7 @@ Returns marker pointing to the start of the encoded MIME part."
 		   nil )))
 	      ((setq cons (vm-mime-can-convert
 			   (car (vm-mm-layout-type layout))))
-	       (format "display as %s" (nth 1 cons)))
+	       "convert")
 	      (t "save")))
       ;; should not be reached
       "burn in the raging fires of hell forever"))
