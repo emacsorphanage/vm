@@ -677,7 +677,7 @@ If non-nil call EXIT-HANDLER with the two arguments COMMAND and OUTPUT-BUFFER."
 	(buffer (process-buffer process))
 	(process-command (process-command process)))
   (if (not (zerop exit-code))
-      (vm-inform 0 "Command '%s' exit code is %d." command exit-code))
+      (vm-warn 0 0 "Command '%s' exit code is %d." command exit-code))
   (vm-display nil nil '(vm-pipe-message-to-command)
 	      '(vm-pipe-message-to-command))
   (vm-switch-to-command-output-buffer command buffer discard-output)

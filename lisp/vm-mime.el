@@ -1583,7 +1583,7 @@ source of the message."
 		   (vm-fetch-message 
 		    (list (vm-message-access-method-of mm)) mm)
 		 (error
-		  (vm-inform 0 "Cannot fetch message; %s" 
+		  (vm-warn 0 2 "Cannot fetch message; %s" 
 			   (error-message-string err)))))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 	       (vm-fetch-message (read (current-buffer)) mm)))
@@ -1718,7 +1718,7 @@ source of the message."
 ;; 		   (vm-fetch-message 
 ;; 		    (list (vm-message-access-method-of mm)) mm)
 ;; 		 (error
-;; 		  (vm-inform 0 "Cannot fetch; %s" (error-message-string err)))))
+;; 		  (vm-warn 0 2 "Cannot fetch; %s" (error-message-string err)))))
 ;; 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 ;; 	       (vm-fetch-message (read (current-buffer)) mm)))
 ;; 	(vm-reset-buffer-modified-p modified fetch-buf)
@@ -3751,7 +3751,7 @@ describing the image type.                             USR, 2011-03-25"
 		 (vm-image-too-small
 		  (setq do-strips nil))
 		 (error
-		  (vm-inform 0 "Failed making image strips: %s" error-data)
+		  (vm-warn 0 0 "Failed making image strips: %s" error-data)
 		  ;; fallback to the non-strips way
 		  (setq do-strips nil)))))
 	(cond ((not do-strips)
@@ -3872,7 +3872,7 @@ describing the image type.                            USR, 2011-03-25"
 		 (vm-image-too-small
 		  (setq do-strips nil))
 		 (error
-		  (vm-inform 0 "Failed making image strips: %s" error-data)
+		  (vm-warn 0 0 "Failed making image strips: %s" error-data)
 		  ;; fallback to the non-strips way
 		  (setq do-strips nil)))))
 	(cond ((not do-strips)
@@ -3950,7 +3950,7 @@ describing the image type.                            USR, 2011-03-25"
 ;; 		    (setq dims (condition-case error-data
 ;; 				   (vm-get-image-dimensions origfile)
 ;; 				 (error
-;; 				  (vm-inform 0 "Failed getting image dimensions: %s"
+;; 				  (vm-warn 0 0 "Failed getting image dimensions: %s"
 ;; 					   error-data)
 ;; 				  (throw 'done nil)))
 ;; 			  width (nth 0 dims)
@@ -4059,7 +4059,7 @@ describing the image type.                            USR, 2011-03-25"
 ;; 							       overlay-list)
 ;; 							      image-type)))
 ;; 	    (error
-;; 	     (vm-inform 0 "Failed making image strips: %s" error-data)))
+;; 	     (vm-warn 0 0 "Failed making image strips: %s" error-data)))
 ;; 	  t ))
 ;;     nil ))
 

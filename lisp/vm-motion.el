@@ -74,7 +74,7 @@ given."
 	  (vm-present-current-message)
 	(vm-record-and-change-message-pointer vm-message-pointer cons)
 	(vm-present-current-message)
-	;;(vm-inform 0 "start of message you want is: %s"
+	;;(vm-warn 0 0 "start of message you want is: %s"
 	;; (vm-su-start-of (car vm-message-pointer)))
 	(if (and (vm-summary-operation-p)
 		 vm-summary-show-threads

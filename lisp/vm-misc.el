@@ -1629,7 +1629,7 @@ If MODES is nil the take the modes from the variable
               (funcall m -1))
 	(error 
 	 (when (not (member m vm-disable-modes-ignore))
-	   (vm-inform 0 "Could not disable mode `%S': %S" m errmsg)
+	   (vm-warn 0 2 "Could not disable mode `%S': %S" m errmsg)
 	   (setq vm-disable-modes-ignore (cons m vm-disable-modes-ignore)))
 	 nil)))))
 

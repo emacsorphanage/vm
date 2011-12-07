@@ -451,10 +451,10 @@ Mouse'."
 		;; succeeded.  I have tried to just use exit status
 		;; as the failure criterion and users complained.
 		((equal (nth 7 (file-attributes tempfile)) 0)
-		 (vm-inform 0 "%s exited non-zero (code %s)" command status)
+		 (vm-warn 0 0 "%s exited non-zero (code %s)" command status)
 		 t)
 		(t (save-excursion
-		     (vm-inform 0 "%s exited non-zero (code %s)" command status)
+		     (vm-warn 0 0 "%s exited non-zero (code %s)" command status)
 		     (set-buffer (find-file-noselect tempfile))
 		     (setq errstring (buffer-string))
 		     (kill-buffer nil)

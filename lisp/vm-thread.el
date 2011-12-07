@@ -1482,7 +1482,7 @@ to the thread.  Used for testing purposes."
 	  ml)
     ;; Recover from errors
     (when errors-found
-      (vm-inform 0 (concat "Problem detected with the threads database; "
+      (vm-warn 0 2 (concat "Problem detected with the threads database; "
 		       "try vm-fix-my-summary"))
       ;; (setq vm-thread-obarray 'bonk)
       ;; (setq vm-thread-subject-obarray 'bonk)

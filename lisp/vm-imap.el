@@ -321,7 +321,7 @@ occurs, typically VM cannot proceed."
 	(when (not (equal (current-buffer) buf))
 	  (when (string-lessp "24" emacs-version)
 	    ;; the Emacs bug should have been fixed in version 24
-	    (vm-inform 0 
+	    (vm-warn 0 2 
 	     "Emacs process output error: Buffer changed to %s" 
 	     (current-buffer)))
 	  ;; recover from the bug
@@ -764,11 +764,10 @@ on all the relevant IMAP servers and then immediately expunges."
 			(error
 			 (if (cdr error-data)
 			     (apply 'message (cdr error-data))
-			   (vm-inform 0
+			   (vm-warn 0 2
 			    "Couldn't open IMAP session to %s, skipping..."
 			    folder))
 			 (setq trouble (cons folder trouble))
-			 (sleep-for 2)
 			 (while (equal (nth 1 (car mp)) source)
 			   (setq mp (cdr mp)))
 			 (throw 'replay t)))
@@ -785,9 +784,8 @@ on all the relevant IMAP servers and then immediately expunges."
 		      (vm-increment delete-count)))
 		(error
 		 (setq trouble (cons folder trouble))
-		 (vm-inform 0 "Something signaled: %s"
+		 (vm-warn 0 2 "Something signaled: %s"
 			  (prin1-to-string error-data))
-		 (sleep-for 2)
 		 (vm-inform 0 "Skipping rest of mailbox %s..." folder)
 		 (sleep-for 2)
 		 (while (equal (nth 2 (car mp)) source)
@@ -1076,8 +1074,7 @@ nil if the session could not be created."
 	(setq pass
 	      (read-passwd (format "IMAP password for %s: " folder)))
 	(when (equal pass "")
-	    (vm-inform 0 "Password cannot be empty")
-	    (sit-for 2)
+	    (vm-warn 0 2 "Password cannot be empty")
 	    (setq pass nil)))
       (when (null pass)
 	(error "Need password for %s for %s" folder purpose)))
@@ -1139,7 +1136,7 @@ nil if the session could not be created."
 						       imap-buffer
 						       host port))))
 		(error
-		 (vm-inform 0 "%s" (error-message-string err))
+		 (vm-warn 0 2 "%s" (error-message-string err))
 		 (setq shutdown t)
 		 (throw 'end-of-session nil))))
 	    (setq shutdown t)
@@ -3284,9 +3281,9 @@ headers-only form."
 		   (setq r-list (cdr r-list)
 			 n (+ n (1+ (- (cdr range) (car range)))))))
 	     (vm-imap-normal-error	; handler
-	      (vm-inform 0 "IMAP error: %s" (cadr error-data)))
+	      (vm-warn 0 2 "IMAP error: %s" (cadr error-data)))
 	     (vm-imap-protocol-error	; handler
-	      (vm-inform 0 "Retrieval from %s signaled: %s" folder
+	      (vm-warn 0 2 "Retrieval from %s signaled: %s" folder
 			 error-data))
 	     ;; Continue with whatever messages have been read
 	     (quit
@@ -3446,10 +3443,10 @@ headers-only form."
 		(vm-inform 6 "Expunging messages on the server... done")))
 
 	  (vm-imap-normal-error		; handler
-	   (vm-inform 0 "IMAP error: %s" (cadr error-data)))
+	   (vm-warn 0 2 "IMAP error: %s" (cadr error-data)))
 
 	  (vm-imap-protocol-error	; handler
-	   (vm-inform 0 "Expunge from %s signalled: %s"
+	   (vm-warn 0 2 "Expunge from %s signalled: %s"
 		      folder error-data))
 	  (quit 			; handler
 	   (error "Quit received during expunge from %s"
@@ -3585,10 +3582,10 @@ otherwise.
 			(vm-imap-read-ok-response process)
 			t)
 		    (vm-imap-normal-error ; handler
-		     (vm-inform 0 "IMAP error: %s" (cadr error-data))
+		     (vm-warn 0 2 "IMAP error: %s" (cadr error-data))
 		     nil)
 		    (vm-imap-protocol-error ; handler
-		     (vm-inform 0 "Retrieval from %s signaled: %s" folder
+		     (vm-warn 0 2 "Retrieval from %s signaled: %s" folder
 			      error-data)
 		     nil
 		     ;; Continue with whatever messages have been read

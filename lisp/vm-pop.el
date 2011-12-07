@@ -508,8 +508,7 @@ relevant POP servers to remove the messages."
 		    (read-passwd
 		     (format "POP password for %s: " popdrop)))
 	      (when (equal pass "")
-		(vm-inform 0 "Password cannot be empty")
-		(sit-for 2)
+		(vm-warn 0 2 "Password cannot be empty")
 		(setq pass nil)))
 	    (when (null pass)
 	      (vm-inform 0 "Need password for %s" popdrop)
@@ -571,7 +570,7 @@ relevant POP servers to remove the messages."
 		   (vm-pop-send-command process (format "PASS %s" pass))
 		   (unless (vm-pop-read-response process)
 
-		     (vm-inform 0 "POP password for %s incorrect" popdrop)
+		     (vm-warn 0 0 "POP password for %s incorrect" popdrop)
 		     (setq vm-pop-passwords
 			   (vm-delete (lambda (pair)
 					(equal (car pair) source-nopwd))
@@ -597,7 +596,7 @@ relevant POP servers to remove the messages."
 		   (when (null timestamp)
 		     (goto-char (point-max))
      (insert-before-markers "<<< ooops, no timestamp found in greeting! >>>\n")
-		     (vm-inform 0 "Server of %s does not support APOP" popdrop)
+		     (vm-warn 0 0 "Server of %s does not support APOP" popdrop)
 		     ;; don't sleep unless we're running synchronously
 		     (if vm-pop-ok-to-ask
 			 (sleep-for 2))
@@ -608,7 +607,7 @@ relevant POP servers to remove the messages."
 			    user
 			    (vm-pop-md5 (concat timestamp pass))))
 		   (unless (vm-pop-read-response process)
-		     (vm-inform 0 "POP password for %s incorrect" popdrop)
+		     (vm-warn 0 0 "POP password for %s incorrect" popdrop)
 		     (when vm-pop-ok-to-ask
 		       (sleep-for 2))
 		     (throw 'done nil))
@@ -1115,7 +1114,7 @@ popdrop
 		     (setq r-list (cdr r-list)
 			   n (1+ n))))
 	       (error
-		(vm-inform 0 "Retrieval from %s signaled: %s" safe-popdrop
+		(vm-warn 0 2 "Retrieval from %s signaled: %s" safe-popdrop
 			 error-data))
 	       (quit
 		(vm-inform 0 "Quit received during retrieval from %s"

@@ -1564,7 +1564,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			 (= (length cache) vm-cached-data-vector-length)
 			 (or (null (aref cache 7)) (stringp (aref cache 7)))
 			 (or (null (aref cache 11)) (stringp (aref cache 11))))
-              (vm-inform 0 "Bad VM cache data: %S" cache)
+              (vm-warn 0 2 "Bad VM cache data: %S" cache)
               (vm-set-stuff-flag-of (car mp) t)
               (setcar (cdr data)
                       (setq cache 
@@ -4388,7 +4388,7 @@ Same as \\[vm-recover-folder]."
           (condition-case errmsg
               (run-hooks 'vm-retrieved-spooled-mail-hook)
             (t 
-	     (vm-inform 0 
+	     (vm-warn 0 2
 	      "Ignoring error while running vm-retrieved-spooled-mail-hook. %S"
 	      errmsg)))
           (vm-assimilate-new-messages :read-attributes nil))))))
@@ -5266,7 +5266,7 @@ Gives an error if unable to retrieve message."
 		   (apply (intern (format "vm-fetch-%s-message" fetch-method))
 			  mm nil))
 	   (error 
-	    (vm-inform 0 "Unable to load message; %s" (error-message-string err))))
+	    (vm-warn 0 2 "Unable to load message; %s" (error-message-string err))))
 	 (when fetch-result
 	   (vm-assert (eq (point) (marker-position (vm-text-of mm))))
 	   (vm-increment testing)

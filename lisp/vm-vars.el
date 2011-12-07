@@ -1814,7 +1814,7 @@ them all at once.  See `vm-mime-use-image-strips'."
 	      file (expand-file-name name vmdir))
 	(if (file-exists-p file)
 	    file
-;	  (vm-inform 0 "VM could not find executable %S!" name)
+;	  (vm-warn 0 2 "VM could not find executable %S!" name)
 	  nil))))
 
 (defcustom vm-imagemagick-convert-program (vm-locate-executable-file "convert")

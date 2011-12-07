@@ -925,7 +925,7 @@ real or virtual)."
 		       ;; Use dynamic non-local bindings from vm-quit
 		       (vm-quit no-expunge no-change))))
 	       (error 
-		(vm-inform 0 "Unable to quit component folders: %s"
+		(vm-warn 0 2 "Unable to quit component folders: %s"
 			 (prin1-to-string error-data))))))
 
 	  ((eq major-mode 'vm-mode)
@@ -1015,13 +1015,11 @@ real or virtual)."
 	  (vm-get-new-mail)
 	;; handlers
 	(folder-read-only
-	 (vm-inform 0 "Folder is read only: %s"
-		  (or buffer-file-name (buffer-name)))
-	 (sit-for 1))
+	 (vm-warn 0 1 "Folder is read only: %s"
+		  (or buffer-file-name (buffer-name))))
 	(unrecognized-folder-type
-	 (vm-inform 0 "Folder type is unrecognized: %s"
-		  (or buffer-file-name (buffer-name)))
-	 (sit-for 1)))))
+	 (vm-warn 0 1 "Folder type is unrecognized: %s"
+		  (or buffer-file-name (buffer-name)))))))
   (vm-emit-totals-blurb))
 
 ;;;###autoload
