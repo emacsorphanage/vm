@@ -3633,6 +3633,7 @@ messages from a particular sender and save them to a folder, or mark all
 messages with a particular subject and print them.  One can also mark
 messages by searching for particular strings in their text.
 
+@kindex M M
 To mark the current message, type @kbd{M M}
 (@code{vm-mark-message}).  If you give a numeric prefix argument
 @var{n}, the next @var{n-1} messages will be marked as well.  A negative
@@ -3640,10 +3641,13 @@ prefix argument means mark the previous @var{n-1}.  An asterisk
 (@samp{*}) will appear to the right of the message numbers of all marked
 messages in the summary window.
 
+@kindex M U
 To remove a mark from the current message, use @kbd{M U}
 (@code{vm-unmark-message}).  Prefix arguments work as with
 @code{vm-mark-message}.
 
+@kindex M m
+@kindex M u
 Use @kbd{M m} to mark all messages in the current folder; @kbd{M u}
 removes marks from all messages.
 
@@ -7571,10 +7575,23 @@ The following properties are defined for attachment buttons:
 
 @itemize
 @item @code{vm-mime-object}.
-The object denoting the MIME attachment.  It is either a string
-denoting the file name, a buffer that contains the file to be
-attached, or @code{t} indicating that the attachment is another MIME
-object in a VM folder.  In the last case, the @code{vm-mime-layout}
+The object denoting the MIME attachment.  It is either 
+
+@itemize
+@item 
+a string denoting a file name, 
+@item
+a buffer containing the file to be attached, 
+@item
+a list of the form (buffer, start, end, filename) indicating a region in a
+buffer, typically the Folder buffer, or 
+@item
+@code{t} indicating that the attachment is another MIME
+object in a VM folder.  
+@end itemize
+
+@noindent 
+In the last case, the @code{vm-mime-layout}
 property describes the rest of the metadata.
 @item @code{vm-mime-type}.
 A string denoting the MIME type of the object.  (Note that it is a

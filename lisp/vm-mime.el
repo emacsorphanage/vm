@@ -8068,10 +8068,12 @@ This is a destructive operation and cannot be undone!"
 ;;-----------------------------------------------------------------------------
 ;; The following functions are taken from vm-pine.el
 ;; Copyright (C) Robert Widhopf-Fenk
+;; Copyright (C) Uday S. Reddy, 2010-2011
 
 ;;;###autoload
 (defun vm-mime-convert-to-attachment-buttons ()
   "Replace all mime buttons in the current buffer by attachment buttons."
+  ;; called vm-mime-encode-mime-attachments in vm-pine.el
   (interactive)
   (cond (vm-xemacs-p
          (let ((e-list (vm-extent-list 
@@ -8097,50 +8099,21 @@ This is a destructive operation and cannot be undone!"
          (error "don't know how to MIME encode composition for %s"
                 (emacs-version)))))
 
-;; This function is now unused.  USR, 2011-02-14
-;; (defun vm-mime-re-fake-attachment-overlays (start end)
-;;   "For all MIME buttons in the region, create \"fake\" attachment
-;; overlays, which are then used during MIME encoding of the
-;; composition.  This function is similar to
-;; `vm-mime-fake-attachment-overlays' and used only with FSF Emacs.
-;; 						  USR, 2011-02-14"
-;;   (let ((o-list nil)
-;; 	(done nil)
-;; 	(pos start)
-;; 	object props o)
-;;     (save-excursion
-;;       (save-restriction
-;; 	(narrow-to-region start end)
-;; 	(while (not done)
-;; 	  (setq object (get-text-property pos 'vm-mime-layout))
-;; 	  (setq pos (next-single-property-change pos 'vm-mime-layout))
-;; 	  (unless pos 
-;; 	    (setq pos (point-max) 
-;; 		  done t))
-;; 	  (when object
-;; 	    (setq o (make-overlay start pos))
-;; 	    (overlay-put o 'insert-in-front-hooks
-;; 			 '(vm-disallow-overlay-endpoint-insertion))
-;; 	    (overlay-put o 'insert-behind-hooks
-;; 			 '(vm-disallow-overlay-endpoint-insertion))
-;; 	    (setq props (append (list 'vm-mime-object t)
-;; 				(text-properties-at start)))
-;; 	    (while props
-;; 	      (overlay-put o (car props) (cadr props))
-;; 	      (setq props (cddr props)))
-;; 	    (setq o-list (cons o o-list)))
-;; 	  (setq start pos))
-;; 	o-list ))))
+;; The function vm-mime-re-fake-attachment-overlays from vm-pine.el is
+;; now unused.  USR, 2011-02-14 
 
 (defun vm-mime-replace-by-attachment-button (x)
-  "Replace the MIME button specified by X by an attachment button."
+  "Replace the MIME button specified by extent X by an attachment button."
+  ;; This was called vm-mime-encode-mime-button in vm-pine.el
   (save-excursion
     (let* ((layout (vm-extent-property x 'vm-mime-layout))
 	   (xstart (vm-extent-start-position x))
 	   (xend   (vm-extent-end-position x))
-	   (start  (vm-mm-layout-header-start layout))
+	   (hstart (vm-mm-layout-header-start layout))
+	   (bstart (vm-mm-layout-body-start layout))
 	   (end    (vm-mm-layout-body-end   layout))
-	   (buf    (marker-buffer start))
+	   (hbuf   (marker-buffer hstart))
+	   (bbuf   (marker-buffer bstart))
 	   (desc   (or (vm-mm-layout-description layout)
 		       "message body text"))
 	   (disp   (or (vm-mm-layout-disposition layout)
@@ -8150,6 +8123,7 @@ This is a destructive operation and cannot be undone!"
 	   (type   (vm-mm-layout-type layout)))
 
       ;; special case of message/external-body
+      ;; seems to be unused now.  USR, 2011-12-06
       (when (and type
 		 (string= (car type) "message/external-body")
 		 (string= (cadr type) "access-type=local-file"))
@@ -8173,14 +8147,16 @@ This is a destructive operation and cannot be undone!"
       (goto-char xstart)
       (cond (filename
 	     (vm-attach-file filename (car type)))
-	    (file
-	     (vm-attach-object (list buf start end disp file) 
-				    :type (car type) :params nil 
-				    :description desc :mimed t))
+	    ((eq hbuf bbuf)
+	     (vm-attach-object 
+	      (if file
+		  (list hbuf hstart end disp file)
+		(list hbuf hstart end disp))
+	      :type (car type) :params nil :description desc :mimed t))
 	    (t
-	     (vm-attach-object (list buf start end disp)
-				    :type (car type) :params nil 
-				    :description desc :mimed t)))
+	     (vm-attach-object 
+	      bbuf
+	      :type (car type) :params nil :description desc :mimed nil)))
       ;; delete the mime-button
       (delete-region (vm-extent-start-position x) (vm-extent-end-position x))
       (vm-detach-extent x))))
