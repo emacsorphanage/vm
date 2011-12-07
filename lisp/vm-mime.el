@@ -8114,13 +8114,15 @@ This is a destructive operation and cannot be undone!"
 	   (end    (vm-mm-layout-body-end   layout))
 	   (hbuf   (marker-buffer hstart))
 	   (bbuf   (marker-buffer bstart))
+	   (type   (vm-mm-layout-type layout))
 	   (desc   (or (vm-mm-layout-description layout)
-		       "message body text"))
+		       (vm-mime-get-parameter layout "name")
+		       "attachment"))
 	   (disp   (or (vm-mm-layout-disposition layout)
 		       '("inline")))
 	   (file   (vm-mime-get-disposition-parameter layout "filename"))
-	   (filename nil)
-	   (type   (vm-mm-layout-type layout)))
+	   (ext-file nil)
+)
 
       ;; special case of message/external-body
       ;; seems to be unused now.  USR, 2011-12-06
@@ -8128,7 +8130,7 @@ This is a destructive operation and cannot be undone!"
 		 (string= (car type) "message/external-body")
 		 (string= (cadr type) "access-type=local-file"))
 	(save-excursion
-	  (setq filename (substring (caddr type) 5))
+	  (setq ext-file (substring (caddr type) 5))
 	  (vm-select-folder-buffer)
 	  (save-restriction
 	    (let ((start (vm-mm-layout-body-start layout))
@@ -8145,18 +8147,20 @@ This is a destructive operation and cannot be undone!"
         
       ;; insert an attached-object-button
       (goto-char xstart)
-      (cond (filename
-	     (vm-attach-file filename (car type)))
+      (cond (ext-file
+	     (vm-attach-file ext-file (car type)))
 	    ((eq hbuf bbuf)
 	     (vm-attach-object 
 	      (if file
 		  (list hbuf hstart end disp file)
 		(list hbuf hstart end disp))
-	      :type (car type) :params nil :description desc :mimed t))
+	      :type (car type) :params (cdr type) 
+	      :disposition disp :description desc :mimed t))
 	    (t
 	     (vm-attach-object 
 	      bbuf
-	      :type (car type) :params nil :description desc :mimed nil)))
+	      :type (car type) :params (cdr type) 
+	      :disposition disp :description desc :mimed nil)))
       ;; delete the mime-button
       (delete-region (vm-extent-start-position x) (vm-extent-end-position x))
       (vm-detach-extent x))))
