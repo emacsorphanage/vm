@@ -3882,6 +3882,9 @@ arrow only if the summary window is not the only existing window."
 (defvar vm-debug nil
   "*Flag used by developers to control localized debugging features.")
 
+(defvar vm-virtual-debug nil
+  "*Flag used by developers to control localized debugging of virtual folders.")
+
 (defvar vm-traced-message-ids nil
   "*List of message ID's whose activity is debugged.  This is for
 developers' use only.")

@@ -225,6 +225,11 @@ all the real folder buffers involved."
 				(vm-buffer-of (vm-real-message-of m)))
 			       (apply 'vm-vs-or m selectors))
 			   (apply 'vm-vs-or m selectors)))
+		(when (and vm-virtual-debug
+			   (member (vm-su-message-id m)
+				   vm-traced-message-ids))
+		  (debug "vm-virtual-build-message-list" m)
+		  (apply 'vm-vs-or m selectors))
 		(unless dont-finalize
 		  (intern
 		   (vm-message-id-number-of (vm-real-message-of m))
