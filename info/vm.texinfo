@@ -942,17 +942,24 @@ The format of a POP or IMAP maildrop specification is as follows:
 ``imap:@var{HOST}:@var{PORT}:@var{MAILBOX}:@var{AUTH}:@var{USER}:@var{PASSWORD}''
 @end example
 
+@cindex SSL
 @noindent Replace @samp{pop} in the example with @samp{pop-ssl} to
 have VM speak POP over an SSL connection.  Use @samp{pop-ssh} to use
 POP over an SSH connection.  Similarly, replace @samp{imap} with
 @samp{imap-ssl} or @samp{imap-ssh}, as needed.
 
+@cindex stunnel
+@vindex vm-stunnel-program
 For SSL, you must either be using a version of Emacs that has SSL capability
-or you have the stunnel program installed and the variable
-@code{vm-stunnel-program} must name it in order for POP/IMAP over SSL to
-work.  The default value of this variable, @samp{"stunnel"}, should be
-sufficient if the program is installed in your normal command search path.
+or have the stunnel program installed and the variable
+@code{vm-stunnel-program} naming it.  The default value of this variable,
+@samp{"stunnel"}, should be sufficient if the program is installed in your
+normal command search path.  In order to use the built-in SSL capability of
+your Emacs version, set @code{vm-stunnel-program} to @code{nil}.
 
+@cindex SSH
+@vindex vm-ssh-program
+@vindex vm-ssh-remote-command
 For SSH, you must have the ssh program installed and the variable
 @code{vm-ssh-program} must name it in order for POP/IMAP over SSH to
 work.  When VM makes the SSH connection it must run a command on
@@ -967,6 +974,7 @@ which means you must be using .shosts authentication or RSA.)
 
 @var{HOST} is the host name of the mail server.  
 
+@cindex port, TCP
 @var{PORT} is the TCP port number to connect to.  The normal port
 numbers are:
 @multitable @columnfractions 0.20 0.80
@@ -997,6 +1005,7 @@ to set the value of @code{vm-pop-md5-program} appropriately
 to point at the program that will generate the MD5 digest
 that VM needs.
 
+@cindex CRAM-MD5
 @vindex vm-imap-session-preauth-hook
 Acceptable values of @var{AUTH} for IMAP
 are @samp{"preauth"}, @samp{"cram-md5"}, and @samp{"login"}.
@@ -1061,6 +1070,7 @@ defined via the variables @code{vm-pop-folder-alist} and
 Since a number of components have to be brought together to establish
 connections to mail servers, it is not uncommon for problems to arise.
 
+@cindex stunnel
 To find out what could be going wrong, you can look at the Emacs buffer that
 store a trace of the session with mail server.  Such buffers have names
 beginning with ``trace of POP session'' or ``trace of IMAP session''.  There
