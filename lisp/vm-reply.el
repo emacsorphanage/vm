@@ -2004,7 +2004,7 @@ message."
 			    (random 1000000) (random 1000000))))
 	  (unless (vm-mail-mode-get-header-contents "Date")
 	    (insert "Date: "
-		    (format-time-string "%a, %d %b %Y %H%M%S %Z"
+		    (format-time-string "%a, %d %b %Y %T %z"
 					(current-time))
 		    "\n"))
 	  (when (and vm-send-using-mime
