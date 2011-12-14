@@ -4817,12 +4817,12 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
                               types
                               (vm-mime-is-type-valid type types exceptions)))
                      (when action-name
-                       (vm-inform 8
+                       (vm-inform 10
 			"%s part type=%s filename=%s disposition=%s"
 			action-name type filename disposition))
                      (funcall action (car mlist) layout type filename))
                     (action-name
-                     (vm-inform 8
+                     (vm-inform 10
 		      "No %s on part type=%s filename=%s disposition=%s"
 		      action-name type filename disposition)))
               (setq parts (cdr parts)))))

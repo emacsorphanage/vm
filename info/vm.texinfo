@@ -4532,6 +4532,16 @@ messages that contain the string @samp{greeting} in one of its headers.
 @xref{Virtual Selectors}, for virtual selectors you can use for this
 purpose. 
 
+@findex vm-create-virtual-folder-of-threads
+@findex vm-create-search-folder-of-threads
+@kindex V T
+The command @code{vm-create-search-folder-of-threads} (bound to @kbd{V T})
+lets you create a virtual folder in the same way, but consisting of entire
+message threads.  If a message thread contains any message matching the
+given selector then it is included in the virtual folder.  For instance, if
+you type @kbd{V T author RET Peter} then all threads containing a message
+authored by @samp{Peter} will be included in the virtual folder.
+
 @findex vm-apply-virtual-folder
 @kindex V X
 The command @code{vm-apply-virtual-folder} (bound to @kbd{V X}) tries
@@ -4575,7 +4585,7 @@ frequently used selectors:
 @item V t (@code{vm-create-text-virtual-folder})
 @item V d (@code{vm-create-date-virtual-folder})
 @item V l (@code{vm-create-label-virtual-folder})
-@item V ! (@code{vm-create-flagged-virtual-folder}
+@item V ! (@code{vm-create-flagged-virtual-folder})
 @item V n (@code{vm-create-new-virtual-folder})
 @item V u (@code{vm-create-unseen-virtual-folder})
 @end table
@@ -4848,14 +4858,24 @@ lines.  @var{ARG} should be a number.
 
 @table @code
 @item sexp
-matches message if the argument ``s-expression'' yields @code{t}.  (This
-selector is available in creating interactive virtual folders.  The argument
-``s-expression'' can be made up of the selectors mentioned above combined
-using the logical connectives listed below.  There would be no need to use
-the @code{sexp} selector in defining predefined virtual folders because
-those definitions can directly use ``s-expressions''.)
+matches message if the argument ``s-expression'' yields @code{t}.  For
+example, to find all the messages from @samp{Jenny} with attachments, you
+can type @kbd{V C sexp RET (and (author "Jenny") attachment) RET}.
+
+(This selector is available for creating interactive virtual folders.  The
+argument ``s-expression'' can involve selectors combined using the logical
+connectives listed below.  There would be no need to use the @code{sexp}
+selector in defining predefined virtual folders because those definitions
+can directly use ``s-expressions''.)
+
 @item eval
 matches message if evaluating the Lisp expression @var{ARG} yields @code{t}.
+The Lisp expression can refer to the message by the name
+@code{vm-virtual-message}.  This is more flexible than the @code{sexp}
+selector because it allows arbitrary Lisp expressions, not only the built-in
+selectors.  However, you would need some knowledge of the Lisp functions
+that manipulate VM messages to use this selector.
+
 @item and
 matches the message if all its argument
 selectors match the message.  Example:
@@ -4864,6 +4884,7 @@ selectors match the message.  Example:
 @end example
 @noindent matches all new messages from Derek McGinty.
 @code{and} takes any number of arguments.
+
 @item not
 matches message only if its selector argument
 does NOT match the message.  Example:
@@ -4871,6 +4892,7 @@ does NOT match the message.  Example:
 (not (deleted))
 @end example
 @noindent matches messages that are not deleted.
+
 @item or
 matches the message if any of its argument
 selectors match the message.  Example:
@@ -4880,6 +4902,24 @@ selectors match the message.  Example:
 @noindent matches messages from Dave Weckl or messages
 with the string ``drum'' in their Subject header.
 @code{or} takes any number of arguments.
+
+@item thread
+matches a message thread if any message in the thread matches the argument
+selector.  Example:
+@example
+(thread (outgoing))
+@end example
+@noindent matches all threads that have an outgoing message, i.e., a message
+authored by you.
+
+@item thread-all
+matches a message thread if all messages in the thread match the argument
+selector.  Example:
+@example
+(thread (less-chars-than 1000))
+@end example
+@noindent matches threads if all their messages contain fewer than 1000
+characters. 
 @end table
 
 @unnumberedsubsubsec Selectors based on context

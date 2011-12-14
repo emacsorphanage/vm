@@ -40,6 +40,11 @@ VM 8.2.0
 
   IMPROVEMENTS
 
+   * New command `vm-create-virtual-folder-of-threads' (bound to `V T')
+     allows you to select entire threads into a virtual folder instead of
+     individual messages.  There are also new virtual folder selectors
+     `thread' and `thread-all'. 
+
    * The trace of POP/IMAP sessions are retained in buffers named "trace of
      POP session..." or "trace of IMAP session...".  They are useful for
      troubleshooting any problems with mail server connections.

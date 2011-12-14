@@ -1,3 +1,4 @@
+
 ;;; vm-virtual.el --- Virtual folders for VM
 ;;
 ;; This file is part of VM
@@ -335,20 +336,17 @@ Prefix arg means the new virtual folder should be visited read only."
   (let ((use-marks (eq last-command 'vm-next-command-uses-marks))
 	(parent-summary-format vm-summary-format)
 	vm-virtual-folder-alist ; shadow the global variable
+	clause
 	)
     (unless name
       (if arg
 	  (setq name (format "%s %s %s" (buffer-name) selector arg))
 	(setq name (format "%s %s" (buffer-name) selector))))
+    (setq clause (if arg (list selector arg) (list selector)))
+    (if use-marks
+	(setq clause (list 'and '(marked) clause)))
     (setq vm-virtual-folder-alist
-	  (list
-	   (list name
-		 (list (list (list 'get-buffer (buffer-name)))
-					; sexpr that will be eval'ed
-		       (if use-marks
-			   (list 'and '(marked)
-				 (if arg (list selector arg) (list selector)))
-			 (if arg (list selector arg) (list selector)))))))
+	  `(( ,name (((get-buffer ,(buffer-name))) ,clause))))
     (vm-visit-virtual-folder name read-only bookmark)
     (setq vm-summary-format parent-summary-format))
   ;; have to do this again here because the known virtual
@@ -358,6 +356,52 @@ Prefix arg means the new virtual folder should be visited read only."
     (vm-menu-install-known-virtual-folders-menu)))
 
 (defalias 'vm-create-search-folder 'vm-create-virtual-folder)
+
+;;;###autoload
+(defun vm-create-virtual-folder-of-threads (selector &optional arg
+						     read-only name
+						     bookmark)
+  "Create a new virtual folder of threads in the current folder.
+The threads will be chosen by applying the selector you specify,
+which is normally read from the minibuffer.  If any message in a
+thread matches the selector then the thread is chosen.
+
+Prefix arg means the new virtual folder should be visited read only."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command)
+	 (prefix current-prefix-arg))
+     (save-current-buffer
+     (vm-select-folder-buffer)
+     (nconc (vm-read-virtual-selector "Create virtual folder of threads: ")
+	    (list prefix)))))
+
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
+  (let ((use-marks (eq last-command 'vm-next-command-uses-marks))
+	(parent-summary-format vm-summary-format)
+	vm-virtual-folder-alist ; shadow the global variable
+	clause
+	)
+    (unless name
+      (if arg
+	  (setq name (format "%s %s %s" (buffer-name) selector arg))
+	(setq name (format "%s %s" (buffer-name) selector))))
+    (setq clause 
+	  (if arg 
+	      (list 'thread (list selector arg))
+	    (list 'thread (list selector))))
+    (if use-marks
+	(setq clause (list 'and '(marked) clause)))
+    (setq vm-virtual-folder-alist
+	  `(( ,name (((get-buffer ,(buffer-name))) ,clause))))
+    (vm-visit-virtual-folder name read-only bookmark)
+    (setq vm-summary-format parent-summary-format))
+  ;; have to do this again here because the known virtual
+  ;; folder menu is now hosed because we installed it while
+  ;; vm-virtual-folder-alist was bound to the temp value above
+  (when vm-use-menus
+    (vm-menu-install-known-virtual-folders-menu)))  
+
 
 ;;;###autoload
 (defun vm-apply-virtual-folder (name &optional read-only)
@@ -661,6 +705,28 @@ Prefix arg means the new virtual folder should be visited read only."
 
 (defun vm-vs-any (m) t)
 
+(defun vm-vs-thread (m arg)
+  (let ((selector (car arg))
+	(arglist (cdr arg))
+	(root (vm-thread-root m))
+	tree function)
+    (setq tree (vm-thread-subtree root))
+    (setq function (cdr (assq selector vm-virtual-selector-function-alist)))
+    (vm-find tree
+	     (lambda (m)
+	       (apply function m arglist)))))
+
+(defun vm-vs-thread-all (m arg)
+  (let ((selector (car arg))
+	(arglist (cdr arg))
+	(root (vm-thread-root m))
+	tree function)
+    (setq tree (vm-thread-subtree root))
+    (setq function (cdr (assq selector vm-virtual-selector-function-alist)))
+    (vm-for-all tree
+	     (lambda (m)
+	       (apply function m arglist)))))
+
 (defun vm-vs-author (m arg)
   (or (string-match arg (vm-su-full-name m))
       (string-match arg (vm-su-from m))))
@@ -813,6 +879,7 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 
 
 (put 'sexp 'vm-virtual-selector-clause "matching S-expression selector")
+(put 'eval 'vm-virtual-selector-clause "giving true for expression")
 (put 'header 'vm-virtual-selector-clause "with header matching")
 (put 'label 'vm-virtual-selector-clause "with label of")
 (put 'text 'vm-virtual-selector-clause "with text matching")
@@ -834,6 +901,7 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 (put 'more-lines-than 'vm-virtual-selector-clause "with more lines than")
 (put 'less-lines-than 'vm-virtual-selector-clause "with less lines than")
 (put 'sexp 'vm-virtual-selector-arg-type 'string)
+(put 'eval 'vm-virtual-selector-arg-type 'string)
 (put 'header 'vm-virtual-selector-arg-type 'string)
 (put 'label 'vm-virtual-selector-arg-type 'label)
 (put 'text 'vm-virtual-selector-arg-type 'string)
@@ -878,7 +946,7 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 			     nil)))))
 	      (t (setq arg (read-string prompt))))))
     (let ((real-arg
-	   (if (eq selector 'sexp)
+	   (if (or (eq selector 'sexp) (eq selector 'eval))
 	       (let ((read-arg (read arg)))
 		 (if (listp read-arg) read-arg (list read-arg)))
 	     arg)))

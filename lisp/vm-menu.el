@@ -83,6 +83,8 @@
 		  (header-name-regexp))
 (declare-function vm-create-virtual-folder "vm-virtual"
 		  (selector &optional arg read-only name bookmark))
+(declare-function vm-create-virtual-folder-of-threads "vm-virtual"
+		  (selector &optional arg read-only name bookmark))
 (declare-function vm-so-sortable-subject "vm-sort" (message))
 (declare-function vm-su-from "vm-summary" (message))
 
@@ -211,6 +213,7 @@
     ["Same Author as current" vm-create-virtual-folder-same-author t]
     ["Same Subject as current" vm-create-virtual-folder-same-subject t]
     ["Create General" vm-create-virtual-folder t]
+    ["Create General (Threads)" vm-create-virtual-folder-of-threads t]
     "---"
     "Auto operations"
     ["Delete Message(s)" vm-virtual-auto-delete-message t]

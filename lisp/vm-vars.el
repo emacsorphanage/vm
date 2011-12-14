@@ -5772,7 +5772,7 @@ and up."
   (define-key vm-mode-virtual-map "D" 'vm-virtual-auto-delete-message)
   ;; (define-key vm-mode-virtual-map "S" 'vm-virtual-save-message)
   ;; (define-key vm-mode-virtual-map "A" 'vm-virtual-auto-archive-messages)
-  (define-key vm-mode-virtual-map "T" 'vm-virtual-check-selector-interactive)
+  (define-key vm-mode-virtual-map "?" 'vm-virtual-check-selector-interactive)
   )
 (defalias 'vm-current-key-bindings 'vm-v8-key-bindings)
 
@@ -5898,6 +5898,7 @@ the users or bound to other functions in future versions of VM."
     (define-key map "V" vm-mode-virtual-map)
     (define-key vm-mode-virtual-map "V" 'vm-visit-virtual-folder)
     (define-key vm-mode-virtual-map "C" 'vm-create-virtual-folder)
+    (define-key vm-mode-virtual-map "T" 'vm-create-virtual-folder-of-threads)
     (define-key vm-mode-virtual-map "X" 'vm-apply-virtual-folder)
     (define-key vm-mode-virtual-map "A" 'vm-create-virtual-folder-same-author)
     (define-key vm-mode-virtual-map "S" 'vm-create-virtual-folder-same-subject)
@@ -6541,6 +6542,8 @@ header line in email messages,
 (defconst vm-supported-interactive-virtual-selectors
   '(("any")
     ("sexp")
+    ("eval")
+    ;; ("member") ; - yet to be defined
     ("virtual-folder-member")
     ("header")
     ("label")
@@ -6592,11 +6595,15 @@ header line in email messages,
 
 (defconst vm-virtual-selector-function-alist
   '((any . vm-vs-any)
+    ;; (member . vm-vs-member) ; yet to be defined
     (virtual-folder-member . vm-vs-virtual-folder-member)
     (and . vm-vs-and)
     (or . vm-vs-or)
     (not . vm-vs-not)
     (sexp . vm-vs-sexp)
+    (eval . vm-vs-eval)
+    (thread . vm-vs-thread)
+    (thread-all . vm-vs-thread-all)
     (header . vm-vs-header)
     (label . vm-vs-label)
     (text . vm-vs-text)
