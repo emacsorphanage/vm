@@ -2621,7 +2621,7 @@ saving a folder."
   :group 'vm-dispose
   :type 'boolean)
 
-(defcustom vm-confirm-quit nil
+(defcustom vm-confirm-quit 'if-something-will-be-lost
   "*Value of t causes VM to always ask for confirmation before quitting
 a VM visit of a folder.  A nil value means VM will ask only when messages
 will be lost unwittingly by quitting, i.e. not removed by intentional
