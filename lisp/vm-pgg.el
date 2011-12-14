@@ -840,9 +840,10 @@ cleanup here after verification and decoding took place."
            ;; add a button
            (let ((buffer-read-only nil))
              (vm-mime-insert-button
+	      :caption
               (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
-              'vm-pgg-mime-decrypt
-              layout nil)))
+              :action 'vm-pgg-mime-decrypt
+              :layout layout)))
           (t
            ;; decode the message now
            (save-excursion
@@ -985,9 +986,10 @@ cleanup here after verification and decoding took place."
           (insert-buffer-substring pgg-errors-buffer)))
     (let ((buffer-read-only nil))
       (vm-mime-insert-button
+       :caption
        (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
-       'vm-pgg-mime-snarf-keys
-       layout nil)))
+       :action 'vm-pgg-mime-snarf-keys
+       :layout layout)))
   t)
 
 ;;; ###autoload

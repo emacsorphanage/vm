@@ -529,8 +529,9 @@ specified by `vm-included-text-headers' and
       ;; Use normal MIME decoding but override normal parameter settings
       (let (;; override the alternative-select-method
 	    (vm-mime-alternative-show-method vm-mime-alternative-yank-method)
-	    ;; include only text and message types
-	    (vm-auto-displayed-mime-content-types '("text" "message"))       
+	    ;; include only text and message/rfc822 types
+	    ;; message/external-body should not be included
+	    (vm-auto-displayed-mime-content-types '("text" "message/rfc822"))
 	    ;; don't include separator for multipart
 	    (vm-mime-parts-display-separator "")
 	    ;; make MIME buttons look like text unless they are included

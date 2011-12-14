@@ -7571,6 +7571,16 @@ is found from
 display the MIME part.
 @end enumerate
 
+@inindex message/external-body
+MIME parts of type @code{message/external-body} need special treatment.  If
+they are not asked to be auto-displayed, then they are displayed as buttons,
+but the button caption may use information from the child part (the actual
+object that is in the external-body) such as its type and description.  If a
+@code{message/external-body} part is asked to be auto-displayed, then the
+child part is fetched from the external source and stored in an internal
+buffer.  It may be auto-displayed if it is appropriate to do so, or shown in
+turn as a button.
+
 @inindex MIME button
 MIME buttons are displayed as regions of text displaying button
 labels.  In addition, they have an overlay/extent placed on them,

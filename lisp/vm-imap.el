@@ -2991,19 +2991,19 @@ operation of the server to minimize I/O."
 (defun vm-imap-get-synchronization-data (&optional do-retrieves)
   "Compares the UID's of messages in the local cache and the IMAP
 server.  Returns a list containing:
-  RETRIEVE-LIST: A list of pairs consisting of UID's and message
+RETRIEVE-LIST: A list of pairs consisting of UID's and message
   sequence numbers of the messages that are not present in the
   local cache and not retrieved previously, and, hence, need to be
   retrieved now.
-  REMOTE-EXPUNGE-LIST: A list of pairs consisting of UID's and message
-  sequence numbers of the messages that are not present in the local cache,
-  but have been retrieved previously and, hence, need to be expunged on the
-  server. 
-  LOCAL-EXPUNGE-LIST: A list of message descriptors for messages in the
+REMOTE-EXPUNGE-LIST: A list of pairs consisting of UID's and
+  UIDVALIDITY's of the messages that are not present in the local
+  cache (but we have reason to believe that they have been retrieved
+  previously) and, hence, need to be expunged on the server. 
+LOCAL-EXPUNGE-LIST: A list of message descriptors for messages in the
   local cache which are not present on the server and, hence, need
   to expunged locally.
-  STALE-LIST: A list of message descriptors for messages in the
-  local cache whose uidvalidity values are stale.
+STALE-LIST: A list of message descriptors for messages in the
+  local cache whose UIDVALIDITY values are stale.
 If the argument DO-RETRIEVES is 'full, then all the messages that
 are not presently in cache are retrieved.  Otherwise, the
 messages previously retrieved are ignored."
@@ -3323,6 +3323,7 @@ headers-only form."
 	  (car mp) (vm-folder-imap-uid-message-flags uid) t)
 	 (setq mp (cdr mp)
 	       r-list (cdr r-list)))
+       (vm-update-summary-and-mode-line) ; update message sizes, possibly
        (when vm-arrived-message-hook
 	 (mapc (lambda (m)
 		 (vm-run-hook-on-message 'vm-arrived-message-hook m))

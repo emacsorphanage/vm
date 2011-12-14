@@ -2919,12 +2919,14 @@ given as the argument instead, then nothing is done.   USR, 2011-03-25"
       (let ((buffer-read-only nil)
 	    (vm-mf-default-action "save"))
 	(vm-mime-insert-button
+	 :caption
 	 (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+	 :action
 	 (function
 	  (lambda (layout)
 	    (save-excursion
 	      (vm-mime-save-application/octet-stream layout))))
-	 layout nil)))
+	 :layout layout)))
   t)
 
 (defun vm-mime-save-application/octet-stream (layout)
@@ -3093,18 +3095,21 @@ emacs-w3m."
 
 (defun vm-mime-display-button-multipart/parallel (layout)
   (vm-mime-insert-button
+   :caption
    (concat
     ;; display the file name or disposition
     (let ((file (vm-mime-get-disposition-filename layout)))
       (if file (format " %s " file) ""))
     (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout) )
+   :action
    (function
     (lambda (layout)
       (save-excursion
 	(let ((vm-mime-auto-displayed-content-types t)
 	      (vm-mime-auto-displayed-content-type-exceptions nil))
 	  (vm-decode-mime-layout layout t)))))
-   layout t))
+   :layout layout 
+   :disposable t))
 
 (fset 'vm-mime-display-internal-multipart/parallel
       'vm-mime-display-internal-multipart/mixed)
@@ -3113,12 +3118,14 @@ emacs-w3m."
   (if (vectorp layout)
       (let ((buffer-read-only nil))
 	(vm-mime-insert-button
+	 :caption
 	 (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+	 :action
 	 (function
 	  (lambda (layout)
 	    (save-excursion
 	      (vm-mime-display-internal-multipart/digest layout))))
-	 layout nil))
+	 :layout layout))
     (goto-char (vm-extent-start-position layout))
     (setq layout (vm-extent-property layout 'vm-mime-layout))
     (set-buffer (generate-new-buffer (format "digest from %s/%s"
@@ -3151,12 +3158,14 @@ emacs-w3m."
 (defun vm-mime-display-button-message/rfc822 (layout)
   (let ((buffer-read-only nil))
     (vm-mime-insert-button
+     :caption
      (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+     :action
      (function
       (lambda (layout)
 	(save-excursion
 	  (vm-mime-display-internal-message/rfc822 layout))))
-     layout nil)))
+     :layout layout)))
 
 (fset 'vm-mime-display-button-message/news
       'vm-mime-display-button-message/rfc822)
@@ -3393,10 +3402,12 @@ button that this LAYOUT comes from."
 			       (vm-mm-layout-disposition tmplayout))
     (setq format (vm-mime-find-format-for-layout tmplayout))
     (vm-mime-insert-button
+     :caption
      (vm-replace-in-string
       (vm-mime-sprintf format tmplayout)	      
       "save\\]"
       "display]")
+     :action
      (function
       (lambda (extent)
 	;; reuse the internal display code, but make sure that no new
@@ -3408,8 +3419,7 @@ button that this LAYOUT comes from."
 	      (vm-mime-auto-displayed-content-type-exceptions nil))
 	  (vm-mime-display-internal-message/external-body 
 	   layout extent))))
-     layout
-     nil)))
+     :layout layout)))
 
 
 (defun vm-mime-fetch-url-with-programs (url buffer)
@@ -3517,12 +3527,14 @@ it to an internal object by retrieving the body.       USR, 2011-03-28"
   (if (vectorp layout)
       (let ((buffer-read-only nil))
 	(vm-mime-insert-button
+	 :caption
 	 (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+	 :action
 	 (function
 	  (lambda (layout)
 	    (save-excursion
 	      (vm-mime-display-internal-message/partial layout))))
-	 layout nil))
+	 :layout layout))
     (vm-inform 6 "Assembling message...")
     (let ((parts nil)
 	  (missing nil)
@@ -4602,9 +4614,9 @@ automatically.  No external viewers are tried.     USR, 2011-03-25"
 DISPOSABLE is true, then the button will be removed when it is
 expanded to display the mime object."
   (vm-mime-insert-button
-   (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
-   (function vm-mime-display-generic)
-   layout disposable))
+   :caption (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+   :action (function vm-mime-display-generic)
+   :layout layout :disposable disposable))
 
 ;;----------------------------------------------------------------------------
 ;;; MIME buttons
@@ -5171,7 +5183,7 @@ the front and placing the image there as the display text property.
 					 ':type 'xpm
 					 ':file file))))))))
 
-(defun vm-mime-insert-button (caption action layout disposable)
+(defun* vm-mime-insert-button (&key caption action layout (disposable nil))
   "Display a button for a mime object, using CAPTION as the label (a
 string) and ACTION as the default action (a function).  The mime object
 is described by LAYOUT.  If DISPOSABLE is true, then the button will
@@ -5482,6 +5494,7 @@ file with the name should be overwritten."
       (vm-mime-fetch-message/external-body layout)
       (if (vm-mm-layout-display-error layout)
 	  (apply 'error (vm-mm-layout-display-error layout)))
+      ;; Use the child layout for external viewer
       (setq layout (car (vm-mm-layout-parts layout))))
     (if (vm-mime-find-external-viewer (car (vm-mm-layout-type layout)))
 	(vm-mime-display-external-generic layout)
@@ -8121,8 +8134,7 @@ This is a destructive operation and cannot be undone!"
 	   (disp   (or (vm-mm-layout-disposition layout)
 		       '("inline")))
 	   (file   (vm-mime-get-disposition-parameter layout "filename"))
-	   (ext-file nil)
-)
+	   (ext-file nil))
 
       ;; special case of message/external-body
       ;; seems to be unused now.  USR, 2011-12-06
