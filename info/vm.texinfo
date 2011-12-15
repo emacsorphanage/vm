@@ -21,7 +21,7 @@ This file documents the VM mail reader.
 @table @asis
 @item Copyright (C) 1989, 1991, 1999 Kyle E. Jones
 @item Copyright (C) 2003 - 2008 Robert Widhopf-Fenk
-@item Copyright (C) 2008 - 2010 Uday S. Reddy
+@item Copyright (C) 2008 - 2012 Uday S. Reddy
 @end table
 
 Permission is granted to make and distribute verbatim copies of
@@ -1453,14 +1453,15 @@ situation, then you should set the variable
 
 @node Crash Recovery,, Getting New Mail, Starting Up
 @section Crash Recovery
+@cindex crash reovery
 @cindex message attributes
 @cindex message labels
+@cindex auto-save
 
-@cindex autosave
 When Emacs crashes, its last action before dying is to try to
-write out an autosave file that contains changes to files that
+write out an auto-save file that contains changes to files that
 you were editing.  VM folders are file buffers inside Emacs, so
-folders are autosaved also.  Changes, with regard to VM folders,
+folders are auto-saved also.  For VM folders, ``changes''
 means attribute changes, label additions and deletions, message
 edits, and expunges.  VM keeps track of whether a message is new
 or old, whether it has been replied to, whether it is flagged
@@ -1468,7 +1469,7 @@ for deletion and so on, by writing special headers into the
 folder buffer.  These headers are saved to disk when you save
 the folder.  If Emacs crashes before the folder has been saved,
 VM may forget some attribute changes unless they were written to
-the autosave file.
+the auto-save file.
 
 Note that when VM retrieves mail from spool files it @emph{always}
 writes them to disk immediately and at least one copy of the message is
@@ -1476,16 +1477,18 @@ on disk at all times.  So while you can lose attribute changes from
 crashes, you should not lose messages unless the disk itself is
 compromised.
 
+@unnumberedsubsec Recovering Folders
+
 When you visit a folder, VM checks for the existence of an
-autosave file that has been modified more recently than the
-folder file.  If such an autosave file exists, there is a good
+auto-save file that has been modified more recently than the
+folder file.  If such an auto-save file exists, there is a good
 chance that Emacs or your operating system crashed while VM
 was visiting a folder.  VM will then write a message to the echo
-area informing you of the existence of the autosave file and
-visit the folder in read-only mode.  Visiting the folder in
+area informing you of the existence of the auto-save file and
+visit the folder in @emph{read-only} mode.  Visiting the folder in
 read-only mode prevents you from modifying the folder, which
 in turn prevents Emacs from wanting to write new changes to
-the autosave file.  VM will not retrieve new mail for a folder
+the auto-save file.  VM will not retrieve new mail for a folder
 that is in read-only mode.  VM also skips summary
 generation and MIME decoding to help catch your attention.
 
@@ -1493,22 +1496,24 @@ generation and MIME decoding to help catch your attention.
 @findex recover-file
 If you want to recover the lost changes, run @kbd{M-x
 vm-recover-folder} or use the Recover Folder entry in Folder menu.  At
-the @samp{Recover File:} prompt press @key{RET}.  (Emacs's built-in
-@kbd{recover-file} command is not recommended for this purpose because
-VM is unable to obtain reliable data regarding the mail folders from
-Emacs.)  Emacs will then display a detailed directory listing showing
-the folder file and the autosave file and ask if you want to recover
-from the autosave file.  A good rule of thumb is to answer ``yes'' if
-the autosave file is larger than the folder file.  If the autosave
-file is significantly smaller, Emacs may not have completed writing
-the autosave file.  Or it could be that the smaller autosave file
-reflects the results of an expunge that you had not yet committed to
-disk before the crash.  If so, answering ``no'' means you might have
-to do that expunge again, but this is better than not knowing whether
-the autosave file was truncated.
+the @samp{Recover File:} prompt press @key{RET}.  Emacs's built-in
+@kbd{recover-file} command is @emph{not recommended} for this purpose because
+VM is unable to obtain reliable data regarding mail folders from
+Emacs.
+
+In response to @code{vm-recover-folder}, Emacs will display a detailed
+directory listing showing the folder file and the auto-save file and ask you
+whether you want to recover from the auto-save file.  A good rule of thumb is
+to answer ``yes'' if the auto-save file is larger than the folder file.  If
+the auto-save file is significantly smaller, Emacs might not have completed
+writing the auto-save file during the previous crash.  Or it could be that
+the smaller auto-save file reflects the results of an expunge that you had
+not yet committed to disk before the crash.  If so, answering ``no'' means
+you might have to do that expunge again, but this is better than not knowing
+whether the auto-save file was truncated.
 
 Assuming you answered ``yes'', the folder buffer's contents will be
-replaced by the contents of the autosave file and VM will re-parse the
+replaced by the contents of the auto-save file and VM will re-parse the
 folder.  At this point the contents of the folder buffer and the disk
 copy of the folder are different.  Therefore VM will not get new mail
 for this folder until the two copies of the folder are synchronized.
@@ -1520,26 +1525,66 @@ files for the folder.
 Assuming you answered ``no'' to the recovery question, you should type
 @kbd{C-x C-q}, which is bound to @code{vm-toggle-read-only} in VM folder
 buffers.  The folder will be taken out of read-only mode and you can
-read and retrieve your mail normally.
+read and retrieve your mail normally, ignoring the auto-save file that is
+still on disk.
 
 If you are visiting a POP or IMAP folder (rather than a local folder)
 that was modified during a previous crash, the process of recovery is
 similar.  However, there will be less useful information in the
-autosave file in this case.  When you synchronize an IMAP folder with
+auto-save file in this case.  When you synchronize an IMAP folder with
 the server, only the changes made during the current VM session are
-saved to the server.  Changes stored in the autosave file were made in
+saved to the server.  Changes stored in the auto-save file were made in
 a previous session of VM and, so, cannot be saved to the server.  So,
 saying ``no'' to the recovery question and toggling the read-only
 status (@kbd{C-x C-q}) is a better option in the case of server
-folders. 
+folders.
 
-@unnumberedsubsec Discarding changes
+@unnumberedsubsec Recovering Message Compositions
+
+@vindex vm-mail-auto-save-directory
+@findex vm-postpone-message
+Any messages you were in the midst of composing when Emacs crashed, would
+also have auto-save files in the disk.  They would be saved in the
+@code{vm-mail-auto-save-directory}, if you have set that variable, or
+@code{vm-folder-directory}, or the directory that was current when you
+started composing the message.  You can visit the auto-save file, which
+would get loaded as a text file by default, and then run @kbd{M-x
+mail-mode}.  VM's mail-mode command keys are not available in this mode.
+The best option is to run @kbd{M-x vm-postpone-message} to save the
+unfinished message composition and then continue it using
+@code{vm-continue-postponed-message}.  @xref{Add-ons, Postponing message composition}.
+
+@unnumberedsubsec Recovering Sessions
+
+Emacs also provides a way to recover the entire Emacs session after a crash.
+@xref{Recover,,, emacs, the GNU Emacs Manual}.  However, the Emacs
+@code{recover-session} command will recover VM folders as if they were
+ordinary files.  As mentioned above, this is not a good method of recovering
+VM folders.  You should use @code{vm-recover-folder} command instead.  So,
+when Emacs @code{recover-session} command asks you whether to recover a VM
+folder, the best option is to answer ``no''.  Then you should recover the
+folders separately, using the @code{vm-recover-folder} command.
+
+If you do answer ``yes'', then Emacs loads the auto-save file into a buffer.
+The auto-save file still exists on the disk, but it will get deleted when
+you save the buffer.  So, you should examine the folder before you save it.
+Run @kbd{M-x vm-mode} in the buffer corresponding to the VM folder, make
+sure that it is not damaged, and then save the folder.  If you do not
+believe that the auto-saved version is good, you can kill the buffer.  At
+this point, VM asks you for confirmation whether you really want to kill the
+buffer and, secondly, whether you want to delete the auto-save file.  If you
+answer ``yes'' to the last question, then the auto-saved folder will be
+gone for ever.
+
+
+
+@unnumberedsubsec Reverting a Folder
 
 @findex vm-revert-folder
 @findex revert-file
 If you have made changes to a mail folder which you would like to
 cancel and go back to the version currently on the disk, you can use
-the function @kbd{vm-revert-folder} or the Revert Folder entry in the
+the function @kbd{vm-revert-folder} or the ``Revert Folder'' entry in the
 Folder menu.  (Emacs's built-in @kbd{revert-file} is not recommended.)
 
 @node Selecting Messages, Reading Messages, Starting Up, Top
@@ -2617,7 +2662,8 @@ the copy is prepended with the value of the variable
 with the text.  Point is left before the inserted text, the mark after.
 Any hook functions bound to @code{mail-yank-hooks} are run, after inserting
 the text and setting point and mark.  If a prefix argument is given,
-this tells VM to ignore @code{mail-yank-hooks}, don't set the mark, don't prepend the
+this tells VM: ignore @code{mail-yank-hooks}, don't set the mark, don't 
+prepend the 
 value of @code{vm-included-text-prefix} to every yanked line, and don't yank
 any headers other than those specified in
 @code{vm-visible-headers} and @code{vm-invisible-headers}.  
@@ -3816,7 +3862,7 @@ other BABYL mailers.  The labels used are ``recent'', ``unseen'',
 folders, you should not use these label names for your own purposes.
 
 @vindex vm-flush-interval
-@cindex autosave
+@cindex auto-save
 All message attributes are stored in the folder.  In order for
 attribute changes to be saved to disk, they must be written to
 the folder's buffer prior to the buffer being saved.  The
@@ -3825,8 +3871,8 @@ value of @code{t} means write the new attributes to the folder
 buffer whenever a change occurs.  A value of @code{nil} means
 wait until just before the folder is saved before writing out the
 attributes.  VM will work faster with this setting, but if Emacs
-or your system crashes, the autosave file will contain no useful
-data pertaining to message attribute changes.  The autosave file
+or your system crashes, the auto-save file will contain no useful
+data pertaining to message attribute changes.  The auto-save file
 will still reflect message edits and expunges.  @xref{Crash
 Recovery}.  A positive integer value @var{n} instructs VM to write
 out attribute changes every @var{n} seconds.  The default value
@@ -5322,10 +5368,10 @@ The Helper button.  Clicking on this button runs the command
 @code{vm-help}, but it also does context specific things under certain
 conditions.  If the current message is a MIME message that needs
 decoding, the Helper button becomes the Decode MIME button.  If the 
-current folder has an autosave file that appears to be the result 
+current folder has an auto-save file that appears to be the result 
 of an Emacs or system crash, the Helper button becomes the Recover 
 button.  Clicking on the Recover button runs @code{vm-recover-folder}, 
-so you can recover your folder from an existing autosave file.
+so you can recover your folder from an existing auto-save file.
 @item mime
 The Decode MIME button.  Clicking on this button runs the command
 @code{vm-toolbar-mime-command}.  This command is normally just an
@@ -7798,7 +7844,7 @@ three timer tasks that get scheduled to occur at regular intervals:
 @inindex vm-flush-itimer-function
 @item vm-flush-itimer-function
 Stores message attributes in the folder so that they will be saved
-when an autosave is done.  This is controlled by the variable
+when an auto-save is done.  This is controlled by the variable
 @code{vm-flush-interval}. 
 @inindex vm-get-mail-itimer-function
 @item vm-get-mail-itimer-function
