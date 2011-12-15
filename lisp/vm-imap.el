@@ -3185,9 +3185,7 @@ messages previously retrieved are ignored."
 	      (vm-inform 1 "They will be labelled 'stale'")
 	      (mapc 
 	       (lambda (m)
-		 (vm-set-labels m (cons "stale" (vm-labels-of m)))
-		 (vm-set-attribute-modflag-of m t)
-		 (vm-set-stuff-flag-of m t))
+		 (vm-add-or-delete-message-labels "stale" (list m) 'all))
 	       stale-list)
 	      ))
 	(vm-inform 6 "Expunging messages in cache... done"))

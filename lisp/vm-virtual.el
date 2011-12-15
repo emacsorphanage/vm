@@ -229,7 +229,7 @@ all the real folder buffers involved."
 		(when (and vm-virtual-debug
 			   (member (vm-su-message-id m)
 				   vm-traced-message-ids))
-		  (debug "vm-virtual-build-message-list" m)
+		  (debug "vm-build-virtual-message-list" m)
 		  (apply 'vm-vs-or m selectors))
 		(unless dont-finalize
 		  (intern
