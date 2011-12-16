@@ -40,11 +40,12 @@
 ;; loved virtual folders and `vmpc-conditions' in order to solve the handling
 ;; of my different email-addresses.
 ;;
-;; This was kind of annoying, since virtual folder selector offer the best
-;; way of specifying conditions, but they only work on messages within
-;; folders and not on messages which are currently composed. So I decided to
-;; extend virtual folder selectors also to message composing, although not
-;; all of the selectors are meaningful for `mail-mode'.
+;; This was kind of annoying, since virtual folder selectors offer the
+;; best way of specifying conditions, but they only work on messages
+;; within folders and not on messages which are currently being
+;; composed. So I decided to extend virtual folder selectors also to
+;; message composing, although not all of the selectors are meaningful
+;; for `mail-mode'.
 ;;
 ;; I wrote functions which can replace (*) the existing ones and others that
 ;; add new (+) functionality.  Finally I came up with the following ones:
@@ -80,7 +81,7 @@
 ;;        (or
 ;;         ;; kill all those where all authors/recipients
 ;;         ;; are unknown to my BBDB, i.e. messages from
-;;         ;; strangers which are not directed to me!
+;;         ;; strangers who are not recognized by me.
 ;;         ;; (c't 12/2001) 
 ;;         (not (in-bbdb))
 ;;         ;; authors that I do not know

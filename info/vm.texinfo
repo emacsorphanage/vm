@@ -946,9 +946,9 @@ follows:
 @end example
 
 @noindent Replace @samp{pop} in the example with @samp{pop-ssl} to
-have VM speak @acronym{POP} over an @acronym{SSL} connection.  Use @samp{pop-ssh} to use
-@acronym{POP} over an SSH connection.  Similarly, replace @samp{imap} with
-@samp{imap-ssl} or @samp{imap-ssh}, as needed.
+have VM speak @acronym{POP} over an @acronym{SSL} connection.  Use
+@samp{pop-ssh} to use @acronym{POP} over an SSH connection.  Similarly,
+replace @samp{imap} with @samp{imap-ssl} or @samp{imap-ssh}, as needed.
 
 @cindex @acronym{SSL}
 @cindex @acronym{TLS}        
@@ -960,12 +960,13 @@ them as ``@acronym{SSL}'' in this manual.
 
 @cindex stunnel
 @vindex vm-stunnel-program
-For @acronym{SSL}, you must either be using a version of Emacs that has @acronym{SSL} capability
-or have the @command{stunnel} program installed and the variable
-@code{vm-stunnel-program} naming it.  The default value of this variable,
-@samp{"stunnel"}, should be sufficient if the program is installed in your
-normal command search path.  In order to use the built-in @acronym{SSL} capability of
-your Emacs version, set @code{vm-stunnel-program} to @code{nil}.
+For @acronym{SSL}, you must either be using a version of Emacs that has
+@acronym{SSL} capability or have the @command{stunnel} program installed and
+the variable @code{vm-stunnel-program} naming it.  The default value of this
+variable, @samp{"stunnel"}, should be sufficient if the program is installed
+in your normal command search path.  In order to use the built-in
+@acronym{SSL} capability of your Emacs version, set
+@code{vm-stunnel-program} to @code{nil}.
 
 @cindex SSH
 @vindex vm-ssh-program
@@ -7606,6 +7607,75 @@ Conversely, the headers of outgoing messages are encoded using
 @node Virtual Folder Internals, @acronym{MIME} Display, Coding Systems, Internals
 @section Virtual Folder Internals
 
+@inindex virtual-folder-definition
+@inindex vm-virtual-folder-alist
+A virtual folder is characterized by its definition, which is stored in the
+buffer-local variable @code{virtual-folder-definition}.  The form of the
+definition is as given in @code{vm-virtual-folder-alist}.  @xref{Defined
+Folders, vm-virtual-folder-alist}.  It is a collection of clauses, with each
+clause listing a collection of folders and a collection of virtual
+selectors.
+
+Each virtual selector @var{X} has a corresponding Lisp function
+@samp{vm-vs-@var{X}}, whose purpose is to check whether a given message
+matches the selector.  The arguments for @samp{vm-vs-@var{X}} are a message
+data structure @code{m} and all the arguments for the virtual selector
+@var{X}.
+
+For example, the virtual selector @code{author} has a string argument,
+representing the author name.  The corresponding Lisp function is defined
+as: 
+
+@example
+(defun vm-vs-author (m author-name)
+  (or (string-match author-name (vm-su-full-name m))
+      (string-match author-name (vm-su-from m))))
+@end example
+
+@noindent The definition checks to see if the given @code{author-name}
+pattern occurs in the full name of the author (@code{vm-su-full-name}) or
+the email address of the author (@code{vm-su-from}).
+
+The @code{author} selector is then registered in four places:
+
+@itemize
+@inindex vm-virtual-selector-function-alist
+@item 
+The variable @code{vm-virtual-selector-function-alist}, which contains pairs
+of the form @samp{(@var{SELECTOR} . @var{FUNCTION})}.  For the @code{author}
+selector, the pair is @code{(author . vm-vs-author)}.
+
+@inindex vm-virtual-selector-arg-type
+@item
+The selector symbol @code{author} is given a property
+@code{vm-virtual-selector-arg-type} indicating the type of argument it
+requies:
+
+@example
+(put 'author 'vm-virtual-selector-arg-type 'string)
+@end example
+
+@inindex vm-supported-interactive-virtual-selectors
+@item
+The variable @code{vm-supported-interactive-virtual-selectors}, which
+contains lists of strings, each string being the name of a virtual
+selector.  For the @code{author} selector, the list is @code{("author")}.
+Including the selector in this variable allows it to be used in creating
+interactive virtual folders (search folders).
+
+@inindex vm-virtual-selector-clause
+@item
+The selector symbol @code{author} is given a property
+@code{vm-virtual-selector-clause} indicating the prompt string for
+interactive use:
+
+@example
+(put 'author 'vm-virtual-selector-clause "with author matching")
+@end example
+@end itemize
+
+@noindent Evidently, the last two registrations are only needed for interactive
+selectors that can be used with the @kbd{V C} command.
 
 
 @node @acronym{MIME} Display, @acronym{MIME} Composition, Virtual Folder Internals, Internals

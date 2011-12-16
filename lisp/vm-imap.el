@@ -86,6 +86,12 @@
 ;; ------------------------------------------------------------------------
 
 
+;;
+;; vm-folder-access-data
+;;
+;; See the info manual section on "Folder Internals" for the structure
+;; of the data stored here.
+;;
 ;; The following functions are based on cached folder-access-data.
 ;; They will only function when the IMAP process is "valid" and the
 ;; server message data is non-nil.
@@ -2474,8 +2480,8 @@ tracing purposes. Returns the IMAP process or nil if unsuccessful."
 (defun vm-imap-retrieve-uid-and-flags-data ()
   "Retrieve the uid's and message flags for all the messages on the
 IMAP server in the current mail box.  The results are stored in
-`vm-folder-access-data' in the fields uid-list, uid-obarray and
-flags-obarray.
+`vm-folder-access-data' in the fields imap-uid-list, imap-uid-obarray
+and imap-flags-obarray.
 Throws vm-imap-protocol-error for failure.
 
 This function is preferable to `vm-imap-get-uid-list' because it
@@ -3218,7 +3224,9 @@ headers-only form."
 	 (use-body-peek (vm-folder-imap-body-peek))
 	 (uid-validity (vm-folder-imap-uid-validity))
 	 uid r-list r-entry range new-messages message-size 
-	 statblob old-eob pos k mp pair headers-only
+	 statblob old-eob pos k mp pair
+	 (headers-only (or (eq vm-enable-external-messages t)
+			  (memq 'imap vm-enable-external-messages)))
 	 (n 0))
     (save-excursion
       (vm-inform 6 "Retrieving new messages... ")
@@ -3226,16 +3234,15 @@ headers-only form."
        (widen)
        (setq old-eob (point-max))
        (goto-char (point-max))
+       (when (null vm-imap-max-message-size)
+	 (setq vm-imap-max-message-size most-positive-fixnum))
        ;; Annotate retrieve-list with headers-only flags
        (setq retrieve-list
 	     (mapcar 
 	      (lambda (pair)
-		(if (and (integerp vm-imap-max-message-size)
-			 (> (read (vm-folder-imap-uid-message-size (car pair)))
-			    vm-imap-max-message-size))
-		    (list (car pair) (cdr pair) 
-			  (or (eq vm-enable-external-messages t)
-			      (memq 'imap vm-enable-external-messages)))
+		(if (> (read (vm-folder-imap-uid-message-size (car pair)))
+		       vm-imap-max-message-size)
+		    (list (car pair) (cdr pair) headers-only)
 		  (list (car pair) (cdr pair) nil)))
 	      retrieve-list))
        (setq r-list (vm-imap-bunch-retrieve-list 
@@ -3321,7 +3328,7 @@ headers-only form."
 	  (car mp) (vm-folder-imap-uid-message-flags uid) t)
 	 (setq mp (cdr mp)
 	       r-list (cdr r-list)))
-       (vm-update-summary-and-mode-line) ; update message sizes, possibly
+       ;; (vm-update-summary-and-mode-line) ; update message sizes, possibly
        (when vm-arrived-message-hook
 	 (mapc (lambda (m)
 		 (vm-run-hook-on-message 'vm-arrived-message-hook m))
