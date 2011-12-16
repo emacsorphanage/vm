@@ -149,28 +149,29 @@ to switch environments.
 @cindex virtual folders
 @cindex archiving
 @cindex address book
-@cindex MIME
+@cindex @acronym{MIME}
 @cindex encryption
-@cindex BBDB
+@cindex @acronym{BBDB}
 @cindex Org mode
-@cindex GPG
+@cindex @acronym{GPG}
 VM was developed by Kyle Jones starting in 1989.  It was a leader
 in mail-reading functionality by introducing features like thread
 management, virtual folders, automatic archiving of messages and a
-full treatment of MIME.  VM can interface to other packages
-available in Emacs, for remote file access, BBDB address book, GPG
+full treatment of @acronym{MIME}.  VM can interface to other packages
+available in Emacs, for remote file access, @acronym{BBDB} address book,
+@acronym{GPG} 
 encryption and Org mode task management etc.  It can also invoke
 external utilities available on your system such as mail filtering
 tools and html rendering tools.
 
-@cindex POP
-@cindex IMAP
+@cindex @acronym{POP}
+@cindex @acronym{IMAP}
 @cindex mail servers
 @cindex mbox
 @cindex Thunderbird
 VM can read and store mail on your file system (both local and
 remote).  It can also handle mail stored in remote file servers
-running POP and IMAP protocols.  The local folders are stored in a
+running @acronym{POP} and @acronym{IMAP} protocols.  The local folders are stored in a
 Unix-standard @code{mbox} format, which is also used by most other
 mail readers including Thunderbird.  In fact, VM can seamlessly
 operate on Thunderbird folders and, if you use a remote mail server,
@@ -181,14 +182,14 @@ you have archived mail in that format.
 
 @cindex maildir
 @cindex newsgroups
-@cindex RSS feeds
-@cindex S/MIME
-There are also a few things that VM cannot (yet) do.  It does not have
-the ability to deal with maildir folders.  It cannot be used to read
-newsgroups and RSS feeds.  It does not have its own mail filtering
-tools.  It does not have support for the Secure MIME (S/MIME)
-protocol.  However, active development of VM is continuing.  It may
-acquire some of these features before long.
+@cindex @acronym{RSS} feeds
+@cindex @acronym{S/MIME}
+There are also a few things that VM cannot (yet) do.  It does not have the
+ability to deal with maildir folders.  It cannot be used to read newsgroups
+and @acronym{RSS} feeds.  It does not have its own mail filtering tools.  It
+does not have support for the Secure @acronym{MIME} (@acronym{S/MIME})
+protocol.  However, active development of VM is continuing.  It may acquire
+some of these features before long.
 
 VM has been found most useful by professional users who must deal with
 large quantities of email in the course of their work, and deal with
@@ -226,8 +227,8 @@ If you type @kbd{?} in a VM folder buffer you will get some help, i.e.
 
 @findex vm-scroll-forward
 @findex vm-scroll-backward
-@kindex @key{SPC}
-@kindex @key{DEL}
+@kindex SPC
+@kindex DEL
 If there are any messages in the primary inbox, VM selects the first new
 or unread message, and previews it.  @dfn{Previewing} is VM's way of
 showing you part of a message and allowing you to decide whether you want
@@ -399,7 +400,7 @@ other options are available.
 
 VM can work with mail folders saved on the local file system.
 @xref{Local Folders}.  It can also work with mail folders stored on
-remote mail servers, such as POP and IMAP servers.  @xref{POP and IMAP
+remote mail servers, such as @acronym{POP} and @acronym{IMAP} servers.  @xref{@acronym{POP} and @acronym{IMAP}
 Folders}.  Server folders have the advantage that they can be accessed
 from multiple locations on the internet.  VM might appear to have a
 bias towards local folders due to its history of development.  But it
@@ -442,14 +443,14 @@ there are @var{n} or fewer messages.  The default value of
 
 @menu
 * Local Folders::       Working with folders on the local file system
-* POP and IMAP Folders::        Working with folders on mail servers
+* @acronym{POP} and @acronym{IMAP} Folders::        Working with folders on mail servers
 * Thunderbird Folders::         Working with folders managed by Thunderbird
 * External Messages::           Working with messages stored externally.
 * Getting New Mail::  Retrieving mail from spool files.
 * Crash Recovery::    Recovering changes after Emacs or your system dies.
 @end menu
 
-@node Local Folders, POP and IMAP Folders, Starting Up, Starting Up
+@node Local Folders, @acronym{POP} and @acronym{IMAP} Folders, Starting Up, Starting Up
 @section Local Folders
 
 @cindex mbox
@@ -478,7 +479,7 @@ It is also possible for agents such as @file{procmail}, @file{filter} and
 @file{~/.qmail} files, sorting the incoming mail into separate spool
 files.  On other systems, incoming mail may be
 delivered to mailboxes on remote mail servers, from where it can be
-retrieved through protocols like POP and IMAP.  No matter what the
+retrieved through protocols like @acronym{POP} and @acronym{IMAP}.  No matter what the
 delivery agent, what all spool files have in common is that mail is
 delivered into them by one or more entities apart from VM and that all
 access to spool files must therefore be accompanied by the use of some
@@ -514,13 +515,13 @@ retrieving any new messages from the system mailbox.
 
 @menu
 * Spool Files::         Specifying where mail comes from
-* POP Spool Files::     How to use a POP mailbox as a spool file
-* IMAP Spool Files::    How to use an IMAP mailbox as a spool file
+* @acronym{POP} Spool Files::     How to use a @acronym{POP} mailbox as a spool file
+* @acronym{IMAP} Spool Files::    How to use an @acronym{IMAP} mailbox as a spool file
 * Index Files::         Using an index to speed up VM starting
 * Folder types::        About the mail folder formats handled by VM
 @end menu
 
-@node Spool Files, POP Spool Files, Local Folders, Local Folders
+@node Spool Files, @acronym{POP} Spool Files, Local Folders, Local Folders
 @unnumberedsubsec Spool Files
 
 Every folder, including the primary inbox, can have one or more spool
@@ -626,23 +627,24 @@ should return the spool file name or crash box name to be used
 for that folder.
 
 If your spool file is on another host, VM supports accessing
-spool files on remote hosts using the POP and IMAP protocols.
+spool files on remote hosts using the @acronym{POP} and @acronym{IMAP} protocols.
 
-@node POP Spool Files,IMAP Spool Files,Spool Files,Local Folders
-@unnumberedsubsec POP Spool Files
-@cindex POP spool files
-VM can access spool files on mail servers via the Post Office Protocol
-(POP).  To use a POP mailbox as a spool file, you need to use a POP
+@node @acronym{POP} Spool Files,@acronym{IMAP} Spool Files,Spool Files,Local Folders
+@unnumberedsubsec @acronym{POP} Spool Files
+
+@cindex @acronym{POP} spool files
+VM can access spool files on mail servers via the @dfn{Post Office Protocol}
+(@dfn{@acronym{POP}}).  To use a @acronym{POP} mailbox as a spool file, you need to use a @acronym{POP}
 maildrop specification (@ref{maildrop specification},
-@ref{POP and IMAP Folders}).  Once this is done, VM will retrieve new mail
-from the POP mailbox in the same way as it retrieves it from system
+@ref{@acronym{POP} and @acronym{IMAP} Folders}).  Once this is done, VM will retrieve new mail
+from the @acronym{POP} mailbox in the same way as it retrieves it from system
 mailbox.  The retrieved messages can be automatically removed from the
-POP mailbox or retained until a later expunge operation.
+@acronym{POP} mailbox or retained until a later expunge operation.
 
 @vindex vm-pop-max-message-size
 @findex vm-get-new-mail
 @vindex vm-auto-get-new-mail
-By default VM will retrieve all the messages from a POP mailbox
+By default VM will retrieve all the messages from a @acronym{POP} mailbox
 before returning control of Emacs to you.  If the mailbox is
 large, the wait could be considerable.  If you set
 @code{vm-pop-max-message-size} to a positive numeric value, VM will not 
@@ -656,11 +658,11 @@ large message and you can retrieve it later.
 @vindex vm-pop-bytes-per-session
 @vindex vm-pop-messages-per-session
 The variable @code{vm-pop-messages-per-session} controls how many messages
-VM will retrieve from a POP mailbox before returning control to
+VM will retrieve from a @acronym{POP} mailbox before returning control to
 you.  Similarly, the variable @code{vm-pop-bytes-per-session} limits the
-number of bytes VM will retrieve from a POP mailbox before returning
+number of bytes VM will retrieve from a @acronym{POP} mailbox before returning
 control to you.  By default, the value of both variables is nil, which
-tells VM to retrieve all the messages in the POP mailbox regardless
+tells VM to retrieve all the messages in the @acronym{POP} mailbox regardless
 of how many messages there are and how large the mailbox is.
 
 @findex vm-expunge-pop-messages
@@ -676,10 +678,10 @@ If you want VM to expunge the messages automatically after retrieving
 them, you can set @code{vm-pop-expunge-after-retrieving} to @code{t}.
 But a better method is to set the variable
 @code{vm-pop-auto-expunge-alist}, which gives you a way to specify, on
-a per-mailbox basis, which POP mailboxes should have messages automatically
-removed after retrieving and which ones should leave the messages on the POP
+a per-mailbox basis, which @acronym{POP} mailboxes should have messages automatically
+removed after retrieving and which ones should leave the messages on the @acronym{POP}
 server.  The value of @code{vm-pop-auto-expunge-alist} should be a
-list of POP mailboxes and values specifying whether messages should
+list of @acronym{POP} mailboxes and values specifying whether messages should
 be automatically deleted from the mailbox after retrieval.  The format
 of the list is:
 
@@ -687,15 +689,15 @@ of the list is:
 ((@var{MAILDROP} . @var{VAL}) (@var{MAILDROP} . @var{VAL}) ...)
 @end example
 
-@var{MAILDROP} should be a POP mailbox specification as described
+@var{MAILDROP} should be a @acronym{POP} mailbox specification as described
 in the documentation for the variable @code{vm-spool-files}.  If
-you have the POP password specified in the @code{vm-spool-files}
+you have the @acronym{POP} password specified in the @code{vm-spool-files}
 entry, you do not have to specify it here as well.  Use @samp{*}
 instead; VM will still understand that this mailbox is the same as
 the one in @code{vm-spool-files} that contains the password.
 
 @var{VAL} should be @code{nil} if retrieved messages should be left in the
-corresponding POP mailbox, @code{t} if retrieved messages should be
+corresponding @acronym{POP} mailbox, @code{t} if retrieved messages should be
 removed from the mailbox immediately after retrieval.
 
 Here is an example:
@@ -709,63 +711,64 @@ Here is an example:
 )
 @end example
 
-@node IMAP Spool Files, Index Files, POP Spool Files, Local Folders
-@unnumberedsubsec IMAP Spool Files
-@cindex IMAP spool files
+@node @acronym{IMAP} Spool Files, Index Files, @acronym{POP} Spool Files, Local Folders
+@unnumberedsubsec @acronym{IMAP} Spool Files
+@cindex @acronym{IMAP} spool files
 @cindex maildrop specification
-VM can also use the IMAP protocol to retrieve mail from a mail server.
-As with POP, instead of specifying a local file name in the
-@code{vm-spool-files} definition, you would give an IMAP maildrop
-specification (@ref{maildrop specification}, @ref{POP and IMAP Folders}).
-Once this is done, VM will retrieve new mail from the IMAP mailbox in
+VM can also use @dfn{@acronym{IMAP}} (@dfn{Internet Message Access Protocol}) to
+retrieve mail from a mail server. 
+As with @acronym{POP}, instead of specifying a local file name in the
+@code{vm-spool-files} definition, you would give an @acronym{IMAP} maildrop
+specification (@ref{maildrop specification}, @ref{@acronym{POP} and @acronym{IMAP} Folders}).
+Once this is done, VM will retrieve new mail from the @acronym{IMAP} mailbox in
 the same way as it retrieves it from system mailbox.  The retrieved
-messages can be automatically removed from the IMAP mailbox or
+messages can be automatically removed from the @acronym{IMAP} mailbox or
 retained until a later expunge operation.
 
 @vindex vm-imap-bytes-per-session
 @vindex vm-imap-messages-per-session
 The variable @code{vm-imap-messages-per-session} controls how many messages
-VM will retrieve from an IMAP mailbox before returning control to
+VM will retrieve from an @acronym{IMAP} mailbox before returning control to
 you.  Similarly, the variable @code{vm-imap-bytes-per-session} limits the
-number of bytes VM will retrieve from an IMAP mailbox before returning
+number of bytes VM will retrieve from an @acronym{IMAP} mailbox before returning
 control to you.  By default, the value of both variables is nil, which
-tells VM to retrieve all the messages in the IMAP mailbox regardless
+tells VM to retrieve all the messages in the @acronym{IMAP} mailbox regardless
 of how many messages there are and how large the mailbox is.
 
-@cindex expunging, IMAP messages
+@cindex expunging, @acronym{IMAP} messages
 @findex vm-expunge-imap-messages
 After VM retrieves messages from the mailbox, the default action is to
 leave the original messages on the server unchanged.  They can be
-expunged from the server by running @code{vm-expunge-imap-messages};
+@dfn{expunged} from the server by running @code{vm-expunge-imap-messages};
 only those messages that VM has retrieved into the current folder will
 be expunged.
 
 @vindex vm-imap-expunge-after-retrieving
 @vindex vm-imap-auto-expunge-alist
-If you want VM to expunge the messages automatically after retrieving
-them, you can set @code{vm-imap-expunge-after-retrieving} to @code{t}.
-But a better method is to set the variable
-@code{vm-imap-auto-expunge-alist}, which gives you a way to specify, on
-a per-mailbox basis, which IMAP mailboxes should have messages automatically
-removed after retrieving and which ones should leave the messages on the IMAP
-server.  The value of @code{vm-imap-auto-expunge-alist} should be a
-list of IMAP mailboxes and values specifying whether messages should
-be automatically deleted from the mailbox after retrieval.  The format
-of the list is:
+If you want VM to expunge the messages automatically after retrieving them,
+you can set @code{vm-imap-expunge-after-retrieving} to @code{t}.  But a
+better method is to set the variable @code{vm-imap-auto-expunge-alist},
+which gives you a way to specify, on a per-mailbox basis, which
+@acronym{IMAP} mailboxes should have messages automatically removed after
+retrieving and which ones should leave the messages on the @acronym{IMAP}
+server.  The value of @code{vm-imap-auto-expunge-alist} should be a list of
+@acronym{IMAP} mailboxes and values specifying whether messages should be
+automatically deleted from the mailbox after retrieval.  The format of the
+list is:
 
 @example
 ((@var{MAILDROP} . @var{VAL}) (@var{MAILDROP} . @var{VAL}) ...)
 @end example
 
-@var{MAILDROP} should be an IMAP maildrop specification as described
+@var{MAILDROP} should be an @acronym{IMAP} maildrop specification as described
 in the documentation for the variable @code{vm-spool-files}.  If
-you have the IMAP password specified in the @code{vm-spool-files}
+you have the @acronym{IMAP} password specified in the @code{vm-spool-files}
 entry, you do not have to specify it here as well.  Use @samp{*}
 instead; VM will still understand that this mailbox is the same as
 the one in @code{vm-spool-files} that contains the password.
 
 @var{VAL} should be @code{nil} if retrieved messages should be left in the
-corresponding IMAP mailbox, @code{t} if retrieved messages should be
+corresponding @acronym{IMAP} mailbox, @code{t} if retrieved messages should be
 removed from the mailbox immediately after retrieval.
 
 Here is an example:
@@ -781,12 +784,12 @@ Here is an example:
 )
 @end example
 
-@unnumberedsubsubsec Multiple access to IMAP spool files
+@unnumberedsubsubsec Multiple access to @acronym{IMAP} spool files
 
-A principal idea behind the IMAP protocol is that messages can be
+A principal idea behind the @acronym{IMAP} protocol is that messages can be
 retained on the server so that you can read them from multiple
 locations, e.g., from office and home, or from other places on the
-Internet while you travel.  If you access your IMAP mailbox from
+Internet while you travel.  If you access your @acronym{IMAP} mailbox from
 multiple locations then you would need to plan your strategy for
 expunging messages carefully.  For instance, if you access your work
 mailbox from home, and both your office machine and home machine
@@ -794,41 +797,40 @@ expunge messages after retrieving them, then some of your mail will
 end up on your office machine and some on your home machine.  That is
 unlikely to be a successful strategy.
 
-The best way to access IMAP mailboxes from multiple locations is to
-use the facility of IMAP folders.  (@xref{POP and IMAP Folders}.)
-However, if you prefer to download all mail to local folders, then
-your best bet is to designate one of your machines as the principal
-location for downloading mail and treat the other machines as
-temporary mail reading sites.  In that case, you should set the
-principal downloading location to expunge messages on the server and
-set the other reading sites to leave the messages on the server
-intact.  You can also manually run @code{vm-expunge-imap-messages} if
-you are careful to remember which site should expunge messages and
-which site should retain them.
+The best way to access @acronym{IMAP} mailboxes from multiple locations is
+to use the facility of @acronym{IMAP} folders.  (@xref{@acronym{POP} and
+@acronym{IMAP} Folders}.)  However, if you prefer to download all mail to
+local folders, then your best bet is to designate one of your machines as
+the principal location for downloading mail and treat the other machines as
+temporary mail reading sites.  In that case, you should set the principal
+downloading location to expunge messages on the server and set the other
+reading sites to leave the messages on the server intact.  You can also
+manually run @code{vm-expunge-imap-messages} if you are careful to remember
+which site should expunge messages and which site should retain them.
 
-@cindex X-VM-IMAP-Retrieved header
-VM remembers the messages you have downloaded from an IMAP spool file
-so that it can avoid downloading them again on your next visit.  The
+@cindex X-VM-@acronym{IMAP}-Retrieved header
+VM remembers the messages you have downloaded from an @acronym{IMAP} spool
+file so that it can avoid downloading them again on your next visit.  The
 list of these messages is written into a special mail header titled
-@code{X-VM-IMAP-Retrieved} in your mail folder.  When you expunge IMAP
-messages, their entries are deleted from the list.  However, when you
-designate one of your machines as a reading site and never expunge
+@code{X-VM-@acronym{IMAP}-Retrieved} in your mail folder.  When you expunge
+@acronym{IMAP} messages, their entries are deleted from the list.  However,
+when you designate one of your machines as a reading site and never expunge
 messages from there, then the @code{X-VM-IMAP-Retrieved} header on
-that machine will only grow over time.  When the list gets excessively
-long, it will slow down the saving of folders.
+that machine will only grow over time.  When the list gets excessively long,
+it will slow down the saving of folders.
 
 @findex vm-prune-imap-retrieved-list
 To avoid the problem, you should prediodically run the command
-@code{vm-prune-imap-retrieved-list}.  It will examine the IMAP server
+@code{vm-prune-imap-retrieved-list}.  It will examine the @acronym{IMAP} server
 to see which messages still exist and retain only their information in
 the @code{X-VM-IMAP-Retrieved} header.
 
 
-@node Index Files, Folder types,IMAP Spool Files, Local Folders
+@node Index Files, Folder types,@acronym{IMAP} Spool Files, Local Folders
 @unnumberedsubsec Index Files
 @cindex index file
 
-VM can create an index file which describes the messages contained in
+VM can create an @dfn{index} file, which describes the messages contained in
 a folder.  If such an index file exists and is up to date, then VM
 will read the contents of the index file first while starting up in
 order to quickly form the summary of the folder.
@@ -891,19 +893,19 @@ content lengths may be unreliable, you must also set the variable
 @code{vm-trust-From_-with-Content-Length} to a non-Nil value in order to
 convince VM that you really want to use this format.
 
-Two additional formats are @code{mmdf} used by MMDF systems and
+Two additional formats are @code{mmdf} used by @acronym{MMDF} systems and
 @code{babyl} used by the Emacs Rmail mode.  These formats are recognized
 automatically when read from the file system.
 
 
-@node POP and IMAP Folders, Thunderbird Folders, Local Folders, Starting Up
-@section POP and IMAP Folders
+@node @acronym{POP} and @acronym{IMAP} Folders, Thunderbird Folders, Local Folders, Starting Up
+@section @acronym{POP} and @acronym{IMAP} Folders
 
 @cindex primary inbox
 @cindex maildrop specification
 @vindex vm-primary-inbox
 VM supports accessing remote mailboxes on mail servers via the Post
-Office Protocol (POP) and the Internet Message Access Protocol (IMAP).
+Office Protocol (@acronym{POP}) and the Internet Message Access Protocol (@acronym{IMAP}).
 Instead of a local file name, you can set the @code{vm-primary-inbox} to
 a string that tells VM how to access a server mailbox. Called a
 @dfn{maildrop specification}, the string is of one of the
@@ -914,17 +916,17 @@ following formats:
 ``imap:@var{HOST}:@var{PORT}:@var{MAILBOX}:@var{AUTH}:@var{USER}:@var{PASSWORD}''@end example
 
 @noindent Remote mailboxes accessed by VM in this fashion are referred
-to as @dfn{server folders} (and @dfn{POP folders} or @dfn{IMAP
+to as @dfn{server folders} (and @dfn{@acronym{POP} folders} or @dfn{@acronym{IMAP}
 folders}, more specifically).
 
 @cindex cache folders
 VM retrieves mail from the server folders into internal Emacs buffers
 for its normal operation.  It also saves copies of the folders on the
 local file system for speed of operation.  These are referred to as
-``cache'' folders.  However, the @emph{only}
+@dfn{cache folders}.  However, the @emph{only}
 permanent copies of the folders are on the mail server.  This should
-be contrasted with using server mailboxes as spool files (@pxref{POP
-Spool Files} and @pxref{IMAP Spool Files}), where the permanent
+be contrasted with using server mailboxes as spool files (@pxref{@acronym{POP}
+Spool Files} and @pxref{@acronym{IMAP} Spool Files}), where the permanent
 folders are on the @emph{local} file system and only the incoming mail
 is held on the servers.
 
@@ -935,42 +937,50 @@ store all your email.
 
 @anchor{maildrop specification}
 @unnumberedsubsec Maildrop specification
-The format of a POP or IMAP maildrop specification is as follows:
+The format of a @acronym{POP} or @acronym{IMAP} maildrop specification is as
+follows:
 
 @example
 ``pop:@var{HOST}:@var{PORT}:@var{AUTH}:@var{USER}:@var{PASSWORD}''
 ``imap:@var{HOST}:@var{PORT}:@var{MAILBOX}:@var{AUTH}:@var{USER}:@var{PASSWORD}''
 @end example
 
-@cindex SSL
 @noindent Replace @samp{pop} in the example with @samp{pop-ssl} to
-have VM speak POP over an SSL connection.  Use @samp{pop-ssh} to use
-POP over an SSH connection.  Similarly, replace @samp{imap} with
+have VM speak @acronym{POP} over an @acronym{SSL} connection.  Use @samp{pop-ssh} to use
+@acronym{POP} over an SSH connection.  Similarly, replace @samp{imap} with
 @samp{imap-ssl} or @samp{imap-ssh}, as needed.
+
+@cindex @acronym{SSL}
+@cindex @acronym{TLS}        
+@dfn{@acronym{SSL}} refers to a protocol called @dfn{secure sockets layer},
+which allows you to securely communicate with a mail server using encryption
+technology.  A newer version of the same protocol is called
+@dfn{@acronym{TLS}} (@dfn{transport layer security}).  We refer to both of
+them as ``@acronym{SSL}'' in this manual.
 
 @cindex stunnel
 @vindex vm-stunnel-program
-For SSL, you must either be using a version of Emacs that has SSL capability
-or have the stunnel program installed and the variable
+For @acronym{SSL}, you must either be using a version of Emacs that has @acronym{SSL} capability
+or have the @command{stunnel} program installed and the variable
 @code{vm-stunnel-program} naming it.  The default value of this variable,
 @samp{"stunnel"}, should be sufficient if the program is installed in your
-normal command search path.  In order to use the built-in SSL capability of
+normal command search path.  In order to use the built-in @acronym{SSL} capability of
 your Emacs version, set @code{vm-stunnel-program} to @code{nil}.
 
 @cindex SSH
 @vindex vm-ssh-program
 @vindex vm-ssh-remote-command
-For SSH, you must have the ssh program installed and the variable
-@code{vm-ssh-program} must name it in order for POP/IMAP over SSH to
-work.  When VM makes the SSH connection it must run a command on
-the remote server so that the SSH session is maintained long enough
-for the POP/IMAP connection to be established.  By default that command
-is @samp{"echo ready; sleep 10"}, but you can specify another
-command by setting @code{vm-ssh-remote-command}.  Whatever
-command you use must produce some output and hold the connection
-open long enough for VM to establish a port-forwarded connection
-to the mail server.  (SSH must be able to authenticate without a password,
-which means you must be using .shosts authentication or RSA.)
+For SSH, you must have the @command{ssh} program installed and the variable
+@code{vm-ssh-program} must name it in order for @acronym{POP}/@acronym{IMAP}
+over SSH to work.  When VM makes the SSH connection it must run a command on
+the remote server so that the SSH session is maintained long enough for the
+@acronym{POP}/@acronym{IMAP} connection to be established.  By default that
+command is @samp{"echo ready; sleep 10"}, but you can specify another
+command by setting @code{vm-ssh-remote-command}.  Whatever command you use
+must produce some output and hold the connection open long enough for VM to
+establish a port-forwarded connection to the mail server.  (SSH must be able
+to authenticate without a password, which means you must be using .shosts
+authentication or RSA.)
 
 @var{HOST} is the host name of the mail server.  
 
@@ -978,28 +988,28 @@ which means you must be using .shosts authentication or RSA.)
 @var{PORT} is the TCP port number to connect to.  The normal port
 numbers are:
 @multitable @columnfractions 0.20 0.80
-@item 110 @tab for POP
-@item 995 @tab for POP over SSL
-@item 143 @tab for IMAP
-@item 993 @tab for IMAP over SSL
+@item 110 @tab for @acronym{POP}
+@item 995 @tab for @acronym{POP} over @acronym{SSL}
+@item 143 @tab for @acronym{IMAP}
+@item 993 @tab for @acronym{IMAP} over @acronym{SSL}
 @end multitable
 
-@var{MAILBOX} is the name of the mailbox on the IMAP server.  This should
-be @samp{"inbox"}, to access your default IMAP mailbox on the
-server.  No @var{MAILBOX} component is needed for POP maildrops
-because POP does not support multiple mailboxes.
+@var{MAILBOX} is the name of the mailbox on the @acronym{IMAP} server.  This
+should be @samp{"inbox"}, to access your default @acronym{IMAP} mailbox on
+the server.  No @var{MAILBOX} component is needed for @acronym{POP}
+maildrops because @acronym{POP} does not support multiple mailboxes.
 
 @vindex vm-pop-md5-program
 @var{AUTH} is the authentication method used to convince the
 server you should have access to the mailbox.  Acceptable
-values for POP are @samp{pass}, @samp{rpop} and @samp{apop}.  For
+values for @acronym{POP} are @samp{pass}, @samp{rpop} and @samp{apop}.  For
 @samp{pass}, the @var{PASSWORD} is sent to the server with
-the POP PASS command.  For @samp{rpop}, the @var{PASSWORD}
-should be the string to be sent to the server via the RPOP
+the @acronym{POP} PASS command.  For @samp{rpop}, the @var{PASSWORD}
+should be the string to be sent to the server via the @acronym{RPOP}
 command.  In this case the string is not really a secret;
 authentication is done by other means.  For @samp{apop}, an
 MD5 digest of the @var{PASSWORD} appended to the server
-time-stamp will be sent to the server with the APOP command.
+time-stamp will be sent to the server with the @acronym{APOP} command.
 If Emacs does not have built in MD5 support, you will have
 to set the value of @code{vm-pop-md5-program} appropriately
 to point at the program that will generate the MD5 digest
@@ -1007,20 +1017,20 @@ that VM needs.
 
 @cindex CRAM-MD5
 @vindex vm-imap-session-preauth-hook
-Acceptable values of @var{AUTH} for IMAP
+Acceptable values of @var{AUTH} for @acronym{IMAP}
 are @samp{"preauth"}, @samp{"cram-md5"}, and @samp{"login"}.
 @samp{"preauth"} causes VM to skip the authentication stage of
 the protocol with the assumption that the session was
 authenticated in some way external to VM.  The hook
 @code{vm-imap-session-preauth-hook} is run, and it is expected to
-return a process connected to an authenticated IMAP session.
+return a process connected to an authenticated @acronym{IMAP} session.
 @samp{"cram-md5} tells VM to use the CRAM-MD5 authentication
 method as specified in RFC 2195.  The advantage of this method
 over the @samp{"login"} method is that it avoids sending your
-password over the net unencrypted.  Not all IMAP servers support
+password over the net unencrypted.  Not all @acronym{IMAP} servers support
 @samp{"cram-md5"}; if you're not sure, ask your mail
 administrator or just try it.  The other value, @samp{"login"},
-tells VM to use the IMAP LOGIN command for authentication, which
+tells VM to use the @acronym{IMAP} LOGIN command for authentication, which
 sends your user name and password in clear text to the server.
 
 @var{USER} is the user name used in authentication methods that
@@ -1040,12 +1050,12 @@ session.
 @cindex auth-source library
 @cindex authinfo
 @cindex passwords, storing
-If your environment has the @code{EasyPG} utility and your version of Emacs
-supports it, i.e., has the @code{epa-file} and @code{auth-source} libraries,
+If your environment has the @dfn{EasyPG} utility and your version of Emacs
+supports it, i.e., has the @samp{epa-file} and @samp{auth-source} libraries,
 then you can store password information in a file such as
-@code{.authinfo.gpg}.  The @code{EasyPG} protocol allows you to store
+@file{.authinfo.gpg}.  The @samp{EasyPG} protocol allows you to store
 this information in an encrypted form so that it cannot be read by third
-parties.  Each line in the @code{.authinfo.gpg} file should be of the
+parties.  Each line in the @file{.authinfo.gpg} file should be of the
 form
 
 @example
@@ -1073,12 +1083,12 @@ connections to mail servers, it is not uncommon for problems to arise.
 @cindex stunnel
 To find out what could be going wrong, you can look at the Emacs buffer that
 store a trace of the session with mail server.  Such buffers have names
-beginning with ``trace of POP session'' or ``trace of IMAP session''.  There
-could be multiple buffers of this kind for different servers and multiple
-sessions.  In the trace buffer, you will find the commands that VM sent to
-the server and the responses it has received.  Typical problems are protocol
-mismatches between VM and the mail server, or malfunctions in other
-components such as the @code{stunnel} program.
+beginning with ``trace of @acronym{POP} session'' or ``trace of
+@acronym{IMAP} session''.  There could be multiple buffers of this kind for
+different servers and multiple sessions.  In the trace buffer, you will find
+the commands that VM sent to the server and the responses it has received.
+Typical problems are protocol mismatches between VM and the mail server, or
+malfunctions in other components such as the @code{stunnel} program.
 
 @vindex vm-pop-keep-trace-buffer
 @vindex vm-imap-keep-trace-buffer
@@ -1088,13 +1098,13 @@ such server sessions.  The default is 1.  Setting these variables to nil
 will have the effect that no trace buffers are kept.
 
 @menu
-* POP Folders::         How to use mailboxes on POP servers
-* IMAP Folders::        How to use mail folders on IMAP servers
+* @acronym{POP} Folders::         How to use mailboxes on @acronym{POP} servers
+* @acronym{IMAP} Folders::        How to use mail folders on @acronym{IMAP} servers
 @end menu
 
-@node POP Folders, IMAP Folders, POP and IMAP Folders, POP and IMAP Folders
-@unnumberedsubsec POP Folders
-@cindex POP
+@node @acronym{POP} Folders, @acronym{IMAP} Folders, @acronym{POP} and @acronym{IMAP} Folders, @acronym{POP} and @acronym{IMAP} Folders
+@unnumberedsubsec @acronym{POP} Folders
+@cindex @acronym{POP}
 @cindex message attributes
 
 
@@ -1102,27 +1112,27 @@ will have the effect that no trace buffers are kept.
 @findex vm-save-folder
 @vindex vm-folder-directory
 @vindex vm-pop-folder-cache-directory
-The command @code{vm-visit-pop-folder} allows you to visit a POP
-mailbox as a folder.  When you visit a POP folder, VM will download
+The command @code{vm-visit-pop-folder} allows you to visit a @acronym{POP}
+mailbox as a folder.  When you visit a @acronym{POP} folder, VM will download
 copies of the messages that it finds there for you to read.  These
 messages are saved locally in cache folders, in the directory
 specified by @code{vm-pop-folder-cache-directory} (or
 @code{vm-folder-directory} if the former is not defined).
 @vindex vm-pop-folder-cache-directory
 If you delete and expunge messages in the folder, the
-corresponding messages on the POP server will be removed when you
+corresponding messages on the @acronym{POP} server will be removed when you
 save the changes with @code{vm-save-folder}.
 
-Message attributes (new, replied, filed, etc.) and labels cannot be
-stored on the POP server but they will be maintained in the cache folder.
-This means that if you access the same POP mailbox from 
-multiple locations on the internet, you will see different attributes
-at different locations.  To be able to store message attributes and
-labels on the server, you should use IMAP folders (@ref{IMAP Folders})
-resident on an IMAP server.
+@dfn{Message attributes} (new, replied, filed, etc.) and labels cannot be
+stored on the @acronym{POP} server but they will be maintained in the cache
+folder.  This means that if you access the same @acronym{POP} mailbox from
+multiple locations on the internet, you will see different attributes at
+different locations.  To be able to store message attributes and labels on
+the server, you should use @acronym{IMAP} folders (@ref{@acronym{IMAP}
+Folders}) resident on an @acronym{IMAP} server.
 
 @vindex vm-pop-folder-alist
-In order for VM to know about POP folders that you can access, you
+In order for VM to know about @acronym{POP} folders that you can access, you
 must declare them by setting the variable @code{vm-pop-folder-alist}.
 The variable's value should be an associative list of the form:
 
@@ -1130,7 +1140,8 @@ The variable's value should be an associative list of the form:
  ((@var{POPDROP} @var{NAME}) ...)
 @end example
 
-@var{POPDROP} is a POP maildrop specification (@ref{maildrop specification}).
+@var{POPDROP} is a @acronym{POP} maildrop specification (@ref{maildrop
+specification}).
 
 @var{NAME} is a string that should give a less cumbersome name that you
 will use to refer to this maildrop when using @code{vm-visit-pop-folder}.
@@ -1148,43 +1159,43 @@ For example:
 
 @samp{Yahoo! mail} and @samp{local mail} are what you would type
 when @code{vm-visit-pop-folder} asks for a folder name.  There is no
-need to specify the password for POP accounts in this definition.
+need to specify the password for @acronym{POP} accounts in this definition.
 
-@node IMAP Folders,, POP Folders, POP and IMAP Folders
-@unnumberedsubsec IMAP Folders
-@cindex IMAP
+@node @acronym{IMAP} Folders,, @acronym{POP} Folders, @acronym{POP} and @acronym{IMAP} Folders
+@unnumberedsubsec @acronym{IMAP} Folders
+@cindex @acronym{IMAP}
 @cindex message attributes 
 @cindex message labels
 
 @findex vm-visit-imap-folder
-The command @code{vm-visit-imap-folder} allows you to visit an IMAP
-mailbox as a folder.  The name of the IMAP mailbox should be input via
-the minibuffer in the format account-name:folder-name.  Here,
-``account-name'' is the name of an IMAP account declared in
-@code{vm-imap-account-alist} and ``folder-name'' is the name of an IMAP
-mailbox in this account.
+The command @code{vm-visit-imap-folder} allows you to visit an
+@acronym{IMAP} mailbox as a folder.  The name of the @acronym{IMAP} mailbox
+should be input via the minibuffer in the format account-name:folder-name.
+Here, ``account-name'' is the name of an @acronym{IMAP} account declared in
+@code{vm-imap-account-alist} and ``folder-name'' is the name of an
+@acronym{IMAP} mailbox in this account.
 
 @findex vm-save-folder
 @vindex vm-folder-directory
 @vindex vm-imap-folder-cache-directory
-When you visit an IMAP folder, VM will
+When you visit an @acronym{IMAP} folder, VM will
 download copies of the messages that it finds there for you to read.
 These messages are saved locally in a cache folder on the disk, in the 
 directory specified by @code{vm-imap-folder-cache-directory} (or
 @code{vm-folder-directory} if the former is not defined).
 @vindex vm-imap-folder-cache-directory
 If you delete and expunge messages, these changes are made to both the
-cache folder and the folder on the IMAP server when saved
+cache folder and the folder on the @acronym{IMAP} server when saved
 with @code{vm-save-folder}.
 
-Message attributes (new, replied, filed, etc.) are stored on the IMAP
+Message attributes (new, replied, filed, etc.) are stored on the @acronym{IMAP}
 server and are also cached locally.  Message labels are also stored on
-the IMAP server as user-defined permanent flags.  (This assumes that
-the IMAP server has the ability to store user-defined permanent
+the @acronym{IMAP} server as user-defined permanent flags.  (This assumes that
+the @acronym{IMAP} server has the ability to store user-defined permanent
 flags.)
 
 @vindex vm-imap-account-alist
-In order for VM to know about IMAP accounts that you can access, you
+In order for VM to know about @acronym{IMAP} accounts that you can access, you
 must declare them by setting the variable @code{vm-imap-account-alist}.
 The variable's value should be an associative list of the form:
 
@@ -1192,7 +1203,7 @@ The variable's value should be an associative list of the form:
  ((@var{IMAPDROP} @var{NAME}) ...)
 @end example
 
-@var{IMAPDROP} is an IMAP maildrop specification (@ref{maildrop
+@var{IMAPDROP} is an @acronym{IMAP} maildrop specification (@ref{maildrop
   specification}). 
 
 @var{NAME} is a string that should give a less cumbersome name that you
@@ -1211,31 +1222,31 @@ For example:
 @noindent The mailbox and password fields (@samp{*} in the example) are
 ignored.  When @code{vm-visit-imap-folder} asks for a folder name, you
 enter an account name followed by ``:'' and a folder name.  Any folder
-that is accessible to you on the IMAP server can be specified.  For
+that is accessible to you on the @acronym{IMAP} server can be specified.  For
 example, @code{becky:inbox} or @code{crickle:drafts}.
 
 @vindex vm-imap-refer-to-inbox-by-account-name
-When you visit an IMAP folder inside VM, the folder is referred to by
-its folder name as it exists on the server.  For example, visiting
-@code{becky:INBOX} creates a folder called @code{INBOX} inside VM.  If
-you visit multiple IMAP accounts within a VM session, then you would end up
-with multiple folder buffers all named @code{INBOX}.  To avoid this
-problem, you can set the
-variable @code{vm-imap-refer-to-inbox-by-account-name} to t, which
-causes the @code{INBOX} folder buffers to be named by their IMAP account names
-instead.  For example, visiting @code{becky:INBOX} would create a VM
-folder named @code{becky} and visiting @code{crickle:INBOX} would create
-a VM folder named @code{crickle}. 
+When you visit an @acronym{IMAP} folder inside VM, the folder is referred to
+by its folder name as it exists on the server.  For example, visiting
+@code{becky:INBOX} creates a folder called @code{INBOX} inside VM.  If you
+visit multiple @acronym{IMAP} accounts within a VM session, then you would
+end up with multiple folder buffers all named @code{INBOX}.  To avoid this
+problem, you can set the variable
+@code{vm-imap-refer-to-inbox-by-account-name} to t, which causes the
+@code{INBOX} folder buffers to be named by their @acronym{IMAP} account
+names instead.  For example, visiting @code{becky:INBOX} would create a VM
+folder named @code{becky} and visiting @code{crickle:INBOX} would create a
+VM folder named @code{crickle}.
 
 @vindex vm-imap-server-list
 The customization variable @code{vm-imap-server-list}, used in older
 versions of VM, is deprecated.  Please use @code{vm-imap-account-alist}
 instead.
 
-@anchor{IMAP Synchronization}
-@unnumberedsubsec IMAP Synchronization
+@anchor{@acronym{IMAP} Synchronization}
+@unnumberedsubsec @acronym{IMAP} Synchronization
 @vindex vm-get-new-mail
-The cache folder and the folder on the IMAP server are partially
+The cache folder and the folder on the @acronym{IMAP} server are partially
 synchronized every time @code{vm-get-new-mail} is invoked.  This involves
 (i) writing the changed attributes and labels to the server, (ii) updating
 the attributes and labels in the cache folder based on the server data,
@@ -1248,60 +1259,59 @@ If the variable is set to nil then @code{vm-get-new-mail} simply
 retrieves any new messages.
 
 @findex vm-save-folder
-The cache folder and the folder on the IMAP server are also synchronized
-every time @code{vm-save-folder} is invoked.  This involves (i) writing the
-changed attributes and labels to the server, (ii) updating the attributes
-and labels in the cache folder based on the server data, (iii) expunging
-messages in the cache folder that have been expunged on the server, (iv)
-deleting and expunging the locally expunged messages on the server folder,
-and finally, (v) saving a copy of the folder on the file system.
+The cache folder and the folder on the @acronym{IMAP} server are also
+synchronized every time @code{vm-save-folder} is invoked.  This involves (i)
+writing the changed attributes and labels to the server, (ii) updating the
+attributes and labels in the cache folder based on the server data, (iii)
+expunging messages in the cache folder that have been expunged on the
+server, (iv) deleting and expunging the locally expunged messages on the
+server folder, and finally, (v) saving a copy of the folder on the file
+system.
 
 @findex vm-imap-synchronize
 The command @code{vm-imap-synchronize} can always be used to perform
 full synchronization with the server.
 
-After fetching messages from the IMAP server into the cache folder, it
-is possible to visit the cache folder as if it were a normal folder.  VM
-can operate on the cache folder without contacting the server.  This
-allows offline operation on the mail folders.  When the IMAP server is
-connected again, one should run @kbd{C-u M-x vm-imap-synchronize}, i.e.,
-call it
-with a @emph{prefix argument}.  This causes @emph{all} the message attributes
-and labels to be written to the server, since it may not be known
-which of them have actually changed during the offline operation.
+After fetching messages from the @acronym{IMAP} server into the cache
+folder, it is possible to visit the cache folder as if it were a normal
+folder.  VM can operate on the cache folder without contacting the server.
+This allows offline operation on the mail folders.  When the @acronym{IMAP}
+server is connected again, one should run @kbd{C-u M-x vm-imap-synchronize},
+i.e., call it with a @emph{prefix argument}.  This causes @emph{all} the
+message attributes and labels to be written to the server, since it may not
+be known which of them have actually changed during the offline operation.
 Similarly, @emph{all} the messages that may have been expunged in the cache
 folder are expunged on the server.
 
-@anchor{UIDVALIDITY}
-@unnumberedsubsec UIDVALIDITY
+@anchor{@acronym{UIDVALIDITY}}
+@unnumberedsubsec @acronym{UIDVALIDITY}
 
-@cindex UIDVALIDITY
-Messages on an IMAP server have unique id numbers called UID's.
-In addition, a second id number called @dfn{UIDVALIDITY} allows the
-server to renumber messages when the id numbers within a particular
-UIDVALIDITY are exhausted.  All the messages on the server at any
-given time have the same UIDVALIDITY value.  When the server needs to
-renumber the messages, it changes the UIDVALIDITY value and issues new
-UID numbers for all the messages with new UIDVALIDITY.  This happens
-but rarely because there are over two billion UID's within each
-UIDVALIDITY.
+@cindex @acronym{UIDVALIDITY}
+Messages on an @acronym{IMAP} server have unique id numbers called UID's.
+In addition, a second id number called @dfn{@acronym{UIDVALIDITY}} allows
+the server to renumber messages when the id numbers within a particular
+@acronym{UIDVALIDITY} are exhausted.  All the messages on the server at any
+given time have the same @acronym{UIDVALIDITY} value.  When the server needs
+to renumber the messages, it changes the @acronym{UIDVALIDITY} value and
+issues new @acronym{UID} numbers for all the messages with new
+@acronym{UIDVALIDITY}.  This happens but rarely because there are over two
+billion UID's within each @acronym{UIDVALIDITY}.
 
-When the UIDVALIDITY changes on the IMAP server, VM has no easy way to
-identify the new UID's for the messages in its cache.  So, it marks
-all the messages in the cache as invalid and refreshes the cache with
-new copies of messages from the server.  This is a time-consuming
-operation but it happens only rarely.  VM warns you before it
-refreshes the cache and asks for confirmation.  You can abort the
-operation if you cannot spare the time, but note that it is not
-possible to perform any changes to the IMAP folder until the cache is
-refreshed.  You might consider setting the @code{vm-enable-external-messages}
-flag to @code{(imap)} before you refresh the cache so that it will be
-quicker. @pxref{External Messages}.
-
+When the @acronym{UIDVALIDITY} changes on the @acronym{IMAP} server, VM has
+no easy way to identify the new UID's for the messages in its cache.  So, it
+marks all the messages in the cache as invalid and refreshes the cache with
+new copies of messages from the server.  This is a time-consuming operation
+but it happens only rarely.  VM warns you before it refreshes the cache and
+asks for confirmation.  You can abort the operation if you cannot spare the
+time, but note that it is not possible to perform any changes to the
+@acronym{IMAP} folder until the cache is refreshed.  You might consider
+setting the @code{vm-enable-external-messages} flag to @code{(imap)} before
+you refresh the cache so that it will be quicker. @pxref{External Messages}.
 
 
 
-@node Thunderbird Folders, External Messages, POP and IMAP Folders, Starting Up
+
+@node Thunderbird Folders, External Messages, @acronym{POP} and @acronym{IMAP} Folders, Starting Up
 @section Thunderbird Folders
 
 @cindex Thunderbird
@@ -1309,7 +1319,7 @@ VM can work with local folders managed by Mozilla Thunderbird.  You can
 find the location of Thunderbird's folders by examining the Account
 Settings for ``Local Folders'' inside Thunderbird.
 
-Thunderbird stores the folders in the @code{From_} folder type.
+Thunderbird stores the folders in the @samp{From_} folder type.
 @xref{Folder types}.  Within such folders, Thunderbird stores the
 message status flags (message attributes such as whether a message is
 read, replied to, deleted etc.) under special header fields called
@@ -1386,12 +1396,12 @@ messages may be maintained by VM.
 
 @vindex vm-imap-max-message-size
 As of version 8.2.0, the only context in which external messages are
-implemented is that of IMAP folders.  Setting
-@code{vm-enable-external-messages} to @code{(imap)} enables IMAP messages to
-be maintained externally.  When new messages are retrieved, this causes all
-messages with size below @code{vm-imap-max-message-size} to be loaded
-immediately, and larger messages will be left on the server to be fetched on
-demand.  To treat all messages as external messages, you can set
+implemented is that of @acronym{IMAP} folders.  Setting
+@code{vm-enable-external-messages} to @code{(imap)} enables @acronym{IMAP}
+messages to be maintained externally.  When new messages are retrieved, this
+causes all messages with size below @code{vm-imap-max-message-size} to be
+loaded immediately, and larger messages will be left on the server to be
+fetched on demand.  To treat all messages as external messages, you can set
 @code{vm-imap-max-message-size} to 0.
 
 @vindex vm-fetched-message-limit
@@ -1423,11 +1433,11 @@ copy retrieved from the server.
 
 @findex vm-get-new-mail
 @kindex g
-Pressing @kbd{g} runs @code{vm-get-new-mail}, which will retrieve mail
-from all the spool files associated with the current folder.
-@xref{Local Folders}.  For POP and IMAP folders, any newly arrived
-messages at the mail server will be incorporated into the local copy
-of the folders.
+Pressing @kbd{g} runs @code{vm-get-new-mail}, which will retrieve mail from
+all the spool files associated with the current folder.  @xref{Local
+Folders}.  For @acronym{POP} and @acronym{IMAP} folders, any newly arrived
+messages at the mail server will be incorporated into the local copy of the
+folders.
 
 @vindex vm-auto-get-new-mail
 If the value of the variable @code{vm-auto-get-new-mail} is non-@code{nil} VM
@@ -1459,9 +1469,9 @@ situation, then you should set the variable
 @cindex auto-save
 
 When Emacs crashes, its last action before dying is to try to
-write out an auto-save file that contains changes to files that
+write out an @dfn{auto-save} file that contains changes to files that
 you were editing.  VM folders are file buffers inside Emacs, so
-folders are auto-saved also.  For VM folders, ``changes''
+folders are auto-saved also.  For VM folders, @dfn{changes}
 means attribute changes, label additions and deletions, message
 edits, and expunges.  VM keeps track of whether a message is new
 or old, whether it has been replied to, whether it is flagged
@@ -1490,7 +1500,7 @@ read-only mode prevents you from modifying the folder, which
 in turn prevents Emacs from wanting to write new changes to
 the auto-save file.  VM will not retrieve new mail for a folder
 that is in read-only mode.  VM also skips summary
-generation and MIME decoding to help catch your attention.
+generation and @acronym{MIME} decoding to help catch your attention.
 
 @findex vm-recover-folder
 @findex recover-file
@@ -1528,16 +1538,15 @@ buffers.  The folder will be taken out of read-only mode and you can
 read and retrieve your mail normally, ignoring the auto-save file that is
 still on disk.
 
-If you are visiting a POP or IMAP folder (rather than a local folder)
-that was modified during a previous crash, the process of recovery is
-similar.  However, there will be less useful information in the
-auto-save file in this case.  When you synchronize an IMAP folder with
-the server, only the changes made during the current VM session are
-saved to the server.  Changes stored in the auto-save file were made in
-a previous session of VM and, so, cannot be saved to the server.  So,
-saying ``no'' to the recovery question and toggling the read-only
-status (@kbd{C-x C-q}) is a better option in the case of server
-folders.
+If you are visiting a @acronym{POP} or @acronym{IMAP} folder (rather than a
+local folder) that was modified during a previous crash, the process of
+recovery is similar.  However, there will be less useful information in the
+auto-save file in this case.  When you synchronize an @acronym{IMAP} folder
+with the server, only the changes made during the current VM session are
+saved to the server.  Changes stored in the auto-save file were made in a
+previous session of VM and, so, cannot be saved to the server.  So, saying
+``no'' to the recovery question and toggling the read-only status (@kbd{C-x
+C-q}) is a better option in the case of server folders.
 
 @unnumberedsubsec Recovering Message Compositions
 
@@ -1663,12 +1672,12 @@ Other commands to select messages:
 
 @table @kbd
 @findex vm-goto-message
-@kindex @key{RET}
-@item RET (@code{vm-goto-message})
+@kindex RET
+@item @key{RET} (@code{vm-goto-message})
 Go to message number @var{n}.  @var{n} is the prefix argument, if
 provided, otherwise it is prompted for in the minibuffer.
 @findex vm-goto-message-last-seen
-@kindex @key{TAB}
+@kindex TAB
 @item TAB (@code{vm-goto-message-last-seen})
 Go to message last previewed or read.
 @findex vm-next-message-no-skip
@@ -1713,7 +1722,7 @@ presentation is done in two stages: @dfn{previewing} and @dfn{paging}.
 @menu
 * Previewing::                  Customizing message previews.
 * Paging::                      Viewing the current message.
-* MIME Messages::               Using VM's MIME display features.
+* @acronym{MIME} Messages::               Using VM's @acronym{MIME} display features.
 @end menu
 
 @node Previewing, Paging, Reading Messages, Reading Messages
@@ -1786,11 +1795,11 @@ have VM preview all messages, set the value of
 Typing @kbd{t} (@code{vm-expose-hidden-headers}) makes VM toggle
 between exposing and hiding headers that would ordinarily be hidden.
 
-@node Paging, MIME Messages, Previewing, Reading Messages
+@node Paging, @acronym{MIME} Messages, Previewing, Reading Messages
 @section Paging
 
-@kindex @key{SPC}
-@kindex @key{DEL}
+@kindex SPC
+@kindex DEL
 @vindex vm-auto-next-message
 Typing @key{SPC} during a message preview exposes the body of the
 message.  If the message was new or previously unread, it will be
@@ -1842,7 +1851,7 @@ faces}.)
 Sometimes you will receive messages that contain lines that are
 too long to fit on your screen without wrapping.  Setting
 @code{vm-word-wrap-paragraphs} to t will cause VM to use the 
-@code{longlines.el} library by Grossjohann, Schroeder and Yidong to
+@file{longlines.el} library by Grossjohann, Schroeder and Yidong to
 carry out word wrapping.  You must have this library installed
 somewhere on your @code{load-path}.  Another way to deal with the
 problem is to use the @code{visual-line-mode} in Emacs 23.  You can
@@ -1865,19 +1874,19 @@ fill column that VM uses is controlled by
 @code{fill-column}, this variable is not buffer-local by default.
 
 
-@node MIME Messages,, Paging, Reading Messages
-@section Reading MIME Messages
+@node @acronym{MIME} Messages,, Paging, Reading Messages
+@section Reading @acronym{MIME} Messages
 
-@cindex MIME
+@cindex @acronym{MIME}
 @vindex vm-display-using-mime
-@dfn{MIME} is a set of extensions to the standard Internet message
-format that allows reliable transmission of arbitrary data including
-images, audio and video, as well as ordinary text in different
-languages.  By default, VM will recognize MIME encoded messages and
-display them as specified by the various MIME standards specifications.
-This can be turned off by setting the variable
-@code{vm-display-using-mime} to @code{nil} and VM will then display MIME
-messages as plain text messages.
+@dfn{@acronym{MIME}} is a set of extensions to the standard Internet message
+format that allows reliable transmission of arbitrary data including images,
+audio and video, as well as ordinary text in different languages.  By
+default, VM will recognize @acronym{MIME} encoded messages and display them
+as specified by the various @acronym{MIME} standards specifications.  This
+can be turned off by setting the variable @code{vm-display-using-mime} to
+@code{nil} and VM will then display @acronym{MIME} messages as plain text
+messages.
 
 @vindex vm-mime-base64-decoder-program
 @vindex vm-mime-base64-encoder-program
@@ -1889,47 +1898,43 @@ messages as plain text messages.
 @vindex vm-mime-qp-encoder-switches
 @vindex vm-mime-uuencode-decoder-program
 @vindex vm-mime-uuencode-decoder-switches
-At its most basic MIME is a set of transfer encodings used to ensure
-error free transport, and a set of content types.  VM understands the
-two standard MIME transport encodings, Quoted-Printable and BASE64, and
-will decode messages that use them as necessary.  VM also will
-try to recognize and decode messages using the UNIX ``uuencode''
-encoding system.  While this is not an official MIME transfer
-encoding and never will be, enough old mailers still use it
-that it is worthwhile to attempt to decode it.
-VM has Emacs-Lisp based Quoted-Printable and BASE64 encoders and
-decoders, but you can have VM use external programs to perform
-these tasks and the process will almost certainly be faster.
-The variables @code{vm-mime-qp-decoder-program},
-@code{vm-mime-qp-decoder-switches},
-@code{vm-mime-qp-encoder-program},
-@code{vm-mime-qp-encoder-switches},
+At its most basic @acronym{MIME} is a set of transfer encodings used to
+ensure error free transport, and a set of content types.  VM understands the
+two standard @acronym{MIME} transport encodings, Quoted-Printable and
+BASE64, and will decode messages that use them as necessary.  VM also will
+try to recognize and decode messages using the UNIX ``uuencode'' encoding
+system.  While this is not an official @acronym{MIME} transfer encoding and
+never will be, enough old mailers still use it that it is worthwhile to
+attempt to decode it.  VM has Emacs-Lisp based Quoted-Printable and BASE64
+encoders and decoders, but you can have VM use external programs to perform
+these tasks and the process will almost certainly be faster.  The variables
+@code{vm-mime-qp-decoder-program}, @code{vm-mime-qp-decoder-switches},
+@code{vm-mime-qp-encoder-program}, @code{vm-mime-qp-encoder-switches},
 @code{vm-mime-base64-decoder-switches},
 @code{vm-mime-base64-encoder-switches},
 @code{vm-mime-base64-decoder-program},
-@code{vm-mime-base64-encoder-program},
-tell VM which programs to use
-and what command line switches to pass to them.  There are C
-programs at VM's distribution sites on the Internet to handle BASE64
-and Quoted-Printable.  VM does not have a built-in ``uuencode''
-decoder, so @code{vm-mime-uuencode-decoder-program} must be set
-non-@code{nil} for VM to decode uuencoded MIME objects.
+@code{vm-mime-base64-encoder-program}, tell VM which programs to use and
+what command line switches to pass to them.  There are C programs at VM's
+distribution sites on the Internet to handle BASE64 and Quoted-Printable.
+VM does not have a built-in ``uuencode'' decoder, so
+@code{vm-mime-uuencode-decoder-program} must be set non-@code{nil} for VM to
+decode uuencoded @acronym{MIME} objects.
 
 @menu
-* Viewing MIME::                Decoding MIME for viewing
-* Attachments::                 Operating on MIME attachments
+* Viewing @acronym{MIME}::                Decoding @acronym{MIME} for viewing
+* Attachments::                 Operating on @acronym{MIME} attachments
 * Internal display::            Viewing attachments internally in Emacs
 * External display::            Viewing attachments with external viewers
 * Displaying images::           Using Emacs facilities for images
-* MIME type conversion::        Converting external attachments to internal
-* Character sets::              MIME character sets
-* multipart/alternative::       MIME content in alternative formats
-* Inferring MIME types::        Inferring types from attachment file names
+* @acronym{MIME} type conversion::        Converting external attachments to internal
+* Character sets::              @acronym{MIME} character sets
+* multipart/alternative::       @acronym{MIME} content in alternative formats
+* Inferring @acronym{MIME} types::        Inferring types from attachment file names
 @end menu
 
 
-@node Viewing MIME, Attachments,, MIME Messages
-@unnumberedsubsec Viewing MIME messages
+@node Viewing @acronym{MIME}, Attachments,, @acronym{MIME} Messages
+@unnumberedsubsec Viewing @acronym{MIME} messages
 By default VM will display as many content types as possible
 within Emacs.  Images and audio are also supported if
 support for images and audio has been compiled in.  Types that
@@ -1939,7 +1944,7 @@ type that can, or be displayed using an external viewer.
 @vindex vm-auto-decode-mime-messages
 @vindex vm-mime-decode-for-preview
 @kindex D
-The first step in displaying a MIME message is decoding it to
+The first step in displaying a @acronym{MIME} message is decoding it to
 determine what object types it contains.  The variable
 @code{vm-auto-decode-mime-messages} controls when this happens.
 A value of @code{t} means VM should decode the message as soon as
@@ -1947,48 +1952,49 @@ the message body is exposed, or during previewing if
 @code{vm-mime-decode-for-preview} is also set non-@code{nil}.  A
 @code{nil} value means wait until decoding is explicitly
 requested.  Type @kbd{D} (@code{vm-decode-mime-message}) to
-manually initiate MIME decoding.
+manually initiate @acronym{MIME} decoding.
 
 @vindex vm-mime-button-format-alist
-@cindex MIME button
-When VM does not display a MIME object immediately, it displays a @b{MIME
-button} or tag line in its place that describes the object and what you
-have to do to display it.  The value of @code{vm-mime-button-format-alist}
-determines the format of the text in those buttons.
+@cindex @acronym{MIME} button
+When VM does not display a @acronym{MIME} object immediately, it displays a
+@b{@acronym{MIME} button} or tag line in its place that describes the object
+and what you have to do to display it.  The value of
+@code{vm-mime-button-format-alist} determines the format of the text in
+those buttons.
 
-After decoding you will see either the decoded MIME objects or
+After decoding you will see either the decoded @acronym{MIME} objects or
 button lines that must be activated to attempt display of the
-MIME object.  
+@acronym{MIME} object.  
 
 @vindex vm-mime-auto-displayed-content-types
 @vindex vm-mime-auto-displayed-content-type-exceptions
-The variable @code{vm-mime-auto-displayed-content-types} specifies the
-types that are displayed immediately.  Its value should be a list of
-MIME content types that should be displayed immediately after decoding.
-Other types will be displayed as a button that you must activate to
-display the object.  The variable
-@code{vm-mime-auto-displayed-content-type-exceptions} can be used to
-specify any exceptions to the types listed in
+The variable @code{vm-mime-auto-displayed-content-types} specifies the types
+that are displayed immediately.  Its value should be a list of
+@acronym{MIME} content types that should be displayed immediately after
+decoding.  Other types will be displayed as a button that you must activate
+to display the object.  The variable
+@code{vm-mime-auto-displayed-content-type-exceptions} can be used to specify
+any exceptions to the types listed in
 @code{vm-mime-auto-displayed-content-types}.
 
 @cindex Content-Disposition
 @vindex vm-mime-honor-content-disposition
 @cindex attachments
-The MIME objects in messages come with a header called
-@strong{Content-Disposition}, which specifies whether the MIME object should
-be displayed as part of the message display (the ``inline'' disposition) or
-whether it should be displayed as a button that should be invoked to view
-the object (the ``attachment'' disposition).  However, not all mail clients
-do a good job of adding this header.  It is not uncommon to find mail
-clients that declare all MIME objects to be ``inline'' and others that
-declare all MIME objects to be ``attachment''.  The variable
-@code{vm-mime-honor-content-disposition} can be customized to tell VM
-whether it should follow the suggestions in the Content-Disposition headers.
-A value of @code{t} means that they should be always honored and a value of
-@code{nil} means that they should be ignored.  It can also be set to the
-symbol @code{internal-only}, which means that the Content-Disposition
+The @acronym{MIME} objects in messages come with a header called
+@dfn{Content-Disposition}, which specifies whether the @acronym{MIME} object
+should be displayed as part of the message display (the ``inline''
+disposition) or whether it should be displayed as a button that should be
+invoked to view the object (the @dfn{attachment} disposition).  However, not
+all mail clients do a good job of adding this header.  It is not uncommon to
+find mail clients that declare all @acronym{MIME} objects to be ``inline''
+and others that declare all @acronym{MIME} objects to be ``attachment''.
+The variable @code{vm-mime-honor-content-disposition} can be customized to
+tell VM whether it should follow the suggestions in the Content-Disposition
+headers.  A value of @code{t} means that they should be always honored and a
+value of @code{nil} means that they should be ignored.  It can also be set
+to the symbol @code{internal-only}, which means that the Content-Disposition
 suggestions should be honored for only the internally displayable types.
-(@xref{Internal display of MIME attachments}.)
+(@xref{Internal display of @acronym{MIME} attachments}.)
 
 @findex vm-next-button
 @findex vm-previous-button
@@ -1998,9 +2004,9 @@ The commands @kbd{[} and @kbd{]} (@code{vm-previous-button}) and
 @code{vm-next-button}, respectively) can be
 used move to particular buttons within the message presentation.
 
-@node Attachments, Internal display, Viewing MIME, MIME Messages
-@unnumberedsubsec  Operating on MIME attachments
-@anchor{Operating on MIME attachments}
+@node Attachments, Internal display, Viewing @acronym{MIME}, @acronym{MIME} Messages
+@unnumberedsubsec  Operating on @acronym{MIME} attachments
+@anchor{Operating on @acronym{MIME} attachments}
 @cindex attachments
 @kindex $ |
 @kindex $ d
@@ -2020,23 +2026,23 @@ used move to particular buttons within the message presentation.
 @findex vm-delete-mime-object
 @findex vm-mime-reader-map-display-using-external-viewer
 @findex vm-mime-reader-map-attach-to-composition
-To activate a button, either click the middle mouse
-button over it, or move the cursor to the line and press RET.  If you
-are running under a window system, you can use the right mouse button
-over a MIME button to display a menu of actions you can take on the MIME
-object.  If you prefer using keyboard commands, you can save the MIME
-object with @kbd{$ w}, print it with @kbd{$ p}, or pipe it to a shell
-command with @kbd{$ |}.  Use @kbd{$ s} to append an encapsulated message
-or USENET news article to a folder.  If you want to display the object
-with its characters displayed using Emacs' default face, use @kbd{$
-RET}.  To display the object using an external viewer, type @kbd{$ e}.
+To activate a button, either click the middle mouse button over it, or move
+the cursor to the line and press @key{RET}.  If you are running under a
+window system, you can use the right mouse button over a @acronym{MIME}
+button to display a menu of actions you can take on the @acronym{MIME}
+object.  If you prefer using keyboard commands, you can save the
+@acronym{MIME} object with @kbd{$ w}, print it with @kbd{$ p}, or pipe it to
+a shell command with @kbd{$ |}.  Use @kbd{$ s} to append an encapsulated
+message or USENET news article to a folder.  If you want to display the
+object with its characters displayed using Emacs' default face, use @kbd{$
+@key{RET}}.  To display the object using an external viewer, type @kbd{$ e}.
 
 @multitable @columnfractions .20 .80
 @item $ w   @tab @code{vm-mime-reader-map-save-file}
 @item $ s   @tab @code{vm-mime-reader-map-save-message}
 @item $ p   @tab @code{vm-mime-reader-map-pipe-to-printer}
 @item $ |   @tab @code{vm-mime-reader-map-pipe-to-command}
-@item $ RET @tab @code{vm-mime-reader-map-display-using-default}
+@item $ @key{RET} @tab @code{vm-mime-reader-map-display-using-default}
 @item $ e   @tab @code{vm-mime-reader-map-display-using-external-viewer}
 @item $ v   @tab @code{vm-mime-reader-map-display-object-as-type}
 @item $ d   @tab @code{vm-delete-mime-object}
@@ -2046,13 +2052,13 @@ RET}.  To display the object using an external viewer, type @kbd{$ e}.
 @vindex vm-mime-delete-after-saving
 @vindex vm-mime-attachment-save-directory
 @vindex vm-mime-confirm-delete
-The MIME attachments can be saved to disk with @kbd{$ w}
+The @acronym{MIME} attachments can be saved to disk with @kbd{$ w}
 (@code{vm-mime-reader-map-save-file}).  They can be deleted at the
 same time by setting the variable @code{vm-mime-delete-after-saving}.
-In this case, the attachment is deleted and replaced by a MIME part
+In this case, the attachment is deleted and replaced by a @acronym{MIME} part
 that refers to the saved copy.  The variable
 @code{vm-mime-attachment-save-directory} specifies the default
-directory to save the attachments in.  The MIME attachments can also
+directory to save the attachments in.  The @acronym{MIME} attachments can also
 be deleted directly from the message bodies with @kbd{$ d}
 (@code{vm-delete-mime-object}).  The variable
 @code{vm-mime-confirm-delete} controls whether a confirmation is asked
@@ -2077,21 +2083,21 @@ usually a faster operation of VM.
 The commands @code{vm-save-all-attachments} and
 @code{vm-delete-all-attachments} can be used to save or delete
 @i{all} the attachments in a message.  An "attachment" in this context
-is any MIME part that has "attachment" as its content-disposition or
-simply has a file name.  In addition, all MIME parts that have types
+is any @acronym{MIME} part that has "attachment" as its content-disposition or
+simply has a file name.  In addition, all @acronym{MIME} parts that have types
 matching @code{vm-mime-savable-types} or @code{vm-mime-deletable-types}
 (but not the corresponding @code{-exceptions}) are included.
 
-@node Internal display, External display, Attachments, MIME Messages
-@unnumberedsubsec Internal display of MIME attachments
-@anchor{Internal display of MIME attachments}
+@node Internal display, External display, Attachments, @acronym{MIME} Messages
+@unnumberedsubsec Internal display of @acronym{MIME} attachments
+@anchor{Internal display of @acronym{MIME} attachments}
 
 @vindex vm-mime-auto-displayed-content-types
 A value of t for @code{vm-mime-auto-displayed-content-types} means that
 all types should be displayed immediately.  A nil value means
-never display MIME objects immediately; only use buttons.  If
+never display @acronym{MIME} objects immediately; only use buttons.  If
 the value of @code{vm-mime-auto-displayed-content-types} is a list, it
-should be a list of strings, which should all be MIME types or
+should be a list of strings, which should all be @acronym{MIME} types or
 type/subtype pairs.  Example:
 
 @example
@@ -2105,7 +2111,7 @@ JPEG images should be displayed this way.
 
 @vindex vm-mime-auto-displayed-content-type-exceptions
 The variable @code{vm-mime-auto-displayed-content-type-exceptions}
-should be a list of MIME content types that should not be
+should be a list of @acronym{MIME} content types that should not be
 displayed immediately after decoding.  This variable acts as
 an exception list for @code{vm-mime-auto-displayed-content-types};
 all types listed there will be auto-displayed except those in
@@ -2124,7 +2130,7 @@ html.
 The variable @code{vm-mime-internal-content-types} specifies which
 types should be displayed internally within Emacs.  Like
 @code{vm-mime-auto-displayed-content-types} its value should be a list
-of MIME content types.  A value of t means that VM should always
+of @acronym{MIME} content types.  A value of t means that VM should always
 display an object internally if possible.  VM knows which object types
 can be displayed internally, so you can specify the types you want
 without worrying about potential errors.  If the value is a list, it
@@ -2145,43 +2151,45 @@ The variable @code{vm-mime-internal-content-type-exceptions} serves as
 the exception list for @code{vm-mime-internal-content-types}.  Its value 
 should be a list of types that should not be displayed internally.
 
-@cindex HTML
+@cindex @acronym{HTML}
 @vindex vm-mime-text/html-handler
-The HTML content in text/html MIME parts can be displayed in Emacs using
-a variety of packages.  VM knows about:
+The @acronym{HTML} content in text/html @acronym{MIME} parts can be
+displayed in Emacs using a variety of packages.  VM knows about:
 
 @cindex lynx
 @cindex w3m
 @cindex w3
 @multitable @columnfractions .15 .85
 @item lynx   
-  @tab  The lynx browser used externally to convert HTML to plain text
+  @tab The @command{lynx} browser used externally to convert @acronym{HTML}
+  to plain text
 @item w3m    
-  @tab  The w3m browser used externally to convert HTML to plain text
+  @tab The @command{w3m} browser used externally to convert @acronym{HTML}
+  to plain text
 @item emacs-w3 
-  @tab  The Emacs/W3 browser used internally in Emacs
+  @tab  The @samp{Emacs/W3} browser used internally in Emacs
 @item emacs-w3m 
-  @tab  The Emacs/W3M browser used internally in Emacs
+  @tab  The @samp{Emacs/W3M} browser used internally in Emacs
 @end multitable
 
 You can set the variable @code{vm-mime-text/html-handler} to one of
 these values to use the appropriate package.  A value of
 @code{auto-select} causes VM to select the best package available.  A
-value of @code{nil} asks VM not to display HTML content internally.
+value of @code{nil} asks VM not to display @acronym{HTML} content internally.
 The default value is @code{auto-select}, allowing VM to give you the
 best display possible in your environment.  If you do not like the
 results, you may set the variable to a different value or
 @code{nil}.
 
 
-@node External display, Displaying images, Internal display, MIME Messages
-@unnumberedsubsec External display of MIME attachments
+@node External display, Displaying images, Internal display, @acronym{MIME} Messages
+@unnumberedsubsec External display of @acronym{MIME} attachments
 
 @vindex vm-mime-external-content-types-alist
 For types that you want displayed externally, set the value
 of @code{vm-mime-external-content-types-alist} to specify external
 viewers for the types.  The value of this variable should be an
-associative list of MIME content types and the external programs
+associative list of @acronym{MIME} content types and the external programs
 used to display them.  If VM cannot display a type internally or
 a type is not listed in @code{vm-mime-internal-content-types} VM will
 try to launch an external program to display that type.
@@ -2204,7 +2212,7 @@ The alist format is a list of lists, each sublist having the form
 (@var{TYPE} @var{COMMAND-LINE})
 @end example
 
-@noindent @var{TYPE} is a string specifying a MIME type or
+@noindent @var{TYPE} is a string specifying a @acronym{MIME} type or
 type/subtype pair.  For example ``text'' or ``image/jpeg''.  If a
 top-level type is listed without a subtype, all subtypes of that type
 are assumed to be included.
@@ -2230,7 +2238,7 @@ passed to the shell ("sh -c" typically) for execution.  Since
 the command line will be passed to the shell, you can use shell
 variables and input/output redirection if needed.  As with the
 @var{PROGRAM/ARGS} form, the name of the temporary file that
-contains the MIME object will be appended to the command line if
+contains the @acronym{MIME} object will be appended to the command line if
 @samp{%f} does not appear in the command line string.
 
 In either the @var{PROGRAM/ARG} or @var{COMMAND-LINE} forms, all the
@@ -2283,12 +2291,12 @@ You can still display such a type with an external viewer by using
 
 @vindex vm-mime-attachment-auto-suffix-alist
 
-When a MIME object is displayed using an external viewer VM must
+When a @acronym{MIME} object is displayed using an external viewer VM must
 first write the object to a temporary file.  The external viewer
 then opens and displays that file.  Some viewers will not open a
 file unless the filename ends with some extension that it
 recognizes such as @samp{.html} or @samp{.jpg}.  You can use the
-variable @code{vm-mime-attachment-auto-suffix-alist} to map MIME
+variable @code{vm-mime-attachment-auto-suffix-alist} to map @acronym{MIME}
 types to extensions that your external viewers will recognize.
 The value of this variable should be a list of type and suffix
 pairs.  The list format is:
@@ -2297,7 +2305,7 @@ pairs.  The list format is:
 ((@var{TYPE} . @var{SUFFIX}) ...)
 @end example
 
-@var{TYPE} is a string specifying a MIME top-level type or a type/subtype pair.
+@var{TYPE} is a string specifying a @acronym{MIME} top-level type or a type/subtype pair.
 If a top-level type is listed without a subtype, all subtypes of
 that type are matched.
 
@@ -2321,7 +2329,7 @@ Example:
 associated with the first type that matches will be used for the
 temporary filename.
 
-@node Displaying images, MIME type conversion, External display, MIME Messages
+@node Displaying images, @acronym{MIME} type conversion, External display, @acronym{MIME} Messages
 @unnumberedsubsec Displaying inline images in messages
 
 @cindex images
@@ -2339,12 +2347,12 @@ function @code{image-type-available-p} with an image type such as
 @vindex vm-mime-internal-content-types
 @vindex vm-mime-auto-displayed-content-types
 Assuming that a particular image type, say @samp{tiff} is available,
-you can include its MIME type in
+you can include its @acronym{MIME} type in
 @code{vm-mime-internal-content-types}, e.g., 
 @example
 (add-to-list 'vm-mime-internal-content-types "image/tiff")
 @end example
-You can also add the MIME type to the variable
+You can also add the @acronym{MIME} type to the variable
 @code{vm-mime-auto-displayed-content-types} so that VM will
 automatically display all images of the type.  
 If the type is not included among the auto-displayed types, then the
@@ -2356,10 +2364,10 @@ button with the middle mouse button expands the image to its full size.
 @vindex vm-imagemagick-convert-program
 Once an image is displayed, you can use the right mouse button to do
 various image manipulations on it, such as enlarging/reducing it,
-rotating it etc.  To do such operations, VM uses the ImageMagick
+rotating it etc.  To do such operations, VM uses the @samp{ImageMagick}
 graphics manipulation software.  You can install ImageMagick on your
-system and specify the location of its @code{identify} and
-@code{convert} programs to VM via the variables
+system and specify the location of its @command{identify} and
+@command{convert} programs to VM via the variables
 @code{vm-imagemagick-identify-program} and
 @code{vm-imagemagick-convert-program}.
 
@@ -2377,8 +2385,8 @@ turn off such conversion by setting the variable
 @code{vm-imagemagick-convert-program} to @samp{nil}.
 
 
-@node MIME type conversion, Character sets, Displaying images, MIME Messages
-@unnumberedsubsec MIME type conversion
+@node @acronym{MIME} type conversion, Character sets, Displaying images, @acronym{MIME} Messages
+@unnumberedsubsec @acronym{MIME} type conversion
 
 @vindex vm-mime-type-converter-alist
 Types that cannot be displayed internally or externally are
@@ -2396,7 +2404,7 @@ The alist format is
 ( (START-TYPE END-TYPE COMMAND-LINE ) ... )
 @end example
 
-@var{START-TYPE} is a string specifying a MIME type or type/subtype pair.
+@var{START-TYPE} is a string specifying a @acronym{MIME} type or type/subtype pair.
 Example @samp{"text"} or @samp{"image/jpeg"}.  If a top-level type is
 listed without a subtype, all subtypes of that type are assumed
 to be included.
@@ -2421,10 +2429,10 @@ Example:
 
 @noindent The first matching list element will be used.
 
-@node Character sets, multipart/alternative, MIME type conversion, MIME Messages
-@unnumberedsubsec MIME character sets
+@node Character sets, multipart/alternative, @acronym{MIME} type conversion, @acronym{MIME} Messages
+@unnumberedsubsec @acronym{MIME} character sets
 
-For text type messages, MIME also requires that a character set
+For text type messages, @acronym{MIME} also requires that a character set
 be specified, so that the recipient's mail reader knows what
 character glyphs to use to display each character code.  To
 display a message properly VM needs to know how to choose a font
@@ -2462,7 +2470,7 @@ display.  Example:
 (add-to-list 'vm-mime-default-face-charsets "Windows-1257")
 @end example
 
-Note that for character sets listed in this variable, VM's MIME
+Note that for character sets listed in this variable, VM's @acronym{MIME}
 decoding is bypassed.  So you should not add charsets like "UTF-8"
 that require additional decoding.
 
@@ -2477,7 +2485,7 @@ iso-2022-jp which VM running on a MULE-enabled Emacs could
 display.
 
 VM offers a way to do such conversions.  The variable
-@code{vm-mime-charset-converter-alist} is an associative list of MIME
+@code{vm-mime-charset-converter-alist} is an associative list of @acronym{MIME}
 charsets and programs that can convert between them.  If VM
 cannot display a particular character set, it will scan this list
 to see if the charset can be converted into a charset that it can
@@ -2489,7 +2497,7 @@ The alist format is:
  ( ( START-CHARSET END-CHARSET COMMAND-LINE ) ... )
 @end example
 
-@var{START-CHARSET} is a string specifying a MIME charset.
+@var{START-CHARSET} is a string specifying a @acronym{MIME} charset.
 Example @samp{"iso-8859-1"} or @samp{"utf-8"}.
 
 @var{END-CHARSET} is a string specifying the charset to which
@@ -2526,7 +2534,7 @@ them.  The format of the list is:
  
 ( (@var{CHARSET} . @var{FONT}) ...) 
  
-@var{CHARSET} is a string naming a MIME registered character set such 
+@var{CHARSET} is a string naming a @acronym{MIME} registered character set such 
 as @samp{"iso-8859-5"}.
  
 @var{FONT} is a string naming a font that can be used to display
@@ -2556,26 +2564,26 @@ any XEmacs version compiled with MULE support, the value of
 because all characters are displayed using fonts discovered by
 MULE and VM has no control over them.
 
-@node multipart/alternative, Inferring MIME types, Character sets, MIME Messages
-@unnumberedsubsec MIME multipart/alternative
+@node multipart/alternative, Inferring @acronym{MIME} types, Character sets, @acronym{MIME} Messages
+@unnumberedsubsec @acronym{MIME} multipart/alternative
 
-@cindex MIME alternatives
-MIME allows a message to be sent with its content encoded in multiple
+@cindex @acronym{MIME} alternatives
+@acronym{MIME} allows a message to be sent with its content encoded in multiple
 formats, simultaneously, in the same message.  Such messages have a
-content type of multipart/alternative.  The idea is that the sender
-might have different MIME decoding or display capabilities than some
+content type of @dfn{multipart/alternative}.  The idea is that the sender
+might have different @acronym{MIME} decoding or display capabilities than some
 of his recipients.  For instance, the sender may be able to compose a
 message using fancy text formatting constructs like tables, italics
 and equations but some of the recipients may only be able to display
-plain text.  The multipart/alternative type message is the solution
+plain text.  The @samp{multipart/alternative} type message is the solution
 to this dilemma.  Such a message would contain at least two text
 subparts, one in plain text and the other in the full featured text
 formatting language that the sender used.
 
 @vindex vm-mime-alternative-show-method
-@cindex MIME alternative, best
-@cindex MIME alternative, best-internal
-To control how VM displays multipart/alternative messages, you must
+@cindex @acronym{MIME} alternative, best
+@cindex @acronym{MIME} alternative, best-internal
+To control how VM displays @samp{multipart/alternative} messages, you must
 set the variable @code{vm-mime-alternative-show-method}.  Its value must be
 a symbol.  A value of @code{best} tells VM to display the message
 using the subpart closest in appearance to what the sender used to
@@ -2586,20 +2594,20 @@ value of @code{best-internal} tells VM to use the closest subpart that
 it can display internally.  External viewers won't be used in this
 case.  A value of @code{all} asks VM to display all the alternatives.
 
-@cindex MIME alternative, favorite
-@cindex MIME alternative, favorite-internal
+@cindex @acronym{MIME} alternative, favorite
+@cindex @acronym{MIME} alternative, favorite-internal
 The value can also be a list of the form
 
 @example
-  (favorite TYPE ...)
+  (favorite @var{TYPE} ...)
 @end example
 
 @noindent with the first element of the list being the symbol @code{favorite}.
-The remaining elements of the list are strings specifying MIME types.
+The remaining elements of the list are strings specifying @acronym{MIME} types.
 VM will look for each TYPE in turn in the list of alternatives and
 choose the first matching alternative found that can be displayed.  If
 instead of the symbol @code{favorite}, @code{favorite-internal} is
-used then the first TYPE that matches an alternative that can be
+used then the first @var{TYPE} that matches an alternative that can be
 displayed internally will be chosen.
 
 @findex vm-nuke-alternative-text/html
@@ -2612,12 +2620,12 @@ most faithful representation of the sender's message and it may
 include attachments that are not replicated in the other
 alternatives.  Please use caution.
 
-@node Inferring MIME types, , multipart/alternative, MIME Messages
-@unnumberedsubsec Inferring MIME types
+@node Inferring @acronym{MIME} types, , multipart/alternative, @acronym{MIME} Messages
+@unnumberedsubsec Inferring @acronym{MIME} types
 
 Some mailers incorrectly use the generic
 @samp{application/octet-stream} type when sending files that
-really have a specific MIME type.  For example, a JPEG image
+really have a specific @acronym{MIME} type.  For example, a JPEG image
 might be sent using @samp{application/octet-stream} type instead
 of @samp{image/jpeg}, which would be the correct type.  In many
 cases the filename sent along with the mistyped file
@@ -2626,7 +2634,7 @@ cases the filename sent along with the mistyped file
 @vindex vm-infer-mime-types
 If the variable
 @code{vm-infer-mime-types} is set non-@code{nil}, VM will attempt to use 
-the filename sent with a MIME attachment to guess an attachment's 
+the filename sent with a @acronym{MIME} attachment to guess an attachment's 
 type if the attachment is of type @samp{application/octet-stream}.
 
 @vindex vm-infer-mime-types-for-text
@@ -2681,7 +2689,7 @@ with C-c C-v.
 @cindex drag and drop
 @item C-c C-a (@code{vm-attach-file}) or drag-and-drop a file
 Attaches a file to the composition.  When you send the message, VM 
-will insert the file and MIME encode it.  The variable
+will insert the file and @acronym{MIME} encode it.  The variable
 @code{vm-send-using-mime} must be set non-@code{nil} for this command to work.
 You will be asked for the file's type, and a brief description of 
 the attachment.  The description is optional.  If the file's type
@@ -2694,7 +2702,7 @@ content disposition gives a hint to the recipient's mailer how to
 treat the attachment.  Specifically the disposition will indicate 
 whether the attachment should be displayed along with the message 
 or saved to a file.  Any text in the composition that appears
-before the tag will appear in a MIME text part before the
+before the tag will appear in a @acronym{MIME} text part before the
 attachment when the message is encoded and sent.  Similarly, any
 text after the tag will appear after the attachment in the
 encoded message.  If you change your mind about using the
@@ -2711,7 +2719,7 @@ folder.  You will be prompted for the message number of the
 message to be attached.  If you invoke the command on marked
 messages by running
 @code{vm-next-command-uses-marks} first, the marked messages in
-the selected folder will be attached as a MIME digest.
+the selected folder will be attached as a @acronym{MIME} digest.
 @kindex C-c C-b
 @item C-c C-b (@code{vm-attach-buffer})
 Attaches an Emacs buffer to the composition.
@@ -2720,7 +2728,7 @@ Attaches an Emacs buffer to the composition.
 @kindex C-c C-e
 @kindex C-c C-c
 @item C-c C-e (@code{vm-mime-encode-composition})
-Encodes the composition using MIME, but does not send it.  This
+Encodes the composition using @acronym{MIME}, but does not send it.  This
 is useful if you want to use PGP to sign a message before sending
 it.  After signing the message, you would use @kbd{C-c C-c} as usual to
 send the message.  Emacs' @code{undo} command can be used to undo
@@ -2763,13 +2771,13 @@ headers will be used.
 
 @menu
 * Sending Options::        Variables that control mail sending.
-* Sending MIME Messages::  Sending a message using MIME attachments.
+* Sending @acronym{MIME} Messages::  Sending a message using @acronym{MIME} attachments.
 * Replying::               Describes the various ways to reply to a message.
 * Forwarding Messages::    How to forward a message to a third party.
 * Saving copies::          Saving copies of sent mail.
 @end menu
 
-@node Sending Options, Sending MIME Messages, Sending Messages, Sending Messages
+@node Sending Options, Sending @acronym{MIME} Messages, Sending Messages, Sending Messages
 @section Mail Sending Options
 
 As already mentioned, VM uses Emacs @ref{Mail Mode,,,emacs, the Gnu
@@ -2810,25 +2818,25 @@ headers into a particular order before sending.  The order is
 determined by the variable @code{vm-mail-header-order}.
 
 
-@node Sending MIME Messages, Replying, Sending Options, Sending Messages
-@section Sending MIME Messages
+@node Sending @acronym{MIME} Messages, Replying, Sending Options, Sending Messages
+@section Sending @acronym{MIME} Messages
 
 @vindex vm-send-using-mime
-To use VM's MIME composition features, you must have
-@code{vm-send-using-mime} set to a non-@code{nil} value.  With MIME composition
+To use VM's @acronym{MIME} composition features, you must have
+@code{vm-send-using-mime} set to a non-@code{nil} value.  With @acronym{MIME} composition
 enabled, VM will allow you to add file attachments to your
 composition and will analyze your message when you send it and
-MIME encode it as necessary.
+@acronym{MIME} encode it as necessary.
 
 @menu
-* MIME attachments::    Sending a message using MIME attachments.
-* MIME characters::     Sending a message with MIME-encoded characters.
-* MIME headers::        Sending a message with MIME-encoded headers.
-* MIME preview::        Previewing a MIME message before sending.
+* @acronym{MIME} attachments::    Sending a message using @acronym{MIME} attachments.
+* @acronym{MIME} characters::     Sending a message with @acronym{MIME}-encoded characters.
+* @acronym{MIME} headers::        Sending a message with @acronym{MIME}-encoded headers.
+* @acronym{MIME} preview::        Previewing a @acronym{MIME} message before sending.
 @end menu
 
-@node MIME attachments, MIME characters, Sending MIME Messages, Sending MIME Messages, 
-@unnumberedsec MIME attachments
+@node @acronym{MIME} attachments, @acronym{MIME} characters, Sending @acronym{MIME} Messages, Sending @acronym{MIME} Messages, 
+@unnumberedsec @acronym{MIME} attachments
 
 @kindex C-c C-a
 @findex vm-attach-file
@@ -2843,7 +2851,7 @@ like this
   [ATTACHMENT ~/sounds/chronophasia_scream.au, audio/basic]
 
 @noindent You can type text before and after this tag and it will appear
-before or after the text in the final MIME message when VM encodes
+before or after the text in the final @acronym{MIME} message when VM encodes
 it.  You can kill the tag with @kbd{C-k} and yank it back with
 @kbd{C-y} to move it to another place in the message.  You can
 yank back the tag multiple times to duplicate the attachment in
@@ -2853,7 +2861,7 @@ won't appear in the message when it is sent.
 @cindex Content-Disposition
 If you click the right mouse button on the attachment tag, a menu
 will appear that allows you to change the content disposition of
-the attachment.  The @dfn{Content-Disposition} of a MIME object
+the attachment.  The @dfn{Content-Disposition} of a @acronym{MIME} object
 gives a mail reader a hint as to whether the object should be
 displayed inline or as an inert tag or button that you must
 activate in some fashion.  @dfn{Inline} display usually means
@@ -2861,7 +2869,7 @@ that the object will be displayed within or alongside the message
 text, if that is possible.  @dfn{Attachment}, when used as a
 content disposition, means that the object will likely be
 displayed as a tag.  By default, VM specifies an inline
-disposition for all MIME types except @samp{application} and
+disposition for all @acronym{MIME} types except @samp{application} and
 @samp{model} types.
 
 @kindex C-c C-b
@@ -2884,7 +2892,7 @@ attached as a digest in the outgoing message.
 @unnumberedsubsubsec Point-to-point attachment operations
 
 @cindex point-to-point attachment operations
-A number of ``point-to-point'' operations allow you to attach objects
+A number of @dfn{point-to-point operations} allow you to attach objects
 from other editing contexts to a message you are composing.
 
 @findex vm-dired-attach-file
@@ -2905,10 +2913,10 @@ composition buffer (@code{vm-dnd-attach-file}).
 @findex vm-attach-message-to-composition
 When you visit a folder in VM, you can attach a message from the
 folder by running @code{vm-attach-message-to-composition}.  When
-viewing a message that has MIME attachments, you can attach any of
+viewing a message that has @acronym{MIME} attachments, you can attach any of
 those attachments to your message composition by using the @kbd{$ a}
 (@code{vm-reader-map-attach-to-composition}) function.
-(@xref{Operating on MIME attachments}.)  This operation is also
+(@xref{Operating on @acronym{MIME} attachments}.)  This operation is also
 available on the pop-menu for attachments.
 
 In all these cases, you will be prompted for the message composition
@@ -2918,8 +2926,8 @@ buffer ring.
 
 
 
-@node MIME characters, MIME headers, MIME attachments, Sending MIME Messages
-@unnumberedsec MIME characters
+@node @acronym{MIME} characters, @acronym{MIME} headers, @acronym{MIME} attachments, Sending @acronym{MIME} Messages
+@unnumberedsec @acronym{MIME} characters
 
 @vindex vm-mime-7bit-composition-charset
 By default, when you type text into a composition buffer VM
@@ -2943,10 +2951,10 @@ to accept messages containing such characters and some will accept
 them but zero the eighth bit, garbling the message.  To avoid
 these problems, VM transfer encodes 8-bit text by default.
 
-MIME has two transfer encodings that convert 8-bit data to 7-bit data
+@acronym{MIME} has two transfer encodings that convert 8-bit data to 7-bit data
 for safe transport.  @dfn{Quoted-printable} leaves the text mostly
-readable even if the recipient does not have a MIME-capable mail
-reader.  @dfn{BASE64} is unreadable without a MIME-capable mail
+readable even if the recipient does not have a @acronym{MIME}-capable mail
+reader.  @dfn{BASE64} is unreadable without a @acronym{MIME}-capable mail
 reader.
 
 @vindex vm-mime-8bit-text-transfer-encoding
@@ -2956,7 +2964,7 @@ be a symbol that specifies what kind of transfer encoding to do
 for 8-bit text.  A value of @samp{quoted-printable}, means to use
 quoted-printable encoding.  A value of @samp{base64} means to use
 BASE64 encoding.  A value of @samp{8bit} means to send the message as
-is.  Note that this variable usually only applies to textual MIME
+is.  Note that this variable usually only applies to textual @acronym{MIME}
 content types.  Images, audio, video, etc. typically will have
 some attribute that makes VM consider them to be ``binary'',
 which moves them outside the scope of this variable.  For
@@ -2964,13 +2972,13 @@ example, messages with line lengths of 1000 characters or more
 are considered binary, as are messages that contain carriage
 returns (ASCII code 13) or NULs (ASCII code 0).
 
-@node MIME headers, MIME preview, MIME characters, Sending MIME Messages
-@unnumberedsec MIME headers
+@node @acronym{MIME} headers, @acronym{MIME} preview, @acronym{MIME} characters, Sending @acronym{MIME} Messages
+@unnumberedsec @acronym{MIME} headers
 
 The internet standards specify that the header lines of messages should
 always be in 7 bit ASCII, even if the body of a message can use an
 8 bit character set.  If you use other non-ASCII characters in typing
-the headers then VM encodes their words using the MIME encoded-word
+the headers then VM encodes their words using the @acronym{MIME} encoded-word
 syntax, which is of the form @code{=?charset?encoding?encoded text?=}.  
 
 @vindex vm-mime-encode-headers-regexp
@@ -2990,11 +2998,11 @@ meant by a ``word'' for VM for the purpose of encoding.  By default, the
 words are those containing any 8 bit character and delimited by white
 space characters.
 
-@node MIME preview, , MIME headers, Sending MIME Messages
-@unnumberedsec MIME preview
+@node @acronym{MIME} preview, , @acronym{MIME} headers, Sending @acronym{MIME} Messages
+@unnumberedsec @acronym{MIME} preview
 
 @kindex C-c C-p
-To preview what a MIME message will look like to a recipient,
+To preview what a @acronym{MIME} message will look like to a recipient,
 use @kbd{C-c C-p} (@code{vm-mime-preview-composition}).  VM
 will encode a copy of the message and present it to you in a
 temporary mail folder.  You can scroll through the message
@@ -3004,7 +3012,7 @@ further changes.
 
 @kindex C-c C-e
 @kindex C-c C-c
-To encode a MIME message without sending it, use @kbd{C-c C-e}
+To encode a @acronym{MIME} message without sending it, use @kbd{C-c C-e}
 (@code{vm-mime-encode-composition}).  This is useful if you use
 PGP and want to sign a message before sending it.  VM will encode
 the message for transport, inserting all necessary headers and
@@ -3013,11 +3021,11 @@ C-c C-c and be confident that VM won't invalidate the signature
 by making further modifications to the message.  Or if you want
 to resume editing the message you can run the Emacs @code{undo}
 (normally bound to @kbd{C-x u}) command which will revert the
-encoded MIME bodies back to tags and you can continue entering
+encoded @acronym{MIME} bodies back to tags and you can continue entering
 your composition.
 
 
-@node Replying, Forwarding Messages, Sending MIME Messages, Sending Messages
+@node Replying, Forwarding Messages, Sending @acronym{MIME} Messages, Sending Messages
 @section Replying
 
 @vindex vm-reply-subject-prefix
@@ -3112,11 +3120,11 @@ messages you are replying to.)
 
 @cindex attachment button
 Citing message text is a tricky business because the original message
-could be a MIME message with encoded text or formatted text along with
-embedded images and attachments.  By default, VM uses its MIME
+could be a @acronym{MIME} message with encoded text or formatted text along with
+embedded images and attachments.  By default, VM uses its @acronym{MIME}
 displaying mechanism to extract the included text to be cited in
 replies.  The quoted text is then similar to what appears in the
-message Presentation buffer.  However, the MIME attachments are not
+message Presentation buffer.  However, the @acronym{MIME} attachments are not
 included by default.  They are shown in the message composition buffer
 with @b{attachment buttons} labelled similar to:
 @example
@@ -3129,9 +3137,9 @@ message is sent.  The format of the button in this case looks like:
 [ATTACHMENT mary.jpg, image/jpeg]
 @end example
 
-@cindex MIME alternatives
+@cindex @acronym{MIME} alternatives
 @vindex vm-mime-alternative-yank-method
-When citing a @code{multipart/alternative} MIME component, VM chooses the
+When citing a @code{multipart/alternative} @acronym{MIME} component, VM chooses the
 alternative specified by the variable
 @code{vm-mime-alternative-yank-method}.  It can 
 be defined similar to the variable
@@ -3154,7 +3162,7 @@ Alternatively, you can fill individual paragraphs manually using
 
 @unnumberedsubsec Alternative methods to include text
 
-The method of MIME decoding for included text is relatively new in VM.
+The method of @acronym{MIME} decoding for included text is relatively new in VM.
 The older methods are the inclusion of plain text, due to Kyle Jones,
 and the inclusion of text from the Presentation buffer, due to Robert
 Fenk. 
@@ -3164,9 +3172,9 @@ Fenk.
 The Kyle Jones method of plain text inclusion is enabled by setting
 the variable @code{vm-include-text-basic} to @code{t}.  Setting the
 variable to nil returns you to the default behaviour.  You can set the
-variable @code{vm-included-mime-types-list} to additional MIME
+variable @code{vm-included-mime-types-list} to additional @acronym{MIME}
 type/subtype pairs that should be included in cited text.  But it may
-not produce good results because the handling of MIME types is not
+not produce good results because the handling of @acronym{MIME} types is not
 available in the basic text inclusion method.
 
 @vindex vm-include-text-from-presentation
@@ -3301,10 +3309,11 @@ will be centered.
 @kindex B
 @cindex resending messages
 @cindex Resent-To header
-If you wish to forward a message as is, without appearing to
-intervene, you can use @kbd{B} (@code{vm-resend-message}).  VM will
+You can forward a message ``as is'', without appearing to
+intervene, by @dfn{resending} it.
+Use  the @kbd{B} (@code{vm-resend-message}) command.  VM will
 resend the same original message and with its original headers and add
-a @code{Resent-To} header that you should fill in with the new
+a @samp{Resent-To} header that you should fill in with the new
 recipients.  Use @kbd{C-c C-c} as usual to send the message.  The
 resent message will be flagged as ``redistributed''.  Note that a
 re-sent message will appear to the recipients as if it came from the
@@ -3321,23 +3330,23 @@ with caution.
 @cindex file CC
 @findex vm-imap-save-composition
 You can save copies of outgoing mail messages in 'sent' folders by
-adding an @code{FCC:} header line to the composed message.  The value
+adding an @samp{FCC:} header line to the composed message.  The value
 of the header should be either the full path name of a mail folder on
-the file system or the maildrop specification of a folder on an IMAP
-server.  If you use IMAP folders for saving sent mail, you should also
+the file system or the maildrop specification of a folder on an @acronym{IMAP}
+server.  If you use @acronym{IMAP} folders for saving sent mail, you should also
 add the function @code{vm-imap-save-composition} to the mail-mode's
 @code{mail-send-hook} variable.
 
-@cindex IMAP-FCC
+@cindex @acronym{IMAP}-FCC
 @vindex vm-imap-default-account
-If you have multiple IMAP accounts, you might wish to save copies of
-your replies separately in each IMAP account.  This can be done by
-adding an @code{IMAP-FCC:} header line.  The value of the header field
-should be a plain folder name on the ``current'' IMAP account, e.g.,
-`Sent'.  The ``current'' IMAP account will be determined by the IMAP
+If you have multiple @acronym{IMAP} accounts, you might wish to save copies of
+your replies separately in each @acronym{IMAP} account.  This can be done by
+adding an @samp{@acronym{IMAP}-FCC:} header line.  The value of the header field
+should be a plain folder name on the ``current'' @acronym{IMAP} account, e.g.,
+`Sent'.  The ``current'' @acronym{IMAP} account will be determined by the @acronym{IMAP}
 folder from which you start composing the new message (which is called
 the ``parent folder'' for you composition).  If the parent folder is
-not an IMAP folder or if there is no parent folder, then the message
+not an @acronym{IMAP} folder or if there is no parent folder, then the message
 copy will be saved in a folder on @code{vm-imap-default-account}.
 
 @vindex vm-do-fcc-before-mime-encode
@@ -3373,7 +3382,7 @@ many messages should be saved.  Messages saved with
 @vindex vm-folder-directory
 @vindex vm-thunderbird-folder-directory
 Messages can be saved to folders on the local file system or to
-folders on an IMAP server.
+folders on an @acronym{IMAP} server.
 If @code{vm-folder-directory} is set, @code{vm-save-message} will
 insert this directory name into the minibuffer before prompting you
 for a folder name; this will save you some typing.   If
@@ -3389,13 +3398,13 @@ automatically suggest an appropriate save folder where the message
 should be saved.
 
 @vindex vm-imap-save-to-server
-@cindex IMAP
-If you use an IMAP server and prefer to save messages on other folders
-on the same IMAP server, you can set the variable
+@cindex @acronym{IMAP}
+If you use an @acronym{IMAP} server and prefer to save messages on other folders
+on the same @acronym{IMAP} server, you can set the variable
 @code{vm-imap-save-to-server} to t.  You will be prompted for the name
-of the IMAP folder in which to save the message.  The variable
+of the @acronym{IMAP} folder in which to save the message.  The variable
 @code{vm-auto-folder-alist} can also be used to suggest appropriate save
-folders on the IMAP server.
+folders on the @acronym{IMAP} server.
 
 @findex vm-save-message-to-local-folder
 @findex vm-save-message-to-imap-folder
@@ -3463,7 +3472,7 @@ a relative path name -- relative to @code{vm-folder-directory} or the
 @code{default-directory} of the currently visited folder, whichever is
 non-nil, or
 @item
-the maildrop specification of an IMAP folder.
+the maildrop specification of an @acronym{IMAP} folder.
 @end itemize
 
 If any part of the contents of the message header named by
@@ -3681,7 +3690,7 @@ the edit buffer through the command prefix @kbd{C-c C-v}.
 @cindex marking
 @cindex searching
 @cindex virtual folders
-VM provides a way to mark selected messages so that subsequent
+VM provides a way to @dfn{mark} selected messages so that subsequent
 operations can be applied to them.  This is similar to marking in other
 parts of Emacs, e.g., @xref{Marks vs Flags, Dired Marks, Dired Marks,
 emacs}, but arguably more powerful.  For example, one can mark all
@@ -4547,13 +4556,13 @@ subset of messages from another virtual folder.
 @cindex interactive virtual folders
 There are two ways of working with virtual folders.  When you are
 visiting a folder, you can use one or more selectors or search keys to
-interactively create a virtual folder.  We call such folders ``search
-folders.''  You can browse through the
+interactively create a virtual folder.  We call such folders @dfn{search
+folders}.  You can browse through the
 messages in the search folder and carry out actions on them which
 will be reflected back to the original folder.  When you are done, you
 can quit the search folder and return to the original folder.
 
-@cindex predefined virtual folders
+@cindex defined virtual folders
 @vindex vm-virtual-folder-alist
 @kindex V V
 @findex vm-visit-virtual-folder
@@ -4564,17 +4573,17 @@ actions carried out on the virtual folder messages will be reflected
 back to the underlying real folders.  When you quit a virtual folder, all
 its underlying real folders will also be quit, unless they were previously
 visited in the Emacs session.  We call such virtual folders
-``predefined'' virtual folders.
+@dfn{defined virtual folders}.
 
 @menu
 * Search Folders::	Virtual folders created interactively
-* Predefined VFs::	Virtual folders defined in advance
+* Defined Folders::	Virtual folders defined in advance
 * Virtual Selectors::	Selectors used for creating virtual folders
-* Working with VFs::	What you can do in a virtual folder
+* Working with Virtual Folders:: What you can do in a virtual folder
 * vm-avirtual::		Automatic operations using virtual selectors
 @end menu
 
-@node Search Folders, Predefined VFs, Virtual Folders, Virtual Folders
+@node Search Folders, Defined Folders, Virtual Folders, Virtual Folders
 @section Search Folders
 
 @findex vm-create-virtual-folder
@@ -4583,7 +4592,8 @@ visited in the Emacs session.  We call such virtual folders
 The command @code{vm-create-search-folder} (bound to @kbd{V C}) lets you
 interactively create a virtual folder from the messages of the current
 folder, using exactly one selector to choose the messages.  If you type
-@kbd{V C header RET greeting}, VM will create a folder containing only those
+@kbd{V C header @key{RET} greeting}, VM will create a folder containing only
+those 
 messages that contain the string @samp{greeting} in one of its headers.
 @xref{Virtual Selectors}, for virtual selectors you can use for this
 purpose. 
@@ -4595,13 +4605,13 @@ The command @code{vm-create-search-folder-of-threads} (bound to @kbd{V T})
 lets you create a virtual folder in the same way, but consisting of entire
 message threads.  If a message thread contains any message matching the
 given selector then it is included in the virtual folder.  For instance, if
-you type @kbd{V T author RET Peter} then all threads containing a message
+you type @kbd{V T author @key{RET} Peter} then all threads containing a message
 authored by @samp{Peter} will be included in the virtual folder.
 
 @findex vm-apply-virtual-folder
 @kindex V X
 The command @code{vm-apply-virtual-folder} (bound to @kbd{V X}) tries
-the selectors of a predefined virtual folder against the messages of
+the selectors of a defined virtual folder against the messages of
 the current folder and creates a virtual folder containing the
 matching messages.
 
@@ -4663,15 +4673,15 @@ text of messages.  The key binding @kbd{V t}
 (@code{vm-create-text-virtual-folder}) can be used to find all messages with
 the string.  This is more efficient than the @code{vm-isearch-forward}
 command (@pxref{Selecting Messages}) because it only searches in the text part
-of message bodies, not inside MIME attachments. 
+of message bodies, not inside @acronym{MIME} attachments. 
 
-@node Predefined VFs, Working with VFs, Search Folders, Virtual Folders
-@section Predefined Virtual Folders
+@node Defined Folders, Working with Virtual Folders, Search Folders, Virtual Folders
+@section Defined Virtual Folders
 
 @vindex vm-virtual-folder-alist
 @findex vm-visit-virtual-folder
 @kindex V V
-A predefined virtual folder is defined by its name, the folders that it
+A defined virtual folder is defined by its name, the folders that it
 contains and its selectors.  The variable
 @code{vm-virtual-folder-alist} is a list of the definitions of all
 such virtual folders.  You can  visit a virtual folder listed in
@@ -4690,12 +4700,12 @@ Each virtual folder definition should have the following form:
 @var{VIRTUAL-FOLDER-NAME} is the name of the virtual folder being defined.
 This is the name by which you and VM will refer to this folder.
 
-@var{FOLDER} should be the specification of a real folder: a file path
-for a local folder or a maildrop specification for a POP/IMAP folder.  There may
-be more than one @var{FOLDER} listed, the @var{SELECTOR}s within
-that sublist will apply to them all.  If @var{FOLDER} is a
-directory, VM will assume this to mean that all the folders in
-that directory should be searched.
+@var{FOLDER} should be the specification of a real folder: a file path for a
+local folder or a maildrop specification for a @acronym{POP}/@acronym{IMAP}
+folder.  There may be more than one @var{FOLDER} listed, the @var{SELECTOR}s
+within that sublist will apply to them all.  If @var{FOLDER} is a directory,
+VM will assume this to mean that all the folders in that directory should be
+searched.
 
 The @var{SELECTOR} is a Lisp symbol that tells VM how to
 decide whether a message should be included in the virtual
@@ -4733,7 +4743,7 @@ creating virtual folder definitions.
 )
 @end example
 
-When you visit a predefined virtual folder, all the underlying folders
+When you visit a defined virtual folder, all the underlying folders
 that it depends on will be visited automatically.  Likewise, when you
 quit the virtual folder, all the underlying folders that were
 purposely visited as part of the virtual folder will be closed
@@ -4745,7 +4755,7 @@ previously visited for independent reasons will remain open.
 
 @unnumberedsubsubsec Generic selectors
 
-@cindex BBDB
+@cindex @acronym{BBDB}
 @table @code
 @item any
 matches any message.
@@ -4780,9 +4790,9 @@ list of the message.  @var{ARG} should be a regular expression.
 @item outgoing
 matches message if your are the author of it, i.e. if the author matches
 @code{vm-summary-uninteresting-senders}.
-@cindex BBDB
+@cindex @acronym{BBDB}
 @item in-bbdb
-matches message if its addresses are in the BBDB.  With an optional
+matches message if its addresses are in the @acronym{BBDB}.  With an optional
 first argument you can specify the address class (@code{authors} or
 @code{recipients}) .  With an optional second argument @code{t}, the
 selector checks only the first address specified in the message.
@@ -4893,6 +4903,7 @@ matches message if it is marked, as with
 @unnumberedsubsubsec Selectors based on analysing the text
 
 @table @code
+@vindex vm-vs-attachment-regexp
 @item attachment
 matches if a message contains an attachment, i.e., its text matches
 @code{vm-vs-attachment-regexp}.
@@ -4916,7 +4927,7 @@ lines.  @var{ARG} should be a number.
 @item sexp
 matches message if the argument ``s-expression'' yields @code{t}.  For
 example, to find all the messages from @samp{Jenny} with attachments, you
-can type @kbd{V C sexp RET (and (author "Jenny") attachment) RET}.
+can type @kbd{V C sexp @key{RET} (and (author "Jenny") attachment) @key{RET}}.
 
 (This selector is available for creating interactive virtual folders.  The
 argument ``s-expression'' can involve selectors combined using the logical
@@ -4995,7 +5006,7 @@ matches the message if the current-buffer is in mail-mode and one of
 its argument selectors matches the message.
 @end table
 
-@node Working with VFs, vm-avirtual, Predefined VFs,Virtual Folders
+@node Working with Virtual Folders, vm-avirtual, Defined Folders,Virtual Folders
 @section Working with Virtual Folders
 
 @findex vm-get-new-mail
@@ -5047,11 +5058,11 @@ to @kbd{V M}).  If the virtual folder is currently sharing attributes
 with real folders, it will no longer be.  If it is not sharing
 attributes with the underlying folders then it will be.
 
-@node vm-avirtual,, Working with VFs, Virtual Folders
+@node vm-avirtual,, Working with Virtual Folders, Virtual Folders
 @section vm-avirtual Package
 
 @cindex vm-avirtual
-The @code{vm-avirtual} add-on package created by Robert Widhopf-Fenk provides
+The @samp{vm-avirtual} add-on package created by Robert Widhopf-Fenk provides
 various automatic operations based on virtual selectors.  These
 facilities are only partially documented.
 
@@ -5311,7 +5322,7 @@ which invokes @code{vm-apply-window-configuration}.
 @cindex .vm.windows
 VM saves information about your window configurations in the file
 named by the variable @code{vm-window-configuration-file}.  The default
-location of the configuration file is @samp{"~/.vm.windows"}.
+location of the configuration file is @file{"~/.vm.windows"}.
 Do not make @code{vm-window-configuration-file} point to the same
 location as @code{vm-init-file}, as the window configuration save
 commands will then overwrite the content of your init file.
@@ -5366,14 +5377,14 @@ either @code{fset} or @code{defun}.
 The Helper button.  Clicking on this button runs the command
 @code{vm-toolbar-helper-command}.  This command normally just runs
 @code{vm-help}, but it also does context specific things under certain
-conditions.  If the current message is a MIME message that needs
-decoding, the Helper button becomes the Decode MIME button.  If the 
+conditions.  If the current message is a @acronym{MIME} message that needs
+decoding, the Helper button becomes the Decode @acronym{MIME} button.  If the 
 current folder has an auto-save file that appears to be the result 
 of an Emacs or system crash, the Helper button becomes the Recover 
 button.  Clicking on the Recover button runs @code{vm-recover-folder}, 
 so you can recover your folder from an existing auto-save file.
 @item mime
-The Decode MIME button.  Clicking on this button runs the command
+The Decode @acronym{MIME} button.  Clicking on this button runs the command
 @code{vm-toolbar-mime-command}.  This command is normally just an
 alias for the @code{vm-decode-mime-message} command.
 @item next
@@ -5450,6 +5461,7 @@ not need to set it.
 
 @vindex vm-popup-menu-on-mouse-3
 @cindex menu bar
+@cindex menus, pop-up
 VM uses Emacs' menu bar and pop-up menus whenever they are available
 using which you can readily access VM's commands.  By default, VM puts
 a context-sensitive pop-up menu on mouse button 3 (usually the
@@ -5542,24 +5554,24 @@ This variable is ignored under XEmacs if
 documentation for the function @code{highlight-headers} to find out
 how to customize header highlighting using this package.
 
-@cindex URL
+@cindex @acronym{URL}
 @vindex vm-highlight-url-face
 @vindex vm-url-search-limit
 URL's that occur in message bodies are displayed using the face
 named by @code{vm-highlight-url-face}.  Typing Return on such URL's or
-clicking button-2 has the effect of sending the URL to an external web
-browser.  @xref{Using the Mouse}.  Searching for URLs in a
-large message can take a long time.  Since URLs often occur near
+clicking button-2 has the effect of sending the @acronym{URL} to an external web
+browser.  @xref{Using the Mouse}.  Searching for @acronym{URL}s in a
+large message can take a long time.  Since @acronym{URL}s often occur near
 the beginning and near the end of messages, VM offers a way to
-search just those parts of a message for URLs.  The variable
+search just those parts of a message for @acronym{URL}s.  The variable
 @code{vm-url-search-limit} specifies how much of a message to search.
 If @code{vm-url-search-limit} has a positive numeric value @var{N}, VM 
 will search the first @math{@var{N} / 2} characters and the last
-@math{@var{N} / 2} characters in the message for URLs.
+@math{@var{N} / 2} characters in the message for @acronym{URL}s.
 
 @vindex vm-mime-button-face
 The face named by @code{vm-mime-button-face} is used to display the
-textual buttons that trigger the display of MIME objects.
+textual buttons that trigger the display of @acronym{MIME} objects.
 
 @xref{Summary Faces}, for the faces support in the Summary buffer.
 
@@ -5572,11 +5584,11 @@ and summary buffers.
 @table @asis
 @item button-1 (left button usually)
 Unchanged.
-@cindex URL
+@cindex @acronym{URL}
 @item button-2 (middle button usually)
 Activate.  If you click on a summary entry, that message will be
 selected and become the current message.  If you click on a
-highlighted URL in the body of a message, that URL will be sent
+highlighted @acronym{URL} in the body of a message, that @acronym{URL} will be sent
 to the browser specified by @code{vm-url-browser}.
 @item button-3 (right button usually)
 Context Menu.  If the mouse pointer is over the contents of the
@@ -5586,19 +5598,19 @@ you may want to create a virtual folder containing all the
 messages in the current folder written by this author.  If the
 mouse pointer is over the contents of the Subject header, a menu
 of actions to be performed on the current message's subject is
-produced.  If button-3 is clicked over a highlighted URL, a menu
+produced.  If button-3 is clicked over a highlighted @acronym{URL}, a menu
 of Web browsers is produced.  Otherwise the normal VM mode
 specific menu is produced.
 @end table
 
 @cindex w3m
-@cindex HTML
-These button assignments work only in plain text messages.  For HTML
+@cindex @acronym{HTML}
+These button assignments work only in plain text messages.  For @acronym{HTML}
 messages, you might use an internal web browser such as w3m to display
 the content, which will have its own button assignments.  For instance,
 w3m binds button-2 to the browser function specified by the variable
 @code{w3m-goto-article-function}.  You will need to set that variable to
-the desired browser function to get button-2 to work in HTML messages.
+the desired browser function to get button-2 to work in @acronym{HTML} messages.
 
 In mail composition buffers only mouse button-3 is affected.
 Context sensitive menus are produced when that button is clicked.
@@ -5611,13 +5623,13 @@ Context sensitive menus are produced when that button is clicked.
 @cindex web browser
 VM provides a number of browser functions that you can set as the value
 of @code{vm-url-browser}.  An example is the function
-@code{vm-mouse-send-url-to-netscape}, which sends the URL at mouse to the
+@code{vm-mouse-send-url-to-netscape}, which sends the @acronym{URL} at mouse to the
 Netscape browser.  Other browsers supported in this way include
 @code{mosaic}, @code{mmosaic}, @code{opera}, @code{mozilla},
 @code{firefox}, and @code{konqueror}, all of which have functions of the
 form @code{vm-mouse-send-url-to-xxx} and @code{vm-mouse-send-url-to-xxx-new-window}.  You can also set
 @code{vm-url-browser} to the Emacs function @code{browse-url}, and use
-the facilities defined in the @code{browse-url} library to send URL's to
+the facilities defined in the @samp{browse-url} library to send URL's to
 external browsers.
 
 @node Hooks, Preface to Add-ons, Using the Mouse, Top
@@ -5660,7 +5672,7 @@ When the hooks are called, the current buffer will be the folder containing
 the message and the start and end of the message will be bracketed by
 (point-min) and (point-max).  The hooks are calle with one argument, a
 string denoting the folder where the message was saved.  The folder could be
-a file name or the maildrop specification of an IMAP mailbox.
+a file name or the maildrop specification of an @acronym{IMAP} mailbox.
 
 @item vm-arrived-message-hook
 @vindex vm-arrived-message-hook
@@ -5804,7 +5816,7 @@ List of hook functions to run when a VM presentation buffer is
 created.  The current buffer will be the new presentation buffer
 when the hooks are run.  Presentation buffers are used to display
 messages when some type of decoding must be done to the message
-to make it presentable.  E.g. MIME decoding.
+to make it presentable.  E.g. @acronym{MIME} decoding.
 
 @item vm-quit-hook
 @vindex vm-quit-hook
@@ -5853,11 +5865,11 @@ List of hook functions that are run just after all menus are initialized.
 @item vm-mime-display-function
 @vindex vm-mime-display-function
 If non-@code{nil}, this should name a function to be called inside 
-@code{vm-decode-mime-message} to do the MIME display of the current
+@code{vm-decode-mime-message} to do the @acronym{MIME} display of the current
 message.  The function is called with no arguments, and at the
 time of the call the current buffer will be the @dfn{presentation
 buffer} for the folder, which is a temporary buffer that VM uses
-for the display of MIME messages.  A copy of the current message
+for the display of @acronym{MIME} messages.  A copy of the current message
 will be in the presentation buffer at that time.  The normal work
 that @code{vm-decode-mime-message} would do is not done, because this
 function is expected to subsume all of it.
@@ -5866,7 +5878,7 @@ function is expected to subsume all of it.
 @vindex vm-mail-send-hook
 List of hook functions to call just before sending a message.
 The hooks are run after confirming that you want to send the
-message (see @code{vm-confirm-mail-send} but before MIME encoding
+message (see @code{vm-confirm-mail-send} but before @acronym{MIME} encoding
 and FCC processing.
 
 @item mail-yank-hooks
@@ -5931,7 +5943,7 @@ Useful ways to customize VM.
 @vindex vm-enable-addons
 Some messages come with huge lists of recipients and one has to page
 through them before getting to the actual content of the message.  The
-``shrunken headers'' feature, included in @code{vm-rfaddons},
+@dfn{shrunken headers} feature, included in @code{vm-rfaddons},
 addresses this problem.  To use the feature, you must add
 @code{shrunken-headers} to the variable @code{vm-enable-addons} in
 your VM init file:
@@ -5949,9 +5961,9 @@ use it often.
 
 (This add-on was provided by Robert Fenk.)
 
-@unnumberedsubsubsec MIME alternatives
-@cindex MIME alternatives
-The default setting of VM for handling MIME alternatives is
+@unnumberedsubsubsec @acronym{MIME} alternatives
+@cindex @acronym{MIME} alternatives
+The default setting of VM for handling @acronym{MIME} alternatives is
 @code{best-internal}, which means the best alternative that can be
 displayed internally in VM is chosen.  Many users have environments
 where only @code{text/plain} parts can be displayed internally.
@@ -5960,8 +5972,8 @@ expected to be more faithful to the sender's composition.  On
 occasion, you might wish to see the @code{text/html} part even if it
 has to be viewed externally.
 
-@cindex MIME alternative, best
-@cindex MIME alternative, best-internal
+@cindex @acronym{MIME} alternative, best
+@cindex @acronym{MIME} alternative, best-internal
 @findex vm-toggle-best-mime
 The function @code{vm-toggle-best-mime} function, included in
 @code{vm-rfaddons}, allows you to change VM's selection method to
@@ -6007,7 +6019,8 @@ putting @code{vm-mime-auto-save-all-attachments} in
 @cindex vm-pine
 @cindex postponing message composition
 Sometimes, you might want to interrupt the composing of a message and
-continue it later.  The add-on called @code{vm-pine} provides this
+continue it later.  This is called @dfn{postponing}.  The add-on called
+@samp{vm-pine} provides this 
 functionality. 
 
 @findex vm-postpone-composition
@@ -6026,8 +6039,8 @@ You can continue composing the postponed messages by visiting
 @code{vm-postponed-folder}, selecting a message and running @kbd{M-x
 vm-continue-postponed-message}.  This constructs a new message composition
 buffer by copying the text from the VM Presentation buffer.  It also
-converts any MIME buttons into attachment buttons, which will be encoded as
-valid MIME attachments when the message is sent.  Unfortunately, any
+converts any @acronym{MIME} buttons into attachment buttons, which will be encoded as
+valid @acronym{MIME} attachments when the message is sent.  Unfortunately, any
 attachments that are displayed inline in the Presentation buffer will not be
 encoded.  This is a limitation of this package.
 
@@ -6064,7 +6077,7 @@ series.
 
 @cindex Savannah
 All these releases are available from the new project page of VM hosted
-by Savannah, at the URL
+by Savannah, at the @acronym{URL}
 @uref{http://savannah.nongnu.org/projects/viewmail/}. 
 According to the project page, ``this site exists to continue VM development
 after version 7.19 as a community project.''
@@ -6080,7 +6093,7 @@ releases made by the team are numbered @code{8.1.0} and up.
 @cindex Launchpad
 The project code base is maintained at the Launchpad web site
 @uref{http://launchpad.net/vm}.  The ``VM Development Team'' can be
-reached here using the email address @code{vm@@lists.launchpad.net}.
+reached here using the email address @email{vm@@lists.launchpad.net}.
 
 @unnumberedsubsec Savannah project site
 
@@ -6140,7 +6153,7 @@ and make suggestions that will be valuable to the developers.
 
 To download the development version, identify the ``branch'' that you
 would like to download, and use Bazaar version control system with an
-appropriate Launchpad URL.  For example, the command
+appropriate Launchpad @acronym{URL}.  For example, the command
 @command{bzr get lp:vm} can be used to download the main development
 branch. 
 
@@ -6231,10 +6244,10 @@ Please let us know if any other contributors have been missed out.
 
 Here are some of the VM features that its users find most valuable:
 
-@cindex BBDB
-@cindex IMAP
-@cindex HTML
-@cindex MIME
+@cindex @acronym{BBDB}
+@cindex @acronym{IMAP}
+@cindex @acronym{HTML}
+@cindex @acronym{MIME}
 @cindex virtual folders
 @itemize
 @item
@@ -6245,20 +6258,20 @@ bindings.
 @item
 Speed of usage facilitated by keyboard commands.
 @item
-Integration with BBDB for maintaining contacts and email addresses.
+Integration with @acronym{BBDB} for maintaining contacts and email addresses.
 @item
 VM-Pcrisis for managing multiple mail identities.
 @item 
-Integration with emacs-w3m for viewing HTML email.
+Integration with emacs-w3m for viewing @acronym{HTML} email.
 @item
-Comprehensive MIME support.
+Comprehensive @acronym{MIME} support.
 @item
 Ability to operate on all attachments of a message, such as saving or
 deleting. 
 @item
 Interactive virtual folders (created by @code{V C}).
 @item
-Support for IMAP folders.
+Support for @acronym{IMAP} folders.
 @item
 Ability to delete duplicate copies of messages.
 @end itemize
@@ -6279,9 +6292,9 @@ Incremental search in virtual folders.
 @item
 Thread-level operations such as killing an entire thread.
 @item
-Headers-only downloading of IMAP folders.
+Headers-only downloading of @acronym{IMAP} folders.
 @item
-Downloading IMAP messages without attachments.
+Downloading @acronym{IMAP} messages without attachments.
 @item
 Support for maildir folders.
 @item
@@ -6310,8 +6323,8 @@ suitable text to explain the problem and send the bug-report message.
 @findex vm-pop-submit-bug-report
 @findex vm-imap-start-bug-report
 @findex vm-imap-submit-bug-report
-For mail server-associated problems dealing with POP/IMAP spool files
-or POP/IMAP folders, the cause of the problem might be in the
+For mail server-associated problems dealing with @acronym{POP}/@acronym{IMAP} spool files
+or @acronym{POP}/@acronym{IMAP} folders, the cause of the problem might be in the
 interaction with the mail server.  To identify the cause, it may be
 necessary for the VM maintainer to look at the server interactions
 during the problem occurrence.  To capture the server interactions,
@@ -6335,8 +6348,9 @@ developers/programmers.
 * Sorting Internals::     Details of how messages are sorted
 * User Interaction::      Handling of the user interaction
 * Coding Systems::        How VM handles character coding
-* MIME Display::          How VM displays MIME messages
-* MIME Composition::	  How MIME messages are composed
+* @acronym{MIME} Display::          How VM displays @acronym{MIME} messages
+* @acronym{MIME} Composition::	  How @acronym{MIME} messages are composed
+* Virtual Folder Internals:: Details of virtual folders and selectors
 * Extents and Overlays::  How VM deals with XEmacs and GNU Emacs differences
 * Timers and Concurrency:: How VM runs asynchronous timers
 @end menu
@@ -6379,11 +6393,11 @@ mbox's from the old System V format can be handled.)  In a
 line stores the length of the message.  So, no trailing separator line
 is required.
 
-@cindex MMDF format
+@cindex @acronym{MMDF} format
 @cindex Babyl format
-@inindex MMDF format
+@inindex @acronym{MMDF} format
 @inindex Babyl format
-In addition to these mbox formats, VM also handles the MMDF format and
+In addition to these mbox formats, VM also handles the @acronym{MMDF} format and
 the Emacs Rmail's Babyl format.  The variable @code{vm-folder-type}
 stores the type of the folder being used.
 
@@ -6424,24 +6438,27 @@ arranged according to these variables.
 X-VM-Summary-Format.  This header stores the format string for the
 summary lines.
 @item
-@inindex X-VM-POP-Retrieved
-X-VM-POP-Retrieved. This header lists all the messages that have
-been retrieved from POP servers together with the identifying
-information for the POP servers.  VM refrains from retrieving these
+@inindex X-VM-@acronym{POP}-Retrieved
+X-VM-@acronym{POP}-Retrieved. This header lists all the messages that have
+been retrieved from @acronym{POP} servers together with the identifying
+information for the @acronym{POP} servers.  VM refrains from retrieving these
 messages again in future in order to avoid duplication.
 @item
-@inindex X-VM-IMAP-Retrieved
-X-VM-IMAP-Retrieved. This header lists messages that have been retrieved
-from IMAP servers together with their identifying information on the IMAP
-servers (UID and UIDVALIDITY).  VM refrains from retrieving these messages
-again in future in order to avoid duplication.  (For local folders, this
-lists all the retrieved messages except those known to be expunged on the
-server.  For IMAP folders, it does not list all the retrieved messages
-because they are normally the same as those on the server.  Only the
-messages locally expunged in the cache folder but not known to be expunged
-on the server are listed.  In the normal cases, the variable is just nil in
-IMAP folders.)
+@inindex X-VM-@acronym{IMAP}-Retrieved
+X-VM-@acronym{IMAP}-Retrieved. This header lists messages that have been
+retrieved from @acronym{IMAP} servers together with their identifying
+information on the @acronym{IMAP} servers (@acronym{UID} and
+@acronym{UIDVALIDITY}).  VM refrains from retrieving these messages again in
+future in order to avoid duplication.  (For local folders, this lists all
+the retrieved messages except those known to be expunged on the server.  For
+@acronym{IMAP} folders, it does not list all the retrieved messages because
+they are normally the same as those on the server.  Only the messages
+locally expunged in the cache folder but not known to be expunged on the
+server are listed.  In the normal cases, the variable is just nil in
+@acronym{IMAP} folders.)
 @end itemize
+
+@unnumberedsubsubsec Folder variables
 
 Internal to Emacs, VM stores the folder as simply a text buffer.  However, it
 remembers a variety of data about the message contents in the buffer
@@ -6469,7 +6486,7 @@ message store.  The first two elements of the vector are the maildrop
 specification for the mail server and a reference to the process
 connecting to the mail server.  For the 'pop access method, that is all
 there is.  But, for the 'imap access method, the vector has 9 other
-entries detailing various pieces of data about the IMAP server.
+entries detailing various pieces of data about the @acronym{IMAP} server.
 @item
 @inindex vm-folder-read-only
 @code{vm-folder-read-only}.  A boolean flag indicating whether the
@@ -6543,12 +6560,12 @@ bodies were fetched for viewing or other operations.
 @code{vm-fetched-message-limit}. 
 @item
 @inindex vm-mime-decoded
-@inindex MIME
-@code{vm-mime-decoded}.  The MIME decoding state of the current message
+@inindex @acronym{MIME}
+@code{vm-mime-decoded}.  The @acronym{MIME} decoding state of the current message
 display: @code{undecoded} if the message is shown in undecoded plain
 text form, @code{decoded} if the message is shown decoded, and
 @code{buttons} if the message is shown as a series of buttons for all
-its MIME components.  The @kbd{D} command cycles through these
+its @acronym{MIME} components.  The @kbd{D} command cycles through these
 states. 
 @item
 @inindex vm-system-state
@@ -6608,10 +6625,11 @@ applies, and any arguments needed for the action.
 undoing cycle.
 @end itemize
 
-@unnumberedsubsubsec POP and IMAP folders
+@unnumberedsubsubsec vm-folder-access-data
 
-The component @code{vm-folder-access-data} of ?? is a vector storing data
-about the state of the mail server.  It contains the following items:
+The variable @code{vm-folder-access-data} is a vector storing data about the
+state of the mail server (for @acronym{POP} and @acronym{IMAP} servers).  It contains the
+following items:
 
 @itemize
 @item
@@ -6624,7 +6642,7 @@ folder.  (Each folder uses a separate process to avoid unwanted
 interference.) 
 @item
 @code{imap-uid-validity}.
-The UIDVALIDITY value of the IMAP folder.
+The @acronym{UIDVALIDITY} value of the @acronym{IMAP} folder.
 @item
 @code{imap-read-write}.
 A boolean flag indicating whether the folder is writable.
@@ -6634,7 +6652,7 @@ A boolean flag indicating whether the folder allows deletions.
 @item
 @code{imap-body-peek}.
 A boolean flag indicating whether the folder allows the @code{BODYPEEK}
-command of IMAP.
+command of @acronym{IMAP}.
 @item
 @code{imap-permanent-flags}.
 The list of permananet flags that have been stored in the folder.
@@ -6653,18 +6671,20 @@ that time.
 @item
 @code{imap-uid-list}.
 The list of UID's and flags of the messages in the folder,
-using cons cells of the form (msg-num . uid . size . flags list).
+using cons cells of the form (msg-num . uid . size . flags list).  The cons
+cells (size . flags list) are shared with @code{imap-flags-obarray} below.
 @item
 @code{imap-uid-obarray}.
 An obarray that binds all the UIDs of messages in the folder to their
 message sequence numbers.
 @item
-@code{imap-flags-obarray}.
-An obarray that binds all the UIDs of messages in the folder to cons cells
-of the form (size . flags list).  These cons cells are the same as those
-occurring in the @code{imap-uid-list} field.  So, any updates will be
-shared.  Both of these obarrays bind exactly the same set of UIDs.  The
-reason for their separation seems to be historical. 
+@code{imap-flags-obarray}.  An obarray that binds all the UIDs of messages
+in the folder to cons cells of the form (size . flags list).  These cons
+cells are the same as those occurring in the @code{imap-uid-list} field.
+So, any updates will be shared through both the views.  The two obarrays,
+@code{imap-uid-obarray} and @code{imap-flags-obarray}, bind exactly the same
+set of UIDs.  Jointly, they are referred to as @code{uid-and-flags-data}.
+The reason for their separation is historical.
 @end itemize
 
 @node Message Internals, Summary Internals, Folder Internals, Internals
@@ -6829,12 +6849,12 @@ switched from unmirrored to mirrored.
 @code{virtual-summary}.  Summary for unmirrored virtual message.
 @inindex mime-layout
 @item
-@code{mime-layout}.  MIME layout information; types, ids, positions, etc of
-all MIME entities.  (See below.)
+@code{mime-layout}.  @acronym{MIME} layout information; types, ids, positions, etc of
+all @acronym{MIME} entities.  (See below.)
 @inindex mime-encoded-header-flag
 @item
 @code{mime-encoded-header-flag}. Flag that indicates if the headers of the
-message are MIME encoded.
+message are @acronym{MIME} encoded.
 @inindex su-summary-mouse-track-overlay
 @item
 @code{su-summary-mouse-track-overlay}.  The overlay on the summary of this
@@ -6896,8 +6916,8 @@ exception.  They are really hard data that cannot be calculated from
 anything else.
 
 Some of the data deals with information from message headers.  The
-header fields can have MIME-encoded words in them.  The strings stored
-in the cached-data vector, however, are MIME-decoded versions of the
+header fields can have @acronym{MIME}-encoded words in them.  The strings stored
+in the cached-data vector, however, are @acronym{MIME}-decoded versions of the
 header fields, but they also have text properties that store the names
 of the original character sets used in the header fields.  This allows
 the strings to be quickly re-encoded for storage on disk.
@@ -6912,11 +6932,11 @@ the message.
 @inindex full-name
 @item 
 full-name.  The full name of the author of the message.  This is a
-MIME-decoded string with text properties.
+@acronym{MIME}-decoded string with text properties.
 @inindex from
 @item
 from.  The email address of the author of the message.  This is a
-MIME-decoded string with text properties.
+@acronym{MIME}-decoded string with text properties.
 @inindex message-id
 @item
 message-id.  The unique id of the message.
@@ -6925,7 +6945,7 @@ message-id.  The unique id of the message.
 line-count. The number of lines in the message.
 @inindex subject
 @item
-subject.  The subject string of the message.  This is a MIME-decoded
+subject.  The subject string of the message.  This is a @acronym{MIME}-decoded
 string with text properties.
 @inindex vheaders-regexp
 @item
@@ -6936,12 +6956,12 @@ section.
 @inindex to
 @item
 to.  Addresses of the recipients of the message in a comma separated
-string.  This is a MIME-decoded string with text properties.
+string.  This is a @acronym{MIME}-decoded string with text properties.
 @inindex to-names
 @item
 to-names. The full names of the recipients in a comma separated
 string.  Addresses are used if full names are not available.  This is
-a MIME-decoded string with text properties.
+a @acronym{MIME}-decoded string with text properties.
 @inindex month-number
 @item
 month-number.  Numeric month of the sent date.
@@ -6951,14 +6971,14 @@ sortable-datestring.  Date string of the sent date for sorting purposes.
 @inindex sortable-subject
 @item
 sortable-subject.  The subject string for sorting purposes.  (Prefixes
-such as ``re:'' are removed.)  This is a MIME-decoded string with text
+such as ``re:'' are removed.)  This is a @acronym{MIME}-decoded string with text
 properties.
 @inindex summary
 @item
 summary.  A tokenized summary for the message, from which the actual
 summary line can be quickly calculated.  This is a list containing
 tokens, such as @code{number} and @code{thread-indent}, as well as
-MIME-decoded strings with text properties.
+@acronym{MIME}-decoded strings with text properties.
 @inindex parent
 @item
 parent.  The message ID of the parent of the message in its
@@ -6969,7 +6989,7 @@ references.  Message IDs listed in the References header of the message.
 @c @inindex headers-to-be-retrieved
 @c @item
 @c headers-to-be-retrieved.  Flag that indicates whether the headers of the
-@c message have not been retrieved from the mail server (for POP or IMAP
+@c message have not been retrieved from the mail server (for @acronym{POP} or @acronym{IMAP}
 @c folders).
 @inindex body-to-be-discarded
 @item
@@ -6982,14 +7002,14 @@ body-to-be-retrieved.  Flag that indicates whether the body of the
 message has not been retrieved from the mail server.
 @inindex pop-uidl
 @item
-pop-uidl.  The UIDL id of the message on the POP server.
+pop-uidl.  The @acronym{UIDL} id of the message on the @acronym{POP} server.
 @inindex imap-uid
 @item
-imap-uid.  The UID of the message on the IMAP server.
+imap-uid.  The @acronym{UID} of the message on the @acronym{IMAP} server.
 @inindex imap-uid-validity
 @item
-imap-uid-validity.  The UID-VALIDITY value of the message on the IMAP
-server. 
+imap-uid-validity.  The @acronym{UIDVALIDITY} value of the message on the
+@acronym{IMAP} server. 
 @inindex spam-score
 @item
 spam-score.  The spam score of the message.
@@ -7025,18 +7045,18 @@ attribute-modflag.  Flag to indicate if the attributes of the message
 have been modified since the last save.
 @end itemize
 
-@unnumberedsubsec MIME layout
-@anchor{MIME layout}
-The MIME layout of a message, stored in the soft data of the message,
+@unnumberedsubsec @acronym{MIME} layout
+@anchor{@acronym{MIME} layout}
+The @acronym{MIME} layout of a message, stored in the soft data of the message,
 is in turn a vector containing various pieces of data.  Such a vector
-is used not only for the overall message, but for all its MIME parts
+is used not only for the overall message, but for all its @acronym{MIME} parts
 and subparts as well.
 
 @inindex type
 @inindex Content-Type
 @itemize
 @item @code{type}.
-A list of strings consisting of the MIME type of the part along
+A list of strings consisting of the @acronym{MIME} type of the part along
 with its attributes.  This comes from ``Content-Type'' header.  The type
 could be of the form `type/subtype'.  Quotation marks are stripped from
 attribute values.  An example is @code{("multipart/mixed" "boundary=----_=_NextPart_001_01AFE588.63E23840")}.
@@ -7046,7 +7066,7 @@ attribute values.  An example is @code{("multipart/mixed" "boundary=----_=_NextP
 @inindex encoding
 @inindex Content-Transfer-Encoding
 @item
-@code{encoding}.  The MIME encoding used for the part.  It comes from the
+@code{encoding}.  The @acronym{MIME} encoding used for the part.  It comes from the
 ``Content-Transfer-Encoding'' header.
 @inindex id
 @inindex Content-ID
@@ -7072,20 +7092,20 @@ stripped.
 @item
 @code{header-start}, @code{header-end}, @code{body-start} and
 @code{body-end}.  Markers into the content buffer delineating the
-headers/body of the MIME part.
+headers/body of the @acronym{MIME} part.
 @inindex parts
 @item
-@code{parts}. A list of MIME layouts for the individual subparts of this part.
+@code{parts}. A list of @acronym{MIME} layouts for the individual subparts of this part.
 @inindex cache
 @item
-@code{cache}. A symbol that is unique to this MIME part.  Other data is
+@code{cache}. A symbol that is unique to this @acronym{MIME} part.  Other data is
 stored as properties of this symbol:
 @itemize
 @inindex vm-mime-display-external-generic
 @item
 @code{vm-mime-display-external-generic}.
 This property stores the id of the process used to externally display
-the MIME part as well as the name of the temporary file used. 
+the @acronym{MIME} part as well as the name of the temporary file used. 
 @inindex vm-mime-display-internal-image-xxxx
 @item
 @code{vm-mime-display-internal-image-xxxx}.
@@ -7108,21 +7128,21 @@ clip is stored.
 @end itemize
 @inindex message-symbol
 @item
-@code{message-symbol}.  A reference to the message that contains the MIME
+@code{message-symbol}.  A reference to the message that contains the @acronym{MIME}
 part.  Represented as a symbol (that is, an interned key into a hash
 table).  This is a different symbol from the real-message-sym of the
 message. 
 @inindex display-error
 @item
-@code{display-error}.  If the display of a MIME part fails, its error string is
+@code{display-error}.  If the display of a @acronym{MIME} part fails, its error string is
 stored here.
 @inindex layout-is-converted
 @item
-@code{layout-is-converted}.  Flag indicating that MIME type conversion has been
-performed on this part.  @pxref{MIME type conversion}.
+@code{layout-is-converted}.  Flag indicating that @acronym{MIME} type conversion has been
+performed on this part.  @pxref{@acronym{MIME} type conversion}.
 @inindex unconverted-layout
 @item
-@code{unconverted-layout}.  If the MIME type conversion has been performed on
+@code{unconverted-layout}.  If the @acronym{MIME} type conversion has been performed on
 this part, then this holds the original unconverted layout.
 @end itemize
 
@@ -7525,7 +7545,7 @@ which installs a fresh menu bar retaining the standard Emacs menus.
 The same function is used to reinstall the dedicated VM menu bar when
 needed. 
 
-@node Coding Systems, MIME Display, User Interaction , Internals
+@node Coding Systems, Virtual Folder Internals, User Interaction, Internals
 @section Coding Systems
 
 @inindex coding system
@@ -7546,12 +7566,12 @@ different versions of Emacs.
 @inindex vm-mime-mule-charset-to-coding-alist
 Emacs defines a property called @code{mime-charset} for each
 implemented coding system, which is the official preferred name of the
-MIME character set that it corresponds to.  For example,
-@code{iso-latin-1} corresponds to the MIME charset @code{iso-8859-1},
-and @code{hebrew-iso-8bit} corresponds to the MIME charset
+@acronym{MIME} character set that it corresponds to.  For example,
+@code{iso-latin-1} corresponds to the @acronym{MIME} charset @code{iso-8859-1},
+and @code{hebrew-iso-8bit} corresponds to the @acronym{MIME} charset
 @code{iso-8859-8}.  The Emacs function @code{coding-system-get} can be
 used to extract the @code{mime-charset} property of a coding system.
-VM stores all the known coding systems and the corresponding MIME
+VM stores all the known coding systems and the corresponding @acronym{MIME}
 charsets in its internal variables
 @code{vm-mime-mule-coding-to-charset-alist} and
 @code{vm-mime-mule-charset-to-coding-alist}.
@@ -7559,12 +7579,12 @@ charsets in its internal variables
 @inindex Content-Type
 @inindex decode-coding-region
 @inindex encode-coding-region
-MIME messages specify the character set that their content is in, in the
-Content-Type header.  VM uses this information to decode the content
+@acronym{MIME} messages specify the character set that their content is in,
+in the Content-Type header.  VM uses this information to decode the content
 to the Emacs internal coding system.  This is done using the function
-@code{decode-coding-region}.
-Conversely, VM encodes the outgoing messages into the default or
-chosen MIME character set using the function @code{encode-coding-region}.
+@code{decode-coding-region}.  Conversely, VM encodes the outgoing messages
+into the default or chosen @acronym{MIME} character set using the function
+@code{encode-coding-region}.
 
 @inindex decode-coding-string
 @inindex encode-coding-string
@@ -7583,52 +7603,58 @@ VM decodes such strings using the function @code{decode-coding-string}.
 Conversely, the headers of outgoing messages are encoded using
 @code{encode-coding-string}
 
-@node MIME Display, MIME Composition, Coding Systems, Internals
-@section MIME Display
+@node Virtual Folder Internals, @acronym{MIME} Display, Coding Systems, Internals
+@section Virtual Folder Internals
+
+
+
+@node @acronym{MIME} Display, @acronym{MIME} Composition, Virtual Folder Internals, Internals
+@section @acronym{MIME} Display
 
 @inindex vm-decode-mime-layout
-The MIME layout of a message is stored in the @code{mime-layout} field
-of the Soft data vector of the message.  (@xref{MIME layout}.)
-The MIME layout is in general a tree structure of ``MIME parts''.  The
-function @code{vm-decode-mime-layout} is responsible for traversing
-the tree structure at each MIME part and displaying it appropriately.
+The @acronym{MIME} layout of a message is stored in the @code{mime-layout}
+field of the Soft data vector of the message.  (@xref{@acronym{MIME}
+layout}.)  The @acronym{MIME} layout is in general a tree structure of
+``@acronym{MIME} parts''.  The function @code{vm-decode-mime-layout} is
+responsible for traversing the tree structure at each @acronym{MIME} part
+and displaying it appropriately.
 
 The function @code{vm-decode-mime-layout} goes through the following
 sequence of decisions: 
 
 @enumerate
 @item
-If the MIME part is a @code{multipart} type, then the subparts are
+If the @acronym{MIME} part is a @code{multipart} type, then the subparts are
 displayed as needed.  If it is a single part, it proceeds as follows.
 @item 
-If the MIME part should not be displayed automatically, it is
-displayed as a button.  (An automatically displayed MIME type is one
+If the @acronym{MIME} part should not be displayed automatically, it is
+displayed as a button.  (An automatically displayed @acronym{MIME} type is one
 listed in @code{vm-mime-auto-displayed-content-types}
 but not listed in the corresponding exceptions.)
 @item
-If the MIME part should be displayed internally and VM is able to do
-so, then it is displayed internally.  (An internally displayed MIME
+If the @acronym{MIME} part should be displayed internally and VM is able to do
+so, then it is displayed internally.  (An internally displayed @acronym{MIME}
 type is one listed in @code{vm-mime-internal-content-types} but not
 listed in the corresponding exceptions.)
 @item
-Otherwise, the MIME part is displayed externally.  An external viewer
+Otherwise, the @acronym{MIME} part is displayed externally.  An external viewer
 is found from
 @code{vm-mime-external-content-types-alist} and it is invoked to
-display the MIME part.
+display the @acronym{MIME} part.
 @end enumerate
 
 @inindex message/external-body
-MIME parts of type @code{message/external-body} need special treatment.  If
-they are not asked to be auto-displayed, then they are displayed as buttons,
-but the button caption may use information from the child part (the actual
-object that is in the external-body) such as its type and description.  If a
-@code{message/external-body} part is asked to be auto-displayed, then the
-child part is fetched from the external source and stored in an internal
-buffer.  It may be auto-displayed if it is appropriate to do so, or shown in
-turn as a button.
+@acronym{MIME} parts of type @samp{message/external-body} need special
+treatment.  If they are not asked to be auto-displayed, then they are
+displayed as buttons, but the button caption may use information from the
+child part (the actual object that is in the external-body) such as its type
+and description.  If a @code{message/external-body} part is asked to be
+auto-displayed, then the child part is fetched from the external source and
+stored in an internal buffer.  It may be auto-displayed if it is appropriate
+to do so, or shown in turn as a button.
 
-@inindex MIME button
-MIME buttons are displayed as regions of text displaying button
+@inindex @acronym{MIME} button
+@acronym{MIME} buttons are displayed as regions of text displaying button
 labels.  In addition, they have an overlay/extent placed on them,
 which has a number of properties associated with it:
 
@@ -7636,13 +7662,13 @@ which has a number of properties associated with it:
 @item @code{vm-button}.
 Always @code{t}.
 @item @code{vm-mime-layout}.  
-Gives the layout of the MIME part.
+Gives the layout of the @acronym{MIME} part.
 @item @code{vm-mime-function}.
 The function that carries out the action represented by pressing the
 button.
 @item @code{vm-mime-disposable}.
 Set to true if the button should be removed when it is replaced by the
-MIME object.
+@acronym{MIME} object.
 @inindex vm-mime-button-face
 @item @code{face}.
 Set to the value of @code{vm-mime-button-face}.
@@ -7652,11 +7678,11 @@ Set to a keymap that includes @code{vm-mime-reader-map}, binding the
 @end itemize
 
 
-@node MIME Composition, Extents and Overlays, MIME Display, Internals
-@section MIME Composition
+@node @acronym{MIME} Composition, Extents and Overlays, @acronym{MIME} Display, Internals
+@section @acronym{MIME} Composition
 
 @inindex attachment button
-A MIME message is composed just like a normal message.  When objects
+A @acronym{MIME} message is composed just like a normal message.  When objects
 are attached using commands like @code{vm-attach-file},
 @b{attachment buttons} are created in the message composition buffer.  An
 attachment button is a region of text that looks like:
@@ -7681,7 +7707,7 @@ The following properties are defined for attachment buttons:
 
 @itemize
 @item @code{vm-mime-object}.
-The object denoting the MIME attachment.  It is either 
+The object denoting the @acronym{MIME} attachment.  It is either 
 
 @itemize
 @item 
@@ -7692,7 +7718,7 @@ a buffer containing the file to be attached,
 a list of the form (buffer, start, end, filename) indicating a region in a
 buffer, typically the Folder buffer, or 
 @item
-@code{t} indicating that the attachment is another MIME
+@code{t} indicating that the attachment is another @acronym{MIME}
 object in a VM folder.  
 @end itemize
 
@@ -7700,18 +7726,18 @@ object in a VM folder.
 In the last case, the @code{vm-mime-layout}
 property describes the rest of the metadata.
 @item @code{vm-mime-type}.
-A string denoting the MIME type of the object.  (Note that it is a
-single string, unlike the @code{type} component of a MIME layout.)
+A string denoting the @acronym{MIME} type of the object.  (Note that it is a
+single string, unlike the @code{type} component of a @acronym{MIME} layout.)
 @item @code{vm-mime-parameters}.
-A list of strings denoting the parameters of the MIME type.
+A list of strings denoting the parameters of the @acronym{MIME} type.
 @item @code{vm-mime-description}.
-A string for the MIME description of the object.
+A string for the @acronym{MIME} description of the object.
 @item @code{vm-mime-disposition}.
-A list describing the MIME disposition.
+A list describing the @acronym{MIME} disposition.
 @item @code{vm-mime-encoded}.
-A boolean indicating whether the object has MIME headers.
+A boolean indicating whether the object has @acronym{MIME} headers.
 @item @code{vm-mime-encoding}.
-The MIME encoding used, if it is already encoded.
+The @acronym{MIME} encoding used, if it is already encoded.
 @item @code{vm-mime-forward-local-refs}.
 Whether or not references to local external-body objects should be
 forwarded as is.
@@ -7727,21 +7753,21 @@ Standard stickiness of text properties in GNU Emacs.
 @inindex vm-mime-fake-attachment-overlays
 When a composed message is sent, the attachment buttons are replaced
 by actual attachment objects.  In FSF Emacs, the attachment buttons
-are first converted into ``fake'' overlays before MIME encoding, in a
+are first converted into ``fake'' overlays before @acronym{MIME} encoding, in a
 function called @code{vm-mime-fake-attachment-overlays}.  This allows
 the next stage to treat both FSF Emacs and XEmacs using the same
 logic.
 
-The function @code{vm-mime-encode-composition} then encodes the
-composition buffer, by selecting each attachment button and replacing it
-with the corresponding object.  The bodies of @samp{external-body}
-objects are also retrieved at this stage.  Unless the objects were
-already MIME-encoded, they are MIME-encoded and made into MIME parts by
-adding suitable headers.  The message itself is given MIME headers
-describing its content and then handed to Emacs message-sending
-functions. 
+The function @code{vm-mime-encode-composition} then encodes the composition
+buffer, by selecting each attachment button and replacing it with the
+corresponding object.  The bodies of @samp{external-body} objects are also
+retrieved at this stage.  Unless the objects were already
+@acronym{MIME}-encoded, they are @acronym{MIME}-encoded and made into
+@acronym{MIME} parts by adding suitable headers.  The message itself is
+given @acronym{MIME} headers describing its content and then handed to Emacs
+message-sending functions.
 
-@unnumberedsubsec Yanking or Forwarding MIME Messages
+@unnumberedsubsec Yanking or Forwarding @acronym{MIME} Messages
 @inindex yank
 @inindex include
 @inindex vm-include-mime-attachments
@@ -7760,14 +7786,14 @@ generate the yanked text along with such token buttons.
 
 If @code{vm-include-mime-attachments} is @code{t}, then first the
 @code{vm-decode-mime-layout} function is employed to generate proper
-MIME buttons for all the attachments.  In a second step, the MIME
-buttons are replaced by attachment buttons using a function called
-@code{vm-mime-convert-to-attachment-buttons}.  These attachment buttons
-are then handled as described above.
+@acronym{MIME} buttons for all the attachments.  In a second step, the
+@acronym{MIME} buttons are replaced by attachment buttons using a function
+called @code{vm-mime-convert-to-attachment-buttons}.  These attachment
+buttons are then handled as described above.
 
 
 
-@node Extents and Overlays, Timers and Concurrency, MIME Composition, Internals
+@node Extents and Overlays, Timers and Concurrency, @acronym{MIME} Composition, Internals
 @section Extents and Overlays
 
 @inindex extents
@@ -7824,7 +7850,7 @@ regenerated and then set to their correct positions afterwards.  Not
 doing this correctly can seriously degrade the performance of summary
 generation.
 @item
-Presentation buffers use extents/overlays for MIME buttons.  These
+Presentation buffers use extents/overlays for @acronym{MIME} buttons.  These
 are implemented uniformly.
 @item
 The message composition buffers have attachment buttons.  These are
