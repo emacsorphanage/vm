@@ -1583,9 +1583,8 @@ The result is a mime-decoded string with text properties.
 				  
 ;;;###autoload
 (defun vm-su-message-id (m)
-  "Returns the subject string of M, either from the stored
-entry (vm-subject-of) or recalculating it if necessary.  It is a
-mime-encoded string with text properties.  USR 2010-05-13"
+  "Returns the message id of M.  It is a mime-encoded string.
+							USR 2010-12-16"
   (or (vm-message-id-of m)
       (vm-set-message-id-of
        m

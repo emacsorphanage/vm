@@ -40,6 +40,9 @@ VM 8.2.0
 
   IMPROVEMENTS
 
+   * New virtual folder selectors added: `message-id', `uid' (for IMAP) and
+     `uidl' (for POP).
+
    * New command `vm-create-virtual-folder-of-threads' (bound to `V T')
      allows you to select entire threads into a virtual folder instead of
      individual messages.  There are also new virtual folder selectors

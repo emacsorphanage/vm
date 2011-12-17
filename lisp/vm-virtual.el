@@ -816,11 +816,14 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
       (goto-char (vm-headers-of (vm-real-message-of m)))
       (re-search-forward arg (vm-text-of (vm-real-message-of m)) t))))
 
-(defun vm-vs-UID (m arg)
+(defun vm-vs-uid (m arg)
   (equal (vm-imap-uid-of m) arg))
 
-(defun vm-vs-UIDL (m arg)
+(defun vm-vs-uidl (m arg)
   (equal (vm-pop-uidl-of m) arg))
+
+(defun vm-vs-message-id (m arg)
+  (equal (vm-su-message-id m) arg))
 
 (defun vm-vs-label (m arg)
   (vm-member arg (vm-labels-of m)))
@@ -888,8 +891,9 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 (put 'eval 'vm-virtual-selector-clause "giving true for expression")
 (put 'header 'vm-virtual-selector-clause "with header matching")
 (put 'label 'vm-virtual-selector-clause "with label of")
-(put 'UID 'vm-virtual-selector-clause "with IMAP UID of")
-(put 'UIDL 'vm-virtual-selector-clause "with POP UIDL of")
+(put 'uid 'vm-virtual-selector-clause "with IMAP UID of")
+(put 'uidl 'vm-virtual-selector-clause "with POP UIDL of")
+(put 'message-id 'vm-virtual-selector-clause "with Message ID of")
 (put 'text 'vm-virtual-selector-clause "with text matching")
 (put 'header-or-text 'vm-virtual-selector-clause
      "with header or text matching")
@@ -913,8 +917,9 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
 (put 'eval 'vm-virtual-selector-arg-type 'string)
 (put 'header 'vm-virtual-selector-arg-type 'string)
 (put 'label 'vm-virtual-selector-arg-type 'label)
-(put 'UID 'vm-virtual-selector-arg-type 'string)
-(put 'UIDL 'vm-virtual-selector-arg-type 'string)
+(put 'uid 'vm-virtual-selector-arg-type 'string)
+(put 'uidl 'vm-virtual-selector-arg-type 'string)
+(put 'message-id 'vm-virtual-selector-arg-type 'string)
 (put 'text 'vm-virtual-selector-arg-type 'string)
 (put 'header-or-text 'vm-virtual-selector-arg-type 'string)
 (put 'recipient 'vm-virtual-selector-arg-type 'string)

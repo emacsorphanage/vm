@@ -4834,6 +4834,12 @@ part which defaults to midnight.
 matches message if it is more than @var{ARG} days old
 @item newer-than
 matches message if it is at most @var{ARG} days old
+@item message-id
+matches message if its Message ID is @var{ARG}
+@item uid
+matches message if its IMAP UID is @var{ARG} (for IMAP folders)
+@item uidl
+matches message if its POP UIDL is @var{ARG} (for POP folders)
 @item spam-score
 matches message if its spam score is at least @var{ARG}.  See
 @code{vm-spam-score-headers} for configuration.
@@ -6361,18 +6367,21 @@ developers/programmers.
 
 @cindex mbox
 @inindex mbox
-By default, VM stores mail folders in the Unix @code{mbox} format,
-described in the RFC 4155 specification of the Internet Engineering
-Task Force.  In this format, the mail folder is a text file consisting
+VM stores mail folders in the Unix @samp{mbox} format (in all its variants).
+Internal to Emacs, the mbox is loaded into a text buffer (the @dfn{Folder}
+buffer) and individual messages are identified by remembering markers into
+the text buffer.  @xref{Message Internals}.
+
+The Unix @dfn{mbox} format is described in the RFC 4155 specification of the
+Internet Engineering Task Force.  The mail folder is a text file consisting
 of a sequence of messages, with each message consisting of a series of
 headers followed by a message body.  The beginning of each message is
-delineated by a separator line starting with the string ``From '' and
-the end of the message by a blank line.  The leading separator line in
-VM folder is of the form ``From VM ...'' where the ``...''  records
-the time at which VM first saw the message.  The format of the
-individual messages is as per the RFC 2822 specification, except that
-Line-Feed characters may be used to delineate the end of lines in the
-"Unix" format.
+delineated by a separator line starting with the string ``From '' and the
+end of the message by a blank line.  The leading separator line in VM folder
+is of the form ``From VM ...'' where the ``...''  records the time at which
+VM first saw the message.  The format of the individual messages is as per
+the RFC 2822 specification, except that Line-Feed characters may be used to
+delineate the end of lines in the "Unix" format.
 
 @vindex vm-folder-type
 @cindex From_ folder type
