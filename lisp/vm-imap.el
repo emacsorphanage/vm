@@ -4303,6 +4303,7 @@ one declared in `vm-imap-account-alist'."
 		  (format "%s" vm-last-visit-imap-account)
 		"")
 	      )))))
+  (require 'ehelp)
   (setq vm-last-visit-imap-account account)
   (let ((vm-imap-ok-to-ask t)
 	folder spec process mailbox-list buffer)
@@ -4321,14 +4322,15 @@ one declared in `vm-imap-account-alist'."
       ;; unwind-protection
       (when process (vm-imap-end-session process)))
     (setq mailbox-list (sort mailbox-list (function string-lessp)))
-    (setq buffer (get-buffer-create (format "%s folders" account)))
-    (save-current-buffer
-      (set-buffer buffer)
-      (erase-buffer)
-      (while mailbox-list
-	(insert (format "%s\n" (car mailbox-list)))
-	(setq mailbox-list (cdr mailbox-list))))
-    (switch-to-buffer-other-window buffer)
+    (setq buffer (get-buffer-create (format "*%s folders*" account)))
+    ;; (with-help-buffer (buffer-name buffer)
+    ;;    (dolist (mailbox mailbox-list)
+    ;; 	     (princ (format "%s\n" mailbox))))
+    (with-electric-help
+     (lambda ()
+       (dolist (mailbox mailbox-list)
+	 (princ (format "%s\n" mailbox))))
+     buffer)
     ))
 (defalias 'vm-imap-list-folders 'vm-list-imap-folders)
 
