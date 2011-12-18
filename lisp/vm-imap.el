@@ -2079,8 +2079,10 @@ See also `vm-imap-get-message-size'."
 		 (forward-char 2)
 		 (setq token '(end-of-line) done (not skip-eol)))
 		((looking-at "\n")
-		 (vm-imap-protocol-error 
-		  "missing CR before LF - possible connection problem"))
+		 (vm-warn 0 2 
+		  "missing CR before LF - possible connection problem")
+		 (forward-char 1)
+		 (setq token '(end-of-line) done (not skip-eol)))
 		((looking-at "\\[")
 		 (forward-char 1)
 		 (let* ((list (list 'vector))
