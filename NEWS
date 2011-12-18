@@ -40,6 +40,9 @@ VM 8.2.0
 
   IMPROVEMENTS
 
+   * New variable: `vm-sort-messages-by-delivery-date' allows messages to be
+     sorted by the date of their delivery instead of the date sent.
+
    * New virtual folder selectors added: `message-id', `uid' (for IMAP) and
      `uidl' (for POP).
 

@@ -999,6 +999,12 @@ folders.  This is not a customization variable.  See
 
 (make-variable-buffer-local 'vm-folder-read-thunderbird-status)
 
+(defcustom vm-sort-messages-by-delivery-date nil
+  "*If set to t, VM will use the \"Delivery-Date\" header instead of
+the \"Date\" header for sorting messages."
+  :group 'vm-summary
+  :type 'boolean)
+
 (defcustom vm-visible-headers
   '("Resent-"
     "From:" "Sender:"
@@ -1061,14 +1067,6 @@ Nil means just use VM's builtin header highlighting code.
 FSF Emacs always uses VM's builtin highlighting code."
   :group 'vm-misc
   :type 'boolean)
-
-(defcustom vm-verbosity 8
-  "*Level of chattiness in progress messages displayed in the
-minibuffer.  Indicative levels are:
-  1 - extremely quiet
-  5 - normally level
-  7 - detailed level
- 10 - debugging information")
 
 (defface vm-highlighted-header '((t (:inherit bold)))
  "Default face used to highlight headers."
@@ -3876,6 +3874,14 @@ arrow only if the summary window is not the only existing window."
   :type '(choice (const :tag "No" nil) 
 		 (const :tag "Always" t) 
 		 (const :tag "Yes, if not only window" yes-if-not-only-window)))
+
+(defcustom vm-verbosity 8
+  "*Level of chattiness in progress messages displayed in the
+minibuffer.  Indicative levels are:
+  1 - extremely quiet
+  5 - normally level
+  7 - detailed level
+ 10 - debugging information")
 
 ;; These flags and variables are for debugging purposes
 

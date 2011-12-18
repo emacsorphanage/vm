@@ -1302,7 +1302,12 @@ was sent.                                                  USR, 2010-05-13"
 (defun vm-su-do-date (m)
   (let ((case-fold-search t)
 	vector date)
-    (setq date (or (vm-get-header-contents m "Date:") (vm-grok-From_-date m)))
+    (setq date 
+	  (or 
+	   ;; (and vm-sort-messages-by-delivery-date
+	   ;; 	(vm-get-header-contents m "Delivery-Date:"))
+	   (vm-get-header-contents m "Date:")
+	   (vm-grok-From_-date m)))
     (cond
      ((null date)
       (vm-set-weekday-of m "")

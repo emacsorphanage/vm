@@ -796,7 +796,8 @@ Prefix arg means the new virtual folder should be visited read only."
 
 (defun vm-vs-spam-score (m min &optional max)
   "True when the spam score is >= MIN and optionally <= MAX.
-The headers that will be checked are those listed in `vm-vs-spam-score-headers'."
+The headers that will be checked are those listed in
+`vm-vs-spam-score-headers'." 
   (let ((spam-headers vm-vs-spam-score-headers)
         it-is-spam)
     (while spam-headers
@@ -804,7 +805,7 @@ The headers that will be checked are those listed in `vm-vs-spam-score-headers'.
              (score (vm-get-header-contents m (car spam-selector))))
         (when (and score (string-match (nth 1 spam-selector) score))
           (setq score (funcall (nth 2 spam-selector) (match-string 0 score)))
-          (if (and (<= min score) (if max (<= score max) t))
+          (if (and (<= min score) (or (null max) (<= score max)))
               (setq it-is-spam t spam-headers nil))))
       (setq spam-headers (cdr spam-headers)))
     it-is-spam))

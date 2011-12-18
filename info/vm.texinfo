@@ -3923,11 +3923,24 @@ Valid sort keys are:
 @item spam-score @tab reversed-spam-score
 @end multitable
 
-The sort key @code{date} represents the date and time at which the
-messages were sent.  The sort key @code{activity} represents the date
-of the most recent activity.  This is the default sort order used with
-threads.  @xref{Threading}.  It allows even old threads that have
-recent messages to be brought to the front.
+@cindex delivery date
+@vindex vm-sort-messages-by-delivery-date
+The sort key @code{date} represents the date and time of the message.
+Normally, this is the date when the message was sent by the sender.  Note
+that the message could have been ``queued'' after it was sent, either on the
+sender's machine, on some server on the network, or in a mailing list
+moderator's tray.  It is not uncommon for messages to arrive much later than
+their sent date.  Setting the variable
+@code{vm-sort-messages-by-delivery-date} to @code{t} causes VM to use the
+delivery dates of messages rather than sent dates for sorting purposes.
+(This assumes that your own mail server records the delivery date in a
+@samp{Delivery-Date} header.  If no such header is present, then VM uses the
+sent date.)
+
+The sort key @code{activity} represents the date of the most recent
+activity.  This is the default sort order used with threads.
+@xref{Threading}.  It allows even old threads that have recent messages to
+be brought to the front.
 
 @vindex vm-subject-ignored-prefix
 @vindex vm-subject-ignored-suffix
@@ -6977,7 +6990,8 @@ a @acronym{MIME}-decoded string with text properties.
 month-number.  Numeric month of the sent date.
 @inindex sortable-datestring
 @item
-sortable-datestring.  Date string of the sent date for sorting purposes.
+sortable-datestring.  Date string of the sent date for sorting purposes (or
+delivery date if @code{vm-sort-messages-by-delivery-date} is set to t).
 @inindex sortable-subject
 @item
 sortable-subject.  The subject string for sorting purposes.  (Prefixes

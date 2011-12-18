@@ -232,13 +232,20 @@ the folder undisturbed."
 
 ;;;###autoload
 (defun vm-so-sortable-datestring (m)
+  "Returns the date string of M.  The date returned is obtained from
+the \"Date\" header of the message, if it exists, or the date the
+message was received in VM.  If `vm-sort-messages-by-delivery-date' is
+non-nil, then the \"Delivery-Date\" header is used instead of the
+\"Date\" header." 
   (or (vm-sortable-datestring-of m)
       (progn
 	(vm-set-sortable-datestring-of
 	 m
 	 (condition-case nil
 	     (vm-timezone-make-date-sortable
-	      (or (vm-get-header-contents m "Date:")
+	      (or (if vm-sort-messages-by-delivery-date
+		      (vm-get-header-contents m "Delivery-Date:")
+		    (vm-get-header-contents m "Date:"))
 		  (vm-grok-From_-date m)
 		  "Thu, 1 Jan 1970 00:00:00 GMT"))
 	   (error "1970010100:00:00")))
