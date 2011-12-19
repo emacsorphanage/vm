@@ -40,6 +40,10 @@ VM 8.2.0
 
   IMPROVEMENTS
 
+   * See the new info manual section on "IMAP folders" for newly documented
+     functions.  In particular, `vm-list-imap-folders' now lists the message
+     counts in the IMAP folders.  
+
    * New variable: `vm-sort-messages-by-delivery-date' allows messages to be
      sorted by the date of their delivery instead of the date sent.
 

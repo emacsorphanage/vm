@@ -2200,6 +2200,12 @@ See also `vm-imap-get-message-size'."
     token ))
 
 (defun vm-imap-response-matches (response &rest expr)
+  "Checks if a REPSONSE from the IMAP server matches the pattern
+EXPR.  The syntax of patterns is:
+
+  expr ::= quoted-symbol | 'atom | 'string | ('vector expr*) | ('list expr*)
+
+Numbers are included among atoms."
   (let ((case-fold-search t) e r)
     (catch 'done
       (while (and expr response)
@@ -4284,9 +4290,13 @@ documentation for `vm-spool-files'."
 (defalias 'vm-rename-imap-folder 'vm-imap-rename-folder)
 
 ;;;###autoload
-(defun vm-list-imap-folders (account)
-  "List all folders on an IMAP account ACCOUNT.  The account must be
-one declared in `vm-imap-account-alist'."
+(defun vm-list-imap-folders (account &optional filter-new)
+  "List all folders on an IMAP account ACCOUNT, along with the
+counts of messages in them.  The account must be one declared in
+`vm-imap-account-alist'.
+
+With a prefix argument, it lists only the folders with new messages in
+them."
 ;; Creates a self-contained IMAP session and destroys it at the end.
   (interactive
    (save-excursion
@@ -4302,11 +4312,12 @@ one declared in `vm-imap-account-alist'."
 	      (if vm-last-visit-imap-account		; initial-input
 		  (format "%s" vm-last-visit-imap-account)
 		"")
-	      )))))
+	      )
+	     current-prefix-arg))))
   (require 'ehelp)
   (setq vm-last-visit-imap-account account)
   (let ((vm-imap-ok-to-ask t)
-	folder spec process mailbox-list buffer)
+	folder spec process mailbox-list mailbox-status-list buffer)
     (setq spec (vm-imap-spec-for-account account))
     (setq process (and spec (vm-imap-make-session spec t "folders")))
     (if (null process)
@@ -4316,23 +4327,83 @@ one declared in `vm-imap-account-alist'."
 	(progn
 	  (setq mailbox-list 
 		(vm-imap-mailbox-list process nil))
+	  (setq mailbox-status-list
+		(mapcar
+		 (lambda (mailbox)
+		   (cons mailbox
+			 (vm-imap-get-mailbox-status process mailbox)))
+		 mailbox-list))
 	  (when mailbox-list
 	    (add-to-list 'vm-imap-account-folder-cache 
 			 (cons account mailbox-list))))
       ;; unwind-protection
       (when process (vm-imap-end-session process)))
-    (setq mailbox-list (sort mailbox-list (function string-lessp)))
+
+    (setq mailbox-status-list 
+	  (sort mailbox-status-list 
+		(lambda (mbstat1 mbstat2)
+		  (string-lessp (car mbstat1) (car mbstat2)))))
+
+    ;; Display the results
     (setq buffer (get-buffer-create (format "*%s folders*" account)))
     ;; (with-help-buffer (buffer-name buffer)
     ;;    (dolist (mailbox mailbox-list)
     ;; 	     (princ (format "%s\n" mailbox))))
     (with-electric-help
      (lambda ()
-       (dolist (mailbox mailbox-list)
-	 (princ (format "%s\n" mailbox))))
+       (dolist (mbstat mailbox-status-list)
+	 (if (or (null filter-new) (> (nth 2 mbstat) 0))
+	     (princ (format "%s: %s messages, %s new \n" 
+			    (car mbstat) (nth 1 mbstat) (nth 2 mbstat))))))
      buffer)
     ))
+
 (defalias 'vm-imap-list-folders 'vm-list-imap-folders)
+
+(defun vm-imap-get-mailbox-status (process mailbox)
+  "Requests the status of IMAP MAILBOX from the server and returns the
+message count and recent message count (a list of two numbers)."
+  (let ((imap-buffer (process-buffer process))
+	(need-ok t)
+	response p tok msg-count recent-count)
+    (with-current-buffer imap-buffer
+      ;;-----------------------------
+      (vm-buffer-type:enter 'process)
+      ;;-----------------------------
+      (vm-imap-send-command 
+       process 
+       (format "STATUS %s (MESSAGES RECENT)" (vm-imap-quote-string mailbox)))
+      (while need-ok
+	(setq response (vm-imap-read-response-and-verify process "STATUS"))
+	(cond ((vm-imap-response-matches response 'VM 'OK)
+	       (setq need-ok nil))
+	      ((vm-imap-response-matches response '* 'STATUS 'string 'list)
+	       (setq p (cdr (nth 3 response)))
+	       (while p
+		 (cond 
+		  ((vm-imap-response-matches p 'MESSAGES 'atom)
+		   (setq tok (nth 1 p))
+		   (goto-char (nth 1 tok))
+		   (setq msg-count (read imap-buffer))
+		   (setq p (nthcdr 2 p)))
+		  ((vm-imap-response-matches p 'RECENT 'atom)
+		   (setq tok (nth 1 p))
+		   (goto-char (nth 1 tok))
+		   (setq recent-count (read imap-buffer))
+		   (setq p (nthcdr 2 p)))
+		  (t
+		   (vm-imap-protocol-error
+		    "expected MESSAGES and RECENT in STATUS response"))
+		  )))
+	      (t
+	       (vm-imap-protocol-error
+		"unexpected response to STATUS command"))
+	      ))
+      ;;-------------------
+      (vm-buffer-type:exit)
+      ;;-------------------
+      )
+    (list msg-count recent-count)))
 
 ;;; Robert Fenk's draft function for saving messages to IMAP folders.
 

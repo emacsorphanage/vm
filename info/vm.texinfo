@@ -81,6 +81,7 @@ This manual corresponds to VM version @value{VERSION}.
 * Digests::             How to read digests under VM.
 * Summaries::           How to view and customize the summary of a folder.
 * Virtual Folders::     Blurring the boundaries of different physical folders.
+* @acronym{IMAP} Server Folders:: Working with IMAP server folders.
 * Frames and Windows::  How to customize VM's use of windows and frames.
 * Toolbar::             How to configure VM's toolbar.
 * Menus::               How to configure VM's menus.
@@ -1272,42 +1273,6 @@ system.
 @findex vm-imap-synchronize
 The command @code{vm-imap-synchronize} can always be used to perform
 full synchronization with the server.
-
-After fetching messages from the @acronym{IMAP} server into the cache
-folder, it is possible to visit the cache folder as if it were a normal
-folder.  VM can operate on the cache folder without contacting the server.
-This allows offline operation on the mail folders.  When the @acronym{IMAP}
-server is connected again, one should run @kbd{C-u M-x vm-imap-synchronize},
-i.e., call it with a @emph{prefix argument}.  This causes @emph{all} the
-message attributes and labels to be written to the server, since it may not
-be known which of them have actually changed during the offline operation.
-Similarly, @emph{all} the messages that may have been expunged in the cache
-folder are expunged on the server.
-
-@anchor{@acronym{UIDVALIDITY}}
-@unnumberedsubsec @acronym{UIDVALIDITY}
-
-@cindex @acronym{UIDVALIDITY}
-Messages on an @acronym{IMAP} server have unique id numbers called UID's.
-In addition, a second id number called @dfn{@acronym{UIDVALIDITY}} allows
-the server to renumber messages when the id numbers within a particular
-@acronym{UIDVALIDITY} are exhausted.  All the messages on the server at any
-given time have the same @acronym{UIDVALIDITY} value.  When the server needs
-to renumber the messages, it changes the @acronym{UIDVALIDITY} value and
-issues new @acronym{UID} numbers for all the messages with new
-@acronym{UIDVALIDITY}.  This happens but rarely because there are over two
-billion UID's within each @acronym{UIDVALIDITY}.
-
-When the @acronym{UIDVALIDITY} changes on the @acronym{IMAP} server, VM has
-no easy way to identify the new UID's for the messages in its cache.  So, it
-marks all the messages in the cache as invalid and refreshes the cache with
-new copies of messages from the server.  This is a time-consuming operation
-but it happens only rarely.  VM warns you before it refreshes the cache and
-asks for confirmation.  You can abort the operation if you cannot spare the
-time, but note that it is not possible to perform any changes to the
-@acronym{IMAP} folder until the cache is refreshed.  You might consider
-setting the @code{vm-enable-external-messages} flag to @code{(imap)} before
-you refresh the cache so that it will be quicker. @pxref{External Messages}.
 
 
 
@@ -4553,7 +4518,7 @@ Message that is currently selected.
 @end itemize
 
 
-@node Virtual Folders, Frames and Windows, Summaries, Top
+@node Virtual Folders, @acronym{IMAP} Server Folders, Summaries, Top
 @chapter Virtual Folders
 
 @cindex searching
@@ -5156,7 +5121,84 @@ suggests this folder as the default location for saving.  The command
 the corresponding @var{FOLDER}s, as suggested by
 @code{vm-virtual-auto-folder-alist}.
 
-@node Frames and Windows, Toolbar, Virtual Folders, Top
+@node @acronym{IMAP} Server Folders, Frames and Windows, Virtual Folders, Top
+@chapter @acronym{IMAP} Server Folders
+
+This chapter covers the additional features of @acronym{IMAP} server
+folders, i.e., folders on an @acronym{IMAP} server that you access using VM.
+@xref{@acronym{IMAP} Folders}.  Do not use these features if you just
+download mail from IMAP mail boxes into local folders.
+
+@findex vm-imap-synchronize
+The command @code{vm-imap-synchronize} can be used to perform full
+synchronization between a VM folder and the corresponding folder on the IMAP
+server.  (Recall that @code{vm-get-new-mail} and @code{vm-save-folder} do
+half-synchronization in one direction each.)
+
+@vindex vm-imap-connection-mode
+The variable @code{vm-imap-connection-mode} allows you to work while
+disconnected from the network.  If it is set to @code{online}, which is the
+default, VM communicates with the server during @code{vm-get-new-mail},
+@code{vm-save-folder} and @code{vm-imap-synchronize} operations.  In order
+to work while disconnected from the network, set the variable to
+@code{offline}.  In this mode, @code{vm-save-folder} writes any changes
+made to the folder to the local copy on disk (the ``cache'' folder);
+@code{vm-visit-imap-folder} likewise visits the cache folder.
+
+You can set @code{vm-imap-connection-mode} to @code{autoconnect} if you have
+intermittent problems with the network.  In this mode, doing
+@code{vm-get-new-mail} attempts to connect to the network.  If it succeeds
+then @code{vm-imap-connection-mode} turns into @code{online}.
+
+When the @acronym{IMAP} server is connected again, you should run @kbd{C-u
+M-x vm-imap-synchronize}, i.e., call it with a @emph{prefix argument}.  This
+causes @emph{all} the message attributes and labels to be written to the
+server, since it may not be known which of them have actually changed during
+the offline operation.  Similarly, @emph{all} the messages that may have
+been expunged in the cache folder are expunged on the server.
+
+@anchor{@acronym{UIDVALIDITY}}
+@unnumberedsubsec @acronym{UIDVALIDITY}
+
+@cindex @acronym{UIDVALIDITY}
+Messages on an @acronym{IMAP} server have unique id numbers called UID's.
+In addition, a second id number called @dfn{@acronym{UIDVALIDITY}} allows
+the server to renumber messages when the id numbers within a particular
+@acronym{UIDVALIDITY} are exhausted.  All the messages on the server at any
+given time have the same @acronym{UIDVALIDITY} value.  When the server needs
+to renumber the messages, it changes the @acronym{UIDVALIDITY} value and
+issues new @acronym{UID} numbers for all the messages with new
+@acronym{UIDVALIDITY}.  This happens but rarely because there are over two
+billion UID's within each @acronym{UIDVALIDITY}.
+
+When the @acronym{UIDVALIDITY} changes on the @acronym{IMAP} server, VM has
+no easy way to identify the new UID's for the messages in its cache.  So, it
+marks all the messages in the cache as invalid and refreshes the cache with
+new copies of messages from the server.  This is a time-consuming operation
+but it happens only rarely.  VM warns you before it refreshes the cache and
+asks for confirmation.  You can abort the operation if you cannot spare the
+time, but note that it is not possible to perform any changes to the
+@acronym{IMAP} folder until the cache is refreshed.  You might consider
+setting the @code{vm-enable-external-messages} flag to @code{(imap)} before
+you refresh the cache so that it will be quicker. @pxref{External Messages}.
+
+@unnumberedsubsec Operations for the IMAP server
+
+@cindex vm-list-imap-folders
+The command @code{vm-list-imap-folders} lists the folders available on the
+@acronym{IMAP} server, along with the total number of messages and recent
+(new) messages in each of them.  If you run it with a prefix argument, it
+lists only those folders that have new messages.
+
+@cindex vm-create-imap-folder
+@cindex vm-delete-imap-folder
+@cindex vm-rename-imap-folder
+Use the command @code{vm-create-imap-folder} for creating a new folder on
+the @acronym{IMAP} server and @code{vm-delete-imap-folder} for deleting an
+existing folder.  You can rename a folder using
+@code{vm-rename-imap-folder}.
+
+@node Frames and Windows, Toolbar, @acronym{IMAP} Server Folders, Top
 @chapter Frames and Windows
 
 VM uses Emacs frames and windows to display messages and summaries
