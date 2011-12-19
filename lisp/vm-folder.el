@@ -5266,7 +5266,8 @@ Gives an error if unable to retrieve message."
 		   (apply (intern (format "vm-fetch-%s-message" fetch-method))
 			  mm nil))
 	   (error 
-	    (vm-warn 0 2 "Unable to load message; %s" (error-message-string err))))
+	    (vm-warn 0 1 "Unable to load message; %s" 
+		     (error-message-string err))))
 	 (when fetch-result
 	   (vm-assert (eq (point) (marker-position (vm-text-of mm))))
 	   (vm-increment testing)

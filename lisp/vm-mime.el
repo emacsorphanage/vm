@@ -1583,7 +1583,7 @@ source of the message."
 		   (vm-fetch-message 
 		    (list (vm-message-access-method-of mm)) mm)
 		 (error
-		  (vm-warn 0 2 "Cannot fetch message; %s" 
+		  (vm-warn 0 0 "Cannot fetch message; %s" 
 			   (error-message-string err)))))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 	       (vm-fetch-message (read (current-buffer)) mm)))

@@ -91,10 +91,13 @@
   (when (<= level vm-verbosity)
     (apply 'message args)))
 
-(defun vm-warn (level sit-for &rest args)
-  (when (<= level vm-verbosity)
+(defun vm-warn (l secs &rest args)
+  "Give a warning at level L and display it for SECS seconds.  The
+remaining arguments are passed to `message' to generate the warning
+message." 
+  (when (<= l vm-verbosity)
     (apply 'message args)
-    (sit-for sit-for)))
+    (sleep-for secs)))
 
 ;; garbage-collector result
 (defconst gc-fields '(:conses :syms :miscs 
