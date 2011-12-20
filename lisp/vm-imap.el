@@ -3334,6 +3334,8 @@ headers-only form."
 	  (car mp) (vm-folder-imap-uid-message-size uid))
 	 (vm-imap-update-message-flags 
 	  (car mp) (vm-folder-imap-uid-message-flags uid) t)
+	 (vm-mark-for-summary-update (car mp))
+	 (vm-set-stuff-flag-of (car mp) t)
 	 (setq mp (cdr mp)
 	       r-list (cdr r-list)))
        ;; (vm-update-summary-and-mode-line) ; update message sizes, possibly
