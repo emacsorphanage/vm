@@ -136,7 +136,8 @@ expanded (using the folded attribute of the message)."
 ;;       (vm-mouse-support-possible-p)
 ;;       (vm-mouse-xemacs-mouse-p)
 ;;       (add-hook 'mode-motion-hook 'mode-motion-highlight-line))
-  (when (and vm-mutable-frames (or vm-frame-per-folder vm-frame-per-summary))
+  (when (and vm-mutable-frame-configuration 
+	     (or vm-frame-per-folder vm-frame-per-summary))
     (vm-set-hooks-for-frame-deletion))
   (run-hooks 'vm-summary-mode-hook)
   ;; Lucid Emacs apparently used this name
@@ -2042,7 +2043,7 @@ Call this function if you made changes to `vm-summary-format'."
   (use-local-map vm-folders-summary-mode-map)
   (when (vm-menu-support-possible-p)
     (vm-menu-install-menus))
-  (when (and vm-mutable-frames vm-frame-per-folders-summary)
+  (when (and vm-mutable-frame-configuration vm-frame-per-folders-summary)
     (vm-set-hooks-for-frame-deletion))
   (run-hooks 'vm-folders-summary-mode-hook))
 

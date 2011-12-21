@@ -33,8 +33,8 @@
   "Show VM's license, i.e. the GPL."
   (interactive)
   (require 'info)
-  (let ((pop-up-windows (eq vm-mutable-windows t))
-	(pop-up-frames (and vm-mutable-frames vm-frame-per-help)))
+  (let ((pop-up-windows (eq vm-mutable-window-configuration t))
+	(pop-up-frames (and vm-mutable-frame-configuration vm-frame-per-help)))
     (or 
      (condition-case ()
 	 (progn (Info-goto-node "(vm)License") t)

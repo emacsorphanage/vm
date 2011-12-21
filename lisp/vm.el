@@ -361,14 +361,14 @@ deleted messages.  Use `###' to expunge deleted messages."
 	;; raise the summary frame if the user wants frames
 	;; raised and if there is a summary frame.
 	(if (and vm-summary-buffer
-		 vm-mutable-frames
+		 vm-mutable-frame-configuration
 		 vm-frame-per-summary
 		 vm-raise-frame-at-startup)
 	    (vm-raise-frame))
-	;; if vm-mutable-windows is nil, the startup
+	;; if vm-mutable-window-configuration is nil, the startup
 	;; configuration can't be applied, so do
 	;; something to get a VM buffer on the screen
-	(if vm-mutable-windows
+	(if vm-mutable-window-configuration
 	    (vm-display nil nil (list this-command)
 			(list (or this-command 'vm) 'startup))
 	  (save-excursion
@@ -1010,14 +1010,14 @@ vm-visit-virtual-folder.")
       ;; raise the summary frame if the user wants frames
       ;; raised and if there is a summary frame.
       (when (and vm-summary-buffer
-		 vm-mutable-frames
+		 vm-mutable-frame-configuration
 		 vm-frame-per-summary
 		 vm-raise-frame-at-startup)
 	(vm-raise-frame))
-      ;; if vm-mutable-windows is nil, the startup
+      ;; if vm-mutable-window-configuration is nil, the startup
       ;; configuration can't be applied, so do
       ;; something to get a VM buffer on the screen
-      (if vm-mutable-windows
+      (if vm-mutable-window-configuration
 	  (vm-display nil nil (list this-command)
 		      (list (or this-command 'vm) 'startup))
 	(save-excursion

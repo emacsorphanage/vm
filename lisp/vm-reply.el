@@ -1529,7 +1529,7 @@ found, the current buffer remains selected."
 	  ;; different composition buffer.
 	  (vm-unbury-buffer b)
 	  (set-buffer b)
-	  (if (and vm-mutable-frames vm-frame-per-composition
+	  (if (and vm-mutable-frame-configuration vm-frame-per-composition
 		   (vm-multiple-frames-possible-p)
 		   ;; only pop up a frame if there's an undisplay
 		   ;; hook in place to make the frame go away.
@@ -1767,7 +1767,7 @@ Binds the `vm-mail-mode-map' and hooks"
     ;; config stuff will select it as the composition buffer.
     (vm-unbury-buffer (current-buffer))
     ;; make a new frame if the user wants it.
-    (when (and vm-mutable-frames vm-frame-per-composition
+    (when (and vm-mutable-frame-configuration vm-frame-per-composition
 	       (vm-multiple-frames-possible-p))
       (vm-goto-new-frame 'composition)
       (vm-set-hooks-for-frame-deletion))

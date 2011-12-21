@@ -4005,7 +4005,8 @@ it was invoked.  VM will not create, delete, or use any other windows,
 nor will it resize its own window."
   :group 'vm-frames
   :type 'boolean)
-(defvaralias 'vm-mutable-windows 'vm-mutable-window-configuration)
+(defvaralias 'vm-mutable-windows 
+  'vm-mutable-window-configuration)
 
 (defcustom vm-mutable-frame-configuration t
   "*Non-nil value means VM is allowed to create and destroy frames
@@ -4021,7 +4022,8 @@ This variable does not apply to the VM commands whose
 names end in -other-frame, which always create a new frame."
   :group 'vm-frames
   :type 'boolean)
-(defvaralias 'vm-mutable-frames 'vm-mutable-frameconfiguration)
+(defvaralias 'vm-mutable-frames 
+  'vm-mutable-frame-configuration)
 
 (defcustom vm-raise-frame-at-startup t
   "*Specifies whether VM should raise its frame at startup.
@@ -7160,7 +7162,10 @@ actions to be taken to destroy them.")
 	   ("euc-kr"		iso-2022-kr)
 	  )
 	 ))
-  "Alist that maps MIME character sets to MULE coding systems.")
+  "Alist that maps MIME character sets to MULE coding systems.  The
+information is generated from the 'mime-charset property of coding
+systems, if it is defined in the Emacs version.  Otherwise, a
+default alist is used.")
 	  
 (defconst vm-mime-mule-charset-to-charset-alist
   '(
@@ -7202,25 +7207,20 @@ actions to be taken to destroy them.")
 	   (iso-2022-7-dos	"iso-2022-jp")
 	   (iso-2022-7-mac	"iso-2022-jp")
 	  )))
-  "Alist that maps MULE coding systems to MIME character sets.")
+  "Alist that maps MULE coding systems to MIME character sets.  The
+information is generated from the 'mime-charset property of coding
+systems, if it is defined in the Emacs version.  Otherwise, a
+default alist is used.")
 
-(defconst vm-mime-charset-completion-alist
-  '(
-    ("us-ascii")
-    ("iso-8859-1")
-    ("iso-8859-2")
-    ("iso-8859-3")
-    ("iso-8859-4")
-    ("iso-8859-5")
-    ("iso-8859-6")
-    ("iso-8859-7")
-    ("iso-8859-8")
-    ("iso-8859-9")
-    ("iso-2022-jp")
-    ("iso-2022-jp-2")
-    ("iso-2022-int-1")
-    ("iso-2022-kr")
-   ))
+(defcustom vm-mime-charset-completion-alist
+  (mapcar (lambda (a) (list (car a)))
+    vm-mime-mule-charset-to-coding-alist)
+  "The completion alist of MIME charsets known to VM.  The default
+information is derived from `vm-mime-mule-charset-to-coding-alist' (which see)."
+  :group 'vm-mime
+  :type '(repeat (list string)))
+
+
 (defconst vm-mime-type-completion-alist
   '(
     ("text/plain")

@@ -498,7 +498,7 @@ HISTORY argument is ignored."
     (setq vm-mouse-read-file-name-prompt prompt)
     (setq vm-mouse-read-file-name-return-value nil)
     (setq vm-mouse-read-file-name-should-delete-frame nil)
-    (if (and vm-mutable-frames vm-frame-per-completion
+    (if (and vm-mutable-frame-configuration vm-frame-per-completion
 	     (vm-multiple-frames-possible-p))
 	(save-excursion
 	  (setq vm-mouse-read-file-name-should-delete-frame t)
@@ -604,7 +604,7 @@ HISTORY argument is ignored."
     (setq vm-mouse-read-string-multi-word multi-word)
     (setq vm-mouse-read-string-return-value nil)
     (setq vm-mouse-read-string-should-delete-frame nil)
-    (if (and vm-mutable-frames vm-frame-per-completion
+    (if (and vm-mutable-frame-configuration vm-frame-per-completion
 	     (vm-multiple-frames-possible-p))
 	(save-excursion
 	  (setq vm-mouse-read-string-should-delete-frame t)

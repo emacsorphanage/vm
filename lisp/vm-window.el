@@ -119,10 +119,10 @@
 	    (apply 'vm-set-window-configuration configs))))))
 
 (defun vm-display-buffer (buffer)
-  (let ((pop-up-windows (eq vm-mutable-windows t))
-	(pop-up-frames (and pop-up-frames vm-mutable-frames)))
+  (let ((pop-up-windows (eq vm-mutable-window-configuration t))
+	(pop-up-frames (and pop-up-frames vm-mutable-frame-configuration)))
     (if (or pop-up-frames
-	    (and (eq vm-mutable-windows t)
+	    (and (eq vm-mutable-window-configuration t)
 		 (symbolp
 		  (vm-buffer-to-label
 		   (window-buffer
@@ -132,7 +132,8 @@
 
 (defun vm-undisplay-buffer (buffer)
   (vm-save-buffer-excursion
-   (let ((vm-mutable-frames (and vm-mutable-frames pop-up-frames)))
+   (let ((vm-mutable-frame-configuration 
+	  (and vm-mutable-frame-configuration pop-up-frames)))
      (vm-maybe-delete-windows-or-frames-on buffer))
    (let (w)
      (while (setq w (vm-get-buffer-window buffer))
@@ -177,7 +178,7 @@
 
 (defun vm-set-window-configuration (&rest tags)
   (catch 'done
-    (if (not vm-mutable-windows)
+    (if (not vm-mutable-window-configuration)
 	(throw 'done nil))
     (let ((nonexistent " *vm-nonexistent*")
 	  (nonexistent-summary " *vm-nonexistent-summary*")
@@ -272,7 +273,7 @@ specific configurations are searched for first, then the category
 configurations and then the default configuration.  The first
 configuration found is the one that is applied.
 
-The value of vm-mutable-windows must be non-nil for VM to use
+The value of vm-mutable-window-configuration must be non-nil for VM to use
 window configurations."
   (interactive
    (let ((last-command last-command)
@@ -463,8 +464,8 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 	      (setq delete-me nil))))))
 
 (defun vm-maybe-delete-windows-or-frames-on (buffer)
-  (and (eq vm-mutable-windows t) (vm-window-loop 'delete buffer))
-  (and vm-mutable-frames (vm-frame-loop 'delete buffer)))
+  (and (eq vm-mutable-window-configuration t) (vm-window-loop 'delete buffer))
+  (and vm-mutable-frame-configuration (vm-frame-loop 'delete buffer)))
 
 (defun vm-replace-buffer-in-windows (old new)
   (vm-window-loop 'replace old new))
@@ -509,7 +510,7 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 	       (wf (and w (vm-window-frame w))))
 	  (and w (eq (vm-selected-frame) wf) (vm-created-this-frame-p wf)
 	       (vm-error-free-call 'vm-delete-frame wf))
-	  (and w (let ((vm-mutable-frames t))
+	  (and w (let ((vm-mutable-frame-configuration t))
 		   (vm-maybe-delete-windows-or-frames-on b)))))))
 
 (defun vm-register-frame (frame)
@@ -534,7 +535,7 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 	 (vm-warp-mouse-to-frame-maybe (vm-selected-frame)))))
 
 (defun vm-goto-new-summary-frame-maybe ()
-  (if (and vm-mutable-frames vm-frame-per-summary
+  (if (and vm-mutable-frame-configuration vm-frame-per-summary
 	   (vm-multiple-frames-possible-p))
       (let ((w (vm-get-buffer-window vm-summary-buffer)))
 	(if (null w)
@@ -547,7 +548,7 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 		 (vm-warp-mouse-to-frame-maybe (vm-window-frame w))))))))
 
 (defun vm-goto-new-folders-summary-frame-maybe ()
-  (if (and vm-mutable-frames vm-frame-per-folders-summary
+  (if (and vm-mutable-frame-configuration vm-frame-per-folders-summary
 	   (vm-multiple-frames-possible-p))
       (let ((w (vm-get-buffer-window vm-folders-summary-buffer)))
 	(if (null w)
@@ -560,7 +561,7 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 		 (vm-warp-mouse-to-frame-maybe (vm-window-frame w))))))))
 
 (defun vm-goto-new-folder-frame-maybe (&rest types)
-  (if (and vm-mutable-frames vm-frame-per-folder
+  (if (and vm-mutable-frame-configuration vm-frame-per-folder
 	   (vm-multiple-frames-possible-p))
       (let ((w (or (vm-get-buffer-window (current-buffer))
 		   ;; summary == folder for the purpose

@@ -1492,7 +1492,7 @@ a string denoting the folder name."
       (when (fboundp 'set-buffer-file-coding-system)
 	(set-buffer-file-coding-system (vm-binary-coding-system) t))
       (vm-fsfemacs-nonmule-display-8bit-chars)
-      (if (and vm-mutable-frames vm-frame-per-folder
+      (if (and vm-mutable-frame-configuration vm-frame-per-folder
 	       (vm-multiple-frames-possible-p))
 	  (vm-set-hooks-for-frame-deletion))
       (use-local-map vm-mode-map)
@@ -1644,7 +1644,7 @@ source of the message."
 ;; 	     (if (fboundp 'set-buffer-file-coding-system)
 ;; 		 (set-buffer-file-coding-system (vm-binary-coding-system) t))
 ;; 	     (vm-fsfemacs-nonmule-display-8bit-chars)
-;; 	     (if (and vm-mutable-frames vm-frame-per-folder
+;; 	     (if (and vm-mutable-frame-configuration vm-frame-per-folder
 ;; 		      (vm-multiple-frames-possible-p))
 ;; 		 (vm-set-hooks-for-frame-deletion))
 ;; 	     (use-local-map vm-mode-map)
@@ -5426,7 +5426,7 @@ file with the name should be overwritten."
 	    (vm-mime-insert-mime-body layout)
 	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
 	    (let ((pop-up-windows (and pop-up-windows
-				       (eq vm-mutable-windows t)))
+				       (eq vm-mutable-window-configuration t)))
 		  (process-coding-system-alist
 		   (if (vm-mime-text-type-layout-p layout)
 		       nil

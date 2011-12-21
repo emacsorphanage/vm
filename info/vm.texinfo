@@ -5210,6 +5210,7 @@ commands and classes of commands by using VM's window configuration
 facilities.
 
 @vindex vm-mutable-frame-configuration
+@vindex vm-mutable-frames
 To use VM's frame configuration features, the variable
 @code{vm-mutable-frame-configuration} must be set non-@code{nil}.  This is
 the default.  If @code{vm-mutable-frame-configuration} is set to @code{nil}
@@ -5218,6 +5219,7 @@ frames.  (This variable was called @code{vm-mutable-frames} in versions
 prior to 8.2.)
 
 @vindex vm-mutable-window-configuration
+@vindex vm-mutable-windows
 To use window configurations, the variable
 @code{vm-mutable-window-configuration} must be set non-@code{nil}.  If
 @code{vm-mutable-window-configuration} is set to @code{nil}, VM will only

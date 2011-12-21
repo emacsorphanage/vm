@@ -758,7 +758,8 @@ See the variable `vm-handle-return-receipt-mode' for customization."
                              vm-handle-return-receipt-mode)
                             (t
                              (eval vm-handle-return-receipt-mode)))))
-           (vm-mutable-frames (if (eq mode 'edit) vm-mutable-frames nil))
+           (vm-mutable-frame-configuration 
+	    (if (eq mode 'edit) vm-mutable-frame-configuration nil))
            (vm-mail-mode-hook nil)
            (vm-mode-hook nil)
            message)

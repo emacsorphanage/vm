@@ -617,7 +617,7 @@ Output, if any, is displayed.  The message is not altered."
   (setq vm-last-pipe-command command)
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
 	m
-	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
+	(pop-up-windows (and pop-up-windows (eq vm-mutable-window-configuration t)))
 	;; prefix arg doesn't have "normal" meaning here, so only call
 	;; vm-select-operable-messages for marks and threads.
 	(mlist (vm-select-operable-messages 1 (vm-interactive-p) "Pipe")))
@@ -630,7 +630,7 @@ Output, if any, is displayed.  The message is not altered."
       (set-buffer (vm-buffer-of m))
       (save-restriction
 	(widen)
-	(let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
+	(let ((pop-up-windows (and pop-up-windows (eq vm-mutable-window-configuration t)))
 	      ;; call-process-region calls write-region.
 	      ;; don't let it do CR -> LF translation.
 	      (selective-display nil)
@@ -732,7 +732,7 @@ arguments after the command finished."
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (setq vm-last-pipe-command command)
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
-	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
+	(pop-up-windows (and pop-up-windows (eq vm-mutable-window-configuration t)))
 	;; prefix arg doesn't have "normal" meaning here, so only call
 	;; vm-select-operable-messages for marks and threads.
 	(mlist (vm-select-operable-messages 1 (vm-interactive-p) "Pipe"))
@@ -849,7 +849,7 @@ Output, if any, is displayed.  The message is not altered."
 					(list tempfile)))
 			     " "))
 	 (m nil)
-	 (pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
+	 (pop-up-windows (and pop-up-windows (eq vm-mutable-window-configuration t)))
 	 (mlist (vm-select-operable-messages count (vm-interactive-p) "Print")))
     (vm-retrieve-operable-messages count mlist)
 
@@ -876,7 +876,7 @@ Output, if any, is displayed.  The message is not altered."
 			(vm-mime-external-content-types-alist nil))
 		    (vm-decode-mime-layout (vm-mm-layout m)))
 		  (let ((pop-up-windows (and pop-up-windows
-					     (eq vm-mutable-windows t)))
+					     (eq vm-mutable-window-configuration t)))
 			;; call-process-region calls write-region.
 			;; don't let it do CR -> LF translation.
 			(selective-display nil))
@@ -894,7 +894,7 @@ Output, if any, is displayed.  The message is not altered."
 	  (widen)
 	  (narrow-to-region (vm-vheaders-of m) (vm-text-end-of m))
 	  (let ((pop-up-windows (and pop-up-windows
-				     (eq vm-mutable-windows t)))
+				     (eq vm-mutable-window-configuration t)))
 		;; call-process-region calls write-region.
 		;; don't let it do CR -> LF translation.
 		(selective-display nil))

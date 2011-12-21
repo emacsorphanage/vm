@@ -3956,8 +3956,9 @@ Same as \\[vm-recover-folder]."
   (interactive)
   (if (eq major-mode 'vm-summary-mode)
       (vm-select-folder-buffer-and-validate 0 (vm-interactive-p)))
-  (let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
-	(pop-up-frames (and vm-mutable-frames vm-frame-per-help)))
+  (let ((pop-up-windows (and pop-up-windows 
+			     (eq vm-mutable-window-configuration t)))
+	(pop-up-frames (and vm-mutable-frame-configuration vm-frame-per-help)))
     (cond
      ((eq last-command 'vm-help)
       (describe-function major-mode))
