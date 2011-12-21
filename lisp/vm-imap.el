@@ -4381,7 +4381,8 @@ message count and recent message count (a list of two numbers)."
 	(setq response (vm-imap-read-response-and-verify process "STATUS"))
 	(cond ((vm-imap-response-matches response 'VM 'OK)
 	       (setq need-ok nil))
-	      ((vm-imap-response-matches response '* 'STATUS 'string 'list)
+	      ((or (vm-imap-response-matches response '* 'STATUS 'string 'list)
+		   (vm-imap-response-matches response '* 'STATUS 'atom 'list))
 	       (setq p (cdr (nth 3 response)))
 	       (while p
 		 (cond 
