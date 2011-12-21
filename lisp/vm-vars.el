@@ -3994,7 +3994,7 @@ List the directories in the order you wish them to appear in the summary."
   :group 'vm-summary
   :type '(repeat directory))
 
-(defcustom vm-mutable-windows pop-up-windows
+(defcustom vm-mutable-window-configuration pop-up-windows
   "*This variable's value controls VM's window usage.
 
 A non-nil value gives VM free run of the Emacs display; it will commandeer
@@ -4005,8 +4005,9 @@ it was invoked.  VM will not create, delete, or use any other windows,
 nor will it resize its own window."
   :group 'vm-frames
   :type 'boolean)
+(defvaralias 'vm-mutable-windows 'vm-mutable-window-configuration)
 
-(defcustom vm-mutable-frames t
+(defcustom vm-mutable-frame-configuration t
   "*Non-nil value means VM is allowed to create and destroy frames
 to display and undisplay buffers.  Whether VM actually does
 so depends on the value of the variables with names prefixed by
@@ -4020,6 +4021,7 @@ This variable does not apply to the VM commands whose
 names end in -other-frame, which always create a new frame."
   :group 'vm-frames
   :type 'boolean)
+(defvaralias 'vm-mutable-frames 'vm-mutable-frameconfiguration)
 
 (defcustom vm-raise-frame-at-startup t
   "*Specifies whether VM should raise its frame at startup.

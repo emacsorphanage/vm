@@ -5209,17 +5209,21 @@ Inside each frame you can associate different window setups with
 commands and classes of commands by using VM's window configuration
 facilities.
 
-@vindex vm-mutable-frames
+@vindex vm-mutable-frame-configuration
 To use VM's frame configuration features, the variable
-@code{vm-mutable-frames} must be set non-@code{nil}.  This is the default.  If
-@code{vm-mutable-frames} is set to nil VM will only use the current
-frame, and VM will not create, delete or resize frames.
+@code{vm-mutable-frame-configuration} must be set non-@code{nil}.  This is
+the default.  If @code{vm-mutable-frame-configuration} is set to @code{nil}
+VM will only use the current frame, and VM will not create, delete or resize
+frames.  (This variable was called @code{vm-mutable-frames} in versions
+prior to 8.2.)
 
-@vindex vm-mutable-windows
-To use window configurations, the variable @code{vm-mutable-windows}
-must be set non-@code{nil}.  If @code{vm-mutable-windows} is set to nil, VM
-will only use the selected window, and will not create, delete or
-resize windows.
+@vindex vm-mutable-window-configuration
+To use window configurations, the variable
+@code{vm-mutable-window-configuration} must be set non-@code{nil}.  If
+@code{vm-mutable-window-configuration} is set to @code{nil}, VM will only
+use the selected window, and will not create, delete or resize windows.
+(This variable was called @code{vm-mutable-windows} in versions
+prior to 8.2.)
 
 @menu
 * Frame Configuration::         How to configure frame use and appearance.
