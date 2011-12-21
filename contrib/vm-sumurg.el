@@ -1,6 +1,31 @@
 ;; $Header: /home/jcb/Source/Emacs/RCS/vm-sumurg.el,v 1.30 2011/12/19 14:55:59 jcb Exp $
+;;; vm-sumurg.el -- Adding urgency indicators to summary
 ;; 
+;; This file is an add-on for VM
+;; 
+;; Copyright (C) 2011 Julian Bradfield
+;;
+;; Author:      Julian Bradfield
+;; Status:      Tested for VM 8.2.x running under XEmacs
+;; Keywords:    VM helpers
+;; X-URL:       http://homepages.inf.ed.ac.uk/jcb/Software/emacs/
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License along
+;; with this program; if not, write to the Free Software Foundation, Inc.,
+;; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+
+;;; Commentary:
 ;; This file provides an add-on to VM so that messages with certain
 ;; labels are tagged in bright colours, associated with urgency levels.
 ;; Messages labelled "*" (urgency level 1) are yellow;
@@ -22,6 +47,8 @@
 ;;
 ;; At one time, this worked on FSF Emacs, but I haven't tried it for
 ;; a long time; it's only known to work on XEmacs.
+
+;;; Code:
 
 (require 'vm)
 (require 'vm-summary)
@@ -62,24 +89,27 @@
 ; stick the faces into an array for convenience
 ; note that this is inserting facenames, not faces
 (defconst vm-sumurg-facearray
-  [ nil vm-sumurg-pending-face vm-sumurg-urgent-face vm-sumurg-veryurgent-face vm-sumurg-rightnow-face ])
+  [ nil vm-sumurg-pending-face vm-sumurg-urgent-face
+	vm-sumurg-veryurgent-face vm-sumurg-rightnow-face ]) 
 
 ; each of these symbols holds a string to go in the modeline
 (defconst vm-sumurg-symarray
-  [ nil vm-sumurg-modeline-pending vm-sumurg-modeline-urgent vm-sumurg-modeline-veryurgent vm-sumurg-modeline-rightnow ])
+  [ nil vm-sumurg-modeline-pending vm-sumurg-modeline-urgent
+	vm-sumurg-modeline-veryurgent vm-sumurg-modeline-rightnow ]) 
 
 
 (defun vm-sumurg-level-of (m)
   (if (member "****" (vm-labels-of m)) 4
-			      (if (member "***" (vm-labels-of m)) 3
-				(if (member "**" (vm-labels-of m)) 2
-				  (if (member "*" (vm-labels-of m)) 1 0
-				      )))))
+    (if (member "***" (vm-labels-of m)) 3
+      (if (member "**" (vm-labels-of m)) 2
+	(if (member "*" (vm-labels-of m)) 1 0)))))
 
 ; assuming that m is a message, highlight it in yellow, orange or red
 ; according as it has a *, **, or *** label.
 (defun vm-sumurg-highlight-message ()
-  (vm-sumurg-add-highlights (string-to-number (vm-number-of m)) (vm-su-start-of m) (vm-su-end-of m) (vm-sumurg-level-of m)
+  (vm-sumurg-add-highlights (string-to-number (vm-number-of m))
+			    (vm-su-start-of m) (vm-su-end-of m)
+			    (vm-sumurg-level-of m) 
 			    ))
 
 (defadvice vm-summary-highlight-region (after vm-sumurg-vshr activate compile)
@@ -100,9 +130,8 @@
     (setq vm-sumurg-comp-counted t)
     ;; set the comp entry
     (setq vm-sumurg-modeline-comp
-	  (if (> vm-sumurg-comp-counter 0) (format "%d%s"  
-						   vm-sumurg-comp-counter
-						   "C")))
+	  (if (> vm-sumurg-comp-counter 0) 
+	      (format "%d%s" vm-sumurg-comp-counter "C")))
     (redraw-modeline t)))
 
 (add-hook 'mail-mode-hook 'vm-sumurg-comp-hook)
@@ -113,9 +142,8 @@
     (setq vm-sumurg-comp-counter (1- vm-sumurg-comp-counter))
     ;; set the comp entry
     (setq vm-sumurg-modeline-comp
-	  (if (> vm-sumurg-comp-counter 0) (format "%d%s"  
-						   vm-sumurg-comp-counter
-						   "C")))
+	  (if (> vm-sumurg-comp-counter 0) 
+	      (format "%d%s" vm-sumurg-comp-counter "C")))
     (redraw-modeline t)))
 
 (add-hook 'vm-mail-send-hook 'vm-sumurg-comp-end-hook)
@@ -133,8 +161,8 @@
     (mapcar (lambda (level)
 	      (setq count (aref vm-sumurg-counter level))
 	      (set (aref vm-sumurg-symarray level)
-		   (if (> count 0) (format "%d%s" count
-					   (substring "****" 0 level))))
+		   (if (> count 0) 
+		       (format "%d%s" count (substring "****" 0 level))))
 	      (if (> count 0) (setq maxl level)))
 	    '( 1 2 3 4))
     ;; if there's a rightnow message, enable the blinker, else disable
@@ -168,7 +196,8 @@
 	  (aset vm-sumurg-counter level (1+ (aref vm-sumurg-counter level)))
 	  (cond (vm-xemacs-p
 		 ;; re-use extents, and delete them when not required
-		 (let ((e (extent-at (/ (+ start end)) (current-buffer) 'vm-sumurg)))
+		 (let ((e (extent-at (/ (+ start end))
+				     (current-buffer) 'vm-sumurg))) 
 		   ;; why not 1- end ? Because the extent is right-open
 		   ;; so it gets deleted any by the summary update (see code)
 		   (if e t
@@ -180,7 +209,8 @@
 		     (set-extent-property e 'detachable nil)
 		     (set-extent-property e 'vm-sumurg t)
 		     )
-		   (set-extent-property e 'face (aref vm-sumurg-facearray level))))
+		   (set-extent-property e 'face 
+					(aref vm-sumurg-facearray level)))) 
 		(vm-fsfemacs-p
 		 ;; why 1- ? Because then the overlay gets deleted by
 		 ;; the process of summary update.
@@ -189,7 +219,8 @@
 		   (overlay-put e 'face (aref vm-sumurg-facearray level))))))
       ;; level 0: emacs, delete the extent
       (cond (vm-xemacs-p
-	     (let ((e (extent-at (/ (+ start end)) (current-buffer) 'vm-sumurg)))
+	     (let ((e (extent-at (/ (+ start end)) 
+				 (current-buffer) 'vm-sumurg))) 
 	       (if e (delete-extent e))))))
     (vm-sumurg-set-modeline-entries)))
 
@@ -219,9 +250,14 @@
 			   (setq min (string-to-number (match-string 6 label))))
 		  (when vm-sumurg-default-time
 		    (if (string-match hhmmregex vm-sumurg-default-time)
-			(progn (setq hour (string-to-number (match-string 1 vm-sumurg-default-time)))
-			       (setq min (string-to-number (match-string 2 vm-sumurg-default-time))))
-		      (message "Trying to fix up default time %s" vm-sumurg-default-time)
+			(progn (setq hour 
+				     (string-to-number 
+				      (match-string 1 vm-sumurg-default-time)))
+			       (setq min 
+				     (string-to-number 
+				      (match-string 2 vm-sumurg-default-time))))
+		      (message "Trying to fix up default time %s" 
+			       vm-sumurg-default-time)
 		      (condition-case nil
 			  (progn (setq tmp 
 				       (vm-sumurg-parse-date 
@@ -240,9 +276,11 @@
 		;; from check-pending, we'll schedule a timeout immediately
 		;; rather than actually doing the actions now.
 		(setq time (encode-time 0 min hour day month year))
-		(if (and (time-less-p time now) (null vm-sumurg-check-pending-in-progress))
+		(if (and (time-less-p time now) 
+			 (null vm-sumurg-check-pending-in-progress))
 		    (progn
-		      (save-excursion (vm-add-or-delete-message-labels label 1 nil))
+		      (save-excursion 
+			(vm-add-or-delete-message-labels label 1 nil))
 		      ;; let's try to clear the label out of the global list
 		      ;; to avoid indefinite build-up
 		      (unintern (concat (vm-su-message-id m) label) 
@@ -256,8 +294,9 @@
 		  ;; but not if there's already one set for this message
 		  ;; and label
 		  (when (not (and vm-sumurg-timer-obarray
-				  (intern-soft (concat (vm-su-message-id m)
-						       label) vm-sumurg-timer-obarray)))
+				  (intern-soft 
+				   (concat (vm-su-message-id m) label) 
+				   vm-sumurg-timer-obarray)))
 		    (if (null vm-sumurg-timer-obarray)
 		      (let ((o (make-vector 29 0)))
 			(setq vm-sumurg-timer-obarray o)
@@ -284,13 +323,18 @@
 				     (save-excursion
 				       (set-buffer (car arg))
 				       (let ((mp vm-message-list))
-					 (while (and mp (not (equal (vm-message-id-of (car mp)) (cadr arg))))
+					 (while (and mp 
+						     (not (equal 
+							   (vm-message-id-of
+							    (car mp))
+							   (cadr arg))))
 					   (setq mp (cdr mp)))
 					 (if mp 
 					     (vm-sumurg-check-future (car mp))))
 				       (vm-follow-summary-cursor)
 				       (vm-select-folder-buffer)
-				       (intern (buffer-name) vm-buffers-needing-display-update)
+				       (intern (buffer-name) 
+					       vm-buffers-needing-display-update)
 				       (vm-update-summary-and-mode-line))))
 				 (list (current-buffer) (vm-su-message-id m)))
 		    ))
@@ -318,7 +362,8 @@
 	(set-extent-face e 'vm-sumurg-urgent-face)
 	(set-extent-keymap e k)
 	(set-extent-property e 'help-echo "button2 selects urgent messages")
-	(define-key k [(button2)] (lambda () (interactive "@") (vm-sumurg-showurgent 2)))
+	(define-key k [(button2)] 
+	  (lambda () (interactive "@") (vm-sumurg-showurgent 2))) 
 	e
 	)))
 
@@ -328,8 +373,10 @@
 	    (k (make-sparse-keymap)))
 	(set-extent-face e 'vm-sumurg-veryurgent-face)
 	(set-extent-keymap e k)
-	(set-extent-property e 'help-echo "button2 selects very urgent messages")
-	(define-key k [(button2)] (lambda () (interactive "@") (vm-sumurg-showurgent 3)))
+	(set-extent-property e 'help-echo 
+			     "button2 selects very urgent messages")
+	(define-key k [(button2)] 
+	  (lambda () (interactive "@") (vm-sumurg-showurgent 3)))
 	e
 	)))
 
@@ -340,8 +387,10 @@
 	    (k (make-sparse-keymap)))
 	(set-extent-face e 'vm-sumurg-rightnow-face)
 	(set-extent-keymap e k)
-	(set-extent-property e 'help-echo "button2 selects very urgent messages")
-	(define-key k [(button2)] (lambda () (interactive "@") (vm-sumurg-showurgent 4)))
+	(set-extent-property e 'help-echo 
+			     "button2 selects very urgent messages")
+	(define-key k [(button2)] 
+	  (lambda () (interactive "@") (vm-sumurg-showurgent 4)))
 	e
 	)))
 
@@ -352,8 +401,10 @@
 	    (k (make-sparse-keymap)))
 	(set-extent-face e 'vm-sumurg-comp-face)
 	(set-extent-keymap e k)
-	(set-extent-property e 'help-echo "button2 switches to a composition buffer")
-	(define-key k [(button2)] (lambda () (interactive) (vm-continue-composing-message)))
+	(set-extent-property e 'help-echo 
+			     "button2 switches to a composition buffer")
+	(define-key k [(button2)] 
+	  (lambda () (interactive) (vm-continue-composing-message)))
 	e
 	)))
 
@@ -363,15 +414,20 @@
   (cond (vm-xemacs-p
 	 (list
 	  (list 'vm-sumurg-modeline-comp
-		(list vm-sumurg-comp-extent "" 'vm-sumurg-modeline-comp))
+		(list vm-sumurg-comp-extent "" 
+		      'vm-sumurg-modeline-comp))
 	  (list 'vm-sumurg-modeline-pending
-		(list vm-sumurg-pending-extent "" 'vm-sumurg-modeline-pending))
+		(list vm-sumurg-pending-extent "" 
+		      'vm-sumurg-modeline-pending))
 	  (list 'vm-sumurg-modeline-urgent
-		(list vm-sumurg-urgent-extent "" 'vm-sumurg-modeline-urgent))
+		(list vm-sumurg-urgent-extent "" 
+		      'vm-sumurg-modeline-urgent))
 	  (list 'vm-sumurg-modeline-veryurgent
-		(list vm-sumurg-veryurgent-extent "" 'vm-sumurg-modeline-veryurgent))
+		(list vm-sumurg-veryurgent-extent "" 
+		      'vm-sumurg-modeline-veryurgent))
 	  (list 'vm-sumurg-modeline-rightnow
-		(list vm-sumurg-rightnow-extent "" 'vm-sumurg-modeline-rightnow))))
+		(list vm-sumurg-rightnow-extent "" 
+		      'vm-sumurg-modeline-rightnow))))
 	(vm-fsfemacs-p
 	 (list
 	  (list 'vm-sumurg-modeline-comp
@@ -436,12 +492,15 @@
   (before vm-sumurg-dnmlu activate compile)
   (when (and vm-message-pointer vm-ml-sumurg-extent)
     (set-extent-face vm-ml-sumurg-extent 
-	  (aref vm-sumurg-facearray (vm-sumurg-level-of (car vm-message-pointer))))
+	  (aref vm-sumurg-facearray 
+		(vm-sumurg-level-of (car vm-message-pointer))))
     (if vm-presentation-buffer
 	(save-excursion
 	  (set-buffer vm-presentation-buffer)
 	  (set-extent-face vm-ml-sumurg-extent 
-			   (aref vm-sumurg-facearray (vm-sumurg-level-of (car vm-message-pointer))))))))
+			   (aref vm-sumurg-facearray 
+				 (vm-sumurg-level-of 
+				  (car vm-message-pointer))))))))
 
 
 ; given a pointer into a message list, return the first element
@@ -475,7 +534,9 @@
 	    (aset vm-sumurg-counter l (1- (aref vm-sumurg-counter l)))
 	    (aset vm-sumurg-urgency-array i 0))
 	  (setq i (1+ i)))
-	(mapcar (lambda (m) (vm-sumurg-check-future m) (vm-sumurg-highlight-message)) m-list)))))
+	(mapcar (lambda (m) 
+		  (vm-sumurg-check-future m) (vm-sumurg-highlight-message))
+		m-list)))))
   
 (add-hook 'vm-summary-update-hook 'vm-sumurg-highlight-message)
 (add-hook 'vm-summary-redo-hook 'vm-sumurg-check-pending)
@@ -508,8 +569,11 @@
   (setq vm-sumurg-blinker-in-focus nil))
 (defun vm-sumurg-blinker-enable ()
   (setq vm-sumurg-blinker-needed t)
-  (if vm-mail-buffer (vm-copy-local-variables vm-mail-buffer 'vm-sumurg-blinker-needed))
-  (if vm-presentation-buffer (vm-copy-local-variables vm-presentation-buffer 'vm-sumurg-blinker-needed))
+  (if vm-mail-buffer 
+      (vm-copy-local-variables vm-mail-buffer 'vm-sumurg-blinker-needed))
+  (if vm-presentation-buffer 
+      (vm-copy-local-variables vm-presentation-buffer 
+			       'vm-sumurg-blinker-needed))
   (add-hook 'select-frame-hook 'vm-sumurg-blinker-select-frame-hook)
   (add-hook 'deselect-frame-hook 'vm-sumurg-blinker-deselect-frame-hook)
   (vm-sumurg-blinker-select-frame-hook))
@@ -518,9 +582,12 @@
   (remove-hook 'deselect-frame-hook 'vm-sumurg-blinker-deselect-frame-hook)
   (setq vm-sumurg-blinker-in-focus nil)
   (setq vm-sumurg-blinker-needed nil)
-  (if vm-mail-buffer (vm-copy-local-variables vm-mail-buffer 'vm-sumurg-blinker-needed))
-  (if vm-presentation-buffer (vm-copy-local-variables vm-presentation-buffer 'vm-sumurg-blinker-needed))
-)
+  (if vm-mail-buffer 
+      (vm-copy-local-variables vm-mail-buffer 'vm-sumurg-blinker-needed))
+  (if vm-presentation-buffer 
+      (vm-copy-local-variables vm-presentation-buffer 
+			       'vm-sumurg-blinker-needed))
+  )
 
 ; bound to vm-virtual-folder-alist in following command
 (defvar vm-sumurg-urgent-folder-alist
@@ -573,7 +640,7 @@ The date can be given in several reasonable forms:
 ISO: 2012-01-22
 European numeric: 22/01/2012 or 22/01/12
 British traditional: 22 January 2012  or  22 Jan 2012  or  Jan 22, 2012
-(month names can be given either in full, or as the first three letters)
+ (month names can be given either in full, or as the first three letters)
 Except in ISO format, the year can be omitted, and the next such date will
 be assumed.
 
@@ -595,7 +662,7 @@ reasonable formats: 19:27  19.27  19h27  7.27 pm  19h  7pm.
 Specifically any of h : . is recognized as a separator; am and pm are 
 recognized in either case and with or without full stops; the separator
 and minutes may be omitted, provided that h or am/pm is used.
-(To avoid confusion with years, military format 1927 is not accepted.)
+ (To avoid confusion with years, military format 1927 is not accepted.)
 
 A time spec normally means that time on the given date. In the special case 
 where there is only a time spec, and the date is empty, it means the next
@@ -627,7 +694,8 @@ happens later.)"
      (setq count (prefix-numeric-value current-prefix-arg))
      (list level date count nil clear)))
   (if (null count) (setq count 1))
-  (if (and (not clear) (or (< level 0) (> level 4))) (error "%d is not a known urgency level" level))
+  (if (and (not clear) (or (< level 0) (> level 4)))
+      (error "%d is not a known urgency level" level))
   (when (null msg)
     (vm-follow-summary-cursor))
   (vm-select-folder-buffer)
@@ -650,8 +718,10 @@ happens later.)"
 	    (vm-add-or-delete-message-labels
 	     (concat (substring "****" 0 level) date) count 'all)
 	    (vm-sumurg-check-future (car vm-message-pointer)))
-	(vm-add-or-delete-message-labels "* ** *** ****" count nil)
-	(vm-add-or-delete-message-labels (substring "****" 0 level) count 'all)))
+	(vm-add-or-delete-message-labels 
+	 "* ** *** ****" count nil)
+	(vm-add-or-delete-message-labels 
+	 (substring "****" 0 level) count 'all)))
 ;    ;; for reasons I don't understand, the display of the selected message
 ;    ;; doesn't get updated - some interaction with the highlight face,
 ;    ;; I guess. So call highlight message explicitly 
@@ -732,7 +802,8 @@ than or equal to the given value (prompted for, when interactive)."
 	     (concat
 	      ;; XEmacs bug: ^ not recognized after shy group open, so
 	      ;; put it as second alternative
-	      "\\(?:[_t]\\|^\\|\\s-\\)\\s-*" ; start with beginning, T or whitespace
+	      "\\(?:[_t]\\|^\\|\\s-\\)\\s-*" ; start with beginning, T
+					; or whitespace 
 	      "\\([0-9][0-9]?\\)" ; the hours
 	      ;; now either we have minutes followed by an optional
 	      ;; am/pm, or we have a compulsory h/am/pm
@@ -754,7 +825,9 @@ than or equal to the given value (prompted for, when interactive)."
 	      (and vm-sumurg-default-time
 		   (setq ts vm-sumurg-default-time)
 		   (or (string-match timeregexp ts)
-		       (error 'invalid-argument "vm-sumurg-default-time not in a valid time format" 'vm-sumurg-default-time))))
+		       (error 'invalid-argument 
+			      "vm-sumurg-default-time not in a valid time format"
+			      'vm-sumurg-default-time))))
       (setq hh (string-to-number (match-string 1 ts)))
       (if (match-beginning 2)
 	  (setq mm (string-to-number (match-string 2 ts))))
@@ -786,12 +859,15 @@ than or equal to the given value (prompted for, when interactive)."
 	    ((string-match
 	     (eval-when-compile (concat "^\\s-*" ; white space at beginning
 		      "\\(?:" ; start of day match
-		      ;; given a string, build a regexp that matches the first 2 letters,
-		      ;; the first three letters, or the whole string. I.e. monday will
+		      ;; given a string, build a regexp that matches
+		      ;; the first 2 letters, 
+		      ;; the first three letters, or the whole
+		      ;; string. I.e. monday will 
 		      ;; match mo, mon, monday
 		      (mapconcat 
 		       (lambda (d)
-			 (concat "\\(" (substring d 0 2) "\\(?:" (substring d 2 3)
+			 (concat "\\(" (substring d 0 2) 
+				 "\\(?:" (substring d 2 3)
 				 "\\(?:" (substring d 3) "\\)?\\)?\\)")
 			 )
 		       '("sunday" "monday" "tuesday" "wednesday"
@@ -817,15 +893,20 @@ than or equal to the given value (prompted for, when interactive)."
 		     (nth 5 date))
 	       )) ; end of first clause
 	   ;; iso date, nice and easy
-	   ((string-match "^\\s-*\\([12][0-9][0-9][0-9]\\)-\\([0-9][0-9]\\)-\\([0-9][0-9]\\)\\s-*$" s)
+	   ((string-match 
+	     "^\\s-*\\([12][0-9][0-9][0-9]\\)-\\([0-9][0-9]\\)-\\([0-9][0-9]\\)\\s-*$"
+	     s)
 	    (list 0 mm hh (string-to-number (match-string 3 s))
 		  (string-to-number (match-string 2 s))
 		  (string-to-number (match-string 1 s))))
 	   ;; and traditional dates
-	   ((string-match "^\\s-*\\([0-9][0-9]?\\)/\\([0-9][0-9]?\\)\\(?:/\\([0-9]+\\)\\)?\\s-*$" s)
+	   ((string-match 
+	     "^\\s-*\\([0-9][0-9]?\\)/\\([0-9][0-9]?\\)\\(?:/\\([0-9]+\\)\\)?\\s-*$"
+	     s)
 	    (let ((d (string-to-number (match-string 1 s)))
 		  (m (string-to-number (match-string 2 s)))
-		  (y (if (match-beginning 3) (string-to-number (match-string 3 s)))))
+		  (y (if (match-beginning 3) 
+			 (string-to-number (match-string 3 s)))))
 	      (when (null y)
 		  (setq y (nth 5 date))
 		  (if (or (< m (nth 4 date))
@@ -836,11 +917,13 @@ than or equal to the given value (prompted for, when interactive)."
 	   ;; 5 jan yy
 	   ((string-match 
 	     (eval-when-compile (concat
-	       "^\\s-*\\([0-9][0-9]?\\)\\s-*\\(?:" ; initial white space and number
+	       "^\\s-*\\([0-9][0-9]?\\)\\s-*\\(?:" ; initial white
+					; space and number 
 	       ;; construct a month matcher: bracket n is month n-1
 	       (mapconcat
 		(lambda (m) 
-		  (concat "\\(" (substring m 0 3) "\\(?:" (substring m 3) "\\)?\\)"))
+		  (concat "\\(" (substring m 0 3) 
+			  "\\(?:" (substring m 3) "\\)?\\)"))
 		'("january" "february" "march" "april" "may" "june" "july"
 		  "august" "september" "october" "november" "december")
 		"\\|")
@@ -851,7 +934,8 @@ than or equal to the given value (prompted for, when interactive)."
 		       (while (and (< i 14) (null (match-beginning i)))
 			 (setq i (1+ i)))
 		       (if (>= i 14)
-			   (error 'internal-error "matched impossible month in vm-sumurg-parse-date")
+			   (error 'internal-error 
+				  "matched impossible month in vm-sumurg-parse-date")
 			 (1- i))))
 		  (y (if (match-beginning 14)
 			 (string-to-number (match-string 14 s)))))
@@ -869,18 +953,21 @@ than or equal to the given value (prompted for, when interactive)."
 	       ;; construct a month matcher: bracket n is month n-1
 	       (mapconcat
 		(lambda (m) 
-		  (concat "\\(" (substring m 0 3) "\\(?:" (substring m 3) "\\)?\\)"))
+		  (concat "\\(" (substring m 0 3) 
+			  "\\(?:" (substring m 3) "\\)?\\)"))
 		'("january" "february" "march" "april" "may" "june" "july"
 		  "august" "september" "october" "november" "december")
 		"\\|")
-	       "\\)\\s-*\\([0-9][0-9]?\\)\\(?:,\\s-*\\([0-9]+\\)\\)?\\s-*$" ; end of month group, day and year
+	       "\\)\\s-*\\([0-9][0-9]?\\)\\(?:,\\s-*\\([0-9]+\\)\\)?\\s-*$" 
+					; end of month group, day and year
 	       )) s)
 	    (let ((d (string-to-number (match-string 13 s)))
 		  (m (let ((i 1))
 		       (while (and (< i 13) (null (match-beginning i)))
 			 (setq i (1+ i)))
 		       (if (>= i 13)
-			   (error 'internal-error "matched impossible month in vm-sumurg-parse-date")
+			   (error 'internal-error 
+				  "matched impossible month in vm-sumurg-parse-date")
 			 i)))
 		  (y (if (match-beginning 14)
 			 (string-to-number (match-string 14 s)))))
@@ -891,7 +978,10 @@ than or equal to the given value (prompted for, when interactive)."
 		      (setq y (1+ y))))
 	      (if (< y 100) (setq y (+ 2000 y)))
 	      (list 0 mm hh d m y)))
-	   (t (error 'invalid-argument (concat s " is not a recognized date format")))) ; end of cond
+	   (t 
+	    (error 'invalid-argument 
+		   (concat s " is not a recognized date format")))) 
+					; end of cond
     ) timep))) ; end of defn
 
 
