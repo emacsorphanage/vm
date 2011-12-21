@@ -1266,9 +1266,12 @@ summary buffer to select a folder."
       (nconc varlist (list 'emacs-w3m-version 'w3m-version 
 			   'w3m-goto-article-function)))
     (let ((fill-column (1- (window-width)))	; turn off auto-fill
+	  (mail-user-agent 'message-user-agent) ; use the default
+					; mail-user-agent for bug reports
 	  (vars-to-delete 
 	   '(vm-auto-folder-alist	; a bit private
 	     vm-mail-folder-alist	; ditto
+	     vm-virtual-folder-alist	; ditto
 	     ;; vm-mail-fcc-default - is this private?
 	     vmpc-actions vmpc-conditions 
 	     vmpc-actions-alist vmpc-reply-alist vmpc-forward-alist
@@ -1324,12 +1327,12 @@ summary buffer to select a folder."
       (setq varlist (append (list 'features) varlist))
       (delete-other-windows)
       (reporter-submit-bug-report
-       vm-maintainer-address
-       (concat "VM " (vm-version))
-       varlist
-       nil
-       nil
-       (concat
+       vm-maintainer-address		; address
+       (concat "VM " (vm-version))	; pkgname
+       varlist				; varlist
+       pre-hooks			; pre-hooks
+       post-hooks			; post-hooks
+       (concat				; salutation
 	"INSTRUCTIONS:
 - Please change the Subject header to a concise bug description.
 

@@ -3812,7 +3812,8 @@ specification SPEC."
 (defun vm-imap-account-name-for-spec (spec)
   "Returns the IMAP account name for maildrop specification SPEC, by
 looking up `vm-imap-account-alist' or nil if there is no such account."
-  (let (comps account-comps (alist vm-imap-account-alist))
+  (let ((alist vm-imap-account-alist)
+	comps account-comps)
     (setq comps (vm-imap-parse-spec-to-list spec))
     (catch 'return
     (while alist
@@ -4322,6 +4323,7 @@ them."
 	folder spec process mailbox-list mailbox-status-list buffer)
     (setq spec (vm-imap-spec-for-account account))
     (setq process (and spec (vm-imap-make-session spec t "folders")))
+					; new session required for STATUS
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
 	       (vm-safe-imapdrop-string account)))
