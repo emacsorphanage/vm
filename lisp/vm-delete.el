@@ -68,26 +68,26 @@ thread are deleted."
 		   count (vm-interactive-p) "Delete")))
     (while mlist
       (unless (vm-deleted-flag (car mlist))
-	(vm-set-deleted-flag (car mlist) t)
-	(vm-increment del-count))
-      ;; The following is a temporary fix.  To be absorted into
-      ;; vm-update-summary-and-mode-line eventually.
-      (when (and vm-summary-enable-thread-folding
-		 vm-summary-show-threads
-		 ;; (not (and vm-enable-thread-operations
-		 ;;	 (eq count 1)))
-		 (> (vm-thread-count (car mlist)) 1))
-	(with-current-buffer vm-summary-buffer
-	  (vm-expand-thread (vm-thread-root (car mlist)))))
+	(when (vm-set-deleted-flag (car mlist) t)
+	    (vm-increment del-count)
+	    ;; The following is a temporary fix.  To be absorted into
+	    ;; vm-update-summary-and-mode-line eventually.
+	    (when (and vm-summary-enable-thread-folding
+		       vm-summary-show-threads
+		       ;; (not (and vm-enable-thread-operations
+		       ;;	 (eq count 1)))
+		       (> (vm-thread-count (car mlist)) 1))
+	      (with-current-buffer vm-summary-buffer
+		(vm-expand-thread (vm-thread-root (car mlist)))))))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-delete-message vm-delete-message-backward)
 		(list this-command))
-    (if (and used-marks (vm-interactive-p))
-	(if (zerop del-count)
-	    (vm-inform 5 "No messages deleted")
-	  (vm-inform 5 "%d message%s deleted"
-		      del-count
-		      (if (= 1 del-count) "" "s"))))
+    (when (vm-interactive-p)
+      (if (zerop del-count)
+	  (vm-inform 5 "No messages deleted")
+	(vm-inform 5 "%d message%s deleted"
+		   del-count
+		   (if (= 1 del-count) "" "s"))))
     (vm-update-summary-and-mode-line)
     (if (and vm-move-after-deleting (not used-marks))
 	(let ((vm-circular-folders (and vm-circular-folders
@@ -127,9 +127,8 @@ thread are undeleted."
 	(undel-count 0))
     (while mlist
       (if (vm-deleted-flag (car mlist))
-	  (progn
-	    (vm-set-deleted-flag (car mlist) nil)
-	    (vm-increment undel-count)))
+	  (if (vm-set-deleted-flag (car mlist) nil)
+	      (vm-increment undel-count)))
       (setq mlist (cdr mlist)))
     (if (and used-marks (vm-interactive-p))
 	(if (zerop undel-count)
@@ -175,17 +174,17 @@ messages in the thread are flagged/unflagged."
     (when mlist
       (setq new-flagged (not (vm-flagged-flag (car mlist)))))
     (while mlist
-      (vm-set-flagged-flag (car mlist) new-flagged)
-      (vm-increment flagged-count)
-      ;; The following is a temporary fix.  To be absorted into
-      ;; vm-update-summary-and-mode-line eventually.
-      (when (and vm-summary-enable-thread-folding
+      (when (vm-set-flagged-flag (car mlist) new-flagged)
+	(vm-increment flagged-count)
+	;; The following is a temporary fix.  To be absorted into
+	;; vm-update-summary-and-mode-line eventually.
+	(when (and vm-summary-enable-thread-folding
 		 vm-summary-show-threads
 		 ;; (not (and vm-enable-thread-operations
 		 ;;	 (eq count 1)))
 		 (> (vm-thread-count (car mlist)) 1))
 	(with-current-buffer vm-summary-buffer
-	  (vm-expand-thread (vm-thread-root (car mlist)))))
+	  (vm-expand-thread (vm-thread-root (car mlist))))))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-toggle-flag-message)
 		(list this-command))
@@ -221,9 +220,8 @@ don't move at all."
     (while mp
       (if (and (not (vm-deleted-flag (car mp)))
 	       (string-equal subject (vm-so-sortable-subject (car mp))))
-	  (progn
-	    (vm-set-deleted-flag (car mp) t)
-	    (vm-increment n)))
+	  (if (vm-set-deleted-flag (car mp) t)
+	      (vm-increment n)))
       (setq mp (cdr mp)))
     (and (vm-interactive-p)
 	 (if (zerop n)
@@ -260,8 +258,8 @@ don't move at all."
 	(n 0))
     (while list
       (unless (vm-deleted-flag (car list))
-	(vm-set-deleted-flag (car list) t)
-	(vm-increment n))
+	(if (vm-set-deleted-flag (car list) t)
+	    (vm-increment n)))
       (setq list (cdr list)))
     (when (vm-interactive-p)
       (if (zerop n)
@@ -310,8 +308,8 @@ unmarked messages are not considerd for deletion."
 	     (when mid
 	       ;; (or mid (debug (car mp)))
 	       (when (intern-soft mid table)
-		 (vm-set-deleted-flag (car mp) t)
-		 (setq n (1+ n)))
+		 (if (vm-set-deleted-flag (car mp) t)
+		     (setq n (1+ n))))
 	       (intern mid table))))
       (setq mp (cdr mp)))
     (when (vm-interactive-p)
@@ -356,9 +354,8 @@ unmarked messages are not hashed or considerd for deletion."
 	    (set-buffer (vm-buffer-of m))
 	    (setq hash (vm-md5-region (vm-text-of m) (vm-text-end-of m)))
 	    (if (intern-soft hash table)
-		(progn
-		  (vm-set-deleted-flag (car mlist) t)
-		  (vm-increment del-count))
+		(if (vm-set-deleted-flag (car mlist) t)
+		    (vm-increment del-count))
 	      (intern hash table)))
 	  (setq mlist (cdr mlist)))))
     (vm-display nil nil '(vm-delete-duplicate-messages)

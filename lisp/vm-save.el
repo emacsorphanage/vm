@@ -432,9 +432,9 @@ The saved messages are flagged as `filed'."
 		 (narrow-to-region (vm-headers-of m) (vm-text-end-of m))
 		 (run-hook-with-args 'vm-save-message-hook folder))
 	       (unless (vm-filed-flag m)
-		   (vm-set-filed-flag m t))
-	       (vm-increment save-count)
-	       (vm-modify-folder-totals folder 'saved 1 m)
+		 (when (vm-set-filed-flag m t)
+		   (vm-increment save-count)
+		   (vm-modify-folder-totals folder 'saved 1 m)))
 	       (vm-update-summary-and-mode-line)
 	       (setq ml (cdr ml)))))
 	;; unwind-protections
@@ -989,14 +989,14 @@ The saved messages are flagged as `filed'."
 	      (vm-imap-save-message process m mailbox))
 	    (vm-run-hook-on-message-with-args 'vm-save-message-hook m folder)
 	    (unless (vm-filed-flag m)
-	      (vm-set-filed-flag m t))
-	    ;; we set the deleted flag so that the user is not
-	    ;; confused if the save doesn't go through fully.
-	    (when (and vm-delete-after-saving (not (vm-deleted-flag m)))
-	      (vm-set-deleted-flag m t))
-	    (vm-increment save-count)
-	    (vm-inform 6 "Saving messages... %s" save-count)
-	    (vm-modify-folder-totals folder 'saved 1 m)
+	      (when (vm-set-filed-flag m t)
+		(vm-increment save-count)
+		(vm-modify-folder-totals folder 'saved 1 m)
+		;; we set the deleted flag so that the user is not
+		;; confused if the save doesn't go through fully.
+		(when (and vm-delete-after-saving (not (vm-deleted-flag m)))
+		  (vm-set-deleted-flag m t))
+		(vm-inform 6 "Saving messages... %s" save-count)))
 	    (setq ml (cdr ml))))
       (when process (vm-imap-end-session process))
       (vm-inform 5 "%d message%s saved to %s"

@@ -476,7 +476,8 @@ nil	       delete the label
 (defun vm-set-xxxx-flag (m flag norecord function attr-index)
   "A generic function to set the message flag of M at ATTR-INDEX to
   the value FLAG.  The argument FUNCTION tells the specific
-  non-generic function that invoked this one.
+  non-generic function that invoked this one.  A boolean flag is
+  returned indicating success or failure of the operation.
 The flag is also set for all the virtual messages mirroring M as well
   as the real message underlying M. 
 Normally, a record of the change is kept for the purpose of undo, and
@@ -513,7 +514,9 @@ Normally, a record of the change is kept for the purpose of undo, and
 	    (vm-set-attribute-modflag-of m t)
 	    (if (eq vm-flush-interval t)
 		(vm-stuff-virtual-message-data m)
-	      (vm-set-stuff-flag-of m t))))))
+	      (vm-set-stuff-flag-of m t)))
+      ;; return success result
+      t)))
 
 (defun vm-set-xxxx-cached-data-flag (m flag norecord function attr-index)
   "A generic function to set the cached-data flag of M at ATTR-INDEX to

@@ -335,6 +335,7 @@ Prefix arg means the new virtual folder should be visited read only."
 	    (list prefix)))))
 
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
+  (if vm-folder-read-only (setq read-only t))
   (let ((use-marks (eq last-command 'vm-next-command-uses-marks))
 	(parent-summary-format vm-summary-format)
 	vm-virtual-folder-alist ; shadow the global variable
