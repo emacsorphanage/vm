@@ -7985,25 +7985,30 @@ end of the path."
   (vm-check-for-killed-summary)
   (if (vm-interactive-p) (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
-  (let ((m (car vm-message-pointer)))
-    (switch-to-buffer "*VM mime part layout*")
-    (erase-buffer)
-    ;; (setq truncate-lines t)
-    (insert (format "%s\n" (vm-decode-mime-encoded-words-in-string
-                            (vm-su-subject m))))
-    (vm-mime-map-layout-parts
-     m
-     (lambda (m layout path)
-       (if verbose
-           (insert (format "%s%S\n" (make-string (length path) ? ) layout))
-         (insert (format "%s%S%s%s%s\n" (make-string (length path) ? )
-                         (vm-mm-layout-type layout)
-                         (let ((id (vm-mm-layout-id layout)))
-                           (if id (format " id=%S" id) ""))
-                         (let ((desc (vm-mm-layout-description layout)))
-                           (if desc (format " desc=%S" desc) ""))
-                         (let ((dispo (vm-mm-layout-disposition layout)))
-                           (if dispo (format " %S" dispo) "")))))))))
+  (let ((m (car vm-message-pointer))
+	(buffer (get-buffer-create "*VM mime part layout*")))
+    ;; (switch-to-buffer "*VM mime part layout*")
+    ;; (erase-buffer)
+    (with-current-buffer buffer (setq truncate-lines t))
+    (with-electric-help
+     (lambda ()
+       (princ (format "%s\n" (vm-decode-mime-encoded-words-in-string
+			       (vm-su-subject m))))
+       (vm-mime-map-layout-parts
+	m
+	(lambda (m layout path)
+	  (if verbose
+	      (princ (format "%s%S\n" (make-string (length path) ? ) layout))
+	    (princ (format "%s%S%s%s%s\n" (make-string (length path) ? )
+			   (vm-mm-layout-type layout)
+			   (let ((id (vm-mm-layout-id layout)))
+			     (if id (format " id=%S" id) ""))
+			   (let ((desc (vm-mm-layout-description layout)))
+			     (if desc (format " desc=%S" desc) ""))
+			   (let ((dispo (vm-mm-layout-disposition layout)))
+			     (if dispo (format " %S" dispo) ""))))))))
+     buffer)
+    ))
 (defalias 'vm-mime-list-part-structure
   'vm-list-mime-part-structure)
 
