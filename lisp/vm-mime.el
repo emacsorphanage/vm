@@ -3361,6 +3361,7 @@ fetched content."
 		  (vm-set-mm-layout-body-start 
 		   child-layout (vm-marker (point-min)))))
 	    (vm-mime-error		; handler
+	     ;; (vm-warn 0 2 (format "Error in retrieving: %s" (cdr data)))
 	     (vm-set-mm-layout-display-error layout (cdr data))
 	     (setq child-layout nil)))))
       ;; unwind-protections

@@ -4473,6 +4473,7 @@ folder."
     (setq string (concat (buffer-substring (point-min) (match-beginning 0))
 			 (buffer-substring
 			  (match-end 0) (point-max))))
+    (setq string (vm-imap-subst-CRLF-for-LF string))
     
     (while mailboxes
       (setq mailbox (car (car mailboxes)))
