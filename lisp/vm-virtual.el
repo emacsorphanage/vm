@@ -1,4 +1,3 @@
-
 ;;; vm-virtual.el --- Virtual folders for VM
 ;;
 ;; This file is part of VM

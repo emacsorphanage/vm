@@ -206,34 +206,29 @@ mandatory."
 argument START-POINT (a list of messages) or, if it is nil, all
 the messages in the current folder."
   (let ((m-list (or start-point vm-message-list))
-	mp m root
 	(n 0)
 	(modulus 100)
 	(do-mouse-track (or (and vm-mouse-track-summary
 				 (vm-mouse-support-possible-p))
 			    vm-summary-enable-faces)))
-    (setq mp m-list)
+    ;; (setq mp m-list)
     (save-excursion
       (set-buffer vm-summary-buffer)
       (setq line-move-ignore-invisible vm-summary-show-threads)
       (let ((buffer-read-only nil)
 	    (modified (buffer-modified-p))
 	    (debug nil) ; vm-summary-debug, if necessary
-	    o
-	    )
+	    track)
 	(unwind-protect
 	    (progn
+	      (if (null start-point)
+		  (setq vm-summary-pointer nil))
 	      (if start-point
-		  (if (vm-su-start-of (car mp))
-		      (progn
-			(goto-char (vm-su-start-of (car mp)))
-			(vm-disable-extents (point) (point-max))
-			(delete-region (point) (point-max)))
-		    (goto-char (point-max)))
-		(goto-char (point-min))
-		(vm-disable-extents)
-		(erase-buffer)
-		(setq vm-summary-pointer nil))
+		  (goto-char (or (vm-su-start-of (car m-list)) (point-max)))
+		(goto-char (point-min)))
+	      (vm-disable-extents (point) (point-max))
+	      (delete-region (point) (point-max))
+
 	      ;; avoid doing long runs down the marker chain while
 	      ;; building the summary.  use integers to store positions
 	      ;; and then convert them to markers after all the
@@ -241,66 +236,74 @@ the messages in the current folder."
 	      ;; re-establish them afterwards.
 	      (vm-inform 7 "Generating summary... %d" n)
 	      (overlay-recenter (point))
-	      (setq mp m-list)
-	      (while mp
-		(setq m (car mp))
-		(when (markerp (vm-su-start-of m))
-		  (set-marker (vm-su-start-of m) nil))
-		(when (markerp (vm-su-end-of m))
-		  (set-marker (vm-su-end-of m) nil))
-		(when (setq o (vm-su-summary-mouse-track-overlay-of m))
-		  (vm-detach-extent o))
-		(setq mp (cdr mp)))
+	      (let ((mp m-list)
+		    m start end track)
+		(while mp
+		  (setq m (car mp))
+		  (setq start (vm-su-start-of m)
+			end (vm-su-end-of m)
+			track (vm-su-summary-mouse-track-overlay-of m))
+		  (when start (set-marker start nil))
+		  (vm-set-su-start-of m nil)
+		  (when end (set-marker end nil))
+		  (vm-set-su-end-of m nil)
+		  (when track (vm-detach-extent track))
+		  (setq mp (cdr mp))))
 
 	      (overlay-recenter (point-max))
 
-	      (setq mp m-list)
-	      (while mp
-                (setq m (car mp))
-		(vm-summary-debug m)
-		(vm-set-su-start-of m (point))
-		(insert vm-summary-no-=>)
-		(vm-tokenized-summary-insert m (vm-su-summary m))
-		(vm-set-su-end-of m (point))
-                (let ((s (vm-su-start-of m)) (e (vm-su-end-of m)))
-		  (when s
-		    (put-text-property s e 'vm-message m)
-		    (when (and vm-summary-enable-thread-folding
-			       vm-summary-show-threads)
-		      (if (= (vm-thread-indentation-of m) 0)
-			  (when (> (vm-thread-count m) 1)
-			    (if vm-summary-threads-collapsed
-				(vm-summary-mark-root-collapsed m)
-			      (vm-summary-mark-root-expanded m)))
-			(setq root (vm-thread-root m))
-			(when (and root (vm-collapsed-root-p root))
-			  (unless (vm-visible-message m)
-			    (put-text-property s e 'invisible t))
-			  ;; why mess with the root here?  USR, 2010-07-20
-			  ;; (vm-summary-mark-root-collapsed root)
-			  )))))
-		(setq mp (cdr mp) n (1+ n))
-		(when (zerop (% n modulus))
-		  (vm-inform 7 "Generating summary... %d" n)
-		  (if debug (debug "vm-debug-summary: Generating summary"))
-		  (setq debug nil)))
-	      ;; now convert the ints to markers.
-	      (setq mp m-list)
-	      (while mp
-		(setq m (car mp))
-		(when do-mouse-track
-		  (vm-set-su-summary-mouse-track-overlay-of
-		   m
-		   (vm-mouse-set-mouse-track-highlight
-		    (vm-su-start-of m)
-		    (vm-su-end-of m)
-		    (vm-su-summary-mouse-track-overlay-of m))))
-		(vm-set-su-start-of m (vm-marker (vm-su-start-of m)))
-		(vm-set-su-end-of m (vm-marker (vm-su-end-of m)))
-		(when vm-summary-enable-faces (vm-summary-faces-add m))
-		(setq mp (cdr mp))))
+	      (let ((mp m-list) 
+		    m root)
+		(while mp
+		  (setq m (car mp))
+		  (vm-summary-debug m)
+		  (vm-set-su-start-of m (point))
+		  (insert vm-summary-no-=>)
+		  (vm-tokenized-summary-insert m (vm-su-summary m))
+		  (vm-set-su-end-of m (point))
+		  (let ((s (vm-su-start-of m)) (e (vm-su-end-of m)))
+		    (when s
+		      (put-text-property s e 'vm-message m)
+		      (when (and vm-summary-enable-thread-folding
+				 vm-summary-show-threads)
+			(if (= (vm-thread-indentation-of m) 0)
+			    (when (> (vm-thread-count m) 1)
+			      (if vm-summary-threads-collapsed
+				  (vm-summary-mark-root-collapsed m)
+				(vm-summary-mark-root-expanded m)))
+			  (setq root (vm-thread-root m))
+			  (when (and root (vm-collapsed-root-p root))
+			    (unless (vm-visible-message m)
+			      (put-text-property s e 'invisible t))
+			    ;; why mess with the root here?  USR, 2010-07-20
+			    ;; (vm-summary-mark-root-collapsed root)
+			    )))))
+		  (setq mp (cdr mp) n (1+ n))
+		  (when (zerop (% n modulus))
+		    (vm-inform 7 "Generating summary... %d" n)
+		    (if debug (debug "vm-debug-summary: Generating summary"))
+		    (setq debug nil)))))
+
+	  ;; unwind-protection
+	  ;; convert the summary markers back from ints
+	  (let ((mp m-list)
+		m start end)
+	    (while mp
+	      (setq m (car mp))
+	      (setq start (or (vm-su-start-of m) (point-max))
+		    end (or (vm-su-end-of m) (point-max))
+		    track (vm-su-summary-mouse-track-overlay-of m))
+	      (when do-mouse-track
+		(vm-set-su-summary-mouse-track-overlay-of
+		 m (vm-mouse-set-mouse-track-highlight start end track)))
+	      (vm-set-su-start-of m (vm-marker start))
+	      (vm-set-su-end-of m (vm-marker end))
+	      (when vm-summary-enable-faces (vm-summary-faces-add m))
+	      (setq mp (cdr mp))))
 	  (set-buffer-modified-p modified))
+
 	(run-hooks 'vm-summary-redo-hook)))
+
     (if (>= n modulus)
 	(unless vm-summary-debug 
 	  (vm-inform 7 "Generating summary... done")))))
@@ -470,7 +473,8 @@ the Summary buffer exists. "
   "Replace the summary line of the message M in the summary
 buffer by a regenerated summary line."
   (vm-summary-debug m)
-  (if (and (markerp (vm-su-start-of m))
+  (if (and (buffer-name (vm-buffer-of m)) ; ignore deleted folders and
+	   (markerp (vm-su-start-of m))	  ; markers into deleted buffers
 	   (marker-buffer (vm-su-start-of m)))
       (let ((modified (buffer-modified-p)) ; Folder or Presentation
 	    (do-mouse-track

@@ -37,6 +37,7 @@
 (provide 'vm-pcrisis)
 
 (eval-and-compile
+  (require 'timezone)
   (require 'vm-misc)
   (require 'vm-minibuf)
   (require 'vm-folder)
