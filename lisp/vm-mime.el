@@ -1398,7 +1398,7 @@ DEFAULT-TRANSFER-ENCODING, unless specified, is assumed to be 7bit.
   "Return the parameter NAME from PARAM-LIST.
 
 If parameter value continuations was used, i.e. the parameter was split into
-shorter pieces, rebuilt it from them."  
+shorter pieces, rebuild it from them."  
   (or (vm-mime-get-xxx-parameter-internal name param-list)
       (let ((n 0) content p)
         (while (setq p (vm-mime-get-xxx-parameter-internal

@@ -1352,7 +1352,7 @@ Run this function in order to test/check your conditions."
   (setq vmpc-true-conditions (reverse vmpc-true-conditions)))
 
 (defun vmpc-build-actions-to-run-list ()
-  "Built a list of the actions to run.
+  "Build a list of the actions to run.
 These are the true conditions mapped to actions.  Duplicates will be
 eliminated.  You may run it in a composition buffer in order to see what
 actions will be run."

@@ -3998,7 +3998,7 @@ You can sort threads by the usual sort keys and the sort order will
 apply to at least the root messages of threads.  Sorting threads by
 subject, for instance, can be a quick way to find threads with similar
 subject lines.  Sorting them by date would sort them chronologically
-according to when the threads were initiated.  Sorting them activity
+according to when the threads were initiated.  Sorting them by activity
 is a variant of the chronological order where the dates of latest
 activity are given prominence instead of the dates of the initial
 messages. 
