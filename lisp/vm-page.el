@@ -798,6 +798,13 @@ preview or the full message, governed by the the variables
              (and vm-display-using-mime
 		  (not (vm-mime-plain-message-p (car vm-message-pointer)))))
 	 (let ((layout (vm-mm-layout (car vm-message-pointer))))
+	   ;; This check is for Bug Report 740755.  USR, 2011-12-24
+	   (let ((new-layout (vm-mime-parse-entity-safe 
+			      (car vm-message-pointer))))
+	     (unless (vm-mime-layouts-equal layout new-layout)
+	       (when vm-debug 
+		 (debug 'vm-present-message 
+			"Corruption of cached MIME layout (Bug 740755)?"))))
 	   (vm-make-presentation-copy (car vm-message-pointer))
 	   (vm-save-buffer-excursion
 	    (vm-replace-buffer-in-windows (current-buffer)

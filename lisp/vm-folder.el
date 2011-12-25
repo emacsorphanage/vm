@@ -2140,7 +2140,7 @@ FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
 	       (delete-region (match-beginning 0) (match-end 0)))
 	     (goto-char (vm-headers-of m))
 	     (setq opoint (point))
-	     (insert-before-markers
+	     (insert			; insert-before-markers?
 	      vm-attributes-header " ("
 	      (let ((print-escape-newlines t))
 		(prin1-to-string attributes))

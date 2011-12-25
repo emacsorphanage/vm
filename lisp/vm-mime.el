@@ -248,6 +248,29 @@ TO are overwritten.                                    USR, 2011-03-27"
       (aset to i (aref from i))
       (setq i (1- i)))))
 
+(defun vm-mime-layouts-equal (layout1 layout2)
+  (catch 'return
+    (if (equal layout1 layout2)
+	(throw 'return t))
+    (vm-mapc 
+     (lambda (i)
+       (unless (equal (aref layout1 i) (aref layout2 i))
+	 (throw 'return nil)))
+     '(0 1 2 3 4 5 6))			; type through q-disposition
+    (vm-mapc
+     (lambda (i)
+       (unless (equal (marker-position (aref layout1 i))
+		      (marker-position (aref layout2 i)))
+	 (throw 'return nil)))
+     '(7 9 10))				; header-start, body-start, body-end
+    (vm-mapc 
+     (lambda (part1 part2)
+       (unless (vm-mime-layouts-equal part1 part2)
+	 (throw 'return nil)))
+     (vm-mm-layout-parts layout1)
+     (vm-mm-layout-parts layout2))
+    t))
+
 (defun vm-mm-layout-type (e) (aref e 0))
 (defun vm-mm-layout-qtype (e) (aref e 1))
 (defun vm-mm-layout-encoding (e) (aref e 2))
