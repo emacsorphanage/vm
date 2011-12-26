@@ -1066,7 +1066,9 @@ machine HOST login USER password PASSWORD port PORT
 
 @noindent where HOST, USER, PASSWORD and PORT are as detailed above.
 Ensure that the variable @code{auth-sources} is customized to refer to
-your authinfo file.  Then VM will read passwords from the file and you
+your authinfo file.  
+@xref{Help for users,, Help for users, auth , Emacs auth-source}.
+Then VM will read passwords from the file and you
 don't need to type them in when accessing mail servers.
 
 If you have multiple login accounts on the same HOST then VM will only
