@@ -4172,7 +4172,8 @@ documentation for `vm-spool-files'."
     (setq process (vm-imap-make-session folder t "create"))
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
-	       (vm-safe-imapdrop-string folder)))
+	       (or (vm-imap-folder-for-spec folder)
+		   (vm-safe-imapdrop-string folder))))
     (unwind-protect
 	(with-current-buffer (process-buffer process)
 	  ;;-----------------------------
@@ -4217,7 +4218,8 @@ documentation for `vm-spool-files'."
     (setq process (vm-imap-make-session folder t "delete folder"))
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
-	       (vm-safe-imapdrop-string folder)))
+	       (or (vm-imap-folder-for-spec folder)
+		   (vm-safe-imapdrop-string folder))))
     (unwind-protect
 	(save-current-buffer
 	  ;;-----------------------------
@@ -4260,15 +4262,18 @@ documentation for `vm-spool-files'."
 	   source dest)
        (setq source (vm-read-imap-folder-name "Rename IMAP folder: " t nil))
        (setq dest (vm-read-imap-folder-name
-		   (format "Rename %s to: " (vm-safe-imapdrop-string source))
-		    nil t))
+		   (format "Rename %s to: " 
+			   (or (vm-imap-folder-for-spec source)
+			       (vm-safe-imapdrop-string source)))
+		   nil t))
        (list source dest))))
   (let ((vm-imap-ok-to-ask t)
 	process mailbox-source mailbox-dest)
     (setq process (vm-imap-make-session source t "rename folder"))
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
-	       (vm-safe-imapdrop-string source)))
+	       (or (vm-imap-folder-for-spec source)
+		   (vm-safe-imapdrop-string source))))
     (unwind-protect
 	(save-current-buffer
 	  ;;-----------------------------
@@ -4326,7 +4331,8 @@ them."
 					; new session required for STATUS
     (if (null process)
 	(error "Couldn't open IMAP session for %s"
-	       (vm-safe-imapdrop-string account)))
+	       (or (vm-imap-folder-for-spec account)
+		   (vm-safe-imapdrop-string account))))
     (unwind-protect
 	(progn
 	  (setq mailbox-list 

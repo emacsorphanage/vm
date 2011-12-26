@@ -183,7 +183,7 @@ The saved messages are flagged as `filed'."
 ;;---------------------------------------------------------------------------
 
 (defun vm-read-save-folder-name (&optional imap)
-  (let (default default-imap directory)
+  (let (default default-is-imap default-imap directory file-name)
     (save-current-buffer
       ;; is this needed?  USR, 2011-11-12
       ;; (vm-session-initialization)
@@ -192,8 +192,10 @@ The saved messages are flagged as `filed'."
       (setq default 
 	    (or (vm-auto-select-folder vm-message-pointer vm-auto-folder-alist)
 		vm-last-save-folder))
+      (setq default-is-imap
+	    (and default (vm-imap-folder-spec-p default)))
       (setq default-imap
-	    (or (and default (vm-imap-folder-spec-p default) default)
+	    (or (and default-is-imap default)
 		vm-last-save-imap-folder
 		vm-last-visit-imap-folder))
       (setq directory 
@@ -207,6 +209,17 @@ The saved messages are flagged as `filed'."
 		(let ((default-directory directory)) 
 		  (file-directory-p default)))
 	   (vm-read-file-name "Save in folder: " directory nil nil default))
+	  (default-is-imap
+	    (let ((insert-default-directory nil))
+	      (setq file-name 
+		    (vm-read-file-name
+		     (format "Save in folder: (default %s) " 
+			     (or (vm-imap-folder-for-spec default)
+				 (vm-safe-imapdrop-string default)))
+		     nil default 
+		     ;; 'confirm      ; -- this blocks the default
+		     ))
+	      (if (equal file-name "") default file-name)))
 	  (default
 	    (vm-read-file-name
 	     (format "Save in folder: (default %s) " default)
@@ -975,7 +988,7 @@ The saved messages are flagged as `filed'."
 	    ;; FIXME But stuffing attributes into the IMAP buffer is
 	    ;; not easy.  USR, 2010-03-08
 	    ;; (vm-stuff-message-data m t)
-	    (if server-to-server-p 	; economise on upstream data traffic
+	    (if server-to-server-p ; economise on upstream data traffic
 		(let ((process 
 		       (vm-re-establish-folder-imap-session nil "save")))
 		  (if (null process)
@@ -988,20 +1001,20 @@ The saved messages are flagged as `filed'."
 		  (error "Could not connect to the IMAP server"))
 	      (vm-imap-save-message process m mailbox))
 	    (vm-run-hook-on-message-with-args 'vm-save-message-hook m folder)
-	    (unless (vm-filed-flag m)
-	      (when (vm-set-filed-flag m t)
-		(vm-increment save-count)
-		(vm-modify-folder-totals folder 'saved 1 m)
-		;; we set the deleted flag so that the user is not
-		;; confused if the save doesn't go through fully.
-		(when (and vm-delete-after-saving (not (vm-deleted-flag m)))
-		  (vm-set-deleted-flag m t))
-		(vm-inform 6 "Saving messages... %s" save-count)))
+	    (vm-set-filed-flag m t)
+	    (vm-increment save-count)
+	    (vm-modify-folder-totals folder 'saved 1 m)
+	    ;; we set the deleted flag so that the user is not
+	    ;; confused if the save doesn't go through fully.
+	    (when (and vm-delete-after-saving (not (vm-deleted-flag m)))
+	      (vm-set-deleted-flag m t))
+	    (vm-inform 6 "Saving messages... %s" save-count)
 	    (setq ml (cdr ml))))
       (when process (vm-imap-end-session process))
       (vm-inform 5 "%d message%s saved to %s"
 	       save-count (if (/= 1 save-count) "s" "")
-	       (vm-safe-imapdrop-string folder)))
+	       (or (vm-imap-folder-for-spec folder)
+		   (vm-safe-imapdrop-string folder))))
     (vm-update-summary-and-mode-line)
     (setq vm-last-save-imap-folder folder)
     ;; We call delete-message again even though the deleted-flags have

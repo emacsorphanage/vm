@@ -1752,9 +1752,11 @@ Call this function if you made changes to `vm-summary-format'."
 
 (defun vm-make-folders-summary-key (folder &optional dir)
   (cond ((vm-pop-folder-spec-p folder)
-	 (vm-safe-popdrop-string folder))
+	 (or (vm-pop-find-name-for-spec folder)
+	     (vm-safe-popdrop-string folder)))
 	((vm-imap-folder-spec-p folder)
-	 (vm-safe-imapdrop-string folder))
+	 (or (vm-imap-folder-for-spec folder)
+	     (vm-safe-imapdrop-string folder)))
 	(t
 	 (concat "folder-summary0:"
 		 (file-truename

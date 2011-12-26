@@ -77,6 +77,7 @@
 
 
 (declare-function vm-pop-find-name-for-spec "vm-pop" (spec))
+(declare-function vm-imap-folder-for-spec "vm-imap" (spec))
 (declare-function vm-mime-plain-message-p "vm-mime" (message))
 (declare-function vm-yank-message "vm-reply" (message))
 (declare-function vm-mail "vm" (&optional to subject))
@@ -1393,6 +1394,11 @@ separate dedicated menu bar, depending on the value of
 					    (car folders))))
 			    (list 'vm-menu-run-command
 				  ''vm-visit-pop-folder foo))
+			   ((and (vm-imap-folder-spec-p (car folders))
+				 (setq foo (vm-imap-folder-for-spec
+					    (car folders))))
+			    (list 'vm-menu-run-command
+				  'vm'visit-imap-folder foo))
 			   (t
 			    (list 'vm-menu-run-command
 				  ''vm-visit-folder (car folders))))

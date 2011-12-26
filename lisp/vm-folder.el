@@ -203,17 +203,20 @@ If non-nil, END-POINT should point to a cons cell in
 vm-message-list and the numbering will end with the message just
 before this cell.  A nil value means numbering will be done until
 the end of vm-message-list is reached."
-  (let ((n 1) (message-list (or start-point vm-message-list)))
-    (if (and start-point (vm-reverse-link-of (car start-point)))
+  (let ((n 1) 
+	(message-list vm-message-list))
+    (when (and start-point (vm-reverse-link-of (car start-point)))
+      (if (null (vm-number-of (car (vm-reverse-link-of (car start-point)))))
+	  (vm-warn 0 2 "Bad numbering start-point; please report bug.")
 	(setq n (1+ (string-to-number
 		     (vm-number-of
-		      (car
-		       (vm-reverse-link-of
-			(car start-point))))))))
+		      (car (vm-reverse-link-of (car start-point))))))
+	      message-list start-point)))
     (while (not (eq message-list end-point))
       (vm-set-number-of (car message-list) (int-to-string n))
       (vm-set-padded-number-of (car message-list) (format "%3d" n))
-      (setq n (1+ n) message-list (cdr message-list)))
+      (setq n (1+ n) 
+	    message-list (cdr message-list)))
     (or end-point (setq vm-ml-highest-message-number (int-to-string (1- n))))
     (if vm-summary-buffer
 	(vm-copy-local-variables vm-summary-buffer
@@ -287,13 +290,12 @@ end of vm-message-list.
 
 Otherwise the variables' values should be conses in vm-message-list
 or nil."
-  (if vm-numbering-redo-start-point
-      (progn
-	(vm-number-messages (and (consp vm-numbering-redo-start-point)
-				 vm-numbering-redo-start-point)
-			    vm-numbering-redo-end-point)
-	(setq vm-numbering-redo-start-point nil
-	      vm-numbering-redo-end-point nil))))
+  (when vm-numbering-redo-start-point
+    (vm-number-messages (if (consp vm-numbering-redo-start-point)
+			    vm-numbering-redo-start-point)
+			vm-numbering-redo-end-point)
+    (setq vm-numbering-redo-start-point nil
+	  vm-numbering-redo-end-point nil)))
 
 (defun vm-set-summary-redo-start-point (start-point)
   "Set vm-summary-redo-start-point to START-POINT if appropriate.
@@ -4327,11 +4329,15 @@ Same as \\[vm-recover-folder]."
 		 (setq retrieval-function 'vm-spool-move-mail))
 		((vm-imap-folder-spec-p maildrop)
 		 (setq non-file-maildrop t)
-		 (setq safe-maildrop (vm-safe-imapdrop-string maildrop))
+		 (setq safe-maildrop 
+		       (or (vm-imap-account-name-for-spec maildrop)
+			   (vm-safe-imapdrop-string maildrop)))
 		 (setq retrieval-function 'vm-imap-move-mail))
 		((vm-pop-folder-spec-p maildrop)
 		 (setq non-file-maildrop t)
-		 (setq safe-maildrop (vm-safe-popdrop-string maildrop))
+		 (setq safe-maildrop 
+		       (or (vm-pop-find-name-for-spec maildrop)
+			   (vm-safe-popdrop-string maildrop)))
 		 (setq retrieval-function 'vm-pop-move-mail))
 		(t (setq retrieval-function 'vm-spool-move-mail)))
 	  (setq crash (expand-file-name crash vm-folder-directory))
@@ -4403,6 +4409,7 @@ maildrop string)."
       (aref vm-folder-access-data 0)
     buffer-file-name))
 
+;; This function is now obsolete.  USR, 2011-12-26
 (defun vm-safe-popdrop-string (maildrop)
   "Return a human-readable version of a pop MAILDROP string."
   (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]*\\):[^:]*:[^:]*:\\([^:]*\\):[^:]*" maildrop)
@@ -4425,6 +4432,7 @@ maildrop string)."
                      '("*" "*"))
              ":"))
 
+;; This function is now obsolete.  USR, 2011-12-26
 (defun vm-safe-imapdrop-string (maildrop)
   "Return a human-readable version of an imap MAILDROP string."
   (or (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*" maildrop)
@@ -4508,18 +4516,21 @@ files."
   (interactive "P")
   (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-folder-read-only)
-  (cond ((eq major-mode 'vm-virtual-mode)
-	 (vm-virtual-get-new-mail))
-	((not (eq major-mode 'vm-mode))
-	 (error "Can't get mail for a non-VM folder buffer"))
-	((null arg)
-	 (if (not (eq major-mode 'vm-mode))
-	     (vm-mode))
-	 (if (consp (car (vm-spool-files)))
-	     (vm-inform 5 "Checking for new mail for %s..."
-		      (or buffer-file-name (buffer-name)))
-	   (vm-inform 5 "Checking for new mail..."))
-	 (let (totals-blurb)
+  (let* ((folder (buffer-name))
+	 (description (if (consp (car (vm-spool-files))) 
+					; folder-specific spool files
+			  (format "new mail for %s" (buffer-name))
+			(format "new mail")))
+	 totals-blurb)
+    (cond ((eq major-mode 'vm-virtual-mode)
+	   (vm-virtual-get-new-mail))
+	  ((not (eq major-mode 'vm-mode))
+	   (error "Can't get mail for a non-VM folder buffer"))
+	  ((null arg)
+	   ;; This is redundant now.  USR, 2011-12-26
+	   ;; (if (not (eq major-mode 'vm-mode))
+	   ;;     (vm-mode))
+	   (vm-inform 5 "Checking for %s..." description)
 	   (if (vm-get-spooled-mail t)
 	       (progn
 		 ;; say this NOW, before the non-previewers read
@@ -4531,48 +4542,45 @@ files."
 		     (vm-present-current-message)
 		   (vm-update-summary-and-mode-line))
 		 (vm-inform 5 totals-blurb))
-	     (if (consp (car (vm-spool-files)))
-		 (vm-inform 5 "No new mail for %s"
-			  (or buffer-file-name (buffer-name)))
-	       (vm-inform 5 "No new mail."))
+	     (vm-inform 5 "No new %s" description)
 	     (and (vm-interactive-p) (vm-sit-for 4) (vm-inform 5 ""))
-	     )))
-	(t
-	 (let ((buffer-read-only nil)
-	       folder mcount totals-blurb)
-	   (setq folder (read-file-name "Gather mail from folder: "
-					vm-folder-directory nil t))
-	   (if (and vm-check-folder-types
-		    (not (vm-compatible-folder-p folder)))
-	       (error "Folder %s is not the same format as this folder."
-		      folder))
-	   (save-excursion
-	     (vm-save-restriction
-	      (widen)
-	      (goto-char (point-max))
-	      (let ((coding-system-for-read (vm-binary-coding-system)))
-		(insert-file-contents folder))))
-	   (setq mcount (length vm-message-list))
-	   (if (vm-assimilate-new-messages)
-	       (progn
-		 ;; say this NOW, before the non-previewers read
-		 ;; a message, alter the new message count and
-		 ;; confuse themselves.
-		 (setq totals-blurb (vm-emit-totals-blurb))
-		 (vm-display nil nil '(vm-get-new-mail) '(vm-get-new-mail))
-		 (if (vm-thoughtfully-select-message)
-		     (vm-present-current-message)
-		   (vm-update-summary-and-mode-line))
-		 (vm-inform 5 totals-blurb)
-		 ;; The gathered messages are actually still on disk
-		 ;; unless the user deletes the folder himself.
-		 ;; However, users may not understand what happened if
-		 ;; the messages go away after a "quit, no save".
-		 (setq vm-messages-not-on-disk
-		       (+ vm-messages-not-on-disk
-			  (- (length vm-message-list)
-			     mcount))))
-	     (vm-inform 5 "No messages gathered."))))))
+	     ))
+	  (t
+	   (let ((buffer-read-only nil)
+		 folder mcount)
+	     (setq folder (read-file-name "Gather mail from folder: "
+					  vm-folder-directory nil t))
+	     (if (and vm-check-folder-types
+		      (not (vm-compatible-folder-p folder)))
+		 (error "Folder %s is not the same format as this folder."
+			folder))
+	     (save-excursion
+	       (vm-save-restriction
+		(widen)
+		(goto-char (point-max))
+		(let ((coding-system-for-read (vm-binary-coding-system)))
+		  (insert-file-contents folder))))
+	     (setq mcount (length vm-message-list))
+	     (if (vm-assimilate-new-messages)
+		 (progn
+		   ;; say this NOW, before the non-previewers read
+		   ;; a message, alter the new message count and
+		   ;; confuse themselves.
+		   (setq totals-blurb (vm-emit-totals-blurb))
+		   (vm-display nil nil '(vm-get-new-mail) '(vm-get-new-mail))
+		   (if (vm-thoughtfully-select-message)
+		       (vm-present-current-message)
+		     (vm-update-summary-and-mode-line))
+		   (vm-inform 5 totals-blurb)
+		   ;; The gathered messages are actually still on disk
+		   ;; unless the user deletes the folder himself.
+		   ;; However, users may not understand what happened if
+		   ;; the messages go away after a "quit, no save".
+		   (setq vm-messages-not-on-disk
+			 (+ vm-messages-not-on-disk
+			    (- (length vm-message-list)
+			       mcount))))
+	       (vm-inform 5 "No messages gathered.")))))))
 
 ;; returns list of new messages if there were any new messages, nil otherwise
 (defun* vm-assimilate-new-messages (&key

@@ -117,7 +117,8 @@ a POP server, find its cache file on the file system"
 	(m-per-session vm-pop-messages-per-session)
 	(b-per-session vm-pop-bytes-per-session)
 	(handler (vm-find-file-name-handler source 'vm-pop-move-mail))
-	(popdrop (vm-safe-popdrop-string source))
+	(popdrop (or (vm-pop-find-name-for-spec source)
+		     (vm-safe-popdrop-string source)))
 	(statblob nil)
 	(can-uidl t)
 	(msgid (list nil (vm-popdrop-sans-password source) 'uidl))
@@ -355,7 +356,8 @@ relevant POP servers to remove the messages."
 			     (vm-pop-end-session process)
 			     (setq process nil)))
 			(setq source (nth 1 data))
-			(setq popdrop (vm-safe-popdrop-string source))
+			(setq popdrop (or (vm-pop-find-name-for-spec source)
+					  (vm-safe-popdrop-string source)))
 			(condition-case nil
 			    (progn
 			      (vm-inform 6 
@@ -431,7 +433,8 @@ relevant POP servers to remove the messages."
   (let ((process-to-shutdown nil)
 	process use-ssl use-ssh success
 	(folder-type vm-folder-type)
-	(popdrop (vm-safe-popdrop-string source))
+	(popdrop (or (vm-pop-find-name-for-spec source)
+		     (vm-safe-popdrop-string source)))
 	(coding-system-for-read (vm-binary-coding-system))
 	(coding-system-for-write (vm-binary-coding-system))
 	(session-name "POP")
@@ -1081,7 +1084,8 @@ popdrop
 	   (n 1)
 	   (statblob nil)
 	   (popdrop (vm-folder-pop-maildrop-spec))
-	   (safe-popdrop (vm-safe-popdrop-string popdrop))
+	   (safe-popdrop (or (vm-pop-find-name-for-spec popdrop)
+			     (vm-safe-popdrop-string popdrop)))
 	   r-list mp got-some message-size
 	   (folder-buffer (current-buffer)))
       (if (and do-retrieves retrieve-list)
