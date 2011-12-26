@@ -113,7 +113,6 @@ only marked messages are checked against `vm-auto-folder-alist'.
 The saved messages are flagged as `filed'."
   (interactive "P")
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
-  (vm-inform 5 "Archiving...")
   (let ((auto-folder)
 	(archived 0))
     (unwind-protect
@@ -125,12 +124,17 @@ The saved messages are flagged as `filed'."
 	(let ((vm-message-pointer
 	       (if (eq last-command 'vm-next-command-uses-marks)
 		   (vm-select-operable-messages
-		    0 (vm-interactive-p) "Archive")
-		 vm-message-list))
+		    0 (vm-interactive-p) "Archive")))
 	      (done nil)
 	      stop-point
 	      (vm-last-save-folder vm-last-save-folder)
 	      (vm-move-after-deleting nil))
+	  ;; Double check if the user really wants to archive
+	  (unless (or arg vm-message-pointer
+		      (y-or-n-p "Auto archive the entire folder? "))
+	    (error "Aborted"))
+	  (setq vm-message-pointer (or vm-message-pointer vm-message-list))
+	  (vm-inform 5 "Archiving...")
 	  ;; mark the place where we should stop.  otherwise if any
 	  ;; messages in this folder are archived to this folder
 	  ;; we would file messages into this folder forever.

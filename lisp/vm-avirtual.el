@@ -1120,8 +1120,6 @@ Like `vm-save-message' but the default folder is guessed by
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
 
-  (vm-inform 5 "Archiving...")
-  
   (let ((auto-folder)
         (folder-list (list (buffer-name)))
         (archived 0))
@@ -1133,12 +1131,18 @@ Like `vm-save-message' but the default folder is guessed by
         ;; shouldn't affect its value.
         (let ((vm-message-pointer
                (if (eq last-command 'vm-next-command-uses-marks)
-                   (vm-select-operable-messages 0 (vm-interactive-p) "Archive")
-                 vm-message-list))
+                   (vm-select-operable-messages 
+		    0 (vm-interactive-p) "Archive")))
               (done nil)
               stop-point
               (vm-last-save-folder vm-last-save-folder)
               (vm-move-after-deleting nil))
+	  ;; Double check if the user really wants to archive
+	  (unless (or prompt vm-message-pointer
+		      (y-or-n-p "Auto archive the entire folder? "))
+	    (error "Aborted"))
+	  (setq vm-message-pointer (or vm-message-pointer vm-message-list))
+	  (vm-inform 5 "Archiving...")
           ;; mark the place where we should stop.  otherwise if any
           ;; messages in this folder are archived to this folder
           ;; we would file messages into this folder forever.
@@ -1177,8 +1181,8 @@ Like `vm-save-message' but the default folder is guessed by
 ;;----------------------------------------------------------------------------
 ;;;###autoload
 (defun vm-virtual-make-folder-persistent ()
-  "Save all mails of current virtual folder to the real folder with the same
-name."  
+  "Save all messages of current virtual folder in the real folder
+with the same name."
   (interactive)
   (save-excursion
     (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
@@ -1187,7 +1191,7 @@ name."
           (vm-goto-message 0)
           (vm-save-message file (length vm-message-list))
           (vm-inform 5 "Saved virtual folder in file \"%s\"" file))
-      (error "This is no virtual folder"))))
+      (error "This is not a virtual folder"))))
 
 ;;----------------------------------------------------------------------------
 
