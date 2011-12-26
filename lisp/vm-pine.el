@@ -357,7 +357,7 @@ creation)."
           (let ((vm-mail-hook nil)
                 (vm-mail-mode-hook nil)
                 (this-command 'vm-mail))
-            (vm-mail-internal nil to))
+            (vm-mail-internal :to to))
         (set-buffer (generate-new-buffer to))
         (setq default-directory (expand-file-name
                                  (or vm-folder-directory "~/")))

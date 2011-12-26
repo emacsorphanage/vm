@@ -79,6 +79,9 @@
 (declare-function vm-pop-find-name-for-spec "vm-pop" (spec))
 (declare-function vm-mime-plain-message-p "vm-mime" (message))
 (declare-function vm-yank-message "vm-reply" (message))
+(declare-function vm-mail "vm" (&optional to subject))
+(declare-function vm-get-header-contents "vm-summary"
+		  (message header-name-regexp &optional clump-sep))
 (declare-function vm-mail-mode-get-header-contents "vm-reply"
 		  (header-name-regexp))
 (declare-function vm-create-virtual-folder "vm-virtual"
@@ -615,6 +618,8 @@ do not allow menubar buttons.")
        vm-message-list]
       ["Virtual Folder, Matching Author" vm-menu-create-author-virtual-folder
        vm-message-list]
+      ["Send a message" vm-menu-mail-to
+       vm-message-list]
       )))
 
 (defconst vm-menu-attachment-menu
@@ -889,6 +894,13 @@ set to the command name so that window configuration will be done."
   (setq this-command 'vm-create-virtual-folder)
   (vm-create-virtual-folder 'author (regexp-quote
 				     (vm-su-from (car vm-message-pointer)))))
+
+(defun vm-menu-mail-to ()
+  (interactive)
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
+  (setq this-command 'vm-mail)
+  (vm-mail (vm-get-header-contents (car vm-message-pointer) "From:")))
+
 
 (defun vm-menu-xemacs-global-menubar ()
   (save-excursion

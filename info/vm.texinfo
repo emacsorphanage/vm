@@ -2617,7 +2617,7 @@ mail sending facility provided with Emacs, plus some extensions added
 by VM.  @xref{Sending Mail,,,emacs, the GNU Emacs Manual}.  Emacs
 comes with two versions of mail sending packages, called ``mail mode''
 and ``message mode''.  VM currently uses the ``mail mode'' package,
-which is not to dissimilar to the ``message mode'' package.
+which is not too dissimilar to the ``message mode'' package.
 
 Even though VM's mail composition buffers will be in ``mail mode'',
 they have some extra command keys.
@@ -2763,10 +2763,21 @@ header lines that you can fill in.  The @code{From} header is usually
 standard and contains your email address.  You can have VM fill it in
 for you
 automatically by setting the variable @code{vm-mail-header-from}.  (It is
-@code{nil} by default.)  The variable
+@code{nil} by default.)  
+
+@vindex vm-mail-use-sender-address
+The variable @code{vm-mail-use-sender-address}, if set to @code{t}, asks VM
+to fill in the @code{To} header from the sender's name and address of the
+current message.  This has effect only when @code{vm-mail} is invoked from a
+VM folder.  When it is invoked from other buffers, the @code{To} headers is
+unfilled.  (Some people tend to use @code{vm-reply} to get this effect, but
+that is a bad practice because it also tags the new message as a reply to an
+older message.)
+
+The variable
 @code{vm-mail-mode-hidden-headers} can be used to hide some of the
 header lines from the mail composition buffer.  By default, the
-headers ``References'', ``In-Reply-To'' and ``X-Mailer'' are hidden. 
+headers ``References'' and ``X-Mailer'' are hidden. 
 
 @vindex vm-mail-header-insert-date
 @vindex vm-mail-header-insert-message-id
@@ -4750,6 +4761,9 @@ regular expression.
 matches message if @var{ARG} matches any part of the
 headers or the text portion of the message;
 @var{ARG} should be a regular expression.
+@item header-field
+matches messages if the header field named @var{ARG1} has text matching
+@var{ARG2}. 
 @end table
 
 @unnumberedsubsubsec Selectors based on message headers

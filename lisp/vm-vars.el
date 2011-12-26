@@ -2802,6 +2802,8 @@ The recognized SELECTORs are:
    header          - matches message if ARG matches any part of the header
                      portion of the message; ARG should be a
                      regular expression.
+   header-field    - matches message if the header field named ARG1
+                     has the regular expression pattern ARG2.
    header-or-text  - matches message if ARG matches any part of the
 		     headers or the text portion of the message;
 		     ARG should be a regular expression.
@@ -2956,14 +2958,11 @@ format of the Resent-From header, when resending a message with
   :group 'vm-compose
   :type '(choice (const nil) string))
 
-(defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
-  "*A list of headers to hide in `vm-mail-mode'."
-  :group 'vm-presentation
-  :type '(choice (const :tag "Disabled" nil)
-                 (set :tag "Header list"
-                      (string "References")
-                      (string "In-Reply-To")
-                      (string "X-Mailer"))))
+(defcustom vm-mail-use-sender-address nil
+  "*If this set to `t', \\[vm-mail] will use the sender of the current
+message as the recipient for the new message composition."
+  :group 'vm-compose
+  :type 'boolean)
 
 (defcustom vm-mail-header-insert-date t
   "*Non-nil value causes VM to insert a Date header into a message
@@ -2993,6 +2992,11 @@ useful later for threading messages.
 A nil value means don't insert a Message-ID header."
   :group 'vm-compose
   :type 'boolean)
+
+(defcustom vm-mail-mode-hidden-headers '("References" "X-Mailer")
+  "*A list of headers to hide in `vm-mail-mode'."
+  :group 'vm-compose
+  :type '(repeat :tag "Header" string))
 
 (defcustom vm-mail-header-order '("From:" "Organization:" "Subject:"
 				  "Date:" "Priority:" "X-Priority:" 
@@ -6618,6 +6622,7 @@ header line in email messages,
     (thread . vm-vs-thread)
     (thread-all . vm-vs-thread-all)
     (header . vm-vs-header)
+    (header-field . vm-vs-header-field)
     (label . vm-vs-label)
     (uid . vm-vs-uid)
     (uidl . vm-vs-uidl)

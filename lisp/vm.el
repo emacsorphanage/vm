@@ -1081,11 +1081,13 @@ recipient list."
   (interactive)
   (vm-session-initialization)
   (vm-check-for-killed-folder)
-  (vm-select-folder-buffer-if-possible)
-  (vm-check-for-killed-summary)
-  (vm-mail-internal nil to subject)
-  (run-hooks 'vm-mail-hook)
-  (run-hooks 'vm-mail-mode-hook))
+  (let ((guess (when (null to)
+		 (vm-select-recipient-from-sender))))
+    (vm-select-folder-buffer-if-possible)
+    (vm-check-for-killed-summary)
+    (vm-mail-internal :to to :guessed-to guess :subject subject)
+    (run-hooks 'vm-mail-hook)
+    (run-hooks 'vm-mail-mode-hook)))
 
 ;;;###autoload
 (defun vm-mail-other-frame (&optional to)
@@ -1094,6 +1096,8 @@ Optional argument TO is a string that should contain a comma separated
 recipient list."
   (interactive)
   (vm-session-initialization)
+  (when (null to)
+    (setq to (vm-select-recipient-from-sender)))
   (if (vm-multiple-frames-possible-p)
       (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
@@ -1109,6 +1113,8 @@ Optional argument TO is a string that should contain a comma separated
 recipient list."
   (interactive)
   (vm-session-initialization)
+  (when (null to)
+    (setq to (vm-select-recipient-from-sender)))
   (if (one-window-p t)
       (split-window))
   (other-window 1)
@@ -1118,7 +1124,6 @@ recipient list."
 
 (fset 'vm-folders-summary-mode 'vm-mode)
 (put 'vm-folders-summary-mode 'mode-class 'special)
-
 
 ;;;###autoload
 (defun vm-folders-summarize (&optional display raise)
@@ -1204,11 +1209,11 @@ summary buffer to select a folder."
   (if continue
       (vm-continue-composing-message)
     (let ((buffer (vm-mail-internal
-		   (if to
-		       (format "message to %s"
-			       (vm-truncate-roman-string to 20))
-		     nil)
-		   to subject)))
+		   :buffer-name (if to
+				    (format "message to %s"
+					    (vm-truncate-roman-string to 20))
+				  nil)
+		   :to to :subject subject)))
       (goto-char (point-min))
       (re-search-forward (concat "^" mail-header-separator "$"))
       (beginning-of-line)

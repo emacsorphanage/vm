@@ -243,9 +243,10 @@ messages of the folder are involved in this reply."
           newsgroups (vm-delete-duplicates newsgroups)
           newsgroups (if newsgroups (mapconcat 'identity newsgroups ",")))
     (vm-mail-internal
-     (format "reply to %s%s" (vm-su-full-name (car mlist))
-             (if (cdr mlist) ", ..." ""))
-     to subject in-reply-to cc references newsgroups)
+     :buffer-name (format "reply to %s%s" (vm-su-full-name (car mlist))
+			  (if (cdr mlist) ", ..." ""))
+     :to to :subject subject :in-reply-to in-reply-to :cc cc 
+     :references references :newsgroups newsgroups)
     (make-local-variable 'vm-reply-list)
     (setq vm-system-state 'replying
           vm-reply-list mlist
@@ -1139,14 +1140,13 @@ See `vm-forward-message-plain' for forwarding messages in plain text."
       (save-restriction
 	(widen)
 	(vm-mail-internal
-	 (format "forward of %s's note re: %s"
-		 (vm-su-full-name (car vm-message-pointer))
-		 (vm-su-subject (car vm-message-pointer)))
-	 nil
-	 (when vm-forwarding-subject-format
-	   (let ((vm-summary-uninteresting-senders nil))
-	     (vm-summary-sprintf vm-forwarding-subject-format
-				 (car mlist)))))
+	 :buffer-name (format "forward of %s's note re: %s"
+			      (vm-su-full-name (car vm-message-pointer))
+			      (vm-su-subject (car vm-message-pointer)))
+	 :subject (when vm-forwarding-subject-format
+		    (let ((vm-summary-uninteresting-senders nil))
+		      (vm-summary-sprintf vm-forwarding-subject-format
+					  (car mlist)))))
 	(make-local-variable 'vm-forward-list)
 	(setq vm-system-state 'forwarding
 	      vm-forward-list mlist
@@ -1250,8 +1250,8 @@ you can change the recipient address before resending the message."
       ;; from inserting another From header.
       (let ((vm-mail-header-from nil))
 	(vm-mail-internal
-	 (format "retry of bounce from %s"
-		 (vm-su-from (car vm-message-pointer)))))
+	 :buffer-name (format "retry of bounce from %s"
+			      (vm-su-from (car vm-message-pointer)))))
       (goto-char (point-min))
       (if (vectorp layout)
 	  (progn
@@ -1308,9 +1308,9 @@ You may also create a Resent-Cc header."
       ;; from inserting another From header.
       (let ((vm-mail-header-from nil))
 	(vm-mail-internal
-	 (format "resend of %s's note re: %s"
-		 (vm-su-full-name (car vm-message-pointer))
-		 (vm-su-subject (car vm-message-pointer)))))
+	 :buffer-name (format "resend of %s's note re: %s"
+			      (vm-su-full-name (car vm-message-pointer))
+			      (vm-su-subject (car vm-message-pointer)))))
       (goto-char (point-min))
       (insert-buffer-substring b start lim)
       (delete-region (point) (point-max))
@@ -1388,15 +1388,14 @@ included in the digest."
     (save-restriction
       (widen)
       (vm-mail-internal
-       (format "digest from %s" (buffer-name))
-       nil
-       (and vm-forwarding-subject-format
-            (let ((vm-summary-uninteresting-senders nil))
-              (concat (vm-summary-sprintf 
-		       vm-forwarding-subject-format (car mlist))
-                      (if (cdr mlist)
-                          (format " [and %d more messages]"
-                                  (length (cdr mlist))))))))
+       :buffer-name (format "digest from %s" (buffer-name))
+       :subject (and vm-forwarding-subject-format
+		     (let ((vm-summary-uninteresting-senders nil))
+		       (concat (vm-summary-sprintf 
+				vm-forwarding-subject-format (car mlist))
+			       (if (cdr mlist)
+				   (format " [and %d more messages]"
+					   (length (cdr mlist))))))))
       ;; current buffer is mail-buffer
       (setq mail-buffer (current-buffer))
       (make-local-variable 'vm-forward-list)
@@ -1577,7 +1576,8 @@ command can be invoked from external agents via an emacsclient."
 	  ;; we'll insert the header later
 	  (setq header-list (cons header (cons value header-list)))))
       (setq list (cdr list)))
-    (vm-mail-internal nil to subject in-reply-to cc references newsgroups)
+    (vm-mail-internal :to to :subject subject :in-reply-to in-reply-to
+		      :cc cc :references references :newsgroups newsgroups)
     (save-excursion
       (goto-char (point-min))
       (while header-list
@@ -1643,15 +1643,25 @@ buffers.")
   (add-hook 'vm-mail-send-hook 'vm-forget-composition-buffer nil t)
   (vm-update-ml-composition-buffer-count))
 
+(defun vm-select-recipient-from-sender ()
+  "Select a recipient's address from the current message's sender, if
+there is a current message."
+  (when (and vm-mail-use-sender-address
+	     (memq major-mode '(vm-mode vm-virtual-mode 
+					vm-summary-mode vm-presentation-mode)))
+    (vm-select-folder-buffer)
+    (vm-get-header-contents (car vm-message-pointer) "From:")))
+
+
 ;;;###autoload
-(defun vm-mail-internal
-    (&optional buffer-name to subject in-reply-to cc references newsgroups)
+(defun* vm-mail-internal (&key buffer-name to guessed-to subject 
+			       in-reply-to cc references newsgroups)
     "Create a message buffer and set it up according to args.
 Fills in the headers as given by the arguments.
 Binds the `vm-mail-mode-map' and hooks"
   (let ((folder-buffer nil))
-    (if (memq major-mode '(vm-mode vm-virtual-mode))
-	(setq folder-buffer (current-buffer)))
+    (when (memq major-mode '(vm-mode vm-virtual-mode))
+      (setq folder-buffer (current-buffer)))
     (setq buffer-name (if buffer-name
                           (vm-decode-mime-encoded-words-in-string buffer-name)
                         "mail to ?"))
@@ -1699,10 +1709,15 @@ Binds the `vm-mail-mode-map' and hooks"
 	  (build-mail-aliases))))
     (when (stringp vm-mail-header-from)
       (insert "From: " vm-mail-header-from "\n"))
-    (setq to (if to (vm-decode-mime-encoded-words-in-string to))
-	  subject (if subject (vm-decode-mime-encoded-words-in-string subject))
-	  cc (if cc (vm-decode-mime-encoded-words-in-string cc)))
-    (insert "To: " (or to "") "\n")
+    (setq to (if to 
+		 (vm-decode-mime-encoded-words-in-string to))
+	  guessed-to (if guessed-to 
+			 (vm-decode-mime-encoded-words-in-string guessed-to))
+	  subject (if subject 
+		      (vm-decode-mime-encoded-words-in-string subject))
+	  cc (if cc 
+		 (vm-decode-mime-encoded-words-in-string cc)))
+    (insert "To: " (or to guessed-to "") "\n")
     (and cc (insert "Cc: " cc "\n"))
     (insert "Subject: " (or subject "") "\n")
     (and newsgroups (insert "Newsgroups: " newsgroups "\n"))
@@ -1801,8 +1816,10 @@ Binds the `vm-mail-mode-map' and hooks"
 		  vm-resend-bounced-message
 		  vm-resend-bounced-message-other-frame)
 		(list this-command 'composing-message))
-    (unless to
-      (mail-position-on-field "To"))
+    (cond ((null to)
+	   (mail-position-on-field "To" t))
+	  ((null subject)
+	   (mail-position-on-field "Subject" t)))
     (cond ((and vm-xemacs-p
 		(fboundp 'start-itimer)
 		(null (get-itimer "vm-rename-mail"))

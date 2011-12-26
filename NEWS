@@ -24,7 +24,7 @@ Status
   unreliable mail link to the mailing list.  You can however browse the
   archives of the newsgroup at Google Groups.
   
-VM 8.2.0
+VM 8.2.0b
 
   CHANGES
 
@@ -39,6 +39,10 @@ VM 8.2.0
      alternatives for citation in replies.
 
   IMPROVEMENTS
+
+   * New variable `vm-mail-use-sender-address' allows `vm-mail' to pick up
+     the sender of the current message as the recipient of a new message
+     composition. 
 
    * See the new info manual section on "IMAP folders" for newly documented
      functions.  In particular, `vm-list-imap-folders' now lists the message

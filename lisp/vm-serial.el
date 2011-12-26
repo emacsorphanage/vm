@@ -790,7 +790,7 @@ questions will bother you!"
               (flet ((vm-display (buffer display commands configs
                                          &optional do-not-raise)
                                  nil))
-                (vm-mail-internal vm-serial-send-mail-buffer))
+                (vm-mail-internal :buffer-name vm-serial-send-mail-buffer))
               (get-buffer vm-serial-send-mail-buffer))))
          (source-buffer (current-buffer))
          work to to-string)

@@ -820,6 +820,10 @@ The headers that will be checked are those listed in
       (goto-char (vm-headers-of (vm-real-message-of m)))
       (re-search-forward arg (vm-text-of (vm-real-message-of m)) t))))
 
+(defun vm-vs-header-field (m field arg)
+  (let ((header (vm-get-header-contents m field)))
+    (string-match arg header)))
+
 (defun vm-vs-uid (m arg)
   (equal (vm-imap-uid-of m) arg))
 

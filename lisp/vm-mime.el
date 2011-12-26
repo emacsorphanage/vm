@@ -3364,8 +3364,8 @@ fetched content."
 			   server)))
 			(error "Aborted"))
 		    (vm-mail-internal
-		     (format "mail to MIME mail server %s" server)
-		     server subject)
+		     :buffer-name (format "mail to MIME mail server %s" server)
+		     :to server :subject subject)
 		    (mail-text)
 		    (vm-mime-insert-mime-body child-layout)
 		    (let ((vm-confirm-mail-send nil))
