@@ -285,9 +285,10 @@ deleted messages.  Use `###' to expunge deleted messages."
       ;; builds message list, reads attributes if they weren't
       ;; read from an index file.
       ;; but that is not what the code is doing! - USR, 2011-04-24
-      (vm-assimilate-new-messages :read-attributes t
-				  :gobble-order (not did-read-index-file) 
-				  :run-hooks nil)
+      (unless revisit
+	(vm-assimilate-new-messages :read-attributes t
+				    :gobble-order (not did-read-index-file) 
+				    :run-hooks nil))
 
       (if (and first-time (not did-read-index-file))
 	  (progn
