@@ -246,7 +246,7 @@ TEST
 ])
 
 ##############################################################################
-AC_INIT([VM], [8.2.0a1], [vm@lists.launchpad.net])
+AC_INIT([VM], [8.2.0b], [vm@lists.launchpad.net])
 # Name of the application
 # Version (release) number
 # Contact address

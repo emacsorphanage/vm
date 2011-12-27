@@ -24,19 +24,27 @@ Status
   unreliable mail link to the mailing list.  You can however browse the
   archives of the newsgroup at Google Groups.
   
-VM 8.2.0b
+VM 8.2.0b  (2011-12-28)
 
   CHANGES
 
    * New customization variable `vm-spam-score-headers' allows the
      extraction of spam scores.  (Replaces the former variable
-     `vm-vs-spam-score-headers' used by vm-virtual.el.) 
+     `vm-vs-spam-score-headers' used by vm-avirtual.el.) 
 
    * The variable `vm-mime-alternative-select-method' renamed to
      `vm-mime-alternative-show-method' to make it clear that it only applies
      to the viewing of messages.  The new variable
      `vm-mime-alternative-yank-method' controls the selection of
      alternatives for citation in replies.
+
+   * `vm-submit-bug-report' now uses Emacs message-mode for composing the
+     bug report (whereas it previously used mail-mode with VM-specific
+     tweaks).  Please do C-h m to find the functions you might need.
+
+   * Terminology: Interactively created virtual folders are now called
+     "Search Folders".  They have a stronger connection to their parent
+     folders and inherit some attributes, e.g., the read-only property.
 
   IMPROVEMENTS
 
