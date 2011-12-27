@@ -1285,7 +1285,8 @@ MIME messages."
   "*Non-nil value means use information from the Content-Disposition
 header to display MIME messages.  Possible values are `t', to mean that the
 Content-Disposition header should always be honored or 'internal-only,
-to mean that it should be honored for only internally-displayable types.
+to mean that an \"inline\" disposition should be honored only for
+internally-displayable types. 
 
 The Content-Disposition header specifies whether a MIME object
 should be displayed inline or treated as an attachment.  For VM,
@@ -1296,7 +1297,7 @@ of options."
   :group 'vm-mime
   :type '(choice (const :tag "Ignore it" nil)
 		 (const :tag "Honor it always" t)
-		 (const :tag "Honor it for internal types" internal-only)))
+		 (const :tag "Honor inline for internal types" internal-only)))
 (defvaralias 'vm-honor-mime-content-disposition
   'vm-mime-honor-content-disposition)
 

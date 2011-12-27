@@ -2344,9 +2344,11 @@ says whether the Content-Disposition header of the MIME object
 should be honored (default t).  The global setting of
 `vm-mime-honor-content-disposition' also has this effect."
   ;; Karnaugh map analysis shows that
-  ;; - all objects that are not auto-displayed should be buttons
-  ;; - attachment disposition objects are displayed as buttons only if
-  ;;   honor-content-disposition is non-nil
+  ;; - attachment disposition objects should be buttons
+  ;; - all auto-displayed objects should not be buttons
+  ;; - inline objects should be displayed if honor = t or
+  ;;   honor = internal-only and the object is internal-displayable
+  ;; - all other cases should be buttons
   (let ((type (car (vm-mm-layout-type layout)))
 	(disposition (car (vm-mm-layout-disposition layout))))
     (setq disposition (and disposition (downcase disposition)))
@@ -2354,12 +2356,18 @@ should be honored (default t).  The global setting of
 	  (and honor-content-disposition vm-mime-honor-content-disposition))
     (cond ((vm-mime-types-match "multipart" type)
 	   nil)
-	  ((and disposition
-		(or (eq honor-content-disposition t)
-		    (and (eq honor-content-disposition 'internal-only)
-			 (vm-mime-should-display-internal layout))))
-	   (equal disposition "attachment"))
-	  (t (not (vm-mime-should-auto-display layout))))))
+	  ((equal disposition "attachment")
+	   t)
+	  ((eq disposition "inline")
+	   (cond ((eq honor-content-disposition 'internal-only)
+		  (not (or (vm-mime-should-auto-display layout)
+			   (vm-mime-should-display-internal layout))))
+		 ((eq honor-content-disposition t)
+		  nil)
+		 (t
+		  (not (vm-mime-should-auto-display layout)))))
+	  (t
+	   (not (vm-mime-should-auto-display layout))))))
 
 (defun vm-mime-should-auto-display (layout)
   (let ((type (car (vm-mm-layout-type layout))))
@@ -4436,6 +4444,7 @@ The return value does not seem to be meaningful.     USR, 2011-03-25"
 	  ;; the output is always PNG now, so fix it for displaying, but restore
 	  ;; it for the layout afterwards
 	  (vm-set-mm-layout-type layout '("image/png"))
+	  (vm-set-mm-layout-disposition layout '("inline"))
 	  (vm-mark-image-tempfile-as-message-garbage-once layout tempfile)
 	  (vm-mime-display-internal-generic extent))
       (vm-set-mm-layout-type layout saved-type))))
@@ -4552,6 +4561,8 @@ image when possible."
 	;; display a thumbnail over the fake extent
 	(let ((vm-mime-internal-content-types '("image"))
 	      (vm-mime-internal-content-type-exceptions nil)
+	      (vm-mime-auto-displayed-content-types '("image"))
+	      (vm-mime-auto-displayed-content-type-exceptions nil)
 	      (vm-mime-use-image-strips nil))
 	  (vm-mime-frob-image-xxxx thumb-extent
 				   "-thumbnail" 
