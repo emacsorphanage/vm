@@ -1142,7 +1142,7 @@ nil if the session could not be created."
 						       imap-buffer
 						       host port))))
 		(error
-		 (vm-warn 0 2 "%s" (error-message-string err))
+		 (vm-warn 0 1 "%s" (error-message-string err))
 		 (setq shutdown t)
 		 (throw 'end-of-session nil))))
 	    (setq shutdown t)

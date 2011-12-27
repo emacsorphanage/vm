@@ -312,8 +312,13 @@
   '("Help"
     ["Switch to Emacs Menubar" vm-menu-toggle-menubar t]
     "---"
+    ["Customize VM" vm-customize t]
+    ["Describe VM Mode" describe-mode t]
+    ["VM News" vm-view-news t]
+    ["VM Manual" vm-menu-view-manual t]
+    ["Submit Bug Report" vm-submit-bug-report t]
+    "---"
     ["What Now?" vm-help t]
-    ["Describe Mode" describe-mode t]
     ["Revert Folder (back to disk version)" revert-buffer (vm-menu-can-revert-p)]
     ["Recover Folder (from auto-save file)" recover-file (vm-menu-can-recover-p)]
     "---"
@@ -1439,6 +1444,34 @@ separate dedicated menu bar, depending on the value of
 				      vm-menu-folder-menu)
 		 (define-key vm-mode-menu-map [rootmenu vm vm-menubar-folder]
 		   (cons "Folder" vm-menu-fsfemacs-folder-menu))))))))
+
+(defun vm-customize ()
+  "Customize VM options."
+  (interactive)
+  (customize-group 'vm))
+
+(defun vm-view-news ()
+  "View NEWS for the current VM version."
+  (interactive)
+  (let* ((vm-dir (file-name-directory (locate-library "vm")))
+	 (doc-dirs (list (and vm-configure-docdir
+			       (expand-file-name vm-configure-docdir))
+			 (and vm-configure-datadir
+			       (expand-file-name vm-configure-datadir))
+			 (concat vm-dir "../")))
+	 doc-dir)
+    (while doc-dirs
+      (setq doc-dir (car doc-dirs))
+      (if (and doc-dir
+               (file-exists-p (expand-file-name "NEWS" doc-dir)))
+          (setq doc-dirs nil)
+	(setq doc-dirs (cdr doc-dirs))))
+    (view-file-other-frame (expand-file-name "NEWS" doc-dir))))
+
+(defun vm-view-manual ()
+  "View the VM manual."
+  (interactive)
+  (info "VM"))
 
 
 ;;; Muenkel Folders menu code

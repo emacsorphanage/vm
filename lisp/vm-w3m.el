@@ -60,7 +60,7 @@
 
 (defgroup vm-w3m nil
   "w3m settings for VM."
-  :group  'vm)
+  :group  'vm-presentation)
 
 (defcustom vm-w3m-display-inline-images t
   "Non-nil means VM will allow retrieving images in the HTML contents
