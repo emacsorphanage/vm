@@ -77,11 +77,17 @@
 
 
 (declare-function vm-pop-find-name-for-spec "vm-pop" (spec))
+(declare-function vm-imap-folder-for-spec "vm-imap" (spec))
 (declare-function vm-mime-plain-message-p "vm-mime" (message))
 (declare-function vm-yank-message "vm-reply" (message))
+(declare-function vm-mail "vm" (&optional to subject))
+(declare-function vm-get-header-contents "vm-summary"
+		  (message header-name-regexp &optional clump-sep))
 (declare-function vm-mail-mode-get-header-contents "vm-reply"
 		  (header-name-regexp))
 (declare-function vm-create-virtual-folder "vm-virtual"
+		  (selector &optional arg read-only name bookmark))
+(declare-function vm-create-virtual-folder-of-threads "vm-virtual"
 		  (selector &optional arg read-only name bookmark))
 (declare-function vm-so-sortable-subject "vm-sort" (message))
 (declare-function vm-su-from "vm-summary" (message))
@@ -195,12 +201,29 @@
 (defconst vm-menu-virtual-menu
   '("Virtual"
     ["Visit Virtual Folder" vm-visit-virtual-folder t]
-    ["Visit Virtual Folder Same Author" vm-visit-virtual-folder-same-author t]
-    ["Visit Virtual Folder Same Subject" vm-visit-virtual-folder-same-subject t]
-    ["Create Virtual Folder" vm-create-virtual-folder t]
-    ["Apply Virtual Folder" vm-apply-virtual-folder t]
+    ["Apply Virtual Folder Selectors" vm-apply-virtual-folder t]
+    ["Omit Message" vm-virtual-omit-message t]
+    ["Update all" vm-virtual-update-folders]
     "---"
-    ;; "---"
+    "Search Folders"
+    ["Author" vm-create-author-virtual-folder t]
+    ["Recipients" vm-create-author-or-recipient-virtual-folder t]
+    ["Subject" vm-create-subject-virtual-folder t]
+    ["Text (Body)" vm-create-text-virtual-folder t]
+    ["Days" vm-create-date-virtual-folder t]
+    ["Label" vm-create-label-virtual-folder t]
+    ["Flagged" vm-create-flagged-virtual-folder t]
+    ["Unseen" vm-create-unseen-virtual-folder t]
+    ["Same Author as current" vm-create-virtual-folder-same-author t]
+    ["Same Subject as current" vm-create-virtual-folder-same-subject t]
+    ["Create General" vm-create-virtual-folder t]
+    ["Create General (Threads)" vm-create-virtual-folder-of-threads t]
+    "---"
+    "Auto operations"
+    ["Delete Message(s)" vm-virtual-auto-delete-message t]
+    ["Save Message(s)" vm-virtual-save-message t]
+    ["Archive Messages" vm-virtual-auto-archive-messages t]
+    
     ;; special string that marks the tail of this menu for
     ;; vm-menu-install-known-virtual-folders-menu.
     "-------"
@@ -289,8 +312,13 @@
   '("Help"
     ["Switch to Emacs Menubar" vm-menu-toggle-menubar t]
     "---"
+    ["Customize VM" vm-customize t]
+    ["Describe VM Mode" describe-mode t]
+    ["VM News" vm-view-news t]
+    ["VM Manual" vm-menu-view-manual t]
+    ["Submit Bug Report" vm-submit-bug-report t]
+    "---"
     ["What Now?" vm-help t]
-    ["Describe Mode" describe-mode t]
     ["Revert Folder (back to disk version)" revert-buffer (vm-menu-can-revert-p)]
     ["Recover Folder (from auto-save file)" recover-file (vm-menu-can-recover-p)]
     "---"
@@ -596,6 +624,8 @@ do not allow menubar buttons.")
        vm-message-list]
       ["Virtual Folder, Matching Author" vm-menu-create-author-virtual-folder
        vm-message-list]
+      ["Send a message" vm-menu-mail-to
+       vm-message-list]
       )))
 
 (defconst vm-menu-attachment-menu
@@ -858,7 +888,7 @@ set to the command name so that window configuration will be done."
 
 (defun vm-menu-create-subject-virtual-folder ()
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (setq this-command 'vm-create-virtual-folder)
   (vm-create-virtual-folder 'sortable-subject (regexp-quote
 	 			       (vm-so-sortable-subject
@@ -866,10 +896,17 @@ set to the command name so that window configuration will be done."
 
 (defun vm-menu-create-author-virtual-folder ()
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (setq this-command 'vm-create-virtual-folder)
   (vm-create-virtual-folder 'author (regexp-quote
 				     (vm-su-from (car vm-message-pointer)))))
+
+(defun vm-menu-mail-to ()
+  (interactive)
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
+  (setq this-command 'vm-mail)
+  (vm-mail (vm-get-header-contents (car vm-message-pointer) "From:")))
+
 
 (defun vm-menu-xemacs-global-menubar ()
   (save-excursion
@@ -1208,7 +1245,7 @@ menu bar.                                             USR, 2011-02-27"
   (interactive)
   (if buffer
       (set-buffer buffer)
-    (vm-select-folder-buffer-and-validate 0 (interactive-p)))
+    (vm-select-folder-buffer-and-validate 0 (vm-interactive-p)))
   (cond ((vm-menu-xemacs-menus-p)
 	 (if (null (car (find-menu-item current-menubar '("[Emacs Menubar]"))))
 	     (set-buffer-menubar vm-menu-vm-menubar)
@@ -1357,13 +1394,16 @@ separate dedicated menu bar, depending on the value of
       (setq menu (cons
 		  (vector "    "
 			  (cond
-			   ((and (stringp vm-recognize-pop-maildrops)
-				 (string-match vm-recognize-pop-maildrops
-					       (car folders))
+			   ((and (vm-pop-folder-spec-p (car folders))
 				 (setq foo (vm-pop-find-name-for-spec
 					    (car folders))))
 			    (list 'vm-menu-run-command
 				  ''vm-visit-pop-folder foo))
+			   ((and (vm-imap-folder-spec-p (car folders))
+				 (setq foo (vm-imap-folder-for-spec
+					    (car folders))))
+			    (list 'vm-menu-run-command
+				  'vm'visit-imap-folder foo))
 			   (t
 			    (list 'vm-menu-run-command
 				  ''vm-visit-folder (car folders))))
@@ -1404,6 +1444,34 @@ separate dedicated menu bar, depending on the value of
 				      vm-menu-folder-menu)
 		 (define-key vm-mode-menu-map [rootmenu vm vm-menubar-folder]
 		   (cons "Folder" vm-menu-fsfemacs-folder-menu))))))))
+
+(defun vm-customize ()
+  "Customize VM options."
+  (interactive)
+  (customize-group 'vm))
+
+(defun vm-view-news ()
+  "View NEWS for the current VM version."
+  (interactive)
+  (let* ((vm-dir (file-name-directory (locate-library "vm")))
+	 (doc-dirs (list (and vm-configure-docdir
+			       (expand-file-name vm-configure-docdir))
+			 (and vm-configure-datadir
+			       (expand-file-name vm-configure-datadir))
+			 (concat vm-dir "../")))
+	 doc-dir)
+    (while doc-dirs
+      (setq doc-dir (car doc-dirs))
+      (if (and doc-dir
+               (file-exists-p (expand-file-name "NEWS" doc-dir)))
+          (setq doc-dirs nil)
+	(setq doc-dirs (cdr doc-dirs))))
+    (view-file-other-frame (expand-file-name "NEWS" doc-dir))))
+
+(defun vm-view-manual ()
+  "View the VM manual."
+  (interactive)
+  (info "VM"))
 
 
 ;;; Muenkel Folders menu code

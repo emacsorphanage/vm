@@ -1,3 +1,4 @@
+
 ;;; vm-vars.el --- VM user and internal variable initialization
 ;;
 ;; This file is part of VM
@@ -100,14 +101,18 @@
   :group 'vm)
 
 (defgroup vm-dispose nil
-  "Options affecting the deletion and expunging of messages in VM."
+  "Options affecting the saving, deleting and expunging of messages in VM."
+  :group 'vm)
+
+(defgroup vm-print nil
+  "Options affecting printing of messages in VM."
   :group 'vm)
 
 (defgroup vm-toolbar nil
   "Options affecting the VM toolbar"
   :group 'vm)
 
-(defgroup vm-ext nil
+(defgroup vm-add-ons nil
   "Options for non-core VM extensions"
   :group 'vm)
 
@@ -130,6 +135,16 @@ in an Emacs session."
 meant for specifying the preferred settings for VM variables."
   :group 'vm-misc
   :type 'file)
+
+(defcustom vm-temp-file-directory
+  (or (getenv "TMPDIR")
+      (and (file-directory-p "/tmp") "/tmp")
+      (and (file-directory-p "C:\\TEMP") "C:\\TEMP")
+      (and (file-directory-p "C:\\") "C:\\")
+      "/tmp")
+  "*Name of a directory where VM can put temporary files."
+  :group 'vm-misc
+  :type 'directory)
 
 (defcustom vm-folder-directory nil
   "*Directory where folders of mail are kept."
@@ -454,11 +469,9 @@ the function will not be called."
   :type '(choice (const :tag "Default" nil)
                  function))
 
-(defcustom vm-pop-md5-program "md5"
+(defconst vm-pop-md5-program "md5"
   "*Program that reads a message on its standard input and writes an
-MD5 digest on its output."
-  :group 'vm-pop
-  :type 'string)
+MD5 digest on its output.")
 
 (defcustom vm-pop-max-message-size nil
   "*If VM is about to retrieve via POP a message larger than this
@@ -557,14 +570,10 @@ t."
   :group 'vm-pop
   :type 'boolean)
 
-(defcustom vm-recognize-pop-maildrops "^\\(pop\\|pop-ssl\\|pop-ssh\\):[^:]+:[^:]+:[^:]+:[^:]+:.+"
-  "*Value if non-nil should be a regular expression that matches
-spool names found in `vm-spool-files' that should be considered POP
-maildrops.  A nil value tells VM that all the spool names are to
-be considered files except those matched by `vm-recognize-imap-maildrops'."
-  :group 'vm-pop
-  :type '(choice (const :tag "Don't Recognize" nil)
-		 regexp))
+(defconst vm-recognize-pop-maildrops 
+  "^\\(pop\\|pop-ssl\\|pop-ssh\\):[^:]+:[^:]+:[^:]+:[^:]+:.+"
+  "Regular expression matching the maildrop specification of POP
+  folders.  It can be set to nil to prohibit POP maildrops.")
 
 (defcustom vm-pop-folder-alist nil
   "*Alist of POP maildrop specifications and names that refer to them.
@@ -669,14 +678,11 @@ deleted from the mailbox immediately after retrieval."
   "List of IMAP mailboxes for which warning has been given about the
 lack of settings for auto-expunge.")
 
-(defcustom vm-recognize-imap-maildrops "^\\(imap\\|imap-ssl\\|imap-ssh\\):[^:]+:[^:]+:[^:]+:[^:]+:[^:]+:.+"
-  "*Value if non-nil should be a regular expression that matches
-spool names found in `vm-spool-files' that should be considered IMAP
-maildrops.  A nil value tells VM that all the spool names are to
-be considered files except those matched by `vm-recognize-pop-maildrops'."
-  :group 'vm-imap
-  :type '(choice (const :tag "Don't Recognize" nil)
-		 regexp))
+(defconst vm-recognize-imap-maildrops 
+  "^\\(imap\\|imap-ssl\\|imap-ssh\\):[^:]+:[^:]+:[^:]+:[^:]+:[^:]+:.+"
+  "Regular expression matching maildrop specificaiton of IMAP
+folders.  It can be set to nil to prohibit the recognition of
+IMAP maildrops.")
 
 (defvar vm-imap-server-list nil
   "*List of IMAP maildrop specifications that tell VM the IMAP servers
@@ -1006,6 +1012,12 @@ folders.  This is not a customization variable.  See
 
 (make-variable-buffer-local 'vm-folder-read-thunderbird-status)
 
+(defcustom vm-sort-messages-by-delivery-date nil
+  "*If set to t, VM will use the \"Delivery-Date\" header instead of
+the \"Date\" header for sorting messages."
+  :group 'vm-summary
+  :type 'boolean)
+
 (defcustom vm-visible-headers
   '("Resent-"
     "From:" "Sender:"
@@ -1068,14 +1080,6 @@ Nil means just use VM's builtin header highlighting code.
 FSF Emacs always uses VM's builtin highlighting code."
   :group 'vm-misc
   :type 'boolean)
-
-(defcustom vm-verbosity 8
-  "*Level of chattiness in progress messages displayed in the
-minibuffer.  Indicative levels are:
-  1 - extremely quiet
-  5 - normally level
-  7 - detailed level
- 10 - debugging information")
 
 (defface vm-highlighted-header '((t (:inherit bold)))
  "Default face used to highlight headers."
@@ -1281,7 +1285,8 @@ MIME messages."
   "*Non-nil value means use information from the Content-Disposition
 header to display MIME messages.  Possible values are `t', to mean that the
 Content-Disposition header should always be honored or 'internal-only,
-to mean that it should be honored for only internally-displayable types.
+to mean that an \"inline\" disposition should be honored only for
+internally-displayable types. 
 
 The Content-Disposition header specifies whether a MIME object
 should be displayed inline or treated as an attachment.  For VM,
@@ -1292,7 +1297,7 @@ of options."
   :group 'vm-mime
   :type '(choice (const :tag "Ignore it" nil)
 		 (const :tag "Honor it always" t)
-		 (const :tag "Honor it for internal types" internal-only)))
+		 (const :tag "Honor inline for internal types" internal-only)))
 (defvaralias 'vm-honor-mime-content-disposition
   'vm-mime-honor-content-disposition)
 
@@ -1821,7 +1826,7 @@ them all at once.  See `vm-mime-use-image-strips'."
 	      file (expand-file-name name vmdir))
 	(if (file-exists-p file)
 	    file
-;	  (vm-inform 0 "VM could not find executable %S!" name)
+;	  (vm-warn 0 2 "VM could not find executable %S!" name)
 	  nil))))
 
 (defcustom vm-imagemagick-convert-program (vm-locate-executable-file "convert")
@@ -1990,17 +1995,17 @@ deleting a MIME object with `vm-delete-mime-object'."
   :type 'symbol)
 
 (defcustom vm-mime-button-format-alist
-  '(("text" . "%-50.50(%t, %d, %c%) [%a]")
-    ("multipart/alternative" . "%-50.50(%d%) [%a]")
-    ("multipart/digest" . "%-50.50(%d, %n message%s%) [%a]")
-    ("multipart" . "%-50.50(%d, %n part%s%) [%a]")
-    ("message/partial" . "%-50.50(%d, part %N (of %T)%) [%a]")
-    ("message/external-body" . "%-50.50(%d%) [%a (%x)]")
-    ("message" . "%-50.50(%d%) [%a]")
-    ("audio" . "%-50.50(%d%) [%a]")
-    ("video" . "%-50.50(%d%) [%a]")
-    ("image" . "%-50.50(%d%) [%a]")
-    ("application" . "%-50.50(%f, %d%) [%a]"))
+  '(("text" . "%-60.60(%t (%c): %f, %d%) %10.10([%a]%)")
+    ("multipart/alternative" . "%-50.50(%d%) %20.20([%a]%)")
+    ("multipart/digest" . "%-50.50(%d, %n message%s%) %20.20([%a]%)")
+    ("multipart" . "%-50.50(%d, %n part%s%) %20.20([%a]%)")
+    ("message/partial" . "%-50.50(%d, part %N (of %T)%) %20.20([%a]%)")
+    ("message/external-body" . "%-55.55(%d%) [%a (%x)]")
+    ("message" . "%-50.50(%d%) %20.20([%a]%)")
+    ("audio" . "%-55.55(%t: %f, %d%) %10.10([%a]%)")
+    ("video" . "%-55.55(%t: %f, %d%) %10.10([%a]%)")
+    ("image" . "%-55.55(%t: %f, %d%) %10.10([%a]%)")
+    ("application" . "%-55.55(%t: %f, %d%) %10.10([%a]%)"))
   ;; old definition
   ;; '(("text" . "%-35.35(%d, %c%) [%k to %a]")
   ;;   ("multipart/alternative" . "%-35.35(%d%) [%k to %a]")
@@ -2619,7 +2624,7 @@ anything else you put into this file will go away."
   "*Non-nil value causes VM to expunge deleted messages before
 quitting.  You can use `vm-quit-no-expunge' and `vm-quit-no-change'
 to override this behavior."
-  :group 'vm-dispose
+  :group 'vm-misc
   :type 'boolean)
 
 (defcustom vm-expunge-before-save nil
@@ -2628,7 +2633,7 @@ saving a folder."
   :group 'vm-dispose
   :type 'boolean)
 
-(defcustom vm-confirm-quit nil
+(defcustom vm-confirm-quit 'if-something-will-be-lost
   "*Value of t causes VM to always ask for confirmation before quitting
 a VM visit of a folder.  A nil value means VM will ask only when messages
 will be lost unwittingly by quitting, i.e. not removed by intentional
@@ -2708,7 +2713,7 @@ consistent.
 
 A value other than nil or t means that VM will save to the folder
 buffer if it is visited or to the file otherwise."
-  :group 'vm-folders
+  :group 'vm-dispose
   :type '(choice (const :tag "Always" t)
 		 (const :tag "Never" nil)
 		 (const :tag "Not always" not-always)))
@@ -2745,7 +2750,7 @@ and will be descended recursively.
 Whether REGEXP is matched case sensitively depends on the value
 of the variable `vm-auto-folder-case-fold-search'.  Header names
 are always matched case insensitively."
-  :group 'vm-folders
+  :group 'vm-dispose
   :type '(choice (const :tag "None" nil)
 		 (repeat (cons 
 			  (regexp :tag "Header Regexp")
@@ -2758,7 +2763,7 @@ are always matched case insensitively."
   "*Non-nil value means VM will ignore case when matching header
 contents while doing automatic folder selection via the variable
 `vm-auto-folder-alist'."
-  :group 'vm-folders
+  :group 'vm-dispose
   :type 'boolean)
 
 (defcustom vm-virtual-folder-alist nil
@@ -2811,6 +2816,8 @@ The recognized SELECTORs are:
    header          - matches message if ARG matches any part of the header
                      portion of the message; ARG should be a
                      regular expression.
+   header-field    - matches message if the header field named ARG1
+                     has the regular expression pattern ARG2.
    header-or-text  - matches message if ARG matches any part of the
 		     headers or the text portion of the message;
 		     ARG should be a regular expression.
@@ -2908,7 +2915,7 @@ set this variable directly, rather you should use the command
 
 (make-variable-buffer-local 'vm-virtual-mirror)
 
-(defcustom vm-folder-read-only nil
+(defvar vm-folder-read-only nil
   "*Non-nil value causes a folder to be considered unmodifiable by VM.
 Commands that modify message attributes or messages themselves are disallowed.
 Commands that add or remove messages from the folder are disallowed.
@@ -2919,9 +2926,7 @@ This variable automatically becomes buffer-local when set in any
 fashion.  You should set this variable only in your .vm or .emacs
 file.  Use setq-default.  Once VM has been started, you should not
 set this variable directly, rather you should use the command
-`vm-toggle-read-only', normally bound to C-x C-q."
-  :group 'vm-folders
-  :type 'boolean)
+`vm-toggle-read-only', normally bound to C-x C-q.")
 
 (make-variable-buffer-local 'vm-folder-read-only)
 
@@ -2939,7 +2944,7 @@ of t causes VM never to kill such buffers.
 
 Note that these buffers will vanish once you exit Emacs.  To keep a permanent
 record of your outgoing mail, use the `mail-archive-file-name' variable."
-  :group 'vm-misc 
+  :group 'vm-compose
   :type '(choice (const :tag "Keep" Keep)
                  (const :tag "Don't Keep" nil)
                  (integer :tag "Keep N")))
@@ -2965,14 +2970,11 @@ format of the Resent-From header, when resending a message with
   :group 'vm-compose
   :type '(choice (const nil) string))
 
-(defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
-  "*A list of headers to hide in `vm-mail-mode'."
-  :group 'vm-presentation
-  :type '(choice (const :tag "Disabled" nil)
-                 (set :tag "Header list"
-                      (string "References")
-                      (string "In-Reply-To")
-                      (string "X-Mailer"))))
+(defcustom vm-mail-use-sender-address nil
+  "*If this set to `t', \\[vm-mail] will use the sender of the current
+message as the recipient for the new message composition."
+  :group 'vm-compose
+  :type 'boolean)
 
 (defcustom vm-mail-header-insert-date t
   "*Non-nil value causes VM to insert a Date header into a message
@@ -3002,6 +3004,11 @@ useful later for threading messages.
 A nil value means don't insert a Message-ID header."
   :group 'vm-compose
   :type 'boolean)
+
+(defcustom vm-mail-mode-hidden-headers '("References" "X-Mailer")
+  "*A list of headers to hide in `vm-mail-mode'."
+  :group 'vm-compose
+  :type '(repeat :tag "Header" string))
 
 (defcustom vm-mail-header-order '("From:" "Organization:" "Subject:"
 				  "Date:" "Priority:" "X-Priority:" 
@@ -3884,10 +3891,23 @@ arrow only if the summary window is not the only existing window."
 		 (const :tag "Always" t) 
 		 (const :tag "Yes, if not only window" yes-if-not-only-window)))
 
+(defcustom vm-verbosity 8
+  "*Level of chattiness in progress messages displayed in the
+minibuffer.  Indicative levels are:
+  1 - extremely quiet
+  5 - normally level
+  7 - detailed level
+ 10 - debugging information"
+  :group 'vm-misc
+  :type 'integer)
+
 ;; These flags and variables are for debugging purposes
 
 (defvar vm-debug nil
   "*Flag used by developers to control localized debugging features.")
+
+(defvar vm-virtual-debug nil
+  "*Flag used by developers to control localized debugging of virtual folders.")
 
 (defvar vm-traced-message-ids nil
   "*List of message ID's whose activity is debugged.  This is for
@@ -3945,7 +3965,7 @@ subject are significant."
 (defcustom vm-folders-summary-database "~/.vm.folders.db"
   "*Name of Berkeley DB file used to store summary information about folders.
 This file is consulted to produce the folders summary."
-  :group 'vm-folders
+  :group 'vm-summary
   :type 'file)
 
 (defcustom vm-folders-summary-format
@@ -3992,7 +4012,7 @@ List the directories in the order you wish them to appear in the summary."
   :group 'vm-summary
   :type '(repeat directory))
 
-(defcustom vm-mutable-windows pop-up-windows
+(defcustom vm-mutable-window-configuration pop-up-windows
   "*This variable's value controls VM's window usage.
 
 A non-nil value gives VM free run of the Emacs display; it will commandeer
@@ -4003,8 +4023,10 @@ it was invoked.  VM will not create, delete, or use any other windows,
 nor will it resize its own window."
   :group 'vm-frames
   :type 'boolean)
+(defvaralias 'vm-mutable-windows 
+  'vm-mutable-window-configuration)
 
-(defcustom vm-mutable-frames t
+(defcustom vm-mutable-frame-configuration t
   "*Non-nil value means VM is allowed to create and destroy frames
 to display and undisplay buffers.  Whether VM actually does
 so depends on the value of the variables with names prefixed by
@@ -4018,6 +4040,8 @@ This variable does not apply to the VM commands whose
 names end in -other-frame, which always create a new frame."
   :group 'vm-frames
   :type 'boolean)
+(defvaralias 'vm-mutable-frames 
+  'vm-mutable-frame-configuration)
 
 (defcustom vm-raise-frame-at-startup t
   "*Specifies whether VM should raise its frame at startup.
@@ -4172,12 +4196,22 @@ VM wants to display or undisplay."
 (defvar vm-configure-datadir nil
   "A directory VM will search for data files.
 
-It will be set at built time and should not be used by the user.")
+It will be set at build time and should not be used by the user.")
 
 (defvar vm-configure-pixmapdir nil
   "A directory VM will search for pixmaps.
 
-It will be set at built time and should not be used by the user.")
+It will be set at build time and should not be used by the user.")
+
+(defvar vm-configure-docdir nil
+  "A directory VM will search for documentation files.
+
+It will be set at build time and should not be used by the user.")
+
+(defvar vm-configure-infodir nil
+  "A directory VM will search for info files.
+
+It will be set at build time and should not be used by the user.")
 
 (defun vm-pixmap-directory ()
   "Return the directory where the pixmaps are.
@@ -4625,13 +4659,13 @@ folder itself undisturbed."
 
 (defcustom vm-edit-message-mode 'text-mode
   "*Major mode to use when editing messages in VM."
-  :group 'vm-compose
+  :group 'vm-dispose
   :type 'function)
 
 (defvar lpr-command)
 (defcustom vm-print-command (if (boundp 'lpr-command) lpr-command "lpr")
   "*Command VM uses to print messages."
-  :group 'vm-misc
+  :group 'vm-print
   :type '(choice (string :tag "Command")
                  (const nil)))
 
@@ -4640,7 +4674,7 @@ folder itself undisturbed."
   "*List of command line flags passed to the command named by
 `vm-print-command'.  VM uses `vm-print-command' to print
 messages."
-  :group 'vm-misc
+  :group 'vm-print
   :type '(repeat (const nil)
                  (string :tag "Switch")))
 
@@ -5364,15 +5398,12 @@ FCC processing."
 ;;   :group 'vm
 ;;   :type '(choice (const nil) (const t) string))
 
-(defcustom vm-rename-current-buffer-function nil
+(defconst vm-rename-current-buffer-function nil
   "*Non-nil value should be a function to call to rename a buffer.
 Value should be something that can be passed to `funcall'.  If
 this variable is non-nil, VM will use this function instead of
 its own buffer renaming code.  The buffer to be renamed will be
-the current buffer when the function is called."
-  :group 'vm-misc
-  :type '(choice (const nil)
-                function))
+the current buffer when the function is called.")
 
 (defvar mode-popup-menu nil
   "The mode-specific popup menu.  Automatically buffer local.
@@ -5562,9 +5593,13 @@ Set this to nil and VM will not use it."
   "*Name of program to use to run stunnel.
 This is used to make SSL connections to POP and IMAP servers that
 support SSL.  If this is set to nil, VM will attempt to use the
-built-in SSL functionality of Emacs.  If the version of Emacs you
-are running does not have SSL capability, then any attempt to
-contact the server will likely hang."
+built-in SSL functionality of Emacs.  Use this setting only if you
+know that your version of Emacs has SSL capability, or any attempt to 
+contact the server will likely hang.
+
+If you do use an stunnel program, then see also the related variables
+`vm-stunnel-program-switches' and
+`vm-stunnel-program-additional-configuration-file'."
   :group 'vm-helpers
   :type '(choice (const :tag "None" nil)
 		 file))
@@ -5587,7 +5622,7 @@ unless you understand how VM uses stunnel and know that you need
 to change something to get stunnel working.
 
 For stunnel version 4 and beyond stunnel relies on a configuration
-file to tell it what to do.  VM builts te ncessary configuration
+file to tell it what to do.  VM builts the necessary configuration
 file for each instance of stunnel that it runs.  If you have extra
 configuration options you want stunnel to use, put them in a file
 and set vm-stunnel-program-additional-configuration-file to the
@@ -5678,16 +5713,6 @@ This is only used for FSF Emacs currently.")
   "Non-nil if stunnel is controlled by a configuration file.
 An older stunnel version used command line arguments instead.")
 
-(defcustom vm-temp-file-directory
-  (or (getenv "TMPDIR")
-      (and (file-directory-p "/tmp") "/tmp")
-      (and (file-directory-p "C:\\TEMP") "C:\\TEMP")
-      (and (file-directory-p "C:\\") "C:\\")
-      "/tmp")
-  "*Name of a directory where VM can put temporary files."
-  :group 'vm-misc
-  :type 'directory)
-
 (defcustom vm-tale-is-an-idiot nil
   "*Non-nil value causes `vm-mail-send' to check multi-line recipient
 headers of outbound mail for lines that don't end with a
@@ -5732,7 +5757,7 @@ you'd prefer something more widely used outside of Japan be used instead,
 you could load the `latin-unity' and `un-define' libraries under XEmacs
 21.4, and initialize this list to something like `(iso-8859-1 iso-8859-15
 utf-8)'. "
-  :group 'vm-misc
+  :group 'vm-compose
   :type '(choice (const nil)
 		 (repeat :tag "Coding system" symbol)))
 
@@ -5746,17 +5771,13 @@ utf-8)'. "
 If non-nil buffer names will be cleaned to avoid save problems.
 If t, 8bit chars are replaced by a \"_\", if a string it should
 be a regexp matching all chars to be replaced by a \"_\"."
-  :group 'vm-misc
+  :group 'vm-compose
   :type '(choice (const :tag "Disabled" nil)
 		 (regexp :tag "Enabled" "[^ a-zA-Z0-9.,_\"'+-]")
 		 (regexp :tag "Custom regexp")))
 
-(defcustom vm-buffer-name-limit 80
-  "*The limit for a generated buffer name."
-  :group 'vm-misc
-  :type '(choice (const :tag "Disabled" nil)
-		 (integer :tag "Enabled" 80)
-		 (integer :tag "Length")))
+(defconst vm-buffer-name-limit 80
+  "*The limit for a generated buffer name.")
 
 (defconst vm-maintainer-address "viewmail-bugs@nongnu.org"
   "Where to send VM bug reports.")
@@ -5771,6 +5792,12 @@ and up."
   (define-key vm-mode-map "!" 'vm-toggle-flag-message)
   (define-key vm-mode-map "<" 'vm-promote-subthread)
   (define-key vm-mode-map ">" 'vm-demote-subthread)
+  (define-key vm-mode-virtual-map "O" 'vm-virtual-omit-message)
+  (define-key vm-mode-virtual-map "U" 'vm-virtual-update-folders)
+  (define-key vm-mode-virtual-map "D" 'vm-virtual-auto-delete-message)
+  ;; (define-key vm-mode-virtual-map "S" 'vm-virtual-save-message)
+  ;; (define-key vm-mode-virtual-map "A" 'vm-virtual-auto-archive-messages)
+  (define-key vm-mode-virtual-map "?" 'vm-virtual-check-selector-interactive)
   )
 (defalias 'vm-current-key-bindings 'vm-v8-key-bindings)
 
@@ -5896,10 +5923,22 @@ the users or bound to other functions in future versions of VM."
     (define-key map "V" vm-mode-virtual-map)
     (define-key vm-mode-virtual-map "V" 'vm-visit-virtual-folder)
     (define-key vm-mode-virtual-map "C" 'vm-create-virtual-folder)
+    (define-key vm-mode-virtual-map "T" 'vm-create-virtual-folder-of-threads)
+    (define-key vm-mode-virtual-map "X" 'vm-apply-virtual-folder)
     (define-key vm-mode-virtual-map "A" 'vm-create-virtual-folder-same-author)
     (define-key vm-mode-virtual-map "S" 'vm-create-virtual-folder-same-subject)
-    (define-key vm-mode-virtual-map "X" 'vm-apply-virtual-folder)
     (define-key vm-mode-virtual-map "M" 'vm-toggle-virtual-mirror)
+
+    (define-key vm-mode-virtual-map "a" 'vm-create-author-virtual-folder)
+    (define-key vm-mode-virtual-map "r" 'vm-create-author-or-recipient-virtual-folder)
+    (define-key vm-mode-virtual-map "d" 'vm-create-date-virtual-folder)
+    (define-key vm-mode-virtual-map "l" 'vm-create-label-virtual-folder)
+    (define-key vm-mode-virtual-map "s" 'vm-create-subject-virtual-folder)
+    (define-key vm-mode-virtual-map "t" 'vm-create-text-virtual-folder)
+    (define-key vm-mode-virtual-map "!" 'vm-create-flagged-virtual-folder)
+    (define-key vm-mode-virtual-map "n" 'vm-create-new-virtual-folder)
+    (define-key vm-mode-virtual-map "u" 'vm-create-unseen-virtual-folder)
+
     (define-key vm-mode-virtual-map "?" 'vm-virtual-help)
     (define-key map "M" vm-mode-mark-map)
     (define-key vm-mode-mark-map "N" 'vm-next-command-uses-marks)
@@ -6528,9 +6567,14 @@ header line in email messages,
 (defconst vm-supported-interactive-virtual-selectors
   '(("any")
     ("sexp")
+    ("eval")
+    ;; ("member") ; - yet to be defined
     ("virtual-folder-member")
     ("header")
     ("label")
+    ("uid")
+    ("uidl")
+    ("message-id")
     ("text")
     ("header-or-text")
     ("recipient")
@@ -6579,12 +6623,21 @@ header line in email messages,
 
 (defconst vm-virtual-selector-function-alist
   '((any . vm-vs-any)
+    ;; (member . vm-vs-member) ; yet to be defined
     (virtual-folder-member . vm-vs-virtual-folder-member)
     (and . vm-vs-and)
     (or . vm-vs-or)
     (not . vm-vs-not)
+    (sexp . vm-vs-sexp)
+    (eval . vm-vs-eval)
+    (thread . vm-vs-thread)
+    (thread-all . vm-vs-thread-all)
     (header . vm-vs-header)
+    (header-field . vm-vs-header-field)
     (label . vm-vs-label)
+    (uid . vm-vs-uid)
+    (uidl . vm-vs-uidl)
+    (message-id . vm-vs-message-id)
     (text . vm-vs-text)
     (header-or-text . vm-vs-header-or-text)
     (recipient . vm-vs-recipient)
@@ -6777,6 +6830,13 @@ append a space to words that complete unambiguously.")
 (make-variable-buffer-local 'vm-ml-message-written)
 (defvar vm-ml-message-marked nil)
 (make-variable-buffer-local 'vm-ml-message-marked)
+
+(defcustom vm-remember-passwords-insecurely nil
+  "If set to `t', VM uses its own storage for remembering passwords
+for POP/IMAP accounts, which is insecure."
+  :group 'vm-folders
+  :type 'boolean)
+
 ;; to make the tanjed compiler shut up
 (defvar vm-pop-read-point nil)
 (defvar vm-pop-ok-to-ask nil)
@@ -6819,8 +6879,9 @@ UIDVALIDITY for each message to be expunged.")
 (make-variable-buffer-local 'vm-imap-auth-methods)
 ;; The number of old ('failed') trace buffers to remember for debugging
 ;; purposes 
-(defvar vm-pop-keep-failed-trace-buffers 20)
-(defvar vm-imap-keep-failed-trace-buffers 20)
+;; These are now subsumed in vm-...-keep-trace-buffer variables.  USR, 2011-11
+;; (defvar vm-pop-keep-failed-trace-buffers 20)
+;; (defvar vm-imap-keep-failed-trace-buffers 20)
 ;; Lists of trace buffers remembered for debugging purposes
 (defvar vm-kept-pop-buffers nil
   "* Variable that holds the old trace buffers of POP sessions for
@@ -6831,12 +6892,20 @@ UIDVALIDITY for each message to be expunged.")
   debugging purposes.")
 ;; (make-variable-buffer-local 'vm-kept-imap-buffers)
 ;; Flag to make POP/IMAP code remember old trace buffers
-(defvar vm-pop-keep-trace-buffer nil
-  "* Set this to non-nil to retain a limited number of POP session
-  trace buffers for debugging purposes.")
-(defvar vm-imap-keep-trace-buffer nil
-  "* Set this to non-nil to retain a limited number of IMAP session
-  trace buffers for debugging purposes.")
+(defcustom vm-pop-keep-trace-buffer 1
+  "* The number of POP session trace buffers that should be
+  retained for debugging purposes.  If it is nil, then no trace
+  buffers are kept."
+  :group 'vm-pop
+  :type '(choice (integer :tag "Number of session buffers kept"
+		 (const :tag "No session buffers kept" nil))))
+(defcustom vm-imap-keep-trace-buffer 1
+  "* The number of IMAP session trace buffers that should be
+  retained for debugging purposes.  If it is nil, then no trace
+  buffers are kept."
+  :group 'vm-imap
+  :type '(choice (integer :tag "Number of session buffers kept"
+		 (const :tag "No session buffers kept" nil))))
 (defvar vm-imap-session-done nil)
 (defvar vm-reply-list nil
   "Buffer local variable in Composition buffers that holds the set of
@@ -6940,21 +7009,36 @@ that has a match.")
 (defvar vm-mf-default-action nil)
 (defvar vm-mime-compiled-format-alist nil)
 (defconst vm-mime-default-action-string-alist
-  '(("text" . "display text")
+  ;; old definition
+  ;; '(("text" . "display text")
+  ;;   ("multipart/alternative" . "display selected part")
+  ;;   ("multipart/digest" . "read digest")
+  ;;   ("multipart/parallel" . "display parts in parallel")
+  ;;   ("multipart" . "display parts")
+  ;;   ("message/partial" . "attempt message assembly")
+  ;;   ("message/external-body" . "retrieve the object")
+  ;;   ("message" . "display message")
+  ;;   ("audio" . "play audio")
+  ;;   ("video" . "display video")
+  ;;   ("image" . "display image")
+  ;;   ("model" . "display model")
+  ;;   ("application/postscript" . "display PostScript")
+  ;;   ("application/msword" . "display Word document")
+  ;;   ("application" . "display attachment"))
+
+  '(("text" . "display")
     ("multipart/alternative" . "display selected part")
     ("multipart/digest" . "read digest")
     ("multipart/parallel" . "display parts in parallel")
     ("multipart" . "display parts")
     ("message/partial" . "attempt message assembly")
-    ("message/external-body" . "retrieve the object")
-    ("message" . "display message")
-    ("audio" . "play audio")
-    ("video" . "display video")
-    ("image" . "display image")
-    ("model" . "display model")
-    ("application/postscript" . "display PostScript")
-    ("application/msword" . "display Word document")
-    ("application" . "display attachment")))
+    ("message/external-body" . "retrieve")
+    ("message" . "display")
+    ("audio" . "play")
+    ("video" . "play")
+    ("image" . "display")
+    ("model" . "display")
+    ("application" . "display")))
 
 (defconst vm-mime-type-description-alist
   '(("multipart/digest" . "digest")
@@ -6964,18 +7048,44 @@ that has a match.")
     ("text/plain" . "plain text")
     ("text/enriched" . "enriched text")
     ("text/html" . "HTML")
+    ("text/calendar" . "Calendar event")
+    ("text/directory" . "VCard")
+    ("text/x-vcard" . "VCard")
     ("image/gif" . "GIF image")
     ("image/tiff" . "TIFF image")
     ("image/jpeg" . "JPEG image")
     ("image/png" . "PNG image")
     ("message/rfc822" . "mail message")
-    ("message/news" . "USENET news article")
+    ("message/news" . "news article")
     ("message/partial" . "message fragment")
-    ("message/external-body" . "external object")
+    ("message/external-body" . "external")
+    ("application/pdf" . "PDF")
     ("application/postscript" . "PostScript")
-    ("application/msword" . "Word document")
-    ("application/vnd.ms-excel" . "Excel spreadsheet")
-    ("application/octet-stream" . "untyped binary data")))
+    ("application/msword" . "Document")
+    ("application/vnd.ms-excel" . "Spreadsheet")
+    ("application/vnd.ms-powerpoint" . "Presentation")
+    ("application/vnd-ms-access" . "Database")
+    ("application/vnd.oasis.opendocument.text" . "Open Doc")
+    ("application/vnd.oasis.opendocument.presentation" . "Prsentation")
+    ("application/vnd.oasis.opendocument.spreadsheet" . "Spreadsheet")
+    ("application/vnd.oasis.opendocument.graphics" . "Graphics")
+    ("application/vnd.oasis.opendocument.formulae" . "Formulae")
+    ("application/vnd.oasis.opendocument.databases" . "Database")
+    ("application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+     . "Document")
+    ("application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+     . "Document")
+    ("application/vnd.openxmlformats-officedocument.presentationml.presentation"
+     . "Presentation")
+    ("application/vnd.openxmlformats-officedocument.presentationml.presentation"
+     . "Presentation")
+    ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+     . "Spreadsheet")
+    ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+     . "Spreadsheet")
+    ("application/x-dvi" . "DVI")
+    ("application/octet-stream" . "Untyped binary data")
+    ("application/mac-binhex40" . "Untyped Mac data")))
 
 (defconst vm-mime-base64-alphabet
   (concat
@@ -7075,7 +7185,10 @@ actions to be taken to destroy them.")
 	   ("euc-kr"		iso-2022-kr)
 	  )
 	 ))
-  "Alist that maps MIME character sets to MULE coding systems.")
+  "Alist that maps MIME character sets to MULE coding systems.  The
+information is generated from the 'mime-charset property of coding
+systems, if it is defined in the Emacs version.  Otherwise, a
+default alist is used.")
 	  
 (defconst vm-mime-mule-charset-to-charset-alist
   '(
@@ -7117,25 +7230,20 @@ actions to be taken to destroy them.")
 	   (iso-2022-7-dos	"iso-2022-jp")
 	   (iso-2022-7-mac	"iso-2022-jp")
 	  )))
-  "Alist that maps MULE coding systems to MIME character sets.")
+  "Alist that maps MULE coding systems to MIME character sets.  The
+information is generated from the 'mime-charset property of coding
+systems, if it is defined in the Emacs version.  Otherwise, a
+default alist is used.")
 
-(defconst vm-mime-charset-completion-alist
-  '(
-    ("us-ascii")
-    ("iso-8859-1")
-    ("iso-8859-2")
-    ("iso-8859-3")
-    ("iso-8859-4")
-    ("iso-8859-5")
-    ("iso-8859-6")
-    ("iso-8859-7")
-    ("iso-8859-8")
-    ("iso-8859-9")
-    ("iso-2022-jp")
-    ("iso-2022-jp-2")
-    ("iso-2022-int-1")
-    ("iso-2022-kr")
-   ))
+(defcustom vm-mime-charset-completion-alist
+  (mapcar (lambda (a) (list (car a)))
+    vm-mime-mule-charset-to-coding-alist)
+  "The completion alist of MIME charsets known to VM.  The default
+information is derived from `vm-mime-mule-charset-to-coding-alist' (which see)."
+  :group 'vm-mime
+  :type '(repeat (list string)))
+
+
 (defconst vm-mime-type-completion-alist
   '(
     ("text/plain")
@@ -7178,7 +7286,7 @@ actions to be taken to destroy them.")
 Most addons are from `vm-rfaddons-infect-vm'.
 
 You must restart VM after a change to cause any effects."
-  :group 'vm-ext
+  :group 'vm-rfaddons
   :type '(set (const :tag "Enable shrinking of multi-line headers to one line."
 		     shrunken-headers)
 	      (const :tag "Open a line when typing in quoted text"
@@ -7215,7 +7323,7 @@ the command `vm-summary-faces-mode' should be used."
   "*A list of minor modes to disable before encoding a message.
 These modes may slow down (font-lock and *spell) encoding and may
 cause trouble (abbrev-mode)."
-  :group 'vm-misc
+  :group 'vm-compose
   :type '(repeat :tag "Mode" symbol))
 
 (defvar vm-summary-faces-mode nil

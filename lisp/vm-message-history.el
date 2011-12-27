@@ -126,7 +126,7 @@
 With prefix ARG, select the ARG'th previous message."
   (interactive "p")
   (or arg (setq arg 1))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (or vm-message-history
       (error "No message history"))
   (cond ((> arg 0)
@@ -172,7 +172,7 @@ With prefix ARG, select the ARG'th next message."
   "Select the message below the cursor."
   (interactive)
   (let ((mp (get-text-property (point) 'vm-message-pointer)))
-    (vm-select-folder-buffer-and-validate 0 (interactive-p))
+    (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
     (vm-record-and-change-message-pointer vm-message-pointer mp)
     (vm-present-current-message)
     (vm-display nil nil '(vm-goto-message-last-seen)
@@ -192,7 +192,7 @@ With prefix ARG, select the ARG'th next message."
 (defun vm-message-history-browse ()
   "Select a message from a popup menu of the current folder's history."
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (or vm-message-history
       (error "No message history"))
   (let ((history vm-message-history)

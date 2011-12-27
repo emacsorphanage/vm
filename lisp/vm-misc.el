@@ -42,6 +42,8 @@
 (declare-function emacs-get-buffer-window "vm-misc.el"
 		  (&optional buffer-or-name frame devices))
 
+(declare-function vm-interactive-p "vm-misc.el"
+		  ())
 (declare-function vm-device-type "vm-misc.el"
 		  (&optional device))
 (declare-function vm-buffer-substring-no-properties "vm-misc.el"
@@ -89,10 +91,13 @@
   (when (<= level vm-verbosity)
     (apply 'message args)))
 
-(defun vm-warn (level sit-for &rest args)
-  (when (<= level vm-verbosity)
+(defun vm-warn (l secs &rest args)
+  "Give a warning at level L and display it for SECS seconds.  The
+remaining arguments are passed to `message' to generate the warning
+message." 
+  (when (<= l vm-verbosity)
     (apply 'message args)
-    (sit-for sit-for)))
+    (sleep-for secs)))
 
 ;; garbage-collector result
 (defconst gc-fields '(:conses :syms :miscs 
@@ -564,6 +569,11 @@ PRED and return the position"
 	  (throw 'fail nil)))
       t)))
 
+(fset 'vm-interactive-p
+      (if (fboundp 'interactive-p)	; Xemacs or Gnu Emacs under obsolescence
+	  'interactive-p
+	(lambda () (called-interactively-p 'any))))
+
 (fset 'vm-device-type
       (cond (vm-xemacs-p 'device-type)
 	    (vm-fsfemacs-p 'vm-fsfemacs-device-type)))
@@ -722,7 +732,9 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (setq list (cdr list)))
     nil ))
 
-(fset 'vm-member (symbol-function (if (fboundp 'member) 'member 'vm-member-0)))
+(fset 'vm-member 
+      (symbol-function 
+       (if (fboundp 'member) 'member 'vm-member-0)))
 
 (defun vm-delqual (ob list)
   (let ((prev nil)
@@ -1620,7 +1632,7 @@ If MODES is nil the take the modes from the variable
               (funcall m -1))
 	(error 
 	 (when (not (member m vm-disable-modes-ignore))
-	   (vm-inform 0 "Could not disable mode `%S': %S" m errmsg)
+	   (vm-warn 0 2 "Could not disable mode `%S': %S" m errmsg)
 	   (setq vm-disable-modes-ignore (cons m vm-disable-modes-ignore)))
 	 nil)))))
 
@@ -1641,5 +1653,9 @@ Emacs 22.1. This function used to supress compiler warnings."
   (if (boundp 'find-file-hook)
       (add-hook 'find-file-hook vm-hook-fn)
     (add-hook 'find-file-hooks vm-hook-fn)))
+
+;; Aliases for VM functions
+
+
 
 ;;; vm-misc.el ends here

@@ -53,6 +53,14 @@
     (insert (vm-vcard-format-layout layout)))
   t)
 
+;;;###autoload
+(defun vm-mime-display-internal-text/vcard (layout)
+  (vm-mime-display-internal-text/x-vcard layout))
+
+;;;###autoload
+(defun vm-mime-display-internal-text/directory (layout)
+  (vm-mime-display-internal-text/x-vcard layout))
+
 (defun vm-vcard-format-layout (layout)
   (let* ((beg (vm-mm-layout-body-start layout))
          (end (vm-mm-layout-body-end layout))

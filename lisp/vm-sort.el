@@ -52,7 +52,7 @@ change the presentation order and leave the physical order of
 the folder undisturbed."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (if vm-move-messages-physically
       (vm-error-if-folder-read-only))
   (vm-display nil nil '(vm-move-message-forward
@@ -232,13 +232,20 @@ the folder undisturbed."
 
 ;;;###autoload
 (defun vm-so-sortable-datestring (m)
+  "Returns the date string of M.  The date returned is obtained from
+the \"Date\" header of the message, if it exists, or the date the
+message was received in VM.  If `vm-sort-messages-by-delivery-date' is
+non-nil, then the \"Delivery-Date\" header is used instead of the
+\"Date\" header." 
   (or (vm-sortable-datestring-of m)
       (progn
 	(vm-set-sortable-datestring-of
 	 m
 	 (condition-case nil
 	     (vm-timezone-make-date-sortable
-	      (or (vm-get-header-contents m "Date:")
+	      (or (if vm-sort-messages-by-delivery-date
+		      (vm-get-header-contents m "Delivery-Date:")
+		    (vm-get-header-contents m "Date:"))
 		  (vm-grok-From_-date m)
 		  "Thu, 1 Jan 1970 00:00:00 GMT"))
 	   (error "1970010100:00:00")))
@@ -311,13 +318,13 @@ folder in the order in which the messages arrived."
 			   "Sort messages by: ")
 			 vm-supported-sort-keys t)
 	 current-prefix-arg)))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   ;; only squawk if interactive.  The thread display uses this
   ;; function and doesn't expect errors.
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-error-if-folder-empty))
   ;; ditto
-  (if (and (interactive-p) (or vm-move-messages-physically lets-get-physical))
+  (if (and (vm-interactive-p) (or vm-move-messages-physically lets-get-physical))
       (vm-error-if-folder-read-only))
 
   (vm-display nil nil '(vm-sort-messages) '(vm-sort-messages))

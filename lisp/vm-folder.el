@@ -203,17 +203,20 @@ If non-nil, END-POINT should point to a cons cell in
 vm-message-list and the numbering will end with the message just
 before this cell.  A nil value means numbering will be done until
 the end of vm-message-list is reached."
-  (let ((n 1) (message-list (or start-point vm-message-list)))
-    (if (and start-point (vm-reverse-link-of (car start-point)))
+  (let ((n 1) 
+	(message-list vm-message-list))
+    (when (and start-point (vm-reverse-link-of (car start-point)))
+      (if (null (vm-number-of (car (vm-reverse-link-of (car start-point)))))
+	  (vm-warn 0 2 "Bad numbering start-point; please report bug.")
 	(setq n (1+ (string-to-number
 		     (vm-number-of
-		      (car
-		       (vm-reverse-link-of
-			(car start-point))))))))
+		      (car (vm-reverse-link-of (car start-point))))))
+	      message-list start-point)))
     (while (not (eq message-list end-point))
       (vm-set-number-of (car message-list) (int-to-string n))
       (vm-set-padded-number-of (car message-list) (format "%3d" n))
-      (setq n (1+ n) message-list (cdr message-list)))
+      (setq n (1+ n) 
+	    message-list (cdr message-list)))
     (or end-point (setq vm-ml-highest-message-number (int-to-string (1- n))))
     (if vm-summary-buffer
 	(vm-copy-local-variables vm-summary-buffer
@@ -287,13 +290,12 @@ end of vm-message-list.
 
 Otherwise the variables' values should be conses in vm-message-list
 or nil."
-  (if vm-numbering-redo-start-point
-      (progn
-	(vm-number-messages (and (consp vm-numbering-redo-start-point)
-				 vm-numbering-redo-start-point)
-			    vm-numbering-redo-end-point)
-	(setq vm-numbering-redo-start-point nil
-	      vm-numbering-redo-end-point nil))))
+  (when vm-numbering-redo-start-point
+    (vm-number-messages (if (consp vm-numbering-redo-start-point)
+			    vm-numbering-redo-start-point)
+			vm-numbering-redo-end-point)
+    (setq vm-numbering-redo-start-point nil
+	  vm-numbering-redo-end-point nil)))
 
 (defun vm-set-summary-redo-start-point (start-point)
   "Set vm-summary-redo-start-point to START-POINT if appropriate.
@@ -545,6 +547,7 @@ Toolbars are updated."
 	    (vm-inform 6 "Recreating summary... %s" n))
 	(setq n (1+ n))
 	(setq ms (cdr ms)))
+      (vm-inform 6 "Recreating summary... done")
       (setq vm-messages-needing-summary-update nil)))
   (vm-do-needed-folders-summary-update)
   (vm-force-mode-line-update))
@@ -1563,7 +1566,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			 (= (length cache) vm-cached-data-vector-length)
 			 (or (null (aref cache 7)) (stringp (aref cache 7)))
 			 (or (null (aref cache 11)) (stringp (aref cache 11))))
-              (vm-inform 0 "Bad VM cache data: %S" cache)
+              (vm-warn 0 2 "Bad VM cache data: %S" cache)
               (vm-set-stuff-flag-of (car mp) t)
               (setcar (cdr data)
                       (setq cache 
@@ -1672,6 +1675,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
       ;; make message be new by default, but avoid vm-set-new-flag
       ;; because it asks for a summary update for the message.
       (vm-set-new-flag-of (car mp) t)
+      (vm-set-unread-flag-of (car mp) t)
       (setq access-method (vm-message-access-method-of (car mp)))
       (cond ((eq access-method 'imap)
 	     (vm-imap-set-default-attributes (car mp)))
@@ -1710,7 +1714,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 (defun vm-emit-totals-blurb ()
   (interactive)
   (save-excursion
-    (vm-select-folder-buffer-and-validate 0 (interactive-p))
+    (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
     (if (not (equal (nth 0 vm-totals) vm-modification-counter))
 	(vm-compute-totals))
     (if (equal (nth 1 vm-totals) 0)
@@ -2138,7 +2142,7 @@ FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
 	       (delete-region (match-beginning 0) (match-end 0)))
 	     (goto-char (vm-headers-of m))
 	     (setq opoint (point))
-	     (insert-before-markers
+	     (insert			; insert-before-markers?
 	      vm-attributes-header " ("
 	      (let ((print-escape-newlines t))
 		(prin1-to-string attributes))
@@ -3139,9 +3143,9 @@ thread are affected."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((mlist (vm-select-operable-messages
-		count (interactive-p) "Unread")))
+		count (vm-interactive-p) "Unread")))
     (while mlist
       (if (and (not (vm-unread-flag (car mlist)))
 	       (not (vm-new-flag (car mlist))))
@@ -3172,9 +3176,9 @@ thread are affected."
   (interactive "p")
   (or count (setq count 1))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((mlist (vm-select-operable-messages
-		count (interactive-p) "Mark as read")))
+		count (vm-interactive-p) "Mark as read")))
     (while mlist
       (when (or (vm-unread-flag (car mlist))
 		(vm-new-flag (car mlist)))
@@ -3195,7 +3199,7 @@ The folder is not altered and Emacs is still visiting it.  You
 can switch back to it with switch-to-buffer or by using the
 Buffer Menu."
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
 
@@ -3221,7 +3225,7 @@ Buffer Menu."
   "Iconify the frame and bury the current VM folder and summary buffers.
 The folder is not altered and Emacs is still visiting it."
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
 
@@ -3266,7 +3270,7 @@ If the customization variable `vm-expunge-before-quit' is set to
 
 Giving a prefix argument overrides the variable and no expunge is done."  
   (interactive "P")
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
   (vm-display nil nil '(vm-quit vm-quit-no-change vm-quit-no-expunge)
@@ -3316,8 +3320,8 @@ Giving a prefix argument overrides the variable and no expunge is done."
     (unless (or no-change virtual)
       ;; this could take a while, so give the user some feedback
       (vm-inform 5 "Quitting...")
-      (or vm-folder-read-only (eq major-mode 'vm-virtual-mode)
-	  (vm-change-all-new-to-unread)))
+      (unless (or vm-folder-read-only (eq major-mode 'vm-virtual-mode))
+	(vm-change-all-new-to-unread)))
     (when (and (buffer-modified-p)
 	       (or buffer-file-name buffer-offer-save)
 	       (not no-change)
@@ -3606,7 +3610,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
   ;; This function hasn't been documented.  Not clear why it is
   ;; different from vm-save-folder.  USR, 2011-04-27
   (interactive "P")
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-virtual-folder)
   (save-buffer prefix)
   (intern (buffer-name) vm-buffers-needing-display-update)
@@ -3624,7 +3628,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
   ;; This function hasn't been documented.  Not clear what it does.
   ;; 						  USR, 2011-04-27
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-virtual-folder)
   (let ((old-buffer-name (buffer-name))
 	(oldmodebits (and (fboundp 'default-file-modes)
@@ -3690,7 +3694,7 @@ When applied to a virtual folder, this command runs itself on
 each of the underlying real folders associated with the virtual
 folder."
   (interactive (list current-prefix-arg))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-display nil nil '(vm-save-folder) '(vm-save-folder))
   (if (eq major-mode 'vm-virtual-mode)
       (vm-virtual-save-folder prefix)
@@ -3799,7 +3803,7 @@ Expunge won't be done if folder is read-only.
 When applied to a virtual folder, this command works as if you had
 run vm-expunge-folder followed by vm-save-folder."
   (interactive (list current-prefix-arg))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-display nil nil '(vm-save-and-expunge-folder)
 	      '(vm-save-and-expunge-folder))
   (if (not vm-folder-read-only)
@@ -3953,9 +3957,10 @@ Same as \\[vm-recover-folder]."
   "Display help for various VM activities."
   (interactive)
   (if (eq major-mode 'vm-summary-mode)
-      (vm-select-folder-buffer-and-validate 0 (interactive-p)))
-  (let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
-	(pop-up-frames (and vm-mutable-frames vm-frame-per-help)))
+      (vm-select-folder-buffer-and-validate 0 (vm-interactive-p)))
+  (let ((pop-up-windows (and pop-up-windows 
+			     (eq vm-mutable-window-configuration t)))
+	(pop-up-frames (and vm-mutable-frame-configuration vm-frame-per-help)))
     (cond
      ((eq last-command 'vm-help)
       (describe-function major-mode))
@@ -4249,13 +4254,9 @@ Same as \\[vm-recover-folder]."
 	    (when (or this-buffer (not this-buffer-only))
 		  (if (file-exists-p crash)
 		      (setq mail-waiting t)
-		    (cond ((and vm-recognize-imap-maildrops
-				(string-match vm-recognize-imap-maildrops
-					      maildrop))
+		    (cond ((vm-imap-folder-spec-p maildrop)
 			   (setq meth 'vm-imap-check-mail))
-			  ((and vm-recognize-pop-maildrops
-				(string-match vm-recognize-pop-maildrops
-					      maildrop))
+			  ((vm-pop-folder-spec-p maildrop)
 			   (setq meth 'vm-pop-check-mail))
 			  (t (setq meth 'vm-spool-check-mail)))
 		    (if (not interactive)
@@ -4326,17 +4327,17 @@ Same as \\[vm-recover-folder]."
 	  (cond ((vm-movemail-specific-spool-file-p maildrop)
 		 (setq non-file-maildrop t)
 		 (setq retrieval-function 'vm-spool-move-mail))
-		((and vm-recognize-imap-maildrops
-		      (string-match vm-recognize-imap-maildrops
-				    maildrop))
+		((vm-imap-folder-spec-p maildrop)
 		 (setq non-file-maildrop t)
-		 (setq safe-maildrop (vm-safe-imapdrop-string maildrop))
+		 (setq safe-maildrop 
+		       (or (vm-imap-account-name-for-spec maildrop)
+			   (vm-safe-imapdrop-string maildrop)))
 		 (setq retrieval-function 'vm-imap-move-mail))
-		((and vm-recognize-pop-maildrops
-		      (string-match vm-recognize-pop-maildrops
-				    maildrop))
+		((vm-pop-folder-spec-p maildrop)
 		 (setq non-file-maildrop t)
-		 (setq safe-maildrop (vm-safe-popdrop-string maildrop))
+		 (setq safe-maildrop 
+		       (or (vm-pop-find-name-for-spec maildrop)
+			   (vm-safe-popdrop-string maildrop)))
 		 (setq retrieval-function 'vm-pop-move-mail))
 		(t (setq retrieval-function 'vm-spool-move-mail)))
 	  (setq crash (expand-file-name crash vm-folder-directory))
@@ -4394,7 +4395,7 @@ Same as \\[vm-recover-folder]."
           (condition-case errmsg
               (run-hooks 'vm-retrieved-spooled-mail-hook)
             (t 
-	     (vm-inform 0 
+	     (vm-warn 0 2
 	      "Ignoring error while running vm-retrieved-spooled-mail-hook. %S"
 	      errmsg)))
           (vm-assimilate-new-messages :read-attributes nil))))))
@@ -4408,6 +4409,7 @@ maildrop string)."
       (aref vm-folder-access-data 0)
     buffer-file-name))
 
+;; This function is now obsolete.  USR, 2011-12-26
 (defun vm-safe-popdrop-string (maildrop)
   "Return a human-readable version of a pop MAILDROP string."
   (or (and (string-match "^\\(pop:\\|pop-ssl:\\|pop-ssh:\\)?\\([^:]*\\):[^:]*:[^:]*:\\([^:]*\\):[^:]*" maildrop)
@@ -4430,6 +4432,7 @@ maildrop string)."
                      '("*" "*"))
              ":"))
 
+;; This function is now obsolete.  USR, 2011-12-26
 (defun vm-safe-imapdrop-string (maildrop)
   "Return a human-readable version of an imap MAILDROP string."
   (or (and (string-match "^\\(imap\\|imap-ssl\\|imap-ssh\\):\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*:\\([^:]*\\):[^:]*" maildrop)
@@ -4511,20 +4514,23 @@ folder.  A prefix argument has no effect when this command is
 applied to virtual folder; mail is always gathered from the spool
 files."
   (interactive "P")
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-folder-read-only)
-  (cond ((eq major-mode 'vm-virtual-mode)
-	 (vm-virtual-get-new-mail))
-	((not (eq major-mode 'vm-mode))
-	 (error "Can't get mail for a non-VM folder buffer"))
-	((null arg)
-	 (if (not (eq major-mode 'vm-mode))
-	     (vm-mode))
-	 (if (consp (car (vm-spool-files)))
-	     (vm-inform 5 "Checking for new mail for %s..."
-		      (or buffer-file-name (buffer-name)))
-	   (vm-inform 5 "Checking for new mail..."))
-	 (let (totals-blurb)
+  (let* ((folder (buffer-name))
+	 (description (if (consp (car (vm-spool-files))) 
+					; folder-specific spool files
+			  (format "new mail for %s" (buffer-name))
+			(format "new mail")))
+	 totals-blurb)
+    (cond ((eq major-mode 'vm-virtual-mode)
+	   (vm-virtual-get-new-mail))
+	  ((not (eq major-mode 'vm-mode))
+	   (error "Can't get mail for a non-VM folder buffer"))
+	  ((null arg)
+	   ;; This is redundant now.  USR, 2011-12-26
+	   ;; (if (not (eq major-mode 'vm-mode))
+	   ;;     (vm-mode))
+	   (vm-inform 5 "Checking for %s..." description)
 	   (if (vm-get-spooled-mail t)
 	       (progn
 		 ;; say this NOW, before the non-previewers read
@@ -4536,48 +4542,45 @@ files."
 		     (vm-present-current-message)
 		   (vm-update-summary-and-mode-line))
 		 (vm-inform 5 totals-blurb))
-	     (if (consp (car (vm-spool-files)))
-		 (vm-inform 5 "No new mail for %s"
-			  (or buffer-file-name (buffer-name)))
-	       (vm-inform 5 "No new mail."))
-	     (and (interactive-p) (vm-sit-for 4) (vm-inform 5 ""))
-	     )))
-	(t
-	 (let ((buffer-read-only nil)
-	       folder mcount totals-blurb)
-	   (setq folder (read-file-name "Gather mail from folder: "
-					vm-folder-directory nil t))
-	   (if (and vm-check-folder-types
-		    (not (vm-compatible-folder-p folder)))
-	       (error "Folder %s is not the same format as this folder."
-		      folder))
-	   (save-excursion
-	     (vm-save-restriction
-	      (widen)
-	      (goto-char (point-max))
-	      (let ((coding-system-for-read (vm-binary-coding-system)))
-		(insert-file-contents folder))))
-	   (setq mcount (length vm-message-list))
-	   (if (vm-assimilate-new-messages)
-	       (progn
-		 ;; say this NOW, before the non-previewers read
-		 ;; a message, alter the new message count and
-		 ;; confuse themselves.
-		 (setq totals-blurb (vm-emit-totals-blurb))
-		 (vm-display nil nil '(vm-get-new-mail) '(vm-get-new-mail))
-		 (if (vm-thoughtfully-select-message)
-		     (vm-present-current-message)
-		   (vm-update-summary-and-mode-line))
-		 (vm-inform 5 totals-blurb)
-		 ;; The gathered messages are actually still on disk
-		 ;; unless the user deletes the folder himself.
-		 ;; However, users may not understand what happened if
-		 ;; the messages go away after a "quit, no save".
-		 (setq vm-messages-not-on-disk
-		       (+ vm-messages-not-on-disk
-			  (- (length vm-message-list)
-			     mcount))))
-	     (vm-inform 5 "No messages gathered."))))))
+	     (vm-inform 5 "No new %s" description)
+	     (and (vm-interactive-p) (vm-sit-for 4) (vm-inform 5 ""))
+	     ))
+	  (t
+	   (let ((buffer-read-only nil)
+		 folder mcount)
+	     (setq folder (read-file-name "Gather mail from folder: "
+					  vm-folder-directory nil t))
+	     (if (and vm-check-folder-types
+		      (not (vm-compatible-folder-p folder)))
+		 (error "Folder %s is not the same format as this folder."
+			folder))
+	     (save-excursion
+	       (vm-save-restriction
+		(widen)
+		(goto-char (point-max))
+		(let ((coding-system-for-read (vm-binary-coding-system)))
+		  (insert-file-contents folder))))
+	     (setq mcount (length vm-message-list))
+	     (if (vm-assimilate-new-messages)
+		 (progn
+		   ;; say this NOW, before the non-previewers read
+		   ;; a message, alter the new message count and
+		   ;; confuse themselves.
+		   (setq totals-blurb (vm-emit-totals-blurb))
+		   (vm-display nil nil '(vm-get-new-mail) '(vm-get-new-mail))
+		   (if (vm-thoughtfully-select-message)
+		       (vm-present-current-message)
+		     (vm-update-summary-and-mode-line))
+		   (vm-inform 5 totals-blurb)
+		   ;; The gathered messages are actually still on disk
+		   ;; unless the user deletes the folder himself.
+		   ;; However, users may not understand what happened if
+		   ;; the messages go away after a "quit, no save".
+		   (setq vm-messages-not-on-disk
+			 (+ vm-messages-not-on-disk
+			    (- (length vm-message-list)
+			       mcount))))
+	       (vm-inform 5 "No messages gathered.")))))))
 
 ;; returns list of new messages if there were any new messages, nil otherwise
 (defun* vm-assimilate-new-messages (&key
@@ -4762,7 +4765,7 @@ which is used in interactive confirmations."
 ;;;###autoload
 (defun vm-toggle-read-only ()
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (setq vm-folder-read-only (not vm-folder-read-only))
   (intern (buffer-name) vm-buffers-needing-display-update)
   (vm-inform 5 "Folder is now %s"
@@ -4908,7 +4911,7 @@ Interactively TYPE will be read from the minibuffer."
        (setq types (vm-delqual (symbol-name vm-folder-type)
 			       (copy-sequence types)))
        (list (intern (vm-read-string "Change folder to type: " types))))))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-virtual-folder)
   (if (not (memq type '(From_ BellFrom_ From_-with-Content-Length mmdf babyl)))
       (error "Unknown folder type: %s" type))
@@ -5142,13 +5145,13 @@ applied to collapsed threads in summary and thread operations are
 enabled via `vm-enable-thread-operations' then all messages in the
 thread are loaded."
   (interactive "p")
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (when (null count) (setq count 1))
   (let ((mlist (vm-select-operable-messages
-		count (interactive-p) "Load"))
+		count (vm-interactive-p) "Load"))
 	(errors 0)
 	(n 0)
 	fetch-method
@@ -5205,7 +5208,7 @@ applied to collapsed threads in summary and thread operations are
 enabled via `vm-enable-thread-operations' then all messages in the
 thread are retrieved."
   (save-current-buffer
-    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (when (null count) (setq count 1))
     (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	  (vm-fetched-message-limit nil)
@@ -5217,7 +5220,7 @@ thread are retrieved."
       ;; 	(setq mlist (list (car vm-message-pointer))))
       (unless mlist
 	(setq mlist (vm-select-operable-messages
-		     count (interactive-p) "Retrieve")))
+		     count (vm-interactive-p) "Retrieve")))
       (save-excursion
 	(while mlist
 	  (setq m (car mlist))
@@ -5231,7 +5234,7 @@ thread are retrieved."
 	(when (> n 0)
 	  (vm-inform 8 "Retrieving message body... done")
 	  (intern (buffer-name) vm-buffers-needing-display-update)
-	  (when (interactive-p)
+	  (when (vm-interactive-p)
 	    (vm-update-summary-and-mode-line))))
       )))
 
@@ -5272,7 +5275,8 @@ Gives an error if unable to retrieve message."
 		   (apply (intern (format "vm-fetch-%s-message" fetch-method))
 			  mm nil))
 	   (error 
-	    (vm-inform 0 "Unable to load message; %s" (error-message-string err))))
+	    (vm-warn 0 0 "Unable to load message; %s" 
+		     (error-message-string err))))
 	 (when fetch-result
 	   (vm-assert (eq (point) (marker-position (vm-text-of mm))))
 	   (vm-increment testing)
@@ -5337,14 +5341,14 @@ If the optional argument PHYSICAL is non-nil, then the message is
 physically discarded.  Otherwise, the discarding may be delayed until
 the folder is saved."
   (interactive "p")
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (when (null count) 
     (setq count 1))
   (let ((mlist (vm-select-operable-messages
-		count (interactive-p) "Unload"))
+		count (vm-interactive-p) "Unload"))
 	(buffer-undo-list t)
 	(errors 0)
 	m mm)

@@ -139,6 +139,8 @@ vm-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	echo "(custom-add-load 'vm 'vm-cus-load)" | tr -d '\015' >> $@
 	echo "(setq vm-configure-datadir \"${datadir}/vm\")" | tr -d '\015' >> $@
 	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" | tr -d '\015' >> $@
+	echo "(setq vm-configure-docdir \"${docdir}\")" | tr -d '\015' >> $@
+	echo "(setq vm-configure-infodir \"${infodir}\")" | tr -d '\015' >> $@
 	echo "(require 'vm-vars)" | tr -d '\015' >> $@
 	echo "(provide 'vm-autoloads)" | tr -d '\015' >> $@
 

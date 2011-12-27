@@ -97,6 +97,9 @@
   (put 'vm-mime-error 'error-conditions '(vm-mime-error error))
   (put 'vm-mime-error 'error-message "MIME error"))
 
+(defsubst vm-mime-handler (op type)
+  (intern (concat "vm-mime-" op "-" type)))
+
 ;; A lot of the more complicated MIME character set processing is only
 ;; practical under MULE.
 (eval-when-compile 
@@ -244,6 +247,29 @@ TO are overwritten.                                    USR, 2011-03-27"
     (while (>= i 0)
       (aset to i (aref from i))
       (setq i (1- i)))))
+
+(defun vm-mime-layouts-equal (layout1 layout2)
+  (catch 'return
+    (if (equal layout1 layout2)
+	(throw 'return t))
+    (vm-mapc 
+     (lambda (i)
+       (unless (equal (aref layout1 i) (aref layout2 i))
+	 (throw 'return nil)))
+     '(0 1 2 3 4 5 6))			; type through q-disposition
+    (vm-mapc
+     (lambda (i)
+       (unless (equal (marker-position (aref layout1 i))
+		      (marker-position (aref layout2 i)))
+	 (throw 'return nil)))
+     '(7 9 10))				; header-start, body-start, body-end
+    (vm-mapc 
+     (lambda (part1 part2)
+       (unless (vm-mime-layouts-equal part1 part2)
+	 (throw 'return nil)))
+     (vm-mm-layout-parts layout1)
+     (vm-mm-layout-parts layout2))
+    t))
 
 (defun vm-mm-layout-type (e) (aref e 0))
 (defun vm-mm-layout-qtype (e) (aref e 1))
@@ -1395,7 +1421,7 @@ DEFAULT-TRANSFER-ENCODING, unless specified, is assumed to be 7bit.
   "Return the parameter NAME from PARAM-LIST.
 
 If parameter value continuations was used, i.e. the parameter was split into
-shorter pieces, rebuilt it from them."  
+shorter pieces, rebuild it from them."  
   (or (vm-mime-get-xxx-parameter-internal name param-list)
       (let ((n 0) content p)
         (while (setq p (vm-mime-get-xxx-parameter-internal
@@ -1489,7 +1515,7 @@ a string denoting the folder name."
       (when (fboundp 'set-buffer-file-coding-system)
 	(set-buffer-file-coding-system (vm-binary-coding-system) t))
       (vm-fsfemacs-nonmule-display-8bit-chars)
-      (if (and vm-mutable-frames vm-frame-per-folder
+      (if (and vm-mutable-frame-configuration vm-frame-per-folder
 	       (vm-multiple-frames-possible-p))
 	  (vm-set-hooks-for-frame-deletion))
       (use-local-map vm-mode-map)
@@ -1580,7 +1606,7 @@ source of the message."
 		   (vm-fetch-message 
 		    (list (vm-message-access-method-of mm)) mm)
 		 (error
-		  (vm-inform 0 "Cannot fetch message; %s" 
+		  (vm-warn 0 0 "Cannot fetch message; %s" 
 			   (error-message-string err)))))
 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 	       (vm-fetch-message (read (current-buffer)) mm)))
@@ -1641,7 +1667,7 @@ source of the message."
 ;; 	     (if (fboundp 'set-buffer-file-coding-system)
 ;; 		 (set-buffer-file-coding-system (vm-binary-coding-system) t))
 ;; 	     (vm-fsfemacs-nonmule-display-8bit-chars)
-;; 	     (if (and vm-mutable-frames vm-frame-per-folder
+;; 	     (if (and vm-mutable-frame-configuration vm-frame-per-folder
 ;; 		      (vm-multiple-frames-possible-p))
 ;; 		 (vm-set-hooks-for-frame-deletion))
 ;; 	     (use-local-map vm-mode-map)
@@ -1715,7 +1741,7 @@ source of the message."
 ;; 		   (vm-fetch-message 
 ;; 		    (list (vm-message-access-method-of mm)) mm)
 ;; 		 (error
-;; 		  (vm-inform 0 "Cannot fetch; %s" (error-message-string err)))))
+;; 		  (vm-warn 0 2 "Cannot fetch; %s" (error-message-string err)))))
 ;; 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
 ;; 	       (vm-fetch-message (read (current-buffer)) mm)))
 ;; 	(vm-reset-buffer-modified-p modified fetch-buf)
@@ -2318,9 +2344,11 @@ says whether the Content-Disposition header of the MIME object
 should be honored (default t).  The global setting of
 `vm-mime-honor-content-disposition' also has this effect."
   ;; Karnaugh map analysis shows that
-  ;; - all objects that are not auto-displayed should be buttons
-  ;; - attachment disposition objects are displayed as buttons only if
-  ;;   honor-content-disposition is non-nil
+  ;; - attachment disposition objects should be buttons
+  ;; - all auto-displayed objects should not be buttons
+  ;; - inline objects should be displayed if honor = t or
+  ;;   honor = internal-only and the object is internal-displayable
+  ;; - all other cases should be buttons
   (let ((type (car (vm-mm-layout-type layout)))
 	(disposition (car (vm-mm-layout-disposition layout))))
     (setq disposition (and disposition (downcase disposition)))
@@ -2328,12 +2356,18 @@ should be honored (default t).  The global setting of
 	  (and honor-content-disposition vm-mime-honor-content-disposition))
     (cond ((vm-mime-types-match "multipart" type)
 	   nil)
-	  ((and disposition
-		(or (eq honor-content-disposition t)
-		    (and (eq honor-content-disposition 'internal-only)
-			 (vm-mime-should-display-internal layout))))
-	   (equal disposition "attachment"))
-	  (t (not (vm-mime-should-auto-display layout))))))
+	  ((equal disposition "attachment")
+	   t)
+	  ((eq disposition "inline")
+	   (cond ((eq honor-content-disposition 'internal-only)
+		  (not (or (vm-mime-should-auto-display layout)
+			   (vm-mime-should-display-internal layout))))
+		 ((eq honor-content-disposition t)
+		  nil)
+		 (t
+		  (not (vm-mime-should-auto-display layout)))))
+	  (t
+	   (not (vm-mime-should-auto-display layout))))))
 
 (defun vm-mime-should-auto-display (layout)
   (let ((type (car (vm-mm-layout-type layout))))
@@ -2417,7 +2451,7 @@ in the buffer.  The function is expected to make the message
 `MIME presentable' to the user in whatever manner it sees fit."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (unless (or vm-display-using-mime vm-mime-display-function)
       (error "MIME display disabled, set vm-display-using-mime non-nil to enable."))
   (if vm-mime-display-function
@@ -2465,7 +2499,7 @@ in the buffer.  The function is expected to make the message
 	      (vm-expose-hidden-headers))
 	  (set-buffer vm-presentation-buffer))
 	;; Are we now in the Presentation buffer?  Why?  USR, 2010-05-08
-	(when (and (interactive-p) (eq vm-system-state 'previewing))
+	(when (and (vm-interactive-p) (eq vm-system-state 'previewing))
 	  (let ((vm-display-using-mime nil))
 	    (vm-show-current-message)))
 	(setq m (car vm-message-pointer))
@@ -2514,6 +2548,10 @@ in the buffer.  The function is expected to make the message
           (setq filename (vm-decode-mime-encoded-words-in-string filename)))))
     filename))
 
+(defun vm-mime-rewrite-with-inferred-type (layout type2)
+  (vm-set-mm-layout-type layout (list type2))
+  (vm-set-mm-layout-qtype layout (list (concat "\"" type2 "\""))))
+
 (defun vm-decode-mime-layout (layout &optional dont-honor-c-d)
   "Decode the MIME part in the current buffer using LAYOUT.  
 If DONT-HONOR-C-D non-Nil, then don't honor the Content-Disposition
@@ -2527,7 +2565,7 @@ deleted.
 Returns t if the display was successful.  Not clear what happens if it
 is not successful.                                   USR, 2011-03-25"
   (let ((modified (buffer-modified-p))
-	handler new-layout file type type2 type-no-subtype 
+	handler new-layout file type inf-type type-no-subtype inf-type-no-subtype
 	(extent nil))
     (unless (vectorp layout)
       ;; handle a button extent
@@ -2541,84 +2579,113 @@ is not successful.                                   USR, 2011-03-25"
     (unwind-protect
 	(progn
 	  (setq type (downcase (car (vm-mm-layout-type layout)))
-		type-no-subtype (car (vm-parse type "\\([^/]+\\)")))
-	  (cond ((and vm-infer-mime-types
+		type-no-subtype (car (vm-parse type "\\([^/]+\\)"))
+		file (vm-mime-get-disposition-filename layout)
+		inf-type (when (and vm-infer-mime-types file)
+			   (vm-mime-default-type-from-filename file)))
+	  (when inf-type
+	    (setq inf-type (downcase inf-type)
+		  inf-type-no-subtype  (car (vm-parse inf-type "\\([^/]+\\)"))))
+	  (cond ((and vm-infer-mime-types inf-type
 		      (or (and vm-infer-mime-types-for-text
 			       (vm-mime-types-match "text/plain" type))
 			  (vm-mime-types-match "application/octet-stream" type))
-		      (setq file (vm-mime-get-disposition-filename layout))
-		      (setq type2 (vm-mime-default-type-from-filename file))
-		      (not (vm-mime-types-match type type2)))
-		 (vm-set-mm-layout-type layout (list type2))
-		 (vm-set-mm-layout-qtype layout
-					 (list (concat "\"" type2 "\"")))
+		      (not (vm-mime-types-match type inf-type)))
+		 (vm-mime-rewrite-with-inferred-type layout inf-type)
 		 (setq type (downcase (car (vm-mm-layout-type layout)))
 		       type-no-subtype (car (vm-parse type "\\([^/]+\\)")))))
-	  
-	  (cond ((and (vm-mime-should-display-button 
-		       layout :honor-content-disposition (not dont-honor-c-d))
-		      ;; original conditional-cases changed to fboundp
-		      ;; checks.  USR, 2011-03-25
-		      (or (fboundp 
-			   (setq handler 
-				 (intern (concat "vm-mime-display-button-"
-						 type))))
-			  (fboundp 
-			   (setq handler
-				 (intern (concat "vm-mime-display-button-"
-						 type-no-subtype)))))
-		      (funcall handler layout))
-		 ;; if the handler returns t, we are done
-		 )
-		((and (vm-mime-should-display-internal layout)
-		      (or (fboundp 
-			   (setq handler 
-				 (intern (concat "vm-mime-display-internal-"
-						 type))))
-			  (fboundp 
-			   (setq handler
-				 (intern (concat "vm-mime-display-internal-"
-						 type-no-subtype)))))
-		      (funcall handler layout))
-		 ;; if the handler returns t, we are done
-		 )
-		((vm-mime-types-match "multipart" type)
-		 (if (fboundp (setq handler
-				    (intern (concat "vm-mime-display-internal-"
-						    type))))
-		     (funcall handler layout)
-		   (vm-mime-display-internal-multipart/mixed layout))
-		 )
-		((and (vm-mime-find-external-viewer type)
-		      (vm-mime-display-external-generic layout))
-		 ;; external viewer worked.  the button should go away.
-		 (when extent (vm-set-extent-property
-			       extent 'vm-mime-disposable nil))
-		 )
-		((and (not (vm-mm-layout-is-converted layout))
-		      (vm-mime-can-convert type)
-		      (setq new-layout
-			    (vm-mime-convert-undisplayable-layout layout)))
-		 ;; conversion worked.  the button should go away.
-		 (when extent
-		   (vm-set-extent-property extent 'vm-mime-disposable t))
-		 (vm-decode-mime-layout new-layout)
-		 )
-		(t 
-		 (when extent (vm-mime-rewrite-failed-button
-			       extent
-			       (or (vm-mm-layout-display-error layout)
-				   "no external viewer defined for type")))
-		 (cond ((vm-mime-types-match "message/external-body" type)
-			(if (null extent)
-			    (vm-mime-display-button-xxxx layout t)
-			  (setq extent nil)))
-		       ((vm-mime-types-match "application/octet-stream" type)
-			(vm-mime-display-internal-application/octet-stream
-			 (or extent layout)))
-		       ;; if everything else fails, do nothing
-		       )
-		 ))
+	  (cond 
+	   ((and (vm-mime-should-display-button 
+		  layout :honor-content-disposition (not dont-honor-c-d))
+		 ;; original conditional-cases changed to fboundp
+		 ;; checks.  USR, 2011-03-25
+		 (or (fboundp 
+		      (setq handler (vm-mime-handler 
+				     "display-button" type))) 
+		     (fboundp 
+		      (setq handler (vm-mime-handler 
+				     "display-button" type-no-subtype)))
+
+		     (setq handler 'vm-mime-display-button-application))
+		      
+		 (funcall handler layout))
+	    ;; if the handler returns t, we are done
+	    )
+	   ((and vm-infer-mime-types inf-type
+		 (vm-mime-should-display-button 
+		  layout :honor-content-disposition (not dont-honor-c-d))
+		 (or (fboundp 
+		      (setq handler (vm-mime-handler 
+				     "display-button" inf-type)))
+		     (fboundp 
+		      (setq handler (vm-mime-handler 
+				     "display-button" 
+				     inf-type-no-subtype))))
+		 (funcall handler layout))
+	    ;; if the handler returns t, overwrite the layout type
+	    (vm-mime-rewrite-with-inferred-type layout inf-type))
+	   ((and (vm-mime-should-display-internal layout)
+		 (or (fboundp 
+		      (setq handler (vm-mime-handler 
+				     "display-internal" type)))
+		     (fboundp 
+		      (setq handler (vm-mime-handler 
+				     "display-internal" type-no-subtype))))
+		 (funcall handler layout))
+	    ;; if the handler returns t, we are done
+	    )
+	   ((and vm-infer-mime-types inf-type
+		 (vm-mime-should-display-internal layout)
+		 (or (fboundp
+		      (setq handler (vm-mime-handler 
+				     "display-internal" inf-type)))
+		     (fboundp
+		      (setq handler (vm-mime-handler 
+				     "display-internal" 
+				     inf-type-no-subtype))))
+		 (funcall handler layout))
+	    ;; if the handler returns t, overwrite the layout type
+	    (vm-mime-rewrite-with-inferred-type layout inf-type))
+	   ((vm-mime-types-match "multipart" type)
+	    (if (fboundp 
+		 (setq handler (vm-mime-handler "display-internal" type)))
+		(funcall handler layout)
+	      (vm-mime-display-internal-multipart/mixed layout))
+	    )
+	   ((and (vm-mime-find-external-viewer type)
+		 (vm-mime-display-external-generic layout))
+	    ;; external viewer worked.  the button should go away.
+	    (when extent (vm-set-extent-property
+			  extent 'vm-mime-disposable nil))
+	    )
+	   ((and (not (vm-mm-layout-is-converted layout))
+		 (vm-mime-can-convert type)
+		 (setq new-layout
+		       (vm-mime-convert-undisplayable-layout layout)))
+	    ;; conversion worked.  the button should go away.
+	    (when extent
+	      (vm-set-extent-property extent 'vm-mime-disposable t))
+	    (vm-decode-mime-layout new-layout)
+	    )
+	   (t 
+	    (when extent (vm-mime-rewrite-failed-button
+			  extent
+			  (or (vm-mm-layout-display-error layout)
+			      "no external viewer defined for type")))
+	    (cond ((vm-mime-types-match "message/external-body" type)
+		   (if (null extent)
+		       (vm-mime-display-button-xxxx layout t)
+		     (setq extent nil)))
+		  ((vm-mime-types-match "application/octet-stream" type)
+		   (vm-mime-display-internal-application/octet-stream
+		    (or extent layout)))
+		  ;; if everything else fails, just display a button
+		  (t
+		   (vm-set-mm-layout-display-error 
+		    layout "Unknown MIME type")
+		   (vm-mime-display-button-application layout))
+		  )
+	    ))
 	  (when extent (vm-mime-delete-button-maybe extent)))
       ;; unwind-protection
       (set-buffer-modified-p modified)))
@@ -2881,14 +2948,16 @@ determined by `vm-mime-external-content-types-alist'."
 given as the argument instead, then nothing is done.   USR, 2011-03-25"
   (if (vectorp layout)
       (let ((buffer-read-only nil)
-	    (vm-mf-default-action "save to a file"))
+	    (vm-mf-default-action "save"))
 	(vm-mime-insert-button
+	 :caption
 	 (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+	 :action
 	 (function
 	  (lambda (layout)
 	    (save-excursion
 	      (vm-mime-save-application/octet-stream layout))))
-	 layout nil)))
+	 :layout layout)))
   t)
 
 (defun vm-mime-save-application/octet-stream (layout)
@@ -3057,18 +3126,21 @@ emacs-w3m."
 
 (defun vm-mime-display-button-multipart/parallel (layout)
   (vm-mime-insert-button
+   :caption
    (concat
     ;; display the file name or disposition
     (let ((file (vm-mime-get-disposition-filename layout)))
       (if file (format " %s " file) ""))
     (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout) )
+   :action
    (function
     (lambda (layout)
       (save-excursion
 	(let ((vm-mime-auto-displayed-content-types t)
 	      (vm-mime-auto-displayed-content-type-exceptions nil))
 	  (vm-decode-mime-layout layout t)))))
-   layout t))
+   :layout layout 
+   :disposable t))
 
 (fset 'vm-mime-display-internal-multipart/parallel
       'vm-mime-display-internal-multipart/mixed)
@@ -3077,12 +3149,14 @@ emacs-w3m."
   (if (vectorp layout)
       (let ((buffer-read-only nil))
 	(vm-mime-insert-button
+	 :caption
 	 (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+	 :action
 	 (function
 	  (lambda (layout)
 	    (save-excursion
 	      (vm-mime-display-internal-multipart/digest layout))))
-	 layout nil))
+	 :layout layout))
     (goto-char (vm-extent-start-position layout))
     (setq layout (vm-extent-property layout 'vm-mime-layout))
     (set-buffer (generate-new-buffer (format "digest from %s/%s"
@@ -3115,12 +3189,14 @@ emacs-w3m."
 (defun vm-mime-display-button-message/rfc822 (layout)
   (let ((buffer-read-only nil))
     (vm-mime-insert-button
+     :caption
      (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+     :action
      (function
       (lambda (layout)
 	(save-excursion
 	  (vm-mime-display-internal-message/rfc822 layout))))
-     layout nil)))
+     :layout layout)))
 
 (fset 'vm-mime-display-button-message/news
       'vm-mime-display-button-message/rfc822)
@@ -3296,8 +3372,8 @@ fetched content."
 			   server)))
 			(error "Aborted"))
 		    (vm-mail-internal
-		     (format "mail to MIME mail server %s" server)
-		     server subject)
+		     :buffer-name (format "mail to MIME mail server %s" server)
+		     :to server :subject subject)
 		    (mail-text)
 		    (vm-mime-insert-mime-body child-layout)
 		    (let ((vm-confirm-mail-send nil))
@@ -3316,6 +3392,7 @@ fetched content."
 		  (vm-set-mm-layout-body-start 
 		   child-layout (vm-marker (point-min)))))
 	    (vm-mime-error		; handler
+	     ;; (vm-warn 0 2 (format "Error in retrieving: %s" (cdr data)))
 	     (vm-set-mm-layout-display-error layout (cdr data))
 	     (setq child-layout nil)))))
       ;; unwind-protections
@@ -3357,10 +3434,12 @@ button that this LAYOUT comes from."
 			       (vm-mm-layout-disposition tmplayout))
     (setq format (vm-mime-find-format-for-layout tmplayout))
     (vm-mime-insert-button
+     :caption
      (vm-replace-in-string
       (vm-mime-sprintf format tmplayout)	      
-      "save to a file\\]"
-      "display as text]")
+      "save\\]"
+      "display]")
+     :action
      (function
       (lambda (extent)
 	;; reuse the internal display code, but make sure that no new
@@ -3372,8 +3451,7 @@ button that this LAYOUT comes from."
 	      (vm-mime-auto-displayed-content-type-exceptions nil))
 	  (vm-mime-display-internal-message/external-body 
 	   layout extent))))
-     layout
-     nil)))
+     :layout layout)))
 
 
 (defun vm-mime-fetch-url-with-programs (url buffer)
@@ -3481,12 +3559,14 @@ it to an internal object by retrieving the body.       USR, 2011-03-28"
   (if (vectorp layout)
       (let ((buffer-read-only nil))
 	(vm-mime-insert-button
+	 :caption
 	 (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+	 :action
 	 (function
 	  (lambda (layout)
 	    (save-excursion
 	      (vm-mime-display-internal-message/partial layout))))
-	 layout nil))
+	 :layout layout))
     (vm-inform 6 "Assembling message...")
     (let ((parts nil)
 	  (missing nil)
@@ -3715,7 +3795,7 @@ describing the image type.                             USR, 2011-03-25"
 		 (vm-image-too-small
 		  (setq do-strips nil))
 		 (error
-		  (vm-inform 0 "Failed making image strips: %s" error-data)
+		  (vm-warn 0 0 "Failed making image strips: %s" error-data)
 		  ;; fallback to the non-strips way
 		  (setq do-strips nil)))))
 	(cond ((not do-strips)
@@ -3836,7 +3916,7 @@ describing the image type.                            USR, 2011-03-25"
 		 (vm-image-too-small
 		  (setq do-strips nil))
 		 (error
-		  (vm-inform 0 "Failed making image strips: %s" error-data)
+		  (vm-warn 0 0 "Failed making image strips: %s" error-data)
 		  ;; fallback to the non-strips way
 		  (setq do-strips nil)))))
 	(cond ((not do-strips)
@@ -3914,7 +3994,7 @@ describing the image type.                            USR, 2011-03-25"
 ;; 		    (setq dims (condition-case error-data
 ;; 				   (vm-get-image-dimensions origfile)
 ;; 				 (error
-;; 				  (vm-inform 0 "Failed getting image dimensions: %s"
+;; 				  (vm-warn 0 0 "Failed getting image dimensions: %s"
 ;; 					   error-data)
 ;; 				  (throw 'done nil)))
 ;; 			  width (nth 0 dims)
@@ -4023,7 +4103,7 @@ describing the image type.                            USR, 2011-03-25"
 ;; 							       overlay-list)
 ;; 							      image-type)))
 ;; 	    (error
-;; 	     (vm-inform 0 "Failed making image strips: %s" error-data)))
+;; 	     (vm-warn 0 0 "Failed making image strips: %s" error-data)))
 ;; 	  t ))
 ;;     nil ))
 
@@ -4364,6 +4444,7 @@ The return value does not seem to be meaningful.     USR, 2011-03-25"
 	  ;; the output is always PNG now, so fix it for displaying, but restore
 	  ;; it for the layout afterwards
 	  (vm-set-mm-layout-type layout '("image/png"))
+	  (vm-set-mm-layout-disposition layout '("inline"))
 	  (vm-mark-image-tempfile-as-message-garbage-once layout tempfile)
 	  (vm-mime-display-internal-generic extent))
       (vm-set-mm-layout-type layout saved-type))))
@@ -4480,6 +4561,8 @@ image when possible."
 	;; display a thumbnail over the fake extent
 	(let ((vm-mime-internal-content-types '("image"))
 	      (vm-mime-internal-content-type-exceptions nil)
+	      (vm-mime-auto-displayed-content-types '("image"))
+	      (vm-mime-auto-displayed-content-type-exceptions nil)
 	      (vm-mime-use-image-strips nil))
 	  (vm-mime-frob-image-xxxx thumb-extent
 				   "-thumbnail" 
@@ -4566,9 +4649,9 @@ automatically.  No external viewers are tried.     USR, 2011-03-25"
 DISPOSABLE is true, then the button will be removed when it is
 expanded to display the mime object."
   (vm-mime-insert-button
-   (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
-   (function vm-mime-display-generic)
-   layout disposable))
+   :caption (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+   :action (function vm-mime-display-generic)
+   :layout layout :disposable disposable))
 
 ;;----------------------------------------------------------------------------
 ;;; MIME buttons
@@ -4703,30 +4786,45 @@ buffer for message composition is queried from the minibufer."
 ;;
 ;; vm-mime-action-on-all-attachments :
 ;;	(int, ((message, layout, type, filename) -> void),
-;;	 &optional type list, message list, bool) 
+;;	 &optional type list, type list, message list, bool) 
+;;	-> void
+;; This function is replaced by the following, but interface retained
+;; for backward-compatibility.
+;;
+;; vm-mime-operate-on-attachments :
+;;	(int, :action ((message, layout, type, filename) -> void),
+;;	 :included type list, :excluded type list, 
+;;	 :messages message list, :name string) 
 ;;	-> void
 ;;----------------------------------------------------------------------------
 
 ;;;###autoload
-(defun vm-mime-action-on-all-attachments 
-  (count action &optional types exceptions mlist quiet)
+(defun* vm-mime-operate-on-attachments (count &key 
+					      ((:name action-name))
+					      ((:action action))
+					      ((:included types)) 
+					      ((:excluded exceptions))
+					      ((:messages mlist)))
   "On the next COUNT messages or marked messages, call the
-function ACTION on all \"attachments\".  For the purpose of this
-function, an \"attachment\" is a mime part part which has
-\"attachment\" as its disposition, or simply has an associated
-filename, or has a type that matches a regexp in TYPES but
-doesn't match one in EXCEPTIONS.
+function ACTION on all \"attachments\".  
 
-If QUIET is true no messages are generated.
+For the purpose of this function, an \"attachment\" is a mime
+part part which has \"attachment\" as its disposition, or simply
+has an associated filename, or has a type that matches a regexp
+in TYPES but doesn't match one in EXCEPTIONS.
+
+ACTION-NAME should be a human-readable string describing the
+action in minibuffer messages.  Or it can be nil to suppress
+messages. 
 
 ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME." 
   (unless mlist
-    (or count (setq count 1))
+    (unless count (setq count 1))
     (vm-check-for-killed-folder)
     (vm-select-folder-buffer-and-validate 1 nil))
 
   (let ((mlist (or mlist (vm-select-operable-messages
-			  count (interactive-p) "Action on"))))
+			  count (vm-interactive-p) "Action on"))))
     (vm-retrieve-operable-messages count mlist)
     (save-excursion
       (while mlist
@@ -4765,17 +4863,34 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
 				    "message/external-body" type))
                               types
                               (vm-mime-is-type-valid type types exceptions)))
-                     (when (not quiet)
-                       (vm-inform 8
-			"Action on part type=%s filename=%s disposition=%s"
-			type filename disposition))
+                     (when action-name
+                       (vm-inform 10
+			"%s part type=%s filename=%s disposition=%s"
+			action-name type filename disposition))
                      (funcall action (car mlist) layout type filename))
-                    ((not quiet)
-                     (vm-inform 8
-		      "No action on part type=%s filename=%s disposition=%s"
-		      type filename disposition)))
+                    (action-name
+                     (vm-inform 10
+		      "No %s on part type=%s filename=%s disposition=%s"
+		      action-name type filename disposition)))
               (setq parts (cdr parts)))))
         (setq mlist (cdr mlist))))))
+
+;;;###autoload
+(defun vm-mime-action-on-all-attachments 
+  (count action &optional types exceptions mlist quiet)
+  "On the next COUNT messages or marked messages, call the
+function ACTION on all \"attachments\".  For the purpose of this
+function, an \"attachment\" is a mime part part which has
+\"attachment\" as its disposition, or simply has an associated
+filename, or has a type that matches a regexp in TYPES but
+doesn't match one in EXCEPTIONS.
+
+If QUIET is true no messages are generated.
+
+ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME." 
+  (vm-mime-operate-on-attachments
+   count :action action :included types :excluded exceptions :messages mlist
+   :name (if quiet nil "action on")))
 
 (defun vm-mime-is-type-valid (type types-alist type-exceptions)
   (catch 'done
@@ -4802,23 +4917,25 @@ simply has an associated filename.  Any mime types that match
 are also included."
   (interactive "p")
   (vm-check-for-killed-summary)
-  (if (interactive-p) (vm-follow-summary-cursor))
+  (if (vm-interactive-p) (vm-follow-summary-cursor))
   
-  (let ((n 0))
-    (vm-mime-action-on-all-attachments
+  (let ((successes 0))
+    (vm-mime-operate-on-attachments
      count
+     :name "deleting"
+     :action
      (lambda (msg layout type file)
        (vm-inform 7 "Deleting `%s%s" type (if file (format " (%s)" file) ""))
        (vm-mime-discard-layout-contents layout)
-       (setq n (+ 1 n)))
-     vm-mime-deleteable-types
-     vm-mime-deleteable-type-exceptions)
-    (when (interactive-p)
+       (setq successes (+ 1 successes)))
+     :included vm-mime-deleteable-types
+     :excluded vm-mime-deleteable-type-exceptions)
+    (when (vm-interactive-p)
       (vm-discard-cached-data count)
       (let ((vm-preview-lines nil))
 	(vm-present-current-message)))
-    (if (> n 0)
-	(vm-inform 5 "%d attachment%s deleted" n (if (= n 1) "" "s"))
+    (if (> successes 0)
+	(vm-inform 5 "%d attachment%s deleted" successes (if (= successes 1) "" "s"))
       (vm-inform 5 "No attachments deleted")))
   (vm-update-summary-and-mode-line))
 
@@ -4859,12 +4976,17 @@ created."
           vm-mime-save-all-attachments-history)))
 
   (vm-check-for-killed-summary)
-  (if (interactive-p) (vm-follow-summary-cursor))
+  (if (vm-interactive-p) (vm-follow-summary-cursor))
  
-  (let ((n 0))
-    (vm-mime-action-on-all-attachments
+  (let ((successes 0)
+	(failures 0)
+	(result nil))
+    (vm-mime-operate-on-attachments
      count
-     ;; the action to be performed BEGIN
+     :name "saving"
+     :included vm-mime-saveable-types
+     :excluded vm-mime-saveable-type-exceptions
+     :action
      (lambda (msg layout type file)
        (let ((directory (if (functionp directory)
                             (funcall directory msg)
@@ -4889,28 +5011,33 @@ created."
                  (delete-file file)
                (setq file nil)))
          
-         (when file
+         (if (null file)
+	     (setq failures (+ 1 failures))
            (vm-inform 5 "Saving %s" (if file (format " (%s)" file) ""))
            (make-directory (file-name-directory file) t)
-           (vm-mime-send-body-to-file layout file file)
-           (if vm-mime-delete-after-saving
+           (setq result (vm-mime-send-body-to-file layout file file))
+           (when result 
+	     (when vm-mime-delete-after-saving
                (let ((vm-mime-confirm-delete nil))
                  (vm-mime-discard-layout-contents 
 		  layout (expand-file-name file))))
-           (setq n (+ 1 n)))))
-     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; the action to be performed END
-     ;; attachment filters 
-     vm-mime-saveable-types
-     vm-mime-saveable-type-exceptions)
+	     (setq successes (+ 1 successes))))))
+     )
 
-    (when (interactive-p)
+    (when (vm-interactive-p)
       (vm-discard-cached-data count)
       (let ((vm-preview-lines nil))
 	(vm-present-current-message)))
     
-    (if (> n 0)
-        (vm-inform 5 "%d attachment%s saved" n (if (= n 1) "" "s"))
-      (vm-inform 5 "No attachments saved"))))
+    (if (> failures 0)
+	(if (> successes 0)
+	    (vm-inform 5 "%d attachment%s saved; %s failed" 
+		       successes (if (= successes 1) "" "s") failures)
+	  (vm-inform 5 "No attachments saved; %s failed" failures))
+	(if (> successes 0)
+	    (vm-inform 5 "%d attachment%s saved" 
+		       successes (if (= successes 1) "" "s"))
+	  (vm-inform 5 "No attachments saved")))))
 
 ;; (define-obsolete-function-alias 'vm-mime-save-all-attachments
 ;;   'vm-save-all-attachments "8.2.0")
@@ -4939,13 +5066,17 @@ confirmed before creating a new directory."
   (interactive "p")
 
   (vm-check-for-killed-summary)
-  (if (interactive-p) (vm-follow-summary-cursor))
+  (if (vm-interactive-p) (vm-follow-summary-cursor))
  
-  (let ((n 0)
+  (let ((successes 0)
+	(failures 0)
 	(directory nil))
-    (vm-mime-action-on-all-attachments
+    (vm-mime-operate-on-attachments
      count
-     ;; the action to be performed BEGIN
+     :included vm-mime-saveable-types
+     :excluded vm-mime-saveable-type-exceptions
+     :name "saving"
+     :action
      (lambda (msg layout type file-name)
        (let ((file (vm-read-file-name
 		    (if file-name			; prompt
@@ -4975,26 +5106,30 @@ confirmed before creating a new directory."
 		(format "Directory %s does not exist; create it?" directory))
 	       (make-directory directory t)
 	     (setq file nil)))
-         (when file
+         (if (null file)
+	     (setq failures (+ 1 failures))
            (vm-inform 5 "Saving %s" (if file (format " (%s)" file) ""))
            (vm-mime-send-body-to-file layout file file)
            (if vm-mime-delete-after-saving
                (let ((vm-mime-confirm-delete nil))
                  (vm-mime-discard-layout-contents 
 		  layout (expand-file-name file))))
-           (setq n (+ 1 n)))))
-     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; the action to be performed END
-     ;; attachment filters 
-     vm-mime-saveable-types
-     vm-mime-saveable-type-exceptions)
+           (setq successes (+ 1 successes)))))
+     )
 
-    (when (interactive-p)
+    (when (vm-interactive-p)
       (vm-discard-cached-data count)
       (vm-present-current-message))
     
-    (if (> n 0)
-        (vm-inform 5 "%d attachment%s saved" n (if (= n 1) "" "s"))
-      (vm-inform 5 "No attachments saved"))))
+    (if (> failures 0)
+	(if (> successes 0)
+	    (vm-inform 5 "%d attachment%s saved; %s failed" 
+		       successes (if (= successes 1) "" "s") failures)
+	  (vm-inform 5 "No attachments saved; %s failed" failures))
+	(if (> successes 0)
+	    (vm-inform 5 "%d attachment%s saved" 
+		       successes (if (= successes 1) "" "s"))
+	  (vm-inform 5 "No attachments saved")))))
 ;; for the karking compiler
 (defvar vm-menu-mime-dispose-menu)
 
@@ -5083,7 +5218,7 @@ the front and placing the image there as the display text property.
 					 ':type 'xpm
 					 ':file file))))))))
 
-(defun vm-mime-insert-button (caption action layout disposable)
+(defun* vm-mime-insert-button (&key caption action layout (disposable nil))
   "Display a button for a mime object, using CAPTION as the label (a
 string) and ACTION as the default action (a function).  The mime object
 is described by LAYOUT.  If DISPOSABLE is true, then the button will
@@ -5146,7 +5281,7 @@ be removed when it is expanded to display the mime object."
 ;;; MIME button operations
 ;;
 ;; vm-mime-send-body-to-file: (extent-or-layout 
-;;		               &optional filename filename bool) -> filename
+;;		               &optional filename filepath bool) -> filename
 ;; vm-mime-send-body-to-folder: (extent-or-layout 
 ;;		                 &optional filename) -> filename
 ;; vm-mime-delete-body-after-saving: (extent) -> void
@@ -5193,6 +5328,11 @@ be removed when it is expanded to display the mime object."
 
 (defun vm-mime-send-body-to-file (layout &optional default-filename file
                                          overwrite)
+  "Writes the body of MIME object given by LAYOUT to FILE.  Returns
+boolean value indicating success or failure.
+The optional argument DEFAULT-FILENAME gives the default filename to
+be used if FILE is not specified.  OVERWRITE says whether any existing
+file with the name should be overwritten."
   (unless (vectorp layout)
     (setq layout (vm-extent-property layout 'vm-mime-layout)))
   (when (vm-mime-types-match "message/external-body"
@@ -5226,34 +5366,37 @@ be removed when it is expanded to display the mime object."
     (let ((work-buffer (vm-make-work-buffer))
 	  (coding-system-for-read (vm-binary-coding-system)))
       (unwind-protect
-	  (with-current-buffer work-buffer
-	    (setq selective-display nil)
-	    ;; Tell DOS/Windows NT whether the file is binary
-	    (setq buffer-file-type (not (vm-mime-text-type-layout-p layout)))
-	    ;; Tell XEmacs/MULE not to mess with the bits unless
-	    ;; this is a text type.
-	    (if (fboundp 'set-buffer-file-coding-system)
-		(if (vm-mime-text-type-layout-p layout)
-		    (set-buffer-file-coding-system
-		     (vm-line-ending-coding-system) nil)
-		  (set-buffer-file-coding-system (vm-binary-coding-system) t)))
-	    (vm-mime-insert-mime-body layout)
-	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
-            (unless (or overwrite (not (file-exists-p file)))
-              (or (y-or-n-p "File exists, overwrite? ")
-                  (error "Aborted")))
-	    ;; Bind the jka-compr-compression-info-list to nil so
-	    ;; that jka-compr won't compress already compressed
-	    ;; data.  This is a crock, but as usual I'm getting
-	    ;; the bug reports for somebody else's bad code.
-	    (let ((jka-compr-compression-info-list nil)
-		  (command (vm-mime-find-write-filter
-			    (car (vm-mm-layout-type layout)))))
-	      (if command (shell-command-on-region (point-min) (point-max)
-						   (concat command " > " file))
-		(write-region (point-min) (point-max) file nil nil)))
-	    
-	    file )
+	  (condition-case err
+	      (with-current-buffer work-buffer
+		(setq selective-display nil)
+		;; Tell DOS/Windows NT whether the file is binary
+		(setq buffer-file-type (not (vm-mime-text-type-layout-p layout)))
+		;; Tell XEmacs/MULE not to mess with the bits unless
+		;; this is a text type.
+		(if (fboundp 'set-buffer-file-coding-system)
+		    (if (vm-mime-text-type-layout-p layout)
+			(set-buffer-file-coding-system
+			 (vm-line-ending-coding-system) nil)
+		      (set-buffer-file-coding-system (vm-binary-coding-system) t)))
+		(vm-mime-insert-mime-body layout)
+		(vm-mime-transfer-decode-region layout (point-min) (point-max))
+		(unless (or overwrite (not (file-exists-p file)))
+		  (or (y-or-n-p "File exists, overwrite? ")
+		      (error "Aborted")))
+		;; Bind the jka-compr-compression-info-list to nil so
+		;; that jka-compr won't compress already compressed
+		;; data.  This is a crock, but as usual I'm getting
+		;; the bug reports for somebody else's bad code.
+		(let ((jka-compr-compression-info-list nil)
+		      (command (vm-mime-find-write-filter
+				(car (vm-mm-layout-type layout)))))
+		  (if command 
+		      (shell-command-on-region 
+		       (point-min) (point-max) (concat command " > " file))
+		    (write-region (point-min) (point-max) file nil nil)))
+		file )
+	    (error (vm-warn 1 2 "Error in writing %s: %s" file err)
+		   nil))
 	(when work-buffer (kill-buffer work-buffer))))))
 
 (defun vm-mime-send-body-to-folder (layout &optional default-filename)
@@ -5318,7 +5461,7 @@ be removed when it is expanded to display the mime object."
 	    (vm-mime-insert-mime-body layout)
 	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
 	    (let ((pop-up-windows (and pop-up-windows
-				       (eq vm-mutable-windows t)))
+				       (eq vm-mutable-window-configuration t)))
 		  (process-coding-system-alist
 		   (if (vm-mime-text-type-layout-p layout)
 		       nil
@@ -5386,6 +5529,7 @@ be removed when it is expanded to display the mime object."
       (vm-mime-fetch-message/external-body layout)
       (if (vm-mm-layout-display-error layout)
 	  (apply 'error (vm-mm-layout-display-error layout)))
+      ;; Use the child layout for external viewer
       (setq layout (car (vm-mm-layout-parts layout))))
     (if (vm-mime-find-external-viewer (car (vm-mm-layout-type layout)))
 	(vm-mime-display-external-generic layout)
@@ -6586,7 +6730,7 @@ The MIME object is replaced by a text/plain object that briefly
 describes what was deleted."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (when (and (vm-virtual-message-p (car vm-message-pointer))
 	     (null (vm-virtual-messages-of (car vm-message-pointer))))
@@ -6619,7 +6763,7 @@ describes what was deleted."
 	     (delete-region (point) (vm-extent-end-position e))
 	     (vm-set-extent-endpoints e opos (point)))))
 	(vm-mime-discard-layout-contents layout saved-file)))
-    (when (interactive-p)
+    (when (vm-interactive-p)
       ;; make the change visible and place the cursor behind the removed object
       (vm-discard-cached-data)
       (when vm-presentation-buffer
@@ -6797,7 +6941,7 @@ should be encoded together."
         (goto-char end)))))
 
 ;;;###autoload
-(defun vm-mime-encode-composition ()
+(defun vm-mime-encode-composition (&optional attachments-only)
  "MIME encode the current mail composition buffer.
 
 This function chooses the MIME character set(s) to use, and transforms the
@@ -6836,7 +6980,7 @@ and the approriate content-type and boundary markup information is added."
 	(mybuffer (current-buffer)))
     (unwind-protect
 	(progn
-	  (vm-mime-encode-composition-internal)
+	  (vm-mime-encode-composition-internal attachments-only)
 	  (setq unwind-needed nil))
       (and unwind-needed (consp buffer-undo-list)
 	   (eq mybuffer (current-buffer))
@@ -6847,7 +6991,7 @@ and the approriate content-type and boundary markup information is added."
 ;; This function was originally XEmacs-specific.  It has now been
 ;; generalized to both XEmacs and GNU Emacs.  USR, 2011-03-27
 
-(defun vm-mime-encode-composition-internal ()
+(defun vm-mime-encode-composition-internal (&optional attachments-only)
   "MIME encode the message composition in the current buffer."
   (save-restriction
     (widen)
@@ -6939,22 +7083,25 @@ and the approriate content-type and boundary markup information is added."
 		        (car (vm-extent-property e 'vm-mime-forward-local-refs))
 		    description (vm-extent-property e 'vm-mime-description)
 		    disposition
-		    (if (not (equal
-			      (car (vm-extent-property e 'vm-mime-disposition))
-			      "unspecified"))
-			(vm-extent-property e 'vm-mime-disposition)
-		      (vm-mm-layout-qdisposition layout)))
+		    (if (equal
+			 (car (vm-extent-property e 'vm-mime-disposition))
+			 "unspecified")
+			(vm-mm-layout-qdisposition layout)
+		      (vm-extent-property e 'vm-mime-disposition)))
 	    (setq type (vm-extent-property e 'vm-mime-type)
 		  params (vm-extent-property e 'vm-mime-parameters)
 		  forward-local-refs
 		      (car (vm-extent-property e 'vm-mime-forward-local-refs))
 		  description (vm-extent-property e 'vm-mime-description)
 		  disposition
-		  (if (not (equal
-			    (car (vm-extent-property e 'vm-mime-disposition))
-			    "unspecified"))
-		      (vm-extent-property e 'vm-mime-disposition)
-		    nil)))
+		  (if (equal
+		       (car (vm-extent-property e 'vm-mime-disposition))
+		       "unspecified")
+		      (if attachments-only '("attachment") nil)
+		    (if attachments-only
+			(cons "attachment"
+			      (cdr (vm-extent-property e 'vm-mime-disposition)))
+		      (vm-extent-property e 'vm-mime-disposition)))))
 	  ;; 1e. Encode the object if necessary
 	  (cond ((vm-mime-types-match "text" type)
 		 (setq encoding
@@ -7697,7 +7844,7 @@ Returns marker pointing to the start of the encoded MIME part."
 		     (setq sexp (cons (list 'vm-mf-parts-count-pluralizer
 					    'vm-mime-layout) sexp)))
 		    ((= conv-spec ?t)
-		     (setq sexp (cons (list 'vm-mf-content-type
+		     (setq sexp (cons (list 'vm-mf-content-type-description
 					    'vm-mime-layout) sexp)))
 		    ((= conv-spec ?T)
 		     (setq sexp (cons (list 'vm-mf-partial-total
@@ -7785,15 +7932,17 @@ Returns marker pointing to the start of the encoded MIME part."
 
 (defun vm-mf-content-description (layout)
   (or (vm-mm-layout-description layout)
-      (let ((p vm-mime-type-description-alist)
-	    (type (car (vm-mm-layout-type layout))))
-	(catch 'done
-	  (while p
-	    (if (vm-mime-types-match (car (car p)) type)
-		(throw 'done (cdr (car p)))
-	      (setq p (cdr p))))
-	  nil ))
-      (vm-mf-content-type layout)))
+      (vm-mf-content-type-description layout)))
+
+(defun vm-mf-content-type-description (layout)
+  (let ((p vm-mime-type-description-alist)
+	(type (car (vm-mm-layout-type layout))))
+    (catch 'done
+      (while p
+	(if (vm-mime-types-match (car (car p)) type)
+	    (throw 'done (cdr (car p)))
+	  (setq p (cdr p))))
+      (vm-mf-content-type layout) )))
 
 (defun vm-mf-text-charset (layout)
   (or (vm-mime-get-parameter layout "charset")
@@ -7824,12 +7973,13 @@ Returns marker pointing to the start of the encoded MIME part."
       "Click mouse-2"
     "Press RETURN"))
 
-(defun vm-mf-default-action (layout)
-  (if (eq vm-mime-alternative-show-method 'all)
-      (concat (vm-mf-default-action-orig layout) " alternative")
-    (vm-mf-default-action-orig layout)))
+;; This puts "alternative" on all attachments.  Silly.  USR, 2011-11-24
+;; (defun vm-mf-default-action (layout)
+;;   (if (eq vm-mime-alternative-show-method 'all)
+;;       (concat (vm-mf-default-action-orig layout) " alternative")
+;;     (vm-mf-default-action-orig layout)))
 
-(defun vm-mf-default-action-orig (layout)
+(defun vm-mf-default-action (layout)
   (or vm-mf-default-action
       (let (cons)
         (cond ((or (vm-mime-can-display-internal layout)
@@ -7845,8 +7995,8 @@ Returns marker pointing to the start of the encoded MIME part."
 		   nil )))
 	      ((setq cons (vm-mime-can-convert
 			   (car (vm-mm-layout-type layout))))
-	       (format "display as %s" (nth 1 cons)))
-	      (t "save to a file")))
+	       "convert")
+	      (t "save")))
       ;; should not be reached
       "burn in the raging fires of hell forever"))
 
@@ -7868,27 +8018,32 @@ end of the path."
   "List mime part structure of the current message."
   (interactive "P")
   (vm-check-for-killed-summary)
-  (if (interactive-p) (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
-  (let ((m (car vm-message-pointer)))
-    (switch-to-buffer "*VM mime part layout*")
-    (erase-buffer)
-    ;; (setq truncate-lines t)
-    (insert (format "%s\n" (vm-decode-mime-encoded-words-in-string
-                            (vm-su-subject m))))
-    (vm-mime-map-layout-parts
-     m
-     (lambda (m layout path)
-       (if verbose
-           (insert (format "%s%S\n" (make-string (length path) ? ) layout))
-         (insert (format "%s%S%s%s%s\n" (make-string (length path) ? )
-                         (vm-mm-layout-type layout)
-                         (let ((id (vm-mm-layout-id layout)))
-                           (if id (format " id=%S" id) ""))
-                         (let ((desc (vm-mm-layout-description layout)))
-                           (if desc (format " desc=%S" desc) ""))
-                         (let ((dispo (vm-mm-layout-disposition layout)))
-                           (if dispo (format " %S" dispo) "")))))))))
+  (if (vm-interactive-p) (vm-follow-summary-cursor))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
+  (let ((m (car vm-message-pointer))
+	(buffer (get-buffer-create "*VM mime part layout*")))
+    ;; (switch-to-buffer "*VM mime part layout*")
+    ;; (erase-buffer)
+    (with-current-buffer buffer (setq truncate-lines t))
+    (with-electric-help
+     (lambda ()
+       (princ (format "%s\n" (vm-decode-mime-encoded-words-in-string
+			       (vm-su-subject m))))
+       (vm-mime-map-layout-parts
+	m
+	(lambda (m layout path)
+	  (if verbose
+	      (princ (format "%s%S\n" (make-string (length path) ? ) layout))
+	    (princ (format "%s%S%s%s%s\n" (make-string (length path) ? )
+			   (vm-mm-layout-type layout)
+			   (let ((id (vm-mm-layout-id layout)))
+			     (if id (format " id=%S" id) ""))
+			   (let ((desc (vm-mm-layout-description layout)))
+			     (if desc (format " desc=%S" desc) ""))
+			   (let ((dispo (vm-mm-layout-disposition layout)))
+			     (if dispo (format " %S" dispo) ""))))))))
+     buffer)
+    ))
 (defalias 'vm-mime-list-part-structure
   'vm-list-mime-part-structure)
 
@@ -7939,23 +8094,23 @@ the first sub part of a multipart/alternative is a text/plain part."
 
 This is a destructive operation and cannot be undone!"
   (interactive "p")
-  (when (interactive-p)
+  (when (vm-interactive-p)
     (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (let ((mlist (or mlist 
 		   (vm-select-operable-messages
-		    count (interactive-p) "Nuke html of"))))
+		    count (vm-interactive-p) "Nuke html of"))))
     (vm-retrieve-operable-messages count mlist)
     (save-excursion
       (while mlist
         (let ((count (vm-nuke-alternative-text/html-internal (car mlist))))
-          (when (interactive-p)
+          (when (vm-interactive-p)
             (if (= count 0)
                 (vm-inform 5 "No text/html parts found.")
               (vm-inform 5 "%d text/html part%s deleted."
                        count (if (> count 1) "s" ""))))
           (setq mlist (cdr mlist))))))
-  (when (interactive-p)
+  (when (vm-interactive-p)
     (vm-discard-cached-data count)
     (vm-present-current-message)))
 (defalias 'vm-mime-nuke-alternative-text/html
@@ -7966,10 +8121,12 @@ This is a destructive operation and cannot be undone!"
 ;;-----------------------------------------------------------------------------
 ;; The following functions are taken from vm-pine.el
 ;; Copyright (C) Robert Widhopf-Fenk
+;; Copyright (C) Uday S. Reddy, 2010-2011
 
 ;;;###autoload
 (defun vm-mime-convert-to-attachment-buttons ()
   "Replace all mime buttons in the current buffer by attachment buttons."
+  ;; called vm-mime-encode-mime-attachments in vm-pine.el
   (interactive)
   (cond (vm-xemacs-p
          (let ((e-list (vm-extent-list 
@@ -7995,64 +8152,37 @@ This is a destructive operation and cannot be undone!"
          (error "don't know how to MIME encode composition for %s"
                 (emacs-version)))))
 
-;; This function is now unused.  USR, 2011-02-14
-;; (defun vm-mime-re-fake-attachment-overlays (start end)
-;;   "For all MIME buttons in the region, create \"fake\" attachment
-;; overlays, which are then used during MIME encoding of the
-;; composition.  This function is similar to
-;; `vm-mime-fake-attachment-overlays' and used only with FSF Emacs.
-;; 						  USR, 2011-02-14"
-;;   (let ((o-list nil)
-;; 	(done nil)
-;; 	(pos start)
-;; 	object props o)
-;;     (save-excursion
-;;       (save-restriction
-;; 	(narrow-to-region start end)
-;; 	(while (not done)
-;; 	  (setq object (get-text-property pos 'vm-mime-layout))
-;; 	  (setq pos (next-single-property-change pos 'vm-mime-layout))
-;; 	  (unless pos 
-;; 	    (setq pos (point-max) 
-;; 		  done t))
-;; 	  (when object
-;; 	    (setq o (make-overlay start pos))
-;; 	    (overlay-put o 'insert-in-front-hooks
-;; 			 '(vm-disallow-overlay-endpoint-insertion))
-;; 	    (overlay-put o 'insert-behind-hooks
-;; 			 '(vm-disallow-overlay-endpoint-insertion))
-;; 	    (setq props (append (list 'vm-mime-object t)
-;; 				(text-properties-at start)))
-;; 	    (while props
-;; 	      (overlay-put o (car props) (cadr props))
-;; 	      (setq props (cddr props)))
-;; 	    (setq o-list (cons o o-list)))
-;; 	  (setq start pos))
-;; 	o-list ))))
+;; The function vm-mime-re-fake-attachment-overlays from vm-pine.el is
+;; now unused.  USR, 2011-02-14 
 
 (defun vm-mime-replace-by-attachment-button (x)
-  "Replace the MIME button specified by X by an attachment button."
+  "Replace the MIME button specified by extent X by an attachment button."
+  ;; This was called vm-mime-encode-mime-button in vm-pine.el
   (save-excursion
     (let* ((layout (vm-extent-property x 'vm-mime-layout))
 	   (xstart (vm-extent-start-position x))
 	   (xend   (vm-extent-end-position x))
-	   (start  (vm-mm-layout-header-start layout))
+	   (hstart (vm-mm-layout-header-start layout))
+	   (bstart (vm-mm-layout-body-start layout))
 	   (end    (vm-mm-layout-body-end   layout))
-	   (buf    (marker-buffer start))
+	   (hbuf   (marker-buffer hstart))
+	   (bbuf   (marker-buffer bstart))
+	   (type   (vm-mm-layout-type layout))
 	   (desc   (or (vm-mm-layout-description layout)
-		       "message body text"))
+		       (vm-mime-get-parameter layout "name")
+		       "attachment"))
 	   (disp   (or (vm-mm-layout-disposition layout)
 		       '("inline")))
 	   (file   (vm-mime-get-disposition-parameter layout "filename"))
-	   (filename nil)
-	   (type   (vm-mm-layout-type layout)))
+	   (ext-file nil))
 
       ;; special case of message/external-body
+      ;; seems to be unused now.  USR, 2011-12-06
       (when (and type
 		 (string= (car type) "message/external-body")
 		 (string= (cadr type) "access-type=local-file"))
 	(save-excursion
-	  (setq filename (substring (caddr type) 5))
+	  (setq ext-file (substring (caddr type) 5))
 	  (vm-select-folder-buffer)
 	  (save-restriction
 	    (let ((start (vm-mm-layout-body-start layout))
@@ -8069,16 +8199,20 @@ This is a destructive operation and cannot be undone!"
         
       ;; insert an attached-object-button
       (goto-char xstart)
-      (cond (filename
-	     (vm-attach-file filename (car type)))
-	    (file
-	     (vm-attach-object (list buf start end disp file) 
-				    :type (car type) :params nil 
-				    :description desc :mimed t))
+      (cond (ext-file
+	     (vm-attach-file ext-file (car type)))
+	    ((eq hbuf bbuf)
+	     (vm-attach-object 
+	      (if file
+		  (list hbuf hstart end disp file)
+		(list hbuf hstart end disp))
+	      :type (car type) :params (cdr type) 
+	      :disposition disp :description desc :mimed t))
 	    (t
-	     (vm-attach-object (list buf start end disp)
-				    :type (car type) :params nil 
-				    :description desc :mimed t)))
+	     (vm-attach-object 
+	      bbuf
+	      :type (car type) :params (cdr type) 
+	      :disposition disp :description desc :mimed nil)))
       ;; delete the mime-button
       (delete-region (vm-extent-start-position x) (vm-extent-end-position x))
       (vm-detach-extent x))))

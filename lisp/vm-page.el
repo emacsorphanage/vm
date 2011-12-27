@@ -66,7 +66,7 @@ Prefix argument N means scroll forward N lines."
 	needs-decoding 
 	(was-invisible nil))
     (vm-follow-summary-cursor)
-    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (setq mp-changed
 	  (or (null vm-presentation-buffer)
 	      (not (equal (vm-number-of (car vm-message-pointer))
@@ -798,6 +798,13 @@ preview or the full message, governed by the the variables
              (and vm-display-using-mime
 		  (not (vm-mime-plain-message-p (car vm-message-pointer)))))
 	 (let ((layout (vm-mm-layout (car vm-message-pointer))))
+	   ;; This check is for Bug Report 740755.  USR, 2011-12-24
+	   (let ((new-layout (vm-mime-parse-entity-safe 
+			      (car vm-message-pointer))))
+	     (unless (vm-mime-layouts-equal layout new-layout)
+	       (when vm-debug 
+		 (debug 'vm-present-message 
+			"Corruption of cached MIME layout (Bug 740755)?"))))
 	   (vm-make-presentation-copy (car vm-message-pointer))
 	   (vm-save-buffer-excursion
 	    (vm-replace-buffer-in-windows (current-buffer)
@@ -868,7 +875,7 @@ preview or the full message, governed by the the variables
 	       (vm-mime-error (vm-set-mm-layout-display-error
 			       (vm-mime-layout-of (car vm-message-pointer))
 			       (car (cdr data)))
-			      (vm-warn 0 "%s" (car (cdr data)))))
+			      (vm-warn 0 2 "%s" (car (cdr data)))))
 	     (vm-narrow-for-preview)))
        ;; if no MIME decoding is needed
        (vm-energize-urls-in-message-region)
@@ -912,7 +919,7 @@ is done if necessary.  (USR, 2010-01-14)"
 	(vm-mime-error (vm-set-mm-layout-display-error
 			(vm-mime-layout-of (car vm-message-pointer))
 			(car (cdr data)))
-		       (vm-warn 0 "%s" (car (cdr data))))))
+		       (vm-warn 0 2 "%s" (car (cdr data))))))
   ;; FIXME this probably cause folder corruption by filling the folder instead
   ;; of the presentation copy  ..., RWF, 2008-07
   ;; Well, so, we will check if we are in a presentation buffer! 
@@ -977,7 +984,7 @@ is done if necessary.  (USR, 2010-01-14)"
   (interactive)
   (vm-follow-summary-cursor)
   (save-excursion
-    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (vm-display nil nil '(vm-expose-hidden-headers)
 		'(vm-expose-hidden-headers))
     (vm-save-buffer-excursion
@@ -1057,7 +1064,7 @@ is done if necessary.  (USR, 2010-01-14)"
   "Moves to the beginning of the current message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (vm-widen-page)
@@ -1081,7 +1088,7 @@ is done if necessary.  (USR, 2010-01-14)"
 as necessary."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)
@@ -1114,7 +1121,7 @@ will produce an action.  If the message is being previewed, it is
 exposed and marked as read."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)
@@ -1142,7 +1149,7 @@ will produce an action.  If the message is being previewed, it is
 exposed and marked as read."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (and vm-presentation-buffer
        (set-buffer vm-presentation-buffer))
   (if (eq vm-system-state 'previewing)

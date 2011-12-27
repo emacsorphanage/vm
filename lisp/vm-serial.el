@@ -427,7 +427,7 @@ You may remove a token by specifying just the TOKEN as argument."
                                 vm-serial-token-history))
           (value (read-expression
                   "Value: "
-                  (format "%S" (cdr (assoc var vm-serial-token-alist))))))
+                  (format "%S" (cdr (assoc token vm-serial-token-alist))))))
      (list token value)))
   (let ((tk (assoc token vm-serial-token-alist)))
     (if tk
@@ -627,7 +627,7 @@ me."
                  (setq no-expand (if (and no-expand (listp no-expand))
                                      no-expand 'not))))
       
-      (if (or (interactive-p)
+      (if (or (vm-interactive-p)
               (local-variable-p 'vm-serial-body-contents (current-buffer)))
           (message "Inserting serial mail `%S'." mail)
         (let ((start (mail-text)) (end (goto-char (point-max))))
@@ -790,7 +790,7 @@ questions will bother you!"
               (flet ((vm-display (buffer display commands configs
                                          &optional do-not-raise)
                                  nil))
-                (vm-mail-internal vm-serial-send-mail-buffer))
+                (vm-mail-internal :buffer-name vm-serial-send-mail-buffer))
               (get-buffer vm-serial-send-mail-buffer))))
          (source-buffer (current-buffer))
          work to to-string)
@@ -869,13 +869,13 @@ questions will bother you!"
 	  (vm-make-local-hook 'kill-buffer-hook)
 	  (vm-make-local-hook 'mail-send-hook)
           (add-hook 'kill-buffer-hook
-                    '(lambda ()
-                       (vm-serial-send-mail-increment 'vm-serial-killed-cnt))
+                    (lambda ()
+		      (vm-serial-send-mail-increment 'vm-serial-killed-cnt))
                     t t)
           (add-hook 'kill-buffer-hook 'vm-serial-send-mail t t)
           (add-hook 'mail-send-hook
-                    '(lambda ()
-                       (vm-serial-send-mail-increment 'vm-serial-sent-cnt))
+                    (lambda ()
+		      (vm-serial-send-mail-increment 'vm-serial-sent-cnt))
                     t t)
           (remove-hook 'kill-buffer-hook 'vm-save-killed-message-hook t)
           (message "Kill or send this mail to get to the next mail!"))

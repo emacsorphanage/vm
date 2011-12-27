@@ -177,7 +177,7 @@ Consecutive invocations of this command cause sequentially earlier
 changes to be undone.  After an intervening command between undos,
 the undos themselves become undoable."
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (vm-display nil nil '(vm-undo) '(vm-undo))
   (let ((modified (buffer-modified-p)))
@@ -219,13 +219,13 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
       (vm-read-string "Set attributes: " vm-supported-attribute-names t)
       (prefix-numeric-value current-prefix-arg))))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (vm-display nil nil '(vm-set-message-attributes)
 	      '(vm-set-message-attributes))
   (let ((name-list (vm-parse string "[ \t]*\\([^ \t]+\\)"))
 	(m-list (vm-select-operable-messages 
-		 count (interactive-p) "Set attributes of"))
+		 count (vm-interactive-p) "Set attributes of"))
 	n-list name m)
     (while m-list
       (setq m (car m-list)
@@ -311,10 +311,10 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
   (let ((m-list nil)
 	(ignored-labels nil))
     (vm-follow-summary-cursor)
-    (vm-select-folder-buffer-and-validate 1 (interactive-p))
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (vm-error-if-folder-read-only)
     (setq m-list (vm-select-operable-messages
-		  count (interactive-p) "Add labels to"))
+		  count (vm-interactive-p) "Add labels to"))
     (setq ignored-labels 
 	  (vm-add-or-delete-message-labels string m-list 'all))
     (if ignored-labels
@@ -355,10 +355,10 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 		      (vm-obarray-to-string-list vm-label-obarray) t)
       (prefix-numeric-value current-prefix-arg)))))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (let* ((m-list (vm-select-operable-messages
-		  count (interactive-p) "Add labels to"))
+		  count (vm-interactive-p) "Add labels to"))
 	(ignored-labels
 	 (vm-add-or-delete-message-labels string m-list 'existing-only)))
     (if ignored-labels
@@ -401,10 +401,10 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 		      (vm-obarray-to-string-list vm-label-obarray) t)
       (prefix-numeric-value current-prefix-arg)))))
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (let ((m-list (vm-select-operable-messages
-		 count (interactive-p) "Delete labels to")))
+		 count (vm-interactive-p) "Delete labels to")))
     (vm-add-or-delete-message-labels string m-list nil)))
 
 (defun vm-add-or-delete-message-labels (string m-list add)
@@ -476,7 +476,8 @@ nil	       delete the label
 (defun vm-set-xxxx-flag (m flag norecord function attr-index)
   "A generic function to set the message flag of M at ATTR-INDEX to
   the value FLAG.  The argument FUNCTION tells the specific
-  non-generic function that invoked this one.
+  non-generic function that invoked this one.  A boolean flag is
+  returned indicating success or failure of the operation.
 The flag is also set for all the virtual messages mirroring M as well
   as the real message underlying M. 
 Normally, a record of the change is kept for the purpose of undo, and
@@ -513,7 +514,9 @@ Normally, a record of the change is kept for the purpose of undo, and
 	    (vm-set-attribute-modflag-of m t)
 	    (if (eq vm-flush-interval t)
 		(vm-stuff-virtual-message-data m)
-	      (vm-set-stuff-flag-of m t))))))
+	      (vm-set-stuff-flag-of m t)))
+      ;; return success result
+      t)))
 
 (defun vm-set-xxxx-cached-data-flag (m flag norecord function attr-index)
   "A generic function to set the cached-data flag of M at ATTR-INDEX to

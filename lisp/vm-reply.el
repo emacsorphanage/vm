@@ -145,7 +145,7 @@ the body of those messages should be included in the reply.
 COUNT is the prefix argument indicating how many consecutive
 messages of the folder are involved in this reply."
   (let ((mlist (vm-select-operable-messages
-		count (interactive-p) "Reply to"))
+		count (vm-interactive-p) "Reply to"))
         (dir default-directory)
         (message-pointer vm-message-pointer)
         (case-fold-search t)
@@ -243,9 +243,10 @@ messages of the folder are involved in this reply."
           newsgroups (vm-delete-duplicates newsgroups)
           newsgroups (if newsgroups (mapconcat 'identity newsgroups ",")))
     (vm-mail-internal
-     (format "reply to %s%s" (vm-su-full-name (car mlist))
-             (if (cdr mlist) ", ..." ""))
-     to subject in-reply-to cc references newsgroups)
+     :buffer-name (format "reply to %s%s" (vm-su-full-name (car mlist))
+			  (if (cdr mlist) ", ..." ""))
+     :to to :subject subject :in-reply-to in-reply-to :cc cc 
+     :references references :newsgroups newsgroups)
     (make-local-variable 'vm-reply-list)
     (setq vm-system-state 'replying
           vm-reply-list mlist
@@ -262,7 +263,10 @@ messages of the folder are involved in this reply."
 	    (narrow-to-region (point) (point))
 	    (vm-yank-message (car mlist))
 	    (goto-char (point-max)))
-	  (setq mlist (cdr mlist)))))
+	  (setq mlist (cdr mlist))))
+      ;; Set window-start to the top because the yanks processed by
+      ;; emacs-w3m are somehow clobbering the buffer in Emacs 24
+      (set-window-start nil (point-min)))
     (when vm-fill-paragraphs-containing-long-lines-in-reply
       (vm-fill-long-lines-in-reply))
     (run-hooks 'vm-reply-hook)
@@ -464,7 +468,8 @@ specified by `vm-included-text-headers' and
       ;; citation functions will fail with messages similar to
       ;; "doesn't conform to RFC 822." -- Brent Goodrick, 2009-01-24
       ;; But this yanks wrongly!  The following line reverted by Uday
-      ;; Reddy, 2009-12-07 (goto-char (point-min))
+      ;; Reddy, 2009-12-07 
+      ;; (goto-char (point-min))
       (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
 	    (mail-yank-hooks (run-hooks 'mail-yank-hooks))
 	    (t (vm-mail-yank-default message))))))
@@ -477,7 +482,7 @@ specified by `vm-included-text-headers' and
   (let ((start (point)))
     (vm-insert-region-from-buffer
      (save-excursion
-       (vm-select-folder-buffer-and-validate 1 (interactive-p))
+       (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
        ;; ensure the current message is presented 
        (vm-present-current-message)
        (vm-show-current-message)
@@ -525,8 +530,9 @@ specified by `vm-included-text-headers' and
       ;; Use normal MIME decoding but override normal parameter settings
       (let (;; override the alternative-select-method
 	    (vm-mime-alternative-show-method vm-mime-alternative-yank-method)
-	    ;; include only text and message types
-	    (vm-auto-displayed-mime-content-types '("text" "message"))       
+	    ;; include only text and message/rfc822 types
+	    ;; message/external-body should not be included
+	    (vm-auto-displayed-mime-content-types '("text" "message/rfc822"))
 	    ;; don't include separator for multipart
 	    (vm-mime-parts-display-separator "")
 	    ;; make MIME buttons look like text unless they are included
@@ -1022,7 +1028,7 @@ Normal VM commands may be accessed in the reply buffer by prefixing them
 with C-c C-v."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((vm-enable-thread-operations nil))
     (vm-do-reply nil nil count)))
 
@@ -1032,7 +1038,7 @@ with C-c C-v."
 from the message.  See the documentation for function vm-reply for details."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((vm-enable-thread-operations nil))
     (vm-do-reply nil t count)))
 
@@ -1042,7 +1048,7 @@ from the message.  See the documentation for function vm-reply for details."
 See the documentation for the function vm-reply for details."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((vm-enable-thread-operations nil))
     (vm-do-reply t nil count)))
 
@@ -1052,7 +1058,7 @@ See the documentation for the function vm-reply for details."
 the message.  See the documentation for the function vm-reply for details."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((vm-enable-thread-operations nil))
     (vm-do-reply t t count)))
 
@@ -1085,11 +1091,11 @@ to the outgoing message.
 See `vm-forward-message' for other forms of forwarding."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((vm-forwarded-headers vm-forwarded-headers-plain)
 	(vm-unforwarded-header-regexp vm-unforwarded-header-regexp-plain))
     (vm-forward-message t (vm-select-operable-messages
-			   1 (interactive-p) "Forward"))))
+			   1 (vm-interactive-p) "Forward"))))
 
 ;;;###autoload
 (defun vm-forward-message (&optional plain mlist)
@@ -1106,7 +1112,7 @@ See `vm-forward-message-plain' for forwarding messages in plain text."
   ;; forwarded. 
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((dir default-directory)
 	(miming (and vm-send-using-mime
 		     (not plain)
@@ -1115,7 +1121,7 @@ See `vm-forward-message-plain' for forwarding messages in plain text."
 	header-end)
     (unless mlist
 	(setq mlist (vm-select-operable-messages
-		     1 (interactive-p) "Forward")))
+		     1 (vm-interactive-p) "Forward")))
     (if (cdr mlist)
 	;; multiple message forwarding
 	(progn
@@ -1134,14 +1140,13 @@ See `vm-forward-message-plain' for forwarding messages in plain text."
       (save-restriction
 	(widen)
 	(vm-mail-internal
-	 (format "forward of %s's note re: %s"
-		 (vm-su-full-name (car vm-message-pointer))
-		 (vm-su-subject (car vm-message-pointer)))
-	 nil
-	 (when vm-forwarding-subject-format
-	   (let ((vm-summary-uninteresting-senders nil))
-	     (vm-summary-sprintf vm-forwarding-subject-format
-				 (car mlist)))))
+	 :buffer-name (format "forward of %s's note re: %s"
+			      (vm-su-full-name (car vm-message-pointer))
+			      (vm-su-subject (car vm-message-pointer)))
+	 :subject (when vm-forwarding-subject-format
+		    (let ((vm-summary-uninteresting-senders nil))
+		      (vm-summary-sprintf vm-forwarding-subject-format
+					  (car mlist)))))
 	(make-local-variable 'vm-forward-list)
 	(setq vm-system-state 'forwarding
 	      vm-forward-list mlist
@@ -1217,7 +1222,7 @@ You will be placed in a Mail mode buffer with the extracted message and
 you can change the recipient address before resending the message."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((b (current-buffer)) start
 	(dir default-directory)
 	(layout (vm-mm-layout (car vm-message-pointer)))
@@ -1245,8 +1250,8 @@ you can change the recipient address before resending the message."
       ;; from inserting another From header.
       (let ((vm-mail-header-from nil))
 	(vm-mail-internal
-	 (format "retry of bounce from %s"
-		 (vm-su-from (car vm-message-pointer)))))
+	 :buffer-name (format "retry of bounce from %s"
+			      (vm-su-from (car vm-message-pointer)))))
       (goto-char (point-min))
       (if (vectorp layout)
 	  (progn
@@ -1289,7 +1294,7 @@ this header, what happens when you send the message is undefined.
 You may also create a Resent-Cc header."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (save-restriction
     (widen)
     (let ((b (current-buffer))
@@ -1303,9 +1308,9 @@ You may also create a Resent-Cc header."
       ;; from inserting another From header.
       (let ((vm-mail-header-from nil))
 	(vm-mail-internal
-	 (format "resend of %s's note re: %s"
-		 (vm-su-full-name (car vm-message-pointer))
-		 (vm-su-subject (car vm-message-pointer)))))
+	 :buffer-name (format "resend of %s's note re: %s"
+			      (vm-su-full-name (car vm-message-pointer))
+			      (vm-su-subject (car vm-message-pointer)))))
       (goto-char (point-min))
       (insert-buffer-substring b start lim)
       (delete-region (point) (point-max))
@@ -1360,7 +1365,7 @@ collapsed threads in summary and thread operations are enabled via
 `vm-enable-thread-operations' then all messages in the thread are
 included in the digest."
   (interactive "P")
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((dir default-directory)
 	(miming (and vm-send-using-mime (equal vm-digest-send-type "mime")))
 	mp mail-buffer work-buffer b
@@ -1369,7 +1374,7 @@ included in the digest."
       ;; prefix arg doesn't have "normal" meaning here, so only call
       ;; vm-select-operable-messages for marks or threads.
       (setq mlist (vm-select-operable-messages 
-		   1 (interactive-p) "Send as digest")))
+		   1 (vm-interactive-p) "Send as digest")))
     ;; if messages were selected use them, otherwise the whole folder
     (cond ((cdr mlist)
 	   (vm-retrieve-operable-messages 1 mlist))
@@ -1383,15 +1388,14 @@ included in the digest."
     (save-restriction
       (widen)
       (vm-mail-internal
-       (format "digest from %s" (buffer-name))
-       nil
-       (and vm-forwarding-subject-format
-            (let ((vm-summary-uninteresting-senders nil))
-              (concat (vm-summary-sprintf 
-		       vm-forwarding-subject-format (car mlist))
-                      (if (cdr mlist)
-                          (format " [and %d more messages]"
-                                  (length (cdr mlist))))))))
+       :buffer-name (format "digest from %s" (buffer-name))
+       :subject (and vm-forwarding-subject-format
+		     (let ((vm-summary-uninteresting-senders nil))
+		       (concat (vm-summary-sprintf 
+				vm-forwarding-subject-format (car mlist))
+			       (if (cdr mlist)
+				   (format " [and %d more messages]"
+					   (length (cdr mlist))))))))
       ;; current buffer is mail-buffer
       (setq mail-buffer (current-buffer))
       (make-local-variable 'vm-forward-list)
@@ -1524,7 +1528,7 @@ found, the current buffer remains selected."
 	  ;; different composition buffer.
 	  (vm-unbury-buffer b)
 	  (set-buffer b)
-	  (if (and vm-mutable-frames vm-frame-per-composition
+	  (if (and vm-mutable-frame-configuration vm-frame-per-composition
 		   (vm-multiple-frames-possible-p)
 		   ;; only pop up a frame if there's an undisplay
 		   ;; hook in place to make the frame go away.
@@ -1572,7 +1576,8 @@ command can be invoked from external agents via an emacsclient."
 	  ;; we'll insert the header later
 	  (setq header-list (cons header (cons value header-list)))))
       (setq list (cdr list)))
-    (vm-mail-internal nil to subject in-reply-to cc references newsgroups)
+    (vm-mail-internal :to to :subject subject :in-reply-to in-reply-to
+		      :cc cc :references references :newsgroups newsgroups)
     (save-excursion
       (goto-char (point-min))
       (while header-list
@@ -1638,15 +1643,25 @@ buffers.")
   (add-hook 'vm-mail-send-hook 'vm-forget-composition-buffer nil t)
   (vm-update-ml-composition-buffer-count))
 
+(defun vm-select-recipient-from-sender ()
+  "Select a recipient's address from the current message's sender, if
+there is a current message."
+  (when (and vm-mail-use-sender-address
+	     (memq major-mode '(vm-mode vm-virtual-mode 
+					vm-summary-mode vm-presentation-mode)))
+    (vm-select-folder-buffer)
+    (vm-get-header-contents (car vm-message-pointer) "From:")))
+
+
 ;;;###autoload
-(defun vm-mail-internal
-    (&optional buffer-name to subject in-reply-to cc references newsgroups)
+(defun* vm-mail-internal (&key buffer-name to guessed-to subject 
+			       in-reply-to cc references newsgroups)
     "Create a message buffer and set it up according to args.
 Fills in the headers as given by the arguments.
 Binds the `vm-mail-mode-map' and hooks"
   (let ((folder-buffer nil))
-    (if (memq major-mode '(vm-mode vm-virtual-mode))
-	(setq folder-buffer (current-buffer)))
+    (when (memq major-mode '(vm-mode vm-virtual-mode))
+      (setq folder-buffer (current-buffer)))
     (setq buffer-name (if buffer-name
                           (vm-decode-mime-encoded-words-in-string buffer-name)
                         "mail to ?"))
@@ -1694,10 +1709,15 @@ Binds the `vm-mail-mode-map' and hooks"
 	  (build-mail-aliases))))
     (when (stringp vm-mail-header-from)
       (insert "From: " vm-mail-header-from "\n"))
-    (setq to (if to (vm-decode-mime-encoded-words-in-string to))
-	  subject (if subject (vm-decode-mime-encoded-words-in-string subject))
-	  cc (if cc (vm-decode-mime-encoded-words-in-string cc)))
-    (insert "To: " (or to "") "\n")
+    (setq to (if to 
+		 (vm-decode-mime-encoded-words-in-string to))
+	  guessed-to (if guessed-to 
+			 (vm-decode-mime-encoded-words-in-string guessed-to))
+	  subject (if subject 
+		      (vm-decode-mime-encoded-words-in-string subject))
+	  cc (if cc 
+		 (vm-decode-mime-encoded-words-in-string cc)))
+    (insert "To: " (or to guessed-to "") "\n")
     (and cc (insert "Cc: " cc "\n"))
     (insert "Subject: " (or subject "") "\n")
     (and newsgroups (insert "Newsgroups: " newsgroups "\n"))
@@ -1762,7 +1782,7 @@ Binds the `vm-mail-mode-map' and hooks"
     ;; config stuff will select it as the composition buffer.
     (vm-unbury-buffer (current-buffer))
     ;; make a new frame if the user wants it.
-    (when (and vm-mutable-frames vm-frame-per-composition
+    (when (and vm-mutable-frame-configuration vm-frame-per-composition
 	       (vm-multiple-frames-possible-p))
       (vm-goto-new-frame 'composition)
       (vm-set-hooks-for-frame-deletion))
@@ -1796,8 +1816,10 @@ Binds the `vm-mail-mode-map' and hooks"
 		  vm-resend-bounced-message
 		  vm-resend-bounced-message-other-frame)
 		(list this-command 'composing-message))
-    (unless to
-      (mail-position-on-field "To"))
+    (cond ((null to)
+	   (mail-position-on-field "To" t))
+	  ((null subject)
+	   (mail-position-on-field "Subject" t)))
     (cond ((and vm-xemacs-p
 		(fboundp 'start-itimer)
 		(null (get-itimer "vm-rename-mail"))
@@ -2000,7 +2022,7 @@ message."
 			    (random 1000000) (random 1000000))))
 	  (unless (vm-mail-mode-get-header-contents "Date")
 	    (insert "Date: "
-		    (format-time-string "%a, %d %b %Y %H%M%S %Z"
+		    (format-time-string "%a, %d %b %Y %T %z"
 					(current-time))
 		    "\n"))
 	  (when (and vm-send-using-mime

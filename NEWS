@@ -24,7 +24,7 @@ Status
   unreliable mail link to the mailing list.  You can however browse the
   archives of the newsgroup at Google Groups.
   
-VM 8.2.0
+VM 8.2.0b
 
   CHANGES
 
@@ -39,6 +39,29 @@ VM 8.2.0
      alternatives for citation in replies.
 
   IMPROVEMENTS
+
+   * New variable `vm-mail-use-sender-address' allows `vm-mail' to pick up
+     the sender of the current message as the recipient of a new message
+     composition. 
+
+   * See the new info manual section on "IMAP folders" for newly documented
+     functions.  In particular, `vm-list-imap-folders' now lists the message
+     counts in the IMAP folders.  
+
+   * New variable: `vm-sort-messages-by-delivery-date' allows messages to be
+     sorted by the date of their delivery instead of the date sent.
+
+   * New virtual folder selectors added: `message-id', `uid' (for IMAP) and
+     `uidl' (for POP).
+
+   * New command `vm-create-virtual-folder-of-threads' (bound to `V T')
+     allows you to select entire threads into a virtual folder instead of
+     individual messages.  There are also new virtual folder selectors
+     `thread' and `thread-all'. 
+
+   * The trace of POP/IMAP sessions are retained in buffers named "trace of
+     POP session..." or "trace of IMAP session...".  They are useful for
+     troubleshooting any problems with mail server connections.
 
    * Setting `vm-stunnel-program' to nil asks VM to use the built-in SSL
      functionality of Emacs, available in Gnu Emacs 24.

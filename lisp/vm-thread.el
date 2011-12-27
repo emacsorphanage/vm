@@ -73,6 +73,7 @@
 ;; vm-th-date-of : symbol -> string
 ;; vm-th-youngest-date-of : symbol -> string
 ;; vm-th-oldest-date-of : symbol -> string
+;; vm-th-oldest-subject-of : symbol -> string
 ;; vm-th-thread-date-of : symbol X criterion-symbol -> string
 ;; vm-th-canonical-message-p : message -> bool
 ;; vm-th-canonical-message: message -> message
@@ -142,25 +143,6 @@
       (apply 'debug message args)))
 
 
-;;;###autoload
-(defun vm-thread-symbol (m)
-  "Returns the interned symbol of message M which carries the
-threading information.  Threads should have been built before this.
-Otherwise nil is returned."
-  (with-current-buffer (vm-buffer-of m)
-    (and (vectorp vm-thread-obarray)
-	 (intern (vm-su-message-id m) vm-thread-obarray))))
-
-;;;###autoload
-(defun vm-subject-symbol (m)
-  "Returns the interned symbol of message M which carries the
-subject-based threading information.  Threads should have been built
-before this.  Otherwise nil is returned."
-  (with-current-buffer (vm-buffer-of m)
-    (and (vectorp vm-thread-subject-obarray)
-	 (intern (vm-so-sortable-subject m) vm-thread-subject-obarray))))
-
-
 (defsubst vm-th-thread-symbol (m)
   (intern (vm-su-message-id m) vm-thread-obarray))
 
@@ -173,8 +155,14 @@ before this.  Otherwise nil is returned."
 (defsubst vm-th-oldest-date-of (id-sym)
   (get id-sym 'oldest-date))
 
+(defsubst vm-th-oldest-subject-of (id-sym)
+  (get id-sym 'oldest-subject))
+
 (defsubst vm-th-set-oldest-date-of (id-sym date)
   (put id-sym 'oldest-date date))
+
+(defsubst vm-th-set-oldest-subject-of (id-sym subject)
+  (put id-sym 'oldest-subject subject))
 
 (defsubst vm-th-thread-date-of (id-sym criterion)
   "For the message with the interned symbol ID-SYM, return the
@@ -259,11 +247,18 @@ youngest or oldest date in its thread.  CRITERION must be one of
 (defsubst vm-th-set-date-of (id-sym date)
   (put id-sym 'date date))
 
-(defsubst vm-ts-subject-symbol (id-sym)
-  ;; the subject symbol is calculated from the canonical message of
-  ;; ID-SYM, just in case the different copies have different subjects.
-  (intern (vm-so-sortable-subject (vm-th-message-of id-sym))
-	  vm-thread-subject-obarray))
+(defun vm-ts-subject-symbol (id-sym)
+  ;; the subject symbol is calculated from the oldest-subject field
+  ;; stored in the reference root of ID-SYM.
+  ;; if there is no such field exists, then nil is returned.
+  (if (member (symbol-name id-sym) vm-traced-message-ids)
+      (vm-thread-debug 'vm-ts-subject-symbol id-sym))
+  (let ((sym id-sym)
+	parent subject)
+    (while (setq parent (vm-th-parent-of sym))
+      (setq sym parent))
+    (if (setq subject (vm-th-oldest-subject-of sym))
+	(intern subject vm-thread-subject-obarray))))
 
 (defsubst vm-ts-root-of (subject-sym)
   (aref (symbol-value subject-sym) 0))
@@ -296,6 +291,100 @@ youngest or oldest date in its thread.  CRITERION must be one of
     (aset vec 2 members)
     (aset vec 3 messages)))
 
+;;;###autoload
+(defun vm-thread-symbol (m)
+  "Returns the interned symbol of message M which carries the
+threading information.  Threads should have been built before this.
+Otherwise nil is returned."
+  (with-current-buffer (vm-buffer-of m)
+    (and (vectorp vm-thread-obarray)
+	 (intern (vm-su-message-id m) vm-thread-obarray))))
+
+;;;###autoload
+(defun vm-subject-symbol (m)
+  "Returns the interned symbol of message M which carries the
+subject-based threading information.  Threads should have been built
+before this.  Otherwise nil is returned."
+  (with-current-buffer (vm-buffer-of m)
+    (vm-ts-subject-symbol (vm-th-thread-symbol m))))
+
+;; Integrity constraints for reference threads
+
+;; MESSAGES:
+;;	The messages field of id-sym points to all known messages with
+;; 	this id.
+;; MESSAGE: 
+;; 	The message field of id-sym points to the canonical
+;; 	message with this id, which must be the first in the messages
+;; 	field.
+;; DATE:
+;;	The date field of id-sym contains the date of the canonical
+;; 	message with this id.
+;; BASIC:
+;;	MESSAGES /\ MESSAGE /\ DATE
+;; PARENT:
+;;	The parent field of id-sym contains the interned id of the
+;; 	parent of the message, and the parent's children field contains
+;; 	this id-sym.
+;; CHILDREN:
+;;	The children field of id-sym contains the interned id's of all
+;; 	the known children of the message.
+;; LINKS:
+;;	PARENT /\ CHILDREN
+;; YOUNGEST:
+;;	The youngest-date of id-sym contains the date of the youngest
+;; 	message in the subthread rooted in this id.
+;; OLDEST:
+;;	The oldest-date and oldest-subject of id-sym contain the date
+;;	and the subject (resp.) of the oldest 
+;; 	message in the thread containing this id.
+;; DATES:
+;;	YOUNGEST /\ OLDEST
+;; NODE:
+;;	BASIC /\ LINKS /\ DATES
+
+;; Integrity constraints for subject threads
+
+;; TS-ROOT:
+;;	The root of the subject symbol is the id of the canonical message of
+;;	the oldest message with the subject.
+;; TS-DATE:
+;;	The date field of the subject symbol is the date of the root
+;;	message.
+;; TS-MEMBERS:
+;;	The members field of the subject symbol contains all known
+;;	"members" of the subject thread, except for the root.
+;;	"Member" means the root of a reference thread with the given
+;;	subject.  (The descendants may have different subject lines.)
+;; TS-MESSAGES:
+;;	The messages field of the subject symbol is the list of all
+;;	the messages in the folder with this subject.  (What about
+;;	descendant of a member that may have a different subject line?)
+
+;; Cached information
+
+;; SUBTREE: 
+;;	The subtree fields of all the messages with the id contain the
+;; 	subtrees rooted at that node (as recorded in the threads database).
+;; LIST:
+;;	The thread-list fields of all the messages with the id contain
+;; 	the thread-list above that node (as recorded in the threads database).
+;; INDENTATION:
+;;	The thread-indentation field of all the messages with the id
+;; 	store the length of the thread-list.
+;; DISPLAY
+;;	The summary display shows the thread-indentation value.
+;; SUBTREE0, LIST0, INDENTATION0
+;;	Above properties hold only if the corresponding fields are
+;; 	non-nil.
+;; DISPLAY0:
+;;	If the message is not scheduled for summary-update then its
+;; 	summary display shows the thread-indentation value.
+;; CACHE:
+;;	SUBTREE /\ LIST /\ INDENTATION /\ DISPLAY
+;; CACHE0:
+;;	SUBTREE0 /\ LIST0 /\ INDENTATION0 /\ DISPLAY0
+
 ;;; thread tree - basic operations
 
 (defun vm-th-new-thread-symbol (m)
@@ -308,23 +397,31 @@ and child pointers."
 
 (defsubst vm-th-add-message-to-symbol (id-sym m)
   "Add message M to ID-SYM as one of the messages with its id."
+  ;; requires: BASIC and messages /= nil
+  ;; ensures: BASIC
   (unless (memq m (vm-th-messages-of id-sym))
     (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))))
 
 (defsubst vm-th-remove-message-from-symbol (id-sym m)
   "Delete message M from ID-SYM as one of the messages with its id."
+  ;; requires: BASIC and m in messages
+  ;; ensures: BASIC
   (vm-th-set-messages-of id-sym (remq m (vm-th-messages-of id-sym)))
   (if (eq m (vm-th-message-of id-sym))
       (vm-th-set-message-of id-sym (car (vm-th-messages-of id-sym)))))
 
 (defsubst vm-th-init-thread-symbol (id-sym m)
   "Initialize thread symbol ID-SYM to the message M."
+  ;; requires: true
+  ;; ensures: BASIC
   (vm-th-set-message-of id-sym m)
   (vm-th-set-messages-of id-sym (list m))
   (vm-th-set-date-of id-sym (vm-so-sortable-datestring m)))
 
 (defsubst vm-th-set-parent (id-sym parent-sym)
   "Set the parent of ID-SYM to PARENT-SYM."
+  ;; requires: BASIC
+  ;; ensures: BASIC /\ PARENT
   (vm-th-set-parent-of id-sym parent-sym)
   (vm-th-add-child parent-sym id-sym))
 
@@ -333,11 +430,13 @@ and child pointers."
 invalidated by setting the parent of ID-SYM to PARENT-SYM.  This
 involves the thread-subtrees of PARENT-SYM and all its ancestors.
 It also invovles thread-lists of ID-SYM and all its descendants."
+  ;; ensures: SUBTREE0(ancestors(parent-sym)), LIST0(descendents(id-sym))
   (vm-th-clear-subtree parent-sym)
   (vm-th-clear-thread-lists id-sym))
 
 (defsubst vm-ts-add-member (subject-sym id-sym)
   "Add ID-SYM as a member of SUBJECT-SYM."
+  ;; ensures: TS-MEMBERS(subject-sym)
   (unless (memq id-sym (vm-ts-members-of subject-sym))
     (vm-ts-set-members-of 
      subject-sym (cons id-sym (vm-ts-members-of subject-sym)))))
@@ -349,6 +448,7 @@ It also invovles thread-lists of ID-SYM and all its descendants."
 
 (defsubst vm-ts-add-message (subject-sym m)
   "Add M as a message in the subject thread of SUBJECT-SYM."
+  ;; ensures: TS-MESSAGES(subject-sym)
   (vm-ts-set-messages-of 
    subject-sym (cons m (vm-ts-messages-of subject-sym))))
 
@@ -393,6 +493,8 @@ for ID-SYM, which is the subject root of SUBJECT-SYM.  This
 involves clearing the thread-subtree of ID-SYM and the
 thread-lists of all members of SUBJEC-SYM. (not entirely clear if this
 is right).                                           USR, 2011-04-08"
+  ;; ensures: SUBTREE0(ancestors(id-sym)) /\ 
+  ;;          LIST0(descendants(members(subject-sym)))
   (vm-th-clear-subtree id-sym)
   (mapc 'vm-th-clear-thread-lists 
 	(vm-ts-members-of subject-sym)))
@@ -405,7 +507,7 @@ When the threads display is on, the folder will be sorted by
 thread activity and thread indentation (via the %I summary format
 specifier) will be visible."
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   ;; get numbering of new messages done now
   ;; so that the sort code only has to worry about the
   ;; changes it needs to make.
@@ -436,7 +538,7 @@ The case $N$ being 0 is a special case.  It means to decrease the
 indentation all the way to 0."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((modified (buffer-modified-p))
 	(msg (car vm-message-pointer))
 	(indent 0))
@@ -462,7 +564,7 @@ The case $N$ being 0 is a special case.  It means to reset the
 indentation back to the normal indentation, i.e., no offset is used."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((modified (buffer-modified-p))
 	(msg (car vm-message-pointer)))
     (if (= n 0)
@@ -500,6 +602,8 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 	  vm-thread-subject-obarray (make-vector 641 0)))
     ;; Build threads using references
     (vm-build-reference-threads mp schedule-reindents initializing)
+    ;; Record thread dates and subjects
+    (vm-record-thread-dates mp)
     ;; Build threads using subject
     (when vm-thread-using-subject
       (vm-build-subject-threads mp schedule-reindents initializing))
@@ -536,24 +640,33 @@ being initialized."
 	  (vm-thread-debug 'vm-build-reference-threads id m))
       (unless id-sym			; first occurrence now
 	(setq id-sym (vm-th-new-thread-symbol m)))
+      ;; { BASIC0(id-sym) }
       (if (vm-th-messages-of id-sym)	; registered already
 	  (vm-th-add-message-to-symbol id-sym m)
 	(vm-th-init-thread-symbol id-sym m))
+      ;; { BASIC /\ DISPLAY0 (id-sym) }
       (when schedule-reindents
 	(vm-thread-mark-for-summary-update (list m)))
+      ;; { BASIC /\ DISPLAY0 (id-sym) }
       ;; Thread using the parent
       (setq parent (vm-parent m))
       (if (null parent)
+	  ;; {NODE /\ DISPLAY0 (id-sym)}
 	  ;; could be a duplicate copy of a message
 	  (unless initializing
 	    (vm-th-clear-subtree id-sym))
+	  ;; {NODE /\ SUBTREE0 /\ DISPLAY0 (id-sym)}
+	  ;; {NODE /\ SUBTREE0 /\ LIST0 /\ INDENTATION0 /\ DISPLAY0 (id-sym)}
 	(setq parent-sym (intern parent vm-thread-obarray))
 	;; set the parent of m.
 	;; if there was a parent already, update it consistently.
-	(when (vm-th-safe-parent-p id-sym parent-sym)
+	(if (not (vm-th-safe-parent-p id-sym parent-sym))
+	    (vm-inform 10 "Unsafe thread parent detected for %s: %s"
+			   (symbol-name id-sym) (symbol-name parent-sym))
 	  (if (member (symbol-name id-sym) vm-traced-message-ids)
 	      (vm-thread-debug 'vm-build-reference-threads-1 id-sym))	  
 	  (cond ((null (vm-th-parent-of id-sym))
+		 ;; {BASIC /\ LINKS0 /\ DISPLAY0 (id-sym)}
 		 (unless initializing 
 		   (vm-th-clear-cached-data id-sym parent-sym))
 		 (vm-th-set-parent id-sym parent-sym))
@@ -580,6 +693,7 @@ being initialized."
 		     (vm-thread-debug 'vm-build-reference-threads 
 				      'old-parent-sym old-parent-sym)
 		     ))))))
+      ;; { NODE /\ CACHE0 (id-sym) }
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
 	  (vm-inform 7 "Building threads... %d%%" (* (/ (+ n 0.0) total) 100))))
@@ -599,16 +713,18 @@ being initialized."
 		  refs (cdr refs))
 	    (while refs
 	      (setq id-sym (intern (car refs) vm-thread-obarray))
-	      (when (and (null (vm-th-parent-of id-sym))
-			 (vm-th-safe-parent-p id-sym parent-sym))
-		(if (member (symbol-name id-sym) vm-traced-message-ids)
-		    (vm-thread-debug 'vm-build-reference-threads-2 id-sym))
-		(unless initializing 
-		  (vm-th-clear-cached-data id-sym parent-sym))
-		(vm-th-set-parent id-sym parent-sym)
-		(if schedule-reindents
-		    (vm-thread-mark-for-summary-update 
-		     (vm-th-messages-of id-sym))))
+	      (when (null (vm-th-parent-of id-sym))
+		(if (not (vm-th-safe-parent-p id-sym parent-sym))
+		    (vm-inform 10 "Unsafe reference parent detected for %s: %s"
+			       (symbol-name id-sym) (symbol-name parent-sym))
+		  (if (member (symbol-name id-sym) vm-traced-message-ids)
+		      (vm-thread-debug 'vm-build-reference-threads-2 id-sym))
+		  (unless initializing 
+		    (vm-th-clear-cached-data id-sym parent-sym))
+		  (vm-th-set-parent id-sym parent-sym)
+		  (if schedule-reindents
+		      (vm-thread-mark-for-summary-update 
+		       (vm-th-messages-of id-sym)))))
 	      (setq parent-sym id-sym
 		    refs (cdr refs)))))
       (setq mp (cdr mp) n (1+ n))
@@ -619,6 +735,8 @@ being initialized."
 (defun vm-th-clear-thread-lists (id-sym)
   "Clear the thread-list and thread-indentation fields of the
 message with ID-SYM and all its descendants."
+  ;; requires: BASIC /\ LINKS (descendants(id-sym))
+  ;; ensures: LIST0 /\ INDENTATION0 (descendants(id-sym))
   (mapc (lambda (d)
 	  (vm-set-thread-list-of d nil)
 	  (vm-set-thread-indentation-of d nil))
@@ -639,6 +757,8 @@ set them to nil.  They will get recalculated on demand."
 (defun vm-th-clear-subtree (id-sym)
   "Clear the thread subtrees of the messages with id-symbol ID-SYM and
 all its ancestors, followed via the parent links."
+  ;; requires: BASIC /\ LINKS (ancestors(id-sym))
+  ;; ensures: TREE0(ancestors(id-sym))
   (let ((msg (vm-th-message-of id-sym))
 	subject subject-sym)
     (vm-th-clear-subtree-of id-sym)
@@ -650,7 +770,7 @@ all its ancestors, followed via the parent links."
     ;; msg is now the reference root of id-sym
     (when msg 
       (setq subject-sym (vm-ts-subject-symbol (vm-th-thread-symbol msg)))
-      (when (boundp subject-sym)
+      (when (and subject-sym (boundp subject-sym))
 	(setq id-sym (vm-ts-root-of subject-sym))
 	(vm-th-clear-subtree-of id-sym)))))
 
@@ -693,19 +813,19 @@ with other ancestors."
 (defun vm-build-subject-threads (mp schedule-reindents initializing)
   (let ((n 0)
 	(modulus 10)
-	m id id-sym date ref-root
+	m id id-sym date
 	subject subject-sym)
     (while mp
       (setq m (car mp)
 	    id (vm-su-message-id m)
 	    id-sym (vm-th-thread-symbol m)
-	    date (vm-so-sortable-datestring m)
-	    ref-root (vm-th-root id-sym))
+	    date (vm-so-sortable-datestring m))
       (when (member id vm-traced-message-ids)
 	(vm-thread-debug 'vm-build-subject-threads id m))
-      ;; Use the reference root's subject rather than m's subject
-      (setq subject (vm-so-sortable-subject ref-root)
-	    subject-sym (vm-ts-subject-symbol (vm-th-thread-symbol ref-root)))
+      ;; Use the reference root's oldest-subject, which should be
+      ;; defined by now
+      (setq subject-sym (vm-ts-subject-symbol id-sym)
+	    subject (symbol-name subject-sym))
       (when (member subject vm-traced-message-subjects)
 	(vm-thread-debug 'vm-build-subject-threads id m))
       ;; -------------- atomic block -------------------------------
@@ -777,6 +897,8 @@ function is called."
   "Mark the messages in MESSAGE-LIST and all their descendants for
 summary update.  This function does not depend on cached
 thread-subtrees.                                USR, 2011-04-03" 
+  ;; requires: BASIC /\ LINKS (descendants(message-list))
+  ;; ensures: LIST0 /\ INDENTATION0 /\ DISPLAY0 (descendants(message-list))
   (mapc (lambda (m)
 	  ;; if thread-list is null then we've already marked this
 	  ;; message, or it doesn't need marking.
@@ -789,6 +911,73 @@ thread-subtrees.                                USR, 2011-04-03"
 	     (vm-th-child-messages-of (vm-thread-symbol m)))))
 	message-list))
 
+(defun vm-record-thread-dates (mlist)
+  "Returns date and subject of all messages in MLIST in the oldest-date,
+youngest-date and oldest-subject fields of all their ancestors.  The
+oldest-subject field is only updated for reference-based ancestors,
+whereas dates are updated for both reference and subject-based ancestors."
+  (dolist (m mlist)
+    (let ((done nil)
+	  (subject-thread nil)
+	  (loop-recovery-point nil)
+	  (date (vm-so-sortable-datestring m))
+	  (subject (vm-so-sortable-subject m))
+	  id-sym subject-sym loop-sym 
+	  root-date root-subject youngest-date
+	  root)
+      (with-current-buffer (vm-buffer-of m)
+	;; thread trees do not have loops any more, but better to be
+	;; safe than sorry.  USR, 2011-05-13
+	(fillarray vm-thread-loop-obarray 0)
+	(setq id-sym (vm-th-thread-symbol m))
+	(when (member (symbol-name id-sym) vm-traced-message-ids)
+	  (vm-thread-debug 'vm-record-thread-dates id-sym))
+	(set (intern (symbol-name id-sym) vm-thread-loop-obarray) t)
+	(while (not done)
+	  ;; save the date of the oldest message in this thread
+	  (setq root-date (vm-th-oldest-date-of id-sym))
+	  (setq root-subject (vm-th-oldest-subject-of id-sym))
+	  (when (or (null root-date) (string< date root-date))
+	    (vm-th-set-oldest-date-of id-sym date)
+	    (unless subject-thread
+	      (vm-th-set-oldest-subject-of id-sym subject)))
+	  ;; save the date of the youngest message in this thread
+	  (setq youngest-date (vm-th-youngest-date-of id-sym))
+	  (when (or (null root-date) (string< youngest-date date))
+	    (vm-th-set-youngest-date-of id-sym date))
+	  (cond ((vm-th-parent-of id-sym)
+		 (setq id-sym (vm-th-parent-of id-sym)
+		       loop-sym (intern (symbol-name id-sym)
+					vm-thread-loop-obarray))
+		 (if (boundp loop-sym)
+		     ;; loop detected, bail...
+		     (setq done t)
+		   (set loop-sym t)
+		   (when (vm-th-messages-of id-sym)
+		     (setq m (vm-th-message-of id-sym)))))
+		((null m)		; why this?  USR, 2011-09-24
+		 (setq done t))
+		((null vm-thread-using-subject)
+		 (setq done t))
+		((and (setq subject-sym 
+			    (vm-ts-subject-symbol (vm-th-thread-symbol m)))
+		      (or (not (boundp subject-sym))
+			  (and (eq (vm-ts-root-of subject-sym) 
+				   (vm-th-thread-symbol m)))))
+		 (setq done t))
+		(t
+		 (setq subject-thread t)
+		 (setq id-sym (vm-ts-root-of subject-sym))
+		 (setq loop-sym (intern (symbol-name id-sym)
+					vm-thread-loop-obarray))
+		 (if (boundp loop-sym)
+		     ;; loop detected, bail...
+		     (setq done t)
+		   (setq root (vm-th-message-of id-sym))
+		   (set loop-sym t)
+		   (setq m (vm-th-message-of id-sym))))))
+	))))
+
 (defun vm-build-thread-list (message)
   "Returns the thread-list, i.e., the lineage of MESSAGE, as a list of
 symbols interned in vm-thread-obarray."
@@ -797,7 +986,9 @@ symbols interned in vm-thread-obarray."
   (let ((done nil)
 	(loop-recovery-point nil)
 	(date (vm-so-sortable-datestring message))
-	m thread-list id-sym subject-sym loop-sym root-date youngest-date
+	(subject (vm-so-sortable-subject message))
+	m thread-list id-sym subject-sym loop-sym 
+	root-date root-subject youngest-date
 	root ancestors)
     (setq m message)
     (with-current-buffer (vm-buffer-of m)
@@ -818,9 +1009,11 @@ symbols interned in vm-thread-obarray."
       (while (not done)
 	;; save the date of the oldest message in this thread
 	(setq root-date (vm-th-oldest-date-of id-sym))
+	(setq root-subject (vm-th-oldest-subject-of id-sym))
 	(when (or (null root-date)
 		  (string< date root-date))
-	  (vm-th-set-oldest-date-of id-sym date))
+	  (vm-th-set-oldest-date-of id-sym date)
+	  (vm-th-set-oldest-subject-of id-sym subject))
 	;; save the date of the youngest message in this thread
 	(setq youngest-date (vm-th-youngest-date-of id-sym))
 	(when (or (null root-date)
@@ -910,17 +1103,13 @@ The full functionality of this function is not entirely clear.
 MESSAGE-CHANGING is non-nil, then forget information that might
 be different if the message contents changed.  The message will be
 reinserted into an appropriate thread later.       USR, 2011-03-17"
-  (let (date id-sym s-sym p-sym root root-sym)
+  (let (date subject id-sym s-sym p-sym root root-sym)
     ;; handles for the thread and thread-subject databases
     (setq id-sym (vm-th-thread-symbol m))
-    (if (setq root (vm-th-root id-sym))
-	(progn
-	  (setq root-sym (vm-th-thread-symbol root))
-	  (setq s-sym (vm-ts-subject-symbol root-sym)))
-      (vm-thread-debug 'vm-thread-message id-sym))
+    (setq s-sym (vm-ts-subject-symbol id-sym))
     (if (member (symbol-name id-sym) vm-traced-message-ids)
 	(vm-thread-debug 'vm-unthread-message id-sym))
-    (if (member (symbol-name s-sym) vm-traced-message-subjects)
+    (if (and s-sym (member (symbol-name s-sym) vm-traced-message-subjects))
 	(vm-thread-debug 'vm-unthread-message id-sym))
     ;; mark the subtree for summary update before we change it
     (vm-thread-mark-for-summary-update (list m))
@@ -934,8 +1123,10 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 	(vm-th-remove-message-from-symbol id-sym m)
 	;; reset the thread dates of m
 	(setq date (vm-so-sortable-datestring m))
+	(setq subject (vm-so-sortable-subject m))
 	(vm-th-set-youngest-date-of id-sym date)
 	(vm-th-set-oldest-date-of id-sym date)
+	(vm-th-set-oldest-subject-of id-sym subject)
 	;; if message changed, remove it from the thread tree
 	;; not clear what is going on.  USR, 2010-07-24
 	(when (and message-changing (null (vm-th-message-of id-sym)))
@@ -963,8 +1154,7 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 	   (t
 	    (let ((p (remq m (vm-ts-messages-of s-sym)))
 		  msg date children
-		  oldest-msg oldest-date 
-		  oldest-msg-same-sub oldest-date-same-sub)
+		  oldest-msg oldest-date)
 	      ;; find the oldest message in the subject thread
 	      (while p
 		(setq msg (vm-th-canonical-message (car p)))
@@ -973,42 +1163,25 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 		  (when (or (null oldest-date)
 			    (string-lessp date oldest-date))
 		    (setq oldest-msg msg)
-		    (setq oldest-date date))
-		  (when (and (or (null oldest-date-same-sub)
-				 (string-lessp date oldest-date-same-sub))
-			     (eq (vm-subject-symbol msg) s-sym))
-		    (setq oldest-msg-same-sub msg)
-		    (setq oldest-date-same-sub date)))
+		    (setq oldest-date date)))
 		(setq p (cdr p)))
 	      ;; make the oldest message the new subject root
-	      (if (null oldest-msg)	
+ 	      (if (null oldest-msg)	
 		  ;; subject thread is empty
 		  (makunbound s-sym)
 		;; subject thread nonempty
 		(let (new-sub new-s-sym)
-		  (when (null oldest-msg-same-sub) ; new subject
-		    (setq new-sub (vm-so-sortable-subject oldest-msg))
-		    (setq new-s-sym (intern new-sub vm-thread-subject-obarray))
-		    ;; for convenience, pretend
-		    (setq oldest-msg-same-sub oldest-msg)
-		    (setq oldest-date-same-sub oldest-date))
-		  (setq root-sym (vm-th-thread-symbol oldest-msg-same-sub))
-		  (setq children (vm-th-visible-children-of id-sym))
+		  (setq root-sym (vm-th-thread-symbol oldest-msg))
+		  ;; (setq children (vm-th-visible-children-of id-sym))
+		  (setq children (cons id-sym (vm-ts-members-of s-sym)))
 		  ;; (vm-th-clear-cached-data root-sym root-sym)
 		  (vm-th-clear-subtree root-sym)
 		  ;; (vm-th-clear-thread-lists root-sym)
 		  (mapc 'vm-th-clear-thread-lists (vm-ts-members-of s-sym))
 		  (vm-ts-set s-sym :root root-sym
-			     :root-date oldest-date-same-sub
-			     :members (remq root-sym 
-					    (append children
-						    (vm-ts-members-of s-sym)))
+			     :root-date oldest-date
+			     :members (remq root-sym children)
 			     :messages (remq m (vm-ts-messages-of s-sym)))
-		  (when new-s-sym 	; need new subject
-		    (if (boundp new-s-sym)
-			(vm-ts-merge new-s-sym s-sym)
-		      (set new-s-sym (symbol-value s-sym))
-		      (makunbound s-sym)))
 		  ;; I'm not sure there aren't situations
 		  ;; where this might loop forever.
 		  ;; ---------------- atomic block -----------------------
@@ -1040,7 +1213,7 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
   "Attach the current message as a child of the message last visited."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (vm-build-threads-if-unbuilt)
   (unless vm-last-message-pointer
@@ -1141,6 +1314,7 @@ calculates the thread-list and caches it.  USR, 2010-03-13"
 the interned symbol of a message.  If there are multiple messages with
 the same root message ID, one of them is chosen arbitrarily.  Threads
 should have been built for this function to work."
+  ;; requires: LIST0(m)
   (let (m-sym list id-sym)
     (cond ((symbolp m) 
 	   (setq m-sym m)
@@ -1168,6 +1342,7 @@ either a message or the interned symbol of M.  Threads should
 have been built for this function to work.  
 
 See also: `vm-thread-root'."
+  ;; requires: LIST0(m)
   (let (m-sym list id-sym)
     (cond ((symbolp m) 
 	   (setq m-sym m)
@@ -1193,6 +1368,7 @@ See also: `vm-thread-root'."
   "Returns t if message M is known to be a thread root, nil
 otherwise.  No exceptions are thrown for errors."
   ;; Threads may not be turned on.  So, ignore errors.
+  ;; requires: LIST0(m)
   (condition-case err
       (and (eq m (vm-thread-root m))
 	   (> (vm-thread-count m) 1))
@@ -1225,21 +1401,19 @@ Threads should have been built for this function to work."
 		  (vm-thread-debug 'vm-thread-subtree (vm-su-message-id msg))))
 	      (while list
 		(setq id-sym (car list)
-		      id (symbol-name id-sym))
+		      id (symbol-name id-sym)
+		      subject-sym (with-current-buffer (vm-buffer-of msg)
+				    (vm-ts-subject-symbol id-sym)))
 		(when (and (vm-th-messages-of id-sym)
 			   (not (memq (vm-th-message-of id-sym) result)))
 		  (setq result (append result (vm-th-messages-of id-sym))))
 		(when (null (intern-soft id loop-obarray))
 		  (intern id loop-obarray)
 		  (nconc list (copy-sequence (vm-th-children-of id-sym)))
-		  (mapc
-		   (lambda (m)
-		     (setq subject-sym (vm-subject-symbol m))
-		     (when (and (boundp subject-sym) 
-				(eq id-sym (vm-ts-root-of subject-sym)))
-		       (nconc list 
-			      (copy-sequence (vm-ts-members-of subject-sym)))))
-		   (vm-th-messages-of id-sym)))
+		  (when (and subject-sym (boundp subject-sym) 
+			     (eq id-sym (vm-ts-root-of subject-sym)))
+		    (nconc list 
+			   (copy-sequence (vm-ts-members-of subject-sym)))))
 		(setq list (cdr list)))
 	      (when msg
 		(vm-set-thread-subtree-of msg result))
@@ -1308,7 +1482,7 @@ to the thread.  Used for testing purposes."
 	  ml)
     ;; Recover from errors
     (when errors-found
-      (vm-inform 0 (concat "Problem detected with the threads database; "
+      (vm-warn 0 2 (concat "Problem detected with the threads database; "
 		       "try vm-fix-my-summary"))
       ;; (setq vm-thread-obarray 'bonk)
       ;; (setq vm-thread-subject-obarray 'bonk)

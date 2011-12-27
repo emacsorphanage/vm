@@ -330,7 +330,7 @@ default the local keymap of the current buffer is used."
 
 (defun vm-keyboard-read-file-name (prompt &optional dir default
 					  must-match initial history)
-  "Like read-file-name, except HISTORY's value is unaltered."
+  "Like `read-file-name', except HISTORY's value is unaltered."
   (let ((oldvalue (symbol-value history))
 	;; evade the XEmacs dialog box, yeccch.
 	(use-dialog-box nil))
@@ -349,7 +349,7 @@ default the local keymap of the current buffer is used."
 
 (defun vm-read-file-name (prompt &optional dir default
 				 must-match initial history)
-  "Like read-file-name, except a mouse interface is used if a mouse
+  "Like `read-file-name', except a mouse interface is used if a mouse
 click mouse triggered the current command."
   (if (vm-mouse-support-possible-here-p)
       (cond ((and (vm-mouse-xemacs-mouse-p)

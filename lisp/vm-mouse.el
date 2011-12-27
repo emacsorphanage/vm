@@ -451,10 +451,10 @@ Mouse'."
 		;; succeeded.  I have tried to just use exit status
 		;; as the failure criterion and users complained.
 		((equal (nth 7 (file-attributes tempfile)) 0)
-		 (vm-inform 0 "%s exited non-zero (code %s)" command status)
+		 (vm-warn 0 0 "%s exited non-zero (code %s)" command status)
 		 t)
 		(t (save-excursion
-		     (vm-inform 0 "%s exited non-zero (code %s)" command status)
+		     (vm-warn 0 0 "%s exited non-zero (code %s)" command status)
 		     (set-buffer (find-file-noselect tempfile))
 		     (setq errstring (buffer-string))
 		     (kill-buffer nil)
@@ -498,7 +498,7 @@ HISTORY argument is ignored."
     (setq vm-mouse-read-file-name-prompt prompt)
     (setq vm-mouse-read-file-name-return-value nil)
     (setq vm-mouse-read-file-name-should-delete-frame nil)
-    (if (and vm-mutable-frames vm-frame-per-completion
+    (if (and vm-mutable-frame-configuration vm-frame-per-completion
 	     (vm-multiple-frames-possible-p))
 	(save-excursion
 	  (setq vm-mouse-read-file-name-should-delete-frame t)
@@ -604,7 +604,7 @@ HISTORY argument is ignored."
     (setq vm-mouse-read-string-multi-word multi-word)
     (setq vm-mouse-read-string-return-value nil)
     (setq vm-mouse-read-string-should-delete-frame nil)
-    (if (and vm-mutable-frames vm-frame-per-completion
+    (if (and vm-mutable-frame-configuration vm-frame-per-completion
 	     (vm-multiple-frames-possible-p))
 	(save-excursion
 	  (setq vm-mouse-read-string-should-delete-frame t)

@@ -57,37 +57,37 @@ applied to collapsed threads in summary and thread operations are
 enabled via `vm-enable-thread-operations' then all messages in the
 thread are deleted."
   (interactive "p")
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(del-count 0))
     (unless mlist
       (setq mlist (vm-select-operable-messages 
-		   count (interactive-p) "Delete")))
+		   count (vm-interactive-p) "Delete")))
     (while mlist
       (unless (vm-deleted-flag (car mlist))
-	(vm-set-deleted-flag (car mlist) t)
-	(vm-increment del-count))
-      ;; The following is a temporary fix.  To be absorted into
-      ;; vm-update-summary-and-mode-line eventually.
-      (when (and vm-summary-enable-thread-folding
-		 vm-summary-show-threads
-		 ;; (not (and vm-enable-thread-operations
-		 ;;	 (eq count 1)))
-		 (> (vm-thread-count (car mlist)) 1))
-	(with-current-buffer vm-summary-buffer
-	  (vm-expand-thread (vm-thread-root (car mlist)))))
+	(when (vm-set-deleted-flag (car mlist) t)
+	    (vm-increment del-count)
+	    ;; The following is a temporary fix.  To be absorted into
+	    ;; vm-update-summary-and-mode-line eventually.
+	    (when (and vm-summary-enable-thread-folding
+		       vm-summary-show-threads
+		       ;; (not (and vm-enable-thread-operations
+		       ;;	 (eq count 1)))
+		       (> (vm-thread-count (car mlist)) 1))
+	      (with-current-buffer vm-summary-buffer
+		(vm-expand-thread (vm-thread-root (car mlist)))))))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-delete-message vm-delete-message-backward)
 		(list this-command))
-    (if (and used-marks (interactive-p))
-	(if (zerop del-count)
-	    (vm-inform 5 "No messages deleted")
-	  (vm-inform 5 "%d message%s deleted"
-		      del-count
-		      (if (= 1 del-count) "" "s"))))
+    (when (vm-interactive-p)
+      (if (zerop del-count)
+	  (vm-inform 5 "No messages deleted")
+	(vm-inform 5 "%d message%s deleted"
+		   del-count
+		   (if (= 1 del-count) "" "s"))))
     (vm-update-summary-and-mode-line)
     (if (and vm-move-after-deleting (not used-marks))
 	(let ((vm-circular-folders (and vm-circular-folders
@@ -98,7 +98,7 @@ thread are deleted."
 (defun vm-delete-message-backward (count)
   "Like vm-delete-message, except the deletion direction is reversed."
   (interactive "p")
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
   (vm-delete-message (- count)))
 
@@ -117,21 +117,20 @@ applied to collapsed threads in summary and thread operations are
 enabled via `vm-enable-thread-operations' then all messages in the
 thread are undeleted."
   (interactive "p")
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist (vm-select-operable-messages 
-		count (interactive-p) "Undelete"))
+		count (vm-interactive-p) "Undelete"))
 	(undel-count 0))
     (while mlist
       (if (vm-deleted-flag (car mlist))
-	  (progn
-	    (vm-set-deleted-flag (car mlist) nil)
-	    (vm-increment undel-count)))
+	  (if (vm-set-deleted-flag (car mlist) nil)
+	      (vm-increment undel-count)))
       (setq mlist (cdr mlist)))
-    (if (and used-marks (interactive-p))
+    (if (and used-marks (vm-interactive-p))
 	(if (zerop undel-count)
 	    (vm-inform 5 "No messages undeleted")
 	  (vm-inform 5 "%d message%s undeleted"
@@ -162,34 +161,34 @@ ignored.  If applied to collapsed threads in summary and thread
 operations are enabled via `vm-enable-thread-operations' then all
 messages in the thread are flagged/unflagged."
   (interactive "p")
-  (if (interactive-p)
+  (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(flagged-count 0)
 	(new-flagged nil))
     (unless mlist
       (setq mlist (vm-select-operable-messages 
-		   count (interactive-p) "Flag/unflag")))
+		   count (vm-interactive-p) "Flag/unflag")))
     (when mlist
       (setq new-flagged (not (vm-flagged-flag (car mlist)))))
     (while mlist
-      (vm-set-flagged-flag (car mlist) new-flagged)
-      (vm-increment flagged-count)
-      ;; The following is a temporary fix.  To be absorted into
-      ;; vm-update-summary-and-mode-line eventually.
-      (when (and vm-summary-enable-thread-folding
+      (when (vm-set-flagged-flag (car mlist) new-flagged)
+	(vm-increment flagged-count)
+	;; The following is a temporary fix.  To be absorted into
+	;; vm-update-summary-and-mode-line eventually.
+	(when (and vm-summary-enable-thread-folding
 		 vm-summary-show-threads
 		 ;; (not (and vm-enable-thread-operations
 		 ;;	 (eq count 1)))
 		 (> (vm-thread-count (car mlist)) 1))
 	(with-current-buffer vm-summary-buffer
-	  (vm-expand-thread (vm-thread-root (car mlist)))))
+	  (vm-expand-thread (vm-thread-root (car mlist))))))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-toggle-flag-message)
 		(list this-command))
-    (if (and used-marks (interactive-p))
+    (if (and used-marks (vm-interactive-p))
 	(if (zerop flagged-count)
 	    (vm-inform 5 "No messages flagged/unflagged")
 	  (vm-inform 5 "%d message%s %sflagged"
@@ -212,7 +211,7 @@ negative arugment means move backward, a zero argument means
 don't move at all."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (let ((subject (vm-so-sortable-subject (car vm-message-pointer)))
 	(mp vm-message-list)
@@ -221,11 +220,10 @@ don't move at all."
     (while mp
       (if (and (not (vm-deleted-flag (car mp)))
 	       (string-equal subject (vm-so-sortable-subject (car mp))))
-	  (progn
-	    (vm-set-deleted-flag (car mp) t)
-	    (vm-increment n)))
+	  (if (vm-set-deleted-flag (car mp) t)
+	      (vm-increment n)))
       (setq mp (cdr mp)))
-    (and (interactive-p)
+    (and (vm-interactive-p)
 	 (if (zerop n)
 	     (vm-inform 5 "No messages deleted.")
 	   (vm-inform 5 "%d message%s deleted" n (if (= n 1) "" "s")))))
@@ -252,7 +250,7 @@ negative arugment means move backward, a zero argument means
 don't move at all."
   (interactive "p")
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (vm-build-threads-if-unbuilt)
   (let ((list (vm-thread-subtree
@@ -260,10 +258,10 @@ don't move at all."
 	(n 0))
     (while list
       (unless (vm-deleted-flag (car list))
-	(vm-set-deleted-flag (car list) t)
-	(vm-increment n))
+	(if (vm-set-deleted-flag (car list) t)
+	    (vm-increment n)))
       (setq list (cdr list)))
-    (when (interactive-p)
+    (when (vm-interactive-p)
       (if (zerop n)
 	  (vm-inform 5 "No messages deleted.")
 	(vm-inform 5 "%d message%s deleted" n (if (= n 1) "" "s")))))
@@ -292,7 +290,7 @@ When invoked on marked messages (via `vm-next-command-uses-marks'),
 only duplicate messages among the marked messages are deleted;
 unmarked messages are not considerd for deletion."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(table (make-vector 103 0))
@@ -310,11 +308,11 @@ unmarked messages are not considerd for deletion."
 	     (when mid
 	       ;; (or mid (debug (car mp)))
 	       (when (intern-soft mid table)
-		 (vm-set-deleted-flag (car mp) t)
-		 (setq n (1+ n)))
+		 (if (vm-set-deleted-flag (car mp) t)
+		     (setq n (1+ n))))
 	       (intern mid table))))
       (setq mp (cdr mp)))
-    (when (interactive-p)
+    (when (vm-interactive-p)
       (if (zerop n)
 	  (vm-inform 5 "No messages deleted")
 	(vm-inform 5 "%d message%s deleted" n (if (= 1 n) "" "s"))))
@@ -336,7 +334,7 @@ When invoked on marked messages (via `vm-next-command-uses-marks'),
 only duplicate messages among the marked messages are deleted,
 unmarked messages are not hashed or considerd for deletion."
   (interactive)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
 	(mlist vm-message-list)
@@ -356,14 +354,13 @@ unmarked messages are not hashed or considerd for deletion."
 	    (set-buffer (vm-buffer-of m))
 	    (setq hash (vm-md5-region (vm-text-of m) (vm-text-end-of m)))
 	    (if (intern-soft hash table)
-		(progn
-		  (vm-set-deleted-flag (car mlist) t)
-		  (vm-increment del-count))
+		(if (vm-set-deleted-flag (car mlist) t)
+		    (vm-increment del-count))
 	      (intern hash table)))
 	  (setq mlist (cdr mlist)))))
     (vm-display nil nil '(vm-delete-duplicate-messages)
 		(list this-command))
-    (when (interactive-p)
+    (when (vm-interactive-p)
       (if (zerop del-count)
 	  (vm-inform 5 "No messages deleted")
 	(vm-inform 5 "%d message%s deleted" 
@@ -390,7 +387,7 @@ When invoked on marked messages (via `vm-next-command-uses-marks'),
 only messages both marked and deleted are expunged, other messages are
 ignored."
   (interactive)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   ;; do this so we have a clean slate.  code below depends on the
   ;; fact that the numbering redo start point begins as nil in

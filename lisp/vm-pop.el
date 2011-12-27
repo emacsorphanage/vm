@@ -117,7 +117,8 @@ a POP server, find its cache file on the file system"
 	(m-per-session vm-pop-messages-per-session)
 	(b-per-session vm-pop-bytes-per-session)
 	(handler (vm-find-file-name-handler source 'vm-pop-move-mail))
-	(popdrop (vm-safe-popdrop-string source))
+	(popdrop (or (vm-pop-find-name-for-spec source)
+		     (vm-safe-popdrop-string source)))
 	(statblob nil)
 	(can-uidl t)
 	(msgid (list nil (vm-popdrop-sans-password source) 'uidl))
@@ -319,9 +320,9 @@ into the current folder.  VM sends POP DELE commands to all the
 relevant POP servers to remove the messages."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-virtual-folder)
-  (if (and (interactive-p) (eq vm-folder-access-method 'pop))
+  (if (and (vm-interactive-p) (eq vm-folder-access-method 'pop))
       (error "This command is not meant for POP folders.  Use the normal folder expunge instead."))
   (let ((process nil)
 	(source nil)
@@ -355,7 +356,8 @@ relevant POP servers to remove the messages."
 			     (vm-pop-end-session process)
 			     (setq process nil)))
 			(setq source (nth 1 data))
-			(setq popdrop (vm-safe-popdrop-string source))
+			(setq popdrop (or (vm-pop-find-name-for-spec source)
+					  (vm-safe-popdrop-string source)))
 			(condition-case nil
 			    (progn
 			      (vm-inform 6 
@@ -431,7 +433,8 @@ relevant POP servers to remove the messages."
   (let ((process-to-shutdown nil)
 	process use-ssl use-ssh success
 	(folder-type vm-folder-type)
-	(popdrop (vm-safe-popdrop-string source))
+	(popdrop (or (vm-pop-find-name-for-spec source)
+		     (vm-safe-popdrop-string source)))
 	(coding-system-for-read (vm-binary-coding-system))
 	(coding-system-for-write (vm-binary-coding-system))
 	(session-name "POP")
@@ -508,8 +511,7 @@ relevant POP servers to remove the messages."
 		    (read-passwd
 		     (format "POP password for %s: " popdrop)))
 	      (when (equal pass "")
-		(vm-inform 0 "Password cannot be empty")
-		(sit-for 2)
+		(vm-warn 0 2 "Password cannot be empty")
 		(setq pass nil)))
 	    (when (null pass)
 	      (vm-inform 0 "Need password for %s" popdrop)
@@ -571,7 +573,11 @@ relevant POP servers to remove the messages."
 		   (vm-pop-send-command process (format "PASS %s" pass))
 		   (unless (vm-pop-read-response process)
 
-		     (vm-inform 0 "POP password for %s incorrect" popdrop)
+		     (vm-warn 0 0 "POP password for %s incorrect" popdrop)
+		     (setq vm-pop-passwords
+			   (vm-delete (lambda (pair)
+					(equal (car pair) source-nopwd))
+				      vm-pop-passwords))
 		     ;; don't sleep unless we're running synchronously.
 		     (when vm-pop-ok-to-ask
 		       (sleep-for 2))
@@ -593,7 +599,7 @@ relevant POP servers to remove the messages."
 		   (when (null timestamp)
 		     (goto-char (point-max))
      (insert-before-markers "<<< ooops, no timestamp found in greeting! >>>\n")
-		     (vm-inform 0 "Server of %s does not support APOP" popdrop)
+		     (vm-warn 0 0 "Server of %s does not support APOP" popdrop)
 		     ;; don't sleep unless we're running synchronously
 		     (if vm-pop-ok-to-ask
 			 (sleep-for 2))
@@ -604,7 +610,7 @@ relevant POP servers to remove the messages."
 			    user
 			    (vm-pop-md5 (concat timestamp pass))))
 		   (unless (vm-pop-read-response process)
-		     (vm-inform 0 "POP password for %s incorrect" popdrop)
+		     (vm-warn 0 0 "POP password for %s incorrect" popdrop)
 		     (when vm-pop-ok-to-ask
 		       (sleep-for 2))
 		     (throw 'done nil))
@@ -651,10 +657,10 @@ killed as well."
 		    "Waiting for response to POP QUIT command... done"))))))
   (if (and (process-buffer process)
 	   (buffer-live-p (process-buffer process)))
-      (if (and (not vm-pop-keep-trace-buffer) (not keep-buffer))
+      (if (and (null vm-pop-keep-trace-buffer) (not keep-buffer))
 	  (kill-buffer (process-buffer process))
 	(vm-keep-some-buffers (process-buffer process) 'vm-kept-pop-buffers
-			      vm-pop-keep-failed-trace-buffers
+			      vm-pop-keep-trace-buffer
 			      "saved ")))
   (if (fboundp 'add-async-timeout)
       (add-async-timeout 2 'delete-process process)
@@ -1078,7 +1084,8 @@ popdrop
 	   (n 1)
 	   (statblob nil)
 	   (popdrop (vm-folder-pop-maildrop-spec))
-	   (safe-popdrop (vm-safe-popdrop-string popdrop))
+	   (safe-popdrop (or (vm-pop-find-name-for-spec popdrop)
+			     (vm-safe-popdrop-string popdrop)))
 	   r-list mp got-some message-size
 	   (folder-buffer (current-buffer)))
       (if (and do-retrieves retrieve-list)
@@ -1111,7 +1118,7 @@ popdrop
 		     (setq r-list (cdr r-list)
 			   n (1+ n))))
 	       (error
-		(vm-inform 0 "Retrieval from %s signaled: %s" safe-popdrop
+		(vm-warn 0 2 "Retrieval from %s signaled: %s" safe-popdrop
 			 error-data))
 	       (quit
 		(vm-inform 0 "Quit received during retrieval from %s"
@@ -1241,10 +1248,9 @@ specification SPEC."
   "Begin to compose a bug report for POP support functionality."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (setq vm-kept-pop-buffers nil)
-  (setq vm-pop-keep-trace-buffer t)
-  (setq vm-pop-keep-failed-trace-buffers 20))
+  (setq vm-pop-keep-trace-buffer 20))
 
 (defun vm-pop-submit-bug-report ()
   "Submit a bug report for VM's POP support functionality.  
@@ -1253,7 +1259,7 @@ occurrence and this command after the problem occurrence, in
 order to capture the trace of POP sessions during the occurrence."
   (interactive)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (if (or vm-pop-keep-trace-buffer
 	  (y-or-n-p "Did you run vm-pop-start-bug-report earlier? "))
       (vm-inform 5 "Thank you. Preparing the bug report... ")
@@ -1262,22 +1268,22 @@ order to capture the trace of POP sessions during the occurrence."
     (if process
 	(vm-pop-end-session process)))
   (let ((trace-buffer-hook
-	 '(lambda ()
-	    (let ((bufs vm-kept-pop-buffers) 
-		  buf)
-	      (insert "\n\n")
-	      (insert "POP Trace buffers - most recent first\n\n")
-	      (while bufs
-		(setq buf (car bufs))
-		(insert "----") 
-		(insert (format "%s" buf))
-		(insert "----------\n")
-		(insert (save-excursion
-			  (set-buffer buf)
-			  (buffer-string)))
-		(setq bufs (cdr bufs)))
-	      (insert "--------------------------------------------------\n"))
-	    )))
+	 (lambda ()
+	   (let ((bufs vm-kept-pop-buffers) 
+		 buf)
+	     (insert "\n\n")
+	     (insert "POP Trace buffers - most recent first\n\n")
+	     (while bufs
+	       (setq buf (car bufs))
+	       (insert "----") 
+	       (insert (format "%s" buf))
+	       (insert "----------\n")
+	       (insert (save-excursion
+			 (set-buffer buf)
+			 (buffer-string)))
+	       (setq bufs (cdr bufs)))
+	     (insert "--------------------------------------------------\n"))
+	   )))
     (vm-submit-bug-report nil (list trace-buffer-hook))
   ))
 

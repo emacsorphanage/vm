@@ -143,13 +143,11 @@ deleted messages.  Use `###' to expunge deleted messages."
 	  (cond ((bufferp f)		; may be unnecessary. USR, 2010-01
 		 (setq access-method vm-folder-access-method))
 		((and (stringp f)
-		      vm-recognize-imap-maildrops
-		      (string-match vm-recognize-imap-maildrops f))
+		      (vm-imap-folder-spec-p f))
 		 (setq access-method 'imap
 		       folder f))
 		((and (stringp f)
-		      vm-recognize-pop-maildrops
-		      (string-match vm-recognize-pop-maildrops f))
+		      (vm-pop-folder-spec-p f))
 		 (setq access-method 'pop
 		       folder f)))))
     (let ((full-startup (and (not reload) (not (bufferp folder))))
@@ -287,9 +285,10 @@ deleted messages.  Use `###' to expunge deleted messages."
       ;; builds message list, reads attributes if they weren't
       ;; read from an index file.
       ;; but that is not what the code is doing! - USR, 2011-04-24
-      (vm-assimilate-new-messages :read-attributes t
-				  :gobble-order (not did-read-index-file) 
-				  :run-hooks nil)
+      (unless revisit
+	(vm-assimilate-new-messages :read-attributes t
+				    :gobble-order (not did-read-index-file) 
+				    :run-hooks nil))
 
       (if (and first-time (not did-read-index-file))
 	  (progn
@@ -363,14 +362,14 @@ deleted messages.  Use `###' to expunge deleted messages."
 	;; raise the summary frame if the user wants frames
 	;; raised and if there is a summary frame.
 	(if (and vm-summary-buffer
-		 vm-mutable-frames
+		 vm-mutable-frame-configuration
 		 vm-frame-per-summary
 		 vm-raise-frame-at-startup)
 	    (vm-raise-frame))
-	;; if vm-mutable-windows is nil, the startup
+	;; if vm-mutable-window-configuration is nil, the startup
 	;; configuration can't be applied, so do
 	;; something to get a VM buffer on the screen
-	(if vm-mutable-windows
+	(if vm-mutable-window-configuration
 	    (vm-display nil nil (list this-command)
 			(list (or this-command 'vm) 'startup))
 	  (save-excursion
@@ -402,7 +401,7 @@ deleted messages.  Use `###' to expunge deleted messages."
       (if (or (not full-startup) preserve-auto-save-file)
 	  (throw 'done t))
       
-      (if (interactive-p)
+      (if (vm-interactive-p)
 	  (vm-inform 5 totals-blurb))
 
       (if (and vm-auto-get-new-mail
@@ -420,7 +419,7 @@ deleted messages.  Use `###' to expunge deleted messages."
 	    (vm-inform 5 totals-blurb)))
 
       ;; Display copyright and copying info.
-      (when (and (interactive-p) (not vm-startup-message-displayed))
+      (when (and (vm-interactive-p) (not vm-startup-message-displayed))
 	(vm-display-startup-message)
 	(if (not (input-pending-p))
 	    (vm-inform 5 totals-blurb))))))
@@ -513,14 +512,12 @@ message-pointer or getting new mail)."
   (vm-check-for-killed-summary)
   (setq vm-last-visit-folder folder)
   (let ((access-method nil) foo)
-    (cond ((and (stringp vm-recognize-pop-maildrops)
-		(string-match vm-recognize-pop-maildrops folder)
+    (cond ((and (vm-pop-folder-spec-p folder)
 		(setq foo (vm-pop-find-name-for-spec folder)))
 	   (setq folder foo
 		 access-method 'pop
 		 vm-last-visit-pop-folder folder))
-	  ((and (stringp vm-recognize-imap-maildrops)
-		(string-match vm-recognize-imap-maildrops folder)
+	  ((and (vm-imap-folder-spec-p folder)
 		;;(setq foo (vm-imap-find-name-for-spec folder))
 		)
 	   (setq ;; folder foo
@@ -893,7 +890,7 @@ non-virtual folders should be returned."
                    default))))
 
   (switch-to-buffer folder-name)
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-summarize)
   (let ((this-command 'vm-scroll-backward))
     (vm-display nil nil '(vm-scroll-forward vm-scroll-backward)
@@ -1014,14 +1011,14 @@ vm-visit-virtual-folder.")
       ;; raise the summary frame if the user wants frames
       ;; raised and if there is a summary frame.
       (when (and vm-summary-buffer
-		 vm-mutable-frames
+		 vm-mutable-frame-configuration
 		 vm-frame-per-summary
 		 vm-raise-frame-at-startup)
 	(vm-raise-frame))
-      ;; if vm-mutable-windows is nil, the startup
+      ;; if vm-mutable-window-configuration is nil, the startup
       ;; configuration can't be applied, so do
       ;; something to get a VM buffer on the screen
-      (if vm-mutable-windows
+      (if vm-mutable-window-configuration
 	  (vm-display nil nil (list this-command)
 		      (list (or this-command 'vm) 'startup))
 	(save-excursion
@@ -1031,7 +1028,7 @@ vm-visit-virtual-folder.")
 
     ;; check interactive-p so as not to bog the user down if they
     ;; run this function from within another function.
-    (when (and (interactive-p)
+    (when (and (vm-interactive-p)
 	       (not vm-startup-message-displayed))
       (vm-display-startup-message)
       (vm-inform 5 blurb))))
@@ -1085,11 +1082,13 @@ recipient list."
   (interactive)
   (vm-session-initialization)
   (vm-check-for-killed-folder)
-  (vm-select-folder-buffer-if-possible)
-  (vm-check-for-killed-summary)
-  (vm-mail-internal nil to subject)
-  (run-hooks 'vm-mail-hook)
-  (run-hooks 'vm-mail-mode-hook))
+  (let ((guess (when (null to)
+		 (vm-select-recipient-from-sender))))
+    (vm-select-folder-buffer-if-possible)
+    (vm-check-for-killed-summary)
+    (vm-mail-internal :to to :guessed-to guess :subject subject)
+    (run-hooks 'vm-mail-hook)
+    (run-hooks 'vm-mail-mode-hook)))
 
 ;;;###autoload
 (defun vm-mail-other-frame (&optional to)
@@ -1098,6 +1097,8 @@ Optional argument TO is a string that should contain a comma separated
 recipient list."
   (interactive)
   (vm-session-initialization)
+  (when (null to)
+    (setq to (vm-select-recipient-from-sender)))
   (if (vm-multiple-frames-possible-p)
       (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
@@ -1113,6 +1114,8 @@ Optional argument TO is a string that should contain a comma separated
 recipient list."
   (interactive)
   (vm-session-initialization)
+  (when (null to)
+    (setq to (vm-select-recipient-from-sender)))
   (if (one-window-p t)
       (split-window))
   (other-window 1)
@@ -1122,7 +1125,6 @@ recipient list."
 
 (fset 'vm-folders-summary-mode 'vm-mode)
 (put 'vm-folders-summary-mode 'mode-class 'special)
-
 
 ;;;###autoload
 (defun vm-folders-summarize (&optional display raise)
@@ -1165,7 +1167,7 @@ summary buffer to select a folder."
        (vm-check-for-killed-folder))
   (save-excursion
     (and vm-mail-buffer
-	 (vm-select-folder-buffer-and-validate 0 (interactive-p)))
+	 (vm-select-folder-buffer-and-validate 0 (vm-interactive-p)))
     (vm-check-for-killed-summary)
     (let ((folder-buffer (and (eq major-mode 'vm-mode)
 			      (current-buffer)))
@@ -1208,11 +1210,11 @@ summary buffer to select a folder."
   (if continue
       (vm-continue-composing-message)
     (let ((buffer (vm-mail-internal
-		   (if to
-		       (format "message to %s"
-			       (vm-truncate-roman-string to 20))
-		     nil)
-		   to subject)))
+		   :buffer-name (if to
+				    (format "message to %s"
+					    (vm-truncate-roman-string to 20))
+				  nil)
+		   :to to :subject subject)))
       (goto-char (point-min))
       (re-search-forward (concat "^" mail-header-separator "$"))
       (beginning-of-line)
@@ -1270,9 +1272,12 @@ summary buffer to select a folder."
       (nconc varlist (list 'emacs-w3m-version 'w3m-version 
 			   'w3m-goto-article-function)))
     (let ((fill-column (1- (window-width)))	; turn off auto-fill
+	  (mail-user-agent 'message-user-agent) ; use the default
+					; mail-user-agent for bug reports
 	  (vars-to-delete 
 	   '(vm-auto-folder-alist	; a bit private
 	     vm-mail-folder-alist	; ditto
+	     vm-virtual-folder-alist	; ditto
 	     ;; vm-mail-fcc-default - is this private?
 	     vmpc-actions vmpc-conditions 
 	     vmpc-actions-alist vmpc-reply-alist vmpc-forward-alist
@@ -1328,12 +1333,12 @@ summary buffer to select a folder."
       (setq varlist (append (list 'features) varlist))
       (delete-other-windows)
       (reporter-submit-bug-report
-       vm-maintainer-address
-       (concat "VM " (vm-version))
-       varlist
-       nil
-       nil
-       (concat
+       vm-maintainer-address		; address
+       (concat "VM " (vm-version))	; pkgname
+       varlist				; varlist
+       pre-hooks			; pre-hooks
+       post-hooks			; post-hooks
+       (concat				; salutation
 	"INSTRUCTIONS:
 - Please change the Subject header to a concise bug description.
 
@@ -1372,18 +1377,20 @@ summary buffer to select a folder."
 	 (error "VM %s must be run on GNU Emacs 21 or a later version."
 		(vm-version)))))
 
-(defun vm-set-debug-flags ()
-  (or stack-trace-on-error
-      debug-on-error
-      (setq stack-trace-on-error
-	    '(
-	      wrong-type-argument
-	      wrong-number-of-arguments
-	      args-out-of-range
-	      void-function
-	      void-variable
-	      invalid-function
-	     ))))
+;; This function is now defunct.  USR, 2011-11-12
+
+;; (defun vm-set-debug-flags ()
+;;   (or stack-trace-on-error
+;;       debug-on-error
+;;       (setq stack-trace-on-error
+;; 	    '(
+;; 	      wrong-type-argument
+;; 	      wrong-number-of-arguments
+;; 	      args-out-of-range
+;; 	      void-function
+;; 	      void-variable
+;; 	      invalid-function
+;; 	     ))))
 
 (defun vm-toggle-thread-operations ()
   "Toggle the variable `vm-enable-thread-operations'.

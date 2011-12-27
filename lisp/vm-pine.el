@@ -251,7 +251,7 @@ when continuing a postponed message."
 This is only for internal use of vm-pine.el!!!")
 
 ;;-----------------------------------------------------------------------------
-(define-key vm-mode-map "C"      'vm-continue-what-message)
+;; (define-key vm-mode-map "C"      'vm-continue-what-message)
 
 ;;-----------------------------------------------------------------------------
 (defun vm-get-persistent-message-ids-for (mlist)
@@ -324,14 +324,13 @@ The variables `vm-postponed-message-headers' and
 `vm-postponed-message-discard-header-regexp' control which
 headers are copied to the composition buffer.
 
-In `vm-mail-mode' this is bound to [C].
 If optional argument SILENT is positive then act in background (no frame
 creation)."
   (interactive "P")
 
   (vm-session-initialization)
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
 
   (if (eq vm-system-state 'previewing)
       (vm-show-current-message))
@@ -358,7 +357,7 @@ creation)."
           (let ((vm-mail-hook nil)
                 (vm-mail-mode-hook nil)
                 (this-command 'vm-mail))
-            (vm-mail-internal nil to))
+            (vm-mail-internal :to to))
         (set-buffer (generate-new-buffer to))
         (setq default-directory (expand-file-name
                                  (or vm-folder-directory "~/")))
@@ -578,8 +577,8 @@ Optional argument DONT-KILL is positive, then do not kill source message."
                 (t
                  (insert (format "From: %s\n" login))))))
     
-    ;; mime-encode the message if necessary 
-    (condition-case nil (vm-mime-encode-composition) (error t))
+    ;; mime-encode the message if necessary and add "attachment" disposition
+    (condition-case nil (vm-mime-encode-composition t) (error t))
 
     ;; add the current date 
     (if (not (vm-mail-mode-get-header-contents "Date:"))
@@ -651,7 +650,7 @@ Optional argument DONT-KILL is positive, then do not kill source message."
     ;; delete source message
     (vm-delete-postponed-message)
 
-    ;; mess arounf with the window configuration 
+    ;; mess around with the window configuration 
     (let ((b (current-buffer))
           (this-command 'vm-mail-send-and-exit))
       (cond ((null (buffer-name b));; dead buffer
@@ -672,7 +671,7 @@ Optional argument DONT-KILL is positive, then do not kill source message."
         (insert (concat "FCC: " folder "\n" mail-header-separator))
       (kill-this-buffer))
 
-    (if (interactive-p)
+    (if (vm-interactive-p)
         (message "Message postponed to folder `%s'" folder))))
 
 ;;-----------------------------------------------------------------------------
@@ -785,7 +784,7 @@ configuration."
              (vm-continue-postponed-message)))
           ((equal action 'visit)
            (funcall visit vm-postponed-folder)
-           (vm-select-folder-buffer-and-validate 0 (interactive-p))
+           (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
 	   (vm-make-local-hook 'vm-quit-hook)
            (add-hook 'vm-quit-hook 'vm-expunge-folder nil t)
            (vm-expunge-folder)

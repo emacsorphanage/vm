@@ -76,7 +76,7 @@ of available face names."
                                           vm-summary-faces-alist)
                                   nil t "vm-summary-deleted")))
   (setq prop (or prop vm-summary-faces-hide "vm-summary-deleted"))
-  (vm-select-folder-buffer-and-validate 0 (interactive-p))
+  (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-summarize)
   (set-buffer vm-summary-buffer)
   (let ((extents (vm-summary-faces-list-extents))
@@ -136,14 +136,14 @@ fonts and colors, for easy recogniton of the message status."
         (setq vm-summary-enable-faces t)
       (setq vm-summary-enable-faces nil)))
 
-  (when (interactive-p)
+  (when (vm-interactive-p)
     (vm-inform 1 "VM summary faces mode is %s"
              (if vm-summary-enable-faces "on" "off")))
   
   (if (memq major-mode '(vm-mode vm-virtual-mode vm-summary-mode
                                  vm-presentation-mode))
       (save-excursion
-        (vm-select-folder-buffer-and-validate 0 (interactive-p))
+        (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
         (vm-summarize)
         (set-buffer vm-summary-buffer)
         (if vm-summary-enable-faces
