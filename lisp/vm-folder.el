@@ -1715,15 +1715,17 @@ Supports version 4 format of attribute storage, for backward compatibility."
   (interactive)
   (save-excursion
     (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
-    (if (not (equal (nth 0 vm-totals) vm-modification-counter))
-	(vm-compute-totals))
-    (if (equal (nth 1 vm-totals) 0)
-	(vm-inform 5 "No messages.")
-      (vm-inform 5 "%d message%s, %d new, %d unread, %d deleted"
-	       (nth 1 vm-totals) (if (= (nth 1 vm-totals) 1) "" "s")
-	       (nth 2 vm-totals)
-	       (nth 3 vm-totals)
-	       (nth 4 vm-totals)))))
+    (let ((folder (buffer-name (current-buffer))))
+      (if (not (equal (nth 0 vm-totals) vm-modification-counter))
+	  (vm-compute-totals))
+      (if (equal (nth 1 vm-totals) 0)
+	  (vm-inform 5 "%s: No messages." folder)
+	(vm-inform 5 "%s: %d message%s, %d new, %d unread, %d deleted"
+		   folder
+		   (nth 1 vm-totals) (if (= (nth 1 vm-totals) 1) "" "s")
+		   (nth 2 vm-totals)
+		   (nth 3 vm-totals)
+		   (nth 4 vm-totals))))))
 
 (defun vm-convert-v4-attributes (data)
   (list (apply 'vector
@@ -2401,7 +2403,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 
 ;; Insert a bookmark into the first message in the folder.
 (defun vm-stuff-bookmark ()
-  (if vm-message-list
+  (if vm-message-pointer
       (save-excursion
 	(vm-save-restriction
 	 (widen)
@@ -3319,7 +3321,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 
     (unless (or no-change virtual)
       ;; this could take a while, so give the user some feedback
-      (vm-inform 5 "Quitting...")
+      (vm-inform 5 "%s: Quitting..." (buffer-name (current-buffer)))
       (unless (or vm-folder-read-only (eq major-mode 'vm-virtual-mode))
 	(vm-change-all-new-to-unread)))
     (when (and (buffer-modified-p)
@@ -3808,7 +3810,7 @@ run vm-expunge-folder followed by vm-save-folder."
 	      '(vm-save-and-expunge-folder))
   (if (not vm-folder-read-only)
       (progn
-	(vm-inform 6 "Expunging...")
+	(vm-inform 6 "%s: Expunging..." (buffer-name (current-buffer)))
 	(vm-expunge-folder :quiet t)))
   (vm-save-folder prefix))
 

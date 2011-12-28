@@ -1019,8 +1019,9 @@ real or virtual)."
 		 (dolist (pair vm-component-buffers)
 		   (when (cdr pair)
 		     (with-current-buffer (car pair)
-		       ;; Use dynamic non-local bindings from vm-quit
-		       (vm-quit no-expunge no-change))))
+		       ;; Use dynamic bindings from vm-quit
+		       (let ((vm-verbosity (1- vm-verbosity)))
+			 (vm-quit no-expunge no-change)))))
 	       (error 
 		(vm-warn 0 2 "Unable to quit component folders: %s"
 			 (prin1-to-string error-data))))))

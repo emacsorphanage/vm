@@ -157,7 +157,7 @@ deleted messages.  Use `###' to expunge deleted messages."
 	  (did-read-index-file nil)
 	  folder-buffer first-time totals-blurb
 	  folder-name account-name remote-spec
-	  preserve-auto-save-file)
+	  revisiting preserve-auto-save-file)
       (cond ((and full-startup (eq access-method 'pop))
 	     ;; (setq vm-last-visit-pop-folder folder)
 	     (setq remote-spec folder)
@@ -175,10 +175,11 @@ deleted messages.  Use `###' to expunge deleted messages."
 			    (vm-imap-account-name-for-spec remote-spec)))
 		 (setq folder-name account-name))
 	     (setq folder (vm-imap-make-filename-for-spec remote-spec))))
-      (setq folder-buffer
-	    (if (bufferp folder)
-		folder
-	      (vm-read-folder folder remote-spec folder-name)))
+      (if (bufferp folder)
+	  (setq revisiting revisit
+		folder-buffer folder)
+	(setq revisiting nil)
+	(setq folder-buffer (vm-read-folder folder remote-spec folder-name)))
       (set-buffer folder-buffer)
       ;; Thunderbird folders
       (let ((msf (concat (buffer-file-name) ".msf")))
@@ -285,7 +286,7 @@ deleted messages.  Use `###' to expunge deleted messages."
       ;; builds message list, reads attributes if they weren't
       ;; read from an index file.
       ;; but that is not what the code is doing! - USR, 2011-04-24
-      (unless revisit
+      (unless revisiting
 	(vm-assimilate-new-messages :read-attributes t
 				    :gobble-order (not did-read-index-file) 
 				    :run-hooks nil))
@@ -332,8 +333,8 @@ deleted messages.  Use `###' to expunge deleted messages."
 		(vm-raise-frame))))
 
       ;; if the folder is being revisited, nothing more to be done
-      (if (and revisit (not first-time))
-	  (throw 'done t))
+      (when (and revisiting (not first-time))
+	(throw 'done t))
 
       ;; say this NOW, before the non-previewers read a message,
       ;; alter the new message count and confuse themselves.
@@ -964,6 +965,7 @@ vm-visit-virtual-folder.")
       ;; scroll in place messes with scroll-up and this loses
       (make-local-variable 'scroll-in-place)
       (setq scroll-in-place nil)
+      ;; Visit all the component folders and build message list
       (vm-build-virtual-message-list nil)
       (use-local-map vm-mode-map)
       (when (vm-menu-support-possible-p)

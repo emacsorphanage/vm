@@ -394,7 +394,7 @@ ignored."
   ;; all folder buffers.
   (vm-update-summary-and-mode-line)
   (unless quiet
-    (vm-inform 5 "Expunging..."))
+    (vm-inform 5 "%s: Expunging..." (buffer-name (current-buffer))))
   (let ((use-marks (and (eq last-command 'vm-next-command-uses-marks)
 			(null just-these-messages)))
 	(mp vm-message-list)
