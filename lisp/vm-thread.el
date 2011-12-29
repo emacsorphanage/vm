@@ -400,7 +400,8 @@ and child pointers."
   ;; requires: BASIC and messages /= nil
   ;; ensures: BASIC
   (unless (memq m (vm-th-messages-of id-sym))
-    (vm-th-set-messages-of id-sym (cons m (vm-th-messages-of id-sym)))))
+    (vm-th-set-messages-of 
+     id-sym (append (vm-th-messages-of id-sym) (list m)))))
 
 (defsubst vm-th-remove-message-from-symbol (id-sym m)
   "Delete message M from ID-SYM as one of the messages with its id."
@@ -678,6 +679,7 @@ being initialized."
 		   (vm-thread-mark-for-summary-update
 		    (vm-th-messages-of parent-sym))))
 		(t
+		 ;; new authoritative parent.  Overwrite the previous.
 		 (setq old-parent-sym (vm-th-parent-of id-sym))
 		 (unless initializing 
 		   (vm-th-clear-subtree old-parent-sym)	
