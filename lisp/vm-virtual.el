@@ -118,64 +118,38 @@ all the real folder buffers involved."
 	      selectors (cdr clause))
 	(while folders			; folders can change below
 	  (setq folder (car folders))
-	  (cond ((and (stringp folder) 
-		      (vm-pop-folder-spec-p folder))
-		 ;; POP folder, fine
+	  (cond ((and (stringp folder) (vm-pop-folder-spec-p folder))
 		 nil)
-		((and (stringp folder)
-		      (vm-imap-folder-spec-p folder))
-		 ;; IMAP folder, fine
+		((and (stringp folder) (vm-imap-folder-spec-p folder))
 		 nil)
-		((stringp folder)
-		 ;; Local folder, use full path
+		((stringp folder)	; Local folder, use full path
 		 (setq folder (expand-file-name folder vm-folder-directory)))
-		((listp folder)
-		 ;; Sexpr, eval it
+		((listp folder)		; Sexpr, eval it
 		 (setq folder (eval folder))))
-	  (cond
-	   ((null folder)
-	    ;; folder was a s-expr which returned nil
-	    ;; skip it
-	    nil )
-	   ((and (stringp folder) (file-directory-p folder))
-	    ;; an entire directory!
-	    (setq folders (nconc folders
-				 (vm-delete-backup-file-names
-				  (vm-delete-auto-save-file-names
-				   (vm-delete-directory-file-names
-				    (directory-files folder t nil)))))))
-	   ((or (null new-messages)
-		;; If we're assimilating messages into an
-		;; existing virtual folder, only allow selectors
-		;; that would be normally applied to this folder.
-		(and (bufferp folder)
-		     (eq (vm-buffer-of (car new-messages)) folder))
-		(and (stringp folder)
-		     (eq (vm-buffer-of (car new-messages))
-			 ;; letter bomb protection
-			 ;; set inhibit-local-variables to t for v18 Emacses
-			 ;; set enable-local-variables to nil
-			 ;; for newer Emacses
-			 (let ((inhibit-local-variables t)
-			       (coding-system-for-read
-				(vm-binary-coding-system))
-			       (enable-local-eval nil)
-			       (enable-local-variables nil)
-			       (vm-frame-per-folder nil)
-			       (vm-verbosity (1- vm-verbosity)))
-			   (vm-visit-folder folder nil t)
-			   (vm-select-folder-buffer)
-			   (current-buffer)))))
-
-	    ;; Check if the folder is already visited, or visit it
+	  (catch 'done
+	    (when (null folder)
+	      ;; folder was a s-expr which returned nil
+	      ;; skip it
+	      (throw 'done nil))
+	    (when (and (stringp folder) (file-directory-p folder))
+	      ;; an entire directory!
+	      (setq folders (nconc folders
+				   (vm-delete-backup-file-names
+				    (vm-delete-auto-save-file-names
+				     (vm-delete-directory-file-names
+				      (directory-files folder t nil))))))
+	      (throw 'done t))
 	    (cond ((bufferp folder)
 		   (setq buffer folder)
-		   (setq components (cons (cons buffer nil) components))
-		   (set-buffer folder))
-		  ((setq buffer (vm-get-folder-buffer folder))
-		   (setq components (cons (cons buffer nil) components))
-		   (set-buffer buffer))
-		  (t
+		   (setq components (cons (cons buffer nil) components)))
+		  ((and (stringp folder)
+			(setq buffer (vm-get-folder-buffer folder)))
+		   (setq components (cons (cons buffer nil) components)))
+		  ((stringp folder)
+		   ;; letter bomb protection
+		   ;; set inhibit-local-variables to t for v18 Emacses
+		   ;; set enable-local-variables to nil
+		   ;; for newer Emacses
 		   (let ((inhibit-local-variables t)
 			 (coding-system-for-read 
 			  (vm-binary-coding-system))
@@ -186,18 +160,28 @@ all the real folder buffers involved."
 		     (vm-visit-folder folder nil t)
 		     (vm-select-folder-buffer)
 		     (setq buffer (current-buffer))
-		     (setq components (cons (cons buffer t) components))
-		     (set-buffer buffer))))
-	    (if (eq major-mode 'vm-virtual-mode)
-		(setq virtual t
-		      real-buffers-used 
-		      (append vm-real-buffers real-buffers-used))
-	      (setq virtual nil)
-	      (unless (memq (current-buffer) real-buffers-used)
-		(setq real-buffers-used (cons (current-buffer)
-					      real-buffers-used)))
-	      (unless (eq major-mode 'vm-mode)
-		(vm-mode)))
+		     (setq components (cons (cons buffer t) components))))
+		  (t (catch 'done nil)))
+	   (when (or (null new-messages)
+		     ;; If we're assimilating messages into an
+		     ;; existing virtual folder, only allow selectors
+		     ;; that would be normally applied to this folder.
+		     (eq (vm-buffer-of (car new-messages)) buffer))
+	     ;; Check if the folder is already visited, or visit it
+	     (cond ((bufferp buffer)
+		    (set-buffer buffer))
+		   (t			; is this case needed?
+		    (catch 'done nil)))
+	     (if (eq major-mode 'vm-virtual-mode)
+		 (setq virtual t
+		       real-buffers-used 
+		       (append vm-real-buffers real-buffers-used))
+	       (setq virtual nil)
+	       (unless (memq (current-buffer) real-buffers-used)
+		 (setq real-buffers-used (cons (current-buffer)
+					       real-buffers-used)))
+	       (unless (eq major-mode 'vm-mode)
+		 (vm-mode)))
 
 	    ;; change (sexpr) into ("/file" "/file2" ...)
 	    ;; this assumes that there will never be (sexpr sexpr2)
