@@ -98,4 +98,5 @@ snapshot::
 	./release.sh snapshot
 
 tags::
-	etags lisp/*.el contrib/*.el info/vm.texinfo NEWS
+	etags lisp/*.el contrib/*.el info/*.texinfo NEWS example.vm INSTALL Makefile.in lisp/Makefile.in info/Makefile.in src/Makefile.in pixmaps/Makefile.in
+
