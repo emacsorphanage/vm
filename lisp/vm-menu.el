@@ -315,7 +315,7 @@
     ["Customize VM" vm-customize t]
     ["Describe VM Mode" describe-mode t]
     ["VM News" vm-view-news t]
-    ["VM Manual" vm-menu-view-manual t]
+    ["VM Manual" vm-view-manual t]
     ["Submit Bug Report" vm-submit-bug-report t]
     "---"
     ["What Now?" vm-help t]
