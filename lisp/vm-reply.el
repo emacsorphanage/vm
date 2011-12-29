@@ -1643,6 +1643,7 @@ buffers.")
   (add-hook 'vm-mail-send-hook 'vm-forget-composition-buffer nil t)
   (vm-update-ml-composition-buffer-count))
 
+;;;###autoload
 (defun vm-select-recipient-from-sender ()
   "Select a recipient's address from the current message's sender, if
 there is a current message."

@@ -3487,10 +3487,15 @@ command responds to a prefix argument exactly as @code{vm-save-message}
 does.  Messages saved this way are flagged ``written''.
 @findex vm-auto-archive-messages
 @kindex A
+@vindex vm-confirm-for-auto-archive
 @item A (@code{vm-auto-archive-messages})
 Save all unfiled messages that auto-match a folder via
 @code{vm-auto-folder-alist} to their appropriate folders.  Messages that
-are flagged for deletion are not saved by this command.  If invoked with a
+are flagged for deletion are not saved by this command.  This command asks
+for confirmation before archiving because it is a wholesale operation that
+cannot be easy reversed.  (Set @code{vm-confirm-for-auto-archive} to
+@code{nil} to override the confirmation dialogue.)  If the command is
+invoked with a 
 prefix argument, confirmation will be requested for each save.
 @findex vm-pipe-message-to-command
 @kindex ||

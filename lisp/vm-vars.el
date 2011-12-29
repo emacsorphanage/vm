@@ -2983,7 +2983,7 @@ removed before the new one is inserted.  If the message being
 sent is a resent message (i.e. has a Resent- recipient header)
 then the Resent-Date header will be removed/inserted instead.
 
-This is useful if you set mail-archive-file-name,
+This is useful if you set `mail-archive-file-name',
 because your archived message will contain a Date header.
 
 A nil value means don't insert a Date header."
@@ -2997,7 +2997,7 @@ be removed before the new one is inserted.  If the message being
 sent is a resent message (i.e. has a Resent- recipient header) a
 Resent-Message-ID header will be removed/inserted instead.
 
-This is useful if you set mail-archive-file-name, because your
+This is useful if you set `mail-archive-file-name', because your
 archived messages will contain a Message-ID header, which may be
 useful later for threading messages.
 
@@ -4606,7 +4606,7 @@ after successfully saving them to a folder."
   :type 'boolean)
 
 (defcustom vm-delete-after-archiving nil
-  "*Non-nil value causes VM automatically to mark messages for deletion
+  "*Non-nil value causes VM to automatically mark messages for deletion
 after successfully auto-archiving them with the `vm-auto-archive-messages'
 command."
   :group 'vm-dispose
@@ -4615,6 +4615,12 @@ command."
 (defcustom vm-delete-after-bursting nil
   "*Non-nil value causes VM automatically to mark a message for deletion
 after it has been successfully burst by the `vm-burst-digest' command."
+  :group 'vm-dispose
+  :type 'boolean)
+
+(defcustom vm-confirm-for-auto-archive t
+  "*Non-nil value causes VM to ask for confirmation when
+`vm-auto-archive-messages' is invoked."
   :group 'vm-dispose
   :type 'boolean)
 

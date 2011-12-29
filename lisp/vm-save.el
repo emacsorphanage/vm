@@ -105,6 +105,10 @@
 `vm-auto-folder-alist' to their appropriate folders.  Messages that
 are flagged for deletion are not saved.
 
+This command asks for confirmation before proceeding.  Set
+`vm-confirm-for-auto-archive' to nil to turn off the confirmation
+dialogue. 
+
 Prefix arg means to ask user for confirmation before saving each message.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
