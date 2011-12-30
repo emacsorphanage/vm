@@ -4356,8 +4356,10 @@ them."
 	  (setq mailbox-status-list
 		(mapcar
 		 (lambda (mailbox)
-		   (cons mailbox
-			 (vm-imap-get-mailbox-status process mailbox)))
+		   (condition-case err
+		       (cons mailbox
+			     (vm-imap-get-mailbox-status process mailbox))
+		     (error (list mailbox 0 0))))
 		 mailbox-list))
 	  (when mailbox-list
 	    (add-to-list 'vm-imap-account-folder-cache 
