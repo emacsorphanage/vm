@@ -27,6 +27,7 @@ SOURCES += CHANGES
 SOURCES += README
 SOURCES += TODO
 SOURCES += COPYING
+SOURCES += example.vm
 
 
 ##############################################################################

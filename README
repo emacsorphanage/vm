@@ -30,7 +30,8 @@ INSTALLATION
 Read INSTALL and follow the instructions to compile and setup VM.
 
 If you are new to VM, see example.vm for example configuration
-settings (in a '~/.vm' file).  Read more in the VM manual on 'info'. 
+settings (to be put into a '~/.vm' file).  Read more in the VM manual on
+'info'.
 
 *******************************************************************************
 BUGS
