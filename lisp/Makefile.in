@@ -91,10 +91,7 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_DATA = @INSTALL_DATA@
 
 prefix = @prefix@
-top_srcdir = @top_srcdir@
 srcdir = @srcdir@
-datadir= @datadir@
-datarootdir= @datarootdir@
 lispdir = @lispdir@
 etcdir= @etcdir@
 pixmapdir= @pixmapdir@
