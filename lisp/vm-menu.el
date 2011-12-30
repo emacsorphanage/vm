@@ -1456,8 +1456,6 @@ separate dedicated menu bar, depending on the value of
   (let* ((vm-dir (file-name-directory (locate-library "vm")))
 	 (doc-dirs (list (and vm-configure-docdir
 			       (expand-file-name vm-configure-docdir))
-			 (and vm-configure-datadir
-			       (expand-file-name vm-configure-datadir))
 			 (concat vm-dir "../")))
 	 doc-dir)
     (while doc-dirs
