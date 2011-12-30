@@ -10,17 +10,15 @@ OBJECTS = $(SOURCES:.c=.o)
 
 ##############################################################################
 # location of required programms
-prefix = @prefix@
-exec_prefix = @exec_prefix@
 MKDIR = @MKDIR@
 RM   = @RM@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 
 prefix = @prefix@
-top_srcdir = @top_srcdir@
+exec_prefix = @exec_prefix@
 srcdir = @srcdir@
-bindir= @bindir@
+bindir = @bindir@
 
 ##############################################################################
 all: $(SOURCES:.c=)

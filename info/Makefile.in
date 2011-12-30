@@ -8,7 +8,6 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 
 ##############################################################################
 # location of required programms
-prefix = @prefix@
 MKDIR = @MKDIR@
 RM   = @RM@
 LS   = @LS@
@@ -18,11 +17,9 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_DATA = @INSTALL_DATA@
 
-top_srcdir = @top_srcdir@
+prefix = @prefix@
 srcdir = @srcdir@
-datadir= @datadir@
-datarootdir= @datarootdir@
-info_dir = @info_dir@
+infodir = @infodir@
 
 EMACS_PROG = @EMACS_PROG@
 EMACS_FLAVOR = @EMACS_FLAVOR@
@@ -51,29 +48,29 @@ Makefile: @srcdir@/Makefile.in
 install: install-pkg
 
 install-pkg: uninstall-pkg info
-	@mkdir -p -m 0755 "$(DESTDIR)$(info_dir)";                     \
+	@mkdir -p -m 0755 "$(DESTDIR)$(infodir)";                      \
 	if test "x$(SYMLINKS)" = "xno" ; then                          \
           for i in `${LS} *.info* ` ; do                               \
-	    echo "Installing $$i in $(DESTDIR)$(info_dir)" ;           \
-            $(INSTALL_DATA) $$i "$(DESTDIR)$(info_dir)" ;              \
+	    echo "Installing $$i in $(DESTDIR)$(infodir)" ;            \
+            $(INSTALL_DATA) $$i "$(DESTDIR)$(infodir)" ;               \
           done ;                                                       \
         else                                                           \
           if test "x$(LINKPATH)" = "x" ; then                          \
             for i in `${LS} *.info* ` ; do                             \
-              echo "Linking $$i in $(DESTDIR)$(info_dir)" ;            \
-              $(LN_S) "`pwd`/$$i" "$(DESTDIR)$(info_dir)/$$i" ;        \
+              echo "Linking $$i in $(DESTDIR)$(infodir)" ;             \
+              $(LN_S) "`pwd`/$$i" "$(DESTDIR)$(infodir)/$$i" ;         \
             done ;                                                     \
           else                                                         \
             for i in `${LS} *.info* ` ; do                             \
-              echo "Linking $(LINKPATH)/texinfo/$$i in $(DESTDIR)$(info_dir)" ; \
-              $(LN_S) "$(LINKPATH)/texinfo/$$i" "$(DESTDIR)$(info_dir)/$$i" ; \
+              echo "Linking $(LINKPATH)/texinfo/$$i in $(DESTDIR)$(infodir)" ; \
+              $(LN_S) "$(LINKPATH)/texinfo/$$i" "$(DESTDIR)$(infodir)/$$i" ; \
             done ;                                                     \
           fi ;                                                         \
         fi
 	@echo VM INFO files successfully installed\!
 
 uninstall-pkg:
-	-$(RM) "$(DESTDIR)$(info_dir)"/vm*.info*
+	-$(RM) "$(DESTDIR)$(infodir)"/vm*.info*
 
 ##############################################################################
 clean:

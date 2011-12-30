@@ -5,16 +5,14 @@ SHELL = /bin/sh
 
 ##############################################################################
 # location of required programms
-prefix = @prefix@
 MKDIR = @MKDIR@
 RM   = @RM@
 LS   = @LS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 
+prefix = @prefix@
 srcdir = @srcdir@
-datadir= @datadir@
-datarootdir= @datarootdir@
 pixmapdir = @pixmapdir@
 
 SYMLINKS = @SYMLINKS@

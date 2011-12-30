@@ -28,8 +28,8 @@ USING CONFIGURE
 
    a) GNU Emacs: 
       lisp files goto ${prefix}/share/emacs/site-lisp,
-      data files go to ${prefix}/share/vm, and 
-      doc files go to ${prefix}/share/doc/vm-X.Y.Z, and 
+      data files (e.g. pixmaps) go to ${prefix}/share/vm, and 
+      doc files go to the same location as data files, and 
       info files go to ${prefix}/share/info, (overridable with
       --with-lispdir=..., --with-etcdir=..., --with-docdir=...
       and --infodir=...).
@@ -37,7 +37,7 @@ USING CONFIGURE
    b) XEmacs: 
       lisp files go to ${prefix}/lib/xemacs/site-packages/lisp/vm, 
       data files go to ${prefix}/lib/xemacs/site-packages/etc/vm,
-      doc files go to ${prefix}/lib/vm-X.Y.Z,
+      doc files go to the same location as data files, and 
       info files to ${prefix}/lib/xemacs/site-packages/info, (overridable
       with --with-lispdir=..., --with-etcdir=...,  --with-docdir=...
       and --infodir=...).
