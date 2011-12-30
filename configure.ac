@@ -211,15 +211,11 @@ AC_DEFUN([VM_PATH_INFO_DIR], [
   dnl Set default value.  This must be an absolute path.
   if test "$infodir" = "\${datarootdir}/info"; then
     if test "$EMACS_FLAVOR" = "xemacs"; then
-      info_dir="\$(prefix)/${thedir}/${EMACS_FLAVOR}/site-packages/info"
-    else
-      info_dir="\${datarootdir}/info"
+      infodir="\$(prefix)/${thedir}/${EMACS_FLAVOR}/site-packages/info"
     fi
-  else
-    info_dir=$infodir
   fi
-  AC_MSG_RESULT($info_dir)
-  AC_SUBST(info_dir)
+  AC_MSG_RESULT($infodir)
+  AC_SUBST(infodir)
 ])
 
 # --with-other-dir option

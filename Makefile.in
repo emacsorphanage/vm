@@ -78,8 +78,8 @@ xemacs-package:
 	fi
 	-$(RM) -rf ,,package
 	cd lisp; make PACKAGEDIR=$(PKGDIR)/lisp/vm install-pkg
-	cd info; make info_dir=$(PKGDIR)/info install-pkg
-	cd src; make info_dir=$(PKGDIR)/bin install-pkg
+	cd info; make infodir=$(PKGDIR)/info install-pkg
+	cd src; make infodir=$(PKGDIR)/bin install-pkg
 	echo ";;;###autoload" > $(PKGINFO)
 	echo "(package-provide 'vm'" > $(PKGINFO)
 	echo "         :version 0.7" >> $(PKGINFO)
