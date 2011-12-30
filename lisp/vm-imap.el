@@ -3780,7 +3780,7 @@ is being invoked interactively."
 ;;       (setcar (nthcdr 3 spec-items) folder)
 ;;       (if (eq buffer (vm-get-file-buffer 
 ;; 		      (vm-imap-make-filename-for-spec
-;; 		       (mapconcat 'identity spec-items ":"))))
+;; 		       (vm-imap-encode-list-to-spec spec-items))))
 ;; 	  (setq done t)
 ;; 	(setq list (cdr list))))
 ;;     (and list (car list)))
@@ -3849,7 +3849,22 @@ format account:mailbox."
 (defun vm-imap-parse-spec-to-list (spec)
   "Parses the IMAP maildrop specification SPEC and returns a list of
 its components."
-  (vm-parse spec "\\([^:]+\\):?" 1 6))
+  (let ((list (vm-parse spec "\\([^:]+\\):?" 1 6)))
+    list))
+
+;;;###autoload
+(defun vm-imap-encode-list-to-spec (list)
+  "Convert a LIST of components into a maildrop specification."
+    (mapconcat 'identity list ":"))
+
+;;;###autoload
+(defun vm-imap-spec-for-mailbox (spec mailbox)
+  "Return a modified version of the maildrop specification SPEC
+for accessing MAILBOX."
+  (let ((list (vm-parse spec "\\([^:]+\\):?" 1 6)))
+    (mapconcat 'identity 
+	       (append (vm-elems 3 list) (cons mailbox (nthcdr 4 list)))
+	       ":")))
 
 (defun vm-imap-spec-list-to-host-alist (spec-list)
   (let (host-alist spec host)
@@ -3980,7 +3995,8 @@ IMAP mailbox spec."
     (setq list (vm-imap-parse-spec-to-list spec))
     (setcar (nthcdr 3 list) folder)
     (setq vm-last-visit-imap-account account)
-    (mapconcat 'identity list ":")))
+    (vm-imap-encode-list-to-spec list)
+    ))
 
 (defun vm-imap-directory-separator (process ref)
   (let ((c-list nil)
