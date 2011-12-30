@@ -801,10 +801,11 @@ preview or the full message, governed by the the variables
 	   ;; This check is for Bug Report 740755.  USR, 2011-12-24
 	   (let ((new-layout (vm-mime-parse-entity-safe 
 			      (car vm-message-pointer))))
-	     (unless (vm-mime-layouts-equal layout new-layout)
-	       (when vm-debug 
-		 (debug 'vm-present-message 
-			"Corruption of cached MIME layout (Bug 740755)?"))))
+	     ;; repair the cached layout if necessary
+	     (unless (vm-mime-verify-cached-layout layout new-layout)
+	       (unless vm-debug
+		 (vm-set-mime-layout-of 
+		  (car vm-message-pointer) new-layout))))
 	   (vm-make-presentation-copy (car vm-message-pointer))
 	   (vm-save-buffer-excursion
 	    (vm-replace-buffer-in-windows (current-buffer)

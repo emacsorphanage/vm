@@ -217,8 +217,15 @@ configuration.  "
 	  :layout-is-converted :unconverted-layout])
 
 (defun vm-pp-mime-layout (layout)
-  (pp (vm-zip-vectors vm-mime-layout-fields layout))
+  (pp (vm-formatted-mime-layout layout))
   nil)
+
+(defun vm-formatted-mime-layout (layout)
+  (let ((copy (copy-sequence layout)))
+    (vm-set-mm-layout-parts 
+     copy
+     (mapcar 'vm-formatted-mime-layout (vm-mm-layout-parts copy)))
+    (vm-zip-vectors vm-mime-layout-fields copy)))
 
 (defun vm-make-layout (&rest plist)
   (vector
@@ -270,6 +277,37 @@ TO are overwritten.                                    USR, 2011-03-27"
      (vm-mm-layout-parts layout1)
      (vm-mm-layout-parts layout2))
     t))
+
+(defun vm-mime-verify-cached-layout (cached current)
+  (let ((mismatch
+	 (catch 'mismatch
+	   (if (equal cached current)
+	       (throw 'mismatch nil))
+	   (vm-mapc 
+	    (lambda (i)
+	      (unless (equal (aref cached i) (aref current i))
+		(throw 'mismatch i)))
+	    '(0 1 2 3 4))		; type through description
+	   ;; ignore disposition and qdisposition because of the hack
+	   ;; in vm-mime-frob-image-xxxx
+	   (vm-mapc
+	    (lambda (i)
+	      (unless (equal (marker-position (aref cached i))
+			     (marker-position (aref current i)))
+		(throw 'mismatch i)))
+	    '(7 9 10))		  ; header-start, body-start, body-end
+	   (vm-mapc 
+	    (lambda (part1 part2)
+	      (unless (vm-mime-verify-cached-layout part1 part2)
+		(throw 'mismatch 11)))
+	    (vm-mm-layout-parts cached)
+	    (vm-mm-layout-parts current))
+	   nil)))
+    (when (and vm-debug mismatch)
+      (debug 'vm-mime-verify-cached-layout
+	     (aref vm-mime-layout-fields mismatch)
+	     (aref cached mismatch) (aref current mismatch)))
+    (null mismatch)))
 
 (defun vm-mm-layout-type (e) (aref e 0))
 (defun vm-mm-layout-qtype (e) (aref e 1))
