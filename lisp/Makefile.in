@@ -92,6 +92,7 @@ INSTALL_DATA = @INSTALL_DATA@
 
 prefix = @prefix@
 srcdir = @srcdir@
+datarootdir = @datarootdir@
 lispdir = @lispdir@
 etcdir= @etcdir@
 pixmapdir= @pixmapdir@

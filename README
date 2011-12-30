@@ -6,7 +6,7 @@ http://www.wonderworks.com/vm and the FAQ is still hosted there.
 
 The later versions of VM have been maintained by the user community.
 The current 'VM development team' (vm@lists.launchpad.net) consists of
-of Robert Widhof-Fenk, Ulrich Müller and Uday Reddy, but contributions
+of Robert Widhopf-Fenk, Ulrich Müller and Uday Reddy, but contributions
 from various other users and developers have also been incorporated in
 them.  See the info manual for a full list of contributors.
 
@@ -73,7 +73,7 @@ Code Repository
 We maintain the source code using Bazaar (http://bazaar-vcs.org/).
 
 If you want to get the latest development version of VM, or want to
-contribute changes you may want to branch from the follwing launchpad
+contribute changes you may want to branch from the following launchpad
 URI:
 
   lp:vm
