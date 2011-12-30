@@ -415,7 +415,7 @@ VM 8.1.90a  (2010-05-11)
      the network, do `C-u M-x vm-imap-synchronize' to force full
      synchronization. 
 
-   * Improved error messages arising in IMAP sessions wih the server.
+   * Improved error messages arising in IMAP sessions with the server.
 
    * New variable `vm-do-fcc-before-mime-encode' (formerly in
      vm-rfaddons) allows you to save fcc copies of messages before
@@ -467,7 +467,7 @@ VM 8.1.1 (2010-04-26)
 
     * Fixed the build process to treat version info better.
 
-    * Removed a few incompatibilites with XEmacs.
+    * Removed a few incompatibilities with XEmacs.
 
     * Mode line format reverted to the original one in 7.19.  The new
       mode line format is available in the variable
