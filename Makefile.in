@@ -12,6 +12,7 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 
 prefix = @prefix@
 srcdir = @srcdir@
+datarootdir = @datarootdir@
 docdir = @docdir@
 
 SUBDIRS = lisp info src pixmaps

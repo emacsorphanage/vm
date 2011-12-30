@@ -19,6 +19,7 @@ INSTALL_DATA = @INSTALL_DATA@
 
 prefix = @prefix@
 srcdir = @srcdir@
+datarootdir = @datarootdir@
 infodir = @infodir@
 
 EMACS_PROG = @EMACS_PROG@
