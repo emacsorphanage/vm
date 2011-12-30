@@ -164,16 +164,12 @@ TEST
     AC_SUBST(etcdir)
     AC_SUBST(pixmapdir)
 
-    AC_ARG_WITH(docdir,[  --with-docdir=DIR    where to install doc files], docdir=${withval})
+    AC_ARG_WITH(docdir,[  --with-docdir=DIR    where to install doc files],
+      docdir=${withval},
+      dnl Set default value. Install ancillary documentation in etcdir,
+      dnl following Emacs conventions.
+      docdir="${etcdir}")
     AC_MSG_CHECKING([where doc files should go])
-    if test -z "$docdir"; then
-      dnl Set default value
-      if test "$EMACS_FLAVOR" = "xemacs"; then
-          docdir="${etcdir}"
-      else
-          docdir="${datarootdir}/doc/vm"
-      fi
-    fi
     AC_MSG_RESULT($docdir)
     AC_SUBST(docdir)
 

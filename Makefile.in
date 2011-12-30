@@ -15,7 +15,6 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 srcdir = @srcdir@
 datadir= @datadir@
 datarootdir= @datarootdir@
-etcdir = @etcdir@
 pixmapdir = @pixmapdir@
 docdir = @docdir@
 
@@ -51,11 +50,9 @@ install: install-pkg
 
 install-pkg:
 	$(MKDIR) -p "$(DESTDIR)$(docdir)"
-	$(MKDIR) -p "$(DESTDIR)$(etcdir)"
 	for i in $(SOURCES) ; do                                  \
-	    echo "Installing $$i in '$(DESTDIR)$(docdir)' and '$(DESTDIR)$(etcdir)'" ;  \
+	    echo "Installing $$i in '$(DESTDIR)$(docdir)'" ;      \
 	    $(INSTALL_DATA) $$i "$(DESTDIR)$(docdir)" ;           \
-	    $(INSTALL_DATA) $$i "$(DESTDIR)$(etcdir)" ;                     \
 	done ;
 
 clean:
