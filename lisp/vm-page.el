@@ -282,10 +282,10 @@ it is suppressed if the variable `vm-auto-next-message' is nil."
 		 (vm-number-of (car vm-message-pointer))
 		 (vm-summary-sprintf "%F" (car vm-message-pointer))))))
 
-(defun vm-emit-mime-decoding-message (&rest args)
+(defun vm-emit-mime-decoding-message (format &rest args)
   (interactive)
   (when vm-emit-messages-for-mime-decoding
-    (apply 'message args)))
+    (apply 'message (concat "%s: " format) (buffer-name vm-mail-buffer) args)))
 
 ;;;###autoload
 (defun vm-scroll-backward (&optional arg)
@@ -876,7 +876,9 @@ preview or the full message, governed by the the variables
 	       (vm-mime-error (vm-set-mm-layout-display-error
 			       (vm-mime-layout-of (car vm-message-pointer))
 			       (car (cdr data)))
-			      (vm-warn 0 2 "%s" (car (cdr data)))))
+			      (vm-warn 0 2 "%s: %s" 
+				       (buffer-name vm-mail-buffer)
+				       (car (cdr data)))))
 	     (vm-narrow-for-preview)))
        ;; if no MIME decoding is needed
        (vm-energize-urls-in-message-region)
@@ -920,7 +922,9 @@ is done if necessary.  (USR, 2010-01-14)"
 	(vm-mime-error (vm-set-mm-layout-display-error
 			(vm-mime-layout-of (car vm-message-pointer))
 			(car (cdr data)))
-		       (vm-warn 0 2 "%s" (car (cdr data))))))
+		       (vm-warn 0 2 "%s: %s" 
+				(buffer-name vm-mail-buffer)
+				(car (cdr data))))))
   ;; FIXME this probably cause folder corruption by filling the folder instead
   ;; of the presentation copy  ..., RWF, 2008-07
   ;; Well, so, we will check if we are in a presentation buffer! 

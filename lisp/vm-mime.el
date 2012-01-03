@@ -2825,18 +2825,20 @@ is not successful.                                   USR, 2011-03-25"
 	    ;; do clean up
 	    (goto-char end)
 	    (delete-char -1)
-	    (vm-inform 6 "Inlining text/html by %s... done."
-		     vm-mime-text/html-handler)
+	    (vm-emit-mime-decoding-message
+	     "Inlining text/html by %s... done." vm-mime-text/html-handler)
 	    t)
 	(error (vm-set-mm-layout-display-error
 		layout
 		(format "Inline text/html by %s display failed: %s"
 			vm-mime-text/html-handler
 			(error-message-string error-data)))
-	       (vm-warn 0 2 "%s" (vm-mm-layout-display-error layout))
+	       (vm-warn 0 2 "%s: %s" 
+			(buffer-name) (vm-mm-layout-display-error layout))
 	       nil))
     ;; no handler
-    (vm-warn 0 2 "No handler available for internal display of text/html")
+    (vm-warn 0 2 "%s: No handler available for internal display of text/html"
+	     (buffer-name))
     nil))
   
 
@@ -2854,7 +2856,8 @@ in the text are highlighted and energized."
 	(progn
 	  (vm-set-mm-layout-display-error
 	   layout (concat "Undisplayable charset: " charset))
-	  (vm-warn 0 2 "%s" (vm-mm-layout-display-error layout))
+	  (vm-warn 0 2 "%s: %s" (buffer-name vm-mail-buffer) 
+		   (vm-mm-layout-display-error layout))
 	  nil)
       (vm-mime-insert-mime-body layout)
       (unless (bolp) (insert "\n"))
@@ -2894,7 +2897,8 @@ in the text are highlighted and energized."
 	(enriched-decode start end)
       (error (vm-set-mm-layout-display-error
 	      layout (format "enriched-decode signaled %s" errdata))
-	     (vm-warn 0 2 "%s" (vm-mm-layout-display-error layout))
+	     (vm-warn 0 2 "%s: %s" (buffer-name vm-mail-buffer)
+		      (vm-mm-layout-display-error layout))
 	     nil ))
     (vm-energize-urls-in-message-region start end)
     (goto-char end)
@@ -3833,7 +3837,8 @@ describing the image type.                             USR, 2011-03-25"
 		 (vm-image-too-small
 		  (setq do-strips nil))
 		 (error
-		  (vm-warn 0 0 "Failed making image strips: %s" error-data)
+		  (vm-warn 0 0 "%s: Failed making image strips: %s" 
+			   (buffer-name vm-mail-buffer) error-data)
 		  ;; fallback to the non-strips way
 		  (setq do-strips nil)))))
 	(cond ((not do-strips)
@@ -3954,7 +3959,8 @@ describing the image type.                            USR, 2011-03-25"
 		 (vm-image-too-small
 		  (setq do-strips nil))
 		 (error
-		  (vm-warn 0 0 "Failed making image strips: %s" error-data)
+		  (vm-warn 0 0 "%s: Failed making image strips: %s" 
+			   (buffer-name vm-mail-buffer) error-data)
 		  ;; fallback to the non-strips way
 		  (setq do-strips nil)))))
 	(cond ((not do-strips)
@@ -4032,8 +4038,8 @@ describing the image type.                            USR, 2011-03-25"
 ;; 		    (setq dims (condition-case error-data
 ;; 				   (vm-get-image-dimensions origfile)
 ;; 				 (error
-;; 				  (vm-warn 0 0 "Failed getting image dimensions: %s"
-;; 					   error-data)
+;; 				  (vm-warn 0 0 "%s: Failed getting image dimensions: %s"
+;; 					   (buffer-name vm-mail-buffer) error-data)
 ;; 				  (throw 'done nil)))
 ;; 			  width (nth 0 dims)
 ;; 			  height (nth 1 dims)
@@ -4141,7 +4147,8 @@ describing the image type.                            USR, 2011-03-25"
 ;; 							       overlay-list)
 ;; 							      image-type)))
 ;; 	    (error
-;; 	     (vm-warn 0 0 "Failed making image strips: %s" error-data)))
+;; 	     (vm-warn 0 0 "%s: Failed making image strips: %s" 
+;;	                  (buffer-name vm-mail-buffer) error-data)))
 ;; 	  t ))
 ;;     nil ))
 

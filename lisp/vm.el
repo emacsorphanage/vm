@@ -391,11 +391,12 @@ deleted messages.  Use `###' to expunge deleted messages."
 
       ;; Warn user about auto save file, if appropriate.
       (if preserve-auto-save-file
-	  (vm-inform 0
+	  (vm-warn 0 2
 	   (substitute-command-keys
 	    (concat
-	     "Auto save file is newer; consider \\[vm-recover-folder].  "
-	     "FOLDER IS READ ONLY."))))
+	     "%s: Auto save file is newer; consider \\[vm-recover-folder].  "
+	     "FOLDER IS READ ONLY."))
+	   (buffer-name)))
       ;; if we're not doing a full startup or if doing more would
       ;; trash the auto save file that we need to preserve,
       ;; stop here.
@@ -409,8 +410,7 @@ deleted messages.  Use `###' to expunge deleted messages."
 	       (not vm-block-new-mail)
 	       (not vm-folder-read-only))
 	  (progn
-	    (vm-inform 6 "Checking for new mail for %s..."
-		     (or buffer-file-name (buffer-name)))
+	    (vm-inform 6 "%s: Checking for new mail..." (buffer-name))
 	    (if (vm-get-spooled-mail nil) ; automatic is non-interactive!
 		(progn
 		  (setq totals-blurb (vm-emit-totals-blurb))

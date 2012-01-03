@@ -234,7 +234,8 @@ the messages in the current folder."
 	      ;; and then convert them to markers after all the
 	      ;; insertions are done.  Likewise, detach overlays and
 	      ;; re-establish them afterwards.
-	      (vm-inform 7 "Generating summary... %d" n)
+	      (vm-inform 7 "%s: Generating summary... %d" 
+			 (buffer-name vm-mail-buffer) n)
 	      (overlay-recenter (point))
 	      (let ((mp m-list)
 		    m start end track)
@@ -280,7 +281,8 @@ the messages in the current folder."
 			    )))))
 		  (setq mp (cdr mp) n (1+ n))
 		  (when (zerop (% n modulus))
-		    (vm-inform 7 "Generating summary... %d" n)
+		    (vm-inform 7 "%s: Generating summary... %d" 
+			       (buffer-name vm-mail-buffer) n)
 		    (if debug (debug "vm-debug-summary: Generating summary"))
 		    (setq debug nil)))))
 
@@ -306,7 +308,8 @@ the messages in the current folder."
 
     (if (>= n modulus)
 	(unless vm-summary-debug 
-	  (vm-inform 7 "Generating summary... done")))))
+	  (vm-inform 7 "%s: Generating summary... done" 
+		     (buffer-name vm-mail-buffer))))))
 
 (defun vm-expand-thread (&optional root)
   "Expand the thread associated with the message at point. This
@@ -1671,7 +1674,7 @@ Call this function if you made changes to `vm-summary-format'."
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (if kill-local-summary
       (kill-local-variable 'vm-summary-format))
-  (vm-inform 5 "Fixing your summary... %s" vm-summary-format)
+  (vm-inform 5 "%s: Fixing your summary... %s" (buffer-name) vm-summary-format)
   (let ((mp vm-message-list))
     ;; Erase all the cached summary and threading data
     (while mp
@@ -1686,18 +1689,18 @@ Call this function if you made changes to `vm-summary-format'."
     (setq vm-thread-obarray 'bonk
 	  vm-thread-subject-obarray 'bonk)
     ;; Generate fresh summary data and stuff it
-;;     (vm-inform 7 "Stuffing cached data...")
+;;     (vm-inform 7 "%s: Stuffing cached data..." (buffer-name))
 ;;     (vm-stuff-folder-data nil)
-;;     (vm-inform 7 "Stuffing cached data... done")
+;;     (vm-inform 7 "%s: Stuffing cached data... done" (buffer-name))
 ;;     (set-buffer-modified-p t)
     ;; Regenerate the summary
-    (vm-inform 5 "Recreating summary...")
+    (vm-inform 5 "%s: Recreating summary..." (buffer-name))
     (vm-update-summary-and-mode-line)
     (unless vm-summary-debug
-      (vm-inform 5 "Recreating summary... done")))
+      (vm-inform 5 "%s: Recreating summary... done" (buffer-name))))
   (if vm-thread-debug
       (vm-check-thread-integrity))
-  (vm-inform 5 "Fixing your summary... done"))
+  (vm-inform 5 "%s: Fixing your summary... done" (buffer-name)))
 
 (defun vm-su-thread-indent (m)
   (if (and vm-summary-show-threads (natnump vm-summary-thread-indent-level))

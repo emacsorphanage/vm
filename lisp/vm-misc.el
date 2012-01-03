@@ -89,7 +89,9 @@
 
 (defun vm-inform (level &rest args)
   (when (<= level vm-verbosity)
-    (apply 'message args)))
+    (let ((message (apply 'message args)))
+      (sleep-for vm-verbal-time)
+      message)))
 
 (defun vm-warn (l secs &rest args)
   "Give a warning at level L and display it for SECS seconds.  The

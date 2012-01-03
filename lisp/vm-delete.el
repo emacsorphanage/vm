@@ -394,7 +394,7 @@ ignored."
   ;; all folder buffers.
   (vm-update-summary-and-mode-line)
   (unless quiet
-    (vm-inform 5 "%s: Expunging..." (buffer-name (current-buffer))))
+    (vm-inform 5 "%s: Expunging..." (buffer-name)))
   (let ((use-marks (and (eq last-command 'vm-next-command-uses-marks)
 			(null just-these-messages)))
 	(mp vm-message-list)
@@ -573,8 +573,9 @@ ignored."
       (if vm-ml-sort-keys
           (vm-sort-messages vm-ml-sort-keys))
       (unless quiet
-	(vm-inform 5 "Deleted messages expunged.")))
-     (t (vm-inform 5 "No messages are flagged for deletion."))))
+	(vm-inform 5 "%s: Deleted messages expunged." (buffer-name))))
+     (t 
+      (vm-inform 5 "%s: No messages are flagged for deletion." (buffer-name)))))
   (when vm-debug
     (vm-check-thread-integrity)))
 

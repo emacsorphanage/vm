@@ -207,7 +207,8 @@ the end of vm-message-list is reached."
 	(message-list vm-message-list))
     (when (and start-point (vm-reverse-link-of (car start-point)))
       (if (null (vm-number-of (car (vm-reverse-link-of (car start-point)))))
-	  (vm-warn 0 2 "Bad numbering start-point; please report bug.")
+	  (vm-warn 0 2 "%s: Bad numbering start-point; please report bug."
+		   (buffer-name))
 	(setq n (1+ (string-to-number
 		     (vm-number-of
 		      (car (vm-reverse-link-of (car start-point))))))
@@ -544,10 +545,10 @@ Toolbars are updated."
 		    (equal (vm-message-id-number-of m) "Q"))
 	  (vm-update-message-summary (car ms)))
 	(if (eq (mod n 10) 0)
-	    (vm-inform 6 "Recreating summary... %s" n))
+	    (vm-inform 6 "%s: Recreating summary... %s" (buffer-name) n))
 	(setq n (1+ n))
 	(setq ms (cdr ms)))
-      (vm-inform 6 "Recreating summary... done")
+      (vm-inform 6 "%s: Recreating summary... done" (buffer-name))
       (setq vm-messages-needing-summary-update nil)))
   (vm-do-needed-folders-summary-update)
   (vm-force-mode-line-update))
@@ -1152,15 +1153,17 @@ vm-folder-type is initialized here."
 	  (setq tail-cons (cdr tail-cons)))
 	(vm-increment n)
 	(if (zerop (% n modulus))
-	    (vm-inform 7 "Parsing messages... %d" n)))
+	    (vm-inform 7 "%s: Parsing messages... %d" 
+		       (buffer-name) n)))
       (if (>= n modulus)
-	  (vm-inform 7 "Parsing messages... done"))
+	  (vm-inform 7 "%s: Parsing messages... done"
+		       (buffer-name)))
       (if (and (not (= last-end (point-max)))
 	       (not (eq vm-folder-type 'unknown)))
 	  (vm-warn 1 2 
 		   "Warning: garbage found at end of folder, %s, starting at %d"
 		   (or buffer-file-name (buffer-name))
-	   last-end)))))
+		   last-end)))))
 
 (defun vm-build-header-order-alist (vheaders)
   (let ((order-alist (cons nil nil))
@@ -1566,7 +1569,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			 (= (length cache) vm-cached-data-vector-length)
 			 (or (null (aref cache 7)) (stringp (aref cache 7)))
 			 (or (null (aref cache 11)) (stringp (aref cache 11))))
-              (vm-warn 0 2 "Bad VM cache data: %S" cache)
+              (vm-warn 0 2 "%s: Bad VM cache data: %S" (buffer-name) cache)
               (vm-set-stuff-flag-of (car mp) t)
               (setcar (cdr data)
                       (setq cache 
@@ -1610,10 +1613,11 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	      ((vm-unread-flag (car mp))
 	       (vm-increment vm-unread-count)))
 	(if (zerop (% vm-total-count modulus))
-	    (vm-inform 6 "Reading attributes... %d" vm-total-count))
+	    (vm-inform 6 "%s: Reading attributes... %d" (buffer-name)
+		       vm-total-count))
 	(setq mp (cdr mp)))
       (if (>= vm-total-count modulus)
-	  (vm-inform 6 "Reading attributes... done"))
+	  (vm-inform 6 "%s: Reading attributes... done" (buffer-name)))
       (if (null message-list)
 	  (setq vm-totals (list vm-modification-counter
 				vm-total-count
@@ -1715,7 +1719,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
   (interactive)
   (save-excursion
     (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
-    (let ((folder (buffer-name (current-buffer))))
+    (let ((folder (buffer-name)))
       (if (not (equal (nth 0 vm-totals) vm-modification-counter))
 	  (vm-compute-totals))
       (if (equal (nth 1 vm-totals) 0)
@@ -1973,26 +1977,26 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	(goto-char (point-min))
 	(vm-skip-past-folder-header)
 	(vm-skip-past-leading-message-separator)
-	(if (re-search-forward vm-message-order-header-regexp lim t)
-	    (let ((oldpoint (point)))
-	      (condition-case nil
-		  (progn
-		    (setq order (read (current-buffer)))
-		    (unless (listp order)
-		      (error "Bad order header at %d in buffer %s"
-			     oldpoint (buffer-name))
-		      (sit-for 1))
-		    order )
-		(error
-		 (vm-warn 1 1 
-			  "Bad order header at %d in buffer %s, ignoring"
-			  oldpoint (buffer-name))
-		 (setq order nil)))
-	      (if order
-		  (progn
-		    (vm-inform 6 "Reordering messages...")
-		    (vm-startup-apply-message-order order)
-		    (vm-inform 6 "Reordering messages... done")))))))))
+	(when (re-search-forward vm-message-order-header-regexp lim t)
+	  (let ((oldpoint (point)))
+	    (condition-case nil
+		(progn
+		  (setq order (read (current-buffer)))
+		  (unless (listp order)
+		    (error "Bad order header at %d in buffer %s"
+			   oldpoint (buffer-name))
+		    (sit-for 1))
+		  order )
+	      (error
+	       (vm-warn 1 1 
+			"Bad order header at %d in buffer %s, ignoring"
+			oldpoint (buffer-name))
+	       (setq order nil)))
+	    (when order
+	      (vm-inform 6 "%s: Reordering messages..." (buffer-name))
+	      (vm-startup-apply-message-order order)
+	      (vm-inform 6 "%s: Reordering messages... done" (buffer-name)))))
+	))))
 
 (defun vm-has-message-order ()
   (let ((case-fold-search t)
@@ -2190,7 +2194,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
       (setq mp (cdr mp)))
     (when (and newlist (not quiet))
       (setq len (length newlist))
-      (vm-inform 7 "%d message%s to stuff" len (if (= 1 len) "" "s")))
+      (vm-inform 7 "%s: %d message%s to stuff" (buffer-name)
+		 len (if (= 1 len) "" "s")))
     ;; now sort the list by physical order so that we
     ;; reduce the amount of gap motion induced by modifying
     ;; the buffer.  what we want to avoid is updating
@@ -2198,14 +2203,15 @@ stuff-flag set in the current folder.    USR 2010-04-20"
     ;; large chunks of memory to be copied repeatedly as
     ;; the gap moves to accomodate the insertions.
     (if (not quiet)
-	(vm-inform 6 "Ordering updates..."))
+	(vm-inform 6 "%s: Ordering updates..." (buffer-name)))
     (let ((vm-key-functions '(vm-sort-compare-physical-order-r)))
       (setq mp (sort newlist 'vm-sort-compare-xxxxxx)))
     (while (and mp (or (not abort-if-input-pending) (not (input-pending-p))))
       (vm-stuff-message-data (car mp))
       (setq n (1+ n))
       (if (not quiet)
-	  (vm-inform 6 "Stuffing %d%% complete..." (* (/ (+ n 0.0) len) 100)))
+	  (vm-inform 6 "%s: Stuffing %d%% complete..." (buffer-name)
+		     (* (/ (+ n 0.0) len) 100)))
       (setq mp (cdr mp)))
     (if mp nil t)))
 
@@ -2809,7 +2815,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		    validity-check vis invis folder-type
 		    bookmark summary labels pop-retrieved imap-retrieved order
 		    v m (m-list nil) tail)
-		(vm-inform 5 "Reading index file...")
+		(vm-inform 5 "%s: Reading index file..." (buffer-name))
 		(setq work-buffer (vm-make-work-buffer))
 		(with-current-buffer work-buffer
 		  (insert-file-contents-literally index-file))
@@ -2912,12 +2918,12 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		(vm-startup-apply-labels labels)
 		(vm-startup-apply-header-variables vis invis)
 
-		(vm-inform 5 "Reading index file... done")
+		(vm-inform 5 "%s: Reading index file... done" (buffer-name))
 		t )
 	    (and work-buffer (kill-buffer work-buffer))))
-      (error (vm-warn 1 2 "Index file read of %s signaled: %s"
-		      index-file error-data)
-	     (vm-warn 1 2 "Ignoring index file...")))))
+      (error (vm-warn 1 2 "%s: Index file read of %s signaled: %s"
+		      (buffer-name) index-file error-data)
+	     (vm-warn 1 2 "%s: Ignoring index file..." (buffer-name))))))
 
 (defun vm-check-index-file-validity (blob)
   (save-excursion
@@ -2968,10 +2974,10 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 	(let ((print-escape-newlines t)
 	      (print-length nil)
 	      m-list mp m)
-	  (vm-inform 6 "Sorting for index file...")
+	  (vm-inform 6 "%s: Sorting for index file..." (buffer-name))
 	  (setq m-list (sort (copy-sequence vm-message-list)
 			     (function vm-sort-compare-physical-order)))
-	  (vm-inform 6 "Stuffing index file...")
+	  (vm-inform 6 "%s: Stuffing index file..." (buffer-name))
 	  (setq work-buffer (vm-make-work-buffer))
 
 	  (princ ";; index file version\n" work-buffer)
@@ -3099,7 +3105,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 
 	  (princ ";; end of index file\n" work-buffer)
 
-	  (vm-inform 6 "Writing index file...")
+	  (vm-inform 6 "%s: Writing index file..." (buffer-name))
 	  (catch 'done
 	    (with-current-buffer work-buffer
 	      (condition-case data
@@ -3107,10 +3113,11 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 			(selective-display nil))
 		    (write-region (point-min) (point-max) index-file))
 		(error
-		 (vm-warn 1 2 "Write of %s signaled: %s" index-file data)
+		 (vm-warn 1 2 "%s: Write of %s signaled: %s" 
+			  (buffer-name) index-file data)
 		 (throw 'done nil))))
 	    (vm-error-free-call 'set-file-modes index-file (vm-octal 600))
-	    (vm-inform 6 "Writing index file... done")
+	    (vm-inform 6 "%s: Writing index file... done" (buffer-name))
 	    t ))
       (and work-buffer (kill-buffer work-buffer)))))
 
@@ -3321,7 +3328,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 
     (unless (or no-change virtual)
       ;; this could take a while, so give the user some feedback
-      (vm-inform 5 "%s: Quitting..." (buffer-name (current-buffer)))
+      (vm-inform 5 "%s: Quitting..." (buffer-name))
       (unless (or vm-folder-read-only (eq major-mode 'vm-virtual-mode))
 	(vm-change-all-new-to-unread)))
     (when (and (buffer-modified-p)
@@ -3583,9 +3590,9 @@ Giving a prefix argument overrides the variable and no expunge is done."
     (vm-save-restriction
      (let ((buffer-read-only))
        (vm-discard-fetched-messages)
-       (vm-inform 6 "Stuffing cached data...")
+       (vm-inform 6 "%s: Stuffing cached data..." (buffer-name))
        (vm-stuff-folder-data nil)
-       (vm-inform 6 "Stuffing cached data... done")
+       (vm-inform 6 "%s: Stuffing cached data... done" (buffer-name))
        (if vm-message-list
 	   (progn
 	     (if (and vm-folders-summary-database buffer-file-name)
@@ -3593,7 +3600,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 		   (vm-compute-totals)
 		   (vm-store-folder-totals buffer-file-name (cdr vm-totals))))
 	     ;; get summary cache up-to-date
-	     (vm-inform 6 "Stuffing folder data...")
+	     (vm-inform 6 "%s: Stuffing folder data..." (buffer-name))
 	     (vm-update-summary-and-mode-line)
 	     (vm-stuff-bookmark)
 	     (vm-stuff-pop-retrieved)
@@ -3604,7 +3611,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	     (vm-stuff-summary)
 	     (and vm-message-order-changed
 		  (vm-stuff-message-order))
-	     (vm-inform 6 "Stuffing folder data... done")))
+	     (vm-inform 6 "%s: Stuffing folder data... done" (buffer-name))))
        nil ))))
 
 ;;;###autoload
@@ -3723,26 +3730,25 @@ folder."
 		     (file-exists-p msf))
                 (delete-file msf)))
 	  ;; stuff the attributes of messages that need it.
-	  (vm-inform 6 "Stuffing cached data...")
+	  (vm-inform 6 "%s: Stuffing cached data..." (buffer-name))
 	  (vm-stuff-folder-data nil)
-	  (vm-inform 6 "Stuffing cached data... done")
+	  (vm-inform 6 "%s: Stuffing cached data... done" (buffer-name))
 	  ;; stuff bookmark and header variable values
-	  (if vm-message-list
-	      (progn
-		;; get summary cache up-to-date
-		(vm-inform 6 "Stuffing folder data...")
-		(vm-update-summary-and-mode-line)
-		(vm-stuff-bookmark)
-		(vm-stuff-pop-retrieved)
-		(vm-stuff-imap-retrieved)
-		(vm-stuff-last-modified)
-		(vm-stuff-header-variables)
-		(vm-stuff-labels)
-		(vm-stuff-summary)
-		(and vm-message-order-changed
-		     (vm-stuff-message-order))
-		(vm-inform 6 "Stuffing folder data... done")))
-	  (vm-inform 5 "Saving folder %s..." (buffer-name))
+	  (when vm-message-list
+	    ;; get summary cache up-to-date
+	    (vm-inform 6 "%s: Stuffing folder data..." (buffer-name))
+	    (vm-update-summary-and-mode-line)
+	    (vm-stuff-bookmark)
+	    (vm-stuff-pop-retrieved)
+	    (vm-stuff-imap-retrieved)
+	    (vm-stuff-last-modified)
+	    (vm-stuff-header-variables)
+	    (vm-stuff-labels)
+	    (vm-stuff-summary)
+	    (and vm-message-order-changed
+		 (vm-stuff-message-order))
+	    (vm-inform 6 "%s: Stuffing folder data... done" (buffer-name)))
+	  (vm-inform 5 "%s: Saving folder..." (buffer-name))
 	  (let ((vm-inhibit-write-file-hook t)
 		(oldmodebits (and (fboundp 'default-file-modes)
 				  (default-file-modes))))
@@ -3794,7 +3800,7 @@ folder."
 		 ;; no can do, oh well.
 		 (error nil)))
 	  )
-      (vm-inform 5 "No changes need to be saved"))))
+      (vm-inform 5 "%s: No changes need to be saved" (buffer-name)))))
 
 ;;;###autoload
 (defun vm-save-and-expunge-folder (&optional prefix)
@@ -3810,7 +3816,7 @@ run vm-expunge-folder followed by vm-save-folder."
 	      '(vm-save-and-expunge-folder))
   (if (not vm-folder-read-only)
       (progn
-	(vm-inform 6 "%s: Expunging..." (buffer-name (current-buffer)))
+	(vm-inform 6 "%s: Expunging..." (buffer-name))
 	(vm-expunge-folder :quiet t)))
   (vm-save-folder prefix))
 
@@ -3845,7 +3851,7 @@ be used as the name of the buffer."
 		;; for XEmacs/Mule
 		(coding-system-for-read
 		 (vm-line-ending-coding-system)))
-	    (vm-inform 5 "Reading folder %s..." (or folder-name file))
+	    (vm-inform 5 "%s: Reading folder..." (or folder-name file))
 	    (let ((buffer (find-file-noselect file t))
 		  (hist-item (or remote-spec folder vm-primary-inbox)))
 	      (when folder-name
@@ -3855,7 +3861,7 @@ be used as the name of the buffer."
 	      (if (not (equal hist-item (car vm-folder-history)))
 		    (setq vm-folder-history
 			  (cons hist-item vm-folder-history)))
-	      (vm-inform 5 "Reading folder %s... done" (or folder-name file))
+	      (vm-inform 5 "%s: Reading folder... done" (or folder-name file))
 	      buffer))))))
 
 ;;;###autoload
@@ -4314,11 +4320,11 @@ Same as \\[vm-recover-folder]."
 		   (not (yes-or-no-p
 			 (format
 			  "Folder %s changed on disk, discard those changes? "
-			  (buffer-name (current-buffer)))))))
+			  (buffer-name))))))
 	  (progn
 	    (vm-warn 0 2 
 		     "Folder %s changed on disk, consider M-x revert-buffer"
-		     (buffer-name (current-buffer)))
+		     (buffer-name))
 	    nil )
 	(while triples
 	  (setq in (expand-file-name (nth 0 (car triples)) vm-folder-directory))
@@ -4532,7 +4538,7 @@ files."
 	   ;; This is redundant now.  USR, 2011-12-26
 	   ;; (if (not (eq major-mode 'vm-mode))
 	   ;;     (vm-mode))
-	   (vm-inform 5 "Checking for %s..." description)
+	   (vm-inform 5 "%s: Checking for %s..." folder description)
 	   (if (vm-get-spooled-mail t)
 	       (progn
 		 ;; say this NOW, before the non-previewers read
@@ -4544,7 +4550,7 @@ files."
 		     (vm-present-current-message)
 		   (vm-update-summary-and-mode-line))
 		 (vm-inform 5 totals-blurb))
-	     (vm-inform 5 "No new %s" description)
+	     (vm-inform 5 "%s: No new %s" folder description)
 	     (and (vm-interactive-p) (vm-sit-for 4) (vm-inform 5 ""))
 	     ))
 	  (t
@@ -4582,7 +4588,7 @@ files."
 			 (+ vm-messages-not-on-disk
 			    (- (length vm-message-list)
 			       mcount))))
-	       (vm-inform 5 "No messages gathered.")))))))
+	       (vm-inform 5 "%s: No messages gathered." folder)))))))
 
 ;; returns list of new messages if there were any new messages, nil otherwise
 (defun* vm-assimilate-new-messages (&key

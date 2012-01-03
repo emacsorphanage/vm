@@ -276,7 +276,7 @@ vm-retrieved-spooled-mail-hook."
 	 (beginning-of-line)
 	 (forward-line)
 	 )
-       (vm-inform 5 "Filtering new messages... ")
+       (vm-inform 5 "%s: Filtering new messages... " (buffer-name))
        (let ((res (call-process-region (point) (point-max)
 				       (or shell-file-name "sh")
 				       t t nil shell-command-switch
@@ -288,7 +288,7 @@ vm-retrieved-spooled-mail-hook."
 	     (error "Something went wrong filtering new messages (exit %s)"
 		    res)
 	   (delete-region (point) (point-max))))
-       (vm-inform 5 "Filtering new messages... done.")
+       (vm-inform 5 "%s: Filtering new messages... done." (buffer-name))
        )
      )
     )
@@ -346,7 +346,8 @@ vm-retrieved-spooled-mail-hook."
 	(widen)
 	(goto-char (vm-headers-of message))
 	(narrow-to-region (point) (vm-text-end-of message))
-	(vm-inform 6 "Re-classifying message as %s." text)
+	(vm-inform 6 "%s: Re-classifying message as %s." 
+		   (buffer-name) text)
 	(if (not (eq switch2 nil))
 	    (progn
 	      (call-process-region (point-min) (point-max)
@@ -355,8 +356,8 @@ vm-retrieved-spooled-mail-hook."
 				   (concat vm-bogofilter-program " "
 					   switch2)
 				   )
-	      (vm-inform 6 "Message re-classified as %s, updating tag."
-		       text)
+	      (vm-inform 6 "%s: Message re-classified as %s, updating tag."
+			 (buffer-name) text)
 	      ))
 	(let ((buffer-read-only nil)
 	      (buffer (get-buffer-create "*Shell Command Output*")))
@@ -368,7 +369,8 @@ vm-retrieved-spooled-mail-hook."
 			       )
 	  (delete-region (point) (vm-text-end-of message)))
 	(vm-discard-cached-data)
-	(vm-inform 6 "Message re-classified and tagged as %s." text)
+	(vm-inform 6 "%s: Message re-classified and tagged as %s." 
+		   (buffer-name) text)
 	(vm-present-current-message)
 	(vm-update-summary-and-mode-line)
 	)))))

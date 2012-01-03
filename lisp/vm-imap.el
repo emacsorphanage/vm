@@ -2080,7 +2080,7 @@ See also `vm-imap-get-message-size'."
 		 (setq token '(end-of-line) done (not skip-eol)))
 		((looking-at "\n")
 		 (vm-warn 0 2 
-		  "missing CR before LF - possible connection problem")
+		  "missing CR before LF - IMAP connection may have a problem")
 		 (forward-char 1)
 		 (setq token '(end-of-line) done (not skip-eol)))
 		((looking-at "\\[")
@@ -3135,8 +3135,9 @@ messages previously retrieved are ignored."
       (vm-imap-server-error "Could not connect to the IMAP server")
     (if do-retrieves
 	(vm-assimilate-new-messages))	; Just to be sure
-    (vm-inform 6 "Logging into the IMAP server...")
+    (vm-inform 6 "%s: Logging into the IMAP server..." (buffer-name))
     (let* ((folder-buffer (current-buffer))
+	   (folder-name (buffer-name folder-buffer))
 	   (process (vm-folder-imap-process))
 	   (imap-buffer (process-buffer process))
 	   (uid-validity (vm-folder-imap-uid-validity))
@@ -3153,7 +3154,8 @@ messages previously retrieved are ignored."
 	(let ((mp vm-message-list)
 	      (errors 0))
 	  ;;  (perm-flags (vm-folder-imap-permanent-flags))
-	  (vm-inform 6 "Updating attributes on the IMAP server... ")
+	  (vm-inform 6 "%s: Updating attributes on the IMAP server... "
+		     folder-name)
 	  (while mp
 	    (if (or (eq save-attributes 'all)
 		    (vm-attribute-modflag-of (car mp)))
@@ -3165,14 +3167,17 @@ messages previously retrieved are ignored."
 	    (setq mp (cdr mp)))
 	  (if (> errors 0)
 	      (vm-inform 3
-	       "Updating attributes on the IMAP server... %d errors" errors)
-	    (vm-inform 6 "Updating attributes on the IMAP server... done"))))
+	       "%s: Updating attributes on the IMAP server... %d errors" 
+	       folder-name errors)
+	    (vm-inform 6 "%s: Updating attributes on the IMAP server... done"
+		       folder-name))))
       (when retrieve-attributes
 	(let ((mp vm-message-list)
 	      (len (length vm-message-list))
 	      (n 0)
 	      uid m mflags)
-	  (vm-inform 6 "Retrieving message attributes and labels... ")
+	  (vm-inform 6 "%s: Retrieving message attributes and labels... "
+		     folder-name)
 	  (while mp
 	    (setq m (car mp))
 	    (setq uid (vm-imap-uid-of m))
@@ -3182,27 +3187,29 @@ messages previously retrieved are ignored."
 	      (vm-imap-update-message-flags m mflags t))
 	    (setq mp (cdr mp)
 		  n (1+ n)))
-	  (vm-inform 6 "Retrieving message atrributes and labels... done")
+	  (vm-inform 6 "%s: Retrieving message atrributes and labels... done"
+		     folder-name)
 	  ))
       (when (and do-retrieves retrieve-list)
 	(setq new-messages (vm-imap-retrieve-messages retrieve-list)))
 
       (when do-local-expunges
-	(vm-inform 6 "Expunging messages in cache... ")
+	(vm-inform 6 "%s: Expunging messages in cache... "
+		   folder-name)
 	(vm-expunge-folder :quiet t :just-these-messages local-expunge-list)
 	(if (and interactive stale-list)
 	    (if (y-or-n-p 
 		 (format 
-		  "Found %s messages with invalid UIDs.  Expunge them? "
-		  (length stale-list)))
+		  "%s: Found %s messages with invalid UIDs.  Expunge them? "
+		  folder-name (length stale-list)))
 		(vm-expunge-folder :quiet t :just-these-messages stale-list)
-	      (vm-inform 1 "They will be labelled 'stale'")
+	      (vm-inform 1 "%s: They will be labelled 'stale'" folder-name)
 	      (mapc 
 	       (lambda (m)
 		 (vm-add-or-delete-message-labels "stale" (list m) 'all))
 	       stale-list)
 	      ))
-	(vm-inform 6 "Expunging messages in cache... done"))
+	(vm-inform 6 "%s: Expunging messages in cache... done" folder-name))
 
       (when (and do-remote-expunges
 		 (if (eq do-remote-expunges 'all)
@@ -3237,7 +3244,8 @@ headers-only form."
 			  (memq 'imap vm-enable-external-messages)))
 	 (n 0))
     (save-excursion
-      (vm-inform 6 "Retrieving new messages... ")
+      (vm-inform 6 "%s: Retrieving new messages... " 
+		 (buffer-name folder-buffer))
       (vm-save-restriction
        (widen)
        (setq old-eob (point-max))
@@ -3314,7 +3322,7 @@ headers-only form."
        (setq vm-spooled-mail-waiting nil)
        (vm-set-folder-imap-retrieved-count (vm-folder-imap-mailbox-count))
        (intern (buffer-name) vm-buffers-needing-display-update)
-       (vm-inform 6 "Updating summary... ")
+       (vm-inform 6 "%s: Updating summary... " (buffer-name folder-buffer))
        (vm-update-summary-and-mode-line)
        (setq mp (vm-assimilate-new-messages :read-attributes nil))
        (setq new-messages mp)
@@ -3361,7 +3369,8 @@ headers-only form."
 	 (mailbox-count (vm-folder-imap-mailbox-count))
 	 (expunge-count (length vm-imap-messages-to-expunge))
 	 uids-to-delete m-list d-list message e-list count)
-    (vm-inform 6 "Expunging messages on the server... ")
+    (vm-inform 6 "%s: Expunging messages on the server... "
+	       (buffer-name folder-buffer))
     ;; uids-to-delete to have UID's of all UID-valid messages in
     ;; vm-imap-messages-to-expunge 
     (unwind-protect
@@ -3452,11 +3461,13 @@ headers-only form."
 		  ;; m-list has message sequence numbers of messages
 		  ;; that haven't yet been expunged
 		  (if (cdr m-list)
-		      (vm-inform 7 "%s messages yet to be expunged"
+		      (vm-inform 7 "%s: %s messages yet to be expunged"
+				 (buffer-name folder-buffer)
 				 (length (cdr m-list))))
 					; try again, if the user wants us to
 		  (setq count (1+ count)))
-		(vm-inform 6 "Expunging messages on the server... done")))
+		(vm-inform 6 "%s: Expunging messages on the server... done"
+			   (buffer-name folder-buffer))))
 
 	  (vm-imap-normal-error		; handler
 	   (vm-warn 0 2 "IMAP error: %s" (cadr error-data)))
@@ -3641,7 +3652,8 @@ otherwise.
 	 (mp vm-message-list)
 	 (errors 0))
       ;;  (perm-flags (vm-folder-imap-permanent-flags))
-      (vm-inform 6 "Updating attributes on the IMAP server... ")
+      (vm-inform 6 "%s: Updating attributes on the IMAP server... "
+		 (buffer-name))
       ;;-----------------------------------------
       (vm-imap-folder-session-type:assert 'valid)
       ;;-----------------------------------------
@@ -3654,8 +3666,10 @@ otherwise.
 	       (vm-buffer-type:set 'folder))))
 	(setq mp (cdr mp)))
       (if (> errors 0)
-	  (vm-inform 3 "Updating attributes on the IMAP server... %d errors" errors)
-	(vm-inform 6 "Updating attributes on the IMAP server... done"))))
+	  (vm-inform 3 "%s: Updating attributes on the IMAP server... %d errors" 
+		     (buffer-name) errors)
+	(vm-inform 6 "%s: Updating attributes on the IMAP server... done"
+		   (buffer-name)))))
 
 
 (defun vm-imap-synchronize (&optional full)
@@ -3675,7 +3689,7 @@ This is useful for saving offline work on the cache folder."
   ;;--------------------------
   (vm-display nil nil '(vm-imap-synchronize) '(vm-imap-synchronize))
   (if (not (eq vm-folder-access-method 'imap))
-      (vm-inform 0 "This is not an IMAP folder")
+      (vm-inform 0 "%s: This is not an IMAP folder" (buffer-name))
     (when (vm-establish-new-folder-imap-session t "general operation" nil)
       (vm-imap-retrieve-uid-and-flags-data)
       (vm-imap-save-attributes :interactive t :all-flags full)
@@ -3687,9 +3701,9 @@ This is useful for saving offline work on the cache folder."
 				  :do-retrieves t
 				  :retrieve-attributes t)
       ;; stuff the attributes of messages that need it.
-      ;; (vm-inform 7 "Stuffing cached data...")
+      ;; (vm-inform 7 "%s: Stuffing cached data..." (buffer-name) )
       ;; (vm-stuff-folder-data nil)
-      ;; (vm-inform 7 "Stuffing cached data... done")
+      ;; (vm-inform 7 "%s: Stuffing cached data... done" (buffer-name))
       ;; stuff bookmark and header variable values
       (when vm-message-list
 	;; get summary cache up-to-date
@@ -3718,7 +3732,7 @@ is being invoked interactively."
   (vm-buffer-type:set 'folder)
   ;;--------------------------
   (vm-inform 10 
-	      "Checking for new mail in %s... " (buffer-name (current-buffer)))
+	      "%s: Checking for new mail... " (buffer-name))
   (cond (vm-global-block-new-mail
 	 nil)
 	((null (vm-establish-new-folder-imap-session 
@@ -3734,8 +3748,8 @@ is being invoked interactively."
 		  (setq result (> (vm-folder-imap-mailbox-count) 
 				  (vm-folder-imap-retrieved-count)))))
 	   (vm-imap-end-session (vm-folder-imap-process))
-	   (vm-inform 10 "Checking for new mail in %s... done"
-		       (buffer-name (current-buffer)))
+	   (vm-inform 10 "%s: Checking for new mail... done"
+		       (buffer-name))
 	   result))))
 (defalias 'vm-imap-folder-check-for-mail 'vm-imap-folder-check-mail)
 (make-obsolete 'vm-imap-folder-check-for-mail

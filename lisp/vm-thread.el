@@ -615,7 +615,7 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 	 (vm-thread-subtree id-sym)))
      vm-thread-obarray)
     (when (> n modulus)
-      (vm-inform 6 "Building threads... done"))))
+      (vm-inform 6 "%s: Building threads... done" (buffer-name)))))
 
 (defun vm-build-reference-threads (mlist schedule-reindents initializing)
   "Build reference threads for all the messages in MLIST.  If threads are
@@ -662,8 +662,9 @@ being initialized."
 	;; set the parent of m.
 	;; if there was a parent already, update it consistently.
 	(if (not (vm-th-safe-parent-p id-sym parent-sym))
-	    (vm-inform 10 "Unsafe thread parent detected for %s: %s"
-			   (symbol-name id-sym) (symbol-name parent-sym))
+	    (vm-inform 10 "%s: Unsafe thread parent detected for %s: %s"
+		       (buffer-name)
+		       (symbol-name id-sym) (symbol-name parent-sym))
 	  (if (member (symbol-name id-sym) vm-traced-message-ids)
 	      (vm-thread-debug 'vm-build-reference-threads-1 id-sym))	  
 	  (cond ((null (vm-th-parent-of id-sym))
@@ -698,7 +699,8 @@ being initialized."
       ;; { NODE /\ CACHE0 (id-sym) }
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
-	  (vm-inform 7 "Building threads... %d%%" (* (/ (+ n 0.0) total) 100))))
+	  (vm-inform 7 "%s: Building threads... %d%%" 
+		     (buffer-name) (* (/ (+ n 0.0) total) 100))))
 
     ;; use the References header to set parenting information
     ;; for ancestors of this message.  This does not override
@@ -717,7 +719,8 @@ being initialized."
 	      (setq id-sym (intern (car refs) vm-thread-obarray))
 	      (when (null (vm-th-parent-of id-sym))
 		(if (not (vm-th-safe-parent-p id-sym parent-sym))
-		    (vm-inform 10 "Unsafe reference parent detected for %s: %s"
+		    (vm-inform 10 "%s: Unsafe reference parent detected for %s: %s"
+			       (buffer-name)
 			       (symbol-name id-sym) (symbol-name parent-sym))
 		  (if (member (symbol-name id-sym) vm-traced-message-ids)
 		      (vm-thread-debug 'vm-build-reference-threads-2 id-sym))
@@ -731,7 +734,8 @@ being initialized."
 		    refs (cdr refs)))))
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
-	  (vm-inform 7 "Building threads... %d%%" (* (/ (+ n 0.0) total) 100)))
+	  (vm-inform 7 "%s: Building threads... %d%%" 
+		     (buffer-name) (* (/ (+ n 0.0) total) 100)))
       )))
 
 (defun vm-th-clear-thread-lists (id-sym)
@@ -872,7 +876,7 @@ with other ancestors."
       ;; -------------- end atomic block ----------------------------------
       (setq mp (cdr mp) n (1+ n))
       (when (zerop (% n modulus))
-	(vm-inform 7 "Building threads... %d" n)))))
+	(vm-inform 7 "%s: Building threads... %d" (buffer-name) n)))))
 
 ;; used by the thread sort code.
 ;;
@@ -1484,8 +1488,9 @@ to the thread.  Used for testing purposes."
 	  ml)
     ;; Recover from errors
     (when errors-found
-      (vm-warn 0 2 (concat "Problem detected with the threads database; "
-		       "try vm-fix-my-summary"))
+      (vm-warn 0 2 (concat "%s: Problem detected with the threads database; "
+		       "try vm-fix-my-summary")
+	       (buffer-name))
       ;; (setq vm-thread-obarray 'bonk)
       ;; (setq vm-thread-subject-obarray 'bonk)
       ))))

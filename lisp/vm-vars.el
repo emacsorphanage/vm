@@ -3901,6 +3901,13 @@ minibuffer.  Indicative levels are:
   :group 'vm-misc
   :type 'integer)
 
+(defcustom vm-verbal-time 0
+  "*Number of seconds for which to display VM's minibuffer messages.
+This number should be normally 0.  Otherwise, it will delay VM's
+operation."
+  :group 'vm-misc
+  :type 'integer)
+
 ;; These flags and variables are for debugging purposes
 
 (defvar vm-debug nil
