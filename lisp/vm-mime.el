@@ -7134,7 +7134,8 @@ and the approriate content-type and boundary markup information is added."
 			 "unspecified")
 			(vm-mm-layout-qdisposition layout)
 		      (vm-extent-property e 'vm-mime-disposition)))
-	    (setq type (vm-extent-property e 'vm-mime-type)
+	    (setq layout nil
+		  type (vm-extent-property e 'vm-mime-type)
 		  params (vm-extent-property e 'vm-mime-parameters)
 		  forward-local-refs
 		      (car (vm-extent-property e 'vm-mime-forward-local-refs))
