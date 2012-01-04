@@ -24,6 +24,18 @@ Status
   unreliable mail link to the mailing list.  You can however browse the
   archives of the newsgroup at Google Groups.
   
+VM 8.2.0
+
+  CHANGES
+
+   * New variable (actually added in 8.2.0a)
+     `vm-fill-paragraphs-containing-long-lines-in-reply' which specifies the
+     maximum line length beyond which filling should be done in composed
+     messages (just before they are sent).
+
+   * Newly documented command `vm-fill-long-lines-in-reply' fills a message
+     being composed, along with its included text.
+
 VM 8.2.0b  (2011-12-28)
 
   CHANGES
@@ -440,7 +452,7 @@ VM 8.1.2
       `vm-imap-expunge-after-retrieving' changed to nil to help new
       users.
 
-    * `vm-fill-long-lines-in-reply' initialized to the default value
+    * `vm-fill-long-lines-in-reply-column' initialized to the default value
       of `fill-column'.
 
     * All MIME messages are now decoded in the Presentation buffer,

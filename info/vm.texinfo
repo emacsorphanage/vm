@@ -3106,28 +3106,40 @@ replies.  The quoted text is then similar to what appears in the
 message Presentation buffer.  However, the @acronym{MIME} attachments are not
 included by default.  They are shown in the message composition buffer
 with @b{attachment buttons} labelled similar to:
+
 @example
 [DELETED ATTACHMENT mary.jpg, image/jpeg]
 @end example
+
 @noindent If you set the variable @code{vm-include-mime-attachments} then
 the attachment buttons are converted to actual attachments before the
 message is sent.  The format of the button in this case looks like:
+
 @example
 [ATTACHMENT mary.jpg, image/jpeg]
 @end example
 
 @cindex @acronym{MIME} alternatives
 @vindex vm-mime-alternative-yank-method
-When citing a @code{multipart/alternative} @acronym{MIME} component, VM chooses the
-alternative specified by the variable
-@code{vm-mime-alternative-yank-method}.  It can 
-be defined similar to the variable
+When citing a @code{multipart/alternative} @acronym{MIME} component, VM
+uses the variable @code{vm-mime-alternative-yank-method}
+to decide which alternative should be cited.  It can 
+be defined in a similar way to the variable
 @code{vm-mime-alternative-show-method}. (@pxref{multipart/alternative}.) 
+
+@unnumberedsubsec Filling included text
+
+If the included text contains long lines, i.e., lines longer than the
+normal window width, you might want to fill paragraphs.  It is not necessary
+to do so.  If you send a message with long lines in it, VM will MIME-encode
+the text so that it can be transported reliably and your recipients can use
+their own email readers to format the long lines.  Keep in mind also that
+only running text should be filled.  Tables, figures and program code have
+line breaks that are significant, and they may be destroyed by filling.
 
 @vindex vm-fill-paragraphs-containing-long-lines-in-reply
 @vindex vm-fill-long-lines-in-reply-column
-If the included text contains long lines, i.e., lines longer than the
-normal window width, you might want to fill paragraphs.  You can invoke
+You can invoke
 automatic filling of paragraphs by setting the variable
 @code{vm-fill-paragraphs-containing-long-lines-in-reply}.  Like its
 namesake used in message presentation (@pxref{Paging}), it should be
@@ -3136,7 +3148,14 @@ Setting it to @code{nil} disables paragraph filling.  If filling is
 used, the fill column is controlled by the variable
 @code{vm-fill-long-lines-in-reply-column}.
 
-Alternatively, you can fill individual paragraphs manually using
+@findex vm-fill-long-lines-in-reply
+You can also invoke the command @code{vm-fill-long-lines-in-reply}
+interactively.  It uses the two variables mentioned above to decide when and
+how to fill text.  If the
+@code{vm-fill-paragraphs-containing-long-lines-in-reply} is @code{nil}, it
+assumes that it should fill any lines longer than the current window width. 
+
+Finally, you can fill individual paragraphs manually using
 @kbd{C-c C-q} (@code{mail-fill-yanked-message}).
 
 @unnumberedsubsec Alternative methods to include text
@@ -3265,10 +3284,8 @@ is flagged ``forwarded'' when the message is sent.
 The command @kbd{@@} (@code{vm-send-digest}) works like @kbd{z} except
 that a digest of all the messages in the current folder is made and
 inserted into the VM Mail mode buffer.  Also, @code{vm-send-digest} can
-be applied to just marked messages.  @xref{Marking Messages}.  When applied
-to marked messages, @code{vm-send-digest} will only bundle marked
-messages, as opposed to the usual bundling of all messages in the
-current folder.  The message encapsulation method is specified by the
+be applied to just marked messages.  @xref{Marking Messages}.
+The message encapsulation method is specified by the
 variable @code{vm-digest-send-type}, which accepts the same values as
 @code{vm-forwarding-digest-type}.  All the messages included in the digest will
 be flagged ``forwarded'' when the digest message is sent.
@@ -3291,7 +3308,7 @@ will be centered.
 You can forward a message ``as is'', without appearing to
 intervene, by @dfn{resending} it.
 Use  the @kbd{B} (@code{vm-resend-message}) command.  VM will
-resend the same original message and with its original headers and add
+resend the same original message with its original headers and add
 a @samp{Resent-To} header that you should fill in with the new
 recipients.  Use @kbd{C-c C-c} as usual to send the message.  The
 resent message will be flagged as ``redistributed''.  Note that a
