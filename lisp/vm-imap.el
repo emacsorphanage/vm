@@ -283,14 +283,132 @@ using cached data."
   (vm-assert (or (eq vm-imap-session-type 'active) 
 		 (eq vm-imap-session-type 'valid))))
 
-(defun vm-imap-quote-mailbox-name (name)
+;; Handling mailbox names and maildrop specs
+
+(defsubst vm-imap-quote-string (string)
+  (vm-with-string-as-temp-buffer string 'vm-imap-quote-buffer))
+
+(defun vm-imap-quote-buffer ()
+  (goto-char (point-min))
+  (insert "\"")
+  (while (re-search-forward "[\"\\]" nil t)
+    (forward-char -1)
+    (insert "\\")
+    (forward-char 1))
+  (goto-char (point-max))
+  (insert "\""))
+
+(defsubst vm-imap-quote-mailbox-name (name)
   (vm-imap-quote-string (utf7-encode name t)))
 
-(defun vm-imap-encode-mailbox-name (name)
+(defsubst vm-imap-encode-mailbox-name (name)
   (utf7-encode name t))
 
-(defun vm-imap-decode-mailbox-name (name)
+(defsubst vm-imap-decode-mailbox-name (name)
   (utf7-decode name t))
+
+;;;###autoload
+(defun vm-imap-make-filename-for-spec (spec)
+  "Returns a cache file name appropriate for the IMAP maildrop
+specification SPEC."
+  (let (md5)
+    (setq spec (vm-imap-normalize-spec spec))
+    (setq md5 (vm-md5-string spec))
+    (expand-file-name (concat "imap-cache-" md5)
+		      (or vm-imap-folder-cache-directory
+			  vm-folder-directory
+			  (getenv "HOME")))))
+
+;;;###autoload
+(defun vm-imap-normalize-spec (spec)
+  (let (comps)
+    (setq comps (vm-imap-parse-spec-to-list spec))
+    (setcar (vm-last comps) "*")		; scrub password
+    (setcar comps "imap")		; standardise protocol name
+    (setcar (nthcdr 2 comps) "*")	; scrub portnumber
+    (setcar (nthcdr 4 comps) "*")	; scrub authentication method
+    (setq spec (mapconcat (function identity) comps ":"))
+    spec ))
+
+;;;###autoload
+(defun vm-imap-account-name-for-spec (spec)
+  "Returns the IMAP account name for maildrop specification SPEC, by
+looking up `vm-imap-account-alist' or nil if there is no such account."
+  (let ((alist vm-imap-account-alist)
+	comps account-comps)
+    (setq comps (vm-imap-parse-spec-to-list spec))
+    (catch 'return
+    (while alist
+      (setq account-comps (vm-imap-parse-spec-to-list (car (car alist))))
+      (if (and (equal (nth 1 comps) (nth 1 account-comps)) ; host
+	       (equal (nth 5 comps) (nth 5 account-comps))) ; login
+	  (throw 'return (cadr (car alist)))
+	(setq alist (cdr alist))))
+    nil)))
+
+;;;###autoload
+(defun vm-imap-folder-for-spec (spec)
+  "Returns the IMAP folder for maildrop specification SPEC in the
+format account:mailbox."
+  (let (comps account-comps (alist vm-imap-account-alist))
+    (setq comps (vm-imap-parse-spec-to-list spec))
+    (catch 'return
+    (while alist
+      (setq account-comps (vm-imap-parse-spec-to-list (car (car alist))))
+      (if (and (equal (nth 1 comps) (nth 1 account-comps)) ; host
+	       (equal (nth 5 comps) (nth 5 account-comps))) ; login
+	  (throw 'return (concat (cadr (car alist)) ":" (nth 3 comps)))
+	(setq alist (cdr alist))))
+    nil)))
+
+;;;###autoload
+(defun vm-imap-spec-for-account (account)
+  "Returns the IMAP maildrop spec for ACCOUNT, by looking up
+`vm-imap-account-alist' or nil if there is no such account."
+  (car (rassoc (list account) vm-imap-account-alist)))
+
+;;;###autoload
+(defun vm-imap-parse-spec-to-list (spec)
+  "Parses the IMAP maildrop specification SPEC and returns a list of
+its components."
+  (let ((list (vm-parse spec "\\([^:]+\\):?" 1 6)))
+    ;; (append (butlast list 4)
+    ;;         (cons (utf7-decode (nth 3 list) t)
+    ;;               (last list 3)))
+    list
+    ))
+
+;;;###autoload
+(defun vm-imap-encode-list-to-spec (list)
+  "Convert a LIST of components into a maildrop specification."
+    (mapconcat 'identity list ":")
+  ;; (mapconcat 'identity
+  ;;            (append (butlast list 4)
+  ;;                    (cons (utf7-encode (nth 3 list) t)
+  ;;                          (last list 3)))
+  ;;            ":")
+  )
+
+;;;###autoload
+(defun vm-imap-spec-for-mailbox (spec mailbox)
+  "Return a modified version of the maildrop specification SPEC
+for accessing MAILBOX."
+  (let ((list (vm-parse spec "\\([^:]+\\):?" 1 6)))
+    (mapconcat 'identity 
+	       (append (vm-elems 3 list) (cons mailbox (nthcdr 4 list)))
+	       ":")))
+
+(defun vm-imap-spec-list-to-host-alist (spec-list)
+  (let (host-alist spec host)
+    (while spec-list
+      (setq spec (vm-imapdrop-sans-password-and-mailbox (car spec-list)))
+      (setq host-alist (cons
+			(list
+			 (nth 1 (vm-imap-parse-spec-to-list spec))
+			 spec)
+			host-alist)
+	    spec-list (cdr spec-list)))
+    host-alist ))
 
 ;; Simple macros
 
@@ -310,17 +428,17 @@ using cached data."
   (put 'vm-imap-normal-error 'error-message "IMAP error")
   )
 
-(defun vm-imap-protocol-error (&rest args)
+(defsubst vm-imap-protocol-error (&rest args)
   (let ((local (make-local-variable 'vm-imap-keep-trace-buffer)))
     (unless (symbol-value local) (set local 1)))
   (signal 'vm-imap-protocol-error (list (apply 'format args))))
 
-(defun vm-imap-normal-error (&rest args)
+(defsubst vm-imap-normal-error (&rest args)
   (let ((local (make-local-variable 'vm-imap-keep-trace-buffer)))
     (unless (symbol-value local) (set local 1)))
   (signal 'vm-imap-normal-error (list (apply 'format args))))
 
-(defun vm-imap-capability (cap &optional process)
+(defsubst vm-imap-capability (cap &optional process)
   (if process
       (with-current-buffer (process-buffer process)
 	(memq cap vm-imap-capabilities))
@@ -360,21 +478,6 @@ connection is established to the IMAP server and message bodies
 are not fetched.  In the 'autoconnect mode, a connection is
 established whenever a synchronization operation is performed and the
 connection mode is then turned into 'online.")
-
-(defun delete-common-elements (list1 list2 pred)
-  ;; Takes two lists of unique values with dummy headers and
-  ;; destructively deletes all their common elements
-  (rplacd list1 (sort (cdr list1) pred))
-  (rplacd list2 (sort (cdr list2) pred))
-  (while (and (cdr list1) (cdr list2))
-    (cond ((equal (car (cdr list1)) (car (cdr list2)))
-	   (rplacd list1 (cdr (cdr list1)))
-	   (rplacd list2 (cdr (cdr list2))))
-	  ((apply pred (car (cdr list1)) (car (cdr list2)) nil)
-	   (setq list1 (cdr list1)))
-	  (t
-	   (setq list2 (cdr list2)))
-	  )))
 
 
 ;; -----------------------------------------------------------------------
@@ -2300,19 +2403,6 @@ Numbers are included among atoms."
 	(setq list (cdr (cdr list))))
       nil )))
 
-(defun vm-imap-quote-string (string)
-  (vm-with-string-as-temp-buffer string 'vm-imap-quote-buffer))
-
-(defun vm-imap-quote-buffer ()
-  (goto-char (point-min))
-  (insert "\"")
-  (while (re-search-forward "[\"\\]" nil t)
-    (forward-char -1)
-    (insert "\\")
-    (forward-char 1))
-  (goto-char (point-max))
-  (insert "\""))
-
 (defun vm-imap-poke-session (process)
   "Poke the IMAP session by sending a NOOP command, just to make sure
 that the session is active.  Returns t or nil."
@@ -2795,7 +2885,7 @@ server should be issued by UID, not message sequence number."
       (setq copied-flags (copy-sequence cached-flags))
       (setq labels (cons nil (copy-sequence labels)))
       ;; Ignore labels that are both in vm and the server
-      (delete-common-elements labels copied-flags 'string<)
+      (vm-delete-common-elements labels copied-flags 'string<)
       ;; Ignore reversible flags that we have locally reversed -- Why?
       ;; (mapc (lambda (flag) (delete flag copied-flags))
       ;;  '("\\seen" "\\deleted" "\\flagged"))
@@ -3811,109 +3901,6 @@ is being invoked interactively."
 ;; 	  (setq done t)
 ;; 	(setq list (cdr list))))
 ;;     (and list (car list)))
-
-;;;###autoload
-(defun vm-imap-make-filename-for-spec (spec)
-  "Returns a cache file name appropriate for the IMAP maildrop
-specification SPEC."
-  (let (md5)
-    (setq spec (vm-imap-normalize-spec spec))
-    (setq md5 (vm-md5-string spec))
-    (expand-file-name (concat "imap-cache-" md5)
-		      (or vm-imap-folder-cache-directory
-			  vm-folder-directory
-			  (getenv "HOME")))))
-
-;;;###autoload
-(defun vm-imap-normalize-spec (spec)
-  (let (comps)
-    (setq comps (vm-imap-parse-spec-to-list spec))
-    (setcar (vm-last comps) "*")		; scrub password
-    (setcar comps "imap")		; standardise protocol name
-    (setcar (nthcdr 2 comps) "*")	; scrub portnumber
-    (setcar (nthcdr 4 comps) "*")	; scrub authentication method
-    (setq spec (mapconcat (function identity) comps ":"))
-    spec ))
-
-;;;###autoload
-(defun vm-imap-account-name-for-spec (spec)
-  "Returns the IMAP account name for maildrop specification SPEC, by
-looking up `vm-imap-account-alist' or nil if there is no such account."
-  (let ((alist vm-imap-account-alist)
-	comps account-comps)
-    (setq comps (vm-imap-parse-spec-to-list spec))
-    (catch 'return
-    (while alist
-      (setq account-comps (vm-imap-parse-spec-to-list (car (car alist))))
-      (if (and (equal (nth 1 comps) (nth 1 account-comps)) ; host
-	       (equal (nth 5 comps) (nth 5 account-comps))) ; login
-	  (throw 'return (cadr (car alist)))
-	(setq alist (cdr alist))))
-    nil)))
-
-;;;###autoload
-(defun vm-imap-folder-for-spec (spec)
-  "Returns the IMAP folder for maildrop specification SPEC in the
-format account:mailbox."
-  (let (comps account-comps (alist vm-imap-account-alist))
-    (setq comps (vm-imap-parse-spec-to-list spec))
-    (catch 'return
-    (while alist
-      (setq account-comps (vm-imap-parse-spec-to-list (car (car alist))))
-      (if (and (equal (nth 1 comps) (nth 1 account-comps)) ; host
-	       (equal (nth 5 comps) (nth 5 account-comps))) ; login
-	  (throw 'return (concat (cadr (car alist)) ":" (nth 3 comps)))
-	(setq alist (cdr alist))))
-    nil)))
-
-;;;###autoload
-(defun vm-imap-spec-for-account (account)
-  "Returns the IMAP maildrop spec for ACCOUNT, by looking up
-`vm-imap-account-alist' or nil if there is no such account."
-  (car (rassoc (list account) vm-imap-account-alist)))
-
-;;;###autoload
-(defun vm-imap-parse-spec-to-list (spec)
-  "Parses the IMAP maildrop specification SPEC and returns a list of
-its components."
-  (let ((list (vm-parse spec "\\([^:]+\\):?" 1 6)))
-    ;; (append (butlast list 4)
-    ;;         (cons (utf7-decode (nth 3 list) t)
-    ;;               (last list 3)))
-    list
-    ))
-
-;;;###autoload
-(defun vm-imap-encode-list-to-spec (list)
-  "Convert a LIST of components into a maildrop specification."
-  (mapconcat 'identity
-             (append (butlast list 4)
-                     (cons (utf7-encode (nth 3 list) t)
-                           (last list 3)))
-             ":"))
-
-;;;###autoload
-(defun vm-imap-spec-for-mailbox (spec mailbox)
-  "Return a modified version of the maildrop specification SPEC
-for accessing MAILBOX."
-  (let ((list (vm-parse spec "\\([^:]+\\):?" 1 6)))
-    (mapconcat 'identity 
-	       (append (vm-elems 3 list)
-                       (cons (utf7-encode mailbox t)
-                             (nthcdr 4 list)))
-	       ":")))
-
-(defun vm-imap-spec-list-to-host-alist (spec-list)
-  (let (host-alist spec host)
-    (while spec-list
-      (setq spec (vm-imapdrop-sans-password-and-mailbox (car spec-list)))
-      (setq host-alist (cons
-			(list
-			 (nth 1 (vm-imap-parse-spec-to-list spec))
-			 spec)
-			host-alist)
-	    spec-list (cdr spec-list)))
-    host-alist ))
 
 (defvar vm-imap-account-folder-cache nil
   "Caches the list of all folders on an IMAP account.")
