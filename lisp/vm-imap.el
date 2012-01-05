@@ -42,7 +42,9 @@
   (require 'vm-reply)
 )
 
-(require 'utf7)
+(eval-and-compile
+  (require 'utf7)
+)
 
 (declare-function vm-session-initialization 
 		  "vm.el" ())
@@ -280,6 +282,15 @@ using cached data."
 (defsubst vm-imap-session-type:assert-active ()
   (vm-assert (or (eq vm-imap-session-type 'active) 
 		 (eq vm-imap-session-type 'valid))))
+
+(defun vm-imap-quote-mailbox-name (name)
+  (vm-imap-quote-string (utf7-encode name t)))
+
+(defun vm-imap-encode-mailbox-name (name)
+  (utf7-encode name t))
+
+(defun vm-imap-decode-mailbox-name (name)
+  (utf7-decode name t))
 
 ;; Simple macros
 
@@ -1420,7 +1431,7 @@ Returns a list containing:
 	(need-ok t))
     (vm-imap-log-token 'select-mailbox)
     (vm-imap-send-command 
-     process (format "%s %s" command (vm-imap-quote-string mailbox)))
+     process (format "%s %s" command (vm-imap-quote-mailbox-name mailbox)))
     (while need-ok
       (setq response (vm-imap-read-response-and-verify process command))
       (cond ((vm-imap-response-matches response '* 'OK 'vector)
@@ -2891,7 +2902,7 @@ MAILBOX."
 	  ;;----------------------------------
 	  (vm-imap-send-command process
 				(format "APPEND %s %s {%d}"
-					(vm-imap-quote-string mailbox)
+					(vm-imap-quote-mailbox-name mailbox)
 					(if flags flags "()")
 					(length string)))
 	  ;;--------------------------------
@@ -2958,7 +2969,7 @@ operation of the server to minimize I/O."
 	   process
 	   (format "UID COPY %s %s"
 		   (vm-imap-uid-of m)
-		   (vm-imap-quote-string mailbox)))
+		   (vm-imap-quote-mailbox-name mailbox)))
 	  ;;--------------------------------
 	  (vm-imap-session-type:set 'active)
 	  ;;--------------------------------
@@ -4035,8 +4046,9 @@ IMAP mailbox spec."
 	  (vm-buffer-type:enter 'process)
 	  (vm-imap-session-type:assert-active)
 	  ;;----------------------------------
-	  (vm-imap-send-command process (format "LIST %s \"\""
-						(vm-imap-quote-string ref)))
+	  (vm-imap-send-command 
+	   process 
+	   (format "LIST %s \"\"" (vm-imap-quote-mailbox-name ref)))
 	  ;;--------------------------------
 	  (vm-imap-dump-uid-seq-num-data)
 	  ;;--------------------------------
@@ -4087,10 +4099,10 @@ selectable mailboxes to be listed.  Returns a list of mailbox names."
 		     (setq r (nthcdr 4 response)
 			   p (car r))
 		     (if (memq (car p) '(atom string))
-			 (setq c-list (cons (utf7-decode
-                                             (buffer-substring
-                                              (nth 1 p) (nth 2 p)) t)
-					    c-list)))))))
+			 (setq c-list 
+			       (cons (vm-imap-decode-mailbox-name
+				      (buffer-substring (nth 1 p) (nth 2 p)))
+				     c-list)))))))
 	  c-list )
       ;; unwind-protections
       ;;-------------------
@@ -4113,7 +4125,9 @@ well. Returns a boolean value."
 	  (vm-imap-session-type:assert-active)
 	  (vm-imap-dump-uid-seq-num-data)
 	  ;;----------------------------------
-	  (vm-imap-send-command process (concat "LIST \"\" \"" mailbox "\""))
+	  (vm-imap-send-command 
+	   process 
+	   (format "LIST %s" (vm-imap-quote-mailbox-name mailbox)))
 	  (setq need-ok t)
 	  (while need-ok
 	    (setq response (vm-imap-read-response-and-verify process "LIST"))
@@ -4168,21 +4182,25 @@ well. Returns a boolean value."
 	  ;; real error if the final mailbox creation fails.
 	  (vm-imap-read-boolean-response process)
 	  (setq i (match-end 0)))))
-  (vm-imap-send-command process (format "CREATE %s"
-					(vm-imap-quote-string mailbox)))
+  (vm-imap-send-command 
+   process 
+   (format "CREATE %s" (vm-imap-quote-mailbox-name mailbox)))
   (if (null (vm-imap-read-boolean-response process))
       (vm-imap-normal-error "creation of %s failed" mailbox)))
 
 (defun vm-imap-delete-mailbox (process mailbox)
-  (vm-imap-send-command process (format "DELETE %s"
-					(vm-imap-quote-string mailbox)))
+  (vm-imap-send-command 
+   process 
+   (format "DELETE %s" (vm-imap-quote-mailbox-name mailbox)))
   (if (null (vm-imap-read-boolean-response process))
       (vm-imap-normal-error "deletion of %s failed" mailbox)))
 
 (defun vm-imap-rename-mailbox (process source dest)
-  (vm-imap-send-command process (format "RENAME %s %s"
-					(vm-imap-quote-string source)
-					(vm-imap-quote-string dest)))
+  (vm-imap-send-command 
+   process 
+   (format "RENAME %s %s"
+	   (vm-imap-quote-mailbox-name source)
+	   (vm-imap-quote-mailbox-name dest)))
   (if (null (vm-imap-read-boolean-response process))
       (vm-imap-normal-error "renaming of %s to %s failed" source dest)))
 
@@ -4428,7 +4446,7 @@ message count and recent message count (a list of two numbers)."
       (vm-imap-send-command 
        process 
        (format "STATUS %s (MESSAGES RECENT)"
-               (vm-imap-quote-string (utf7-encode mailbox t))))
+               (vm-imap-quote-mailbox-name mailbox)))
       (while need-ok
 	(setq response (vm-imap-read-response-and-verify process "STATUS"))
 	(cond ((vm-imap-response-matches response 'VM 'OK)
@@ -4547,11 +4565,12 @@ folder."
 	    ;; (vm-imap-session-type:assert-active)
 	    ;;----------------------------------
 
-	    (vm-imap-send-command process
-				  (format "APPEND %s %s {%d}"
-					  (vm-imap-quote-string mailbox)
-					  (if flags flags "()")
-					  (length string)))
+	    (vm-imap-send-command 
+	     process
+	     (format "APPEND %s %s {%d}"
+		     (vm-imap-quote-mailbox-name mailbox)
+		     (if flags flags "()")
+		     (length string)))
 	    ;; could these be done with vm-imap-read-boolean-response?
 	    (let ((need-plus t) response)
 	      (while need-plus
