@@ -4477,6 +4477,7 @@ The return value does not seem to be meaningful.     USR, 2011-03-25"
 	 (blob (get (vm-mm-layout-cache layout)
 		    'vm-mime-display-internal-image-xxxx))
          (saved-type (vm-mm-layout-type layout))
+	 (saved-disposition (vm-mm-layout-disposition layout))
          success tempfile
 	 (work-buffer nil))
     ;; Emacs 19 uses a different layout cache than XEmacs or Emacs 21+.
@@ -4509,7 +4510,8 @@ The return value does not seem to be meaningful.     USR, 2011-03-25"
 	  (vm-set-mm-layout-disposition layout '("inline"))
 	  (vm-mark-image-tempfile-as-message-garbage-once layout tempfile)
 	  (vm-mime-display-internal-generic extent))
-      (vm-set-mm-layout-type layout saved-type))))
+      (vm-set-mm-layout-type layout saved-type)
+      (vm-set-mm-layout-disposition layout saved-disposition))))
 
 (defun vm-mark-image-tempfile-as-message-garbage-once (layout tempfile)
   (if (get (vm-mm-layout-cache layout) 'vm-message-garbage)
