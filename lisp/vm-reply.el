@@ -116,20 +116,28 @@
 
 ;;;###autoload
 (defun vm-fill-long-lines-in-reply ()
+  "Fill lines in the message composition in the current buffer,
+provided it has lines longer than the line length specified by
+`vm-fill-paragraphs-containing-long-lines-in-reply'.  If that variable
+is `nil' then it uses the width of the window as the maximum line
+length." 
   (interactive)
   (let ((vm-word-wrap-paragraphs vm-word-wrap-paragraphs-in-reply)
 					; doesn't work well with fill-prefixes
 	(vm-paragraph-fill-column vm-fill-long-lines-in-reply-column))
-    (vm-fill-paragraphs-containing-long-lines
-     vm-fill-paragraphs-containing-long-lines-in-reply
-     (save-excursion
-       (goto-char (point-min))
-       (re-search-forward 
-	(concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
-	(point-max))
-       (forward-line 1)
-       (point))
-     (point-max))))
+    (when (or (vm-interactive-p)
+	      vm-fill-paragraphs-containing-long-lines-in-reply)
+      (vm-fill-paragraphs-containing-long-lines
+       (or vm-fill-paragraphs-containing-long-lines-in-reply
+	   'window-width)		; use window-width for interactive
+       (save-excursion
+	 (goto-char (point-min))
+	 (re-search-forward 
+	  (concat "^\\(" (regexp-quote mail-header-separator) "\\)$")
+	  (point-max))
+	 (forward-line 1)
+	 (point))
+       (point-max)))))
 
 ;;;###autoload
 (defun vm-do-reply (to-all include-text count)
