@@ -2374,41 +2374,57 @@ assuming that it is text."
       ;; unwind-protection
       (when work-buffer (kill-buffer work-buffer)))))
 
-(defun* vm-mime-should-display-button (layout &key
-					      (honor-content-disposition t))
+(defun* vm-mime-should-display-button (layout &key ignore-content-disposition)
   "Checks whether MIME object with LAYOUT should be displayed as
-a button.  Optional keyword argument HONOR-CONTENT-DISPOSITION
+a button.  Optional keyword argument IGNORE-CONTENT-DISPOSITION
 says whether the Content-Disposition header of the MIME object
-should be honored (default t).  The global setting of
-`vm-mime-honor-content-disposition' also has this effect."
+should be ignored."
+  (not (vm-mime-should-display-object layout ignore-content-disposition)))
+
+(defun vm-mime-should-display-object (layout ignore-content-disposition)
+  "Checks whether MIME object with LAYOUT should be automatically
+displayed.  Optional keyword argument IGNORE-CONTENT-DISPOSITION
+says whether the Content-Disposition header of the MIME object
+should be ignored."
   ;; Karnaugh map analysis shows that
   ;; - attachment disposition objects should be buttons
   ;; - all auto-displayed objects should not be buttons
-  ;; - inline objects should be displayed if honor = t or
-  ;;   honor = internal-only and the object is internal-displayable
+  ;; - inline objects should be displayed if
+  ;;   vm-mime-honor-content-disposition is either nil or
+  ;;   it is 'internal-only and the object is internal-displayable
   ;; - all other cases should be buttons
   (let ((type (car (vm-mm-layout-type layout)))
-	(disposition (car (vm-mm-layout-disposition layout))))
+	(disposition (car (vm-mm-layout-disposition layout)))
+	(honor-content-disposition (and (not ignore-content-disposition)
+					vm-mime-honor-content-disposition)))
     (setq disposition (and disposition (downcase disposition)))
-    (setq honor-content-disposition 
-	  (and honor-content-disposition vm-mime-honor-content-disposition))
-    (cond ((vm-mime-types-match "multipart" type)
-	   nil)
-	  ((and (equal disposition "attachment")
-		honor-content-disposition)
-	   t)
-	  ((eq disposition "inline")
-	   (cond ((eq honor-content-disposition 'internal-only)
-		  (not (or (vm-mime-should-auto-display layout)
-			   (vm-mime-should-display-internal layout))))
-		 ((eq honor-content-disposition t)
-		  nil)
-		 (t
-		  (not (vm-mime-should-auto-display layout)))))
-	  (t
-	   (not (vm-mime-should-auto-display layout))))))
+    (cond 
+     ;; multiparts are always displayed
+     ((vm-mime-types-match "multipart" type)
+      t)				
+     ;; attachment objects are not displayed if the disposition is honored
+     ((and (equal disposition "attachment")
+	   honor-content-disposition)
+      nil)				
+     ;; inline objects are auto-displayed
+     ;; if honor = t or 
+     ;; honor = 'internal-only and they are internally auto-displayable
+     ((equal disposition "inline")
+      (cond ((eq honor-content-disposition 'internal-only)
+	     (and (vm-mime-auto-displayable layout)
+		  (vm-mime-internally-displayable layout)))
+	    ((eq honor-content-disposition t)
+	     t)
+	    (t
+	     (vm-mime-auto-displayable layout))))
+     (t
+      (vm-mime-auto-displayable layout)))))
 
-(defun vm-mime-should-auto-display (layout)
+(defun vm-mime-auto-displayable (layout)
+  "Returns a boolean value indicating whether MIME object with LAYOUT
+should be auto-displayed according to the settings of
+`vm-mime-auto-displayed-content-types' and
+`vm-mime-auto-displayed-content-type-exceptions'."
   (let ((type (car (vm-mm-layout-type layout))))
     (and (or (eq vm-mime-auto-displayed-content-types t)
 	     (vm-find (cons "multipart" vm-mime-auto-displayed-content-types)
@@ -2416,7 +2432,7 @@ should be honored (default t).  The global setting of
 	 (not (vm-find vm-mime-auto-displayed-content-type-exceptions
 		       (lambda (i) (vm-mime-types-match i type)))))))
 
-(defun vm-mime-should-display-internal (layout)
+(defun vm-mime-internally-displayable (layout)
   (let ((type (car (vm-mm-layout-type layout))))
     (if (or (eq vm-mime-internal-content-types t)
 	    (vm-find (cons "multipart" vm-mime-internal-content-types)
@@ -2635,7 +2651,7 @@ is not successful.                                   USR, 2011-03-25"
 		       type-no-subtype (car (vm-parse type "\\([^/]+\\)")))))
 	  (cond 
 	   ((and (vm-mime-should-display-button 
-		  layout :honor-content-disposition (not dont-honor-c-d))
+		  layout :ignore-content-disposition dont-honor-c-d)
 		 ;; original conditional-cases changed to fboundp
 		 ;; checks.  USR, 2011-03-25
 		 (or (fboundp 
@@ -2652,7 +2668,7 @@ is not successful.                                   USR, 2011-03-25"
 	    )
 	   ((and vm-infer-mime-types inf-type
 		 (vm-mime-should-display-button 
-		  layout :honor-content-disposition (not dont-honor-c-d))
+		  layout :ignore-content-disposition dont-honor-c-d)
 		 (or (fboundp 
 		      (setq handler (vm-mime-handler 
 				     "display-button" inf-type)))
@@ -2663,7 +2679,7 @@ is not successful.                                   USR, 2011-03-25"
 		 (funcall handler layout))
 	    ;; if the handler returns t, overwrite the layout type
 	    (vm-mime-rewrite-with-inferred-type layout inf-type))
-	   ((and (vm-mime-should-display-internal layout)
+	   ((and (vm-mime-internally-displayable layout)
 		 (or (fboundp 
 		      (setq handler (vm-mime-handler 
 				     "display-internal" type)))
@@ -2674,7 +2690,7 @@ is not successful.                                   USR, 2011-03-25"
 	    ;; if the handler returns t, we are done
 	    )
 	   ((and vm-infer-mime-types inf-type
-		 (vm-mime-should-display-internal layout)
+		 (vm-mime-internally-displayable layout)
 		 (or (fboundp
 		      (setq handler (vm-mime-handler 
 				     "display-internal" inf-type)))
@@ -3087,7 +3103,7 @@ the argument.                                        USR, 2011-03-25"
 	     (while (and part-list (not done))
 	       (setq type (car (vm-mm-layout-type (car part-list))))
 	       (cond ((and (vm-mime-can-display-internal (car part-list) t)
-			   (vm-mime-should-display-internal (car part-list)))
+			   (vm-mime-internally-displayable (car part-list)))
 		      (setq best (car part-list)
 			    done t))
 		     ((and (null second-best)
@@ -3135,7 +3151,7 @@ the argument.                                        USR, 2011-03-25"
 	       (while (and part-list (not done))
 		 (setq type (car (vm-mm-layout-type (car part-list))))
 		 (cond ((and (vm-mime-can-display-internal (car part-list) t)
-			     (vm-mime-should-display-internal (car part-list)))
+			     (vm-mime-internally-displayable (car part-list)))
 			(if (vm-mime-types-match (car favs) type)
 			    (setq best (car part-list)
 				  done t)
