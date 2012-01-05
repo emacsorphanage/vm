@@ -42,6 +42,8 @@
   (require 'vm-reply)
 )
 
+(require 'utf7)
+
 (declare-function vm-session-initialization 
 		  "vm.el" ())
 (declare-function vm-submit-bug-report 
@@ -3864,12 +3866,20 @@ format account:mailbox."
   "Parses the IMAP maildrop specification SPEC and returns a list of
 its components."
   (let ((list (vm-parse spec "\\([^:]+\\):?" 1 6)))
-    list))
+    ;; (append (butlast list 4)
+    ;;         (cons (utf7-decode (nth 3 list) t)
+    ;;               (last list 3)))
+    list
+    ))
 
 ;;;###autoload
 (defun vm-imap-encode-list-to-spec (list)
   "Convert a LIST of components into a maildrop specification."
-    (mapconcat 'identity list ":"))
+  (mapconcat 'identity
+             (append (butlast list 4)
+                     (cons (utf7-encode (nth 3 list) t)
+                           (last list 3)))
+             ":"))
 
 ;;;###autoload
 (defun vm-imap-spec-for-mailbox (spec mailbox)
@@ -3877,7 +3887,9 @@ its components."
 for accessing MAILBOX."
   (let ((list (vm-parse spec "\\([^:]+\\):?" 1 6)))
     (mapconcat 'identity 
-	       (append (vm-elems 3 list) (cons mailbox (nthcdr 4 list)))
+	       (append (vm-elems 3 list)
+                       (cons (utf7-encode mailbox t)
+                             (nthcdr 4 list)))
 	       ":")))
 
 (defun vm-imap-spec-list-to-host-alist (spec-list)
@@ -4075,8 +4087,9 @@ selectable mailboxes to be listed.  Returns a list of mailbox names."
 		     (setq r (nthcdr 4 response)
 			   p (car r))
 		     (if (memq (car p) '(atom string))
-			 (setq c-list (cons (buffer-substring
-					     (nth 1 p) (nth 2 p))
+			 (setq c-list (cons (utf7-decode
+                                             (buffer-substring
+                                              (nth 1 p) (nth 2 p)) t)
 					    c-list)))))))
 	  c-list )
       ;; unwind-protections
@@ -4414,7 +4427,8 @@ message count and recent message count (a list of two numbers)."
       ;;-----------------------------
       (vm-imap-send-command 
        process 
-       (format "STATUS %s (MESSAGES RECENT)" (vm-imap-quote-string mailbox)))
+       (format "STATUS %s (MESSAGES RECENT)"
+               (vm-imap-quote-string (utf7-encode mailbox t))))
       (while need-ok
 	(setq response (vm-imap-read-response-and-verify process "STATUS"))
 	(cond ((vm-imap-response-matches response 'VM 'OK)
