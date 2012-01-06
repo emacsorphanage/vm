@@ -1691,6 +1691,16 @@ presentation is done in two stages: @dfn{previewing} and @dfn{paging}.
 * Previewing::                  Customizing message previews.
 * Paging::                      Viewing the current message.
 * @acronym{MIME} Messages::               Using VM's @acronym{MIME} display features.
+* Viewing @acronym{MIME}::                Decoding @acronym{MIME} for viewing
+* Attachments::                 Operating on @acronym{MIME} attachments
+* Internal display::            Viewing attachments internally in Emacs
+* @acronym{HTML} display::                Reading @acronym{HTML} content using Emacs-w3m browser
+* External display::            Viewing attachments with external viewers
+* Displaying images::           Using Emacs facilities for images
+* @acronym{MIME} type conversion::        Converting external attachments to internal
+* Character sets::              @acronym{MIME} character sets
+* multipart/alternative::       @acronym{MIME} content in alternative formats
+* Inferring @acronym{MIME} types::        Inferring types from attachment file names
 @end menu
 
 @node Previewing, Paging, Reading Messages, Reading Messages
@@ -1739,7 +1749,7 @@ effects will not be immediate.  You will need to use the command
 @code{vm-discard-cached-data} on each message (bound to @kbd{j} by
 default) to force VM to rearrange the message headers.  A good way to do
 this is to mark all the messages in the folder and apply
-@code{vm-discard-cached-data} to the marked messages
+@code{vm-discard-cached-data} to the marked messages.
 @xref{Marking Messages}.
 
 @vindex vm-highlighted-header-regexp
@@ -1866,11 +1876,11 @@ messages.
 @vindex vm-mime-qp-encoder-switches
 @vindex vm-mime-uuencode-decoder-program
 @vindex vm-mime-uuencode-decoder-switches
-At its most basic @acronym{MIME} is a set of transfer encodings used to
+At its most basic level, @acronym{MIME} is a set of transfer encodings used to
 ensure error free transport, and a set of content types.  VM understands the
-two standard @acronym{MIME} transport encodings, Quoted-Printable and
-BASE64, and will decode messages that use them as necessary.  VM also will
-try to recognize and decode messages using the UNIX ``uuencode'' encoding
+two standard @acronym{MIME} transport encodings, @dfn{Quoted-Printable} and
+@dfn{BASE64}, and will decode messages that use them as necessary.  VM will also
+try to recognize and decode messages using the UNIX @dfn{uuencode} encoding
 system.  While this is not an official @acronym{MIME} transfer encoding and
 never will be, enough old mailers still use it that it is worthwhile to
 attempt to decode it.  VM has Emacs-Lisp based Quoted-Printable and BASE64
@@ -1892,6 +1902,7 @@ decode uuencoded @acronym{MIME} objects.
 * Viewing @acronym{MIME}::                Decoding @acronym{MIME} for viewing
 * Attachments::                 Operating on @acronym{MIME} attachments
 * Internal display::            Viewing attachments internally in Emacs
+* @acronym{HTML} display::                Reading @acronym{HTML} content using Emacs-w3m browser
 * External display::            Viewing attachments with external viewers
 * Displaying images::           Using Emacs facilities for images
 * @acronym{MIME} type conversion::        Converting external attachments to internal
@@ -1902,7 +1913,7 @@ decode uuencoded @acronym{MIME} objects.
 
 
 @node Viewing @acronym{MIME}, Attachments,, @acronym{MIME} Messages
-@unnumberedsubsec Viewing @acronym{MIME} messages
+@subsection Viewing @acronym{MIME} messages
 By default VM will display as many content types as possible
 within Emacs.  Images and audio are also supported if
 support for images and audio has been compiled in.  Types that
@@ -1930,20 +1941,52 @@ and what you have to do to display it.  The value of
 @code{vm-mime-button-format-alist} determines the format of the text in
 those buttons.
 
-After decoding you will see either the decoded @acronym{MIME} objects or
+After decoding, you will see either the decoded @acronym{MIME} objects or
 button lines that must be activated to attempt display of the
 @acronym{MIME} object.  
 
 @vindex vm-mime-auto-displayed-content-types
 @vindex vm-mime-auto-displayed-content-type-exceptions
 The variable @code{vm-mime-auto-displayed-content-types} specifies the types
-that are displayed immediately.  Its value should be a list of
-@acronym{MIME} content types that should be displayed immediately after
-decoding.  Other types will be displayed as a button that you must activate
-to display the object.  The variable
-@code{vm-mime-auto-displayed-content-type-exceptions} can be used to specify
-any exceptions to the types listed in
+that are displayed immediately and
+@code{vm-mime-auto-displayed-content-type-exceptions} specifies
+any exceptions to the types specified in
 @code{vm-mime-auto-displayed-content-types}.
+
+
+@vindex vm-mime-auto-displayed-content-types
+A value of t for @code{vm-mime-auto-displayed-content-types} means that
+all types should be displayed immediately.  A nil value means
+never display @acronym{MIME} objects immediately; only use buttons.  If
+the value of @code{vm-mime-auto-displayed-content-types} is a list, it
+should be a list of strings, which should all be @acronym{MIME} types or
+type/subtype pairs.  Example:
+
+@example
+(setq vm-mime-auto-displayed-content-types '("text" "image/jpeg"))
+@end example
+
+@noindent If a top-level type is listed without a subtype then all
+subtypes of that type are assumed to be included.  The example above
+says that all text types should be displayed immediately, but only
+JPEG images should be displayed this way.
+
+@vindex vm-mime-auto-displayed-content-type-exceptions
+The variable @code{vm-mime-auto-displayed-content-type-exceptions}
+should be a list of @acronym{MIME} content types that should not be
+displayed immediately after decoding.  This variable acts as
+an exception list for @code{vm-mime-auto-displayed-content-types};
+all types listed there will be auto-displayed except those in
+the exception list.
+
+@example
+(setq vm-mime-auto-displayed-content-type-exceptions '("text/html"))
+@end example
+
+@noindent If ``text'' has been included in
+@code{vm-mime-auto-displayed-content-types} then the effect of this
+setting is to allow the auto-display of all text types @i{except} for
+html.
 
 @cindex Content-Disposition
 @vindex vm-mime-honor-content-disposition
@@ -1964,17 +2007,18 @@ to the symbol @code{internal-only}, which means that the Content-Disposition
 suggestions should be honored for only the internally displayable types.
 (@xref{Internal display of @acronym{MIME} attachments}.)
 
+@node Attachments, Internal display, Viewing @acronym{MIME}, @acronym{MIME} Messages
+@subsection  Operating on @acronym{MIME} attachments
+@anchor{Operating on @acronym{MIME} attachments}
 @findex vm-next-button
 @findex vm-previous-button
 @kindex [
 @kindex ]
 The commands @kbd{[} and @kbd{]} (@code{vm-previous-button}) and
 @code{vm-next-button}, respectively) can be
-used move to particular buttons within the message presentation.
+used to move to attachment buttons within the message presentation.
 
-@node Attachments, Internal display, Viewing @acronym{MIME}, @acronym{MIME} Messages
-@unnumberedsubsec  Operating on @acronym{MIME} attachments
-@anchor{Operating on @acronym{MIME} attachments}
+
 @cindex attachments
 @kindex $ |
 @kindex $ d
@@ -1994,9 +2038,9 @@ used move to particular buttons within the message presentation.
 @findex vm-delete-mime-object
 @findex vm-mime-reader-map-display-using-external-viewer
 @findex vm-mime-reader-map-attach-to-composition
-To activate a button, either click the middle mouse button over it, or move
+To activate a button, either click mouse-2 over it, or move
 the cursor to the line and press @key{RET}.  If you are running under a
-window system, you can use the right mouse button over a @acronym{MIME}
+window system, you can use mouse-3 over a @acronym{MIME}
 button to display a menu of actions you can take on the @acronym{MIME}
 object.  If you prefer using keyboard commands, you can save the
 @acronym{MIME} object with @kbd{$ w}, print it with @kbd{$ p}, or pipe it to
@@ -2056,43 +2100,9 @@ simply has a file name.  In addition, all @acronym{MIME} parts that have types
 matching @code{vm-mime-savable-types} or @code{vm-mime-deletable-types}
 (but not the corresponding @code{-exceptions}) are included.
 
-@node Internal display, External display, Attachments, @acronym{MIME} Messages
-@unnumberedsubsec Internal display of @acronym{MIME} attachments
+@node Internal display, @acronym{HTML} display, Attachments, @acronym{MIME} Messages
+@subsection Internal display of @acronym{MIME} attachments
 @anchor{Internal display of @acronym{MIME} attachments}
-
-@vindex vm-mime-auto-displayed-content-types
-A value of t for @code{vm-mime-auto-displayed-content-types} means that
-all types should be displayed immediately.  A nil value means
-never display @acronym{MIME} objects immediately; only use buttons.  If
-the value of @code{vm-mime-auto-displayed-content-types} is a list, it
-should be a list of strings, which should all be @acronym{MIME} types or
-type/subtype pairs.  Example:
-
-@example
-(setq vm-mime-auto-displayed-content-types '("text" "image/jpeg"))
-@end example
-
-@noindent If a top-level type is listed without a subtype then all
-subtypes of that type are assumed to be included.  The example above
-says that all text types should be displayed immediately, but only
-JPEG images should be displayed this way.
-
-@vindex vm-mime-auto-displayed-content-type-exceptions
-The variable @code{vm-mime-auto-displayed-content-type-exceptions}
-should be a list of @acronym{MIME} content types that should not be
-displayed immediately after decoding.  This variable acts as
-an exception list for @code{vm-mime-auto-displayed-content-types};
-all types listed there will be auto-displayed except those in
-the exception list.
-
-@example
-(setq vm-mime-auto-displayed-content-type-exceptions '("text/html"))
-@end example
-
-@noindent If ``code'' has been included in
-@code{vm-mime-auto-displayed-content-types} then the effect of this
-setting is to allow the auto-display of all text types @i{except} for
-html.
 
 @vindex vm-mime-internal-content-types
 The variable @code{vm-mime-internal-content-types} specifies which
@@ -2127,6 +2137,7 @@ displayed in Emacs using a variety of packages.  VM knows about:
 @cindex lynx
 @cindex w3m
 @cindex w3
+@cindex Emacs-w3m
 @multitable @columnfractions .15 .85
 @item lynx   
   @tab The @command{lynx} browser used externally to convert @acronym{HTML}
@@ -2137,7 +2148,8 @@ displayed in Emacs using a variety of packages.  VM knows about:
 @item emacs-w3 
   @tab  The @samp{Emacs/W3} browser used internally in Emacs
 @item emacs-w3m 
-  @tab  The @samp{Emacs/W3M} browser used internally in Emacs
+  @tab  The @samp{Emacs-W3M} browser used internally in Emacs.
+        @xref{top,, Emacs-w3m, emacs-w3m, Emacs-w3m User's Manual}.
 @end multitable
 
 You can set the variable @code{vm-mime-text/html-handler} to one of
@@ -2149,9 +2161,65 @@ best display possible in your environment.  If you do not like the
 results, you may set the variable to a different value or
 @code{nil}.
 
+@node @acronym{HTML} display, External display, Internal display, @acronym{MIME} Messages
+@subsection @acronym{HTML} display
 
-@node External display, Displaying images, Internal display, @acronym{MIME} Messages
-@unnumberedsubsec External display of @acronym{MIME} attachments
+@cindex Emacs-w3m
+The preferred method of displaying @acronym{HTML} content in email messages
+is through the Emacs-w3m browser.  @xref{top,, Emacs-w3m, emacs-w3m,
+Emacs-w3m User's Manual}.  VM has special facilities for using this browser,
+which are described in this section.
+
+@vindex vm-w3m-use-w3m-minor-mode-map
+The Emacs-w3m browser has its own key bindings for use within HTML text.
+These are disabled by default so that VM's key bindings will continue to
+have effect.  To switch to the Emacs-w3m key bindings, set the variable
+@code{vm-w3m-use-w3m-minor-mode-map} to @code{t}.
+
+@vindex vm-w3m-display-inline-images
+@acronym{HTML} content may have embedded images.  Such images might be
+shipped with the email message (via the @acronym{MIME} type
+@samp{multipart/related}) or they might be provided via @acronym{URL}'s to
+be retrieved when you view the message.  The variable
+@code{vm-w3m-display-inline-images} controls whether VM should allow images
+to be retrieved via @acronym{URL}'s.  Set it to @code{t} to retrieve them
+and @code{nil} otherwise.
+
+@vindex vm-w3m-safe-url-regexp
+@acronym{URL}'s embedded in @acronym{HTML} content are in general unsafe,
+because you cannot see where they point to.  (The fraudulent technique of
+``phishing'' operates by asking you to click on innocuous links, which under
+the surface, link to the fraudster's web sites.)  By default, the Emacs-w3m
+browser treats all external @acronym{URL}'s as unsafe and gives you a warning
+when you attempt to follow the links.  To get around the warning, you can
+customize the variable @code{vm-w3m-safe-url-regexp}.  You can set it to
+@code{t}, to regard all @acronym{URL}'s as being safe, or to a regular
+expression that identifies which @acronym{URL}'s should be regarded as safe.
+
+The Emacs-w3m browser has numerous 
+option settings that may customize.  Some important
+settings for use with VM are the following:
+
+@table @code
+@vindex w3m-force-redisplay
+@item w3m-force-redisplay
+You may set this to @code{nil} if you find the HTML display ``jittery''
+(which is caused by Emacs-w3m redisplaying the text during formatting).
+
+@vindex w3m-pop-up-frames
+@item w3m-pop-up-frames
+You may set this to @code{t} if you find that Emacs-w3m is too liberal with
+your Emacs windows.
+
+@vindex w3m-goto-article-function
+@item w3m-goto-article-function
+Set this to an Emacs function that opens a @code{URL}.  If you have already
+set @code{vm-url-browser}, you may copy its value into this variable.
+@end table
+
+
+@node External display, Displaying images, @acronym{HTML} display, @acronym{MIME} Messages
+@subsection External display of @acronym{MIME} attachments
 
 @vindex vm-mime-external-content-types-alist
 For types that you want displayed externally, set the value
@@ -2298,7 +2366,7 @@ associated with the first type that matches will be used for the
 temporary filename.
 
 @node Displaying images, @acronym{MIME} type conversion, External display, @acronym{MIME} Messages
-@unnumberedsubsec Displaying inline images in messages
+@subsection Displaying inline images in messages
 
 @cindex images
 Most versions of Emacs can display images when used on graphical
@@ -2354,7 +2422,7 @@ turn off such conversion by setting the variable
 
 
 @node @acronym{MIME} type conversion, Character sets, Displaying images, @acronym{MIME} Messages
-@unnumberedsubsec @acronym{MIME} type conversion
+@subsection @acronym{MIME} type conversion
 
 @vindex vm-mime-type-converter-alist
 Types that cannot be displayed internally or externally are
@@ -2398,7 +2466,7 @@ Example:
 @noindent The first matching list element will be used.
 
 @node Character sets, multipart/alternative, @acronym{MIME} type conversion, @acronym{MIME} Messages
-@unnumberedsubsec @acronym{MIME} character sets
+@subsection @acronym{MIME} character sets
 
 For text type messages, @acronym{MIME} also requires that a character set
 be specified, so that the recipient's mail reader knows what
@@ -2533,7 +2601,7 @@ because all characters are displayed using fonts discovered by
 MULE and VM has no control over them.
 
 @node multipart/alternative, Inferring @acronym{MIME} types, Character sets, @acronym{MIME} Messages
-@unnumberedsubsec @acronym{MIME} multipart/alternative
+@subsection @acronym{MIME} multipart/alternative
 
 @cindex @acronym{MIME} alternatives
 @acronym{MIME} allows a message to be sent with its content encoded in multiple
@@ -2589,7 +2657,7 @@ include attachments that are not replicated in the other
 alternatives.  Please use caution.
 
 @node Inferring @acronym{MIME} types, , multipart/alternative, @acronym{MIME} Messages
-@unnumberedsubsec Inferring @acronym{MIME} types
+@subsection Inferring @acronym{MIME} types
 
 Some mailers incorrectly use the generic
 @samp{application/octet-stream} type when sending files that
@@ -5691,10 +5759,12 @@ and summary buffers.
 @item button-1 (left button usually)
 Unchanged.
 @cindex @acronym{URL}
+@vindex vm-url-browser
 @item button-2 (middle button usually)
 Activate.  If you click on a summary entry, that message will be
 selected and become the current message.  If you click on a
-highlighted @acronym{URL} in the body of a message, that @acronym{URL} will be sent
+highlighted @acronym{URL} in the body of a message, that @acronym{URL} will
+be sent 
 to the browser specified by @code{vm-url-browser}.
 @item button-3 (right button usually)
 Context Menu.  If the mouse pointer is over the contents of the
@@ -5709,12 +5779,13 @@ of Web browsers is produced.  Otherwise the normal VM mode
 specific menu is produced.
 @end table
 
-@cindex w3m
+@cindex Emacs-w3m
 @cindex @acronym{HTML}
+@vindex w3m-goto-article-function
 These button assignments work only in plain text messages.  For @acronym{HTML}
-messages, you might use an internal web browser such as w3m to display
+messages, you might use an internal web browser such as Emacs-w3m to display
 the content, which will have its own button assignments.  For instance,
-w3m binds button-2 to the browser function specified by the variable
+Emacs-w3m binds button-2 to the browser function specified by the variable
 @code{w3m-goto-article-function}.  You will need to set that variable to
 the desired browser function to get button-2 to work in @acronym{HTML} messages.
 
@@ -5727,15 +5798,16 @@ Context sensitive menus are produced when that button is clicked.
 @findex browse-url
 @cindex browse-url
 @cindex web browser
-VM provides a number of browser functions that you can set as the value
-of @code{vm-url-browser}.  An example is the function
-@code{vm-mouse-send-url-to-netscape}, which sends the @acronym{URL} at mouse to the
-Netscape browser.  Other browsers supported in this way include
-@code{mosaic}, @code{mmosaic}, @code{opera}, @code{mozilla},
-@code{firefox}, and @code{konqueror}, all of which have functions of the
-form @code{vm-mouse-send-url-to-xxx} and @code{vm-mouse-send-url-to-xxx-new-window}.  You can also set
-@code{vm-url-browser} to the Emacs function @code{browse-url}, and use
-the facilities defined in the @samp{browse-url} library to send URL's to
+VM provides a number of browser functions that you can set as the value of
+@code{vm-url-browser}.  An example is the function
+@code{vm-mouse-send-url-to-netscape}, which sends the @acronym{URL} at mouse
+to the Netscape browser.  Other browsers supported in this way include
+@code{mosaic}, @code{mmosaic}, @code{opera}, @code{mozilla}, @code{firefox},
+and @code{konqueror}, all of which have functions of the form
+@code{vm-mouse-send-url-to-xxx} and
+@code{vm-mouse-send-url-to-xxx-new-window}.  You can also set
+@code{vm-url-browser} to the Emacs function @code{browse-url}, and use the
+facilities defined in the @samp{browse-url} library to send URL's to
 external browsers.
 
 @node Hooks, Preface to Add-ons, Using the Mouse, Top

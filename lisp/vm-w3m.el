@@ -85,7 +85,7 @@ this variable to nil if you consider all urls to be safe."
   :type '(choice (regexp :tag "Regexp")
 		 (const :tag "All URLs are safe" nil)))
 
-(defcustom vm-w3m-use-w3m-minor-mode-map t
+(defcustom vm-w3m-use-w3m-minor-mode-map nil
   "Say whether to use emacs-w3m command keys in VM presentation buffers.
 Set this variable to nil if you don't want vm-w3m to override any VM
 commend keys.  If it is non-nil, you will not be able to use some VM

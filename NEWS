@@ -36,6 +36,10 @@ VM 8.2.0
    * Newly documented command `vm-fill-long-lines-in-reply' fills a message
      being composed, along with its included text.
 
+   * The variable `vm-w3m-use-w3m-minor-mode-map' is set to `nil' by default
+     so that VM key bindings will be functional inside HTML text (when
+     displayed using the Emacs-w3m browser).
+
 VM 8.2.0b  (2011-12-28)
 
   CHANGES
