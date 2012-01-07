@@ -177,4 +177,4 @@ unavailable, but the best functionality is obtained with them.
 
           (setq vm-mime-text/html-handler 'emacs-w3m)
 
-  Other than 'emacs-w3m, you can also use 'w3, 'w3m and 'lynx.
+  Other than 'emacs-w3m, you can also use 'emacs-w3, 'w3m and 'lynx.

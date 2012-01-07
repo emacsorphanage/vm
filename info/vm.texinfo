@@ -7733,36 +7733,40 @@ needed.
 @inindex coding system
 A Coding System is a way of encoding characters as bit patterns.
 @pxref{Coding System Basics,, Coding System Basics, elisp, Emacs Lisp
-manual}.  US-ASCII is a coding system for English.  Other coding
-systems are used to encode the various languages of the world, e.g.,
-@code{iso-latin-1} for Western European languages, and
-@code{hebrew-iso-8bit} for Hebrew.  Emacs also uses its own internal
-coding system for characters, which can encode all character sets
-currently in existence.  But the internal coding system can vary between
-different versions of Emacs.
+manual}.  US-ASCII is a coding system for English.  Other coding systems are
+used to encode the various languages of the world, e.g., @samp{iso-latin-1}
+(also called @samp{iso-8859-1} or simply @samp{latin-1}) for Western
+European languages, and @code{hebrew-iso-8bit} (also called
+@samp{iso-8858-8}) for Hebrew.  In addition to these standard coding
+systems, Emacs uses its own internal coding system for characters, which can
+encode all character sets currently in existence.  But the internal coding
+system can vary between different versions of Emacs.
 
+@inindex Content-Type
+@inindex decode-coding-region
+@inindex encode-coding-region
 @inindex mime-charset
 @inindex coding-system-get
 @inindex charset
 @inindex vm-mime-mule-coding-to-charset-alist
 @inindex vm-mime-mule-charset-to-coding-alist
-Emacs defines a property called @code{mime-charset} for each
-implemented coding system, which is the official preferred name of the
-@acronym{MIME} character set that it corresponds to.  For example,
-@code{iso-latin-1} corresponds to the @acronym{MIME} charset @code{iso-8859-1},
-and @code{hebrew-iso-8bit} corresponds to the @acronym{MIME} charset
-@code{iso-8859-8}.  The Emacs function @code{coding-system-get} can be
-used to extract the @code{mime-charset} property of a coding system.
-VM stores all the known coding systems and the corresponding @acronym{MIME}
+@acronym{MIME} messages specify the @dfn{character set} that their content
+is in, in the @samp{Content-Type} header.  In reality, the ``character set''
+is a reference to a coding system, which has been used to encode the the
+characters in the particular character set as bit patterns.  However, the
+name that Emacs uses to refer to a coding system is often different from the
+MIME character set name.  The correspondence between the two is defined via
+a property called @code{mime-charset} for each implemented coding system
+inside Emacs.  For example, the @code{mime-charset} property of
+@samp{iso-latin-1} is @samp{iso-8859-1}, that of @samp{hebrew-iso-8bit} is
+@samp{iso-8859-8}.  The Emacs function @code{coding-system-get} can be used
+to extract the @code{mime-charset} property of an Emacs coding system.  VM
+stores all the known coding systems and the corresponding @acronym{MIME}
 charsets in its internal variables
 @code{vm-mime-mule-coding-to-charset-alist} and
 @code{vm-mime-mule-charset-to-coding-alist}.
 
-@inindex Content-Type
-@inindex decode-coding-region
-@inindex encode-coding-region
-@acronym{MIME} messages specify the character set that their content is in,
-in the Content-Type header.  VM uses this information to decode the content
+VM uses this information to decode the content
 to the Emacs internal coding system.  This is done using the function
 @code{decode-coding-region}.  Conversely, VM encodes the outgoing messages
 into the default or chosen @acronym{MIME} character set using the function

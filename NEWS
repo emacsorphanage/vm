@@ -40,6 +40,9 @@ VM 8.2.0
      so that VM key bindings will be functional inside HTML text (when
      displayed using the Emacs-w3m browser).
 
+   * The variable `vm-mutable-frames' has a new name to convey its sense
+     better: `vm-mutable-frame-configuration'.  The old name still works.
+
 VM 8.2.0b  (2011-12-28)
 
   CHANGES

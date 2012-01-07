@@ -2083,7 +2083,7 @@ that recipient is outside of East Asia."
             (cond ((locate-library "w3m")
                    'emacs-w3m)
                   ((locate-library "w3")
-                   'w3)
+                   'emacs-w3)
                   ((executable-find "w3m")
                    'w3m)
                   ((executable-find "lynx")

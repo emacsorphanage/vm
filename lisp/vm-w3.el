@@ -66,7 +66,7 @@
     (vm-w3-cid-retrieve (ad-get-arg 0))))
 
 ;;;###autoload
-(defun vm-mime-display-internal-w3-text/html (start end layout)
+(defun vm-mime-display-internal-emacs-w3-text/html (start end layout)
   (setq vm-w3-text/html-message (vm-mm-layout-message layout))
   (let nil;((vm-w3-text/html-message (vm-mm-layout-message layout)))
     (w3-region start (1- end)))

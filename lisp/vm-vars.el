@@ -1709,9 +1709,9 @@ and when you read an email."
 (defcustom vm-mime-default-face-charsets
   (if vm-fsfemacs-mule-p
       (if (eq window-system nil)
-          '("us-ascii" "iso-8859-1")
-        '("us-ascii"))
-    '("us-ascii" "iso-8859-1"))
+          '("us-ascii" "ansi_x3.4-1968" "iso-8859-1")
+        '("us-ascii" "ansi_x3.4-1968"))
+    '("us-ascii" "ansi_x3.4-1968" "iso-8859-1"))
   "*List of character sets that can be displayed using the `default' face.
 The default face is what you normally see when you edit text in Emacs.
 The font assigned to the default face can typically display one or two
@@ -1720,7 +1720,7 @@ one of the ISO-8859 character sets usually can be displayed.  Whatever
 character sets that your default face can display should be listed as
 the value of `vm-mime-default-face-charsets'.  Example:
 
- (setq vm-mime-default-face-charsets '(\"us-ascii\" \"iso-8859-1\"))
+ (setq vm-mime-default-face-charsets '(\"us-ascii\" \"ansi_x3.4-1968\" \"iso-8859-1\"))
 
 Case is not significant in character set names.
 
