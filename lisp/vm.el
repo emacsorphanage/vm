@@ -1209,7 +1209,7 @@ summary buffer to select a folder."
 			send-actions return-action &rest ignored)
   (interactive)
   (vm-session-initialization)
-  ;; (require 'vm-reply)
+  (require 'vm-reply)
   (if continue
       (vm-continue-composing-message)
     (let ((buffer (vm-mail-internal
@@ -1259,7 +1259,7 @@ summary buffer to select a folder."
   (interactive)
   (require 'reporter)
   (vm-session-initialization)
-  ;; (require 'vm-reply)
+  (require 'vm-reply)
   ;; Use VM to send the bug report.  Could be trouble if vm-mail
   ;; is what the user wants to complain about.  But most of the
   ;; time we'll be fine and users like to use MIME to attach

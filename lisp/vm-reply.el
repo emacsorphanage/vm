@@ -114,7 +114,6 @@
   (while (re-search-forward "^" (point-max) t)
     (insert vm-included-text-prefix)))
 
-;;;###autoload
 (defun vm-fill-long-lines-in-reply ()
   "Fill lines in the message composition in the current buffer,
 provided it has lines longer than the line length specified by
@@ -303,7 +302,6 @@ messages of the folder are involved in this reply."
 	    (setq re-list (cdr re-list))))
 	result)))
 
-;;;###autoload
 (defun vm-mail-yank-default (&optional message)
   "The default message yank handler when `mail-citation-hook' is set to nil."
   (save-excursion
@@ -327,7 +325,6 @@ messages of the folder are involved in this reply."
 	(insert vm-included-text-prefix)
 	(forward-line 1)))))
 
-;;;###autoload
 (defun vm-yank-message-other-folder (folder)
   "Like vm-yank-message except the message is yanked from a folder other
 than the one that spawned the current Mail mode buffer.  The name of the
@@ -374,7 +371,6 @@ Don't call this function from a program."
       (vm-bury-buffer newbuf)
       (vm-bury-buffer sumbuf))))
 
-;;;###autoload
 (defun vm-yank-message (message)
   "Yank message number N into the current buffer at point.
 When called interactively N is always read from the minibuffer.  When
@@ -635,7 +631,6 @@ specified by `vm-included-text-headers' and
 	       (setq alternatives (1- alternatives))
 	       (setq parts (cdr parts))))))))
 
-;;;###autoload
 (defun vm-mail-send-and-exit (&rest ignored)
   "Send message and maybe delete the composition buffer.
 The value of `vm-keep-sent-mesages' determines whether the composition buffer
@@ -811,7 +806,6 @@ This function is a variant of `vm-get-header-contents'."
 
 (defvar coding-system-for-write)
 
-;;;###autoload
 (defun vm-mail-send ()
   "Just like mail-send except that VM flags the appropriate message(s)
 as replied to, forwarded, etc, if appropriate."
@@ -896,7 +890,6 @@ as replied to, forwarded, etc, if appropriate."
       (vm-keep-mail-buffer (current-buffer)))
     (vm-display nil nil '(vm-mail-send) '(vm-mail-send))))
 
-;;;###autoload
 (defun vm-do-fcc-before-mime-encode ()
   "The name says it all.
 Sometimes you may want to save a message unencoded, specifically not to waste
@@ -931,7 +924,6 @@ storage for attachments which are stored on disk anyway."
 	      (vm-matched-header-contents)
 	    nil ))))))
 
-;;;###autoload
 (defun vm-mail-mode-remove-header (header-name-regexp)
   (let (regexp)
     (setq regexp (concat "^\\(" header-name-regexp "\\)\\|\\(^"
@@ -1651,7 +1643,6 @@ buffers.")
   (add-hook 'vm-mail-send-hook 'vm-forget-composition-buffer nil t)
   (vm-update-ml-composition-buffer-count))
 
-;;;###autoload
 (defun vm-select-recipient-from-sender ()
   "Select a recipient's address from the current message's sender, if
 there is a current message."
@@ -1662,7 +1653,6 @@ there is a current message."
     (vm-get-header-contents (car vm-message-pointer) "From:")))
 
 
-;;;###autoload
 (defun* vm-mail-internal (&key buffer-name to guessed-to subject 
 			       in-reply-to cc references newsgroups)
     "Create a message buffer and set it up according to args.
