@@ -1,4 +1,3 @@
-
 ;;; vm-vars.el --- VM user and internal variable initialization
 ;;
 ;; This file is part of VM

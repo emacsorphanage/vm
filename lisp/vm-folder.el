@@ -545,10 +545,12 @@ Toolbars are updated."
 		    (equal (vm-message-id-number-of m) "Q"))
 	  (vm-update-message-summary (car ms)))
 	(if (eq (mod n 10) 0)
-	    (vm-inform 6 "%s: Recreating summary... %s" (buffer-name) n))
+	    (vm-inform 6 "%s: Recreating summary... %s" 
+		       (buffer-name vm-mail-buffer) n))
 	(setq n (1+ n))
 	(setq ms (cdr ms)))
-      (vm-inform 6 "%s: Recreating summary... done" (buffer-name))
+      (vm-inform 6 "%s: Recreating summary... done" 
+		 (buffer-name vm-mail-buffer))
       (setq vm-messages-needing-summary-update nil)))
   (vm-do-needed-folders-summary-update)
   (vm-force-mode-line-update))

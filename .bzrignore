@@ -1,5 +1,6 @@
 *.elc
 TAGS
+configure.lineno
 ChangeLog
 base64-decode
 base64-encode

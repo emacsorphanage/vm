@@ -4325,7 +4325,7 @@ documentation for `vm-spool-files'."
 		 (memq (process-status process) '(open run)))
 	(vm-imap-end-session process))
       )))
-(defalias 'vm-imap-rename-imap-folder 'vm-rename-imap-folder)
+(defalias 'vm-imap-rename-folder 'vm-rename-imap-folder)
 
 ;;;###autoload
 (defun vm-list-imap-folders (account &optional filter-new)
