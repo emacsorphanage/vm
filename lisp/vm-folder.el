@@ -1957,7 +1957,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
   (and (or (not (equal vis vm-visible-headers))
 	   (not (equal invis vm-invisible-header-regexp)))
        (let ((mp vm-message-list))
-	 (vm-inform 6 "Discarding visible header info...")
+	 (vm-inform 6 "%s: Discarding visible header info..." (buffer-name))
 	 (while mp
 	   (vm-set-vheaders-regexp-of (car mp) nil)
 	   (vm-set-vheaders-of (car mp) nil)
@@ -3623,6 +3623,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
   (interactive "P")
   (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-virtual-folder)
+  ;; FIXME Why not basic-save-buffer?
   (save-buffer prefix)
   (intern (buffer-name) vm-buffers-needing-display-update)
   (setq vm-block-new-mail nil)
@@ -3758,6 +3759,7 @@ folder."
 		(progn
 		  (and oldmodebits (set-default-file-modes
 				    vm-default-folder-permission-bits))
+		  ;; FIXME Why not basic-save-buffer?
 		  (save-buffer prefix))
 	      (and oldmodebits (set-default-file-modes oldmodebits))))
 	  (vm-unmark-folder-modified-p (current-buffer)) ; folder buffer
@@ -3807,11 +3809,11 @@ folder."
 ;;;###autoload
 (defun vm-save-and-expunge-folder (&optional prefix)
   "Expunge folder, then save it to disk.
-Prefix arg is handled the same as for the command save-buffer.
+Prefix arg is handled the same as for the command `save-buffer'.
 Expunge won't be done if folder is read-only.
 
 When applied to a virtual folder, this command works as if you had
-run vm-expunge-folder followed by vm-save-folder."
+run `vm-expunge-folder' followed by `vm-save-folder'."
   (interactive (list current-prefix-arg))
   (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-display nil nil '(vm-save-and-expunge-folder)

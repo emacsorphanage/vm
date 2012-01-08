@@ -4022,7 +4022,39 @@ a regular expression that matches all strings at the beginning of
 a subject that you do not want to be considered when message
 subjects are compared.  A @code{nil} value means VM should not ignore
 any prefixes.  The analogous variable for subject suffixes is
-@code{vm-subject-ignored-suffix}.
+@code{vm-subject-ignored-suffix}.  By default,
+@code{vm-subject-ignored-prefix} is set to remove the prefix ``Re:'', which
+is often added in replying to messages.  The default value of
+@code{vm-subject-ignored-suffix} is set to remove the suffix ``(fwd)'',
+which is sometimes added when messages are forwarded.
+
+@cindex subject tags
+@vindex vm-subject-tag-prefix
+In addition to these uninteresting prefixes/suffixes, you also have the
+option of removing @dfn{subject tags} that are added by mailing lists when
+forwarding messages to members.  For example, the @samp{viewmail-info}
+mailing list adds the subject tag ``[VM]'' at the beginning of each subject
+line.  Bug report handling systems often add tags indicating reference
+numbers, e.g., a tag of the form ``bug#nnnn'' added by the
+Gnu Emacs bug reports system.  To remove such subject tags, set the variable
+@code{vm-subject-tag-prefix} to a regular expression that matches all
+subject tags you want removed.  For example, the setting
+
+@example
+(setq vm-subject-tag-prefix "\\[[^]][ \n\t]*")
+@end example
+
+@noindent asks VM to strip all subject tags enclosed in square brackets
+(along with the white space following them).  The default value of
+@code{vm-subject-tag-prefix} is nil.
+
+@ignore -- to be uncommented when it is in
+@vindex vm-summary-strip-subject-tags
+In addition to ignoring subject tags during sorting, you can also ask VM to
+remove subject tags from the the summary lines in the Summary buffer.
+The variable @code{vm-summary-strip-subject-tags} should be set to a non-nil
+value to achieve this effect.
+@end ignore
 
 @vindex vm-subject-significant-chars
 Once the subject has been normalized, the variable

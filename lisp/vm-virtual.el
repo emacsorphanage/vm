@@ -477,7 +477,7 @@ Prefix arg means the new virtual folder should be visited read only."
 	 (this-command this-command)
 	 (prefix current-prefix-arg))
      (vm-select-folder-buffer)
-     (list (read-string "Virtual folder of author/recipient: ")
+     (list (read-string "Virtual folder of author: ")
 	   prefix)))
   (vm-create-virtual-folder 'author arg read-only name))
 

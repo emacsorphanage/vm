@@ -188,10 +188,12 @@ thread have their cached data discarded."
 	(vm-set-text-of m nil)
 	(vm-set-mime-layout-of m nil)
 	(vm-set-mime-encoded-header-flag-of m nil)
+	;; FIXME It is slow to do this repeatedly, once for each
+	;; message.  Need to do it in bulk.  USR, 2012-03-08
 	(if (vectorp vm-thread-obarray)
 	    (vm-build-threads (list m)))
-	(if vm-thread-debug
-	    (vm-check-thread-integrity))
+	;; (if vm-thread-debug
+	;;     (vm-check-thread-integrity))
 	(if vm-summary-show-threads
 	    (intern (buffer-name) buffers-needing-thread-sort))
 	(dolist (v-m (vm-virtual-messages-of m))
@@ -213,6 +215,8 @@ thread have their cached data discarded."
 		 (eq (car vm-message-pointer) m))
 	    (save-excursion (vm-present-current-message)))
 	(setq mlist (cdr mlist))))
+    (if vm-thread-debug
+        (vm-check-thread-integrity))
     (save-excursion
       (mapatoms (function (lambda (s)
 			    (set-buffer (get-buffer (symbol-name s)))
