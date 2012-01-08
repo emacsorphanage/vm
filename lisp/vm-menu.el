@@ -1464,7 +1464,7 @@ separate dedicated menu bar, depending on the value of
                (file-exists-p (expand-file-name "NEWS" doc-dir)))
           (setq doc-dirs nil)
 	(setq doc-dirs (cdr doc-dirs))))
-    (view-file-other-frame (expand-file-name "NEWS" doc-dir))))
+    (vm-view-file-other-frame (expand-file-name "NEWS" doc-dir))))
 
 (defun vm-view-manual ()
   "View the VM manual."

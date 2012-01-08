@@ -171,6 +171,8 @@ auto-autoloads.el: $(SOURCES:%=@srcdir@/%)
 	echo "(require 'vm-vars)" >> $@
 	echo "(setq vm-configure-datadir \"${etcdir}\")" >> $@
 	echo "(setq vm-configure-pixmapdir \"${pixmapdir}\")" >> $@
+	echo "(setq vm-configure-docdir \"${docdir}\")"  >> $@
+	echo "(setq vm-configure-infodir \"${infodir}\")" >> $@
 	$(RM) $@.tmp
 
 

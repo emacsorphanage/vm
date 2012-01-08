@@ -2188,12 +2188,20 @@ triple (source-type target-type command).  Otherwise, return nil."
 	  ;; time.  JCB, 2011-02-04
 	  (let ((coding-system-for-write (vm-binary-coding-system))
 		(coding-system-for-read (vm-binary-coding-system)))
-	    (setq ex (call-process-region 
-		      (point-min) (point-max) shell-file-name
-		      t t nil shell-command-switch (nth 2 ooo)))))
+	    (condition-case data
+		(setq ex (call-process-region 
+			  (point-min) (point-max) shell-file-name
+			  t t nil shell-command-switch (nth 2 ooo)))
+	      (error
+	       ;; FIXME give a decent error message here
+	       (vm-warn 0 2
+			"Converstion from %s to %s failed: %S" 
+			(car (vm-mm-layout-type layout)) (nth 1 ooo)
+			data)
+	       (throw 'done nil)))))
 	(unless (eq ex 0)
 	  (switch-to-buffer work-buffer)
-	  (vm-warn 0 5 
+	  (vm-warn 0 2
 		   "Conversion from %s to %s failed (exit code %s)"
 		   (car (vm-mm-layout-type layout)) (nth 1 ooo) ex)
 	  (throw 'done nil))
@@ -2246,7 +2254,10 @@ triple (source-type target-type command).  Otherwise, return nil."
 (defun vm-mime-find-charset-for-binary-buffer ()
   "Finds an appropriate MIME character set for the current buffer,
 assuming that it is text."
-  (let ((coding-systems (detect-coding-region (point-min) (point-max)))
+  (let ((coding-systems
+	 (condition-case err
+	     (detect-coding-region (point-min) (point-max))
+	   (error nil)))
 	(coding-system nil) (n nil))
     ;; XEmacs returns a single coding-system sometimes
     (unless (listp coding-systems)
@@ -2851,11 +2862,12 @@ is not successful.                                   USR, 2011-03-25"
 			vm-mime-text/html-handler
 			(error-message-string error-data)))
 	       (vm-warn 0 2 "%s: %s" 
-			(buffer-name) (vm-mm-layout-display-error layout))
+			(buffer-name vm-mail-buffer)
+			(vm-mm-layout-display-error layout))
 	       nil))
     ;; no handler
     (vm-warn 0 2 "%s: No handler available for internal display of text/html"
-	     (buffer-name))
+	     (buffer-name vm-mail-buffer))
     nil))
   
 

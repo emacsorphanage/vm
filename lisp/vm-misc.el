@@ -42,6 +42,8 @@
 (declare-function emacs-get-buffer-window "vm-misc.el"
 		  (&optional buffer-or-name frame devices))
 
+(declare-function vm-view-file-other-frame "vm-misc.el"
+		  (file))
 (declare-function vm-interactive-p "vm-misc.el"
 		  ())
 (declare-function vm-device-type "vm-misc.el"
@@ -570,6 +572,11 @@ PRED and return the position"
 	    (setq list (cdr list))
 	  (throw 'fail nil)))
       t)))
+
+(fset 'vm-view-file-other-frame
+      (if (fboundp 'view-file-other-frame)
+	  'view-file-other-frame
+	'view-file-other-window))
 
 (fset 'vm-interactive-p
       (if (fboundp 'interactive-p)	; Xemacs or Gnu Emacs under obsolescence
