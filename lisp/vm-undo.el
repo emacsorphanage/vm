@@ -681,7 +681,7 @@ A record of the change is kept for the purpose of undo, and the
 ;; others of its kind for maintenance purposes.
 (defun vm-set-deleted-flag-in-vector (v flag)
   (aset v 2 flag))
-;; ditto.  this is for vm-read-attributes.
+;; ditto.  this is for vm-read-VM-data.
 (defun vm-set-new-flag-in-vector (v flag)
   (aset v 0 flag))
 

@@ -419,8 +419,8 @@ ignored."
 ;;;###autoload
 (defun vm-next-message-same-subject ()
   "Move forward to the nearest message with the same subject.
-vm-subject-ignored-prefix and vm-subject-ignored-suffix will apply
-to the subject comparisons."
+`vm-subject-ignored-prefix', `vm-subject-ignored-suffix' and
+`vm-subject-tag-prefix' will apply to the subject comparisons."
   (interactive)
   (if (vm-interactive-p)
       (vm-follow-summary-cursor))
@@ -448,8 +448,8 @@ to the subject comparisons."
 ;;;###autoload
 (defun vm-previous-message-same-subject ()
   "Move backward to the nearest message with the same subject.
-vm-subject-ignored-prefix and vm-subject-ignored-suffix will apply
-to the subject comparisons."
+`vm-subject-ignored-prefix', `vm-subject-ignored-suffix' and
+`vm-subject-tag-prefix' will apply to the subject comparisons."
   (interactive)
   (if (vm-interactive-p)
       (vm-follow-summary-cursor))

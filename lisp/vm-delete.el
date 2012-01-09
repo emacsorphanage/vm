@@ -202,10 +202,10 @@ messages in the thread are flagged/unflagged."
 (defun vm-kill-subject (&optional arg)
 "Delete all messages with the same subject as the current message.
 Message subjects are compared after ignoring parts matched by
-the variables vm-subject-ignored-prefix and vm-subject-ignored-suffix.
+the variables `vm-subject-ignored-prefix' and `vm-subject-ignored-suffix'.
 
 The optional prefix argument ARG specifies the direction to move
-if vm-move-after-killing is non-nil.  The default direction is
+if `vm-move-after-killing' is non-nil.  The default direction is
 forward.  A positive prefix argument means move forward, a
 negative arugment means move backward, a zero argument means
 don't move at all."

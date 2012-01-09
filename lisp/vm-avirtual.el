@@ -424,6 +424,7 @@ I was really missing this!"
                  (not (looking-at "\n"))))
           (insert "\n"))
       (insert word)
+      ;; FIXME Why not basic-save-buffer?
       (save-buffer)
       (setq vm-spam-words (cons word vm-spam-words))
       (setq vm-spam-words-regexp (regexp-opt vm-spam-words)))))
@@ -533,22 +534,7 @@ I was really missing this!"
   (let ((case-fold-search t)
         (subject (vm-mail-mode-get-header-contents "Subject:")))
     (when subject
-      (if (and vm-subject-ignored-prefix
-               (string-match vm-subject-ignored-prefix subject)
-               (zerop (match-beginning 0)))
-          (setq subject (substring subject (match-end 0))))
-      (if (and vm-subject-ignored-suffix
-               (string-match vm-subject-ignored-suffix subject)
-               (= (match-end 0) (length subject)))
-          (setq subject (substring subject 0 (match-beginning 0))))
-      (setq subject (vm-with-string-as-temp-buffer
-                     subject
-                     (function vm-collapse-whitespace)))
-      (if (and vm-subject-significant-chars
-               (natnump vm-subject-significant-chars)
-               (< vm-subject-significant-chars (length subject)))
-          (setq subject
-                (substring subject 0 vm-subject-significant-chars)))
+      (setq subject (vm-so-trim-subject subject))
       (string-match arg subject))))
 
 (defun vm-mail-vs-header (arg)

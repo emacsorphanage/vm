@@ -3952,6 +3952,32 @@ Matches are done case-insensitively."
   :group 'vm-summary
   :type 'regexp)
 
+(defcustom vm-subject-tag-prefix nil
+  "*Non-nil value should be a regular expression that matches the
+\"subject tags\" included in subject lines by mailing lists.
+Subject tags are always enclosed in square brackets.  This
+regular expression should not include square brackets because it
+is only applied to the actual tags used inside the square
+brackets.
+
+Subject tags matching the regular expression will be ignored when
+threading, sorting, marking and killing messages by subject.  They are
+also removed from message summary lines if
+`vm-summary-strip-subject-tags' is set to `t'.
+
+Matches are done case-insensitively."
+  :group 'vm-summary
+  :type 'regexp)
+
+(defcustom vm-summary-strip-subject-tags nil
+  "*Set this to a non-nil value to ask VM to strip \"subject tags\" added
+by mailing lists when displaying subjects in summary lines.
+
+The subject tags that will be stripped are those matching
+`vm-subject-tag-prefix'."
+  :group 'vm-summary
+  :type 'boolean)
+
 (defcustom vm-subject-significant-chars nil
   "*Number of characters in the normalized message subject considered
 significant in message threading and sorting.  The normalized

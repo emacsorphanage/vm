@@ -255,31 +255,43 @@ non-nil, then the \"Delivery-Date\" header is used instead of the
 (defun vm-so-sortable-subject (m)
   "Returns the subject string of M, after stripping redundant prefixes
 and suffixes, which is suitable for sorting by subject.  The string is
-MIME-decoded with possible properties."
+MIME-decoded with possible text properties."
   (or (vm-sortable-subject-of m)
       (progn
-	(vm-set-sortable-subject-of
-	 m
-	 (let ((case-fold-search t)
-	       (subject (vm-su-subject m)))
-	   (if (and vm-subject-ignored-prefix
+	(vm-set-sortable-subject-of m (vm-so-trim-subject (vm-su-subject m)))
+	(vm-sortable-subject-of m))))
+
+(defun vm-so-trim-subject (subject)
+  "Given SUBJECT string (which should be MIME-decoded with
+possible text properties), returns a modified string after
+stripping redundant prefixes and suffixes as suitable for sorting
+by subject."
+  (let ((case-fold-search t))
+    (catch 'done
+      (while t
+	(cond ((and vm-subject-ignored-prefix
 		    (string-match vm-subject-ignored-prefix subject)
 		    (zerop (match-beginning 0)))
 	       (setq subject (substring subject (match-end 0))))
-	   (if (and vm-subject-ignored-suffix
-		    (string-match vm-subject-ignored-suffix subject)
-		    (= (match-end 0) (length subject)))
-	       (setq subject (substring subject 0 (match-beginning 0))))
-	   (setq subject (vm-with-string-as-temp-buffer
-			  subject
-			  (function vm-collapse-whitespace)))
-	   (if (and vm-subject-significant-chars
-		    (natnump vm-subject-significant-chars)
-		    (< vm-subject-significant-chars (length subject)))
-	       (setq subject
-		     (substring subject 0 vm-subject-significant-chars)))
-	   subject ))
-	(vm-sortable-subject-of m))))
+	      ((and vm-subject-tag-prefix
+		    (string-match vm-subject-tag-prefix subject)
+		    (zerop (match-beginning 0)))
+	       (setq subject (substring subject (match-end 0))))
+	      (t
+	       (throw 'done nil)))))
+    (setq subject (vm-with-string-as-temp-buffer
+		   subject
+		   (function vm-collapse-whitespace)))
+    (if (and vm-subject-ignored-suffix
+	     (string-match vm-subject-ignored-suffix subject)
+	     (= (match-end 0) (length subject)))
+	(setq subject (substring subject 0 (match-beginning 0))))
+    (if (and vm-subject-significant-chars
+	     (natnump vm-subject-significant-chars)
+	     (< vm-subject-significant-chars (length subject)))
+	(setq subject
+	      (substring subject 0 vm-subject-significant-chars)))
+    subject ))
 
 (defvar vm-sort-compare-header nil
   "the header to sort on.")

@@ -24,6 +24,15 @@ Status
   unreliable mail link to the mailing list.  You can however browse the
   archives of the newsgroup at Google Groups.
   
+VM 8.2.1
+
+  IMPROVEMENTS
+
+   * New variable `vm-subject-tag-prefix' allows the subject tags added by
+     mailing lists to be ignored during sorting etc. (similar to
+     `vm-subject-ignored-prefix').  Another variable
+     `vm-summary-strip-subject-tags' removes them from summary lines as well.
+
 VM 8.2.0
 
   CHANGES

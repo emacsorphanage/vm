@@ -4022,7 +4022,37 @@ a regular expression that matches all strings at the beginning of
 a subject that you do not want to be considered when message
 subjects are compared.  A @code{nil} value means VM should not ignore
 any prefixes.  The analogous variable for subject suffixes is
-@code{vm-subject-ignored-suffix}.
+@code{vm-subject-ignored-suffix}.  By default,
+@code{vm-subject-ignored-prefix} is set to remove the prefix ``Re:'', which
+is often added in replying to messages.  The default value of
+@code{vm-subject-ignored-suffix} is set to remove the suffix ``(fwd)'',
+which is sometimes added when messages are forwarded.
+
+@cindex subject tags
+@vindex vm-subject-tag-prefix
+In addition to these uninteresting prefixes/suffixes, you also have the
+option of removing @dfn{subject tags} that are added by mailing lists when
+forwarding messages to members.  For example, the @samp{viewmail-info}
+mailing list adds the subject tag ``[VM]'' at the beginning of each subject
+line.  Bug report handling systems often add tags indicating reference
+numbers, e.g., a tag of the form ``bug#nnnn'' added by the
+Gnu Emacs bug reports system.  To remove such subject tags, set the variable
+@code{vm-subject-tag-prefix} to a regular expression that matches all
+subject tags you want removed.  For example, the setting
+
+@example
+(setq vm-subject-tag-prefix "\\[[^]][ \n\t]*")
+@end example
+
+@noindent asks VM to strip all subject tags enclosed in square brackets
+(along with the white space following them).  The default value of
+@code{vm-subject-tag-prefix} is nil.
+
+@vindex vm-summary-strip-subject-tags
+In addition to ignoring subject tags during sorting, you can also ask VM to
+remove subject tags from the the summary lines in the Summary buffer.
+The variable @code{vm-summary-strip-subject-tags} should be set to a non-nil
+value to achieve this effect.
 
 @vindex vm-subject-significant-chars
 Once the subject has been normalized, the variable
@@ -6878,19 +6908,19 @@ sub-vectors:
 
 @itemize
 @item
-Location data.  This data about the location of the various parts of the
+Location data (0).  This data about the location of the various parts of the
 message in the Folder buffer is calculated after a folder is loaded and
 parsed.
 @item
-Soft data.  This vector contains other calculated data about the
+Soft data (1).  This vector contains other calculated data about the
 message that is specific to a VM session.
 @item
-Attributes.  All the hard-wired message attributes are stored in this
+Attributes (2).  All the hard-wired message attributes are stored in this
 vector.
 @item
-Cached Data.  Calculated data that is cached for each message.
+Cached Data (3).  Calculated data that is cached for each message.
 @item
-Mirror Data.  Extra data shared by virtual messages if vm-virtual-mirror
+Mirror Data (4).  Extra data shared by virtual messages if vm-virtual-mirror
 is non-nil.
 @end itemize
 
@@ -6911,29 +6941,29 @@ not actually required.  (See below.)
 @inindex start
 @itemize
 @item
-@code{start}.  Marker for the starting position of the message, at which a
+@code{start} (0).  Marker for the starting position of the message, at which a
 leading separator line begins.
 @inindex headers
 @item
-@code{headers}. Marker for the position in the buffer where the headers
+@code{headers} (1). Marker for the position in the buffer where the headers
 of the message start.
 @inindex vheaders
 @item
-@code{vheaders}.  Marker for the position in the buffer where the
+@code{vheaders} (2).  Marker for the position in the buffer where the
 visible headers of the message start.  (The headers are rearranged in
 such a way that all the visible headers are towards the end of the
 headers region.)
 @inindex text
 @item
-@code{text}. Marker for the position in the buffer where the text of the
+@code{text} (3). Marker for the position in the buffer where the text of the
 message starts.
 @inindex text-end
 @item
-@code{text-end}. Marker for the position in the buffer where the text of
+@code{text-end} (4). Marker for the position in the buffer where the text of
 the message ends.
 @inindex end
 @item
-@code{end}. Marker for the position in the buffer where the message
+@code{end} (5). Marker for the position in the buffer where the message
 ends.
 @end itemize
 
@@ -6953,25 +6983,25 @@ specific to a VM session.
 @inindex number
 @itemize
 @item
-@code{number}. The message number as an integer.
+@code{number} (0). The message number as an integer.
 @inindex padded-number
 @item
-@code{padded-number}. The message number as a padded string.
+@code{padded-number} (1). The message number as a padded string.
 @inindex mark
 @item
-@code{mark}. Flag that indicates if the message has been marked (via
+@code{mark} (2). Flag that indicates if the message has been marked (via
 @code{vm-mark-message}).
 @inindex su-start
 @item
-@code{su-start}. The position in the Summary buffer where the summary line of
-the message starts.
+@code{su-start} (3). The position in the Summary buffer where the summary
+line of the message starts.
 @inindex su-end
 @item
-@code{su-end}.  The position in the Summary buffer where the summary line of
+@code{su-end} (4).  The position in the Summary buffer where the summary line of
 the message ends.
 @inindex real-message-sym
 @item
-@code{real-message-sym}.  If the message is in a virtual folder, then its
+@code{real-message-sym} (5).  If the message is in a virtual folder, then its
 corresponding ``real message'' is the underlying message in another
 folder which is described by a message data structure similar to the
 current one.  The real message data structures are represented by
@@ -6982,68 +7012,75 @@ The use of symbols for this purpose avoids the possibility of circular
 data structures.
 @inindex mirrored-message-sym
 @item
-@code{mirrored-message-sym}.  This is similar to the
-@code{real-message-sym}, except that it points to the message directly
-mirrored by the current virtual folder message.
+@code{mirrored-message-sym} (21).  This is similar to the
+@code{real-message-sym}, except that it points to the message that this
+message directly mirrors (as a virtual message).  If we follow the
+``mirrored-message'' links in succession we should eventually reach the
+``real-message''.
 @inindex reverse-link-sym
 @item
-@code{reverse-link-sym}.  Reference to the previous message in the message list,
-also represented by an uninterned symbol written as ``<--''.
+@code{reverse-link-sym} (6).  Reference to the previous message in the
+message list, also represented by an uninterned symbol written as ``<--''.
 @inindex message-type
 @item
-@code{message-type}.  A symbol indicating the type of the message according to
-its folder type, one of @code{BellFrom_}, @code{From_} and
+@code{message-type} (7).  A symbol indicating the type of the message
+according to its folder type, one of @code{BellFrom_}, @code{From_} and
 @code{From_-with-Content-Length}.
 @inindex message-id-number
 @item
-@code{message-id-number}.  A number that uniquely identifies the message
+@code{message-id-number} (8).  A number that uniquely identifies the message 
 within a VM session.
 @inindex buffer
 @item
-@code{buffer}. The Folder buffer of the message.  (Messages in Presentation
+@code{buffer} (9). The Folder buffer of the message.  (Messages in Presentation
 buffers also have this field set to the corresponding Folder buffer.)
 @inindex thread-indentation
 @item
-@code{thread-indentation}. Indentation level of the message in its message
+@code{thread-indentation} (10). Indentation level of the message in its message
 thread.
+@inindex thread-indentation-offset
+@item
+@code{thread-indentation-offset} (22). Indentation added by the user for the
+message, which is used in addition to the @code{thread-indentation}.  This
+is not ``cached'' data and should not be discarded.
 @inindex thread-list
 @item
-@code{thread-list}.  List of symbols from @code{vm-thread-obarray} that give
-this message's lineage.
+@code{thread-list} (11).  List of symbols from @code{vm-thread-obarray} that
+give this message's lineage.
 @inindex thread-subtree
 @item
-@code{thread-subtree}.  List of messages that form the subtree under
+@code{thread-subtree} (20).  List of messages that form the subtree under
 this message in a threaded summary display.
 @inindex babyl-frob-flag
 @item
-@code{babyl-frob-flag}.
+@code{babyl-frob-flag} (12).
 @inindex saved-virtual-attributes
 @item
-saved-virtual-attributes.  Saved attributes if the message switched from
-unmirrored to mirrored.
+@code{saved-virtual-attributes} (13).  Saved attributes if the message
+switched from unmirrored to mirrored.
 @inindex saved-virtual-mirror-data
 @item
-@code{saved-virtual-mirror-data}.  Saved mirror data, if the message was
+@code{saved-virtual-mirror-data} (14).  Saved mirror data, if the message was
 switched from unmirrored to mirrored.
 @inindex virtual-summary
 @item
-@code{virtual-summary}.  Summary for unmirrored virtual message.
+@code{virtual-summary} (15).  Summary for unmirrored virtual message.
 @inindex mime-layout
 @item
-@code{mime-layout}.  @acronym{MIME} layout information; types, ids, positions, etc of
-all @acronym{MIME} entities.  (See below.)
+@code{mime-layout} (16).  @acronym{MIME} layout information; types, ids,
+positions, etc of all @acronym{MIME} entities.  (See below.)
 @inindex mime-encoded-header-flag
 @item
-@code{mime-encoded-header-flag}. Flag that indicates if the headers of the
-message are @acronym{MIME} encoded.
+@code{mime-encoded-header-flag} (17). Flag that indicates if the headers of
+the message are @acronym{MIME} encoded.
 @inindex su-summary-mouse-track-overlay
 @item
-@code{su-summary-mouse-track-overlay}.  The overlay on the summary of this
-message used for selection by mouse.
+@code{su-summary-mouse-track-overlay} (18).  The overlay on the summary of
+this message used for selection by mouse.
 @inindex message-access-method
 @item
-@code{message-access-method}.  The access-method to be used for the message,
-inherited from its real folder.
+@code{message-access-method} (19).  The access-method to be used for the
+message, inherited from its real folder.
 @end itemize
 
 
@@ -7056,32 +7093,60 @@ field when the folder is saved to disk.
 @inindex new-flag
 @itemize
 @item
-new-flag.  Flag to indicate if the message is ``new''.
+@code{new-flag} (0).  Flag to indicate if the message is ``new''.
 @inindex unread-flag
 @item
-unread-flag.  Flag to indicate if the message is unread.
+@code{unread-flag} (1).  Flag to indicate if the message is unread.
 @inindex deleted-flag
 @item
-deleted-flag.  Flag to indicate if the message has been deleted.
+@code{deleted-flag} (2).  Flag to indicate if the message has been deleted.
 @inindex filed-flag
 @item
-filed-flag.  Flag to indicate if the message has been filed.
+@code{filed-flag} (3).  Flag to indicate if the message has been filed.
 @inindex replied-flag
 @item
-replied-flag.  Flag to indicate if the message has been replied to.
+@code{replied-flag} (4).  Flag to indicate if the message has been replied to.
 @inindex written-flag
 @item
-written-flag.  Flag to indicate if the message has been saved.
+@code{written-flag} (5).  Flag to indicate if the message has been saved.
 @inindex forwarded-flag
 @item
-forwarded-flag.  Flag to indicate if the message has been forwarded.
+@code{forwarded-flag} (6).  Flag to indicate if the message has been forwarded.
 @inindex edited-flag
 @item
-edited-flag.  Flag to indicate if the message has been edited.
+@code{edited-flag} (7).  Flag to indicate if the message has been edited.
 @inindex redistributed-flag
 @item
-redistributed-flag.  Flag to indicate if the message has been
+@code{redistributed-flag} (8).  Flag to indicate if the message has been
 redistributed. 
+@item
+@code{flagged-flag} (9). Flag to indicate if the message has been
+``flagged'' as important.
+@item
+@code{folded-flag} (10). Flag to indicate whether the summary of the
+subthread rooted at this message has been ``folded'', i.e., hidden from
+view.
+@item
+@code{watched-flag} (11). Flag that says that the user wants to ``watch''
+this thread.  There are no functions that use this at present.
+@item
+@code{ignored-flag} (12).  Flag that says that the user wants to ignore this
+thread.  There are no functions that use this at present.
+@item
+@code{read-receipt-flag} (13).  Flag that says that the sender of this
+message wishes to receive a read-receipt.  There are no functions that use
+this at present. 
+@item
+@code{read-receipt-sent-flag} (14).  Flag that says that a read-receipt has
+been sent for this message.  There are no functions that use this at present.
+@item
+@code{attachments-flag} (15).  Flag that says that this message has
+attachments.  There are no functions that use this at present.
+@item
+@code{thread-root-flag} (16). Flag that says that this message should be
+regarded as the root of a message thread, even if its ``parent'' and
+``references'' headers say otherwise.  This field is not used at present.
+
 @end itemize
 
 @subsubheading Cached Data
@@ -7089,112 +7154,153 @@ redistributed.
 
 @cindex cached data
 @inindex X-VM-v5-Data header
-The data that is cached for the message and stored on the disk as part
-of the @code{X-VM-v5-Data} header field.  Even though this vector is
-only supposed to have data that can be calculated from the message
-itself, the fields pop-uidl, imap-uid and imap-uid-validity form an
-exception.  They are really hard data that cannot be calculated from
-anything else.
+The vector is meant for data that is cached for each message and stored on
+the disk as part of the @code{X-VM-v5-Data} header field.  Cached data is
+present in other parts of the message or its headers and, so can be freely
+discarded and recalculated.  That is history.
 
-Some of the data deals with information from message headers.  The
-header fields can have @acronym{MIME}-encoded words in them.  The strings stored
-in the cached-data vector, however, are @acronym{MIME}-decoded versions of the
-header fields, but they also have text properties that store the names
-of the original character sets used in the header fields.  This allows
-the strings to be quickly re-encoded for storage on disk.
+Over the years, this vector has also accumulated a number of fields that are
+not ``cached'' data in this sense.  Some fields contain hard data that is
+not available elsewhere, such as the ID's of external messages on mail
+servers.  It also contains data provided by the user which should be
+preserved across VM sessions.
+
+Some fields contain information from message headers.  The header fields can
+have @acronym{MIME}-encoded words in them.  The strings stored in the
+cached-data vector, however, are @acronym{MIME}-decoded versions of the
+header fields.  So, when they are written to disk, they should be re-encoded
+because only @acronym{MIME}-encoded text can appear in mail folders.  To
+facilitate this, they are given text properties that store the names of the
+original character sets used in the header fields.  This allows the strings
+to be quickly re-encoded for storage on disk.
 
 @inindex byte-count
 @itemize
 @item
-byte-count.  The size of the message in bytes.
+@code{byte-count} (0).  The size of the message in bytes.
 @item
-weekday, monthday, month, year, hour, zone.  Data indicating the date of
+@code{weekday}, @code{monthday}, @code{month}, @code{year}, @code{hour},
+@code{zone} (1-6).  Data indicating the date of 
 the message.
 @inindex full-name
 @item 
-full-name.  The full name of the author of the message.  This is a
-@acronym{MIME}-decoded string with text properties.
+@code{full-name} (7).  The full name of the author of the message.  This is
+a @acronym{MIME}-decoded string with text properties.
 @inindex from
 @item
-from.  The email address of the author of the message.  This is a
+@code{from} (8).  The email address of the author of the message.  This is a
 @acronym{MIME}-decoded string with text properties.
 @inindex message-id
 @item
-message-id.  The unique id of the message.
+@code{message-id} (9).  The unique id of the message.
 @inindex line-count
 @item
-line-count. The number of lines in the message.
+@code{line-count} (10). The number of lines in the message.
 @inindex subject
 @item
-subject.  The subject string of the message.  This is a @acronym{MIME}-decoded
-string with text properties.
+@code{subject} (11).  The subject string of the message.  This is a
+@acronym{MIME}-decoded string with text properties.
 @inindex vheaders-regexp
 @item
-vheaders-regexp.  A regular expression that can be used to find the
-start of the visible headers.  The headers must have been already
+@code{vheaders-regexp} (12).  A regular expression that can be used to find
+the start of the visible headers.  The headers must have been already
 ordered so that the visible headers are at the bottom of the headers
-section. 
+section.
 @inindex to
 @item
-to.  Addresses of the recipients of the message in a comma separated
-string.  This is a @acronym{MIME}-decoded string with text properties.
+@code{to} (13).  Addresses of the recipients of the message in a comma
+separated string.  This is a @acronym{MIME}-decoded string with text
+properties.
 @inindex to-names
 @item
-to-names. The full names of the recipients in a comma separated
-string.  Addresses are used if full names are not available.  This is
-a @acronym{MIME}-decoded string with text properties.
+@code{to-names} (14). The full names of the recipients in a comma separated
+string.  Addresses are used if full names are not available.  This is a
+@acronym{MIME}-decoded string with text properties.
 @inindex month-number
 @item
-month-number.  Numeric month of the sent date.
+@code{month-number} (15).  Numeric month of the sent date.
 @inindex sortable-datestring
 @item
-sortable-datestring.  Date string of the sent date for sorting purposes (or
-delivery date if @code{vm-sort-messages-by-delivery-date} is set to t).
+@code{sortable-datestring} (16).  Date string of the sent date for sorting
+purposes (or delivery date if @code{vm-sort-messages-by-delivery-date} is
+set to t). 
 @inindex sortable-subject
 @item
-sortable-subject.  The subject string for sorting purposes.  (Prefixes
-such as ``re:'' are removed.)  This is a @acronym{MIME}-decoded string with text
-properties.
+@code{sortable-subject} (17).  The subject string for sorting purposes.
+(Prefixes such as ``re:'' are removed.)  This is a @acronym{MIME}-decoded
+string with text properties.
 @inindex summary
 @item
-summary.  A tokenized summary for the message, from which the actual
-summary line can be quickly calculated.  This is a list containing
+@code{summary} (18).  A tokenized summary for the message, from which the
+actual summary line can be quickly calculated.  This is a list containing
 tokens, such as @code{number} and @code{thread-indent}, as well as
 @acronym{MIME}-decoded strings with text properties.
 @inindex parent
 @item
-parent.  The message ID of the parent of the message in its
+@code{parent} (19).  The message ID of the parent of the message in its
 thread.
 @inindex references
 @item
-references.  Message IDs listed in the References header of the message.
-@c @inindex headers-to-be-retrieved
-@c @item
-@c headers-to-be-retrieved.  Flag that indicates whether the headers of the
-@c message have not been retrieved from the mail server (for @acronym{POP} or @acronym{IMAP}
-@c folders).
-@inindex body-to-be-discarded
-@item
-body-to-be-discarded.  Flag that indicates whether they body of the
-message should be discarded before the folder is saved.  (This is used
-in conjunction with the @code{body-to-be-retrieved} below.
+@code{references} (20).  Message IDs listed in the References header of the
+message. 
 @inindex body-to-be-retrieved
 @item
-body-to-be-retrieved.  Flag that indicates whether the body of the
+@code{body-to-be-retrieved} (22).  Flag that indicates whether the body of the
 message has not been retrieved from the mail server.
+@item
+@inindex body-to-be-discarded
+@code{body-to-be-discarded} (21).  Flag that indicates whether they body of
+the message should be discarded before the folder is saved.  (This is used
+in conjunction with the @code{body-to-be-retrieved} above.)
 @inindex pop-uidl
 @item
-pop-uidl.  The @acronym{UIDL} id of the message on the @acronym{POP} server.
+@code{pop-uidl} (23).  The @acronym{UIDL} id of the message on the
+@acronym{POP} server.
 @inindex imap-uid
 @item
-imap-uid.  The @acronym{UID} of the message on the @acronym{IMAP} server.
+@code{imap-uid} (23).  The @acronym{UID} of the message on the
+@acronym{IMAP} server.
 @inindex imap-uid-validity
 @item
-imap-uid-validity.  The @acronym{UIDVALIDITY} value of the message on the
-@acronym{IMAP} server. 
+@code{imap-uid-validity} (24).  The @acronym{UIDVALIDITY} value of the
+message on the @acronym{IMAP} server.
 @inindex spam-score
 @item
-spam-score.  The spam score of the message.
+@code{spam-score} (25).  The spam score of the message.
+@inindex headers-to-be-retrieved
+@item
+@code{headers-to-be-retrieved} (26).  Flag that indicates whether the
+headers of the message have not been retrieved from the mail server (for
+external messages).  This is not ``cached'' data and should not be
+discarded.   This field is unused at present.
+@inindex headers-to-be-discarded
+@item
+@code{headers-to-be-discarded} (27).  Flag that indicates whether the
+headers of the message should be discarded before the folder is saved (for
+external messages).  This is not ``cached'' data and should not be
+discarded.  This field is unused at present.
+@inindex summary-subject
+@item
+@code{summary-subject} (28).  Subject of the message as it appears in the
+summary line of the message.  (This optionally omits the subject tags added
+by mailing lists.)
+@inindex declared-parent
+@item
+@code{declared-parent} (29).  The message ID of the parent of the message,
+as declared by the user.  This may not be present in the headers of the
+message.  So, it is not ``cached'' data and should not be discarded.  This
+field is not used at present. 
+@inindex declared-duplicates
+@item
+@code{declared-duplicates} (30).  List of message ID's that the user
+declared as being duplicates of this message.  The duplicate copies may not
+be present in the folder, but they should be taken into account in
+calculating threads.  This is not ``cached'' data and should nto be
+discarded.  This field is not used at present.
+@item
+@code{d-weekday}, @code{d-monthday}, @code{d-month}, @code{d-year},
+@code{d-hour}, @code{d-zone} (31-36).  Data indicating the delivery date of
+the message.   These fields are not used at present.
 @end itemize
 
 @subsubheading Mirror Data
@@ -7205,34 +7311,36 @@ is non-nil.
 @inindex edit-buffer
 @itemize
 @item 
-edit-buffer.  If the message is being edited, this is the buffer being
-used.
+@code{edit-buffer} (0).  If the message is being edited, this is the buffer
+being used.
 @inindex virtual-messages-sym
 @item
-virtual-messages-sym.  List of virtual messages mirroring the current real
-message, represented by an uninterned symbol written as ``<v>''. 
+@code{virtual-messages-sym} (1).  List of virtual messages mirroring the
+current real message, represented by an uninterned symbol written as
+``<v>''.
 @inindex stuff-flag
 @item
-stuff-flag.  Flag to indicates if the attribute changes have been
+@code{stuff-flag} (2).  Flag to indicates if the attribute changes have been
 ``stuffed'' into the folder buffer.
 @inindex labels
 @item
-labels.  List of labels attached to the message.
+@code{labels} (3).  List of labels attached to the message.
 @inindex label-string
 @item
-label-string.  The string of labels attached to the message.
+@code{label-string} (4).  The string of labels attached to the message.
 @inindex attribute-modflag
 @item
-attribute-modflag.  Flag to indicate if the attributes of the message
-have been modified since the last save.
+@code{attribute-modflag} (5).  Flag to indicate if the attributes of the
+message have been modified since the last save.
 @end itemize
 
 @unnumberedsubsec @acronym{MIME} layout
 @anchor{@acronym{MIME} layout}
-The @acronym{MIME} layout of a message, stored in the soft data of the message,
-is in turn a vector containing various pieces of data.  Such a vector
-is used not only for the overall message, but for all its @acronym{MIME} parts
-and subparts as well.
+
+The @acronym{MIME} layout of a message, stored in the soft data of the
+message, is in turn a vector containing various pieces of data.  Such a
+vector is used not only for the overall message, but for all its
+@acronym{MIME} parts and subparts as well.
 
 @inindex type
 @inindex Content-Type
@@ -7241,15 +7349,16 @@ and subparts as well.
 A list of strings consisting of the @acronym{MIME} type of the part along
 with its attributes.  This comes from ``Content-Type'' header.  The type
 could be of the form `type/subtype'.  Quotation marks are stripped from
-attribute values.  An example is @code{("multipart/mixed" "boundary=----_=_NextPart_001_01AFE588.63E23840")}.
+attribute values.  An example is 
+@code{("multipart/mixed" "boundary=----_=_NextPart_001_01AFE588.63E23840")}.
 @inindex qtype
 @item
 @code{qtype}.  Like type, but the quotation marks are not stripped.
 @inindex encoding
 @inindex Content-Transfer-Encoding
 @item
-@code{encoding}.  The @acronym{MIME} encoding used for the part.  It comes from the
-``Content-Transfer-Encoding'' header.
+@code{encoding}.  The @acronym{MIME} encoding used for the part.  It comes
+from the ``Content-Transfer-Encoding'' header.
 @inindex id
 @inindex Content-ID
 @item
@@ -7277,11 +7386,12 @@ stripped.
 headers/body of the @acronym{MIME} part.
 @inindex parts
 @item
-@code{parts}. A list of @acronym{MIME} layouts for the individual subparts of this part.
+@code{parts}. A list of @acronym{MIME} layouts for the individual subparts
+of this part.
 @inindex cache
 @item
-@code{cache}. A symbol that is unique to this @acronym{MIME} part.  Other data is
-stored as properties of this symbol:
+@code{cache}. A symbol that is unique to this @acronym{MIME} part.  Other
+data is stored as properties of this symbol:
 @itemize
 @inindex vm-mime-display-external-generic
 @item
@@ -7310,22 +7420,23 @@ clip is stored.
 @end itemize
 @inindex message-symbol
 @item
-@code{message-symbol}.  A reference to the message that contains the @acronym{MIME}
-part.  Represented as a symbol (that is, an interned key into a hash
-table).  This is a different symbol from the real-message-sym of the
-message. 
+@code{message-symbol}.  A reference to the message that contains the
+@acronym{MIME} part.  Represented as a symbol (that is, an interned key into
+a hash table).  This is a different symbol from the real-message-sym of the
+message.
 @inindex display-error
 @item
-@code{display-error}.  If the display of a @acronym{MIME} part fails, its error string is
-stored here.
+@code{display-error}.  If the display of a @acronym{MIME} part fails, its
+error string is stored here.
 @inindex layout-is-converted
 @item
-@code{layout-is-converted}.  Flag indicating that @acronym{MIME} type conversion has been
-performed on this part.  @pxref{@acronym{MIME} type conversion}.
+@code{layout-is-converted}.  Flag indicating that @acronym{MIME} type
+conversion has been performed on this part.  @pxref{@acronym{MIME} type
+conversion}.
 @inindex unconverted-layout
 @item
-@code{unconverted-layout}.  If the @acronym{MIME} type conversion has been performed on
-this part, then this holds the original unconverted layout.
+@code{unconverted-layout}.  If the @acronym{MIME} type conversion has been
+performed on this part, then this holds the original unconverted layout.
 @end itemize
 
 @unnumberedsubsec Cross-buffer sharing of data

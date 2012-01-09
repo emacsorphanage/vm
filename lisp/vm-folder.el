@@ -1462,7 +1462,7 @@ vm-folder-type is initialized here."
     (vm-mark-for-summary-update message)
     (vm-set-stuff-flag-of message t)))
 
-(defun vm-read-attributes (message-list)
+(defun vm-read-VM-data (message-list)
   "Reads the message attributes and cached header information.
 
 Reads the message attributes and cached header information from the
@@ -1486,6 +1486,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
           (vm-unread-count 0)
           (vm-deleted-count 0)
 	  (vm-total-count 0)
+	  (vm-upgrade-count 0)
 	  (modulus (+ (% (vm-abs (random)) 11) 25))
 	  (case-fold-search t)
 	  oldpoint data cache)
@@ -1577,6 +1578,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
                       (setq cache 
 			    (make-vector vm-cached-data-vector-length nil))))
 
+	    (when (vm-stuff-flag-of (car mp))
+	      (vm-increment vm-upgrade-count)
+	      (vm-mark-folder-modified-p))
 	    (vm-set-labels-of (car mp) (nth 2 data))
 	    (vm-set-cached-data-of (car mp) cache)
 	    (vm-set-attributes-of (car mp) (car data)))
@@ -1589,7 +1593,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	    (vm-set-attributes-of
 	     (car mp)
 	     (make-vector vm-attributes-vector-length nil))
-	    (vm-set-unread-flag (car mp) (not (looking-at ".*R.*")) 'norecord))
+	    (vm-set-unread-flag (car mp) (not (looking-at ".*R.*")) 'norecord)
+	    (vm-increment vm-upgrade-count)
+	    (vm-mark-folder-modified-p))
 	   (t
 	    (vm-set-cached-data-of 
 	     (car mp) (make-vector vm-cached-data-vector-length nil))
@@ -1600,7 +1606,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	    ;; assume the message is new.  avoid
 	    ;; vm-set-new-flag because it asks for a
 	    ;; summary update.
-	    (vm-set-new-flag-of (car mp) t)))
+	    (vm-set-new-flag-of (car mp) t)
+	    (vm-increment vm-upgrade-count)
+	    (vm-mark-folder-modified-p)))
 	  ;; let babyl attributes override the normal VM
 	  ;; attributes header.
 	  (cond ((eq vm-folder-type 'babyl)
@@ -1618,8 +1626,11 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	    (vm-inform 6 "%s: Reading attributes... %d" (buffer-name)
 		       vm-total-count))
 	(setq mp (cdr mp)))
-      (if (>= vm-total-count modulus)
-	  (vm-inform 6 "%s: Reading attributes... done" (buffer-name)))
+      (cond ((not (zerop vm-upgrade-count))
+	     (vm-warn 0 1 "%s: Attributes data upgraded for %s messages"
+			(buffer-name) vm-upgrade-count))
+	    ((>= vm-total-count modulus)
+	     (vm-inform 6 "%s: Reading attributes... done" (buffer-name))))
       (if (null message-list)
 	  (setq vm-totals (list vm-modification-counter
 				vm-total-count
@@ -1957,7 +1968,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
   (and (or (not (equal vis vm-visible-headers))
 	   (not (equal invis vm-invisible-header-regexp)))
        (let ((mp vm-message-list))
-	 (vm-inform 6 "Discarding visible header info...")
+	 (vm-inform 6 "%s: Discarding visible header info..." (buffer-name))
 	 (while mp
 	   (vm-set-vheaders-regexp-of (car mp) nil)
 	   (vm-set-vheaders-of (car mp) nil)
@@ -3623,6 +3634,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
   (interactive "P")
   (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-error-if-virtual-folder)
+  ;; FIXME Why not basic-save-buffer?
   (save-buffer prefix)
   (intern (buffer-name) vm-buffers-needing-display-update)
   (setq vm-block-new-mail nil)
@@ -3758,6 +3770,7 @@ folder."
 		(progn
 		  (and oldmodebits (set-default-file-modes
 				    vm-default-folder-permission-bits))
+		  ;; FIXME Why not basic-save-buffer?
 		  (save-buffer prefix))
 	      (and oldmodebits (set-default-file-modes oldmodebits))))
 	  (vm-unmark-folder-modified-p (current-buffer)) ; folder buffer
@@ -3807,11 +3820,11 @@ folder."
 ;;;###autoload
 (defun vm-save-and-expunge-folder (&optional prefix)
   "Expunge folder, then save it to disk.
-Prefix arg is handled the same as for the command save-buffer.
+Prefix arg is handled the same as for the command `save-buffer'.
 Expunge won't be done if folder is read-only.
 
 When applied to a virtual folder, this command works as if you had
-run vm-expunge-folder followed by vm-save-folder."
+run `vm-expunge-folder' followed by `vm-save-folder'."
   (interactive (list current-prefix-arg))
   (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-display nil nil '(vm-save-and-expunge-folder)
@@ -4623,7 +4636,7 @@ files."
 	 (unless vm-assimilate-new-messages-sorted
 	   (setq vm-ml-sort-keys nil))
 	 (if read-attributes
-	     (vm-read-attributes (cdr tail-cons))
+	     (vm-read-VM-data (cdr tail-cons))
 	   (vm-set-default-attributes (cdr tail-cons)))
 	 ;; Yuck.  This has to be done here instead of in the
 	 ;; vm function because this needs to be done before
