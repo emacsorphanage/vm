@@ -4129,9 +4129,10 @@ well. Returns a boolean value."
 		     (setq r (nthcdr 4 response)
 			   p (car r))
 		     (if (memq (car p) '(atom string))
-			 (setq c-list (cons (buffer-substring 
-					     (nth 1 p) (nth 2 p))
-					    c-list)))))))
+			 (setq c-list 
+			       (cons (vm-imap-decode-mailbox-name
+				      (buffer-substring (nth 1 p) (nth 2 p)))
+				     c-list)))))))
 	  c-list )
       ;; unwind-protections
       ;;-------------------
