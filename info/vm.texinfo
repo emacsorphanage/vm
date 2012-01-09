@@ -4048,13 +4048,11 @@ subject tags you want removed.  For example, the setting
 (along with the white space following them).  The default value of
 @code{vm-subject-tag-prefix} is nil.
 
-@ignore -- to be uncommented when it is in
 @vindex vm-summary-strip-subject-tags
 In addition to ignoring subject tags during sorting, you can also ask VM to
 remove subject tags from the the summary lines in the Summary buffer.
 The variable @code{vm-summary-strip-subject-tags} should be set to a non-nil
 value to achieve this effect.
-@end ignore
 
 @vindex vm-subject-significant-chars
 Once the subject has been normalized, the variable

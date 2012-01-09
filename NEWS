@@ -30,7 +30,8 @@ VM 8.2.1
 
    * New variable `vm-subject-tag-prefix' allows the subject tags added by
      mailing lists to be ignored during sorting etc. (similar to
-     `vm-subject-ignored-prefix'). 
+     `vm-subject-ignored-prefix').  Another variable
+     `vm-summary-strip-subject-tags' removes them from summary lines as well.
 
 VM 8.2.0
 

@@ -921,7 +921,7 @@ mime.  It is used for writing summary lines to disk.   USR, 2010-05-13."
 		       (setq sexp (cons (list 'vm-padded-number-of
 					      'vm-su-message) sexp))))
 		    ((= conv-spec ?s)
-		     (setq sexp (cons (list 'vm-su-subject
+		     (setq sexp (cons (list 'vm-su-summary-subject
 					    'vm-su-message) sexp)))
 		    ((= conv-spec ?T)
 		     (setq sexp (cons (list 'vm-su-to-names
@@ -1637,7 +1637,7 @@ entry (vm-line-count-of) or recalculating it if necessary.  USR 2010-05-13"
 ;;;###autoload
 (defun vm-su-subject (m)
   "Returns the subject string of M, either from the stored
-entry (vm-subject-of) or recalculating it if necessary.  It is a
+entry (`vm-subject-of') or recalculating it if necessary.  It is a
 mime-decoded string with text properties.  USR 2010-05-13"
   (or (vm-subject-of m)
       (vm-set-subject-of
@@ -1645,7 +1645,22 @@ mime-decoded string with text properties.  USR 2010-05-13"
        (let ((subject (vm-decode-mime-encoded-words-in-string
                        (or (vm-get-header-contents m "Subject:") "")))
 	     (i nil))
-	 ;; (setq subject (vm-su-trim-subject subject))
+	 (while (string-match "\n[ \t]*" subject)
+	   (setq subject (replace-match " " nil t subject)))
+	 subject ))))
+
+(defun vm-su-summary-subject (m)
+  "Returns the subject string of M, appropriate for display in
+summary lines.  It is either from the stored
+entry (`vm-summary-subject-of') or recalculating it if necessary.  It is a
+mime-decoded string with text properties.  USR 2010-05-13"
+  (or (vm-summary-subject-of m)
+      (vm-set-summary-subject-of
+       m
+       (let ((subject (vm-decode-mime-encoded-words-in-string
+                       (or (vm-get-header-contents m "Subject:") "")))
+	     (i nil))
+	 (setq subject (vm-su-trim-subject subject))
 	 (while (string-match "\n[ \t]*" subject)
 	   (setq subject (replace-match " " nil t subject)))
 	 subject ))))
@@ -1660,7 +1675,7 @@ The other prefixes and suffixes (`vm-subject-ignored-prefix' and
   (let ((case-fold-search t)
 	(prefix ""))
     (catch 'done
-      (while t
+      (while vm-summary-strip-subject-tags ; constant in the loop
 	(cond ((and vm-subject-ignored-prefix
 		    (string-match vm-subject-ignored-prefix subject)
 		    (zerop (match-beginning 0)))

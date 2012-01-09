@@ -3952,7 +3952,7 @@ Matches are done case-insensitively."
   :group 'vm-summary
   :type 'regexp)
 
-(defcustom vm-subject-tag-prefix "\\[[^]]*]"
+(defcustom vm-subject-tag-prefix nil
   "*Non-nil value should be a regular expression that matches the
 \"subject tags\" included in subject lines by mailing lists.
 Subject tags are always enclosed in square brackets.  This
