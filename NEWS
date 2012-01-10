@@ -52,6 +52,10 @@ VM 8.2.0
    * The variable `vm-mutable-frames' has a new name to convey its sense
      better: `vm-mutable-frame-configuration'.  The old name still works.
 
+   IMPROVEMENTS
+
+   * International character sets supported in IMAP mailbox names.
+
 VM 8.2.0b  (2011-12-28)
 
   CHANGES

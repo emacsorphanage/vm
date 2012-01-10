@@ -518,6 +518,22 @@ them.  The original LIST is permanently modified."
 	(setq prev p p (cdr p))))
     list ))
 
+(defun vm-delete-common-elements (list1 list2 pred)
+  "Takes two sorted lists of unique values with dummy headers and
+destructively deletes all their common elements.  PRED is used as
+the function for < comparison."
+  (rplacd list1 (sort (cdr list1) pred))
+  (rplacd list2 (sort (cdr list2) pred))
+  (while (and (cdr list1) (cdr list2))
+    (cond ((equal (car (cdr list1)) (car (cdr list2)))
+	   (rplacd list1 (cdr (cdr list1)))
+	   (rplacd list2 (cdr (cdr list2))))
+	  ((apply pred (car (cdr list1)) (car (cdr list2)) nil)
+	   (setq list1 (cdr list1)))
+	  (t
+	   (setq list2 (cdr list2)))
+	  )))
+
 (defun vm-elems (n list)
   "Select the first N elements of LIST and return them as a list."
   (let (res)
