@@ -26,6 +26,13 @@ Status
   
 VM 8.2.1
 
+  CHANGES
+
+   * New variables `vm-use-presentation-minor-modes' and
+     `vm-presentation-minor-modes' control the minor modes to be used with
+     presentation text prepared by other tools such as emacs-w3m.  The
+     old variable `vm-w3m-use-w3m-minor-mode-map' is obsolete.
+
   IMPROVEMENTS
 
    * New variable `vm-subject-tag-prefix' allows the subject tags added by

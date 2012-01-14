@@ -1204,6 +1204,24 @@ re-filling lines longer than the value of
                  (const :tag "Window width" window-width)
                  (integer :tag "Fill column")))
 
+(defcustom vm-use-presentation-minor-modes t
+  "*Asks VM to use minor modes for the message presentation text
+when appropriate, e.g., when the text is prepared using the
+emacs-w3m package.
+
+Customize `vm-presentation-minor-modes' to set the appropriate minor modes."
+  :group 'vm-presentation
+  :type '(choice (const :tag "No minor modes" nil)
+		 (const :tag "Use minor modes" t)))
+
+(defcustom vm-presentation-minor-modes '((emacs-w3m w3m-minor-mode))
+  "*An assocation list mapping message presentation methods,
+such as emacs-w3m, to the corresponding minor modes to be used in
+the presentation buffer."
+  :group 'vm-presentation
+  :type '(repeat (list (symbol :tag "Presentation method")
+		       (symbol :tag "Minor mode"))))
+
 (defcustom vm-display-using-mime t
   "*Non-nil value means VM should display messages using MIME.
 MIME (Multipurpose Internet Mail Extensions) is a set of

@@ -28,6 +28,7 @@
 
 ;; vm-xemacs.el is a fake file to fool the Emacs 23 compiler
 (declare-function find-coding-system "vm-xemacs" (coding-system-or-name))
+(declare-function map-extents "vm-xemacs" (function &optional buffer from to))
 
 ;; Aliases for xemacs functions
 (declare-function xemacs-abbreviate-file-name "vm-misc.el" 
@@ -61,11 +62,14 @@
 		  (beg end &optional buffer front-advance rear-advance) t)
 (declare-function vm-extent-end-position "vm-misc.el" (overlay) t)
 (declare-function vm-extent-start-position "vm-misc.el" (overlay) t)
+(declare-function vm-next-extent-change "vm-misc.el" (pos) t)
+(declare-function vm-previous-extent-change "vm-misc.el" (pos) t)
 (declare-function vm-detach-extent "vm-misc.el" (overlay) t)
 (declare-function vm-delete-extent "vm-misc.el" (overlay) t)
 (declare-function vm-disable-extents "vm-misc.el" 
 		  (&optional beg end name val) t)
 (declare-function vm-extent-properties "vm-misc.el" (overlay) t)
+(declare-function vm-map-extents "vm-misc.el" (function buffer) t)
 
 (declare-function timezone-make-date-sortable "ext:timezone"
 		  (date &optional local timezone))
@@ -1094,6 +1098,16 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	(fset 'vm-extent-start-position 'overlay-start)
       (fset 'vm-extent-start-position 'extent-start-position)))
 
+(if (not (fboundp 'vm-next-extent-change))
+    (if vm-fsfemacs-p
+	(fset 'vm-next-extent-change 'next-overlay-change)
+      (fset 'vm-next-extent-change 'next-extent-change)))
+
+(if (not (fboundp 'vm-previous-extent-change))
+    (if vm-fsfemacs-p
+	(fset 'vm-previous-extent-change 'previous-overlay-change)
+      (fset 'vm-previous-extent-change 'previous-extent-change)))
+
 (if (not (fboundp 'vm-detach-extent))
     (if vm-fsfemacs-p
 	(fset 'vm-detach-extent 'delete-overlay)
@@ -1117,6 +1131,33 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
     (if vm-fsfemacs-p
 	(fset 'vm-extent-properties 'overlay-properties)
       (fset 'vm-extent-properties 'extent-properties)))
+
+(defun vm-xemacs-map-extents (function &optional buffer)
+  (let (from to)
+    (with-current-buffer buffer
+      (setq from (point-min)
+	    to (point-max)))
+    (map-extents function buffer from to)))
+
+(defun vm-fsfemacs-map-extents (function &optional buffer)
+  "Map FUNCTION over the extents in BUFFER.
+FUNCTION is called with two arguments: an extent and a dummy argument
+which should be ignored.  (This is included for compatibility with XEmacs)."
+  (let (o-lists o p)
+    (setq o-lists (overlay-lists))
+    (setq p (car o-lists))
+    (while p
+      (funcall function (car p) nil)
+      (setq p (cdr p)))
+    (setq p (cdr o-lists))
+    (while p
+      (funcall function (car p) nil)
+      (setq p (cdr p)))))
+
+(if (not (fboundp 'vm-map-extents))
+    (if vm-fsfemacs-p
+	(fset 'vm-map-extents 'vm-fsfemacs-map-extents)
+      (fset 'vm-map-extents 'vm-xemacs-map-extents)))
 
 (defun vm-extent-at (pos &optional property)
   "Find an extent at POS in the current buffer having PROPERTY.

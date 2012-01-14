@@ -85,22 +85,45 @@ this variable to nil if you consider all urls to be safe."
   :type '(choice (regexp :tag "Regexp")
 		 (const :tag "All URLs are safe" nil)))
 
-(defcustom vm-w3m-use-w3m-minor-mode-map nil
-  "Say whether to use emacs-w3m command keys in VM presentation buffers.
-Set this variable to nil if you don't want vm-w3m to override any VM
-commend keys.  If it is non-nil, you will not be able to use some VM
-command keys, which are bound to emacs-w3m commands defined in the
-`w3m-minor-mode-command-alist' variable."
-  :group 'vm-w3m
-  :type 'boolean)
+;; (defcustom vm-w3m-use-w3m-minor-mode-map nil
+;;   "Say whether to use emacs-w3m command keys in VM presentation buffers.
+;; Set this variable to nil if you don't want vm-w3m to override any VM
+;; commend keys.  If it is non-nil, you will not be able to use some VM
+;; command keys, which are bound to emacs-w3m commands defined in the
+;; `w3m-minor-mode-command-alist' variable."
+;;   :group 'vm-w3m
+;;   :type 'boolean)
+
+(defvaralias 'vm-w3m-use-w3m-minor-mode-map 
+  'vm-use-presentation-minor-modes)
+(make-obsolete-variable 'vm-w3m-use-w3m-minor-mode-map
+			'vm-use-presentation-minor-modes "8.2.0")
+
+(defvar vm-w3m-minor-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "[" 'w3m-previous-anchor)
+    (define-key map "]" 'w3m-next-anchor)
+    (define-key map "{" 'w3m-previous-image)
+    (define-key map "}" 'w3m-next-image)
+    (define-key map [return] 'w3m-view-this-url)
+    (define-key map [C-return] 'w3m-view-url-with-external-browser)
+    (define-key map "\C-xw" 'w3m-print-this-url)
+    (define-key map "\C-xi" 'w3m-toggle-inline-image)
+    (define-key map "\C-x\C-I" 'w3m-toggle-inline-images)
+    (define-key map [down-mouse-1] 'w3m-mouse-view-this-url)
+    (cond ((fboundp 'set-keymap-name)
+	   (set-keymap-name map 'vm-w3m-map)))
+    map )
+  "Keymap for text/html parts inlined by emacs-w3m.")
 
 (eval-and-compile
   (or (featurep 'xemacs) (>= emacs-major-version 21)
       (defvar vm-w3m-mode-map nil
-	"Keymap for text/html parts inlined by emacs-w3m.
+	"Internal variable holding the keymap for text/html parts
+inlined by emacs-w3m. 
 This keymap will be bound only when Emacs 20 is running and overwritten
-by the value of `w3m-minor-mode-map'.  In order to add some commands to
-this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
+by the minor-mode-keymap for emacs-w3m text, as determined by
+`vm-presentation-minor-modes'.")))
 
 (defun vm-w3m-cid-retrieve (url &rest args)
   "Insert a content of URL."
@@ -121,16 +144,22 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
 		w3m-cid-retrieve-function-alist)))
 
 (defun vm-w3m-local-map-property ()
-  (if (and (boundp 'w3m-minor-mode-map) w3m-minor-mode-map)
+  (let* ((minor-mode (and vm-use-presentation-minor-modes
+			 (cadr (assoc 'emacs-w3m vm-presentation-minor-modes))))
+	 (keymap-name (and minor-mode 
+			   (intern (format "%s-map"  minor-mode))))
+	 (keymap (and keymap-name (boundp keymap-name)
+		      (symbol-value keymap-name))))
+    (when keymap
       (if (or (featurep 'xemacs) (>= emacs-major-version 21))
-	  (list 'keymap w3m-minor-mode-map)
+	  (list 'keymap keymap)
 	(list 'local-map
 	      (or vm-w3m-mode-map
 		  (progn
 		    (setq vm-w3m-mode-map
-			  (copy-keymap w3m-minor-mode-map))
+			  (copy-keymap keymap))
 		    (set-keymap-parent vm-w3m-mode-map vm-mode-map)
-		    vm-w3m-mode-map))))))
+		    vm-w3m-mode-map)))))))
 
 ;;;###autoload
 (defun vm-mime-display-internal-emacs-w3m-text/html (start end layout)
@@ -140,7 +169,7 @@ this keymap, add them to `w3m-minor-mode-map' instead of this keymap.")))
     (w3m-region start (1- end))
     (add-text-properties
      start end
-     (nconc (if vm-w3m-use-w3m-minor-mode-map
+     (nconc (if vm-use-presentation-minor-modes
 		(if (equal major-mode 'vm-presentation-mode)
 		    (vm-w3m-local-map-property)))
             ;; Put the mark meaning that this part was

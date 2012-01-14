@@ -376,14 +376,16 @@ Negative arg means scroll forward."
 				       (point-max))))
       (setq search-pairs (list (cons (point-min) (point-max)))))
     (cond
-     (vm-xemacs-p
+     ((or vm-xemacs-p vm-fsfemacs-p)	; should work for both cases
       (let (e)
-	(map-extents (function
-		      (lambda (e ignore)
-			(when (vm-extent-property e 'vm-url)
-			  (vm-delete-extent e))
-			nil))
-		     (current-buffer) (point-min) (point-max))
+	(vm-map-extents (function
+			 (lambda (e ignore)
+			   (when (vm-extent-property e 'vm-url)
+			     (vm-delete-extent e))
+			   nil))
+			(current-buffer) 
+			;; (point-min) (point-max)
+			)
 	(if clean-only (vm-inform 1 "Energy from urls removed!")
 	(while search-pairs
 	  (goto-char (car (car search-pairs)))
@@ -403,44 +405,51 @@ Negative arg means scroll forward."
 			     (looking-at "mailto:"))
 			   'vm-menu-popup-mailto-url-browser-menu
 			 'vm-menu-popup-url-browser-menu)))
-		  (define-key keymap 'button2 'vm-mouse-send-url-at-event)
-		  (if vm-popup-menu-on-mouse-3
-		      (define-key keymap 'button3 popup-function))
+		  (if vm-fsfemacs-p
+		      (setq keymap (nconc keymap (current-local-map))))
+		  (if vm-xemacs-p
+		      (define-key keymap 'button2 'vm-mouse-send-url-at-event)
+		    ;; nothing for fsfemacs?
+		    )
+		  (when vm-popup-menu-on-mouse-3
+		    (if vm-xemacs-p
+			(define-key keymap 'button3 popup-function)
+		      (define-key keymap [mouse-3] popup-function)))
 		  (define-key keymap "\r"
 		    (function (lambda () (interactive)
 				(vm-mouse-send-url-at-position (point)))))
 		  (vm-set-extent-property e 'vm-button t)
+		  ;; for xemacs
 		  (vm-set-extent-property e 'keymap keymap)
+		  ;; for fsfemacs
+		  (vm-set-extent-property e 'local-map keymap)
 		  (vm-set-extent-property e 'balloon-help 'vm-url-help)
+		  ;; for xemacs
 		  (vm-set-extent-property e 'highlight t)
+		  ;; for fsfemacs
+		  (vm-set-extent-property e 'mouse-face 'highlight)
 		  ;; for vm-continue-postponed-message
 		  (vm-set-extent-property e 'duplicable t)
 		  )))
 	  (setq search-pairs (cdr search-pairs))))))
-     ((and vm-fsfemacs-p
-	   (fboundp 'overlay-put))
-      (let (o-lists o p)
-	(setq o-lists (overlay-lists)
-	      p (car o-lists))
-	(while p
-	  (when (overlay-get (car p) 'vm-url)
-	    (vm-delete-extent (car p)))
-	  (setq p (cdr p)))
-	(setq p (cdr o-lists))
-	(while p
-	  (when (overlay-get (car p) 'vm-url)
-	    (vm-delete-extent (car p)))
-	  (setq p (cdr p)))
+     (vm-fsfemacs-p
+      (let (e)
+	(vm-map-extents (function
+			 (lambda (e ignore)
+			   (when (vm-extent-property e 'vm-url)
+			     (vm-delete-extent e))
+			   nil))
+			(current-buffer))
 	(while search-pairs
 	  (goto-char (car (car search-pairs)))
 	  (while (re-search-forward vm-url-regexp (cdr (car search-pairs)) t)
 	    (setq n 1)
 	    (while (null (match-beginning n))
 	      (vm-increment n))
-	    (setq o (make-overlay (match-beginning n) (match-end n)))
-	    (overlay-put o 'vm-url t)
-	    (if (facep vm-highlight-url-face)
-		(overlay-put o 'face vm-highlight-url-face))
+	    (setq e (vm-make-extent (match-beginning n) (match-end n)))
+	    (vm-set-extent-property e 'vm-url t)
+	    (if vm-highlight-url-face
+		(vm-set-extent-property e 'face vm-highlight-url-face))
 	    (if vm-url-browser
 		(let ((keymap (make-sparse-keymap))
 		      (popup-function
@@ -449,15 +458,17 @@ Negative arg means scroll forward."
 			     (looking-at "mailto:"))
 			   'vm-menu-popup-mailto-url-browser-menu
 			 'vm-menu-popup-url-browser-menu)))
-		  (overlay-put o 'vm-button t)
-		  (overlay-put o 'mouse-face 'highlight)
 		  (setq keymap (nconc keymap (current-local-map)))
 		  (if vm-popup-menu-on-mouse-3
 		      (define-key keymap [mouse-3] popup-function))
 		  (define-key keymap "\r"
 		    (function (lambda () (interactive)
 				(vm-mouse-send-url-at-position (point)))))
-		  (overlay-put o 'local-map keymap))))
+		  (vm-set-extent-property e 'vm-button t)
+		  (vm-set-extent-property e 'local-map keymap)
+		  (vm-set-extent-property e 'balloon-help 'vm-url-help)
+		  (vm-set-extent-property e 'mouse-face 'highlight)
+		  )))
 	  (setq search-pairs (cdr search-pairs))))))))
 
 (defun vm-energize-headers ()
@@ -1173,20 +1184,12 @@ exposed and marked as read."
 (defun vm-move-to-xxxx-button (count next)
   (let ((old-point (point))
 	(endp (if next 'eobp 'bobp))
-	(extent-end-position (if vm-xemacs-p
-				 (if next
-				     'extent-end-position
-				   'extent-start-position)
-			       (if next
-				   'overlay-end
-				 'overlay-start)))
-	(next-extent-change (if vm-xemacs-p
-				(if next
-				    'next-extent-change
-				  'previous-extent-change)
-			      (if next
-				  'next-overlay-change
-				'previous-overlay-change)))
+	(extent-end-position (if next
+				 'vm-extent-end-position
+			       'vm-extent-start-position))
+	(next-extent-change (if next
+				'vm-next-extent-change
+			      'vm-previous-extent-change))
 	e)
     (while (and (> count 0) (not (funcall endp)))
       (goto-char (funcall next-extent-change (+ (point) (if next 0 -1))))

@@ -2170,11 +2170,14 @@ is through the Emacs-w3m browser.  @xref{top,, Emacs-w3m, emacs-w3m,
 Emacs-w3m User's Manual}.  VM has special facilities for using this browser,
 which are described in this section.
 
-@vindex vm-w3m-use-w3m-minor-mode-map
+@vindex vm-use-presentation-minor-modes
+@vindex vm-presentation-minor-modes
 The Emacs-w3m browser has its own key bindings for use within HTML text.
 These are disabled by default so that VM's key bindings will continue to
 have effect.  To switch to the Emacs-w3m key bindings, set the variable
-@code{vm-w3m-use-w3m-minor-mode-map} to @code{t}.
+@code{vm-use-presentation-minor-modes} to @code{t}.  The minor mode to be
+used for the Emacs-w3m generated text can be set using the variable
+@code{vm-presentation-minor-modes}. 
 
 @vindex vm-w3m-display-inline-images
 @acronym{HTML} content may have embedded images.  Such images might be
@@ -7799,6 +7802,7 @@ well as the buffer in which the command execution was initiated.
 
 [More to be filled in on @code{vm-display} etc.]
 
+@unnumberedsubsec Menus
 @inindex vm-mode-menu-map
 The default menu bar of VM contains VM-specific menus, replacing the
 standard Emacs menus.  This is achieved by setting the buffer-specific
