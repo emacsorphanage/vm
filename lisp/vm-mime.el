@@ -278,11 +278,24 @@ TO are overwritten.                                    USR, 2011-03-27"
      (vm-mm-layout-parts layout2))
     t))
 
-(defun vm-mime-verify-cached-layout (cached current)
-  (let ((mismatch
+(defun vm-mime-verify-cached-layout (cached current &optional external-body)
+  "Returns a boolean value indicating whether a CACHED MIME layout is
+valid with respect to a CURRENT layout.  
+
+The optional argument EXTERNAL-BODY says whether this layout is the
+body of a message/external-body part, in which case mismatches in the
+body markers is tolerated."
+  (let ((type (if (vectorp cached)
+		  (car (vm-mm-layout-type cached))))
+	mismatch			; position of mismatch in the
+					; layout vector, or nil
+	)
+    (setq mismatch
 	 (catch 'mismatch
-	   (if (equal cached current)
-	       (throw 'mismatch nil))
+	   (when (equal cached current)
+	     (throw 'mismatch nil))
+	   (unless (and (vectorp cached) (vectorp current))
+	     (throw 'mismatch nil))
 	   (vm-mapc 
 	    (lambda (i)
 	      (unless (equal (aref cached i) (aref current i))
@@ -290,19 +303,22 @@ TO are overwritten.                                    USR, 2011-03-27"
 	    '(0 1 2 3 4))		; type through description
 	   ;; ignore disposition and qdisposition because of the hack
 	   ;; in vm-mime-frob-image-xxxx
-	   (vm-mapc
-	    (lambda (i)
-	      (unless (equal (marker-position (aref cached i))
-			     (marker-position (aref current i)))
-		(throw 'mismatch i)))
-	    '(7 9 10))		  ; header-start, body-start, body-end
+	   (unless external-body
+	     (vm-mapc
+	      (lambda (i)
+		(unless (equal (marker-position (aref cached i))
+			       (marker-position (aref current i)))
+		  (throw 'mismatch i)))
+	      '(7 9 10)))	  ; header-start, body-start, body-end
 	   (vm-mapc 
 	    (lambda (part1 part2)
-	      (unless (vm-mime-verify-cached-layout part1 part2)
+	      (unless (vm-mime-verify-cached-layout 
+		       part1 part2 
+		       (vm-mime-types-match "message/external-body" type))
 		(throw 'mismatch 11)))
 	    (vm-mm-layout-parts cached)
 	    (vm-mm-layout-parts current))
-	   nil)))
+	   nil))
     (when (and vm-debug mismatch)
       (debug 'vm-mime-verify-cached-layout
 	     (aref vm-mime-layout-fields mismatch)
