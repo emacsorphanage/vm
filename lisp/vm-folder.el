@@ -1486,6 +1486,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
           (vm-unread-count 0)
           (vm-deleted-count 0)
 	  (vm-total-count 0)
+	  (vm-bad-cache-count 0)
 	  (vm-upgrade-count 0)
 	  (modulus (+ (% (vm-abs (random)) 11) 25))
 	  (case-fold-search t)
@@ -1569,11 +1570,13 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	    ;; that's OK because nth returns nil if you overshoot the
 	    ;; end of the list.
             (unless (and (vectorp cache)
-			 (= (length cache) vm-cached-data-vector-length)
+			 (>= (length cache) vm-cached-data-vector-length)
 			 (or (null (aref cache 7)) (stringp (aref cache 7)))
 			 (or (null (aref cache 11)) (stringp (aref cache 11))))
-              (vm-warn 0 2 "%s: Bad VM cache data: %S" (buffer-name) cache)
-              (vm-set-stuff-flag-of (car mp) t)
+	      (when (zerop vm-bad-cache-count)
+		(vm-warn 0 2 "%s: Bad VM cache data: %S" (buffer-name) cache)
+		(vm-set-stuff-flag-of (car mp) t))
+	      (vm-increment vm-bad-cache-count)
               (setcar (cdr data)
                       (setq cache 
 			    (make-vector vm-cached-data-vector-length nil))))
@@ -1629,6 +1632,11 @@ Supports version 4 format of attribute storage, for backward compatibility."
       (cond ((not (zerop vm-upgrade-count))
 	     (vm-warn 0 1 "%s: Attributes data upgraded for %s messages"
 			(buffer-name) vm-upgrade-count))
+	    ((not (zerop vm-bad-cache-count))
+	     (vm-warn 0 5 
+		      (concat "%s: Bad VM cache data found for %s messages; "
+			      "Reset to empty data.")
+		      (buffer-name) vm-bad-cache-count))
 	    ((>= vm-total-count modulus)
 	     (vm-inform 6 "%s: Reading attributes... done" (buffer-name))))
       (if (null message-list)
