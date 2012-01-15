@@ -2030,8 +2030,8 @@ See also `vm-imap-get-message-size'."
 	    ;; Otherwise, skip the response
 	    ))
     (if need-size
-	(vm-imap-protocol-error
-	 "expected UID, RFC822.SIZE in FETCH response")
+	(vm-imap-normal-error
+	 "IMAP server has no information for message UID %s" uid)
       size )))
 
 (defun vm-imap-read-capability-response (process)
