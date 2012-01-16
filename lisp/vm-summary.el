@@ -1205,14 +1205,17 @@ message.  The string is 7 characters long. 		USR, 2010-05-13."
    (if (vm-edited-flag m) "e" " ")))
 
 (defun vm-su-byte-count (m)
-  "Given a MESSAGE, ruturns a string showing the length of the
+  "Given a MESSAGE, returns a string showing the length of the
 message in bytes.  				USR, 2010-05-13."
   (or (vm-byte-count-of m)
       (vm-set-byte-count-of
        m
-       (int-to-string
-	(- (vm-text-end-of (vm-real-message-of m))
-	   (vm-text-of (vm-real-message-of m)))))))
+       (if (vm-body-to-be-retrieved-of m)
+	   (vm-fetch-message-size 
+	    (list (vm-message-access-method-of m)) m)
+	 (int-to-string
+	  (- (vm-text-end-of (vm-real-message-of m))
+	     (vm-text-of (vm-real-message-of m))))))))
 
 (defun vm-su-size (msg)
   "Given a MESSAGE, return a string showing the the size of the

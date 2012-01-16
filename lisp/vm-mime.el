@@ -1855,6 +1855,10 @@ the actual message from the file \"message-11\"."
 	(vm-set-mime-layout-of mm (vm-mime-parse-entity-safe))
 	))))
   
+(defun vm-fetch-message-size (storage mm)
+  (apply (intern (format "vm-fetch-%s-message-size" (car storage)))
+	 mm (cdr storage)))
+
 (defun vm-fetch-file-message (m filename)
   "Insert the message with message descriptor MM stored in the given FILENAME."
   (insert-file-contents filename nil nil nil t)

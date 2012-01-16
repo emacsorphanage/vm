@@ -3738,6 +3738,12 @@ otherwise.
       )))
 	 
 
+(defun vm-fetch-imap-message-size (m)
+  (let ((uid-sym (intern-soft (vm-imap-uid-of m)
+			      (vm-folder-imap-flags-obarray))))
+    (and uid-sym
+	 (car (symbol-value uid-sym)))))
+
 (defun* vm-imap-save-attributes (&optional &key
 					   (interactive nil)
 					   (all-flags nil))
