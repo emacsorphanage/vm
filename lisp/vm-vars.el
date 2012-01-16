@@ -6079,7 +6079,7 @@ other possibilities, see the NEWS file of VM."
 
 (defcustom vm-summary-enable-thread-folding nil
   "*If non-nil, enables folding of threads in VM summary
-windows.  (This functionality is still experimental.)"
+windows."
   :group 'vm-summary
   :type 'boolean)
 
