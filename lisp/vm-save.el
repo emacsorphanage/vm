@@ -232,10 +232,13 @@ The saved messages are flagged as `filed'."
 	    (vm-read-file-name
 	     (format "Save in folder: (default %s) " default)
 	     directory default 
-	     ;; 'confirm           ; -- this blocks the default
+	     ;; 'confirm               ; -- this blocks the default
 	     ))
 	  (t
-	   (vm-read-file-name "Save in folder: " directory nil 'confirm)))))
+	   (vm-read-file-name 
+	    "Save in folder: " directory nil 
+	    'confirm			; -- this blocks the default
+	    )))))
 
 ;;;###autoload
 (defun vm-save-message (folder &optional count mlist quiet)
