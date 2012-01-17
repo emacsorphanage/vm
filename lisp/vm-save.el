@@ -453,9 +453,9 @@ The saved messages are flagged as `filed'."
 		 (narrow-to-region (vm-headers-of m) (vm-text-end-of m))
 		 (run-hook-with-args 'vm-save-message-hook folder))
 	       (unless (vm-filed-flag m)
-		 (when (vm-set-filed-flag m t)
-		   (vm-increment save-count)
-		   (vm-modify-folder-totals folder 'saved 1 m)))
+		   (vm-set-filed-flag m t))
+	       (vm-increment save-count)
+	       (vm-modify-folder-totals folder 'saved 1 m)
 	       (vm-update-summary-and-mode-line)
 	       (setq ml (cdr ml)))))
 	;; unwind-protections
