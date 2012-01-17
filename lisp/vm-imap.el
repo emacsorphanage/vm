@@ -1484,13 +1484,13 @@ as well."
   (if (not (= (point) (point-max)))
       (vm-imap-log-tokens (list 'send1 (point) (point-max))))
   (goto-char (point-max))
-;;   try if it makes a difference to get pending output here, use timeout
-;;   (accept-process-output process 0 0.01)
-;;   (if (not (= (point) (point-max)))
-;;       (vm-imap-log-tokens (list 'send2 (point) (point-max))))
-;;   (goto-char (point-max))
+  ;; try if it makes a difference to get pending output here, use timeout
+  ;; (accept-process-output process 0 0.01)
+  ;; (if (not (= (point) (point-max)))
+  ;;     (vm-imap-log-tokens (list 'send2 (point) (point-max))))
+  ;; (goto-char (point-max))
 
-  (or no-tag (insert-before-markers (or tag "VM") " "))
+  (unless no-tag (insert-before-markers (or tag "VM") " "))
   (let ((case-fold-search t))
     (if (string-match "^LOGIN" command)
 	(insert-before-markers "LOGIN <parameters omitted>\r\n")

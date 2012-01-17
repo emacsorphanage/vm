@@ -1266,9 +1266,14 @@ summary buffer to select a folder."
   ;; stuff to the reports.
   (let ((reporter-mailer '(vm-mail))
 	(mail-user-agent 'vm-user-agent)
-        varlist (errors 0))
-    (setq varlist (apropos-internal "^\\(vm\\|vmpc\\)-" 'user-variable-p)
-          varlist (sort varlist
+        (varlist nil)
+	(errors 0))
+    (setq varlist (apropos-internal "^\\(vm\\|vmpc\\)-" 'user-variable-p))
+    (setq varlist (vm-delete
+		   (lambda (v)
+		     (equal (symbol-value v) (car (get v 'standard-value))))
+		   varlist))
+    (setq varlist (sort varlist
                         (lambda (v1 v2)
                           (string-lessp (format "%s" v1) (format "%s" v2)))))
     (when (and (eq vm-mime-text/html-handler 'emacs-w3m)
@@ -1276,7 +1281,7 @@ summary buffer to select a folder."
       (nconc varlist (list 'emacs-w3m-version 'w3m-version 
 			   'w3m-goto-article-function)))
     (let ((fill-column (1- (window-width)))	; turn off auto-fill
-	  (mail-user-agent 'message-user-agent) ; use the default
+	  (mail-user-agent (default-value 'mail-user-agent)) ; use the default
 					; mail-user-agent for bug reports
 	  (vars-to-delete 
 	   '(vm-auto-folder-alist	; a bit private
@@ -1344,6 +1349,9 @@ summary buffer to select a folder."
        post-hooks			; post-hooks
        (concat				; salutation
 	"INSTRUCTIONS:
+
+- You are using Emacs default messaging here.  *** NOT vm-mail-mode!
+
 - Please change the Subject header to a concise bug description.
 
 - In this report, remember to cover the basics, that is, what you

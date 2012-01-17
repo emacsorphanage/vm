@@ -4573,7 +4573,7 @@ files."
 		     (vm-present-current-message)
 		   (vm-update-summary-and-mode-line))
 		 (vm-inform 5 totals-blurb))
-	     (vm-inform 5 "%s: No new %s" folder description)
+	     (vm-inform 5 "%s: No %s" folder description)
 	     (and (vm-interactive-p) (vm-sit-for 4) (vm-inform 5 ""))
 	     ))
 	  (t
