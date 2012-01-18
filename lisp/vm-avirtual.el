@@ -733,10 +733,19 @@ format:
 ;;----------------------------------------------------------------------------
 ;;;###autoload
 (defun vm-virtual-update-folders (&optional count message-list)
-  "Updates all virtual folders.
-E.g. when creating a folder of all marked messages one can call this
-function in order to add newly marked messages to the virtual folder
-without recreating it."
+  "Add the current message to all virtual folders that are
+applicable.  
+
+With a prefix argument COUNT, the current message and the next
+COUNT - 1 messages are added.  A negative argument means
+the current message and the previous |COUNT| - 1 messages are
+added.
+
+When invoked on marked messages (via `vm-next-command-uses-marks'),
+only marked messages are added, other messages are ignored.  If
+applied to collapsed threads in summary and thread operations are
+enabled via `vm-enable-thread-operations' then all messages in the
+thread are added."
   (interactive "p")
   (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
 

@@ -5198,12 +5198,13 @@ The command @code{M-x vm-virtual-omit-message} (bound to @kbd{V O} in
 version 8) will omit a message from a virtual folder, irrespective of
 whether it satisfies the definition of the virtual folder.  The command
 @code{M-x vm-virtual-update-folders} (bound to @kbd{V U} in version 8) will
-force an update of all the visited virtual folders to reflect the changes in
-their underlying folders.
+add the current message to all visited virtual folders that it logically
+belongs to.  This is useful for adding newly arrived messages or newly
+marked messages to virtual folders.
 
 @findex vm-virtual-check-selector-interactive
 The command @kbd{M-x vm-virtual-check-selector-interactive} (bound to @kbd{V
-T} in version 8) allows you to test a selector, i.e., a virtual folder
+?} in version 8) allows you to test a selector, i.e., a virtual folder
 definition, interactively by applying it to the current message.  With a
 prefix argument, it will print diagnostic information in a separate buffer.
 This feature is useful because virtual folder selectors can get quite
