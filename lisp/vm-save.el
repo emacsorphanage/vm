@@ -237,7 +237,7 @@ The saved messages are flagged as `filed'."
 	  (t
 	   (vm-read-file-name 
 	    "Save in folder: " directory nil 
-	    'confirm			; -- this blocks the default
+	    ;; 'confirm			; -- this blocks the default
 	    )))))
 
 ;;;###autoload
