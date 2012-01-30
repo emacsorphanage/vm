@@ -961,10 +961,12 @@ storage for attachments which are stored on disk anyway."
 	    (if (> (length prefix) 44)
 		(setq prefix (concat (substring prefix 0 40) " ...")))
 	    (setq name prefix n 2)
-	    (while (get-buffer name)
-	      (setq name (format "%s<%d>" prefix n))
-	      (vm-increment n))
-	    (rename-buffer name))))))
+	    (if (equal name (buffer-name))
+		t ; do nothing
+	      (while (get-buffer name)
+		(setq name (format "%s<%d>" prefix n))
+		(vm-increment n))
+	      (rename-buffer name)))))))
 
 (defun vm-mail-mark-replied ()
   (save-excursion
