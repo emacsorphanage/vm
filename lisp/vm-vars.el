@@ -6778,7 +6778,10 @@ header line in email messages,
     "unanswered"
     ))
 
-(defvar vm-key-functions nil)
+(defvar vm-key-functions nil
+  "A list of sort-compare functions that should be used for sorting
+the current folder (internal variable).  See `vm-sort-compare-xxxxxx'
+for a full description.")
 (defconst vm-digest-type-alist '(("rfc934") ("rfc1153") ("mime")))
 (defvar vm-completion-auto-correct t
   "Non-nil means that minibuffer-complete-file should aggressively erase
@@ -6863,7 +6866,9 @@ append a space to words that complete unambiguously.")
 (make-variable-buffer-local 'vm-ml-message-number)
 (defvar vm-ml-highest-message-number nil)
 (make-variable-buffer-local 'vm-ml-highest-message-number)
-(defvar vm-ml-sort-keys nil)
+(defvar vm-ml-sort-keys nil
+  "A list of sort keys using in sorting the messages in the current
+folder (internal variable).")
 (make-variable-buffer-local 'vm-ml-sort-keys)
 (defvar vm-ml-labels nil)
 (make-variable-buffer-local 'vm-ml-labels)

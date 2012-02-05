@@ -546,6 +546,28 @@ folder in the order in which the messages arrived."
 
 ;;;###autoload
 (defun vm-sort-compare-xxxxxx (msg1 msg2)
+  "Compare MSG1 and MSG2 to determine which should precede the
+other in the sort order according to `vm-key-functions'.  Returns a
+boolean value (`t' or `nil'). 
+
+`vm-key-functions' is a list of \"key-functions\" that compare
+the two messages to see if one should precede the other.  They
+return `t' if MSG1 should precede MSG2, `nil' if MSG2 should
+precede MSG1, and '=' if neither is the case.  In the last case, the
+two messages are regarded as equivalent as per the particular
+key-function and the remaining key-functions are tried to resolve the
+tie.   (This amounts to a lexicographic combination of the sort-orders
+in `vm-key-functions'.)
+
+`vm-sort-compare-thread' is special if it occurs in
+`vm-key-functions'.  It determines the oldest different ancestors
+of MSG1 and MSG2, which are then compared using the remaining
+key-functions.
+
+If all the key-functions return `=' (signifying that MSG1 and
+MSG2 are equivalent according to all the key-functions), then the
+messages are compared by the physical order to break the tie.
+So, this function always returns a boolean value, never `='."
   (if (and vm-summary-debug
 	   (or (member (vm-number-of msg1) vm-summary-traced-messages)
 	       (member (vm-number-of msg2) vm-summary-traced-messages)))
@@ -577,6 +599,13 @@ folder in the order in which the messages arrived."
 	(vm-sort-compare-physical-order m1 m2)))))
 
 (defun vm-sort-compare-thread (m1 m2)
+  "Returns a cons-pair of messages representing the oldest different
+ancestors of M1 and M2 in thread-tree.  This is justified by the property
+that, if P1 and P2 are the oldest different ancestors of M1 and M2, then
+
+  M1 precedes M2 in the threaded-sort order if and only if 
+		P1 precedes P2 in the normal sort order.
+"
   (let ((root1 (vm-thread-root-sym m1))
 	(root2 (vm-thread-root-sym m2))
 	(list1 (vm-thread-list m1))
