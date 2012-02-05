@@ -2776,6 +2776,12 @@ are always matched case insensitively."
 				 (choice (string :tag "Folder Name")
 					 (sexp :tag "Folder Expresion"))))))))
 
+(defcustom vm-save-using-auto-folders t
+  "*Non-nil value means that VM will suggest folders for saving
+messages automatically using the setting of `vm-auto-folder-alist'."
+  :group 'vm-dispose
+  :type 'boolean)
+
 (defcustom vm-auto-folder-case-fold-search nil
   "*Non-nil value means VM will ignore case when matching header
 contents while doing automatic folder selection via the variable

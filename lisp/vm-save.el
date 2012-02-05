@@ -45,59 +45,60 @@
 
 ;;;###autoload
 (defun vm-auto-select-folder (mp auto-folder-alist)
-  (condition-case error-data
-      (catch 'match
-	(let (header alist tuple-list)
-	  (setq alist auto-folder-alist)
-	  (while alist
-	    (setq header 
-		  (vm-get-header-contents (car mp) (car (car alist)) ", "))
-	    (when header
-	      (setq tuple-list (cdr (car alist)))
-	      (while tuple-list
-		(when (let ((case-fold-search vm-auto-folder-case-fold-search))
-			(string-match (car (car tuple-list)) header))
-		  ;; Don't waste time eval'ing an atom.
-		  (if (stringp (cdr (car tuple-list)))
-		      (throw 'match (cdr (car tuple-list)))
-		    (let* ((match-data (vm-match-data))
-			   ;; allow this buffer to live forever
-			   (buf (get-buffer-create " *vm-auto-folder*"))
-			   (result))
-		      ;; Set up a buffer that matches our cached
-		      ;; match data.
-		      (save-excursion
-			(set-buffer buf)
-			(if vm-fsfemacs-mule-p
-			    (set-buffer-multibyte nil)) ; for empty buffer
-			(widen)
-			(erase-buffer)
-			(insert header)
-			;; It appears that get-buffer-create clobbers the
-			;; match-data.
-			;;
-			;; The match data is off by one because we matched
-			;; a string and Emacs indexes strings from 0 and
-			;; buffers from 1.
-			;;
-			;; Also store-match-data only accepts MARKERS!!
-			;; AUGHGHGH!!
-			(store-match-data
-			 (mapcar
-			  (function (lambda (n) (and n (vm-marker n))))
-			  (mapcar
-			   (function (lambda (n) (and n (1+ n))))
-			   match-data)))
-			(setq result (eval (cdr (car tuple-list))))
-			(while (consp result)
-			  (setq result (vm-auto-select-folder mp result)))
-			(when result
-			  (throw 'match result))))))
-		(setq tuple-list (cdr tuple-list))))
-	    (setq alist (cdr alist)))
-	  nil ))
-    (error (error "error processing vm-auto-folder-alist: %s"
-		  (prin1-to-string error-data)))))
+  (if vm-save-using-auto-folders
+      (condition-case error-data
+	  (catch 'match
+	    (let (header alist tuple-list)
+	      (setq alist auto-folder-alist)
+	      (while alist
+		(setq header 
+		      (vm-get-header-contents (car mp) (car (car alist)) ", "))
+		(when header
+		  (setq tuple-list (cdr (car alist)))
+		  (while tuple-list
+		    (when (let ((case-fold-search vm-auto-folder-case-fold-search))
+			    (string-match (car (car tuple-list)) header))
+		      ;; Don't waste time eval'ing an atom.
+		      (if (stringp (cdr (car tuple-list)))
+			  (throw 'match (cdr (car tuple-list)))
+			(let* ((match-data (vm-match-data))
+			       ;; allow this buffer to live forever
+			       (buf (get-buffer-create " *vm-auto-folder*"))
+			       (result))
+			  ;; Set up a buffer that matches our cached
+			  ;; match data.
+			  (save-excursion
+			    (set-buffer buf)
+			    (if vm-fsfemacs-mule-p
+				(set-buffer-multibyte nil)) ; for empty buffer
+			    (widen)
+			    (erase-buffer)
+			    (insert header)
+			    ;; It appears that get-buffer-create clobbers the
+			    ;; match-data.
+			    ;;
+			    ;; The match data is off by one because we matched
+			    ;; a string and Emacs indexes strings from 0 and
+			    ;; buffers from 1.
+			    ;;
+			    ;; Also store-match-data only accepts MARKERS!!
+			    ;; AUGHGHGH!!
+			    (store-match-data
+			     (mapcar
+			      (function (lambda (n) (and n (vm-marker n))))
+			      (mapcar
+			       (function (lambda (n) (and n (1+ n))))
+			       match-data)))
+			    (setq result (eval (cdr (car tuple-list))))
+			    (while (consp result)
+			      (setq result (vm-auto-select-folder mp result)))
+			    (when result
+			      (throw 'match result))))))
+		    (setq tuple-list (cdr tuple-list))))
+		(setq alist (cdr alist)))
+	      nil ))
+	(error (error "error processing vm-auto-folder-alist: %s"
+		      (prin1-to-string error-data))))))
 
 ;;;###autoload
 (defun vm-auto-archive-messages (&optional arg)

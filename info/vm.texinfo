@@ -3513,12 +3513,23 @@ command.  There is a separate variable
 works like @code{vm-delete-after-saving} but applies to the @kbd{A}
 (@code{vm-auto-archive-messages}) command (see below).
 
-@unnumberedsubsec vm-auto-folder-alist
+@unnumberedsubsec Automatic save folders
+
+@cindex save folders
+VM can automatically suggest folders for saving messages, using rules that
+you specify.  It saves the work of having to type in a folder for saving
+messages. 
 
 @vindex vm-auto-folder-alist
-The variable @code{vm-auto-folder-alist} is used to specify
-pattern-matching rules by which VM can determine an appropriate folder
-in which to save a message.  The value of this variable should be a
+@vindex vm-save-using-auto-folders
+The variable @code{vm-auto-folder-alist} is used to specify pattern-matching
+rules by which VM determines the save folder for a message.  It is also
+possible to specify rules using virtual folder selectors.
+@xref{vm-virtual-auto-folder-alist}.  The suggestion of save folders via
+both the methods can be turned on or off using the variable
+@code{vm-save-using-auto-folders}.  (Its default value is @code{t}.)
+
+The value of @code{vm-auto-folder-alist} should be a
 list of the form:
 
 @display
@@ -5236,6 +5247,7 @@ the @code{vm-virtual-auto-delete-message-selector} in the incoming mail
 to be automatically deleted before you view them.
 
 @unnumberedsubsec Automatic saving
+@anchor{vm-virtual-auto-folder-alist}
 
 @findex vm-virtual-save-message
 @findex vm-virtual-auto-archive-messages

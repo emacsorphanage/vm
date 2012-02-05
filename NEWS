@@ -24,7 +24,7 @@ Status
   unreliable mail link to the mailing list.  You can however browse the
   archives of the newsgroup at Google Groups.
   
-VM 8.2.1
+VM 8.2.0b1
 
   CHANGES
 
@@ -33,16 +33,19 @@ VM 8.2.1
      presentation text prepared by other tools such as emacs-w3m.  The
      old variable `vm-w3m-use-w3m-minor-mode-map' is obsolete.
 
-  IMPROVEMENTS
+   * The variable `vm-mutable-frames' renamed to
+     `vm-mutable-frame-configuration' to convey its sense better.  The old
+     name still works.
+
+   IMPROVEMENTS
 
    * New variable `vm-subject-tag-prefix' allows the subject tags added by
      mailing lists to be ignored during sorting etc. (similar to
      `vm-subject-ignored-prefix').  Another variable
      `vm-summary-strip-subject-tags' removes them from summary lines as well.
 
-VM 8.2.0
-
-  CHANGES
+   * New variable `vm-save-using-auto-folders' (default t), can be used to
+     turn off auto-folder suggestions during message save.
 
    * New variable (actually added in 8.2.0a)
      `vm-fill-paragraphs-containing-long-lines-in-reply' which specifies the
@@ -51,15 +54,6 @@ VM 8.2.0
 
    * Newly documented command `vm-fill-long-lines-in-reply' fills a message
      being composed, along with its included text.
-
-   * The variable `vm-w3m-use-w3m-minor-mode-map' is set to `nil' by default
-     so that VM key bindings will be functional inside HTML text (when
-     displayed using the Emacs-w3m browser).
-
-   * The variable `vm-mutable-frames' has a new name to convey its sense
-     better: `vm-mutable-frame-configuration'.  The old name still works.
-
-   IMPROVEMENTS
 
    * International character sets supported in IMAP mailbox names.
 
