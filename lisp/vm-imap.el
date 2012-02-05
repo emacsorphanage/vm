@@ -243,7 +243,10 @@ using cached data."
   "* Boolean flag to turn on or off logging of IMAP sessions.  Meant
   for debugging IMAP server interactions.")
 
-(defvar vm-imap-tokens nil)
+(defvar vm-imap-tokens nil
+  "Internal variable used to store a trail of the lexical and parsing
+activity carried out on the IMAP process output.  Used for debugging
+purposes.")
 
 (defsubst vm-imap-init-log ()
   (setq vm-imap-tokens nil))
@@ -1827,8 +1830,8 @@ messages.  `vm-imap-get-uid-list' is an older version of this function."
 (defun vm-imap-retrieve-to-target (process target statblob bodypeek)
   "Read a mail message from PROCESS and store it in TARGET, which
 is either a file or a buffer.  Report status using STATBLOB.  The
-boolean BODYPEEK tells if the bodypeek function is available for
-the IMAP server."
+boolean BODYPEEK indicates whether the bodypeek function is
+available for the IMAP server."
   (vm-assert (not (null vm-imap-read-point)))
   (vm-imap-log-token 'retrieve)
   (let ((***start vm-imap-read-point)	; avoid dynamic binding of 'start'
@@ -1849,7 +1852,14 @@ the IMAP server."
 	   
 	   (need-ok t)
 	   response)
-      (setq response (vm-imap-read-response-and-verify process "message FETCH"))
+
+      (condition-case err
+	  (setq response 
+		(vm-imap-read-response-and-verify process "message FETCH"))
+	(error 
+	 (vm-imap-normal-error (error-message-string err)))
+	(quit 
+	 (vm-imap-normal-error "quit signal received during retrieval")))
       (cond ((vm-imap-response-matches response '* 'atom 'FETCH 'list)
 	     (setq fetch-response response))
 	    (t
@@ -2119,7 +2129,7 @@ See also `vm-imap-get-message-size'."
   (set-marker end nil))
 
 (defun vm-imap-read-response (process)
-  ;; Reads a line of respose from the imap PROCESS
+  "Reads a line of respose from the imap PROCESS.  Returns a list of tokens."
   ;;--------------------------------------------
   ;; This assertion often fails for some reason,
   ;; perhaps some asynchrony involved?
@@ -2147,9 +2157,11 @@ See also `vm-imap-get-message-size'."
 	  (setq tail (cdr tail)))))))
 
 (defun vm-imap-read-response-and-verify (process &optional command-desc)
-  ;; Reads a line of response from the imap PROCESS and checks for
-  ;; standard errors like "BAD" and "BYE".  Optional COMMAND-DESC is a
-  ;; command description that can be printed with the error message.
+  "Reads a line of response from the imap PROCESS and checks for
+standard errors like \"BAD\" and \"BYE\".  Returns a list of tokens.
+
+Optional COMMAND-DESC is a command description that can be
+printed with the error message."
   ;;--------------------------------------------
   ;; This assertion often fails for some reason,
   ;; perhaps some asynchrony involved?
@@ -2170,6 +2182,18 @@ See also `vm-imap-get-message-size'."
 
 
 (defun vm-imap-read-object (process &optional skip-eol)
+  "Reads a single token from the PROCESS and returns it.  If the
+output from PROCESS is incomplete, waits until enough output becomes
+available." 
+  ;; The possible tokens are:
+  ;;   (end-of-line)
+  ;;   (atom position position)
+  ;;   (string position position)
+  ;;   (vector token...)
+  ;;   (list token...)
+  ;;   close-bracket
+  ;;   close-paren
+  ;;   close-brace
   ;;----------------------------------
   ;; Originally, this assertion failed often for some reason,
   ;; perhaps some asynchrony involved?
@@ -2235,17 +2259,17 @@ See also `vm-imap-get-message-size'."
 		 ;; string ::= { n-octets } end-of-line octets...
 		 (forward-char 1)
 		 (let (start obj n-octets)
-		   ;; better check if we have a number here because
-		   ;; gmail sometimes puts random stuff.
-		   (if (not (save-excursion 
-			      (looking-at "[0-9]*}")))
-		       (setq token '(open-brace) done t)
-		     (setq obj (vm-imap-read-object process))
-		     (unless (eq (car obj) 'atom)
+		   (setq obj (vm-imap-read-object process))
+		     (unless (and (eq (car obj) 'atom)
+				  (string-match 
+				   "[0-9]*"
+				   (buffer-substring (nth 1 obj) (nth 2 obj))))
 		       (vm-imap-protocol-error "number expected after {"))
-		     (setq n-octets (string-to-number
-				     (buffer-substring (nth 1 obj)
-						       (nth 2 obj))))
+		     ;; gmail sometimes outputs random strings in
+		     ;; braces, but we can't accept them.
+		     (setq n-octets 
+			   (string-to-number
+			    (buffer-substring (nth 1 obj) (nth 2 obj))))
 		     (setq obj (vm-imap-read-object process))
 		     (unless (eq (car obj) 'close-brace)
 		       (vm-imap-protocol-error "} expected"))
@@ -2259,7 +2283,7 @@ See also `vm-imap-get-message-size'."
 		       (vm-accept-process-output process))
 		     (goto-char (+ start n-octets))
 		     (setq token (list 'string start (point))
-			   done t))))
+			   done t)))
 		((looking-at "}")
 		 (forward-char 1)
 		 (setq token '(close-brace) done t))
