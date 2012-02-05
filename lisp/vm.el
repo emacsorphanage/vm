@@ -77,7 +77,7 @@
 
 ;;;###autoload
 (defun* vm (&optional folder &key (read-only nil) (access-method nil)
-		      (reload nil) (revisit nil))
+		      (reload nil) (just-visit nil))
   "Read mail under Emacs.
 Optional first arg FOLDER specifies the folder to visit.  It can
 be the path name of a local folder or the maildrop specification
@@ -120,9 +120,10 @@ deleted messages.  Use `###' to expunge deleted messages."
   ;; an existing buffer.  All initialisations must be performed but
   ;; some variables need to be preserved, e.g., vm-folder-access-data.
 
-  ;; REVISIT, if non-nil, means that, if the folder has already been
-  ;; visited, then it should be just selected.  No further processing
-  ;; should be done.
+  ;; JUST-VISIT, if non-nil, says that the folder should be visited
+  ;; with as little intial processing as possible.  No summary
+  ;; generation, no moving of the message-pointer, no retrieval of new
+  ;; mail.
 
   ;; The functions find-name-for-spec and find-spec-for-name translate
   ;; between folder names and maildrop specs for the server folders.
@@ -132,30 +133,30 @@ deleted messages.  Use `###' to expunge deleted messages."
   ;; recursive call to vm in order to allow defadvice on its first call
   (unless (boundp 'vm-session-beginning)
     (vm folder :read-only read-only :access-method access-method
-	:reload reload :revisit revisit))
+	:reload reload :just-visit just-visit))
   ;; set inhibit-local-variables non-nil to protect
   ;; against letter bombs.
   ;; set enable-local-variables to nil for newer Emacses
   (catch 'done
+    (unless folder
+      (setq folder vm-primary-inbox))
     ;; deduce the access method if none specified
-    (if (null access-method)
-	(let ((f (or folder vm-primary-inbox)))
-	  (cond ((bufferp f)		; may be unnecessary. USR, 2010-01
-		 (setq access-method vm-folder-access-method))
-		((and (stringp f)
-		      (vm-imap-folder-spec-p f))
-		 (setq access-method 'imap
-		       folder f))
-		((and (stringp f)
-		      (vm-pop-folder-spec-p f))
-		 (setq access-method 'pop
-		       folder f)))))
+    (unless access-method
+      (cond ((bufferp folder)	    ; may be unnecessary. USR, 2010-01
+	     (setq access-method vm-folder-access-method))
+	    ((and (stringp folder) (vm-imap-folder-spec-p folder))
+	     (setq access-method 'imap))
+	    ((and (stringp folder) (vm-pop-folder-spec-p folder))
+	     (setq access-method 'pop))
+	    ((stringp folder)
+	     (setq folder 
+		   (expand-file-name folder vm-folder-directory)))))
     (let ((full-startup (and (not reload) (not (bufferp folder))))
 	  ;; if we have been asked to visit a folder that is already
 	  ;; visited, then we don't do a full-startup unless we are
 	  ;; reloading.  but what exactly do we do? - USR, 2011-04-24
 	  (did-read-index-file nil)
-	  folder-buffer first-time totals-blurb
+	  folder-buffer set-vm-mode totals-blurb
 	  folder-name account-name remote-spec
 	  revisiting preserve-auto-save-file)
       (cond ((and full-startup (eq access-method 'pop))
@@ -176,112 +177,65 @@ deleted messages.  Use `###' to expunge deleted messages."
 		 (setq folder-name account-name))
 	     (setq folder (vm-imap-make-filename-for-spec remote-spec))))
       (if (bufferp folder)
-	  (setq revisiting revisit
+	  (setq revisiting just-visit
 		folder-buffer folder)
 	(setq revisiting nil)
 	(setq folder-buffer (vm-read-folder folder remote-spec folder-name)))
       (set-buffer folder-buffer)
       ;; Thunderbird folders
-      (let ((msf (concat (buffer-file-name) ".msf")))
-	;; notice the message summary file of Thunderbird 
-        (setq vm-folder-read-thunderbird-status 
-	      (and (file-exists-p msf)
-		   vm-sync-thunderbird-status)))
+      (setq vm-folder-read-thunderbird-status 
+	    (and (vm-thunderbird-folder-p (buffer-file-name))
+		 vm-sync-thunderbird-status))
       (if (and vm-fsfemacs-mule-p enable-multibyte-characters)
 	  (set-buffer-multibyte nil))	; is this safe?
       ;; for MULE
-      ;;
-      ;; If the file coding system is not a no-conversion variant,
-      ;; make it so by encoding all the text, then setting the
-      ;; file coding system and decoding it.  This situation is
-      ;; only possible if a file is visited and then vm-mode is
-      ;; run on it afterwards.
-      ;;
-      ;; There are separate code blocks for FSF Emacs and XEmacs
-      ;; because the coding systems have different names.
       (defvar buffer-file-coding-system)
-      (if (and (or vm-xemacs-mule-p vm-xemacs-file-coding-p)
-	       (not (eq (get-coding-system buffer-file-coding-system)
-			(get-coding-system 'no-conversion-unix)))
-	       (not (eq (get-coding-system buffer-file-coding-system)
-			(get-coding-system 'no-conversion-dos)))
-	       (not (eq (get-coding-system buffer-file-coding-system)
-			(get-coding-system 'no-conversion-mac)))
-	       (not (eq (get-coding-system buffer-file-coding-system)
-			(get-coding-system 'binary))))
-	  (let ((buffer-read-only nil)
-		(omodified (buffer-modified-p)))
-	    (unwind-protect
-		(progn
-		  (encode-coding-region (point-min) (point-max)
-					buffer-file-coding-system)
-		  (set-buffer-file-coding-system 'no-conversion nil)
-		  (decode-coding-region (point-min) (point-max)
-					buffer-file-coding-system))
-	      (set-buffer-modified-p omodified))))
-      (if (and vm-fsfemacs-mule-p (null buffer-file-coding-system))
-	  (set-buffer-file-coding-system 'raw-text nil))
-      (if (and vm-fsfemacs-mule-p
-	       (not (eq (coding-system-base buffer-file-coding-system)
-			(coding-system-base 'raw-text-unix)))
-	       (not (eq (coding-system-base buffer-file-coding-system)
-			(coding-system-base 'raw-text-mac)))
-	       (not (eq (coding-system-base buffer-file-coding-system)
-			(coding-system-base 'raw-text-dos)))
-	       (not (eq (coding-system-base buffer-file-coding-system)
-			(coding-system-base 'no-conversion))))
-	  (let ((buffer-read-only nil)
-		(omodified (buffer-modified-p)))
-	    (unwind-protect
-		(progn
-		  (encode-coding-region (point-min) (point-max)
-					buffer-file-coding-system)
-		  (set-buffer-file-coding-system 'raw-text nil)
-		  (decode-coding-region (point-min) (point-max)
-					buffer-file-coding-system))
-	      (set-buffer-modified-p omodified))))
+      (if (or vm-xemacs-mule-p vm-xemacs-file-coding-p)
+	  (vm-setup-xemacs-folder-coding-system))
+      (if vm-fsfemacs-mule-p
+	  (vm-setup-fsfemacs-folder-coding-system))
+
       (vm-check-for-killed-summary)
       (vm-check-for-killed-presentation)
       ;; If the buffer's not modified then we know that there can be no
       ;; messages in the folder that are not on disk.
       (unless (buffer-modified-p) 
 	(setq vm-messages-not-on-disk 0))
-      (setq first-time (not (eq major-mode 'vm-mode))
-	    preserve-auto-save-file (and buffer-file-name
-					  (not (buffer-modified-p))
-					  (file-newer-than-file-p
-					   (make-auto-save-file-name)
-					   buffer-file-name)))
-      (setq vm-folder-read-only (or preserve-auto-save-file read-only
-				    (default-value 'vm-folder-read-only)
-				    (and first-time buffer-read-only)))
+      (setq set-vm-mode (not (eq major-mode 'vm-mode)))
+      (setq preserve-auto-save-file 
+	    (and buffer-file-name (not (buffer-modified-p))
+		 (file-newer-than-file-p (make-auto-save-file-name)
+					 buffer-file-name)))
+      (setq vm-folder-read-only 
+	    (or preserve-auto-save-file read-only
+		(default-value 'vm-folder-read-only)
+		(and set-vm-mode buffer-read-only)))
       ;; If this is not a VM mode buffer then some initialization
       ;; needs to be done
-      (if first-time
-	  (progn
-	    (buffer-disable-undo (current-buffer))
-	    (abbrev-mode 0)
-	    (auto-fill-mode 0)
-	    ;; If an 8-bit message arrives undeclared the 8-bit
-	    ;; characters in it should be displayed using the
-	    ;; user's default face charset, rather than as octal
-	    ;; escapes.
-	    (vm-fsfemacs-nonmule-display-8bit-chars)
-	    (vm-mode-internal access-method reload)
-	    (if full-startup
-		(cond ((eq access-method 'pop)
-		       (vm-set-folder-pop-maildrop-spec remote-spec))
-		      ((eq access-method 'imap)
-		       (vm-set-folder-imap-maildrop-spec remote-spec)
-		       (vm-register-folder-garbage 
-			'vm-kill-folder-imap-session nil)
-		       )))
-	    ;; If the buffer is modified we don't know if the
-	    ;; folder format has been changed to be different
-	    ;; from index file, so don't read the index file in
-	    ;; that case.
-	    (if (not (buffer-modified-p))
-		(setq did-read-index-file (vm-read-index-file-maybe)))))
+      (when set-vm-mode
+	(buffer-disable-undo (current-buffer))
+	(abbrev-mode 0)
+	(auto-fill-mode 0)
+	;; If an 8-bit message arrives undeclared the 8-bit
+	;; characters in it should be displayed using the
+	;; user's default face charset, rather than as octal
+	;; escapes.
+	(vm-fsfemacs-nonmule-display-8bit-chars)
+	(vm-mode-internal access-method reload)
+	(if full-startup
+	    (cond ((eq access-method 'pop)
+		   (vm-set-folder-pop-maildrop-spec remote-spec))
+		  ((eq access-method 'imap)
+		   (vm-set-folder-imap-maildrop-spec remote-spec)
+		   (vm-register-folder-garbage 
+		    'vm-kill-folder-imap-session nil)
+		   )))
+	;; If the buffer is modified we don't know if the
+	;; folder format has been changed to be different
+	;; from index file, so don't read the index file in
+	;; that case.
+	(unless (buffer-modified-p)
+	  (setq did-read-index-file (vm-read-index-file-maybe))))
 
       ;; builds message list, reads attributes if they weren't
       ;; read from an index file.
@@ -291,49 +245,41 @@ deleted messages.  Use `###' to expunge deleted messages."
 				    :gobble-order (not did-read-index-file) 
 				    :run-hooks nil))
 
-      (if (and first-time (not did-read-index-file))
-	  (progn
-	    (vm-gobble-visible-header-variables)
-	    (vm-gobble-bookmark)
-	    (vm-gobble-pop-retrieved)
-	    (vm-gobble-imap-retrieved)
-	    (vm-gobble-summary)
-	    (vm-gobble-labels)))
+      (if (and set-vm-mode (not did-read-index-file))
+	  (vm-gobble-headers))
+
+      (when just-visit
+	(setq full-startup nil))
 
       ;; Recall the UID VALIDITY value stored in the cache folder
-      (cond ((eq access-method 'imap)
-	     (if vm-imap-retrieved-messages
-		 (vm-set-folder-imap-uid-validity 
-		  (vm-imap-recorded-uid-validity))))
-	    ((eq access-method 'pop)
-	     ;; FIXME yet to be filled in
-	     ))
+      (when (and (eq access-method 'imap) vm-imap-retrieved-messages)
+	(vm-set-folder-imap-uid-validity (vm-imap-recorded-uid-validity)))
 
-      (if first-time
-	  (vm-start-itimers-if-needed))
+      (when set-vm-mode
+	(vm-start-itimers-if-needed))
 
       ;; make a new frame if the user wants one.  reuse an
       ;; existing frame that is showing this folder.
-      (if (and full-startup
-	       ;; this so that "emacs -f vm" doesn't create a frame.
-	       this-command)
-	  (apply 'vm-goto-new-folder-frame-maybe
-		 (if folder '(folder) '(primary-folder folder))))
+      (when (and full-startup
+		 ;; this so that "emacs -f vm" doesn't create a frame.
+		 this-command)
+	(apply 'vm-goto-new-folder-frame-maybe
+	       (if folder '(folder) '(primary-folder folder))))
 
       ;; raise frame if requested and apply startup window
       ;; configuration.
-      (if full-startup
-	  (let ((buffer-to-display (or vm-summary-buffer
-				       vm-presentation-buffer
-				       (current-buffer))))
-	    (vm-display buffer-to-display buffer-to-display
-			(list this-command)
-			(list (or this-command 'vm) 'startup))
-	    (if vm-raise-frame-at-startup
-		(vm-raise-frame))))
+      (when full-startup
+	(let ((buffer-to-display (or vm-summary-buffer
+				     vm-presentation-buffer
+				     (current-buffer))))
+	  (vm-display buffer-to-display buffer-to-display
+		      (list this-command)
+		      (list (or this-command 'vm) 'startup))
+	  (if vm-raise-frame-at-startup
+	      (vm-raise-frame))))
 
       ;; if the folder is being revisited, nothing more to be done
-      (when (and revisiting (not first-time))
+      (when (and revisiting (not set-vm-mode))
 	(throw 'done t))
 
       ;; say this NOW, before the non-previewers read a message,
@@ -354,19 +300,19 @@ deleted messages.  Use `###' to expunge deleted messages."
 	(vm-menu-install-visited-folders-menu))
 
       (when full-startup
-	(if (and (vm-should-generate-summary)
-		 ;; don't generate a summary if recover-file is
-		 ;; likely to happen, since recover-file does
-		 ;; not work in a summary buffer.
-		 (not preserve-auto-save-file))
-	    (vm-summarize t nil))
+	(when (and (vm-should-generate-summary)
+		   ;; don't generate a summary if recover-file is
+		   ;; likely to happen, since recover-file does
+		   ;; not work in a summary buffer.
+		   (not preserve-auto-save-file))
+	  (vm-summarize t nil))
 	;; raise the summary frame if the user wants frames
 	;; raised and if there is a summary frame.
-	(if (and vm-summary-buffer
-		 vm-mutable-frame-configuration
-		 vm-frame-per-summary
-		 vm-raise-frame-at-startup)
-	    (vm-raise-frame))
+	(when (and vm-summary-buffer
+		   vm-mutable-frame-configuration
+		   vm-frame-per-summary
+		   vm-raise-frame-at-startup)
+	  (vm-raise-frame))
 	;; if vm-mutable-window-configuration is nil, the startup
 	;; configuration can't be applied, so do
 	;; something to get a VM buffer on the screen
@@ -390,7 +336,7 @@ deleted messages.  Use `###' to expunge deleted messages."
       (run-hooks 'vm-visit-folder-hook)
 
       ;; Warn user about auto save file, if appropriate.
-      (if preserve-auto-save-file
+      (when preserve-auto-save-file
 	  (vm-warn 0 2
 	   (substitute-command-keys
 	    (concat
@@ -400,30 +346,89 @@ deleted messages.  Use `###' to expunge deleted messages."
       ;; if we're not doing a full startup or if doing more would
       ;; trash the auto save file that we need to preserve,
       ;; stop here.
-      (if (or (not full-startup) preserve-auto-save-file)
-	  (throw 'done t))
+      (when (or (not full-startup) preserve-auto-save-file)
+	(throw 'done t))
       
-      (if (vm-interactive-p)
-	  (vm-inform 5 totals-blurb))
+      (when (vm-interactive-p)
+	(vm-inform 5 totals-blurb))
 
-      (if (and vm-auto-get-new-mail
-	       (not vm-block-new-mail)
-	       (not vm-folder-read-only))
-	  (progn
-	    (vm-inform 6 "%s: Checking for new mail..." (buffer-name))
-	    (if (vm-get-spooled-mail nil) ; automatic is non-interactive!
-		(progn
-		  (setq totals-blurb (vm-emit-totals-blurb))
-		  (if (vm-thoughtfully-select-message)
-		      (vm-present-current-message)
-		    (vm-update-summary-and-mode-line))))
-	    (vm-inform 5 totals-blurb)))
+      (when (and vm-auto-get-new-mail
+		 (not vm-block-new-mail)
+		 (not vm-folder-read-only))
+	(vm-inform 6 "%s: Checking for new mail..." (buffer-name))
+	(when (vm-get-spooled-mail nil)	; automatic is non-interactive!
+	  (setq totals-blurb (vm-emit-totals-blurb))
+	  (if (vm-thoughtfully-select-message)
+	      (vm-present-current-message)
+	    (vm-update-summary-and-mode-line)))
+	(vm-inform 5 totals-blurb))
 
       ;; Display copyright and copying info.
       (when (and (vm-interactive-p) (not vm-startup-message-displayed))
 	(vm-display-startup-message)
 	(if (not (input-pending-p))
 	    (vm-inform 5 totals-blurb))))))
+
+(defun vm-setup-xemacs-folder-coding-system ()
+  ;; If the file coding system is not a no-conversion variant,
+  ;; make it so by encoding all the text, then setting the
+  ;; file coding system and decoding it.  This situation is
+  ;; only possible if a file is visited and then vm-mode is
+  ;; run on it afterwards.
+  (if (and (not (eq (get-coding-system buffer-file-coding-system)
+		    (get-coding-system 'no-conversion-unix)))
+	   (not (eq (get-coding-system buffer-file-coding-system)
+		    (get-coding-system 'no-conversion-dos)))
+	   (not (eq (get-coding-system buffer-file-coding-system)
+		    (get-coding-system 'no-conversion-mac)))
+	   (not (eq (get-coding-system buffer-file-coding-system)
+		    (get-coding-system 'binary))))
+      (let ((buffer-read-only nil)
+	    (omodified (buffer-modified-p)))
+	(unwind-protect
+	    (progn
+	      (encode-coding-region (point-min) (point-max)
+				    buffer-file-coding-system)
+	      (set-buffer-file-coding-system 'no-conversion nil)
+	      (decode-coding-region (point-min) (point-max)
+				    buffer-file-coding-system))
+	  (set-buffer-modified-p omodified)))))
+
+(defun vm-setup-fsfemacs-folder-coding-system ()
+  ;; If the file coding system is not a no-conversion variant,
+  ;; make it so by encoding all the text, then setting the
+  ;; file coding system and decoding it.  This situation is
+  ;; only possible if a file is visited and then vm-mode is
+  ;; run on it afterwards.
+  (if (null buffer-file-coding-system)
+      (set-buffer-file-coding-system 'raw-text nil))
+  (if (and (not (eq (coding-system-base buffer-file-coding-system)
+		    (coding-system-base 'raw-text-unix)))
+	   (not (eq (coding-system-base buffer-file-coding-system)
+		    (coding-system-base 'raw-text-mac)))
+	   (not (eq (coding-system-base buffer-file-coding-system)
+		    (coding-system-base 'raw-text-dos)))
+	   (not (eq (coding-system-base buffer-file-coding-system)
+		    (coding-system-base 'no-conversion))))
+      (let ((buffer-read-only nil)
+	    (omodified (buffer-modified-p)))
+	(unwind-protect
+	    (progn
+	      (encode-coding-region (point-min) (point-max)
+				    buffer-file-coding-system)
+	      (set-buffer-file-coding-system 'raw-text nil)
+	      (decode-coding-region (point-min) (point-max)
+				    buffer-file-coding-system))
+	  (set-buffer-modified-p omodified)))))
+
+(defun vm-gobble-headers ()
+  "Process all the VM-specific headers in the current folder."
+  (vm-gobble-visible-header-variables)
+  (vm-gobble-bookmark)
+  (vm-gobble-pop-retrieved)
+  (vm-gobble-imap-retrieved)
+  (vm-gobble-summary)
+  (vm-gobble-labels))
 
 ;;;###autoload
 (defun vm-other-frame (&optional folder read-only)
@@ -471,7 +476,7 @@ Customize VM by setting variables and store them in the `vm-init-file'."
   (vm-display nil nil '(vm-mode) '(vm-mode)))
 
 ;;;###autoload
-(defun vm-visit-folder (folder &optional read-only revisit)
+(defun vm-visit-folder (folder &optional read-only just-visit)
   "Visit a mail file.
 VM will parse and present its messages to you in the usual way.
 
@@ -484,10 +489,10 @@ that the folder should be considered read only.  No attribute
 changes, messages additions or deletions will be allowed in the
 visited folder.
 
-The optional third arg REVISIT (not available interactively) says
-that, if the folder is already visited, then it should be merely
-selected without doing further processing (such as moving the
-message-pointer or getting new mail)."
+The optional third arg JUST-VISIT (not available interactively)
+says that the folder should be visited with as little intial
+processing as possible.  No summary generation, no moving of the
+message-pointer, no retrieval of new mail."
   (interactive
    (save-current-buffer
      (vm-session-initialization)
@@ -530,7 +535,8 @@ message-pointer or getting new mail)."
 	     (setq folder (expand-file-name folder)
 		   vm-last-visit-folder folder))))
     (vm folder 
-	:read-only read-only :access-method access-method :revisit revisit)))
+	:read-only read-only :access-method access-method 
+	:just-visit just-visit)))
 
 ;;;###autoload
 (defun vm-visit-folder-other-frame (folder &optional read-only)

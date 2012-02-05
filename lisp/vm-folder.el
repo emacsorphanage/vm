@@ -1399,6 +1399,9 @@ vm-folder-type is initialized here."
 ;; Commentary here:
 ;; http://www.eyrich-net.org/mozilla/X-Mozilla-Status.html?en
 
+(defun vm-thunderbird-folder-p (folder-path-name)
+  (file-exists-p (concat folder-path-name ".msf")))
+
 (defun vm-read-thunderbird-status (message)
   (let (status)
     (setq status (vm-get-header-contents message "X-Mozilla-Status:"))
