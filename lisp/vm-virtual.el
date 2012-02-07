@@ -42,7 +42,7 @@
 )
 
 (declare-function vm-visit-folder "vm" 
-		  (folder &optional read-only revisit))
+		  (folder &optional read-only just-visit))
 (declare-function vm-visit-virtual-folder "vm"
 		  (folder &optional read-only bookmark))
 (declare-function vm-mode "vm" 
