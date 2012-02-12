@@ -3918,7 +3918,7 @@ arrow only if the summary window is not the only existing window."
   "*Level of chattiness in progress messages displayed in the
 minibuffer.  Indicative levels are:
   1 - extremely quiet
-  5 - normally level
+  5 - normal level
   7 - detailed level
  10 - debugging information"
   :group 'vm-misc

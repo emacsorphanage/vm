@@ -545,11 +545,11 @@ Toolbars are updated."
 		    (equal (vm-message-id-number-of m) "Q"))
 	  (vm-update-message-summary (car ms)))
 	(if (eq (mod n 10) 0)
-	    (vm-inform 6 "%s: Recreating summary... %s" 
+	    (vm-inform 7 "%s: Recreating summary... %s" 
 		       (buffer-name vm-mail-buffer) n))
 	(setq n (1+ n))
 	(setq ms (cdr ms)))
-      (vm-inform 6 "%s: Recreating summary... done" 
+      (vm-inform 7 "%s: Recreating summary... done" 
 		 (buffer-name vm-mail-buffer))
       (setq vm-messages-needing-summary-update nil)))
   (vm-do-needed-folders-summary-update)
@@ -1629,7 +1629,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	      ((vm-unread-flag (car mp))
 	       (vm-increment vm-unread-count)))
 	(if (zerop (% vm-total-count modulus))
-	    (vm-inform 6 "%s: Reading attributes... %d" (buffer-name)
+	    (vm-inform 7 "%s: Reading attributes... %d" (buffer-name)
 		       vm-total-count))
 	(setq mp (cdr mp)))
       (cond ((not (zerop vm-upgrade-count))
@@ -1641,7 +1641,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			      "Reset to empty data.")
 		      (buffer-name) vm-bad-cache-count))
 	    ((>= vm-total-count modulus)
-	     (vm-inform 6 "%s: Reading attributes... done" (buffer-name))))
+	     (vm-inform 7 "%s: Reading attributes... done" (buffer-name))))
       (if (null message-list)
 	  (setq vm-totals (list vm-modification-counter
 				vm-total-count
@@ -2998,7 +2998,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 	(let ((print-escape-newlines t)
 	      (print-length nil)
 	      m-list mp m)
-	  (vm-inform 6 "%s: Sorting for index file..." (buffer-name))
+	  (vm-inform 7 "%s: Sorting for index file..." (buffer-name))
 	  (setq m-list (sort (copy-sequence vm-message-list)
 			     (function vm-sort-compare-physical-order)))
 	  (vm-inform 6 "%s: Stuffing index file..." (buffer-name))
@@ -3614,9 +3614,9 @@ Giving a prefix argument overrides the variable and no expunge is done."
     (vm-save-restriction
      (let ((buffer-read-only))
        (vm-discard-fetched-messages)
-       (vm-inform 6 "%s: Stuffing cached data..." (buffer-name))
+       (vm-inform 7 "%s: Stuffing cached data..." (buffer-name))
        (vm-stuff-folder-data nil)
-       (vm-inform 6 "%s: Stuffing cached data... done" (buffer-name))
+       (vm-inform 7 "%s: Stuffing cached data... done" (buffer-name))
        (if vm-message-list
 	   (progn
 	     (if (and vm-folders-summary-database buffer-file-name)
@@ -3624,7 +3624,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 		   (vm-compute-totals)
 		   (vm-store-folder-totals buffer-file-name (cdr vm-totals))))
 	     ;; get summary cache up-to-date
-	     (vm-inform 6 "%s: Stuffing folder data..." (buffer-name))
+	     (vm-inform 7 "%s: Stuffing folder data..." (buffer-name))
 	     (vm-update-summary-and-mode-line)
 	     (vm-stuff-bookmark)
 	     (vm-stuff-pop-retrieved)
@@ -3635,7 +3635,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	     (vm-stuff-summary)
 	     (and vm-message-order-changed
 		  (vm-stuff-message-order))
-	     (vm-inform 6 "%s: Stuffing folder data... done" (buffer-name))))
+	     (vm-inform 7 "%s: Stuffing folder data... done" (buffer-name))))
        nil ))))
 
 ;;;###autoload
@@ -3755,13 +3755,13 @@ folder."
 		     (file-exists-p msf))
                 (delete-file msf)))
 	  ;; stuff the attributes of messages that need it.
-	  (vm-inform 6 "%s: Stuffing cached data..." (buffer-name))
+	  (vm-inform 7 "%s: Stuffing cached data..." (buffer-name))
 	  (vm-stuff-folder-data nil)
-	  (vm-inform 6 "%s: Stuffing cached data... done" (buffer-name))
+	  (vm-inform 7 "%s: Stuffing cached data... done" (buffer-name))
 	  ;; stuff bookmark and header variable values
 	  (when vm-message-list
 	    ;; get summary cache up-to-date
-	    (vm-inform 6 "%s: Stuffing folder data..." (buffer-name))
+	    (vm-inform 7 "%s: Stuffing folder data..." (buffer-name))
 	    (vm-update-summary-and-mode-line)
 	    (vm-stuff-bookmark)
 	    (vm-stuff-pop-retrieved)
@@ -3772,7 +3772,7 @@ folder."
 	    (vm-stuff-summary)
 	    (and vm-message-order-changed
 		 (vm-stuff-message-order))
-	    (vm-inform 6 "%s: Stuffing folder data... done" (buffer-name)))
+	    (vm-inform 7 "%s: Stuffing folder data... done" (buffer-name)))
 	  (vm-inform 5 "%s: Saving folder..." (buffer-name))
 	  (let ((vm-inhibit-write-file-hook t)
 		(oldmodebits (and (fboundp 'default-file-modes)
@@ -4240,11 +4240,11 @@ Same as \\[vm-recover-folder]."
 	      (condition-case data
 		  (progn
 		    (unless quietly 
-		      (vm-inform 6 "Counting messages in %s..." file))
+		      (vm-inform 7 "Counting messages in %s..." file))
 		    (call-process vm-grep-program nil t nil "-c" regexp
 				  (expand-file-name file))
 		    (unless quietly 
-		      (vm-inform 6 "Counting messages in %s... done" file)))
+		      (vm-inform 7 "Counting messages in %s... done" file)))
 		(error (vm-warn 1 2 "Attempt to run %s on %s signaled: %s"
 				vm-grep-program file data)
 		       (setq vm-grep-program nil)))
