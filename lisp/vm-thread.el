@@ -1258,17 +1258,23 @@ the cache is nil, calculates the parent and caches it.  USR, 2010-03-13"
   (or (vm-parent-of m)
       (vm-set-parent-of
        m
-       (or (vm-last-elem (vm-references m))
-	   (let (in-reply-to ids id)
-	     (setq in-reply-to (vm-get-header-contents m "In-Reply-To:" " ")
-		   ids (and in-reply-to (vm-parse in-reply-to
-						  "[^<]*\\(<[^>]+>\\)")))
-	     (while ids
-	       (when (< (length id) (length (car ids)))
-		   (setq id (car ids)))
-	       (setq ids (cdr ids)))
-	     (and id (vm-set-references-of m (list id)))
-	     id )))))
+       (or 
+	;; Use the In-Reply-To header if it exists
+	(let (in-reply-to ids id)
+	  (setq in-reply-to (vm-get-header-contents m "In-Reply-To:" " ")
+		ids (and in-reply-to (vm-parse in-reply-to
+					       "[^<]*\\(<[^>]+>\\)")))
+	  (while ids
+	    (when (< (length id) (length (car ids)))
+	      (setq id (car ids)))
+	    (setq ids (cdr ids)))
+	  ;; we do not want to hack the References header any more
+	  ;; USR, 2012-02-12
+	  ;; (when id (vm-set-references-of m (list id)))
+	  id )
+	;; Otherwise use the last element of the References header
+	;; But References headers are often buggy
+	(vm-last-elem (vm-references m))))))
 (defalias 'vm-th-parent 'vm-parent)
 
 ;;;###autoload

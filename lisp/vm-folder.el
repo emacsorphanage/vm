@@ -3854,6 +3854,10 @@ Optional argument REMOTE-SPEC gives the maildrop specification for
 the server folder that the FOLDER might be caching.
 Optional argument FOLDER-NAME gives the name of the folder that should
 be used as the name of the buffer."
+  ;; Security issue:
+  ;; set inhibit-local-variables non-nil to protect
+  ;; against letter bombs.
+  ;; set enable-local-variables to nil for newer Emacses
   (let ((file (or folder (expand-file-name vm-primary-inbox
 					   vm-folder-directory))))
     (if (file-directory-p file)
