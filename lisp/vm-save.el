@@ -645,7 +645,7 @@ Output, if any, is displayed.  The message is not altered."
 	(pop-up-windows (and pop-up-windows (eq vm-mutable-window-configuration t)))
 	;; prefix arg doesn't have "normal" meaning here, so only call
 	;; vm-select-operable-messages for marks and threads.
-	(mlist (vm-select-operable-messages 1 (vm-interactive-p) "Pipe")))
+	(mlist (vm-select-operable-messages 0 (vm-interactive-p) "Pipe")))
     (vm-retrieve-operable-messages 1 mlist)
     (save-excursion
       (set-buffer buffer)
@@ -760,7 +760,7 @@ arguments after the command finished."
 	(pop-up-windows (and pop-up-windows (eq vm-mutable-window-configuration t)))
 	;; prefix arg doesn't have "normal" meaning here, so only call
 	;; vm-select-operable-messages for marks and threads.
-	(mlist (vm-select-operable-messages 1 (vm-interactive-p) "Pipe"))
+	(mlist (vm-select-operable-messages 0 (vm-interactive-p) "Pipe"))
 	m process)
     (vm-retrieve-operable-messages 1 mlist)
     (save-excursion

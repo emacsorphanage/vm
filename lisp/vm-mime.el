@@ -6189,12 +6189,13 @@ minibuffer if the command is run interactively."
 	      (let ((coding-system-for-read (vm-binary-coding-system)))
 		(setq folder (find-file-noselect file)))
 	      (with-current-buffer folder
-		(vm-mode)
-		(setq mlist (vm-select-operable-messages 1 t "Attach")))))
+		(vm-mode))))
 	   (t
-	    (setq folder vm-mail-buffer)
-	    (with-current-buffer folder
-	      (setq mlist (vm-select-operable-messages 1 t "Attach")))))
+	    (setq folder vm-mail-buffer)))
+     ;; Select marked messages if there were any
+     (with-current-buffer folder
+       (setq mlist (vm-select-operable-messages 0 t "Attach")))
+     ;; Otherwise, ask the user
      (when (null mlist)
        (with-current-buffer folder
 	 (setq default (and vm-message-pointer
@@ -6209,6 +6210,7 @@ minibuffer if the command is run interactively."
 	   (setq result (string-to-number result)))
 	 (when (null (setq mp (nthcdr (1- result) vm-message-list)))
 	   (error "No such message."))))
+
      (setq description (read-string "Description: "))
      (when (string-match "^[ \t]*$" description)
        (setq description nil))
@@ -6223,8 +6225,8 @@ minibuffer if the command is run interactively."
 	 (vm-attach-message-internal (car message) description))
 	(t
 	 (vm-attach-message-digest-internal message description))))
-(defalias 'vm-mime-attach-message 'vm-attach-message)
 
+(defalias 'vm-mime-attach-message 'vm-attach-message)
 
 (defun vm-attach-message-internal (message description)
   "Attach MESSAGE as a mime object to the current composition.  Use

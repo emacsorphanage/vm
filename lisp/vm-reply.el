@@ -1376,7 +1376,7 @@ included in the digest."
       ;; prefix arg doesn't have "normal" meaning here, so only call
       ;; vm-select-operable-messages for marks or threads.
       (setq mlist (vm-select-operable-messages 
-		   1 (vm-interactive-p) "Send as digest")))
+		   0 (vm-interactive-p) "Send as digest")))
     ;; if messages were selected use them, otherwise the whole folder
     (cond ((cdr mlist)
 	   (vm-retrieve-operable-messages 1 mlist))
