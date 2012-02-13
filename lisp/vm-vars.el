@@ -2661,7 +2661,7 @@ will be unwittingly lost."
   :type '(choice (const :tag "Always ask" t) 
                  (const :tag "Only ask if messages will be lost" nil) 
                  (const :tag "Only ask if there are unsaved changes" 
-                        'if-something-will-be-lost)))
+                        if-something-will-be-lost)))
 
 (defcustom vm-confirm-new-folders nil
   "*Non-nil value causes interactive calls to `vm-save-message'
