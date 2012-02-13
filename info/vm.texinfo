@@ -2838,6 +2838,7 @@ for you
 automatically by setting the variable @code{vm-mail-header-from}.  (It is
 @code{nil} by default.)  
 
+@findex vm-mail-to-sender
 @vindex vm-mail-use-sender-address
 The variable @code{vm-mail-use-sender-address}, if set to @code{t}, asks VM
 to fill in the @code{To} header from the sender's name and address of the
@@ -3120,6 +3121,10 @@ Replies to the all recipients of the current message.
 @item F (@code{vm-followup-include-text})
 Replies to the all recipients of the current message and provides
 included text.
+@findex vm-mail-to-sender
+@item vm-mail-to-sender
+Writes a message to the sender of the current message.  (This is similar to
+@code{vm-reply} but meant for writing a message about a new subject.)
 @end table
 
 These commands all accept a numeric prefix argument @var{n}, which if
@@ -8246,29 +8251,53 @@ implement this functionality using overlays.
 @node Timers and Concurrency,, Extents and Overlays, Internals
 @section Timers and Concurrency
 
+@inindex timers
+@inindex concurrency
 VM has been designed as mainly a sequential program.  However, there
-three timer tasks that get scheduled to occur at regular intervals:
+are three timer tasks that get scheduled to occur at regular intervals: 
 
 @table @code
 @inindex vm-flush-itimer-function
 @item vm-flush-itimer-function
-Stores message attributes in the folder so that they will be saved
-when an auto-save is done.  This is controlled by the variable
-@code{vm-flush-interval}. 
+Stores any needed message attributes in folder buffers so that they will be
+saved when an autosave is done.  This is controlled by the variable
+@code{vm-flush-interval}.  
+
+This timer task switches to the folder buffers and
+inserts text in message headers.  So, it moves the point and mark and
+invalidates any cached
+positions in the folder buffer.
 @inindex vm-get-mail-itimer-function
+@inindex vm-message-list
 @item vm-get-mail-itimer-function
-Moves new mail from maildrops into the folder.  This is controlled by
-the variable @code{vm-auto-get-new-mail}.
+Moves any new mail from maildrops into the folder buffers.  This is
+controlled by the variable @code{vm-auto-get-new-mail}.
+
+This timer task switches to the folder buffers and appends text at the end.
+It would extend the @code{vm-message-list} variables in these buffers.
+It might also do various wholesale modifications such as sorting messages,
+modifying the threads database, updating the summary and modeline etc.  If
+there are POP or IMAP folders, it would execute server commands in the
+corresponding process buffers.
 @inindex vm-check-mail-itimer-function
 @item vm-check-mail-itimer-function
 Checks the maildrops for any new mail.  This is controlled by the
 variable @code{vm-mail-check-interval}.
+
+This timer task does not make any modifications to the folder buffers.
+However, it executes server command in the process buffers of POP or IMAP
+folders. 
 @end table
 
 @noindent These timer tasks are scheduled using the @code{itimer} package in
 XEmacs and the @code{timer} package in Gnu Emacs.
 
-
+@inindex vm-global-block-new-mail
+The basic synchronization mechanism is a global variable
+@code{vm-global-block-new-mail}.  If set, it prohibits the
+@code{vm-get-mail-itimer-function} and @code{vm-check-mail-itimer-function}
+from running.  All invocations of @code{get-new-mail} and
+@code{check-for-new-mail} functions set this variable during their activity.
 
 
 @node Concept Index, Key Index, Internals, Top
