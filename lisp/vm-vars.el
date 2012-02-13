@@ -1625,24 +1625,32 @@ The first matching list element will be used."
                  (repeat (list string string string))))
 
 (defcustom vm-mime-alternative-show-method 'best-internal
-  "*Value tells how to choose which multipart/alternative part to display.
-A MIME message of type multipart/alternative has multiple message
-parts containing the same information, but each part may be
-formatted differently.  VM will display only one of the parts.
-This variable tells VM how to choose which part to display.
-(There is a separate variable `vm-mime-alternative-yank-method'
+  "*Value tells how to choose which alternative to display when
+it displays a message with \"multipart/alternative\" content.
+Possible values are 'best, 'best-internal, 'all or a
+favorite-methods list as described below.
+
+  A MIME message of type multipart/alternative has multiple
+message parts containing the same information, but each part may
+be formatted differently.  VM will typically display only one of
+the parts.  This variable tells VM how to choose which part to
+display.
+
+  (There is a separate variable `vm-mime-alternative-yank-method'
 for deciding the multipart/alternative to be used in replies.)
 
-A value of 'best means choose the part that is the most faithful to
-the sender's original content that can be displayed.
+  A value of 'best means choose the part that is the most
+faithful to the sender's original content that can be displayed.
 
-A value of 'best-internal means choose the best part that can
-be displayed internally, (i.e. with the built-in capabilities
-of Emacs) and is allowed to be displayed internally (see
+  A value of 'best-internal means choose the best part that can
+be displayed internally, (i.e. with the built-in capabilities of
+Emacs) and is allowed to be displayed internally (see
 `vm-mime-internal-content-types').  If none of the parts can be
 displayed internally, behavior reverts to that of 'best.
 
-The value can also be a list of the form
+  A value of 'all means that all the alternatives are displayed.
+
+  The value can also be a list of the form
 
   (favorite TYPE ...)
 
@@ -1650,9 +1658,11 @@ with the first element of the list being the symbol 'favorite'.  The
 remaining elements of the list are strings specifying MIME types.
 VM will look for each TYPE in turn in the list of alternatives and
 choose the first matching alternative found that can be displayed.
+
 If the symbol 'favorite' is 'favorite-internal' instead, the first TYPE
 that matches an alternative that can be displayed internally will be
 chosen."
+
   :group 'vm-mime
   :type '(choice (choice (const best-internal)
                          (const best)
@@ -1661,20 +1671,25 @@ chosen."
                  (cons (const favorite-internal) (repeat string))))
 
 (defcustom vm-mime-alternative-yank-method 'best-internal
-  "*Value tells how to choose which multipart/alternative part to
-yank, i.e., include, in replies.  It is similar to
-`vm-mime-alternative-show-method' used for displaying messages.
+  "*Value tells how to choose which alternative to yank, i.e.,
+include, in replies, when it yanks a mesage with
+\"multipart/alternative\" content.  (It is similar to
+`vm-mime-alternative-show-method' used for displaying messages.)
+Possible values are 'best, 'best-internal, 'all or a
+favorite-methods list as described below.
 
-A value of 'best means choose the part that is the most faithful to
+  A value of 'best means choose the part that is the most faithful to
 the sender's original content that can be displayed.
 
-A value of 'best-internal means choose the best part that can
-be displayed internally, (i.e. with the built-in capabilities
-of Emacs) and is allowed to be displayed internally (see
+  A value of 'best-internal means choose the best part that can
+be displayed internally, (i.e. with the built-in capabilities of
+Emacs) and is allowed to be displayed internally (see
 `vm-mime-internal-content-types').  If none of the parts can be
 displayed internally, behavior reverts to that of 'best.
 
-The value can also be a list of the form
+  A value of 'all means that all the alternatives are yanked.
+
+  The value can also be a list of the form
 
   (favorite TYPE ...)
 
@@ -1682,6 +1697,7 @@ with the first element of the list being the symbol 'favorite'.  The
 remaining elements of the list are strings specifying MIME types.
 VM will look for each TYPE in turn in the list of alternatives and
 choose the first matching alternative found that can be displayed.
+
 If the symbol 'favorite' is 'favorite-internal' instead, the first TYPE
 that matches an alternative that can be displayed internally will be
 chosen."
