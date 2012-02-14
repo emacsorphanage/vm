@@ -91,7 +91,8 @@
   "*List of actions.
 Actions are associated with conditions from `vmpc-conditions' by one of
 `vmpc-actions-alist', `vmpc-reply-alist', `', `vmpc-forward-alist',
-`vmpc-resend-alist',  `vmpc-newmail-alist' or `vmpc-automorph-alist'.
+`vmpc-resend-alist',  `vmpc-mail-alist', `vmpc-newmail-alist' or
+`vmpc-automorph-alist'. 
 
 These are also the actions from which you can choose when using the newmail
 features of Personality Crisis, or the `vmpc-prompt-for-profile' action.
@@ -154,8 +155,16 @@ resending, composing or automorphing, then set this one."
 ;  :set 'vmpc-alist-set
   :group 'vmpc)
 
+(defcustom vmpc-mail-alist ()
+  "*An alist associating conditions with actions from `vmpc-actions'
+when composing a message starting from a folder."
+  :type (vmpc-defcustom-alist-type)
+;  :set 'vmpc-alist-set
+  :group 'vmpc)
+
 (defcustom vmpc-newmail-alist ()
-  "*An alist associating conditions with actions from `vmpc-actions' when composing."
+  "*An alist associating conditions with actions from `vmpc-actions'
+when composing." 
   :type (vmpc-defcustom-alist-type)
 ;  :set 'vmpc-alist-set
   :group 'vmpc)
@@ -190,8 +199,8 @@ right for you will depend on how often you send email to new addresses using
 
 (defvar vmpc-current-state nil
   "The current state of pcrisis.
-It is one of 'reply, 'forward, 'resend, 'automorph or 'newmail.
-It controls which actions/functions can/will be run.")
+It is one of 'reply, 'forward, 'resend, 'automorph, 'mail or 'newmail.
+It controls which actions/functions can/will be run.") 
 
 (defvar vmpc-current-buffer nil
   "The current buffer, i.e. 'none or 'composition.
@@ -619,7 +628,7 @@ CLUMP-SEP is specified, treat HDRFIELD as a regular expression and
 return the contents of all header fields which match that regexp,
 separated from each other by CLUMP-SEP."
   (if (and (eq vmpc-current-buffer 'none)
-	   (memq vmpc-current-state '(reply forward resend)))
+	   (memq vmpc-current-state '(reply forward resend mail)))
       (let ((mp (car (vm-select-operable-messages
 		      1 (vm-interactive-p) "Operate on")))
             content c)
@@ -634,7 +643,7 @@ separated from each other by CLUMP-SEP."
 (defun vmpc-get-header-contents (hdrfield &optional clump-sep)
  "Return the contents of HDRFIELD."
  (cond ((and (eq vmpc-current-buffer 'none)
-             (memq vmpc-current-state '(reply forward resend)))
+             (memq vmpc-current-state '(reply forward resend mail)))
         (vmpc-get-replied-header-contents hdrfield clump-sep))
        ((eq vmpc-current-state 'automorph)
         (vmpc-get-current-header-contents hdrfield clump-sep))))
@@ -642,7 +651,7 @@ separated from each other by CLUMP-SEP."
 (defun vmpc-get-replied-body-text ()
   "Return the body text of the message being replied to."
   (if (and (eq vmpc-current-buffer 'none)
-	   (memq vmpc-current-state '(reply forward resend)))
+	   (memq vmpc-current-state '(reply forward resend mail)))
       (save-excursion
 	(let* ((mp (car (vm-select-operable-messages
 			 1 (vm-interactive-p) "Operate on")))
@@ -660,7 +669,7 @@ separated from each other by CLUMP-SEP."
 Does nothing if that header doesn't exist."
   (let ((hdrcont (vmpc-get-replied-header-contents hdrfield)))
   (if (and (eq vmpc-current-buffer 'none)
-	   (memq vmpc-current-state '(reply forward resend))
+	   (memq vmpc-current-state '(reply forward resend mail))
 	   (not (equal hdrcont "")))
       (add-to-list 'vmpc-saved-headers-alist (cons hdrfield hdrcont)))))
 
@@ -668,7 +677,7 @@ Does nothing if that header doesn't exist."
   "Return the contents of HDRFIELD from `vmpc-saved-headers-alist'.
 The alist in question is created by `vmpc-save-replied-header'."
   (if (and (eq vmpc-current-buffer 'composition)
-	   (memq vmpc-current-state '(reply forward resend)))
+	   (memq vmpc-current-state '(reply forward resend mail)))
       (cdr (assoc hdrfield vmpc-saved-headers-alist))))
 
 (defun vmpc-substitute-replied-header (dest src)
@@ -676,7 +685,7 @@ The alist in question is created by `vmpc-save-replied-header'."
 For example, if the address you want to send your reply to is the same
 as the contents of the \"From\" header in the message you are replying
 to, use (vmpc-substitute-replied-header \"To\" \"From\"."
-  (if (memq vmpc-current-state '(reply forward resend))
+  (if (memq vmpc-current-state '(reply forward resend mail))
       (progn
 	(if (eq vmpc-current-buffer 'none)
 	    (vmpc-save-replied-header src))
@@ -1095,6 +1104,7 @@ The special action \"none\" will result in an empty action list."
                                (const reply)
                                (const forward)
                                (const resent)
+                               (const mail)
                                (const newmail))
                        (repeat (string :tag "Header"))))
   :group 'vmpc)
@@ -1255,13 +1265,14 @@ haven't yet been checked when this one is checked."
 (defun vmpc-folder-account-match (account-regexp)
   "Return true if the current folder's POP/IMAP account name matches REGEXP."
   (let ((account
-	 (cond ((eq vm-folder-access-method 'imap)
-		(vm-imap-account-name-for-spec (vm-folder-imap-maildrop-spec)))
-	       ((eq vm-folder-access-method 'pop)
-		(vm-pop-find-name-for-spec (vm-folder-pop-maildrop-spec)))
-	       (t "")
-	       )))
-    (string-match account-regexp account)))
+	   (cond 
+	    ((eq vm-folder-access-method 'imap)
+	     (vm-imap-account-name-for-spec (vm-folder-imap-maildrop-spec)))
+	    ((eq vm-folder-access-method 'pop)
+	     (vm-pop-find-name-for-spec (vm-folder-pop-maildrop-spec)))
+	    (t "")
+	    )))
+      (string-match account-regexp account)))
 
 (defun vmpc-header-match (hdrfield regexp &optional clump-sep num)
   "Return true if the contents of specified header HDRFIELD match REGEXP.
@@ -1273,7 +1284,7 @@ return the contents of all header fields which match that regexp,
 separated from each other by CLUMP-SEP.
 
 If NUM is specified return the match string NUM."
-  (cond ((memq vmpc-current-state '(reply forward resend))
+  (cond ((memq vmpc-current-state '(reply forward resend mail))
          (let ((hdr (vmpc-get-replied-header-contents hdrfield clump-sep)))
            (and hdr (string-match regexp hdr)
                 (if num (match-string num hdr) t))))
@@ -1302,7 +1313,7 @@ REGEXP."
   "Return non-nil if the contents of the message body match REGEXP.
 For automorph, this means the body of your message; when replying it
 means the body of the message being replied to."
-  (cond ((and (memq vmpc-current-state '(reply forward resend))
+  (cond ((and (memq vmpc-current-state '(reply forward resend mail))
 	      (eq vmpc-current-buffer 'none))
 	 (string-match regexp (vmpc-get-replied-body-text)))
 	((eq vmpc-current-state 'automorph)
@@ -1330,7 +1341,8 @@ Run this function in order to test/check your conditions."
       (setq vmpc-current-state (intern (completing-read
                                         "VMPC state (default is 'reply): "
                                         '(("reply") ("forward") ("resend")
-                                          ("newmail") ("automorph"))
+                                          ("mail") ("newmail")
+					  ("automorph"))
                                         nil t nil nil "reply"))
             vmpc-current-buffer 'none))
     (vm-follow-summary-cursor)
@@ -1479,6 +1491,19 @@ recursion nor concurrent calls."
 (defadvice vm-do-reply (around vmpc-reply activate)
   "*Reply to a message with pcrisis voodoo."
   (vmpc-init-vars 'reply)
+  (vmpc-build-true-conditions-list)
+  (vmpc-build-actions-to-run-list)
+  (vmpc-run-actions)
+  ad-do-it
+  (vmpc-create-sig-and-pre-sig-exerlays)
+  (vmpc-make-vars-local)
+  (vmpc-run-actions))
+
+(defadvice vm-mail-from-folder (around vmpc-mail activate)
+  "*Start a new message with pcrisis voodoo."
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
+  (vmpc-init-vars 'mail)
   (vmpc-build-true-conditions-list)
   (vmpc-build-actions-to-run-list)
   (vmpc-run-actions)

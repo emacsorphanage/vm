@@ -1645,10 +1645,15 @@ buffers.")
   (add-hook 'vm-mail-send-hook 'vm-forget-composition-buffer nil t)
   (vm-update-ml-composition-buffer-count))
 
-(defun vm-select-recipient-from-sender ()
+;;;###autoload
+(defun vm-select-recipient-from-sender-if-possible (&optional use-sender)
   "Select a recipient's address from the current message's sender, if
-there is a current message."
-  (when (and vm-mail-use-sender-address
+possible and appropriate.
+
+The optional argument USE-SENDER may be nil, in which case the
+variable `vm-mail-use-sender-address' determines whether the sender
+address is used."
+  (when (and (or use-sender vm-mail-use-sender-address)
 	     (memq major-mode '(vm-mode vm-virtual-mode 
 					vm-summary-mode vm-presentation-mode)))
     (vm-select-folder-buffer)

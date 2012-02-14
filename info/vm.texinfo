@@ -2785,15 +2785,17 @@ composing your message.
 
 @end table
 
-@findex vm-mail
 @kindex m
-The simplest command is @kbd{m} (@code{vm-mail}) which sends a mail
+@findex vm-mail-from-folder
+The simplest command is @kbd{m} (@code{vm-mail-from-folder}) which sends a mail
 message much as @kbd{M-x mail} does but allows the added commands
 described above.
 
-@code{vm-mail} can be invoked outside of VM by typing @kbd{M-x vm-mail}.
-However, only (@code{vm-yank-message-other-folder}) will work; all the
-other commands require a parent folder.
+@findex vm-mail
+The alternative command @code{vm-mail} can be invoked outside of VM by
+typing @kbd{M-x vm-mail}.  However, only
+(@code{vm-yank-message-other-folder}) will work; all the other commands
+require a parent folder.
 
 If you send a message and it is returned by the mail system
 because it was undeliverable, you can resend the message by
@@ -2838,15 +2840,15 @@ for you
 automatically by setting the variable @code{vm-mail-header-from}.  (It is
 @code{nil} by default.)  
 
-@findex vm-mail-to-sender
+@findex vm-mail-from-folder
 @vindex vm-mail-use-sender-address
 The variable @code{vm-mail-use-sender-address}, if set to @code{t}, asks VM
 to fill in the @code{To} header from the sender's name and address of the
-current message.  This has effect only when @code{vm-mail} is invoked from a
-VM folder.  When it is invoked from other buffers, the @code{To} headers is
-unfilled.  (Some people tend to use @code{vm-reply} to get this effect, but
-that is a bad practice because it also tags the new message as a reply to an
-older message.)
+current message.  This has effect only when @code{vm-mail-from-folder} is
+invoked from a VM folder.  When @code{vm-mail} is invoked, possibly from
+other buffers, the @code{To} headers is unfilled.  (Some people tend to use
+@code{vm-reply} to get this effect, but that is a bad practice because it
+also tags the new message as a reply to an older message.)
 
 The variable
 @code{vm-mail-mode-hidden-headers} can be used to hide some of the
@@ -5409,11 +5411,11 @@ or kill the summary, VM will delete the frame.
 
 @vindex vm-frame-per-composition
 Setting @code{vm-frame-per-composition} non-@code{nil} causes VM to create a
-new frame for the composition buffer when you run any of VM's
-message composition commands.  E.g. @code{vm-reply-include-text},
-@code{vm-mail}, @code{vm-forward-message}.  When you finish editing the
-composition and send it, or when you kill the composition buffer, 
-the frame will be deleted.
+new frame for the composition buffer when you run any of VM's message
+composition commands.  E.g. @code{vm-reply-include-text},
+@code{vm-mail-from-folder}, @code{vm-mail}, @code{vm-forward-message}.  When
+you finish editing the composition and send it, or when you kill the
+composition buffer, the frame will be deleted.
 
 @vindex vm-frame-per-edit
 The variable @code{vm-frame-per-edit}, if non-@code{nil}, tells VM to create a

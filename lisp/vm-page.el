@@ -28,7 +28,6 @@
   (require 'vm-minibuf)
   (require 'vm-folder)
   (require 'vm-summary)
-  (require 'vm-thread)
   (require 'vm-window)
   (require 'vm-motion)
   (require 'vm-menu)

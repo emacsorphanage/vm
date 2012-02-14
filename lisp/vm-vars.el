@@ -5956,7 +5956,7 @@ the users or bound to other functions in future versions of VM."
     (define-key map "c" 'vm-continue-composing-message)
     (define-key map "@" 'vm-send-digest)
     (define-key map "*" 'vm-optional-key)
-    (define-key map "m" 'vm-mail)
+    (define-key map "m" 'vm-mail-from-folder)
     (define-key map "g" 'vm-get-new-mail)
     (define-key map "G" 'vm-sort-messages)
     (define-key map "v" 'vm-visit-folder)

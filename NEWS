@@ -39,6 +39,12 @@ VM 8.2.0b1
 
    IMPROVEMENTS
 
+   * New command `vm-mail-from-folder', which is like `vm-mail', but depends
+     on the current folder as its parent folder and the current message as
+     its parent message.  Setting the variable `vm-mail-use-sender-address'
+     to `t' causes the command to pick up the sender of the current message
+     as the recipient of the new message.
+
    * New variable `vm-subject-tag-prefix' allows the subject tags added by
      mailing lists to be ignored during sorting etc. (similar to
      `vm-subject-ignored-prefix').  Another variable
@@ -80,10 +86,6 @@ VM 8.2.0b  (2011-12-28)
      folders and inherit some attributes, e.g., the read-only property.
 
   IMPROVEMENTS
-
-   * New variable `vm-mail-use-sender-address' allows `vm-mail' to pick up
-     the sender of the current message as the recipient of a new message
-     composition. 
 
    * See the new info manual section on "IMAP folders" for newly documented
      functions.  In particular, `vm-list-imap-folders' now lists the message

@@ -1130,46 +1130,61 @@ recipient list."
   (interactive)
   (vm-session-initialization)
   (vm-check-for-killed-folder)
-  (let ((guess (when (null to)
-		 (vm-select-recipient-from-sender))))
-    (vm-select-folder-buffer-if-possible)
-    (vm-check-for-killed-summary)
-    (vm-mail-internal :to to :guessed-to guess :subject subject)
-    (run-hooks 'vm-mail-hook)
-    (run-hooks 'vm-mail-mode-hook)))
+  (vm-select-folder-buffer-if-possible)
+  (vm-check-for-killed-summary)
+  (vm-mail-internal :to to :subject subject)
+  (run-hooks 'vm-mail-hook)
+  (run-hooks 'vm-mail-mode-hook))
 
 ;;;###autoload
-(defun vm-mail-other-frame (&optional to)
+(defun vm-mail-other-frame (&optional to subject)
   "Like vm-mail, but run in a newly created frame.
 Optional argument TO is a string that should contain a comma separated
 recipient list."
   (interactive)
   (vm-session-initialization)
   (when (null to)
-    (setq to (vm-select-recipient-from-sender)))
+    (setq to (vm-select-recipient-from-sender-if-possible)))
   (if (vm-multiple-frames-possible-p)
       (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
-    (vm-mail to))
+    (vm-mail to subject))
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
-(defun vm-mail-other-window (&optional to)
+(defun vm-mail-other-window (&optional to subject)
   "Like vm-mail, but run in a different window.
 Optional argument TO is a string that should contain a comma separated
 recipient list."
   (interactive)
   (vm-session-initialization)
   (when (null to)
-    (setq to (vm-select-recipient-from-sender)))
+    (setq to (vm-select-recipient-from-sender-if-possible)))
   (if (one-window-p t)
       (split-window))
   (other-window 1)
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
-    (vm-mail to)))
+    (vm-mail to subject)))
+
+;;;###autoload
+(defun vm-mail-from-folder (&optional subject)
+  "Compose a new mail message using the current folder as its
+parent folder and current message as its parent message.  If the
+variable `vm-mail-using-sender-address' is `t', then the sender of the
+current message is selected as the recipient of the new composition."
+  ;; FIXME We also need variants of this for other-frame and
+  ;; other-window.                                USR, 2012-01-19
+  
+  (interactive)
+  (vm-session-initialization)
+  (vm-select-folder-buffer-and-validate 1)
+  (let* ((guess (vm-select-recipient-from-sender-if-possible)))
+    (vm-mail-internal :to nil :guessed-to guess :subject subject)
+    (run-hooks 'vm-mail-hook)
+    (run-hooks 'vm-mail-mode-hook)))
 
 (fset 'vm-folders-summary-mode 'vm-mode)
 (put 'vm-folders-summary-mode 'mode-class 'special)
