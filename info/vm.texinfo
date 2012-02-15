@@ -1283,10 +1283,45 @@ full synchronization with the server.
 @section Thunderbird Folders
 
 @cindex Thunderbird
-VM can work with local folders managed by Mozilla Thunderbird.  You can
-find the location of Thunderbird's folders by examining the Account
-Settings for ``Local Folders'' inside Thunderbird.
+VM can work with local folders managed by Mozilla Thunderbird.  You can find
+the location of Thunderbird's folders by examining the Account Settings for
+``Local Folders'' inside Thunderbird.  You can visit any of the folders in
+that directory using VM and make changes.  Such changes will be propagated
+to Thunderbid in an appropriate way.
 
+@findex vm-visit-thunderbird-folder
+@vindex vm-thunderbird-folder-directory
+Alternatively, you can seet the variable
+@code{vm-thunderbird-folder-directory} to the directory where Thunderbird
+stores its folders, and use the command @code{M-x
+vm-visit-thunderbird-folder} to visit its folders.  This works the same way
+as @code{vm-visit-folder} except that the default directory for visiting
+folders as well as saving messages will be the value of
+@code{vm-thunderbird-folder-directory}.  On the other hand, the folders
+visited using @code{vm-visit-folder} will continue to be in
+@code{vm-folder-directory}, allowing you to manage the two spaces
+separately.
+
+If, on the other hand, you want to maintain a single space where VM
+and Thunderbird can jointly operate, then you should set the variable
+@code{vm-folder-directory} to that place and leave
+@code{vm-thunderbird-folder-directory} with its default value of
+@code{nil}.
+
+@unnumberedsubsec Differences in folder summary
+Most current versions of Thunderbird hide deleted messages from the summary
+window.  However, the deleted messages are still present in the folder.
+They are expunged from the folder only when you do some bulk operation such
+as ``purge'' or ``compact''.  Since the deleted messages are still present
+in the folder, when you visit the folder in VM, the deleted messages will
+appear in the VM summary buffer.  This is normal.
+
+If you want VM's summary buffer to appear similar to Thunderbird's, you can
+use the @command{vm-summary-faces-hide} command.  @xref{Hiding summary
+lines}. 
+
+
+@unnumberedsubsec How the interoperation works
 Thunderbird stores the folders in the @samp{From_} folder type.
 @xref{Folder types}.  Within such folders, Thunderbird stores the
 message status flags (message attributes such as whether a message is
@@ -1325,24 +1360,6 @@ variable.  You may set its default value in your @code{.vm} file.  To
 change it in a running Emacs session, you must use @code{setq-default}.
 @xref{Locals,, Local Variables, emacs, Gnu Emacs manual}.
 
-@findex vm-visit-thunderbird-folder
-@vindex vm-thunderbird-folder-directory
-A new experimental feature allows you to visit Thunderbird's local
-folders using the command @code{M-x vm-visit-thunderbird-folder}.
-This works the same way as @code{vm-visit-folder} except for the
-difference that the default directory for visiting folders as well as
-saving messages will be taken from the variable
-@code{vm-thunderbird-folder-directory}.  You should set this variable to the
-directory where Thunderbird stores its folders.  The folders visited
-using @code{M-x vm-visit-folder} will continue to be found in
-@code{vm-folder-directory}, thus allowing you to manage the two spaces
-separately. 
-
-If, on the other hand, you want to maintain a single space where VM
-and Thunderbird can jointly operate, then you should set the variable
-@code{vm-folder-directory} to point to that place and leave
-@code{vm-thunderbird-folder-directory} with its default value of
-@code{nil}.
 
 @node External Messages, Getting New Mail, Thunderbird Folders, Starting Up
 @section External Messages
@@ -4622,6 +4639,7 @@ them.  The highlighting is done using the standard Emacs
 @code{highlight} face.
 
 @subsubheading Hiding summary lines
+@anchor{Hiding summary lines}
 @cindex hiding summary lines
 @cindex vm-summary-faces-hide
 The command @code{vm-summary-faces-hide} allows you to hide the
