@@ -3201,19 +3201,21 @@ the argument.                                        USR, 2011-03-25"
 This function decodes the ``start'' part (see RFC2387) only.  The
 other parts will be decoded by the other VM functions through
 emacs-w3m."
-  (let* ((part-list (vm-mm-layout-parts layout))
-	 (start-part (car part-list))
-	 (start-id (vm-mime-get-parameter layout "start"))
-	 layout)
-    ;; Look for the start part.
-    (if start-id
-	(while part-list
-	  (setq layout (car part-list))
-	  (if (equal start-id (vm-mm-layout-id layout))
-	      (setq start-part layout
-		    part-list nil)
-	    (setq part-list (cdr part-list)))))
-    (if start-part (vm-decode-mime-layout start-part))))
+  (if (eq vm-mime-related-show-method 'mixed)
+      (vm-mime-display-internal-multipart/mixed layout)
+    (let* ((part-list (vm-mm-layout-parts layout))
+	   (start-part (car part-list))
+	   (start-id (vm-mime-get-parameter layout "start"))
+	   layout)
+      ;; Look for the start part.
+      (if start-id
+	  (while part-list
+	    (setq layout (car part-list))
+	    (if (equal start-id (vm-mm-layout-id layout))
+		(setq start-part layout
+		      part-list nil)
+	      (setq part-list (cdr part-list)))))
+      (if start-part (vm-decode-mime-layout start-part)))))
 
 (defun vm-mime-display-button-multipart/parallel (layout)
   (vm-mime-insert-button

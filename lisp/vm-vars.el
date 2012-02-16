@@ -1709,6 +1709,25 @@ chosen."
                  (cons (const favorite) (repeat string))
                  (cons (const favorite-internal) (repeat string))))
 
+(defcustom vm-mime-related-show-method 'related
+  "*Value tells how to handle \"multipart/related\" attachments in
+email messages.  The possible values are 'mixed and 'related.
+
+The value of 'mixed asks VM to treat \"multipart/related\"
+attachments the same way as \"multipart/mixed\" attachments, i.e., all
+of them will be displayed either as buttons or as content.
+
+The value of 'related asks VM to use them as related parts which means
+that they will be embedded in rendered \"text/html\" parts.
+
+Some mail messages arrive with wrong placement of the
+\"multipart/related\" content, inhibiting the html viewers from
+accessing them.  In that case, setting this variable to 'mixed will
+allow you to view them separately."
+  :group 'vm-mime
+  :type '(choice (choice (const mixed)
+                         (const related))))
+
 (defcustom vm-mime-text/html-handler 'auto-select
   "*The library used for displaying HTML messages.  The possible
 values are:

@@ -28,6 +28,12 @@ VM 8.2.0b1
 
   CHANGES
 
+   * New command `vm-mail-from-folder' (bound to `m' in VM).  It is like
+     `vm-mail', but depends on the current folder as its parent folder and
+     the current message as its parent message.  Setting the variable
+     `vm-mail-use-sender-address' to `t' causes the command to pick up the
+     sender of the current message as the recipient of the new message.
+
    * New variables `vm-use-presentation-minor-modes' and
      `vm-presentation-minor-modes' control the minor modes to be used with
      presentation text prepared by other tools such as emacs-w3m.  The
@@ -39,11 +45,10 @@ VM 8.2.0b1
 
    IMPROVEMENTS
 
-   * New command `vm-mail-from-folder', which is like `vm-mail', but depends
-     on the current folder as its parent folder and the current message as
-     its parent message.  Setting the variable `vm-mail-use-sender-address'
-     to `t' causes the command to pick up the sender of the current message
-     as the recipient of the new message.
+   * New variable `vm-mime-related-show-method' to force the display of
+     MIME multipart/related attachments.
+
+   * VM-Pcrisis extended to handle `vm-mail-from-folder'.
 
    * New variable `vm-subject-tag-prefix' allows the subject tags added by
      mailing lists to be ignored during sorting etc. (similar to
