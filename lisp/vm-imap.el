@@ -1067,7 +1067,7 @@ of the current folder, or nil if none has been recorded."
 ;;
 ;; -- Functions to handle the interaction with the IMAP server
 ;;
-;; vm-imap-make-session: folder -> process
+;; vm-imap-make-session: (folder &optional bool string) -> process
 ;; vm-imap-end-session: (process &optional buffer) -> void
 ;; vm-imap-check-connection: process -> void
 ;;
@@ -1134,9 +1134,9 @@ of the current folder, or nil if none has been recorded."
 
 
 ;;;###autoload
-(defun vm-imap-make-session (source &optional interactive purpose)
+(defun vm-imap-make-session (source interactive &optional purpose)
   "Create a new IMAP session for the IMAP mail box SOURCE.
-Optional argument INTERACTIVE says the operation has been invoked
+INTERACTIVE says the operation has been invoked
 interactively, and the optional argument PURPOSE is inserted in
 the process buffer for tracing purposes.  Returns the process or
 nil if the session could not be created."
@@ -1153,8 +1153,7 @@ nil if the session could not be created."
 	(process-connection-type nil)
 	greeting
 	host port mailbox auth user pass authinfo
-	source-list imap-buffer
-	source-nopwd-nombox)
+	source-list imap-buffer source-nopwd-nombox)
     (vm-imap-log-token 'make)
     ;; parse the maildrop
     (setq source-list (vm-parse source "\\([^:]*\\):?" 1 7)
@@ -1267,11 +1266,11 @@ nil if the session could not be created."
 	    (setq shutdown t)
 	    (setq vm-imap-read-point (point))
 	    (vm-process-kill-without-query process)
-	    (if (setq greeting (vm-imap-read-greeting process))
-		(insert-before-markers 
-		 (format "-- connected for %s\r\n" purpose))
+	    (when (null (setq greeting (vm-imap-read-greeting process)))
 	      (delete-process process)	; why here?  USR
 	      (throw 'end-of-session nil))
+	    (insert-before-markers 
+	     (format "-- connected for %s\r\n" purpose))
 	    (set (make-local-variable 'vm-imap-session-done) nil)
 	    ;; record server capabilities
 	    (vm-imap-send-command process "CAPABILITY")
@@ -1289,7 +1288,7 @@ nil if the session could not be created."
 	       (format "LOGIN %s %s" 
 		       (vm-imap-quote-string user) (vm-imap-quote-string pass)))
 	      (unless (vm-imap-read-ok-response process)
-		(vm-inform 0 "IMAP password for %s incorrect" folder)
+		(vm-inform 0 "IMAP login failed for %s" folder)
 		(setq vm-imap-passwords
 		      (vm-delete (lambda (pair)
 				   (equal (car pair) source-nopwd-nombox))
@@ -4629,6 +4628,7 @@ folder."
       (setq mailboxes (cdr mailboxes)))
     ))
 
+;;;###autoload
 (defun vm-imap-start-bug-report ()
   "Begin to compose a bug report for IMAP support functionality."
   (interactive)
@@ -4637,6 +4637,7 @@ folder."
   (setq vm-kept-imap-buffers nil)
   (setq vm-imap-keep-trace-buffer 20))
 
+;;;###autoload
 (defun vm-imap-submit-bug-report ()
   "Submit a bug report for VM's IMAP support functionality.  
 It is necessary to run vm-imap-start-bug-report before the problem
@@ -4672,6 +4673,7 @@ order to capture the trace of IMAP sessions during the occurrence."
   ))
 
 
+;;;###autoload
 (defun vm-imap-set-default-attributes (m)
   (vm-set-headers-to-be-retrieved-of m nil)
   (vm-set-body-to-be-retrieved-of m nil)

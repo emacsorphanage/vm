@@ -76,8 +76,8 @@
       (require 'vm-autoloads)))
 
 ;;;###autoload
-(defun* vm (&optional folder &key (read-only nil) (access-method nil)
-		      (reload nil) (just-visit nil))
+(defun* vm (&optional folder &key read-only interactive
+		      access-method reload just-visit)
   "Read mail under Emacs.
 Optional first arg FOLDER specifies the folder to visit.  It can
 be the path name of a local folder or the maildrop specification
@@ -387,7 +387,7 @@ deleted messages.  Use `###' to expunge deleted messages."
       
       ;; [15] Display the totals-blurb again
 
-      (when (vm-interactive-p)
+      (when interactive
 	(vm-inform 5 totals-blurb))
 
       ;; [16] Get new mail if requested
@@ -396,7 +396,7 @@ deleted messages.  Use `###' to expunge deleted messages."
 		 (not vm-block-new-mail)
 		 (not vm-folder-read-only))
 	(vm-inform 6 "%s: Checking for new mail..." (buffer-name))
-	(when (vm-get-spooled-mail nil)	; automatic is non-interactive!
+	(when (vm-get-spooled-mail interactive)
 	  (setq totals-blurb (vm-emit-totals-blurb))
 	  (if (vm-thoughtfully-select-message)
 	      (vm-present-current-message)
@@ -404,7 +404,7 @@ deleted messages.  Use `###' to expunge deleted messages."
 	(vm-inform 5 totals-blurb))
 
       ;; [17] Display copyright and copying info.
-      (when (and (vm-interactive-p) (not vm-startup-message-displayed))
+      (when (and interactive (not vm-startup-message-displayed))
 	(vm-display-startup-message)
 	(if (not (input-pending-p))
 	    (vm-inform 5 totals-blurb))))))
@@ -471,9 +471,11 @@ deleted messages.  Use `###' to expunge deleted messages."
   (vm-gobble-labels))
 
 ;;;###autoload
-(defun vm-other-frame (&optional folder read-only)
+(defun vm-other-frame (&optional folder read-only 
+				 &key interactive)
   "Like vm, but run in a newly created frame."
   (interactive (list nil current-prefix-arg))
+  (when (vm-interactive-p) (setq interactive t))
   (vm-session-initialization)
   (if (vm-multiple-frames-possible-p)
       (if folder
@@ -481,21 +483,23 @@ deleted messages.  Use `###' to expunge deleted messages."
 	(vm-goto-new-frame 'primary-folder 'folder)))
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm folder :read-only read-only))
+    (vm folder :interactive interactive :read-only read-only))
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
-(defun vm-other-window (&optional folder read-only)
+(defun vm-other-window (&optional folder read-only
+				  &key interactive)
   "Like vm, but run in a different window."
   (interactive (list nil current-prefix-arg))
+  (when (vm-interactive-p) (setq interactive t))
   (vm-session-initialization)
   (if (one-window-p t)
       (split-window))
   (other-window 1)
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm folder :read-only read-only)))
+    (vm folder :interactive interactive :read-only read-only)))
 
 (put 'vm-mode 'mode-class 'special)
 
@@ -516,7 +520,8 @@ Customize VM by setting variables and store them in the `vm-init-file'."
   (vm-display nil nil '(vm-mode) '(vm-mode)))
 
 ;;;###autoload
-(defun vm-visit-folder (folder &optional read-only just-visit)
+(defun vm-visit-folder (folder &optional read-only 
+			       &key interactive just-visit)
   "Visit a mail file.
 VM will parse and present its messages to you in the usual way.
 
@@ -552,6 +557,7 @@ message-pointer, no retrieval of new mail."
 			""))
 	      default-directory default nil nil 'vm-folder-history)
 	     current-prefix-arg))))
+  (when (vm-interactive-p) (setq interactive t))
   (vm-session-initialization)
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer-if-possible)
@@ -575,11 +581,13 @@ message-pointer, no retrieval of new mail."
 	     (setq folder (expand-file-name folder)
 		   vm-last-visit-folder folder))))
     (vm folder 
+	:interactive interactive
 	:read-only read-only :access-method access-method 
 	:just-visit just-visit)))
 
 ;;;###autoload
-(defun vm-visit-folder-other-frame (folder &optional read-only)
+(defun vm-visit-folder-other-frame (folder &optional read-only
+					   &key interactive)
   "Like vm-visit-folder, but run in a newly created frame."
   (interactive
    (save-current-buffer
@@ -600,17 +608,19 @@ message-pointer, no retrieval of new mail."
 			""))
 	      default-directory default nil nil 'vm-folder-history)
 	     current-prefix-arg))))
+  (when (vm-interactive-p) (setq interactive t))
   (vm-session-initialization)
   (if (vm-multiple-frames-possible-p)
       (vm-goto-new-frame 'folder))
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm-visit-folder folder read-only))
+    (vm-visit-folder folder read-only :interactive interactive))
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
-(defun vm-visit-folder-other-window (folder &optional read-only)
+(defun vm-visit-folder-other-window (folder &optional read-only
+					    &key interactive)
   "Like vm-visit-folder, but run in a different window."
   (interactive
    (save-current-buffer
@@ -631,16 +641,18 @@ message-pointer, no retrieval of new mail."
 			""))
 	      default-directory default nil nil 'vm-folder-history)
 	     current-prefix-arg))))
+  (when (vm-interactive-p) (setq interactive t))
   (vm-session-initialization)
   (if (one-window-p t)
       (split-window))
   (other-window 1)
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm-visit-folder folder read-only)))
+    (vm-visit-folder folder read-only :interactive interactive)))
 
 ;;;###autoload
-(defun vm-visit-thunderbird-folder (folder &optional read-only)
+(defun vm-visit-thunderbird-folder (folder &optional read-only
+					   &key interactive)
   "Visit a mail file maintained by Thunderbird.
 VM will parse and present its messages to you in the usual way.
 
@@ -676,6 +688,7 @@ of messages is carried out preferentially to other Thunderbird folders."
 			""))
 	      default-directory default nil nil 'vm-folder-history)
 	     current-prefix-arg))))
+  (when (vm-interactive-p) (setq interactive t))
   (vm-session-initialization)
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer-if-possible)
@@ -685,13 +698,14 @@ of messages is carried out preferentially to other Thunderbird folders."
 	  (or vm-thunderbird-folder-directory default-directory)))
     (setq folder (expand-file-name folder)
 	  vm-last-visit-folder folder))
-  (vm folder :read-only read-only)
+  (vm folder :interactive interactive :read-only read-only)
   (set (make-local-variable 'vm-foreign-folder-directory)
        vm-thunderbird-folder-directory)
   )
 
 ;;;###autoload
-(defun vm-visit-pop-folder (folder &optional read-only)
+(defun vm-visit-pop-folder (folder &optional read-only
+				   &key interactive)
   "Visit a POP mailbox.
 VM will present its messages to you in the usual way.  Messages
 found in the POP mailbox will be downloaded and stored in a local
@@ -726,6 +740,7 @@ visited folder."
 			""))
 	      completion-list)
 	     current-prefix-arg))))
+  (when (vm-interactive-p) (setq interactive t))
   (let (remote-spec)
     (vm-session-initialization)
     (vm-check-for-killed-folder)
@@ -737,10 +752,12 @@ visited folder."
     (setq remote-spec (vm-pop-find-spec-for-name folder))
     (if (null remote-spec)
 	(error "No such POP folder: %s" folder))
-    (vm remote-spec :read-only read-only :access-method 'pop)))
+    (vm remote-spec :access-method 'pop
+	:interactive interactive :read-only read-only )))
 
 ;;;###autoload
-(defun vm-visit-pop-folder-other-frame (folder &optional read-only)
+(defun vm-visit-pop-folder-other-frame (folder &optional read-only
+					       &key interactive)
   "Like vm-visit-pop-folder, but run in a newly created frame."
   (interactive
    (save-current-buffer
@@ -766,12 +783,13 @@ visited folder."
       (vm-goto-new-frame 'folder))
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm-visit-pop-folder folder read-only))
+    (vm-visit-pop-folder folder read-only :interactive interactive))
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
-(defun vm-visit-pop-folder-other-window (folder &optional read-only)
+(defun vm-visit-pop-folder-other-window (folder &optional read-only
+						&key interactive)
   "Like vm-visit-pop-folder, but run in a different window."
   (interactive
    (save-current-buffer
@@ -798,10 +816,11 @@ visited folder."
   (other-window 1)
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm-visit-pop-folder folder read-only)))
+    (vm-visit-pop-folder folder read-only :interactive interactive)))
 
 ;;;###autoload
-(defun vm-visit-imap-folder (folder &optional read-only)
+(defun vm-visit-imap-folder (folder &optional read-only
+				    &key interactive)
   "Visit a IMAP mailbox.
 VM will present its messages to you in the usual way.  Messages
 found in the IMAP mailbox will be downloaded and stored in a local
@@ -842,10 +861,12 @@ visited folder."
   (vm-check-for-killed-folder)
   (vm-select-folder-buffer-if-possible)
   (setq vm-last-visit-imap-folder folder)
-  (vm folder :read-only read-only :access-method 'imap))
+  (vm folder :access-method 'imap
+      :interactive interactive :read-only read-only))
 
 ;;;###autoload
-(defun vm-visit-imap-folder-other-frame (folder &optional read-only)
+(defun vm-visit-imap-folder-other-frame (folder &optional read-only
+						&key interactive)
   "Like vm-visit-imap-folder, but run in a newly created frame."
   (interactive
    (save-current-buffer
@@ -865,12 +886,13 @@ visited folder."
       (vm-goto-new-frame 'folder))
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm-visit-imap-folder folder read-only))
+    (vm-visit-imap-folder folder read-only :interactive interactive))
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
-(defun vm-visit-imap-folder-other-window (folder &optional read-only)
+(defun vm-visit-imap-folder-other-window (folder &optional read-only
+						 &key interactive)
   "Like vm-visit-imap-folder, but run in a different window."
   (interactive
    (save-current-buffer
@@ -885,13 +907,14 @@ visited folder."
 		      (if current-prefix-arg " read only" ""))
 	      nil nil vm-last-visit-imap-folder)
 	     current-prefix-arg))))
+  (when (vm-interactive-p) (setq interactive t))
   (vm-session-initialization)
   (if (one-window-p t)
       (split-window))
   (other-window 1)
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm-visit-imap-folder folder read-only)))
+    (vm-visit-imap-folder folder read-only :interactive interactive)))
 
 
 ;;;###autoload

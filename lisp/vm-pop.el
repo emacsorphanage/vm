@@ -147,7 +147,7 @@ a POP server, find its cache file on the file system"
 	  (if handler
 	      (throw 'done
 		     (funcall handler 'vm-pop-move-mail source destination)))
-	  (setq process (vm-pop-make-session source))
+	  (setq process (vm-pop-make-session source vm-pop-ok-to-ask))
 	  (or process (throw 'done nil))
 	  (setq process-buffer (process-buffer process))
 	  (save-excursion
@@ -283,7 +283,7 @@ a POP server, find its cache file on the file system"
 	    (if handler
 		(throw 'done
 		       (funcall handler 'vm-pop-check-mail source)))
-	    (setq process (vm-pop-make-session source))
+	    (setq process (vm-pop-make-session source nil))
 	    (or process (throw 'done nil))
 	    (set-buffer (process-buffer process))
 	    (vm-pop-send-command process "UIDL")
@@ -362,7 +362,8 @@ relevant POP servers to remove the messages."
 			    (progn
 			      (vm-inform 6 
 					 "Opening POP session to %s..." popdrop)
-			      (setq process (vm-pop-make-session source))
+			      (setq process (vm-pop-make-session 
+					     source vm-pop-ok-to-ask))
 			      (if (null process)
 				  (signal 'error nil))
 			      (vm-inform 6 
@@ -429,21 +430,27 @@ relevant POP servers to remove the messages."
     (setq vm-pop-retrieved-messages
 	  (delq nil vm-pop-retrieved-messages))))
 
-(defun vm-pop-make-session (source)
-  (let ((process-to-shutdown nil)
-	process use-ssl use-ssh success
+(defun vm-pop-make-session (source interactive)
+  "Create a new POP session for the POP mail box SOURCE.
+Optional argument INTERACTIVE says the operation has been invoked
+interactively.  Returns the process or nil if the session could not be
+created." 
+  (let ((shutdown nil)			; whether process is to be shutdown
 	(folder-type vm-folder-type)
+	process success
 	(popdrop (or (vm-pop-find-name-for-spec source)
 		     (vm-safe-popdrop-string source)))
 	(coding-system-for-read (vm-binary-coding-system))
 	(coding-system-for-write (vm-binary-coding-system))
+	(use-ssl nil)
+	(use-ssh nil)
 	(session-name "POP")
 	(process-connection-type nil)
 	greeting timestamp ssh-process
 	host port auth user pass authinfo
-	source-list process-buffer source-nopwd)
+	source-list pop-buffer source-nopwd)
     (unwind-protect
-	(catch 'done
+	(catch 'end-of-session
 	  ;; parse the maildrop
 	  (setq source-list (vm-pop-parse-spec-to-list source))
 	  ;; remove pop or pop-ssl from beginning of list if
@@ -514,16 +521,15 @@ relevant POP servers to remove the messages."
 		(vm-warn 0 2 "Password cannot be empty")
 		(setq pass nil)))
 	    (when (null pass)
-	      (vm-inform 0 "Need password for %s" popdrop)
-	      (throw 'done nil))
+	      (error "Need password for %s" popdrop))
 	  ;; get the trace buffer
-	  (setq process-buffer
+	  (setq pop-buffer
 		(vm-make-work-buffer 
 		 (vm-make-trace-buffer-name session-name host)))
 	  (save-excursion
-	    (set-buffer process-buffer)
+	    (set-buffer pop-buffer)
 	    (setq vm-folder-type (or folder-type vm-default-folder-type))
-	    (buffer-disable-undo process-buffer)
+	    (buffer-disable-undo pop-buffer)
 	    (make-local-variable 'vm-pop-read-point)
 	    ;; clear the trace buffer of old output
 	    (erase-buffer)
@@ -538,42 +544,41 @@ relevant POP servers to remove the messages."
 		   (if (null vm-stunnel-program)
 		       (setq process 
 			     (open-network-stream session-name
-						  process-buffer
+						  pop-buffer
 						  host port
 						  :type 'tls))
 		     (vm-setup-stunnel-random-data-if-needed)
 		     (setq process
-			   (apply 'start-process session-name process-buffer
+			   (apply 'start-process session-name pop-buffer
 				  vm-stunnel-program
 				  (nconc (vm-stunnel-configuration-args host
 									port)
 					 vm-stunnel-program-switches)))))
 		  (use-ssh
 		   (setq process (open-network-stream
-				  session-name process-buffer
+				  session-name pop-buffer
 				  "127.0.0.1"
 				  (vm-setup-ssh-tunnel host port))))
 		  (t
 		   (setq process (open-network-stream session-name
-						      process-buffer
+						      pop-buffer
 						      host port))))
-	    (and (null process) (throw 'done nil))
-	    (insert-before-markers "connected\n")
+	    (and (null process) (throw 'end-of-session nil))
+	    (setq shutdown t)
 	    (setq vm-pop-read-point (point))
 	    (vm-process-kill-without-query process)
 	    (when (null (setq greeting (vm-pop-read-response process t)))
 	      (delete-process process)
-	      (throw 'done nil))
-	    (setq process-to-shutdown process)
+	      (throw 'end-of-session nil))
 	    ;; authentication
 	    (cond ((equal auth "pass")
 		   (vm-pop-send-command process (format "USER %s" user))
 		   (and (null (vm-pop-read-response process))
-			(throw 'done nil))
+			(throw 'end-of-session nil))
 		   (vm-pop-send-command process (format "PASS %s" pass))
 		   (unless (vm-pop-read-response process)
 
-		     (vm-warn 0 0 "POP password for %s incorrect" popdrop)
+		     (vm-warn 0 0 "POP login failed for %s" popdrop)
 		     (setq vm-pop-passwords
 			   (vm-delete (lambda (pair)
 					(equal (car pair) source-nopwd))
@@ -581,7 +586,7 @@ relevant POP servers to remove the messages."
 		     ;; don't sleep unless we're running synchronously.
 		     (when vm-pop-ok-to-ask
 		       (sleep-for 2))
-		     (throw 'done nil))
+		     (throw 'end-of-session nil))
 		   (unless (assoc source-nopwd vm-pop-passwords)
 		     (setq vm-pop-passwords (cons (list source-nopwd pass)
 						  vm-pop-passwords)))
@@ -589,10 +594,10 @@ relevant POP servers to remove the messages."
 		  ((equal auth "rpop")
 		   (vm-pop-send-command process (format "USER %s" user))
 		   (when (null (vm-pop-read-response process))
-		     (throw 'done nil))
+		     (throw 'end-of-session nil))
 		   (vm-pop-send-command process (format "RPOP %s" pass))
 		   (when (null (vm-pop-read-response process))
-		     (throw 'done nil)))
+		     (throw 'end-of-session nil)))
 		  ((equal auth "apop")
 		   (setq timestamp (vm-parse greeting "[^<]+\\(<[^>]+>\\)")
 			 timestamp (car timestamp))
@@ -603,32 +608,33 @@ relevant POP servers to remove the messages."
 		     ;; don't sleep unless we're running synchronously
 		     (if vm-pop-ok-to-ask
 			 (sleep-for 2))
-		     (throw 'done nil))
+		     (throw 'end-of-session nil))
 		   (vm-pop-send-command
 		    process
 		    (format "APOP %s %s"
 			    user
 			    (vm-pop-md5 (concat timestamp pass))))
 		   (unless (vm-pop-read-response process)
-		     (vm-warn 0 0 "POP password for %s incorrect" popdrop)
+		     (vm-warn 0 0 "POP login failed for %s" popdrop)
 		     (when vm-pop-ok-to-ask
 		       (sleep-for 2))
-		     (throw 'done nil))
+		     (throw 'end-of-session nil))
 		   (unless (assoc source-nopwd vm-pop-passwords)
 		     (setq vm-pop-passwords (cons (list source-nopwd pass)
 						  vm-pop-passwords)))
 		   (setq success t))
 		  (t (error "Don't know how to authenticate using %s" auth)))
-	    (setq process-to-shutdown nil) )))
+	    (setq shutdown nil) )))
       ;; unwind-protection
-      (if process-to-shutdown
-	  (vm-pop-end-session process-to-shutdown t))
+      (when shutdown
+	  (vm-pop-end-session process t))
       (vm-tear-down-stunnel-random-data))
+    
     (if success
 	process
-      ;; try again if possible
-      (when vm-pop-ok-to-ask
-	(vm-pop-make-session source)))))
+      ;; try again if possible, treat it as non-interactive the next time
+      (when interactive
+	(vm-pop-make-session source nil)))))
 
 (defun vm-pop-end-session (process &optional keep-buffer verbose)
   "Kill the POP session represented by PROCESS.  PROCESS could be
@@ -995,8 +1001,10 @@ popdrop
 	(vm-pop-ok-to-ask interactive))
     (if (processp process)
 	(vm-pop-end-session process))
-    (setq process (vm-pop-make-session (vm-folder-pop-maildrop-spec)))
-    (vm-set-folder-pop-process process)
+    (setq process 
+	  (vm-pop-make-session (vm-folder-pop-maildrop-spec) interactive))
+    (when (processp process)
+      (vm-set-folder-pop-process process))
     process ))
 
 (defun vm-pop-get-uidl-data ()
@@ -1244,6 +1252,7 @@ specification SPEC."
     (vm-parse spec "\\([^:]+\\):?" 1 4)))
 
 
+;;;###autoload
 (defun vm-pop-start-bug-report ()
   "Begin to compose a bug report for POP support functionality."
   (interactive)
@@ -1252,6 +1261,7 @@ specification SPEC."
   (setq vm-kept-pop-buffers nil)
   (setq vm-pop-keep-trace-buffer 20))
 
+;;;###autoload
 (defun vm-pop-submit-bug-report ()
   "Submit a bug report for VM's POP support functionality.  
 It is necessary to run vm-pop-start-bug-report before the problem
@@ -1287,6 +1297,7 @@ order to capture the trace of POP sessions during the occurrence."
     (vm-submit-bug-report nil (list trace-buffer-hook))
   ))
 
+;;;###autoload
 (defun vm-pop-set-default-attributes (m)
   (vm-set-headers-to-be-retrieved-of m nil)
   (vm-set-body-to-be-retrieved-of m nil)
