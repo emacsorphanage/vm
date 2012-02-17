@@ -1709,7 +1709,7 @@ chosen."
                  (cons (const favorite) (repeat string))
                  (cons (const favorite-internal) (repeat string))))
 
-(defcustom vm-mime-related-show-method 'related
+(defcustom vm-mime-multipart/related-show-method 'related
   "*Value tells how to handle \"multipart/related\" attachments in
 email messages.  The possible values are 'mixed and 'related.
 

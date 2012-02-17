@@ -3201,7 +3201,7 @@ the argument.                                        USR, 2011-03-25"
 This function decodes the ``start'' part (see RFC2387) only.  The
 other parts will be decoded by the other VM functions through
 emacs-w3m."
-  (if (eq vm-mime-related-show-method 'mixed)
+  (if (eq vm-mime-multipart/related-show-method 'mixed)
       (vm-mime-display-internal-multipart/mixed layout)
     (let* ((part-list (vm-mm-layout-parts layout))
 	   (start-part (car part-list))

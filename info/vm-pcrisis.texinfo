@@ -268,11 +268,13 @@ want vm-pcrisis to take in @code{vmpc-actions}, giving a name to each.
 You then associate the condition with the action in
 @code{vmpc-reply-alist} if it's one that relies on the headers of a
 message you are replying to, @code{vmpc-forward-alist} if it's a message
-you are forwarding, or @code{vmpc-automorph-alist} if it's based on the
+you are forwarding, 
+@code{vmpc-resend-alist} if it is a mesasge you are resending,  
+or @code{vmpc-automorph-alist} if it's based on the
 headers of your own message.  You may also use
-@code{vmpc-newmail-alist} to associate conditions with actions for new
-messages, and @code{vmpc-resend-alist} for resending
-(bounced) messages.  
+@code{vmpc-mail-alist} to associate conditions with actions for new
+messages created using @code{vm-mail-from-folder}, and
+@code{vmpc-newmail-alist} for new messages created using @code{vm-mail}. 
 
 If you want to use the @code{vmpc-automorph} function, which takes
 actions based on the headers of a message you are composing, 
@@ -328,26 +330,30 @@ fine-grained control over when your actions will trigger.
 
 @findex vmpc-folder-match
 @item @code{vmpc-folder-match}
-When doing replies, forwards and resends, this matches against the name of
+When doing replies, forwards, resends or mail-from-folder,
+this matches against the name of
 the folder where the original message is located.
 
 @findex vmpc-folder-account-match
 @item @code{vmpc-folder-account-match}
-When doing replies, forwards and resends, this matches against POP/IMAP
+When doing replies, forwards, resends or mail-from-folder,
+this matches against POP/IMAP
 account name of the folder where the original message is located.  (These
 are the account names defined via the variables @code{vm-pop-folder-alist}
 and @code{vm-imap-account-alist}.)
 
 @findex vmpc-header-match
 @item @code{vmpc-header-match}
-When doing replies, forwards and resends, this matches against the contents
+When doing replies, forwards, resends or mail-from-folder,
+this matches against the contents
 of a header in the original message; when using the
 @code{vmpc-automorph} function, it matches against a header in the message
 you are composing.
 
 @findex vmpc-only-from-match
 @item @code{vmpc-only-from-match} 
-When doing replies, forwards and resends, this matches against the contents
+When doing replies, forwards, resends or mail-from-folder,
+this matches against the contents
 of the given headers in the original message; it is true only when @emph{all}
 email adresses match the given regexp.
 
@@ -357,7 +363,7 @@ email adresses match the given regexp.
 is just like @code{vmpc-header-match} but 
 allows you to match against the text in the body of the message.
 
-@findex vmpc-hceck-virtual-selector
+@findex vmpc-check-virtual-selector
 @item @code{vmpc-check-virtual-selector}. 
 If you are using @code{vm-avirtual.el} you can also use this
 to check a virtual folder selector.
@@ -941,6 +947,7 @@ address.  Like this:
 @c * vmpc-automorph-alist::        
 @c * vmpc-forward-alist::          
 @c * vmpc-resend-alist::           
+@c * vmpc-mail-alist
 @c * vmpc-newmail-alist::          
 @c @end menu
 
@@ -1027,26 +1034,39 @@ messages with @code{vm-resend-message}.
 
 @c ***************************************************************************
 
+@unnumberedsubsec vmpc-mail-alist
+@vindex vmpc-mail-alist
+@anchor{vmpc-mail-alist}
+
+The @code{vmpc-mail-alist} variable has the same syntax as
+@code{vmpc-reply-alist} and follows the same principles.  (See
+@ref{vmpc-reply-alist}.)  The only difference is that it controls
+which actions are associated with which conditions when creating new
+messages with @code{vm-mail-from-folder}.
+
 @unnumberedsubsec vmpc-newmail-alist
 @vindex vmpc-newmail-alist
 @anchor{vmpc-newmail-alist}
 
 The @code{vmpc-newmail-alist} variable has the same syntax as
-@code{vmpc-reply-alist} and follows the same principles.  (See
-@ref{vmpc-reply-alist}.)  The only difference is that it controls
+@code{vmpc-reply-alist}.  (See
+@ref{vmpc-reply-alist}.)  However, it controls
 which actions are associated with which conditions when creating new
-messages with vm-mail.  
+messages with @code{vm-mail}.  Since @code{vm-mail} can be invoked from any
+context and there is no parent message, any conditions that
+refer to the parent message have no effect.
 
-One strategy for this is to have conditions based on the folder from
-which you are sending mail.  You might like to set things this up for
-some folders, and have vm-pcrisis prompt you for an action in the other
-folders.  Here's how you might do that...
+However, if you invoke @code{vm-mail} from a VM folder, the folder is
+considered the parent folder of the new message.  So, you can use conditions
+based on the parent folder.  You might like to set things this up for some
+folders, and have vm-pcrisis prompt you for an action in the other folders.
+Here's how you might do that...
 
 In @code{vmpc-conditions}, you'd have a couple of conditions like this:
 
 @lisp
 ("mail to foo-list"
- (string-match "^foo" (buffer-name (current-buffer))))
+ (vmpc-folder-match "^foo"))
 ("no cond" 
  (vmpc-none-true-yet))
 @end lisp

@@ -45,8 +45,8 @@ VM 8.2.0b1
 
    IMPROVEMENTS
 
-   * New variable `vm-mime-related-show-method' to force the display of
-     MIME multipart/related attachments.
+   * New variable `vm-mime-multipart/related-show-method' to force the
+     display of MIME multipart/related attachments.
 
    * VM-Pcrisis extended to handle `vm-mail-from-folder'.
 

@@ -4,7 +4,7 @@
 ;;
 ;; Copyright (C) 1999 Rob Hodges,
 ;;               2006 Robert Widhopf, Robert P. Goldman
-;;		 2011 Uday S. Reddy
+;;		 2011-2012 Uday S. Reddy
 ;;
 ;; Package: Personality Crisis for VM
 ;; Author: Rob Hodges
