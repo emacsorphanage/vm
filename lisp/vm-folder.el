@@ -1585,8 +1585,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			    (make-vector vm-cached-data-vector-length nil))))
 
 	    (when (vm-stuff-flag-of (car mp))
-	      (vm-increment vm-upgrade-count)
-	      (vm-mark-folder-modified-p))
+	      (vm-increment vm-upgrade-count))
 	    (vm-set-labels-of (car mp) (nth 2 data))
 	    (vm-set-cached-data-of (car mp) cache)
 	    (vm-set-attributes-of (car mp) (car data)))
@@ -1600,8 +1599,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	     (car mp)
 	     (make-vector vm-attributes-vector-length nil))
 	    (vm-set-unread-flag (car mp) (not (looking-at ".*R.*")) 'norecord)
-	    (vm-increment vm-upgrade-count)
-	    (vm-mark-folder-modified-p))
+	    (vm-increment vm-upgrade-count))
 	   (t
 	    (vm-set-cached-data-of 
 	     (car mp) (make-vector vm-cached-data-vector-length nil))
@@ -1613,8 +1611,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	    ;; vm-set-new-flag because it asks for a
 	    ;; summary update.
 	    (vm-set-new-flag-of (car mp) t)
-	    (vm-increment vm-upgrade-count)
-	    (vm-mark-folder-modified-p)))
+	    (vm-increment vm-upgrade-count)))
 	  ;; let babyl attributes override the normal VM
 	  ;; attributes header.
 	  (cond ((eq vm-folder-type 'babyl)
