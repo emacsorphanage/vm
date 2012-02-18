@@ -166,12 +166,12 @@ messages of the folder are involved in this reply."
     (while mp
       (cond ((setq tmp (vm-get-header-contents (car mp) "Reply-To:" ", "))
              (unless (vm-ignored-reply-to tmp)
-                 (add-to-list 'to tmp)))
+                 (add-to-list 'to tmp t)))
             ((setq tmp (vm-get-header-contents (car mp) "From:" ", "))
-             (add-to-list 'to tmp))
+             (add-to-list 'to tmp t))
             ;; bad, but better than nothing for some
             ((setq tmp (vm-grok-From_-author (car mp)))
-             (add-to-list 'to tmp))
+             (add-to-list 'to tmp t))
             (t (error "No From: or Reply-To: header in message")))
       (let ((this-subject (vm-get-header-contents (car mp) "Subject:"))
             (this-reply-to (and vm-in-reply-to-format
@@ -201,11 +201,12 @@ messages of the folder are involved in this reply."
 	  (if cc
 	      (setq cc (concat cc "," tmp2))
 	    (setq cc tmp2))))
+      ;; References header will be made from the last message.  Others
+      ;; will be ignored.
       (setq references
             (cons (or (vm-get-header-contents (car mp) "References:" " ")
                       (vm-get-header-contents (car mp) "In-reply-to:" " "))
-                  (cons (vm-get-header-contents (car mp) "Message-ID:" " ")
-                        references)))
+                  (list (vm-get-header-contents (car mp) "Message-ID:" " "))))
       (setq newsgroups
             (cons (or (and to-all
                            (vm-get-header-contents 
