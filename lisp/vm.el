@@ -1059,8 +1059,7 @@ vm-visit-virtual-folder.")
 	      (if (eq bookmark (vm-real-message-of (car mp)))
 		  (progn
 		    (vm-record-and-change-message-pointer
-		     vm-message-pointer mp)
-		    (vm-present-current-message)
+		     vm-message-pointer mp :present t)
 		    (setq mp nil))
 		(setq mp (cdr mp))))))
       (unless vm-message-pointer

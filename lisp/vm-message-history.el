@@ -153,9 +153,8 @@ With prefix ARG, select the ARG'th previous message."
   (if (eq (car vm-message-pointer) (car vm-message-history-pointer))
       (vm-present-current-message)
     (vm-record-and-change-message-pointer
-     vm-message-pointer
-     (vm-message-position (car vm-message-history-pointer)))
-    (vm-present-current-message))
+     vm-message-pointer (vm-message-position (car vm-message-history-pointer))
+     :present t))
   (vm-message-history-browse))
 
 ;;;###autoload
@@ -173,8 +172,8 @@ With prefix ARG, select the ARG'th next message."
   (interactive)
   (let ((mp (get-text-property (point) 'vm-message-pointer)))
     (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
-    (vm-record-and-change-message-pointer vm-message-pointer mp)
-    (vm-present-current-message)
+    (vm-record-and-change-message-pointer vm-message-pointer mp
+					  :present t)
     (vm-display nil nil '(vm-goto-message-last-seen)
                 '(vm-goto-message-last-seen))
     (vm-message-history-browse)))

@@ -991,7 +991,8 @@ real or virtual)."
 	     (when (and mirrored-msg (vm-buffer-of mirrored-msg))
 	       (with-current-buffer (vm-buffer-of mirrored-msg)
 		 (vm-record-and-change-message-pointer
-		  vm-message-pointer (vm-message-position mirrored-msg))))
+		  vm-message-pointer (vm-message-position mirrored-msg)
+		  :present t)))
 	     (dolist (real-buf vm-real-buffers)
 	       (with-current-buffer real-buf
 		 (setq vm-virtual-buffers (delq b vm-virtual-buffers))))

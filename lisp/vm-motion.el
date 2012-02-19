@@ -35,14 +35,18 @@
 
 (declare-function vm-so-sortable-subject "vm-sort" (message))
 
-(defun vm-record-and-change-message-pointer (old new)
+(defun* vm-record-and-change-message-pointer (old new &key present)
   "Change the `vm-message-pointer' of the folder from OLD to NEW, both
-of which must be pointers into the `vm-message-list'."
+of which must be pointers into the `vm-message-list'.
+If the keyword argument PRESENT is t, then update the presentation
+buffer to contain the message at the position NEW."
   (intern (buffer-name) vm-buffers-needing-display-update)
   (vm-garbage-collect-message)
   (setq vm-last-message-pointer old
 	vm-message-pointer new
-	vm-need-summary-pointer-update t))
+	vm-need-summary-pointer-update t)
+  (if present
+      (vm-present-current-message)))
 
 ;;;###autoload
 (defun vm-goto-message (n)
@@ -72,8 +76,8 @@ given."
 	  (error "No such message."))
       (if (eq vm-message-pointer cons)
 	  (vm-present-current-message)
-	(vm-record-and-change-message-pointer vm-message-pointer cons)
-	(vm-present-current-message)
+	(vm-record-and-change-message-pointer vm-message-pointer cons
+					      :present t)
 	;;(vm-warn 0 0 "start of message you want is: %s"
 	;; (vm-su-start-of (car vm-message-pointer)))
 	(if (and (vm-summary-operation-p)
@@ -92,10 +96,9 @@ given."
   (vm-display nil nil '(vm-goto-message-last-seen)
 	      '(vm-goto-message-last-seen))
   (if vm-last-message-pointer
-      (progn
-	(vm-record-and-change-message-pointer vm-message-pointer
-					      vm-last-message-pointer)
-	(vm-present-current-message))))
+      (vm-record-and-change-message-pointer 
+       vm-message-pointer vm-last-message-pointer
+       :present t)))
 (defalias 'vm-goto-last-message-seen 'vm-goto-message-last-seen)
 
 ;;;###autoload
@@ -122,9 +125,9 @@ given."
 	     (setq message (car lineage)))))
     (when message
       (setq message (car (vm-th-messages-of (car lineage))))
-      (vm-record-and-change-message-pointer vm-message-pointer
-					    (vm-message-position message))
-      (vm-present-current-message))))
+      (vm-record-and-change-message-pointer 
+       vm-message-pointer (vm-message-position message)
+       :present t))))
 
 (defun vm-check-count (count)
   (if (>= count 0)
@@ -307,8 +310,9 @@ this command 'sees' marked messages as it moves."
 		      oldmp )))
 	   (setq error 'end-of-folder))))))
     (unless (eq vm-message-pointer oldmp)
-      (vm-record-and-change-message-pointer oldmp vm-message-pointer)
-      (vm-present-current-message))
+      (vm-record-and-change-message-pointer 
+       oldmp vm-message-pointer
+       :present t))
     (when (and error signal-errors)
 	 (signal error nil))))
 
@@ -439,8 +443,8 @@ ignored."
 	    (if (equal subject
 		       (vm-so-sortable-subject (car vm-message-pointer)))
 		(setq done t)))
-	  (vm-record-and-change-message-pointer oldmp vm-message-pointer)
-	  (vm-present-current-message))
+	  (vm-record-and-change-message-pointer 
+	   oldmp vm-message-pointer :present t))
       (end-of-folder
        (setq vm-message-pointer oldmp)
        (vm-inform 5 "No next message with the same subject")))))
@@ -468,8 +472,8 @@ ignored."
 	    (if (equal subject
 		       (vm-so-sortable-subject (car vm-message-pointer)))
 		(setq done t)))
-	  (vm-record-and-change-message-pointer oldmp vm-message-pointer)
-	  (vm-present-current-message))
+	  (vm-record-and-change-message-pointer 
+	   oldmp vm-message-pointer :present t))
       (beginning-of-folder
        (setq vm-message-pointer oldmp)
        (vm-inform 5 "No previous message with the same subject")))))
@@ -549,8 +553,7 @@ If a new message is selected then return t, otherwise nil. USR, 2010-03-08"
 	       ;; 	(save-excursion
 	       ;; 	  (set-buffer vm-mail-buffer)
 	       ;; 	  (vm-record-and-change-message-pointer 
-	       ;;		vm-message-pointer mp)
-	       ;; 	  (vm-present-current-message)
+	       ;;		vm-message-pointer mp :present t)
 	       ;; 	  ;; return non-nil so the caller will know that
 	       ;; 	  ;; a new message was selected.
 	       ;; 	  t ))
@@ -566,11 +569,10 @@ If a new message is selected then return t, otherwise nil. USR, 2010-03-08"
 		(if (not (eq mp message-pointer))
 		    (save-excursion
 		      (set-buffer vm-mail-buffer)
-		      (vm-record-and-change-message-pointer
-		       vm-message-pointer mp)
-		      ;; preview disabled to avoid message
+		      ;; presentation disabled to avoid message
 		      ;; loading. USR, 2010-09-30
-		      ;; (vm-present-current-message)
+		      (vm-record-and-change-message-pointer
+		       vm-message-pointer mp :present nil)
 		      ;; return non-nil so the caller will know that
 		      ;; a new message was selected.
 		      t )))))))

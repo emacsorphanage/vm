@@ -1882,8 +1882,8 @@ Supports version 4 format of attribute storage, for backward compatibility."
 (defun vm-startup-apply-bookmark (n)
   (if n
       (vm-record-and-change-message-pointer
-       vm-message-pointer
-       (nthcdr (1- n) vm-message-list))))
+       vm-message-pointer (nthcdr (1- n) vm-message-list)
+       :present nil)))
 
 (defun vm-gobble-pop-retrieved ()
   (let ((case-fold-search t)

@@ -86,8 +86,10 @@ vm-search-using-regexps for this search."
 	       (vm-isearch-update)
 	       (if (not (eq vm-message-pointer old-vm-message-pointer))
 		   (progn
+		     ;; apparently, no need to update presentation here
 		     (vm-record-and-change-message-pointer
-		      old-vm-message-pointer vm-message-pointer)
+		      old-vm-message-pointer vm-message-pointer
+		      :present nil)
 		     (vm-update-summary-and-mode-line)
 		     ;; vm-show-current-message only adjusts (point-max),
 		     ;; it doesn't change (point-min).
