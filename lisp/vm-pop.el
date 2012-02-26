@@ -1264,7 +1264,7 @@ specification SPEC."
 ;;;###autoload
 (defun vm-pop-submit-bug-report ()
   "Submit a bug report for VM's POP support functionality.  
-It is necessary to run vm-pop-start-bug-report before the problem
+It is necessary to run `vm-pop-start-bug-report' before the problem
 occurrence and this command after the problem occurrence, in
 order to capture the trace of POP sessions during the occurrence."
   (interactive)
@@ -1274,7 +1274,8 @@ order to capture the trace of POP sessions during the occurrence."
 	  (y-or-n-p "Did you run vm-pop-start-bug-report earlier? "))
       (vm-inform 5 "Thank you. Preparing the bug report... ")
     (vm-inform 1 "Consider running vm-pop-start-bug-report before the problem occurrence"))
-  (let ((process (vm-folder-pop-process)))
+  (let ((process (if (eq vm-folder-access-method 'pop)
+		     (vm-folder-pop-process))))
     (if process
 	(vm-pop-end-session process)))
   (let ((trace-buffer-hook
@@ -1288,8 +1289,7 @@ order to capture the trace of POP sessions during the occurrence."
 	       (insert "----") 
 	       (insert (format "%s" buf))
 	       (insert "----------\n")
-	       (insert (save-excursion
-			 (set-buffer buf)
+	       (insert (with-current-buffer buf
 			 (buffer-string)))
 	       (setq bufs (cdr bufs)))
 	     (insert "--------------------------------------------------\n"))

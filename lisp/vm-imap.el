@@ -4640,7 +4640,7 @@ folder."
 ;;;###autoload
 (defun vm-imap-submit-bug-report ()
   "Submit a bug report for VM's IMAP support functionality.  
-It is necessary to run vm-imap-start-bug-report before the problem
+It is necessary to run `vm-imap-start-bug-report' before the problem
 occurrence and this command after the problem occurrence, in
 order to capture the trace of IMAP sessions during the occurrence."
   (interactive)
@@ -4650,9 +4650,10 @@ order to capture the trace of IMAP sessions during the occurrence."
 	  (y-or-n-p "Did you run vm-imap-start-bug-report earlier? "))
       (vm-inform 5 "Thank you. Preparing the bug report... ")
     (vm-inform 1 "Consider running vm-imap-start-bug-report before the problem occurrence"))
-  (let ((process (vm-folder-imap-process)))
+  (let ((process (if (eq vm-folder-access-method 'imap)
+		     (vm-folder-imap-process))))
     (if process
-	(vm-imap-end-session (vm-folder-imap-process))))
+	(vm-imap-end-session process)))
   (let ((trace-buffer-hook
 	 (lambda ()
 	   (let ((bufs vm-kept-imap-buffers) 
