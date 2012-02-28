@@ -131,11 +131,13 @@ deleted messages.  Use `###' to expunge deleted messages."
   ;; between folder names and maildrop specs for the server folders.
 
   (interactive (list nil :read-only current-prefix-arg))
+  (when (vm-interactive-p) (setq interactive t))
   (vm-session-initialization)
   ;; recursive call to vm in order to allow defadvice on its first
   ;; call.  Added in VM 8.0.6
   (unless (boundp 'vm-session-beginning)
-    (vm folder :read-only read-only :access-method access-method
+    (vm folder :interactive nil :read-only read-only 
+	:access-method access-method
 	:reload reload :just-visit just-visit))
   ;; set inhibit-local-variables non-nil to protect
   ;; against letter bombs.

@@ -1661,6 +1661,7 @@ address is used."
     (vm-get-header-contents (car vm-message-pointer) "From:")))
 
 
+;;;###autoload
 (defun* vm-mail-internal (&key buffer-name to guessed-to subject 
 			       in-reply-to cc references newsgroups)
     "Create a message buffer and set it up according to args.

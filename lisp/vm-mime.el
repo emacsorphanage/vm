@@ -3529,14 +3529,12 @@ button that this LAYOUT comes from."
     (vm-mime-insert-button
      :caption
      (vm-replace-in-string
-      (vm-mime-sprintf format tmplayout)	      
-      "save\\]"
-      "display]")
+      (vm-mime-sprintf format tmplayout) "save\\]" "display]")
      :action
      (function
       (lambda (extent)
 	;; reuse the internal display code, but make sure that no new
-	;; buttons should be created for the external-body content.
+	;; buttons will be created for the external-body content.
 	(let ((layout (if vm-xemacs-p
                          (vm-extent-property extent 'vm-mime-layout)
                        (overlay-get extent 'vm-mime-layout)))
@@ -3544,6 +3542,7 @@ button that this LAYOUT comes from."
 	      (vm-mime-auto-displayed-content-type-exceptions nil))
 	  (vm-mime-display-internal-message/external-body 
 	   layout extent))))
+     ;; :disposable t
      :layout layout)))
 
 
