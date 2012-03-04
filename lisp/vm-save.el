@@ -135,7 +135,7 @@ The saved messages are flagged as `filed'."
 	      (vm-last-save-folder vm-last-save-folder)
 	      (vm-move-after-deleting nil))
 	  ;; Double check if the user really wants to archive
-	  (unless (or arg vm-message-pointer
+	  (unless (or arg vm-message-pointer (not (vm-interactive-p))
 		      (y-or-n-p "Auto archive the entire folder? "))
 	    (error "Aborted"))
 	  (setq vm-message-pointer (or vm-message-pointer vm-message-list))

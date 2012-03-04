@@ -961,13 +961,20 @@ them as ``@acronym{SSL}'' in this manual.
 
 @cindex stunnel
 @vindex vm-stunnel-program
+@vindex vm-stunnel-program-additional-configuration-file
 For @acronym{SSL}, you must either be using a version of Emacs that has
 @acronym{SSL} capability or have the @command{stunnel} program installed and
 the variable @code{vm-stunnel-program} naming it.  The default value of this
-variable, @samp{"stunnel"}, should be sufficient if the program is installed
-in your normal command search path.  In order to use the built-in
-@acronym{SSL} capability of your Emacs version, set
-@code{vm-stunnel-program} to @code{nil}.
+variable, @samp{"stunnel"}, which will work if an @samp{stunnel} program is
+installed in your normal command search path.  In order to use the built-in
+@acronym{SSL} capability of your Emacs, set
+@code{vm-stunnel-program} to @code{nil}.  Depending on the version of
+@samp{stunnel} program you are using, you may need to define a configuration
+file for @samp{stunnel}.  If need it, you should set the variable
+@code{vm-stunnel-program-additional-configuration-file} to the location of
+the configuration file.  (Consult the doc string of the variable and the
+manual of the @samp{stunnel} program 
+to find out what to put in the configuration file.)
 
 @cindex SSH
 @vindex vm-ssh-program

@@ -5719,15 +5719,13 @@ unless you understand how VM uses stunnel and know that you need
 to change something to get stunnel working.
 
 For stunnel version 4 and beyond stunnel relies on a configuration
-file to tell it what to do.  VM builts the necessary configuration
+file to tell it what to do.  VM builds the necessary configuration
 file for each instance of stunnel that it runs.  If you have extra
 configuration options you want stunnel to use, put them in a file
-and set vm-stunnel-program-additional-configuration-file to the
-name of that file.
+and set this variable to the name of that file.
 
-This variable is ignored if you're running stunnel versions prior
-to version 4 as VM uses command line argument to control stunnel
-in those cases."
+This variable is ignored for stunnel versions prior to version 4 as VM
+uses command line argument to control stunnel in those cases."
   :group 'vm-helpers
   :type '(choice (const :tag "None" nil)
 		 (file :must-match t)))
