@@ -43,7 +43,17 @@ VM 8.2.0b1
      `vm-mutable-frame-configuration' to convey its sense better.  The old
      name still works.
 
+   * Invoking `vm-auto-archive-messages' requires an additional confirmation
+     to guard against accidental invocation.  Set the variable
+     `vm-confirm-for-auto-archive' to nil to turn this off.
+
    IMPROVEMENTS
+
+   * Enhanced the Summary display to show the user mentioned in the
+     "Reply-To" header (called the "principal"), when both the sender and
+     the recipient match `vm-summary-uninteresting-senders'.  The variable
+     `vm-summary-principal-marker' controls the tag used for showing the
+     principal (default "For: ").
 
    * New variable `vm-mime-multipart/related-show-method' to force the
      display of MIME multipart/related attachments.

@@ -267,14 +267,8 @@ works in all VM buffers."
 ;; message IDs parsed from References header
 (defsubst vm-references-of (message)
   (aref (aref message 3) 20))
-;; have we retrieved the headers of this message?
-;; only valid for remote folder access methods
-;; USR: changed the name to vm-headers-to-be-retrieved-of because all the
-;; VM folders in the world already have nil's written in this field.
-;; USR: changed it again to vm-body-to-be-discarded-of to allow for
+;; USR: changed the name to vm-body-to-be-discarded-of to allow for
 ;; fetched messages to be discarded before save.  2010-06-08
-(defsubst vm-headers-to-be-retrieved-of (message)
-  nil)
 (defsubst vm-body-to-be-discarded-of (message)
   (aref (aref message 3) 21))
 ;; have we retrieved the body of this message?
@@ -294,18 +288,29 @@ works in all VM buffers."
 ;; imap UIDVALIDITY value for message
 (defsubst vm-imap-uid-validity-of (message)
   (aref (aref message 3) 24))
+;; spam-score of the message gathered from a suitable header
 (defsubst vm-spam-score-of (message)
   (aref (aref message 3) 25))
-;; (defsubst vm-headers-to-be-retrieved-of (message)
-;;   (aref (aref message 3) 26))
+;; have we retrieved the headers of this message?
+;; only valid for remote folder access methods
+;; USR: changed the name to vm-headers-to-be-retrieved-of because all the
+;; VM folders in the world already have nil's written in this field.
+(defsubst vm-headers-to-be-retrieved-of (message)
+  (aref (aref message 3) 26))
+;; whether the headers of the message are temporarily stored in folder
 (defsubst vm-headers-to-be-discarded-of (message)
   (aref (aref message 3) 27))
+;; subject string of the message for summary purposes
 (defsubst vm-summary-subject-of (message)
   (aref (aref message 3) 28))
+;; the thread parent message as declared by the user (not "cached" data)
 (defsubst vm-declared-parent-of (message)
   (aref (aref message 3) 29))
+;; the list of duplicate messages as declared by the user 
+;; (not "cacahed" data)
 (defsubst vm-declared-duplicates-of (message)
   (aref (aref message 3) 30))
+;; Components of the delivery-date of the message
 (defsubst vm-d-weekday-of (message)
   (aref (aref message 3) 31))
 (defsubst vm-d-monthday-of (message)
@@ -318,6 +323,12 @@ works in all VM buffers."
   (aref (aref message 3) 35))
 (defsubst vm-d-zone-of (message)
   (aref (aref message 3) 36))
+;; message Reply-To header's full name part
+(defsubst vm-reply-to-name-of (message) 
+  (aref (aref message 3) 37))
+;; message Reply-To header's address part
+(defsubst vm-reply-to-of (message) 
+  (aref (aref message 3) 38))
 
 ;; extra data shared by virtual messages if vm-virtual-mirror is non-nil
 (defconst vm-mirror-data-vector-length 6)
@@ -488,6 +499,10 @@ works in all VM buffers."
   (aset (aref message 3) 35 val))
 (defsubst vm-set-d-zone-of (message val)
   (aset (aref message 3) 36 val))
+(defsubst vm-set-reply-to-name-of (message author)
+  (aset (aref message 3) 37 author))
+(defsubst vm-set-reply-to-of (message author)
+  (aset (aref message 3) 38 author))
 
 (defsubst vm-set-edit-buffer-of (message buf)
   (aset (aref message 4) 0 buf))

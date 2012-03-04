@@ -453,7 +453,7 @@ subexpressions."
 	     (setq f-element "\\( *[0-9]+ *\\)")
 	     (setq m-element (list count (quote 'u-vm-color-date-face)
 				    nil u-vm-color-xemacs-workaround)))
-	    ((string-equal value "f") ;; authors / recipients address
+	    ((string-equal value "f") ;; authors/principal/recipients address
 	     ;;(setq f-element "\\(To: [^ \n]+\\)?\\([^ \n]+\\)?")
 	     (setq f-element (concat
 			      "\\("
@@ -473,7 +473,7 @@ subexpressions."
 	     (setq m-element (list count (quote 'u-vm-color-author-face) t t)))
 	    ((or (string-equal value "F")
 		 (string-equal value "UA")  ;; IS THIS CORRECT!????????
-		 (string-equal value "UB")) ;; authors / recipients full names
+		 (string-equal value "UB")) ;; author/principal/recipient full names
 	     ;;(setq f-element "\\(To:.+\\)?\\([^:\n]+\\)?")
 	     (setq f-element (concat
 			      "\\("

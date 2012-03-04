@@ -176,6 +176,7 @@
     (header-or-text . vm-mail-vs-header-or-text)
     (recipient . vm-mail-vs-recipient)
     (author . vm-mail-vs-author)
+    (principal . vm-mail-vs-principal)
     (author-or-recipient . vm-mail-vs-author-or-recipient)
     (subject . vm-mail-vs-subject)
     (sortable-subject . vm-mail-vs-sortable-subject)
@@ -510,6 +511,10 @@ I was really missing this!"
 
 (defun vm-mail-vs-author (arg)
   (let ((val (vm-mail-mode-get-header-contents "Sender\\|From:")))
+    (and val (string-match arg val))))
+
+(defun vm-mail-vs-principal (arg)
+  (let ((val (vm-mail-mode-get-header-contents "Reply-To:")))
     (and val (string-match arg val))))
 
 (defun vm-mail-vs-recipient (arg)

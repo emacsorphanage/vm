@@ -253,7 +253,7 @@
    :type 'boolean)
 
 (defcustom vm-pgg-get-author-headers '("From:" "Sender:")
-  "*The list of headers to get the author of a mail that is to be send.
+  "*The list of headers to get the author of a mail that is to be sent.
 If nil, `pgg-default-user-id' is used as a fallback."
   :group 'vm-pgg
   :type '(repeat string))

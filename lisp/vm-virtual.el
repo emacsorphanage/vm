@@ -722,6 +722,10 @@ Prefix arg means the new virtual folder should be visited read only."
   (or (string-match arg (vm-su-to m))
       (string-match arg (vm-su-to-names m))))
 
+(defun vm-vs-principal (m arg)
+  (or (string-match arg (vm-su-reply-to m))
+      (string-match arg (vm-su-reply-to-name m))))
+
 (defun vm-vs-author-or-recipient (m arg)
   (or (vm-vs-author m arg)
       (vm-vs-recipient m arg)))
@@ -890,6 +894,7 @@ The headers that will be checked are those listed in
 (put 'header-or-text 'vm-virtual-selector-clause
      "with header or text matching")
 (put 'recipient 'vm-virtual-selector-clause "with recipient matching")
+(put 'principal 'vm-virtual-selector-clause "with principal matching")
 (put 'author-or-recipient 'vm-virtual-selector-clause
      "with author or recipient matching")
 (put 'author 'vm-virtual-selector-clause "with author matching")
@@ -915,6 +920,7 @@ The headers that will be checked are those listed in
 (put 'text 'vm-virtual-selector-arg-type 'string)
 (put 'header-or-text 'vm-virtual-selector-arg-type 'string)
 (put 'recipient 'vm-virtual-selector-arg-type 'string)
+(put 'principal 'vm-virtual-selector-arg-type 'string)
 (put 'author-or-recipient 'vm-virtual-selector-arg-type 'string)
 (put 'author 'vm-virtual-selector-arg-type 'string)
 (put 'subject 'vm-virtual-selector-arg-type 'string)

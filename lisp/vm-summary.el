@@ -1311,6 +1311,28 @@ was sent.                                                  USR, 2010-05-13"
 		 (match-beginning 1)
 		 (match-end 1)))))))))
 
+(defconst vm-su-rfc822-date-format
+  ;; The date format recognized here is the one specified in RFC 822.
+  ;; Some slop is allowed e.g. dashes between the monthday, month and year
+  ;; because such malformed headers have been observed.
+  (concat "\\(\\([a-z][a-z][a-z]\\),\\)?[ \t\n]*"
+	  "\\([0-9][0-9]?\\)[ \t\n---]*"
+	  "\\([a-z][a-z][a-z]\\)[ \t\n---]*"
+	  "\\([0-9]*[0-9][0-9]\\)[ \t\n]*"
+	  "\\([0-9:]+\\)[ \t\n]*"
+	  "\\([a-z][a-z]?[a-z]?\\|\\(-\\|\\+\\)[01][0-9][0-9][0-9]\\)"))
+
+(defconst vm-su-ctime-format
+  ;; UNIX ctime(3) format, with slop allowed in the whitespace, and we allow for
+  ;; the possibility of a timezone at the end.
+  (concat
+   "\\([a-z][a-z][a-z]\\)[ \t\n]*" 
+   "\\([a-z][a-z][a-z]\\)[ \t\n]*" 
+   "\\([0-9][0-9]?\\)[ \t\n]*"
+   "\\([0-9:]+\\)[ \t\n]*"
+   "\\([0-9][0-9][0-9][0-9]\\)[ \t\n]*"
+   "\\([a-z][a-z]?[a-z]?\\|\\(-\\|\\+\\)[01][0-9][0-9][0-9]\\)?"))
+
 (defun vm-su-do-date (m)
   (let ((case-fold-search t)
 	vector date)
@@ -1329,15 +1351,10 @@ was sent.                                                  USR, 2010-05-13"
       (vm-set-year-of m "")
       (vm-set-hour-of m "")
       (vm-set-zone-of m ""))
-     ((string-match
-;; The date format recognized here is the one specified in RFC 822.
-;; Some slop is allowed e.g. dashes between the monthday, month and year
-;; because such malformed headers have been observed.
-"\\(\\([a-z][a-z][a-z]\\),\\)?[ \t\n]*\\([0-9][0-9]?\\)[ \t\n---]*\\([a-z][a-z][a-z]\\)[ \t\n---]*\\([0-9]*[0-9][0-9]\\)[ \t\n]*\\([0-9:]+\\)[ \t\n]*\\([a-z][a-z]?[a-z]?\\|\\(-\\|\\+\\)[01][0-9][0-9][0-9]\\)"
-       date)
+     ((string-match vm-su-rfc822-date-format date)
       (if (match-beginning 2)
-	  (vm-su-do-weekday m (substring date (match-beginning 2)
-					    (match-end 2)))
+	  (vm-su-do-weekday 
+	   m (substring date (match-beginning 2) (match-end 2)))
 	(vm-set-weekday-of m ""))
       (vm-set-monthday-of m (substring date (match-beginning 3) (match-end 3)))
       (vm-su-do-month m (substring date (match-beginning 4) (match-end 4)))
@@ -1350,20 +1367,14 @@ was sent.                                                  USR, 2010-05-13"
 		   (vm-set-year-of m (concat "19" (vm-year-of m)))))))
       (vm-set-hour-of m (substring date (match-beginning 6) (match-end 6)))
       (vm-set-zone-of m (substring date (match-beginning 7) (match-end 7))))
-     ((string-match
-;; UNIX ctime(3) format, with slop allowed in the whitespace, and we allow for
-;; the possibility of a timezone at the end.
-"\\([a-z][a-z][a-z]\\)[ \t\n]*\\([a-z][a-z][a-z]\\)[ \t\n]*\\([0-9][0-9]?\\)[ \t\n]*\\([0-9:]+\\)[ \t\n]*\\([0-9][0-9][0-9][0-9]\\)[ \t\n]*\\([a-z][a-z]?[a-z]?\\|\\(-\\|\\+\\)[01][0-9][0-9][0-9]\\)?"
-       date)
-      (vm-su-do-weekday m (substring date (match-beginning 1)
-				     (match-end 1)))
+     ((string-match vm-su-ctime-format date)
+      (vm-su-do-weekday m (substring date (match-beginning 1) (match-end 1)))
       (vm-su-do-month m (substring date (match-beginning 2) (match-end 2)))
       (vm-set-monthday-of m (substring date (match-beginning 3) (match-end 3)))
       (vm-set-hour-of m (substring date (match-beginning 4) (match-end 4)))
       (vm-set-year-of m (substring date (match-beginning 5) (match-end 5)))
       (if (match-beginning 6)
-	  (vm-set-zone-of m (substring date (match-beginning 6)
-				       (match-end 6)))
+	  (vm-set-zone-of m (substring date (match-beginning 6) (match-end 6)))
 	(vm-set-zone-of m "")))
      (t
       (setq vector (vm-parse-date date))
@@ -1414,45 +1425,80 @@ was sent.                                                  USR, 2010-05-13"
 
 (defun vm-su-full-name (m)
   "Returns the author name of M as a string, either from
-the stored entry (vm-full-name-of) or recalculating it if necessary.
+the stored entry (`vm-full-name-of') or recalculating it if necessary.
 The result is a mime-decoded string with text-properties.
 							USR 2010-05-13"
   (or (vm-full-name-of m)
       (progn (vm-su-do-author m) (vm-full-name-of m))))
 
+(defun vm-su-reply-to-name (m)
+  "Returns the principal (Reply-To) name of M as a string, either from
+the stored entry (`vm-reply-to-name-of') or recalculating it if necessary.
+The result is a mime-decoded string with text-properties.
+							USR 2010-05-13"
+  (or (vm-reply-to-name-of m)
+      (progn (vm-su-do-principal m) (vm-reply-to-name-of m))))
+
 (defun vm-su-interesting-full-name (m)
-  "Returns the author name of M as a string, but if the author is
-\"uninteresting\" then returns the value of
-`vm-summary-uninteresting-senders-arrow' followed by recipient
-names.  The result is a mime-decoded string with text properties.
+  "Returns the author name of M as a string.
+If the author is \"uninteresting\" then returns the value of
+`vm-summary-recipient-marker' followed by recipient names.
+If the recipient is also \"uninteresting\" then returns the value of
+`vm-summary-principal-marker' followed by the reply-to names.
+The result is a mime-decoded string with text properties.
 							  USR 2010-05-13"
-  (if vm-summary-uninteresting-senders
-      (let ((case-fold-search nil))
-	(if (string-match vm-summary-uninteresting-senders (vm-su-from m))
-	    (concat vm-summary-uninteresting-senders-arrow (vm-su-to-names m))
-	  (vm-su-full-name m)))
-    (vm-su-full-name m)))
+  (let ((case-fold-search nil))
+    (cond 
+     ((null vm-summary-uninteresting-senders)
+      (vm-su-full-name m))
+     ((not (string-match vm-summary-uninteresting-senders (vm-su-from m)))
+      (vm-su-full-name m))
+      ;; FIXME do we need to match each address separately?  USR, 2012-03-02
+     ((not (string-match vm-summary-uninteresting-senders (vm-su-to-names m)))
+      (concat vm-summary-recipient-marker (vm-su-to-names m)))
+     ((not (string-match "\\?\\?\\?" (vm-su-reply-to-name m)))
+      (concat vm-summary-principal-marker (vm-su-reply-to-name m)))
+     (t
+      (concat vm-summary-recipient-marker (vm-su-to-names m))))))
+      
 
 (defun vm-su-from (m)
   "Returns the author address of M as a string, either from
-the stored entry (vm-from-of) or recalculating it if necessary.
+the stored entry (`vm-from-of') or recalculating it if necessary.
 The result is a mime-encoded string, but this is not certain.
 							USR 2010-05-13"
   (or (vm-from-of m)
       (progn (vm-su-do-author m) (vm-from-of m))))
 
+(defun vm-su-reply-to (m)
+  "Returns the principal (Reply-To) address of M as a string, either from
+the stored entry (`vm-reply-to-of') or recalculating it if necessary.
+The result is a mime-encoded string, but this is not certain.
+							USR 2010-05-13"
+  (or (vm-reply-to-of m)
+      (progn (vm-su-do-principal m) (vm-reply-to-of m))))
+
 (defun vm-su-interesting-from (m)
-  "Returns the author address of M as a string, but if the author is
-\"uninteresting\" then returns the value of
-`vm-summary-uninteresting-senders-arrow' followed by recipient
-addresses.  The result is a mime-encoded string, but this not certain.
+  "Returns the author address of M as a string.
+If the author is \"uninteresting\" then returns the value of
+`vm-summary-recipient-marker' followed by recipient addresses.
+If the recipient is also \"uninteresting\" then returns the value of
+`vm-summary-principal-marker' followed by the reply-to address.
+The result is a mime-encoded string, but this is not certain.
 							  USR 2010-05-13"
-  (if vm-summary-uninteresting-senders
-      (let ((case-fold-search nil))
-	(if (string-match vm-summary-uninteresting-senders (vm-su-from m))
-	    (concat vm-summary-uninteresting-senders-arrow (vm-su-to m))
-	  (vm-su-from m)))
-    (vm-su-from m)))
+  (let ((case-fold-search nil))
+    (cond 
+     ((null vm-summary-uninteresting-senders)
+      (vm-su-from m))
+     ((not (string-match vm-summary-uninteresting-senders (vm-su-from m)))
+      (vm-su-from m))
+     ((not (string-match vm-summary-uninteresting-senders (vm-su-to m)))
+      ;; FIXME do we need to match each address separately?  USR, 2012-03-02
+      (concat vm-summary-uninteresting-senders-arrow (vm-su-to m)))
+     ((not (string-match "\\?\\?\\?" (vm-su-reply-to m)))
+      (concat vm-summary-principal-marker (vm-su-reply-to m)))
+     (t
+      (concat vm-summary-recipient-marker (vm-su-to m))))))
 
 ;; Some yogurt-headed delivery agents don't even provide a From: header.
 (defun vm-grok-From_-author (message)
@@ -1474,7 +1520,7 @@ addresses.  The result is a mime-encoded string, but this not certain.
 
 (defun vm-su-do-author (m)
   "Parses the From headers of the message M and stores the results in
-the from and full-name entries of the cached-data vector.   USR, 2010-05-13"
+the `from' and `full-name' entries of the cached-data vector.   USR, 2010-05-13"
   (let ((full-name (vm-get-header-contents m "Full-Name:"))
 	(from (or (vm-get-header-contents m "From:" ", ")
 		  (vm-grok-From_-author m)))
@@ -1497,20 +1543,47 @@ the from and full-name entries of the cached-data vector.   USR, 2010-05-13"
     (vm-set-full-name-of m (vm-decode-mime-encoded-words-in-string full-name))
     (vm-set-from-of m (vm-decode-mime-encoded-words-in-string from))))
 
+(defun vm-su-do-principal (m)
+  "Parses the Reply-To header of the message M and stores the results in
+the `reply-to' and `reply-to-name' entries of the cached-data vector."
+  (let ((reply-to (vm-get-header-contents m "Reply-To:" ", "))
+	reply-to-name pair i)
+    (if (null reply-to)
+	(setq reply-to "???"
+	      reply-to-name "???")
+      (setq pair (funcall vm-chop-full-name-function reply-to)
+	    reply-to (or (nth 1 pair) reply-to)
+	    reply-to-name (or (nth 0 pair) reply-to)))
+    (if (string-match "\\`\"\\([^\"]+\\)\"\\'" reply-to-name)
+ 	(setq reply-to-name
+ 	      (substring reply-to-name (match-beginning 1) (match-end 1))))
+    (while (setq i (string-match "\n" reply-to-name i))
+      (aset reply-to-name i ?\ ))
+    (vm-set-reply-to-name-of 
+     m (vm-decode-mime-encoded-words-in-string reply-to-name))
+    (vm-set-reply-to-of 
+     m (vm-decode-mime-encoded-words-in-string reply-to))))
+
+(defconst vm-su-address-format
+  (concat
+   "\\`[ \t\n]*\\([^< \t\n]+\\([ \t\n]+[^< \t\n]+\\)*\\)?[ \t\n]*"
+   "<\\([^>]+\\)>[ \t\n]*\\'"))
+
+(defconst vm-su-address-format-2
+  (concat
+   "\\`[ \t\n]*\\(\\(\"[^\"]+\"\\|[^\"( \t\n]\\)+\\)[ \t\n]*"
+   "(\\([^ \t\n]+\\([ \t\n]+[^ \t\n]+\\)*\\)?)[ \t\n]*\\'"))
+
 (defun vm-default-chop-full-name (address)
   (let ((from address)
 	(full-name nil))
-    (cond ((string-match
-"\\`[ \t\n]*\\([^< \t\n]+\\([ \t\n]+[^< \t\n]+\\)*\\)?[ \t\n]*<\\([^>]+\\)>[ \t\n]*\\'"
-			 address)
+    (cond ((string-match vm-su-address-format address)
 	   (if (match-beginning 1)
 	       (setq full-name
 		     (substring address (match-beginning 1) (match-end 1))))
 	   (setq from
 		 (substring address (match-beginning 3) (match-end 3))))
-	  ((string-match
-"\\`[ \t\n]*\\(\\(\"[^\"]+\"\\|[^\"( \t\n]\\)+\\)[ \t\n]*(\\([^ \t\n]+\\([ \t\n]+[^ \t\n]+\\)*\\)?)[ \t\n]*\\'"
-			 address)
+	  ((string-match vm-su-address-format-2 address)
 	   (if (match-beginning 3)
 	       (setq full-name
 		     (substring address (match-beginning 3) (match-end 3))))
@@ -1586,14 +1659,14 @@ the from and full-name entries of the cached-data vector.   USR, 2010-05-13"
 
 (defun vm-su-to (m)
   "Returns the recipient addresses of M as a string, either from
-the stored entry (vm-to-of) or recalculating them if necessary.
+the stored entry (`vm-to-of') or recalculating them if necessary.
 The result is a mime-decoded string with text properties.  
 							USR 2010-05-13"
   (or (vm-to-of m) (progn (vm-su-do-recipients m) (vm-to-of m))))
 
 (defun vm-su-to-names (m)
   "Returns the recipient names of M as a string, either from
-the stored entry (vm-to-names-of) or recalculating them if necessary.
+the stored entry (`vm-to-names-of') or recalculating them if necessary.
 The result is a mime-decoded string with text properties.  
 							USR 2010-05-13"
   (or (vm-to-names-of m) (progn (vm-su-do-recipients m) (vm-to-names-of m))))
@@ -1625,7 +1698,7 @@ The result is a mime-decoded string with text properties.
 
 (defun vm-su-line-count (m)
   "Returns the line count of M as a string, either from the stored
-entry (vm-line-count-of) or recalculating it if necessary.  USR 2010-05-13"
+entry (`vm-line-count-of') or recalculating it if necessary.  USR 2010-05-13"
   (or (vm-line-count-of m)
       (vm-set-line-count-of
        m
@@ -1699,7 +1772,7 @@ The other prefixes and suffixes (`vm-subject-ignored-prefix' and
 
 (defun vm-su-summary (m)
   "Returns the tokenized summary line of M, either from the
-stored entry (vm-summary-of) or recalculating it if necessary.
+stored entry (`vm-summary-of') or recalculating it if necessary.
 The summary line is a mime-decoded string with text properties.
 						  USR 2010-05-13"
   (if (and (vm-virtual-message-p m) (not (vm-virtual-messages-of m)))

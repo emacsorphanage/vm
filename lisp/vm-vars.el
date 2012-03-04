@@ -2856,6 +2856,9 @@ The recognized SELECTORs are:
 
    author          - matches message if ARG matches the author; ARG should be a
                      regular expression.
+   principal       - matches message if ARG matches the principal in
+                     the \"Reply-To\" header; ARG should be a regular
+                     expression. 
    author-or-recipient
 		   - matches message if ARG matches the author of
 		     the message or any of its recipients; ARG
@@ -3932,8 +3935,16 @@ respectively."
   :group 'vm-summary
   :type '(choice (const nil) regexp))
 
-(defcustom vm-summary-uninteresting-senders-arrow "To: "
-  "*String to display before the string that is displayed instead of an
+(defcustom vm-summary-recipient-marker "To: "
+  "*String to display before the recipients when displayed instead of an
+\"uninteresting\" sender.  See `vm-summary-uninteresting-senders'."
+  :group 'vm-summary
+  :type 'string)
+(defvaralias 'vm-summary-uninteresting-senders-arrow
+  'vm-summary-recipient-marker)
+
+(defcustom vm-summary-principal-marker "For: "
+  "*String to display before the principal when displayed instead of an
 \"uninteresting\" sender.  See `vm-summary-uninteresting-senders'."
   :group 'vm-summary
   :type 'string)
@@ -6674,6 +6685,7 @@ header line in email messages,
     ("header-or-text")
     ("recipient")
     ("author")
+    ("principal")
     ("author-or-recipient")
     ("outgoing")
     ("uninteresting-senders")
@@ -6737,6 +6749,7 @@ header line in email messages,
     (header-or-text . vm-vs-header-or-text)
     (recipient . vm-vs-recipient)
     (author . vm-vs-author)
+    (principal . vm-vs-principal)
     (author-or-recipient . vm-vs-author-or-recipient)
     (outgoing . vm-vs-outgoing)
     (uninteresting-senders . vm-vs-uninteresting-senders)

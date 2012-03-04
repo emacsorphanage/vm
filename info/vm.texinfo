@@ -4428,6 +4428,7 @@ of the substituted string.  If the string is longer than this value, it
 is truncated.
 
 @vindex vm-summary-uninteresting-senders
+@vindex vm-summary-recipient-marker
 @vindex vm-summary-uninteresting-senders-arrow
 If you save copies of all your outbound messages in a folder and
 later visit that folder, the @samp{%F} format specifier will normally
@@ -4438,9 +4439,18 @@ if non-@code{nil}, should be a regular expression that matches
 addresses that you don't consider interesting enough to appear in
 the summary.  When such senders would be displayed by the @samp{%F} or
 @samp{%f} summary format specifiers VM will substitute the value of
-@code{vm-summary-uninteresting-senders-arrow} (default "To: ")
+@code{vm-summary-recipient-marker} (default "To: ")
 followed by what would be shown by the @samp{%T} and @samp{%t} specifiers
 respectively.
+
+If the recipients of the message are also ``uninteresting'' in this way,
+then VM will substitute the value of @code{vm-summary-principal-marker}
+(default "For: ") followed by the name or address in the @samp{Reply-To}
+header.   
+
+(For compatibility with older versions, the variable
+@code{vm-summary-recipient-marker} is also referred to by its old name,
+@code{vm-summary-uninteresting-senders-arrow}.)
 
 The summary format need not be one line per message but it must end with
 a newline, otherwise the message pointer will not be displayed correctly
@@ -4986,6 +4996,9 @@ should be a regular expression.
 @item recipient
 matches message if @var{ARG} matches any part of the recipient
 list of the message.  @var{ARG} should be a regular expression.
+@item principal
+matches message if @var{ARG} matches any part of the @samp{Reply-To} header
+of the message.  @var{ARG} should be a regular expression.
 @vindex vm-summary-uninteresting-senders
 @item outgoing
 matches message if your are the author of it, i.e. if the author matches
@@ -7388,6 +7401,10 @@ discarded.  This field is not used at present.
 @code{d-weekday}, @code{d-monthday}, @code{d-month}, @code{d-year},
 @code{d-hour}, @code{d-zone} (31-36).  Data indicating the delivery date of
 the message.   These fields are not used at present.
+@item
+@code{reply-to-name}, @code{reply-to}.  The full name and the email address
+in the @samp{Reply-To} header of the message (called the ``principal'' of
+the message.)
 @end itemize
 
 @subsubheading Mirror Data
