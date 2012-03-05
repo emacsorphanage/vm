@@ -1221,6 +1221,35 @@ the presentation buffer."
   :group 'vm-presentation
   :type '(repeat (list (symbol :tag "Presentation method")
 		       (symbol :tag "Minor mode"))))
+;; smime related stuff
+(defvar vm-smime-sign-message nil
+  "Tells VM to sign the message upon sending, should not be set
+directly rather use the function `vm-smime-sign-message' or
+`vm-smime-sign-encrypt-message'")
+
+(defvar vm-smime-encrypt-message nil
+  "Tells VM to encrypt the message upon sending, should not be
+set directly rather use the function `vm-smime-encrypt-message'
+or `vm-smime-sign-encrypt-message'")
+
+(defcustom vm-smime-get-recipient-certificate-method 'ask
+  "*The method by which VM should find the certificates to use in
+encrypting this S/MIME encoded composition. Valid valus are as follows:
+
+   'ask - Ask the user to specify the files manually each time. The
+          user will be prompted for a file name and whether they want
+          to specify another thereafter and so on.
+
+   'links - This method assumes that there exist links under
+            `smime-certificate-directory' given by the recipient address
+            to the appropriate PEM encoded certificate, i.e.
+             ~/CERTS/bob@somewhere.com -> ~/CERTS/bob_johnstons_certificate.pem
+            If any recipient in the message does not have such a link
+            the sender will be asked if they would like to supply an
+            alternative file"
+  :type '(choice (const :tag "Ask" ask)
+				 (const :tag "Links" links))
+  :group 'vm-mime)
 
 (defcustom vm-display-using-mime t
   "*Non-nil value means VM should display messages using MIME.

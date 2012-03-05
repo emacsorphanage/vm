@@ -40,6 +40,7 @@
   (require 'vm-reply)
   (require 'vm-digest)
   (require 'vm-edit)
+  (require 'smime)
   )
 
 ;; vm-xemacs.el is a fake file to fool the Emacs 23 compiler
@@ -2681,6 +2682,25 @@ is not successful.                                   USR, 2011-03-25"
 		 (setq type (downcase (car (vm-mm-layout-type layout)))
 		       type-no-subtype (car (vm-parse type "\\([^/]+\\)")))))
 	  (cond 
+	   ;; If its a signed message, the signature comes later but we
+	   ;; need to verify it now since other code may alter the text
+	   ;; (and there's a pretty good chance that the message was
+	   ;; encrypted, so it's non-trivial to get the original layout)
+	   ((and (vm-mime-types-match "multipart/signed" type)
+		 (when (string-match "pkcs7-signature"
+				     (vm-mime-get-parameter layout "protocol"))
+		   (let ((verified nil))
+		     (with-temp-buffer
+		       (vm-mime-insert-mime-headers layout)
+		       (vm-mime-insert-mime-body layout)
+		       (when (smime-verify-buffer)
+			 (setq verified t)))
+		     (if verified
+			 (insert
+			  "/*****S/MIME SIGNATURE VERIFICATION SUCCESSFULL*****/\n")
+		       (insert
+			"/*****S/MIME SIGNATURE VERIFICATION FAILED*****/\n"))))
+		 nil))
 	   ((and (vm-mime-should-display-button 
 		  layout :ignore-content-disposition dont-honor-c-d)
 		 ;; original conditional-cases changed to fboundp
@@ -2953,6 +2973,142 @@ in the text are highlighted and energized."
     (goto-char end)
     (vm-emit-mime-decoding-message "Decoding text/enriched... done")
     t ))
+
+(defun vm-mime-smime-extract-pkcs7-signature (layout)
+  (unless (vectorp layout)
+	(goto-char (vm-extent-start-position layout))
+    (setq layout (vm-extent-property layout 'vm-mime-layout)))
+  (let ((certout (vm-read-file-name
+		  "Append certificates to file: "
+		  (concat smime-certificate-directory "/" 
+			  (vm-get-sender)))))
+	(with-temp-buffer
+	  (insert "-----BEGIN PKCS7-----\n")
+	  (vm-mime-insert-mime-body layout)
+	  (insert "-----END PKCS7-----\n")
+	  (if (smime-pkcs7-certificates-region (point-min) (point-max))
+		  (progn
+			(append-to-file nil nil certout)
+			(message "Certificates extracted and appended to %s" certout))
+		(message "Could not extract any certificates!")))))
+
+(defalias 'vm-mime-display-button-application/x-pkcs7-signature
+  'vm-mime-display-button-application/pkcs7-signature)
+
+(defun vm-mime-display-button-application/pkcs7-signature (layout)
+  (if (vectorp layout)
+      (let ((vm-mf-default-action "append cert to file"))
+	(vm-mime-insert-button
+	 :caption
+	 (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+	 :action
+	 (function vm-mime-smime-extract-pkcs7-signature)
+	 :layout layout)))
+  t)
+
+(defun vm-mime-display-application/pkcs7-mime (layout)
+  (let ((vm-mime-auto-displayed-content-types
+	 (append vm-mime-auto-displayed-content-types
+		 '("application/pkcs7-mime" "application/x-pkcs7-mime"))))
+    (vm-decode-mime-layout layout t)))
+
+(defalias 'vm-mime-display-button-application/x-pkcs7-mime
+  'vm-mime-display-button-application/pkcs7-mime)
+
+(defun vm-mime-display-button-application/pkcs7-mime (layout)
+  (if (vectorp layout)
+      (let ((vm-mf-default-action "decrypt message"))
+	(vm-mime-insert-button
+	 :caption
+	 (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)
+	 :action
+	 (function
+	  (lambda (layout)
+	    (save-excursion
+	      (vm-mime-display-application/pkcs7-mime layout))))
+	 :layout layout
+	 :disposable t)))
+  t)
+
+(defalias 'vm-mime-display-internal-application/x-pkcs7-mime
+  'vm-mime-display-internal-application/pkcs7-mime)
+
+(defun vm-mime-display-internal-application/pkcs7-mime 
+  (layout &optional key-email)
+  "Decrypt a S/MIME encoded message using `smime-decode-region'
+to do the work. The resulting structure will often be another
+MIME-encoded message, so run the decoding again to present the
+message as it is designed to be viewed. This funtion relies on
+the user properly setting smime related variables, specifically
+`smime-keys'
+
+To have the decryption done automatically upon viewing, add 
+
+application/pkcs7-mime, and
+application/x-pkcs7-mime
+
+to `vm-mime-auto-displayed-content-types', but at present the
+smime code always asks for a password so this might mess up your
+normal flow"
+  (let ((start (point)) end
+	(buffer-read-only nil)
+	msg sub-layout retval
+	(real-content-type (vm-mm-layout-type layout)))
+    ;; find the most appropriate key for this mail. First search in
+    ;; smime keys for a recipient then fall back to user-mail-address,
+    ;; this makes the assumption (probably a good one), that the mail
+    ;; is encrypted with keys for any recipient
+    (unless key-email
+      (let ((skeys smime-keys)
+	    (recips (save-excursion
+		      (vm-select-folder-buffer)
+		      (vm-get-recipients))))
+	(while skeys
+	  (when (member (caar skeys) recips)
+	    (setq key-email (caar skeys)))
+	  (setq skeys (cdr skeys)))))
+    ;; need the content type for openssl smime to decrypt, insert the
+    ;; real ones from this layout. Is there a better way? The full
+    ;; content type including args (which may be necessary from smime)
+    ;; is stored in a list, we must explode it
+    (insert "Content-Type: ")
+    (while real-content-type
+      (insert (concat (car real-content-type) "; "))
+      (setq real-content-type (cdr real-content-type)))
+    (insert "\n\n")
+    (vm-mime-insert-mime-body layout)
+    (if (smime-decrypt-region
+	 start (point)
+	 (smime-get-key-by-email (or key-email user-mail-address)))
+	(save-excursion
+	  (setq end (point-marker))
+	  (vm-mime-crlf-to-lf-region start end)
+	  (setq msg (vm-make-message))
+	  (goto-char start)
+	  (vm-set-start-of msg (vm-marker (point)))
+	  (vm-set-headers-of msg (vm-marker (point)))
+	  (search-forward-regexp "\n\n" nil t)
+	  (vm-set-text-of msg (vm-marker (point)))
+	  (vm-set-text-end-of msg (vm-marker end))
+	  (vm-set-end-of msg (vm-marker end))
+	  (setq sub-layout (vm-mime-parse-entity-safe msg))
+	  (goto-char start)
+	  (insert "/*****S/MIME DECRYPT SUCCESSFUL - VIEWING SECURE*****/\n")
+	  (when (vectorp layout)
+	    (when (vm-decode-mime-layout sub-layout)
+	      (put-text-property (point) end 'invisible t)))
+	  t)
+      (delete-region start (point))
+      (if (y-or-n-p "Decryption failed, try a different key?")
+	  (vm-mime-display-internal-application/pkcs7-mime 
+	   layout (completing-read
+		   (concat "Key" (if smime-keys 
+		     (concat " (default " (caar smime-keys) "): ") ": "))
+		   smime-keys nil nil nil nil 
+		   (car-safe (car-safe smime-keys))))
+	(insert "/*****S/MIME DECRYPTION FAILED - BAD KEY?*****/\n")
+	nil)
+      )))
 
 (defun vm-mime-display-external-generic (layout)
   "Display mime object with LAYOUT in an external viewer, as
@@ -7104,7 +7260,7 @@ and the approriate content-type and boundary markup information is added."
 	  text-result			; results from text encodings
 	  forward-local-refs already-mimed layout e e-list boundary
 	  type encoding charset params description disposition object
-	  opoint-min encoded-attachment)
+	  opoint-min encoded-attachment message-smimed)
       (when vm-xemacs-p
 	;;Make sure we don't double encode UTF-8 (for example) text.
 	(setq buffer-file-coding-system (vm-binary-coding-system)))
@@ -7348,6 +7504,9 @@ and the approriate content-type and boundary markup information is added."
 	 :discard-regexp
 	 "\\(Content-Type:\\|MIME-Version:\\|Content-Transfer-Encoding\\)")
 	(vm-add-mail-mode-header-separator)
+	(when (or vm-smime-sign-message vm-smime-encrypt-message)
+	  (mail-text)
+	  (open-line 1))
 	(insert "MIME-Version: 1.0\n")
 	(if multipart
 	    (progn
@@ -7366,7 +7525,38 @@ and the approriate content-type and boundary markup information is added."
 		    "\n"))
 	  (when description
 	    (insert "Content-Description: " description "\n"))
-	  (insert "Content-Transfer-Encoding: " encoding "\n"))))))
+	  (insert "Content-Transfer-Encoding: " encoding "\n")))
+      ;; If necessary do smime signing and encrypting. This is the last
+      ;; task since it operates on the entirety of the message, including
+      ;; mime
+      (when vm-smime-sign-message
+	(mail-text)
+	(or (smime-sign-region 
+	     (point) (point-max)
+	     (or (smime-get-key-by-email
+		  (vm-get-sender))
+		 (error "S/MIME: cannot find key for sender, see smime-keys")))
+	    (error "S/MIME: signing outgoing message failed"))
+	;; Now that this composition is signed, if there is some reason
+	;; it is not sent, we do not want to sign it again
+	(setq message-smimed t)
+	(setq vm-smime-sign-message nil))
+      (when vm-smime-encrypt-message
+	(mail-text)
+	(or (smime-encrypt-region (point) (point-max)
+				  (vm-smime-get-recipient-certfiles))
+	    (error "S/MIME: encryption of outgoing message failed"))
+	;; do not encrypt twice if message did not get sent
+	(setq message-smimed t)
+	(setq vm-smime-encrypt-message nil))
+      ;; Now we need to move the S/MIME generated headers back into the
+      ;; header area
+      (when message-smimed
+	(mail-text)
+	(vm-remove-mail-mode-header-separator)
+	(forward-line -1)
+	(delete-char 1)
+	(vm-add-mail-mode-header-separator)))))
 
 (defun vm-mime-encode-text-part (beg end whole-message)
   "Encode the text from BEG to END in a composition buffer
@@ -7432,12 +7622,15 @@ WHOLE-MESSAGE is true then nil is returned."
 	   nil :keep-list nil 
 	   :discard-regexp
 	   "\\(Content-Type:\\|Content-Transfer-Encoding\\|MIME-Version:\\)")
+	  (vm-add-mail-mode-header-separator)
+	  (when (or vm-smime-sign-message vm-smime-encrypt-message)
+		(mail-text)
+		(open-line 1))
 	  (insert "MIME-Version: 1.0\n")
 	  (if enriched
 	      (insert "Content-Type: text/enriched; charset=" charset "\n")
 	    (insert "Content-Type: text/plain; charset=" charset "\n"))
 	  (insert "Content-Transfer-Encoding: " encoding "\n")
-	  (vm-add-mail-mode-header-separator)
 	  nil)
 
       (setq marker (point-marker))
@@ -7450,6 +7643,132 @@ WHOLE-MESSAGE is true then nil is returned."
       (widen)
       (cons marker encoding))))
 
+(defun vm-smime-sign-message ()
+  "Toggle the current composition for S/MIME signing. This only
+sets a flag and will not do the signing immediately. Actual
+singing is done upon sending the message. If the message is
+already set for signing this function will clear the flag so
+that no signing is done"
+  (interactive)
+  (when (null smime-keys)
+    (error "S/MIME: smime keys must be setup. See documentation for variable smime-keys"))
+  (if (eq major-mode 'mail-mode)
+      (if vm-smime-sign-message
+	  (progn (set (make-local-variable
+		       'vm-smime-sign-message) nil)
+		 (setq mode-name (vm-replace-in-string
+				  mode-name "SIGNED\\( \\|\\+\\)" "")))
+	(set (make-local-variable 'vm-smime-sign-message) t)
+	(setq mode-name (concat "SIGNED " mode-name)))
+    (error "Command must be used in a VM Mail mode buffer.")))
+
+(defun vm-smime-encrypt-message ()
+  "Toggle the current composition for S/MIME encryption. This
+only sets a flag and will not do the encryption immediately.
+Actual encryption is done upon sending the message. If the
+message is already set for encryption this function will clear
+the flag so that no signing is done"
+  (interactive)
+  (if (eq major-mode 'mail-mode)
+      (if vm-smime-encrypt-message
+	  (progn (set (make-local-variable
+		       'vm-smime-encrypt-message) nil)
+		 (setq mode-name
+		       (vm-replace-in-string
+			(vm-replace-in-string
+			 mode-name
+			 "SIGNED\\+" "SINGED ")
+			"ENCRYPTED " "")))
+	(set (make-local-variable 'vm-smime-encrypt-message) t)
+	(if (not vm-smime-sign-message)
+	    (setq mode-name (concat "ENCRYPTED " mode-name))
+	  (setq mode-name (vm-replace-in-string mode-name "SIGNED " ""))
+	  (setq mode-name (concat "SIGNED+ENCRYPTED " mode-name))))
+    (error "Command must be used in a VM Mail mode buffer.")))
+
+(defun vm-smime-sign-encrypt-message ()
+  "See documentation for `vm-smime-sign-message' and
+`vm-smime-encrypt-message'. This function simply toggles the two
+of those and can be used to instruct VM to S/MIME sign and
+encrypt an outgoing message upon sending."
+  (interactive)
+  (if (eq major-mode 'mail-mode)
+      (progn (vm-smime-sign-message)
+	     (vm-smime-encrypt-message))
+    (error "Command must be used in a VM Mail mode buffer.")))
+
+(defun vm-smime-get-recipient-certfiles ()
+  "Get the certificate files for encrypting a S/MIME encoded
+message based on the recipient list. Uses the variable
+`vm-smime-get-recipient-certificate-method' to determine how to
+obtain the certificate files. Returns a list of paths to these
+certificate files."
+  (let ((certfiles '())
+	(default-directory smime-certificate-directory))
+    (case vm-smime-get-recipient-certificate-method
+      (ask
+       ;; this method just always asks for all certificates
+       (setq certfiles 
+	     (append (list (read-file-name "Recipient certificate: "))))
+       (while (y-or-n-p "Add more certificates?")
+	 (setq certfiles 
+	       (append certfiles 
+		       (list (read-file-name
+			      "Add recipient certificate: "))))))
+      (links
+       ;; go through all recipient headers getting emails. This method
+       ;; assumes that the recipient cert is linked by email under the
+       ;; variable smime-certificate-directory
+       (setq certfiles
+	     (append certfiles
+		     (mapcar 'expand-file-name (vm-get-recipients))))
+       (let ((files certfiles))
+	 (while files
+	   (when (not (file-exists-p (car files)))
+	     (setq certfiles (delete (car files) certfiles))
+	     (when (y-or-n-p (format "Could not find certificate %s, replace?"
+				     (car files)))
+	       (setq certfiles
+		     (append certfiles
+			     (list (read-file-name
+				    "Replace with certificate: "))))))
+	   (setq files (cdr files))))))
+    certfiles))
+
+(defun vm-get-sender ()
+  "Determine the sender of the message, used for determining
+which mapping of `smime-keys' to use in S/MIME signing a
+composition. If there is no 'From' header in the message,
+`user-mail-address' will be used"
+  (or (save-excursion
+	(goto-char (point-min))
+	(when (mail-fetch-field "From")
+	  (cadr (mail-extract-address-components
+		 (mail-fetch-field "From")))))
+      user-mail-address))
+
+(defun vm-get-recipients ()
+  (let ((to-headers '("To" "Bcc" "Cc"))
+	(case-fold-search t)
+	(recips '()))
+    (save-excursion
+      (save-restriction
+	(goto-char (point-min))
+	(narrow-to-region 
+	 (point) 
+	 (save-excursion (rfc822-goto-eoh) (point)))
+	(while to-headers
+	  (when (mail-fetch-field (car to-headers))
+	    (setq 
+	     recips 
+	     (append 
+	      recips
+	      (mapcar 
+	       'cadr 
+	       (mail-extract-address-components
+		(mail-fetch-field (car to-headers)) t)))))
+	  (setq to-headers (cdr to-headers)))))
+    recips))
 
 ;; This function is now defunct.   Use vm-mime-encode-composition.
 ;; USR, 2011-03-27

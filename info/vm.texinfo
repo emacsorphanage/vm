@@ -1934,6 +1934,7 @@ decode uuencoded @acronym{MIME} objects.
 * multipart/alternative::       @acronym{MIME} content in alternative formats
 * multipart/related::           Attachments embedded in message display
 * Inferring @acronym{MIME} types::        Inferring types from attachment file names
+* Reading @acronym{S/MIME} messages:: Reading PKCS7 Secure @acronym{MIME} (@acronym{S/MIME}) messages
 @end menu
 
 
@@ -2722,7 +2723,7 @@ the standard.  If you receive many such messages, you would need to set
 related attachments.
 
 
-@node Inferring @acronym{MIME} types, , multipart/alternative, @acronym{MIME} Messages
+@node Inferring @acronym{MIME} types, Reading @acronym{S/MIME} messages, multipart/alternative, @acronym{MIME} Messages
 @subsection Inferring @acronym{MIME} types
 
 Some mailers incorrectly use the generic
@@ -2744,6 +2745,70 @@ If the variable
 @code{vm-infer-mime-types-for-text} is set non-@code{nil}, VM will
 attempt to use filenames for attachments of type @samp{text/plain} as
 well. 
+
+@node Reading @acronym{S/MIME} messages, , Inferring @acronym{MIME} types, @acronym{MIME} Messages
+@subsection Reading @acronym{S/MIME} messages
+
+VM supports reading S/MIME messages using smime.el package included in
+standard GNU emacs @emph{NOTE: xemacs, other flavors?}. Typically, a secure
+message part (identified by @acronym{MIME} type
+application/pkcs7-smime) will be presented as a button which when
+pushed will decrypt that part of the message. It is possible also to
+auto decrypt upon reading the message by adding
+``application/x-pkcs7-smime'' and ``application/pkcs7-smime'' to the
+variable @code{vm-auto-displayed-mime-content-types}, but beware that
+at present the smime code always asks for a private key passcode, even
+for non-encrypted private keys, such that you will be prompted upon
+paging through messages which may be undesirable. Additionally, since
+the content of the @acronym{S/MIME} encoded message should be
+considered private, auto-displaying could compromise security.
+
+In order to get started reading @acronym{S/MIME} messages, you need to
+first have at least one RSA public/private key pair to be associated
+with your email address and a certificate generated from those. There
+are numerous ways to obtain these sets, I will highlight only the
+simplest one as a way to just get started. We can create a self-signed
+certificate (which should only be used with people you already trust)
+using ``openssl'' on the command line:
+
+$ openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem
+
+This will generate an encrypted private key in key.pem and certificate
+in cert.pem. Next we need to tell emacs about the certificate and its
+association to an email address. This is done with @code{smime-keys},
+which see. Importantly, the cert file (second element of each
+association) is expected to also have the private key within
+it. Simply concatenate the private key and cert and store in a file:
+
+$ cat key.pem cert.pem > key-cert.pem
+
+Then, @code{smime-keys} might be
+
+@example
+((``joe@@example.com" "~/.ssl/key-cert.pem"))
+@end example
+
+Multiple addresses with different certificates are allowed, when
+reading @acronym{S/MIME} messages, VM will search for recipients to
+the message that match email addresses in @code{smime-keys} and
+attempt to decrypt the message with one of those keys. Should there be
+no matches in the "To:" or "Cc:" fields, @code{user-mail-address} will
+be used. Finally should decryption fail with that key, the user will
+be prompted to supply another private key with which to attempt
+decryption or simply give up.
+
+Signature verification is done automatically when a @acronym{MIME}
+header of type ``application/pkcs7-signature'' is encountered. It is
+assumed that the signers certificate is embedded in the message (this
+is typically the case when sending @acronym{S/MIME} messages). Success
+or failure does not affect reading of the message but only either
+emits a success message or a warning that verification failed. The
+signers certificate will be available for download to a file (default
+is the senders email address under the
+@code{smime-certificate-directory}), which is usefull for
+automatically choosing certificates when sending mail. See
+@ref{Sending @acronym{S/MIME} Messages,Sending Mail} for more
+information.
 
 @node Sending Messages, Saving Messages, Reading Messages, Top
 @chapter Sending Messages
@@ -2876,6 +2941,7 @@ headers will be used.
 @menu
 * Sending Options::        Variables that control mail sending.
 * Sending @acronym{MIME} Messages::  Sending a message using @acronym{MIME} attachments.
+* Sending @acronym{S/MIME} Messages::  Sending a secure message using the @acronym{S/MIME} extension.
 * Replying::               Describes the various ways to reply to a message.
 * Forwarding Messages::    How to forward a message to a third party.
 * Saving copies::          Saving copies of sent mail.
@@ -2934,7 +3000,7 @@ headers into a particular order before sending.  The order is
 determined by the variable @code{vm-mail-header-order}.
 
 
-@node Sending @acronym{MIME} Messages, Replying, Sending Options, Sending Messages
+@node Sending @acronym{MIME} Messages, Sending @acronym{S/MIME} Messages, Sending Options, Sending Messages
 @section Sending @acronym{MIME} Messages
 
 @vindex vm-send-using-mime
@@ -3140,8 +3206,61 @@ to resume editing the message you can run the Emacs @code{undo}
 encoded @acronym{MIME} bodies back to tags and you can continue entering
 your composition.
 
+@node Sending @acronym{S/MIME} Messages, Replying, Sending @acronym{MIME} Messages, Sending Messages
+@section Sending @acronym{S/MIME} Messages
 
-@node Replying, Forwarding Messages, Sending @acronym{MIME} Messages, Sending Messages
+@vindex vm-get-recipient-certificate-method
+VM supports sending @acronym{S/MIME} messages utilizing the smime.el
+package included in emacs. Sending signed, secure, or signed secure
+messages is essentially no different that any other message, except
+that sometime before hitting send (@kbd{C-c C-c}), you would use one
+of the following functions
+
+@code{vm-smime-sign-message}
+@code{vm-smime-encrypt-message}
+@code{vm-smime-sign-encrypt-message}
+
+These can be used in any combination, but note that VM, when
+instructed to both encrypt and sign, will always sign before
+encrypting. Also, signing and encrypting (at present) is only
+supported for the entire message, including any attachments and text
+parts.
+
+The functions above only set flags, the actual signing and encrypting
+is done as the very last step before sending the message. There are
+several ways VM can choose which certificates to use in encrypting a
+message which are set using
+@code{vm-smime-get-recipient-certificate-method}. At present, the
+options are one of 'ask or 'links. 
+
+      'ask 
+
+      Tells VM to prompt the user for all certificates, after entering
+      one the user will be prompted to add more or just send.
+
+      'links
+
+      This method tells VM that recipient certificates are stored
+      under @code{smime-cetificate-directory} using the recipients email
+      address as a file name, e.g.
+      @example
+      ~/.ssl/jow@@example.com -> joes-cert.pem
+      @end example
+
+      This doesn't require prompting the user @emph{unless} a particular
+      recipient address could not be associated with a file, in 
+      which case the user will be promted to provide a replacement.
+
+In the case that errors should occur during signing or encryption or
+thereafter, VM will stop sending the message (phew!) and whichever
+steps were completed will not be repeated. For example, if a message
+should be signed and encrypted and signing was succesful but
+encryption failed due to a bad cert file for one recipient, the
+message will remain signed and the sign flag will be turned off. The
+user can then fix the problem, send again and trust that it wont be
+double signed but @emph{will} be encrypted.
+
+@node Replying, Forwarding Messages, Sending @acronym{S/MIME} Messages, Sending Messages
 @section Replying
 
 @vindex vm-reply-subject-prefix
