@@ -26,6 +26,7 @@ SOURCES += vm-menu.el
 SOURCES += vm-message.el
 SOURCES += vm-message-history.el
 SOURCES += vm-mime.el
+SOURCES += vm-smime.el
 SOURCES += vm-minibuf.el
 SOURCES += vm-misc.el
 SOURCES += vm-motion.el

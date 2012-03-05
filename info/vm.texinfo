@@ -2807,8 +2807,8 @@ signers certificate will be available for download to a file (default
 is the senders email address under the
 @code{smime-certificate-directory}), which is usefull for
 automatically choosing certificates when sending mail. See
-@ref{Sending @acronym{S/MIME} Messages,Sending Mail} for more
-information.
+@ref{Sending @acronym{S/MIME} Messages,Sending @acronym{S/MIME} Messages}
+for more information.
 
 @node Sending Messages, Saving Messages, Reading Messages, Top
 @chapter Sending Messages
