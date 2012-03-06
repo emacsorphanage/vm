@@ -71,6 +71,8 @@
 		  (extent begin-glyph &optional layout))
 (declare-function extent-live-p "vm-xemacs" (object))
 
+(declare-function vm-get-sender ())
+(declare-function vm-smime-get-recipient-certfiles ())
 (declare-function vm-mode "vm" (&optional read-only))
 
 (defvar enable-multibyte-characters)

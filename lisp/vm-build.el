@@ -51,7 +51,7 @@
 (setq byte-compile-warnings '(not suspicious))
 ;; Old permissive setting
 ;; (setq byte-compile-warnings '(free-vars))
-(put 'inhibit-local-variables 'byte-obsolete-variable nil)
+;; (put 'inhibit-local-variables 'byte-obsolete-variable nil)
 
 ;; Preload these to get macros right 
 (require 'cl)

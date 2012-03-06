@@ -40,6 +40,7 @@
   (require 'vm-reply)
   (require 'vm-digest)
   (require 'vm-edit)
+  (require 'vm-mime)
   (require 'smime)
   )
 
@@ -283,6 +284,7 @@ certificate files."
 	   (setq files (cdr files))))))
     certfiles))
 
+;;;###autoload
 (defun vm-get-sender ()
   "Determine the sender of the message, used for determining
 which mapping of `smime-keys' to use in S/MIME signing a
