@@ -2807,6 +2807,7 @@ is not successful.                                   USR, 2011-03-25"
 
 (defun vm-mime-cid-retrieve (url message)
   "Insert a content pointed by URL if it has the cid: scheme."
+  (setq vm-mime-cid-retrieved t)
   (if (string-match "\\`cid:" url)
       (setq url (concat "<" (substring url (match-end 0)) ">"))
     (error "%S is not a cid url" url))
@@ -3228,7 +3229,9 @@ emacs-w3m."
     (let* ((part-list (vm-mm-layout-parts layout))
 	   (start-part (car part-list))
 	   (start-id (vm-mime-get-parameter layout "start"))
-	   layout)
+	   layout
+	   (vm-mime-cid-retrieved nil) ; override
+	   )
       ;; Look for the start part.
       (if start-id
 	  (while part-list
@@ -3237,7 +3240,20 @@ emacs-w3m."
 		(setq start-part layout
 		      part-list nil)
 	      (setq part-list (cdr part-list)))))
-      (if start-part (vm-decode-mime-layout start-part)))))
+      (if start-part (vm-decode-mime-layout start-part))
+      ;; if no related parts were fetched, display them now
+      (unless (and start-part vm-mime-cid-retrieved)
+	(let ((part-list (vm-mm-layout-parts layout)))
+	  (while part-list
+	    (let ((part (car part-list)))
+	      (unless (eq part start-part)
+		(vm-decode-mime-layout part))
+	      (setq part-list (cdr part-list))
+	      ;; we always put separator because it is cleaner, and buttons
+	      ;; may get expanded to documents in any case. USR, 2011-02-09
+	      (when part-list
+		(insert vm-mime-parts-display-separator))))))
+      t)))
 
 (defun vm-mime-display-button-multipart/parallel (layout)
   (vm-mime-insert-button

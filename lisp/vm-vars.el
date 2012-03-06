@@ -1757,6 +1757,11 @@ allow you to view them separately."
   :type '(choice (choice (const mixed)
                          (const related))))
 
+(defvar vm-mime-cid-retrieved nil
+  "Internal variable to keep track of whether the display of
+\"multipart/related\" content worked as expected, by shipping the
+cid: attachments to the content viewer.")
+
 (defcustom vm-mime-text/html-handler 'auto-select
   "*The library used for displaying HTML messages.  The possible
 values are:

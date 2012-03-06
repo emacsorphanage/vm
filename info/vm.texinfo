@@ -2700,28 +2700,15 @@ automatically ship the @samp{multipart/related} attachments to Emacs/W3M so
 that it can embed them in the message display.
 
 However, if you do not use an internal viewer for the @samp{text/html}
-content, then the attachments will not get displayed.  A solution to this
-dilemma is to ask VM to treat @samp{multipart/related} parts as if they were
-@samp{multipart/mixed} parts.  Since all the subparts of a
-@samp{multipart/mixed} part are displayed in one form or another, you will
-get to see the attachments.
+content, then the attachments will not get displayed.  In this case, VM will
+display all the attachments individually, either as buttons or as images.
+In effect, VM falls down to the method of displaying @samp{multipart/mixed}
+content. 
 
 @vindex vm-mime-multipart/related-show-method
-The variable @code{vm-mime-multipart/related-show-method} controls how
-@samp{multipart/related} parts are handled.  If its value is the symbol
-@code{mixed} then @samp{multipart/related} parts are treated the same way as
-@samp{multipart/mixed} parts.  If the value is the symbol @code{related} then
-the attachments are only shipped to the @samp{text/html} viewer.
-
-According to the standard, RFC 2387, a @samp{multipart/related} combination
-should start with a component that can process the related attachments, such
-as @samp{text/html}.  However, some mail clients send messages using an
-obsolete proposal, RFC 1872, which allowed the first component to be a
-@samp{multipart/alternative} combination.  Such messages are not legal as per
-the standard.  If you receive many such messages, you would need to set
-@code{vm-mime-multipart/related-show-method} to @code{mixed} so that you can view the
-related attachments.
-
+You can ask VM to always treat @samp{multipart/related} content in a way
+similar to @samp{multipart/mixed} by setting the variable
+@code{vm-mime-multipart/related-show-method} to @code{'mixed}.
 
 @node Inferring @acronym{MIME} types, Reading @acronym{S/MIME} messages, multipart/alternative, @acronym{MIME} Messages
 @subsection Inferring @acronym{MIME} types
