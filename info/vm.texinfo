@@ -821,7 +821,7 @@ that machine will only grow over time.  When the list gets excessively long,
 it will slow down the saving of folders.
 
 @findex vm-prune-imap-retrieved-list
-To avoid the problem, you should prediodically run the command
+To avoid the problem, you should periodically run the command
 @code{vm-prune-imap-retrieved-list}.  It will examine the @acronym{IMAP} server
 to see which messages still exist and retain only their information in
 the @code{X-VM-IMAP-Retrieved} header.
@@ -1080,7 +1080,7 @@ don't need to type them in when accessing mail servers.
 
 If you have multiple login accounts on the same HOST then VM will only
 use the first login listed in the authinfo file.  To allow for multiple
-logins, the HOST entry in the authinfo line can be replaced by an
+login's, the HOST entry in the authinfo line can be replaced by an
 account name as defined internally in VM.  These account names are
 defined via the variables @code{vm-pop-folder-alist} and
 @code{vm-imap-account-alist}, described below.
@@ -1294,11 +1294,11 @@ VM can work with local folders managed by Mozilla Thunderbird.  You can find
 the location of Thunderbird's folders by examining the Account Settings for
 ``Local Folders'' inside Thunderbird.  You can visit any of the folders in
 that directory using VM and make changes.  Such changes will be propagated
-to Thunderbid in an appropriate way.
+to Thunderbird in an appropriate way.
 
 @findex vm-visit-thunderbird-folder
 @vindex vm-thunderbird-folder-directory
-Alternatively, you can seet the variable
+Alternatively, you can set the variable
 @code{vm-thunderbird-folder-directory} to the directory where Thunderbird
 stores its folders, and use the command @code{M-x
 vm-visit-thunderbird-folder} to visit its folders.  This works the same way
@@ -1328,7 +1328,7 @@ use the @command{vm-summary-faces-hide} command.  @xref{Hiding summary
 lines}. 
 
 
-@unnumberedsubsec How the interoperation works
+@unnumberedsubsec How the inter-operation works
 Thunderbird stores the folders in the @samp{From_} folder type.
 @xref{Folder types}.  Within such folders, Thunderbird stores the
 message status flags (message attributes such as whether a message is
@@ -1455,7 +1455,7 @@ situation, then you should set the variable
 
 @node Crash Recovery,, Getting New Mail, Starting Up
 @section Crash Recovery
-@cindex crash reovery
+@cindex crash recovery
 @cindex message attributes
 @cindex message labels
 @cindex auto-save
@@ -2014,6 +2014,7 @@ the exception list.
 setting is to allow the auto-display of all text types @i{except} for
 html.
 
+@unnumberedsubsubsec Content-Disposition (inline or attachment)
 @cindex Content-Disposition
 @vindex vm-mime-honor-content-disposition
 @cindex attachments
@@ -2032,6 +2033,14 @@ value of @code{nil} means that they should be ignored.  It can also be set
 to the symbol @code{internal-only}, which means that the Content-Disposition
 suggestions should be honored for only the internally displayable types.
 (@xref{Internal display of @acronym{MIME} attachments}.)
+
+@unnumberedsubsubsec Viewing @acronym{MIME} structure
+
+@findex vm-mime-list-part-structure
+The @acronym{MIME} structure of a message can be displayed using the command
+@code{vm-mime-list-part-structure}.   It causes VM to display a pop-up
+window listing the hierarchical structure of the message in VM's internal
+format, which should be normally discernible.
 
 @node Attachments, Internal display, Viewing @acronym{MIME}, @acronym{MIME} Messages
 @subsection  Operating on @acronym{MIME} attachments
@@ -2730,7 +2739,7 @@ type if the attachment is of type @samp{application/octet-stream}.
 @vindex vm-infer-mime-types-for-text
 If the variable
 @code{vm-infer-mime-types-for-text} is set non-@code{nil}, VM will
-attempt to use filenames for attachments of type @samp{text/plain} as
+attempt to use file names for attachments of type @samp{text/plain} as
 well. 
 
 @node Reading @acronym{S/MIME} messages, , Inferring @acronym{MIME} types, @acronym{MIME} Messages
@@ -2792,7 +2801,7 @@ or failure does not affect reading of the message but only either
 emits a success message or a warning that verification failed. The
 signers certificate will be available for download to a file (default
 is the senders email address under the
-@code{smime-certificate-directory}), which is usefull for
+@code{smime-certificate-directory}), which is useful for
 automatically choosing certificates when sending mail. See
 @ref{Sending @acronym{S/MIME} Messages,Sending @acronym{S/MIME} Messages}
 for more information.
@@ -3139,7 +3148,7 @@ some attribute that makes VM consider them to be ``binary'',
 which moves them outside the scope of this variable.  For
 example, messages with line lengths of 1000 characters or more
 are considered binary, as are messages that contain carriage
-returns (ASCII code 13) or NULs (ASCII code 0).
+returns (ASCII code 13) or NUL's (ASCII code 0).
 
 @node @acronym{MIME} headers, @acronym{MIME} preview, @acronym{MIME} characters, Sending @acronym{MIME} Messages
 @unnumberedsec @acronym{MIME} headers
@@ -3228,7 +3237,7 @@ options are one of 'ask or 'links.
       'links
 
       This method tells VM that recipient certificates are stored
-      under @code{smime-cetificate-directory} using the recipients email
+      under @code{smime-certificate-directory} using the recipients email
       address as a file name, e.g.
       @example
       ~/.ssl/jow@@example.com -> joes-cert.pem
@@ -3236,12 +3245,12 @@ options are one of 'ask or 'links.
 
       This doesn't require prompting the user @emph{unless} a particular
       recipient address could not be associated with a file, in 
-      which case the user will be promted to provide a replacement.
+      which case the user will be promoted to provide a replacement.
 
 In the case that errors should occur during signing or encryption or
 thereafter, VM will stop sending the message (phew!) and whichever
 steps were completed will not be repeated. For example, if a message
-should be signed and encrypted and signing was succesful but
+should be signed and encrypted and signing was successful but
 encryption failed due to a bad cert file for one recipient, the
 message will remain signed and the sign flag will be turned off. The
 user can then fix the problem, send again and trust that it wont be
@@ -4563,7 +4572,7 @@ a newline, otherwise the message pointer will not be displayed correctly
 in the summary window.
 
 @findex vm-fix-my-summary
-Summary lines are precomputed and cached in the folder buffer.  If you
+Summary lines are pre-computed and cached in the folder buffer.  If you
 change the @code{vm-summary-format}, you need to force the cache to be
 updated.  You can do this by the command@code{vm-fix-my-summary}.
 
@@ -5225,7 +5234,7 @@ matches message if it is marked, as with
 @code{vm-mark-message}.
 @end table
 
-@unnumberedsubsubsec Selectors based on analysing the text
+@unnumberedsubsubsec Selectors based on analyzing the text
 
 @table @code
 @vindex vm-vs-attachment-regexp
@@ -5889,7 +5898,7 @@ By default, @code{vm-use-menus} is set to a list of symbols indicating
 which menus should appear in the menu bar.  These menus will replace
 the standard Emacs menus whenever VM folder are being viewed.  You can
 switch to the Emacs menu bar when necessary by clicking on the menu
-labelled @code{[Emacs]} (on some systems, thre will be a drop-down
+labelled @code{[Emacs]} (on some systems, there will be a drop-down
 menu labelled @code{Emacs}).  From the Emacs menu bar, you can return
 to the VM menu bar by clicking on the menu labelled @code{[VM]} (or
 under the drop-down menu labelled @code{VM}).
@@ -6081,10 +6090,10 @@ start and end of the message will be bracketed by (point-min) and
 
 @item vm-save-message-hook
 @vindex vm-save-message-hook
-List of hook fucntions called every time a message is saved to a folder.
+List of hook functions called every time a message is saved to a folder.
 When the hooks are called, the current buffer will be the folder containing
 the message and the start and end of the message will be bracketed by
-(point-min) and (point-max).  The hooks are calle with one argument, a
+(point-min) and (point-max).  The hooks are called with one argument, a
 string denoting the folder where the message was saved.  The folder could be
 a file name or the maildrop specification of an @acronym{IMAP} mailbox.
 
@@ -6411,9 +6420,9 @@ them from the mail folders.
 @vindex vm-mime-auto-save-all-attachments-subdir
 The function @code{vm-mime-auto-save-all-attachments}, included in
 @code{vm-rfaddons}, provides enhanced functionality for saving
-attachments.  It saves the attachments in a subdirectory of
+attachments.  It saves the attachments in a sub-directory of
 @code{vm-mime-save-attachment-save-directory}, whose name is obtained
-by concating the ``from'', ``subject'' and ``date'' headers of the
+by concatenating the ``from'', ``subject'' and ``date'' headers of the
 message.  This can be customized via the variable
 @code{vm-mime-auto-save-all-attachments-subdir}. 
 
@@ -7072,7 +7081,7 @@ A boolean flag indicating whether the folder allows the @code{BODYPEEK}
 command of @acronym{IMAP}.
 @item
 @code{imap-permanent-flags}.
-The list of permananet flags that have been stored in the folder.
+The list of permanent flags that have been stored in the folder.
 @item
 @code{imap-mailbox-count}.
 The number of messages in the folder.
@@ -7092,15 +7101,15 @@ using cons cells of the form (msg-num . uid . size . flags list).  The cons
 cells (size . flags list) are shared with @code{imap-flags-obarray} below.
 @item
 @code{imap-uid-obarray}.
-An obarray that binds all the UIDs of messages in the folder to their
+An obarray that binds all the UID's of messages in the folder to their
 message sequence numbers.
 @item
-@code{imap-flags-obarray}.  An obarray that binds all the UIDs of messages
+@code{imap-flags-obarray}.  An obarray that binds all the UID's of messages
 in the folder to cons cells of the form (size . flags list).  These cons
 cells are the same as those occurring in the @code{imap-uid-list} field.
 So, any updates will be shared through both the views.  The two obarrays,
 @code{imap-uid-obarray} and @code{imap-flags-obarray}, bind exactly the same
-set of UIDs.  Jointly, they are referred to as @code{uid-and-flags-data}.
+set of UID's.  Jointly, they are referred to as @code{uid-and-flags-data}.
 The reason for their separation is historical.
 @end itemize
 
@@ -7501,7 +7510,7 @@ field is not used at present.
 @code{declared-duplicates} (30).  List of message ID's that the user
 declared as being duplicates of this message.  The duplicate copies may not
 be present in the folder, but they should be taken into account in
-calculating threads.  This is not ``cached'' data and should nto be
+calculating threads.  This is not ``cached'' data and should not be
 discarded.  This field is not used at present.
 @item
 @code{d-weekday}, @code{d-monthday}, @code{d-month}, @code{d-year},
@@ -7673,7 +7682,7 @@ the Folder buffer, but have separate Soft data vectors.  (This allows,
 for instance, virtual folders to have their own threads, which could
 in general be different from the threads in the underlying folders.)  
 The other sub-vectors are shared with the underlying real folders.  (In
-particular, the tokenized summary line is the same in the virual
+particular, the tokenized summary line is the same in the virtual
 folders and their underlying folders.)
 
 
@@ -8156,7 +8165,7 @@ selector, the pair is @code{(author . vm-vs-author)}.
 @item
 The selector symbol @code{author} is given a property
 @code{vm-virtual-selector-arg-type} indicating the type of argument it
-requies:
+requires:
 
 @example
 (put 'author 'vm-virtual-selector-arg-type 'string)
