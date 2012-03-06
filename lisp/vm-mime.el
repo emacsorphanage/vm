@@ -3229,15 +3229,15 @@ emacs-w3m."
     (let* ((part-list (vm-mm-layout-parts layout))
 	   (start-part (car part-list))
 	   (start-id (vm-mime-get-parameter layout "start"))
-	   layout
+	   part
 	   (vm-mime-cid-retrieved nil) ; override
 	   )
       ;; Look for the start part.
       (if start-id
 	  (while part-list
-	    (setq layout (car part-list))
-	    (if (equal start-id (vm-mm-layout-id layout))
-		(setq start-part layout
+	    (setq part (car part-list))
+	    (if (equal start-id (vm-mm-layout-id part))
+		(setq start-part part
 		      part-list nil)
 	      (setq part-list (cdr part-list)))))
       (if start-part (vm-decode-mime-layout start-part))
