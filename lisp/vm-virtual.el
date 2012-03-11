@@ -994,7 +994,8 @@ real or virtual)."
 	     (setq mirrored-msg (and vm-message-pointer
 				     (vm-mirrored-message-of 
 				      (car vm-message-pointer))))
-	     (when (and mirrored-msg (vm-buffer-of mirrored-msg))
+	     (when (and mirrored-msg (not no-change) 
+			(vm-buffer-of mirrored-msg))
 	       (with-current-buffer (vm-buffer-of mirrored-msg)
 		 (vm-record-and-change-message-pointer
 		  vm-message-pointer (vm-message-position mirrored-msg)

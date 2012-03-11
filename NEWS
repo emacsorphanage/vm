@@ -49,6 +49,9 @@ VM 8.2.0b1
 
    IMPROVEMENTS
 
+   * Quitting an interactive virtual folder using `vm-quit-no-change'
+     prevents VM from changing the message pointer in the underlying folder.
+
    * Enhanced the Summary display to show the user mentioned in the
      "Reply-To" header (called the "principal"), when both the sender and
      the recipient match `vm-summary-uninteresting-senders'.  The variable

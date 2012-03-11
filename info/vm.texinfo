@@ -4942,8 +4942,8 @@ matching messages.
 @findex vm-create-virtual-folder-same-subject
 @findex vm-create-virtual-folder-same-author
 The commands @code{vm-create-virtual-folder-same-subject} (bound to @kbd{V
-S} in version 7.19) and @code{vm-create-virtual-folder-same-author} (bound
-to @kbd{V A} in version 7.19) create virtual folders containing all the
+S}) and @code{vm-create-virtual-folder-same-author} (bound
+to @kbd{V A}) create virtual folders containing all the
 messages in the current folder with the same subject or author as the
 current message.  There are also short-cut key bindings for a number of
 frequently used selectors:
@@ -4980,15 +4980,18 @@ frequently used selectors:
 
 
 @cindex searching
-When you quit a search folder, the currently selected message
-in the virtual folder becomes the current message in the underlying folder.
-So, you can use the search folder facility to search for particular
+When you run @code{vm-quit} on a search folder, the currently selected
+message in the search folder becomes the current message in the underlying
+folder.  So, you can use the search folder facility to search for particular
 messages.  For example, if you knew that one of the messages with the
 subject @samp{greeting} had a hotel offer and you wanted to find it, you can
 first create a search folder of messages with subject @samp{greeting},
 browse through them to find the message that had the hotel offer, and then
-quit the virtual folder.  VM will return you to the copy of the same message
-in the original folder.
+quit the search folder.  VM will return you to the copy of the same message
+in the original folder.  (You can go back to the previously viewed message
+in the original folder by doing @code{vm-goto-mesasge-last-seen}.  To
+inhibit changing the current message in the original message entirely, quit
+the search folder using @code{vm-quit-no-change}.)
 
 Search folders also form an efficient way to search for some string in the
 text of messages.  The key binding @kbd{V t}
