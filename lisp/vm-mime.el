@@ -6891,6 +6891,7 @@ describes what was deleted."
 	(when vm-mime-confirm-delete
 	  (unless (y-or-n-p (vm-mime-sprintf "Delete %t? " layout))
 	    (error "Aborted")))
+	(vm-mime-discard-layout-contents layout saved-file)
 	(let ((inhibit-read-only t)
 	      opos
 	      (buffer-read-only nil))
@@ -6903,7 +6904,7 @@ describes what was deleted."
 	     (insert label)
 	     (delete-region (point) (vm-extent-end-position e))
 	     (vm-set-extent-endpoints e opos (point)))))
-	(vm-mime-discard-layout-contents layout saved-file)))
+	))
     (when (vm-interactive-p)
       ;; make the change visible and place the cursor behind the removed object
       (vm-discard-cached-data)
@@ -6917,9 +6918,13 @@ describes what was deleted."
 	  (buffer-read-only nil)
 	  (m (vm-mm-layout-message layout))
 	  newid new-layout)
-      (if (null m)
-	  (error "Message body not loaded"))
+      (when (null m)
+	(error "Message body not loaded"))
       (set-buffer (vm-buffer-of m))
+      (when (and (markerp (vm-mm-layout-body-start layout))
+		 (not (eq (marker-buffer (vm-mm-layout-body-start layout))
+			  (current-buffer))))
+	(error "MIME body is not in the message"))
       (vm-save-restriction
 	(widen)
 	(if (vm-mm-layout-is-converted layout)
