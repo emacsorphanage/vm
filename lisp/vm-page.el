@@ -865,8 +865,10 @@ preview or the full message, governed by the the variables
 	   ;; messages.
 	   ;; But why restrict the external viewers?  USR, 2011-02-08
 	   (let ((vm-mime-auto-displayed-content-type-exceptions
-		  (cons "message/external-body"
-			vm-mime-auto-displayed-content-type-exceptions))
+		  (if (integerp vm-preview-lines)
+		      (cons "message/external-body"
+			    vm-mime-auto-displayed-content-type-exceptions)
+		    vm-mime-auto-displayed-content-type-exceptions))
 		 ;; (vm-mime-external-content-types-alist nil)
 		 )
 	     (condition-case data

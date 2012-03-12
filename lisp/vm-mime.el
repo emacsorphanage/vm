@@ -3567,7 +3567,9 @@ button that this LAYOUT comes from."
     (vm-mime-insert-button
      :caption
      (vm-replace-in-string
-      (vm-mime-sprintf format tmplayout) "save\\]" "display]")
+      (vm-replace-in-string
+       (vm-mime-sprintf format tmplayout) "save\\]" "fetch]")
+      "display\\]" "fetch]")
      :action
      (function
       (lambda (extent)
@@ -3580,7 +3582,9 @@ button that this LAYOUT comes from."
 	      (vm-mime-auto-displayed-content-type-exceptions nil))
 	  (vm-mime-display-internal-message/external-body 
 	   layout extent))))
-     ;; :disposable t
+     ;; the button should be disposable so that it can be replaced by
+     ;; the external body (see Launchpad bug #941561)
+     :disposable t
      :layout layout)))
 
 
