@@ -3960,7 +3960,7 @@ the edit buffer through the command prefix @kbd{C-c C-v}.
 @cindex virtual folders
 VM provides a way to @dfn{mark} selected messages so that subsequent
 operations can be applied to them.  This is similar to marking in other
-parts of Emacs, e.g., @xref{Marks vs Flags, Dired Marks, Dired Marks,
+parts of Emacs, e.g., @pxref{Marks vs Flags, Dired Marks, Dired Marks,
 emacs}, but arguably more powerful.  For example, one can mark all
 messages from a particular sender and save them to a folder, or mark all
 messages with a particular subject and print them.  One can also mark
@@ -3987,15 +3987,24 @@ removes marks from all messages.
 Other marking commands:
 
 @table @kbd
-@findex vm-mark-matching-messages
+@findex vm-mark-messages-by-selector
 @kindex M C
-@item M C (@code{vm-mark-matching-messages})
-Mark all messages matched by a virtual folder selector.
+@item M C (@code{vm-mark-messages-by-selector})
+Mark all messages matching a virtual selector.
 @xref{Virtual Folders}.
-@findex vm-unmark-matching-messages
+@findex vm-unmark-messages-by-selector
 @kindex M c
-@item M c (@code{vm-unmark-matching-messages})
-Unmark all messages matched by a virtual folder selector.
+@item M c (@code{vm-unmark-messages-by-selector})
+Unmark all messages matching a virtual selector.
+@findex vm-mark-messages-by-virtual-folder
+@kindex M X
+@item M X (@code{vm-mark-messages-by-virtual-folder})
+Mark all messages matching the selectors of a virtual folder.
+@xref{Virtual Folders}.
+@findex vm-unmark-unmark-messages-by-virtual-folder
+@kindex M x
+@item M x (@code{vm-unmark-messages-by-virtual-folder})
+Unmark all messages matching the selectors of a virtual folder.
 @findex vm-mark-thread-subtree
 @kindex M T
 @item M T (@code{vm-mark-thread-subtree})

@@ -190,7 +190,7 @@ previous N-1 messages."
 		(vm-mark-for-summary-update m t))))
       (setq mp (cdr mp)))))
 
-(defun vm-mark-or-unmark-messages-with-selector (val selector arg)
+(defun vm-mark-or-unmark-messages-by-selector (val selector arg)
   (let ((mlist vm-message-list)
 	(virtual (eq major-mode 'vm-virtual-mode))
 	(arglist (if arg (list arg) nil))
@@ -211,7 +211,7 @@ previous N-1 messages."
 	    (vm-increment count)))
       (setq mlist (cdr mlist)))
     (vm-display nil nil
-		'(vm-mark-matching-messages vm-unmark-matching-messages)
+		'(vm-mark-messages-by-selector vm-unmark-messages-by-selector)
 		(list this-command 'marking-message))
     (vm-update-summary-and-mode-line)
     (vm-inform 5 "%s message%s %smarked"
@@ -220,11 +220,11 @@ previous N-1 messages."
 	     (if val "" "un"))))
 
 ;;;###autoload
-(defun vm-mark-matching-messages (selector &optional arg)
-  "Mark messages matching some criterion.
+(defun vm-mark-messages-by-selector (selector &optional arg)
+  "Mark messages matching a virtual selector.
 You can use any of the virtual folder selectors, except for the
 `and', `or' and `not' selectors.  See the documentation for the
-variable vm-virtual-folder-alist for more information."
+variable `vm-virtual-folder-alist' for more information."
   (interactive
    (let ((last-command last-command)
 	 (this-command this-command))
@@ -232,14 +232,15 @@ variable vm-virtual-folder-alist for more information."
        (vm-select-folder-buffer)
        (vm-read-virtual-selector "Mark messages: "))))
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
-  (vm-mark-or-unmark-messages-with-selector t selector arg))
+  (vm-mark-or-unmark-messages-by-selector t selector arg))
+(defalias 'vm-mark-matching-messages 'vm-mark-messages-by-selector)
 
 ;;;###autoload
-(defun vm-unmark-matching-messages (selector &optional arg)
-  "Unmark messages matching some criterion.
+(defun vm-unmark-messages-by-selector (selector &optional arg)
+  "Unmark messages matching a virtual selector.
 You can use any of the virtual folder selectors, except for the
 `and', `or' and `not' selectors.  See the documentation for the
-variable vm-virtual-folder-alist for more information."
+variable `vm-virtual-folder-alist' for more information."
   (interactive
    (let ((last-command last-command)
 	 (this-command this-command))
@@ -247,7 +248,8 @@ variable vm-virtual-folder-alist for more information."
        (vm-select-folder-buffer)
        (vm-read-virtual-selector "Unmark messages: "))))
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
-  (vm-mark-or-unmark-messages-with-selector nil selector arg))
+  (vm-mark-or-unmark-messages-by-selector nil selector arg))
+(defalias 'vm-unmark-matching-messages 'vm-unmark-messages-by-selector)
 
 ;;;###autoload
 (defun vm-mark-thread-subtree ()
@@ -411,8 +413,8 @@ variable vm-virtual-folder-alist for more information."
 		  (t (setq vmlist (cdr vmlist)))))
 	  (setq mlist (cdr mlist)))))
     (vm-display nil nil
-		'(vm-mark-matching-messages-with-virtual-folder
-		  vm-unmark-matching-messages-with-virtual-folder)
+		'(vm-mark-messages-by-virtual-folder
+		  vm-unmark-messages-by-virtual-folder)
 		(list this-command 'marking-message))
     (vm-update-summary-and-mode-line)
     (vm-inform 5 "%s message%s %smarked"
@@ -421,7 +423,7 @@ variable vm-virtual-folder-alist for more information."
 	     (if val "" "un"))))
 
 ;;;###autoload
-(defun vm-mark-matching-messages-with-virtual-folder (name)
+(defun vm-mark-messages-by-virtual-folder (name)
   "Mark messages that are matched by the selectors of virtual folder NAME."
   (interactive
    (let ((last-command last-command)
@@ -432,9 +434,11 @@ variable vm-virtual-folder-alist for more information."
        vm-virtual-folder-alist nil t))))
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-mark-or-unmark-messages-with-virtual-folder t name))
+(defalias 'vm-mark-matching-messages-with-virtual-folder 
+  'vm-mark-messages-by-virtual-folder)
 
 ;;;###autoload
-(defun vm-unmark-matching-messages-with-virtual-folder (name)
+(defun vm-unmark-messages-by-virtual-folder (name)
   "Unmark messages that are matched by the selectors of virtual folder NAME."
   (interactive
    (let ((last-command last-command)
@@ -445,6 +449,8 @@ variable vm-virtual-folder-alist for more information."
        vm-virtual-folder-alist nil t))))
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-mark-or-unmark-messages-with-virtual-folder nil name))
+(defalias 'vm-unmark-matching-messages-with-virtual-folder
+  'vm-unmark-messages-by-virtual-folder)
 
 ;;;###autoload
 (defun vm-next-command-uses-marks ()

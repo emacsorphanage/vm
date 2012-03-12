@@ -253,21 +253,25 @@
      :style radio
      :selected (eq last-command 'vm-next-command-uses-marks)]
     "----"
-    ["Mark" vm-mark-message vm-message-list]
-    ["Unmark" vm-unmark-message vm-message-list]
-    ["Mark All" vm-mark-all-messages vm-message-list]
-    ["Clear All Marks" vm-clear-all-marks vm-message-list]
+    ["Mark Message" vm-mark-message vm-message-list]
+    ["Mark All Messages" vm-mark-all-messages vm-message-list]
     ["Mark Region in Summary" vm-mark-summary-region vm-message-list]
-    ["Unmark Region in Summary" vm-unmark-summary-region vm-message-list]
-    "----"
-    ["Mark Same Subject" vm-mark-messages-same-subject vm-message-list]
-    ["Unmark Same Subject" vm-unmark-messages-same-subject vm-message-list]
-    ["Mark Same Author" vm-mark-messages-same-author vm-message-list]
-    ["Unmark Same Author" vm-unmark-messages-same-author vm-message-list]
-    ["Mark Messages Matching..." vm-mark-matching-messages vm-message-list]
-    ["Unmark Messages Matching..." vm-unmark-matching-messages vm-message-list]
     ["Mark Thread Subtree" vm-mark-thread-subtree vm-message-list]
+    ["Mark by Selector..." vm-mark-messages-by-selector vm-message-list]
+    ["Mark by Virtual Folder..." 
+     vm-mark-messages-by-virtual-folder vm-message-list]
+    ["Mark Same Subject" vm-mark-messages-same-subject vm-message-list]
+    ["Mark Same Author" vm-mark-messages-same-author vm-message-list]
+    "----"
+    ["Unmark Message" vm-unmark-message vm-message-list]
+    ["Unmark All Messages" vm-clear-all-marks vm-message-list]
+    ["Unmark Region in Summary" vm-unmark-summary-region vm-message-list]
     ["Unmark Thread Subtree" vm-unmark-thread-subtree vm-message-list]
+    ["Unmark by Selector..." vm-unmark-messages-by-selector vm-message-list]
+    ["Unmark by Virtual Folder..." 
+     vm-unmark-messages-by-virtual-folder vm-message-list]
+    ["Unmark Same Subject" vm-unmark-messages-same-subject vm-message-list]
+    ["Unmark Same Author" vm-unmark-messages-same-author vm-message-list]
     ))
 
 (defconst vm-menu-label-menu

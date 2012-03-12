@@ -47,6 +47,10 @@ VM 8.2.0b1
      to guard against accidental invocation.  Set the variable
      `vm-confirm-for-auto-archive' to nil to turn this off.
 
+   * `vm-mark-matching-messages' renamed to `vm-mark-messages-by-selector'
+     and all related commands renamed similarly.  The old names will
+     continue to work.
+
    IMPROVEMENTS
 
    * Quitting an interactive virtual folder using `vm-quit-no-change'
