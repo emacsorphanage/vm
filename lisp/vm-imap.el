@@ -1425,8 +1425,11 @@ as well."
 	    (condition-case nil
 		(if vm-imap-session-done
 		    ;;-------------------------------------
-		    (vm-imap-session-type:assert 'inactive)
-		  ;;-------------------------------------
+		    ;; Don't bother checking because it might fail if
+		    ;; the user typed C-g.
+		    ;; (vm-imap-session-type:assert 'inactive)
+		    ;;-------------------------------------
+		    nil
 		  (vm-imap-send-command process "LOGOUT")
 		  ;; we don't care about the response.
 		  ;; try reading it anyway and trap any errors.
