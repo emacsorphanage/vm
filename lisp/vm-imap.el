@@ -2111,12 +2111,17 @@ See also `vm-imap-get-message-size'."
       (cond ((vm-imap-response-matches response '*)
 	     nil )
 	    ((vm-imap-response-matches response 'VM 'OK)
-	     (setq retval t done t))
+	     (setq retval t)
+	     (setq done t))
 	    ((vm-imap-response-matches response 'VM 'NO)
-	     (setq retval nil done t))
+	     (setq retval nil)
+	     (setq done t))
 	    ((vm-imap-response-matches response 'VM 'BAD)
-	     (setq retval nil done t)
-	     (vm-imap-normal-error "Server said BAD"))
+	     (setq retval nil)
+	     (setq done t)
+	     (vm-imap-normal-error 
+	      "server says - %s"
+	      (vm-imap-read-error-message process (cadr (cadr response)))))
 	    (t
 	     (vm-imap-protocol-error "Did not receive OK response"))))
     retval ))
@@ -2174,13 +2179,27 @@ printed with the error message."
       (setq vm-buffer-type-trail (cons 'verify vm-buffer-type-trail)))
   ;;--------------------------------------------
   (let ((response (vm-imap-read-response process)))
-    (if (vm-imap-response-matches response 'VM 'NO)
-	(vm-imap-normal-error (format "server said NO")))
-    (if (vm-imap-response-matches response 'VM 'BAD)
-	(vm-imap-normal-error (format "server said BAD")))
-    (if (vm-imap-response-matches response '* 'BYE)
-	(vm-imap-normal-error (format "server disconnected")))
+    (when (vm-imap-response-matches response 'VM 'NO)
+      (vm-imap-normal-error 
+       "server says - %s" 
+       (vm-imap-read-error-message process (cadr (cadr response)))))
+    (when (vm-imap-response-matches response 'VM 'BAD)
+      (vm-imap-normal-error 
+       "server says - %s" 
+       (vm-imap-read-error-message process (cadr (cadr response)))))
+    (when (vm-imap-response-matches response '* 'BYE)
+      (vm-imap-normal-error "server disconnected"))
     response))
+
+(defun vm-imap-read-error-message (process pos)
+  "Return the error message in the PROCESS buffer starting at position POS."
+  (buffer-substring 
+   pos
+   (save-excursion
+     (goto-char pos)
+     (if (search-forward "\r\n" (point-max) t)
+	 (- (point) 2)
+       (+ (point) 2)))))
 
 
 (defun vm-imap-read-object (process &optional skip-eol)
@@ -4185,7 +4204,9 @@ well. Returns a boolean value."
 	    ((vm-imap-response-matches response '* 'BYE)
 	     (vm-imap-normal-error "server disconnected"))
 	    ((vm-imap-response-matches response 'VM 'BAD)
-	     (vm-imap-normal-error "server said BAD"))))
+	     (vm-imap-normal-error 
+	      "server says - %s" 
+	      (vm-imap-read-error-message process (cadr (cadr response)))))))
     retval ))
 
 (defun vm-imap-create-mailbox (process mailbox
@@ -4596,14 +4617,19 @@ folder."
 	    (let ((need-plus t) response)
 	      (while need-plus
 		(setq response (vm-imap-read-response process))
-		(cond ((vm-imap-response-matches response 'VM 'NO)
-		       (vm-imap-normal-error "server said NO"))
-		      ((vm-imap-response-matches response 'VM 'BAD)
-		       (vm-imap-normal-error "server said BAD"))
-		      ((vm-imap-response-matches response '* 'BYE)
-		       (vm-imap-normal-error "server disconnected"))
-		      ((vm-imap-response-matches response '+)
-		       (setq need-plus nil)))))
+		(cond 
+		 ((vm-imap-response-matches response 'VM 'NO)
+		  (vm-imap-normal-error 
+		   "server says - %s"
+		   (vm-imap-read-error-message process (cadr (cadr response)))))
+		 ((vm-imap-response-matches response 'VM 'BAD)
+		  (vm-imap-normal-error
+		   "server says - %s"
+		   (vm-imap-read-error-message process (cadr (cadr response)))))
+		 ((vm-imap-response-matches response '* 'BYE)
+		  (vm-imap-normal-error "server disconnected"))
+		 ((vm-imap-response-matches response '+)
+		  (setq need-plus nil)))))
 
 	    (vm-imap-send-command process string nil t)
 	    (let ((need-ok t) response)
@@ -4612,11 +4638,17 @@ folder."
 		(setq response (vm-imap-read-response process))
 		(cond
 		 ((vm-imap-response-matches response 'VM 'NO)
-		  (vm-imap-protocol-error "server said NO to APPEND data"))
+		  ;; (vm-imap-protocol-error "server says NO to APPEND data")
+		  (vm-imap-normal-error
+		   "servers says - %s:"
+		   (vm-imap-read-error-message process (cadr (cadr response)))))
 		 ((vm-imap-response-matches response 'VM 'BAD)
-		  (vm-imap-protocol-error "server said BAD to APPEND data"))
+		  ;; (vm-imap-protocol-error "server says BAD to APPEND data")
+		  (vm-imap-normal-error
+		   "server says - %s"
+		   (vm-imap-read-error-message process (cadr (cadr response)))))
 		 ((vm-imap-response-matches response '* 'BYE)
-		  (vm-imap-protocol-error "server said BYE to APPEND data"))
+		  (vm-imap-normal-error "server disconnected"))
 		 ((vm-imap-response-matches response 'VM 'OK)
 		  (setq need-ok nil)))))
 	    )
