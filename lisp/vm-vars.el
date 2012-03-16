@@ -95,6 +95,14 @@
   "Options affecting mail composition within VM."
   :group 'vm)
 
+(defgroup vm-reply nil
+  "Options for replying to messages within VM."
+  :group 'vm-compose)
+
+(defgroup vm-forward nil
+  "Options for forwarding messages within VM."
+  :group 'vm-compose)
+
 (defgroup vm-presentation nil
   "Options affecting the presentation of messages in VM."
   :group 'vm)
@@ -1147,7 +1155,7 @@ for the variable to have effect."
 during message composition.  This is done using the `longlines'
 library, which must be installed for the variable to have
 effect."
-  :group 'vm-compose
+  :group 'vm-reply
   :type 'boolean)
 
 (defcustom vm-fill-paragraphs-containing-long-lines nil
@@ -1185,7 +1193,7 @@ but `vm-fill-long-lines-in-reply-column' determines the fill column.
 Note that filling is carried out only if word wrapping is not in
 effect.  The variable `vm-word-wrap-paragraphs-in-reply' controls word
 wrapping."
-  :group 'vm-compose 
+  :group 'vm-reply
   :type '(choice (const :tag "No" nil)
 		 (const :tag "Window width" window-width)
 		 (integer :tag "Fill column")))
@@ -1199,7 +1207,7 @@ re-filling lines longer than the value of
 
 (defcustom vm-fill-long-lines-in-reply-column (default-value 'fill-column)
   "*Fill lines spanning that many columns or more in replies."
-  :group 'vm-compose
+  :group 'vm-reply
   :type '(choice (const :tag "Off" nil)
                  (const :tag "Window width" window-width)
                  (integer :tag "Fill column")))
@@ -2456,7 +2464,7 @@ replaced by `vm-include-mime-attachments'.")
 (defcustom vm-include-mime-attachments nil
   "*Non-nil value enables attachments to be included in quoted text in
 a reply message.  Otherwise only the button label will be included."
-  :group 'vm-compose
+  :group 'vm-reply
   :type 'boolean)
 
 (defcustom vm-infer-mime-types nil
@@ -3027,7 +3035,7 @@ set this variable directly, rather you should use the command
 
 (defcustom vm-included-text-prefix " > "
   "*String used to prefix included text in replies."
-  :group 'vm-compose
+  :group 'vm-reply
   :type 'string)
 
 (defcustom vm-keep-sent-messages 1
@@ -3070,6 +3078,15 @@ format of the Resent-From header, when resending a message with
 message as the recipient for the new message composition."
   :group 'vm-compose
   :type 'boolean)
+
+(defcustom vm-mail-mode-hidden-headers '("References" "In-Reply-To" "X-Mailer")
+  "*A list of headers to hide in `vm-mail-mode'."
+  :group 'vm-compose
+  :type '(choice (const :tag "Disabled" nil)
+                 (set :tag "Header list"
+                      (string "References")
+                      (string "In-Reply-To")
+                      (string "X-Mailer"))))
 
 (defcustom vm-mail-header-insert-date t
   "*Non-nil value causes VM to insert a Date header into a message
@@ -3131,7 +3148,7 @@ attachments which are stored on disk anyway."
   "*Non-nil value should be a string that VM should add to the beginning
 of the Subject header in replies, if the string is not already present.
 Nil means don't prefix the Subject header."
-  :group 'vm-compose
+  :group 'vm-reply
   :type '(choice (const nil) string))
 
 (defcustom vm-reply-ignored-addresses nil
@@ -3143,7 +3160,7 @@ you see an address in the header you don't want you should remove
 it yourself.
 
 Case is ignored when matching the addresses."
-  :group 'vm-compose
+  :group 'vm-reply
   :type '(choice (const nil)
                  (repeat regexp)))
 
@@ -3158,7 +3175,7 @@ Case is ignored when matching the addresses.
 This variable exists solely to provide an escape chute from
 mailing lists that add a Reply-To: mailing list header, thereby
 leaving no way to reply to just the author of a message."
-  :group 'vm-compose
+  :group 'vm-reply
   :type '(choice (const nil)
 		 (repeat regexp)))
 
@@ -3171,7 +3188,7 @@ Nil means don't put an In-Reply-To header in replies.
 
 If the format includes elements with non-ASCII characters, then
 \"In-Reply-To\" should be added to `vm-mime-encode-headers-regexp'."
-  :group 'vm-compose
+  :group 'vm-reply
   :type '(choice (const nil) string))
 
 (defcustom vm-included-text-attribution-format "%F writes:\n"
@@ -3179,14 +3196,14 @@ If the format includes elements with non-ASCII characters, then
 included text from a message in a reply.  See the documentation for the
 variable `vm-summary-format' for information on what this string may contain.
 Nil means don't attribute included text in replies."
-  :group 'vm-compose
+  :group 'vm-reply
   :type '(choice (const nil) string))
 
 (defcustom vm-include-text-basic nil
   "*If true a reply will include the basic text of a message.
 This is an old method for citing messages and should not be used
 normally." 
-  :group 'vm-compose
+  :group 'vm-reply
   :type 'boolean)
 
 (defvar vm-include-text-from-presentation nil
@@ -3214,7 +3231,7 @@ is true.  It has no effect for the default text quotation mechanism
 based on MIME decoding.
 
 The defaut value is nil." 
-  :group 'vm-compose
+  :group 'vm-reply
   :type '(choice (const nil)
                  (repeat string)))
 
@@ -3238,7 +3255,7 @@ will be included.  `vm-included-text-headers' determines the
 header order in that case, with headers not matching any in the
 `vm-included-text-headers' list appearing last in the header
 section of the included text."
-  :group 'vm-compose
+  :group 'vm-reply
   :type '(choice (const nil)
                  (repeat regexp)))
 
@@ -3258,7 +3275,7 @@ others will be included.  `vm-included-text-headers' determines the
 header order in that case, with headers not matching any in
 the `vm-included-text-headers' list appearing last in the header
 section of the included text."
-  :group 'vm-compose
+  :group 'vm-reply
   :type '(choice (const nil)
                  regexp))
 
@@ -3268,14 +3285,14 @@ header that is generated for a forwarded message.  See the documentation
 for the variable `vm-summary-format' for information on what this string
 may contain.  The format should *not* end with nor contain a newline.
 Nil means leave the Subject header empty when forwarding."
-  :group 'vm-compose
+  :group 'vm-forward
   :type '(choice (const nil)
 		 (string)))
 
 (defcustom vm-forwarded-message-preamble-format
   "\n---------- Original Message ----------\n"
   "*String which specifies the preamble for a forwarded message."
-  :group 'vm-compose
+  :group 'vm-forward
   :type 'string)
 
 (defcustom vm-forwarded-headers nil
@@ -3298,7 +3315,7 @@ be forwarded.  `vm-forwarded-headers' determines the forwarding
 order in that case, with headers not matching any in the
 `vm-forwarded-headers' list appearing last in the header section
 of the forwarded message."
-  :group 'vm-compose
+  :group 'vm-forward
   :type '(repeat regexp))
 
 (defcustom vm-unforwarded-header-regexp "none-to-be-dropped"
@@ -3317,7 +3334,7 @@ be forwarded.  `vm-forwarded-headers' determines the forwarding
 order in that case, with headers not matching any in the 
 `vm-forwarded-headers' list appearing last in the header section 
 of the forwarded message."
-  :group 'vm-compose
+  :group 'vm-forward
   :type '(choice
 	  (const :tag "Only forward headers listed in vm-forward-headers" nil)
 	  (const :tag "Forward all headers" "none-to-be-dropped")
@@ -3343,7 +3360,7 @@ forwarded.  In this case, `vm-forwarded-headers-plain' determines the
 forwarding order in that case, with headers not matching any in the
 `vm-forwarded-headers-plain' list appearing last in the header section
 of the forwarded message."
-  :group 'vm-compose
+  :group 'vm-forward
   :type '(repeat regexp))
 
 (defcustom vm-unforwarded-header-regexp-plain nil
@@ -3362,7 +3379,7 @@ will be forwarded.  `vm-forwarded-headers-plain' determines the
 forwarding order in that case, with headers not matching any in
 the `vm-forwarded-headers-plain' list appearing last in the
 header section of the forwarded message."
-  :group 'vm-compose
+  :group 'vm-forward
   :type '(choice
 	  (const :tag "Only forward headers listed in vm-forward-headers-plain" nil)
 	  (const :tag "Forward all headers" "none-to-be-dropped")
@@ -3383,7 +3400,7 @@ Legal values of this variable are:
 nil
 
 A nil value means to use plain text forwarding."
-  :group 'vm-compose
+  :group 'vm-forward
   :type '(choice
           (const "mime")
           (const "rfc934")
@@ -3669,7 +3686,7 @@ will be kept.  `vm-resend-bounced-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-resend-bounced-headers' list appearing last in the headers of
 the message."
-  :group 'vm-compose
+  :group 'vm-forward
   :type '(repeat regexp))
 
 (defcustom vm-resend-bounced-discard-header-regexp nil
@@ -3688,7 +3705,7 @@ will be kept.  `vm-resend-bounced-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-resend-bounced-headers' list appearing last in the headers of
 the message."
-  :group 'vm-compose
+  :group 'vm-forward
   :type '(choice (const nil)
                  regexp))
 
@@ -3712,7 +3729,7 @@ will be kept.  `vm-resend-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-resend-headers' list appearing last in the headers of
 the message."
-  :group 'vm-compose
+  :group 'vm-forward
   :type '(choice (const nil)
                  repeat regexp))
 
@@ -3732,7 +3749,7 @@ will be kept.  `vm-resend-headers' determines the order of
 appearance in that case, with headers not matching any in the
 `vm-resend-headers' list appearing last in the headers of
 the message."
-  :group 'vm-compose
+  :group 'vm-forward
   :type '(choice (const nil)
 		 regexp))
 
@@ -4834,7 +4851,7 @@ from the headers generated in reply messages.  If you use the \"fakemail\"
 program as distributed with Emacs, you probably want to set this variable
 to t, because as of Emacs v18.52 \"fakemail\" could not handle unstripped
 headers."
-  :group 'vm-compose
+  :group 'vm-reply
   :type 'boolean)
 
 (defcustom vm-select-new-message-hook nil
@@ -5853,19 +5870,21 @@ This is only used for FSF Emacs currently.")
   "Non-nil if stunnel is controlled by a configuration file.
 An older stunnel version used command line arguments instead.")
 
-(defcustom vm-tale-is-an-idiot nil
+(defcustom vm-mail-check-recipient-format nil
   "*Non-nil value causes `vm-mail-send' to check multi-line recipient
 headers of outbound mail for lines that don't end with a
 comma.  If such a line is found, an error is signaled and the
 mail is not sent."
   :group 'vm-compose
   :type 'boolean)
+(defvaralias 'vm-tale-is-an-idiot 'vm-mail-check-recipient-format)
 
 (defcustom vm-dnd-protocol-alist
   '(("^file:///" . vm-dnd-attach-file)
     ("^file://"  . dnd-open-file)
     ("^file:"    . vm-dnd-attach-file))
-  "The functions to call when a drop in `mail-mode' is made.
+  "The functions to call when a drag and drop into a message
+composition buffer is done.
 See `dnd-protocol-alist' for more information.  When nil, behave
 as in other buffers."
   :group 'vm-compose
