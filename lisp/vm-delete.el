@@ -57,8 +57,8 @@ applied to collapsed threads in summary and thread operations are
 enabled via `vm-enable-thread-operations' then all messages in the
 thread are deleted."
   (interactive "p")
-  (if (vm-interactive-p)
-      (vm-follow-summary-cursor))
+  (when (vm-interactive-p)
+    (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
@@ -69,16 +69,16 @@ thread are deleted."
     (while mlist
       (unless (vm-deleted-flag (car mlist))
 	(when (vm-set-deleted-flag (car mlist) t)
-	    (vm-increment del-count)
-	    ;; The following is a temporary fix.  To be absorted into
-	    ;; vm-update-summary-and-mode-line eventually.
-	    (when (and vm-summary-enable-thread-folding
-		       vm-summary-show-threads
-		       ;; (not (and vm-enable-thread-operations
-		       ;;	 (eq count 1)))
-		       (> (vm-thread-count (car mlist)) 1))
-	      (with-current-buffer vm-summary-buffer
-		(vm-expand-thread (vm-thread-root (car mlist)))))))
+	  (vm-increment del-count)))
+      ;; The following is a temporary fix.  To be absorted into
+      ;; vm-update-summary-and-mode-line eventually.
+      (when (and vm-summary-enable-thread-folding
+		 vm-summary-show-threads
+		 ;; (not (and vm-enable-thread-operations
+		 ;;	 (eq count 1)))
+		 (> (vm-thread-count (car mlist)) 1))
+	(with-current-buffer vm-summary-buffer
+	  (vm-expand-thread (vm-thread-root (car mlist)))))
       (setq mlist (cdr mlist)))
     (vm-display nil nil '(vm-delete-message vm-delete-message-backward)
 		(list this-command))
@@ -89,17 +89,17 @@ thread are deleted."
 		   del-count
 		   (if (= 1 del-count) "" "s"))))
     (vm-update-summary-and-mode-line)
-    (if (and vm-move-after-deleting (not used-marks))
-	(let ((vm-circular-folders (and vm-circular-folders
-					(eq vm-move-after-deleting t))))
-	  (vm-next-message count t executing-kbd-macro)))))
+    (when (and vm-move-after-deleting (not used-marks))
+      (let ((vm-circular-folders (and vm-circular-folders
+				      (eq vm-move-after-deleting t))))
+	(vm-next-message count t executing-kbd-macro)))))
 
 ;;;###autoload
 (defun vm-delete-message-backward (count)
   "Like vm-delete-message, except the deletion direction is reversed."
   (interactive "p")
-  (if (vm-interactive-p)
-      (vm-follow-summary-cursor))
+  (when (vm-interactive-p)
+    (vm-follow-summary-cursor))
   (vm-delete-message (- count)))
 
 ;;;###autoload
@@ -117,8 +117,8 @@ applied to collapsed threads in summary and thread operations are
 enabled via `vm-enable-thread-operations' then all messages in the
 thread are undeleted."
   (interactive "p")
-  (if (vm-interactive-p)
-      (vm-follow-summary-cursor))
+  (when (vm-interactive-p)
+    (vm-follow-summary-cursor))
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
   (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
@@ -126,23 +126,23 @@ thread are undeleted."
 		count (vm-interactive-p) "Undelete"))
 	(undel-count 0))
     (while mlist
-      (if (vm-deleted-flag (car mlist))
-	  (if (vm-set-deleted-flag (car mlist) nil)
-	      (vm-increment undel-count)))
+      (when (vm-deleted-flag (car mlist))
+	(when (vm-set-deleted-flag (car mlist) nil)
+	  (vm-increment undel-count)))
       (setq mlist (cdr mlist)))
-    (if (and used-marks (vm-interactive-p))
-	(if (zerop undel-count)
-	    (vm-inform 5 "No messages undeleted")
-	  (vm-inform 5 "%d message%s undeleted"
-		      undel-count
-		      (if (= 1 undel-count)
-			  "" "s"))))
+    (when (and used-marks (vm-interactive-p))
+      (if (zerop undel-count)
+	  (vm-inform 5 "No messages undeleted")
+	(vm-inform 5 "%d message%s undeleted"
+		   undel-count
+		   (if (= 1 undel-count)
+		       "" "s"))))
     (vm-display nil nil '(vm-undelete-message) '(vm-undelete-message))
     (vm-update-summary-and-mode-line)
-    (if (and vm-move-after-undeleting (not used-marks))
-	(let ((vm-circular-folders (and vm-circular-folders
-					(eq vm-move-after-undeleting t))))
-	  (vm-next-message count t executing-kbd-macro)))))
+    (when (and vm-move-after-undeleting (not used-marks))
+      (let ((vm-circular-folders (and vm-circular-folders
+				      (eq vm-move-after-undeleting t))))
+	(vm-next-message count t executing-kbd-macro)))))
 
 ;;;###autoload
 (defun vm-toggle-flag-message (count &optional mlist)
