@@ -45,7 +45,8 @@
 		  (specifier value &optional locale tag-set how-to-add))
 (declare-function rfc822-addresses "ext:rfc822" (header-text))
 
-(declare-function vm-visit-folder "vm.el" (folder &optional read-only))
+(declare-function vm-visit-folder "vm.el" 
+		  (folder &optional read-only &key interactive just-visit))
 (declare-function vm-set-folded-flag "vm-undo.el" (m flag &optional norecord))
 
 (defvar scrollbar-height)		; defined for XEmacs

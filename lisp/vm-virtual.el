@@ -42,7 +42,7 @@
 )
 
 (declare-function vm-visit-folder "vm" 
-		  (folder &optional read-only just-visit))
+		  (folder &optional read-only &key interactive just-visit))
 (declare-function vm-visit-virtual-folder "vm"
 		  (folder &optional read-only bookmark))
 (declare-function vm-mode "vm" 
@@ -157,7 +157,7 @@ all the real folder buffers involved."
 			 (enable-local-variables nil)
 			 (vm-frame-per-folder nil)
 			 (vm-verbosity (1- vm-verbosity)))
-		     (vm-visit-folder folder nil t)
+		     (vm-visit-folder folder nil :just-visit t)
 		     (vm-select-folder-buffer)
 		     (setq buffer (current-buffer))
 		     (setq components (cons (cons buffer t) components))))
