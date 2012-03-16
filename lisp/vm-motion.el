@@ -178,7 +178,8 @@ interpretation of the preferences.                  USR, 2011-01-18"
 (defun vm-should-skip-hidden-message (mp)
   "Checks if the current message in MP should be skipped as a hidden
 message in the summary buffer."
-  (and vm-summary-buffer
+  (and vm-summary-buffer 
+       (vm-summary-operation-p)
        (with-current-buffer vm-summary-buffer
 	 (and vm-skip-collapsed-sub-threads
 	      vm-summary-enable-thread-folding
