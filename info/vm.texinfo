@@ -88,6 +88,7 @@ This manual corresponds to VM version @value{VERSION}.
 * Faces::               How to configure VM's use of faces.
 * Using the Mouse::     Understanding the VM mouse interface.
 * Hooks::               How you can make VM run your code at certain times.
+* Configuration::       Hints on how to configure VM to read and send mail
 
 Add-ons and Customizations:
 
@@ -6067,7 +6068,7 @@ and @code{konqueror}, all of which have functions of the form
 facilities defined in the @samp{browse-url} library to send URL's to
 external browsers.
 
-@node Hooks, Preface to Add-ons, Using the Mouse, Top
+@node Hooks, Configuration, Using the Mouse, Top
 @chapter Hooks
 
 VM has many hook variables that allow you to run functions when
@@ -6341,7 +6342,185 @@ If this hook is entirely empty, i.e. @code{nil}, a default action is taken
 instead of no action.
 @end table
 
-@node Preface to Add-ons, Customizations, Hooks, Top
+@node Configuration, Preface to Add-ons, Hooks, Top
+@section Configuration of VM
+
+@unnumberedsubsec Hints on email environment configuration
+
+When VM was first written, the majority of users received their email and
+replied to them on Unix systems.  These systems either ran permanent services
+for receiving and sending email, or they shared their file systems with
+other servers which provided such services.  The local system administrators
+took care of all the configuration.
+
+Today, the majority of users receive their email and reply to them on remote
+servers across th Internet.  A variety of protocols are used to download,
+share and transmit email, which the users need to know about.  In addition,
+the email messages sent across the network are open to probes that violate
+our privacy and security.  To address the problem, additional security
+protocols are used to protect privacy.  Finally, VM runs inside the Emacs
+environment and depends on it for the implementation of various protocols,
+and Emacs in turn depends on other Gnu tools for other implementations of
+protocols.  This section is an attempt to bring together all the information
+you would be potentially required to master in order to configure VM through
+all these protocols and services.  It is only expected to be introductory.
+You may need to consult additional documentation of other protocols and
+programs in order to fully understand how to configure your email
+environment.
+
+@unnumberedsubsubsec Configuration for email reception
+
+If you receive email on a remote server, that email will be made available
+via a mail reception protocol.  The two commonly used protocols are:
+
+@itemize
+@item @acronym{POP} (Post office protocol)
+@item @acronym{IMAP} (Internet message access protocol)
+@end itemize
+
+@noindent @acronym{POP} was designed to receive and store your email in a
+``post office'' until you are ready to download it to your own computer.
+Once you download it, the email gets deleted from the server's ``post
+office.''  However, today, most @acronym{POP} servers also provide the
+ability to retain the email in the post office even after you downloaded it.
+
+@acronym{IMAP} was designed to receive and store your email essentially
+permanently.  However, the @acronym{IMAP} service providers are likely to
+give you a limit on how much disk space your account will be allowed to use.
+As long as you are within those limits, you can organize your email on the
+server as if it is your own computer, and create multiple folders etc.
+
+VM provides two ways of working with mail servers:
+
+@itemize
+@item
+You can store your email in local folders and download new mail from the
+mail servers.  @xref{Local Folders}, especially the subsections on
+``@acronym{POP} Spool Files'' and ``@acronym{IMAP} Spool Files.''  Even
+though the local folders method is provided for both @acronym{POP} and
+@acronym{IMAP} servers, it is really appropriate only for @acronym{POP}
+servers.
+@item
+You can store your email on the mail server and process it in VM via cache
+folders stored on your file system.  @xref{@acronym{POP} and @acronym{IMAP}
+Folders}.  Even though the method of server folders is provided for both
+@acronym{POP} and @acronym{IMAP} servers, it is really appropriate only for
+@acronym{IMAP} servers.
+@end itemize
+
+@unnumberedsubsubsec Configuration for secure email reception
+
+To ensure privacy on the open Internet while you download email from mail
+servers, some servers provide an additional secure communication layer.
+Some servers insist that you can only use secure communication, and
+refuse to provide an insecure channel.  For your own security, you should
+attempt to use the secure communication layer whenever it is available.  You
+can specify the secure mail servers using tags @code{pop-ssl} or
+@code{imap-ssl} in defining maildrop specifications.  Please make sure that
+you specify an appropriate port number, as required by the documentation of
+your mail server.  (Normally port 995 is used for @code{pop-ssl} and
+port 993 is used for @code{imap-ssl}.)
+
+Secure channels are provided using a protocol called @acronym{SSL} (Secure
+Sockets Layer).  A later version of the protocol is called @acronym{TLS}
+(Transport Layer Security), which is backward compatible with @acronym{SSL}.
+
+Gnu Emacs version 24 has a built-in implementation of @acronym{TLS} (which
+also includes @acronym{SSL}).  Prior versions of Gnu Emacs do not have it.
+Other versions of Emacs may or may not have any implementation of
+@acronym{SSL} or @acronym{TLS}.
+
+If the Emacs version does not have SSL/TLS support, you can use an external
+@code{stunnel} program to establish a secure ``tunnel''.  You can download
+the @code{stunnel} program from the @code{stunnel.org} web site, and install
+it somewhere on the @code{exec-path}.  VM is preconigured to use the
+@code{stunnel} program for talking to the mail servers that require SSL,
+i.e., the value of the variable @code{vm-stunnel-program} is set to
+@code{stunnel}.  VM automatically generates a configuration file that the
+@code{stunnel} program requires, starts the program, and communicates
+through it to the mail server.  You can look at the generated configuration
+file by running:
+
+@example
+M-: (find-file (vm-stunnel-configuration-file))
+@end example
+
+@noindent Depending on what is required by your mail server, you may need to
+specify additional configuration options for @code{stunnel}.  In that case,
+you should create the required configuration file and set the variable
+@code{vm-stunnel-program-additional-configuration-file} to its path name.
+
+If your Emacs version has a built-in implementation of @acronym{TLS} and you
+wish to use it, you should set the variable @code{vm-stunnel-program} to
+@code{nil}.
+
+@unnumberedsubsubsec Configuration for email sending
+
+Configuration for sending email can be more complicated, partly because you
+are dependent on Emacs for the mail sending libraries.  VM does not have its
+own mail sending functionality.
+
+The original Emacs mail-sending library is called @code{sendmail.el} (also
+referred to @code{mail-mode} because of its user interface for mail
+composition).  This library essentially assumes that the local machine has
+mail sending capabilities.
+
+When using remote servers for mail sending, the servers runs a protocol
+called @acronym{SMTP} (Simple mail transfer protocol).  A separate Emacs
+library @code{smtpmail.el} has been written to intervene in the operation of
+@code{sendmail.el} and hand the mail to the remote @acronym{SMTP} server
+instead.  @xref{top,, Emacs SMTP Library, smtpmail, Emacs SMTP Library}.
+This library has traditionally had limited functionality, and various other
+packages have been contributed to enhance the functionality.
+
+On the server side, there are actually two versions of the @acronym{SMTP}
+that are run by servers.  The so-called Mail Transfer Agents use port 25.
+Mail Submission Agents use port 587.  The Mail Transfer Agents have an
+additional port 465 for secure @acronym{SSL} connections.  However, the Mail
+Submission Agents must use port 587 for for both secure and insecure
+communication.  These complexities, coupled with the limited functionality
+of @code{smtpmail.el} library, have made the life difficult to many users.
+
+The @code{smtpmail.el} library included with Gnu Emacs version 24 has
+@acronym{SSL} functionality.  You should set the variable
+@code{smtpmail-stream-type} to @code{ssl} to use it with a mail server.  If
+the @acronym{SMTP} server supprts @acronym{SSL}, this is the simplest security
+mechanism to use.  The port number to use (usually 465) is specified in the
+variable @acronym{smtpmail-smtp-service}.
+
+If the @acronym{SMTP} server does not use a secure protocol, it normally
+expects connections on port 25.  In this case, you should set the variable
+@code{smtpmail-stream-type} to @code{nil}.
+
+In the more complicated case, the @acronym{SMTP} server expects a ``mail
+submission'' connection on port 587, and it may require a @acronym{STARTTLS}
+protocol to engage in secure communication.  This means that your mail
+program first communicates insecurely, the server informs it that it
+requires the @acronym{STARTTLS} protocol, and the mail program must then
+initiate a negotiation to establish a secure channel.  Prior to Gnu Emacs
+24, this was handled by a contributed Emacs library called
+@code{starttls.el}.  While it did the job adequately for many users, some
+others have found that it did not work properly on the
+Windows platform.
+
+In Gnu Emacs 24, due to the integration of the @acronym{TLS} protocol, Emacs
+is able to use the external @acronym{GnuTLS} library, which can execute a
+@acronym{STARTTLS} protocol.  However, you must obtain and install the
+binary executables of the @acronym{GnuTLS} library on your system in order
+to obtain this functionality.  You should set the variable
+@acronym{smtpmail-stream-type} to @code{starttls} to request Emacs to use
+the @code{STARTTLS} protocol.  Emacs 24 tries both an external
+@acronym{GnuTLS} library and its own internal @code{starttls.el} library, to
+achieve the @code{STARTTLS} negotiation.
+
+If you set @code{smtpmail-stream-type} to @code{nil} (which is also the
+default value), then Emacs tries a plain text communication initially and
+upgrades it to @acronym{TLS} if the server requires @acronym{STARTTLS}.
+Prior to Gnu Emacs 24, this is the only possible behaviour provided in all
+cases. 
+
+
+@node Preface to Add-ons, Customizations, Configuration, Top
 @unnumbered What are Add-ons?
 
 Over the years, a number of users have contributed various functions
