@@ -1770,6 +1770,13 @@ allow you to view them separately."
 \"multipart/related\" content worked as expected, by shipping the
 cid: attachments to the content viewer.")
 
+(defcustom vm-mime-verify-signatures nil
+  "*Non-nil value means that VM should attempt to verify signatures
+attached in \"multipart/signed\" parts."
+  :group 'vm-mime
+  :type '(choice (const nil :tag "Do not verify")
+		 (const t :tag "Verify")))
+
 (defcustom vm-mime-text/html-handler 'auto-select
   "*The library used for displaying HTML messages.  The possible
 values are:

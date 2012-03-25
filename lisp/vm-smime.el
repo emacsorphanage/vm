@@ -1,9 +1,9 @@
-;;; vm-mime.el ---  MIME support functions
+;;; vm-smime.el ---  MIME support functions
 ;;
 ;; This file is part of VM
 ;;
-;; Copyright (C) 1997-2003 Kyle E. Jones
-;; Copyright (C) 2003-2006 Robert Widhopf-Fenk
+;; Copyright (C) 2012 Arik Mitschang
+;; Copyright (C) 2012 Uday S. Reddy
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@
 ;;;###autoload
 (defun vm-mime-display-button-application/pkcs7-signature (layout)
   (if (vectorp layout)
-      (let ((vm-mf-default-action "append cert to file"))
+      (let ((vm-mf-default-action "save"))
 	(vm-mime-insert-button
 	 :caption
 	 (vm-mime-sprintf (vm-mime-find-format-for-layout layout) layout)

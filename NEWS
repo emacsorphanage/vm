@@ -53,6 +53,12 @@ VM 8.2.0b1
 
    IMPROVEMENTS
 
+   * Added support for Secure MIME (S/MIME) signatures and encryption (still
+     experimental at this stage).  See the info section on Secure MIME.  To
+     enable the verification of S/MIME signatures, set the variable
+     `vm-mime-verify-signatures' to t.  Thanks to Arik Mitschang for this
+     contribution.
+
    * Quitting an interactive virtual folder using `vm-quit-no-change'
      prevents VM from changing the message pointer in the underlying folder.
 

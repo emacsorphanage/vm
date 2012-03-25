@@ -2689,8 +2689,10 @@ is not successful.                                   USR, 2011-03-25"
 	   ;; (and there's a pretty good chance that the message was
 	   ;; encrypted, so it's non-trivial to get the original layout)
 	   ((and (vm-mime-types-match "multipart/signed" type)
-		 (when (string-match "pkcs7-signature"
-				     (vm-mime-get-parameter layout "protocol"))
+		 (when (and vm-mime-verify-signatures
+			    (string-match 
+			     "pkcs7-signature"
+			     (vm-mime-get-parameter layout "protocol")))
 		   (let ((verified nil))
 		     (with-temp-buffer
 		       (vm-mime-insert-mime-headers layout)
