@@ -2747,17 +2747,23 @@ well.
 @node Reading Secure @acronym{MIME}, , Inferring @acronym{MIME} types, @acronym{MIME} Messages
 @subsection Reading Secure @acronym{MIME} Messages
 
-VM supports reading @acronym{S/MIME} messages using the @samp{smime.el}
-package included with Emacs.  Typically, a secure message part (identified
+VM supports reading @acronym{S/MIME} messages if your Emacs version includes
+@samp{smime.el}
+package.
+Typically, a secure message part (identified
 by @acronym{MIME} type ``application/pkcs7-smime'') will be presented as a
-button which when pushed will decrypt that part of the message. It is also
-possible to auto-decrypt upon reading the message by adding
-``application/x-pkcs7-smime'' and ``application/pkcs7-smime'' to the
+button which, when pushed, will decrypt that part of the message.
+It is also
+possible to auto-decrypt whenever you read the message by adding
+@code{"application/x-pkcs7-smime"} and @code{"application/pkcs7-smime"} to
+the
 variable @code{vm-auto-displayed-mime-content-types} But beware that, at
 present, the @samp{smime.el} library always asks for a private key passcode,
-even for non-encrypted private keys.  So, you will be prompted while
-paging through messages, which may be undesirable. In addition, since the
-content of the @acronym{S/MIME} encoded message should be considered
+even for non-encrypted private keys.
+So, you will be prompted while
+paging through messages, which may be undesirable. 
+In addition, since the
+content of the @acronym{S/MIME}-encoded message should be considered
 private, auto-decrypting could compromise security.
 
 In order to get started reading @acronym{S/MIME} messages, you need to
@@ -2769,7 +2775,7 @@ certificate (which should only be used with people you already trust)
 using ``openssl'' on the command line:
 
 @example
-$ openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem
+openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem
 @end example
 
 @vindex smime-keys
@@ -2777,18 +2783,18 @@ $ openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem
 certificate in @samp{cert.pem}.  Next we need to tell Emacs about the
 certificate and its association to an email address.  This is done by
 setting the variable @code{smime-keys}.  (Consult its documentation for
-further info.)  Importantly, the @samp{cert.pem} file (second element of
+further info.)  More importantly, the @samp{cert.pem} file (second element of
 each association) is expected to also have the private key within it. Simply
-concatenate the private key and certificate and store in a file:
+concatenate @samp{key.pem} and @samp{cert.pem} files and store it in a file:
 
 @example
-$ cat key.pem cert.pem > key-cert.pem
+cat key.pem cert.pem > key-cert.pem
 @end example
 
-@noindent Then, @code{smime-keys} might be
+@noindent Then @code{smime-keys} might be
 
 @example
-((``joe@@example.com" "~/.ssl/key-cert.pem"))
+(("joe@@example.com" "~/.ssl/key-cert.pem"))
 @end example
 
 @noindent Multiple addresses with different certificates are allowed.  When
@@ -2796,18 +2802,22 @@ reading @acronym{S/MIME} messages, VM will search for recipients of
 the message that match email addresses in @code{smime-keys} and
 attempt to decrypt the message with one of those keys. Should there be
 no matches in the "To:" or "Cc:" fields, @code{user-mail-address} will
-be used. Finally, should decryption fail with that key, the user will
+be used. Finally, should decryption fail with that key, you will
 be prompted to supply another private key with which to attempt
 decryption or simply give up.
 
 @vindex vm-mime-verify-signatures
 Secure @acronym{MIME} messages can arrive with a signature using a MIME type
-``application/pkcs7-signature''.  VM verifies such signatures automatically,
+``application/pkcs7-signature''.  
+VM verifies such signatures automatically,
 provided you have set the variable @code{vm-mime-verify-signatures} to
-@code{t}. It is assumed that the signer\s certificate is embedded in the
+@code{t}. 
+It is assumed that the signer's certificate is embedded in the
 message (this is typically the case when sending @acronym{S/MIME} messages).
-Success or failure does not affect the reading of the message, but only
-emits a success message or a warning.  The signers certificate will be
+Success or failure does not affect the reading of the message.
+It merely
+emits a success message or a warning.
+The signers certificate will be
 available for download to a file (default is the sender's email address under
 the @code{smime-certificate-directory}), which is useful for automatically
 choosing certificates when sending mail. See @ref{Sending Secure @acronym{MIME},
@@ -6485,41 +6495,47 @@ This library has traditionally had limited functionality, and various other
 packages have been contributed to enhance the functionality.
 
 On the server side, there are actually two versions of the @acronym{SMTP}
-that are run by servers.  The so-called Mail Transfer Agents use port 25.
-Mail Submission Agents use port 587.  The Mail Transfer Agents have an
-additional port 465 for secure @acronym{SSL} connections.  However, the Mail
-Submission Agents must use port 587 for for both secure and insecure
+that are run by servers.  The so-called ``Mail Transfer Agents'' use port 25
+for plain connections and port 465 for secure @acronym{SSL} connections.
+Mail Submission Agents use port 587 for both secure and insecure
 communication.  These complexities, coupled with the limited functionality
 of @code{smtpmail.el} library, have made the life difficult to many users.
 
+@vindex smtpmail-stream-type
+@vindex smtpmail-smtp-service
 The @code{smtpmail.el} library included with Gnu Emacs version 24 has
-@acronym{SSL} functionality.  You should set the variable
-@code{smtpmail-stream-type} to @code{ssl} to use it with a mail server.  If
-the @acronym{SMTP} server supprts @acronym{SSL}, this is the simplest security
-mechanism to use.  The port number to use (usually 465) is specified in the
-variable @acronym{smtpmail-smtp-service}.
+@acronym{SSL}/@acronym{TLS} functionality.  Follow these guidelines for
+configuring the uptodate @code{smtpmail} library depending on the type of
+the @acronym{SMTP} server.
 
-If the @acronym{SMTP} server does not use a secure protocol, it normally
-expects connections on port 25.  In this case, you should set the variable
-@code{smtpmail-stream-type} to @code{nil}.
+@itemize
+@item The @acronym{SMTP} server does not use a secure protocol.
 
-In the more complicated case, the @acronym{SMTP} server expects a ``mail
+In this case, the server expects connections on port 25.  You should set the
+variable @code{smtpmail-stream-type} to @code{nil} and
+@code{smtpmail-smtp-service} to 25.
+
+@item The @acronym{SMTP} server supports @acronym{SSL}.
+
+In this case, you should set the variable @code{smtpmail-stream-type} to
+@code{ssl} to use it with the mail server. The port number to use (usually
+465) is specified in the variable @code{smtpmail-smtp-service}.
+
+@item The @acronym{SMTP} server is a Mail Submission Agent.
+
+This is the more complicated case.  The @acronym{SMTP} server expects a ``mail
 submission'' connection on port 587, and it may require a @acronym{STARTTLS}
 protocol to engage in secure communication.  This means that your mail
 program first communicates insecurely, the server informs it that it
 requires the @acronym{STARTTLS} protocol, and the mail program must then
-initiate a negotiation to establish a secure channel.  Prior to Gnu Emacs
-24, this was handled by a contributed Emacs library called
-@code{starttls.el}.  While it did the job adequately for many users, some
-others have found that it did not work properly on the
-Windows platform.
+initiate a negotiation to establish a secure channel.
 
 In Gnu Emacs 24, due to the integration of the @acronym{TLS} protocol, Emacs
-is able to use the external @acronym{GnuTLS} library, which can execute a
+is able to use an external @acronym{GnuTLS} library, which can execute a
 @acronym{STARTTLS} protocol.  However, you must obtain and install the
 binary executables of the @acronym{GnuTLS} library on your system in order
-to obtain this functionality.  You should set the variable
-@acronym{smtpmail-stream-type} to @code{starttls} to request Emacs to use
+to obtain this functionality.  Having done this, you should set the variable
+@code{smtpmail-stream-type} to @code{starttls} to request Emacs to use
 the @code{STARTTLS} protocol.  Emacs 24 tries both an external
 @acronym{GnuTLS} library and its own internal @code{starttls.el} library, to
 achieve the @code{STARTTLS} negotiation.
@@ -6527,9 +6543,18 @@ achieve the @code{STARTTLS} negotiation.
 If you set @code{smtpmail-stream-type} to @code{nil} (which is also the
 default value), then Emacs tries a plain text communication initially and
 upgrades it to @acronym{TLS} if the server requires @acronym{STARTTLS}.
-Prior to Gnu Emacs 24, this is the only possible behaviour provided in all
-cases. 
+@end itemize
 
+Prior to Gnu Emacs 24, Emacs did not have built-in support for @acronym{SSL}
+or @acronym{TLS} protocols.  However, a contributed Emacs package called
+@code{starttls.el} was available to make use of an external @acronym{GnuTLS}
+library which was not integrated with Emacs.  The @code{smtpmail.el} library
+did not have the @code{smtpmail-stream-type} setting.  The default behaviour
+depended on the @code{smtpmail-smtp-service}, with the possible values of
+25, 465 or 587, as explained above.  It did the job adequately for many
+users.  But it did not work properly on the Windows platform, because
+Windows did not respect the signal requests needed for @acronym{STARTTLS}
+negotiation.
 
 @node Preface to Add-ons, Customizations, Configuration, Top
 @unnumbered What are Add-ons?
@@ -7199,6 +7224,7 @@ states.
 @inindex vm-system-state
 @code{vm-system-state}.  The state of VM in a Folder buffer or
 Presentation buffer: 
+
 @itemize
 @item 
 @inindex previewing
