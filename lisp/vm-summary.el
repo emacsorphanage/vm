@@ -1836,7 +1836,10 @@ Call this function if you made changes to `vm-summary-format'."
   (or (vm-label-string-of m)
       (vm-set-label-string-of
        m
-       (mapconcat 'identity (sort (vm-labels-of m) 'string-lessp) ","))
+       (mapconcat 
+	'identity 
+	(sort (copy-sequence (vm-labels-of m)) 'string-lessp)
+	","))
       (vm-label-string-of m)))
 
 (defun vm-make-folder-summary ()
