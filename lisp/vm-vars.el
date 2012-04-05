@@ -2823,14 +2823,14 @@ buffer if it is visited or to the file otherwise."
   "*Non-nil value should be an alist that VM will use to choose a default
 folder name when messages are saved.  The alist should be of the form
 \((HEADER-NAME-REGEXP
-   (REGEXP . FOLDER-NAME) ... )
+   (REGEXP . FOLDER) ... )
   ...)
-where HEADER-NAME-REGEXP and REGEXP are strings, and FOLDER-NAME
+where HEADER-NAME-REGEXP and REGEXP are strings, and FOLDER
 is a string or an s-expression that evaluates to a string.
 
 If any part of the contents of the first message header whose
 name is matched by HEADER-NAME-REGEXP is matched by the regular
-expression REGEXP, VM will evaluate the corresponding FOLDER-NAME
+expression REGEXP, VM will evaluate the corresponding FOLDER
 and use the result as the default folder for saving the message.
 If the resulting folder name is a relative pathname, then it will
 be rooted in the directory named by `vm-folder-directory', or the
@@ -2839,12 +2839,12 @@ default-directory of the currently visited folder if
 maildrop specification, then the corresponding IMAP folder is used for
 saving. 
 
-When FOLDER-NAME is evaluated, the current buffer will contain
+When FOLDER is evaluated, the current buffer will contain
 only the contents of the header matched by HEADER-NAME-REGEXP.
 It is safe to modify this buffer.  You can use the match data
 from any \\( ... \\) grouping constructs in REGEXP along with the
 function buffer-substring to build a folder name based on the
-header information.  If the result of evaluating FOLDER-NAME is a
+header information.  If the result of evaluating FOLDER is a
 list, then the list will be treated as another auto-folder-alist
 and will be descended recursively.
 
@@ -2884,122 +2884,27 @@ and what the inclusion criteria are.
 Each virtual folder definition should have the following form:
 
   (VIRTUAL-FOLDER-NAME
-    ( (FOLDER-NAME ...)
+    ( (FOLDER ...)
       (SELECTOR [ARG ...]) ... )
     ... )
 
 VIRTUAL-FOLDER-NAME is the name of the virtual folder being defined.
 This is the name by which you and VM will refer to this folder.
 
-FOLDER-NAME should be the name of a real folder.  There may be more than
-one FOLDER-NAME listed, the SELECTORs within that sublist will apply to
-them all.  If FOLDER-NAME is a directory, VM will assume this to mean that
-all the folders in that directory should be searched.
+FOLDER should be the specification of a real folder: a file path for
+a local folder or a maildrop specification for a POP/IMAP folder.
+There may be more than one FOLDER listed, the SELECTORs within that
+sublist will apply to them all.  If FOLDER is a directory, VM will
+assume this to mean that all the folders in that directory should be
+searched.
 
-The SELECTOR is a Lisp symbol that tells VM how to decide whether a message
-from one of the folders specified by the FOLDER-NAMEs should be included
-in the virtual folder.  Some SELECTORs require an argument ARG; unless
-otherwise noted ARG may be omitted.
+The SELECTOR is a Lisp symbol that tells VM how to decide whether
+a message from one of the specified FOLDERs should be included in
+the virtual folder.  Some SELECTORs require an argument ARG;
+unless otherwise noted ARG may be omitted.
 
-The recognized SELECTORs are:
-
-   author          - matches message if ARG matches the author; ARG should be a
-                     regular expression.
-   principal       - matches message if ARG matches the principal in
-                     the \"Reply-To\" header; ARG should be a regular
-                     expression. 
-   author-or-recipient
-		   - matches message if ARG matches the author of
-		     the message or any of its recipients; ARG
-		     should be a regular expression.
-   and             - matches the message if all its argument
-                     selectors match the message.  Example:
-                        (and (author \"Derek McGinty\") (new))
-                     matches all new messages from Derek McGinty.
-                     `and' takes any number of arguments.
-   any             - matches any message.
-   deleted         - matches message if it is flagged for deletion.
-   edited          - matches message if it has been edited.
-   filed           - matches message if it has been saved with its headers.
-   forwarded       - matches message if it has been forwarded using
-		     a variant of `vm-forward-message' or `vm-send-digest'.
-   header          - matches message if ARG matches any part of the header
-                     portion of the message; ARG should be a
-                     regular expression.
-   header-field    - matches message if the header field named ARG1
-                     has the regular expression pattern ARG2.
-   header-or-text  - matches message if ARG matches any part of the
-		     headers or the text portion of the message;
-		     ARG should be a regular expression.
-   label           - matches message if message has a label named ARG.
-   less-chars-than - matches message if message has less than ARG
-                     characters.  ARG should be a number.
-   less-lines-than - matches message if message has less than ARG
-                     lines.  ARG should be a number.
-   more-chars-than - matches message if message has more than ARG
-                     characters.  ARG should be a number.
-   more-lines-than - matches message if message has more than ARG
-                     lines.  ARG should be a number.
-   marked          - matches message if it is marked, as with `vm-mark-message'.
-   new             - matches message if it is new.
-   not             - matches message only if its selector argument
-                     does NOT match the message.  Example:
-                       (not (deleted))
-                     matches messages that are not deleted.
-   or              - matches the message if any of its argument
-                     selectors match the message.  Example:
-                        (or (author \"Dave Weckl\") (subject \"drum\"))
-                     matches messages from Dave Weckl or messages
-                     with the word \"drum\" in their Subject header.
-                     `or' takes any number of arguments.
-   read            - matches message if it is neither new nor unread.
-   recent	   - matches message if it is new.
-   recipient       - matches message if ARG matches any part of the recipient
-                     list of the message.  ARG should be a regular expression.
-   redistributed   - matches message if it has been redistributed using
-		     `vm-resend-message'.
-   replied         - matches message if it has been replied to.
-   sent-after      - matches message if it was sent after the date ARG.
-                     A fully specified date looks like this:
-                       \"31 Dec 1999 23:59:59 GMT\"
-                     although the parts can appear in any order.
-                     You can leave out any part and it will
-                     default to the current date's value for that
-                     part, with the exception of the hh:mm:ss
-                     part which defaults to midnight.
-   sent-before     - matches message if it was sent before the date ARG.
-                     A fully specified date looks like this:
-                       \"31 Dec 1999 23:59:59 GMT\"
-                     although the parts can appear in any order.
-                     You can leave out any part and it will
-                     default to the current date's value for that
-                     part, with the exception of the hh:mm:ss
-                     part which defaults to midnight.
-   subject         - matches message if ARG matches any part of the message's
-                     subject; ARG should be a regular expression.
-   text            - matches message if ARG matches any part of the text
-                     portion of the message; ARG should be a
-                     regular expression.
-   unanswered	   - matches message if it has not been replied to.
-		     Same as the `unreplied' selector.
-   undeleted	   - matches message if it has not been deleted.
-   unedited	   - matches message if it has not been edited.
-   unfiled         - matches message if it has not been saved with its
-		     headers.
-   unforwarded	   - matches message if it has not been forwarded using
-		     `vm-forward-message' or `vm-send-digest' or one
-		     of their variants.
-   unread          - matches message if it is not new and hasn't been read.
-   unseen          - matches message if it is not new and hasn't been read.
-		     Same as `unread' selector.
-   unredistributed - matches message if it has not been redistributed using
-		     `vm-resend-message'.
-   unreplied	   - matches message if it has not been replied to.
-   virtual-folder-member
-		   - matches message if the message is already a
-		     member of some virtual folder currently
-		     being visited.
-   written         - matches message if it has been saved without its headers.
+See the VM manual section \"Virtual Selectors\" for the complete list
+of recognized SELECTORs.
 "
   :group 'vm-folders
   :type '(choice (const :tag "none" nil)
@@ -6335,10 +6240,10 @@ folder is meant to access.")
 which is normally an entry in `vm-virtual-folder-alist'.  It is of the
 form: 
   (VIRTUAL-FOLDER-NAME
-    ((FOLDER-NAME ...)
+    ((FOLDER ...)
      (SELECTOR [ARG ...]) ...) 
     ... )
-A FOLDER-NAME entry can be
+A FOLDER entry can be
 - the name of a local folder, or
 - an s-expression which, when evaluated, yields a folder buffer loaded
 in VM." )

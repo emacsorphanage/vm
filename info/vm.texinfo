@@ -635,27 +635,20 @@ spool files on remote hosts using the @acronym{POP} and @acronym{IMAP} protocols
 @unnumberedsubsec @acronym{POP} Spool Files
 
 @cindex @acronym{POP} spool files
+@cindex maildrop specification
 VM can access spool files on mail servers via the @dfn{Post Office Protocol}
-(@dfn{@acronym{POP}}).  To use a @acronym{POP} mailbox as a spool file, you need to use a @acronym{POP}
+(@dfn{@acronym{POP}}).  To use a @acronym{POP} mailbox as a spool file, you
+need to use a @acronym{POP} 
 maildrop specification (@ref{maildrop specification},
-@ref{@acronym{POP} and @acronym{IMAP} Folders}).  Once this is done, VM will retrieve new mail
+@ref{@acronym{POP} and @acronym{IMAP} Folders}).  Once this is done, VM will
+retrieve new mail 
 from the @acronym{POP} mailbox in the same way as it retrieves it from system
 mailbox.  The retrieved messages can be automatically removed from the
 @acronym{POP} mailbox or retained until a later expunge operation.
 
-@vindex vm-pop-max-message-size
-@findex vm-get-new-mail
-@vindex vm-auto-get-new-mail
 By default VM will retrieve all the messages from a @acronym{POP} mailbox
 before returning control of Emacs to you.  If the mailbox is
-large, the wait could be considerable.  If you set
-@code{vm-pop-max-message-size} to a positive numeric value, VM will not 
-automatically retrieve messages larger than this size.  If VM is
-retrieving messages because you invoked @code{vm-get-new-mail}
-interactively, then VM will ask whether it should retrieve the
-large message.  If VM is retrieving messages automatically
-(e.g. @code{vm-auto-get-new-mail} is set non-@code{nil}) then VM will skip the
-large message and you can retrieve it later.
+large, the wait could be considerable.
 
 @vindex vm-pop-bytes-per-session
 @vindex vm-pop-messages-per-session
@@ -667,6 +660,19 @@ control to you.  By default, the value of both variables is nil, which
 tells VM to retrieve all the messages in the @acronym{POP} mailbox regardless
 of how many messages there are and how large the mailbox is.
 
+@vindex vm-pop-max-message-size
+@findex vm-get-new-mail
+@vindex vm-auto-get-new-mail
+Another way to reduce the amount of wait is to control how the large messages
+should be handled.  If you set @code{vm-pop-max-message-size} to a positive
+numeric value, VM will not automatically retrieve messages larger than this
+size.  If VM is retrieving messages because you invoked
+@code{vm-get-new-mail} interactively, then VM will ask whether it should
+retrieve the large message.  If VM is retrieving messages automatically
+(e.g. @code{vm-auto-get-new-mail} is set non-@code{nil}) then VM will skip
+the large messages and you can retrieve them later.
+
+@cindex expunging, @acronym{POP} messages
 @findex vm-expunge-pop-messages
 After VM retrieves messages from the mailbox, the default action is to
 leave the original messages on the server unchanged.  They can be
@@ -680,8 +686,10 @@ If you want VM to expunge the messages automatically after retrieving
 them, you can set @code{vm-pop-expunge-after-retrieving} to @code{t}.
 But a better method is to set the variable
 @code{vm-pop-auto-expunge-alist}, which gives you a way to specify, on
-a per-mailbox basis, which @acronym{POP} mailboxes should have messages automatically
-removed after retrieving and which ones should leave the messages on the @acronym{POP}
+a per-mailbox basis, which @acronym{POP} mailboxes should have messages
+automatically 
+removed after retrieving and which ones should leave the messages on the
+@acronym{POP} 
 server.  The value of @code{vm-pop-auto-expunge-alist} should be a
 list of @acronym{POP} mailboxes and values specifying whether messages should
 be automatically deleted from the mailbox after retrieval.  The format
@@ -691,7 +699,7 @@ of the list is:
 ((@var{MAILDROP} . @var{VAL}) (@var{MAILDROP} . @var{VAL}) ...)
 @end example
 
-@var{MAILDROP} should be a @acronym{POP} mailbox specification as described
+@var{MAILDROP} should be a @acronym{POP} maildrop specification as described
 in the documentation for the variable @code{vm-spool-files}.  If
 you have the @acronym{POP} password specified in the @code{vm-spool-files}
 entry, you do not have to specify it here as well.  Use @samp{*}
@@ -727,6 +735,10 @@ the same way as it retrieves it from system mailbox.  The retrieved
 messages can be automatically removed from the @acronym{IMAP} mailbox or
 retained until a later expunge operation.
 
+By default VM will retrieve all the messages from an @acronym{IMAP} mailbox
+before returning control of Emacs to you.  If the mailbox is
+large, the wait could be considerable.
+
 @vindex vm-imap-bytes-per-session
 @vindex vm-imap-messages-per-session
 The variable @code{vm-imap-messages-per-session} controls how many messages
@@ -736,6 +748,18 @@ number of bytes VM will retrieve from an @acronym{IMAP} mailbox before returning
 control to you.  By default, the value of both variables is nil, which
 tells VM to retrieve all the messages in the @acronym{IMAP} mailbox regardless
 of how many messages there are and how large the mailbox is.
+
+@vindex vm-imap-max-message-size
+@findex vm-get-new-mail
+@vindex vm-auto-get-new-mail
+Another way to reduce the amount of wait is to control how the large messages
+should be handled.  If you set @code{vm-imap-max-message-size} to a positive
+numeric value, VM will not automatically retrieve messages larger than this
+size.  If VM is retrieving messages because you invoked
+@code{vm-get-new-mail} interactively, then VM will ask whether it should
+retrieve the large message.  If VM is retrieving messages automatically
+(e.g. @code{vm-auto-get-new-mail} is set non-@code{nil}) then VM will skip
+the large messages and you can retrieve them later.
 
 @cindex expunging, @acronym{IMAP} messages
 @findex vm-expunge-imap-messages
