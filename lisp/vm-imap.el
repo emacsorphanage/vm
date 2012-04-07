@@ -1819,7 +1819,7 @@ messages.  `vm-imap-get-uid-list' is an older version of this function."
 		 (format "Retrieve message %d (size = %d)? " n size))
 		'retrieve
 	      (if (y-or-n-p 
-		   (format "Delete message %d (size = %d) from maildrop? " 
+		   (format "Delete message %d (size = %d) on the server? " 
 			   n size))
 		  'delete
 		'skip))))
@@ -2545,8 +2545,10 @@ IMAP process or nil if unsuccessful."
 	(when (and (vm-folder-imap-uid-validity)
 		   (not (equal (vm-folder-imap-uid-validity) uid-validity)))
 	  (unless (y-or-n-p 
-		   (concat "Folder's UID VALIDITY value has changed "
-			   "on the server.  Refresh cache? "))
+		   (format
+		    (concat "%s: Folder's UID VALIDITY value has changed "
+			    "on the server.  Refresh cache? ")
+		    (buffer-name)))
 	    (error "Aborted"))
 	  (vm-warn 5 4
 		   (concat "VM will download new copies of messages"

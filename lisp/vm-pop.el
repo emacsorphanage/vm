@@ -873,7 +873,7 @@ killed as well."
 		  (set-window-point (selected-window) (point))))
 	    (if (y-or-n-p (format "Retrieve message %d (size = %d)? " n size))
 		'retrieve
-	      (if (y-or-n-p (format "Delete message %d from popdrop? " n))
+	      (if (y-or-n-p (format "Delete message %d on the server? " n))
 		  'delete
 		'skip))))
       (and work-buffer (kill-buffer work-buffer)))))

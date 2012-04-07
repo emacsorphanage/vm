@@ -3321,7 +3321,8 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	   (not
 	    (y-or-n-p
 	     (format
-	      "%d message%s have not been saved to disk, quit anyway? "
+	      "%s: %d message%s have not been saved to disk, quit anyway? "
+	      (buffer-name)
 	      vm-messages-not-on-disk
 	      (if (= 1 vm-messages-not-on-disk) "" "s")))))
       (error "Aborted"))
@@ -3330,10 +3331,14 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	   (or buffer-file-name buffer-offer-save)
 	   (buffer-modified-p)
 	   vm-confirm-quit
-	   (not (y-or-n-p "There are unsaved changes, quit anyway? ")))
+	   (not (y-or-n-p 
+		 (format "%s: There are unsaved changes, quit anyway?  "
+			 (buffer-name)))))
       (error "Aborted"))
      ((and (eq vm-confirm-quit t)
-	   (not (y-or-n-p "Do you really want to quit? ")))
+	   (not (y-or-n-p 
+		 (format "%s: Do you really want to quit? "
+			 (buffer-name)))))
       (error "Aborted")))
 
     (save-excursion (run-hooks 'vm-quit-hook))
@@ -4781,7 +4786,8 @@ which is used in interactive confirmations."
 	      (vm-collapsed-root-p (vm-current-message))
 	      (or (eq vm-enable-thread-operations t)
 		  (y-or-n-p 
-		   (format "%s all messages in thread? " op-description))))
+		   (format "%s: %s all messages in thread? " 
+			   (buffer-name) op-description))))
 	 (vm-thread-subtree (vm-current-message)))
 	(t
 	 (list (vm-current-message)))
