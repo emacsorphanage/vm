@@ -3940,6 +3940,10 @@ operation."
   :group 'vm-misc
   :type 'integer)
 
+(defvar vm-current-warning nil
+  "Internal variable to keep track of the current warning message
+shown to the user.")
+
 ;; These flags and variables are for debugging purposes
 
 (defvar vm-debug nil

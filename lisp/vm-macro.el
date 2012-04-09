@@ -119,7 +119,9 @@ If optional argument MINIMUM is 1, the folder should be nonempty
 as well.  If INTERACTIVE-p is t, then it also records the
 current-buffer in `vm-user-interaction-buffer'."
   (when interactive-p
-    (setq vm-user-interaction-buffer (current-buffer)))
+    (setq vm-user-interaction-buffer (current-buffer))
+    ;; Do some initializations for a new interactive command
+    (setq vm-current-warning nil))
   (cond (vm-mail-buffer
 	 (or (buffer-name vm-mail-buffer)
 	     (error "Folder buffer has been killed."))

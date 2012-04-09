@@ -104,8 +104,11 @@
 remaining arguments are passed to `message' to generate the warning
 message." 
   (when (<= l vm-verbosity)
-    (apply 'message args)
-    (sleep-for secs)))
+    (let ((warning (apply 'format args)))
+      (unless (equal vm-current-warning warning)
+	(setq vm-current-warning warning)
+	(message warning)
+	(sleep-for secs)))))
 
 ;; garbage-collector result
 (defconst gc-fields '(:conses :syms :miscs 

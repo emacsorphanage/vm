@@ -7022,6 +7022,7 @@ developers/programmers.
 * Sorting Internals::     Details of how messages are sorted
 * User Interaction::      Handling of the user interaction
 * Coding Systems::        How VM handles character coding
+* Message Display::       How VM displays messages
 * @acronym{MIME} Display::          How VM displays @acronym{MIME} messages
 * @acronym{MIME} Composition::	  How @acronym{MIME} messages are composed
 * Virtual Folder Internals:: Details of virtual folders and selectors
@@ -8313,7 +8314,7 @@ which installs a fresh menu bar retaining the standard Emacs menus.
 The same function is used to reinstall the dedicated VM menu bar when
 needed. 
 
-@node Coding Systems, Virtual Folder Internals, User Interaction, Internals
+@node Coding Systems, Message Display, User Interaction, Internals
 @section Coding Systems
 
 @inindex coding system
@@ -8375,81 +8376,29 @@ VM decodes such strings using the function @code{decode-coding-string}.
 Conversely, the headers of outgoing messages are encoded using
 @code{encode-coding-string}
 
-@node Virtual Folder Internals, @acronym{MIME} Display, Coding Systems, Internals
-@section Virtual Folder Internals
+@node Message Display, @acronym{MIME} Display, Coding Systems, Internals
+@section Message Display
 
-@inindex virtual-folder-definition
-@inindex vm-virtual-folder-alist
-A virtual folder is characterized by its definition, which is stored in the
-buffer-local variable @code{virtual-folder-definition}.  The form of the
-definition is as given in @code{vm-virtual-folder-alist}.  @xref{Defined
-Folders, vm-virtual-folder-alist}.  It is a collection of clauses, with each
-clause listing a collection of folders and a collection of virtual
-selectors.
+VM displays messages in a ``Presentation buffer'' separate from the Folder
+buffer.  This is done in two stages: @i{Preview} and @i{Show}.  
 
-Each virtual selector @var{X} has a corresponding Lisp function
-@samp{vm-vs-@var{X}}, whose purpose is to check whether a given message
-matches the selector.  The arguments for @samp{vm-vs-@var{X}} are a message
-data structure @code{m} and all the arguments for the virtual selector
-@var{X}.
+The previewing is done by a function called
+@code{vm-present-current-message}.  It creates a Presentation buffer if it
+is not present already, makes a copy of the message text in the Presentation
+buffer and carries out any @acronym{MIME} decoding that may be necessary.
+And, then, depending on the value of @code{vm-preview-lines}, it narrows the
+buffer to show a selected portion of the message.
 
-For example, the virtual selector @code{author} has a string argument,
-representing the author name.  The corresponding Lisp function is defined
-as: 
+The full message display is done by @code{vm-show-current-message}.  It does
+nothing more than removing the narrowing done by
+@code{vm-present-current-message}.
 
-@example
-(defun vm-vs-author (m author-name)
-  (or (string-match author-name (vm-su-full-name m))
-      (string-match author-name (vm-su-from m))))
-@end example
+Prior to version 8.2.0, it was possible to see plain text messages directly
+in the Folder buffer.  That mode of operation is now obsolete.  For
+uniformity, VM assumes that the Presentation buffer is always used for
+displaying the message content.
 
-@noindent The definition checks to see if the given @code{author-name}
-pattern occurs in the full name of the author (@code{vm-su-full-name}) or
-the email address of the author (@code{vm-su-from}).
-
-The @code{author} selector is then registered in four places:
-
-@itemize
-@inindex vm-virtual-selector-function-alist
-@item 
-The variable @code{vm-virtual-selector-function-alist}, which contains pairs
-of the form @samp{(@var{SELECTOR} . @var{FUNCTION})}.  For the @code{author}
-selector, the pair is @code{(author . vm-vs-author)}.
-
-@inindex vm-virtual-selector-arg-type
-@item
-The selector symbol @code{author} is given a property
-@code{vm-virtual-selector-arg-type} indicating the type of argument it
-requires:
-
-@example
-(put 'author 'vm-virtual-selector-arg-type 'string)
-@end example
-
-@inindex vm-supported-interactive-virtual-selectors
-@item
-The variable @code{vm-supported-interactive-virtual-selectors}, which
-contains lists of strings, each string being the name of a virtual
-selector.  For the @code{author} selector, the list is @code{("author")}.
-Including the selector in this variable allows it to be used in creating
-interactive virtual folders (search folders).
-
-@inindex vm-virtual-selector-clause
-@item
-The selector symbol @code{author} is given a property
-@code{vm-virtual-selector-clause} indicating the prompt string for
-interactive use:
-
-@example
-(put 'author 'vm-virtual-selector-clause "with author matching")
-@end example
-@end itemize
-
-@noindent Evidently, the last two registrations are only needed for interactive
-selectors that can be used with the @kbd{V C} command.
-
-
-@node @acronym{MIME} Display, @acronym{MIME} Composition, Virtual Folder Internals, Internals
+@node @acronym{MIME} Display, @acronym{MIME} Composition, Message Display, Internals
 @section @acronym{MIME} Display
 
 @inindex vm-decode-mime-layout
@@ -8519,7 +8468,7 @@ Set to a keymap that includes @code{vm-mime-reader-map}, binding the
 @end itemize
 
 
-@node @acronym{MIME} Composition, Extents and Overlays, @acronym{MIME} Display, Internals
+@node @acronym{MIME} Composition, Virtual Folder Internals, @acronym{MIME} Display, Internals
 @section @acronym{MIME} Composition
 
 @inindex attachment button
@@ -8634,7 +8583,81 @@ buttons are then handled as described above.
 
 
 
-@node Extents and Overlays, Timers and Concurrency, @acronym{MIME} Composition, Internals
+@node Virtual Folder Internals, Extents and Overlays, @acronym{MIME} Composition, Internals
+@section Virtual Folder Internals
+
+@inindex virtual-folder-definition
+@inindex vm-virtual-folder-alist
+A virtual folder is characterized by its definition, which is stored in the
+buffer-local variable @code{virtual-folder-definition}.  The form of the
+definition is as given in @code{vm-virtual-folder-alist}.  @xref{Defined
+Folders, vm-virtual-folder-alist}.  It is a collection of clauses, with each
+clause listing a collection of folders and a collection of virtual
+selectors.
+
+Each virtual selector @var{X} has a corresponding Lisp function
+@samp{vm-vs-@var{X}}, whose purpose is to check whether a given message
+matches the selector.  The arguments for @samp{vm-vs-@var{X}} are a message
+data structure @code{m} and all the arguments for the virtual selector
+@var{X}.
+
+For example, the virtual selector @code{author} has a string argument,
+representing the author name.  The corresponding Lisp function is defined
+as: 
+
+@example
+(defun vm-vs-author (m author-name)
+  (or (string-match author-name (vm-su-full-name m))
+      (string-match author-name (vm-su-from m))))
+@end example
+
+@noindent The definition checks to see if the given @code{author-name}
+pattern occurs in the full name of the author (@code{vm-su-full-name}) or
+the email address of the author (@code{vm-su-from}).
+
+The @code{author} selector is then registered in four places:
+
+@itemize
+@inindex vm-virtual-selector-function-alist
+@item 
+The variable @code{vm-virtual-selector-function-alist}, which contains pairs
+of the form @samp{(@var{SELECTOR} . @var{FUNCTION})}.  For the @code{author}
+selector, the pair is @code{(author . vm-vs-author)}.
+
+@inindex vm-virtual-selector-arg-type
+@item
+The selector symbol @code{author} is given a property
+@code{vm-virtual-selector-arg-type} indicating the type of argument it
+requires:
+
+@example
+(put 'author 'vm-virtual-selector-arg-type 'string)
+@end example
+
+@inindex vm-supported-interactive-virtual-selectors
+@item
+The variable @code{vm-supported-interactive-virtual-selectors}, which
+contains lists of strings, each string being the name of a virtual
+selector.  For the @code{author} selector, the list is @code{("author")}.
+Including the selector in this variable allows it to be used in creating
+interactive virtual folders (search folders).
+
+@inindex vm-virtual-selector-clause
+@item
+The selector symbol @code{author} is given a property
+@code{vm-virtual-selector-clause} indicating the prompt string for
+interactive use:
+
+@example
+(put 'author 'vm-virtual-selector-clause "with author matching")
+@end example
+@end itemize
+
+@noindent Evidently, the last two registrations are only needed for interactive
+selectors that can be used with the @kbd{V C} command.
+
+
+@node Extents and Overlays, Timers and Concurrency, Virtual Folder Internals, Internals
 @section Extents and Overlays
 
 @inindex extents
