@@ -989,10 +989,9 @@ The saved messages are flagged as `filed'."
 		       (equal (nth 5 source-spec-list) 
 			      (nth 5 target-spec-list))))
 	    ;; FIXME try to load the body before saving
-	    (if (and (not server-to-server-p)
+	    (when (and (not server-to-server-p)
 		     (vm-body-to-be-retrieved-of m))
-		(error "Message %s body has not been retrieved"
-		       (vm-number-of (car ml))))
+		(vm-retrieve-operable-messages 1 (list m)))
 	    ;; Kyle Jones says:
 	    ;; have to stuff the attributes in all cases because
 	    ;; the deleted attribute may have been stuffed
