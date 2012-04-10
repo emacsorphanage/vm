@@ -2104,7 +2104,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	  opoint)
       (goto-char (vm-headers-of (car mp)))
       (setq opoint (point))
-      (insert-before-markers vm-storage-header " (")
+      (insert-before-markers vm-external-storage-header " (")
       (when args (insert-before-markers (format "%s" (car args))))
       (setq args (cdr args))
       (while args
@@ -5196,7 +5196,8 @@ thread are loaded."
 	(errors 0)
 	(n 0)
 	fetch-method
-	m mm)
+	m mm
+	(need-refresh (not (vm-body-retrieved-of (vm-current-message)))))
     (setq count 0)
     (unwind-protect
 	(save-excursion
@@ -5223,6 +5224,8 @@ thread are loaded."
 		  (list this-command))	
       (when (> count 0) (vm-mark-folder-modified-p))
       (vm-update-summary-and-mode-line))
+      (when need-refresh
+	(vm-preview-current-message))
       (if (= count 1)
 	  (vm-inform 5 "Message body loaded")
 	(vm-inform 5 "%s message bodies loaded" 

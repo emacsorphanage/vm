@@ -219,6 +219,15 @@ has copied out the mail."
   :type '(choice directory 
                  (const :tag "No, do not keep crash boxes" nil)))
 
+(defcustom vm-external-fetch-message-for-presentation t
+  "*Non-nil value indicates that external message bodies should be
+automatically fetched for message presentation.  If it is nil, then
+messages will be presented with only the headers and `vm-load-message'
+must be used to load the externally stored message bodies."
+  :group 'vm-folder
+  :type '(choice (const :tag "No automatic fetching" nil)
+		(const :tag "Automatic fetching" t)))
+
 (defcustom vm-fetched-message-limit 10
   "*Should be an integer representing the maximum number of messages
 that VM should keep in the Folder buffer when the messages are
@@ -6402,8 +6411,8 @@ folder needs to be updated.")
 (defconst vm-pop-retrieved-header "X-VM-POP-Retrieved:")
 (defconst vm-imap-retrieved-header-regexp "^X-VM-IMAP-Retrieved:")
 (defconst vm-imap-retrieved-header "X-VM-IMAP-Retrieved:")
-(defconst vm-storage-header-regexp "^X-VM-Storage:")
-(defconst vm-storage-header "X-VM-Storage:")
+(defconst vm-external-storage-header-regexp "^X-VM-Storage:")
+(defconst vm-external-storage-header "X-VM-Storage:")
 (defconst vm-last-modified-header-regexp "^X-VM-Last-Modified:")
 (defconst vm-last-modified-header "X-VM-Last-Modified:")
 (defconst vm-summary-header-regexp "^X-VM-Summary-Format:")

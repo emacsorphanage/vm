@@ -1653,6 +1653,10 @@ source of the message."
 					 (vm-start-of real-m))))
 
 	;; fetch the real message now
+	;; why is this being done here, rather than in
+	;; vm-present-current-message or vm-show-current-message?
+	;; it was inserted by Rob F in rev. 506.1.1
+	;;                              USR, 2012-04-09
 	(goto-char (point-min))
 	(cond ((and (vm-message-access-method-of mm)
 		    (vm-body-to-be-retrieved-of mm))
@@ -1665,7 +1669,8 @@ source of the message."
 		 (error
 		  (vm-warn 0 0 "Cannot fetch message; %s" 
 			   (error-message-string err)))))
-	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
+	      ((re-search-forward vm-external-storage-header-regexp
+				  (vm-text-of mm) t)
 	       (vm-fetch-message (read (current-buffer)) mm)))
 	;; This might be redundant.  Wasn't in revision 717.
 	;; (vm-reset-buffer-modified-p modified (current-buffer)) 
@@ -1799,7 +1804,8 @@ source of the message."
 ;; 		    (list (vm-message-access-method-of mm)) mm)
 ;; 		 (error
 ;; 		  (vm-warn 0 2 "Cannot fetch; %s" (error-message-string err)))))
-;; 	      ((re-search-forward "^X-VM-Storage: " (vm-text-of mm) t)
+;; 	      ((re-search-forward vm-external-storage-header-regexp
+;;				  (vm-text-of mm) t)
 ;; 	       (vm-fetch-message (read (current-buffer)) mm)))
 ;; 	(vm-reset-buffer-modified-p modified fetch-buf)
 ;; 	;; fixup the reference to the message
