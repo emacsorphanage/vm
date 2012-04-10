@@ -1651,27 +1651,44 @@ source of the message."
 	(set-marker (vm-end-of mm) (+ (vm-start-of mm)
 				      (- (vm-end-of real-m)
 					 (vm-start-of real-m))))
-
 	;; fetch the real message now
 	;; why is this being done here, rather than in
 	;; vm-present-current-message or vm-show-current-message?
 	;; it was inserted by Rob F in rev. 506.1.1
-	;;                              USR, 2012-04-09
-	(goto-char (point-min))
-	(cond ((and (vm-message-access-method-of mm)
-		    (vm-body-to-be-retrieved-of mm))
-	       ;; Remember that this does process I/O and
-	       ;; accept-process-output, allowing concurrent threads
-	       ;; to run!!!  USR, 2010-07-11
-	       (condition-case err
-		   (vm-fetch-message 
-		    (list (vm-message-access-method-of mm)) mm)
-		 (error
-		  (vm-warn 0 0 "Cannot fetch message; %s" 
-			   (error-message-string err)))))
-	      ((re-search-forward vm-external-storage-header-regexp
-				  (vm-text-of mm) t)
-	       (vm-fetch-message (read (current-buffer)) mm)))
+	;; let us disable it and see if it works.  USR, 2012-04-09
+	;; (when vm-external-fetch-message-for-presentation
+	;; (goto-char (point-min))
+	;; (cond ((and (vm-message-access-method-of mm)
+	;; 	    (vm-body-to-be-retrieved-of mm))
+	;;        ;; Remember that this does process I/O and
+	;;        ;; accept-process-output, allowing concurrent threads
+	;;        ;; to run!!!  USR, 2010-07-11
+	;;        (condition-case err
+	;; 	   (vm-fetch-message 
+	;; 	    (list (vm-message-access-method-of mm)) mm)
+	;; 	 (error
+	;; 	  (vm-warn 0 0 "Cannot fetch message; %s" 
+	;; 		   (error-message-string err)))))
+	;;       ((re-search-forward vm-external-storage-header-regexp
+	;;                           (vm-text-of mm) t)
+	;;        (vm-fetch-message (read (current-buffer)) mm))))
+
+	;; Attempt to show a message about the missing body.
+	;; But it is not working right.  Needs more work.  USR, 2012-04-09
+	;; (cond ((and (vm-message-access-method-of mm)
+	;; 	    (vm-body-to-be-retrieved-of mm))
+	;;        (let ((buffer-read-only nil))
+	;; 	 (save-excursion
+	;; 	   (goto-char (vm-text-end-of mm))
+	;; 	   (insert-before-markers
+	;; 	    "<... message body in external source ...>\n"))))
+	;;       ((re-search-forward vm-external-storage-header-regexp
+	;;                           (vm-text-of mm) t)
+	;;        (let ((buffer-read-only nil))
+	;; 	 (goto-char (point-max))
+	;; 	 (insert-before-markers
+	;; 	  "<... message body in external source ...>\n"))))
+
 	;; This might be redundant.  Wasn't in revision 717.
 	;; (vm-reset-buffer-modified-p modified (current-buffer)) 
 	;; fixup the reference to the message
