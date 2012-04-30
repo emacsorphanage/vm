@@ -156,19 +156,27 @@ Also define the `vm-mime-display-internal-application/SUBTYPE' and
 
 If MODE is nil, just define the functions."
   (interactive
-   (let* ((subtype (completing-read "Subtype: "
-                                    vm-mime-internal-application-subtypes))
+   (let* ((subtype (completing-read 
+		    ;; prompt
+		    "Subtype: "
+		    ;; collection
+		    vm-mime-internal-application-subtypes))
           (subtype-mode (fboundp (intern (concat subtype "-mode"))))
           (completion-ignore-case nil)
-          (mode (intern (completing-read (if subtype-mode
-                                             "Mode: (default t) "
-                                           "Mode: ")
-                                         obarray
-                                         (lambda (s)
-                                           (and (fboundp s)
-                                                (string-match "-mode\\'"
-                                                              (symbol-name s))))
-                                         t nil nil (if subtype-mode "t")))))
+          (mode (intern (completing-read 
+			 ;; prompt
+			 (if subtype-mode "Mode: (default t) " "Mode: ")
+			 ;; collection
+			 obarray
+			 ;; predicate
+			 (lambda (s)
+			   (and (fboundp s)
+				(string-match "-mode\\'"
+					      (symbol-name s))))
+			 ;; require-match, initial-input, hist
+			 t nil nil 
+			 ;; default
+			 (if subtype-mode "t")))))
      (or (eq mode 't)
          (fboundp mode)                ; i.e. (equal (symbol-name mode) "")
          (error "Undefined mode: %s" mode)) ; (unintern mode)

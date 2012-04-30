@@ -370,8 +370,11 @@ click mouse triggered the current command."
 
 (defun vm-read-folder-name ()
   (completing-read
+   ;; prompt
    "VM Folder: "
+   ;; collection
    (mapcar (lambda (f) (list f)) (vm-folder-buffers))
+   ;; predicate, require-match, initial-input, hist
    nil t nil nil))
 
 ;;; vm-minibuf.el ends here

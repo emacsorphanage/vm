@@ -603,9 +603,13 @@ Subject header."
   "*Set `vm-mime-8bit-composition-charset' to CHARSET.
 With the optional BUFFER-LOCAL prefix arg, this only affects the current
 buffer."
-  (interactive (list (completing-read "Composition charset: "
-				      vm-mime-charset-completion-alist
-				      nil t)
+  (interactive (list (completing-read 
+		      ;; prompt
+		      "Composition charset: "
+		      ;; collection
+		      vm-mime-charset-completion-alist
+		      ;; predicate, require-match
+		      nil t)
 		     current-prefix-arg))
   (if (or vm-xemacs-mule-p vm-fsfemacs-p)
       (error "vm-mime-8bit-composition-charset has no effect in XEmacs/MULE"))
@@ -925,9 +929,11 @@ match."
               (let ((default-type (or (vm-mime-default-type-from-filename file)
                                       "application/octet-stream")))
                 (setq type (completing-read
+			    ;; prompt
                             (format "Content type for %s (default %s): "
                                     (file-name-nondirectory file)
                                     default-type)
+			    ;; collection
                             vm-mime-type-completion-alist)
                       type (if (> (length type) 0) type default-type))))
           (if (not (vm-mime-types-match "text" type)) nil
@@ -942,8 +948,10 @@ match."
                   ((null charset)
                    (setq charset
                          (completing-read
+			  ;; prompt
                           (format "Character set for %s (default US-ASCII): "
                                   file)
+			  ;; collection
                           vm-mime-charset-completion-alist)
                          charset (if (> (length charset) 0) charset)))))
           (vm-attach-file file type charset))
@@ -1839,14 +1847,17 @@ Call it with a prefix ARG to change the action."
   (interactive "P")
   (when (and (listp arg) (not (null arg)))
     (setq vm-delete-message-action
-          (completing-read "After delete: "
-                           '(("vm-rmail-up")
-                             ("vm-rmail-down")
-                             ("vm-previous-message")
-                             ("vm-previous-unread-message")
-                             ("vm-next-message")
-                             ("vm-next-unread-message")
-                             ("nothing"))))
+          (completing-read
+	   ;; prompt
+	   "After delete: "
+	   ;; collection
+	   '(("vm-rmail-up")
+	     ("vm-rmail-down")
+	     ("vm-previous-message")
+	     ("vm-previous-unread-message")
+	     ("vm-next-message")
+	     ("vm-next-unread-message")
+	     ("nothing"))))
     (message "action after delete is %S" vm-delete-message-action))
   (vm-toggle-deleted (prefix-numeric-value arg))
   (let ((fun (intern vm-delete-message-action)))

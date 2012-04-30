@@ -430,7 +430,9 @@ variable `vm-virtual-folder-alist' for more information."
 	 (this-command this-command))
      (list
       (completing-read
+       ;; prompt
        "Mark messages matching this virtual folder's selectors: "
+       ;; collection, predicate, require-match
        vm-virtual-folder-alist nil t))))
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-mark-or-unmark-messages-with-virtual-folder t name))
@@ -445,7 +447,9 @@ variable `vm-virtual-folder-alist' for more information."
 	 (this-command this-command))
      (list
       (completing-read
+       ;; prompt
        "Unmark message matching this virtual folder's selectors: "
+       ;; collection, predicate, require-match
        vm-virtual-folder-alist nil t))))
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-mark-or-unmark-messages-with-virtual-folder nil name))

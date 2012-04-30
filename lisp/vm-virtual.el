@@ -400,8 +400,13 @@ Prefix arg means the new virtual folder should be visited read only."
    (let ((last-command last-command)
 	 (this-command this-command))
      (list
-      (completing-read "Apply this virtual folder's selectors: "
-		       vm-virtual-folder-alist nil t)
+      (completing-read 
+       ;; prompt
+       "Apply this virtual folder's selectors: "
+       ;; collection
+       vm-virtual-folder-alist 
+       ;; predicate, require-match
+       nil t)
       current-prefix-arg)))
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((vfolder (assoc name vm-virtual-folder-alist))

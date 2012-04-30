@@ -2615,11 +2615,16 @@ in the buffer.  The function is expected to make the message
 		 (vm-highlight-headers-maybe)
 		 (vm-energize-headers-and-xfaces))
 	     (set-buffer-modified-p modified))))
-	(save-excursion (set-buffer vm-mail-buffer)
-			(setq vm-mime-decoded 'decoded))
+	(with-current-buffer vm-mail-buffer
+	  (setq vm-mime-decoded 'decoded))
 	(intern (buffer-name vm-mail-buffer) vm-buffers-needing-display-update)
 	(vm-update-summary-and-mode-line)
-	(vm-emit-mime-decoding-message "Decoding MIME message... done"))))
+	(with-current-buffer vm-mail-buffer
+	  (vm-emit-mime-decoding-message 
+	   ;; (format "Showing MIME %s" (or vm-mime-decoded "undecoded"))
+	   "Decoding MIME message... done"
+	   ))
+	)))
   (vm-display nil nil '(vm-decode-mime-message)
 	      '(vm-decode-mime-message reading-message)))
 
@@ -6028,13 +6033,17 @@ this case and not prompt you for it in the minibuffer."
 	   default-type (or (vm-mime-default-type-from-filename file)
 			    "application/octet-stream")
 	   type (completing-read
-		 (format "Content type (default %s): "
-			 default-type)
+		 ;; prompt
+		 (format "Content type (default %s): " default-type)
+		 ;; collection
 		 vm-mime-type-completion-alist)
 	   type (if (> (length type) 0) type default-type))
      (when (vm-mime-types-match "text" type)
-       (setq charset (completing-read "Character set (default US-ASCII): "
-				      vm-mime-charset-completion-alist)
+       (setq charset (completing-read
+		      ;; prompt
+		      "Character set (default US-ASCII): "
+		      ;; collection
+		      vm-mime-charset-completion-alist)
 	     charset (if (> (length charset) 0) charset)))
      (setq description (read-string "One line description: "))
      (when (string-match "^[ \t]*$" description)
@@ -6092,8 +6101,9 @@ should use `vm-attach-file' to attach the file."
 	   default-type (or (vm-mime-default-type-from-filename file)
 			    "application/octet-stream")
 	   type (completing-read
-		 (format "Content type (default %s): "
-			 default-type)
+		 ;; prompt
+		 (format "Content type (default %s): " default-type)
+		 ;; collection
 		 vm-mime-type-completion-alist)
 	   type (if (> (length type) 0) type default-type))
      (list file type)))
@@ -6152,13 +6162,17 @@ this case and not prompt you for it in the minibuffer."
 	   default-type (or (vm-mime-default-type-from-filename buffer-name)
 			    "application/octet-stream")
 	   type (completing-read
-		 (format "Content type (default %s): "
-			 default-type)
+		 ;; prompt
+		 (format "Content type (default %s): " default-type)
+		 ;; collection
 		 vm-mime-type-completion-alist)
 	   type (if (> (length type) 0) type default-type))
      (when (vm-mime-types-match "text" type)
-       (setq charset (completing-read "Character set (default US-ASCII): "
-				      vm-mime-charset-completion-alist)
+       (setq charset (completing-read
+		      ;; prompt
+		      "Character set (default US-ASCII): "
+		      ;; collection
+		      vm-mime-charset-completion-alist)
 	     charset (if (> (length charset) 0) charset)))
      (setq description (read-string "One line description: "))
      (when (string-match "^[ \t]*$" description)
@@ -6626,10 +6640,13 @@ there is no file name for this object.             USR, 2011-03-07"
   (interactive)
   (vm-mime-set-attachment-disposition-at-point
    (intern
-    (completing-read "Disposition-type: "
-                     '(("unspecified") ("inline") ("attachment"))
-                     nil
-                     t))))
+    (completing-read 
+     ;; prompt
+     "Disposition-type: "
+     ;; collection
+     '(("unspecified") ("inline") ("attachment"))
+     ;; predicate, require-match
+     nil t))))
 
 (defun vm-mime-attachment-disposition-at-point ()
   (cond (vm-fsfemacs-p

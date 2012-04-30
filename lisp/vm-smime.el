@@ -180,9 +180,14 @@ normal flow"
       (if (y-or-n-p "Decryption failed, try a different key?")
 	  (vm-mime-display-internal-application/pkcs7-mime 
 	   layout (completing-read
+		   ;; prompt
 		   (concat "Key" (if smime-keys 
-		     (concat " (default " (caar smime-keys) "): ") ": "))
-		   smime-keys nil nil nil nil 
+		     (concat " (default " (caar smime-keys) "): ") ":"))
+		   ;; collection
+		   smime-keys 
+		   ;; predicate, require-match, initial-input, hist
+		   nil nil nil nil 
+		   ;; default
 		   (car-safe (car-safe smime-keys))))
 	(insert "/*****S/MIME DECRYPTION FAILED - BAD KEY?*****/\n")
 	nil)

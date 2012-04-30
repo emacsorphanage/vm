@@ -1116,16 +1116,16 @@ The special action \"none\" will result in an empty action list."
   "Read a profile and return it."
   (unless default
     (setq default (car vmpc-profiles-history)))
-  (completing-read (format "VMPC profile%s: "
-                           (if vmpc-profiles-history
-                               (concat " (" default ")")
-                             ""))
-                   vmpc-auto-profiles
-                   nil
-                   require-match
-                   initial-contents
-                   'vmpc-profiles-history
-                   default))
+  (completing-read 
+   ;; prompt
+   (format "VMPC profile%s: "
+	   (if vmpc-profiles-history (concat " (" default ")") ""))
+   ;; collection
+   vmpc-auto-profiles
+   ;; predicate, require-match, initial-input, hist
+   nil require-match initial-contents 'vmpc-profiles-history
+   ;; default
+   default))
 
 (defun vmpc-prompt-for-profile (&optional remember prompt)
   "Find a profile or prompt for it and add its actions to the list of actions.
@@ -1338,12 +1338,17 @@ Run this function in order to test/check your conditions."
     (if (eq major-mode 'vm-mail-mode)
         (setq vmpc-current-state 'automorph
               vmpc-current-buffer 'composition)
-      (setq vmpc-current-state (intern (completing-read
-                                        "VMPC state (default is 'reply): "
-                                        '(("reply") ("forward") ("resend")
-                                          ("mail") ("newmail")
-					  ("automorph"))
-                                        nil t nil nil "reply"))
+      (setq vmpc-current-state 
+	    (intern (completing-read
+		     ;; prompt
+		     "VMPC state (default is 'reply): "
+		     ;; collection
+		     '(("reply") ("forward") ("resend") 
+		       ("mail") ("newmail") ("automorph"))
+		     ;; predicate, require-match, initial-input, hist
+		     nil t nil nil 
+		     ;; default
+		     "reply"))
             vmpc-current-buffer 'none))
     (vm-follow-summary-cursor)
     (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
@@ -1406,8 +1411,11 @@ completion."
 				(list (regexp-quote (car a)) 1))
                               vmpc-actions)))
     (if (not action-regexp)
-        (setq action-regexp (completing-read "VMPC action-regexp: "
-                                             action-names)))
+        (setq action-regexp (completing-read
+			     ;; prompt
+			     "VMPC action-regexp: "
+			     ;; collection
+			     action-names)))
     (mapcar (lambda (action)
 	      (if (string-match action-regexp (car action))
 		  (mapcar (lambda (action-command)

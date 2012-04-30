@@ -7239,12 +7239,11 @@ bodies were fetched for viewing or other operations.
 @item
 @inindex vm-mime-decoded
 @inindex @acronym{MIME}
-@code{vm-mime-decoded}.  The @acronym{MIME} decoding state of the current message
-display: @code{undecoded} if the message is shown in undecoded plain
+@code{vm-mime-decoded}.  The @acronym{MIME} decoding state of the current
+message display: @code{nil} if the message is shown in undecoded plain
 text form, @code{decoded} if the message is shown decoded, and
-@code{buttons} if the message is shown as a series of buttons for all
-its @acronym{MIME} components.  The @kbd{D} command cycles through these
-states. 
+@code{buttons} if the message is shown as a series of buttons for all its
+@acronym{MIME} components.  The @kbd{D} command cycles through these states.
 @item
 @inindex vm-system-state
 @code{vm-system-state}.  The state of VM in a Folder buffer or

@@ -70,11 +70,15 @@ vm-summary-edited.  See `vm-summary-faces-alist' for a list
 of available face names."
   (interactive "P")
   (if (and (listp prop) (numberp (car prop)))
-      (setq prop (completing-read "Face name: "
-                                  (mapcar (lambda (f)
-                                            (list (format "%s" (cadr f))))
-                                          vm-summary-faces-alist)
-                                  nil t "vm-summary-deleted")))
+      (setq prop (completing-read 
+		  ;; prompt
+		  "Face name: "
+		  ;; collection
+		  (mapcar (lambda (f)
+			    (list (format "%s" (cadr f))))
+			  vm-summary-faces-alist)
+		  ;; predicate, require-match, initial-input
+		  nil t "vm-summary-deleted")))
   (setq prop (or prop vm-summary-faces-hide "vm-summary-deleted"))
   (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (vm-summarize)

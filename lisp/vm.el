@@ -954,11 +954,16 @@ non-virtual folders should be returned."
 				     (lambda (f) (member f buffers))))
 		  (if pos (setq default (nth pos history)))
                   (completing-read
+		   ;; prompt
                    (format "Foldername%s: " 
 			   (if default (format " (%s)" default) ""))
+		   ;; collection
                    (mapcar (lambda (b) (list b)) (vm-folder-buffers))
+		   ;; predicate, require-match, initial-input
                    nil t nil
+		   ;; hist
                    'vm-switch-to-folder-history
+		   ;; default
                    default))))
 
   (switch-to-buffer folder-name)

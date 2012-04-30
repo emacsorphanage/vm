@@ -4043,16 +4043,19 @@ IMAP mailbox spec."
       (setq default-account vm-last-visit-imap-account))
     (setq folder-input
 	  (completing-read
-	   (format			; prompt
-;;	    "IMAP folder:%s " 
+	   ;; prompt
+	   (format			
+	    ;; "IMAP folder:%s " 
 	    "%s%s" prompt
 	    (if (and default-account default-folder)
 		(format "(default %s:%s) " default-account default-folder)
 	      ""))
-	   'vm-imap-folder-completion-list ; collection
-	   nil				; predicate
-	   nil				; require-match
-	   (if default-account		; initial-input
+	   ;; collection
+	   'vm-imap-folder-completion-list 
+	   ;; predicate, require-match
+	   nil nil
+	   ;; initial-input
+	   (if default-account		
 	       (format "%s:" default-account)
 	     "")))
     (if (or (equal folder-input "")  
@@ -4421,8 +4424,14 @@ them."
 	   (last-command last-command)
 	   (completion-list (mapcar (function cadr) vm-imap-account-alist)))
        (list (completing-read 
-	      "IMAP account: " completion-list nil t
-	      (if vm-last-visit-imap-account		; initial-input
+	      ;; prompt
+	      "IMAP account: " 
+	      ;; collection
+	      completion-list 
+	      ;; predicate, require-match
+	      nil t
+	      ;; initial-input
+	      (if vm-last-visit-imap-account		
 		  (format "%s" vm-last-visit-imap-account)
 		"")
 	      )

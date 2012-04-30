@@ -282,9 +282,13 @@ window configurations."
 	 (error "Configurable windows not enabled.  Set vm-window-configuration-file to enable."))
      (list
       (intern
-       (completing-read "Name this window configuration: "
-			vm-supported-window-configurations
-			'identity t)))))
+       (completing-read 
+	;; prompt
+	"Name this window configuration: "
+	;; collection
+	vm-supported-window-configurations
+	;; predicate, require-match
+	'identity t)))))
   (if (null vm-window-configuration-file)
       (error "Configurable windows not enabled.  Set vm-window-configuration-file to enable."))
   (let (map p)
@@ -335,12 +339,16 @@ The action will be read from the minibuffer."
 	 (error "Configurable windows not enabled.  Set vm-window-configuration-file to enable."))
      (list
       (intern
-       (completing-read "Delete window configuration: "
-			(mapcar (function
-				 (lambda (x)
-				   (list (symbol-name (car x)))))
-				vm-window-configurations)
-			'identity t)))))
+       (completing-read 
+	;; prompt
+	"Delete window configuration: "
+	;; collection
+	(mapcar (function
+		 (lambda (x)
+		   (list (symbol-name (car x)))))
+		vm-window-configurations)
+	;; predicate, require-match
+	'identity t)))))
   (if (null vm-window-configuration-file)
       (error "Configurable windows not enabled.  Set vm-window-configuration-file to enable."))
   (let (p)
@@ -363,12 +371,16 @@ from the minibuffer."
 	 (this-command this-command))
      (list
       (intern
-       (completing-read "Apply window configuration: "
-			(mapcar (function
-				 (lambda (x)
-				   (list (symbol-name (car x)))))
-				vm-window-configurations)
-			'identity t)))))
+       (completing-read 
+	;; prompt
+	"Apply window configuration: "
+	;; collection
+	(mapcar (function
+		 (lambda (x)
+		   (list (symbol-name (car x)))))
+		vm-window-configurations)
+	;; predicate, require-match
+	'identity t)))))
   (vm-set-window-configuration tag))
 
 (defun vm-window-help ()

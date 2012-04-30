@@ -420,11 +420,15 @@ buffer containing the original message.")
   "Set vm-serial TOKEN to NEWVALUE with DOC.
 You may remove a token by specifying just the TOKEN as argument."
   (interactive
-   (let* ((token (completing-read "Token: "
-                                (vm-serial-get-completing-list
-                                 vm-serial-token-alist)
-                                nil nil nil
-                                vm-serial-token-history))
+   (let* ((token (completing-read
+		  ;; prompt
+		  "Token: "
+		  ;; collection
+		  (vm-serial-get-completing-list vm-serial-token-alist)
+		  ;; predicate, require-match, initial-input
+		  nil nil nil
+		  ;; hist
+		  vm-serial-token-history))
           (value (read-expression
                   "Value: "
                   (format "%S" (cdr (assoc token vm-serial-token-alist))))))
@@ -450,11 +454,15 @@ Is a list of (TOKEN NEWVALUE DOC) elements"
 
 (defun vm-serial-get-token (&optional token)
   "Return value of vm-serial TOKEN."
-  (interactive (list (completing-read "Token: "
-                                      (vm-serial-get-completing-list
-                                       vm-serial-token-alist)
-                                      nil nil nil
-                                      vm-serial-token-history)))
+  (interactive (list (completing-read 
+		      ;; prompt
+		      "Token: "
+		      ;; collection
+		      (vm-serial-get-completing-list vm-serial-token-alist)
+		      ;; predicate, require-mtach, initial
+		      nil nil nil
+		      ;; hist
+		      vm-serial-token-history)))
   (let ((value (assoc token vm-serial-token-alist)))
     (if value
         (cadr value)
@@ -607,13 +615,15 @@ me."
           (setq mail nil)
         (setq no-expand (if (= mail 16) '(t))
               mail (completing-read
+		    ;; prompt
                     "Mail: "
-                    (vm-serial-get-completing-list
-                     vm-serial-mails-alist)
-                    nil
-                    t;; exact match
-                    (cons (vm-serial-find-default-mail)
-                          0)
+		    ;; collection
+                    (vm-serial-get-completing-list vm-serial-mails-alist)
+		    ;; predicate, require-match
+                    nil t
+		    ;; initial-input
+                    (cons (vm-serial-find-default-mail) 0)
+		    ;; hist
                     vm-serial-mail-history)
               vm-serial-yank-mail-choice mail)))
 
@@ -723,17 +733,19 @@ a warning."
   "Reads a valid token, inserts it at point and expands it."
   (interactive (list
                 (completing-read
+		 ;; prompt
                  (format "Token%s: "
                          (if vm-serial-insert-token-history
                              (concat " (default: "
                                      (car vm-serial-insert-token-history)
                                      ")")
                            ""))
+		 ;; collection
                  (mapcar (lambda (tok) (list (car tok)))
                          vm-serial-token-alist)
-                 nil
-                 t
-                 nil
+		 ;; predicate, require-match, initial-input
+                 nil t nil
+		 ;; hist
                  'vm-serial-insert-token-history)))
   (setq vm-serial-insert-token-history
         (delete "" vm-serial-insert-token-history))

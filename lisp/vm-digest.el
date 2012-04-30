@@ -627,11 +627,13 @@ burst."
     (let ((type nil)
 	  (this-command this-command)
 	  (last-command last-command))
-      (setq type (completing-read (format "Digest type: (default %s) "
-					  vm-digest-burst-type)
-				  (append vm-digest-type-alist
-					  (list '("guess")))
-				  'identity nil))
+      (setq type (completing-read 
+		  ;; prompt
+		  (format "Digest type: (default %s) " vm-digest-burst-type)
+		  ;; collection
+		  (append vm-digest-type-alist (list '("guess")))
+		  ;; predicate, require-match
+		  'identity nil))
       (if (string= type "")
 	  vm-digest-burst-type
 	type ))))
@@ -736,11 +738,13 @@ burst."
     (let ((type nil)
 	  (this-command this-command)
 	  (last-command last-command))
-      (setq type (completing-read (format "Digest type: (default %s) "
-					  vm-digest-burst-type)
-				  (append vm-digest-type-alist
-					  (list '("guess")))
-				  'identity nil))
+      (setq type (completing-read
+		  ;; prompt
+		  (format "Digest type: (default %s) " vm-digest-burst-type)
+		  ;; collection
+		  (append vm-digest-type-alist (list '("guess")))
+		  ;; predicate, require-match
+		  'identity nil))
       (if (string= type "")
 	  vm-digest-burst-type
 	type ))))

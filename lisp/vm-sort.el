@@ -844,14 +844,19 @@ that, if P1 and P2 are the oldest different ancestors of M1 and M2, then
   (if (null vm-sort-compare-header)
       (setq vm-sort-compare-header
             (completing-read
+	     ;; prompt
              (if (car vm-sort-compare-header-history)
                  (format "Sort hy header (%s): "
                          (car vm-sort-compare-header-history))
                "Sort hy header: ")
+	     ;; collection
              (mapcar (lambda (h) (list h))
                      (vm-get-headers-of m2 (vm-get-headers-of m1)))
+	     ;; predicate, require-match, initial-input
              nil nil nil
+	     ;; hist
              'vm-sort-compare-header-history
+	     ;; default
              (car vm-sort-compare-header-history)))
     (string< (vm-get-header-contents m1 vm-sort-compare-header)
              (vm-get-header-contents m2 vm-sort-compare-header))))
