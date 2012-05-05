@@ -615,6 +615,13 @@ variable."
   :group 'vm-pop
   :type '(choice (const nil) directory))
 
+(defcustom vm-pop-server-timeout nil
+  "*Number of seconds to wait for output from the POP server before
+timing out.  It can be set to nil to never time out."
+  :group 'vm-pop
+  :type '(choice (const :tag "Never" nil) 
+		 (integer :tag "Seconds")))
+
 (defcustom vm-imap-max-message-size nil
   "*The largest message size of IMAP messages that VM should retrieve
 automatically.  
@@ -6303,7 +6310,9 @@ folder.  (Not in use.)")
   "The message presentation buffer for the current folder.")
 (make-variable-buffer-local 'vm-presentation-buffer-handle)
 (defvar vm-mime-decoded nil
-  "The MIME decoding state of the current folder.")
+  "The MIME decoding state of the current folder."
+  ;; What are the decoding states? nil, 'decoded or 'buttons? - USR, 2012-05-04
+  )
 (make-variable-buffer-local 'vm-mime-decoded)
 (defvar vm-summary-buffer nil
   "The summary buffer for the current folder.")

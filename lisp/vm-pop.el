@@ -540,29 +540,38 @@ created."
 		    " session " (current-time-string) "\n")
 	    (insert (format "connecting to %s:%s\n" host port))
 	    ;; open the connection to the server
-	    (cond (use-ssl
-		   (if (null vm-stunnel-program)
-		       (setq process 
-			     (open-network-stream session-name
-						  pop-buffer
-						  host port
-						  :type 'tls))
-		     (vm-setup-stunnel-random-data-if-needed)
-		     (setq process
-			   (apply 'start-process session-name pop-buffer
-				  vm-stunnel-program
-				  (nconc (vm-stunnel-configuration-args host
-									port)
-					 vm-stunnel-program-switches)))))
-		  (use-ssh
-		   (setq process (open-network-stream
-				  session-name pop-buffer
-				  "127.0.0.1"
-				  (vm-setup-ssh-tunnel host port))))
-		  (t
-		   (setq process (open-network-stream session-name
-						      pop-buffer
-						      host port))))
+	    (condition-case err
+		(with-timeout 
+		    ((or vm-pop-server-timeout 1000)
+		     (error (format "Timed out opening connection to %s"
+				    host)))
+		  (cond (use-ssl
+			 (if (null vm-stunnel-program)
+			     (setq process 
+				   (open-network-stream session-name
+							pop-buffer
+							host port
+							:type 'tls))
+			   (vm-setup-stunnel-random-data-if-needed)
+			   (setq process
+				 (apply 'start-process session-name pop-buffer
+					vm-stunnel-program
+					(nconc (vm-stunnel-configuration-args host
+									      port)
+					       vm-stunnel-program-switches)))))
+			(use-ssh
+			 (setq process (open-network-stream
+					session-name pop-buffer
+					"127.0.0.1"
+					(vm-setup-ssh-tunnel host port))))
+			(t
+			 (setq process (open-network-stream session-name
+							    pop-buffer
+							    host port)))))
+	      (error	
+	       (vm-warn 0 1 "%s" (error-message-string err))
+	       (setq shutdown t)
+	       (throw 'end-of-session nil)))
 	    (and (null process) (throw 'end-of-session nil))
 	    (setq shutdown t)
 	    (setq vm-pop-read-point (point))
@@ -603,7 +612,7 @@ created."
 			 timestamp (car timestamp))
 		   (when (null timestamp)
 		     (goto-char (point-max))
-     (insert-before-markers "<<< ooops, no timestamp found in greeting! >>>\n")
+    (insert-before-markers "<<< ooops, no timestamp found in greeting! >>>\n")
 		     (vm-warn 0 0 "Server of %s does not support APOP" popdrop)
 		     ;; don't sleep unless we're running synchronously
 		     (if vm-pop-ok-to-ask

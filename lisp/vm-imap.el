@@ -1235,30 +1235,34 @@ nil if the session could not be created."
 	      (insert (format "-- connecting to %s:%s\r\n" host port))
 	      ;; open the connection to the server
 	      (condition-case err
-		  (cond 
-		   (use-ssl
-		    (if (null vm-stunnel-program)
-			(setq process 
-			      (open-network-stream session-name
-						   imap-buffer
-						   host port
-						   :type 'tls))
-		      (vm-setup-stunnel-random-data-if-needed)
-		      (setq process
-			    (apply 'start-process session-name imap-buffer
-				   vm-stunnel-program
-				   (nconc (vm-stunnel-configuration-args host
-									 port)
-					  vm-stunnel-program-switches)))))
-		   (use-ssh
-		    (setq process (open-network-stream
-				   session-name imap-buffer
-				   "127.0.0.1"
-				   (vm-setup-ssh-tunnel host port))))
-		   (t
-		    (setq process (open-network-stream session-name
-						       imap-buffer
-						       host port))))
+		  (with-timeout 
+		      ((or vm-imap-server-timeout 1000)
+		       (error (format "Timed out opening connection to %s"
+				      host)))
+		    (cond 
+		     (use-ssl
+		      (if (null vm-stunnel-program)
+			  (setq process 
+				(open-network-stream session-name
+						     imap-buffer
+						     host port
+						     :type 'tls))
+			(vm-setup-stunnel-random-data-if-needed)
+			(setq process
+			      (apply 'start-process session-name imap-buffer
+				     vm-stunnel-program
+				     (nconc (vm-stunnel-configuration-args host
+									   port)
+					    vm-stunnel-program-switches)))))
+		     (use-ssh
+		      (setq process (open-network-stream
+				     session-name imap-buffer
+				     "127.0.0.1"
+				     (vm-setup-ssh-tunnel host port))))
+		     (t
+		      (setq process (open-network-stream session-name
+							 imap-buffer
+							 host port)))))
 		(error
 		 (vm-warn 0 1 "%s" (error-message-string err))
 		 (setq shutdown t)

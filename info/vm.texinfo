@@ -6359,7 +6359,7 @@ function is expected to subsume all of it.
 @vindex vm-mail-send-hook
 List of hook functions to call just before sending a message.
 The hooks are run after confirming that you want to send the
-message (see @code{vm-confirm-mail-send} but before @acronym{MIME} encoding
+message (see @code{vm-confirm-mail-send}) but before @acronym{MIME} encoding
 and FCC processing.
 
 @item mail-yank-hooks
