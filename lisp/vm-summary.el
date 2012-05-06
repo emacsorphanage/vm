@@ -1811,12 +1811,16 @@ Call this function if you made changes to `vm-summary-format'."
     ;; Erase threading information
     (setq vm-thread-obarray 'bonk
 	  vm-thread-subject-obarray 'bonk)
+    ;; Ask for messages to be renumbered
+    (vm-set-numbering-redo-start-point t)
+    (vm-set-numbering-redo-end-point t)
     ;; Generate fresh summary data and stuff it
 ;;     (vm-inform 7 "%s: Stuffing cached data..." (buffer-name))
 ;;     (vm-stuff-folder-data nil)
 ;;     (vm-inform 7 "%s: Stuffing cached data... done" (buffer-name))
 ;;     (set-buffer-modified-p t)
     ;; Regenerate the summary
+    (vm-sort-messages (or vm-ml-sort-keys "activity"))
     (vm-inform 5 "%s: Recreating summary..." (buffer-name))
     (vm-update-summary-and-mode-line)
     (unless vm-summary-debug

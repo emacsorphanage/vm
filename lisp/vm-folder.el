@@ -292,9 +292,11 @@ end of vm-message-list.
 Otherwise the variables' values should be conses in vm-message-list
 or nil."
   (when vm-numbering-redo-start-point
+    ;; vm-number-messages expects nil for defaults, not t!
     (vm-number-messages (if (consp vm-numbering-redo-start-point)
 			    vm-numbering-redo-start-point)
-			vm-numbering-redo-end-point)
+			(if (consp vm-numbering-redo-end-point)
+			    vm-numbering-redo-end-point))
     (setq vm-numbering-redo-start-point nil
 	  vm-numbering-redo-end-point nil)))
 

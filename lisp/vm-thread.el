@@ -675,7 +675,7 @@ being initialized."
 		((eq (vm-th-parent-of id-sym) parent-sym)
 		 ;; could be a duplicate copy of a message
 		 (unless initializing
-		   (vm-th-clear-subtree id-sym))
+		   (vm-th-clear-cached-data id-sym parent-sym))
 		 (when schedule-reindents
 		   (vm-thread-mark-for-summary-update
 		    (vm-th-messages-of parent-sym))))
@@ -744,6 +744,13 @@ message with ID-SYM and all its descendants."
   ;; requires: BASIC /\ LINKS (descendants(id-sym))
   ;; ensures: LIST0 /\ INDENTATION0 (descendants(id-sym))
   (mapc (lambda (d)
+	  ;; The reference root and subject might have changed.  Clear
+	  ;; away the old data.
+	  ;; This is not working yet.  USR, 2012-05-04
+	  ;; (let* ((r-sym (car (vm-thread-list-of d)))
+	  ;; 	 (s-sym (and r-sym (vm-ts-subject-symbol r-sym))))
+	  ;;   (when (and r-sym (boundp s-sym))
+	  ;;     (vm-ts-clear-cached-data r-sym s-sym)))
 	  (vm-set-thread-list-of d nil)
 	  (vm-set-thread-indentation-of d nil))
 	(vm-th-messages-of id-sym))

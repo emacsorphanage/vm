@@ -6900,8 +6900,8 @@ append a space to words that complete unambiguously.")
 (defvar vm-ml-highest-message-number nil)
 (make-variable-buffer-local 'vm-ml-highest-message-number)
 (defvar vm-ml-sort-keys nil
-  "A list of sort keys using in sorting the messages in the current
-folder (internal variable).")
+  "A string containing a list of sort keys to be used for sorting
+the current folder (internal variable).")
 (make-variable-buffer-local 'vm-ml-sort-keys)
 (defvar vm-ml-labels nil)
 (make-variable-buffer-local 'vm-ml-labels)
