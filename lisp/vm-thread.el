@@ -743,14 +743,11 @@ being initialized."
 message with ID-SYM and all its descendants."
   ;; requires: BASIC /\ LINKS (descendants(id-sym))
   ;; ensures: LIST0 /\ INDENTATION0 (descendants(id-sym))
+  (when (member (symbol-name id-sym) vm-traced-message-ids)
+    (vm-thread-debug 'vm-th-clear-thread-lists (symbol-name id-sym)))
   (mapc (lambda (d)
-	  ;; The reference root and subject might have changed.  Clear
-	  ;; away the old data.
-	  ;; This is not working yet.  USR, 2012-05-04
-	  ;; (let* ((r-sym (car (vm-thread-list-of d)))
-	  ;; 	 (s-sym (and r-sym (vm-ts-subject-symbol r-sym))))
-	  ;;   (when (and r-sym (boundp s-sym))
-	  ;;     (vm-ts-clear-cached-data r-sym s-sym)))
+	  ;; This idea still needs more work.  USR, 2012-05-06
+	  ;; (vm-unthread-message-from-subject-thread d)
 	  (vm-set-thread-list-of d nil)
 	  (vm-set-thread-indentation-of d nil))
 	(vm-th-messages-of id-sym))
@@ -1116,19 +1113,29 @@ The full functionality of this function is not entirely clear.
 MESSAGE-CHANGING is non-nil, then forget information that might
 be different if the message contents changed.  The message will be
 reinserted into an appropriate thread later.       USR, 2011-03-17"
-  (let (date subject id-sym s-sym p-sym root root-sym)
+  (let ((id-sym (vm-th-thread-symbol m)))
     ;; handles for the thread and thread-subject databases
-    (setq id-sym (vm-th-thread-symbol m))
-    (setq s-sym (vm-ts-subject-symbol id-sym))
     (if (member (symbol-name id-sym) vm-traced-message-ids)
-	(vm-thread-debug 'vm-unthread-message id-sym))
-    (if (and s-sym (member (symbol-name s-sym) vm-traced-message-subjects))
 	(vm-thread-debug 'vm-unthread-message id-sym))
     ;; mark the subtree for summary update before we change it
     (vm-thread-mark-for-summary-update (list m))
     ;; discard cached thread properties of descendants and ancestors
     (vm-th-clear-cached-data id-sym id-sym)
+
     ;; remove the message from its erstwhile thread
+    (vm-unthread-message-from-reference-thread m message-changing)
+
+    ;; remove the message from its erstwhile subject thread
+    (vm-unthread-message-from-subject-thread m)
+    )
+  ;; This doesn't work yet
+  ;; (if vm-thread-debug
+  ;;     (vm-check-thread-integrity))
+  )
+
+(defun vm-unthread-message-from-reference-thread (m message-changing)
+  (let ((id-sym (vm-th-thread-symbol m))
+	date subject p-sym)
     ;; -------------- atomic block -------------------------------
     (let ((inhibit-quit t))
       (when (boundp id-sym)
@@ -1148,7 +1155,22 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 	    (vm-th-delete-child p-sym id-sym))
 	  (vm-th-set-parent-of id-sym nil))))
     ;;-------------- end atomic block ------------------------------
+    ))
 
+(defun vm-unthread-message-from-subject-thread (m)
+  "Remove the message M from its subject thread, assuming that it has
+been already removed from its symbol node."
+  ;; The following functionality has not been implemented
+  ;; If the optional argument ALL is non-nil, remove the entire node
+  ;; from the subject thread, i.e., all the messages with the same id
+  ;; would be removed simultaneously.
+  (let* ((id-sym (vm-th-thread-symbol m))
+	 (s-sym (vm-ts-subject-symbol id-sym))
+	root-sym)
+    (if (member (symbol-name id-sym) vm-traced-message-ids)
+	(vm-thread-debug 'vm-unthread-message-from-subject-thread id-sym))
+    (if (and s-sym (member (symbol-name s-sym) vm-traced-message-subjects))
+	(vm-thread-debug 'vm-unthread-message-from-subject-thread s-sym))
     ;; remove the message from its erstwhile subject thread
     (when (and s-sym (boundp s-sym))
       (if (eq (vm-ts-root-of s-sym) id-sym)
@@ -1158,12 +1180,12 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 	   ;; duplicate copy present, so keep the root id-sym.
 	   ;; FIXME the thread-subtree of the duplicate copy has to be
 	   ;; cleared somehow.
-	   ((vm-th-message-of id-sym)	
-	      (vm-ts-set-messages-of
+	   ((vm-th-message-of id-sym)
+	    (vm-ts-set-messages-of
 	       s-sym (remq m (vm-ts-messages-of s-sym))))
 	   ;; subject thread becomes empty
 	   ((null (remq m (vm-ts-messages-of s-sym)))
-	      (makunbound s-sym))
+	    (makunbound s-sym))
 	   (t
 	    (let ((p (remq m (vm-ts-messages-of s-sym)))
 		  msg date children
@@ -1207,17 +1229,18 @@ reinserted into an appropriate thread later.       USR, 2011-03-17"
 		  )))))
 	;; )
 	;; handle a non-root of subject thread
+	;; Assuming that the message has been already removed from its
+	;; symbol, we remove the symbol if there are no further
+	;; messages for it.  In all cases, we remove the message
+	;; itself from the cached message collection of the subject.
 	(unless (vm-th-message-of id-sym)
 	  (vm-ts-set-members-of 
 	   s-sym (append (vm-th-visible-children-of id-sym)
 			 (remq id-sym (vm-ts-members-of s-sym)))))
 	(vm-ts-set-messages-of 
 	 s-sym (remq m (vm-ts-messages-of s-sym)))
-	)))
-  ;; This doesn't work yet
-  ;; (if vm-thread-debug
-  ;;     (vm-check-thread-integrity))
-  )
+	))))
+
 
 ;; This function is still under development.  USR, 2011-04-04
 

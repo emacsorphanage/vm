@@ -1,0 +1,79 @@
+Entity-relationship model for the threads database
+--------------------------------------------------
+
+The basic idea for modelling the threads database is to 
+
+1. model a barebones data structure using ER diagrams, 
+
+2. formalize the constraints between the concepts and then 
+
+3. to add other *derived* attributes and relationships.
+
+Here is a start.
+
+Basic data structure
+--------------------
+
+3 entities: message, mid, subject
+
+    message(date)
+    mid(id)
+    subject(sub)
+
+relationships:
+
+    bearsID:   message [1] <--> [0..n] mid
+    canonical: message [1] <--> [0..1] mid
+    parent:    mid [0..1]  <--> [0..n] mid
+    member:    mid [0..1]  <--> [1..n] subject
+    sub-root:  mid [0..1]  <--> [1] subject
+
+defined concepts:
+
+    empty(id) <=> NOT[EXISTS m. bearsID(m, id)]
+    nonempty(id) <=> NOT[empty(id)]
+    ancestor(id1, id2) <=> parent+(id1, id2)
+    thread-root(id) <=> nonempty(id) AND
+    		    	FORALL id'. ancestor(id', id) => empty(id')
+    older(id1, id2) <=> canonical(m1, id1) AND canonical(m2, id2) AND
+			m1.date <= m2.date
+
+dependencies:
+
+    bearsID --> empty --> thread-root
+    parent --> ancestor --> thread-root
+    message --> empty --> thread-root
+    canonical --> older
+
+constraints (axioms):
+
+[C1] canonical(m, mid) => bearsID(m, mid)
+[C2] member(id, s) => thread-root(id)
+[C3] sub-root(id, s) <=> member(id, s) AND 
+     		     	 FORALL id'. member(id', s) => older(id, id')
+
+dependencies:
+
+    bearsID -->[C1] canonical
+    thread-root -->[C2] member -->[C3] sub-root
+    older -->[C3] sub-root
+
+
+
+
+
+
+Algorithm for inserting a new message in reference thread
+---------------------------------------------------------
+
+insert(m) {
+   m-sym := new-thread-symbol(m);
+   if message-list(m-sym) != empty then
+       message-list(m-sym) += m;
+   else
+       message-list(m-sym) = {m};
+
+   if parent(m) != nil then {
+       p := parent(m);
+       
+   ... unfinished

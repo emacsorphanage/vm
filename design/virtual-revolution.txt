@@ -1,0 +1,33 @@
+The "selectors" used in defining virtual folders are basically
+
+* properties for identifying some group of messages.
+
+They have nothing to do with virtual folders, except that searching is the
+most compelling reason to use them.  So, almost all mail clients end up
+providing some way to specify such selectors, perhaps through dialogue
+boxes.
+
+Whenever you want to specify properties for groups of messages in order to
+do something with them, you can use selectors.
+
+- Searching is obvious.  (Leads to virtual folders.)
+
+- deletion (used in vm-avirtual)
+
+- saving (used in vm-avirtual also)
+
+- high-lighting (used in vm-summary-faces)
+
+- hiding (also used in vm-summary-faces)
+
+- movement (e.g., M-n, M-p)
+
+- filtering/archiving/expiration
+
+- spam-selection and deletion
+
+- scoring?
+
+
+
+

@@ -3878,8 +3878,8 @@ displayed by indentation in the folder summary."
   "*Non-nil value causes VM to use the Subject header to thread messages.
 Messages with the same subject will be grouped together.
 
-A nil value means VM will disregard the Subject header when
-threading messages."
+A nil value means VM will disregard the Subject header when threading
+messages."
   :group 'vm-summary
   :type 'boolean)
 
