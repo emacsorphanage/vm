@@ -3963,9 +3963,9 @@ is being invoked interactively."
 (defvar vm-imap-account-folder-cache nil
   "Caches the list of all folders on an IMAP account.")
 
-(defun vm-imap-folder-completion-list (string predicate flag)
+(defun vm-imap-folder-completion-list (string predicate method)
   "Find completions for STRING as an IMAP folder name, satisfying
-  PREDICATE.  The third argument FLAG is one of:
+  PREDICATE.  The third argument METHOD is one of:
 
 `nil' - try-completion, returns string if there are mult possibilities,
 `t' - all-completions, returns a list of all completions,
@@ -3981,17 +3981,16 @@ See Info node `(elisp)Programmed Completion'."
 	completion-list folder account spec process mailbox-list)
 
     ;; handle SPC completion (remove last " " from string)
-    (and (> (length string) 0)
-         (string= " " (substring string -1))
-         (setq string (substring string 0 -1)))
+    (when (and (> (length string) 0)
+	       (string= " " (substring string -1)))
+      (setq string (substring string 0 -1)))
 
-    ;; check for account 
+    ;; check if account-name is present
     (setq folder (try-completion (or string "") account-list predicate))
-    (if (stringp folder)
-	(setq account (car (vm-parse folder "\\([^:]+\\):?" 1)))
-      (setq account (car (vm-parse string "\\([^:]+\\):?" 1))))
+    (setq account (car (vm-parse (if (stringp folder) folder string)
+				 "\\([^:]+\\):" 1)))
     
-    ;; get folders of this account
+    ;; if yes, get folders of the account into completion-list
     (when account
       (setq mailbox-list (cdr (assoc account vm-imap-account-folder-cache)))
       (setq spec (vm-imap-spec-for-account account))
@@ -4012,18 +4011,20 @@ See Info node `(elisp)Programmed Completion'."
 		    mailbox-list))
       (setq folder (try-completion (or string "") completion-list predicate)))
     
-    (setq folder (or folder string))
-    (if (eq folder t)
-	(setq folder string))
-    (cond ((null flag)
+    ;; process the requested method
+    (setq folder (if (eq folder t)
+		     string
+		   (or folder string)))
+
+    (cond ((null method)		; try-completion
 	   folder)
-	  ((eq t flag)
+	  ((eq method t)		; all-completions
 	   (mapcar 'car
 		   (vm-delete (lambda (c)
 				(string-prefix-p folder (car c)))
 			      (or completion-list account-list) t))
 	   )
-	  ((eq 'lambda flag)
+	  ((eq method 'lambda)		; test-completion
 	   (try-completion folder completion-list predicate)))))
 
 ;;;###autoload
