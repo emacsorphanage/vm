@@ -7429,7 +7429,7 @@ folder created from FOLDER using SELECTOR with ARG."
 
 (defun vm-virtual-application-folder-name (folder selector)
   "Return a virtual folder name for applying a virtual SELECTOR to FOLDER."
-  (format "(%s/%s)" (buffer-name) (car vfolder)))
+  (format "(%s/%s)" folder selector))
 
 (defcustom vm-disable-modes-before-encoding 
   '(auto-fill-mode font-lock-mode ispell-minor-mode flyspell-mode

@@ -3771,7 +3771,7 @@ otherwise.
 			      (cadr error-data))
 		     nil
 		     ;; Continue with whatever messages have been read
-x		     )
+		     )
 		    (quit
 		     (delete-region old-eob (point-max))
 		     (error (format "Quit received during retrieval from %s"
