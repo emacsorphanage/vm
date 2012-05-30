@@ -7417,6 +7417,20 @@ the command `vm-summary-faces-mode' should be used."
   :group 'vm-faces
   :type 'boolean)
 
+;; The following functions are customizable by the users.
+;; They might be turned into variables at some future date.  USR, 2012-05-23
+
+(defun vm-virtual-folder-name (folder selector arg)
+  "Returns an appropriate folder name for an interactive virtual
+folder created from FOLDER using SELECTOR with ARG."
+  (if arg
+      (format "(%s %s %s)" folder selector arg)
+    (format "(%s %s)" folder selector)))
+
+(defun vm-virtual-application-folder-name (folder selector)
+  "Return a virtual folder name for applying a virtual SELECTOR to FOLDER."
+  (format "(%s/%s)" (buffer-name) (car vfolder)))
+
 (defcustom vm-disable-modes-before-encoding 
   '(auto-fill-mode font-lock-mode ispell-minor-mode flyspell-mode
                    abbrev-mode adaptive-fill-mode)

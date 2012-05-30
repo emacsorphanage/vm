@@ -3309,51 +3309,57 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	      (list this-command 'quitting))
   (let ((virtual (eq major-mode 'vm-virtual-mode))
 	(process nil))
-    (cond
-     ((and (not virtual) no-change (buffer-modified-p)
-	   (or buffer-file-name buffer-offer-save)
-	   (not (zerop vm-messages-not-on-disk))
-	   ;; Folder may have been saved with C-x C-s and attributes may have
-	   ;; been changed after that; in that case vm-messages-not-on-disk
-	   ;; would not have been zeroed.  However, all modification flag
-	   ;; undos are cleared if VM actually modifies the folder buffer
-	   ;; (as opposed to the folder's attributes), so this can be used
-	   ;; to verify that there are indeed unsaved messages.
-	   (null (assq 'vm-set-buffer-modified-p vm-undo-record-list))
-	   (not
-	    (y-or-n-p
-	     (format
-	      "%s: %d message%s have not been saved to disk, quit anyway? "
-	      (buffer-name)
-	      vm-messages-not-on-disk
-	      (if (= 1 vm-messages-not-on-disk) "" "s")))))
-      (error "Aborted"))
-     ((and (not virtual)
-	   no-change
-	   (or buffer-file-name buffer-offer-save)
-	   (buffer-modified-p)
-	   vm-confirm-quit
-	   (not (y-or-n-p 
-		 (format "%s: There are unsaved changes, quit anyway?  "
-			 (buffer-name)))))
-      (error "Aborted"))
-     ((and (eq vm-confirm-quit t)
-	   (not (y-or-n-p 
-		 (format "%s: Do you really want to quit? "
-			 (buffer-name)))))
-      (error "Aborted")))
 
+    ;; 1. Save folder if necessary
+    (when (not virtual)
+      (cond
+       ((and no-change (buffer-modified-p)
+	     (or buffer-file-name buffer-offer-save)
+	     (not (zerop vm-messages-not-on-disk))
+	     ;; Folder may have been saved with C-x C-s and attributes may have
+	     ;; been changed after that; in that case vm-messages-not-on-disk
+	     ;; would not have been zeroed.  However, all modification flag
+	     ;; undos are cleared if VM actually modifies the folder buffer
+	     ;; (as opposed to the folder's attributes), so this can be used
+	     ;; to verify that there are indeed unsaved messages.
+	     (null (assq 'vm-set-buffer-modified-p vm-undo-record-list))
+	     (not
+	      (y-or-n-p
+	       (format
+		"%s: %d message%s have not been saved to disk, quit anyway? "
+		(buffer-name)
+		vm-messages-not-on-disk
+		(if (= 1 vm-messages-not-on-disk) "" "s")))))
+	(error "Aborted"))
+       ((and no-change
+	     (or buffer-file-name buffer-offer-save)
+	     (buffer-modified-p)
+	     vm-confirm-quit
+	     (not (y-or-n-p 
+		   (format "%s: There are unsaved changes, quit anyway?  "
+			   (buffer-name)))))
+	(error "Aborted"))
+       ((and (eq vm-confirm-quit t)
+	     (not (y-or-n-p 
+		   (format "%s: Do you really want to quit? "
+			   (buffer-name)))))
+	(error "Aborted"))))
+
+    ;; 2. Run vm-quit-hook
     (save-excursion (run-hooks 'vm-quit-hook))
 
-    (when (and vm-expunge-before-quit
-	       (not no-expunge)
-	       (not no-change)
-	       (buffer-modified-p))
-      (vm-expunge-folder))
+    ;; 3. Expunge folder if necessary
+    (when vm-expunge-before-quit
+      (when (and (not virtual)
+		 (not no-expunge)
+		 (not no-change)
+		 (buffer-modified-p))
+	(vm-expunge-folder)))
 
     (vm-garbage-collect-message)
     (vm-garbage-collect-folder)
 
+    ;; 4. Save folder if necessary
     (unless (or no-change virtual)
       ;; this could take a while, so give the user some feedback
       (vm-inform 5 "%s: Quitting..." (buffer-name))
@@ -3365,8 +3371,14 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	       (not virtual))
       (vm-save-folder))
 
+    ;; 5. Handle virtual folders
+    ;;    If this is a virtual folder with component folders, quit the
+    ;;    component folders.
+    ;;    If there are virtual folders dependent on this one, clear away
+    ;;    their virtual copies.
     (vm-virtual-quit no-expunge no-change)
 
+    ;; 6. Kill the folder along with its buffers and processes
     (cond ((and (eq vm-folder-access-method 'pop)
 		(setq process (vm-folder-pop-process)))
 	   (vm-pop-end-session process))
@@ -3375,6 +3387,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 	   (vm-imap-end-session process))
 	  )
     (message "")			; why this?  USR, 2010-05-03
+
     (let ((summary-buffer vm-summary-buffer)
 	  (pres-buffer vm-presentation-buffer-handle)
 	  (mail-buffer (current-buffer)))

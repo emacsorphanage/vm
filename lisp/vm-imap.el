@@ -3763,14 +3763,15 @@ otherwise.
 			(vm-imap-read-ok-response process)
 			t)
 		    (vm-imap-normal-error ; handler
-		     (vm-warn 0 2 "IMAP error: %s" (cadr error-data))
+		     (vm-warn 0 2 "IMAP message unavailable: %s" 
+			      (cadr error-data))
 		     nil)
 		    (vm-imap-protocol-error ; handler
-		     (vm-warn 0 2 "Retrieval from %s signaled: %s" folder
-			      error-data)
+		     (vm-warn 0 2 "IMAP message unavailable: %s"
+			      (cadr error-data))
 		     nil
 		     ;; Continue with whatever messages have been read
-		     )
+x		     )
 		    (quit
 		     (delete-region old-eob (point-max))
 		     (error (format "Quit received during retrieval from %s"

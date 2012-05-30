@@ -325,9 +325,7 @@ Prefix arg means the new virtual folder should be visited read only."
 	clause
 	)
     (unless name
-      (if arg
-	  (setq name (format "%s %s %s" (buffer-name) selector arg))
-	(setq name (format "%s %s" (buffer-name) selector))))
+      (setq name (vm-virtual-folder-name (buffer-name) selector arg)))
     (setq clause (if arg (list selector arg) (list selector)))
     (if use-marks
 	(setq clause (list 'and '(marked) clause)))
@@ -370,9 +368,7 @@ Prefix arg means the new virtual folder should be visited read only."
 	clause
 	)
     (unless name
-      (if arg
-	  (setq name (format "%s %s %s" (buffer-name) selector arg))
-	(setq name (format "%s %s" (buffer-name) selector))))
+      (setq name (vm-virtual-folder-name (buffer-name) selector arg)))
     (setq clause 
 	  (if arg 
 	      (list 'thread (list selector arg))
@@ -422,7 +418,8 @@ Prefix arg means the new virtual folder should be visited read only."
 		  (list (list 'and '(marked)
 			      (nconc (list 'or) (cdr (car clauses)))))))
       (setq clauses (cdr clauses)))
-    (setcar vfolder (format "%s/%s" (buffer-name) (car vfolder)))
+    (setcar vfolder (vm-virtual-application-folder-name
+		     (buffer-name) (car vfolder)))
     (setq vm-virtual-folder-alist (list vfolder))
     (vm-visit-virtual-folder (car vfolder) read-only))
   ;; have to do this again here because the "known virtual
@@ -449,7 +446,8 @@ the same subject as the current message."
       (setq subject (regexp-quote subject)))
     (vm-create-virtual-folder
      'sortable-subject subject nil
-     (format "%s %s %s" (buffer-name) 'subject displayed-subject) bookmark)))
+     (vm-virtual-folder-name (buffer-name) 'subject displayed-subject)
+     bookmark)))
 
 ;;;###autoload
 (defun vm-create-virtual-folder-same-author ()
@@ -469,7 +467,8 @@ same author as the current message."
       (setq author (regexp-quote author)))
     (vm-create-virtual-folder
      'author author nil
-     (format "%s %s %s" (buffer-name) 'author displayed-author) bookmark)))
+     (vm-virtual-folder-name (buffer-name) 'author displayed-author)
+     bookmark)))
 
 ;;;###autoload
 (defun vm-create-author-virtual-folder (&optional arg read-only name)
