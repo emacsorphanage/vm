@@ -5706,6 +5706,15 @@ only with a configuration file."
   :type '(choice (const :tag "None" nil)
 		 (repeat string)))
 
+(defcustom vm-stunnel-wants-configuration-file t
+  "Non-nil if stunnel version is controlled by a configuration file.
+This is needed for stunnel version 4 or later.
+Older versions of stunnel used command line arguments instead."
+  :group 'vm-helpers
+  :type '(choice (const :tag "Yes" t)
+		 (const :tag "No" nil)
+		 (const :tag "Automatically determine" 'unknown)))
+
 (defcustom vm-stunnel-program-additional-configuration-file nil
   "*Name of a configuration file to append to the config file VM creates
 when using stunnel version 4 or later.  Leave this set to nil
@@ -5797,10 +5806,6 @@ data to XBM data."
 			    (format "%s -X" vm-uncompface-program)))))
   "Non-nil if the uncompface command accepts a -X argument.
 This is only used for FSF Emacs currently.")
-
-(defvar vm-stunnel-wants-configuration-file 'unknown
-  "Non-nil if stunnel is controlled by a configuration file.
-An older stunnel version used command line arguments instead.")
 
 (defcustom vm-mail-check-recipient-format nil
   "*Non-nil value causes `vm-mail-send' to check multi-line recipient

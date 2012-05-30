@@ -28,6 +28,10 @@ VM 8.2.0b1
 
   CHANGES
 
+   * The default value of `vm-stunnel-wants-configuration-file' changed to
+     `t' because stunnel version 4 is now the default, and it needs a
+     configuration file.
+
    * New command `vm-mail-from-folder' (bound to `m' in VM).  It is like
      `vm-mail', but depends on the current folder as its parent folder and
      the current message as its parent message.  Setting the variable
