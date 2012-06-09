@@ -1025,9 +1025,9 @@ The saved messages are flagged as `filed'."
       (vm-inform 5 "%d message%s saved to %s"
 	       save-count (if (/= 1 save-count) "s" "")
 	       (or (vm-imap-folder-for-spec folder)
-		   (vm-safe-imapdrop-string folder))))
-    (vm-update-summary-and-mode-line)
-    (setq vm-last-save-imap-folder folder)
+		   (vm-safe-imapdrop-string folder)))
+      (vm-update-summary-and-mode-line)
+      (setq vm-last-save-imap-folder folder))
     ;; We call delete-message again even though the deleted-flags have
     ;; already been set, perhaps to take care of other business?
     (if (and vm-delete-after-saving (not vm-folder-read-only))
