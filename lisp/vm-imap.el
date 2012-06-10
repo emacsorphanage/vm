@@ -4222,6 +4222,12 @@ well. Returns a boolean value."
 
 (defun vm-imap-create-mailbox (process mailbox
 			       &optional dont-create-parent-directories)
+  "Create a MAILBOX using the IMAP PROCESS.  The optional argument
+DONT-CREATE-PARENT-DIRECTORIES is defunct, but it should always be `t'."
+  ;; IMAP protocol says that the parent directories will created
+  ;; automatically. 
+  ;; The defunct argument should be gotten rid of and the dead code
+  ;; should be removed.  USR, 2012-06-10
   (if (not dont-create-parent-directories)
       (let (dir sep sep-regexp i)
 	(setq sep (vm-imap-directory-separator process "")
@@ -4617,7 +4623,7 @@ folder."
 	      (error "No connection to IMAP server for IMAP-FCC"))
 	    (set-buffer (process-buffer process))
 	    (condition-case nil
-		(vm-imap-create-mailbox process mailbox)
+		(vm-imap-create-mailbox process mailbox t)
 	      (vm-imap-protocol-error 	; handler
 	       (vm-buffer-type:set 'process))) ; ignore errors
 	    ;;----------------------------------
