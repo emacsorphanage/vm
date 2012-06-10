@@ -471,7 +471,6 @@ of VM's local folders will be kept.  If you create such a directory,
 you should set the variable @code{vm-folder-directory} to point to it.
 
 @cindex spool file
-@vindex vm-spool-files
 @cindex file locking
 A @dfn{spool file} is a file where the mail transport system delivers
 messages intended for you.  On Unix systems, a program called
@@ -526,6 +525,7 @@ retrieving any new messages from the system mailbox.
 @node Spool Files, @acronym{POP} Spool Files, Local Folders, Local Folders
 @unnumberedsubsec Spool Files
 
+@vindex vm-spool-files
 Every folder, including the primary inbox, can have one or more spool
 files associated with it.  You make these associations known to VM by
 setting the variable @code{vm-spool-files}.
