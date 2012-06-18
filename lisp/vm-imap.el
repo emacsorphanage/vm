@@ -4067,7 +4067,8 @@ IMAP mailbox spec."
 	      (cadr (assoc (vm-imapdrop-sans-password-and-mailbox default)
 			   vm-imap-account-alist))
 	      default-folder (nth 3 list))
-      (setq default-account vm-last-visit-imap-account))
+      (setq default-account 
+	    (or vm-last-visit-imap-account vm-imap-default-account)))
     (setq folder-input
 	  (completing-read
 	   ;; prompt
