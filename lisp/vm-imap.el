@@ -1166,7 +1166,7 @@ Returns the process or nil if the session could not be created."
 	  auth (nth 4 source-list)
 	  user (nth 5 source-list)
 	  pass (nth 6 source-list)
-	  source-nopwd-nombox (vm-imapdrop-sans-personal-info source))
+	  source-nopwd-nombox (vm-imapdrop-sans-password-and-mailbox source))
     (cond ((equal auth "preauth") t)
 	  ((equal protocol "imap-ssl")
 	   (setq use-ssl t
