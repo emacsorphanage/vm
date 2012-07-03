@@ -1360,6 +1360,13 @@ Returns the process or nil if the session could not be created."
 	  (vm-imap-make-session source interactive purpose t))))))
 
 (defun vm-imap-get-password (folder source user host port interactive purpose)
+  "Get the password for the IMAP FOLDER at the server SOURCE.  The
+additional arguments USER, HOST and PORT are also passed in for
+convenience.  The password is obtained from VM's internal password
+cache, the auth-source package or by interactively querying the user.  
+The argument INTERACTIVE says whether the interactive querying should
+be done.  The argument PURPOSE is a string displayed to the user in
+case of errors."
   (let ((pass (car (cdr (assoc source vm-imap-passwords))))
 	authinfo)
     (when (and (null pass)
@@ -1389,6 +1396,9 @@ Returns the process or nil if the session could not be created."
     pass))
 
 (defun vm-imap-forget-password (source host port)
+  "Forget the cached password for the IMAP account corresponding to
+SOURCE, and also for HOST at PORT.  The forgetting is done inside VM
+as well in auth-source (if it is being used)."
   (setq vm-imap-passwords
 	(vm-delete (lambda (pair)
 		     (equal (car pair) source))

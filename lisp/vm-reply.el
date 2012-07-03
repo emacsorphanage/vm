@@ -1785,7 +1785,7 @@ Binds the `vm-mail-mode-map' and hooks"
 		  nil
 		(insert "\n-- \n"))
 	      (goto-char (point-max)))))
-      (error (vm-warn 1 2 "Cound not read signature file: %s" (cdr err))))
+      (error (vm-warn 1 2 "Could not read signature file: %s" (cdr err))))
     ;; move this buffer to the head of the buffer list so window
     ;; config stuff will select it as the composition buffer.
     (vm-unbury-buffer (current-buffer))
