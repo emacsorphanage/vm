@@ -2844,14 +2844,16 @@ is not successful.                                   USR, 2011-03-25"
   (let ((charset (or (vm-mime-get-parameter layout "charset") "us-ascii")))
     (shell-command-on-region
      start (1- end)
-     (format "w3m -dump -T text/html -I %s -O %s" charset charset)
+     (format "%s -dump -T text/html -I %s -O %s" 
+	     vm-w3m-program charset charset)
      nil t)))
   
 (defun vm-mime-display-internal-lynx-text/html (start end layout)
-  (shell-command-on-region start (1- end)
-;;                           "lynx -force_html /dev/stdin" 
-			   "lynx -force_html -dump -pseudo_inlines -stdin"
-			   nil t))
+  (shell-command-on-region 
+   start (1- end)
+   ;; (concat vm-lynx-program " -force_html /dev/stdin" )
+   (concat vm-lynx-program " -force_html -dump -pseudo_inlines -stdin"
+	   nil t)))
 
 (defun vm-mime-display-internal-text/html (layout)
   "Dispatch handling of html to the actual html handler."
