@@ -212,9 +212,9 @@ Prefix argument N means scroll forward N lines."
 ;;	  nil )
       (error
        (if (or (and (< direction 0)
-		    (> (point-min) (vm-text-of (car vm-message-pointer))))
+		    (> (point) (vm-text-of (car vm-message-pointer))))
 	       (and (>= direction 0)
-		    (/= (point-max)
+		    (/= (point)
 			(vm-text-end-of (car vm-message-pointer)))))
 	   (progn
 	     (vm-widen-page)
