@@ -2903,14 +2903,16 @@ is not successful.                                   USR, 2011-03-25"
 	    (goto-char end)
 	    (insert-before-markers "z")
 	    ;; the view port (scrollbar) is sometimes messed up, try to avoid it
-	    (save-window-excursion
-	      ;; dispatch to actual handler
-	      (funcall (intern (format "vm-mime-display-internal-%s-text/html"
-				       vm-mime-text/html-handler))
-		       start end layout))
-	    ;; do clean up
-	    (goto-char end)
-	    (delete-char -1)
+	    (unwind-protect
+		(save-window-excursion
+		  ;; dispatch to actual handler
+		  (funcall (intern 
+			    (format "vm-mime-display-internal-%s-text/html"
+				    vm-mime-text/html-handler))
+			   start end layout))
+	      ;; do clean up
+	      (goto-char end)
+	      (delete-char -1))
 	    (vm-emit-mime-decoding-message
 	     "Inlining text/html by %s... done." vm-mime-text/html-handler)
 	    t)
