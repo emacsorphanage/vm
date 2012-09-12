@@ -3536,6 +3536,16 @@ The key @kbd{Z} (@code{vm-forward-message-plain}) allows you to use
 plain-text forwarding directly, without needing to alter
 @code{vm-forwarding-digest-type}.
 
+If you have previously saved any attachments in the messages being
+forwarded, those attachments are normally fetched and included in the
+forwarded messages.  You can inhibit this by setting the variable
+@code{vm-mime-forward-saved-attachments} to @code{nil}.  Messages are then
+forwarded with external references to saved attachments.  If the recipients
+have access to the file system where attachments are saved, they will still
+be able to view them.  (This may be appropriate if the attachemnts are saved
+in some shared file space, or if you wish to suppress the attachments in the
+forwarded messages.)
+
 @vindex vm-forwarded-headers
 @vindex vm-unforwarded-header-regexp
 @vindex vm-forwarded-headers-plain

@@ -3334,22 +3334,39 @@ A nil value means to use plain text forwarding."
 	  (const nil :tag "Forward in plain text")))
 
 (defcustom vm-mime-forward-local-external-bodies nil
-  "*Non-nil value means forward messages that contain
-message/external-body parts that use the `local-file' access
-method.  A nil value means copy the externally referenced objects
-into the message before forwarding.  This copying is only done
-for objects accessed with the `local-file' access method.  Objects
-referenced with other methods are not copied.
+  "*Non-nil value means that the `message/external-body' MIME
+parts are retained in messages during forwarding, as long as
+their external bodies are on the local file system.  A nil value
+means that the externally referenced objects are fetched into the
+message before forwarding.  The fetching is only done for objects
+accessed with the `local-file' access method.  Objects referenced
+with other methods are not fetched.
 
-Messages that use the mesage/external-body type contain a
-reference to an object (image, audio, etc.) instead of the object
-itself.  So instead of the data that makes up an image, there
-might be a reference to a local file that contains the image.  If
-the recipient doesn't have access to your local filesystems then
-they will not be able to use the message/external-body reference.
-That is why the default value of this variable is nil, which
-forces such referneces to be converted to objects present in the
-message itself."
+In particular, the MIME attachments that are saved to
+disk (using, for example, `vm-mime-save-all-attchments') are
+represented in messages with `message/external-body' references.
+Setting the variable to a non-nil value causes these references
+to be sent in forwarded messages.  Setting it to nil causes the
+references to be expanded out with the actual attachments."
+  :group 'vm-mime
+  :type 'boolean)
+(make-obsolete-variable 'vm-mime-forward-local-external-bodies
+			'vm-mime-forward-saved-attachments "8.2.0")
+
+(defcustom vm-mime-forward-saved-attachments 
+  (not vm-mime-forward-local-external-bodies)
+  "*Non-nil value means that any attachments saved to local files
+using, for example `vm-mime-save-all-attachments', will be
+retrieved and re-attached to forwarded messages.  
+
+Nil value means that the messages will be forwarded with external
+references to the saved attachments.  The recipients will need to
+fetch the attachments themselves if they have access to your file
+system.
+
+This replaces the variable `vm-mime-forward-local-external-bodies' in
+previous versions of VM.  If you had set that variable to `nil' then
+you should set this variable to `t'."
   :group 'vm-mime
   :type 'boolean)
 
@@ -7240,7 +7257,7 @@ that has a match.")
 actions to be taken to destroy them.")
 (make-variable-buffer-local 'vm-message-garbage-alist)
 (defvar vm-folder-garbage-alist nil
-  "An association list of files created for this message and the
+  "An association list of files created for this folder and the
 actions to be taken to destroy them.")
 (make-variable-buffer-local 'vm-folder-garbage-alist)
 (defvar vm-global-garbage-alist nil

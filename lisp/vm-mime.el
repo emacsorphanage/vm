@@ -3393,8 +3393,8 @@ emacs-w3m."
   (vm-mime-display-internal-text/plain layout t))
 
 (defun vm-mime-retrieve-external-body (layout)
-  "Fetch an external body into the current buffer.
-LAYOUT is the MIME layout struct for the message/external-body object."
+  "Retrieve a message/external-body object described by LAYOUT into the
+current buffer."
   (let ((access-method (downcase (vm-mime-get-parameter layout "access-type")))
 	(work-buffer (current-buffer)))
     (cond ((string= access-method "local-file")
@@ -6515,7 +6515,12 @@ there is no file name for this object.             USR, 2011-03-07"
   (when (vm-mail-mode-get-header-contents "MIME-Version")
     (error "Can't attach MIME object to already encoded MIME buffer."))
   (let (start end e tag-string file-name
-	(fb (list vm-mime-forward-local-external-bodies)))
+	;; Forward references to external-body parts if
+        ;; either vm-mime-forward-local-external-bodies is t
+        ;; or vm-mime-forward-saved-attachments is nil
+	;; Otherwise, expand the external-body parts
+	(fb (list (or vm-mime-forward-local-external-bodies
+		      (not vm-mime-forward-saved-attachments)))))
     (cond ((and (stringp object) (not mimed))
 	   (if (or (vm-mime-types-match "application" type)
 		   (vm-mime-types-match "model" type))

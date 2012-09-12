@@ -28,6 +28,11 @@ VM 8.2.0b1
 
   CHANGES
 
+   * New variable `vm-mime-forward-saved-attachments' controls whether saved
+     attachments are included in forwarded messages.  (This replaces the
+     former undocumented variable `vm-mime-forward-local-external-bodies'.
+     That variable is now obsolete.)
+
    * The default value of `vm-stunnel-wants-configuration-file' changed to
      `t' because stunnel version 4 is now the default, and it needs a
      configuration file.
