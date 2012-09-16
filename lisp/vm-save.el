@@ -888,7 +888,7 @@ Output, if any, is displayed.  The message is not altered."
 	  (let ((work-buffer nil))
 	    (unwind-protect
 		(progn
-		  (setq work-buffer (vm-make-work-buffer))
+		  (setq work-buffer (vm-make-multibyte-work-buffer))
 		  (set-buffer work-buffer)
 		  (vm-insert-region-from-buffer
 		   (vm-buffer-of m) (vm-vheaders-of m) (vm-text-of m))
