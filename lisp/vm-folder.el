@@ -2204,7 +2204,7 @@ FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
 	 (vm-restore-buffer-modified-p	; folder-buffer
 	  old-buffer-modified-p (current-buffer)))))))
   
-(defun vm-stuff-folder-data (&optional abort-if-input-pending quiet) 
+(defun vm-stuff-folder-data (&optional abort-if-input-pending) 
   "Stuff the soft and cached data of all the messages that have the
 stuff-flag set in the current folder.    USR 2010-04-20"
   (let ((newlist nil) mp len (n 0))
@@ -2215,7 +2215,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
       (if (vm-stuff-flag-of (car mp))
 	  (setq newlist (cons (car mp) newlist)))
       (setq mp (cdr mp)))
-    (when (and newlist (not quiet))
+    (when newlist
       (setq len (length newlist))
       (vm-inform 7 "%s: %d message%s to stuff" (buffer-name)
 		 len (if (= 1 len) "" "s")))
@@ -2225,16 +2225,14 @@ stuff-flag set in the current folder.    USR 2010-04-20"
     ;; message 3, then 234, then 10, then 500, thus causing
     ;; large chunks of memory to be copied repeatedly as
     ;; the gap moves to accomodate the insertions.
-    (if (not quiet)
-	(vm-inform 6 "%s: Ordering updates..." (buffer-name)))
+    (vm-inform 7 "%s: Ordering updates..." (buffer-name))
     (let ((vm-key-functions '(vm-sort-compare-physical-order-r)))
       (setq mp (sort newlist 'vm-sort-compare-xxxxxx)))
     (while (and mp (or (not abort-if-input-pending) (not (input-pending-p))))
       (vm-stuff-message-data (car mp))
       (setq n (1+ n))
-      (if (not quiet)
-	  (vm-inform 6 "%s: Stuffing %d%% complete..." (buffer-name)
-		     (* (/ (+ n 0.0) len) 100)))
+      (vm-inform 7 "%s: Stuffing %d%% complete..." (buffer-name)
+		     (* (/ (+ n 0.0) len) 100))
       (setq mp (cdr mp)))
     (if mp nil t)))
 
@@ -3613,7 +3611,7 @@ Giving a prefix argument overrides the variable and no expunge is done."
 		       (vm-stuff-labels)
 		       (and vm-message-order-changed
 			    (vm-stuff-message-order))
-		       (and (vm-stuff-folder-data t t)
+		       (and (vm-stuff-folder-data t)
 			    (setq vm-flushed-modification-counter
 				  vm-modification-counter)))))))
 	(setq buf-list (cdr buf-list)))
