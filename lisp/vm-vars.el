@@ -5702,7 +5702,10 @@ Set this to nil and VM will not use it."
   :type '(choice (const :tag "None" nil)
 		 file))
 
-(defcustom vm-stunnel-program "stunnel"
+(defcustom vm-stunnel-program
+  (if (and (fboundp 'gnutls-available-p) (gnutls-available-p))
+      nil
+    "stunnel")
   "*Name of program to use to run stunnel.
 This is used to make SSL connections to POP and IMAP servers that
 support SSL.  If this is set to nil, VM will attempt to use the
