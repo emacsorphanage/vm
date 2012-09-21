@@ -264,6 +264,8 @@ I was really missing this!"
 (defvar vm-virtual-check-level 0)
 
 (defun vm-vs-or (m &rest selectors)
+  "Virtual selector combinator for checking the disjunction of the
+given SELECTORS."
   (let ((case-fold-search vm-virtual-check-case-fold-search)
         (vm-virtual-check-level (+ 2 vm-virtual-check-level))
         (result nil) selector arglist function)
@@ -283,6 +285,8 @@ I was really missing this!"
     result))
 
 (defun vm-vs-and (m &rest selectors)
+  "Virtual selector combinator for checking the conjunction of the
+given SELECTORS."
   (let ((vm-virtual-check-level (+ 2 vm-virtual-check-level))
         (result t) selector arglist function)
     (while selectors
@@ -300,20 +304,22 @@ I was really missing this!"
       (setq selectors (if (null result) nil (cdr selectors))))
     result))
 
-(defun vm-vs-not (m arg)
+(defun vm-vs-not (m selector)
+  "Virtual selector combinator for checking the negation of the
+given SELECTOR."
   (let ((vm-virtual-check-level (+ 2 vm-virtual-check-level))
-        (selector (car arg))
-	(arglist (cdr arg))
+        (selector (car selector))
+	(selectorlist (cdr selector))
         result function)
     (setq function (cdr (assq selector vm-virtual-selector-function-alist)))
     (if (null function)
 	(vm-warn 0 2 "Invalid virtual selector: %s" selector)
-      (setq result (apply function m arglist))
+      (setq result (apply function m selectorlist))
       (if vm-virtual-check-diagnostics
 	  (princ (format "%snot: %s for (%S%s)\n"
 			 (make-string vm-virtual-check-level ? )
 			 (if result t nil) selector
-			 (if arglist (format " %S" arglist) "")))))
+			 (if selectorlist (format " %S" selectorlist) "")))))
     (not result)))
 
 ;;-----------------------------------------------------------------------------
@@ -341,10 +347,12 @@ I was really missing this!"
   "Set to the VM message vector when doing a `vm-vs-eval'.")
 
 (defun vm-vs-folder-name (m regexp)
+  "Virtual selector to check if the current folder's name matches REGEXP."
   (setq m (vm-real-message-of m))
   (string-match regexp (buffer-name (marker-buffer (vm-start-of m)))))
 
 (defun vm-vs-eval (&rest selectors)
+  "Virtual selector to evaluate the given SELECTOR as a Lisp expression."
   (let ((vm-virtual-message (car selectors)))
     (eval (cadr selectors))))
 
@@ -359,7 +367,8 @@ I was really missing this!"
     (eq m (car vm-message-pointer))))
 
 (defun vm-vs-in-bbdb (m &optional address-class only-first)
-  "check if one of the email addresses from the mail is known."
+  "check if one of the email addresses in the message headers is known
+in BBDB."
   (let (bbdb-user-mail-names)
     (let* ((bbdb-get-only-first-address-p only-first)
            (bbdb-user-mail-names nil)
@@ -383,7 +392,8 @@ I was really missing this!"
       done)))
 
 (defun vm-mail-vs-in-bbdb (&optional address-class only-first)
-  "check if one of the email addresses from the mail is known."
+  "check if one of the email addresses in the message headers is known
+in BBDB."
   (let (bbdb-user-mail-names)
     (let* ((bbdb-get-only-first-address-p only-first)
            (bbdb-user-mail-names nil)
@@ -407,7 +417,7 @@ I was really missing this!"
 
 ;;;###autoload
 (defun vm-add-spam-word (word)
-  "Add a new word to the list of spam words."
+  "Add a new WORD to the list of spam words."
   (interactive (list (if (region-active-p)
                          (buffer-substring (point) (mark))
                        (read-string "Spam word: "))))

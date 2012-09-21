@@ -305,7 +305,8 @@ all the real folder buffers involved."
 					  bookmark)
   "Create a new virtual folder from messages in the current folder.
 The messages will be chosen by applying the selector you specify,
-which is normally read from the minibuffer.
+which is normally read from the minibuffer.  See `vm-vs-interactive'
+for the list of selectors.
 
 Prefix arg means the new virtual folder should be visited read only."
   (interactive
@@ -658,6 +659,8 @@ Prefix arg means the new virtual folder should be visited read only."
   (vm-inform 0 "VV = visit, VX = apply selectors, VC = create, VM = toggle virtual mirror"))
 
 (defun vm-vs-or (m &rest selectors)
+  "Virtual selector combinator for checking the disjunction of the
+given SELECTORS."
   (let ((result nil) selector arglist function)
     (while selectors
       (setq selector (car (car selectors))
@@ -670,6 +673,8 @@ Prefix arg means the new virtual folder should be visited read only."
     result ))
 
 (defun vm-vs-and (m &rest selectors)
+  "Virtual selector combinator for checking the conjunction of the
+given SELECTORS."
   (let ((result t) selector arglist function)
     (while selectors
       (setq selector (car (car selectors))
@@ -681,96 +686,142 @@ Prefix arg means the new virtual folder should be visited read only."
       (setq selectors (if (null result) nil (cdr selectors))))
     result ))
 
-(defun vm-vs-not (m arg)
-  (let ((selector (car arg))
-	(arglist (cdr arg))
+(defun vm-vs-not (m selector)
+  "Virtual selector combinator for checking the negation of the
+given SELECTOR."
+  (let ((selector (car selector))
+	(selectorlist (cdr selector))
 	function
 	(result nil))
     (setq function (cdr (assq selector vm-virtual-selector-function-alist)))
     (if (null function)
 	(vm-warn 0 2 "Invalid virtual selector: %s" selector)
-      (setq result (not (apply function m arglist))))
+      (setq result (not (apply function m selectorlist))))
     result))
 
-(defun vm-vs-sexp (m arg)
-  (vm-vs-and m arg))
+(defun vm-vs-sexp (m expression)
+  "Virtual selector combinator to check a complex EXPRESSION made
+of other selectors."
+  (vm-vs-and m expression))
 
-(defun vm-vs-any (m) t)
+(defun vm-vs-any (m) 
+  "Virtual selector that always selects any message."
+  t)
 
-(defun vm-vs-thread (m arg)
-  (let ((selector (car arg))
-	(arglist (cdr arg))
+(defun vm-vs-thread (m selector)
+  "Virtual selector combinator to check a given SELECTOR holds for any
+message in a thread."
+  (let ((selector (car selector))
+	(selectorlist (cdr selector))
 	(root (vm-thread-root m))
 	tree function)
     (setq tree (vm-thread-subtree root))
     (setq function (cdr (assq selector vm-virtual-selector-function-alist)))
     (vm-find tree
 	     (lambda (m)
-	       (apply function m arglist)))))
+	       (apply function m selectorlist)))))
 
-(defun vm-vs-thread-all (m arg)
-  (let ((selector (car arg))
-	(arglist (cdr arg))
+(defun vm-vs-thread-all (m selector)
+  "Virtual selector combinator to check a given SELECTOR holds for all
+messages in a thread."
+  (let ((selector (car selector))
+	(selectorlist (cdr selector))
 	(root (vm-thread-root m))
 	tree function)
     (setq tree (vm-thread-subtree root))
     (setq function (cdr (assq selector vm-virtual-selector-function-alist)))
     (vm-for-all tree
 	     (lambda (m)
-	       (apply function m arglist)))))
+	       (apply function m selectorlist)))))
 
-(defun vm-vs-author (m arg)
-  (or (string-match arg (vm-su-full-name m))
-      (string-match arg (vm-su-from m))))
+(defun vm-vs-author (m regexp)
+  "Virtual selector to check if the author matches REGEXP."
+  (or (string-match regexp (vm-su-full-name m))
+      (string-match regexp (vm-su-from m))))
 
-(defun vm-vs-recipient (m arg)
-  (or (string-match arg (vm-su-to m))
-      (string-match arg (vm-su-to-names m))))
+(defun vm-vs-recipient (m regexp)
+  "Virtual selector to check if any recipient of the message matches REGEXP."
+  (or (string-match regexp (vm-su-to m))
+      (string-match regexp (vm-su-to-names m))))
 
-(defun vm-vs-principal (m arg)
-  (or (string-match arg (vm-su-reply-to m))
-      (string-match arg (vm-su-reply-to-name m))))
+(defun vm-vs-principal (m regexp)
+  "Virtual selector to check if the principal of the message (the
+\"Reply-To\" header) matches REGEXP."
+  (or (string-match regexp (vm-su-reply-to m))
+      (string-match regexp (vm-su-reply-to-name m))))
 
-(defun vm-vs-author-or-recipient (m arg)
-  (or (vm-vs-author m arg)
-      (vm-vs-recipient m arg)))
+(defun vm-vs-author-or-recipient (m regexp)
+  "Virtual selector to check if the author or any of the recipients of
+the message matches REGEXP."
+  (or (vm-vs-author m regexp)
+      (vm-vs-recipient m regexp)))
 
-(defun vm-vs-subject (m arg)
-  (string-match arg (vm-su-subject m)))
+(defun vm-vs-subject (m regexp)
+  "Virtual selector to check if the subject of the message matches REGEXP."
+  (string-match regexp (vm-su-subject m)))
 
-(defun vm-vs-sortable-subject (m arg)
-  (string-match arg (vm-so-sortable-subject m)))
+(defun vm-vs-sortable-subject (m regexp)
+  "Virtual selector to check if the subject of the message, as used
+for sorting summary lines, matches REGEXP.  This differs from the
+actual subject string in that it ignores prefixes, suffixes or
+insignificant characters.  (See `vm-subject-ignored-prefix',
+`vm-subject-ignored-suffix', `vm-subject-tag-prefix' and
+`vm-subject-significant-chars')" 
+  (string-match regexp (vm-so-sortable-subject m)))
 
-(defun vm-vs-sent-before (m arg)
-  (string< (vm-so-sortable-datestring m) (vm-timezone-make-date-sortable arg)))
+(defun vm-vs-sent-before (m date)
+  "Virtual selector to check if the date of the message was earlier
+than a given DATE.  The DATE is specified in the format
+          \"31 Dec 1999 23:59:59 GMT\"
+but you can leave out any part of it to get a sensible default."
+  (string< (vm-so-sortable-datestring m) (vm-timezone-make-date-sortable date)))
 
-(defun vm-vs-sent-after (m arg)
-  (string< (vm-timezone-make-date-sortable arg) (vm-so-sortable-datestring m)))
+(defun vm-vs-sent-after (m date)
+  "Virtual selector to check if the date of the message was earlier
+than a given DATE.  The DATE is specified in the format
+          \"31 Dec 1999 23:59:59 GMT\"
+but you can leave out any part of it to get a sensible default."
+  (string< (vm-timezone-make-date-sortable date) (vm-so-sortable-datestring m)))
 
-(defun vm-vs-older-than (m arg)
-  (let ((date (vm-get-header-contents m "Date:")))
+(defun vm-vs-older-than (m days)
+  "Virtual selector to check if the date of the message was at least
+given DAYS ago.  (Today is considered 0 days ago, and yesterday is
+1 day ago.)"
+  (let ((date (vm-su-datestring m)))
     (if date
-        (> (days-between (current-time-string) date) arg))))
+        (> (days-between (current-time-string) date) days))))
 
-(defun vm-vs-newer-than (m arg)
-  (let ((date (vm-get-header-contents m "Date:")))
+(defun vm-vs-newer-than (m days)
+  "Virtual selector to check if the date of the message was at most
+given DAYS ago.  (Today is considered 0 days ago, and yesterday is
+1 day ago.)"
+  (let ((date (vm-su-datestring m)))
     (if date
-        (<= (days-between (current-time-string) date) arg))))
+        (<= (days-between (current-time-string) date) days))))
 
 (defun vm-vs-outgoing (m)
+  "Virtual selector to check if the message is an outgoing message,
+i.e., sent by the user of this VM."
   (and vm-summary-uninteresting-senders
        (or (string-match vm-summary-uninteresting-senders (vm-su-full-name m))
            (string-match vm-summary-uninteresting-senders (vm-su-from m)))))
 
 (defun vm-vs-uninteresting-senders (m)
+  "Virtual selector to check of the sender is an \"uninteresting\"
+sender.  (See `vm-summary-uninteresting-senders'.)"
   (string-match vm-summary-uninteresting-senders
                 (vm-get-header-contents m "From:")))
 
 (defun vm-vs-attachment (m)
+  "Virtual selector to check if the message has an attachment."
   (or (vm-attachments-flag m)
       (vm-vs-text m vm-vs-attachment-regexp)))
 
-(defun vm-vs-spam-word (m &optional selector)
+(defun vm-vs-spam-word (m &optional part)
+  "Virtual selector to check if the message has a spam word in the
+given message PART (which can be \"header\", \"text\" or
+\"header-or-text\".  Spam words are those loaded from the
+`vm-spam-words-file'."
   (if (and (not vm-spam-words)
            vm-spam-words-file
            (file-readable-p vm-spam-words-file)
@@ -783,17 +834,17 @@ Prefix arg means the new virtual folder should be visited read only."
         (setq vm-spam-words-regexp (regexp-opt vm-spam-words))))
   (if (and m vm-spam-words-regexp)
       (let ((case-fold-search t))
-        (cond ((eq selector 'header)
+        (cond ((eq part 'header)
                (vm-vs-header m vm-spam-words-regexp))
-              ((eq selector 'header-or-text)
+              ((eq part 'header-or-text)
                (vm-vs-header-or-text m vm-spam-words-regexp))
               (t
                (vm-vs-text m vm-spam-words-regexp))))))
 
 (defun vm-vs-spam-score (m min &optional max)
-  "True when the spam score is >= MIN and optionally <= MAX.
-The headers that will be checked are those listed in
-`vm-vs-spam-score-headers'." 
+  "Virtual selector to check if the spam score is >= MIN and
+optionally <= MAX.  The headers that will be checked are those
+listed in `vm-vs-spam-score-headers'."
   (let ((spam-headers vm-vs-spam-score-headers)
         it-is-spam)
     (while spam-headers
@@ -806,56 +857,77 @@ The headers that will be checked are those listed in
       (setq spam-headers (cdr spam-headers)))
     it-is-spam))
 
-(defun vm-vs-header (m arg)
+(defun vm-vs-header (m regexp)
+  "Virtual selector to check if any header contains an instance of REGEXP."
   (save-excursion
     (save-restriction
       (widen)
       (goto-char (vm-headers-of (vm-real-message-of m)))
-      (re-search-forward arg (vm-text-of (vm-real-message-of m)) t))))
+      (re-search-forward regexp (vm-text-of (vm-real-message-of m)) t))))
 
-(defun vm-vs-header-field (m field arg)
+(defun vm-vs-header-field (m field regexp)
+  "Virtual selector to check if the given header FIELD contains
+an instance of REGEXP."
   (let ((header (vm-get-header-contents m field)))
-    (string-match arg header)))
+    (string-match regexp header)))
 
 (defun vm-vs-uid (m arg)
+  "Virtual selector to check if the message UID is ARG."
   (equal (vm-imap-uid-of m) arg))
 
 (defun vm-vs-uidl (m arg)
+  "Virtual selector to check if the message UIDL is ARG."
   (equal (vm-pop-uidl-of m) arg))
 
 (defun vm-vs-message-id (m arg)
+  "Virtual selector to check if the message id is ARG."
   (equal (vm-su-message-id m) arg))
 
 (defun vm-vs-label (m arg)
+  "Virtual selector to check of ARG is a label of the message."
   (vm-member arg (vm-labels-of m)))
 
-(defun vm-vs-text (m arg)
+(defun vm-vs-text (m regexp)
+  "Virtual selector to check if the body of the message has an
+instance of REGEXP."
   (save-excursion
     (save-restriction
       (widen)
       (goto-char (vm-text-of (vm-real-message-of m)))
-      (re-search-forward arg (vm-text-end-of (vm-real-message-of m)) t))))
+      (re-search-forward regexp (vm-text-end-of (vm-real-message-of m)) t))))
 
-(defun vm-vs-header-or-text (m arg)
+(defun vm-vs-header-or-text (m regexp)
+  "Virtual selector to check if either the header or the body of
+the message has an instance of REGEXP."
   (save-excursion
     (save-restriction
       (widen)
       (goto-char (vm-headers-of (vm-real-message-of m)))
-      (re-search-forward arg (vm-text-end-of (vm-real-message-of m)) t))))
+      (re-search-forward regexp (vm-text-end-of (vm-real-message-of m)) t))))
 
 (defun vm-vs-more-chars-than (m arg)
+  "Virtual selector to check if the message size in characters is more
+than ARG."
   (> (string-to-number (vm-su-byte-count m)) arg))
 
 (defun vm-vs-less-chars-than (m arg)
+  "Virtual selector to check if the message size in characters is less
+than ARG."
   (< (string-to-number (vm-su-byte-count m)) arg))
 
 (defun vm-vs-more-lines-than (m arg)
+  "Virtual selector to check if the message size in lines is more
+than ARG."
   (> (string-to-number (vm-su-line-count m)) arg))
 
 (defun vm-vs-less-lines-than (m arg)
+  "Virtual selector to check if the message size in lines is less
+than ARG."
   (< (string-to-number (vm-su-line-count m)) arg))
 
 (defun vm-vs-virtual-folder-member (m)
+  "Virtual selector to check if the message is a member of any virtual
+folders currently being viewed."
   (vm-virtual-messages-of m))
 
 (defun vm-vs-new (m) (vm-new-flag m))

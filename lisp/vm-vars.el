@@ -6687,7 +6687,7 @@ header line in email messages,
     "spam-score" "reversed-spam-score"
     "physical-order" "reversed-physical-order"))
 
-(defconst vm-supported-interactive-virtual-selectors
+(defconst vm-vs-interactive
   '(("any")
     ("sexp")
     ("eval")
@@ -6743,9 +6743,16 @@ header line in email messages,
     ("collapsed")
     ("spam-word")
     ("spam-score")
-    ))
+    )
+  "This is the list of virtual selectors that can be used in creating
+virtual folders (search folders) interactively.  You can get
+individual help on each selector by checking the function
+`vm-vs-SELECTOR', e.g., `vm-vs-spam-score' for the spam-score selector.")
 
-(defconst vm-virtual-selector-function-alist
+(defvaralias 'vm-supported-interactive-virtual-selectors
+  'vm-vs-interactive)
+
+(defconst vm-vs-alist
   '((any . vm-vs-any)
     ;; (member . vm-vs-member) ; yet to be defined
     (virtual-folder-member . vm-vs-virtual-folder-member)
@@ -6811,6 +6818,9 @@ header line in email messages,
     (expanded . vm-vs-expanded)
     (collapsed . vm-vs-collapsed)
     ))
+
+(defvaralias 'vm-virtual-selector-function-alist
+  'vm-vs-alist)
 
 (defconst vm-supported-attribute-names
   '("new"

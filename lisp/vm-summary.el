@@ -1411,6 +1411,31 @@ was sent.                                                  USR, 2010-05-13"
 	(vm-set-weekday-of m (nth 1 val))
       (vm-set-weekday-of m ""))))
 
+(defun vm-su-datestring (m)
+  "The sent date of message M in the format \"Sun Jan 01 00:00:00 2000\"."
+  (when (and (vm-su-weekday m) (vm-su-month m) (vm-su-monthday m)
+	     (vm-su-hour m) (vm-su-year m))
+    (format "%s %s %s %s %s"
+	    (condition-case error
+		(substring (vm-su-weekday m) 0 3)
+	      (error "   "))
+	    (substring (vm-su-month m) 0 3)
+	    (vm-su-monthday m)
+	    (vm-su-hour m)
+	    (vm-su-year m))))
+
+;; (defun vm-su-delivery-datestring (m)
+;;   "The delivery date of message M in the format \"Sun Jan 01 00:00:00 2000"."
+;;   (when (vm-su-d-weekday m)
+;;     (format "%s %s %s %s %s"
+;; 	    (condition-case error
+;; 		(substring (vm-su-d-weekday m) 0 3)
+;; 	      (error "Sun"))
+;; 	    (substring (vm-su-d-month m) 0 3)
+;; 	    (vm-su-d-monthday m)
+;; 	    (vm-su-d-hour m)
+;; 	    (vm-su-d-year m))))
+
 (defun vm-run-user-summary-function (function message)
   ;; (condition-case nil
   (let ((m (vm-real-message-of message)))
