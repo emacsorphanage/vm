@@ -5357,7 +5357,14 @@ must be done to the message to make it presentable.  E.g. MIME decoding."
 
 (defcustom vm-quit-hook nil
   "*List of hook functions to run when you quit VM.
-This applies to any VM quit command."
+This applies to any VM quit command.  The following global variables
+may be used in your hook function.
+
+  virtual - true if the current folder is a virtual folder
+  no-expunge - true if no expunge was requested as part of quit
+  no-change - true if the changes are being discarded
+  `vm-expunge-before-quit' - user option controlling auto-expunge
+"
   :group 'vm-hooks
   :type 'hook)
 

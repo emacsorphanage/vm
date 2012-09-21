@@ -3298,7 +3298,13 @@ The setting of `vm-expunge-before-quit' is ignored."
 If the customization variable `vm-expunge-before-quit' is set to
   non-nil value then deleted messages are expunged.
 
-Giving a prefix argument overrides the variable and no expunge is done."  
+Giving a prefix argument overrides the variable and no expunge is
+done.
+
+When called internally, the optional argument NO-EXPUNGE says
+that the deleted messages should not be expunged (irrespective of
+the value of `vm-expunge-before-quit'.  NO-CHANGE says that
+changes should not be saved."
   (interactive "P")
   (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
