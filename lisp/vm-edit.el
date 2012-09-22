@@ -208,7 +208,10 @@ thread have their cached data discarded."
 
 	      (if (and vm-presentation-buffer
 		       (eq (car vm-message-pointer) v-m))
-		  (save-excursion (vm-present-current-message))))))
+		  ;; FIXME why is this call to present-current-message
+		  ;; needed?  Might be wasteful. USR, 2012-09-22
+		  (save-excursion 
+		    (vm-present-current-message))))))
 	(vm-mark-for-summary-update m)
 	(vm-set-stuff-flag-of m t)
 	(if (and interactive-p vm-presentation-buffer
@@ -217,11 +220,14 @@ thread have their cached data discarded."
 	(setq mlist (cdr mlist))))
     (if vm-thread-debug
         (vm-check-thread-integrity))
-    (save-excursion
-      (mapatoms (function (lambda (s)
-			    (set-buffer (get-buffer (symbol-name s)))
-			    (vm-sort-messages (or vm-ml-sort-keys "activity"))))
-		buffers-needing-thread-sort))))
+    ;; Probably not a good idea to sort messages here.
+    ;; Reorders the message summary unnecessarily.  USR, 2012-09-22
+    ;; (save-excursion
+    ;;   (mapatoms (function (lambda (s)
+    ;; 			    (set-buffer (get-buffer (symbol-name s)))
+    ;; 			    (vm-sort-messages (or vm-ml-sort-keys "activity"))))
+    ;; 		buffers-needing-thread-sort))
+    ))
 
 ;;;###autoload
 (defun vm-edit-message-end ()

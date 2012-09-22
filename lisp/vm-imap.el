@@ -3587,7 +3587,7 @@ headers-only form."
 			  (lambda (**pair1 **pair2) 
 			    (> (cdr **pair1) (cdr **pair2)))))
 	      ;; d-list to have ranges of message sequence numbers
-	      ;; of messages to be expuntged, in ascending order.
+	      ;; of messages to be expunged, in ascending order.
 	      (setq d-list (vm-imap-bunch-messages
 			    (nreverse (mapcar (function cdr) m-list))))
 	      (setq expunge-count 0)	; number of messages expunged
@@ -3677,9 +3677,11 @@ headers-only form."
     ))
 
 (defun vm-imap-bunch-retrieve-list (retrieve-list)
-  "Given a sorted list of pairs consisting of message sequence numbers
-and headers-only flags, creates a list of bunched message sequences,
-each of the form (begin-num . end-num), along with their headers-only flags."  
+  "RETRIEVE-LIST consists of pairs (message-sequence-number boolean)
+  where the boolean flag says whether the message is headers-only.
+  Bunch the message sequence numbers to produce a list of pairs
+  ((begin-num . end-num) boolean).  Each message in a bunch has the
+  same headers-only flag."
   (let ((ranges nil)
 	pair headers-only
 	beg last last-headers-only next diff)
