@@ -615,7 +615,7 @@ is nil, do it for all the messages in the folder.  USR, 2010-07-15"
 	 (vm-thread-subtree id-sym)))
      vm-thread-obarray)
     (when (> n modulus)
-      (vm-inform 6 "%s: Building threads... done" (buffer-name)))))
+      (vm-inform 7 "%s: Building threads... done" (buffer-name)))))
 
 (defun vm-build-reference-threads (mlist schedule-reindents initializing)
   "Build reference threads for all the messages in MLIST.  If threads are
@@ -1418,9 +1418,19 @@ otherwise.  No exceptions are thrown for errors."
      nil)))
 
 ;;;###autoload
+(defun vm-thread-subtree-safe (msg)
+  "Returns the list of messages in the thread subtree of MSG.
+Threads should have been built for this function to work."
+  (if (eq major-mode 'vm-mode)
+      (vm-thread-subtree msg)
+    (with-current-buffer vm-mail-buffer
+      (vm-thread-subtree msg))))
+
+;;;###autoload
 (defun vm-thread-subtree (msg)
   "Returns the list of messages in the thread subtree of MSG.
-MSG can be a message or the interned symbol of a message.
+MSG can be a message or the interned symbol of a message.  This
+function should only be called in a VM Folder buffer.
 Threads should have been built for this function to work."
   (let (m-sym)
     (if (symbolp msg)

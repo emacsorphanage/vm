@@ -1978,11 +1978,14 @@ Supports version 4 format of attribute storage, for backward compatibility."
   (and (or (not (equal vis vm-visible-headers))
 	   (not (equal invis vm-invisible-header-regexp)))
        (let ((mp vm-message-list))
-	 (vm-inform 6 "%s: Discarding visible header info..." (buffer-name))
+	 (vm-inform 7 "%s: Discarding visible header info..." (buffer-name))
 	 (while mp
 	   (vm-set-vheaders-regexp-of (car mp) nil)
 	   (vm-set-vheaders-of (car mp) nil)
-	   (setq mp (cdr mp))))))
+	   (setq mp (cdr mp)))
+	 (vm-inform 7 "%s: Discarding visible header info... done" 
+		    (buffer-name))
+	 )))
 
 ;; Read and delete the header that gives the folder's desired
 ;; message order.
@@ -2016,9 +2019,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			oldpoint (buffer-name))
 	       (setq order nil)))
 	    (when order
-	      (vm-inform 6 "%s: Reordering messages..." (buffer-name))
+	      (vm-inform 7 "%s: Reordering messages..." (buffer-name))
 	      (vm-startup-apply-message-order order)
-	      (vm-inform 6 "%s: Reordering messages... done" (buffer-name)))))
+	      (vm-inform 7 "%s: Reordering messages... done" (buffer-name)))))
 	))))
 
 (defun vm-has-message-order ()
@@ -3233,7 +3236,10 @@ Buffer Menu."
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
 
-  (save-excursion (run-hooks 'vm-quit-hook))
+  (let ((virtual (eq major-mode 'vm-virtual-mode))
+	(no-expunge t)
+	(no-change nil))
+    (save-excursion (run-hooks 'vm-quit-hook)))
 
   (vm-garbage-collect-message)
 
@@ -3259,7 +3265,10 @@ The folder is not altered and Emacs is still visiting it."
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))
       (error "%s must be invoked from a VM buffer." this-command))
 
-  (save-excursion (run-hooks 'vm-quit-hook))
+  (let ((virtual (eq major-mode 'vm-virtual-mode))
+	(no-expunge t)
+	(no-change nil))
+    (save-excursion (run-hooks 'vm-quit-hook)))
 
   (vm-garbage-collect-message)
 
@@ -3276,7 +3285,7 @@ The folder is not altered and Emacs is still visiting it."
 
 ;;;###autoload
 (defun vm-quit-no-change ()
-  "Quit visiting the current folder without saving changes made to the folder."
+  "Quit visiting the current folder and discard any changes made to the folder."
   (interactive)
   (vm-quit t t))
 
@@ -3304,7 +3313,7 @@ done.
 When called internally, the optional argument NO-EXPUNGE says
 that the deleted messages should not be expunged (irrespective of
 the value of `vm-expunge-before-quit'.  NO-CHANGE says that
-changes should not be saved."
+changes should be discarded."
   (interactive "P")
   (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))

@@ -715,7 +715,7 @@ message in a thread."
 	(selectorlist (cdr selector))
 	(root (vm-thread-root m))
 	tree function)
-    (setq tree (vm-thread-subtree root))
+    (setq tree (vm-thread-subtree-safe root))
     (setq function (cdr (assq selector vm-virtual-selector-function-alist)))
     (vm-find tree
 	     (lambda (m)
@@ -728,7 +728,7 @@ messages in a thread."
 	(selectorlist (cdr selector))
 	(root (vm-thread-root m))
 	tree function)
-    (setq tree (vm-thread-subtree root))
+    (setq tree (vm-thread-subtree-safe root))
     (setq function (cdr (assq selector vm-virtual-selector-function-alist)))
     (vm-for-all tree
 	     (lambda (m)

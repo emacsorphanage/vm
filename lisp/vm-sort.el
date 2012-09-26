@@ -438,7 +438,7 @@ folder in the order in which the messages arrived."
       (vm-build-threads-if-unbuilt)
       (vm-build-thread-lists)
       (setq key-funcs (cons 'vm-sort-compare-thread key-funcs)))
-    (vm-inform 6 "%s: Sorting messages..." (buffer-name))
+    (vm-inform 7 "%s: Sorting messages..." (buffer-name))
     (let ((vm-key-functions key-funcs))
       (setq new-message-list (sort (copy-sequence old-message-list)
 				   'vm-sort-compare-xxxxxx))
@@ -448,7 +448,7 @@ folder in the order in which the messages arrived."
 	  (setq vm-key-functions '(vm-sort-compare-physical-order)
 		physical-order-list (sort (copy-sequence old-message-list)
 					  'vm-sort-compare-xxxxxx))))
-    (vm-inform 6 "%s: Sorting messages... done" (buffer-name))
+    (vm-inform 7 "%s: Sorting messages... done" (buffer-name))
     (let ((inhibit-quit t))
       (setq mp-old old-message-list
 	    mp-new new-message-list)

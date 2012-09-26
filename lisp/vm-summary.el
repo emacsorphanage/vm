@@ -49,6 +49,9 @@
 		  (folder &optional read-only &key interactive just-visit))
 (declare-function vm-set-folded-flag "vm-undo.el" (m flag &optional norecord))
 
+(declare-function vm-sort-messages "vm-sort.el"
+		  (keys &optional lets-get-physical))
+
 (defvar scrollbar-height)		; defined for XEmacs
 
 
@@ -70,7 +73,9 @@
     ;; The point often ends up preceding the invisible stuff.  Skip it.
     (while (get-text-property (point) 'invisible)
       (forward-char))
-    (get-text-property (+ (point) 3) 'vm-message)))
+    (if (eobp)
+	nil
+      (get-text-property (+ (point) 3) 'vm-message))))
 
 (defsubst vm-summary-padded-thread-count (m)
   "Returns a formatted thread count of the message M, usable in
@@ -446,12 +451,14 @@ of action."
     (when vm-summary-buffer
       (set-buffer vm-summary-buffer)
       (let ((buffer-read-only nil)
+	    (msg (vm-summary-message-at-point))
 	    root next)
-	(setq root (vm-thread-root (vm-summary-message-at-point)))
-	(if (vm-expanded-root-p root)
-	    (call-interactively 'vm-collapse-thread)
-	  (call-interactively 'vm-expand-thread))
-	))))
+	(when msg
+	  (setq root (vm-thread-root msg))
+	  (if (vm-expanded-root-p root)
+	      (call-interactively 'vm-collapse-thread)
+	    (call-interactively 'vm-expand-thread))
+	  )))))
 
 (defun vm-do-needed-summary-rebuild ()
   "Rebuild the summary lines of all the messages starting at
