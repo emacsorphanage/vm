@@ -1375,7 +1375,7 @@ should have been built for this function to work."
 	(when (vm-th-messages-of id-sym)
 	  (throw 'return (vm-th-message-of id-sym)))
 	(setq list (cdr list)))
-      nil)))
+      m)))
 
 ;;;###autoload
 (defun vm-thread-root-sym (m)
@@ -1403,7 +1403,7 @@ See also: `vm-thread-root'."
 	(when (vm-th-messages-of id-sym)
 	    (throw 'return id-sym))
 	(setq list (cdr list)))
-      nil)))
+      m-sym)))
 
 ;;;###autoload
 (defun vm-thread-root-p (m)
