@@ -2158,7 +2158,7 @@ FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
 (defun vm-stuff-message-data-internal (m &optional for-other-folder)
   "Stuff the attributes, labels, soft and cached data of the
 message M into the folder buffer.  The optional argument
-FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
+FOR-OTHER-FOLDER indicates <something unknown>.  USR 2010-03-06"
   (let (attributes cache opoint
 	(delflag (vm-deleted-flag m)))
     (progn
@@ -2348,59 +2348,64 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 
 (defun vm-stuff-thunderbird-status (message)
   (let (status status2 status2-hi status2-lo)
-    (setq status (vm-get-header-contents message "X-Mozilla-Status:"))
-    (if (not status)
-        (setq status 0)
-      (setq status (string-to-number status 16))
-      ;; clear those bits we are using and keep others ...
-      (setq status (logand status (lognot (logior #x1 #x2 #x4 #x8 #x1000))))
-      (goto-char (vm-headers-of message))
-      (if (re-search-forward "^X-Mozilla-Status: [ 0-9A-Fa-f]+\n"
-			     (vm-text-of message) t)
-          (delete-region (match-beginning 0) (match-end 0))))
-    (setq status2 (vm-get-header-contents message "X-Mozilla-Status2:"))
-    (if (not status2)
-        (setq status2 0
-	      status2-hi 0
-	      status2-lo 0)
-      (if (> (length status2) 4)
-	  (setq status2-hi (string-to-number (substring status2 0 -4) 16)
-		status2-lo (string-to-number (substring status2 -4 nil) 16))
-	;; handle badly fomatted status strings written by old
-	;; versions
-	(setq status2 (string-to-number status2 16)
-	      status2-hi (/ status2 #x1000)
-	      status2-lo (mod status2 #x1000)))
-      ;; clear those bits we are using and keep others ...
-      (setq status2-hi (logand status2-hi (lognot (logior #x1))))
-      (goto-char (vm-headers-of message))
-      (if (re-search-forward "^X-Mozilla-Status2: [ 0-9A-Fa-f]+\n"
-			     (vm-text-of message) t)
-          (delete-region (match-beginning 0) (match-end 0))))
+    (goto-char (vm-headers-of message))
+    (if (re-search-forward "^X-Mozilla-Status: \\([ 0-9A-Fa-f]+\\)\n"
+			   (vm-text-of message) t)
+	(progn
+	  (setq status (buffer-substring (match-beginning 1) (match-end 1)))
+	  (delete-region (match-beginning 0) (match-end 0))
+	  (setq status (string-to-number status 16))
+	  ;; clear those bits we are using and keep others ...
+	  ;; #xeff0 is (lognot (logior #x1 #x2 #x4 #x8 #x1000))
+	  (setq status (logand status #xeff0))
+	  )
+      (setq status 0))
+
+    (goto-char (vm-headers-of message))
+    (if (re-search-forward "^X-Mozilla-Status2: \([ 0-9A-Fa-f]+\)\n"
+			   (vm-text-of message) t)
+	(progn
+	  (setq status2 (buffer-substring (match-beginning 1) (match-end 1)))
+	  (delete-region (match-beginning 0) (match-end 0))
+	  (if (> (length status2) 4)
+	      (setq status2-hi (string-to-number (substring status2 0 -4) 16)
+		    status2-lo (string-to-number (substring status2 -4 nil) 16))
+	    ;; handle badly fomatted status strings written by old
+	    ;; versions
+	    (setq status2 (string-to-number status2 16)
+		  status2-hi (/ status2 #x1000)
+		  status2-lo (mod status2 #x1000)))
+	  ;; clear those bits we are using and keep others ...
+	  ;; #xfffe is (lognot (logior #x1))
+	  (setq status2-hi (logand status2-hi #xfffe)))
+      (setq status2 0
+	    status2-hi 0
+	    status2-lo 0))
+
     (unless (vm-unread-flag message)
-        (setq status (logior status #x1)))
+      (setq status (logior status #x1)))
     (when (vm-replied-flag message)
-        (setq status (logior status #x2)))
+      (setq status (logior status #x2)))
     (when (vm-flagged-flag message)
-        (setq status (logior status #x4)))
+      (setq status (logior status #x4)))
     (when (vm-deleted-flag message)
-        (setq status (logior status #x8)))
+      (setq status (logior status #x8)))
     (when (vm-folded-flag message)
-        (setq status (logior status #x0020)))
+      (setq status (logior status #x0020)))
     (when (vm-watched-flag message)
-        (setq status (logior status #x0100)))
+      (setq status (logior status #x0100)))
     (when (vm-forwarded-flag message)
-        (setq status (logior status #x1000)))
+      (setq status (logior status #x1000)))
     (when (vm-new-flag message)
-        (setq status2-hi (logior status2-hi #x0001)))
+      (setq status2-hi (logior status2-hi #x0001)))
     (when (vm-ignored-flag message)
-        (setq status2-hi (logior status2-hi #x0004)))
+      (setq status2-hi (logior status2-hi #x0004)))
     (when (vm-read-receipt-flag message)
-        (setq status2-hi (logior status2-hi #x0040)))
+      (setq status2-hi (logior status2-hi #x0040)))
     (when (vm-read-receipt-sent-flag message)
-        (setq status2-hi (logior status2-hi #x0080)))
+      (setq status2-hi (logior status2-hi #x0080)))
     (when (vm-attachments-flag message)
-        (setq status2-hi (logior status2-hi #x1000)))
+      (setq status2-hi (logior status2-hi #x1000)))
     (goto-char (vm-headers-of message))
     (insert (format "X-Mozilla-Status: %04x\n" status))
     (insert (format "X-Mozilla-Status2: %04x%04x\n" status2-hi status2-lo))))
