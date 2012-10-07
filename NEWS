@@ -28,6 +28,10 @@ VM 8.2.0b1
 
   CHANGES
 
+   * The %t and %T format specifiers in vm-summary-format listed only the
+     "addressees" (listed in the "To" headers) instead of all recipients.
+     New specifiers %r and %R can be used to list all recipients.
+
    * New variable `vm-mime-forward-saved-attachments' controls whether saved
      attachments are included in forwarded messages.  (This replaces the
      former undocumented variable `vm-mime-forward-local-external-bodies'.

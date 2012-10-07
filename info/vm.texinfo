@@ -4597,9 +4597,18 @@ author's address
 author's full name (same as f if full name not found)
 
 @item t
-addresses of the recipients of the message, in a comma-separated list
+email addresses of the addressees of the message (listed in the ``To''
+header), in a comma-separated list
 
 @item T
+full names of the addressees of the message (listed in the ``To''
+header), in a comma-separated list
+
+@item r
+addresses of the recipients of the message (listed in the ``To'' or ``Cc''
+headers), in a comma-separated list
+
+@item R
 full names of the recipients of the message, in a comma-separated list (or
 their email addresses if full names are not given)
 
@@ -7695,23 +7704,23 @@ to be quickly re-encoded for storage on disk.
 @code{weekday}, @code{monthday}, @code{month}, @code{year}, @code{hour},
 @code{zone} (1-6).  Data indicating the date of 
 the message.
-@inindex full-name
+@inindex decoded-full-name
 @item 
-@code{full-name} (7).  The full name of the author of the message.  This is
-a @acronym{MIME}-decoded string with text properties.
-@inindex from
+@code{decoded-full-name} (7).  The full name of the author of the message.
+This is a @acronym{MIME}-decoded string with text properties.
+@inindex decoded-from
 @item
-@code{from} (8).  The email address of the author of the message.  This is a
-@acronym{MIME}-decoded string with text properties.
+@code{decoded-from} (8).  The email address of the author of the message.
+This is a @acronym{MIME}-decoded string with text properties.
 @inindex message-id
 @item
 @code{message-id} (9).  The unique id of the message.
 @inindex line-count
 @item
 @code{line-count} (10). The number of lines in the message.
-@inindex subject
+@inindex decoded-subject
 @item
-@code{subject} (11).  The subject string of the message.  This is a
+@code{decoded-subject} (11).  The subject string of the message.  This is a
 @acronym{MIME}-decoded string with text properties.
 @inindex vheaders-regexp
 @item
@@ -7719,16 +7728,16 @@ a @acronym{MIME}-decoded string with text properties.
 the start of the visible headers.  The headers must have been already
 ordered so that the visible headers are at the bottom of the headers
 section.
-@inindex to
+@inindex decoded-to
 @item
-@code{to} (13).  Addresses of the recipients of the message in a comma
-separated string.  This is a @acronym{MIME}-decoded string with text
-properties.
+@code{decoded-to} (13).  The email addresses of the addressees of the message
+(listed in the ``To'' header) in a comma separated string.  This is a
+@acronym{MIME}-decoded string with text properties.
 @inindex to-names
 @item
-@code{to-names} (14). The full names of the recipients in a comma separated
-string.  Addresses are used if full names are not available.  This is a
-@acronym{MIME}-decoded string with text properties.
+@code{decoded-to-names} (14). The full names of the addressees in a comma
+separated string.  Addresses are used if full names are not available.  This
+is a @acronym{MIME}-decoded string with text properties.
 @inindex month-number
 @item
 @code{month-number} (15).  Numeric month of the sent date.
@@ -7737,17 +7746,17 @@ string.  Addresses are used if full names are not available.  This is a
 @code{sortable-datestring} (16).  Date string of the sent date for sorting
 purposes (or delivery date if @code{vm-sort-messages-by-delivery-date} is
 set to t). 
-@inindex sortable-subject
+@inindex decoded-sortable-subject
 @item
-@code{sortable-subject} (17).  The subject string for sorting purposes.
+@code{decoded-sortable-subject} (17).  The subject string for sorting purposes.
 (Prefixes such as ``re:'' are removed.)  This is a @acronym{MIME}-decoded
 string with text properties.
 @inindex summary
 @item
-@code{summary} (18).  A tokenized summary for the message, from which the
-actual summary line can be quickly calculated.  This is a list containing
-tokens, such as @code{number} and @code{thread-indent}, as well as
-@acronym{MIME}-decoded strings with text properties.
+@code{decoded-tokenized-summary} (18).  A tokenized summary for the message,
+from which the actual summary line can be quickly calculated.  This is a
+list containing tokens, such as @code{number} and @code{thread-indent}, as
+well as @acronym{MIME}-decoded strings with text properties.
 @inindex parent
 @item
 @code{parent} (19).  The message ID of the parent of the message in its
@@ -7792,11 +7801,11 @@ discarded.   This field is unused at present.
 headers of the message should be discarded before the folder is saved (for
 external messages).  This is not ``cached'' data and should not be
 discarded.  This field is unused at present.
-@inindex summary-subject
+@inindex decoded-summary-subject
 @item
-@code{summary-subject} (28).  Subject of the message as it appears in the
-summary line of the message.  (This optionally omits the subject tags added
-by mailing lists.)
+@code{decoded-summary-subject} (28).  Subject of the message as it appears
+in the summary line of the message.  (This optionally omits the subject tags
+added by mailing lists.)
 @inindex declared-parent
 @item
 @code{declared-parent} (29).  The message ID of the parent of the message,
@@ -7814,10 +7823,18 @@ discarded.  This field is not used at present.
 @code{d-weekday}, @code{d-monthday}, @code{d-month}, @code{d-year},
 @code{d-hour}, @code{d-zone} (31-36).  Data indicating the delivery date of
 the message.   These fields are not used at present.
+@inindex decoded-reply-to-name
+@inindex decoded-reply-to
 @item
-@code{reply-to-name}, @code{reply-to}.  The full name and the email address
-in the @samp{Reply-To} header of the message (called the ``principal'' of
-the message.)
+@code{decoded-reply-to-name}, @code{decoded-reply-to} (37-38).  The full
+name and the email address in the @samp{Reply-To} header of the message
+(called the ``principal'' of the message.)
+@inindex decoded-to-cc
+@inindex decoded-to-cc-name
+@item
+@code{decoded-to-cc-name}, @code{decoded-to-cc} (39-40).  The full names and
+the email addresses in the @samp{To} and @samp{Cc} headers of the message
+(called the ``recipients'' of the message.)
 @end itemize
 
 @subsubheading Mirror Data

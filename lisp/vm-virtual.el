@@ -976,6 +976,7 @@ folders currently being viewed."
 (put 'header-or-text 'vm-virtual-selector-clause
      "with header or text matching")
 (put 'recipient 'vm-virtual-selector-clause "with recipient matching")
+(put 'addressee 'vm-virtual-selector-clause "with addressee matching")
 (put 'principal 'vm-virtual-selector-clause "with principal matching")
 (put 'author-or-recipient 'vm-virtual-selector-clause
      "with author or recipient matching")
@@ -1002,6 +1003,7 @@ folders currently being viewed."
 (put 'text 'vm-virtual-selector-arg-type 'string)
 (put 'header-or-text 'vm-virtual-selector-arg-type 'string)
 (put 'recipient 'vm-virtual-selector-arg-type 'string)
+(put 'addressee 'vm-virtual-selector-arg-type 'string)
 (put 'principal 'vm-virtual-selector-arg-type 'string)
 (put 'author-or-recipient 'vm-virtual-selector-arg-type 'string)
 (put 'author 'vm-virtual-selector-arg-type 'string)

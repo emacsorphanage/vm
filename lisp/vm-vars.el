@@ -3737,10 +3737,14 @@ Recognized specifiers are:
    n - message number
    p - indicator for postponed messages 
    P - indicator for attachments, see `vm-summary-attachment-indicator'
+   r - addresses of the recipients of the message, in a comma-separated list
+   R - full names of the recipients of the message, in a comma-separated list
+       If a full name cannot be found, the corresponding address is used
+       instead.
    s - message subject
    S - human readable size of the message
-   t - addresses of the recipients of the message, in a comma-separated list
-   T - full names of the recipients of the message, in a comma-separated list
+   t - addresses of the addressees of the message, in a comma-separated list
+   T - full names of the addressees of the message, in a comma-separated list
        If a full name cannot be found, the corresponding address is used
        instead.
    U - user defined specifier.  The next character in the format
@@ -6681,6 +6685,7 @@ header line in email messages,
     "author" "reversed-author"
     "full-name" "reversed-full-name"
     "subject" "reversed-subject"
+    "addressees" "reversed-addressees"
     "recipients" "reversed-recipients"
     "line-count" "reversed-line-count"
     "byte-count" "reversed-byte-count"
@@ -6700,8 +6705,9 @@ header line in email messages,
     ("message-id")
     ("text")
     ("header-or-text")
-    ("recipient")
     ("author")
+    ("addressee")
+    ("recipient")
     ("principal")
     ("author-or-recipient")
     ("outgoing")
@@ -6771,6 +6777,7 @@ individual help on each selector by checking the function
     (message-id . vm-vs-message-id)
     (text . vm-vs-text)
     (header-or-text . vm-vs-header-or-text)
+    (addressee . vm-vs-addressee)
     (recipient . vm-vs-recipient)
     (author . vm-vs-author)
     (principal . vm-vs-principal)
