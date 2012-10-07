@@ -3702,8 +3702,6 @@ The string may contain the printf-like `%' conversion specifiers which
 substitute information about the message into the final summary line.
 
 Recognized specifiers are:
-   p - indicator for postponed messages 
-   P - indicator for attachments, see `vm-summary-attachment-indicator'
    a - attribute indicators (always four characters wide)
        The first char is  `D', `N', `U', ` ' or `!' for deleted, new, unread,
        read and flagged messages respectively.
@@ -3725,7 +3723,6 @@ Recognized specifiers are:
        The first char is  `D', `N', `U', ` ' or `!' for deleted, new, unread
        read and flagged messages respectively.
    c - number of characters in message (ignoring headers)
-   S - human readable size of the message
    d - numeric day of month message sent
    f - author's address
    F - author's full name (same as f if full name not found)
@@ -3738,7 +3735,10 @@ Recognized specifiers are:
    m - month message sent
    M - numeric month message sent (January = 1)
    n - message number
+   p - indicator for postponed messages 
+   P - indicator for attachments, see `vm-summary-attachment-indicator'
    s - message subject
+   S - human readable size of the message
    t - addresses of the recipients of the message, in a comma-separated list
    T - full names of the recipients of the message, in a comma-separated list
        If a full name cannot be found, the corresponding address is used

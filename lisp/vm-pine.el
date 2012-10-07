@@ -138,8 +138,8 @@ this function returns the \"To:\" or \"Newsgroups:\" header field with a
 For example the outgoing message box will now list to whom you sent the
 messages.  Use `vm-fix-summary' to update the summary of a folder! With
 loaded BBDB it uses `vm-summary-function-B' to obtain the full name of the
-sender.  The only difference to VMs default behavior is the honoring of
-messages sent to news groups. ;c)
+sender.  The only difference to VM's default behavior is the honoring of
+messages sent to news groups.)
 
 See also:    `vm-summary-uninteresting-senders'"
   (interactive)

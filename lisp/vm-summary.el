@@ -25,7 +25,7 @@
 
 (provide 'vm-summary)
 
-(eval-when-compile
+(eval-and-compile
   (require 'vm-misc)
   (require 'vm-crypto)
   (require 'vm-folder)
@@ -937,6 +937,12 @@ mime.  It is used for writing summary lines to disk.   USR, 2010-05-13."
 		    ((= conv-spec ?t)
 		     (setq sexp (cons (list 'vm-su-to
 					    'vm-su-message) sexp)))
+		    ((= conv-spec ?R)
+		     (setq sexp (cons (list 'vm-su-to-cc-names
+					    'vm-su-message) sexp)))
+		    ((= conv-spec ?r)
+		     (setq sexp (cons (list 'vm-su-to-cc
+					    'vm-su-message) sexp)))
 		    ((= conv-spec ?U)
 		     (setq sexp
 			   (cons (list 'vm-run-user-summary-function
@@ -1456,21 +1462,23 @@ was sent.                                                  USR, 2010-05-13"
   ;; (error " "))
   )
 
-(defun vm-su-full-name (m)
+(defun vm-su-decoded-full-name (m)
   "Returns the author name of M as a string, either from
-the stored entry (`vm-full-name-of') or recalculating it if necessary.
+the stored entry (`vm-decoded-full-name-of') or recalculating it if necessary.
 The result is a mime-decoded string with text-properties.
 							USR 2010-05-13"
-  (or (vm-full-name-of m)
-      (progn (vm-su-do-author m) (vm-full-name-of m))))
+  (or (vm-decoded-full-name-of m)
+      (progn (vm-su-do-author m) (vm-decoded-full-name-of m))))
+(defalias 'vm-su-full-name 'vm-su-decoded-full-name)
 
-(defun vm-su-reply-to-name (m)
-  "Returns the principal (Reply-To) name of M as a string, either from
-the stored entry (`vm-reply-to-name-of') or recalculating it if necessary.
-The result is a mime-decoded string with text-properties.
-							USR 2010-05-13"
-  (or (vm-reply-to-name-of m)
-      (progn (vm-su-do-principal m) (vm-reply-to-name-of m))))
+(defun vm-su-decoded-reply-to-name (m)
+  "Returns the principal (Reply-To) name of M as a string, either
+from the stored entry (`vm-decoded-reply-to-name-of') or
+recalculating it if necessary.  The result is a mime-decoded
+string with text-properties.                           USR 2010-05-13"
+  (or (vm-decoded-reply-to-name-of m)
+      (progn (vm-su-do-principal m) (vm-decoded-reply-to-name-of m))))
+(defalias 'vm-su-reply-to-name 'vm-su-decoded-reply-to-name)
 
 (defun vm-su-interesting-full-name (m)
   "Returns the author name of M as a string.
@@ -1497,19 +1505,19 @@ The result is a mime-decoded string with text properties.
 
 (defun vm-su-from (m)
   "Returns the author address of M as a string, either from
-the stored entry (`vm-from-of') or recalculating it if necessary.
+the stored entry (`vm-decoded-from-of') or recalculating it if necessary.
 The result is a mime-encoded string, but this is not certain.
 							USR 2010-05-13"
-  (or (vm-from-of m)
-      (progn (vm-su-do-author m) (vm-from-of m))))
+  (or (vm-decoded-from-of m)
+      (progn (vm-su-do-author m) (vm-decoded-from-of m))))
 
 (defun vm-su-reply-to (m)
   "Returns the principal (Reply-To) address of M as a string, either from
-the stored entry (`vm-reply-to-of') or recalculating it if necessary.
+the stored entry (`vm-decoded-reply-to-of') or recalculating it if necessary.
 The result is a mime-encoded string, but this is not certain.
 							USR 2010-05-13"
-  (or (vm-reply-to-of m)
-      (progn (vm-su-do-principal m) (vm-reply-to-of m))))
+  (or (vm-decoded-reply-to-of m)
+      (progn (vm-su-do-principal m) (vm-decoded-reply-to-of m))))
 
 (defun vm-su-interesting-from (m)
   "Returns the author address of M as a string.
@@ -1573,8 +1581,10 @@ the `from' and `full-name' entries of the cached-data vector.   USR, 2010-05-13"
  	      (substring full-name (match-beginning 1) (match-end 1))))
     (while (setq i (string-match "\n" full-name i))
       (aset full-name i ?\ ))
-    (vm-set-full-name-of m (vm-decode-mime-encoded-words-in-string full-name))
-    (vm-set-from-of m (vm-decode-mime-encoded-words-in-string from))))
+    (vm-set-decoded-full-name-of 
+     m (vm-decode-mime-encoded-words-in-string full-name))
+    (vm-set-decoded-from-of 
+     m (vm-decode-mime-encoded-words-in-string from))))
 
 (defun vm-su-do-principal (m)
   "Parses the Reply-To header of the message M and stores the results in
@@ -1592,9 +1602,9 @@ the `reply-to' and `reply-to-name' entries of the cached-data vector."
  	      (substring reply-to-name (match-beginning 1) (match-end 1))))
     (while (setq i (string-match "\n" reply-to-name i))
       (aset reply-to-name i ?\ ))
-    (vm-set-reply-to-name-of 
+    (vm-set-decoded-reply-to-name-of 
      m (vm-decode-mime-encoded-words-in-string reply-to-name))
-    (vm-set-reply-to-of 
+    (vm-set-decoded-reply-to-of 
      m (vm-decode-mime-encoded-words-in-string reply-to))))
 
 (defconst vm-su-address-format
@@ -1687,23 +1697,84 @@ the `reply-to' and `reply-to-name' entries of the cached-data vector."
       (setq list (cdr list)))
     (setq names (nreverse names))
     ;; added by jwz for fixed vm-parse-addresses
-    (vm-set-to-of m (mapconcat 'identity addresses ", "))
-    (vm-set-to-names-of m (mapconcat 'identity names ", "))))
+    (vm-set-decoded-to-cc-of 
+     m (vm-decode-mime-encoded-words-in-string 
+	(mapconcat 'identity addresses ", ")))
+    (vm-set-decoded-to-cc-names-of 
+     m (vm-decode-mime-encoded-words-in-string 
+	(mapconcat 'identity names ", ")))))
 
-(defun vm-su-to (m)
-  "Returns the recipient addresses of M as a string, either from
-the stored entry (`vm-to-of') or recalculating them if necessary.
-The result is a mime-decoded string with text properties.  
-							USR 2010-05-13"
-  (or (vm-to-of m) (progn (vm-su-do-recipients m) (vm-to-of m))))
+(defun vm-su-do-addressees (m)
+  (let ((mail-use-rfc822 t) i names addresses to list full-name)
+    (setq to (or (vm-get-header-contents m "To:" ", ")
+		 (vm-get-header-contents m "Apparently-To:" ", ")
+		 (vm-get-header-contents m "Newsgroups:" ", ")
+		 ;; desperation....
+		 (user-login-name))
+	  addresses (condition-case err
+                        (rfc822-addresses to)
+                      (error
+                       (vm-warn 0 5 err)
+                       (list "corrupted-header"))))
+    (setq list (vm-parse-addresses to)) ; adds text properties for charsets
+    (while list
+      ;; Just like vm-su-do-author:
+      (setq full-name (or (nth 0 (funcall vm-chop-full-name-function
+					  (car list)))
+			  (car list)))
+      ;; If double quotes are around the full name, fish the name out.
+      (if (string-match "\\`\"\\([^\"]+\\)\"\\'" full-name)
+	  (setq full-name
+		(substring full-name (match-beginning 1) (match-end 1))))
+      (while (setq i (string-match "\n" full-name i))
+	(aset full-name i ?\ ))
+      (setq names (cons full-name names))
+      (setq list (cdr list)))
+    (setq names (nreverse names))
+    ;; added by jwz for fixed vm-parse-addresses
+    (vm-set-decoded-to-of 
+     m (vm-decode-mime-encoded-words-in-string 
+	(mapconcat 'identity addresses ", ")))
+    (vm-set-decoded-to-names-of 
+     m (vm-decode-mime-encoded-words-in-string 
+	(mapconcat 'identity names ", ")))))
 
-(defun vm-su-to-names (m)
-  "Returns the recipient names of M as a string, either from
-the stored entry (`vm-to-names-of') or recalculating them if necessary.
-The result is a mime-decoded string with text properties.  
-							USR 2010-05-13"
-  (or (vm-to-names-of m) (progn (vm-su-do-recipients m) (vm-to-names-of m))))
+(defun vm-su-decoded-to (m)
+  "Returns the email addresses of the addressees of M as a string,
+either from the stored entry (`vm-decoded-to-of') or
+recalculating them if necessary. The result is a mime-decoded
+string with text properties.  			USR 2012-10-07"
+  (or (vm-decoded-to-of m) 
+      (progn (vm-su-do-addressees m) (vm-decoded-to-of m))))
+(defalias 'vm-su-to 'vm-su-decoded-to)
+
+(defun vm-su-decoded-to-names (m)
+  "Returns the addressees of M as a string, either from the
+stored entry (`vm-decoded-to-names-of') or recalculating them if
+necessary.  The result is a mime-decoded string with text
+properties.  					USR 2012-10-07"
+  (or (vm-decoded-to-names-of m) 
+      (progn (vm-su-do-addressees m) (vm-decoded-to-names-of m))))
+(defalias 'vm-su-to-names 'vm-su-decoded-to-names)
 				  
+(defun vm-su-decoded-to-cc (m)
+  "Returns the recipient addresses of M as a string, either from
+the stored entry (`vm-decoded-to-cc-of') or recalculating them if
+necessary. The result is a mime-decoded string with text properties.  
+							USR 2012-10-07"
+  (or (vm-decoded-to-cc-of m) 
+      (progn (vm-su-do-recipients m) (vm-decoded-to-cc-of m))))
+(defalias 'vm-su-to-cc 'vm-su-decoded-to-cc)
+
+(defun vm-su-decoded-to-cc-names (m)
+  "Returns the recipient names of M as a string, either from
+the stored entry (`vm-decoded-to-cc-names-of') or recalculating them
+if necessary.  The result is a mime-decoded string with text properties.  
+							USR 2012-10-07"
+  (or (vm-decoded-to-cc-names-of m) 
+      (progn (vm-su-do-recipients m) (vm-decoded-to-cc-names-of m))))
+(defalias 'vm-su-to-cc-names 'vm-su-decoded-to-cc-names)
+
 ;;;###autoload
 (defun vm-su-message-id (m)
   "Returns the message id of M.  It is a mime-encoded string.
@@ -1744,12 +1815,12 @@ entry (`vm-line-count-of') or recalculating it if necessary.  USR 2010-05-13"
 			 (vm-text-end-of (vm-real-message-of m)))))))))
 
 ;;;###autoload
-(defun vm-su-subject (m)
+(defun vm-su-decoded-subject (m)
   "Returns the subject string of M, either from the stored
-entry (`vm-subject-of') or recalculating it if necessary.  It is a
+entry (`vm-decoded-subject-of') or recalculating it if necessary.  It is a
 mime-decoded string with text properties.  USR 2010-05-13"
-  (or (vm-subject-of m)
-      (vm-set-subject-of
+  (or (vm-decoded-subject-of m)
+      (vm-set-decoded-subject-of
        m
        (let ((subject (vm-decode-mime-encoded-words-in-string
                        (or (vm-get-header-contents m "Subject:") "")))
@@ -1757,14 +1828,16 @@ mime-decoded string with text properties.  USR 2010-05-13"
 	 (while (string-match "\n[ \t]*" subject)
 	   (setq subject (replace-match " " nil t subject)))
 	 subject ))))
+(defalias 'vm-su-subject 'vm-su-decoded-subject)
 
-(defun vm-su-summary-subject (m)
+(defun vm-su-decoded-summary-subject (m)
   "Returns the subject string of M, appropriate for display in
 summary lines.  It is either from the stored
-entry (`vm-summary-subject-of') or recalculating it if necessary.  It is a
-mime-decoded string with text properties.  USR 2010-05-13"
-  (or (vm-summary-subject-of m)
-      (vm-set-summary-subject-of
+entry (`vm-decoded-summary-subject-of') or recalculating it if
+necessary.  It is a mime-decoded string with text properties.
+							USR 2010-05-13"
+  (or (vm-decoded-summary-subject-of m)
+      (vm-set-decoded-summary-subject-of
        m
        (let ((subject (vm-decode-mime-encoded-words-in-string
                        (or (vm-get-header-contents m "Subject:") "")))
@@ -1773,6 +1846,7 @@ mime-decoded string with text properties.  USR 2010-05-13"
 	 (while (string-match "\n[ \t]*" subject)
 	   (setq subject (replace-match " " nil t subject)))
 	 subject ))))
+(defalias 'vm-su-summary-subject 'vm-su-decoded-summary-subject)
 
 (defun vm-su-trim-subject (subject)
   "Given SUBJECT string (which should be MIME-decoded with
@@ -1803,23 +1877,27 @@ The other prefixes and suffixes (`vm-subject-ignored-prefix' and
 		   (function vm-collapse-whitespace)))
     (concat prefix subject) ))
 
-(defun vm-su-summary (m)
+(defun vm-su-decoded-tokenized-summary (m)
   "Returns the tokenized summary line of M, either from the
-stored entry (`vm-summary-of') or recalculating it if necessary.
-The summary line is a mime-decoded string with text properties.
+stored entry (`vm-decoded-tokenized-summary-of') or recalculating it
+if necessary.  The summary line is a mime-decoded string with text
+properties. 
 						  USR 2010-05-13"
   (if (and (vm-virtual-message-p m) (not (vm-virtual-messages-of m)))
       (or (vm-virtual-summary-of m)
 	  (save-excursion
 	    (vm-select-folder-buffer)
-	    (vm-set-virtual-summary-of m (vm-summary-sprintf
-					  vm-summary-format m t))
+	    (vm-set-virtual-summary-of 
+	     m (vm-summary-sprintf vm-summary-format m t))
 	    (vm-virtual-summary-of m)))
-    (or (vm-summary-of m)
+    (or (vm-decoded-tokenized-summary-of m)
 	(save-excursion
 	  (vm-select-folder-buffer)
-	  (vm-set-summary-of m (vm-summary-sprintf vm-summary-format m t))
-	  (vm-summary-of m)))))
+	  ;; FIXME Is this being set to a decoded string?  USR, 2012-10-07
+	  (vm-set-decoded-tokenized-summary-of 
+	   m (vm-summary-sprintf vm-summary-format m t))
+	  (vm-decoded-tokenized-summary-of m)))))
+(defalias 'vm-su-summary 'vm-su-decoded-tokenized-summary)
 
 ;;;###autoload
 (defun vm-fix-my-summary (&optional kill-local-summary)
@@ -1833,7 +1911,7 @@ Call this function if you made changes to `vm-summary-format'."
   (let ((mp vm-message-list))
     ;; Erase all the cached summary and threading data
     (while mp
-      (vm-set-summary-of (car mp) nil)
+      (vm-set-decoded-tokenized-summary-of (car mp) nil)
       (vm-set-thread-indentation-of (car mp) nil)
       (vm-set-thread-list-of (car mp) nil)
       (vm-set-thread-subtree-of (car mp) nil)
@@ -1869,14 +1947,15 @@ Call this function if you made changes to `vm-summary-format'."
     "" ))
 
 (defun vm-su-labels (m)
-  (or (vm-label-string-of m)
-      (vm-set-label-string-of
+  (or (vm-decoded-label-string-of m)
+      ;; FIXME Is this being set to a decoded string?
+      (vm-set-decoded-label-string-of
        m
        (mapconcat 
 	'identity 
-	(sort (copy-sequence (vm-labels-of m)) 'string-lessp)
+	(sort (copy-sequence (vm-decoded-labels-of m)) 'string-lessp)
 	","))
-      (vm-label-string-of m)))
+      (vm-decoded-label-string-of m)))
 
 (defun vm-make-folder-summary ()
   (make-vector vm-folder-summary-vector-length nil))

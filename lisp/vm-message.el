@@ -204,20 +204,28 @@ works in all VM buffers."
 (defsubst vm-thread-root-flag (message) (aref (aref message 2) 16))
 
 ;; message cached data
-(defconst vm-cached-data-vector-length 40)
+(defconst vm-cached-data-vector-length 50)
 (defconst vm-cached-data-fields
-  [:byte-count :weekday :monthday :month :year :hour :zone
-	       :full-name :from :message-id :line-count :subject
-	       :vheaders-regexp :to :to-names :month-number
-	       :sortable-datestring :sortable-subject
-	       :summary :parent :references
-	       :body-to-be-discarded
-	       :body-to-be-retrieved
-	       :uid :imap-uid-validity :spam-score
-	       :headers-to-be-retrieved :headers-to-be-discarded
-	       :summary-subject :declared-parent :declared-duplicates
+  [:byte-count :weekday :monthday :month :year :hour :zone	 ; 0-6
+	       :decoded-full-name :decoded-from			 ; 7-8
+	       :message-id :line-count :decoded-tokenized-subject ; 9-11
+	       :vheaders-regexp					 ; 12
+	       :decoded-to :decoded-to-names :month-number	 ; 13-15
+	       :sortable-datestring :sortable-subject		 ; 16-17
+	       :decoded-summary :parent :references 		 ; 18-20
+	       :body-to-be-discarded				 ; 21
+	       :body-to-be-retrieved				 ; 22
+	       :uid :imap-uid-validity :spam-score		 ; 23-25
+	       :headers-to-be-retrieved :headers-to-be-discarded ; 26-27
+	       :decoded-summary-subject				 ; 28
+	       :declared-parent :declared-duplicates		 ; 29-30
 	       :d-weekday :d-monthday :d-month :d-year :d-hour :d-zone
-	       :unused :unsed :unused])
+								 ; 31-36
+	       :decoded-reply-to-name :decoded-reply-to	         ; 37-38
+	       :decoded-to-cc-names :decoded-to-cc	         ; 39-40
+	       :unused :unused :unused :unused :unused :unused	 ; 41-46
+	       :unused :unused :unused				 ; 47-49
+	       ])
 ;; message size in bytes (as a string)
 (defsubst vm-byte-count-of (message) (aref (aref message 3) 0))
 ;; weekday sent
@@ -233,34 +241,41 @@ works in all VM buffers."
 ;; timezone
 (defsubst vm-zone-of (message) (aref (aref message 3) 6))
 ;; message author's full name (Full-Name: or gouged from From:)
-(defsubst vm-full-name-of (message) (aref (aref message 3) 7))
+(defsubst vm-decoded-full-name-of (message) (aref (aref message 3) 7))
+(defalias 'vm-full-name-of 'vm-decoded-full-name-of)
 ;; message author address (gouged from From:)
-(defsubst vm-from-of (message) (aref (aref message 3) 8))
+(defsubst vm-decoded-from-of (message) (aref (aref message 3) 8))
+(defalias 'vm-from-of 'vm-decoded-from-of)
 ;; message ID (Message-Id:)
 (defsubst vm-message-id-of (message) (aref (aref message 3) 9))
 ;; number of lines in message (as a string)
 (defsubst vm-line-count-of (message) (aref (aref message 3) 10))
 ;; message subject (Subject:)
-(defsubst vm-subject-of (message) (aref (aref message 3) 11))
+(defsubst vm-decoded-subject-of (message) (aref (aref message 3) 11))
+(defalias 'vm-subject-of 'vm-decoded-subject-of)
 ;; Regexp that can be used to find the start of the already ordered headers.
 (defsubst vm-vheaders-regexp-of (message)
   (aref (aref message 3) 12))
 ;; Addresses of recipients in a comma separated list
-(defsubst vm-to-of (message) (aref (aref message 3) 13))
+(defsubst vm-decoded-to-of (message) (aref (aref message 3) 13))
+(defalias 'vm-to-of 'vm-decoded-to-of)
 ;; Full names of recipients in a comma separated list.  Addresses if
 ;; full names not available.
-(defsubst vm-to-names-of (message) (aref (aref message 3) 14))
+(defsubst vm-decoded-to-names-of (message) (aref (aref message 3) 14))
+(defalias 'vm-to-names-of 'vm-decoded-to-names-of)
 ;; numeric month sent
 (defsubst vm-month-number-of (message) (aref (aref message 3) 15))
 ;; sortable date string (used for easy sorting, naturally)
 (defsubst vm-sortable-datestring-of (message)
   (aref (aref message 3) 16))
 ;; sortable subject, re: garbage removed
-(defsubst vm-sortable-subject-of (message)
+(defsubst vm-decoded-sortable-subject-of (message)
   (aref (aref message 3) 17))
+(defalias 'vm-sortable-subject-of 'vm-decoded-sortable-subject-of)
 ;; tokenized summary entry
-(defsubst vm-summary-of (message)
+(defsubst vm-decoded-tokenized-summary-of (message)
   (aref (aref message 3) 18))
+(defalias 'vm-summary-of 'vm-decoded-tokenized-summary-of)
 ;; parent of this message, as determined by threading
 (defsubst vm-parent-of (message)
   (aref (aref message 3) 19))
@@ -301,12 +316,13 @@ works in all VM buffers."
 (defsubst vm-headers-to-be-discarded-of (message)
   (aref (aref message 3) 27))
 ;; subject string of the message for summary purposes
-(defsubst vm-summary-subject-of (message)
+(defsubst vm-decoded-summary-subject-of (message)
   (aref (aref message 3) 28))
+(defalias 'vm-summary-subject-of 'vm-decoded-summary-subject-of)
 ;; the thread parent message as declared by the user (not "cached" data)
 (defsubst vm-declared-parent-of (message)
   (aref (aref message 3) 29))
-;; the list of duplicate messages as declared by the user 
+;; the list of duplicate messages as declared by the user
 ;; (not "cacahed" data)
 (defsubst vm-declared-duplicates-of (message)
   (aref (aref message 3) 30))
@@ -324,11 +340,21 @@ works in all VM buffers."
 (defsubst vm-d-zone-of (message)
   (aref (aref message 3) 36))
 ;; message Reply-To header's full name part
-(defsubst vm-reply-to-name-of (message) 
+(defsubst vm-decoded-reply-to-name-of (message)
   (aref (aref message 3) 37))
+(defalias 'vm-reply-to-name-of 'vm-decoded-reply-to-name-of)
 ;; message Reply-To header's address part
-(defsubst vm-reply-to-of (message) 
+(defsubst vm-decoded-reply-to-of (message)
   (aref (aref message 3) 38))
+(defalias 'vm-reply-to-of 'vm-decoded-reply-to-of)
+;; message recipients' full names
+(defsubst vm-decoded-to-cc-names-of (message)
+  (aref (aref message 3) 39))
+(defalias 'vm-to-cc-names-of 'vm-decoded-to-cc-names-of)
+;; message recipients' addresses
+(defsubst vm-decoded-to-cc-of (message)
+  (aref (aref message 3) 40))
+(defalias 'vm-to-cc-of 'vm-decoded-to-cc-of)
 
 ;; extra data shared by virtual messages if vm-virtual-mirror is non-nil
 (defconst vm-mirror-data-vector-length 6)
@@ -343,9 +369,11 @@ works in all VM buffers."
 ;; nil if all attribute changes have been stuffed into the folder buffer
 (defsubst vm-stuff-flag-of (message) (aref (aref message 4) 2))
 ;; list of labels attached to this message
-(defsubst vm-labels-of (message) (aref (aref message 4) 3))
-;; comma list of labels
-(defsubst vm-label-string-of (message) (aref (aref message 4) 4))
+(defsubst vm-decoded-labels-of (message) (aref (aref message 4) 3))
+(defalias 'vm-labels-of 'vm-decoded-labels-of)
+;; comma-separated list of labels
+(defsubst vm-decoded-label-string-of (message) (aref (aref message 4) 4))
+(defalias 'vm-label-string-of 'vm-decoded-label-string-of)
 ;; attribute modification flag for this message
 ;; non-nil if attributes need to be saved
 (defsubst vm-attribute-modflag-of (message) (aref (aref message 4) 5))
@@ -435,30 +463,37 @@ works in all VM buffers."
   (aset (aref message 3) 5 val))
 (defsubst vm-set-zone-of (message val)
   (aset (aref message 3) 6 val))
-(defsubst vm-set-full-name-of (message author)
+(defsubst vm-set-decoded-full-name-of (message author)
   (aset (aref message 3) 7 author))
-(defsubst vm-set-from-of (message author)
+(defalias 'vm-set-full-name-of 'vm-set-decoded-full-name-of)
+(defsubst vm-set-decoded-from-of (message author)
   (aset (aref message 3) 8 author))
+(defalias 'vm-from-of 'vm-set-decoded-from-of)
 (defsubst vm-set-message-id-of (message id)
   (aset (aref message 3) 9 id))
 (defsubst vm-set-line-count-of (message count)
   (aset (aref message 3) 10 count))
-(defsubst vm-set-subject-of (message subject)
+(defsubst vm-set-decoded-subject-of (message subject)
   (aset (aref message 3) 11 subject))
+(defalias 'vm-set-subject-of 'vm-set-decoded-subject-of)
 (defsubst vm-set-vheaders-regexp-of (message regexp)
   (aset (aref message 3) 12 regexp))
-(defsubst vm-set-to-of (message recips)
+(defsubst vm-set-decoded-to-of (message recips)
   (aset (aref message 3) 13 recips))
-(defsubst vm-set-to-names-of (message recips)
+(defalias 'vm-set-to-of 'vm-set-decoded-to-of)
+(defsubst vm-set-decoded-to-names-of (message recips)
   (aset (aref message 3) 14 recips))
+(defalias 'vm-set-to-names-of 'vm-set-decoded-to-names-of)
 (defsubst vm-set-month-number-of (message val)
   (aset (aref message 3) 15 val))
 (defsubst vm-set-sortable-datestring-of (message val)
   (aset (aref message 3) 16 val))
-(defsubst vm-set-sortable-subject-of (message val)
+(defsubst vm-set-decoded-sortable-subject-of (message val)
   (aset (aref message 3) 17 val))
-(defsubst vm-set-summary-of (message val)
+(defalias 'vm-set-sortable-subject-of 'vm-set-decoded-sortable-subject-of)
+(defsubst vm-set-decoded-tokenized-summary-of (message val)
   (aset (aref message 3) 18 val))
+(defalias 'vm-set-summary-of 'vm-set-decoded-tokenized-summary-of)
 (defsubst vm-set-parent-of (message val)
   (aset (aref message 3) 19 val))
 (defsubst vm-set-references-of (message val)
@@ -481,8 +516,9 @@ works in all VM buffers."
 ;;   (aset (aref message 3) 26 val))
 (defsubst vm-set-headers-to-be-discarded-of (message val)
   (aset (aref message 3) 27 val))
-(defsubst vm-set-summary-subject-of (message val)
+(defsubst vm-set-decoded-summary-subject-of (message val)
   (aset (aref message 3) 28 val))
+(defalias 'vm-set-summary-subject-of 'vm-set-decoded-summary-subject-of)
 (defsubst vm-set-declared-parent-of (message val)
   (aset (aref message 3) 29 val))
 (defsubst vm-set-declared-duplicates-of (message val)
@@ -499,10 +535,18 @@ works in all VM buffers."
   (aset (aref message 3) 35 val))
 (defsubst vm-set-d-zone-of (message val)
   (aset (aref message 3) 36 val))
-(defsubst vm-set-reply-to-name-of (message author)
+(defsubst vm-set-decoded-reply-to-name-of (message author)
   (aset (aref message 3) 37 author))
-(defsubst vm-set-reply-to-of (message author)
+(defalias 'vm-set-reply-to-name-of 'vm-set-decoded-reply-to-name-of)
+(defsubst vm-set-decoded-reply-to-of (message author)
   (aset (aref message 3) 38 author))
+(defalias 'vm-set-reply-to-of 'vm-set-decoded-reply-to-of)
+(defsubst vm-set-decoded-to-cc-names-of (message author)
+  (aset (aref message 3) 39 author))
+(defalias 'vm-set-to-cc-names-of 'vm-set-decoded-to-cc-names-of)
+(defsubst vm-set-decoded-to-cc-of (message author)
+  (aset (aref message 3) 40 author))
+(defalias 'vm-set-to-cc-of 'vm-set-decoded-to-cc-of)
 
 (defsubst vm-set-edit-buffer-of (message buf)
   (aset (aref message 4) 0 buf))
@@ -512,10 +556,12 @@ works in all VM buffers."
   (aset (aref message 4) 1 sym))
 (defsubst vm-set-stuff-flag-of (message val)
   (aset (aref message 4) 2 val))
-(defsubst vm-set-labels-of (message labels)
+(defsubst vm-set-decoded-labels-of (message labels)
   (aset (aref message 4) 3 labels))
-(defsubst vm-set-label-string-of (message string)
+(defalias 'vm-set-labels-of 'vm-set-decoded-labels-of)
+(defsubst vm-set-decoded-label-string-of (message string)
   (aset (aref message 4) 4 string))
+(defalias 'vm-set-label-string-of 'vm-set-decoded-label-string-of)
 (defsubst vm-set-attribute-modflag-of (message flag)
   (aset (aref message 4) 5 flag))
 
@@ -530,59 +576,55 @@ works in all VM buffers."
 
     ;; byte-count
     (aset new-vector 0 (aref vector 0))
-    ;; weekday
-    (aset new-vector 1 (vm-mime-encode-words-in-string (aref vector 1)))
+    ;; weekday - ASCII as per RFC 5322
+    (aset new-vector 1 (aref vector 1))
     ;; monthday
     (aset new-vector 2 (aref vector 2))
-    ;; month
-    (aset new-vector 3 (vm-mime-encode-words-in-string (aref vector 3)))
+    ;; month - ASCII as per RFC5322
+    (aset new-vector 3 (aref vector 3))
     ;; year
     (aset new-vector 4 (aref vector 4))
     ;; hour
     (aset new-vector 5 (aref vector 5))
     ;; zone
     (aset new-vector 6 (aref vector 6))
-    ;; full-name
+    ;; decoded-full-name
     (aset new-vector 7
 	  (vm-reencode-mime-encoded-words-in-string (aref vector 7)))
-    ;; from
+    ;; decoded-from
     (aset new-vector 8
 	  (vm-reencode-mime-encoded-words-in-string (aref vector 8)))
     ;; message-id
     (aset new-vector 9
-	  (vm-reencode-mime-encoded-words-in-string (aref vector 9)))
+	  (aref vector 9))
     ;; line-count
     (aset new-vector 10 (aref vector 10))
-    ;; subject
+    ;; decoded-subject
     (aset new-vector 11
 	  (vm-reencode-mime-encoded-words-in-string (aref vector 11)))
-    ;; vheaders-regexp
-    (aset new-vector 12 (vm-mime-encode-words-in-string (aref vector 12)))
-    ;; to
+    ;; vheaders-regexp - all header fields should be ASCII
+    (aset new-vector 12 (aref vector 12))
+    ;; decoded-to
     (aset new-vector 13
 	  (vm-reencode-mime-encoded-words-in-string (aref vector 13)))
-    ;; to-names
+    ;; decoded-to-names
     (aset new-vector 14
 	  (vm-reencode-mime-encoded-words-in-string (aref vector 14)))
     ;; month-number
     (aset new-vector 15 (aref vector 15))
     ;; sortable-date-string
-    (aset new-vector 16
-	  (vm-reencode-mime-encoded-words-in-string (aref vector 16)))
-    ;; sortable-subject
+    (aset new-vector 16 (aref vector 16))
+    ;; decoded-sortable-subject
     (aset new-vector 17
 	  (vm-reencode-mime-encoded-words-in-string (aref vector 17)))
-    ;; summary
+    ;; decoded-tokenized-summary
     (aset new-vector 18
 	  (vm-reencode-mime-encoded-words-in-tokenized-summary
 	   (aref vector 18)))
     ;; parent
-    (aset new-vector 19
-	  (vm-reencode-mime-encoded-words-in-string (aref vector 19)))
+    (aset new-vector 19 (aref vector 19))
     ;; references
-    (aset new-vector 20
-	  (mapcar (function vm-reencode-mime-encoded-words-in-string)
-		  (aref vector 20)))
+    (aset new-vector 20 (aref vector 20))
     ;; body-to-be-discarded (formerly headers-to-be-retrieved)
     (aset new-vector 21 (aref vector 21))
     ;; body-to-be-retrieved
@@ -597,29 +639,57 @@ works in all VM buffers."
     (aset new-vector 26 (aref vector 26))
     ;; headers-to-be-discarded
     (aset new-vector 27 (aref vector 27))
-    ;; summary-subject
-    (aset new-vector 28 
+    ;; decoded-summary-subject
+    (aset new-vector 28
 	  (vm-reencode-mime-encoded-words-in-string (aref vector 28)))
     ;; declared-parent
-    (aset new-vector 29 
-	  (vm-reencode-mime-encoded-words-in-string (aref vector 29)))
+    (aset new-vector 29
+	  (aref vector 29))
     ;; declared-duplicates
-    (aset new-vector 30 
-	  (mapcar
-	   (function vm-reencode-mime-encoded-words-in-string)
-	   (aref vector 30)))
-    ;; d-weekday
-    (aset new-vector 31 (vm-mime-encode-words-in-string (aref vector 31)))
+    (aset new-vector 30
+	  (aref vector 30))
+    ;; d-weekday - ASCII as per RFC
+    (aset new-vector 31 (aref vector 31))
     ;; d-monthday
     (aset new-vector 32 (aref vector 32))
     ;; d-month
-    (aset new-vector 33 (vm-mime-encode-words-in-string (aref vector 33)))
+    (aset new-vector 33 (aref vector 33))
     ;; d-year
     (aset new-vector 34 (aref vector 34))
     ;; d-hour
     (aset new-vector 35 (aref vector 35))
     ;; d-zone
     (aset new-vector 36 (aref vector 36))
+    ;; decoded-reply-to-name
+    (aset new-vector 37 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 37)))
+    ;; decoded-reply-to
+    (aset new-vector 38 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 38)))
+    ;; decoded-to-cc-names
+    (aset new-vector 39 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 39)))
+    ;; decoded-to-cc
+    (aset new-vector 40 
+	  (vm-reencode-mime-encoded-words-in-string (aref vector 40)))
+    ;; unused
+    (aset new-vector 41 (aref vector 41))
+    ;; unused
+    (aset new-vector 42 (aref vector 42))
+    ;; unused
+    (aset new-vector 43 (aref vector 43))
+    ;; unused
+    (aset new-vector 44 (aref vector 44))
+    ;; unused
+    (aset new-vector 45 (aref vector 45))
+    ;; unused
+    (aset new-vector 46 (aref vector 46))
+    ;; unused
+    (aset new-vector 47 (aref vector 47))
+    ;; unused
+    (aset new-vector 48 (aref vector 48))
+    ;; unused
+    (aset new-vector 49 (aref vector 49))
     new-vector))
 
 

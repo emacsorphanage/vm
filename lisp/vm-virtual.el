@@ -741,6 +741,11 @@ messages in a thread."
 
 (defun vm-vs-recipient (m regexp)
   "Virtual selector to check if any recipient of the message matches REGEXP."
+  (or (string-match regexp (vm-su-to-cc m))
+      (string-match regexp (vm-su-to-cc-names m))))
+
+(defun vm-vs-addressee (m regexp)
+  "Virtual selector to check if any addressee of the message matches REGEXP."
   (or (string-match regexp (vm-su-to m))
       (string-match regexp (vm-su-to-names m))))
 
@@ -885,7 +890,7 @@ an instance of REGEXP."
 
 (defun vm-vs-label (m arg)
   "Virtual selector to check of ARG is a label of the message."
-  (vm-member arg (vm-labels-of m)))
+  (vm-member arg (vm-decoded-labels-of m)))
 
 (defun vm-vs-text (m regexp)
   "Virtual selector to check if the body of the message has an

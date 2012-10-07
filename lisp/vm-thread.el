@@ -700,7 +700,7 @@ being initialized."
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
 	  (vm-inform 7 "%s: Building threads... %d%%" 
-		     (buffer-name) (* (/ (+ n 0.0) total) 100))))
+		     (buffer-name) (truncate (* n 100) total))))
 
     ;; use the References header to set parenting information
     ;; for ancestors of this message.  This does not override
@@ -735,7 +735,7 @@ being initialized."
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
 	  (vm-inform 7 "%s: Building threads... %d%%" 
-		     (buffer-name) (* (/ (+ n 0.0) total) 100)))
+		     (buffer-name) (truncate (* n 100) total)))
       )))
 
 (defun vm-th-clear-thread-lists (id-sym)

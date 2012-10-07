@@ -4493,11 +4493,12 @@ information about the message into the final summary.
 
 Recognized specifiers are:
 @table @code
+
 @item a
 attribute indicators (always four characters wide)
 @*
-The first char is  `D', `N', `U' or ` ' for deleted, new, unread
-and read messages respectively.
+The first char is  `D', `N', `U' or `!' for deleted, new, unread
+and flagged messages respectively, and ` ' if none of the conditions apply.
 @*
 The second char is `F', `W' or ` ' for filed (saved) or written
 messages.
@@ -4506,70 +4507,108 @@ The third char is `R', `Z' or ` ' for messages replied to,
 and forwarded messages.
 @*
 The fourth char is `E' if the message has been edited, ` ' otherwise.
+
+
 @item A
 longer version of attributes indicators (seven characters
 wide).@*
 @*
-The first char is  `D', `N', `U' or ` ' for deleted, new, unread
-and read messages respectively.
+The first char is  `D', `N', `U' or `!' for deleted, new, unread
+and flagged messages respectively, and ` ' if none of the conditions apply.
 @*
-The second is `r' or ` ', for message replied to.
+The second is `R' or ` ', for message replied to.
 @*
-The third is `z' or ` ', for messages forwarded.
+The third is `Z' or ` ', for messages forwarded.
 @*
-The fourth is `b' or ` ', for messages redistributed.
+The fourth is `B' or ` ', for messages redistributed.
 @*
-The fifth is `f' or ` ', for messages filed.
+The fifth is `F' or ` ', for messages filed.
 @*
-The sixth is `w' or ` ', for messages written.
+The sixth is `W' or ` ', for messages written.
 @*
 The seventh is `e' or ` ', for messages that have been edited.
-@vindex vm-summary-attachment-indicator
-@item P
-indicator for a message with attachments.
-The variable @code{vm-summary-attachment-indicator} is the inserted
-string, by default a @kbd{$}. 
+
+
+@item b
+shorter version of the attribute indicators (one character wide).
+@*
+`D', `N', `U' or `!' for deleted, new, unread
+and flagged messages respectively, and ` ' if none of the conditions apply.
+
+@item *
+message mark, `*' if the message is marked, ` ' otherwise
+
 @vindex vm-summary-postponed-indicator
 @item p
-indicator for a postponed message. 
-The variable @code{vm-summary-postponed-indicator} is the inserted
-string, by default a @kbd{P}. 
-@item c
-number of characters in message (ignoring headers)
-@item S
-human readable size of the message
-@item d
-numeric day of month message sent
-@item f
-author's address
-@item F
-author's full name (same as f if full name not found)
-@item h
-hour:min:sec message sent
-@item H
-hour:min message sent
-@item i
-message ID
+indicator for a postponed message: @kbd{P} or the string customized by
+@code{vm-summary-postponed-indicator}
+
+@vindex vm-summary-attachment-indicator
+@item P
+indicator for a message with attachments: @kbd{$} or the string customized
+via @code{vm-summary-attachment-indicator}
+
 @item I
 thread indentation
-@item l
-number of lines in message (ignoring headers)
-@item L
-labels (as a comma list)
-@item m
-month message sent
-@item M
-numeric month message sent (January = 1)
+
 @item n
 message number
-@item s
-message subject
+
+@item i
+message ID
+
+@item c
+number of characters in message (ignoring headers)
+
+@item S
+human readable size of the message
+
+@item l
+number of lines in message (ignoring headers)
+
+@item d
+numeric day of month message sent
+
+@item w
+day of the week message sent
+
+@item m
+month message sent
+
+@item M
+numeric month message sent (January = 1)
+
+@item y
+year message sent
+
+@item h
+hour:min:sec message sent
+
+@item H
+hour:min message sent
+
+@item z
+timezone of date when the message was sent
+
+@item f
+author's address
+
+@item F
+author's full name (same as f if full name not found)
+
 @item t
 addresses of the recipients of the message, in a comma-separated list
+
 @item T
-full names of the recipients of the message, in a comma-separated list
-If a full name cannot be found, the corresponding address is used
-instead.
+full names of the recipients of the message, in a comma-separated list (or
+their email addresses if full names are not given)
+
+@item s
+message subject
+
+@item L
+labels (as a comma list)
+
 @item U
 user defined specifier.  The next character in the format
 string should be a letter.  VM will call the function
@@ -4580,20 +4619,14 @@ will be passed a message struct as an argument.
 The function should return a string, which VM will insert into
 the summary as it would for information from any other summary
 specifier.
-@item w
-day of the week message sent
-@item y
-year message sent
-@item z
-timezone of date when the message was sent
-@item *
-`*' if the message is marked, ` ' otherwise
+
 @item (
 starts a group, terminated by %).  Useful for specifying
 the field width and precision for the concatenation of
 group of format specifiers.  Example: \"%.35(%I%s%)\"
 specifies a maximum display width of 35 characters for the
 concatenation of the thread indentation and the subject.
+
 @item )
 ends a group.
 @end table

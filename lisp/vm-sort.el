@@ -24,7 +24,7 @@
 
 (provide 'vm-sort)
 
-(eval-when-compile
+(eval-and-compile
   (require 'vm-misc)
   (require 'vm-minibuf)
   (require 'vm-folder)
@@ -256,10 +256,11 @@ non-nil, then the \"Delivery-Date\" header is used instead of the
   "Returns the subject string of M, after stripping redundant prefixes
 and suffixes, which is suitable for sorting by subject.  The string is
 MIME-decoded with possible text properties."
-  (or (vm-sortable-subject-of m)
+  (or (vm-decoded-sortable-subject-of m)
       (progn
-	(vm-set-sortable-subject-of m (vm-so-trim-subject (vm-su-subject m)))
-	(vm-sortable-subject-of m))))
+	(vm-set-decoded-sortable-subject-of 
+	 m (vm-so-trim-subject (vm-su-decoded-subject m)))
+	(vm-decoded-sortable-subject-of m))))
 
 (defun vm-so-trim-subject (subject)
   "Given SUBJECT string (which should be MIME-decoded with
@@ -737,13 +738,27 @@ that, if P1 and P2 are the oldest different ancestors of M1 and M2, then
 ;; 	  (t t))))
 
 (defun vm-sort-compare-recipients (m1 m2)
+  (let ((s1 (vm-su-to-cc m1))
+	(s2 (vm-su-to-cc m2)))
+    (cond ((string-lessp s1 s2) t)
+	  ((string-equal s1 s2) '=)
+	  (t nil))))
+
+(defun vm-sort-compare-recipients-r (m1 m2)
+  (let ((s1 (vm-su-to-cc m1))
+	(s2 (vm-su-to-cc m2)))
+    (cond ((string-lessp s1 s2) nil)
+	  ((string-equal s1 s2) '=)
+	  (t t))))
+
+(defun vm-sort-compare-addressees (m1 m2)
   (let ((s1 (vm-su-to m1))
 	(s2 (vm-su-to m2)))
     (cond ((string-lessp s1 s2) t)
 	  ((string-equal s1 s2) '=)
 	  (t nil))))
 
-(defun vm-sort-compare-recipients-r (m1 m2)
+(defun vm-sort-compare-addressees-r (m1 m2)
   (let ((s1 (vm-su-to m1))
 	(s2 (vm-su-to m2)))
     (cond ((string-lessp s1 s2) nil)

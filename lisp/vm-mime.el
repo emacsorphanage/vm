@@ -440,6 +440,7 @@ freshly parsing the message contents."
     (lambda () (vm-mime-base64-decode-region (point-min) (point-max))))))
 
 (defun vm-mime-base64-encode-string (string)
+  "Return the base64 encoding of multibyte STRING."
   (vm-with-string-as-temp-buffer
    string
    (function
@@ -467,6 +468,8 @@ freshly parsing the message contents."
 	  (insert "\r\n"))))))
       
 (defun vm-encode-coding-region (b-start b-end coding-system &rest foo)
+  "This is a wrapper function to `encode-coding-region' having the
+same effect."
   (let ((work-buffer nil)
 	start end
 	oldsize
@@ -496,7 +499,8 @@ freshly parsing the message contents."
       (and work-buffer (kill-buffer work-buffer)))))
 
 (defun vm-decode-coding-region (b-start b-end coding-system &rest foo)
-  "This is a wrapper for decode-coding-region, having the same effect."
+  "This is a wrapper function for `decode-coding-region', having the
+same effect."
   (let ((work-buffer nil)
 	start end
 	oldsize
@@ -7039,6 +7043,9 @@ describes what was deleted."
 	       (vm-set-mm-layout-display-error layout nil)))))))
 
 (defun vm-mime-encode-words (&optional encoding)
+  "MIME encode all words in the current buffer.  The optional argument
+ENCODING can be 'Q or 'B (for quoted-printable and base64
+respectively).  If none is specified, quoted-printbale is used."
   (goto-char (point-min))
 
   ;; find right encoding 
@@ -7087,8 +7094,9 @@ describes what was deleted."
 (defun vm-mime-encode-headers ()
   "Encodes the headers of a message.
 
-Only the words containing a non 7bit ASCII char are encoded, but not the whole
-header as this will cause trouble for the recipients and authors headers.
+Only the words containing a non-ASCII characters are encoded, but
+not the whole header as this will cause trouble for the
+recipient and author headers.
 
 Whitespace between encoded words is trimmed during decoding and thus those
 should be encoded together."

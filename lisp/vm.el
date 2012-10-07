@@ -274,7 +274,8 @@ deleted messages.  Use `###' to expunge deleted messages."
       (unless revisiting
 	(vm-assimilate-new-messages :read-attributes t
 				    :gobble-order gobble-headers 
-				    :run-hooks nil))
+				    :run-hooks nil)
+	(vm-stuff-folder-data t))
 
       (when (and set-vm-mode gobble-headers)
 	(vm-gobble-headers))

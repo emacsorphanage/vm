@@ -347,7 +347,7 @@ and thread indentation."
 	   ;; virtual messages mirroring this message.  the summary
 	   ;; entry cache must be cleared when an attribute of a
 	   ;; message that could appear in the summary has changed.
-	   (vm-set-summary-of m nil))
+	   (vm-set-decoded-tokenized-summary-of m nil))
 	 (when (vm-su-start-of m)
 	   (vm-add-to-list m vm-messages-needing-summary-update))
 	 (intern (buffer-name (vm-buffer-of m))
@@ -393,7 +393,7 @@ and thread indentation."
 		 ;; toss the cache.  this also tosses the cache of
 		 ;; any virtual messages sharing the same cache as
 		 ;; this message.
-		 (vm-set-summary-of m nil))
+		 (vm-set-decoded-tokenized-summary-of m nil))
 	       (when (vm-su-start-of (vm-real-message-of m))
 		 (vm-add-to-list (vm-real-message-of m)
 				 vm-messages-needing-summary-update))
@@ -439,7 +439,7 @@ on its presentation buffer, if any."
 		(vm-restore-buffer-modified-p omodified (current-buffer))))))
     ;; try to avoid calling vm-su-labels if possible so as to
     ;; avoid loading vm-summary.el.
-    (if (vm-labels-of (car vm-message-pointer))
+    (if (vm-decoded-labels-of (car vm-message-pointer))
 	(setq vm-ml-labels (vm-su-labels (car vm-message-pointer)))
       (setq vm-ml-labels nil))
     (setq vm-ml-message-number (vm-number-of (car vm-message-pointer)))
@@ -1588,7 +1588,9 @@ Supports version 4 format of attribute storage, for backward compatibility."
 
 	    (when (vm-stuff-flag-of (car mp))
 	      (vm-increment vm-upgrade-count))
-	    (vm-set-labels-of (car mp) (nth 2 data))
+	    (vm-set-decoded-labels-of 
+	     (car mp) 
+	     (mapcar 'vm-decode-mime-encoded-words-in-string (nth 2 data)))
 	    (vm-set-cached-data-of (car mp) cache)
 	    (vm-set-attributes-of (car mp) (car data)))
 	   ((and vm-berkeley-mail-compatibility
@@ -1690,7 +1692,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			    (match-end 1))
 			   labels))
 	(goto-char (match-end 0)))
-      (vm-set-labels-of message labels))))
+      (vm-set-decoded-labels-of message labels))))
 
 (defun vm-set-default-attributes (message-list)
   (let ((mp (or message-list vm-message-list)) attr access-method cache)
@@ -2096,7 +2098,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
            (setq vm-summary-format summary))
 	(let ((mp vm-message-list))
 	  (while mp
-	    (vm-set-summary-of (car mp) nil)
+	    (vm-set-decoded-tokenized-summary-of (car mp) nil)
 	    ;; force restuffing of cache to clear old
 	    ;; summary entry cache.
 	    (vm-set-stuff-flag-of (car mp) t)
@@ -2138,79 +2140,86 @@ FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
      (let ((old-buffer-modified-p (buffer-modified-p))
 	   (vm-mime-qp-encoder-program nil) ; use internal code
 	   (vm-mime-base64-encoder-program nil) ; for speed
-	   attributes cache
 	   (case-fold-search t)
 	   (buffer-read-only nil)
  	   ;; don't truncate the printing of large Lisp objects
  	   (print-length nil)
-	   opoint
 	   ;; This prevents file locking from occuring.  Disabling
 	   ;; locking can speed things noticeably if the lock
 	   ;; directory is on a slow device.  We don't need locking
 	   ;; here because the user shouldn't care about VM stuffing
 	   ;; its own status headers.
-	   (buffer-file-name nil)
-	   (delflag (vm-deleted-flag m)))
+	   (buffer-file-name nil))
        (unwind-protect
-	   (progn
-	     ;; don't put this folder's summary entry into another folder.
-	     (if for-other-folder
-		 (vm-set-summary-of m nil)
-	       (if (vm-su-start-of m)
-		   ;; fill the summary cache if it's not done already.
-		   (vm-su-summary m)))
-	     (setq attributes (vm-attributes-of m)
-		   cache (vm-cached-data-of m))
-	     (when (and delflag for-other-folder)
-	       (vm-set-deleted-flag-in-vector
-		(setq attributes (copy-sequence attributes)) nil))
-	     (when (eq vm-folder-type 'babyl)
-	       (vm-stuff-babyl-attributes m for-other-folder))
-             (when (eq vm-sync-thunderbird-status t)
-	       (vm-stuff-thunderbird-status m))
-	     (goto-char (vm-headers-of m))
-	     (while (re-search-forward vm-attributes-header-regexp
-				       (vm-text-of m) t)
-	       (delete-region (match-beginning 0) (match-end 0)))
-	     (goto-char (vm-headers-of m))
-	     (setq opoint (point))
-	     (insert			; insert-before-markers?
-	      vm-attributes-header " ("
-	      (let ((print-escape-newlines t))
-		(prin1-to-string attributes))
-	      "\n\t"
-              (let ((print-escape-newlines t))
-                (prin1-to-string (vm-mime-encode-words-in-cache-vector cache)))
-              "\n\t"
-	      (let ((print-escape-newlines t))
-		(prin1-to-string (vm-labels-of m)))
-	      ")\n")
-	     (set-marker (vm-headers-of m) opoint)
-	     (cond ((and (eq vm-folder-type 'From_)
-			 vm-berkeley-mail-compatibility)
-		    (goto-char (vm-headers-of m))
-		    (while (re-search-forward
-			    vm-berkeley-mail-status-header-regexp
-			    (vm-text-of m) t)
-		      (delete-region (match-beginning 0) (match-end 0)))
-		    (goto-char (vm-headers-of m))
-		    (cond ((not (vm-new-flag m))
-			   (insert-before-markers
-			    vm-berkeley-mail-status-header
-			    (if (vm-unread-flag m) "" "R")
-			    "O\n")
-			   (set-marker (vm-headers-of m) opoint)))))
-	     (if for-other-folder
-		 (vm-set-stuff-flag-of m nil) ; same effect as VM 7.19
-	       (vm-set-stuff-flag-of m nil))  ; new
-	     )
+	   (vm-stuff-message-data-internal m for-other-folder)
 	 (vm-restore-buffer-modified-p	; folder-buffer
 	  old-buffer-modified-p (current-buffer)))))))
+
+(defun vm-stuff-message-data-internal (m &optional for-other-folder)
+  "Stuff the attributes, labels, soft and cached data of the
+message M into the folder buffer.  The optional argument
+FOR-OTHER-FOLDER indicates <someting unknown>.  USR 2010-03-06"
+  (let (attributes cache opoint
+	(delflag (vm-deleted-flag m)))
+    (progn
+      ;; don't put this folder's summary entry into another folder.
+      (if for-other-folder
+	  (vm-set-decoded-tokenized-summary-of m nil)
+	(if (vm-su-start-of m)
+	    ;; fill the summary cache if it's not done already.
+	    (vm-su-summary m)))
+      (setq attributes (vm-attributes-of m)
+	    cache (vm-cached-data-of m))
+      (when (and delflag for-other-folder)
+	(vm-set-deleted-flag-in-vector
+	 (setq attributes (copy-sequence attributes)) nil))
+      (when (eq vm-folder-type 'babyl)
+	(vm-stuff-babyl-attributes m for-other-folder))
+      (when (eq vm-sync-thunderbird-status t)
+	(vm-stuff-thunderbird-status m))
+      (goto-char (vm-headers-of m))
+      (while (re-search-forward vm-attributes-header-regexp
+				(vm-text-of m) t)
+	(delete-region (match-beginning 0) (match-end 0)))
+      (goto-char (vm-headers-of m))
+      (setq opoint (point))
+      (insert				; insert-before-markers?
+       vm-attributes-header " ("
+       (let ((print-escape-newlines t))
+	 (prin1-to-string attributes))
+       "\n\t"
+       (let ((print-escape-newlines t))
+	 (prin1-to-string (vm-mime-encode-words-in-cache-vector cache)))
+       "\n\t"
+       (let ((print-escape-newlines t))
+	 (prin1-to-string (vm-decoded-labels-of m)))
+       ")\n")
+      (set-marker (vm-headers-of m) opoint)
+      (cond ((and (eq vm-folder-type 'From_)
+		  vm-berkeley-mail-compatibility)
+	     (goto-char (vm-headers-of m))
+	     (while (re-search-forward
+		     vm-berkeley-mail-status-header-regexp
+		     (vm-text-of m) t)
+	       (delete-region (match-beginning 0) (match-end 0)))
+	     (goto-char (vm-headers-of m))
+	     (cond ((not (vm-new-flag m))
+		    (insert-before-markers
+		     vm-berkeley-mail-status-header
+		     (if (vm-unread-flag m) "" "R")
+		     "O\n")
+		    (set-marker (vm-headers-of m) opoint)))))
+      (if for-other-folder
+	  (vm-set-stuff-flag-of m nil)	  ; same effect as VM 7.19
+	(vm-set-stuff-flag-of m nil))	  ; new
+      )))
+
+
   
 (defun vm-stuff-folder-data (&optional abort-if-input-pending) 
   "Stuff the soft and cached data of all the messages that have the
 stuff-flag set in the current folder.    USR 2010-04-20"
-  (let ((newlist nil) mp len (n 0))
+  (let ((newlist nil) mp len (n 0) (p 0) (p-last 0))
     ;; stuff the attributes of messages that need it.
     ;; build a list of messages that need their attributes stuffed
     (setq mp vm-message-list)
@@ -2228,16 +2237,39 @@ stuff-flag set in the current folder.    USR 2010-04-20"
     ;; message 3, then 234, then 10, then 500, thus causing
     ;; large chunks of memory to be copied repeatedly as
     ;; the gap moves to accomodate the insertions.
-    (vm-inform 7 "%s: Ordering updates..." (buffer-name))
+    ;; (vm-inform 7 "%s: Ordering updates..." (buffer-name)) ; Pointless
     (let ((vm-key-functions '(vm-sort-compare-physical-order-r)))
       (setq mp (sort newlist 'vm-sort-compare-xxxxxx)))
-    (while (and mp (or (not abort-if-input-pending) (not (input-pending-p))))
-      (vm-stuff-message-data (car mp))
-      (setq n (1+ n))
-      (vm-inform 7 "%s: Stuffing %d%% complete..." (buffer-name)
-		     (* (/ (+ n 0.0) len) 100))
-      (setq mp (cdr mp)))
-    (if mp nil t)))
+    (save-excursion
+      (vm-save-restriction
+       (widen)
+       (let ((old-buffer-modified-p (buffer-modified-p))
+	     (vm-mime-qp-encoder-program nil)	  ; use internal code
+	     (vm-mime-base64-encoder-program nil) ; for speed
+	     (case-fold-search t)
+	     (buffer-read-only nil)
+	     ;; don't truncate the printing of large Lisp objects
+	     (print-length nil)
+	     ;; This prevents file locking from occuring.  Disabling
+	     ;; locking can speed things noticeably if the lock
+	     ;; directory is on a slow device.  We don't need locking
+	     ;; here because the user shouldn't care about VM stuffing
+	     ;; its own status headers.
+	     (buffer-file-name nil))
+	 (unwind-protect
+	     (while (and mp 
+			 (or (not abort-if-input-pending)
+			     (not (input-pending-p))))
+	       (vm-stuff-message-data-internal (car mp))
+	       (setq n (1+ n))
+	       (setq p-last p
+		     p (truncate (* 100 n) len))
+	       (when (> p p-last)
+		 (vm-inform 7 "%s: Stuffing %d%% complete..." (buffer-name) p))
+	       (setq mp (cdr mp)))
+	   (vm-restore-buffer-modified-p ; folder-buffer
+	    old-buffer-modified-p (current-buffer)))
+	 (if mp nil t))))))
 
 ;; we can be a bit lazy in this function since it's only called
 ;; from within vm-stuff-message-data.  we don't worry about
@@ -2275,7 +2307,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
   (if (looking-at "\\( [^\000-\040,\177-\377]+,\\)+")
       (delete-region (match-beginning 0) (match-end 0)))
   (mapcar (function (lambda (label) (insert " " label ",")))
-	  (vm-labels-of m)))
+	  (vm-decoded-labels-of m)))
 
 (defun vm-babyl-attributes-string (m for-other-folder)
   (concat
@@ -2300,7 +2332,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 
 (defun vm-babyl-labels-string (m)
   (let ((list nil)
-	(labels (vm-labels-of m)))
+	(labels (vm-decoded-labels-of m)))
     (while labels
       (setq list (cons "," (cons (car labels) (cons " " list)))
 	    labels (cdr labels)))
@@ -2912,7 +2944,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 		    (vm-set-cached-data-of m v))
 		  (if (null label-list)
 		      (error "Label list is shorter than location list")
-		    (vm-set-labels-of m (car label-list)))
+		    (vm-set-decoded-labels-of m (car label-list)))
 		  (setq location-list (cdr location-list)
 			attr-list (cdr attr-list)
 			cache-list (cdr cache-list)
@@ -3100,7 +3132,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 	  (while mp
 	    (setq m (car mp))
 	    (princ "  " work-buffer)
-	    (prin1 (vm-labels-of m) work-buffer)
+	    (prin1 (vm-decoded-labels-of m) work-buffer)
 	    (princ "\n" work-buffer)
 	    (setq mp (cdr mp)))
 	  (princ ")\n" work-buffer)
@@ -3599,14 +3631,14 @@ changes should be discarded."
       (set-itimer-restart current-itimer vm-flush-interval)))
   ;; if no vm-mode buffers are found, we might as well shut down the
   ;; flush itimer.
-  (unless (vm-flush-cached-data)
+  (unless (vm-flush-cached-data-all-folders)
     (if timer
 	(cancel-timer timer)
       (set-itimer-restart current-itimer nil))))
 
 ;; flush cached data in all vm-mode buffers.
 ;; returns non-nil if any vm-mode buffers were found.
-(defun vm-flush-cached-data ()
+(defun vm-flush-cached-data-all-folders ()
   (save-excursion
     (let ((buf-list (buffer-list))
 	  (found-one nil))
@@ -4721,7 +4753,7 @@ files."
       ;; add the labels
       (when (and labels vm-burst-digest-messages-inherit-labels)
 	(mapc (lambda (m)
-		(vm-set-labels-of m (copy-sequence labels)))
+		(vm-set-decoded-labels-of m (copy-sequence labels)))
 	      new-messages))
       (when vm-summary-show-threads
 	;; get numbering of new messages done now

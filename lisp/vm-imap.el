@@ -222,8 +222,8 @@ using cached data."
 			(vm-imap-status-mailbox o)
 			(if (vm-imap-status-need o)
 			    (format "%d%%%s"
-				    (/ (* 100 (vm-imap-status-got o))
-				       (vm-imap-status-need o))
+				    (truncate (* 100 (vm-imap-status-got o))
+					      (vm-imap-status-need o))
 				    (if (eq (vm-imap-status-got o)
 					    (vm-imap-status-last-got o))
 					" (stalled)"
@@ -2891,12 +2891,12 @@ recorded in the undo stack."
     (if (not saw-Deleted)		; undelete if the server says so
 	(if (vm-deleted-flag m)
 	    (vm-set-deleted-flag m nil norecord)))
-    (setq labels (sort (vm-labels-of m) 'string-lessp))
+    (setq labels (sort (vm-decoded-labels-of m) 'string-lessp))
     (setq seen-labels (sort seen-labels 'string-lessp))
     (if (equal labels seen-labels)
 	t
-      (vm-set-labels-of m seen-labels)
-      (vm-set-label-string-of m nil)
+      (vm-set-decoded-labels-of m seen-labels)
+      (vm-set-decoded-label-string-of m nil)
       (vm-mark-for-summary-update m)
       (vm-set-stuff-flag-of m t))
     ))
@@ -2936,7 +2936,7 @@ server should be issued by UID, not message sequence number."
 	 (message-num (and (boundp uid-key1) (symbol-value uid-key1)))
 	 (cached-flags (and (boundp uid-key2) (symbol-value uid-key2)))
 					; leave uid as the dummy header
-	 (labels (vm-labels-of m))
+	 (labels (vm-decoded-labels-of m))
 	 copied-flags need-ok flags+ flags- response)
     (when message-num
       ;; Reversible flags are treated the same as labels
@@ -3232,7 +3232,7 @@ messages previously retrieved are ignored."
     (while mp
       (cond ((not (equal (vm-imap-uid-validity-of (car mp)) uid-validity))
 	     (setq stale-list (cons (car mp) stale-list)))
-	    ((member "stale" (vm-labels-of (car mp)))
+	    ((member "stale" (vm-decoded-labels-of (car mp)))
 	     nil)
 	    (t
 	     (setq uid (vm-imap-uid-of (car mp)))

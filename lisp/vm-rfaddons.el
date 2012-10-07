@@ -329,15 +329,15 @@ or do the binding and advising on your own. (Rob F)"
 
 (defun rf-vm-su-labels (m)
   "This version does some sanity checking. (Rob F)"
-  (let ((labels (vm-label-string-of m)))
+  (let ((labels (vm-decoded-label-string-of m)))
     (if (and labels (stringp labels))
         labels
-      (setq labels (vm-labels-of m))
+      (setq labels (vm-decoded-labels-of m))
       (if (and labels (listp labels))
-          (vm-set-label-string-of
+          (vm-set-decoded-label-string-of
            m
            (setq labels (mapconcat 'identity labels ",")))
-        (vm-set-label-string-of m "")
+        (vm-set-decoded-label-string-of m "")
         (setq labels "")))
     labels))
 
@@ -1477,11 +1477,11 @@ and add an \"%0UA\" to your `vm-summary-format'. (Rob F)"
                                        
     (when (and (> attachments 0 )
                (vm-new-flag msg)
-               (or (not (vm-labels-of msg))
+               (or (not (vm-decoded-labels-of msg))
                    (not (member vm-summary-attachment-label
-                                (vm-labels-of msg)))))
+                                (vm-decoded-labels-of msg)))))
       (vm-set-labels msg (append (list vm-summary-attachment-label)
-                                 (vm-labels-of msg))))))
+                                 (vm-decoded-labels-of msg))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;###autoload

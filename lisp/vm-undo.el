@@ -290,6 +290,8 @@ being all the labels that have ever been used in this folder.
 The names should be entered as a space separated list.  Label
 names are compared case-insensitively.
 
+  (Only ASCII strings are at present allowed as message labels.)
+
 A numeric prefix argument COUNT causes the current message and
 the next COUNT-1 message to have the labels added.  A
 negative COUNT arg causes the current message and the previous
@@ -335,6 +337,8 @@ completion to expand the label names, with the completion list
 being all the labels that have ever been used in this folder.
 The names should be entered as a space separated list.  Label
 names are compared case-insensitively.
+
+  (Only ASCII strings are at present allowed as message labels.)
 
 A numeric prefix argument COUNT causes the current message and
 the next COUNT-1 messages to have the labels added.  A
@@ -409,7 +413,8 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 
 (defun vm-add-or-delete-message-labels (string m-list add)
   "Add or delete the labels given in STRING for all messages in
-M-LIST.  The third parameter ADD is one of:
+M-LIST.  STRING is a MIME-decoded string with text properties.
+The third parameter ADD is one of:
 
 nil	       delete the label
 'all           add the label in all cases
@@ -457,7 +462,7 @@ nil	       delete the label
 		  (intern (car labels) vm-label-obarray)
 		  (setq labels (cdr labels))))))))
       (setq act-labels action-labels
-	    labels (copy-sequence (vm-labels-of (car m-list))))
+	    labels (copy-sequence (vm-decoded-labels-of (car m-list))))
       (if add
 	  (while act-labels
 	    (setq labels (cons (car act-labels) labels)
@@ -475,14 +480,14 @@ nil	       delete the label
 
 (defun vm-set-xxxx-flag (m flag norecord function attr-index)
   "A generic function to set the message flag of M at ATTR-INDEX to
-  the value FLAG.  The argument FUNCTION tells the specific
-  non-generic function that invoked this one.  A boolean flag is
-  returned indicating success or failure of the operation.
+the value FLAG.  The argument FUNCTION tells the specific
+non-generic function that invoked this one.  A boolean flag is
+returned indicating success or failure of the operation.
 The flag is also set for all the virtual messages mirroring M as well
-  as the real message underlying M. 
+as the real message underlying M. 
 Normally, a record of the change is kept for the purpose of undo, and
-  the changed attributes are stuffed into the folder, but NORECORD
-  suppresses all of this.                             USR 2010-04-06" 
+the changed attributes are stuffed into the folder, but NORECORD
+ suppresses all of this.                             USR 2010-04-06" 
   (let ((m-list nil) vmp)
     (when (and (not vm-folder-read-only)
 	       (or (not (vm-virtual-messages-of m))
@@ -520,13 +525,13 @@ Normally, a record of the change is kept for the purpose of undo, and
 
 (defun vm-set-xxxx-cached-data-flag (m flag norecord function attr-index)
   "A generic function to set the cached-data flag of M at ATTR-INDEX to
-  the value FLAG.  The argument FUNCTION tells the specific
-  non-generic function that invoked this one.
+the value FLAG.  The argument FUNCTION tells the specific
+non-generic function that invoked this one.
 The flag is also set for all the virtual messages mirroring M as well
-  as the real message underlying M. 
+as the real message underlying M. 
 Normally, a record of the change is kept for the purpose of undo, and
-  the changed attributes are stuffed into the folder, but NORECORD
-  suppresses all of this.                             USR 2010-04-06" 
+the changed attributes are stuffed into the folder, but NORECORD
+suppresses all of this.                             USR 2010-04-06" 
   (let ((m-list nil) vmp)
     (when
      (and (not vm-folder-read-only)
@@ -538,7 +543,8 @@ Normally, a record of the change is kept for the purpose of undo, and
            ;; do nothing it is is already set 
            (not (eq flag (aref (vm-cached-data-of m) attr-index))))
      (unless norecord
-	(dolist (v-m (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
+	(dolist (v-m (cons (vm-real-message-of m) 
+			   (vm-virtual-messages-of m)))
 	  (if (eq (vm-cached-data-of m) (vm-cached-data-of v-m))
 	      (setq m-list (cons v-m m-list))))
 	(if (null m-list)
@@ -564,13 +570,13 @@ Normally, a record of the change is kept for the purpose of undo, and
 
 (defun vm-set-labels (m labels)
   "Set the message labels of M to the value LABELS (a list of
-  strings). 
+MIME-decoded strings with text properties). 
 The labels are also set for all the virtual messages mirroring M as
-  well as the real message underlying M. 
+well as the real message underlying M. 
 A record of the change is kept for the purpose of undo, and the
-  changed attributes are stuffed into the folder.        USR 2010-04-06" 
+changed attributes are stuffed into the folder.        USR 2010-04-06" 
   (let ((m-list nil)
-	(old-labels (vm-labels-of m)))
+	(old-labels (vm-decoded-labels-of m)))
     (cond
      ((and (not vm-folder-read-only)
 	   (or (not (vm-virtual-messages-of m))
@@ -594,8 +600,8 @@ A record of the change is kept for the purpose of undo, and the
 	    (vm-undo-record (list 'vm-set-labels m old-labels))
 	    ;; (vm-undo-boundary)
 	    (vm-increment vm-modification-counter))))
-      (vm-set-labels-of m labels)
-      (vm-set-label-string-of m nil)
+      (vm-set-decoded-labels-of m labels)
+      (vm-set-decoded-label-string-of m nil)
       (vm-mark-for-summary-update m)
       (if (eq vm-flush-interval t)
 	  (vm-stuff-virtual-message-data m)
@@ -662,7 +668,7 @@ A record of the change is kept for the purpose of undo, and the
 ;; use these to avoid undo and summary update.
 (defun vm-set-new-flag-of (m flag) (aset (aref m 2) 0 flag))
 (defun vm-set-unread-flag-of (m flag) (aset (aref m 2) 1 flag))
-(defun vm-set-deleted-flag-of (m flag) (aset (aref m 2) 2 flag))
+ (defun vm-set-deleted-flag-of (m flag) (aset (aref m 2) 2 flag))
 (defun vm-set-filed-flag-of (m flag) (aset (aref m 2) 3 flag))
 (defun vm-set-replied-flag-of (m flag) (aset (aref m 2) 4 flag))
 (defun vm-set-written-flag-of (m flag) (aset (aref m 2) 5 flag))
