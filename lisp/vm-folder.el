@@ -2362,7 +2362,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
       (setq status 0))
 
     (goto-char (vm-headers-of message))
-    (if (re-search-forward "^X-Mozilla-Status2: \([ 0-9A-Fa-f]+\)\n"
+    (if (re-search-forward "^X-Mozilla-Status2: \\([ 0-9A-Fa-f]+\\)\n"
 			   (vm-text-of message) t)
 	(progn
 	  (setq status2 (buffer-substring (match-beginning 1) (match-end 1)))
