@@ -1420,11 +1420,14 @@ otherwise.  No exceptions are thrown for errors."
 ;;;###autoload
 (defun vm-thread-subtree-safe (msg)
   "Returns the list of messages in the thread subtree of MSG.
-Threads should have been built for this function to work."
+If threads have not been built, just returns a singleton list
+containing MSG."
   (if (eq major-mode 'vm-mode)
       (vm-thread-subtree msg)
     (with-current-buffer vm-mail-buffer
-      (vm-thread-subtree msg))))
+      (if (vectorp 'vm-thread-obarray)
+	  (vm-thread-subtree msg)
+	(list msg)))))
 
 ;;;###autoload
 (defun vm-thread-subtree (msg)

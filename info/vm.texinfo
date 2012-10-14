@@ -3118,8 +3118,8 @@ from other editing contexts to a message you are composing.
 @findex vm-dired-do-attach-files
 You can visit a directory in Emacs (@pxref{Dired,,,emacs, the GNU
 Emacs Manual}), and run @code{vm-dired-attach-file} on any file.  The
-file be attached to your message composition.  You can also mark a set
-of files in Dired and run @code{vm-dired-do-attach-files} to attach
+file will be be attached to your message composition.  You can also mark a set
+of files in a Dired buffer and run @code{vm-dired-do-attach-files} to attach
 all of them.
 
 @findex vm-dnd-attach-file
@@ -3136,7 +3136,7 @@ viewing a message that has @acronym{MIME} attachments, you can attach any of
 those attachments to your message composition by using the @kbd{$ a}
 (@code{vm-reader-map-attach-to-composition}) function.
 (@xref{Operating on @acronym{MIME} attachments}.)  This operation is also
-available on the pop-menu for attachments.
+available on the pop-up menu for attachments.
 
 In all these cases, you will be prompted for the message composition
 buffer to which you would like to attach the objects.  The default is

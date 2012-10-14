@@ -1,0 +1,56 @@
+vm-stuff-folder-data                                 1           10.156        10.156
+vm-stuff-message-data                                3377        9.3599999999  0.0027716908
+vm-stuff-thunderbird-status                          3377        2.399         0.0007103938
+vm-mime-encode-words-in-cache-vector                 3377        1.328         0.0003932484
+vm-mime-encode-words-in-string                       27016       0.7810000000  2.89...e-005
+vm-get-header-contents                               6754        0.7200000000  0.0001066034
+vm-sort-compare-xxxxxx                               31972       0.4220000000  1.31...e-005
+vm-matched-header-contents                           6754        0.1860000000  2.75...e-005
+vm-reencode-mime-encoded-words-in-string             47376       0.1570000000  3.31...e-006
+vm-make-multibyte-work-buffer                        8604        0.1430000000  1.66...e-005
+vm-garbage-collect-message                           8604        0.1410000000  1.63...e-005
+vm-mime-encode-words                                 8604        0.14          1.62...e-005
+vm-buffer-substring-no-properties                    6754        0.139         2.05...e-005
+vm-inform                                            101         0.1250000000  0.0012376237
+vm-match-header                                      6754        0.109         1.61...e-005
+vm-generate-new-multibyte-buffer                     8604        0.095         1.10...e-005
+vm-reencode-mime-encoded-words-in-tokenized-summary  3377        0.047         1.39...e-005
+vm-substring-no-properties                           8604        0.016         1.85...e-006
+vm-sort-compare-physical-order-r                     31972       0.016         5.00...e-007
+vm-restore-buffer-modified-p                         3377        0.016         4.73...e-006
+vm-add-undo-boundaries                               35          0.0           0.0
+vm-garbage-collect-folder                            8604        0.0           0.0
+-------------------------------------------------------------------------------------------
+After eliminating some unnecessary MIME encoding:
+
+vm-stuff-folder-data                                 1           8.844         8.844
+vm-stuff-message-data                                3377        8.0779999999  0.0023920639
+vm-stuff-thunderbird-status                          3377        2.3729999999  0.0007026946
+vm-sort-compare-xxxxxx                               31972       0.3900000000  1.21...e-005
+vm-mime-encode-words-in-cache-vector                 3377        0.3590000000  0.0001063073
+vm-get-header-contents                               6754        0.2360000000  3.49...e-005
+vm-sort-compare-physical-order-r                     31972       0.125         3.90...e-006
+vm-inform                                            101         0.125         0.0012376237
+vm-reencode-mime-encoded-words-in-tokenized-summary  3377        0.109         3.22...e-005
+vm-reencode-mime-encoded-words-in-string             43901       0.016         3.64...e-007
+vm-restore-buffer-modified-p                         3377        0.016         4.73...e-006
+vm-match-header                                      6754        0.016         2.36...e-006
+vm-matched-header-contents                           6754        0.0           0.0
+vm-add-undo-boundaries                               39          0.0           0.0
+vm-garbage-collect-folder                            2           0.0           0.0
+vm-buffer-substring-no-properties                    6754        0.0           0.0
+vm-garbage-collect-message                           2           0.0           0.0
+--------------------------------------------------------------------------------------------
+After shaving a bit from vm-stuff-thunderbird-status
+
+vm-stuff-folder-data                                 1           8.469         8.469
+vm-stuff-message-data-internal                       3377        7.8299999999  0.0023186259
+vm-stuff-thunderbird-status                          3377        2.0469999999  0.0006061593
+vm-sort-compare-xxxxxx                               31972       0.3270000000  1.02...e-005
+vm-mime-encode-words-in-cache-vector                 3377        0.2650000000  7.84...e-005
+vm-reencode-mime-encoded-words-in-string             43901       0.0630000000  1.43...e-006
+vm-sort-compare-physical-order-r                     31972       0.061         1.90...e-006
+vm-inform                                            101         0.061         0.0006039603
+vm-reencode-mime-encoded-words-in-tokenized-summary  3377        0.0470000000  1.39...e-005
+vm-add-undo-boundaries                               31          0.0           0.0
+vm-restore-buffer-modified-p                         1           0.0           0.0

@@ -172,6 +172,10 @@ mandatory."
 	  (set-buffer vm-summary-buffer)
 	  (abbrev-mode 0)
 	  (auto-fill-mode 0)
+	  ;; Experimental code to use buffer-face-mode to change font
+	  ;; (when (boundp 'vm-summary-face)
+	  ;;   (setq bufer-face-mode-face vm-summary-face)
+	  ;;   (buffer-face-mode 1))
 	  (vm-fsfemacs-nonmule-display-8bit-chars)
 	  (if (fboundp 'buffer-disable-undo)
 	      (buffer-disable-undo (current-buffer))
@@ -1107,7 +1111,10 @@ of multiple header lines which might match HEADER-NAME-REGEXP.
       (concat (make-string (- width sw) ?0) string))))
 
 (defun vm-truncate-string (string width)
-  (cond ((fboundp 'char-width)
+  "Truncate STRING to WIDTH number of columns."
+  (cond ((fboundp 'trucate-string-to-width)
+	 (truncate-string-to-width string width))
+	((fboundp 'char-width)
 	 (cond ((> width 0)
 		(let ((i 0)
 		      (lim (length string))
@@ -1132,6 +1139,7 @@ of multiple header lines which might match HEADER-NAME-REGEXP.
 	(t (vm-truncate-roman-string string width))))
 
 (defun vm-truncate-roman-string (string width)
+  "Truncate STRING in Roman alphabet to WIDTH number of columns."
   (cond ((<= (length string) (vm-abs width))
 	 string)
 	((< width 0)
@@ -1263,45 +1271,60 @@ from any of the headers listed in `vm-spam-score-headers'."
   (or (vm-spam-score-of m)
       (vm-set-spam-score-of m (vm-su-spam-score-aux m))))
 
-(defun vm-su-weekday (m)
+(defun vm-su-weekday (message)
   "Given a MESSAGE, returns a string showing the week day on which it
 was sent.                                                  USR, 2010-05-13"
-  (or (vm-weekday-of m)
-      (progn (vm-su-do-date m) (vm-weekday-of m))))
+  (or (vm-weekday-of message)
+      (progn (vm-su-do-date message) (vm-weekday-of message))))
 
-(defun vm-su-monthday (m)
+(defun vm-su-monthday (message)
   "Given a MESSAGE, returns a string showing the month day on which it
 was sent.                                                  USR, 2010-05-13"
-  (or (vm-monthday-of m)
-      (progn (vm-su-do-date m) (vm-monthday-of m))))
+  (or (vm-monthday-of message)
+      (progn (vm-su-do-date message) (vm-monthday-of message))))
 
-(defun vm-su-month (m)
-  (or (vm-month-of m)
-      (progn (vm-su-do-date m) (vm-month-of m))))
+(defun vm-su-month (message)
+  "Given a MESSAGE, returns a string showing the month name in which it
+was sent.                                                  USR, 2010-05-13"
+  (or (vm-month-of message)
+      (progn (vm-su-do-date message) (vm-month-of message))))
 
-(defun vm-su-month-number (m)
-  (or (vm-month-number-of m)
-      (progn (vm-su-do-date m) (vm-month-number-of m))))
+(defun vm-su-month-number (message)
+  "Given a MESSAGE, returns a string showing the month number in which it
+was sent.                                                  USR, 2010-05-13"
+  (or (vm-month-number-of message)
+      (progn (vm-su-do-date message) (vm-month-number-of message))))
 
-(defun vm-su-year (m)
-  (or (vm-year-of m)
-      (progn (vm-su-do-date m) (vm-year-of m))))
+(defun vm-su-year (message)
+  "Given a MESSAGE, returns a string showing the year in which it
+was sent.                                                  USR, 2010-05-13"
+  (or (vm-year-of message)
+      (progn (vm-su-do-date message) (vm-year-of message))))
 
-(defun vm-su-hour-short (m)
-  (let ((string (vm-su-hour m)))
+(defun vm-su-hour-short (message)
+  "Given a MESSAGE, returns a string showing the hour in which it
+was sent.  The hour is short (6 characters long). 	  USR, 2012-10-13"
+  (let ((string (vm-su-hour message)))
     (if (> (length string) 5)
 	(substring string 0 5)
       string)))
 
-(defun vm-su-hour (m)
-  (or (vm-hour-of m)
-      (progn (vm-su-do-date m) (vm-hour-of m))))
+(defun vm-su-hour (message)
+  "Given a MESSAGE, returns a string showing the hour in which it
+was sent.						 USR, 2012-10-13"
+  (or (vm-hour-of message)
+      (progn (vm-su-do-date message) (vm-hour-of message))))
 
-(defun vm-su-zone (m)
-  (or (vm-zone-of m)
-      (progn (vm-su-do-date m) (vm-zone-of m))))
+(defun vm-su-zone (message)
+  "Given a MESSAGE, returns a string showing the time zone in which it
+was sent.						 USR, 2012-10-13"
+  (or (vm-zone-of message)
+      (progn (vm-su-do-date message) (vm-zone-of message))))
 
-(defun vm-su-mark (m) (if (vm-mark-of m) "*" " "))
+(defun vm-su-mark (message) 
+  "Given a MESSAGE, returns the string that should appear in its mark
+field in the summary.				 	USR, 2012-10-13"
+  (if (vm-mark-of message) "*" " "))
 
 ;; Some yogurt-headed delivery agents don't provide a Date: header.
 (defun vm-grok-From_-date (message)
@@ -1348,6 +1371,8 @@ was sent.                                                  USR, 2010-05-13"
    "\\([a-z][a-z]?[a-z]?\\|\\(-\\|\\+\\)[01][0-9][0-9][0-9]\\)?"))
 
 (defun vm-su-do-date (m)
+  "Given a message M, extract its sent date and cache it in the
+cached-data-vector."
   (let ((case-fold-search t)
 	vector date)
     (setq date 
@@ -1666,6 +1691,8 @@ the `reply-to' and `reply-to-name' entries of the cached-data vector."
     (funcall vm-chop-full-name-function address)))
 
 (defun vm-su-do-recipients (m)
+  "Given a message M, extract its recipients from the headers and
+store the strings in the cached data vector.		USR, 2012-10-13"
   (let ((mail-use-rfc822 t) i names addresses to cc all list full-name)
     (setq to (or (vm-get-header-contents m "To:" ", ")
 		 (vm-get-header-contents m "Apparently-To:" ", ")
