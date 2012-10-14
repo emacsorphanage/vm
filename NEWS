@@ -66,13 +66,17 @@ VM 8.2.0b1
 
    IMPROVEMENTS
 
+   * New commands `vm-create-search-folder-other-window' and
+     `vm-create-search-folder-other-frame'.  Search folders can now have
+     their own summary-formats that differ from those of the base folders.
+
    * Added support for Secure MIME (S/MIME) signatures and encryption (still
      experimental at this stage).  See the info section on Secure MIME.  To
      enable the verification of S/MIME signatures, set the variable
      `vm-mime-verify-signatures' to t.  Thanks to Arik Mitschang for this
      contribution.
 
-   * Quitting an interactive virtual folder using `vm-quit-no-change'
+   * Quitting a search folder using `vm-quit-no-change'
      prevents VM from changing the message pointer in the underlying folder.
 
    * Enhanced the Summary display to show the user mentioned in the

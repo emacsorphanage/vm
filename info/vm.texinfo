@@ -5017,6 +5017,8 @@ visited in the Emacs session.  We call such virtual folders
 
 @findex vm-create-virtual-folder
 @findex vm-create-search-folder
+@findex vm-create-search-folder-other-window
+@findex vm-create-search-folder-other-frame
 @kindex V C
 The command @code{vm-create-search-folder} (bound to @kbd{V C}) lets you
 interactively create a virtual folder from the messages of the current
@@ -5025,7 +5027,8 @@ folder, using exactly one selector to choose the messages.  If you type
 those 
 messages that contain the string @samp{greeting} in one of its headers.
 @xref{Virtual Selectors}, for virtual selectors you can use for this
-purpose. 
+purpose.  The variants @code{vm-create-search-folder-other-frame} and
+@code{vm-create-search-folder-other-window} provide similar functionality.
 
 @findex vm-create-virtual-folder-of-threads
 @findex vm-create-search-folder-of-threads
