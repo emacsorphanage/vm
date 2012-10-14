@@ -999,12 +999,19 @@ folders.
 
 vm-virtual-mode is not a normal major mode.  If you run it, it
 will not do anything.  The entry point to vm-virtual-mode is
-vm-visit-virtual-folder.")
+`vm-visit-virtual-folder'.")
 
 (defvar scroll-in-place)
 
 ;;;###autoload
-(defun vm-visit-virtual-folder (folder-name &optional read-only bookmark)
+(defun vm-visit-virtual-folder (folder-name 
+				&optional read-only bookmark summary-format)
+  "Visit the virtual folder FOLDER-NAME.  With a prefix argument,
+visit it in read-only mode.
+
+When called in Lisp code, additional optional arguments BOOKMARK and
+SUMMARY-FORMAT specify the message where the pointer should be and the
+summary format to use."
   (interactive
    (let ((last-command last-command)
 	 (this-command this-command))
@@ -1036,6 +1043,7 @@ vm-visit-virtual-folder.")
 	    mode-line-format vm-mode-line-format
 	    buffer-read-only t
 	    vm-folder-read-only read-only
+	    vm-summary-format (or summary-format vm-summary-format)
 	    vm-label-obarray (make-vector 29 0)
 	    vm-virtual-folder-definition
 	    (assoc folder-name vm-virtual-folder-alist))
@@ -1112,8 +1120,9 @@ vm-visit-virtual-folder.")
       (vm-inform 5 blurb))))
 
 ;;;###autoload
-(defun vm-visit-virtual-folder-other-frame (folder-name &optional read-only)
-  "Like vm-visit-virtual-folder, but run in a newly created frame."
+(defun vm-visit-virtual-folder-other-frame 
+  	(folder-name &optional read-only bookmark summary-format)
+  "Like `vm-visit-virtual-folder', but run in a newly created frame."
   (interactive
    (let ((last-command last-command)
 	 (this-command this-command))
@@ -1128,13 +1137,14 @@ vm-visit-virtual-folder.")
       (vm-goto-new-frame 'folder))
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm-visit-virtual-folder folder-name read-only))
+    (vm-visit-virtual-folder folder-name read-only bookmark summary-format))
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
-(defun vm-visit-virtual-folder-other-window (folder-name &optional read-only)
-  "Like vm-visit-virtual-folder, but run in a different window."
+(defun vm-visit-virtual-folder-other-window 
+  		(folder-name &optional read-only bookmark summary-format)
+  "Like `vm-visit-virtual-folder', but run in a different window."
   (interactive
    (let ((last-command last-command)
 	 (this-command this-command))
@@ -1150,7 +1160,7 @@ vm-visit-virtual-folder.")
   (other-window 1)
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm-visit-virtual-folder folder-name read-only)))
+    (vm-visit-virtual-folder folder-name read-only bookmark summary-format)))
 
 ;;;###autoload
 (defun vm-mail (&optional to subject)

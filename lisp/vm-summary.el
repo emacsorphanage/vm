@@ -1883,21 +1883,35 @@ stored entry (`vm-decoded-tokenized-summary-of') or recalculating it
 if necessary.  The summary line is a mime-decoded string with text
 properties. 
 						  USR 2010-05-13"
-  (if (and (vm-virtual-message-p m) (not (vm-virtual-messages-of m)))
+  (if (vm-virtual-message-p m)
+      ;; Kyle also had (not (vm-virtual-messages-of m)) as a condition
+      ;; here.    USR 2012-10-14
       (or (vm-virtual-summary-of m)
-	  (save-excursion
-	    (vm-select-folder-buffer)
+	  (with-current-buffer (vm-buffer-of m)
 	    (vm-set-virtual-summary-of 
 	     m (vm-summary-sprintf vm-summary-format m t))
 	    (vm-virtual-summary-of m)))
     (or (vm-decoded-tokenized-summary-of m)
-	(save-excursion
-	  (vm-select-folder-buffer)
+	(with-current-buffer (vm-buffer-of m)
 	  ;; FIXME Is this being set to a decoded string?  USR, 2012-10-07
 	  (vm-set-decoded-tokenized-summary-of 
 	   m (vm-summary-sprintf vm-summary-format m t))
 	  (vm-decoded-tokenized-summary-of m)))))
 (defalias 'vm-su-summary 'vm-su-decoded-tokenized-summary)
+
+
+(defun vm-set-su-decoded-tokenized-summary (m summary)
+  "Set the tokenized summary line of M to SUMMARY.  SUMMARY should be
+a mime-decoded string with text properties."
+  (if (vm-virtual-message-p m)
+      ;; Kyle also had (not (vm-virtual-messages-of m)) as a condition
+      ;; here.    USR 2012-10-14
+      (with-current-buffer (vm-buffer-of m)
+	    (vm-set-virtual-summary-of m summary)
+	    (vm-virtual-summary-of m))
+    (with-current-buffer (vm-buffer-of m)
+	  (vm-set-decoded-tokenized-summary-of m summary)
+	  (vm-decoded-tokenized-summary-of m))))
 
 ;;;###autoload
 (defun vm-fix-my-summary (&optional kill-local-summary)
@@ -1911,7 +1925,7 @@ Call this function if you made changes to `vm-summary-format'."
   (let ((mp vm-message-list))
     ;; Erase all the cached summary and threading data
     (while mp
-      (vm-set-decoded-tokenized-summary-of (car mp) nil)
+      (vm-set-su-decoded-tokenized-summary (car mp) nil)
       (vm-set-thread-indentation-of (car mp) nil)
       (vm-set-thread-list-of (car mp) nil)
       (vm-set-thread-subtree-of (car mp) nil)

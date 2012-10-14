@@ -44,7 +44,11 @@
 (declare-function vm-visit-folder "vm" 
 		  (folder &optional read-only &key interactive just-visit))
 (declare-function vm-visit-virtual-folder "vm"
-		  (folder &optional read-only bookmark))
+		  (folder &optional read-only bookmark summary-format))
+(declare-function vm-visit-virtual-folder-other-window "vm"
+		  (folder &optional read-only bookmark summary-format))
+(declare-function vm-visit-virtual-folder-other-frame "vm"
+		  (folder &optional read-only bookmark summary-format))
 (declare-function vm-mode "vm" 
 		  (&optional read-only))
 (declare-function vm-get-folder-buffer "vm"
@@ -332,8 +336,7 @@ Prefix arg means the new virtual folder should be visited read only."
 	(setq clause (list 'and '(marked) clause)))
     (setq vm-virtual-folder-alist
 	  `(( ,name (((get-buffer ,(buffer-name))) ,clause))))
-    (vm-visit-virtual-folder name read-only bookmark)
-    (setq vm-summary-format parent-summary-format))
+    (vm-visit-virtual-folder name read-only bookmark parent-summary-format))
   ;; have to do this again here because the known virtual
   ;; folder menu is now hosed because we installed it while
   ;; vm-virtual-folder-alist was bound to the temp value above
@@ -341,6 +344,94 @@ Prefix arg means the new virtual folder should be visited read only."
     (vm-menu-install-known-virtual-folders-menu)))
 
 (defalias 'vm-create-search-folder 'vm-create-virtual-folder)
+
+;;;###autoload
+(defun vm-create-virtual-folder-other-frame
+  		(selector &optional arg read-only name bookmark)
+  "Create a new virtual folder from messages in the current folder,
+using another frame.
+The messages will be chosen by applying the selector you specify,
+which is normally read from the minibuffer.  See `vm-vs-interactive'
+for the list of selectors.
+
+Prefix arg means the new virtual folder should be visited read only."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command)
+	 (prefix current-prefix-arg))
+     (save-current-buffer
+     (vm-select-folder-buffer)
+     (nconc (vm-read-virtual-selector "Create virtual folder of messages: ")
+	    (list prefix)))))
+
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
+  (if vm-folder-read-only (setq read-only t))
+  (let ((use-marks (eq last-command 'vm-next-command-uses-marks))
+	(parent-summary-format vm-summary-format)
+	vm-virtual-folder-alist ; shadow the global variable
+	clause
+	)
+    (unless name
+      (setq name (vm-virtual-folder-name (buffer-name) selector arg)))
+    (setq clause (if arg (list selector arg) (list selector)))
+    (if use-marks
+	(setq clause (list 'and '(marked) clause)))
+    (setq vm-virtual-folder-alist
+	  `(( ,name (((get-buffer ,(buffer-name))) ,clause))))
+    (vm-visit-virtual-folder-other-frame
+     name read-only bookmark parent-summary-format))
+  ;; have to do this again here because the known virtual
+  ;; folder menu is now hosed because we installed it while
+  ;; vm-virtual-folder-alist was bound to the temp value above
+  (when vm-use-menus
+    (vm-menu-install-known-virtual-folders-menu)))
+
+(defalias 'vm-create-search-folder-other-frame
+  'vm-create-virtual-folder-other-frame)
+
+;;;###autoload
+(defun vm-create-virtual-folder-other-window 
+  		(selector &optional arg read-only name bookmark)
+  "Create a new virtual folder from messages in the current folder
+using another window.
+The messages will be chosen by applying the selector you specify,
+which is normally read from the minibuffer.  See `vm-vs-interactive'
+for the list of selectors.
+
+Prefix arg means the new virtual folder should be visited read only."
+  (interactive
+   (let ((last-command last-command)
+	 (this-command this-command)
+	 (prefix current-prefix-arg))
+     (save-current-buffer
+     (vm-select-folder-buffer)
+     (nconc (vm-read-virtual-selector "Create virtual folder of messages: ")
+	    (list prefix)))))
+
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
+  (if vm-folder-read-only (setq read-only t))
+  (let ((use-marks (eq last-command 'vm-next-command-uses-marks))
+	(parent-summary-format vm-summary-format)
+	vm-virtual-folder-alist ; shadow the global variable
+	clause
+	)
+    (unless name
+      (setq name (vm-virtual-folder-name (buffer-name) selector arg)))
+    (setq clause (if arg (list selector arg) (list selector)))
+    (if use-marks
+	(setq clause (list 'and '(marked) clause)))
+    (setq vm-virtual-folder-alist
+	  `(( ,name (((get-buffer ,(buffer-name))) ,clause))))
+    (vm-visit-virtual-folder-other-window
+     name read-only bookmark parent-summary-format))
+  ;; have to do this again here because the known virtual
+  ;; folder menu is now hosed because we installed it while
+  ;; vm-virtual-folder-alist was bound to the temp value above
+  (when vm-use-menus
+    (vm-menu-install-known-virtual-folders-menu)))
+
+(defalias 'vm-create-search-folder-other-window 
+  'vm-create-virtual-folder-other-window)
 
 ;;;###autoload
 (defun vm-create-virtual-folder-of-threads (selector &optional arg
@@ -378,8 +469,7 @@ Prefix arg means the new virtual folder should be visited read only."
 	(setq clause (list 'and '(marked) clause)))
     (setq vm-virtual-folder-alist
 	  `(( ,name (((get-buffer ,(buffer-name))) ,clause))))
-    (vm-visit-virtual-folder name read-only bookmark)
-    (setq vm-summary-format parent-summary-format))
+    (vm-visit-virtual-folder name read-only bookmark parent-summary-format))
   ;; have to do this again here because the known virtual
   ;; folder menu is now hosed because we installed it while
   ;; vm-virtual-folder-alist was bound to the temp value above
@@ -408,6 +498,7 @@ Prefix arg means the new virtual folder should be visited read only."
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (let ((vfolder (assoc name vm-virtual-folder-alist))
 	(use-marks (eq last-command 'vm-next-command-uses-marks))
+	(parent-summary-format vm-summary-format)
 	clauses vm-virtual-folder-alist)
     (or vfolder (error "No such virtual folder, %s" name))
     (setq vfolder (vm-copy vfolder))
@@ -422,7 +513,8 @@ Prefix arg means the new virtual folder should be visited read only."
     (setcar vfolder (vm-virtual-application-folder-name
 		     (buffer-name) (car vfolder)))
     (setq vm-virtual-folder-alist (list vfolder))
-    (vm-visit-virtual-folder (car vfolder) read-only))
+    ;; FIXME should the bookmark here be nil?
+    (vm-visit-virtual-folder (car vfolder) read-only nil parent-summary-format))
   ;; have to do this again here because the "known virtual
   ;; folder" menu is now hosed because we installed it while
   ;; vm-virtual-folder-alist was bound to the temp value above
@@ -472,9 +564,9 @@ same author as the current message."
      bookmark)))
 
 ;;;###autoload
-(defun vm-create-author-virtual-folder (&optional arg read-only name)
+(defun vm-create-author-virtual-folder (&optional string read-only name)
   "Create a virtual folder (search folder) of messages with the given
-author in the current folder. 
+string in the author's name/address, from the current folder.
 
 Prefix arg means the new virtual folder should be visited read only."
   (interactive
@@ -484,12 +576,14 @@ Prefix arg means the new virtual folder should be visited read only."
      (vm-select-folder-buffer)
      (list (read-string "Virtual folder of author: ")
 	   prefix)))
-  (vm-create-virtual-folder 'author arg read-only name))
+  (vm-create-virtual-folder 'author string read-only name))
 
 ;;;###autoload
-(defun vm-create-author-or-recipient-virtual-folder (&optional arg read-only name)
-  "Create a virtual folder (search folder) with given author or
-recipient from messages in the current folder.
+(defun vm-create-author-or-recipient-virtual-folder 
+  			(&optional string read-only name)
+  "Create a virtual folder (search folder) of messages with the given
+string in the name/address of the author or recipients, from the
+current folder.  
 
 Prefix arg means the new virtual folder should be visited read only."
   (interactive
@@ -499,10 +593,10 @@ Prefix arg means the new virtual folder should be visited read only."
      (vm-select-folder-buffer)
      (list (read-string "Virtual folder of author/recipient: ")
 	   prefix)))
-  (vm-create-virtual-folder 'author-or-recipient arg read-only name))
+  (vm-create-virtual-folder 'author-or-recipient string read-only name))
 
 ;;;###autoload
-(defun vm-create-subject-virtual-folder (&optional arg read-only subject)
+(defun vm-create-subject-virtual-folder (&optional string read-only subject)
   "Create a virtual folder (search folder) with given subject from
 messages in the current folder. 
 
@@ -514,10 +608,10 @@ Prefix arg means the new virtual folder should be visited read only."
      (vm-select-folder-buffer)
      (list (read-string "Virtual folder of subject: ")
 	   prefix)))
-  (vm-create-virtual-folder 'subject arg read-only subject))
+  (vm-create-virtual-folder 'subject string read-only subject))
 
 ;;;###autoload
-(defun vm-create-text-virtual-folder (&optional arg read-only subject)
+(defun vm-create-text-virtual-folder (&optional string read-only subject)
   "Create a virtual folder (search folder) of all messsages with the
 given string in its text.
 
@@ -529,7 +623,7 @@ Prefix arg means the new virtual folder should be visited read only."
      (vm-select-folder-buffer)
      (list (read-string "Virtual folder of subject: ")
 	   prefix)))
-  (vm-create-virtual-folder 'text arg read-only subject))
+  (vm-create-virtual-folder 'text string read-only subject))
 
 ;;;###autoload
 (defun vm-create-date-virtual-folder (&optional arg read-only subject)

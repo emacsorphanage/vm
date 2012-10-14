@@ -3241,26 +3241,25 @@ messages previously retrieved are ignored."
 		 (setq local-expunge-list (cons (car mp) local-expunge-list)))))
       (setq mp (cdr mp)))
     ;; Figure out messages that need to be retrieved
-    (mapatoms (lambda (sym)
-		(let ((uid (symbol-name sym)))
-		  (unless  (boundp (intern uid here))
-		    ;; message not in cache.  if it has been retrieved
-		    ;; previously, it needs to be expunged on the server.
-		    ;; otherwise, it needs to be retrieved.
-		    (setq retrieved-entry
-			  (vm-find vm-imap-retrieved-messages
-				   (lambda (entry)
-				     (and (equal (car entry) uid)
-					  (equal (cadr entry) uid-validity)))))
-		    (if (or do-full-retrieve
-			    (null retrieved-entry)) ; already retrieved
-			(setq retrieve-list 
-			      (cons (cons uid (symbol-value sym))
-				    retrieve-list))
-		      (setq remote-expunge-list
-			    (cons (cons uid uid-validity)
-				  remote-expunge-list))))))
-	      there)
+    (mapatoms 
+     (lambda (sym)
+       (let ((uid (symbol-name sym)))
+	 (unless  (boundp (intern uid here))
+	   ;; message not in cache.  if it has been retrieved
+	   ;; previously, it needs to be expunged on the server.
+	   ;; otherwise, it needs to be retrieved.
+	   (setq retrieved-entry
+		 (vm-find vm-imap-retrieved-messages
+			  (lambda (entry)
+			    (and (equal (car entry) uid)
+				 (equal (cadr entry) uid-validity)))))
+	   (if (or do-full-retrieve (null retrieved-entry)) ; already retrieved
+	       (setq retrieve-list 
+		     (cons (cons uid (symbol-value sym)) retrieve-list))
+	     (setq remote-expunge-list
+		   (cons (cons uid uid-validity)
+			 remote-expunge-list))))))
+     there)
     (setq retrieve-list 
 	  (sort retrieve-list 
 		(lambda (**pair1 **pair2)
@@ -3398,8 +3397,7 @@ messages previously retrieved are ignored."
 
       (when (and do-remote-expunges
 		 (if (eq do-remote-expunges 'all)
-		     (setq vm-imap-messages-to-expunge 
-			   remote-expunge-list)
+		     (setq vm-imap-messages-to-expunge remote-expunge-list)
 		   vm-imap-messages-to-expunge))
 	(vm-imap-expunge-remote-messages))
       ;; Not clear that one should end the session right away.  We
@@ -4613,12 +4611,10 @@ folder."
 	  ;;-------------------
 	  ))
       (when (and (null maildrop)  vm-imap-default-account)
-	(setq maildrop 
-	      (vm-imap-spec-for-account vm-imap-default-account)))
+	(setq maildrop(vm-imap-spec-for-account vm-imap-default-account)))
       (when (null maildrop)
 	(error "Set `vm-imap-default-account' to use IMAP-FCC"))
-      (setq process 
-	    (vm-imap-make-session maildrop t "IMAP-FCC"))
+      (setq process (vm-imap-make-session maildrop t "IMAP-FCC"))
       (if (null process)
 	  (error "Could not connect to the IMAP server for IMAP-FCC"))
       (setq mailboxes (list (cons mailbox process)))
@@ -4741,7 +4737,8 @@ order to capture the trace of IMAP sessions during the occurrence."
   (if (or vm-imap-keep-trace-buffer
 	  (y-or-n-p "Did you run vm-imap-start-bug-report earlier? "))
       (vm-inform 5 "Thank you. Preparing the bug report... ")
-    (vm-inform 1 "Consider running vm-imap-start-bug-report before the problem occurrence"))
+    (vm-inform 1 (concat "Consider running vm-imap-start-bug-report "
+			 "before the problem occurrence")))
   (let ((process (if (eq vm-folder-access-method 'imap)
 		     (vm-folder-imap-process))))
     (if process

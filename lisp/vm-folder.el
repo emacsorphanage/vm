@@ -378,7 +378,7 @@ and thread indentation."
 	 ;; only take care of this one message.
 	 (if (vm-virtual-messages-of m)
 	     (progn
-	       ;; schedule updates for all the virtual message who share
+	       ;; schedule updates for all the virtual message which share
 	       ;; the same cache as this message.
 	       (dolist (v-m (vm-virtual-messages-of m))
 		 (when (eq (vm-attributes-of m) (vm-attributes-of v-m))
@@ -393,6 +393,8 @@ and thread indentation."
 		 ;; toss the cache.  this also tosses the cache of
 		 ;; any virtual messages sharing the same cache as
 		 ;; this message.
+		 ;; FIXME does this really toss the cache of virtual
+		 ;; mirrors?  USR, 2012-10-14
 		 (vm-set-decoded-tokenized-summary-of m nil))
 	       (when (vm-su-start-of (vm-real-message-of m))
 		 (vm-add-to-list (vm-real-message-of m)
@@ -2167,7 +2169,7 @@ FOR-OTHER-FOLDER indicates <something unknown>.  USR 2010-03-06"
 	  (vm-set-decoded-tokenized-summary-of m nil)
 	(if (vm-su-start-of m)
 	    ;; fill the summary cache if it's not done already.
-	    (vm-su-summary m)))
+	    (vm-su-decoded-tokenized-summary m)))
       (setq attributes (vm-attributes-of m)
 	    cache (vm-cached-data-of m))
       (when (and delflag for-other-folder)
@@ -5424,6 +5426,7 @@ this facilty is only available for IMAP folders."
   (interactive)
   (vm-unload-message 1 t)
   (vm-load-message)
+  (vm-set-edited-flag-of (vm-current-message) nil)
   (intern (buffer-name) vm-buffers-needing-display-update)
   (let ((vm-preview-lines nil))
     (vm-present-current-message)))
