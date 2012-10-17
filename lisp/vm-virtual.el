@@ -651,7 +651,8 @@ Prefix arg means the new virtual folder should be visited read only."
 	 (this-command this-command)
 	 (prefix current-prefix-arg))
      (vm-select-folder-buffer)
-     (list (read-string "Virtual folder of label: ")
+     (list (vm-read-string "Virtual folder of label: "
+			   (vm-obarray-to-string-list vm-label-obarray))
 	   prefix)))
   (vm-create-virtual-folder 'label arg read-only name))
 
