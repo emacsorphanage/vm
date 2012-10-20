@@ -3823,7 +3823,7 @@ otherwise.
 
 (defun vm-fetch-imap-message-size (m)
   "Given an IMAP message M, return its message size by looking up the
-cached tables."
+cached tables.  If there is no cached data, return nil.  USR, 2012-10-19"
   (with-current-buffer (vm-buffer-of m)
     (let ((uid-sym (intern-soft (vm-imap-uid-of m)
 				(vm-folder-imap-flags-obarray))))
