@@ -551,7 +551,7 @@ the function for < comparison."
     (nreverse res)))
 
 (defun vm-find (list pred)
-  "Find the first element of LIST satisfying PRED and return the position"
+  "Find the first element of LIST satisfying PRED and return its position"
   (let ((n 0))
     (while (and list (not (apply pred (car list) nil)))
       (setq list (cdr list))
@@ -559,7 +559,7 @@ the function for < comparison."
     (if list n nil)))
 
 (defun vm-find-all (list pred)
-  "Find all the elements of LIST satisfying PRED"
+  "Find all the elements of LIST satisfying PRED and return thier list"
   (let ((n 0) (res nil))
     (while list 
       (when (apply pred (car list) nil)
@@ -569,8 +569,8 @@ the function for < comparison."
     (nreverse res)))
 
 (defun vm-find2 (list1 list2 pred)
-  "Find the first pair of elements of LIST1 and LIST2 satisfying
-PRED and return the position"
+  "Find the first corresponding pair of elements of LIST1 and
+LIST2 satisfying PRED and return the position"
   (let ((n 0))
     (while (and list1 list2 (not (apply pred (car list1) (car list2) nil)))
       (setq list1 (cdr list2)
