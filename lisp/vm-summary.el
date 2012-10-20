@@ -1910,9 +1910,12 @@ stored entry (`vm-decoded-tokenized-summary-of') or recalculating it
 if necessary.  The summary line is a mime-decoded string with text
 properties. 
 						  USR 2010-05-13"
-  (if (vm-virtual-message-p m)
-      ;; Kyle also had (not (vm-virtual-messages-of m)) as a condition
-      ;; here.    USR 2012-10-14
+  (if (and (vm-virtual-message-p m)
+	   ;; Kyle also had (not (vm-virtual-messages-of m)) as a condition
+	   ;; here.    USR 2012-10-14
+	   ;; We put this back for now because removing it is giving
+	   ;; errors for virtual foldrs.  USR 2012-10-19
+	   (not (vm-virtual-messages-of m)))
       (or (vm-virtual-summary-of m)
 	  (with-current-buffer (vm-buffer-of m)
 	    (vm-set-virtual-summary-of 
