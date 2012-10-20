@@ -6585,7 +6585,7 @@ there is no file name for this object.             USR, 2011-03-07"
 	   (put-text-property start end 'vm-mime-parameters params)
 	   (put-text-property start end 'vm-mime-description description)
 	   (put-text-property start end 'vm-mime-disposition disposition)
-	   (put-text-property start end 'vm-mime-encoding nil)
+	   (put-text-property start end 'vm-mime-encoding (list nil))
 	   (put-text-property start end 'vm-mime-encoded mimed)
 	   ;; (put-text-property start end 'duplicable t)
 	   )
@@ -6609,7 +6609,7 @@ there is no file name for this object.             USR, 2011-03-07"
 	   (vm-set-extent-property e 'vm-mime-parameters params)
 	   (vm-set-extent-property e 'vm-mime-description description)
 	   (vm-set-extent-property e 'vm-mime-disposition disposition)
-	   (vm-set-extent-property e 'vm-mime-encoding nil)
+	   (vm-set-extent-property e 'vm-mime-encoding (list nil))
 	   (vm-set-extent-property e 'vm-mime-encoded mimed)))))
 (defalias 'vm-mime-attach-object 'vm-attach-object)
 
@@ -6687,19 +6687,23 @@ there is no file name for this object.             USR, 2011-03-07"
 
 (defun vm-mime-attachment-encoding-at-point ()
   (cond (vm-fsfemacs-p
-	 (get-text-property (point) 'vm-mime-encoding))
+	 (let ((enc (get-text-property (point) 'vm-mime-encoding)))
+	   (car enc)))
 	(vm-xemacs-p
-	 (let ((e (vm-extent-at (point) 'vm-mime-encoding)))
-           (if e (vm-extent-property e 'vm-mime-encoding))))))
+	 (let* ((e (vm-extent-at (point) 'vm-mime-encoding))
+		(enc (vm-extent-property e 'vm-mime-encoding)))
+           (if e (car enc))))))
 
 (defun vm-mime-set-attachment-encoding-at-point (sym)
   (cond (vm-fsfemacs-p
 	 ;; (set-text-property (point) 'vm-mime-encoding sym)
-	 (put-text-property (point) (point) 'vm-mime-encoding sym)
-	 )
+	 ;; (put-text-property (point) (point) 'vm-mime-encoding sym)
+	 (let ((enc (get-text-property (point) 'vm-mime-encoding)))
+	   (setcar enc sym)))
 	(vm-xemacs-p
-	 (let ((e (vm-extent-at (point) 'vm-mime-disposition)))
-           (vm-set-extent-property e 'vm-mime-encoding sym)))))
+	 (let* ((e (vm-extent-at (point) 'vm-mime-disposition))
+		(enc (vm-extent-property e 'vm-mime-encoding)))
+	   (setcar enc sym)))))
 
 (defun vm-disallow-overlay-endpoint-insertion 
   (overlay after start end &optional old-size)

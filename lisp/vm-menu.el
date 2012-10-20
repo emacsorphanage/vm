@@ -699,17 +699,17 @@ do not allow menubar buttons.")
          )
       (
        ,@(if (vm-menu-fsfemacs19-menus-p)
-	     (list "Forward Local External Bodies"
-		   "Forward Local External Bodies"
+	     (list "Saved attachments"
+		   "Saved attachments"
 		   "---"
 		   "---")
-	   (list "Forward Local External Bodies"))
-	 ["Forward Unchanged"
+	   (list "Saved attachments"))
+	 ["Include references"
 	  (vm-mime-set-attachment-forward-local-refs-at-point t)
 	  :active vm-send-using-mime
 	  :style radio
-	  :selected (vm-mime-attachment-forward-local-refs-at-point)]
-	 ["Convert to Internal Object"
+	  :selected (vm-comp-comp-forward-local-refs-at-point)]
+	 ["Include objects"
 	  (vm-mime-set-attachment-forward-local-refs-at-point nil)
 	  :active vm-send-using-mime
 	  :style radio
