@@ -1871,6 +1871,9 @@ the actual message from the file \"message-11\"."
 	))))
   
 (defun vm-fetch-message-size (storage mm)
+  "Return the size of the message MM using the STORAGE specification.
+The STORAGE specification is given in the same as for
+`vm-fetch-message', which see."
   (apply (intern (format "vm-fetch-%s-message-size" (car storage)))
 	 mm (cdr storage)))
 

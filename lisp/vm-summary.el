@@ -1239,7 +1239,7 @@ message in bytes.  				USR, 2010-05-13."
 			 (vm-text-of real-m))))))
 	(vm-set-byte-count-of real-m size)
 	(vm-set-byte-count-of m size)
-	size)))
+	(or size "0"))))
 
 (defun vm-su-size (msg)
   "Given a MESSAGE, return a string showing the the size of the
