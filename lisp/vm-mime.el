@@ -604,7 +604,9 @@ out includes base-64, quoted-printable, uuencode and CRLF conversion."
 		 ;; The FSF Emacs version of this is unforgiving
 		 ;; of errors, which is not in the spirit of the
 		 ;; MIME spec, so avoid using it.
-		 (not vm-fsfemacs-p))
+		 ;; Let us try it out now.  USR, 2012-10-19
+		 ;; (not vm-fsfemacs-p)
+		 )
 	    (condition-case data
 		(base64-decode-region start end)
 	      (error (vm-mime-error "%S" data)))
