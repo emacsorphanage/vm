@@ -7303,7 +7303,7 @@ and the approriate content-type and boundary markup information is added."
 	  ;; 1e. Encode the object if necessary
 	  (cond ((vm-mime-types-match "text" type)
 		 (setq encoding
-		       (or (vm-extent-property e 'vm-mime-encoding)
+		       (or (car (vm-extent-property e 'vm-mime-encoding))
 			   (vm-determine-proper-content-transfer-encoding
 			    (if already-mimed
 				(vm-mm-layout-body-start layout)
