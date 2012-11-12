@@ -102,6 +102,16 @@ expanded (using the folded attribute of the message)."
   (and (vm-thread-root-p m)
        (vm-folded-flag m)))
 
+(defsubst vm-summary-set-root-collapsed (m)
+  "Set a thread root message M as being collapsed.  Folder is not
+marked as modified."
+  (vm-set-folded-flag m t t))
+
+(defsubst vm-summary-set-root-expanded (m)
+  "Set a thread root message M as being expanded.  Folder is not
+marked as modified."
+  (vm-set-folded-flag m nil t))
+
 (defsubst vm-summary-mark-root-collapsed (m)
   "Mark a thread root message M as collapsed."
   (vm-set-folded-flag m t))
@@ -280,9 +290,15 @@ the messages in the current folder."
 				 vm-summary-show-threads)
 			(if (= (vm-thread-indentation-of m) 0)
 			    (when (> (vm-thread-count m) 1)
+			      ;; FIXME this is not working yet.
+			      ;; USR 2012-11-12
+			      ;; (if vm-summary-threads-collapsed
+			      ;; 	  (vm-summary-set-root-collapsed m)
+			      ;; 	(vm-summary-set-root-expanded m))
 			      (if vm-summary-threads-collapsed
 				  (vm-summary-mark-root-collapsed m)
-				(vm-summary-mark-root-expanded m)))
+				(vm-summary-mark-root-expanded m))
+			      )
 			  (setq root (vm-thread-root m))
 			  (when (and root (vm-collapsed-root-p root))
 			    (unless (vm-visible-message m)
