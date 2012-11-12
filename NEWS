@@ -28,6 +28,11 @@ VM 8.2.0b1
 
   CHANGES
 
+   * Folders visited read-only will not be saved to disk even when VM makes
+     internal changes to the folder buffers.  New variable
+     `vm-preserve-read-only-folders-disk' can be customized to override this
+     behavior.
+
    * The %t and %T format specifiers in vm-summary-format listed only the
      "addressees" (listed in the "To" headers) instead of all recipients.
      New specifiers %r and %R can be used to list all recipients.

@@ -3341,7 +3341,9 @@ The setting of `vm-expunge-before-quit' is ignored."
 
 ;;;###autoload
 (defun vm-quit (&optional no-expunge no-change)
-  "Quit visiting the current folder, saving changes.  
+  "Quit visiting the current folder, saving changes.  If the folder is
+being visited read-only then changes are not saved.  This behavior
+can be customized using `vm-preserve-read-only-folders-on-disk'.
 
 If the customization variable `vm-expunge-before-quit' is set to
   non-nil value then deleted messages are expunged.
@@ -3359,11 +3361,15 @@ changes should be discarded."
       (error "%s must be invoked from a VM buffer." this-command))
   (vm-display nil nil '(vm-quit vm-quit-no-change vm-quit-no-expunge)
 	      (list this-command 'quitting))
+  (if (and vm-folder-read-only vm-preserve-read-only-folders-on-disk)
+      (setq no-change t))
   (let ((virtual (eq major-mode 'vm-virtual-mode))
 	(process nil))
 
     ;; 1. Save folder if necessary
-    (when (not virtual)
+    ;; Why are we saving before expunging?  USR, 2012-11-12
+    (unless (or virtual
+		(and vm-folder-read-only vm-preserve-read-only-folders-on-disk))
       (cond
        ((and no-change (buffer-modified-p)
 	     (or buffer-file-name buffer-offer-save)
@@ -3402,10 +3408,10 @@ changes should be discarded."
 
     ;; 3. Expunge folder if necessary
     (when vm-expunge-before-quit
-      (when (and (not virtual)
-		 (not no-expunge)
-		 (not no-change)
-		 (buffer-modified-p))
+      (unless (or virtual
+		  no-expunge
+		  no-change
+		  (not (buffer-modified-p)))
 	(vm-expunge-folder)))
 
     (vm-garbage-collect-message)

@@ -2737,6 +2737,12 @@ anything else you put into this file will go away."
   :group 'vm-frames
   :type 'file)
 
+(defcustom vm-preserve-read-only-folders-on-disk t
+  "*Non-nil value means that VM will not attempt to save read-only
+folders to disk and discards changes during `vm-quit'."
+  :group 'vm-misc
+  :type 'boolean)
+
 (defcustom vm-expunge-before-quit nil
   "*Non-nil value causes VM to expunge deleted messages before
 quitting.  You can use `vm-quit-no-expunge' and `vm-quit-no-change'

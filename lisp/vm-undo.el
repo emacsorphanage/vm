@@ -644,6 +644,10 @@ changed attributes are stuffed into the folder.        USR 2010-04-06"
 (defun vm-set-redistributed-flag (m flag &optional norecord)
   (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 8))
 
+;; FIXME The folowing functions are setting 'vm-set-redistributed-flag
+;; in the undo trail (rev. 1024).  They need their own undo records.
+;; USR, 2012-11-12
+
 (defun vm-set-flagged-flag (m flag &optional norecord)
   (vm-set-xxxx-flag m flag norecord 'vm-set-redistributed-flag 9))
 

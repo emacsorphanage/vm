@@ -418,6 +418,17 @@ prompted for in the minibuffer.  @kbd{M-x vm-visit-pop-folder} and
 @kbd{M-x vm-visit-imap-folder} perform similar function for server
 folders. 
 
+@cindex read-only folders
+@vindex vm-preserve-read-only-folders-on-disk
+With a prefix argument @kbd{M-x vm-visit-folder} visits a folder in
+``read-only'' mode.  In read-only mode, no attribute changes, messages
+additions or deletions will be allowed in the visited folder.  However, VM
+might still make internal changes to the visited folder (with the effect
+that you might see the buffer-modified indicator in the modeline).  These
+changes will be discarded when the folder is quit.  The variable
+@code{vm-preserve-read-only-folders-on-disk} should be set to @code{nil} if
+you want to save VM's internal modifications.
+
 Once VM has read the folder and assimilated any new mail, the first new or
 unread message will be selected, if any.  If there is no such message,
 VM will select whatever the selected message was when this folder was last
