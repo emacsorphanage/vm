@@ -350,6 +350,22 @@ looking up `vm-imap-account-alist' or nil if there is no such account."
     nil)))
 
 ;;;###autoload
+(defun vm-imap-folder-name-for-spec (spec)
+  "Returns the IMAP folder name for maildrop specification SPEC, by
+looking up `vm-imap-account-alist' or nil if there is no such account."
+  (let ((alist vm-imap-account-alist)
+	comps account-comps)
+    (setq comps (vm-imap-parse-spec-to-list spec))
+    (catch 'return
+    (while alist
+      (setq account-comps (vm-imap-parse-spec-to-list (car (car alist))))
+      (if (and (equal (nth 1 comps) (nth 1 account-comps)) ; host
+	       (equal (nth 5 comps) (nth 5 account-comps))) ; login
+	  (throw 'return (nth 3 comps))
+	(setq alist (cdr alist))))
+    nil)))
+
+;;;###autoload
 (defun vm-imap-folder-for-spec (spec)
   "Returns the IMAP folder for maildrop specification SPEC in the
 format account:mailbox."
