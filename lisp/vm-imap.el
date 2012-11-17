@@ -1481,10 +1481,13 @@ as well."
 		    ;; (vm-imap-session-type:assert 'inactive)
 		    ;;-------------------------------------
 		    nil
+		  (vm-inform 6 "Closing IMAP session to %s..."
+			     "server")
 		  (vm-imap-send-command process "LOGOUT")
 		  ;; we don't care about the response.
-		  ;; try reading it anyway and trap any errors.
-		  (vm-imap-read-ok-response process))
+		  ;; avoid waiting for it because some servers misbehave.
+		  ;; (vm-imap-read-ok-response process)
+		  )
 	      (vm-imap-protocol-error ; handler
 	       nil)		      ; ignore errors 
 	      (error nil))	      ; handler
@@ -1495,7 +1498,8 @@ as well."
 	  ;;----------------------------------
 	  ;; This is just for tracing purposes
 	  (goto-char (point-max))
-	  (insert "ending IMAP session " (current-time-string) "\r\n")
+	  (insert "\r\n\r\n\r\n"
+		  "ending IMAP session " (current-time-string) "\r\n")
 	  ;; Schedule killing of the process after a delay to allow
 	  ;; any output to be received first
 	  (if (fboundp 'add-async-timeout)
@@ -2510,6 +2514,7 @@ that the session is active.  Returns t or nil."
 	      ;;----------------------------
 	      (vm-buffer-type:enter 'process)
 	      ;;----------------------------
+	      (vm-inform 6 "Checking IMAP connection to %s..." "server")
 	      (vm-imap-send-command process "NOOP")
 	      (condition-case err
 		  (let ((response nil)

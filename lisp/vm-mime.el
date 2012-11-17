@@ -2674,7 +2674,10 @@ deleted.
 Returns t if the display was successful.  Not clear what happens if it
 is not successful.                                   USR, 2011-03-25"
   (let ((modified (buffer-modified-p))
-	handler new-layout file type inf-type type-no-subtype inf-type-no-subtype
+	handler new-layout file 
+	type primary-type     ; type = primary-type/secondary-type
+	;; used only if vm-infer-mime-types is t
+	infered-type infered-primary-type 
 	(extent nil))
     (unless (vectorp layout)
       ;; handle a button extent
@@ -2682,27 +2685,28 @@ is not successful.                                   USR, 2011-03-25"
 	    layout (vm-extent-property extent 'vm-mime-layout))
       (goto-char (vm-extent-start-position extent))
       ;; if the button is for external-body, use the external-body
-      (setq type (downcase (car (vm-mm-layout-type layout))))
-      (when (vm-mime-types-match "message/external-body" type)
-	(setq layout (car (vm-mm-layout-parts layout)))))
+      (let ((type (downcase (car (vm-mm-layout-type layout)))))
+	(when (vm-mime-types-match "message/external-body" type)
+	  (setq layout (car (vm-mm-layout-parts layout))))))
     (unwind-protect
 	(progn
 	  (setq type (downcase (car (vm-mm-layout-type layout)))
-		type-no-subtype (car (vm-parse type "\\([^/]+\\)"))
-		file (vm-mime-get-disposition-filename layout)
-		inf-type (when (and vm-infer-mime-types file)
-			   (vm-mime-default-type-from-filename file)))
-	  (when inf-type
-	    (setq inf-type (downcase inf-type)
-		  inf-type-no-subtype  (car (vm-parse inf-type "\\([^/]+\\)"))))
-	  (cond ((and vm-infer-mime-types inf-type
+		primary-type (car (vm-parse type "\\([^/]+\\)"))
+		file (vm-mime-get-disposition-filename layout))
+	  (when (and vm-infer-mime-types file)
+	    (setq infered-type (vm-mime-default-type-from-filename file))
+	    (when infered-type
+	      (setq infered-type (downcase infered-type))
+	      (setq infered-primary-type  
+		    (car (vm-parse infered-type "\\([^/]+\\)")))))
+	  (cond ((and infered-type
 		      (or (and vm-infer-mime-types-for-text
 			       (vm-mime-types-match "text/plain" type))
 			  (vm-mime-types-match "application/octet-stream" type))
-		      (not (vm-mime-types-match type inf-type)))
-		 (vm-mime-rewrite-with-inferred-type layout inf-type)
+		      (not (vm-mime-types-match type infered-type)))
+		 (vm-mime-rewrite-with-inferred-type layout infered-type)
 		 (setq type (downcase (car (vm-mm-layout-type layout)))
-		       type-no-subtype (car (vm-parse type "\\([^/]+\\)")))))
+		       primary-type (car (vm-parse type "\\([^/]+\\)")))))
 	  (cond 
 	   ;; If its a signed message, the signature comes later but we
 	   ;; need to verify it now since other code may alter the text
@@ -2725,69 +2729,47 @@ is not successful.                                   USR, 2011-03-25"
 		       (insert
 			"/*****S/MIME SIGNATURE VERIFICATION FAILED*****/\n"))))
 		 nil))
+
 	   ((and (vm-mime-should-display-button 
 		  layout :ignore-content-disposition dont-honor-c-d)
-		 ;; original conditional-cases changed to fboundp
-		 ;; checks.  USR, 2011-03-25
-		 (or (fboundp 
-		      (setq handler (vm-mime-handler 
-				     "display-button" type))) 
-		     (fboundp 
-		      (setq handler (vm-mime-handler 
-				     "display-button" type-no-subtype)))
-
-		     (setq handler 'vm-mime-display-button-application))
-		      
-		 (funcall handler layout))
+		 (or (vm-mime-display-button layout type primary-type)
+		     (funcall 'vm-mime-display-button-application layout)))
 	    ;; if the handler returns t, we are done
 	    )
-	   ((and vm-infer-mime-types inf-type
+
+	   ((and infered-type
 		 (vm-mime-should-display-button 
 		  layout :ignore-content-disposition dont-honor-c-d)
-		 (or (fboundp 
-		      (setq handler (vm-mime-handler 
-				     "display-button" inf-type)))
-		     (fboundp 
-		      (setq handler (vm-mime-handler 
-				     "display-button" 
-				     inf-type-no-subtype))))
-		 (funcall handler layout))
+		 (vm-mime-display-button 
+		  layout infered-type infered-primary-type))
 	    ;; if the handler returns t, overwrite the layout type
-	    (vm-mime-rewrite-with-inferred-type layout inf-type))
+	    (vm-mime-rewrite-with-inferred-type layout infered-type))
+
 	   ((and (vm-mime-internally-displayable layout)
-		 (or (fboundp 
-		      (setq handler (vm-mime-handler 
-				     "display-internal" type)))
-		     (fboundp 
-		      (setq handler (vm-mime-handler 
-				     "display-internal" type-no-subtype))))
-		 (funcall handler layout))
+		 (vm-mime-display-internal layout type primary-type))
 	    ;; if the handler returns t, we are done
 	    )
-	   ((and vm-infer-mime-types inf-type
+
+	   ((and vm-infer-mime-types infered-type
 		 (vm-mime-internally-displayable layout)
-		 (or (fboundp
-		      (setq handler (vm-mime-handler 
-				     "display-internal" inf-type)))
-		     (fboundp
-		      (setq handler (vm-mime-handler 
-				     "display-internal" 
-				     inf-type-no-subtype))))
-		 (funcall handler layout))
+		 (vm-mime-display-internal 
+		  layout infered-type infered-primary-type))
 	    ;; if the handler returns t, overwrite the layout type
-	    (vm-mime-rewrite-with-inferred-type layout inf-type))
+	    (vm-mime-rewrite-with-inferred-type layout infered-type))
+
 	   ((vm-mime-types-match "multipart" type)
 	    (if (fboundp 
 		 (setq handler (vm-mime-handler "display-internal" type)))
 		(funcall handler layout)
 	      (vm-mime-display-internal-multipart/mixed layout))
 	    )
+
 	   ((and (vm-mime-find-external-viewer type)
 		 (vm-mime-display-external-generic layout))
 	    ;; external viewer worked.  the button should go away.
 	    (when extent (vm-set-extent-property
-			  extent 'vm-mime-disposable nil))
-	    )
+			  extent 'vm-mime-disposable nil)))
+
 	   ((and (not (vm-mm-layout-is-converted layout))
 		 (vm-mime-can-convert type)
 		 (setq new-layout
@@ -2795,8 +2777,8 @@ is not successful.                                   USR, 2011-03-25"
 	    ;; conversion worked.  the button should go away.
 	    (when extent
 	      (vm-set-extent-property extent 'vm-mime-disposable t))
-	    (vm-decode-mime-layout new-layout)
-	    )
+	    (vm-decode-mime-layout new-layout))
+
 	   (t 
 	    (when extent (vm-mime-rewrite-failed-button
 			  extent
@@ -2820,6 +2802,31 @@ is not successful.                                   USR, 2011-03-25"
       ;; unwind-protection
       (set-buffer-modified-p modified)))
   t )
+
+(defun vm-mime-display-button (layout type primary-type)
+  "Display MIME button, if possible, for a MIME LAYOUT of TYPE and
+PRIMARY-TYPE.  Returns a boolean flag indicating success." 
+  ;; original conditional-cases changed to fboundp
+  ;; checks.  USR, 2011-03-25
+  (let (handler)
+    (when (or (fboundp 
+	       (setq handler (vm-mime-handler "display-button" type)))
+	      (fboundp 
+	       (setq handler (vm-mime-handler "display-button" primary-type))))
+      (funcall handler layout))))
+
+(defun vm-mime-display-internal (layout type primary-type)
+  "Display internally MIME LAYOUT of TYPE and PRIMARY-TYPE, if
+possible.  Returns a boolean flag indicating success."
+  ;; original conditional-cases changed to fboundp
+  ;; checks.  USR, 2011-03-25
+  (let (handler)
+    (when 
+	(or (fboundp 
+	     (setq handler (vm-mime-handler "display-internal" type)))
+	    (fboundp 
+	     (setq handler (vm-mime-handler "display-internal" primary-type))))
+      (funcall handler layout))))
 
 (defun vm-mime-display-button-text (layout)
   (vm-mime-display-button-xxxx layout t))
@@ -4098,178 +4105,6 @@ describing the image type.                            USR, 2011-03-25"
     ;; otherwise, image-type not available here
     nil ))
 
-;; FSF Emacs 19 is not supported any more.  USR, 2011-02-23
-;; (defun vm-mime-display-internal-image-fsfemacs-19-xxxx (layout image-type name)
-;;   (if (and (vm-images-possible-here-p)
-;; 	   (vm-image-type-available-p image-type))
-;;       (catch 'done
-;; 	(let ((selective-display nil)
-;; 	      start end origfile workfile image work-buffer
-;; 	      (hroll (if vm-fsfemacs-mule-p
-;; 			 (+ (cdr (assq 'internal-border-width
-;; 				       (frame-parameters)))
-;; 			    (if (memq (cdr (assq 'vertical-scroll-bars
-;; 						 (frame-parameters)))
-;; 				      '(t left))
-;; 				(vm-fsfemacs-scroll-bar-width)
-;; 			      0))
-;; 		       (cdr (assq 'internal-border-width
-;; 				  (frame-parameters)))))
-;; 	      (vroll (cdr (assq 'internal-border-width (frame-parameters))))
-;; 	      (reverse (eq (cdr (assq 'background-mode (frame-parameters)))
-;; 			   'dark))
-;; 	      blob strips
-;; 	      dims width height char-width char-height
-;; 	      horiz-pad vert-pad trash-list
-;; 	      (buffer-read-only nil))
-;; 	  (if (and (setq blob (get (vm-mm-layout-cache layout)
-;; 				   'vm-mime-display-internal-image-xxxx))
-;; 		   (file-exists-p (car blob))
-;; 		   (progn
-;; 		     (setq origfile (car blob)
-;; 			   workfile (nth 1 blob)
-;; 			   width (nth 2 blob)
-;; 			   height (nth 3 blob)
-;; 			   char-width (nth 4 blob)
-;; 			   char-height (nth 5 blob))
-;; 		     (and (= char-width (frame-char-width))
-;; 			  (= char-height (frame-char-height)))))
-;; 	      (setq strips (nth 6 blob))
-;; 	    (unwind-protect
-;; 		(progn
-;; 		  (save-excursion
-;; 		    (setq work-buffer (vm-make-work-buffer))
-;; 		    (set-buffer work-buffer)
-;; 		    (if (and origfile (file-exists-p origfile))
-;; 			(progn
-;; 			  (insert-file-contents origfile)
-;; 			  (setq start (point-min)
-;; 				end (vm-marker (point-max))))
-;; 		      (setq start (point))
-;; 		      (vm-mime-insert-mime-body layout)
-;; 		      (setq end (point-marker))
-;; 		      (vm-mime-transfer-decode-region layout start end)
-;; 		      (setq origfile (vm-make-tempfile))
-;; 		      (setq trash-list (cons origfile trash-list))
-;; 		      (let ((coding-system-for-write (vm-binary-coding-system)))
-;; 			(write-region start end origfile nil 0)))
-;; 		    (setq dims (condition-case error-data
-;; 				   (vm-get-image-dimensions origfile)
-;; 				 (error
-;; 				  (vm-warn 0 0 "%s: Failed getting image dimensions: %s"
-;; 					   (buffer-name vm-mail-buffer) error-data)
-;; 				  (throw 'done nil)))
-;; 			  width (nth 0 dims)
-;; 			  height (nth 1 dims)
-;; 			  char-width (frame-char-width)
-;; 			  char-height (frame-char-height)
-;; 			  horiz-pad (if (< width char-width)
-;; 					(- char-width width)
-;; 				      (% width char-width))
-;; 			  horiz-pad (if (zerop horiz-pad)
-;; 					horiz-pad
-;; 				      (- char-width horiz-pad))
-;; 			  vert-pad (if (< height char-height)
-;; 				       (- char-height height)
-;; 				     (% height char-height))
-;; 			  vert-pad (if (zerop vert-pad)
-;; 				       vert-pad
-;; 				     (- char-height vert-pad)))
-;; 		    ;; crop one line from the bottom of the image
-;; 		    ;; if vertical padding needed is odd so that
-;; 		    ;; the image height plus the padding will be an
-;; 		    ;; exact multiple of the char height.
-;; 		    (if (not (zerop (% vert-pad 2)))
-;; 			(setq height (1- height)
-;; 			      vert-pad (1+ vert-pad)))
-;; 		    (call-process-region start end
-;; 					 vm-imagemagick-convert-program
-;; 					 t t nil
-;; 					 (if reverse "-negate" "-matte")
-;; 					 "-crop"
-;; 					 (format "%dx%d+0+0" width height)
-;; 					 "-page"
-;; 					 (format "%dx%d+0+0" width height)
-;; 					 "-mattecolor" "white"
-;; 					 "-frame"
-;; 					 (format "%dx%d+0+0"
-;; 						 (/ (1+ horiz-pad) 2)
-;; 						 (/ vert-pad 2))
-;; 					 "-"
-;; 					 "-")
-;; 		    (setq width (+ width (* 2 (/ (1+ horiz-pad) 2)))
-;; 			  height (+ height (* 2 (/ vert-pad 2))))
-;; 		    (if (null workfile)
-;; 			(setq workfile (vm-make-tempfile)
-;; 			      trash-list (cons workfile trash-list)))
-;; 		    (let ((coding-system-for-write (vm-binary-coding-system)))
-;; 		      (write-region (point-min) (point-max) workfile nil 0))
-;; 		    (put (vm-mm-layout-cache layout)
-;; 			 'vm-mime-display-internal-image-xxxx
-;; 			 (list origfile workfile width height
-;; 			       char-width char-height)))
-;; 		  (when trash-list
-;; 		       (vm-register-folder-garbage-files trash-list)))
-;; 	      (and work-buffer (kill-buffer work-buffer))))
-;; 	  (if (not (bolp))
-;; 	      (insert-char ?\n 1))
-;; 	  (condition-case error-data
-;; 	      (let (o i-start start process image-list overlay-list)
-;; 		(if (and strips (file-exists-p (car strips)))
-;; 		    (setq image-list strips)
-;; 		  (setq strips (vm-make-image-strips workfile char-height
-;; 						     image-type t nil
-;; 						     hroll vroll)
-;; 			process (car strips)
-;; 			strips (cdr strips)
-;; 			image-list strips)
-;; 		  (put (vm-mm-layout-cache layout)
-;; 		       'vm-mime-display-internal-image-xxxx
-;; 		       (list origfile workfile width height
-;; 			     char-width char-height
-;; 			     strips))
-;; 		  (vm-register-message-garbage-files strips))
-;; 		(setq i-start (point))
-;; 		(while strips
-;; 		  (setq start (point))
-;; 		  (insert-char ?\  (/ width char-width))
-;; 		  (put-text-property start (point) 'face 'vm-image-placeholder)
-;; 		  (setq o (make-overlay start (point) nil t))
-;; 		  (overlay-put o 'evaporate t)
-;; 		  (setq overlay-list (cons o overlay-list))
-;; 		  (insert "\n")
-;; 		  (setq strips (cdr strips)))
-;; 		(setq o (make-overlay i-start (point) nil t nil))
-;; 		(overlay-put o 'vm-mime-layout layout)
-;; 		(overlay-put o 'vm-mime-disposable t)
-;; 		(if vm-use-menus
-;; 		    (overlay-put o 'vm-image vm-menu-fsfemacs-image-menu))
-;; 		(if process
-;; 		    (save-excursion
-;; 		      (set-buffer (process-buffer process))
-;; 		      (set (make-local-variable 'vm-image-list) image-list)
-;; 		      (set (make-local-variable 'vm-image-type) image-type)
-;; 		      (set (make-local-variable 'vm-image-type-name)
-;; 			   name)
-;; 		      (set (make-local-variable 'vm-overlay-list)
-;; 			   (nreverse overlay-list))
-;; 		      ;; incremental strip display intentionally
-;; 		      ;; omitted because it makes the Emacs 19
-;; 		      ;; display completely repaint for each new
-;; 		      ;; strip.
-;; 		      (set-process-sentinel
-;; 		       process
-;; 		       'vm-process-sentinel-display-image-strips))
-;; 		  (vm-display-image-strips-on-overlay-regions image-list
-;; 							      (nreverse
-;; 							       overlay-list)
-;; 							      image-type)))
-;; 	    (error
-;; 	     (vm-warn 0 0 "%s: Failed making image strips: %s" 
-;;	                  (buffer-name vm-mail-buffer) error-data)))
-;; 	  t ))
-;;     nil ))
-
 (defun vm-get-image-dimensions (file)
   (let (work-buffer width height)
     (unwind-protect
@@ -4575,22 +4410,18 @@ convert program during the creation of the thumbnail image.
 
 The return value does not seem to be meaningful.     USR, 2011-03-25"
   (let* ((layout (vm-extent-property extent 'vm-mime-layout))
-	 (blob (get (vm-mm-layout-cache layout)
-		    'vm-mime-display-internal-image-xxxx))
+	 (tempfile (get (vm-mm-layout-cache layout)
+			'vm-mime-display-internal-image-xxxx))
          (saved-type (vm-mm-layout-type layout))
 	 (saved-disposition (vm-mm-layout-disposition layout))
-         success tempfile
+         success
 	 (work-buffer nil))
-    ;; Emacs 19 uses a different layout cache than XEmacs or Emacs 21+.
-    ;; The cache blob is a list in that case.
-    (if (consp blob)
-	(setq tempfile (car blob))
-      (setq tempfile blob))
     (setq work-buffer (vm-make-work-buffer))
     (unwind-protect
 	(with-current-buffer work-buffer
 	  (set-buffer-file-coding-system (vm-binary-coding-system))
-          ;; convert just the first page "[0]" and enforce PNG output by "png:"
+	  ;; convert just the first page "[0]" and enforce PNG
+	  ;; output by "png:" 
 	  (let ((coding-system-for-read (vm-binary-coding-system)))
 	    (setq success
 		  (eq 0 (apply 'call-process vm-imagemagick-convert-program
@@ -4598,8 +4429,6 @@ The return value does not seem to be meaningful.     USR, 2011-03-25"
 			       (append convert-args (list "-[0]" "png:-"))))))
 	  (when success
 	    (write-region (point-min) (point-max) tempfile nil 0)
-	    (when (consp blob)
-	      (setcar (nthcdr 5 blob) 0))
 	    (put (vm-mm-layout-cache layout) 'vm-image-modified t)))
       ;; unwind-protection
       (when work-buffer (kill-buffer work-buffer)))
@@ -4640,14 +4469,10 @@ The return value does not seem to be meaningful.     USR, 2011-03-25"
 
 (defun vm-mime-revert-image (extent)
   (let* ((layout (vm-extent-property extent 'vm-mime-layout))
-	 (blob (get (vm-mm-layout-cache layout)
-		    'vm-mime-display-internal-image-xxxx))
-	 tempfile)
+	 (tempfile (get (vm-mm-layout-cache layout)
+			'vm-mime-display-internal-image-xxxx)))
     ;; Emacs 19 uses a different layout cache than XEmacs or Emacs 21+.
-    ;; The cache blob is a list in that case.
-    (if (consp blob)
-	(setq tempfile (car blob))
-      (setq tempfile blob))
+    ;; It is not supported any more.  USR, 2012-11-18
     (and (stringp tempfile)
 	 (vm-error-free-call 'delete-file tempfile))
     (put (vm-mm-layout-cache layout) 'vm-image-modified nil)
@@ -4655,14 +4480,9 @@ The return value does not seem to be meaningful.     USR, 2011-03-25"
 
 (defun vm-mime-larger-image (extent)
   (let* ((layout (vm-extent-property extent 'vm-mime-layout))
-	 (blob (get (vm-mm-layout-cache layout)
-		    'vm-mime-display-internal-image-xxxx))
-	 dims tempfile)
-    ;; Emacs 19 uses a different layout cache than XEmacs or Emacs 21+.
-    ;; The cache blob is a list in that case.
-    (if (consp blob)
-	(setq tempfile (car blob))
-      (setq tempfile blob))
+	 (tempfile (get (vm-mm-layout-cache layout)
+			'vm-mime-display-internal-image-xxxx))
+	 dims)
     (setq dims (vm-get-image-dimensions tempfile))
     (vm-mime-frob-image-xxxx extent
 			     "-scale"
@@ -4672,14 +4492,9 @@ The return value does not seem to be meaningful.     USR, 2011-03-25"
 
 (defun vm-mime-smaller-image (extent)
   (let* ((layout (vm-extent-property extent 'vm-mime-layout))
-	 (blob (get (vm-mm-layout-cache layout)
-		    'vm-mime-display-internal-image-xxxx))
-	 dims tempfile)
-    ;; Emacs 19 uses a different layout cache than XEmacs or Emacs 21+.
-    ;; The cache blob is a list in that case.
-    (if (consp blob)
-	(setq tempfile (car blob))
-      (setq tempfile blob))
+	 (tempfile (get (vm-mm-layout-cache layout)
+			'vm-mime-display-internal-image-xxxx))
+	 dims)
     (setq dims (vm-get-image-dimensions tempfile))
     (vm-mime-frob-image-xxxx extent
 			     "-scale"
@@ -4753,7 +4568,7 @@ image when possible."
 	     'vm-mime-display-internal-image-xxxx
 	     nil)
 	t)
-    ;; just display the normal button
+    ;; if image not possible, just display the normal button
     (vm-mime-display-button-xxxx layout t)))
 
 (defun vm-mime-display-button-application/pdf (layout)

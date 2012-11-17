@@ -7950,8 +7950,9 @@ the @acronym{MIME} part as well as the name of the temporary file used.
 @item
 @code{vm-mime-display-internal-image-xxxx}.
 This property stores the name of the temporary file where the image is
-stored.  For an image represented as image strips, it actually stores
-a list with a number of other data items.
+stored.  
+@comment For an image represented as image strips, it actually stores
+@comment a list with a number of other data items.
 @inindex vm-image-modified
 @item
 @code{vm-image-modified}.
