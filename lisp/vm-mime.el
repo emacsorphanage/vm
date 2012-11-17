@@ -349,6 +349,19 @@ body markers is tolerated."
 (defun vm-mm-layout-is-converted (e) (aref e 15))
 (defun vm-mm-layout-unconverted-layout (e) (aref e 16))
 
+(defun vm-mm-layout-image-file (e)
+  (get (vm-mm-layout-cache e) 'vm-mime-display-internal-image-xxxx))
+(defun vm-mm-layout-image-modified (e)
+  (get (vm-mm-layout-cache e) 'vm-image-modified))
+(defun vm-set-mm-layout-image-file (e file)
+  (put (vm-mm-layout-cache e)
+       'vm-mime-display-internal-image-xxxx
+       file))
+(defun vm-set-mm-layout-image-modified (e flag)
+  (put (vm-mm-layout-cache e)
+       'vm-image-modified
+       flag))
+
 (defun vm-set-mm-layout-type (e type) (aset e 0 type))
 (defun vm-set-mm-layout-qtype (e type) (aset e 1 type))
 (defun vm-set-mm-layout-encoding (e encoding) (aset e 2 encoding))
@@ -3884,8 +3897,7 @@ describing the image type.                             USR, 2011-03-25"
 	    do-strips
 	    (keymap (make-sparse-keymap))
 	    (buffer-read-only nil))
-	(if (and (setq tempfile (get (vm-mm-layout-cache layout)
-				     'vm-mime-display-internal-image-xxxx))
+	(if (and (setq tempfile (vm-mm-layout-image-file layout))
 		 (file-readable-p tempfile))
 	    nil
 	  (vm-mime-insert-mime-body layout)
@@ -3896,9 +3908,7 @@ describing the image type.                             USR, 2011-03-25"
 	  ;; coding system for presentation buffer is binary so
 	  ;; we don't need to set it here.
 	  (write-region start end tempfile nil 0)
-	  (put (vm-mm-layout-cache layout)
-	       'vm-mime-display-internal-image-xxxx
-	       tempfile)
+	  (vm-set-mm-layout-image-file layout tempfile)
 	  (delete-region start end))
 	(if (not (bolp))
 	    (insert "\n"))
@@ -4010,8 +4020,7 @@ describing the image type.                            USR, 2011-03-25"
 	    (incremental vm-mime-display-image-strips-incrementally)
 	    do-strips
 	    (buffer-read-only nil))
-	(if (and (setq tempfile (get (vm-mm-layout-cache layout)
-				     'vm-mime-display-internal-image-xxxx))
+	(if (and (setq tempfile (vm-mm-layout-image-file layout))
 		 (file-readable-p tempfile))
 	    nil
 	  (unwind-protect
@@ -4026,9 +4035,7 @@ describing the image type.                            USR, 2011-03-25"
 		  (setq tempfile (vm-make-tempfile))
 		  (let ((coding-system-for-write (vm-binary-coding-system)))
 		    (write-region start end tempfile nil 0))
-		  (put (vm-mm-layout-cache layout)
-		       'vm-mime-display-internal-image-xxxx
-		       tempfile))
+		  (vm-mm-layout-image-file layout))
 		(vm-register-folder-garbage-files (list tempfile)))
 	    (and work-buffer (kill-buffer work-buffer))))
 	(if (not (bolp))
@@ -4410,40 +4417,47 @@ convert program during the creation of the thumbnail image.
 
 The return value does not seem to be meaningful.     USR, 2011-03-25"
   (let* ((layout (vm-extent-property extent 'vm-mime-layout))
-	 (tempfile (get (vm-mm-layout-cache layout)
-			'vm-mime-display-internal-image-xxxx))
+	 (tempfile (vm-mm-layout-image-file layout))
          (saved-type (vm-mm-layout-type layout))
 	 (saved-disposition (vm-mm-layout-disposition layout))
          success
 	 (work-buffer nil))
-    (setq work-buffer (vm-make-work-buffer))
-    (unwind-protect
-	(with-current-buffer work-buffer
-	  (set-buffer-file-coding-system (vm-binary-coding-system))
-	  ;; convert just the first page "[0]" and enforce PNG
-	  ;; output by "png:" 
-	  (let ((coding-system-for-read (vm-binary-coding-system)))
-	    (setq success
-		  (eq 0 (apply 'call-process vm-imagemagick-convert-program
-			       tempfile t nil
-			       (append convert-args (list "-[0]" "png:-"))))))
-	  (when success
-	    (write-region (point-min) (point-max) tempfile nil 0)
-	    (put (vm-mm-layout-cache layout) 'vm-image-modified t)))
-      ;; unwind-protection
-      (when work-buffer (kill-buffer work-buffer)))
+    (if (and tempfile (vm-mm-layout-image-modified layout))
+	;; image already frobbed
+	(setq success t)
+      ;; create a frob
+      (setq work-buffer (vm-make-work-buffer))
+      (unwind-protect
+	  (with-current-buffer work-buffer
+	    (set-buffer-file-coding-system (vm-binary-coding-system))
+	    ;; convert just the first page "[0]" and enforce PNG
+	    ;; output by "png:" 
+	    (let ((coding-system-for-read (vm-binary-coding-system)))
+	      (setq success
+		    (eq 0 (apply 'call-process vm-imagemagick-convert-program
+				 tempfile t nil
+				 (append convert-args (list "-[0]" "png:-"))))))
+	    (when success
+	      (write-region (point-min) (point-max) tempfile nil 0)
+	      (vm-set-mm-layout-image-modified layout t)))
+	;; unwind-protection
+	(when work-buffer (kill-buffer work-buffer))))
+
     (unwind-protect
 	(when success
 	  ;; the output is always PNG now, so fix it for displaying, but restore
 	  ;; it for the layout afterwards
 	  (vm-set-mm-layout-type layout '("image/png"))
 	  (vm-set-mm-layout-disposition layout '("inline"))
-	  (vm-mark-image-tempfile-as-message-garbage-once layout tempfile)
+	  ;; (vm-mark-image-tempfile-as-message-garbage-once layout tempfile)
 	  (vm-mime-display-internal-generic extent))
       (vm-set-mm-layout-type layout saved-type)
       (vm-set-mm-layout-disposition layout saved-disposition))))
 
 (defun vm-mark-image-tempfile-as-message-garbage-once (layout tempfile)
+  "Register image TEMPFILE used for MIME LAYOUT as a message garbage
+file, and set the 'vm-message-garbage property of LAYOUT.  This
+feature is currently not in use.                        USR, 2012-11-17"
   (if (get (vm-mm-layout-cache layout) 'vm-message-garbage)
       nil
     (vm-register-message-garbage-files (list tempfile))
@@ -4469,19 +4483,18 @@ The return value does not seem to be meaningful.     USR, 2011-03-25"
 
 (defun vm-mime-revert-image (extent)
   (let* ((layout (vm-extent-property extent 'vm-mime-layout))
-	 (tempfile (get (vm-mm-layout-cache layout)
-			'vm-mime-display-internal-image-xxxx)))
+	 (tempfile (vm-mm-layout-image-file layout)))
     ;; Emacs 19 uses a different layout cache than XEmacs or Emacs 21+.
     ;; It is not supported any more.  USR, 2012-11-18
-    (and (stringp tempfile)
-	 (vm-error-free-call 'delete-file tempfile))
-    (put (vm-mm-layout-cache layout) 'vm-image-modified nil)
+    ;; (and (stringp tempfile)
+    ;; 	 (vm-error-free-call 'delete-file tempfile))
+    (vm-set-mm-layout-image-file layout nil)
+    (vm-set-mm-layout-image-modified layout nil)
     (vm-mime-display-generic extent)))
 
 (defun vm-mime-larger-image (extent)
   (let* ((layout (vm-extent-property extent 'vm-mime-layout))
-	 (tempfile (get (vm-mm-layout-cache layout)
-			'vm-mime-display-internal-image-xxxx))
+	 (tempfile (vm-mm-layout-image-file layout))
 	 dims)
     (setq dims (vm-get-image-dimensions tempfile))
     (vm-mime-frob-image-xxxx extent
@@ -4492,8 +4505,7 @@ The return value does not seem to be meaningful.     USR, 2011-03-25"
 
 (defun vm-mime-smaller-image (extent)
   (let* ((layout (vm-extent-property extent 'vm-mime-layout))
-	 (tempfile (get (vm-mm-layout-cache layout)
-			'vm-mime-display-internal-image-xxxx))
+	 (tempfile (vm-mm-layout-image-file layout))
 	 dims)
     (setq dims (vm-get-image-dimensions tempfile))
     (vm-mime-frob-image-xxxx extent
@@ -4526,18 +4538,18 @@ image when possible."
 	(vm-set-extent-property thumb-extent 'vm-mime-disposable nil)
 	(vm-set-extent-property thumb-extent 'start-open t)
 	;; write out the image data 
-	(with-current-buffer (vm-make-work-buffer)
-	  (vm-mime-insert-mime-body layout)
-	  (vm-mime-transfer-decode-region layout (point-min) (point-max))
-	  (setq tempfile (vm-make-tempfile))
-	  (let ((coding-system-for-write (vm-binary-coding-system)))
-	    (write-region (point-min) (point-max) tempfile nil 0))
-	  (kill-buffer (current-buffer)))
-	;; store the temp filename
-	(put (vm-mm-layout-cache layout)
-	     'vm-mime-display-internal-image-xxxx
-	     tempfile)
-	(vm-register-folder-garbage-files (list tempfile))
+	(setq tempfile (vm-mm-layout-image-file layout))
+	(unless tempfile
+	  (with-current-buffer (vm-make-work-buffer)
+	    (vm-mime-insert-mime-body layout)
+	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
+	    (setq tempfile (vm-make-tempfile))
+	    (let ((coding-system-for-write (vm-binary-coding-system)))
+	      (write-region (point-min) (point-max) tempfile nil 0))
+	    (kill-buffer (current-buffer)))
+	  ;; store the temp filename
+	  (vm-set-mm-layout-image-file layout tempfile)
+	  (vm-register-folder-garbage-files (list tempfile)))
 	;; display a thumbnail over the fake extent
 	(let ((vm-mime-internal-content-types '("image"))
 	      (vm-mime-internal-content-type-exceptions nil)
@@ -4564,9 +4576,8 @@ image when possible."
 	      (set-extent-begin-glyph (vm-extent-at start) glyph)
 	    (put-text-property start (1+ start) 'display glyph)))
 	;; remove the cached thumb so that full sized image will be shown
-	(put (vm-mm-layout-cache layout)
-	     'vm-mime-display-internal-image-xxxx
-	     nil)
+	;; next time
+	;; (vm-set-mm-layout-image-file layout nil)
 	t)
     ;; if image not possible, just display the normal button
     (vm-mime-display-button-xxxx layout t)))

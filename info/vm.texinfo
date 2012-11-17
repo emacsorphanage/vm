@@ -7370,13 +7370,22 @@ undoing cycle.
 @inindex vm-label-obarray
 @code{vm-label-obarray}.  An obarray storing all the labels that are
 registered to be used in the current folder.
+@inindex vm-folder-garbage-alist
+@code{vm-folder-garbage-alist}.  An alist with items that constitute the
+temporary storage used in displaying the folder and functions to
+dispose them.  These garbage items are disposed when the folder is quit.
+@inindex vm-message-garbage-alist
+@code{vm-message-garbage-alist}. An alist with items that constitute the
+temporary storage used in displaying the current message and functions to
+dispose them.  These garbage items are disposed whenever a new message is
+selected or if the folder is quit.
 @end itemize
 
 @unnumberedsubsubsec vm-folder-access-data
 
 The variable @code{vm-folder-access-data} is a vector storing data about the
-state of the mail server (for @acronym{POP} and @acronym{IMAP} servers).  It contains the
-following items:
+state of the mail server (for @acronym{POP} and @acronym{IMAP} servers).  It
+contains the following items:
 
 @itemize
 @item
@@ -7893,7 +7902,7 @@ vector is used not only for the overall message, but for all its
 @inindex type
 @inindex Content-Type
 @itemize
-@item @code{type}.
+@item @code{type} (0).
 A list of strings consisting of the @acronym{MIME} type of the part along
 with its attributes.  This comes from ``Content-Type'' header.  The type
 could be of the form `type/subtype'.  Quotation marks are stripped from
@@ -7901,44 +7910,44 @@ attribute values.  An example is
 @code{("multipart/mixed" "boundary=----_=_NextPart_001_01AFE588.63E23840")}.
 @inindex qtype
 @item
-@code{qtype}.  Like type, but the quotation marks are not stripped.
+@code{qtype} (1).  Like type, but the quotation marks are not stripped.
 @inindex encoding
 @inindex Content-Transfer-Encoding
 @item
-@code{encoding}.  The @acronym{MIME} encoding used for the part.  It comes
+@code{encoding} (2).  The @acronym{MIME} encoding used for the part.  It comes
 from the ``Content-Transfer-Encoding'' header.
 @inindex id
 @inindex Content-ID
 @item
-@code{id}. The id obtained from the ``Content-ID'' header of the part.
+@code{id} (3). The id obtained from the ``Content-ID'' header of the part.
 @inindex description
 @inindex Content-Description
 @item
-@code{description}.  A description string obtained from the
+@code{description} (4).  A description string obtained from the
 ``Content-Description'' header of the part.
 @inindex disposition
 @inindex Content-Disposition
 @item
-@code{disposition}.  A list of strings obtained from the
+@code{disposition} (5).  A list of strings obtained from the
 ``Content-Disposition'' header of the part.  Quotation marks are
 stripped from attribute values.  (An example is @code{(``attachment'',
 ``filename=mydocument.doc'')}.)
 @inindex qdisposition
 @item
-@code{qdisposition}.  Like disposition, but the quotation marks are not
+@code{qdisposition} (6).  Like disposition, but the quotation marks are not
 stripped. 
 @inindex header-start
 @item
-@code{header-start}, @code{header-end}, @code{body-start} and
-@code{body-end}.  Markers into the content buffer delineating the
+@code{header-start} (7), @code{header-end} (8), @code{body-start} (9) and
+@code{body-end} (10).  Markers into the content buffer delineating the
 headers/body of the @acronym{MIME} part.
 @inindex parts
 @item
-@code{parts}. A list of @acronym{MIME} layouts for the individual subparts
+@code{parts} (11). A list of @acronym{MIME} layouts for the individual subparts
 of this part.
 @inindex cache
 @item
-@code{cache}. A symbol that is unique to this @acronym{MIME} part.  Other
+@code{cache} (12). A symbol that is unique to this @acronym{MIME} part.  Other
 data is stored as properties of this symbol:
 @itemize
 @inindex vm-mime-display-external-generic
@@ -7965,26 +7974,28 @@ This property stores the name of the temporary file where the audio
 clip is stored.
 @inindex vm-message-garbage
 @item
-@code{vm-message-garbage}.
+@code{vm-message-garbage}.  This property is a boolean flag indicating
+whether the files used in this layout have been registered as message
+garbage.  (This feature is currently not in use.)
 @end itemize
 @inindex message-symbol
 @item
-@code{message-symbol}.  A reference to the message that contains the
+@code{message-symbol} (13).  A reference to the message that contains the
 @acronym{MIME} part.  Represented as a symbol (that is, an interned key into
 a hash table).  This is a different symbol from the real-message-sym of the
 message.
 @inindex display-error
 @item
-@code{display-error}.  If the display of a @acronym{MIME} part fails, its
+@code{display-error} (14).  If the display of a @acronym{MIME} part fails, its
 error string is stored here.
 @inindex layout-is-converted
 @item
-@code{layout-is-converted}.  Flag indicating that @acronym{MIME} type
+@code{layout-is-converted} (15).  Flag indicating that @acronym{MIME} type
 conversion has been performed on this part.  @pxref{@acronym{MIME} type
 conversion}.
 @inindex unconverted-layout
 @item
-@code{unconverted-layout}.  If the @acronym{MIME} type conversion has been
+@code{unconverted-layout} (16).  If the @acronym{MIME} type conversion has been
 performed on this part, then this holds the original unconverted layout.
 @end itemize
 
