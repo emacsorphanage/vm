@@ -4877,9 +4877,22 @@ which is used in interactive confirmations."
 
 ;;;###autoload
 (defun vm-toggle-read-only ()
+  "If the current VM folder is read-only, make it modifiable.
+
+This command can also be used to make a modifiable folder read-only.
+However it is unsafe to do so because any previous modifications will
+be discarded when the folder is quit.  You should first save the
+current changes of the folder before making it read-only."
   (interactive)
   (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
-  (setq vm-folder-read-only (not vm-folder-read-only))
+  (if vm-folder-read-only
+      (setq vm-folder-read-only nil)
+    (if (or (not (buffer-modified-p))
+	    (y-or-n-p 
+	     (concat "It is unsafe to make the folder read-only. "
+		     "Proceed? ")))
+	(setq vm-folder-read-only t)
+      (error "Aborted")))
   (intern (buffer-name) vm-buffers-needing-display-update)
   (vm-inform 5 "Folder is now %s"
 	   (if vm-folder-read-only "read-only" "modifiable"))
