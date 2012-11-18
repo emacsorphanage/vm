@@ -1616,8 +1616,7 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	    ;; assume the message is new.  avoid
 	    ;; vm-set-new-flag because it asks for a
 	    ;; summary update.
-	    (vm-set-new-flag-of (car mp) t)
-	    (vm-increment vm-upgrade-count)))
+	    (vm-set-new-flag-of (car mp) t)))
 	  ;; let babyl attributes override the normal VM
 	  ;; attributes header.
 	  (cond ((eq vm-folder-type 'babyl)

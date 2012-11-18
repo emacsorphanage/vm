@@ -4972,7 +4972,8 @@ face name.
 
 The order matters. The first condition that matches the message will
 decide the face."
-  :type '(repeat (cons (sexp) (face)))
+  :type '(repeat (group (sexp :tag "Virtual Selector") 
+			(face :tag "Face")))
   :group 'vm-summary-faces)
 
 ;;---------------------------------------------------------------------------

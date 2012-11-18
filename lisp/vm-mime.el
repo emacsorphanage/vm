@@ -349,19 +349,6 @@ body markers is tolerated."
 (defun vm-mm-layout-is-converted (e) (aref e 15))
 (defun vm-mm-layout-unconverted-layout (e) (aref e 16))
 
-(defun vm-mm-layout-image-file (e)
-  (get (vm-mm-layout-cache e) 'vm-mime-display-internal-image-xxxx))
-(defun vm-mm-layout-image-modified (e)
-  (get (vm-mm-layout-cache e) 'vm-image-modified))
-(defun vm-set-mm-layout-image-file (e file)
-  (put (vm-mm-layout-cache e)
-       'vm-mime-display-internal-image-xxxx
-       file))
-(defun vm-set-mm-layout-image-modified (e flag)
-  (put (vm-mm-layout-cache e)
-       'vm-image-modified
-       flag))
-
 (defun vm-set-mm-layout-type (e type) (aset e 0 type))
 (defun vm-set-mm-layout-qtype (e type) (aset e 1 type))
 (defun vm-set-mm-layout-encoding (e encoding) (aset e 2 encoding))
@@ -379,6 +366,16 @@ body markers is tolerated."
 (defun vm-set-mm-layout-display-error (e c) (aset e 14 c))
 (defun vm-set-mm-layout-is-converted (e c) (aset e 15 c))
 (defun vm-set-mm-layout-unconverted-layout (e l) (aset e 16 l))
+
+;; Properties of layout-cache
+(defun vm-mm-layout-image-file (e)
+  (get (vm-mm-layout-cache e) 'vm-mime-display-internal-image-xxxx))
+(defun vm-mm-layout-image-modified (e)
+  (get (vm-mm-layout-cache e) 'vm-image-modified))
+(defun vm-set-mm-layout-image-file (e file)
+  (put (vm-mm-layout-cache e) 'vm-mime-display-internal-image-xxxx file))
+(defun vm-set-mm-layout-image-modified (e flag)
+  (put (vm-mm-layout-cache e) 'vm-image-modified flag))
 
 (defun vm-mime-type-with-params (type params)
   "Returns a string concatenating MIME TYPE (a string) and PARAMS (a
@@ -4449,6 +4446,8 @@ The return value does not seem to be meaningful.     USR, 2011-03-25"
 	  ;; it for the layout afterwards
 	  (vm-set-mm-layout-type layout '("image/png"))
 	  (vm-set-mm-layout-disposition layout '("inline"))
+	  ;; Keep the image files around in case the user comes back
+	  ;; to them.   USR, 2012-11-17
 	  ;; (vm-mark-image-tempfile-as-message-garbage-once layout tempfile)
 	  (vm-mime-display-internal-generic extent))
       (vm-set-mm-layout-type layout saved-type)
@@ -4486,9 +4485,10 @@ feature is currently not in use.                        USR, 2012-11-17"
 	 (tempfile (vm-mm-layout-image-file layout)))
     ;; Emacs 19 uses a different layout cache than XEmacs or Emacs 21+.
     ;; It is not supported any more.  USR, 2012-11-18
-    ;; (and (stringp tempfile)
-    ;; 	 (vm-error-free-call 'delete-file tempfile))
-    (vm-set-mm-layout-image-file layout nil)
+    ;; It is not clear why the tempfile is being deleted.  When will
+    ;; it be re-created?  USR, 2012-11-18
+    (and (stringp tempfile)
+    	 (vm-error-free-call 'delete-file tempfile))
     (vm-set-mm-layout-image-modified layout nil)
     (vm-mime-display-generic extent)))
 
