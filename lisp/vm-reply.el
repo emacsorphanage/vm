@@ -520,7 +520,9 @@ specified by `vm-included-text-headers' and
 	(vm-fill-paragraphs-containing-long-lines
 	 vm-fill-paragraphs-containing-long-lines-in-reply)
 	(vm-paragraph-fill-column 
-	 vm-fill-long-lines-in-reply-column))
+	 vm-fill-long-lines-in-reply-column)
+	;; (vm-use-presentation-minor-modes nil) ; do we need this?
+	)
     (if (eq layout 'none)
 	(vm-insert-region-from-buffer (vm-buffer-of message)
 				      (vm-headers-of message)

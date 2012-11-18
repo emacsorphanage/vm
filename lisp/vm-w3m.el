@@ -45,7 +45,7 @@
 		  "ext:w3m" (&optional force no-cache))
 
 
-;; Dummy vriable declarations to suppress warnings if w3m is not
+;; Dummy variable declarations to suppress warnings if w3m is not
 ;; loaded
 
 (defvar w3m-current-buffer)

@@ -24,15 +24,18 @@
 
 ;;*****************************************************************************
 ;; Make VM your default mail agent in Emacs
+;;*****************************************************************************
 (setq mail-user-agent 'vm-user-agent)
 
-;;*****************************************************************************
 
 ;; Two ways of using VM:
 ;; - downloading mail to local folders
 ;; - reading mail on mail servers from anywhere on the internet
 
+;;*****************************************************************************
 ;; For local folders, set these variables:
+;;
+;;*****************************************************************************
 
 (setq vm-folder-directory "~/mail")
 
@@ -57,26 +60,29 @@
              (concat vm-folder-directory "spam.crash"))
        ;; POP
        (list "gmail.pop" 
-	     "pop:pop.google.com:110:pass:YourEmailAddress:*"
+	     "pop:pop.google.com:110:pass:YourEmailID:*"
              (concat vm-folder-directory "gmail.pop.crash"))
        ;; POP-SSL 
        (list "gmail.pop" 
-	     "pop-ssl:pop.google.com:995:pass:YourEmailAddress:*"
+	     "pop-ssl:pop.google.com:995:pass:YourEmailID:*"
              (concat vm-folder-directory "gmail.pop.crash"))
        ;; IMAP
        (list "gmail.imap" 
-	     "imap:imap.google.com:143:inbox:login:YourEmailAddress:*"
+	     "imap:imap.google.com:143:inbox:login:YourEmailID:*"
              (concat vm-folder-directory "gmail.imap.crash"))
        ))
        
+;;*****************************************************************************
 ;; For server folders, set these variables:
+;;
+;;*****************************************************************************
 
 (setq vm-primary-inbox
       ;; use one of these two
       ;; for POP server 
-      "pop:pop.google.com:110:pass:YourEmailAddress:*"
+      "pop:pop.google.com:110:pass:YourEmailID:*"
       ;; for IMAP server 
-      "imap:imap.google.com:143:inbox:login:YourEmailAddress:*"
+      "imap:imap.google.com:143:inbox:login:YourEmailID:*"
       )
 
 (setq vm-pop-folder-cache-directory "~/mailcache")
@@ -84,20 +90,22 @@
 
 (setq vm-pop-folder-alist
       ;; for other POP servers
-      '(("pop:pop3.blueyonder.co.uk:110:pass:YourEmailAddress:*" 
+      '(("pop:pop3.blueyonder.co.uk:110:pass:YourEmailID:*" 
 	 "blueyonder")
-	("pop:mailhost.cs.bham.ac.uk:110:pass:YourEmailAddress:*" 
+	("pop:mailhost.cs.bham.ac.uk:110:pass:YourEmailID:*" 
 	 "bham")))
 (setq vm-imap-account-alist
       ;; for other IMAP servers
-      '(("imap:imap4.blueyonder.co.uk:143:*:login:YourEmailAddress:*" 
+      '(("imap:imap4.blueyonder.co.uk:143:*:login:YourEmailID:*" 
 	 "blueyonder")
-	("imap:mailhost.cs.bham.ac.uk:143:*:login:YourEmailAddress:*" 
+	("imap:mailhost.cs.bham.ac.uk:143:*:login:YourEmailID:*" 
 	 "bham")
 	))
 
 ;;*****************************************************************************
 ;; Summary 
+;;
+;;*****************************************************************************
 
 ;; See the recipients for emails you sent instead of yourself.
 (setq vm-summary-uninteresting-senders 
@@ -111,6 +119,8 @@
 ;;
 ;; HTML messages can be converted to text or the w3 resp. w3m Emacs viewers
 ;; can be used for displaying. 
+;;
+;;*****************************************************************************
 
 (setq  vm-mime-type-converter-alist
       '(("text/html" "text/plain" "lynx -force_html -dump /dev/stdin")
@@ -129,7 +139,8 @@
 
 ;;*****************************************************************************
 ;; Composing email
-
+;;
+;;*****************************************************************************
 (setq mail-default-headers "From: Robert Widhopf-Fenk <hack@robf.de>\n")
 
 (vmpc-my-identities "me@company1.nil" "me@home.nil" "me@alterego.nil")
@@ -137,6 +148,8 @@
 
 ;;*****************************************************************************
 ;; A hook function to setup mail-composing buffers
+;;
+;;*****************************************************************************
 (defun robf-vm-mail-mode-hook ()
   "Robert Widhopf-Fenks `vm-mail-mode-hook'."
   (interactive)
@@ -184,6 +197,9 @@
 ;; email address and have to send them using different SMTP servers, the you
 ;; might want to take a look at esmtpmail.el a fork from smtpmail.el targeted
 ;; to deal with personal crisis support.
+;;
+;;*****************************************************************************
+
 (require 'esmtpmail)
 (setq send-mail-function 'esmtpmail-send-it
       esmtpmail-default-smtp-server "smtp.someprovider.com"
@@ -194,13 +210,15 @@
 ;; the author.  There are also other authentication  methods, see the docs.
 (setq esmtpmail-send-it-by-alist 
       (list
-       '("YourEmaiAddress1" "SMTPSERVER1"
-         (vm-pop-login "pop:SMTPSERVER1:110:pass:YourEmailAddress:*"))
-       '("YourEmaiAddress2" "SMTPSERVER2"
-         (vm-after-pop "pop:SMTPSERVER2:110:pass:YourEmailAddress:*"))))
+       '("YourEmailAddress1" "SMTPSERVER1"
+         (vm-pop-login "pop:SMTPSERVER1:110:pass:YourEmailID:*"))
+       '("YourEmailAddress2" "SMTPSERVER2"
+         (vm-after-pop "pop:SMTPSERVER2:110:pass:YourEmailID:*"))))
 
 ;;*****************************************************************************
 ;; Feed mail to a local queue if you are offline
+;;
+;;*****************************************************************************
 (require 'feedmail)
 
 (setq send-mail-function 'vm-mail-send-or-feed-it
@@ -225,6 +243,8 @@
 
 ;;*****************************************************************************
 ;; BBDB - the address book for Emacs
+;;
+;;*****************************************************************************
 (require 'bbdb)
 (require 'bbdb-autoloads)
 (bbdb-initialize 'vm 'sendmail)
@@ -235,6 +255,8 @@
 
 ;;*****************************************************************************
 ;; Now change some keyboard bindings 
+;;
+;;*****************************************************************************
 (define-key vm-mode-map [(meta up)]    'vm-previous-unread-message)
 (define-key vm-mode-map [(meta down)]  'vm-next-unread-message)
 (define-key vm-mode-map "\C- "  'vm-scroll-backward)

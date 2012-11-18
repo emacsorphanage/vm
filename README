@@ -6,7 +6,7 @@ http://www.wonderworks.com/vm and the FAQ is still hosted there.
 
 The later versions of VM have been maintained by the user community.
 The current 'VM development team' (vm@lists.launchpad.net) consists of
-of Robert Widhopf-Fenk, Ulrich Müller and Uday Reddy, but contributions
+of Arik Mitschang, Ulrich Müller and Uday Reddy, but contributions
 from various other users and developers have also been incorporated in
 them.  See the info manual for a full list of contributors.
 
@@ -109,14 +109,13 @@ The project home is at
 
    http://launchpad.net/vm
 
-Registering on launchpad is painless process and makes it convenient
+Registering on launchpad is a painless process and makes it convenient
 to participate in the development of VM (or other Launchpad projects).
 
 The "Bugs" tracker is where we keep track of the bugs that need fixing
 as well as TODO items.
 
 The "Blueprints" section records our future development plans.
-
 
 
 *******************************************************************************
@@ -134,7 +133,7 @@ Extensions for VM written by Robert:
 		      for spam tagging
 - vm-biff.el	      is a xbiff within VM, notifying you of new mail
 - vm-serial.el	      templates for mails, personalized serial mails 
-- vm-summary-faces.el face base on virtual selectors 
+- vm-summary-faces.el faces based on virtual selectors 
 
 Additional extensions for VM from other people:
 - vm-pcrisis.el	      by Rob Hodges for people with personal crisis which need
@@ -147,7 +146,11 @@ Enhancements:
 - Support for reading HTML messages using Emacs packages and external
 applications, as well as replying to HTML messages.
 
-- IMAP server support by Uday Reddy
+- IMAP folder support by Uday Reddy
+
+- Thread folding by Arik Mitschang
+
+- S/MIME support by Arik Mitschang
 
 
 Local Variables:
