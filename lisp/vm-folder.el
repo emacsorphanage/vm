@@ -5166,9 +5166,9 @@ folder is saved."
 	    (setq vm-fetched-messages	; add-to-list is no good on XEmacs
 		  (nconc vm-fetched-messages (list m))))
 
-	(if vm-fetched-message-limit
+	(if vm-external-fetched-message-limit
 	    (while (>= vm-fetched-message-count
-		       vm-fetched-message-limit)
+		       vm-external-fetched-message-limit)
 	      (let ((mm (car vm-fetched-messages)))
 		;; These tests should always come out true, but we are
 		;; not confident.  A lot could have happened since the
@@ -5340,7 +5340,7 @@ thread are retrieved."
     (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (when (null count) (setq count 1))
     (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
-	  (vm-fetched-message-limit nil)
+	  (vm-external-fetched-message-limit nil)
 	  (errors 0)
 	  (n 0)
 	  fetch-method

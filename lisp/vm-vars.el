@@ -228,13 +228,15 @@ must be used to load the externally stored message bodies."
   :type '(choice (const :tag "No automatic fetching" nil)
 		(const :tag "Automatic fetching" t)))
 
-(defcustom vm-fetched-message-limit 10
+(defcustom vm-external-fetched-message-limit 10
   "*Should be an integer representing the maximum number of messages
 that VM should keep in the Folder buffer when the messages are
 fetched on demand, or nil to signify no limit."
   :group 'vm-folders
   :type '(choice (const :tag "No Limit" nil) 
 		 (integer :tag "Number of Mesages")))
+(defvaralias 'vm-fetched-message-limit 
+  'vm-external-fetched-message-limit)
 
 (defcustom vm-index-file-suffix nil
   "*Suffix used to construct VM index file names, e.g., \".inx\".

@@ -214,7 +214,8 @@ this command 'sees' marked messages as it moves."
   ;;(vm-inform 8 "running vm next message")
   (if (vm-interactive-p)
       (vm-follow-summary-cursor))
-  (vm-select-folder-buffer-and-validate (if signal-errors 1 0) (vm-interactive-p))
+  (vm-select-folder-buffer-and-validate 
+   (if signal-errors 1 0) (vm-interactive-p))
   ;; include other commands that call vm-next-message so that the
   ;; correct window configuration is applied for these particular
   ;; non-interactive calls.

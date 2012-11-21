@@ -1432,10 +1432,10 @@ loaded immediately, and larger messages will be left on the server to be
 fetched on demand.  To treat all messages as external messages, you can set
 @code{vm-imap-max-message-size} to 0.
 
-@vindex vm-fetched-message-limit
+@vindex vm-external-fetched-message-limit
 After fetching the bodies of external messages, VM stores them in the Folder
 buffer temporarily, so that repeated fetching is avoided.  The variable
-@code{vm-fetched-message-limit} controls how many message bodies are stored
+@code{vm-external-fetched-message-limit} controls how many message bodies are stored
 in this way.  You can set it to an integer (10 is the default), or to
 @code{nil}, signifying that there is no limit.  All the fetched message
 bodies are flushed before folders are saved to disk.
@@ -7301,7 +7301,7 @@ bodies were fetched for viewing or other operations.
 @inindex vm-fetched-messages
 @code{vm-fetched-message-count}.  The number of messages in
 @code{vm-fetched-messages}.  An attempt is made to keep this below the
-@code{vm-fetched-message-limit}. 
+@code{vm-external-fetched-message-limit}. 
 @item
 @inindex vm-mime-decoded
 @inindex @acronym{MIME}

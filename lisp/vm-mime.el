@@ -1673,21 +1673,23 @@ source of the message."
 	;; vm-present-current-message or vm-show-current-message?
 	;; it was inserted by Rob F in rev. 506.1.1
 	;;                              USR, 2012-04-09
+	;; Let us turn it off and see waht happens.
+	;;                              USR, 2012-11-21
 	(goto-char (point-min))
-	(cond ((and (vm-message-access-method-of mm)
-		    (vm-body-to-be-retrieved-of mm))
-	       ;; Remember that this does process I/O and
-	       ;; accept-process-output, allowing concurrent threads
-	       ;; to run!!!  USR, 2010-07-11
-	       (condition-case err
-		   (vm-fetch-message 
-		    (list (vm-message-access-method-of mm)) mm)
-		 (error
-		  (vm-warn 0 0 "Cannot fetch message; %s" 
-			   (error-message-string err)))))
-	      ((re-search-forward vm-external-storage-header-regexp
-				  (vm-text-of mm) t)
-	       (vm-fetch-message (read (current-buffer)) mm)))
+	;; (cond ((and (vm-message-access-method-of mm)
+	;; 	    (vm-body-to-be-retrieved-of mm))
+	;;        ;; Remember that this does process I/O and
+	;;        ;; accept-process-output, allowing concurrent threads
+	;;        ;; to run!!!  USR, 2010-07-11
+	;;        (condition-case err
+	;; 	   (vm-fetch-message 
+	;; 	    (list (vm-message-access-method-of mm)) mm)
+	;; 	 (error
+	;; 	  (vm-warn 0 0 "Cannot fetch message; %s" 
+	;; 		   (error-message-string err)))))
+	;;       ((re-search-forward vm-external-storage-header-regexp
+	;; 			  (vm-text-of mm) t)
+	;;        (vm-fetch-message (read (current-buffer)) mm)))
 	;; This might be redundant.  Wasn't in revision 717.
 	;; (vm-reset-buffer-modified-p modified (current-buffer)) 
 	;; fixup the reference to the message
@@ -5338,7 +5340,7 @@ file with the name should be overwritten."
 	(use-dialog-box nil)
 	(dir vm-mime-attachment-save-directory)
 	(done nil))
-    (unless file
+    (when (null file)
       (while (not done)
 	(setq file
 	      (read-file-name
