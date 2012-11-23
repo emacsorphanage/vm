@@ -913,7 +913,10 @@ sender.  (See `vm-summary-uninteresting-senders'.)"
                 (vm-get-header-contents m "From:")))
 
 (defun vm-vs-attachment (m)
-  "Virtual selector to check if the message has an attachment."
+  "Virtual selector to check if the message has an attachment.
+
+Note that the message should have been loaded from external source (if
+any) for it to match this selector."
   (or (vm-attachments-flag m)
       (vm-vs-text m vm-vs-attachment-regexp)))
 
@@ -921,7 +924,10 @@ sender.  (See `vm-summary-uninteresting-senders'.)"
   "Virtual selector to check if the message has a spam word in the
 given message PART (which can be \"header\", \"text\" or
 \"header-or-text\".  Spam words are those loaded from the
-`vm-spam-words-file'."
+`vm-spam-words-file'.
+
+Note that the message should have been loaded from external source (if
+any) for this selector to detect the occurrences in the text."
   (if (and (not vm-spam-words)
            vm-spam-words-file
            (file-readable-p vm-spam-words-file)
@@ -989,7 +995,10 @@ an instance of REGEXP."
 
 (defun vm-vs-text (m regexp)
   "Virtual selector to check if the body of the message has an
-instance of REGEXP."
+instance of REGEXP.
+
+Note that the message should have been loaded from external source (if
+any) for it to match this selector."
   (save-excursion
     (save-restriction
       (widen)
@@ -998,7 +1007,10 @@ instance of REGEXP."
 
 (defun vm-vs-header-or-text (m regexp)
   "Virtual selector to check if either the header or the body of
-the message has an instance of REGEXP."
+the message has an instance of REGEXP.
+
+Note that the message should have been loaded from external source (if
+any) for the selector to detect occurrences in the text."
   (save-excursion
     (save-restriction
       (widen)
