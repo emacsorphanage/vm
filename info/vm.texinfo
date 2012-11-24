@@ -4325,7 +4325,7 @@ subject tags you want removed.  For example, the setting
 
 @vindex vm-summary-strip-subject-tags
 In addition to ignoring subject tags during sorting, you can also ask VM to
-remove subject tags from the the summary lines in the Summary buffer.
+remove subject tags from the summary lines in the Summary buffer.
 The variable @code{vm-summary-strip-subject-tags} should be set to a non-nil
 value to achieve this effect.
 
@@ -5975,7 +5975,7 @@ list will be display flushright for top and bottom toolbars, and
 flushbottom for left and right toolbars.
 @end table
 
-If an positive integer appears in the the @code{vm-use-toolbar} list, it
+If an positive integer appears in the @code{vm-use-toolbar} list, it
 specifies the number of pixels of blank space to display between
 the button that comes before and the button that comes after the
 integer.
@@ -7086,6 +7086,7 @@ developers/programmers.
 * Summary Internals::     Details of summary generation
 * Threading Internals::   Details of message threads handling
 * Sorting Internals::     Details of how messages are sorted
+* IMAP Server Interaction:: Handling interaction with IMAP servers
 * User Interaction::      Handling of the user interaction
 * Coding Systems::        How VM handles character coding
 * Message Display::       How VM displays messages
@@ -8279,7 +8280,7 @@ be used to fill in the missing information.
 
 
 
-@node Sorting Internals, User Interaction, Threading Internals, Internals
+@node Sorting Internals, IMAP Server Interaction, Threading Internals, Internals
 @section Sorting Internals
 
 @inindex vm-key-functions
@@ -8324,7 +8325,31 @@ the order of the most recent message in the thread or subthread.
 Sorting them by ``date'' means using the date of the root message of
 the thread or subthread.
 
-@node User Interaction, Coding Systems, Sorting Internals, Internals
+@node IMAP Server Interaction, User Interaction, Sorting Internals, Internals
+@section IMAP Server Interaction
+
+When IMAP servers are used as mail spools (or ``drop boxes'') for local
+folders, VM opens a session with the IMAP server each time it is asked to
+get new mail.  These sessions are closed immediately after the downloading
+is completed.
+
+When VM is used to handle IMAP folders, sessions are created with the server
+each time a synchronization is performed (for reading as well as saving).
+A separate session is created for each IMAP folder visited in VM.
+If, in addition, the IMAP folders have external messages, VM keeps an active
+session with the server (separately for each IMAP folder), which is used to
+fetch messages on demand.
+
+When an IMAP session is inactive for a certain period, IMAP server is likely
+to forcibly close it.  To ensure that an IMAP session is active when VM
+tries to talk to the server, it first checks that the session is active.
+(This can be disabled by setting @code{vm-imap-ensure-active-sessions}.)  If
+the server has forcibly closed the connection, it would not respond, and
+Emacs networking code times out after a certain period.  During this
+process, VM will appear to ``hang.''  In reality, it is waiting for the
+Emacs networking code to come back with a response.
+
+@node User Interaction, Coding Systems, IMAP Server Interaction, Internals
 @section User Interaction
 
 @inindex vm-mail-buffer
@@ -8424,7 +8449,7 @@ system can vary between different versions of Emacs.
 @inindex vm-mime-mule-charset-to-coding-alist
 @acronym{MIME} messages specify the @dfn{character set} that their content
 is in, in the @samp{Content-Type} header.  In reality, the ``character set''
-is a reference to a coding system, which has been used to encode the the
+is a reference to a coding system, which has been used to encode the
 characters in the particular character set as bit patterns.  However, the
 name that Emacs uses to refer to a coding system is often different from the
 MIME character set name.  The correspondence between the two is defined via
@@ -8450,16 +8475,22 @@ into the default or chosen @acronym{MIME} character set using the function
 @inindex quoted printable
 The headers of email messages can only be in US-ASCII.  So header fields
 in other character sets are encoded using either base-64 or
-quoted-printable encoding (which give ASCII strings) and annotated
+quoted-printable encoding (which yield ASCII strings) and annotated
 with the name of the original character set.  Such annotations look
 like @code{=?charset?B?}.  They can apply
 to individual words or sequences of words appearing the in the
-headers.  Note that the annotation @code{?B?} signifies base-64
-encoding of the byte stream.  Similarly the annotation @code{?Q?} might
+headers.  Note that the annotation @code{?B?} signifies a base-64
+encoding of the byte stream.  Similarly the annotation @code{?Q?} is
 be used to denote the quoted-printable encoding.
 VM decodes such strings using the function @code{decode-coding-string}.
 Conversely, the headers of outgoing messages are encoded using
-@code{encode-coding-string}
+@code{encode-coding-string}.
+
+When header lines are MIME-decoded from the original character set into the
+Emacs internal coding, the original character set is still remembered as a
+text property of the strings.  The strings in the @code{X-VM-v5-Data} header
+have these text properties and, when the header is written to the disk,
+these strings are converted back into their original MIME encodings.
 
 @node Message Display, @acronym{MIME} Display, Coding Systems, Internals
 @section Message Display
