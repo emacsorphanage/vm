@@ -781,12 +781,12 @@ preview or the full message, governed by the the variables
      (setq vm-system-state 'previewing)
      (setq vm-mime-decoded nil)
 
-     ;; 1. Make a virtual copy.
-     ;;    Make sure that the message body is loaded (if needed)
+     ;; 1a. make sure that the message body is loaded (if needed)
      (when vm-external-fetch-message-for-presentation
        (when (vm-body-to-be-retrieved-of (car vm-message-pointer))
 	 (let ((mm (vm-real-message-of (car vm-message-pointer))))
 	   (vm-retrieve-real-message-body mm :fetch t :register t))))
+     ;; 1b. create a virtual copy if in a virtual folder
      (when vm-real-buffers
        (vm-make-virtual-copy (car vm-message-pointer)))
 

@@ -55,6 +55,10 @@
   "Mail folder settings for VM."
   :group 'vm)
 
+(defgroup vm-external nil
+  "Settings for external messages."
+  :group 'vm-folders)
+
 (defgroup vm-pop nil
   "POP3 mail folders for VM."
   :group 'vm-folders)
@@ -224,7 +228,7 @@ has copied out the mail."
 automatically fetched for message presentation.  If it is nil, then
 messages will be presented with only the headers and `vm-load-message'
 must be used to load the externally stored message bodies."
-  :group 'vm-folder
+  :group 'vm-external
   :type '(choice (const :tag "No automatic fetching" nil)
 		(const :tag "Automatic fetching" t)))
 
@@ -232,7 +236,7 @@ must be used to load the externally stored message bodies."
   "*Should be an integer representing the maximum number of messages
 that VM should keep in the Folder buffer when the messages are
 fetched on demand, or nil to signify no limit."
-  :group 'vm-folders
+  :group 'vm-external
   :type '(choice (const :tag "No Limit" nil) 
 		 (integer :tag "Number of Mesages")))
 (defvaralias 'vm-fetched-message-limit 
@@ -269,7 +273,7 @@ viewed.
 As of version 8.2.0, this facility is only available for IMAP
 folders (context name `imap').  Messages larger than
 `vm-imap-max-message-size' are treated as external messages."
-  :group 'vm-folders
+  :group 'vm-external
   :type '(repeat (choice (const imap))))
 
 (defvar vm-load-headers-only nil

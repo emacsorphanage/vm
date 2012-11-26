@@ -1677,20 +1677,37 @@ source of the message."
 	;; Let us turn it off and see waht happens.
 	;;                              USR, 2012-11-21
 	(goto-char (point-min))
+	(cond ((and (vm-message-access-method-of mm)
+		    (vm-body-to-be-retrieved-of mm))
+	       ;; Remember that this does process I/O and
+	       ;; accept-process-output, allowing concurrent threads
+	       ;; to run!!!  USR, 2010-07-11
+	       (condition-case err
+		   (vm-fetch-message 
+		    (list (vm-message-access-method-of mm)) mm)
+		 (error
+		  (vm-warn 0 0 "Cannot fetch message; %s" 
+			   (error-message-string err)))))
+	      ((re-search-forward vm-external-storage-header-regexp
+	                          (vm-text-of mm) t)
+	       (vm-fetch-message (read (current-buffer)) mm)))
+
+	;; Attempt to show a message about the missing body.
+	;; But it is not working right.  Needs more work.  USR, 2012-04-09
 	;; (cond ((and (vm-message-access-method-of mm)
 	;; 	    (vm-body-to-be-retrieved-of mm))
-	;;        ;; Remember that this does process I/O and
-	;;        ;; accept-process-output, allowing concurrent threads
-	;;        ;; to run!!!  USR, 2010-07-11
-	;;        (condition-case err
-	;; 	   (vm-fetch-message 
-	;; 	    (list (vm-message-access-method-of mm)) mm)
-	;; 	 (error
-	;; 	  (vm-warn 0 0 "Cannot fetch message; %s" 
-	;; 		   (error-message-string err)))))
+	;;        (let ((buffer-read-only nil))
+	;; 	 (save-excursion
+	;; 	   (goto-char (vm-text-end-of mm))
+	;; 	   (insert-before-markers
+	;; 	    "<... message body in external source ...>\n"))))
 	;;       ((re-search-forward vm-external-storage-header-regexp
-	;; 			  (vm-text-of mm) t)
-	;;        (vm-fetch-message (read (current-buffer)) mm)))
+	;;                           (vm-text-of mm) t)
+	;;        (let ((buffer-read-only nil))
+	;; 	 (goto-char (point-max))
+	;; 	 (insert-before-markers
+	;; 	  "<... message body in external source ...>\n"))))
+
 	;; This might be redundant.  Wasn't in revision 717.
 	;; (vm-reset-buffer-modified-p modified (current-buffer)) 
 	;; fixup the reference to the message

@@ -1432,13 +1432,21 @@ loaded immediately, and larger messages will be left on the server to be
 fetched on demand.  To treat all messages as external messages, you can set
 @code{vm-imap-max-message-size} to 0.
 
-@vindex vm-external-fetched-message-limit
+@vindex vm-external-fetch-message-for-presentation
+Normally, the messages that are not present in the folder are fetched
+automatically when an attempt is made to view them.  You can disable this by
+setting the variable @code{vm-external-fetch-message-for-presentation} to
+@code{nil}.  In that case, the messages are displayed with an empty message
+body.  You can load the missing message body using the @kbd{o} command
+described below.
+
+@vindex vm-fetched-message-limit
 After fetching the bodies of external messages, VM stores them in the Folder
 buffer temporarily, so that repeated fetching is avoided.  The variable
 @code{vm-external-fetched-message-limit} controls how many message bodies are stored
 in this way.  You can set it to an integer (10 is the default), or to
 @code{nil}, signifying that there is no limit.  All the fetched message
-bodies are flushed before folders are saved to disk.
+bodies are removed from the folders before they are saved to disk.
 
 @findex vm-load-message
 @findex vm-unload-message
@@ -1449,7 +1457,7 @@ You can manually load message bodies into the Folder using the command
 @kbd{o} (@code{vm-load-message}).  The command @kbd{O}
 (@code{vm-unload-message}) unloads a previously loaded message body.  Both
 the commands can take numerical prefix arguments or operate on marked
-messages.  Note that ``loading'' a message body is different from on demand
+messages.  Note that ``loading'' a message body is different from on-demand
 ``fetching''.  Loaded messages are permanently stored in the Folder buffer
 and written to disk when the folder is saved.  In contrast, fetched message
 bodies are always discarded before writing to disk.  The command
