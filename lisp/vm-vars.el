@@ -2931,10 +2931,13 @@ See the VM manual section \"Virtual Selectors\" for the complete list
 of recognized SELECTORs.
 "
   :group 'vm-folders
-  :type '(choice (const :tag "none" nil)
-		 (repeat (group (string :tag "Virtual Folder Name")
-				(repeat :tag "Folder List" string)
-				(sexp :tag "Selectors")))))
+  :type '(choice
+	  (const :tag "none" nil)
+	  (repeat 
+	   (group 
+	    (string :tag "Virtual Folder Name")
+	    (group (repeat :tag "Folder List" string)
+		   (sexp :tag "Selectors"))))))
 
 (defcustom vm-virtual-mirror t
   "*Non-nil value causes the attributes of messages in virtual folders
