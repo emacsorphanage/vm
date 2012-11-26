@@ -7425,7 +7425,7 @@ information is derived from `vm-mime-mule-charset-to-coding-alist' (which see)."
 ;;      t value means binary file
 ;; presumably it controls whether LF -> CRLF mapping is done
 ;; when writing to files.
-(defvar buffer-file-type)
+;; (defvar buffer-file-type)		; defunct variable.  USR, 2012-11-25
 (defvar vm-mf-attachment-file nil)
 (defvar vm-frame-list nil)
 (if (not (boundp 'shell-command-switch))

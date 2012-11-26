@@ -7030,10 +7030,6 @@ Ability to compose rich text email messages (in 'text/enriched' and
 @item
 Incremental search in virtual folders.
 @item
-Thread-level operations such as killing an entire thread.
-@item
-Headers-only downloading of @acronym{IMAP} folders.
-@item
 Downloading @acronym{IMAP} messages without attachments.
 @item
 Support for maildir folders.

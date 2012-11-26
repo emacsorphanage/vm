@@ -369,7 +369,7 @@ need to add quotes or leave them undecoded.             RWF"
 	     (nreverse list))
 	(and work-buffer (kill-buffer work-buffer)))))))
 
-(defvar buffer-file-type)
+;; (defvar buffer-file-type)
 
 (defun vm-write-string (where string)
   (if (bufferp where)
@@ -385,7 +385,7 @@ need to add quotes or leave them undecoded.             RWF"
 	    (insert string)
 	    ;; correct for VM's uses of this function---
 	    ;; writing out message separators
-	    (setq buffer-file-type nil)
+	    ;; (setq buffer-file-type nil)  ; defunct variable
 	    (write-region (point-min) (point-max) where t 'quiet))
 	(and temp-buffer (kill-buffer temp-buffer))))))
 
