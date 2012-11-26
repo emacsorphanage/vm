@@ -7763,13 +7763,14 @@ is a @acronym{MIME}-decoded string with text properties.
 @code{month-number} (15).  Numeric month of the sent date.
 @inindex sortable-datestring
 @item
-@code{sortable-datestring} (16).  Date string of the sent date for sorting
-purposes (or delivery date if @code{vm-sort-messages-by-delivery-date} is
-set to t). 
+@code{sortable-datestring} (16).  The date string of the ``date'' of the
+message for sorting purposes (either the sent date or the delivery date,
+depending on the value of @code{vm-sort-messages-by-delivery-date}).
 @inindex decoded-sortable-subject
 @item
-@code{decoded-sortable-subject} (17).  The subject string for sorting purposes.
-(Prefixes such as ``re:'' are removed.)  This is a @acronym{MIME}-decoded
+@code{decoded-sortable-subject} (17).  The subject string of the message for
+sorting purposes.  (Prefixes such as ``re:'' are removed and subject tags of
+mailing lists might also be removed.)  This is a @acronym{MIME}-decoded
 string with text properties.
 @inindex summary
 @item
