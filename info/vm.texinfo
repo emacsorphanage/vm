@@ -6924,7 +6924,6 @@ are gratefully acknowledged:
 @item Jens Gustedt
 @item John J Foerch
 @item Kevin Rogers
-@item Kyle Jones
 @item Rob Hodges
 @item Robert Marshall
 @item Robert P. Goldman
@@ -6936,6 +6935,10 @@ are gratefully acknowledged:
 @item Arik Mitschang
 @item Anthony Mallet
 @item Noah Friedman
+@item JJK ``Blueman''
+@item Tim Cross
+@item Arik Mitschang
+@item Eric Schulte
 @end itemize
 
 Please let us know if any other contributors have been missed out.
@@ -6979,8 +6982,8 @@ Please let us know if any other contributors have been missed out.
 @itemize
 @item Version 8.1.0, released 21 March, 2010.
 @item Version 8.1.1, released 25 April, 2010.
-@item Version 8.1.2, planned for release in July/August, 2010.
-@item Version 8.2.0, planned for release in August/September, 2010.
+@item Version 8.1.2, released 5 March, 2012.
+@item Version 8.2.0, planned for release in March, 2013.
 @end itemize
 
 

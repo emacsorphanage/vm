@@ -582,11 +582,9 @@ from which mail is to be moved and DESTINATION is the VM folder."
 	mailbox mailbox-count recent-count message-size response
 	n (retrieved 0) retrieved-bytes process-buffer)
     (setq auto-expunge 
-	  (cond ((setq x (assoc source
-				vm-imap-auto-expunge-alist))
+	  (cond ((setq x (assoc source vm-imap-auto-expunge-alist))
 		 (cdr x))
-		((setq x (assoc (vm-imapdrop-sans-password source)
-				vm-imap-auto-expunge-alist))
+		((setq x (assoc source-nopwd vm-imap-auto-expunge-alist))
 		 (cdr x))
 		(vm-imap-expunge-after-retrieving
 		 t)
@@ -1178,7 +1176,7 @@ Returns the process or nil if the session could not be created."
 	  protocol (car source-list)
 	  host (nth 1 source-list)
 	  port (nth 2 source-list)
-	  ;;		mailbox (nth 3 source-list)
+	  ;; mailbox (nth 3 source-list)
 	  auth (nth 4 source-list)
 	  user (nth 5 source-list)
 	  pass (nth 6 source-list)
@@ -1190,9 +1188,10 @@ Returns the process or nil if the session could not be created."
 	  ((equal protocol "imap-ssh")
 	   (setq use-ssh t
 		 session-name "IMAP over SSH")))
-    (vm-imap-check-for-server-spec source host port auth user pass
-				   use-ssl use-ssh)
+    (vm-imap-check-for-server-spec 
+     source host port auth user pass use-ssl use-ssh)
     (setq port (string-to-number port))
+    ;; Try to get password from auth-sources
     (when (and (equal pass "*") (not (equal auth "preauth")))
       (setq pass (vm-imap-get-password 
 		  folder source-nopwd-nombox user host port 
