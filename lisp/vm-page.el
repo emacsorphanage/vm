@@ -74,6 +74,7 @@ Prefix argument N means scroll forward N lines."
     ;; the following vodoo was added by USR for fixing the jumping
     ;; cursor problem in the summary window, reported on May 4, 2008
     ;; in gnu.emacs.vm.info, title "Re: synchronization of vm buffers"
+    ;; The original vodoo was:
     ;; (if mp-changed (sit-for 0))
     (when mp-changed 
       (vm-present-current-message)

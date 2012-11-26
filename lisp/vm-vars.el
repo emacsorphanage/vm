@@ -55,6 +55,10 @@
   "Mail folder settings for VM."
   :group 'vm)
 
+(defgroup vm-virtual nil
+  "Settings for virtual folders."
+  :group 'vm-folders)
+
 (defgroup vm-external nil
   "Settings for external messages."
   :group 'vm-folders)
@@ -519,7 +523,7 @@ will only retrieve that many messages from any particular POP maildrop.
 To retrieve more messages, type 'g' again.
 
 A nil value means there's no limit."
-  :group 'vm-pop
+  :group 'vm-folders
   :type '(choice (const :tag "No Limit" nil) 
 		 integer))
 
@@ -531,7 +535,7 @@ any particular POP maildrop.  To retrieve more messages, type 'g'
 again.
 
 A nil value means there's no limit."
-  :group 'vm-pop
+  :group 'vm-folders
   :type '(choice (const :tag "No Limit" nil) 
 		 (integer :tag "Bytes")))
 
@@ -548,7 +552,7 @@ lack of UIDL support and not retrieve messages from the server.
 This variable only affects POP mailboxes not listed in
 `vm-pop-auto-expunge-alist' (which is the recommended method for
 customizing this behavior)."
-  :group 'vm-pop
+  :group 'vm-folders
   :type 'boolean)
 
 (defcustom vm-pop-auto-expunge-alist nil
@@ -574,7 +578,7 @@ remote POP server supports the UIDL command.  If the server does
 not support UIDL and you've asked to VM leave messages on the server,
 VM will complain about the lack of UIDL support and not retrieve
 messages from the server."
-  :group 'vm-pop
+  :group 'vm-folders
   :type '(repeat (cons string boolean)))
 
 (defvar vm-pop-auto-expunge-warned nil
@@ -655,7 +659,7 @@ will only retrieve that many messages from any particular IMAP maildrop.
 To retrieve more messages, type 'g' again.
 
 A nil value means there's no limit."
-  :group 'vm-imap
+  :group 'vm-folders
   :type '(choice (const :tag "Unlimited" nil) integer))
 
 (defcustom vm-imap-bytes-per-session nil
@@ -666,7 +670,7 @@ any particular IMAP maildrop.  To retrieve more messages, type 'g'
 again.
 
 A nil value means there's no limit."
-  :group 'vm-imap
+  :group 'vm-folders
   :type '(choice (const :tag "No Limit" nil) 
 		 (integer :tag "Bytes")))
 
@@ -679,7 +683,7 @@ you run `vm-expunge-imap-messages'.
 This variable only affects IMAP mailboxes not listed in
 `vm-imap-auto-expunge-alist' (which is the recommended method for
 customizing this behavior)."
-  :group 'vm-imap
+  :group 'vm-folders
   :type 'boolean)
 
 (defcustom vm-imap-auto-expunge-alist nil
@@ -699,7 +703,7 @@ still understand that this mailbox is the same as the one in
 VAL should be nil if retrieved messages should be left in the
 corresponding IMAP mailbox, t if retrieved messages should be
 deleted from the mailbox immediately after retrieval."
-  :group 'vm-imap
+  :group 'vm-folders
   :type '(repeat (cons (string :tag "IMAP Folder Specificaiton")
 		       boolean)))
 
@@ -2934,7 +2938,7 @@ unless otherwise noted ARG may be omitted.
 See the VM manual section \"Virtual Selectors\" for the complete list
 of recognized SELECTORs.
 "
-  :group 'vm-folders
+  :group 'vm-virtual
   :type '(choice
 	  (const :tag "none" nil)
 	  (repeat 
@@ -2956,7 +2960,7 @@ fashion.  You should set this variable only in your .vm or .emacs
 file.  Use setq-default.  Once VM has been started, you should not
 set this variable directly, rather you should use the command
 `vm-toggle-virtual-mirror', normally bound to `V M'."
-  :group 'vm-folders
+  :group 'vm-virtual
   :type 'boolean)
 
 (make-variable-buffer-local 'vm-virtual-mirror)
