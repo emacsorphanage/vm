@@ -71,6 +71,8 @@ VM 8.2.0b1
 
    IMPROVEMENTS
 
+   * Prefix argument 0 applies the operation to all messages in a folder. 
+
    * New commands `vm-create-search-folder-other-window' and
      `vm-create-search-folder-other-frame'.  Search folders can now have
      their own summary-formats that differ from those of the base folders.

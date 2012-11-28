@@ -482,7 +482,7 @@ occurs, typically VM cannot proceed."
 	     (current-buffer)))
 	  ;; recover from the bug
 	  (set-buffer buf))
-      (vm-imap-protocol-error "No response from the IMAP server"))))
+      (vm-imap-protocol-error "Timed out for response from the IMAP server"))))
 
 
 ;; Mollify the pesky compiler

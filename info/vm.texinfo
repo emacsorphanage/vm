@@ -69,13 +69,13 @@ This manual corresponds to VM version @value{VERSION}.
 * Preface::             What is VM?
 * Introduction::        Overview of the VM interface.
 * Starting Up::         What happens when you start VM.
-* Selecting Messages::  How to select messages for reading.
+* Navigating::  How to select messages for reading.
 * Reading Messages::    Previewing and paging through a message.
 * Sending Messages::    How to send messages from within VM.
+* Selecting Messages::    Running VM commands on arbitrary sets of messages.
 * Saving Messages::     How to save messages.
 * Deleting Messages::   How to delete, undelete and expunge messages.
 * Editing Messages::    How to alter the text and headers of a message.
-* Marking Messages::    Running VM commands on arbitrary sets of messages.
 * Message Attributes::  How to change and undo changes to message attributes.
 * Sorting Messages::    How to make VM present similar messages together.
 * Digests::             How to read digests under VM.
@@ -244,7 +244,7 @@ the next message.  @xref{Paging}.
 
 If you do not want to read a message that's being previewed, type
 @kbd{n} and VM will move to the next message (if there is one).
-@xref{Selecting Messages}.
+@xref{Navigating}.
 
 To save a message to a mail folder use @kbd{s} (@code{vm-save-message}).
 VM will prompt you for the folder name in the minibuffer.
@@ -354,7 +354,7 @@ You can associate other spool files with your primary inbox and spool
 files with other folders by setting the variable
 @code{vm-spool-files}.  @xref{Spool Files}.
 
-@node Starting Up, Selecting Messages, Introduction, Top
+@node Starting Up, Navigating, Introduction, Top
 @chapter Starting Up
 
 @findex vm-load-init-file
@@ -1632,8 +1632,8 @@ cancel and go back to the version currently on the disk, you can use
 the function @kbd{vm-revert-folder} or the ``Revert Folder'' entry in the
 Folder menu.  (Emacs's built-in @kbd{revert-file} is not recommended.)
 
-@node Selecting Messages, Reading Messages, Starting Up, Top
-@chapter Selecting Messages
+@node Navigating, Reading Messages, Starting Up, Top
+@chapter Navigating
 
 @findex vm-next-message
 @findex vm-previous-message
@@ -1749,7 +1749,7 @@ the search.
 @xref{Incremental Search,,,emacs, the GNU Emacs Manual}.
 @end table
 
-@node Reading Messages, Sending Messages, Selecting Messages, Top
+@node Reading Messages, Sending Messages, Navigating, Top
 @chapter Reading Messages
 
 Once a message has been selected, VM will show it to you.  By default,
@@ -1819,7 +1819,7 @@ effects will not be immediate.  You will need to use the command
 default) to force VM to rearrange the message headers.  A good way to do
 this is to mark all the messages in the folder and apply
 @code{vm-discard-cached-data} to the marked messages.
-@xref{Marking Messages}.
+@xref{Selecting Messages}.
 
 @vindex vm-highlighted-header-regexp
 @vindex vm-highlighted-header-face
@@ -2866,7 +2866,7 @@ the @code{smime-certificate-directory}), which is useful for automatically
 choosing certificates when sending mail. See @ref{Sending Secure @acronym{MIME},
 Sending Secure @acronym{MIME}} for more information.
 
-@node Sending Messages, Saving Messages, Reading Messages, Top
+@node Sending Messages, Selecting Messages, Reading Messages, Top
 @chapter Sending Messages
 
 When sending messages from within VM, you will be using the standard
@@ -3615,7 +3615,7 @@ is flagged ``forwarded'' when the message is sent.
 The command @kbd{@@} (@code{vm-send-digest}) works like @kbd{z} except
 that a digest of all the messages in the current folder is made and
 inserted into the VM Mail mode buffer.  Also, @code{vm-send-digest} can
-be applied to just marked messages.  @xref{Marking Messages}.
+be applied to just marked messages.  @xref{Selecting Messages}.
 The message encapsulation method is specified by the
 variable @code{vm-digest-send-type}, which accepts the same values as
 @code{vm-forwarding-digest-type}.  All the messages included in the digest will
@@ -3684,7 +3684,155 @@ avoid saving attachments.  However, the character coding of the sent
 folder should be chosen carefully to allow proper storage of the
 messages.
 
-@node Saving Messages, Deleting Messages, Sending Messages, Top
+@node Selecting Messages, Saving Messages, Sending Messages, Top
+@chapter Selecting Messages
+
+In the following sections, you will see various operations that you can do
+on messages such as saving, deleting or running external applications.  All
+such operations work on either single messages or collections of
+messages you can select using VM's features.  The mechanisms for selecting
+collections of messages for operations are described in this section.
+
+@cindex prefix argument
+All VM operations take a prefix argument, which may be a positive integer,
+negative integer or 0.  If it is a positive integer @var{n}, then the
+current message and the next @var{n-1} are selected for the operation.  If
+it is a negative integer @var{-n}, then the current message and the previous
+@var{n-1} are selected.  If it is @var{0}, then all the messages in the
+current folder are selected.
+
+When you have thread-folding enabled, you can execute VM operations on
+entire threads in the Summary window.  @xref{Thread Operations}.
+
+In addition, a collection of messages can be explicitly marked for the
+purpose of operating on them.
+
+@menu
+* Marking Messages::    Marking messages for operations.
+@end menu
+
+@node Marking Messages, , Selecting Messages, Selecting Messages
+@section Marking Messages
+
+@cindex marking
+@cindex searching
+@cindex virtual folders
+VM provides a way to @dfn{mark} selected messages so that subsequent
+operations can be applied to them.  This is similar to marking in other
+parts of Emacs, e.g., @pxref{Marks vs Flags, Dired Marks, Dired Marks,
+emacs}, but arguably more powerful.  For example, one can mark all
+messages from a particular sender and save them to a folder, or mark all
+messages with a particular subject and print them.  One can also mark
+messages by searching for particular strings in their text.
+
+@kindex M M
+To mark the current message, type @kbd{M M}
+(@code{vm-mark-message}).  If you give a numeric prefix argument
+@var{n}, the next @var{n-1} messages will be marked as well.  A negative
+prefix argument means mark the previous @var{n-1}.  An asterisk
+(@samp{*}) will appear to the right of the message numbers of all marked
+messages in the summary window.
+
+@kindex M U
+To remove a mark from the current message, use @kbd{M U}
+(@code{vm-unmark-message}).  Prefix arguments work as with
+@code{vm-mark-message}.
+
+@kindex M m
+@kindex M u
+Use @kbd{M m} to mark all messages in the current folder; @kbd{M u}
+removes marks from all messages.
+
+Other marking commands:
+
+@table @kbd
+@findex vm-mark-messages-by-selector
+@kindex M C
+@item M C (@code{vm-mark-messages-by-selector})
+Mark all messages matching a virtual selector.
+@xref{Virtual Folders}.
+@findex vm-unmark-messages-by-selector
+@kindex M c
+@item M c (@code{vm-unmark-messages-by-selector})
+Unmark all messages matching a virtual selector.
+@findex vm-mark-messages-by-virtual-folder
+@kindex M X
+@item M X (@code{vm-mark-messages-by-virtual-folder})
+Mark all messages matching the selectors of a virtual folder.
+@xref{Virtual Folders}.
+@findex vm-unmark-unmark-messages-by-virtual-folder
+@kindex M x
+@item M x (@code{vm-unmark-messages-by-virtual-folder})
+Unmark all messages matching the selectors of a virtual folder.
+@findex vm-mark-thread-subtree
+@kindex M T
+@item M T (@code{vm-mark-thread-subtree})
+Mark all messages in the thread tree rooted at current message.
+@xref{Threading}.
+@findex vm-unmark-thread-subtree
+@kindex M t
+@item M t (@code{vm-unmark-thread-subtree})
+Unmark all messages in the thread tree rooted at current message.
+@findex vm-mark-messages-same-subject
+@kindex M S
+@item M S (@code{vm-mark-same-subject})
+Mark messages with the same subject as the current message.
+@findex vm-unmark-messages-same-subject
+@kindex M s
+@item M s (@code{vm-unmark-same-subject})
+Unmark messages with the same subject as the current message.
+@findex vm-mark-messages-same-author
+@kindex M A
+@item M A (@code{vm-mark-same-author})
+Mark messages with the same author as the current message.
+@findex vm-unmark-messages-same-author
+@kindex M a
+@item M a (@code{vm-unmark-same-author})
+Unmark messages with the same author as the current message.
+@end table
+
+While the above commands can be used in any VM buffer, the following
+commands can be used in a Summary buffer to mark or unmark a region of
+message summary lines.
+
+@table @kbd
+@findex vm-mark-summary-region
+@kindex M R
+@item M R (@code{vm-mark-summary-region})
+Mark all messages in the current region in a Summary buffer
+@findex vm-unmark-summary-region
+@kindex M r
+@item M r (@code{vm-unmark-summary-region})
+Unmark all messages in the current region in a Summary buffer
+@end table
+
+To apply a VM command to all marked messages you must prefix it with the
+key sequence @kbd{M N} (@code{vm-next-command-uses-marks}).  The next VM
+command will apply to all marked messages, provided the command can be
+applied to such messages in a meaningful and useful way.  Unfortunately,
+as of this writing, this mechanism works only if the next command
+invoked is a keyboard command.  Commands invoked by @kbd{M-x} are
+unable to access the marked messages.  So, to invoke a complex command,
+you might temporarily bind it to an unused key, e.g.,
+
+@example
+M-x local-set-key C vm-forward-message-all-headers
+M N C
+@end example
+
+@noindent forwards marked messages with all headers included.
+
+It is possible to use marking to execute operations on message
+threads.  For example, the sequence of key strokes:
+
+@example
+MuMTMNsMu
+@end example
+
+@noindent saves a thread of messages.  However, there are faster methods to
+operate on message threads.  @xref{Thread Operations}.
+
+@node Saving Messages, Deleting Messages, Selecting Messages, Top
 @chapter Saving Messages
 
 @cindex file locking
@@ -4000,7 +4148,7 @@ to be invoked every time new messages arrive so that you don't have to
 worry about the duplicate copies any further.  (@xref{Hooks}.)
 
 
-@node Editing Messages, Marking Messages, Deleting Messages, Top
+@node Editing Messages, Message Attributes, Deleting Messages, Top
 @chapter Editing Messages
 
 @kindex C-c C-e
@@ -4027,128 +4175,7 @@ current message will be flagged unedited.
 As with VM Mail mode buffers, all VM commands can be accessed from
 the edit buffer through the command prefix @kbd{C-c C-v}.
 
-@node Marking Messages, Message Attributes, Editing Messages, Top
-@chapter Marking Messages
-
-@cindex marking
-@cindex searching
-@cindex virtual folders
-VM provides a way to @dfn{mark} selected messages so that subsequent
-operations can be applied to them.  This is similar to marking in other
-parts of Emacs, e.g., @pxref{Marks vs Flags, Dired Marks, Dired Marks,
-emacs}, but arguably more powerful.  For example, one can mark all
-messages from a particular sender and save them to a folder, or mark all
-messages with a particular subject and print them.  One can also mark
-messages by searching for particular strings in their text.
-
-@kindex M M
-To mark the current message, type @kbd{M M}
-(@code{vm-mark-message}).  If you give a numeric prefix argument
-@var{n}, the next @var{n-1} messages will be marked as well.  A negative
-prefix argument means mark the previous @var{n-1}.  An asterisk
-(@samp{*}) will appear to the right of the message numbers of all marked
-messages in the summary window.
-
-@kindex M U
-To remove a mark from the current message, use @kbd{M U}
-(@code{vm-unmark-message}).  Prefix arguments work as with
-@code{vm-mark-message}.
-
-@kindex M m
-@kindex M u
-Use @kbd{M m} to mark all messages in the current folder; @kbd{M u}
-removes marks from all messages.
-
-Other marking commands:
-
-@table @kbd
-@findex vm-mark-messages-by-selector
-@kindex M C
-@item M C (@code{vm-mark-messages-by-selector})
-Mark all messages matching a virtual selector.
-@xref{Virtual Folders}.
-@findex vm-unmark-messages-by-selector
-@kindex M c
-@item M c (@code{vm-unmark-messages-by-selector})
-Unmark all messages matching a virtual selector.
-@findex vm-mark-messages-by-virtual-folder
-@kindex M X
-@item M X (@code{vm-mark-messages-by-virtual-folder})
-Mark all messages matching the selectors of a virtual folder.
-@xref{Virtual Folders}.
-@findex vm-unmark-unmark-messages-by-virtual-folder
-@kindex M x
-@item M x (@code{vm-unmark-messages-by-virtual-folder})
-Unmark all messages matching the selectors of a virtual folder.
-@findex vm-mark-thread-subtree
-@kindex M T
-@item M T (@code{vm-mark-thread-subtree})
-Mark all messages in the thread tree rooted at current message.
-@xref{Threading}.
-@findex vm-unmark-thread-subtree
-@kindex M t
-@item M t (@code{vm-unmark-thread-subtree})
-Unmark all messages in the thread tree rooted at current message.
-@findex vm-mark-messages-same-subject
-@kindex M S
-@item M S (@code{vm-mark-same-subject})
-Mark messages with the same subject as the current message.
-@findex vm-unmark-messages-same-subject
-@kindex M s
-@item M s (@code{vm-unmark-same-subject})
-Unmark messages with the same subject as the current message.
-@findex vm-mark-messages-same-author
-@kindex M A
-@item M A (@code{vm-mark-same-author})
-Mark messages with the same author as the current message.
-@findex vm-unmark-messages-same-author
-@kindex M a
-@item M a (@code{vm-unmark-same-author})
-Unmark messages with the same author as the current message.
-@end table
-
-While the above commands can be used in any VM buffer, the following
-commands can be used in a Summary buffer to mark or unmark a region of
-message summary lines.
-
-@table @kbd
-@findex vm-mark-summary-region
-@kindex M R
-@item M R (@code{vm-mark-summary-region})
-Mark all messages in the current region in a Summary buffer
-@findex vm-unmark-summary-region
-@kindex M r
-@item M r (@code{vm-unmark-summary-region})
-Unmark all messages in the current region in a Summary buffer
-@end table
-
-To apply a VM command to all marked messages you must prefix it with the
-key sequence @kbd{M N} (@code{vm-next-command-uses-marks}).  The next VM
-command will apply to all marked messages, provided the command can be
-applied to such messages in a meaningful and useful way.  Unfortunately,
-as of this writing, this mechanism works only if the next command
-invoked is a keyboard command.  Commands invoked by @kbd{M-x} are
-unable to access the marked messages.  So, to invoke a complex command,
-you might temporarily bind it to an unused key, e.g.,
-
-@example
-M-x local-set-key C vm-forward-message-all-headers
-M N C
-@end example
-
-@noindent forwards marked messages with all headers included.
-
-It is possible to use marking to execute operations on message
-threads.  For example, the sequence of key strokes:
-
-@example
-MuMTMNsMu
-@end example
-
-@noindent saves a thread of messages.  However, there are faster methods to
-operate on message threads.  @xref{Thread Operations}.
-
-@node Message Attributes, Sorting Messages, Marking Messages, Top
+@node Message Attributes, Sorting Messages, Editing Messages, Top
 @chapter Message Attributes
 @cindex message attributes
 
@@ -4865,7 +4892,7 @@ All operations that can be sensibly invoked on multiple messages
 extend to thread operations in this way.  They include deleting,
 undeleting, marking, unmarking, forwarding, saving/deleting
 attachments etc.  Replying to messages cannot be invoked as a thread
-operation, to prevent the accidental sending of replies to unintended
+operation.  This is to avoid accidentally sending replies to unintended
 recipients. 
 
 The thread operations can give rise to surprising behavior.  Even
@@ -5126,7 +5153,7 @@ Search folders also form an efficient way to search for some string in the
 text of messages.  The key binding @kbd{V t}
 (@code{vm-create-text-virtual-folder}) can be used to find all messages with
 the string.  This is more efficient than the @code{vm-isearch-forward}
-command (@pxref{Selecting Messages}) because it only searches in the text part
+command (@pxref{Navigating}) because it only searches in the text part
 of message bodies, not inside @acronym{MIME} attachments. 
 
 @node Defined Folders, Working with Virtual Folders, Search Folders, Virtual Folders
@@ -6066,7 +6093,7 @@ This is a menu of commands that let you add and remove message
 labels from messages.
 @item mark
 This is a menu of commands that you can use to mark and unmark
-messages based on various criteria.  @xref{Marking Messages}.
+messages based on various criteria.  @xref{Selecting Messages}.
 @item motion
 This is a menu of commands to move around inside messages and
 inside folders.
@@ -7040,10 +7067,6 @@ Ability to compose rich text email messages (in 'text/enriched' and
 'text/html' modes).
 @item
 Incremental search in virtual folders.
-@item
-Thread-level operations such as killing an entire thread.
-@item
-Headers-only downloading of @acronym{IMAP} folders.
 @item
 Downloading @acronym{IMAP} messages without attachments.
 @item

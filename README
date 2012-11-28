@@ -148,7 +148,11 @@ applications, as well as replying to HTML messages.
 
 - IMAP folder support by Uday Reddy
 
+- External message support by Uday Reddy
+
 - Thread folding by Arik Mitschang
+
+- Thread operations by Uday Reddy
 
 - S/MIME support by Arik Mitschang
 
