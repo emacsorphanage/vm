@@ -482,7 +482,7 @@ occurs, typically VM cannot proceed."
 	     (current-buffer)))
 	  ;; recover from the bug
 	  (set-buffer buf))
-      (vm-imap-protocol-error "Timed out for response from the IMAP server"))))
+      (vm-imap-protocol-error "No response from the IMAP server"))))
 
 
 ;; Mollify the pesky compiler
@@ -1990,7 +1990,7 @@ available for the IMAP server."
 	;; the CRLF or the LF newline convention is used on the inbox
 	;; associated with this crashbox.  This setting assumes the LF
 	;; newline convention is used.
-	(let ((coding-system-for-read (vm-binary-coding-system))
+	(let ((buffer-file-type t)
 	      (selective-display nil))
 	  (write-region ***start end target t 0))
       (let ((b (current-buffer)))

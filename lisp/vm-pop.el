@@ -995,7 +995,7 @@ popdrop
 	;; the CRLF or the LF newline convention is used on the inbox
 	;; associated with this crashbox.  This setting assumes the LF
 	;; newline convention is used.
-	(let ((buffer-file-type t)	; defunct variable
+	(let ((buffer-file-type t)
 	      (selective-display nil))
 	  (write-region start end target t 0))
       (let ((b (current-buffer)))
@@ -1079,76 +1079,37 @@ popdrop
 	  there )))))
 
 (defun vm-pop-get-synchronization-data ()
-  "Compares the UID's of messages in the local cache and the POP
-server.  Returns a list containing:
-RETRIEVE-LIST: A list of pairs consisting of UID's and message
-  sequence numbers of the messages that are not present in the
-  local cache and not retrieved previously, and, hence, need to be
-  retrieved now.
-LOCAL-EXPUNGE-LIST: A list of message descriptors for messages in the
-  local cache which are not present on the server and, hence, need
-  to expunged locally."
-  ;; The following features are in the IMAP code, but not in POP.  Why
-  ;; not?  -- USR, 2012-11-24
-  ;; REMOTE-EXPUNGE-LIST: A list of pairs consisting of UID's and
-  ;;   UIDVALIDITY's of the messages that are not present in the local
-  ;;   cache (but we have reason to believe that they have been retrieved
-  ;;   previously) and, hence, need to be expunged on the server. 
-  ;; If the argument DO-RETRIEVES is 'full, then all the messages that
-  ;; are not presently in cache are retrieved.  Otherwise, the
-  ;; messages previously retrieved are ignored.
   (let ((here (make-vector 67 0))
 	(there (vm-pop-get-uidl-data))
 	(process (vm-folder-pop-process))
-	retrieve-list local-expunge-list uid 
+	retrieve-list expunge-list
 	mp)
     (setq mp vm-message-list)
     (while mp
-      (cond ((null (vm-pop-uidl-of (car mp)))
-	     nil)
-	    (t
-	     (setq uid (vm-pop-uidl-of (car mp)))
-	     (set (intern uid here) (car mp))
-	     (if (not (boundp (intern uid there)))
-		 (setq local-expunge-list (cons (car mp) local-expunge-list)))))
+      (if (null (vm-pop-uidl-of (car mp)))
+	  nil
+	(set (intern (vm-pop-uidl-of (car mp)) here) (car mp))
+	(if (not (boundp (intern (vm-pop-uidl-of (car mp)) there)))
+	    (setq expunge-list (cons (car mp) expunge-list))))
       (setq mp (cdr mp)))
-    (mapatoms 
-     (lambda (sym)
-       (let ((uid (symbol-name sym)))
-	 (if (and (not (boundp (intern uid here)))
-		  (not (assoc uid
-			      vm-pop-retrieved-messages)))
-	     (setq retrieve-list 
-		   (cons (cons uid (symbol-value sym)) retrieve-list)))))
-     there)
-    (setq retrieve-list 
-	  (sort retrieve-list 
-		(lambda (**pair1 **pair2)
-		  (string-lessp (cdr **pair1) (cdr **pair2)))))	  
-    (list retrieve-list local-expunge-list)))
+    (mapatoms (function
+	       (lambda (sym)
+		 (if (and (not (boundp (intern (symbol-name sym) here)))
+			  (not (assoc (symbol-name sym)
+				      vm-pop-retrieved-messages)))
+		     (setq retrieve-list (cons
+					  (cons (symbol-name sym)
+						(symbol-value sym))
+					  retrieve-list)))))
+	      there)
+    (list retrieve-list expunge-list)))
 
 ;;;###autoload
-(defun* vm-pop-synchronize-folder (&key 
-				   (interactive nil)
-				   (do-remote-expunges nil)
-				   (do-local-expunges nil)
-				   (do-retrieves nil))
-  "Synchronize POP folder with the server.
-   INTERACTIVE, true if the function was invoked interactively, e.g., as
-   vm-get-spooled-mail.
-   DO-REMOTE-EXPUNGES indicates whether the server mail box should be
-   expunged.
-   DO-LOCAL-EXPUNGES indicates whether the cache buffer should be
-   expunged.
-   DO-RETRIEVES indicates if new messages that are not already in the
-   cache should be retrieved from the server.  If this flag is 'full
-   then messages previously retrieved but not in cache are retrieved
-   as well.
-"
-  ;; -- Comments by USR
-  ;; Not clear why do-local-expunges and do-remote-expunges should be
-  ;; separate.  It doesn't make sense to do one but not the other!
-
+(defun* vm-pop-synchronize-folder (&optional 
+				  &key (interactive nil)
+				  (do-remote-expunges nil)
+				  (do-local-expunges nil)
+				  (do-retrieves nil))
   (if (and do-retrieves vm-block-new-mail)
       (error "Can't get new mail until you save this folder."))
   (if (or vm-global-block-new-mail
@@ -1157,7 +1118,7 @@ LOCAL-EXPUNGE-LIST: A list of message descriptors for messages in the
     (if do-retrieves
 	(vm-assimilate-new-messages))
     (let* ((sync-data (vm-pop-get-synchronization-data))
-	   (retrieve-list (nth 0 sync-data))
+	   (retrieve-list (car sync-data))
 	   (local-expunge-list (nth 1 sync-data))
 	   (process (vm-folder-pop-process))
 	   (n 1)

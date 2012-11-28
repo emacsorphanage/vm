@@ -1554,7 +1554,7 @@ shorter pieces, rebuild it from them."
 
 (defvar buffer-display-table)
 (defvar standard-display-table)
-;; (defvar buffer-file-type)
+(defvar buffer-file-type)
 
 (defun vm-generate-new-presentation-buffer (folder-buffer name)
   "Generate a new Presentation buffer for FOLDER-BUFFER.  NAME is
@@ -1577,8 +1577,7 @@ a string denoting the folder name."
 				 (vm-menu-support-possible-p)
 				 (vm-menu-mode-menu))
 	    ;; Default to binary file type for DOS/NT.
-	    ;; buffer-file-type t		; defunct variable?
-	    coding-system-for-read (vm-binary-coding-system)
+	    buffer-file-type t
 	    ;; Tell XEmacs/MULE not to mess with the text on writes.
 	    buffer-read-only t
 	    mode-line-format vm-mode-line-format)
@@ -1754,8 +1753,7 @@ source of the message."
 ;; 					(vm-menu-support-possible-p)
 ;; 					(vm-menu-mode-menu))
 ;; 		   ;; Default to binary file type for DOS/NT.
-;; 		   ;; buffer-file-type t     ; defunct variable?
-;;		   coding-system-for-read (vm-binary-coding-system)
+;; 		   buffer-file-type t
 ;; 		   ;; Tell XEmacs/MULE not to mess with the text on writes.
 ;; 		   buffer-read-only t
 ;; 		   mode-line-format vm-mode-line-format)
@@ -5382,8 +5380,7 @@ file with the name should be overwritten."
 	      (with-current-buffer work-buffer
 		(setq selective-display nil)
 		;; Tell DOS/Windows NT whether the file is binary
-		;; (setq buffer-file-type       ; defunct variable
-		;;       (not (vm-mime-text-type-layout-p layout)))
+		(setq buffer-file-type (not (vm-mime-text-type-layout-p layout)))
 		;; Tell XEmacs/MULE not to mess with the bits unless
 		;; this is a text type.
 		(if (fboundp 'set-buffer-file-coding-system)
@@ -5431,7 +5428,7 @@ file with the name should be overwritten."
 	    (with-current-buffer work-buffer
 	      (setq selective-display nil)
 	      ;; Tell DOS/Windows NT whether the file is binary
-	      ;; (setq buffer-file-type t)	; defunct variable
+	      (setq buffer-file-type t)
 	      ;; Tell XEmacs/MULE not to mess with the bits unless
 	      ;; this is a text type.
 	      (if (fboundp 'set-buffer-file-coding-system)
