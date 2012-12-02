@@ -5321,9 +5321,12 @@ thread are loaded."
 
 ;;;###autoload
 (defun vm-retrieve-operable-messages (&optional count mlist)
-  "Retrieve the message from from its permanent location for
-temporary use.  Currently this facility is only available for
-IMAP folders.
+  "Retrieve the current \"operable\" messages from their
+permanent locations for temporary use.  Currently this facility is
+only available for IMAP folders.
+
+If COUNT and MLIST or both nil, then the \"operable\" message is just
+the current message, and it is retrieved.
 
 If the optional argument MLIST is non-nil, then the messages in
 MLIST are retrieved.  Otherwise, the following applies.

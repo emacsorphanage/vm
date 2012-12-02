@@ -357,6 +357,8 @@ VM 8.1.93a (2010-08-28)
       (add-hook 'vm-summary-mode-hook 'u-vm-color-summary-mode)
      from your VM initialization file.
 
+     Some users have reported that Emacs hangs if this line is retained.
+
   ** Commands renamed:
      `vm-mime-save-all-attachments' => `vm-save-all-attachments'(C-c C-s)
      `vm-mime-delete-all-attachments' => `vm-delete-all-attachments'(C-c C-d)

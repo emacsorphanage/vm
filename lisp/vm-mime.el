@@ -6275,6 +6275,7 @@ minibuffer if the command is run interactively."
   (let ((mlist (vm-select-operable-messages 1 t "Attach")))
     (when (null mlist)
       (setq mlist (list (vm-current-message))))
+    (vm-retrieve-operable-messages 1 mlist)
 
     (with-current-buffer composition
     (if (null (cdr mlist))		; single message
