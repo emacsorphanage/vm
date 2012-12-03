@@ -274,7 +274,7 @@ for customization of the output."
 		 count (vm-interactive-p) "Print"))
 	 (mcount (length mlist))
 	 (tmpbuf (get-buffer-create "*vm-ps-print*")))
-    (vm-retrieve-operable-messages count mlist)
+    (vm-retrieve-operable-messages count mlist :fail t)
 
     (set-buffer tmpbuf)
     (setq major-mode 'vm-mode)

@@ -4822,29 +4822,41 @@ files."
 	(vm-sort-messages vm-ml-sort-keys)))
     new-messages ))
 
-(defun vm-select-operable-messages (prefix 
+(defun vm-select-operable-messages (count 
 				    &optional interactive op-description)
   "Return a list of all marked messages, messages indicated by
-the PREFIX argument or messages in a collapsed thread, in that
-order.  Marked messages are returned only if the previous command
-was `vm-next-command-uses-marks'.  PREFIX is used if it is not 1
-or INTERACTIVE is nil, returning a number of messages around
-`vm-message-pointer' equal to (abs prefix), either backward (if
-prefix is negative) or forward (if positive).
+the COUNT or messages in a collapsed thread, in that
+order.  
+
+Marked messages are returned only if the previous command was
+`vm-next-command-uses-marks'.  
+
+COUNT is used if it is non-nil and different from 1 or
+INTERACTIVE is nil.  In that case, a number of messages around
+`vm-message-pointer' equal to (abs count) are returned, either
+backward (if COUNT is negative) or forward (if positive).  If
+COUNT is zero, then all messages in the folder are returned.
+
+If INTERACTIVE is t and the current operation is a thread operation
+invoked in a Summary buffer, then all the messages in the thread are
+returned. 
+
+Otherwise, if COUNT is 1, then the current message is returned.  If
+COUNT is nil then no messages are returned.
 
 OP-DESCRIPTION is a string describing the opeartion being peformed,
 which is used in interactive confirmations."
   (cond ((eq last-command 'vm-next-command-uses-marks)
 	 (vm-marked-messages))
-	((not (= prefix 1))
-	 (let ((direction (if (< prefix 0) 'backward 'forward))
-	       (count (vm-abs prefix))
+	((and count (not (= count 1)))
+	 (let ((direction (if (< count 0) 'backward 'forward))
+	       (count (vm-abs count))
 	       (vm-message-pointer vm-message-pointer) ; why this?
 	       mlist)
-	   (if (= prefix 0)
+	   (if (= count 0)
 	       (setq mlist (copy-sequence vm-message-list))
 	     (unless (eq vm-circular-folders t)
-	       (vm-check-count prefix))
+	       (vm-check-count count))
 	     (while (not (zerop count))
 	       (setq mlist (cons (car vm-message-pointer) mlist))
 	       (vm-decrement count)
@@ -4863,6 +4875,8 @@ which is used in interactive confirmations."
 		   (format "%s: %s all messages in thread? " 
 			   (buffer-name) op-description))))
 	 (vm-thread-subtree (vm-current-message)))
+	((null count)
+	 nil)
 	(t
 	 (list (vm-current-message)))
 	))
@@ -5320,10 +5334,12 @@ thread are loaded."
     ))
 
 ;;;###autoload
-(defun vm-retrieve-operable-messages (&optional count mlist)
+(defun vm-retrieve-operable-messages (&optional count mlist
+						&key fail)
   "Retrieve the current \"operable\" messages from their
 permanent locations for temporary use.  Currently this facility is
-only available for IMAP folders.
+only available for IMAP folders.  If FAIL is non-nil then any errors
+during retrieval cause failure.
 
 If COUNT and MLIST or both nil, then the \"operable\" message is just
 the current message, and it is retrieved.
@@ -5331,10 +5347,11 @@ the current message, and it is retrieved.
 If the optional argument MLIST is non-nil, then the messages in
 MLIST are retrieved.  Otherwise, the following applies.
 
-With a prefix argument COUNT, the current message and the next 
-COUNT - 1 messages are retrieved.  A negative argument means
-the current message and the previous |COUNT| - 1 messages are
-retrieved.
+With a positive integer argument COUNT, the current message and
+the next COUNT - 1 messages are retrieved.  A negative argument
+means the current message and the previous |COUNT| - 1 messages
+are retrieved.  If COUNT is 0, then all the messages in the current
+folder are retrieved.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
 only marked messages are retrieved, other messages are ignored.  If
@@ -5363,7 +5380,7 @@ thread are retrieved."
 	  (when (vm-body-to-be-retrieved-of mm)
 	    (setq n (1+ n))
 	    (vm-inform 8 "Retrieving message body... %s" n)
-	    (vm-retrieve-real-message-body mm :register t))
+	    (vm-retrieve-real-message-body mm :register t :fail fail))
 	  (setq mlist (cdr mlist)))
 	(when (> n 0)
 	  (vm-inform 8 "Retrieving message body... done")
@@ -5372,12 +5389,16 @@ thread are retrieved."
 	    (vm-update-summary-and-mode-line))))
       )))
 
-(defun* vm-retrieve-real-message-body (mm &key (fetch nil) (register nil))
+(defun* vm-retrieve-real-message-body (mm &key 
+					  (fetch nil) (register nil) 
+					  (fail nil))
   "Retrieve the body of a real message MM from its external
-source and insert it into the Folder buffer.  If the optional argument
-FETCH is t, then the retrieval is for a temporary message fetch.  If
-the optional argument REGISTER is t, then register it as a fetched
-message. 
+source and insert it into the Folder buffer.  
+
+If FETCH is non-nil, then the retrieval is for a temporary
+message fetch.  If REGISTER is non-nil, then register it as a
+fetched message If FAIL is non-nil, then fail for any errors
+during retrieval.
 
 Gives an error if unable to retrieve message."
   (if (not (eq (vm-message-access-method-of mm) 'imap))
@@ -5409,8 +5430,11 @@ Gives an error if unable to retrieve message."
 		   (apply (intern (format "vm-fetch-%s-message" fetch-method))
 			  mm nil))
 	   (error 
-	    (vm-warn 0 0 "Unable to load message; %s" 
-		     (error-message-string err))))
+	    (if fail
+		(error "Unable to load message; %s"
+		       (error-message-string err))
+	      (vm-warn 0 0 "Unable to load message; %s" 
+		       (error-message-string err)))))
 	 (when fetch-result
 	   (vm-assert (eq (point) (marker-position (vm-text-of mm))))
 	   (vm-increment testing)

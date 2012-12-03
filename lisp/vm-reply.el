@@ -158,7 +158,7 @@ messages of the folder are involved in this reply."
         (case-fold-search t)
         to cc subject in-reply-to references
         mp tmp tmp2 newsgroups)
-    (vm-retrieve-operable-messages count mlist)
+    (vm-retrieve-operable-messages count mlist :fail t)
     (when (and include-text vm-include-text-from-presentation
 	       (> (length mlist) 1))
       (error "Including presentation is possible for only a single message"))
@@ -425,7 +425,7 @@ specified by `vm-included-text-headers' and
     (error "The folder buffer containing message %d has been killed."
 	   (vm-number-of message)))
   (vm-display nil nil '(vm-yank-message) '(vm-yank-message composing-message))
-  (vm-retrieve-operable-messages 1 (list message))
+  (vm-retrieve-operable-messages 1 (list message) :fail t)
   (setq message (vm-real-message-of message))
   (let ((layout (vm-mm-layout message))
 	(start (point))
@@ -1141,7 +1141,7 @@ See `vm-forward-message-plain' for forwarding messages in plain text."
 	    ;; (command-execute 'vm-send-digest)
 	    (vm-send-digest nil mlist)))
       ;; single message forwarding
-      (vm-retrieve-operable-messages 1 mlist)
+      (vm-retrieve-operable-messages 1 mlist :fail t)
       (save-restriction
 	(widen)
 	(vm-mail-internal
@@ -1233,7 +1233,8 @@ you can change the recipient address before resending the message."
 	(layout (vm-mm-layout (car vm-message-pointer)))
 	(lim (vm-text-end-of (car vm-message-pointer))))
     ;; We only want to select one message here
-    (vm-retrieve-operable-messages 1 (list (car vm-message-pointer)))
+    (vm-retrieve-operable-messages 1 (list (car vm-message-pointer))
+				   :fail t)
     (save-restriction
       (widen)
       (if (or (not (vectorp layout))
@@ -1308,7 +1309,8 @@ You may also create a Resent-Cc header."
 	  (start (vm-headers-of (car vm-message-pointer)))
 	  (lim (vm-text-end-of (car vm-message-pointer))))
       ;; We only want to select one message here
-      (vm-retrieve-operable-messages 1 (list (car vm-message-pointer)))
+      (vm-retrieve-operable-messages 1 (list (car vm-message-pointer))
+				     :fail t)
       ;; briefly nullify vm-mail-header-from to keep vm-mail-internal
       ;; from inserting another From header.
       (let ((vm-mail-header-from nil))
@@ -1379,10 +1381,10 @@ included in the digest."
       ;; prefix arg doesn't have "normal" meaning here, so only call
       ;; vm-select-operable-messages for marks or threads.
       (setq mlist (vm-select-operable-messages 
-		   0 (vm-interactive-p) "Send as digest")))
+		   1 (vm-interactive-p) "Send as digest")))
     ;; if messages were selected use them, otherwise the whole folder
     (cond ((cdr mlist)
-	   (vm-retrieve-operable-messages 1 mlist))
+	   (vm-retrieve-operable-messages 1 mlist :fail t))
 	  ((not (y-or-n-p "Send the entire folder as a digest? "))
 	   (error "aborted"))
 	  ((vm-find vm-message-list

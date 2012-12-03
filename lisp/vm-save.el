@@ -313,7 +313,7 @@ The saved messages are flagged as `filed'."
     (unless mlist
       (setq mlist (vm-select-operable-messages
 		   count (vm-interactive-p) "Save")))
-    (vm-retrieve-operable-messages count mlist)
+    (vm-retrieve-operable-messages count mlist :fail t)
 
     ;; Expand the filename, forcing relative paths to resolve
     ;; into the folder directory.
@@ -531,7 +531,7 @@ This command should NOT be used to save message to mail folders; use
   (unless count (setq count 1))
   (let ((mlist (vm-select-operable-messages
 		count (vm-interactive-p) "Save")))
-    (vm-retrieve-operable-messages count mlist)
+    (vm-retrieve-operable-messages count mlist :fail t)
     (setq file (expand-file-name file))
     ;; Check and see if we are currently visiting the file
     ;; that the user wants to save to.
@@ -645,8 +645,8 @@ Output, if any, is displayed.  The message is not altered."
 	(pop-up-windows (and pop-up-windows (eq vm-mutable-window-configuration t)))
 	;; prefix arg doesn't have "normal" meaning here, so only call
 	;; vm-select-operable-messages for marks and threads.
-	(mlist (vm-select-operable-messages 0 (vm-interactive-p) "Pipe")))
-    (vm-retrieve-operable-messages 1 mlist)
+	(mlist (vm-select-operable-messages 1 (vm-interactive-p) "Pipe")))
+    (vm-retrieve-operable-messages 1 mlist :fail t)
     (save-excursion
       (set-buffer buffer)
       (erase-buffer))
@@ -760,9 +760,9 @@ arguments after the command finished."
 	(pop-up-windows (and pop-up-windows (eq vm-mutable-window-configuration t)))
 	;; prefix arg doesn't have "normal" meaning here, so only call
 	;; vm-select-operable-messages for marks and threads.
-	(mlist (vm-select-operable-messages 0 (vm-interactive-p) "Pipe"))
+	(mlist (vm-select-operable-messages 1 (vm-interactive-p) "Pipe"))
 	m process)
-    (vm-retrieve-operable-messages 1 mlist)
+    (vm-retrieve-operable-messages 1 mlist :fail t)
     (save-excursion
       (set-buffer buffer)
       (erase-buffer))
@@ -876,7 +876,7 @@ Output, if any, is displayed.  The message is not altered."
 	 (m nil)
 	 (pop-up-windows (and pop-up-windows (eq vm-mutable-window-configuration t)))
 	 (mlist (vm-select-operable-messages count (vm-interactive-p) "Print")))
-    (vm-retrieve-operable-messages count mlist)
+    (vm-retrieve-operable-messages count mlist :fail t)
 
     (save-excursion
       (set-buffer buffer)
@@ -988,10 +988,8 @@ The saved messages are flagged as `filed'."
 			      (nth 1 target-spec-list))
 		       (equal (nth 5 source-spec-list) 
 			      (nth 5 target-spec-list))))
-	    ;; FIXME try to load the body before saving
-	    (when (and (not server-to-server-p)
-		     (vm-body-to-be-retrieved-of m))
-		(vm-retrieve-operable-messages 1 (list m)))
+	    (unless server-to-server-p
+		(vm-retrieve-operable-messages 1 (list m) :fail t))
 	    ;; Kyle Jones says:
 	    ;; have to stuff the attributes in all cases because
 	    ;; the deleted attribute may have been stuffed

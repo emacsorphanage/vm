@@ -643,7 +643,7 @@ burst."
   (let ((start-buffer (current-buffer)) m totals-blurb
 	(mlist (vm-select-operable-messages
 		1 (vm-interactive-p) "Burst digest of")))
-    (vm-retrieve-operable-messages 1 mlist)
+    (vm-retrieve-operable-messages 1 mlist :fail t)
     (while mlist
       (if (vm-virtual-message-p (car mlist))
 	  (progn
@@ -755,7 +755,7 @@ burst."
 	(mlist (vm-select-operable-messages
 		1 (vm-interactive-p) "Burst digest of"))
 	(work-buffer nil))
-    (vm-retrieve-operable-messages 1 mlist)
+    (vm-retrieve-operable-messages 1 mlist :fail t)
     (unwind-protect
 	(save-excursion			; to go to work-buffer
 	  (setq work-buffer (generate-new-buffer

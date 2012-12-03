@@ -279,7 +279,7 @@ don't move at all."
 
 ;;;###autoload
 (defun vm-delete-duplicate-messages ()
-"Delete duplicate messages in the current folder.
+  "Delete duplicate messages in the current folder.
 This command works by comparing the message ID's.  Messages that
 already deleted are not considered, so VM will never delete the last
 copy of a message in a folder.  'Deleting' means flagging for

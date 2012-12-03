@@ -4835,7 +4835,7 @@ ACTION will get called with four arguments: MSG LAYOUT TYPE FILENAME."
 
   (let ((mlist (or mlist (vm-select-operable-messages
 			  count (vm-interactive-p) "Action on"))))
-    (vm-retrieve-operable-messages count mlist)
+    (vm-retrieve-operable-messages count mlist :fail t)
     (save-excursion
       (while mlist
         (let (m parts layout filename type disposition o)
@@ -6117,16 +6117,20 @@ minibuffer if the command is run interactively."
 	    (setq folder vm-mail-buffer)))
      ;; Select marked messages if there were any
      (with-current-buffer folder
-       (setq mlist (vm-select-operable-messages 0 t "Attach")))
+       (setq mlist (vm-select-operable-messages nil t "Attach"))
+       (vm-inform 1 "Attaching %s messages from %s..." 
+		  (length mlist) (buffer-name folder))
+       (vm-retrieve-operable-messages 1 mlist :fail t))
      ;; Otherwise, ask the user
      (when (null mlist)
        (with-current-buffer folder
 	 (setq default (and vm-message-pointer
 			    (vm-number-of (car vm-message-pointer)))
 	       prompt (if default
-			  (format "Attach message number: (default %s) "
-				  default)
-			"Attach message number: "))
+			  (format "Attach message number from %s: (default %s) "
+				  (buffer-name folder) default)
+			(format "Attach message number from %s: "
+				(buffer-name folder))))
 	 (while (zerop result)
 	   (setq result (read-string prompt))
 	   (and (string= result "") default (setq result default))
@@ -6273,9 +6277,7 @@ minibuffer if the command is run interactively."
   (vm-follow-summary-cursor)
 
   (let ((mlist (vm-select-operable-messages 1 t "Attach")))
-    (when (null mlist)
-      (setq mlist (list (vm-current-message))))
-    (vm-retrieve-operable-messages 1 mlist)
+    (vm-retrieve-operable-messages 1 mlist :fail t)
 
     (with-current-buffer composition
     (if (null (cdr mlist))		; single message
@@ -8181,7 +8183,7 @@ This is a destructive operation and cannot be undone!"
   (let ((mlist (or mlist 
 		   (vm-select-operable-messages
 		    count (vm-interactive-p) "Nuke html of"))))
-    (vm-retrieve-operable-messages count mlist)
+    (vm-retrieve-operable-messages count mlist :fail t)
     (save-excursion
       (while mlist
         (let ((count (vm-nuke-alternative-text/html-internal (car mlist))))
