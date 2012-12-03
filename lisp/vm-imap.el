@@ -2513,7 +2513,7 @@ that the session is active.  Returns t or nil."
 	      ;;----------------------------
 	      (vm-buffer-type:enter 'process)
 	      ;;----------------------------
-	      (vm-inform 6 "Checking IMAP connection to %s..." "server")
+	      (vm-inform 7 "Checking IMAP connection to %s..." "server")
 	      (vm-imap-send-command process "NOOP")
 	      (condition-case err
 		  (let ((response nil)
@@ -2523,6 +2523,7 @@ that the session is active.  Returns t or nil."
 			    (vm-imap-read-response-and-verify process "NOOP"))
 		      (cond ((vm-imap-response-matches response 'VM 'OK)
 			     (setq need-ok nil))))
+		    (vm-inform 7 "Checking IMAP connection to %s...alive" "server")
 		    ;;----------------------------
 		    (vm-buffer-type:exit)
 		    ;;----------------------------

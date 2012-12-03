@@ -5317,9 +5317,9 @@ default to the current date's value for that
 part, with the exception of the hh:mm:ss
 part which defaults to midnight.
 @item older-than
-matches message if it is more than @var{ARG} days old
+matches message if it is more than @var{ARG} days old (today = 0)
 @item newer-than
-matches message if it is at most @var{ARG} days old
+matches message if it is at most @var{ARG} days old (today = 0)
 @item message-id
 matches message if its Message ID is @var{ARG}
 @item uid
