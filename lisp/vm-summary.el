@@ -734,7 +734,9 @@ Otherwise, it is a string in mime-decoded form with text-properties.
       (setq match (assoc format (symbol-value alist-var))))
     ;; The local variable name `vm-su-message' is mandatory here for
     ;; the format s-expression to work.
-    (let ((vm-su-message message))
+    (let ((vm-su-message message)
+	  (vm-mime-qp-decoder-program nil) ; speed up decoding
+	  (vm-mime-base64-decoder-program nil))
       (if (or tokenize (null vm-display-using-mime))
 	  (eval (cdr match))
 	(vm-decode-mime-encoded-words-in-string (eval (cdr match)))))))

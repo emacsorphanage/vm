@@ -467,9 +467,11 @@ for accessing MAILBOX."
   (memq auth vm-imap-auth-methods))
 
 (defsubst vm-accept-process-output (process)
-  "Accept output from PROCESS.  The variable `vm-imap-server-timeout'
-specifies how many seconds to wait before timing out.  If a timeout
-occurs, typically VM cannot proceed."
+  "Accept output from PROCESS.  
+
+The variable `vm-imap-server-timeout' specifies how many seconds
+to wait before timing out.  If a timeout occurs, an exception is
+thrown.  In such a situation, typically VM cannot proceed."
   ;; protect against possible buffer change due to bug in Emacs
   (let ((buf (current-buffer))
 	(got-output (accept-process-output process vm-imap-server-timeout)))
@@ -2142,6 +2144,9 @@ See also `vm-imap-get-message-size'."
       nil)))
 
 (defun vm-imap-read-greeting (process)
+  "Read the initial greeting from the IMAP server.
+
+May throw exceptions."
   ;;----------------------------------
   (vm-buffer-type:assert 'process)
   ;;----------------------------------
@@ -2155,6 +2160,11 @@ See also `vm-imap-get-message-size'."
 	  (t nil))))
 
 (defun vm-imap-read-ok-response (process)
+  "Reads an OK response from the IMAP server, returning a boolean
+result.
+
+May throw exceptions."
+  ;; FIXME Is this the same as vm-imap-read-boolean-response?
   ;;----------------------------------
   (vm-buffer-type:assert 'process)
   ;;----------------------------------
@@ -2190,7 +2200,9 @@ See also `vm-imap-get-message-size'."
   (set-marker end nil))
 
 (defun vm-imap-read-response (process)
-  "Reads a line of respose from the imap PROCESS.  Returns a list of tokens."
+  "Reads a line of respose from the imap PROCESS.  Returns a list of tokens.
+
+May throw exceptions."
   ;;--------------------------------------------
   ;; This assertion often fails for some reason,
   ;; perhaps some asynchrony involved?
@@ -2223,6 +2235,7 @@ standard errors like \"BAD\" and \"BYE\".  Returns a list of tokens.
 
 Optional COMMAND-DESC is a command description that can be
 printed with the error message."
+  ;; FIXME Does this function throw exceptions?
   ;;--------------------------------------------
   ;; This assertion often fails for some reason,
   ;; perhaps some asynchrony involved?
@@ -2259,7 +2272,9 @@ printed with the error message."
 (defun vm-imap-read-object (process &optional skip-eol)
   "Reads a single token from the PROCESS and returns it.  If the
 output from PROCESS is incomplete, waits until enough output becomes
-available." 
+available.
+
+May throw exceptions." 
   ;; The possible tokens are:
   ;;   (end-of-line)
   ;;   (atom position position)
@@ -4259,6 +4274,10 @@ well. Returns a boolean value."
       )))
 
 (defun vm-imap-read-boolean-response (process)
+  "Read a boolean response from the IMAP server (OK, NO, BYE, BAD).
+Returns a boolean value (t or nil).
+
+May throw exceptions."
   (let ((need-ok t) retval response)
     (while need-ok
       (vm-imap-check-connection process)
@@ -4607,8 +4626,11 @@ message count and recent message count (a list of two numbers)."
   "Saves the current composition in the IMAP folder given by the
 IMAP-FCC header. 
 Add this to your `mail-send-hook' and start composing from an IMAP
-folder." 
-;; Creates a self-contained IMAP session and destroys it at the end.
+folder.
+
+May throw exceptions." 
+  ;; FIXME This function should not be throwing exceptions.
+  ;; Creates a self-contained IMAP session and destroys it at the end.
   (let ((mailbox (vm-mail-get-header-contents "IMAP-FCC:"))
 	(mailboxes nil)
 	(fcc-string (vm-mail-get-header-contents "FCC:" ","))
@@ -4619,11 +4641,10 @@ folder."
 	(setq mailboxes nil)
       ;; IMAP-FCC header present
       (when vm-mail-buffer		; has parent folder
-	(save-current-buffer
+	(with-current-buffer vm-mail-buffer
 	  ;;----------------------------
 	  (vm-buffer-type:enter 'folder)
 	  ;;----------------------------
-	  (vm-select-folder-buffer)
 	  (setq m (car vm-message-pointer))
 	  (when m 
 	    (set-buffer (vm-buffer-of (vm-real-message-of m))))
@@ -4634,9 +4655,9 @@ folder."
 	  ;;-------------------
 	  ))
       (when (and (null maildrop)  vm-imap-default-account)
-	(setq maildrop(vm-imap-spec-for-account vm-imap-default-account)))
-      (when (null maildrop)
-	(error "Set `vm-imap-default-account' to use IMAP-FCC"))
+	(setq maildrop(vm-imap-spec-for-account vm-imap-default-account))
+	(when (null maildrop)
+	  (error "Set `vm-imap-default-account' to use IMAP-FCC")))
       (setq process (vm-imap-make-session maildrop t "IMAP-FCC"))
       (if (null process)
 	  (error "Could not connect to the IMAP server for IMAP-FCC"))
@@ -4683,6 +4704,7 @@ folder."
 	    ;; (vm-imap-session-type:assert-active)
 	    ;;----------------------------------
 
+	    (vm-inform 7 "Saving outgoing message to IMAP server...")
 	    (vm-imap-send-command 
 	     process
 	     (format "APPEND %s %s {%d}"
@@ -4727,6 +4749,7 @@ folder."
 		  (vm-imap-normal-error "server disconnected"))
 		 ((vm-imap-response-matches response 'VM 'OK)
 		  (setq need-ok nil)))))
+	    (vm-inform 7 "Saving outgoing message to IMAP server... done")
 	    )
 	;; unwind-protections
 	(when (and (processp process)
