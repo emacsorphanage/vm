@@ -578,5 +578,6 @@ ignored."
       (vm-inform 5 "%s: No messages are flagged for deletion." (buffer-name)))))
   (when vm-debug
     (vm-check-thread-integrity)))
+(defalias 'vm-compact-folder 'vm-expunge-folder)
 
 ;;; vm-delete.el ends here

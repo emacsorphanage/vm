@@ -242,35 +242,55 @@ message, @key{DEL} scrolls backward.  When you reach the end
 of a message, typing @key{SPC} or @kbd{n} moves you forward to preview
 the next message.  @xref{Paging}.
 
+@findex vm-next-message
+@kindex n
 If you do not want to read a message that's being previewed, type
 @kbd{n} and VM will move to the next message (if there is one).
 @xref{Navigating}.
 
+@findex vm-save-message
+@kindex s
 To save a message to a mail folder use @kbd{s} (@code{vm-save-message}).
 VM will prompt you for the folder name in the minibuffer.
 @xref{Saving Messages}.
 
+@findex vm-delete-message
+@findex vm-undelete-message
+@findex vm-expunge-folder
+@findex vm-compact-folder
+@kindex d
+@kindex u
+@kindex ###
+@cindex expunging
+@cindex compacting
 Messages are deleted by typing @kbd{d} (@code{vm-delete-message}) while
 previewing or reading them.  The message is not removed right away; VM
 makes a note that you want the message to be removed later.  If you
 change your mind about deleting a message, select it and type @kbd{u}
 (@code{vm-undelete-message}), and the message will be undeleted.
 @xref{Deleting Messages}.  The actual removal of deleted messages from
-the current folder is called @dfn{expunging} and it is accomplished by
-typing @kbd{###} (@code{vm-expunge-folder}).  The message is still present
+the current folder is called @dfn{expunging} or @dfn{compacting}, and it is
+accomplished by 
+typing @kbd{###} (@code{vm-expunge-folder}, @code{vm-compact-folder}).  The
+deleted messages are still present 
 in the on-disk version of the folder until the folder is saved.
 
-Typing @kbd{h} (@code{vm-summarize}) causes VM to display a window
-containing a summary of the contents of the current folder.  The summary is
-presented one line per message, by message number, listing each message's
-author, date sent, line and byte count, and subject.  Also, various
-letters appear beside the message number to indicate that a message is
-new, unread, flagged for deletion, etc.  An arrow @samp{->} appears to
-the left of the line summarizing the current message.  The summary
-format is user configurable, @pxref{Summaries}.
+@findex vm-summarize
+@findex vm-headers-summary
+@kindex h
+Typing @kbd{h} (@code{vm-summarize}, @code{vm-headers-summary}) causes VM to
+display a window containing a summary of the contents of the current folder.
+The summary is presented one line per message, by message number, listing
+each message's author, date sent, line and byte count, and subject.  Also,
+various letters appear beside the message number to indicate that a message
+is new, unread, flagged for deletion, etc.  An arrow @samp{->} appears to
+the left of the line summarizing the current message.  The summary format is
+user configurable, @pxref{Summaries}.
 
 @findex vm-save-folder
 @kindex S
+@cindex expunging
+@cindex compacting
 When you are finished reading mail the current folder must be saved, so
 that the next time the folder is visited VM will know which messages
 have been already read, replied to and so on.  Typing @kbd{S}
@@ -327,6 +347,7 @@ Or, you can locate the folder's buffers again by using @code{list-buffers},
 which is normally bound to @kbd{C-x C-b}.
 
 @findex vm-quit-just-iconify
+@findex vm-quit-just-bury
 Another command you can use if you are using a window system like X
 Windows is @code{vm-quit-just-iconify}.  This command buries the
 folder's buffers like @code{vm-quit-just-bury} and also iconifies the
@@ -346,6 +367,8 @@ another file from which to gather messages instead of the usual spool
 files.  In this case the source folder is copied but no messages are
 deleted from it as they would be for a spool file.
 
+@cindex primary inbox
+@cindex spool file
 By default your primary inbox has your system mailbox associated with
 it, e.g. @file{/var/spool/mail/kyle}, and so typing @kbd{g} will retrieve
 mail from this file.  Your system mailbox is one example of a @dfn{spool
@@ -359,6 +382,7 @@ files with other folders by setting the variable
 
 @findex vm-load-init-file
 @vindex vm-init-file
+@cindex configuration settings
 @cindex .vm
 The first time VM is started in an Emacs session, it attempts to load
 the file specified by the variable @code{vm-init-file}, normally
@@ -372,6 +396,7 @@ applications that VM can invoke.  You can reload this file by typing
 
 @vindex vm-preferences-file
 @cindex .vm.preferences
+@cindex preferences settings
 In addition, VM also attempts to load a file specified by the variable
 @code{vm-preferences-file}, normally @file{~/.vm.preferences}.  This
 file should contain your preferential settings for various VM
@@ -655,7 +680,7 @@ maildrop specification (@ref{maildrop specification},
 retrieve new mail 
 from the @acronym{POP} mailbox in the same way as it retrieves it from system
 mailbox.  The retrieved messages can be automatically removed from the
-@acronym{POP} mailbox or retained until a later expunge operation.
+@acronym{POP} mailbox or retained until a later expunge (compact) operation.
 
 By default VM will retrieve all the messages from a @acronym{POP} mailbox
 before returning control of Emacs to you.  If the mailbox is
@@ -683,7 +708,8 @@ retrieve the large message.  If VM is retrieving messages automatically
 (e.g. @code{vm-auto-get-new-mail} is set non-@code{nil}) then VM will skip
 the large messages and you can retrieve them later.
 
-@cindex expunging, @acronym{POP} messages
+@cindex expunging, @acronym{POP} servers
+@cindex compacting, @acronym{POP} servers
 @findex vm-expunge-pop-messages
 After VM retrieves messages from the mailbox, the default action is to
 leave the original messages on the server unchanged.  They can be
@@ -773,6 +799,7 @@ retrieve the large message.  If VM is retrieving messages automatically
 the large messages and you can retrieve them later.
 
 @cindex expunging, @acronym{IMAP} messages
+@cindex compacting, @acronym{IMAP} servers
 @findex vm-expunge-imap-messages
 After VM retrieves messages from the mailbox, the default action is to
 leave the original messages on the server unchanged.  They can be
@@ -1393,10 +1420,10 @@ writing the Thunderbird status flags.  In this case, the changes made to
 the folders are visible inside VM even after revisiting, but they will have
 no effect for Thunderbird.  
 
-WARNING: Keep in mind that all this applies to changes to message
-attributes only.  If you @i{expunge} a folder, then the deleted messages
-are physically purged from the folder.  They will be lost both inside VM
-as well as Thunderbird.
+WARNING: Keep in mind that all this applies to changes to message attributes
+only.  If you @i{expunge} (@i{compact}) a folder, then the deleted messages
+are physically purged from the folder.  They will be lost both inside VM as
+well as Thunderbird.
 
 The variable @code{vm-sync-thunderbird-status} is a buffer-local
 variable.  You may set its default value in your @code{.vm} file.  To
@@ -4088,8 +4115,9 @@ detected by comparing message ID's.
 Flags duplicate messages for deletion.  The duplicate messages are
 detected by comparing message bodies.
 @findex vm-expunge-folder
+@findex vm-compact-folder
 @kindex ###
-@item ### (@code{vm-expunge-folder})
+@item ### (@code{vm-expunge-folder}, @code{vm-compact-folder})
 Does the actual removal of messages flagged for deletion in the current
 folder.
 @end table
@@ -4110,19 +4138,19 @@ command.
 @vindex vm-expunge-before-save
 @vindex vm-expunge-before-quit
 Normally, deleted messages are preserved in folders until an explicit
-@code{vm-expunge-folder} operation is done.  This default behavior can
-be altered by setting the variables @code{vm-expunge-before-save} and
-@code{vm-expunge-before-quit}.  If @code{vm-expunge-before-save} is
-set to non-@code{nil}, then deleted messages are expunged whenever a
-folder is saved.  This is not an undo-able operation and no
-confirmation is asked for.  So you should use this setting only if
-your normal workflow includes expunging messages as part of save.  The
-variable @code{vm-expunge-before-quit} can be similarly set to
-non-@code{nil} to cause VM to expunge deleted messages whenever you
-quit the folder.  
+@code{vm-expunge-folder} (@code{vm-compact-folder}) operation is done.  This
+default behavior can be altered by setting the variables
+@code{vm-expunge-before-save} and @code{vm-expunge-before-quit}.  If
+@code{vm-expunge-before-save} is set to non-@code{nil}, then deleted
+messages are expunged whenever a folder is saved.  This is not an undo-able
+operation and no confirmation is asked for.  So you should use this setting
+only if your normal workflow includes expunging messages as part of save.
+The variable @code{vm-expunge-before-quit} can be similarly set to
+non-@code{nil} to cause VM to expunge deleted messages whenever you quit the
+folder.
 
-@cindex vm-save-folder-no-expunge
-@cindex vm-quit-no-expunge
+@findex vm-save-folder-no-expunge
+@findex vm-quit-no-expunge
 The commands @code{vm-save-folder-no-expunge} and
 @code{vm-quit-no-expunge} can be used to preserve deleted messages in
 the saved folders, irrespective of the settings of the above
@@ -4484,22 +4512,23 @@ properly formatted.
 @chapter Summaries
 
 @findex vm-summarize
+@findex vm-headers-summary
 @vindex vm-auto-center-summary
 @vindex vm-summary-arrow
 @kindex h
-Typing @kbd{h} (@code{vm-summarize}) causes VM to display a summary of
-contents of the current folder.  The information in the summary is
-automatically updated as changes are made to the current folder.  An
-arrow @samp{->} appears to the left of the line summarizing the current
+Typing @kbd{h} (@code{vm-summarize}, @code{vm-headers-summary}) causes VM to
+display a summary of contents of the current folder.  The information in the
+summary is automatically updated as changes are made to the current folder.
+An arrow @samp{->} appears to the left of the line summarizing the current
 message.  The variable @code{vm-auto-center-summary} controls whether VM
-will keep the summary arrow vertically centered within the summary
-window.  A value of @code{t} causes VM to always keep the arrow
-centered.  A value of @code{nil} (the default) means VM will never
-bother centering the arrow.  A value that is not @code{nil} and not
-@code{t} causes VM to center the arrow only if the summary window is not
-the only existing window.  You can change what the summary arrow looks
-like by setting @code{vm-summary-arrow} to a string depicting the new arrow.
-You should set this variable before VM creates the summary buffer.
+will keep the summary arrow vertically centered within the summary window.
+A value of @code{t} causes VM to always keep the arrow centered.  A value of
+@code{nil} (the default) means VM will never bother centering the arrow.  A
+value that is not @code{nil} and not @code{t} causes VM to center the arrow
+only if the summary window is not the only existing window.  You can change
+what the summary arrow looks like by setting @code{vm-summary-arrow} to a
+string depicting the new arrow.  You should set this variable before VM
+creates the summary buffer.
 
 
 You can have a summary generated automatically at VM startup

@@ -211,6 +211,7 @@ mandatory."
     (vm-display nil nil '(vm-summarize vm-summarize-other-frame)
 		(list this-command)))
   (vm-update-summary-and-mode-line))
+(defalias 'vm-headers-summary 'vm-summarize)
 
 ;;;###autoload
 (defun vm-summarize-other-frame (&optional display)
@@ -221,6 +222,7 @@ mandatory."
   (vm-summarize display)
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
+(defalias 'vm-headers-summary-other-frame 'vm-summarize-other-frame)
 
 (defun vm-do-summary (&optional start-point)
   "Generate summary lines for all the messages in the optional
