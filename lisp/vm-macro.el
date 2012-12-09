@@ -57,9 +57,11 @@
        (setq ,list (cons ,elem ,list))))
 
 (defsubst vm-sit-for (seconds &optional nodisplay)
-  "Like sit-for, but has no effect if display-hourglass is set to t.
-Otherwise, the hourglass would be displayed while sit-for happens."
-  (unless (and (boundp 'display-hourglass) display-hourglass)
+  "Like sit-for, but has no effect if `display-hourglass' is set
+to `t' and the Emacs is running in a `window-system'.  Otherwise,
+the hourglass would be displayed while `sit-for' happens."
+  (unless (and (boundp 'display-hourglass) display-hourglass
+	       window-system)
     (sit-for seconds nodisplay)))
 
 (defsubst vm-marker (pos &optional buffer)

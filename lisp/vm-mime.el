@@ -302,7 +302,12 @@ body markers is tolerated."
 	   (vm-mapc 
 	    (lambda (i)
 	      (unless (equal (aref cached i) (aref current i))
-		(throw 'mismatch i)))
+		;; skip if the cached type has been inferred
+		(unless (and (<= i 1)	; type or qtype
+			     (equal (aref current i)
+				    '("application/octet-stream"))
+			     vm-infer-mime-types)
+		  (throw 'mismatch i))))
 	    '(0 1 2 3 4))		; type through description
 	   ;; ignore disposition and qdisposition because of the hack
 	   ;; in vm-mime-frob-image-xxxx
