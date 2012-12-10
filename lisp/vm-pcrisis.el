@@ -85,6 +85,9 @@
 
 (defcustom vmpc-conditions ()
   "*List of conditions which will be checked by pcrisis."
+  :type '(repeat (list (choice :tag "Condition name"
+			       (symbol) (string))
+		       (sexp :tag "Condition")))
   :group 'vmpc)
 
 (defcustom vmpc-actions ()
@@ -98,8 +101,9 @@ These are also the actions from which you can choose when using the newmail
 features of Personality Crisis, or the `vmpc-prompt-for-profile' action.
 
 You may also define an action without associated commands, e.g. \"none\"."
-  :type '(repeat (list (string :tag "Action name")
-                       (sexp :tag "Commands")))
+  :type '(repeat (cons (choice :tag "Action name"
+			       (symbol) (string))
+                       (repeat :tag "Commands" sexp)))
   :group 'vmpc)
 
 (defun vmpc-alist-set (symbol value)
@@ -117,17 +121,29 @@ Checks if the condition and all the actions exist."
     (setq value (cdr value)))
   (set symbol value))
 
+;; (defun vmpc-defcustom-alist-type ()
+;;   "Generate :type for vmpc-*-alist variables."
+;;   (list 'repeat
+;;         (list 'cons
+;;               (append '(choice :tag "Condition")
+;;                       (mapcar (lambda (c) (list 'const (car c))) vmpc-conditions)
+;;                       '((string)))
+;;               (list 'repeat :tag "Actions to run"
+;;                     (append '(choice :tag "Action")
+;;                             (mapcar (lambda (a) (list 'const (car a))) vmpc-actions)
+;;                             '(string))))))
+
 (defun vmpc-defcustom-alist-type ()
   "Generate :type for vmpc-*-alist variables."
-  (list 'repeat
-        (list 'list 
-              (append '(choice :tag "Condition")
-                      (mapcar (lambda (c) (list 'const (car c))) vmpc-conditions)
-                      '((string)))
-              (list 'repeat :tag "Actions to run"
-                    (append '(choice :tag "Action")
-                            (mapcar (lambda (a) (list 'const (car a))) vmpc-actions)
-                            '(string))))))
+  `(repeat
+    (cons
+     (choice :tag "Condition"
+	     ,@(mapcar (lambda (c) `(const ,(car c))) vmpc-conditions)
+	     (string))
+     (repeat :tag "Actions to run"
+	     (choice :tag "Action"
+		     ,@(mapcar (lambda (a) `(const ,(car a))) vmpc-actions)
+		     (string))))))
 
 (defcustom vmpc-actions-alist ()
   "*An alist associating conditions with actions from `vmpc-actions'.

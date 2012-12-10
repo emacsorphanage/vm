@@ -1066,6 +1066,12 @@ symbols interned in vm-thread-obarray."
 		 (setq root (vm-th-message-of id-sym))
 		 ;; the ancestors of id-sym will be added.
 		 ;; remove them if they were already added.
+		 (when (null root)
+		   (vm-thread-debug 'vm-build-thread-list 'invalid-subject-root)
+		   (signal 'vm-thread-error 
+			   (list 'vm-build-thread-list 'invalid-subject-root
+				 (symbol-name subject-sym))))
+		 
 		 (setq ancestors (remq id-sym (vm-thread-list root)))
 		 (mapc (lambda (a)
 			 (setq thread-list (remq a thread-list))
