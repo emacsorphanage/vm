@@ -267,7 +267,8 @@ MIME-decoded with possible text properties."
 possible text properties), returns a modified string after
 stripping redundant prefixes and suffixes as suitable for sorting
 by subject."
-  (let ((case-fold-search t))
+  (let ((case-fold-search t)
+	(tag-end nil))
     (catch 'done
       (while t
 	(cond ((and vm-subject-ignored-prefix
@@ -276,8 +277,13 @@ by subject."
 	       (setq subject (substring subject (match-end 0))))
 	      ((and vm-subject-tag-prefix
 		    (string-match vm-subject-tag-prefix subject)
-		    (zerop (match-beginning 0)))
-	       (setq subject (substring subject (match-end 0))))
+		    (zerop (match-beginning 0))
+		    (setq tag-end (match-end 0))
+		    (not (and vm-subject-tag-prefix-exceptions
+			      (string-match 
+			       vm-subject-tag-prefix-exceptions subject)
+			      (zerop (match-beginning 0)))))
+	       (setq subject (substring subject tag-end)))
 	      (t
 	       (throw 'done nil)))))
     (setq subject (vm-with-string-as-temp-buffer
