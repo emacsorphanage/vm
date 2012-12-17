@@ -400,117 +400,48 @@ ignored."
 	(mp vm-message-list)
 	(virtual (eq major-mode 'vm-virtual-mode))
 	(buffers-altered (make-vector 29 0))
-	prev virtual-messages)
+	virtual-messages)
     (while mp
-      (cond
-       ((if just-these-messages
-	    (memq (car mp) message-list)
-	  (and (vm-deleted-flag (car mp))
-	       (or (not use-marks)
-		   (vm-mark-of (car mp)))))
-	;; remove the message from the thread tree.
+      (when (if just-these-messages
+		(memq (car mp) message-list)
+	      (and (vm-deleted-flag (car mp))
+		   (or (not use-marks)
+		       (vm-mark-of (car mp)))))
+	;; 1. remove the message from the thread tree.
 	(if (vectorp vm-thread-obarray)
 	    (vm-unthread-message-and-mirrors 
 	     (vm-real-message-of (car mp)) :message-changing nil))
-	;; expunge from the virtual side first, removing all
-	;; references to this message before actually removing
-	;; the message itself.
-	(cond
-	 ((setq virtual-messages (vm-virtual-messages-of (car mp)))
-	  (let (vms prev curr)
-	    (if virtual
-		(setq vms (cons (vm-real-message-of (car mp))
-				(vm-virtual-messages-of (car mp))))
-	      (setq vms (vm-virtual-messages-of (car mp))))
+	;; 2. remove the virtual mirrors from message lists.
+	(when (setq virtual-messages (vm-virtual-messages-of (car mp)))
+	  (let ((vms (if virtual
+			 (cons (vm-real-message-of (car mp))
+			       (vm-virtual-messages-of (car mp)))
+		       (vm-virtual-messages-of (car mp)))))
 	    (while vms
-	      (save-excursion
-		(set-buffer (vm-buffer-of (car vms)))
-		(vm-unregister-fetched-message (car vms))
-		(setq prev (vm-reverse-link-of (car vms))
-		      curr (or (cdr prev) vm-message-list))
-		(intern (buffer-name) buffers-altered)
-		(vm-set-numbering-redo-start-point (or prev t))
-		(vm-set-summary-redo-start-point (or prev t))
-		(if (eq vm-message-pointer curr)
-		    (setq vm-system-state nil
-			  vm-message-pointer (or prev (cdr curr))))
-		(if (eq vm-last-message-pointer curr)
-		    (setq vm-last-message-pointer nil))
-		;; lock out interrupts to preserve message-list integrity
-		(let ((inhibit-quit t))
-		  ;; vm-clear-expunge-invalidated-undos uses
-		  ;; this to recognize expunged messages.
-		  ;; If this stuff is mirrored we'll be
-		  ;; setting this value multiple times if there
-		  ;; are multiple virtual messages referencing
-		  ;; the underlying real message.  Harmless.
-		  (vm-set-deleted-flag-of (car curr) 'expunged)
-		  ;; disable any summary update that may have
-		  ;; already been scheduled.
-		  (vm-set-su-start-of (car curr) nil)
-		  (vm-increment vm-modification-counter)
-		  (if (null prev)
-		      (progn
-			(setq vm-message-list (cdr vm-message-list))
-			(and (cdr curr)
-			     (vm-set-reverse-link-of (car (cdr curr)) nil)))
-		    (setcdr prev (cdr curr))
-		    (and (cdr curr)
-			 (vm-set-reverse-link-of (car (cdr curr)) prev)))
-		  (vm-set-virtual-messages-of (car mp) (cdr vms))
-		  (vm-mark-folder-modified-p (vm-buffer-of (car vms)))))
-	      (setq vms (cdr vms))))))
-	(cond
-	 ((or (not virtual-messages)
-	      (not virtual))
-	  (when (and (not virtual-messages) virtual)
+	      (with-current-buffer (vm-buffer-of (car vms))
+		(vm-expunge-message (car vms))
+		(intern (buffer-name) buffers-altered))
+	      (vm-set-virtual-messages-of (car mp) (cdr vms))
+	      (setq vms (cdr vms)))))
+	;; 3. remove this message from message lists.
+	(when (or (null virtual-messages) (not virtual))
+	  (when (and (null virtual-messages) virtual)
 	    (vm-set-virtual-messages-of
 	     (vm-real-message-of (car mp))
 	     (delq (car mp) (vm-virtual-messages-of
 			     (vm-real-message-of (car mp))))))
-	  (if (eq vm-message-pointer mp)
-	      (setq vm-system-state nil
-		    vm-message-pointer (or prev (cdr mp))))
-	  (if (eq vm-last-message-pointer mp)
-	      (setq vm-last-message-pointer nil))
-	  (intern (buffer-name) buffers-altered)
-	  (if (null vm-numbering-redo-start-point)
-	      (progn
-		(vm-set-numbering-redo-start-point (or prev t))
-		(vm-set-summary-redo-start-point (or prev t))))
-	  ;; lock out interrupt to preserve message list integrity
-	  (let ((inhibit-quit t))
-	    (if (null prev)
-		(progn (setq vm-message-list (cdr vm-message-list))
-		       (and (cdr mp)
-			    (vm-set-reverse-link-of (car (cdr mp)) nil)))
-	      (setcdr prev (cdr mp))
-	      (and (cdr mp) (vm-set-reverse-link-of (car (cdr mp)) prev)))
-	    ;; vm-clear-expunge-invalidated-undos uses this to recognize
-	    ;; expunged messages.
-	    (vm-set-deleted-flag-of (car mp) 'expunged)
-	    ;; disable any summary update that may have
-	    ;; already been scheduled.
-	    (vm-set-su-start-of (car mp) nil)
-	    (vm-mark-folder-modified-p (current-buffer))
-	    (vm-increment vm-modification-counter))))
+	  (vm-expunge-message (car mp))
+	  (intern (buffer-name) buffers-altered))
+	;; 4. expunge the real message from its folder
 	(if (eq (vm-attributes-of (car mp))
 		(vm-attributes-of (vm-real-message-of (car mp))))
 	    (let ((real-m (vm-real-message-of (car mp))))
-	      (save-excursion
-		(set-buffer (vm-buffer-of real-m))
+	      (with-current-buffer (vm-buffer-of real-m)
 		(cond ((eq vm-folder-access-method 'pop)
 		       (setq vm-pop-messages-to-expunge
 			     (cons (vm-pop-uidl-of real-m)
-				   vm-pop-messages-to-expunge)
-			     ;; Set this so that if Emacs crashes or
-			     ;; the user quits without saving, we
-			     ;; have a record of messages that were
-			     ;; retrieved and expunged locally.
-			     ;; When the user does M-x recover-file
-			     ;; we won't re-retrieve messages the
-			     ;; user has already dealt with.
-			     vm-pop-retrieved-messages
+				   vm-pop-messages-to-expunge))
+		       (setq vm-pop-retrieved-messages
 			     (cons (list (vm-pop-uidl-of real-m)
 					 (vm-folder-pop-maildrop-spec)
 					 'uidl)
@@ -521,13 +452,6 @@ ignored."
 				    (vm-imap-uid-of real-m)
 				    (vm-imap-uid-validity-of real-m))
 				   vm-imap-messages-to-expunge))
-		       ;; Set this so that if Emacs crashes or
-		       ;; the user quits without saving, we
-		       ;; have a record of messages that were
-		       ;; retrieved and expunged locally.
-		       ;; When the user does M-x recover-file
-		       ;; we won't re-retrieve messages the
-		       ;; user has already dealt with.
 		       (when (and (vm-imap-uid-of real-m)
 				  (vm-imap-uid-validity-of real-m))
 			 (setq vm-imap-retrieved-messages
@@ -542,42 +466,77 @@ ignored."
 		 (let ((buffer-read-only nil))
 		   (delete-region (vm-start-of real-m)
 				  (vm-end-of real-m))))))))
-       (t (setq prev mp)))
       (setq mp (cdr mp)))
     (vm-display nil nil '(vm-expunge-folder) '(vm-expunge-folder))
-    (cond
-     (buffers-altered
-      (save-excursion
-	(mapatoms
-	 (function
-	  (lambda (buffer)
-	    (set-buffer (symbol-name buffer))
-	    ;; FIXME The update summary here is a heavy duty
-	    ;; operation.  Can we be more clever about it, for
-	    ;; instance avoid doing it before quitting a folder?
-	    (if (null vm-system-state)
-		(progn
-		  (vm-garbage-collect-message)
-		  (if (null vm-message-pointer)
-		      ;; folder is now empty
-		      (progn (setq vm-folder-type nil)
-			     (vm-update-summary-and-mode-line))
-		    (vm-present-current-message)))
-	      (vm-update-summary-and-mode-line))
-	    (if (not (eq major-mode 'vm-virtual-mode))
-		(setq vm-message-order-changed
-		      (or vm-message-order-changed
-			  vm-message-order-header-present)))
-	    (vm-clear-expunge-invalidated-undos)))
-	 buffers-altered))
+
+    ;; 5. Update display
+
+    (if (null buffers-altered)
+	(vm-inform 5 "%s: No messages are flagged for deletion." (buffer-name))
+      (mapatoms
+       (lambda (buffer)
+	 (with-current-buffer (symbol-name buffer)
+	   ;; FIXME The update summary here is a heavy duty
+	   ;; operation.  Can we be more clever about it, for
+	   ;; instance avoid doing it before quitting a folder?
+	   (if (null vm-system-state)
+	       (progn
+		 (vm-garbage-collect-message)
+		 (if (null vm-message-pointer)
+		     ;; folder is now empty
+		     (progn (setq vm-folder-type nil)
+			    (vm-update-summary-and-mode-line))
+		   (vm-present-current-message)))
+	     (vm-update-summary-and-mode-line))
+	   (unless (eq major-mode 'vm-virtual-mode)
+	     (setq vm-message-order-changed
+		   (or vm-message-order-changed 
+		       vm-message-order-header-present)))
+	   (vm-clear-expunge-invalidated-undos)))
+       buffers-altered)
       (if vm-ml-sort-keys
           (vm-sort-messages vm-ml-sort-keys))
       (unless quiet
 	(vm-inform 5 "%s: Deleted messages expunged." (buffer-name))))
-     (t 
-      (vm-inform 5 "%s: No messages are flagged for deletion." (buffer-name)))))
+    )
   (when vm-debug
     (vm-check-thread-integrity)))
 (defalias 'vm-compact-folder 'vm-expunge-folder)
+
+(defun vm-expunge-message (m)
+  "Expunge the message M from the current folder buffer."
+  (let (prev curr)
+    (vm-unregister-fetched-message m)
+    (setq prev (vm-reverse-link-of m)
+	  curr (or (cdr prev) vm-message-list))
+    (vm-set-numbering-redo-start-point (or prev t))
+    (vm-set-summary-redo-start-point (or prev t))
+    (when (eq vm-message-pointer curr)
+      (setq vm-system-state nil)
+      (setq vm-message-pointer (or prev (cdr curr))))
+    (when (eq vm-last-message-pointer curr)
+      (setq vm-last-message-pointer nil))
+    ;; lock out interrupts to preserve message-list integrity
+    (let ((inhibit-quit t))
+      ;; vm-clear-expunge-invalidated-undos uses
+      ;; this to recognize expunged messages.
+      ;; If this stuff is mirrored we'll be
+      ;; setting this value multiple times if there
+      ;; are multiple virtual messages referencing
+      ;; the underlying real message.  Harmless.
+      (vm-set-deleted-flag-of (car curr) 'expunged)
+      ;; disable any summary update that may have
+      ;; already been scheduled.
+      (vm-set-su-start-of (car curr) nil)
+      (if (null prev)
+	  (progn
+	    (setq vm-message-list (cdr vm-message-list))
+	    (and (cdr curr)
+		 (vm-set-reverse-link-of (car (cdr curr)) nil)))
+	(setcdr prev (cdr curr))
+	(and (cdr curr)
+	     (vm-set-reverse-link-of (car (cdr curr)) prev)))
+      (vm-mark-folder-modified-p (current-buffer))
+      (vm-increment vm-modification-counter))))
 
 ;;; vm-delete.el ends here
