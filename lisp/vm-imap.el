@@ -2246,17 +2246,19 @@ printed with the error message."
       (setq vm-buffer-type-trail (cons 'verify vm-buffer-type-trail)))
   ;;--------------------------------------------
   (let ((response (vm-imap-read-response process)))
-    (when (vm-imap-response-matches response 'VM 'NO)
-      (vm-imap-normal-error 
-       "server says - %s" 
-       (vm-imap-read-error-message process (cadr (cadr response)))))
-    (when (vm-imap-response-matches response 'VM 'BAD)
-      (vm-imap-normal-error 
-       "server says - %s" 
-       (vm-imap-read-error-message process (cadr (cadr response)))))
-    (when (vm-imap-response-matches response '* 'BYE)
-      (vm-imap-normal-error "server disconnected"))
-    response))
+    (if (null response)
+	nil
+      (when (vm-imap-response-matches response 'VM 'NO)
+	(vm-imap-normal-error 
+	 "server says - %s" 
+	 (vm-imap-read-error-message process (cadr (cadr response)))))
+      (when (vm-imap-response-matches response 'VM 'BAD)
+	(vm-imap-normal-error 
+	 "server says - %s" 
+	 (vm-imap-read-error-message process (cadr (cadr response)))))
+      (when (vm-imap-response-matches response '* 'BYE)
+	(vm-imap-normal-error "server disconnected"))
+      response)))
 
 (defun vm-imap-read-error-message (process pos)
   "Return the error message in the PROCESS buffer starting at position POS."
@@ -2311,6 +2313,8 @@ May throw exceptions."
 		((looking-at "\n")
 		 (vm-warn 0 2 
 		  "missing CR before LF - IMAP connection may have a problem")
+		 (when vm-debug (debug "vm-imap-read-object" 
+				       "missing CR before LF"))
 		 (forward-char 1)
 		 (setq token '(end-of-line) done (not skip-eol)))
 		((looking-at "\\[")
