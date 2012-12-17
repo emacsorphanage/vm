@@ -1900,12 +1900,14 @@ necessary.  It is a mime-decoded string with text properties.
 (defun vm-su-trim-subject (subject)
   "Given SUBJECT string (which should be MIME-decoded with
 possible text properties), returns a modified string after
-stripping subject tags as determined by `vm-subject-tag-prefix'.
+stripping subject tags as determined by `vm-subject-tag-prefix'
+but not matching `vm-subject-tag-prefix-exceptions'.
 
 The other prefixes and suffixes (`vm-subject-ignored-prefix' and
  `vm-subject-ignored-suffix') are not modified."
   (let ((case-fold-search t)
-	(prefix ""))
+	(prefix "")
+	(tag-end nil))
     (catch 'done
       (while vm-summary-strip-subject-tags ; constant in the loop
 	(cond ((and vm-subject-ignored-prefix
@@ -1917,8 +1919,12 @@ The other prefixes and suffixes (`vm-subject-ignored-prefix' and
 	       (setq subject (substring subject (match-end 0))))
 	      ((and vm-subject-tag-prefix
 		    (string-match vm-subject-tag-prefix subject)
-		    (zerop (match-beginning 0)))
-	       (setq subject (substring subject (match-end 0))))
+		    (zerop (match-beginning 0))
+		    (setq tag-end (match-end 0))
+		    (or (null vm-subject-tag-prefix-exceptions)
+			(not (string-match
+			      vm-subject-tag-prefix-exceptions subject))))
+	       (setq subject (substring subject tag-end)))
 	      (t
 	       (throw 'done nil)))))
     (setq subject (vm-with-string-as-temp-buffer

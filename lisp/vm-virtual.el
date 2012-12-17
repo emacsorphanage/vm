@@ -865,8 +865,8 @@ the message matches REGEXP."
 for sorting summary lines, matches REGEXP.  This differs from the
 actual subject string in that it ignores prefixes, suffixes or
 insignificant characters.  (See `vm-subject-ignored-prefix',
-`vm-subject-ignored-suffix', `vm-subject-tag-prefix' and
-`vm-subject-significant-chars')" 
+`vm-subject-ignored-suffix', `vm-subject-tag-prefix',
+`vm-subject-tag-prefix-exceptions' and `vm-subject-significant-chars')" 
   (string-match regexp (vm-so-sortable-subject m)))
 
 (defun vm-vs-sent-before (m date)
