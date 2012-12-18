@@ -100,7 +100,9 @@ VM 8.2.0b1
    * New variable `vm-subject-tag-prefix' allows the subject tags added by
      mailing lists to be ignored during sorting etc. (similar to
      `vm-subject-ignored-prefix').  Another variable
-     `vm-summary-strip-subject-tags' removes them from summary lines as well.
+     `vm-subject-tag-prefix-exceptions' can specify exceptions to this.
+     `vm-summary-strip-subject-tags' removes subject tags from summary lines
+     as well.
 
    * New variable `vm-save-using-auto-folders' (default t), can be used to
      turn off auto-folder suggestions during message save.

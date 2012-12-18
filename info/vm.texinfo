@@ -4368,6 +4368,7 @@ which is sometimes added when messages are forwarded.
 
 @cindex subject tags
 @vindex vm-subject-tag-prefix
+@vindex vm-subject-tag-prefix-exceptions
 In addition to these uninteresting prefixes/suffixes, you also have the
 option of removing @dfn{subject tags} that are added by mailing lists when
 forwarding messages to members.  For example, the @samp{viewmail-info}
@@ -4384,7 +4385,9 @@ subject tags you want removed.  For example, the setting
 
 @noindent asks VM to strip all subject tags enclosed in square brackets
 (along with the white space following them).  The default value of
-@code{vm-subject-tag-prefix} is nil.
+@code{vm-subject-tag-prefix} is nil.  The additional variable
+@code{vm-subject-tag-prefix-exceptions} can specify a regular expression
+pattern whose matching subject tags are @i{not} removed.
 
 @vindex vm-summary-strip-subject-tags
 In addition to ignoring subject tags during sorting, you can also ask VM to

@@ -4046,15 +4046,26 @@ Matches are done case-insensitively."
 (defcustom vm-subject-tag-prefix nil
   "*Non-nil value should be a regular expression that matches the
 \"subject tags\" included in subject lines by mailing lists.
-Subject tags are always enclosed in square brackets.  This
-regular expression should not include square brackets because it
-is only applied to the actual tags used inside the square
-brackets.
+Subject tags are always enclosed in square brackets and have white
+space following them.  For example \"\\[[^]:]*][ \n\t]*\" matches all
+subject tags enclosed in square brackets along with the trailing white
+space following it.
 
-Subject tags matching the regular expression will be ignored when
+Subject tags matching this regular expression will be ignored when
 threading, sorting, marking and killing messages by subject.  They are
 also removed from message summary lines if
 `vm-summary-strip-subject-tags' is set to `t'.
+
+Matches are done case-insensitively."
+  :group 'vm-summary
+  :type 'regexp)
+
+(defcustom vm-subject-tag-prefix-exceptions nil
+  "*Non-nil value should be a regular expression that matches the
+\"subject tags\" included in subject lines by mailing lists.  See
+`vm-subject-tag-prefix'.  Subject tags matching this pattern are not
+removed during threading, sorting, summarizing, marking and
+killing messages by subject.
 
 Matches are done case-insensitively."
   :group 'vm-summary
@@ -4065,7 +4076,7 @@ Matches are done case-insensitively."
 by mailing lists when displaying subjects in summary lines.
 
 The subject tags that will be stripped are those matching
-`vm-subject-tag-prefix'."
+`vm-subject-tag-prefix' but not matching `vm-subject-tag-prefix-exceptions'."
   :group 'vm-summary
   :type 'boolean)
 

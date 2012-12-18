@@ -158,7 +158,8 @@
       "---"
       ["File" vm-save-message vm-message-list]
       ["Delete" vm-delete-message vm-message-list]
-      ["Undelete"	vm-undelete-message vm-message-list]
+      ["Undelete" vm-undelete-message vm-message-list]
+      ["Flag/Unflag" vm-toggle-flag-message]
       ["Kill Current Subject" vm-kill-subject vm-message-list]
       ["Mark Unread" vm-mark-message-unread vm-message-list]
       ["Edit" vm-edit-message vm-message-list]
