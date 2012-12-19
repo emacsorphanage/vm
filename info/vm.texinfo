@@ -5353,7 +5353,7 @@ matches message if it is more than @var{ARG} days old (today = 0)
 @item newer-than
 matches message if it is at most @var{ARG} days old (today = 0)
 @item message-id
-matches message if its Message ID is @var{ARG}
+matches message if its Message ID has a string matching @var{ARG}
 @item uid
 matches message if its IMAP UID is @var{ARG} (for IMAP folders)
 @item uidl

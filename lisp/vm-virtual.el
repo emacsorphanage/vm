@@ -985,9 +985,10 @@ an instance of REGEXP."
   "Virtual selector to check if the message UIDL is ARG."
   (equal (vm-pop-uidl-of m) arg))
 
-(defun vm-vs-message-id (m arg)
-  "Virtual selector to check if the message id is ARG."
-  (equal (vm-su-message-id m) arg))
+(defun vm-vs-message-id (m regexp)
+  "Virtual selector to check if the message id contains an instance of
+REGEXP."
+  (string-match regexp (vm-su-message-id m)))
 
 (defun vm-vs-label (m arg)
   "Virtual selector to check of ARG is a label of the message."
