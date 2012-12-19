@@ -281,7 +281,7 @@ don't move at all."
 (defun vm-delete-duplicate-messages ()
   "Delete duplicate messages in the current folder.
 This command works by comparing the message ID's.  Messages that
-already deleted are not considered, so VM will never delete the last
+are already deleted are not considered, so VM will never delete the last
 copy of a message in a folder.  'Deleting' means flagging for
 deletion; you will have to expunge the messages with
 `vm-expunge-folder' to really get rid of them, as usual.
@@ -302,7 +302,13 @@ unmarked messages are not considerd for deletion."
 	(let ((vm-enable-thread-operations nil))
 	  (setq mp (vm-select-operable-messages 0))))
     (while mp
-      (cond ((vm-deleted-flag (car mp)))
+      (cond ((vm-deleted-flag (car mp))
+	     ;; ignore deleted messages
+	     )
+	    ((and (eq vm-folder-access-method 'imap)
+		  (member "stale" (vm-labels-of (car mp))))
+	     ;; ignore stale messages
+	     )
             (t
              (setq mid (vm-su-message-id (car mp)))
 	     (when mid
