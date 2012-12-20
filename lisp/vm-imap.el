@@ -1482,7 +1482,8 @@ as well."
 		    ;; (vm-imap-session-type:assert 'inactive)
 		    ;;-------------------------------------
 		    nil
-		  (vm-inform 6 "Closing IMAP session to %s..."
+		  (vm-inform 6 "%s: Closing IMAP session to %s..."
+			     (buffer-name vm-mail-buffer)
 			     "server")
 		  (vm-imap-send-command process "LOGOUT")
 		  ;; we don't care about the response.
@@ -2200,7 +2201,8 @@ May throw exceptions."
   (set-marker end nil))
 
 (defun vm-imap-read-response (process)
-  "Reads a line of respose from the imap PROCESS.  Returns a list of tokens.
+  "Reads a line of respose from the imap PROCESS.  Returns a list of
+tokens, which may be empty when the server output is ill-formed.
 
 May throw exceptions."
   ;;--------------------------------------------
@@ -2442,6 +2444,8 @@ EXPR.  The syntax of patterns is:
 Numbers are included among atoms."
   (let ((case-fold-search t) e r)
     (catch 'done
+      (if (null response)
+	  (throw 'done nil))
       (while (and expr response)
 	(setq e (car expr)
 	      r (car response))

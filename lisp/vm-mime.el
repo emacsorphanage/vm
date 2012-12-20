@@ -1884,12 +1884,13 @@ the actual message from the file \"message-11\"."
       (delete-region (point) (point-max))
       ;; Remember that this might do process I/O and accept-process-output,
       ;; allowing other threads to run!!!  USR, 2010-07-11 
-      (vm-inform 6 "Fetching message from external source...")
+      (vm-inform 6 "%s: Fetching message from external source..." (buffer-name))
       (setq fetch-result
 	    (apply (intern (format "vm-fetch-%s-message" (car storage)))
 		   mm (cdr storage)))
       (when fetch-result
-	(vm-inform 6 "Fetching message from external source... done")
+	(vm-inform 6 "%s: Fetching message from external source... done"
+		   (buffer-name))
 	;; delete the new headers
 	(delete-region (vm-text-of mm)
 		       (or (re-search-forward "\n\n" (point-max) t)
