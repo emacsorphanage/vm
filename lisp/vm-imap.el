@@ -1151,14 +1151,16 @@ of the current folder, or nil if none has been recorded."
 
 ;;;###autoload
 (defun vm-imap-make-session (source interactive &optional purpose retry)
-  "Create a new IMAP session for the IMAP mail box SOURCE.
-INTERACTIVE says the operation has been invoked
-interactively, and the optional argument PURPOSE is inserted in
-the process buffer for tracing purposes.  Optional argument RETRY says
+  "Create a new IMAP session for the IMAP mail box SOURCE, attached to
+the current folder.
+INTERACTIVE says the operation has been invoked interactively,
+and the optional argument PURPOSE is inserted in the process
+buffer for tracing purposes.  Optional argument RETRY says
 whether this call is a retry.
 
 Returns the process or nil if the session could not be created."
   (let ((shutdown nil)		   ; whether process is to be shutdown
+	(folder-buffer (current-buffer))
 	(folder-type vm-folder-type)
 	process ooo success
 	(folder (or (vm-imap-folder-for-spec source)
@@ -1211,6 +1213,7 @@ Returns the process or nil if the session could not be created."
 	    ;;----------------------------
 	    (vm-buffer-type:enter 'process)
 	    ;;----------------------------
+	    (setq vm-mail-buffer folder-buffer)
 	    (setq vm-folder-type (or folder-type vm-default-folder-type))
 	    (buffer-disable-undo imap-buffer)
 	    (make-local-variable 'vm-imap-read-point)
@@ -2531,12 +2534,13 @@ that the session is active.  Returns t or nil."
   (if (and process (memq (process-status process) '(open run))
 	   (buffer-live-p (process-buffer process)))
       (if vm-imap-ensure-active-sessions
-	  (let ((buffer (process-buffer process)))
-	    (with-current-buffer buffer
+	  (let ((imap-buffer (process-buffer process)))
+	    (with-current-buffer imap-buffer
 	      ;;----------------------------
 	      (vm-buffer-type:enter 'process)
 	      ;;----------------------------
-	      (vm-inform 7 "Checking IMAP connection to %s..." "server")
+	      (vm-inform 7 "%s: Checking IMAP connection to %s..." "server"
+			 (buffer-name vm-mail-buffer))
 	      (vm-imap-send-command process "NOOP")
 	      (condition-case err
 		  (let ((response nil)
@@ -3941,7 +3945,7 @@ This is useful for saving offline work on the cache folder."
 				  :retrieve-attributes t)
       ;; stuff the attributes of messages that need it.
       ;; (vm-inform 7 "%s: Stuffing cached data..." (buffer-name) )
-      ;; (vm-stuff-folder-data nil)
+      ;; (vm-stuff-folder-data :interactive t :abort-if-input-pending nil)
       ;; (vm-inform 7 "%s: Stuffing cached data... done" (buffer-name))
       ;; stuff bookmark and header variable values
       (when vm-message-list

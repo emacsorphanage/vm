@@ -275,7 +275,8 @@ deleted messages.  Use `###' to expunge deleted messages."
 	(vm-assimilate-new-messages :read-attributes t
 				    :gobble-order gobble-headers 
 				    :run-hooks nil)
-	(vm-stuff-folder-data t))
+	(vm-stuff-folder-data :interactive interactive 
+			      :abort-if-input-pending t))
 
       (when (and set-vm-mode gobble-headers)
 	(vm-gobble-headers))
@@ -1266,11 +1267,11 @@ summary buffer to select a folder."
   ;; if this command was run from a VM related buffer, select
   ;; the folder buffer in the folders summary, but only if that
   ;; folder has an entry there.
-  (and vm-mail-buffer
-       (vm-check-for-killed-folder))
+  (when vm-mail-buffer
+    (vm-check-for-killed-folder))
   (save-excursion
-    (and vm-mail-buffer
-	 (vm-select-folder-buffer-and-validate 0 (vm-interactive-p)))
+    (when vm-mail-buffer
+      (vm-select-folder-buffer-and-validate 0 (vm-interactive-p)))
     (vm-check-for-killed-summary)
     (let ((folder-buffer (and (eq major-mode 'vm-mode)
 			      (current-buffer)))

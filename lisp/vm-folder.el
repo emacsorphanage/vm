@@ -2217,10 +2217,15 @@ FOR-OTHER-FOLDER indicates <something unknown>.  USR 2010-03-06"
 
 
   
-(defun vm-stuff-folder-data (&optional abort-if-input-pending) 
+(defun* vm-stuff-folder-data (&key interactive abort-if-input-pending) 
   "Stuff the soft and cached data of all the messages that have the
-stuff-flag set in the current folder.    USR 2010-04-20"
-  (let ((newlist nil) mp len (n 0) (p 0) (p-last 0))
+stuff-flag set in the current folder.
+Keyword parameter INTERACTIVE says whether the stuffing is being done
+as part of an interactive command.
+ABORT-IF-INPUT-PENDING says stuffing should be aborted if there is
+pending input.   So, presumably this is non-interactive.  USR 2012-12-22"
+  (let ((newlist nil) mp len (n 0) (p 0) (p-last 0)
+	(inform-level (if interactive 8 9)))
     ;; stuff the attributes of messages that need it.
     ;; build a list of messages that need their attributes stuffed
     (setq mp vm-message-list)
@@ -2230,7 +2235,7 @@ stuff-flag set in the current folder.    USR 2010-04-20"
       (setq mp (cdr mp)))
     (when newlist
       (setq len (length newlist))
-      (vm-inform 7 "%s: %d message%s to stuff" (buffer-name)
+      (vm-inform inform-level "%s: %d message%s to stuff" (buffer-name)
 		 len (if (= 1 len) "" "s")))
     ;; now sort the list by physical order so that we
     ;; reduce the amount of gap motion induced by modifying
@@ -2238,7 +2243,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
     ;; message 3, then 234, then 10, then 500, thus causing
     ;; large chunks of memory to be copied repeatedly as
     ;; the gap moves to accomodate the insertions.
-    ;; (vm-inform 7 "%s: Ordering updates..." (buffer-name)) ; Pointless
+    ;; (vm-inform inform-level "%s: Ordering updates..." (buffer-name)) 
+					; Pointless
     (let ((vm-key-functions '(vm-sort-compare-physical-order-r)))
       (setq mp (sort newlist 'vm-sort-compare-xxxxxx)))
     (save-excursion
@@ -2266,7 +2272,8 @@ stuff-flag set in the current folder.    USR 2010-04-20"
 	       (setq p-last p
 		     p (truncate (* 100 n) len))
 	       (when (> p p-last)
-		 (vm-inform 7 "%s: Stuffing %d%% complete..." (buffer-name) p))
+		 (vm-inform inform-level
+			    "%s: Stuffing %d%% complete..." (buffer-name) p))
 	       (setq mp (cdr mp)))
 	   (vm-restore-buffer-modified-p ; folder-buffer
 	    old-buffer-modified-p (current-buffer)))
@@ -3651,6 +3658,8 @@ changes should be discarded."
 ;; flush cached data in all vm-mode buffers.
 ;; returns non-nil if any vm-mode buffers were found.
 (defun vm-flush-cached-data-all-folders ()
+  "Put the cached data for all folders into the X-VM-v5-data headers.
+This function is only used in background tasks.  USR 2012-12-22."
   (save-excursion
     (let ((buf-list (buffer-list))
 	  (found-one nil))
@@ -3670,7 +3679,9 @@ changes should be discarded."
 		       (vm-stuff-labels)
 		       (and vm-message-order-changed
 			    (vm-stuff-message-order))
-		       (and (vm-stuff-folder-data t)
+		       (and (vm-stuff-folder-data
+			     :interactive nil
+			     :abort-if-input-pending t)
 			    (setq vm-flushed-modification-counter
 				  vm-modification-counter)))))))
 	(setq buf-list (cdr buf-list)))
@@ -3689,27 +3700,25 @@ changes should be discarded."
      (let ((buffer-read-only))
        (vm-discard-fetched-messages)
        (vm-inform 7 "%s: Stuffing cached data..." (buffer-name))
-       (vm-stuff-folder-data nil)
+       (vm-stuff-folder-data :interactive t :abort-if-input-pending nil)
        (vm-inform 7 "%s: Stuffing cached data... done" (buffer-name))
-       (if vm-message-list
-	   (progn
-	     (if (and vm-folders-summary-database buffer-file-name)
-		 (progn
-		   (vm-compute-totals)
-		   (vm-store-folder-totals buffer-file-name (cdr vm-totals))))
-	     ;; get summary cache up-to-date
-	     (vm-inform 7 "%s: Stuffing folder data..." (buffer-name))
-	     (vm-update-summary-and-mode-line)
-	     (vm-stuff-bookmark)
-	     (vm-stuff-pop-retrieved)
-	     (vm-stuff-imap-retrieved)
-	     (vm-stuff-last-modified)
-	     (vm-stuff-header-variables)
-	     (vm-stuff-labels)
-	     (vm-stuff-summary)
-	     (and vm-message-order-changed
-		  (vm-stuff-message-order))
-	     (vm-inform 7 "%s: Stuffing folder data... done" (buffer-name))))
+       (when vm-message-list
+	 (when (and vm-folders-summary-database buffer-file-name)
+	   (vm-compute-totals)
+	   (vm-store-folder-totals buffer-file-name (cdr vm-totals)))
+	 ;; get summary cache up-to-date
+	 (vm-inform 8 "%s: Stuffing folder data..." (buffer-name))
+	 (vm-update-summary-and-mode-line)
+	 (vm-stuff-bookmark)
+	 (vm-stuff-pop-retrieved)
+	 (vm-stuff-imap-retrieved)
+	 (vm-stuff-last-modified)
+	 (vm-stuff-header-variables)
+	 (vm-stuff-labels)
+	 (vm-stuff-summary)
+	 (when vm-message-order-changed
+	   (vm-stuff-message-order))
+	 (vm-inform 8 "%s: Stuffing folder data... done" (buffer-name)))
        nil ))))
 
 ;;;###autoload
@@ -3830,7 +3839,8 @@ folder."
                 (delete-file msf)))
 	  ;; stuff the attributes of messages that need it.
 	  (vm-inform 7 "%s: Stuffing cached data..." (buffer-name))
-	  (vm-stuff-folder-data nil)
+	  (vm-stuff-folder-data :interactive t 
+				:abort-if-input-pending nil)
 	  (vm-inform 7 "%s: Stuffing cached data... done" (buffer-name))
 	  ;; stuff bookmark and header variable values
 	  (when vm-message-list

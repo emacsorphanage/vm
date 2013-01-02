@@ -1997,10 +1997,10 @@ Call this function if you made changes to `vm-summary-format'."
     (vm-set-numbering-redo-start-point t)
     (vm-set-numbering-redo-end-point t)
     ;; Generate fresh summary data and stuff it
-;;     (vm-inform 7 "%s: Stuffing cached data..." (buffer-name))
-;;     (vm-stuff-folder-data nil)
-;;     (vm-inform 7 "%s: Stuffing cached data... done" (buffer-name))
-;;     (set-buffer-modified-p t)
+    ;; (vm-inform 7 "%s: Stuffing cached data..." (buffer-name))
+    ;; (vm-stuff-folder-data :interactive t :abort-if-input-pending nil)
+    ;; (vm-inform 7 "%s: Stuffing cached data... done" (buffer-name))
+    ;; (set-buffer-modified-p t)
     ;; Regenerate the summary
     (vm-sort-messages (or vm-ml-sort-keys "activity"))
     (vm-inform 5 "%s: Recreating summary..." (buffer-name))
