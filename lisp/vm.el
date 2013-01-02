@@ -1026,7 +1026,7 @@ summary format to use."
   (require 'vm-virtual)
   (unless (assoc folder-name vm-virtual-folder-alist)
     (error "No such virtual folder, %s" folder-name))
-  (let ((buffer-name folder-name)
+  (let ((buffer-name (concat "(" folder-name ")"))
 	first-time blurb)
     (set-buffer (get-buffer-create buffer-name))
     (setq first-time (not (eq major-mode 'vm-virtual-mode)))
