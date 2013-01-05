@@ -6395,7 +6395,7 @@ there is no file name for this object.             USR, 2011-03-07"
 ;; 	     (setq type 
 ;; 		   (concat type "; name=\"" file-name "\""))
 	     (setq params
-		   (list (concat "name=\"" file-name "\"")))
+		   (append params (list (concat "name=\"" file-name "\""))))
 	     (setq disposition 
 		   (nconc disposition
 			  (list (concat "filename=\"" file-name "\""))))))
