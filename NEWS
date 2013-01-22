@@ -14,11 +14,11 @@ Status
 
   Mailing list:            viewmail-info@nongnu.org
 
-  Bug report:              viewmail-bugs@nongnu.org
+  Bug reports:             viewmail-bugs@nongnu.org
                            (Please use `M-x vm-submit-bug-report' within VM)
 
   News group:              gmane.emacs.viewmail on news.gmane.org  
-                           (gnu.emacs.vm.info is defunct)
+                           (avoid gnu.emacs.vm.info)
   
   Please DO NOT use the Usenet newsgroup gnu.emacs.vm.info because it has an
   unreliable mail link to the mailing list.  You can however browse the
@@ -27,6 +27,10 @@ Status
 VM 8.2.0b1
 
   CHANGES
+
+   * vm-avirtual.el add-on package has a new variable
+     `vm-virtual-make-up-auto-folder-names' which controls whether virtual
+     folder names are used as auto-folders.  (Default: t)
 
    * Folders visited read-only will not be saved to disk even when VM makes
      internal changes to the folder buffers.  New variable

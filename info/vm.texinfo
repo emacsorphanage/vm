@@ -6995,12 +6995,10 @@ are gratefully acknowledged:
 @item Anthony Mallet
 @item Noah Friedman
 @item JJK ``Blueman''
-@item Tim Cross
-@item Arik Mitschang
 @item Eric Schulte
 @end itemize
 
-Please let us know if any other contributors have been missed out.
+Please let us know if any contributors have been missed out.
 
 @unnumberedsubsec Selected Releases of Kyle Jones
 @itemize

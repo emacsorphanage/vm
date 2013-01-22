@@ -251,7 +251,7 @@
 ;; we redefine the basic selectors for some extra features ...
 
 (defcustom vm-virtual-check-case-fold-search t
-  "Wheater to use case-fold-search or not when applying virtual selectors.
+  "Whether to use case-fold-search or not when applying virtual selectors.
 I was really missing this!"
   :type 'boolean
   :group 'vm-avirtual)
@@ -803,7 +803,7 @@ thread are added."
 ;;----------------------------------------------------------------------------
 ;;;###autoload
 (defun vm-virtual-omit-message (&optional count message-list)
-  "Omits a meassage from a virtual folder.
+  "Omits a message from a virtual folder.
 IMHO allowing it for real folders makes no sense.  One rather should create a
 virtual folder of all messages."
   (interactive "p")
@@ -928,7 +928,7 @@ into VM!"
   
 ;;;###autoload
 (defun vm-virtual-auto-delete-messages ()
-  "*Mark all messages from the current upto the last for (spam-)deletion.
+  "*Mark all messages from the current up to the last for (spam-)deletion.
 Add this to `vm-arrived-messages-hook'.
 
 See the function `vm-virtual-auto-delete-message' for details.
@@ -953,7 +953,7 @@ where VIRTUAL-FOLDER-NAME is a string, and FOLDER-NAME
 is a string or an s-expression that evaluates to a string.
 
 This allows you to extend `vm-virtual-auto-select-folder' to generate
-a folder name.  Your function may use `folder' to get the currently choosen
+a folder name.  Your function may use `folder' to get the currently chosen
 folder name and `mp' (a vm-message-pointer) to access the message. 
 
 Example:
@@ -967,18 +967,48 @@ virtual folder selector of the virtual folder \"spam\" during August in year
   :type 'sexp
   :group 'vm-avirtual)
 
+(defcustom vm-virtual-make-up-auto-folder-names t
+  "*Non-nil value causes the vm-avirtual.el package to make up
+auto-folder names from virtual folder names, so that all messages
+belonging to a virtual folder are saved to real folders with the
+same name.  Any auto-folder names suggested in
+`vm-virtual-auto-folder-alist' will take priority over such made
+up names."
+  :type 'boolean
+  :group 'vm-avirtual)
+
+
 ;;;###autoload
-(defun vm-virtual-auto-select-folder (&optional m avfolder-alist
+(defun vm-virtual-auto-select-folder (&optional m virtual-folder-alist
                                                 valid-folder-list
                                                 not-to-history)
   "Return the first matching virtual folder.
 This is a more powerful replacement of `vm-auto-select-folder'.
 It is used by `vm-virtual-save-message' for finding the folder to
 save the current message.  It may also be used for finding the
-right FCC for outgoing messages."
-  (when (not m)
-    (setq m (car vm-message-pointer))
-    (setq avfolder-alist vm-virtual-folder-alist)
+right FCC for outgoing messages.                    RobF, 2004-05-02
+
+The matching virtual folder is found for the message M (defaults to
+the current message).
+
+VIRTUAL-FOLDER-ALIST is the association list of virtual folder definitions
+ (defaults to `vm-virtual-folder-alist').
+
+VALID-FOLDER-LIST is the list of folder names that may be regarded as
+the folder names of the message.  (The default is the name of
+the current folder.  If the message is virtual, it is the folder name of
+the underlying real message.)
+
+NOT-TO-HISTORY says that the history of last saved folders should not
+be altered.  (By default, it is updated with the folder name returned
+by this function.)
+
+This is not yet the whole story!                    USR, 2013-01-18"
+
+  (unless m (setq m (car vm-message-pointer)))
+  (unless virtual-folder-alist
+    (setq virtual-folder-alist vm-virtual-folder-alist))
+  (unless valid-folder-list
     (setq valid-folder-list 
 	  (cond ((eq major-mode 'mail-mode)
 		 nil)
@@ -991,37 +1021,50 @@ right FCC for outgoing messages."
 			(vm-buffer-of
 			 (vm-real-message-of m))))))))
   
-  (let ((vfolders avfolder-alist)
-        selector folder-list)
+  (let ((vfolders virtual-folder-alist)
+        vfolder selector matching-vfolders auto-folders)
 
     (when t;(and m (aref m 0) (aref (aref m 0) 0)
             ;   (marker-buffer (aref (aref m 0) 0)))
+      ;; set matching-vfolders in reverse order of priority
       (while vfolders
+	(setq vfolder (caar vfolders))
         (setq selector (vm-virtual-get-selector 
-			(caar vfolders) valid-folder-list))
+			vfolder valid-folder-list))
         (when (and selector (vm-virtual-check-selector selector m))
-          (setq folder-list (append (list (caar vfolders)) folder-list))
+          (setq matching-vfolders (cons vfolder matching-vfolders))
           (if not-to-history
               (setq vfolders nil)))
         (setq vfolders (cdr vfolders)))
       
-      (setq folder-list (reverse folder-list))
+      ;; (setq matching-vfolders (reverse matching-vfolders))
       
-      (setq folder-list
-            (mapcar (lambda (f)
-                      (let ((rf (assoc f vm-virtual-auto-folder-alist)))
-                        (if rf (eval (cadr rf)) f)))
-                    folder-list))
-      
-      (when (and (not not-to-history) folder-list)
-        (let ((fl (cdr folder-list)) f)
-          (while fl
-            (setq f (vm-abbreviate-file-name
-                     (expand-file-name (car fl) vm-folder-directory))
-                  vm-folder-history (delete f vm-folder-history)
-                  vm-folder-history (nconc (list f) vm-folder-history)
-                  fl (cdr fl)))))
-      (car folder-list))))
+      ;; find auto-folders for matching-vfolders in order of priority
+      (vm-mapc
+       (lambda (vfolder)
+	 (let ((auto-folder 
+		(cadr (assoc vfolder vm-virtual-auto-folder-alist))))
+	   (cond (auto-folder
+		  (setq auto-folders 
+			(cons (eval auto-folder) auto-folders)))
+		 (vm-virtual-make-up-auto-folder-names
+		  (setq auto-folders
+			(cons vfolder auto-folders)))
+		 )))
+       matching-vfolders)
+
+      ;; adjust the vm-folder-history
+      (when (and (not not-to-history) auto-folders)
+        (let ((folders (cdr auto-folders)) folder)
+          (while folders
+            (setq folder (vm-abbreviate-file-name
+			  (expand-file-name (car folders) vm-folder-directory))
+                  vm-folder-history (delete folder vm-folder-history)
+                  vm-folder-history (nconc (list folder) vm-folder-history)
+                  folders (cdr folders)))))
+
+      ;; return the first match
+      (car auto-folders))))
   
 ;;-----------------------------------------------------------------------------
 ;;;###autoload
@@ -1029,17 +1072,14 @@ right FCC for outgoing messages."
 (add-to-list 'vm-supported-sort-keys "auto-folder")
 
 (defun vm-sort-compare-auto-folder (m1 m2)
-  (let* ((folder-list (list (buffer-name)))
-         s1 s2)
+  (let* (s1 s2)
     (if (setq s1 (assoc m1 vm-sort-compare-auto-folder-cache))
         (setq s1 (cdr s1))
-      (setq s1 (vm-virtual-auto-select-folder
-                m1 vm-virtual-folder-alist folder-list))
+      (setq s1 (vm-virtual-auto-select-folder m1))
       (add-to-list 'vm-sort-compare-auto-folder-cache (cons m1 s1)))
     (if (setq s2 (assoc m2 vm-sort-compare-auto-folder-cache))
         (setq s2 (cdr s2))
-      (setq s2 (vm-virtual-auto-select-folder
-                m2 vm-virtual-folder-alist folder-list))
+      (setq s2 (vm-virtual-auto-select-folder m2))
       (add-to-list 'vm-sort-compare-auto-folder-cache (cons m2 s2)))
     (cond ((or (and (null s1) s2)
                (and s1 s2 (string-lessp s1 s2)))
@@ -1130,62 +1170,60 @@ Like `vm-save-message' but the default folder is guessed by
   (vm-error-if-folder-read-only)
 
   (let ((auto-folder)
-        (folder-list (list (buffer-name)))
         (archived 0))
     (unwind-protect
-        ;; Need separate (let ...) so vm-message-pointer can
-        ;; revert back in time for
-        ;; (vm-update-summary-and-mode-line).
-        ;; vm-last-save-folder is tucked away here since archives
-        ;; shouldn't affect its value.
-        (let ((vm-message-pointer
-               (if (eq last-command 'vm-next-command-uses-marks)
-                   (vm-select-operable-messages 
+	(let ((vm-message-pointer	; local copy
+	       (if (eq last-command 'vm-next-command-uses-marks)
+		   (vm-select-operable-messages
 		    0 (vm-interactive-p) "Archive")))
-              (done nil)
-              stop-point
-              (vm-last-save-folder vm-last-save-folder)
-              (vm-move-after-deleting nil))
-	  ;; Double check if the user really wants to archive
-	  (unless (or prompt vm-message-pointer
-		      (y-or-n-p "Auto archive the entire folder? "))
-	    (error "Aborted"))
+	      (vm-last-save-folder vm-last-save-folder) ; shadowed
+	      (vm-move-after-deleting nil)		; shadowed
+	      (done nil)
+	      msg stop-point)
 	  (setq vm-message-pointer (or vm-message-pointer vm-message-list))
+	  ;; Double check if the user really wants to archive
+	  (unless 
+	      (or (not vm-confirm-for-auto-archive)
+		  (null vm-message-pointer)
+		  (not (vm-interactive-p))
+		  (y-or-n-p 
+		   (format "Auto archive %s messages? "
+			   (if (eq last-command 'vm-next-command-uses-marks)
+			       "marked" "all"))))
+	    (error "Aborted"))
 	  (vm-inform 5 "Archiving...")
-          ;; mark the place where we should stop.  otherwise if any
-          ;; messages in this folder are archived to this folder
-          ;; we would file messages into this folder forever.
-          (setq stop-point (vm-last vm-message-pointer))
-          (while (not done)
-            (and (not (vm-filed-flag (car vm-message-pointer)))
-                 ;; don't archive deleted messages
-                 (not (vm-deleted-flag (car vm-message-pointer)))
-                 (setq auto-folder
-                       (vm-virtual-auto-select-folder (car vm-message-pointer)
-                                                      vm-virtual-folder-alist
-                                                      folder-list))
-                 ;; Don't let user archive into the same folder
-                 ;; that they are visiting.
-                 (not (eq (vm-get-file-buffer auto-folder)
-                          (current-buffer)))
-                 (or (null prompt)
-                     (y-or-n-p
-                      (format "Save message %s in folder %s? "
-                              (vm-number-of (car vm-message-pointer))
-                              auto-folder)))
-                 (let ((vm-delete-after-saving vm-delete-after-archiving))
-                   (vm-save-message auto-folder)
-                   (vm-increment archived)
-                   (vm-inform 6 "%d archived, still working..." archived)))
+	  ;; mark the place where we should stop.
+	  (setq stop-point (vm-last vm-message-pointer))
+	  (while (not done)
+	    (setq msg (car vm-message-pointer))
+	    (when (and (not (vm-filed-flag msg))
+		       (not (vm-deleted-flag msg))
+		       (setq auto-folder
+			     (vm-virtual-auto-select-folder msg))
+		       (not (eq (vm-get-file-buffer auto-folder)
+				(current-buffer)))
+		       (or (not prompt)
+			   (y-or-n-p
+			    (format "Save message %s in folder %s? "
+				    (vm-number-of (car vm-message-pointer))
+				    auto-folder))))
+	      (condition-case nil
+		  (let ((vm-delete-after-saving vm-delete-after-archiving)
+			(last-command 'vm-virtual-auto-archive-messages))
+		    (vm-save-message auto-folder 1 nil 'quiet)
+		    (vm-increment archived)
+		    (vm-inform 6 "%d archived, still working..." archived))
+		(error nil)))
             (setq done (eq vm-message-pointer stop-point)
                   vm-message-pointer (cdr vm-message-pointer))))
+      ;; unwind-protection
       ;; fix mode line
       (intern (buffer-name) vm-buffers-needing-display-update)
       (vm-update-summary-and-mode-line))
     (if (zerop archived)
         (vm-inform 5 "No messages were archived")
       (vm-inform 5 "%d message%s archived"
-               archived (if (= 1 archived) "" "s")))))
+		 archived (if (= 1 archived) "" "s")))))
 
 ;;----------------------------------------------------------------------------
 ;;;###autoload

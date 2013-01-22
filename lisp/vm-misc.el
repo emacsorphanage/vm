@@ -602,9 +602,9 @@ LIST2 satisfying PRED and return the position"
 	'view-file-other-window))
 
 (fset 'vm-interactive-p
-      (if (fboundp 'interactive-p)	; Xemacs or Gnu Emacs under obsolescence
-	  'interactive-p
-	(lambda () (called-interactively-p 'any))))
+      (if (fboundp 'called-interactively-p)	; Gnu Emacs 23.2
+	  (lambda () (called-interactively-p 'any))
+	'interactive-p))
 
 (fset 'vm-device-type
       (cond (vm-xemacs-p 'device-type)

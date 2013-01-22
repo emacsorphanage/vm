@@ -32,7 +32,8 @@
 (declare-function vm-mime-plain-message-p "vm-mime" (message))
 (declare-function vm-save-message "vm-save" (folder 
 					     &optional count mlist quiet))
-(declare-function vm-auto-select-folder "vm-save" (mp auto-folder-alist))
+(declare-function vm-auto-select-folder "vm-save" 
+		  (mp &optional auto-folder-alist))
 
 (declare-function glyph-height "vm-xemacs" (glyph &optional window))
 (declare-function glyph-width "vm-xemacs" (glyph &optional window))
@@ -293,7 +294,7 @@ s-expression like this one in your .vm file:
 	(vm-check-for-killed-folder)
 	(vm-select-folder-buffer-if-possible)
 	(and vm-message-pointer
-	     (vm-auto-select-folder vm-message-pointer vm-auto-folder-alist)))
+	     (vm-auto-select-folder vm-message-pointer)))
     (error nil)))
 
 ;;;###autoload
@@ -302,7 +303,7 @@ s-expression like this one in your .vm file:
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
   (vm-error-if-folder-read-only)
-  (let ((file (vm-auto-select-folder vm-message-pointer vm-auto-folder-alist)))
+  (let ((file (vm-auto-select-folder vm-message-pointer)))
     (if file
 	(progn
 	  (vm-save-message file 1)

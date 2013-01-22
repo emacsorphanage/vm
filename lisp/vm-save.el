@@ -44,7 +44,11 @@
 (declare-function vm-session-initialization "vm" ())
 
 ;;;###autoload
-(defun vm-auto-select-folder (mp auto-folder-alist)
+(defun vm-auto-select-folder (mp &optional auto-folder-alist)
+  "Select a folder to save the head of MP (a pointer to a message in a
+message list) using AUTO-FOLDER-ALIST."
+  (unless auto-folder-alist
+    (setq auto-folder-alist vm-auto-folder-alist))
   (if vm-save-using-auto-folders
       (condition-case error-data
 	  (catch 'match
@@ -101,7 +105,7 @@
 		      (prin1-to-string error-data))))))
 
 ;;;###autoload
-(defun vm-auto-archive-messages (&optional arg)
+(defun vm-auto-archive-messages (&optional prompt)
   "Save all unfiled messages that auto-match a folder via
 `vm-auto-folder-alist' to their appropriate folders.  Messages that
 are flagged for deletion are not saved.
@@ -110,7 +114,7 @@ This command asks for confirmation before proceeding.  Set
 `vm-confirm-for-auto-archive' to nil to turn off the confirmation
 dialogue. 
 
-Prefix arg means to ask user for confirmation before saving each message.
+Prefix arg means to prompt user for confirmation before saving each message.
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
 only marked messages are checked against `vm-auto-folder-alist'.  
@@ -118,62 +122,63 @@ only marked messages are checked against `vm-auto-folder-alist'.
 The saved messages are flagged as `filed'."
   (interactive "P")
   (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
+  (vm-error-if-folder-read-only)
+
   (let ((auto-folder)
 	(archived 0))
     (unwind-protect
-	;; Need separate (let ...) so vm-message-pointer can
-	;; revert back in time for
-	;; (vm-update-summary-and-mode-line).
-	;; vm-last-save-folder is tucked away here since archives
-	;; shouldn't affect its value.
-	(let ((vm-message-pointer
+	(let ((vm-message-pointer	; local copy
 	       (if (eq last-command 'vm-next-command-uses-marks)
 		   (vm-select-operable-messages
 		    0 (vm-interactive-p) "Archive")))
+	      (vm-last-save-folder vm-last-save-folder) ; shadowed
+	      (vm-move-after-deleting nil)		; shadowed
 	      (done nil)
-	      stop-point
-	      (vm-last-save-folder vm-last-save-folder)
-	      (vm-move-after-deleting nil))
-	  ;; Double check if the user really wants to archive
-	  (unless (or arg vm-message-pointer (not (vm-interactive-p))
-		      (y-or-n-p "Auto archive the entire folder? "))
-	    (error "Aborted"))
+	      msg stop-point)
 	  (setq vm-message-pointer (or vm-message-pointer vm-message-list))
+	  ;; Double check if the user really wants to archive
+	  (unless 
+	      (or (not vm-confirm-for-auto-archive)
+		  (null vm-message-pointer)
+		  (not (vm-interactive-p))
+		  (y-or-n-p 
+		   (format "Auto archive %s messages? "
+			   (if (eq last-command 'vm-next-command-uses-marks)
+			       "marked" "all"))))
+	    (error "Aborted"))
 	  (vm-inform 5 "Archiving...")
-	  ;; mark the place where we should stop.  otherwise if any
-	  ;; messages in this folder are archived to this folder
-	  ;; we would file messages into this folder forever.
+	  ;; mark the place where we should stop.
 	  (setq stop-point (vm-last vm-message-pointer))
 	  (while (not done)
-	    (and (not (vm-filed-flag (car vm-message-pointer)))
-		 ;; don't archive deleted messages
-		 (not (vm-deleted-flag (car vm-message-pointer)))
-		 (setq auto-folder (vm-auto-select-folder
-				    vm-message-pointer
-				    vm-auto-folder-alist))
-		 ;; Don't let user archive into the same folder
-		 ;; that they are visiting.
-		 (not (eq (vm-get-file-buffer auto-folder)
-			  (current-buffer)))
-		 (or (null arg)
-		     (y-or-n-p
-		      (format "Save message %s in folder %s? "
-			      (vm-number-of (car vm-message-pointer))
-			      auto-folder)))
-		 (let ((vm-delete-after-saving vm-delete-after-archiving)
-		       (last-command 'vm-auto-archive-messages))
-		   (vm-save-message auto-folder 1 nil 'quiet)
-		   (vm-increment archived)
-		   (vm-inform 6 "%d archived, still working..." archived)))
+	    (setq msg (car vm-message-pointer))
+	    (when (and (not (vm-filed-flag msg))
+		       (not (vm-deleted-flag msg))
+		       (setq auto-folder 
+			     (vm-auto-select-folder vm-message-pointer))
+		       (not (eq (vm-get-file-buffer auto-folder)
+				(current-buffer)))
+		       (or (not prompt)
+			   (y-or-n-p
+			    (format "Save message %s in folder %s? "
+				    (vm-number-of (car vm-message-pointer))
+				    auto-folder))))
+	      (condition-case nil
+		  (let ((vm-delete-after-saving vm-delete-after-archiving)
+			(last-command 'vm-auto-archive-messages))
+		    (vm-save-message auto-folder 1 nil 'quiet)
+		    (vm-increment archived)
+		    (vm-inform 6 "%d archived, still working..." archived))
+		(error nil)))
 	    (setq done (eq vm-message-pointer stop-point)
 		  vm-message-pointer (cdr vm-message-pointer))))
+      ;; unwind-protection
       ;; fix mode line
       (intern (buffer-name) vm-buffers-needing-display-update)
       (vm-update-summary-and-mode-line))
     (if (zerop archived)
 	(vm-inform 5 "No messages were archived")
       (vm-inform 5 "%d message%s archived"
-	       archived (if (= 1 archived) "" "s")))))
+		 archived (if (= 1 archived) "" "s")))))
 
 ;;;---------------------------------------------------------------------------
 ;; The following defun seems a lot less efficient than it might be,
@@ -199,7 +204,7 @@ The saved messages are flagged as `filed'."
       (vm-select-folder-buffer)
       (vm-error-if-folder-empty)
       (setq default 
-	    (or (vm-auto-select-folder vm-message-pointer vm-auto-folder-alist)
+	    (or (vm-auto-select-folder vm-message-pointer)
 		vm-last-save-folder))
       (setq default-is-imap
 	    (and default (vm-imap-folder-spec-p default)))
@@ -306,8 +311,7 @@ The saved messages are flagged as `filed'."
   (let (auto-folder unexpanded-folder ml)
     (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
     (setq unexpanded-folder folder)
-    (setq auto-folder (vm-auto-select-folder vm-message-pointer
-					     vm-auto-folder-alist))
+    (setq auto-folder (vm-auto-select-folder vm-message-pointer))
     (vm-display nil nil '(vm-save-message) '(vm-save-message))
     (unless count (setq count 1))
     (unless mlist

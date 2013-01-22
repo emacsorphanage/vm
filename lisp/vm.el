@@ -943,18 +943,22 @@ non-virtual folders should be returned."
 (defun vm-switch-to-folder (folder-name)
   "Switch to another opened VM folder and rearrange windows as with a scroll."
   (interactive (list
-                (let* ((buffers (vm-folder-buffers))
+                (let* ((folder-buffers (vm-folder-buffers))
+		       (current-folder 
+			(save-excursion
+			  (vm-select-folder-buffer)
+			  (buffer-name)))
 		       (history vm-switch-to-folder-history) 
 		       pos default)
                   (if (member major-mode
-                              '(vm-mode vm-presentation-mode
-                                        vm-summary-mode))
-                      (save-excursion
-                        (vm-select-folder-buffer)
-                        (setq buffers (delete (buffer-name) buffers))))
-		  (setq pos (vm-find history
-				     (lambda (f) (member f buffers))))
-		  (if pos (setq default (nth pos history)))
+                              '(vm-mode vm-presentation-mode vm-summary-mode))
+                      (setq folder-buffers 
+			    (delete current-folder folder-buffers)))
+		  (if (setq pos (vm-find 
+				 history 
+				 (lambda (f) (member f folder-buffers))))
+		      (setq default (nth pos history))
+		    (setq default (car folder-buffers)))
                   (completing-read
 		   ;; prompt
                    (format "Foldername%s: " 
