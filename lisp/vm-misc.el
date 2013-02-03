@@ -45,8 +45,8 @@
 
 (declare-function vm-view-file-other-frame "vm-misc.el"
 		  (file))
-(declare-function vm-interactive-p "vm-misc.el"
-		  ())
+;; (declare-function vm-interactive-p "vm-misc.el"
+;; 		  ())
 (declare-function vm-device-type "vm-misc.el"
 		  (&optional device))
 (declare-function vm-buffer-substring-no-properties "vm-misc.el"
@@ -601,10 +601,10 @@ LIST2 satisfying PRED and return the position"
 	  'view-file-other-frame
 	'view-file-other-window))
 
-(fset 'vm-interactive-p
-      (if (fboundp 'called-interactively-p)	; Gnu Emacs 23.2
-	  (lambda () (called-interactively-p 'any))
-	'interactive-p))
+;; (fset 'vm-interactive-p
+;;       (if (fboundp 'called-interactively-p)	; Gnu Emacs 23.2
+;; 	  (lambda () (called-interactively-p 'any))
+;; 	'interactive-p))
 
 (fset 'vm-device-type
       (cond (vm-xemacs-p 'device-type)

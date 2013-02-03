@@ -1099,12 +1099,12 @@ of the current folder, or nil if none has been recorded."
 ;; vm-imap-select-mailbox: (process & mailbox &optional bool bool) -> 
 ;;				(int int uid-validity bool bool (flag list))
 ;; vm-imap-read-capability-response: process -> ?
-;; vm-imap-read-greeting: process -> ?
-;; vm-imap-read-ok-response: process -> ?
-;; vm-imap-read-response: process -> server-resonse
+;; vm-imap-read-greeting: process -> ? [exceptions]
+;; vm-imap-read-ok-response: process -> ? [exceptions]
+;; vm-imap-read-response: process -> server-resonse [exceptions]
 ;; vm-imap-read-response-and-verify: process -> server-resopnse
-;; vm-imap-read-boolean-response: process -> ?
-;; vm-imap-read-object: (process &optinal bool) -> ?
+;; vm-imap-read-boolean-response: process -> ? [exceptions]
+;; vm-imap-read-object: (process &optinal bool) -> ? [exceptions]
 ;; vm-imap-response-matches: (string &rest symbol) -> bool
 ;; vm-imap-response-bail-if-server-says-farewell: 
 ;;			response -> void + 'end-of-session exception

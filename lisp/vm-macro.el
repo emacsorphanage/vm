@@ -46,6 +46,11 @@
 (unless (fboundp 'declare-function)
   (defmacro declare-function (fn file &optional arglist fileonly)))
 
+(defmacro vm-interactive-p ()
+  (if (fboundp 'called-interactively-p)	; Gnu Emacs 23.2
+      '(called-interactively-p 'any)
+    '(interactive-p)))
+
 (declare-function vm-check-for-killed-summary "vm-misc" ())
 (declare-function vm-check-for-killed-presentation "vm-misc" ())
 (declare-function vm-error-if-folder-empty "vm-misc" ())
