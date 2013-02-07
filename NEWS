@@ -28,6 +28,12 @@ VM 8.2.0b1
 
   CHANGES
 
+   * VMPC (formerly called "VM-Pcrisis") is being integrated into VM.  See
+     the section on "Add-ons" in the VM manual.
+     Variables such as `vmpc-reply-alist' have been renamed to
+     `vmpc-reply-rules'.  `vmpc-action-alist' has been renamed to
+     `vmpc-default-rules'.  (The old names continue to work.)
+
    * vm-avirtual.el add-on package has a new variable
      `vm-virtual-make-up-auto-folder-names' which controls whether virtual
      folder names are used as auto-folders.  (Default: t)

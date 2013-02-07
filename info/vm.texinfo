@@ -1624,7 +1624,7 @@ would get loaded as a text file by default, and then run @kbd{M-x
 mail-mode}.  VM's mail-mode command keys are not available in this mode.
 The best option is to run @kbd{M-x vm-postpone-message} to save the
 unfinished message composition and then continue it using
-@code{vm-continue-postponed-message}.  @xref{Add-ons, Postponing message composition}.
+@code{vm-continue-postponed-message}.  @xref{Add-ons, VM-Pine: Postponing message composition}.
 
 @unnumberedsubsec Recovering Sessions
 
@@ -2998,11 +2998,13 @@ composing your message.
 
 @kindex m
 @findex vm-mail-from-folder
+@anchor{vm-mail-from-folder}
 The simplest command is @kbd{m} (@code{vm-mail-from-folder}) which sends a mail
 message much as @kbd{M-x mail} does but allows the added commands
 described above.
 
 @findex vm-mail
+@anchor{vm-mail}
 The alternative command @code{vm-mail} can be invoked outside of VM by
 typing @kbd{M-x vm-mail}.  However, only
 (@code{vm-yank-message-other-folder}) will work; all the other commands
@@ -6822,7 +6824,7 @@ putting @code{vm-mime-auto-save-all-attachments} in
 
 @node Add-ons, History and Administration, Customizations, Top
 @chapter Add-ons
-@section Postponing message composition
+@section VM-Pine: Postponing message composition
 @cindex vm-pine
 @cindex postponing message composition
 Sometimes, you might want to interrupt the composing of a message and
@@ -6852,6 +6854,174 @@ attachments that are displayed inline in the Presentation buffer will not be
 encoded.  This is a limitation of this package.
 
 (This add-on was provided by Robert Fenk.)
+
+@section VMPC: Programmable customization of message composition
+@cindex vmpc
+
+VMPC (also called ``VM-Pcrisis'') is a powerful customization package that
+allows you to automatically customize message compositions based on
+their parent messages.  The most immediate application of this package is
+for composing replies where, for instance, you might want to set the
+``From:'' header of the outgoing message to be the same as the email address
+at which you received the message.  This matters clearly if you have
+multiple email accounts.
+
+@vindex vmpc-conditions
+@vindex vmpc-actions
+VMPC is based on condition-action rules.  You define a variable
+@code{vmpc-conditions} to contain a collection of named conditions that you
+can test for in the parent message, and a variable @code{vmpc-actions} to
+contain a collection of name actions that you can perform on the outgoing
+message.  These take the form:
+
+@example
+(set-variable 'vmpc-conditions
+              '(("condition-name1" @var{condition})
+                ("condition-name2" @var{condition})
+                ...))
+(set-variable 'vmpc-actions
+              '(("action-name1" @var{action}...)
+                ("action-name2" @var{action}...)
+                ...))
+@end example
+
+Then, you can set the following variables to contain
+a collection of condition-action rules, each of which is of the form:
+
+@example
+(@var{CONDITION-NAME} @var{ACTION-NAME1} @var{ACTION-NAME2}...)
+@end example
+@table @code
+@vindex vmpc-default-rules
+@item vmpc-default-rules
+@vindex vmpc-reply-rules
+@vindex vmpc-forward-rules
+@vindex vmpc-resend-rules
+@vindex vmpc-mail-rules
+Condition-action rules for composing messages based on a parent message,
+such as replying, forwarding, resending and mailing
+(@pxref{vm-mail-from-folder}).  
+
+There are also specialized variables @code{vmpc-reply-rules},
+@code{vmpc-forward-rules}, @code{vmpc-resend-rules} and
+@code{vmpc-mail-rules}, which can override the general default rules in
+@code{vmpc-default-rules}.
+
+@vindex vmpc-newmail-rules
+@item vmpc-newmail-rules
+Condition-action rules for new message compositions with no parent message.
+(@pxref{vm-mail}).
+
+@vindex vmpc-automorph-rules
+@item vmpc-automorph-rules
+Condition-action rules for message compositions based on their own content
+(called ``automorphing'').
+@end table
+
+The @i{conditions} are typically checked in the ``parent folder'' of a mail
+composition, which may be the message you are responding to, forwarding,
+resending etc.  VMPC provides a collection of useful condition-checking
+functions.  Others can be defined as needed.
+
+@table @code
+@findex vmpc-header-match
+@item vmpc-header-match
+This condition checks if a header field of the message matches a regular
+expression pattern.  For example, the condition
+
+@example
+(vmpc-header-match "To\\|Cc" (regexp-quote "me@@myisp.net"))
+@end example
+
+@noindent checks if either the ``To'' or ``Cc'' header contains the pattern
+@code{me@@myisp.net}. 
+
+@findex vmpc-only-from-match
+@item vmpc-only-from-match
+This is similar to @code{vmpc-header-match}, but assumes that the header
+field contains email addresses, and matches every one of the email addresses
+against the regular expression pattern.  For example, the condition
+
+@example
+(vmpc-only-from-match "To\\|Cc" (regexp-quote "@@mycompany.com"))
+@end example
+
+@noindent if every email address in the ``To'' and ``Cc'' headers is at
+@code{mycompany.com}. 
+
+@findex vmpc-body-match
+@item vmpc-body-match
+This condition checks if the body of the message contains the
+given regular expression pattern.
+
+@findex vmpc-folder-match
+@item vmpc-folder-match
+This condition checks if the name of the folder contains the
+given regular expression pattern.
+
+@findex vmpc-folder-account-match
+@item vmpc-folder-account-match
+This condition checks if the @acronym{POP}/@acronym{IMAP} account of the
+folder contains the given regular expression pattern.
+
+@findex vmpc-check-virtual-selector
+@item vmpc-check-virtual-selector
+(This function is provided by the @code{vm-avirtual} package.)  This
+condition checks if the message matches a given virtual selector.
+@end table
+
+@noindent The conditions are just normal functions.  So, you can combine
+them with connectives like @code{and}, @code{or} and @code{not}, and add
+other functions that are defined in Emacs or VM or new functions of your
+own. 
+
+The @i{actions} are typically executed in the mail composition buffer for
+the message you are composing.
+
+@table @code
+@findex vmpc-substitute-header
+@item vmpc-substitute-header
+This action substitutes a specified header field of the outgoing message
+with a given string.  For example, the action
+
+@example
+(vmpc-substitute-header "From" "me@@myisp.net")
+@end example
+
+@noindent sets the ``From'' header of the outgoing message to
+@code{me@@myisp.net}. 
+
+@findex vmpc-add-header
+@item vmpc-add-header
+This action adds a specified header field to the outgoing message
+with a given string.  If the header field already exists, nothing is done. 
+
+@findex vmpc-insert-header
+@item vmpc-insert-header
+This action appends a given string to a specified header field of the
+outgoing message.
+
+@findex vmpc-delete-header
+@item vmpc-delete-header
+This action deletes a specified header field of the outgoing message
+with a given string.  Either the contents of the header field or the header
+itself can be deleted.
+
+@findex vmpc-signature
+@item vmpc-signature
+
+The action @code{(vmpc-signature "signature-file")} inserts the signature
+from @code{signature-file}.  If there is already a signature in the outgoing
+message, then it replaces with the new signature.
+
+@findex vmpc-pre-signature
+@item vmpc-pre-signature
+
+This action is similar to @code{vmpc-signature}, but inserts the new
+signature at the top, above the message body.
+
+
+@end table
 
 
 @node History and Administration, Highlights, Add-ons, Top

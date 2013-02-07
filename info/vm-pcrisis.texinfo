@@ -266,15 +266,15 @@ writing a message.
 You define the condition in @code{vmpc-conditions}, and the action you
 want vm-pcrisis to take in @code{vmpc-actions}, giving a name to each.
 You then associate the condition with the action in
-@code{vmpc-reply-alist} if it's one that relies on the headers of a
-message you are replying to, @code{vmpc-forward-alist} if it's a message
+@code{vmpc-reply-rules} if it's one that relies on the headers of a
+message you are replying to, @code{vmpc-forward-rules} if it's a message
 you are forwarding, 
-@code{vmpc-resend-alist} if it is a mesasge you are resending,  
-or @code{vmpc-automorph-alist} if it's based on the
+@code{vmpc-resend-rules} if it is a mesasge you are resending,  
+or @code{vmpc-automorph-rules} if it's based on the
 headers of your own message.  You may also use
-@code{vmpc-mail-alist} to associate conditions with actions for new
+@code{vmpc-mail-rules} to associate conditions with actions for new
 messages created using @code{vm-mail-from-folder}, and
-@code{vmpc-newmail-alist} for new messages created using @code{vm-mail}. 
+@code{vmpc-newmail-rules} for new messages created using @code{vm-mail}. 
 
 If you want to use the @code{vmpc-automorph} function, which takes
 actions based on the headers of a message you are composing, 
@@ -942,21 +942,21 @@ address.  Like this:
 @section Associating Conditions with Actions
 
 @c @menu
-@c * vmpc-action-alist::           
-@c * vmpc-reply-alist::            
-@c * vmpc-automorph-alist::        
-@c * vmpc-forward-alist::          
-@c * vmpc-resend-alist::           
-@c * vmpc-mail-alist
-@c * vmpc-newmail-alist::          
+@c * vmpc-default-rules::           
+@c * vmpc-reply-rules::            
+@c * vmpc-automorph-rules::        
+@c * vmpc-forward-rules::          
+@c * vmpc-resend-rules::           
+@c * vmpc-mail-rules
+@c * vmpc-newmail-rules::          
 @c @end menu
 
 @c ***************************************************************************
 
-@unnumberedsubsec vmpc-action-alist
-@vindex vmpc-action-alist
+@unnumberedsubsec vmpc-default-rules
+@vindex vmpc-default-rules
 
-The @code{vmpc-action-alist} variable controls which actions are
+The @code{vmpc-default-rules} variable controls which actions are
 performed if various conditions are met when creating a reply.  Its
 format is something like this:
 
@@ -966,16 +966,16 @@ format is something like this:
     ...                         )
 @end lisp
 
-If you do not want to set all the other alists then sent this one as it
-will be used as a fall back.
+@noindent If you do not want to set all the other rules variables then sent
+this one as it will be used as a fall back.
 
 @c ***************************************************************************
 
-@unnumberedsubsec vmpc-reply-alist
-@vindex vmpc-reply-alist
-@anchor{vmpc-reply-alist}
+@unnumberedsubsec vmpc-reply-rules
+@vindex vmpc-reply-rules
+@anchor{vmpc-reply-rules}
 
-The @code{vmpc-reply-alist} variable controls which actions are
+The @code{vmpc-reply-rules} variable controls which actions are
 performed if various conditions are met when creating a reply.  Its
 format is something like this:
 
@@ -989,7 +989,7 @@ If we follow on from our examples in the previous sections, we might
 have this in our ~/.vm file:
 
 @lisp
-(setq vmpc-reply-alist '(
+(setq vmpc-reply-rules '(
   ("condition that's always true" "david")
   ("plaintext messages from foo-list" "foo on the hill")
   ("html messages from foo-list" "set To to From" 
@@ -1001,56 +1001,56 @@ have this in our ~/.vm file:
 
 @c ***************************************************************************
 
-@unnumberedsubsec vmpc-automorph-alist
-@vindex vmpc-automorph-alist
-@anchor{vmpc-automorph-alist}
+@unnumberedsubsec vmpc-automorph-rules
+@vindex vmpc-automorph-rules
+@anchor{vmpc-automorph-rules}
 
-The @code{vmpc-automorph-alist} variable has the same syntax as
-@code{vmpc-reply-alist} and follows the same principles.  (See
-@ref{vmpc-reply-alist}.)  The only difference is that it controls
+The @code{vmpc-automorph-rules} variable has the same syntax as
+@code{vmpc-reply-rules} and follows the same principles.  (See
+@ref{vmpc-reply-rules}.)  The only difference is that it controls
 which actions are associated with which conditions when the
 @code{vmpc-automorph} function is called.
 
 @c ***************************************************************************
-@unnumberedsubsec vmpc-forward-alist
-@vindex vmpc-forward-alist
+@unnumberedsubsec vmpc-forward-rules
+@vindex vmpc-forward-rules
 
-The @code{vmpc-forward-alist} variable has the same syntax as
-@code{vmpc-reply-alist} and follows the same principles.  (See
-@ref{vmpc-reply-alist}.)  The only difference is that it controls
+The @code{vmpc-forward-rules} variable has the same syntax as
+@code{vmpc-reply-rules} and follows the same principles.  (See
+@ref{vmpc-reply-rules}.)  The only difference is that it controls
 which actions are associated with which conditions when forwarding
 messages.
 
 @c ***************************************************************************
-@unnumberedsubsec vmpc-resend-alist
-@vindex vmpc-resend-alist
+@unnumberedsubsec vmpc-resend-rules
+@vindex vmpc-resend-rules
 
-The @code{vmpc-resend-alist} variable has the same syntax as
-@code{vmpc-reply-alist} and follows the same principles.  (See
-@ref{vmpc-reply-alist}.)  The only difference is that it controls
+The @code{vmpc-resend-rules} variable has the same syntax as
+@code{vmpc-reply-rules} and follows the same principles.  (See
+@ref{vmpc-reply-rules}.)  The only difference is that it controls
 which actions are associated with which conditions when resending
 messages with @code{vm-resend-message}.  
 
 
 @c ***************************************************************************
 
-@unnumberedsubsec vmpc-mail-alist
-@vindex vmpc-mail-alist
-@anchor{vmpc-mail-alist}
+@unnumberedsubsec vmpc-mail-rules
+@vindex vmpc-mail-rules
+@anchor{vmpc-mail-rules}
 
-The @code{vmpc-mail-alist} variable has the same syntax as
-@code{vmpc-reply-alist} and follows the same principles.  (See
-@ref{vmpc-reply-alist}.)  The only difference is that it controls
+The @code{vmpc-mail-rules} variable has the same syntax as
+@code{vmpc-reply-rules} and follows the same principles.  (See
+@ref{vmpc-reply-rules}.)  The only difference is that it controls
 which actions are associated with which conditions when creating new
 messages with @code{vm-mail-from-folder}.
 
-@unnumberedsubsec vmpc-newmail-alist
-@vindex vmpc-newmail-alist
-@anchor{vmpc-newmail-alist}
+@unnumberedsubsec vmpc-newmail-rules
+@vindex vmpc-newmail-rules
+@anchor{vmpc-newmail-rules}
 
-The @code{vmpc-newmail-alist} variable has the same syntax as
-@code{vmpc-reply-alist}.  (See
-@ref{vmpc-reply-alist}.)  However, it controls
+The @code{vmpc-newmail-rules} variable has the same syntax as
+@code{vmpc-reply-rules}.  (See
+@ref{vmpc-reply-rules}.)  However, it controls
 which actions are associated with which conditions when creating new
 messages with @code{vm-mail}.  Since @code{vm-mail} can be invoked from any
 context and there is no parent message, any conditions that
@@ -1083,10 +1083,10 @@ foo-list, and another one to prompt you for a profile:
  (vmpc-prompt-for-profile))
 @end lisp
 
-Finally, you'd set up @code{vmpc-newmail-alist} like this:
+Finally, you'd set up @code{vmpc-newmail-rules} like this:
 
 @lisp
-(setq vmpc-newmail-alist
+(setq vmpc-newmail-rules
       '(
         ("mail to foo-list" "foo profile")
         ("no cond" "prompt")
@@ -1105,7 +1105,7 @@ called.
 
 You'll have to set up what this function does --- for which, see
 @ref{vmpc-conditions}, @ref{vmpc-actions} and
-@ref{vmpc-automorph-alist} 
+@ref{vmpc-automorph-rules} 
 --- but you'll also have to consider when you want it called.
 
 Most people would prefer never to have to call it explicitly; it's
@@ -1299,7 +1299,7 @@ should check the value of the following variables:
 @item @code{vmpc-true-conditions} is the list of true conditions.
 
 @item @code{vmpc-actions-to-run} is the list of actions to run,
-i.e. those actions mapped by a @code{vmpc-*-alist}. 
+i.e. those actions mapped by a @code{vmpc-*-rules}. 
 
 @item @code{vmpc-saved-headers-alist} the value of headers saved for
 substitution. 
@@ -1424,7 +1424,7 @@ you are in when you invoke vm-mail) when creating a brand new message.
 
 @item Due to the above, the @code{vmpc-newmail-prompt-for-profile}
 variable is now obsoleted.  Its effect can be duplicated easily enough;
-see @ref{vmpc-newmail-alist} for details.  
+see @ref{vmpc-newmail-rules} for details.  
 
 @end itemize
 

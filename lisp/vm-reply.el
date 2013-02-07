@@ -1237,6 +1237,9 @@ you can change the recipient address before resending the message."
 				   :fail t)
     (save-restriction
       (widen)
+      ;; if the mailer message has the original message as a MIME
+      ;; attachment, then set layout to the attachment.
+      ;; otherwise find the body of the message heuristically.
       (if (or (not (vectorp layout))
 	      (not (setq layout (vm-mime-layout-contains-type
 				 layout "message/rfc822"))))
@@ -1260,10 +1263,12 @@ you can change the recipient address before resending the message."
 			      (vm-su-from (car vm-message-pointer)))))
       (goto-char (point-min))
       (if (vectorp layout)
+	  ;; attachment message
 	  (progn
 	    (setq start (point))
 	    (vm-mime-insert-mime-body layout)
 	    (vm-mime-transfer-decode-region layout start (point)))
+	;; plain text message
 	(insert-buffer-substring b start lim))
       (delete-region (point) (point-max))
       (goto-char (point-min))
@@ -1287,6 +1292,7 @@ you can change the recipient address before resending the message."
       (setq default-directory dir)))
   (run-hooks 'vm-resend-bounced-message-hook)
   (run-hooks 'vm-mail-mode-hook))
+(defalias 'vm-retry-bounced-message 'vm-resend-bounced-message)
 
 ;;;###autoload
 (defun vm-resend-message ()

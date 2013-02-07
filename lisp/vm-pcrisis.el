@@ -93,9 +93,9 @@
 (defcustom vmpc-actions ()
   "*List of actions.
 Actions are associated with conditions from `vmpc-conditions' by one of
-`vmpc-actions-alist', `vmpc-reply-alist', `', `vmpc-forward-alist',
-`vmpc-resend-alist',  `vmpc-mail-alist', `vmpc-newmail-alist' or
-`vmpc-automorph-alist'. 
+`vmpc-rules', `vmpc-reply-rules', `', `vmpc-forward-rules',
+`vmpc-resend-rules',  `vmpc-mail-rules', `vmpc-newmail-rules' or
+`vmpc-automorph-rules'. 
 
 These are also the actions from which you can choose when using the newmail
 features of Personality Crisis, or the `vmpc-prompt-for-profile' action.
@@ -106,8 +106,8 @@ You may also define an action without associated commands, e.g. \"none\"."
                        (repeat :tag "Commands" sexp)))
   :group 'vmpc)
 
-(defun vmpc-alist-set (symbol value)
-  "Used as :set for vmpc-*-alist variables.
+(defun vmpc-rules-set (symbol value)
+  "Used as :set for vmpc-*-rules variables.
 Checks if the condition and all the actions exist."
   (while value
     (let ((condition (caar value))
@@ -121,8 +121,8 @@ Checks if the condition and all the actions exist."
     (setq value (cdr value)))
   (set symbol value))
 
-;; (defun vmpc-defcustom-alist-type ()
-;;   "Generate :type for vmpc-*-alist variables."
+;; (defun vmpc-defcustom-rules-type ()
+;;   "Generate :type for vmpc-*-rules variables."
 ;;   (list 'repeat
 ;;         (list 'cons
 ;;               (append '(choice :tag "Condition")
@@ -133,8 +133,8 @@ Checks if the condition and all the actions exist."
 ;;                             (mapcar (lambda (a) (list 'const (car a))) vmpc-actions)
 ;;                             '(string))))))
 
-(defun vmpc-defcustom-alist-type ()
-  "Generate :type for vmpc-*-alist variables."
+(defun vmpc-defcustom-rules-type ()
+  "Generate :type for vmpc-*-rules variables."
   `(repeat
     (cons
      (choice :tag "Condition"
@@ -145,51 +145,58 @@ Checks if the condition and all the actions exist."
 		     ,@(mapcar (lambda (a) `(const ,(car a))) vmpc-actions)
 		     (string))))))
 
-(defcustom vmpc-actions-alist ()
-  "*An alist associating conditions with actions from `vmpc-actions'.
-If you do not want to map actions for each state, e.g. for replying, forwarding,
-resending, composing or automorphing, then set this one."
-  :type (vmpc-defcustom-alist-type)
-;  :set 'vmpc-alist-set
+(defcustom vmpc-default-rules ()
+  "*A default list of condition-action rules used for replying, forwarding,
+resending, composing and automorphing, unless overridden by more
+specific variables such as `vmpc-reply-rules'."
+  :type (vmpc-defcustom-rules-type)
+;  :set 'vmpc-rules-set
   :group 'vmpc)
+(defalias 'vmpc-actions-alist 'vmpc-default-rules)
 
-(defcustom vmpc-reply-alist ()
-  "*An alist associating conditions with actions from `vmpc-actions' when replying."
-  :type (vmpc-defcustom-alist-type)
-;  :set 'vmpc-alist-set
+(defcustom vmpc-reply-rules ()
+  "*A list of condition-action rules used during reply."
+  :type (vmpc-defcustom-rules-type)
+;  :set 'vmpc-rules-set
   :group 'vmpc)
+(defalias 'vmpc-reply-alist 'vmpc-reply-rules)
 
-(defcustom vmpc-forward-alist ()
-  "*An alist associating conditions with actions from `vmpc-actions' when forwarding."
-  :type (vmpc-defcustom-alist-type)
-;  :set 'vmpc-alist-set
+(defcustom vmpc-forward-rules ()
+  "*A list of condition-action rules used when forwarding."
+  :type (vmpc-defcustom-rules-type)
+;  :set 'vmpc-rules-set
   :group 'vmpc)
+(defalias 'vmpc-forward-alist 'vmpc-forward-rules)
 
-(defcustom vmpc-automorph-alist ()
+(defcustom vmpc-automorph-rules ()
   "*An alist associating conditions with actions from `vmpc-actions' when automorphing."
-  :type (vmpc-defcustom-alist-type)
-;  :set 'vmpc-alist-set
+  :type (vmpc-defcustom-rules-type)
+;  :set 'vmpc-rules-set
   :group 'vmpc)
+(defalias 'vmpc-automorph-alist 'vmpc-automorph-rules)
 
-(defcustom vmpc-mail-alist ()
+(defcustom vmpc-mail-rules ()
   "*An alist associating conditions with actions from `vmpc-actions'
 when composing a message starting from a folder."
-  :type (vmpc-defcustom-alist-type)
-;  :set 'vmpc-alist-set
+  :type (vmpc-defcustom-rules-type)
+;  :set 'vmpc-rules-set
   :group 'vmpc)
+(defalias 'vmpc-mail-alist 'vmpc-mail-rules)
 
-(defcustom vmpc-newmail-alist ()
+(defcustom vmpc-newmail-rules ()
   "*An alist associating conditions with actions from `vmpc-actions'
 when composing." 
-  :type (vmpc-defcustom-alist-type)
-;  :set 'vmpc-alist-set
+  :type (vmpc-defcustom-rules-type)
+;  :set 'vmpc-rules-set
   :group 'vmpc)
+(defalias 'vmpc-newmail-alist 'vmpc-newmail-rules)
 
-(defcustom vmpc-resend-alist ()
+(defcustom vmpc-resend-rules ()
   "*An alist associating conditions with actions from `vmpc-actions' when resending."
-  :type (vmpc-defcustom-alist-type)
-;  :set 'vmpc-alist-set
+  :type (vmpc-defcustom-rules-type)
+;  :set 'vmpc-rules-set
   :group 'vmpc)
+(defalias 'vmpc-resend-alist 'vmpc-resend-rules)
 
 (defcustom vmpc-default-profile "default"
   "*The default profile to select if no profile was found."
@@ -282,7 +289,7 @@ It will ensure that pcrisis correctly handles the signature .")
 (defun vmpc-my-identities (&rest identities)
   "Setup pcrisis with the given IDENTITIES."
   (setq vmpc-conditions    '(("always true" t))
-        vmpc-actions-alist '(("always true" "prompt for a profile"))
+        vmpc-default-rules '(("always true" "prompt for a profile"))
         vmpc-actions       '(("prompt for a profile" 
 			      (vmpc-prompt-for-profile t t))))
   (setq vmpc-actions
@@ -1164,27 +1171,26 @@ PROMPT argument and call this function interactively in the composition buffer."
   (interactive (progn (setq vmpc-current-state 'automorph)
                       (list 'prompt t)))
     
-  (if (or (and (eq vmpc-current-buffer 'none)
-	       (not (eq vmpc-current-state 'automorph)))
-	  (eq vmpc-current-state 'automorph))
+  (if (or (eq vmpc-current-state 'automorph)
+	  (eq vmpc-current-buffer 'none))
       (let ((headers 
 	     (or (assoc vmpc-current-buffer vmpc-prompt-for-profile-headers)
 		 (assoc vmpc-current-state vmpc-prompt-for-profile-headers)
 		 (assoc 'default vmpc-prompt-for-profile-headers)))
-            addrs a old-actions actions dest)
+            field addrs a old-actions actions dest)
         (setq headers (cadr headers))
         ;; search also other headers for known addresses 
         (while (and headers (not actions))
-          (setq addrs (vmpc-get-header-contents (car headers)))
-          (if addrs (setq addrs (vmpc-split addrs  ",")))
-          (while addrs
-            (setq a (vmpc-string-extract-address (car addrs)))
-            (if (vm-ignored-reply-to a)
-                (setq a nil))
-            (setq actions (append (vmpc-get-profile-for-address a) actions))
-            (if (not dest) (setq dest a))
-            (setq addrs (cdr addrs)))
-          (setq headers (cdr headers)))
+          (when (setq field (vmpc-get-header-contents (car headers)))
+	    (setq addrs (vmpc-split field  ","))
+	    (while addrs
+	      (setq a (vmpc-string-extract-address (car addrs)))
+	      (if (vm-ignored-reply-to a)
+		  (setq a nil))
+	      (setq actions (append (vmpc-get-profile-for-address a) actions))
+	      (if (not dest) (setq dest a))
+	      (setq addrs (cdr addrs))))
+	  (setq headers (cdr headers)))
 
         (setq dest 
 	      (or dest vmpc-default-profile (if prompt (vmpc-read-profile))))
@@ -1393,9 +1399,9 @@ actions will be run."
   (if (and (vm-interactive-p) 
 	   (not (member major-mode '(vm-mail-mode mail-mode))))
       (error "Run `vmpc-build-actions-to-run-list' in a composition buffer!"))
-  (let ((alist (or (symbol-value (intern (format "vmpc-%s-alist"
+  (let ((alist (or (symbol-value (intern (format "vmpc-%s-rules"
                                                  vmpc-current-state)))
-                   vmpc-actions-alist))
+                   vmpc-default-rules))
         (old-vmpc-actions-to-run vmpc-actions-to-run)
         actions)
     (setq vmpc-actions-to-run nil)
