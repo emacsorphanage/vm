@@ -4374,6 +4374,7 @@ documentation for `vm-spool-files'."
        (list folder))
      ))
   (let ((vm-imap-ok-to-ask t)
+	(account (vm-imap-account-name-for-spec folder))
 	process mailbox folder-display)
     (setq process (vm-imap-make-session folder t "create"))
     (if (null process)
@@ -4389,7 +4390,10 @@ documentation for `vm-spool-files'."
 	  (setq folder-display (or (vm-imap-folder-for-spec folder)
 				   (vm-safe-imapdrop-string folder)))
 	  (vm-imap-create-mailbox process mailbox t)
-	  (vm-inform 5 "Folder %s created" folder-display))
+	  (vm-inform 5 "Folder %s created" folder-display)
+	  ;; invalidate the folder-cache
+	  (vm-delete (lambda (a) (equal (car a) account))
+		     vm-imap-account-folder-cache))
       ;; unwind-protections
       (when (and (processp process)
 		 (memq (process-status process) '(open run)))
@@ -4420,6 +4424,7 @@ documentation for `vm-spool-files'."
 	   (last-command last-command))
        (list (vm-read-imap-folder-name "Delete IMAP folder: " nil nil)))))
   (let ((vm-imap-ok-to-ask t)
+	(account (vm-imap-account-name-for-spec folder))
 	process mailbox folder-display)
     (setq process (vm-imap-make-session folder t "delete folder"))
     (if (null process)
@@ -4436,7 +4441,10 @@ documentation for `vm-spool-files'."
 	  (setq folder-display (or (vm-imap-folder-for-spec folder)
 				   (vm-safe-imapdrop-string folder)))
 	  (vm-imap-delete-mailbox process mailbox)
-	  (vm-inform 5 "Folder %s deleted" folder-display))
+	  (vm-inform 5 "Folder %s deleted" folder-display)
+	  ;; invalidate the folder-cache
+	  (vm-delete (lambda (a) (equal (car a) account))
+		     vm-imap-account-folder-cache))
       ;; unwind-protections
       (when (and (processp process)
 		 (memq (process-status process) '(open run)))
@@ -4474,6 +4482,7 @@ documentation for `vm-spool-files'."
 		   nil t))
        (list source dest))))
   (let ((vm-imap-ok-to-ask t)
+	(account (vm-imap-account-name-for-spec source))
 	process mailbox-source mailbox-dest)
     (setq process (vm-imap-make-session source t "rename folder"))
     (if (null process)
@@ -4493,7 +4502,10 @@ documentation for `vm-spool-files'."
 		     (or (vm-imap-folder-for-spec source)
 			 (vm-safe-imapdrop-string source))
 		     (or (vm-imap-folder-for-spec dest)
-			 (vm-safe-imapdrop-string dest))))
+			 (vm-safe-imapdrop-string dest)))
+	  ;; invalidate the folder-cache
+	  (vm-delete (lambda (a) (equal (car a) account))
+		     vm-imap-account-folder-cache))
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
