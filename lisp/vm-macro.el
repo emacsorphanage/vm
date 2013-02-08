@@ -34,22 +34,24 @@
   (if (fboundp 'mapc)
       (defalias 'bbdb-mapc 'mapc)
     (defalias 'bbdb-mapc 'mapcar))
+
+  (unless (fboundp 'with-current-buffer)
+    (defmacro with-current-buffer (buf &rest body)
+      `(save-current-buffer (set-buffer ,buf) ,@body)))
+
+  (unless (fboundp 'defvaralias)
+    (defmacro defvaralias (&rest args)))
+
+  (unless (fboundp 'declare-function)
+    (defmacro declare-function (fn file &optional arglist fileonly)))
+
+  (defmacro vm-interactive-p ()
+    (if (featurep 'xemacs)
+	`(interactive-p)
+      (if (> emacs-major-version 23)
+	  `(called-interactively-p 'interactive)
+	`(interactive-p))))
   )
-
-(unless (fboundp 'with-current-buffer)
-  (defmacro with-current-buffer (buf &rest body)
-    `(save-current-buffer (set-buffer ,buf) ,@body)))
-
-(unless (fboundp 'defvaralias)
-  (defmacro defvaralias (&rest args)))
-
-(unless (fboundp 'declare-function)
-  (defmacro declare-function (fn file &optional arglist fileonly)))
-
-(defmacro vm-interactive-p ()
-  (if (fboundp 'called-interactively-p)	; Gnu Emacs 23.2
-      '(called-interactively-p 'any)
-    '(interactive-p)))
 
 (declare-function vm-check-for-killed-summary "vm-misc" ())
 (declare-function vm-check-for-killed-presentation "vm-misc" ())

@@ -1532,7 +1532,7 @@ recursion nor concurrent calls."
 (defadvice vm-mail-from-folder (around vmpc-mail activate)
   "*Start a new message with pcrisis voodoo."
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   (vmpc-init-vars 'mail)
   (vmpc-build-true-conditions-list)
   (vmpc-build-actions-to-run-list)
@@ -1568,7 +1568,7 @@ recursion nor concurrent calls."
   "*Forward a message with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   ;;  the rest is almost exactly the same as replying:
   (vmpc-init-vars 'forward)
   (vmpc-build-true-conditions-list)
@@ -1583,7 +1583,7 @@ recursion nor concurrent calls."
   "*Forward a message in plain text with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   ;;  the rest is almost exactly the same as replying:
   (vmpc-init-vars 'forward)
   (vmpc-build-true-conditions-list)
@@ -1598,7 +1598,7 @@ recursion nor concurrent calls."
   "*Resent a message with pcrisis voodoo."
   ;; this stuff is already done when replying, but not here:
   (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
+  (vm-select-folder-buffer-and-validate 1 (interactive-p))
   ;; the rest is almost exactly the same as replying:
   (vmpc-init-vars 'resend)
   (vmpc-build-true-conditions-list)
