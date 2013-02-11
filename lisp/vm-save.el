@@ -137,15 +137,16 @@ The saved messages are flagged as `filed'."
 	      msg stop-point)
 	  (setq vm-message-pointer (or vm-message-pointer vm-message-list))
 	  ;; Double check if the user really wants to archive
-	  (unless 
-	      (or (not vm-confirm-for-auto-archive)
-		  (null vm-message-pointer)
-		  (not (vm-interactive-p))
-		  (y-or-n-p 
-		   (format "Auto archive %s messages? "
-			   (if (eq last-command 'vm-next-command-uses-marks)
-			       "marked" "all"))))
-	    (error "Aborted"))
+	  ;; in case she typed `A' accidentally
+	  (when 
+	      (and vm-confirm-for-auto-archive
+		   (not (eq last-command 'vm-next-command-uses-marks))
+		   (vm-interactive-p))
+	    (unless (y-or-n-p 
+		     (format "Auto archive %s messages? "
+			     (if (eq last-command 'vm-next-command-uses-marks)
+				 "marked" "all")))
+	      (error "Aborted")))
 	  (vm-inform 5 "Archiving...")
 	  ;; mark the place where we should stop.
 	  (setq stop-point (vm-last vm-message-pointer))
@@ -160,15 +161,18 @@ The saved messages are flagged as `filed'."
 		       (or (not prompt)
 			   (y-or-n-p
 			    (format "Save message %s in folder %s? "
-				    (vm-number-of (car vm-message-pointer))
+				    (vm-number-of msg)
 				    auto-folder))))
-	      (condition-case nil
+	      (condition-case error-data
 		  (let ((vm-delete-after-saving vm-delete-after-archiving)
 			(last-command 'vm-auto-archive-messages))
 		    (vm-save-message auto-folder 1 nil 'quiet)
 		    (vm-increment archived)
 		    (vm-inform 6 "%d archived, still working..." archived))
-		(error nil)))
+		(error (vm-warn 1 2 "%s: Error in archiving message %s: %s"
+				(buffer-name) (vm-number-of msg)
+				error-data))
+		))
 	    (setq done (eq vm-message-pointer stop-point)
 		  vm-message-pointer (cdr vm-message-pointer))))
       ;; unwind-protection
