@@ -2898,7 +2898,7 @@ messages automatically using the setting of `vm-auto-folder-alist'."
   :group 'vm-dispose
   :type 'boolean)
 
-(defcustom vm-auto-folder-case-fold-search nil
+(defcustom vm-auto-folder-case-fold-search t
   "*Non-nil value means VM will ignore case when matching header
 contents while doing automatic folder selection via the variable
 `vm-auto-folder-alist'."

@@ -46,25 +46,29 @@
 ;;;###autoload
 (defun vm-auto-select-folder (mp &optional auto-folder-alist)
   "Select a folder to save the head of MP (a pointer to a message in a
-message list) using AUTO-FOLDER-ALIST."
+message list) using AUTO-FOLDER-ALIST.  If the latter is not
+specified, use `vm-auto-folder-alist'."
   (unless auto-folder-alist
     (setq auto-folder-alist vm-auto-folder-alist))
   (if vm-save-using-auto-folders
       (condition-case error-data
 	  (catch 'match
-	    (let (header alist tuple-list)
+	    (let (header alist fields tuple-list tuple)
 	      (setq alist auto-folder-alist)
 	      (while alist
+		(setq fields (car (car alist)))
+		(setq tuple-list (cdr (car alist)))
 		(setq header 
-		      (vm-get-header-contents (car mp) (car (car alist)) ", "))
+		      (vm-get-header-contents (car mp) fields ", "))
 		(when header
-		  (setq tuple-list (cdr (car alist)))
 		  (while tuple-list
-		    (when (let ((case-fold-search vm-auto-folder-case-fold-search))
-			    (string-match (car (car tuple-list)) header))
+		    (setq tuple (car tuple-list))
+		    (when (let ((case-fold-search ; dynamic binding
+				 vm-auto-folder-case-fold-search))
+			    (string-match (car tuple) header))
 		      ;; Don't waste time eval'ing an atom.
-		      (if (stringp (cdr (car tuple-list)))
-			  (throw 'match (cdr (car tuple-list)))
+		      (if (stringp (cdr tuple))
+			  (throw 'match (cdr tuple))
 			(let* ((match-data (vm-match-data))
 			       ;; allow this buffer to live forever
 			       (buf (get-buffer-create " *vm-auto-folder*"))
@@ -93,7 +97,7 @@ message list) using AUTO-FOLDER-ALIST."
 			      (mapcar
 			       (function (lambda (n) (and n (1+ n))))
 			       match-data)))
-			    (setq result (eval (cdr (car tuple-list))))
+			    (setq result (eval (cdr tuple)))
 			    (while (consp result)
 			      (setq result (vm-auto-select-folder mp result)))
 			    (when result
@@ -108,13 +112,15 @@ message list) using AUTO-FOLDER-ALIST."
 (defun vm-auto-archive-messages (&optional prompt)
   "Save all unfiled messages that auto-match a folder via
 `vm-auto-folder-alist' to their appropriate folders.  Messages that
-are flagged for deletion are not saved.
+are flagged for deletion are not saved.  Messages with a \"filed\"
+flag are not saved.
 
 This command asks for confirmation before proceeding.  Set
 `vm-confirm-for-auto-archive' to nil to turn off the confirmation
 dialogue. 
 
-Prefix arg means to prompt user for confirmation before saving each message.
+Prefix arg means to prompt user for confirmation for each message
+separately. 
 
 When invoked on marked messages (via `vm-next-command-uses-marks'),
 only marked messages are checked against `vm-auto-folder-alist'.  

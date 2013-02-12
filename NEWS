@@ -28,6 +28,9 @@ VM 8.2.0b1
 
   CHANGES
 
+   * The default value of `vm-auto-folder-case-fold-search' is now `t',
+     which is in line with the manual.
+
    * VMPC (formerly called "VM-Pcrisis") is being integrated into VM.  See
      the section on "Add-ons" in the VM manual.
      Variables such as `vmpc-reply-alist' have been renamed to
