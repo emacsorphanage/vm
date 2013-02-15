@@ -7681,6 +7681,14 @@ The reason for their separation is historical.
 @node Message Internals, Summary Internals, Folder Internals, Internals
 @section Message Internals
 
+The format of the mail messages is as described in RFC 822.  There is an
+updated standard, RFC 2822 dated April 2001.  It is not known whether these
+updates have been incorporated in VM.
+
+The message bodies can be in the MIME format, as described in RFC 2045, 2046
+and 2047.  The newer extensions (RFC 2184, 2231, 5335) are not incorporated
+in VM.  International email headers (RFC 6532) are also not supported.
+
 The message data structure is a vector containing various pieces of
 data about the message, some of which is permanent and some that is
 calculated during a VM session.  The data is organized into four

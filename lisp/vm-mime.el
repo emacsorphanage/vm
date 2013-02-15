@@ -3289,7 +3289,7 @@ the argument.                                        USR, 2011-03-25"
 
 (defun vm-mime-display-internal-multipart/related (layout)
   "Decode multipart/related body parts.
-This function decodes the ``start'' part (see RFC2387) only.  The
+This function decodes the ``start'' part only (see RFC2387).  The
 other parts will be decoded by the other VM functions through
 emacs-w3m."
   (if (eq vm-mime-multipart/related-show-method 'mixed)
@@ -5011,7 +5011,7 @@ created."
 	       (if file
 		   (expand-file-name (file-name-nondirectory file) directory)
 		 (vm-read-file-name
-		  (format "Save %s to file: " type)
+		  (format "Save %s (no filename given) to: " type)
 		  (or directory
 		      vm-mime-all-attachments-directory
 		      vm-mime-attachment-save-directory)
