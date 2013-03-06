@@ -3269,7 +3269,7 @@ thread are affected."
     (vm-update-summary-and-mode-line)
     (when (and vm-move-after-reading (not used-marks))
       (let ((vm-circular-folders (and vm-circular-folders
-				      (eq vm-move-after-deleting t))))
+				      (eq vm-move-after-reading t))))
 	(vm-next-message count t executing-kbd-macro)))))
 (defalias 'vm-flag-message-read 'vm-mark-message-read)
 (make-obsolete 'vm-flag-message-read 
