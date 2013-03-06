@@ -4733,6 +4733,18 @@ not t and not nil means that motion should be done as if
 		 (const :tag "Yes" t) 
 		 (const :tag "Skip if some undeleted" skip-if-some-undeleted)))
 
+(defcustom vm-move-after-reading nil
+  "*Non-nil value causes VM's `.' command to automatically invoke
+`vm-next-message' or `vm-previous-message' after killing messages, to try
+to move past the read messages.  A value of t means motion
+should honor the value of `vm-circular-folders'.  A value that is
+not t and not nil means that motion should be done as if
+`vm-circular-folders' is set to nil."
+  :group 'vm-summary
+  :type '(choice (const :tag "No" nil) 
+                 (const :tag "Yes" t) 
+                 (const :tag "Skip if some undeleted" skip-if-some-undeleted)))
+
 (defcustom vm-delete-after-saving nil
   "*Non-nil value causes VM automatically to mark messages for deletion
 after successfully saving them to a folder."
