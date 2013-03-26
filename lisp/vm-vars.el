@@ -644,7 +644,7 @@ is as follows:
 retrieved.
 
 - In local folders, the message is skipped if it is part of
-automatical mail retrieval.  During interactive mail retrieval, obtained by
+automatic mail retrieval.  During interactive mail retrieval, obtained by
 running `vm-get-new-mail', VM queries you whether it should be retrieved.
 
 A nil value for `vm-imap-max-message-size' means no size limit."

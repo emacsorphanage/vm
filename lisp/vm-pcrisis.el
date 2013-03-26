@@ -152,28 +152,28 @@ specific variables such as `vmpc-reply-rules'."
   :type (vmpc-defcustom-rules-type)
 ;  :set 'vmpc-rules-set
   :group 'vmpc)
-(defalias 'vmpc-actions-alist 'vmpc-default-rules)
+(defvaralias 'vmpc-actions-alist 'vmpc-default-rules)
 
 (defcustom vmpc-reply-rules ()
   "*A list of condition-action rules used during reply."
   :type (vmpc-defcustom-rules-type)
 ;  :set 'vmpc-rules-set
   :group 'vmpc)
-(defalias 'vmpc-reply-alist 'vmpc-reply-rules)
+(defvaralias 'vmpc-reply-alist 'vmpc-reply-rules)
 
 (defcustom vmpc-forward-rules ()
   "*A list of condition-action rules used when forwarding."
   :type (vmpc-defcustom-rules-type)
 ;  :set 'vmpc-rules-set
   :group 'vmpc)
-(defalias 'vmpc-forward-alist 'vmpc-forward-rules)
+(defvaralias 'vmpc-forward-alist 'vmpc-forward-rules)
 
 (defcustom vmpc-automorph-rules ()
   "*An alist associating conditions with actions from `vmpc-actions' when automorphing."
   :type (vmpc-defcustom-rules-type)
 ;  :set 'vmpc-rules-set
   :group 'vmpc)
-(defalias 'vmpc-automorph-alist 'vmpc-automorph-rules)
+(defvaralias 'vmpc-automorph-alist 'vmpc-automorph-rules)
 
 (defcustom vmpc-mail-rules ()
   "*An alist associating conditions with actions from `vmpc-actions'
@@ -181,7 +181,7 @@ when composing a message starting from a folder."
   :type (vmpc-defcustom-rules-type)
 ;  :set 'vmpc-rules-set
   :group 'vmpc)
-(defalias 'vmpc-mail-alist 'vmpc-mail-rules)
+(defvaralias 'vmpc-mail-alist 'vmpc-mail-rules)
 
 (defcustom vmpc-newmail-rules ()
   "*An alist associating conditions with actions from `vmpc-actions'
@@ -189,14 +189,14 @@ when composing."
   :type (vmpc-defcustom-rules-type)
 ;  :set 'vmpc-rules-set
   :group 'vmpc)
-(defalias 'vmpc-newmail-alist 'vmpc-newmail-rules)
+(defvaralias 'vmpc-newmail-alist 'vmpc-newmail-rules)
 
 (defcustom vmpc-resend-rules ()
   "*An alist associating conditions with actions from `vmpc-actions' when resending."
   :type (vmpc-defcustom-rules-type)
 ;  :set 'vmpc-rules-set
   :group 'vmpc)
-(defalias 'vmpc-resend-alist 'vmpc-resend-rules)
+(defvaralias 'vmpc-resend-alist 'vmpc-resend-rules)
 
 (defcustom vmpc-default-profile "default"
   "*The default profile to select if no profile was found."
