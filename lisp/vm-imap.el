@@ -4392,8 +4392,9 @@ documentation for `vm-spool-files'."
 	  (vm-imap-create-mailbox process mailbox t)
 	  (vm-inform 5 "Folder %s created" folder-display)
 	  ;; invalidate the folder-cache
-	  (vm-delete (lambda (a) (equal (car a) account))
-		     vm-imap-account-folder-cache))
+	  (setq vm-imap-account-folder-cache
+		(vm-delete (lambda (a) (equal (car a) account))
+			   vm-imap-account-folder-cache)))
       ;; unwind-protections
       (when (and (processp process)
 		 (memq (process-status process) '(open run)))
@@ -4443,8 +4444,9 @@ documentation for `vm-spool-files'."
 	  (vm-imap-delete-mailbox process mailbox)
 	  (vm-inform 5 "Folder %s deleted" folder-display)
 	  ;; invalidate the folder-cache
-	  (vm-delete (lambda (a) (equal (car a) account))
-		     vm-imap-account-folder-cache))
+	  (setq vm-imap-account-folder-cache
+		(vm-delete (lambda (a) (equal (car a) account))
+			   vm-imap-account-folder-cache)))
       ;; unwind-protections
       (when (and (processp process)
 		 (memq (process-status process) '(open run)))
@@ -4504,8 +4506,9 @@ documentation for `vm-spool-files'."
 		     (or (vm-imap-folder-for-spec dest)
 			 (vm-safe-imapdrop-string dest)))
 	  ;; invalidate the folder-cache
-	  (vm-delete (lambda (a) (equal (car a) account))
-		     vm-imap-account-folder-cache))
+	  (setq vm-imap-account-folder-cache
+		(vm-delete (lambda (a) (equal (car a) account))
+			   vm-imap-account-folder-cache)))
       ;;-------------------
       (vm-buffer-type:exit)
       ;;-------------------
