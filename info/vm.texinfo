@@ -1898,11 +1898,13 @@ VM will consider to be a page delimiter.
 @findex vm-mark-message-unread
 @kindex U
 @kindex .
+@vindex vm-move-after-reading
 You can ``unread'' a message (so to speak) by typing @kbd{U}
 (@code{vm-unread-message}, also called @code{vm-mark-message-unread}).
-The current message will be marked unread.  Conversely, you can mark
-an unread message as read by typing @kbd{.}
-(@code{vm-mark-message-read}).
+The current message will be marked unread.  Conversely, you can mark an
+unread message as read by typing @kbd{.}  (@code{vm-mark-message-read}).
+Setting the variable @code{vm-move-after-reading} will cause vm to move
+to the next undeleted message after marking the current message as read.
 
 @findex vm-toggle-flag-message
 @kindex !

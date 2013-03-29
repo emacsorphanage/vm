@@ -3253,18 +3253,24 @@ enabled via `vm-enable-thread-operations' then all messages in the
 thread are affected."
   (interactive "p")
   (or count (setq count 1))
-  (vm-follow-summary-cursor)
-  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
-  (let ((mlist (vm-select-operable-messages
-		count (vm-interactive-p) "Mark as read")))
-    (while mlist
-      (when (or (vm-unread-flag (car mlist))
-		(vm-new-flag (car mlist)))
+  (let ((used-marks (eq last-command 'vm-next-command-uses-marks))
+        (del-count 0))
+    (vm-follow-summary-cursor)
+    (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
+    (let ((mlist (vm-select-operable-messages
+		  count (vm-interactive-p) "Mark as read")))
+      (while mlist
+	(when (or (vm-unread-flag (car mlist))
+		  (vm-new-flag (car mlist)))
 	  (vm-set-unread-flag (car mlist) nil)
 	  (vm-set-new-flag (car mlist) nil))
-      (setq mlist (cdr mlist))))
-  (vm-display nil nil '(vm-mark-message-read) '(vm-mark-message-read))
-  (vm-update-summary-and-mode-line))
+	(setq mlist (cdr mlist))))
+    (vm-display nil nil '(vm-mark-message-read) '(vm-mark-message-read))
+    (vm-update-summary-and-mode-line)
+    (when (and vm-move-after-reading (not used-marks))
+      (let ((vm-circular-folders (and vm-circular-folders
+				      (eq vm-move-after-reading t))))
+	(vm-next-message count t executing-kbd-macro)))))
 (defalias 'vm-flag-message-read 'vm-mark-message-read)
 (make-obsolete 'vm-flag-message-read 
 	       'vm-mark-message-read "8.2.0")
