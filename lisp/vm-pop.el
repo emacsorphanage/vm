@@ -496,118 +496,118 @@ Returns the process or nil if the session could not be created."
       (error "No password in POP maildrop specification, \"%s\"" source))
     (when (equal pass "*")
       (setq pass (vm-pop-get-password 
-		  popdrop source-nopwd user host port interactive))
-      ;; get the trace buffer
-      (setq pop-buffer
-	    (vm-make-work-buffer 
-	     (vm-make-trace-buffer-name session-name host)))
-      (unwind-protect
-	  (catch 'end-of-session
-	    (save-excursion     	; = save-current-buffer? 
-	      (set-buffer pop-buffer)
-	      (setq vm-folder-type (or folder-type vm-default-folder-type))
-	      (buffer-disable-undo pop-buffer)
-	      (make-local-variable 'vm-pop-read-point)
-	      ;; clear the trace buffer of old output
-	      (erase-buffer)
-	      ;; Tell MULE not to mess with the text.
-	      (when (fboundp 'set-buffer-file-coding-system)
-		(set-buffer-file-coding-system (vm-binary-coding-system) t))
-	      (insert "starting " session-name
-		      " session " (current-time-string) "\n")
-	      (insert (format "connecting to %s:%s\n" host port))
-	      ;; open the connection to the server
-	      (condition-case err
-		  (with-timeout 
-		      ((or vm-pop-server-timeout 1000)
-		       (error (format "Timed out opening connection to %s"
-				      host)))
-		    (cond (use-ssl
-			   (if (null vm-stunnel-program)
-			       (setq process 
-				     (open-network-stream session-name
-							  pop-buffer
-							  host port
-							  :type 'tls))
-			     (vm-setup-stunnel-random-data-if-needed)
-			     (setq process
-				   (apply 'start-process session-name pop-buffer
-					  vm-stunnel-program
-					  (nconc (vm-stunnel-configuration-args host
-										port)
-						 vm-stunnel-program-switches)))))
-			  (use-ssh
-			   (setq process (open-network-stream
-					  session-name pop-buffer
-					  "127.0.0.1"
-					  (vm-setup-ssh-tunnel host port))))
-			  (t
-			   (setq process (open-network-stream session-name
-							      pop-buffer
-							      host port)))))
-		(error	
-		 (vm-warn 0 1 "%s" (error-message-string err))
-		 (setq shutdown t)
-		 (throw 'end-of-session nil)))
-	      (and (null process) (throw 'end-of-session nil))
-	      (setq shutdown t)
-	      (setq vm-pop-read-point (point))
-	      (vm-process-kill-without-query process)
-	      (when (null (setq greeting (vm-pop-read-response process t)))
-		(delete-process process)
-		(throw 'end-of-session nil))
-	      ;; authentication
-	      (cond ((equal auth "pass")
-		     (vm-pop-send-command process (format "USER %s" user))
-		     (and (null (vm-pop-read-response process))
-			  (throw 'end-of-session nil))
-		     (vm-pop-send-command process (format "PASS %s" pass))
-		     (unless (vm-pop-read-response process)
+		  popdrop source-nopwd user host port interactive)))
+    ;; get the trace buffer
+    (setq pop-buffer
+	  (vm-make-work-buffer 
+	   (vm-make-trace-buffer-name session-name host)))
+    (unwind-protect
+	(catch 'end-of-session
+	  (save-excursion		; = save-current-buffer? 
+	    (set-buffer pop-buffer)
+	    (setq vm-folder-type (or folder-type vm-default-folder-type))
+	    (buffer-disable-undo pop-buffer)
+	    (make-local-variable 'vm-pop-read-point)
+	    ;; clear the trace buffer of old output
+	    (erase-buffer)
+	    ;; Tell MULE not to mess with the text.
+	    (when (fboundp 'set-buffer-file-coding-system)
+	      (set-buffer-file-coding-system (vm-binary-coding-system) t))
+	    (insert "starting " session-name
+		    " session " (current-time-string) "\n")
+	    (insert (format "connecting to %s:%s\n" host port))
+	    ;; open the connection to the server
+	    (condition-case err
+		(with-timeout 
+		    ((or vm-pop-server-timeout 1000)
+		     (error (format "Timed out opening connection to %s"
+				    host)))
+		  (cond (use-ssl
+			 (if (null vm-stunnel-program)
+			     (setq process 
+				   (open-network-stream session-name
+							pop-buffer
+							host port
+							:type 'tls))
+			   (vm-setup-stunnel-random-data-if-needed)
+			   (setq process
+				 (apply 'start-process session-name pop-buffer
+					vm-stunnel-program
+					(nconc (vm-stunnel-configuration-args host
+									      port)
+					       vm-stunnel-program-switches)))))
+			(use-ssh
+			 (setq process (open-network-stream
+					session-name pop-buffer
+					"127.0.0.1"
+					(vm-setup-ssh-tunnel host port))))
+			(t
+			 (setq process (open-network-stream session-name
+							    pop-buffer
+							    host port)))))
+	      (error	
+	       (vm-warn 0 1 "%s" (error-message-string err))
+	       (setq shutdown t)
+	       (throw 'end-of-session nil)))
+	    (and (null process) (throw 'end-of-session nil))
+	    (setq shutdown t)
+	    (setq vm-pop-read-point (point))
+	    (vm-process-kill-without-query process)
+	    (when (null (setq greeting (vm-pop-read-response process t)))
+	      (delete-process process)
+	      (throw 'end-of-session nil))
+	    ;; authentication
+	    (cond ((equal auth "pass")
+		   (vm-pop-send-command process (format "USER %s" user))
+		   (and (null (vm-pop-read-response process))
+			(throw 'end-of-session nil))
+		   (vm-pop-send-command process (format "PASS %s" pass))
+		   (unless (vm-pop-read-response process)
 
-		       (vm-warn 0 0 "POP login failed for %s" popdrop)
-		       (vm-pop-forget-password source-nopwd host port)
-		       ;; don't sleep unless we're running synchronously.
-		       (when vm-pop-ok-to-ask
+		     (vm-warn 0 0 "POP login failed for %s" popdrop)
+		     (vm-pop-forget-password source-nopwd host port)
+		     ;; don't sleep unless we're running synchronously.
+		     (when vm-pop-ok-to-ask
+		       (sleep-for 2))
+		     (throw 'end-of-session nil))
+		   (unless (assoc source-nopwd vm-pop-passwords)
+		     (setq vm-pop-passwords (cons (list source-nopwd pass)
+						  vm-pop-passwords)))
+		   (setq success t))
+		  ((equal auth "rpop")
+		   (vm-pop-send-command process (format "USER %s" user))
+		   (when (null (vm-pop-read-response process))
+		     (throw 'end-of-session nil))
+		   (vm-pop-send-command process (format "RPOP %s" pass))
+		   (when (null (vm-pop-read-response process))
+		     (throw 'end-of-session nil)))
+		  ((equal auth "apop")
+		   (setq timestamp (vm-parse greeting "[^<]+\\(<[^>]+>\\)")
+			 timestamp (car timestamp))
+		   (when (null timestamp)
+		     (goto-char (point-max))
+		     (insert-before-markers "<<< ooops, no timestamp found in greeting! >>>\n")
+		     (vm-warn 0 0 "Server of %s does not support APOP" popdrop)
+		     ;; don't sleep unless we're running synchronously
+		     (if vm-pop-ok-to-ask
 			 (sleep-for 2))
-		       (throw 'end-of-session nil))
-		     (unless (assoc source-nopwd vm-pop-passwords)
-		       (setq vm-pop-passwords (cons (list source-nopwd pass)
-						    vm-pop-passwords)))
-		     (setq success t))
-		    ((equal auth "rpop")
-		     (vm-pop-send-command process (format "USER %s" user))
-		     (when (null (vm-pop-read-response process))
-		       (throw 'end-of-session nil))
-		     (vm-pop-send-command process (format "RPOP %s" pass))
-		     (when (null (vm-pop-read-response process))
-		       (throw 'end-of-session nil)))
-		    ((equal auth "apop")
-		     (setq timestamp (vm-parse greeting "[^<]+\\(<[^>]+>\\)")
-			   timestamp (car timestamp))
-		     (when (null timestamp)
-		       (goto-char (point-max))
-		       (insert-before-markers "<<< ooops, no timestamp found in greeting! >>>\n")
-		       (vm-warn 0 0 "Server of %s does not support APOP" popdrop)
-		       ;; don't sleep unless we're running synchronously
-		       (if vm-pop-ok-to-ask
-			   (sleep-for 2))
-		       (throw 'end-of-session nil))
-		     (vm-pop-send-command
-		      process
-		      (format "APOP %s %s"
-			      user
-			      (vm-pop-md5 (concat timestamp pass))))
-		     (unless (vm-pop-read-response process)
-		       (vm-warn 0 0 "POP login failed for %s" popdrop)
-		       (when vm-pop-ok-to-ask
-			 (sleep-for 2))
-		       (throw 'end-of-session nil))
-		     (unless (assoc source-nopwd vm-pop-passwords)
-		       (setq vm-pop-passwords (cons (list source-nopwd pass)
-						    vm-pop-passwords)))
-		     (setq success t))
-		    (t (error "Don't know how to authenticate using %s" auth)))
-	      (setq shutdown nil) )))
+		     (throw 'end-of-session nil))
+		   (vm-pop-send-command
+		    process
+		    (format "APOP %s %s"
+			    user
+			    (vm-pop-md5 (concat timestamp pass))))
+		   (unless (vm-pop-read-response process)
+		     (vm-warn 0 0 "POP login failed for %s" popdrop)
+		     (when vm-pop-ok-to-ask
+		       (sleep-for 2))
+		     (throw 'end-of-session nil))
+		   (unless (assoc source-nopwd vm-pop-passwords)
+		     (setq vm-pop-passwords (cons (list source-nopwd pass)
+						  vm-pop-passwords)))
+		   (setq success t))
+		  (t (error "Don't know how to authenticate using %s" auth)))
+	    (setq shutdown nil) ))
       ;; unwind-protection
       (when shutdown
 	(vm-pop-end-session process t))
