@@ -433,7 +433,8 @@ relevant POP servers to remove the messages."
 (defun vm-pop-make-session (source interactive &optional retry)
   "Create a new POP session for the POP mail box SOURCE.
 The argument INTERACTIVE says the operation has been invoked
-interactively.  Optional argument RETRY says whether this call is for a
+interactively.  The possible values are t, 'password-only and nil.
+Optional argument RETRY says whether this call is for a
 retry.
 
 Returns the process or nil if the session could not be created." 
@@ -495,7 +496,7 @@ Returns the process or nil if the session could not be created."
       (error "No password in POP maildrop specification, \"%s\"" source))
     (when (equal pass "*")
       (setq pass (vm-pop-get-password 
-		  popdrop source-nopwd user host port vm-pop-ok-to-ask))
+		  popdrop source-nopwd user host port interactive))
       ;; get the trace buffer
       (setq pop-buffer
 	    (vm-make-work-buffer 
@@ -619,9 +620,9 @@ Returns the process or nil if the session could not be created."
 	(let ((auth-sources nil))
 	  (vm-pop-make-session source interactive t))))))
 
-(defun vm-pop-get-password (popdrop source user host port interactive)
+(defun vm-pop-get-password (popdrop source user host port ask-password)
   "Return the password for POPDROP at server SOURCE.  It corresponds
-to the USER login at HOST and PORT.  INTERACTIVE says whether
+to the USER login at HOST and PORT.  ASK-PASSWORD says whether
 passwords can be queried interactively."
   (let ((pass (car (cdr (assoc source vm-pop-passwords))))
 	authinfo)
@@ -641,7 +642,7 @@ passwords can be queried interactively."
 			 host port))
 		  (equal user (car authinfo)))
 	     (setq pass (cadr authinfo)))))
-    (while (and (null pass) interactive)
+    (while (and (null pass) ask-password)
       (setq pass
 	    (read-passwd
 	     (format "POP password for %s: " popdrop)))
@@ -1030,7 +1031,8 @@ popdrop
 
 (defun vm-establish-new-folder-pop-session (&optional interactive)
   (let ((process (vm-folder-pop-process))
-	(vm-pop-ok-to-ask interactive))
+	;; (vm-pop-ok-to-ask (eq interactive t))
+	)
     (if (processp process)
 	(vm-pop-end-session process))
     (setq process 
@@ -1134,8 +1136,8 @@ LOCAL-EXPUNGE-LIST: A list of message descriptors for messages in the
 				   (do-local-expunges nil)
 				   (do-retrieves nil))
   "Synchronize POP folder with the server.
-   INTERACTIVE, true if the function was invoked interactively, e.g., as
-   vm-get-spooled-mail.
+   INTERACTIVE says the operation has been invoked interactively.  The
+   possible values are t, 'password-only and nil.
    DO-REMOTE-EXPUNGES indicates whether the server mail box should be
    expunged.
    DO-LOCAL-EXPUNGES indicates whether the cache buffer should be

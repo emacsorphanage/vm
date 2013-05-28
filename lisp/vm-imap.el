@@ -1083,7 +1083,7 @@ of the current folder, or nil if none has been recorded."
 ;;
 ;; -- Functions to handle the interaction with the IMAP server
 ;;
-;; vm-imap-make-session: (folder &optional bool string) -> process
+;; vm-imap-make-session: (folder &optional interactive string) -> process
 ;; vm-imap-end-session: (process &optional buffer) -> void
 ;; vm-imap-check-connection: process -> void
 ;;
@@ -1153,7 +1153,8 @@ of the current folder, or nil if none has been recorded."
 (defun vm-imap-make-session (source interactive &optional purpose retry)
   "Create a new IMAP session for the IMAP mail box SOURCE, attached to
 the current folder.
-INTERACTIVE says the operation has been invoked interactively,
+INTERACTIVE says the operation has been invoked interactively.  The
+possible values are t, 'password-only and nil.
 and the optional argument PURPOSE is inserted in the process
 buffer for tracing purposes.  Optional argument RETRY says
 whether this call is a retry.
@@ -1294,7 +1295,7 @@ Returns the process or nil if the session could not be created."
 		(vm-inform 0 "IMAP login failed for %s" folder)
 		(vm-imap-forget-password source-nopwd-nombox host port)
 		;; don't sleep unless we're running synchronously.
-		(if vm-imap-ok-to-ask
+		(if vm-imap-ok-to-ask	; (eq interactive t) ?
 		    (sleep-for 2))
 		(throw 'end-of-session nil))
 	      (unless (assoc source-nopwd-nombox vm-imap-passwords)
@@ -1339,7 +1340,7 @@ Returns the process or nil if the session could not be created."
 		(unless (vm-imap-read-ok-response process)
 		  (vm-inform 0 "IMAP password for %s incorrect" folder)
 		  ;; don't sleep unless we're running synchronously.
-		  (if vm-imap-ok-to-ask
+		  (if vm-imap-ok-to-ask	; (eq interactive t)?
 		      (sleep-for 2))
 		  (throw 'end-of-session nil))
 		(setq success t)
@@ -1353,7 +1354,7 @@ Returns the process or nil if the session could not be created."
 	      (unless (eq greeting 'preauth)
 		(vm-inform 0 "IMAP session was not pre-authenticated")
 		;; don't sleep unless we're running synchronously.
-		(if vm-imap-ok-to-ask
+		(if vm-imap-ok-to-ask	; (eq interactive t)?
 		    (sleep-for 2))
 		(throw 'end-of-session nil))
 	      (setq success t)
@@ -1379,12 +1380,12 @@ Returns the process or nil if the session could not be created."
 	(let ((auth-sources nil))
 	  (vm-imap-make-session source interactive purpose t))))))
 
-(defun vm-imap-get-password (folder source user host port interactive purpose)
+(defun vm-imap-get-password (folder source user host port ask-password purpose)
   "Get the password for the IMAP FOLDER at the server SOURCE.  The
 additional arguments USER, HOST and PORT are also passed in for
 convenience.  The password is obtained from VM's internal password
 cache, the auth-source package or by interactively querying the user.  
-The argument INTERACTIVE says whether the interactive querying should
+The argument ASK-PASSWORD says whether the interactive querying should
 be done.  The argument PURPOSE is a string displayed to the user in
 case of errors."
   (let ((pass (car (cdr (assoc source vm-imap-passwords))))
@@ -1405,7 +1406,7 @@ case of errors."
 			 host port))
 		  (equal user (car authinfo)))
 	     (setq pass (cadr authinfo)))))
-    (while (and (null pass) interactive)
+    (while (and (null pass) ask-password)
       (setq pass
 	    (read-passwd (format "IMAP password for %s: " folder)))
       (when (equal pass "")
@@ -2591,7 +2592,7 @@ IMAP process or nil if unsuccessful."
   ;; which we don't know how to deal with.
 
   (let (process 
-	(vm-imap-ok-to-ask interactive)
+	(vm-imap-ok-to-ask (eq interactive t))
 	mailbox select mailbox-count recent-count uid-validity permanent-flags
 	read-write can-delete body-peek)
     (if (vm-folder-imap-process)
@@ -2674,7 +2675,7 @@ new one.  Returns the IMAP process or nil if unsuccessful."
 Optional argument PURPOSE is inserted into the process buffer for
 tracing purposes. Returns the IMAP process or nil if unsuccessful."
   (let (process 
-	(vm-imap-ok-to-ask interactive)
+	(vm-imap-ok-to-ask (eq interactive t))
 	mailbox select mailbox-count recent-count uid-validity permanent-flags
 	read-write can-delete body-peek)
     (vm-imap-log-token 'new)
@@ -3215,7 +3216,7 @@ operation of the server to minimize I/O."
 ;; top-level operations
 ;; vm-fetch-imap-message: (vm-message) -> void
 ;; vm-imap-synchronize-folder:
-;;	(&optional :interactive bool & 
+;;	(&optional :interactive interactive & 
 ;;                 :do-remote-expunges nil|t|'all & 
 ;;                 :do-local-expunges bool & 
 ;;                 :do-retrieves bool &
@@ -3328,8 +3329,9 @@ messages previously retrieved are ignored."
 				    (save-attributes nil)
 				    (retrieve-attributes nil))
   "Synchronize IMAP folder with the server.
-   INTERACTIVE, true if the function was invoked interactively, e.g., as
-   vm-get-spooled-mail.
+   INTERACTIVE says whether the function was invoked interactively,
+   e.g., as vm-get-spooled-mail.  The possible values are t,
+   'password-only and nil.
    DO-REMOTE-EXPUNGES indicates whether the server mail box should be
    expunged.  If it is 'all, then all messages not present in the cache folder
    are expunged.
@@ -3429,7 +3431,7 @@ messages previously retrieved are ignored."
 	(vm-inform 6 "%s: Expunging messages in cache... "
 		   folder-name)
 	(vm-expunge-folder :quiet t :just-these-messages local-expunge-list)
-	(if (and interactive stale-list)
+	(if (and (eq interactive t) stale-list)
 	    (if (y-or-n-p 
 		 (format 
 		  "%s: Found %s messages with invalid UIDs.  Expunge them? "

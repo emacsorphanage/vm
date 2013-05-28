@@ -4401,6 +4401,10 @@ Same as \\[vm-recover-folder]."
 	mail-waiting ))))
 
 (defun vm-get-spooled-mail (&optional interactive)
+  "Get new mail for the current folder from its spool file.
+The optional argument INTERACTIVE says whether the function can make
+interactive queries to the user.  The possible values are t,
+'password-only and nil."
   (if vm-block-new-mail
       (error "Can't get new mail until you save this folder."))
   (cond ((eq vm-folder-access-method 'pop)

@@ -7033,6 +7033,9 @@ for POP/IMAP accounts, which is insecure."
 
 ;; to make the tanjed compiler shut up
 (defvar vm-pop-read-point nil)
+;; Variable indicating whether POP session handling functions can ask
+;; questions to the user, typically if they are run from interactive
+;; commands. 
 (defvar vm-pop-ok-to-ask nil)
 (defvar vm-pop-passwords nil)
 ;; Keep a list of messages retrieved from the POP maildrops
