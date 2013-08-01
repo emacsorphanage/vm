@@ -1443,7 +1443,7 @@ DEFAULT-TRANSFER-ENCODING, unless specified, is assumed to be 7bit.
       (vm-mime-parse-entity m :default-type default-type 
 			    :default-encoding default-encoding 
 			    :passing-message-only passing-message-only)
-    (vm-mime-error
+    (error
      (vm-inform 0 "%s" (car (cdr error-data)))
      ;; don't sleep, no one cares about MIME syntax errors
      ;;     (sleep-for 2)
