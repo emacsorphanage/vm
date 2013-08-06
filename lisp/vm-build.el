@@ -56,6 +56,8 @@
 ;; Preload these to get macros right 
 (require 'cl)
 (require 'sendmail)
+(when (featurep 'xemacs)
+  (require 'timer-funcs))
 
 ;; now add VM source dirs to load-path and preload some
 (setq load-path (append '("." "./lisp") load-path))
