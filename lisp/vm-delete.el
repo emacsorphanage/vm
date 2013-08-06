@@ -301,13 +301,14 @@ unmarked messages are not considerd for deletion."
     (if used-marks
 	(let ((vm-enable-thread-operations nil))
 	  (setq mp (vm-select-operable-messages 0))))
+    ;; Flag duplicate copies of messages for deletion
     (while mp
       (cond ((vm-deleted-flag (car mp))
-	     ;; ignore deleted messages
+	     ;; ignore messages already flagged for deletion
 	     )
 	    ((and (eq vm-folder-access-method 'imap)
 		  (member "stale" (vm-labels-of (car mp))))
-	     ;; ignore stale messages
+	     ;; ignore messages with the `stale' label
 	     )
             (t
              (setq mid (vm-su-message-id (car mp)))

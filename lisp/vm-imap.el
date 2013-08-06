@@ -3618,7 +3618,8 @@ headers-only form."
 		     vm-imap-messages-to-expunge))
 	      (setq uids-to-delete (delete nil uids-to-delete))
 	      (unless (equal expunge-count (length uids-to-delete))
-		(vm-warn 3 2 "%s stale deleted messages are ignored"
+		(vm-warn 3 2 
+			 "%s deleted messages with invalid UID's were ignored"
 			 (- expunge-count (length uids-to-delete))))
 	      ;; m-list to have the uid's and message sequence
 	      ;; numbers of messages to be expunged, in descending

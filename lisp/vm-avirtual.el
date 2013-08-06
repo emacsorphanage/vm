@@ -351,11 +351,6 @@ given SELECTOR."
   (setq m (vm-real-message-of m))
   (string-match regexp (buffer-name (marker-buffer (vm-start-of m)))))
 
-(defun vm-vs-eval (&rest selectors)
-  "Virtual selector to evaluate the given SELECTOR as a Lisp expression."
-  (let ((vm-virtual-message (car selectors)))
-    (eval (cadr selectors))))
-
 (defun vm-vs-vm-mode (&rest selectors)
   (if (not (equal major-mode 'mail-mode))
       (apply 'vm-vs-or selectors)

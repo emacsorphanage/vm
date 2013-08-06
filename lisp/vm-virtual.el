@@ -799,6 +799,13 @@ given SELECTOR."
 of other selectors."
   (vm-vs-and m expression))
 
+(defun vm-vs-eval (&rest selectors)
+  "Virtual selector to check if a message satisfies a condition given
+by a Lisp EXPRESSION.  The EXPRESSION should use the variable
+`vm-virtual-message' to refer to the message being checked."
+  (let ((vm-virtual-message (car selectors)))
+    (eval (cadr selectors))))
+
 (defun vm-vs-any (m) 
   "Virtual selector that always selects any message."
   t)
