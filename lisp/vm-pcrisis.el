@@ -1281,20 +1281,30 @@ haven't yet been checked when this one is checked."
   (member condition vmpc-true-conditions))
 
 (defun vmpc-folder-match (regexp)
-  "Return true if the current folder name matches REGEXP."
-  (string-match regexp (buffer-name)))
+  "Return true if the the folder name of the current message matches
+REGEXP.  If the message is in a virtual folder, the folder of the
+underlying real message is used."
+  (let* ((m (vm-current-message))
+	 (real-m (vm-real-message-of m)))
+    (with-current-buffer (vm-buffer-of real-m)
+      (string-match regexp (buffer-name)))))
 
 (defun vmpc-folder-account-match (account-regexp)
-  "Return true if the current folder's POP/IMAP account name matches REGEXP."
-  (let ((account
-	   (cond 
-	    ((eq vm-folder-access-method 'imap)
-	     (vm-imap-account-name-for-spec (vm-folder-imap-maildrop-spec)))
-	    ((eq vm-folder-access-method 'pop)
-	     (vm-pop-find-name-for-spec (vm-folder-pop-maildrop-spec)))
-	    (t "")
-	    )))
-      (string-match account-regexp account)))
+  "Return true if the POP/IMAP account name of the currennt
+message matches REGEXP.  If the message is in a virtual folder,
+the folder of the underlying real message is used."
+  (let* ((m (vm-current-message))
+	 (real-m (vm-real-message-of m)))
+    (with-current-buffer (vm-buffer-of real-m)
+      (let ((account
+	     (cond 
+	      ((eq vm-folder-access-method 'imap)
+	       (vm-imap-account-name-for-spec (vm-folder-imap-maildrop-spec)))
+	      ((eq vm-folder-access-method 'pop)
+	       (vm-pop-find-name-for-spec (vm-folder-pop-maildrop-spec)))
+	      (t "")
+	      )))
+	(string-match account-regexp account)))))
 
 (defun vmpc-header-match (hdrfield regexp &optional clump-sep num)
   "Return true if the contents of specified header HDRFIELD match REGEXP.
