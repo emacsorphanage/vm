@@ -295,10 +295,13 @@ body markers is tolerated."
 	)
     (setq mismatch
 	 (catch 'mismatch
+	   ;; If the two layouts are identical, ok.
 	   (when (equal cached current)
 	     (throw 'mismatch nil))
+	   ;; Otherwise, check if both are vectors first
 	   (unless (and (vectorp cached) (vectorp current))
 	     (throw 'mismatch nil))
+	   ;; Check if the basic fields are equal
 	   (vm-mapc 
 	    (lambda (i)
 	      (unless (equal (aref cached i) (aref current i))
@@ -311,6 +314,7 @@ body markers is tolerated."
 	    '(0 1 2 3 4))		; type through description
 	   ;; ignore disposition and qdisposition because of the hack
 	   ;; in vm-mime-frob-image-xxxx
+	   ;; Check if the markers are equal
 	   (unless external-body
 	     (vm-mapc
 	      (lambda (i)
@@ -318,6 +322,7 @@ body markers is tolerated."
 			       (marker-position (aref current i)))
 		  (throw 'mismatch i)))
 	      '(7 9 10)))	  ; header-start, body-start, body-end
+	   ;; Check if the subparts are equal
 	   (vm-mapc 
 	    (lambda (part1 part2)
 	      (unless (vm-mime-verify-cached-layout 
@@ -327,11 +332,20 @@ body markers is tolerated."
 	    (vm-mm-layout-parts cached)
 	    (vm-mm-layout-parts current))
 	   nil))
-    (when (and vm-debug mismatch)
-      (debug 'vm-mime-verify-cached-layout
-	     (aref vm-mime-layout-fields mismatch)
-	     (aref cached mismatch) (aref current mismatch)))
-    (null mismatch)))
+    (if (not mismatch)
+	t
+      ;; If we found a mismatch...
+      (if (and (equal (aref vm-mime-layout-fields mismatch) ':type)
+	       (equal (car (aref current mismatch))
+		      "application/octet-stream"))
+	  ;; Mismatch for application/octet-stream.  Ignore it.
+	  t
+	(when vm-debug
+	  (debug 'vm-mime-verify-cached-layout
+		 (aref vm-mime-layout-fields mismatch)
+		 (aref cached mismatch) (aref current mismatch)))
+	nil))
+    ))
 
 (defun vm-mm-layout-type (e) (aref e 0))
 (defun vm-mm-layout-qtype (e) (aref e 1))
