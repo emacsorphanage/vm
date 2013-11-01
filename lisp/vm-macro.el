@@ -90,7 +90,8 @@ isn't a folder buffer.  USR, 2010-03-08"
 	 (or (buffer-name vm-mail-buffer)
 	     (error "Folder buffer has been killed."))
 	 (set-buffer vm-mail-buffer))
-	((not (memq major-mode '(vm-mode vm-virtual-mode)))
+	((not (or (eq major-mode 'vm-mode)
+		  (eq major-mode 'vm-virtual-mode)))
 	 (error "No VM folder buffer associated with this buffer")))
   ;;--------------------------
   ;; This may be problematic - done in revno 570.
@@ -112,7 +113,8 @@ isn't a folder buffer.  USR, 2010-03-08"
 	 ;; (vm-buffer-type:set 'folder)
 	 ;;--------------------------
 	 )
-	((memq major-mode '(vm-mode vm-virtual-mode))
+	((or (eq major-mode 'vm-mode)
+	     (eq major-mode 'vm-virtual-mode))
 	 ;;--------------------------
 	 ;; This may be problematic - done in revno 570.
 	 ;; (vm-buffer-type:set 'folder)
@@ -135,7 +137,8 @@ current-buffer in `vm-user-interaction-buffer'."
 	 (or (buffer-name vm-mail-buffer)
 	     (error "Folder buffer has been killed."))
 	 (set-buffer vm-mail-buffer))
-	((not (memq major-mode '(vm-mode vm-virtual-mode)))
+	((not (or (eq major-mode 'vm-mode)
+		  (eq major-mode 'vm-virtual-mode)))
 	 (error "No VM folder buffer associated with this buffer")))
   ;;--------------------------
   ;; This may be problematic - done in revno 570.
@@ -155,6 +158,12 @@ current-buffer in `vm-user-interaction-buffer'."
 (defsubst vm-error-if-virtual-folder ()
   (and (eq major-mode 'vm-virtual-mode)
        (error "%s cannot be applied to virtual folders." this-command)))
+
+(defsubst vm-buffer-p ()
+  (or (eq major-mode 'vm-mode)
+      (eq major-mode 'vm-presentation-mode)
+      (eq major-mode 'vm-virtual-mode)
+      (eq major-mode 'vm-summary-mode)))
 
 (defsubst vm-summary-operation-p ()
   (and vm-summary-buffer
