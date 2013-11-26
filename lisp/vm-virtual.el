@@ -44,11 +44,14 @@
 (declare-function vm-visit-folder "vm" 
 		  (folder &optional read-only &key interactive just-visit))
 (declare-function vm-visit-virtual-folder "vm"
-		  (folder &optional read-only bookmark summary-format))
+		  (folder &optional read-only bookmark summary-format
+			  default-directory)) 
 (declare-function vm-visit-virtual-folder-other-window "vm"
-		  (folder &optional read-only bookmark summary-format))
+		  (folder &optional read-only bookmark summary-format
+			  default-directory))
 (declare-function vm-visit-virtual-folder-other-frame "vm"
-		  (folder &optional read-only bookmark summary-format))
+		  (folder &optional read-only bookmark summary-format
+			  default-directory))
 (declare-function vm-mode "vm" 
 		  (&optional read-only))
 (declare-function vm-get-folder-buffer "vm"
@@ -336,7 +339,8 @@ Prefix arg means the new virtual folder should be visited read only."
 	(setq clause (list 'and '(marked) clause)))
     (setq vm-virtual-folder-alist
 	  `(( ,name (((get-buffer ,(buffer-name))) ,clause))))
-    (vm-visit-virtual-folder name read-only bookmark parent-summary-format))
+    (vm-visit-virtual-folder name read-only bookmark 
+			     parent-summary-format default-directory))
   ;; have to do this again here because the known virtual
   ;; folder menu is now hosed because we installed it while
   ;; vm-virtual-folder-alist was bound to the temp value above
@@ -379,7 +383,7 @@ Prefix arg means the new virtual folder should be visited read only."
     (setq vm-virtual-folder-alist
 	  `(( ,name (((get-buffer ,(buffer-name))) ,clause))))
     (vm-visit-virtual-folder-other-frame
-     name read-only bookmark parent-summary-format))
+     name read-only bookmark parent-summary-format default-directory))
   ;; have to do this again here because the known virtual
   ;; folder menu is now hosed because we installed it while
   ;; vm-virtual-folder-alist was bound to the temp value above
@@ -423,7 +427,7 @@ Prefix arg means the new virtual folder should be visited read only."
     (setq vm-virtual-folder-alist
 	  `(( ,name (((get-buffer ,(buffer-name))) ,clause))))
     (vm-visit-virtual-folder-other-window
-     name read-only bookmark parent-summary-format))
+     name read-only bookmark parent-summary-format default-directory))
   ;; have to do this again here because the known virtual
   ;; folder menu is now hosed because we installed it while
   ;; vm-virtual-folder-alist was bound to the temp value above
@@ -469,7 +473,8 @@ Prefix arg means the new virtual folder should be visited read only."
 	(setq clause (list 'and '(marked) clause)))
     (setq vm-virtual-folder-alist
 	  `(( ,name (((get-buffer ,(buffer-name))) ,clause))))
-    (vm-visit-virtual-folder name read-only bookmark parent-summary-format))
+    (vm-visit-virtual-folder name read-only bookmark
+			     parent-summary-format default-directory))
   ;; have to do this again here because the known virtual
   ;; folder menu is now hosed because we installed it while
   ;; vm-virtual-folder-alist was bound to the temp value above
@@ -514,7 +519,8 @@ Prefix arg means the new virtual folder should be visited read only."
 		     (buffer-name) (car vfolder)))
     (setq vm-virtual-folder-alist (list vfolder))
     ;; FIXME should the bookmark here be nil?
-    (vm-visit-virtual-folder (car vfolder) read-only nil parent-summary-format))
+    (vm-visit-virtual-folder (car vfolder) read-only 
+			     nil parent-summary-format default-directory))
   ;; have to do this again here because the "known virtual
   ;; folder" menu is now hosed because we installed it while
   ;; vm-virtual-folder-alist was bound to the temp value above

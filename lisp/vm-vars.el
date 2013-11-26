@@ -2947,6 +2947,23 @@ of recognized SELECTORs.
 	    (group (repeat :tag "Folder List" string)
 		   (sexp :tag "Selectors"))))))
 
+(defcustom vm-virtual-default-directory nil
+  "*Default-directory to be used for virtual folders other than search
+folders.  Since virtual folders do not visit files, the
+`default-directory' for the buffers of the virtual folder will be
+whatever is the `default-directory' when the virtual folder is
+visited.  To override that, you can set this variable.  The directory
+where your VM folders are normally stored would be a good choice.
+
+This only affects the virtual folders created using
+`vm-visit-virtual-folder'.  Search folders always inherit the
+`default-directory' of their parent folders."
+  :group 'vm-virtual
+  :type '(choice
+	  (const :tag "none" nil)
+	  (string :tag "Directory path name")
+	  ))
+
 (defcustom vm-virtual-mirror t
   "*Non-nil value causes the attributes of messages in virtual folders
 to mirror the changes in the attributes of the underlying real messages.

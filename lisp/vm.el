@@ -1010,13 +1010,15 @@ will not do anything.  The entry point to vm-virtual-mode is
 
 ;;;###autoload
 (defun vm-visit-virtual-folder (folder-name 
-				&optional read-only bookmark summary-format)
+				&optional read-only bookmark
+				summary-format directory)
   "Visit the virtual folder FOLDER-NAME.  With a prefix argument,
 visit it in read-only mode.
 
 When called in Lisp code, additional optional arguments BOOKMARK and
 SUMMARY-FORMAT specify the message where the pointer should be and the
-summary format to use."
+summary format to use.  DIRECTORY is the default directory for the
+virtual folder buffer."
   (interactive
    (let ((last-command last-command)
 	 (this-command this-command))
@@ -1033,6 +1035,8 @@ summary format to use."
   (let ((buffer-name (concat "(" folder-name ")"))
 	first-time blurb)
     (set-buffer (get-buffer-create buffer-name))
+    (setq default-directory (or directory vm-virtual-default-directory 
+				default-directory))
     (setq first-time (not (eq major-mode 'vm-virtual-mode)))
     (when first-time
       (if (fboundp 'buffer-disable-undo)
@@ -1126,7 +1130,7 @@ summary format to use."
 
 ;;;###autoload
 (defun vm-visit-virtual-folder-other-frame 
-  	(folder-name &optional read-only bookmark summary-format)
+  	(folder-name &optional read-only bookmark summary-format directory)
   "Like `vm-visit-virtual-folder', but run in a newly created frame."
   (interactive
    (let ((last-command last-command)
@@ -1142,13 +1146,15 @@ summary format to use."
       (vm-goto-new-frame 'folder))
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm-visit-virtual-folder folder-name read-only bookmark summary-format))
+    (vm-visit-virtual-folder folder-name read-only bookmark
+			     summary-format directory))
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
 ;;;###autoload
 (defun vm-visit-virtual-folder-other-window 
-  		(folder-name &optional read-only bookmark summary-format)
+  		(folder-name &optional read-only bookmark
+			     summary-format directory)
   "Like `vm-visit-virtual-folder', but run in a different window."
   (interactive
    (let ((last-command last-command)
@@ -1165,7 +1171,8 @@ summary format to use."
   (other-window 1)
   (let ((vm-frame-per-folder nil)
 	(vm-search-other-frames nil))
-    (vm-visit-virtual-folder folder-name read-only bookmark summary-format)))
+    (vm-visit-virtual-folder folder-name read-only bookmark
+			     summary-format directory)))
 
 ;;;###autoload
 (defun vm-mail (&optional to subject)

@@ -28,6 +28,9 @@ VM 8.2.0b1
 
   CHANGES
 
+   * New variable `vm-virtual-default-directory' allows you to set the
+     `default-directory' for virtual folder buffers.
+
    * The default value of `vm-auto-folder-case-fold-search' is now `t',
      which is in line with the manual.
 
