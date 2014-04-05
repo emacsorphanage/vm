@@ -2940,6 +2940,9 @@ recorded in the undo stack."
     (if (not saw-Deleted)		; undelete if the server says so
 	(if (vm-deleted-flag m)
 	    (vm-set-deleted-flag m nil norecord)))
+    (if (not saw-Flagged)		; unflag if the server says so
+	(if (vm-flagged-flag m)
+	    (vm-set-flagged-flag m nil norecord)))
     (setq labels (sort (vm-decoded-labels-of m) 'string-lessp))
     (setq seen-labels (sort seen-labels 'string-lessp))
     (if (equal labels seen-labels)
