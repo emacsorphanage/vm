@@ -2627,6 +2627,7 @@ IMAP process or nil if unsuccessful."
 	(vm-buffer-type:exit)
 	;;-------------------
 	(when (and (vm-folder-imap-uid-validity)
+		   uid-validity
 		   (not (equal (vm-folder-imap-uid-validity) uid-validity)))
 	  (unless (y-or-n-p 
 		   (format
