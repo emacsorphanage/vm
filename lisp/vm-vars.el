@@ -7493,7 +7493,7 @@ information is derived from `vm-mime-mule-charset-to-coding-alist' (which see)."
 (defvar vm-fsfemacs-cached-scroll-bar-width nil)
 (defvar vm-update-composition-buffer-name-timer nil)
 
-(defcustom vm-enable-addons '(check-recipients
+(defcustom vm-enable-addons '(;; check-recipients -- removed on 2014-07-15
                               check-for-empty-subject
                               encode-headers)
   "*A list of addons to enable, t for all and nil to disable all.
@@ -7573,6 +7573,13 @@ cause trouble (abbrev-mode)."
 ;; define this here so that the user can invoke it right away, if needed.
 
 (defun vm-load-init-file (&optional init-only)
+  "Load the VM's initialization files, normally named \".vm\" and
+\".vm.preferences\".  If a prefix argument is given, then only the
+\".vm\" file is loaded (which is useful testing or debugging the
+preferences file).
+
+The file names may be customized via the variables `vm-init-file' and
+`vm-preferences-file'. "
   (interactive "P")
   (when (or (not vm-init-file-loaded) (interactive-p))
     (when vm-init-file

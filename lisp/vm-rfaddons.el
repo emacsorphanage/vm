@@ -591,11 +591,11 @@ Subject header. (Rob F)"
           (setq end (point))
           (if (re-search-backward "^Subject:" (point-min) t)
               (setq start (point))
-            (error "Could not find end of Subject header start"))
+            (error "vm-mail-check-subject-cleanup: Could not find end of Subject header start"))
           (goto-char start)
           (if (not (re-search-forward (regexp-quote vm-reply-subject-prefix)
                                       end t))
-              (error "Cound not find vm-reply-subject-prefix `%s' in header"
+              (error "vm-mail-check-subject-cleanup: Cound not find vm-reply-subject-prefix `%s' in header"
                      vm-reply-subject-prefix)
             (goto-char (match-end 0))
             (skip-chars-backward ": \t")
@@ -1135,7 +1135,7 @@ headers. (Rob F)"
       (setq contents (vm-mail-mode-get-header-contents (car header-list)))
       (if (and contents (string-match "@[^,\"]*@" contents))
           (setq errors (vm-replace-in-string
-                        (format "Missing separator in %s \"%s\"!  "
+                        (format "vm-mail-check-recipients: Missing separator in %s \"%s\"!  "
                                 (car header-list)
                                 (match-string 0 contents))
                         "[\n\t ]+" " ")))
@@ -1157,7 +1157,7 @@ headers. (Rob F)"
     (setq subject (vm-mail-mode-get-header-contents "Subject:"))
     (if (or (not subject) (string-match "^[ \t]*$" subject))
         (if (not vm-mail-prompt-if-subject-empty)
-            (error "Empty subject")
+            (error "Empty subject header")
           (mail-position-on-field "Subject")
           (insert (read-string "Subject: "))))))
 

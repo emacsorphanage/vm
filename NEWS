@@ -28,6 +28,10 @@ VM 8.2.0b1
 
   CHANGES
 
+   * `vm-mail-check-recipients' removed from default `vm-enable-addons'
+     because it does not handle MIME headers.  If you would like to use it,
+     please add it to the variable in the vm-preferences-file.
+
    * New variable `vm-virtual-default-directory' allows you to set the
      `default-directory' for virtual folder buffers.
 
