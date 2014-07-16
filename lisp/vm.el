@@ -253,19 +253,21 @@ deleted messages.  Use `###' to expunge deleted messages."
 	;; escapes.
 	(vm-fsfemacs-nonmule-display-8bit-chars)
 	(vm-mode-internal access-method reload)
-	(if full-startup
-	    (cond ((eq access-method 'pop)
-		   (vm-set-folder-pop-maildrop-spec remote-spec))
-		  ((eq access-method 'imap)
-		   (vm-set-folder-imap-maildrop-spec remote-spec)
-		   (vm-register-folder-garbage 
-		    'vm-kill-folder-imap-session nil)
-		   )))
 
 	(unless (buffer-modified-p) ; if the buffer is modified, the
 				    ; index file may be invalid.
 	  (let ((did-read-index-file (vm-read-index-file-maybe)))
 	    (setq gobble-headers (not did-read-index-file)))))
+
+      (when full-startup	    ; even if vm-mode is already on
+	(cond ((eq access-method 'pop)
+	       (vm-set-folder-pop-maildrop-spec remote-spec))
+	      ((eq access-method 'imap)
+	       (vm-set-folder-imap-maildrop-spec remote-spec)
+	       (vm-register-folder-garbage 
+		'vm-kill-folder-imap-session nil)
+	       )))
+
 
       ;; [9] Parse the messages and headers
 
