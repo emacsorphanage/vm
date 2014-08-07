@@ -452,7 +452,9 @@ Mouse'."
 		;; as the failure criterion and users complained.
 		((equal (nth 7 (file-attributes tempfile)) 0)
 		 (vm-warn 0 0 "%s exited non-zero (code %s)" command status)
-		 t)
+		 (if vm-report-subprocess-errors
+		     (cons status "")
+		   t))
 		(t (save-excursion
 		     (vm-warn 0 0 "%s exited non-zero (code %s)" command status)
 		     (set-buffer (find-file-noselect tempfile))

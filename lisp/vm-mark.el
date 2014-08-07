@@ -481,6 +481,8 @@ not work."
 (defun vm-mark-help ()
   (interactive)
   (vm-display nil nil '(vm-mark-help) '(vm-mark-help))
-  (vm-inform 0 "MM = mark, MU = unmark, Mm = mark all, Mu = unmark all, MN = use marks, ..."))
+  (vm-inform 
+   0 
+   "MM = mark, MU = unmark, Mm = mark all, Mu = unmark all, MN = use marks, ..."))
 
 ;;; vm-mark.el ends here

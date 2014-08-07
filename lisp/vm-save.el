@@ -1019,7 +1019,8 @@ The saved messages are flagged as `filed'."
 		  (vm-imap-copy-message process m mailbox))
 	      (unless process
 		(setq process 
-		      (vm-imap-make-session folder t "save")))
+		      (vm-imap-make-session folder t :purpose "save"
+					    :folder-buffer (current-buffer))))
 	      (if (null process)
 		  (error "Could not connect to the IMAP server"))
 	      (vm-imap-save-message process m mailbox))

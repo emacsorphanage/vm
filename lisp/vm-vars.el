@@ -4011,6 +4011,12 @@ operation."
   :group 'vm-misc
   :type 'integer)
 
+(defcustom vm-report-subprocess-errors t
+  "Boolean flag that controls whether VM should report errors from
+running commands in subprocesses."
+  :group 'vm-misc
+  :type 'boolean)
+
 (defvar vm-current-warning nil
   "Internal variable to keep track of the current warning message
 shown to the user.")

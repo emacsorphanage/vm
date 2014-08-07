@@ -652,7 +652,7 @@ out includes base-64, quoted-printable, uuencode and CRLF conversion."
 				      vm-mime-base64-decoder-program
 				      vm-mime-base64-decoder-switches)))
 		  (if (not (eq status t))
-		      (vm-mime-error "%s" (cdr status))))
+		      (vm-mime-error "base64-decode failed: %s" (cdr status))))
 	      (goto-char start)
 	      (skip-chars-forward non-data-chars end)
 	      (while (not done)
@@ -744,7 +744,7 @@ out includes base-64, quoted-printable, uuencode and CRLF conversion."
 				     vm-mime-base64-encoder-program
 				     vm-mime-base64-encoder-switches)))
 		  (if (not (eq status t))
-		      (vm-mime-error "%s" (cdr status)))
+		      (vm-mime-error "base64-encode failed: %s" (cdr status)))
 		  (if B-encoding
 		      (save-excursion
 			(set-buffer work-buffer)
@@ -826,7 +826,7 @@ out includes base-64, quoted-printable, uuencode and CRLF conversion."
 				    vm-mime-qp-decoder-program
 				    vm-mime-qp-decoder-switches)))
 		(if (not (eq status t))
-		    (vm-mime-error "%s" (cdr status))))
+		    (vm-mime-error "qp-decode failed: %s" (cdr status))))
 	    (goto-char start)
 	    (setq inputpos start)
 	    (while (< inputpos end)
@@ -906,7 +906,7 @@ out includes base-64, quoted-printable, uuencode and CRLF conversion."
 				    vm-mime-qp-encoder-program
 				    vm-mime-qp-encoder-switches)))
 		(if (not (eq status t))
-		    (vm-mime-error "%s" (cdr status)))
+		    (vm-mime-error "qp-encode failed: %s" (cdr status)))
 		(if quote-from
 		    (save-excursion
 		      (set-buffer work-buffer)
@@ -1010,7 +1010,7 @@ out includes base-64, quoted-printable, uuencode and CRLF conversion."
 				    vm-mime-uuencode-decoder-program
 				    vm-mime-uuencode-decoder-switches)))
 		(if (not (eq status t))
-		    (vm-mime-error "%s" (cdr status))))
+		    (vm-mime-error "uuencode failed: %s" (cdr status))))
 	    (vm-mime-error "no uuencode decoder program defined"))
 	  (delete-region (point-min) (point-max))
 	  (insert-file-contents-literally tempfile)
@@ -2569,6 +2569,12 @@ should be auto-displayed according to the settings of
 
 ;;------------------------------------------------------------------------------
 ;;; MIME decoding
+;;
+;; interactive command:
+;;
+;; vm-decode-mime-message :: (&optional 
+;;			      state :: ENUM('decoded, 'button, 'undecoded))
+;;			     -> void
 ;;------------------------------------------------------------------------------
 
 
@@ -4814,18 +4820,33 @@ buffer for message composition is queried from the minibufer."
 ;;----------------------------------------------------------------------------
 ;;; MIME-related commands
 ;;
-;; vm-mime-action-on-all-attachments :
-;;	(int, ((message, layout, type, filename) -> void),
-;;	 &optional type list, type list, message list, bool) 
+;; vm-mime-action-on-all-attachments ::
+;;	(count :: int, 
+;;	 action :: ((message, layout, type, filename) -> void),
+;;	 &optional 
+;;	 types :: type list, exceptions :: type list, 
+;;	 mlist :: message list, quiet :: bool) 
 ;;	-> void
 ;; This function is replaced by the following, but interface retained
 ;; for backward-compatibility.
 ;;
-;; vm-mime-operate-on-attachments :
-;;	(int, :action ((message, layout, type, filename) -> void),
-;;	 :included type list, :excluded type list, 
-;;	 :messages message list, :name string) 
+;; vm-mime-operate-on-attachments ::
+;;	(count::int, &key
+;;	 :action :: ((message, layout, type, filename) -> void),
+;;	 :included :: type list, 
+;;	 :excluded :: type list, 
+;;	 :messages :: message list, 
+;;	 :name :: string) 
 ;;	-> void
+;; vm-delete-all-attachments :: (&optional count :: int) -> void
+;; vm-mime-delete-all-attachments -- alias to the above
+;; vm-save-all-attachments :: (&optional 
+;;			       count :: int, directory :: path,
+;;			       no-delete-after-saving :: bool) -> void
+;; vm-mime-save-all-attachments -- alias to the above
+;; vm-save-attachments :: (&optional
+;;			   count :: int, 
+;;			   no-delete-after-saving :: bool) -> void
 ;;----------------------------------------------------------------------------
 
 ;;;###autoload

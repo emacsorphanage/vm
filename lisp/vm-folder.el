@@ -3278,7 +3278,7 @@ thread are affected."
 
 ;;;###autoload
 (defun vm-quit-just-bury ()
-  "Bury the current VM folder and summary buffers.
+  "Bury the current VM folder and its auxiliary buffers.
 The folder is not altered and Emacs is still visiting it.  You
 can switch back to it with switch-to-buffer or by using the
 Buffer Menu."
