@@ -1199,7 +1199,7 @@ bear this in mind when you set up the profiles!
 
 @c ***************************************************************************
 
-@unnumberedsubsec vmpc-auto-profiles-file
+@unnumberedsec vmpc-auto-profiles-file
 @vindex vmpc-auto-profiles-file
 
 The variable @code{vmpc-auto-profiles-file} contains the name of the

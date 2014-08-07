@@ -977,7 +977,8 @@ following formats:
 
 @example
 ``pop:@var{HOST}:@var{PORT}:@var{AUTH}:@var{USER}:@var{PASSWORD}''
-``imap:@var{HOST}:@var{PORT}:@var{MAILBOX}:@var{AUTH}:@var{USER}:@var{PASSWORD}''@end example
+``imap:@var{HOST}:@var{PORT}:@var{MAILBOX}:@var{AUTH}:@var{USER}:@var{PASSWORD}''
+@end example
 
 @noindent Remote mailboxes accessed by VM in this fashion are referred
 to as @dfn{server folders} (and @dfn{@acronym{POP} folders} or @dfn{@acronym{IMAP}
@@ -1278,7 +1279,7 @@ The variable's value should be an associative list of the form:
 @end example
 
 @var{IMAPDROP} is an @acronym{IMAP} maildrop specification (@ref{maildrop
-  specification}). 
+specification}).  
 
 @var{NAME} is a string that should give a less cumbersome name that you
 will use to refer to this maildrop when using @code{vm-visit-imap-folder}.
@@ -3104,7 +3105,7 @@ composition and will analyze your message when you send it and
 * @acronym{MIME} preview::        Previewing a @acronym{MIME} message before sending.
 @end menu
 
-@node @acronym{MIME} attachments, @acronym{MIME} characters, Sending @acronym{MIME} Messages, Sending @acronym{MIME} Messages, 
+@node @acronym{MIME} attachments, @acronym{MIME} characters, Sending @acronym{MIME} Messages, Sending @acronym{MIME} Messages
 @unnumberedsec @acronym{MIME} attachments
 
 @kindex C-c C-a
@@ -3158,7 +3159,7 @@ Alternatively, you can mark one or more messages in the parent folder
 before invoking this command.  All the marked messages will be
 attached as a digest in the outgoing message.
 
-@unnumberedsubsubsec Point-to-point attachment operations
+@unnumberedsubsec Point-to-point attachment operations
 
 @cindex point-to-point attachment operations
 A number of @dfn{point-to-point operations} allow you to attach objects
@@ -3952,7 +3953,7 @@ command.  There is a separate variable
 works like @code{vm-delete-after-saving} but applies to the @kbd{A}
 (@code{vm-auto-archive-messages}) command (see below).
 
-@unnumberedsubsec Automatic save folders
+@unnumberedsec Automatic save folders
 
 @cindex save folders
 VM can automatically suggest folders for saving messages, using rules that
@@ -4015,7 +4016,7 @@ matching is case-insensitive.  Note that the matching of header names is
 always case-insensitive because the Internet message standard RFC 822
 specifies that header names are case indistinct.
 
-@unnumberedsubsec Other commands
+@unnumberedsec Other commands
 
 @table @kbd
 @findex vm-save-message-sans-headers
@@ -5704,7 +5705,7 @@ the offline operation.  Similarly, @emph{all} the messages that may have
 been expunged in the cache folder are expunged on the server.
 
 @anchor{@acronym{UIDVALIDITY}}
-@unnumberedsubsec @acronym{UIDVALIDITY}
+@unnumberedsec @acronym{UIDVALIDITY}
 
 @cindex @acronym{UIDVALIDITY}
 Messages on an @acronym{IMAP} server have unique id numbers called UID's.
@@ -5728,7 +5729,7 @@ time, but note that it is not possible to perform any changes to the
 setting the @code{vm-enable-external-messages} flag to @code{(imap)} before
 you refresh the cache so that it will be quicker. @pxref{External Messages}.
 
-@unnumberedsubsec Operations for the IMAP server
+@unnumberedsec Operations for the IMAP server
 
 @cindex vm-list-imap-folders
 The command @code{vm-list-imap-folders} lists the folders available on the
@@ -6748,7 +6749,7 @@ packages in your environment.
 Useful ways to customize VM.
 @section Reading messages
 
-@unnumberedsubsubsec Shrunken headers
+@unnumberedsubsec Shrunken headers
 
 @cindex headers, shrunken
 @vindex vm-enable-addons
@@ -6796,7 +6797,7 @@ part.  You can use the same function to change the method back to
 
 @section Saving messages and attachments
 
-@unnumberedsubsubsec Auto saving attachments
+@unnumberedsubsec Auto saving attachments
 
 Messages with attachments get bulky and increase the size of VM
 folders, slowing down VM.  The functions
@@ -7074,7 +7075,7 @@ The project code base is maintained at the Launchpad web site
 @uref{http://launchpad.net/vm}.  The ``VM Development Team'' can be
 reached here using the email address @email{vm@@lists.launchpad.net}.
 
-@unnumberedsubsec Savannah project site
+@unnumberedsec Savannah project site
 
 The changes made in each of the releases is described in the @samp{NEWS}
 file, which can be found in the source code repository.  The changes made
@@ -7092,7 +7093,7 @@ the @code{Source Code} menu.  The @code{Use Bazaar} entry in the menu
 takes you to a page that lists various version of VM source code, and
 gives instructions for downloading it via @samp{Bazaar} (@code{bzr}).
 
-@unnumberedsubsec Technical support
+@unnumberedsec Technical support
 
 VM has a dedicated usenet newsgroup @code{gnu.emacs.vm.info} and a
 gmane newsgroup @code{gmane.emacs.viewmail}, in which the developers
@@ -7115,7 +7116,7 @@ alternative approaches to narrow down the problem.
 
 The best way to report bugs is via the Launchpad bug tacker.  See below.
 
-@unnumberedsubsec Get Involved
+@unnumberedsec Get Involved
 
 VM is now supported and maintained by the user community.  So, as an
 active user, your participation is key to keep the project going.  
@@ -7439,7 +7440,7 @@ server are listed.  In the normal cases, the variable is just nil in
 @acronym{IMAP} folders.)
 @end itemize
 
-@unnumberedsubsubsec Folder variables
+@unnumberedsubsec Folder variables
 
 Internal to Emacs, VM stores the folder as simply a text buffer.  However, it
 remembers a variety of data about the message contents in the buffer
