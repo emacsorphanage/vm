@@ -2912,12 +2912,18 @@ possible.  Returns a boolean flag indicating success."
     part))
 
 (defun vm-mime-display-internal-w3m-text/html (start end layout)
-  (let ((charset (or (vm-mime-get-parameter layout "charset") "us-ascii")))
-    (shell-command-on-region
-     start (1- end)
-     (format "%s -dump -T text/html -I %s -O %s" 
-	     vm-w3m-program charset charset)
-     nil t)))
+  (let* ((charset (or (vm-mime-get-parameter layout "charset") "us-ascii"))
+	 (coding-system (coding-system-from-name charset)))
+    ;; temporarily override default coding-system because we use our
+    ;; own. (thanks to Ralf Fassel, viewmail-info, 2015-01-30)
+    (let ((default-process-coding-system 
+	    (if coding-system (cons coding-system coding-system)
+	      default-process-coding-system)))
+      (shell-command-on-region
+       start (1- end)
+       (format "%s -dump -T text/html -I %s -O %s" 
+	       vm-w3m-program charset charset)
+       nil t))))
   
 (defun vm-mime-display-internal-lynx-text/html (start end layout)
   (shell-command-on-region 
