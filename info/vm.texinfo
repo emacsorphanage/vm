@@ -929,13 +929,17 @@ format using the command @code{vm-change-folder-type}.  It is a good
 idea to keep all your mail folders in a single format in order to avoid
 incompatibilities.
 
-The system default format is referred to as @code{From_}.  It is the
-Unix mbox format described RFC 4155.  In this format, a leading
-separator line and a trailing separator line are added to each message.
-The leading separator line starts with the string ``From ''.  The
-trailing separator line is a blank line.  VM actually adds two blank lines at
-the end for clarity.
+@cindex Unix
+@cindex From_
+The system default format on most flavors of Unix (except Solaris, AIX and
+System V) is referred to as
+@code{From_}.  It is the Unix mbox format described in RFC 4155.  In this
+format, a leading separator line and a trailing separator line are added to
+each message.  The leading separator line starts with the string ``From ''.
+The trailing separator line is a blank line.  VM actually adds two blank
+lines at the end for clarity.
 
+@cindex BellFrom_
 A variant of this format is referred to as @code{BellFrom_}.  It has a
 leading separator line that starts with the string ``From ''.  However,
 it does not have a trailing blank line.
@@ -950,6 +954,12 @@ appropriate setting for this variable.  It is recommended that you
 convert all the old @code{BellFrom_} folders to the @code{From_} format using
 the command @code{vm-change-folder-type}.
 
+@cindex Solaris
+@cindex System V
+@cindex AIX
+@cindex Content-Length
+@vindex vm-trust-From_-with-Content-Length
+@cindex From_-with-Content-Length
 Solaris, System V and AIX operating systems use another variant of the
 mbox format where the content-length is specified in the ``From '' line.
 VM refers to this format as @code{From_-with-Content-Length}.  Since the
@@ -957,6 +967,9 @@ content lengths may be unreliable, you must also set the variable
 @code{vm-trust-From_-with-Content-Length} to a non-Nil value in order to
 convince VM that you really want to use this format.
 
+@cindex MMDF
+@cindex Babyl
+@cindex Rmail
 Two additional formats are @code{mmdf} used by @acronym{MMDF} systems and
 @code{babyl} used by the Emacs Rmail mode.  These formats are recognized
 automatically when read from the file system.
