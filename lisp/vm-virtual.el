@@ -978,11 +978,12 @@ listed in `vm-vs-spam-score-headers'."
 
 (defun vm-vs-header (m regexp)
   "Virtual selector to check if any header contains an instance of REGEXP."
-  (save-excursion
-    (save-restriction
-      (widen)
-      (goto-char (vm-headers-of (vm-real-message-of m)))
-      (re-search-forward regexp (vm-text-of (vm-real-message-of m)) t))))
+  (with-current-buffer (vm-buffer-of (vm-real-message-of m))
+    (save-excursion
+      (save-restriction
+	(widen)
+	(goto-char (vm-headers-of (vm-real-message-of m)))
+	(re-search-forward regexp (vm-text-of (vm-real-message-of m)) t)))))
 
 (defun vm-vs-header-field (m field regexp)
   "Virtual selector to check if the given header FIELD contains
@@ -1013,11 +1014,12 @@ instance of REGEXP.
 
 Note that the message should have been loaded from external source (if
 any) for it to match this selector."
-  (save-excursion
-    (save-restriction
-      (widen)
-      (goto-char (vm-text-of (vm-real-message-of m)))
-      (re-search-forward regexp (vm-text-end-of (vm-real-message-of m)) t))))
+  (with-current-buffer (vm-buffer-of (vm-real-message-of m))
+    (save-excursion
+      (save-restriction
+	(widen)
+	(goto-char (vm-text-of (vm-real-message-of m)))
+	(re-search-forward regexp (vm-text-end-of (vm-real-message-of m)) t)))))
 
 (defun vm-vs-header-or-text (m regexp)
   "Virtual selector to check if either the header or the body of
@@ -1025,11 +1027,12 @@ the message has an instance of REGEXP.
 
 Note that the message should have been loaded from external source (if
 any) for the selector to detect occurrences in the text."
-  (save-excursion
-    (save-restriction
-      (widen)
-      (goto-char (vm-headers-of (vm-real-message-of m)))
-      (re-search-forward regexp (vm-text-end-of (vm-real-message-of m)) t))))
+  (with-current-buffer (vm-buffer-of (vm-real-message-of m))
+    (save-excursion
+      (save-restriction
+	(widen)
+	(goto-char (vm-headers-of (vm-real-message-of m)))
+	(re-search-forward regexp (vm-text-end-of (vm-real-message-of m)) t)))))
 
 (defun vm-vs-more-chars-than (m arg)
   "Virtual selector to check if the message size in characters is more
