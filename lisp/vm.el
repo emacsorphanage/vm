@@ -1361,7 +1361,8 @@ summary buffer to select a folder."
 	    (push-mark (point))
 	    (mail-text)
 	    (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
-		  (mail-yank-hooks (run-hooks 'mail-yank-hooks))
+		  ;; this is an obsolete variable now
+		  ;; (mail-yank-hooks (run-hooks 'mail-yank-hooks))
 		  (t (vm-mail-yank-default)))))
       (make-local-variable 'mail-send-actions)
       (setq mail-send-actions send-actions)

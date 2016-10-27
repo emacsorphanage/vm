@@ -257,6 +257,8 @@ i.e. when within the composition buffer.")
 
 (make-variable-buffer-local 'vmpc-sig-exerlay)
 
+;; make-face currently takes only one argument.
+;; These calls to make-face should be eliminated, and defface used instead.
 (defvar vmpc-pre-sig-face (progn (make-face 'vmpc-pre-sig-face
 	    "Face used for highlighting the pre-signature.")
 				 (set-face-foreground

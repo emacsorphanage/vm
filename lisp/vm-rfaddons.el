@@ -896,6 +896,8 @@ which should be attached, when empty all files will be attached.
 When called with a prefix arg it will do a literal match instead of a regexp
 match. (Rob F)"
   (interactive
+   ;; temporarily override substitute-in-file-name. but why?
+   ;; flet is obsolete from Emacs 24.3; need to use cl-flet
    (flet ((substitute-in-file-name (file) file))
      (let ((file (vm-read-file-name
                   "Attach files matching regexp: "

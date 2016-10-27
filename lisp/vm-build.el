@@ -48,7 +48,9 @@
 (require 'bytecomp)
 ;; Current public setting
 ;; Check for undefined functions, ignore save-excursion problems
-(setq byte-compile-warnings '(not suspicious))
+;; (setq byte-compile-warnings '(not suspicious))
+;; Ignore undefined functions as well (for Emacs 24.5)
+(setq byte-compile-warnings '(not suspicious unresolved))
 ;; Old permissive setting
 ;; (setq byte-compile-warnings '(free-vars))
 ;; (put 'inhibit-local-variables 'byte-obsolete-variable nil)
