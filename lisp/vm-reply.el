@@ -385,15 +385,16 @@ are replying to, forwarding, or invoked VM's mail command from.
 All message headers are yanked along with the text.  Point is
 left before the inserted text, the mark after.  Any hook
 functions bound to `mail-citation-hook' are run, after inserting
-the text and setting point and mark.  For backward compatibility,
-if mail-citation-hook is set to nil, `mail-yank-hooks' is run
-instead.
+the text and setting point and mark.
 
 If mail-citation-hook and mail-yank-hooks are both nil, this
 default action is taken: the yanked headers are trimmed as
 specified by `vm-included-text-headers' and
 `vm-included-text-discard-header-regexp', and the value of
 `vm-included-text-prefix' is prepended to every yanked line."
+;; The original doc string also said:
+;;  For backward compatibility, if mail-citation-hook is set to nil,
+;; `mail-yank-hooks' is run instead.
   (interactive
    (list
     ;; What we really want for the first argument is a message struct,
@@ -476,7 +477,8 @@ specified by `vm-included-text-headers' and
       ;; Reddy, 2009-12-07 
       ;; (goto-char (point-min))
       (cond (mail-citation-hook (run-hooks 'mail-citation-hook))
-	    (mail-yank-hooks (run-hooks 'mail-yank-hooks))
+	    ;; mail-yank-hooks is obsolete now
+	    ;; (mail-yank-hooks (run-hooks 'mail-yank-hooks))
 	    (t (vm-mail-yank-default message))))))
 
 (defun vm-yank-message-presentation ()

@@ -800,6 +800,8 @@ questions will bother you!"
   (let* ((work-buffer
           (save-excursion
             (let ((vm-frame-per-composition nil))
+	      ;; temporarily override vm-display; why?
+	      ;; flet is obsolete in Emacs 24.3; use cl-flet instead
               (flet ((vm-display (buffer display commands configs
                                          &optional do-not-raise)
                                  nil))
