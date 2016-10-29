@@ -1581,8 +1581,8 @@ Supports version 4 format of attribute storage, for backward compatibility."
 			 (or (null (aref cache 7)) (stringp (aref cache 7)))
 			 (or (null (aref cache 11)) (stringp (aref cache 11))))
 	      (when (zerop vm-bad-cache-count)
-		(vm-warn 0 2 "%s: Bad VM cache data: %S" (buffer-name) cache)
-		(vm-set-stuff-flag-of (car mp) t))
+		(vm-warn 0 2 "%s: Bad VM cache data: %S" (buffer-name) cache))
+	      (vm-set-stuff-flag-of (car mp) t)
 	      (vm-increment vm-bad-cache-count)
               (setcar (cdr data)
                       (setq cache 
@@ -1634,14 +1634,14 @@ Supports version 4 format of attribute storage, for backward compatibility."
 	    (vm-inform 7 "%s: Reading attributes... %d" (buffer-name)
 		       vm-total-count))
 	(setq mp (cdr mp)))
-      (cond ((not (zerop vm-upgrade-count))
-	     (vm-warn 0 1 "%s: Attributes data upgraded for %s messages"
-			(buffer-name) vm-upgrade-count))
-	    ((not (zerop vm-bad-cache-count))
+      (cond ((> vm-bad-cache-count 0)
 	     (vm-warn 0 5 
 		      (concat "%s: Bad VM cache data found for %s messages; "
 			      "Reset to empty data.")
-		      (buffer-name) vm-bad-cache-count))
+		      (buffer-name) vm-bad-cache-count)))
+      (cond ((> vm-upgrade-count vm-bad-cache-count)
+	     (vm-warn 0 1 "%s: Attributes data upgraded for %s messages"
+		      (buffer-name) (- vm-upgrade-count vm-bad-cache-count)))
 	    ((>= vm-total-count modulus)
 	     (vm-inform 7 "%s: Reading attributes... done" (buffer-name))))
       (if (null message-list)
