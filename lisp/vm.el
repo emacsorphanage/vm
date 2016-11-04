@@ -1413,9 +1413,15 @@ summary buffer to select a folder."
 	     vm-summary-uninteresting-senders
 	     ;; obsolete-variables
 	     vm-imap-server-list
+	     ;; sanitized versions included later
+	     vm-spool-files
+	     vm-pop-folder-alist
+	     vm-imap-account-alist
+	     vm-pop-auto-expunge-alist
+	     vm-imap-auto-expunge-alist
 	     ))
 	  ;; delete any passwords stored in maildrop strings
-	  (vm-spool-files 
+	  (vm-spool-files-sanitized
 	   (condition-case nil
 	       (if (listp (car vm-spool-files))
 		   (vm-mapcar 
@@ -1425,7 +1431,7 @@ summary buffer to select a folder."
 		 (vm-mapcar (function vm-maildrop-sans-personal-info)
 			    vm-spool-files))
 	     (error (vm-increment errors) vm-spool-files)))
-	  (vm-pop-folder-alist 
+	  (vm-pop-folder-alist-sanitized
 	   (condition-case nil
 	       (vm-maildrop-alist-sans-personal-info
 		vm-pop-folder-alist)
@@ -1436,17 +1442,17 @@ summary buffer to select a folder."
 	  ;; 	 (vm-mapcar (function vm-maildrop-sans-personal-info) 
 	  ;; 		    vm-imap-server-list)
 	  ;;      (error (vm-increment errors) vm-imap-server-list))))
-	  (vm-imap-account-alist 
+	  (vm-imap-account-alist-sanitized
 	   (condition-case nil
 	       (vm-maildrop-alist-sans-personal-info
 		vm-imap-account-alist)
 	     (error (vm-increment errors) vm-imap-account-alist)))
-	  (vm-pop-auto-expunge-alist
+	  (vm-pop-auto-expunge-alist-sanitized
 	   (condition-case nil
 	       (vm-maildrop-alist-sans-personal-info
 		vm-pop-auto-expunge-alist)
 	     (error (vm-increment errors) vm-pop-auto-expunge-alist)))
-	  (vm-imap-auto-expunge-alist 
+	  (vm-imap-auto-expunge-alist-sanitized
 	   (condition-case nil
 	       (vm-maildrop-alist-sans-personal-info
 		vm-imap-auto-expunge-alist)
@@ -1455,7 +1461,14 @@ summary buffer to select a folder."
         (setq varlist (delete (car vars-to-delete) varlist)
               vars-to-delete (cdr vars-to-delete)))
       ;; see what the user had loaded
-      (setq varlist (append (list 'features) varlist))
+      (setq varlist
+	    (append (list 'features)
+		    (list 'vm-spool-files-sanitized
+			  'vm-pop-folder-alist-sanitized
+			  'vm-imap-account-alist-sanitized
+			  'vm-pop-auto-expunge-alist-sanitized
+			  'vm-imap-auto-expunge-alist-sanitized)
+		    varlist))
       (delete-other-windows)
       (reporter-submit-bug-report
        vm-maintainer-address		; address
