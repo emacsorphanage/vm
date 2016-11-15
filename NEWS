@@ -28,6 +28,9 @@ VM 8.2.0b1
 
   CHANGES
 
+   * `C-x C-s' is now bound to `vm-save-folder', which is the right thing to
+     do in any case.
+   
    * `vm-mail-check-recipients' removed from default `vm-enable-addons'
      because it does not handle MIME headers.  If you would like to use it,
      please add it to the variable in the vm-preferences-file.

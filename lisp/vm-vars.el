@@ -6163,7 +6163,7 @@ the users or bound to other functions in future versions of VM."
     (define-key vm-mode-window-map "D" 'vm-delete-window-configuration)
     (define-key vm-mode-window-map "?" 'vm-window-help)
     (define-key map "\C-t" 'vm-toggle-threads-display)
-    (define-key map "\C-x\C-s" 'vm-save-buffer)
+    (define-key map "\C-x\C-s" 'vm-save-folder)
     (define-key map "\C-x\C-w" 'vm-write-file)
     (define-key map "\C-x\C-q" 'vm-toggle-read-only)
     (define-key map "%" 'vm-optional-key)
