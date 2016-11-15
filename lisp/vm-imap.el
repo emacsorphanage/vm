@@ -3908,10 +3908,11 @@ otherwise.
   "Given an IMAP message M, return its message size by looking up the
 cached tables.  If there is no cached data, return nil.  USR, 2012-10-19"
   (with-current-buffer (vm-buffer-of m)
-    (let ((uid-sym (intern-soft (vm-imap-uid-of m)
-				(vm-folder-imap-flags-obarray))))
-      (and uid-sym
-	   (car (symbol-value uid-sym))))))
+    (condition-case error
+	(let ((uid-sym (intern-soft (vm-imap-uid-of m)
+				    (vm-folder-imap-flags-obarray))))
+	  (car (symbol-value uid-sym)))
+      (error nil))))
 
 (defun* vm-imap-save-attributes (&optional &key
 					   (interactive nil)
