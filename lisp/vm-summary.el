@@ -1478,7 +1478,7 @@ cached-data-vector."
     (format "%s %s %s %s %s"
 	    (condition-case error
 		(substring (vm-su-weekday m) 0 3)
-	      (error "   "))
+	      (error "Sun"))		; make up a valid weekday
 	    (substring (vm-su-month m) 0 3)
 	    (vm-su-monthday m)
 	    (vm-su-hour m)

@@ -887,30 +887,38 @@ insignificant characters.  (See `vm-subject-ignored-prefix',
 than a given DATE.  The DATE is specified in the format
           \"31 Dec 1999 23:59:59 GMT\"
 but you can leave out any part of it to get a sensible default."
-  (string< (vm-so-sortable-datestring m) (vm-timezone-make-date-sortable date)))
+  (condition-case error
+      (string< (vm-so-sortable-datestring m)
+	       (vm-timezone-make-date-sortable date))
+    (error t)))
 
 (defun vm-vs-sent-after (m date)
   "Virtual selector to check if the date of the message was earlier
 than a given DATE.  The DATE is specified in the format
           \"31 Dec 1999 23:59:59 GMT\"
 but you can leave out any part of it to get a sensible default."
-  (string< (vm-timezone-make-date-sortable date) (vm-so-sortable-datestring m)))
+  (condition-case error
+      (string< (vm-timezone-make-date-sortable date)
+	       (vm-so-sortable-datestring m))
+    	(error t)))
 
 (defun vm-vs-older-than (m days)
   "Virtual selector to check if the date of the message was at least
 given DAYS ago.  (Today is considered 0 days ago, and yesterday is
 1 day ago.)"
   (let ((date (vm-su-datestring m)))
-    (if date
-        (> (days-between (current-time-string) date) days))))
+    (condition-case error
+        (> (days-between (current-time-string) date) days)
+      (error t))))
 
 (defun vm-vs-newer-than (m days)
   "Virtual selector to check if the date of the message was at most
 given DAYS ago.  (Today is considered 0 days ago, and yesterday is
 1 day ago.)"
   (let ((date (vm-su-datestring m)))
-    (if date
-        (<= (days-between (current-time-string) date) days))))
+    (condition-case error
+        (<= (days-between (current-time-string) date) days)
+      (error t))))
 
 (defun vm-vs-outgoing (m)
   "Virtual selector to check if the message is an outgoing message,
