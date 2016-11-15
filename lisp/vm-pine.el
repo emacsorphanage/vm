@@ -211,6 +211,13 @@ while the last three are set by `vm-get-persistent-message-ids-for'."
   :group 'vm-pine)
 
 ;;;###autoload
+(defcustom vm-auto-expunge-postponed-folder nil
+  "If non-nil, the postponed-folder is auto-expunged whenever
+postponed messages are continued and sent out."
+  :type 'boolean
+  :group 'vm-pine)
+
+;;;###autoload
 (defcustom vm-postponed-message-headers '("From:" "Organization:"
                                           "Reply-To:"
                                           "To:" "Newsgroups:"
@@ -310,7 +317,7 @@ MSGIDLIST is a list as returned by `vm-get-persistent-message-ids-for'."
 
 ;;-----------------------------------------------------------------------------
 ;;;###autoload
-(defun vm-continue-postponed-message (&optional silent)
+(defun vm-continue-postponed-message (&optional silent draft)
   "Continue composing of the currently selected message.
 Before continuing the composition you may decode the presentation as
 you like, by pressing [D] and viewing part of the message!
@@ -326,7 +333,7 @@ The variables `vm-postponed-message-headers' and
 headers are copied to the composition buffer.
 
 If optional argument SILENT is positive then act in background (no frame
-creation)."
+creation). If DRAFT is non-nil, then do not delete the draft message."
   (interactive "P")
 
   (vm-session-initialization)
@@ -373,8 +380,9 @@ creation)."
             (vm-buffer-of (vm-real-message-of (car vmp))))
       (make-local-variable 'vm-message-pointer)
       (setq vm-message-pointer vmp)
-      (vm-make-local-hook 'mail-send-hook)
-      (add-hook 'mail-send-hook 'vm-delete-postponed-message t t)
+      (unless draft
+	(vm-make-local-hook 'mail-send-hook)
+	(add-hook 'mail-send-hook 'vm-delete-postponed-message t t))
       (erase-buffer)
 
       ;; set the VM variables for setting source message attributes
@@ -384,11 +392,14 @@ creation)."
         (make-local-variable 'vm-redistribute-list)
         (setq vm-pp-data (read vm-pp-data)
               vm-reply-list 
-              (and (nth 1 vm-pp-data) (vm-get-message-pointers-for (nth 1 vm-pp-data)))
+              (and (nth 1 vm-pp-data) 
+		   (vm-get-message-pointers-for (nth 1 vm-pp-data)))
               vm-forward-list
-              (and (nth 2 vm-pp-data) (vm-get-message-pointers-for (nth 2 vm-pp-data)))
+              (and (nth 2 vm-pp-data) 
+		   (vm-get-message-pointers-for (nth 2 vm-pp-data)))
               vm-redistribute-list
-              (and (nth 3 vm-pp-data) (vm-get-message-pointers-for (nth 3 vm-pp-data))))
+              (and (nth 3 vm-pp-data) 
+		   (vm-get-message-pointers-for (nth 3 vm-pp-data))))
         (if vm-reply-list (setq vm-system-state 'replying))
         (if vm-forward-list (setq vm-system-state 'forwarding))
         (if vm-redistribute-list (setq vm-system-state 'redistributing)))
@@ -471,27 +482,28 @@ creation)."
 (defun vm-delete-postponed-message ()
   "Delete the source message belonging to the continued composition."
   (interactive)
-  (if vm-message-pointer
-      (condition-case nil
-          (let* ((msg (car vm-message-pointer))
-                (buffer (vm-buffer-of msg)))
-            ;; only delete messages which have been postponed by us before
-            (when (vm-get-header-contents msg vm-postponed-header)
-              (vm-set-deleted-flag msg t)
-              (vm-update-summary-and-mode-line))
-            ;; in the postponded folder expunge them right now 
-            (when (string= (buffer-name buffer)
-                           (file-name-nondirectory vm-postponed-folder))
-              (if (frames-of-buffer buffer t)
-                  (iconify-frame (car (frames-of-buffer buffer))))
+  (when vm-message-pointer
+    (condition-case nil
+	(let* ((msg (car vm-message-pointer))
+	       (buffer (vm-buffer-of msg)))
+	  ;; only delete messages which have been postponed by us before
+	  (when (vm-get-header-contents msg vm-postponed-header)
+	    (vm-set-deleted-flag msg t)
+	    (vm-update-summary-and-mode-line))
+	  ;; in the postponded folder expunge them right now 
+	  (when (string= (buffer-name buffer)
+			 (file-name-nondirectory vm-postponed-folder))
+	    (if (and vm-xemacs-p (frames-of-buffer buffer t))
+		(iconify-frame (car (frames-of-buffer buffer))))
+	    (when vm-auto-expunge-postponed-folder
               (save-excursion
                 (switch-to-buffer buffer)
                 (vm-expunge-folder)
                 (vm-save-folder)
                 (when (not vm-message-list)
                   (let ((this-command 'vm-quit))
-                    (vm-quit))))))
-        (error "Folder buffer closed before deletion of source message."))))
+                    (vm-quit)))))))
+      (error "Folder buffer closed before deletion of source message."))))
 
 ;;-----------------------------------------------------------------------------
 
@@ -788,7 +800,8 @@ configuration."
            (vm-select-folder-buffer-and-validate 0 (vm-interactive-p))
 	   (vm-make-local-hook 'vm-quit-hook)
            (add-hook 'vm-quit-hook 'vm-expunge-folder nil t)
-           (vm-expunge-folder)
+	   (when vm-auto-expunge-postponed-folder
+	     (vm-expunge-folder))
            (cond ((= (length vm-message-list) 0)
                   (let ((this-command 'vm-quit))
                     (vm-quit))

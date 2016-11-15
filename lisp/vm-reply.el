@@ -1603,7 +1603,7 @@ command can be invoked from external agents via an emacsclient."
       (if (null body)
 	  nil
 	(mail-text)
-	(save-excursion (insert (vm-url-decode-string body) "\n"))
+	(save-excursion (insert body "\n"))
 	;; CRLF to LF for line breaks in the body
 	(while (search-forward "\r\n" nil t)
 	  (replace-match "\n"))))

@@ -196,13 +196,13 @@ The new version of the list, minus the deleted strings, is returned."
     list ))
 
 (defun vm-parse (string regexp &optional matchn matches)
-  "Returns list of string by splitting STRING with REGEXP matches.
-REGEXP must match one item and MATCHN can be used to select a match
-group (default is 1).  MATCHES is the number of time the match is
-applied (default until it does not match anymore).
+  "Returns a list of strings by splitting STRING into items that match REGEXP.
+  MATCHN can be used to select a match group from among that match REGEXP
+  (default is 1).  MATCHES is the number of items to be returned
+  (default is all).
 
 This function is similar to a spring-split, but a bit more complex
-and flexible."
+  and flexible."
   (or matchn (setq matchn 1))
   (let (list tem)
     (store-match-data nil)

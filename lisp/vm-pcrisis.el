@@ -1306,7 +1306,8 @@ the folder of the underlying real message is used."
 		 (vm-pop-find-name-for-spec (vm-folder-pop-maildrop-spec)))
 		(t "")
 		)))
-	  (string-match account-regexp account))))))
+	  (and account
+	      (string-match account-regexp account)))))))
 
 (defun vmpc-header-match (hdrfield regexp &optional clump-sep num)
   "Return true if the contents of specified header HDRFIELD match REGEXP.

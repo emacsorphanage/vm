@@ -570,6 +570,32 @@ same author as the current message."
      bookmark)))
 
 ;;;###autoload
+(defun vm-create-virtual-folder-same-recipient ()
+  "Create a virtual folder (search folder) for all messages that have
+as a recipient the `To' addressee as the current message. If there are
+multiple addressees, only the first one is chosen."
+  (interactive)
+  (vm-follow-summary-cursor)
+  (vm-select-folder-buffer-and-validate 1 (vm-interactive-p))
+   ;;  to be modified
+  (let* ((recipient (car (vm-parse (vm-su-to (car vm-message-pointer))
+				   "\\([^,]*\\)\\(, \\)?" 1 1)))
+	 (displayed-recipient recipient)
+	 (bookmark (if (vm-virtual-message-p (car vm-message-pointer))
+		       (vm-real-message-of (car vm-message-pointer))
+		     (car vm-message-pointer))))
+    (if (equal recipient "")
+	(setq recipient "^$"
+	      displayed-recipient "<none>")
+      (setq recipient (regexp-quote recipient)))
+    ;; end of to be modified
+    (vm-create-virtual-folder
+     'author-or-recipient recipient nil
+     (vm-virtual-folder-name (buffer-name) 'author-or-recipient
+			     displayed-recipient) 
+     bookmark)))
+
+;;;###autoload
 (defun vm-create-author-virtual-folder (&optional string read-only name)
   "Create a virtual folder (search folder) of messages with the given
 string in the author's name/address, from the current folder.

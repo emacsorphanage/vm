@@ -91,6 +91,9 @@ VM 8.2.0b1
 
    IMPROVEMENTS
 
+   * New variable: `vm-auto-expunge-postponed-folder' (default nil) expunges
+     the postponed-folder whenever a postponed message is continued and sent.
+
    * Prefix argument 0 applies the operation to all messages in a folder. 
 
    * New commands `vm-create-search-folder-other-window' and
