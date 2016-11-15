@@ -6121,6 +6121,7 @@ the users or bound to other functions in future versions of VM."
     (define-key vm-mode-virtual-map "T" 'vm-create-virtual-folder-of-threads)
     (define-key vm-mode-virtual-map "X" 'vm-apply-virtual-folder)
     (define-key vm-mode-virtual-map "A" 'vm-create-virtual-folder-same-author)
+    (define-key vm-mode-virtual-map "R" 'vm-create-virtual-folder-same-recipient)
     (define-key vm-mode-virtual-map "S" 'vm-create-virtual-folder-same-subject)
     (define-key vm-mode-virtual-map "M" 'vm-toggle-virtual-mirror)
 

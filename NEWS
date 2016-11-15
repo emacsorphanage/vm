@@ -91,6 +91,9 @@ VM 8.2.0b1
 
    IMPROVEMENTS
 
+   * New command: `vm-create-virtual-folder-same-recipient' (bound to V R)
+     selects the messages with the same recipient as the current message.
+
    * New variable: `vm-auto-expunge-postponed-folder' (default nil) expunges
      the postponed-folder whenever a postponed message is continued and sent.
 

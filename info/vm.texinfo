@@ -5147,10 +5147,12 @@ matching messages.
 @kindex V A
 @findex vm-create-virtual-folder-same-subject
 @findex vm-create-virtual-folder-same-author
+@findex vm-create-virtual-folder-same-recipient
 The commands @code{vm-create-virtual-folder-same-subject} (bound to @kbd{V
-S}) and @code{vm-create-virtual-folder-same-author} (bound
-to @kbd{V A}) create virtual folders containing all the
-messages in the current folder with the same subject or author as the
+S}), @code{vm-create-virtual-folder-same-author} (bound
+to @kbd{V A}) and @code{vm-create-virtual-folder-same-recipient} (bound to
+@kbd{V R}) create virtual folders containing all the
+messages in the current folder with the same subject, author or recipient as the
 current message.  There are also short-cut key bindings for a number of
 frequently used selectors:
 
@@ -6868,6 +6870,12 @@ converts any @acronym{MIME} buttons into attachment buttons, which will be encod
 valid @acronym{MIME} attachments when the message is sent.  Unfortunately, any
 attachments that are displayed inline in the Presentation buffer will not be
 encoded.  This is a limitation of this package.
+
+@findex vm-auto-expunge-postponed-folder
+When you continue composition of a postponed message and send it, its
+previous draft is still retained in the postponed folder. To expunge such
+drafts automatically set @code{vm-auto-expunge-postponed-folder} to @code{t}
+in your VM configuration file.
 
 (This add-on was provided by Robert Fenk.)
 
