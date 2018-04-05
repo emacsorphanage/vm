@@ -1492,55 +1492,61 @@ as well."
   (when (and process (memq (process-status process) '(open run))
 	     (buffer-live-p (process-buffer process)))
     (unwind-protect
-      (save-excursion			; = save-current-buffer?
-	(set-buffer imap-buffer)
-	;;----------------------------
-	(vm-buffer-type:enter 'process)
-	;;----------------------------
-	;; vm-imap-end-session might have already been called on
-	;; this process, so don't logout and schedule the killing
-	;; the process again if it's already been done.
-	(unwind-protect
-	    (condition-case nil
-		(if vm-imap-session-done
-		    ;;-------------------------------------
-		    ;; Don't bother checking because it might fail if
-		    ;; the user typed C-g.
-		    ;; (vm-imap-session-type:assert 'inactive)
-		    ;;-------------------------------------
-		    nil
-		  (vm-inform 6 "%s: Closing IMAP session to %s..."
-			     (if vm-mail-buffer
-				 (buffer-name vm-mail-buffer) 
-			       "vm")
-			     "server")
-		  (vm-imap-send-command process "LOGOUT")
-		  ;; we don't care about the response.
-		  ;; avoid waiting for it because some servers misbehave.
-		  ;; (vm-imap-read-ok-response process)
-		  )
-	      (vm-imap-protocol-error ; handler
-	       nil)		      ; ignore errors 
-	      (error nil))	      ; handler
+	(save-excursion			; = save-current-buffer?
+	  (set-buffer imap-buffer)
+	  ;;----------------------------
+	  (vm-buffer-type:enter 'process)
+	  ;;----------------------------
+	  ;; vm-imap-end-session might have already been called on
+	  ;; this process, so don't logout and schedule the killing
+	  ;; the process again if it's already been done.
+	  (unwind-protect
+	      (condition-case nil
+		  (if vm-imap-session-done
+		      ;;-------------------------------------
+		      ;; Don't bother checking because it might fail if
+		      ;; the user typed C-g.
+		      ;; (vm-imap-session-type:assert 'inactive)
+		      ;;-------------------------------------
+		      nil
+		    (vm-inform 6 "%s: Closing IMAP session to %s..."
+			       (if vm-mail-buffer
+				   (buffer-name vm-mail-buffer) 
+				 "vm")
+			       "server")
+		    (vm-imap-send-command process "LOGOUT")
+		    ;; we don't care about the response.
+		    ;; avoid waiting for it because some servers misbehave.
+		    ;; (vm-imap-read-ok-response process)
+		    )
+		(vm-imap-protocol-error ; handler
+		 nil)			; ignore errors 
+		(error nil))		; handler
+	    ;; unwind-protections
+	    (setq vm-imap-session-done t)
+	    ;;----------------------------------
+	    (vm-imap-session-type:set 'inactive)
+	    ;;----------------------------------
+	    ;; This is just for tracing purposes
+	    (goto-char (point-max))
+	    (insert "\r\n\r\n\r\n"
+		    "ending IMAP session " (current-time-string) "\r\n")
+	    ;; Schedule killing of the process after a delay to allow
+	    ;; any output to be received first
+	    (if (fboundp 'add-async-timeout)
+		(add-async-timeout 2 'delete-process process)
+	      (run-at-time 2 nil 'delete-process process)))
 	  ;; unwind-protections
-	  (setq vm-imap-session-done t)
 	  ;;----------------------------------
-	  (vm-imap-session-type:set 'inactive)
+	  (vm-inform 6 "%s: Closing IMAP session to %s... done"
+		     (if vm-mail-buffer
+			 (buffer-name vm-mail-buffer) 
+		       "vm")
+		     "server")
+
+	  (vm-buffer-type:exit)
 	  ;;----------------------------------
-	  ;; This is just for tracing purposes
-	  (goto-char (point-max))
-	  (insert "\r\n\r\n\r\n"
-		  "ending IMAP session " (current-time-string) "\r\n")
-	  ;; Schedule killing of the process after a delay to allow
-	  ;; any output to be received first
-	  (if (fboundp 'add-async-timeout)
-	      (add-async-timeout 2 'delete-process process)
-	    (run-at-time 2 nil 'delete-process process))))
-      ;; unwind-protections
-      ;;----------------------------------
-      (vm-buffer-type:exit)
-      ;;----------------------------------
-      ))
+	  )))
   (when (and imap-buffer (buffer-live-p imap-buffer))
     (if (and (null vm-imap-keep-trace-buffer) (not keep-buffer))
 	(kill-buffer imap-buffer)
