@@ -2800,9 +2800,12 @@ is not successful.                                   USR, 2011-03-25"
 	    ;; if the handler returns t, overwrite the layout type
 	    (vm-mime-rewrite-with-inferred-type layout infered-type))
 
-	   ((and (vm-mime-internally-displayable layout)
-		 (vm-mime-display-internal layout type primary-type))
-	    ;; if the handler returns t, we are done
+	   ((or (and (vm-mime-internally-displayable layout)
+		     (vm-mime-display-internal layout type primary-type))
+		;; if the handler returns t, we are done
+		;; otherwise, unless the user chooses external, we quit
+		(not
+		 (y-or-n-p "Internal display failed; use external viewer?")))
 	    )
 
 	   ((and vm-infer-mime-types infered-type
