@@ -2298,9 +2298,9 @@ which are described in this section.
 The Emacs-w3m browser has its own key bindings for use within HTML text.
 These are disabled by default so that VM's key bindings will continue to
 have effect.  To switch to the Emacs-w3m key bindings, set the variable
-@code{vm-use-presentation-minor-modes} to @code{t}.  The minor mode to be
-used for the Emacs-w3m generated text can be set using the variable
-@code{vm-presentation-minor-modes}. 
+@code{vm-use-presentation-minor-modes} to @code{t}.  This asks VM to use the
+minor modes specified in @code{vm-presentation-minor-modes}. By default the
+presentation-minor-mode for emacs-w3m is set to @code{w3m-minor-mode}.
 
 @vindex vm-w3m-display-inline-images
 @cindex multipart/related
@@ -2324,7 +2324,7 @@ customize the variable @code{vm-w3m-safe-url-regexp}.  You can set it to
 expression that identifies which @acronym{URL}'s should be regarded as safe.
 
 The Emacs-w3m browser has numerous 
-option settings that may customize.  Some important
+option settings that you may customize.  Some important
 settings for use with VM are the following:
 
 @table @code
@@ -2950,6 +2950,7 @@ parent of this composition.
 @item C-c C-v <Any VM command key>
 All VM commands may be accessed in a VM Mail mode buffer by prefixing them
 with C-c C-v.
+
 @kindex C-c C-a
 @vindex vm-send-using-mime
 @cindex drag and drop
@@ -2986,6 +2987,7 @@ message to be attached.  If you invoke the command on marked
 messages by running
 @code{vm-next-command-uses-marks} first, the marked messages in
 the selected folder will be attached as a @acronym{MIME} digest.
+
 @kindex C-c C-b
 @item C-c C-b (@code{vm-attach-buffer})
 Attaches an Emacs buffer to the composition.
@@ -3014,10 +3016,12 @@ composing your message.
 
 @kindex m
 @findex vm-mail-from-folder
+@cindex parent folder
 @anchor{vm-mail-from-folder}
 The simplest command is @kbd{m} (@code{vm-mail-from-folder}) which sends a mail
 message much as @kbd{M-x mail} does but allows the added commands
-described above.
+described above. The mail folder from which the command is invoked is
+designated as the @emph{parent folder} of the mail composition.
 
 @findex vm-mail
 @anchor{vm-mail}
